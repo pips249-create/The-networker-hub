@@ -58,8 +58,8 @@
       href('index.html') +
       '" aria-label="The Networker Hub home">' +
       '<img src="' +
-      href('assets/logo-nav.png') +
-      '" alt="The Networker Hub" width="180" height="72">' +
+      href('assets/logo-original.png') +
+      '" alt="The Networker Hub" width="200" height="97">' +
       '</a>' +
       '<nav class="nav-links" aria-label="Main">' +
       buildNavLinks(user) +
