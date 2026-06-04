@@ -73,10 +73,23 @@
     return local.toISOString();
   }
 
-  function buildOccurrences() {
-    const start = document.getElementById('ee-start-time').value || '10:00';
-    const end = document.getElementById('ee-end-time').value || '';
-    const keys = [...selectedDates].sort();
+  function syncSelectedDatesFromDom() {
+    document
+      .querySelectorAll('#ee-cal-days .ee-cal-day.is-selected[data-date-key]')
+      .forEach((btn) => {
+        const key = btn.getAttribute('data-date-key');
+        if (key) selectedDates.add(key);
+      });
+  }
+
+  function getSelectedDateKeys() {
+    syncSelectedDatesFromDom();
+    return [...selectedDates].sort();
+  }
+
+  function buildOccurrences(keys, startTime, endTime) {
+    const start = startTime || '10:00';
+    const end = endTime || '12:00';
     return keys.map((key) => ({
       date: combineDateAndTime(key, start),
       endDate: combineDateAndTime(key, end),
@@ -86,7 +99,7 @@
   function renderSelectedList() {
     const list = document.getElementById('ee-date-list');
     const count = document.getElementById('ee-date-count');
-    const keys = [...selectedDates].sort();
+    const keys = getSelectedDateKeys();
     if (count) count.textContent = String(keys.length);
     if (!list) return;
     list.innerHTML = keys.map((k) => '<li>' + esc(formatDateLabel(k)) + '</li>').join('');
@@ -135,6 +148,7 @@
         btn.addEventListener('click', () => {
           if (selectedDates.has(key)) selectedDates.delete(key);
           else selectedDates.add(key);
+          showAlert('');
           renderCalendar();
           renderSelectedList();
         });
@@ -331,11 +345,7 @@
   document.getElementById('ee-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     showAlert('');
-    const occurrences = buildOccurrences();
-    if (!occurrences.length) {
-      showAlert('Select at least one date on the calendar.');
-      return;
-    }
+
     const organiserGroupId = document.getElementById('ee-group').value;
     const title = document.getElementById('ee-title').value.trim();
     if (!organiserGroupId || !title) {
@@ -343,13 +353,21 @@
       return;
     }
 
+    const dateKeys = getSelectedDateKeys();
+    if (!dateKeys.length) {
+      showAlert('Select at least one date on the calendar.');
+      return;
+    }
+
     const timeCheck = QuarterTime
       ? QuarterTime.validatePair('ee-start-time', 'ee-end-time')
-      : { ok: true };
+      : { ok: true, start: '10:00', end: '12:00' };
     if (!timeCheck.ok) {
       showAlert(timeCheck.message);
       return;
     }
+
+    const occurrences = buildOccurrences(dateKeys, timeCheck.start, timeCheck.end);
 
     const payload = {
       organiserGroupId,
@@ -387,7 +405,12 @@
     btn.disabled = false;
 
     if (!res.ok) {
-      showAlert(res.data.message || res.data.error || 'Could not save event');
+      const err = res.data.error || '';
+      const msg =
+        err === 'missing_dates'
+          ? 'Select at least one date on the calendar.'
+          : res.data.message || err || 'Could not save event';
+      showAlert(msg);
       return;
     }
 
