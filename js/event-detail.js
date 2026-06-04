@@ -266,14 +266,32 @@
     });
   }
 
+  function updateBreadcrumbTrail(ev) {
+    const mid = String(ev.industry || ev.format || ev.typeRaw || '').trim();
+    const catEl = document.getElementById('ev-trail-category');
+    if (!catEl) return;
+    const sepBefore = catEl.previousElementSibling;
+    const sepAfter = catEl.nextElementSibling;
+    if (mid) {
+      catEl.textContent = mid;
+      catEl.href = 'index.html';
+      catEl.hidden = false;
+      if (sepBefore && sepBefore.classList.contains('sep')) sepBefore.hidden = false;
+      if (sepAfter && sepAfter.classList.contains('sep')) sepAfter.hidden = false;
+    } else {
+      catEl.hidden = true;
+      if (sepBefore && sepBefore.classList.contains('sep')) sepBefore.hidden = true;
+    }
+  }
+
   function populateFromEvent(ev) {
     currentEvent = ev;
     document.title = ev.title + ' – The Networker Hub';
     document.body.setAttribute('data-event-id', ev.id);
     setText('ev-title', ev.title);
     setText('ev-trail-current', ev.title);
-    setText('ev-category', ev.industry || 'Networking');
-    setText('ev-trail-category', ev.industry || 'Events');
+    setText('ev-category', ev.industry || ev.format || 'Networking');
+    updateBreadcrumbTrail(ev);
 
     const priceLabel = ev.priceKey === 'free' ? 'Free' : ev.price;
     setText('ev-price', ev.priceKey === 'free' ? 'Free' : 'from ' + ev.price);
