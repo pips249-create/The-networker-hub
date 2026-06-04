@@ -452,6 +452,10 @@
   margin-bottom: 16px;
 }
 
+.org-toolbar--section {
+  margin-bottom: 12px;
+}
+
 .org-btn {
   display: inline-flex;
   align-items: center;

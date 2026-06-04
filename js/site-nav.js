@@ -102,6 +102,9 @@
   function buildNavLinks(user) {
     var html = '';
     html += link('index.html#discover', 'Discover', 'home');
+    if (user) {
+      html += link('account/index.html', 'My account', 'account');
+    }
     html += organiserNavLink(user);
     html += link('index.html#academy', 'Academy', 'academy', 'nav-hide-mobile');
     html += link('index.html#for-you', 'For you', 'for-you', 'nav-hide-mobile');

@@ -211,6 +211,13 @@
     return rated.reduce((s, e) => s + e.rating, 0) / rated.length;
   }
 
+  function averageReviewRating() {
+    const list = filteredReviewsList();
+    const rated = list.filter((r) => r.rating != null && !Number.isNaN(Number(r.rating)));
+    if (!rated.length) return null;
+    return rated.reduce((s, r) => s + Number(r.rating), 0) / rated.length;
+  }
+
   function parseRoute() {
     const hash = (location.hash.replace('#', '') || 'dashboard').toLowerCase();
     if (hash === 'tickets') return { page: 'events', sub: 'events-tickets' };
@@ -825,14 +832,16 @@
     const list = filteredReviewsList();
     listEl.innerHTML = '';
 
-    const avg = averageRating();
+    const avg = averageReviewRating();
     const summary = document.getElementById('reviews-summary');
     if (summary) {
       summary.innerHTML =
         list.length +
         ' review' +
         (list.length === 1 ? '' : 's') +
-        (avg != null ? ' · Overall average: <strong class="org-rating">★ ' + avg.toFixed(1) + '</strong>' : '');
+        (avg != null && list.length
+          ? ' · Overall average: <strong class="org-rating">★ ' + avg.toFixed(1) + '</strong>'
+          : '');
     }
 
     if (!list.length) {
@@ -1246,11 +1255,17 @@
       el.addEventListener('click', closeModals);
     });
 
-    document.getElementById('btn-new-group').addEventListener('click', () => {
+    function openNewGroupModal() {
       document.getElementById('modal-group-email').textContent = state.user.email;
       resetGroupLogoPicker();
       openModal('modal-group');
-    });
+    }
+
+    document.getElementById('btn-new-group').addEventListener('click', openNewGroupModal);
+    const btnNewGroupOverview = document.getElementById('btn-new-group-overview');
+    if (btnNewGroupOverview) {
+      btnNewGroupOverview.addEventListener('click', openNewGroupModal);
+    }
 
     document.getElementById('btn-new-event').addEventListener('click', () => {
       if (!state.groups.length) {

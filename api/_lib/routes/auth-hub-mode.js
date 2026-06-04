@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
     return json(res, 200, {
       ok: true,
       hubView: mode,
-      redirect: mode === 'organiser' ? '/organiser/index.html' : '/events/index.html',
+      redirect: mode === 'organiser' ? '/organiser/index.html' : '/account/index.html',
     });
   }
 

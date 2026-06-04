@@ -13,6 +13,7 @@ const routes = {
   'setup-admin': require('./_lib/routes/auth-setup-admin'),
   'forgot-password': require('./_lib/routes/auth-forgot-password'),
   'reset-password': require('./_lib/routes/auth-reset-password'),
+  'attendee-dashboard': require('./_lib/routes/auth-attendee-dashboard'),
 };
 
 module.exports = async function handler(req, res) {

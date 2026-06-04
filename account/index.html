@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My account – The Networker Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css" />
+  </head>
+  <body class="attendee-dashboard-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260606d" data-root="../" data-page="account"></script>
+
+    <div id="ad-signin" class="ad-signin" hidden>
+      <p>Sign in to see your upcoming events, tickets, and reviews.</p>
+      <p style="margin-top: 12px">
+        <a class="ad-btn" href="../login.html?next=/account/index.html" style="font-size:13px;padding:10px 20px">Sign in</a>
+      </p>
+    </div>
+
+    <div id="ad-shell" hidden>
+      <nav class="ad-dash-bar" aria-label="Account sections">
+        <a href="index.html" class="is-active">Home</a>
+        <a href="../events/index.html">Browse events</a>
+        <a href="../organiser/index.html" id="ad-link-organiser" hidden>Organiser dashboard</a>
+      </nav>
+
+      <div class="ad-wrap">
+        <h1 class="ad-welcome-name" id="ad-welcome-name">Welcome back</h1>
+        <p class="ad-welcome-sub" id="ad-welcome-sub">Here's your account at a glance — last updated today.</p>
+        <p class="ad-demo-note" id="ad-demo-note" hidden>
+          Showing sample layout — your bookings will appear here once you register for events (or when Registrations are linked in Airtable).
+        </p>
+
+        <div class="ad-stats">
+          <div class="ad-stat gold">
+            <div class="ad-stat-label">Upcoming events</div>
+            <div class="ad-stat-value" id="ad-stat-upcoming">0</div>
+            <div class="ad-stat-meta" id="ad-stat-next">—</div>
+          </div>
+          <div class="ad-stat green">
+            <div class="ad-stat-label">Reviews left</div>
+            <div class="ad-stat-value" id="ad-stat-reviews">0</div>
+            <div class="ad-stat-meta" id="ad-stat-reviews-pending">—</div>
+          </div>
+        </div>
+
+        <h2 class="ad-section-title">Your next events</h2>
+        <p class="ad-section-sub">Upcoming events you are registered to attend.</p>
+
+        <div class="ad-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="ad-th-thumb"></th>
+                <th>Event name</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Tickets</th>
+                <th>Review left?</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="ad-events-body"></tbody>
+          </table>
+          <p class="ad-empty" id="ad-events-empty" hidden>
+            You haven't registered for any events yet.
+            <a href="../events/index.html">Browse events →</a>
+          </p>
+          <nav class="ad-pagination" id="ad-pagination" aria-label="Events pages" hidden></nav>
+        </div>
+      </div>
+    </div>
+
+    <script src="../js/attendee-dashboard.js?v=20260606d"></script>
+  </body>
+</html>
