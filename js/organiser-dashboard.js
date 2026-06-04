@@ -3,7 +3,17 @@
  */
 (function () {
   const ORG_PAGE_SIZE = 10;
-  const listPages = { groups: 1, events: 1, tickets: 1 };
+  const listPages = { groups: 1, events: 1, tickets: 1, reviews: 1, revenue: 1 };
+  let eventsSubRoute = 'events-list';
+
+  const filters = {
+    eventsStatus: 'all',
+    eventsType: 'all',
+    eventsSearch: '',
+    ticketsEvent: 'all',
+    ticketsType: 'all',
+    reviewsGroup: 'all',
+  };
 
   const state = {
     user: null,
@@ -11,6 +21,7 @@
     events: [],
     upcomingEvents: [],
     tickets: [],
+    reviews: [],
     groupsError: null,
     airtable: null,
   };
@@ -114,31 +125,245 @@
   }
 
   function actionMenuHtml(kind, id, title) {
-    const safeId = esc(id);
-    const eventUrl = '../events/event.html?id=' + encodeURIComponent(id);
     if (kind === 'group') {
       return (
         '<div class="org-action-wrap">' +
         '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
         '<div class="org-action-menu" role="menu">' +
         '<button type="button" class="org-action-item" data-org-goto-view="groups"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit profile</strong><span>Update organiser page details</span></span></button>' +
-        '<button type="button" class="org-action-item" data-org-goto-view="events"><span class="org-action-icon">★</span><span class="org-action-text"><strong>Reviews</strong><span>View feedback for this group</span></span></button>' +
+        '<button type="button" class="org-action-item" data-org-goto-sub="events-reviews"><span class="org-action-icon">★</span><span class="org-action-text"><strong>Reviews</strong><span>View feedback for this group</span></span></button>' +
         '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Coming soon</span></span></button>' +
         '</div></div>'
       );
     }
+    return eventActionMenuHtml(id, title);
+  }
+
+  function eventActionMenuHtml(id, title) {
+    const shortTitle = String(title || 'Event').slice(0, 32);
     return (
       '<div class="org-action-wrap">' +
       '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
       '<div class="org-action-menu" role="menu">' +
-      '<a class="org-action-item" href="' +
-      eventUrl +
-      '" target="_blank" rel="noopener"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit event</strong><span>Update details, times &amp; tickets</span></span></a>' +
-      '<button type="button" class="org-action-item" data-org-goto-view="tickets"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>See attendees</strong><span>View ticket types for this event</span></span></button>' +
-      '<button type="button" class="org-action-item" disabled><span class="org-action-icon">◎</span><span class="org-action-text"><strong>Promote</strong><span>Coming soon</span></span></button>' +
+      '<div class="org-action-menu-header">' +
+      esc(shortTitle) +
+      '</div>' +
+      '<button type="button" class="org-action-item" data-edit-event="' +
+      esc(id) +
+      '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit event</strong><span>Update details, times &amp; tickets</span></span></button>' +
+      '<button type="button" class="org-action-item" data-org-goto-sub="events-tickets" data-filter-event="' +
+      esc(id) +
+      '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>See attendees</strong><span>View ticket types for this event</span></span></button>' +
+      '<button type="button" class="org-action-item" data-org-goto-sub="events-reviews" data-filter-event="' +
+      esc(id) +
+      '"><span class="org-action-icon">★</span><span class="org-action-text"><strong>Reviews</strong><span>Read &amp; reply to reviews</span></span></button>' +
       '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Hide from directory</span></span></button>' +
       '</div></div>'
     );
+  }
+
+  function totalRevenueDisplay() {
+    const sum = state.events.reduce((s, ev) => s + (ev.revenueNum || 0), 0);
+    return '£' + (sum % 1 === 0 ? sum.toFixed(0) : sum.toFixed(2));
+  }
+
+  function averageRating() {
+    const rated = state.events.filter((e) => e.rating != null && !Number.isNaN(e.rating));
+    if (!rated.length) return null;
+    return rated.reduce((s, e) => s + e.rating, 0) / rated.length;
+  }
+
+  function parseRoute() {
+    const hash = (location.hash.replace('#', '') || 'dashboard').toLowerCase();
+    if (hash === 'tickets') return { page: 'events', sub: 'events-tickets' };
+    if (hash.startsWith('events-')) return { page: 'events', sub: hash };
+    if (hash === 'events') return { page: 'events', sub: 'events-list' };
+    return { page: hash, sub: null };
+  }
+
+  function setEventsSub(sub) {
+    eventsSubRoute = sub || 'events-list';
+    document.querySelectorAll('[data-events-sub]').forEach((tab) => {
+      tab.classList.toggle('is-active', tab.getAttribute('data-events-sub') === eventsSubRoute);
+    });
+    document.querySelectorAll('[data-events-panel]').forEach((panel) => {
+      panel.classList.toggle('is-active', panel.getAttribute('data-events-panel') === eventsSubRoute);
+    });
+    const titles = {
+      'events-list': ['My Events', 'Manage all your event listings — click any event name to edit.'],
+      'events-tickets': ['Tickets', 'All ticket types across your events.'],
+      'events-reviews': ['Reviews', 'Read and reply to attendee feedback.'],
+      'events-revenue': ['Revenue', 'Revenue and performance across your listings.'],
+    };
+    const t = titles[eventsSubRoute] || titles['events-list'];
+    const titleEl = document.getElementById('my-events-title');
+    const subEl = document.getElementById('my-events-sub');
+    if (titleEl) titleEl.textContent = t[0];
+    if (subEl) subEl.textContent = t[1];
+  }
+
+  function updateMyEventsTabCounts() {
+    const set = (id, text) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    };
+    set('tab-count-events', String(state.events.length));
+    set('tab-count-tickets', String(state.tickets.length));
+    set('tab-count-reviews', String(state.reviews.length));
+    set('tab-count-revenue', totalRevenueDisplay());
+  }
+
+  function filteredEventsList() {
+    let list = state.events.slice();
+    const q = filters.eventsSearch.trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        (ev) =>
+          String(ev.title || '')
+            .toLowerCase()
+            .includes(q) ||
+          String(ev.type || '')
+            .toLowerCase()
+            .includes(q)
+      );
+    }
+    if (filters.eventsStatus !== 'all') {
+      list = list.filter((ev) => (ev.statusKey || '') === filters.eventsStatus);
+    }
+    if (filters.eventsType !== 'all') {
+      list = list.filter((ev) => String(ev.type || '') === filters.eventsType);
+    }
+    return list;
+  }
+
+  function filteredTicketsList() {
+    let list = state.tickets.slice();
+    if (filters.ticketsEvent !== 'all') {
+      list = list.filter((t) => t.eventId === filters.ticketsEvent);
+    }
+    if (filters.ticketsType !== 'all') {
+      list = list.filter((t) => String(t.name || '') === filters.ticketsType);
+    }
+    return list;
+  }
+
+  function filteredReviewsList() {
+    let list = state.reviews.slice();
+    if (filters.reviewsGroup !== 'all') {
+      list = list.filter((r) => r.groupId === filters.reviewsGroup);
+    }
+    return list;
+  }
+
+  function fillMyEventsFilters() {
+    const typeSel = document.getElementById('filter-events-type');
+    if (typeSel) {
+      const types = [...new Set(state.events.map((e) => e.type).filter(Boolean))].sort();
+      typeSel.innerHTML = '<option value="all">All types</option>';
+      types.forEach((t) => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        typeSel.appendChild(opt);
+      });
+      typeSel.value = filters.eventsType;
+    }
+
+    const ticketEventSel = document.getElementById('filter-tickets-event');
+    if (ticketEventSel) {
+      ticketEventSel.innerHTML = '<option value="all">All events</option>';
+      state.events.forEach((ev) => {
+        const opt = document.createElement('option');
+        opt.value = ev.id;
+        opt.textContent = ev.title;
+        ticketEventSel.appendChild(opt);
+      });
+      ticketEventSel.value = filters.ticketsEvent;
+    }
+
+    const ticketTypeSel = document.getElementById('filter-tickets-type');
+    if (ticketTypeSel) {
+      const names = [...new Set(state.tickets.map((t) => t.name).filter(Boolean))].sort();
+      ticketTypeSel.innerHTML = '<option value="all">All ticket types</option>';
+      names.forEach((n) => {
+        const opt = document.createElement('option');
+        opt.value = n;
+        opt.textContent = n;
+        ticketTypeSel.appendChild(opt);
+      });
+      ticketTypeSel.value = filters.ticketsType;
+    }
+
+    const reviewGroupSel = document.getElementById('filter-reviews-group');
+    if (reviewGroupSel) {
+      reviewGroupSel.innerHTML = '<option value="all">All your groups</option>';
+      state.groups.forEach((g) => {
+        const opt = document.createElement('option');
+        opt.value = g.id;
+        opt.textContent = g.name;
+        reviewGroupSel.appendChild(opt);
+      });
+      reviewGroupSel.value = filters.reviewsGroup;
+    }
+  }
+
+  function openEditEventModal(ev) {
+    if (!ev) return;
+    document.getElementById('modal-event-title').textContent = 'Edit event';
+    document.getElementById('modal-event-lead').textContent =
+      'Update listing details below, or open the full public page to preview changes.';
+    document.getElementById('event-edit-id').value = ev.id;
+    document.getElementById('event-title').value = ev.title || '';
+    document.getElementById('event-type').value = ev.type || 'Networking Event';
+    document.getElementById('event-description').value = ev.description || '';
+    if (ev.date) {
+      const d = new Date(ev.date);
+      if (!Number.isNaN(d.getTime())) {
+        const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+        document.getElementById('event-date').value = local.toISOString().slice(0, 16);
+      }
+    } else {
+      document.getElementById('event-date').value = '';
+    }
+    fillGroupSelect(document.getElementById('event-group'));
+    const grp = document.getElementById('event-group');
+    if (grp && ev.organiserGroupId) grp.value = ev.organiserGroupId;
+    const submitBtn = document.getElementById('event-form-submit');
+    const openLink = document.getElementById('event-form-open-page');
+    if (submitBtn) {
+      submitBtn.textContent = 'Save changes';
+      submitBtn.disabled = true;
+      submitBtn.title = 'Saving from the dashboard is coming soon — use Open full listing';
+    }
+    if (openLink) {
+      openLink.href = '../events/event.html?id=' + encodeURIComponent(ev.id);
+      openLink.hidden = false;
+    }
+    openModal('modal-event');
+  }
+
+  function resetEventModalForCreate() {
+    document.getElementById('modal-event-title').textContent = 'New event';
+    document.getElementById('modal-event-lead').textContent =
+      'Choose which organiser group this event belongs to.';
+    document.getElementById('event-edit-id').value = '';
+    const submitBtn = document.getElementById('event-form-submit');
+    const openLink = document.getElementById('event-form-open-page');
+    if (submitBtn) {
+      submitBtn.textContent = 'Create event';
+      submitBtn.disabled = false;
+      submitBtn.title = '';
+    }
+    if (openLink) openLink.hidden = true;
+  }
+
+  function starsReviewHtml(rating) {
+    const n = Math.min(5, Math.max(0, Math.round(Number(rating) || 0)));
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+      html += '<span class="org-rating-star' + (i <= n ? '' : ' muted') + '" aria-hidden="true">★</span>';
+    }
+    return html;
   }
 
   function paginateList(items, page) {
@@ -256,15 +481,34 @@
   }
 
   function setRoute(route) {
-    const r = route || 'dashboard';
+    let page = route || 'dashboard';
+    let sub = null;
+    if (route && route.startsWith('events-')) {
+      page = 'events';
+      sub = route;
+    } else if (route === 'events') {
+      page = 'events';
+      sub = 'events-list';
+    } else if (route === 'tickets') {
+      page = 'events';
+      sub = 'events-tickets';
+    }
+
     document.querySelectorAll('[data-org-route]').forEach((a) => {
-      a.classList.toggle('is-active', a.getAttribute('data-org-route') === r);
+      const r = a.getAttribute('data-org-route');
+      a.classList.toggle('is-active', r === page);
     });
     document.querySelectorAll('[data-org-page]').forEach((p) => {
-      p.classList.toggle('is-active', p.getAttribute('data-org-page') === r);
+      p.classList.toggle('is-active', p.getAttribute('data-org-page') === page);
     });
-    if (location.hash.replace('#', '') !== r) {
-      history.replaceState(null, '', '#' + r);
+
+    if (page === 'events') {
+      setEventsSub(sub || eventsSubRoute || 'events-list');
+    }
+
+    const hash = page === 'events' ? sub || 'events-list' : page;
+    if (location.hash.replace('#', '') !== hash) {
+      history.replaceState(null, '', '#' + hash);
     }
   }
 
@@ -397,70 +641,206 @@
     const body = document.getElementById('events-body');
     const empty = document.getElementById('events-empty');
     if (!body) return;
-
-    function fillRow(ev) {
-      const tr = document.createElement('tr');
-      const preview =
-        '<a class="org-btn org-btn-outline" style="font-size:11px;padding:4px 10px" href="../events/event.html?id=' +
-        encodeURIComponent(ev.id) +
-        '" target="_blank" rel="noopener">View</a>';
-      tr.innerHTML =
-        '<td><strong>' +
-        esc(ev.title) +
-        '</strong></td><td>' +
-        esc(formatDate(ev.date)) +
-        '</td><td>' +
-        esc(ev.type || '—') +
-        '</td><td>' +
-        esc(groupNameById(ev.organiserGroupId)) +
-        '</td><td>' +
-        preview +
-        '</td>';
-      return tr;
-    }
-
+    const list = filteredEventsList();
     body.innerHTML = '';
-    if (!state.events.length) {
-      if (empty) empty.hidden = false;
+
+    if (!list.length) {
+      if (empty) {
+        empty.hidden = false;
+        empty.textContent = state.events.length
+          ? 'No events match your filters.'
+          : 'Create a group first, then add an event.';
+      }
       updatePaginationNav('events', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
-    } else {
-      if (empty) empty.hidden = true;
-      const pageInfo = paginateList(state.events, listPages.events);
-      listPages.events = pageInfo.page;
-      updatePaginationNav('events', pageInfo);
-      pageInfo.items.forEach((ev) => body.appendChild(fillRow(ev)));
+      return;
     }
+    if (empty) empty.hidden = true;
+    const pageInfo = paginateList(list, listPages.events);
+    listPages.events = pageInfo.page;
+    updatePaginationNav('events', pageInfo);
+
+    pageInfo.items.forEach((ev) => {
+      const tr = document.createElement('tr');
+      const revClass =
+        ev.revenueNum > 0 ? 'org-revenue' : 'org-revenue muted';
+      tr.innerHTML =
+        '<td class="org-td-name"><button type="button" class="org-td-name-click" data-edit-event="' +
+        esc(ev.id) +
+        '">' +
+        esc(ev.title) +
+        '</button></td><td>' +
+        esc(formatDateShort(ev.date)) +
+        '</td><td>' +
+        esc(formatTimeRange(ev.date, ev.endDate)) +
+        '</td><td>' +
+        esc(ev.ticketsSoldLabel || '0') +
+        '</td><td class="' +
+        revClass +
+        '">' +
+        esc(ev.revenueDisplay || '£0') +
+        '</td><td>' +
+        statusBadgeHtml(ev.statusKey || 'draft', ev.statusLabel || 'Draft') +
+        '</td><td>' +
+        eventActionMenuHtml(ev.id, ev.title) +
+        '</td>';
+      body.appendChild(tr);
+    });
   }
 
   function renderTickets() {
     const body = document.getElementById('tickets-body');
     const empty = document.getElementById('tickets-empty');
     if (!body) return;
+    const list = filteredTicketsList();
     body.innerHTML = '';
-    if (!state.tickets.length) {
-      if (empty) empty.hidden = false;
+
+    if (!list.length) {
+      if (empty) {
+        empty.hidden = false;
+        empty.textContent = state.tickets.length
+          ? 'No ticket types match your filters.'
+          : 'No ticket types yet.';
+      }
       updatePaginationNav('tickets', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
       return;
     }
     if (empty) empty.hidden = true;
-    const pageInfo = paginateList(state.tickets, listPages.tickets);
+    const pageInfo = paginateList(list, listPages.tickets);
     listPages.tickets = pageInfo.page;
     updatePaginationNav('tickets', pageInfo);
+
     pageInfo.items.forEach((t) => {
       const ev = state.events.find((e) => e.id === t.eventId);
+      const ref = 'TNH-' + String(t.id).replace(/^rec/, '').slice(0, 8).toUpperCase();
+      const tierBadge =
+        /vip/i.test(t.name) ? 'org-badge-ticket-gold' : 'org-badge-ticket-purple';
+      const statusKey = /sold/i.test(t.status) ? 'draft' : 'live';
+      const statusLabel = t.status || 'Available';
       const tr = document.createElement('tr');
       tr.innerHTML =
-        '<td><strong>' +
-        esc(t.name) +
-        '</strong></td><td>' +
-        esc(ev ? ev.title : t.eventId) +
+        '<td style="font-family:monospace;font-size:11px">' +
+        esc(ref) +
         '</td><td>' +
+        esc(ev ? ev.title : '—') +
+        '</td><td><span class="org-badge ' +
+        tierBadge +
+        '">' +
+        esc(t.name) +
+        '</span></td><td class="org-revenue">' +
         (t.price === '' || t.price === '0' ? 'Free' : '£' + esc(t.price)) +
-        '</td><td><span class="org-badge org-badge-green">' +
-        esc(t.status || 'Available') +
-        '</span></td>';
+        '</td><td>' +
+        esc(t.quantityAvailable != null ? String(t.quantityAvailable) : '—') +
+        '</td><td>' +
+        statusBadgeHtml(statusKey, statusLabel) +
+        '</td>';
       body.appendChild(tr);
     });
+  }
+
+  function renderReviews() {
+    const listEl = document.getElementById('reviews-list');
+    const empty = document.getElementById('reviews-empty');
+    if (!listEl) return;
+    const list = filteredReviewsList();
+    listEl.innerHTML = '';
+
+    const avg = averageRating();
+    const summary = document.getElementById('reviews-summary');
+    if (summary) {
+      summary.innerHTML =
+        list.length +
+        ' review' +
+        (list.length === 1 ? '' : 's') +
+        (avg != null ? ' · Overall average: <strong class="org-rating">★ ' + avg.toFixed(1) + '</strong>' : '');
+    }
+
+    if (!list.length) {
+      if (empty) empty.hidden = false;
+      updatePaginationNav('reviews', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
+      return;
+    }
+    if (empty) empty.hidden = true;
+    const pageInfo = paginateList(list, listPages.reviews);
+    listPages.reviews = pageInfo.page;
+    updatePaginationNav('reviews', pageInfo);
+
+    pageInfo.items.forEach((r) => {
+      const card = document.createElement('article');
+      card.className = 'org-review-card';
+      const replyBlock = r.reply
+        ? '<div class="org-review-reply"><div class="org-review-reply-label">Your reply</div><div class="org-review-reply-text">' +
+          esc(r.reply) +
+          '</div></div>'
+        : '<button type="button" class="org-btn org-btn-outline" style="font-size:11px;margin-top:8px" disabled>Reply to this review (coming soon)</button>';
+      card.innerHTML =
+        '<div class="org-review-card-header"><div style="display:flex;align-items:center;gap:10px">' +
+        '<div class="org-reviewer-avatar">' +
+        esc(r.initials || '?') +
+        '</div><div><div class="org-reviewer-name">' +
+        esc(r.authorName) +
+        '</div><div class="org-reviewer-meta">' +
+        esc(r.groupName) +
+        ' · ' +
+        esc(r.eventTitle) +
+        ' · ' +
+        esc(formatDateShort(r.date)) +
+        '</div></div></div><div class="org-rating">' +
+        starsReviewHtml(r.rating) +
+        '</div></div><div class="org-review-body">"' +
+        esc(r.body) +
+        '"</div>' +
+        replyBlock;
+      listEl.appendChild(card);
+    });
+  }
+
+  function renderRevenue() {
+    const body = document.getElementById('revenue-body');
+    if (!body) return;
+    const list = state.events.slice();
+    body.innerHTML = '';
+
+    const setRev = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+    setRev('rev-stat-events', String(state.events.length));
+    setRev('rev-stat-tickets', String(state.tickets.length));
+    setRev('rev-stat-revenue', totalRevenueDisplay());
+    const avg = averageRating();
+    setRev('rev-stat-rating', avg != null ? '★ ' + avg.toFixed(1) : '—');
+
+    const pageInfo = paginateList(list, listPages.revenue);
+    listPages.revenue = pageInfo.page;
+    updatePaginationNav('revenue', pageInfo);
+
+    pageInfo.items.forEach((ev) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td class="org-td-name"><button type="button" class="org-td-name-click" data-edit-event="' +
+        esc(ev.id) +
+        '">' +
+        esc(ev.title) +
+        '</button></td><td>' +
+        esc(ev.ticketsSoldLabel || '0') +
+        '</td><td class="org-revenue">' +
+        esc(ev.revenueDisplay || '£0') +
+        '</td><td>' +
+        ratingHtml(ev.rating) +
+        '</td><td>' +
+        statusBadgeHtml(ev.statusKey || 'draft', ev.statusLabel || 'Draft') +
+        '</td>';
+      body.appendChild(tr);
+    });
+  }
+
+  function renderMyEventsHub() {
+    updateMyEventsTabCounts();
+    fillMyEventsFilters();
+    renderEvents();
+    renderTickets();
+    renderReviews();
+    renderRevenue();
   }
 
   function fillGroupSelect(select) {
@@ -507,8 +887,7 @@
     renderOverviewGroups();
     renderOverviewEvents();
     renderGroups();
-    renderEvents();
-    renderTickets();
+    renderMyEventsHub();
     fillGroupSelect(document.getElementById('event-group'));
     fillEventSelect(document.getElementById('ticket-event'));
   }
@@ -523,6 +902,9 @@
     listPages.groups = 1;
     listPages.events = 1;
     listPages.tickets = 1;
+    listPages.reviews = 1;
+    listPages.revenue = 1;
+    state.reviews = data.reviews || [];
     state.groupsError = data.groupsError;
     state.airtable = data.airtable;
     state.adminView = data.adminView;
@@ -672,6 +1054,10 @@
 
     document.getElementById('form-event').addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (document.getElementById('event-edit-id').value) {
+        alert('In-dashboard save is coming soon. Use “Open full listing” to view your event page.');
+        return;
+      }
       const organiserGroupId = document.getElementById('event-group').value;
       const title = document.getElementById('event-title').value.trim();
       const dateInput = document.getElementById('event-date').value;
@@ -700,8 +1086,9 @@
       }
       closeModals();
       document.getElementById('form-event').reset();
+      resetEventModalForCreate();
       await refresh();
-      setRoute('events');
+      setRoute('events-list');
     });
 
     document.getElementById('form-ticket').addEventListener('submit', async (e) => {
@@ -733,7 +1120,7 @@
       closeModals();
       document.getElementById('form-ticket').reset();
       await refresh();
-      setRoute('tickets');
+      setRoute('events-tickets');
     });
   }
 
@@ -754,27 +1141,35 @@
         setRoute('groups');
         return;
       }
+      resetEventModalForCreate();
+      document.getElementById('form-event').reset();
       fillGroupSelect(document.getElementById('event-group'));
       openModal('modal-event');
     });
 
-    document.getElementById('btn-new-ticket').addEventListener('click', () => {
-      if (!state.events.length) {
-        alert('Create an event first.');
-        setRoute('events');
-        return;
-      }
-      fillEventSelect(document.getElementById('ticket-event'));
-      openModal('modal-ticket');
-    });
+    const btnNewTicket = document.getElementById('btn-new-ticket');
+    if (btnNewTicket) {
+      btnNewTicket.addEventListener('click', () => {
+        if (!state.events.length) {
+          alert('Create an event first.');
+          setRoute('events-list');
+          return;
+        }
+        fillEventSelect(document.getElementById('ticket-event'));
+        openModal('modal-ticket');
+      });
+    }
 
     document.querySelectorAll('[data-org-goto]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const route = btn.getAttribute('data-org-goto');
         setRoute(route);
         if (route === 'groups') document.getElementById('btn-new-group').click();
-        if (route === 'events') document.getElementById('btn-new-event').click();
-        if (route === 'tickets') document.getElementById('btn-new-ticket').click();
+        if (route === 'events' || route === 'events-list') document.getElementById('btn-new-event').click();
+        if (route === 'tickets' || route === 'events-tickets') {
+          setRoute('events-tickets');
+          document.getElementById('btn-new-ticket')?.click();
+        }
       });
     });
 
@@ -783,6 +1178,77 @@
         setRoute(btn.getAttribute('data-org-goto-view') || 'dashboard');
       });
     });
+
+    document.querySelectorAll('[data-events-sub]').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        setRoute(tab.getAttribute('data-events-sub') || 'events-list');
+      });
+    });
+
+    ['filter-events-status', 'filter-events-type', 'filter-events-search'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const evt = id === 'filter-events-search' ? 'input' : 'change';
+      el.addEventListener(evt, () => {
+        if (id === 'filter-events-status') filters.eventsStatus = el.value;
+        if (id === 'filter-events-type') filters.eventsType = el.value;
+        if (id === 'filter-events-search') filters.eventsSearch = el.value;
+        listPages.events = 1;
+        renderEvents();
+      });
+    });
+
+    ['filter-tickets-event', 'filter-tickets-type'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('change', () => {
+        if (id === 'filter-tickets-event') filters.ticketsEvent = el.value;
+        if (id === 'filter-tickets-type') filters.ticketsType = el.value;
+        listPages.tickets = 1;
+        renderTickets();
+      });
+    });
+
+    const reviewGroupFilter = document.getElementById('filter-reviews-group');
+    if (reviewGroupFilter) {
+      reviewGroupFilter.addEventListener('change', () => {
+        filters.reviewsGroup = reviewGroupFilter.value;
+        listPages.reviews = 1;
+        renderReviews();
+      });
+    }
+
+    const downloadCsv = document.getElementById('btn-download-tickets-csv');
+    if (downloadCsv) {
+      downloadCsv.addEventListener('click', () => {
+        const rows = filteredTicketsList();
+        if (!rows.length) {
+          alert('No ticket types to export.');
+          return;
+        }
+        const header = ['Ticket ref', 'Event', 'Ticket type', 'Price', 'Qty available', 'Status'];
+        const lines = rows.map((t) => {
+          const ev = state.events.find((e) => e.id === t.eventId);
+          return [
+            'TNH-' + String(t.id).replace(/^rec/, '').slice(0, 8),
+            ev ? ev.title : '',
+            t.name,
+            t.price,
+            t.quantityAvailable != null ? t.quantityAvailable : '',
+            t.status || 'Available',
+          ]
+            .map((c) => '"' + String(c).replace(/"/g, '""') + '"')
+            .join(',');
+        });
+        const csv = [header.join(','), ...lines].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'ticket-types.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+    }
 
     document.addEventListener('click', (e) => {
       const toggle = e.target.closest('[data-org-action-toggle]');
@@ -799,17 +1265,43 @@
         return;
       }
       if (!e.target.closest('.org-action-wrap')) closeAllActionMenus();
+
+      const editBtn = e.target.closest('[data-edit-event]');
+      if (editBtn) {
+        const ev = state.events.find((x) => x.id === editBtn.getAttribute('data-edit-event'));
+        if (ev) openEditEventModal(ev);
+        return;
+      }
+
+      const subBtn = e.target.closest('[data-org-goto-sub]');
+      if (subBtn) {
+        const sub = subBtn.getAttribute('data-org-goto-sub');
+        const eventId = subBtn.getAttribute('data-filter-event');
+        if (eventId) {
+          filters.ticketsEvent = eventId;
+          filters.reviewsGroup = 'all';
+          const ticketSel = document.getElementById('filter-tickets-event');
+          if (ticketSel) ticketSel.value = eventId;
+        }
+        setRoute(sub || 'events-list');
+        if (sub === 'events-tickets') renderTickets();
+        if (sub === 'events-reviews') renderReviews();
+        return;
+      }
     });
 
     document.querySelectorAll('[data-org-route]').forEach((a) => {
       a.addEventListener('click', (e) => {
         e.preventDefault();
-        setRoute(a.getAttribute('data-org-route') || 'dashboard');
+        const page = a.getAttribute('data-org-route') || 'dashboard';
+        if (page === 'events') setRoute('events-list');
+        else setRoute(page);
       });
     });
 
     window.addEventListener('hashchange', () => {
-      setRoute(location.hash.replace('#', '') || 'dashboard');
+      const r = parseRoute();
+      setRoute(r.sub || r.page);
     });
 
     document.getElementById('org-shell')?.addEventListener('click', (e) => {
@@ -824,6 +1316,8 @@
       if (listKey === 'groups') renderGroups();
       if (listKey === 'events') renderEvents();
       if (listKey === 'tickets') renderTickets();
+      if (listKey === 'reviews') renderReviews();
+      if (listKey === 'revenue') renderRevenue();
       nav.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 
@@ -849,7 +1343,8 @@
     shell.hidden = false;
     bindForms();
     bindUi();
-    setRoute(location.hash.replace('#', '') || 'dashboard');
+    const initial = parseRoute();
+    setRoute(initial.sub || initial.page);
     try {
       await loadBootstrap();
     } catch (e) {

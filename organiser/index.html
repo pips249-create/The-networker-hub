@@ -30,8 +30,7 @@
       <nav class="org-dash-bar" aria-label="Organiser dashboard">
         <a href="#dashboard" data-org-route="dashboard">Overview</a>
         <a href="#groups" data-org-route="groups">Organiser profiles</a>
-        <a href="#events" data-org-route="events">Events</a>
-        <a href="#tickets" data-org-route="tickets">Ticket types</a>
+        <a href="#events-list" data-org-route="events">My Events</a>
       </nav>
 
       <div class="org-wrap">
@@ -92,7 +91,7 @@
             </p>
           </div>
           <div class="org-section-footer">
-            <button type="button" class="org-btn org-btn-outline" data-org-goto-view="events">
+            <button type="button" class="org-btn org-btn-outline" data-org-goto-view="events-list">
               View all events →
             </button>
           </div>
@@ -125,57 +124,157 @@
           <nav class="org-pagination" id="pagination-groups" data-list="groups" aria-label="Groups pages" hidden></nav>
         </section>
 
-        <!-- Events -->
+        <!-- My Events hub -->
         <section class="org-page" id="org-page-events" data-org-page="events">
           <div class="org-toolbar">
             <div>
-              <h2 class="org-section-title">Events</h2>
-              <p class="org-section-sub">Create listings under one of your organiser groups.</p>
+              <h2 class="org-section-title" id="my-events-title">My Events</h2>
+              <p class="org-section-sub" id="my-events-sub">Manage all your event listings — click any event name to edit.</p>
             </div>
-            <button type="button" class="org-btn org-btn-gold" id="btn-new-event">+ New event</button>
+            <button type="button" class="org-btn org-btn-gold" id="btn-new-event">+ Add a new listing</button>
           </div>
-          <div class="org-table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Event</th>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Organiser group</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="events-body"></tbody>
-            </table>
-            <p class="org-empty" id="events-empty" hidden>Create a group first, then add an event.</p>
-          </div>
-          <nav class="org-pagination" id="pagination-events" data-list="events" aria-label="Events pages" hidden></nav>
-        </section>
 
-        <!-- Tickets -->
-        <section class="org-page" id="org-page-tickets" data-org-page="tickets">
-          <div class="org-toolbar">
-            <div>
-              <h2 class="org-section-title">Ticket types</h2>
-              <p class="org-section-sub">Add tiers for each event (saved to your Airtable Tickets table).</p>
+          <div class="org-events-subnav" role="tablist" aria-label="My events sections">
+            <button type="button" class="org-events-tab is-active" data-events-sub="events-list" role="tab">
+              <span class="org-events-tab-icon" aria-hidden="true">📅</span>
+              All Events <span class="org-events-tab-count" id="tab-count-events">0</span>
+            </button>
+            <button type="button" class="org-events-tab" data-events-sub="events-tickets" role="tab">
+              <span class="org-events-tab-icon" aria-hidden="true">🎟️</span>
+              Tickets <span class="org-events-tab-count" id="tab-count-tickets">0</span>
+            </button>
+            <button type="button" class="org-events-tab" data-events-sub="events-reviews" role="tab">
+              <span class="org-events-tab-icon" aria-hidden="true">⭐</span>
+              Reviews <span class="org-events-tab-count" id="tab-count-reviews">0</span>
+            </button>
+            <button type="button" class="org-events-tab" data-events-sub="events-revenue" role="tab">
+              <span class="org-events-tab-icon" aria-hidden="true">💰</span>
+              Revenue <span class="org-events-tab-count" id="tab-count-revenue">£0</span>
+            </button>
+          </div>
+
+          <!-- All events -->
+          <div class="org-sub-page is-active" id="sub-events-list" data-events-panel="events-list">
+            <div class="org-filter-bar">
+              <select id="filter-events-status" aria-label="Filter by status">
+                <option value="all">All events</option>
+                <option value="live">Live</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="draft">Draft</option>
+              </select>
+              <select id="filter-events-type" aria-label="Filter by type">
+                <option value="all">All types</option>
+              </select>
+              <input type="search" class="org-table-search" id="filter-events-search" placeholder="Search events…" aria-label="Search events" />
             </div>
-            <button type="button" class="org-btn org-btn-gold" id="btn-new-ticket">+ New ticket type</button>
+            <div class="org-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Event name</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Tickets sold</th>
+                    <th>Revenue</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="events-body"></tbody>
+              </table>
+              <p class="org-empty" id="events-empty" hidden>Create a group first, then add an event.</p>
+            </div>
+            <nav class="org-pagination" id="pagination-events" data-list="events" aria-label="Events pages" hidden></nav>
           </div>
-          <div class="org-table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Ticket</th>
-                  <th>Event</th>
-                  <th>Price</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="tickets-body"></tbody>
-            </table>
-            <p class="org-empty" id="tickets-empty" hidden>No ticket types yet.</p>
+
+          <!-- Tickets -->
+          <div class="org-sub-page" id="sub-events-tickets" data-events-panel="events-tickets">
+            <div class="org-toolbar" style="margin-bottom: 12px">
+              <p class="org-section-sub org-sub-lead" style="margin: 0">
+                Ticket tiers linked to your events in Airtable. Individual sales appear when registrations are connected.
+              </p>
+              <button type="button" class="org-btn org-btn-gold" id="btn-new-ticket">+ New ticket type</button>
+            </div>
+            <div class="org-filter-bar">
+              <select id="filter-tickets-event" aria-label="Filter by event">
+                <option value="all">All events</option>
+              </select>
+              <select id="filter-tickets-type" aria-label="Filter by ticket type">
+                <option value="all">All ticket types</option>
+              </select>
+            </div>
+            <div class="org-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ticket ref</th>
+                    <th>Event</th>
+                    <th>Ticket type</th>
+                    <th>Price</th>
+                    <th>Qty available</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="tickets-body"></tbody>
+              </table>
+              <p class="org-empty" id="tickets-empty" hidden>No ticket types yet.</p>
+            </div>
+            <nav class="org-pagination" id="pagination-tickets" data-list="tickets" aria-label="Tickets pages" hidden></nav>
+            <button type="button" class="org-btn org-btn-outline org-download-btn" id="btn-download-tickets-csv">⬇ Download tickets CSV</button>
           </div>
-          <nav class="org-pagination" id="pagination-tickets" data-list="tickets" aria-label="Ticket types pages" hidden></nav>
+
+          <!-- Reviews -->
+          <div class="org-sub-page" id="sub-events-reviews" data-events-panel="events-reviews">
+            <div class="org-reviews-toolbar">
+              <p class="org-reviews-summary" id="reviews-summary">0 reviews</p>
+              <select id="filter-reviews-group" aria-label="Filter by group">
+                <option value="all">All your groups</option>
+              </select>
+            </div>
+            <div class="org-reviews-list" id="reviews-list"></div>
+            <p class="org-empty" id="reviews-empty" hidden>No reviews yet. They will appear here when attendees leave feedback.</p>
+            <nav class="org-pagination" id="pagination-reviews" data-list="reviews" aria-label="Reviews pages" hidden></nav>
+          </div>
+
+          <!-- Revenue -->
+          <div class="org-sub-page" id="sub-events-revenue" data-events-panel="events-revenue">
+            <div class="org-revenue-banner">
+              <div class="org-rev-item">
+                <div class="org-rev-label">Events listed</div>
+                <div class="org-rev-value" id="rev-stat-events">0</div>
+              </div>
+              <div class="org-rev-sep" aria-hidden="true"></div>
+              <div class="org-rev-item">
+                <div class="org-rev-label">Ticket types</div>
+                <div class="org-rev-value" id="rev-stat-tickets">0</div>
+              </div>
+              <div class="org-rev-sep" aria-hidden="true"></div>
+              <div class="org-rev-item">
+                <div class="org-rev-label">Total revenue</div>
+                <div class="org-rev-value org-rev-gold" id="rev-stat-revenue">£0</div>
+              </div>
+              <div class="org-rev-sep" aria-hidden="true"></div>
+              <div class="org-rev-item">
+                <div class="org-rev-label">Avg rating</div>
+                <div class="org-rev-value" id="rev-stat-rating">—</div>
+              </div>
+            </div>
+            <div class="org-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Event</th>
+                    <th>Tickets sold</th>
+                    <th>Revenue</th>
+                    <th>Rating</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="revenue-body"></tbody>
+              </table>
+            </div>
+            <nav class="org-pagination" id="pagination-revenue" data-list="revenue" aria-label="Revenue pages" hidden></nav>
+          </div>
         </section>
       </div>
     </div>
@@ -235,8 +334,9 @@
       <div class="org-modal-backdrop" data-org-modal-close></div>
       <div class="org-modal-panel">
         <h2 id="modal-event-title">New event</h2>
-        <p>Choose which organiser group this event belongs to.</p>
+        <p id="modal-event-lead">Choose which organiser group this event belongs to.</p>
         <form id="form-event">
+          <input type="hidden" id="event-edit-id" value="" />
           <div class="org-field">
             <label for="event-group">Organiser profile</label>
             <select id="event-group" required></select>
@@ -264,7 +364,8 @@
           </div>
           <div class="org-modal-actions">
             <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
-            <button type="submit" class="org-btn org-btn-primary">Create event</button>
+            <button type="submit" class="org-btn org-btn-primary" id="event-form-submit">Create event</button>
+            <a class="org-btn org-btn-outline" id="event-form-open-page" href="#" target="_blank" rel="noopener" hidden>Open full listing</a>
           </div>
         </form>
       </div>
@@ -312,6 +413,6 @@
       </div>
     </div>
 
-    <script src="../js/organiser-dashboard.js?v=20260604d"></script>
+    <script src="../js/organiser-dashboard.js?v=20260605"></script>
   </body>
 </html>
