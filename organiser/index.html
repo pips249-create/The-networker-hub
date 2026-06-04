@@ -98,7 +98,7 @@
               <h2 class="org-section-title">Your next events</h2>
               <p class="org-section-sub">Click an event name or Actions → Edit event to update a listing.</p>
             </div>
-            <button type="button" class="org-btn org-btn-gold" data-action="new-event">+ New event</button>
+            <a href="event-edit.html" class="org-btn org-btn-gold" data-action="new-event">+ New event</a>
           </div>
           <div class="org-table-wrap org-overview-table">
             <table>
@@ -124,7 +124,7 @@
             <button type="button" class="org-btn org-btn-outline" data-org-goto-view="events-list">
               View all events →
             </button>
-            <button type="button" class="org-btn org-btn-gold" data-action="new-event">+ New event</button>
+            <a href="event-edit.html" class="org-btn org-btn-gold" data-action="new-event">+ New event</a>
           </div>
         </section>
 
@@ -163,7 +163,7 @@
               <h2 class="org-section-title" id="my-events-title">My Events</h2>
               <p class="org-section-sub" id="my-events-sub">Manage all your event listings — click any event name to edit.</p>
             </div>
-            <button type="button" class="org-btn org-btn-gold" id="btn-new-event">+ New event</button>
+            <a href="event-edit.html" class="org-btn org-btn-gold" id="btn-new-event">+ New event</a>
           </div>
 
           <div class="org-events-subnav" role="tablist" aria-label="My events sections">
@@ -363,59 +363,6 @@
       </div>
     </div>
 
-    <!-- Modal: event -->
-    <div class="org-modal" id="modal-event" role="dialog" aria-modal="true" aria-labelledby="modal-event-title" hidden>
-      <div class="org-modal-backdrop" data-org-modal-close></div>
-      <div class="org-modal-panel">
-        <h2 id="modal-event-title">New event</h2>
-        <p id="modal-event-lead">Choose which organiser group this event belongs to.</p>
-        <form id="form-event">
-          <input type="hidden" id="event-edit-id" value="" />
-          <div class="org-field">
-            <label for="event-group">Organiser profile</label>
-            <select id="event-group" required></select>
-          </div>
-          <div class="org-field">
-            <label for="event-title">Event title</label>
-            <input type="text" id="event-title" required placeholder="e.g. Lunch &amp; learn — Liverpool" />
-          </div>
-          <div class="org-field">
-            <label for="event-date">Date</label>
-            <input type="date" id="event-date" required />
-          </div>
-          <div class="org-row-2 org-field-row-time">
-            <div class="org-field">
-              <label for="event-start-time">Start time</label>
-              <select id="event-start-time" required></select>
-            </div>
-            <div class="org-field">
-              <label for="event-end-time">End time</label>
-              <select id="event-end-time" required></select>
-            </div>
-          </div>
-          <p class="org-field-hint">Times in 15-minute steps (e.g. 10:00, 10:15, 10:30).</p>
-          <div class="org-field">
-            <label for="event-type">Meeting type</label>
-            <select id="event-type">
-              <option>Networking Event</option>
-              <option>Exhibition</option>
-              <option>Conference</option>
-              <option>Networking / Meeting</option>
-            </select>
-          </div>
-          <div class="org-field">
-            <label for="event-description">Highlights (optional)</label>
-            <textarea id="event-description" rows="3"></textarea>
-          </div>
-          <div class="org-modal-actions">
-            <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
-            <button type="submit" class="org-btn org-btn-primary" id="event-form-submit">Create event</button>
-            <a class="org-btn org-btn-outline" id="event-form-open-page" href="#" target="_blank" rel="noopener" hidden>Open full listing</a>
-          </div>
-        </form>
-      </div>
-    </div>
-
     <!-- Modal: ticket -->
     <div class="org-modal" id="modal-ticket" role="dialog" aria-modal="true" aria-labelledby="modal-ticket-title" hidden>
       <div class="org-modal-backdrop" data-org-modal-close></div>
@@ -458,7 +405,6 @@
       </div>
     </div>
 
-    <script src="../js/organiser-quarter-time.js?v=20260606e"></script>
-    <script src="../js/organiser-dashboard.js?v=20260606h"></script>
+    <script src="../js/organiser-dashboard.js?v=20260606i"></script>
   </body>
 </html>

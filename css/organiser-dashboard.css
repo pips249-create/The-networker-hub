@@ -491,6 +491,7 @@
   border-radius: 999px;
   border: none;
   cursor: pointer;
+  text-decoration: none;
   transition: background 0.15s, border-color 0.15s;
 }
 

@@ -372,71 +372,6 @@
     location.href = groupEditorUrl(g);
   }
 
-  function openEditEventModal(ev) {
-    if (ev && ev.id) {
-      goToEventEditor(ev);
-      return;
-    }
-    document.getElementById('modal-event-title').textContent = 'Edit event';
-    document.getElementById('modal-event-lead').textContent =
-      'Update listing details below, or open the full public page to preview changes.';
-    document.getElementById('event-edit-id').value = ev.id;
-    document.getElementById('event-title').value = ev.title || '';
-    document.getElementById('event-type').value = ev.type || 'Networking Event';
-    document.getElementById('event-description').value = ev.description || '';
-    if (ev.date) {
-      const d = new Date(ev.date);
-      if (!Number.isNaN(d.getTime())) {
-        const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-        document.getElementById('event-date').value = local.toISOString().slice(0, 10);
-        const pad2 = (n) => String(n).padStart(2, '0');
-        const startT = pad2(d.getHours()) + ':' + pad2(d.getMinutes());
-        let endT = '12:00';
-        if (ev.endDate) {
-          const end = new Date(ev.endDate);
-          if (!Number.isNaN(end.getTime())) {
-            endT = pad2(end.getHours()) + ':' + pad2(end.getMinutes());
-          }
-        }
-        if (window.OrganiserQuarterTime) {
-          window.OrganiserQuarterTime.setValues('event-start-time', 'event-end-time', startT, endT);
-        }
-      }
-    } else {
-      document.getElementById('event-date').value = '';
-    }
-    fillGroupSelect(document.getElementById('event-group'));
-    const grp = document.getElementById('event-group');
-    if (grp && ev.organiserGroupId) grp.value = ev.organiserGroupId;
-    const submitBtn = document.getElementById('event-form-submit');
-    const openLink = document.getElementById('event-form-open-page');
-    if (submitBtn) {
-      submitBtn.textContent = 'Save changes';
-      submitBtn.disabled = true;
-      submitBtn.title = 'Saving from the dashboard is coming soon — use Open full listing';
-    }
-    if (openLink) {
-      openLink.href = '../events/event.html?id=' + encodeURIComponent(ev.id);
-      openLink.hidden = false;
-    }
-    openModal('modal-event');
-  }
-
-  function resetEventModalForCreate() {
-    document.getElementById('modal-event-title').textContent = 'New event';
-    document.getElementById('modal-event-lead').textContent =
-      'Choose which organiser group this event belongs to.';
-    document.getElementById('event-edit-id').value = '';
-    const submitBtn = document.getElementById('event-form-submit');
-    const openLink = document.getElementById('event-form-open-page');
-    if (submitBtn) {
-      submitBtn.textContent = 'Create event';
-      submitBtn.disabled = false;
-      submitBtn.title = '';
-    }
-    if (openLink) openLink.hidden = true;
-  }
-
   function starsReviewHtml(rating) {
     const n = Math.min(5, Math.max(0, Math.round(Number(rating) || 0)));
     let html = '';
@@ -689,6 +624,10 @@
   }
 
   function openModal(id) {
+    if (id === 'modal-event') {
+      location.href = 'event-edit.html';
+      return;
+    }
     const el = document.getElementById(id);
     if (!el) return;
     el.hidden = false;
@@ -1092,7 +1031,6 @@
     renderOverviewEvents();
     renderGroups();
     renderMyEventsHub();
-    fillGroupSelect(document.getElementById('event-group'));
     fillEventSelect(document.getElementById('ticket-event'));
   }
 
@@ -1273,63 +1211,6 @@
       setRoute('groups');
     });
 
-    document.getElementById('form-event').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (document.getElementById('event-edit-id').value) {
-        alert('In-dashboard save is coming soon. Use “Open full listing” to view your event page.');
-        return;
-      }
-      const organiserGroupId = document.getElementById('event-group').value;
-      const title = document.getElementById('event-title').value.trim();
-      const dateInput = document.getElementById('event-date').value;
-      const type = document.getElementById('event-type').value;
-      const description = document.getElementById('event-description').value.trim();
-      const QT = window.OrganiserQuarterTime;
-      const timeCheck = QT ? QT.validatePair('event-start-time', 'event-end-time') : { ok: true };
-      if (!dateInput) {
-        alert('Choose an event date.');
-        return;
-      }
-      if (!timeCheck.ok) {
-        alert(timeCheck.message);
-        return;
-      }
-      function combineDateAndTime(dateStr, timeStr) {
-        const [y, m, d] = dateStr.split('-').map(Number);
-        const rounded = QT ? QT.roundToQuarterHour(timeStr) : timeStr;
-        const [hh, mm] = rounded.split(':').map(Number);
-        return new Date(y, m - 1, d, hh || 0, mm || 0, 0).toISOString();
-      }
-      const occurrences = [
-        {
-          date: combineDateAndTime(dateInput, timeCheck.start),
-          endDate: combineDateAndTime(dateInput, timeCheck.end),
-        },
-      ];
-      const btn = e.submitter;
-      if (btn) btn.disabled = true;
-      const { ok, data } = await api('/api/organiser/events', {
-        method: 'POST',
-        body: JSON.stringify({
-          organiserGroupId,
-          title,
-          type,
-          description,
-          occurrences,
-        }),
-      });
-      if (btn) btn.disabled = false;
-      if (!ok) {
-        alert(data.message || data.error || 'Could not create event');
-        return;
-      }
-      closeModals();
-      document.getElementById('form-event').reset();
-      resetEventModalForCreate();
-      await refresh();
-      setRoute('events-list');
-    });
-
     document.getElementById('form-ticket').addEventListener('submit', async (e) => {
       e.preventDefault();
       const eventId = document.getElementById('ticket-event').value;
@@ -1364,13 +1245,6 @@
   }
 
   function bindUi() {
-    if (window.OrganiserQuarterTime) {
-      window.OrganiserQuarterTime.initPair('event-start-time', 'event-end-time', {
-        start: '10:00',
-        end: '12:00',
-      });
-    }
-
     document.querySelectorAll('[data-org-modal-close]').forEach((el) => {
       el.addEventListener('click', closeModals);
     });
@@ -1379,7 +1253,8 @@
       location.href = 'group-edit.html';
     }
 
-    function goToNewEventEditor() {
+    function goToNewEventEditor(e) {
+      if (e && e.preventDefault) e.preventDefault();
       if (!state.groups.length) {
         alert('Create an organiser profile first.');
         location.href = 'group-edit.html';
@@ -1392,8 +1267,7 @@
     document.querySelectorAll('[data-action="new-group"]').forEach((el) => {
       el.addEventListener('click', goToNewGroupEditor);
     });
-    document.getElementById('btn-new-event').addEventListener('click', goToNewEventEditor);
-    document.querySelectorAll('[data-action="new-event"]').forEach((el) => {
+    document.querySelectorAll('#btn-new-event, [data-action="new-event"]').forEach((el) => {
       el.addEventListener('click', goToNewEventEditor);
     });
 
