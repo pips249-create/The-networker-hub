@@ -57,8 +57,18 @@ module.exports = async function handler(req, res) {
 
   try {
     const user = await findUserByEmail(email);
-    if (!user || !verifyPassword(password, user.passwordHash)) {
-      return json(res, 401, { error: 'invalid_credentials', message: 'Email or password is incorrect.' });
+    if (!user) {
+      return json(res, 401, {
+        error: 'no_account',
+        message:
+          'No account exists for this email yet. An admin must run the one-time setup (see AUTH-SETUP.md) or use Forgot password only after your account exists.',
+      });
+    }
+    if (!user.passwordHash || !verifyPassword(password, user.passwordHash)) {
+      return json(res, 401, {
+        error: 'invalid_credentials',
+        message: 'Password is incorrect. Try again or use Forgot password.',
+      });
     }
 
     const sessionUser = {

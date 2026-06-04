@@ -85,10 +85,19 @@
           return res.json();
         })
         .then(function (data) {
-          showMessage(msg, data.message || 'Check your email for a reset link.', 'success');
-          if (data.devResetUrl && dev) {
+          var type = data.accountFound === false ? 'error' : 'success';
+          showMessage(msg, data.message || 'Check your email for a reset link.', type);
+          var link = data.resetUrl || data.devResetUrl;
+          if (link && dev) {
             dev.hidden = false;
-            dev.innerHTML = 'Dev reset link: <a href="' + data.devResetUrl + '">' + data.devResetUrl + '</a>';
+            dev.innerHTML =
+              '<strong>Reset link</strong> (valid 1 hour):<br><a href="' +
+              link +
+              '">' +
+              link +
+              '</a>';
+          } else if (dev) {
+            dev.hidden = true;
           }
           btn.disabled = false;
         })

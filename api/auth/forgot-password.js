@@ -42,7 +42,15 @@ module.exports = async function handler(req, res) {
 
   try {
     const user = await findUserByEmail(email);
-    if (!user) return json(res, 200, genericOk);
+    if (!user) {
+      return json(res, 200, {
+        ok: true,
+        emailSent: false,
+        accountFound: false,
+        message:
+          'If that email is registered, you will receive reset instructions. No account was found for this email — your admin may need to create it first (see setup below).',
+      });
+    }
 
     const token = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString();
@@ -58,8 +66,9 @@ module.exports = async function handler(req, res) {
     await appendSystemLog(`Password reset requested for ${email}`, 'auth');
 
     const resendKey = process.env.RESEND_API_KEY;
+    let emailSent = false;
     if (resendKey) {
-      await fetch('https://api.resend.com/emails', {
+      const mail = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${resendKey}`,
@@ -72,15 +81,22 @@ module.exports = async function handler(req, res) {
           html: `<p>Click to reset your password (valid 1 hour):</p><p><a href="${resetUrl}">${resetUrl}</a></p>`,
         }),
       });
+      emailSent = mail.ok;
     }
 
-    const devLink =
-      process.env.AUTH_DEV_RESET_LINK === 'true' || process.env.VERCEL_ENV === 'preview';
+    const showLinkOnPage =
+      !emailSent &&
+      (process.env.AUTH_SHOW_RESET_LINK !== 'false' ||
+        process.env.AUTH_DEV_RESET_LINK === 'true');
 
     return json(res, 200, {
-      ...genericOk,
-      ...(devLink ? { devResetUrl: resetUrl } : {}),
-      emailSent: Boolean(resendKey),
+      ok: true,
+      emailSent,
+      accountFound: true,
+      message: emailSent
+        ? 'Check your email for a reset link (valid 1 hour).'
+        : 'Email is not configured yet — use the reset link shown below.',
+      ...(showLinkOnPage ? { resetUrl } : {}),
     });
   } catch (e) {
     return json(res, 500, { error: 'server_error', message: e.message });

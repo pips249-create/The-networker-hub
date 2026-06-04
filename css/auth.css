@@ -159,7 +159,17 @@
 
 .auth-dev-link {
   margin-top: 12px;
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.5;
   word-break: break-all;
-  color: var(--text-muted);
+  color: var(--text-body);
+  padding: 12px 14px;
+  background: var(--lavender-light);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-soft);
+}
+
+.auth-dev-link a {
+  font-weight: 600;
+  color: var(--lavender-deep);
 }

@@ -1,4 +1,9 @@
-const { airtableConfig, testAirtableConnection } = require('../lib/auth');
+const {
+  airtableConfig,
+  testAirtableConnection,
+  findUserByEmail,
+  cleanEnvVal,
+} = require('../lib/auth');
 
 /**
  * Safe diagnostic: which auth env vars are set (never returns secret values).
@@ -36,10 +41,29 @@ module.exports = async function handler(req, res) {
 
   const airtable = await testAirtableConnection();
 
+  const adminEmail = cleanEnvVal(process.env.ADMIN_EMAIL) || 'pips249@gmail.com';
+  let adminAccount = { email: adminEmail, exists: false, hasPassword: false, role: null };
+  if (airtable.ok) {
+    try {
+      const u = await findUserByEmail(adminEmail);
+      if (u) {
+        adminAccount = {
+          email: adminEmail,
+          exists: true,
+          hasPassword: Boolean(u.passwordHash),
+          role: u.role,
+        };
+      }
+    } catch {
+      /* Users table may be missing fields */
+    }
+  }
+
   return res.status(200).json({
     authReady,
     canSeedAdmin,
     airtable,
+    adminAccount,
     env,
     hints: {
       missingSessionSecret: !env.hasSessionSecret
@@ -56,8 +80,12 @@ module.exports = async function handler(req, res) {
         : !airtable.ok
           ? airtable.message
           : null,
-      nextStep: authReady && airtable.ok
-        ? 'POST /api/auth/setup-admin once, then sign in at /login.html'
+      setupAdminRequired: airtable.ok && !adminAccount.exists,
+      nextStep:
+        airtable.ok && !adminAccount.exists
+          ? 'Run POST /api/auth/setup-admin once (see VERCEL-AUTH-ENV.md Step 7), then sign in'
+          : authReady && airtable.ok
+        ? 'Sign in at /login.html — forgot password shows an on-page link (email not required)'
         : airtable.ok
           ? 'Complete env vars in Vercel → Deployments → Redeploy'
           : 'Fix AIRTABLE_API_KEY first (see airtableAuth hint), then Redeploy',
