@@ -50,19 +50,13 @@
     var pc = (postcodeInput && postcodeInput.value) || '';
     pc = pc.trim();
     var nearMe = toggleNearMe && toggleNearMe.checked;
+    var usePostcodeFilter = pc && (nearMe || window.hubParseOutcode(pc));
 
-    if (nearMe && pc && window.hubUserCoords && window.hubDistanceMiles) {
-      if (ev.mapLat == null || ev.mapLng == null) return false;
-      var miles = window.hubDistanceMiles(
-        window.hubUserCoords[0],
-        window.hubUserCoords[1],
-        ev.mapLat,
-        ev.mapLng
-      );
-      if (miles > 35) return false;
+    if (usePostcodeFilter && window.hubMatchOutcode) {
+      if (!window.hubMatchOutcode(pc, ev)) return false;
     } else if (pc) {
       var compact = pc.toLowerCase().replace(/\s+/g, '');
-      var locHay = [ev.location, ev.postcode, ev.venue, ev.search]
+      var locHay = [ev.location, ev.postcode, ev.venue, ev.outcode, ev.search]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
@@ -184,11 +178,8 @@
     if (window.hubRefreshMap) window.hubRefreshMap(filtered);
   }
 
-  function maybeGeocodeUserPostcode() {
-    var pc = (postcodeInput && postcodeInput.value) || '';
-    pc = pc.trim();
-    if (!pc || !window.hubGeocodeUserPostcode) return;
-    window.hubGeocodeUserPostcode(pc).then(applyFilters);
+  function onPostcodeInput() {
+    applyFilters();
   }
 
   function resetFilters() {
@@ -228,20 +219,11 @@
   ].forEach(bindFilter);
 
   if (postcodeInput) {
-    postcodeInput.addEventListener('input', function () {
-      maybeGeocodeUserPostcode();
-      applyFilters();
-    });
-    postcodeInput.addEventListener('change', function () {
-      maybeGeocodeUserPostcode();
-      applyFilters();
-    });
+    postcodeInput.addEventListener('input', onPostcodeInput);
+    postcodeInput.addEventListener('change', onPostcodeInput);
   }
   if (toggleNearMe) {
-    toggleNearMe.addEventListener('change', function () {
-      maybeGeocodeUserPostcode();
-      applyFilters();
-    });
+    toggleNearMe.addEventListener('change', onPostcodeInput);
   }
 
   if (priceApply) {

@@ -216,6 +216,14 @@ function extractUkPostcode(...parts) {
   return '';
 }
 
+/** Outcode sector for fast listing filter (e.g. M1, SW1A → SW1). */
+function parseOutcode(raw) {
+  if (!raw) return '';
+  const compact = String(raw).trim().toUpperCase().replace(/\s+/g, '');
+  const m = compact.match(/^([A-Z]{1,2}\d{1,2}[A-Z]?)/);
+  return m ? m[1] : '';
+}
+
 /** Parse Airtable date values (ISO, US, UK, locale strings). */
 function parseAirtableDate(raw) {
   if (raw === null || raw === undefined || raw === '') {
@@ -332,6 +340,7 @@ function recordToEvent(record) {
   const venue = pick(f, FIELD_MAP.venue) || '';
   let postcode = pick(f, FIELD_MAP.postcode) || '';
   if (!postcode) postcode = extractUkPostcode(location, venue);
+  const outcode = parseOutcode(postcode) || parseOutcode(location) || parseOutcode(venue);
   const industry = pick(f, FIELD_MAP.industry) || '';
   const format = pick(f, FIELD_MAP.format) || '';
   const typeRaw = pick(f, FIELD_MAP.type) || 'meeting';
@@ -386,6 +395,7 @@ function recordToEvent(record) {
     time: String(time),
     location,
     postcode: String(postcode),
+    outcode,
     venue: String(venue),
     industry,
     format,
