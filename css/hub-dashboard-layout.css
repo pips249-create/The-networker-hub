@@ -24,11 +24,8 @@ body.hub-page-organiser.organiser-dashboard-page,
 body.hub-page-account.attendee-dashboard-page {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  height: 100vh;
-  max-height: 100dvh;
-  max-height: 100vh;
-  overflow: hidden;
+  min-height: 100dvh;
+  overflow-x: hidden;
 }
 
 body.hub-page-account.account-settings-page {
@@ -48,11 +45,8 @@ body.hub-page-account.account-settings-page .as-signin {
 body.hub-page-organiser.organiser-event-edit-page {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  height: 100vh;
-  max-height: 100dvh;
-  max-height: 100vh;
-  overflow: hidden;
+  min-height: 100dvh;
+  overflow-x: hidden;
 }
 
 .organiser-dashboard-page,
@@ -76,7 +70,6 @@ body.hub-page-organiser.organiser-event-edit-page {
   flex-direction: column;
   width: 100%;
   max-width: 100%;
-  overflow: hidden;
 }
 
 .organiser-dashboard-page .org-dashboard-layout {
@@ -85,7 +78,6 @@ body.hub-page-organiser.organiser-event-edit-page {
   display: flex;
   width: 100%;
   max-width: 100%;
-  overflow: hidden;
 }
 
 .organiser-dashboard-page .org-sidebar,
@@ -140,7 +132,6 @@ body.hub-page-organiser.organiser-event-edit-page {
   flex-direction: column;
   width: 100%;
   max-width: 100%;
-  overflow: hidden;
 }
 
 .attendee-dashboard-page .ad-dashboard-layout {
@@ -149,7 +140,6 @@ body.hub-page-organiser.organiser-event-edit-page {
   display: flex;
   width: 100%;
   max-width: 100%;
-  overflow: hidden;
 }
 
 .attendee-dashboard-page .ad-main {
@@ -210,7 +200,8 @@ body.hub-page-organiser.organiser-event-edit-page {
 /* Desktop: sidebar stays fixed while main content scrolls */
 @media (min-width: 769px) {
   body.hub-page-organiser.organiser-dashboard-page,
-  body.hub-page-account.attendee-dashboard-page {
+  body.hub-page-account.attendee-dashboard-page,
+  body.hub-page-organiser.organiser-event-edit-page {
     height: 100dvh;
     height: 100vh;
     max-height: 100dvh;
@@ -255,35 +246,16 @@ body.hub-page-organiser.organiser-event-edit-page {
     overflow-x: hidden;
     overflow-y: auto;
   }
-}
 
-@media (max-width: 768px) {
-  .organiser-dashboard-page .org-dashboard-layout,
-  .attendee-dashboard-page .ad-dashboard-layout {
-    flex-direction: column;
-  }
-
-  .organiser-dashboard-page .org-sidebar,
-  .attendee-dashboard-page .ad-sidebar {
-    width: 100%;
-    border-right: none;
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-
-  .organiser-dashboard-page .org-sidebar {
-    border-bottom: 1px solid var(--od-border-soft, #e8dbea);
-  }
-
-  .attendee-dashboard-page .ad-sidebar {
-    border-bottom: 1px solid var(--ad-border-soft, #e8dbea);
-  }
-
-  .organiser-dashboard-page .org-sidebar-label,
-  .attendee-dashboard-page .ad-sidebar-label {
-    display: none;
+  .organiser-event-edit-page .ee-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 }
+
+/* Mobile dashboard layout — see hub-mobile.css (loaded last on dashboard pages) */
 
 @media (max-width: 640px) {
   .organiser-dashboard-page .org-wrap,

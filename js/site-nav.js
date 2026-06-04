@@ -55,10 +55,10 @@
 
 /**
  * Shared site navigation — same bar on every page.
- * NAV_BUILD=20260624 — Mobile menu drawer; hub-mobile.css.
+ * NAV_BUILD=20260626 — Mobile menu drawer; hub-mobile.css.
  */
 (function () {
-  var NAV_BUILD = '20260624';
+  var NAV_BUILD = '20260626';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
   var page = (script && script.getAttribute('data-page')) || '';

@@ -4,6 +4,12 @@ const {
   findUserByEmail,
   cleanEnvVal,
 } = require('../auth');
+const {
+  supabaseConfig,
+  testSupabaseConnection,
+  dataProvider,
+  isSupabaseConfigured,
+} = require('../supabase');
 
 /**
  * Safe diagnostic: which auth env vars are set (never returns secret values).
@@ -17,6 +23,8 @@ module.exports = async function handler(req, res) {
   }
 
   const { apiKey, baseId, usersTable } = airtableConfig();
+  const sbCfg = supabaseConfig();
+  const provider = dataProvider();
 
   const env = {
     hasSessionSecret: Boolean(process.env.SESSION_SECRET),
@@ -27,6 +35,10 @@ module.exports = async function handler(req, res) {
     hasSiteUrl: Boolean(process.env.SITE_URL),
     hasAirtableApiKey: Boolean(apiKey),
     hasAirtableBaseId: Boolean(baseId),
+    dataProvider: provider,
+    hasSupabaseUrl: Boolean(sbCfg.url),
+    hasSupabaseServiceKey: Boolean(sbCfg.serviceKey),
+    hasSupabaseAnonKey: Boolean(sbCfg.anonKey),
   };
 
   const authReady =
@@ -40,6 +52,7 @@ module.exports = async function handler(req, res) {
     authReady && (env.hasAdminInitialPassword || env.hasAdminEmail);
 
   const airtable = await testAirtableConnection();
+  const supabase = isSupabaseConfigured() ? await testSupabaseConnection() : { ok: false, configured: false };
 
   const adminEmail = cleanEnvVal(process.env.ADMIN_EMAIL) || 'pips249@gmail.com';
   let adminAccount = { email: adminEmail, exists: false, hasPassword: false, role: null };
@@ -62,7 +75,9 @@ module.exports = async function handler(req, res) {
   return res.status(200).json({
     authReady,
     canSeedAdmin,
+    dataProvider: provider,
     airtable,
+    supabase,
     adminAccount,
     env,
     hints: {
@@ -81,8 +96,16 @@ module.exports = async function handler(req, res) {
           ? airtable.message
           : null,
       setupAdminRequired: airtable.ok && !adminAccount.exists,
+      supabase:
+        !env.hasSupabaseUrl || !env.hasSupabaseServiceKey
+          ? 'Add SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in Vercel, redeploy. See SUPABASE-SETUP.md.'
+          : !supabase.ok
+            ? supabase.message
+            : null,
       nextStep:
-        airtable.ok && !adminAccount.exists
+        provider === 'supabase' && supabase.ok
+          ? 'Supabase connected. Next: add migration SQL to supabase/migrations/ and we migrate auth/events.'
+          : airtable.ok && !adminAccount.exists
           ? 'Run POST /api/auth/setup-admin once (see VERCEL-AUTH-ENV.md Step 7), then sign in'
           : authReady && airtable.ok
         ? 'Sign in at /login.html — forgot password shows an on-page link (email not required)'

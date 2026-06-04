@@ -9,6 +9,8 @@
  */
 
 const { cleanEnvVal, parseAirtableError } = require('./_lib/auth');
+const { dataProvider } = require('./_lib/supabase');
+const supabaseEvents = require('./_lib/supabase-events');
 
 const FIELD_MAP = {
   title: ['Event Title', 'Title', 'Name'],
@@ -1186,6 +1188,10 @@ function recordToEvent(record) {
 }
 
 module.exports = async function handler(req, res) {
+  if (dataProvider() === 'supabase') {
+    return supabaseEvents.handle(req, res);
+  }
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
 
