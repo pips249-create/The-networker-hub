@@ -1389,13 +1389,12 @@
     }
 
     document.getElementById('btn-new-group').addEventListener('click', goToNewGroupEditor);
-    ['btn-new-group-overview'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener('click', goToNewGroupEditor);
+    document.querySelectorAll('[data-action="new-group"]').forEach((el) => {
+      el.addEventListener('click', goToNewGroupEditor);
     });
-    ['btn-new-event', 'btn-new-event-overview'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener('click', goToNewEventEditor);
+    document.getElementById('btn-new-event').addEventListener('click', goToNewEventEditor);
+    document.querySelectorAll('[data-action="new-event"]').forEach((el) => {
+      el.addEventListener('click', goToNewEventEditor);
     });
 
     const btnNewTicket = document.getElementById('btn-new-ticket');

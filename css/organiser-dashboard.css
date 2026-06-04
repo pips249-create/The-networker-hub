@@ -626,6 +626,44 @@
   margin: 16px 0 8px;
 }
 
+.org-section-footer--split {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.org-overview-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.org-overview-head--spaced {
+  margin-top: 36px;
+}
+
+.org-overview-head-text {
+  flex: 1;
+  min-width: 200px;
+}
+
+.org-overview-head .org-section-title {
+  margin-bottom: 4px;
+}
+
+.org-overview-head .org-section-sub {
+  margin-bottom: 0;
+}
+
+.org-overview-head .org-btn-gold {
+  flex-shrink: 0;
+  align-self: center;
+}
+
 .org-overview-table {
   margin-bottom: 0;
 }
