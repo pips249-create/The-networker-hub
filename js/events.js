@@ -235,19 +235,23 @@
     var sel = document.getElementById('filter-type');
     if (!sel) return;
     var keep = sel.value;
-    var cats = {};
+    var bySlug = {};
     events.forEach(function (e) {
-      if (e.typeCategory) cats[e.typeCategory] = true;
+      var slug = e.typeSlug || '';
+      var label = e.typeRaw || e.typeCategory || slug;
+      if (slug) bySlug[slug] = label;
     });
-    var keys = Object.keys(cats).sort();
+    var slugs = Object.keys(bySlug).sort(function (a, b) {
+      return String(bySlug[a]).localeCompare(String(bySlug[b]));
+    });
     sel.innerHTML = '<option value="all">Type: All</option>';
-    keys.forEach(function (cat) {
+    slugs.forEach(function (slug) {
       var opt = document.createElement('option');
-      opt.value = cat;
-      opt.textContent = cat;
+      opt.value = slug;
+      opt.textContent = bySlug[slug];
       sel.appendChild(opt);
     });
-    if (keep && (keep === 'all' || cats[keep])) sel.value = keep;
+    if (keep && (keep === 'all' || bySlug[keep])) sel.value = keep;
   }
 
   function fillFilterOptions() {
@@ -311,6 +315,9 @@
   window.hubRefreshListings = function () {
     currentPage = 1;
     renderAll();
+    if (window.hubRefreshMap && window.hubGetFilteredEvents) {
+      window.hubRefreshMap(window.hubGetFilteredEvents(events));
+    }
   };
 
   async function load() {

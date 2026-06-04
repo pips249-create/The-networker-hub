@@ -11,6 +11,8 @@
 <link rel="stylesheet" href="../css/hub.css">
 <link rel="stylesheet" href="../css/events-page.css">
 <link rel="stylesheet" href="../css/events-filter-bar.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 </head>
 <body class="events-page">
 
@@ -48,44 +50,34 @@
         </div>
       </div>
       <div class="filter-bar-row filter-bar-row-bottom">
-        <div class="filter-bar-chip">
-          <span class="filter-bar-chip-label">In Person</span>
-          <label class="filter-toggle">
-            <input type="checkbox" id="toggle-inperson" checked>
-            <span class="filter-toggle-track" aria-hidden="true"></span>
+        <fieldset class="filter-format-group">
+          <legend class="filter-bar-chip-label">Format</legend>
+          <label class="filter-checkbox">
+            <input type="checkbox" id="check-inperson" checked>
+            <span class="filter-checkbox-box" aria-hidden="true"></span>
+            In person
           </label>
-        </div>
-        <div class="filter-bar-chip">
-          <span class="filter-bar-chip-label">Online</span>
-          <label class="filter-toggle">
-            <input type="checkbox" id="toggle-online" checked>
-            <span class="filter-toggle-track" aria-hidden="true"></span>
+          <label class="filter-checkbox">
+            <input type="checkbox" id="check-online" checked>
+            <span class="filter-checkbox-box" aria-hidden="true"></span>
+            Online
           </label>
-        </div>
+        </fieldset>
         <div class="filter-bar-select">
           <label class="visually-hidden" for="filter-type">Type</label>
           <select id="filter-type" aria-label="Event type">
             <option value="all">Type: All</option>
-            <option value="meeting">meeting</option>
-            <option value="conference">conference</option>
-            <option value="exhibition">exhibition</option>
-            <option value="awards">awards</option>
           </select>
         </div>
-        <div class="filter-date-range">
-          <label class="visually-hidden" for="date-from">From date</label>
-          <input type="date" id="date-from" aria-label="From date">
-          <span class="filter-date-sep">–</span>
-          <label class="visually-hidden" for="date-to">To date</label>
-          <input type="date" id="date-to" aria-label="To date">
+        <div class="filter-date-wrap">
+          <label class="visually-hidden" for="date-range">Date range</label>
+          <input type="text" id="date-range" placeholder="Select dates" readonly aria-label="Date range">
         </div>
-        <div class="filter-bar-chip">
-          <span class="filter-bar-chip-label">Near Me</span>
-          <label class="filter-toggle">
-            <input type="checkbox" id="toggle-nearme">
-            <span class="filter-toggle-track is-teal" aria-hidden="true"></span>
-          </label>
-        </div>
+        <label class="filter-checkbox filter-checkbox-near">
+          <input type="checkbox" id="toggle-nearme">
+          <span class="filter-checkbox-box" aria-hidden="true"></span>
+          Near me
+        </label>
         <div class="filter-price-wrap" id="price-filter-wrap">
           <button type="button" class="filter-price-trigger" id="price-trigger" aria-expanded="false" aria-haspopup="true">Any price</button>
           <div class="filter-price-panel" role="dialog" aria-label="Price range">
@@ -99,14 +91,15 @@
               </div>
               <div>
                 <label for="price-max">Max (&pound;)</label>
-                <input type="number" id="price-max" min="0" placeholder="200" step="1">
+                <input type="number" id="price-max" min="0" placeholder="Any" step="1">
               </div>
             </div>
+            <button type="button" class="filter-price-apply" id="price-apply">Apply price</button>
           </div>
         </div>
-        <button type="button" class="filter-map-btn" id="map-view-btn">
+        <button type="button" class="filter-map-btn" id="map-view-btn" aria-pressed="false">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/></svg>
-          Swap to Map View
+          <span id="map-view-label">Swap to Map View</span>
         </button>
       </div>
     </div>
@@ -163,7 +156,9 @@
         </aside>
       </div>
 
-      <section class="listings-block" aria-labelledby="all-heading">
+      <div id="events-map-panel" class="events-map-panel" hidden aria-label="Events map"></div>
+
+      <section class="listings-block" id="listings-view" aria-labelledby="all-heading">
         <h2 class="listings-header" id="all-heading">All listings</h2>
         <div class="event-listings" id="event-listings"></div>
       </section>
@@ -186,7 +181,10 @@
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="../js/events-filters.js"></script>
+<script src="../js/events-map.js"></script>
 <script src="../js/events.js"></script>
 </body>
 </html>

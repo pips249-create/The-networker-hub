@@ -20,7 +20,9 @@ const FIELD_MAP = {
   venue: ['Venue', 'Venue Name', 'Address'],
   industry: ['Industry'],
   format: ['Meeting Format', 'Format'],
-  type: ['Type', 'Event Type'],
+  type: ['Type', 'Event Type', 'Meeting Type'],
+  latitude: ['Latitude', 'Lat'],
+  longitude: ['Longitude', 'Lng', 'Long'],
   featured: ['Featured', 'Premium', 'Premium Spotlight'],
   photo: ['Photo', 'Image', 'Cover', 'Photos', 'Picture', 'Event Photo', 'Event Image'],
   organiser: ['Organiser', 'Host', 'Organizer'],
@@ -50,6 +52,16 @@ function attachmentUrl(field) {
   }
   if (typeof field === 'string' && field.startsWith('http')) return field;
   return null;
+}
+
+function typeSlugFromRaw(raw) {
+  return (
+    String(raw || 'meeting')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') || 'meeting'
+  );
 }
 
 function parseTypeCategory(raw) {
@@ -148,8 +160,13 @@ function recordToEvent(record) {
   const industry = pick(f, FIELD_MAP.industry) || '';
   const format = pick(f, FIELD_MAP.format) || '';
   const typeRaw = pick(f, FIELD_MAP.type) || 'meeting';
+  const typeSlug = typeSlugFromRaw(typeRaw);
   const typeCategory = parseTypeCategory(typeRaw);
   const type = slugifyType(typeRaw);
+  const latRaw = pick(f, FIELD_MAP.latitude);
+  const lngRaw = pick(f, FIELD_MAP.longitude);
+  const lat = latRaw != null && latRaw !== '' ? Number(latRaw) : null;
+  const lng = lngRaw != null && lngRaw !== '' ? Number(lngRaw) : null;
   const featuredVal = pick(f, FIELD_MAP.featured);
   const featured =
     featuredVal === true ||
@@ -197,7 +214,10 @@ function recordToEvent(record) {
     format,
     type,
     typeRaw: String(typeRaw),
+    typeSlug,
     typeCategory,
+    lat: Number.isFinite(lat) ? lat : null,
+    lng: Number.isFinite(lng) ? lng : null,
     featured,
     price: priceDisplay,
     priceKey,

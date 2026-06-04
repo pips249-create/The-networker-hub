@@ -3,39 +3,38 @@
   var postcodeInput = document.getElementById('postcode');
   var typeSelect = document.getElementById('filter-type');
   var sortSelect = document.getElementById('sort');
-  var dateFrom = document.getElementById('date-from');
-  var dateTo = document.getElementById('date-to');
-  var toggleInPerson = document.getElementById('toggle-inperson');
-  var toggleOnline = document.getElementById('toggle-online');
+  var dateRangeInput = document.getElementById('date-range');
+  var checkInPerson = document.getElementById('check-inperson');
+  var checkOnline = document.getElementById('check-online');
   var toggleNearMe = document.getElementById('toggle-nearme');
   var priceMinInput = document.getElementById('price-min');
   var priceMaxInput = document.getElementById('price-max');
   var priceRangeMax = document.getElementById('price-range-max');
   var priceTrigger = document.getElementById('price-trigger');
   var priceWrap = document.getElementById('price-filter-wrap');
+  var priceApply = document.getElementById('price-apply');
   var resultsCount = document.getElementById('results-count');
   var spotlightPrev = document.getElementById('spotlight-prev');
   var spotlightNext = document.getElementById('spotlight-next');
   var spotlightTrack = document.getElementById('spotlight-track');
   var mapViewBtn = document.getElementById('map-view-btn');
+  var mapViewLabel = document.getElementById('map-view-label');
 
   var pricePanelOpen = false;
+  var priceFilterActive = false;
+  var dateFromTs = null;
+  var dateToTs = null;
+  var flatpickrInstance = null;
 
   function getActiveType() {
     return typeSelect ? typeSelect.value || 'all' : 'all';
   }
 
-  function parseDateInput(val) {
-    if (!val) return null;
-    var d = new Date(val);
-    return Number.isNaN(d.getTime()) ? null : d.getTime();
-  }
-
   function eventMatchesFilters(ev) {
     var type = getActiveType();
     if (type !== 'all') {
-      var cat = ev.typeCategory || ev.type;
-      if (cat !== type) return false;
+      var slug = ev.typeSlug || '';
+      if (slug !== type) return false;
     }
 
     var q = (searchInput && searchInput.value) || '';
@@ -62,8 +61,8 @@
       }
     }
 
-    var wantInPerson = toggleInPerson && toggleInPerson.checked;
-    var wantOnline = toggleOnline && toggleOnline.checked;
+    var wantInPerson = checkInPerson && checkInPerson.checked;
+    var wantOnline = checkOnline && checkOnline.checked;
     var fmt = ev.formatSlug || '';
     if (wantInPerson && !wantOnline) {
       if (fmt && fmt !== 'in-person' && fmt !== 'hybrid') return false;
@@ -73,23 +72,24 @@
       return false;
     }
 
-    var fromTs = dateFrom ? parseDateInput(dateFrom.value) : null;
-    var toTs = dateTo ? parseDateInput(dateTo.value) : null;
-    if (fromTs || toTs) {
+    if (dateFromTs || dateToTs) {
       var evTs = ev.dateRaw ? new Date(ev.dateRaw).getTime() : null;
       if (!evTs) return false;
-      if (fromTs && evTs < fromTs) return false;
-      if (toTs) {
-        var end = new Date(dateTo.value);
-        end.setHours(23, 59, 59, 999);
-        if (evTs > end.getTime()) return false;
-      }
+      if (dateFromTs && evTs < dateFromTs) return false;
+      if (dateToTs && evTs > dateToTs) return false;
     }
 
-    var minP = priceMinInput ? parseFloat(priceMinInput.value) : NaN;
-    var maxP = priceMaxInput ? parseFloat(priceMaxInput.value) : NaN;
-    if (!Number.isNaN(minP) && (Number(ev.priceNum) || 0) < minP) return false;
-    if (!Number.isNaN(maxP) && maxP > 0 && (Number(ev.priceNum) || 0) > maxP) return false;
+    if (priceFilterActive) {
+      var minP = priceMinInput ? parseFloat(priceMinInput.value) : 0;
+      var maxRaw = priceMaxInput ? priceMaxInput.value : '';
+      var maxP = maxRaw === '' ? Infinity : parseFloat(maxRaw);
+      if (!Number.isFinite(minP)) minP = 0;
+      if (!Number.isFinite(maxP)) maxP = Infinity;
+      var p = Number(ev.priceNum);
+      if (!Number.isFinite(p)) p = ev.priceKey === 'free' ? 0 : 0;
+      if (p < minP) return false;
+      if (p > maxP) return false;
+    }
 
     return true;
   }
@@ -112,7 +112,6 @@
         if (!db) return -1;
         return da - db;
       }
-      /* recommended: featured, rating, soonest date */
       if (a.featured !== b.featured) return a.featured ? -1 : 1;
       var ra = Number(a.rating) || 0;
       var rb = Number(b.rating) || 0;
@@ -131,13 +130,21 @@
 
   function updatePriceLabel() {
     if (!priceTrigger) return;
-    var min = priceMinInput ? priceMinInput.value : '0';
-    var max = priceMaxInput ? priceMaxInput.value : '';
-    if (!max || max === '0') {
+    if (!priceFilterActive) {
       priceTrigger.textContent = 'Any price';
       return;
     }
-    priceTrigger.textContent = '£' + min + ' – £' + max;
+    var min = priceMinInput ? priceMinInput.value : '0';
+    var maxRaw = priceMaxInput ? priceMaxInput.value : '';
+    if (maxRaw === '') {
+      priceTrigger.textContent = '£' + min + '+';
+      return;
+    }
+    if (min === maxRaw) {
+      priceTrigger.textContent = '£' + min;
+      return;
+    }
+    priceTrigger.textContent = '£' + min + ' – £' + maxRaw;
   }
 
   function applyFilters() {
@@ -147,6 +154,7 @@
     if (resultsCount) resultsCount.textContent = String(filtered.length);
 
     if (window.hubRefreshListings) window.hubRefreshListings();
+    if (window.hubRefreshMap) window.hubRefreshMap(filtered);
   }
 
   function resetFilters() {
@@ -154,14 +162,16 @@
     if (postcodeInput) postcodeInput.value = '';
     if (typeSelect) typeSelect.value = 'all';
     if (sortSelect) sortSelect.value = 'recommended';
-    if (dateFrom) dateFrom.value = '';
-    if (dateTo) dateTo.value = '';
-    if (toggleInPerson) toggleInPerson.checked = true;
-    if (toggleOnline) toggleOnline.checked = true;
+    if (flatpickrInstance) flatpickrInstance.clear();
+    dateFromTs = null;
+    dateToTs = null;
+    if (checkInPerson) checkInPerson.checked = true;
+    if (checkOnline) checkOnline.checked = true;
     if (toggleNearMe) toggleNearMe.checked = false;
     if (priceMinInput) priceMinInput.value = '0';
     if (priceMaxInput) priceMaxInput.value = '';
     if (priceRangeMax) priceRangeMax.value = '200';
+    priceFilterActive = false;
     updatePriceLabel();
     applyFilters();
   }
@@ -180,21 +190,42 @@
     postcodeInput,
     typeSelect,
     sortSelect,
-    dateFrom,
-    dateTo,
-    toggleInPerson,
-    toggleOnline,
+    checkInPerson,
+    checkOnline,
     toggleNearMe,
-    priceMinInput,
-    priceMaxInput,
-    priceRangeMax,
   ].forEach(bindFilter);
+
+  if (priceApply) {
+    priceApply.addEventListener('click', function () {
+      priceFilterActive = true;
+      pricePanelOpen = false;
+      if (priceWrap) priceWrap.classList.remove('is-open');
+      updatePriceLabel();
+      applyFilters();
+    });
+  }
+
+  if (priceMinInput) {
+    priceMinInput.addEventListener('input', function () {
+      if (priceFilterActive) applyFilters();
+    });
+  }
+  if (priceMaxInput) {
+    priceMaxInput.addEventListener('input', function () {
+      if (priceFilterActive) {
+        updatePriceLabel();
+        applyFilters();
+      }
+    });
+  }
 
   if (priceRangeMax && priceMaxInput) {
     priceRangeMax.addEventListener('input', function () {
       priceMaxInput.value = priceRangeMax.value;
-      updatePriceLabel();
-      applyFilters();
+      if (priceFilterActive) {
+        updatePriceLabel();
+        applyFilters();
+      }
     });
   }
 
@@ -202,17 +233,24 @@
     priceTrigger.addEventListener('click', function () {
       pricePanelOpen = !pricePanelOpen;
       priceWrap.classList.toggle('is-open', pricePanelOpen);
+      priceTrigger.setAttribute('aria-expanded', pricePanelOpen ? 'true' : 'false');
     });
     document.addEventListener('click', function (e) {
       if (!priceWrap.contains(e.target)) {
         pricePanelOpen = false;
         priceWrap.classList.remove('is-open');
+        priceTrigger.setAttribute('aria-expanded', 'false');
       }
     });
   }
 
   var clearBtn = document.getElementById('clear-filters');
-  if (clearBtn) clearBtn.addEventListener('click', resetFilters);
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function () {
+      priceFilterActive = false;
+      resetFilters();
+    });
+  }
 
   document.addEventListener('click', function (e) {
     if (e.target.id === 'empty-reset') resetFilters();
@@ -235,10 +273,48 @@
     });
   }
 
-  if (mapViewBtn) {
+  if (mapViewBtn && window.hubToggleMapView) {
     mapViewBtn.addEventListener('click', function () {
-      mapViewBtn.disabled = true;
-      mapViewBtn.textContent = 'Map view — coming soon';
+      window.hubToggleMapView();
+    });
+  }
+
+  if (dateRangeInput && typeof flatpickr !== 'undefined') {
+    flatpickrInstance = flatpickr(dateRangeInput, {
+      mode: 'range',
+      dateFormat: 'd M Y',
+      altInput: true,
+      altFormat: 'j M Y',
+      allowInput: false,
+      clickOpens: true,
+      locale: { rangeSeparator: ' – ' },
+      onChange: function (selectedDates) {
+        if (!selectedDates.length) {
+          dateFromTs = null;
+          dateToTs = null;
+          applyFilters();
+          return;
+        }
+        dateFromTs = selectedDates[0].getTime();
+        if (selectedDates.length > 1) {
+          var end = new Date(selectedDates[1]);
+          end.setHours(23, 59, 59, 999);
+          dateToTs = end.getTime();
+        } else {
+          var endOne = new Date(selectedDates[0]);
+          endOne.setHours(23, 59, 59, 999);
+          dateToTs = endOne.getTime();
+        }
+        applyFilters();
+      },
+      onClose: function (selectedDates) {
+        if (selectedDates.length === 1) {
+          var end = new Date(selectedDates[0]);
+          end.setHours(23, 59, 59, 999);
+          dateToTs = end.getTime();
+          applyFilters();
+        }
+      },
     });
   }
 
