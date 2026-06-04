@@ -3,28 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Events &amp; exhibitions – The Networker Hub</title>
-<meta name="description" content="Find UK networking meetings, exhibitions, and conferences. Filter by type, date, industry, and location.">
+<title>Events &amp; exhibitions (Redesign 1) – The Networker Hub</title>
+<meta name="description" content="Alternative events listing design — UK networking meetings, exhibitions, and conferences.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css">
 <link rel="stylesheet" href="../css/events-page.css">
+<link rel="stylesheet" href="../css/events-redesign-1.css">
+<link rel="icon" href="../assets/favicon.png" type="image/png">
 </head>
-<body class="events-page">
+<body class="events-page events-redesign-1">
 
 <div id="hub-site-nav"></div>
 <script src="../js/site-nav.js" data-root="../" data-page="events"></script>
 
-<p class="events-design-link" style="max-width:1280px;margin:0 auto;padding:10px 24px 0;font-size:12px;color:var(--text-muted);">
-  Compare layout: <a href="redesign-1.html" style="font-weight:600;color:var(--lavender-deep);">Redesign 1 preview</a>
+<p class="rd1-switcher">
+  <strong>Redesign 1</strong> — design preview.
+  <a href="index.html">View current Events &amp; exhibitions page</a>
 </p>
 
-<section class="hero">
-  <div class="hero-inner">
-    <p class="hero-eyebrow">Events &amp; exhibitions</p>
-    <h1>Meetings, exhibitions &amp; <span class="accent">conferences</span></h1>
-    <p class="hero-lede">One listing for every format — filter by type, date, industry, and location. Data from your Airtable base.</p>
+<section class="rd1-hero" aria-label="Events and exhibitions">
+  <div class="rd1-hero-inner">
+    <div>
+      <span class="rd1-badge">Redesign 1</span>
+      <h1>Events &amp; <em>exhibitions</em></h1>
+      <p class="rd1-hero-lede">
+        Editorial list layout with horizontal filters — same live data as the main browse page, presented for comparison.
+      </p>
+    </div>
+    <div class="rd1-hero-stats" aria-label="Listing summary">
+      <div class="rd1-stat">
+        <strong id="rd1-stat-total">—</strong>
+        <span>Total listings</span>
+      </div>
+      <div class="rd1-stat">
+        <strong id="rd1-stat-filtered">—</strong>
+        <span>Matching filters</span>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -39,14 +56,14 @@
     </div>
     <div class="results-bar" style="margin:0;">
       <span>Showing <strong id="results-count">0</strong> listings</span>
-      <button type="button" id="clear-filters" style="font-family:inherit;font-size:12px;font-weight:600;color:var(--lavender-deep);background:none;border:none;cursor:pointer;text-decoration:underline;">Clear filters</button>
+      <button type="button" id="clear-filters" style="font-family:inherit;font-size:12px;font-weight:600;color:var(--rd1-accent);background:none;border:none;cursor:pointer;text-decoration:underline;">Clear filters</button>
     </div>
   </div>
 
   <div class="events-body">
     <aside class="filters-panel" aria-label="Filters">
       <div class="filters">
-        <h2>Filter &amp; sort</h2>
+        <h2>Refine results</h2>
         <div class="filter-group">
           <label for="filter-type">Event type</label>
           <select id="filter-type">
@@ -134,7 +151,7 @@
         </aside>
       </div>
 
-      <section class="listings-block" aria-labelledby="all-heading">
+      <section class="listings-block" id="listings" aria-labelledby="all-heading">
         <h2 class="listings-header" id="all-heading">All listings</h2>
         <div class="event-listings" id="event-listings"></div>
       </section>
@@ -148,8 +165,8 @@
       <img class="footer-logo" src="../assets/logo.png" alt="" width="160" height="60">
     </a>
     <nav class="footer-links" aria-label="Footer">
-      <a href="index.html">Browse events</a>
-      <a href="redesign-1.html">Redesign 1</a>
+      <a href="index.html">Current design</a>
+      <a href="redesign-1.html" aria-current="page">Redesign 1</a>
       <a href="../about.html">About us</a>
       <a href="../faq.html">FAQ</a>
       <a href="mailto:hello@the-networker.co.uk">Contact</a>
@@ -160,5 +177,38 @@
 
 <script src="../js/events-filters.js"></script>
 <script src="../js/events.js"></script>
+<script>
+(function () {
+  function syncStats() {
+    var all = window.hubAllEvents || [];
+    var filtered = window.hubGetFilteredEvents ? window.hubGetFilteredEvents(all) : all;
+    var totalEl = document.getElementById('rd1-stat-total');
+    var filteredEl = document.getElementById('rd1-stat-filtered');
+    if (totalEl) totalEl.textContent = String(all.length);
+    if (filteredEl) filteredEl.textContent = String(filtered.length);
+  }
+  var orig = window.hubRefreshListings;
+  window.hubRefreshListings = function () {
+    if (orig) orig();
+    syncStats();
+  };
+  var origReload = window.hubReloadEvents;
+  if (typeof origReload === 'function') {
+    window.hubReloadEvents = function () {
+      return origReload().then(function () {
+        syncStats();
+      });
+    };
+  }
+  function waitForData() {
+    if (window.hubAllEvents && window.hubAllEvents.length >= 0) {
+      syncStats();
+      return;
+    }
+    requestAnimationFrame(waitForData);
+  }
+  waitForData();
+})();
+</script>
 </body>
 </html>
