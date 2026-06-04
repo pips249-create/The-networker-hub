@@ -19,48 +19,23 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 16px;
-  padding: 14px 0;
+  gap: 12px;
 }
 
-.filter-bar-row:first-child {
-  padding-top: 0;
-}
-
-.filter-bar-row:last-child {
-  padding-bottom: 0;
-}
-
-.filter-bar-row:not(:last-child) {
+.filter-bar-row-top {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
   border-bottom: 1px solid rgba(196, 165, 116, 0.45);
 }
 
-.filter-bar-row-search .filter-field-grow {
+.filter-bar-row-top .filter-field-grow {
   flex: 1 1 280px;
   min-width: 0;
 }
 
-.filter-bar-row-search .filter-field-postcode {
+.filter-bar-row-top .filter-field-postcode {
   flex: 0 1 220px;
   min-width: 160px;
-}
-
-.filter-bar-row-filters {
-  align-items: flex-end;
-}
-
-.filter-bar-row-filters .filter-date-wrap {
-  flex: 1 1 220px;
-  max-width: 320px;
-}
-
-.filter-bar-row-actions {
-  justify-content: flex-start;
-  gap: 16px;
-}
-
-.filter-bar-row-actions .filter-map-btn {
-  margin-left: auto;
 }
 
 .filter-field {
@@ -493,17 +468,13 @@
 }
 
 @media (max-width: 900px) {
-  .filter-bar-row-filters,
-  .filter-bar-row-actions {
+  .filter-bar-row-bottom {
     flex-direction: column;
     align-items: stretch;
   }
-  .filter-bar-row-actions .filter-map-btn {
+  .filter-map-btn {
     margin-left: 0;
     justify-content: center;
-  }
-  .filter-bar-row-filters .filter-date-wrap {
-    max-width: none;
   }
   .events-map-panel {
     height: 400px;
