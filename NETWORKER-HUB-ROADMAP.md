@@ -19,18 +19,23 @@ When the user enters a postcode or outcode (e.g. `M1`, `SW1A`):
 
 Implemented in `js/postcode-outcode.js` + `outcode` on API events.
 
-## Backend — Sponsorship & Advertisement Management
+## Admin — Backend: Sponsorship & Advertisement Management
 
-Required for Admin Panel (Claude/Cursor): **monthly sponsor swaps without new code**.
+**Admin page:** `/admin/index.html#sponsorship` (shell in `js/admin-app.js`; save API not wired yet).
 
-| Item | Notes |
-|------|--------|
-| Airtable `Site Promotions` / `Sponsor Slots` | slot key (`events-sponsor-hub`), active dates, image, title, body, CTA text, URL |
-| Admin form | Replace image, copy, tracking link; preview; publish |
-| Public API | `GET /api/sponsor?slot=events-sponsor-hub` returns active creative |
-| Events page | Renders API payload — remove hard-coded Sponsor Hub when live |
+**Goal:** swap **Sponsor Hub** image, copy, and tracking link monthly — **no new code or deploy**.
 
-Extend later to spotlight promos, city pages, email banners.
+| Layer | Deliverable |
+|-------|-------------|
+| **Airtable** | `Site Promotions` / `Sponsor Slots` — `slot_key` = `events-sponsor-hub`, `active_from` / `active_to`, image attachment, headline, body lines, `cta_label`, `cta_url`, `is_published` |
+| **Public API** | `GET /api/sponsor?slot=events-sponsor-hub` — active creative for today |
+| **Admin API** | `GET/POST /api/admin/sponsor` — admin-only upsert + publish |
+| **Events browse** | Load sponsor block from API; remove hard-coded block in `events/index.html` when live |
+| **Admin UI** | Image, headline, bullets, CTA label, tracking URL, preview, publish |
+
+Extend later: Premium Spotlight promos, city sponsorship blocks, email banners (one `slot_key` per placement).
+
+Full spec: `Redesign 2/NETWORKER-HUB-ROADMAP.md` → Phase 5 → Backend — Sponsorship & Advertisement Management.
 
 ## Phase 1+ (brief)
 

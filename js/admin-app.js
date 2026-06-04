@@ -60,6 +60,27 @@
     users: { title: 'User & Account Directory', subtitle: 'Manage all platform accounts' },
     moderation: { title: 'Content Moderation', subtitle: 'Review listings and attendee feedback' },
     financials: { title: 'Financial Hub', subtitle: 'Stripe ledger, payouts & automation logs' },
+    sponsorship: {
+      title: 'Sponsorship & Advertisement Management',
+      subtitle: 'Swap Sponsor Hub image, copy, and tracking link without code changes',
+    },
+  };
+
+  /** Default creative for events-sponsor-hub (matches interim events/index.html). */
+  var SPONSOR_SLOT_DEFAULTS = {
+    slotKey: 'events-sponsor-hub',
+    label: 'Events — Sponsor Hub',
+    activeFrom: '',
+    activeTo: '',
+    imageUrl: '',
+    headline: 'Get sponsored: Reach 10k founders monthly from £2,000/month',
+    bullets: [
+      'Premium placement beside Featured events',
+      'Short line of copy',
+      'Direct link to your landing page',
+    ],
+    ctaLabel: 'Enquire now',
+    ctaUrl: 'mailto:sales@the-networker.co.uk?subject=Sponsor%20Hub%20enquiry',
   };
 
   var shell = document.getElementById('admin-shell');
@@ -445,11 +466,138 @@
       '</section></div>';
   }
 
+  function renderSponsorship() {
+    var d = SPONSOR_SLOT_DEFAULTS;
+    var bulletsVal = d.bullets.join('\n');
+
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      '<section class="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">' +
+      '<p class="font-bold text-brand-900 mb-2">Backend requirement (build next)</p>' +
+      '<p class="mb-3">Monthly sponsor updates must <strong>not</strong> require a developer. Staff edit this slot in Admin → Publish; the public Events page reads the active row from Airtable.</p>' +
+      '<ul class="list-disc pl-5 space-y-1 text-amber-900/90">' +
+      '<li><strong>Airtable:</strong> <code class="text-xs bg-white/80 px-1 rounded">Site Promotions</code> — slot <code class="text-xs bg-white/80 px-1 rounded">events-sponsor-hub</code>, dates, image, copy, CTA URL</li>' +
+      '<li><strong>Public API:</strong> <code class="text-xs bg-white/80 px-1 rounded">GET /api/sponsor?slot=events-sponsor-hub</code></li>' +
+      '<li><strong>Admin API:</strong> <code class="text-xs bg-white/80 px-1 rounded">GET/POST /api/admin/sponsor</code> (admin session)</li>' +
+      '<li><strong>Frontend:</strong> replace hard-coded Sponsor Hub in <code class="text-xs bg-white/80 px-1 rounded">events/index.html</code></li>' +
+      '</ul></section>' +
+      '<div class="grid lg:grid-cols-2 gap-6">' +
+      '<form id="sponsor-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">' +
+      '<div><label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Placement slot</label>' +
+      '<select id="sponsor-slot" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" disabled>' +
+      '<option value="' +
+      esc(d.slotKey) +
+      '">' +
+      esc(d.label) +
+      '</option></select>' +
+      '<p class="text-xs text-slate-500 mt-1">More slots (Cities, newsletter) use the same pattern later.</p></div>' +
+      '<div class="grid sm:grid-cols-2 gap-4">' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-from">Active from</label>' +
+      '<input type="date" id="sponsor-from" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+      esc(d.activeFrom) +
+      '"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-to">Active until</label>' +
+      '<input type="date" id="sponsor-to" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+      esc(d.activeTo) +
+      '"></div></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-image">Sponsor image URL</label>' +
+      '<input type="url" id="sponsor-image" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="https://… or Airtable attachment URL" value="' +
+      esc(d.imageUrl) +
+      '">' +
+      '<p class="text-xs text-slate-500 mt-1">Backend: Airtable attachment field; optional upload in admin.</p></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-headline">Headline</label>' +
+      '<input type="text" id="sponsor-headline" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+      esc(d.headline) +
+      '"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-bullets">Bullet copy (one line each)</label>' +
+      '<textarea id="sponsor-bullets" rows="4" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
+      esc(bulletsVal) +
+      '</textarea></div>' +
+      '<div class="grid sm:grid-cols-2 gap-4">' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-label">CTA button label</label>' +
+      '<input type="text" id="sponsor-cta-label" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+      esc(d.ctaLabel) +
+      '"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-url">Tracking link (destination URL)</label>' +
+      '<input type="url" id="sponsor-cta-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+      esc(d.ctaUrl) +
+      '"></div></div>' +
+      '<div class="flex flex-wrap gap-3 pt-2">' +
+      '<button type="button" id="sponsor-preview-btn" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Update preview</button>' +
+      '<button type="button" disabled class="rounded-lg border border-slate-200 text-slate-400 px-4 py-2 text-sm font-semibold cursor-not-allowed" title="Wire to POST /api/admin/sponsor">Publish to site (API pending)</button>' +
+      '</div></form>' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">' +
+      '<h3 class="font-bold text-brand-900 mb-1">Live preview</h3>' +
+      '<p class="text-xs text-slate-500 mb-4">Matches the Events browse Sponsor Hub block.</p>' +
+      '<aside id="sponsor-preview" class="rounded-xl border border-[#d4aee0] bg-gradient-to-br from-[#f3eef5] to-[#ebe0f0] p-5 text-[#2d1b3d] max-w-md"></aside>' +
+      '</section></div></div>';
+
+    function readForm() {
+      var bullets = (document.getElementById('sponsor-bullets').value || '')
+        .split('\n')
+        .map(function (line) {
+          return line.trim();
+        })
+        .filter(Boolean);
+      return {
+        headline: document.getElementById('sponsor-headline').value.trim(),
+        bullets: bullets.length ? bullets : d.bullets,
+        ctaLabel: document.getElementById('sponsor-cta-label').value.trim() || d.ctaLabel,
+        ctaUrl: document.getElementById('sponsor-cta-url').value.trim() || d.ctaUrl,
+        imageUrl: document.getElementById('sponsor-image').value.trim(),
+      };
+    }
+
+    function renderPreview() {
+      var creative = readForm();
+      var el = document.getElementById('sponsor-preview');
+      if (!el) return;
+      var headlineHtml = esc(creative.headline);
+      if (headlineHtml.indexOf(':') !== -1) {
+        var parts = headlineHtml.split(':');
+        headlineHtml = '<em>' + parts[0].trim() + ':</em> ' + parts.slice(1).join(':').trim();
+      }
+      var list = creative.bullets
+        .map(function (line) {
+          return '<li>' + esc(line) + '</li>';
+        })
+        .join('');
+      var img =
+        creative.imageUrl && /^https?:/i.test(creative.imageUrl)
+          ? '<img src="' + esc(creative.imageUrl) + '" alt="" class="w-full rounded-lg mb-4 object-cover max-h-32">'
+          : '';
+      el.innerHTML =
+        img +
+        '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-2">★ Sponsor Hub</div>' +
+        '<h4 class="text-lg font-semibold leading-snug mb-3">' +
+        headlineHtml +
+        '</h4>' +
+        '<ul class="text-sm space-y-1 mb-4 list-disc pl-4 opacity-90">' +
+        list +
+        '</ul>' +
+        '<a href="' +
+        esc(creative.ctaUrl) +
+        '" class="inline-block rounded-lg bg-[#bd932e] text-white text-sm font-semibold px-4 py-2">' +
+        esc(creative.ctaLabel) +
+        '</a>';
+    }
+
+    document.getElementById('sponsor-preview-btn').addEventListener('click', renderPreview);
+    ['sponsor-headline', 'sponsor-bullets', 'sponsor-cta-label', 'sponsor-cta-url', 'sponsor-image'].forEach(
+      function (id) {
+        var input = document.getElementById(id);
+        if (input) input.addEventListener('input', renderPreview);
+      }
+    );
+    renderPreview();
+  }
+
   var routes = {
     dashboard: renderDashboard,
     users: renderUsers,
     moderation: renderModeration,
     financials: renderFinancials,
+    sponsorship: renderSponsorship,
   };
 
   function route() {
