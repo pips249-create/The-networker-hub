@@ -1,4 +1,11 @@
-const { setCors, json, sessionFromRequest, hubViewFromRequest, setHubViewCookie } = require('../auth');
+const {
+  setCors,
+  json,
+  sessionFromRequest,
+  hubViewFromRequest,
+  setHubViewCookie,
+  isClientRole,
+} = require('../auth');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -22,6 +29,12 @@ module.exports = async function handler(req, res) {
       } catch {
         body = {};
       }
+    }
+    if (!isClientRole(session.role)) {
+      return json(res, 403, {
+        error: 'clients_only',
+        message: 'Only client accounts can switch between attendee and organiser mode.',
+      });
     }
     const mode = String(body.mode || body.hubView || '').toLowerCase();
     if (mode !== 'attendee' && mode !== 'organiser') {

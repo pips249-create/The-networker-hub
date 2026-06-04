@@ -11,7 +11,7 @@ One login can **browse and buy tickets** (attendee) and **manage organiser profi
 | Attendee behaviour | Browse `/events/`, book tickets (same session) |
 | Organiser behaviour | `/organiser/index.html` dashboard |
 
-**Users.Role** can stay `attendee` or `member` for most people. Access to the organiser dashboard is **not** tied to `Role = organiser` anymore — it is tied to your **Users** record and **Organisers** rows linked to you.
+**Users.Role** is `client` (browse/book + organiser toggle) or `admin` (Command Center). Access to the organiser dashboard is tied to your **Users** record and **Organisers** rows linked to you — not a separate organiser role.
 
 Admins still use `Role = admin`.
 
@@ -86,5 +86,5 @@ All require sign-in (any role except blocked accounts).
 ## What you do **not** need
 
 - A second user account for organising vs attending
-- `Role = organiser` on Users (optional legacy flag only)
+- Legacy roles `attendee` / `organiser` / `member` in Airtable are treated as `client`
 - A new “Organiser Groups” table if **Organisers** already exists

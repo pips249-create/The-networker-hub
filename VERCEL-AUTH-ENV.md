@@ -29,7 +29,7 @@ In base `appQwgOxCrFFNweHe`, add a table named **`Users`** with these fields (na
 |------------|------------|
 | Email | Email or Single line text |
 | Password Hash | Long text |
-| Role | Single select: `admin`, `organizer`, `attendee` |
+| Role | Single select: `admin`, `client` |
 | Name | Single line text |
 | Reset Token | Single line text |
 | Reset Token Expires | Date (include time) |

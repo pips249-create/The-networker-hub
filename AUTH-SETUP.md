@@ -8,7 +8,7 @@ In base `appQwgOxCrFFNweHe`, add a table named **Users** with these fields:
 |------------|------|
 | Email | Email (or Single line text) |
 | Password Hash | Long text |
-| Role | Single select: `admin`, `organizer`, `attendee` |
+| Role | Single select: `admin`, `client` |
 | Name | Single line text |
 | Reset Token | Single line text |
 | Reset Token Expires | Date (include time) |
@@ -57,7 +57,7 @@ You should see: `"message": "Admin account created."`
 
 ### Add another user (e.g. team member)
 
-Same endpoint; set `"role": "attendee"` (or `organiser`, `member`, `admin`):
+Same endpoint; set `"role": "client"` (most users) or `"admin"` (platform only):
 
 ```bash
 curl -X POST https://the-networker-hub.vercel.app/api/auth/setup-admin \
@@ -67,7 +67,7 @@ curl -X POST https://the-networker-hub.vercel.app/api/auth/setup-admin \
     "email": "rosie@the-networker.co.uk",
     "password": "CHOOSE_A_PASSWORD_MIN_8_CHARS",
     "name": "Rosie McGilvray",
-    "role": "attendee"
+    "role": "client"
   }'
 ```
 

@@ -8,6 +8,9 @@ const {
   appendSystemLog,
   airtableConfig,
   setCors,
+  normalizeRole,
+  isAdminRole,
+  hubViewFromRequest,
 } = require('../auth');
 
 module.exports = async function handler(req, res) {
@@ -71,10 +74,11 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    const role = normalizeRole(user.role);
     const sessionUser = {
       sub: user.id,
       email: user.email,
-      role: user.role,
+      role,
       name: user.name,
     };
 
@@ -84,13 +88,17 @@ module.exports = async function handler(req, res) {
 
     await appendSystemLog(`User signed in: ${user.email}`, 'auth');
 
+    let redirect = body.next || '/events/index.html';
+    if (isAdminRole(role)) {
+      redirect = '/admin/index.html';
+    } else if (hubViewFromRequest(req) === 'organiser') {
+      redirect = body.next || '/organiser/index.html';
+    }
+
     return json(res, 200, {
       ok: true,
       user: sessionUser,
-      redirect:
-        user.role === 'admin'
-          ? '/admin/index.html'
-          : body.next || '/events/index.html',
+      redirect,
     });
   } catch (e) {
     return json(res, 500, {

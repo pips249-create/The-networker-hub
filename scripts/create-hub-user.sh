@@ -2,16 +2,16 @@
 # Create or update a hub login via setup-admin (requires ADMIN_SETUP_SECRET from Vercel).
 # Usage:
 #   export ADMIN_SETUP_SECRET='your-secret-from-vercel'
-#   ./scripts/create-hub-user.sh rosie@the-networker.co.uk 'HerPassword' 'Rosie McGilvray' attendee
+#   ./scripts/create-hub-user.sh rosie@the-networker.co.uk 'HerPassword' 'Rosie McGilvray' client
 #
-# Roles: admin | attendee | organiser | member  (default: attendee)
+# Roles: admin | client  (default: client)
 
 set -euo pipefail
 
 EMAIL="${1:-}"
 PASSWORD="${2:-}"
 NAME="${3:-}"
-ROLE="${4:-attendee}"
+ROLE="${4:-client}"
 SITE="${SITE_URL:-https://the-networker-hub.vercel.app}"
 
 if [ -z "$EMAIL" ] || [ -z "$PASSWORD" ]; then
@@ -35,7 +35,7 @@ console.log(JSON.stringify({
   email: process.argv[1],
   password: process.argv[2],
   name: process.argv[3] || '',
-  role: process.argv[4] || 'attendee'
+  role: process.argv[4] || 'client'
 }));
 " "$EMAIL" "$PASSWORD" "$NAME" "$ROLE")
 

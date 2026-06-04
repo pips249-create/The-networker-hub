@@ -6,6 +6,9 @@ const {
   setCors,
   json,
   hubViewFromRequest,
+  normalizeRole,
+  isAdminRole,
+  isClientRole,
 } = require('../auth');
 const { listGroupsForUser } = require('../organiser');
 
@@ -31,10 +34,11 @@ module.exports = async function handler(req, res) {
       return json(res, 200, { ok: false, user: null });
     }
 
+    const role = normalizeRole(user.role);
     const fresh = {
       sub: user.id,
       email: user.email,
-      role: user.role,
+      role,
       name: user.name,
     };
 
@@ -53,17 +57,19 @@ module.exports = async function handler(req, res) {
       user: fresh,
       hubView: hubViewFromRequest(req),
       organiserProfiles,
-      canOrganise: organiserProfiles > 0 || fresh.role === 'admin',
+      canOrganise: organiserProfiles > 0 || isAdminRole(role),
+      canToggleHubMode: isClientRole(role),
     });
   } catch {
     return json(res, 200, {
       ok: true,
       user: {
         email: session.email,
-        role: session.role,
+        role: normalizeRole(session.role),
         name: session.name,
         sub: session.sub,
       },
+      canToggleHubMode: isClientRole(session.role),
     });
   }
 };

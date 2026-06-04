@@ -112,7 +112,8 @@
     }
     if (user) {
       var hubView = user.hubView || 'attendee';
-      if (window.HubModeSwitch) {
+      var showHubToggle = user.canToggleHubMode !== false && user.role === 'client';
+      if (showHubToggle && window.HubModeSwitch) {
         html += window.HubModeSwitch.html(hubView);
       }
       html += '<button type="button" class="nav-signout" id="nav-signout">Sign out</button>';
@@ -185,6 +186,7 @@
       if (data.ok && data.user) {
         data.user.hubView = data.hubView || 'attendee';
         data.user.organiserProfiles = data.organiserProfiles || 0;
+        data.user.canToggleHubMode = data.canToggleHubMode === true;
         renderNav(data.user);
       }
     })

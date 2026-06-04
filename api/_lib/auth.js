@@ -1,5 +1,11 @@
 const crypto = require('crypto');
 
+/** Airtable Users.Role values: `admin` (platform) | `client` (attendee ↔ organiser toggle). */
+const USER_ROLES = {
+  ADMIN: 'admin',
+  CLIENT: 'client',
+};
+
 const USER_FIELDS = {
   email: ['Email', 'email'],
   passwordHash: ['Password Hash', 'Password', 'password_hash'],
@@ -8,6 +14,24 @@ const USER_FIELDS = {
   resetToken: ['Reset Token', 'reset_token'],
   resetExpires: ['Reset Token Expires', 'Reset Expires', 'reset_expires'],
 };
+
+function normalizeRole(raw) {
+  const r = String(raw || '')
+    .toLowerCase()
+    .trim();
+  if (r === USER_ROLES.ADMIN) return USER_ROLES.ADMIN;
+  if (r === USER_ROLES.CLIENT) return USER_ROLES.CLIENT;
+  // Legacy: attendee, organiser, member, organizer → client
+  return USER_ROLES.CLIENT;
+}
+
+function isAdminRole(role) {
+  return normalizeRole(role) === USER_ROLES.ADMIN;
+}
+
+function isClientRole(role) {
+  return normalizeRole(role) === USER_ROLES.CLIENT;
+}
 
 function pick(fields, keys) {
   for (const key of keys) {
@@ -170,7 +194,7 @@ function json(res, status, body) {
 
 function requireAdmin(session) {
   if (!session) return { ok: false, status: 401, error: 'not_authenticated' };
-  if (session.role !== 'admin') return { ok: false, status: 403, error: 'admin_only' };
+  if (!isAdminRole(session.role)) return { ok: false, status: 403, error: 'admin_only' };
   return { ok: true };
 }
 
@@ -293,7 +317,7 @@ function normalizeUser(record) {
     id: record.id,
     email: String(pick(f, USER_FIELDS.email) || '').toLowerCase(),
     passwordHash: pick(f, USER_FIELDS.passwordHash),
-    role: String(pick(f, USER_FIELDS.role) || 'attendee').toLowerCase(),
+    role: normalizeRole(pick(f, USER_FIELDS.role)),
     name: pick(f, USER_FIELDS.name) || '',
     resetToken: pick(f, USER_FIELDS.resetToken),
     resetExpires: pick(f, USER_FIELDS.resetExpires),
@@ -382,7 +406,11 @@ async function appendSystemLog(message, type = 'info') {
 }
 
 module.exports = {
+  USER_ROLES,
   USER_FIELDS,
+  normalizeRole,
+  isAdminRole,
+  isClientRole,
   pick,
   setCors,
   cleanEnvVal,

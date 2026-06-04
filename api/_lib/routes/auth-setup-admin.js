@@ -5,6 +5,8 @@ const {
   updateUser,
   json,
   airtableConfig,
+  normalizeRole,
+  USER_ROLES,
 } = require('../auth');
 
 /**
@@ -48,13 +50,11 @@ module.exports = async function handler(req, res) {
     .toLowerCase();
   const password = String(body.password || process.env.ADMIN_INITIAL_PASSWORD || '');
   const name = String(body.name || 'Platform Admin').trim();
-  let role = String(body.role || 'admin').toLowerCase();
-  if (role === 'organizer') role = 'organiser';
-  const allowedRoles = new Set(['admin', 'attendee', 'organiser', 'member']);
-  if (!allowedRoles.has(role)) {
+  let role = normalizeRole(body.role || USER_ROLES.ADMIN);
+  if (![USER_ROLES.ADMIN, USER_ROLES.CLIENT].includes(role)) {
     return json(res, 400, {
       error: 'invalid_role',
-      message: 'role must be admin, attendee, organiser, or member',
+      message: 'role must be admin or client',
     });
   }
 

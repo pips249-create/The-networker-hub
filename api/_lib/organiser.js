@@ -12,6 +12,8 @@ const {
   hubViewFromRequest,
   organiserPersonalScopeFromRequest,
   findUserByEmail,
+  isAdminRole,
+  normalizeRole,
 } = require('./auth');
 
 const GROUP_FIELDS = {
@@ -153,7 +155,7 @@ function requireOrganiserSession(req) {
 }
 
 function isPlatformAdmin(session) {
-  return String(session?.role || '').toLowerCase() === 'admin';
+  return isAdminRole(session?.role);
 }
 
 function resolveFieldName(sampleFields, aliases, fallback) {
@@ -811,7 +813,7 @@ async function getOrganiserWorkspace(req) {
     user: {
       email: session.email,
       name: displayName,
-      role: session.role,
+      role: normalizeRole(session.role),
       sub: session.sub,
     },
   };
