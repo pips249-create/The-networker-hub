@@ -1,0 +1,342 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+.organiser-event-edit-page {
+  --ee-purple: #9d60a7;
+  --ee-purple-dark: #7a3d8a;
+  --ee-purple-light: #e8dbea;
+  --ee-purple-pale: #f3eef5;
+  --ee-gold: #bd932e;
+  --ee-text: #2d1b3d;
+  --ee-text-mid: #5a4a62;
+  --ee-text-soft: #9d87aa;
+  --ee-bg: #f0ecf7;
+  --ee-white: #fff;
+  --ee-border: #e8dbea;
+  --ee-radius: 10px;
+  font-family: Poppins, system-ui, sans-serif;
+  background: var(--ee-bg);
+  color: var(--ee-text);
+  min-height: 100vh;
+}
+
+.ee-wrap {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 28px 24px 80px;
+}
+
+.ee-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ee-purple-dark);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  margin-bottom: 16px;
+}
+
+.ee-back:hover {
+  color: var(--ee-purple);
+}
+
+.ee-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ee-purple-dark);
+  margin: 0 0 6px;
+}
+
+.ee-lead {
+  font-size: 14px;
+  color: var(--ee-text-mid);
+  margin: 0 0 28px;
+}
+
+.ee-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .ee-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ee-card {
+  background: var(--ee-white);
+  border: 1px solid var(--ee-border);
+  border-radius: var(--ee-radius);
+  padding: 22px;
+  margin-bottom: 20px;
+}
+
+.ee-card h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ee-purple-dark);
+  margin: 0 0 14px;
+}
+
+.ee-field {
+  margin-bottom: 14px;
+}
+
+.ee-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ee-text-mid);
+  margin-bottom: 6px;
+}
+
+.ee-field input,
+.ee-field select,
+.ee-field textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--ee-border);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.ee-field textarea {
+  resize: vertical;
+  min-height: 88px;
+}
+
+.ee-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ee-upload-zone {
+  border: 2px dashed var(--ee-border);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--ee-purple-pale);
+}
+
+.ee-upload-zone:focus {
+  outline: 2px solid var(--ee-purple);
+  outline-offset: 2px;
+}
+
+.ee-upload-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+
+.ee-upload-preview img {
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.ee-upload-placeholder strong {
+  display: block;
+  font-size: 13px;
+}
+
+.ee-upload-placeholder span {
+  font-size: 11px;
+  color: var(--ee-text-soft);
+}
+
+.ee-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ee-cal-header button {
+  border: 1px solid var(--ee-border);
+  background: var(--ee-white);
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--ee-purple-dark);
+}
+
+.ee-cal-month {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ee-purple-dark);
+}
+
+.ee-cal-weekdays,
+.ee-cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.ee-cal-weekdays span {
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ee-text-soft);
+  padding: 4px 0;
+}
+
+.ee-cal-day {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--ee-text);
+}
+
+.ee-cal-day:hover:not(:disabled) {
+  background: var(--ee-purple-pale);
+}
+
+.ee-cal-day.is-other {
+  color: var(--ee-text-soft);
+  opacity: 0.5;
+}
+
+.ee-cal-day.is-past:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ee-cal-day.is-selected {
+  background: var(--ee-purple);
+  color: #fff;
+}
+
+.ee-selected-dates {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--ee-text-mid);
+}
+
+.ee-selected-dates ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.ee-selected-dates li {
+  margin-bottom: 4px;
+}
+
+.ee-hint {
+  font-size: 11px;
+  color: var(--ee-text-soft);
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+.ee-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--ee-border);
+}
+
+.ee-btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 11px 20px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ee-btn-primary {
+  background: var(--ee-purple);
+  color: #fff;
+}
+
+.ee-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ee-btn-outline {
+  background: transparent;
+  color: var(--ee-purple-dark);
+  border: 2px solid var(--ee-purple);
+}
+
+.ee-alert {
+  background: #fff8e6;
+  border: 1px solid #e8c96a;
+  color: #5a4a20;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.ee-sticky-side .ee-card {
+  position: sticky;
+  top: 16px;
+}
+
+.ee-series-count {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ee-purple);
+}
+
+/* Ticket setup page */
+.ee-tier-row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.7fr 0.7fr 0.6fr auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 720px) {
+  .ee-tier-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ee-tier-row .ee-tier-remove {
+    grid-column: 1 / -1;
+  }
+}
+
+.ee-events-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 0;
+}
+
+.ee-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: var(--ee-purple-pale);
+  color: var(--ee-purple-dark);
+}

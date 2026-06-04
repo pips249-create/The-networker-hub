@@ -345,8 +345,20 @@
     }
   }
 
+  function eventEditorUrl(ev) {
+    if (!ev || !ev.id) return 'event-edit.html';
+    return 'event-edit.html?id=' + encodeURIComponent(ev.id);
+  }
+
+  function goToEventEditor(ev) {
+    location.href = eventEditorUrl(ev);
+  }
+
   function openEditEventModal(ev) {
-    if (!ev) return;
+    if (ev && ev.id) {
+      goToEventEditor(ev);
+      return;
+    }
     document.getElementById('modal-event-title').textContent = 'Edit event';
     document.getElementById('modal-event-lead').textContent =
       'Update listing details below, or open the full public page to preview changes.';
@@ -731,7 +743,9 @@
       const revClass =
         ev.revenueNum > 0 ? 'org-revenue' : 'org-revenue muted';
       tr.innerHTML =
-        '<td class="org-td-name"><button type="button" class="org-td-name-click" data-edit-event="' +
+        '<td>' +
+        thumbHtml(ev) +
+        '</td><td class="org-td-name"><button type="button" class="org-td-name-click" data-edit-event="' +
         esc(ev.id) +
         '">' +
         esc(ev.title) +
@@ -884,7 +898,9 @@
     pageInfo.items.forEach((ev) => {
       const tr = document.createElement('tr');
       tr.innerHTML =
-        '<td class="org-td-name"><button type="button" class="org-td-name-click" data-edit-event="' +
+        '<td>' +
+        thumbHtml(ev) +
+        '</td><td class="org-td-name"><button type="button" class="org-td-name-click" data-edit-event="' +
         esc(ev.id) +
         '">' +
         esc(ev.title) +
@@ -1242,10 +1258,7 @@
         setRoute('groups');
         return;
       }
-      resetEventModalForCreate();
-      document.getElementById('form-event').reset();
-      fillGroupSelect(document.getElementById('event-group'));
-      openModal('modal-event');
+      location.href = 'event-edit.html';
     });
 
     const btnNewTicket = document.getElementById('btn-new-ticket');

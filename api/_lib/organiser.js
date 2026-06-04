@@ -62,6 +62,9 @@ const EVENT_WRITE_FIELDS = {
     'Host/Organiser',
   ],
   description: ['Highlights', 'Description', 'About'],
+  location: ['Location', 'City', 'Region', 'Area'],
+  venue: ['Venue', 'Venue Name', 'Address', 'Venue Address'],
+  endDate: ['End Date', 'End Time', 'End Date & Time', 'Finish Time'],
 };
 
 const TICKET_WRITE_FIELDS = {
@@ -292,6 +295,8 @@ function recordToOrganiserEvent(record, organiserLinkField) {
     organiserGroupIds: groupIds,
     organiserGroupId: groupIds[0] || '',
     description: String(pick(f, EVENT_WRITE_FIELDS.description) || '').trim(),
+    location: String(pick(f, EVENT_WRITE_FIELDS.location) || '').trim(),
+    venue: String(pick(f, EVENT_WRITE_FIELDS.venue) || '').trim(),
     imageUrl: attachmentUrl(pick(f, EVENT_READ_FIELDS.image)),
     statusRaw: String(pick(f, EVENT_READ_FIELDS.approvalStatus) || '').trim(),
     rating: ratingRaw != null && ratingRaw !== '' ? Number(ratingRaw) : null,
@@ -543,38 +548,70 @@ async function createGroup({
   return recordToGroup(data.records[0]);
 }
 
-async function createEvent({ email, groupId, title, date, type, description }) {
+async function buildEventRecordFields({
+  email,
+  groupId,
+  title,
+  date,
+  endDate,
+  type,
+  description,
+  location,
+  venue,
+  photoUrl,
+  photoBase64,
+  photoMime,
+  photoFilename,
+  eventSample,
+  organiserLinkField,
+}) {
+  const sample = eventSample || (await sampleRecordFields(tables().events));
+  const fields = {};
+  const titleField = resolveFieldName(sample, EVENT_WRITE_FIELDS.title, 'Event Title');
+  fields[titleField] = String(title).trim();
+  const dateField = resolveFieldName(sample, EVENT_WRITE_FIELDS.date, 'Date & Time');
+  if (date) fields[dateField] = date;
+  const endField = resolveFieldName(sample, EVENT_WRITE_FIELDS.endDate, null);
+  if (endDate && endField) fields[endField] = endDate;
+  const typeField = resolveFieldName(sample, EVENT_WRITE_FIELDS.type, 'Meeting Type');
+  if (type) fields[typeField] = type;
+  const descField = resolveFieldName(sample, EVENT_WRITE_FIELDS.description, 'Highlights');
+  if (description) fields[descField] = String(description).trim();
+  const locField = resolveFieldName(sample, EVENT_WRITE_FIELDS.location, null);
+  if (location && locField) fields[locField] = String(location).trim();
+  const venueField = resolveFieldName(sample, EVENT_WRITE_FIELDS.venue, null);
+  if (venue && venueField) fields[venueField] = String(venue).trim();
+  const ownerField = resolveFieldName(sample, EVENT_WRITE_FIELDS.ownerEmail, null);
+  if (ownerField) fields[ownerField] = email.toLowerCase();
+  if (groupId && organiserLinkField) fields[organiserLinkField] = [groupId];
+  const imageField = resolveFieldName(sample, EVENT_READ_FIELDS.image, null);
+  if (imageField) {
+    try {
+      const photoAttachment = await resolveLogoAttachment({
+        logoUrl: photoUrl,
+        logoBase64: photoBase64,
+        logoMime: photoMime,
+        logoFilename: photoFilename,
+      });
+      if (photoAttachment) fields[imageField] = photoAttachment;
+    } catch (e) {
+      const err = new Error(e.message || 'photo_upload_failed');
+      err.status = 400;
+      throw err;
+    }
+  }
+  return fields;
+}
+
+async function createEvent(payload) {
   const { events: table } = tables();
   const organiserLinkField = await getEventOrganiserLinkField();
-  const fields = {};
-  const titleField = resolveFieldName(
-    await sampleRecordFields(table),
-    EVENT_WRITE_FIELDS.title,
-    'Event Title'
-  );
-  fields[titleField] = String(title).trim();
-  const dateField = resolveFieldName(
-    await sampleRecordFields(table),
-    EVENT_WRITE_FIELDS.date,
-    'Date & Time'
-  );
-  if (date) fields[dateField] = date;
-  const typeField = resolveFieldName(
-    await sampleRecordFields(table),
-    EVENT_WRITE_FIELDS.type,
-    'Meeting Type'
-  );
-  if (type) fields[typeField] = type;
-  const descField = resolveFieldName(
-    await sampleRecordFields(table),
-    EVENT_WRITE_FIELDS.description,
-    'Highlights'
-  );
-  if (description) fields[descField] = String(description).trim();
   const eventSample = await sampleRecordFields(table);
-  const ownerField = resolveFieldName(eventSample, EVENT_WRITE_FIELDS.ownerEmail, null);
-  if (ownerField) fields[ownerField] = email.toLowerCase();
-  if (groupId) fields[organiserLinkField] = [groupId];
+  const fields = await buildEventRecordFields({
+    ...payload,
+    eventSample,
+    organiserLinkField,
+  });
 
   const resp = await airtableFetch(encodeURIComponent(table), {
     method: 'POST',
@@ -589,6 +626,104 @@ async function createEvent({ email, groupId, title, date, type, description }) {
   }
   const data = await resp.json();
   return recordToOrganiserEvent(data.records[0], organiserLinkField);
+}
+
+async function createEventsBatch(payload) {
+  const dates = Array.isArray(payload.dates) ? payload.dates.filter(Boolean) : [];
+  if (!dates.length) {
+    const one = await createEvent(payload);
+    return [one];
+  }
+  const { events: table } = tables();
+  const organiserLinkField = await getEventOrganiserLinkField();
+  const eventSample = await sampleRecordFields(table);
+  const base = { ...payload, eventSample, organiserLinkField };
+  const created = [];
+  const chunkSize = 10;
+  for (let i = 0; i < dates.length; i += chunkSize) {
+    const slice = dates.slice(i, i + chunkSize);
+    const records = [];
+    for (const date of slice) {
+      records.push({
+        fields: await buildEventRecordFields({ ...base, date, endDate: payload.endDate }),
+      });
+    }
+    const resp = await airtableFetch(encodeURIComponent(table), {
+      method: 'POST',
+      body: JSON.stringify({ records }),
+    });
+    if (!resp.ok) {
+      const err = await resp.text();
+      const e = new Error(parseAirtableError(err)?.message || err);
+      e.status = resp.status;
+      e.detail = err;
+      throw e;
+    }
+    const data = await resp.json();
+    (data.records || []).forEach((rec) => {
+      created.push(recordToOrganiserEvent(rec, organiserLinkField));
+    });
+  }
+  return created;
+}
+
+async function updateEvent(eventId, payload) {
+  const { events: table } = tables();
+  const organiserLinkField = await getEventOrganiserLinkField();
+  const eventSample = await sampleRecordFields(table);
+  const fields = await buildEventRecordFields({
+    ...payload,
+    eventSample,
+    organiserLinkField,
+  });
+  const resp = await airtableFetch(encodeURIComponent(table), {
+    method: 'PATCH',
+    body: JSON.stringify({ records: [{ id: eventId, fields }] }),
+  });
+  if (!resp.ok) {
+    const err = await resp.text();
+    const e = new Error(parseAirtableError(err)?.message || err);
+    e.status = resp.status;
+    e.detail = err;
+    throw e;
+  }
+  const data = await resp.json();
+  return recordToOrganiserEvent(data.records[0], organiserLinkField);
+}
+
+async function getEventById(eventId) {
+  const { events: table } = tables();
+  const organiserLinkField = await getEventOrganiserLinkField();
+  const resp = await airtableFetch(`${encodeURIComponent(table)}/${encodeURIComponent(eventId)}`);
+  if (!resp.ok) {
+    const err = await resp.text();
+    const e = new Error(parseAirtableError(err)?.message || 'Event not found');
+    e.status = resp.status === 404 ? 404 : resp.status;
+    throw e;
+  }
+  const data = await resp.json();
+  return recordToOrganiserEvent(data, organiserLinkField);
+}
+
+async function createTicketsForEvents({ eventIds, tickets }) {
+  const ids = Array.isArray(eventIds) ? eventIds.filter(Boolean) : [];
+  const tiers = Array.isArray(tickets) ? tickets : [];
+  if (!ids.length || !tiers.length) return { created: 0, tickets: [] };
+  const out = [];
+  for (const eventId of ids) {
+    for (const tier of tiers) {
+      const ticket = await createTicket({
+        eventId,
+        name: tier.name,
+        price: tier.price,
+        description: tier.description,
+        status: tier.status,
+        quantityAvailable: tier.quantityAvailable,
+      });
+      out.push(ticket);
+    }
+  }
+  return { created: out.length, tickets: out };
 }
 
 async function createTicket({ eventId, name, price, description, status, quantityAvailable }) {
@@ -835,7 +970,11 @@ module.exports = {
   groupOwnedBySession,
   createGroup,
   createEvent,
+  createEventsBatch,
+  updateEvent,
+  getEventById,
   createTicket,
+  createTicketsForEvents,
   airtableSetupHint,
   recordToGroup,
   getOrganiserWorkspace,

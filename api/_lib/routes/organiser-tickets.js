@@ -7,8 +7,21 @@ const {
   listTicketsForSession,
   isPlatformAdmin,
   createTicket,
+  createTicketsForEvents,
   airtableSetupHint,
 } = require('../organiser');
+
+function parseBody(req) {
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      body = {};
+    }
+  }
+  return body || {};
+}
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -47,14 +60,40 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    let body = req.body;
-    if (typeof body === 'string') {
+    const body = parseBody(req);
+    const eventIds = Array.isArray(body.eventIds)
+      ? body.eventIds.map((id) => String(id).trim()).filter(Boolean)
+      : [];
+    const tickets = Array.isArray(body.tickets) ? body.tickets : [];
+
+    if (eventIds.length && tickets.length) {
       try {
-        body = JSON.parse(body);
-      } catch {
-        body = {};
+        const allowed = await ownedEventIds();
+        const ids = isPlatformAdmin(auth.session)
+          ? eventIds
+          : eventIds.filter((id) => allowed.has(id));
+        if (!ids.length) return json(res, 403, { error: 'event_not_owned' });
+        const tiers = tickets
+          .map((t) => ({
+            name: String(t.name || '').trim(),
+            price: t.price,
+            description: String(t.description || '').trim(),
+            status: String(t.status || 'Available').trim(),
+            quantityAvailable: t.quantityAvailable,
+          }))
+          .filter((t) => t.name);
+        if (!tiers.length) return json(res, 400, { error: 'missing_ticket_types' });
+        const result = await createTicketsForEvents({ eventIds: ids, tickets: tiers });
+        return json(res, 201, { ok: true, ...result });
+      } catch (e) {
+        return json(res, e.status || 500, {
+          error: 'tickets_bulk_failed',
+          message: e.message,
+          airtable: airtableSetupHint('tickets'),
+        });
       }
     }
+
     const eventId = String(body.eventId || '').trim();
     const name = String(body.name || '').trim();
     const price = body.price;

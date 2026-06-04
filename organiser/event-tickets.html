@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ticket types – Organiser – The Networker Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css" />
+  </head>
+  <body class="organiser-event-edit-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260606" data-root="../" data-page="organiser"></script>
+
+    <div class="ee-wrap">
+      <a class="ee-back" href="index.html#events-list">← Back to My Events</a>
+      <h1 class="ee-title">Set up ticket types</h1>
+      <p class="ee-lead" id="ee-tickets-lead">
+        Define your ticket tiers once — we’ll create matching ticket types for every date in this series.
+      </p>
+      <div id="ee-tickets-alert" class="ee-alert" hidden></div>
+
+      <div class="ee-card">
+        <h2>Events in this series</h2>
+        <p class="ee-series-count" id="ee-series-count">0 events</p>
+        <div class="ee-events-pills" id="ee-series-pills"></div>
+      </div>
+
+      <form id="ee-tickets-form">
+        <div class="ee-card">
+          <h2>Ticket types</h2>
+          <p class="ee-hint" style="margin-top:0">Add one row per tier (e.g. Standard, VIP). Each tier is duplicated across all dates above.</p>
+          <div id="ee-tier-rows"></div>
+          <button type="button" class="ee-btn ee-btn-outline" id="ee-add-tier" style="margin-top:12px">+ Add ticket type</button>
+        </div>
+
+        <div class="ee-actions">
+          <button type="submit" class="ee-btn ee-btn-primary" id="ee-tickets-submit">Create tickets for all dates</button>
+          <a class="ee-btn ee-btn-outline" href="index.html#events-tickets">Skip for now</a>
+        </div>
+      </form>
+    </div>
+
+    <script src="../js/organiser-event-tickets.js?v=20260606c"></script>
+  </body>
+</html>

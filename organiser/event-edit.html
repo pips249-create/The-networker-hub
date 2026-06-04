@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Edit event – Organiser – The Networker Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css" />
+  </head>
+  <body class="organiser-event-edit-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260606" data-root="../" data-page="organiser"></script>
+
+    <div class="ee-wrap">
+      <a class="ee-back" href="index.html#events-list">← Back to My Events</a>
+      <h1 class="ee-title" id="ee-page-title">New event listing</h1>
+      <p class="ee-lead" id="ee-page-lead">
+        Add your event details, pick every date this series runs on the calendar, then set up ticket types for all dates in one go.
+      </p>
+      <div id="ee-alert" class="ee-alert" hidden></div>
+
+      <form id="ee-form">
+        <div class="ee-grid">
+          <div class="ee-main">
+            <div class="ee-card">
+              <h2>Event details</h2>
+              <div class="ee-field">
+                <label for="ee-group">Organiser profile</label>
+                <select id="ee-group" required></select>
+              </div>
+              <div class="ee-field">
+                <label for="ee-title">Event title</label>
+                <input type="text" id="ee-title" required placeholder="e.g. Lunch &amp; learn — Liverpool" />
+              </div>
+              <div class="ee-field">
+                <label for="ee-photo-file">Event photo</label>
+                <div class="ee-upload-zone" id="ee-photo-zone" tabindex="0" role="button" aria-label="Upload event photo">
+                  <input type="file" id="ee-photo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+                  <div class="ee-upload-preview" id="ee-photo-preview" hidden>
+                    <img id="ee-photo-preview-img" alt="" width="96" height="72" />
+                    <button type="button" class="ee-btn ee-btn-outline" id="ee-photo-clear" style="font-size:11px;padding:6px 10px">Remove</button>
+                  </div>
+                  <div class="ee-upload-placeholder" id="ee-photo-placeholder">
+                    <strong>Upload cover image</strong>
+                    <span>PNG or JPG, max 2MB — or paste a URL below</span>
+                  </div>
+                </div>
+                <input type="url" id="ee-photo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top:10px" />
+              </div>
+              <div class="ee-field">
+                <label for="ee-type">Meeting type</label>
+                <select id="ee-type">
+                  <option>Networking Event</option>
+                  <option>Exhibition</option>
+                  <option>Conference</option>
+                  <option>Networking / Meeting</option>
+                </select>
+              </div>
+              <div class="ee-row-2">
+                <div class="ee-field">
+                  <label for="ee-location">Location</label>
+                  <input type="text" id="ee-location" placeholder="e.g. Liverpool city centre" />
+                </div>
+                <div class="ee-field">
+                  <label for="ee-venue">Venue</label>
+                  <input type="text" id="ee-venue" placeholder="e.g. The Exchange" />
+                </div>
+              </div>
+              <div class="ee-field">
+                <label for="ee-description">Highlights / description</label>
+                <textarea id="ee-description" rows="4" placeholder="What attendees can expect"></textarea>
+              </div>
+            </div>
+
+            <div class="ee-card">
+              <h2>Time (same for each selected date)</h2>
+              <div class="ee-row-2">
+                <div class="ee-field">
+                  <label for="ee-start-time">Start time</label>
+                  <input type="time" id="ee-start-time" value="10:00" required />
+                </div>
+                <div class="ee-field">
+                  <label for="ee-end-time">End time</label>
+                  <input type="time" id="ee-end-time" value="12:00" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ee-sticky-side">
+            <div class="ee-card">
+              <h2>Recurring dates</h2>
+              <p class="ee-hint" style="margin-top:0">Click days on the calendar to add or remove dates. Each date becomes its own listing in your series.</p>
+              <div class="ee-cal-header">
+                <button type="button" id="ee-cal-prev" aria-label="Previous month">‹</button>
+                <span class="ee-cal-month" id="ee-cal-month-label"></span>
+                <button type="button" id="ee-cal-next" aria-label="Next month">›</button>
+              </div>
+              <div class="ee-cal-weekdays" aria-hidden="true">
+                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+              </div>
+              <div class="ee-cal-days" id="ee-cal-days" role="grid" aria-label="Select event dates"></div>
+              <div class="ee-selected-dates">
+                <strong><span id="ee-date-count">0</span> date(s) selected</strong>
+                <ul id="ee-date-list"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ee-actions">
+          <button type="submit" class="ee-btn ee-btn-primary" id="ee-submit">Save &amp; set up tickets →</button>
+          <a class="ee-btn ee-btn-outline" href="index.html#events-list">Cancel</a>
+        </div>
+      </form>
+    </div>
+
+    <script src="../js/organiser-event-edit.js?v=20260606c"></script>
+  </body>
+</html>
