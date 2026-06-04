@@ -78,6 +78,7 @@ const TICKET_WRITE_FIELDS = {
 
 let writeFieldCache = null;
 let eventLinkFieldCache = null;
+let tableFieldNamesCache = {};
 
 function pick(fields, keys) {
   for (const key of keys) {
@@ -161,15 +162,54 @@ function isPlatformAdmin(session) {
   return isAdminRole(session?.role);
 }
 
-function resolveFieldName(sampleFields, aliases, fallback) {
-  for (const key of aliases) {
-    if (sampleFields && sampleFields[key] !== undefined) return key;
-    const hit = Object.keys(sampleFields || {}).find(
-      (k) => k.toLowerCase() === String(key).toLowerCase()
+async function getTableFieldNames(tableName) {
+  if (tableFieldNamesCache[tableName]) return tableFieldNamesCache[tableName];
+  const { apiKey, baseId } = airtableConfig();
+  if (!apiKey || !baseId) {
+    tableFieldNamesCache[tableName] = [];
+    return [];
+  }
+  try {
+    const resp = await fetch(`https://api.airtable.com/v0/meta/bases/${baseId}/tables`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (!resp.ok) {
+      tableFieldNamesCache[tableName] = [];
+      return [];
+    }
+    const data = await resp.json();
+    const table = (data.tables || []).find(
+      (t) => String(t.name || '').toLowerCase() === String(tableName).toLowerCase()
     );
+    const names = (table?.fields || []).map((f) => f.name).filter(Boolean);
+    tableFieldNamesCache[tableName] = names;
+    return names;
+  } catch {
+    tableFieldNamesCache[tableName] = [];
+    return [];
+  }
+}
+
+function resolveFieldName(sampleFields, aliases, fallback, schemaFieldNames) {
+  const fromSchema = Array.isArray(schemaFieldNames) ? schemaFieldNames : [];
+  const fromSample = Object.keys(sampleFields || {});
+  const names =
+    fromSchema.length > 0
+      ? fromSchema
+      : fromSample.length > 0
+        ? fromSample
+        : [];
+
+  for (const alias of aliases) {
+    const hit = names.find((n) => n.toLowerCase() === String(alias).toLowerCase());
     if (hit) return hit;
   }
-  return fallback;
+  if (fallback) {
+    const hit = names.find((n) => n.toLowerCase() === String(fallback).toLowerCase());
+    if (hit) return hit;
+  }
+  if (!names.length && fallback) return fallback;
+  return null;
 }
 
 async function sampleRecordFields(table) {
@@ -183,15 +223,18 @@ async function getOrganiserWriteFields() {
   if (writeFieldCache) return writeFieldCache;
   const { groups: table } = tables();
   try {
-    const sample = await sampleRecordFields(table);
+    const [sample, schemaFields] = await Promise.all([
+      sampleRecordFields(table),
+      getTableFieldNames(table),
+    ]);
     writeFieldCache = {
-      name: resolveFieldName(sample, GROUP_FIELDS.name, 'Organiser Name'),
-      email: resolveFieldName(sample, GROUP_FIELDS.ownerEmail, 'Email'),
-      description: resolveFieldName(sample, GROUP_FIELDS.description, 'Description'),
-      users: resolveFieldName(sample, GROUP_FIELDS.users, 'Users'),
-      image: resolveFieldName(sample, GROUP_FIELDS.image, 'Logo'),
-      website: resolveFieldName(sample, GROUP_FIELDS.website, 'Website'),
-      location: resolveFieldName(sample, GROUP_FIELDS.location, 'Location'),
+      name: resolveFieldName(sample, GROUP_FIELDS.name, 'Organiser Name', schemaFields),
+      email: resolveFieldName(sample, GROUP_FIELDS.ownerEmail, 'Email', schemaFields),
+      description: resolveFieldName(sample, GROUP_FIELDS.description, 'Description', schemaFields),
+      users: resolveFieldName(sample, GROUP_FIELDS.users, 'Users', schemaFields),
+      image: resolveFieldName(sample, GROUP_FIELDS.image, 'Logo', schemaFields),
+      website: resolveFieldName(sample, GROUP_FIELDS.website, 'Website', schemaFields),
+      location: resolveFieldName(sample, GROUP_FIELDS.location, null, schemaFields),
     };
   } catch {
     writeFieldCache = {
@@ -200,8 +243,8 @@ async function getOrganiserWriteFields() {
       description: 'Description',
       users: 'Users',
       image: 'Logo',
-      website: 'Website',
-      location: 'Location',
+      website: null,
+      location: null,
     };
   }
   return writeFieldCache;
@@ -618,7 +661,8 @@ async function updateGroup(groupId, payload) {
     fields[wf.website] = String(payload.website || '').trim();
   }
   if (payload.location !== undefined && wf.location) {
-    fields[wf.location] = String(payload.location || '').trim();
+    const loc = String(payload.location || '').trim();
+    if (loc) fields[wf.location] = loc;
   }
   if (payload.email && wf.email) fields[wf.email] = String(payload.email).toLowerCase();
 
