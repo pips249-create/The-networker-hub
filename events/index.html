@@ -4,268 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Events &amp; exhibitions – The Networker Hub</title>
-<meta name="description" content="Find UK networking meetings, exhibitions, and conferences in one place. Filter by type, date, industry, location, and format.">
+<meta name="description" content="Find UK networking meetings, exhibitions, and conferences. Filter by type, date, industry, and location.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css">
-<style>
-.layout {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 20px;
-  align-items: start;
-}
-@media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
-
-.filters {
-  background: var(--surface-card);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius);
-  padding: 18px;
-  position: sticky;
-  top: 80px;
-}
-.filters h2 {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.1rem;
-  font-weight: 400;
-  color: var(--charcoal);
-  margin-bottom: 14px;
-}
-.filter-group { margin-bottom: 16px; }
-.filter-group label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-soft);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 6px;
-}
-.filter-group input,
-.filter-group select {
-  width: 100%;
-  font-family: inherit;
-  font-size: 13px;
-  padding: 9px 11px;
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
-  background: var(--white);
-  color: var(--text-body);
-}
-.filter-group input:focus,
-.filter-group select:focus {
-  outline: none;
-  border-color: var(--lavender);
-  box-shadow: 0 0 0 3px rgba(194, 153, 209, 0.25);
-}
-
-.type-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-.type-tab {
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 10px 16px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border-soft);
-  background: var(--surface-card);
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-.type-tab:hover {
-  border-color: var(--lavender);
-  color: var(--charcoal);
-}
-.type-tab .count {
-  font-weight: 500;
-  opacity: 0.75;
-  margin-left: 4px;
-}
-
-.results-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 16px;
-  font-size: 13px;
-  color: var(--text-muted);
-}
-.results-bar strong { color: var(--charcoal); }
-
-.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip {
-  font-size: 11px;
-  padding: 6px 11px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border-soft);
-  background: var(--purple-pale);
-  cursor: pointer;
-  font-family: inherit;
-  color: var(--text-mid);
-}
-.chip:hover,
-.chip.is-active {
-  border-color: var(--lavender);
-  background: rgba(194, 153, 209, 0.35);
-  color: var(--charcoal);
-}
-
-.featured { margin-bottom: 24px; }
-.featured h2 {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.15rem;
-  font-weight: 400;
-  color: var(--charcoal);
-  margin-bottom: 12px;
-}
-.featured-scroll {
-  display: flex;
-  gap: 14px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-}
-.event-card {
-  flex: 0 0 240px;
-  background: var(--surface-card);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius);
-  overflow: hidden;
-  transition: opacity 0.2s;
-}
-.event-card.is-hidden { display: none; }
-.event-card .thumb {
-  height: 100px;
-  background: linear-gradient(135deg, var(--lavender-soft) 0%, var(--lavender) 100%);
-}
-.event-card[data-type="exhibition"] .thumb {
-  background: linear-gradient(135deg, var(--lavender-light) 0%, var(--lavender-soft) 100%);
-}
-.event-card .body { padding: 12px 14px; }
-.type-badge {
-  display: inline-block;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border-radius: var(--radius-pill);
-  margin-bottom: 6px;
-}
-.type-badge.meeting {
-  background: rgba(74, 68, 70, 0.12);
-  color: var(--charcoal);
-}
-.type-badge.exhibition {
-  background: rgba(194, 153, 209, 0.35);
-  color: var(--charcoal);
-}
-.event-card h3 {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--charcoal);
-  margin-bottom: 4px;
-  line-height: 1.3;
-}
-.event-card .meta {
-  font-size: 11px;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-.event-card .price {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--lavender-deep);
-  margin-top: 8px;
-}
-
-.listings-header {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.15rem;
-  font-weight: 400;
-  color: var(--charcoal);
-  margin-bottom: 12px;
-}
-.listings .event-row {
-  display: grid;
-  grid-template-columns: 100px 1fr auto;
-  gap: 14px;
-  align-items: center;
-  background: var(--surface-card);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius);
-  padding: 14px;
-  margin-bottom: 10px;
-  transition: opacity 0.2s;
-}
-.listings .event-row.is-hidden { display: none; }
-@media (max-width: 600px) {
-  .listings .event-row { grid-template-columns: 1fr; }
-}
-.event-row .thumb {
-  height: 72px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, var(--lavender-soft), var(--lavender));
-}
-.event-row[data-type="exhibition"] .thumb {
-  background: linear-gradient(135deg, var(--lavender-light), var(--lavender-soft));
-}
-.event-row h3 {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--charcoal);
-  margin-bottom: 4px;
-}
-.event-row .meta { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
-.event-row .actions {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--lavender-deep);
-  white-space: nowrap;
-}
-.empty-state {
-  display: none;
-  text-align: center;
-  padding: 48px 24px;
-  background: var(--surface-card);
-  border: 1px dashed var(--border-soft);
-  border-radius: var(--radius);
-  color: var(--text-muted);
-  font-size: 14px;
-}
-.empty-state.is-visible { display: block; }
-.empty-state button {
-  margin-top: 12px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 8px 16px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border-soft);
-  background: var(--cream);
-  cursor: pointer;
-  color: var(--charcoal);
-}
-.prototype-note {
-  font-size: 12px;
-  color: var(--text-soft);
-  margin-bottom: 16px;
-}
-</style>
+<link rel="stylesheet" href="../css/events-page.css">
 </head>
-<body>
+<body class="events-page">
 
 <header class="site-nav on-light legacy-nav">
   <a class="nav-logo" href="../index.html" aria-label="The Networker Hub home">
-    <img src="../assets/logo.svg" alt="The Networker Hub" width="180" height="72">
+    <img src="../assets/logo.png" alt="The Networker Hub" width="180" height="72">
   </a>
   <nav class="nav-links">
     <a href="index.html">Events</a>
@@ -274,220 +24,123 @@
   </nav>
 </header>
 
-<section class="hero" style="padding-bottom: 48px;">
+<section class="hero">
   <div class="hero-inner">
     <p class="hero-eyebrow">Events &amp; exhibitions</p>
     <h1>Meetings, exhibitions &amp; <span class="accent">conferences</span></h1>
-    <p class="hero-lede">One place to discover everything — filter by event type, date, industry, location, and format.</p>
+    <p class="hero-lede">One listing for every format — filter by type, date, industry, and location. Data from your Airtable base.</p>
   </div>
 </section>
 
 <main class="shell">
-  <p class="prototype-note">Sample listings — use the filters below. Live data and ticketing coming soon.</p>
+  <p class="load-status" id="load-status" hidden>Loading…</p>
 
-  <div class="layout">
-    <aside class="filters" aria-label="Filter events and exhibitions">
-      <h2>Filter &amp; sort</h2>
+  <div class="events-toolbar">
+    <div class="type-tabs" role="tablist" aria-label="Event type">
+      <button type="button" class="type-tab is-active" role="tab" aria-selected="true" data-type="all">All<span class="count" id="count-all"></span></button>
+      <button type="button" class="type-tab" role="tab" aria-selected="false" data-type="meeting">Meetings<span class="count" id="count-meeting"></span></button>
+      <button type="button" class="type-tab" role="tab" aria-selected="false" data-type="exhibition">Exhibitions<span class="count" id="count-exhibition"></span></button>
+    </div>
+    <div class="results-bar" style="margin:0;">
+      <span>Showing <strong id="results-count">0</strong> listings</span>
+      <button type="button" id="clear-filters" style="font-family:inherit;font-size:12px;font-weight:600;color:var(--lavender-deep);background:none;border:none;cursor:pointer;text-decoration:underline;">Clear filters</button>
+    </div>
+  </div>
 
-      <div class="filter-group">
-        <label for="filter-type">Event type</label>
-        <select id="filter-type" aria-label="Event type">
-          <option value="all">All types</option>
-          <option value="meeting">Meetings &amp; networking</option>
-          <option value="exhibition">Exhibitions &amp; conferences</option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label for="search">Search</label>
-        <input type="search" id="search" placeholder="Name or keywords…" autocomplete="off">
-      </div>
-
-      <div class="filter-group">
-        <label>Date</label>
-        <div class="chip-row" id="date-chips">
-          <button type="button" class="chip" data-date="week">This week</button>
-          <button type="button" class="chip" data-date="month">This month</button>
-          <button type="button" class="chip" data-date="next-week">Next week</button>
-          <button type="button" class="chip" data-date="next-month">Next month</button>
+  <div class="events-body">
+    <aside class="filters-panel" aria-label="Filters">
+      <div class="filters">
+        <h2>Filter &amp; sort</h2>
+        <div class="filter-group">
+          <label for="filter-type">Event type</label>
+          <select id="filter-type">
+            <option value="all">All types</option>
+            <option value="meeting">Meetings &amp; networking</option>
+            <option value="exhibition">Exhibitions &amp; conferences</option>
+          </select>
         </div>
-      </div>
-
-      <div class="filter-group">
-        <label for="sort">Sort by</label>
-        <select id="sort">
-          <option value="date">Date</option>
-          <option value="rating">Best rated</option>
-          <option value="price">Price</option>
-          <option value="near">Near me</option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label for="location">Location</label>
-        <select id="location">
-          <option value="">All locations</option>
-          <option value="online">Online</option>
-          <option value="london">London</option>
-          <option value="manchester">Manchester</option>
-          <option value="birmingham">Birmingham</option>
-          <option value="cambridge">Cambridge</option>
-          <option value="leeds">Leeds</option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label for="industry">Industry</label>
-        <select id="industry">
-          <option value="">All industries</option>
-          <option value="professional">Professional services</option>
-          <option value="technology">Technology</option>
-          <option value="marketing">Marketing</option>
-          <option value="property">Property</option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label for="format">Format</label>
-        <select id="format">
-          <option value="">Any format</option>
-          <option value="in-person">In person</option>
-          <option value="online">Online</option>
-          <option value="hybrid">Hybrid</option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label for="price">Price</label>
-        <select id="price">
-          <option value="">Any price</option>
-          <option value="free">Free only</option>
-          <option value="paid">Paid only</option>
-        </select>
+        <div class="filter-group">
+          <label for="search">Search</label>
+          <input type="search" id="search" placeholder="Name or keywords…" autocomplete="off">
+        </div>
+        <div class="filter-group">
+          <label for="sort">Sort by</label>
+          <select id="sort">
+            <option value="date">Date</option>
+            <option value="rating">Best rated</option>
+            <option value="price">Price</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="location">Location</label>
+          <select id="location">
+            <option value="">All locations</option>
+            <option value="online">Online</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="industry">Industry</label>
+          <select id="industry">
+            <option value="">All industries</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="format">Format</label>
+          <select id="format">
+            <option value="">Any format</option>
+            <option value="in-person">In person</option>
+            <option value="online">Online</option>
+            <option value="hybrid">Hybrid</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="price">Price</label>
+          <select id="price">
+            <option value="">Any price</option>
+            <option value="free">Free only</option>
+            <option value="paid">Paid only</option>
+          </select>
+        </div>
       </div>
     </aside>
 
-    <div>
-      <div class="type-tabs" role="tablist" aria-label="Event type">
-        <button type="button" class="type-tab is-active" role="tab" aria-selected="true" data-type="all">All<span class="count" id="count-all"></span></button>
-        <button type="button" class="type-tab" role="tab" aria-selected="false" data-type="meeting">Meetings &amp; networking<span class="count" id="count-meeting"></span></button>
-        <button type="button" class="type-tab" role="tab" aria-selected="false" data-type="exhibition">Exhibitions &amp; conferences<span class="count" id="count-exhibition"></span></button>
+    <div class="events-main">
+      <div class="spotlight-sponsor-row">
+        <section class="premium-spotlight" aria-labelledby="spotlight-heading">
+          <div class="spotlight-header">
+            <div class="spotlight-title" id="spotlight-heading">
+              <span class="icon" aria-hidden="true">★</span>
+              Premium Spotlight
+            </div>
+            <div class="spotlight-nav">
+              <a href="#listings" class="spotlight-view-all">View all</a>
+              <button type="button" id="spotlight-prev" aria-label="Previous">‹</button>
+              <button type="button" id="spotlight-next" aria-label="Next">›</button>
+            </div>
+          </div>
+          <div class="spotlight-wrap">
+            <div class="spotlight-track" id="spotlight-track"></div>
+          </div>
+        </section>
+
+        <aside class="sponsor-hub" aria-labelledby="sponsor-heading">
+          <div class="sponsor-hub-head" id="sponsor-heading">
+            <span class="icon" aria-hidden="true">★</span>
+            Sponsor Hub
+          </div>
+          <h3><em>Get sponsored:</em> Reach 10k founders monthly from £2,000/month</h3>
+          <ul class="sponsor-list">
+            <li>Premium placement beside Featured events</li>
+            <li>Short line of copy</li>
+            <li>Direct link to your landing page</li>
+          </ul>
+          <a class="sponsor-cta" href="mailto:sales@the-networker.co.uk?subject=Sponsor%20Hub%20enquiry">Enquire now</a>
+        </aside>
       </div>
 
-      <div class="results-bar">
-        <span id="results-text">Showing <strong id="results-count">0</strong> events</span>
-        <button type="button" id="clear-filters" style="font-family:inherit;font-size:12px;font-weight:600;color:var(--lavender-deep);background:none;border:none;cursor:pointer;text-decoration:underline;">Clear filters</button>
-      </div>
-
-      <section class="featured" aria-labelledby="featured-heading">
-        <h2 id="featured-heading">Featured</h2>
-        <div class="featured-scroll" id="featured-list">
-          <article class="event-card" data-type="meeting" data-search="cambridge business breakfast networking professional in-person" data-location="cambridge" data-industry="professional" data-format="in-person" data-price="paid">
-            <div class="thumb" role="img" aria-label=""></div>
-            <div class="body">
-              <span class="type-badge meeting">Meeting</span>
-              <h3>Cambridge Business Breakfast</h3>
-              <p class="meta">Tue 12 Jun · Cambridge · In person</p>
-              <p class="price">£18.00</p>
-            </div>
-          </article>
-          <article class="event-card" data-type="exhibition" data-search="uk proptech expo exhibition property conference birmingham" data-location="birmingham" data-industry="property" data-format="in-person" data-price="paid">
-            <div class="thumb"></div>
-            <div class="body">
-              <span class="type-badge exhibition">Exhibition</span>
-              <h3>UK PropTech Expo 2026</h3>
-              <p class="meta">Wed 18 – Thu 19 Jun · Birmingham NEC</p>
-              <p class="price">From £45.00</p>
-            </div>
-          </article>
-          <article class="event-card" data-type="meeting" data-search="tech founders online meetup technology" data-location="online" data-industry="technology" data-format="online" data-price="free">
-            <div class="thumb"></div>
-            <div class="body">
-              <span class="type-badge meeting">Meeting</span>
-              <h3>Tech Founders Online Meetup</h3>
-              <p class="meta">Thu 14 Jun · Online</p>
-              <p class="price">Free</p>
-            </div>
-          </article>
-          <article class="event-card" data-type="exhibition" data-search="northern marketing conference exhibition manchester" data-location="manchester" data-industry="marketing" data-format="in-person" data-price="paid">
-            <div class="thumb"></div>
-            <div class="body">
-              <span class="type-badge exhibition">Exhibition</span>
-              <h3>Northern Marketing Conference</h3>
-              <p class="meta">Fri 21 Jun · Manchester Central</p>
-              <p class="price">From £89.00</p>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section class="listings" aria-labelledby="all-heading">
+      <section class="listings-block" id="listings" aria-labelledby="all-heading">
         <h2 class="listings-header" id="all-heading">All listings</h2>
-
-        <article class="event-row" data-type="meeting" data-search="leeds professional networking lunch professional services in-person yorkshire" data-location="leeds" data-industry="professional" data-format="in-person" data-price="paid">
-          <div class="thumb"></div>
-          <div>
-            <span class="type-badge meeting">Meeting</span>
-            <h3>Leeds Professional Networking Lunch</h3>
-            <p class="meta">Professional services · In person · Host: Yorkshire Network Co.</p>
-          </div>
-          <span class="actions">View · Save · Share</span>
-        </article>
-
-        <article class="event-row" data-type="exhibition" data-search="birmingham business exhibition conference sme growth" data-location="birmingham" data-industry="professional" data-format="in-person" data-price="free">
-          <div class="thumb"></div>
-          <div>
-            <span class="type-badge exhibition">Exhibition</span>
-            <h3>Birmingham Business Growth Exhibition</h3>
-            <p class="meta">Sat 22 Jun · Birmingham · Free entry · 120+ exhibitors</p>
-          </div>
-          <span class="actions">View · Save · Share</span>
-        </article>
-
-        <article class="event-row" data-type="meeting" data-search="property investors roundtable hybrid property" data-location="london" data-industry="property" data-format="hybrid" data-price="paid">
-          <div class="thumb"></div>
-          <div>
-            <span class="type-badge meeting">Meeting</span>
-            <h3>Property Investors Roundtable</h3>
-            <p class="meta">Property · Hybrid · London &amp; online stream</p>
-          </div>
-          <span class="actions">View · Save · Share</span>
-        </article>
-
-        <article class="event-row" data-type="exhibition" data-search="london fintech summit conference exhibition financial technology" data-location="london" data-industry="technology" data-format="in-person" data-price="paid">
-          <div class="thumb"></div>
-          <div>
-            <span class="type-badge exhibition">Exhibition</span>
-            <h3>London FinTech Summit</h3>
-            <p class="meta">Tue 25 – Wed 26 Jun · ExCeL London · Technology</p>
-          </div>
-          <span class="actions">View · Save · Share</span>
-        </article>
-
-        <article class="event-row" data-type="meeting" data-search="manchester growth network business networking" data-location="manchester" data-industry="professional" data-format="in-person" data-price="paid">
-          <div class="thumb"></div>
-          <div>
-            <span class="type-badge meeting">Meeting</span>
-            <h3>Manchester Growth Network</h3>
-            <p class="meta">Mon 17 Jun · Manchester · In person</p>
-          </div>
-          <span class="actions">View · Save · Share</span>
-        </article>
-
-        <article class="event-row" data-type="exhibition" data-search="creative industries showcase conference exhibition online hybrid" data-location="online" data-industry="marketing" data-format="hybrid" data-price="paid">
-          <div class="thumb"></div>
-          <div>
-            <span class="type-badge exhibition">Exhibition</span>
-            <h3>Creative Industries Showcase</h3>
-            <p class="meta">Thu 27 Jun · Hybrid · Marketing &amp; media</p>
-          </div>
-          <span class="actions">View · Save · Share</span>
-        </article>
-
-        <div class="empty-state" id="empty-state" role="status">
-          <p>No events match your filters. Try a different type or clear your search.</p>
-          <button type="button" id="empty-reset">Show all events</button>
-        </div>
+        <div class="listings" id="listings"></div>
       </section>
     </div>
   </div>
@@ -495,123 +148,12 @@
 
 <footer class="site-footer">
   <div class="footer-inner" style="justify-content:center;">
-    <a href="../index.html" style="color:var(--lavender);font-weight:600;">← Back to home</a>
+    <a href="../index.html" style="color:var(--lavender-deep);font-weight:600;">← Back to home</a>
   </div>
   <p class="footer-copy">© The Networker Group Ltd</p>
 </footer>
 
-<script>
-(function () {
-  var typeSelect = document.getElementById('filter-type');
-  var searchInput = document.getElementById('search');
-  var locationSelect = document.getElementById('location');
-  var industrySelect = document.getElementById('industry');
-  var formatSelect = document.getElementById('format');
-  var priceSelect = document.getElementById('price');
-  var typeTabs = document.querySelectorAll('.type-tab');
-  var items = document.querySelectorAll('.event-card, .event-row');
-  var resultsCount = document.getElementById('results-count');
-  var emptyState = document.getElementById('empty-state');
-  var listingsSection = document.querySelector('.listings');
-
-  function getActiveType() {
-    return typeSelect.value || 'all';
-  }
-
-  function setActiveType(value) {
-    typeSelect.value = value;
-    typeTabs.forEach(function (tab) {
-      var active = tab.getAttribute('data-type') === value;
-      tab.classList.toggle('is-active', active);
-      tab.setAttribute('aria-selected', active ? 'true' : 'false');
-    });
-    if (location.hash === '#exhibitions' && value === 'all') { /* consumed */ }
-    applyFilters();
-  }
-
-  function itemMatches(el) {
-    var type = getActiveType();
-    if (type !== 'all' && el.getAttribute('data-type') !== type) return false;
-
-    var q = (searchInput.value || '').trim().toLowerCase();
-    if (q && (el.getAttribute('data-search') || '').indexOf(q) === -1) return false;
-
-    var loc = locationSelect.value;
-    if (loc && el.getAttribute('data-location') !== loc) return false;
-
-    var ind = industrySelect.value;
-    if (ind && el.getAttribute('data-industry') !== ind) return false;
-
-    var fmt = formatSelect.value;
-    if (fmt && el.getAttribute('data-format') !== fmt) return false;
-
-    var price = priceSelect.value;
-    if (price && el.getAttribute('data-price') !== price) return false;
-
-    return true;
-  }
-
-  function applyFilters() {
-    var visible = 0;
-    var visibleListings = 0;
-    items.forEach(function (el) {
-      var show = itemMatches(el);
-      el.classList.toggle('is-hidden', !show);
-      if (show) {
-        visible++;
-        if (el.classList.contains('event-row')) visibleListings++;
-      }
-    });
-    resultsCount.textContent = String(visibleListings);
-    emptyState.classList.toggle('is-visible', visibleListings === 0);
-
-    var meetings = 0;
-    var exhibitions = 0;
-    document.querySelectorAll('.event-row').forEach(function (el) {
-      if (el.getAttribute('data-type') === 'meeting') meetings++;
-      if (el.getAttribute('data-type') === 'exhibition') exhibitions++;
-    });
-    document.getElementById('count-all').textContent = '(' + (meetings + exhibitions) + ')';
-    document.getElementById('count-meeting').textContent = '(' + meetings + ')';
-    document.getElementById('count-exhibition').textContent = '(' + exhibitions + ')';
-  }
-
-  typeTabs.forEach(function (tab) {
-    tab.addEventListener('click', function () {
-      setActiveType(tab.getAttribute('data-type'));
-    });
-  });
-
-  typeSelect.addEventListener('change', function () {
-    setActiveType(typeSelect.value);
-  });
-
-  [searchInput, locationSelect, industrySelect, formatSelect, priceSelect].forEach(function (el) {
-    el.addEventListener('input', applyFilters);
-    el.addEventListener('change', applyFilters);
-  });
-
-  document.getElementById('clear-filters').addEventListener('click', resetFilters);
-  document.getElementById('empty-reset').addEventListener('click', resetFilters);
-
-  function resetFilters() {
-    searchInput.value = '';
-    locationSelect.value = '';
-    industrySelect.value = '';
-    formatSelect.value = '';
-    priceSelect.value = '';
-    setActiveType('all');
-  }
-
-  if (location.hash === '#exhibitions' || location.search.indexOf('type=exhibition') !== -1) {
-    setActiveType('exhibition');
-  } else if (location.hash === '#meetings' || location.search.indexOf('type=meeting') !== -1) {
-    setActiveType('meeting');
-  } else {
-    applyFilters();
-  }
-})();
-</script>
-
+<script src="../js/events-filters.js"></script>
+<script src="../js/events.js"></script>
 </body>
 </html>
