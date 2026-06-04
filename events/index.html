@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Networking events – The Networker Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/hub.css">
+<style>
+.layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
+
+.filters {
+  background: var(--white);
+  border: 0.5px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 18px;
+  position: sticky;
+  top: 80px;
+}
+.filters h2 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--purple-dark);
+  margin-bottom: 14px;
+}
+.filter-group { margin-bottom: 16px; }
+.filter-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.filter-group input,
+.filter-group select {
+  width: 100%;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 8px 10px;
+  border: 0.5px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+}
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 0.5px solid var(--border-soft);
+  background: var(--purple-pale);
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text-mid);
+}
+.chip:hover { border-color: var(--purple); color: var(--purple-dark); }
+
+.featured {
+  margin-bottom: 20px;
+}
+.featured h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--purple-dark);
+  margin-bottom: 12px;
+}
+.featured-scroll {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.event-card {
+  flex: 0 0 220px;
+  background: var(--white);
+  border: 0.5px solid var(--border-soft);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.event-card .thumb {
+  height: 100px;
+  background: linear-gradient(135deg, var(--purple-pale), var(--gold-light));
+}
+.event-card .body { padding: 12px 14px; }
+.event-card h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--purple-dark);
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+.event-card .meta {
+  font-size: 11px;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+.event-card .price {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold);
+  margin-top: 6px;
+}
+
+.listings .event-row {
+  display: grid;
+  grid-template-columns: 100px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  background: var(--white);
+  border: 0.5px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+@media (max-width: 600px) {
+  .listings .event-row { grid-template-columns: 1fr; }
+}
+.event-row .thumb { height: 72px; border-radius: var(--radius-sm); background: var(--purple-pale); }
+.event-row h3 { font-size: 14px; font-weight: 600; color: var(--purple-dark); }
+.event-row .meta { font-size: 12px; color: var(--text-mid); font-weight: 300; }
+.event-row .actions { font-size: 12px; font-weight: 600; color: var(--purple); white-space: nowrap; }
+.prototype-note {
+  font-size: 12px;
+  color: var(--text-soft);
+  margin-bottom: 16px;
+  font-weight: 300;
+}
+</style>
+</head>
+<body>
+
+<header class="site-nav">
+  <a class="nav-brand" href="../index.html">
+    <span class="nav-mark">N</span>
+    The <span>Networker</span> Hub
+  </a>
+  <nav class="nav-links">
+    <a href="index.html">Events</a>
+    <a href="../index.html">Hub home</a>
+  </nav>
+</header>
+
+<section class="hero" style="padding-bottom: 48px;">
+  <div class="hero-inner">
+    <p class="hero-eyebrow">Networking events</p>
+    <h1>Meetings &amp; <span class="accent">networking</span></h1>
+    <p class="hero-lede">Featured events (max 5 per industry/city on live site), full filters from your brief, organiser listings via Airtable.</p>
+  </div>
+</section>
+
+<main class="shell">
+  <p class="prototype-note">Sample data only — connects to Airtable + Stripe in Phase 1–4.</p>
+
+  <div class="layout">
+    <aside class="filters" aria-label="Filter events">
+      <h2>Filter &amp; sort</h2>
+      <div class="filter-group">
+        <label for="search">Search</label>
+        <input type="search" id="search" placeholder="Event name or keywords…">
+      </div>
+      <div class="filter-group">
+        <label>Date</label>
+        <div class="chip-row">
+          <button type="button" class="chip">This week</button>
+          <button type="button" class="chip">This month</button>
+          <button type="button" class="chip">Next week</button>
+          <button type="button" class="chip">Next month</button>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label for="sort">Sort</label>
+        <select id="sort">
+          <option>Best rated</option>
+          <option>Date</option>
+          <option>Price</option>
+          <option>Near me</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="location">Location</label>
+        <select id="location">
+          <option>All</option>
+          <option>Online</option>
+          <option>London</option>
+          <option>Manchester</option>
+          <option>Birmingham</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="industry">Industry</label>
+        <select id="industry">
+          <option>All industries</option>
+          <option>Professional services</option>
+          <option>Technology</option>
+          <option>Marketing</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="format">Meeting format</label>
+        <select id="format">
+          <option>Any</option>
+          <option>In person</option>
+          <option>Online</option>
+        </select>
+      </div>
+    </aside>
+
+    <div>
+      <section class="featured" aria-labelledby="featured-heading">
+        <h2 id="featured-heading">Featured events</h2>
+        <div class="featured-scroll">
+          <article class="event-card">
+            <div class="thumb" role="img" aria-label="Event image placeholder"></div>
+            <div class="body">
+              <h3>Cambridge Business Breakfast</h3>
+              <p class="meta">Tue 12 Jun · Cambridge · In person</p>
+              <p class="price">£18.00</p>
+            </div>
+          </article>
+          <article class="event-card">
+            <div class="thumb"></div>
+            <div class="body">
+              <h3>Tech Founders Online Meetup</h3>
+              <p class="meta">Thu 14 Jun · Online</p>
+              <p class="price">Free</p>
+            </div>
+          </article>
+          <article class="event-card">
+            <div class="thumb"></div>
+            <div class="body">
+              <h3>Manchester Growth Network</h3>
+              <p class="meta">Mon 17 Jun · Manchester</p>
+              <p class="price">£12.00</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="listings" aria-labelledby="all-heading">
+        <h2 id="all-heading" style="font-size:14px;font-weight:700;color:var(--purple-dark);margin-bottom:12px;">All listings</h2>
+        <article class="event-row">
+          <div class="thumb"></div>
+          <div>
+            <h3>Leeds Professional Networking Lunch</h3>
+            <p class="meta">Professional services · In person · Host: Yorkshire Network Co.</p>
+          </div>
+          <span class="actions">View · Save · Share</span>
+        </article>
+        <article class="event-row">
+          <div class="thumb"></div>
+          <div>
+            <h3>Property Investors Roundtable</h3>
+            <p class="meta">Property · Hybrid · Reviews from organiser profile</p>
+          </div>
+          <span class="actions">View · Save · Share</span>
+        </article>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <a href="../index.html">← Hub home</a>
+</footer>
+
+</body>
+</html>
