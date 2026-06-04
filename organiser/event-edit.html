@@ -18,7 +18,8 @@
     <script src="../js/site-nav.js?v=20260606" data-root="../" data-page="organiser"></script>
 
     <div class="ee-wrap">
-      <a class="ee-back" href="index.html#events-list">← Back to My Events</a>
+      <a class="ee-back" href="index.html#events-list" id="ee-back-link">← Back to My Events</a>
+      <p class="ee-format-badge" id="ee-format-badge" hidden></p>
       <h1 class="ee-title" id="ee-page-title">New event listing</h1>
       <p class="ee-lead" id="ee-page-lead">
         Add your event details, pick every date this series runs on the calendar, then set up ticket types for all dates in one go.
@@ -60,21 +61,65 @@
                   <option>Exhibition</option>
                   <option>Conference</option>
                   <option>Networking / Meeting</option>
+                  <option>Webinar</option>
+                  <option>Workshop</option>
                 </select>
-              </div>
-              <div class="ee-row-2">
-                <div class="ee-field">
-                  <label for="ee-location">Location</label>
-                  <input type="text" id="ee-location" placeholder="e.g. Liverpool city centre" />
-                </div>
-                <div class="ee-field">
-                  <label for="ee-venue">Venue</label>
-                  <input type="text" id="ee-venue" placeholder="e.g. The Exchange" />
-                </div>
               </div>
               <div class="ee-field">
                 <label for="ee-description">Highlights / description</label>
-                <textarea id="ee-description" rows="4" placeholder="What attendees can expect"></textarea>
+                <p class="ee-hint" id="ee-description-hint">
+                  Attendees search and filter events using this text — include who it is for, what happens, and keywords (industry, location, outcomes).
+                </p>
+                <textarea id="ee-description" rows="5" placeholder="What attendees can expect, who should come, and what they will take away"></textarea>
+              </div>
+            </div>
+
+            <div class="ee-card" id="ee-venue-block" hidden>
+              <h2>Venue &amp; address</h2>
+              <p class="ee-hint" style="margin-top:0">Shown on your public listing. All fields are optional — add as much detail as you have.</p>
+              <div class="ee-field">
+                <label for="ee-venue">Venue name</label>
+                <input type="text" id="ee-venue" placeholder="e.g. The Exchange" />
+              </div>
+              <div class="ee-field">
+                <label for="ee-address1">Address line 1</label>
+                <input type="text" id="ee-address1" placeholder="Street address" />
+              </div>
+              <div class="ee-row-2">
+                <div class="ee-field">
+                  <label for="ee-city">City / town</label>
+                  <input type="text" id="ee-city" placeholder="e.g. Liverpool" />
+                </div>
+                <div class="ee-field">
+                  <label for="ee-postcode">Postcode</label>
+                  <input type="text" id="ee-postcode" placeholder="e.g. L1 8JQ" />
+                </div>
+              </div>
+              <div class="ee-field">
+                <label for="ee-location">Area shown on listing <span class="ee-optional">(optional)</span></label>
+                <p class="ee-hint">Short label for search cards, e.g. “Liverpool city centre”. We also build a full address from the fields above.</p>
+                <input type="text" id="ee-location" placeholder="e.g. Liverpool city centre" />
+              </div>
+            </div>
+
+            <div class="ee-card" id="ee-online-block" hidden>
+              <h2>Online access</h2>
+              <p class="ee-hint" style="margin-top:0">Join details are emailed to ticket holders and are not shown on the public listing.</p>
+              <div class="ee-field">
+                <label for="ee-platform">Platform</label>
+                <select id="ee-platform">
+                  <option value="">Select platform (optional)</option>
+                  <option>Zoom Meeting</option>
+                  <option>Zoom Webinar</option>
+                  <option>Microsoft Teams</option>
+                  <option>Google Meet</option>
+                  <option>Hopin</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="ee-field">
+                <label for="ee-join-link">Attendee join link <span class="ee-optional">(optional)</span></label>
+                <input type="url" id="ee-join-link" placeholder="https://…" />
               </div>
             </div>
 
@@ -113,6 +158,9 @@
                 <ul id="ee-date-list"></ul>
               </div>
             </div>
+            <p class="ee-hint">
+              <a href="event-format.html" id="ee-change-format">Change format (in person / online / hybrid)</a>
+            </p>
           </div>
         </div>
 
@@ -124,6 +172,6 @@
     </div>
 
     <script src="../js/organiser-quarter-time.js?v=20260606e"></script>
-    <script src="../js/organiser-event-edit.js?v=20260606k"></script>
+    <script src="../js/organiser-event-edit.js?v=20260606m"></script>
   </body>
 </html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>New event – Format – The Networker Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css" />
+  </head>
+  <body class="organiser-event-edit-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260606" data-root="../" data-page="organiser"></script>
+
+    <div class="ee-wrap ee-format-wrap">
+      <a class="ee-back" href="index.html#events-list">← Back to My Events</a>
+      <h1 class="ee-title">How will people attend?</h1>
+      <p class="ee-lead">
+        Choose the format first — the next step shows only the fields that apply (venue address for in-person events, join link for online, or both for hybrid).
+      </p>
+
+      <div class="ee-format-grid" role="list">
+        <a class="ee-format-card" href="event-edit.html?format=in-person" role="listitem">
+          <span class="ee-format-icon" aria-hidden="true">📍</span>
+          <strong>In person</strong>
+          <span>Venue name, full address and postcode for your listing and map.</span>
+        </a>
+        <a class="ee-format-card" href="event-edit.html?format=online" role="listitem">
+          <span class="ee-format-icon" aria-hidden="true">💻</span>
+          <strong>Online</strong>
+          <span>Platform and join link (sent to ticket holders, not shown publicly).</span>
+        </a>
+        <a class="ee-format-card" href="event-edit.html?format=hybrid" role="listitem">
+          <span class="ee-format-icon" aria-hidden="true">🔀</span>
+          <strong>Hybrid</strong>
+          <span>In-person venue plus online access for remote attendees.</span>
+        </a>
+      </div>
+    </div>
+  </body>
+</html>

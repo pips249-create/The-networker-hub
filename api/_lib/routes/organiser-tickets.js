@@ -80,6 +80,9 @@ module.exports = async function handler(req, res) {
             description: String(t.description || '').trim(),
             status: String(t.status || 'Available').trim(),
             quantityAvailable: t.quantityAvailable,
+            saleEnd: t.saleEnd || null,
+            saleStart: t.saleStart || null,
+            oneSeatOnly: Boolean(t.oneSeatOnly),
           }))
           .filter((t) => t.name);
         if (!tiers.length) return json(res, 400, { error: 'missing_ticket_types' });

@@ -33,10 +33,81 @@
 
       <form id="ee-tickets-form">
         <div class="ee-card">
+          <h2>How would you like to manage attendance?</h2>
+          <p class="ee-hint" style="margin-top:0">
+            Choose open ticket booking, or the One Seat Only Policy for application-based attendance. These options are mutually exclusive.
+          </p>
+          <div class="ee-mode-toggle" role="group" aria-label="Attendance mode">
+            <button type="button" class="ee-mode-btn is-active" data-mode="tickets" id="ee-mode-tickets">🎟 Ticket types</button>
+            <button type="button" class="ee-mode-btn" data-mode="osop" id="ee-mode-osop">🪑 One Seat Only Policy</button>
+          </div>
+          <p class="ee-mode-desc" id="ee-mode-desc">
+            Standard open booking — set up one or more ticket types with prices and quantities. Attendees purchase directly.
+          </p>
+        </div>
+
+        <div class="ee-card" id="ee-panel-tickets">
           <h2>Ticket types</h2>
-          <p class="ee-hint" style="margin-top:0">Add one row per tier (e.g. Standard, VIP). Each tier is duplicated across all dates above.</p>
+          <p class="ee-hint" style="margin-top:0">
+            Add one row per tier (e.g. Standard, Early bird). Each tier is copied to all dates above. Set when sales end — especially for early bird pricing.
+          </p>
           <div id="ee-tier-rows"></div>
           <button type="button" class="ee-btn ee-btn-outline" id="ee-add-tier" style="margin-top:12px">+ Add ticket type</button>
+        </div>
+
+        <div class="ee-card" id="ee-panel-osop" hidden>
+          <h2>One Seat Only Policy</h2>
+          <p class="ee-hint" style="margin-top:0">
+            Prospective attendees submit a request to join your event. They are asked what industry they are in and their job title only. You approve or deny each application.
+          </p>
+          <div class="ee-info-box">
+            <strong>How it works:</strong> Applicants answer two fixed questions — their industry and job title. This information is emailed to you for review. You approve or deny from your dashboard. Approved applicants receive a payment link via Brevo to complete their booking.
+          </div>
+          <div class="ee-row-2">
+            <div class="ee-field">
+              <label for="ee-osop-price">Price <span class="ee-optional">(optional)</span></label>
+              <p class="ee-hint">Charged to approved applicants on booking. Leave at 0.00 for free.</p>
+              <div class="ee-price-input">
+                <span>£</span>
+                <input type="number" id="ee-osop-price" min="0" step="0.01" value="0" />
+              </div>
+            </div>
+            <div class="ee-field">
+              <label for="ee-osop-places">Places available <span class="ee-optional">(optional)</span></label>
+              <p class="ee-hint">Maximum approved applicants. Leave blank for unlimited.</p>
+              <input type="number" id="ee-osop-places" min="1" placeholder="e.g. 20" />
+            </div>
+          </div>
+          <div class="ee-field">
+            <label for="ee-osop-close">Application closing date <span class="ee-optional">(optional)</span></label>
+            <p class="ee-hint">After this date the application button will no longer appear on the listing.</p>
+            <input type="date" id="ee-osop-close" />
+          </div>
+          <p class="ee-label-block">Application questions</p>
+          <ul class="ee-fixed-questions">
+            <li>What industry are you in?</li>
+            <li>What is your job title?</li>
+          </ul>
+          <p class="ee-hint ee-hint-italic">These questions are fixed and cannot be changed.</p>
+        </div>
+
+        <div class="ee-card">
+          <h2>Attendee information at booking</h2>
+          <p class="ee-hint" style="margin-top:0">
+            Optional extras for events with catering or accessibility needs. We add a note to your listing description and can collect these details at checkout when registration is connected.
+          </p>
+          <label class="ee-check">
+            <input type="checkbox" id="ee-food-included" />
+            <span>Food or drink is included (e.g. breakfast, lunch, refreshments)</span>
+          </label>
+          <label class="ee-check">
+            <input type="checkbox" id="ee-collect-dietary" />
+            <span>Ask attendees about dietary requirements</span>
+          </label>
+          <label class="ee-check">
+            <input type="checkbox" id="ee-collect-access" />
+            <span>Ask attendees about accessibility requirements</span>
+          </label>
         </div>
 
         <div class="ee-actions">
@@ -46,6 +117,6 @@
       </form>
     </div>
 
-    <script src="../js/organiser-event-tickets.js?v=20260606c"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260606m"></script>
   </body>
 </html>

@@ -5,6 +5,13 @@
   const SERIES_STORAGE_KEY = 'hub_event_series';
   const params = new URLSearchParams(location.search);
   const editId = params.get('id') || '';
+  let eventFormat = (params.get('format') || '').toLowerCase();
+
+  const FORMAT_LABELS = {
+    'in-person': 'In person',
+    online: 'Online',
+    hybrid: 'Hybrid',
+  };
 
   let calYear = new Date().getFullYear();
   let calMonth = new Date().getMonth();
@@ -247,12 +254,78 @@
     });
   }
 
+  function applyFormatUi(format) {
+    eventFormat = format || eventFormat || 'in-person';
+    const venueBlock = document.getElementById('ee-venue-block');
+    const onlineBlock = document.getElementById('ee-online-block');
+    const badge = document.getElementById('ee-format-badge');
+    const changeLink = document.getElementById('ee-change-format');
+    const showVenue = eventFormat === 'in-person' || eventFormat === 'hybrid';
+    const showOnline = eventFormat === 'online' || eventFormat === 'hybrid';
+    if (venueBlock) venueBlock.hidden = !showVenue;
+    if (onlineBlock) onlineBlock.hidden = !showOnline;
+    if (badge) {
+      badge.textContent = FORMAT_LABELS[eventFormat] || eventFormat;
+      badge.hidden = false;
+    }
+    if (changeLink && !editId) {
+      changeLink.href = 'event-format.html';
+    }
+  }
+
+  function buildLocationFields() {
+    const venue = document.getElementById('ee-venue').value.trim();
+    const address1 = document.getElementById('ee-address1').value.trim();
+    const city = document.getElementById('ee-city').value.trim();
+    const postcode = document.getElementById('ee-postcode').value.trim();
+    const listingArea = document.getElementById('ee-location').value.trim();
+    const parts = [venue, address1, city, postcode].filter(Boolean);
+    const fullAddress = parts.join(', ');
+    let location = listingArea || fullAddress;
+    if (eventFormat === 'online' && !location) location = 'Online';
+    if (eventFormat === 'hybrid' && listingArea) location = listingArea + (fullAddress ? ' · ' + fullAddress : '');
+    if (eventFormat === 'hybrid' && !listingArea && fullAddress) location = fullAddress;
+    return {
+      venue,
+      addressLine1: address1,
+      city,
+      postcode,
+      location,
+      fullAddress,
+      eventFormat,
+      onlinePlatform: document.getElementById('ee-platform').value.trim(),
+      onlineLink: document.getElementById('ee-join-link').value.trim(),
+    };
+  }
+
+  function inferFormatFromEvent(ev) {
+    const loc = String(ev.location || '').toLowerCase();
+    if (loc === 'online' || ev.onlineLink) return 'online';
+    if (ev.onlineLink && (ev.venue || ev.addressLine1)) return 'hybrid';
+    return 'in-person';
+  }
+
   function prefillFromEvent(ev) {
     document.getElementById('ee-title').value = ev.title || '';
     document.getElementById('ee-type').value = ev.type || 'Networking Event';
     document.getElementById('ee-description').value = ev.description || '';
     document.getElementById('ee-location').value = ev.location || '';
     document.getElementById('ee-venue').value = ev.venue || '';
+    if (document.getElementById('ee-address1')) {
+      document.getElementById('ee-address1').value = ev.addressLine1 || '';
+    }
+    if (document.getElementById('ee-city')) document.getElementById('ee-city').value = ev.city || '';
+    if (document.getElementById('ee-postcode')) {
+      document.getElementById('ee-postcode').value = ev.postcode || '';
+    }
+    if (document.getElementById('ee-platform')) {
+      document.getElementById('ee-platform').value = ev.onlinePlatform || '';
+    }
+    if (document.getElementById('ee-join-link')) {
+      document.getElementById('ee-join-link').value = ev.onlineLink || '';
+    }
+    eventFormat = ev.eventFormat || inferFormatFromEvent(ev);
+    applyFormatUi(eventFormat);
     const grp = document.getElementById('ee-group');
     if (grp && ev.organiserGroupId) grp.value = ev.organiserGroupId;
     if (ev.imageUrl) {
@@ -369,15 +442,15 @@
 
     const occurrences = buildOccurrences(dateKeys, timeCheck.start, timeCheck.end);
 
+    const locFields = buildLocationFields();
     const payload = {
       organiserGroupId,
       title,
       type: document.getElementById('ee-type').value,
       description: document.getElementById('ee-description').value.trim(),
-      location: document.getElementById('ee-location').value.trim(),
-      venue: document.getElementById('ee-venue').value.trim(),
       photoUrl: document.getElementById('ee-photo-url').value.trim(),
       occurrences,
+      ...locFields,
     };
 
     if (photoFile) {
@@ -416,8 +489,11 @@
 
     const eventIds = res.data.eventIds || (res.data.events || []).map((ev) => ev.id);
     const events = res.data.events || (res.data.event ? [res.data.event] : []);
+    const locFields = buildLocationFields();
     goToTicketSetup({
       title,
+      organiserGroupId,
+      eventFormat: locFields.eventFormat,
       eventIds,
       events: events.map((ev) => ({
         id: ev.id,
@@ -427,10 +503,20 @@
     });
   });
 
+  function initPage() {
+    if (!editId && !eventFormat) {
+      location.replace('event-format.html');
+      return;
+    }
+    if (!editId) applyFormatUi(eventFormat);
+    else applyFormatUi(eventFormat || 'in-person');
+  }
+
   bindPhotoUpload();
   if (QuarterTime) {
     QuarterTime.initPair('ee-start-time', 'ee-end-time', { start: '10:00', end: '12:00' });
   }
+  initPage();
   renderCalendar();
   renderSelectedList();
   load();

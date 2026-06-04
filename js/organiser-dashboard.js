@@ -625,7 +625,7 @@
 
   function openModal(id) {
     if (id === 'modal-event') {
-      location.href = 'event-edit.html';
+      location.href = 'event-format.html';
       return;
     }
     const el = document.getElementById(id);
@@ -1262,7 +1262,7 @@
         location.href = 'group-edit.html';
         return;
       }
-      location.href = 'event-edit.html';
+      location.href = 'event-format.html';
     }
 
     document.getElementById('btn-new-group').addEventListener('click', goToNewGroupEditor);

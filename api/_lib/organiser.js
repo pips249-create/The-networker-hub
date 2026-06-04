@@ -64,6 +64,12 @@ const EVENT_WRITE_FIELDS = {
   description: ['Highlights', 'Description', 'About'],
   location: ['Location', 'City', 'Region', 'Area'],
   venue: ['Venue', 'Venue Name', 'Address', 'Venue Address'],
+  addressLine1: ['Address Line 1', 'Address', 'Street Address', 'Street'],
+  city: ['City', 'Town'],
+  postcode: ['Postcode', 'Postal Code', 'ZIP'],
+  eventFormat: ['Format', 'Event Format', 'Delivery', 'Location Type', 'Attendance'],
+  onlinePlatform: ['Platform', 'Online Platform', 'Meeting Platform'],
+  onlineLink: ['Join Link', 'Meeting Link', 'Online Link', 'Zoom Link', 'Attendee Link'],
   endDate: ['End Date', 'End Time', 'End Date & Time', 'Finish Time'],
 };
 
@@ -74,6 +80,9 @@ const TICKET_WRITE_FIELDS = {
   linkedEvent: ['Linked Event', 'Event', 'Events'],
   status: ['Status', 'Ticket Status'],
   quantity: ['Quantity Available', 'Quantity', 'Capacity'],
+  saleEnd: ['Sale End', 'Sales End', 'Sales Close', 'Ticket Sales End', 'Sales End Date'],
+  saleStart: ['Sale Start', 'Sales Open', 'Sales Start', 'Ticket Sales Start'],
+  oneSeatOnly: ['One Seat Only', 'One Seat Policy', 'One Seat Only Policy', 'Application Only'],
 };
 
 let writeFieldCache = null;
@@ -340,6 +349,12 @@ function recordToOrganiserEvent(record, organiserLinkField) {
     description: String(pick(f, EVENT_WRITE_FIELDS.description) || '').trim(),
     location: String(pick(f, EVENT_WRITE_FIELDS.location) || '').trim(),
     venue: String(pick(f, EVENT_WRITE_FIELDS.venue) || '').trim(),
+    addressLine1: String(pick(f, EVENT_WRITE_FIELDS.addressLine1) || '').trim(),
+    city: String(pick(f, EVENT_WRITE_FIELDS.city) || '').trim(),
+    postcode: String(pick(f, EVENT_WRITE_FIELDS.postcode) || '').trim(),
+    eventFormat: String(pick(f, EVENT_WRITE_FIELDS.eventFormat) || '').trim(),
+    onlinePlatform: String(pick(f, EVENT_WRITE_FIELDS.onlinePlatform) || '').trim(),
+    onlineLink: String(pick(f, EVENT_WRITE_FIELDS.onlineLink) || '').trim(),
     imageUrl: attachmentUrl(pick(f, EVENT_READ_FIELDS.image)),
     statusRaw: String(pick(f, EVENT_READ_FIELDS.approvalStatus) || '').trim(),
     rating: ratingRaw != null && ratingRaw !== '' ? Number(ratingRaw) : null,
@@ -702,6 +717,20 @@ async function updateGroup(groupId, payload) {
   return group;
 }
 
+function composeEventDescription(description, extras) {
+  let text = String(description || '').trim();
+  const notes = [];
+  if (extras && extras.foodIncluded) notes.push('Food & drink included at this event.');
+  if (extras && extras.collectDietary) notes.push('Attendees will be asked about dietary requirements.');
+  if (extras && extras.collectAccessibility) {
+    notes.push('Attendees will be asked about accessibility requirements.');
+  }
+  if (notes.length) {
+    text = (text ? text + '\n\n' : '') + notes.join(' ');
+  }
+  return text;
+}
+
 async function buildEventRecordFields({
   email,
   groupId,
@@ -712,6 +741,14 @@ async function buildEventRecordFields({
   description,
   location,
   venue,
+  addressLine1,
+  city,
+  postcode,
+  fullAddress,
+  eventFormat,
+  onlinePlatform,
+  onlineLink,
+  attendeeExtras,
   photoUrl,
   photoBase64,
   photoMime,
@@ -720,21 +757,36 @@ async function buildEventRecordFields({
   organiserLinkField,
 }) {
   const sample = eventSample || (await sampleRecordFields(tables().events));
+  const schemaFields = await getTableFieldNames(tables().events);
   const fields = {};
-  const titleField = resolveFieldName(sample, EVENT_WRITE_FIELDS.title, 'Event Title');
+  const titleField = resolveFieldName(sample, EVENT_WRITE_FIELDS.title, 'Event Title', schemaFields);
   fields[titleField] = String(title).trim();
-  const dateField = resolveFieldName(sample, EVENT_WRITE_FIELDS.date, 'Date & Time');
+  const dateField = resolveFieldName(sample, EVENT_WRITE_FIELDS.date, 'Date & Time', schemaFields);
   if (date) fields[dateField] = date;
-  const endField = resolveFieldName(sample, EVENT_WRITE_FIELDS.endDate, null);
+  const endField = resolveFieldName(sample, EVENT_WRITE_FIELDS.endDate, null, schemaFields);
   if (endDate && endField) fields[endField] = endDate;
-  const typeField = resolveFieldName(sample, EVENT_WRITE_FIELDS.type, 'Meeting Type');
+  const typeField = resolveFieldName(sample, EVENT_WRITE_FIELDS.type, 'Meeting Type', schemaFields);
   if (type) fields[typeField] = type;
-  const descField = resolveFieldName(sample, EVENT_WRITE_FIELDS.description, 'Highlights');
-  if (description) fields[descField] = String(description).trim();
-  const locField = resolveFieldName(sample, EVENT_WRITE_FIELDS.location, null);
-  if (location && locField) fields[locField] = String(location).trim();
-  const venueField = resolveFieldName(sample, EVENT_WRITE_FIELDS.venue, null);
+  const descField = resolveFieldName(sample, EVENT_WRITE_FIELDS.description, 'Highlights', schemaFields);
+  const descText = composeEventDescription(description, attendeeExtras);
+  if (descText) fields[descField] = descText;
+  const locField = resolveFieldName(sample, EVENT_WRITE_FIELDS.location, null, schemaFields);
+  const locValue = String(location || fullAddress || '').trim();
+  if (locValue && locField) fields[locField] = locValue;
+  const venueField = resolveFieldName(sample, EVENT_WRITE_FIELDS.venue, null, schemaFields);
   if (venue && venueField) fields[venueField] = String(venue).trim();
+  const addrField = resolveFieldName(sample, EVENT_WRITE_FIELDS.addressLine1, null, schemaFields);
+  if (addressLine1 && addrField) fields[addrField] = String(addressLine1).trim();
+  const cityField = resolveFieldName(sample, EVENT_WRITE_FIELDS.city, null, schemaFields);
+  if (city && cityField) fields[cityField] = String(city).trim();
+  const pcField = resolveFieldName(sample, EVENT_WRITE_FIELDS.postcode, null, schemaFields);
+  if (postcode && pcField) fields[pcField] = String(postcode).trim();
+  const formatField = resolveFieldName(sample, EVENT_WRITE_FIELDS.eventFormat, null, schemaFields);
+  if (eventFormat && formatField) fields[formatField] = String(eventFormat).trim();
+  const platformField = resolveFieldName(sample, EVENT_WRITE_FIELDS.onlinePlatform, null, schemaFields);
+  if (onlinePlatform && platformField) fields[platformField] = String(onlinePlatform).trim();
+  const linkField = resolveFieldName(sample, EVENT_WRITE_FIELDS.onlineLink, null, schemaFields);
+  if (onlineLink && linkField) fields[linkField] = String(onlineLink).trim();
   const ownerField = resolveFieldName(sample, EVENT_WRITE_FIELDS.ownerEmail, null);
   if (ownerField) fields[ownerField] = email.toLowerCase();
   if (groupId && organiserLinkField) fields[organiserLinkField] = [groupId];
@@ -873,6 +925,9 @@ async function createTicketsForEvents({ eventIds, tickets }) {
         description: tier.description,
         status: tier.status,
         quantityAvailable: tier.quantityAvailable,
+        saleEnd: tier.saleEnd,
+        saleStart: tier.saleStart,
+        oneSeatOnly: tier.oneSeatOnly,
       });
       out.push(ticket);
     }
@@ -880,24 +935,51 @@ async function createTicketsForEvents({ eventIds, tickets }) {
   return { created: out.length, tickets: out };
 }
 
-async function createTicket({ eventId, name, price, description, status, quantityAvailable }) {
+async function createTicket({
+  eventId,
+  name,
+  price,
+  description,
+  status,
+  quantityAvailable,
+  saleEnd,
+  saleStart,
+  oneSeatOnly,
+}) {
   const { tickets: table } = tables();
   const sample = await sampleRecordFields(table);
+  const schemaFields = await getTableFieldNames(table);
   const fields = {};
-  const linkField = resolveFieldName(sample, TICKET_WRITE_FIELDS.linkedEvent, 'Linked Event');
-  const nameField = resolveFieldName(sample, TICKET_WRITE_FIELDS.name, 'Ticket Type');
+  const linkField = resolveFieldName(
+    sample,
+    TICKET_WRITE_FIELDS.linkedEvent,
+    'Linked Event',
+    schemaFields
+  );
+  const nameField = resolveFieldName(sample, TICKET_WRITE_FIELDS.name, 'Ticket Type', schemaFields);
   fields[linkField] = [eventId];
   fields[nameField] = String(name).trim();
-  const priceField = resolveFieldName(sample, TICKET_WRITE_FIELDS.price, 'Price');
+  const priceField = resolveFieldName(sample, TICKET_WRITE_FIELDS.price, 'Price', schemaFields);
   if (price !== undefined && price !== '') fields[priceField] = Number(price) || 0;
-  const descField = resolveFieldName(sample, TICKET_WRITE_FIELDS.description, 'Description');
+  const descField = resolveFieldName(sample, TICKET_WRITE_FIELDS.description, 'Description', schemaFields);
   if (description) fields[descField] = String(description).trim();
-  const statusField = resolveFieldName(sample, TICKET_WRITE_FIELDS.status, 'Status');
+  const statusField = resolveFieldName(sample, TICKET_WRITE_FIELDS.status, 'Status', schemaFields);
   if (status) fields[statusField] = status;
-  const qtyField = resolveFieldName(sample, TICKET_WRITE_FIELDS.quantity, 'Quantity Available');
+  const qtyField = resolveFieldName(
+    sample,
+    TICKET_WRITE_FIELDS.quantity,
+    'Quantity Available',
+    schemaFields
+  );
   if (quantityAvailable != null && quantityAvailable !== '') {
     fields[qtyField] = Number(quantityAvailable);
   }
+  const saleEndField = resolveFieldName(sample, TICKET_WRITE_FIELDS.saleEnd, null, schemaFields);
+  if (saleEnd && saleEndField) fields[saleEndField] = saleEnd;
+  const saleStartField = resolveFieldName(sample, TICKET_WRITE_FIELDS.saleStart, null, schemaFields);
+  if (saleStart && saleStartField) fields[saleStartField] = saleStart;
+  const osopField = resolveFieldName(sample, TICKET_WRITE_FIELDS.oneSeatOnly, null, schemaFields);
+  if (oneSeatOnly && osopField) fields[osopField] = true;
 
   const resp = await airtableFetch(encodeURIComponent(table), {
     method: 'POST',
