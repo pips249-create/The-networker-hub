@@ -13,8 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260624" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
-    <link rel="stylesheet" href="../css/hub-loading.css" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260619" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260620" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
@@ -48,32 +47,11 @@
           </nav>
         </aside>
 
-        <div class="org-main hub-page-buffer-host" id="org-main">
-          <div
-            class="hub-page-buffer hub-page-buffer--overlay hub-page-buffer--dashboard"
-            id="org-load-overlay"
-            data-buffer-host="org-main"
-            role="status"
-            aria-live="polite"
-            hidden
-            aria-busy="false"
-          >
-            <div class="hub-page-buffer-card">
-              <img
-                class="hub-page-buffer-visual"
-                src="../assets/event-placeholder.svg"
-                alt=""
-                width="480"
-                height="300"
-                decoding="async"
-              />
-              <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
-              <h2 class="hub-page-buffer-title">Loading your dashboard</h2>
-              <p class="hub-page-buffer-message">
-                We're loading your groups and events — bear with us, it won't take long.
-              </p>
-            </div>
-          </div>
+        <div class="org-main" id="org-main">
+          <p class="org-dash-loading" id="org-dash-loading" hidden role="status" aria-live="polite">
+            <span class="org-dash-loading-spinner" aria-hidden="true"></span>
+            Loading dashboard…
+          </p>
           <div class="org-wrap">
         <div id="org-airtable-alert" class="org-alert" hidden></div>
 
@@ -550,7 +528,6 @@
     </div>
 
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
-    <script src="../js/hub-loading.js?v=20260605"></script>
-    <script src="../js/organiser-dashboard.js?v=20260605c"></script>
+    <script src="../js/organiser-dashboard.js?v=20260620"></script>
   </body>
 </html>

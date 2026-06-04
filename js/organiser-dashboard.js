@@ -140,11 +140,12 @@
 
   function thumbHtml(item) {
     const name = item.name || item.title || '?';
-    if (item.imageUrl) {
+    const imgSrc = item.imageUrl || item.photo || '';
+    if (imgSrc && /^https?:\/\//i.test(imgSrc)) {
       return (
         '<img class="org-thumb" src="' +
-        esc(item.imageUrl) +
-        '" alt="" width="44" height="44" loading="lazy" />'
+        esc(imgSrc) +
+        '" alt="" width="44" height="44" loading="lazy" referrerpolicy="no-referrer" />'
       );
     }
     const letter = String(name).trim().charAt(0).toUpperCase() || '?';
@@ -1260,10 +1261,8 @@
   }
 
   function setDashboardLoading(on) {
-    if (window.hubLoading) {
-      if (on) window.hubLoading.show('org-load-overlay');
-      else window.hubLoading.hide('org-load-overlay');
-    }
+    const el = document.getElementById('org-dash-loading');
+    if (el) el.hidden = !on;
   }
 
   async function loadBootstrap() {

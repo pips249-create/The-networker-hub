@@ -45,5 +45,10 @@
     }
   }
 
-  global.hubLoading = { show, hide };
+  /** Always clear loader state even if show() was never called. */
+  function clear(idOrEl) {
+    hide(idOrEl);
+  }
+
+  global.hubLoading = { show, hide, clear };
 })();

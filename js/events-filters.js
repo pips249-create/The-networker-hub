@@ -69,12 +69,14 @@
     var wantInPerson = checkInPerson && checkInPerson.checked;
     var wantOnline = checkOnline && checkOnline.checked;
     var fmt = ev.formatSlug || '';
-    if (wantInPerson && !wantOnline) {
-      if (fmt && fmt !== 'in-person' && fmt !== 'hybrid') return false;
-    } else if (wantOnline && !wantInPerson) {
-      if (fmt && fmt !== 'online' && fmt !== 'hybrid') return false;
-    } else if (!wantInPerson && !wantOnline) {
-      return false;
+    if (checkInPerson || checkOnline) {
+      if (wantInPerson && !wantOnline) {
+        if (fmt && fmt !== 'in-person' && fmt !== 'hybrid') return false;
+      } else if (wantOnline && !wantInPerson) {
+        if (fmt && fmt !== 'online' && fmt !== 'hybrid') return false;
+      } else if (!wantInPerson && !wantOnline) {
+        return false;
+      }
     }
 
     if (dateFromTs || dateToTs) {

@@ -152,10 +152,12 @@ module.exports = async function handler(req, res) {
       const isDraft =
         base.listingStatus != null && String(base.listingStatus).toLowerCase() === 'draft';
       const primary = occ[0] || {};
+      const touchDate = Boolean(body.date || body.endDate || body.dateTime || occ.length);
       const event = await updateEvent(eventId, {
         ...base,
-        date: primary.date || (isDraft ? '' : primary.date),
-        endDate: primary.endDate || '',
+        _touchDate: touchDate,
+        date: primary.date || body.date || body.dateTime || '',
+        endDate: primary.endDate || body.endDate || '',
       });
 
       const extra = [];

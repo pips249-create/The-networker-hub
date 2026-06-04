@@ -997,9 +997,22 @@
   }
 
   function setEventLoading(on) {
-    if (window.hubLoading) {
-      if (on) window.hubLoading.show('event-detail-load-overlay');
-      else window.hubLoading.hide('event-detail-load-overlay');
+    const overlay = document.getElementById('event-detail-load-overlay');
+    const shell = document.getElementById('event-detail-shell');
+    if (on) {
+      if (window.hubLoading) window.hubLoading.show('event-detail-load-overlay');
+      else if (overlay) {
+        overlay.classList.add('is-active');
+        overlay.hidden = false;
+        if (shell) shell.classList.add('is-loading');
+      }
+    } else {
+      if (window.hubLoading) window.hubLoading.hide('event-detail-load-overlay');
+      else if (overlay) {
+        overlay.classList.remove('is-active');
+        overlay.hidden = true;
+        if (shell) shell.classList.remove('is-loading');
+      }
     }
   }
 

@@ -29,10 +29,18 @@ function mapMeetingType(format) {
 }
 
 function mapApprovalStatus(listingStatus) {
-  const s = String(listingStatus || 'draft').toLowerCase();
+  if (listingStatus == null || listingStatus === '') return undefined;
+  const s = String(listingStatus).toLowerCase();
   if (s === 'published' || s === 'publish' || s === 'approved') return 'Approved';
   if (s === 'rejected') return 'Rejected';
+  if (s === 'draft') return 'Pending Review';
   return 'Pending Review';
+}
+
+function payloadTouchesDate(payload) {
+  if (payload._touchDate) return true;
+  if (payload.date || payload.endDate) return true;
+  return false;
 }
 
 function parseDateIso(dateStr, endStr) {
@@ -259,8 +267,9 @@ async function resolveEventPhotoUrl(payload, eventId) {
 }
 
 async function buildEventRow(payload, eventId, mode) {
-  const dates = parseDateIso(payload.date, payload.endDate);
+  const touchDate = mode !== 'update' || payloadTouchesDate(payload);
   const photo_url = await resolveEventPhotoUrl(payload, eventId);
+  const approval_status = mapApprovalStatus(payload.listingStatus);
 
   const row = {
     title: payload.title,
@@ -273,13 +282,25 @@ async function buildEventRow(payload, eventId, mode) {
     postcode: payload.postcode || null,
     location_label: payload.location || payload.city || payload.venue || null,
     meeting_link: payload.onlineLink || null,
-    starts_at: dates.starts_at,
-    ends_at: dates.ends_at,
-    approval_status: mapApprovalStatus(payload.listingStatus),
     organiser_id: payload.groupId || null,
   };
+
+  if (touchDate) {
+    const dates = parseDateIso(payload.date, payload.endDate);
+    row.starts_at = dates.starts_at;
+    row.ends_at = dates.ends_at;
+  } else if (mode === 'create') {
+    const dates = parseDateIso(payload.date, payload.endDate);
+    row.starts_at = dates.starts_at;
+    row.ends_at = dates.ends_at;
+  }
+
+  if (approval_status !== undefined) row.approval_status = approval_status;
+  else if (mode === 'create') row.approval_status = mapApprovalStatus('draft') || 'Pending Review';
+
   if (photo_url !== undefined) row.photo_url = photo_url;
   else if (mode === 'create') row.photo_url = null;
+
   return row;
 }
 

@@ -363,9 +363,22 @@
   }
 
   function setLoading(on) {
-    if (global.hubLoading) {
-      if (on) global.hubLoading.show('events-load-overlay');
-      else global.hubLoading.hide('events-load-overlay');
+    const overlay = document.getElementById('events-load-overlay');
+    const shell = document.getElementById('events-shell');
+    if (on) {
+      if (global.hubLoading) global.hubLoading.show('events-load-overlay');
+      else if (overlay) {
+        overlay.classList.add('is-active');
+        overlay.hidden = false;
+        if (shell) shell.classList.add('is-loading');
+      }
+    } else {
+      if (global.hubLoading) global.hubLoading.hide('events-load-overlay');
+      else if (overlay) {
+        overlay.classList.remove('is-active');
+        overlay.hidden = true;
+        if (shell) shell.classList.remove('is-loading');
+      }
     }
   }
 
