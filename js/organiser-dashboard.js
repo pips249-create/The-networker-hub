@@ -537,6 +537,17 @@
     nav.innerHTML = meta + paginationNavHtml(pageInfo.page, pageInfo.totalPages);
   }
 
+  function findGroupById(id) {
+    return state.groups.find((x) => x.id === id);
+  }
+
+  function findEventById(id) {
+    return (
+      state.events.find((x) => x.id === id) ||
+      (state.upcomingEvents || []).find((x) => x.id === id)
+    );
+  }
+
   function closeAllActionMenus() {
     document.querySelectorAll('.org-action-menu.is-open').forEach((m) => {
       m.classList.remove('is-open', 'is-floating');
@@ -544,6 +555,10 @@
       m.style.left = '';
       m.style.right = '';
       m.style.bottom = '';
+      if (m._actionWrap) {
+        m._actionWrap.appendChild(m);
+        m._actionWrap = null;
+      }
     });
     document.querySelectorAll('[data-org-action-toggle][aria-expanded="true"]').forEach((b) => {
       b.setAttribute('aria-expanded', 'false');
@@ -551,6 +566,11 @@
   }
 
   function openActionMenu(menu, toggle) {
+    const wrap = toggle.closest('.org-action-wrap');
+    if (wrap && menu.parentElement !== document.body) {
+      menu._actionWrap = wrap;
+      document.body.appendChild(menu);
+    }
     menu.classList.add('is-open', 'is-floating');
     toggle.setAttribute('aria-expanded', 'true');
     menu.style.visibility = 'hidden';
@@ -571,6 +591,53 @@
     menu.style.left = left + 'px';
     menu.style.right = 'auto';
     menu.style.visibility = '';
+  }
+
+  function handleActionMenuChoice(e) {
+    const editGroupBtn = e.target.closest('[data-edit-group]');
+    if (editGroupBtn && !editGroupBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      const gid = editGroupBtn.getAttribute('data-edit-group');
+      const g = findGroupById(gid);
+      if (g) goToGroupEditor(g);
+      else if (gid) location.href = 'group-edit.html?id=' + encodeURIComponent(gid);
+      return true;
+    }
+
+    const editEventBtn = e.target.closest('[data-edit-event]');
+    if (editEventBtn && !editEventBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      const eid = editEventBtn.getAttribute('data-edit-event');
+      const ev = findEventById(eid);
+      if (ev) goToEventEditor(ev);
+      else if (eid) location.href = 'event-edit.html?id=' + encodeURIComponent(eid);
+      return true;
+    }
+
+    const subBtn = e.target.closest('[data-org-goto-sub]');
+    if (subBtn && !subBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      const sub = subBtn.getAttribute('data-org-goto-sub');
+      const eventId = subBtn.getAttribute('data-filter-event');
+      if (eventId) {
+        filters.ticketsEvent = eventId;
+        filters.reviewsGroup = 'all';
+        const ticketSel = document.getElementById('filter-tickets-event');
+        if (ticketSel) ticketSel.value = eventId;
+      }
+      setRoute(sub || 'events-list');
+      if (sub === 'events-tickets') renderTickets();
+      if (sub === 'events-reviews') renderReviews();
+      return true;
+    }
+
+    return false;
   }
 
   function groupNameById(id) {
@@ -684,15 +751,14 @@
     if (empty) empty.hidden = true;
     slice.forEach((ev) => {
       const tr = document.createElement('tr');
-      const eventUrl = '../events/event.html?id=' + encodeURIComponent(ev.id);
       tr.innerHTML =
         '<td>' +
         thumbHtml(ev) +
-        '</td><td class="org-td-name"><a href="' +
-        eventUrl +
+        '</td><td class="org-td-name"><button type="button" class="org-td-name-click" data-edit-event="' +
+        esc(ev.id) +
         '">' +
         esc(ev.title) +
-        '</a></td><td>' +
+        '</button></td><td>' +
         esc(formatDateShort(ev.date)) +
         '</td><td>' +
         esc(formatTimeRange(ev.date, ev.endDate)) +
@@ -745,6 +811,8 @@
         site +
         '</td><td>' +
         esc(g.description || '—') +
+        '</td><td class="org-td-actions">' +
+        actionMenuHtml('group', g.id, g.name) +
         '</td>';
       body.appendChild(tr);
     });
@@ -1311,19 +1379,23 @@
       location.href = 'group-edit.html';
     }
 
-    document.getElementById('btn-new-group').addEventListener('click', goToNewGroupEditor);
-    const btnNewGroupOverview = document.getElementById('btn-new-group-overview');
-    if (btnNewGroupOverview) {
-      btnNewGroupOverview.addEventListener('click', goToNewGroupEditor);
-    }
-
-    document.getElementById('btn-new-event').addEventListener('click', () => {
+    function goToNewEventEditor() {
       if (!state.groups.length) {
         alert('Create an organiser profile first.');
-        setRoute('groups');
+        location.href = 'group-edit.html';
         return;
       }
       location.href = 'event-edit.html';
+    }
+
+    document.getElementById('btn-new-group').addEventListener('click', goToNewGroupEditor);
+    ['btn-new-group-overview'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('click', goToNewGroupEditor);
+    });
+    ['btn-new-event', 'btn-new-event-overview'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('click', goToNewEventEditor);
     });
 
     const btnNewTicket = document.getElementById('btn-new-ticket');
@@ -1344,7 +1416,7 @@
         const route = btn.getAttribute('data-org-goto');
         setRoute(route);
         if (route === 'groups') goToNewGroupEditor();
-        if (route === 'events' || route === 'events-list') document.getElementById('btn-new-event').click();
+        if (route === 'events' || route === 'events-list') goToNewEventEditor();
         if (route === 'tickets' || route === 'events-tickets') {
           setRoute('events-tickets');
           document.getElementById('btn-new-ticket')?.click();
@@ -1429,53 +1501,37 @@
       });
     }
 
-    document.addEventListener('click', (e) => {
-      const toggle = e.target.closest('[data-org-action-toggle]');
-      if (toggle) {
-        e.stopPropagation();
+    document.addEventListener(
+      'click',
+      (e) => {
+        if (handleActionMenuChoice(e)) return;
+
+        const toggle = e.target.closest('[data-org-action-toggle]');
+        if (toggle) {
+          e.stopPropagation();
         const wrap = toggle.closest('.org-action-wrap');
-        const menu = wrap && wrap.querySelector('.org-action-menu');
-        const wasOpen = menu && menu.classList.contains('is-open');
-        closeAllActionMenus();
-        if (menu && !wasOpen) {
-          openActionMenu(menu, toggle);
+        let menu = wrap && wrap.querySelector('.org-action-menu');
+        if (!menu && wrap && wrap._actionMenuEl) {
+          menu = wrap._actionMenuEl;
         }
-        return;
-      }
-      if (!e.target.closest('.org-action-wrap')) closeAllActionMenus();
-
-      const editGroupBtn = e.target.closest('[data-edit-group]');
-      if (editGroupBtn) {
-        const gid = editGroupBtn.getAttribute('data-edit-group');
-        const g = state.groups.find((x) => x.id === gid);
-        if (g) goToGroupEditor(g);
-        else if (gid) location.href = 'group-edit.html?id=' + encodeURIComponent(gid);
-        return;
-      }
-
-      const editBtn = e.target.closest('[data-edit-event]');
-      if (editBtn) {
-        const ev = state.events.find((x) => x.id === editBtn.getAttribute('data-edit-event'));
-        if (ev) goToEventEditor(ev);
-        return;
-      }
-
-      const subBtn = e.target.closest('[data-org-goto-sub]');
-      if (subBtn) {
-        const sub = subBtn.getAttribute('data-org-goto-sub');
-        const eventId = subBtn.getAttribute('data-filter-event');
-        if (eventId) {
-          filters.ticketsEvent = eventId;
-          filters.reviewsGroup = 'all';
-          const ticketSel = document.getElementById('filter-tickets-event');
-          if (ticketSel) ticketSel.value = eventId;
+        if (menu && wrap) wrap._actionMenuEl = menu;
+          const wasOpen = menu && menu.classList.contains('is-open');
+          closeAllActionMenus();
+          if (menu && !wasOpen) {
+            openActionMenu(menu, toggle);
+          }
+          return;
         }
-        setRoute(sub || 'events-list');
-        if (sub === 'events-tickets') renderTickets();
-        if (sub === 'events-reviews') renderReviews();
-        return;
-      }
-    });
+
+        if (
+          !e.target.closest('.org-action-menu') &&
+          !e.target.closest('[data-org-action-toggle]')
+        ) {
+          closeAllActionMenus();
+        }
+      },
+      true
+    );
 
     document.querySelectorAll('[data-org-route]').forEach((a) => {
       a.addEventListener('click', (e) => {

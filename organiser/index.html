@@ -92,8 +92,13 @@
             </button>
           </div>
 
-          <h2 class="org-section-title org-section-title-spaced">Your next events</h2>
-          <p class="org-section-sub">Click an event name to edit the listing or view attendees.</p>
+          <div class="org-toolbar org-toolbar--section org-section-title-spaced">
+            <div>
+              <h2 class="org-section-title" style="margin:0">Your next events</h2>
+              <p class="org-section-sub" style="margin:4px 0 0">Click an event name or Actions → Edit event to update a listing.</p>
+            </div>
+            <button type="button" class="org-btn org-btn-gold" id="btn-new-event-overview">+ New event</button>
+          </div>
           <div class="org-table-wrap org-overview-table">
             <table>
               <thead>
@@ -139,6 +144,7 @@
                   <th>Location</th>
                   <th>Website</th>
                   <th>Description</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="groups-body"></tbody>
@@ -155,7 +161,7 @@
               <h2 class="org-section-title" id="my-events-title">My Events</h2>
               <p class="org-section-sub" id="my-events-sub">Manage all your event listings — click any event name to edit.</p>
             </div>
-            <button type="button" class="org-btn org-btn-gold" id="btn-new-event">+ Add a new listing</button>
+            <button type="button" class="org-btn org-btn-gold" id="btn-new-event">+ New event</button>
           </div>
 
           <div class="org-events-subnav" role="tablist" aria-label="My events sections">
@@ -451,6 +457,6 @@
     </div>
 
     <script src="../js/organiser-quarter-time.js?v=20260606e"></script>
-    <script src="../js/organiser-dashboard.js?v=20260606f"></script>
+    <script src="../js/organiser-dashboard.js?v=20260606g"></script>
   </body>
 </html>
