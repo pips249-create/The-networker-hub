@@ -105,10 +105,6 @@
     document.querySelectorAll('.hub-side-nav-link[data-ad-route]').forEach((a) => {
       a.classList.toggle('is-active', a.getAttribute('data-ad-route') === currentRoute);
     });
-    if (window.HubSideNav) {
-      const nav = document.querySelector('.hub-side-nav');
-      if (nav) HubSideNav.syncActiveGroup(nav);
-    }
     if (location.hash.replace('#', '') !== currentRoute) {
       history.replaceState(null, '', '#' + currentRoute);
     }
@@ -287,7 +283,6 @@
       a.addEventListener('click', (e) => {
         e.preventDefault();
         setRoute(a.getAttribute('data-ad-route') || 'overview');
-        if (window.HubSideNav) HubSideNav.openGroupForLink(a);
       });
     });
     window.addEventListener('hashchange', () => setRoute(parseRoute()));

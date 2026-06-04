@@ -5,7 +5,6 @@
   const ORG_PAGE_SIZE = 10;
   const listPages = { groups: 1, events: 1, tickets: 1, attendees: 1, reviews: 1, revenue: 1 };
   let eventsSubRoute = 'events-list';
-  let academySubRoute = 'academy-home';
 
   const filters = {
     eventsStatus: 'all',
@@ -43,21 +42,6 @@
         ORGANISER_SCOPE_COOKIE + '=my; path=/; max-age=' + 60 * 60 * 24 * 90 + '; SameSite=Lax' + secure;
     } else {
       document.cookie = ORGANISER_SCOPE_COOKIE + '=; path=/; max-age=0; SameSite=Lax' + secure;
-    }
-  }
-
-  function renderWelcome(user) {
-    const name = (user && user.name && String(user.name).trim()) || '';
-    const nameEl = document.getElementById('org-welcome-name');
-    const subEl = document.getElementById('org-welcome-sub');
-    if (nameEl) {
-      nameEl.textContent = name ? 'Welcome back, ' + name : 'Welcome back';
-    }
-    if (subEl) {
-      const email = (user && user.email) || (state.user && state.user.email) || '';
-      subEl.textContent = email
-        ? "Here's your account at a glance — " + email
-        : "Here's your account at a glance.";
     }
   }
 
@@ -265,18 +249,33 @@
     if (hash === 'tickets') return { page: 'events', sub: 'events-tickets' };
     if (hash.startsWith('events-')) return { page: 'events', sub: hash };
     if (hash === 'events') return { page: 'events', sub: 'events-list' };
-    if (hash.startsWith('academy-')) return { page: 'academy', sub: hash };
-    if (hash === 'academy') return { page: 'academy', sub: 'academy-home' };
+    if (hash === 'academy' || hash.startsWith('academy-')) return { page: 'academy', sub: null };
     return { page: hash, sub: null };
   }
 
-  function setAcademySub(sub) {
-    academySubRoute = sub || 'academy-home';
-    document.querySelectorAll('[data-academy-panel]').forEach((panel) => {
-      panel.classList.toggle('is-active', panel.getAttribute('data-academy-panel') === academySubRoute);
-    });
-    const empty = document.getElementById('academy-sessions-empty');
-    if (empty) empty.hidden = false;
+  const ACADEMY_PREVIEW_SESSIONS = [
+    { type: 'WORKSHOP', title: 'Pitch mastery — Workshop', host: 'Apex Events UK' },
+    { type: 'SEMINAR', title: 'Executive presence — Seminar', host: 'Meridian Business Group' },
+    { type: 'MASTERCLASS', title: 'Negotiation edge — Masterclass', host: 'Catalyst Collective' },
+    { type: 'WORKSHOP', title: 'Storytelling for leaders — Workshop', host: 'Summit Path Ltd' },
+  ];
+
+  function renderAcademyPreview() {
+    const grid = document.getElementById('org-academy-preview-grid');
+    if (!grid || grid.dataset.rendered === '1') return;
+    grid.dataset.rendered = '1';
+    grid.innerHTML = ACADEMY_PREVIEW_SESSIONS.map(
+      (s) =>
+        '<article class="org-academy-mini-card">' +
+        '<div class="org-academy-mini-media"><span class="org-academy-mini-type">' +
+        esc(s.type) +
+        '</span></div>' +
+        '<div class="org-academy-mini-body"><strong>' +
+        esc(s.title) +
+        '</strong><span>' +
+        esc(s.host) +
+        '</span></div></article>'
+    ).join('');
   }
 
   function setEventsSub(sub) {
@@ -312,11 +311,6 @@
     set('tab-count-tickets', String(state.tickets.length));
     set('tab-count-reviews', String(state.reviews.length));
     set('tab-count-revenue', totalRevenueDisplay());
-    set('side-count-events', String(state.events.length));
-    set('side-count-tickets', String(state.tickets.length));
-    set('side-count-reviews', String(state.reviews.length));
-    set('side-count-revenue', totalRevenueDisplay());
-    set('side-count-attendees', String(state.attendeesAll.length));
   }
 
   function filteredAttendeesList() {
@@ -829,25 +823,12 @@
       sub = 'events-tickets';
     } else if (route === 'academy' || (route && route.startsWith('academy-'))) {
       page = 'academy';
-      sub = route === 'academy' ? 'academy-home' : route;
     }
 
-    const activeRoute =
-      page === 'events'
-        ? sub || 'events-list'
-        : page === 'academy'
-          ? sub || 'academy-home'
-          : page;
+    const activeRoute = page === 'events' ? sub || 'events-list' : page;
     document.querySelectorAll('.hub-side-nav-link[data-org-route]').forEach((a) => {
-      const r = a.getAttribute('data-org-route');
-      let active = r === activeRoute;
-      if (page === 'academy' && r === 'academy' && activeRoute === 'academy-home') active = true;
-      a.classList.toggle('is-active', active);
+      a.classList.toggle('is-active', a.getAttribute('data-org-route') === activeRoute);
     });
-    if (window.HubSideNav) {
-      const nav = document.querySelector('.hub-side-nav');
-      if (nav) HubSideNav.syncActiveGroup(nav);
-    }
     document.querySelectorAll('[data-org-page]').forEach((p) => {
       p.classList.toggle('is-active', p.getAttribute('data-org-page') === page);
     });
@@ -856,15 +837,10 @@
       setEventsSub(sub || eventsSubRoute || 'events-list');
     }
     if (page === 'academy') {
-      setAcademySub(sub || academySubRoute || 'academy-home');
+      renderAcademyPreview();
     }
 
-    const hash =
-      page === 'events'
-        ? sub || 'events-list'
-        : page === 'academy'
-          ? sub || 'academy-home'
-          : page;
+    const hash = page === 'events' ? sub || 'events-list' : page;
     if (location.hash.replace('#', '') !== hash) {
       history.replaceState(null, '', '#' + hash);
     }
@@ -1305,7 +1281,6 @@
     state.isAdmin = data.isAdmin;
     if (data.user) {
       state.user = { ...state.user, ...data.user };
-      renderWelcome(state.user);
     }
 
     if (data.adminView) {
@@ -1734,7 +1709,6 @@
         e.preventDefault();
         const route = el.getAttribute('data-org-route') || 'dashboard';
         setRoute(route);
-        if (window.HubSideNav) HubSideNav.openGroupForLink(el);
       });
     });
 
@@ -1785,7 +1759,6 @@
       /* non-fatal */
     }
     state.user = user;
-    renderWelcome(user);
     if (signin) signin.hidden = true;
     shell.hidden = false;
     bindForms();

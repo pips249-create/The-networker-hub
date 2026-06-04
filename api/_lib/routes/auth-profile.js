@@ -9,6 +9,9 @@ const {
   USER_FIELDS,
   USER_PROFILE_FIELDS,
   fieldNameOnRecord,
+  resolveProfileFieldName,
+  getUsersTableFieldNames,
+  profileWritableFlags,
 } = require('../auth');
 
 function parseBody(req) {
@@ -33,28 +36,34 @@ function publicProfile(user) {
   };
 }
 
-function buildProfilePatch(user, body) {
+async function buildProfilePatch(user, body) {
   const f = user.fields || {};
+  const tableFields = await getUsersTableFieldNames();
   const patch = {};
+  const skipped = [];
 
   if (body.name !== undefined) {
-    const key = fieldNameOnRecord(f, USER_FIELDS.name, 'Name');
-    patch[key] = String(body.name || '').trim();
+    const key = resolveProfileFieldName(f, USER_FIELDS.name, tableFields);
+    if (key) patch[key] = String(body.name || '').trim();
+    else skipped.push('name');
   }
   if (body.location !== undefined) {
-    const key = fieldNameOnRecord(f, USER_PROFILE_FIELDS.location, 'Location');
-    patch[key] = String(body.location || '').trim();
+    const key = resolveProfileFieldName(f, USER_PROFILE_FIELDS.location, tableFields);
+    if (key) patch[key] = String(body.location || '').trim();
+    else skipped.push('location');
   }
   if (body.marketPreferences !== undefined) {
-    const key = fieldNameOnRecord(f, USER_PROFILE_FIELDS.marketPreferences, 'Market Preferences');
-    patch[key] = String(body.marketPreferences || '').trim();
+    const key = resolveProfileFieldName(f, USER_PROFILE_FIELDS.marketPreferences, tableFields);
+    if (key) patch[key] = String(body.marketPreferences || '').trim();
+    else skipped.push('marketPreferences');
   }
   if (body.businessSector !== undefined) {
-    const key = fieldNameOnRecord(f, USER_PROFILE_FIELDS.businessSector, 'Business Sector');
-    patch[key] = String(body.businessSector || '').trim();
+    const key = resolveProfileFieldName(f, USER_PROFILE_FIELDS.businessSector, tableFields);
+    if (key) patch[key] = String(body.businessSector || '').trim();
+    else skipped.push('businessSector');
   }
 
-  return patch;
+  return { patch, skipped };
 }
 
 module.exports = async function handler(req, res) {
@@ -75,18 +84,42 @@ module.exports = async function handler(req, res) {
       return json(res, 404, { error: 'user_not_found' });
     }
 
+    const tableFields = await getUsersTableFieldNames();
+    const writable = profileWritableFlags(user, tableFields);
+
     if (req.method === 'GET') {
-      return json(res, 200, { ok: true, profile: publicProfile(user) });
+      return json(res, 200, { ok: true, profile: publicProfile(user), writable });
     }
 
     if (req.method === 'PATCH') {
       const body = parseBody(req);
-      const patch = buildProfilePatch(user, body);
+      const { patch, skipped } = await buildProfilePatch(user, body);
       if (!Object.keys(patch).length) {
-        return json(res, 400, { error: 'no_fields', message: 'Nothing to update.' });
+        const labels = {
+          name: 'Name',
+          location: 'Location (or City)',
+          marketPreferences: 'Market Preferences',
+          businessSector: 'Business Sector',
+        };
+        const missing = skipped.map((k) => labels[k] || k).join(', ');
+        return json(res, 400, {
+          error: 'fields_not_configured',
+          message: missing
+            ? `These columns are not set up in your Airtable Users table yet: ${missing}. Add them in Airtable, or save only the fields that are available.`
+            : 'Nothing to update.',
+          skipped,
+          writable,
+        });
       }
       const updated = await updateUser(user.id, patch);
-      return json(res, 200, { ok: true, profile: publicProfile(updated) });
+      const response = { ok: true, profile: publicProfile(updated), writable };
+      if (skipped.length) {
+        response.partial = true;
+        response.skipped = skipped;
+        response.message =
+          'Some details were saved. To store location or preferences, add the matching columns to your Airtable Users table.';
+      }
+      return json(res, 200, response);
     }
 
     if (req.method === 'POST') {

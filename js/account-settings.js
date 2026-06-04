@@ -46,6 +46,28 @@
     ta.value = merged.join(', ');
   }
 
+  function setFieldWritable(id, enabled) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const field = el.closest('.as-field');
+    if (field) field.hidden = !enabled;
+    if (!enabled) {
+      if (el.tagName === 'SELECT' || el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
+        el.disabled = true;
+      }
+    }
+  }
+
+  function applyWritable(writable) {
+    const w = writable || {};
+    setFieldWritable('as-name', w.name !== false);
+    setFieldWritable('as-location', !!w.location);
+    setFieldWritable('as-sector', !!w.businessSector);
+    setFieldWritable('as-prefs', !!w.marketPreferences);
+    const quick = document.getElementById('as-prefs-quick');
+    if (quick) quick.hidden = !w.marketPreferences;
+  }
+
   function fillForm(profile) {
     document.getElementById('as-email').value = profile.email || '';
     document.getElementById('as-name').value = profile.name || '';
@@ -60,6 +82,7 @@
     const data = await res.json();
     if (!data.ok) throw new Error(data.message || data.error || 'load_failed');
     fillForm(data.profile || {});
+    applyWritable(data.writable);
   }
 
   document.getElementById('as-prefs-quick')?.addEventListener('change', syncTextareaFromPrefs);
@@ -85,7 +108,8 @@
       const data = await res.json();
       if (!data.ok) throw new Error(data.message || data.error || 'save_failed');
       fillForm(data.profile || {});
-      showAlert('Your details were saved.', true);
+      if (data.writable) applyWritable(data.writable);
+      showAlert(data.message || 'Your details were saved.', true);
     } catch (err) {
       showAlert(err.message || 'Could not save.', false);
     } finally {

@@ -11,9 +11,9 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260618" />
-    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260618" />
-    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260618" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260618" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260619" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260619" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
@@ -31,115 +31,18 @@
     <div id="org-shell" hidden>
       <div class="org-dashboard-layout">
         <aside class="org-sidebar">
-          <p class="org-sidebar-label">Organiser dashboard</p>
-          <nav class="hub-side-nav org-dash-bar" aria-label="Organiser dashboard">
-            <div class="hub-side-nav-item is-open" data-nav-group="overview">
-              <button
-                type="button"
-                class="hub-side-nav-trigger"
-                aria-expanded="true"
-                aria-controls="org-nav-overview"
-              >
-                <span class="hub-side-nav-main">
-                  <span class="hub-side-nav-title">Overview</span>
-                  <span class="hub-side-nav-desc">Stats, quick actions and your latest group profiles.</span>
-                </span>
-                <span class="hub-side-nav-chev" aria-hidden="true">▾</span>
-              </button>
-              <div id="org-nav-overview" class="hub-side-nav-panel">
-                <a href="#dashboard" class="hub-side-nav-link" data-org-route="dashboard">Dashboard home</a>
-              </div>
-            </div>
-
-            <div class="hub-side-nav-item" data-nav-group="groups">
-              <button
-                type="button"
-                class="hub-side-nav-trigger"
-                aria-expanded="false"
-                aria-controls="org-nav-groups"
-              >
-                <span class="hub-side-nav-main">
-                  <span class="hub-side-nav-title">Group profiles</span>
-                  <span class="hub-side-nav-desc">Group pages, logos and descriptions shown on event listings.</span>
-                </span>
-                <span class="hub-side-nav-chev" aria-hidden="true">▾</span>
-              </button>
-              <div id="org-nav-groups" class="hub-side-nav-panel">
-                <a href="#groups" class="hub-side-nav-link" data-org-route="groups">All group profiles</a>
-                <a href="group-edit.html" class="hub-side-nav-link">+ New group profile</a>
-              </div>
-            </div>
-
-            <div class="hub-side-nav-item" data-nav-group="academy">
-              <button
-                type="button"
-                class="hub-side-nav-trigger"
-                aria-expanded="false"
-                aria-controls="org-nav-academy"
-              >
-                <span class="hub-side-nav-main">
-                  <span class="hub-side-nav-title">The Academy</span>
-                  <span class="hub-side-nav-desc">Workshops, seminars and masterclasses — manage training listings.</span>
-                </span>
-                <span class="hub-side-nav-chev" aria-hidden="true">▾</span>
-              </button>
-              <div id="org-nav-academy" class="hub-side-nav-panel">
-                <a href="#academy" class="hub-side-nav-link" data-org-route="academy"
-                  ><span class="hub-side-nav-icon" aria-hidden="true">✦</span> Academy home</a
-                >
-                <a href="#academy-sessions" class="hub-side-nav-link" data-org-route="academy-sessions"
-                  ><span class="hub-side-nav-icon" aria-hidden="true">📚</span> My sessions
-                  <span class="hub-side-nav-count org-badge-soon-pill">Soon</span></a
-                >
-                <a href="../training/index.html" class="hub-side-nav-link" target="_blank" rel="noopener"
-                  ><span class="hub-side-nav-icon" aria-hidden="true">↗</span> Preview marketplace</a
-                >
-              </div>
-            </div>
-
-            <div class="hub-side-nav-item is-open" data-nav-group="events">
-              <button
-                type="button"
-                class="hub-side-nav-trigger"
-                aria-expanded="true"
-                aria-controls="org-nav-events"
-              >
-                <span class="hub-side-nav-main">
-                  <span class="hub-side-nav-title">My Events</span>
-                  <span class="hub-side-nav-desc">Events, tickets, attendees, reviews and revenue — all in one place.</span>
-                </span>
-                <span class="hub-side-nav-chev" aria-hidden="true">▾</span>
-              </button>
-              <div id="org-nav-events" class="hub-side-nav-panel">
-                <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list"
-                  ><span class="hub-side-nav-icon" aria-hidden="true">📅</span> All events
-                  <span class="hub-side-nav-count" id="side-count-events">0</span></a
-                >
-                <a href="#events-tickets" class="hub-side-nav-link" data-org-route="events-tickets"
-                  ><span class="hub-side-nav-icon" aria-hidden="true">🎟️</span> Tickets
-                  <span class="hub-side-nav-count" id="side-count-tickets">0</span></a
-                >
-                <a href="#events-attendees" class="hub-side-nav-link" data-org-route="events-attendees"
-                  ><span class="hub-side-nav-icon" aria-hidden="true">👥</span> Attendees
-                  <span class="hub-side-nav-count" id="side-count-attendees">0</span></a
-                >
-                <a href="#events-reviews" class="hub-side-nav-link" data-org-route="events-reviews"
-                  ><span class="hub-side-nav-icon" aria-hidden="true">⭐</span> Reviews
-                  <span class="hub-side-nav-count" id="side-count-reviews">0</span></a
-                >
-                <a href="#events-revenue" class="hub-side-nav-link" data-org-route="events-revenue"
-                  ><span class="hub-side-nav-icon" aria-hidden="true">💰</span> Revenue
-                  <span class="hub-side-nav-count" id="side-count-revenue">£0</span></a
-                >
-                <a href="event-format.html" class="hub-side-nav-link"
-                  ><span class="hub-side-nav-icon" aria-hidden="true">＋</span> New event</a
-                >
-              </div>
-            </div>
-
+          <nav class="hub-side-nav hub-side-nav--minimal org-dash-bar" aria-label="Organiser dashboard">
+            <a href="#dashboard" class="hub-side-nav-link is-active" data-org-route="dashboard">Overview</a>
+            <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Group profiles</a>
+            <a href="#academy" class="hub-side-nav-link" data-org-route="academy">The Academy</a>
+            <span class="hub-side-nav-divider">My events</span>
+            <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">Events</a>
+            <a href="#events-tickets" class="hub-side-nav-link" data-org-route="events-tickets">Tickets</a>
+            <a href="#events-attendees" class="hub-side-nav-link" data-org-route="events-attendees">Attendees</a>
+            <a href="#events-reviews" class="hub-side-nav-link" data-org-route="events-reviews">Reviews</a>
+            <a href="#events-revenue" class="hub-side-nav-link" data-org-route="events-revenue">Revenue</a>
             <div class="hub-side-nav-util">
-              <a href="../events/index.html">Browse public events</a>
-              <a href="../account/index.html">Attend events</a>
+              <a href="../events/index.html">Browse events</a>
             </div>
           </nav>
         </aside>
@@ -150,9 +53,6 @@
 
         <!-- Overview -->
         <section class="org-page is-active" id="org-page-dashboard" data-org-page="dashboard">
-          <h1 class="org-welcome-name" id="org-welcome-name">Welcome back</h1>
-          <p class="org-welcome-sub" id="org-welcome-sub">Here's your account at a glance.</p>
-
           <div class="org-overview-add" id="org-add-menu-wrap">
             <button
               type="button"
@@ -325,67 +225,30 @@
           <nav class="org-pagination" id="pagination-groups" data-list="groups" aria-label="Groups pages" hidden></nav>
         </section>
 
-        <!-- The Academy -->
+        <!-- The Academy — marketplace preview + coming soon -->
         <section class="org-page" id="org-page-academy" data-org-page="academy">
-          <div class="org-academy-banner">
-            <span class="org-academy-badge">Learning marketplace</span>
-            <h2 class="org-section-title">The Networker Academy</h2>
-            <p class="org-section-sub org-academy-lead">
-              List <strong>workshops, seminars and masterclasses</strong> for thousands of UK business owners — alongside
-              your events. Session management is rolling out soon; preview the public marketplace below.
-            </p>
-            <div class="org-academy-actions">
-              <a class="org-btn org-btn-outline" href="../training/index.html" target="_blank" rel="noopener"
-                >Preview marketplace ↗</a
-              >
-              <button type="button" class="org-btn org-btn-gold" disabled title="Coming soon">+ List a session</button>
+          <div class="org-academy-stage">
+            <div class="org-academy-preview" aria-hidden="true">
+              <div class="org-academy-preview-hero">
+                <p class="org-academy-preview-kicker">Learning marketplace</p>
+                <h2 class="org-academy-preview-title">
+                  Workshops, seminars &amp; <span>masterclasses</span>
+                </h2>
+                <p class="org-academy-preview-lede">
+                  The Networker Academy — live training for UK business owners.
+                </p>
+              </div>
+              <div class="org-academy-preview-grid" id="org-academy-preview-grid"></div>
             </div>
-          </div>
-
-          <div class="org-sub-page is-active" id="sub-academy-home" data-academy-panel="academy-home">
-            <div class="org-stats org-stats--three">
-              <div class="org-stat gold">
-                <div class="org-stat-label">Sessions listed</div>
-                <div class="org-stat-value" id="academy-stat-sessions">0</div>
-                <div class="org-stat-meta">Coming soon</div>
-              </div>
-              <div class="org-stat green">
-                <div class="org-stat-label">Bookings</div>
-                <div class="org-stat-value" id="academy-stat-bookings">—</div>
-                <div class="org-stat-meta">Coming soon</div>
-              </div>
-              <div class="org-stat purple">
-                <div class="org-stat-label">Revenue</div>
-                <div class="org-stat-value" id="academy-stat-revenue">£0</div>
-                <div class="org-stat-meta">Coming soon</div>
-              </div>
-            </div>
-            <p class="org-academy-note">
-              Your Academy listings will appear here with draft / publish controls, ticket types, and attendee exports —
-              similar to events. Until launch, use <strong>Add new → Academy session</strong> on the overview (greyed) or
-              contact us to register interest.
-            </p>
-          </div>
-
-          <div class="org-sub-page" id="sub-academy-sessions" data-academy-panel="academy-sessions">
-            <h3 class="org-section-title" style="font-size: 1rem">My sessions</h3>
-            <p class="org-section-sub">Workshops, seminars and masterclasses you publish to the Academy.</p>
-            <div class="org-table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Session</th>
-                    <th>Type</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody id="academy-sessions-body"></tbody>
-              </table>
-              <p class="org-empty" id="academy-sessions-empty">
-                No Academy sessions yet — listing tools are coming soon.
-                <a href="../training/index.html" target="_blank" rel="noopener">See the marketplace preview →</a>
+            <div class="org-academy-coming" role="status">
+              <p class="org-academy-coming-label">Coming soon</p>
+              <p class="org-academy-coming-text">
+                List and manage Academy sessions from here soon — workshops, seminars and masterclasses alongside your
+                events.
               </p>
+              <a class="org-btn org-btn-outline" href="../training/index.html" target="_blank" rel="noopener"
+                >View public preview ↗</a
+              >
             </div>
           </div>
         </section>
@@ -660,7 +523,6 @@
       </div>
     </div>
 
-    <script src="../js/hub-side-nav.js?v=20260618"></script>
-    <script src="../js/organiser-dashboard.js?v=20260618"></script>
+    <script src="../js/organiser-dashboard.js?v=20260620"></script>
   </body>
 </html>

@@ -324,11 +324,98 @@ async function findUserByResetToken(token) {
 }
 
 function fieldNameOnRecord(recordFields, candidates, fallback) {
+  return resolveProfileFieldName(recordFields, candidates, null) ?? fallback;
+}
+
+/** First matching candidate on the record, or in the Users table schema when known. */
+function resolveProfileFieldName(recordFields, candidates, tableFieldNames) {
   const f = recordFields || {};
   for (const key of candidates) {
     if (Object.prototype.hasOwnProperty.call(f, key)) return key;
   }
-  return fallback;
+  if (tableFieldNames) {
+    for (const key of candidates) {
+      if (tableFieldNames.has(key)) return key;
+    }
+  }
+  return null;
+}
+
+let usersTableFieldCache = null;
+
+function usersProfileFieldAllowlist() {
+  const raw = cleanEnvVal(process.env.AIRTABLE_USERS_PROFILE_COLUMNS);
+  if (!raw) return null;
+  return new Set(
+    raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+  );
+}
+
+async function getUsersTableFieldNames() {
+  if (usersTableFieldCache) return usersTableFieldCache;
+
+  const allow = usersProfileFieldAllowlist();
+  if (allow) {
+    usersTableFieldCache = allow;
+    return usersTableFieldCache;
+  }
+
+  const { apiKey, baseId, usersTable } = airtableConfig();
+  if (!apiKey || !baseId) return null;
+
+  try {
+    const url = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`;
+    const resp = await fetch(url, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      const table = (data.tables || []).find((t) => t.name === usersTable);
+      if (table) {
+        usersTableFieldCache = new Set((table.fields || []).map((fld) => fld.name));
+        return usersTableFieldCache;
+      }
+    }
+  } catch {
+    /* meta API may be unavailable on this token */
+  }
+
+  try {
+    const q = new URLSearchParams({ maxRecords: '25' });
+    const resp = await airtableFetch(`${encodeURIComponent(usersTable)}?${q}`);
+    if (resp.ok) {
+      const data = await resp.json();
+      const names = new Set();
+      (data.records || []).forEach((rec) => {
+        Object.keys(rec.fields || {}).forEach((k) => names.add(k));
+      });
+      if (names.size) {
+        usersTableFieldCache = names;
+        return usersTableFieldCache;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+
+  return null;
+}
+
+function profileWritableFlags(user, tableFieldNames) {
+  const f = user.fields || {};
+  return {
+    name: !!resolveProfileFieldName(f, USER_FIELDS.name, tableFieldNames),
+    location: !!resolveProfileFieldName(f, USER_PROFILE_FIELDS.location, tableFieldNames),
+    marketPreferences: !!resolveProfileFieldName(
+      f,
+      USER_PROFILE_FIELDS.marketPreferences,
+      tableFieldNames
+    ),
+    businessSector: !!resolveProfileFieldName(f, USER_PROFILE_FIELDS.businessSector, tableFieldNames),
+  };
 }
 
 function profileFromFields(f) {
@@ -408,7 +495,7 @@ async function updateUser(recordId, fields) {
     const msg = parsed?.message || parsed?.type || err || 'update_failed';
     const hint =
       parsed?.type === 'UNKNOWN_FIELD_NAME'
-        ? ' Check Users table field names match: Email, Password Hash, Role, Reset Token, Reset Token Expires.'
+        ? ' That column may be missing from your Airtable Users table. Core fields: Email, Password Hash, Role, Reset Token, Reset Token Expires. Optional profile fields: Name, Location (or City), Market Preferences, Business Sector.'
         : '';
     throw new Error(String(msg).slice(0, 240) + hint);
   }
@@ -443,6 +530,9 @@ module.exports = {
   USER_FIELDS,
   USER_PROFILE_FIELDS,
   fieldNameOnRecord,
+  resolveProfileFieldName,
+  getUsersTableFieldNames,
+  profileWritableFlags,
   profileFromFields,
   normalizeRole,
   isAdminRole,

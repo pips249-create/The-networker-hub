@@ -11,9 +11,9 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260618" />
-    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260618" />
-    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260618" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260618" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260619" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260619" />
   </head>
   <body class="attendee-dashboard-page">
     <div id="hub-site-nav"></div>
@@ -29,75 +29,14 @@
     <div id="ad-shell" hidden>
       <div class="ad-dashboard-layout">
         <aside class="ad-sidebar">
-          <p class="ad-sidebar-label">Attend events</p>
-          <nav class="hub-side-nav ad-dash-bar" aria-label="Attend events dashboard">
-            <div class="hub-side-nav-item is-open" data-nav-group="overview">
-              <button
-                type="button"
-                class="hub-side-nav-trigger"
-                aria-expanded="true"
-                aria-controls="ad-nav-overview"
-              >
-                <span class="hub-side-nav-main">
-                  <span class="hub-side-nav-title">Overview</span>
-                  <span class="hub-side-nav-desc">Your summary — upcoming count, next event and review stats.</span>
-                </span>
-                <span class="hub-side-nav-chev" aria-hidden="true">▾</span>
-              </button>
-              <div id="ad-nav-overview" class="hub-side-nav-panel">
-                <a href="#overview" class="hub-side-nav-link is-active" data-ad-route="overview">Summary &amp; stats</a>
-              </div>
-            </div>
-
-            <div class="hub-side-nav-item is-open" data-nav-group="registrations">
-              <button
-                type="button"
-                class="hub-side-nav-trigger"
-                aria-expanded="true"
-                aria-controls="ad-nav-registrations"
-              >
-                <span class="hub-side-nav-main">
-                  <span class="hub-side-nav-title">My registrations</span>
-                  <span class="hub-side-nav-desc">Events you have booked — upcoming and past attendance.</span>
-                </span>
-                <span class="hub-side-nav-chev" aria-hidden="true">▾</span>
-              </button>
-              <div id="ad-nav-registrations" class="hub-side-nav-panel">
-                <a href="#upcoming" class="hub-side-nav-link" data-ad-route="upcoming"
-                  >Upcoming <span class="hub-side-nav-count" id="ad-side-upcoming">0</span></a
-                >
-                <a href="#past" class="hub-side-nav-link" data-ad-route="past"
-                  >Past events <span class="hub-side-nav-count" id="ad-side-past">0</span></a
-                >
-              </div>
-            </div>
-
-            <div class="hub-side-nav-item" data-nav-group="reviews">
-              <button
-                type="button"
-                class="hub-side-nav-trigger"
-                aria-expanded="false"
-                aria-controls="ad-nav-reviews"
-              >
-                <span class="hub-side-nav-main">
-                  <span class="hub-side-nav-title">Reviews</span>
-                  <span class="hub-side-nav-desc">Leave feedback after events and track reviews you have submitted.</span>
-                </span>
-                <span class="hub-side-nav-chev" aria-hidden="true">▾</span>
-              </button>
-              <div id="ad-nav-reviews" class="hub-side-nav-panel">
-                <a href="#reviews-pending" class="hub-side-nav-link" data-ad-route="reviews-pending"
-                  >Pending <span class="hub-side-nav-count" id="ad-side-pending">0</span></a
-                >
-                <a href="#reviews-done" class="hub-side-nav-link" data-ad-route="reviews-done"
-                  >Submitted <span class="hub-side-nav-count" id="ad-side-reviewed">0</span></a
-                >
-              </div>
-            </div>
-
+          <nav class="hub-side-nav hub-side-nav--minimal ad-dash-bar" aria-label="Attend events">
+            <a href="#overview" class="hub-side-nav-link is-active" data-ad-route="overview">Overview</a>
+            <a href="#upcoming" class="hub-side-nav-link" data-ad-route="upcoming">Upcoming</a>
+            <a href="#past" class="hub-side-nav-link" data-ad-route="past">Past</a>
+            <a href="#reviews-pending" class="hub-side-nav-link" data-ad-route="reviews-pending">Reviews</a>
             <div class="hub-side-nav-util">
               <a href="../events/index.html">Browse events</a>
-              <a href="settings.html">Account settings</a>
+              <a href="settings.html">Settings</a>
             </div>
           </nav>
         </aside>
