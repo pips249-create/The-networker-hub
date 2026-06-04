@@ -9,6 +9,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css">
+<link rel="icon" href="assets/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 </head>
 <body>
 
@@ -16,6 +18,22 @@
 <script src="js/site-nav.js" data-root="" data-page="home"></script>
 
 <section class="home-hero" aria-label="Welcome">
+  <video
+    class="hero-video"
+    autoplay
+    muted
+    loop
+    playsinline
+    preload="metadata"
+    poster="assets/logo.png"
+    aria-hidden="true"
+  >
+    <source
+      src="https://assets.mixkit.co/videos/preview/mixkit-group-of-people-networking-in-a-conference-4406-large.mp4"
+      type="video/mp4"
+    >
+  </video>
+  <div class="hero-video-overlay" aria-hidden="true"></div>
   <div class="home-hero-inner">
     <img
       class="hero-logo"

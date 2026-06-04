@@ -2,6 +2,7 @@
 :root {
   --charcoal: #4a4446;
   --charcoal-soft: #5c5557;
+  --brand-lavender: #b189b8;
   --lavender: #c299d1;
   --lavender-soft: #d9c4e0;
   --lavender-light: #ebe0f0;
@@ -47,33 +48,32 @@ body {
 a { color: var(--lavender-deep); text-decoration: none; }
 a:hover { color: var(--charcoal); }
 
-/* ─── Nav (always light — logo has no background) ─── */
+/* ─── Nav (brand lavender from logo) ─── */
 .site-nav {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
-  padding: 14px 28px;
+  padding: 10px 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border-soft);
+  background: var(--brand-lavender);
+  border-bottom: 1px solid rgba(74, 68, 70, 0.12);
   transition: box-shadow 0.25s;
 }
 .site-nav.is-scrolled {
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 4px 24px rgba(74, 68, 70, 0.18);
 }
 .site-nav.on-dark,
 .site-nav.on-light {
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--brand-lavender);
 }
 .nav-logo {
   display: block;
-  height: 48px;
+  height: 52px;
   width: auto;
   line-height: 0;
 }
@@ -81,10 +81,9 @@ a:hover { color: var(--charcoal); }
   height: 100%;
   width: auto;
   display: block;
-  /* Original logo (cream/lavender) — transparent PNG on brand charcoal chip */
-  padding: 4px 10px;
-  border-radius: 10px;
-  background: var(--charcoal);
+  padding: 0;
+  border-radius: 6px;
+  background: transparent;
 }
 .nav-links {
   display: flex;
@@ -95,10 +94,16 @@ a:hover { color: var(--charcoal); }
   font-weight: 500;
 }
 .site-nav .nav-links a {
-  color: var(--text-muted);
+  color: rgba(255, 252, 248, 0.92);
   text-decoration: none;
 }
-.site-nav .nav-links a:hover { color: var(--charcoal); }
+.site-nav .nav-links a:hover {
+  color: #fff;
+}
+.site-nav .nav-links a[aria-current="page"] {
+  color: #fff;
+  font-weight: 600;
+}
 .nav-cta {
   display: inline-flex;
   align-items: center;
@@ -106,14 +111,14 @@ a:hover { color: var(--charcoal); }
   border-radius: var(--radius-pill);
   font-size: 13px;
   font-weight: 600;
-  background: var(--lavender);
+  background: #faf6ee;
   color: var(--charcoal) !important;
   text-decoration: none !important;
   transition: transform 0.15s, box-shadow 0.15s;
 }
 .nav-cta:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(194, 153, 209, 0.4);
+  box-shadow: 0 6px 20px rgba(45, 38, 54, 0.2);
   color: var(--charcoal) !important;
 }
 
@@ -124,33 +129,33 @@ a:hover { color: var(--charcoal); }
   border-radius: var(--radius-pill);
   font-size: 13px;
   font-weight: 700;
-  color: var(--lavender-deep) !important;
-  background: var(--lavender-light);
-  border: 1px solid var(--lavender);
+  color: var(--charcoal) !important;
+  background: rgba(255, 252, 248, 0.95);
+  border: 1px solid rgba(255, 252, 248, 0.5);
   text-decoration: none !important;
 }
 .nav-admin:hover {
-  background: var(--lavender);
+  background: #fff;
   color: var(--charcoal) !important;
 }
 .nav-admin[aria-current="page"] {
-  background: var(--lavender-deep);
-  border-color: var(--lavender-deep);
-  color: #fff !important;
+  background: var(--charcoal);
+  border-color: var(--charcoal);
+  color: #faf6ee !important;
 }
 
 .nav-signout {
   font-family: inherit;
   font-size: 14px;
   font-weight: 500;
-  color: var(--text-muted);
+  color: rgba(255, 252, 248, 0.9);
   background: none;
   border: none;
   cursor: pointer;
   padding: 0;
 }
 .nav-signout:hover {
-  color: var(--charcoal);
+  color: #fff;
   text-decoration: underline;
 }
 
@@ -167,12 +172,10 @@ body.hub-page-admin {
   padding-top: 0;
 }
 
-/* ─── Homepage hero (bright) ─── */
+/* ─── Homepage hero (video background) ─── */
 .home-hero {
   min-height: 92vh;
   min-height: 92dvh;
-  background:
-    linear-gradient(165deg, #fffdf9 0%, var(--cream) 35%, var(--lavender-light) 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -181,37 +184,52 @@ body.hub-page-admin {
   padding: 110px 24px 80px;
   position: relative;
   overflow: hidden;
+  background: var(--charcoal);
 }
-.home-hero::before {
-  content: '';
+.hero-video {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse 70% 50% at 80% 10%, rgba(194, 153, 209, 0.2), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 15% 85%, rgba(245, 240, 225, 0.9), transparent 50%);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+}
+.hero-video-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(74, 68, 70, 0.55) 0%,
+    rgba(74, 68, 70, 0.72) 45%,
+    rgba(177, 137, 184, 0.65) 100%
+  );
   pointer-events: none;
 }
 .home-hero-inner {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   max-width: 720px;
 }
 .hero-logo {
-  width: min(400px, 86vw);
+  width: min(420px, 90vw);
   height: auto;
   margin: 0 auto 28px;
   display: block;
-  padding: 12px 20px;
-  border-radius: 14px;
-  background: var(--charcoal);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.25));
 }
 .hero-tagline {
-  font-size: clamp(1rem, 2.2vw, 1.15rem);
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
   font-weight: 400;
-  color: var(--text-muted);
+  color: rgba(255, 252, 248, 0.95);
   line-height: 1.65;
   max-width: 32em;
   margin: 0 auto 32px;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35);
 }
 .hero-actions {
   display: flex;
@@ -263,13 +281,26 @@ body.hub-page-admin {
   bottom: 28px;
   left: 50%;
   transform: translateX(-50%);
+  z-index: 2;
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--text-soft);
+  color: rgba(255, 252, 248, 0.85);
   text-decoration: none;
 }
-.hero-scroll:hover { color: var(--lavender-deep); }
+.hero-scroll:hover { color: #fff; }
+
+.home-hero .btn-secondary {
+  background: rgba(255, 252, 248, 0.15);
+  color: #fff;
+  border-color: rgba(255, 252, 248, 0.5);
+  backdrop-filter: blur(6px);
+}
+.home-hero .btn-secondary:hover {
+  background: rgba(255, 252, 248, 0.28);
+  border-color: #fff;
+  color: #fff;
+}
 
 /* ─── Sections ─── */
 .section {

@@ -10,6 +10,14 @@
   var mount = document.getElementById('hub-site-nav');
   if (!mount) return;
 
+  if (!document.querySelector('link[rel="icon"]')) {
+    var icon = document.createElement('link');
+    icon.rel = 'icon';
+    icon.type = 'image/png';
+    icon.href = (script && script.getAttribute('data-root') || '') + 'assets/favicon.png';
+    document.head.appendChild(icon);
+  }
+
   var scrollBound = false;
 
   function href(path) {
