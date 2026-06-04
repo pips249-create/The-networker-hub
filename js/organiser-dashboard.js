@@ -496,10 +496,39 @@
   }
 
   function closeAllActionMenus() {
-    document.querySelectorAll('.org-action-menu.is-open').forEach((m) => m.classList.remove('is-open'));
+    document.querySelectorAll('.org-action-menu.is-open').forEach((m) => {
+      m.classList.remove('is-open', 'is-floating');
+      m.style.top = '';
+      m.style.left = '';
+      m.style.right = '';
+      m.style.bottom = '';
+    });
     document.querySelectorAll('[data-org-action-toggle][aria-expanded="true"]').forEach((b) => {
       b.setAttribute('aria-expanded', 'false');
     });
+  }
+
+  function openActionMenu(menu, toggle) {
+    menu.classList.add('is-open', 'is-floating');
+    toggle.setAttribute('aria-expanded', 'true');
+    menu.style.visibility = 'hidden';
+    menu.style.display = 'block';
+    const rect = toggle.getBoundingClientRect();
+    const menuW = menu.offsetWidth || 220;
+    const menuH = menu.offsetHeight || 180;
+    let top = rect.bottom + 6;
+    let left = rect.right - menuW;
+    if (top + menuH > window.innerHeight - 12) {
+      top = Math.max(12, rect.top - menuH - 6);
+    }
+    if (left < 12) left = 12;
+    if (left + menuW > window.innerWidth - 12) {
+      left = window.innerWidth - menuW - 12;
+    }
+    menu.style.top = top + 'px';
+    menu.style.left = left + 'px';
+    menu.style.right = 'auto';
+    menu.style.visibility = '';
   }
 
   function groupNameById(id) {
@@ -591,7 +620,7 @@
         ratingHtml(g.rating) +
         '</td><td>' +
         statusBadgeHtml(g.statusKey || 'draft', g.statusLabel || 'Draft') +
-        '</td><td>' +
+        '</td><td class="org-td-actions">' +
         actionMenuHtml('group', g.id, g.name) +
         '</td>';
       body.appendChild(tr);
@@ -629,7 +658,7 @@
         esc(ev.revenueDisplay || '£0') +
         '</td><td>' +
         statusBadgeHtml(ev.statusKey || 'upcoming', ev.statusLabel || 'Upcoming') +
-        '</td><td>' +
+        '</td><td class="org-td-actions">' +
         actionMenuHtml('event', ev.id, ev.title) +
         '</td>';
       body.appendChild(tr);
@@ -718,7 +747,7 @@
         esc(ev.revenueDisplay || '£0') +
         '</td><td>' +
         statusBadgeHtml(ev.statusKey || 'draft', ev.statusLabel || 'Draft') +
-        '</td><td>' +
+        '</td><td class="org-td-actions">' +
         eventActionMenuHtml(ev.id, ev.title) +
         '</td>';
       body.appendChild(tr);
@@ -1331,8 +1360,7 @@
         const wasOpen = menu && menu.classList.contains('is-open');
         closeAllActionMenus();
         if (menu && !wasOpen) {
-          menu.classList.add('is-open');
-          toggle.setAttribute('aria-expanded', 'true');
+          openActionMenu(menu, toggle);
         }
         return;
       }
@@ -1375,6 +1403,9 @@
       const r = parseRoute();
       setRoute(r.sub || r.page);
     });
+
+    window.addEventListener('scroll', closeAllActionMenus, true);
+    window.addEventListener('resize', closeAllActionMenus);
 
     document.getElementById('org-shell')?.addEventListener('click', (e) => {
       const btn = e.target.closest('.org-page-btn');

@@ -503,7 +503,7 @@
   background: var(--od-white);
   border-radius: var(--od-radius);
   border: 0.5px solid var(--od-border-soft);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .org-table-wrap table {
@@ -712,12 +712,22 @@
   border: 0.5px solid var(--od-border);
   border-radius: var(--od-radius);
   box-shadow: 0 8px 24px rgba(45, 27, 94, 0.15);
-  z-index: 50;
+  z-index: 200;
   overflow: hidden;
 }
 
 .org-action-menu.is-open {
   display: block;
+}
+
+.org-action-menu.is-floating {
+  position: fixed;
+  z-index: 1200;
+}
+
+.org-table-wrap tbody td.org-td-actions {
+  overflow: visible;
+  position: relative;
 }
 
 .org-action-item {
@@ -1020,11 +1030,13 @@
     grid-template-columns: 1fr;
   }
 
-  .org-overview-table {
+  .org-table-scroll-x {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--od-radius);
   }
 
-  .org-overview-table table {
+  .org-table-scroll-x .org-table-wrap {
     min-width: 720px;
   }
 }
