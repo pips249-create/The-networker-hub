@@ -6,7 +6,7 @@
 <title>Networking events – The Networker Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css">
 <style>
 .layout {
@@ -137,14 +137,14 @@
 </head>
 <body>
 
-<header class="site-nav">
-  <a class="nav-brand" href="../index.html">
-    <span class="nav-mark">N</span>
-    The <span>Networker</span> Hub
+<header class="site-nav on-light legacy-nav">
+  <a class="nav-logo" href="../index.html" aria-label="The Networker Hub home">
+    <img src="../assets/logo.png" alt="The Networker Hub" width="180" height="72">
   </a>
   <nav class="nav-links">
     <a href="index.html">Events</a>
-    <a href="../index.html">Hub home</a>
+    <a href="../index.html">Home</a>
+    <a class="nav-cta" href="index.html">Browse</a>
   </nav>
 </header>
 
@@ -157,7 +157,7 @@
 </section>
 
 <main class="shell">
-  <p class="prototype-note">Sample data only — connects to Airtable + Stripe in Phase 1–4.</p>
+    <p class="prototype-note">Sample listings — live data and ticketing coming soon.</p>
 
   <div class="layout">
     <aside class="filters" aria-label="Filter events">
@@ -268,7 +268,10 @@
 </main>
 
 <footer class="site-footer">
-  <a href="../index.html">← Hub home</a>
+  <div class="footer-inner" style="justify-content:center;">
+    <a href="../index.html" style="color:var(--lavender);font-weight:600;">← Back to home</a>
+  </div>
+  <p class="footer-copy">© The Networker Group Ltd</p>
 </footer>
 
 </body>

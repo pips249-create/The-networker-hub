@@ -3,116 +3,179 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Networker Hub</title>
-<meta name="description" content="Networking events, exhibitions, and training for UK business professionals.">
+<title>The Networker Hub — Events, training &amp; your network</title>
+<meta name="description" content="Discover UK networking events, exhibitions, and professional training. Organisers list events; members book tickets and grow their network.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css">
 </head>
 <body>
 
-<header class="site-nav">
-  <a class="nav-brand" href="index.html">
-    <span class="nav-mark">N</span>
-    The <span>Networker</span> Hub
+<header class="site-nav on-dark" id="site-nav">
+  <a class="nav-logo" href="index.html" aria-label="The Networker Hub home">
+    <img src="assets/logo.png" alt="The Networker Hub" width="200" height="80">
   </a>
   <nav class="nav-links" aria-label="Main">
+    <a href="#discover">Discover</a>
     <a href="events/index.html">Events</a>
-    <a href="#academy">Academy</a>
-    <a href="#dashboards">Dashboards</a>
-    <a href="https://the-networker.co.uk" target="_blank" rel="noopener">Main site</a>
+    <a href="#academy" class="nav-hide-mobile">Academy</a>
+    <a href="#for-you" class="nav-hide-mobile">For you</a>
+    <a href="https://the-networker.co.uk" target="_blank" rel="noopener" class="nav-hide-mobile">Main site</a>
+    <a class="nav-cta" href="events/index.html">Browse events</a>
   </nav>
 </header>
 
-<section class="hero">
-  <div class="hero-inner">
-    <p class="hero-eyebrow">Phase 0 prototype</p>
-    <h1>Events, training &amp; <span class="accent">your network</span> in one hub.</h1>
-    <p class="hero-lede">
-      Built from your Networker brief: networking meetings, exhibitions, the Academy, organiser and attendee dashboards, and Stripe ticketing.
+<section class="home-hero" aria-label="Welcome">
+  <div class="home-hero-inner">
+    <img
+      class="hero-logo"
+      src="assets/logo.png"
+      alt="The Networker Hub"
+      width="640"
+      height="280"
+      fetchpriority="high"
+    >
+    <p class="hero-tagline">
+      Your central place for UK networking meetings, exhibitions, and professional training — discover events, book tickets, and connect with organisers who matter to your industry.
     </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="events/index.html">Explore events</a>
+      <a class="btn btn-secondary" href="#for-you">I&rsquo;m an organiser</a>
+    </div>
+  </div>
+  <a class="hero-scroll" href="#discover">Scroll</a>
+</section>
+
+<section class="section" id="discover">
+  <div class="section-inner">
+    <header class="section-head">
+      <p class="section-kicker">What&rsquo;s inside the hub</p>
+      <h2 class="section-title">Everything your network needs, in one place</h2>
+      <p class="section-lede">
+        From breakfast networking to exhibitions and masterclasses — search, filter, save, and book with confidence.
+      </p>
+    </header>
+    <div class="pillar-grid">
+      <article class="pillar">
+        <div class="pillar-icon" aria-hidden="true">◉</div>
+        <h3>Networking events</h3>
+        <p>Meetings, mixers, and in-person or online formats — featured listings by industry and location.</p>
+      </article>
+      <article class="pillar">
+        <div class="pillar-icon" aria-hidden="true">▣</div>
+        <h3>Exhibitions &amp; conferences</h3>
+        <p>Larger showcases with tickets, calendars, reviews, and organiser profiles you can follow.</p>
+      </article>
+      <article class="pillar">
+        <div class="pillar-icon" aria-hidden="true">✦</div>
+        <h3>The Academy</h3>
+        <p>Workshops, seminars, webinars, and masterclasses — filter by level, length, and training type.</p>
+      </article>
+    </div>
   </div>
 </section>
 
-<main class="shell">
-  <div class="panel">
-    <p>
-      <strong>For business partners:</strong> this site maps the full product. Green badges are clickable prototypes; amber items are on the roadmap in
-      <a href="NETWORKER-HUB-ROADMAP.md">NETWORKER-HUB-ROADMAP.md</a>.
-    </p>
+<section class="section section-alt" aria-labelledby="explore-heading">
+  <div class="section-inner">
+    <header class="section-head">
+      <p class="section-kicker">Start here</p>
+      <h2 class="section-title" id="explore-heading">Explore the hub</h2>
+      <p class="section-lede">Jump straight into listings — more sections are on the way as we build out your brief.</p>
+    </header>
+    <div class="card-grid">
+      <article class="explore-card">
+        <div class="explore-card-top" aria-hidden="true"></div>
+        <div class="explore-card-body">
+          <span class="badge badge-live">Live</span>
+          <h3>Networking events</h3>
+          <p>Search by date, industry, format, and location. Featured events at the top of every listing.</p>
+          <a class="explore-link" href="events/index.html">View events →</a>
+        </div>
+      </article>
+      <article class="explore-card coming">
+        <div class="explore-card-top lavender" aria-hidden="true"></div>
+        <div class="explore-card-body">
+          <span class="badge badge-soon">Coming soon</span>
+          <h3>Exhibitions &amp; conferences</h3>
+          <p>Same powerful filters and organiser-led listings for larger events.</p>
+          <span class="explore-link">Opening soon</span>
+        </div>
+      </article>
+      <article class="explore-card coming">
+        <div class="explore-card-top" aria-hidden="true"></div>
+        <div class="explore-card-body">
+          <span class="badge badge-soon">Coming soon</span>
+          <h3>Organiser directory</h3>
+          <p>Profiles, reviews, industries, and every event from hosts you trust.</p>
+          <span class="explore-link">Opening soon</span>
+        </div>
+      </article>
+      <article class="explore-card coming" id="academy">
+        <div class="explore-card-top lavender" aria-hidden="true"></div>
+        <div class="explore-card-body">
+          <span class="badge badge-soon">Coming soon</span>
+          <h3>Training sessions</h3>
+          <p>Academy workshops with levels, timescales, and ticketed sessions.</p>
+          <span class="explore-link">Opening soon</span>
+        </div>
+      </article>
+    </div>
   </div>
+</section>
 
-  <p class="section-label">Networking events</p>
-  <div class="card-grid">
-    <article class="hub-card">
-      <span class="badge live">Prototype</span>
-      <h2>Meetings &amp; events</h2>
-      <p>Listings, featured events, filters, tickets, calendar, save to dashboard.</p>
-      <a class="card-link" href="events/index.html">View events listing →</a>
-    </article>
-    <article class="hub-card coming">
-      <span class="badge soon">Phase 1</span>
-      <h2>Exhibitions &amp; conferences</h2>
-      <p>Same listing pattern as meetings; organiser-submitted listings.</p>
-      <span class="card-link">Coming soon</span>
-    </article>
-    <article class="hub-card coming">
-      <span class="badge soon">Phase 1</span>
-      <h2>Organisers</h2>
-      <p>Directory with industry, format, reviews; individual organiser profiles.</p>
-      <span class="card-link">Coming soon</span>
-    </article>
+<section class="section section-dark" id="for-you">
+  <div class="section-inner">
+    <header class="section-head">
+      <p class="section-kicker">Built for both sides</p>
+      <h2 class="section-title">Attendees &amp; organisers</h2>
+      <p class="section-lede">
+        Personal dashboards, Stripe ticketing, and tools to grow your community — coming online in phases.
+      </p>
+    </header>
+    <div class="split-cta">
+      <div class="split-panel">
+        <h3>For attendees</h3>
+        <p>Save favourites, manage tickets, add events to your calendar, and get recommendations matched to your industry and postcode.</p>
+        <a class="btn btn-secondary" href="events/index.html">Find an event</a>
+      </div>
+      <div class="split-panel">
+        <h3>For organisers</h3>
+        <p>List meetings and training, sell free or paid tickets, manage applicants, export attendees, and track revenue.</p>
+        <a class="btn btn-secondary" href="mailto:hello@the-networker.co.uk">Get in touch</a>
+      </div>
+    </div>
   </div>
-
-  <p class="section-label" id="academy">The Networker Academy</p>
-  <div class="card-grid">
-    <article class="hub-card coming">
-      <span class="badge soon">Phase 2</span>
-      <h2>Training sessions</h2>
-      <p>Workshops, seminars, webinars — level, timescale, tickets, featured by industry and location.</p>
-      <span class="card-link">Coming soon</span>
-    </article>
-    <article class="hub-card coming">
-      <span class="badge soon">Phase 2</span>
-      <h2>Training organisers</h2>
-      <p>Provider profiles and &ldquo;more by this organiser&rdquo; on session pages.</p>
-      <span class="card-link">Coming soon</span>
-    </article>
-  </div>
-
-  <p class="section-label" id="dashboards">Dashboards &amp; payments</p>
-  <div class="card-grid">
-    <article class="hub-card coming">
-      <span class="badge soon">Phase 3–4</span>
-      <h2>Attendee dashboard</h2>
-      <p>Tickets, favourites, industry and location preferences, reviews, PDF tickets.</p>
-      <span class="card-link">Coming soon</span>
-    </article>
-    <article class="hub-card coming">
-      <span class="badge soon">Phase 4</span>
-      <h2>Organiser dashboard</h2>
-      <p>Add events/workshops, attendees export, revenue, Stripe payouts.</p>
-      <span class="card-link">Coming soon</span>
-    </article>
-    <article class="hub-card coming">
-      <span class="badge soon">Phase 4</span>
-      <h2>Ticketing (Stripe)</h2>
-      <p>Free/paid tickets, approval flow, 4% + 20p platform fee.</p>
-      <span class="card-link">Coming soon</span>
-    </article>
-    <article class="hub-card coming">
-      <span class="badge soon">Phase 5</span>
-      <h2>Admin</h2>
-      <p>Revenue, users, organisers, events — internal tools.</p>
-      <span class="card-link">Coming soon</span>
-    </article>
-  </div>
-</main>
+</section>
 
 <footer class="site-footer">
-  © The Networker Group Ltd · Phase 0 hub prototype
+  <div class="footer-inner">
+    <a href="index.html" aria-label="Home">
+      <img class="footer-logo" src="assets/logo.png" alt="" width="160" height="60">
+    </a>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="events/index.html">Events</a>
+      <a href="https://the-networker.co.uk" target="_blank" rel="noopener">The Networker</a>
+      <a href="mailto:hello@the-networker.co.uk">Contact</a>
+    </nav>
+    <p class="footer-copy">© The Networker Group Ltd</p>
+  </div>
 </footer>
+
+<script>
+(function () {
+  var nav = document.getElementById('site-nav');
+  var hero = document.querySelector('.home-hero');
+  if (!nav || !hero) return;
+  function updateNav() {
+    var past = window.scrollY > hero.offsetHeight - 80;
+    nav.classList.toggle('on-dark', !past);
+    nav.classList.toggle('on-light', past);
+  }
+  updateNav();
+  window.addEventListener('scroll', updateNav, { passive: true });
+})();
+</script>
 
 </body>
 </html>
