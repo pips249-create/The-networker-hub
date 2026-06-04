@@ -6,6 +6,7 @@ const {
   airtableConfig,
   appendSystemLog,
   USER_FIELDS,
+  setCors,
 } = require('../lib/auth');
 
 function fieldNameOnRecord(recordFields, candidates, fallback) {
@@ -17,8 +18,7 @@ function fieldNameOnRecord(recordFields, candidates, fallback) {
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 

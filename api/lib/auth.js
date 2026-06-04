@@ -87,9 +87,23 @@ function parseCookies(req) {
     if (i === -1) return;
     const k = part.slice(0, i).trim();
     const v = part.slice(i + 1).trim();
-    if (k) out[k] = decodeURIComponent(v);
+    if (!k) return;
+    try {
+      out[k] = decodeURIComponent(v);
+    } catch {
+      out[k] = v;
+    }
   });
   return out;
+}
+
+function setCors(req, res) {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Vary', 'Origin');
+  }
 }
 
 function sessionFromRequest(req) {
@@ -114,7 +128,7 @@ function setSessionCookie(res, payload) {
   const secure = process.env.VERCEL_ENV === 'production' ? '; Secure' : '';
   res.setHeader(
     'Set-Cookie',
-    `hub_session=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}${secure}`
+    `hub_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}${secure}`
   );
   return true;
 }
@@ -346,6 +360,7 @@ async function appendSystemLog(message, type = 'info') {
 module.exports = {
   USER_FIELDS,
   pick,
+  setCors,
   cleanEnvVal,
   parseAirtableError,
   testAirtableConnection,

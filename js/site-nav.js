@@ -29,7 +29,7 @@
     html += link('index.html#academy', 'Academy', 'academy', 'nav-hide-mobile');
     html += link('index.html#for-you', 'For you', 'for-you', 'nav-hide-mobile');
     if (user && user.role === 'admin') {
-      html += link('admin/dashboard.html', 'Admin', 'admin', 'nav-admin');
+      html += link('admin/index.html', 'Admin', 'admin', 'nav-admin');
     }
     if (user) {
       html += '<button type="button" class="nav-signout" id="nav-signout">Sign out</button>';

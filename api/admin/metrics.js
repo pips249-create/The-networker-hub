@@ -1,4 +1,4 @@
-const { sessionFromRequest, requireAdmin, json, airtableConfig } = require('../lib/auth');
+const { sessionFromRequest, requireAdmin, json, airtableConfig, setCors } = require('../lib/auth');
 
 function parsePriceNum(raw) {
   if (raw == null || raw === '') return 0;
@@ -45,8 +45,7 @@ async function fetchTableRecords(tableName, sortField) {
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  setCors(req, res);
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method !== 'GET') return json(res, 405, { error: 'method_not_allowed' });

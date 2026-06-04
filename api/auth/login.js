@@ -7,11 +7,11 @@ const {
   sessionFromRequest,
   appendSystemLog,
   airtableConfig,
+  setCors,
 } = require('../lib/auth');
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -89,7 +89,7 @@ module.exports = async function handler(req, res) {
       user: sessionUser,
       redirect:
         user.role === 'admin'
-          ? '/admin/dashboard.html'
+          ? '/admin/index.html'
           : body.next || '/events/index.html',
     });
   } catch (e) {
