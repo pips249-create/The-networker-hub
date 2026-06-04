@@ -65,7 +65,7 @@
 
   <div class="events-filter-shell">
     <div class="events-filter-bar" role="search" aria-label="Filter events">
-      <div class="filter-bar-row filter-bar-row-top">
+      <div class="filter-bar-row filter-bar-row-search">
         <div class="filter-field filter-field-grow filter-field-search">
           <span class="filter-field-icon filter-field-icon-end" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
@@ -82,7 +82,8 @@
           <input type="text" id="postcode" placeholder="Enter postcode" autocomplete="postal-code">
         </div>
       </div>
-      <div class="filter-bar-row filter-bar-row-bottom">
+
+      <div class="filter-bar-row filter-bar-row-filters">
         <fieldset class="filter-format-group">
           <legend class="filter-bar-chip-label">Format</legend>
           <label class="filter-checkbox">
@@ -111,6 +112,9 @@
           <span class="filter-checkbox-box" aria-hidden="true"></span>
           Near me
         </label>
+      </div>
+
+      <div class="filter-bar-row filter-bar-row-actions">
         <div class="filter-price-wrap" id="price-filter-wrap">
           <button type="button" class="filter-price-trigger" id="price-trigger" aria-expanded="false" aria-haspopup="true">Any price</button>
           <div class="filter-price-panel" role="dialog" aria-label="Price range">
