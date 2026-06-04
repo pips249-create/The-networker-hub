@@ -1,50 +1,48 @@
-# Airtable → Supabase migration
+# Airtable → Supabase migration (Phase 2)
 
 ## Before you run
 
-1. SQL migrations applied in [Supabase SQL Editor](https://supabase.com/dashboard/project/uztgzbjrmjbonfniyqcu):
+1. SQL migrations in [Supabase SQL Editor](https://supabase.com/dashboard/project/uztgzbjrmjbonfniyqcu):
    - `supabase/migrations/001_initial_schema.sql`
    - `supabase/migrations/002_hub_platform.sql`
-2. `.env` filled in (copy from `.env.example`):
+2. Airtable token needs **data.records:read** and **schema.bases:read** (for field IDs).
+3. `.env`:
 
 ```env
 SUPABASE_URL=https://uztgzbjrmjbonfniyqcu.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-SUPABASE_ANON_KEY=your_anon_key
 AIRTABLE_API_KEY=your_airtable_token
 AIRTABLE_BASE_ID=appQwgOxCrFFNweHe
 ADMIN_EMAIL=pips249@gmail.com
 ADMIN_INITIAL_PASSWORD=your_chosen_password
 ```
 
-Use the **service_role** key (secret), not the anon key, for `SUPABASE_SERVICE_ROLE_KEY`.
-
 ## Run (once)
 
 ```bash
 cd ~/Desktop/The-networker-hub
-npm install
+npm install @supabase/supabase-js dotenv
 node migrate.js
 ```
 
-Or: `npm run migrate`
+## Migration order
 
-## What it does
+| Step | What |
+|------|------|
+| 1 | Supabase Auth users + `hub_accounts` (emails from Organisers + Attendees) |
+| 2 | `organisers` |
+| 3 | `attendees` |
+| 4 | `events` |
+| 5 | `tickets` |
+| 6 | `registrations` |
+| 7 | `reviews` |
 
-| Step | Tables |
-|------|--------|
-| 1 | `organisers` from Airtable Organisers |
-| 2 | `events` (linked to organisers) |
-| 3 | `tickets` (linked to events) |
-| 4 | Supabase Auth + `hub_accounts` for users that have a password to set (admin uses `ADMIN_INITIAL_PASSWORD`) |
+Uses your Airtable **table IDs** and **field IDs** from the Phase 2 script. Safe to re-run (upsert on `airtable_id`).
 
-Rows are upserted on `airtable_id` — safe to re-run.
+**Note:** New auth users get `ADMIN_INITIAL_PASSWORD` as their password. Tell users to change it after go-live, or run password reset.
 
 ## After migration
 
-1. Add `DATA_PROVIDER=supabase` in Vercel (if not already).
-2. Redeploy the site.
-3. Check https://the-networker-hub.vercel.app/api/events — should list Supabase events.
-4. Login still uses Airtable until auth is migrated in the API; admin can be created in Supabase Auth by this script.
-
-Other Airtable users without a migration password are skipped — they need a password reset in Supabase after you switch auth.
+1. `DATA_PROVIDER=supabase` in Vercel → Redeploy.
+2. Check `/api/events` and Supabase Table Editor.
+3. Site login still uses Airtable cookies until Phase 3 auth API work.
