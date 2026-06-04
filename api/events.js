@@ -150,8 +150,15 @@ module.exports = async function handler(req, res) {
   if (!apiKey || !baseId) {
     return res.status(200).json({
       configured: false,
-      message: 'Add AIRTABLE_API_KEY and AIRTABLE_BASE_ID in Vercel environment variables.',
+      message:
+        'Add AIRTABLE_API_KEY and AIRTABLE_BASE_ID in Vercel → Settings → Environment Variables, then Redeploy.',
       events: [],
+      envCheck: {
+        hasApiKey: Boolean(apiKey),
+        hasBaseId: Boolean(baseId),
+        table: table,
+      },
+      hint: 'After saving variables, open Deployments → ⋯ → Redeploy. Names must match exactly.',
     });
   }
 
