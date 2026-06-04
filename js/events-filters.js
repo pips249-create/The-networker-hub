@@ -1,6 +1,7 @@
 (function () {
   var typeSelect = document.getElementById('filter-type');
   var searchInput = document.getElementById('search');
+  var sortSelect = document.getElementById('sort');
   var locationSelect = document.getElementById('location');
   var industrySelect = document.getElementById('industry');
   var formatSelect = document.getElementById('format');
@@ -11,14 +12,78 @@
   var spotlightNext = document.getElementById('spotlight-next');
   var spotlightTrack = document.getElementById('spotlight-track');
 
-  function getItems() {
-    return document.querySelectorAll(
-      '.premium-card, .event-row, .event-card'
-    );
-  }
-
   function getActiveType() {
     return typeSelect ? typeSelect.value || 'all' : 'all';
+  }
+
+  function eventMatchesFilters(ev) {
+    var type = getActiveType();
+    if (type !== 'all' && ev.type !== type) return false;
+
+    var q = (searchInput && searchInput.value) || '';
+    q = q.trim().toLowerCase();
+    if (q && (ev.search || '').indexOf(q) === -1) return false;
+
+    var loc = locationSelect && locationSelect.value;
+    if (loc && ev.locationSlug !== loc) return false;
+
+    var ind = industrySelect && industrySelect.value;
+    if (ind && ev.industrySlug !== ind) return false;
+
+    var fmt = formatSelect && formatSelect.value;
+    if (fmt && ev.formatSlug !== fmt) return false;
+
+    var price = priceSelect && priceSelect.value;
+    if (price && ev.priceKey !== price) return false;
+
+    return true;
+  }
+
+  function sortEvents(list) {
+    var sort = (sortSelect && sortSelect.value) || 'date';
+    var copy = list.slice();
+    copy.sort(function (a, b) {
+      if (sort === 'rating') {
+        return (Number(b.rating) || 0) - (Number(a.rating) || 0);
+      }
+      if (sort === 'price') {
+        return (Number(a.priceNum) || 0) - (Number(b.priceNum) || 0);
+      }
+      var da = a.dateRaw ? new Date(a.dateRaw).getTime() : 0;
+      var db = b.dateRaw ? new Date(b.dateRaw).getTime() : 0;
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return da - db;
+    });
+    return copy;
+  }
+
+  window.hubGetFilteredEvents = function (all) {
+    var list = (all || window.hubAllEvents || []).filter(eventMatchesFilters);
+    return sortEvents(list);
+  };
+
+  function applyFilters() {
+    var all = window.hubAllEvents || [];
+    var filtered = window.hubGetFilteredEvents(all);
+
+    if (resultsCount) resultsCount.textContent = String(filtered.length);
+
+    var meetings = all.filter(function (e) {
+      return e.type === 'meeting';
+    }).length;
+    var exhibitions = all.filter(function (e) {
+      return e.type === 'exhibition';
+    }).length;
+    var elAll = document.getElementById('count-all');
+    var elM = document.getElementById('count-meeting');
+    var elE = document.getElementById('count-exhibition');
+    if (elAll) elAll.textContent = '(' + all.length + ')';
+    if (elM) elM.textContent = '(' + meetings + ')';
+    if (elE) elE.textContent = '(' + exhibitions + ')';
+
+    if (window.hubRefreshListings) window.hubRefreshListings();
   }
 
   function setActiveType(value) {
@@ -31,73 +96,19 @@
     applyFilters();
   }
 
-  function itemMatches(el) {
-    var type = getActiveType();
-    if (type !== 'all' && el.getAttribute('data-type') !== type) return false;
-
-    var q = (searchInput && searchInput.value || '').trim().toLowerCase();
-    if (q && (el.getAttribute('data-search') || '').indexOf(q) === -1) return false;
-
-    var loc = locationSelect && locationSelect.value;
-    if (loc && el.getAttribute('data-location') !== loc) return false;
-
-    var ind = industrySelect && industrySelect.value;
-    if (ind && el.getAttribute('data-industry') !== ind) return false;
-
-    var fmt = formatSelect && formatSelect.value;
-    if (fmt && el.getAttribute('data-format') !== fmt) return false;
-
-    var price = priceSelect && priceSelect.value;
-    if (price && el.getAttribute('data-price') !== price) return false;
-
-    return true;
-  }
-
-  function applyFilters() {
-    var items = getItems();
-    var visibleListings = 0;
-    items.forEach(function (el) {
-      var show = itemMatches(el);
-      el.classList.toggle('is-hidden', !show);
-      if (show && el.classList.contains('event-row')) visibleListings++;
-    });
-
-    if (resultsCount) resultsCount.textContent = String(visibleListings);
-
-    var empty = document.querySelector('#event-listings .empty-state');
-    if (empty) empty.classList.toggle('is-visible', visibleListings === 0 && items.length > 0);
-
-    var all = window.hubAllEvents || [];
-    if (all.length) {
-      var meetings = all.filter(function (e) {
-        return e.type === 'meeting';
-      }).length;
-      var exhibitions = all.filter(function (e) {
-        return e.type === 'exhibition';
-      }).length;
-      var elAll = document.getElementById('count-all');
-      var elM = document.getElementById('count-meeting');
-      var elE = document.getElementById('count-exhibition');
-      if (elAll) elAll.textContent = '(' + all.length + ')';
-      if (elM) elM.textContent = '(' + meetings + ')';
-      if (elE) elE.textContent = '(' + exhibitions + ')';
-    }
-  }
-
   function resetFilters() {
     if (searchInput) searchInput.value = '';
     if (locationSelect) locationSelect.value = '';
     if (industrySelect) industrySelect.value = '';
     if (formatSelect) formatSelect.value = '';
     if (priceSelect) priceSelect.value = '';
+    if (sortSelect) sortSelect.value = 'date';
     setActiveType('all');
   }
 
   window.hubApplyFilters = applyFilters;
   window.hubResetFilters = resetFilters;
-  window.hubBindFilters = function () {
-    applyFilters();
-  };
+  window.hubBindFilters = function () {};
 
   typeTabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
@@ -111,7 +122,7 @@
     });
   }
 
-  [searchInput, locationSelect, industrySelect, formatSelect, priceSelect].forEach(function (el) {
+  [searchInput, sortSelect, locationSelect, industrySelect, formatSelect, priceSelect].forEach(function (el) {
     if (!el) return;
     el.addEventListener('input', applyFilters);
     el.addEventListener('change', applyFilters);
@@ -122,6 +133,12 @@
 
   document.addEventListener('click', function (e) {
     if (e.target.id === 'empty-reset') resetFilters();
+    var fav = e.target.closest('.fav-btn');
+    if (fav) {
+      e.preventDefault();
+      e.stopPropagation();
+      fav.classList.toggle('is-active');
+    }
   });
 
   if (spotlightPrev && spotlightTrack) {

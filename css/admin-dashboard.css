@@ -1,0 +1,259 @@
+.command-center {
+  min-height: 100vh;
+  background: #1a1520;
+  color: #e8e2ec;
+  padding-top: 64px;
+}
+
+.command-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: rgba(26, 21, 32, 0.95);
+  border-bottom: 1px solid rgba(194, 153, 209, 0.2);
+  backdrop-filter: blur(12px);
+}
+
+.command-nav h1 {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--lavender);
+}
+
+.command-nav-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.command-nav-actions a,
+.command-nav-actions button {
+  font-family: inherit;
+  font-size: 13px;
+  color: #c9bfd0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.command-nav-actions a:hover,
+.command-nav-actions button:hover {
+  color: #fff;
+}
+
+.command-shell {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.command-header {
+  margin-bottom: 28px;
+}
+
+.command-header h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2rem;
+  font-weight: 400;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.command-header p {
+  font-size: 14px;
+  color: #9a9098;
+}
+
+.command-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6fcf97;
+  margin-top: 10px;
+}
+
+.command-status::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6fcf97;
+  animation: pulse-live 2s infinite;
+}
+
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1100px) {
+  .metrics-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 700px) {
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.metric-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(194, 153, 209, 0.15);
+  border-radius: 12px;
+  padding: 18px 16px;
+}
+
+.metric-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9a9098;
+  margin-bottom: 8px;
+}
+
+.metric-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.1;
+}
+
+.metric-value.is-currency::before {
+  content: '£';
+  font-size: 1rem;
+  opacity: 0.7;
+  margin-right: 2px;
+}
+
+.metric-sub {
+  font-size: 11px;
+  color: #6fcf97;
+  margin-top: 6px;
+}
+
+.panels-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 960px) {
+  .panels-row { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(194, 153, 209, 0.12);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.panel-head {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(194, 153, 209, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-head h3 {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--lavender);
+}
+
+.panel-body {
+  padding: 12px 0;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.log-feed-item,
+.alert-item {
+  padding: 12px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 13px;
+}
+
+.log-feed-item:last-child,
+.alert-item:last-child {
+  border-bottom: none;
+}
+
+.log-time {
+  font-size: 11px;
+  color: #6b6368;
+  margin-bottom: 4px;
+}
+
+.log-message {
+  color: #d8d0de;
+}
+
+.log-type {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  background: rgba(194, 153, 209, 0.2);
+  color: var(--lavender);
+}
+
+.alert-item {
+  display: grid;
+  gap: 4px;
+}
+
+.alert-title {
+  font-weight: 600;
+  color: #fff;
+}
+
+.alert-detail {
+  color: #9a9098;
+  font-size: 12px;
+}
+
+.alert-severity {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.alert-severity.high { color: #f07171; }
+.alert-severity.medium { color: #e8a317; }
+.alert-severity.low { color: #6fcf97; }
+
+.command-loading,
+.command-denied {
+  text-align: center;
+  padding: 80px 24px;
+  color: #9a9098;
+}
+
+.command-denied a {
+  color: var(--lavender);
+  font-weight: 600;
+}

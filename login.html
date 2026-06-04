@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in – The Networker Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/hub.css">
+<link rel="stylesheet" href="css/auth.css">
+</head>
+<body class="auth-page">
+
+<header class="site-nav on-light legacy-nav">
+  <a class="nav-logo" href="index.html" aria-label="The Networker Hub home">
+    <img src="assets/logo.png" alt="The Networker Hub" width="160" height="64">
+  </a>
+  <nav class="nav-links">
+    <a href="events/index.html">Events</a>
+    <a href="index.html">Home</a>
+  </nav>
+</header>
+
+<main class="auth-main">
+  <div class="auth-card">
+    <h1>Sign in</h1>
+    <p class="auth-lede">Use your Networker Hub account. Credentials are stored securely in Airtable.</p>
+
+    <div id="auth-message" class="auth-message" role="alert"></div>
+
+    <form id="login-form" novalidate>
+      <div class="auth-field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@company.com">
+      </div>
+      <div class="auth-field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required placeholder="Your password">
+      </div>
+      <div class="auth-actions">
+        <button type="submit" class="auth-submit" id="login-submit">Sign in</button>
+      </div>
+    </form>
+
+    <div class="auth-links">
+      <a href="forgot-password.html">Forgot password?</a>
+      <a href="events/index.html">← Back to events</a>
+    </div>
+  </div>
+</main>
+
+<script src="js/auth.js"></script>
+</body>
+</html>

@@ -20,6 +20,8 @@ const FIELD_MAP = {
   featured: ['Featured', 'Premium', 'Premium Spotlight'],
   photo: ['Photo', 'Image', 'Cover', 'Photos', 'Picture', 'Event Photo', 'Event Image'],
   organiser: ['Organiser', 'Host', 'Organizer'],
+  rating: ['Rating', 'Average Rating', 'Stars'],
+  reviews: ['Reviews', 'Review Count', 'Number of Reviews'],
 };
 
 function pick(fields, keys) {
@@ -95,6 +97,31 @@ function formatDate(isoOrStr) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function formatDateShort(isoOrStr) {
+  if (!isoOrStr) return '';
+  const d = new Date(isoOrStr);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' });
+}
+
+function parsePriceNum(raw) {
+  if (raw === null || raw === undefined || raw === '') return 0;
+  const n = Number(String(raw).replace(/[^0-9.]/g, ''));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function buildDateLine(location, dateRaw, time) {
+  const parts = [];
+  if (location) parts.push(String(location));
+  const short = formatDateShort(dateRaw);
+  if (short) parts.push(short);
+  if (time) {
+    const t = String(time).trim();
+    parts.push(t.length <= 5 ? t : t.slice(0, 5));
+  }
+  return parts.join(' · ') || 'Date TBC';
+}
+
 function recordToEvent(record) {
   const f = record.fields || {};
   const title = pick(f, FIELD_MAP.title) || 'Untitled event';
@@ -112,9 +139,15 @@ function recordToEvent(record) {
     featuredVal === 'yes' ||
     String(featuredVal).toLowerCase() === 'true' ||
     String(featuredVal).toLowerCase() === 'premium';
-  const { display: priceDisplay, priceKey } = normalizePrice(pick(f, FIELD_MAP.price));
+  const priceRaw = pick(f, FIELD_MAP.price);
+  const { display: priceDisplay, priceKey } = normalizePrice(priceRaw);
+  const priceNum = parsePriceNum(priceRaw);
   const photo = attachmentUrl(pick(f, FIELD_MAP.photo));
   const organiser = pick(f, FIELD_MAP.organiser) || '';
+  const ratingRaw = pick(f, FIELD_MAP.rating);
+  const reviewsRaw = pick(f, FIELD_MAP.reviews);
+  const rating = ratingRaw != null && ratingRaw !== '' ? Number(ratingRaw) : 4;
+  const reviews = reviewsRaw != null && reviewsRaw !== '' ? Number(reviewsRaw) : 0;
 
   const search = [title, description, location, industry, organiser, type]
     .join(' ')
@@ -134,8 +167,12 @@ function recordToEvent(record) {
     featured,
     price: priceDisplay,
     priceKey,
+    priceNum,
     photo,
     organiser,
+    rating: Number.isFinite(rating) ? rating : 4,
+    reviews: Number.isFinite(reviews) ? reviews : 0,
+    dateLine: buildDateLine(location, dateRaw, time),
     search,
     locationSlug: slugLocation(location),
     industrySlug: slugIndustry(industry),
@@ -172,6 +209,25 @@ module.exports = async function handler(req, res) {
 
   try {
     const baseUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}`;
+    const recordId = req.query?.id;
+
+    if (recordId) {
+      const resp = await fetch(`${baseUrl}/${encodeURIComponent(recordId)}`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      if (!resp.ok) {
+        const err = await resp.text();
+        return res.status(resp.status).json({
+          configured: true,
+          error: 'airtable_error',
+          detail: err,
+          event: null,
+        });
+      }
+      const data = await resp.json();
+      return res.status(200).json({ configured: true, event: recordToEvent(data) });
+    }
+
     const view = process.env.AIRTABLE_EVENTS_VIEW;
     const all = [];
     let offset;

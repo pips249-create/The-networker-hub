@@ -1,0 +1,133 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(165deg, var(--lavender-light) 0%, var(--surface) 45%, var(--cream) 100%);
+  padding-top: 72px;
+}
+
+.auth-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px 48px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  padding: 32px 28px;
+  box-shadow: var(--shadow-soft);
+}
+
+.auth-card h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.65rem;
+  font-weight: 400;
+  color: var(--charcoal);
+  margin-bottom: 6px;
+}
+
+.auth-lede {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.auth-field {
+  margin-bottom: 16px;
+}
+
+.auth-field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-soft);
+  margin-bottom: 6px;
+}
+
+.auth-field input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 15px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+}
+
+.auth-field input:focus {
+  outline: 2px solid var(--lavender);
+  outline-offset: 1px;
+}
+
+.auth-actions {
+  margin-top: 20px;
+}
+
+.auth-submit {
+  width: 100%;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 13px 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--lavender-deep);
+  color: #fff;
+  cursor: pointer;
+}
+
+.auth-submit:hover {
+  background: var(--charcoal);
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-links {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.auth-message {
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  display: none;
+}
+
+.auth-message.is-visible {
+  display: block;
+}
+
+.auth-message.is-error {
+  background: #fce8e8;
+  color: #8b3030;
+}
+
+.auth-message.is-success {
+  background: #e8f5ec;
+  color: #2d6a3e;
+}
+
+.auth-dev-link {
+  margin-top: 12px;
+  font-size: 12px;
+  word-break: break-all;
+  color: var(--text-muted);
+}

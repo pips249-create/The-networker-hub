@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Overview – Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/hub.css">
+<link rel="stylesheet" href="../css/admin-dashboard.css">
+</head>
+<body class="command-center">
+
+<div id="command-gate">
+  <div class="command-loading" id="command-loading">Verifying access…</div>
+  <div class="command-denied" id="command-denied" hidden>
+    <p>Admin access only.</p>
+    <p style="margin-top:12px;"><a href="../login.html?next=/admin/dashboard.html">Sign in as admin</a></p>
+  </div>
+</div>
+
+<div id="command-app" hidden>
+  <header class="command-nav">
+    <h1>◆ Command Center</h1>
+    <div class="command-nav-actions">
+      <span id="admin-user-email"></span>
+      <a href="../events/index.html">Events</a>
+      <button type="button" id="logout-btn">Sign out</button>
+    </div>
+  </header>
+
+  <div class="command-shell">
+    <header class="command-header">
+      <h2>The Global Overview Dashboard</h2>
+      <p>Real-time bird&rsquo;s-eye view of platform performance — admin only.</p>
+      <div class="command-status">Live · updates every 60s</div>
+    </header>
+
+    <section class="metrics-grid" aria-label="Key metrics">
+      <article class="metric-card">
+        <div class="metric-label">Total revenue</div>
+        <div class="metric-value is-currency" id="m-revenue">0</div>
+        <div class="metric-sub">Gross ticket sales</div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-label">Platform fees</div>
+        <div class="metric-value is-currency" id="m-fees">0</div>
+        <div class="metric-sub">4% + 20p per ticket</div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-label">Live events</div>
+        <div class="metric-value" id="m-events">0</div>
+        <div class="metric-sub">Upcoming &amp; active</div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-label">Organisers</div>
+        <div class="metric-value" id="m-organizers">0</div>
+        <div class="metric-sub">Registered hosts</div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-label">Attendees</div>
+        <div class="metric-value" id="m-attendees">0</div>
+        <div class="metric-sub">Total registrations</div>
+      </article>
+    </section>
+
+    <div class="panels-row">
+      <section class="panel" aria-labelledby="logs-heading">
+        <div class="panel-head">
+          <h3 id="logs-heading">System health log</h3>
+          <span style="font-size:11px;color:#6b6368;">Live feed</span>
+        </div>
+        <div class="panel-body" id="logs-feed"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="alerts-heading">
+        <div class="panel-head">
+          <h3 id="alerts-heading">Recent system alerts</h3>
+          <span style="font-size:11px;color:#f07171;">Action required</span>
+        </div>
+        <div class="panel-body" id="alerts-feed"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script src="../js/admin-dashboard.js"></script>
+</body>
+</html>
