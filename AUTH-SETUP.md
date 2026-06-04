@@ -21,18 +21,22 @@ Optional tables for the dashboard:
 
 ## 2. Vercel environment variables
 
+**Full click-by-click guide:** see **`VERCEL-AUTH-ENV.md`**.
+
 Add alongside your existing Airtable vars:
 
-| Key | Purpose |
-|-----|---------|
-| `SESSION_SECRET` | Random 32+ chars (e.g. from `openssl rand -hex 32`) |
-| `ADMIN_SETUP_SECRET` | One-time secret to create your admin user |
+| Key | Example / how to get it |
+|-----|-------------------------|
+| `SESSION_SECRET` | Run `openssl rand -hex 32` or `./scripts/generate-auth-env.sh` |
+| `ADMIN_SETUP_SECRET` | Run `openssl rand -hex 24` (one-time setup secret) |
 | `ADMIN_EMAIL` | `pips249@gmail.com` |
 | `ADMIN_INITIAL_PASSWORD` | Your chosen password (min 8 chars) |
 | `AIRTABLE_USERS_TABLE` | `Users` |
 | `SITE_URL` | `https://the-networker-hub.vercel.app` |
 
 **Update your Airtable token** scopes to include **data.records:read** and **data.records:write** on this base.
+
+**Verify after redeploy:** https://the-networker-hub.vercel.app/api/auth/config-check
 
 ## 3. Redeploy, then create admin account
 

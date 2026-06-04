@@ -2,7 +2,17 @@
   min-height: 100vh;
   background: #1a1520;
   color: #e8e2ec;
-  padding-top: 64px;
+  padding-top: 0;
+}
+
+.command-center #hub-site-nav .site-nav {
+  position: fixed;
+}
+
+.command-center .command-shell,
+.command-center #command-gate .command-loading,
+.command-center #command-gate .command-denied {
+  padding-top: 76px;
 }
 
 .command-nav {
@@ -59,6 +69,40 @@
 
 .command-header {
   margin-bottom: 28px;
+}
+
+.command-header-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 6px;
+}
+
+.command-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #9a9098;
+}
+
+.command-signout {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c9bfd0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(194, 153, 209, 0.25);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.command-signout:hover {
+  color: #fff;
+  border-color: var(--lavender);
 }
 
 .command-header h2 {

@@ -12,15 +12,8 @@
 </head>
 <body class="auth-page">
 
-<header class="site-nav on-light legacy-nav">
-  <a class="nav-logo" href="index.html" aria-label="The Networker Hub home">
-    <img src="assets/logo.png" alt="The Networker Hub" width="160" height="64">
-  </a>
-  <nav class="nav-links">
-    <a href="events/index.html">Events</a>
-    <a href="index.html">Home</a>
-  </nav>
-</header>
+<div id="hub-site-nav"></div>
+<script src="js/site-nav.js" data-root="" data-page="auth"></script>
 
 <main class="auth-main">
   <div class="auth-card">
@@ -36,7 +29,10 @@
       </div>
       <div class="auth-field">
         <label for="password">Password</label>
-        <input type="password" id="password" name="password" autocomplete="current-password" required placeholder="Your password">
+        <div class="password-input-wrap">
+          <input type="password" id="password" name="password" autocomplete="current-password" required placeholder="Your password">
+          <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">Show</button>
+        </div>
       </div>
       <div class="auth-actions">
         <button type="submit" class="auth-submit" id="login-submit">Sign in</button>

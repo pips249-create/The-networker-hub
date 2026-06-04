@@ -12,19 +12,8 @@
 </head>
 <body>
 
-<header class="site-nav" id="site-nav">
-  <a class="nav-logo" href="index.html" aria-label="The Networker Hub home">
-    <img src="assets/logo.png" alt="The Networker Hub" width="200" height="80">
-  </a>
-  <nav class="nav-links" aria-label="Main">
-    <a href="#discover">Discover</a>
-    <a href="events/index.html">Events</a>
-    <a href="#academy" class="nav-hide-mobile">Academy</a>
-    <a href="#for-you" class="nav-hide-mobile">For you</a>
-    <a href="login.html">Sign in</a>
-    <a class="nav-cta" href="events/index.html">Browse events</a>
-  </nav>
-</header>
+<div id="hub-site-nav"></div>
+<script src="js/site-nav.js" data-root="" data-page="home"></script>
 
 <section class="home-hero" aria-label="Welcome">
   <div class="home-hero-inner">
@@ -151,18 +140,6 @@
     <p class="footer-copy">© The Networker Group Ltd</p>
   </div>
 </footer>
-
-<script>
-(function () {
-  var nav = document.getElementById('site-nav');
-  if (!nav) return;
-  function updateNav() {
-    nav.classList.toggle('is-scrolled', window.scrollY > 24);
-  }
-  updateNav();
-  window.addEventListener('scroll', updateNav, { passive: true });
-})();
-</script>
 
 </body>
 </html>

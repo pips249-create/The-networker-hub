@@ -12,6 +12,9 @@
 </head>
 <body class="command-center">
 
+<div id="hub-site-nav"></div>
+<script src="../js/site-nav.js" data-root="../" data-page="admin"></script>
+
 <div id="command-gate">
   <div class="command-loading" id="command-loading">Verifying access…</div>
   <div class="command-denied" id="command-denied" hidden>
@@ -21,18 +24,15 @@
 </div>
 
 <div id="command-app" hidden>
-  <header class="command-nav">
-    <h1>◆ Command Center</h1>
-    <div class="command-nav-actions">
-      <span id="admin-user-email"></span>
-      <a href="../events/index.html">Events</a>
-      <button type="button" id="logout-btn">Sign out</button>
-    </div>
-  </header>
-
   <div class="command-shell">
     <header class="command-header">
-      <h2>The Global Overview Dashboard</h2>
+      <div class="command-header-top">
+        <h2>The Global Overview Dashboard</h2>
+        <div class="command-header-actions">
+          <span id="admin-user-email"></span>
+          <button type="button" class="command-signout" id="logout-btn">Sign out</button>
+        </div>
+      </div>
       <p>Real-time bird&rsquo;s-eye view of platform performance — admin only.</p>
       <div class="command-status">Live · updates every 60s</div>
     </header>

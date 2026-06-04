@@ -1,4 +1,17 @@
 (function () {
+  document.querySelectorAll('.password-toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var wrap = btn.closest('.password-input-wrap');
+      var input = wrap && wrap.querySelector('input');
+      if (!input) return;
+      var visible = input.type === 'text';
+      input.type = visible ? 'password' : 'text';
+      btn.setAttribute('aria-pressed', visible ? 'false' : 'true');
+      btn.setAttribute('aria-label', visible ? 'Show password' : 'Hide password');
+      btn.textContent = visible ? 'Show' : 'Hide';
+    });
+  });
+
   function showMessage(el, text, type) {
     if (!el) return;
     el.textContent = text;

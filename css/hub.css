@@ -120,6 +120,15 @@ a:hover { color: var(--charcoal); }
   .nav-links .nav-hide-mobile { display: none; }
 }
 
+/* Fixed nav offset (home hero handles its own spacing) */
+body.has-site-nav {
+  padding-top: 76px;
+}
+
+body.hub-page-admin {
+  padding-top: 0;
+}
+
 /* ─── Homepage hero (bright) ─── */
 .home-hero {
   min-height: 92vh;

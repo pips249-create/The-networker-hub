@@ -3,7 +3,6 @@
   display: flex;
   flex-direction: column;
   background: linear-gradient(165deg, var(--lavender-light) 0%, var(--surface) 45%, var(--cream) 100%);
-  padding-top: 72px;
 }
 
 .auth-main {
@@ -53,17 +52,50 @@
   margin-bottom: 6px;
 }
 
-.auth-field input {
+.password-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.password-input-wrap input {
   width: 100%;
   font-family: inherit;
   font-size: 15px;
-  padding: 12px 14px;
+  padding: 12px 72px 12px 14px;
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-sm);
   background: var(--white);
 }
 
-.auth-field input:focus {
+.password-input-wrap input:focus {
+  outline: 2px solid var(--lavender);
+  outline-offset: 1px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--lavender-deep);
+  background: transparent;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.password-toggle:hover {
+  color: var(--charcoal);
+  background: var(--lavender-light);
+}
+
+.password-toggle:focus-visible {
   outline: 2px solid var(--lavender);
   outline-offset: 1px;
 }
