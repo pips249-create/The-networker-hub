@@ -161,10 +161,26 @@ https://the-networker-hub.vercel.app/admin/dashboard.html
 
 ## Troubleshooting
 
+### `AUTHENTICATION_REQUIRED` / “Authentication required”
+
+This comes from **Airtable**, not Vercel login. Your `AIRTABLE_API_KEY` in Vercel is missing, wrong, expired, or pasted with extra quotes/spaces.
+
+**Fix:**
+
+1. Open [airtable.com/create/tokens](https://airtable.com/create/tokens) → **Create token** (or edit).
+2. Scopes: `data.records:read` + `data.records:write`.
+3. Access: base **appQwgOxCrFFNweHe**.
+4. Copy the token — it must start with **`pat`**.
+5. Vercel → **Environment Variables** → edit **`AIRTABLE_API_KEY`**:
+   - Paste **only** the token (no `"` quotes, no spaces before/after).
+6. **Redeploy** (Deployments → ⋯ → Redeploy).
+7. Check: https://the-networker-hub.vercel.app/api/auth/config-check — `"airtable": { "ok": true }`.
+
 | Problem | Fix |
 |---------|-----|
 | `Set SESSION_SECRET in Vercel` on login | Add variable, **Redeploy** |
 | `authReady: false` on config-check | Compare keys character-for-character |
+| `AUTHENTICATION_REQUIRED` | New Airtable `pat` token → update `AIRTABLE_API_KEY` → Redeploy |
 | setup-admin `403 forbidden` | `secret` in curl must match `ADMIN_SETUP_SECRET` exactly |
 | setup-admin Airtable error | Token needs **write** scope; **Users** table + field names |
 | Sign-in fails after setup | Password in curl must match what you type on login page |

@@ -7,6 +7,8 @@
  *   AIRTABLE_EVENTS_TABLE  (default: Events)
  */
 
+const { cleanEnvVal, parseAirtableError } = require('./lib/auth');
+
 const FIELD_MAP = {
   title: ['Title', 'Name', 'Event Title'],
   description: ['Description', 'Short Description', 'Summary'],
@@ -188,8 +190,8 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const apiKey = process.env.AIRTABLE_API_KEY;
-  const baseId = process.env.AIRTABLE_BASE_ID;
+  const apiKey = cleanEnvVal(process.env.AIRTABLE_API_KEY);
+  const baseId = cleanEnvVal(process.env.AIRTABLE_BASE_ID);
   const table = process.env.AIRTABLE_EVENTS_TABLE || 'Events';
 
   if (!apiKey || !baseId) {
@@ -241,9 +243,15 @@ module.exports = async function handler(req, res) {
       });
       if (!resp.ok) {
         const err = await resp.text();
+        const parsed = parseAirtableError(err);
         return res.status(resp.status).json({
           configured: true,
           error: 'airtable_error',
+          airtableType: parsed?.type,
+          message:
+            parsed?.type === 'AUTHENTICATION_REQUIRED'
+              ? 'Airtable rejected your API key. In Vercel, update AIRTABLE_API_KEY with a new pat… token (no quotes), then Redeploy.'
+              : parsed?.message || 'Airtable request failed',
           detail: err,
           events: [],
         });

@@ -1,4 +1,4 @@
-const { airtableConfig } = require('../lib/auth');
+const { airtableConfig, testAirtableConnection } = require('../lib/auth');
 
 /**
  * Safe diagnostic: which auth env vars are set (never returns secret values).
@@ -34,9 +34,12 @@ module.exports = async function handler(req, res) {
   const canSeedAdmin =
     authReady && (env.hasAdminInitialPassword || env.hasAdminEmail);
 
+  const airtable = await testAirtableConnection();
+
   return res.status(200).json({
     authReady,
     canSeedAdmin,
+    airtable,
     env,
     hints: {
       missingSessionSecret: !env.hasSessionSecret
@@ -48,9 +51,16 @@ module.exports = async function handler(req, res) {
       missingAirtableWrite: !env.hasAirtableApiKey
         ? 'Add AIRTABLE_API_KEY with read+write scopes.'
         : null,
-      nextStep: authReady
+      airtableAuth: !airtable.ok && airtable.error === 'AUTHENTICATION_REQUIRED'
+        ? 'Airtable rejected your API key. Create a new pat token at airtable.com/create/tokens, paste into AIRTABLE_API_KEY (no quotes), Redeploy.'
+        : !airtable.ok
+          ? airtable.message
+          : null,
+      nextStep: authReady && airtable.ok
         ? 'POST /api/auth/setup-admin once, then sign in at /login.html'
-        : 'Complete env vars in Vercel → Deployments → Redeploy',
+        : airtable.ok
+          ? 'Complete env vars in Vercel → Deployments → Redeploy'
+          : 'Fix AIRTABLE_API_KEY first (see airtableAuth hint), then Redeploy',
     },
     checkUrl: '/api/auth/config-check',
   });

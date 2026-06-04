@@ -136,13 +136,64 @@ function requireAdmin(session) {
   return { ok: true };
 }
 
+function cleanEnvVal(v) {
+  if (v == null || v === '') return '';
+  let s = String(v).trim();
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
+    s = s.slice(1, -1).trim();
+  }
+  return s;
+}
+
+function parseAirtableError(detail) {
+  if (!detail) return null;
+  try {
+    const j = JSON.parse(detail);
+    return j.error || j;
+  } catch {
+    return { message: String(detail).slice(0, 200) };
+  }
+}
+
 function airtableConfig() {
   return {
-    apiKey: process.env.AIRTABLE_API_KEY,
-    baseId: process.env.AIRTABLE_BASE_ID,
+    apiKey: cleanEnvVal(process.env.AIRTABLE_API_KEY),
+    baseId: cleanEnvVal(process.env.AIRTABLE_BASE_ID),
     usersTable: process.env.AIRTABLE_USERS_TABLE || 'Users',
     logsTable: process.env.AIRTABLE_LOGS_TABLE || 'System Logs',
     alertsTable: process.env.AIRTABLE_ALERTS_TABLE || 'System Alerts',
+  };
+}
+
+async function testAirtableConnection() {
+  const { apiKey, baseId, usersTable } = airtableConfig();
+  if (!apiKey || !baseId) {
+    return { ok: false, error: 'missing_env', message: 'AIRTABLE_API_KEY or AIRTABLE_BASE_ID not set' };
+  }
+  if (!apiKey.startsWith('pat')) {
+    return {
+      ok: false,
+      error: 'invalid_token_format',
+      message: 'AIRTABLE_API_KEY should start with pat (personal access token from airtable.com/create/tokens).',
+    };
+  }
+  const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(usersTable)}?maxRecords=1`;
+  const resp = await fetch(url, {
+    headers: { Authorization: `Bearer ${apiKey}` },
+  });
+  if (resp.ok) {
+    return { ok: true, status: resp.status };
+  }
+  const text = await resp.text();
+  const parsed = parseAirtableError(text);
+  return {
+    ok: false,
+    status: resp.status,
+    error: parsed?.type || 'airtable_error',
+    message: parsed?.message || text.slice(0, 200),
   };
 }
 
@@ -273,6 +324,9 @@ async function appendSystemLog(message, type = 'info') {
 module.exports = {
   USER_FIELDS,
   pick,
+  cleanEnvVal,
+  parseAirtableError,
+  testAirtableConnection,
   hashPassword,
   verifyPassword,
   sessionFromRequest,
