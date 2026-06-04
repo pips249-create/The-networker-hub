@@ -3,7 +3,7 @@
  */
 (function () {
   const API = '/api/events';
-  const PAGE_SIZE = 8;
+  const PAGE_SIZE = 12;
   const EVENT_PLACEHOLDER = '../assets/event-placeholder.svg';
 
   const els = {
