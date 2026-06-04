@@ -55,7 +55,7 @@
       href('index.html') +
       '" aria-label="The Networker Hub home">' +
       '<img src="' +
-      href('assets/logo.png') +
+      href('assets/logo-nav.png') +
       '" alt="The Networker Hub" width="180" height="72">' +
       '</a>' +
       '<nav class="nav-links" aria-label="Main">' +
