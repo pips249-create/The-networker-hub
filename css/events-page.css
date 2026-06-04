@@ -254,6 +254,13 @@
   line-height: 1.4;
 }
 
+.listings-range {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-soft, #9d87aa);
+  margin: 0 0 12px;
+}
+
 .listings-pagination {
   display: flex;
   align-items: center;

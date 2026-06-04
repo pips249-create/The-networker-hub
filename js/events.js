@@ -236,28 +236,45 @@
       return;
     }
 
+    const rangeStart = rows.length ? start + 1 : 0;
+    const rangeEnd = Math.min(start + PAGE_SIZE, rows.length);
+    const rangeHtml =
+      rows.length > PAGE_SIZE
+        ? '<p class="listings-range">Showing ' +
+          rangeStart +
+          '–' +
+          rangeEnd +
+          ' of ' +
+          rows.length +
+          '</p>'
+        : '';
+
     els.listings.innerHTML =
+      rangeHtml +
       '<div class="event-grid">' +
       pageItems.map(gridCard).join('') +
       '</div>' +
       paginationHtml(currentPage, totalPages);
 
     if (els.resultsCount) els.resultsCount.textContent = String(rows.length);
-
-    bindPagination(totalPages);
   }
 
-  function bindPagination(totalPages) {
-    const nav = els.listings && els.listings.querySelector('.listings-pagination');
-    if (!nav) return;
-
-    nav.addEventListener('click', function (e) {
+  function initListingsPagination() {
+    if (!els.listings || els.listings.dataset.paginationBound) return;
+    els.listings.dataset.paginationBound = '1';
+    els.listings.addEventListener('click', function (e) {
       const btn = e.target.closest('.page-btn');
       if (!btn || btn.disabled) return;
+      const filtered = getFilteredList();
+      const nonPremium = filtered.filter(function (ev) {
+        return !ev.featured;
+      });
+      const rows = nonPremium.length ? nonPremium : filtered;
+      const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
       const p = parseInt(btn.getAttribute('data-page'), 10);
       if (!p || p === currentPage || p < 1 || p > totalPages) return;
       currentPage = p;
-      renderGridPage(getFilteredList());
+      renderGridPage(filtered);
       const block = document.querySelector('.listings-block');
       if (block) block.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
@@ -390,5 +407,6 @@
   }
 
   window.hubReloadEvents = load;
+  initListingsPagination();
   load();
 })();

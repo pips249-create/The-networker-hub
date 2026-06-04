@@ -2,6 +2,9 @@
  * Organiser dashboard — groups, events, ticket types (Airtable via /api/organiser/*).
  */
 (function () {
+  const ORG_PAGE_SIZE = 10;
+  const listPages = { groups: 1, events: 1, tickets: 1 };
+
   const state = {
     user: null,
     groups: [],
@@ -138,6 +141,97 @@
     );
   }
 
+  function paginateList(items, page) {
+    const total = items.length;
+    const totalPages = Math.max(1, Math.ceil(total / ORG_PAGE_SIZE));
+    const p = Math.min(Math.max(1, page), totalPages);
+    const start = (p - 1) * ORG_PAGE_SIZE;
+    return {
+      items: items.slice(start, start + ORG_PAGE_SIZE),
+      page: p,
+      totalPages,
+      total,
+      start: total ? start + 1 : 0,
+      end: Math.min(start + ORG_PAGE_SIZE, total),
+    };
+  }
+
+  function paginationNavHtml(page, totalPages) {
+    if (totalPages <= 1) return '';
+
+    const items = [];
+    const maxVisible = 5;
+    let start = Math.max(1, page - 2);
+    let end = Math.min(totalPages, start + maxVisible - 1);
+    start = Math.max(1, end - maxVisible + 1);
+
+    items.push(
+      '<button type="button" class="org-page-btn page-prev" data-page="' +
+        (page - 1) +
+        '" ' +
+        (page <= 1 ? 'disabled' : '') +
+        ' aria-label="Previous page">‹</button>'
+    );
+
+    if (start > 1) {
+      items.push('<button type="button" class="org-page-btn" data-page="1">1</button>');
+      if (start > 2) items.push('<span class="org-page-ellipsis" aria-hidden="true">…</span>');
+    }
+
+    for (let p = start; p <= end; p++) {
+      items.push(
+        '<button type="button" class="org-page-btn' +
+          (p === page ? ' is-active' : '') +
+          '" data-page="' +
+          p +
+          '"' +
+          (p === page ? ' aria-current="page"' : '') +
+          '>' +
+          p +
+          '</button>'
+      );
+    }
+
+    if (end < totalPages) {
+      if (end < totalPages - 1) {
+        items.push('<span class="org-page-ellipsis" aria-hidden="true">…</span>');
+      }
+      items.push(
+        '<button type="button" class="org-page-btn" data-page="' + totalPages + '">' + totalPages + '</button>'
+      );
+    }
+
+    items.push(
+      '<button type="button" class="org-page-btn page-next" data-page="' +
+        (page + 1) +
+        '" ' +
+        (page >= totalPages ? 'disabled' : '') +
+        ' aria-label="Next page">›</button>'
+    );
+
+    return items.join('');
+  }
+
+  function updatePaginationNav(listKey, pageInfo) {
+    const nav = document.getElementById('pagination-' + listKey);
+    if (!nav) return;
+    if (pageInfo.totalPages <= 1) {
+      nav.hidden = true;
+      nav.innerHTML = '';
+      return;
+    }
+    nav.hidden = false;
+    const meta =
+      '<p class="org-pagination-meta">Showing ' +
+      pageInfo.start +
+      '–' +
+      pageInfo.end +
+      ' of ' +
+      pageInfo.total +
+      '</p>';
+    nav.innerHTML = meta + paginationNavHtml(pageInfo.page, pageInfo.totalPages);
+  }
+
   function closeAllActionMenus() {
     document.querySelectorAll('.org-action-menu.is-open').forEach((m) => m.classList.remove('is-open'));
     document.querySelectorAll('[data-org-action-toggle][aria-expanded="true"]').forEach((b) => {
@@ -267,10 +361,14 @@
     body.innerHTML = '';
     if (!state.groups.length) {
       if (empty) empty.hidden = false;
+      updatePaginationNav('groups', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
       return;
     }
     if (empty) empty.hidden = true;
-    state.groups.forEach((g) => {
+    const pageInfo = paginateList(state.groups, listPages.groups);
+    listPages.groups = pageInfo.page;
+    updatePaginationNav('groups', pageInfo);
+    pageInfo.items.forEach((g) => {
       const tr = document.createElement('tr');
       const site = g.website
         ? '<a href="' +
@@ -324,9 +422,13 @@
     body.innerHTML = '';
     if (!state.events.length) {
       if (empty) empty.hidden = false;
+      updatePaginationNav('events', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
     } else {
       if (empty) empty.hidden = true;
-      state.events.forEach((ev) => body.appendChild(fillRow(ev)));
+      const pageInfo = paginateList(state.events, listPages.events);
+      listPages.events = pageInfo.page;
+      updatePaginationNav('events', pageInfo);
+      pageInfo.items.forEach((ev) => body.appendChild(fillRow(ev)));
     }
   }
 
@@ -337,10 +439,14 @@
     body.innerHTML = '';
     if (!state.tickets.length) {
       if (empty) empty.hidden = false;
+      updatePaginationNav('tickets', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
       return;
     }
     if (empty) empty.hidden = true;
-    state.tickets.forEach((t) => {
+    const pageInfo = paginateList(state.tickets, listPages.tickets);
+    listPages.tickets = pageInfo.page;
+    updatePaginationNav('tickets', pageInfo);
+    pageInfo.items.forEach((t) => {
       const ev = state.events.find((e) => e.id === t.eventId);
       const tr = document.createElement('tr');
       tr.innerHTML =
@@ -414,6 +520,9 @@
     state.events = data.events || [];
     state.upcomingEvents = data.upcomingEvents || [];
     state.tickets = data.tickets || [];
+    listPages.groups = 1;
+    listPages.events = 1;
+    listPages.tickets = 1;
     state.groupsError = data.groupsError;
     state.airtable = data.airtable;
     state.adminView = data.adminView;
@@ -701,6 +810,21 @@
 
     window.addEventListener('hashchange', () => {
       setRoute(location.hash.replace('#', '') || 'dashboard');
+    });
+
+    document.getElementById('org-shell')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.org-page-btn');
+      if (!btn || btn.disabled) return;
+      const nav = btn.closest('.org-pagination');
+      if (!nav) return;
+      const listKey = nav.getAttribute('data-list');
+      const p = parseInt(btn.getAttribute('data-page'), 10);
+      if (!listKey || !p || p === listPages[listKey]) return;
+      listPages[listKey] = p;
+      if (listKey === 'groups') renderGroups();
+      if (listKey === 'events') renderEvents();
+      if (listKey === 'tickets') renderTickets();
+      nav.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 
     document.addEventListener('keydown', (e) => {

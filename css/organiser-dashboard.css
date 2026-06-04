@@ -477,6 +477,63 @@
   margin-top: 1px;
 }
 
+.org-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 16px 12px 8px;
+}
+
+.org-pagination-meta {
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  color: var(--od-text-soft);
+  margin-bottom: 4px;
+}
+
+.org-page-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--od-radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  border: 0.5px solid var(--od-border-soft);
+  background: var(--od-white);
+  color: var(--od-text-mid);
+  transition: border-color 0.1s, background 0.1s;
+}
+
+.org-page-btn:hover:not(:disabled) {
+  border-color: var(--od-purple);
+  color: var(--od-purple);
+}
+
+.org-page-btn.is-active {
+  background: var(--od-purple);
+  color: #fff;
+  border-color: var(--od-purple);
+}
+
+.org-page-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.org-page-ellipsis {
+  font-size: 13px;
+  color: var(--od-text-soft);
+  padding: 0 4px;
+}
+
 .org-modal {
   position: fixed;
   inset: 0;
