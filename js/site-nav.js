@@ -55,10 +55,10 @@
 
 /**
  * Shared site navigation — same bar on every page.
- * NAV_BUILD=20260618 — Account settings in My Hub; colour themes swapped.
+ * NAV_BUILD=20260624 — Mobile menu drawer; hub-mobile.css.
  */
 (function () {
-  var NAV_BUILD = '20260618';
+  var NAV_BUILD = '20260624';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
   var page = (script && script.getAttribute('data-page')) || '';
@@ -169,6 +169,101 @@
     return html;
   }
 
+  function buildMobileDrawerLinks(user) {
+    var html = '';
+    html += link('events/index.html', 'Browse events', 'browse', 'nav-mobile-item');
+    html += link('training/index.html', 'Browse training', 'training', 'nav-mobile-item');
+    html += link('about.html', 'About us', 'about', 'nav-mobile-item');
+    html += link('faq.html', 'FAQ', 'faq', 'nav-mobile-item');
+    if (user) {
+      var hubView = user.hubView || 'attendee';
+      var showHubToggle = user.canToggleHubMode !== false && user.role === 'client';
+      if (showHubToggle && window.HubModeSwitch) {
+        html +=
+          '<div class="nav-mobile-hub-mode">' + window.HubModeSwitch.html(hubView) + '</div>';
+      }
+      html += link(
+        'organiser/index.html',
+        'Organiser dashboard',
+        'organiser',
+        'nav-mobile-item'
+      );
+      html += link('account/index.html', 'Attend events', 'account', 'nav-mobile-item');
+      html += link('account/settings.html', 'Account settings', 'settings', 'nav-mobile-item');
+      if (user.role === 'admin') {
+        html += link('admin/index.html', 'Command Center', 'admin', 'nav-mobile-item');
+      }
+      html +=
+        '<button type="button" class="nav-mobile-item nav-mobile-signout" id="nav-mobile-signout">Sign out</button>';
+    } else {
+      html += organiserNavLink(user).replace('nav-organiser', 'nav-mobile-item nav-organiser');
+      html += link('login.html', 'Sign in', 'auth', 'nav-mobile-item');
+    }
+    return html;
+  }
+
+  function bindMobileMenu(nav) {
+    var toggle = document.getElementById('nav-menu-toggle');
+    var drawer = document.getElementById('nav-mobile-drawer');
+    var backdrop = document.getElementById('nav-mobile-backdrop');
+    var closeBtn = document.getElementById('nav-mobile-close');
+    if (!toggle || !drawer || !backdrop) return;
+    if (toggle.dataset.bound) return;
+    toggle.dataset.bound = '1';
+
+    function openMenu() {
+      toggle.setAttribute('aria-expanded', 'true');
+      toggle.setAttribute('aria-label', 'Close menu');
+      nav.classList.add('is-menu-open');
+      drawer.hidden = false;
+      drawer.classList.add('is-open');
+      drawer.setAttribute('aria-hidden', 'false');
+      backdrop.hidden = false;
+      document.body.classList.add('nav-menu-open');
+    }
+
+    function closeMenu() {
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', 'Open menu');
+      nav.classList.remove('is-menu-open');
+      drawer.classList.remove('is-open');
+      drawer.setAttribute('aria-hidden', 'true');
+      backdrop.hidden = true;
+      document.body.classList.remove('nav-menu-open');
+      window.setTimeout(function () {
+        if (!drawer.classList.contains('is-open')) drawer.hidden = true;
+      }, 260);
+    }
+
+    toggle.addEventListener('click', function () {
+      if (drawer.classList.contains('is-open')) closeMenu();
+      else openMenu();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+    backdrop.addEventListener('click', closeMenu);
+    drawer.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', closeMenu);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeMenu();
+    });
+
+    var mobileSignOut = document.getElementById('nav-mobile-signout');
+    if (mobileSignOut) {
+      mobileSignOut.addEventListener('click', function () {
+        closeMenu();
+        fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
+          window.location.href = href('index.html');
+        });
+      });
+    }
+
+    var mobileMode = drawer.querySelector('.hub-mode-switch');
+    if (mobileMode && window.HubModeSwitch) {
+      window.HubModeSwitch.bind(mobileMode, root);
+    }
+  }
+
   function bindMyHubDropdown(nav) {
     var wrap = nav.querySelector('#nav-my-hub');
     if (!wrap || wrap.dataset.bound) return;
@@ -218,10 +313,22 @@
       '<nav class="nav-links" aria-label="Main">' +
       buildNavLinks(user) +
       '</nav>' +
-      '</header>';
+      '<button type="button" class="nav-menu-toggle" id="nav-menu-toggle" aria-expanded="false" aria-controls="nav-mobile-drawer" aria-label="Open menu">' +
+      '<span class="nav-menu-bar"></span><span class="nav-menu-bar"></span><span class="nav-menu-bar"></span>' +
+      '</button>' +
+      '</header>' +
+      '<div class="nav-mobile-backdrop" id="nav-mobile-backdrop" hidden></div>' +
+      '<aside class="nav-mobile-drawer" id="nav-mobile-drawer" aria-hidden="true" hidden>' +
+      '<div class="nav-mobile-drawer-head"><span>Menu</span>' +
+      '<button type="button" class="nav-mobile-close" id="nav-mobile-close" aria-label="Close menu">×</button></div>' +
+      '<nav class="nav-mobile-links" aria-label="Mobile menu">' +
+      buildMobileDrawerLinks(user) +
+      '</nav></aside>';
 
     var nav = document.getElementById('site-nav');
     if (!nav) return;
+
+    bindMobileMenu(nav);
 
     if (!scrollBound) {
       function updateNav() {
