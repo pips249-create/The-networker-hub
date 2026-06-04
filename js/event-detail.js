@@ -133,9 +133,21 @@
 
     const profileEl = document.getElementById('ev-host-profile');
     if (profileEl) {
-      profileEl.textContent =
-        ev.organiserProfile ||
-        'Profile details for this organiser will appear here once added in Airtable.';
+      if (ev.organiserProfile) {
+        profileEl.textContent = ev.organiserProfile;
+      } else if (ev.organiser) {
+        profileEl.textContent =
+          ev.organiser +
+          ' hosts curated networking events across the UK. Full company profile coming soon.';
+      } else {
+        profileEl.textContent =
+          'Profile details for this organiser will appear here once added in Airtable.';
+      }
+    }
+
+    const profileLink = document.getElementById('ev-host-profile-link');
+    if (profileLink) {
+      profileLink.hidden = !ev.organiser;
     }
 
     const indEl = document.getElementById('ev-host-industry');

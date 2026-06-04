@@ -349,9 +349,9 @@ function linkedRecordId(field) {
 
 function pickOrganiserName(fields) {
   const raw = pick(fields, FIELD_MAP.organiser);
-  if (!raw) return '';
+  if (!raw) return pickOrganiserNameFromLookups(fields);
   if (typeof raw === 'string') {
-    if (/^rec[a-zA-Z0-9]+$/i.test(raw)) return '';
+    if (/^rec[a-zA-Z0-9]+$/i.test(raw)) return pickOrganiserNameFromLookups(fields);
     return raw.trim();
   }
   if (Array.isArray(raw)) {
@@ -359,6 +359,176 @@ function pickOrganiserName(fields) {
       .map((x) => (typeof x === 'string' && !/^rec[a-zA-Z0-9]+$/i.test(x) ? x : ''))
       .filter(Boolean);
     if (names.length) return names.join(', ');
+    return pickOrganiserNameFromLookups(fields);
+  }
+  return pickOrganiserNameFromLookups(fields);
+}
+
+/** Airtable lookup fields e.g. "Name (from Host/Organizer)". */
+function pickOrganiserNameFromLookups(fields) {
+  for (const key of fieldKeys(fields)) {
+    if (!/host|organis|organiz/i.test(key)) continue;
+    if (/logo|photo|email|profile|bio|description|approved|status|registration|review/i.test(key)) {
+      continue;
+    }
+    const v = fields[key];
+    if (typeof v === 'string' && v.trim() && !/^rec[a-zA-Z0-9]+$/i.test(v)) return v.trim();
+    if (Array.isArray(v)) {
+      const names = v
+        .map((x) => (typeof x === 'string' && !/^rec[a-zA-Z0-9]+$/i.test(x) ? x.trim() : ''))
+        .filter(Boolean);
+      if (names.length) return names.join(', ');
+    }
+  }
+  return '';
+}
+
+const ORGANISER_PROFILE_MAP = {
+  name: [
+    'Name',
+    'Organiser Name',
+    'Organizer Name',
+    'Company Name',
+    'Business Name',
+    'Host Name',
+    'Title',
+  ],
+  profile: [
+    'Company Profile',
+    'Profile',
+    'Description',
+    'About',
+    'Bio',
+    'Organiser Description',
+    'Company Description',
+  ],
+  logo: ['Logo', 'Photo', 'Company Logo', 'Organiser Logo', 'Organizer Logo', 'Image'],
+};
+
+function mapOrganiserAirtableRecord(record) {
+  const f = record?.fields || {};
+  const name = pick(f, ORGANISER_PROFILE_MAP.name) || '';
+  const profile = pick(f, ORGANISER_PROFILE_MAP.profile) || '';
+  const logo = attachmentUrl(pick(f, ORGANISER_PROFILE_MAP.logo));
+  return {
+    organiser: String(name).trim(),
+    organiserProfile: String(profile).trim(),
+    organiserLogo: logo,
+  };
+}
+
+let cachedOrganiserTableNames = null;
+
+async function discoverOrganiserTableNames(apiKey, baseId) {
+  try {
+    const resp = await fetch(`https://api.airtable.com/v0/meta/bases/${baseId}/tables`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    return (data.tables || [])
+      .map((t) => t.name)
+      .filter((name) => /organis|organiz|host|compan|provider|profile/i.test(name));
+  } catch (e) {
+    return [];
+  }
+}
+
+async function getOrganiserTableCandidates(apiKey, baseId) {
+  if (!cachedOrganiserTableNames) {
+    const discovered = await discoverOrganiserTableNames(apiKey, baseId);
+    cachedOrganiserTableNames = [
+      process.env.AIRTABLE_ORGANISERS_TABLE,
+      ...discovered,
+      'Organisers',
+      'Organizers',
+      'Organiser',
+      'Organizer',
+      'Hosts',
+      'Companies',
+    ].filter((t, i, a) => t && a.indexOf(t) === i);
+  }
+  return cachedOrganiserTableNames;
+}
+
+async function fetchOrganiserProfile(apiKey, baseId, organiserId) {
+  if (!organiserId) return null;
+  const tables = await getOrganiserTableCandidates(apiKey, baseId);
+
+  for (const table of tables) {
+    const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}/${encodeURIComponent(organiserId)}`;
+    try {
+      const resp = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
+      if (resp.ok) {
+        const data = await resp.json();
+        const mapped = mapOrganiserAirtableRecord(data);
+        if (mapped.organiser || mapped.organiserProfile || mapped.organiserLogo) {
+          return mapped;
+        }
+      }
+    } catch (e) {
+      /* try next table */
+    }
+  }
+  return null;
+}
+
+async function enrichOrganisersForEvents(events, apiKey, baseId) {
+  const cache = {};
+  const ids = [
+    ...new Set(
+      events
+        .filter((e) => e.organiserId && (!e.organiser || !e.organiserProfile || !e.organiserLogo))
+        .map((e) => e.organiserId)
+    ),
+  ];
+
+  await Promise.all(
+    ids.map(async (id) => {
+      const profile = await fetchOrganiserProfile(apiKey, baseId, id);
+      if (profile) cache[id] = profile;
+    })
+  );
+
+  return events.map((ev) => {
+    const p = ev.organiserId && cache[ev.organiserId];
+    if (!p) return ev;
+    return {
+      ...ev,
+      organiser: ev.organiser || p.organiser,
+      organiserProfile: ev.organiserProfile || p.organiserProfile,
+      organiserLogo: ev.organiserLogo || p.organiserLogo,
+      search: [ev.search, p.organiser, p.organiserProfile].filter(Boolean).join(' ').toLowerCase(),
+    };
+  });
+}
+
+function pickDescription(fields) {
+  const prefer = pick(fields, [
+    'Event Description',
+    'About',
+    'Description',
+    'Summary',
+    'Details',
+    'Overview',
+  ]);
+  if (prefer != null && prefer !== '') {
+    if (typeof prefer === 'string') return prefer.trim();
+    if (Array.isArray(prefer)) {
+      return prefer
+        .filter((x) => typeof x === 'string')
+        .join('\n\n')
+        .trim();
+    }
+  }
+  const highlights = pick(fields, FIELD_MAP.description);
+  if (highlights == null || highlights === '') return '';
+  if (typeof highlights === 'string') return highlights.trim();
+  if (Array.isArray(highlights)) {
+    const parts = highlights.filter((x) => typeof x === 'string').map((x) => x.trim());
+    const joined = parts.join(' · ');
+    if (parts.some((p) => p.length > 40) || joined.length > 80) return joined;
+    return '';
   }
   return '';
 }
@@ -472,7 +642,7 @@ function buildDateLine(location, parsedDate, time) {
 function recordToEvent(record) {
   const f = record.fields || {};
   const title = pick(f, FIELD_MAP.title) || 'Untitled event';
-  const description = pick(f, FIELD_MAP.description) || '';
+  const description = pickDescription(f);
   const dateField = discoverDateField(f);
   const parsedDate = parseAirtableDate(dateField);
   let time = discoverTimeField(f) || '';
@@ -506,11 +676,10 @@ function recordToEvent(record) {
   const { display: priceDisplay, priceKey } = normalizePrice(priceRaw);
   const priceNum = parsePriceNum(priceRaw);
   const photo = attachmentUrl(pick(f, FIELD_MAP.photo));
-  const organiserLinkRaw = getFieldCI(f, 'Organiser') ?? getFieldCI(f, 'Host');
+  const organiserLinkRaw = pick(f, FIELD_MAP.organiser);
   const organiserId =
     pick(f, FIELD_MAP.organiserId) ||
     linkedRecordId(organiserLinkRaw) ||
-    linkedRecordId(pick(f, FIELD_MAP.organiser)) ||
     '';
   const organiser = pickOrganiserName(f) || '';
   const organiserLogo = attachmentUrl(pick(f, FIELD_MAP.organiserLogo));
@@ -640,13 +809,16 @@ module.exports = async function handler(req, res) {
         });
       }
       const data = await resp.json();
-      const event = recordToEvent(data);
+      let event = recordToEvent(data);
+      [event] = await enrichOrganisersForEvents([event], apiKey, baseId);
+      event = event[0];
       let related = [];
       try {
         const view = process.env.AIRTABLE_EVENTS_VIEW;
         const all = await fetchAllAirtableRecords(baseUrl, apiKey, view);
-        related = all
-          .map(recordToEvent)
+        let allEvents = all.map(recordToEvent);
+        allEvents = await enrichOrganisersForEvents(allEvents, apiKey, baseId);
+        related = allEvents
           .filter((e) => e.id !== event.id && organiserMatch(e, event))
           .slice(0, 6);
       } catch (relErr) {
@@ -686,7 +858,8 @@ module.exports = async function handler(req, res) {
       offset = data.offset;
     } while (offset);
 
-    const events = all.map(recordToEvent);
+    let events = all.map(recordToEvent);
+    events = await enrichOrganisersForEvents(events, apiKey, baseId);
     const payload = { configured: true, events };
     if (req.query?.fields === '1' && all[0]) {
       payload.airtableFieldNames = fieldKeys(all[0].fields || {});
