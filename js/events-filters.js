@@ -64,8 +64,8 @@
 
     if (resultsCount) resultsCount.textContent = String(visibleListings);
 
-    var empty = document.getElementById('empty-state');
-    if (empty) empty.classList.toggle('is-visible', visibleListings === 0);
+    var empty = document.querySelector('#event-listings .empty-state');
+    if (empty) empty.classList.toggle('is-visible', visibleListings === 0 && items.length > 0);
 
     var all = window.hubAllEvents || [];
     if (all.length) {

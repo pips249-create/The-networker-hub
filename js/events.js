@@ -8,7 +8,7 @@
     status: document.getElementById('load-status'),
     featuredList: document.getElementById('featured-list'),
     spotlightTrack: document.getElementById('spotlight-track'),
-    listings: document.getElementById('listings'),
+    listings: document.getElementById('event-listings'),
     empty: document.getElementById('empty-state'),
     resultsCount: document.getElementById('results-count'),
     countAll: document.getElementById('count-all'),
@@ -90,6 +90,8 @@
 
   function fillFilterOptions() {
     if (!els.industry || !els.location) return;
+    while (els.industry.options.length > 1) els.industry.remove(1);
+    while (els.location.options.length > 1) els.location.remove(1);
     const industries = [...new Set(events.map((e) => e.industry).filter(Boolean))].sort();
     const locations = [...new Set(events.map((e) => e.location).filter(Boolean))].sort();
     industries.forEach((label) => {
@@ -142,6 +144,10 @@
     }
 
     updateCounts(list);
+    if (els.resultsCount) {
+      const rowCount = (els.listings && els.listings.querySelectorAll('.event-row').length) || list.length;
+      els.resultsCount.textContent = String(rowCount);
+    }
     window.hubBindFilters?.();
   }
 
