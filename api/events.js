@@ -31,7 +31,16 @@ const FIELD_MAP = {
     'Day',
   ],
   time: ['Time', 'Start Time', 'Event Time', 'Start time', 'From'],
-  price: ['Ticket Price', 'Price'],
+  price: [
+    'Ticket Price',
+    'Price',
+    'From Price',
+    'Starting Price',
+    'Ticket price',
+    'Cost',
+    'Amount',
+    'Fee',
+  ],
   location: ['Location', 'City', 'Venue'],
   postcode: ['Postcode', 'Postal Code', 'ZIP', 'Zip Code'],
   venue: ['Venue', 'Venue Name', 'Address'],
@@ -80,10 +89,18 @@ const FIELD_MAP = {
 };
 
 const TICKET_FIELD_MAP = {
-  linkedEvent: ['Linked Event', 'Event', 'Events', 'Linked Events'],
+  linkedEvent: [
+    'Linked Event',
+    'Event',
+    'Events',
+    'Linked Events',
+    'Event link',
+    'Events 2',
+    'Events 3',
+  ],
   name: ['Ticket Name', 'Name', 'Tier Name', 'Ticket Type', 'Type', 'Tier'],
   description: ['Ticket Description', 'Description'],
-  price: ['Price', 'Ticket Price', 'Amount', 'Cost'],
+  price: ['Price', 'Ticket Price', 'Amount', 'Cost', 'Fee', 'Ticket price'],
   quantityAvailable: ['Quantity Available', 'Quantity', 'Capacity', 'Qty Available'],
   soldOut: ['Sold Out', 'Is Sold Out', 'Status', 'Ticket Status', 'Availability'],
 };
@@ -212,15 +229,29 @@ function slugifyType(raw) {
   return 'meeting';
 }
 
-function normalizePrice(raw) {
-  if (raw === null || raw === undefined || raw === '') return { display: 'Free', priceKey: 'free' };
-  const n = Number(String(raw).replace(/[^0-9.]/g, ''));
-  if (!n || String(raw).toLowerCase().includes('free')) {
-    return { display: 'Free', priceKey: 'free' };
+function coercePriceRaw(raw) {
+  if (raw === null || raw === undefined || raw === '') return null;
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+  if (typeof raw === 'object' && raw !== null) {
+    if (raw.value != null && raw.value !== '') return raw.value;
+    if (raw.amount != null && raw.amount !== '') return raw.amount;
   }
-  const num = Number.isFinite(n) ? n : parseFloat(String(raw).replace(/[^0-9.]/g, ''));
-  if (!num) return { display: String(raw), priceKey: 'paid' };
-  return { display: `£${num % 1 === 0 ? num.toFixed(0) : num.toFixed(2)}`, priceKey: 'paid' };
+  return raw;
+}
+
+function normalizePrice(raw) {
+  const coerced = coercePriceRaw(raw);
+  if (coerced === null || coerced === '') return { display: 'Free', priceKey: 'free' };
+  const str = String(coerced).trim();
+  if (/^free$/i.test(str)) return { display: 'Free', priceKey: 'free' };
+  const num = parsePriceNum(coerced);
+  if (num > 0) {
+    return {
+      display: `£${num % 1 === 0 ? num.toFixed(0) : num.toFixed(2)}`,
+      priceKey: 'paid',
+    };
+  }
+  return { display: 'Free', priceKey: 'free' };
 }
 
 function slugLocation(loc) {
@@ -397,10 +428,22 @@ function parseTicketStatusSoldOut(statusRaw) {
   return parseBoolField(statusRaw);
 }
 
+function discoverTicketPrice(fields) {
+  const hit = pick(fields, TICKET_FIELD_MAP.price);
+  if (hit !== null && hit !== undefined && hit !== '') return hit;
+  for (const key of fieldKeys(fields)) {
+    if (!/price|amount|cost|fee/i.test(key)) continue;
+    if (/description|platform|booking/i.test(key)) continue;
+    const v = fields[key];
+    if (v !== null && v !== undefined && v !== '') return v;
+  }
+  return null;
+}
+
 function ticketRecordToTier(record, eventDefaults = {}) {
   const f = record.fields || {};
   const priceRaw =
-    pick(f, TICKET_FIELD_MAP.price) ??
+    discoverTicketPrice(f) ??
     eventDefaults.priceRaw ??
     (eventDefaults.priceNum > 0 ? eventDefaults.priceNum : null);
   const priceNum = parsePriceNum(priceRaw);
@@ -556,13 +599,22 @@ function applyTicketsToEvent(event, ticketRecords, linkIndexes, eventRecord) {
 
   const available = event.tickets.filter((t) => !t.soldOut);
   const priceSource = available.length ? available : event.tickets;
-  const minTier = priceSource.reduce(
-    (min, t) => (t.priceNum < min.priceNum ? t : min),
-    priceSource[0]
+  const pricedTiers = priceSource.filter((t) => t.priceNum > 0);
+  const minTier = (pricedTiers.length ? pricedTiers : priceSource).reduce((min, t) =>
+    t.priceNum < min.priceNum ? t : min
   );
   event.priceNum = minTier.priceNum;
   event.price = minTier.price;
   event.priceKey = minTier.priceKey;
+
+  if (event.priceKey === 'free' && eventDefaults.priceRaw != null) {
+    const fromEvent = normalizePrice(eventDefaults.priceRaw);
+    if (fromEvent.priceKey === 'paid') {
+      event.priceNum = parsePriceNum(eventDefaults.priceRaw);
+      event.price = fromEvent.display;
+      event.priceKey = fromEvent.priceKey;
+    }
+  }
 
   const qtys = available
     .map((t) => t.quantityAvailable)
@@ -873,8 +925,16 @@ function parseSpotsMeta(fields) {
 }
 
 function parsePriceNum(raw) {
-  if (raw === null || raw === undefined || raw === '') return 0;
-  const n = Number(String(raw).replace(/[^0-9.]/g, ''));
+  const coerced = coercePriceRaw(raw);
+  if (coerced === null || coerced === '') return 0;
+  if (typeof coerced === 'number' && Number.isFinite(coerced)) return coerced;
+  const s = String(coerced).trim();
+  const m = s.match(/(\d+(?:\.\d+)?)/);
+  if (m) {
+    const n = parseFloat(m[1]);
+    return Number.isFinite(n) ? n : 0;
+  }
+  const n = Number(s.replace(/[^0-9.]/g, ''));
   return Number.isFinite(n) ? n : 0;
 }
 
@@ -1012,6 +1072,7 @@ function recordToEvent(record) {
     capacity: spotsMeta.capacity,
     urgency,
     dateLine: buildDateLine(location, parsedDate, time),
+    meetingType: String(typeRaw).trim() || String(format).trim() || 'Event',
     search,
     locationSlug: slugLocation(location),
     industrySlug: slugIndustry(industry),

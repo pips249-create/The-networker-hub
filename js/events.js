@@ -71,6 +71,30 @@
     return 'In-person';
   }
 
+  /** Meeting type from Airtable (Meeting Type / Event Type), not industry. */
+  function meetingTypeLabel(ev) {
+    const raw =
+      ev.meetingType ||
+      ev.typeRaw ||
+      ev.typeCategory ||
+      ev.format ||
+      '';
+    const label = String(raw).trim();
+    if (!label) return 'Event';
+    if (label.length > 28) return label.slice(0, 26) + '…';
+    return label;
+  }
+
+  function priceBadgeLabel(ev) {
+    if (ev.priceKey === 'free' || !ev.price || /^free$/i.test(ev.price)) return 'Free';
+    const n = Number(ev.priceNum);
+    if (n > 0) {
+      const amt = n % 1 === 0 ? '£' + n.toFixed(0) : '£' + n.toFixed(2);
+      return 'from ' + amt;
+    }
+    return ev.price;
+  }
+
   function starsHtml(rating) {
     const avg = Number(rating);
     const full = Math.min(5, Math.max(0, Math.round(Number.isFinite(avg) ? avg : 4)));
@@ -98,7 +122,7 @@
           <div class="premium-card-bg">${photoImg(ev.photo, 'premium-card-img')}</div>
           <div class="premium-card-overlay"></div>
           <span class="premium-badge">Premium</span>
-          <span class="premium-price">${escapeHtml(ev.price)}</span>
+          <span class="premium-price">${escapeHtml(priceBadgeLabel(ev))}</span>
           <div class="premium-card-body">
             <h3>${escapeHtml(ev.title)}</h3>
             <p class="premium-desc">${escapeHtml(ev.description).slice(0, 90)}${ev.description.length > 90 ? '…' : ''}</p>
@@ -117,7 +141,7 @@
     const fmtClass = formatTagClass(ev.format);
     const fmtLabel = formatTagLabel(ev.format);
     const reviewCount = Number(ev.reviews) || 0;
-    const industry = ev.industry || 'Networking';
+    const meetingType = meetingTypeLabel(ev);
     const dateLine =
       ev.dateLine ||
       [ev.location, ev.date || ev.dateFieldRaw, ev.time].filter(Boolean).join(' · ') ||
@@ -134,8 +158,8 @@
         data-price="${escapeHtml(ev.priceKey)}">
         <div class="event-grid-media">
           ${photoImg(ev.photo, 'event-grid-img')}
-          <span class="event-grid-category">${escapeHtml(industry)}</span>
-          <span class="event-grid-price">${escapeHtml(ev.price)}</span>
+          <span class="event-grid-category">${escapeHtml(meetingType)}</span>
+          <span class="event-grid-price">${escapeHtml(priceBadgeLabel(ev))}</span>
         </div>
         <div class="event-grid-body">
           <span class="event-grid-format ${escapeHtml(fmtClass)}">${escapeHtml(fmtLabel)}</span>
