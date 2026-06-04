@@ -37,6 +37,9 @@ const FIELD_MAP = {
     'From Price',
     'Starting Price',
     'Ticket price',
+    'Min Price',
+    'Minimum Price',
+    'Lowest Price',
     'Cost',
     'Amount',
     'Fee',
@@ -100,7 +103,16 @@ const TICKET_FIELD_MAP = {
   ],
   name: ['Ticket Name', 'Name', 'Tier Name', 'Ticket Type', 'Type', 'Tier'],
   description: ['Ticket Description', 'Description'],
-  price: ['Price', 'Ticket Price', 'Amount', 'Cost', 'Fee', 'Ticket price'],
+  price: [
+    'Price',
+    'Ticket Price',
+    'Ticket price',
+    'Amount',
+    'Cost',
+    'Fee',
+    'Unit Price',
+    'Sale Price',
+  ],
   quantityAvailable: ['Quantity Available', 'Quantity', 'Capacity', 'Qty Available'],
   soldOut: ['Sold Out', 'Is Sold Out', 'Status', 'Ticket Status', 'Availability'],
 };
@@ -229,14 +241,57 @@ function slugifyType(raw) {
   return 'meeting';
 }
 
-function coercePriceRaw(raw) {
+/** Flatten Airtable currency, rollups, and lookup arrays to one price value. */
+function flattenPriceRaw(raw) {
   if (raw === null || raw === undefined || raw === '') return null;
   if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
   if (typeof raw === 'object' && raw !== null) {
-    if (raw.value != null && raw.value !== '') return raw.value;
-    if (raw.amount != null && raw.amount !== '') return raw.amount;
+    if (raw.value != null && raw.value !== '') return flattenPriceRaw(raw.value);
+    if (raw.amount != null && raw.amount !== '') return flattenPriceRaw(raw.amount);
+  }
+  if (Array.isArray(raw)) {
+    const nums = [];
+    for (const item of raw) {
+      const flat = flattenPriceRaw(item);
+      const n = parsePriceNum(flat);
+      if (n > 0) nums.push(n);
+      else if (flat != null && flat !== '') {
+        const parsed = parsePriceNum(flat);
+        if (parsed > 0) nums.push(parsed);
+      }
+    }
+    if (nums.length) return Math.min(...nums);
+    if (raw.length) return flattenPriceRaw(raw[0]);
+    return null;
   }
   return raw;
+}
+
+function coercePriceRaw(raw) {
+  return flattenPriceRaw(raw);
+}
+
+function discoverEventPrice(fields) {
+  const hit = pick(fields, FIELD_MAP.price);
+  if (hit !== null && hit !== undefined && hit !== '') {
+    const flat = flattenPriceRaw(hit);
+    if (flat !== null && flat !== '') return flat;
+  }
+  let best = null;
+  let bestNum = 0;
+  for (const key of fieldKeys(fields)) {
+    if (!/price|cost|amount|fee|ticket/i.test(key)) continue;
+    if (/description|platform|booking|sold|revenue|registration|review/i.test(key)) continue;
+    const v = fields[key];
+    if (v === null || v === undefined || v === '') continue;
+    const flat = flattenPriceRaw(v);
+    const n = parsePriceNum(flat);
+    if (n > 0 && (bestNum === 0 || n < bestNum)) {
+      bestNum = n;
+      best = flat;
+    }
+  }
+  return best;
 }
 
 function normalizePrice(raw) {
@@ -430,14 +485,25 @@ function parseTicketStatusSoldOut(statusRaw) {
 
 function discoverTicketPrice(fields) {
   const hit = pick(fields, TICKET_FIELD_MAP.price);
-  if (hit !== null && hit !== undefined && hit !== '') return hit;
+  if (hit !== null && hit !== undefined && hit !== '') {
+    const flat = flattenPriceRaw(hit);
+    if (flat !== null && flat !== '') return flat;
+  }
+  let best = null;
+  let bestNum = 0;
   for (const key of fieldKeys(fields)) {
     if (!/price|amount|cost|fee/i.test(key)) continue;
-    if (/description|platform|booking/i.test(key)) continue;
+    if (/description|platform|booking|sold|revenue/i.test(key)) continue;
     const v = fields[key];
-    if (v !== null && v !== undefined && v !== '') return v;
+    if (v === null || v === undefined || v === '') continue;
+    const flat = flattenPriceRaw(v);
+    const n = parsePriceNum(flat);
+    if (n > 0 && (bestNum === 0 || n < bestNum)) {
+      bestNum = n;
+      best = flat;
+    }
   }
-  return null;
+  return best;
 }
 
 function ticketRecordToTier(record, eventDefaults = {}) {
@@ -581,9 +647,41 @@ function fallbackTicketTier(event) {
   };
 }
 
+function applyListingPriceFromTiers(event, eventDefaults) {
+  const tiers = event.tickets || [];
+  let bestNum = 0;
+  let bestDisplay = 'Free';
+  let bestKey = 'free';
+
+  tiers.forEach((t) => {
+    const n = Number(t.priceNum) || 0;
+    if (n > 0 && (bestNum === 0 || n < bestNum)) {
+      bestNum = n;
+      bestDisplay = t.price || normalizePrice(n).display;
+      bestKey = t.priceKey || 'paid';
+    }
+  });
+
+  if (bestNum === 0 && eventDefaults.priceRaw != null && eventDefaults.priceRaw !== '') {
+    const flat = flattenPriceRaw(eventDefaults.priceRaw);
+    const fromEvent = normalizePrice(flat);
+    const n = parsePriceNum(flat);
+    if (n > 0 || fromEvent.priceKey === 'paid') {
+      bestNum = n;
+      bestDisplay = fromEvent.display;
+      bestKey = fromEvent.priceKey;
+    }
+  }
+
+  event.priceNum = bestNum;
+  event.price = bestDisplay;
+  event.priceKey = bestKey;
+}
+
 function applyTicketsToEvent(event, ticketRecords, linkIndexes, eventRecord) {
+  const fields = eventRecord?.fields || {};
   const eventDefaults = {
-    priceRaw: pick(eventRecord?.fields || {}, FIELD_MAP.price),
+    priceRaw: discoverEventPrice(fields) ?? pick(fields, FIELD_MAP.price),
     price: event.price,
     priceKey: event.priceKey,
     priceNum: event.priceNum,
@@ -597,25 +695,9 @@ function applyTicketsToEvent(event, ticketRecords, linkIndexes, eventRecord) {
       );
   event.tickets = tickets.length ? tickets : [fallbackTicketTier(event)];
 
+  applyListingPriceFromTiers(event, eventDefaults);
+
   const available = event.tickets.filter((t) => !t.soldOut);
-  const priceSource = available.length ? available : event.tickets;
-  const pricedTiers = priceSource.filter((t) => t.priceNum > 0);
-  const minTier = (pricedTiers.length ? pricedTiers : priceSource).reduce((min, t) =>
-    t.priceNum < min.priceNum ? t : min
-  );
-  event.priceNum = minTier.priceNum;
-  event.price = minTier.price;
-  event.priceKey = minTier.priceKey;
-
-  if (event.priceKey === 'free' && eventDefaults.priceRaw != null) {
-    const fromEvent = normalizePrice(eventDefaults.priceRaw);
-    if (fromEvent.priceKey === 'paid') {
-      event.priceNum = parsePriceNum(eventDefaults.priceRaw);
-      event.price = fromEvent.display;
-      event.priceKey = fromEvent.priceKey;
-    }
-  }
-
   const qtys = available
     .map((t) => t.quantityAvailable)
     .filter((n) => n != null);
@@ -987,7 +1069,7 @@ function recordToEvent(record) {
     featuredVal === 'yes' ||
     String(featuredVal).toLowerCase() === 'true' ||
     String(featuredVal).toLowerCase() === 'premium';
-  const priceRaw = pick(f, FIELD_MAP.price);
+  const priceRaw = discoverEventPrice(f);
   const { display: priceDisplay, priceKey } = normalizePrice(priceRaw);
   const priceNum = parsePriceNum(priceRaw);
   const photo = attachmentUrl(pick(f, FIELD_MAP.photo));

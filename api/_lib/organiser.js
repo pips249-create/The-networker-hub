@@ -548,6 +548,66 @@ async function createGroup({
   return recordToGroup(data.records[0]);
 }
 
+async function getGroupById(groupId) {
+  const { groups: table } = tables();
+  const resp = await airtableFetch(
+    `${encodeURIComponent(table)}/${encodeURIComponent(groupId)}`
+  );
+  if (!resp.ok) {
+    const err = await resp.text();
+    const e = new Error(parseAirtableError(err)?.message || 'Group not found');
+    e.status = resp.status === 404 ? 404 : resp.status;
+    throw e;
+  }
+  const data = await resp.json();
+  return recordToGroup(data);
+}
+
+async function updateGroup(groupId, payload) {
+  const { groups: table } = tables();
+  const wf = await getOrganiserWriteFields();
+  const fields = {};
+  if (payload.name) fields[wf.name] = String(payload.name).trim();
+  if (payload.description !== undefined && wf.description) {
+    fields[wf.description] = String(payload.description || '').trim();
+  }
+  if (payload.website !== undefined && wf.website) {
+    fields[wf.website] = String(payload.website || '').trim();
+  }
+  if (payload.location !== undefined && wf.location) {
+    fields[wf.location] = String(payload.location || '').trim();
+  }
+  if (payload.email && wf.email) fields[wf.email] = String(payload.email).toLowerCase();
+
+  try {
+    const logoAttachment = await resolveLogoAttachment({
+      logoUrl: payload.logoUrl,
+      logoBase64: payload.logoBase64,
+      logoMime: payload.logoMime,
+      logoFilename: payload.logoFilename,
+    });
+    if (logoAttachment && wf.image) fields[wf.image] = logoAttachment;
+  } catch (e) {
+    const err = new Error(e.message || 'logo_upload_failed');
+    err.status = 400;
+    throw err;
+  }
+
+  const resp = await airtableFetch(encodeURIComponent(table), {
+    method: 'PATCH',
+    body: JSON.stringify({ records: [{ id: groupId, fields }] }),
+  });
+  if (!resp.ok) {
+    const err = await resp.text();
+    const e = new Error(parseAirtableError(err)?.message || err);
+    e.status = resp.status;
+    e.detail = err;
+    throw e;
+  }
+  const data = await resp.json();
+  return recordToGroup(data.records[0]);
+}
+
 async function buildEventRecordFields({
   email,
   groupId,
@@ -969,6 +1029,8 @@ module.exports = {
   listTicketsForSession,
   groupOwnedBySession,
   createGroup,
+  getGroupById,
+  updateGroup,
   createEvent,
   createEventsBatch,
   updateEvent,

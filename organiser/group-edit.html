@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Organiser profile – The Networker Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css" />
+  </head>
+  <body class="organiser-event-edit-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260606e" data-root="../" data-page="organiser"></script>
+
+    <div class="ee-wrap">
+      <a class="ee-back" href="index.html#groups">← Back to organiser profiles</a>
+      <h1 class="ee-title" id="ge-page-title">New organiser profile</h1>
+      <p class="ee-lead" id="ge-page-lead">
+        Create your organiser group — linked to your account email in Airtable.
+      </p>
+      <p class="ee-lead" id="ge-page-email" style="margin-top:-18px;font-size:13px"></p>
+      <div id="ge-alert" class="ee-alert" hidden></div>
+
+      <form id="ge-form">
+        <div class="ee-card">
+          <h2>Profile details</h2>
+          <div class="ee-field">
+            <label for="ge-logo-file">Photo / logo</label>
+            <div class="ee-upload-zone" id="ge-logo-zone" tabindex="0" role="button" aria-label="Upload logo">
+              <input type="file" id="ge-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+              <div class="ee-upload-preview" id="ge-logo-preview" hidden>
+                <img id="ge-logo-preview-img" alt="" width="96" height="72" />
+                <button type="button" class="ee-btn ee-btn-outline" id="ge-logo-clear" style="font-size:11px;padding:6px 10px">Remove</button>
+              </div>
+              <div class="ee-upload-placeholder" id="ge-logo-placeholder">
+                <strong>Upload a logo</strong>
+                <span>PNG or JPG, max 2MB — or paste a URL below</span>
+              </div>
+            </div>
+            <input type="url" id="ge-logo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top:10px" />
+          </div>
+          <div class="ee-field">
+            <label for="ge-name">Group name</label>
+            <input type="text" id="ge-name" required placeholder="e.g. Catalyst Sessions Ltd" />
+          </div>
+          <div class="ee-field">
+            <label for="ge-description">Description</label>
+            <textarea id="ge-description" rows="4" placeholder="Tell attendees about your group and the events you run"></textarea>
+          </div>
+          <div class="ee-row-2">
+            <div class="ee-field">
+              <label for="ge-website">Website</label>
+              <input type="url" id="ge-website" placeholder="https://www.yourcompany.com" />
+            </div>
+            <div class="ee-field">
+              <label for="ge-location">Location</label>
+              <input type="text" id="ge-location" placeholder="e.g. Liverpool, Merseyside" />
+            </div>
+          </div>
+        </div>
+
+        <div class="ee-actions">
+          <button type="submit" class="ee-btn ee-btn-primary" id="ge-submit">Create profile</button>
+          <a class="ee-btn ee-btn-outline" href="index.html#groups">Cancel</a>
+        </div>
+      </form>
+    </div>
+
+    <script src="../js/organiser-group-edit.js?v=20260606e"></script>
+  </body>
+</html>

@@ -168,7 +168,9 @@
         '<div class="org-action-wrap">' +
         '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
         '<div class="org-action-menu" role="menu">' +
-        '<button type="button" class="org-action-item" data-org-goto-view="groups"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit profile</strong><span>Update organiser page details</span></span></button>' +
+        '<button type="button" class="org-action-item" data-edit-group="' +
+        esc(id) +
+        '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit profile</strong><span>Update organiser page details</span></span></button>' +
         '<button type="button" class="org-action-item" data-org-goto-sub="events-reviews"><span class="org-action-icon">★</span><span class="org-action-text"><strong>Reviews</strong><span>View feedback for this group</span></span></button>' +
         '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Coming soon</span></span></button>' +
         '</div></div>'
@@ -359,6 +361,15 @@
 
   function goToEventEditor(ev) {
     location.href = eventEditorUrl(ev);
+  }
+
+  function groupEditorUrl(g) {
+    if (!g || !g.id) return 'group-edit.html';
+    return 'group-edit.html?id=' + encodeURIComponent(g.id);
+  }
+
+  function goToGroupEditor(g) {
+    location.href = groupEditorUrl(g);
   }
 
   function openEditEventModal(ev) {
@@ -641,9 +652,11 @@
       tr.innerHTML =
         '<td>' +
         thumbHtml(g) +
-        '</td><td class="org-td-name"><strong>' +
+        '</td><td class="org-td-name"><button type="button" class="org-td-name-click" data-edit-group="' +
+        esc(g.id) +
+        '">' +
         esc(g.name) +
-        '</strong></td><td>' +
+        '</button></td><td>' +
         esc(String(g.eventsListed != null ? g.eventsListed : 0)) +
         '</td><td class="org-revenue">' +
         esc(g.revenueDisplay || '£0') +
@@ -722,9 +735,11 @@
       tr.innerHTML =
         '<td>' +
         thumbHtml(g) +
-        '</td><td><strong>' +
+        '</td><td class="org-td-name"><button type="button" class="org-td-name-click" data-edit-group="' +
+        esc(g.id) +
+        '">' +
         esc(g.name) +
-        '</strong></td><td>' +
+        '</button></td><td>' +
         esc(g.location || '—') +
         '</td><td>' +
         site +
@@ -1292,16 +1307,14 @@
       el.addEventListener('click', closeModals);
     });
 
-    function openNewGroupModal() {
-      document.getElementById('modal-group-email').textContent = state.user.email;
-      resetGroupLogoPicker();
-      openModal('modal-group');
+    function goToNewGroupEditor() {
+      location.href = 'group-edit.html';
     }
 
-    document.getElementById('btn-new-group').addEventListener('click', openNewGroupModal);
+    document.getElementById('btn-new-group').addEventListener('click', goToNewGroupEditor);
     const btnNewGroupOverview = document.getElementById('btn-new-group-overview');
     if (btnNewGroupOverview) {
-      btnNewGroupOverview.addEventListener('click', openNewGroupModal);
+      btnNewGroupOverview.addEventListener('click', goToNewGroupEditor);
     }
 
     document.getElementById('btn-new-event').addEventListener('click', () => {
@@ -1330,7 +1343,7 @@
       btn.addEventListener('click', () => {
         const route = btn.getAttribute('data-org-goto');
         setRoute(route);
-        if (route === 'groups') document.getElementById('btn-new-group').click();
+        if (route === 'groups') goToNewGroupEditor();
         if (route === 'events' || route === 'events-list') document.getElementById('btn-new-event').click();
         if (route === 'tickets' || route === 'events-tickets') {
           setRoute('events-tickets');
@@ -1431,10 +1444,19 @@
       }
       if (!e.target.closest('.org-action-wrap')) closeAllActionMenus();
 
+      const editGroupBtn = e.target.closest('[data-edit-group]');
+      if (editGroupBtn) {
+        const gid = editGroupBtn.getAttribute('data-edit-group');
+        const g = state.groups.find((x) => x.id === gid);
+        if (g) goToGroupEditor(g);
+        else if (gid) location.href = 'group-edit.html?id=' + encodeURIComponent(gid);
+        return;
+      }
+
       const editBtn = e.target.closest('[data-edit-event]');
       if (editBtn) {
         const ev = state.events.find((x) => x.id === editBtn.getAttribute('data-edit-event'));
-        if (ev) openEditEventModal(ev);
+        if (ev) goToEventEditor(ev);
         return;
       }
 
