@@ -233,36 +233,13 @@
         <div class="ticket-panel" id="tickets" data-approval-required="false" data-sold-out="false" data-sales-closed="false">
           <div class="ticket-header">
             <span class="from-label">Tickets from</span>
-            <span class="price" id="ev-ticket-from-price">£32.15</span>
+            <span class="price" id="ev-ticket-from-price">—</span>
           </div>
-          <div class="ticket-urgency" id="ev-urgency">12 spots left</div>
+          <div class="ticket-urgency" id="ev-urgency" id="ev-urgency">Loading…</div>
 
           <div id="ticket-purchase-view">
           <div class="ticket-tiers" id="ticket-tiers">
-            <div class="tier selected" id="ev-tier-standard" data-price="32.15" data-label="Standard" role="button" tabindex="0" aria-pressed="true">
-              <div class="tier-radio" aria-hidden="true"></div>
-              <div class="tier-info">
-                <strong>Standard ticket</strong>
-                <span>Lunch, talk &amp; networking</span>
-              </div>
-              <div class="tier-price">£32.15</div>
-            </div>
-            <div class="tier" data-price="18" data-label="Remote" role="button" tabindex="0" aria-pressed="false">
-              <div class="tier-radio" aria-hidden="true"></div>
-              <div class="tier-info">
-                <strong>Remote / livestream</strong>
-                <span>Livestream + breakout rooms</span>
-              </div>
-              <div class="tier-price">£18.00</div>
-            </div>
-            <div class="tier sold-out" data-price="85" data-label="VIP" aria-disabled="true">
-              <div class="tier-radio" aria-hidden="true"></div>
-              <div class="tier-info">
-                <strong>VIP table of 4</strong>
-                <span>Sold out</span>
-              </div>
-              <div class="tier-price">£85.00</div>
-            </div>
+            <p class="ticket-load-hint">Loading tickets…</p>
           </div>
 
           <div class="qty-row">

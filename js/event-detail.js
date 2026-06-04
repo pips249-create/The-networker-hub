@@ -313,20 +313,62 @@
       if (extra) extra.hidden = true;
     }
 
-    const std = document.getElementById('ev-tier-standard');
-    if (std && ev.priceNum > 0) {
-      std.setAttribute('data-price', String(ev.priceNum));
-      const tp = std.querySelector('.tier-price');
-      if (tp) tp.textContent = fmt(ev.priceNum);
-    } else if (std && ev.priceKey === 'free') {
-      std.setAttribute('data-price', '0');
-      const tp = std.querySelector('.tier-price');
-      if (tp) tp.textContent = 'Free';
-    }
-
+    renderTicketPanel(ev);
     setText('ev-related-title', 'More from ' + (ev.organiser || 'this organiser'));
     renderOrganiserReviews(ev);
     applyTicketPanelState(ev);
+  }
+
+  function renderTicketPanel(ev) {
+    const tiersEl = document.getElementById('ticket-tiers');
+    const urgencyEl = document.getElementById('ev-urgency');
+    if (!tiersEl) return;
+
+    const priceNum = ev.priceKey === 'free' ? 0 : Number(ev.priceNum) || 0;
+    const priceLabel = ev.priceKey === 'free' ? 'Free' : fmt(priceNum);
+    const tierDisabled = ev.isSoldOut || ev.isSalesClosed;
+
+    tiersEl.innerHTML = '';
+
+    const tier = document.createElement('div');
+    tier.className =
+      'tier selected' + (tierDisabled ? ' tier-disabled sold-out' : '');
+    tier.id = 'ev-tier-standard';
+    tier.setAttribute('data-price', String(priceNum));
+    tier.setAttribute('data-label', 'Standard');
+    if (!tierDisabled) {
+      tier.setAttribute('role', 'button');
+      tier.setAttribute('tabindex', '0');
+      tier.setAttribute('aria-pressed', 'true');
+    } else {
+      tier.setAttribute('aria-disabled', 'true');
+    }
+
+    tier.innerHTML =
+      '<div class="tier-radio" aria-hidden="true"></div>' +
+      '<div class="tier-info"><strong>Standard ticket</strong>' +
+      '<span>' +
+      (ev.priceKey === 'free' ? 'Free admission' : 'Ticket includes full event access') +
+      '</span></div>' +
+      '<div class="tier-price">' +
+      priceLabel +
+      '</div>';
+    tiersEl.appendChild(tier);
+
+    if (urgencyEl) {
+      urgencyEl.classList.remove('is-sold-out');
+      if (ev.urgency) {
+        urgencyEl.textContent = ev.urgency;
+        urgencyEl.hidden = false;
+        if (ev.spotsLeft === 0 || ev.isSoldOut) urgencyEl.classList.add('is-sold-out');
+      } else if (ev.isSoldOut) {
+        urgencyEl.textContent = 'Sold out';
+        urgencyEl.hidden = false;
+        urgencyEl.classList.add('is-sold-out');
+      } else {
+        urgencyEl.hidden = true;
+      }
+    }
   }
 
   function renderOrganiserReviews(ev) {
@@ -735,7 +777,6 @@
   }
 
   function initTicketPanel(ev) {
-    const tiers = document.querySelectorAll('.tier:not(.sold-out):not(.tier-disabled)');
     const qtyDown = document.getElementById('qty-down');
     const qtyUp = document.getElementById('qty-up');
     const qtyValue = document.getElementById('qty-value');
@@ -747,9 +788,14 @@
     if (!qtyDown) return;
 
     let qty = 1;
-    let price = 32.15;
+    let price = ev.priceKey === 'free' ? 0 : Number(ev.priceNum) || 0;
     let label = 'Standard';
-    const sel = document.querySelector('.tier.selected');
+
+    function getSelectableTiers() {
+      return document.querySelectorAll('#ticket-tiers .tier:not(.sold-out):not(.tier-disabled)');
+    }
+
+    const sel = document.querySelector('#ticket-tiers .tier.selected');
     if (sel) {
       price = parseFloat(sel.getAttribute('data-price')) || 0;
       label = sel.getAttribute('data-label') || label;
@@ -770,7 +816,7 @@
     }
 
     function selectTier(tier) {
-      tiers.forEach((t) => {
+      getSelectableTiers().forEach((t) => {
         t.classList.remove('selected');
         t.setAttribute('aria-pressed', 'false');
       });
@@ -781,8 +827,9 @@
       update();
     }
 
-    tiers.forEach((tier) => {
-      tier.addEventListener('click', () => selectTier(tier));
+    document.getElementById('ticket-tiers')?.addEventListener('click', (e) => {
+      const tier = e.target.closest('.tier:not(.sold-out):not(.tier-disabled)');
+      if (tier) selectTier(tier);
     });
     qtyDown.addEventListener('click', () => {
       if (qty > 1) {
@@ -866,7 +913,18 @@
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
 
+    if (!id && !params.get('title')) {
+      const tiersEl = document.getElementById('ticket-tiers');
+      if (tiersEl) {
+        tiersEl.innerHTML =
+          '<p class="ticket-load-hint">Open an event from <a href="index.html">Browse events</a> to load live ticket data from Airtable.</p>';
+      }
+      return;
+    }
+
     if (id) {
+      const tiersEl = document.getElementById('ticket-tiers');
+      if (tiersEl) tiersEl.innerHTML = '<p class="ticket-load-hint">Loading tickets…</p>';
       try {
         const res = await fetch('/api/events?id=' + encodeURIComponent(id));
         const data = await res.json();
@@ -914,6 +972,8 @@
         isApprovalRequired: false,
         isSoldOut: false,
         isSalesClosed: false,
+        spotsLeft: null,
+        urgency: params.get('urgency') || '',
       }, params);
       currentEvent = ev;
       populateFromEvent(ev);

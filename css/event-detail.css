@@ -719,6 +719,29 @@ a:hover {
   border-radius: 50%;
 }
 
+.ticket-urgency.is-sold-out {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.ticket-urgency.is-sold-out::before {
+  background: #9ca3af;
+}
+
+.ticket-load-hint {
+  margin: 0;
+  padding: 16px;
+  font-size: 14px;
+  color: var(--ink-muted);
+  line-height: 1.55;
+  text-align: center;
+}
+
+.ticket-load-hint a {
+  color: var(--purple-700);
+  font-weight: 600;
+}
+
 .ticket-tiers {
   margin-bottom: 20px;
 }

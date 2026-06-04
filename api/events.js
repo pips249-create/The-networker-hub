@@ -10,9 +10,10 @@
 const { cleanEnvVal, parseAirtableError } = require('./lib/auth');
 
 const FIELD_MAP = {
-  title: ['Title', 'Name', 'Event Title'],
-  description: ['Description', 'Short Description', 'Summary'],
+  title: ['Event Title', 'Title', 'Name'],
+  description: ['Highlights', 'Description', 'Short Description', 'Summary', 'About'],
   date: [
+    'Date & Time',
     'Date',
     'Event Date',
     'Start Date',
@@ -29,18 +30,18 @@ const FIELD_MAP = {
     'Day',
   ],
   time: ['Time', 'Start Time', 'Event Time', 'Start time', 'From'],
-  price: ['Price', 'Ticket Price'],
+  price: ['Ticket Price', 'Price'],
   location: ['Location', 'City', 'Venue'],
   postcode: ['Postcode', 'Postal Code', 'ZIP', 'Zip Code'],
   venue: ['Venue', 'Venue Name', 'Address'],
   industry: ['Industry'],
-  format: ['Meeting Format', 'Format'],
-  type: ['Type', 'Event Type', 'Meeting Type'],
+  format: ['Meeting Format', 'Format', 'Meeting Type'],
+  type: ['Meeting Type', 'Type', 'Event Type'],
   latitude: ['Latitude', 'Lat'],
   longitude: ['Longitude', 'Lng', 'Long'],
   featured: ['Featured', 'Premium', 'Premium Spotlight'],
   photo: ['Photo', 'Image', 'Cover', 'Photos', 'Picture', 'Event Photo', 'Event Image'],
-  organiser: ['Organiser', 'Host', 'Organizer', 'Organiser Name'],
+  organiser: ['Host/Organizer', 'Host/Organiser', 'Organiser', 'Host', 'Organizer', 'Organiser Name'],
   organiserId: ['Organiser ID', 'OrganiserId', 'Host ID', 'Organizer ID'],
   organiserLogo: [
     'Organiser Logo',
@@ -60,11 +61,21 @@ const FIELD_MAP = {
     'Organiser Bio',
   ],
   address: ['Address', 'Venue Address', 'Full Address', 'Address Line 1', 'Street'],
-  rating: ['Rating', 'Average Rating', 'Stars'],
-  reviews: ['Reviews', 'Review Count', 'Number of Reviews'],
-  approvalRequired: ['Approval Required', 'Seat Approval', 'Requires Approval', 'One Seat Policy'],
+  rating: ['Average Rating', 'Rating', 'Stars'],
+  reviews: ['Review Count', 'Reviews', 'Number of Reviews'],
+  approvalRequired: [
+    'Approval Required',
+    'Seat Approval',
+    'Requires Approval',
+    'One Seat Policy',
+    'Seat Approval Required',
+  ],
+  approvalStatus: ['Approval Status'],
   soldOut: ['Sold Out', 'Is Sold Out'],
   salesClosed: ['Sales Closed', 'Registration Closed', 'Tickets Closed'],
+  capacity: ['Capacity', 'Max Attendees', 'Ticket Qty', 'Ticket Quantity', 'Max Capacity'],
+  spotsLeft: ['Spots Left', 'Tickets Remaining', 'Remaining Spots', 'Spots Remaining'],
+  registrations: ['Registrations', 'All Registrations'],
 };
 
 function getFieldCI(fields, name) {
@@ -391,6 +402,51 @@ function parseBoolField(raw) {
   return s === 'true' || s === 'yes' || s === '1' || s === 'on';
 }
 
+function parseApprovalRequired(fields) {
+  if (parseBoolField(pick(fields, FIELD_MAP.approvalRequired))) return true;
+  const status = String(pick(fields, FIELD_MAP.approvalStatus) || '').toLowerCase();
+  if (!status) return false;
+  if (/approved|open|confirmed/.test(status)) return false;
+  return /require|application|review|pending|seat/.test(status);
+}
+
+function parseSalesClosed(fields) {
+  if (parseBoolField(pick(fields, FIELD_MAP.salesClosed))) return true;
+  const status = String(pick(fields, FIELD_MAP.approvalStatus) || '').toLowerCase();
+  return /registration closed|sales closed|closed|ended|cancelled/.test(status);
+}
+
+function parseSoldOut(fields, spotsLeft) {
+  if (parseBoolField(pick(fields, FIELD_MAP.soldOut))) return true;
+  const status = String(pick(fields, FIELD_MAP.approvalStatus) || '').toLowerCase();
+  if (/sold out|full|no tickets/.test(status)) return true;
+  return spotsLeft !== null && spotsLeft <= 0;
+}
+
+function parseSpotsMeta(fields) {
+  const direct = pick(fields, FIELD_MAP.spotsLeft);
+  if (direct !== null && direct !== undefined && direct !== '') {
+    const n = Number(String(direct).replace(/[^0-9.-]/g, ''));
+    if (Number.isFinite(n)) {
+      return { spotsLeft: Math.max(0, Math.round(n)), capacity: null };
+    }
+  }
+
+  const capRaw = pick(fields, FIELD_MAP.capacity);
+  const capacity = capRaw != null && capRaw !== '' ? Number(String(capRaw).replace(/[^0-9.-]/g, '')) : null;
+  const regs = pick(fields, FIELD_MAP.registrations);
+  let regCount = 0;
+  if (Array.isArray(regs)) regCount = regs.length;
+  else if (typeof regs === 'number' && Number.isFinite(regs)) regCount = regs;
+
+  if (Number.isFinite(capacity) && capacity > 0) {
+    const left = Math.max(0, Math.round(capacity - regCount));
+    return { spotsLeft: left, capacity: Math.round(capacity) };
+  }
+
+  return { spotsLeft: null, capacity: null };
+}
+
 function parsePriceNum(raw) {
   if (raw === null || raw === undefined || raw === '') return 0;
   const n = Number(String(raw).replace(/[^0-9.]/g, ''));
@@ -466,9 +522,14 @@ function recordToEvent(record) {
   const reviewsRaw = pick(f, FIELD_MAP.reviews);
   const rating = ratingRaw != null && ratingRaw !== '' ? Number(ratingRaw) : 4;
   const reviews = reviewsRaw != null && reviewsRaw !== '' ? Number(reviewsRaw) : 0;
-  const isApprovalRequired = parseBoolField(pick(f, FIELD_MAP.approvalRequired));
-  const isSoldOut = parseBoolField(pick(f, FIELD_MAP.soldOut));
-  const isSalesClosed = parseBoolField(pick(f, FIELD_MAP.salesClosed));
+  const spotsMeta = parseSpotsMeta(f);
+  const isApprovalRequired = parseApprovalRequired(f);
+  const isSalesClosed = parseSalesClosed(f);
+  const isSoldOut = parseSoldOut(f, spotsMeta.spotsLeft);
+  let urgency = '';
+  if (spotsMeta.spotsLeft != null) {
+    urgency = spotsMeta.spotsLeft > 0 ? spotsMeta.spotsLeft + ' spots left' : 'Sold out';
+  }
 
   const search = [
     title,
@@ -523,6 +584,9 @@ function recordToEvent(record) {
     isApprovalRequired,
     isSoldOut,
     isSalesClosed,
+    spotsLeft: spotsMeta.spotsLeft,
+    capacity: spotsMeta.capacity,
+    urgency,
     dateLine: buildDateLine(location, parsedDate, time),
     search,
     locationSlug: slugLocation(location),
