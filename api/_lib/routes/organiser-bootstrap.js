@@ -1,12 +1,8 @@
-const {
-  json,
-  setCors,
-  requireOrganiserSession,
-  getOrganiserWorkspace,
-  airtableSetupHint,
-} = require('../organiser');
+const { getOrganiserApi } = require('../organiser-provider');
 
 module.exports = async function handler(req, res) {
+  const api = getOrganiserApi();
+  const { json, setCors, getOrganiserWorkspace, airtableSetupHint } = api;
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -33,6 +29,7 @@ module.exports = async function handler(req, res) {
 
     return json(res, 200, {
       ok: true,
+      dataProvider: 'supabase',
       user: ws.user || {
         email: ws.session.email,
         name: ws.session.name || '',
@@ -41,6 +38,7 @@ module.exports = async function handler(req, res) {
       },
       groups: ws.groups,
       events: ws.events,
+      upcomingEvents: ws.upcomingEvents || [],
       tickets: ws.tickets,
       hubView: ws.hubView,
       adminView: ws.adminView,
@@ -54,9 +52,9 @@ module.exports = async function handler(req, res) {
       },
       groupsError: ws.groupsError,
       airtable: {
-        groups: airtableSetupHint('groups'),
-        events: airtableSetupHint('events'),
-        tickets: airtableSetupHint('tickets'),
+        groups: airtableSetupHint && airtableSetupHint('groups'),
+        events: airtableSetupHint && airtableSetupHint('events'),
+        tickets: airtableSetupHint && airtableSetupHint('tickets'),
       },
     });
   } catch (e) {

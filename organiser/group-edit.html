@@ -10,15 +10,13 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../css/hub.css?v=20260626" />
-    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
+    <link rel="stylesheet" href="../css/hub.css?v=20260614" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260626" />
-
   </head>
   <body class="organiser-event-edit-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260626" data-root="../" data-page="organiser"></script>
+    <script src="../js/site-nav.js?v=20260614" data-root="../" data-page="organiser"></script>
 
     <div class="ee-wrap">
       <a class="ee-back" href="index.html#groups">← Back to group profiles</a>
@@ -37,15 +35,16 @@
           <h2>Profile details</h2>
           <div class="ee-field">
             <label for="ge-logo-file">Photo / logo</label>
-            <div class="ee-upload-zone" id="ge-logo-zone" tabindex="0" role="button" aria-label="Upload logo">
+            <p class="auth-lede" style="margin:0 0 8px;font-size:13px">Click to upload, drag and drop, or paste an image (Ctrl+V). Or paste a web address below.</p>
+            <div class="ee-upload-zone" id="ge-logo-zone" tabindex="0" role="button" aria-label="Upload or paste logo">
               <input type="file" id="ge-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
               <div class="ee-upload-preview" id="ge-logo-preview" hidden>
                 <img id="ge-logo-preview-img" alt="" width="96" height="72" />
                 <button type="button" class="ee-btn ee-btn-outline" id="ge-logo-clear" style="font-size:11px;padding:6px 10px">Remove</button>
               </div>
               <div class="ee-upload-placeholder" id="ge-logo-placeholder">
-                <strong>Upload a logo</strong>
-                <span>PNG or JPG, max 2MB — or paste a URL below</span>
+                <strong>Upload, paste, or drop</strong>
+                <span>PNG or JPG, max 2MB — or paste a web address below</span>
               </div>
             </div>
             <input type="url" id="ge-logo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top:10px" />
@@ -76,6 +75,7 @@
       </form>
     </div>
 
+    <script src="../js/organiser-image-upload.js?v=20260605"></script>
     <script src="../js/organiser-group-edit.js?v=20260625"></script>
   </body>
 </html>

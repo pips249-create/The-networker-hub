@@ -1,15 +1,6 @@
-const {
-  hashPassword,
-  findUserByEmail,
-  createUser,
-  setSessionCookie,
-  json,
-  setCors,
-  appendSystemLog,
-  airtableConfig,
-  USER_ROLES,
-  hubViewFromRequest,
-} = require('../auth');
+const { setSessionCookie, json, setCors, hubViewFromRequest } = require('../auth');
+const { useSupabase } = require('../supabase');
+const sbAuth = require('../supabase-auth');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -19,17 +10,17 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
 
-  const { apiKey, baseId } = airtableConfig();
-  if (!apiKey || !baseId) {
-    return json(res, 503, {
-      error: 'not_configured',
-      message: 'Set AIRTABLE_API_KEY and AIRTABLE_BASE_ID in Vercel.',
-    });
-  }
   if (!process.env.SESSION_SECRET) {
     return json(res, 503, {
       error: 'not_configured',
-      message: 'Set SESSION_SECRET in Vercel (random 32+ character string).',
+      message: 'Set SESSION_SECRET in Vercel.',
+    });
+  }
+
+  if (!useSupabase()) {
+    return json(res, 503, {
+      error: 'not_configured',
+      message: 'Supabase is not configured. See SUPABASE-FRESH-START.md.',
     });
   }
 
@@ -65,33 +56,18 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const existing = await findUserByEmail(email);
-    if (existing) {
-      return json(res, 409, {
-        error: 'email_exists',
-        message: 'An account with this email already exists. Sign in instead.',
-      });
-    }
-
-    const user = await createUser({
-      email,
-      passwordHash: hashPassword(password),
-      role: USER_ROLES.CLIENT,
-      name,
-    });
+    const user = await sbAuth.registerUser({ email, password, name });
 
     const sessionUser = {
       sub: user.id,
       email: user.email,
-      role: USER_ROLES.CLIENT,
+      role: user.role,
       name: user.name || name || '',
     };
 
     if (!setSessionCookie(res, sessionUser)) {
       return json(res, 503, { error: 'session_failed' });
     }
-
-    await appendSystemLog(`New account registered: ${user.email}`, 'auth');
 
     let redirect = body.next || '/account/index.html';
     if (hubViewFromRequest(req) === 'organiser') {
@@ -105,11 +81,11 @@ module.exports = async function handler(req, res) {
       redirect,
     });
   } catch (e) {
-    return json(res, 500, {
-      error: 'register_failed',
-      message: e.message || 'Could not create your account.',
-      hint:
-        'Ensure your Airtable Users table has Email and Password Hash. The Role field must already include an option such as Client or Member (the API cannot add new select options).',
+    const msg = e.message || 'Could not create your account.';
+    const code = /already exists/i.test(msg) ? 'email_exists' : 'register_failed';
+    return json(res, code === 'email_exists' ? 409 : 500, {
+      error: code,
+      message: msg,
     });
   }
 };

@@ -2,7 +2,6 @@ const {
   sessionFromRequest,
   setSessionCookie,
   clearSessionCookie,
-  findUserByEmail,
   setCors,
   json,
   hubViewFromRequest,
@@ -10,7 +9,8 @@ const {
   isAdminRole,
   isClientRole,
 } = require('../auth');
-const { listGroupsForUser } = require('../organiser');
+const { useSupabase } = require('../supabase');
+const sbAuth = require('../supabase-auth');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -28,6 +28,37 @@ module.exports = async function handler(req, res) {
   if (!session) return json(res, 200, { ok: false, user: null });
 
   try {
+    if (useSupabase()) {
+      const user = await sbAuth.findUserByEmail(session.email);
+      if (!user) {
+        clearSessionCookie(res);
+        return json(res, 200, { ok: false, user: null });
+      }
+
+      const role = normalizeRole(user.role);
+      const fresh = {
+        sub: user.id,
+        email: user.email,
+        role,
+        name: user.name,
+      };
+
+      setSessionCookie(res, fresh);
+
+      const organiserProfiles = await sbAuth.countOrganiserProfiles(fresh.sub, fresh.email);
+
+      return json(res, 200, {
+        ok: true,
+        user: fresh,
+        hubView: hubViewFromRequest(req),
+        organiserProfiles,
+        canOrganise: organiserProfiles > 0 || isAdminRole(role),
+        canToggleHubMode: isClientRole(role),
+      });
+    }
+
+    const { findUserByEmail } = require('../auth');
+    const { listGroupsForUser } = require('../organiser');
     const user = await findUserByEmail(session.email);
     if (!user || !user.passwordHash) {
       clearSessionCookie(res);
@@ -49,7 +80,7 @@ module.exports = async function handler(req, res) {
       const groups = await listGroupsForUser(fresh.sub, fresh.email);
       organiserProfiles = groups.length;
     } catch {
-      /* Airtable optional at sign-in */
+      /* optional */
     }
 
     return json(res, 200, {

@@ -14,18 +14,18 @@ function normalizePrice(priceNum) {
   return { display: `£${priceNum.toFixed(2)}`, priceKey: 'paid' };
 }
 
+const {
+  normalizeEventType,
+  slugForEventType,
+  parseTypeCategory: parseMeetingCategory,
+} = require('./event-types');
+
 function parseTypeCategory(raw) {
-  const s = String(raw || 'meeting').toLowerCase();
-  if (s.includes('exhibit')) return 'exhibition';
-  if (s.includes('conference')) return 'conference';
-  if (s.includes('network') || s.includes('meeting')) return 'meeting';
-  return 'meeting';
+  return parseMeetingCategory(raw);
 }
 
 function slugifyType(raw) {
-  const cat = parseTypeCategory(raw);
-  if (cat === 'exhibition' || cat === 'conference') return 'exhibition';
-  return 'meeting';
+  return slugForEventType(normalizeEventType(raw));
 }
 
 function slugLocation(loc) {
@@ -119,7 +119,7 @@ function rowToEvent(row, organiser, ticketRows) {
   if (!descText && Array.isArray(row.highlights)) {
     descText = row.highlights.join('\n');
   }
-  const typeRaw = row.event_type || 'Networking / Meeting';
+  const typeRaw = normalizeEventType(row.event_type);
   const typeCategory = parseTypeCategory(typeRaw);
   const type = slugifyType(typeRaw);
   const format = String(row.meeting_type || '').trim();

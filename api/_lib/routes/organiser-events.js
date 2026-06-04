@@ -1,16 +1,4 @@
-const {
-  json,
-  setCors,
-  requireOrganiserSession,
-  listGroupsForSession,
-  listEventsForSession,
-  groupOwnedBySession,
-  createEvent,
-  updateEvent,
-  getEventById,
-  isPlatformAdmin,
-  airtableSetupHint,
-} = require('../organiser');
+const { getOrganiserApi } = require('../organiser-provider');
 
 function parseBody(req) {
   let body = req.body;
@@ -72,6 +60,21 @@ function eventPayloadFromBody(body, email) {
 }
 
 module.exports = async function handler(req, res) {
+  const api = getOrganiserApi();
+  const {
+    json,
+    setCors,
+    requireOrganiserSession,
+    listGroupsForSession,
+    listEventsForSession,
+    groupOwnedBySession,
+    createEvent,
+    updateEvent,
+    getEventById,
+    isPlatformAdmin,
+    airtableSetupHint,
+  } = api;
+
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');

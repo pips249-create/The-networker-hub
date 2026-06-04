@@ -23,8 +23,12 @@ function isSupabaseConfigured() {
 
 function dataProvider() {
   const p = cleanEnvVal(process.env.DATA_PROVIDER).toLowerCase();
-  if (p === 'supabase' || p === 'airtable') return p;
-  return isSupabaseConfigured() ? 'supabase' : 'airtable';
+  if (p === 'airtable') return 'airtable';
+  return 'supabase';
+}
+
+function useSupabase() {
+  return dataProvider() === 'supabase' && isSupabaseConfigured();
 }
 
 let adminClient = null;
@@ -64,17 +68,21 @@ async function testSupabaseConnection() {
   }
   try {
     const sb = getSupabaseAdmin();
-    const probeTables = ['events', 'organisers', 'attendees', 'hub_accounts'];
+    const probeTables = ['hub_accounts', 'organisers', 'attendees', 'events'];
     let lastError = null;
     for (const table of probeTables) {
       const { error } = await sb.from(table).select('id').limit(1);
       if (!error) return { ok: true, configured: true, probeTable: table };
       lastError = error;
       if (error.code === '42P01' || /does not exist/i.test(error.message || '')) continue;
+      const swappedKey =
+        error.code === '42501' || /permission denied/i.test(error.message || '');
       return {
         ok: false,
         configured: true,
-        message: error.message,
+        message: swappedKey
+          ? 'Permission denied — check SUPABASE_SERVICE_ROLE_KEY in local.env (use service_role secret, not the anon key).'
+          : error.message,
         code: error.code,
         probeTable: table,
       };
@@ -98,6 +106,7 @@ module.exports = {
   supabaseConfig,
   isSupabaseConfigured,
   dataProvider,
+  useSupabase,
   getSupabaseAdmin,
   getSupabaseAnon,
   testSupabaseConnection,

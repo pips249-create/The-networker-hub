@@ -1,5 +1,5 @@
 /**
- * Loads events from /api/events (Airtable via Vercel) and renders card grid + pagination.
+ * Loads events from /api/events (Supabase or Airtable via Vercel) and renders card grid + pagination.
  */
 (function () {
   const API = '/api/events';
@@ -71,7 +71,7 @@
     return 'In-person';
   }
 
-  /** Meeting type from Airtable (Meeting Type / Event Type), not industry. */
+  /** Meeting type label for cards (not industry). */
   function meetingTypeLabel(ev) {
     const raw =
       ev.meetingType ||
@@ -285,6 +285,14 @@
     if (!sel) return;
     var keep = sel.value;
     var bySlug = {};
+    var canonical = window.HUB_MEETING_TYPES || [];
+    canonical.forEach(function (t) {
+      var slug = String(t.value || t.label)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+      bySlug[slug] = t.label || t.value;
+    });
     events.forEach(function (e) {
       var slug = e.typeSlug || '';
       var label = e.typeRaw || e.typeCategory || slug;
@@ -330,7 +338,7 @@
     if (els.spotlightTrack) {
       els.spotlightTrack.innerHTML = premium.length
         ? premium.map(premiumCard).join('')
-        : '<p class="spotlight-empty">No premium events yet — mark rows as Featured in Airtable.</p>';
+        : '<p class="spotlight-empty">No premium events yet — set <strong>featured</strong> on approved events in Supabase.</p>';
     }
 
     if (els.featuredList) {
@@ -374,18 +382,29 @@
     try {
       const res = await fetch(API);
       const data = await res.json();
+      const provider = data.provider || 'supabase';
+
       if (!data.configured) {
         setStatus(
-          'Connect Airtable: set AIRTABLE_API_KEY and AIRTABLE_BASE_ID in Vercel (see README).',
+          provider === 'supabase'
+            ? 'Connect Supabase: set SUPABASE_URL, keys, and DATA_PROVIDER=supabase in Vercel, then redeploy.'
+            : 'Connect Airtable: set AIRTABLE_API_KEY and AIRTABLE_BASE_ID in Vercel (see README).',
           true
         );
         events = [];
       } else if (data.error) {
-        setStatus('Could not load Airtable: ' + (data.detail || data.message || data.error), true);
+        setStatus('Could not load events: ' + (data.detail || data.message || data.error), true);
         events = [];
       } else {
         events = data.events || [];
-        setStatus(events.length ? '' : 'No events in your Airtable table yet.', false);
+        setStatus(
+          events.length
+            ? ''
+            : provider === 'supabase'
+              ? 'No approved events yet. Add rows in Supabase (events.approval_status = Approved), or run: node scripts/seed-sample-event.js'
+              : 'No events in your Airtable table yet.',
+          false
+        );
       }
       window.hubAllEvents = events;
       var afterGeo = window.hubEnrichEventCoords

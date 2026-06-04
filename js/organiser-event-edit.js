@@ -231,27 +231,22 @@
       if (previewImg) previewImg.removeAttribute('src');
     }
 
-    if (zone && fileInput) {
-      zone.addEventListener('click', () => fileInput.click());
-      zone.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          fileInput.click();
-        }
-      });
-      fileInput.addEventListener('change', () => {
-        const file = fileInput.files && fileInput.files[0];
-        if (!file) return;
-        if (file.size > 2 * 1024 * 1024) {
-          alert('Image must be under 2MB');
-          return;
-        }
-        photoFile = file;
-        const reader = new FileReader();
-        reader.onload = () => showPreview(reader.result);
-        reader.readAsDataURL(file);
-      });
+    function setPhotoFile(file) {
+      photoFile = file;
+      const reader = new FileReader();
+      reader.onload = () => showPreview(reader.result);
+      reader.readAsDataURL(file);
     }
+
+    if (zone && window.hubBindImageUpload) {
+      window.hubBindImageUpload({ zone, fileInput, onFile: setPhotoFile });
+    }
+    zone.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (fileInput) fileInput.click();
+      }
+    });
     if (clearBtn) clearBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       resetPreview();

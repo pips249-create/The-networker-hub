@@ -3,10 +3,12 @@
   "private": true,
   "description": "The Networker Hub — static site + Vercel serverless API",
   "scripts": {
-    "migrate": "node migrate.js"
+    "seed-admin": "node scripts/seed-admin.js",
+    "seed-sample-event": "node scripts/seed-sample-event.js",
+    "import-attendees": "node scripts/import-attendees-csv.js"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.49.1",
-    "dotenv": "^16.4.7"
+    "@supabase/supabase-js": "^2.107.0",
+    "dotenv": "^16.6.1"
   }
 }

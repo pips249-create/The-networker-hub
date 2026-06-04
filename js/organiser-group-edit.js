@@ -62,20 +62,15 @@
       if (previewImg) previewImg.removeAttribute('src');
     }
 
-    if (zone && fileInput) {
-      zone.addEventListener('click', () => fileInput.click());
-      fileInput.addEventListener('change', () => {
-        const file = fileInput.files && fileInput.files[0];
-        if (!file) return;
-        if (file.size > 2 * 1024 * 1024) {
-          alert('Image must be under 2MB');
-          return;
-        }
-        logoFile = file;
-        const reader = new FileReader();
-        reader.onload = () => showPreview(reader.result);
-        reader.readAsDataURL(file);
-      });
+    function setLogoFile(file) {
+      logoFile = file;
+      const reader = new FileReader();
+      reader.onload = () => showPreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+
+    if (zone && window.hubBindImageUpload) {
+      window.hubBindImageUpload({ zone, fileInput, onFile: setLogoFile });
     }
     if (clearBtn) {
       clearBtn.addEventListener('click', (e) => {

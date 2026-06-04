@@ -1,5 +1,5 @@
 /**
- * Organiser dashboard — groups, events, ticket types (Airtable via /api/organiser/*).
+ * Organiser dashboard — groups, events, ticket types (Supabase via /api/organiser/*).
  */
 (function () {
   const ORG_PAGE_SIZE = 10;
@@ -1299,20 +1299,14 @@
         false
       );
       bindScopeButtonOnce();
-    } else if (data.groupsError && state.airtable && state.airtable.groups) {
-      const g = state.airtable.groups;
+    } else if (data.groupsError) {
       showAirtableAlert(
-        '<strong>Set up Airtable table <code>' +
-          esc(g.table) +
-          '</code></strong> with fields: ' +
-          g.requiredFields.map((f) => '<code>' + esc(f) + '</code>').join(', ') +
-          '. Then redeploy. Error: ' +
-          esc(data.groupsError),
+        '<strong>Could not load group profiles.</strong> ' + esc(data.groupsError),
         true
       );
     } else if (!state.groups.length) {
       showAirtableAlert(
-        'Create your first <strong>group profile</strong> in Airtable (linked to your Users record). Then add events and ticket types.',
+        'Create your first <strong>group profile</strong> (Group profiles in the sidebar), then add events and ticket types.',
         false
       );
     } else if (!data.adminView) {
@@ -1350,22 +1344,7 @@
     const clearBtn = document.getElementById('group-logo-clear');
     if (!zone || !fileInput) return;
 
-    zone.addEventListener('click', () => fileInput.click());
-    zone.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        fileInput.click();
-      }
-    });
-
-    fileInput.addEventListener('change', () => {
-      const file = fileInput.files && fileInput.files[0];
-      if (!file) return;
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Logo must be under 2MB.');
-        fileInput.value = '';
-        return;
-      }
+    function setGroupLogoFile(file) {
       groupLogoFile = file;
       const reader = new FileReader();
       reader.onload = () => {
@@ -1374,6 +1353,16 @@
         if (placeholder) placeholder.hidden = true;
       };
       reader.readAsDataURL(file);
+    }
+
+    if (window.hubBindImageUpload) {
+      window.hubBindImageUpload({ zone, fileInput, onFile: setGroupLogoFile });
+    }
+    zone.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        fileInput.click();
+      }
     });
 
     if (clearBtn) {

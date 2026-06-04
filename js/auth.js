@@ -68,7 +68,12 @@
         })
         .then(function (result) {
           if (!result.ok) {
-            showMessage(msg, result.data.message || 'Sign in failed.', 'error');
+            var errText = result.data.message || result.data.error || 'Sign in failed.';
+            if (/UNAUTHORIZED|authentication token|airtable/i.test(String(errText))) {
+              errText =
+                'The live site is not on Supabase auth yet. Add Supabase env vars in Vercel, redeploy, or sign in after the latest code is deployed.';
+            }
+            showMessage(msg, errText, 'error');
             btn.disabled = false;
             return;
           }

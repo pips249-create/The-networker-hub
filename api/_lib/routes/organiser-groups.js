@@ -1,21 +1,13 @@
-const {
-  json,
-  setCors,
-  requireOrganiserSession,
-  listGroupsForSession,
-  groupOwnedBySession,
-  createGroup,
-  getGroupById,
-  updateGroup,
-  unpublishGroup,
-  enrichGroupForDashboard,
-  isPlatformAdmin,
-  airtableSetupHint,
-} = require('../organiser');
 const { organiserPersonalScopeFromRequest } = require('../auth');
+const { getOrganiserApi } = require('../organiser-provider');
+
+function organiserApi() {
+  return getOrganiserApi();
+}
 
 function adminViewForRequest(req, session) {
-  return isPlatformAdmin(session) && !organiserPersonalScopeFromRequest(req);
+  const api = organiserApi();
+  return api.isPlatformAdmin(session) && !organiserPersonalScopeFromRequest(req);
 }
 
 function parseBody(req) {
@@ -31,6 +23,7 @@ function parseBody(req) {
 }
 
 module.exports = async function handler(req, res) {
+  const { json, setCors, requireOrganiserSession } = getOrganiserApi();
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -40,29 +33,31 @@ module.exports = async function handler(req, res) {
   const auth = requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
+  const api = organiserApi();
+
   if (req.method === 'GET') {
     const groupId = String(req.query?.id || '').trim();
     try {
       if (groupId) {
-        const groups = await listGroupsForSession(auth.session);
-        if (!isPlatformAdmin(auth.session) && !groupOwnedBySession(auth.session, groups, groupId)) {
+        const groups = await api.listGroupsForSession(auth.session);
+        if (!api.isPlatformAdmin(auth.session) && !api.groupOwnedBySession(auth.session, groups, groupId)) {
           return json(res, 403, { error: 'group_not_owned' });
         }
-        const raw = await getGroupById(groupId);
-        const group = await enrichGroupForDashboard(
+        const raw = await api.getGroupById(groupId);
+        const group = await api.enrichGroupForDashboard(
           raw,
           auth.session,
           adminViewForRequest(req, auth.session)
         );
         return json(res, 200, { ok: true, group });
       }
-      const groups = await listGroupsForSession(auth.session);
+      const groups = await api.listGroupsForSession(auth.session);
       return json(res, 200, { ok: true, groups });
     } catch (e) {
       return json(res, e.status || 500, {
         error: 'groups_fetch_failed',
         message: e.message,
-        airtable: airtableSetupHint('groups'),
+        airtable: api.airtableSetupHint && api.airtableSetupHint('groups'),
       });
     }
   }
@@ -84,11 +79,11 @@ module.exports = async function handler(req, res) {
     if (!hasProfileFields) return json(res, 400, { error: 'missing_fields' });
 
     try {
-      const groups = await listGroupsForSession(auth.session);
-      if (!groupOwnedBySession(auth.session, groups, groupId)) {
+      const groups = await api.listGroupsForSession(auth.session);
+      if (!api.groupOwnedBySession(auth.session, groups, groupId)) {
         return json(res, 403, { error: 'group_not_owned' });
       }
-      const updated = await updateGroup(groupId, {
+      const updated = await api.updateGroup(groupId, {
         name: name || undefined,
         description: body.description,
         website: body.website,
@@ -99,7 +94,7 @@ module.exports = async function handler(req, res) {
         logoFilename: body.logoFilename,
         listingStatus,
       });
-      const group = await enrichGroupForDashboard(
+      const group = await api.enrichGroupForDashboard(
         updated,
         auth.session,
         adminViewForRequest(req, auth.session)
@@ -122,7 +117,7 @@ module.exports = async function handler(req, res) {
       return json(res, e.status || 500, {
         error: 'group_update_failed',
         message: e.message,
-        airtable: airtableSetupHint('groups'),
+        airtable: api.airtableSetupHint && api.airtableSetupHint('groups'),
       });
     }
   }
@@ -133,12 +128,12 @@ module.exports = async function handler(req, res) {
     const actionGroupId = String(body.id || body.groupId || '').trim();
     if (action === 'unpublish' && actionGroupId) {
       try {
-        const groups = await listGroupsForSession(auth.session);
-        if (!groupOwnedBySession(auth.session, groups, actionGroupId)) {
+        const groups = await api.listGroupsForSession(auth.session);
+        if (!api.groupOwnedBySession(auth.session, groups, actionGroupId)) {
           return json(res, 403, { error: 'group_not_owned' });
         }
-        const updated = await unpublishGroup(actionGroupId);
-        const group = await enrichGroupForDashboard(
+        const updated = await api.unpublishGroup(actionGroupId);
+        const group = await api.enrichGroupForDashboard(
           updated,
           auth.session,
           adminViewForRequest(req, auth.session)
@@ -164,7 +159,7 @@ module.exports = async function handler(req, res) {
     if (!name) return json(res, 400, { error: 'missing_name' });
 
     try {
-      const created = await createGroup({
+      const created = await api.createGroup({
         userId: auth.session.sub || '',
         email: auth.session.email,
         name,
@@ -177,7 +172,7 @@ module.exports = async function handler(req, res) {
         logoFilename,
         listingStatus: body.listingStatus || 'draft',
       });
-      const group = await enrichGroupForDashboard(
+      const group = await api.enrichGroupForDashboard(
         created,
         auth.session,
         adminViewForRequest(req, auth.session)

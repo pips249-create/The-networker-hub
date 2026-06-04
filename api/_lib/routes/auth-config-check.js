@@ -1,18 +1,15 @@
-const {
-  airtableConfig,
-  testAirtableConnection,
-  findUserByEmail,
-  cleanEnvVal,
-} = require('../auth');
+const { cleanEnvVal } = require('../auth');
 const {
   supabaseConfig,
   testSupabaseConnection,
   dataProvider,
   isSupabaseConfigured,
 } = require('../supabase');
+const sbAuth = require('../supabase-auth');
 
 /**
- * Safe diagnostic: which auth env vars are set (never returns secret values).
+ * Safe diagnostic: which env vars are set (never returns secret values).
+ * Supabase-only — Airtable is optional legacy.
  */
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -22,19 +19,15 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'method_not_allowed' });
   }
 
-  const { apiKey, baseId, usersTable } = airtableConfig();
   const sbCfg = supabaseConfig();
   const provider = dataProvider();
 
   const env = {
     hasSessionSecret: Boolean(process.env.SESSION_SECRET),
-    hasAdminSetupSecret: Boolean(process.env.ADMIN_SETUP_SECRET),
     hasAdminEmail: Boolean(process.env.ADMIN_EMAIL),
     hasAdminInitialPassword: Boolean(process.env.ADMIN_INITIAL_PASSWORD),
-    hasUsersTable: Boolean(usersTable),
+    hasAdminSetupSecret: Boolean(process.env.ADMIN_SETUP_SECRET),
     hasSiteUrl: Boolean(process.env.SITE_URL),
-    hasAirtableApiKey: Boolean(apiKey),
-    hasAirtableBaseId: Boolean(baseId),
     dataProvider: provider,
     hasSupabaseUrl: Boolean(sbCfg.url),
     hasSupabaseServiceKey: Boolean(sbCfg.serviceKey),
@@ -43,32 +36,29 @@ module.exports = async function handler(req, res) {
 
   const authReady =
     env.hasSessionSecret &&
-    env.hasAdminSetupSecret &&
-    env.hasAirtableApiKey &&
-    env.hasAirtableBaseId &&
-    env.hasUsersTable;
+    env.hasSupabaseUrl &&
+    env.hasSupabaseServiceKey &&
+    env.hasSupabaseAnonKey;
 
-  const canSeedAdmin =
-    authReady && (env.hasAdminInitialPassword || env.hasAdminEmail);
+  const canSeedAdmin = authReady && env.hasAdminInitialPassword;
 
-  const airtable = await testAirtableConnection();
   const supabase = isSupabaseConfigured() ? await testSupabaseConnection() : { ok: false, configured: false };
 
   const adminEmail = cleanEnvVal(process.env.ADMIN_EMAIL) || 'pips249@gmail.com';
   let adminAccount = { email: adminEmail, exists: false, hasPassword: false, role: null };
-  if (airtable.ok) {
+  if (supabase.ok) {
     try {
-      const u = await findUserByEmail(adminEmail);
+      const u = await sbAuth.findUserByEmail(adminEmail);
       if (u) {
         adminAccount = {
           email: adminEmail,
           exists: true,
-          hasPassword: Boolean(u.passwordHash),
+          hasPassword: true,
           role: u.role,
         };
       }
     } catch {
-      /* Users table may be missing fields */
+      /* hub_accounts may not exist yet */
     }
   }
 
@@ -76,7 +66,6 @@ module.exports = async function handler(req, res) {
     authReady,
     canSeedAdmin,
     dataProvider: provider,
-    airtable,
     supabase,
     adminAccount,
     env,
@@ -84,34 +73,18 @@ module.exports = async function handler(req, res) {
       missingSessionSecret: !env.hasSessionSecret
         ? 'Add SESSION_SECRET in Vercel, then Redeploy.'
         : null,
-      missingAdminSetupSecret: !env.hasAdminSetupSecret
-        ? 'Add ADMIN_SETUP_SECRET in Vercel, then Redeploy.'
+      missingSupabase: !env.hasSupabaseUrl || !env.hasSupabaseServiceKey || !env.hasSupabaseAnonKey
+        ? 'Add SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and SUPABASE_ANON_KEY. See SUPABASE-FRESH-START.md.'
         : null,
-      missingAirtableWrite: !env.hasAirtableApiKey
-        ? 'Add AIRTABLE_API_KEY with read+write scopes.'
-        : null,
-      airtableAuth: !airtable.ok && airtable.error === 'AUTHENTICATION_REQUIRED'
-        ? 'Airtable rejected your API key. Create a new pat token at airtable.com/create/tokens, paste into AIRTABLE_API_KEY (no quotes), Redeploy.'
-        : !airtable.ok
-          ? airtable.message
-          : null,
-      setupAdminRequired: airtable.ok && !adminAccount.exists,
-      supabase:
-        !env.hasSupabaseUrl || !env.hasSupabaseServiceKey
-          ? 'Add SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in Vercel, redeploy. See SUPABASE-SETUP.md.'
-          : !supabase.ok
-            ? supabase.message
-            : null,
-      nextStep:
-        provider === 'supabase' && supabase.ok
-          ? 'Supabase connected. Next: add migration SQL to supabase/migrations/ and we migrate auth/events.'
-          : airtable.ok && !adminAccount.exists
-          ? 'Run POST /api/auth/setup-admin once (see VERCEL-AUTH-ENV.md Step 7), then sign in'
-          : authReady && airtable.ok
-        ? 'Sign in at /login.html — forgot password shows an on-page link (email not required)'
-        : airtable.ok
-          ? 'Complete env vars in Vercel → Deployments → Redeploy'
-          : 'Fix AIRTABLE_API_KEY first (see airtableAuth hint), then Redeploy',
+      supabaseConnection: !supabase.ok && supabase.configured !== false ? supabase.message : null,
+      setupAdminRequired: supabase.ok && !adminAccount.exists,
+      nextStep: !supabase.ok
+        ? 'Fix Supabase env vars in Vercel → Redeploy.'
+        : !adminAccount.exists
+          ? 'Run: node scripts/seed-admin.js (local) or POST /api/auth/setup-admin with ADMIN_SETUP_SECRET'
+          : authReady
+            ? 'Sign in at /login.html'
+            : 'Complete env vars, then Redeploy',
     },
     checkUrl: '/api/auth/config-check',
   });

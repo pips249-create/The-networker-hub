@@ -3,29 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Events &amp; exhibitions – The Networker Hub</title>
-<meta name="description" content="Find UK networking meetings, exhibitions, and conferences. Filter by type, date, industry, and location.">
+<title>Find your next event – The Networker Hub</title>
+<meta name="description" content="Find networking meetings, netwalking, conferences, exhibitions, and awards ceremonies across the UK. Filter by type, date, industry, and location.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/hub.css?v=20260626">
+<link rel="stylesheet" href="../css/hub.css?v=20260610">
 <link rel="stylesheet" href="../css/events-page.css">
 <link rel="stylesheet" href="../css/events-filter-bar.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260626" />
-
 </head>
 <body class="events-page">
 
 <div id="hub-site-nav"></div>
-<script src="../js/site-nav.js?v=20260626" data-root="../" data-page="events"></script>
+<script src="../js/site-nav.js?v=20260612" data-root="../" data-page="events"></script>
 
-<section class="hero">
+<section class="hero events-hero">
   <div class="hero-inner">
-    <p class="hero-eyebrow">Events &amp; exhibitions</p>
-    <h1>Meetings, exhibitions &amp; <span class="accent">conferences</span></h1>
-    <p class="hero-lede">One listing for every format — filter by type, date, industry, and location. Data from your Airtable base.</p>
+    <h1>Find your next <span class="accent">event</span></h1>
+    <p class="hero-types">Networking meeting · Netwalking · Conference · Exhibition · Awards ceremony</p>
   </div>
 </section>
 
@@ -74,7 +71,7 @@
           </span>
           <label class="visually-hidden" for="search">Search events</label>
           <input type="search" id="search" placeholder="Search all meetings, people, resources…" autocomplete="off" aria-describedby="search-hint">
-          <span id="search-hint" class="visually-hidden">Searches titles, descriptions, locations, industries, organisers, and formats from Airtable</span>
+          <span id="search-hint" class="visually-hidden">Searches titles, descriptions, locations, industries, organisers, and formats from the events database</span>
         </div>
         <div class="filter-field filter-field-postcode">
           <span class="filter-field-icon" aria-hidden="true">
@@ -189,6 +186,7 @@
 <script src="../js/postcode-geo.js"></script>
 <script src="../js/events-filters.js"></script>
 <script src="../js/events-map.js"></script>
+<script src="../js/meeting-types.js?v=20260605"></script>
 <script src="../js/events.js?v=20260606e"></script>
 </body>
 </html>

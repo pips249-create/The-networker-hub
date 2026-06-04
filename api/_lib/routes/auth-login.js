@@ -1,17 +1,14 @@
 const {
-  verifyPassword,
-  findUserByEmail,
   setSessionCookie,
-  clearSessionCookie,
   json,
   sessionFromRequest,
-  appendSystemLog,
-  airtableConfig,
   setCors,
   normalizeRole,
   isAdminRole,
   hubViewFromRequest,
 } = require('../auth');
+const { useSupabase } = require('../supabase');
+const sbAuth = require('../supabase-auth');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -27,17 +24,17 @@ module.exports = async function handler(req, res) {
 
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
 
-  const { apiKey, baseId } = airtableConfig();
-  if (!apiKey || !baseId) {
-    return json(res, 503, {
-      error: 'not_configured',
-      message: 'Set AIRTABLE_API_KEY and AIRTABLE_BASE_ID in Vercel.',
-    });
-  }
   if (!process.env.SESSION_SECRET) {
     return json(res, 503, {
       error: 'not_configured',
       message: 'Set SESSION_SECRET in Vercel (random 32+ character string).',
+    });
+  }
+
+  if (!useSupabase()) {
+    return json(res, 503, {
+      error: 'not_configured',
+      message: 'Set SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and SUPABASE_ANON_KEY. See SUPABASE-FRESH-START.md.',
     });
   }
 
@@ -59,19 +56,17 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const user = await findUserByEmail(email);
-    if (!user) {
-      return json(res, 401, {
-        error: 'no_account',
-        message:
-          'No account exists for this email yet. Create an account or use Forgot password if you have registered before.',
-      });
-    }
-    if (!user.passwordHash || !verifyPassword(password, user.passwordHash)) {
+    const login = await sbAuth.verifyLogin(email, password);
+    if (!login.ok) {
       return json(res, 401, {
         error: 'invalid_credentials',
-        message: 'Password is incorrect. Try again or use Forgot password.',
+        message: 'Email or password is incorrect.',
       });
+    }
+
+    const user = await sbAuth.findUserByEmail(email);
+    if (!user) {
+      return json(res, 401, { error: 'no_account', message: 'No account for this email.' });
     }
 
     const role = normalizeRole(user.role);
@@ -85,8 +80,6 @@ module.exports = async function handler(req, res) {
     if (!setSessionCookie(res, sessionUser)) {
       return json(res, 503, { error: 'session_failed' });
     }
-
-    await appendSystemLog(`User signed in: ${user.email}`, 'auth');
 
     let redirect = body.next || '/events/index.html';
     if (isAdminRole(role)) {
@@ -104,7 +97,6 @@ module.exports = async function handler(req, res) {
     return json(res, 500, {
       error: 'server_error',
       message: e.message,
-      hint: 'Ensure your Airtable token can read/write the Users table.',
     });
   }
 };

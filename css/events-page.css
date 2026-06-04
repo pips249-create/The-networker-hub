@@ -1,6 +1,24 @@
 /* Events browse page layout */
-.events-page .hero {
-  padding: 28px 24px 32px;
+.events-page .hero.events-hero {
+  padding: 40px 24px 44px;
+}
+.events-page .events-hero h1 {
+  font-size: clamp(2.35rem, 6vw, 3.5rem);
+  line-height: 1.08;
+  margin-bottom: 14px;
+  letter-spacing: -0.02em;
+}
+.events-page .events-hero .hero-types {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 36em;
+  margin: 0;
+}
+@media (min-width: 720px) {
+  .events-page .events-hero .hero-types {
+    font-size: 15px;
+  }
 }
 .events-page .shell {
   margin-top: 0;

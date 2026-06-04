@@ -1,17 +1,10 @@
-const {
-  hashPassword,
-  findUserByEmail,
-  createUser,
-  updateUser,
-  json,
-  airtableConfig,
-  normalizeRole,
-  USER_ROLES,
-} = require('../auth');
+const { json } = require('../auth');
+const { isSupabaseConfigured } = require('../supabase');
+const sbAuth = require('../supabase-auth');
 
 /**
  * One-time admin setup. POST with:
- * { "secret": "<ADMIN_SETUP_SECRET>", "email": "pips249@gmail.com", "password": "..." }
+ * { "secret": "<ADMIN_SETUP_SECRET>", "email": "...", "password": "..." }
  */
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -29,8 +22,9 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const { apiKey, baseId } = airtableConfig();
-  if (!apiKey || !baseId) return json(res, 503, { error: 'airtable_not_configured' });
+  if (!isSupabaseConfigured()) {
+    return json(res, 503, { error: 'supabase_not_configured' });
+  }
 
   let body = req.body;
   if (typeof body === 'string') {
@@ -50,13 +44,6 @@ module.exports = async function handler(req, res) {
     .toLowerCase();
   const password = String(body.password || process.env.ADMIN_INITIAL_PASSWORD || '');
   const name = String(body.name || 'Platform Admin').trim();
-  let role = normalizeRole(body.role || USER_ROLES.ADMIN);
-  if (![USER_ROLES.ADMIN, USER_ROLES.CLIENT].includes(role)) {
-    return json(res, 400, {
-      error: 'invalid_role',
-      message: 'role must be admin or client',
-    });
-  }
 
   if (!email || !password) {
     return json(res, 400, {
@@ -69,41 +56,14 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const hash = hashPassword(password);
-    const existing = await findUserByEmail(email);
-
-    if (existing) {
-      await updateUser(existing.id, {
-        'Password Hash': hash,
-        Role: role,
-        Name: name,
-      });
-      return json(res, 200, {
-        ok: true,
-        message: 'User account updated.',
-        email,
-        role,
-      });
-    }
-
-    await createUser({
-      email,
-      passwordHash: hash,
-      role,
-      name,
-    });
-
-    return json(res, 201, {
+    const admin = await sbAuth.ensureAdminUser({ email, password, name });
+    return json(res, 200, {
       ok: true,
-      message: 'User account created.',
-      email,
-      role,
+      message: 'Admin account is ready in Supabase.',
+      email: admin.email,
+      provider: 'supabase',
     });
   } catch (e) {
-    return json(res, 500, {
-      error: 'server_error',
-      message: e.message,
-      hint: 'Create a Users table in Airtable with Email, Password Hash, Role, Name, Reset Token, Reset Token Expires.',
-    });
+    return json(res, 500, { error: 'setup_failed', message: e.message });
   }
 };

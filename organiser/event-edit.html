@@ -10,15 +10,13 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../css/hub.css?v=20260626" />
-    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
+    <link rel="stylesheet" href="../css/hub.css?v=20260614" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260626" />
-
   </head>
   <body class="organiser-event-edit-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260626" data-root="../" data-page="organiser"></script>
+    <script src="../js/site-nav.js?v=20260612" data-root="../" data-page="organiser"></script>
 
     <div class="ee-wrap">
       <header class="ee-page-head">
@@ -69,7 +67,8 @@
           </div>
           <div class="ee-field">
             <label for="ee-photo-file">Event photo</label>
-            <div class="ee-upload-zone" id="ee-photo-zone" tabindex="0" role="button" aria-label="Upload event photo">
+            <p class="auth-lede" style="margin:0 0 8px;font-size:13px">Upload, paste (Ctrl+V), or drop an image — or use a URL below.</p>
+            <div class="ee-upload-zone" id="ee-photo-zone" tabindex="0" role="button" aria-label="Upload or paste event photo">
               <input type="file" id="ee-photo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
               <div class="ee-upload-preview" id="ee-photo-preview" hidden>
                 <img id="ee-photo-preview-img" alt="" width="96" height="72" />
@@ -84,13 +83,12 @@
           </div>
           <div class="ee-field">
             <label for="ee-type">Meeting type</label>
-            <select id="ee-type">
-              <option>Networking Event</option>
-              <option>Exhibition</option>
-              <option>Conference</option>
-              <option>Networking / Meeting</option>
-              <option>Webinar</option>
-              <option>Workshop</option>
+            <select id="ee-type" required>
+              <option value="Networking meeting">Networking meeting</option>
+              <option value="Netwalking">Netwalking</option>
+              <option value="Conference">Conference</option>
+              <option value="Exhibition">Exhibition</option>
+              <option value="Awards ceremony">Awards ceremony</option>
             </select>
           </div>
           <div class="ee-field">
@@ -174,6 +172,7 @@
     </div>
 
     <script src="../js/organiser-quarter-time.js?v=20260606e"></script>
+    <script src="../js/organiser-image-upload.js?v=20260605"></script>
     <script src="../js/organiser-event-edit.js?v=20260611"></script>
   </body>
 </html>

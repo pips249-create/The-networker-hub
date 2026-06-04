@@ -1,15 +1,4 @@
-const {
-  json,
-  setCors,
-  requireOrganiserSession,
-  listGroupsForSession,
-  listEventsForSession,
-  listTicketsForSession,
-  isPlatformAdmin,
-  createTicket,
-  createTicketsForEvents,
-  airtableSetupHint,
-} = require('../organiser');
+const { getOrganiserApi } = require('../organiser-provider');
 
 function parseBody(req) {
   let body = req.body;
@@ -24,6 +13,20 @@ function parseBody(req) {
 }
 
 module.exports = async function handler(req, res) {
+  const api = getOrganiserApi();
+  const {
+    json,
+    setCors,
+    requireOrganiserSession,
+    listGroupsForSession,
+    listEventsForSession,
+    listTicketsForSession,
+    isPlatformAdmin,
+    createTicket,
+    createTicketsForEvents,
+    airtableSetupHint,
+  } = api;
+
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -35,10 +38,14 @@ module.exports = async function handler(req, res) {
 
   async function ownedEventIds() {
     const groups = await listGroupsForSession(auth.session);
+    const { organiserPersonalScopeFromRequest } = require('../auth');
+    const adminView =
+      isPlatformAdmin(auth.session) && !organiserPersonalScopeFromRequest(req);
     const events = await listEventsForSession(
       auth.session,
       groups.map((g) => g.id),
-      []
+      [],
+      adminView
     );
     return new Set(events.map((e) => e.id));
   }

@@ -8,7 +8,14 @@
  * Requires .env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, AIRTABLE_API_KEY
  * Optional: AIRTABLE_BASE_ID (default appQwgOxCrFFNweHe), ADMIN_INITIAL_PASSWORD
  */
-require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+const dotenv = require('dotenv');
+const root = __dirname;
+if (fs.existsSync(path.join(root, 'local.env'))) {
+  dotenv.config({ path: path.join(root, 'local.env') });
+}
+dotenv.config({ path: path.join(root, '.env') });
 const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = clean(process.env.SUPABASE_URL);
@@ -98,27 +105,124 @@ function firstLinkId(raw) {
   return null;
 }
 
+/** fieldId → possible Airtable column names (fallback if meta API unavailable) */
+const FIELD_ALIASES = {
+  [TBL_ORGANISERS]: {
+    fldZQxiA56hZXGxkY: ['Organiser Name', 'Group Name', 'Name'],
+    fldAlXFkC88eXanPJ: ['Email', 'Owner Email', 'Organiser Email'],
+    fldLS1QG2Oq2Ql44y: ['Phone'],
+    fld6WJ0JPsn4waxiN: ['Website', 'Website URL'],
+    fld7XK3AMhBKbdOag: ['Description', 'About', 'Company Profile'],
+    fldoQVap0beGCI4BF: ['Organiser Type', 'Type'],
+    fldXoGgwHuoucGG47: ['Industries', 'Industry'],
+    fldp3IsU83xzwZk58: ['Meeting Formats', 'Meeting formats'],
+    fldPn73dsvB7JfiFN: ['Verification Status', 'Status'],
+    fldyXZQNWhvt2SeRR: ['Featured'],
+    flddTJypexFZVNfeG: ['Stripe Account ID'],
+    fldh2lxmrHoZaJDzn: ['Payout Email'],
+  },
+  [TBL_EVENTS]: {
+    fldXc2awyMUKGr3sJ: ['Event Title', 'Title', 'Name'],
+    fldkKjRkIJRitSigJ: ['Description', 'Highlights', 'About'],
+    fld03lzgcIb5vLHzN: ['Meeting Type', 'Event Type', 'Type'],
+    fldKxTzXpZz6S1g9V: ['Industry', 'Industries'],
+    fldTCRWZRu0xEhp4j: ['Highlights'],
+    fld38F9hklPYifPX7: ['Date & Time', 'Date', 'Event Date', 'Start Date'],
+    fldH5eUvCTXPcp1vg: ['End Date', 'End Time'],
+    fldbiGglQL9cYbvYY: ['Meeting Format', 'Format'],
+    fldbYJ0fH8fXiYILG: ['Venue', 'Venue Name'],
+    fldSQ0GLPnzOwPfOb: ['Address', 'Address Line 1'],
+    fldw8ZvcyY87tx6ju: ['Postcode'],
+    fldtOM5Qx9OuPEXzX: ['City', 'Town'],
+    fldQQ5jtbuQD4Lxc0: ['Location'],
+    fldLU4yI0C6Csx2Zr: ['Join Link', 'Meeting Link', 'Online Link'],
+    fld7O45keJbSm9Sd3: ['Latitude', 'Lat'],
+    fldqzMK75oraJkxiS: ['Longitude', 'Lng'],
+    fldKXURWRuPhCr3DD: ['Approval Status', 'Status'],
+    fldwXeSzvRg6puoIr: ['Featured'],
+    fldzZEljccI0BjNPf: ['Stripe Payment Link'],
+    fld8rR2GAQRxBTlzx: ['Recurrence Pattern'],
+    fldmkAANbvrwIT5E8: ['Recurrence End Date'],
+    fldcYbHdq4W8ZqnCT: ['Organisers', 'Organiser', 'Host/Organiser', 'Host'],
+  },
+  [TBL_TICKETS]: {
+    fldGZu2IBaAMC7ZAH: ['Ticket Name', 'Ticket Type', 'Name'],
+    fld7h91fMaZbMgRZ9: ['Ticket Description', 'Description'],
+    fldGtRfdGtjs2dQ2W: ['Price', 'Ticket Price'],
+    fldyxYp2RoZcrastZ: ['Quantity Available', 'Quantity'],
+    fldmvDlz2xOBcXBnj: ['Ticket Type'],
+    fldzgVB1CKk5xOmgs: ['Sale Start', 'Sales Start'],
+    fldMHrXUpLMO4LCgz: ['Sale End', 'Sales End'],
+    fldaLQWmnxpZ3nxMN: ['Status', 'Ticket Status'],
+    fldPjuid7olS5ZffC: ['Linked Event', 'Event', 'Events'],
+  },
+  [TBL_ATTENDEES]: {
+    fldri0VDgXwn37w5n: ['Name', 'Full Name'],
+    fldqyMOMtvMwKuZTu: ['Email'],
+    fldrGXjAS1G7mswqM: ['Company'],
+    fldInuRRPmJcvF3Wp: ['Location', 'City'],
+    fldfDRfsubEjGXh65: ['Interests', 'Market Preferences'],
+    fldQGTFCNVKYy1dYO: ['Marketing Opt In', 'Marketing opt in'],
+  },
+  [TBL_REGISTRATIONS]: {
+    fld78IzYuUTrAlZLB: ['Attendee', 'Attendees'],
+    fldccyM7dnaH6R6xW: ['Event', 'Events'],
+    fldnKs1OXBjWAT8Ij: ['Organiser', 'Organisers'],
+    fldTOL2MpECrcEtQh: ['Payment Status'],
+    fldmy1X7VRrha7LUd: ['Amount Paid', 'Amount paid'],
+    fldhZ1ozl2oUhmKU7: ['Stripe Payment Intent ID'],
+    fldMjwpeSfARUMATx: ['Application Status'],
+    fld6m2Oh8CAalWb8I: ['Screening Answer Industry'],
+    fldMmFvy4a9xRF2Mi: ['Screening Answer Job Title'],
+    fldIa8kFdbB7FeRCK: ['Ticket Email Sent'],
+    fldUfhGbWO0WYt48q: ['Ticket PDF Sent'],
+    fldXIL9htwAoVD69n: ['Meeting Link'],
+  },
+  [TBL_REVIEWS]: {
+    fldXtxJxjOmlT7u7k: ['Attendee'],
+    fldGwLIv3CBCAgmw6: ['Event'],
+    fldssfG732BIL28xq: ['Organiser'],
+    fldI7oHpJaGYdMLJU: ['Rating'],
+    fldTp9vOCtn9vjvs4: ['Review Text', 'Review'],
+    fldBjnx3i4jGNtvQt: ['Organiser Response'],
+  },
+};
+
 function f(record, fieldId) {
-  const names = fieldMeta.get(record._tableId);
-  const name = names?.get(fieldId);
-  if (!name) return record.fields?.[fieldId] ?? null;
-  return record.fields?.[name] ?? null;
+  const metaMap = fieldMeta.get(record._tableId);
+  const metaName = metaMap?.get(fieldId);
+  if (metaName && record.fields?.[metaName] != null && record.fields[metaName] !== '') {
+    return record.fields[metaName];
+  }
+  const aliases = FIELD_ALIASES[record._tableId]?.[fieldId] || [];
+  for (const name of aliases) {
+    const v = record.fields?.[name];
+    if (v !== undefined && v !== null && v !== '') return v;
+  }
+  return null;
 }
 
 async function loadFieldMeta() {
   const resp = await fetch(`https://api.airtable.com/v0/meta/bases/${AIRTABLE_BASE}/tables`, {
     headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` },
   });
-  if (!resp.ok) {
-    throw new Error(`Airtable meta API ${resp.status}: ${await resp.text()}`);
-  }
-  const data = await resp.json();
-  for (const table of data.tables || []) {
-    const map = new Map();
-    for (const field of table.fields || []) {
-      map.set(field.id, field.name);
+  if (resp.ok) {
+    const data = await resp.json();
+    for (const table of data.tables || []) {
+      const map = new Map();
+      for (const field of table.fields || []) {
+        map.set(field.id, field.name);
+      }
+      fieldMeta.set(table.id, map);
     }
-    fieldMeta.set(table.id, map);
+    console.log('  Airtable field metadata loaded.');
+    return;
+  }
+  console.warn(`  Meta API ${resp.status} — using built-in field name aliases.`);
+  if (AIRTABLE_TOKEN.startsWith('patxxxx') || AIRTABLE_BASE.startsWith('appxxxx')) {
+    throw new Error(
+      'AIRTABLE_API_KEY and AIRTABLE_BASE_ID in .env are still placeholders. Paste real values and save .env.'
+    );
   }
 }
 
