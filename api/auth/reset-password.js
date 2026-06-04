@@ -7,7 +7,7 @@ const {
   airtableConfig,
   USER_FIELDS,
   setCors,
-} = require('../lib/auth');
+} = require('../_lib/auth');
 
 function fieldNameOnRecord(recordFields, candidates, fallback) {
   const f = recordFields || {};

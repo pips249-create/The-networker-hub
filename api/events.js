@@ -8,7 +8,7 @@
  *   AIRTABLE_TICKETS_TABLE (default: Tickets)
  */
 
-const { cleanEnvVal, parseAirtableError } = require('./lib/auth');
+const { cleanEnvVal, parseAirtableError } = require('./_lib/auth');
 
 const FIELD_MAP = {
   title: ['Event Title', 'Title', 'Name'],

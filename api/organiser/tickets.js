@@ -8,7 +8,7 @@ const {
   isPlatformAdmin,
   createTicket,
   airtableSetupHint,
-} = require('../lib/organiser');
+} = require('../_lib/organiser');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);

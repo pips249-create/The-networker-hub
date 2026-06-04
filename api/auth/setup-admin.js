@@ -5,7 +5,7 @@ const {
   updateUser,
   json,
   airtableConfig,
-} = require('../lib/auth');
+} = require('../_lib/auth');
 
 /**
  * One-time admin setup. POST with:

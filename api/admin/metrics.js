@@ -1,4 +1,4 @@
-const { sessionFromRequest, requireAdmin, json, airtableConfig, setCors } = require('../lib/auth');
+const { sessionFromRequest, requireAdmin, json, airtableConfig, setCors } = require('../_lib/auth');
 
 function parsePriceNum(raw) {
   if (raw == null || raw === '') return 0;

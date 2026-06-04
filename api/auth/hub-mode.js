@@ -1,4 +1,4 @@
-const { setCors, json, sessionFromRequest, hubViewFromRequest, setHubViewCookie } = require('../lib/auth');
+const { setCors, json, sessionFromRequest, hubViewFromRequest, setHubViewCookie } = require('../_lib/auth');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
