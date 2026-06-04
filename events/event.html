@@ -174,7 +174,10 @@
                 Catalyst Sessions runs small-format lunch &amp; learns across the North West, focused on hospitality,
                 retail and events. Warm rooms, real conversations, no cold-call energy.
               </p>
-              <a href="#" id="ev-host-profile-link" hidden>View organiser profile →</a>
+              <div class="organiser-actions">
+                <a href="#" id="ev-host-profile-link" class="btn-outline" hidden>View organiser profile →</a>
+                <button type="button" class="btn-outline" id="contact-host-btn">Contact Host</button>
+              </div>
             </div>
           </div>
         </section>
@@ -207,6 +210,18 @@
           </div>
         </section>
 
+        <section class="content-section" id="ev-reviews-section">
+          <h2>What people are saying about this organiser</h2>
+          <div class="reviews-dashboard">
+            <div class="reviews-score-card">
+              <div class="reviews-score" id="ev-reviews-score">4.0<span class="reviews-score-max"> / 5</span></div>
+              <div class="reviews-score-stars" id="ev-reviews-score-stars" aria-hidden="true">★★★★☆</div>
+              <p class="reviews-score-count" id="ev-reviews-score-count">Based on 48 reviews</p>
+            </div>
+            <div class="reviews-feed" id="ev-reviews-feed" aria-live="polite"></div>
+          </div>
+        </section>
+
         <section class="content-section" id="ev-related-section">
           <h2 id="ev-related-title">More from this organiser</h2>
           <div class="related-grid" id="ev-related-grid" aria-live="polite"></div>
@@ -215,14 +230,15 @@
       </div>
 
       <aside class="side-col">
-        <div class="ticket-panel" id="tickets">
+        <div class="ticket-panel" id="tickets" data-approval-required="false" data-sold-out="false" data-sales-closed="false">
           <div class="ticket-header">
             <span class="from-label">Tickets from</span>
             <span class="price" id="ev-ticket-from-price">£32.15</span>
           </div>
           <div class="ticket-urgency" id="ev-urgency">12 spots left</div>
 
-          <div class="ticket-tiers">
+          <div id="ticket-purchase-view">
+          <div class="ticket-tiers" id="ticket-tiers">
             <div class="tier selected" id="ev-tier-standard" data-price="32.15" data-label="Standard" role="button" tabindex="0" aria-pressed="true">
               <div class="tier-radio" aria-hidden="true"></div>
               <div class="tier-info">
@@ -277,6 +293,22 @@
             Add your Stripe Payment Link in the page meta tag <code>stripe-payment-link</code>, or open this page with
             <code>?stripe=</code> followed by your checkout URL.
           </p>
+          </div>
+
+          <form class="seat-application-form" id="seat-application-form" hidden novalidate>
+            <p class="seat-application-intro">This event uses a one-seat approval policy. Tell the host a little about yourself.</p>
+            <label class="form-field" for="apply-industry">
+              <span>What industry are you in?</span>
+              <input type="text" id="apply-industry" name="industry" autocomplete="organization-title" required />
+            </label>
+            <label class="form-field" for="apply-job-title">
+              <span>What is your job title?</span>
+              <input type="text" id="apply-job-title" name="job_title" autocomplete="organization-title" required />
+            </label>
+            <button type="submit" class="cta-btn" id="submit-application-btn">Submit Application</button>
+            <button type="button" class="btn-text-back" id="application-back-btn">← Back to tickets</button>
+          </form>
+
           <button type="button" class="cta-btn" id="buy-btn">Buy ticket</button>
 
           <div class="ticket-foot">
@@ -288,6 +320,31 @@
           </div>
         </div>
       </aside>
+    </div>
+
+
+    <div class="hub-modal" id="contact-host-modal" role="dialog" aria-modal="true" aria-labelledby="contact-host-title" hidden>
+      <div class="hub-modal-backdrop" data-modal-close></div>
+      <div class="hub-modal-panel">
+        <button type="button" class="hub-modal-close" id="contact-host-close" aria-label="Close">×</button>
+        <h2 class="hub-modal-title" id="contact-host-title">Contact Host</h2>
+        <p class="hub-modal-lead">Send a message to <span id="contact-host-name">the organiser</span>. They will reply by email.</p>
+        <form id="contact-host-form" class="hub-modal-form" novalidate>
+          <label class="form-field" for="contact-name">
+            <span>Your Name</span>
+            <input type="text" id="contact-name" name="name" autocomplete="name" required />
+          </label>
+          <label class="form-field" for="contact-email">
+            <span>Your Email</span>
+            <input type="email" id="contact-email" name="email" autocomplete="email" required />
+          </label>
+          <label class="form-field" for="contact-message">
+            <span>Your Message</span>
+            <textarea id="contact-message" name="message" rows="4" required></textarea>
+          </label>
+          <button type="submit" class="cta-btn" id="contact-host-send">Send Message</button>
+        </form>
+      </div>
     </div>
 
     <script src="../js/event-detail.js"></script>

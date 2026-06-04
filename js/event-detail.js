@@ -6,6 +6,27 @@
 
   let currentEvent = null;
 
+  const MOCK_ORGANISER_REVIEWS = [
+    {
+      name: 'Sarah Mitchell',
+      date: '12 May 2026',
+      rating: 5,
+      text: 'Brilliantly run events — welcoming hosts, sharp content, and genuinely useful connections every time.',
+    },
+    {
+      name: 'James Okonkwo',
+      date: '3 Apr 2026',
+      rating: 4,
+      text: 'Professional setup and a great mix of people. Would happily book again for our team.',
+    },
+    {
+      name: 'Emma Clarke',
+      date: '18 Mar 2026',
+      rating: 4,
+      text: 'Clear communication before the day and a well-paced session. Felt worth the ticket price.',
+    },
+  ];
+
   function fmt(n) {
     return '£' + Number(n).toFixed(2);
   }
@@ -57,6 +78,25 @@
   function setText(id, text) {
     const el = document.getElementById(id);
     if (el && text != null && text !== '') el.textContent = text;
+  }
+
+  function parseBoolFlag(value) {
+    if (value === true) return true;
+    if (value === false || value == null || value === '') return false;
+    const s = String(value).trim().toLowerCase();
+    return s === 'true' || s === '1' || s === 'yes' || s === 'on';
+  }
+
+  function normalizeEventFlags(ev, params) {
+    const p = params || new URLSearchParams(window.location.search);
+    return {
+      ...ev,
+      isApprovalRequired:
+        parseBoolFlag(ev.isApprovalRequired) || p.get('approval') === '1' || p.get('isApprovalRequired') === '1',
+      isSoldOut: parseBoolFlag(ev.isSoldOut) || p.get('sold_out') === '1' || p.get('isSoldOut') === '1',
+      isSalesClosed:
+        parseBoolFlag(ev.isSalesClosed) || p.get('sales_closed') === '1' || p.get('isSalesClosed') === '1',
+    };
   }
 
   function venueQuery(ev) {
@@ -285,6 +325,100 @@
     }
 
     setText('ev-related-title', 'More from ' + (ev.organiser || 'this organiser'));
+    renderOrganiserReviews(ev);
+    applyTicketPanelState(ev);
+  }
+
+  function renderOrganiserReviews(ev) {
+    const scoreEl = document.getElementById('ev-reviews-score');
+    const starsEl = document.getElementById('ev-reviews-score-stars');
+    const countEl = document.getElementById('ev-reviews-score-count');
+    const feed = document.getElementById('ev-reviews-feed');
+    const r = Number(ev.rating) || 4;
+    const c = Number(ev.reviews) || MOCK_ORGANISER_REVIEWS.length;
+
+    if (scoreEl) {
+      scoreEl.innerHTML = r.toFixed(1) + '<span class="reviews-score-max"> / 5</span>';
+    }
+    if (starsEl) starsEl.textContent = starsFromAvg(r);
+    if (countEl) countEl.textContent = 'Based on ' + (c || MOCK_ORGANISER_REVIEWS.length) + ' reviews';
+    if (!feed) return;
+
+    feed.innerHTML = '';
+    MOCK_ORGANISER_REVIEWS.forEach((review) => {
+      const card = document.createElement('article');
+      card.className = 'review-card';
+      const header = document.createElement('div');
+      header.className = 'review-card-header';
+      const name = document.createElement('strong');
+      name.textContent = review.name;
+      const date = document.createElement('span');
+      date.className = 'review-card-date';
+      date.textContent = review.date;
+      header.appendChild(name);
+      header.appendChild(date);
+      const stars = document.createElement('div');
+      stars.className = 'review-card-stars';
+      stars.setAttribute('aria-label', review.rating + ' out of 5 stars');
+      stars.textContent = starsFromAvg(review.rating);
+      const body = document.createElement('p');
+      body.textContent = review.text;
+      card.appendChild(header);
+      card.appendChild(stars);
+      card.appendChild(body);
+      feed.appendChild(card);
+    });
+  }
+
+  function showSeatApplication(show) {
+    const panel = document.getElementById('tickets');
+    if (panel) panel.classList.toggle('show-application', show);
+  }
+
+  function applyTicketPanelState(ev) {
+    const panel = document.getElementById('tickets');
+    const buy = document.getElementById('buy-btn');
+    const purchaseView = document.getElementById('ticket-purchase-view');
+    const appForm = document.getElementById('seat-application-form');
+    if (!panel || !buy) return;
+
+    panel.dataset.approvalRequired = ev.isApprovalRequired ? 'true' : 'false';
+    panel.dataset.soldOut = ev.isSoldOut ? 'true' : 'false';
+    panel.dataset.salesClosed = ev.isSalesClosed ? 'true' : 'false';
+
+    panel.classList.remove('is-unavailable', 'is-approval-mode', 'show-application');
+    showSeatApplication(false);
+
+    const unavailable = ev.isSoldOut || ev.isSalesClosed;
+    if (unavailable) {
+      panel.classList.add('is-unavailable');
+      buy.disabled = true;
+      buy.classList.add('cta-btn-disabled');
+      buy.textContent = ev.isSalesClosed ? 'Registration Closed' : 'Sold Out';
+      if (purchaseView) purchaseView.setAttribute('aria-hidden', 'true');
+      document.querySelectorAll('#ticket-tiers .tier:not(.sold-out)').forEach((tier) => {
+        tier.classList.add('tier-disabled');
+        tier.setAttribute('aria-disabled', 'true');
+        tier.style.pointerEvents = 'none';
+      });
+      const qtyDown = document.getElementById('qty-down');
+      const qtyUp = document.getElementById('qty-up');
+      if (qtyDown) qtyDown.disabled = true;
+      if (qtyUp) qtyUp.disabled = true;
+      if (appForm) appForm.hidden = true;
+      return;
+    }
+
+    buy.disabled = false;
+    buy.classList.remove('cta-btn-disabled');
+    if (purchaseView) purchaseView.removeAttribute('aria-hidden');
+
+    if (ev.isApprovalRequired) {
+      panel.classList.add('is-approval-mode');
+      buy.textContent = 'Apply for a Seat';
+    } else {
+      buy.textContent = 'Buy ticket';
+    }
   }
 
   function parseEventStartEnd(ev) {
@@ -557,8 +691,51 @@
     });
   }
 
-  function initTicketing() {
-    const tiers = document.querySelectorAll('.tier:not(.sold-out)');
+  function initContactHost(ev) {
+    const openBtn = document.getElementById('contact-host-btn');
+    const modal = document.getElementById('contact-host-modal');
+    const closeBtn = document.getElementById('contact-host-close');
+    const form = document.getElementById('contact-host-form');
+    const nameSpan = document.getElementById('contact-host-name');
+    if (!openBtn || !modal) return;
+
+    if (nameSpan) nameSpan.textContent = ev.organiser || 'the organiser';
+
+    function openModal() {
+      modal.hidden = false;
+      document.body.classList.add('modal-open');
+      const first = document.getElementById('contact-name');
+      if (first) setTimeout(() => first.focus(), 50);
+    }
+
+    function closeModal() {
+      modal.hidden = true;
+      document.body.classList.remove('modal-open');
+    }
+
+    openBtn.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    modal.querySelectorAll('[data-modal-close]').forEach((el) => {
+      el.addEventListener('click', closeModal);
+    });
+
+    document.addEventListener('keydown', function escModal(e) {
+      if (e.key === 'Escape' && !modal.hidden) closeModal();
+    });
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        // TODO: Connect to organiser messaging API when backend is live
+        closeModal();
+        form.reset();
+        window.alert('Thanks — your message has been queued. The host will respond by email.');
+      });
+    }
+  }
+
+  function initTicketPanel(ev) {
+    const tiers = document.querySelectorAll('.tier:not(.sold-out):not(.tier-disabled)');
     const qtyDown = document.getElementById('qty-down');
     const qtyUp = document.getElementById('qty-up');
     const qtyValue = document.getElementById('qty-value');
@@ -623,8 +800,34 @@
 
     const buy = document.getElementById('buy-btn');
     const stripeHint = document.getElementById('stripe-hint');
+    const appForm = document.getElementById('seat-application-form');
+    const appBack = document.getElementById('application-back-btn');
+
+    if (appBack) {
+      appBack.addEventListener('click', () => showSeatApplication(false));
+    }
+
+    if (appForm) {
+      appForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        // TODO: Connect to seat approval workflow API when backend is live
+        showSeatApplication(false);
+        appForm.reset();
+        window.alert('Application submitted. The host will review your request and email you.');
+      });
+    }
+
     if (buy) {
       buy.addEventListener('click', () => {
+        if (buy.disabled) return;
+
+        if (ev.isApprovalRequired) {
+          showSeatApplication(true);
+          const industry = document.getElementById('apply-industry');
+          if (industry) industry.focus();
+          return;
+        }
+
         const meta = document.querySelector('meta[name="stripe-payment-link"]');
         const base = (meta && meta.getAttribute('content')) || '';
         if (!base.trim()) {
@@ -668,12 +871,15 @@
         const res = await fetch('/api/events?id=' + encodeURIComponent(id));
         const data = await res.json();
         if (data.event) {
-          populateFromEvent(data.event);
+          const ev = normalizeEventFlags(data.event, params);
+          currentEvent = ev;
+          populateFromEvent(ev);
           let related = data.related || [];
-          if (!related.length) related = await loadRelatedFallback(data.event);
+          if (!related.length) related = await loadRelatedFallback(ev);
           renderRelated(related);
-          initTicketing();
-          initActions(data.event);
+          initTicketPanel(ev);
+          initContactHost(ev);
+          initActions(ev);
           return;
         }
       } catch (e) {
@@ -682,7 +888,7 @@
     }
 
     if (params.get('title')) {
-      const ev = {
+      const ev = normalizeEventFlags({
         id: params.get('id') || '',
         title: params.get('title'),
         description: params.get('about') || params.get('blurb') || '',
@@ -705,7 +911,11 @@
         venueName: params.get('venue_name') || '',
         venueAddress: params.get('venue_addr') || '',
         postcode: params.get('postcode') || '',
-      };
+        isApprovalRequired: false,
+        isSoldOut: false,
+        isSalesClosed: false,
+      }, params);
+      currentEvent = ev;
       populateFromEvent(ev);
       if (ev.organiser || ev.organiserId) {
         const related = await loadRelatedFallback(ev);
@@ -713,7 +923,8 @@
       } else {
         renderRelated([]);
       }
-      initTicketing();
+      initTicketPanel(ev);
+      initContactHost(ev);
       initActions(ev);
     }
   }

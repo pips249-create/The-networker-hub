@@ -142,9 +142,13 @@ a:hover {
 }
 
 .hero img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
+  max-width: none;
   object-fit: cover;
+  object-position: center center;
   display: block;
 }
 
@@ -743,7 +747,8 @@ a:hover {
   box-shadow: 0 0 0 3px rgba(123, 63, 199, 0.12);
 }
 
-.tier.sold-out {
+.tier.sold-out,
+.tier.tier-disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -896,6 +901,306 @@ a:hover {
   transform: translateY(1px);
 }
 
+.cta-btn-disabled,
+.cta-btn:disabled {
+  background: #9ca3af;
+  color: #f9fafb;
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+.cta-btn-disabled:hover,
+.cta-btn:disabled:hover {
+  background: #9ca3af;
+}
+
+.ticket-panel.is-unavailable .ticket-tiers .tier:not(.sold-out),
+.ticket-panel.is-unavailable .qty-row,
+.ticket-panel.is-unavailable .summary {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.ticket-panel.is-unavailable .tier {
+  cursor: not-allowed;
+}
+
+.ticket-panel.is-approval-mode #buy-btn {
+  background: var(--purple-700);
+}
+
+.ticket-panel.show-application #ticket-purchase-view,
+.ticket-panel.show-application #buy-btn {
+  display: none;
+}
+
+.ticket-panel.show-application .seat-application-form {
+  display: block;
+}
+
+.seat-application-form {
+  display: none;
+  margin-bottom: 16px;
+}
+
+.seat-application-intro {
+  font-size: 14px;
+  color: var(--ink-muted);
+  line-height: 1.55;
+  margin: 0 0 16px;
+}
+
+.btn-text-back {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  background: none;
+  border: none;
+  color: var(--purple-700);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 8px 0;
+}
+
+.btn-text-back:hover {
+  text-decoration: underline;
+}
+
+.form-field {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.form-field > span {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--purple-900);
+  margin-bottom: 6px;
+}
+
+.form-field input,
+.form-field textarea {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 11px 12px;
+  font-size: 14.5px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  box-sizing: border-box;
+}
+
+.form-field input:focus,
+.form-field textarea:focus {
+  outline: none;
+  border-color: var(--purple-600);
+  box-shadow: 0 0 0 3px rgba(123, 63, 199, 0.14);
+}
+
+.form-field textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.organiser-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--purple-600);
+  background: transparent;
+  color: var(--purple-800);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-outline:hover {
+  background: var(--purple-50);
+  text-decoration: none;
+}
+
+.organiser-info a.btn-outline:hover {
+  text-decoration: none;
+}
+
+/* ---- Organiser reviews ---- */
+.reviews-dashboard {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.reviews-score-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.reviews-score {
+  font-size: 2.75rem;
+  font-weight: 800;
+  color: var(--purple-900);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.reviews-score-max {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.reviews-score-stars {
+  color: var(--amber);
+  font-size: 1.25rem;
+  letter-spacing: 2px;
+  margin: 10px 0 8px;
+}
+
+.reviews-score-count {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.reviews-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.review-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+
+.review-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.review-card-header strong {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.review-card-date {
+  font-size: 12.5px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.review-card-stars {
+  color: var(--amber);
+  font-size: 13px;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.review-card p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+@media (max-width: 768px) {
+  .reviews-dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Modal ---- */
+.hub-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.hub-modal[hidden] {
+  display: none;
+}
+
+.hub-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(26, 16, 37, 0.52);
+}
+
+.hub-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 440px);
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 28px 24px 24px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+}
+
+.hub-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--purple-50);
+  color: var(--purple-800);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.hub-modal-title {
+  margin: 0 0 8px;
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--purple-900);
+}
+
+.hub-modal-lead {
+  margin: 0 0 18px;
+  font-size: 14.5px;
+  color: var(--ink-muted);
+  line-height: 1.55;
+}
+
+.hub-modal-form .cta-btn {
+  margin-top: 4px;
+}
+
 .ticket-foot {
   text-align: center;
   font-size: 12.5px;
@@ -907,6 +1212,10 @@ a:hover {
 .ticket-foot svg {
   vertical-align: -2px;
   margin-right: 4px;
+}
+
+body.modal-open {
+  overflow: hidden;
 }
 
 .stripe-hint {

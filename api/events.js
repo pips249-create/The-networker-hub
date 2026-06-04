@@ -62,6 +62,9 @@ const FIELD_MAP = {
   address: ['Address', 'Venue Address', 'Full Address', 'Address Line 1', 'Street'],
   rating: ['Rating', 'Average Rating', 'Stars'],
   reviews: ['Reviews', 'Review Count', 'Number of Reviews'],
+  approvalRequired: ['Approval Required', 'Seat Approval', 'Requires Approval', 'One Seat Policy'],
+  soldOut: ['Sold Out', 'Is Sold Out'],
+  salesClosed: ['Sales Closed', 'Registration Closed', 'Tickets Closed'],
 };
 
 function getFieldCI(fields, name) {
@@ -381,6 +384,13 @@ async function fetchAllAirtableRecords(baseUrl, apiKey, view) {
   return all;
 }
 
+function parseBoolField(raw) {
+  if (raw === true) return true;
+  if (raw === false || raw === null || raw === undefined || raw === '') return false;
+  const s = String(raw).trim().toLowerCase();
+  return s === 'true' || s === 'yes' || s === '1' || s === 'on';
+}
+
 function parsePriceNum(raw) {
   if (raw === null || raw === undefined || raw === '') return 0;
   const n = Number(String(raw).replace(/[^0-9.]/g, ''));
@@ -456,6 +466,9 @@ function recordToEvent(record) {
   const reviewsRaw = pick(f, FIELD_MAP.reviews);
   const rating = ratingRaw != null && ratingRaw !== '' ? Number(ratingRaw) : 4;
   const reviews = reviewsRaw != null && reviewsRaw !== '' ? Number(reviewsRaw) : 0;
+  const isApprovalRequired = parseBoolField(pick(f, FIELD_MAP.approvalRequired));
+  const isSoldOut = parseBoolField(pick(f, FIELD_MAP.soldOut));
+  const isSalesClosed = parseBoolField(pick(f, FIELD_MAP.salesClosed));
 
   const search = [
     title,
@@ -507,6 +520,9 @@ function recordToEvent(record) {
     organiser,
     rating: Number.isFinite(rating) ? rating : 4,
     reviews: Number.isFinite(reviews) ? reviews : 0,
+    isApprovalRequired,
+    isSoldOut,
+    isSalesClosed,
     dateLine: buildDateLine(location, parsedDate, time),
     search,
     locationSlug: slugLocation(location),
