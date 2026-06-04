@@ -10,12 +10,12 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../css/hub.css" />
+    <link rel="stylesheet" href="../css/hub.css?v=20260610" />
     <link rel="stylesheet" href="../css/organiser-dashboard.css" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260606" data-root="../" data-page="organiser"></script>
+    <script src="../js/site-nav.js?v=20260610" data-root="../" data-page="organiser"></script>
 
     <div id="org-signin" class="org-signin" hidden>
       <p class="org-section-sub">
@@ -154,6 +154,22 @@
             </div>
             <button type="button" class="org-btn org-btn-gold" id="btn-new-group">+ New group</button>
           </div>
+          <div class="org-filter-bar">
+            <select id="filter-groups-status" aria-label="Filter groups by status">
+              <option value="all">All statuses</option>
+              <option value="live">Live</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="draft">Draft</option>
+              <option value="unpublished">Unpublished</option>
+            </select>
+            <input
+              type="search"
+              class="org-table-search"
+              id="filter-groups-search"
+              placeholder="Search groups by name…"
+              aria-label="Search groups"
+            />
+          </div>
           <div class="org-table-wrap">
             <table>
               <thead>
@@ -211,11 +227,18 @@
                 <option value="live">Live</option>
                 <option value="upcoming">Upcoming</option>
                 <option value="draft">Draft</option>
+                <option value="unpublished">Unpublished</option>
               </select>
               <select id="filter-events-type" aria-label="Filter by type">
                 <option value="all">All types</option>
               </select>
-              <input type="search" class="org-table-search" id="filter-events-search" placeholder="Search events…" aria-label="Search events" />
+              <input
+                type="search"
+                class="org-table-search"
+                id="filter-events-search"
+                placeholder="Search by title, type or location…"
+                aria-label="Search events"
+              />
             </div>
             <div class="org-table-wrap">
               <table>
@@ -419,6 +442,6 @@
       </div>
     </div>
 
-    <script src="../js/organiser-dashboard.js?v=20260606o"></script>
+    <script src="../js/organiser-dashboard.js?v=20260609"></script>
   </body>
 </html>

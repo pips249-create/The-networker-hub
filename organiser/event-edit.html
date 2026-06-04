@@ -10,24 +10,25 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../css/hub.css" />
+    <link rel="stylesheet" href="../css/hub.css?v=20260610" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css" />
   </head>
   <body class="organiser-event-edit-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260606" data-root="../" data-page="organiser"></script>
-
-    <div class="ee-top-bar">
-      <a class="ee-back" href="index.html#events-list" id="ee-back-link">← Back to My Events</a>
-      <a class="ee-back ee-back-secondary" href="event-format.html" id="ee-change-format-top">Change format</a>
-    </div>
+    <script src="../js/site-nav.js?v=20260610" data-root="../" data-page="organiser"></script>
 
     <div class="ee-wrap">
-      <p class="ee-format-badge" id="ee-format-badge" hidden></p>
-      <h1 class="ee-title" id="ee-page-title">New event listing</h1>
-      <p class="ee-lead" id="ee-page-lead">
-        Add your event details, pick every date this series runs on the calendar, then set up ticket types for all dates in one go.
-      </p>
+      <header class="ee-page-head">
+        <div class="ee-top-bar">
+          <a class="ee-back" href="index.html#events-list" id="ee-back-link">← Back to My Events</a>
+          <a class="ee-back ee-back-secondary" href="event-format.html" id="ee-change-format-top">Change format</a>
+        </div>
+        <p class="ee-format-badge" id="ee-format-badge" hidden></p>
+        <h1 class="ee-title" id="ee-page-title">New event listing</h1>
+        <p class="ee-lead" id="ee-page-lead">
+          Add your event details, pick every date this series runs on the calendar, then set up ticket types for all dates in one go.
+        </p>
+      </header>
       <div id="ee-alert" class="ee-alert" hidden></div>
 
       <form id="ee-form">
@@ -39,16 +40,18 @@
             <p class="ee-hint" id="ee-group-hint">Which organiser group this event belongs to.</p>
           </div>
           <h3 class="ee-subheading">Recurring dates</h3>
-          <p class="ee-hint">Click days on the calendar to add or remove dates. Each date becomes its own listing in your series.</p>
-          <div class="ee-cal-header">
-            <button type="button" id="ee-cal-prev" aria-label="Previous month">‹</button>
-            <span class="ee-cal-month" id="ee-cal-month-label"></span>
-            <button type="button" id="ee-cal-next" aria-label="Next month">›</button>
+          <p class="ee-hint">Click days on the monthly calendar to add or remove dates. Each date becomes its own listing in your series.</p>
+          <div class="ee-calendar" id="ee-calendar">
+            <div class="ee-cal-header">
+              <button type="button" id="ee-cal-prev" aria-label="Previous month">‹</button>
+              <span class="ee-cal-month" id="ee-cal-month-label"></span>
+              <button type="button" id="ee-cal-next" aria-label="Next month">›</button>
+            </div>
+            <div class="ee-cal-weekdays" aria-hidden="true">
+              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+            </div>
+            <div class="ee-cal-days" id="ee-cal-days" aria-label="Select event dates"></div>
           </div>
-          <div class="ee-cal-weekdays" aria-hidden="true">
-            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-          </div>
-          <div class="ee-cal-days" id="ee-cal-days" role="grid" aria-label="Select event dates"></div>
           <div class="ee-selected-dates">
             <strong><span id="ee-date-count">0</span> date(s) selected</strong>
             <ul id="ee-date-list"></ul>
@@ -94,49 +97,49 @@
             </p>
             <textarea id="ee-description" rows="5" placeholder="What attendees can expect, who should come, and what they will take away"></textarea>
           </div>
-        </div>
 
-        <div class="ee-card" id="ee-venue-block" hidden>
-          <h2>Venue &amp; address</h2>
-          <p class="ee-hint" style="margin-top:0">Shown on your public listing. All fields are optional.</p>
-          <div class="ee-field">
-            <label for="ee-venue">Venue name</label>
-            <input type="text" id="ee-venue" placeholder="e.g. The Exchange" />
-          </div>
-          <div class="ee-field">
-            <label for="ee-address1">Address line 1</label>
-            <input type="text" id="ee-address1" placeholder="Street address" />
-          </div>
-          <div class="ee-row-2">
+          <div class="ee-format-panel" id="ee-venue-block" data-format-panel="venue">
+            <h3 class="ee-subheading">Venue &amp; address</h3>
+            <p class="ee-hint" style="margin-top:0">Shown on your public listing for in-person and hybrid events.</p>
             <div class="ee-field">
-              <label for="ee-city">City / town</label>
-              <input type="text" id="ee-city" placeholder="e.g. Liverpool" />
+              <label for="ee-venue">Venue name</label>
+              <input type="text" id="ee-venue" placeholder="e.g. The Exchange" />
             </div>
             <div class="ee-field">
-              <label for="ee-postcode">Postcode</label>
-              <input type="text" id="ee-postcode" placeholder="e.g. L1 8JQ" />
+              <label for="ee-address1">Address line 1</label>
+              <input type="text" id="ee-address1" placeholder="Street address" autocomplete="street-address" />
+            </div>
+            <div class="ee-row-2">
+              <div class="ee-field">
+                <label for="ee-city">City / town</label>
+                <input type="text" id="ee-city" placeholder="e.g. Liverpool" autocomplete="address-level2" />
+              </div>
+              <div class="ee-field">
+                <label for="ee-postcode">Postcode</label>
+                <input type="text" id="ee-postcode" placeholder="e.g. L1 8JQ" autocomplete="postal-code" />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="ee-card" id="ee-online-block" hidden>
-          <h2>Online access</h2>
-          <p class="ee-hint" style="margin-top:0">Join details are emailed to ticket holders and are not shown on the public listing.</p>
-          <div class="ee-field">
-            <label for="ee-platform">Platform</label>
-            <select id="ee-platform">
-              <option value="">Select platform (optional)</option>
-              <option>Zoom Meeting</option>
-              <option>Zoom Webinar</option>
-              <option>Microsoft Teams</option>
-              <option>Google Meet</option>
-              <option>Hopin</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div class="ee-field">
-            <label for="ee-join-link">Attendee join link <span class="ee-optional">(optional)</span></label>
-            <input type="url" id="ee-join-link" placeholder="https://…" />
+          <div class="ee-format-panel" id="ee-online-block" data-format-panel="online">
+            <h3 class="ee-subheading">Online access</h3>
+            <p class="ee-hint" style="margin-top:0">Join link is sent to ticket holders and is not shown on the public listing.</p>
+            <div class="ee-field">
+              <label for="ee-platform">Platform</label>
+              <select id="ee-platform">
+                <option value="">Select platform</option>
+                <option>Zoom Meeting</option>
+                <option>Zoom Webinar</option>
+                <option>Microsoft Teams</option>
+                <option>Google Meet</option>
+                <option>Hopin</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="ee-field">
+              <label for="ee-join-link">Meeting / join link</label>
+              <input type="url" id="ee-join-link" placeholder="https://zoom.us/j/… or Teams link" />
+            </div>
           </div>
         </div>
 
@@ -157,13 +160,17 @@
         </div>
 
         <div class="ee-actions">
-          <button type="submit" class="ee-btn ee-btn-primary" id="ee-submit">Save &amp; set up tickets →</button>
+          <button type="button" class="ee-btn ee-btn-outline" id="ee-save-draft">Save as draft</button>
+          <button type="submit" class="ee-btn ee-btn-primary" id="ee-submit">Publish &amp; set up tickets →</button>
           <a class="ee-btn ee-btn-outline" href="index.html#events-list">Cancel</a>
         </div>
+        <p class="ee-hint" style="margin-top:12px">
+          Save as draft to keep working without publishing. Publish when you are ready — you will set up tickets on the next step.
+        </p>
       </form>
     </div>
 
     <script src="../js/organiser-quarter-time.js?v=20260606e"></script>
-    <script src="../js/organiser-event-edit.js?v=20260606n"></script>
+    <script src="../js/organiser-event-edit.js?v=20260608"></script>
   </body>
 </html>

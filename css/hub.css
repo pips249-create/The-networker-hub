@@ -235,6 +235,98 @@ a:hover { color: var(--charcoal); }
   text-decoration: underline;
 }
 
+.nav-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.nav-dropdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--charcoal);
+  background: var(--surface-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.nav-dropdown-toggle:hover,
+.nav-dropdown.is-open .nav-dropdown-toggle {
+  color: var(--lavender-deep);
+  border-color: var(--lavender-soft);
+  background: var(--lavender-light);
+}
+.nav-dropdown-toggle.is-active {
+  color: var(--lavender-deep);
+}
+.nav-dropdown-chev {
+  font-size: 10px;
+  line-height: 1;
+  transition: transform 0.15s;
+}
+.nav-dropdown.is-open .nav-dropdown-chev {
+  transform: rotate(180deg);
+}
+.nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  padding: 6px;
+  margin: 0;
+  background: var(--brand-cream);
+  border: 1px solid rgba(194, 153, 209, 0.45);
+  border-radius: 10px;
+  box-shadow: var(--shadow-soft);
+  z-index: 120;
+}
+.nav-dropdown-menu[hidden] {
+  display: none !important;
+}
+.nav-dropdown-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--charcoal);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 12px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.nav-dropdown-item:hover {
+  background: var(--lavender-light);
+  color: var(--lavender-deep);
+}
+.nav-dropdown-item[aria-current="page"] {
+  background: var(--lavender-light);
+  color: var(--lavender-deep);
+  font-weight: 600;
+}
+.nav-dropdown-item.nav-organiser-in-menu {
+  font-weight: 600;
+}
+.nav-dropdown-signout {
+  margin-top: 4px;
+  border-top: 1px solid rgba(194, 153, 209, 0.25);
+  border-radius: 0 0 6px 6px;
+  padding-top: 12px;
+  color: var(--text-muted);
+}
+.nav-dropdown-signout:hover {
+  color: var(--charcoal);
+}
+
 @media (max-width: 720px) {
   .nav-links .nav-hide-mobile { display: none; }
 }

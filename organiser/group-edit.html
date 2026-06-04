@@ -10,12 +10,12 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../css/hub.css" />
+    <link rel="stylesheet" href="../css/hub.css?v=20260610" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css" />
   </head>
   <body class="organiser-event-edit-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260606e" data-root="../" data-page="organiser"></script>
+    <script src="../js/site-nav.js?v=20260610" data-root="../" data-page="organiser"></script>
 
     <div class="ee-wrap">
       <a class="ee-back" href="index.html#groups">← Back to organiser profiles</a>
@@ -24,6 +24,9 @@
         Create your organiser group — linked to your account email in Airtable.
       </p>
       <p class="ee-lead" id="ge-page-email" style="margin-top:-18px;font-size:13px"></p>
+      <p class="ge-status-line" id="ge-status-line" hidden>
+        Current status: <span class="ge-status-pill" id="ge-status-pill"></span>
+      </p>
       <div id="ge-alert" class="ee-alert" hidden></div>
 
       <form id="ge-form">
@@ -58,13 +61,18 @@
           </div>
         </div>
 
-        <div class="ee-actions">
-          <button type="submit" class="ee-btn ee-btn-primary" id="ge-submit">Create profile</button>
+        <div class="ee-actions ge-actions-stack">
+          <button type="button" class="ee-btn ee-btn-primary" id="ge-save-changes" hidden>Save changes</button>
+          <button type="button" class="ee-btn ee-btn-gold" id="ge-publish">Publish now</button>
+          <button type="button" class="ee-btn ee-btn-outline" id="ge-save-draft">Save as draft</button>
           <a class="ee-btn ee-btn-outline" href="index.html#groups">Cancel</a>
         </div>
+        <p class="ee-hint" id="ge-actions-hint" style="margin-top:12px">
+          Draft profiles are only visible in your dashboard until you publish. Use <strong>Publish now</strong> when you are ready for your group to appear on the site.
+        </p>
       </form>
     </div>
 
-    <script src="../js/organiser-group-edit.js?v=20260606j"></script>
+    <script src="../js/organiser-group-edit.js?v=20260609"></script>
   </body>
 </html>
