@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Organiser dashboard – The Networker Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css" />
+  </head>
+  <body class="organiser-dashboard-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260604" data-root="../" data-page="organiser"></script>
+
+    <div id="org-gate" class="org-gate">
+      <p id="org-gate-msg">Checking your account…</p>
+    </div>
+
+    <div id="org-shell" hidden>
+      <nav class="org-dash-bar" aria-label="Organiser dashboard">
+        <a href="#dashboard" data-org-route="dashboard">Overview</a>
+        <a href="#groups" data-org-route="groups">Organiser profiles</a>
+        <a href="#events" data-org-route="events">Events</a>
+        <a href="#tickets" data-org-route="tickets">Ticket types</a>
+      </nav>
+
+      <div class="org-wrap">
+        <div id="org-airtable-alert" class="org-alert" hidden></div>
+
+        <!-- Overview -->
+        <section class="org-page is-active" id="org-page-dashboard" data-org-page="dashboard">
+          <h1 class="org-welcome-name" id="org-welcome-name">Organiser dashboard</h1>
+          <p class="org-welcome-sub" id="org-welcome-email">—</p>
+
+          <div class="org-stats">
+            <div class="org-stat">
+              <div class="org-stat-label">Organiser profiles</div>
+              <div class="org-stat-value" id="stat-groups">0</div>
+            </div>
+            <div class="org-stat gold">
+              <div class="org-stat-label">Events</div>
+              <div class="org-stat-value" id="stat-events">0</div>
+            </div>
+            <div class="org-stat green">
+              <div class="org-stat-label">Ticket types</div>
+              <div class="org-stat-value" id="stat-tickets">0</div>
+            </div>
+          </div>
+
+          <div class="org-quick-grid">
+            <button type="button" class="org-quick-card" data-org-goto="groups">
+              <strong>+ New organiser profile</strong>
+              <span>Brands or teams you run events under (Organisers table)</span>
+            </button>
+            <button type="button" class="org-quick-card" data-org-goto="events">
+              <strong>+ New event</strong>
+              <span>List an event under one of your groups</span>
+            </button>
+            <button type="button" class="org-quick-card" data-org-goto="tickets">
+              <strong>+ Ticket types</strong>
+              <span>Standard, VIP, remote tiers per event</span>
+            </button>
+          </div>
+
+          <h2 class="org-section-title">Your upcoming events</h2>
+          <p class="org-section-sub">Events linked to your email or organiser groups.</p>
+          <div class="org-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Group</th>
+                </tr>
+              </thead>
+              <tbody id="dash-events-body"></tbody>
+            </table>
+            <p class="org-empty" id="dash-events-empty" hidden>No events yet — create a group, then add an event.</p>
+          </div>
+        </section>
+
+        <!-- Groups -->
+        <section class="org-page" id="org-page-groups" data-org-page="groups">
+          <div class="org-toolbar">
+            <div>
+              <h2 class="org-section-title">Organiser profiles</h2>
+              <p class="org-section-sub">Linked to your Users record and email. Events belong to a profile.</p>
+            </div>
+            <button type="button" class="org-btn org-btn-gold" id="btn-new-group">+ New group</button>
+          </div>
+          <div class="org-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Group name</th>
+                  <th>Description</th>
+                  <th>Owner email</th>
+                </tr>
+              </thead>
+              <tbody id="groups-body"></tbody>
+            </table>
+            <p class="org-empty" id="groups-empty" hidden>No groups yet. Create your first organiser group.</p>
+          </div>
+        </section>
+
+        <!-- Events -->
+        <section class="org-page" id="org-page-events" data-org-page="events">
+          <div class="org-toolbar">
+            <div>
+              <h2 class="org-section-title">Events</h2>
+              <p class="org-section-sub">Create listings under one of your organiser groups.</p>
+            </div>
+            <button type="button" class="org-btn org-btn-gold" id="btn-new-event">+ New event</button>
+          </div>
+          <div class="org-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Organiser group</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="events-body"></tbody>
+            </table>
+            <p class="org-empty" id="events-empty" hidden>Create a group first, then add an event.</p>
+          </div>
+        </section>
+
+        <!-- Tickets -->
+        <section class="org-page" id="org-page-tickets" data-org-page="tickets">
+          <div class="org-toolbar">
+            <div>
+              <h2 class="org-section-title">Ticket types</h2>
+              <p class="org-section-sub">Add tiers for each event (saved to your Airtable Tickets table).</p>
+            </div>
+            <button type="button" class="org-btn org-btn-gold" id="btn-new-ticket">+ New ticket type</button>
+          </div>
+          <div class="org-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ticket</th>
+                  <th>Event</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="tickets-body"></tbody>
+            </table>
+            <p class="org-empty" id="tickets-empty" hidden>No ticket types yet.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Modal: group -->
+    <div class="org-modal" id="modal-group" role="dialog" aria-modal="true" aria-labelledby="modal-group-title" hidden>
+      <div class="org-modal-backdrop" data-org-modal-close></div>
+      <div class="org-modal-panel">
+        <h2 id="modal-group-title">New organiser profile</h2>
+        <p>Linked to your <strong>Users</strong> record and <strong id="modal-group-email">email</strong> in Airtable.</p>
+        <form id="form-group">
+          <div class="org-field">
+            <label for="group-name">Organiser name</label>
+            <input type="text" id="group-name" required placeholder="e.g. Catalyst Sessions Ltd" />
+          </div>
+          <div class="org-field">
+            <label for="group-description">Description (optional)</label>
+            <textarea id="group-description" rows="3" placeholder="Short profile shown on listings"></textarea>
+          </div>
+          <div class="org-modal-actions">
+            <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
+            <button type="submit" class="org-btn org-btn-primary">Create profile</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: event -->
+    <div class="org-modal" id="modal-event" role="dialog" aria-modal="true" aria-labelledby="modal-event-title" hidden>
+      <div class="org-modal-backdrop" data-org-modal-close></div>
+      <div class="org-modal-panel">
+        <h2 id="modal-event-title">New event</h2>
+        <p>Choose which organiser group this event belongs to.</p>
+        <form id="form-event">
+          <div class="org-field">
+            <label for="event-group">Organiser profile</label>
+            <select id="event-group" required></select>
+          </div>
+          <div class="org-field">
+            <label for="event-title">Event title</label>
+            <input type="text" id="event-title" required placeholder="e.g. Lunch &amp; learn — Liverpool" />
+          </div>
+          <div class="org-field">
+            <label for="event-date">Date &amp; time</label>
+            <input type="datetime-local" id="event-date" />
+          </div>
+          <div class="org-field">
+            <label for="event-type">Meeting type</label>
+            <select id="event-type">
+              <option>Networking Event</option>
+              <option>Exhibition</option>
+              <option>Conference</option>
+              <option>Networking / Meeting</option>
+            </select>
+          </div>
+          <div class="org-field">
+            <label for="event-description">Highlights (optional)</label>
+            <textarea id="event-description" rows="3"></textarea>
+          </div>
+          <div class="org-modal-actions">
+            <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
+            <button type="submit" class="org-btn org-btn-primary">Create event</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: ticket -->
+    <div class="org-modal" id="modal-ticket" role="dialog" aria-modal="true" aria-labelledby="modal-ticket-title" hidden>
+      <div class="org-modal-backdrop" data-org-modal-close></div>
+      <div class="org-modal-panel">
+        <h2 id="modal-ticket-title">New ticket type</h2>
+        <p>Ticket rows link to your event in the Tickets table.</p>
+        <form id="form-ticket">
+          <div class="org-field">
+            <label for="ticket-event">Event</label>
+            <select id="ticket-event" required></select>
+          </div>
+          <div class="org-field">
+            <label for="ticket-name">Ticket name</label>
+            <input type="text" id="ticket-name" required placeholder="e.g. Standard, VIP, Remote" />
+          </div>
+          <div class="org-field">
+            <label for="ticket-price">Price (£, 0 = free)</label>
+            <input type="number" id="ticket-price" min="0" step="0.01" value="0" />
+          </div>
+          <div class="org-field">
+            <label for="ticket-description">Description (optional)</label>
+            <input type="text" id="ticket-description" placeholder="e.g. Includes lunch and networking" />
+          </div>
+          <div class="org-field">
+            <label for="ticket-status">Status</label>
+            <select id="ticket-status">
+              <option>Available</option>
+              <option>Sold out</option>
+            </select>
+          </div>
+          <div class="org-field">
+            <label for="ticket-qty">Quantity available (optional)</label>
+            <input type="number" id="ticket-qty" min="0" step="1" />
+          </div>
+          <div class="org-modal-actions">
+            <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
+            <button type="submit" class="org-btn org-btn-primary">Create ticket</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="../js/organiser-dashboard.js"></script>
+  </body>
+</html>

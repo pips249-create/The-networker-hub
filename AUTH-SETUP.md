@@ -55,6 +55,24 @@ curl -X POST https://the-networker-hub.vercel.app/api/auth/setup-admin \
 
 You should see: `"message": "Admin account created."`
 
+### Add another user (e.g. team member)
+
+Same endpoint; set `"role": "attendee"` (or `organiser`, `member`, `admin`):
+
+```bash
+curl -X POST https://the-networker-hub.vercel.app/api/auth/setup-admin \
+  -H "Content-Type: application/json" \
+  -d '{
+    "secret": "YOUR_ADMIN_SETUP_SECRET",
+    "email": "rosie@the-networker.co.uk",
+    "password": "CHOOSE_A_PASSWORD_MIN_8_CHARS",
+    "name": "Rosie McGilvray",
+    "role": "attendee"
+  }'
+```
+
+Or run `./scripts/create-hub-user.sh` after exporting `ADMIN_SETUP_SECRET`.
+
 ## 4. Sign in
 
 - **Login:** https://the-networker-hub.vercel.app/login.html  

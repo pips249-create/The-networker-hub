@@ -1,6 +1,61 @@
 /**
+ * Attendee ↔ organiser mode toggle (cookie hub_view).
+ */
+(function () {
+  function bindSwitch(container, root) {
+    if (!container || container.dataset.hubModeBound) return;
+    container.dataset.hubModeBound = '1';
+    container.querySelectorAll('[data-hub-mode]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var mode = btn.getAttribute('data-hub-mode');
+        if (!mode || btn.classList.contains('is-active')) return;
+        btn.disabled = true;
+        fetch('/api/auth/hub-mode', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: mode }),
+        })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            if (data.ok && data.redirect) {
+              window.location.href = root + data.redirect.replace(/^\//, '');
+            } else {
+              btn.disabled = false;
+            }
+          })
+          .catch(function () {
+            btn.disabled = false;
+          });
+      });
+    });
+  }
+
+  window.HubModeSwitch = {
+    html: function (hubView) {
+      var isOrg = hubView === 'organiser';
+      return (
+        '<div class="hub-mode-switch" role="group" aria-label="Switch between attendee and organiser">' +
+        '<button type="button" class="hub-mode-btn' +
+        (!isOrg ? ' is-active' : '') +
+        '" data-hub-mode="attendee">Attendee</button>' +
+        '<button type="button" class="hub-mode-btn' +
+        (isOrg ? ' is-active' : '') +
+        '" data-hub-mode="organiser">Organiser</button>' +
+        '</div>'
+      );
+    },
+    bind: function (container, root) {
+      bindSwitch(container, root || '');
+    },
+  };
+})();
+
+/**
  * Shared site navigation — same bar on every page.
- * Shows Admin link when signed in with admin role.
+ * Shows Admin / Organiser dashboard links when signed in with the right role.
  */
 (function () {
   var script = document.currentScript;
@@ -32,17 +87,34 @@
     return '<a href="' + href(path) + '"' + cls + active + '>' + label + '</a>';
   }
 
+  function organiserNavLink(user) {
+    if (user) {
+      return link('organiser/index.html', 'Organiser dashboard', 'organiser', 'nav-organiser');
+    }
+    return link(
+      'login.html?next=/organiser/index.html',
+      'Organiser dashboard',
+      'organiser',
+      'nav-organiser'
+    );
+  }
+
   function buildNavLinks(user) {
     var html = '';
     html += link('index.html#discover', 'Discover', 'home');
+    html += organiserNavLink(user);
     html += link('index.html#academy', 'Academy', 'academy', 'nav-hide-mobile');
     html += link('index.html#for-you', 'For you', 'for-you', 'nav-hide-mobile');
-    html += link('about.html', 'About us', 'about');
-    html += link('faq.html', 'FAQ', 'faq');
+    html += link('about.html', 'About us', 'about', 'nav-hide-mobile');
+    html += link('faq.html', 'FAQ', 'faq', 'nav-hide-mobile');
     if (user && user.role === 'admin') {
-      html += link('admin/index.html', 'Admin', 'admin', 'nav-admin');
+      html += link('admin/index.html', 'Command Center', 'admin', 'nav-admin');
     }
     if (user) {
+      var hubView = user.hubView || 'attendee';
+      if (window.HubModeSwitch) {
+        html += window.HubModeSwitch.html(hubView);
+      }
       html += '<button type="button" class="nav-signout" id="nav-signout">Sign out</button>';
     } else {
       html += link('login.html', 'Sign in', 'auth');
@@ -78,6 +150,11 @@
       scrollBound = true;
     }
 
+    var modeSwitch = nav.querySelector('.hub-mode-switch');
+    if (modeSwitch && window.HubModeSwitch) {
+      window.HubModeSwitch.bind(modeSwitch, root);
+    }
+
     var signOut = document.getElementById('nav-signout');
     if (signOut) {
       signOut.addEventListener('click', function () {
@@ -92,6 +169,8 @@
     document.body.classList.add('hub-page-home');
   } else if (page === 'admin') {
     document.body.classList.add('hub-page-admin');
+  } else if (page === 'organiser') {
+    document.body.classList.add('hub-page-organiser');
   } else {
     document.body.classList.add('has-site-nav');
   }
@@ -104,6 +183,8 @@
     })
     .then(function (data) {
       if (data.ok && data.user) {
+        data.user.hubView = data.hubView || 'attendee';
+        data.user.organiserProfiles = data.organiserProfiles || 0;
         renderNav(data.user);
       }
     })

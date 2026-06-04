@@ -138,6 +138,23 @@ function clearSessionCookie(res) {
   res.setHeader('Set-Cookie', `hub_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`);
 }
 
+const HUB_VIEW_COOKIE = 'hub_view';
+
+function hubViewFromRequest(req) {
+  const cookies = parseCookies(req);
+  const mode = String(cookies[HUB_VIEW_COOKIE] || 'attendee').toLowerCase();
+  return mode === 'organiser' ? 'organiser' : 'attendee';
+}
+
+function setHubViewCookie(res, mode) {
+  const view = mode === 'organiser' ? 'organiser' : 'attendee';
+  const secure = process.env.VERCEL_ENV === 'production' ? '; Secure' : '';
+  res.setHeader(
+    'Set-Cookie',
+    `${HUB_VIEW_COOKIE}=${view}; Path=/; SameSite=Lax; Max-Age=${60 * 60 * 24 * 365}${secure}`
+  );
+}
+
 function json(res, status, body) {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Cache-Control', 'no-store');
@@ -378,4 +395,7 @@ module.exports = {
   updateUser,
   appendSystemLog,
   normalizeUser,
+  hubViewFromRequest,
+  setHubViewCookie,
+  HUB_VIEW_COOKIE,
 };

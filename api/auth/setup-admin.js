@@ -48,6 +48,15 @@ module.exports = async function handler(req, res) {
     .toLowerCase();
   const password = String(body.password || process.env.ADMIN_INITIAL_PASSWORD || '');
   const name = String(body.name || 'Platform Admin').trim();
+  let role = String(body.role || 'admin').toLowerCase();
+  if (role === 'organizer') role = 'organiser';
+  const allowedRoles = new Set(['admin', 'attendee', 'organiser', 'member']);
+  if (!allowedRoles.has(role)) {
+    return json(res, 400, {
+      error: 'invalid_role',
+      message: 'role must be admin, attendee, organiser, or member',
+    });
+  }
 
   if (!email || !password) {
     return json(res, 400, {
@@ -66,27 +75,29 @@ module.exports = async function handler(req, res) {
     if (existing) {
       await updateUser(existing.id, {
         'Password Hash': hash,
-        Role: 'admin',
+        Role: role,
         Name: name,
       });
       return json(res, 200, {
         ok: true,
-        message: 'Admin account updated.',
+        message: 'User account updated.',
         email,
+        role,
       });
     }
 
     await createUser({
       email,
       passwordHash: hash,
-      role: 'admin',
+      role,
       name,
     });
 
     return json(res, 201, {
       ok: true,
-      message: 'Admin account created.',
+      message: 'User account created.',
       email,
+      role,
     });
   } catch (e) {
     return json(res, 500, {

@@ -5,7 +5,9 @@ const {
   findUserByEmail,
   setCors,
   json,
+  hubViewFromRequest,
 } = require('../lib/auth');
+const { listGroupsForUser } = require('../lib/organiser');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -38,7 +40,21 @@ module.exports = async function handler(req, res) {
 
     setSessionCookie(res, fresh);
 
-    return json(res, 200, { ok: true, user: fresh });
+    let organiserProfiles = 0;
+    try {
+      const groups = await listGroupsForUser(fresh.sub, fresh.email);
+      organiserProfiles = groups.length;
+    } catch {
+      /* Airtable optional at sign-in */
+    }
+
+    return json(res, 200, {
+      ok: true,
+      user: fresh,
+      hubView: hubViewFromRequest(req),
+      organiserProfiles,
+      canOrganise: organiserProfiles > 0 || fresh.role === 'admin',
+    });
   } catch {
     return json(res, 200, {
       ok: true,
