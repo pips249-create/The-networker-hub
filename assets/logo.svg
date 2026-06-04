@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 132" role="img" aria-label="The Networker Hub">
+  <text x="170" y="28" text-anchor="middle" font-family="'DM Serif Display', Georgia, serif" font-size="26" fill="#5c5557">The</text>
+  <text x="170" y="88" text-anchor="middle" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#c299d1">Netw</text>
+  <circle cx="208" cy="72" r="11" fill="#faf6ee" stroke="#c299d1" stroke-width="2.5"/>
+  <circle cx="208" cy="72" r="17" fill="none" stroke="#c299d1" stroke-width="2"/>
+  <text x="222" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#c299d1">rker</text>
+  <text x="170" y="124" text-anchor="middle" font-family="'DM Serif Display', Georgia, serif" font-size="26" fill="#5c5557">Hub</text>
+</svg>

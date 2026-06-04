@@ -83,11 +83,6 @@
   border-color: var(--lavender);
   color: var(--charcoal);
 }
-.type-tab.is-active {
-  background: var(--charcoal);
-  border-color: var(--charcoal);
-  color: var(--cream);
-}
 .type-tab .count {
   font-weight: 500;
   opacity: 0.75;
@@ -149,10 +144,10 @@
 .event-card.is-hidden { display: none; }
 .event-card .thumb {
   height: 100px;
-  background: linear-gradient(135deg, var(--charcoal) 0%, var(--lavender-deep) 100%);
+  background: linear-gradient(135deg, var(--lavender-soft) 0%, var(--lavender) 100%);
 }
 .event-card[data-type="exhibition"] .thumb {
-  background: linear-gradient(135deg, var(--lavender-deep) 0%, var(--lavender) 100%);
+  background: linear-gradient(135deg, var(--lavender-light) 0%, var(--lavender-soft) 100%);
 }
 .event-card .body { padding: 12px 14px; }
 .type-badge {
@@ -218,10 +213,10 @@
 .event-row .thumb {
   height: 72px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, var(--charcoal), var(--lavender-deep));
+  background: linear-gradient(135deg, var(--lavender-soft), var(--lavender));
 }
 .event-row[data-type="exhibition"] .thumb {
-  background: linear-gradient(135deg, var(--lavender-deep), var(--lavender));
+  background: linear-gradient(135deg, var(--lavender-light), var(--lavender-soft));
 }
 .event-row h3 {
   font-size: 15px;
@@ -270,7 +265,7 @@
 
 <header class="site-nav on-light legacy-nav">
   <a class="nav-logo" href="../index.html" aria-label="The Networker Hub home">
-    <img src="../assets/logo.png" alt="The Networker Hub" width="180" height="72">
+    <img src="../assets/logo.svg" alt="The Networker Hub" width="180" height="72">
   </a>
   <nav class="nav-links">
     <a href="index.html">Events</a>
