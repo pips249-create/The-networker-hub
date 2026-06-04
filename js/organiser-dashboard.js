@@ -6,12 +6,13 @@
     user: null,
     groups: [],
     events: [],
+    upcomingEvents: [],
     tickets: [],
     groupsError: null,
     airtable: null,
   };
 
-  const gate = document.getElementById('org-gate');
+  const signin = document.getElementById('org-signin');
   const shell = document.getElementById('org-shell');
   const alertEl = document.getElementById('org-airtable-alert');
 
@@ -48,6 +49,99 @@
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+    });
+  }
+
+  function formatDateShort(raw) {
+    if (!raw) return '—';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+
+  function formatTimeRange(startRaw, endRaw) {
+    if (!startRaw) return '—';
+    const start = new Date(startRaw);
+    if (Number.isNaN(start.getTime())) return '—';
+    const fmt = (d) =>
+      d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+    if (endRaw) {
+      const end = new Date(endRaw);
+      if (!Number.isNaN(end.getTime())) return fmt(start) + ' – ' + fmt(end);
+    }
+    return fmt(start);
+  }
+
+  function thumbHtml(item) {
+    const name = item.name || item.title || '?';
+    if (item.imageUrl) {
+      return (
+        '<img class="org-thumb" src="' +
+        esc(item.imageUrl) +
+        '" alt="" width="44" height="44" loading="lazy" />'
+      );
+    }
+    const letter = String(name).trim().charAt(0).toUpperCase() || '?';
+    return '<div class="org-thumb-placeholder" aria-hidden="true">' + esc(letter) + '</div>';
+  }
+
+  function statusBadgeHtml(key, label) {
+    const cls =
+      key === 'live'
+        ? 'org-badge-green'
+        : key === 'upcoming'
+          ? 'org-badge-gold'
+          : 'org-badge-purple';
+    return '<span class="org-badge ' + cls + '">' + esc(label) + '</span>';
+  }
+
+  function ratingHtml(rating) {
+    if (rating == null || Number.isNaN(Number(rating))) {
+      return '<span class="org-rating muted">—</span>';
+    }
+    return (
+      '<span class="org-rating"><span class="org-rating-star" aria-hidden="true">★</span> ' +
+      esc(Number(rating).toFixed(1)) +
+      '</span>'
+    );
+  }
+
+  function actionMenuHtml(kind, id, title) {
+    const safeId = esc(id);
+    const eventUrl = '../events/event.html?id=' + encodeURIComponent(id);
+    if (kind === 'group') {
+      return (
+        '<div class="org-action-wrap">' +
+        '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
+        '<div class="org-action-menu" role="menu">' +
+        '<button type="button" class="org-action-item" data-org-goto-view="groups"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit profile</strong><span>Update organiser page details</span></span></button>' +
+        '<button type="button" class="org-action-item" data-org-goto-view="events"><span class="org-action-icon">★</span><span class="org-action-text"><strong>Reviews</strong><span>View feedback for this group</span></span></button>' +
+        '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Coming soon</span></span></button>' +
+        '</div></div>'
+      );
+    }
+    return (
+      '<div class="org-action-wrap">' +
+      '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
+      '<div class="org-action-menu" role="menu">' +
+      '<a class="org-action-item" href="' +
+      eventUrl +
+      '" target="_blank" rel="noopener"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit event</strong><span>Update details, times &amp; tickets</span></span></a>' +
+      '<button type="button" class="org-action-item" data-org-goto-view="tickets"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>See attendees</strong><span>View ticket types for this event</span></span></button>' +
+      '<button type="button" class="org-action-item" disabled><span class="org-action-icon">◎</span><span class="org-action-text"><strong>Promote</strong><span>Coming soon</span></span></button>' +
+      '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Hide from directory</span></span></button>' +
+      '</div></div>'
+    );
+  }
+
+  function closeAllActionMenus() {
+    document.querySelectorAll('.org-action-menu.is-open').forEach((m) => m.classList.remove('is-open'));
+    document.querySelectorAll('[data-org-action-toggle][aria-expanded="true"]').forEach((b) => {
+      b.setAttribute('aria-expanded', 'false');
     });
   }
 
@@ -94,10 +188,75 @@
     });
   }
 
-  function renderStats() {
-    document.getElementById('stat-groups').textContent = String(state.groups.length);
-    document.getElementById('stat-events').textContent = String(state.events.length);
-    document.getElementById('stat-tickets').textContent = String(state.tickets.length);
+  function renderOverviewGroups() {
+    const body = document.getElementById('dash-groups-body');
+    const empty = document.getElementById('dash-groups-empty');
+    if (!body) return;
+    body.innerHTML = '';
+    const slice = state.groups.slice(0, 6);
+    if (!slice.length) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+    slice.forEach((g) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' +
+        thumbHtml(g) +
+        '</td><td class="org-td-name"><strong>' +
+        esc(g.name) +
+        '</strong></td><td>' +
+        esc(String(g.eventsListed != null ? g.eventsListed : 0)) +
+        '</td><td class="org-revenue">' +
+        esc(g.revenueDisplay || '£0') +
+        '</td><td>' +
+        ratingHtml(g.rating) +
+        '</td><td>' +
+        statusBadgeHtml(g.statusKey || 'draft', g.statusLabel || 'Draft') +
+        '</td><td>' +
+        actionMenuHtml('group', g.id, g.name) +
+        '</td>';
+      body.appendChild(tr);
+    });
+  }
+
+  function renderOverviewEvents() {
+    const body = document.getElementById('dash-events-body');
+    const empty = document.getElementById('dash-events-empty');
+    if (!body) return;
+    body.innerHTML = '';
+    const slice = (state.upcomingEvents.length ? state.upcomingEvents : state.events).slice(0, 6);
+    if (!slice.length) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+    slice.forEach((ev) => {
+      const tr = document.createElement('tr');
+      const eventUrl = '../events/event.html?id=' + encodeURIComponent(ev.id);
+      tr.innerHTML =
+        '<td>' +
+        thumbHtml(ev) +
+        '</td><td class="org-td-name"><a href="' +
+        eventUrl +
+        '">' +
+        esc(ev.title) +
+        '</a></td><td>' +
+        esc(formatDateShort(ev.date)) +
+        '</td><td>' +
+        esc(formatTimeRange(ev.date, ev.endDate)) +
+        '</td><td>' +
+        esc(ev.ticketsSoldLabel || '0') +
+        '</td><td class="org-revenue">' +
+        esc(ev.revenueDisplay || '£0') +
+        '</td><td>' +
+        statusBadgeHtml(ev.statusKey || 'upcoming', ev.statusLabel || 'Upcoming') +
+        '</td><td>' +
+        actionMenuHtml('event', ev.id, ev.title) +
+        '</td>';
+      body.appendChild(tr);
+    });
   }
 
   function renderGroups() {
@@ -126,9 +285,8 @@
 
   function renderEvents() {
     const body = document.getElementById('events-body');
-    const dashBody = document.getElementById('dash-events-body');
     const empty = document.getElementById('events-empty');
-    const dashEmpty = document.getElementById('dash-events-empty');
+    if (!body) return;
 
     function fillRow(ev) {
       const tr = document.createElement('tr');
@@ -151,38 +309,12 @@
       return tr;
     }
 
-    if (body) {
-      body.innerHTML = '';
-      if (!state.events.length) {
-        if (empty) empty.hidden = false;
-      } else {
-        if (empty) empty.hidden = true;
-        state.events.forEach((ev) => body.appendChild(fillRow(ev)));
-      }
-    }
-
-    if (dashBody) {
-      dashBody.innerHTML = '';
-      const slice = state.events.slice(0, 5);
-      if (!slice.length) {
-        if (dashEmpty) dashEmpty.hidden = false;
-      } else {
-        if (dashEmpty) dashEmpty.hidden = true;
-        slice.forEach((ev) => {
-          const tr = document.createElement('tr');
-          tr.innerHTML =
-            '<td><strong>' +
-            esc(ev.title) +
-            '</strong></td><td>' +
-            esc(formatDate(ev.date)) +
-            '</td><td>' +
-            esc(ev.type || '—') +
-            '</td><td>' +
-            esc(groupNameById(ev.organiserGroupId)) +
-            '</td>';
-          dashBody.appendChild(tr);
-        });
-      }
+    body.innerHTML = '';
+    if (!state.events.length) {
+      if (empty) empty.hidden = false;
+    } else {
+      if (empty) empty.hidden = true;
+      state.events.forEach((ev) => body.appendChild(fillRow(ev)));
     }
   }
 
@@ -254,7 +386,8 @@
   }
 
   function renderAll() {
-    renderStats();
+    renderOverviewGroups();
+    renderOverviewEvents();
     renderGroups();
     renderEvents();
     renderTickets();
@@ -267,6 +400,7 @@
     if (!ok) throw new Error(data.message || data.error || 'load_failed');
     state.groups = data.groups || [];
     state.events = data.events || [];
+    state.upcomingEvents = data.upcomingEvents || [];
     state.tickets = data.tickets || [];
     state.groupsError = data.groupsError;
     state.airtable = data.airtable;
@@ -433,6 +567,29 @@
       });
     });
 
+    document.querySelectorAll('[data-org-goto-view]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        setRoute(btn.getAttribute('data-org-goto-view') || 'dashboard');
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      const toggle = e.target.closest('[data-org-action-toggle]');
+      if (toggle) {
+        e.stopPropagation();
+        const wrap = toggle.closest('.org-action-wrap');
+        const menu = wrap && wrap.querySelector('.org-action-menu');
+        const wasOpen = menu && menu.classList.contains('is-open');
+        closeAllActionMenus();
+        if (menu && !wasOpen) {
+          menu.classList.add('is-open');
+          toggle.setAttribute('aria-expanded', 'true');
+        }
+        return;
+      }
+      if (!e.target.closest('.org-action-wrap')) closeAllActionMenus();
+    });
+
     document.querySelectorAll('[data-org-route]').forEach((a) => {
       a.addEventListener('click', (e) => {
         e.preventDefault();
@@ -462,7 +619,7 @@
     document.getElementById('org-welcome-name').textContent =
       'Welcome' + (user.name ? ', ' + user.name : '');
     document.getElementById('org-welcome-email').textContent = user.email;
-    gate.hidden = true;
+    if (signin) signin.hidden = true;
     shell.hidden = false;
     bindForms();
     bindUi();
@@ -478,14 +635,16 @@
     .then((res) => res.json())
     .then((data) => {
       if (!data.ok || !data.user) {
-        gate.innerHTML =
-          '<p class="org-section-sub">Sign in to manage organiser profiles, events, and tickets. Use <strong>Attendee</strong> mode in the nav to browse and book events.</p>' +
-          '<p style="margin-top:12px"><a class="org-btn org-btn-primary" href="../login.html?next=/organiser/index.html">Sign in</a></p>';
+        if (signin) signin.hidden = false;
         return;
       }
       boot(data.user);
     })
     .catch(() => {
-      document.getElementById('org-gate-msg').textContent = 'Could not verify session.';
+      if (signin) {
+        signin.hidden = false;
+        signin.querySelector('.org-section-sub').textContent =
+          'Could not verify your session. Please try signing in again.';
+      }
     });
 })();

@@ -17,6 +17,20 @@ const GROUP_FIELDS = {
   ownerEmail: ['Email', 'Owner Email', 'Organiser Email', 'User Email'],
   description: ['Description', 'About', 'Profile', 'Company Profile'],
   users: ['Users', 'User', 'Account', 'Hub User'],
+  image: ['Logo', 'Photo', 'Organiser Image', 'Image', 'Cover', 'Organiser Photo'],
+  status: ['Status', 'Profile Status', 'Listing Status', 'Approval Status'],
+  rating: ['Rating', 'Average Rating', 'Stars'],
+  revenue: ['Revenue', 'Total Revenue'],
+};
+
+const EVENT_READ_FIELDS = {
+  image: ['Photo', 'Image', 'Cover', 'Photos', 'Event Photo', 'Event Image'],
+  approvalStatus: ['Approval Status', 'Status', 'Listing Status', 'Event Status'],
+  rating: ['Average Rating', 'Rating', 'Stars'],
+  ticketsSold: ['Tickets Sold', 'Attendees', 'Registrations', 'Sold'],
+  revenue: ['Revenue', 'Total Revenue', 'Event Revenue'],
+  endDate: ['End Date', 'End Time', 'End Date & Time', 'Finish Time'],
+  capacity: ['Capacity', 'Max Attendees', 'Ticket Qty', 'Max Capacity'],
 };
 
 const ORGANISER_EVENT_LINK_FIELDS = [
@@ -70,6 +84,33 @@ function pick(fields, keys) {
     }
   }
   return null;
+}
+
+function attachmentUrl(field) {
+  if (!field) return null;
+  if (Array.isArray(field) && field[0]) {
+    const file = field[0];
+    return (
+      file.thumbnails?.large?.url ||
+      file.thumbnails?.full?.url ||
+      file.url ||
+      null
+    );
+  }
+  if (typeof field === 'string' && field.startsWith('http')) return field;
+  return null;
+}
+
+function parseMoneyNum(raw) {
+  if (raw == null || raw === '') return 0;
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+  const m = String(raw).match(/(\d+(?:\.\d+)?)/);
+  return m ? parseFloat(m[1]) : 0;
+}
+
+function formatMoney(amount) {
+  const n = Number(amount) || 0;
+  return '£' + (n % 1 === 0 ? n.toFixed(0) : n.toFixed(2));
 }
 
 function linkedRecordIds(field) {
@@ -192,12 +233,18 @@ async function fetchAllRecords(table, view) {
 
 function recordToGroup(record) {
   const f = record.fields || {};
+  const statusRaw = String(pick(f, GROUP_FIELDS.status) || '').trim();
+  const ratingRaw = pick(f, GROUP_FIELDS.rating);
   return {
     id: record.id,
     name: String(pick(f, GROUP_FIELDS.name) || 'Untitled organiser').trim(),
     ownerEmail: String(pick(f, GROUP_FIELDS.ownerEmail) || '').toLowerCase(),
     description: String(pick(f, GROUP_FIELDS.description) || '').trim(),
     userIds: linkedRecordIds(pick(f, GROUP_FIELDS.users)),
+    imageUrl: attachmentUrl(pick(f, GROUP_FIELDS.image)),
+    statusRaw,
+    rating: ratingRaw != null && ratingRaw !== '' ? Number(ratingRaw) : null,
+    revenueNum: parseMoneyNum(pick(f, GROUP_FIELDS.revenue)),
     createdAt: record.createdTime || null,
   };
 }
@@ -218,15 +265,25 @@ function recordToOrganiserEvent(record, organiserLinkField) {
       (organiserLinkField ? f[organiserLinkField] : null)
   );
   const dateRaw = pick(f, EVENT_WRITE_FIELDS.date);
+  const endRaw = pick(f, EVENT_READ_FIELDS.endDate);
+  const soldRaw = pick(f, EVENT_READ_FIELDS.ticketsSold);
+  const ratingRaw = pick(f, EVENT_READ_FIELDS.rating);
   return {
     id: record.id,
     title: String(pick(f, EVENT_WRITE_FIELDS.title) || 'Untitled event').trim(),
     date: dateRaw ? String(dateRaw) : '',
+    endDate: endRaw ? String(endRaw) : '',
     type: String(pick(f, EVENT_WRITE_FIELDS.type) || '').trim(),
     ownerEmail: String(pick(f, EVENT_WRITE_FIELDS.ownerEmail) || '').toLowerCase(),
     organiserGroupIds: groupIds,
     organiserGroupId: groupIds[0] || '',
     description: String(pick(f, EVENT_WRITE_FIELDS.description) || '').trim(),
+    imageUrl: attachmentUrl(pick(f, EVENT_READ_FIELDS.image)),
+    statusRaw: String(pick(f, EVENT_READ_FIELDS.approvalStatus) || '').trim(),
+    rating: ratingRaw != null && ratingRaw !== '' ? Number(ratingRaw) : null,
+    ticketsSold: soldRaw != null && soldRaw !== '' ? Number(soldRaw) || 0 : null,
+    revenueNum: parseMoneyNum(pick(f, EVENT_READ_FIELDS.revenue)),
+    capacity: pick(f, EVENT_READ_FIELDS.capacity),
   };
 }
 
@@ -509,6 +566,104 @@ function airtableSetupHint(resource) {
   };
 }
 
+function eventBelongsToGroup(ev, groupId) {
+  if (ev.organiserGroupId === groupId) return true;
+  return (ev.organiserGroupIds || []).includes(groupId);
+}
+
+function deriveListingStatus(statusRaw, dateIso) {
+  const raw = String(statusRaw || '').toLowerCase();
+  if (/draft|pending|unpublish|hidden|inactive/.test(raw)) {
+    return { key: 'draft', label: 'Draft' };
+  }
+  const d = dateIso ? new Date(dateIso) : null;
+  if (!d || Number.isNaN(d.getTime())) {
+    return raw ? { key: 'live', label: 'Live' } : { key: 'draft', label: 'Draft' };
+  }
+  const now = new Date();
+  if (d > now) return { key: 'upcoming', label: 'Upcoming' };
+  return { key: 'live', label: 'Live' };
+}
+
+function enrichOrganiserOverview(groups, events, tickets) {
+  const ticketsByEvent = {};
+  tickets.forEach((t) => {
+    if (!t.eventId) return;
+    if (!ticketsByEvent[t.eventId]) ticketsByEvent[t.eventId] = [];
+    ticketsByEvent[t.eventId].push(t);
+  });
+
+  const enrichedEvents = events.map((ev) => {
+    const tiers = ticketsByEvent[ev.id] || [];
+    let capacity = Number(ev.capacity) || 0;
+    if (!capacity) {
+      capacity = tiers.reduce((sum, t) => sum + (Number(t.quantityAvailable) || 0), 0);
+    }
+    let sold = ev.ticketsSold != null ? Number(ev.ticketsSold) : 0;
+    if (!sold && tiers.length === 1 && tiers[0].quantityAvailable != null) {
+      /* no sold field — capacity only */
+    }
+    let revenueNum = ev.revenueNum || 0;
+    if (!revenueNum && sold > 0) {
+      revenueNum = tiers.reduce((sum, t) => sum + (parseMoneyNum(t.price) || 0) * sold, 0);
+    }
+    const status = deriveListingStatus(ev.statusRaw, ev.date);
+    return {
+      ...ev,
+      ticketsSold: sold,
+      ticketsCapacity: capacity,
+      ticketsSoldLabel: capacity > 0 ? `${sold} / ${capacity}` : sold > 0 ? String(sold) : '0',
+      revenueNum,
+      revenueDisplay: formatMoney(revenueNum),
+      statusKey: status.key,
+      statusLabel: status.label,
+    };
+  });
+
+  const enrichedGroups = groups.map((g) => {
+    const groupEvents = enrichedEvents.filter((ev) => eventBelongsToGroup(ev, g.id));
+    const eventsListed = groupEvents.length;
+    let revenueNum = g.revenueNum || 0;
+    if (!revenueNum) {
+      revenueNum = groupEvents.reduce((sum, ev) => sum + (ev.revenueNum || 0), 0);
+    }
+    const ratings = groupEvents.map((e) => e.rating).filter((r) => r != null && !Number.isNaN(r));
+    const rating =
+      g.rating != null && !Number.isNaN(g.rating)
+        ? g.rating
+        : ratings.length
+          ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+          : null;
+    const status = deriveListingStatus(
+      g.statusRaw,
+      groupEvents.map((e) => e.date).filter(Boolean).sort()[0]
+    );
+    if (eventsListed > 0 && status.key === 'draft' && !g.statusRaw) {
+      status.key = 'live';
+      status.label = 'Live';
+    }
+    return {
+      ...g,
+      eventsListed,
+      revenueNum,
+      revenueDisplay: formatMoney(revenueNum),
+      rating: rating != null ? Math.round(rating * 10) / 10 : null,
+      statusKey: status.key,
+      statusLabel: status.label,
+    };
+  });
+
+  const upcomingEvents = enrichedEvents
+    .filter((ev) => {
+      if (!ev.date) return true;
+      const d = new Date(ev.date);
+      return !Number.isNaN(d.getTime()) && d >= new Date(Date.now() - 86400000);
+    })
+    .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+
+  return { groups: enrichedGroups, events: enrichedEvents, upcomingEvents };
+}
+
 async function getOrganiserWorkspace(req) {
   const auth = requireOrganiserSession(req);
   if (!auth.ok) return auth;
@@ -539,12 +694,14 @@ async function getOrganiserWorkspace(req) {
 
   const eventIds = events.map((e) => e.id);
   const tickets = await listTicketsForSession(session, eventIds);
+  const overview = enrichOrganiserOverview(groups, events, tickets);
 
   return {
     ok: true,
     session,
-    groups,
-    events,
+    groups: overview.groups,
+    events: overview.events,
+    upcomingEvents: overview.upcomingEvents,
     tickets,
     groupsError,
     hubView: hubViewFromRequest(req),

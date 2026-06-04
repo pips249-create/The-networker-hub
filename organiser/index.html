@@ -17,8 +17,13 @@
     <div id="hub-site-nav"></div>
     <script src="../js/site-nav.js?v=20260604" data-root="../" data-page="organiser"></script>
 
-    <div id="org-gate" class="org-gate">
-      <p id="org-gate-msg">Checking your account…</p>
+    <div id="org-signin" class="org-signin" hidden>
+      <p class="org-section-sub">
+        Sign in to manage organiser profiles, events, and tickets. Use <strong>Attendee</strong> mode in the nav to browse and book events.
+      </p>
+      <p style="margin-top: 12px">
+        <a class="org-btn org-btn-primary" href="../login.html?next=/organiser/index.html">Sign in</a>
+      </p>
     </div>
 
     <div id="org-shell" hidden>
@@ -37,51 +42,59 @@
           <h1 class="org-welcome-name" id="org-welcome-name">Organiser dashboard</h1>
           <p class="org-welcome-sub" id="org-welcome-email">—</p>
 
-          <div class="org-stats">
-            <div class="org-stat">
-              <div class="org-stat-label">Organiser profiles</div>
-              <div class="org-stat-value" id="stat-groups">0</div>
-            </div>
-            <div class="org-stat gold">
-              <div class="org-stat-label">Events</div>
-              <div class="org-stat-value" id="stat-events">0</div>
-            </div>
-            <div class="org-stat green">
-              <div class="org-stat-label">Ticket types</div>
-              <div class="org-stat-value" id="stat-tickets">0</div>
-            </div>
-          </div>
-
-          <div class="org-quick-grid">
-            <button type="button" class="org-quick-card" data-org-goto="groups">
-              <strong>+ New organiser profile</strong>
-              <span>Brands or teams you run events under (Organisers table)</span>
-            </button>
-            <button type="button" class="org-quick-card" data-org-goto="events">
-              <strong>+ New event</strong>
-              <span>List an event under one of your groups</span>
-            </button>
-            <button type="button" class="org-quick-card" data-org-goto="tickets">
-              <strong>+ Ticket types</strong>
-              <span>Standard, VIP, remote tiers per event</span>
-            </button>
-          </div>
-
-          <h2 class="org-section-title">Your upcoming events</h2>
-          <p class="org-section-sub">Events linked to your email or organiser groups.</p>
-          <div class="org-table-wrap">
+          <h2 class="org-section-title">Your Groups</h2>
+          <p class="org-section-sub">Click to edit your organiser group profile page</p>
+          <div class="org-table-wrap org-overview-table">
             <table>
               <thead>
                 <tr>
-                  <th>Event</th>
+                  <th class="org-th-thumb"></th>
+                  <th>Name</th>
+                  <th>Events listed</th>
+                  <th>Revenue</th>
+                  <th>Rating</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="dash-groups-body"></tbody>
+            </table>
+            <p class="org-empty" id="dash-groups-empty" hidden>
+              No organiser profiles yet — create your first group.
+            </p>
+          </div>
+          <div class="org-section-footer">
+            <button type="button" class="org-btn org-btn-outline" data-org-goto-view="groups">
+              VIEW ALL OF YOUR GROUPS
+            </button>
+          </div>
+
+          <h2 class="org-section-title org-section-title-spaced">Your next events</h2>
+          <p class="org-section-sub">Click an event name to edit the listing or view attendees.</p>
+          <div class="org-table-wrap org-overview-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="org-th-thumb"></th>
+                  <th>Event name</th>
                   <th>Date</th>
-                  <th>Type</th>
-                  <th>Group</th>
+                  <th>Time</th>
+                  <th>Tickets sold</th>
+                  <th>Revenue</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="dash-events-body"></tbody>
             </table>
-            <p class="org-empty" id="dash-events-empty" hidden>No events yet — create a group, then add an event.</p>
+            <p class="org-empty" id="dash-events-empty" hidden>
+              No upcoming events — create a group, then add an event.
+            </p>
+          </div>
+          <div class="org-section-footer">
+            <button type="button" class="org-btn org-btn-outline" data-org-goto-view="events">
+              View all events →
+            </button>
           </div>
         </section>
 
@@ -267,6 +280,6 @@
       </div>
     </div>
 
-    <script src="../js/organiser-dashboard.js"></script>
+    <script src="../js/organiser-dashboard.js?v=20260604b"></script>
   </body>
 </html>
