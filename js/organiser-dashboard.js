@@ -186,6 +186,7 @@
       m.hidden = true;
       m.classList.remove('is-open');
     });
+    resetGroupLogoPicker();
   }
 
   function renderOverviewGroups() {
@@ -271,13 +272,24 @@
     if (empty) empty.hidden = true;
     state.groups.forEach((g) => {
       const tr = document.createElement('tr');
+      const site = g.website
+        ? '<a href="' +
+          esc(g.website) +
+          '" target="_blank" rel="noopener noreferrer">' +
+          esc(g.website.replace(/^https?:\/\//i, '').slice(0, 40)) +
+          '</a>'
+        : '—';
       tr.innerHTML =
-        '<td><strong>' +
+        '<td>' +
+        thumbHtml(g) +
+        '</td><td><strong>' +
         esc(g.name) +
         '</strong></td><td>' +
-        esc(g.description || '—') +
+        esc(g.location || '—') +
         '</td><td>' +
-        esc(g.ownerEmail) +
+        site +
+        '</td><td>' +
+        esc(g.description || '—') +
         '</td>';
       body.appendChild(tr);
     });
@@ -438,16 +450,104 @@
     await loadBootstrap();
   }
 
+  let groupLogoFile = null;
+
+  function resetGroupLogoPicker() {
+    groupLogoFile = null;
+    const fileInput = document.getElementById('group-logo-file');
+    const preview = document.getElementById('group-logo-preview');
+    const placeholder = document.getElementById('group-logo-placeholder');
+    const urlInput = document.getElementById('group-logo-url');
+    if (fileInput) fileInput.value = '';
+    if (urlInput) urlInput.value = '';
+    if (preview) preview.hidden = true;
+    if (placeholder) placeholder.hidden = false;
+  }
+
+  function bindGroupLogoPicker() {
+    const zone = document.getElementById('group-logo-zone');
+    const fileInput = document.getElementById('group-logo-file');
+    const preview = document.getElementById('group-logo-preview');
+    const previewImg = document.getElementById('group-logo-preview-img');
+    const placeholder = document.getElementById('group-logo-placeholder');
+    const clearBtn = document.getElementById('group-logo-clear');
+    if (!zone || !fileInput) return;
+
+    zone.addEventListener('click', () => fileInput.click());
+    zone.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        fileInput.click();
+      }
+    });
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Logo must be under 2MB.');
+        fileInput.value = '';
+        return;
+      }
+      groupLogoFile = file;
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (previewImg) previewImg.src = reader.result;
+        if (preview) preview.hidden = false;
+        if (placeholder) placeholder.hidden = true;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        resetGroupLogoPicker();
+      });
+    }
+  }
+
+  function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = String(reader.result || '');
+        const base64 = result.includes(',') ? result.split(',')[1] : result;
+        resolve(base64);
+      };
+      reader.onerror = () => reject(new Error('read_failed'));
+      reader.readAsDataURL(file);
+    });
+  }
+
   function bindForms() {
+    bindGroupLogoPicker();
+
     document.getElementById('form-group').addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('group-name').value.trim();
       const description = document.getElementById('group-description').value.trim();
+      const website = document.getElementById('group-website').value.trim();
+      const location = document.getElementById('group-location').value.trim();
+      const logoUrl = document.getElementById('group-logo-url').value.trim();
+      const payload = { name, description, website, location, logoUrl };
+
+      if (groupLogoFile) {
+        try {
+          payload.logoBase64 = await readFileAsBase64(groupLogoFile);
+          payload.logoMime = groupLogoFile.type || 'image/jpeg';
+          payload.logoFilename = groupLogoFile.name || 'logo.jpg';
+        } catch {
+          alert('Could not read the logo file. Try again or use an image URL.');
+          return;
+        }
+      }
+
       const btn = e.submitter;
       if (btn) btn.disabled = true;
       const { ok, data } = await api('/api/organiser/groups', {
         method: 'POST',
-        body: JSON.stringify({ name, description }),
+        body: JSON.stringify(payload),
       });
       if (btn) btn.disabled = false;
       if (!ok) {
@@ -456,6 +556,7 @@
       }
       closeModals();
       document.getElementById('form-group').reset();
+      resetGroupLogoPicker();
       await refresh();
       setRoute('groups');
     });
@@ -534,6 +635,7 @@
 
     document.getElementById('btn-new-group').addEventListener('click', () => {
       document.getElementById('modal-group-email').textContent = state.user.email;
+      resetGroupLogoPicker();
       openModal('modal-group');
     });
 

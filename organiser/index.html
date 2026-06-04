@@ -111,9 +111,11 @@
             <table>
               <thead>
                 <tr>
+                  <th class="org-th-thumb"></th>
                   <th>Group name</th>
+                  <th>Location</th>
+                  <th>Website</th>
                   <th>Description</th>
-                  <th>Owner email</th>
                 </tr>
               </thead>
               <tbody id="groups-body"></tbody>
@@ -178,17 +180,44 @@
     <!-- Modal: group -->
     <div class="org-modal" id="modal-group" role="dialog" aria-modal="true" aria-labelledby="modal-group-title" hidden>
       <div class="org-modal-backdrop" data-org-modal-close></div>
-      <div class="org-modal-panel">
+      <div class="org-modal-panel org-modal-panel--wide">
         <h2 id="modal-group-title">New organiser profile</h2>
         <p>Linked to your <strong>Users</strong> record and <strong id="modal-group-email">email</strong> in Airtable.</p>
         <form id="form-group">
           <div class="org-field">
-            <label for="group-name">Organiser name</label>
+            <label for="group-logo-file">Photo / logo</label>
+            <div class="org-upload-zone" id="group-logo-zone" tabindex="0" role="button" aria-label="Upload logo">
+              <input type="file" id="group-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+              <div class="org-upload-preview" id="group-logo-preview" hidden>
+                <img id="group-logo-preview-img" alt="" width="72" height="72" />
+                <button type="button" class="org-upload-clear" id="group-logo-clear">Remove</button>
+              </div>
+              <div class="org-upload-placeholder" id="group-logo-placeholder">
+                <strong>Upload a logo</strong>
+                <span>PNG or JPG, max 2MB — or paste a URL below</span>
+              </div>
+            </div>
+            <input
+              type="url"
+              id="group-logo-url"
+              placeholder="https://yoursite.com/logo.png (optional if you uploaded a file)"
+            />
+          </div>
+          <div class="org-field">
+            <label for="group-name">Group name</label>
             <input type="text" id="group-name" required placeholder="e.g. Catalyst Sessions Ltd" />
           </div>
           <div class="org-field">
-            <label for="group-description">Description (optional)</label>
-            <textarea id="group-description" rows="3" placeholder="Short profile shown on listings"></textarea>
+            <label for="group-description">Description</label>
+            <textarea id="group-description" rows="4" placeholder="Tell attendees about your group and the events you run"></textarea>
+          </div>
+          <div class="org-field">
+            <label for="group-website">Website</label>
+            <input type="url" id="group-website" placeholder="https://www.yourcompany.com" />
+          </div>
+          <div class="org-field">
+            <label for="group-location">Location</label>
+            <input type="text" id="group-location" placeholder="e.g. Liverpool, Merseyside" />
           </div>
           <div class="org-modal-actions">
             <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
@@ -280,6 +309,6 @@
       </div>
     </div>
 
-    <script src="../js/organiser-dashboard.js?v=20260604b"></script>
+    <script src="../js/organiser-dashboard.js?v=20260604c"></script>
   </body>
 </html>

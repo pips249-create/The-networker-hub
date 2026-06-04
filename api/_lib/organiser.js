@@ -18,6 +18,8 @@ const GROUP_FIELDS = {
   description: ['Description', 'About', 'Profile', 'Company Profile'],
   users: ['Users', 'User', 'Account', 'Hub User'],
   image: ['Logo', 'Photo', 'Organiser Image', 'Image', 'Cover', 'Organiser Photo'],
+  website: ['Website', 'Website URL', 'URL', 'Web', 'Site', 'Company Website'],
+  location: ['Location', 'City', 'Region', 'Address', 'Area', 'Based in', 'Town'],
   status: ['Status', 'Profile Status', 'Listing Status', 'Approval Status'],
   rating: ['Rating', 'Average Rating', 'Stars'],
   revenue: ['Revenue', 'Total Revenue'],
@@ -180,6 +182,9 @@ async function getOrganiserWriteFields() {
       email: resolveFieldName(sample, GROUP_FIELDS.ownerEmail, 'Email'),
       description: resolveFieldName(sample, GROUP_FIELDS.description, 'Description'),
       users: resolveFieldName(sample, GROUP_FIELDS.users, 'Users'),
+      image: resolveFieldName(sample, GROUP_FIELDS.image, 'Logo'),
+      website: resolveFieldName(sample, GROUP_FIELDS.website, 'Website'),
+      location: resolveFieldName(sample, GROUP_FIELDS.location, 'Location'),
     };
   } catch {
     writeFieldCache = {
@@ -187,6 +192,9 @@ async function getOrganiserWriteFields() {
       email: 'Email',
       description: 'Description',
       users: 'Users',
+      image: 'Logo',
+      website: 'Website',
+      location: 'Location',
     };
   }
   return writeFieldCache;
@@ -242,6 +250,8 @@ function recordToGroup(record) {
     description: String(pick(f, GROUP_FIELDS.description) || '').trim(),
     userIds: linkedRecordIds(pick(f, GROUP_FIELDS.users)),
     imageUrl: attachmentUrl(pick(f, GROUP_FIELDS.image)),
+    website: String(pick(f, GROUP_FIELDS.website) || '').trim(),
+    location: String(pick(f, GROUP_FIELDS.location) || '').trim(),
     statusRaw,
     rating: ratingRaw != null && ratingRaw !== '' ? Number(ratingRaw) : null,
     revenueNum: parseMoneyNum(pick(f, GROUP_FIELDS.revenue)),
@@ -431,14 +441,88 @@ async function listTicketsForEventIds(eventIds) {
   return records.map(recordToOrganiserTicket).filter((t) => eventSet.has(t.eventId));
 }
 
-async function createGroup({ userId, email, name, description }) {
+async function uploadImageForAirtable({ base64, mime, filename }) {
+  const raw = String(base64 || '').replace(/^data:[^;]+;base64,/, '');
+  if (!raw) return null;
+  const buffer = Buffer.from(raw, 'base64');
+  if (buffer.length > 2 * 1024 * 1024) {
+    throw new Error('Logo image must be under 2MB');
+  }
+  const name = String(filename || 'logo.jpg').replace(/[^\w.\-]+/g, '_').slice(0, 80) || 'logo.jpg';
+  const type = mime || 'image/jpeg';
+  const boundary = '----hub' + Math.random().toString(36).slice(2);
+  const preamble =
+    `--${boundary}\r\n` +
+    `Content-Disposition: form-data; name="file"; filename="${name}"\r\n` +
+    `Content-Type: ${type}\r\n\r\n`;
+  const epilogue = `\r\n--${boundary}--\r\n`;
+  const body = Buffer.concat([
+    Buffer.from(preamble, 'utf8'),
+    buffer,
+    Buffer.from(epilogue, 'utf8'),
+  ]);
+  const resp = await fetch('https://0x0.st', {
+    method: 'POST',
+    headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+    body,
+  });
+  if (!resp.ok) throw new Error('Could not upload logo for Airtable');
+  const url = (await resp.text()).trim();
+  if (!url.startsWith('http')) throw new Error('Could not upload logo for Airtable');
+  return url;
+}
+
+async function resolveLogoAttachment({ logoUrl, logoBase64, logoMime, logoFilename }) {
+  const url = String(logoUrl || '').trim();
+  if (url && /^https?:\/\//i.test(url)) {
+    return [{ url }];
+  }
+  if (logoBase64) {
+    const hosted = await uploadImageForAirtable({
+      base64: logoBase64,
+      mime: logoMime,
+      filename: logoFilename,
+    });
+    if (hosted) return [{ url: hosted }];
+  }
+  return null;
+}
+
+async function createGroup({
+  userId,
+  email,
+  name,
+  description,
+  website,
+  location,
+  logoUrl,
+  logoBase64,
+  logoMime,
+  logoFilename,
+}) {
   const { groups: table } = tables();
   const wf = await getOrganiserWriteFields();
   const fields = {};
   fields[wf.name] = String(name).trim();
   fields[wf.email] = email.toLowerCase();
   if (description) fields[wf.description] = String(description).trim();
+  if (website && wf.website) fields[wf.website] = String(website).trim();
+  if (location && wf.location) fields[wf.location] = String(location).trim();
   if (userId && wf.users) fields[wf.users] = [userId];
+
+  try {
+    const logoAttachment = await resolveLogoAttachment({
+      logoUrl,
+      logoBase64,
+      logoMime,
+      logoFilename,
+    });
+    if (logoAttachment && wf.image) fields[wf.image] = logoAttachment;
+  } catch (e) {
+    const err = new Error(e.message || 'logo_upload_failed');
+    err.status = 400;
+    throw err;
+  }
 
   const resp = await airtableFetch(encodeURIComponent(table), {
     method: 'POST',
@@ -546,6 +630,9 @@ function airtableSetupHint(resource) {
         'Email',
         'Users (link to Users table)',
         'Description (optional)',
+        'Logo (attachment, optional)',
+        'Website (optional)',
+        'Location (optional)',
       ],
     };
   }

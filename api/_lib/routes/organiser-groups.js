@@ -41,6 +41,12 @@ module.exports = async function handler(req, res) {
     }
     const name = String(body.name || '').trim();
     const description = String(body.description || '').trim();
+    const website = String(body.website || '').trim();
+    const location = String(body.location || '').trim();
+    const logoUrl = String(body.logoUrl || '').trim();
+    const logoBase64 = body.logoBase64 ? String(body.logoBase64) : '';
+    const logoMime = body.logoMime ? String(body.logoMime) : '';
+    const logoFilename = body.logoFilename ? String(body.logoFilename) : '';
     if (!name) return json(res, 400, { error: 'missing_name' });
 
     try {
@@ -49,6 +55,12 @@ module.exports = async function handler(req, res) {
         email: auth.session.email,
         name,
         description,
+        website,
+        location,
+        logoUrl,
+        logoBase64,
+        logoMime,
+        logoFilename,
       });
       return json(res, 201, { ok: true, group });
     } catch (e) {
