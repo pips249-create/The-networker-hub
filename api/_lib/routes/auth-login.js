@@ -8,7 +8,7 @@ const {
   appendSystemLog,
   airtableConfig,
   setCors,
-} = require('../_lib/auth');
+} = require('../auth');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);

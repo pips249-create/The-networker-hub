@@ -1,8 +1,13 @@
 {
   "version": 2,
   "functions": {
-    "api/**/*.js": {
-      "maxDuration": 15
-    }
-  }
+    "api/auth.js": { "maxDuration": 15 },
+    "api/organiser.js": { "maxDuration": 15 },
+    "api/events.js": { "maxDuration": 15 },
+    "api/admin/metrics.js": { "maxDuration": 15 }
+  },
+  "rewrites": [
+    { "source": "/api/auth/:path*", "destination": "/api/auth" },
+    { "source": "/api/organiser/:path*", "destination": "/api/organiser" }
+  ]
 }

@@ -3,9 +3,11 @@ const {
   setCors,
   requireOrganiserSession,
   listGroupsForSession,
-  createGroup,
+  listEventsForSession,
+  groupOwnedBySession,
+  createEvent,
   airtableSetupHint,
-} = require('../_lib/organiser');
+} = require('../organiser');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -20,12 +22,14 @@ module.exports = async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const groups = await listGroupsForSession(auth.session);
-      return json(res, 200, { ok: true, groups });
+      const groupIds = groups.map((g) => g.id);
+      const events = await listEventsForSession(auth.session, groupIds, []);
+      return json(res, 200, { ok: true, events, groups });
     } catch (e) {
       return json(res, e.status || 500, {
-        error: 'groups_fetch_failed',
+        error: 'events_fetch_failed',
         message: e.message,
-        airtable: airtableSetupHint('groups'),
+        airtable: airtableSetupHint('events'),
       });
     }
   }
@@ -39,23 +43,34 @@ module.exports = async function handler(req, res) {
         body = {};
       }
     }
-    const name = String(body.name || '').trim();
+    const title = String(body.title || '').trim();
+    const groupId = String(body.organiserGroupId || body.groupId || '').trim();
+    const date = body.date || body.dateTime || '';
+    const type = String(body.type || body.format || 'Networking Event').trim();
     const description = String(body.description || '').trim();
-    if (!name) return json(res, 400, { error: 'missing_name' });
+
+    if (!title) return json(res, 400, { error: 'missing_title' });
+    if (!groupId) return json(res, 400, { error: 'missing_group' });
 
     try {
-      const group = await createGroup({
-        userId: auth.session.sub || '',
+      const groups = await listGroupsForSession(auth.session);
+      if (!groupOwnedBySession(auth.session, groups, groupId)) {
+        return json(res, 403, { error: 'group_not_owned' });
+      }
+      const event = await createEvent({
         email: auth.session.email,
-        name,
+        groupId,
+        title,
+        date,
+        type,
         description,
       });
-      return json(res, 201, { ok: true, group });
+      return json(res, 201, { ok: true, event });
     } catch (e) {
       return json(res, e.status || 500, {
-        error: 'group_create_failed',
+        error: 'event_create_failed',
         message: e.message,
-        airtable: airtableSetupHint('groups'),
+        airtable: airtableSetupHint('events'),
       });
     }
   }

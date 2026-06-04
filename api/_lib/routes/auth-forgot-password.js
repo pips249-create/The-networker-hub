@@ -7,7 +7,7 @@ const {
   appendSystemLog,
   USER_FIELDS,
   setCors,
-} = require('../_lib/auth');
+} = require('../auth');
 
 function fieldNameOnRecord(recordFields, candidates, fallback) {
   const f = recordFields || {};

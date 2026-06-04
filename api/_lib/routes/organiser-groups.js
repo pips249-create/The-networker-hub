@@ -3,11 +3,9 @@ const {
   setCors,
   requireOrganiserSession,
   listGroupsForSession,
-  listEventsForSession,
-  groupOwnedBySession,
-  createEvent,
+  createGroup,
   airtableSetupHint,
-} = require('../_lib/organiser');
+} = require('../organiser');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -22,14 +20,12 @@ module.exports = async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const groups = await listGroupsForSession(auth.session);
-      const groupIds = groups.map((g) => g.id);
-      const events = await listEventsForSession(auth.session, groupIds, []);
-      return json(res, 200, { ok: true, events, groups });
+      return json(res, 200, { ok: true, groups });
     } catch (e) {
       return json(res, e.status || 500, {
-        error: 'events_fetch_failed',
+        error: 'groups_fetch_failed',
         message: e.message,
-        airtable: airtableSetupHint('events'),
+        airtable: airtableSetupHint('groups'),
       });
     }
   }
@@ -43,34 +39,23 @@ module.exports = async function handler(req, res) {
         body = {};
       }
     }
-    const title = String(body.title || '').trim();
-    const groupId = String(body.organiserGroupId || body.groupId || '').trim();
-    const date = body.date || body.dateTime || '';
-    const type = String(body.type || body.format || 'Networking Event').trim();
+    const name = String(body.name || '').trim();
     const description = String(body.description || '').trim();
-
-    if (!title) return json(res, 400, { error: 'missing_title' });
-    if (!groupId) return json(res, 400, { error: 'missing_group' });
+    if (!name) return json(res, 400, { error: 'missing_name' });
 
     try {
-      const groups = await listGroupsForSession(auth.session);
-      if (!groupOwnedBySession(auth.session, groups, groupId)) {
-        return json(res, 403, { error: 'group_not_owned' });
-      }
-      const event = await createEvent({
+      const group = await createGroup({
+        userId: auth.session.sub || '',
         email: auth.session.email,
-        groupId,
-        title,
-        date,
-        type,
+        name,
         description,
       });
-      return json(res, 201, { ok: true, event });
+      return json(res, 201, { ok: true, group });
     } catch (e) {
       return json(res, e.status || 500, {
-        error: 'event_create_failed',
+        error: 'group_create_failed',
         message: e.message,
-        airtable: airtableSetupHint('events'),
+        airtable: airtableSetupHint('groups'),
       });
     }
   }

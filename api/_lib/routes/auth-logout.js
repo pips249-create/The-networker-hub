@@ -1,4 +1,4 @@
-const { clearSessionCookie, json, setCors } = require('../_lib/auth');
+const { clearSessionCookie, json, setCors } = require('../auth');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);

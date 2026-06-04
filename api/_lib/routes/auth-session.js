@@ -6,8 +6,8 @@ const {
   setCors,
   json,
   hubViewFromRequest,
-} = require('../_lib/auth');
-const { listGroupsForUser } = require('../_lib/organiser');
+} = require('../auth');
+const { listGroupsForUser } = require('../organiser');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);

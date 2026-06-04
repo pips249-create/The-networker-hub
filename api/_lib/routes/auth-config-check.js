@@ -3,7 +3,7 @@ const {
   testAirtableConnection,
   findUserByEmail,
   cleanEnvVal,
-} = require('../_lib/auth');
+} = require('../auth');
 
 /**
  * Safe diagnostic: which auth env vars are set (never returns secret values).
