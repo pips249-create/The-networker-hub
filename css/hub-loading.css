@@ -1,0 +1,96 @@
+/* Page buffer — shown while events / dashboard data loads */
+.hub-page-buffer {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px 48px;
+  min-height: min(420px, 52vh);
+}
+.hub-page-buffer.is-active {
+  display: flex;
+}
+.hub-page-buffer[hidden] {
+  display: none !important;
+}
+
+.hub-page-buffer-card {
+  text-align: center;
+  max-width: 28rem;
+  width: 100%;
+}
+
+.hub-page-buffer-visual {
+  display: block;
+  width: min(100%, 320px);
+  height: auto;
+  margin: 0 auto 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  opacity: 0.92;
+  animation: hub-buffer-pulse 2.4s ease-in-out infinite;
+}
+
+.hub-page-buffer-spinner {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 18px;
+  border: 3px solid var(--lavender-light);
+  border-top-color: var(--lavender-deep);
+  border-radius: 50%;
+  animation: hub-buffer-spin 0.85s linear infinite;
+}
+
+.hub-page-buffer-title {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(1.35rem, 4vw, 1.65rem);
+  font-weight: 400;
+  color: var(--charcoal);
+  margin: 0 0 8px;
+  line-height: 1.25;
+}
+
+.hub-page-buffer-message {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.hub-page-buffer--overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  min-height: 100%;
+  background: rgba(250, 247, 242, 0.92);
+  backdrop-filter: blur(4px);
+  padding: 40px 20px;
+}
+
+.hub-page-buffer-host {
+  position: relative;
+}
+.hub-page-buffer-host.is-loading > :not(.hub-page-buffer) {
+  pointer-events: none;
+  user-select: none;
+}
+
+.hub-page-buffer--dashboard .hub-page-buffer-title {
+  font-family: Poppins, 'DM Sans', system-ui, sans-serif;
+  font-weight: 600;
+}
+
+@keyframes hub-buffer-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes hub-buffer-pulse {
+  0%, 100% { opacity: 0.88; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-page-buffer-visual,
+  .hub-page-buffer-spinner {
+    animation: none;
+  }
+}

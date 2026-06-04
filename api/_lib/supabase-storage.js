@@ -71,7 +71,8 @@ async function resolveImageUrl({ folder, logoUrl, logoBase64, logoMime, logoFile
   });
   if (error) throw new Error(error.message);
 
-  return publicObjectUrl(name);
+  const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(name);
+  return (pub && pub.publicUrl) || publicObjectUrl(name);
 }
 
 module.exports = {

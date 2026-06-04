@@ -614,15 +614,22 @@
 
     const eventIds = res.data.eventIds || (res.data.events || []).map((ev) => ev.id);
     const events = res.data.events || (res.data.event ? [res.data.event] : []);
+    const leadImage =
+      (events[0] && events[0].imageUrl) ||
+      document.getElementById('ee-photo-preview-img')?.src ||
+      document.getElementById('ee-photo-url')?.value.trim() ||
+      '';
     goToTicketSetup({
       title,
       organiserGroupId,
       eventFormat: locFields.eventFormat,
       eventIds,
+      imageUrl: leadImage,
       events: events.map((ev) => ({
         id: ev.id,
         title: ev.title,
         date: ev.date,
+        imageUrl: ev.imageUrl || leadImage,
       })),
     });
   }

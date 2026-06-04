@@ -362,6 +362,13 @@
     updateCounts(events);
   }
 
+  function setLoading(on) {
+    if (global.hubLoading) {
+      if (on) global.hubLoading.show('events-load-overlay');
+      else global.hubLoading.hide('events-load-overlay');
+    }
+  }
+
   function setStatus(msg, isError) {
     if (!els.status) return;
     els.status.textContent = msg;
@@ -378,7 +385,8 @@
   };
 
   async function load() {
-    setStatus('Loading events…', false);
+    setLoading(true);
+    setStatus('', false);
     try {
       const res = await fetch(API);
       const data = await res.json();
@@ -410,18 +418,23 @@
       var afterGeo = window.hubEnrichEventCoords
         ? window.hubEnrichEventCoords(events)
         : Promise.resolve();
-      afterGeo.then(function () {
-        fillFilterOptions();
-        currentPage = 1;
-        if (window.hubApplyFilters) window.hubApplyFilters();
-        else renderAll();
-      });
+      afterGeo
+        .then(function () {
+          fillFilterOptions();
+          currentPage = 1;
+          if (window.hubApplyFilters) window.hubApplyFilters();
+          else renderAll();
+        })
+        .finally(function () {
+          setLoading(false);
+        });
     } catch (e) {
       setStatus('Could not reach /api/events. Deploy on Vercel or run `vercel dev` locally.', true);
       events = [];
       window.hubAllEvents = events;
       fillFilterOptions();
       renderAll();
+      setLoading(false);
     }
   }
 

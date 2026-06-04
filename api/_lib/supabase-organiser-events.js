@@ -233,10 +233,8 @@ async function getEventById(eventId) {
   return rowToEvent(data);
 }
 
-async function buildEventRow(payload, eventId) {
-  const dates = parseDateIso(payload.date, payload.endDate);
-  let photo_url = payload.photoUrl && /^https?:\/\//i.test(payload.photoUrl) ? payload.photoUrl : null;
-  if (payload.photoBase64 || payload.photoUrl) {
+async function resolveEventPhotoUrl(payload, eventId) {
+  if (payload.photoBase64) {
     try {
       const url = await resolveImageUrl({
         folder: `events/${eventId || 'new'}`,
@@ -245,18 +243,28 @@ async function buildEventRow(payload, eventId) {
         logoMime: payload.photoMime,
         logoFilename: payload.photoFilename,
       });
-      if (url) photo_url = url;
+      if (url) return url;
     } catch (e) {
       const err = new Error(e.message || 'Could not upload event photo');
       err.logoWarning = err.message;
       throw err;
     }
   }
+  if (Object.prototype.hasOwnProperty.call(payload, 'photoUrl')) {
+    const url = String(payload.photoUrl || '').trim();
+    if (url && /^https?:\/\//i.test(url)) return url;
+    return null;
+  }
+  return undefined;
+}
 
-  return {
+async function buildEventRow(payload, eventId, mode) {
+  const dates = parseDateIso(payload.date, payload.endDate);
+  const photo_url = await resolveEventPhotoUrl(payload, eventId);
+
+  const row = {
     title: payload.title,
     description: composeDescription(payload.description, payload.attendeeExtras),
-    photo_url,
     event_type: mapEventType(payload.type),
     meeting_type: mapMeetingType(payload.eventFormat),
     venue: payload.venue || null,
@@ -270,11 +278,14 @@ async function buildEventRow(payload, eventId) {
     approval_status: mapApprovalStatus(payload.listingStatus),
     organiser_id: payload.groupId || null,
   };
+  if (photo_url !== undefined) row.photo_url = photo_url;
+  else if (mode === 'create') row.photo_url = null;
+  return row;
 }
 
 async function createEvent(payload) {
   const sb = getSupabaseAdmin();
-  const row = await buildEventRow(payload, 'new');
+  const row = await buildEventRow(payload, 'new', 'create');
   const { data, error } = await sb.from('events').insert(row).select('*').single();
   if (error) throw new Error(error.message);
   return rowToEvent(data);
@@ -282,7 +293,7 @@ async function createEvent(payload) {
 
 async function updateEvent(eventId, payload) {
   const sb = getSupabaseAdmin();
-  const row = await buildEventRow({ ...payload, groupId: payload.groupId }, eventId);
+  const row = await buildEventRow({ ...payload, groupId: payload.groupId }, eventId, 'update');
   const { data, error } = await sb.from('events').update(row).eq('id', eventId).select('*').single();
   if (error) throw new Error(error.message);
   return rowToEvent(data);

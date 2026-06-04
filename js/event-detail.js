@@ -996,19 +996,29 @@
     }
   }
 
+  function setEventLoading(on) {
+    if (window.hubLoading) {
+      if (on) window.hubLoading.show('event-detail-load-overlay');
+      else window.hubLoading.hide('event-detail-load-overlay');
+    }
+  }
+
   async function boot() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
 
     if (!id && !params.get('title')) {
+      setEventLoading(false);
       const tiersEl = document.getElementById('ticket-tiers');
       if (tiersEl) {
         tiersEl.innerHTML =
-          '<p class="ticket-load-hint">Open an event from <a href="index.html">Browse events</a> to load live ticket data from Airtable.</p>';
+          '<p class="ticket-load-hint">Open an event from <a href="index.html">Browse events</a> to load live ticket data.</p>';
       }
       return;
     }
 
+    setEventLoading(true);
+    try {
     if (id) {
       const tiersEl = document.getElementById('ticket-tiers');
       if (tiersEl) tiersEl.innerHTML = '<p class="ticket-load-hint">Loading tickets…</p>';
@@ -1074,6 +1084,9 @@
       initTicketPanel(ev);
       initContactHost(ev);
       initActions(ev);
+    }
+    } finally {
+      setEventLoading(false);
     }
   }
 

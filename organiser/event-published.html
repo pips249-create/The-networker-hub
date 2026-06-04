@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Event published – Organiser – The Networker Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css?v=20260614" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
+  </head>
+  <body class="organiser-event-edit-page organiser-published-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260612" data-root="../" data-page="organiser"></script>
+
+    <div class="ee-wrap ep-wrap">
+      <div class="ep-success" role="status">
+        <span class="ep-success-icon" aria-hidden="true">✓</span>
+        <h1 class="ep-title">Your event is now published</h1>
+        <p class="ep-lead" id="ep-lead">Attendees can find it on the hub. Preview your listing below, then share it with your network.</p>
+      </div>
+
+      <section class="ee-card ep-preview-card" aria-labelledby="ep-preview-heading">
+        <h2 id="ep-preview-heading">Preview your listing</h2>
+        <p class="ee-hint ep-preview-hint">This is how your event appears on the browse page.</p>
+        <div id="ep-preview-loading" class="ep-preview-loading">Loading preview…</div>
+        <article class="ep-listing-preview" id="ep-listing-preview" hidden>
+          <a class="ep-preview-media" id="ep-preview-link" href="#" target="_blank" rel="noopener">
+            <img id="ep-preview-img" src="../assets/event-placeholder.svg" alt="" width="640" height="400" />
+          </a>
+          <div class="ep-preview-body">
+            <h3 class="ep-preview-title" id="ep-preview-title">Event title</h3>
+            <p class="ep-preview-meta" id="ep-preview-meta"></p>
+            <p class="ep-preview-desc" id="ep-preview-desc"></p>
+            <a class="ee-btn ee-btn-outline ep-open-listing" id="ep-open-listing" href="#" target="_blank" rel="noopener"
+              >Open full listing page</a
+            >
+          </div>
+        </article>
+      </section>
+
+      <section class="ee-card ep-share-card" aria-labelledby="ep-share-heading">
+        <h2 id="ep-share-heading">Share on social media</h2>
+        <p class="ee-hint">Spread the word — copy your link or post directly.</p>
+        <div class="ep-share-link-row">
+          <input type="text" class="ep-share-input" id="ep-share-url" readonly aria-label="Share link" />
+          <button type="button" class="ee-btn ee-btn-primary" id="ep-copy-link">Copy link</button>
+        </div>
+        <p class="ep-copy-feedback" id="ep-copy-feedback" hidden>Link copied to clipboard</p>
+        <div class="ep-share-buttons" role="group" aria-label="Share to social networks">
+          <a class="ep-share-btn ep-share-linkedin" id="ep-share-linkedin" href="#" target="_blank" rel="noopener noreferrer"
+            >LinkedIn</a
+          >
+          <a class="ep-share-btn ep-share-facebook" id="ep-share-facebook" href="#" target="_blank" rel="noopener noreferrer"
+            >Facebook</a
+          >
+          <a class="ep-share-btn ep-share-x" id="ep-share-x" href="#" target="_blank" rel="noopener noreferrer">X</a>
+          <a class="ep-share-btn ep-share-whatsapp" id="ep-share-whatsapp" href="#" target="_blank" rel="noopener noreferrer"
+            >WhatsApp</a
+          >
+          <a class="ep-share-btn ep-share-email" id="ep-share-email" href="#">Email</a>
+        </div>
+      </section>
+
+      <div class="ep-actions">
+        <a class="ee-btn ee-btn-primary" href="index.html#events-list">Go to My Events</a>
+        <a class="ee-btn ee-btn-outline" href="../events/index.html" target="_blank" rel="noopener">View public events page</a>
+      </div>
+    </div>
+
+    <script src="../js/organiser-event-published.js?v=20260605"></script>
+  </body>
+</html>

@@ -1259,7 +1259,16 @@
     fillEventSelect(document.getElementById('ticket-event'));
   }
 
+  function setDashboardLoading(on) {
+    if (window.hubLoading) {
+      if (on) window.hubLoading.show('org-load-overlay');
+      else window.hubLoading.hide('org-load-overlay');
+    }
+  }
+
   async function loadBootstrap() {
+    setDashboardLoading(true);
+    try {
     const { ok, data } = await api('/api/organiser/bootstrap');
     if (!ok) throw new Error(data.message || data.error || 'load_failed');
     state.groups = data.groups || [];
@@ -1315,6 +1324,9 @@
 
     applyPendingGroupSave();
     renderAll();
+    } finally {
+      setDashboardLoading(false);
+    }
   }
 
   async function refresh() {

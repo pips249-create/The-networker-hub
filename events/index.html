@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css?v=20260610">
+<link rel="stylesheet" href="../css/hub-loading.css">
 <link rel="stylesheet" href="../css/events-page.css">
 <link rel="stylesheet" href="../css/events-filter-bar.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -26,7 +27,32 @@
   </div>
 </section>
 
-<main class="shell">
+<main class="shell hub-page-buffer-host is-loading" id="events-shell">
+  <div
+    class="hub-page-buffer is-active"
+    id="events-load-overlay"
+    data-buffer-host="events-shell"
+    role="status"
+    aria-live="polite"
+    aria-busy="true"
+  >
+    <div class="hub-page-buffer-card">
+      <img
+        class="hub-page-buffer-visual"
+        src="../assets/event-placeholder.svg"
+        alt=""
+        width="480"
+        height="300"
+        decoding="async"
+      />
+      <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
+      <h2 class="hub-page-buffer-title">Loading your events</h2>
+      <p class="hub-page-buffer-message">
+        We're buffering the latest listings — bear with us, it won't take long.
+      </p>
+    </div>
+  </div>
+
   <p class="load-status" id="load-status" hidden>Loading…</p>
 
   <div class="events-promo-section spotlight-sponsor-row">
@@ -187,6 +213,7 @@
 <script src="../js/events-filters.js"></script>
 <script src="../js/events-map.js"></script>
 <script src="../js/meeting-types.js?v=20260605"></script>
-<script src="../js/events.js?v=20260606e"></script>
+<script src="../js/hub-loading.js?v=20260605"></script>
+<script src="../js/events.js?v=20260606f"></script>
 </body>
 </html>

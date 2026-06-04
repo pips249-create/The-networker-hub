@@ -113,7 +113,33 @@
     const countEl = document.getElementById('ee-series-count');
     const pills = document.getElementById('ee-series-pills');
     const lead = document.getElementById('ee-tickets-lead');
+    const seriesCard = document.getElementById('ee-series-card');
     const n = eventIds.length;
+    const heroImg =
+      seriesMeta.imageUrl ||
+      (seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].imageUrl) ||
+      '';
+    if (heroImg && seriesCard && !seriesCard.querySelector('.ee-series-hero')) {
+      const wrap = document.createElement('div');
+      wrap.className = 'ee-series-hero';
+      const img = document.createElement('img');
+      img.src = heroImg;
+      img.alt = '';
+      img.width = 640;
+      img.height = 360;
+      img.decoding = 'async';
+      img.referrerPolicy = 'no-referrer';
+      img.onerror = function () {
+        wrap.remove();
+      };
+      wrap.appendChild(img);
+      const heading = seriesCard.querySelector('h2');
+      if (heading && heading.nextSibling) {
+        seriesCard.insertBefore(wrap, heading.nextSibling);
+      } else {
+        seriesCard.appendChild(wrap);
+      }
+    }
     if (countEl) {
       countEl.textContent = n + ' event' + (n === 1 ? '' : 's');
     }
@@ -359,15 +385,14 @@
       /* ignore */
     }
 
-    const created = data.created || tiers.length * eventIds.length;
-    alert(
-      'Created ' +
-        created +
-        ' ticket record' +
-        (created === 1 ? '' : 's') +
-        ' across your series.'
-    );
-    location.href = 'index.html#events-tickets';
+    const qs = new URLSearchParams();
+    qs.set('ids', eventIds.join(','));
+    if (seriesMeta.title) qs.set('title', seriesMeta.title);
+    if (seriesMeta.imageUrl) qs.set('image', seriesMeta.imageUrl);
+    const firstImg =
+      seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].imageUrl;
+    if (firstImg) qs.set('image', firstImg);
+    location.href = 'event-published.html?' + qs.toString();
   });
 
   init();

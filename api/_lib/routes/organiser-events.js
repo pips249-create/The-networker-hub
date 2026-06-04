@@ -46,11 +46,13 @@ function eventPayloadFromBody(body, email) {
     onlinePlatform: String(body.onlinePlatform || '').trim(),
     onlineLink: String(body.onlineLink || '').trim(),
     attendeeExtras: body.attendeeExtras || null,
-    photoUrl: String(body.photoUrl || body.imageUrl || '').trim(),
     photoBase64: body.photoBase64 || body.imageBase64 || null,
     photoMime: body.photoMime || body.imageMime || null,
     photoFilename: body.photoFilename || body.imageFilename || null,
   };
+  if (Object.prototype.hasOwnProperty.call(body, 'photoUrl') || Object.prototype.hasOwnProperty.call(body, 'imageUrl')) {
+    payload.photoUrl = String(body.photoUrl || body.imageUrl || '').trim();
+  }
   if (body.listingStatus != null) {
     payload.listingStatus = body.listingStatus;
   } else if (body.publish === true || body.publish === 'true') {
@@ -216,12 +218,21 @@ module.exports = async function handler(req, res) {
         events = [one];
       } else {
         const created = [];
+        let sharedPhotoUrl = null;
         for (const o of occ) {
-          const ev = await createEvent({
+          const slice = {
             ...base,
             date: o.date,
             endDate: o.endDate,
-          });
+          };
+          if (sharedPhotoUrl) {
+            delete slice.photoBase64;
+            delete slice.photoMime;
+            delete slice.photoFilename;
+            slice.photoUrl = sharedPhotoUrl;
+          }
+          const ev = await createEvent(slice);
+          if (!sharedPhotoUrl && ev.imageUrl) sharedPhotoUrl = ev.imageUrl;
           created.push(ev);
         }
         events = created;
