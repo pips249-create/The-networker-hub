@@ -25,7 +25,9 @@
   }
 
   function link(path, label, key, extraClass) {
-    var active = page === key ? ' aria-current="page"' : '';
+    var isActive =
+      page === key || (key === 'browse' && (page === 'events' || page === 'browse'));
+    var active = isActive ? ' aria-current="page"' : '';
     var cls = extraClass ? ' class="' + extraClass + '"' : '';
     return '<a href="' + href(path) + '"' + cls + active + '>' + label + '</a>';
   }
@@ -33,9 +35,10 @@
   function buildNavLinks(user) {
     var html = '';
     html += link('index.html#discover', 'Discover', 'home');
-    html += link('events/index.html', 'Events', 'events');
     html += link('index.html#academy', 'Academy', 'academy', 'nav-hide-mobile');
     html += link('index.html#for-you', 'For you', 'for-you', 'nav-hide-mobile');
+    html += link('about.html', 'About us', 'about');
+    html += link('faq.html', 'FAQ', 'faq');
     if (user && user.role === 'admin') {
       html += link('admin/index.html', 'Admin', 'admin', 'nav-admin');
     }
