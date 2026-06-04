@@ -5,7 +5,16 @@ const {
   json,
   airtableConfig,
   appendSystemLog,
+  USER_FIELDS,
 } = require('../lib/auth');
+
+function fieldNameOnRecord(recordFields, candidates, fallback) {
+  const f = recordFields || {};
+  for (const key of candidates) {
+    if (Object.prototype.hasOwnProperty.call(f, key)) return key;
+  }
+  return fallback;
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -55,9 +64,19 @@ module.exports = async function handler(req, res) {
     const token = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
+    const resetTokenField = fieldNameOnRecord(
+      user.fields,
+      USER_FIELDS.resetToken,
+      'Reset Token'
+    );
+    const resetExpiresField = fieldNameOnRecord(
+      user.fields,
+      USER_FIELDS.resetExpires,
+      'Reset Token Expires'
+    );
     await updateUser(user.id, {
-      'Reset Token': token,
-      'Reset Token Expires': expires,
+      [resetTokenField]: token,
+      [resetExpiresField]: expires,
     });
 
     const host = process.env.SITE_URL || 'https://the-networker-hub.vercel.app';

@@ -288,13 +288,35 @@ async function createUser({ email, passwordHash, role, name }) {
   return normalizeUser(data.records[0]);
 }
 
+function sanitizeAirtableFields(fields) {
+  const out = {};
+  Object.entries(fields).forEach(([key, val]) => {
+    if (val === '' || val === undefined) {
+      out[key] = null;
+    } else {
+      out[key] = val;
+    }
+  });
+  return out;
+}
+
 async function updateUser(recordId, fields) {
   const { usersTable } = airtableConfig();
+  const payload = sanitizeAirtableFields(fields);
   const resp = await airtableFetch(encodeURIComponent(usersTable), {
     method: 'PATCH',
-    body: JSON.stringify({ records: [{ id: recordId, fields }] }),
+    body: JSON.stringify({ records: [{ id: recordId, fields: payload }] }),
   });
-  if (!resp.ok) throw new Error('update_failed');
+  if (!resp.ok) {
+    const err = await resp.text();
+    const parsed = parseAirtableError(err);
+    const msg = parsed?.message || parsed?.type || err || 'update_failed';
+    const hint =
+      parsed?.type === 'UNKNOWN_FIELD_NAME'
+        ? ' Check Users table field names match: Email, Password Hash, Role, Reset Token, Reset Token Expires.'
+        : '';
+    throw new Error(String(msg).slice(0, 240) + hint);
+  }
   const data = await resp.json();
   return normalizeUser(data.records[0]);
 }

@@ -5,7 +5,16 @@ const {
   json,
   appendSystemLog,
   airtableConfig,
+  USER_FIELDS,
 } = require('../lib/auth');
+
+function fieldNameOnRecord(recordFields, candidates, fallback) {
+  const f = recordFields || {};
+  for (const key of candidates) {
+    if (Object.prototype.hasOwnProperty.call(f, key)) return key;
+  }
+  return fallback;
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -47,16 +56,43 @@ module.exports = async function handler(req, res) {
       return json(res, 400, { error: 'expired_token', message: 'This reset link has expired.' });
     }
 
+    const passwordField = fieldNameOnRecord(
+      user.fields,
+      USER_FIELDS.passwordHash,
+      'Password Hash'
+    );
+
     await updateUser(user.id, {
-      'Password Hash': hashPassword(password),
-      'Reset Token': '',
-      'Reset Token Expires': '',
+      [passwordField]: hashPassword(password),
     });
+
+    try {
+      const resetTokenField = fieldNameOnRecord(
+        user.fields,
+        USER_FIELDS.resetToken,
+        'Reset Token'
+      );
+      const resetExpiresField = fieldNameOnRecord(
+        user.fields,
+        USER_FIELDS.resetExpires,
+        'Reset Token Expires'
+      );
+      await updateUser(user.id, {
+        [resetTokenField]: null,
+        [resetExpiresField]: null,
+      });
+    } catch {
+      /* password saved; clearing token fields is optional */
+    }
 
     await appendSystemLog(`Password updated for ${user.email}`, 'auth');
 
     return json(res, 200, { ok: true, message: 'Password updated. You can sign in now.' });
   } catch (e) {
-    return json(res, 500, { error: 'server_error', message: e.message });
+    const msg = e.message || 'Could not update password.';
+    return json(res, 500, {
+      error: 'update_failed',
+      message: msg.includes('update_failed') ? 'Could not save to Airtable. Check Users table field names.' : msg,
+    });
   }
 };
