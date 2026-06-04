@@ -108,7 +108,8 @@ module.exports = async function handler(req, res) {
     return json(res, 500, {
       error: 'register_failed',
       message: e.message || 'Could not create your account.',
-      hint: 'Ensure your Airtable Users table has Email, Password Hash, and Role columns.',
+      hint:
+        'Ensure your Airtable Users table has Email and Password Hash. The Role field must already include an option such as Client or Member (the API cannot add new select options).',
     });
   }
 };

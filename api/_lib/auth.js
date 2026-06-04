@@ -341,7 +341,12 @@ function resolveProfileFieldName(recordFields, candidates, tableFieldNames) {
   return null;
 }
 
-let usersTableFieldCache = null;
+let usersTableMetaCache = null;
+
+const ROLE_AIRTABLE_CANDIDATES = {
+  admin: ['admin', 'Admin', 'Administrator'],
+  client: ['client', 'Client', 'member', 'Member', 'attendee', 'Attendee', 'user', 'User', 'organiser', 'Organiser'],
+};
 
 function usersProfileFieldAllowlist() {
   const raw = cleanEnvVal(process.env.AIRTABLE_USERS_PROFILE_COLUMNS);
@@ -354,17 +359,20 @@ function usersProfileFieldAllowlist() {
   );
 }
 
-async function getUsersTableFieldNames() {
-  if (usersTableFieldCache) return usersTableFieldCache;
+async function getUsersTableFieldsMeta() {
+  if (usersTableMetaCache) return usersTableMetaCache;
 
   const allow = usersProfileFieldAllowlist();
   if (allow) {
-    usersTableFieldCache = allow;
-    return usersTableFieldCache;
+    usersTableMetaCache = [...allow].map((name) => ({ name, type: 'unknown', options: [] }));
+    return usersTableMetaCache;
   }
 
   const { apiKey, baseId, usersTable } = airtableConfig();
-  if (!apiKey || !baseId) return null;
+  if (!apiKey || !baseId) {
+    usersTableMetaCache = [];
+    return usersTableMetaCache;
+  }
 
   try {
     const url = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`;
@@ -375,8 +383,15 @@ async function getUsersTableFieldNames() {
       const data = await resp.json();
       const table = (data.tables || []).find((t) => t.name === usersTable);
       if (table) {
-        usersTableFieldCache = new Set((table.fields || []).map((fld) => fld.name));
-        return usersTableFieldCache;
+        usersTableMetaCache = (table.fields || []).map((fld) => ({
+          name: fld.name,
+          type: fld.type,
+          options:
+            fld.type === 'singleSelect'
+              ? (fld.options?.choices || []).map((c) => c.name).filter(Boolean)
+              : [],
+        }));
+        return usersTableMetaCache;
       }
     }
   } catch {
@@ -393,12 +408,64 @@ async function getUsersTableFieldNames() {
         Object.keys(rec.fields || {}).forEach((k) => names.add(k));
       });
       if (names.size) {
-        usersTableFieldCache = names;
-        return usersTableFieldCache;
+        usersTableMetaCache = [...names].map((name) => ({ name, type: 'unknown', options: [] }));
+        return usersTableMetaCache;
       }
     }
   } catch {
     /* ignore */
+  }
+
+  usersTableMetaCache = [];
+  return usersTableMetaCache;
+}
+
+async function getUsersTableFieldNames() {
+  const meta = await getUsersTableFieldsMeta();
+  if (!meta.length) return null;
+  return new Set(meta.map((fld) => fld.name));
+}
+
+function roleFieldOptionsFromMeta(fieldsMeta, roleFieldName) {
+  if (!roleFieldName || !fieldsMeta.length) return [];
+  const field = fieldsMeta.find((f) => f.name === roleFieldName);
+  return field?.options || [];
+}
+
+function pickRoleAirtableValue(normalizedRole, options) {
+  const key = normalizedRole === USER_ROLES.ADMIN ? 'admin' : 'client';
+  const envVar = key === 'admin' ? 'AIRTABLE_USER_ROLE_ADMIN' : 'AIRTABLE_USER_ROLE_CLIENT';
+  const envVal = cleanEnvVal(process.env[envVar]);
+  const opts = Array.isArray(options) ? options.filter(Boolean) : [];
+
+  if (envVal) {
+    if (!opts.length) return envVal;
+    const envHit = opts.find((o) => String(o).toLowerCase() === envVal.toLowerCase());
+    if (envHit) return envHit;
+  }
+
+  const candidates = ROLE_AIRTABLE_CANDIDATES[key] || ROLE_AIRTABLE_CANDIDATES.client;
+  for (const candidate of candidates) {
+    const hit = opts.find((o) => String(o).toLowerCase() === candidate.toLowerCase());
+    if (hit) return hit;
+  }
+  for (const candidate of candidates) {
+    const hit = opts.find((o) => {
+      const ol = String(o).toLowerCase();
+      const cl = candidate.toLowerCase();
+      return ol.includes(cl) || cl.includes(ol);
+    });
+    if (hit) return hit;
+  }
+
+  if (opts.length) {
+    if (key === 'admin') {
+      const adminOpt = opts.find((o) => /admin/i.test(String(o)));
+      if (adminOpt) return adminOpt;
+    } else {
+      const clientOpt = opts.find((o) => !/admin/i.test(String(o)));
+      if (clientOpt) return clientOpt;
+    }
   }
 
   return null;
@@ -446,7 +513,8 @@ function normalizeUser(record) {
 }
 
 async function buildUserRecordFields({ email, passwordHash, role, name }) {
-  const tableFields = await getUsersTableFieldNames();
+  const fieldsMeta = await getUsersTableFieldsMeta();
+  const tableFields = fieldsMeta.length ? new Set(fieldsMeta.map((f) => f.name)) : null;
   const empty = {};
   const fields = {};
   const emailKey = resolveProfileFieldName(empty, USER_FIELDS.email, tableFields) || 'Email';
@@ -459,7 +527,11 @@ async function buildUserRecordFields({ email, passwordHash, role, name }) {
   fields[pwKey] = passwordHash;
   const normalizedRole = normalizeRole(role);
   if (roleKey) {
-    fields[roleKey] = normalizedRole === USER_ROLES.ADMIN ? USER_ROLES.ADMIN : USER_ROLES.CLIENT;
+    const roleOptions = roleFieldOptionsFromMeta(fieldsMeta, roleKey);
+    const roleValue = pickRoleAirtableValue(normalizedRole, roleOptions);
+    if (roleValue) {
+      fields[roleKey] = roleValue;
+    }
   }
   if (nameKey && name) fields[nameKey] = String(name).trim();
   return fields;
@@ -476,7 +548,13 @@ async function createUser({ email, passwordHash, role, name }) {
   });
   if (!resp.ok) {
     const err = await resp.text();
-    throw new Error(err || 'create_failed');
+    const parsed = parseAirtableError(err);
+    if (parsed?.type === 'INVALID_MULTIPLE_CHOICE_OPTIONS') {
+      throw new Error(
+        'The Role value in Airtable does not match your table options. Add a Role option such as Client or Member in the Users table, or set AIRTABLE_USER_ROLE_CLIENT in Vercel to match an existing option exactly.'
+      );
+    }
+    throw new Error(parsed?.message || err || 'create_failed');
   }
   const data = await resp.json();
   return normalizeUser(data.records[0]);
