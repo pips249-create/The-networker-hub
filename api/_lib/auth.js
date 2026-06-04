@@ -445,21 +445,33 @@ function normalizeUser(record) {
   };
 }
 
+async function buildUserRecordFields({ email, passwordHash, role, name }) {
+  const tableFields = await getUsersTableFieldNames();
+  const empty = {};
+  const fields = {};
+  const emailKey = resolveProfileFieldName(empty, USER_FIELDS.email, tableFields) || 'Email';
+  const pwKey =
+    resolveProfileFieldName(empty, USER_FIELDS.passwordHash, tableFields) || 'Password Hash';
+  const roleKey = resolveProfileFieldName(empty, USER_FIELDS.role, tableFields);
+  const nameKey = resolveProfileFieldName(empty, USER_FIELDS.name, tableFields);
+
+  fields[emailKey] = String(email).trim().toLowerCase();
+  fields[pwKey] = passwordHash;
+  const normalizedRole = normalizeRole(role);
+  if (roleKey) {
+    fields[roleKey] = normalizedRole === USER_ROLES.ADMIN ? USER_ROLES.ADMIN : USER_ROLES.CLIENT;
+  }
+  if (nameKey && name) fields[nameKey] = String(name).trim();
+  return fields;
+}
+
 async function createUser({ email, passwordHash, role, name }) {
   const { usersTable } = airtableConfig();
+  const fields = await buildUserRecordFields({ email, passwordHash, role, name });
   const resp = await airtableFetch(encodeURIComponent(usersTable), {
     method: 'POST',
     body: JSON.stringify({
-      records: [
-        {
-          fields: {
-            Email: email.toLowerCase(),
-            'Password Hash': passwordHash,
-            Role: role,
-            Name: name || '',
-          },
-        },
-      ],
+      records: [{ fields }],
     }),
   });
   if (!resp.ok) {

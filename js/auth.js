@@ -25,6 +25,23 @@
     return p.get('next') || '';
   }
 
+  function withNextParam(baseUrl) {
+    var next = getNextParam();
+    if (!next) return baseUrl;
+    var sep = baseUrl.indexOf('?') >= 0 ? '&' : '?';
+    return baseUrl + sep + 'next=' + encodeURIComponent(next);
+  }
+
+  var createAccountLink = document.getElementById('login-create-account');
+  if (createAccountLink) {
+    createAccountLink.setAttribute('href', withNextParam('register.html'));
+  }
+
+  var registerSignInLink = document.getElementById('register-signin-link');
+  if (registerSignInLink) {
+    registerSignInLink.setAttribute('href', withNextParam('login.html'));
+  }
+
   var loginForm = document.getElementById('login-form');
   if (loginForm) {
     loginForm.addEventListener('submit', function (e) {
@@ -56,6 +73,64 @@
             return;
           }
           window.location.href = result.data.redirect || next || '/events/index.html';
+        })
+        .catch(function () {
+          showMessage(msg, 'Could not reach the server. Try again shortly.', 'error');
+          btn.disabled = false;
+        });
+    });
+  }
+
+  var registerForm = document.getElementById('register-form');
+  if (registerForm) {
+    registerForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var msg = document.getElementById('auth-message');
+      var btn = document.getElementById('register-submit');
+      var name = document.getElementById('name').value.trim();
+      var email = document.getElementById('email').value.trim();
+      var password = document.getElementById('password').value;
+      var password2 = document.getElementById('password2').value;
+      var next = getNextParam();
+
+      if (password !== password2) {
+        showMessage(msg, 'Passwords do not match.', 'error');
+        return;
+      }
+      if (password.length < 8) {
+        showMessage(msg, 'Password must be at least 8 characters.', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      showMessage(msg, 'Creating your account…', 'success');
+
+      fetch('/api/auth/register', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          name: name,
+          next: next,
+        }),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data };
+          });
+        })
+        .then(function (result) {
+          if (!result.ok) {
+            showMessage(msg, result.data.message || 'Could not create account.', 'error');
+            btn.disabled = false;
+            return;
+          }
+          showMessage(msg, result.data.message || 'Account created — taking you in…', 'success');
+          setTimeout(function () {
+            window.location.href = result.data.redirect || next || '/account/index.html';
+          }, 600);
         })
         .catch(function () {
           showMessage(msg, 'Could not reach the server. Try again shortly.', 'error');

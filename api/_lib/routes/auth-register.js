@@ -1,15 +1,13 @@
 const {
-  verifyPassword,
+  hashPassword,
   findUserByEmail,
+  createUser,
   setSessionCookie,
-  clearSessionCookie,
   json,
-  sessionFromRequest,
+  setCors,
   appendSystemLog,
   airtableConfig,
-  setCors,
-  normalizeRole,
-  isAdminRole,
+  USER_ROLES,
   hubViewFromRequest,
 } = require('../auth');
 
@@ -19,12 +17,6 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-
-  if (req.method === 'GET') {
-    const session = sessionFromRequest(req);
-    return json(res, 200, { ok: !!session, user: session || null });
-  }
-
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
 
   const { apiKey, baseId } = airtableConfig();
@@ -49,62 +41,74 @@ module.exports = async function handler(req, res) {
       body = {};
     }
   }
+
   const email = String(body.email || '')
     .trim()
     .toLowerCase();
   const password = String(body.password || '');
+  const name = String(body.name || '').trim();
 
   if (!email || !password) {
-    return json(res, 400, { error: 'missing_credentials' });
+    return json(res, 400, {
+      error: 'missing_fields',
+      message: 'Enter your email and a password.',
+    });
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return json(res, 400, { error: 'invalid_email', message: 'Enter a valid email address.' });
+  }
+  if (password.length < 8) {
+    return json(res, 400, {
+      error: 'weak_password',
+      message: 'Password must be at least 8 characters.',
+    });
   }
 
   try {
-    const user = await findUserByEmail(email);
-    if (!user) {
-      return json(res, 401, {
-        error: 'no_account',
-        message:
-          'No account exists for this email yet. Create an account or use Forgot password if you have registered before.',
-      });
-    }
-    if (!user.passwordHash || !verifyPassword(password, user.passwordHash)) {
-      return json(res, 401, {
-        error: 'invalid_credentials',
-        message: 'Password is incorrect. Try again or use Forgot password.',
+    const existing = await findUserByEmail(email);
+    if (existing) {
+      return json(res, 409, {
+        error: 'email_exists',
+        message: 'An account with this email already exists. Sign in instead.',
       });
     }
 
-    const role = normalizeRole(user.role);
+    const user = await createUser({
+      email,
+      passwordHash: hashPassword(password),
+      role: USER_ROLES.CLIENT,
+      name,
+    });
+
     const sessionUser = {
       sub: user.id,
       email: user.email,
-      role,
-      name: user.name,
+      role: USER_ROLES.CLIENT,
+      name: user.name || name || '',
     };
 
     if (!setSessionCookie(res, sessionUser)) {
       return json(res, 503, { error: 'session_failed' });
     }
 
-    await appendSystemLog(`User signed in: ${user.email}`, 'auth');
+    await appendSystemLog(`New account registered: ${user.email}`, 'auth');
 
-    let redirect = body.next || '/events/index.html';
-    if (isAdminRole(role)) {
-      redirect = '/admin/index.html';
-    } else if (hubViewFromRequest(req) === 'organiser') {
+    let redirect = body.next || '/account/index.html';
+    if (hubViewFromRequest(req) === 'organiser') {
       redirect = body.next || '/organiser/index.html';
     }
 
-    return json(res, 200, {
+    return json(res, 201, {
       ok: true,
+      message: 'Your account has been created.',
       user: sessionUser,
       redirect,
     });
   } catch (e) {
     return json(res, 500, {
-      error: 'server_error',
-      message: e.message,
-      hint: 'Ensure your Airtable token can read/write the Users table.',
+      error: 'register_failed',
+      message: e.message || 'Could not create your account.',
+      hint: 'Ensure your Airtable Users table has Email, Password Hash, and Role columns.',
     });
   }
 };

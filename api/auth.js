@@ -6,6 +6,7 @@ const { json, setCors } = require('./_lib/auth');
 
 const routes = {
   login: require('./_lib/routes/auth-login'),
+  register: require('./_lib/routes/auth-register'),
   session: require('./_lib/routes/auth-session'),
   logout: require('./_lib/routes/auth-logout'),
   'hub-mode': require('./_lib/routes/auth-hub-mode'),
