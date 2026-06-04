@@ -456,6 +456,30 @@
   margin-bottom: 12px;
 }
 
+.org-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.org-field-hint {
+  font-size: 11px;
+  color: var(--od-text-soft);
+  margin: -8px 0 14px;
+  line-height: 1.45;
+}
+
+.org-field select {
+  width: 100%;
+  font: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--od-border-soft);
+  border-radius: var(--od-radius-sm);
+  background: var(--od-white);
+  color: var(--od-text-dark);
+}
+
 .org-btn {
   display: inline-flex;
   align-items: center;

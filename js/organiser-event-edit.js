@@ -63,9 +63,12 @@
     });
   }
 
+  const QuarterTime = window.OrganiserQuarterTime;
+
   function combineDateAndTime(dateKeyStr, timeStr) {
     const [y, m, d] = dateKeyStr.split('-').map(Number);
-    const [hh, mm] = (timeStr || '10:00').split(':').map(Number);
+    const rounded = QuarterTime ? QuarterTime.roundToQuarterHour(timeStr) : timeStr || '10:00';
+    const [hh, mm] = rounded.split(':').map(Number);
     const local = new Date(y, m - 1, d, hh || 0, mm || 0, 0);
     return local.toISOString();
   }
@@ -76,7 +79,7 @@
     const keys = [...selectedDates].sort();
     return keys.map((key) => ({
       date: combineDateAndTime(key, start),
-      endDate: end ? combineDateAndTime(key, end) : '',
+      endDate: combineDateAndTime(key, end),
     }));
   }
 
@@ -253,15 +256,20 @@
         const key = dateKey(d.getFullYear(), d.getMonth(), d.getDate());
         selectedDates.add(key);
         const t = pad2(d.getHours()) + ':' + pad2(d.getMinutes());
-        document.getElementById('ee-start-time').value = t;
+        const endT = ev.endDate
+          ? (() => {
+              const end = new Date(ev.endDate);
+              return Number.isNaN(end.getTime())
+                ? '12:00'
+                : pad2(end.getHours()) + ':' + pad2(end.getMinutes());
+            })()
+          : '12:00';
+        if (QuarterTime) {
+          QuarterTime.setValues('ee-start-time', 'ee-end-time', t, endT);
+        }
       }
-    }
-    if (ev.endDate) {
-      const end = new Date(ev.endDate);
-      if (!Number.isNaN(end.getTime())) {
-        document.getElementById('ee-end-time').value =
-          pad2(end.getHours()) + ':' + pad2(end.getMinutes());
-      }
+    } else if (QuarterTime) {
+      QuarterTime.setValues('ee-start-time', 'ee-end-time', '10:00', '12:00');
     }
     renderCalendar();
     renderSelectedList();
@@ -335,6 +343,14 @@
       return;
     }
 
+    const timeCheck = QuarterTime
+      ? QuarterTime.validatePair('ee-start-time', 'ee-end-time')
+      : { ok: true };
+    if (!timeCheck.ok) {
+      showAlert(timeCheck.message);
+      return;
+    }
+
     const payload = {
       organiserGroupId,
       title,
@@ -389,6 +405,9 @@
   });
 
   bindPhotoUpload();
+  if (QuarterTime) {
+    QuarterTime.initPair('ee-start-time', 'ee-end-time', { start: '10:00', end: '12:00' });
+  }
   renderCalendar();
   renderSelectedList();
   load();

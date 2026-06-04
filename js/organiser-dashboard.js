@@ -377,7 +377,19 @@
       const d = new Date(ev.date);
       if (!Number.isNaN(d.getTime())) {
         const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-        document.getElementById('event-date').value = local.toISOString().slice(0, 16);
+        document.getElementById('event-date').value = local.toISOString().slice(0, 10);
+        const pad2 = (n) => String(n).padStart(2, '0');
+        const startT = pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+        let endT = '12:00';
+        if (ev.endDate) {
+          const end = new Date(ev.endDate);
+          if (!Number.isNaN(end.getTime())) {
+            endT = pad2(end.getHours()) + ':' + pad2(end.getMinutes());
+          }
+        }
+        if (window.OrganiserQuarterTime) {
+          window.OrganiserQuarterTime.setValues('event-start-time', 'event-end-time', startT, endT);
+        }
       }
     } else {
       document.getElementById('event-date').value = '';
@@ -1189,10 +1201,28 @@
       const dateInput = document.getElementById('event-date').value;
       const type = document.getElementById('event-type').value;
       const description = document.getElementById('event-description').value.trim();
-      let date = '';
-      if (dateInput) {
-        date = new Date(dateInput).toISOString();
+      const QT = window.OrganiserQuarterTime;
+      const timeCheck = QT ? QT.validatePair('event-start-time', 'event-end-time') : { ok: true };
+      if (!dateInput) {
+        alert('Choose an event date.');
+        return;
       }
+      if (!timeCheck.ok) {
+        alert(timeCheck.message);
+        return;
+      }
+      function combineDateAndTime(dateStr, timeStr) {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const rounded = QT ? QT.roundToQuarterHour(timeStr) : timeStr;
+        const [hh, mm] = rounded.split(':').map(Number);
+        return new Date(y, m - 1, d, hh || 0, mm || 0, 0).toISOString();
+      }
+      const occurrences = [
+        {
+          date: combineDateAndTime(dateInput, timeCheck.start),
+          endDate: combineDateAndTime(dateInput, timeCheck.end),
+        },
+      ];
       const btn = e.submitter;
       if (btn) btn.disabled = true;
       const { ok, data } = await api('/api/organiser/events', {
@@ -1200,9 +1230,9 @@
         body: JSON.stringify({
           organiserGroupId,
           title,
-          date,
           type,
           description,
+          occurrences,
         }),
       });
       if (btn) btn.disabled = false;
@@ -1251,6 +1281,13 @@
   }
 
   function bindUi() {
+    if (window.OrganiserQuarterTime) {
+      window.OrganiserQuarterTime.initPair('event-start-time', 'event-end-time', {
+        start: '10:00',
+        end: '12:00',
+      });
+    }
+
     document.querySelectorAll('[data-org-modal-close]').forEach((el) => {
       el.addEventListener('click', closeModals);
     });

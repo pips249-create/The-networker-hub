@@ -372,9 +372,20 @@
             <input type="text" id="event-title" required placeholder="e.g. Lunch &amp; learn — Liverpool" />
           </div>
           <div class="org-field">
-            <label for="event-date">Date &amp; time</label>
-            <input type="datetime-local" id="event-date" />
+            <label for="event-date">Date</label>
+            <input type="date" id="event-date" required />
           </div>
+          <div class="org-row-2 org-field-row-time">
+            <div class="org-field">
+              <label for="event-start-time">Start time</label>
+              <select id="event-start-time" required></select>
+            </div>
+            <div class="org-field">
+              <label for="event-end-time">End time</label>
+              <select id="event-end-time" required></select>
+            </div>
+          </div>
+          <p class="org-field-hint">Times in 15-minute steps (e.g. 10:00, 10:15, 10:30).</p>
           <div class="org-field">
             <label for="event-type">Meeting type</label>
             <select id="event-type">
@@ -439,6 +450,7 @@
       </div>
     </div>
 
-    <script src="../js/organiser-dashboard.js?v=20260606d"></script>
+    <script src="../js/organiser-quarter-time.js?v=20260606e"></script>
+    <script src="../js/organiser-dashboard.js?v=20260606e"></script>
   </body>
 </html>

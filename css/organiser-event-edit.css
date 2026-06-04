@@ -93,6 +93,10 @@
   margin-bottom: 6px;
 }
 
+.ee-field select {
+  cursor: pointer;
+}
+
 .ee-field input,
 .ee-field select,
 .ee-field textarea {

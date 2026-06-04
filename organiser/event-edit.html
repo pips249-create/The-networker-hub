@@ -80,16 +80,18 @@
 
             <div class="ee-card">
               <h2>Time (same for each selected date)</h2>
+              <p class="ee-hint" style="margin-top:0">Times are in 15-minute steps. End time is required for every listing.</p>
               <div class="ee-row-2">
                 <div class="ee-field">
                   <label for="ee-start-time">Start time</label>
-                  <input type="time" id="ee-start-time" value="10:00" required />
+                  <select id="ee-start-time" required aria-describedby="ee-time-hint"></select>
                 </div>
                 <div class="ee-field">
                   <label for="ee-end-time">End time</label>
-                  <input type="time" id="ee-end-time" value="12:00" />
+                  <select id="ee-end-time" required aria-describedby="ee-time-hint"></select>
                 </div>
               </div>
+              <p class="ee-hint" id="ee-time-hint">Example: 10:00 – 12:00</p>
             </div>
           </div>
 
@@ -121,6 +123,7 @@
       </form>
     </div>
 
-    <script src="../js/organiser-event-edit.js?v=20260606c"></script>
+    <script src="../js/organiser-quarter-time.js?v=20260606e"></script>
+    <script src="../js/organiser-event-edit.js?v=20260606e"></script>
   </body>
 </html>
