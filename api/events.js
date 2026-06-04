@@ -18,7 +18,7 @@ const FIELD_MAP = {
   format: ['Meeting Format', 'Format'],
   type: ['Type', 'Event Type'],
   featured: ['Featured', 'Premium', 'Premium Spotlight'],
-  photo: ['Photo', 'Image', 'Cover'],
+  photo: ['Photo', 'Image', 'Cover', 'Photos', 'Picture', 'Event Photo', 'Event Image'],
   organiser: ['Organiser', 'Host', 'Organizer'],
 };
 
@@ -33,7 +33,15 @@ function pick(fields, keys) {
 
 function attachmentUrl(field) {
   if (!field) return null;
-  if (Array.isArray(field) && field[0]?.url) return field[0].url;
+  if (Array.isArray(field) && field[0]) {
+    const file = field[0];
+    return (
+      file.thumbnails?.large?.url ||
+      file.thumbnails?.full?.url ||
+      file.url ||
+      null
+    );
+  }
   if (typeof field === 'string' && field.startsWith('http')) return field;
   return null;
 }

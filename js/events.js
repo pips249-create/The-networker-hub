@@ -27,10 +27,21 @@
     return d.innerHTML;
   }
 
+  /** Use in src="" only — do not escape & like escapeHtml (breaks Airtable CDN URLs). */
+  function safePhotoUrl(url) {
+    if (!url) return '';
+    return String(url)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;');
+  }
+
+  function photoImg(url, className) {
+    if (!url) return '';
+    return `<img class="${className}" src="${safePhotoUrl(url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`;
+  }
+
   function premiumCard(ev) {
-    const bg = ev.photo
-      ? `background-image:url('${escapeHtml(ev.photo)}')`
-      : '';
     return `
       <article class="premium-card" data-id="${escapeHtml(ev.id)}"
         data-type="${escapeHtml(ev.type)}"
@@ -39,7 +50,7 @@
         data-industry="${escapeHtml(ev.industrySlug)}"
         data-format="${escapeHtml(ev.formatSlug)}"
         data-price="${escapeHtml(ev.priceKey)}">
-        <div class="premium-card-bg" style="${bg}"></div>
+        <div class="premium-card-bg">${photoImg(ev.photo, 'premium-card-img')}</div>
         <div class="premium-card-overlay"></div>
         <span class="premium-badge">Premium</span>
         <span class="premium-price">${escapeHtml(ev.price)}</span>
@@ -58,7 +69,7 @@
 
   function listingRow(ev) {
     const typeLabel = ev.type === 'exhibition' ? 'Exhibition' : 'Meeting';
-    const bg = ev.photo ? `style="background-image:url('${escapeHtml(ev.photo)}')"` : '';
+    const thumbClass = ev.photo ? 'thumb thumb--photo' : 'thumb';
     return `
       <article class="event-row" data-id="${escapeHtml(ev.id)}"
         data-type="${escapeHtml(ev.type)}"
@@ -67,7 +78,7 @@
         data-industry="${escapeHtml(ev.industrySlug)}"
         data-format="${escapeHtml(ev.formatSlug)}"
         data-price="${escapeHtml(ev.priceKey)}">
-        <div class="thumb" ${bg} role="img" aria-label=""></div>
+        <div class="${thumbClass}">${photoImg(ev.photo, 'thumb-img')}</div>
         <div>
           <span class="type-badge ${escapeHtml(ev.type)}">${typeLabel}</span>
           <h3>${escapeHtml(ev.title)}</h3>

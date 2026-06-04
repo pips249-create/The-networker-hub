@@ -228,8 +228,15 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg, #3a3537, #6a5a72);
-  background-size: cover;
-  background-position: center;
+  overflow: hidden;
+}
+.premium-card-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .premium-card-overlay {
   position: absolute;
@@ -369,9 +376,18 @@
 .results-bar { margin-bottom: 12px; }
 
 .listings .event-row .thumb {
-  background-size: cover;
-  background-position: center;
+  position: relative;
+  overflow: hidden;
   background-color: var(--lavender-light);
+}
+.listings .event-row .thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.listings .event-row .thumb:not(.thumb--photo) {
+  background: linear-gradient(135deg, var(--lavender-soft), var(--lavender));
 }
 .listings .event-row.is-hidden { display: none; }
 .event-card.is-hidden { display: none; }
