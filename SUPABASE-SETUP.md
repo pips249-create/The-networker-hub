@@ -114,7 +114,17 @@ Then open `http://localhost:3000/api/auth/config-check`.
 
 ---
 
-## 7. What to send in your next message
+## 7. Import Airtable data
+
+```bash
+cd ~/Desktop/The-networker-hub
+npm install
+node migrate.js
+```
+
+See `scripts/MIGRATE.md` for required `.env` keys.
+
+## 8. What to send in your next message
 
 So we can start coding immediately:
 

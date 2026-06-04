@@ -2,7 +2,11 @@
   "name": "the-networker-hub",
   "private": true,
   "description": "The Networker Hub — static site + Vercel serverless API",
+  "scripts": {
+    "migrate": "node migrate.js"
+  },
   "dependencies": {
-    "@supabase/supabase-js": "^2.49.1"
+    "@supabase/supabase-js": "^2.49.1",
+    "dotenv": "^16.4.7"
   }
 }
