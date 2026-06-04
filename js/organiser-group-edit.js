@@ -173,6 +173,15 @@
       return;
     }
 
+    const logoWarning = res.data.logoWarning || res.data.group?.logoWarning;
+    if (logoWarning) {
+      showAlert(logoWarning);
+      setTimeout(() => {
+        location.href = 'index.html#groups';
+      }, 3500);
+      return;
+    }
+
     location.href = 'index.html#groups';
   });
 

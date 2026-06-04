@@ -77,7 +77,11 @@ module.exports = async function handler(req, res) {
         logoMime: body.logoMime,
         logoFilename: body.logoFilename,
       });
-      return json(res, 200, { ok: true, group });
+      return json(res, 200, {
+        ok: true,
+        group,
+        logoWarning: group.logoWarning || null,
+      });
     } catch (e) {
       return json(res, e.status || 500, {
         error: 'group_update_failed',
@@ -112,7 +116,11 @@ module.exports = async function handler(req, res) {
         logoMime,
         logoFilename,
       });
-      return json(res, 201, { ok: true, group });
+      return json(res, 201, {
+        ok: true,
+        group,
+        logoWarning: group.logoWarning || null,
+      });
     } catch (e) {
       return json(res, e.status || 500, {
         error: 'group_create_failed',

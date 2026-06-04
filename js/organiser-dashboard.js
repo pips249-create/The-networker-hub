@@ -1204,11 +1204,13 @@
         alert(data.message || data.error || 'Could not create group');
         return;
       }
+      const logoWarning = data.logoWarning || data.group?.logoWarning;
       closeModals();
       document.getElementById('form-group').reset();
       resetGroupLogoPicker();
       await refresh();
       setRoute('groups');
+      if (logoWarning) alert(logoWarning);
     });
 
     document.getElementById('form-ticket').addEventListener('submit', async (e) => {

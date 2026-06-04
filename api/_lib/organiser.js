@@ -450,35 +450,73 @@ async function listTicketsForEventIds(eventIds) {
   return records.map(recordToOrganiserTicket).filter((t) => eventSet.has(t.eventId));
 }
 
-async function uploadImageForAirtable({ base64, mime, filename }) {
+function decodeUploadBuffer(base64) {
   const raw = String(base64 || '').replace(/^data:[^;]+;base64,/, '');
   if (!raw) return null;
   const buffer = Buffer.from(raw, 'base64');
   if (buffer.length > 2 * 1024 * 1024) {
     throw new Error('Logo image must be under 2MB');
   }
-  const name = String(filename || 'logo.jpg').replace(/[^\w.\-]+/g, '_').slice(0, 80) || 'logo.jpg';
-  const type = mime || 'image/jpeg';
-  const boundary = '----hub' + Math.random().toString(36).slice(2);
-  const preamble =
-    `--${boundary}\r\n` +
-    `Content-Disposition: form-data; name="file"; filename="${name}"\r\n` +
-    `Content-Type: ${type}\r\n\r\n`;
-  const epilogue = `\r\n--${boundary}--\r\n`;
-  const body = Buffer.concat([
-    Buffer.from(preamble, 'utf8'),
-    buffer,
-    Buffer.from(epilogue, 'utf8'),
-  ]);
-  const resp = await fetch('https://0x0.st', {
-    method: 'POST',
-    headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
-    body,
-  });
-  if (!resp.ok) throw new Error('Could not upload logo for Airtable');
-  const url = (await resp.text()).trim();
-  if (!url.startsWith('http')) throw new Error('Could not upload logo for Airtable');
+  return buffer;
+}
+
+function sanitiseUploadFilename(filename) {
+  return String(filename || 'logo.jpg').replace(/[^\w.\-]+/g, '_').slice(0, 80) || 'logo.jpg';
+}
+
+async function uploadViaUguu(buffer, mime, filename) {
+  const form = new FormData();
+  form.append('files[]', new Blob([buffer], { type: mime }), filename);
+  const resp = await fetch('https://uguu.se/upload', { method: 'POST', body: form });
+  let data = {};
+  try {
+    data = await resp.json();
+  } catch {
+    data = {};
+  }
+  const url = data.files && data.files[0] && String(data.files[0].url || '').trim();
+  if (!resp.ok || !url.startsWith('http')) {
+    throw new Error('uguu_upload_failed');
+  }
   return url;
+}
+
+async function uploadViaTelegraph(buffer, mime, filename) {
+  const form = new FormData();
+  form.append('file', new Blob([buffer], { type: mime }), filename);
+  const resp = await fetch('https://telegra.ph/upload', { method: 'POST', body: form });
+  let data;
+  try {
+    data = await resp.json();
+  } catch {
+    data = null;
+  }
+  if (!Array.isArray(data) || !data[0] || !data[0].src) {
+    throw new Error('telegraph_upload_failed');
+  }
+  return 'https://telegra.ph' + String(data[0].src);
+}
+
+async function uploadImageForAirtable({ base64, mime, filename }) {
+  const buffer = decodeUploadBuffer(base64);
+  if (!buffer) return null;
+  const name = sanitiseUploadFilename(filename);
+  const type = mime || 'image/jpeg';
+  const providers = [uploadViaUguu, uploadViaTelegraph];
+  let lastErr;
+  for (const upload of providers) {
+    try {
+      const url = await upload(buffer, type, name);
+      if (url && url.startsWith('http')) return url;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw new Error(
+    lastErr && lastErr.message === 'Logo image must be under 2MB'
+      ? lastErr.message
+      : 'Could not upload logo for Airtable'
+  );
 }
 
 async function resolveLogoAttachment({ logoUrl, logoBase64, logoMime, logoFilename }) {
@@ -519,18 +557,21 @@ async function createGroup({
   if (location && wf.location) fields[wf.location] = String(location).trim();
   if (userId && wf.users) fields[wf.users] = [userId];
 
-  try {
-    const logoAttachment = await resolveLogoAttachment({
-      logoUrl,
-      logoBase64,
-      logoMime,
-      logoFilename,
-    });
-    if (logoAttachment && wf.image) fields[wf.image] = logoAttachment;
-  } catch (e) {
-    const err = new Error(e.message || 'logo_upload_failed');
-    err.status = 400;
-    throw err;
+  let logoWarning = null;
+  if (logoUrl || logoBase64) {
+    try {
+      const logoAttachment = await resolveLogoAttachment({
+        logoUrl,
+        logoBase64,
+        logoMime,
+        logoFilename,
+      });
+      if (logoAttachment && wf.image) fields[wf.image] = logoAttachment;
+    } catch (e) {
+      logoWarning =
+        e.message ||
+        'Logo could not be uploaded. Your profile was saved — add a logo URL on this page and save again.';
+    }
   }
 
   const resp = await airtableFetch(encodeURIComponent(table), {
@@ -545,7 +586,9 @@ async function createGroup({
     throw e;
   }
   const data = await resp.json();
-  return recordToGroup(data.records[0]);
+  const group = recordToGroup(data.records[0]);
+  if (logoWarning) group.logoWarning = logoWarning;
+  return group;
 }
 
 async function getGroupById(groupId) {
@@ -579,18 +622,23 @@ async function updateGroup(groupId, payload) {
   }
   if (payload.email && wf.email) fields[wf.email] = String(payload.email).toLowerCase();
 
-  try {
-    const logoAttachment = await resolveLogoAttachment({
-      logoUrl: payload.logoUrl,
-      logoBase64: payload.logoBase64,
-      logoMime: payload.logoMime,
-      logoFilename: payload.logoFilename,
-    });
-    if (logoAttachment && wf.image) fields[wf.image] = logoAttachment;
-  } catch (e) {
-    const err = new Error(e.message || 'logo_upload_failed');
-    err.status = 400;
-    throw err;
+  let logoWarning = null;
+  const hasLogo =
+    payload.logoUrl || payload.logoBase64 || payload.logoMime || payload.logoFilename;
+  if (hasLogo) {
+    try {
+      const logoAttachment = await resolveLogoAttachment({
+        logoUrl: payload.logoUrl,
+        logoBase64: payload.logoBase64,
+        logoMime: payload.logoMime,
+        logoFilename: payload.logoFilename,
+      });
+      if (logoAttachment && wf.image) fields[wf.image] = logoAttachment;
+    } catch (e) {
+      logoWarning =
+        e.message ||
+        'Logo could not be uploaded. Other changes were saved — try a logo URL instead.';
+    }
   }
 
   const resp = await airtableFetch(encodeURIComponent(table), {
@@ -605,7 +653,9 @@ async function updateGroup(groupId, payload) {
     throw e;
   }
   const data = await resp.json();
-  return recordToGroup(data.records[0]);
+  const group = recordToGroup(data.records[0]);
+  if (logoWarning) group.logoWarning = logoWarning;
+  return group;
 }
 
 async function buildEventRecordFields({
@@ -655,7 +705,7 @@ async function buildEventRecordFields({
       });
       if (photoAttachment) fields[imageField] = photoAttachment;
     } catch (e) {
-      const err = new Error(e.message || 'photo_upload_failed');
+      const err = new Error(e.message || 'Could not upload event photo for Airtable');
       err.status = 400;
       throw err;
     }
