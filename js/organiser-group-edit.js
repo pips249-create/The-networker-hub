@@ -149,14 +149,18 @@
     }
   }
 
+  function deriveStatusKeyFromRaw(statusRaw) {
+    const raw = String(statusRaw || '').toLowerCase();
+    if (!raw) return 'draft';
+    if (/unpublish/.test(raw)) return 'unpublished';
+    if (/^draft$|pending|hidden|inactive/.test(raw)) return 'draft';
+    if (/publish|live|active|public|approved|visible/.test(raw)) return 'live';
+    return 'draft';
+  }
+
   function enrichGroupFromApi(raw) {
     if (!raw) return null;
-    const statusKey =
-      raw.statusKey ||
-      (String(raw.statusRaw || '').toLowerCase().includes('publish') &&
-      !/unpublish|draft/.test(String(raw.statusRaw || '').toLowerCase())
-        ? 'live'
-        : 'draft');
+    const statusKey = raw.statusKey || deriveStatusKeyFromRaw(raw.statusRaw);
     const statusLabel =
       raw.statusLabel ||
       (statusKey === 'live' ? 'Live' : statusKey === 'unpublished' ? 'Unpublished' : 'Draft');

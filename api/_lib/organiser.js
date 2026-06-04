@@ -24,7 +24,15 @@ const GROUP_FIELDS = {
   image: ['Logo', 'Photo', 'Organiser Image', 'Image', 'Cover', 'Organiser Photo'],
   website: ['Website', 'Website URL', 'URL', 'Web', 'Site', 'Company Website'],
   location: ['Location', 'City', 'Region', 'Address', 'Area', 'Based in', 'Town'],
-  status: ['Status', 'Profile Status', 'Listing Status', 'Approval Status'],
+  status: [
+    'Status',
+    'Profile Status',
+    'Listing Status',
+    'Approval Status',
+    'Publish Status',
+    'Published',
+    'Visibility',
+  ],
   unpublishedAt: ['Unpublished At', 'Unpublished Date', 'Date Unpublished'],
   rating: ['Rating', 'Average Rating', 'Stars'],
   revenue: ['Revenue', 'Total Revenue'],
@@ -48,6 +56,36 @@ function normalizeListingStatus(input) {
 function listingStatusAirtableValue(input) {
   const key = normalizeListingStatus(input);
   return LISTING_STATUS[key] || LISTING_STATUS.draft;
+}
+
+const STATUS_OPTION_CANDIDATES = {
+  published: ['Published', 'Live', 'Active', 'Public', 'Approved', 'Visible', 'On'],
+  draft: ['Draft', 'Pending', 'Inactive'],
+  unpublished: ['Unpublished', 'Hidden', 'Off', 'Archived', 'Removed'],
+};
+
+function pickStatusOption(key, options) {
+  const normalizedKey = normalizeListingStatus(key);
+  const candidates = STATUS_OPTION_CANDIDATES[normalizedKey] || STATUS_OPTION_CANDIDATES.draft;
+  const opts = Array.isArray(options) ? options.filter(Boolean) : [];
+
+  for (const candidate of candidates) {
+    const hit = opts.find((o) => String(o).toLowerCase() === candidate.toLowerCase());
+    if (hit) return hit;
+  }
+  for (const candidate of candidates) {
+    const hit = opts.find((o) => {
+      const ol = String(o).toLowerCase();
+      const cl = candidate.toLowerCase();
+      return ol.includes(cl) || cl.includes(ol);
+    });
+    if (hit) return hit;
+  }
+  if (normalizedKey === 'published' && opts.length) {
+    const nonDraft = opts.find((o) => !/draft|unpublish|pending|hidden|inactive/i.test(String(o)));
+    if (nonDraft) return nonDraft;
+  }
+  return LISTING_STATUS[normalizedKey] || LISTING_STATUS.draft;
 }
 
 function isPublicListingVisible(statusRaw) {
@@ -117,6 +155,7 @@ const TICKET_WRITE_FIELDS = {
 let writeFieldCache = null;
 let eventLinkFieldCache = null;
 let tableFieldNamesCache = {};
+let tableFieldsMetaCache = {};
 
 function pick(fields, keys) {
   for (const key of keys) {
@@ -212,6 +251,42 @@ function isPlatformAdmin(session) {
   return isAdminRole(session?.role);
 }
 
+async function getTableFieldsMeta(tableName) {
+  if (tableFieldsMetaCache[tableName]) return tableFieldsMetaCache[tableName];
+  const names = await getTableFieldNames(tableName);
+  const { apiKey, baseId } = airtableConfig();
+  if (!apiKey || !baseId || !names.length) {
+    tableFieldsMetaCache[tableName] = [];
+    return [];
+  }
+  try {
+    const resp = await fetch(`https://api.airtable.com/v0/meta/bases/${baseId}/tables`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (!resp.ok) {
+      tableFieldsMetaCache[tableName] = [];
+      return [];
+    }
+    const data = await resp.json();
+    const table = (data.tables || []).find(
+      (t) => String(t.name || '').toLowerCase() === String(tableName).toLowerCase()
+    );
+    const fields = (table?.fields || []).map((f) => ({
+      name: f.name,
+      type: f.type,
+      options:
+        f.type === 'singleSelect'
+          ? (f.options?.choices || []).map((c) => c.name).filter(Boolean)
+          : [],
+    }));
+    tableFieldsMetaCache[tableName] = fields;
+    return fields;
+  } catch {
+    tableFieldsMetaCache[tableName] = [];
+    return [];
+  }
+}
+
 async function getTableFieldNames(tableName) {
   if (tableFieldNamesCache[tableName]) return tableFieldNamesCache[tableName];
   const { apiKey, baseId } = airtableConfig();
@@ -273,10 +348,15 @@ async function getOrganiserWriteFields() {
   if (writeFieldCache) return writeFieldCache;
   const { groups: table } = tables();
   try {
-    const [sample, schemaFields] = await Promise.all([
+    const [sample, schemaFields, fieldsMeta] = await Promise.all([
       sampleRecordFields(table),
       getTableFieldNames(table),
+      getTableFieldsMeta(table),
     ]);
+    const statusField = resolveFieldName(sample, GROUP_FIELDS.status, null, schemaFields);
+    const statusMeta = statusField
+      ? fieldsMeta.find((m) => m.name === statusField)
+      : null;
     writeFieldCache = {
       name: resolveFieldName(sample, GROUP_FIELDS.name, 'Organiser Name', schemaFields),
       email: resolveFieldName(sample, GROUP_FIELDS.ownerEmail, 'Email', schemaFields),
@@ -285,7 +365,8 @@ async function getOrganiserWriteFields() {
       image: resolveFieldName(sample, GROUP_FIELDS.image, 'Logo', schemaFields),
       website: resolveFieldName(sample, GROUP_FIELDS.website, 'Website', schemaFields),
       location: resolveFieldName(sample, GROUP_FIELDS.location, null, schemaFields),
-      status: resolveFieldName(sample, GROUP_FIELDS.status, 'Status', schemaFields),
+      status: statusField,
+      statusOptions: statusMeta?.options || [],
       unpublishedAt: resolveFieldName(sample, GROUP_FIELDS.unpublishedAt, null, schemaFields),
     };
   } catch {
@@ -297,7 +378,8 @@ async function getOrganiserWriteFields() {
       image: 'Logo',
       website: null,
       location: null,
-      status: 'Status',
+      status: null,
+      statusOptions: [],
       unpublishedAt: null,
     };
   }
@@ -305,16 +387,21 @@ async function getOrganiserWriteFields() {
 }
 
 function applyGroupListingStatus(fields, wf, listingStatus, { markUnpublished = false } = {}) {
-  if (!wf.status) return;
+  if (!wf || !wf.status) return false;
   const key = normalizeListingStatus(listingStatus);
-  fields[wf.status] = LISTING_STATUS[key];
+  const value =
+    wf.statusOptions && wf.statusOptions.length
+      ? pickStatusOption(key, wf.statusOptions)
+      : listingStatusAirtableValue(key);
+  fields[wf.status] = value;
   if (wf.unpublishedAt) {
     if (markUnpublished || key === 'unpublished') {
       fields[wf.unpublishedAt] = new Date().toISOString().slice(0, 10);
     } else if (key === 'published') {
-      fields[wf.unpublishedAt] = '';
+      fields[wf.unpublishedAt] = null;
     }
   }
+  return true;
 }
 
 async function getEventOrganiserLinkField() {
@@ -358,7 +445,12 @@ async function fetchAllRecords(table, view) {
 
 function recordToGroup(record) {
   const f = record.fields || {};
-  const statusRaw = String(pick(f, GROUP_FIELDS.status) || '').trim();
+  let statusRaw = '';
+  if (writeFieldCache && writeFieldCache.status && f[writeFieldCache.status] != null && f[writeFieldCache.status] !== '') {
+    statusRaw = String(f[writeFieldCache.status]).trim();
+  } else {
+    statusRaw = String(pick(f, GROUP_FIELDS.status) || '').trim();
+  }
   const ratingRaw = pick(f, GROUP_FIELDS.rating);
   return {
     id: record.id,
@@ -673,7 +765,14 @@ async function createGroup({
   if (website && wf.website) fields[wf.website] = String(website).trim();
   if (location && wf.location) fields[wf.location] = String(location).trim();
   if (userId && wf.users) fields[wf.users] = [userId];
-  applyGroupListingStatus(fields, wf, listingStatus || 'draft');
+  const statusApplied = applyGroupListingStatus(fields, wf, listingStatus || 'draft');
+  if (listingStatus && normalizeListingStatus(listingStatus) === 'published' && !statusApplied) {
+    const e = new Error(
+      'Your Airtable Organisers table needs a status column (e.g. Status or Profile Status) with Draft and Live/Published options.'
+    );
+    e.status = 400;
+    throw e;
+  }
 
   let logoWarning = null;
   if (logoUrl || logoBase64) {
@@ -742,7 +841,14 @@ async function updateGroup(groupId, payload) {
   if (payload.email && wf.email) fields[wf.email] = String(payload.email).toLowerCase();
   if (payload.listingStatus != null) {
     const markUnpublished = normalizeListingStatus(payload.listingStatus) === 'unpublished';
-    applyGroupListingStatus(fields, wf, payload.listingStatus, { markUnpublished });
+    const applied = applyGroupListingStatus(fields, wf, payload.listingStatus, { markUnpublished });
+    if (!applied) {
+      const e = new Error(
+        'Your Airtable Organisers table needs a status column (e.g. Status or Profile Status) with Draft and Live/Published options.'
+      );
+      e.status = 400;
+      throw e;
+    }
   }
 
   let logoWarning = null;
@@ -1115,6 +1221,15 @@ function eventBelongsToGroup(ev, groupId) {
   return (ev.organiserGroupIds || []).includes(groupId);
 }
 
+function deriveGroupListingStatus(statusRaw) {
+  const raw = String(statusRaw || '').toLowerCase().trim();
+  if (!raw) return { key: 'draft', label: 'Draft' };
+  if (/unpublish/.test(raw)) return { key: 'unpublished', label: 'Unpublished' };
+  if (/^draft$|pending|hidden|inactive/.test(raw)) return { key: 'draft', label: 'Draft' };
+  if (/publish|live|active|public|approved|visible/.test(raw)) return { key: 'live', label: 'Live' };
+  return { key: 'draft', label: 'Draft' };
+}
+
 function deriveListingStatus(statusRaw, dateIso) {
   const raw = String(statusRaw || '').toLowerCase();
   if (/unpublish/.test(raw)) {
@@ -1181,10 +1296,7 @@ function enrichOrganiserOverview(groups, events, tickets) {
         : ratings.length
           ? ratings.reduce((a, b) => a + b, 0) / ratings.length
           : null;
-    const status = deriveListingStatus(
-      g.statusRaw,
-      groupEvents.map((e) => e.date).filter(Boolean).sort()[0]
-    );
+    const status = deriveGroupListingStatus(g.statusRaw);
     return {
       ...g,
       eventsListed,

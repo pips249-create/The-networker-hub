@@ -73,7 +73,15 @@ module.exports = async function handler(req, res) {
     const name = String(body.name || '').trim();
     const listingStatus = body.listingStatus != null ? body.listingStatus : null;
     if (!groupId) return json(res, 400, { error: 'missing_group_id' });
-    if (!name && listingStatus == null) return json(res, 400, { error: 'missing_name' });
+    const hasProfileFields =
+      name ||
+      listingStatus != null ||
+      body.description !== undefined ||
+      body.website !== undefined ||
+      body.location !== undefined ||
+      body.logoUrl ||
+      body.logoBase64;
+    if (!hasProfileFields) return json(res, 400, { error: 'missing_fields' });
 
     try {
       const groups = await listGroupsForSession(auth.session);
