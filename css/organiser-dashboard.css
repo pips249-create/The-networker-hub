@@ -3,22 +3,22 @@
 
 .organiser-dashboard-page {
   box-sizing: border-box;
-  --od-purple: #9d60a7;
-  --od-purple-dark: #7a3d8a;
-  --od-purple-deep: #2d1b5e;
-  --od-purple-light: #e8dbea;
-  --od-purple-pale: #f3eef5;
+  --od-purple: #0d6e7a;
+  --od-purple-dark: #084a52;
+  --od-purple-deep: #1e3a4f;
+  --od-purple-light: #d4f0f3;
+  --od-purple-pale: #e8f6f8;
   --od-gold: #bd932e;
   --od-gold-light: #fdf3df;
-  --od-text-dark: #2d1b3d;
-  --od-text-mid: #5a4a62;
-  --od-text-soft: #9d87aa;
-  --od-bg: #f0ecf7;
+  --od-text-dark: #1a2e3b;
+  --od-text-mid: #4a6272;
+  --od-text-soft: #7a94a3;
+  --od-bg: #f4f8fa;
   --od-white: #ffffff;
-  --od-border: #d4aee0;
-  --od-border-soft: #e8dbea;
-  --od-green: #2a7a30;
-  --od-green-light: #eaf4e6;
+  --od-border: #9dd9cc;
+  --od-border-soft: #cfe4ea;
+  --od-green: #1d7a4a;
+  --od-green-light: #e3f5eb;
   --od-red: #c03030;
   --od-red-light: #fbeaea;
   --od-radius: 10px;

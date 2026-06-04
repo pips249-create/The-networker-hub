@@ -55,10 +55,10 @@
 
 /**
  * Shared site navigation — same bar on every page.
- * NAV_BUILD=20260613 — Browse training page; Attend events in My Hub.
+ * NAV_BUILD=20260618 — Account settings in My Hub; colour themes swapped.
  */
 (function () {
-  var NAV_BUILD = '20260613';
+  var NAV_BUILD = '20260618';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
   var page = (script && script.getAttribute('data-page')) || '';
@@ -102,9 +102,10 @@
 
   function myHubDropdownHtml(user) {
     var hubActive =
-      page === 'organiser' || page === 'account' || page === 'admin';
+      page === 'organiser' || page === 'account' || page === 'settings' || page === 'admin';
     var organiserActive = page === 'organiser' ? ' aria-current="page"' : '';
     var accountActive = page === 'account' ? ' aria-current="page"' : '';
+    var settingsActive = page === 'settings' ? ' aria-current="page"' : '';
     var adminActive = page === 'admin' ? ' aria-current="page"' : '';
     var adminItem = '';
     if (user && user.role === 'admin') {
@@ -132,6 +133,11 @@
       '"' +
       accountActive +
       '>Attend events</a>' +
+      '<a role="menuitem" class="nav-dropdown-item" href="' +
+      href('account/settings.html') +
+      '"' +
+      settingsActive +
+      '>Account settings</a>' +
       adminItem +
       '<button type="button" role="menuitem" class="nav-dropdown-item nav-dropdown-signout" id="nav-signout">Sign out</button>' +
       '</div></div>'
@@ -249,7 +255,7 @@
     document.body.classList.add('hub-page-admin');
   } else if (page === 'organiser') {
     document.body.classList.add('hub-page-organiser');
-  } else if (page === 'account') {
+  } else if (page === 'account' || page === 'settings') {
     document.body.classList.add('hub-page-account');
   } else {
     document.body.classList.add('has-site-nav');

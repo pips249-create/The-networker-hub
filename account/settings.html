@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Account settings – The Networker Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css?v=20260618" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260618" />
+    <link rel="stylesheet" href="../css/account-settings.css?v=20260618" />
+  </head>
+  <body class="account-settings-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260618" data-root="../" data-page="settings"></script>
+
+    <div id="as-signin" class="as-signin" hidden>
+      <p>Sign in to manage your account details.</p>
+      <p style="margin-top: 12px">
+        <a class="as-btn as-btn-primary" href="../login.html?next=/account/settings.html">Sign in</a>
+      </p>
+    </div>
+
+    <main id="as-main" class="as-wrap" hidden>
+      <h1 class="as-title">Account settings</h1>
+      <p class="as-lead">Update your profile, location, marketing preferences and password.</p>
+
+      <div id="as-alert" class="as-alert" hidden role="status"></div>
+
+      <form id="as-profile-form">
+        <section class="as-card">
+          <h2>Your details</h2>
+          <p class="as-card-sub">Shown on bookings and organiser communications where relevant.</p>
+
+          <div class="as-field">
+            <label for="as-email">Email</label>
+            <input type="email" id="as-email" disabled autocomplete="email" />
+          </div>
+          <div class="as-field">
+            <label for="as-name">Full name</label>
+            <input type="text" id="as-name" name="name" autocomplete="name" required />
+          </div>
+          <div class="as-field">
+            <label for="as-location">Location</label>
+            <input
+              type="text"
+              id="as-location"
+              name="location"
+              placeholder="e.g. Manchester, UK or postcode"
+              autocomplete="address-level2"
+            />
+          </div>
+          <div class="as-field">
+            <label for="as-sector">Business sector</label>
+            <select id="as-sector" name="businessSector">
+              <option value="">Select a sector</option>
+              <option value="Professional services">Professional services</option>
+              <option value="Finance &amp; insurance">Finance &amp; insurance</option>
+              <option value="Technology">Technology</option>
+              <option value="Retail &amp; hospitality">Retail &amp; hospitality</option>
+              <option value="Manufacturing">Manufacturing</option>
+              <option value="Construction">Construction</option>
+              <option value="Health &amp; wellbeing">Health &amp; wellbeing</option>
+              <option value="Education &amp; training">Education &amp; training</option>
+              <option value="Creative &amp; media">Creative &amp; media</option>
+              <option value="Property &amp; real estate">Property &amp; real estate</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="as-field">
+            <label for="as-prefs">Market preferences</label>
+            <textarea
+              id="as-prefs"
+              name="marketPreferences"
+              placeholder="e.g. B2B networking, exhibitions, local meetups, training workshops…"
+            ></textarea>
+            <div class="as-checkgroup" id="as-prefs-quick" aria-label="Quick preference tags">
+              <label><input type="checkbox" value="Networking events" /> Networking events</label>
+              <label><input type="checkbox" value="Exhibitions" /> Exhibitions</label>
+              <label><input type="checkbox" value="Training &amp; workshops" /> Training &amp; workshops</label>
+              <label><input type="checkbox" value="Online events" /> Online events</label>
+              <label><input type="checkbox" value="Local meetups" /> Local meetups</label>
+            </div>
+          </div>
+          <div class="as-actions">
+            <button type="submit" class="as-btn as-btn-primary" id="as-save-profile">Save changes</button>
+          </div>
+        </section>
+      </form>
+
+      <form id="as-password-form">
+        <section class="as-card">
+          <h2>Password</h2>
+          <p class="as-card-sub">Choose a strong password you do not use elsewhere.</p>
+          <div class="as-field">
+            <label for="as-current-pw">Current password</label>
+            <input type="password" id="as-current-pw" autocomplete="current-password" required />
+          </div>
+          <div class="as-field">
+            <label for="as-new-pw">New password</label>
+            <input type="password" id="as-new-pw" minlength="8" autocomplete="new-password" required />
+          </div>
+          <div class="as-field">
+            <label for="as-confirm-pw">Confirm new password</label>
+            <input type="password" id="as-confirm-pw" minlength="8" autocomplete="new-password" required />
+          </div>
+          <div class="as-actions">
+            <button type="submit" class="as-btn as-btn-primary">Update password</button>
+            <a class="as-btn as-btn-outline" href="../forgot-password.html">Forgot password?</a>
+          </div>
+        </section>
+      </form>
+    </main>
+
+    <script src="../js/account-settings.js?v=20260618"></script>
+  </body>
+</html>

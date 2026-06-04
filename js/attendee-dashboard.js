@@ -307,11 +307,6 @@
     if (shell) shell.hidden = false;
     renderWelcome(sessionData.user);
 
-    if (sessionData.canOrganise) {
-      const orgLink = document.getElementById('ad-side-organiser');
-      if (orgLink) orgLink.hidden = false;
-    }
-
     const res = await fetch('/api/auth/attendee-dashboard', { credentials: 'include' });
     const data = await res.json();
     if (!data.ok) {

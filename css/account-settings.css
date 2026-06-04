@@ -1,0 +1,193 @@
+/* Account settings — uses attendee (purple) dashboard palette */
+.account-settings-page {
+  --as-purple: #9d60a7;
+  --as-purple-dark: #7a3d8a;
+  --as-purple-deep: #2d1b5e;
+  --as-purple-light: #e8dbea;
+  --as-purple-pale: #f3eef5;
+  --as-gold: #bd932e;
+  --as-text-dark: #2d1b3d;
+  --as-text-mid: #5a4a62;
+  --as-text-soft: #9d87aa;
+  --as-bg: #f0ecf7;
+  --as-white: #ffffff;
+  --as-border-soft: #e8dbea;
+  --as-radius: 10px;
+  --as-radius-sm: 6px;
+  font-family: 'Poppins', system-ui, sans-serif;
+  background: var(--as-bg);
+  color: var(--as-text-dark);
+  min-height: 100vh;
+}
+
+.account-settings-page .site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--as-border-soft);
+}
+
+.as-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px clamp(16px, 4vw, 32px) 64px;
+  box-sizing: border-box;
+}
+
+.as-title {
+  font-size: clamp(1.35rem, 3vw, 1.65rem);
+  font-weight: 700;
+  color: var(--as-purple-deep);
+  margin: 0 0 8px;
+}
+
+.as-lead {
+  font-size: 14px;
+  color: var(--as-text-mid);
+  margin: 0 0 28px;
+  line-height: 1.5;
+}
+
+.as-card {
+  background: var(--as-white);
+  border: 1px solid var(--as-border-soft);
+  border-radius: var(--as-radius);
+  padding: 22px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 12px rgba(45, 27, 61, 0.05);
+}
+
+.as-card h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--as-purple-dark);
+  margin: 0 0 4px;
+}
+
+.as-card-sub {
+  font-size: 12px;
+  color: var(--as-text-soft);
+  margin: 0 0 18px;
+}
+
+.as-field {
+  margin-bottom: 16px;
+}
+
+.as-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--as-text-mid);
+  margin-bottom: 6px;
+}
+
+.as-field input,
+.as-field select,
+.as-field textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--as-border-soft);
+  border-radius: var(--as-radius-sm);
+  color: var(--as-text-dark);
+  background: var(--as-white);
+  box-sizing: border-box;
+}
+
+.as-field textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.as-field input:disabled {
+  background: var(--as-purple-pale);
+  color: var(--as-text-soft);
+}
+
+.as-checkgroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 8px;
+}
+
+.as-checkgroup label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--as-text-dark);
+  margin: 0;
+  cursor: pointer;
+}
+
+.as-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.as-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 20px;
+  border-radius: var(--as-radius-sm);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.as-btn-primary {
+  background: var(--as-purple);
+  color: #fff;
+}
+
+.as-btn-primary:hover {
+  background: var(--as-purple-dark);
+  color: #fff;
+}
+
+.as-btn-outline {
+  background: transparent;
+  color: var(--as-purple-dark);
+  border: 1.5px solid var(--as-border-soft);
+}
+
+.as-alert {
+  font-size: 13px;
+  padding: 12px 14px;
+  border-radius: var(--as-radius-sm);
+  margin-bottom: 20px;
+}
+
+.as-alert[hidden] {
+  display: none;
+}
+
+.as-alert.is-ok {
+  background: #eaf4e6;
+  color: #1d5a28;
+  border: 1px solid #b8dcc0;
+}
+
+.as-alert.is-error {
+  background: var(--as-purple-pale);
+  color: #8b3030;
+  border: 1px solid #e8c4c4;
+}
+
+.as-signin {
+  max-width: 400px;
+  margin: 80px auto;
+  text-align: center;
+  color: var(--as-text-mid);
+}

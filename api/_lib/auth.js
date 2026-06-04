@@ -15,6 +15,18 @@ const USER_FIELDS = {
   resetExpires: ['Reset Token Expires', 'Reset Expires', 'reset_expires'],
 };
 
+const USER_PROFILE_FIELDS = {
+  location: ['Location', 'City', 'Region', 'Area', 'Town', 'Postcode'],
+  marketPreferences: [
+    'Market Preferences',
+    'Marketing Preferences',
+    'Preferences',
+    'Interests',
+    'Marketing',
+  ],
+  businessSector: ['Business Sector', 'Sector', 'Industry', 'Business Industry'],
+};
+
 function normalizeRole(raw) {
   const r = String(raw || '')
     .toLowerCase()
@@ -311,8 +323,26 @@ async function findUserByResetToken(token) {
   return normalizeUser(record);
 }
 
+function fieldNameOnRecord(recordFields, candidates, fallback) {
+  const f = recordFields || {};
+  for (const key of candidates) {
+    if (Object.prototype.hasOwnProperty.call(f, key)) return key;
+  }
+  return fallback;
+}
+
+function profileFromFields(f) {
+  const prefs = pick(f, USER_PROFILE_FIELDS.marketPreferences);
+  return {
+    location: String(pick(f, USER_PROFILE_FIELDS.location) || '').trim(),
+    marketPreferences: String(prefs || '').trim(),
+    businessSector: String(pick(f, USER_PROFILE_FIELDS.businessSector) || '').trim(),
+  };
+}
+
 function normalizeUser(record) {
   const f = record.fields || {};
+  const profile = profileFromFields(f);
   return {
     id: record.id,
     email: String(pick(f, USER_FIELDS.email) || '').toLowerCase(),
@@ -321,6 +351,9 @@ function normalizeUser(record) {
     name: pick(f, USER_FIELDS.name) || '',
     resetToken: pick(f, USER_FIELDS.resetToken),
     resetExpires: pick(f, USER_FIELDS.resetExpires),
+    location: profile.location,
+    marketPreferences: profile.marketPreferences,
+    businessSector: profile.businessSector,
     fields: f,
   };
 }
@@ -408,6 +441,9 @@ async function appendSystemLog(message, type = 'info') {
 module.exports = {
   USER_ROLES,
   USER_FIELDS,
+  USER_PROFILE_FIELDS,
+  fieldNameOnRecord,
+  profileFromFields,
   normalizeRole,
   isAdminRole,
   isClientRole,

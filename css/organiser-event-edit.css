@@ -13,15 +13,15 @@ body.hub-page-organiser.organiser-event-edit-page {
 }
 
 .organiser-event-edit-page {
-  --ee-purple: #9d60a7;
-  --ee-purple-dark: #7a3d8a;
-  --ee-purple-light: #e8dbea;
-  --ee-purple-pale: #f3eef5;
+  --ee-purple: #0d6e7a;
+  --ee-purple-dark: #084a52;
+  --ee-purple-light: #d4f0f3;
+  --ee-purple-pale: #e8f6f8;
   --ee-gold: #bd932e;
-  --ee-text: #2d1b3d;
-  --ee-text-mid: #5a4a62;
-  --ee-text-soft: #9d87aa;
-  --ee-bg: #f0ecf7;
+  --ee-text: #1a2e3b;
+  --ee-text-mid: #4a6272;
+  --ee-text-soft: #7a94a3;
+  --ee-bg: #f4f8fa;
   --ee-white: #fff;
   --ee-border: #e8dbea;
   --ee-radius: 10px;

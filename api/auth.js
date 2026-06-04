@@ -14,6 +14,7 @@ const routes = {
   'forgot-password': require('./_lib/routes/auth-forgot-password'),
   'reset-password': require('./_lib/routes/auth-reset-password'),
   'attendee-dashboard': require('./_lib/routes/auth-attendee-dashboard'),
+  profile: require('./_lib/routes/auth-profile'),
 };
 
 module.exports = async function handler(req, res) {

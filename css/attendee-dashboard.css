@@ -1,20 +1,20 @@
-/* Attendee hub — distinct from organiser (teal / slate, hero layout) */
+/* Attendee hub — purple theme (organiser palette swapped) */
 .attendee-dashboard-page {
-  --ad-teal: #0d6e7a;
-  --ad-teal-dark: #084a52;
-  --ad-teal-light: #d4f0f3;
-  --ad-teal-pale: #e8f6f8;
-  --ad-slate: #1e3a4f;
-  --ad-coral: #e07a5a;
-  --ad-coral-light: #fdeee8;
-  --ad-text-dark: #1a2e3b;
-  --ad-text-mid: #4a6272;
-  --ad-text-soft: #7a94a3;
-  --ad-bg: #f4f8fa;
+  --ad-teal: #9d60a7;
+  --ad-teal-dark: #7a3d8a;
+  --ad-teal-light: #e8dbea;
+  --ad-teal-pale: #f3eef5;
+  --ad-slate: #2d1b5e;
+  --ad-coral: #bd932e;
+  --ad-coral-light: #fdf3df;
+  --ad-text-dark: #2d1b3d;
+  --ad-text-mid: #5a4a62;
+  --ad-text-soft: #9d87aa;
+  --ad-bg: #f0ecf7;
   --ad-white: #ffffff;
-  --ad-border-soft: #cfe4ea;
-  --ad-green: #1d7a4a;
-  --ad-green-light: #e3f5eb;
+  --ad-border-soft: #e8dbea;
+  --ad-green: #2a7a30;
+  --ad-green-light: #eaf4e6;
   --ad-red: #c03030;
   --ad-red-light: #fbeaea;
   --ad-radius: 12px;

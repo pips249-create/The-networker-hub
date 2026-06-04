@@ -31,6 +31,20 @@ body.hub-page-account.attendee-dashboard-page {
   overflow: hidden;
 }
 
+body.hub-page-account.account-settings-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body.hub-page-account.account-settings-page #as-main,
+body.hub-page-account.account-settings-page .as-signin {
+  flex: 1;
+  overflow-y: auto;
+}
+
 body.hub-page-organiser.organiser-event-edit-page {
   display: flex;
   flex-direction: column;
@@ -85,13 +99,13 @@ body.hub-page-organiser.organiser-event-edit-page {
 }
 
 .organiser-dashboard-page .org-sidebar {
-  background: var(--od-purple-light, #e8dbea);
-  border-right: 1px solid var(--od-border-soft, #e8dbea);
+  background: var(--od-purple-light, #d4f0f3);
+  border-right: 1px solid var(--od-border-soft, #cfe4ea);
 }
 
 .attendee-dashboard-page .ad-sidebar {
-  background: var(--ad-teal-pale, #e8f6f8);
-  border-right: 1px solid var(--ad-border-soft, #cfe4ea);
+  background: var(--ad-teal-pale, #f3eef5);
+  border-right: 1px solid var(--ad-border-soft, #e8dbea);
 }
 
 .organiser-dashboard-page .org-main {
@@ -211,7 +225,7 @@ body.hub-page-organiser.organiser-event-edit-page {
   }
 
   .attendee-dashboard-page .ad-sidebar {
-    border-bottom: 1px solid var(--ad-border-soft, #cfe4ea);
+    border-bottom: 1px solid var(--ad-border-soft, #e8dbea);
   }
 
   .organiser-dashboard-page .org-sidebar-label,
