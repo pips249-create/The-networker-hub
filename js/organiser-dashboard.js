@@ -1305,6 +1305,25 @@
       });
     });
 
+    document.querySelectorAll('[data-org-shortcut]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const route = btn.getAttribute('data-org-shortcut');
+        if (!route) return;
+        setRoute(route);
+        if (route === 'groups') renderGroups();
+        else if (route === 'events-reviews') {
+          renderMyEventsHub();
+          renderReviews();
+        } else if (
+          route === 'events-tickets' ||
+          route === 'events-list' ||
+          route === 'events-revenue'
+        ) {
+          renderMyEventsHub();
+        }
+      });
+    });
+
     document.querySelectorAll('[data-events-sub]').forEach((tab) => {
       tab.addEventListener('click', () => {
         setRoute(tab.getAttribute('data-events-sub') || 'events-list');

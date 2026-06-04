@@ -430,6 +430,86 @@
   margin-top: 8px;
 }
 
+.org-quick-actions {
+  margin-bottom: 32px;
+}
+
+.org-quick-actions-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--od-purple-dark);
+  margin: 0 0 12px;
+}
+
+.org-quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .org-quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .org-quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.org-quick-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+  padding: 16px 18px;
+  background: var(--od-white);
+  border: 1.5px solid var(--od-border-soft);
+  border-radius: var(--od-radius);
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.org-quick-card:hover {
+  border-color: var(--od-purple);
+  box-shadow: 0 6px 20px rgba(122, 61, 138, 0.1);
+}
+
+.org-quick-card--primary {
+  border-color: var(--od-gold);
+  background: linear-gradient(180deg, #fffdf9 0%, var(--od-white) 100%);
+}
+
+.org-quick-card--primary:hover {
+  border-color: var(--od-gold);
+  box-shadow: 0 6px 20px rgba(189, 147, 46, 0.15);
+}
+
+.org-quick-icon {
+  font-size: 22px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.org-quick-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--od-purple-dark);
+}
+
+.org-quick-hint {
+  font-size: 11px;
+  color: var(--od-text-soft);
+  line-height: 1.45;
+  font-weight: 400;
+}
+
 .org-section-title {
   font-size: 20px;
   font-weight: 700;
