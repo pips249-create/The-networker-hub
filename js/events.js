@@ -4,6 +4,7 @@
 (function () {
   const API = '/api/events';
   const PAGE_SIZE = 8;
+  const EVENT_PLACEHOLDER = '../assets/event-placeholder.svg';
 
   const els = {
     status: document.getElementById('load-status'),
@@ -36,8 +37,12 @@
   }
 
   function photoImg(url, className) {
-    if (!url) return '';
-    return `<img class="${className}" src="${safePhotoUrl(url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`;
+    const src = url ? safePhotoUrl(url) : EVENT_PLACEHOLDER;
+    const fallback = EVENT_PLACEHOLDER.replace(/'/g, '%27');
+    return (
+      `<img class="${className}" src="${src}" alt="" loading="lazy" decoding="async" ` +
+      `referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='${fallback}'">`
+    );
   }
 
   function slugIndustry(ind) {
@@ -125,7 +130,7 @@
         data-format="${escapeHtml(ev.formatSlug)}"
         data-price="${escapeHtml(ev.priceKey)}">
         <div class="event-grid-media">
-          ${ev.photo ? photoImg(ev.photo, 'event-grid-img') : '<div class="event-grid-placeholder" aria-hidden="true"></div>'}
+          ${photoImg(ev.photo, 'event-grid-img')}
           <span class="event-grid-category">${escapeHtml(industry)}</span>
           <span class="event-grid-price">${escapeHtml(ev.price)}</span>
         </div>

@@ -58,15 +58,15 @@
 
     const hero = document.getElementById('ev-hero-img');
     if (hero) {
-      if (ev.photo) {
-        hero.loading = 'lazy';
-        hero.decoding = 'async';
-        hero.src = ev.photo;
-        hero.alt = ev.title;
-      } else {
-        hero.removeAttribute('src');
-        hero.alt = ev.title;
-      }
+      const placeholder = '../assets/event-placeholder.svg';
+      hero.loading = 'lazy';
+      hero.decoding = 'async';
+      hero.src = ev.photo || placeholder;
+      hero.alt = ev.title;
+      hero.onerror = function () {
+        hero.onerror = null;
+        hero.src = placeholder;
+      };
     }
 
     setText('ev-meta-starts', ev.date || 'Date to be confirmed');

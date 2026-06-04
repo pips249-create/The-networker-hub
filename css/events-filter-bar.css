@@ -8,11 +8,11 @@
 }
 
 .events-filter-bar {
-  background: #f9f3e7;
-  border: 1px solid #c4a574;
+  background: linear-gradient(165deg, #fffdf9 0%, var(--lavender-light) 55%, var(--surface-card) 100%);
+  border: 1px solid var(--border-soft);
   border-radius: 16px;
   padding: 18px 20px 16px;
-  box-shadow: 0 4px 20px rgba(74, 68, 70, 0.06);
+  box-shadow: var(--shadow-soft);
 }
 
 .filter-bar-row {
@@ -25,7 +25,7 @@
 .filter-bar-row-top {
   margin-bottom: 14px;
   padding-bottom: 14px;
-  border-bottom: 1px solid rgba(196, 165, 116, 0.45);
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .filter-bar-row-top .filter-field-grow {
@@ -50,7 +50,7 @@
   font-family: inherit;
   font-size: 14px;
   padding: 11px 14px 11px 40px;
-  border: 1px solid #d8cbb8;
+  border: 1px solid var(--border-soft);
   border-radius: 10px;
   background: #fff;
   color: var(--charcoal);
@@ -75,7 +75,7 @@
   width: 18px;
   height: 18px;
   pointer-events: none;
-  color: #9a8f7a;
+  color: var(--lavender-deep);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -142,7 +142,7 @@
   width: 18px;
   height: 18px;
   border-radius: 4px;
-  border: 2px solid #c4a574;
+  border: 2px solid var(--lavender-soft);
   background: #fff;
   flex-shrink: 0;
   display: inline-flex;
@@ -152,8 +152,8 @@
 }
 
 .filter-checkbox input:checked + .filter-checkbox-box {
-  background: #b8956a;
-  border-color: #b8956a;
+  background: var(--lavender-deep);
+  border-color: var(--lavender-deep);
 }
 
 .filter-checkbox input:checked + .filter-checkbox-box::after {
@@ -181,7 +181,7 @@
   font-size: 13px;
   font-weight: 500;
   padding: 10px 14px;
-  border: 1px solid #d8cbb8;
+  border: 1px solid var(--border-soft);
   border-radius: 10px;
   background: #fff;
   color: var(--charcoal);
@@ -196,14 +196,14 @@
 .flatpickr-calendar {
   border-radius: 12px;
   box-shadow: 0 12px 36px rgba(45, 38, 54, 0.18);
-  border: 1px solid #d8cbb8;
+  border: 1px solid var(--border-soft);
 }
 
 .flatpickr-day.selected,
 .flatpickr-day.startRange,
 .flatpickr-day.endRange {
-  background: #b8956a;
-  border-color: #b8956a;
+  background: var(--lavender-deep);
+  border-color: var(--lavender-deep);
 }
 
 .filter-bar-select {
@@ -215,7 +215,7 @@
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
-  border: 1px solid #d8cbb8;
+  border: 1px solid var(--border-soft);
   border-radius: 10px;
   background: #fff;
   color: var(--charcoal);
@@ -231,13 +231,13 @@
   font-weight: 600;
   border: none;
   border-radius: 8px;
-  background: #b8956a;
+  background: var(--lavender-deep);
   color: #fff;
   cursor: pointer;
 }
 
 .filter-price-apply:hover {
-  background: #9a7d5a;
+  background: var(--charcoal);
 }
 
 .filter-price-wrap {
@@ -255,7 +255,7 @@
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
-  border: 1px solid #d8cbb8;
+  border: 1px solid var(--border-soft);
   border-radius: 10px;
   background: #fff;
   color: var(--charcoal);
@@ -272,7 +272,7 @@
   min-width: 260px;
   padding: 16px;
   background: #fff;
-  border: 1px solid #d8cbb8;
+  border: 1px solid var(--border-soft);
   border-radius: 12px;
   box-shadow: 0 12px 36px rgba(45, 38, 54, 0.15);
 }
@@ -290,7 +290,7 @@
 
 .filter-price-sliders input[type="range"] {
   width: 100%;
-  accent-color: #b8956a;
+  accent-color: var(--lavender-deep);
 }
 
 .filter-price-inputs {
@@ -314,7 +314,7 @@
   font-family: inherit;
   font-size: 13px;
   padding: 8px 10px;
-  border: 1px solid #d8cbb8;
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
 }
 
