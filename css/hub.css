@@ -359,6 +359,17 @@ body.hub-page-admin {
   padding-top: 0;
 }
 
+body.hub-page-organiser,
+body.hub-page-account {
+  padding-top: 0;
+}
+
+body.hub-page-organiser .site-nav,
+body.hub-page-account .site-nav {
+  position: sticky;
+  top: 0;
+}
+
 /* ─── Homepage hero (text) + embedded video block ─── */
 .home-hero {
   min-height: 72vh;

@@ -10,12 +10,13 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../css/hub.css?v=20260611" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css" />
+    <link rel="stylesheet" href="../css/hub.css?v=20260614" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260614" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260611" data-root="../" data-page="organiser"></script>
+    <script src="../js/site-nav.js?v=20260614" data-root="../" data-page="organiser"></script>
 
     <div id="org-signin" class="org-signin" hidden>
       <p class="org-section-sub">
@@ -27,13 +28,18 @@
     </div>
 
     <div id="org-shell" hidden>
-      <nav class="org-dash-bar" aria-label="Organiser dashboard">
-        <a href="#dashboard" data-org-route="dashboard">Overview</a>
-        <a href="#groups" data-org-route="groups">Organiser profiles</a>
-        <a href="#events-list" data-org-route="events">My Events</a>
-      </nav>
+      <div class="org-dashboard-layout">
+        <aside class="org-sidebar">
+          <p class="org-sidebar-label">Dashboard</p>
+          <nav class="org-dash-bar" aria-label="Organiser dashboard">
+            <a href="#dashboard" data-org-route="dashboard">Overview</a>
+            <a href="#groups" data-org-route="groups">Organiser profiles</a>
+            <a href="#events-list" data-org-route="events">My Events</a>
+          </nav>
+        </aside>
 
-      <div class="org-wrap">
+        <div class="org-main">
+          <div class="org-wrap">
         <div id="org-airtable-alert" class="org-alert" hidden></div>
 
         <!-- Overview -->
@@ -351,6 +357,8 @@
             <nav class="org-pagination" id="pagination-revenue" data-list="revenue" aria-label="Revenue pages" hidden></nav>
           </div>
         </section>
+          </div>
+        </div>
       </div>
     </div>
 

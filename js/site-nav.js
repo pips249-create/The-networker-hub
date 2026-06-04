@@ -55,10 +55,10 @@
 
 /**
  * Shared site navigation — same bar on every page.
- * NAV_BUILD=20260611 — Browse events first, Browse training (blue), My Hub last.
+ * NAV_BUILD=20260613 — Browse training page; Attend events in My Hub.
  */
 (function () {
-  var NAV_BUILD = '20260611';
+  var NAV_BUILD = '20260613';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
   var page = (script && script.getAttribute('data-page')) || '';
@@ -131,7 +131,7 @@
       href('account/index.html') +
       '"' +
       accountActive +
-      '>My account</a>' +
+      '>Attend events</a>' +
       adminItem +
       '<button type="button" role="menuitem" class="nav-dropdown-item nav-dropdown-signout" id="nav-signout">Sign out</button>' +
       '</div></div>'
@@ -142,7 +142,7 @@
     var html = '';
     html += link('events/index.html', 'Browse events', 'browse', 'nav-cta');
     html += link(
-      'index.html#academy',
+      'training/index.html',
       'Browse training',
       'training',
       'nav-cta-blue nav-hide-mobile'
@@ -249,6 +249,8 @@
     document.body.classList.add('hub-page-admin');
   } else if (page === 'organiser') {
     document.body.classList.add('hub-page-organiser');
+  } else if (page === 'account') {
+    document.body.classList.add('hub-page-account');
   } else {
     document.body.classList.add('has-site-nav');
   }

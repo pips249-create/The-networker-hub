@@ -10,6 +10,8 @@
     eventsStatus: 'all',
     eventsType: 'all',
     eventsSearch: '',
+    groupsStatus: 'all',
+    groupsSearch: '',
     ticketsEvent: 'all',
     ticketsType: 'all',
     reviewsGroup: 'all',
@@ -73,9 +75,31 @@
     return d.innerHTML;
   }
 
+  const GROUP_SAVED_KEY = 'hub_group_last_saved';
+
+  function applyPendingGroupSave() {
+    try {
+      const raw = sessionStorage.getItem(GROUP_SAVED_KEY);
+      if (!raw) return;
+      sessionStorage.removeItem(GROUP_SAVED_KEY);
+      const parsed = JSON.parse(raw);
+      const group = parsed && parsed.group;
+      if (!group || !group.id) return;
+      const idx = state.groups.findIndex((g) => g.id === group.id);
+      if (idx >= 0) {
+        state.groups[idx] = { ...state.groups[idx], ...group };
+      } else {
+        state.groups.unshift(group);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
   function api(path, options) {
     return fetch(path, {
       credentials: 'include',
+      cache: 'no-store',
       ...options,
       headers: {
         'Content-Type': 'application/json',
@@ -146,7 +170,9 @@
         ? 'org-badge-green'
         : key === 'upcoming'
           ? 'org-badge-gold'
-          : 'org-badge-purple';
+          : key === 'unpublished'
+            ? 'org-badge-red'
+            : 'org-badge-purple';
     return '<span class="org-badge ' + cls + '">' + esc(label) + '</span>';
   }
 
@@ -161,8 +187,17 @@
     );
   }
 
-  function actionMenuHtml(kind, id, title) {
+  function actionMenuHtml(kind, id, title, item) {
     if (kind === 'group') {
+      const statusKey = item && item.statusKey;
+      const unpublishDisabled = statusKey === 'unpublished' || statusKey === 'draft';
+      const unpublishBtn = unpublishDisabled
+        ? '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>' +
+          (statusKey === 'unpublished' ? 'Already unpublished' : 'Publish first to list on site') +
+          '</span></span></button>'
+        : '<button type="button" class="org-action-item danger" data-unpublish-group="' +
+          esc(id) +
+          '"><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Remove from public site</span></span></button>';
       return (
         '<div class="org-action-wrap">' +
         '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
@@ -171,7 +206,7 @@
         esc(id) +
         '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit profile</strong><span>Update organiser page details</span></span></button>' +
         '<button type="button" class="org-action-item" data-org-goto-sub="events-reviews"><span class="org-action-icon">★</span><span class="org-action-text"><strong>Reviews</strong><span>View feedback for this group</span></span></button>' +
-        '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Coming soon</span></span></button>' +
+        unpublishBtn +
         '</div></div>'
       );
     }
@@ -259,19 +294,43 @@
     set('tab-count-revenue', totalRevenueDisplay());
   }
 
+  function filteredGroupsList() {
+    let list = state.groups.slice();
+    const q = filters.groupsSearch.trim().toLowerCase();
+    if (q) {
+      list = list.filter((g) => {
+        const hay = [g.name, g.description, g.website, g.location]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return hay.includes(q);
+      });
+    }
+    if (filters.groupsStatus !== 'all') {
+      list = list.filter((g) => (g.statusKey || '') === filters.groupsStatus);
+    }
+    return list;
+  }
+
   function filteredEventsList() {
     let list = state.events.slice();
     const q = filters.eventsSearch.trim().toLowerCase();
     if (q) {
-      list = list.filter(
-        (ev) =>
-          String(ev.title || '')
-            .toLowerCase()
-            .includes(q) ||
-          String(ev.type || '')
-            .toLowerCase()
-            .includes(q)
-      );
+      list = list.filter((ev) => {
+        const hay = [
+          ev.title,
+          ev.type,
+          ev.location,
+          ev.venue,
+          ev.city,
+          ev.postcode,
+          ev.description,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return hay.includes(q);
+      });
     }
     if (filters.eventsStatus !== 'all') {
       list = list.filter((ev) => (ev.statusKey || '') === filters.eventsStatus);
@@ -482,6 +541,31 @@
     );
   }
 
+  async function confirmUnpublishGroup(groupId) {
+    if (!groupId) return;
+    const g = findGroupById(groupId);
+    const label = g && g.name ? g.name : 'this group';
+    const ok = window.confirm(
+      'Unpublish "' +
+        label +
+        '"?\n\n' +
+        'This group will be removed from the public site immediately.\n\n' +
+        'After 60 days of being unpublished, this group will be permanently deleted.'
+    );
+    if (!ok) return;
+
+    const res = await api('/api/organiser/groups', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'unpublish', id: groupId }),
+    });
+    if (!res.ok) {
+      window.alert(res.data.message || res.data.error || 'Could not unpublish this group.');
+      return;
+    }
+    await loadBootstrap();
+    renderAll();
+  }
+
   function closeAllActionMenus() {
     document.querySelectorAll('.org-action-menu.is-open').forEach((m) => {
       m.classList.remove('is-open', 'is-floating');
@@ -528,6 +612,16 @@
   }
 
   function handleActionMenuChoice(e) {
+    const unpublishBtn = e.target.closest('[data-unpublish-group]');
+    if (unpublishBtn && !unpublishBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      const gid = unpublishBtn.getAttribute('data-unpublish-group');
+      confirmUnpublishGroup(gid);
+      return true;
+    }
+
     const editGroupBtn = e.target.closest('[data-edit-group]');
     if (editGroupBtn && !editGroupBtn.disabled) {
       e.preventDefault();
@@ -670,7 +764,7 @@
         '</td><td>' +
         statusBadgeHtml(g.statusKey || 'draft', g.statusLabel || 'Draft') +
         '</td><td class="org-td-actions">' +
-        actionMenuHtml('group', g.id, g.name) +
+        actionMenuHtml('group', g.id, g.name, g) +
         '</td>';
       body.appendChild(tr);
     });
@@ -718,13 +812,19 @@
     const empty = document.getElementById('groups-empty');
     if (!body) return;
     body.innerHTML = '';
-    if (!state.groups.length) {
-      if (empty) empty.hidden = false;
+    const list = filteredGroupsList();
+    if (!list.length) {
+      if (empty) {
+        empty.hidden = false;
+        empty.textContent = state.groups.length
+          ? 'No groups match your search or filters.'
+          : 'No groups yet. Create your first organiser group.';
+      }
       updatePaginationNav('groups', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
       return;
     }
     if (empty) empty.hidden = true;
-    const pageInfo = paginateList(state.groups, listPages.groups);
+    const pageInfo = paginateList(list, listPages.groups);
     listPages.groups = pageInfo.page;
     updatePaginationNav('groups', pageInfo);
     pageInfo.items.forEach((g) => {
@@ -745,7 +845,7 @@
         '</td><td>' +
         statusBadgeHtml(g.statusKey || 'draft', g.statusLabel || 'Draft') +
         '</td><td class="org-td-actions">' +
-        actionMenuHtml('group', g.id, g.name) +
+        actionMenuHtml('group', g.id, g.name, g) +
         '</td>';
       body.appendChild(tr);
     });
@@ -1087,6 +1187,7 @@
       showAirtableAlert(null);
     }
 
+    applyPendingGroupSave();
     renderAll();
   }
 
@@ -1336,6 +1437,18 @@
       });
     });
 
+    ['filter-groups-status', 'filter-groups-search'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const evt = id === 'filter-groups-search' ? 'input' : 'change';
+      el.addEventListener(evt, () => {
+        if (id === 'filter-groups-status') filters.groupsStatus = el.value;
+        if (id === 'filter-groups-search') filters.groupsSearch = el.value;
+        listPages.groups = 1;
+        renderGroups();
+      });
+    });
+
     ['filter-tickets-event', 'filter-tickets-type'].forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -1432,6 +1545,11 @@
     window.addEventListener('hashchange', () => {
       const r = parseRoute();
       setRoute(r.sub || r.page);
+      if (r.page === 'groups') refresh();
+    });
+
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted && shell && !shell.hidden) refresh();
     });
 
     window.addEventListener('scroll', closeAllActionMenus, true);

@@ -7,9 +7,16 @@ const {
   createGroup,
   getGroupById,
   updateGroup,
+  unpublishGroup,
+  enrichGroupForDashboard,
   isPlatformAdmin,
   airtableSetupHint,
 } = require('../organiser');
+const { organiserPersonalScopeFromRequest } = require('../auth');
+
+function adminViewForRequest(req, session) {
+  return isPlatformAdmin(session) && !organiserPersonalScopeFromRequest(req);
+}
 
 function parseBody(req) {
   let body = req.body;
@@ -41,7 +48,12 @@ module.exports = async function handler(req, res) {
         if (!isPlatformAdmin(auth.session) && !groupOwnedBySession(auth.session, groups, groupId)) {
           return json(res, 403, { error: 'group_not_owned' });
         }
-        const group = await getGroupById(groupId);
+        const raw = await getGroupById(groupId);
+        const group = await enrichGroupForDashboard(
+          raw,
+          auth.session,
+          adminViewForRequest(req, auth.session)
+        );
         return json(res, 200, { ok: true, group });
       }
       const groups = await listGroupsForSession(auth.session);
@@ -59,16 +71,17 @@ module.exports = async function handler(req, res) {
     const body = parseBody(req);
     const groupId = String(body.id || body.groupId || req.query?.id || '').trim();
     const name = String(body.name || '').trim();
+    const listingStatus = body.listingStatus != null ? body.listingStatus : null;
     if (!groupId) return json(res, 400, { error: 'missing_group_id' });
-    if (!name) return json(res, 400, { error: 'missing_name' });
+    if (!name && listingStatus == null) return json(res, 400, { error: 'missing_name' });
 
     try {
       const groups = await listGroupsForSession(auth.session);
       if (!groupOwnedBySession(auth.session, groups, groupId)) {
         return json(res, 403, { error: 'group_not_owned' });
       }
-      const group = await updateGroup(groupId, {
-        name,
+      const updated = await updateGroup(groupId, {
+        name: name || undefined,
         description: body.description,
         website: body.website,
         location: body.location,
@@ -76,11 +89,17 @@ module.exports = async function handler(req, res) {
         logoBase64: body.logoBase64,
         logoMime: body.logoMime,
         logoFilename: body.logoFilename,
+        listingStatus,
       });
+      const group = await enrichGroupForDashboard(
+        updated,
+        auth.session,
+        adminViewForRequest(req, auth.session)
+      );
       return json(res, 200, {
         ok: true,
         group,
-        logoWarning: group.logoWarning || null,
+        logoWarning: updated.logoWarning || null,
       });
     } catch (e) {
       return json(res, e.status || 500, {
@@ -93,6 +112,30 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'POST') {
     let body = parseBody(req);
+    const action = String(body.action || '').toLowerCase().trim();
+    const actionGroupId = String(body.id || body.groupId || '').trim();
+    if (action === 'unpublish' && actionGroupId) {
+      try {
+        const groups = await listGroupsForSession(auth.session);
+        if (!groupOwnedBySession(auth.session, groups, actionGroupId)) {
+          return json(res, 403, { error: 'group_not_owned' });
+        }
+        const updated = await unpublishGroup(actionGroupId);
+        const group = await enrichGroupForDashboard(
+          updated,
+          auth.session,
+          adminViewForRequest(req, auth.session)
+        );
+        return json(res, 200, { ok: true, group });
+      } catch (e) {
+        return json(res, e.status || 500, {
+          error: 'group_unpublish_failed',
+          message: e.message,
+          airtable: airtableSetupHint('groups'),
+        });
+      }
+    }
+
     const name = String(body.name || '').trim();
     const description = String(body.description || '').trim();
     const website = String(body.website || '').trim();
@@ -104,7 +147,7 @@ module.exports = async function handler(req, res) {
     if (!name) return json(res, 400, { error: 'missing_name' });
 
     try {
-      const group = await createGroup({
+      const created = await createGroup({
         userId: auth.session.sub || '',
         email: auth.session.email,
         name,
@@ -115,11 +158,17 @@ module.exports = async function handler(req, res) {
         logoBase64,
         logoMime,
         logoFilename,
+        listingStatus: body.listingStatus || 'draft',
       });
+      const group = await enrichGroupForDashboard(
+        created,
+        auth.session,
+        adminViewForRequest(req, auth.session)
+      );
       return json(res, 201, {
         ok: true,
         group,
-        logoWarning: group.logoWarning || null,
+        logoWarning: created.logoWarning || null,
       });
     } catch (e) {
       return json(res, e.status || 500, {

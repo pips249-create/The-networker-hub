@@ -1,7 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-body.organiser-event-edit-page.has-site-nav {
-  padding-top: 76px;
+body.hub-page-organiser.organiser-event-edit-page {
+  padding-top: 0;
+}
+
+.organiser-event-edit-page .site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--ee-border);
 }
 
 .organiser-event-edit-page {
@@ -23,27 +31,48 @@ body.organiser-event-edit-page.has-site-nav {
   min-height: 100vh;
 }
 
+.ee-page-head {
+  margin-bottom: 24px;
+}
+
 .ee-top-bar {
-  position: sticky;
-  top: 76px;
-  z-index: 90;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  max-width: 920px;
-  margin: 0 auto;
-  padding: 10px 24px;
-  background: rgba(240, 236, 247, 0.95);
-  backdrop-filter: blur(6px);
-  border-bottom: 1px solid var(--ee-border);
+  margin-bottom: 16px;
 }
 
 .ee-wrap {
-  max-width: 920px;
+  max-width: 960px;
+  width: 100%;
   margin: 0 auto;
-  padding: 20px 24px 80px;
+  padding: 24px clamp(16px, 4vw, 32px) 80px;
+  box-sizing: border-box;
+}
+
+.ee-format-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ee-purple-dark);
+  background: var(--ee-purple-pale);
+  border: 1px solid var(--ee-border);
+  border-radius: var(--radius-pill, 999px);
+  padding: 5px 12px;
+  margin-bottom: 10px;
+}
+
+.ee-format-panel {
+  display: none;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--ee-border);
+}
+
+.ee-format-panel.is-visible {
+  display: block;
 }
 
 .ee-back {
@@ -196,54 +225,85 @@ body.organiser-event-edit-page.has-site-nav {
   color: var(--ee-text-soft);
 }
 
+.ee-calendar {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  margin: 12px 0 0;
+  padding: 14px;
+  background: var(--ee-purple-pale);
+  border: 1px solid var(--ee-border);
+  border-radius: var(--ee-radius);
+}
+
 .ee-cal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
 .ee-cal-header button {
+  flex-shrink: 0;
   border: 1px solid var(--ee-border);
   background: var(--ee-white);
   border-radius: 6px;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 18px;
+  line-height: 1;
   color: var(--ee-purple-dark);
 }
 
 .ee-cal-month {
-  font-size: 14px;
+  flex: 1;
+  text-align: center;
+  font-size: 15px;
   font-weight: 700;
   color: var(--ee-purple-dark);
 }
 
-.ee-cal-weekdays,
+.ee-cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
 .ee-cal-days {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
+  min-height: 220px;
 }
 
 .ee-cal-weekdays span {
-  font-size: 10px;
+  display: block;
+  font-size: 11px;
   font-weight: 600;
   text-align: center;
   color: var(--ee-text-soft);
-  padding: 4px 0;
+  padding: 6px 0;
 }
 
 .ee-cal-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
   aspect-ratio: 1;
+  max-height: 48px;
   border: none;
   border-radius: 6px;
-  background: transparent;
-  font-size: 12px;
+  background: var(--ee-white);
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   color: var(--ee-text);
+  box-sizing: border-box;
 }
 
 .ee-cal-day:hover:not(:disabled) {
@@ -326,6 +386,52 @@ body.organiser-event-edit-page.has-site-nav {
   background: transparent;
   color: var(--ee-purple-dark);
   border: 2px solid var(--ee-purple);
+}
+
+.ee-btn-gold {
+  background: var(--ee-gold);
+  color: var(--ee-text);
+  border: 1px solid rgba(189, 147, 46, 0.5);
+}
+
+.ee-btn-gold:hover {
+  filter: brightness(1.05);
+}
+
+.ee-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ge-status-line {
+  font-size: 13px;
+  color: var(--ee-text-mid);
+  margin: -12px 0 20px;
+}
+
+.ge-status-pill {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--ee-purple-pale);
+  color: var(--ee-purple-dark);
+}
+
+.ge-status-pill.is-live {
+  background: #e6f4ea;
+  color: #1e6b3a;
+}
+
+.ge-status-pill.is-draft {
+  background: var(--ee-purple-pale);
+  color: var(--ee-purple-dark);
+}
+
+.ge-status-pill.is-unpublished {
+  background: #fde8e8;
+  color: #8b2e2e;
 }
 
 .ee-alert {

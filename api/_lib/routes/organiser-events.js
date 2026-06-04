@@ -42,7 +42,7 @@ function normalizeOccurrences(body) {
 }
 
 function eventPayloadFromBody(body, email) {
-  return {
+  const payload = {
     email,
     groupId: String(body.organiserGroupId || body.groupId || '').trim(),
     title: String(body.title || '').trim(),
@@ -63,6 +63,12 @@ function eventPayloadFromBody(body, email) {
     photoMime: body.photoMime || body.imageMime || null,
     photoFilename: body.photoFilename || body.imageFilename || null,
   };
+  if (body.listingStatus != null) {
+    payload.listingStatus = body.listingStatus;
+  } else if (body.publish === true || body.publish === 'true') {
+    payload.listingStatus = 'published';
+  }
+  return payload;
 }
 
 module.exports = async function handler(req, res) {
@@ -138,11 +144,13 @@ module.exports = async function handler(req, res) {
         return json(res, 403, { error: 'group_not_owned' });
       }
 
+      const isDraft =
+        base.listingStatus != null && String(base.listingStatus).toLowerCase() === 'draft';
       const primary = occ[0] || {};
       const event = await updateEvent(eventId, {
         ...base,
-        date: primary.date,
-        endDate: primary.endDate,
+        date: primary.date || (isDraft ? '' : primary.date),
+        endDate: primary.endDate || '',
       });
 
       const extra = [];
@@ -181,17 +189,22 @@ module.exports = async function handler(req, res) {
 
     if (!title) return json(res, 400, { error: 'missing_title' });
     if (!groupId) return json(res, 400, { error: 'missing_group' });
-    if (!occ.length) return json(res, 400, { error: 'missing_dates' });
+    const base = eventPayloadFromBody(body, auth.session.email);
+    if (base.listingStatus == null) base.listingStatus = 'draft';
+    const isDraft = String(base.listingStatus || '').toLowerCase() === 'draft';
+    if (!occ.length && !isDraft) return json(res, 400, { error: 'missing_dates' });
 
     try {
       const groups = await listGroupsForSession(auth.session);
       if (!groupOwnedBySession(auth.session, groups, groupId)) {
         return json(res, 403, { error: 'group_not_owned' });
       }
-      const base = eventPayloadFromBody(body, auth.session.email);
 
       let events;
-      if (occ.length === 1) {
+      if (!occ.length && isDraft) {
+        const one = await createEvent({ ...base, date: '', endDate: '' });
+        events = [one];
+      } else if (occ.length === 1) {
         const one = await createEvent({
           ...base,
           date: occ[0].date,

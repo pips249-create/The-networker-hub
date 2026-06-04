@@ -1,0 +1,209 @@
+/**
+ * Dashboard viewport layout — organiser & attendee hubs fit the screen;
+ * site nav stays visible; main content scrolls inside the dashboard area.
+ */
+
+body.hub-page-organiser,
+body.hub-page-account {
+  padding-top: 0 !important;
+  margin: 0;
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* Sticky site nav (not fixed) so flex height math works */
+body.hub-page-organiser .site-nav,
+body.hub-page-account .site-nav {
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+body.hub-page-organiser.organiser-dashboard-page,
+body.hub-page-account.attendee-dashboard-page {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  height: 100vh;
+  max-height: 100dvh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+body.hub-page-organiser.organiser-event-edit-page {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  height: 100vh;
+  max-height: 100dvh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.organiser-dashboard-page,
+.attendee-dashboard-page,
+.organiser-event-edit-page {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+.organiser-dashboard-page #hub-site-nav,
+.attendee-dashboard-page #hub-site-nav,
+.organiser-event-edit-page #hub-site-nav {
+  flex-shrink: 0;
+}
+
+/* ─── Organiser dashboard: sidebar + scrollable main ─── */
+.organiser-dashboard-page #org-shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.organiser-dashboard-page .org-dashboard-layout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.organiser-dashboard-page .org-sidebar {
+  flex-shrink: 0;
+  width: 220px;
+  background: var(--od-purple-light, #e8dbea);
+  border-right: 1px solid var(--od-border-soft, #e8dbea);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.organiser-dashboard-page .org-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.organiser-dashboard-page #org-signin,
+.attendee-dashboard-page #ad-signin {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.organiser-dashboard-page .org-wrap {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* ─── Attendee dashboard: hero + scrollable main ─── */
+.attendee-dashboard-page #ad-shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.attendee-dashboard-page .ad-hero {
+  flex-shrink: 0;
+}
+
+.attendee-dashboard-page .ad-main {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.attendee-dashboard-page .ad-wrap {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* ─── Organiser edit pages (group / event) ─── */
+.organiser-event-edit-page .ee-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding-left: clamp(16px, 4vw, 32px);
+  padding-right: clamp(16px, 4vw, 32px);
+}
+
+/* ─── Tables scroll inside their panel ─── */
+.organiser-dashboard-page .org-table-wrap {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.organiser-dashboard-page .org-table-wrap table {
+  min-width: 720px;
+}
+
+.attendee-dashboard-page .ad-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.attendee-dashboard-page .ad-table-scroll table {
+  min-width: 600px;
+}
+
+@media (max-width: 768px) {
+  .organiser-dashboard-page .org-dashboard-layout {
+    flex-direction: column;
+  }
+
+  .organiser-dashboard-page .org-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--od-border-soft, #e8dbea);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .organiser-dashboard-page .org-sidebar-label {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .organiser-dashboard-page .org-wrap,
+  .attendee-dashboard-page .ad-wrap {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .attendee-dashboard-page .ad-hero {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}

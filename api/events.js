@@ -772,6 +772,18 @@ function pickOrganiserNameFromLookups(fields) {
   return '';
 }
 
+function isPublicListingVisible(statusRaw) {
+  const raw = String(statusRaw || '')
+    .toLowerCase()
+    .trim();
+  if (!raw) return true;
+  return !/draft|pending|unpublish|hidden|inactive/.test(raw);
+}
+
+function eventListingStatusRaw(fields) {
+  return String(pick(fields, FIELD_MAP.approvalStatus) || '').trim();
+}
+
 const ORGANISER_PROFILE_MAP = {
   name: [
     'Name',
@@ -792,6 +804,7 @@ const ORGANISER_PROFILE_MAP = {
     'Company Description',
   ],
   logo: ['Logo', 'Photo', 'Company Logo', 'Organiser Logo', 'Organizer Logo', 'Image'],
+  status: ['Status', 'Profile Status', 'Listing Status', 'Approval Status'],
 };
 
 function mapOrganiserAirtableRecord(record) {
@@ -799,10 +812,12 @@ function mapOrganiserAirtableRecord(record) {
   const name = pick(f, ORGANISER_PROFILE_MAP.name) || '';
   const profile = pick(f, ORGANISER_PROFILE_MAP.profile) || '';
   const logo = attachmentUrl(pick(f, ORGANISER_PROFILE_MAP.logo));
+  const listingStatusRaw = String(pick(f, ORGANISER_PROFILE_MAP.status) || '').trim();
   return {
     organiser: String(name).trim(),
     organiserProfile: String(profile).trim(),
     organiserLogo: logo,
+    organiserListingStatusRaw: listingStatusRaw,
   };
 }
 
@@ -865,11 +880,7 @@ async function fetchOrganiserProfile(apiKey, baseId, organiserId) {
 async function enrichOrganisersForEvents(events, apiKey, baseId) {
   const cache = {};
   const ids = [
-    ...new Set(
-      events
-        .filter((e) => e.organiserId && (!e.organiser || !e.organiserProfile || !e.organiserLogo))
-        .map((e) => e.organiserId)
-    ),
+    ...new Set(events.filter((e) => e.organiserId).map((e) => e.organiserId)),
   ];
 
   await Promise.all(
@@ -887,9 +898,19 @@ async function enrichOrganisersForEvents(events, apiKey, baseId) {
       organiser: ev.organiser || p.organiser,
       organiserProfile: ev.organiserProfile || p.organiserProfile,
       organiserLogo: ev.organiserLogo || p.organiserLogo,
+      organiserListingStatusRaw: p.organiserListingStatusRaw || '',
       search: [ev.search, p.organiser, p.organiserProfile].filter(Boolean).join(' ').toLowerCase(),
     };
   });
+}
+
+function isEventPubliclyVisible(ev, fields) {
+  const eventStatus = ev.listingStatusRaw != null ? ev.listingStatusRaw : eventListingStatusRaw(fields || {});
+  if (!isPublicListingVisible(eventStatus)) return false;
+  if (ev.organiserListingStatusRaw && !isPublicListingVisible(ev.organiserListingStatusRaw)) {
+    return false;
+  }
+  return true;
 }
 
 function pickDescription(fields) {
@@ -1156,6 +1177,7 @@ function recordToEvent(record) {
     dateLine: buildDateLine(location, parsedDate, time),
     meetingType: String(typeRaw).trim() || String(format).trim() || 'Event',
     search,
+    listingStatusRaw: eventListingStatusRaw(f),
     locationSlug: slugLocation(location),
     industrySlug: slugIndustry(industry),
     formatSlug: slugFormat(format),
@@ -1208,11 +1230,27 @@ module.exports = async function handler(req, res) {
         });
       }
       const data = await resp.json();
+      if (!isEventPubliclyVisible({ listingStatusRaw: eventListingStatusRaw(data.fields || {}) }, data.fields)) {
+        return res.status(404).json({
+          configured: true,
+          error: 'not_found',
+          message: 'This event is not published.',
+          event: null,
+        });
+      }
       const ticketRecords = await fetchTicketsTableRecords(apiKey, baseId);
       const linkIndexes = buildTicketLinkIndexes(ticketRecords, [data]);
       let event = applyTicketsToEvent(recordToEvent(data), ticketRecords, linkIndexes, data);
       const enriched = await enrichOrganisersForEvents([event], apiKey, baseId);
       event = enriched[0];
+      if (!isEventPubliclyVisible(event, data.fields)) {
+        return res.status(404).json({
+          configured: true,
+          error: 'not_found',
+          message: 'This event is not published.',
+          event: null,
+        });
+      }
       let related = [];
       try {
         const view = process.env.AIRTABLE_EVENTS_VIEW;
@@ -1220,7 +1258,7 @@ module.exports = async function handler(req, res) {
         let allEvents = attachTicketsToEvents(all.map(recordToEvent), ticketRecords, all);
         allEvents = await enrichOrganisersForEvents(allEvents, apiKey, baseId);
         related = allEvents
-          .filter((e) => e.id !== event.id && organiserMatch(e, event))
+          .filter((e) => e.id !== event.id && organiserMatch(e, event) && isEventPubliclyVisible(e))
           .slice(0, 6);
       } catch (relErr) {
         console.error('related_events_fetch', relErr.message);
@@ -1266,6 +1304,7 @@ module.exports = async function handler(req, res) {
       return applyTicketsToEvent(ev, ticketRecords, linkIndexes, rec);
     });
     events = await enrichOrganisersForEvents(events, apiKey, baseId);
+    events = events.filter((ev) => isEventPubliclyVisible(ev));
     const payload = { configured: true, events };
     if (req.query?.fields === '1') {
       if (all[0]) payload.airtableFieldNames = fieldKeys(all[0].fields || {});

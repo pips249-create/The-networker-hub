@@ -2,6 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 .organiser-dashboard-page {
+  box-sizing: border-box;
   --od-purple: #9d60a7;
   --od-purple-dark: #7a3d8a;
   --od-purple-deep: #2d1b5e;
@@ -29,17 +30,28 @@
 }
 
 .organiser-dashboard-page .site-nav {
-  position: static;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
   border-bottom: 1px solid var(--od-border-soft);
 }
 
+.org-sidebar-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--od-text-soft);
+  padding: 20px 20px 8px;
+  margin: 0;
+}
+
 .org-dash-bar {
-  background: var(--od-purple-light);
-  border-bottom: 1px solid var(--od-border-soft);
-  padding: 0 24px;
   display: flex;
-  gap: 0;
-  overflow-x: auto;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 12px 20px;
 }
 
 .org-dash-bar a {
@@ -47,24 +59,51 @@
   text-decoration: none;
   font-size: 13px;
   font-weight: 600;
-  padding: 14px 18px;
-  border-bottom: 3px solid transparent;
+  padding: 12px 14px;
+  border-radius: var(--od-radius-sm);
+  border-left: 3px solid transparent;
   white-space: nowrap;
 }
 
 .org-dash-bar a:hover {
   color: var(--od-purple);
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .org-dash-bar a.is-active {
-  border-bottom-color: var(--od-purple);
+  border-left-color: var(--od-purple);
   color: var(--od-purple);
+  background: var(--od-white);
+  box-shadow: 0 1px 4px rgba(45, 27, 61, 0.06);
+}
+
+@media (max-width: 768px) {
+  .org-dash-bar {
+    flex-direction: row;
+    padding: 0 12px;
+    gap: 0;
+  }
+
+  .org-dash-bar a {
+    border-left: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    padding: 14px 16px;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .org-dash-bar a.is-active {
+    border-bottom-color: var(--od-purple);
+    border-left-color: transparent;
+    background: transparent;
+  }
 }
 
 .org-wrap {
-  max-width: 1040px;
-  margin: 0 auto;
-  padding: 32px 24px 64px;
+  width: 100%;
+  padding: 28px clamp(16px, 3vw, 32px) 56px;
+  box-sizing: border-box;
 }
 
 .org-page {
@@ -625,7 +664,6 @@
   background: var(--od-white);
   border-radius: var(--od-radius);
   border: 0.5px solid var(--od-border-soft);
-  overflow: visible;
 }
 
 .org-table-wrap table {
