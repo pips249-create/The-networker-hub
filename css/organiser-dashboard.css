@@ -396,6 +396,25 @@
   background: var(--od-green);
 }
 
+.org-stat.purple::before {
+  background: #9d60a7;
+}
+
+.org-stat.purple .org-stat-value {
+  color: var(--od-purple-dark);
+}
+
+.org-stats {
+  margin-bottom: 28px;
+}
+
+.org-alert .org-scope-actions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .org-stat-label {
   font-size: 11px;
   font-weight: 600;
@@ -473,6 +492,11 @@
 
 .org-btn-outline:hover {
   background: var(--od-purple-pale);
+}
+
+.org-btn-sm {
+  font-size: 11px;
+  padding: 6px 14px;
 }
 
 .org-table-wrap {

@@ -26,9 +26,47 @@
     airtable: null,
   };
 
+  const ORGANISER_SCOPE_COOKIE = 'hub_organiser_scope';
   const signin = document.getElementById('org-signin');
   const shell = document.getElementById('org-shell');
   const alertEl = document.getElementById('org-airtable-alert');
+
+  function setOrganiserScopeCookie(mode) {
+    const secure = location.protocol === 'https:' ? '; Secure' : '';
+    if (mode === 'my') {
+      document.cookie =
+        ORGANISER_SCOPE_COOKIE + '=my; path=/; max-age=' + 60 * 60 * 24 * 90 + '; SameSite=Lax' + secure;
+    } else {
+      document.cookie = ORGANISER_SCOPE_COOKIE + '=; path=/; max-age=0; SameSite=Lax' + secure;
+    }
+  }
+
+  function renderWelcome(user) {
+    const name = (user && user.name && String(user.name).trim()) || '';
+    const nameEl = document.getElementById('org-welcome-name');
+    const subEl = document.getElementById('org-welcome-sub');
+    if (nameEl) {
+      nameEl.textContent = name ? 'Welcome back, ' + name : 'Welcome back';
+    }
+    if (subEl) {
+      const email = (user && user.email) || (state.user && state.user.email) || '';
+      subEl.textContent = email
+        ? "Here's your account at a glance — " + email
+        : "Here's your account at a glance.";
+    }
+  }
+
+  function renderStats() {
+    const rev = totalRevenueDisplay();
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+    set('stat-groups', String(state.groups.length));
+    set('stat-events', String(state.events.length));
+    set('stat-tickets', String(state.tickets.length));
+    set('stat-revenue', rev);
+  }
 
   function esc(s) {
     const d = document.createElement('div');
@@ -883,7 +921,24 @@
     });
   }
 
+  let scopeButtonsBound = false;
+  function bindScopeButtonOnce() {
+    if (scopeButtonsBound) return;
+    scopeButtonsBound = true;
+    document.getElementById('org-airtable-alert')?.addEventListener('click', (e) => {
+      if (e.target.id === 'btn-scope-my') {
+        setOrganiserScopeCookie('my');
+        refresh();
+      }
+      if (e.target.id === 'btn-scope-all') {
+        setOrganiserScopeCookie('clear');
+        refresh();
+      }
+    });
+  }
+
   function renderAll() {
+    renderStats();
     renderOverviewGroups();
     renderOverviewEvents();
     renderGroups();
@@ -908,12 +963,29 @@
     state.groupsError = data.groupsError;
     state.airtable = data.airtable;
     state.adminView = data.adminView;
+    state.personalScope = data.personalScope;
+    state.isAdmin = data.isAdmin;
+    if (data.user) {
+      state.user = { ...state.user, ...data.user };
+      renderWelcome(state.user);
+    }
 
     if (data.adminView) {
       showAirtableAlert(
-        '<strong>Admin view</strong> — showing all organiser profiles, events, and ticket types across the platform.',
+        '<strong>Admin view</strong> — showing all organiser profiles, events, and ticket types across the platform.' +
+          '<div class="org-scope-actions"><button type="button" class="org-btn org-btn-primary org-btn-sm" id="btn-scope-my">View my organiser data only</button></div>',
         false
       );
+      bindScopeButtonOnce();
+    } else if (data.personalScope && data.isAdmin) {
+      showAirtableAlert(
+        '<strong>My organiser view</strong> — showing only groups and events linked to your account (' +
+          esc(state.user.email) +
+          ').' +
+          '<div class="org-scope-actions"><button type="button" class="org-btn org-btn-outline org-btn-sm" id="btn-scope-all">View all (admin)</button></div>',
+        false
+      );
+      bindScopeButtonOnce();
     } else if (data.groupsError && state.airtable && state.airtable.groups) {
       const g = state.airtable.groups;
       showAirtableAlert(
@@ -1336,9 +1408,8 @@
     } catch {
       /* non-fatal */
     }
-    document.getElementById('org-welcome-name').textContent =
-      'Welcome' + (user.name ? ', ' + user.name : '');
-    document.getElementById('org-welcome-email').textContent = user.email;
+    state.user = user;
+    renderWelcome(user);
     if (signin) signin.hidden = true;
     shell.hidden = false;
     bindForms();

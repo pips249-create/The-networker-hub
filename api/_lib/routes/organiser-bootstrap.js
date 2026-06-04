@@ -33,7 +33,7 @@ module.exports = async function handler(req, res) {
 
     return json(res, 200, {
       ok: true,
-      user: {
+      user: ws.user || {
         email: ws.session.email,
         name: ws.session.name || '',
         role: ws.session.role,
@@ -44,6 +44,8 @@ module.exports = async function handler(req, res) {
       tickets: ws.tickets,
       hubView: ws.hubView,
       adminView: ws.adminView,
+      personalScope: ws.personalScope,
+      isAdmin: ws.isAdmin,
       canOrganise: ws.canOrganise,
       stats: {
         groups: ws.groups.length,

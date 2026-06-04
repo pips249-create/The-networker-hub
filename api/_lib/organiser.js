@@ -10,6 +10,8 @@ const {
   setCors,
   parseAirtableError,
   hubViewFromRequest,
+  organiserPersonalScopeFromRequest,
+  findUserByEmail,
 } = require('./auth');
 
 const GROUP_FIELDS = {
@@ -408,18 +410,18 @@ async function listAllOrganiserTickets() {
   }
 }
 
-async function listGroupsForSession(session) {
-  if (isPlatformAdmin(session)) return listAllGroups();
+async function listGroupsForSession(session, adminView) {
+  if (adminView) return listAllGroups();
   return listGroupsForUser(session.sub || '', session.email);
 }
 
-async function listEventsForSession(session, groupIds, organiserRecords) {
-  if (isPlatformAdmin(session)) return listAllOrganiserEvents();
+async function listEventsForSession(session, groupIds, organiserRecords, adminView) {
+  if (adminView) return listAllOrganiserEvents();
   return listEventsForOrganiser(session.email, groupIds, organiserRecords);
 }
 
-async function listTicketsForSession(session, eventIds) {
-  if (isPlatformAdmin(session)) return listAllOrganiserTickets();
+async function listTicketsForSession(session, eventIds, adminView) {
+  if (adminView) return listAllOrganiserTickets();
   return listTicketsForEventIds(eventIds);
 }
 
@@ -755,12 +757,22 @@ async function getOrganiserWorkspace(req) {
   const auth = requireOrganiserSession(req);
   if (!auth.ok) return auth;
   const { session } = auth;
-  const adminView = isPlatformAdmin(session);
+  const isAdmin = isPlatformAdmin(session);
+  const personalScope = isAdmin && organiserPersonalScopeFromRequest(req);
+  const adminView = isAdmin && !personalScope;
+
+  let displayName = session.name || '';
+  try {
+    const user = await findUserByEmail(session.email);
+    if (user && user.name) displayName = user.name;
+  } catch {
+    /* use session name */
+  }
 
   let groups = [];
   let groupsError = null;
   try {
-    groups = await listGroupsForSession(session);
+    groups = await listGroupsForSession(session, adminView);
   } catch (e) {
     groupsError = e.message;
   }
@@ -774,13 +786,13 @@ async function getOrganiserWorkspace(req) {
       const organiserRecords = await fetchAllRecords(table);
       ownedRecords = organiserRecords.filter((r) => groupIds.includes(r.id));
     }
-    events = await listEventsForSession(session, groupIds, ownedRecords);
+    events = await listEventsForSession(session, groupIds, ownedRecords, adminView);
   } catch (e) {
     return { ok: false, status: 500, error: 'events_fetch_failed', message: e.message, groups };
   }
 
   const eventIds = events.map((e) => e.id);
-  const tickets = await listTicketsForSession(session, eventIds);
+  const tickets = await listTicketsForSession(session, eventIds, adminView);
   const overview = enrichOrganiserOverview(groups, events, tickets);
 
   return {
@@ -793,7 +805,15 @@ async function getOrganiserWorkspace(req) {
     groupsError,
     hubView: hubViewFromRequest(req),
     adminView,
+    personalScope,
+    isAdmin,
     canOrganise: groups.length > 0 || adminView,
+    user: {
+      email: session.email,
+      name: displayName,
+      role: session.role,
+      sub: session.sub,
+    },
   };
 }
 
