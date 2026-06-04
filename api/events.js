@@ -12,7 +12,7 @@ const { cleanEnvVal, parseAirtableError } = require('./lib/auth');
 const FIELD_MAP = {
   title: ['Title', 'Name', 'Event Title'],
   description: ['Description', 'Short Description', 'Summary'],
-  date: ['Date', 'Event Date', 'Start Date'],
+  date: ['Date', 'Event Date', 'Start Date', 'Start', 'When', 'Event Start', 'Meeting Date'],
   time: ['Time', 'Start Time'],
   price: ['Price', 'Ticket Price'],
   location: ['Location', 'City', 'Venue'],
@@ -116,18 +116,88 @@ function slugFormat(fmt) {
   return s.replace(/[^a-z0-9]+/g, '-').slice(0, 20);
 }
 
+const UK_POSTCODE_RE = /\b([A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2})\b/i;
+
+function extractUkPostcode(...parts) {
+  for (const part of parts) {
+    if (!part) continue;
+    const m = String(part).match(UK_POSTCODE_RE);
+    if (m) return m[1].replace(/\s+/g, ' ').trim().toUpperCase();
+  }
+  return '';
+}
+
+/** Parse Airtable date values (ISO, US, UK, locale strings). */
+function parseAirtableDate(raw) {
+  if (raw === null || raw === undefined || raw === '') {
+    return { iso: '', ts: null, display: '', short: '' };
+  }
+
+  if (typeof raw === 'object' && raw !== null) {
+    if (raw.iso) return parseAirtableDate(raw.iso);
+    if (Array.isArray(raw) && raw[0]) return parseAirtableDate(raw[0]);
+  }
+
+  const s = String(raw).trim();
+
+  const uk = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (uk) {
+    let d = parseInt(uk[1], 10);
+    let m = parseInt(uk[2], 10) - 1;
+    let y = parseInt(uk[3], 10);
+    if (y < 100) y += 2000;
+    if (d > 12 && m < 12) {
+      /* likely DD/MM/YYYY */
+    } else if (d <= 12 && m + 1 > 12) {
+      const tmp = d;
+      d = m + 1;
+      m = tmp - 1;
+    }
+    const dt = new Date(y, m, d, 12, 0, 0, 0);
+    if (!Number.isNaN(dt.getTime())) {
+      return packDate(dt, s);
+    }
+  }
+
+  const isoDay = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoDay) {
+    const dt = new Date(
+      parseInt(isoDay[1], 10),
+      parseInt(isoDay[2], 10) - 1,
+      parseInt(isoDay[3], 10),
+      12,
+      0,
+      0,
+      0
+    );
+    if (!Number.isNaN(dt.getTime())) return packDate(dt, s);
+  }
+
+  const d = new Date(s);
+  if (!Number.isNaN(d.getTime())) return packDate(d, s);
+
+  return { iso: '', ts: null, display: s, short: s };
+}
+
+function packDate(dt, fallback) {
+  const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+  return {
+    iso,
+    ts: dt.getTime(),
+    display: dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+    short: dt.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' }),
+    raw: fallback,
+  };
+}
+
 function formatDate(isoOrStr) {
-  if (!isoOrStr) return '';
-  const d = new Date(isoOrStr);
-  if (Number.isNaN(d.getTime())) return String(isoOrStr);
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  const p = parseAirtableDate(isoOrStr);
+  return p.display || (isoOrStr ? String(isoOrStr) : '');
 }
 
 function formatDateShort(isoOrStr) {
-  if (!isoOrStr) return '';
-  const d = new Date(isoOrStr);
-  if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' });
+  const p = parseAirtableDate(isoOrStr);
+  return p.short || '';
 }
 
 function parsePriceNum(raw) {
@@ -152,11 +222,13 @@ function recordToEvent(record) {
   const f = record.fields || {};
   const title = pick(f, FIELD_MAP.title) || 'Untitled event';
   const description = pick(f, FIELD_MAP.description) || '';
-  const dateRaw = pick(f, FIELD_MAP.date);
+  const dateField = pick(f, FIELD_MAP.date);
+  const parsedDate = parseAirtableDate(dateField);
   const time = pick(f, FIELD_MAP.time) || '';
   const location = pick(f, FIELD_MAP.location) || '';
-  const postcode = pick(f, FIELD_MAP.postcode) || '';
   const venue = pick(f, FIELD_MAP.venue) || '';
+  let postcode = pick(f, FIELD_MAP.postcode) || '';
+  if (!postcode) postcode = extractUkPostcode(location, venue);
   const industry = pick(f, FIELD_MAP.industry) || '';
   const format = pick(f, FIELD_MAP.format) || '';
   const typeRaw = pick(f, FIELD_MAP.type) || 'meeting';
@@ -204,8 +276,10 @@ function recordToEvent(record) {
     id: record.id,
     title,
     description,
-    date: formatDate(dateRaw),
-    dateRaw: dateRaw || '',
+    date: parsedDate.display || formatDate(dateField),
+    dateRaw: parsedDate.iso || (dateField ? String(dateField) : ''),
+    dateTs: parsedDate.ts,
+    dateFieldRaw: dateField ? String(dateField) : '',
     time: String(time),
     location,
     postcode: String(postcode),
@@ -226,7 +300,7 @@ function recordToEvent(record) {
     organiser,
     rating: Number.isFinite(rating) ? rating : 4,
     reviews: Number.isFinite(reviews) ? reviews : 0,
-    dateLine: buildDateLine(location, dateRaw, time),
+    dateLine: buildDateLine(location, parsedDate.iso || dateField, time),
     search,
     locationSlug: slugLocation(location),
     industrySlug: slugIndustry(industry),

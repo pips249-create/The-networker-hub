@@ -339,13 +339,20 @@
         setStatus(events.length ? '' : 'No events in your Airtable table yet.', false);
       }
       window.hubAllEvents = events;
-      fillFilterOptions();
-      currentPage = 1;
-      if (window.hubApplyFilters) window.hubApplyFilters();
-      else renderAll();
+      var afterGeo = window.hubEnrichEventCoords
+        ? window.hubEnrichEventCoords(events)
+        : Promise.resolve();
+      afterGeo.then(function () {
+        fillFilterOptions();
+        currentPage = 1;
+        if (window.hubApplyFilters) window.hubApplyFilters();
+        else renderAll();
+      });
     } catch (e) {
       setStatus('Could not reach /api/events. Deploy on Vercel or run `vercel dev` locally.', true);
       events = [];
+      window.hubAllEvents = events;
+      fillFilterOptions();
       renderAll();
     }
   }

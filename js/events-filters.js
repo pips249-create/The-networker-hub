@@ -48,15 +48,26 @@
     }
 
     var pc = (postcodeInput && postcodeInput.value) || '';
-    pc = pc.trim().toLowerCase();
-    if (pc) {
-      var compact = pc.replace(/\s+/g, '');
+    pc = pc.trim();
+    var nearMe = toggleNearMe && toggleNearMe.checked;
+
+    if (nearMe && pc && window.hubUserCoords && window.hubDistanceMiles) {
+      if (ev.mapLat == null || ev.mapLng == null) return false;
+      var miles = window.hubDistanceMiles(
+        window.hubUserCoords[0],
+        window.hubUserCoords[1],
+        ev.mapLat,
+        ev.mapLng
+      );
+      if (miles > 35) return false;
+    } else if (pc) {
+      var compact = pc.toLowerCase().replace(/\s+/g, '');
       var locHay = [ev.location, ev.postcode, ev.venue, ev.search]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
       var locCompact = locHay.replace(/\s/g, '');
-      if (locHay.indexOf(pc) === -1 && locCompact.indexOf(compact) === -1) {
+      if (locHay.indexOf(pc.toLowerCase()) === -1 && locCompact.indexOf(compact) === -1) {
         return false;
       }
     }
@@ -73,8 +84,13 @@
     }
 
     if (dateFromTs || dateToTs) {
-      var evTs = ev.dateRaw ? new Date(ev.dateRaw).getTime() : null;
-      if (!evTs) return false;
+      var evTs =
+        ev.dateTs != null
+          ? ev.dateTs
+          : ev.dateRaw
+            ? new Date(ev.dateRaw).getTime()
+            : null;
+      if (evTs == null || Number.isNaN(evTs)) return false;
       if (dateFromTs && evTs < dateFromTs) return false;
       if (dateToTs && evTs > dateToTs) return false;
     }
@@ -94,6 +110,15 @@
     return true;
   }
 
+  function eventDateTs(ev) {
+    if (ev.dateTs != null && !Number.isNaN(ev.dateTs)) return ev.dateTs;
+    if (ev.dateRaw) {
+      var t = new Date(ev.dateRaw).getTime();
+      return Number.isNaN(t) ? null : t;
+    }
+    return null;
+  }
+
   function sortEvents(list) {
     var sort = (sortSelect && sortSelect.value) || 'recommended';
     var copy = list.slice();
@@ -105,19 +130,21 @@
         return (Number(a.priceNum) || 0) - (Number(b.priceNum) || 0);
       }
       if (sort === 'date') {
-        var da = a.dateRaw ? new Date(a.dateRaw).getTime() : 0;
-        var db = b.dateRaw ? new Date(b.dateRaw).getTime() : 0;
-        if (!da && !db) return 0;
-        if (!da) return 1;
-        if (!db) return -1;
+        var da = eventDateTs(a);
+        var db = eventDateTs(b);
+        if (da == null && db == null) return 0;
+        if (da == null) return 1;
+        if (db == null) return -1;
         return da - db;
       }
       if (a.featured !== b.featured) return a.featured ? -1 : 1;
       var ra = Number(a.rating) || 0;
       var rb = Number(b.rating) || 0;
       if (rb !== ra) return rb - ra;
-      var d1 = a.dateRaw ? new Date(a.dateRaw).getTime() : Infinity;
-      var d2 = b.dateRaw ? new Date(b.dateRaw).getTime() : Infinity;
+      var d1 = eventDateTs(a);
+      var d2 = eventDateTs(b);
+      if (d1 == null) d1 = Infinity;
+      if (d2 == null) d2 = Infinity;
       return d1 - d2;
     });
     return copy;
@@ -157,6 +184,13 @@
     if (window.hubRefreshMap) window.hubRefreshMap(filtered);
   }
 
+  function maybeGeocodeUserPostcode() {
+    var pc = (postcodeInput && postcodeInput.value) || '';
+    pc = pc.trim();
+    if (!pc || !window.hubGeocodeUserPostcode) return;
+    window.hubGeocodeUserPostcode(pc).then(applyFilters);
+  }
+
   function resetFilters() {
     if (searchInput) searchInput.value = '';
     if (postcodeInput) postcodeInput.value = '';
@@ -187,13 +221,28 @@
 
   [
     searchInput,
-    postcodeInput,
     typeSelect,
     sortSelect,
     checkInPerson,
     checkOnline,
-    toggleNearMe,
   ].forEach(bindFilter);
+
+  if (postcodeInput) {
+    postcodeInput.addEventListener('input', function () {
+      maybeGeocodeUserPostcode();
+      applyFilters();
+    });
+    postcodeInput.addEventListener('change', function () {
+      maybeGeocodeUserPostcode();
+      applyFilters();
+    });
+  }
+  if (toggleNearMe) {
+    toggleNearMe.addEventListener('change', function () {
+      maybeGeocodeUserPostcode();
+      applyFilters();
+    });
+  }
 
   if (priceApply) {
     priceApply.addEventListener('click', function () {
