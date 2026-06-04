@@ -253,6 +253,65 @@ a:hover {
   padding-bottom: 32px;
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.action-dropdown-wrap {
+  position: relative;
+}
+
+.action-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  min-width: 220px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 8px 0;
+  box-shadow: var(--shadow-lg);
+}
+
+.action-dropdown-label {
+  margin: 0;
+  padding: 8px 14px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.action-dropdown-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--purple-800);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.action-dropdown-item:hover {
+  background: var(--purple-50);
+}
+
+.action-dropdown-copy {
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 12px;
+}
+
+.action-btn.is-saved {
+  background: var(--purple-100);
+  border-color: var(--purple-600);
+  color: var(--purple-900);
 }
 
 .action-btn {
@@ -322,55 +381,6 @@ a:hover {
   color: var(--purple-600);
 }
 
-/* ---- Agenda ---- */
-.agenda {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 8px 0;
-}
-
-.agenda-item {
-  display: grid;
-  grid-template-columns: 90px 1fr;
-  gap: 20px;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--border);
-  align-items: start;
-}
-
-.agenda-item:last-child {
-  border-bottom: none;
-}
-
-.agenda-time {
-  font-weight: 600;
-  color: var(--purple-700);
-  font-size: 14px;
-  font-variant-numeric: tabular-nums;
-  padding-top: 2px;
-}
-
-.agenda-body strong {
-  display: block;
-  font-weight: 600;
-  color: var(--ink);
-  margin-bottom: 3px;
-  font-size: 15px;
-}
-
-.agenda-body span {
-  color: var(--ink-muted);
-  font-size: 14px;
-}
-
-@media (max-width: 640px) {
-  .agenda-item {
-    grid-template-columns: 70px 1fr;
-    padding: 14px 18px;
-  }
-}
-
 /* ---- Organiser card ---- */
 .organiser-card {
   background: var(--surface);
@@ -403,12 +413,18 @@ a:hover {
   padding: 6px;
 }
 
-.organiser-avatar.has-logo img {
+.organiser-avatar.has-logo #ev-host-logo {
   width: 100%;
   height: 100%;
   object-fit: contain;
   border-radius: 50%;
   display: block;
+}
+
+.organiser-avatar .host-initials {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .host-industry {
@@ -474,38 +490,18 @@ a:hover {
   overflow: hidden;
 }
 
-.map-placeholder {
+.map-embed {
   height: 220px;
-  background:
-    linear-gradient(rgba(123, 63, 199, 0.05), rgba(123, 63, 199, 0.05)),
-    repeating-linear-gradient(0deg, transparent 0, transparent 39px, rgba(123, 63, 199, 0.08) 40px),
-    repeating-linear-gradient(90deg, transparent 0, transparent 39px, rgba(123, 63, 199, 0.08) 40px),
-    #ede3f7;
+  background: #ede3f7;
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
 }
 
-.map-pin {
-  width: 40px;
-  height: 40px;
-  background: var(--purple-600);
-  border-radius: 50% 50% 50% 0;
-  transform: rotate(-45deg);
-  box-shadow: 0 4px 14px rgba(123, 63, 199, 0.35);
-  position: relative;
-}
-
-.map-pin::after {
-  content: "";
-  position: absolute;
-  top: 11px;
-  left: 11px;
-  width: 18px;
-  height: 18px;
-  background: var(--surface);
-  border-radius: 50%;
+.map-embed iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
 }
 
 .location-details {
@@ -556,6 +552,8 @@ a:hover {
   font: inherit;
   color: inherit;
   padding: 0;
+  text-decoration: none;
+  display: block;
 }
 
 .related-card:hover {
@@ -563,9 +561,28 @@ a:hover {
   box-shadow: var(--shadow-md);
 }
 
+.related-empty {
+  font-size: 14.5px;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+#ev-related-section.is-empty-related .related-grid {
+  display: none;
+}
+
 .related-img {
   aspect-ratio: 16 / 10;
   position: relative;
+  background: var(--lavender-light);
+  overflow: hidden;
+}
+
+.related-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .related-img .mini-pill {

@@ -40,7 +40,26 @@ const FIELD_MAP = {
   longitude: ['Longitude', 'Lng', 'Long'],
   featured: ['Featured', 'Premium', 'Premium Spotlight'],
   photo: ['Photo', 'Image', 'Cover', 'Photos', 'Picture', 'Event Photo', 'Event Image'],
-  organiser: ['Organiser', 'Host', 'Organizer'],
+  organiser: ['Organiser', 'Host', 'Organizer', 'Organiser Name'],
+  organiserId: ['Organiser ID', 'OrganiserId', 'Host ID', 'Organizer ID'],
+  organiserLogo: [
+    'Organiser Logo',
+    'Host Logo',
+    'Organiser Photo',
+    'Organiser Image',
+    'Company Logo',
+    'Logo',
+  ],
+  organiserProfile: [
+    'Company Profile',
+    'Organiser Profile',
+    'Organiser Description',
+    'Company Description',
+    'Host Bio',
+    'About Organiser',
+    'Organiser Bio',
+  ],
+  address: ['Address', 'Venue Address', 'Full Address', 'Address Line 1', 'Street'],
   rating: ['Rating', 'Average Rating', 'Stars'],
   reviews: ['Reviews', 'Review Count', 'Number of Reviews'],
 };
@@ -303,6 +322,65 @@ function formatDateShort(isoOrStr) {
   return p.short || '';
 }
 
+function linkedRecordId(field) {
+  if (!field) return '';
+  if (Array.isArray(field) && field.length) {
+    const first = field[0];
+    if (typeof first === 'string' && /^rec[a-zA-Z0-9]+$/i.test(first)) return first;
+    if (first && typeof first === 'object' && first.id) return String(first.id);
+  }
+  if (typeof field === 'string' && /^rec[a-zA-Z0-9]+$/i.test(field)) return field;
+  return '';
+}
+
+function pickOrganiserName(fields) {
+  const raw = pick(fields, FIELD_MAP.organiser);
+  if (!raw) return '';
+  if (typeof raw === 'string') {
+    if (/^rec[a-zA-Z0-9]+$/i.test(raw)) return '';
+    return raw.trim();
+  }
+  if (Array.isArray(raw)) {
+    const names = raw
+      .map((x) => (typeof x === 'string' && !/^rec[a-zA-Z0-9]+$/i.test(x) ? x : ''))
+      .filter(Boolean);
+    if (names.length) return names.join(', ');
+  }
+  return '';
+}
+
+function organiserMatch(a, b) {
+  if (a.organiserId && b.organiserId) return a.organiserId === b.organiserId;
+  const na = String(a.organiser || '')
+    .trim()
+    .toLowerCase();
+  const nb = String(b.organiser || '')
+    .trim()
+    .toLowerCase();
+  return Boolean(na && nb && na === nb);
+}
+
+async function fetchAllAirtableRecords(baseUrl, apiKey, view) {
+  const all = [];
+  let offset;
+  do {
+    const q = new URLSearchParams({ pageSize: '100' });
+    if (view) q.set('view', view);
+    if (offset) q.set('offset', offset);
+    const resp = await fetch(`${baseUrl}?${q}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (!resp.ok) {
+      const err = await resp.text();
+      throw new Error(err || 'airtable_fetch_failed');
+    }
+    const data = await resp.json();
+    all.push(...(data.records || []));
+    offset = data.offset;
+  } while (offset);
+  return all;
+}
+
 function parsePriceNum(raw) {
   if (raw === null || raw === undefined || raw === '') return 0;
   const n = Number(String(raw).replace(/[^0-9.]/g, ''));
@@ -362,7 +440,18 @@ function recordToEvent(record) {
   const { display: priceDisplay, priceKey } = normalizePrice(priceRaw);
   const priceNum = parsePriceNum(priceRaw);
   const photo = attachmentUrl(pick(f, FIELD_MAP.photo));
-  const organiser = pick(f, FIELD_MAP.organiser) || '';
+  const organiserLinkRaw = getFieldCI(f, 'Organiser') ?? getFieldCI(f, 'Host');
+  const organiserId =
+    pick(f, FIELD_MAP.organiserId) ||
+    linkedRecordId(organiserLinkRaw) ||
+    linkedRecordId(pick(f, FIELD_MAP.organiser)) ||
+    '';
+  const organiser = pickOrganiserName(f) || '';
+  const organiserLogo = attachmentUrl(pick(f, FIELD_MAP.organiserLogo));
+  const organiserProfile = pick(f, FIELD_MAP.organiserProfile) || '';
+  const addressLine = pick(f, FIELD_MAP.address) || '';
+  const venueName = String(venue || '').trim();
+  const venueAddress = [addressLine, postcode].filter(Boolean).join(', ') || String(location || '').trim();
   const ratingRaw = pick(f, FIELD_MAP.rating);
   const reviewsRaw = pick(f, FIELD_MAP.reviews);
   const rating = ratingRaw != null && ratingRaw !== '' ? Number(ratingRaw) : 4;
@@ -397,6 +486,11 @@ function recordToEvent(record) {
     postcode: String(postcode),
     outcode,
     venue: String(venue),
+    venueName,
+    venueAddress,
+    organiserId: String(organiserId),
+    organiserLogo,
+    organiserProfile: String(organiserProfile),
     industry,
     format,
     type,
@@ -466,7 +560,19 @@ module.exports = async function handler(req, res) {
         });
       }
       const data = await resp.json();
-      return res.status(200).json({ configured: true, event: recordToEvent(data) });
+      const event = recordToEvent(data);
+      let related = [];
+      try {
+        const view = process.env.AIRTABLE_EVENTS_VIEW;
+        const all = await fetchAllAirtableRecords(baseUrl, apiKey, view);
+        related = all
+          .map(recordToEvent)
+          .filter((e) => e.id !== event.id && organiserMatch(e, event))
+          .slice(0, 6);
+      } catch (relErr) {
+        console.error('related_events_fetch', relErr.message);
+      }
+      return res.status(200).json({ configured: true, event, related });
     }
 
     const view = process.env.AIRTABLE_EVENTS_VIEW;

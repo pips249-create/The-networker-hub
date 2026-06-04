@@ -89,33 +89,50 @@
         </div>
 
         <div class="quick-actions">
-          <button type="button" class="action-btn" aria-label="Save event">
+          <button type="button" class="action-btn" id="save-btn" aria-label="Save event" aria-pressed="false">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
             </svg>
             Save
           </button>
-          <button type="button" class="action-btn" aria-label="Share event">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="18" cy="5" r="3" />
-              <circle cx="6" cy="12" r="3" />
-              <circle cx="18" cy="19" r="3" />
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-            </svg>
-            Share
-          </button>
-          <button type="button" class="action-btn" id="calendar-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="18" rx="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-              <line x1="12" y1="14" x2="12" y2="18" />
-              <line x1="10" y1="16" x2="14" y2="16" />
-            </svg>
-            Add to calendar
-          </button>
+          <div class="action-dropdown-wrap">
+            <button type="button" class="action-btn" id="share-btn" aria-expanded="false" aria-haspopup="true" aria-controls="share-menu">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+              Share
+            </button>
+            <div class="action-dropdown" id="share-menu" role="menu" hidden>
+              <p class="action-dropdown-label">Share this event</p>
+              <a class="action-dropdown-item" id="share-linkedin" href="#" target="_blank" rel="noopener noreferrer" role="menuitem">LinkedIn</a>
+              <a class="action-dropdown-item" id="share-twitter" href="#" target="_blank" rel="noopener noreferrer" role="menuitem">X (Twitter)</a>
+              <a class="action-dropdown-item" id="share-facebook" href="#" target="_blank" rel="noopener noreferrer" role="menuitem">Facebook</a>
+              <button type="button" class="action-dropdown-item action-dropdown-copy" id="share-copy" role="menuitem">Copy link</button>
+            </div>
+          </div>
+          <div class="action-dropdown-wrap">
+            <button type="button" class="action-btn" id="calendar-btn" aria-expanded="false" aria-haspopup="true" aria-controls="calendar-menu">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+                <line x1="12" y1="14" x2="12" y2="18" />
+                <line x1="10" y1="16" x2="14" y2="16" />
+              </svg>
+              Add to calendar
+            </button>
+            <div class="action-dropdown" id="calendar-menu" role="menu" hidden>
+              <p class="action-dropdown-label">Add to your calendar</p>
+              <a class="action-dropdown-item" id="cal-google" href="#" target="_blank" rel="noopener noreferrer" role="menuitem">Google Calendar</a>
+              <a class="action-dropdown-item" id="cal-outlook" href="#" target="_blank" rel="noopener noreferrer" role="menuitem">Outlook / Office 365</a>
+              <button type="button" class="action-dropdown-item" id="cal-ics" role="menuitem">Download .ics (Apple Calendar)</button>
+            </div>
+          </div>
         </div>
 
         <section class="content-section" id="ev-about-section">
@@ -141,55 +158,23 @@
         </section>
 
         <section class="content-section">
-          <h2>Agenda</h2>
-          <div class="agenda">
-            <div class="agenda-item">
-              <div class="agenda-time">15:00</div>
-              <div class="agenda-body">
-                <strong>Arrival &amp; seated lunch</strong>
-                <span>Informal introductions at your table of 6–8.</span>
-              </div>
-            </div>
-            <div class="agenda-item">
-              <div class="agenda-time">15:45</div>
-              <div class="agenda-body">
-                <strong>Guest talk + Q&amp;A</strong>
-                <span>30 min talk, 15 min open questions.</span>
-              </div>
-            </div>
-            <div class="agenda-item">
-              <div class="agenda-time">16:30</div>
-              <div class="agenda-body">
-                <strong>Structured networking round</strong>
-                <span>Three rotations — leave with warm intros.</span>
-              </div>
-            </div>
-            <div class="agenda-item">
-              <div class="agenda-time">17:15</div>
-              <div class="agenda-body">
-                <strong>Coffee &amp; open wrap</strong>
-                <span>Stay on or head off — entirely up to you.</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="content-section">
           <h2>Hosted by</h2>
           <div class="organiser-card">
-            <div class="organiser-avatar" id="ev-host-avatar" aria-hidden="true">CS</div>
+            <div class="organiser-avatar" id="ev-host-avatar" aria-hidden="true">
+              <img id="ev-host-logo" src="" alt="" width="64" height="64" hidden />
+              <span id="ev-host-initials" class="host-initials">CS</span>
+            </div>
             <div class="organiser-info">
               <h3 id="ev-host-name">Catalyst Sessions Ltd</h3>
               <span id="ev-host-industry" class="host-industry" hidden></span>
-              <div class="org-meta">
-                <span>★ 4.2 average · 14 past events</span>
-                <span>Member since 2023</span>
+              <div class="org-meta" id="ev-host-meta" hidden>
+                <span id="ev-host-rating-meta"></span>
               </div>
-              <p>
+              <p id="ev-host-profile">
                 Catalyst Sessions runs small-format lunch &amp; learns across the North West, focused on hospitality,
                 retail and events. Warm rooms, real conversations, no cold-call energy.
               </p>
-              <a href="#">View organiser profile →</a>
+              <a href="#" id="ev-host-profile-link" hidden>View organiser profile →</a>
             </div>
           </div>
         </section>
@@ -197,8 +182,15 @@
         <section class="content-section">
           <h2>Location</h2>
           <div class="location-card">
-            <div class="map-placeholder" role="img" aria-label="Map preview for venue location">
-              <div class="map-pin"></div>
+            <div class="map-embed">
+              <iframe
+                id="ev-map-iframe"
+                title="Map showing event venue"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                allowfullscreen
+                src=""
+              ></iframe>
             </div>
             <div class="location-details">
               <strong id="ev-venue-name">The Albion Rooms</strong>
@@ -206,7 +198,7 @@
               <a
                 class="location-link"
                 id="ev-directions"
-                href="https://www.google.com/maps/search/?api=1&query=The%20Albion%20Rooms%2042%20Castle%20Street%20Liverpool%20L2%207LQ"
+                href="https://www.google.com/maps/dir/?api=1&destination=The%20Albion%20Rooms%2042%20Castle%20Street%20Liverpool%20L2%207LQ"
                 target="_blank"
                 rel="noopener noreferrer"
                 >Get directions →</a
@@ -215,43 +207,10 @@
           </div>
         </section>
 
-        <section class="content-section">
-          <h2>More from Catalyst Sessions</h2>
-          <div class="related-grid">
-            <button type="button" class="related-card">
-              <div class="related-img" style="background: linear-gradient(135deg, #5b2f99, #9456e0)">
-                <span class="mini-pill">Retail &amp; E-comm</span>
-                <span class="mini-price">£28.00</span>
-              </div>
-              <div class="related-body">
-                <div class="format-tag">IN-PERSON</div>
-                <h4>Manchester operators breakfast</h4>
-                <div class="when">Manchester · Sat 14 Jun · 09:00</div>
-              </div>
-            </button>
-            <button type="button" class="related-card">
-              <div class="related-img" style="background: linear-gradient(135deg, #3d2766, #7b3fc7)">
-                <span class="mini-pill">Hospitality</span>
-                <span class="mini-price">£35.50</span>
-              </div>
-              <div class="related-body">
-                <div class="format-tag hybrid-tag">HYBRID</div>
-                <h4>Summer supper &amp; speaker night</h4>
-                <div class="when">Liverpool · Fri 28 Jun · 19:00</div>
-              </div>
-            </button>
-            <button type="button" class="related-card">
-              <div class="related-img" style="background: linear-gradient(135deg, #7b3fc7, #b580e8)">
-                <span class="mini-pill">Events &amp; Leisure</span>
-                <span class="mini-price">£22.00</span>
-              </div>
-              <div class="related-body">
-                <div class="format-tag online-tag">ONLINE</div>
-                <h4>Festival &amp; pop-up marketing AMA</h4>
-                <div class="when">Online · Wed 10 Jul · 13:00</div>
-              </div>
-            </button>
-          </div>
+        <section class="content-section" id="ev-related-section">
+          <h2 id="ev-related-title">More from this organiser</h2>
+          <div class="related-grid" id="ev-related-grid" aria-live="polite"></div>
+          <p class="related-empty" id="ev-related-empty" hidden>No other upcoming events from this organiser yet.</p>
         </section>
       </div>
 
@@ -332,577 +291,5 @@
     </div>
 
     <script src="../js/event-detail.js"></script>
-    <!-- removed legacy inline script -->
-    <script style="display:none">(function(){if(false){
-        function fmt(n) {
-          return "£" + n.toFixed(2);
-        }
-
-        function hostInitials(name) {
-          var parts = String(name || "")
-            .trim()
-            .split(/\s+/)
-            .filter(Boolean);
-          var a = (parts[0] && parts[0][0]) || "H";
-          var b = (parts[1] && parts[1][0]) || (parts[0] && parts[0][1]) || "N";
-          return (a + b).toUpperCase();
-        }
-
-        function isSafeLogoSrc(u) {
-          var s = String(u || "").trim().toLowerCase();
-          return (
-            s.indexOf("https:") === 0 ||
-            s.indexOf("http:") === 0 ||
-            s.indexOf("data:image/") === 0
-          );
-        }
-
-        function applyHostAvatar(avatarEl, logoSrc, initialsFallback) {
-          if (!avatarEl) return;
-          avatarEl.classList.remove("has-logo");
-          avatarEl.innerHTML = "";
-          if (logoSrc && isSafeLogoSrc(logoSrc)) {
-            var im = document.createElement("img");
-            im.src = logoSrc;
-            im.alt = "";
-            avatarEl.appendChild(im);
-            avatarEl.classList.add("has-logo");
-          } else {
-            avatarEl.textContent = initialsFallback || "?";
-          }
-        }
-
-        function starsFromAvg(avg) {
-          var a = Number(avg);
-          if (isNaN(a)) a = 0;
-          var full = Math.min(5, Math.max(0, Math.round(a)));
-          var s = "";
-          for (var i = 1; i <= 5; i++) {
-            s += i <= full ? "★" : "☆";
-          }
-          return s;
-        }
-
-        function formatLabel(mode) {
-          var m = String(mode || "inperson").toLowerCase();
-          if (m === "hybrid") return "Hybrid event";
-          if (m === "online") return "Online event";
-          return "In-person event";
-        }
-
-        function populateListingFromQuery() {
-          var params = new URLSearchParams(window.location.search);
-          var title = params.get("title");
-          if (!title) return;
-
-          document.title = title;
-          var tEl = document.getElementById("ev-title");
-          if (tEl) tEl.textContent = title;
-
-          var cur = document.getElementById("ev-trail-current");
-          if (cur) cur.textContent = title;
-
-          var tc = document.getElementById("ev-trail-category");
-
-          var back = params.get("back");
-          if (back) {
-            var safeBack = back;
-            var bk = document.getElementById("ev-back");
-            if (bk) bk.href = safeBack;
-            var te = document.getElementById("ev-trail-events");
-            if (te) te.href = safeBack;
-            if (tc) tc.href = safeBack;
-          }
-
-          var cat = params.get("category");
-          if (cat) {
-            var cEl = document.getElementById("ev-category");
-            if (cEl) cEl.textContent = cat;
-            if (tc) tc.textContent = cat;
-          }
-
-          var priceNum = params.get("price");
-          if (priceNum != null && priceNum !== "" && !isNaN(Number(priceNum))) {
-            var n = Number(priceNum);
-            var pf = fmt(n);
-            var pb = document.getElementById("ev-price");
-            if (pb) pb.textContent = "from " + pf;
-            var th = document.getElementById("ev-ticket-from-price");
-            if (th) th.textContent = pf;
-            var std = document.getElementById("ev-tier-standard");
-            if (std) {
-              std.setAttribute("data-price", String(n));
-              var tp = std.querySelector(".tier-price");
-              if (tp) tp.textContent = pf;
-            }
-          }
-
-          var fmtParam = params.get("format");
-          if (fmtParam) {
-            var fEl = document.getElementById("ev-format");
-            if (fEl) fEl.textContent = formatLabel(fmtParam);
-          }
-
-          var img = params.get("img");
-          if (img) {
-            var im = document.getElementById("ev-hero-img");
-            if (im) {
-              im.src = img;
-              im.alt = title;
-            }
-          }
-
-          var starts = params.get("starts");
-          if (starts) {
-            var ms = document.getElementById("ev-meta-starts");
-            if (ms) ms.textContent = starts;
-          }
-
-          var timeRow = document.getElementById("ev-meta-time-row");
-          var timeTxt = params.get("time");
-          if (timeTxt) {
-            var mt = document.getElementById("ev-meta-time");
-            if (mt) mt.textContent = timeTxt;
-            if (timeRow) timeRow.style.display = "";
-          } else if (timeRow) {
-            timeRow.style.display = "none";
-          }
-
-          var city = params.get("city");
-          if (city) {
-            var mc = document.getElementById("ev-meta-city");
-            if (mc) mc.textContent = city;
-          }
-
-          var ra = params.get("rating");
-          var rc = params.get("reviews");
-          if (ra != null || rc != null) {
-            var stars = document.getElementById("ev-rating-stars");
-            if (stars) stars.textContent = starsFromAvg(ra);
-            var cnt = document.getElementById("ev-rating-count");
-            if (cnt) {
-              var rN = Number(ra);
-              var cN = Number(rc);
-              cnt.textContent =
-                (isNaN(rN) ? "0" : rN.toFixed(1)) +
-                (isNaN(cN) ? "" : " (" + String(Math.round(cN)) + " reviews)");
-            }
-            var wrap = document.getElementById("ev-rating-wrap");
-            if (wrap && !isNaN(Number(ra)) && !isNaN(Number(rc))) {
-              wrap.setAttribute(
-                "aria-label",
-                Number(ra).toFixed(1) + " out of 5 from " + String(Math.round(Number(rc))) + " reviews"
-              );
-            }
-          }
-
-          var host = params.get("host");
-          var hostLogo = params.get("host_logo");
-          var av = document.getElementById("ev-host-avatar");
-          if (host) {
-            var hn = document.getElementById("ev-host-name");
-            if (hn) hn.textContent = host;
-            if (av) applyHostAvatar(av, hostLogo || "", hostInitials(host));
-          } else if (hostLogo && av) {
-            applyHostAvatar(av, hostLogo, "?");
-          }
-
-          var industry = params.get("industry");
-          var indEl = document.getElementById("ev-host-industry");
-          if (indEl) {
-            if (industry) {
-              indEl.textContent = industry;
-              indEl.hidden = false;
-            } else {
-              indEl.textContent = "";
-              indEl.hidden = true;
-            }
-          }
-
-          var vName = params.get("venue_name");
-          var vAddr = params.get("venue_addr");
-          if (vName) {
-            var vn = document.getElementById("ev-venue-name");
-            if (vn) vn.textContent = vName;
-          }
-          if (vAddr) {
-            var va = document.getElementById("ev-venue-addr");
-            if (va) va.textContent = vAddr;
-          }
-          var mapsQ = params.get("maps_q");
-          if (mapsQ || vName || vAddr) {
-            var q = mapsQ || [vName, vAddr].filter(Boolean).join(", ");
-            if (q) {
-              var dir = document.getElementById("ev-directions");
-              if (dir) {
-                dir.href =
-                  "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q);
-              }
-            }
-          }
-
-          var about = params.get("about");
-          var blurb = params.get("blurb");
-          var lead = document.getElementById("ev-about-lead");
-          var extra = document.getElementById("ev-about-extra");
-          if (about && lead) {
-            lead.textContent = about;
-            if (extra) extra.hidden = true;
-          } else if (blurb && lead) {
-            lead.textContent = blurb;
-            if (extra) extra.hidden = true;
-          }
-
-          var urgency = params.get("urgency");
-          if (urgency) {
-            var uEl = document.getElementById("ev-urgency");
-            if (uEl) uEl.textContent = urgency;
-          }
-
-          var eid = params.get("id");
-          if (eid) {
-            document.body.setAttribute("data-event-id", eid);
-          }
-        }
-
-        populateListingFromQuery();
-
-        (function augmentFromOrganiserStorage() {
-          var params = new URLSearchParams(window.location.search);
-          var eid = params.get("id");
-          if (!eid) return;
-          var raw;
-          try {
-            raw = localStorage.getItem("pageListing:organiser");
-          } catch (err) {
-            return;
-          }
-          if (!raw) return;
-          var data;
-          try {
-            data = JSON.parse(raw);
-          } catch (e2) {
-            return;
-          }
-          var list = data.meetings || [];
-          var meeting = null;
-          for (var i = 0; i < list.length; i++) {
-            if (list[i].id === eid) {
-              meeting = list[i];
-              break;
-            }
-          }
-          if (!meeting) return;
-
-          var industryText =
-            meeting.industries && meeting.industries.length
-              ? meeting.industries.slice(0, 3).join(" · ")
-              : (meeting.industry || "").trim() || (data.groupIndustry || "").trim();
-          var indEl = document.getElementById("ev-host-industry");
-          if (indEl && industryText) {
-            indEl.textContent = industryText;
-            indEl.hidden = false;
-          }
-
-          var logo =
-            (data.groupLogoDataUrl || "").trim() ||
-            (data.groupLogoUrl || "").trim();
-          if (logo) {
-            var hostName = (data.groupName || params.get("host") || "").trim();
-            var av = document.getElementById("ev-host-avatar");
-            applyHostAvatar(av, logo, hostInitials(hostName || "Host"));
-          }
-
-          var desc = (meeting.eventDescription || meeting.about || "").trim();
-          if (desc) {
-            var lead = document.getElementById("ev-about-lead");
-            var extra = document.getElementById("ev-about-extra");
-            if (lead) lead.textContent = desc;
-            if (extra) extra.hidden = true;
-          }
-
-          var hero =
-            (meeting.eventImageDataUrl || "").trim() || (meeting.eventImageUrl || "").trim();
-          if (hero && isSafeLogoSrc(hero)) {
-            var him = document.getElementById("ev-hero-img");
-            if (him) {
-              him.src = hero;
-              him.alt = (meeting.eventName || meeting.title || params.get("title") || "Event") + "";
-            }
-          }
-
-          var vn = (meeting.venueName || "").trim();
-          var va = [meeting.address1, meeting.postcode].filter(Boolean).join(", ");
-          if (vn) {
-            var vne = document.getElementById("ev-venue-name");
-            if (vne) vne.textContent = vn;
-          }
-          if (va) {
-            var vae = document.getElementById("ev-venue-addr");
-            if (vae) vae.textContent = va;
-          }
-          var mapParts = [vn, meeting.address1, meeting.postcode].filter(Boolean).join(", ");
-          if (mapParts) {
-            var dir = document.getElementById("ev-directions");
-            if (dir) {
-              dir.href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(mapParts);
-            }
-          }
-
-          var brandHex = (meeting.eventColour || "").trim().replace(/^#/, "");
-          if (/^[0-9a-fA-F]{6}$/i.test(brandHex) && !(params.get("brand") || params.get("primary") || "").trim()) {
-            var metaBrand = document.querySelector('meta[name="theme-brand"]');
-            if (!metaBrand) {
-              metaBrand = document.createElement("meta");
-              metaBrand.setAttribute("name", "theme-brand");
-              document.head.appendChild(metaBrand);
-            }
-            metaBrand.setAttribute("content", brandHex);
-          }
-
-          var cap = (meeting.ticketQty || meeting.maxAttendees || "").trim();
-          if (cap) {
-            var uEl = document.getElementById("ev-urgency");
-            if (uEl) uEl.textContent = cap + " tickets";
-          }
-        })();
-
-        function parseHexColor(input) {
-          if (input == null || input === "") return null;
-          var s = String(input).trim().replace(/^#/, "");
-          if (!/^[0-9a-fA-F]{6}$/.test(s)) return null;
-          return {
-            r: parseInt(s.slice(0, 2), 16),
-            g: parseInt(s.slice(2, 4), 16),
-            b: parseInt(s.slice(4, 6), 16),
-          };
-        }
-
-        function rgbToHex(rgb) {
-          return (
-            "#" +
-            [rgb.r, rgb.g, rgb.b]
-              .map(function (x) {
-                var h = Math.max(0, Math.min(255, Math.round(x))).toString(16);
-                return h.length === 1 ? "0" + h : h;
-              })
-              .join("")
-          );
-        }
-
-        function mixRgb(a, b, t) {
-          return {
-            r: a.r + (b.r - a.r) * t,
-            g: a.g + (b.g - a.g) * t,
-            b: a.b + (b.b - a.b) * t,
-          };
-        }
-
-        function metaContent(name) {
-          var el = document.querySelector('meta[name="' + name + '"]');
-          var v = el && el.getAttribute("content");
-          return v ? v.trim() : "";
-        }
-
-        function applyTheme() {
-          var params = new URLSearchParams(window.location.search);
-          var root = document.documentElement;
-          var brand =
-            parseHexColor((params.get("brand") || params.get("primary") || "").replace(/^#/, "")) ||
-            parseHexColor(metaContent("theme-brand").replace(/^#/, ""));
-          var pageBg =
-            parseHexColor((params.get("bg") || params.get("page") || "").replace(/^#/, "")) ||
-            parseHexColor(metaContent("theme-bg").replace(/^#/, ""));
-          var accent =
-            parseHexColor((params.get("accent") || "").replace(/^#/, "")) ||
-            parseHexColor(metaContent("theme-accent").replace(/^#/, ""));
-
-          if (brand) {
-            var black = { r: 0, g: 0, b: 0 };
-            var white = { r: 255, g: 255, b: 255 };
-            root.style.setProperty("--purple-700", rgbToHex(brand));
-            root.style.setProperty("--purple-600", rgbToHex(mixRgb(brand, white, 0.24)));
-            root.style.setProperty("--purple-800", rgbToHex(mixRgb(brand, black, 0.2)));
-            root.style.setProperty("--purple-900", rgbToHex(mixRgb(brand, black, 0.38)));
-            root.style.setProperty("--purple-500", rgbToHex(mixRgb(brand, white, 0.14)));
-            root.style.setProperty("--purple-100", rgbToHex(mixRgb(brand, white, 0.9)));
-            root.style.setProperty("--purple-50", rgbToHex(mixRgb(brand, white, 0.95)));
-            root.style.setProperty("--border", rgbToHex(mixRgb(brand, white, 0.84)));
-            root.style.setProperty("--border-strong", rgbToHex(mixRgb(brand, white, 0.74)));
-            root.style.setProperty(
-              "--shadow-sm",
-              "0 1px 2px rgba(" + brand.r + "," + brand.g + "," + brand.b + ",0.06)"
-            );
-            root.style.setProperty(
-              "--shadow-md",
-              "0 4px 16px rgba(" + brand.r + "," + brand.g + "," + brand.b + ",0.1)"
-            );
-            root.style.setProperty(
-              "--shadow-lg",
-              "0 12px 40px rgba(" + brand.r + "," + brand.g + "," + brand.b + ",0.14)"
-            );
-          }
-
-          if (pageBg) {
-            root.style.setProperty("--lavender-bg", rgbToHex(pageBg));
-          }
-
-          if (accent) {
-            root.style.setProperty("--amber", rgbToHex(accent));
-          }
-        }
-
-        applyTheme();
-
-        var tiers = document.querySelectorAll(".tier:not(.sold-out)");
-        var qtyDown = document.getElementById("qty-down");
-        var qtyUp = document.getElementById("qty-up");
-        var qtyValue = document.getElementById("qty-value");
-        var sumLabel = document.getElementById("sum-label");
-        var sumQty = document.getElementById("sum-qty");
-        var sumSubtotal = document.getElementById("sum-subtotal");
-        var sumFee = document.getElementById("sum-fee");
-        var sumTotal = document.getElementById("sum-total");
-
-        var qty = 1;
-        var price = 32.15;
-        var label = "Standard";
-
-        var selTier0 = document.querySelector(".tier.selected");
-        if (selTier0) {
-          var p0 = parseFloat(selTier0.getAttribute("data-price"));
-          if (!isNaN(p0)) price = p0;
-          label = selTier0.getAttribute("data-label") || label;
-        }
-
-        function update() {
-          var subtotal = price * qty;
-          var fee = subtotal * 0.04 + 0.2 * qty;
-          var total = subtotal + fee;
-          sumLabel.textContent = label;
-          sumQty.textContent = String(qty);
-          sumSubtotal.textContent = fmt(subtotal);
-          sumFee.textContent = fmt(fee);
-          sumTotal.textContent = fmt(total);
-          qtyValue.textContent = String(qty);
-          qtyDown.disabled = qty <= 1;
-          qtyUp.disabled = qty >= 10;
-        }
-
-        function selectTier(tier) {
-          tiers.forEach(function (t) {
-            t.classList.remove("selected");
-            t.setAttribute("aria-pressed", "false");
-          });
-          tier.classList.add("selected");
-          tier.setAttribute("aria-pressed", "true");
-          price = parseFloat(tier.getAttribute("data-price")) || 0;
-          label = tier.getAttribute("data-label") || "Ticket";
-          update();
-        }
-
-        tiers.forEach(function (tier) {
-          tier.addEventListener("click", function () {
-            selectTier(tier);
-          });
-          tier.addEventListener("keydown", function (e) {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              selectTier(tier);
-            }
-          });
-        });
-
-        qtyDown.addEventListener("click", function () {
-          if (qty > 1) {
-            qty--;
-            update();
-          }
-        });
-        qtyUp.addEventListener("click", function () {
-          if (qty < 10) {
-            qty++;
-            update();
-          }
-        });
-
-        update();
-
-        function getStripeBaseUrl() {
-          var meta = document.querySelector('meta[name="stripe-payment-link"]');
-          var fromMeta = meta && meta.getAttribute("content") ? meta.getAttribute("content").trim() : "";
-          var params = new URLSearchParams(window.location.search);
-          var fromQuery = params.get("stripe") || params.get("payment_link");
-          return (fromQuery || fromMeta || "").trim();
-        }
-
-        function buildStripeCheckoutUrl() {
-          var base = getStripeBaseUrl();
-          if (!base) return null;
-          try {
-            var u = new URL(base);
-            var evId = document.body.getAttribute("data-event-id") || "";
-            var ref =
-              (evId ? "id" + evId + "-" : "") +
-              "event-" +
-              String(qty) +
-              "x-" +
-              label.replace(/\s+/g, "-").toLowerCase().replace(/[^a-z0-9-]/g, "");
-            u.searchParams.set("client_reference_id", ref.slice(0, 200));
-            if (qty > 1) {
-              u.searchParams.set("quantity", String(qty));
-            }
-            return u.toString();
-          } catch (err) {
-            return base;
-          }
-        }
-
-        var buy = document.getElementById("buy-btn");
-        var stripeHint = document.getElementById("stripe-hint");
-
-        buy.addEventListener("click", function () {
-          update();
-          var url = buildStripeCheckoutUrl();
-          if (!url) {
-            if (stripeHint) {
-              stripeHint.hidden = false;
-              stripeHint.focus();
-            }
-            return;
-          }
-          if (stripeHint) stripeHint.hidden = true;
-          window.location.assign(url);
-        });
-
-        document.getElementById("calendar-btn").addEventListener("click", function () {
-          var tNode = document.getElementById("ev-title");
-          var titleText = tNode ? tNode.textContent : "Event";
-          var loc = "";
-          var va = document.getElementById("ev-venue-addr");
-          var vn = document.getElementById("ev-venue-name");
-          if (vn && va) loc = vn.textContent + ", " + va.textContent;
-          else if (va) loc = va.textContent;
-          var starts = document.getElementById("ev-meta-starts");
-          var timeR = document.getElementById("ev-meta-time");
-          var details =
-            (starts ? starts.textContent : "") +
-            (timeR && timeR.textContent ? " · " + timeR.textContent : "") +
-            " · " +
-            (document.getElementById("ev-format")
-              ? document.getElementById("ev-format").textContent
-              : "");
-          window.open(
-            "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" +
-              encodeURIComponent(titleText) +
-              "&details=" +
-              encodeURIComponent(details) +
-              "&dates=20260531T150000/20260531T173000&location=" +
-              encodeURIComponent(loc || "See listing"),
-            "_blank"
-          );
-        });
-      })();
-    </script>
   </body>
 </html>

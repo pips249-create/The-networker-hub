@@ -1,8 +1,10 @@
 /**
- * Event detail page — loads from /api/events?id= or URL query params.
+ * Event detail page — /api/events?id= or URL query fallback.
  */
 (function () {
   window.hubEventDetailBooted = true;
+
+  let currentEvent = null;
 
   function fmt(n) {
     return '£' + Number(n).toFixed(2);
@@ -16,6 +18,11 @@
     const a = (parts[0] && parts[0][0]) || 'H';
     const b = (parts[1] && parts[1][0]) || (parts[0] && parts[0][1]) || 'N';
     return (a + b).toUpperCase();
+  }
+
+  function isSafeImgSrc(u) {
+    const s = String(u || '').trim().toLowerCase();
+    return s.indexOf('https:') === 0 || s.indexOf('http:') === 0 || s.indexOf('data:image/') === 0;
   }
 
   function starsFromAvg(avg) {
@@ -33,17 +40,179 @@
     return 'In-person event';
   }
 
+  function formatTagClass(fmt) {
+    const m = String(fmt || '').toLowerCase();
+    if (m.includes('hybrid')) return 'hybrid-tag';
+    if (m.includes('online') && !m.includes('person')) return 'online-tag';
+    return '';
+  }
+
+  function formatTagLabel(fmt) {
+    const m = String(fmt || '').toLowerCase();
+    if (m.includes('hybrid')) return 'HYBRID';
+    if (m.includes('online') && !m.includes('person')) return 'ONLINE';
+    return 'IN-PERSON';
+  }
+
   function setText(id, text) {
     const el = document.getElementById(id);
     if (el && text != null && text !== '') el.textContent = text;
   }
 
-  function applyHostAvatar(avatarEl, initials) {
-    if (!avatarEl) return;
-    avatarEl.textContent = initials || '?';
+  function venueQuery(ev) {
+    return [ev.venueName, ev.venueAddress, ev.venue, ev.postcode, ev.location]
+      .filter(Boolean)
+      .join(', ')
+      .trim();
+  }
+
+  function applyHostBlock(ev) {
+    const host = ev.organiser || 'Event organiser';
+    setText('ev-host-name', host);
+
+    const logoEl = document.getElementById('ev-host-logo');
+    const initialsEl = document.getElementById('ev-host-initials');
+    const avatar = document.getElementById('ev-host-avatar');
+    const logo = ev.organiserLogo || '';
+
+    if (logoEl && initialsEl && avatar) {
+      if (logo && isSafeImgSrc(logo)) {
+        logoEl.src = logo;
+        logoEl.alt = host + ' logo';
+        logoEl.hidden = false;
+        initialsEl.hidden = true;
+        avatar.classList.add('has-logo');
+      } else {
+        logoEl.hidden = true;
+        logoEl.removeAttribute('src');
+        initialsEl.hidden = false;
+        initialsEl.textContent = hostInitials(host);
+        avatar.classList.remove('has-logo');
+      }
+    }
+
+    const profileEl = document.getElementById('ev-host-profile');
+    if (profileEl) {
+      profileEl.textContent =
+        ev.organiserProfile ||
+        'Profile details for this organiser will appear here once added in Airtable.';
+    }
+
+    const indEl = document.getElementById('ev-host-industry');
+    if (indEl) {
+      if (ev.industry) {
+        indEl.textContent = ev.industry;
+        indEl.hidden = false;
+      } else indEl.hidden = true;
+    }
+
+    const metaWrap = document.getElementById('ev-host-meta');
+    const ratingMeta = document.getElementById('ev-host-rating-meta');
+    if (metaWrap && ratingMeta && (ev.rating || ev.reviews)) {
+      const r = Number(ev.rating) || 0;
+      const c = Number(ev.reviews) || 0;
+      ratingMeta.textContent = '★ ' + r.toFixed(1) + ' average' + (c ? ' · ' + c + ' reviews' : '');
+      metaWrap.hidden = false;
+    } else if (metaWrap) metaWrap.hidden = true;
+  }
+
+  function applyMapAndDirections(ev) {
+    const q = venueQuery(ev);
+    const dir = document.getElementById('ev-directions');
+    if (dir && q) {
+      dir.href = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(q);
+    }
+
+    const iframe = document.getElementById('ev-map-iframe');
+    if (iframe) {
+      if (q) {
+        iframe.src =
+          'https://maps.google.com/maps?q=' + encodeURIComponent(q) + '&z=15&output=embed';
+        iframe.hidden = false;
+      } else {
+        iframe.removeAttribute('src');
+        iframe.hidden = true;
+      }
+    }
+  }
+
+  function eventDetailHref(ev) {
+    return 'event.html?id=' + encodeURIComponent(ev.id);
+  }
+
+  function renderRelated(related) {
+    const grid = document.getElementById('ev-related-grid');
+    const empty = document.getElementById('ev-related-empty');
+    const section = document.getElementById('ev-related-section');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+    const list = (related || []).filter((e) => e && e.id);
+
+    if (!list.length) {
+      if (empty) empty.hidden = false;
+      if (section) section.classList.add('is-empty-related');
+      return;
+    }
+
+    if (empty) empty.hidden = true;
+    if (section) section.classList.remove('is-empty-related');
+
+    const placeholder = '../assets/event-placeholder.svg';
+
+    list.forEach((ev) => {
+      const card = document.createElement('a');
+      card.className = 'related-card';
+      card.href = eventDetailHref(ev);
+
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'related-img';
+
+      const img = document.createElement('img');
+      img.src = ev.photo || placeholder;
+      img.alt = '';
+      img.loading = 'lazy';
+      img.onerror = function () {
+        img.onerror = null;
+        img.src = placeholder;
+      };
+      imgWrap.appendChild(img);
+
+      const pill = document.createElement('span');
+      pill.className = 'mini-pill';
+      pill.textContent = ev.industry || 'Networking';
+      imgWrap.appendChild(pill);
+
+      const price = document.createElement('span');
+      price.className = 'mini-price';
+      price.textContent = ev.priceKey === 'free' ? 'Free' : ev.price || '—';
+      imgWrap.appendChild(price);
+
+      const body = document.createElement('div');
+      body.className = 'related-body';
+
+      const tag = document.createElement('div');
+      tag.className = 'format-tag ' + formatTagClass(ev.format);
+      tag.textContent = formatTagLabel(ev.format);
+      body.appendChild(tag);
+
+      const h4 = document.createElement('h4');
+      h4.textContent = ev.title;
+      body.appendChild(h4);
+
+      const when = document.createElement('div');
+      when.className = 'when';
+      when.textContent = ev.dateLine || [ev.location, ev.date, ev.time].filter(Boolean).join(' · ');
+      body.appendChild(when);
+
+      card.appendChild(imgWrap);
+      card.appendChild(body);
+      grid.appendChild(card);
+    });
   }
 
   function populateFromEvent(ev) {
+    currentEvent = ev;
     document.title = ev.title + ' – The Networker Hub';
     document.body.setAttribute('data-event-id', ev.id);
     setText('ev-title', ev.title);
@@ -87,36 +256,20 @@
       cnt.textContent = r.toFixed(1) + (c ? ' (' + c + ' reviews)' : '');
     }
 
-    const host = ev.organiser || 'Event organiser';
-    setText('ev-host-name', host);
-    applyHostAvatar(document.getElementById('ev-host-avatar'), hostInitials(host));
-    const indEl = document.getElementById('ev-host-industry');
-    if (indEl) {
-      if (ev.industry) {
-        indEl.textContent = ev.industry;
-        indEl.hidden = false;
-      } else indEl.hidden = true;
-    }
+    applyHostBlock(ev);
 
-    const vn = ev.venueName || ev.location || '';
+    const vn = ev.venueName || ev.venue || '';
     const va = ev.venueAddress || ev.location || '';
     setText('ev-venue-name', vn || 'Venue TBC');
     setText('ev-venue-addr', va);
-    const dir = document.getElementById('ev-directions');
-    if (dir && (vn || va)) {
-      dir.href =
-        'https://www.google.com/maps/search/?api=1&query=' +
-        encodeURIComponent([vn, va].filter(Boolean).join(', '));
-    }
+    applyMapAndDirections(ev);
 
     const lead = document.getElementById('ev-about-lead');
     const extra = document.getElementById('ev-about-extra');
     if (lead) {
       lead.textContent =
         ev.description ||
-        'Join us for ' +
-          ev.title +
-          '. Full details will be shared with ticket holders.';
+        'Join us for ' + ev.title + '. Full details will be shared with ticket holders.';
       if (extra) extra.hidden = true;
     }
 
@@ -131,8 +284,277 @@
       if (tp) tp.textContent = 'Free';
     }
 
-    const related = document.getElementById('ev-related-title');
-    if (related) related.textContent = 'More from ' + (ev.organiser || 'this organiser');
+    setText('ev-related-title', 'More from ' + (ev.organiser || 'this organiser'));
+  }
+
+  function parseEventStartEnd(ev) {
+    let start = null;
+    if (ev.dateRaw) {
+      const iso = String(ev.dateRaw).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (iso) {
+        let h = 12;
+        let m = 0;
+        const tm = String(ev.time || '').match(/(\d{1,2}):(\d{2})/);
+        if (tm) {
+          h = parseInt(tm[1], 10);
+          m = parseInt(tm[2], 10);
+        }
+        start = new Date(parseInt(iso[1], 10), parseInt(iso[2], 10) - 1, parseInt(iso[3], 10), h, m, 0);
+      }
+    }
+    if (!start || Number.isNaN(start.getTime())) {
+      start = new Date();
+      start.setHours(12, 0, 0, 0);
+    }
+    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+    return { start, end };
+  }
+
+  function formatGCal(dt) {
+    const pad = (n) => String(n).padStart(2, '0');
+    return (
+      dt.getUTCFullYear() +
+      pad(dt.getUTCMonth() + 1) +
+      pad(dt.getUTCDate()) +
+      'T' +
+      pad(dt.getUTCHours()) +
+      pad(dt.getUTCMinutes()) +
+      pad(dt.getUTCSeconds()) +
+      'Z'
+    );
+  }
+
+  function formatOutlookIso(dt) {
+    return dt.toISOString().replace(/\.\d{3}Z$/, 'Z');
+  }
+
+  function formatIcsDate(dt) {
+    const pad = (n) => String(n).padStart(2, '0');
+    return (
+      dt.getUTCFullYear() +
+      pad(dt.getUTCMonth() + 1) +
+      pad(dt.getUTCDate()) +
+      'T' +
+      pad(dt.getUTCHours()) +
+      pad(dt.getUTCMinutes()) +
+      pad(dt.getUTCSeconds()) +
+      'Z'
+    );
+  }
+
+  function buildCalendarLinks(ev) {
+    const { start, end } = parseEventStartEnd(ev);
+    const title = ev.title || 'Event';
+    const loc = venueQuery(ev) || ev.location || '';
+    const details = (ev.description || '').slice(0, 800);
+    const dates = formatGCal(start) + '/' + formatGCal(end);
+
+    return {
+      google:
+        'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' +
+        encodeURIComponent(title) +
+        '&dates=' +
+        dates +
+        '&details=' +
+        encodeURIComponent(details) +
+        '&location=' +
+        encodeURIComponent(loc),
+      outlook:
+        'https://outlook.live.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&subject=' +
+        encodeURIComponent(title) +
+        '&startdt=' +
+        encodeURIComponent(formatOutlookIso(start)) +
+        '&enddt=' +
+        encodeURIComponent(formatOutlookIso(end)) +
+        '&body=' +
+        encodeURIComponent(details) +
+        '&location=' +
+        encodeURIComponent(loc),
+      icsContent: [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//The Networker Hub//EN',
+        'BEGIN:VEVENT',
+        'UID:' + (ev.id || 'event') + '@thenetworkerhub',
+        'DTSTAMP:' + formatIcsDate(new Date()),
+        'DTSTART:' + formatIcsDate(start),
+        'DTEND:' + formatIcsDate(end),
+        'SUMMARY:' + title.replace(/[,;\\]/g, '\\$&'),
+        'DESCRIPTION:' + details.replace(/\n/g, '\\n').replace(/[,;\\]/g, '\\$&'),
+        'LOCATION:' + loc.replace(/[,;\\]/g, '\\$&'),
+        'END:VEVENT',
+        'END:VCALENDAR',
+      ].join('\r\n'),
+    };
+  }
+
+  function pageUrl() {
+    return window.location.href;
+  }
+
+  function closeAllDropdowns(except) {
+    document.querySelectorAll('.action-dropdown').forEach((menu) => {
+      if (menu !== except) {
+        menu.hidden = true;
+        const btnId = menu.id === 'share-menu' ? 'share-btn' : menu.id === 'calendar-menu' ? 'calendar-btn' : null;
+        if (btnId) {
+          const btn = document.getElementById(btnId);
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+      }
+    });
+  }
+
+  function toggleDropdown(menu, btn) {
+    const open = menu.hidden;
+    closeAllDropdowns(menu);
+    menu.hidden = !open;
+    if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  function getSavedIds() {
+    try {
+      const raw = localStorage.getItem('hubSavedEventIds');
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function setSavedIds(ids) {
+    try {
+      localStorage.setItem('hubSavedEventIds', JSON.stringify(ids));
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function initActions(ev) {
+    const saveBtn = document.getElementById('save-btn');
+    const shareBtn = document.getElementById('share-btn');
+    const shareMenu = document.getElementById('share-menu');
+    const calBtn = document.getElementById('calendar-btn');
+    const calMenu = document.getElementById('calendar-menu');
+    const url = pageUrl();
+    const shareTitle = ev.title || 'Event on The Networker Hub';
+
+    function refreshSaveUi() {
+      if (!saveBtn || !ev.id) return;
+      const saved = getSavedIds().includes(String(ev.id));
+      saveBtn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+      saveBtn.classList.toggle('is-saved', saved);
+    }
+
+    refreshSaveUi();
+
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function () {
+        const id = String(ev.id || document.body.getAttribute('data-event-id') || '');
+        if (!id) return;
+        let ids = getSavedIds();
+        if (ids.includes(id)) {
+          ids = ids.filter((x) => x !== id);
+        } else {
+          // TODO: Connect to Attendee Dashboard database storage when built
+          ids.push(id);
+        }
+        setSavedIds(ids);
+        refreshSaveUi();
+      });
+    }
+
+    const linkedIn = document.getElementById('share-linkedin');
+    const twitter = document.getElementById('share-twitter');
+    const facebook = document.getElementById('share-facebook');
+    if (linkedIn) {
+      linkedIn.href =
+        'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url);
+    }
+    if (twitter) {
+      twitter.href =
+        'https://twitter.com/intent/tweet?url=' +
+        encodeURIComponent(url) +
+        '&text=' +
+        encodeURIComponent(shareTitle);
+    }
+    if (facebook) {
+      facebook.href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url);
+    }
+
+    const copyBtn = document.getElementById('share-copy');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function () {
+        const done = function () {
+          copyBtn.textContent = 'Link copied';
+          setTimeout(function () {
+            copyBtn.textContent = 'Copy link';
+          }, 2000);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(done).catch(function () {
+            window.prompt('Copy this link:', url);
+          });
+        } else {
+          window.prompt('Copy this link:', url);
+        }
+        if (shareMenu) shareMenu.hidden = true;
+        if (shareBtn) shareBtn.setAttribute('aria-expanded', 'false');
+      });
+    }
+
+    if (shareBtn && shareMenu) {
+      shareBtn.addEventListener('click', function () {
+        if (navigator.share) {
+          navigator
+            .share({ title: shareTitle, text: shareTitle, url: url })
+            .catch(function () {
+              toggleDropdown(shareMenu, shareBtn);
+            });
+          return;
+        }
+        toggleDropdown(shareMenu, shareBtn);
+      });
+    }
+
+    const links = buildCalendarLinks(ev);
+    const calGoogle = document.getElementById('cal-google');
+    const calOutlook = document.getElementById('cal-outlook');
+    const calIcs = document.getElementById('cal-ics');
+    if (calGoogle) calGoogle.href = links.google;
+    if (calOutlook) calOutlook.href = links.outlook;
+
+    if (calIcs) {
+      calIcs.addEventListener('click', function () {
+        const blob = new Blob([links.icsContent], { type: 'text/calendar;charset=utf-8' });
+        const dl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = dl;
+        a.download = (ev.title || 'event').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.ics';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(dl);
+        if (calMenu) calMenu.hidden = true;
+        if (calBtn) calBtn.setAttribute('aria-expanded', 'false');
+      });
+    }
+
+    if (calBtn && calMenu) {
+      calBtn.addEventListener('click', function () {
+        toggleDropdown(calMenu, calBtn);
+      });
+    }
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.action-dropdown-wrap')) {
+        closeAllDropdowns(null);
+      }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeAllDropdowns(null);
+    });
   }
 
   function initTicketing() {
@@ -212,28 +634,29 @@
         window.location.assign(base);
       });
     }
-
-    const cal = document.getElementById('calendar-btn');
-    if (cal) {
-      cal.addEventListener('click', () => {
-        const title = document.getElementById('ev-title')?.textContent || 'Event';
-        const loc =
-          [document.getElementById('ev-venue-name')?.textContent, document.getElementById('ev-venue-addr')?.textContent]
-            .filter(Boolean)
-            .join(', ') || '';
-        window.open(
-          'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' +
-            encodeURIComponent(title) +
-            '&location=' +
-            encodeURIComponent(loc),
-          '_blank'
-        );
-      });
-    }
   }
 
-  function buyBtn() {
-    return document.getElementById('buy-btn');
+  async function loadRelatedFallback(ev) {
+    try {
+      const res = await fetch('/api/events');
+      const data = await res.json();
+      const all = data.events || [];
+      return all
+        .filter((e) => {
+          if (e.id === ev.id) return false;
+          if (ev.organiserId && e.organiserId) return e.organiserId === ev.organiserId;
+          const a = String(e.organiser || '')
+            .trim()
+            .toLowerCase();
+          const b = String(ev.organiser || '')
+            .trim()
+            .toLowerCase();
+          return a && b && a === b;
+        })
+        .slice(0, 6);
+    } catch (e) {
+      return [];
+    }
   }
 
   async function boot() {
@@ -246,7 +669,11 @@
         const data = await res.json();
         if (data.event) {
           populateFromEvent(data.event);
+          let related = data.related || [];
+          if (!related.length) related = await loadRelatedFallback(data.event);
+          renderRelated(related);
           initTicketing();
+          initActions(data.event);
           return;
         }
       } catch (e) {
@@ -255,11 +682,12 @@
     }
 
     if (params.get('title')) {
-      populateFromEvent({
+      const ev = {
         id: params.get('id') || '',
         title: params.get('title'),
         description: params.get('about') || params.get('blurb') || '',
         date: params.get('starts') || '',
+        dateRaw: '',
         time: params.get('time') || '',
         location: params.get('city') || '',
         industry: params.get('category') || '',
@@ -269,12 +697,24 @@
         priceNum: parseFloat(params.get('price')) || 0,
         photo: params.get('img') || null,
         organiser: params.get('host') || '',
+        organiserId: params.get('organiser_id') || '',
+        organiserLogo: params.get('host_logo') || '',
+        organiserProfile: params.get('host_profile') || '',
         rating: params.get('rating') || 4,
         reviews: params.get('reviews') || 0,
         venueName: params.get('venue_name') || '',
         venueAddress: params.get('venue_addr') || '',
-      });
+        postcode: params.get('postcode') || '',
+      };
+      populateFromEvent(ev);
+      if (ev.organiser || ev.organiserId) {
+        const related = await loadRelatedFallback(ev);
+        renderRelated(related);
+      } else {
+        renderRelated([]);
+      }
       initTicketing();
+      initActions(ev);
     }
   }
 
