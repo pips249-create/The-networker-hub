@@ -51,11 +51,13 @@
     if (!el) return;
     const field = el.closest('.as-field');
     if (field) field.hidden = !enabled;
-    if (!enabled) {
-      if (el.tagName === 'SELECT' || el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
-        el.disabled = true;
-      }
+    if (el.tagName === 'SELECT' || el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
+      el.disabled = !enabled;
     }
+  }
+
+  function scrollAlertIntoView() {
+    if (alertEl) alertEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   function applyWritable(writable) {
@@ -107,11 +109,25 @@
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.message || data.error || 'save_failed');
-      fillForm(data.profile || {});
-      if (data.writable) applyWritable(data.writable);
-      showAlert(data.message || 'Your details were saved.', true);
+      await loadProfile();
+      let msg = data.message || 'Your details were saved.';
+      if (data.partial && data.skipped && data.skipped.length) {
+        msg =
+          (data.message || 'Some details were saved.') +
+          ' Fields not stored yet: ' +
+          data.skipped.join(', ') +
+          '.';
+      }
+      showAlert(msg, true);
+      scrollAlertIntoView();
+      if (data.profile && data.profile.name) {
+        document.dispatchEvent(
+          new CustomEvent('hub-profile-updated', { detail: { name: data.profile.name } })
+        );
+      }
     } catch (err) {
       showAlert(err.message || 'Could not save.', false);
+      scrollAlertIntoView();
     } finally {
       if (btn) btn.disabled = false;
     }

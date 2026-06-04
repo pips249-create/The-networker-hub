@@ -223,6 +223,7 @@
     });
     if (triggerBtn) triggerBtn.disabled = true;
 
+    try {
     let res;
     if (editId) {
       res = await api('/api/organiser/groups', {
@@ -235,10 +236,6 @@
         body: JSON.stringify(payload),
       });
     }
-
-    [saveChanges, draftBtn, publishBtn].forEach((b) => {
-      if (b) b.disabled = false;
-    });
 
     if (!res.ok) {
       showAlert(res.data.message || res.data.error || 'Could not save profile');
@@ -260,10 +257,25 @@
     let msg = 'Profile saved.';
     if (mode === 'published') msg = 'Profile published — it will appear on the site.';
     else if (mode === 'draft') msg = 'Saved as draft.';
+    else if (mode === 'save') msg = 'Changes saved.';
+
+    if (mode === 'save' && editId && saved) {
+      prefillGroup(saved);
+      configureEditActions(saved);
+      showAlert(msg);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     showAlert(msg);
     setTimeout(() => {
       location.href = 'index.html#groups';
-    }, mode === 'save' ? 400 : 800);
+    }, 800);
+    } finally {
+      [saveChanges, draftBtn, publishBtn].forEach((b) => {
+        if (b) b.disabled = false;
+      });
+    }
   }
 
   async function load() {

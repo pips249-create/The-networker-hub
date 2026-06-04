@@ -2,6 +2,7 @@ const {
   json,
   setCors,
   sessionFromRequest,
+  setSessionCookie,
   findUserByEmail,
   updateUser,
   hashPassword,
@@ -112,12 +113,23 @@ module.exports = async function handler(req, res) {
         });
       }
       const updated = await updateUser(user.id, patch);
-      const response = { ok: true, profile: publicProfile(updated), writable };
+      const profile = publicProfile(updated);
+      const response = { ok: true, profile, writable };
       if (skipped.length) {
         response.partial = true;
         response.skipped = skipped;
         response.message =
           'Some details were saved. To store location or preferences, add the matching columns to your Airtable Users table.';
+      } else {
+        response.message = 'Your details were saved.';
+      }
+      if (profile.name && profile.name !== session.name) {
+        setSessionCookie(res, {
+          sub: session.sub,
+          email: session.email,
+          role: session.role,
+          name: profile.name,
+        });
       }
       return json(res, 200, response);
     }
