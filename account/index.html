@@ -10,13 +10,14 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../css/hub.css?v=20260614" />
-    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260614" />
+    <link rel="stylesheet" href="../css/hub.css?v=20260615" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260615" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260615" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260615" />
   </head>
   <body class="attendee-dashboard-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260614" data-root="../" data-page="account"></script>
+    <script src="../js/site-nav.js?v=20260615" data-root="../" data-page="account"></script>
 
     <div id="ad-signin" class="ad-signin" hidden>
       <p>Sign in to see your upcoming events, tickets, and reviews.</p>
@@ -26,71 +27,218 @@
     </div>
 
     <div id="ad-shell" hidden>
-      <header class="ad-hero">
-        <div class="ad-hero-inner">
-          <p class="ad-hero-kicker">Attend events</p>
-          <h1 class="ad-welcome-name" id="ad-welcome-name">Welcome back</h1>
-          <p class="ad-welcome-sub" id="ad-welcome-sub">Your tickets and upcoming events in one place.</p>
-          <div class="ad-hero-actions">
-            <a class="ad-btn ad-btn-primary" href="../events/index.html">Browse events</a>
-            <a class="ad-btn ad-btn-ghost" href="../organiser/index.html" id="ad-link-organiser" hidden
-              >Organiser dashboard</a
-            >
-          </div>
-        </div>
-      </header>
-
-      <main class="ad-main">
-        <div class="ad-wrap">
-          <p class="ad-demo-note" id="ad-demo-note" hidden>
-            Showing sample layout — your bookings will appear here once you register for events.
-          </p>
-
-          <div class="ad-stats">
-            <div class="ad-stat">
-              <div class="ad-stat-label">Upcoming events</div>
-              <div class="ad-stat-value" id="ad-stat-upcoming">0</div>
-              <div class="ad-stat-meta" id="ad-stat-next">—</div>
-            </div>
-            <div class="ad-stat ad-stat--accent">
-              <div class="ad-stat-label">Reviews left</div>
-              <div class="ad-stat-value" id="ad-stat-reviews">0</div>
-              <div class="ad-stat-meta" id="ad-stat-reviews-pending">—</div>
-            </div>
-          </div>
-
-          <section class="ad-section">
-            <h2 class="ad-section-title">Your upcoming events</h2>
-            <p class="ad-section-sub">Events you are registered to attend.</p>
-
-            <div class="ad-table-scroll">
-              <div class="ad-table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th class="ad-th-thumb"></th>
-                      <th>Event</th>
-                      <th>Date</th>
-                      <th>Time</th>
-                      <th>Tickets</th>
-                      <th>Review</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody id="ad-events-body"></tbody>
-                </table>
+      <div class="ad-dashboard-layout">
+        <aside class="ad-sidebar">
+          <p class="ad-sidebar-label">Attend events</p>
+          <nav class="hub-side-nav ad-dash-bar" aria-label="Attend events dashboard">
+            <div class="hub-side-nav-item is-open" data-nav-group="overview">
+              <button
+                type="button"
+                class="hub-side-nav-trigger"
+                aria-expanded="true"
+                aria-controls="ad-nav-overview"
+              >
+                <span class="hub-side-nav-main">
+                  <span class="hub-side-nav-title">Overview</span>
+                  <span class="hub-side-nav-desc">Your summary — upcoming count, next event and review stats.</span>
+                </span>
+                <span class="hub-side-nav-chev" aria-hidden="true">▾</span>
+              </button>
+              <div id="ad-nav-overview" class="hub-side-nav-panel">
+                <a href="#overview" class="hub-side-nav-link is-active" data-ad-route="overview">Summary &amp; stats</a>
               </div>
             </div>
-            <p class="ad-empty" id="ad-events-empty" hidden>
-              You haven't registered for any events yet.
-              <a href="../events/index.html">Browse events →</a>
+
+            <div class="hub-side-nav-item is-open" data-nav-group="registrations">
+              <button
+                type="button"
+                class="hub-side-nav-trigger"
+                aria-expanded="true"
+                aria-controls="ad-nav-registrations"
+              >
+                <span class="hub-side-nav-main">
+                  <span class="hub-side-nav-title">My registrations</span>
+                  <span class="hub-side-nav-desc">Events you have booked — upcoming and past attendance.</span>
+                </span>
+                <span class="hub-side-nav-chev" aria-hidden="true">▾</span>
+              </button>
+              <div id="ad-nav-registrations" class="hub-side-nav-panel">
+                <a href="#upcoming" class="hub-side-nav-link" data-ad-route="upcoming"
+                  >Upcoming <span class="hub-side-nav-count" id="ad-side-upcoming">0</span></a
+                >
+                <a href="#past" class="hub-side-nav-link" data-ad-route="past"
+                  >Past events <span class="hub-side-nav-count" id="ad-side-past">0</span></a
+                >
+              </div>
+            </div>
+
+            <div class="hub-side-nav-item" data-nav-group="reviews">
+              <button
+                type="button"
+                class="hub-side-nav-trigger"
+                aria-expanded="false"
+                aria-controls="ad-nav-reviews"
+              >
+                <span class="hub-side-nav-main">
+                  <span class="hub-side-nav-title">Reviews</span>
+                  <span class="hub-side-nav-desc">Leave feedback after events and track reviews you have submitted.</span>
+                </span>
+                <span class="hub-side-nav-chev" aria-hidden="true">▾</span>
+              </button>
+              <div id="ad-nav-reviews" class="hub-side-nav-panel">
+                <a href="#reviews-pending" class="hub-side-nav-link" data-ad-route="reviews-pending"
+                  >Pending <span class="hub-side-nav-count" id="ad-side-pending">0</span></a
+                >
+                <a href="#reviews-done" class="hub-side-nav-link" data-ad-route="reviews-done"
+                  >Submitted <span class="hub-side-nav-count" id="ad-side-reviewed">0</span></a
+                >
+              </div>
+            </div>
+
+            <div class="hub-side-nav-util">
+              <a href="../events/index.html">Browse events</a>
+              <a href="../organiser/index.html" id="ad-side-organiser" hidden>Organiser dashboard</a>
+            </div>
+          </nav>
+        </aside>
+
+        <div class="ad-main">
+          <div class="ad-wrap">
+            <header class="ad-page-head">
+              <p class="ad-hero-kicker">Attend events</p>
+              <h1 class="ad-welcome-name" id="ad-welcome-name">Welcome back</h1>
+              <p class="ad-welcome-sub" id="ad-welcome-sub">Your tickets and upcoming events in one place.</p>
+            </header>
+
+            <p class="ad-demo-note" id="ad-demo-note" hidden>
+              Showing sample layout — your bookings will appear here once you register for events.
             </p>
-            <nav class="ad-pagination" id="ad-pagination" aria-label="Events pages" hidden></nav>
-          </section>
+
+            <!-- Overview -->
+            <section class="ad-page is-active" id="ad-page-overview" data-ad-page="overview">
+              <div class="ad-stats">
+                <div class="ad-stat">
+                  <div class="ad-stat-label">Upcoming events</div>
+                  <div class="ad-stat-value" id="ad-stat-upcoming">0</div>
+                  <div class="ad-stat-meta" id="ad-stat-next">—</div>
+                </div>
+                <div class="ad-stat ad-stat--accent">
+                  <div class="ad-stat-label">Reviews left</div>
+                  <div class="ad-stat-value" id="ad-stat-reviews">0</div>
+                  <div class="ad-stat-meta" id="ad-stat-reviews-pending">—</div>
+                </div>
+              </div>
+              <p class="ad-section-hint">
+                Use the menu on the left to view your registrations or leave reviews after events.
+              </p>
+            </section>
+
+            <!-- Upcoming -->
+            <section class="ad-page" id="ad-page-upcoming" data-ad-page="upcoming">
+              <h2 class="ad-section-title">Upcoming events</h2>
+              <p class="ad-section-sub">Events you are registered to attend.</p>
+              <div class="ad-table-scroll">
+                <div class="ad-table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th class="ad-th-thumb"></th>
+                        <th>Event</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Tickets</th>
+                        <th>Review</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="ad-upcoming-body"></tbody>
+                  </table>
+                </div>
+              </div>
+              <p class="ad-empty" id="ad-upcoming-empty" hidden>
+                No upcoming events.
+                <a href="../events/index.html">Browse events →</a>
+              </p>
+              <nav class="ad-pagination" id="ad-pagination-upcoming" aria-label="Upcoming events pages" hidden></nav>
+            </section>
+
+            <!-- Past -->
+            <section class="ad-page" id="ad-page-past" data-ad-page="past">
+              <h2 class="ad-section-title">Past events</h2>
+              <p class="ad-section-sub">Events you have already attended.</p>
+              <div class="ad-table-scroll">
+                <div class="ad-table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th class="ad-th-thumb"></th>
+                        <th>Event</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Tickets</th>
+                        <th>Review</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="ad-past-body"></tbody>
+                  </table>
+                </div>
+              </div>
+              <p class="ad-empty" id="ad-past-empty" hidden>You have no past events yet.</p>
+              <nav class="ad-pagination" id="ad-pagination-past" aria-label="Past events pages" hidden></nav>
+            </section>
+
+            <!-- Reviews pending -->
+            <section class="ad-page" id="ad-page-reviews-pending" data-ad-page="reviews-pending">
+              <h2 class="ad-section-title">Reviews to complete</h2>
+              <p class="ad-section-sub">Events you attended — leave feedback when review is open.</p>
+              <div class="ad-table-scroll">
+                <div class="ad-table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th class="ad-th-thumb"></th>
+                        <th>Event</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="ad-reviews-pending-body"></tbody>
+                  </table>
+                </div>
+              </div>
+              <p class="ad-empty" id="ad-reviews-pending-empty" hidden>No pending reviews — you're all caught up.</p>
+            </section>
+
+            <!-- Reviews done -->
+            <section class="ad-page" id="ad-page-reviews-done" data-ad-page="reviews-done">
+              <h2 class="ad-section-title">Submitted reviews</h2>
+              <p class="ad-section-sub">Feedback you have already left for organisers.</p>
+              <div class="ad-table-scroll">
+                <div class="ad-table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th class="ad-th-thumb"></th>
+                        <th>Event</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="ad-reviews-done-body"></tbody>
+                  </table>
+                </div>
+              </div>
+              <p class="ad-empty" id="ad-reviews-done-empty" hidden>You haven't submitted any reviews yet.</p>
+            </section>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
 
-    <script src="../js/attendee-dashboard.js?v=20260612"></script>
+    <script src="../js/hub-side-nav.js?v=20260615"></script>
+    <script src="../js/attendee-dashboard.js?v=20260615"></script>
   </body>
 </html>

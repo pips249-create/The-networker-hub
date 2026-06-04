@@ -74,15 +74,24 @@ body.hub-page-organiser.organiser-event-edit-page {
   overflow: hidden;
 }
 
-.organiser-dashboard-page .org-sidebar {
+.organiser-dashboard-page .org-sidebar,
+.attendee-dashboard-page .ad-sidebar {
   flex-shrink: 0;
-  width: 220px;
-  background: var(--od-purple-light, #e8dbea);
-  border-right: 1px solid var(--od-border-soft, #e8dbea);
+  width: 260px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+.organiser-dashboard-page .org-sidebar {
+  background: var(--od-purple-light, #e8dbea);
+  border-right: 1px solid var(--od-border-soft, #e8dbea);
+}
+
+.attendee-dashboard-page .ad-sidebar {
+  background: var(--ad-teal-pale, #e8f6f8);
+  border-right: 1px solid var(--ad-border-soft, #cfe4ea);
 }
 
 .organiser-dashboard-page .org-main {
@@ -108,7 +117,7 @@ body.hub-page-organiser.organiser-event-edit-page {
   box-sizing: border-box;
 }
 
-/* ─── Attendee dashboard: hero + scrollable main ─── */
+/* ─── Attendee dashboard: sidebar + scrollable main ─── */
 .attendee-dashboard-page #ad-shell {
   flex: 1;
   min-height: 0;
@@ -119,12 +128,18 @@ body.hub-page-organiser.organiser-event-edit-page {
   overflow: hidden;
 }
 
-.attendee-dashboard-page .ad-hero {
-  flex-shrink: 0;
+.attendee-dashboard-page .ad-dashboard-layout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .attendee-dashboard-page .ad-main {
   flex: 1;
+  min-width: 0;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
@@ -178,19 +193,29 @@ body.hub-page-organiser.organiser-event-edit-page {
 }
 
 @media (max-width: 768px) {
-  .organiser-dashboard-page .org-dashboard-layout {
+  .organiser-dashboard-page .org-dashboard-layout,
+  .attendee-dashboard-page .ad-dashboard-layout {
     flex-direction: column;
   }
 
-  .organiser-dashboard-page .org-sidebar {
+  .organiser-dashboard-page .org-sidebar,
+  .attendee-dashboard-page .ad-sidebar {
     width: 100%;
     border-right: none;
-    border-bottom: 1px solid var(--od-border-soft, #e8dbea);
     overflow-x: auto;
     overflow-y: hidden;
   }
 
-  .organiser-dashboard-page .org-sidebar-label {
+  .organiser-dashboard-page .org-sidebar {
+    border-bottom: 1px solid var(--od-border-soft, #e8dbea);
+  }
+
+  .attendee-dashboard-page .ad-sidebar {
+    border-bottom: 1px solid var(--ad-border-soft, #cfe4ea);
+  }
+
+  .organiser-dashboard-page .org-sidebar-label,
+  .attendee-dashboard-page .ad-sidebar-label {
     display: none;
   }
 }
@@ -202,8 +227,8 @@ body.hub-page-organiser.organiser-event-edit-page {
     padding-right: 16px;
   }
 
-  .attendee-dashboard-page .ad-hero {
-    padding-left: 16px;
-    padding-right: 16px;
+  .attendee-dashboard-page .ad-page-head {
+    padding-left: 0;
+    padding-right: 0;
   }
 }

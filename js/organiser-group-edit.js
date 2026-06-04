@@ -1,5 +1,5 @@
 /**
- * Full-page organiser profile (group) create / edit.
+ * Full-page group profile create / edit.
  */
 (function () {
   const GROUP_SAVED_KEY = 'hub_group_last_saved';
@@ -265,7 +265,7 @@
   async function load() {
     const sessionRes = await api('/api/auth/session');
     if (!sessionRes.ok || !sessionRes.data.user) {
-      showAlert('Please sign in to manage organiser profiles.');
+      showAlert('Please sign in to manage group profiles.');
       return;
     }
     const emailEl = document.getElementById('ge-page-email');
@@ -274,9 +274,9 @@
     }
 
     if (editId) {
-      document.getElementById('ge-page-title').textContent = 'Edit organiser profile';
+      document.getElementById('ge-page-title').textContent = 'Edit group profile';
       document.getElementById('ge-page-lead').textContent =
-        'Update your group page details — changes appear in your organiser profiles list after you save.';
+        'Update your group page details — changes appear in your group profiles list after you save.';
       configureEditActions(null);
 
       const res = await api('/api/organiser/groups?id=' + encodeURIComponent(editId));

@@ -3,8 +3,9 @@
  */
 (function () {
   const PAGE_SIZE = 5;
-  let currentPage = 1;
+  const listPages = { upcoming: 1, past: 1 };
   let registrations = [];
+  let currentRoute = 'overview';
 
   const signin = document.getElementById('ad-signin');
   const shell = document.getElementById('ad-shell');
@@ -33,6 +34,28 @@
       if (!Number.isNaN(end.getTime())) return fmt(start) + '–' + fmt(end);
     }
     return fmt(start);
+  }
+
+  function isUpcoming(reg) {
+    if (!reg.date) return true;
+    const t = new Date(reg.date).getTime();
+    return !Number.isNaN(t) && t >= Date.now();
+  }
+
+  function upcomingList() {
+    return registrations.filter(isUpcoming);
+  }
+
+  function pastList() {
+    return registrations.filter((r) => !isUpcoming(r));
+  }
+
+  function pendingReviewsList() {
+    return registrations.filter((r) => r.reviewStatus === 'pending');
+  }
+
+  function doneReviewsList() {
+    return registrations.filter((r) => r.reviewStatus === 'reviewed');
   }
 
   function thumbHtml(item) {
@@ -68,17 +91,27 @@
     return '<button type="button" class="ad-btn" disabled>View Ticket</button>';
   }
 
-  function sortedRegistrations() {
-    const now = Date.now();
-    return registrations.slice().sort((a, b) => {
-      const da = a.date ? new Date(a.date).getTime() : 0;
-      const db = b.date ? new Date(b.date).getTime() : 0;
-      const aUp = da >= now;
-      const bUp = db >= now;
-      if (aUp !== bUp) return aUp ? -1 : 1;
-      if (aUp) return da - db;
-      return db - da;
+  function parseRoute() {
+    const hash = (location.hash.replace('#', '') || 'overview').toLowerCase();
+    const allowed = ['overview', 'upcoming', 'past', 'reviews-pending', 'reviews-done'];
+    return allowed.includes(hash) ? hash : 'overview';
+  }
+
+  function setRoute(route) {
+    currentRoute = route || 'overview';
+    document.querySelectorAll('[data-ad-page]').forEach((p) => {
+      p.classList.toggle('is-active', p.getAttribute('data-ad-page') === currentRoute);
     });
+    document.querySelectorAll('.hub-side-nav-link[data-ad-route]').forEach((a) => {
+      a.classList.toggle('is-active', a.getAttribute('data-ad-route') === currentRoute);
+    });
+    if (window.HubSideNav) {
+      const nav = document.querySelector('.hub-side-nav');
+      if (nav) HubSideNav.syncActiveGroup(nav);
+    }
+    if (location.hash.replace('#', '') !== currentRoute) {
+      history.replaceState(null, '', '#' + currentRoute);
+    }
   }
 
   function renderStats(stats) {
@@ -99,9 +132,21 @@
     }
   }
 
-  function renderPagination(totalPages) {
-    const nav = document.getElementById('ad-pagination');
+  function updateSideCounts() {
+    const set = (id, n) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(n);
+    };
+    set('ad-side-upcoming', upcomingList().length);
+    set('ad-side-past', pastList().length);
+    set('ad-side-pending', pendingReviewsList().length);
+    set('ad-side-reviewed', doneReviewsList().length);
+  }
+
+  function renderPagination(navId, listKey, totalPages) {
+    const nav = document.getElementById(navId);
     if (!nav) return;
+    const currentPage = listPages[listKey] || 1;
     if (totalPages <= 1) {
       nav.hidden = true;
       return;
@@ -114,6 +159,8 @@
         (p === currentPage ? ' is-active' : '') +
         '" data-page="' +
         p +
+        '" data-list="' +
+        listKey +
         '">' +
         p +
         '</button>';
@@ -121,6 +168,8 @@
     html +=
       '<button type="button" class="ad-page-btn" data-page="' +
       (currentPage + 1) +
+      '" data-list="' +
+      listKey +
       '" ' +
       (currentPage >= totalPages ? 'disabled' : '') +
       ' aria-label="Next page">›</button>';
@@ -128,54 +177,101 @@
     nav.querySelectorAll('[data-page]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const p = Number(btn.getAttribute('data-page'));
-        if (!p || p < 1 || p > totalPages || p === currentPage) return;
-        currentPage = p;
-        renderTable();
+        const key = btn.getAttribute('data-list');
+        if (!p || !key || p < 1 || p > totalPages || p === listPages[key]) return;
+        listPages[key] = p;
+        renderAllTables();
       });
     });
   }
 
-  function renderTable() {
-    const body = document.getElementById('ad-events-body');
-    const empty = document.getElementById('ad-events-empty');
+  function renderEventRows(bodyId, emptyId, navId, listKey, list, fullColumns) {
+    const body = document.getElementById(bodyId);
+    const empty = document.getElementById(emptyId);
     if (!body) return;
 
-    const list = sortedRegistrations();
     const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
-    currentPage = Math.min(currentPage, totalPages);
-    const start = (currentPage - 1) * PAGE_SIZE;
+    listPages[listKey] = Math.min(listPages[listKey] || 1, totalPages);
+    const start = (listPages[listKey] - 1) * PAGE_SIZE;
     const slice = list.slice(start, start + PAGE_SIZE);
 
     body.innerHTML = '';
     if (!list.length) {
       if (empty) empty.hidden = false;
-      renderPagination(1);
+      renderPagination(navId, listKey, 1);
       return;
     }
     if (empty) empty.hidden = true;
 
     slice.forEach((reg) => {
       const tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td>' +
-        thumbHtml(reg) +
-        '</td><td class="ad-td-name">' +
-        esc(reg.title) +
-        '</td><td>' +
-        esc(formatDateShort(reg.date)) +
-        '</td><td>' +
-        esc(formatTimeRange(reg.date, reg.endDate)) +
-        '</td><td>' +
-        esc(reg.ticketLabel || '—') +
-        '</td><td>' +
-        reviewBadge(reg.reviewStatus) +
-        '</td><td>' +
-        actionCell(reg) +
-        '</td>';
+      if (fullColumns) {
+        tr.innerHTML =
+          '<td>' +
+          thumbHtml(reg) +
+          '</td><td class="ad-td-name">' +
+          esc(reg.title) +
+          '</td><td>' +
+          esc(formatDateShort(reg.date)) +
+          '</td><td>' +
+          esc(formatTimeRange(reg.date, reg.endDate)) +
+          '</td><td>' +
+          esc(reg.ticketLabel || '—') +
+          '</td><td>' +
+          reviewBadge(reg.reviewStatus) +
+          '</td><td>' +
+          actionCell(reg) +
+          '</td>';
+      } else {
+        tr.innerHTML =
+          '<td>' +
+          thumbHtml(reg) +
+          '</td><td class="ad-td-name">' +
+          esc(reg.title) +
+          '</td><td>' +
+          esc(formatDateShort(reg.date)) +
+          '</td><td>' +
+          reviewBadge(reg.reviewStatus) +
+          '</td><td>' +
+          actionCell(reg) +
+          '</td>';
+      }
       body.appendChild(tr);
     });
 
-    renderPagination(totalPages);
+    renderPagination(navId, listKey, totalPages);
+  }
+
+  function renderAllTables() {
+    const up = upcomingList().sort((a, b) => {
+      const da = a.date ? new Date(a.date).getTime() : 0;
+      const db = b.date ? new Date(b.date).getTime() : 0;
+      return da - db;
+    });
+    const past = pastList().sort((a, b) => {
+      const da = a.date ? new Date(a.date).getTime() : 0;
+      const db = b.date ? new Date(b.date).getTime() : 0;
+      return db - da;
+    });
+    renderEventRows('ad-upcoming-body', 'ad-upcoming-empty', 'ad-pagination-upcoming', 'upcoming', up, true);
+    renderEventRows('ad-past-body', 'ad-past-empty', 'ad-pagination-past', 'past', past, true);
+    renderEventRows(
+      'ad-reviews-pending-body',
+      'ad-reviews-pending-empty',
+      null,
+      'reviews-pending',
+      pendingReviewsList(),
+      false
+    );
+    renderEventRows(
+      'ad-reviews-done-body',
+      'ad-reviews-done-empty',
+      null,
+      'reviews-done',
+      doneReviewsList(),
+      false
+    );
+    updateSideCounts();
   }
 
   function renderWelcome(user) {
@@ -186,7 +282,21 @@
     }
   }
 
+  function bindNav() {
+    document.querySelectorAll('.hub-side-nav-link[data-ad-route]').forEach((a) => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        setRoute(a.getAttribute('data-ad-route') || 'overview');
+        if (window.HubSideNav) HubSideNav.openGroupForLink(a);
+      });
+    });
+    window.addEventListener('hashchange', () => setRoute(parseRoute()));
+  }
+
   async function init() {
+    bindNav();
+    setRoute(parseRoute());
+
     const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
     const sessionData = await sessionRes.json();
     if (!sessionData.ok || !sessionData.user) {
@@ -198,7 +308,7 @@
     renderWelcome(sessionData.user);
 
     if (sessionData.canOrganise) {
-      const orgLink = document.getElementById('ad-link-organiser');
+      const orgLink = document.getElementById('ad-side-organiser');
       if (orgLink) orgLink.hidden = false;
     }
 
@@ -214,7 +324,7 @@
 
     registrations = data.registrations || [];
     renderStats(data.stats || {});
-    renderTable();
+    renderAllTables();
 
     const demoNote = document.getElementById('ad-demo-note');
     if (demoNote) demoNote.hidden = !data.isDemo;

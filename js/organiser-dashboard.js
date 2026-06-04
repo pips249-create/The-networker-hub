@@ -3,8 +3,9 @@
  */
 (function () {
   const ORG_PAGE_SIZE = 10;
-  const listPages = { groups: 1, events: 1, tickets: 1, reviews: 1, revenue: 1 };
+  const listPages = { groups: 1, events: 1, tickets: 1, attendees: 1, reviews: 1, revenue: 1 };
   let eventsSubRoute = 'events-list';
+  let academySubRoute = 'academy-home';
 
   const filters = {
     eventsStatus: 'all',
@@ -15,6 +16,7 @@
     ticketsEvent: 'all',
     ticketsType: 'all',
     reviewsGroup: 'all',
+    attendeesEvent: 'all',
   };
 
   const state = {
@@ -23,6 +25,7 @@
     events: [],
     upcomingEvents: [],
     tickets: [],
+    attendeesAll: [],
     reviews: [],
     groupsError: null,
     airtable: null,
@@ -225,9 +228,12 @@
       '<button type="button" class="org-action-item" data-edit-event="' +
       esc(id) +
       '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit event</strong><span>Update details, times &amp; tickets</span></span></button>' +
+      '<button type="button" class="org-action-item" data-org-goto-sub="events-attendees" data-filter-event="' +
+      esc(id) +
+      '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>See attendees</strong><span>View who registered for this event</span></span></button>' +
       '<button type="button" class="org-action-item" data-org-goto-sub="events-tickets" data-filter-event="' +
       esc(id) +
-      '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>See attendees</strong><span>View ticket types for this event</span></span></button>' +
+      '"><span class="org-action-icon">🎟️</span><span class="org-action-text"><strong>Ticket types</strong><span>Manage tiers and pricing</span></span></button>' +
       '<button type="button" class="org-action-item" data-org-goto-sub="events-reviews" data-filter-event="' +
       esc(id) +
       '"><span class="org-action-icon">★</span><span class="org-action-text"><strong>Reviews</strong><span>Read &amp; reply to reviews</span></span></button>' +
@@ -259,20 +265,29 @@
     if (hash === 'tickets') return { page: 'events', sub: 'events-tickets' };
     if (hash.startsWith('events-')) return { page: 'events', sub: hash };
     if (hash === 'events') return { page: 'events', sub: 'events-list' };
+    if (hash.startsWith('academy-')) return { page: 'academy', sub: hash };
+    if (hash === 'academy') return { page: 'academy', sub: 'academy-home' };
     return { page: hash, sub: null };
+  }
+
+  function setAcademySub(sub) {
+    academySubRoute = sub || 'academy-home';
+    document.querySelectorAll('[data-academy-panel]').forEach((panel) => {
+      panel.classList.toggle('is-active', panel.getAttribute('data-academy-panel') === academySubRoute);
+    });
+    const empty = document.getElementById('academy-sessions-empty');
+    if (empty) empty.hidden = false;
   }
 
   function setEventsSub(sub) {
     eventsSubRoute = sub || 'events-list';
-    document.querySelectorAll('[data-events-sub]').forEach((tab) => {
-      tab.classList.toggle('is-active', tab.getAttribute('data-events-sub') === eventsSubRoute);
-    });
     document.querySelectorAll('[data-events-panel]').forEach((panel) => {
       panel.classList.toggle('is-active', panel.getAttribute('data-events-panel') === eventsSubRoute);
     });
     const titles = {
       'events-list': ['My Events', 'Manage all your event listings — click any event name to edit.'],
       'events-tickets': ['Tickets', 'All ticket types across your events.'],
+      'events-attendees': ['Attendees', 'Registrations for your events — filter by event and download a CSV.'],
       'events-reviews': ['Reviews', 'Read and reply to attendee feedback.'],
       'events-revenue': ['Revenue', 'Revenue and performance across your listings.'],
     };
@@ -281,6 +296,11 @@
     const subEl = document.getElementById('my-events-sub');
     if (titleEl) titleEl.textContent = t[0];
     if (subEl) subEl.textContent = t[1];
+
+    if (eventsSubRoute === 'events-attendees') {
+      fillAttendeesEventFilter();
+      loadAttendeesAll().then(() => renderAttendees());
+    }
   }
 
   function updateMyEventsTabCounts() {
@@ -292,6 +312,111 @@
     set('tab-count-tickets', String(state.tickets.length));
     set('tab-count-reviews', String(state.reviews.length));
     set('tab-count-revenue', totalRevenueDisplay());
+    set('side-count-events', String(state.events.length));
+    set('side-count-tickets', String(state.tickets.length));
+    set('side-count-reviews', String(state.reviews.length));
+    set('side-count-revenue', totalRevenueDisplay());
+    set('side-count-attendees', String(state.attendeesAll.length));
+  }
+
+  function filteredAttendeesList() {
+    let list = state.attendeesAll.slice();
+    if (filters.attendeesEvent !== 'all') {
+      list = list.filter((a) => a.eventId === filters.attendeesEvent);
+    }
+    return list;
+  }
+
+  function fillAttendeesEventFilter() {
+    const sel = document.getElementById('filter-attendees-event');
+    if (!sel) return;
+    sel.innerHTML = '<option value="all">All events</option>';
+    state.events.forEach((ev) => {
+      const opt = document.createElement('option');
+      opt.value = ev.id;
+      opt.textContent = ev.title;
+      sel.appendChild(opt);
+    });
+    sel.value = filters.attendeesEvent;
+  }
+
+  async function loadAttendeesAll() {
+    const hint = document.getElementById('attendees-load-hint');
+    if (hint) hint.hidden = false;
+    const { ok, data } = await api('/api/organiser/attendees?eventId=all');
+    if (hint) hint.hidden = true;
+    if (ok) {
+      state.attendeesAll = data.attendees || [];
+      updateMyEventsTabCounts();
+    }
+    return ok;
+  }
+
+  function exportAttendeesCsv() {
+    const rows = filteredAttendeesList();
+    if (!rows.length) {
+      alert('No attendees to export for this filter.');
+      return;
+    }
+    const header = ['Name', 'Email', 'Phone', 'Event', 'Ticket', 'Quantity', 'Registered'];
+    const lines = rows.map((a) =>
+      [a.name, a.email, a.phone || '', a.eventTitle, a.ticketName, a.quantity, a.registeredAt]
+        .map((c) => '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"')
+        .join(',')
+    );
+    const csv = [header.join(','), ...lines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const link = document.createElement('a');
+    const suffix =
+      filters.attendeesEvent !== 'all'
+        ? '-' + String(filters.attendeesEvent).replace(/^rec/, '').slice(0, 8)
+        : '-all-events';
+    link.href = URL.createObjectURL(blob);
+    link.download = 'attendees' + suffix + '.csv';
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  function renderAttendees() {
+    const body = document.getElementById('attendees-body');
+    const empty = document.getElementById('attendees-empty');
+    if (!body) return;
+    const list = filteredAttendeesList();
+    body.innerHTML = '';
+
+    if (!list.length) {
+      if (empty) {
+        empty.hidden = false;
+        empty.textContent = state.attendeesAll.length
+          ? 'No attendees match this event filter.'
+          : 'No registrations yet. Attendees appear here when people book tickets for your events.';
+      }
+      updatePaginationNav('attendees', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
+      return;
+    }
+    if (empty) empty.hidden = true;
+    const pageInfo = paginateList(list, listPages.attendees);
+    listPages.attendees = pageInfo.page;
+    updatePaginationNav('attendees', pageInfo);
+
+    pageInfo.items.forEach((a) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td class="org-td-name">' +
+        esc(a.name) +
+        '</td><td>' +
+        esc(a.email || '—') +
+        '</td><td>' +
+        esc(a.eventTitle) +
+        '</td><td>' +
+        esc(a.ticketName) +
+        '</td><td>' +
+        esc(String(a.quantity)) +
+        '</td><td>' +
+        esc(formatDateShort(a.registeredAt)) +
+        '</td>';
+      body.appendChild(tr);
+    });
   }
 
   function filteredGroupsList() {
@@ -410,6 +535,8 @@
       });
       reviewGroupSel.value = filters.reviewsGroup;
     }
+
+    fillAttendeesEventFilter();
   }
 
   function eventEditorUrl(ev) {
@@ -655,12 +782,16 @@
       const eventId = subBtn.getAttribute('data-filter-event');
       if (eventId) {
         filters.ticketsEvent = eventId;
+        filters.attendeesEvent = eventId;
         filters.reviewsGroup = 'all';
         const ticketSel = document.getElementById('filter-tickets-event');
         if (ticketSel) ticketSel.value = eventId;
+        const attSel = document.getElementById('filter-attendees-event');
+        if (attSel) attSel.value = eventId;
       }
       setRoute(sub || 'events-list');
       if (sub === 'events-tickets') renderTickets();
+      if (sub === 'events-attendees') renderAttendees();
       if (sub === 'events-reviews') renderReviews();
       return true;
     }
@@ -696,12 +827,27 @@
     } else if (route === 'tickets') {
       page = 'events';
       sub = 'events-tickets';
+    } else if (route === 'academy' || (route && route.startsWith('academy-'))) {
+      page = 'academy';
+      sub = route === 'academy' ? 'academy-home' : route;
     }
 
-    document.querySelectorAll('[data-org-route]').forEach((a) => {
+    const activeRoute =
+      page === 'events'
+        ? sub || 'events-list'
+        : page === 'academy'
+          ? sub || 'academy-home'
+          : page;
+    document.querySelectorAll('.hub-side-nav-link[data-org-route]').forEach((a) => {
       const r = a.getAttribute('data-org-route');
-      a.classList.toggle('is-active', r === page);
+      let active = r === activeRoute;
+      if (page === 'academy' && r === 'academy' && activeRoute === 'academy-home') active = true;
+      a.classList.toggle('is-active', active);
     });
+    if (window.HubSideNav) {
+      const nav = document.querySelector('.hub-side-nav');
+      if (nav) HubSideNav.syncActiveGroup(nav);
+    }
     document.querySelectorAll('[data-org-page]').forEach((p) => {
       p.classList.toggle('is-active', p.getAttribute('data-org-page') === page);
     });
@@ -709,8 +855,16 @@
     if (page === 'events') {
       setEventsSub(sub || eventsSubRoute || 'events-list');
     }
+    if (page === 'academy') {
+      setAcademySub(sub || academySubRoute || 'academy-home');
+    }
 
-    const hash = page === 'events' ? sub || 'events-list' : page;
+    const hash =
+      page === 'events'
+        ? sub || 'events-list'
+        : page === 'academy'
+          ? sub || 'academy-home'
+          : page;
     if (location.hash.replace('#', '') !== hash) {
       history.replaceState(null, '', '#' + hash);
     }
@@ -1059,6 +1213,7 @@
     fillMyEventsFilters();
     renderEvents();
     renderTickets();
+    renderAttendees();
     renderReviews();
     renderRevenue();
   }
@@ -1140,7 +1295,9 @@
     listPages.tickets = 1;
     listPages.reviews = 1;
     listPages.revenue = 1;
+    listPages.attendees = 1;
     state.reviews = data.reviews || [];
+    loadAttendeesAll();
     state.groupsError = data.groupsError;
     state.airtable = data.airtable;
     state.adminView = data.adminView;
@@ -1153,7 +1310,7 @@
 
     if (data.adminView) {
       showAirtableAlert(
-        '<strong>Admin view</strong> — showing all organiser profiles, events, and ticket types across the platform.' +
+        '<strong>Admin view</strong> — showing all group profiles, events, Academy sessions, and ticket types across the platform.' +
           '<div class="org-scope-actions"><button type="button" class="org-btn org-btn-primary org-btn-sm" id="btn-scope-my">View my organiser data only</button></div>',
         false
       );
@@ -1180,7 +1337,7 @@
       );
     } else if (!state.groups.length) {
       showAirtableAlert(
-        'Create your first <strong>organiser profile</strong> in Airtable (linked to your Users record). Then add events and ticket types.',
+        'Create your first <strong>group profile</strong> in Airtable (linked to your Users record). Then add events and ticket types.',
         false
       );
     } else if (!data.adminView) {
@@ -1352,17 +1509,39 @@
     function goToNewEventEditor(e) {
       if (e && e.preventDefault) e.preventDefault();
       if (!state.groups.length) {
-        alert('Create an organiser profile first.');
+        alert('Create a group profile first.');
         location.href = 'group-edit.html';
         return;
       }
       location.href = 'event-format.html';
     }
 
-    document.getElementById('btn-new-group').addEventListener('click', goToNewGroupEditor);
-    document.querySelectorAll('[data-action="new-group"]').forEach((el) => {
-      el.addEventListener('click', goToNewGroupEditor);
-    });
+    const addToggle = document.getElementById('org-add-toggle');
+    const addMenu = document.getElementById('org-add-menu');
+    const addWrap = document.getElementById('org-add-menu-wrap');
+    if (addToggle && addMenu) {
+      addToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = !addMenu.hidden;
+        addMenu.hidden = open;
+        addToggle.setAttribute('aria-expanded', open ? 'false' : 'true');
+      });
+      addMenu.querySelectorAll('[data-org-route]').forEach((item) => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          addMenu.hidden = true;
+          addToggle.setAttribute('aria-expanded', 'false');
+          setRoute(item.getAttribute('data-org-route') || 'dashboard');
+        });
+      });
+      document.addEventListener('click', (e) => {
+        if (addWrap && !addWrap.contains(e.target)) {
+          addMenu.hidden = true;
+          addToggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+
     document.querySelectorAll('#btn-new-event, [data-action="new-event"]').forEach((el) => {
       el.addEventListener('click', goToNewEventEditor);
     });
@@ -1408,19 +1587,14 @@
         else if (route === 'events-reviews') {
           renderMyEventsHub();
           renderReviews();
-        } else if (
+        }         else if (
           route === 'events-tickets' ||
           route === 'events-list' ||
+          route === 'events-attendees' ||
           route === 'events-revenue'
         ) {
           renderMyEventsHub();
         }
-      });
-    });
-
-    document.querySelectorAll('[data-events-sub]').forEach((tab) => {
-      tab.addEventListener('click', () => {
-        setRoute(tab.getAttribute('data-events-sub') || 'events-list');
       });
     });
 
@@ -1467,6 +1641,20 @@
         listPages.reviews = 1;
         renderReviews();
       });
+    }
+
+    const attendeesEventFilter = document.getElementById('filter-attendees-event');
+    if (attendeesEventFilter) {
+      attendeesEventFilter.addEventListener('change', () => {
+        filters.attendeesEvent = attendeesEventFilter.value;
+        listPages.attendees = 1;
+        renderAttendees();
+      });
+    }
+
+    const btnDownloadAttendees = document.getElementById('btn-download-attendees-csv');
+    if (btnDownloadAttendees) {
+      btnDownloadAttendees.addEventListener('click', exportAttendeesCsv);
     }
 
     const downloadCsv = document.getElementById('btn-download-tickets-csv');
@@ -1533,12 +1721,20 @@
       true
     );
 
-    document.querySelectorAll('[data-org-route]').forEach((a) => {
-      a.addEventListener('click', (e) => {
+    document.querySelectorAll('[data-org-route]').forEach((el) => {
+      if (el.tagName === 'A') {
+        const href = el.getAttribute('href');
+        if (href && !href.startsWith('#')) return;
+      }
+      el.addEventListener('click', (e) => {
+        if (el.tagName === 'A') {
+          const href = el.getAttribute('href');
+          if (href && !href.startsWith('#')) return;
+        }
         e.preventDefault();
-        const page = a.getAttribute('data-org-route') || 'dashboard';
-        if (page === 'events') setRoute('events-list');
-        else setRoute(page);
+        const route = el.getAttribute('data-org-route') || 'dashboard';
+        setRoute(route);
+        if (window.HubSideNav) HubSideNav.openGroupForLink(el);
       });
     });
 
@@ -1568,6 +1764,7 @@
       if (listKey === 'events') renderEvents();
       if (listKey === 'tickets') renderTickets();
       if (listKey === 'reviews') renderReviews();
+      if (listKey === 'attendees') renderAttendees();
       if (listKey === 'revenue') renderRevenue();
       nav.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });

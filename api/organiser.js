@@ -9,6 +9,7 @@ const routes = {
   groups: require('./_lib/routes/organiser-groups'),
   events: require('./_lib/routes/organiser-events'),
   tickets: require('./_lib/routes/organiser-tickets'),
+  attendees: require('./_lib/routes/organiser-attendees'),
 };
 
 module.exports = async function handler(req, res) {

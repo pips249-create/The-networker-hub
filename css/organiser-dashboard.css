@@ -47,59 +47,6 @@
   margin: 0;
 }
 
-.org-dash-bar {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 0 12px 20px;
-}
-
-.org-dash-bar a {
-  color: var(--od-purple-dark);
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 12px 14px;
-  border-radius: var(--od-radius-sm);
-  border-left: 3px solid transparent;
-  white-space: nowrap;
-}
-
-.org-dash-bar a:hover {
-  color: var(--od-purple);
-  background: rgba(255, 255, 255, 0.45);
-}
-
-.org-dash-bar a.is-active {
-  border-left-color: var(--od-purple);
-  color: var(--od-purple);
-  background: var(--od-white);
-  box-shadow: 0 1px 4px rgba(45, 27, 61, 0.06);
-}
-
-@media (max-width: 768px) {
-  .org-dash-bar {
-    flex-direction: row;
-    padding: 0 12px;
-    gap: 0;
-  }
-
-  .org-dash-bar a {
-    border-left: none;
-    border-bottom: 3px solid transparent;
-    border-radius: 0;
-    padding: 14px 16px;
-    background: transparent;
-    box-shadow: none;
-  }
-
-  .org-dash-bar a.is-active {
-    border-bottom-color: var(--od-purple);
-    border-left-color: transparent;
-    background: transparent;
-  }
-}
-
 .org-wrap {
   width: 100%;
   padding: 28px clamp(16px, 3vw, 32px) 56px;
@@ -114,7 +61,17 @@
   display: block;
 }
 
-/* My Events hub */
+.org-load-hint {
+  font-size: 13px;
+  color: var(--od-text-soft);
+  margin: 0 0 12px;
+}
+
+.org-load-hint[hidden] {
+  display: none;
+}
+
+/* My Events hub — horizontal tabs removed; use left sidebar */
 .org-events-subnav {
   display: flex;
   gap: 0;
@@ -473,8 +430,140 @@
   margin-top: 8px;
 }
 
+/* Overview — single gold “Add new” control */
+.org-overview-add {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.org-add-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.org-add-chev {
+  font-size: 10px;
+  opacity: 0.85;
+}
+
+.org-add-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  min-width: 280px;
+  background: var(--od-white);
+  border: 1px solid var(--od-border-soft);
+  border-radius: var(--od-radius);
+  box-shadow: 0 12px 32px rgba(45, 27, 61, 0.14);
+  padding: 8px;
+}
+
+.org-add-menu[hidden] {
+  display: none;
+}
+
+.org-add-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border: none;
+  border-radius: var(--od-radius-sm);
+  background: transparent;
+  font-family: inherit;
+  color: var(--od-text-dark);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.org-add-menu-item:hover {
+  background: var(--od-purple-pale);
+}
+
+.org-add-menu-item strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--od-purple-dark);
+  margin-bottom: 4px;
+}
+
+.org-add-menu-item span {
+  display: block;
+  font-size: 11px;
+  color: var(--od-text-soft);
+  line-height: 1.4;
+}
+
+.org-badge-soon-inline {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--od-gold);
+}
+
+.org-badge-soon-pill {
+  background: var(--od-gold-light) !important;
+  color: #8a5a10 !important;
+}
+
+/* The Academy */
+.org-academy-banner {
+  background: linear-gradient(135deg, var(--od-purple-deep) 0%, var(--od-purple-dark) 55%, var(--od-purple) 100%);
+  color: #fff;
+  border-radius: var(--od-radius);
+  padding: 24px 28px;
+  margin-bottom: 24px;
+}
+
+.org-academy-banner .org-section-title {
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.org-academy-lead {
+  color: rgba(255, 255, 255, 0.9) !important;
+  max-width: 42em;
+}
+
+.org-academy-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--od-gold-light);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius-pill, 999px);
+  padding: 4px 12px;
+  margin-bottom: 12px;
+}
+
+.org-academy-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.org-academy-note {
+  font-size: 13px;
+  color: var(--od-text-mid);
+  line-height: 1.55;
+  margin: 0;
+  padding: 16px 18px;
+  background: var(--od-purple-pale);
+  border-radius: var(--od-radius-sm);
+  border: 1px solid var(--od-border-soft);
+}
+
 .org-quick-actions {
   margin-bottom: 32px;
+}
+
+.org-quick-actions--compact .org-quick-actions-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .org-quick-actions-title {

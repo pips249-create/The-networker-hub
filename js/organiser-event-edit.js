@@ -338,7 +338,7 @@
       sel.disabled = true;
       if (hint) {
         hint.innerHTML =
-          'You need an organiser profile first. <a href="group-edit.html">Create a group</a> then return here.';
+          'You need a group profile first. <a href="group-edit.html">Create a group profile</a> then return here.';
       }
       return;
     }
