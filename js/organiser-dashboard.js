@@ -62,7 +62,6 @@
       const el = document.getElementById(id);
       if (el) el.textContent = val;
     };
-    set('stat-groups', String(state.groups.length));
     set('stat-events', String(state.events.length));
     set('stat-tickets', String(state.tickets.length));
     set('stat-revenue', rev);
@@ -730,13 +729,6 @@
     updatePaginationNav('groups', pageInfo);
     pageInfo.items.forEach((g) => {
       const tr = document.createElement('tr');
-      const site = g.website
-        ? '<a href="' +
-          esc(g.website) +
-          '" target="_blank" rel="noopener noreferrer">' +
-          esc(g.website.replace(/^https?:\/\//i, '').slice(0, 40)) +
-          '</a>'
-        : '—';
       tr.innerHTML =
         '<td>' +
         thumbHtml(g) +
@@ -745,11 +737,13 @@
         '">' +
         esc(g.name) +
         '</button></td><td>' +
-        esc(g.location || '—') +
+        esc(String(g.eventsListed != null ? g.eventsListed : 0)) +
+        '</td><td class="org-revenue">' +
+        esc(g.revenueDisplay || '£0') +
         '</td><td>' +
-        site +
+        ratingHtml(g.rating) +
         '</td><td>' +
-        esc(g.description || '—') +
+        statusBadgeHtml(g.statusKey || 'draft', g.statusLabel || 'Draft') +
         '</td><td class="org-td-actions">' +
         actionMenuHtml('group', g.id, g.name) +
         '</td>';
@@ -1178,9 +1172,8 @@
       const name = document.getElementById('group-name').value.trim();
       const description = document.getElementById('group-description').value.trim();
       const website = document.getElementById('group-website').value.trim();
-      const location = document.getElementById('group-location').value.trim();
       const logoUrl = document.getElementById('group-logo-url').value.trim();
-      const payload = { name, description, website, location, logoUrl };
+      const payload = { name, description, website, logoUrl };
 
       if (groupLogoFile) {
         try {

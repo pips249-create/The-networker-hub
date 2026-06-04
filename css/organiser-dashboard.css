@@ -369,6 +369,10 @@
   margin-bottom: 28px;
 }
 
+.org-stats--three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .org-stat {
   background: var(--od-white);
   border-radius: var(--od-radius);
@@ -445,6 +449,15 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
+}
+
+.org-quick-actions--three .org-quick-actions-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.org-th-actions {
+  text-align: right;
+  width: 120px;
 }
 
 @media (max-width: 900px) {

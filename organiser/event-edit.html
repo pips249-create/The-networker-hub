@@ -17,8 +17,12 @@
     <div id="hub-site-nav"></div>
     <script src="../js/site-nav.js?v=20260606" data-root="../" data-page="organiser"></script>
 
-    <div class="ee-wrap">
+    <div class="ee-top-bar">
       <a class="ee-back" href="index.html#events-list" id="ee-back-link">← Back to My Events</a>
+      <a class="ee-back ee-back-secondary" href="event-format.html" id="ee-change-format-top">Change format</a>
+    </div>
+
+    <div class="ee-wrap">
       <p class="ee-format-badge" id="ee-format-badge" hidden></p>
       <h1 class="ee-title" id="ee-page-title">New event listing</h1>
       <p class="ee-lead" id="ee-page-lead">
@@ -27,141 +31,129 @@
       <div id="ee-alert" class="ee-alert" hidden></div>
 
       <form id="ee-form">
-        <div class="ee-grid">
-          <div class="ee-main">
-            <div class="ee-card">
-              <h2>Event details</h2>
-              <div class="ee-field">
-                <label for="ee-group">Organiser profile</label>
-                <select id="ee-group" required></select>
-              </div>
-              <div class="ee-field">
-                <label for="ee-title">Event title</label>
-                <input type="text" id="ee-title" required placeholder="e.g. Lunch &amp; learn — Liverpool" />
-              </div>
-              <div class="ee-field">
-                <label for="ee-photo-file">Event photo</label>
-                <div class="ee-upload-zone" id="ee-photo-zone" tabindex="0" role="button" aria-label="Upload event photo">
-                  <input type="file" id="ee-photo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
-                  <div class="ee-upload-preview" id="ee-photo-preview" hidden>
-                    <img id="ee-photo-preview-img" alt="" width="96" height="72" />
-                    <button type="button" class="ee-btn ee-btn-outline" id="ee-photo-clear" style="font-size:11px;padding:6px 10px">Remove</button>
-                  </div>
-                  <div class="ee-upload-placeholder" id="ee-photo-placeholder">
-                    <strong>Upload cover image</strong>
-                    <span>PNG or JPG, max 2MB — or paste a URL below</span>
-                  </div>
-                </div>
-                <input type="url" id="ee-photo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top:10px" />
-              </div>
-              <div class="ee-field">
-                <label for="ee-type">Meeting type</label>
-                <select id="ee-type">
-                  <option>Networking Event</option>
-                  <option>Exhibition</option>
-                  <option>Conference</option>
-                  <option>Networking / Meeting</option>
-                  <option>Webinar</option>
-                  <option>Workshop</option>
-                </select>
-              </div>
-              <div class="ee-field">
-                <label for="ee-description">Highlights / description</label>
-                <p class="ee-hint" id="ee-description-hint">
-                  Attendees search and filter events using this text — include who it is for, what happens, and keywords (industry, location, outcomes).
-                </p>
-                <textarea id="ee-description" rows="5" placeholder="What attendees can expect, who should come, and what they will take away"></textarea>
-              </div>
-            </div>
-
-            <div class="ee-card" id="ee-venue-block" hidden>
-              <h2>Venue &amp; address</h2>
-              <p class="ee-hint" style="margin-top:0">Shown on your public listing. All fields are optional — add as much detail as you have.</p>
-              <div class="ee-field">
-                <label for="ee-venue">Venue name</label>
-                <input type="text" id="ee-venue" placeholder="e.g. The Exchange" />
-              </div>
-              <div class="ee-field">
-                <label for="ee-address1">Address line 1</label>
-                <input type="text" id="ee-address1" placeholder="Street address" />
-              </div>
-              <div class="ee-row-2">
-                <div class="ee-field">
-                  <label for="ee-city">City / town</label>
-                  <input type="text" id="ee-city" placeholder="e.g. Liverpool" />
-                </div>
-                <div class="ee-field">
-                  <label for="ee-postcode">Postcode</label>
-                  <input type="text" id="ee-postcode" placeholder="e.g. L1 8JQ" />
-                </div>
-              </div>
-              <div class="ee-field">
-                <label for="ee-location">Area shown on listing <span class="ee-optional">(optional)</span></label>
-                <p class="ee-hint">Short label for search cards, e.g. “Liverpool city centre”. We also build a full address from the fields above.</p>
-                <input type="text" id="ee-location" placeholder="e.g. Liverpool city centre" />
-              </div>
-            </div>
-
-            <div class="ee-card" id="ee-online-block" hidden>
-              <h2>Online access</h2>
-              <p class="ee-hint" style="margin-top:0">Join details are emailed to ticket holders and are not shown on the public listing.</p>
-              <div class="ee-field">
-                <label for="ee-platform">Platform</label>
-                <select id="ee-platform">
-                  <option value="">Select platform (optional)</option>
-                  <option>Zoom Meeting</option>
-                  <option>Zoom Webinar</option>
-                  <option>Microsoft Teams</option>
-                  <option>Google Meet</option>
-                  <option>Hopin</option>
-                  <option>Other</option>
-                </select>
-              </div>
-              <div class="ee-field">
-                <label for="ee-join-link">Attendee join link <span class="ee-optional">(optional)</span></label>
-                <input type="url" id="ee-join-link" placeholder="https://…" />
-              </div>
-            </div>
-
-            <div class="ee-card">
-              <h2>Time (same for each selected date)</h2>
-              <p class="ee-hint" style="margin-top:0">Times are in 15-minute steps. End time is required for every listing.</p>
-              <div class="ee-row-2">
-                <div class="ee-field">
-                  <label for="ee-start-time">Start time</label>
-                  <select id="ee-start-time" required aria-describedby="ee-time-hint"></select>
-                </div>
-                <div class="ee-field">
-                  <label for="ee-end-time">End time</label>
-                  <select id="ee-end-time" required aria-describedby="ee-time-hint"></select>
-                </div>
-              </div>
-              <p class="ee-hint" id="ee-time-hint">Example: 10:00 – 12:00</p>
-            </div>
+        <div class="ee-card ee-card-plan">
+          <h2>Plan your series</h2>
+          <div class="ee-field">
+            <label for="ee-group">Organiser profile</label>
+            <select id="ee-group" required></select>
+            <p class="ee-hint" id="ee-group-hint">Which organiser group this event belongs to.</p>
           </div>
+          <h3 class="ee-subheading">Recurring dates</h3>
+          <p class="ee-hint">Click days on the calendar to add or remove dates. Each date becomes its own listing in your series.</p>
+          <div class="ee-cal-header">
+            <button type="button" id="ee-cal-prev" aria-label="Previous month">‹</button>
+            <span class="ee-cal-month" id="ee-cal-month-label"></span>
+            <button type="button" id="ee-cal-next" aria-label="Next month">›</button>
+          </div>
+          <div class="ee-cal-weekdays" aria-hidden="true">
+            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+          </div>
+          <div class="ee-cal-days" id="ee-cal-days" role="grid" aria-label="Select event dates"></div>
+          <div class="ee-selected-dates">
+            <strong><span id="ee-date-count">0</span> date(s) selected</strong>
+            <ul id="ee-date-list"></ul>
+          </div>
+        </div>
 
-          <div class="ee-sticky-side">
-            <div class="ee-card">
-              <h2>Recurring dates</h2>
-              <p class="ee-hint" style="margin-top:0">Click days on the calendar to add or remove dates. Each date becomes its own listing in your series.</p>
-              <div class="ee-cal-header">
-                <button type="button" id="ee-cal-prev" aria-label="Previous month">‹</button>
-                <span class="ee-cal-month" id="ee-cal-month-label"></span>
-                <button type="button" id="ee-cal-next" aria-label="Next month">›</button>
+        <div class="ee-card">
+          <h2>Event details</h2>
+          <div class="ee-field">
+            <label for="ee-title">Event title</label>
+            <input type="text" id="ee-title" required placeholder="e.g. Lunch &amp; learn — Liverpool" />
+          </div>
+          <div class="ee-field">
+            <label for="ee-photo-file">Event photo</label>
+            <div class="ee-upload-zone" id="ee-photo-zone" tabindex="0" role="button" aria-label="Upload event photo">
+              <input type="file" id="ee-photo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+              <div class="ee-upload-preview" id="ee-photo-preview" hidden>
+                <img id="ee-photo-preview-img" alt="" width="96" height="72" />
+                <button type="button" class="ee-btn ee-btn-outline" id="ee-photo-clear" style="font-size:11px;padding:6px 10px">Remove</button>
               </div>
-              <div class="ee-cal-weekdays" aria-hidden="true">
-                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-              </div>
-              <div class="ee-cal-days" id="ee-cal-days" role="grid" aria-label="Select event dates"></div>
-              <div class="ee-selected-dates">
-                <strong><span id="ee-date-count">0</span> date(s) selected</strong>
-                <ul id="ee-date-list"></ul>
+              <div class="ee-upload-placeholder" id="ee-photo-placeholder">
+                <strong>Upload cover image</strong>
+                <span>PNG or JPG, max 2MB — or paste a URL below</span>
               </div>
             </div>
-            <p class="ee-hint">
-              <a href="event-format.html" id="ee-change-format">Change format (in person / online / hybrid)</a>
+            <input type="url" id="ee-photo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top:10px" />
+          </div>
+          <div class="ee-field">
+            <label for="ee-type">Meeting type</label>
+            <select id="ee-type">
+              <option>Networking Event</option>
+              <option>Exhibition</option>
+              <option>Conference</option>
+              <option>Networking / Meeting</option>
+              <option>Webinar</option>
+              <option>Workshop</option>
+            </select>
+          </div>
+          <div class="ee-field">
+            <label for="ee-description">Highlights / description</label>
+            <p class="ee-hint" id="ee-description-hint">
+              Attendees search and filter events using this text — include who it is for, what happens, and useful keywords.
             </p>
+            <textarea id="ee-description" rows="5" placeholder="What attendees can expect, who should come, and what they will take away"></textarea>
           </div>
+        </div>
+
+        <div class="ee-card" id="ee-venue-block" hidden>
+          <h2>Venue &amp; address</h2>
+          <p class="ee-hint" style="margin-top:0">Shown on your public listing. All fields are optional.</p>
+          <div class="ee-field">
+            <label for="ee-venue">Venue name</label>
+            <input type="text" id="ee-venue" placeholder="e.g. The Exchange" />
+          </div>
+          <div class="ee-field">
+            <label for="ee-address1">Address line 1</label>
+            <input type="text" id="ee-address1" placeholder="Street address" />
+          </div>
+          <div class="ee-row-2">
+            <div class="ee-field">
+              <label for="ee-city">City / town</label>
+              <input type="text" id="ee-city" placeholder="e.g. Liverpool" />
+            </div>
+            <div class="ee-field">
+              <label for="ee-postcode">Postcode</label>
+              <input type="text" id="ee-postcode" placeholder="e.g. L1 8JQ" />
+            </div>
+          </div>
+        </div>
+
+        <div class="ee-card" id="ee-online-block" hidden>
+          <h2>Online access</h2>
+          <p class="ee-hint" style="margin-top:0">Join details are emailed to ticket holders and are not shown on the public listing.</p>
+          <div class="ee-field">
+            <label for="ee-platform">Platform</label>
+            <select id="ee-platform">
+              <option value="">Select platform (optional)</option>
+              <option>Zoom Meeting</option>
+              <option>Zoom Webinar</option>
+              <option>Microsoft Teams</option>
+              <option>Google Meet</option>
+              <option>Hopin</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="ee-field">
+            <label for="ee-join-link">Attendee join link <span class="ee-optional">(optional)</span></label>
+            <input type="url" id="ee-join-link" placeholder="https://…" />
+          </div>
+        </div>
+
+        <div class="ee-card">
+          <h2>Time (same for each selected date)</h2>
+          <p class="ee-hint" style="margin-top:0">Times are in 15-minute steps. End time is required for every listing.</p>
+          <div class="ee-row-2">
+            <div class="ee-field">
+              <label for="ee-start-time">Start time</label>
+              <select id="ee-start-time" required aria-describedby="ee-time-hint"></select>
+            </div>
+            <div class="ee-field">
+              <label for="ee-end-time">End time</label>
+              <select id="ee-end-time" required aria-describedby="ee-time-hint"></select>
+            </div>
+          </div>
+          <p class="ee-hint" id="ee-time-hint">Example: 10:00 – 12:00</p>
         </div>
 
         <div class="ee-actions">
@@ -172,6 +164,6 @@
     </div>
 
     <script src="../js/organiser-quarter-time.js?v=20260606e"></script>
-    <script src="../js/organiser-event-edit.js?v=20260606m"></script>
+    <script src="../js/organiser-event-edit.js?v=20260606n"></script>
   </body>
 </html>

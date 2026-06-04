@@ -87,7 +87,6 @@
     document.getElementById('ge-name').value = g.name || '';
     document.getElementById('ge-description').value = g.description || '';
     document.getElementById('ge-website').value = g.website || '';
-    document.getElementById('ge-location').value = g.location || '';
     if (g.imageUrl) {
       const preview = document.getElementById('ge-logo-preview');
       const previewImg = document.getElementById('ge-logo-preview-img');
@@ -140,7 +139,6 @@
       name,
       description: document.getElementById('ge-description').value.trim(),
       website: document.getElementById('ge-website').value.trim(),
-      location: document.getElementById('ge-location').value.trim(),
       logoUrl: document.getElementById('ge-logo-url').value.trim(),
     };
 

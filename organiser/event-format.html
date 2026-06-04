@@ -42,5 +42,17 @@
         </a>
       </div>
     </div>
+    <script>
+      document.querySelectorAll('.ee-format-card').forEach(function (link) {
+        link.addEventListener('click', function () {
+          var m = (link.getAttribute('href') || '').match(/format=([a-z-]+)/i);
+          if (m) {
+            try {
+              sessionStorage.setItem('hub_event_format', m[1]);
+            } catch (e) {}
+          }
+        });
+      });
+    </script>
   </body>
 </html>

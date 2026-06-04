@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
+body.organiser-event-edit-page.has-site-nav {
+  padding-top: 76px;
+}
+
 .organiser-event-edit-page {
   --ee-purple: #9d60a7;
   --ee-purple-dark: #7a3d8a;
@@ -19,10 +23,27 @@
   min-height: 100vh;
 }
 
+.ee-top-bar {
+  position: sticky;
+  top: 76px;
+  z-index: 90;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 10px 24px;
+  background: rgba(240, 236, 247, 0.95);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--ee-border);
+}
+
 .ee-wrap {
   max-width: 920px;
   margin: 0 auto;
-  padding: 28px 24px 80px;
+  padding: 20px 24px 80px;
 }
 
 .ee-back {
@@ -33,7 +54,24 @@
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
-  margin-bottom: 16px;
+}
+
+.ee-back-secondary {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ee-text-mid);
+}
+
+.ee-card-plan {
+  border-color: var(--ee-purple);
+  box-shadow: 0 4px 16px rgba(122, 61, 138, 0.08);
+}
+
+.ee-subheading {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ee-purple-dark);
+  margin: 18px 0 8px;
 }
 
 .ee-back:hover {

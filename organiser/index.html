@@ -41,11 +41,7 @@
           <h1 class="org-welcome-name" id="org-welcome-name">Welcome back</h1>
           <p class="org-welcome-sub" id="org-welcome-sub">Here's your account at a glance.</p>
 
-          <div class="org-stats" id="org-stats">
-            <div class="org-stat">
-              <div class="org-stat-label">Organiser profiles</div>
-              <div class="org-stat-value" id="stat-groups">0</div>
-            </div>
+          <div class="org-stats org-stats--three" id="org-stats">
             <div class="org-stat gold">
               <div class="org-stat-label">Events</div>
               <div class="org-stat-value" id="stat-events">0</div>
@@ -60,7 +56,7 @@
             </div>
           </div>
 
-          <div class="org-quick-actions" aria-label="Quick actions">
+          <div class="org-quick-actions org-quick-actions--three" aria-label="Quick actions">
             <h2 class="org-quick-actions-title">Quick actions</h2>
             <div class="org-quick-actions-grid">
               <a class="org-quick-card org-quick-card--primary" href="event-format.html">
@@ -68,30 +64,15 @@
                 <span class="org-quick-label">Add a new event</span>
                 <span class="org-quick-hint">Create a listing and set up tickets</span>
               </a>
-              <a class="org-quick-card" href="group-edit.html">
-                <span class="org-quick-icon" aria-hidden="true">👥</span>
-                <span class="org-quick-label">Add organiser profile</span>
-                <span class="org-quick-hint">New group page for your events</span>
-              </a>
               <button type="button" class="org-quick-card" data-org-shortcut="events-reviews">
                 <span class="org-quick-icon" aria-hidden="true">★</span>
                 <span class="org-quick-label">Respond to reviews</span>
                 <span class="org-quick-hint">Read and reply to attendee feedback</span>
               </button>
-              <button type="button" class="org-quick-card" data-org-shortcut="events-tickets">
-                <span class="org-quick-icon" aria-hidden="true">🎟️</span>
-                <span class="org-quick-label">Manage ticket types</span>
-                <span class="org-quick-hint">Prices, quantities and availability</span>
-              </button>
               <button type="button" class="org-quick-card" data-org-shortcut="events-list">
                 <span class="org-quick-icon" aria-hidden="true">📋</span>
                 <span class="org-quick-label">View all events</span>
                 <span class="org-quick-hint">Edit listings, dates and status</span>
-              </button>
-              <button type="button" class="org-quick-card" data-org-shortcut="groups">
-                <span class="org-quick-icon" aria-hidden="true">🏢</span>
-                <span class="org-quick-label">Organiser profiles</span>
-                <span class="org-quick-hint">Update logos, descriptions and links</span>
               </button>
             </div>
           </div>
@@ -113,7 +94,7 @@
                   <th>Revenue</th>
                   <th>Rating</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  <th class="org-th-actions">Actions</th>
                 </tr>
               </thead>
               <tbody id="dash-groups-body"></tbody>
@@ -147,7 +128,7 @@
                   <th>Tickets sold</th>
                   <th>Revenue</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  <th class="org-th-actions">Actions</th>
                 </tr>
               </thead>
               <tbody id="dash-events-body"></tbody>
@@ -178,11 +159,12 @@
               <thead>
                 <tr>
                   <th class="org-th-thumb"></th>
-                  <th>Group name</th>
-                  <th>Location</th>
-                  <th>Website</th>
-                  <th>Description</th>
-                  <th>Actions</th>
+                  <th>Name</th>
+                  <th>Events listed</th>
+                  <th>Revenue</th>
+                  <th>Rating</th>
+                  <th>Status</th>
+                  <th class="org-th-actions">Actions</th>
                 </tr>
               </thead>
               <tbody id="groups-body"></tbody>
@@ -387,10 +369,6 @@
             <label for="group-website">Website</label>
             <input type="url" id="group-website" placeholder="https://www.yourcompany.com" />
           </div>
-          <div class="org-field">
-            <label for="group-location">Location</label>
-            <input type="text" id="group-location" placeholder="e.g. Liverpool, Merseyside" />
-          </div>
           <div class="org-modal-actions">
             <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
             <button type="submit" class="org-btn org-btn-primary">Create profile</button>
@@ -441,6 +419,6 @@
       </div>
     </div>
 
-    <script src="../js/organiser-dashboard.js?v=20260606n"></script>
+    <script src="../js/organiser-dashboard.js?v=20260606o"></script>
   </body>
 </html>

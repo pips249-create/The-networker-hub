@@ -3,9 +3,10 @@
  */
 (function () {
   const SERIES_STORAGE_KEY = 'hub_event_series';
+  const FORMAT_STORAGE_KEY = 'hub_event_format';
   const params = new URLSearchParams(location.search);
   const editId = params.get('id') || '';
-  let eventFormat = (params.get('format') || '').toLowerCase();
+  let eventFormat = (params.get('format') || sessionStorage.getItem(FORMAT_STORAGE_KEY) || '').toLowerCase();
 
   const FORMAT_LABELS = {
     'in-person': 'In person',
@@ -235,6 +236,7 @@
 
   function fillGroupsSelect() {
     const sel = document.getElementById('ee-group');
+    const hint = document.getElementById('ee-group-hint');
     if (!sel) return;
     sel.innerHTML = '';
     if (!groups.length) {
@@ -243,9 +245,14 @@
       opt.textContent = 'Create a group first';
       sel.appendChild(opt);
       sel.disabled = true;
+      if (hint) {
+        hint.innerHTML =
+          'You need an organiser profile first. <a href="group-edit.html">Create a group</a> then return here.';
+      }
       return;
     }
     sel.disabled = false;
+    if (hint) hint.textContent = 'Which organiser group this event belongs to.';
     groups.forEach((g) => {
       const opt = document.createElement('option');
       opt.value = g.id;
@@ -268,9 +275,9 @@
       badge.textContent = FORMAT_LABELS[eventFormat] || eventFormat;
       badge.hidden = false;
     }
-    if (changeLink && !editId) {
-      changeLink.href = 'event-format.html';
-    }
+    const changeTop = document.getElementById('ee-change-format-top');
+    if (changeLink) changeLink.href = 'event-format.html';
+    if (changeTop) changeTop.href = 'event-format.html';
   }
 
   function buildLocationFields() {
@@ -278,13 +285,10 @@
     const address1 = document.getElementById('ee-address1').value.trim();
     const city = document.getElementById('ee-city').value.trim();
     const postcode = document.getElementById('ee-postcode').value.trim();
-    const listingArea = document.getElementById('ee-location').value.trim();
     const parts = [venue, address1, city, postcode].filter(Boolean);
     const fullAddress = parts.join(', ');
-    let location = listingArea || fullAddress;
+    let location = fullAddress;
     if (eventFormat === 'online' && !location) location = 'Online';
-    if (eventFormat === 'hybrid' && listingArea) location = listingArea + (fullAddress ? ' · ' + fullAddress : '');
-    if (eventFormat === 'hybrid' && !listingArea && fullAddress) location = fullAddress;
     return {
       venue,
       addressLine1: address1,
@@ -309,7 +313,6 @@
     document.getElementById('ee-title').value = ev.title || '';
     document.getElementById('ee-type').value = ev.type || 'Networking Event';
     document.getElementById('ee-description').value = ev.description || '';
-    document.getElementById('ee-location').value = ev.location || '';
     document.getElementById('ee-venue').value = ev.venue || '';
     if (document.getElementById('ee-address1')) {
       document.getElementById('ee-address1').value = ev.addressLine1 || '';
@@ -504,6 +507,13 @@
   });
 
   function initPage() {
+    if (params.get('format')) {
+      try {
+        sessionStorage.setItem(FORMAT_STORAGE_KEY, params.get('format'));
+      } catch {
+        /* ignore */
+      }
+    }
     if (!editId && !eventFormat) {
       location.replace('event-format.html');
       return;
