@@ -20,6 +20,21 @@ Vercel is **not** passing your secrets to the deployment yet.
 | `AIRTABLE_EVENTS_VIEW` | `viwuzobg711IGzgev` |
 | `AIRTABLE_TICKETS_TABLE` | `Tickets` (optional; linked tiers per event) |
 
+### Tickets table (multi-tier)
+
+Each row in **Tickets** should link to one **Events** record (column **Linked Event**, or a linked **Tickets** field on the event).
+
+| Tickets column | API mapping |
+|----------------|-------------|
+| Linked Event | ties row to event |
+| Ticket Name or **Ticket Type** | tier label |
+| Price | tier price (falls back to event **Ticket Price** if empty) |
+| Ticket Description | tier blurb |
+| Quantity Available | spots left for tier |
+| Sold Out or **Status** | availability (`Sold out`, `Available`, etc.) |
+
+Debug: `GET /api/events?tickets_debug=1` — shows link discovery and how many tiers matched.
+
 For **each** variable, enable **Production** (and Preview if you use preview URLs).
 
 **Do not use:** `AIRTABLE_KEY`, `API_KEY`, `BASE_ID`, or quotes around values.

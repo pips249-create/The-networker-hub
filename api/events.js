@@ -81,11 +81,11 @@ const FIELD_MAP = {
 
 const TICKET_FIELD_MAP = {
   linkedEvent: ['Linked Event', 'Event', 'Events', 'Linked Events'],
-  name: ['Ticket Name', 'Name', 'Tier Name'],
+  name: ['Ticket Name', 'Name', 'Tier Name', 'Ticket Type', 'Type', 'Tier'],
   description: ['Ticket Description', 'Description'],
-  price: ['Price', 'Ticket Price'],
+  price: ['Price', 'Ticket Price', 'Amount', 'Cost'],
   quantityAvailable: ['Quantity Available', 'Quantity', 'Capacity', 'Qty Available'],
-  soldOut: ['Sold Out', 'Is Sold Out'],
+  soldOut: ['Sold Out', 'Is Sold Out', 'Status', 'Ticket Status', 'Availability'],
 };
 
 function getFieldCI(fields, name) {
@@ -371,43 +371,156 @@ function ticketLinksToEvent(fields, eventId) {
   return linkedRecordIds(linked).includes(eventId);
 }
 
-function ticketRecordToTier(record) {
+function tierLabelFromRaw(raw) {
+  if (raw == null || raw === '') return '';
+  if (Array.isArray(raw)) {
+    const parts = raw
+      .map((x) => (typeof x === 'string' ? x : x && x.name ? String(x.name) : ''))
+      .filter(Boolean);
+    return parts.join(', ').trim();
+  }
+  return String(raw).trim();
+}
+
+function parseTicketStatusSoldOut(statusRaw) {
+  if (statusRaw == null || statusRaw === '') return false;
+  if (Array.isArray(statusRaw)) {
+    return statusRaw.some((s) => parseTicketStatusSoldOut(s));
+  }
+  const s = String(statusRaw).toLowerCase();
+  if (/sold\s*out|closed|unavailable|full|ended|cancelled|waitlist\s*full/.test(s)) {
+    return true;
+  }
+  if (/available|open|active|on\s*sale|published|live/.test(s)) {
+    return false;
+  }
+  return parseBoolField(statusRaw);
+}
+
+function ticketRecordToTier(record, eventDefaults = {}) {
   const f = record.fields || {};
-  const priceRaw = pick(f, TICKET_FIELD_MAP.price);
+  const priceRaw =
+    pick(f, TICKET_FIELD_MAP.price) ??
+    eventDefaults.priceRaw ??
+    (eventDefaults.priceNum > 0 ? eventDefaults.priceNum : null);
   const priceNum = parsePriceNum(priceRaw);
-  const { display: price, priceKey } = normalizePrice(priceRaw);
+  const { display: price, priceKey } = normalizePrice(
+    priceRaw != null && priceRaw !== '' ? priceRaw : eventDefaults.price || 'Free'
+  );
   const qtyRaw = pick(f, TICKET_FIELD_MAP.quantityAvailable);
   let quantityAvailable = null;
   if (qtyRaw != null && qtyRaw !== '') {
     const n = Number(qtyRaw);
     if (Number.isFinite(n)) quantityAvailable = Math.max(0, Math.round(n));
   }
-  const soldOutFlag = parseBoolField(pick(f, TICKET_FIELD_MAP.soldOut));
-  const soldOut = soldOutFlag || (quantityAvailable !== null && quantityAvailable <= 0);
-  const name = pick(f, TICKET_FIELD_MAP.name) || 'Ticket';
+  const soldOutCheckbox = parseBoolField(
+    pick(f, ['Sold Out', 'Is Sold Out'])
+  );
+  const statusRaw = pick(f, ['Status', 'Ticket Status', 'Availability']);
+  const soldOut =
+    soldOutCheckbox ||
+    parseTicketStatusSoldOut(statusRaw) ||
+    (quantityAvailable !== null && quantityAvailable <= 0);
+  const name = tierLabelFromRaw(pick(f, TICKET_FIELD_MAP.name)) || 'Ticket';
   const description = pick(f, TICKET_FIELD_MAP.description) || '';
 
   return {
     id: record.id,
-    name: String(name).trim(),
+    name,
     description: String(description).trim(),
     price,
     priceKey,
     priceNum,
     soldOut,
     quantityAvailable,
-    label: String(name).trim().slice(0, 48) || 'Ticket',
+    label: name.slice(0, 48) || 'Ticket',
   };
 }
 
-function ticketsForEvent(ticketRecords, eventId) {
-  return ticketRecords
-    .filter((rec) => ticketLinksToEvent(rec.fields || {}, eventId))
-    .map(ticketRecordToTier)
-    .sort((a, b) => {
-      if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;
-      return a.priceNum - b.priceNum;
-    });
+function sortTicketTiers(tickets) {
+  return tickets.slice().sort((a, b) => {
+    if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;
+    return a.priceNum - b.priceNum;
+  });
+}
+
+/** Index ticket rows by event id (forward link on Tickets + reverse link on Events). */
+function buildTicketLinkIndexes(ticketRecords, eventRecords) {
+  const eventIdSet = new Set((eventRecords || []).map((r) => r.id));
+  const ticketIdSet = new Set((ticketRecords || []).map((r) => r.id));
+  const byEventId = new Map();
+  const ticketLinkKeyCounts = new Map();
+  const eventLinkKeyCounts = new Map();
+
+  function addTicketToEvent(eventId, ticketRec) {
+    if (!eventIdSet.has(eventId)) return;
+    if (!byEventId.has(eventId)) byEventId.set(eventId, []);
+    const list = byEventId.get(eventId);
+    if (!list.some((r) => r.id === ticketRec.id)) list.push(ticketRec);
+  }
+
+  for (const rec of ticketRecords || []) {
+    const f = rec.fields || {};
+    for (const key of fieldKeys(f)) {
+      const ids = linkedRecordIds(f[key]).filter((id) => eventIdSet.has(id));
+      if (!ids.length) continue;
+      ticketLinkKeyCounts.set(key, (ticketLinkKeyCounts.get(key) || 0) + ids.length);
+      ids.forEach((eid) => addTicketToEvent(eid, rec));
+    }
+  }
+
+  for (const evRec of eventRecords || []) {
+    const f = evRec.fields || {};
+    for (const key of fieldKeys(f)) {
+      if (/registration|review|host|organis|organiz|attendee/i.test(key)) continue;
+      const ids = linkedRecordIds(f[key]).filter((id) => ticketIdSet.has(id));
+      if (!ids.length) continue;
+      eventLinkKeyCounts.set(key, (eventLinkKeyCounts.get(key) || 0) + ids.length);
+      const ticketRecs = (ticketRecords || []).filter((r) => ids.includes(r.id));
+      ticketRecs.forEach((t) => addTicketToEvent(evRec.id, t));
+    }
+  }
+
+  let ticketLinkField = null;
+  let ticketLinkBest = 0;
+  for (const [key, count] of ticketLinkKeyCounts) {
+    if (count > ticketLinkBest) {
+      ticketLinkBest = count;
+      ticketLinkField = key;
+    }
+  }
+
+  let eventTicketField = null;
+  let eventLinkBest = 0;
+  for (const [key, count] of eventLinkKeyCounts) {
+    if (count > eventLinkBest) {
+      eventLinkBest = count;
+      eventTicketField = key;
+    }
+  }
+
+  let linkedTicketRows = 0;
+  for (const list of byEventId.values()) linkedTicketRows += list.length;
+
+  return {
+    byEventId,
+    ticketLinkField,
+    eventTicketField,
+    linkedTicketRows,
+  };
+}
+
+function unionFieldNames(records) {
+  const keys = new Set();
+  for (const rec of records || []) {
+    fieldKeys(rec.fields || {}).forEach((k) => keys.add(k));
+  }
+  return [...keys].sort();
+}
+
+function ticketsForEventFromIndex(eventId, linkIndexes, eventDefaults) {
+  const linked = linkIndexes?.byEventId?.get(eventId) || [];
+  return sortTicketTiers(linked.map((rec) => ticketRecordToTier(rec, eventDefaults)));
 }
 
 function fallbackTicketTier(event) {
@@ -425,8 +538,20 @@ function fallbackTicketTier(event) {
   };
 }
 
-function applyTicketsToEvent(event, ticketRecords) {
-  const tickets = ticketsForEvent(ticketRecords, event.id);
+function applyTicketsToEvent(event, ticketRecords, linkIndexes, eventRecord) {
+  const eventDefaults = {
+    priceRaw: pick(eventRecord?.fields || {}, FIELD_MAP.price),
+    price: event.price,
+    priceKey: event.priceKey,
+    priceNum: event.priceNum,
+  };
+  const tickets = linkIndexes
+    ? ticketsForEventFromIndex(event.id, linkIndexes, eventDefaults)
+    : sortTicketTiers(
+        ticketRecords
+          .filter((rec) => ticketLinksToEvent(rec.fields || {}, event.id))
+          .map((rec) => ticketRecordToTier(rec, eventDefaults))
+      );
   event.tickets = tickets.length ? tickets : [fallbackTicketTier(event)];
 
   const available = event.tickets.filter((t) => !t.soldOut);
@@ -470,8 +595,11 @@ async function fetchTicketsTableRecords(apiKey, baseId) {
   }
 }
 
-function attachTicketsToEvents(events, ticketRecords) {
-  return events.map((ev) => applyTicketsToEvent(ev, ticketRecords));
+function attachTicketsToEvents(events, ticketRecords, eventRecords) {
+  const linkIndexes = buildTicketLinkIndexes(ticketRecords, eventRecords);
+  return events.map((ev, i) =>
+    applyTicketsToEvent(ev, ticketRecords, linkIndexes, eventRecords?.[i])
+  );
 }
 
 function pickOrganiserName(fields) {
@@ -938,14 +1066,15 @@ module.exports = async function handler(req, res) {
       }
       const data = await resp.json();
       const ticketRecords = await fetchTicketsTableRecords(apiKey, baseId);
-      let event = applyTicketsToEvent(recordToEvent(data), ticketRecords);
-      [event] = await enrichOrganisersForEvents([event], apiKey, baseId);
-      event = event[0];
+      const linkIndexes = buildTicketLinkIndexes(ticketRecords, [data]);
+      let event = applyTicketsToEvent(recordToEvent(data), ticketRecords, linkIndexes, data);
+      const enriched = await enrichOrganisersForEvents([event], apiKey, baseId);
+      event = enriched[0];
       let related = [];
       try {
         const view = process.env.AIRTABLE_EVENTS_VIEW;
         const all = await fetchAllAirtableRecords(baseUrl, apiKey, view);
-        let allEvents = attachTicketsToEvents(all.map(recordToEvent), ticketRecords);
+        let allEvents = attachTicketsToEvents(all.map(recordToEvent), ticketRecords, all);
         allEvents = await enrichOrganisersForEvents(allEvents, apiKey, baseId);
         related = allEvents
           .filter((e) => e.id !== event.id && organiserMatch(e, event))
@@ -988,14 +1117,39 @@ module.exports = async function handler(req, res) {
     } while (offset);
 
     const ticketRecords = await fetchTicketsTableRecords(apiKey, baseId);
-    let events = attachTicketsToEvents(all.map(recordToEvent), ticketRecords);
+    const linkIndexes = buildTicketLinkIndexes(ticketRecords, all);
+    let events = all.map((rec) => {
+      const ev = recordToEvent(rec);
+      return applyTicketsToEvent(ev, ticketRecords, linkIndexes, rec);
+    });
     events = await enrichOrganisersForEvents(events, apiKey, baseId);
     const payload = { configured: true, events };
-    if (req.query?.fields === '1' && all[0]) {
-      payload.airtableFieldNames = fieldKeys(all[0].fields || {});
-      if (ticketRecords[0]) {
+    if (req.query?.fields === '1') {
+      if (all[0]) payload.airtableFieldNames = fieldKeys(all[0].fields || {});
+      payload.airtableTicketFieldNames = unionFieldNames(ticketRecords);
+      if (ticketRecords[0] && !payload.airtableTicketFieldNames.length) {
         payload.airtableTicketFieldNames = fieldKeys(ticketRecords[0].fields || {});
       }
+    }
+    if (req.query?.tickets_debug === '1') {
+      const withRealTiers = events.filter(
+        (e) => e.tickets?.length && e.tickets[0].id !== e.id + '-standard'
+      );
+      payload.ticketsDebug = {
+        ticketRecordCount: ticketRecords.length,
+        airtableTicketFieldNamesUnion: unionFieldNames(ticketRecords),
+        linkedTicketRowAssignments: linkIndexes.linkedTicketRows,
+        discoveredTicketLinkField: linkIndexes.ticketLinkField,
+        discoveredEventTicketsField: linkIndexes.eventTicketField,
+        eventsWithLinkedTiers: withRealTiers.length,
+        sampleLinkedEvent: withRealTiers[0]
+          ? {
+              id: withRealTiers[0].id,
+              title: withRealTiers[0].title,
+              tickets: withRealTiers[0].tickets,
+            }
+          : null,
+      };
     }
     return res.status(200).json(payload);
   } catch (e) {
