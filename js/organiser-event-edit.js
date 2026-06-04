@@ -6,7 +6,20 @@
   const FORMAT_STORAGE_KEY = 'hub_event_format';
   const params = new URLSearchParams(location.search);
   const editId = params.get('id') || '';
-  let eventFormat = (params.get('format') || sessionStorage.getItem(FORMAT_STORAGE_KEY) || '').toLowerCase();
+  function normalizeEventFormat(raw) {
+    const s = String(raw || '')
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-');
+    if (s === 'inperson' || s === 'in-person' || s === 'in_person') return 'in-person';
+    if (s === 'online' || s === 'virtual') return 'online';
+    if (s === 'hybrid') return 'hybrid';
+    return s || '';
+  }
+
+  let eventFormat = normalizeEventFormat(
+    params.get('format') || sessionStorage.getItem(FORMAT_STORAGE_KEY) || ''
+  );
 
   const FORMAT_LABELS = {
     'in-person': 'In person',
@@ -33,9 +46,29 @@
     el.hidden = !msg;
   }
 
+  function fieldToString(val) {
+    if (val == null || val === '') return '';
+    if (Array.isArray(val)) {
+      return val
+        .map((x) => (typeof x === 'string' ? x : ''))
+        .filter(Boolean)
+        .join('\n')
+        .trim();
+    }
+    return String(val).trim();
+  }
+
+  function parseAirtableDate(raw) {
+    if (!raw) return null;
+    const d = new Date(String(raw).trim());
+    if (!Number.isNaN(d.getTime())) return d;
+    return null;
+  }
+
   async function api(path, opts) {
     const res = await fetch(path, {
       credentials: 'include',
+      cache: 'no-store',
       headers: { 'Content-Type': 'application/json', ...(opts && opts.headers) },
       ...opts,
     });
@@ -234,6 +267,64 @@
     });
   }
 
+  function ensureGroupOptionForEvent(ev) {
+    const sel = document.getElementById('ee-group');
+    if (!sel) return;
+    const gid =
+      ev.organiserGroupId || (ev.organiserGroupIds && ev.organiserGroupIds[0]) || '';
+    if (!gid) return;
+    const existing = [...sel.options].some((o) => o.value === gid);
+    if (!existing) {
+      const g = groups.find((x) => x.id === gid);
+      const opt = document.createElement('option');
+      opt.value = gid;
+      opt.textContent = g ? g.name : ev.organiserName || 'Linked organiser';
+      sel.appendChild(opt);
+    }
+    sel.value = gid;
+  }
+
+  function setMeetingTypeSelect(value) {
+    const sel = document.getElementById('ee-type');
+    if (!sel) return;
+    const v = fieldToString(value);
+    if (!v) return;
+    let matched = false;
+    for (let i = 0; i < sel.options.length; i++) {
+      const opt = sel.options[i];
+      if (opt.value === v || opt.textContent === v) {
+        sel.value = opt.value;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      sel.appendChild(opt);
+      sel.value = v;
+    }
+  }
+
+  function normalizeEventForForm(ev) {
+    const copy = { ...ev };
+    copy.title = fieldToString(ev.title);
+    copy.description = fieldToString(ev.description);
+    copy.type = fieldToString(ev.type || ev.typeRaw);
+    copy.venue = fieldToString(ev.venue);
+    copy.addressLine1 = fieldToString(ev.addressLine1);
+    copy.city = fieldToString(ev.city);
+    copy.postcode = fieldToString(ev.postcode);
+    copy.location = fieldToString(ev.location);
+    copy.onlinePlatform = fieldToString(ev.onlinePlatform);
+    copy.onlineLink = fieldToString(ev.onlineLink);
+    if (!copy.addressLine1 && !copy.venue && copy.location && copy.location.toLowerCase() !== 'online') {
+      copy.addressLine1 = copy.location;
+    }
+    return copy;
+  }
+
   function fillGroupsSelect() {
     const sel = document.getElementById('ee-group');
     const hint = document.getElementById('ee-group-hint');
@@ -262,21 +353,24 @@
   }
 
   function applyFormatUi(format) {
-    eventFormat = format || eventFormat || 'in-person';
+    eventFormat = normalizeEventFormat(format) || eventFormat || 'in-person';
+    try {
+      sessionStorage.setItem(FORMAT_STORAGE_KEY, eventFormat);
+    } catch {
+      /* ignore */
+    }
     const venueBlock = document.getElementById('ee-venue-block');
     const onlineBlock = document.getElementById('ee-online-block');
     const badge = document.getElementById('ee-format-badge');
-    const changeLink = document.getElementById('ee-change-format');
     const showVenue = eventFormat === 'in-person' || eventFormat === 'hybrid';
     const showOnline = eventFormat === 'online' || eventFormat === 'hybrid';
-    if (venueBlock) venueBlock.hidden = !showVenue;
-    if (onlineBlock) onlineBlock.hidden = !showOnline;
+    if (venueBlock) venueBlock.classList.toggle('is-visible', showVenue);
+    if (onlineBlock) onlineBlock.classList.toggle('is-visible', showOnline);
     if (badge) {
       badge.textContent = FORMAT_LABELS[eventFormat] || eventFormat;
       badge.hidden = false;
     }
     const changeTop = document.getElementById('ee-change-format-top');
-    if (changeLink) changeLink.href = 'event-format.html';
     if (changeTop) changeTop.href = 'event-format.html';
   }
 
@@ -309,9 +403,10 @@
     return 'in-person';
   }
 
-  function prefillFromEvent(ev) {
+  function prefillFromEvent(rawEv) {
+    const ev = normalizeEventForForm(rawEv);
     document.getElementById('ee-title').value = ev.title || '';
-    document.getElementById('ee-type').value = ev.type || 'Networking Event';
+    setMeetingTypeSelect(ev.type || 'Networking Event');
     document.getElementById('ee-description').value = ev.description || '';
     document.getElementById('ee-venue').value = ev.venue || '';
     if (document.getElementById('ee-address1')) {
@@ -322,15 +417,22 @@
       document.getElementById('ee-postcode').value = ev.postcode || '';
     }
     if (document.getElementById('ee-platform')) {
-      document.getElementById('ee-platform').value = ev.onlinePlatform || '';
+      const platform = ev.onlinePlatform || '';
+      const platformSel = document.getElementById('ee-platform');
+      if (platform && ![...platformSel.options].some((o) => o.value === platform || o.text === platform)) {
+        const opt = document.createElement('option');
+        opt.value = platform;
+        opt.textContent = platform;
+        platformSel.appendChild(opt);
+      }
+      platformSel.value = platform;
     }
     if (document.getElementById('ee-join-link')) {
       document.getElementById('ee-join-link').value = ev.onlineLink || '';
     }
-    eventFormat = ev.eventFormat || inferFormatFromEvent(ev);
+    eventFormat = normalizeEventFormat(ev.eventFormat || inferFormatFromEvent(ev));
     applyFormatUi(eventFormat);
-    const grp = document.getElementById('ee-group');
-    if (grp && ev.organiserGroupId) grp.value = ev.organiserGroupId;
+    ensureGroupOptionForEvent(ev);
     if (ev.imageUrl) {
       const preview = document.getElementById('ee-photo-preview');
       const previewImg = document.getElementById('ee-photo-preview-img');
@@ -340,19 +442,18 @@
       if (placeholder) placeholder.hidden = true;
       document.getElementById('ee-photo-url').value = ev.imageUrl;
     }
+    selectedDates.clear();
     if (ev.date) {
-      const d = new Date(ev.date);
-      if (!Number.isNaN(d.getTime())) {
+      const d = parseAirtableDate(ev.date);
+      if (d) {
+        calYear = d.getFullYear();
+        calMonth = d.getMonth();
         const key = dateKey(d.getFullYear(), d.getMonth(), d.getDate());
         selectedDates.add(key);
         const t = pad2(d.getHours()) + ':' + pad2(d.getMinutes());
-        const endT = ev.endDate
-          ? (() => {
-              const end = new Date(ev.endDate);
-              return Number.isNaN(end.getTime())
-                ? '12:00'
-                : pad2(end.getHours()) + ':' + pad2(end.getMinutes());
-            })()
+        const endD = ev.endDate ? parseAirtableDate(ev.endDate) : null;
+        const endT = endD
+          ? pad2(endD.getHours()) + ':' + pad2(endD.getMinutes())
           : '12:00';
         if (QuarterTime) {
           QuarterTime.setValues('ee-start-time', 'ee-end-time', t, endT);
@@ -382,22 +483,35 @@
       return;
     }
     groups = data.groups || [];
-    fillGroupsSelect();
 
     if (editId) {
       document.getElementById('ee-page-title').textContent = 'Edit event';
       document.getElementById('ee-page-lead').textContent =
-        'Update your listing, add more dates to the series on the calendar, then continue to tickets.';
-      document.getElementById('ee-submit').textContent = 'Save & set up tickets →';
+        'Update your listing, add more dates on the calendar, then continue to tickets.';
+      document.getElementById('ee-submit').textContent = 'Save & publish → tickets';
+      const changeTop = document.getElementById('ee-change-format-top');
+      if (changeTop) changeTop.hidden = false;
+
+      let ev = null;
       const evRes = await api('/api/organiser/events?id=' + encodeURIComponent(editId));
       if (evRes.ok && evRes.data.event) {
-        prefillFromEvent(evRes.data.event);
-      } else {
-        const local = (data.events || []).find((e) => e.id === editId);
-        if (local) prefillFromEvent(local);
-        else showAlert('Could not load this event.');
+        ev = evRes.data.event;
       }
+      if (!ev) {
+        ev = (data.events || []).find((e) => e.id === editId);
+      }
+      fillGroupsSelect();
+      if (ev) {
+        prefillFromEvent(ev);
+      } else {
+        showAlert(
+          'Could not load this event. Try again from My Events, or check you have access to this listing.'
+        );
+      }
+      return;
     }
+
+    fillGroupsSelect();
   }
 
   document.getElementById('ee-cal-prev').addEventListener('click', () => {
@@ -418,8 +532,8 @@
     renderCalendar();
   });
 
-  document.getElementById('ee-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+  async function saveEvent(options) {
+    const publish = options && options.publish;
     showAlert('');
 
     const organiserGroupId = document.getElementById('ee-group').value;
@@ -430,20 +544,22 @@
     }
 
     const dateKeys = getSelectedDateKeys();
-    if (!dateKeys.length) {
-      showAlert('Select at least one date on the calendar.');
+    if (publish && !dateKeys.length) {
+      showAlert('Select at least one date on the calendar before publishing.');
       return;
     }
 
-    const timeCheck = QuarterTime
-      ? QuarterTime.validatePair('ee-start-time', 'ee-end-time')
-      : { ok: true, start: '10:00', end: '12:00' };
-    if (!timeCheck.ok) {
-      showAlert(timeCheck.message);
-      return;
+    let occurrences = [];
+    if (dateKeys.length) {
+      const timeCheck = QuarterTime
+        ? QuarterTime.validatePair('ee-start-time', 'ee-end-time')
+        : { ok: true, start: '10:00', end: '12:00' };
+      if (!timeCheck.ok) {
+        showAlert(timeCheck.message);
+        return;
+      }
+      occurrences = buildOccurrences(dateKeys, timeCheck.start, timeCheck.end);
     }
-
-    const occurrences = buildOccurrences(dateKeys, timeCheck.start, timeCheck.end);
 
     const locFields = buildLocationFields();
     const payload = {
@@ -452,6 +568,7 @@
       type: document.getElementById('ee-type').value,
       description: document.getElementById('ee-description').value.trim(),
       photoUrl: document.getElementById('ee-photo-url').value.trim(),
+      listingStatus: publish ? 'published' : 'draft',
       occurrences,
       ...locFields,
     };
@@ -462,8 +579,11 @@
       payload.photoFilename = photoFile.name;
     }
 
-    const btn = document.getElementById('ee-submit');
-    btn.disabled = true;
+    const submitBtn = document.getElementById('ee-submit');
+    const draftBtn = document.getElementById('ee-save-draft');
+    [submitBtn, draftBtn].forEach((b) => {
+      if (b) b.disabled = true;
+    });
 
     let res;
     if (editId) {
@@ -478,21 +598,27 @@
       });
     }
 
-    btn.disabled = false;
+    [submitBtn, draftBtn].forEach((b) => {
+      if (b) b.disabled = false;
+    });
 
     if (!res.ok) {
       const err = res.data.error || '';
       const msg =
         err === 'missing_dates'
-          ? 'Select at least one date on the calendar.'
+          ? 'Select at least one date on the calendar before publishing.'
           : res.data.message || err || 'Could not save event';
       showAlert(msg);
       return;
     }
 
+    if (!publish) {
+      location.href = 'index.html#events-list';
+      return;
+    }
+
     const eventIds = res.data.eventIds || (res.data.events || []).map((ev) => ev.id);
     const events = res.data.events || (res.data.event ? [res.data.event] : []);
-    const locFields = buildLocationFields();
     goToTicketSetup({
       title,
       organiserGroupId,
@@ -504,30 +630,54 @@
         date: ev.date,
       })),
     });
+  }
+
+  document.getElementById('ee-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveEvent({ publish: true });
   });
 
+  const draftBtn = document.getElementById('ee-save-draft');
+  if (draftBtn) {
+    draftBtn.addEventListener('click', () => saveEvent({ publish: false }));
+  }
+
   function initPage() {
+    if (editId) return true;
     if (params.get('format')) {
+      eventFormat = normalizeEventFormat(params.get('format'));
       try {
-        sessionStorage.setItem(FORMAT_STORAGE_KEY, params.get('format'));
+        sessionStorage.setItem(FORMAT_STORAGE_KEY, eventFormat);
       } catch {
         /* ignore */
       }
     }
-    if (!editId && !eventFormat) {
+    if (!eventFormat) {
       location.replace('event-format.html');
-      return;
+      return false;
     }
-    if (!editId) applyFormatUi(eventFormat);
-    else applyFormatUi(eventFormat || 'in-person');
+    applyFormatUi(eventFormat);
+    return true;
   }
 
-  bindPhotoUpload();
-  if (QuarterTime) {
-    QuarterTime.initPair('ee-start-time', 'ee-end-time', { start: '10:00', end: '12:00' });
+  async function bootEditor() {
+    bindPhotoUpload();
+    if (QuarterTime) {
+      QuarterTime.initPair('ee-start-time', 'ee-end-time', { start: '10:00', end: '12:00' });
+    }
+    if (editId) {
+      await load();
+      return;
+    }
+    if (!initPage()) return;
+    await load();
+    renderCalendar();
+    renderSelectedList();
   }
-  initPage();
-  renderCalendar();
-  renderSelectedList();
-  load();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootEditor);
+  } else {
+    bootEditor();
+  }
 })();

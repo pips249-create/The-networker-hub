@@ -25,9 +25,38 @@ const GROUP_FIELDS = {
   website: ['Website', 'Website URL', 'URL', 'Web', 'Site', 'Company Website'],
   location: ['Location', 'City', 'Region', 'Address', 'Area', 'Based in', 'Town'],
   status: ['Status', 'Profile Status', 'Listing Status', 'Approval Status'],
+  unpublishedAt: ['Unpublished At', 'Unpublished Date', 'Date Unpublished'],
   rating: ['Rating', 'Average Rating', 'Stars'],
   revenue: ['Revenue', 'Total Revenue'],
 };
+
+const LISTING_STATUS = {
+  draft: 'Draft',
+  published: 'Published',
+  unpublished: 'Unpublished',
+};
+
+function normalizeListingStatus(input) {
+  const s = String(input || '')
+    .toLowerCase()
+    .trim();
+  if (s === 'publish' || s === 'published' || s === 'live') return 'published';
+  if (s === 'unpublish' || s === 'unpublished') return 'unpublished';
+  return 'draft';
+}
+
+function listingStatusAirtableValue(input) {
+  const key = normalizeListingStatus(input);
+  return LISTING_STATUS[key] || LISTING_STATUS.draft;
+}
+
+function isPublicListingVisible(statusRaw) {
+  const raw = String(statusRaw || '')
+    .toLowerCase()
+    .trim();
+  if (!raw) return true;
+  return !/draft|pending|unpublish|hidden|inactive/.test(raw);
+}
 
 const EVENT_READ_FIELDS = {
   image: ['Photo', 'Image', 'Cover', 'Photos', 'Event Photo', 'Event Image'],
@@ -103,6 +132,18 @@ function pick(fields, keys) {
     }
   }
   return null;
+}
+
+function fieldToPlainText(val) {
+  if (val == null || val === '') return '';
+  if (Array.isArray(val)) {
+    return val
+      .map((x) => (typeof x === 'string' ? x : ''))
+      .filter(Boolean)
+      .join('\n')
+      .trim();
+  }
+  return String(val).trim();
 }
 
 function attachmentUrl(field) {
@@ -244,6 +285,8 @@ async function getOrganiserWriteFields() {
       image: resolveFieldName(sample, GROUP_FIELDS.image, 'Logo', schemaFields),
       website: resolveFieldName(sample, GROUP_FIELDS.website, 'Website', schemaFields),
       location: resolveFieldName(sample, GROUP_FIELDS.location, null, schemaFields),
+      status: resolveFieldName(sample, GROUP_FIELDS.status, 'Status', schemaFields),
+      unpublishedAt: resolveFieldName(sample, GROUP_FIELDS.unpublishedAt, null, schemaFields),
     };
   } catch {
     writeFieldCache = {
@@ -254,9 +297,24 @@ async function getOrganiserWriteFields() {
       image: 'Logo',
       website: null,
       location: null,
+      status: 'Status',
+      unpublishedAt: null,
     };
   }
   return writeFieldCache;
+}
+
+function applyGroupListingStatus(fields, wf, listingStatus, { markUnpublished = false } = {}) {
+  if (!wf.status) return;
+  const key = normalizeListingStatus(listingStatus);
+  fields[wf.status] = LISTING_STATUS[key];
+  if (wf.unpublishedAt) {
+    if (markUnpublished || key === 'unpublished') {
+      fields[wf.unpublishedAt] = new Date().toISOString().slice(0, 10);
+    } else if (key === 'published') {
+      fields[wf.unpublishedAt] = '';
+    }
+  }
 }
 
 async function getEventOrganiserLinkField() {
@@ -346,7 +404,7 @@ function recordToOrganiserEvent(record, organiserLinkField) {
     ownerEmail: String(pick(f, EVENT_WRITE_FIELDS.ownerEmail) || '').toLowerCase(),
     organiserGroupIds: groupIds,
     organiserGroupId: groupIds[0] || '',
-    description: String(pick(f, EVENT_WRITE_FIELDS.description) || '').trim(),
+    description: fieldToPlainText(pick(f, EVENT_WRITE_FIELDS.description)),
     location: String(pick(f, EVENT_WRITE_FIELDS.location) || '').trim(),
     venue: String(pick(f, EVENT_WRITE_FIELDS.venue) || '').trim(),
     addressLine1: String(pick(f, EVENT_WRITE_FIELDS.addressLine1) || '').trim(),
@@ -604,6 +662,7 @@ async function createGroup({
   logoBase64,
   logoMime,
   logoFilename,
+  listingStatus,
 }) {
   const { groups: table } = tables();
   const wf = await getOrganiserWriteFields();
@@ -614,6 +673,7 @@ async function createGroup({
   if (website && wf.website) fields[wf.website] = String(website).trim();
   if (location && wf.location) fields[wf.location] = String(location).trim();
   if (userId && wf.users) fields[wf.users] = [userId];
+  applyGroupListingStatus(fields, wf, listingStatus || 'draft');
 
   let logoWarning = null;
   if (logoUrl || logoBase64) {
@@ -680,6 +740,10 @@ async function updateGroup(groupId, payload) {
     if (loc) fields[wf.location] = loc;
   }
   if (payload.email && wf.email) fields[wf.email] = String(payload.email).toLowerCase();
+  if (payload.listingStatus != null) {
+    const markUnpublished = normalizeListingStatus(payload.listingStatus) === 'unpublished';
+    applyGroupListingStatus(fields, wf, payload.listingStatus, { markUnpublished });
+  }
 
   let logoWarning = null;
   const hasLogo =
@@ -700,6 +764,10 @@ async function updateGroup(groupId, payload) {
     }
   }
 
+  if (!Object.keys(fields).length) {
+    return getGroupById(groupId);
+  }
+
   const resp = await airtableFetch(encodeURIComponent(table), {
     method: 'PATCH',
     body: JSON.stringify({ records: [{ id: groupId, fields }] }),
@@ -715,6 +783,10 @@ async function updateGroup(groupId, payload) {
   const group = recordToGroup(data.records[0]);
   if (logoWarning) group.logoWarning = logoWarning;
   return group;
+}
+
+async function unpublishGroup(groupId) {
+  return updateGroup(groupId, { listingStatus: 'unpublished' });
 }
 
 function composeEventDescription(description, extras) {
@@ -753,12 +825,22 @@ async function buildEventRecordFields({
   photoBase64,
   photoMime,
   photoFilename,
+  listingStatus,
   eventSample,
   organiserLinkField,
 }) {
   const sample = eventSample || (await sampleRecordFields(tables().events));
   const schemaFields = await getTableFieldNames(tables().events);
   const fields = {};
+  const statusField = resolveFieldName(
+    sample,
+    EVENT_READ_FIELDS.approvalStatus,
+    'Approval Status',
+    schemaFields
+  );
+  if (statusField && listingStatus != null) {
+    fields[statusField] = listingStatusAirtableValue(listingStatus);
+  }
   const titleField = resolveFieldName(sample, EVENT_WRITE_FIELDS.title, 'Event Title', schemaFields);
   fields[titleField] = String(title).trim();
   const dateField = resolveFieldName(sample, EVENT_WRITE_FIELDS.date, 'Date & Time', schemaFields);
@@ -1035,7 +1117,10 @@ function eventBelongsToGroup(ev, groupId) {
 
 function deriveListingStatus(statusRaw, dateIso) {
   const raw = String(statusRaw || '').toLowerCase();
-  if (/draft|pending|unpublish|hidden|inactive/.test(raw)) {
+  if (/unpublish/.test(raw)) {
+    return { key: 'unpublished', label: 'Unpublished' };
+  }
+  if (/draft|pending|hidden|inactive/.test(raw)) {
     return { key: 'draft', label: 'Draft' };
   }
   const d = dateIso ? new Date(dateIso) : null;
@@ -1100,10 +1185,6 @@ function enrichOrganiserOverview(groups, events, tickets) {
       g.statusRaw,
       groupEvents.map((e) => e.date).filter(Boolean).sort()[0]
     );
-    if (eventsListed > 0 && status.key === 'draft' && !g.statusRaw) {
-      status.key = 'live';
-      status.label = 'Live';
-    }
     return {
       ...g,
       eventsListed,
@@ -1124,6 +1205,16 @@ function enrichOrganiserOverview(groups, events, tickets) {
     .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
 
   return { groups: enrichedGroups, events: enrichedEvents, upcomingEvents };
+}
+
+async function enrichGroupForDashboard(group, session, adminView) {
+  const events = await listEventsForSession(session, [group.id], [], adminView);
+  const tickets = await listTicketsForSession(
+    session,
+    events.map((e) => e.id),
+    adminView
+  );
+  return enrichOrganiserOverview([group], events, tickets).groups[0];
 }
 
 async function getOrganiserWorkspace(req) {
@@ -1207,6 +1298,10 @@ module.exports = {
   createGroup,
   getGroupById,
   updateGroup,
+  unpublishGroup,
+  enrichGroupForDashboard,
+  enrichOrganiserOverview,
+  isPublicListingVisible,
   createEvent,
   createEventsBatch,
   updateEvent,

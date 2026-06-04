@@ -174,6 +174,25 @@ a:hover { color: var(--charcoal); }
   background: #d4b4d4;
 }
 
+.nav-cta-blue {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  background: #2563eb;
+  color: #fff !important;
+  text-decoration: none !important;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.nav-cta-blue:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+  color: #fff !important;
+  background: #1d4ed8;
+}
+
 .nav-organiser {
   display: inline-flex !important;
   align-items: center;
