@@ -104,10 +104,19 @@ module.exports = async function handler(req, res) {
         auth.session,
         adminViewForRequest(req, auth.session)
       );
+      const saveWarnings = updated.saveWarnings || [];
+      const message =
+        saveWarnings.length && listingStatus != null
+          ? 'Profile saved. ' + saveWarnings.join(' ')
+          : saveWarnings.length
+            ? saveWarnings.join(' ')
+            : null;
       return json(res, 200, {
         ok: true,
         group,
         logoWarning: updated.logoWarning || null,
+        saveWarnings,
+        message,
       });
     } catch (e) {
       return json(res, e.status || 500, {
@@ -177,6 +186,10 @@ module.exports = async function handler(req, res) {
         ok: true,
         group,
         logoWarning: created.logoWarning || null,
+        saveWarnings: created.saveWarnings || [],
+        message: created.saveWarnings?.length
+          ? 'Profile created. ' + created.saveWarnings.join(' ')
+          : null,
       });
     } catch (e) {
       return json(res, e.status || 500, {

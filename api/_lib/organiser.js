@@ -333,7 +333,10 @@ function resolveFieldName(sampleFields, aliases, fallback, schemaFieldNames) {
     const hit = names.find((n) => n.toLowerCase() === String(fallback).toLowerCase());
     if (hit) return hit;
   }
-  if (!names.length && fallback) return fallback;
+  /* Only use fallback when schema and sample are both unavailable (avoid writing to non-existent columns). */
+  if (!names.length && fallback && fromSchema.length === 0 && fromSample.length === 0) {
+    return fallback;
+  }
   return null;
 }
 
@@ -358,12 +361,12 @@ async function getOrganiserWriteFields() {
       ? fieldsMeta.find((m) => m.name === statusField)
       : null;
     writeFieldCache = {
-      name: resolveFieldName(sample, GROUP_FIELDS.name, 'Organiser Name', schemaFields),
-      email: resolveFieldName(sample, GROUP_FIELDS.ownerEmail, 'Email', schemaFields),
-      description: resolveFieldName(sample, GROUP_FIELDS.description, 'Description', schemaFields),
-      users: resolveFieldName(sample, GROUP_FIELDS.users, 'Users', schemaFields),
-      image: resolveFieldName(sample, GROUP_FIELDS.image, 'Logo', schemaFields),
-      website: resolveFieldName(sample, GROUP_FIELDS.website, 'Website', schemaFields),
+      name: resolveFieldName(sample, GROUP_FIELDS.name, null, schemaFields),
+      email: resolveFieldName(sample, GROUP_FIELDS.ownerEmail, null, schemaFields),
+      description: resolveFieldName(sample, GROUP_FIELDS.description, null, schemaFields),
+      users: resolveFieldName(sample, GROUP_FIELDS.users, null, schemaFields),
+      image: resolveFieldName(sample, GROUP_FIELDS.image, null, schemaFields),
+      website: resolveFieldName(sample, GROUP_FIELDS.website, null, schemaFields),
       location: resolveFieldName(sample, GROUP_FIELDS.location, null, schemaFields),
       status: statusField,
       statusOptions: statusMeta?.options || [],
@@ -371,11 +374,11 @@ async function getOrganiserWriteFields() {
     };
   } catch {
     writeFieldCache = {
-      name: 'Organiser Name',
-      email: 'Email',
-      description: 'Description',
-      users: 'Users',
-      image: 'Logo',
+      name: null,
+      email: null,
+      description: null,
+      users: null,
+      image: null,
       website: null,
       location: null,
       status: null,
@@ -402,6 +405,66 @@ function applyGroupListingStatus(fields, wf, listingStatus, { markUnpublished = 
     }
   }
   return true;
+}
+
+function assertOrganiserWriteFields(wf) {
+  if (!wf || !wf.name) {
+    const e = new Error(
+      'Could not find a name column in your Organisers table (e.g. Organiser Name, Group Name, or Name). Add one in Airtable and try again.'
+    );
+    e.status = 400;
+    throw e;
+  }
+}
+
+function buildGroupUpdateFields(wf, payload) {
+  const fields = {};
+  const warnings = [];
+
+  if (payload.name) {
+    fields[wf.name] = String(payload.name).trim();
+  }
+
+  if (payload.description !== undefined) {
+    if (wf.description) {
+      fields[wf.description] = String(payload.description || '').trim();
+    } else if (String(payload.description || '').trim()) {
+      warnings.push(
+        'Description was not saved — add a Description (or About) column to your Organisers table.'
+      );
+    }
+  }
+
+  if (payload.website !== undefined) {
+    if (wf.website) {
+      fields[wf.website] = String(payload.website || '').trim();
+    } else if (String(payload.website || '').trim()) {
+      warnings.push('Website was not saved — add a Website column to your Organisers table.');
+    }
+  }
+
+  if (payload.location !== undefined && wf.location) {
+    const loc = String(payload.location || '').trim();
+    if (loc) fields[wf.location] = loc;
+  }
+
+  if (payload.email && wf.email) {
+    fields[wf.email] = String(payload.email).toLowerCase();
+  }
+
+  let statusApplied = false;
+  if (payload.listingStatus != null) {
+    statusApplied = applyGroupListingStatus(fields, wf, payload.listingStatus, {
+      markUnpublished: normalizeListingStatus(payload.listingStatus) === 'unpublished',
+    });
+    if (!statusApplied) {
+      warnings.push(
+        'Publish status was not updated — add a Status column with Draft and Live (or Published) options in your Organisers table.'
+      );
+    }
+  }
+
+  return { fields, warnings, statusApplied };
 }
 
 async function getEventOrganiserLinkField() {
@@ -758,21 +821,17 @@ async function createGroup({
 }) {
   const { groups: table } = tables();
   const wf = await getOrganiserWriteFields();
-  const fields = {};
-  fields[wf.name] = String(name).trim();
-  fields[wf.email] = email.toLowerCase();
-  if (description) fields[wf.description] = String(description).trim();
-  if (website && wf.website) fields[wf.website] = String(website).trim();
-  if (location && wf.location) fields[wf.location] = String(location).trim();
+  assertOrganiserWriteFields(wf);
+  const { fields, warnings } = buildGroupUpdateFields(wf, {
+    name,
+    description,
+    website,
+    location,
+    email,
+    listingStatus: listingStatus || 'draft',
+  });
+  if (wf.email) fields[wf.email] = email.toLowerCase();
   if (userId && wf.users) fields[wf.users] = [userId];
-  const statusApplied = applyGroupListingStatus(fields, wf, listingStatus || 'draft');
-  if (listingStatus && normalizeListingStatus(listingStatus) === 'published' && !statusApplied) {
-    const e = new Error(
-      'Your Airtable Organisers table needs a status column (e.g. Status or Profile Status) with Draft and Live/Published options.'
-    );
-    e.status = 400;
-    throw e;
-  }
 
   let logoWarning = null;
   if (logoUrl || logoBase64) {
@@ -805,6 +864,7 @@ async function createGroup({
   const data = await resp.json();
   const group = recordToGroup(data.records[0]);
   if (logoWarning) group.logoWarning = logoWarning;
+  if (warnings.length) group.saveWarnings = warnings;
   return group;
 }
 
@@ -826,30 +886,8 @@ async function getGroupById(groupId) {
 async function updateGroup(groupId, payload) {
   const { groups: table } = tables();
   const wf = await getOrganiserWriteFields();
-  const fields = {};
-  if (payload.name) fields[wf.name] = String(payload.name).trim();
-  if (payload.description !== undefined && wf.description) {
-    fields[wf.description] = String(payload.description || '').trim();
-  }
-  if (payload.website !== undefined && wf.website) {
-    fields[wf.website] = String(payload.website || '').trim();
-  }
-  if (payload.location !== undefined && wf.location) {
-    const loc = String(payload.location || '').trim();
-    if (loc) fields[wf.location] = loc;
-  }
-  if (payload.email && wf.email) fields[wf.email] = String(payload.email).toLowerCase();
-  if (payload.listingStatus != null) {
-    const markUnpublished = normalizeListingStatus(payload.listingStatus) === 'unpublished';
-    const applied = applyGroupListingStatus(fields, wf, payload.listingStatus, { markUnpublished });
-    if (!applied) {
-      const e = new Error(
-        'Your Airtable Organisers table needs a status column (e.g. Status or Profile Status) with Draft and Live/Published options.'
-      );
-      e.status = 400;
-      throw e;
-    }
-  }
+  assertOrganiserWriteFields(wf);
+  const { fields, warnings } = buildGroupUpdateFields(wf, payload);
 
   let logoWarning = null;
   const hasLogo =
@@ -871,7 +909,13 @@ async function updateGroup(groupId, payload) {
   }
 
   if (!Object.keys(fields).length) {
-    return getGroupById(groupId);
+    const e = new Error(
+      warnings.length
+        ? warnings.join(' ')
+        : 'Nothing could be saved — check your Organisers table has columns for name, description, and website.'
+    );
+    e.status = 400;
+    throw e;
   }
 
   const resp = await airtableFetch(encodeURIComponent(table), {
@@ -880,7 +924,8 @@ async function updateGroup(groupId, payload) {
   });
   if (!resp.ok) {
     const err = await resp.text();
-    const e = new Error(parseAirtableError(err)?.message || err);
+    const parsed = parseAirtableError(err);
+    const e = new Error(parsed?.message || err);
     e.status = resp.status;
     e.detail = err;
     throw e;
@@ -888,6 +933,7 @@ async function updateGroup(groupId, payload) {
   const data = await resp.json();
   const group = recordToGroup(data.records[0]);
   if (logoWarning) group.logoWarning = logoWarning;
+  if (warnings.length) group.saveWarnings = warnings;
   return group;
 }
 

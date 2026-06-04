@@ -246,31 +246,22 @@
     if (saved) stashSavedGroup(saved);
 
     const logoWarning = res.data.logoWarning || res.data.group?.logoWarning;
-    if (logoWarning) {
-      showAlert(logoWarning);
-      setTimeout(() => {
-        location.href = 'index.html#groups';
-      }, 3500);
-      return;
-    }
+    const saveWarnings = res.data.saveWarnings || [];
+    const apiMessage = res.data.message || '';
 
     let msg = 'Profile saved.';
     if (mode === 'published') msg = 'Profile published — it will appear on the site.';
     else if (mode === 'draft') msg = 'Saved as draft.';
     else if (mode === 'save') msg = 'Changes saved.';
 
-    if (mode === 'save' && editId && saved) {
-      prefillGroup(saved);
-      configureEditActions(saved);
-      showAlert(msg);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
+    if (apiMessage) msg = apiMessage;
+    else if (saveWarnings.length) msg = msg + ' ' + saveWarnings.join(' ');
+    if (logoWarning) msg = logoWarning + (saveWarnings.length ? ' ' + saveWarnings.join(' ') : '');
 
     showAlert(msg);
-    setTimeout(() => {
+    setTimeout(function () {
       location.href = 'index.html#groups';
-    }, 800);
+    }, logoWarning || saveWarnings.length ? 2200 : 700);
     } finally {
       [saveChanges, draftBtn, publishBtn].forEach((b) => {
         if (b) b.disabled = false;
