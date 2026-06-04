@@ -12,8 +12,23 @@ const { cleanEnvVal, parseAirtableError } = require('./lib/auth');
 const FIELD_MAP = {
   title: ['Title', 'Name', 'Event Title'],
   description: ['Description', 'Short Description', 'Summary'],
-  date: ['Date', 'Event Date', 'Start Date', 'Start', 'When', 'Event Start', 'Meeting Date'],
-  time: ['Time', 'Start Time'],
+  date: [
+    'Date',
+    'Event Date',
+    'Start Date',
+    'Start',
+    'When',
+    'Event Start',
+    'Meeting Date',
+    'Event date',
+    'Start date',
+    'Date of event',
+    'Event Date & Time',
+    'Start Date/Time',
+    'Date/Time',
+    'Day',
+  ],
+  time: ['Time', 'Start Time', 'Event Time', 'Start time', 'From'],
   price: ['Price', 'Ticket Price'],
   location: ['Location', 'City', 'Venue'],
   postcode: ['Postcode', 'Postal Code', 'ZIP', 'Zip Code'],
@@ -30,13 +45,87 @@ const FIELD_MAP = {
   reviews: ['Reviews', 'Review Count', 'Number of Reviews'],
 };
 
+function getFieldCI(fields, name) {
+  if (!fields || !name) return undefined;
+  if (fields[name] !== undefined) return fields[name];
+  const lower = String(name).toLowerCase();
+  const key = fieldKeys(fields).find((k) => k.toLowerCase() === lower);
+  return key !== undefined ? fields[key] : undefined;
+}
+
 function pick(fields, keys) {
   for (const key of keys) {
-    if (fields[key] !== undefined && fields[key] !== null && fields[key] !== '') {
-      return fields[key];
-    }
+    const v = getFieldCI(fields, key);
+    if (v !== undefined && v !== null && v !== '') return v;
   }
   return null;
+}
+
+function fieldKeys(fields) {
+  return Object.keys(fields || {});
+}
+
+/** Match Airtable columns when names differ from our defaults (e.g. "Event date", "Start date/time"). */
+function discoverField(fields, aliases, options = {}) {
+  const hit = pick(fields, aliases);
+  if (hit !== null && hit !== undefined && hit !== '') return hit;
+
+  const namePattern = options.namePattern || /./;
+  const excludePattern =
+    options.excludePattern ||
+    /created|modified|updated|expir|token|password|hash|sold|review|rating|count/i;
+
+  for (const key of fieldKeys(fields)) {
+    if (excludePattern.test(key)) continue;
+    if (!namePattern.test(key)) continue;
+    const v = fields[key];
+    if (v !== undefined && v !== null && v !== '') return v;
+  }
+
+  if (options.valueTest) {
+    for (const key of fieldKeys(fields)) {
+      if (excludePattern.test(key)) continue;
+      const v = fields[key];
+      if (options.valueTest(v)) return v;
+    }
+  }
+
+  return null;
+}
+
+function looksLikeDateValue(v) {
+  if (v === null || v === undefined || v === '') return false;
+  if (typeof v === 'object') {
+    if (v.iso) return true;
+    if (Array.isArray(v) && v[0]) return looksLikeDateValue(v[0]);
+    return false;
+  }
+  const s = String(v).trim();
+  if (s.length < 6) return false;
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return true;
+  if (/^\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}/.test(s)) return true;
+  const d = new Date(s);
+  return !Number.isNaN(d.getTime());
+}
+
+function discoverDateField(fields) {
+  return discoverField(
+    fields,
+    FIELD_MAP.date,
+    {
+      namePattern: /date|when|start|begins?|scheduled|held\s*on|event\s*day/i,
+      excludePattern:
+        /created|modified|updated|expir|token|end\s*date|closing|deadline|sold|review|rating/i,
+      valueTest: looksLikeDateValue,
+    }
+  );
+}
+
+function discoverTimeField(fields) {
+  return discoverField(fields, FIELD_MAP.time, {
+    namePattern: /time|start\s*time|from|doors/i,
+    excludePattern: /created|modified|updated|expir|token|date|sold|review/i,
+  });
 }
 
 function attachmentUrl(field) {
@@ -173,6 +262,12 @@ function parseAirtableDate(raw) {
     if (!Number.isNaN(dt.getTime())) return packDate(dt, s);
   }
 
+  const isoDateTime = s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (isoDateTime) {
+    const dt = new Date(s);
+    if (!Number.isNaN(dt.getTime())) return packDate(dt, s);
+  }
+
   const d = new Date(s);
   if (!Number.isNaN(d.getTime())) return packDate(d, s);
 
@@ -206,14 +301,18 @@ function parsePriceNum(raw) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function buildDateLine(location, dateRaw, time) {
+function buildDateLine(location, parsedDate, time) {
   const parts = [];
   if (location) parts.push(String(location));
-  const short = formatDateShort(dateRaw);
-  if (short) parts.push(short);
+  if (parsedDate && parsedDate.short) {
+    parts.push(parsedDate.short);
+  } else if (parsedDate && parsedDate.display) {
+    parts.push(parsedDate.display);
+  }
   if (time) {
     const t = String(time).trim();
-    parts.push(t.length <= 5 ? t : t.slice(0, 5));
+    const timeOnly = t.match(/(\d{1,2}:\d{2})/);
+    parts.push(timeOnly ? timeOnly[1] : t.length <= 8 ? t : t.slice(0, 5));
   }
   return parts.join(' · ') || 'Date TBC';
 }
@@ -222,9 +321,13 @@ function recordToEvent(record) {
   const f = record.fields || {};
   const title = pick(f, FIELD_MAP.title) || 'Untitled event';
   const description = pick(f, FIELD_MAP.description) || '';
-  const dateField = pick(f, FIELD_MAP.date);
+  const dateField = discoverDateField(f);
   const parsedDate = parseAirtableDate(dateField);
-  const time = pick(f, FIELD_MAP.time) || '';
+  let time = discoverTimeField(f) || '';
+  if (!time && dateField && String(dateField).includes('T')) {
+    const tm = String(dateField).match(/T(\d{2}:\d{2})/);
+    if (tm) time = tm[1];
+  }
   const location = pick(f, FIELD_MAP.location) || '';
   const venue = pick(f, FIELD_MAP.venue) || '';
   let postcode = pick(f, FIELD_MAP.postcode) || '';
@@ -300,7 +403,7 @@ function recordToEvent(record) {
     organiser,
     rating: Number.isFinite(rating) ? rating : 4,
     reviews: Number.isFinite(reviews) ? reviews : 0,
-    dateLine: buildDateLine(location, parsedDate.iso || dateField, time),
+    dateLine: buildDateLine(location, parsedDate, time),
     search,
     locationSlug: slugLocation(location),
     industrySlug: slugIndustry(industry),
@@ -388,7 +491,11 @@ module.exports = async function handler(req, res) {
     } while (offset);
 
     const events = all.map(recordToEvent);
-    return res.status(200).json({ configured: true, events });
+    const payload = { configured: true, events };
+    if (req.query?.fields === '1' && all[0]) {
+      payload.airtableFieldNames = fieldKeys(all[0].fields || {});
+    }
+    return res.status(200).json(payload);
   } catch (e) {
     return res.status(500).json({
       configured: true,

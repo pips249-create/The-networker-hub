@@ -118,7 +118,10 @@
     const fmtLabel = formatTagLabel(ev.format);
     const reviewCount = Number(ev.reviews) || 0;
     const industry = ev.industry || 'Networking';
-    const dateLine = ev.dateLine || [ev.location, ev.date, ev.time].filter(Boolean).join(' · ') || 'Date TBC';
+    const dateLine =
+      ev.dateLine ||
+      [ev.location, ev.date || ev.dateFieldRaw, ev.time].filter(Boolean).join(' · ') ||
+      'Date TBC';
 
     return `
       <a class="event-grid-card" href="${escapeHtml(detailHref(ev))}"
