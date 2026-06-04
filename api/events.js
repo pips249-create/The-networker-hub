@@ -16,6 +16,8 @@ const FIELD_MAP = {
   time: ['Time', 'Start Time'],
   price: ['Price', 'Ticket Price'],
   location: ['Location', 'City', 'Venue'],
+  postcode: ['Postcode', 'Postal Code', 'ZIP', 'Zip Code'],
+  venue: ['Venue', 'Venue Name', 'Address'],
   industry: ['Industry'],
   format: ['Meeting Format', 'Format'],
   type: ['Type', 'Event Type'],
@@ -50,9 +52,19 @@ function attachmentUrl(field) {
   return null;
 }
 
-function slugifyType(raw) {
+function parseTypeCategory(raw) {
   const s = String(raw || 'meeting').toLowerCase();
-  if (s.includes('exhibit') || s.includes('conference')) return 'exhibition';
+  if (s.includes('award')) return 'awards';
+  if (s.includes('exhibit')) return 'exhibition';
+  if (s.includes('conference')) return 'conference';
+  if (s.includes('meeting') || s.includes('network') || s.includes('mixer')) return 'meeting';
+  return 'meeting';
+}
+
+/** Legacy bucket for tabs: meeting vs exhibition */
+function slugifyType(raw) {
+  const cat = parseTypeCategory(raw);
+  if (cat === 'exhibition' || cat === 'conference') return 'exhibition';
   return 'meeting';
 }
 
@@ -131,9 +143,13 @@ function recordToEvent(record) {
   const dateRaw = pick(f, FIELD_MAP.date);
   const time = pick(f, FIELD_MAP.time) || '';
   const location = pick(f, FIELD_MAP.location) || '';
+  const postcode = pick(f, FIELD_MAP.postcode) || '';
+  const venue = pick(f, FIELD_MAP.venue) || '';
   const industry = pick(f, FIELD_MAP.industry) || '';
   const format = pick(f, FIELD_MAP.format) || '';
-  const type = slugifyType(pick(f, FIELD_MAP.type));
+  const typeRaw = pick(f, FIELD_MAP.type) || 'meeting';
+  const typeCategory = parseTypeCategory(typeRaw);
+  const type = slugifyType(typeRaw);
   const featuredVal = pick(f, FIELD_MAP.featured);
   const featured =
     featuredVal === true ||
@@ -151,7 +167,19 @@ function recordToEvent(record) {
   const rating = ratingRaw != null && ratingRaw !== '' ? Number(ratingRaw) : 4;
   const reviews = reviewsRaw != null && reviewsRaw !== '' ? Number(reviewsRaw) : 0;
 
-  const search = [title, description, location, industry, organiser, type]
+  const search = [
+    title,
+    description,
+    location,
+    postcode,
+    venue,
+    industry,
+    organiser,
+    typeRaw,
+    format,
+    typeCategory,
+  ]
+    .filter(Boolean)
     .join(' ')
     .toLowerCase();
 
@@ -163,9 +191,13 @@ function recordToEvent(record) {
     dateRaw: dateRaw || '',
     time: String(time),
     location,
+    postcode: String(postcode),
+    venue: String(venue),
     industry,
     format,
     type,
+    typeRaw: String(typeRaw),
+    typeCategory,
     featured,
     price: priceDisplay,
     priceKey,

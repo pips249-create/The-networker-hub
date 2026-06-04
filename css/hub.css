@@ -191,10 +191,10 @@ body.hub-page-admin {
   padding-top: 0;
 }
 
-/* ─── Homepage hero (video background) ─── */
+/* ─── Homepage hero (text) + embedded video block ─── */
 .home-hero {
-  min-height: 92vh;
-  min-height: 92dvh;
+  min-height: 72vh;
+  min-height: 72dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -203,36 +203,82 @@ body.hub-page-admin {
   padding: 110px 24px 80px;
   position: relative;
   overflow: hidden;
-  background: var(--lavender-light);
 }
-.hero-video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  z-index: 0;
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-.hero-video-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
+.home-hero-static {
   background: linear-gradient(
-    180deg,
-    rgba(245, 240, 232, 0.12) 0%,
-    rgba(194, 153, 209, 0.1) 50%,
-    rgba(177, 137, 184, 0.18) 100%
+    165deg,
+    #fffdf9 0%,
+    var(--cream) 42%,
+    var(--lavender-light) 100%
   );
+}
+.home-hero-static::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 80% 20%, rgba(194, 153, 209, 0.22), transparent 50%),
+    radial-gradient(ellipse at 10% 80%, rgba(250, 246, 238, 0.9), transparent 45%);
   pointer-events: none;
 }
 .home-hero-inner {
   position: relative;
-  z-index: 2;
+  z-index: 1;
   max-width: 720px;
+}
+
+.home-video-block {
+  padding: 56px 24px 72px;
+  background: var(--surface-card);
+  border-top: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+}
+.home-video-layout {
+  display: grid;
+  grid-template-columns: 1fr minmax(280px, 1.05fr);
+  gap: 40px;
+  align-items: center;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+@media (max-width: 820px) {
+  .home-video-layout {
+    grid-template-columns: 1fr;
+  }
+  .home-video-frame {
+    order: -1;
+  }
+}
+.home-video-copy {
+  text-align: left;
+}
+.home-video-copy .section-kicker {
+  text-align: left;
+}
+.home-video-copy .section-title {
+  text-align: left;
+  margin-bottom: 14px;
+}
+.home-video-copy .section-lede {
+  text-align: left;
+  margin-bottom: 24px;
+}
+.home-video-frame {
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-lift);
+  border: 1px solid var(--border-soft);
+  background: var(--charcoal);
+  aspect-ratio: 16 / 10;
+  max-height: 420px;
+}
+.home-video-player {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  background: #2a2628;
 }
 .hero-title {
   font-family: 'DM Serif Display', Georgia, serif;

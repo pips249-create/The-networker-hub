@@ -10,15 +10,12 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css">
 <link rel="stylesheet" href="../css/events-page.css">
+<link rel="stylesheet" href="../css/events-filter-bar.css">
 </head>
 <body class="events-page">
 
 <div id="hub-site-nav"></div>
 <script src="../js/site-nav.js" data-root="../" data-page="events"></script>
-
-<p class="events-design-link" style="max-width:1280px;margin:0 auto;padding:10px 24px 0;font-size:12px;color:var(--text-muted);">
-  Compare layout: <a href="redesign-1.html" style="font-weight:600;color:var(--lavender-deep);">Redesign 1 preview</a>
-</p>
 
 <section class="hero">
   <div class="hero-inner">
@@ -31,75 +28,107 @@
 <main class="shell">
   <p class="load-status" id="load-status" hidden>Loading…</p>
 
-  <div class="events-toolbar">
-    <div class="type-tabs" role="tablist" aria-label="Event type">
-      <button type="button" class="type-tab is-active" role="tab" aria-selected="true" data-type="all">All<span class="count" id="count-all"></span></button>
-      <button type="button" class="type-tab" role="tab" aria-selected="false" data-type="meeting">Meetings<span class="count" id="count-meeting"></span></button>
-      <button type="button" class="type-tab" role="tab" aria-selected="false" data-type="exhibition">Exhibitions<span class="count" id="count-exhibition"></span></button>
-    </div>
-    <div class="results-bar" style="margin:0;">
-      <span>Showing <strong id="results-count">0</strong> listings</span>
-      <button type="button" id="clear-filters" style="font-family:inherit;font-size:12px;font-weight:600;color:var(--lavender-deep);background:none;border:none;cursor:pointer;text-decoration:underline;">Clear filters</button>
-    </div>
-  </div>
-
-  <div class="events-body">
-    <aside class="filters-panel" aria-label="Filters">
-      <div class="filters">
-        <h2>Filter &amp; sort</h2>
-        <div class="filter-group">
-          <label for="filter-type">Event type</label>
-          <select id="filter-type">
-            <option value="all">All types</option>
-            <option value="meeting">Meetings &amp; networking</option>
-            <option value="exhibition">Exhibitions &amp; conferences</option>
+  <div class="events-filter-shell">
+    <div class="events-filter-bar" role="search" aria-label="Filter events">
+      <div class="filter-bar-row filter-bar-row-top">
+        <div class="filter-field filter-field-grow filter-field-search">
+          <span class="filter-field-icon filter-field-icon-end" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+          </span>
+          <label class="visually-hidden" for="search">Search events</label>
+          <input type="search" id="search" placeholder="Search all meetings, people, resources…" autocomplete="off" aria-describedby="search-hint">
+          <span id="search-hint" class="visually-hidden">Searches titles, descriptions, locations, industries, organisers, and formats from Airtable</span>
+        </div>
+        <div class="filter-field filter-field-postcode">
+          <span class="filter-field-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          </span>
+          <label class="visually-hidden" for="postcode">Postcode</label>
+          <input type="text" id="postcode" placeholder="Enter postcode" autocomplete="postal-code">
+        </div>
+      </div>
+      <div class="filter-bar-row filter-bar-row-bottom">
+        <div class="filter-bar-chip">
+          <span class="filter-bar-chip-label">In Person</span>
+          <label class="filter-toggle">
+            <input type="checkbox" id="toggle-inperson" checked>
+            <span class="filter-toggle-track" aria-hidden="true"></span>
+          </label>
+        </div>
+        <div class="filter-bar-chip">
+          <span class="filter-bar-chip-label">Online</span>
+          <label class="filter-toggle">
+            <input type="checkbox" id="toggle-online" checked>
+            <span class="filter-toggle-track" aria-hidden="true"></span>
+          </label>
+        </div>
+        <div class="filter-bar-select">
+          <label class="visually-hidden" for="filter-type">Type</label>
+          <select id="filter-type" aria-label="Event type">
+            <option value="all">Type: All</option>
+            <option value="meeting">meeting</option>
+            <option value="conference">conference</option>
+            <option value="exhibition">exhibition</option>
+            <option value="awards">awards</option>
           </select>
         </div>
-        <div class="filter-group">
-          <label for="search">Search</label>
-          <input type="search" id="search" placeholder="Name or keywords…" autocomplete="off">
+        <div class="filter-date-range">
+          <label class="visually-hidden" for="date-from">From date</label>
+          <input type="date" id="date-from" aria-label="From date">
+          <span class="filter-date-sep">–</span>
+          <label class="visually-hidden" for="date-to">To date</label>
+          <input type="date" id="date-to" aria-label="To date">
         </div>
-        <div class="filter-group">
+        <div class="filter-bar-chip">
+          <span class="filter-bar-chip-label">Near Me</span>
+          <label class="filter-toggle">
+            <input type="checkbox" id="toggle-nearme">
+            <span class="filter-toggle-track is-teal" aria-hidden="true"></span>
+          </label>
+        </div>
+        <div class="filter-price-wrap" id="price-filter-wrap">
+          <button type="button" class="filter-price-trigger" id="price-trigger" aria-expanded="false" aria-haspopup="true">Any price</button>
+          <div class="filter-price-panel" role="dialog" aria-label="Price range">
+            <div class="filter-price-sliders">
+              <input type="range" id="price-range-max" min="0" max="500" step="5" value="200" aria-label="Maximum price">
+            </div>
+            <div class="filter-price-inputs">
+              <div>
+                <label for="price-min">Min (&pound;)</label>
+                <input type="number" id="price-min" min="0" value="0" step="1">
+              </div>
+              <div>
+                <label for="price-max">Max (&pound;)</label>
+                <input type="number" id="price-max" min="0" placeholder="200" step="1">
+              </div>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="filter-map-btn" id="map-view-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/></svg>
+          Swap to Map View
+        </button>
+      </div>
+    </div>
+
+    <div class="events-results-meta">
+      <span>Showing <strong id="results-count">0</strong> results</span>
+      <div class="events-results-actions">
+        <button type="button" id="clear-filters" class="clear-filters-link">Clear filters</button>
+        <div class="events-sort-wrap">
           <label for="sort">Sort by</label>
           <select id="sort">
+            <option value="recommended">Recommended</option>
             <option value="date">Date</option>
             <option value="rating">Best rated</option>
             <option value="price">Price</option>
           </select>
         </div>
-        <div class="filter-group">
-          <label for="location">Location</label>
-          <select id="location">
-            <option value="">All locations</option>
-            <option value="online">Online</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="industry">Industry</label>
-          <select id="industry">
-            <option value="">All industries</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="format">Format</label>
-          <select id="format">
-            <option value="">Any format</option>
-            <option value="in-person">In person</option>
-            <option value="online">Online</option>
-            <option value="hybrid">Hybrid</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="price">Price</label>
-          <select id="price">
-            <option value="">Any price</option>
-            <option value="free">Free only</option>
-            <option value="paid">Paid only</option>
-          </select>
-        </div>
       </div>
-    </aside>
+    </div>
+  </div>
 
+  <div class="events-body">
     <div class="events-main">
       <div class="spotlight-sponsor-row">
         <section class="premium-spotlight" aria-labelledby="spotlight-heading">
@@ -149,7 +178,6 @@
     </a>
     <nav class="footer-links" aria-label="Footer">
       <a href="index.html">Browse events</a>
-      <a href="redesign-1.html">Redesign 1</a>
       <a href="../about.html">About us</a>
       <a href="../faq.html">FAQ</a>
       <a href="mailto:hello@the-networker.co.uk">Contact</a>

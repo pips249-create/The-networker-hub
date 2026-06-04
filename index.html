@@ -17,19 +17,7 @@
 <div id="hub-site-nav"></div>
 <script src="js/site-nav.js" data-root="" data-page="home"></script>
 
-<section class="home-hero" aria-label="Welcome">
-  <video
-    class="hero-video"
-    autoplay
-    muted
-    loop
-    playsinline
-    preload="auto"
-    aria-hidden="true"
-  >
-    <source src="assets/hero-networking.mp4" type="video/mp4">
-  </video>
-  <div class="hero-video-overlay" aria-hidden="true"></div>
+<section class="home-hero home-hero-static" aria-label="Welcome">
   <div class="home-hero-inner">
     <h1 class="hero-title">The Networker Hub</h1>
     <p class="hero-tagline">
@@ -41,6 +29,31 @@
     </div>
   </div>
   <a class="hero-scroll" href="#discover">Scroll</a>
+</section>
+
+<section class="home-video-block" aria-labelledby="home-video-heading">
+  <div class="section-inner home-video-layout">
+    <div class="home-video-copy">
+      <p class="section-kicker">In the room</p>
+      <h2 class="section-title" id="home-video-heading">Where connections happen</h2>
+      <p class="section-lede">
+        Real networking — meetings, exhibitions, and training across the UK. Browse live listings, filter by what matters to you, and book your next event.
+      </p>
+      <a class="btn btn-primary" href="events/index.html">Browse events</a>
+    </div>
+    <div class="home-video-frame">
+      <video
+        class="home-video-player"
+        controls
+        muted
+        loop
+        playsinline
+        preload="metadata"
+      >
+        <source src="assets/hero-networking.mp4" type="video/mp4">
+      </video>
+    </div>
+  </div>
 </section>
 
 <section class="section" id="discover">

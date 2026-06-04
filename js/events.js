@@ -231,7 +231,27 @@
     });
   }
 
+  function fillTypeFilterOptions() {
+    var sel = document.getElementById('filter-type');
+    if (!sel) return;
+    var keep = sel.value;
+    var cats = {};
+    events.forEach(function (e) {
+      if (e.typeCategory) cats[e.typeCategory] = true;
+    });
+    var keys = Object.keys(cats).sort();
+    sel.innerHTML = '<option value="all">Type: All</option>';
+    keys.forEach(function (cat) {
+      var opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      sel.appendChild(opt);
+    });
+    if (keep && (keep === 'all' || cats[keep])) sel.value = keep;
+  }
+
   function fillFilterOptions() {
+    fillTypeFilterOptions();
     if (!els.industry || !els.location) return;
     while (els.industry.options.length > 1) els.industry.remove(1);
     while (els.location.options.length > 1) els.location.remove(1);
