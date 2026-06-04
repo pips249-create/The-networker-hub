@@ -5,6 +5,7 @@
  *   AIRTABLE_API_KEY
  *   AIRTABLE_BASE_ID
  *   AIRTABLE_EVENTS_TABLE  (default: Events)
+ *   AIRTABLE_TICKETS_TABLE (default: Tickets)
  */
 
 const { cleanEnvVal, parseAirtableError } = require('./lib/auth');
@@ -76,6 +77,15 @@ const FIELD_MAP = {
   capacity: ['Capacity', 'Max Attendees', 'Ticket Qty', 'Ticket Quantity', 'Max Capacity'],
   spotsLeft: ['Spots Left', 'Tickets Remaining', 'Remaining Spots', 'Spots Remaining'],
   registrations: ['Registrations', 'All Registrations'],
+};
+
+const TICKET_FIELD_MAP = {
+  linkedEvent: ['Linked Event', 'Event', 'Events', 'Linked Events'],
+  name: ['Ticket Name', 'Name', 'Tier Name'],
+  description: ['Ticket Description', 'Description'],
+  price: ['Price', 'Ticket Price'],
+  quantityAvailable: ['Quantity Available', 'Quantity', 'Capacity', 'Qty Available'],
+  soldOut: ['Sold Out', 'Is Sold Out'],
 };
 
 function getFieldCI(fields, name) {
@@ -337,14 +347,131 @@ function formatDateShort(isoOrStr) {
 }
 
 function linkedRecordId(field) {
-  if (!field) return '';
-  if (Array.isArray(field) && field.length) {
-    const first = field[0];
-    if (typeof first === 'string' && /^rec[a-zA-Z0-9]+$/i.test(first)) return first;
-    if (first && typeof first === 'object' && first.id) return String(first.id);
+  const ids = linkedRecordIds(field);
+  return ids[0] || '';
+}
+
+function linkedRecordIds(field) {
+  if (!field) return [];
+  if (Array.isArray(field)) {
+    return field
+      .map((item) => {
+        if (typeof item === 'string' && /^rec[a-zA-Z0-9]+$/i.test(item)) return item;
+        if (item && typeof item === 'object' && item.id) return String(item.id);
+        return '';
+      })
+      .filter(Boolean);
   }
-  if (typeof field === 'string' && /^rec[a-zA-Z0-9]+$/i.test(field)) return field;
-  return '';
+  if (typeof field === 'string' && /^rec[a-zA-Z0-9]+$/i.test(field)) return [field];
+  return [];
+}
+
+function ticketLinksToEvent(fields, eventId) {
+  const linked = pick(fields, TICKET_FIELD_MAP.linkedEvent);
+  return linkedRecordIds(linked).includes(eventId);
+}
+
+function ticketRecordToTier(record) {
+  const f = record.fields || {};
+  const priceRaw = pick(f, TICKET_FIELD_MAP.price);
+  const priceNum = parsePriceNum(priceRaw);
+  const { display: price, priceKey } = normalizePrice(priceRaw);
+  const qtyRaw = pick(f, TICKET_FIELD_MAP.quantityAvailable);
+  let quantityAvailable = null;
+  if (qtyRaw != null && qtyRaw !== '') {
+    const n = Number(qtyRaw);
+    if (Number.isFinite(n)) quantityAvailable = Math.max(0, Math.round(n));
+  }
+  const soldOutFlag = parseBoolField(pick(f, TICKET_FIELD_MAP.soldOut));
+  const soldOut = soldOutFlag || (quantityAvailable !== null && quantityAvailable <= 0);
+  const name = pick(f, TICKET_FIELD_MAP.name) || 'Ticket';
+  const description = pick(f, TICKET_FIELD_MAP.description) || '';
+
+  return {
+    id: record.id,
+    name: String(name).trim(),
+    description: String(description).trim(),
+    price,
+    priceKey,
+    priceNum,
+    soldOut,
+    quantityAvailable,
+    label: String(name).trim().slice(0, 48) || 'Ticket',
+  };
+}
+
+function ticketsForEvent(ticketRecords, eventId) {
+  return ticketRecords
+    .filter((rec) => ticketLinksToEvent(rec.fields || {}, eventId))
+    .map(ticketRecordToTier)
+    .sort((a, b) => {
+      if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;
+      return a.priceNum - b.priceNum;
+    });
+}
+
+function fallbackTicketTier(event) {
+  return {
+    id: event.id + '-standard',
+    name: 'Standard ticket',
+    description:
+      event.priceKey === 'free' ? 'Free admission' : 'Ticket includes full event access',
+    price: event.price,
+    priceKey: event.priceKey,
+    priceNum: event.priceNum,
+    soldOut: Boolean(event.isSoldOut),
+    quantityAvailable: event.spotsLeft,
+    label: 'Standard',
+  };
+}
+
+function applyTicketsToEvent(event, ticketRecords) {
+  const tickets = ticketsForEvent(ticketRecords, event.id);
+  event.tickets = tickets.length ? tickets : [fallbackTicketTier(event)];
+
+  const available = event.tickets.filter((t) => !t.soldOut);
+  const priceSource = available.length ? available : event.tickets;
+  const minTier = priceSource.reduce(
+    (min, t) => (t.priceNum < min.priceNum ? t : min),
+    priceSource[0]
+  );
+  event.priceNum = minTier.priceNum;
+  event.price = minTier.price;
+  event.priceKey = minTier.priceKey;
+
+  const qtys = available
+    .map((t) => t.quantityAvailable)
+    .filter((n) => n != null);
+  if (qtys.length) {
+    const total = qtys.reduce((sum, n) => sum + n, 0);
+    event.spotsLeft = total;
+    event.urgency = total > 0 ? total + ' spots left' : 'Sold out';
+    if (total <= 0) event.isSoldOut = true;
+  } else if (!available.length && event.tickets.length) {
+    event.isSoldOut = true;
+    event.urgency = 'Sold out';
+  }
+
+  return event;
+}
+
+async function fetchTicketsTableRecords(apiKey, baseId) {
+  const table = process.env.AIRTABLE_TICKETS_TABLE || 'Tickets';
+  const ticketsUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}`;
+  try {
+    return await fetchAllAirtableRecords(
+      ticketsUrl,
+      apiKey,
+      process.env.AIRTABLE_TICKETS_VIEW
+    );
+  } catch (e) {
+    console.error('tickets_table_fetch', e.message);
+    return [];
+  }
+}
+
+function attachTicketsToEvents(events, ticketRecords) {
+  return events.map((ev) => applyTicketsToEvent(ev, ticketRecords));
 }
 
 function pickOrganiserName(fields) {
@@ -761,6 +888,7 @@ function recordToEvent(record) {
     locationSlug: slugLocation(location),
     industrySlug: slugIndustry(industry),
     formatSlug: slugFormat(format),
+    tickets: [],
   };
 }
 
@@ -809,14 +937,15 @@ module.exports = async function handler(req, res) {
         });
       }
       const data = await resp.json();
-      let event = recordToEvent(data);
+      const ticketRecords = await fetchTicketsTableRecords(apiKey, baseId);
+      let event = applyTicketsToEvent(recordToEvent(data), ticketRecords);
       [event] = await enrichOrganisersForEvents([event], apiKey, baseId);
       event = event[0];
       let related = [];
       try {
         const view = process.env.AIRTABLE_EVENTS_VIEW;
         const all = await fetchAllAirtableRecords(baseUrl, apiKey, view);
-        let allEvents = all.map(recordToEvent);
+        let allEvents = attachTicketsToEvents(all.map(recordToEvent), ticketRecords);
         allEvents = await enrichOrganisersForEvents(allEvents, apiKey, baseId);
         related = allEvents
           .filter((e) => e.id !== event.id && organiserMatch(e, event))
@@ -858,11 +987,15 @@ module.exports = async function handler(req, res) {
       offset = data.offset;
     } while (offset);
 
-    let events = all.map(recordToEvent);
+    const ticketRecords = await fetchTicketsTableRecords(apiKey, baseId);
+    let events = attachTicketsToEvents(all.map(recordToEvent), ticketRecords);
     events = await enrichOrganisersForEvents(events, apiKey, baseId);
     const payload = { configured: true, events };
     if (req.query?.fields === '1' && all[0]) {
       payload.airtableFieldNames = fieldKeys(all[0].fields || {});
+      if (ticketRecords[0]) {
+        payload.airtableTicketFieldNames = fieldKeys(ticketRecords[0].fields || {});
+      }
     }
     return res.status(200).json(payload);
   } catch (e) {

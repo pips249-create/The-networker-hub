@@ -7,7 +7,7 @@ function parsePriceNum(raw) {
 }
 
 function platformFee(subtotal) {
-  return subtotal * 0.04 + 0.2;
+  return subtotal * 0.045 + 0.2;
 }
 
 async function fetchAllEvents(apiKey, baseId, table, view) {

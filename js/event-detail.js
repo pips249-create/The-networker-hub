@@ -4,6 +4,9 @@
 (function () {
   window.hubEventDetailBooted = true;
 
+  const BOOKING_FEE_RATE = 0.045;
+  const BOOKING_FEE_PER_TICKET = 0.2;
+
   let currentEvent = null;
 
   const MOCK_ORGANISER_REVIEWS = [
@@ -331,41 +334,87 @@
     applyTicketPanelState(ev);
   }
 
+  function ticketTiersForEvent(ev) {
+    if (ev.tickets && ev.tickets.length) return ev.tickets;
+    return [
+      {
+        id: (ev.id || 'event') + '-standard',
+        name: 'Standard ticket',
+        description:
+          ev.priceKey === 'free' ? 'Free admission' : 'Ticket includes full event access',
+        price: ev.price,
+        priceKey: ev.priceKey,
+        priceNum: ev.priceKey === 'free' ? 0 : Number(ev.priceNum) || 0,
+        soldOut: Boolean(ev.isSoldOut),
+        quantityAvailable: ev.spotsLeft,
+        label: 'Standard',
+      },
+    ];
+  }
+
   function renderTicketPanel(ev) {
     const tiersEl = document.getElementById('ticket-tiers');
     const urgencyEl = document.getElementById('ev-urgency');
     if (!tiersEl) return;
 
-    const priceNum = ev.priceKey === 'free' ? 0 : Number(ev.priceNum) || 0;
-    const priceLabel = ev.priceKey === 'free' ? 'Free' : fmt(priceNum);
-    const tierDisabled = ev.isSoldOut || ev.isSalesClosed;
-
+    const tiers = ticketTiersForEvent(ev);
+    const panelClosed = ev.isSoldOut || ev.isSalesClosed;
     tiersEl.innerHTML = '';
 
-    const tier = document.createElement('div');
-    tier.className =
-      'tier selected' + (tierDisabled ? ' tier-disabled sold-out' : '');
-    tier.id = 'ev-tier-standard';
-    tier.setAttribute('data-price', String(priceNum));
-    tier.setAttribute('data-label', 'Standard');
-    if (!tierDisabled) {
-      tier.setAttribute('role', 'button');
-      tier.setAttribute('tabindex', '0');
-      tier.setAttribute('aria-pressed', 'true');
-    } else {
-      tier.setAttribute('aria-disabled', 'true');
+    let firstSelectable = null;
+
+    tiers.forEach((t, index) => {
+      const soldOut = Boolean(t.soldOut) || panelClosed;
+      const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
+      const priceDisplay = t.priceKey === 'free' ? 'Free' : t.price || fmt(priceNum);
+      const subtitle = soldOut ? 'Sold out' : t.description || '';
+
+      const tier = document.createElement('div');
+      tier.className = 'tier' + (soldOut ? ' sold-out tier-disabled' : '');
+      tier.id = index === 0 ? 'ev-tier-standard' : 'ev-tier-' + t.id;
+      tier.setAttribute('data-ticket-id', t.id);
+      tier.setAttribute('data-price', String(priceNum));
+      tier.setAttribute('data-label', t.label || t.name || 'Ticket');
+
+      if (!soldOut) {
+        tier.setAttribute('role', 'button');
+        tier.setAttribute('tabindex', '0');
+        if (!firstSelectable) {
+          firstSelectable = tier;
+          tier.classList.add('selected');
+          tier.setAttribute('aria-pressed', 'true');
+        } else {
+          tier.setAttribute('aria-pressed', 'false');
+        }
+      } else {
+        tier.setAttribute('aria-disabled', 'true');
+      }
+
+      tier.innerHTML =
+        '<div class="tier-radio" aria-hidden="true"></div>' +
+        '<div class="tier-info"><strong>' +
+        escapeHtml(t.name || 'Ticket') +
+        '</strong><span>' +
+        escapeHtml(subtitle) +
+        '</span></div>' +
+        '<div class="tier-price">' +
+        escapeHtml(priceDisplay) +
+        '</div>';
+
+      tiersEl.appendChild(tier);
+    });
+
+    if (!firstSelectable && tiersEl.children.length) {
+      tiersEl.innerHTML =
+        '<p class="ticket-load-hint">All ticket tiers are currently sold out.</p>';
     }
 
-    tier.innerHTML =
-      '<div class="tier-radio" aria-hidden="true"></div>' +
-      '<div class="tier-info"><strong>Standard ticket</strong>' +
-      '<span>' +
-      (ev.priceKey === 'free' ? 'Free admission' : 'Ticket includes full event access') +
-      '</span></div>' +
-      '<div class="tier-price">' +
-      priceLabel +
-      '</div>';
-    tiersEl.appendChild(tier);
+    const fromPrice = ev.priceKey === 'free' ? 'Free' : ev.price || '—';
+    setText('ev-ticket-from-price', fromPrice);
+    const heroPrice = document.getElementById('ev-price');
+    if (heroPrice && ev.priceKey !== 'free') {
+      heroPrice.textContent = 'from ' + (ev.price || fromPrice);
+    }
 
     if (urgencyEl) {
       urgencyEl.classList.remove('is-sold-out');
@@ -381,6 +430,14 @@
         urgencyEl.hidden = true;
       }
     }
+  }
+
+  function escapeHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   function renderOrganiserReviews(ev) {
@@ -815,7 +872,7 @@
 
     function update() {
       const subtotal = price * qty;
-      const fee = subtotal * 0.04 + 0.2 * qty;
+      const fee = subtotal * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty;
       const total = subtotal + fee;
       if (sumLabel) sumLabel.textContent = label;
       if (sumQty) sumQty.textContent = String(qty);
@@ -986,6 +1043,7 @@
         isSalesClosed: false,
         spotsLeft: null,
         urgency: params.get('urgency') || '',
+        tickets: [],
       }, params);
       currentEvent = ev;
       populateFromEvent(ev);

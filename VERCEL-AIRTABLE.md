@@ -18,6 +18,7 @@ Vercel is **not** passing your secrets to the deployment yet.
 | `AIRTABLE_BASE_ID` | `appQwgOxCrFFNweHe` |
 | `AIRTABLE_EVENTS_TABLE` | `tblOwGcn7BKt71j6b` |
 | `AIRTABLE_EVENTS_VIEW` | `viwuzobg711IGzgev` |
+| `AIRTABLE_TICKETS_TABLE` | `Tickets` (optional; linked tiers per event) |
 
 For **each** variable, enable **Production** (and Preview if you use preview URLs).
 

@@ -222,6 +222,30 @@
           </div>
         </section>
 
+        <section class="content-section" id="ev-reviews-section">
+          <h2>What people are saying about this organiser</h2>
+          <div class="reviews-dashboard">
+            <div class="reviews-score-card">
+              <div class="reviews-score" id="ev-reviews-score">4.0<span class="reviews-score-max"> / 5</span></div>
+              <div class="reviews-score-stars" id="ev-reviews-score-stars" aria-hidden="true">★★★★☆</div>
+              <p class="reviews-score-count" id="ev-reviews-score-count">Based on 48 reviews</p>
+            </div>
+            <div class="reviews-feed" id="ev-reviews-feed" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <section class="content-section" id="ev-reviews-section">
+          <h2>What people are saying about this organiser</h2>
+          <div class="reviews-dashboard">
+            <div class="reviews-score-card">
+              <div class="reviews-score" id="ev-reviews-score">4.0<span class="reviews-score-max"> / 5</span></div>
+              <div class="reviews-score-stars" id="ev-reviews-score-stars" aria-hidden="true">★★★★☆</div>
+              <p class="reviews-score-count" id="ev-reviews-score-count">Based on 48 reviews</p>
+            </div>
+            <div class="reviews-feed" id="ev-reviews-feed" aria-live="polite"></div>
+          </div>
+        </section>
+
         <section class="content-section" id="ev-related-section">
           <h2 id="ev-related-title">More from this organiser</h2>
           <div class="related-grid" id="ev-related-grid" aria-live="polite"></div>
@@ -233,13 +257,36 @@
         <div class="ticket-panel" id="tickets" data-approval-required="false" data-sold-out="false" data-sales-closed="false">
           <div class="ticket-header">
             <span class="from-label">Tickets from</span>
-            <span class="price" id="ev-ticket-from-price">—</span>
+            <span class="price" id="ev-ticket-from-price">£32.15</span>
           </div>
-          <div class="ticket-urgency" id="ev-urgency">Loading…</div>
+          <div class="ticket-urgency" id="ev-urgency">12 spots left</div>
 
           <div id="ticket-purchase-view">
           <div class="ticket-tiers" id="ticket-tiers">
-            <p class="ticket-load-hint">Loading tickets…</p>
+            <div class="tier selected" id="ev-tier-standard" data-price="32.15" data-label="Standard" role="button" tabindex="0" aria-pressed="true">
+              <div class="tier-radio" aria-hidden="true"></div>
+              <div class="tier-info">
+                <strong>Standard ticket</strong>
+                <span>Lunch, talk &amp; networking</span>
+              </div>
+              <div class="tier-price">£32.15</div>
+            </div>
+            <div class="tier" data-price="18" data-label="Remote" role="button" tabindex="0" aria-pressed="false">
+              <div class="tier-radio" aria-hidden="true"></div>
+              <div class="tier-info">
+                <strong>Remote / livestream</strong>
+                <span>Livestream + breakout rooms</span>
+              </div>
+              <div class="tier-price">£18.00</div>
+            </div>
+            <div class="tier sold-out" data-price="85" data-label="VIP" aria-disabled="true">
+              <div class="tier-radio" aria-hidden="true"></div>
+              <div class="tier-info">
+                <strong>VIP table of 4</strong>
+                <span>Sold out</span>
+              </div>
+              <div class="tier-price">£85.00</div>
+            </div>
           </div>
 
           <div class="qty-row">
@@ -257,7 +304,7 @@
               <span class="value" id="sum-subtotal">£32.15</span>
             </div>
             <div class="summary-row">
-              <span>Booking fee (4% + 20p)</span>
+              <span>Booking fee (4.5% + 20p)</span>
               <span class="value" id="sum-fee">£1.49</span>
             </div>
             <div class="summary-row total">
@@ -299,6 +346,53 @@
       </aside>
     </div>
 
+    <div class="hub-modal" id="contact-host-modal" role="dialog" aria-modal="true" aria-labelledby="contact-host-title" hidden>
+      <div class="hub-modal-backdrop" data-modal-close></div>
+      <div class="hub-modal-panel">
+        <button type="button" class="hub-modal-close" id="contact-host-close" aria-label="Close">×</button>
+        <h2 class="hub-modal-title" id="contact-host-title">Contact Host</h2>
+        <p class="hub-modal-lead">Send a message to <span id="contact-host-name">the organiser</span>. They will reply by email.</p>
+        <form id="contact-host-form" class="hub-modal-form" novalidate>
+          <label class="form-field" for="contact-name">
+            <span>Your Name</span>
+            <input type="text" id="contact-name" name="name" autocomplete="name" required />
+          </label>
+          <label class="form-field" for="contact-email">
+            <span>Your Email</span>
+            <input type="email" id="contact-email" name="email" autocomplete="email" required />
+          </label>
+          <label class="form-field" for="contact-message">
+            <span>Your Message</span>
+            <textarea id="contact-message" name="message" rows="4" required></textarea>
+          </label>
+          <button type="submit" class="cta-btn" id="contact-host-send">Send Message</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="hub-modal" id="contact-host-modal" role="dialog" aria-modal="true" aria-labelledby="contact-host-title" hidden>
+      <div class="hub-modal-backdrop" data-modal-close></div>
+      <div class="hub-modal-panel">
+        <button type="button" class="hub-modal-close" id="contact-host-close" aria-label="Close">×</button>
+        <h2 class="hub-modal-title" id="contact-host-title">Contact Host</h2>
+        <p class="hub-modal-lead">Send a message to <span id="contact-host-name">the organiser</span>. They will reply by email.</p>
+        <form id="contact-host-form" class="hub-modal-form" novalidate>
+          <label class="form-field" for="contact-name">
+            <span>Your Name</span>
+            <input type="text" id="contact-name" name="name" autocomplete="name" required />
+          </label>
+          <label class="form-field" for="contact-email">
+            <span>Your Email</span>
+            <input type="email" id="contact-email" name="email" autocomplete="email" required />
+          </label>
+          <label class="form-field" for="contact-message">
+            <span>Your Message</span>
+            <textarea id="contact-message" name="message" rows="4" required></textarea>
+          </label>
+          <button type="submit" class="cta-btn" id="contact-host-send">Send Message</button>
+        </form>
+      </div>
+    </div>
 
     <div class="hub-modal" id="contact-host-modal" role="dialog" aria-modal="true" aria-labelledby="contact-host-title" hidden>
       <div class="hub-modal-backdrop" data-modal-close></div>
