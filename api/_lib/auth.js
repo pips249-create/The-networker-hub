@@ -389,6 +389,8 @@ module.exports = {
   json,
   requireAdmin,
   airtableConfig,
+  airtableFetch,
+  escapeFormulaValue,
   findUserByEmail,
   findUserByResetToken,
   createUser,
