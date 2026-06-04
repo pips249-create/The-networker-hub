@@ -3,6 +3,9 @@
   --charcoal: #4a4446;
   --charcoal-soft: #5c5557;
   --brand-lavender: #b189b8;
+  --brand-black: #000000;
+  --brand-cream: #f5f0e8;
+  --brand-lavender-icon: #c397c3;
   --lavender: #c299d1;
   --lavender-soft: #d9c4e0;
   --lavender-light: #ebe0f0;
@@ -48,50 +51,63 @@ body {
 a { color: var(--lavender-deep); text-decoration: none; }
 a:hover { color: var(--charcoal); }
 
-/* ─── Nav (brand lavender from logo) ─── */
+/* ─── Nav (black — matches logo background) ─── */
 .site-nav {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
-  padding: 10px 28px;
+  padding: 0 28px 0 0;
+  min-height: 64px;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
   gap: 20px;
-  background: var(--brand-lavender);
-  border-bottom: 1px solid rgba(74, 68, 70, 0.12);
+  background: var(--brand-black);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   transition: box-shadow 0.25s;
 }
 .site-nav.is-scrolled {
-  box-shadow: 0 4px 24px rgba(74, 68, 70, 0.18);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
 }
 .site-nav.on-dark,
 .site-nav.on-light {
-  background: var(--brand-lavender);
+  background: var(--brand-black);
 }
 .nav-logo {
-  display: block;
-  height: 52px;
-  width: auto;
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  margin: 0;
+  padding: 6px 20px 6px 16px;
   line-height: 0;
+  background-color: var(--brand-black);
+  flex-shrink: 0;
 }
 .nav-logo img {
-  height: 100%;
+  height: 52px;
   width: auto;
+  max-width: min(200px, 38vw);
   display: block;
+  object-fit: contain;
+  object-position: left center;
   padding: 0;
-  border-radius: 6px;
-  background: transparent;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background-color: var(--brand-black);
+  vertical-align: middle;
 }
 .nav-links {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  align-self: center;
   gap: 6px 22px;
   font-size: 14px;
   font-weight: 500;
+  padding: 12px 0;
 }
 .site-nav .nav-links a {
   color: rgba(255, 252, 248, 0.92);
@@ -111,15 +127,16 @@ a:hover { color: var(--charcoal); }
   border-radius: var(--radius-pill);
   font-size: 13px;
   font-weight: 600;
-  background: #faf6ee;
-  color: var(--charcoal) !important;
+  background: var(--brand-lavender-icon);
+  color: var(--brand-black) !important;
   text-decoration: none !important;
   transition: transform 0.15s, box-shadow 0.15s;
 }
 .nav-cta:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(45, 38, 54, 0.2);
-  color: var(--charcoal) !important;
+  box-shadow: 0 6px 20px rgba(195, 151, 195, 0.45);
+  color: var(--brand-black) !important;
+  background: #d4b4d4;
 }
 
 .nav-admin {
@@ -129,19 +146,19 @@ a:hover { color: var(--charcoal); }
   border-radius: var(--radius-pill);
   font-size: 13px;
   font-weight: 700;
-  color: var(--charcoal) !important;
-  background: rgba(255, 252, 248, 0.95);
-  border: 1px solid rgba(255, 252, 248, 0.5);
+  color: var(--brand-cream) !important;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   text-decoration: none !important;
 }
 .nav-admin:hover {
-  background: #fff;
-  color: var(--charcoal) !important;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff !important;
 }
 .nav-admin[aria-current="page"] {
-  background: var(--charcoal);
-  border-color: var(--charcoal);
-  color: #faf6ee !important;
+  background: var(--brand-lavender-icon);
+  border-color: var(--brand-lavender-icon);
+  color: var(--brand-black) !important;
 }
 
 .nav-signout {
@@ -212,15 +229,15 @@ body.hub-page-admin {
   z-index: 2;
   max-width: 720px;
 }
-.hero-logo {
-  width: min(420px, 90vw);
-  height: auto;
-  margin: 0 auto 28px;
-  display: block;
-  padding: 0;
-  border-radius: 0;
-  background: transparent;
-  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.25));
+.hero-title {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(2.25rem, 6vw, 3.5rem);
+  font-weight: 400;
+  line-height: 1.1;
+  color: #faf6ee;
+  margin: 0 auto 20px;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
 }
 .hero-tagline {
   font-size: clamp(1rem, 2.2vw, 1.2rem);
