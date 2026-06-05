@@ -124,6 +124,38 @@ a:hover { color: var(--charcoal); }
   color: var(--lavender-deep);
   font-weight: 600;
 }
+.site-nav.is-session-pending .nav-auth-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 4px;
+}
+.nav-auth-pending-pill {
+  display: inline-block;
+  height: 28px;
+  width: 88px;
+  border-radius: var(--radius-pill, 999px);
+  background: linear-gradient(90deg, rgba(194, 153, 209, 0.18) 0%, rgba(194, 153, 209, 0.32) 50%, rgba(194, 153, 209, 0.18) 100%);
+  background-size: 200% 100%;
+  animation: nav-auth-shimmer 1.2s ease-in-out infinite;
+}
+.nav-auth-pending-pill--short {
+  width: 64px;
+}
+.nav-mobile-auth-pending {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0 4px;
+}
+.nav-mobile-auth-pending .nav-auth-pending-pill {
+  width: 100%;
+  max-width: 220px;
+}
+@keyframes nav-auth-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
 .hub-mode-switch {
   display: inline-flex;
   align-items: center;

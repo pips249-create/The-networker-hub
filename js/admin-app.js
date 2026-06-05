@@ -57,6 +57,10 @@
 
   var PAGE_META = {
     dashboard: { title: 'Overview Dashboard', subtitle: 'System-wide performance health check' },
+    'event-health': {
+      title: 'Event data issues',
+      subtitle: 'Fix published events missing dates, organisers, VAT, or profile data',
+    },
     users: { title: 'User & Account Directory', subtitle: 'Manage all platform accounts' },
     moderation: { title: 'Content Moderation', subtitle: 'Review listings and attendee feedback' },
     financials: { title: 'Financial Hub', subtitle: 'Stripe ledger, payouts & automation logs' },
@@ -65,6 +69,16 @@
       subtitle: 'Swap Sponsor Hub image, copy, and tracking link without code changes',
     },
   };
+
+  var EVENT_TYPES = [
+    'Networking meeting',
+    'Netwalking',
+    'Conference',
+    'Exhibition',
+    'Awards ceremony',
+  ];
+  var MEETING_FORMATS = ['In person', 'Online', 'Hybrid'];
+  var healthCache = null;
 
   /** Default creative for events-sponsor-hub (matches interim events/index.html). */
   var SPONSOR_SLOT_DEFAULTS = {
@@ -119,6 +133,282 @@
     document.getElementById('page-subtitle').textContent = meta.subtitle;
   }
 
+  function updateHealthBadge(count) {
+    var badge = document.getElementById('admin-health-badge');
+    if (!badge) return;
+    var n = Number(count) || 0;
+    if (n > 0) {
+      badge.textContent = n > 99 ? '99+' : String(n);
+      badge.classList.remove('hidden');
+      badge.setAttribute('aria-label', n + ' events need data fixes');
+    } else {
+      badge.classList.add('hidden');
+      badge.setAttribute('aria-label', 'No event data issues');
+    }
+  }
+
+  function fetchEventHealth() {
+    return fetch('/api/admin/event-health', { credentials: 'include' })
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        if (data && data.configured !== false) {
+          healthCache = data;
+          updateHealthBadge(data.count);
+        }
+        return data;
+      })
+      .catch(function () {
+        return null;
+      });
+  }
+
+  function issueBadge(issue) {
+    var cls =
+      issue.severity === 'high'
+        ? 'bg-red-100 text-red-800'
+        : issue.severity === 'medium'
+          ? 'bg-amber-100 text-amber-900'
+          : 'bg-slate-100 text-slate-700';
+    return (
+      '<span class="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mr-1 mb-1 ' +
+      cls +
+      '">' +
+      esc(issue.label) +
+      '</span>'
+    );
+  }
+
+  function toDatetimeLocalValue(iso) {
+    if (!iso) return '';
+    try {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      var pad = function (n) {
+        return String(n).padStart(2, '0');
+      };
+      return (
+        d.getFullYear() +
+        '-' +
+        pad(d.getMonth() + 1) +
+        '-' +
+        pad(d.getDate()) +
+        'T' +
+        pad(d.getHours()) +
+        ':' +
+        pad(d.getMinutes())
+      );
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function renderEventHealth() {
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<div id="event-health-status" class="text-sm text-slate-500">Scanning published events…</div>' +
+      '<div id="event-health-summary" class="hidden grid sm:grid-cols-2 xl:grid-cols-4 gap-3"></div>' +
+      '<div id="event-health-list" class="space-y-3"></div></div>';
+
+    fetchEventHealth().then(function (data) {
+      var status = document.getElementById('event-health-status');
+      var summary = document.getElementById('event-health-summary');
+      var list = document.getElementById('event-health-list');
+      if (!status || !summary || !list) return;
+
+      if (!data || data.configured === false) {
+        status.textContent = 'Supabase is not configured — event health checks are unavailable.';
+        return;
+      }
+
+      if (!data.count) {
+        status.innerHTML =
+          '<span class="text-emerald-700 font-semibold">All published events look complete.</span>';
+        summary.classList.add('hidden');
+        list.innerHTML = '';
+        return;
+      }
+
+      status.textContent =
+        data.count + ' published event' + (data.count === 1 ? '' : 's') + ' need attention.';
+
+      var issueCards = Object.keys(data.issuesByCode || {})
+        .map(function (code) {
+          var sample = (data.events[0] && data.events[0].issues.find(function (i) {
+            return i.code === code;
+          })) || { label: code, severity: 'low' };
+          return (
+            '<div class="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">' +
+            '<p class="text-xs text-slate-500 uppercase font-semibold">' +
+            esc(sample.label) +
+            '</p>' +
+            '<p class="text-xl font-bold text-brand-900 mt-1">' +
+            data.issuesByCode[code] +
+            '</p></div>'
+          );
+        })
+        .join('');
+      summary.innerHTML = issueCards;
+      summary.classList.remove('hidden');
+
+      var organisers = data.organisers || [];
+      list.innerHTML = (data.events || [])
+        .map(function (ev) {
+          var issueHtml = (ev.issues || []).map(issueBadge).join('');
+          var orgOptions =
+            '<option value="">— No organiser —</option>' +
+            organisers
+              .map(function (o) {
+                var sel = ev.organiser_id === o.id ? ' selected' : '';
+                return (
+                  '<option value="' +
+                  esc(o.id) +
+                  '"' +
+                  sel +
+                  '>' +
+                  esc(o.name || o.id) +
+                  '</option>'
+                );
+              })
+              .join('');
+          var typeOptions = EVENT_TYPES.map(function (t) {
+            return (
+              '<option value="' +
+              esc(t) +
+              '"' +
+              (ev.event_type === t ? ' selected' : '') +
+              '>' +
+              esc(t) +
+              '</option>'
+            );
+          }).join('');
+          var formatOptions = MEETING_FORMATS.map(function (f) {
+            return (
+              '<option value="' +
+              esc(f) +
+              '"' +
+              (ev.meeting_type === f ? ' selected' : '') +
+              '>' +
+              esc(f) +
+              '</option>'
+            );
+          }).join('');
+          var vatVal = ev.vat_treatment || '';
+          var hasOrgProfileIssue = (ev.issues || []).some(function (i) {
+            return i.code === 'missing_organiser_logo' || i.code === 'missing_organiser_profile';
+          });
+
+          return (
+            '<article class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" data-event-id="' +
+            esc(ev.id) +
+            '">' +
+            '<div class="p-4 border-b border-slate-100 flex flex-wrap items-start justify-between gap-3">' +
+            '<div class="min-w-0 flex-1">' +
+            '<h3 class="font-bold text-brand-900">' +
+            esc(ev.title || 'Untitled') +
+            '</h3>' +
+            '<p class="text-xs text-slate-500 mt-1">/' +
+            esc(ev.slug || '') +
+            '</p>' +
+            '<div class="mt-2">' +
+            issueHtml +
+            '</div></div>' +
+            '<div class="flex flex-wrap gap-2 shrink-0">' +
+            '<a href="../events/' +
+            esc(ev.slug || '') +
+            '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View page</a>' +
+            (ev.organiser_id
+              ? '<a href="../organiser/group-edit.html" target="_blank" rel="noopener" class="text-xs font-semibold text-slate-600 hover:underline">Organiser profile</a>'
+              : '') +
+            '</div></div>' +
+            '<form class="event-health-form p-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">' +
+            '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event date & time</label>' +
+            '<input type="datetime-local" name="starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2" value="' +
+            esc(toDatetimeLocalValue(ev.starts_at)) +
+            '"></div>' +
+            '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser</label>' +
+            '<select name="organiser_id" class="w-full rounded-lg border border-slate-300 px-3 py-2">' +
+            orgOptions +
+            '</select></div>' +
+            '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
+            '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2">' +
+            '<option value="">—</option>' +
+            typeOptions +
+            '</select></div>' +
+            '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Format</label>' +
+            '<select name="meeting_type" class="w-full rounded-lg border border-slate-300 px-3 py-2">' +
+            '<option value="">—</option>' +
+            formatOptions +
+            '</select></div>' +
+            '<div><label class="block text-xs font-semibold text-slate-500 mb-1">VAT (paid tickets)</label>' +
+            '<select name="vat_treatment" class="w-full rounded-lg border border-slate-300 px-3 py-2">' +
+            '<option value="">—</option>' +
+            '<option value="included"' +
+            (vatVal === 'included' ? ' selected' : '') +
+            '>Prices include VAT</option>' +
+            '<option value="added"' +
+            (vatVal === 'added' ? ' selected' : '') +
+            '>VAT added at checkout</option>' +
+            '</select></div>' +
+            '<div class="sm:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-3 pt-1">' +
+            (hasOrgProfileIssue
+              ? '<p class="text-xs text-amber-800">Logo or organiser bio must be updated in the organiser profile.</p>'
+              : '') +
+            '<button type="submit" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Save fixes</button>' +
+            '<span class="event-health-msg text-xs text-slate-500"></span>' +
+            '</div></form></article>'
+          );
+        })
+        .join('');
+
+      list.querySelectorAll('.event-health-form').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var article = form.closest('[data-event-id]');
+          var id = article && article.getAttribute('data-event-id');
+          var msg = form.querySelector('.event-health-msg');
+          var btn = form.querySelector('button[type="submit"]');
+          if (!id) return;
+
+          var payload = { id: id };
+          var starts = form.starts_at.value;
+          if (starts) payload.starts_at = new Date(starts).toISOString();
+          else payload.starts_at = null;
+          payload.organiser_id = form.organiser_id.value || null;
+          payload.event_type = form.event_type.value || null;
+          payload.meeting_type = form.meeting_type.value || null;
+          payload.vat_treatment = form.vat_treatment.value || null;
+
+          if (btn) btn.disabled = true;
+          if (msg) msg.textContent = 'Saving…';
+
+          fetch('/api/admin/events', {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+            .then(function (r) {
+              return r.json();
+            })
+            .then(function (res) {
+              if (!res.ok) throw new Error(res.message || res.error || 'Save failed');
+              if (msg) msg.textContent = 'Saved — rescanning…';
+              return fetchEventHealth();
+            })
+            .then(function () {
+              renderEventHealth();
+            })
+            .catch(function (err) {
+              if (msg) msg.textContent = err.message || 'Could not save';
+              if (btn) btn.disabled = false;
+            });
+        });
+      });
+    });
+  }
+
   function renderDashboard() {
     var m = MOCK.metrics;
     var alerts = MOCK.alerts
@@ -153,9 +443,10 @@
 
     main.innerHTML =
       '<div class="space-y-6">' +
+      '<div id="dashboard-event-health-alert"></div>' +
       '<section class="space-y-3">' +
       '<h3 class="text-sm font-bold uppercase tracking-wide text-slate-500">Critical alerts</h3>' +
-      '<div class="grid gap-3">' +
+      '<div class="grid gap-3" id="dashboard-alerts">' +
       alerts +
       '</div></section>' +
       '<section class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">' +
@@ -188,6 +479,20 @@
         var el = document.getElementById('live-metrics');
         if (el) el.textContent = 'Could not load live metrics.';
       });
+
+    fetchEventHealth().then(function (data) {
+      var slot = document.getElementById('dashboard-event-health-alert');
+      if (!slot || !data || !data.count) return;
+      slot.innerHTML =
+        '<a href="#event-health" class="block rounded-lg border border-red-200 bg-red-50 p-4 text-red-900 hover:bg-red-100/80 transition">' +
+        '<p class="font-semibold text-sm">' +
+        data.count +
+        ' published event' +
+        (data.count === 1 ? '' : 's') +
+        ' missing data</p>' +
+        '<p class="text-xs mt-1 opacity-90">Dates, organisers, VAT, or profile fields need fixing before pages show correctly. Open Event data issues to edit rows.</p>' +
+        '</a>';
+    });
   }
 
   function card(title, value, sub, color) {
@@ -594,6 +899,7 @@
 
   var routes = {
     dashboard: renderDashboard,
+    'event-health': renderEventHealth,
     users: renderUsers,
     moderation: renderModeration,
     financials: renderFinancials,
@@ -613,6 +919,7 @@
     gate.classList.add('hidden');
     shell.classList.remove('hidden');
     document.body.classList.add('hub-page-admin');
+    fetchEventHealth();
     route();
     window.addEventListener('hashchange', route);
   }

@@ -186,7 +186,7 @@
           ' hosts curated networking events across the UK. Full company profile coming soon.';
       } else {
         profileEl.textContent =
-          'Profile details for this organiser will appear here once added in Airtable.';
+          'The organiser is completing their group profile. Check back soon for host details.';
       }
     }
 
@@ -547,17 +547,19 @@
     const el = document.getElementById('ev-vat-note');
     if (!el) return;
 
-    const treatment = String(ev.vatTreatment || ev.vat_treatment || '').trim();
+    let treatment = String(ev.vatTreatment || ev.vat_treatment || '').trim();
     const hasPaidTier = (tiers || []).some((t) => {
       const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
       return priceNum > 0;
     });
 
-    if (!treatment || !hasPaidTier) {
+    if (!hasPaidTier) {
       el.hidden = true;
       el.textContent = '';
       return;
     }
+
+    if (!treatment) treatment = 'included';
 
     el.textContent =
       treatment === 'added' ? 'VAT added at checkout' : 'Prices include VAT';

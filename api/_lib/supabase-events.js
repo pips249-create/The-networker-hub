@@ -59,6 +59,20 @@ function eventTypeTabCategory(raw) {
   return 'meeting';
 }
 
+function inferMeetingType(row) {
+  const fmt = String(row.meeting_type || '').trim();
+  if (fmt) return fmt;
+  if (String(row.meeting_link || '').trim()) return 'Online';
+  if (row.venue || row.postcode || row.city || row.location_label) return 'In person';
+  return 'In person';
+}
+
+function resolvedEventType(row, typeRaw) {
+  const stored = String(row.event_type || '').trim();
+  if (stored) return stored;
+  return typeRaw;
+}
+
 function ukOutcode(postcode) {
   const m = String(postcode || '')
     .trim()
@@ -150,7 +164,8 @@ function rowToEvent(row, organiser, ticketRows) {
   const typeRaw = normalizeEventType(row.event_type);
   const typeCategory = parseTypeCategory(typeRaw);
   const type = slugifyType(typeRaw);
-  const format = String(row.meeting_type || '').trim();
+  const format = inferMeetingType(row);
+  const eventTypeLabel = resolvedEventType(row, typeRaw);
   const location = String(row.location_label || row.city || row.venue || '').trim();
   const postcode = String(row.postcode || '').trim();
   const venue = String(row.venue || '').trim();
@@ -199,8 +214,8 @@ function rowToEvent(row, organiser, ticketRows) {
     outcode: String(row.outcode || '').trim() || ukOutcode(postcode),
     nextDate: nextDateRaw ? String(nextDateRaw) : '',
     nextDateTs: parsedDate.ts,
-    eventType: String(row.event_type || '').trim(),
-    eventTypeCategory: eventTypeTabCategory(row.event_type),
+    eventType: eventTypeLabel,
+    eventTypeCategory: eventTypeTabCategory(eventTypeLabel),
     venue,
     venueName: venue,
     venueAddress: [row.address, postcode].filter(Boolean).join(', ') || location,

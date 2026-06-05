@@ -55,10 +55,12 @@
 
 /**
  * Shared site navigation — same bar on every page.
- * NAV_BUILD=20260626 — Mobile menu drawer; hub-mobile.css.
+ * NAV_BUILD=20260627 — Session cache + pending auth skeleton (no logged-out flash).
  */
 (function () {
-  var NAV_BUILD = '20260626';
+  var NAV_BUILD = '20260627';
+  var SESSION_KEY = 'hub_nav_session_v1';
+  var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
   var page = (script && script.getAttribute('data-page')) || '';
@@ -144,7 +146,32 @@
     );
   }
 
-  function buildNavLinks(user) {
+  function readCachedUser() {
+    try {
+      var raw = sessionStorage.getItem(SESSION_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (!parsed || !parsed.user || !parsed.ts) return null;
+      if (Date.now() - parsed.ts > SESSION_TTL_MS) return null;
+      return parsed.user;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function cacheUser(user) {
+    try {
+      if (!user) {
+        sessionStorage.removeItem(SESSION_KEY);
+        return;
+      }
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ts: Date.now(), user: user }));
+    } catch (e) {
+      /* ignore quota / private mode */
+    }
+  }
+
+  function buildNavLinks(user, pending) {
     var html = '';
     html += link('events/index.html', 'Browse events', 'browse', 'nav-cta');
     html += link(
@@ -155,6 +182,14 @@
     );
     html += link('about.html', 'About us', 'about', 'nav-hide-mobile');
     html += link('faq.html', 'FAQ', 'faq', 'nav-hide-mobile');
+    if (pending && !user) {
+      html +=
+        '<span class="nav-auth-pending" aria-hidden="true">' +
+        '<span class="nav-auth-pending-pill"></span>' +
+        '<span class="nav-auth-pending-pill nav-auth-pending-pill--short"></span>' +
+        '</span>';
+      return html;
+    }
     if (user) {
       var hubView = user.hubView || 'attendee';
       var showHubToggle = user.canToggleHubMode !== false && user.role === 'client';
@@ -169,12 +204,20 @@
     return html;
   }
 
-  function buildMobileDrawerLinks(user) {
+  function buildMobileDrawerLinks(user, pending) {
     var html = '';
     html += link('events/index.html', 'Browse events', 'browse', 'nav-mobile-item');
     html += link('training/index.html', 'Browse training', 'training', 'nav-mobile-item');
     html += link('about.html', 'About us', 'about', 'nav-mobile-item');
     html += link('faq.html', 'FAQ', 'faq', 'nav-mobile-item');
+    if (pending && !user) {
+      html +=
+        '<span class="nav-mobile-auth-pending" aria-hidden="true">' +
+        '<span class="nav-auth-pending-pill"></span>' +
+        '<span class="nav-auth-pending-pill"></span>' +
+        '</span>';
+      return html;
+    }
     if (user) {
       var hubView = user.hubView || 'attendee';
       var showHubToggle = user.canToggleHubMode !== false && user.role === 'client';
@@ -252,6 +295,7 @@
     if (mobileSignOut) {
       mobileSignOut.addEventListener('click', function () {
         closeMenu();
+        cacheUser(null);
         fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
           window.location.href = href('index.html');
         });
@@ -300,9 +344,12 @@
     });
   }
 
-  function renderNav(user) {
+  function renderNav(user, pending) {
+    var pendingClass = pending ? ' is-session-pending' : '';
     mount.innerHTML =
-      '<header class="site-nav on-light" id="site-nav">' +
+      '<header class="site-nav on-light' +
+      pendingClass +
+      '" id="site-nav">' +
       '<a class="nav-logo" href="' +
       href('index.html') +
       '" aria-label="The Networker Hub home">' +
@@ -311,7 +358,7 @@
       '" alt="The Networker Hub" width="200" height="97">' +
       '</a>' +
       '<nav class="nav-links" aria-label="Main">' +
-      buildNavLinks(user) +
+      buildNavLinks(user, pending) +
       '</nav>' +
       '<button type="button" class="nav-menu-toggle" id="nav-menu-toggle" aria-expanded="false" aria-controls="nav-mobile-drawer" aria-label="Open menu">' +
       '<span class="nav-menu-bar"></span><span class="nav-menu-bar"></span><span class="nav-menu-bar"></span>' +
@@ -322,7 +369,7 @@
       '<div class="nav-mobile-drawer-head"><span>Menu</span>' +
       '<button type="button" class="nav-mobile-close" id="nav-mobile-close" aria-label="Close menu">×</button></div>' +
       '<nav class="nav-mobile-links" aria-label="Mobile menu">' +
-      buildMobileDrawerLinks(user) +
+      buildMobileDrawerLinks(user, pending) +
       '</nav></aside>';
 
     var nav = document.getElementById('site-nav');
@@ -349,6 +396,7 @@
     var signOut = document.getElementById('nav-signout');
     if (signOut) {
       signOut.addEventListener('click', function () {
+        cacheUser(null);
         fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
           window.location.href = href('index.html');
         });
@@ -368,7 +416,12 @@
     document.body.classList.add('has-site-nav');
   }
 
-  renderNav(null);
+  var cachedUser = readCachedUser();
+  if (cachedUser) {
+    renderNav(cachedUser, false);
+  } else {
+    renderNav(null, true);
+  }
 
   fetch('/api/auth/session', { credentials: 'include' })
     .then(function (res) {
@@ -379,10 +432,14 @@
         data.user.hubView = data.hubView || 'attendee';
         data.user.organiserProfiles = data.organiserProfiles || 0;
         data.user.canToggleHubMode = data.canToggleHubMode === true;
-        renderNav(data.user);
+        cacheUser(data.user);
+        renderNav(data.user, false);
+        return;
       }
+      cacheUser(null);
+      renderNav(null, false);
     })
     .catch(function () {
-      /* keep default nav */
+      if (!cachedUser) renderNav(null, false);
     });
 })();
