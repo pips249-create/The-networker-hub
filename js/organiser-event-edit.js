@@ -13,7 +13,7 @@
       .replace(/\s+/g, '-');
     if (s === 'inperson' || s === 'in-person' || s === 'in_person') return 'in-person';
     if (s === 'online' || s === 'virtual') return 'online';
-    if (s === 'hybrid') return 'hybrid';
+    if (s === 'hybrid') return 'in-person';
     return s || '';
   }
 
@@ -24,7 +24,6 @@
   const FORMAT_LABELS = {
     'in-person': 'In person',
     online: 'Online',
-    hybrid: 'Hybrid',
   };
 
   let calYear = new Date().getFullYear();
@@ -511,8 +510,8 @@
     const venueBlock = document.getElementById('ee-venue-block');
     const onlineBlock = document.getElementById('ee-online-block');
     const badge = document.getElementById('ee-format-badge');
-    const showVenue = eventFormat === 'in-person' || eventFormat === 'hybrid';
-    const showOnline = eventFormat === 'online' || eventFormat === 'hybrid';
+    const showVenue = eventFormat === 'in-person';
+    const showOnline = eventFormat === 'online';
     if (venueBlock) venueBlock.classList.toggle('is-visible', showVenue);
     if (onlineBlock) onlineBlock.classList.toggle('is-visible', showOnline);
     if (badge) {
@@ -546,8 +545,8 @@
 
   function inferFormatFromEvent(ev) {
     const loc = String(ev.location || '').toLowerCase();
-    if (loc === 'online' || ev.onlineLink) return 'online';
-    if (ev.onlineLink && (ev.venue || ev.addressLine1)) return 'hybrid';
+    if (loc === 'online') return 'online';
+    if (ev.onlineLink && !ev.venue && !ev.addressLine1 && !ev.postcode) return 'online';
     return 'in-person';
   }
 
@@ -558,9 +557,6 @@
     document.getElementById('ee-description').value = ev.description || '';
     const wc = document.getElementById('ee-word-count');
     if (wc) wc.textContent = String(countWords(ev.description || ''));
-    if (document.getElementById('ee-max-attendees') && ev.maxAttendees != null) {
-      document.getElementById('ee-max-attendees').value = ev.maxAttendees;
-    }
     if (document.getElementById('ee-industry')) {
       const ind = ev.industry || (ev.industries && ev.industries[0]) || '';
       const indSel = document.getElementById('ee-industry');
@@ -643,8 +639,11 @@
   }
 
   async function load() {
+    const loading = window.organiserPageLoading;
+    if (loading) loading.show('Loading event');
     const { ok, data } = await api('/api/organiser/bootstrap');
     if (!ok) {
+      if (loading) loading.hide();
       showAlert('Please sign in to manage events.');
       return;
     }
@@ -672,10 +671,12 @@
           'Could not load this event. Try again from My Events, or check you have access to this listing.'
         );
       }
+      if (loading) loading.hide();
       return;
     }
 
     fillGroupsSelect();
+    if (loading) loading.hide();
   }
 
   document.getElementById('ee-cal-prev').addEventListener('click', () => {
@@ -737,14 +738,13 @@
 
     const locFields = buildLocationFields();
     if (
-      (eventFormat === 'in-person' || eventFormat === 'hybrid') &&
+      eventFormat === 'in-person' &&
       !currentEventLocked &&
       !locFields.postcode
     ) {
       showAlert('Enter a postcode for in-person events (used to place your event on the map).');
       return;
     }
-    const maxRaw = document.getElementById('ee-max-attendees')?.value;
     const recurrence = deriveRecurrenceFromDates(dateKeys);
     const payload = {
       organiserGroupId,
@@ -754,7 +754,6 @@
       description,
       photoUrl: document.getElementById('ee-photo-url').value.trim(),
       listingStatus: 'draft',
-      maxAttendees: maxRaw === '' || maxRaw == null ? null : Number(maxRaw),
       recurrencePattern: recurrence.recurrencePattern,
       recurrenceEndDate: recurrence.recurrenceEndDate,
       occurrences,
@@ -769,9 +768,11 @@
 
     const submitBtn = document.getElementById('ee-submit');
     const draftBtn = document.getElementById('ee-save-draft');
+    const loading = window.organiserPageLoading;
     [submitBtn, draftBtn].forEach((b) => {
       if (b) b.disabled = true;
     });
+    if (loading) loading.show(publish ? 'Continuing to tickets' : 'Saving draft');
 
     let res;
     if (editId) {
@@ -786,6 +787,7 @@
       });
     }
 
+    if (loading) loading.hide();
     [submitBtn, draftBtn].forEach((b) => {
       if (b) b.disabled = false;
     });

@@ -12,9 +12,15 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260614" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614c" />
   </head>
   <body class="organiser-event-edit-page">
+    <div id="ee-page-loading" class="ee-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
+      <div class="ee-page-loading-card">
+        <div class="ee-page-loading-spinner" aria-hidden="true"></div>
+        <p class="ee-page-loading-text"><span class="ee-page-loading-label">Loading</span><span class="ee-page-loading-dots" aria-hidden="true"></span></p>
+      </div>
+    </div>
     <div id="hub-site-nav"></div>
     <script src="../js/site-nav.js?v=20260612" data-root="../" data-page="organiser"></script>
 
@@ -153,19 +159,18 @@
             </div>
           </div>
           <div class="ee-refund-agreement">
-            <p><strong>⚠ You are responsible for all refunds</strong></p>
-            <p>By listing on The Networker Hub you agree that:</p>
+            <p><strong>You are responsible for all refunds</strong></p>
             <ul>
               <li>Refunds are issued directly by you through your Stripe account</li>
               <li>The Networker Hub does not hold or process attendee payments</li>
               <li>Your platform fee (3% + 20p per ticket) is non-refundable</li>
               <li>If you cancel an event, you must refund all attendees within 14 days</li>
             </ul>
-            <label class="ee-check">
-              <input type="checkbox" id="refund-terms-agreed" />
-              <span>I understand I am responsible for processing all refunds directly</span>
-            </label>
           </div>
+          <label class="ee-check ee-refund-check">
+            <input type="checkbox" id="refund-terms-agreed" />
+            <span>I understand I am responsible for processing all refunds directly</span>
+          </label>
           <p class="ee-alert ee-alert-warn" id="ee-publish-warn" hidden>Add at least one ticket type and complete the refund policy before publishing.</p>
         </div>
 
@@ -177,7 +182,8 @@
       </form>
     </div>
 
-    <script src="../js/organiser-quarter-time.js?v=20260613d"></script>
-    <script src="../js/organiser-event-tickets.js?v=20260613d"></script>
+    <script src="../js/organiser-page-loading.js?v=20260614c"></script>
+    <script src="../js/organiser-quarter-time.js?v=20260614c"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260614c"></script>
   </body>
 </html>

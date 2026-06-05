@@ -960,36 +960,36 @@ body.hub-page-organiser.organiser-event-edit-page {
 }
 
 .ee-refund-options {
-  display: grid;
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin-bottom: 16px;
 }
 
-@media (min-width: 640px) {
-  .ee-refund-options {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
 .ee-refund-card {
-  display: block;
-  border: 2px solid var(--ee-border);
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 2px 12px;
+  align-items: start;
+  border: 1.5px solid var(--ee-border);
   border-radius: var(--ee-radius);
-  padding: 14px;
+  padding: 12px 14px;
   cursor: pointer;
   background: var(--ee-white);
+  transition: border-color 0.15s, background 0.15s;
 }
 
-.ee-refund-card input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
+.ee-refund-card input[type='radio'] {
+  grid-row: 1 / span 2;
+  margin-top: 2px;
+  accent-color: var(--ee-purple);
 }
 
 .ee-refund-card strong {
   display: block;
+  grid-column: 2;
   font-size: 14px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   color: var(--ee-text);
 }
 
@@ -998,6 +998,7 @@ body.hub-page-organiser.organiser-event-edit-page {
   font-size: 12px;
   color: var(--ee-text-mid);
   line-height: 1.45;
+  grid-column: 2;
 }
 
 .ee-refund-card.is-selected {
@@ -1026,7 +1027,10 @@ body.hub-page-organiser.organiser-event-edit-page {
 }
 
 .ee-refund-extra {
-  margin-top: 12px;
+  grid-column: 1 / -1;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ee-border);
 }
 
 .ee-refund-extra label,
@@ -1049,18 +1053,124 @@ body.hub-page-organiser.organiser-event-edit-page {
 }
 
 .ee-refund-agreement {
-  background: #fff8e6;
-  border: 1px solid #f0d78c;
+  background: #f8f9fb;
+  border: 1px solid var(--ee-border);
+  border-left: 3px solid #d4a017;
   border-radius: var(--ee-radius);
-  padding: 14px 16px;
+  padding: 12px 14px;
   font-size: 12px;
-  line-height: 1.55;
+  line-height: 1.5;
+  color: var(--ee-text-mid);
+  margin-bottom: 12px;
+}
+
+.ee-refund-agreement p {
+  margin: 0 0 6px;
+}
+
+.ee-refund-agreement p strong {
   color: var(--ee-text);
+  font-size: 13px;
 }
 
 .ee-refund-agreement ul {
-  margin: 8px 0 12px 18px;
+  margin: 6px 0 0 18px;
   padding: 0;
+}
+
+.ee-refund-check {
+  margin-top: 0;
+  padding: 10px 12px;
+  background: var(--ee-white);
+  border: 1px solid var(--ee-border);
+  border-radius: var(--ee-radius);
+}
+
+.ee-datetime-split {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.ee-datetime-split input[type='date'] {
+  min-width: 0;
+}
+
+.ee-datetime-split select {
+  min-width: 5.5rem;
+}
+
+.ee-page-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(250, 247, 242, 0.88);
+  backdrop-filter: blur(4px);
+}
+
+.ee-page-loading[hidden] {
+  display: none !important;
+}
+
+.ee-page-loading-card {
+  text-align: center;
+  padding: 24px 28px;
+  background: var(--ee-white);
+  border: 1px solid var(--ee-border);
+  border-radius: var(--ee-radius);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+  min-width: 180px;
+}
+
+.ee-page-loading-spinner {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 14px;
+  border: 3px solid var(--ee-border);
+  border-top-color: var(--ee-purple);
+  border-radius: 50%;
+  animation: ee-page-spin 0.85s linear infinite;
+}
+
+.ee-page-loading-text {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ee-text);
+}
+
+.ee-page-loading-dots::after {
+  content: '';
+  animation: ee-loading-dots 1.2s steps(4, end) infinite;
+}
+
+@keyframes ee-page-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ee-loading-dots {
+  0% {
+    content: '';
+  }
+  25% {
+    content: '.';
+  }
+  50% {
+    content: '..';
+  }
+  75% {
+    content: '...';
+  }
+}
+
+body.ee-is-loading {
+  overflow: hidden;
 }
 
 .ee-alert-warn {

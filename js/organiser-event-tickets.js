@@ -100,46 +100,21 @@
 
   const QuarterTime = window.OrganiserQuarterTime;
 
-  function parseDatetimeLocalQuarter(raw) {
-    if (!raw) return null;
-    const d = new Date(raw);
-    if (Number.isNaN(d.getTime())) return null;
-    if (QuarterTime) {
-      const rounded = QuarterTime.roundToQuarterHour(
-        d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0')
-      );
-      const parts = rounded.split(':').map(Number);
-      d.setHours(parts[0] || 0, parts[1] || 0, 0, 0);
-    }
-    return d.toISOString();
+  function combineDateAndQuarterTime(dateStr, timeStr) {
+    if (!dateStr) return null;
+    const rounded = QuarterTime
+      ? QuarterTime.roundToQuarterHour(timeStr || '09:00')
+      : timeStr || '09:00';
+    const parts = rounded.split(':').map(Number);
+    const ymd = dateStr.split('-').map(Number);
+    const local = new Date(ymd[0], (ymd[1] || 1) - 1, ymd[2] || 1, parts[0] || 0, parts[1] || 0, 0);
+    if (Number.isNaN(local.getTime())) return null;
+    return local.toISOString();
   }
 
-  function bindQuarterDatetimeInput(input) {
-    if (!input || input.dataset.quarterBound) return;
-    input.dataset.quarterBound = '1';
-    input.setAttribute('step', '900');
-    input.addEventListener('change', function () {
-      if (!input.value || !QuarterTime) return;
-      const d = new Date(input.value);
-      if (Number.isNaN(d.getTime())) return;
-      const rounded = QuarterTime.roundToQuarterHour(
-        d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0')
-      );
-      const parts = rounded.split(':').map(Number);
-      d.setMinutes(parts[1] || 0, 0, 0);
-      d.setHours(parts[0] || 0);
-      const pad = (n) => String(n).padStart(2, '0');
-      input.value =
-        d.getFullYear() +
-        '-' +
-        pad(d.getMonth() + 1) +
-        '-' +
-        pad(d.getDate()) +
-        'T' +
-        pad(d.getHours()) +
-        ':' +
-        pad(d.getMinutes());
-    });
+  function populateQuarterTimeSelect(selectEl, selected) {
+    if (!selectEl || !QuarterTime) return;
+    QuarterTime.populateSelect(selectEl, selected || '09:00');
   }
 
   function loadSeriesMeta() {
@@ -261,11 +236,19 @@
       '</div>' +
       '<div class="ee-row-2">' +
       '<div class="ee-field"><label>Sale start <span class="ee-optional">(optional)</span></label>' +
-      '<p class="ee-hint" style="margin-top:0">15-minute steps</p>' +
-      '<input type="datetime-local" class="ee-tier-sale-start" step="900" /></div>' +
+      '<p class="ee-hint" style="margin-top:0">Pick a date and time in 15-minute steps</p>' +
+      '<div class="ee-datetime-split">' +
+      '<input type="date" class="ee-tier-sale-start-date" />' +
+      '<select class="ee-tier-sale-start-time" aria-label="Sale start time"></select>' +
+      '</div></div>' +
       '<div class="ee-field"><label>Sale end <span class="ee-optional">(optional)</span></label>' +
       saleEndSelectHtml('1_week') +
-      '<input type="datetime-local" class="ee-tier-sale-custom" step="900" hidden style="margin-top:8px" /></div>' +
+      '<div class="ee-sale-custom-wrap" hidden style="margin-top:8px">' +
+      '<p class="ee-hint" style="margin:0 0 6px">Custom end date and time</p>' +
+      '<div class="ee-datetime-split">' +
+      '<input type="date" class="ee-tier-sale-custom-date" />' +
+      '<select class="ee-tier-sale-custom-time" aria-label="Custom sale end time"></select>' +
+      '</div></div></div>' +
       '</div>' +
       '<div class="ee-field"><label>Ticket type</label><select class="ee-tier-kind">' +
       '<option value="Standard">Standard (auto-approve)</option>' +
@@ -319,14 +302,14 @@
 
   function bindTierRow(row) {
     const saleSelect = row.querySelector('.ee-tier-sale-end');
-    const customInput = row.querySelector('.ee-tier-sale-custom');
-    if (saleSelect && customInput) {
+    const customWrap = row.querySelector('.ee-sale-custom-wrap');
+    if (saleSelect && customWrap) {
       saleSelect.addEventListener('change', () => {
-        customInput.hidden = saleSelect.value !== 'custom';
+        customWrap.hidden = saleSelect.value !== 'custom';
       });
     }
-    bindQuarterDatetimeInput(row.querySelector('.ee-tier-sale-start'));
-    bindQuarterDatetimeInput(customInput);
+    populateQuarterTimeSelect(row.querySelector('.ee-tier-sale-start-time'), '09:00');
+    populateQuarterTimeSelect(row.querySelector('.ee-tier-sale-custom-time'), '18:00');
     row.querySelectorAll('input, textarea, select').forEach((el) => {
       el.addEventListener('input', updateTierSummary);
       el.addEventListener('change', updateTierSummary);
@@ -373,14 +356,15 @@
       const qty = row.querySelector('.ee-tier-qty')?.value;
       const desc = row.querySelector('.ee-tier-desc')?.value.trim() || '';
       const saleOption = row.querySelector('.ee-tier-sale-end')?.value;
-      const customDt = row.querySelector('.ee-tier-sale-custom')?.value;
-      const saleStartRaw = row.querySelector('.ee-tier-sale-start')?.value;
-      const saleStart = parseDatetimeLocalQuarter(saleStartRaw);
-      const saleEnd = computeSaleEndIso(
-        saleOption,
-        customDt ? parseDatetimeLocalQuarter(customDt) : null,
-        eventDate
+      const customDt = combineDateAndQuarterTime(
+        row.querySelector('.ee-tier-sale-custom-date')?.value,
+        row.querySelector('.ee-tier-sale-custom-time')?.value
       );
+      const saleStart = combineDateAndQuarterTime(
+        row.querySelector('.ee-tier-sale-start-date')?.value,
+        row.querySelector('.ee-tier-sale-start-time')?.value
+      );
+      const saleEnd = computeSaleEndIso(saleOption, customDt, eventDate);
       const ticketKind = row.querySelector('.ee-tier-kind')?.value || 'Standard';
       const isApp = ticketKind === 'Application-based';
       tiers.push({
@@ -554,6 +538,7 @@
 
   async function saveTickets(publish) {
     showAlert('');
+    const loading = window.organiserPageLoading;
     const tiers = attendanceMode === 'osop' ? collectOsopTiers() : collectTiers();
     if (!tiers.length) {
       showAlert('Add at least one ticket type with a name.');
@@ -583,6 +568,7 @@
     const saveBtn = document.getElementById('ee-tickets-save');
     if (btn) btn.disabled = true;
     if (saveBtn) saveBtn.disabled = true;
+    if (loading) loading.show(publish ? 'Publishing event' : 'Saving tickets');
 
     const body = {
       eventIds,
@@ -600,6 +586,7 @@
       await applyAttendeeExtrasToEvents();
     }
 
+    if (loading) loading.hide();
     if (saveBtn) saveBtn.disabled = false;
     updatePublishButton();
 
