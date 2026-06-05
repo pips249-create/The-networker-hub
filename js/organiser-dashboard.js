@@ -1045,6 +1045,9 @@
     if (page === 'academy') {
       renderAcademyPreview();
     }
+    if (page === 'team') {
+      loadTeamMembers().then(() => renderTeam());
+    }
 
     const hash = page === 'events' ? sub || 'events-list' : page;
     if (location.hash.replace('#', '') !== hash) {
@@ -1165,12 +1168,26 @@
     });
   }
 
+  function overviewEventsForDashboard() {
+    const list = state.events.slice();
+    list.sort((a, b) => {
+      const draftA = String(a.statusKey || '').toLowerCase() === 'draft';
+      const draftB = String(b.statusKey || '').toLowerCase() === 'draft';
+      if (draftA !== draftB) return draftA ? 1 : -1;
+      const da = a.date ? new Date(a.date).getTime() : Number.POSITIVE_INFINITY;
+      const db = b.date ? new Date(b.date).getTime() : Number.POSITIVE_INFINITY;
+      if (da !== db) return da - db;
+      return String(a.title || '').localeCompare(String(b.title || ''));
+    });
+    return list.slice(0, 6);
+  }
+
   function renderOverviewEvents() {
     const body = document.getElementById('dash-events-body');
     const empty = document.getElementById('dash-events-empty');
     if (!body) return;
     body.innerHTML = '';
-    const slice = (state.upcomingEvents.length ? state.upcomingEvents : state.events).slice(0, 6);
+    const slice = overviewEventsForDashboard();
     if (!slice.length) {
       if (empty) empty.hidden = false;
       return;
@@ -1498,8 +1515,13 @@
     const { ok, data } = await api('/api/organiser/team');
     if (!ok) {
       state.teamMembers = [];
+      state.teamError =
+        data.message ||
+        data.error ||
+        (data.error === 'team_not_supported' ? 'Team management is not available on this server.' : 'Could not load team members.');
       return;
     }
+    state.teamError = null;
     state.teamMembers = data.members || [];
     state.canManageTeam = data.canManageTeam !== false;
     state.canDeleteEvents = data.canDeleteEvents !== false;
@@ -1510,9 +1532,29 @@
     const body = document.getElementById('team-body');
     const empty = document.getElementById('team-empty');
     const inviteBtn = document.getElementById('btn-invite-team');
+    const teamPage = document.getElementById('org-page-team');
     if (!body) return;
     body.innerHTML = '';
     if (inviteBtn) inviteBtn.hidden = !state.canManageTeam;
+    if (teamPage) {
+      let errEl = teamPage.querySelector('.org-team-error');
+      if (state.teamError) {
+        if (!errEl) {
+          errEl = document.createElement('p');
+          errEl.className = 'org-alert error org-team-error';
+          const toolbar = teamPage.querySelector('.org-toolbar');
+          if (toolbar && toolbar.nextSibling) {
+            teamPage.insertBefore(errEl, toolbar.nextSibling);
+          } else {
+            teamPage.prepend(errEl);
+          }
+        }
+        errEl.textContent = state.teamError;
+        errEl.hidden = false;
+      } else if (errEl) {
+        errEl.hidden = true;
+      }
+    }
 
     const list = state.teamMembers.slice();
     if (!list.length) {
@@ -1976,7 +2018,9 @@
 
     document.querySelectorAll('[data-org-goto-view]').forEach((btn) => {
       btn.addEventListener('click', () => {
-        setRoute(btn.getAttribute('data-org-goto-view') || 'dashboard');
+        const route = btn.getAttribute('data-org-goto-view') || 'dashboard';
+        setRoute(route);
+        if (route === 'dashboard' || route === 'groups') refresh();
       });
     });
 
@@ -1989,13 +2033,15 @@
         else if (route === 'events-reviews') {
           renderMyEventsHub();
           renderReviews();
-        }         else if (
+        } else if (
           route === 'events-tickets' ||
           route === 'events-list' ||
           route === 'events-attendees' ||
           route === 'events-revenue'
         ) {
           renderMyEventsHub();
+        } else if (route === 'team') {
+          loadTeamMembers().then(() => renderTeam());
         }
       });
     });
@@ -2149,17 +2195,20 @@
         e.preventDefault();
         const route = el.getAttribute('data-org-route') || 'dashboard';
         setRoute(route);
+        if (route === 'dashboard' || route === 'team' || route === 'groups') refresh();
       });
     });
 
     window.addEventListener('hashchange', () => {
       const r = parseRoute();
       setRoute(r.sub || r.page);
-      if (r.page === 'groups') refresh();
+      if (r.page === 'groups' || r.page === 'dashboard' || r.page === 'team') refresh();
     });
 
     window.addEventListener('pageshow', (e) => {
-      if (e.persisted && shell && !shell.hidden) refresh();
+      if (shell && !shell.hidden && (e.persisted || performance.getEntriesByType('navigation')[0]?.type === 'back_forward')) {
+        refresh();
+      }
     });
 
     window.addEventListener('scroll', closeAllActionMenus, true);
