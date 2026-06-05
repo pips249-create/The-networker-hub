@@ -20,6 +20,7 @@ const {
   parseTypeCategory: parseMeetingCategory,
 } = require('./event-types');
 const { plainEventDescription } = require('./event-description');
+const { publicEventSlug } = require('./event-slug');
 
 function parseTypeCategory(raw) {
   return parseMeetingCategory(raw);
@@ -59,20 +60,38 @@ function ukOutcode(postcode) {
 }
 
 function formatDateParts(startsAt) {
-  if (!startsAt) return { iso: '', ts: null, display: '', short: '' };
+  if (!startsAt) return { iso: '', ts: null, display: '', short: '', dateOnly: '', time: '' };
   const d = new Date(startsAt);
-  if (Number.isNaN(d.getTime())) return { iso: '', ts: null, display: '', short: '' };
+  if (Number.isNaN(d.getTime())) {
+    return { iso: '', ts: null, display: '', short: '', dateOnly: '', time: '' };
+  }
   const iso = d.toISOString();
-  const display = d.toLocaleString('en-GB', {
-    weekday: 'short',
+  const dateOnly = d.toLocaleDateString('en-GB', {
+    weekday: 'long',
     day: 'numeric',
-    month: 'short',
+    month: 'long',
     year: 'numeric',
+  });
+  const time = d.toLocaleTimeString('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
+    hour12: false,
   });
+  const display = `${dateOnly}, ${time}`;
   const short = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-  return { iso, ts: d.getTime(), display, short };
+  return { iso, ts: d.getTime(), display, short, dateOnly, time };
+}
+
+function formatTimeRange(startsAt, endsAt) {
+  if (!startsAt) return '';
+  const start = new Date(startsAt);
+  if (Number.isNaN(start.getTime())) return '';
+  const fmt = (d) =>
+    d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+  if (!endsAt) return fmt(start);
+  const end = new Date(endsAt);
+  if (Number.isNaN(end.getTime())) return fmt(start);
+  return `${fmt(start)} – ${fmt(end)}`;
 }
 
 function buildDateLine(location, parsedDate, time) {
@@ -129,9 +148,7 @@ function rowToEvent(row, organiser, ticketRows) {
   const venue = String(row.venue || '').trim();
   const industry = Array.isArray(row.industries) ? row.industries[0] || '' : '';
   const parsedDate = formatDateParts(row.starts_at);
-  const time = parsedDate.display.includes(',')
-    ? parsedDate.display.split(',').pop().trim()
-    : '';
+  const time = formatTimeRange(row.starts_at, row.ends_at) || parsedDate.time || '';
 
   const tiers = (ticketRows || [])
     .filter((t) => t.event_id === row.id)
@@ -149,15 +166,22 @@ function rowToEvent(row, organiser, ticketRows) {
   const spotsLeft = null;
   const isSoldOut = tiers.length > 0 && tiers.every((t) => t.soldOut);
 
+  const highlights = Array.isArray(row.highlights)
+    ? row.highlights.map((h) => String(h || '').trim()).filter(Boolean)
+    : [];
+
   const ev = {
     id: row.id,
-    slug: row.slug ? String(row.slug).trim() : null,
+    slug: publicEventSlug({ slug: row.slug, title }),
     title,
     description: descText,
-    date: parsedDate.display,
+    highlights,
+    foodIncluded: Boolean(row.food_included),
+    date: parsedDate.dateOnly || parsedDate.display,
     dateRaw: parsedDate.iso,
     dateTs: parsedDate.ts,
     dateFieldRaw: row.starts_at ? String(row.starts_at) : '',
+    endDateRaw: row.ends_at ? String(row.ends_at) : '',
     time,
     location,
     postcode,

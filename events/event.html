@@ -107,9 +107,9 @@
               </svg>
               <span id="ev-meta-city">Liverpool city centre</span>
             </span>
-            <span class="rating" id="ev-rating-wrap" aria-label="4 out of 5 stars from 48 reviews">
-              <span class="stars" id="ev-rating-stars" aria-hidden="true">★★★★☆</span>
-              <span class="rating-count" id="ev-rating-count">4.0 (48 reviews)</span>
+            <span class="rating" id="ev-rating-wrap" hidden aria-label="Event rating">
+              <span class="stars" id="ev-rating-stars" aria-hidden="true"></span>
+              <span class="rating-count" id="ev-rating-count"></span>
             </span>
           </div>
         </div>
@@ -163,24 +163,10 @@
 
         <section class="content-section" id="ev-about-section">
           <h2>About this event</h2>
-          <p id="ev-about-lead">
-            Join a curated group of Liverpool SME owners, marketers and hospitality operators for a relaxed Sunday
-            afternoon lunch &amp; learn. We will unpack what actually works for local venues in 2026 — from loyalty
-            programmes and door-to-door conversion, to how the latest booking tools are reshaping weekend trade.
-          </p>
-          <p id="ev-about-extra">
-            Expect a light two-course lunch, one short talk from an industry guest, and a structured networking round
-            where everyone leaves with at least three warm introductions. You can also join remotely via our livestream
-            and breakout rooms.
-          </p>
-          <h3 class="subhead">What&apos;s included</h3>
-          <ul>
-            <li>Two-course seasonal lunch &amp; unlimited soft drinks</li>
-            <li>30-minute talk from a guest speaker (announced one week prior)</li>
-            <li>Facilitated networking with name badges &amp; intro cards</li>
-            <li>Digital attendee list with opt-in contact sharing</li>
-            <li>Livestream access for remote attendees, with breakout rooms</li>
-          </ul>
+          <p id="ev-about-lead">Loading event details…</p>
+          <p id="ev-about-extra" hidden></p>
+          <h3 class="subhead" id="ev-included-heading" hidden>What&apos;s included</h3>
+          <ul id="ev-included-list"></ul>
         </section>
 
         <section class="content-section">
@@ -196,10 +182,7 @@
               <div class="org-meta" id="ev-host-meta" hidden>
                 <span id="ev-host-rating-meta"></span>
               </div>
-              <p id="ev-host-profile">
-                Catalyst Sessions runs small-format lunch &amp; learns across the North West, focused on hospitality,
-                retail and events. Warm rooms, real conversations, no cold-call energy.
-              </p>
+              <p id="ev-host-profile"></p>
               <div class="organiser-actions">
                 <a href="#" id="ev-host-profile-link" class="btn-outline" hidden>View group profile →</a>
                 <button type="button" class="btn-outline" id="contact-host-btn">Contact Host</button>
@@ -236,7 +219,7 @@
           </div>
         </section>
 
-        <section class="content-section" id="ev-reviews-section">
+        <section class="content-section" id="ev-reviews-section" hidden>
           <h2>What people are saying about this organiser</h2>
           <div class="reviews-dashboard">
             <div class="reviews-score-card">
@@ -428,7 +411,7 @@
     </div>
 
     <script src="../js/hub-loading.js?v=20260605"></script>
-    <script src="../js/event-detail.js?v=20260606f"></script>
+    <script src="../js/event-detail.js?v=20260614g"></script>
   </body>
 </html>
 <!-- legacy inline removed

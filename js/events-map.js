@@ -93,7 +93,11 @@
         }
         bounds.push(coords);
         placed++;
-        var href = 'event.html?id=' + encodeURIComponent(ev.id);
+        var slug = ev.slug ? String(ev.slug).trim() : '';
+        var uuidLike = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(slug);
+        var href = slug && !uuidLike
+          ? '/events/' + encodeURIComponent(slug)
+          : 'event.html?id=' + encodeURIComponent(ev.id);
         var pc = ev.postcode || (window.hubExtractPostcode ? window.hubExtractPostcode(ev) : '');
         var popup =
           '<div class="map-popup">' +

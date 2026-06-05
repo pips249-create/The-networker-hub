@@ -486,6 +486,7 @@ async function publishOrganiserListingsForEventIds(sb, eventRows) {
 
 async function publishEventsWithRefund(eventIds, refundPayload) {
   const sb = getSupabaseAdmin();
+  const { ensureEventSlug } = require('./event-slug');
   const ids = (eventIds || []).filter(Boolean);
   if (!ids.length) {
     const e = new Error('No events to publish');
@@ -502,10 +503,32 @@ async function publishEventsWithRefund(eventIds, refundPayload) {
     refund_terms_agreed: Boolean(refundPayload.refundTermsAgreed),
     refund_terms_agreed_at: refundPayload.refundTermsAgreed ? new Date().toISOString() : null,
   };
-  const { data, error } = await sb.from('events').update(patch).in('id', ids).select('*');
-  if (error) throw new Error(error.message);
-  await publishOrganiserListingsForEventIds(sb, data || []);
-  return (data || []).map(rowToEvent);
+
+  const { data: existing, error: loadErr } = await sb
+    .from('events')
+    .select('id, title, slug')
+    .in('id', ids);
+  if (loadErr) throw new Error(loadErr.message);
+
+  const updated = [];
+  for (const row of existing || []) {
+    const slug = await ensureEventSlug(sb, {
+      title: row.title,
+      eventId: row.id,
+      currentSlug: row.slug,
+    });
+    const { data, error } = await sb
+      .from('events')
+      .update({ ...patch, slug })
+      .eq('id', row.id)
+      .select('*')
+      .single();
+    if (error) throw new Error(error.message);
+    if (data) updated.push(data);
+  }
+
+  await publishOrganiserListingsForEventIds(sb, updated);
+  return updated.map(rowToEvent);
 }
 
 /** Same shape as Airtable API: { eventIds, tickets, publish, refund } */

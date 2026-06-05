@@ -51,10 +51,34 @@
 
   function starsFromAvg(avg) {
     const a = Number(avg);
-    const full = Math.min(5, Math.max(0, Math.round(isNaN(a) ? 4 : a)));
+    if (!Number.isFinite(a) || a <= 0) return '☆☆☆☆☆';
+    const full = Math.min(5, Math.max(0, Math.round(a)));
     let s = '';
     for (let i = 1; i <= 5; i++) s += i <= full ? '★' : '☆';
     return s;
+  }
+
+  function slugifyTitle(title) {
+    return String(title || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 96);
+  }
+
+  function publicSlug(ev) {
+    const stored = ev && ev.slug ? String(ev.slug).trim() : '';
+    const uuidLike =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(stored);
+    if (stored && !uuidLike) return stored;
+    return slugifyTitle(ev && ev.title) || stored || '';
+  }
+
+  function canonicalEventPath(ev) {
+    const slug = publicSlug(ev);
+    if (slug) return '/events/' + encodeURIComponent(slug);
+    if (ev && ev.id) return '/events/event.html?id=' + encodeURIComponent(ev.id);
+    return window.location.pathname;
   }
 
   function formatHeroLabel(fmt) {
@@ -163,10 +187,11 @@
 
     const metaWrap = document.getElementById('ev-host-meta');
     const ratingMeta = document.getElementById('ev-host-rating-meta');
-    if (metaWrap && ratingMeta && (ev.rating || ev.reviews)) {
-      const r = Number(ev.rating) || 0;
-      const c = Number(ev.reviews) || 0;
-      ratingMeta.textContent = '★ ' + r.toFixed(1) + ' average' + (c ? ' · ' + c + ' reviews' : '');
+    const reviewCount = Number(ev.reviews) || 0;
+    const rating = Number(ev.rating) || 0;
+    if (metaWrap && ratingMeta && reviewCount > 0 && rating > 0) {
+      ratingMeta.textContent =
+        '★ ' + rating.toFixed(1) + ' average · ' + reviewCount + ' review' + (reviewCount === 1 ? '' : 's');
       metaWrap.hidden = false;
     } else if (metaWrap) metaWrap.hidden = true;
   }
@@ -192,9 +217,8 @@
   }
 
   function eventDetailHref(ev) {
-    if (ev.slug) {
-      return '/events/' + encodeURIComponent(ev.slug);
-    }
+    const slug = publicSlug(ev);
+    if (slug) return '/events/' + encodeURIComponent(slug);
     return 'event.html?id=' + encodeURIComponent(ev.id);
   }
 
@@ -238,7 +262,7 @@
 
       const pill = document.createElement('span');
       pill.className = 'mini-pill';
-      pill.textContent = ev.industry || 'Networking';
+      pill.textContent = ev.typeRaw || ev.typeCategory || 'Event';
       imgWrap.appendChild(pill);
 
       const price = document.createElement('span');
@@ -287,14 +311,79 @@
     }
   }
 
+  function renderAboutSection(ev) {
+    const lead = document.getElementById('ev-about-lead');
+    const extra = document.getElementById('ev-about-extra');
+    const heading = document.getElementById('ev-included-heading');
+    const list = document.getElementById('ev-included-list');
+    const desc = String(ev.description || '').trim();
+
+    if (lead) {
+      lead.textContent =
+        desc || 'Join us for ' + ev.title + '. Full details will be shared with ticket holders.';
+    }
+    if (extra) extra.hidden = true;
+
+    if (!list) return;
+    list.innerHTML = '';
+    const bullets = Array.isArray(ev.highlights) ? ev.highlights.filter(Boolean) : [];
+    if (ev.foodIncluded) bullets.push('Food or drink included with your ticket');
+
+    if (bullets.length) {
+      if (heading) heading.hidden = false;
+      bullets.forEach((item) => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        list.appendChild(li);
+      });
+    } else if (heading) {
+      heading.hidden = true;
+    }
+  }
+
+  function renderRatingBlock(ev) {
+    const wrap = document.getElementById('ev-rating-wrap');
+    const stars = document.getElementById('ev-rating-stars');
+    const cnt = document.getElementById('ev-rating-count');
+    const reviewCount = Number(ev.reviews) || 0;
+    const rating = Number(ev.rating) || 0;
+
+    if (!wrap) return;
+    if (!reviewCount || rating <= 0) {
+      wrap.hidden = true;
+      return;
+    }
+
+    wrap.hidden = false;
+    if (stars) stars.textContent = starsFromAvg(rating);
+    if (cnt) {
+      cnt.textContent = rating.toFixed(1) + ' (' + reviewCount + ' review' + (reviewCount === 1 ? '' : 's') + ')';
+    }
+    wrap.setAttribute(
+      'aria-label',
+      rating.toFixed(1) + ' out of 5 from ' + reviewCount + ' reviews'
+    );
+  }
+
+  function updateCanonicalUrl(ev) {
+    const path = canonicalEventPath(ev);
+    if (!path || window.location.pathname + window.location.search === path) return;
+    try {
+      history.replaceState(null, '', path);
+    } catch {
+      /* ignore */
+    }
+  }
+
   function populateFromEvent(ev) {
     currentEvent = ev;
     document.title = ev.title + ' – The Networker Hub';
     document.body.setAttribute('data-event-id', ev.id);
     setText('ev-title', ev.title);
     setText('ev-trail-current', ev.title);
-    setText('ev-category', ev.industry || ev.format || 'Networking');
+    setText('ev-category', ev.typeRaw || ev.typeCategory || ev.format || 'Event');
     updateBreadcrumbTrail(ev);
+    updateCanonicalUrl(ev);
 
     const priceLabel = ev.priceKey === 'free' ? 'Free' : ev.price;
     setText('ev-price', ev.priceKey === 'free' ? 'Free' : 'from ' + ev.price);
@@ -314,40 +403,35 @@
       };
     }
 
-    setText('ev-meta-starts', ev.date || 'Date to be confirmed');
+    const dateLabel =
+      ev.date ||
+      (ev.dateFieldRaw
+        ? new Date(ev.dateFieldRaw).toLocaleDateString('en-GB', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })
+        : '');
+    setText('ev-meta-starts', dateLabel || 'Date to be confirmed');
     const timeRow = document.getElementById('ev-meta-time-row');
     if (ev.time) {
       setText('ev-meta-time', ev.time);
       if (timeRow) timeRow.style.display = '';
     } else if (timeRow) timeRow.style.display = 'none';
 
-    setText('ev-meta-city', ev.location || 'Location TBC');
+    const cityLabel = [ev.venueName || ev.venue, ev.city, ev.location].filter(Boolean)[0] || 'Location TBC';
+    setText('ev-meta-city', cityLabel);
 
-    const stars = document.getElementById('ev-rating-stars');
-    if (stars) stars.textContent = starsFromAvg(ev.rating);
-    const cnt = document.getElementById('ev-rating-count');
-    if (cnt) {
-      const r = Number(ev.rating) || 4;
-      const c = Number(ev.reviews) || 0;
-      cnt.textContent = r.toFixed(1) + (c ? ' (' + c + ' reviews)' : '');
-    }
-
+    renderRatingBlock(ev);
     applyHostBlock(ev);
 
     const vn = ev.venueName || ev.venue || '';
-    const va = ev.venueAddress || ev.location || '';
-    setText('ev-venue-name', vn || 'Venue TBC');
+    const va = [ev.venueAddress, ev.address, ev.postcode].filter(Boolean).join(', ') || ev.location || '';
+    setText('ev-venue-name', vn || cityLabel || 'Venue TBC');
     setText('ev-venue-addr', va);
     applyMapAndDirections(ev);
-
-    const lead = document.getElementById('ev-about-lead');
-    const extra = document.getElementById('ev-about-extra');
-    if (lead) {
-      lead.textContent =
-        ev.description ||
-        'Join us for ' + ev.title + '. Full details will be shared with ticket holders.';
-      if (extra) extra.hidden = true;
-    }
+    renderAboutSection(ev);
 
     renderTicketPanel(ev);
     renderRefundPolicy(ev);
@@ -516,44 +600,65 @@
   }
 
   function renderOrganiserReviews(ev) {
+    const section = document.getElementById('ev-reviews-section');
     const scoreEl = document.getElementById('ev-reviews-score');
     const starsEl = document.getElementById('ev-reviews-score-stars');
     const countEl = document.getElementById('ev-reviews-score-count');
     const feed = document.getElementById('ev-reviews-feed');
-    const r = Number(ev.rating) || 4;
-    const c = Number(ev.reviews) || MOCK_ORGANISER_REVIEWS.length;
+    const r = Number(ev.rating) || 0;
+    const c = Number(ev.reviews) || 0;
+    const hasReviews = c > 0 && r > 0;
+
+    if (section) section.hidden = !hasReviews;
+    if (!hasReviews) {
+      if (feed) feed.innerHTML = '';
+      return;
+    }
 
     if (scoreEl) {
       scoreEl.innerHTML = r.toFixed(1) + '<span class="reviews-score-max"> / 5</span>';
     }
     if (starsEl) starsEl.textContent = starsFromAvg(r);
-    if (countEl) countEl.textContent = 'Based on ' + (c || MOCK_ORGANISER_REVIEWS.length) + ' reviews';
+    if (countEl) countEl.textContent = 'Based on ' + c + ' review' + (c === 1 ? '' : 's');
     if (!feed) return;
 
     feed.innerHTML = '';
-    MOCK_ORGANISER_REVIEWS.forEach((review) => {
-      const card = document.createElement('article');
-      card.className = 'review-card';
-      const header = document.createElement('div');
-      header.className = 'review-card-header';
-      const name = document.createElement('strong');
-      name.textContent = review.name;
-      const date = document.createElement('span');
-      date.className = 'review-card-date';
-      date.textContent = review.date;
-      header.appendChild(name);
-      header.appendChild(date);
-      const stars = document.createElement('div');
-      stars.className = 'review-card-stars';
-      stars.setAttribute('aria-label', review.rating + ' out of 5 stars');
-      stars.textContent = starsFromAvg(review.rating);
-      const body = document.createElement('p');
-      body.textContent = review.text;
-      card.appendChild(header);
-      card.appendChild(stars);
-      card.appendChild(body);
-      feed.appendChild(card);
-    });
+    if (c > 0 && c <= MOCK_ORGANISER_REVIEWS.length) {
+      MOCK_ORGANISER_REVIEWS.slice(0, c).forEach((review) => {
+        appendReviewCard(feed, review);
+      });
+      return;
+    }
+    if (c > 0) {
+      const placeholder = document.createElement('p');
+      placeholder.className = 'reviews-empty-note';
+      placeholder.textContent = 'Attendee reviews will appear here as they are submitted.';
+      feed.appendChild(placeholder);
+    }
+  }
+
+  function appendReviewCard(feed, review) {
+    const card = document.createElement('article');
+    card.className = 'review-card';
+    const header = document.createElement('div');
+    header.className = 'review-card-header';
+    const name = document.createElement('strong');
+    name.textContent = review.name;
+    const date = document.createElement('span');
+    date.className = 'review-card-date';
+    date.textContent = review.date;
+    header.appendChild(name);
+    header.appendChild(date);
+    const stars = document.createElement('div');
+    stars.className = 'review-card-stars';
+    stars.setAttribute('aria-label', review.rating + ' out of 5 stars');
+    stars.textContent = starsFromAvg(review.rating);
+    const body = document.createElement('p');
+    body.textContent = review.text;
+    card.appendChild(header);
+    card.appendChild(stars);
+    card.appendChild(body);
+    feed.appendChild(card);
   }
 
   function showSeatApplication(show) {
@@ -709,6 +814,11 @@
   }
 
   function pageUrl() {
+    const ev = currentEvent;
+    if (ev) {
+      const path = canonicalEventPath(ev);
+      return window.location.origin + path;
+    }
     return window.location.href;
   }
 

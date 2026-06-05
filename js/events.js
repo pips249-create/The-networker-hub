@@ -15,7 +15,6 @@
     countAll: document.getElementById('count-all'),
     countMeeting: document.getElementById('count-meeting'),
     countExhibition: document.getElementById('count-exhibition'),
-    industry: document.getElementById('industry'),
     location: document.getElementById('location'),
     sponsorTitle: document.getElementById('sponsor-title'),
     sponsorBody: document.getElementById('sponsor-body'),
@@ -46,11 +45,6 @@
       `<img class="${className}" src="${src}" alt="" loading="lazy" decoding="async" ` +
       `referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='${fallback}'">`
     );
-  }
-
-  function slugIndustry(ind) {
-    if (!ind) return '';
-    return String(ind).toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40);
   }
 
   function slugLocation(loc) {
@@ -108,7 +102,25 @@
     return html;
   }
 
+  function slugifyEventTitle(title) {
+    return String(title || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 96);
+  }
+
+  function publicEventSlug(ev) {
+    const stored = ev.slug ? String(ev.slug).trim() : '';
+    const uuidLike =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(stored);
+    if (stored && !uuidLike) return stored;
+    return slugifyEventTitle(ev.title) || '';
+  }
+
   function detailHref(ev) {
+    const slug = publicEventSlug(ev);
+    if (slug) return '/events/' + encodeURIComponent(slug);
     return 'event.html?id=' + encodeURIComponent(ev.id);
   }
 
@@ -118,7 +130,6 @@
         data-type="${escapeHtml(ev.type)}"
         data-search="${escapeHtml(ev.search)}"
         data-location="${escapeHtml(ev.locationSlug)}"
-        data-industry="${escapeHtml(ev.industrySlug)}"
         data-format="${escapeHtml(ev.formatSlug)}"
         data-price="${escapeHtml(ev.priceKey)}">
         <a class="premium-card-link" href="${escapeHtml(detailHref(ev))}">
@@ -159,7 +170,6 @@
         data-type="${escapeHtml(ev.type)}"
         data-search="${escapeHtml(ev.search)}"
         data-location="${escapeHtml(ev.locationSlug)}"
-        data-industry="${escapeHtml(ev.industrySlug)}"
         data-format="${escapeHtml(ev.formatSlug)}"
         data-price="${escapeHtml(ev.priceKey)}">
         <div class="event-grid-media">
@@ -315,17 +325,9 @@
 
   function fillFilterOptions() {
     fillTypeFilterOptions();
-    if (!els.industry || !els.location) return;
-    while (els.industry.options.length > 1) els.industry.remove(1);
+    if (!els.location) return;
     while (els.location.options.length > 1) els.location.remove(1);
-    const industries = [...new Set(events.map((e) => e.industry).filter(Boolean))].sort();
     const locations = [...new Set(events.map((e) => e.location).filter(Boolean))].sort();
-    industries.forEach((label) => {
-      const opt = document.createElement('option');
-      opt.value = slugIndustry(label);
-      opt.textContent = label;
-      els.industry.appendChild(opt);
-    });
     locations.forEach((label) => {
       const opt = document.createElement('option');
       opt.value = slugLocation(label);
