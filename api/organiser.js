@@ -10,6 +10,9 @@ const routes = {
   events: require('./_lib/routes/organiser-events'),
   tickets: require('./_lib/routes/organiser-tickets'),
   attendees: require('./_lib/routes/organiser-attendees'),
+  team: require('./_lib/routes/organiser-team'),
+  cancellations: require('./_lib/routes/organiser-cancellations'),
+  payouts: require('./_lib/routes/organiser-payouts'),
 };
 
 module.exports = async function handler(req, res) {

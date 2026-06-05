@@ -26,8 +26,12 @@
     tickets: [],
     attendeesAll: [],
     reviews: [],
+    teamMembers: [],
     groupsError: null,
     airtable: null,
+    canManageTeam: true,
+    canDeleteEvents: true,
+    organiserRole: 'owner',
   };
 
   const ORGANISER_SCOPE_COOKIE = 'hub_organiser_scope';
@@ -158,10 +162,50 @@
         ? 'org-badge-green'
         : key === 'upcoming'
           ? 'org-badge-gold'
-          : key === 'unpublished'
-            ? 'org-badge-red'
-            : 'org-badge-purple';
+          : key === 'archived'
+            ? 'org-badge-blue'
+            : key === 'cancelled'
+              ? 'org-badge-red'
+              : key === 'unpublished'
+                ? 'org-badge-red'
+                : 'org-badge-purple';
     return '<span class="org-badge ' + cls + '">' + esc(label) + '</span>';
+  }
+
+  function payoutStatusBadgeHtml(ev) {
+    const key = ev.payoutStatusKey || (ev.payoutHeld ? 'held' : null);
+    const label = ev.payoutStatusLabel || (ev.payoutHeld ? 'Held' : '—');
+    if (!key || label === '—') return '<span class="org-payout-muted">—</span>';
+    const cls =
+      key === 'paid'
+        ? 'org-badge-green'
+        : key === 'approved'
+          ? 'org-badge-blue'
+          : key === 'pending_review'
+            ? 'org-badge-gold'
+            : key === 'held'
+              ? 'org-badge-red'
+              : 'org-badge-purple';
+    return '<span class="org-badge ' + cls + '">' + esc(label) + '</span>';
+  }
+
+  function payoutActionsHtml(ev) {
+    const parts = [];
+    if (ev.needsRefundConfirmation) {
+      parts.push(
+        '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-confirm-refunds="' +
+          esc(ev.id) +
+          '">Confirm refunds issued</button>'
+      );
+    }
+    if (ev.canRequestPayout) {
+      parts.push(
+        '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-request-payout="' +
+          esc(ev.id) +
+          '">Request payout</button>'
+      );
+    }
+    return parts.length ? parts.join(' ') : '—';
   }
 
   function ratingHtml(rating) {
@@ -227,6 +271,41 @@
     );
   }
 
+  function eventActionMenuHtmlWithItem(ev) {
+    const id = ev.id;
+    const title = ev.title;
+    const shortTitle = String(title || 'Event').slice(0, 32);
+    const cancelled = String(ev.status || '').toLowerCase() === 'cancelled';
+    const cancelItem =
+      ev.locked && !cancelled
+        ? '<button type="button" class="org-action-item danger" data-goto-cancel="' +
+          esc(id) +
+          '"><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Cancel event</strong><span>Cancel locked event with ticket sales</span></span></button>'
+        : '';
+    return (
+      '<div class="org-action-wrap">' +
+      '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
+      '<div class="org-action-menu" role="menu">' +
+      '<div class="org-action-menu-header">' +
+      esc(shortTitle) +
+      '</div>' +
+      '<button type="button" class="org-action-item" data-edit-event="' +
+      esc(id) +
+      '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit event</strong><span>Update details, times &amp; tickets</span></span></button>' +
+      '<button type="button" class="org-action-item" data-org-goto-sub="events-attendees" data-filter-event="' +
+      esc(id) +
+      '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>See attendees</strong><span>View who registered for this event</span></span></button>' +
+      '<button type="button" class="org-action-item" data-org-goto-sub="events-tickets" data-filter-event="' +
+      esc(id) +
+      '"><span class="org-action-icon">🎟️</span><span class="org-action-text"><strong>Ticket types</strong><span>Manage tiers and pricing</span></span></button>' +
+      '<button type="button" class="org-action-item" data-org-goto-sub="events-revenue" data-filter-event="' +
+      esc(id) +
+      '"><span class="org-action-icon">£</span><span class="org-action-text"><strong>Revenue &amp; payout</strong><span>Request payout when eligible</span></span></button>' +
+      cancelItem +
+      '</div></div>'
+    );
+  }
+
   function totalRevenueDisplay() {
     const sum = state.events.reduce((s, ev) => s + (ev.revenueNum || 0), 0);
     return '£' + (sum % 1 === 0 ? sum.toFixed(0) : sum.toFixed(2));
@@ -251,6 +330,7 @@
     if (hash.startsWith('events-')) return { page: 'events', sub: hash };
     if (hash === 'events') return { page: 'events', sub: 'events-list' };
     if (hash === 'academy' || hash.startsWith('academy-')) return { page: 'academy', sub: null };
+    if (hash === 'team') return { page: 'team', sub: null };
     return { page: hash, sub: null };
   }
 
@@ -788,10 +868,130 @@
       if (sub === 'events-tickets') renderTickets();
       if (sub === 'events-attendees') renderAttendees();
       if (sub === 'events-reviews') renderReviews();
+      if (sub === 'events-revenue') renderRevenue();
+      return true;
+    }
+
+    const cancelGoto = e.target.closest('[data-goto-cancel]');
+    if (cancelGoto && !cancelGoto.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      const eid = cancelGoto.getAttribute('data-goto-cancel');
+      location.href = 'event-edit.html?id=' + encodeURIComponent(eid) + '&cancel=1';
       return true;
     }
 
     return false;
+  }
+
+  let pendingPayoutEventId = null;
+
+  function closePayoutModal() {
+    pendingPayoutEventId = null;
+    const modal = document.getElementById('modal-payout');
+    if (modal) modal.hidden = true;
+    const submitBtn = document.getElementById('btn-payout-submit');
+    if (submitBtn) submitBtn.disabled = true;
+  }
+
+  async function openPayoutModal(eventId) {
+    pendingPayoutEventId = eventId;
+    const modal = document.getElementById('modal-payout');
+    const breakdownEl = document.getElementById('modal-payout-breakdown');
+    const ineligibleEl = document.getElementById('modal-payout-ineligible');
+    const submitBtn = document.getElementById('btn-payout-submit');
+    const titleEl = document.getElementById('modal-payout-event');
+    if (!modal) return;
+
+    if (titleEl) titleEl.textContent = 'Loading payout breakdown…';
+    if (breakdownEl) breakdownEl.hidden = true;
+    if (ineligibleEl) {
+      ineligibleEl.hidden = true;
+      ineligibleEl.textContent = '';
+    }
+    if (submitBtn) submitBtn.disabled = true;
+    modal.hidden = false;
+
+    const { ok, data } = await api(
+      '/api/organiser/payouts?eventId=' + encodeURIComponent(eventId)
+    );
+    if (!ok) {
+      closePayoutModal();
+      alert(data.message || data.error || 'Could not load payout breakdown');
+      return;
+    }
+
+    const preview = data.preview || {};
+    const ev = findEventById(eventId);
+    if (titleEl) {
+      titleEl.textContent = preview.eventTitle || (ev && ev.title) || 'Event payout';
+    }
+
+    const fmt = preview.breakdownFormatted || {};
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+    set('payout-gross', fmt.amountGross || '£0.00');
+    set('payout-stripe', '-' + String(fmt.stripeFee || '£0.00').replace(/^-/, ''));
+    set('payout-platform', '-' + String(fmt.platformFee || '£0.00').replace(/^-/, ''));
+    set('payout-net', fmt.amountNet || '£0.00');
+
+    if (breakdownEl) breakdownEl.hidden = false;
+
+    if (!preview.canRequestPayout && ineligibleEl) {
+      ineligibleEl.hidden = false;
+      ineligibleEl.textContent =
+        preview.ineligibleReason || 'This event is not eligible for a payout request yet.';
+    }
+    if (submitBtn) submitBtn.disabled = !preview.canRequestPayout;
+  }
+
+  async function submitPayoutRequest() {
+    if (!pendingPayoutEventId) return;
+    const submitBtn = document.getElementById('btn-payout-submit');
+    if (submitBtn) submitBtn.disabled = true;
+    const eventId = pendingPayoutEventId;
+    const { ok, data } = await api('/api/organiser/payouts', {
+      method: 'POST',
+      body: JSON.stringify({ eventId }),
+    });
+    if (!ok) {
+      if (submitBtn) submitBtn.disabled = false;
+      alert(data.message || data.error || 'Could not request payout');
+      return;
+    }
+    closePayoutModal();
+    closeModals();
+    showAirtableAlert(data.message || 'Payout request submitted.', false);
+    await refresh();
+    setRoute('events-revenue');
+  }
+
+  async function requestEventPayout(eventId) {
+    await openPayoutModal(eventId);
+  }
+
+  async function confirmRefundsForEvent(eventId) {
+    if (
+      !window.confirm(
+        'Confirm that you have issued refunds to all attendees for this event through your Stripe account?'
+      )
+    ) {
+      return;
+    }
+    const { ok, data } = await api('/api/organiser/cancellations', {
+      method: 'POST',
+      body: JSON.stringify({ eventId, action: 'confirm_refunds' }),
+    });
+    if (!ok) {
+      alert(data.message || data.error || 'Could not confirm refunds');
+      return;
+    }
+    showAirtableAlert(data.message || 'Refunds confirmed.', false);
+    await refresh();
+    setRoute('events-revenue');
   }
 
   function groupNameById(id) {
@@ -824,6 +1024,8 @@
       sub = 'events-tickets';
     } else if (route === 'academy' || (route && route.startsWith('academy-'))) {
       page = 'academy';
+    } else if (route === 'team') {
+      page = 'team';
     }
 
     const activeRoute = page === 'events' ? sub || 'events-list' : page;
@@ -863,6 +1065,7 @@
       m.hidden = true;
       m.classList.remove('is-open');
     });
+    pendingPayoutEventId = null;
     resetGroupLogoPicker();
   }
 
@@ -1028,7 +1231,7 @@
         '</td><td>' +
         statusBadgeHtml(ev.statusKey || 'draft', ev.statusLabel || 'Draft') +
         '</td><td class="org-td-actions">' +
-        eventActionMenuHtml(ev.id, ev.title) +
+        eventActionMenuHtmlWithItem(ev) +
         '</td>';
       body.appendChild(tr);
     });
@@ -1143,11 +1346,29 @@
     });
   }
 
+  function renderPayoutHeldBanner() {
+    const banner = document.getElementById('payout-held-banner');
+    if (!banner) return;
+    const held = state.events.filter((ev) => ev.needsRefundConfirmation);
+    if (!held.length) {
+      banner.hidden = true;
+      banner.innerHTML = '';
+      return;
+    }
+    banner.hidden = false;
+    const names = held.map((ev) => esc(ev.title)).join(', ');
+    banner.innerHTML =
+      '<p><strong>Your payout is on hold</strong> — please confirm refunds have been issued to all attendees for: ' +
+      names +
+      '.</p>';
+  }
+
   function renderRevenue() {
     const body = document.getElementById('revenue-body');
     if (!body) return;
-    const list = state.events.slice();
+    const list = filteredEventsList().length ? filteredEventsList() : state.events.slice();
     body.innerHTML = '';
+    renderPayoutHeldBanner();
 
     const setRev = (id, val) => {
       const el = document.getElementById(id);
@@ -1165,6 +1386,7 @@
 
     pageInfo.items.forEach((ev) => {
       const tr = document.createElement('tr');
+      if (ev.needsRefundConfirmation) tr.classList.add('org-row-payout-held');
       tr.innerHTML =
         '<td>' +
         thumbHtml(ev) +
@@ -1172,7 +1394,11 @@
         esc(ev.id) +
         '">' +
         esc(ev.title) +
-        '</button></td><td>' +
+        '</button>' +
+        (ev.needsRefundConfirmation
+          ? '<p class="org-payout-held-note">Payout on hold — confirm refunds issued</p>'
+          : '') +
+        '</td><td>' +
         esc(ev.ticketsSoldLabel || '0') +
         '</td><td class="org-revenue">' +
         esc(ev.revenueDisplay || '£0') +
@@ -1180,6 +1406,10 @@
         ratingHtml(ev.rating) +
         '</td><td>' +
         statusBadgeHtml(ev.statusKey || 'draft', ev.statusLabel || 'Draft') +
+        '</td><td>' +
+        payoutStatusBadgeHtml(ev) +
+        '</td><td class="org-td-actions">' +
+        payoutActionsHtml(ev) +
         '</td>';
       body.appendChild(tr);
     });
@@ -1193,6 +1423,137 @@
     renderAttendees();
     renderReviews();
     renderRevenue();
+  }
+
+  function teamRoleLabel(role) {
+    return role === 'owner' ? 'Owner' : 'Editor';
+  }
+
+  function teamStatusLabel(status) {
+    return status === 'active' ? 'Active' : 'Pending';
+  }
+
+  async function loadTeamMembers() {
+    const { ok, data } = await api('/api/organiser/team');
+    if (!ok) {
+      state.teamMembers = [];
+      return;
+    }
+    state.teamMembers = data.members || [];
+    state.canManageTeam = data.canManageTeam !== false;
+    state.canDeleteEvents = data.canDeleteEvents !== false;
+    state.organiserRole = data.role || state.organiserRole;
+  }
+
+  function renderTeam() {
+    const body = document.getElementById('team-body');
+    const empty = document.getElementById('team-empty');
+    const inviteBtn = document.getElementById('btn-invite-team');
+    if (!body) return;
+    body.innerHTML = '';
+    if (inviteBtn) inviteBtn.hidden = !state.canManageTeam;
+
+    const list = state.teamMembers.slice();
+    if (!list.length) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    list.forEach((m) => {
+      const tr = document.createElement('tr');
+      const isOwner = m.role === 'owner' || m.isAccountOwner;
+      const actions = [];
+      if (!isOwner && state.canManageTeam) {
+        if (m.status === 'pending') {
+          actions.push(
+            '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-team-resend="' +
+              esc(m.id) +
+              '">Resend invite</button>'
+          );
+        }
+        actions.push(
+          '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-team-remove="' +
+            esc(m.id) +
+            '">Remove</button>'
+        );
+      }
+      tr.innerHTML =
+        '<td>' +
+        esc(m.email) +
+        '</td><td>' +
+        esc(teamRoleLabel(m.role)) +
+        '</td><td>' +
+        esc(teamStatusLabel(m.status)) +
+        '</td><td class="org-td-actions">' +
+        (actions.join(' ') || '—') +
+        '</td>';
+      body.appendChild(tr);
+    });
+  }
+
+  function bindTeamUi() {
+    const inviteBtn = document.getElementById('btn-invite-team');
+    if (inviteBtn) {
+      inviteBtn.addEventListener('click', () => openModal('modal-team-invite'));
+    }
+    const form = document.getElementById('form-team-invite');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('team-invite-email').value.trim();
+        const btn = e.submitter;
+        if (btn) btn.disabled = true;
+        const { ok, data } = await api('/api/organiser/team', {
+          method: 'POST',
+          body: JSON.stringify({ email, role: 'editor' }),
+        });
+        if (btn) btn.disabled = false;
+        if (!ok) {
+          alert(data.message || data.error || 'Could not send invite');
+          return;
+        }
+        closeModals();
+        form.reset();
+        await loadTeamMembers();
+        renderTeam();
+        showAirtableAlert(data.message || 'Invite sent.', false);
+      });
+    }
+    const teamPage = document.getElementById('org-page-team');
+    if (teamPage) {
+      teamPage.addEventListener('click', async (e) => {
+        const resend = e.target.closest('[data-team-resend]');
+        if (resend) {
+          const id = resend.getAttribute('data-team-resend');
+          const { ok, data } = await api('/api/organiser/team', {
+            method: 'POST',
+            body: JSON.stringify({ action: 'resend', id }),
+          });
+          if (!ok) alert(data.message || data.error || 'Could not resend invite');
+          else {
+            await loadTeamMembers();
+            renderTeam();
+            showAirtableAlert(data.message || 'Invite resent.', false);
+          }
+          return;
+        }
+        const remove = e.target.closest('[data-team-remove]');
+        if (remove) {
+          const id = remove.getAttribute('data-team-remove');
+          if (!window.confirm('Remove this team member?')) return;
+          const { ok, data } = await api('/api/organiser/team', {
+            method: 'DELETE',
+            body: JSON.stringify({ id }),
+          });
+          if (!ok) alert(data.message || data.error || 'Could not remove member');
+          else {
+            await loadTeamMembers();
+            renderTeam();
+          }
+        }
+      });
+    }
   }
 
   function fillGroupSelect(select) {
@@ -1256,6 +1617,7 @@
     renderOverviewGroups();
     renderOverviewEvents();
     renderGroups();
+    renderTeam();
     renderMyEventsHub();
     fillEventSelect(document.getElementById('ticket-event'));
   }
@@ -1290,6 +1652,10 @@
     if (data.user) {
       state.user = { ...state.user, ...data.user };
     }
+    state.canManageTeam = data.canManageTeam !== false;
+    state.canDeleteEvents = data.canDeleteEvents !== false;
+    state.organiserRole = data.organiserRole || 'owner';
+    loadTeamMembers().then(() => renderTeam());
 
     if (data.adminView) {
       showAirtableAlert(
@@ -1669,6 +2035,19 @@
       (e) => {
         if (handleActionMenuChoice(e)) return;
 
+        const payoutBtn = e.target.closest('[data-request-payout]');
+        if (payoutBtn) {
+          e.preventDefault();
+          requestEventPayout(payoutBtn.getAttribute('data-request-payout'));
+          return;
+        }
+        const refundsBtn = e.target.closest('[data-confirm-refunds]');
+        if (refundsBtn) {
+          e.preventDefault();
+          confirmRefundsForEvent(refundsBtn.getAttribute('data-confirm-refunds'));
+          return;
+        }
+
         const toggle = e.target.closest('[data-org-action-toggle]');
         if (toggle) {
           e.stopPropagation();
@@ -1761,7 +2140,13 @@
     state.user = user;
     if (signin) signin.hidden = true;
     shell.hidden = false;
+    const payoutSubmit = document.getElementById('btn-payout-submit');
+    if (payoutSubmit) {
+      payoutSubmit.addEventListener('click', submitPayoutRequest);
+    }
+
     bindForms();
+    bindTeamUi();
     bindUi();
     const initial = parseRoute();
     setRoute(initial.sub || initial.page);

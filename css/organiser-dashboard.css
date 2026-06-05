@@ -1072,6 +1072,76 @@
   color: #7a5c10;
 }
 
+.org-payout-held-banner {
+  background: #fdf0ef;
+  border: 1px solid #e8b4b0;
+  border-radius: var(--od-radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #7b241c;
+}
+
+.org-payout-held-note {
+  font-size: 11px;
+  color: #a93226;
+  margin: 4px 0 0;
+  font-weight: 600;
+}
+
+.org-payout-muted {
+  color: var(--od-text-soft);
+  font-size: 12px;
+}
+
+.org-row-payout-held {
+  background: #fffaf9;
+}
+
+.org-modal-sub {
+  font-size: 13px;
+  color: var(--od-text-mid);
+  margin: -4px 0 16px;
+}
+
+.org-payout-breakdown {
+  background: var(--od-purple-pale, #f6f0fa);
+  border-radius: var(--od-radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.org-payout-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--od-text);
+}
+
+.org-payout-line.org-payout-deduct span:last-child {
+  color: #a93226;
+}
+
+.org-payout-divider {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin: 10px 0;
+}
+
+.org-payout-line.org-payout-total {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.org-payout-ineligible {
+  font-size: 13px;
+  color: #a93226;
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
 .org-action-wrap {
   position: relative;
   display: inline-block;

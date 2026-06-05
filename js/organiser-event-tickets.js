@@ -12,6 +12,7 @@
     .filter(Boolean);
   let seriesMeta = { title: '', events: [], eventFormat: '' };
   let attendanceMode = 'tickets';
+  let selectedRefundPolicy = '';
 
   const SALE_END_OPTIONS = [
     { value: 'at_start', label: 'When the event starts' },
@@ -203,22 +204,71 @@
       '<div class="ee-tier-row ee-tier-row-expanded" data-tier-index="' +
       index +
       '">' +
-      '<div class="ee-field"><label>Ticket name</label><input type="text" class="ee-tier-name" required placeholder="e.g. Standard, Early bird" /></div>' +
-      '<div class="ee-row-2">' +
-      '<div class="ee-field"><label>Price (£) <span class="ee-optional">(optional)</span></label><input type="number" class="ee-tier-price" min="0" step="0.01" value="0" /></div>' +
-      '<div class="ee-field"><label>Qty <span class="ee-optional">(optional)</span></label><input type="number" class="ee-tier-qty" min="0" step="1" placeholder="Unlimited" /></div>' +
+      '<div class="ee-tier-order">' +
+      '<button type="button" class="ee-btn ee-btn-outline ee-tier-up" aria-label="Move up">↑</button>' +
+      '<button type="button" class="ee-btn ee-btn-outline ee-tier-down" aria-label="Move down">↓</button>' +
       '</div>' +
-      '<div class="ee-field"><label>Ticket description <span class="ee-optional">(optional)</span></label>' +
-      '<p class="ee-hint">e.g. what is included — breakfast, VIP access, etc.</p>' +
-      '<input type="text" class="ee-tier-desc" placeholder="e.g. Includes networking lunch" /></div>' +
-      '<div class="ee-field"><label>Sales end</label>' +
-      '<p class="ee-hint">When this ticket type stops being available (useful for early bird tiers).</p>' +
+      '<div class="ee-field"><label>Ticket name</label><input type="text" class="ee-tier-name" required placeholder="e.g. General Admission, Early Bird" /></div>' +
+      '<div class="ee-field"><label>Description <span class="ee-optional">(optional)</span></label>' +
+      '<textarea class="ee-tier-desc" rows="2" placeholder="What is included with this ticket"></textarea></div>' +
+      '<div class="ee-row-2">' +
+      '<div class="ee-field"><label>Price (£)</label><p class="ee-hint">Enter 0 for free</p><input type="number" class="ee-tier-price" min="0" step="0.01" value="0" /></div>' +
+      '<div class="ee-field"><label>Quantity available <span class="ee-optional">(optional)</span></label><input type="number" class="ee-tier-qty" min="0" step="1" placeholder="Unlimited" /></div>' +
+      '</div>' +
+      '<div class="ee-row-2">' +
+      '<div class="ee-field"><label>Sale start <span class="ee-optional">(optional)</span></label><input type="datetime-local" class="ee-tier-sale-start" /></div>' +
+      '<div class="ee-field"><label>Sale end <span class="ee-optional">(optional)</span></label>' +
       saleEndSelectHtml('1_week') +
       '<input type="datetime-local" class="ee-tier-sale-custom" hidden style="margin-top:8px" /></div>' +
-      '<div class="ee-field"><label>Status</label><select class="ee-tier-status"><option>Available</option><option>Sold out</option></select></div>' +
+      '</div>' +
+      '<div class="ee-field"><label>Ticket type</label><select class="ee-tier-kind">' +
+      '<option value="Standard">Standard (auto-approve)</option>' +
+      '<option value="Application-based">Application-based (you review applicants)</option>' +
+      '</select></div>' +
       '<button type="button" class="ee-btn ee-btn-outline ee-tier-remove" style="font-size:11px;padding:8px 10px">Remove</button>' +
       '</div>'
     );
+  }
+
+  function updateTierSummary() {
+    const summary = document.getElementById('ee-tier-summary');
+    if (!summary || attendanceMode !== 'tickets') return;
+    const rows = document.querySelectorAll('.ee-tier-row');
+    let count = 0;
+    let totalQty = 0;
+    let hasUnlimited = false;
+    let minPrice = null;
+    rows.forEach((row) => {
+      const name = row.querySelector('.ee-tier-name')?.value.trim();
+      if (!name) return;
+      count += 1;
+      const qtyRaw = row.querySelector('.ee-tier-qty')?.value;
+      if (qtyRaw === '' || qtyRaw == null) hasUnlimited = true;
+      else totalQty += Number(qtyRaw) || 0;
+      const price = Number(row.querySelector('.ee-tier-price')?.value) || 0;
+      if (minPrice == null || price < minPrice) minPrice = price;
+    });
+    const qtyLabel = hasUnlimited && count ? 'unlimited' : String(totalQty);
+    const fromPrice = minPrice == null ? '0' : minPrice.toFixed(2);
+    summary.textContent =
+      count +
+      ' ticket type' +
+      (count === 1 ? '' : 's') +
+      ' · ' +
+      qtyLabel +
+      ' total available · from £' +
+      fromPrice;
+  }
+
+  function moveTierRow(row, dir) {
+    const wrap = document.getElementById('ee-tier-rows');
+    if (!wrap || !row) return;
+    if (dir < 0 && row.previousElementSibling) {
+      wrap.insertBefore(row, row.previousElementSibling);
+    } else if (dir > 0 && row.nextElementSibling) {
+      wrap.insertBefore(row.nextElementSibling, row);
+    }
+    updateTierSummary();
   }
 
   function bindTierRow(row) {
@@ -229,12 +279,22 @@
         customInput.hidden = saleSelect.value !== 'custom';
       });
     }
+    row.querySelectorAll('input, textarea, select').forEach((el) => {
+      el.addEventListener('input', updateTierSummary);
+      el.addEventListener('change', updateTierSummary);
+    });
+    const up = row.querySelector('.ee-tier-up');
+    const down = row.querySelector('.ee-tier-down');
+    if (up) up.addEventListener('click', () => moveTierRow(row, -1));
+    if (down) down.addEventListener('click', () => moveTierRow(row, 1));
     const removeBtn = row.querySelector('.ee-tier-remove');
     if (removeBtn) {
       removeBtn.addEventListener('click', () => {
         const wrap = document.getElementById('ee-tier-rows');
         if (wrap && wrap.children.length <= 1) return;
         row.remove();
+        updateTierSummary();
+        updatePublishButton();
       });
     }
   }
@@ -248,38 +308,103 @@
     const row = div.firstElementChild;
     bindTierRow(row);
     wrap.appendChild(row);
+    updateTierSummary();
+    updatePublishButton();
   }
 
   function collectTiers() {
     const rows = document.querySelectorAll('.ee-tier-row');
     const tiers = [];
     const eventDate = seriesMeta.events && seriesMeta.events[0] ? seriesMeta.events[0].date : null;
-    rows.forEach((row) => {
+    rows.forEach((row, idx) => {
       const name = row.querySelector('.ee-tier-name').value.trim();
       if (!name) return;
       const price = row.querySelector('.ee-tier-price').value;
       const qty = row.querySelector('.ee-tier-qty').value;
-      const status = row.querySelector('.ee-tier-status').value;
       const desc = row.querySelector('.ee-tier-desc').value.trim();
       const saleOption = row.querySelector('.ee-tier-sale-end').value;
       const customDt = row.querySelector('.ee-tier-sale-custom').value;
+      const saleStartRaw = row.querySelector('.ee-tier-sale-start')?.value;
+      const saleStart = saleStartRaw ? new Date(saleStartRaw).toISOString() : null;
       const saleEnd = computeSaleEndIso(saleOption, customDt, eventDate);
-      let description = desc;
-      if (saleOption && saleOption !== 'at_start') {
-        const note = 'Sales end: ' + saleEndLabel(saleOption) + '.';
-        description = description ? description + ' ' + note : note;
-      }
+      const ticketKind = row.querySelector('.ee-tier-kind')?.value || 'Standard';
+      const isApp = ticketKind === 'Application-based';
       tiers.push({
         name,
         price,
-        description,
-        status,
+        description: desc,
+        status: 'Available',
         quantityAvailable: qty === '' ? null : Number(qty),
+        saleStart,
         saleEnd,
-        oneSeatOnly: false,
+        oneSeatOnly: isApp,
+        ticketType: ticketKind,
+        displayOrder: idx,
       });
     });
     return tiers;
+  }
+
+  function collectRefundPayload() {
+    const policy =
+      selectedRefundPolicy ||
+      document.querySelector('input[name="refund-policy"]:checked')?.value ||
+      '';
+    const agreed = document.getElementById('refund-terms-agreed')?.checked;
+    const payload = {
+      refundPolicy: policy,
+      refundTermsAgreed: agreed,
+    };
+    if (policy === 'full_refund') {
+      payload.refundCutoffDays = Number(document.getElementById('refund-cutoff-days')?.value) || 0;
+    } else if (policy === 'partial_refund') {
+      payload.refundPolicyDetails = document.getElementById('refund-partial-details')?.value.trim() || '';
+    } else if (policy === 'custom') {
+      payload.refundPolicyDetails = document.getElementById('refund-custom-details')?.value.trim() || '';
+    }
+    return payload;
+  }
+
+  function updatePublishButton() {
+    const btn = document.getElementById('ee-tickets-submit');
+    const warn = document.getElementById('ee-publish-warn');
+    if (!btn) return;
+    const tiers = attendanceMode === 'osop' ? collectOsopTiers() : collectTiers();
+    const refund = collectRefundPayload();
+    const ready =
+      tiers.length > 0 && refund.refundPolicy && refund.refundTermsAgreed;
+    btn.disabled = !ready;
+    if (warn) warn.hidden = ready;
+  }
+
+  function bindRefundPolicy() {
+    document.querySelectorAll('.ee-refund-card').forEach((card) => {
+      const radio = card.querySelector('input[type="radio"]');
+      if (!radio) return;
+      radio.addEventListener('change', () => {
+        selectedRefundPolicy = radio.value;
+        document.querySelectorAll('.ee-refund-card').forEach((c) => {
+          const r = c.querySelector('input[type="radio"]');
+          const active = r && r.checked;
+          c.classList.toggle('is-selected', active);
+          const extra = c.querySelector('.ee-refund-extra');
+          if (extra) extra.hidden = !active;
+        });
+        updatePublishButton();
+      });
+      card.addEventListener('click', (e) => {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+          radio.checked = true;
+          radio.dispatchEvent(new Event('change'));
+        }
+      });
+    });
+    const agree = document.getElementById('refund-terms-agreed');
+    if (agree) agree.addEventListener('change', updatePublishButton);
+    ['refund-cutoff-days', 'refund-partial-details', 'refund-custom-details'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', updatePublishButton);
+    });
   }
 
   function collectOsopTiers() {
@@ -326,6 +451,7 @@
           id,
           title: ev.title,
           organiserGroupId: ev.organiserGroupId || seriesMeta.organiserGroupId,
+          type: ev.type,
           description: ev.description,
           location: ev.location,
           venue: ev.venue,
@@ -344,16 +470,25 @@
     renderSeriesSummary();
     addTierRow();
     document.getElementById('ee-add-tier').addEventListener('click', addTierRow);
-    document.getElementById('ee-mode-tickets').addEventListener('click', () => setAttendanceMode('tickets'));
-    document.getElementById('ee-mode-osop').addEventListener('click', () => setAttendanceMode('osop'));
+    document.getElementById('ee-mode-tickets').addEventListener('click', () => {
+      setAttendanceMode('tickets');
+      updateTierSummary();
+      updatePublishButton();
+    });
+    document.getElementById('ee-mode-osop').addEventListener('click', () => {
+      setAttendanceMode('osop');
+      updatePublishButton();
+    });
+    bindRefundPolicy();
+    updatePublishButton();
   }
 
-  document.getElementById('ee-tickets-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+  async function saveTickets(publish) {
     showAlert('');
     const tiers = attendanceMode === 'osop' ? collectOsopTiers() : collectTiers();
     if (!tiers.length) {
       showAlert('Add at least one ticket type with a name.');
+      updatePublishButton();
       return;
     }
     if (!eventIds.length) {
@@ -361,21 +496,51 @@
       return;
     }
 
+    const refund = collectRefundPayload();
+    if (publish) {
+      if (!refund.refundPolicy) {
+        showAlert('Select a refund policy before publishing.');
+        updatePublishButton();
+        return;
+      }
+      if (!refund.refundTermsAgreed) {
+        showAlert('Confirm you understand you are responsible for refunds.');
+        updatePublishButton();
+        return;
+      }
+    }
+
     const btn = document.getElementById('ee-tickets-submit');
-    btn.disabled = true;
+    const saveBtn = document.getElementById('ee-tickets-save');
+    if (btn) btn.disabled = true;
+    if (saveBtn) saveBtn.disabled = true;
+
+    const body = {
+      eventIds,
+      tickets: tiers,
+      publish,
+      ...refund,
+    };
+
     const { ok, data } = await api('/api/organiser/tickets', {
       method: 'POST',
-      body: JSON.stringify({ eventIds, tickets: tiers }),
+      body: JSON.stringify(body),
     });
 
     if (ok) {
       await applyAttendeeExtrasToEvents();
     }
 
-    btn.disabled = false;
+    if (saveBtn) saveBtn.disabled = false;
+    updatePublishButton();
 
     if (!ok) {
-      showAlert(data.message || data.error || 'Could not create tickets');
+      showAlert(data.message || data.error || 'Could not save tickets');
+      return;
+    }
+
+    if (!publish) {
+      showAlert('Tickets saved. Complete the refund policy and publish when ready.');
       return;
     }
 
@@ -393,7 +558,17 @@
       seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].imageUrl;
     if (firstImg) qs.set('image', firstImg);
     location.href = 'event-published.html?' + qs.toString();
+  }
+
+  document.getElementById('ee-tickets-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await saveTickets(true);
   });
+
+  const saveDraftBtn = document.getElementById('ee-tickets-save');
+  if (saveDraftBtn) {
+    saveDraftBtn.addEventListener('click', () => saveTickets(false));
+  }
 
   init();
 })();

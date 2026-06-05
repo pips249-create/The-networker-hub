@@ -1237,6 +1237,55 @@ a:hover {
   margin-right: 4px;
 }
 
+.refund-badge {
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  line-height: 1.45;
+}
+
+.refund-badge.is-full {
+  background: #eef9f3;
+  color: #0d6e4a;
+}
+
+.refund-badge.is-partial {
+  background: #fff8e6;
+  color: #8a6d00;
+}
+
+.refund-badge.is-none {
+  background: #fdf0ef;
+  color: #a93226;
+}
+
+.refund-badge.is-custom {
+  background: #eef6fc;
+  color: #1a6fa8;
+}
+
+.ticket-refund-details {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.ticket-refund-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 8px 0;
+}
+
+.ticket-refund-details #ev-refund-details-body {
+  padding: 8px 0 4px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
 body.modal-open {
   overflow: hidden;
 }

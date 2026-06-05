@@ -51,4 +51,4 @@
   }
 
   global.hubLoading = { show, hide, clear };
-})();
+})(typeof window !== 'undefined' ? window : globalThis);

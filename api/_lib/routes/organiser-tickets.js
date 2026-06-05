@@ -81,7 +81,7 @@ module.exports = async function handler(req, res) {
           : eventIds.filter((id) => allowed.has(id));
         if (!ids.length) return json(res, 403, { error: 'event_not_owned' });
         const tiers = tickets
-          .map((t) => ({
+          .map((t, idx) => ({
             name: String(t.name || '').trim(),
             price: t.price,
             description: String(t.description || '').trim(),
@@ -90,11 +90,36 @@ module.exports = async function handler(req, res) {
             saleEnd: t.saleEnd || null,
             saleStart: t.saleStart || null,
             oneSeatOnly: Boolean(t.oneSeatOnly),
+            ticketType: t.ticketType || (t.oneSeatOnly ? 'Application-based' : 'Standard'),
+            displayOrder: t.displayOrder != null ? t.displayOrder : idx,
           }))
           .filter((t) => t.name);
         if (!tiers.length) return json(res, 400, { error: 'missing_ticket_types' });
-        const result = await createTicketsForEvents({ eventIds: ids, tickets: tiers });
-        return json(res, 201, { ok: true, ...result });
+
+        const publish = Boolean(body.publish);
+        if (publish) {
+          if (!body.refundTermsAgreed) {
+            return json(res, 400, { error: 'refund_terms_required' });
+          }
+          if (!body.refundPolicy) {
+            return json(res, 400, { error: 'refund_policy_required' });
+          }
+        }
+
+        const result = await createTicketsForEvents({
+          eventIds: ids,
+          tickets: tiers,
+          publish,
+          refund: publish
+            ? {
+                refundPolicy: body.refundPolicy,
+                refundPolicyDetails: body.refundPolicyDetails || '',
+                refundCutoffDays: body.refundCutoffDays,
+                refundTermsAgreed: body.refundTermsAgreed,
+              }
+            : null,
+        });
+        return json(res, 201, { ok: true, published: publish, ...result });
       } catch (e) {
         return json(res, e.status || 500, {
           error: 'tickets_bulk_failed',

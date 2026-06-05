@@ -8,6 +8,8 @@ const { findUserByEmail } = require('./supabase-auth');
 const { hubViewFromRequest, organiserPersonalScopeFromRequest } = require('./auth');
 
 const sbOrg = require('./supabase-organiser');
+const { geocodeUkPostcode } = require('./postcode-geocode');
+const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 
 function formatMoney(amount) {
   const n = Number(amount) || 0;
@@ -52,28 +54,27 @@ function parseDateIso(dateStr, endStr) {
   };
 }
 
-function composeDescription(description, extras) {
-  let text = String(description || '').trim();
-  if (extras && typeof extras === 'object') {
-    const extra = JSON.stringify(extras);
-    if (extra && extra !== '{}') text = (text ? text + '\n\n' : '') + extra;
-  }
-  return text || null;
-}
+const { plainEventDescription, mapAttendeeExtrasToRow } = require('./event-description');
 
 function rowToEvent(row) {
   if (!row) return null;
   const dateIso = row.starts_at ? String(row.starts_at) : '';
+  const eventStatus = row.status || (row.approval_status === 'Approved' ? 'published' : 'draft');
   return {
     id: row.id,
     title: String(row.title || 'Untitled event').trim(),
     date: dateIso,
     endDate: row.ends_at ? String(row.ends_at) : '',
     type: String(row.event_type || '').trim(),
+    industry: Array.isArray(row.industries) ? row.industries[0] || '' : '',
     ownerEmail: '',
     organiserGroupIds: row.organiser_id ? [row.organiser_id] : [],
     organiserGroupId: row.organiser_id || '',
-    description: String(row.description || '').trim(),
+    description: plainEventDescription(row.description),
+    slug: row.slug ? String(row.slug).trim() : null,
+    foodIncluded: Boolean(row.food_included),
+    collectDietary: Boolean(row.collect_dietary),
+    collectAccessibility: Boolean(row.collect_accessibility),
     location: String(row.location_label || row.city || row.venue || '').trim(),
     venue: String(row.venue || '').trim(),
     addressLine1: String(row.address || '').trim(),
@@ -83,11 +84,27 @@ function rowToEvent(row) {
     onlinePlatform: '',
     onlineLink: String(row.meeting_link || '').trim(),
     imageUrl: String(row.photo_url || '').trim(),
+    status: eventStatus,
     statusRaw: row.approval_status || 'Pending Review',
+    listingStatus: eventStatus,
+    approvalStatus: row.approval_status || 'Pending Review',
+    recurrencePattern: row.recurrence_pattern || null,
+    recurrenceEndDate: row.recurrence_end_date || null,
+    maxAttendees: row.max_attendees != null ? Number(row.max_attendees) : null,
+    locked: Boolean(row.locked),
+    lockedReason: row.locked_reason || null,
+    lockedAt: row.locked_at || null,
+    payoutHeld: Boolean(row.payout_held),
+    refundPolicy: row.refund_policy || null,
+    refundPolicyDetails: row.refund_policy_details || null,
+    refundCutoffDays: row.refund_cutoff_days != null ? Number(row.refund_cutoff_days) : null,
+    refundTermsAgreed: Boolean(row.refund_terms_agreed),
+    lat: row.latitude != null ? Number(row.latitude) : null,
+    lng: row.longitude != null ? Number(row.longitude) : null,
     rating: row.average_rating != null ? Number(row.average_rating) : null,
     ticketsSold: 0,
     revenueNum: 0,
-    capacity: null,
+    capacity: row.max_attendees != null ? Number(row.max_attendees) : null,
   };
 }
 
@@ -100,6 +117,10 @@ function rowToTicket(row) {
     status: String(row.status || '').trim(),
     quantityAvailable: row.quantity,
     eventId: row.event_id || '',
+    ticketType: row.ticket_type || 'Standard',
+    displayOrder: row.display_order != null ? Number(row.display_order) : 0,
+    saleStart: row.sale_starts_at || null,
+    saleEnd: row.sale_ends_at || null,
   };
 }
 
@@ -116,15 +137,26 @@ function deriveGroupListingStatus(statusRaw) {
   return { key: 'draft', label: 'Draft' };
 }
 
-function deriveListingStatus(statusRaw, dateIso) {
+function deriveListingStatus(statusRaw, dateIso, eventStatus, endDateIso) {
+  const st = String(eventStatus || '').toLowerCase();
+  if (st === 'cancelled') return { key: 'cancelled', label: 'Cancelled' };
+  if (st === 'archived') return { key: 'archived', label: 'Archived' };
+  if (st === 'draft') return { key: 'draft', label: 'Draft' };
+  if (st === 'unpublished') return { key: 'unpublished', label: 'Unpublished' };
   const raw = String(statusRaw || '').toLowerCase();
   if (/unpublish|reject/.test(raw)) return { key: 'unpublished', label: 'Unpublished' };
   if (/pending|draft/.test(raw)) return { key: 'draft', label: 'Draft' };
-  const d = dateIso ? new Date(dateIso) : null;
+  const endRef = endDateIso || dateIso;
+  const d = endRef ? new Date(endRef) : dateIso ? new Date(dateIso) : null;
   if (!d || Number.isNaN(d.getTime())) {
-    return /approved/.test(raw) ? { key: 'live', label: 'Live' } : { key: 'draft', label: 'Draft' };
+    return /approved|published/.test(raw) || st === 'published'
+      ? { key: 'live', label: 'Live' }
+      : { key: 'draft', label: 'Draft' };
   }
   if (d > new Date()) return { key: 'upcoming', label: 'Upcoming' };
+  if (st === 'published' || /approved|published/.test(raw)) {
+    return { key: 'archived', label: 'Archived' };
+  }
   return { key: 'live', label: 'Live' };
 }
 
@@ -141,7 +173,12 @@ function enrichOrganiserOverview(groups, events, tickets) {
     const capacity = tiers.reduce((sum, t) => sum + (Number(t.quantityAvailable) || 0), 0);
     const sold = ev.ticketsSold != null ? Number(ev.ticketsSold) : 0;
     const revenueNum = ev.revenueNum || 0;
-    const status = deriveListingStatus(ev.statusRaw, ev.date);
+    const status = deriveListingStatus(
+      ev.statusRaw,
+      ev.date,
+      ev.status || ev.listingStatus,
+      ev.endDate
+    );
     return {
       ...ev,
       ticketsSold: sold,
@@ -190,11 +227,12 @@ async function listEventsForOrganiser(email, groupIds) {
   const sb = getSupabaseAdmin();
   const ids = groupIds || [];
   if (!ids.length) return [];
-  const { data, error } = await sb
-    .from('events')
-    .select('*')
-    .in('organiser_id', ids)
-    .order('starts_at', { ascending: true });
+  // For the common case (single organiser), prefer a simple equality filter.
+  // This matches the dashboard behaviour and avoids `IN (...)` edge cases.
+  let query = sb.from('events').select('*');
+  if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
+  else query = query.in('organiser_id', ids);
+  const { data, error } = await query.order('starts_at', { ascending: true });
   if (error) throw new Error(error.message);
   return (data || []).map(rowToEvent);
 }
@@ -266,37 +304,88 @@ async function resolveEventPhotoUrl(payload, eventId) {
   return undefined;
 }
 
+function mapEventStatus(payload) {
+  const ls = String(payload.listingStatus || payload.status || '').toLowerCase();
+  if (ls === 'published' || ls === 'publish' || ls === 'live') return 'published';
+  if (ls === 'unpublished' || ls === 'unpublish') return 'unpublished';
+  return 'draft';
+}
+
 async function buildEventRow(payload, eventId, mode) {
   const touchDate = mode !== 'update' || payloadTouchesDate(payload);
   const photo_url = await resolveEventPhotoUrl(payload, eventId);
-  const approval_status = mapApprovalStatus(payload.listingStatus);
+  const isLocked = Boolean(payload._locked);
+  const listingStatus = payload.listingStatus != null ? payload.listingStatus : null;
+  const approval_status =
+    listingStatus != null
+      ? mapApprovalStatus(listingStatus)
+      : payload.publish === true
+        ? 'Approved'
+        : undefined;
 
   const row = {
     title: payload.title,
-    description: composeDescription(payload.description, payload.attendeeExtras),
-    event_type: mapEventType(payload.type),
-    meeting_type: mapMeetingType(payload.eventFormat),
-    venue: payload.venue || null,
-    address: payload.addressLine1 || payload.fullAddress || null,
-    city: payload.city || null,
-    postcode: payload.postcode || null,
-    location_label: payload.location || payload.city || payload.venue || null,
-    meeting_link: payload.onlineLink || null,
+    description: plainEventDescription(payload.description) || null,
     organiser_id: payload.groupId || null,
   };
 
-  if (touchDate) {
+  if (payload.attendeeExtras && typeof payload.attendeeExtras === 'object') {
+    Object.assign(row, mapAttendeeExtrasToRow(payload.attendeeExtras));
+  }
+
+  if (!isLocked) {
+    row.event_type = mapEventType(payload.type);
+    row.meeting_type = mapMeetingType(payload.eventFormat);
+    row.venue = payload.venue || null;
+    row.address = payload.addressLine1 || payload.fullAddress || null;
+    row.city = payload.city || null;
+    row.postcode = payload.postcode || null;
+    row.location_label = payload.location || payload.city || payload.venue || null;
+  }
+
+  row.meeting_link = payload.onlineLink || null;
+
+  if (payload.industry) {
+    row.industries = [String(payload.industry).trim()];
+  }
+  if (payload.maxAttendees != null && payload.maxAttendees !== '') {
+    const cap = Number(payload.maxAttendees);
+    row.max_attendees = Number.isFinite(cap) ? cap : null;
+  }
+  if (payload.recurrencePattern) {
+    row.recurrence_pattern = payload.recurrencePattern;
+  }
+  if (payload.recurrenceEndDate) {
+    row.recurrence_end_date = payload.recurrenceEndDate;
+  }
+
+  if (!isLocked && touchDate) {
     const dates = parseDateIso(payload.date, payload.endDate);
     row.starts_at = dates.starts_at;
     row.ends_at = dates.ends_at;
-  } else if (mode === 'create') {
+  } else if (!isLocked && mode === 'create') {
     const dates = parseDateIso(payload.date, payload.endDate);
     row.starts_at = dates.starts_at;
     row.ends_at = dates.ends_at;
   }
 
+  if (!isLocked && payload.postcode) {
+    const geo = await geocodeUkPostcode(payload.postcode);
+    if (geo) {
+      if (geo.latitude != null) row.latitude = geo.latitude;
+      if (geo.longitude != null) row.longitude = geo.longitude;
+      if (!row.city && geo.city) row.city = geo.city;
+    }
+  }
+
+  if (listingStatus != null) {
+    row.status = mapEventStatus(payload);
+  } else if (mode === 'create') {
+    row.status = 'draft';
+  }
+
   if (approval_status !== undefined) row.approval_status = approval_status;
-  else if (mode === 'create') row.approval_status = mapApprovalStatus('draft') || 'Pending Review';
+  else if (mode === 'create') row.approval_status = 'Pending Review';
 
   if (photo_url !== undefined) row.photo_url = photo_url;
   else if (mode === 'create') row.photo_url = null;
@@ -314,7 +403,21 @@ async function createEvent(payload) {
 
 async function updateEvent(eventId, payload) {
   const sb = getSupabaseAdmin();
-  const row = await buildEventRow({ ...payload, groupId: payload.groupId }, eventId, 'update');
+  const { data: existing } = await sb.from('events').select('*').eq('id', eventId).maybeSingle();
+  const patchPayload = { ...payload, groupId: payload.groupId };
+  if (existing && existing.locked) {
+    patchPayload._locked = true;
+    patchPayload.type = existing.event_type;
+    patchPayload.eventFormat = existing.meeting_type;
+    patchPayload.venue = existing.venue;
+    patchPayload.addressLine1 = existing.address;
+    patchPayload.city = existing.city;
+    patchPayload.postcode = existing.postcode;
+    patchPayload.date = existing.starts_at;
+    patchPayload.endDate = existing.ends_at;
+    patchPayload.location = existing.location_label;
+  }
+  const row = await buildEventRow(patchPayload, eventId, 'update');
   const { data, error } = await sb.from('events').update(row).eq('id', eventId).select('*').single();
   if (error) throw new Error(error.message);
   return rowToEvent(data);
@@ -336,6 +439,9 @@ async function createTicket({
   quantityAvailable,
   saleEnd,
   saleStart,
+  oneSeatOnly,
+  displayOrder,
+  ticketType,
 }) {
   const sb = getSupabaseAdmin();
   const priceNum = parseFloat(String(price || '0').replace(/[^0-9.]/g, '')) || 0;
@@ -343,6 +449,9 @@ async function createTicket({
     quantityAvailable != null && quantityAvailable !== ''
       ? Number(quantityAvailable)
       : null;
+  const type =
+    ticketType ||
+    (oneSeatOnly || /application/i.test(String(name || '')) ? 'Application-based' : 'Standard');
   const row = {
     event_id: eventId,
     name: name || 'Ticket',
@@ -352,14 +461,55 @@ async function createTicket({
     status: mapTicketStatus(status),
     sale_starts_at: saleStart || null,
     sale_ends_at: saleEnd || null,
+    ticket_type: type,
+    display_order: displayOrder != null ? Number(displayOrder) : 0,
   };
   const { data, error } = await sb.from('tickets').insert(row).select('*').single();
   if (error) throw new Error(error.message);
   return rowToTicket(data);
 }
 
-/** Same shape as Airtable API: { eventIds, tickets } */
-async function createTicketsForEvents({ eventIds, tickets }) {
+/** Browse page requires organiser listing_status not draft — auto-publish when events go live. */
+async function publishOrganiserListingsForEventIds(sb, eventRows) {
+  const organiserIds = [
+    ...new Set((eventRows || []).map((row) => row.organiser_id).filter(Boolean)),
+  ];
+  if (!organiserIds.length) return;
+
+  const { error } = await sb
+    .from('organisers')
+    .update({ listing_status: 'published' })
+    .in('id', organiserIds)
+    .or('listing_status.eq.draft,listing_status.is.null');
+  if (error) throw new Error(error.message);
+}
+
+async function publishEventsWithRefund(eventIds, refundPayload) {
+  const sb = getSupabaseAdmin();
+  const ids = (eventIds || []).filter(Boolean);
+  if (!ids.length) {
+    const e = new Error('No events to publish');
+    e.status = 400;
+    throw e;
+  }
+  const patch = {
+    status: 'published',
+    approval_status: 'Approved',
+    refund_policy: refundPayload.refundPolicy || null,
+    refund_policy_details: refundPayload.refundPolicyDetails || null,
+    refund_cutoff_days:
+      refundPayload.refundCutoffDays != null ? Number(refundPayload.refundCutoffDays) : null,
+    refund_terms_agreed: Boolean(refundPayload.refundTermsAgreed),
+    refund_terms_agreed_at: refundPayload.refundTermsAgreed ? new Date().toISOString() : null,
+  };
+  const { data, error } = await sb.from('events').update(patch).in('id', ids).select('*');
+  if (error) throw new Error(error.message);
+  await publishOrganiserListingsForEventIds(sb, data || []);
+  return (data || []).map(rowToEvent);
+}
+
+/** Same shape as Airtable API: { eventIds, tickets, publish, refund } */
+async function createTicketsForEvents({ eventIds, tickets, publish, refund }) {
   const ids = Array.isArray(eventIds) ? eventIds.filter(Boolean) : [];
   const tiers = Array.isArray(tickets) ? tickets : [];
   if (!ids.length || !tiers.length) return { created: 0, tickets: [] };
@@ -377,11 +527,20 @@ async function createTicketsForEvents({ eventIds, tickets }) {
           quantityAvailable: tier.quantityAvailable,
           saleEnd: tier.saleEnd,
           saleStart: tier.saleStart,
+          oneSeatOnly: tier.oneSeatOnly,
+          displayOrder: tier.displayOrder,
+          ticketType: tier.ticketType,
         })
       );
     }
   }
-  return { created: out.length, tickets: out };
+
+  let publishedEvents = null;
+  if (publish && refund) {
+    publishedEvents = await publishEventsWithRefund(ids, refund);
+  }
+
+  return { created: out.length, tickets: out, publishedEvents };
 }
 
 async function enrichGroupForDashboard(group, session, adminView) {
@@ -421,6 +580,12 @@ async function getOrganiserWorkspace(req) {
   }
 
   const groupIds = groups.map((g) => g.id);
+  try {
+    const { archivePastPublishedEvents } = require('./supabase-organiser-payouts');
+    await archivePastPublishedEvents(groupIds);
+  } catch {
+    /* archive helper optional */
+  }
   let events = [];
   try {
     events = await listEventsForSession(session, groupIds, [], adminView);
@@ -430,7 +595,24 @@ async function getOrganiserWorkspace(req) {
 
   const eventIds = events.map((e) => e.id);
   const tickets = await listTicketsForSession(session, eventIds, adminView);
-  const overview = enrichOrganiserOverview(groups, events, tickets);
+  let overview = enrichOrganiserOverview(groups, events, tickets);
+
+  try {
+    const { enrichEventsWithPayoutData } = require('./supabase-organiser-payouts');
+    overview = {
+      ...overview,
+      events: await enrichEventsWithPayoutData(overview.events),
+    };
+  } catch {
+    /* payout tables may not exist yet */
+  }
+
+  let access = null;
+  try {
+    access = await resolveOrganiserAccess(session);
+  } catch {
+    access = null;
+  }
 
   return {
     ok: true,
@@ -445,6 +627,9 @@ async function getOrganiserWorkspace(req) {
     personalScope,
     isAdmin,
     canOrganise: groups.length > 0 || adminView,
+    organiserRole: access ? access.role : null,
+    canManageTeam: access ? access.canManageTeam : true,
+    canDeleteEvents: access ? access.canDeleteEvents : true,
     user: {
       email: session.email,
       name: displayName,
@@ -468,6 +653,7 @@ module.exports = {
   updateEvent,
   createTicket,
   createTicketsForEvents,
+  publishEventsWithRefund,
   enrichGroupForDashboard,
   enrichOrganiserOverview,
   getOrganiserWorkspace,

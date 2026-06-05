@@ -3,10 +3,27 @@
  */
 (function () {
   const GROUP_SAVED_KEY = 'hub_group_last_saved';
+  const INDUSTRY_OPTIONS = [
+    'Business',
+    'Technology',
+    'Creative',
+    'Finance',
+    'Healthcare',
+    'Property',
+    'Legal',
+    'Marketing',
+    'Education',
+    'Manufacturing',
+    'Retail',
+    'Hospitality',
+    'Other',
+  ];
   const params = new URLSearchParams(location.search);
   const editId = params.get('id') || '';
   let logoFile = null;
   let currentGroup = null;
+  const selectedIndustries = new Set();
+  const selectedFormats = new Set();
 
   function showAlert(msg) {
     const el = document.getElementById('ge-alert');
@@ -95,36 +112,101 @@
     line.hidden = false;
   }
 
+  function countWords(text) {
+    return String(text || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length;
+  }
+
+  function bindWordCounter() {
+    const ta = document.getElementById('ge-description');
+    const counter = document.getElementById('ge-word-count');
+    if (!ta || !counter) return;
+    const update = () => {
+      counter.textContent = String(countWords(ta.value));
+    };
+    ta.addEventListener('input', update);
+    update();
+  }
+
+  function renderIndustryChips() {
+    const wrap = document.getElementById('ge-industries');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    INDUSTRY_OPTIONS.forEach((label) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'ee-chip' + (selectedIndustries.has(label) ? ' is-active' : '');
+      btn.textContent = label;
+      btn.addEventListener('click', () => {
+        if (selectedIndustries.has(label)) selectedIndustries.delete(label);
+        else selectedIndustries.add(label);
+        renderIndustryChips();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function bindFormatToggles() {
+    document.querySelectorAll('[data-ge-format]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const fmt = btn.getAttribute('data-ge-format');
+        if (selectedFormats.has(fmt)) selectedFormats.delete(fmt);
+        else selectedFormats.add(fmt);
+        document.querySelectorAll('[data-ge-format]').forEach((b) => {
+          b.classList.toggle('is-active', selectedFormats.has(b.getAttribute('data-ge-format')));
+        });
+      });
+    });
+  }
+
+  function setFormatsFromList(list) {
+    selectedFormats.clear();
+    (list || []).forEach((f) => selectedFormats.add(f));
+    document.querySelectorAll('[data-ge-format]').forEach((b) => {
+      b.classList.toggle('is-active', selectedFormats.has(b.getAttribute('data-ge-format')));
+    });
+  }
+
   function configureEditActions(g) {
     const saveChanges = document.getElementById('ge-save-changes');
+    const continueBtn = document.getElementById('ge-save-continue');
     const publishBtn = document.getElementById('ge-publish');
     const draftBtn = document.getElementById('ge-save-draft');
     const hint = document.getElementById('ge-actions-hint');
 
     if (saveChanges) saveChanges.hidden = false;
-    if (publishBtn) publishBtn.textContent = 'Publish now';
-    if (draftBtn) draftBtn.textContent = 'Save as draft';
+    if (continueBtn) continueBtn.hidden = true;
+    if (publishBtn) {
+      publishBtn.hidden = false;
+      publishBtn.textContent = 'Publish now';
+    }
+    if (draftBtn) {
+      draftBtn.hidden = false;
+      draftBtn.textContent = 'Save as draft';
+    }
     if (hint) {
       hint.innerHTML =
-        '<strong>Save changes</strong> updates your profile here without changing publish status. ' +
-        'Use <strong>Publish now</strong> to make this group visible on the public site.';
+        '<strong>Save changes</strong> updates your profile. Use <strong>Publish now</strong> when ready for the public site.';
     }
     if (g) showStatusBadge(g);
   }
 
   function configureCreateActions() {
     const saveChanges = document.getElementById('ge-save-changes');
+    const continueBtn = document.getElementById('ge-save-continue');
     const publishBtn = document.getElementById('ge-publish');
     const draftBtn = document.getElementById('ge-save-draft');
     const hint = document.getElementById('ge-actions-hint');
 
     if (saveChanges) saveChanges.hidden = true;
-    if (publishBtn) publishBtn.textContent = 'Publish profile';
-    if (draftBtn) draftBtn.textContent = 'Save as draft';
+    if (continueBtn) continueBtn.hidden = false;
+    if (publishBtn) publishBtn.hidden = true;
+    if (draftBtn) draftBtn.hidden = true;
     if (hint) {
-      hint.innerHTML =
-        'Draft profiles are only visible in your dashboard until you publish. ' +
-        'Use <strong>Publish profile</strong> when you are ready for your group to appear on the site.';
+      hint.textContent =
+        'Your profile will be submitted for verification. Next, you will set up your first event.';
     }
   }
 
@@ -133,6 +215,15 @@
     document.getElementById('ge-name').value = g.name || '';
     document.getElementById('ge-description').value = g.description || '';
     document.getElementById('ge-website').value = g.website || '';
+    if (document.getElementById('ge-contact-email')) {
+      document.getElementById('ge-contact-email').value = g.contactEmail || '';
+    }
+    selectedIndustries.clear();
+    (g.industries || []).forEach((i) => selectedIndustries.add(i));
+    renderIndustryChips();
+    setFormatsFromList(g.meetingFormats || []);
+    const counter = document.getElementById('ge-word-count');
+    if (counter) counter.textContent = String(countWords(g.description || ''));
     if (g.imageUrl) {
       const preview = document.getElementById('ge-logo-preview');
       const previewImg = document.getElementById('ge-logo-preview-img');
@@ -187,11 +278,30 @@
       return null;
     }
 
+    const description = document.getElementById('ge-description').value.trim();
+    if (!description) {
+      showAlert('Enter a description for your group.');
+      return null;
+    }
+    if (countWords(description) > 150) {
+      showAlert('Description must be 150 words or fewer.');
+      return null;
+    }
+
+    const contactEmail = document.getElementById('ge-contact-email').value.trim();
+    if (!contactEmail) {
+      showAlert('Enter a contact email.');
+      return null;
+    }
+
     const payload = {
       name,
-      description: document.getElementById('ge-description').value.trim(),
+      description,
       website: document.getElementById('ge-website').value.trim(),
       logoUrl: document.getElementById('ge-logo-url').value.trim(),
+      industries: [...selectedIndustries],
+      meetingFormats: [...selectedFormats],
+      contactEmail,
     };
 
     if (logoFile) {
@@ -213,7 +323,8 @@
     const saveChanges = document.getElementById('ge-save-changes');
     const draftBtn = document.getElementById('ge-save-draft');
     const publishBtn = document.getElementById('ge-publish');
-    [saveChanges, draftBtn, publishBtn].forEach((b) => {
+    const continueBtn = document.getElementById('ge-save-continue');
+    [saveChanges, draftBtn, publishBtn, continueBtn].forEach((b) => {
       if (b) b.disabled = true;
     });
     if (triggerBtn) triggerBtn.disabled = true;
@@ -248,17 +359,20 @@
     if (mode === 'published') msg = 'Profile published — it will appear on the site.';
     else if (mode === 'draft') msg = 'Saved as draft.';
     else if (mode === 'save') msg = 'Changes saved.';
+    else if (mode === 'continue') msg = 'Profile saved — redirecting to event setup.';
 
     if (apiMessage) msg = apiMessage;
     else if (saveWarnings.length) msg = msg + ' ' + saveWarnings.join(' ');
     if (logoWarning) msg = logoWarning + (saveWarnings.length ? ' ' + saveWarnings.join(' ') : '');
 
     showAlert(msg);
+    const redirect =
+      !editId && mode === 'continue' ? 'event-format.html' : 'index.html#groups';
     setTimeout(function () {
-      location.href = 'index.html#groups';
+      location.href = redirect;
     }, logoWarning || saveWarnings.length ? 2200 : 700);
     } finally {
-      [saveChanges, draftBtn, publishBtn].forEach((b) => {
+      [saveChanges, draftBtn, publishBtn, continueBtn].forEach((b) => {
         if (b) b.disabled = false;
       });
     }
@@ -271,9 +385,12 @@
       return;
     }
     const emailEl = document.getElementById('ge-page-email');
+    const accountEmail = sessionRes.data.user.email || '';
     if (emailEl) {
-      emailEl.textContent = 'Linked to ' + (sessionRes.data.user.email || 'your account');
+      emailEl.textContent = 'Linked to ' + (accountEmail || 'your account');
     }
+    const contactEl = document.getElementById('ge-contact-email');
+    if (contactEl && !editId && accountEmail) contactEl.value = accountEmail;
 
     if (editId) {
       document.getElementById('ge-page-title').textContent = 'Edit group profile';
@@ -313,6 +430,14 @@
     saveGroup('published', document.getElementById('ge-publish'));
   });
 
+  const continueBtn = document.getElementById('ge-save-continue');
+  if (continueBtn) {
+    continueBtn.addEventListener('click', () => saveGroup('continue', continueBtn));
+  }
+
   bindLogoUpload();
+  bindWordCounter();
+  renderIndustryChips();
+  bindFormatToggles();
   load();
 })();

@@ -25,6 +25,11 @@
           <a class="ee-back ee-back-secondary" href="event-format.html" id="ee-change-format-top">Change format</a>
         </div>
         <p class="ee-format-badge" id="ee-format-badge" hidden></p>
+        <p class="ee-status-badge" id="ee-status-badge" hidden></p>
+        <div class="ee-lock-banner" id="ee-lock-banner" hidden role="status">
+          🔒 This event has active ticket sales — to make changes contact
+          <a href="mailto:hello@thenetworkerhub.co.uk">hello@thenetworkerhub.co.uk</a>
+        </div>
         <h1 class="ee-title" id="ee-page-title">New event listing</h1>
         <p class="ee-lead" id="ee-page-lead">
           Add your event details, pick every date this series runs on the calendar, then set up ticket types for all dates in one go.
@@ -82,13 +87,30 @@
             <input type="url" id="ee-photo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top:10px" />
           </div>
           <div class="ee-field">
-            <label for="ee-type">Meeting type</label>
+            <label for="ee-type">Event type</label>
             <select id="ee-type" required>
-              <option value="Networking meeting">Networking meeting</option>
-              <option value="Netwalking">Netwalking</option>
-              <option value="Conference">Conference</option>
+              <option value="Networking / Meeting">Networking / Meeting</option>
               <option value="Exhibition">Exhibition</option>
-              <option value="Awards ceremony">Awards ceremony</option>
+              <option value="Conference">Conference</option>
+            </select>
+          </div>
+          <div class="ee-field">
+            <label for="ee-industry">Industry</label>
+            <select id="ee-industry" required>
+              <option value="">Select industry</option>
+              <option>Business</option>
+              <option>Technology</option>
+              <option>Creative</option>
+              <option>Finance</option>
+              <option>Healthcare</option>
+              <option>Property</option>
+              <option>Legal</option>
+              <option>Marketing</option>
+              <option>Education</option>
+              <option>Manufacturing</option>
+              <option>Retail</option>
+              <option>Hospitality</option>
+              <option>Other</option>
             </select>
           </div>
           <div class="ee-field">
@@ -96,7 +118,35 @@
             <p class="ee-hint" id="ee-description-hint">
               Attendees search and filter events using this text — include who it is for, what happens, and useful keywords.
             </p>
-            <textarea id="ee-description" rows="5" placeholder="What attendees can expect, who should come, and what they will take away"></textarea>
+            <textarea id="ee-description" rows="5" maxlength="1200" placeholder="What attendees can expect, who should come, and what they will take away"></textarea>
+            <p class="ee-hint"><span id="ee-word-count">0</span> / 150 words</p>
+          </div>
+          <div class="ee-field">
+            <label for="ee-max-attendees">Max attendees <span class="ee-optional">(optional)</span></label>
+            <input type="number" id="ee-max-attendees" min="1" step="1" placeholder="Overall cap for this event" />
+          </div>
+          <div class="ee-row-2">
+            <div class="ee-field">
+              <label for="ee-recurrence">Recurrence</label>
+              <select id="ee-recurrence">
+                <option value="one-time">One-time</option>
+                <option value="weekly">Weekly</option>
+                <option value="bi-weekly">Bi-weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+            <div class="ee-field" id="ee-recurrence-end-wrap" hidden>
+              <label for="ee-recurrence-end">Recurrence ends on</label>
+              <input type="date" id="ee-recurrence-end" />
+            </div>
+          </div>
+          <div class="ee-field">
+            <p class="ee-label-block">Format</p>
+            <div class="ee-mode-toggle" role="group" aria-label="Event format">
+              <button type="button" class="ee-mode-btn" data-ee-format="in-person">In person</button>
+              <button type="button" class="ee-mode-btn" data-ee-format="online">Online</button>
+              <button type="button" class="ee-mode-btn" data-ee-format="hybrid">Hybrid</button>
+            </div>
           </div>
 
           <div class="ee-format-panel" id="ee-venue-block" data-format-panel="venue">
@@ -146,15 +196,15 @@
 
         <div class="ee-card">
           <h2>Time (same for each selected date)</h2>
-          <p class="ee-hint" style="margin-top:0">Times are in 15-minute steps. End time is required for every listing.</p>
+          <p class="ee-hint" style="margin-top:0">Times are in 15-minute steps. End time is optional.</p>
           <div class="ee-row-2">
             <div class="ee-field">
               <label for="ee-start-time">Start time</label>
               <select id="ee-start-time" required aria-describedby="ee-time-hint"></select>
             </div>
             <div class="ee-field">
-              <label for="ee-end-time">End time</label>
-              <select id="ee-end-time" required aria-describedby="ee-time-hint"></select>
+              <label for="ee-end-time">End time <span class="ee-optional">(optional)</span></label>
+              <select id="ee-end-time" aria-describedby="ee-time-hint"></select>
             </div>
           </div>
           <p class="ee-hint" id="ee-time-hint">Example: 10:00 – 12:00</p>
@@ -162,8 +212,9 @@
 
         <div class="ee-actions">
           <button type="button" class="ee-btn ee-btn-outline" id="ee-save-draft">Save as draft</button>
-          <button type="submit" class="ee-btn ee-btn-primary" id="ee-submit">Publish &amp; set up tickets →</button>
-          <a class="ee-btn ee-btn-outline" href="index.html#events-list">Cancel</a>
+          <button type="submit" class="ee-btn ee-btn-primary" id="ee-submit">Publish now</button>
+          <button type="button" class="ee-btn ee-btn-danger" id="ee-cancel-event" hidden>Cancel event</button>
+          <a class="ee-btn ee-btn-outline" href="index.html#events-list">Back to dashboard</a>
         </div>
         <p class="ee-hint" style="margin-top:12px">
           Save as draft to keep working without publishing. Publish when you are ready — you will set up tickets on the next step.
@@ -171,8 +222,43 @@
       </form>
     </div>
 
+    <div class="ee-modal" id="ee-cancel-modal" role="dialog" aria-modal="true" aria-labelledby="ee-cancel-title" hidden>
+      <div class="ee-modal-backdrop" data-ee-modal-close></div>
+      <div class="ee-modal-panel">
+        <h2 id="ee-cancel-title">Cancel this event</h2>
+        <p class="ee-cancel-warning">
+          Cancelling this event will place your payout on hold until refunds are confirmed. Failure to refund
+          attendees within 14 days will result in your account being suspended.
+        </p>
+        <form id="ee-cancel-form">
+          <div class="ee-field">
+            <label for="ee-cancel-reason">Reason for cancellation <span class="ee-required">(required)</span></label>
+            <select id="ee-cancel-reason" required>
+              <option value="">Select a reason</option>
+              <option>Venue issue</option>
+              <option>Date change needed</option>
+              <option>Not enough registrations</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="ee-field">
+            <label for="ee-cancel-details">Details</label>
+            <textarea id="ee-cancel-details" rows="3" placeholder="Tell attendees what happened and what to expect"></textarea>
+          </div>
+          <label class="ee-check">
+            <input type="checkbox" id="ee-cancel-refund-confirm" />
+            <span>I confirm I will refund all attendees within 14 days through my Stripe account</span>
+          </label>
+          <div class="ee-modal-actions">
+            <button type="button" class="ee-btn ee-btn-outline" data-ee-modal-close>Keep event</button>
+            <button type="submit" class="ee-btn ee-btn-danger" id="ee-cancel-confirm" disabled>Confirm cancellation</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <script src="../js/organiser-quarter-time.js?v=20260606e"></script>
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
-    <script src="../js/organiser-event-edit.js?v=20260611"></script>
+    <script src="../js/organiser-event-edit.js?v=20260609"></script>
   </body>
 </html>

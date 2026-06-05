@@ -54,28 +54,47 @@
             <input type="text" id="ge-name" required placeholder="e.g. Catalyst Sessions Ltd" />
           </div>
           <div class="ee-field">
-            <label for="ge-description">Description</label>
-            <textarea id="ge-description" rows="4" placeholder="Tell attendees about your group and the events you run"></textarea>
+            <label for="ge-description">Description <span class="ee-required">(required)</span></label>
+            <textarea id="ge-description" rows="4" required maxlength="1200" placeholder="Tell attendees about your group and the events you run"></textarea>
+            <p class="ee-hint"><span id="ge-word-count">0</span> / 150 words</p>
           </div>
           <div class="ee-field">
-            <label for="ge-website">Website</label>
+            <label for="ge-website">Website <span class="ee-optional">(optional)</span></label>
             <input type="url" id="ge-website" placeholder="https://www.yourcompany.com" />
+          </div>
+          <div class="ee-field">
+            <p class="ee-label-block">Industries served</p>
+            <p class="ee-hint" style="margin-top:0">Select all that apply — shown on your group profile.</p>
+            <div class="ee-chip-grid" id="ge-industries" role="group" aria-label="Industries served"></div>
+          </div>
+          <div class="ee-field">
+            <p class="ee-label-block">Meeting formats</p>
+            <div class="ee-mode-toggle" role="group" aria-label="Meeting formats">
+              <button type="button" class="ee-mode-btn" data-ge-format="In person">In person</button>
+              <button type="button" class="ee-mode-btn" data-ge-format="Online">Online</button>
+              <button type="button" class="ee-mode-btn" data-ge-format="Hybrid">Hybrid</button>
+            </div>
+          </div>
+          <div class="ee-field">
+            <label for="ge-contact-email">Contact email</label>
+            <input type="email" id="ge-contact-email" required placeholder="hello@yourcompany.com" autocomplete="email" />
           </div>
         </div>
 
         <div class="ee-actions ge-actions-stack">
           <button type="button" class="ee-btn ee-btn-primary" id="ge-save-changes" hidden>Save changes</button>
-          <button type="button" class="ee-btn ee-btn-gold" id="ge-publish">Publish now</button>
-          <button type="button" class="ee-btn ee-btn-outline" id="ge-save-draft">Save as draft</button>
+          <button type="button" class="ee-btn ee-btn-gold" id="ge-save-continue">Save and create event →</button>
+          <button type="button" class="ee-btn ee-btn-outline" id="ge-publish" hidden>Publish now</button>
+          <button type="button" class="ee-btn ee-btn-outline" id="ge-save-draft" hidden>Save as draft</button>
           <a class="ee-btn ee-btn-outline" href="index.html#groups">Cancel</a>
         </div>
         <p class="ee-hint" id="ge-actions-hint" style="margin-top:12px">
-          Draft profiles are only visible in your dashboard until you publish. Use <strong>Publish now</strong> when you are ready for your group to appear on the site.
+          Your profile will be submitted for verification. Next, you will set up your first event.
         </p>
       </form>
     </div>
 
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
-    <script src="../js/organiser-group-edit.js?v=20260625"></script>
+    <script src="../js/organiser-group-edit.js?v=20260608"></script>
   </body>
 </html>

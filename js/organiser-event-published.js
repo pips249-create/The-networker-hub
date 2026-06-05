@@ -12,7 +12,7 @@
   const fallbackImage = params.get('image') || '';
 
   const origin = location.origin;
-  const listingUrl = primaryId
+  let listingUrl = primaryId
     ? origin + '/events/event.html?id=' + encodeURIComponent(primaryId)
     : origin + '/events/index.html';
 
@@ -20,6 +20,43 @@
     const d = document.createElement('div');
     d.textContent = s == null ? '' : String(s);
     return d.innerHTML;
+  }
+
+  function plainDescription(text) {
+    let s = String(text || '').trim();
+    if (!s) return '';
+    if (s.startsWith('{') && s.endsWith('}')) {
+      try {
+        const obj = JSON.parse(s);
+        if (obj && typeof obj === 'object' && 'foodIncluded' in obj) return '';
+      } catch {
+        /* keep */
+      }
+    }
+    const m = s.match(/\n\n(\{[\s\S]*\})\s*$/);
+    if (m) {
+      try {
+        const obj = JSON.parse(m[1]);
+        if (obj && typeof obj === 'object' && 'foodIncluded' in obj) {
+          s = s.slice(0, m.index).trim();
+        }
+      } catch {
+        /* keep */
+      }
+    }
+    return s;
+  }
+
+  function buildListingUrl(ev) {
+    const slug = ev && ev.slug ? String(ev.slug).trim() : '';
+    if (slug) {
+      return origin + '/events/' + encodeURIComponent(slug);
+    }
+    const id = (ev && ev.id) || primaryId;
+    if (id) {
+      return origin + '/events/event.html?id=' + encodeURIComponent(id);
+    }
+    return origin + '/events/index.html';
   }
 
   function setShareUrls(title) {
@@ -70,6 +107,8 @@
     const openListing = document.getElementById('ep-open-listing');
     const previewLink = document.getElementById('ep-preview-link');
 
+    listingUrl = buildListingUrl(ev);
+
     const title = ev.title || fallbackTitle || 'Your event';
     const photo = ev.photo || ev.imageUrl || fallbackImage || '../assets/event-placeholder.svg';
     const meta = [ev.date || ev.dateLine, ev.location, ev.meetingType || ev.format]
@@ -87,8 +126,9 @@
     if (titleEl) titleEl.textContent = title;
     if (metaEl) metaEl.textContent = meta || 'See listing for details';
     if (descEl) {
-      const d = String(ev.description || '').trim();
-      descEl.textContent = d.length > 220 ? d.slice(0, 217) + '…' : d || 'Your published listing is live on the hub.';
+      const d = plainDescription(ev.description);
+      descEl.textContent =
+        d.length > 220 ? d.slice(0, 217) + '…' : d || 'Your published listing is live on the hub.';
     }
     if (openListing) openListing.href = listingUrl;
     if (previewLink) previewLink.href = listingUrl;
@@ -138,6 +178,8 @@
       const data = await res.json();
       if (data.event) {
         renderPreview({
+          id: data.event.id,
+          slug: data.event.slug,
           title: data.event.title,
           description: data.event.description,
           date: data.event.date,

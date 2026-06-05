@@ -88,6 +88,9 @@ module.exports = async function handler(req, res) {
         description: body.description,
         website: body.website,
         location: body.location,
+        contactEmail: body.contactEmail,
+        industries: body.industries,
+        meetingFormats: body.meetingFormats,
         logoUrl: body.logoUrl,
         logoBase64: body.logoBase64,
         logoMime: body.logoMime,
@@ -160,17 +163,22 @@ module.exports = async function handler(req, res) {
 
     try {
       const created = await api.createGroup({
+        session: auth.session,
         userId: auth.session.sub || '',
         email: auth.session.email,
+        contactEmail: body.contactEmail || auth.session.email,
         name,
         description,
         website,
         location,
+        industries: body.industries || [],
+        meetingFormats: body.meetingFormats || [],
         logoUrl,
         logoBase64,
         logoMime,
         logoFilename,
         listingStatus: body.listingStatus || 'draft',
+        verificationStatus: body.verificationStatus || 'Pending',
       });
       const group = await api.enrichGroupForDashboard(
         created,

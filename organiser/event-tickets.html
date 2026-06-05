@@ -52,8 +52,9 @@
           <p class="ee-hint" style="margin-top:0">
             Add one row per tier (e.g. Standard, Early bird). Each tier is copied to all dates above. Set when sales end — especially for early bird pricing.
           </p>
+          <p class="ee-tier-summary" id="ee-tier-summary" aria-live="polite">0 ticket types · unlimited available · from £0</p>
           <div id="ee-tier-rows"></div>
-          <button type="button" class="ee-btn ee-btn-outline" id="ee-add-tier" style="margin-top:12px">+ Add ticket type</button>
+          <button type="button" class="ee-btn ee-btn-outline" id="ee-add-tier" style="margin-top:12px">+ Add another ticket type</button>
         </div>
 
         <div class="ee-card" id="ee-panel-osop" hidden>
@@ -111,13 +112,71 @@
           </label>
         </div>
 
+        <div class="ee-card" id="ee-refund-card">
+          <h2>Refund policy</h2>
+          <p class="ee-hint" style="margin-top:0">Choose how refunds work for this event. Required before publishing.</p>
+          <div class="ee-refund-options" role="radiogroup" aria-label="Refund policy">
+            <label class="ee-refund-card" data-policy="full_refund">
+              <input type="radio" name="refund-policy" value="full_refund" />
+              <strong>Full refund</strong>
+              <span>Attendees can request a full refund</span>
+              <div class="ee-refund-extra" hidden>
+                <label for="refund-cutoff-days">Refunds allowed up to</label>
+                <div class="ee-inline-num">
+                  <input type="number" id="refund-cutoff-days" min="0" step="1" value="7" />
+                  <span>days before the event</span>
+                </div>
+              </div>
+            </label>
+            <label class="ee-refund-card is-partial" data-policy="partial_refund">
+              <input type="radio" name="refund-policy" value="partial_refund" />
+              <strong>Partial refund</strong>
+              <span>Attendees receive a partial refund</span>
+              <div class="ee-refund-extra" hidden>
+                <label for="refund-partial-details">Describe your partial refund terms</label>
+                <textarea id="refund-partial-details" rows="3" placeholder="e.g. 50% refund if cancelled 7+ days before"></textarea>
+              </div>
+            </label>
+            <label class="ee-refund-card is-none" data-policy="no_refunds">
+              <input type="radio" name="refund-policy" value="no_refunds" />
+              <strong>No refunds</strong>
+              <span>All ticket sales are final</span>
+            </label>
+            <label class="ee-refund-card is-custom" data-policy="custom">
+              <input type="radio" name="refund-policy" value="custom" />
+              <strong>Custom policy</strong>
+              <span>I have my own refund policy</span>
+              <div class="ee-refund-extra" hidden>
+                <label for="refund-custom-details">Your refund policy</label>
+                <textarea id="refund-custom-details" rows="4" placeholder="Full policy text shown to attendees"></textarea>
+              </div>
+            </label>
+          </div>
+          <div class="ee-refund-agreement">
+            <p><strong>⚠ You are responsible for all refunds</strong></p>
+            <p>By listing on The Networker Hub you agree that:</p>
+            <ul>
+              <li>Refunds are issued directly by you through your Stripe account</li>
+              <li>The Networker Hub does not hold or process attendee payments</li>
+              <li>Your platform fee (3% + 20p per ticket) is non-refundable</li>
+              <li>If you cancel an event, you must refund all attendees within 14 days</li>
+            </ul>
+            <label class="ee-check">
+              <input type="checkbox" id="refund-terms-agreed" />
+              <span>I understand I am responsible for processing all refunds directly</span>
+            </label>
+          </div>
+          <p class="ee-alert ee-alert-warn" id="ee-publish-warn" hidden>Add at least one ticket type and complete the refund policy before publishing.</p>
+        </div>
+
         <div class="ee-actions">
-          <button type="submit" class="ee-btn ee-btn-primary" id="ee-tickets-submit">Create tickets for all dates</button>
-          <a class="ee-btn ee-btn-outline" href="index.html#events-tickets">Skip for now</a>
+          <button type="button" class="ee-btn ee-btn-outline" id="ee-tickets-save">Save tickets (draft)</button>
+          <button type="submit" class="ee-btn ee-btn-primary" id="ee-tickets-submit" disabled>Publish event</button>
+          <a class="ee-btn ee-btn-outline" href="index.html#events-tickets">Back to dashboard</a>
         </div>
       </form>
     </div>
 
-    <script src="../js/organiser-event-tickets.js?v=20260606m"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260608"></script>
   </body>
 </html>

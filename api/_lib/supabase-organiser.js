@@ -4,19 +4,27 @@
 const { getSupabaseAdmin } = require('./supabase');
 const { resolveImageUrl } = require('./supabase-storage');
 const { isAdminRole } = require('./auth');
+const { resolveOrganiserAccess, getOrCreateOrganiserAccount } = require('./supabase-organiser-access');
 
 function rowToGroup(row) {
   if (!row) return null;
+  const industries = Array.isArray(row.industries) ? row.industries : [];
+  const meetingFormats = Array.isArray(row.meeting_formats) ? row.meeting_formats : [];
   return {
     id: row.id,
     name: String(row.name || 'Untitled organiser').trim(),
-    ownerEmail: String(row.email || '').toLowerCase(),
+    ownerEmail: String(row.email || row.contact_email || '').toLowerCase(),
+    contactEmail: String(row.contact_email || row.email || '').toLowerCase(),
     description: String(row.description || '').trim(),
     userIds: row.supabase_user_id ? [row.supabase_user_id] : [],
+    organiserAccountId: row.organiser_account_id || null,
     imageUrl: String(row.photo_url || '').trim(),
     website: String(row.website || '').trim(),
-    location: Array.isArray(row.industries) ? row.industries.join(', ') : '',
+    industries,
+    meetingFormats,
+    location: industries.join(', '),
     statusRaw: row.listing_status || 'draft',
+    verificationStatus: row.verification_status || 'Pending',
     rating: row.average_rating != null ? Number(row.average_rating) : null,
     revenueNum: 0,
     createdAt: row.created_at || null,
@@ -42,6 +50,7 @@ async function listGroupsForUser(userId, email) {
   const uid = isUuid(userId) ? userId : null;
   let query = sb.from('organisers').select('*');
   if (uid && em) {
+    // Match either by explicit link OR by legacy email-only ownership.
     query = query.or(`supabase_user_id.eq.${uid},email.eq.${em}`);
   } else if (uid) {
     query = query.eq('supabase_user_id', uid);
@@ -52,6 +61,26 @@ async function listGroupsForUser(userId, email) {
   }
   const { data, error } = await query.order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
+
+  // Backfill `supabase_user_id` when we matched on email but the link is missing.
+  // This keeps subsequent lookups fast and consistent.
+  if (uid && em && Array.isArray(data) && data.length) {
+    const toBackfill = data.filter(
+      (row) =>
+        row &&
+        !row.supabase_user_id &&
+        String(row.email || '').toLowerCase() === em
+    );
+    for (const row of toBackfill) {
+      try {
+        await sb.from('organisers').update({ supabase_user_id: uid }).eq('id', row.id);
+        row.supabase_user_id = uid;
+      } catch {
+        // non-fatal: we still return the groups we found
+      }
+    }
+  }
+
   return (data || []).map(rowToGroup);
 }
 
@@ -87,8 +116,23 @@ async function listGroupsForAdminOverview(session) {
   return [...byId.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
 }
 
+async function listGroupsForAccount(session) {
+  const access = await resolveOrganiserAccess(session);
+  if (!access.groupIds.length) return [];
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('organisers')
+    .select('*')
+    .in('id', access.groupIds)
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data || []).map(rowToGroup);
+}
+
 async function listGroupsForSession(session, adminView) {
   if (adminView) return listGroupsForAdminOverview(session);
+  const accountGroups = await listGroupsForAccount(session);
+  if (accountGroups.length) return accountGroups;
   return listGroupsForUser(session.sub || '', session.email);
 }
 
@@ -131,15 +175,24 @@ async function resolveLogo(payload, organiserId) {
 async function createGroup(payload) {
   const sb = getSupabaseAdmin();
   const listing = normalizeListingStatus(payload.listingStatus || 'draft');
+  let organiserAccountId = payload.organiserAccountId || null;
+  if (!organiserAccountId && payload.session) {
+    const account = await getOrCreateOrganiserAccount(payload.session);
+    organiserAccountId = account ? account.id : null;
+  }
   const insert = {
     name: payload.name,
-    email: payload.email?.toLowerCase(),
+    email: (payload.contactEmail || payload.email || '').toLowerCase() || null,
+    contact_email: (payload.contactEmail || payload.email || '').toLowerCase() || null,
     description: payload.description || null,
     website: payload.website || null,
+    industries: Array.isArray(payload.industries) ? payload.industries : [],
+    meeting_formats: Array.isArray(payload.meetingFormats) ? payload.meetingFormats : [],
     organiser_type: 'Events',
-    verification_status: 'Verified',
+    verification_status: payload.verificationStatus || 'Pending',
     listing_status: listing,
     supabase_user_id: payload.userId || null,
+    organiser_account_id: organiserAccountId,
   };
 
   const { data: created, error } = await sb.from('organisers').insert(insert).select('*').single();
@@ -177,6 +230,16 @@ async function updateGroup(groupId, payload) {
   if (payload.name) patch.name = payload.name;
   if (payload.description !== undefined) patch.description = payload.description || null;
   if (payload.website !== undefined) patch.website = payload.website || null;
+  if (payload.contactEmail !== undefined) {
+    patch.contact_email = payload.contactEmail || null;
+    patch.email = payload.contactEmail || null;
+  }
+  if (payload.industries !== undefined) {
+    patch.industries = Array.isArray(payload.industries) ? payload.industries : [];
+  }
+  if (payload.meetingFormats !== undefined) {
+    patch.meeting_formats = Array.isArray(payload.meetingFormats) ? payload.meetingFormats : [];
+  }
   if (payload.listingStatus != null) {
     patch.listing_status = normalizeListingStatus(payload.listingStatus);
   }
@@ -252,6 +315,7 @@ function airtableSetupHint() {
 module.exports = {
   listGroupsForSession,
   listGroupsForUser,
+  listGroupsForAccount,
   createGroup,
   updateGroup,
   getGroupById,
@@ -261,4 +325,5 @@ module.exports = {
   isPlatformAdmin,
   airtableSetupHint,
   rowToGroup,
+  resolveOrganiserAccess,
 };

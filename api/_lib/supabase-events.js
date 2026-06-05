@@ -19,6 +19,7 @@ const {
   slugForEventType,
   parseTypeCategory: parseMeetingCategory,
 } = require('./event-types');
+const { plainEventDescription } = require('./event-description');
 
 function parseTypeCategory(raw) {
   return parseMeetingCategory(raw);
@@ -115,7 +116,7 @@ function fallbackTicketTier(event) {
 
 function rowToEvent(row, organiser, ticketRows) {
   const title = String(row.title || '').trim();
-  let descText = String(row.description || '').trim();
+  let descText = plainEventDescription(row.description);
   if (!descText && Array.isArray(row.highlights)) {
     descText = row.highlights.join('\n');
   }
@@ -150,6 +151,7 @@ function rowToEvent(row, organiser, ticketRows) {
 
   const ev = {
     id: row.id,
+    slug: row.slug ? String(row.slug).trim() : null,
     title,
     description: descText,
     date: parsedDate.display,
@@ -200,6 +202,9 @@ function rowToEvent(row, organiser, ticketRows) {
     industrySlug: slugIndustry(industry),
     formatSlug: slugFormat(format),
     tickets: tiers.length ? tiers : [],
+    refundPolicy: row.refund_policy || null,
+    refundPolicyDetails: row.refund_policy_details || null,
+    refundCutoffDays: row.refund_cutoff_days != null ? Number(row.refund_cutoff_days) : null,
   };
 
   if (!ev.tickets.length) ev.tickets = [fallbackTicketTier(ev)];
@@ -218,13 +223,67 @@ function organiserMatch(a, b) {
   return a.organiserId === b.organiserId;
 }
 
-async function fetchApprovedEvents(sb) {
-  const { data: events, error: evErr } = await sb
+function isMissingPublishedEventsView(error) {
+  const msg = String(error?.message || error || '').toLowerCase();
+  return (
+    msg.includes('published_events') &&
+    (msg.includes('does not exist') ||
+      msg.includes('relation') ||
+      msg.includes('schema cache') ||
+      msg.includes('could not find'))
+  );
+}
+
+async function fetchPublishedEventRows(sb) {
+  const viewRes = await sb.from('published_events').select('*').order('starts_at', { ascending: true });
+  if (!viewRes.error) return viewRes.data || [];
+
+  if (!isMissingPublishedEventsView(viewRes.error)) {
+    throw new Error(viewRes.error.message);
+  }
+
+  const tableRes = await sb
     .from('events')
     .select('*')
     .eq('approval_status', 'Approved')
     .order('starts_at', { ascending: true });
-  if (evErr) throw new Error(evErr.message);
+  if (tableRes.error) throw new Error(tableRes.error.message);
+  return tableRes.data || [];
+}
+
+async function fetchPublishedEventById(sb, recordId) {
+  const viewRes = await sb.from('published_events').select('*').eq('id', recordId).maybeSingle();
+  if (!viewRes.error) return viewRes.data || null;
+
+  if (!isMissingPublishedEventsView(viewRes.error)) {
+    throw new Error(viewRes.error.message);
+  }
+
+  const tableRes = await sb.from('events').select('*').eq('id', recordId).maybeSingle();
+  if (tableRes.error) throw new Error(tableRes.error.message);
+  if (!tableRes.data || tableRes.data.approval_status !== 'Approved') return null;
+  return tableRes.data;
+}
+
+async function fetchPublishedEventBySlug(sb, slug) {
+  const s = String(slug || '').trim();
+  if (!s) return null;
+
+  const viewRes = await sb.from('published_events').select('*').eq('slug', s).maybeSingle();
+  if (!viewRes.error) return viewRes.data || null;
+
+  if (!isMissingPublishedEventsView(viewRes.error)) {
+    throw new Error(viewRes.error.message);
+  }
+
+  const tableRes = await sb.from('events').select('*').eq('slug', s).maybeSingle();
+  if (tableRes.error) throw new Error(tableRes.error.message);
+  if (!tableRes.data || tableRes.data.approval_status !== 'Approved') return null;
+  return tableRes.data;
+}
+
+async function fetchApprovedEvents(sb) {
+  const events = await fetchPublishedEventRows(sb);
 
   const eventIds = (events || []).map((e) => e.id);
   const orgIds = [...new Set((events || []).map((e) => e.organiser_id).filter(Boolean))];
@@ -275,11 +334,13 @@ async function handle(req, res) {
   try {
     const sb = getSupabaseAdmin();
     const recordId = req.query?.id;
+    const slug = req.query?.slug;
 
-    if (recordId) {
-      const { data: row, error } = await sb.from('events').select('*').eq('id', recordId).maybeSingle();
-      if (error) throw new Error(error.message);
-      if (!row || row.approval_status !== 'Approved') {
+    if (recordId || slug) {
+      const row = recordId
+        ? await fetchPublishedEventById(sb, recordId)
+        : await fetchPublishedEventBySlug(sb, slug);
+      if (!row) {
         return res.status(404).json({
           configured: true,
           provider: 'supabase',
@@ -303,7 +364,8 @@ async function handle(req, res) {
         }
       }
 
-      const { data: tickets } = await sb.from('tickets').select('*').eq('event_id', recordId);
+      const eventId = row.id;
+      const { data: tickets } = await sb.from('tickets').select('*').eq('event_id', eventId);
       const event = rowToEvent(row, organiser, tickets || []);
       const all = await fetchApprovedEvents(sb);
       const related = all.filter((e) => e.id !== event.id && organiserMatch(e, event)).slice(0, 6);

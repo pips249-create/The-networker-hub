@@ -192,6 +192,9 @@
   }
 
   function eventDetailHref(ev) {
+    if (ev.slug) {
+      return '/events/' + encodeURIComponent(ev.slug);
+    }
     return 'event.html?id=' + encodeURIComponent(ev.id);
   }
 
@@ -347,9 +350,63 @@
     }
 
     renderTicketPanel(ev);
+    renderRefundPolicy(ev);
     setText('ev-related-title', 'More from ' + (ev.organiser || 'this organiser'));
     renderOrganiserReviews(ev);
     applyTicketPanelState(ev);
+  }
+
+  function renderRefundPolicy(ev) {
+    const badge = document.getElementById('ev-refund-badge');
+    const details = document.getElementById('ev-refund-details');
+    const body = document.getElementById('ev-refund-details-body');
+    if (!badge) return;
+
+    const policy = ev.refundPolicy || ev.refund_policy || '';
+    if (!policy) {
+      badge.hidden = true;
+      if (details) details.hidden = true;
+      return;
+    }
+
+    let label = '';
+    let cls = '';
+    let detailText = '';
+
+    if (policy === 'full_refund') {
+      label = '✓ Full refunds available';
+      cls = 'is-full';
+      const days = ev.refundCutoffDays != null ? ev.refundCutoffDays : ev.refund_cutoff_days;
+      detailText =
+        days != null
+          ? 'Full refunds are available up to ' + days + ' day' + (days === 1 ? '' : 's') + ' before the event.'
+          : 'Full refunds are available before the event.';
+    } else if (policy === 'partial_refund') {
+      label = '~ Partial refunds — see policy';
+      cls = 'is-partial';
+      detailText = ev.refundPolicyDetails || ev.refund_policy_details || 'Partial refunds apply — see organiser terms.';
+    } else if (policy === 'no_refunds') {
+      label = '✗ No refunds — all sales final';
+      cls = 'is-none';
+      detailText = 'All ticket sales are final. No refunds will be issued.';
+    } else if (policy === 'custom') {
+      label = 'ℹ Custom refund policy';
+      cls = 'is-custom';
+      detailText = ev.refundPolicyDetails || ev.refund_policy_details || 'See organiser refund policy below.';
+    } else {
+      badge.hidden = true;
+      if (details) details.hidden = true;
+      return;
+    }
+
+    badge.textContent = label;
+    badge.className = 'refund-badge ' + cls;
+    badge.hidden = false;
+
+    if (details && body) {
+      body.textContent = detailText;
+      details.hidden = !detailText;
+    }
   }
 
   function ticketTiersForEvent(ev) {
@@ -1019,8 +1076,9 @@
   async function boot() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
+    const slug = params.get('slug');
 
-    if (!id && !params.get('title')) {
+    if (!id && !slug && !params.get('title')) {
       setEventLoading(false);
       const tiersEl = document.getElementById('ticket-tiers');
       if (tiersEl) {
@@ -1032,11 +1090,14 @@
 
     setEventLoading(true);
     try {
-    if (id) {
+    if (id || slug) {
       const tiersEl = document.getElementById('ticket-tiers');
       if (tiersEl) tiersEl.innerHTML = '<p class="ticket-load-hint">Loading tickets…</p>';
       try {
-        const res = await fetch('/api/events?id=' + encodeURIComponent(id));
+        const apiUrl = id
+          ? '/api/events?id=' + encodeURIComponent(id)
+          : '/api/events?slug=' + encodeURIComponent(slug);
+        const res = await fetch(apiUrl);
         const data = await res.json();
         if (data.event) {
           const ev = normalizeEventFlags(data.event, params);

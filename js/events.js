@@ -17,6 +17,9 @@
     countExhibition: document.getElementById('count-exhibition'),
     industry: document.getElementById('industry'),
     location: document.getElementById('location'),
+    sponsorTitle: document.getElementById('sponsor-title'),
+    sponsorBody: document.getElementById('sponsor-body'),
+    sponsorCta: document.getElementById('sponsor-cta'),
   };
 
   let events = [];
@@ -365,20 +368,20 @@
   function setLoading(on) {
     const overlay = document.getElementById('events-load-overlay');
     const shell = document.getElementById('events-shell');
+    if (window.hubLoading) {
+      if (on) window.hubLoading.show('events-load-overlay');
+      else window.hubLoading.hide('events-load-overlay');
+      return;
+    }
+    if (!overlay) return;
     if (on) {
-      if (global.hubLoading) global.hubLoading.show('events-load-overlay');
-      else if (overlay) {
-        overlay.classList.add('is-active');
-        overlay.hidden = false;
-        if (shell) shell.classList.add('is-loading');
-      }
+      overlay.classList.add('is-active');
+      overlay.hidden = false;
+      if (shell) shell.classList.add('is-loading');
     } else {
-      if (global.hubLoading) global.hubLoading.hide('events-load-overlay');
-      else if (overlay) {
-        overlay.classList.remove('is-active');
-        overlay.hidden = true;
-        if (shell) shell.classList.remove('is-loading');
-      }
+      overlay.classList.remove('is-active');
+      overlay.hidden = true;
+      if (shell) shell.classList.remove('is-loading');
     }
   }
 
@@ -389,6 +392,42 @@
     els.status.hidden = !msg;
   }
 
+  function renderSponsorBlock(block) {
+    if (!els.sponsorTitle && !els.sponsorBody && !els.sponsorCta) return;
+    if (!block) return;
+
+    const title = String(block.title || '').trim();
+    const body = String(block.body || '').trim();
+    const ctaLabel = String(block.cta_label || '').trim();
+    const ctaUrl = String(block.cta_url || '').trim();
+
+    if (els.sponsorTitle && title) els.sponsorTitle.textContent = title;
+    if (els.sponsorBody) {
+      els.sponsorBody.innerHTML = body ? body : '';
+    }
+    if (els.sponsorCta) {
+      if (ctaLabel && ctaUrl) {
+        els.sponsorCta.textContent = ctaLabel;
+        els.sponsorCta.href = ctaUrl;
+        els.sponsorCta.hidden = false;
+      } else {
+        els.sponsorCta.hidden = true;
+      }
+    }
+  }
+
+  async function loadSponsorBlock() {
+    try {
+      const res = await fetch('/api/cms-block?slot=sponsor_hub');
+      const data = await res.json();
+      if (data && data.ok && data.block) {
+        renderSponsorBlock(data.block);
+      }
+    } catch {
+      /* non-fatal */
+    }
+  }
+
   window.hubRefreshListings = function () {
     currentPage = 1;
     renderAll();
@@ -397,9 +436,34 @@
     }
   };
 
+  function applyLoadedEvents() {
+    window.hubAllEvents = events;
+    fillFilterOptions();
+    currentPage = 1;
+    if (window.hubApplyFilters) window.hubApplyFilters();
+    else renderAll();
+  }
+
+  function refreshAfterGeocode() {
+    var geo = window.hubEnrichEventCoords
+      ? window.hubEnrichEventCoords(events)
+      : Promise.resolve();
+    return geo
+      .then(function () {
+        if (window.hubApplyFilters) window.hubApplyFilters();
+        else renderAll();
+      })
+      .catch(function () {
+        /* map coords are optional */
+      });
+  }
+
   async function load() {
     setLoading(true);
     setStatus('', false);
+    var safetyTimer = setTimeout(function () {
+      setLoading(false);
+    }, 6000);
     try {
       const res = await fetch(API);
       const data = await res.json();
@@ -427,31 +491,23 @@
           false
         );
       }
-      window.hubAllEvents = events;
-      var afterGeo = window.hubEnrichEventCoords
-        ? window.hubEnrichEventCoords(events)
-        : Promise.resolve();
-      afterGeo
-        .then(function () {
-          fillFilterOptions();
-          currentPage = 1;
-          if (window.hubApplyFilters) window.hubApplyFilters();
-          else renderAll();
-        })
-        .finally(function () {
-          setLoading(false);
-        });
+      applyLoadedEvents();
+      refreshAfterGeocode();
     } catch (e) {
       setStatus('Could not reach /api/events. Deploy on Vercel or run `vercel dev` locally.', true);
       events = [];
-      window.hubAllEvents = events;
-      fillFilterOptions();
-      renderAll();
+      applyLoadedEvents();
+    } finally {
+      clearTimeout(safetyTimer);
       setLoading(false);
+      if (window.hubLoading && window.hubLoading.clear) {
+        window.hubLoading.clear('events-load-overlay');
+      }
     }
   }
 
   window.hubReloadEvents = load;
   initListingsPagination();
+  loadSponsorBlock();
   load();
 })();

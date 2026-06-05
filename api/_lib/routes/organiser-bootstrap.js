@@ -45,6 +45,9 @@ module.exports = async function handler(req, res) {
       personalScope: ws.personalScope,
       isAdmin: ws.isAdmin,
       canOrganise: ws.canOrganise,
+      organiserRole: ws.organiserRole,
+      canManageTeam: ws.canManageTeam,
+      canDeleteEvents: ws.canDeleteEvents,
       stats: {
         groups: ws.groups.length,
         events: ws.events.length,

@@ -73,7 +73,7 @@
       });
   };
 
-  window.hubEnrichEventCoords = function (events) {
+  function enrichEventCoords(events) {
     var list = events || [];
     var needed = [];
     list.forEach(function (ev) {
@@ -108,12 +108,20 @@
             return cache[pc] === undefined;
           });
           if (!uncached.length) return;
+          var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+          var timer = controller
+            ? setTimeout(function () {
+                controller.abort();
+              }, 8000)
+            : null;
           return fetch('https://api.postcodes.io/postcodes', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ postcodes: uncached }),
+            signal: controller ? controller.signal : undefined,
           })
             .then(function (res) {
+              if (timer) clearTimeout(timer);
               return res.json();
             })
             .then(function (data) {
@@ -127,6 +135,7 @@
               });
             })
             .catch(function () {
+              if (timer) clearTimeout(timer);
               uncached.forEach(function (pc) {
                 cache[pc] = null;
               });
@@ -143,6 +152,16 @@
           });
         });
       });
+  }
+
+  window.hubEnrichEventCoords = function (events) {
+    var work = enrichEventCoords(events);
+    return Promise.race([
+      work,
+      new Promise(function (resolve) {
+        setTimeout(resolve, 4000);
+      }),
+    ]);
   };
 
   window.hubDistanceMiles = haversineMiles;

@@ -34,6 +34,7 @@
           <nav class="hub-side-nav hub-side-nav--minimal org-dash-bar" aria-label="Organiser dashboard">
             <a href="#dashboard" class="hub-side-nav-link is-active" data-org-route="dashboard">Overview</a>
             <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Group profiles</a>
+            <a href="#team" class="hub-side-nav-link" data-org-route="team">Team</a>
             <a href="#academy" class="hub-side-nav-link" data-org-route="academy">The Academy</a>
             <span class="hub-side-nav-divider">My events</span>
             <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">Events</a>
@@ -229,6 +230,31 @@
           <nav class="org-pagination" id="pagination-groups" data-list="groups" aria-label="Groups pages" hidden></nav>
         </section>
 
+        <!-- Team members -->
+        <section class="org-page" id="org-page-team" data-org-page="team">
+          <div class="org-toolbar">
+            <div>
+              <h2 class="org-section-title">Team members</h2>
+              <p class="org-section-sub">Invite editors to help manage events. Only the account owner can invite or remove team members.</p>
+            </div>
+            <button type="button" class="org-btn org-btn-gold" id="btn-invite-team" hidden>Invite team member</button>
+          </div>
+          <div class="org-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name / email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th class="org-th-actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="team-body"></tbody>
+            </table>
+            <p class="org-empty" id="team-empty" hidden>No team members yet.</p>
+          </div>
+        </section>
+
         <!-- The Academy — marketplace preview + coming soon -->
         <section class="org-page" id="org-page-academy" data-org-page="academy">
           <div class="org-academy-stage">
@@ -395,6 +421,7 @@
 
           <!-- Revenue -->
           <div class="org-sub-page" id="sub-events-revenue" data-events-panel="events-revenue">
+            <div class="org-payout-held-banner" id="payout-held-banner" hidden role="status"></div>
             <div class="org-revenue-banner">
               <div class="org-rev-item">
                 <div class="org-rev-label">Events listed</div>
@@ -425,7 +452,9 @@
                     <th>Tickets sold</th>
                     <th>Revenue</th>
                     <th>Rating</th>
-                    <th>Status</th>
+                    <th>Event status</th>
+                    <th>Payout</th>
+                    <th class="org-th-actions">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="revenue-body"></tbody>
@@ -485,6 +514,64 @@
       </div>
     </div>
 
+    <!-- Modal: invite team member -->
+    <div class="org-modal" id="modal-team-invite" role="dialog" aria-modal="true" aria-labelledby="modal-team-title" hidden>
+      <div class="org-modal-backdrop" data-org-modal-close></div>
+      <div class="org-modal-panel">
+        <h2 id="modal-team-title">Invite team member</h2>
+        <p>Editors can create and edit events but cannot manage team members.</p>
+        <form id="form-team-invite">
+          <div class="org-field">
+            <label for="team-invite-email">Email address</label>
+            <input type="email" id="team-invite-email" required placeholder="colleague@company.com" />
+          </div>
+          <div class="org-field">
+            <label for="team-invite-role">Role</label>
+            <select id="team-invite-role" disabled>
+              <option value="editor" selected>Editor</option>
+            </select>
+          </div>
+          <div class="org-modal-actions">
+            <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
+            <button type="submit" class="org-btn org-btn-primary">Send invite</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: payout request -->
+    <div class="org-modal" id="modal-payout" role="dialog" aria-modal="true" aria-labelledby="modal-payout-title" hidden>
+      <div class="org-modal-backdrop" data-org-modal-close></div>
+      <div class="org-modal-panel">
+        <h2 id="modal-payout-title">Request payout</h2>
+        <p id="modal-payout-event" class="org-modal-sub"></p>
+        <div class="org-payout-breakdown" id="modal-payout-breakdown" hidden>
+          <div class="org-payout-line">
+            <span>Gross ticket sales</span>
+            <span id="payout-gross">£0.00</span>
+          </div>
+          <div class="org-payout-line org-payout-deduct">
+            <span>Stripe fees (1.5% + 20p/transaction)</span>
+            <span id="payout-stripe">-£0.00</span>
+          </div>
+          <div class="org-payout-line org-payout-deduct">
+            <span>Platform fee (3%)</span>
+            <span id="payout-platform">-£0.00</span>
+          </div>
+          <div class="org-payout-divider" aria-hidden="true"></div>
+          <div class="org-payout-line org-payout-total">
+            <span>Your payout</span>
+            <span id="payout-net">£0.00</span>
+          </div>
+        </div>
+        <p class="org-payout-ineligible" id="modal-payout-ineligible" hidden></p>
+        <div class="org-modal-actions">
+          <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
+          <button type="button" class="org-btn org-btn-gold" id="btn-payout-submit" disabled>Submit payout request</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal: ticket -->
     <div class="org-modal" id="modal-ticket" role="dialog" aria-modal="true" aria-labelledby="modal-ticket-title" hidden>
       <div class="org-modal-backdrop" data-org-modal-close></div>
@@ -528,6 +615,6 @@
     </div>
 
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
-    <script src="../js/organiser-dashboard.js?v=20260620"></script>
+    <script src="../js/organiser-dashboard.js?v=20260608"></script>
   </body>
 </html>
