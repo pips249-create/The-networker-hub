@@ -98,6 +98,50 @@
     return hit ? hit.label : option;
   }
 
+  const QuarterTime = window.OrganiserQuarterTime;
+
+  function parseDatetimeLocalQuarter(raw) {
+    if (!raw) return null;
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return null;
+    if (QuarterTime) {
+      const rounded = QuarterTime.roundToQuarterHour(
+        d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0')
+      );
+      const parts = rounded.split(':').map(Number);
+      d.setHours(parts[0] || 0, parts[1] || 0, 0, 0);
+    }
+    return d.toISOString();
+  }
+
+  function bindQuarterDatetimeInput(input) {
+    if (!input || input.dataset.quarterBound) return;
+    input.dataset.quarterBound = '1';
+    input.setAttribute('step', '900');
+    input.addEventListener('change', function () {
+      if (!input.value || !QuarterTime) return;
+      const d = new Date(input.value);
+      if (Number.isNaN(d.getTime())) return;
+      const rounded = QuarterTime.roundToQuarterHour(
+        d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0')
+      );
+      const parts = rounded.split(':').map(Number);
+      d.setMinutes(parts[1] || 0, 0, 0);
+      d.setHours(parts[0] || 0);
+      const pad = (n) => String(n).padStart(2, '0');
+      input.value =
+        d.getFullYear() +
+        '-' +
+        pad(d.getMonth() + 1) +
+        '-' +
+        pad(d.getDate()) +
+        'T' +
+        pad(d.getHours()) +
+        ':' +
+        pad(d.getMinutes());
+    });
+  }
+
   function loadSeriesMeta() {
     try {
       const raw = sessionStorage.getItem(SERIES_STORAGE_KEY);
@@ -216,10 +260,12 @@
       '<div class="ee-field"><label>Quantity available <span class="ee-optional">(optional)</span></label><input type="number" class="ee-tier-qty" min="0" step="1" placeholder="Unlimited" /></div>' +
       '</div>' +
       '<div class="ee-row-2">' +
-      '<div class="ee-field"><label>Sale start <span class="ee-optional">(optional)</span></label><input type="datetime-local" class="ee-tier-sale-start" /></div>' +
+      '<div class="ee-field"><label>Sale start <span class="ee-optional">(optional)</span></label>' +
+      '<p class="ee-hint" style="margin-top:0">15-minute steps</p>' +
+      '<input type="datetime-local" class="ee-tier-sale-start" step="900" /></div>' +
       '<div class="ee-field"><label>Sale end <span class="ee-optional">(optional)</span></label>' +
       saleEndSelectHtml('1_week') +
-      '<input type="datetime-local" class="ee-tier-sale-custom" hidden style="margin-top:8px" /></div>' +
+      '<input type="datetime-local" class="ee-tier-sale-custom" step="900" hidden style="margin-top:8px" /></div>' +
       '</div>' +
       '<div class="ee-field"><label>Ticket type</label><select class="ee-tier-kind">' +
       '<option value="Standard">Standard (auto-approve)</option>' +
@@ -279,6 +325,8 @@
         customInput.hidden = saleSelect.value !== 'custom';
       });
     }
+    bindQuarterDatetimeInput(row.querySelector('.ee-tier-sale-start'));
+    bindQuarterDatetimeInput(customInput);
     row.querySelectorAll('input, textarea, select').forEach((el) => {
       el.addEventListener('input', updateTierSummary);
       el.addEventListener('change', updateTierSummary);
@@ -317,16 +365,22 @@
     const tiers = [];
     const eventDate = seriesMeta.events && seriesMeta.events[0] ? seriesMeta.events[0].date : null;
     rows.forEach((row, idx) => {
-      const name = row.querySelector('.ee-tier-name').value.trim();
+      const nameEl = row.querySelector('.ee-tier-name');
+      if (!nameEl) return;
+      const name = nameEl.value.trim();
       if (!name) return;
-      const price = row.querySelector('.ee-tier-price').value;
-      const qty = row.querySelector('.ee-tier-qty').value;
-      const desc = row.querySelector('.ee-tier-desc').value.trim();
-      const saleOption = row.querySelector('.ee-tier-sale-end').value;
-      const customDt = row.querySelector('.ee-tier-sale-custom').value;
+      const price = row.querySelector('.ee-tier-price')?.value;
+      const qty = row.querySelector('.ee-tier-qty')?.value;
+      const desc = row.querySelector('.ee-tier-desc')?.value.trim() || '';
+      const saleOption = row.querySelector('.ee-tier-sale-end')?.value;
+      const customDt = row.querySelector('.ee-tier-sale-custom')?.value;
       const saleStartRaw = row.querySelector('.ee-tier-sale-start')?.value;
-      const saleStart = saleStartRaw ? new Date(saleStartRaw).toISOString() : null;
-      const saleEnd = computeSaleEndIso(saleOption, customDt, eventDate);
+      const saleStart = parseDatetimeLocalQuarter(saleStartRaw);
+      const saleEnd = computeSaleEndIso(
+        saleOption,
+        customDt ? parseDatetimeLocalQuarter(customDt) : null,
+        eventDate
+      );
       const ticketKind = row.querySelector('.ee-tier-kind')?.value || 'Standard';
       const isApp = ticketKind === 'Application-based';
       tiers.push({
@@ -369,33 +423,48 @@
     const btn = document.getElementById('ee-tickets-submit');
     const warn = document.getElementById('ee-publish-warn');
     if (!btn) return;
-    const tiers = attendanceMode === 'osop' ? collectOsopTiers() : collectTiers();
-    const refund = collectRefundPayload();
-    const ready =
-      tiers.length > 0 && refund.refundPolicy && refund.refundTermsAgreed;
-    btn.disabled = !ready;
-    if (warn) warn.hidden = ready;
+    try {
+      const tiers = attendanceMode === 'osop' ? collectOsopTiers() : collectTiers();
+      const refund = collectRefundPayload();
+      const ready =
+        tiers.length > 0 && refund.refundPolicy && refund.refundTermsAgreed;
+      btn.disabled = !ready;
+      if (warn) warn.hidden = ready;
+    } catch {
+      btn.disabled = true;
+      if (warn) warn.hidden = false;
+    }
+  }
+
+  function selectRefundCard(radio) {
+    if (!radio) return;
+    radio.checked = true;
+    selectedRefundPolicy = radio.value;
+    document.querySelectorAll('.ee-refund-card').forEach((c) => {
+      const r = c.querySelector('input[type="radio"]');
+      const active = r && r.checked;
+      c.classList.toggle('is-selected', active);
+      c.setAttribute('aria-checked', active ? 'true' : 'false');
+      const extra = c.querySelector('.ee-refund-extra');
+      if (extra) extra.hidden = !active;
+    });
+    updatePublishButton();
   }
 
   function bindRefundPolicy() {
     document.querySelectorAll('.ee-refund-card').forEach((card) => {
       const radio = card.querySelector('input[type="radio"]');
       if (!radio) return;
-      radio.addEventListener('change', () => {
-        selectedRefundPolicy = radio.value;
-        document.querySelectorAll('.ee-refund-card').forEach((c) => {
-          const r = c.querySelector('input[type="radio"]');
-          const active = r && r.checked;
-          c.classList.toggle('is-selected', active);
-          const extra = c.querySelector('.ee-refund-extra');
-          if (extra) extra.hidden = !active;
-        });
-        updatePublishButton();
-      });
+      radio.addEventListener('change', () => selectRefundCard(radio));
       card.addEventListener('click', (e) => {
-        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-          radio.checked = true;
-          radio.dispatchEvent(new Event('change'));
+        if (e.target.closest('input, textarea')) return;
+        e.preventDefault();
+        selectRefundCard(radio);
+      });
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectRefundCard(radio);
         }
       });
     });

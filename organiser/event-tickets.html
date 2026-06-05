@@ -116,41 +116,41 @@
           <h2>Refund policy</h2>
           <p class="ee-hint" style="margin-top:0">Choose how refunds work for this event. Required before publishing.</p>
           <div class="ee-refund-options" role="radiogroup" aria-label="Refund policy">
-            <label class="ee-refund-card" data-policy="full_refund">
-              <input type="radio" name="refund-policy" value="full_refund" />
+            <div class="ee-refund-card" data-policy="full_refund" role="radio" tabindex="0" aria-checked="false">
+              <input type="radio" name="refund-policy" value="full_refund" id="refund-policy-full" />
               <strong>Full refund</strong>
               <span>Attendees can request a full refund</span>
               <div class="ee-refund-extra" hidden>
-                <label for="refund-cutoff-days">Refunds allowed up to</label>
+                <span class="ee-field-label">Refunds allowed up to</span>
                 <div class="ee-inline-num">
-                  <input type="number" id="refund-cutoff-days" min="0" step="1" value="7" />
+                  <input type="number" id="refund-cutoff-days" min="0" step="1" value="7" aria-label="Refund cutoff days" />
                   <span>days before the event</span>
                 </div>
               </div>
-            </label>
-            <label class="ee-refund-card is-partial" data-policy="partial_refund">
-              <input type="radio" name="refund-policy" value="partial_refund" />
+            </div>
+            <div class="ee-refund-card is-partial" data-policy="partial_refund" role="radio" tabindex="0" aria-checked="false">
+              <input type="radio" name="refund-policy" value="partial_refund" id="refund-policy-partial" />
               <strong>Partial refund</strong>
               <span>Attendees receive a partial refund</span>
               <div class="ee-refund-extra" hidden>
-                <label for="refund-partial-details">Describe your partial refund terms</label>
-                <textarea id="refund-partial-details" rows="3" placeholder="e.g. 50% refund if cancelled 7+ days before"></textarea>
+                <span class="ee-field-label">Describe your partial refund terms</span>
+                <textarea id="refund-partial-details" rows="3" placeholder="e.g. 50% refund if cancelled 7+ days before" aria-label="Partial refund terms"></textarea>
               </div>
-            </label>
-            <label class="ee-refund-card is-none" data-policy="no_refunds">
-              <input type="radio" name="refund-policy" value="no_refunds" />
+            </div>
+            <div class="ee-refund-card is-none" data-policy="no_refunds" role="radio" tabindex="0" aria-checked="false">
+              <input type="radio" name="refund-policy" value="no_refunds" id="refund-policy-none" />
               <strong>No refunds</strong>
               <span>All ticket sales are final</span>
-            </label>
-            <label class="ee-refund-card is-custom" data-policy="custom">
-              <input type="radio" name="refund-policy" value="custom" />
+            </div>
+            <div class="ee-refund-card is-custom" data-policy="custom" role="radio" tabindex="0" aria-checked="false">
+              <input type="radio" name="refund-policy" value="custom" id="refund-policy-custom" />
               <strong>Custom policy</strong>
               <span>I have my own refund policy</span>
               <div class="ee-refund-extra" hidden>
-                <label for="refund-custom-details">Your refund policy</label>
-                <textarea id="refund-custom-details" rows="4" placeholder="Full policy text shown to attendees"></textarea>
+                <span class="ee-field-label">Your refund policy</span>
+                <textarea id="refund-custom-details" rows="4" placeholder="Full policy text shown to attendees" aria-label="Custom refund policy"></textarea>
               </div>
-            </label>
+            </div>
           </div>
           <div class="ee-refund-agreement">
             <p><strong>⚠ You are responsible for all refunds</strong></p>
@@ -177,6 +177,7 @@
       </form>
     </div>
 
-    <script src="../js/organiser-event-tickets.js?v=20260608"></script>
+    <script src="../js/organiser-quarter-time.js?v=20260613d"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260613d"></script>
   </body>
 </html>

@@ -358,6 +358,27 @@ body.hub-page-organiser.organiser-event-edit-page {
   border-top: 1px solid var(--ee-border);
 }
 
+.ee-actions--split {
+  justify-content: space-between;
+  align-items: center;
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.ee-card-actions {
+  padding-top: 20px;
+}
+
+.ee-actions-note {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.ee-dates-times {
+  margin-top: 16px;
+}
+
 .ee-btn {
   font: inherit;
   font-size: 13px;
@@ -1008,7 +1029,8 @@ body.hub-page-organiser.organiser-event-edit-page {
   margin-top: 12px;
 }
 
-.ee-refund-extra label {
+.ee-refund-extra label,
+.ee-refund-extra .ee-field-label {
   display: block;
   font-size: 12px;
   font-weight: 600;

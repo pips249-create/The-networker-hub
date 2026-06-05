@@ -70,102 +70,12 @@
     badge.hidden = false;
   }
 
-  function updateCancelEventButton(ev) {
-    const btn = document.getElementById('ee-cancel-event');
-    if (!btn || !ev) return;
-    const cancelled = String(ev.status || '').toLowerCase() === 'cancelled';
-    btn.hidden = !editId || !ev.locked || cancelled;
-  }
-
-  function openCancelModal() {
-    const modal = document.getElementById('ee-cancel-modal');
-    if (modal) modal.hidden = false;
-    const confirmBtn = document.getElementById('ee-cancel-confirm');
-    const checkbox = document.getElementById('ee-cancel-refund-confirm');
-    if (confirmBtn) confirmBtn.disabled = !(checkbox && checkbox.checked);
-  }
-
-  function closeCancelModal() {
-    const modal = document.getElementById('ee-cancel-modal');
-    if (modal) modal.hidden = true;
-    const form = document.getElementById('ee-cancel-form');
-    if (form) form.reset();
-    const confirmBtn = document.getElementById('ee-cancel-confirm');
-    if (confirmBtn) confirmBtn.disabled = true;
-  }
-
-  function bindCancellationUi() {
-    const cancelBtn = document.getElementById('ee-cancel-event');
-    const modal = document.getElementById('ee-cancel-modal');
-    const form = document.getElementById('ee-cancel-form');
-    const checkbox = document.getElementById('ee-cancel-refund-confirm');
-    const confirmBtn = document.getElementById('ee-cancel-confirm');
-
-    if (cancelBtn) {
-      cancelBtn.addEventListener('click', openCancelModal);
-    }
-    if (modal) {
-      modal.querySelectorAll('[data-ee-modal-close]').forEach((el) => {
-        el.addEventListener('click', closeCancelModal);
-      });
-    }
-    if (checkbox && confirmBtn) {
-      checkbox.addEventListener('change', () => {
-        confirmBtn.disabled = !checkbox.checked;
-      });
-    }
-    if (form) {
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!editId) return;
-        const reason = document.getElementById('ee-cancel-reason').value;
-        const details = document.getElementById('ee-cancel-details').value.trim();
-        const refundTermsConfirmed = document.getElementById('ee-cancel-refund-confirm').checked;
-        if (!reason) {
-          showAlert('Select a cancellation reason.');
-          return;
-        }
-        if (!refundTermsConfirmed) {
-          showAlert('Confirm you will refund all attendees within 14 days.');
-          return;
-        }
-        if (confirmBtn) confirmBtn.disabled = true;
-        const { ok, data } = await api('/api/organiser/cancellations', {
-          method: 'POST',
-          body: JSON.stringify({
-            eventId: editId,
-            reason,
-            details,
-            refundTermsConfirmed,
-          }),
-        });
-        if (confirmBtn) confirmBtn.disabled = false;
-        if (!ok) {
-          showAlert(data.message || data.error || 'Could not cancel event');
-          return;
-        }
-        closeCancelModal();
-        showAlert(data.message || 'Event cancelled.');
-        setTimeout(() => {
-          location.href = 'index.html#events-list';
-        }, 1200);
-      });
-    }
-  }
-
   function applyLockUi(locked) {
     currentEventLocked = Boolean(locked);
     const banner = document.getElementById('ee-lock-banner');
     if (banner) banner.hidden = !currentEventLocked;
 
-    const lockSelectors = [
-      '#ee-type',
-      '#ee-start-time',
-      '#ee-end-time',
-      '#ee-postcode',
-      '#ee-recurrence',
-      '#ee-recurrence-end',
-    ];
+    const lockSelectors = ['#ee-type', '#ee-start-time', '#ee-end-time', '#ee-postcode'];
     lockSelectors.forEach((sel) => {
       const el = document.querySelector(sel);
       if (el) {
@@ -174,8 +84,8 @@
         if (field) field.classList.toggle('is-locked', currentEventLocked);
       }
     });
-    const planCard = document.querySelector('.ee-card-plan');
-    if (planCard) planCard.classList.toggle('is-locked', currentEventLocked);
+    const datesCard = document.getElementById('ee-card-dates');
+    if (datesCard) datesCard.classList.toggle('is-locked', currentEventLocked);
   }
 
   function bindFormatToggleButtons() {
@@ -198,15 +108,30 @@
     });
   }
 
-  function bindRecurrenceUi() {
-    const sel = document.getElementById('ee-recurrence');
-    const wrap = document.getElementById('ee-recurrence-end-wrap');
-    if (!sel || !wrap) return;
-    const update = () => {
-      wrap.hidden = sel.value === 'one-time';
-    };
-    sel.addEventListener('change', update);
-    update();
+  function daysBetweenDateKeys(a, b) {
+    const da = parseDateKey(a);
+    const db = parseDateKey(b);
+    return Math.round((db.getTime() - da.getTime()) / 86400000);
+  }
+
+  function deriveRecurrenceFromDates(keys) {
+    if (!keys || keys.length <= 1) {
+      return { recurrencePattern: null, recurrenceEndDate: null };
+    }
+    const sorted = [...keys].sort();
+    const end = sorted[sorted.length - 1];
+    const gaps = [];
+    for (let i = 1; i < sorted.length; i++) {
+      gaps.push(daysBetweenDateKeys(sorted[i - 1], sorted[i]));
+    }
+    const allSame = gaps.length && gaps.every((g) => g === gaps[0]);
+    if (allSame && gaps[0] === 7) {
+      return { recurrencePattern: 'weekly', recurrenceEndDate: end };
+    }
+    if (allSame && gaps[0] === 14) {
+      return { recurrencePattern: 'bi-weekly', recurrenceEndDate: end };
+    }
+    return { recurrencePattern: 'Series', recurrenceEndDate: end };
   }
 
   function validateTimes() {
@@ -303,6 +228,28 @@
 
   const QuarterTime = window.OrganiserQuarterTime;
 
+  function formatTime12h(timeStr) {
+    if (!timeStr) return '';
+    const rounded = QuarterTime ? QuarterTime.roundToQuarterHour(timeStr) : timeStr;
+    const parts = rounded.split(':').map(Number);
+    const h = parts[0] || 0;
+    const m = parts[1] || 0;
+    const period = h >= 12 ? 'pm' : 'am';
+    const hour12 = h % 12 || 12;
+    return hour12 + ':' + pad2(m) + period;
+  }
+
+  function formatSelectedDateLine(key) {
+    const d = parseDateKey(key);
+    const datePart = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    const startEl = document.getElementById('ee-start-time');
+    const endEl = document.getElementById('ee-end-time');
+    const start = startEl ? formatTime12h(startEl.value) : '';
+    const end = endEl && endEl.value ? formatTime12h(endEl.value) : '';
+    if (!start) return datePart;
+    return datePart + ' · ' + start + (end ? ' – ' + end : '');
+  }
+
   function combineDateAndTime(dateKeyStr, timeStr) {
     const [y, m, d] = dateKeyStr.split('-').map(Number);
     const rounded = QuarterTime ? QuarterTime.roundToQuarterHour(timeStr) : timeStr || '10:00';
@@ -340,7 +287,17 @@
     const keys = getSelectedDateKeys();
     if (count) count.textContent = String(keys.length);
     if (!list) return;
-    list.innerHTML = keys.map((k) => '<li>' + esc(formatDateLabel(k)) + '</li>').join('');
+    list.innerHTML = keys.map((k) => '<li>' + esc(formatSelectedDateLine(k)) + '</li>').join('');
+  }
+
+  function bindTimeListRefresh() {
+    const startEl = document.getElementById('ee-start-time');
+    const endEl = document.getElementById('ee-end-time');
+    [startEl, endEl].forEach((el) => {
+      if (!el || el.dataset.dateListBound) return;
+      el.dataset.dateListBound = '1';
+      el.addEventListener('change', renderSelectedList);
+    });
   }
 
   function renderCalendar() {
@@ -563,8 +520,6 @@
       badge.hidden = false;
     }
     syncFormatToggleButtons();
-    const changeTop = document.getElementById('ee-change-format-top');
-    if (changeTop) changeTop.href = 'event-format.html';
   }
 
   function buildLocationFields() {
@@ -603,6 +558,9 @@
     document.getElementById('ee-description').value = ev.description || '';
     const wc = document.getElementById('ee-word-count');
     if (wc) wc.textContent = String(countWords(ev.description || ''));
+    if (document.getElementById('ee-max-attendees') && ev.maxAttendees != null) {
+      document.getElementById('ee-max-attendees').value = ev.maxAttendees;
+    }
     if (document.getElementById('ee-industry')) {
       const ind = ev.industry || (ev.industries && ev.industries[0]) || '';
       const indSel = document.getElementById('ee-industry');
@@ -614,18 +572,6 @@
       }
       indSel.value = ind;
     }
-    if (document.getElementById('ee-max-attendees') && ev.maxAttendees != null) {
-      document.getElementById('ee-max-attendees').value = ev.maxAttendees;
-    }
-    if (document.getElementById('ee-recurrence') && ev.recurrencePattern) {
-      document.getElementById('ee-recurrence').value = ev.recurrencePattern;
-    }
-    if (document.getElementById('ee-recurrence-end') && ev.recurrenceEndDate) {
-      document.getElementById('ee-recurrence-end').value = String(ev.recurrenceEndDate).slice(0, 10);
-    }
-    const recWrap = document.getElementById('ee-recurrence-end-wrap');
-    const recSel = document.getElementById('ee-recurrence');
-    if (recWrap && recSel) recWrap.hidden = recSel.value === 'one-time';
     document.getElementById('ee-venue').value = ev.venue || '';
     if (document.getElementById('ee-address1')) {
       document.getElementById('ee-address1').value = ev.addressLine1 || '';
@@ -684,7 +630,6 @@
     renderSelectedList();
     showEventStatusBadge(ev);
     applyLockUi(ev.locked);
-    updateCancelEventButton(ev);
   }
 
   function goToTicketSetup(series) {
@@ -709,9 +654,7 @@
       document.getElementById('ee-page-title').textContent = 'Edit event';
       document.getElementById('ee-page-lead').textContent =
         'Update your listing, add more dates on the calendar, then continue to tickets.';
-      document.getElementById('ee-submit').textContent = 'Save & continue → tickets';
-      const changeTop = document.getElementById('ee-change-format-top');
-      if (changeTop) changeTop.hidden = false;
+      document.getElementById('ee-submit').textContent = 'Continue to tickets →';
 
       let ev = null;
       const evRes = await api('/api/organiser/events?id=' + encodeURIComponent(editId));
@@ -802,8 +745,7 @@
       return;
     }
     const maxRaw = document.getElementById('ee-max-attendees')?.value;
-    const recurrence = document.getElementById('ee-recurrence')?.value || 'one-time';
-    const recurrenceEnd = document.getElementById('ee-recurrence-end')?.value || null;
+    const recurrence = deriveRecurrenceFromDates(dateKeys);
     const payload = {
       organiserGroupId,
       title,
@@ -813,8 +755,8 @@
       photoUrl: document.getElementById('ee-photo-url').value.trim(),
       listingStatus: 'draft',
       maxAttendees: maxRaw === '' || maxRaw == null ? null : Number(maxRaw),
-      recurrencePattern: recurrence === 'one-time' ? null : recurrence,
-      recurrenceEndDate: recurrence === 'one-time' ? null : recurrenceEnd,
+      recurrencePattern: recurrence.recurrencePattern,
+      recurrenceEndDate: recurrence.recurrenceEndDate,
       occurrences,
       ...locFields,
     };
@@ -917,19 +859,12 @@
     bindPhotoUpload();
     bindWordCounter();
     bindFormatToggleButtons();
-    bindRecurrenceUi();
-    bindCancellationUi();
     if (QuarterTime) {
-      QuarterTime.initPair('ee-start-time', 'ee-end-time', { start: '10:00', end: '12:00' });
+      QuarterTime.initPair('ee-start-time', 'ee-end-time', { start: '18:00', end: '20:00' });
     }
+    bindTimeListRefresh();
     if (editId) {
       await load();
-      if (params.get('cancel') === '1') {
-        const evRes = await api('/api/organiser/events?id=' + encodeURIComponent(editId));
-        if (evRes.ok && evRes.data.event && evRes.data.event.locked) {
-          openCancelModal();
-        }
-      }
       return;
     }
     if (!initPage()) return;

@@ -572,6 +572,43 @@
       </div>
     </div>
 
+    <!-- Modal: cancel event -->
+    <div class="org-modal" id="modal-event-cancel" role="dialog" aria-modal="true" aria-labelledby="modal-event-cancel-title" hidden>
+      <div class="org-modal-backdrop" data-org-modal-close></div>
+      <div class="org-modal-panel">
+        <h2 id="modal-event-cancel-title">Cancel this event</h2>
+        <p id="modal-event-cancel-name" class="org-modal-sub"></p>
+        <p class="org-payout-ineligible" id="modal-event-cancel-warning">
+          Cancelling this event will place your payout on hold until refunds are confirmed. Failure to refund
+          attendees within 14 days will result in your account being suspended.
+        </p>
+        <form id="form-event-cancel">
+          <div class="org-field">
+            <label for="event-cancel-reason">Reason for cancellation <span class="org-required">(required)</span></label>
+            <select id="event-cancel-reason" required>
+              <option value="">Select a reason</option>
+              <option>Venue issue</option>
+              <option>Date change needed</option>
+              <option>Not enough registrations</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="org-field">
+            <label for="event-cancel-details">Details</label>
+            <textarea id="event-cancel-details" rows="3" placeholder="Tell attendees what happened and what to expect"></textarea>
+          </div>
+          <label class="org-check">
+            <input type="checkbox" id="event-cancel-refund-confirm" />
+            <span>I confirm I will refund all attendees within 14 days through my Stripe account</span>
+          </label>
+          <div class="org-modal-actions">
+            <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Keep event</button>
+            <button type="submit" class="org-btn org-btn-danger" id="btn-event-cancel-confirm" disabled>Confirm cancellation</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Modal: ticket -->
     <div class="org-modal" id="modal-ticket" role="dialog" aria-modal="true" aria-labelledby="modal-ticket-title" hidden>
       <div class="org-modal-backdrop" data-org-modal-close></div>
@@ -615,6 +652,6 @@
     </div>
 
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
-    <script src="../js/organiser-dashboard.js?v=20260608"></script>
+    <script src="../js/organiser-dashboard.js?v=20260614b"></script>
   </body>
 </html>

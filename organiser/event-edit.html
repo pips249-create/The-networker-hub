@@ -12,7 +12,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260614" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614b" />
   </head>
   <body class="organiser-event-edit-page">
     <div id="hub-site-nav"></div>
@@ -22,7 +22,6 @@
       <header class="ee-page-head">
         <div class="ee-top-bar">
           <a class="ee-back" href="index.html#events-list" id="ee-back-link">← Back to My Events</a>
-          <a class="ee-back ee-back-secondary" href="event-format.html" id="ee-change-format-top">Change format</a>
         </div>
         <p class="ee-format-badge" id="ee-format-badge" hidden></p>
         <p class="ee-status-badge" id="ee-status-badge" hidden></p>
@@ -32,59 +31,28 @@
         </div>
         <h1 class="ee-title" id="ee-page-title">New event listing</h1>
         <p class="ee-lead" id="ee-page-lead">
-          Add your event details, pick every date this series runs on the calendar, then set up ticket types for all dates in one go.
+          Add your event details, set the location, pick dates on the calendar, then continue to ticket setup.
         </p>
       </header>
       <div id="ee-alert" class="ee-alert" hidden></div>
 
       <form id="ee-form">
-        <div class="ee-card ee-card-plan">
-          <h2>Plan your series</h2>
+        <!-- Section 1: Group -->
+        <div class="ee-card" id="ee-card-group">
+          <h2>Which group is this event for?</h2>
           <div class="ee-field">
             <label for="ee-group">Group profile</label>
             <select id="ee-group" required></select>
             <p class="ee-hint" id="ee-group-hint">Which organiser group this event belongs to.</p>
           </div>
-          <h3 class="ee-subheading">Recurring dates</h3>
-          <p class="ee-hint">Click days on the monthly calendar to add or remove dates. Each date becomes its own listing in your series.</p>
-          <div class="ee-calendar" id="ee-calendar">
-            <div class="ee-cal-header">
-              <button type="button" id="ee-cal-prev" aria-label="Previous month">‹</button>
-              <span class="ee-cal-month" id="ee-cal-month-label"></span>
-              <button type="button" id="ee-cal-next" aria-label="Next month">›</button>
-            </div>
-            <div class="ee-cal-weekdays" aria-hidden="true">
-              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-            </div>
-            <div class="ee-cal-days" id="ee-cal-days" aria-label="Select event dates"></div>
-          </div>
-          <div class="ee-selected-dates">
-            <strong><span id="ee-date-count">0</span> date(s) selected</strong>
-            <ul id="ee-date-list"></ul>
-          </div>
         </div>
 
-        <div class="ee-card">
-          <h2>Event details</h2>
+        <!-- Section 2: Basic event details -->
+        <div class="ee-card" id="ee-card-details">
+          <h2>Basic event details</h2>
           <div class="ee-field">
             <label for="ee-title">Event title</label>
             <input type="text" id="ee-title" required placeholder="e.g. Lunch &amp; learn — Liverpool" />
-          </div>
-          <div class="ee-field">
-            <label for="ee-photo-file">Event photo</label>
-            <p class="auth-lede" style="margin:0 0 8px;font-size:13px">Upload, paste (Ctrl+V), or drop an image — or use a URL below.</p>
-            <div class="ee-upload-zone" id="ee-photo-zone" tabindex="0" role="button" aria-label="Upload or paste event photo">
-              <input type="file" id="ee-photo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
-              <div class="ee-upload-preview" id="ee-photo-preview" hidden>
-                <img id="ee-photo-preview-img" alt="" width="96" height="72" />
-                <button type="button" class="ee-btn ee-btn-outline" id="ee-photo-clear" style="font-size:11px;padding:6px 10px">Remove</button>
-              </div>
-              <div class="ee-upload-placeholder" id="ee-photo-placeholder">
-                <strong>Upload cover image</strong>
-                <span>PNG or JPG, max 2MB — or paste a URL below</span>
-              </div>
-            </div>
-            <input type="url" id="ee-photo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top:10px" />
           </div>
           <div class="ee-field">
             <label for="ee-type">Event type</label>
@@ -125,21 +93,27 @@
             <label for="ee-max-attendees">Max attendees <span class="ee-optional">(optional)</span></label>
             <input type="number" id="ee-max-attendees" min="1" step="1" placeholder="Overall cap for this event" />
           </div>
-          <div class="ee-row-2">
-            <div class="ee-field">
-              <label for="ee-recurrence">Recurrence</label>
-              <select id="ee-recurrence">
-                <option value="one-time">One-time</option>
-                <option value="weekly">Weekly</option>
-                <option value="bi-weekly">Bi-weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
+          <div class="ee-field">
+            <label for="ee-photo-file">Event photo</label>
+            <p class="auth-lede" style="margin:0 0 8px;font-size:13px">Upload, paste (Ctrl+V), or drop an image — or use a URL below.</p>
+            <div class="ee-upload-zone" id="ee-photo-zone" tabindex="0" role="button" aria-label="Upload or paste event photo">
+              <input type="file" id="ee-photo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+              <div class="ee-upload-preview" id="ee-photo-preview" hidden>
+                <img id="ee-photo-preview-img" alt="" width="96" height="72" />
+                <button type="button" class="ee-btn ee-btn-outline" id="ee-photo-clear" style="font-size:11px;padding:6px 10px">Remove</button>
+              </div>
+              <div class="ee-upload-placeholder" id="ee-photo-placeholder">
+                <strong>Upload cover image</strong>
+                <span>PNG or JPG, max 2MB — or paste a URL below</span>
+              </div>
             </div>
-            <div class="ee-field" id="ee-recurrence-end-wrap" hidden>
-              <label for="ee-recurrence-end">Recurrence ends on</label>
-              <input type="date" id="ee-recurrence-end" />
-            </div>
+            <input type="url" id="ee-photo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top:10px" />
           </div>
+        </div>
+
+        <!-- Section 3: Location -->
+        <div class="ee-card" id="ee-card-location">
+          <h2>Location</h2>
           <div class="ee-field">
             <p class="ee-label-block">Format</p>
             <div class="ee-mode-toggle" role="group" aria-label="Event format">
@@ -174,7 +148,7 @@
 
           <div class="ee-format-panel" id="ee-online-block" data-format-panel="online">
             <h3 class="ee-subheading">Online access</h3>
-            <p class="ee-hint" style="margin-top:0">Join link is sent to ticket holders and is not shown on the public listing.</p>
+            <p class="ee-hint" style="margin-top:0">Only shared with ticket holders — not shown on the public listing.</p>
             <div class="ee-field">
               <label for="ee-platform">Platform</label>
               <select id="ee-platform">
@@ -194,10 +168,22 @@
           </div>
         </div>
 
-        <div class="ee-card">
-          <h2>Time (same for each selected date)</h2>
-          <p class="ee-hint" style="margin-top:0">Times are in 15-minute steps. End time is optional.</p>
-          <div class="ee-row-2">
+        <!-- Section 4: Dates -->
+        <div class="ee-card ee-card-dates" id="ee-card-dates">
+          <h2>Dates</h2>
+          <p class="ee-hint" style="margin-top:0">Click days on the monthly calendar to add or remove dates for this event.</p>
+          <div class="ee-calendar" id="ee-calendar">
+            <div class="ee-cal-header">
+              <button type="button" id="ee-cal-prev" aria-label="Previous month">‹</button>
+              <span class="ee-cal-month" id="ee-cal-month-label"></span>
+              <button type="button" id="ee-cal-next" aria-label="Next month">›</button>
+            </div>
+            <div class="ee-cal-weekdays" aria-hidden="true">
+              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+            </div>
+            <div class="ee-cal-days" id="ee-cal-days" aria-label="Select event dates"></div>
+          </div>
+          <div class="ee-row-2 ee-dates-times">
             <div class="ee-field">
               <label for="ee-start-time">Start time</label>
               <select id="ee-start-time" required aria-describedby="ee-time-hint"></select>
@@ -207,58 +193,26 @@
               <select id="ee-end-time" aria-describedby="ee-time-hint"></select>
             </div>
           </div>
-          <p class="ee-hint" id="ee-time-hint">Example: 10:00 – 12:00</p>
+          <p class="ee-hint" id="ee-time-hint">Same start and end time for every selected date. Times are in 15-minute steps.</p>
+          <div class="ee-selected-dates">
+            <strong><span id="ee-date-count">0</span> date(s) selected</strong>
+            <ul id="ee-date-list"></ul>
+          </div>
         </div>
 
-        <div class="ee-actions">
-          <button type="button" class="ee-btn ee-btn-outline" id="ee-save-draft">Save as draft</button>
-          <button type="submit" class="ee-btn ee-btn-primary" id="ee-submit">Publish now</button>
-          <button type="button" class="ee-btn ee-btn-danger" id="ee-cancel-event" hidden>Cancel event</button>
-          <a class="ee-btn ee-btn-outline" href="index.html#events-list">Back to dashboard</a>
+        <!-- Section 5: Save or publish -->
+        <div class="ee-card ee-card-actions">
+          <div class="ee-actions ee-actions--split">
+            <button type="button" class="ee-btn ee-btn-outline" id="ee-save-draft">Save as draft</button>
+            <button type="submit" class="ee-btn ee-btn-gold" id="ee-submit">Continue to tickets →</button>
+          </div>
+          <p class="ee-hint ee-actions-note">You'll set up ticket types on the next step.</p>
         </div>
-        <p class="ee-hint" style="margin-top:12px">
-          Save as draft to keep working without publishing. Publish when you are ready — you will set up tickets on the next step.
-        </p>
       </form>
-    </div>
-
-    <div class="ee-modal" id="ee-cancel-modal" role="dialog" aria-modal="true" aria-labelledby="ee-cancel-title" hidden>
-      <div class="ee-modal-backdrop" data-ee-modal-close></div>
-      <div class="ee-modal-panel">
-        <h2 id="ee-cancel-title">Cancel this event</h2>
-        <p class="ee-cancel-warning">
-          Cancelling this event will place your payout on hold until refunds are confirmed. Failure to refund
-          attendees within 14 days will result in your account being suspended.
-        </p>
-        <form id="ee-cancel-form">
-          <div class="ee-field">
-            <label for="ee-cancel-reason">Reason for cancellation <span class="ee-required">(required)</span></label>
-            <select id="ee-cancel-reason" required>
-              <option value="">Select a reason</option>
-              <option>Venue issue</option>
-              <option>Date change needed</option>
-              <option>Not enough registrations</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div class="ee-field">
-            <label for="ee-cancel-details">Details</label>
-            <textarea id="ee-cancel-details" rows="3" placeholder="Tell attendees what happened and what to expect"></textarea>
-          </div>
-          <label class="ee-check">
-            <input type="checkbox" id="ee-cancel-refund-confirm" />
-            <span>I confirm I will refund all attendees within 14 days through my Stripe account</span>
-          </label>
-          <div class="ee-modal-actions">
-            <button type="button" class="ee-btn ee-btn-outline" data-ee-modal-close>Keep event</button>
-            <button type="submit" class="ee-btn ee-btn-danger" id="ee-cancel-confirm" disabled>Confirm cancellation</button>
-          </div>
-        </form>
-      </div>
     </div>
 
     <script src="../js/organiser-quarter-time.js?v=20260606e"></script>
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
-    <script src="../js/organiser-event-edit.js?v=20260609"></script>
+    <script src="../js/organiser-event-edit.js?v=20260614b"></script>
   </body>
 </html>

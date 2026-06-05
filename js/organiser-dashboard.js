@@ -276,11 +276,13 @@
     const title = ev.title;
     const shortTitle = String(title || 'Event').slice(0, 32);
     const cancelled = String(ev.status || '').toLowerCase() === 'cancelled';
+    const published =
+      String(ev.status || '').toLowerCase() === 'published' || ev.approvalStatus === 'Approved';
     const cancelItem =
-      ev.locked && !cancelled
-        ? '<button type="button" class="org-action-item danger" data-goto-cancel="' +
+      ev.locked && !cancelled && published
+        ? '<button type="button" class="org-action-item danger" data-cancel-event="' +
           esc(id) +
-          '"><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Cancel event</strong><span>Cancel locked event with ticket sales</span></span></button>'
+          '"><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Cancel this event</strong><span>Cancel a published event with ticket sales</span></span></button>'
         : '';
     return (
       '<div class="org-action-wrap">' +
@@ -872,13 +874,13 @@
       return true;
     }
 
-    const cancelGoto = e.target.closest('[data-goto-cancel]');
-    if (cancelGoto && !cancelGoto.disabled) {
+    const cancelBtn = e.target.closest('[data-cancel-event]');
+    if (cancelBtn && !cancelBtn.disabled) {
       e.preventDefault();
       e.stopPropagation();
       closeAllActionMenus();
-      const eid = cancelGoto.getAttribute('data-goto-cancel');
-      location.href = 'event-edit.html?id=' + encodeURIComponent(eid) + '&cancel=1';
+      const eid = cancelBtn.getAttribute('data-cancel-event');
+      openCancelEventModal(eid);
       return true;
     }
 
@@ -886,6 +888,7 @@
   }
 
   let pendingPayoutEventId = null;
+  let pendingCancelEventId = null;
 
   function closePayoutModal() {
     pendingPayoutEventId = null;
@@ -1066,7 +1069,65 @@
       m.classList.remove('is-open');
     });
     pendingPayoutEventId = null;
+    pendingCancelEventId = null;
+    const cancelForm = document.getElementById('form-event-cancel');
+    if (cancelForm) cancelForm.reset();
+    const cancelConfirm = document.getElementById('btn-event-cancel-confirm');
+    if (cancelConfirm) cancelConfirm.disabled = true;
     resetGroupLogoPicker();
+  }
+
+  function openCancelEventModal(eventId) {
+    pendingCancelEventId = eventId;
+    const modal = document.getElementById('modal-event-cancel');
+    const titleEl = document.getElementById('modal-event-cancel-name');
+    const confirmBtn = document.getElementById('btn-event-cancel-confirm');
+    const checkbox = document.getElementById('event-cancel-refund-confirm');
+    const ev = findEventById(eventId);
+    if (titleEl) {
+      titleEl.textContent = ev && ev.title ? '“' + ev.title + '”' : '';
+    }
+    if (confirmBtn) confirmBtn.disabled = !(checkbox && checkbox.checked);
+    if (modal) {
+      modal.hidden = false;
+      modal.classList.add('is-open');
+    }
+  }
+
+  async function submitEventCancellation() {
+    if (!pendingCancelEventId) return;
+    const reason = document.getElementById('event-cancel-reason')?.value;
+    const details = document.getElementById('event-cancel-details')?.value.trim() || '';
+    const refundTermsConfirmed = document.getElementById('event-cancel-refund-confirm')?.checked;
+    const confirmBtn = document.getElementById('btn-event-cancel-confirm');
+    if (!reason) {
+      alert('Select a cancellation reason.');
+      return;
+    }
+    if (!refundTermsConfirmed) {
+      alert('Confirm you will refund all attendees within 14 days.');
+      return;
+    }
+    if (confirmBtn) confirmBtn.disabled = true;
+    const eventId = pendingCancelEventId;
+    const { ok, data } = await api('/api/organiser/cancellations', {
+      method: 'POST',
+      body: JSON.stringify({
+        eventId,
+        reason,
+        details,
+        refundTermsConfirmed,
+      }),
+    });
+    if (!ok) {
+      if (confirmBtn) confirmBtn.disabled = false;
+      alert(data.message || data.error || 'Could not cancel event');
+      return;
+    }
+    closeModals();
+    showAirtableAlert(data.message || 'Event cancelled.', false);
+    await refresh();
+    setRoute('events-list');
   }
 
   function renderOverviewGroups() {
@@ -2125,6 +2186,21 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') closeModals();
     });
+
+    const cancelRefundCheck = document.getElementById('event-cancel-refund-confirm');
+    const cancelConfirmBtn = document.getElementById('btn-event-cancel-confirm');
+    if (cancelRefundCheck && cancelConfirmBtn) {
+      cancelRefundCheck.addEventListener('change', () => {
+        cancelConfirmBtn.disabled = !cancelRefundCheck.checked;
+      });
+    }
+    const cancelForm = document.getElementById('form-event-cancel');
+    if (cancelForm) {
+      cancelForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        submitEventCancellation();
+      });
+    }
   }
 
   async function boot(user) {

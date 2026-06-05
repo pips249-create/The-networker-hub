@@ -851,6 +851,36 @@
   background: var(--od-purple-pale);
 }
 
+.org-btn-danger {
+  background: #b42318;
+  color: #fff;
+}
+
+.org-btn-danger:hover:not(:disabled) {
+  background: #912018;
+}
+
+.org-btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.org-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--od-text-dark);
+  cursor: pointer;
+}
+
+.org-check input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
 .org-btn-sm {
   font-size: 11px;
   padding: 6px 14px;

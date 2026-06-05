@@ -392,6 +392,16 @@
     els.status.hidden = !msg;
   }
 
+  const SPONSOR_ENQUIRE_MAILTO =
+    'mailto:sales@the-networker.co.uk?subject=' + encodeURIComponent('Sponsor Hub enquiry');
+
+  function normalizeSponsorCtaUrl(url) {
+    const u = String(url || '').trim();
+    if (!u) return SPONSOR_ENQUIRE_MAILTO;
+    if (/^(https?:|mailto:)/i.test(u)) return u;
+    return SPONSOR_ENQUIRE_MAILTO;
+  }
+
   function renderSponsorBlock(block) {
     if (!els.sponsorTitle && !els.sponsorBody && !els.sponsorCta) return;
     if (!block) return;
@@ -399,7 +409,7 @@
     const title = String(block.title || '').trim();
     const body = String(block.body || '').trim();
     const ctaLabel = String(block.cta_label || '').trim();
-    const ctaUrl = String(block.cta_url || '').trim();
+    const ctaUrl = normalizeSponsorCtaUrl(block.cta_url);
 
     if (els.sponsorTitle && title) els.sponsorTitle.textContent = title;
     if (els.sponsorBody) {
