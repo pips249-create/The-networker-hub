@@ -2,58 +2,9 @@
  * The Networker — unified admin panel (SPA, hash routing).
  */
 (function () {
-  var MOCK = {
-    metrics: {
-      revenue: 48250.5,
-      fees: 2140.32,
-      listings: { meetings: 124, exhibitions: 38, training: 52, total: 214 },
-      organisers: 89,
-      providers: 34,
-      attendees: 4210,
-    },
-    alerts: [
-      { id: 1, severity: 'high', title: 'Stripe webhook timeout', detail: 'Organiser payout hook failed 3× in 10 min.' },
-      { id: 2, severity: 'medium', title: 'Support queue', detail: '4 unhandled organiser tickets.' },
-    ],
-    activity: [
-      { time: '2026-06-04T11:18:00Z', text: 'Organizer Meridian Events posted a new exhibition in Birmingham.' },
-      { time: '2026-06-04T11:05:00Z', text: 'User Y registered — London, SW1A.' },
-      { time: '2026-06-04T10:42:00Z', text: 'PAID: Ticket confirmed for Lunch & learn — Liverpool. Platform fee routed.' },
-      { time: '2026-06-04T10:30:00Z', text: 'SUCCESS: Stripe Checkout link generated & sent via Resend.' },
-      { time: '2026-06-04T10:28:00Z', text: 'Organiser approved application from User A (Industry: Tech).' },
-    ],
-    users: [
-      { id: 'u1', name: 'Pip Hancher', email: 'pips249@gmail.com', role: 'Organiser', city: 'Liverpool', postcode: 'L1 8JQ', status: 'Active', featured: true },
-      { id: 'u2', name: 'Sarah Chen', email: 'sarah@meridian.io', role: 'Organiser', city: 'Birmingham', postcode: 'B1 1AA', status: 'Active', featured: true },
-      { id: 'u3', name: 'James Okonkwo', email: 'james@train.co.uk', role: 'Training Provider', city: 'London', postcode: 'EC2A 4NE', status: 'Active', featured: false },
-      { id: 'u4', name: 'Alex Rivera', email: 'alex.r@email.com', role: 'Attendee', city: 'Manchester', postcode: 'M1 4BT', status: 'Active', featured: false },
-      { id: 'u5', name: 'Spam Bot 22', email: 'bot@temp-mail.net', role: 'Attendee', city: '—', postcode: '—', status: 'Suspended', featured: false },
-    ],
-    listings: [
-      { id: 'e1', title: 'Lunch & learn — Liverpool', type: 'Meeting', organiser: 'Pip Hancher', city: 'Liverpool', status: 'Live', sold: 28, capacity: 40 },
-      { id: 'e2', title: 'Summer Tech Expo', type: 'Exhibition', organiser: 'Sarah Chen', city: 'Birmingham', status: 'Live', sold: 120, capacity: 200 },
-      { id: 'e3', title: 'SEO Masterclass', type: 'Workshop', organiser: 'James Okonkwo', city: 'Online', status: 'Draft', sold: 0, capacity: 50 },
-      { id: 'e4', title: 'Leadership Seminar', type: 'Seminar', organiser: 'James Okonkwo', city: 'London', status: 'Live', sold: 45, capacity: 60 },
-    ],
-    reviews: [
-      { id: 'r1', user: 'Alex Rivera', event: 'Lunch & learn — Liverpool', rating: 5, text: 'Great networking, well organised.', time: '2026-06-03T14:00:00Z' },
-      { id: 'r2', user: 'Unknown', event: 'Summer Tech Expo', rating: 1, text: 'Buy cheap watches!!!', time: '2026-06-04T09:00:00Z', spam: true },
-    ],
-    stripeAccounts: [
-      { organiser: 'Meridian Events', balance: '£2,340.00', lastPayout: '2026-05-28', status: 'Connected' },
-      { organiser: 'Pip Hancher', balance: '£890.50', lastPayout: '2026-05-30', status: 'Connected' },
-    ],
-    payoutQueue: [
-      { id: 'p1', organiser: 'Train UK Ltd', amount: '£1,200.00', requested: '2026-06-04T08:00:00Z' },
-    ],
-    automationLog: [
-      { ts: '2026-06-04T10:25:00Z', line: 'Application Submitted by User A (Industry: Technology)', status: 'info' },
-      { ts: '2026-06-04T10:28:00Z', line: 'Organiser Approved User A', status: 'info' },
-      { ts: '2026-06-04T10:30:00Z', line: 'SUCCESS: Stripe Checkout Link generated & sent via Resend', status: 'ok' },
-      { ts: '2026-06-04T10:42:00Z', line: 'PAID: User A ticket confirmed. Platform fee routed to Admin.', status: 'ok' },
-      { ts: '2026-06-04T10:55:00Z', line: 'ERROR: Resend email bounce — organiser@invalid.domain', status: 'error' },
-    ],
-  };
+  var liveUsers = [];
+  var liveListings = [];
+  var liveReviews = [];
 
   var PAGE_META = {
     dashboard: { title: 'Overview Dashboard', subtitle: 'System-wide performance health check' },
@@ -162,6 +113,36 @@
       badge.classList.add('hidden');
       badge.setAttribute('aria-label', 'No event data issues');
     }
+  }
+
+  function adminGet(url) {
+    return fetch(url, { credentials: 'include' }).then(function (r) {
+      return r.json().then(function (data) {
+        if (!r.ok) {
+          data = data || {};
+          data.error = data.error || data.message || 'request_failed';
+        }
+        return data;
+      });
+    });
+  }
+
+  function alertCard(a) {
+    var bg =
+      a.severity === 'high'
+        ? 'bg-red-50 border-red-200 text-red-800'
+        : a.severity === 'medium'
+          ? 'bg-amber-50 border-amber-200 text-amber-900'
+          : 'bg-slate-50 border-slate-200 text-slate-700';
+    return (
+      '<div class="rounded-lg border p-4 ' +
+      bg +
+      '"><p class="font-semibold text-sm">' +
+      esc(a.title) +
+      '</p><p class="text-xs mt-1 opacity-90">' +
+      esc(a.detail) +
+      '</p></div>'
+    );
   }
 
   function fetchEventHealth() {
@@ -517,75 +498,99 @@
   }
 
   function renderDashboard() {
-    var m = MOCK.metrics;
-    var alerts = MOCK.alerts
-      .map(function (a) {
-        var bg = a.severity === 'high' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-900';
-        return (
-          '<div class="rounded-lg border p-4 ' +
-          bg +
-          '"><p class="font-semibold text-sm">' +
-          esc(a.title) +
-          '</p><p class="text-xs mt-1 opacity-90">' +
-          esc(a.detail) +
-          '</p></div>'
-        );
-      })
-      .join('');
-
-    var activity = MOCK.activity
-      .map(function (item) {
-        return (
-          '<li class="relative pl-6 pb-6 border-l-2 border-brand-200 last:pb-0">' +
-          '<span class="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-brand-500"></span>' +
-          '<time class="text-xs text-slate-400 block">' +
-          fmtTime(item.time) +
-          '</time>' +
-          '<p class="text-sm text-slate-700 mt-1">' +
-          esc(item.text) +
-          '</p></li>'
-        );
-      })
-      .join('');
-
     main.innerHTML =
       '<div class="space-y-6">' +
       '<div id="dashboard-event-health-alert"></div>' +
       '<section class="space-y-3">' +
       '<h3 class="text-sm font-bold uppercase tracking-wide text-slate-500">Critical alerts</h3>' +
-      '<div class="grid gap-3" id="dashboard-alerts">' +
-      alerts +
-      '</div></section>' +
-      '<section class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">' +
-      card('Revenue & fees', fmtMoney(m.revenue), 'Platform fees: ' + fmtMoney(m.fees), 'emerald') +
-      card('Live listings', String(m.listings.total), 'Meetings ' + m.listings.meetings + ' · Exhibitions ' + m.listings.exhibitions + ' · Training ' + m.listings.training, 'brand') +
-      card('Organisers & providers', String(m.organisers), 'Active providers: ' + m.providers, 'violet') +
-      card('Attendees / users', String(m.attendees), 'Registered platform users', 'blue') +
+      '<div class="grid gap-3" id="dashboard-alerts"><p class="text-sm text-slate-500">Loading from Supabase…</p></div>' +
+      '</section>' +
+      '<section class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4" id="dashboard-metrics">' +
+      card('Revenue & fees', '…', 'Loading…', 'emerald') +
+      card('Live listings', '…', 'Loading…', 'brand') +
+      card('Organisers & providers', '…', 'Loading…', 'violet') +
+      card('Attendees / users', '…', 'Loading…', 'blue') +
       '</section>' +
       '<section class="grid lg:grid-cols-2 gap-6">' +
       '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
       '<h3 class="font-bold text-brand-900 mb-4">Recent system activity</h3>' +
-      '<ul class="">' +
-      activity +
-      '</ul></div>' +
+      '<ul id="dashboard-activity"><li class="text-sm text-slate-500">Loading…</li></ul></div>' +
       '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900 mb-2">Live API metrics</h3>' +
-      '<p class="text-sm text-slate-500 mb-4">Loaded from Airtable when available.</p>' +
+      '<h3 class="font-bold text-brand-900 mb-2">Supabase snapshot</h3>' +
+      '<p class="text-sm text-slate-500 mb-4">Live counts from events, registrations, organisers, and users.</p>' +
       '<pre id="live-metrics" class="text-xs bg-slate-50 p-4 rounded-lg overflow-auto max-h-64 text-slate-600">Loading…</pre>' +
       '</div></section></div>';
 
-    fetch('/api/admin/metrics', { credentials: 'include' })
-      .then(function (r) {
-        return r.json();
-      })
-      .then(function (data) {
-        var el = document.getElementById('live-metrics');
-        if (el) el.textContent = JSON.stringify(data, null, 2);
-      })
-      .catch(function () {
-        var el = document.getElementById('live-metrics');
-        if (el) el.textContent = 'Could not load live metrics.';
-      });
+    adminGet('/api/admin/metrics').then(function (data) {
+      var alertsEl = document.getElementById('dashboard-alerts');
+      var metricsEl = document.getElementById('dashboard-metrics');
+      var activityEl = document.getElementById('dashboard-activity');
+      var preEl = document.getElementById('live-metrics');
+
+      if (!data || data.error || data.configured === false) {
+        if (alertsEl) {
+          alertsEl.innerHTML =
+            '<p class="text-sm text-red-700">Could not load dashboard data. Check Supabase env vars on Vercel.</p>';
+        }
+        if (preEl) preEl.textContent = JSON.stringify(data || { error: 'unavailable' }, null, 2);
+        return;
+      }
+
+      var m = data.metrics || {};
+      var listings = m.listings || {};
+
+      if (metricsEl) {
+        metricsEl.innerHTML =
+          card('Revenue & fees', fmtMoney(m.revenue || 0), 'Platform fees: ' + fmtMoney(m.fees || 0), 'emerald') +
+          card(
+            'Live listings',
+            String(listings.total || 0),
+            'Meetings ' +
+              (listings.meetings || 0) +
+              ' · Exhibitions ' +
+              (listings.exhibitions || 0) +
+              ' · Training ' +
+              (listings.training || 0),
+            'brand'
+          ) +
+          card(
+            'Organisers & providers',
+            String(m.organisers || 0),
+            'Workshops / training: ' + (m.providers || 0),
+            'violet'
+          ) +
+          card('Attendees / users', String(m.attendees || 0), 'Hub accounts & attendee profiles', 'blue');
+      }
+
+      if (alertsEl) {
+        var alerts = data.alerts || [];
+        alertsEl.innerHTML = alerts.length
+          ? alerts.map(alertCard).join('')
+          : '<p class="text-sm text-emerald-700">No critical alerts right now.</p>';
+      }
+
+      if (activityEl) {
+        var activity = data.activity || [];
+        activityEl.innerHTML = activity.length
+          ? activity
+              .map(function (item) {
+                return (
+                  '<li class="relative pl-6 pb-6 border-l-2 border-brand-200 last:pb-0">' +
+                  '<span class="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-brand-500"></span>' +
+                  '<time class="text-xs text-slate-400 block">' +
+                  fmtTime(item.time) +
+                  '</time>' +
+                  '<p class="text-sm text-slate-700 mt-1">' +
+                  esc(item.text) +
+                  '</p></li>'
+                );
+              })
+              .join('')
+          : '<li class="text-sm text-slate-500">No recent activity yet.</li>';
+      }
+
+      if (preEl) preEl.textContent = JSON.stringify(data, null, 2);
+    });
 
     fetchEventHealth().then(function (data) {
       var slot = document.getElementById('dashboard-event-health-alert');
@@ -626,9 +631,10 @@
   }
 
   function renderUsers() {
-    var roleOpts = ['All', 'Organiser', 'Training Provider', 'Attendee'];
+    var roleOpts = ['All', 'Admin', 'Organiser', 'Attendee'];
     main.innerHTML =
       '<div class="space-y-4">' +
+      '<p id="users-status" class="text-sm text-slate-500">Loading users from Supabase…</p>' +
       '<div class="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap gap-3 items-end shadow-sm">' +
       '<div class="flex-1 min-w-[200px]"><label class="text-xs font-semibold text-slate-500 uppercase">Search</label>' +
       '<input type="search" id="user-search" placeholder="Name or email…" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"></div>' +
@@ -641,12 +647,12 @@
       '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
       '<table class="w-full text-sm text-left"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
       '<tr><th class="px-4 py-3">Name</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">Role</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Status</th></tr></thead>' +
-      '<tbody id="users-tbody"></tbody></table></div></div>';
+      '<tbody id="users-tbody"><tr><td colspan="5" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table></div></div>';
 
     function filterUsers() {
       var q = (document.getElementById('user-search').value || '').toLowerCase();
       var role = document.getElementById('user-role-filter').value;
-      return MOCK.users.filter(function (u) {
+      return liveUsers.filter(function (u) {
         if (role !== 'All' && u.role !== role) return false;
         if (q && (u.name + u.email).toLowerCase().indexOf(q) === -1) return false;
         return true;
@@ -655,7 +661,14 @@
 
     function paint() {
       var tbody = document.getElementById('users-tbody');
-      tbody.innerHTML = filterUsers()
+      if (!tbody) return;
+      var rows = filterUsers();
+      if (!rows.length) {
+        tbody.innerHTML =
+          '<tr><td colspan="5" class="px-4 py-6 text-slate-500">No users match your filters.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows
         .map(function (u) {
           var st =
             u.status === 'Active'
@@ -663,7 +676,7 @@
               : 'bg-red-100 text-red-800';
           return (
             '<tr class="border-t border-slate-100 hover:bg-brand-50/50 cursor-pointer user-row" data-user-id="' +
-            u.id +
+            esc(u.id) +
             '">' +
             '<td class="px-4 py-3 font-medium">' +
             esc(u.name) +
@@ -688,7 +701,7 @@
       tbody.querySelectorAll('.user-row').forEach(function (row) {
         row.addEventListener('click', function () {
           var id = row.getAttribute('data-user-id');
-          var u = MOCK.users.find(function (x) {
+          var u = liveUsers.find(function (x) {
             return x.id === id;
           });
           if (u) openUserDrawer(u);
@@ -696,9 +709,23 @@
       });
     }
 
+    adminGet('/api/admin/users').then(function (data) {
+      var status = document.getElementById('users-status');
+      if (!data || data.error || data.configured === false) {
+        liveUsers = [];
+        if (status) status.textContent = 'Could not load users from Supabase.';
+        paint();
+        return;
+      }
+      liveUsers = data.users || [];
+      if (status) {
+        status.textContent = liveUsers.length + ' account' + (liveUsers.length === 1 ? '' : 's') + ' from Supabase';
+      }
+      paint();
+    });
+
     document.getElementById('user-search').addEventListener('input', paint);
     document.getElementById('user-role-filter').addEventListener('change', paint);
-    paint();
   }
 
   function openUserDrawer(u) {
@@ -730,9 +757,13 @@
     document.getElementById('user-drawer').classList.remove('hidden');
   }
 
-  function renderModeration() {
-    var rows = MOCK.listings
+  function listingsTableHtml(listings) {
+    if (!listings.length) {
+      return '<tr><td colspan="7" class="px-4 py-6 text-slate-500">No events in Supabase yet.</td></tr>';
+    }
+    return listings
       .map(function (l) {
+        var soldLabel = l.capacity ? l.sold + '/' + l.capacity : String(l.sold || 0) + ' sold';
         var pct = l.capacity ? Math.round((l.sold / l.capacity) * 100) : 0;
         return (
           '<tr class="border-t border-slate-100">' +
@@ -751,19 +782,26 @@
           '<td class="px-4 py-3"><span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100">' +
           esc(l.status) +
           '</span></td>' +
-          '<td class="px-4 py-3 min-w-[120px]"><div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-brand-500 rounded-full" style="width:' +
-          pct +
-          '%"></div></div><span class="text-xs text-slate-500">' +
-          l.sold +
-          '/' +
-          l.capacity +
+          '<td class="px-4 py-3 min-w-[120px]">' +
+          (l.capacity
+            ? '<div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-brand-500 rounded-full" style="width:' +
+              pct +
+              '%"></div></div>'
+            : '') +
+          '<span class="text-xs text-slate-500">' +
+          esc(soldLabel) +
           '</span></td>' +
-          '<td class="px-4 py-3"><button type="button" class="text-brand-700 font-semibold text-xs hover:underline edit-listing-btn">Edit</button></td></tr>'
+          '<td class="px-4 py-3"><a href="#event-health" class="text-brand-700 font-semibold text-xs hover:underline">Review data</a></td></tr>'
         );
       })
       .join('');
+  }
 
-    var reviews = MOCK.reviews
+  function reviewsHtml(reviews) {
+    if (!reviews.length) {
+      return '<p class="text-sm text-slate-500">No reviews yet.</p>';
+    }
+    return reviews
       .map(function (r) {
         return (
           '<article class="border border-slate-200 rounded-lg p-4 ' +
@@ -774,108 +812,140 @@
           ' · ' +
           esc(r.event) +
           '</p><p class="text-amber-500 text-sm">' +
-          '★'.repeat(r.rating) +
+          '★'.repeat(Math.max(0, Math.min(5, r.rating))) +
           '</p></div><time class="text-xs text-slate-400">' +
           fmtTime(r.time) +
           '</time></div>' +
           '<p class="text-sm text-slate-600 mt-2">' +
           esc(r.text) +
           '</p>' +
-          '<button type="button" class="mt-3 text-xs font-bold text-red-600 hover:underline">Delete / Flag as Spam</button></article>'
+          (r.spam
+            ? '<p class="mt-2 text-xs font-semibold text-red-700">Flagged as possible spam</p>'
+            : '') +
+          '</article>'
         );
       })
       .join('');
+  }
 
+  function renderModeration() {
     main.innerHTML =
       '<div class="space-y-6">' +
+      '<p id="moderation-status" class="text-sm text-slate-500">Loading listings and reviews from Supabase…</p>' +
       '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-slate-100 font-bold text-brand-900">All listings</div>' +
       '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
       '<tr><th class="px-4 py-3 text-left">Title</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Tickets</th><th class="px-4 py-3"></th></tr></thead>' +
-      '<tbody>' +
-      rows +
-      '</tbody></table></div>' +
+      '<tbody id="moderation-listings"><tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table></div>' +
       '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
       '<h3 class="font-bold text-brand-900 mb-4">Review moderation</h3>' +
-      '<div class="space-y-3">' +
-      reviews +
-      '</div></div></div>';
+      '<div class="space-y-3" id="moderation-reviews">Loading…</div></div></div>';
+
+    adminGet('/api/admin/moderation').then(function (data) {
+      var status = document.getElementById('moderation-status');
+      var listingsEl = document.getElementById('moderation-listings');
+      var reviewsEl = document.getElementById('moderation-reviews');
+      if (!data || data.error || data.configured === false) {
+        liveListings = [];
+        liveReviews = [];
+        if (status) status.textContent = 'Could not load moderation data from Supabase.';
+        if (listingsEl) listingsEl.innerHTML = listingsTableHtml([]);
+        if (reviewsEl) reviewsEl.innerHTML = reviewsHtml([]);
+        return;
+      }
+      liveListings = data.listings || [];
+      liveReviews = data.reviews || [];
+      if (status) {
+        status.textContent =
+          liveListings.length + ' events · ' + liveReviews.length + ' reviews from Supabase';
+      }
+      if (listingsEl) listingsEl.innerHTML = listingsTableHtml(liveListings);
+      if (reviewsEl) reviewsEl.innerHTML = reviewsHtml(liveReviews);
+    });
   }
 
   function renderFinancials() {
-    var stripe = MOCK.stripeAccounts
-      .map(function (s) {
-        return (
-          '<tr class="border-t border-slate-100"><td class="px-4 py-3 font-medium">' +
-          esc(s.organiser) +
-          '</td><td class="px-4 py-3">' +
-          esc(s.balance) +
-          '</td><td class="px-4 py-3">' +
-          esc(s.lastPayout) +
-          '</td><td class="px-4 py-3 text-emerald-600 font-medium">' +
-          esc(s.status) +
-          '</td></tr>'
-        );
-      })
-      .join('');
-
-    var queue = MOCK.payoutQueue
-      .map(function (p) {
-        return (
-          '<div class="flex flex-wrap items-center justify-between gap-3 p-4 border border-slate-200 rounded-lg">' +
-          '<div><p class="font-semibold">' +
-          esc(p.organiser) +
-          '</p><p class="text-sm text-slate-500">' +
-          esc(p.amount) +
-          ' · ' +
-          fmtTime(p.requested) +
-          '</p></div>' +
-          '<button type="button" class="rounded-lg bg-emerald-600 text-white px-4 py-2 text-sm font-semibold hover:bg-emerald-700">Approve Payout</button></div>'
-        );
-      })
-      .join('');
-
-    var log = MOCK.automationLog
-      .map(function (l) {
-        var cls =
-          l.status === 'error'
-            ? 'text-red-600 bg-red-50'
-            : l.status === 'ok'
-              ? 'text-emerald-700'
-              : 'text-slate-600';
-        return (
-          '<div class="font-mono text-xs py-2 border-b border-slate-100 ' +
-          cls +
-          '">' +
-          '<span class="text-slate-400">[' +
-          fmtTime(l.ts) +
-          ']</span> — ' +
-          esc(l.line) +
-          (l.status === 'error'
-            ? ' <button type="button" class="ml-2 font-sans font-bold text-red-700 underline">Retry workflow</button>'
-            : '') +
-          '</div>'
-        );
-      })
-      .join('');
-
     main.innerHTML =
       '<div class="space-y-6">' +
+      '<p id="financials-status" class="text-sm text-slate-500">Loading financial data from Supabase…</p>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
       '<h3 class="px-4 py-3 font-bold border-b border-slate-100">Stripe Connect ledger</h3>' +
       '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
-      '<tr><th class="px-4 py-3 text-left">Organiser</th><th class="px-4 py-3">Balance</th><th class="px-4 py-3">Last payout</th><th class="px-4 py-3">Status</th></tr></thead>' +
-      '<tbody>' +
-      stripe +
-      '</tbody></table></section>' +
+      '<tr><th class="px-4 py-3 text-left">Organiser</th><th class="px-4 py-3">Paid registrations</th><th class="px-4 py-3">Last payout</th><th class="px-4 py-3">Status</th></tr></thead>' +
+      '<tbody id="financials-stripe"><tr><td colspan="4" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table></section>' +
       '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900 mb-4">Manual payout requests</h3><div class="space-y-3">' +
-      queue +
-      '</div></section>' +
+      '<h3 class="font-bold text-brand-900 mb-2">Manual payout requests</h3>' +
+      '<p class="text-sm text-slate-500 mb-4">Payout queue is not stored in Supabase yet.</p>' +
+      '<div class="space-y-3" id="financials-queue"><p class="text-sm text-slate-500">None pending.</p></div></section>' +
       '<section class="bg-slate-900 rounded-xl p-5 text-slate-100 shadow-sm">' +
-      '<h3 class="font-bold text-sm uppercase tracking-wide text-brand-100 mb-4">Automation activity log</h3>' +
-      log +
-      '</section></div>';
+      '<h3 class="font-bold text-sm uppercase tracking-wide text-brand-100 mb-4">Registration activity log</h3>' +
+      '<div id="financials-log">Loading…</div></section></div>';
+
+    adminGet('/api/admin/financials').then(function (data) {
+      var status = document.getElementById('financials-status');
+      var stripeEl = document.getElementById('financials-stripe');
+      var logEl = document.getElementById('financials-log');
+
+      if (!data || data.error || data.configured === false) {
+        if (status) status.textContent = 'Could not load financial data from Supabase.';
+        return;
+      }
+
+      var stripe = data.stripeAccounts || [];
+      var log = data.automationLog || [];
+
+      if (status) {
+        status.textContent =
+          stripe.length + ' organiser' + (stripe.length === 1 ? '' : 's') + ' · registration log from Supabase';
+      }
+
+      if (stripeEl) {
+        stripeEl.innerHTML = stripe.length
+          ? stripe
+              .map(function (s) {
+                var statusCls = s.status === 'Connected' ? 'text-emerald-600' : 'text-slate-500';
+                return (
+                  '<tr class="border-t border-slate-100"><td class="px-4 py-3 font-medium">' +
+                  esc(s.organiser) +
+                  '</td><td class="px-4 py-3">' +
+                  esc(s.balance) +
+                  '</td><td class="px-4 py-3">' +
+                  esc(s.lastPayout) +
+                  '</td><td class="px-4 py-3 font-medium ' +
+                  statusCls +
+                  '">' +
+                  esc(s.status) +
+                  '</td></tr>'
+                );
+              })
+              .join('')
+          : '<tr><td colspan="4" class="px-4 py-6 text-slate-500">No organisers in Supabase yet.</td></tr>';
+      }
+
+      if (logEl) {
+        logEl.innerHTML = log.length
+          ? log
+              .map(function (l) {
+                var cls =
+                  l.status === 'error'
+                    ? 'text-red-300 bg-red-950/30'
+                    : l.status === 'ok'
+                      ? 'text-emerald-300'
+                      : 'text-slate-300';
+                return (
+                  '<div class="font-mono text-xs py-2 border-b border-white/10 ' +
+                  cls +
+                  '"><span class="text-slate-500">[' +
+                  fmtTime(l.ts) +
+                  ']</span> — ' +
+                  esc(l.line) +
+                  '</div>'
+                );
+              })
+              .join('')
+          : '<p class="text-sm text-slate-400">No registrations logged yet.</p>';
+      }
+    });
   }
 
   function renderSponsorship() {
@@ -886,13 +956,8 @@
       '<div class="space-y-6">' +
       '<section class="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">' +
       '<p class="font-bold text-brand-900 mb-2">Backend requirement (build next)</p>' +
-      '<p class="mb-3">Monthly sponsor updates must <strong>not</strong> require a developer. Staff edit this slot in Admin → Publish; the public Events page reads the active row from Airtable.</p>' +
-      '<ul class="list-disc pl-5 space-y-1 text-amber-900/90">' +
-      '<li><strong>Airtable:</strong> <code class="text-xs bg-white/80 px-1 rounded">Site Promotions</code> — slot <code class="text-xs bg-white/80 px-1 rounded">events-sponsor-hub</code>, dates, image, copy, CTA URL</li>' +
-      '<li><strong>Public API:</strong> <code class="text-xs bg-white/80 px-1 rounded">GET /api/sponsor?slot=events-sponsor-hub</code></li>' +
-      '<li><strong>Admin API:</strong> <code class="text-xs bg-white/80 px-1 rounded">GET/POST /api/admin/sponsor</code> (admin session)</li>' +
-      '<li><strong>Frontend:</strong> replace hard-coded Sponsor Hub in <code class="text-xs bg-white/80 px-1 rounded">events/index.html</code></li>' +
-      '</ul></section>' +
+      '<p class="mb-3">Sponsor Hub copy is stored in Supabase <code class="text-xs bg-white/80 px-1 rounded">cms_blocks</code> (slot <code class="text-xs bg-white/80 px-1 rounded">sponsor_hub</code>). The public Events page reads it via <code class="text-xs bg-white/80 px-1 rounded">GET /api/cms-block?slot=sponsor_hub</code>.</p>' +
+      '<p class="text-amber-900/90">Edit the row in Supabase Table Editor, or wire the Publish button below to <code class="text-xs bg-white/80 px-1 rounded">POST /api/admin/sponsor</code> when ready.</p></section>' +
       '<div class="grid lg:grid-cols-2 gap-6">' +
       '<form id="sponsor-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">' +
       '<div><label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Placement slot</label>' +
@@ -1001,7 +1066,37 @@
         if (input) input.addEventListener('input', renderPreview);
       }
     );
-    renderPreview();
+
+    fetch('/api/cms-block?slot=sponsor_hub')
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.ok || !data.block) {
+          renderPreview();
+          return;
+        }
+        var block = data.block;
+        var headline = document.getElementById('sponsor-headline');
+        var bullets = document.getElementById('sponsor-bullets');
+        var ctaLabel = document.getElementById('sponsor-cta-label');
+        var ctaUrl = document.getElementById('sponsor-cta-url');
+        if (headline && block.title) headline.value = String(block.title).replace(/<[^>]+>/g, '').trim();
+        if (block.body && bullets) {
+          var temp = document.createElement('div');
+          temp.innerHTML = block.body;
+          var lines = Array.prototype.map.call(temp.querySelectorAll('li'), function (li) {
+            return li.textContent.trim();
+          }).filter(Boolean);
+          if (lines.length) bullets.value = lines.join('\n');
+        }
+        if (ctaLabel && block.cta_label) ctaLabel.value = block.cta_label;
+        if (ctaUrl && block.cta_url) ctaUrl.value = block.cta_url;
+        renderPreview();
+      })
+      .catch(function () {
+        renderPreview();
+      });
   }
 
   var routes = {

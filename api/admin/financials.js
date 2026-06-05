@@ -1,5 +1,5 @@
 const { sessionFromRequest, requireAdmin, json, setCors } = require('../_lib/auth');
-const { getAdminDashboard } = require('../_lib/admin-supabase-data');
+const { getAdminFinancials } = require('../_lib/admin-supabase-data');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -12,9 +12,9 @@ module.exports = async function handler(req, res) {
   if (!gate.ok) return json(res, gate.status, { error: gate.error });
 
   try {
-    const report = await getAdminDashboard();
+    const report = await getAdminFinancials();
     return json(res, 200, { ok: true, ...report });
   } catch (e) {
-    return json(res, 500, { ok: false, error: 'metrics_failed', message: e.message });
+    return json(res, 500, { ok: false, error: 'financials_failed', message: e.message });
   }
 };

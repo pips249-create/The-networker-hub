@@ -619,12 +619,76 @@
 
 .empty-state {
   display: none;
-  text-align: center;
-  padding: 32px 20px;
-  background: var(--surface-card);
-  border: 1px dashed var(--border-soft);
-  border-radius: var(--radius);
-  color: var(--text-muted);
-  font-size: 14px;
+  margin-top: 8px;
 }
-.empty-state.is-visible { display: block; }
+.empty-state.is-visible {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  padding: 48px 24px;
+  border-radius: 20px;
+  background: linear-gradient(165deg, #fffdf9 0%, var(--lavender-light) 55%, rgba(235, 224, 240, 0.45) 100%);
+  border: 1px solid rgba(194, 153, 209, 0.35);
+  box-shadow: var(--shadow-soft);
+}
+.empty-state-inner {
+  max-width: 380px;
+  text-align: center;
+}
+.empty-state-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--lavender-soft);
+  color: var(--lavender-deep);
+  box-shadow: 0 8px 24px rgba(91, 47, 153, 0.08);
+}
+.empty-state-icon svg {
+  display: block;
+  opacity: 0.9;
+}
+.empty-state-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: var(--charcoal);
+  margin: 0 0 10px;
+  line-height: 1.25;
+}
+.empty-state-text {
+  margin: 0 0 24px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+.empty-state-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 22px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--lavender-deep) 0%, #7a3d8a 100%);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(91, 47, 153, 0.22);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.empty-state-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(91, 47, 153, 0.28);
+}
+.empty-state-btn:focus-visible {
+  outline: 2px solid var(--lavender);
+  outline-offset: 3px;
+}

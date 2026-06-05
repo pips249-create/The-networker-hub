@@ -261,7 +261,17 @@
 
     if (!rows.length) {
       els.listings.innerHTML =
-        '<div class="empty-state is-visible" role="status"><p>No events match your filters.</p><button type="button" id="empty-reset">Show all</button></div>';
+        '<div class="empty-state is-visible" role="status">' +
+        '<div class="empty-state-inner">' +
+        '<div class="empty-state-icon" aria-hidden="true">' +
+        '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">' +
+        '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/>' +
+        '<path d="M8 11h6M11 8v6" stroke-linecap="round"/>' +
+        '</svg></div>' +
+        '<h3 class="empty-state-title">No events match your filters</h3>' +
+        '<p class="empty-state-text">Try clearing filters, choosing a different date range, or browsing all event types.</p>' +
+        '<button type="button" class="empty-state-btn" id="empty-reset">Clear all filters</button>' +
+        '</div></div>';
       if (els.resultsCount) els.resultsCount.textContent = '0';
       return;
     }
