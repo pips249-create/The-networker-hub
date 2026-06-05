@@ -1,51 +1,46 @@
 /**
- * Event card images: event photo → organiser logo → type-based Unsplash placeholder.
+ * Event card images: event photo → organiser logo → local placeholder in /assets/placeholders/.
  */
 (function () {
+  var PLACEHOLDER_BASE = '/assets/placeholders/';
+
   var PLACEMENT_IMAGES = [
-    'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=800&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=800&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=800&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1560179707-f14e90ef3623?q=80&w=800&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=800&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=800&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1557804506-669a77965eba?q=80&w=800&auto=format&fit=crop',
+    PLACEHOLDER_BASE + '1.svg',
+    PLACEHOLDER_BASE + '2.svg',
+    PLACEHOLDER_BASE + '3.svg',
+    PLACEHOLDER_BASE + '4.svg',
+    PLACEHOLDER_BASE + '5.svg',
+    PLACEHOLDER_BASE + '6.svg',
+    PLACEHOLDER_BASE + '7.svg',
+    PLACEHOLDER_BASE + '8.svg',
   ];
 
   var TYPE_PLACEMENTS = {
     meeting: [
-      'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1557804506-669a77965eba?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=800&auto=format&fit=crop',
+      PLACEHOLDER_BASE + '1.svg',
+      PLACEHOLDER_BASE + '2.svg',
+      PLACEHOLDER_BASE + '3.svg',
+      PLACEHOLDER_BASE + '4.svg',
+      PLACEHOLDER_BASE + '5.svg',
     ],
-    exhibition: [
-      'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1560179707-f14e90ef3623?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=800&auto=format&fit=crop',
-    ],
+    exhibition: [PLACEHOLDER_BASE + '6.svg', PLACEHOLDER_BASE + '7.svg'],
     conference: [
-      'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=800&auto=format&fit=crop',
+      PLACEHOLDER_BASE + '2.svg',
+      PLACEHOLDER_BASE + '4.svg',
+      PLACEHOLDER_BASE + '6.svg',
+      PLACEHOLDER_BASE + '8.svg',
     ],
-    netwalking: [
-      'https://images.unsplash.com/photo-1557804506-669a77965eba?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=800&auto=format&fit=crop',
-    ],
-    awards: [
-      'https://images.unsplash.com/photo-1560179707-f14e90ef3623?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=800&auto=format&fit=crop',
-    ],
+    netwalking: [PLACEHOLDER_BASE + '3.svg', PLACEHOLDER_BASE + '5.svg'],
+    awards: [PLACEHOLDER_BASE + '7.svg', PLACEHOLDER_BASE + '8.svg'],
   };
+
+  var DEFAULT_PLACEHOLDER = PLACEHOLDER_BASE + 'default.svg';
 
   function isUsableImageUrl(url) {
     var value = String(url || '').trim();
     if (!value) return false;
     if (/event-placeholder/i.test(value)) return false;
+    if (/\/assets\/placeholders\//i.test(value)) return false;
     return true;
   }
 
@@ -62,14 +57,14 @@
   function placementForEvent(eventId, eventType, title) {
     var pool = typePool(eventType);
     var key = String(eventId || '') + '|' + String(title || '').trim();
-    if (!key || key === '|') return pool[0];
+    if (!key || key === '|') return pool[0] || DEFAULT_PLACEHOLDER;
 
     var charSum = 0;
     for (var i = 0; i < key.length; i++) {
       charSum += key.charCodeAt(i);
     }
 
-    return pool[charSum % pool.length];
+    return pool[charSum % pool.length] || DEFAULT_PLACEHOLDER;
   }
 
   function getEventImage(ev) {
@@ -108,5 +103,8 @@
   window.getFlexibleEventImage = getFlexibleEventImage;
   window.getEventPlacementImage = function (eventId, eventType, title) {
     return placementForEvent(eventId, eventType, title);
+  };
+  window.getDefaultEventPlaceholder = function () {
+    return DEFAULT_PLACEHOLDER;
   };
 })();

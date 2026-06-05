@@ -358,10 +358,62 @@ async function fetchFinancials(sb) {
   };
 }
 
+const SPONSOR_HUB_SLOT = 'sponsor_hub';
+
 async function fetchSponsorBlock(sb) {
-  const res = await sb.from('cms_blocks').select('*').eq('slot', 'sponsor_hub').maybeSingle();
+  const res = await sb.from('cms_blocks').select('*').eq('slot', SPONSOR_HUB_SLOT).maybeSingle();
   if (res.error) throw new Error(res.error.message);
   return res.data || null;
+}
+
+async function saveSponsorBlock(sb, payload) {
+  const title = String(payload.title || '').trim();
+  const body = String(payload.body || '').trim();
+  const cta_label = String(payload.cta_label || '').trim();
+  const cta_url = String(payload.cta_url || '').trim();
+  const logo_url = String(payload.logo_url || '').trim() || null;
+  const company_name = String(payload.company_name || '').trim() || null;
+  const active = payload.active !== false;
+
+  if (!body) throw new Error('missing_body');
+
+  const existing = await sb
+    .from('cms_blocks')
+    .select('id')
+    .eq('slot', SPONSOR_HUB_SLOT)
+    .maybeSingle();
+  if (existing.error) throw new Error(existing.error.message);
+
+  const row = {
+    slot: SPONSOR_HUB_SLOT,
+    title,
+    body,
+    cta_label,
+    cta_url,
+    logo_url,
+    company_name,
+    active,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (existing.data?.id) {
+    const res = await sb.from('cms_blocks').update(row).eq('id', existing.data.id).select().single();
+    if (res.error) throw new Error(res.error.message);
+    return res.data;
+  }
+
+  const res = await sb.from('cms_blocks').insert(row).select().single();
+  if (res.error) throw new Error(res.error.message);
+  return res.data;
+}
+
+async function getAdminSponsor() {
+  if (!isSupabaseConfigured()) {
+    return { configured: false, provider: 'supabase', block: null };
+  }
+  const sb = getSupabaseAdmin();
+  const block = await fetchSponsorBlock(sb);
+  return { configured: true, provider: 'supabase', block, updatedAt: new Date().toISOString() };
 }
 
 async function getAdminDashboard() {
@@ -420,5 +472,7 @@ module.exports = {
   getAdminUsers,
   getAdminModeration,
   getAdminFinancials,
+  getAdminSponsor,
+  saveSponsorBlock,
   fetchSponsorBlock,
 };

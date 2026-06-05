@@ -116,17 +116,30 @@ function formatTimeRange(startsAt, endsAt) {
   return `${fmt(start)} – ${fmt(end)}`;
 }
 
+function cardLocationLabel(row) {
+  const city = String(row.city || '').trim();
+  if (city) return city.slice(0, 20);
+  const outcode = String(row.outcode || '').trim() || ukOutcode(row.postcode);
+  if (outcode) return outcode.slice(0, 20);
+  if (String(inferMeetingType(row) || '')
+    .toLowerCase()
+    .includes('online')) {
+    return 'Online';
+  }
+  return '';
+}
+
 function buildDateLine(location, parsedDate, time) {
   const parts = [parsedDate.short, time, location].filter(Boolean);
   return parts.join(' · ');
 }
 
-function ticketRowToTier(row, eventDefaults) {
+function ticketRowToTier(row, registrationCount) {
   const priceNum = parsePriceNum(row.price);
   const { display: price, priceKey } = normalizePrice(priceNum);
   const qty = row.quantity != null ? Math.max(0, Number(row.quantity)) : null;
-  const soldOut =
-    row.status === 'Sold out' || (qty !== null && !Number.isFinite(qty) ? false : qty <= 0);
+  const sold = Math.max(0, Number(registrationCount) || 0);
+  const soldOut = qty !== null && Number.isFinite(qty) && sold >= qty;
   const name = String(row.name || 'Ticket').trim();
   return {
     id: row.id,
@@ -137,8 +150,29 @@ function ticketRowToTier(row, eventDefaults) {
     priceNum,
     soldOut,
     quantityAvailable: qty,
+    registrationsCount: sold,
     label: name.slice(0, 48) || 'Ticket',
   };
+}
+
+async function fetchRegistrationCountsByTicket(sb, ticketRows) {
+  const ids = (ticketRows || []).map((t) => t.id).filter(Boolean);
+  if (!ids.length) return new Map();
+
+  const { data, error } = await sb
+    .from('registrations')
+    .select('ticket_id')
+    .in('ticket_id', ids)
+    .neq('payment_status', 'Refunded')
+    .neq('application_status', 'Denied');
+  if (error) throw new Error(error.message);
+
+  const counts = new Map();
+  (data || []).forEach((row) => {
+    if (!row.ticket_id) return;
+    counts.set(row.ticket_id, (counts.get(row.ticket_id) || 0) + 1);
+  });
+  return counts;
 }
 
 function fallbackTicketTier(event) {
@@ -167,6 +201,8 @@ function rowToEvent(row, organiser, ticketRows) {
   const format = inferMeetingType(row);
   const eventTypeLabel = resolvedEventType(row, typeRaw);
   const location = String(row.location_label || row.city || row.venue || '').trim();
+  const city = String(row.city || '').trim();
+  const locationShort = cardLocationLabel(row) || location.slice(0, 20);
   const postcode = String(row.postcode || '').trim();
   const venue = String(row.venue || '').trim();
   const industry = Array.isArray(row.industries) ? row.industries[0] || '' : '';
@@ -174,9 +210,10 @@ function rowToEvent(row, organiser, ticketRows) {
   const parsedDate = formatDateParts(nextDateRaw);
   const time = formatTimeRange(row.starts_at, row.ends_at) || parsedDate.time || '';
 
-  const tiers = (ticketRows || [])
-    .filter((t) => t.event_id === row.id)
-    .map((t) => ticketRowToTier(t, {}));
+  const eventTickets = (ticketRows || []).filter((t) => t.event_id === row.id);
+  const tiers = eventTickets.map((t) =>
+    ticketRowToTier(t, t._registrationCount != null ? t._registrationCount : 0)
+  );
   tiers.sort((a, b) => {
     if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;
     return a.priceNum - b.priceNum;
@@ -210,15 +247,18 @@ function rowToEvent(row, organiser, ticketRows) {
     endDateRaw: row.ends_at ? String(row.ends_at) : '',
     time,
     location,
+    city,
+    locationShort,
     postcode,
     outcode: String(row.outcode || '').trim() || ukOutcode(postcode),
     nextDate: nextDateRaw ? String(nextDateRaw) : '',
     nextDateTs: parsedDate.ts,
     eventType: eventTypeLabel,
     eventTypeCategory: eventTypeTabCategory(eventTypeLabel),
+    address: String(row.address || '').trim(),
     venue,
     venueName: venue,
-    venueAddress: [row.address, postcode].filter(Boolean).join(', ') || location,
+    venueAddress: [row.address, city, postcode].filter(Boolean).join(', '),
     organiserId: row.organiser_id || (organiser && organiser.id) || '',
     organiserLogo: organiser ? String(organiser.photo_url || '') : '',
     organiserProfile: organiser ? String(organiser.description || '') : '',
@@ -244,7 +284,7 @@ function rowToEvent(row, organiser, ticketRows) {
     spotsLeft,
     capacity: null,
     urgency: '',
-    dateLine: buildDateLine(location, parsedDate, time),
+    dateLine: buildDateLine(locationShort, parsedDate, time),
     meetingType: format || typeRaw,
     hasFreeTickets,
     hasPaidTickets,
@@ -270,6 +310,8 @@ function rowToEvent(row, organiser, ticketRows) {
 
 function isPublicEvent(row, organiser) {
   if (row.approval_status !== 'Approved') return false;
+  const status = String(row.status || 'published').toLowerCase();
+  if (status !== 'published') return false;
   if (organiser && organiser.listing_status === 'draft') return false;
   if (organiser && organiser.listing_status === 'unpublished') return false;
   return true;
@@ -306,6 +348,7 @@ async function fetchPublishedEventRows(sb) {
     .from('events')
     .select('*')
     .eq('approval_status', 'Approved')
+    .eq('status', 'published')
     .order('starts_at', { ascending: true });
   if (tableRes.error) throw new Error(tableRes.error.message);
   return tableRes.data || [];
@@ -321,7 +364,13 @@ async function fetchPublishedEventById(sb, recordId) {
 
   const tableRes = await sb.from('events').select('*').eq('id', recordId).maybeSingle();
   if (tableRes.error) throw new Error(tableRes.error.message);
-  if (!tableRes.data || tableRes.data.approval_status !== 'Approved') return null;
+  if (
+    !tableRes.data ||
+    tableRes.data.approval_status !== 'Approved' ||
+    String(tableRes.data.status || 'published').toLowerCase() !== 'published'
+  ) {
+    return null;
+  }
   return tableRes.data;
 }
 
@@ -338,7 +387,13 @@ async function fetchPublishedEventBySlug(sb, slug) {
 
   const tableRes = await sb.from('events').select('*').eq('slug', s).maybeSingle();
   if (tableRes.error) throw new Error(tableRes.error.message);
-  if (!tableRes.data || tableRes.data.approval_status !== 'Approved') return null;
+  if (
+    !tableRes.data ||
+    tableRes.data.approval_status !== 'Approved' ||
+    String(tableRes.data.status || 'published').toLowerCase() !== 'published'
+  ) {
+    return null;
+  }
   return tableRes.data;
 }
 
@@ -353,6 +408,8 @@ async function fetchApprovedEvents(sb) {
     const { data: tix, error: tixErr } = await sb.from('tickets').select('*').in('event_id', eventIds);
     if (tixErr) throw new Error(tixErr.message);
     tickets = tix || [];
+    const regCounts = await fetchRegistrationCountsByTicket(sb, tickets);
+    tickets = tickets.map((t) => ({ ...t, _registrationCount: regCounts.get(t.id) || 0 }));
   }
 
   let organisers = [];
@@ -425,8 +482,14 @@ async function handle(req, res) {
       }
 
       const eventId = row.id;
-      const { data: tickets } = await sb.from('tickets').select('*').eq('event_id', eventId);
-      const event = rowToEvent(row, organiser, tickets || []);
+      const { data: ticketsRaw } = await sb.from('tickets').select('*').eq('event_id', eventId);
+      const ticketsList = ticketsRaw || [];
+      const regCounts = await fetchRegistrationCountsByTicket(sb, ticketsList);
+      const tickets = ticketsList.map((t) => ({
+        ...t,
+        _registrationCount: regCounts.get(t.id) || 0,
+      }));
+      const event = rowToEvent(row, organiser, tickets);
       const all = await fetchApprovedEvents(sb);
       const related = all.filter((e) => e.id !== event.id && organiserMatch(e, event)).slice(0, 6);
       return res.status(200).json({ configured: true, provider: 'supabase', event, related });

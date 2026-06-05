@@ -452,15 +452,15 @@
       if (timeRow) timeRow.style.display = '';
     } else if (timeRow) timeRow.style.display = 'none';
 
-    const cityLabel = [ev.venueName || ev.venue, ev.city, ev.location].filter(Boolean)[0] || 'Location TBC';
+    const cityLabel = ev.city || ev.outcode || ev.locationShort || 'Location TBC';
     setText('ev-meta-city', cityLabel);
 
     renderRatingBlock(ev);
     applyHostBlock(ev);
 
-    const vn = ev.venueName || ev.venue || '';
-    const va = [ev.venueAddress, ev.address, ev.postcode].filter(Boolean).join(', ') || ev.location || '';
-    setText('ev-venue-name', vn || cityLabel || 'Venue TBC');
+    const vn = String(ev.venue || ev.venueName || '').trim();
+    const va = [ev.address, ev.city, ev.postcode].filter(Boolean).join(', ') || ev.venueAddress || '';
+    setText('ev-venue-name', vn || 'Venue TBC');
     setText('ev-venue-addr', va);
     applyMapAndDirections(ev);
     renderAboutSection(ev);
@@ -1254,6 +1254,22 @@
     setText('ev-trail-current', 'Event unavailable');
   }
 
+  async function loadEventPageAds() {
+    if (!window.CmsAdBlocks) return;
+    const sidebarEl = document.getElementById('event-page-sidebar-ad');
+    const bannerEl = document.getElementById('event-page-banner-ad');
+    try {
+      const results = await Promise.all([
+        window.CmsAdBlocks.loadCmsAd('event_page_sidebar_ad'),
+        window.CmsAdBlocks.loadCmsAd('event_page_banner_ad'),
+      ]);
+      if (results[0] && sidebarEl) window.CmsAdBlocks.renderSidebarAd(sidebarEl, results[0]);
+      if (results[1] && bannerEl) window.CmsAdBlocks.renderBannerAd(bannerEl, results[1]);
+    } catch {
+      /* non-fatal */
+    }
+  }
+
   async function boot() {
     const route = eventRouteFromLocation();
     const params = route.params;
@@ -1287,6 +1303,7 @@
           initTicketPanel(ev);
           initContactHost(ev);
           initActions(ev);
+          loadEventPageAds();
           return;
         }
         showEventLoadError(
@@ -1342,6 +1359,7 @@
       initTicketPanel(ev);
       initContactHost(ev);
       initActions(ev);
+      loadEventPageAds();
     }
     } finally {
       setEventLoading(false);

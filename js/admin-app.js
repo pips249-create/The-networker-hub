@@ -31,14 +31,13 @@
   var MEETING_FORMATS = ['In person', 'Online', 'Hybrid'];
   var healthCache = null;
 
-  /** Default creative for events-sponsor-hub (matches interim events/index.html). */
+  /** Default creative for events-sponsor-hub (matches events browse Sponsor Hub). */
   var SPONSOR_SLOT_DEFAULTS = {
     slotKey: 'events-sponsor-hub',
     label: 'Events — Sponsor Hub',
-    activeFrom: '',
-    activeTo: '',
-    imageUrl: '',
-    headline: 'Get sponsored: Reach 10k founders monthly from £2,000/month',
+    companyName: '',
+    logoUrl: '',
+    tagline: 'Get sponsored: Reach 10k founders monthly from £2,000/month',
     bullets: [
       'Premium placement beside Featured events',
       'Short line of copy',
@@ -46,6 +45,7 @@
     ],
     ctaLabel: 'Enquire now',
     ctaUrl: 'mailto:sales@the-networker.co.uk?subject=Sponsor%20Hub%20enquiry',
+    active: true,
   };
 
   var shell = document.getElementById('admin-shell');
@@ -948,16 +948,95 @@
     });
   }
 
+  function sponsorHeadlineHtml(headline) {
+    var safe = esc(String(headline || '').trim());
+    if (!safe) return '';
+    if (safe.indexOf(':') !== -1) {
+      var parts = safe.split(':');
+      return '<em>' + parts[0].trim() + ':</em> ' + parts.slice(1).join(':').trim();
+    }
+    return safe;
+  }
+
+  function sponsorBulletsFromBody(html) {
+    var temp = document.createElement('div');
+    temp.innerHTML = String(html || '');
+    return Array.prototype.map
+      .call(temp.querySelectorAll('li'), function (li) {
+        return li.textContent.trim();
+      })
+      .filter(Boolean);
+  }
+
+  function sponsorTaglineFromBlock(block) {
+    var title = String(block.title || '').trim();
+    if (title && title.toLowerCase() !== 'sponsor hub') return title;
+    var temp = document.createElement('div');
+    temp.innerHTML = String(block.body || '');
+    var h3 = temp.querySelector('h3');
+    return h3 ? h3.textContent.trim() : '';
+  }
+
+  function sponsorBulletsHtml(bullets) {
+    if (!bullets.length) return '';
+    return (
+      '<ul class="sponsor-list">' +
+      bullets
+        .map(function (line) {
+          return '<li>' + esc(line) + '</li>';
+        })
+        .join('') +
+      '</ul>'
+    );
+  }
+
+  function sponsorBodyFromForm(creative) {
+    return sponsorBulletsHtml(creative.bullets);
+  }
+
+  function sponsorPreviewLogoHtml(logoUrl) {
+    if (logoUrl && /^(https?:|\/)/i.test(logoUrl)) {
+      return (
+        '<img src="' +
+        esc(logoUrl) +
+        '" alt="" class="block max-w-[120px] max-h-[60px] object-contain mb-3">'
+      );
+    }
+    return (
+      '<div class="w-[120px] h-[60px] mb-3 flex items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-100 text-[10px] font-semibold text-slate-500">Your logo here</div>'
+    );
+  }
+
+  function applySponsorBlockToForm(block) {
+    if (!block) return;
+    var company = document.getElementById('sponsor-company');
+    var logoUrl = document.getElementById('sponsor-logo-url');
+    var tagline = document.getElementById('sponsor-tagline');
+    var bullets = document.getElementById('sponsor-bullets');
+    var ctaLabel = document.getElementById('sponsor-cta-label');
+    var ctaUrl = document.getElementById('sponsor-cta-url');
+    var active = document.getElementById('sponsor-active');
+    var lines = sponsorBulletsFromBody(block.body);
+
+    if (company) company.value = String(block.company_name || '').trim();
+    if (logoUrl) logoUrl.value = String(block.logo_url || '').trim();
+    if (tagline) tagline.value = sponsorTaglineFromBlock(block);
+    if (bullets && lines.length) bullets.value = lines.join('\n');
+    if (ctaLabel && block.cta_label) ctaLabel.value = block.cta_label;
+    if (ctaUrl && block.cta_url) ctaUrl.value = block.cta_url;
+    if (active) active.checked = block.active !== false;
+  }
+
   function renderSponsorship() {
     var d = SPONSOR_SLOT_DEFAULTS;
     var bulletsVal = d.bullets.join('\n');
+    var sponsorLogoBase64 = null;
+    var sponsorLogoMime = '';
+    var sponsorLogoFilename = '';
 
     main.innerHTML =
       '<div class="space-y-6">' +
-      '<section class="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">' +
-      '<p class="font-bold text-brand-900 mb-2">Backend requirement (build next)</p>' +
-      '<p class="mb-3">Sponsor Hub copy is stored in Supabase <code class="text-xs bg-white/80 px-1 rounded">cms_blocks</code> (slot <code class="text-xs bg-white/80 px-1 rounded">sponsor_hub</code>). The public Events page reads it via <code class="text-xs bg-white/80 px-1 rounded">GET /api/cms-block?slot=sponsor_hub</code>.</p>' +
-      '<p class="text-amber-900/90">Edit the row in Supabase Table Editor, or wire the Publish button below to <code class="text-xs bg-white/80 px-1 rounded">POST /api/admin/sponsor</code> when ready.</p></section>' +
+      '<p id="sponsor-status" class="text-sm text-slate-500">Loading Sponsor Hub from Supabase…</p>' +
       '<div class="grid lg:grid-cols-2 gap-6">' +
       '<form id="sponsor-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">' +
       '<div><label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Placement slot</label>' +
@@ -967,24 +1046,23 @@
       '">' +
       esc(d.label) +
       '</option></select>' +
-      '<p class="text-xs text-slate-500 mt-1">More slots (Cities, newsletter) use the same pattern later.</p></div>' +
-      '<div class="grid sm:grid-cols-2 gap-4">' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-from">Active from</label>' +
-      '<input type="date" id="sponsor-from" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
-      esc(d.activeFrom) +
+      '<p class="text-xs text-slate-500 mt-1">Published to the Events browse page Sponsor Hub block.</p></div>' +
+      '<label class="flex items-center gap-2 text-sm text-slate-700">' +
+      '<input type="checkbox" id="sponsor-active" class="rounded border-slate-300" checked> ' +
+      'Sponsor active (uncheck to show “Become a sponsor” placeholder on site)</label>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-company">Company name</label>' +
+      '<input type="text" id="sponsor-company" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Acme Ltd" value="' +
+      esc(d.companyName) +
       '"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-to">Active until</label>' +
-      '<input type="date" id="sponsor-to" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
-      esc(d.activeTo) +
-      '"></div></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-image">Sponsor image URL</label>' +
-      '<input type="url" id="sponsor-image" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="https://… or Airtable attachment URL" value="' +
-      esc(d.imageUrl) +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-logo-url">Company logo URL</label>' +
+      '<input type="text" id="sponsor-logo-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mb-2" placeholder="https://…" value="' +
+      esc(d.logoUrl) +
       '">' +
-      '<p class="text-xs text-slate-500 mt-1">Backend: Airtable attachment field; optional upload in admin.</p></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-headline">Headline</label>' +
-      '<input type="text" id="sponsor-headline" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
-      esc(d.headline) +
+      '<label class="block text-xs text-slate-500 mb-1" for="sponsor-logo-file">Or upload logo (max 2MB, 120×60 recommended)</label>' +
+      '<input type="file" id="sponsor-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" class="block w-full text-sm text-slate-600"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-tagline">Tagline / offer</label>' +
+      '<input type="text" id="sponsor-tagline" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+      esc(d.tagline) +
       '"></div>' +
       '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-bullets">Bullet copy (one line each)</label>' +
       '<textarea id="sponsor-bullets" rows="4" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
@@ -995,19 +1073,32 @@
       '<input type="text" id="sponsor-cta-label" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
       esc(d.ctaLabel) +
       '"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-url">Tracking link (destination URL)</label>' +
-      '<input type="url" id="sponsor-cta-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-url">CTA link (https:// or mailto:)</label>' +
+      '<input type="text" id="sponsor-cta-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
       esc(d.ctaUrl) +
       '"></div></div>' +
       '<div class="flex flex-wrap gap-3 pt-2">' +
-      '<button type="button" id="sponsor-preview-btn" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Update preview</button>' +
-      '<button type="button" disabled class="rounded-lg border border-slate-200 text-slate-400 px-4 py-2 text-sm font-semibold cursor-not-allowed" title="Wire to POST /api/admin/sponsor">Publish to site (API pending)</button>' +
+      '<button type="button" id="sponsor-preview-btn" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Update preview</button>' +
+      '<button type="button" id="sponsor-publish-btn" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Publish to site</button>' +
       '</div></form>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">' +
       '<h3 class="font-bold text-brand-900 mb-1">Live preview</h3>' +
       '<p class="text-xs text-slate-500 mb-4">Matches the Events browse Sponsor Hub block.</p>' +
-      '<aside id="sponsor-preview" class="rounded-xl border border-[#d4aee0] bg-gradient-to-br from-[#f3eef5] to-[#ebe0f0] p-5 text-[#2d1b3d] max-w-md"></aside>' +
+      '<aside id="sponsor-preview" class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 text-[#2d1b3d] max-w-md shadow-[0_4px_18px_rgba(91,47,153,0.1)]"></aside>' +
       '</section></div></div>';
+
+    function setSponsorStatus(text, tone) {
+      var el = document.getElementById('sponsor-status');
+      if (!el) return;
+      el.textContent = text;
+      el.className =
+        'text-sm ' +
+        (tone === 'error'
+          ? 'text-red-700 font-semibold'
+          : tone === 'ok'
+            ? 'text-emerald-700 font-semibold'
+            : 'text-slate-500');
+    }
 
     function readForm() {
       var bullets = (document.getElementById('sponsor-bullets').value || '')
@@ -1016,12 +1107,17 @@
           return line.trim();
         })
         .filter(Boolean);
+      var activeEl = document.getElementById('sponsor-active');
+      var logoUrl = document.getElementById('sponsor-logo-url').value.trim();
+      if (sponsorLogoBase64) logoUrl = sponsorLogoBase64;
       return {
-        headline: document.getElementById('sponsor-headline').value.trim(),
-        bullets: bullets.length ? bullets : d.bullets,
+        active: activeEl ? activeEl.checked : true,
+        companyName: document.getElementById('sponsor-company').value.trim(),
+        logoUrl: logoUrl,
+        tagline: document.getElementById('sponsor-tagline').value.trim(),
+        bullets: bullets.length ? bullets : d.bullets.slice(),
         ctaLabel: document.getElementById('sponsor-cta-label').value.trim() || d.ctaLabel,
         ctaUrl: document.getElementById('sponsor-cta-url').value.trim() || d.ctaUrl,
-        imageUrl: document.getElementById('sponsor-image').value.trim(),
       };
     }
 
@@ -1029,73 +1125,158 @@
       var creative = readForm();
       var el = document.getElementById('sponsor-preview');
       if (!el) return;
-      var headlineHtml = esc(creative.headline);
-      if (headlineHtml.indexOf(':') !== -1) {
-        var parts = headlineHtml.split(':');
-        headlineHtml = '<em>' + parts[0].trim() + ':</em> ' + parts.slice(1).join(':').trim();
+
+      if (!creative.active) {
+        el.innerHTML =
+          '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Sponsor Hub</div>' +
+          '<p class="text-base font-extrabold mb-2">Your brand here</p>' +
+          '<p class="text-sm text-slate-600 mb-4">Reach 10k+ professionals monthly</p>' +
+          '<span class="inline-block rounded-lg border border-[#c9a8d8] text-[#5b2f99] text-sm font-bold px-4 py-2">Find out more →</span>';
+        return;
       }
-      var list = creative.bullets
-        .map(function (line) {
-          return '<li>' + esc(line) + '</li>';
-        })
-        .join('');
-      var img =
-        creative.imageUrl && /^https?:/i.test(creative.imageUrl)
-          ? '<img src="' + esc(creative.imageUrl) + '" alt="" class="w-full rounded-lg mb-4 object-cover max-h-32">'
-          : '';
+
+      var taglineHtml = sponsorHeadlineHtml(creative.tagline);
+      var list = sponsorBulletsHtml(creative.bullets);
       el.innerHTML =
-        img +
-        '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-2">★ Sponsor Hub</div>' +
-        '<h4 class="text-lg font-semibold leading-snug mb-3">' +
-        headlineHtml +
-        '</h4>' +
-        '<ul class="text-sm space-y-1 mb-4 list-disc pl-4 opacity-90">' +
+        '<span class="absolute top-4 right-4 text-[9px] font-bold uppercase tracking-wider text-slate-500">Sponsored</span>' +
+        '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3 pr-16">★ Sponsor Hub</div>' +
+        sponsorPreviewLogoHtml(creative.logoUrl) +
+        (creative.companyName
+          ? '<p class="text-sm font-extrabold mb-1">' + esc(creative.companyName) + '</p>'
+          : '') +
+        (taglineHtml ? '<p class="text-sm font-semibold leading-snug mb-3">' + taglineHtml + '</p>' : '') +
+        '<div class="text-xs text-slate-600 mb-4">' +
         list +
-        '</ul>' +
-        '<a href="' +
-        esc(creative.ctaUrl) +
-        '" class="inline-block rounded-lg bg-[#bd932e] text-white text-sm font-semibold px-4 py-2">' +
+        '</div>' +
+        '<span class="inline-block w-full text-center rounded-lg bg-[#2d2636] text-white text-sm font-bold px-4 py-2.5">' +
         esc(creative.ctaLabel) +
-        '</a>';
+        '</span>';
     }
 
     document.getElementById('sponsor-preview-btn').addEventListener('click', renderPreview);
-    ['sponsor-headline', 'sponsor-bullets', 'sponsor-cta-label', 'sponsor-cta-url', 'sponsor-image'].forEach(
-      function (id) {
-        var input = document.getElementById(id);
-        if (input) input.addEventListener('input', renderPreview);
-      }
-    );
+    [
+      'sponsor-company',
+      'sponsor-logo-url',
+      'sponsor-tagline',
+      'sponsor-bullets',
+      'sponsor-cta-label',
+      'sponsor-cta-url',
+      'sponsor-active',
+    ].forEach(function (id) {
+      var input = document.getElementById(id);
+      if (input) input.addEventListener('input', renderPreview);
+      if (input && input.type === 'checkbox') input.addEventListener('change', renderPreview);
+    });
 
-    fetch('/api/cms-block?slot=sponsor_hub')
-      .then(function (r) {
-        return r.json();
+    document.getElementById('sponsor-logo-file').addEventListener('change', function (ev) {
+      var file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) {
+        setSponsorStatus('Logo must be under 2MB.', 'error');
+        ev.target.value = '';
+        return;
+      }
+      sponsorLogoMime = file.type || 'image/jpeg';
+      sponsorLogoFilename = file.name || 'logo.jpg';
+      var reader = new FileReader();
+      reader.onload = function () {
+        sponsorLogoBase64 = String(reader.result || '');
+        document.getElementById('sponsor-logo-url').value = '';
+        renderPreview();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('sponsor-publish-btn').addEventListener('click', function () {
+      var btn = document.getElementById('sponsor-publish-btn');
+      var creative = readForm();
+      var body = sponsorBodyFromForm(creative);
+      if (creative.active && !creative.bullets.length) {
+        setSponsorStatus('Add at least one bullet before publishing an active sponsor.', 'error');
+        return;
+      }
+      if (creative.active && (!creative.ctaLabel || !creative.ctaUrl)) {
+        setSponsorStatus('CTA label and link are required for an active sponsor.', 'error');
+        return;
+      }
+
+      if (btn) btn.disabled = true;
+      setSponsorStatus('Publishing…');
+
+      var payload = {
+        title: creative.tagline,
+        body: body || '<ul class="sponsor-list"><li>Placeholder</li></ul>',
+        cta_label: creative.ctaLabel,
+        cta_url: creative.ctaUrl,
+        company_name: creative.companyName,
+        logo_url: sponsorLogoBase64 ? '' : document.getElementById('sponsor-logo-url').value.trim(),
+        active: creative.active,
+      };
+      if (sponsorLogoBase64) {
+        payload.logoBase64 = sponsorLogoBase64;
+        payload.logoMime = sponsorLogoMime;
+        payload.logoFilename = sponsorLogoFilename;
+      }
+
+      fetch('/api/admin/sponsor', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       })
-      .then(function (data) {
-        if (!data || !data.ok || !data.block) {
+        .then(function (r) {
+          return r.json().then(function (data) {
+            if (!r.ok || data.ok === false) {
+              throw new Error(data.message || data.error || 'Publish failed (' + r.status + ')');
+            }
+            return data;
+          });
+        })
+        .then(function (data) {
+          sponsorLogoBase64 = null;
+          sponsorLogoMime = '';
+          sponsorLogoFilename = '';
+          var fileInput = document.getElementById('sponsor-logo-file');
+          if (fileInput) fileInput.value = '';
+          if (data.block) applySponsorBlockToForm(data.block);
+          setSponsorStatus(
+            creative.active
+              ? 'Published — live on the Events browse page.'
+              : 'Saved — site will show the “Become a sponsor” placeholder.',
+            'ok'
+          );
           renderPreview();
+        })
+        .catch(function (err) {
+          setSponsorStatus(err.message || 'Could not publish Sponsor Hub.', 'error');
+        })
+        .finally(function () {
+          if (btn) btn.disabled = false;
+        });
+    });
+
+    renderPreview();
+
+    adminGet('/api/admin/sponsor')
+      .then(function (data) {
+        if (data.configured === false) {
+          setSponsorStatus('Supabase is not configured — showing defaults only.', 'error');
           return;
         }
-        var block = data.block;
-        var headline = document.getElementById('sponsor-headline');
-        var bullets = document.getElementById('sponsor-bullets');
-        var ctaLabel = document.getElementById('sponsor-cta-label');
-        var ctaUrl = document.getElementById('sponsor-cta-url');
-        if (headline && block.title) headline.value = String(block.title).replace(/<[^>]+>/g, '').trim();
-        if (block.body && bullets) {
-          var temp = document.createElement('div');
-          temp.innerHTML = block.body;
-          var lines = Array.prototype.map.call(temp.querySelectorAll('li'), function (li) {
-            return li.textContent.trim();
-          }).filter(Boolean);
-          if (lines.length) bullets.value = lines.join('\n');
+        if (data.error) {
+          setSponsorStatus('Could not load Sponsor Hub: ' + data.error, 'error');
+          return;
         }
-        if (ctaLabel && block.cta_label) ctaLabel.value = block.cta_label;
-        if (ctaUrl && block.cta_url) ctaUrl.value = block.cta_url;
+        if (data.block) {
+          applySponsorBlockToForm(data.block);
+          setSponsorStatus('Loaded live Sponsor Hub from Supabase.');
+        } else {
+          setSponsorStatus('No Sponsor Hub row yet — edit below and publish.');
+        }
         renderPreview();
       })
       .catch(function () {
-        renderPreview();
+        setSponsorStatus('Could not load Sponsor Hub.', 'error');
       });
   }
 

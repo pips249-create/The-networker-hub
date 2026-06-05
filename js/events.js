@@ -15,7 +15,13 @@
     countMeeting: document.getElementById('count-meeting'),
     countExhibition: document.getElementById('count-exhibition'),
     location: document.getElementById('location'),
-    sponsorTitle: document.getElementById('sponsor-title'),
+    sponsorHub: document.getElementById('sponsor-hub'),
+    sponsorBadge: document.getElementById('sponsor-badge'),
+    sponsorLogoWrap: document.getElementById('sponsor-logo-wrap'),
+    sponsorLogo: document.getElementById('sponsor-logo'),
+    sponsorLogoPlaceholder: document.getElementById('sponsor-logo-placeholder'),
+    sponsorCompany: document.getElementById('sponsor-company'),
+    sponsorTagline: document.getElementById('sponsor-tagline'),
     sponsorBody: document.getElementById('sponsor-body'),
     sponsorCta: document.getElementById('sponsor-cta'),
   };
@@ -46,19 +52,43 @@
     return ev.photo || ev.organiserLogo || '';
   }
 
+  function defaultPlaceholder() {
+    if (window.getDefaultEventPlaceholder) return window.getDefaultEventPlaceholder();
+    return '/assets/placeholders/default.svg';
+  }
+
+  function isPlaceholderSrc(url) {
+    return /\/assets\/placeholders\//i.test(url) || /event-placeholder/i.test(url);
+  }
+
   function photoImg(url, className, eventId, eventType, eventTitle) {
     const placementFn = window.getEventPlacementImage;
-    const fallbackRaw = placementFn
-      ? placementFn(eventId || '', eventType || '', eventTitle || '')
-      : window.getEventBrowseImage
-        ? window.getEventBrowseImage({ id: eventId, eventType: eventType, title: eventTitle })
-        : '';
-    const src = safePhotoUrl(url || fallbackRaw);
-    const fallback = safePhotoUrl(fallbackRaw).replace(/'/g, '%27');
+    const fallbackRaw =
+      (placementFn
+        ? placementFn(eventId || '', eventType || '', eventTitle || '')
+        : window.getEventBrowseImage
+          ? window.getEventBrowseImage({ id: eventId, eventType: eventType, title: eventTitle })
+          : '') || defaultPlaceholder();
+    const resolved = url || fallbackRaw;
+    const src = safePhotoUrl(resolved);
+    const fallback = safePhotoUrl(fallbackRaw || defaultPlaceholder()).replace(/'/g, '%27');
+    const placeholderClass = isPlaceholderSrc(resolved) ? ' is-placeholder' : '';
     return (
-      `<img class="${className}" src="${src}" alt="" loading="lazy" decoding="async" ` +
-      `referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='${fallback}'">`
+      `<img class="${className}${placeholderClass}" src="${src}" alt="" loading="lazy" decoding="async" ` +
+      `onerror="this.onerror=null;this.src='${fallback}';this.classList.add('is-placeholder')">`
     );
+  }
+
+  function cardLocation(ev) {
+    const city = String(ev.city || '').trim();
+    if (city) return city.slice(0, 20);
+    const outcode = String(ev.outcode || '').trim();
+    if (outcode) return outcode.slice(0, 20);
+    if (String(ev.format || '').toLowerCase().includes('online')) return 'Online';
+    const loc = String(ev.locationShort || ev.location || '').trim();
+    if (!loc) return 'TBC';
+    const short = loc.split(',')[0].trim() || loc;
+    return short.slice(0, 20);
   }
 
   function slugLocation(loc) {
@@ -172,7 +202,7 @@
     const meetingType = meetingTypeLabel(ev);
     const dateLine =
       ev.dateLine ||
-      [ev.location, ev.date || ev.dateFieldRaw, ev.time].filter(Boolean).join(' · ') ||
+      [cardLocation(ev), ev.date || ev.dateFieldRaw, ev.time].filter(Boolean).join(' · ') ||
       'Date TBC';
     const premiumBadge = ev.featured
       ? '<span class="event-grid-premium">Premium</span>'
@@ -388,6 +418,13 @@
   const SPONSOR_ENQUIRE_MAILTO =
     'mailto:sales@the-networker.co.uk?subject=' + encodeURIComponent('Sponsor Hub enquiry');
 
+  const SPONSOR_FALLBACK = {
+    headline: 'Your brand here',
+    subtitle: 'Reach 10k+ professionals monthly',
+    ctaLabel: 'Find out more →',
+    ctaUrl: SPONSOR_ENQUIRE_MAILTO,
+  };
+
   function normalizeSponsorCtaUrl(url) {
     const u = String(url || '').trim();
     if (!u) return SPONSOR_ENQUIRE_MAILTO;
@@ -395,28 +432,140 @@
     return SPONSOR_ENQUIRE_MAILTO;
   }
 
-  function renderSponsorBlock(block) {
-    if (!els.sponsorTitle && !els.sponsorBody && !els.sponsorCta) return;
-    if (!block) return;
-
+  function sponsorTaglineFromBlock(block) {
     const title = String(block.title || '').trim();
-    const body = String(block.body || '').trim();
-    const ctaLabel = String(block.cta_label || '').trim();
-    const ctaUrl = normalizeSponsorCtaUrl(block.cta_url);
+    if (title && title.toLowerCase() !== 'sponsor hub') return title;
+    const temp = document.createElement('div');
+    temp.innerHTML = String(block.body || '');
+    const h3 = temp.querySelector('h3');
+    return h3 ? h3.textContent.trim() : '';
+  }
 
-    if (els.sponsorTitle && title) els.sponsorTitle.textContent = title;
-    if (els.sponsorBody) {
-      els.sponsorBody.innerHTML = body ? body : '';
-    }
-    if (els.sponsorCta) {
-      if (ctaLabel && ctaUrl) {
-        els.sponsorCta.textContent = ctaLabel;
-        els.sponsorCta.href = ctaUrl;
-        els.sponsorCta.hidden = false;
+  function sponsorBulletsHtml(body) {
+    const temp = document.createElement('div');
+    temp.innerHTML = String(body || '');
+    const items = Array.from(temp.querySelectorAll('li'))
+      .map((li) => li.textContent.trim())
+      .filter(Boolean);
+    if (!items.length) return '';
+    return (
+      '<ul class="sponsor-list">' +
+      items.map((line) => '<li>' + escapeHtml(line) + '</li>').join('') +
+      '</ul>'
+    );
+  }
+
+  function sponsorTaglineHtml(text) {
+    const raw = String(text || '').trim();
+    if (!raw) return '';
+    const colon = raw.indexOf(':');
+    if (colon === -1) return escapeHtml(raw);
+    const lead = escapeHtml(raw.slice(0, colon + 1).trim());
+    const rest = escapeHtml(raw.slice(colon + 1).trim());
+    return '<em>' + lead + '</em> ' + rest;
+  }
+
+  function setSponsorLogo(logoUrl) {
+    const url = String(logoUrl || '').trim();
+    const hasLogo = /^https?:\/\//i.test(url);
+    if (els.sponsorLogoWrap) els.sponsorLogoWrap.hidden = false;
+    if (els.sponsorLogo) {
+      if (hasLogo) {
+        els.sponsorLogo.src = url;
+        els.sponsorLogo.alt = '';
+        els.sponsorLogo.hidden = false;
       } else {
-        els.sponsorCta.hidden = true;
+        els.sponsorLogo.removeAttribute('src');
+        els.sponsorLogo.hidden = true;
       }
     }
+    if (els.sponsorLogoPlaceholder) {
+      els.sponsorLogoPlaceholder.hidden = hasLogo;
+    }
+  }
+
+  function renderSponsorFallback() {
+    if (!els.sponsorHub) return;
+    els.sponsorHub.classList.remove('sponsor-hub--active');
+    els.sponsorHub.classList.add('sponsor-hub--fallback');
+
+    if (els.sponsorBadge) els.sponsorBadge.hidden = true;
+    if (els.sponsorLogoWrap) els.sponsorLogoWrap.hidden = true;
+    if (els.sponsorCompany) els.sponsorCompany.hidden = true;
+    if (els.sponsorTagline) {
+      els.sponsorTagline.hidden = false;
+      els.sponsorTagline.textContent = SPONSOR_FALLBACK.headline;
+    }
+    if (els.sponsorBody) {
+      els.sponsorBody.hidden = false;
+      els.sponsorBody.textContent = SPONSOR_FALLBACK.subtitle;
+    }
+    if (els.sponsorCta) {
+      els.sponsorCta.textContent = SPONSOR_FALLBACK.ctaLabel;
+      els.sponsorCta.href = SPONSOR_FALLBACK.ctaUrl;
+      els.sponsorCta.hidden = false;
+    }
+  }
+
+  function renderSponsorAd(block) {
+    if (!els.sponsorHub) return;
+    els.sponsorHub.classList.add('sponsor-hub--active');
+    els.sponsorHub.classList.remove('sponsor-hub--fallback');
+
+    const company = String(block.company_name || '').trim();
+    const tagline = sponsorTaglineFromBlock(block);
+    const logoUrl = String(block.logo_url || '').trim();
+    const ctaLabel = String(block.cta_label || '').trim() || 'Enquire now';
+    const ctaUrl = normalizeSponsorCtaUrl(block.cta_url);
+    const bulletsHtml = sponsorBulletsHtml(block.body);
+
+    if (els.sponsorBadge) els.sponsorBadge.hidden = false;
+    setSponsorLogo(logoUrl);
+
+    if (els.sponsorCompany) {
+      if (company) {
+        els.sponsorCompany.textContent = company;
+        els.sponsorCompany.hidden = false;
+      } else {
+        els.sponsorCompany.textContent = '';
+        els.sponsorCompany.hidden = true;
+      }
+    }
+
+    if (els.sponsorTagline) {
+      if (tagline) {
+        els.sponsorTagline.hidden = false;
+        els.sponsorTagline.innerHTML = sponsorTaglineHtml(tagline);
+      } else {
+        els.sponsorTagline.hidden = true;
+        els.sponsorTagline.textContent = '';
+      }
+    }
+
+    if (els.sponsorBody) {
+      if (bulletsHtml) {
+        els.sponsorBody.hidden = false;
+        els.sponsorBody.innerHTML = bulletsHtml;
+      } else {
+        els.sponsorBody.hidden = true;
+        els.sponsorBody.innerHTML = '';
+      }
+    }
+
+    if (els.sponsorCta) {
+      els.sponsorCta.textContent = ctaLabel;
+      els.sponsorCta.href = ctaUrl;
+      els.sponsorCta.hidden = false;
+    }
+  }
+
+  function renderSponsorBlock(block) {
+    if (!els.sponsorHub) return;
+    if (!block || block.active === false) {
+      renderSponsorFallback();
+      return;
+    }
+    renderSponsorAd(block);
   }
 
   async function loadSponsorBlock() {
@@ -425,9 +574,11 @@
       const data = await res.json();
       if (data && data.ok && data.block) {
         renderSponsorBlock(data.block);
+      } else {
+        renderSponsorFallback();
       }
     } catch {
-      /* non-fatal */
+      renderSponsorFallback();
     }
   }
 

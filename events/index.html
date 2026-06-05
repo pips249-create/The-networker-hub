@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="../css/hub.css?v=20260627">
 <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627">
 <link rel="stylesheet" href="../css/hub-loading.css?v=20260605b">
-<link rel="stylesheet" href="../css/events-page.css?v=20260627c">
+<link rel="stylesheet" href="../css/events-page.css?v=20260628b">
 <link rel="stylesheet" href="../css/events-filter-bar.css?v=20260627b">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
@@ -69,20 +69,20 @@
       </div>
     </section>
 
-    <aside class="sponsor-hub" aria-labelledby="sponsor-heading">
+    <aside class="sponsor-hub sponsor-hub--fallback" id="sponsor-hub" aria-labelledby="sponsor-heading">
+      <span class="sponsor-hub-badge" id="sponsor-badge" hidden>Sponsored</span>
       <div class="sponsor-hub-head" id="sponsor-heading">
         <span class="icon" aria-hidden="true">★</span>
-        <span id="sponsor-title">Sponsor Hub</span>
+        <span>Sponsor Hub</span>
       </div>
-      <div id="sponsor-body" class="sponsor-body">
-        <h3><em>Get sponsored:</em> Reach 10k founders monthly from £2,000/month</h3>
-        <ul class="sponsor-list">
-          <li>Premium placement beside Featured events</li>
-          <li>Short line of copy</li>
-          <li>Direct link to your landing page</li>
-        </ul>
+      <div class="sponsor-logo-wrap" id="sponsor-logo-wrap" hidden>
+        <img id="sponsor-logo" class="sponsor-logo" alt="" hidden>
+        <div id="sponsor-logo-placeholder" class="sponsor-logo-placeholder" hidden>Your logo here</div>
       </div>
-      <a class="sponsor-cta" id="sponsor-cta" href="mailto:sales@the-networker.co.uk?subject=Sponsor%20Hub%20enquiry">Enquire now</a>
+      <p class="sponsor-company" id="sponsor-company" hidden></p>
+      <p class="sponsor-tagline" id="sponsor-tagline"></p>
+      <div id="sponsor-body" class="sponsor-body"></div>
+      <a class="sponsor-cta" id="sponsor-cta" href="mailto:sales@the-networker.co.uk?subject=Sponsor%20Hub%20enquiry">Find out more →</a>
     </aside>
   </div>
 
@@ -209,7 +209,7 @@
 <script src="../js/events-filters.js?v=20260627b"></script>
 <script src="../js/events-map.js?v=20260616"></script>
 <script src="../js/hub-loading.js?v=20260616"></script>
-<script src="../js/flexible-event-image.js?v=20260627b"></script>
-<script src="../js/events.js?v=20260627c"></script>
+<script src="../js/flexible-event-image.js?v=20260628a"></script>
+<script src="../js/events.js?v=20260628b"></script>
 </body>
 </html>

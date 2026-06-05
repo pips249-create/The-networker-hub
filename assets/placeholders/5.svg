@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="Networking event">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ebe0f0"/>
+      <stop offset="55%" stop-color="#d9c4e0"/>
+      <stop offset="100%" stop-color="#c299d1"/>
+    </linearGradient>
+    <linearGradient id="sil" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#9a7aa8" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#9a7aa8" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="400" fill="url(#bg)"/>
+  <ellipse cx="320" cy="340" rx="220" ry="28" fill="url(#sil)"/>
+  <!-- People silhouettes -->
+  <g fill="#5c5557" opacity="0.85">
+    <circle cx="200" cy="168" r="28"/>
+    <path d="M160 280 Q200 220 240 280 Z"/>
+    <circle cx="320" cy="152" r="32"/>
+    <path d="M272 280 Q320 210 368 280 Z"/>
+    <circle cx="440" cy="172" r="26"/>
+    <path d="M404 280 Q440 228 476 280 Z"/>
+  </g>
+  <!-- Connection arcs -->
+  <g fill="none" stroke="#faf6ee" stroke-width="3" stroke-linecap="round" opacity="0.9">
+    <path d="M228 168 Q280 120 292 152"/>
+    <path d="M348 152 Q380 110 412 172"/>
+    <path d="M256 180 Q320 200 384 180"/>
+  </g>
+  <text x="320" y="48" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="#4a4446" opacity="0.55">The Networker Hub</text>
+</svg>
