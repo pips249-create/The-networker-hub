@@ -23,7 +23,6 @@
   let logoFile = null;
   let currentGroup = null;
   const selectedIndustries = new Set();
-  const selectedFormats = new Set();
 
   function showAlert(msg) {
     const el = document.getElementById('ge-alert');
@@ -148,27 +147,6 @@
     });
   }
 
-  function bindFormatToggles() {
-    document.querySelectorAll('[data-ge-format]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const fmt = btn.getAttribute('data-ge-format');
-        if (selectedFormats.has(fmt)) selectedFormats.delete(fmt);
-        else selectedFormats.add(fmt);
-        document.querySelectorAll('[data-ge-format]').forEach((b) => {
-          b.classList.toggle('is-active', selectedFormats.has(b.getAttribute('data-ge-format')));
-        });
-      });
-    });
-  }
-
-  function setFormatsFromList(list) {
-    selectedFormats.clear();
-    (list || []).forEach((f) => selectedFormats.add(f));
-    document.querySelectorAll('[data-ge-format]').forEach((b) => {
-      b.classList.toggle('is-active', selectedFormats.has(b.getAttribute('data-ge-format')));
-    });
-  }
-
   function configureEditActions(g) {
     const saveChanges = document.getElementById('ge-save-changes');
     const continueBtn = document.getElementById('ge-save-continue');
@@ -221,7 +199,6 @@
     selectedIndustries.clear();
     (g.industries || []).forEach((i) => selectedIndustries.add(i));
     renderIndustryChips();
-    setFormatsFromList(g.meetingFormats || []);
     const counter = document.getElementById('ge-word-count');
     if (counter) counter.textContent = String(countWords(g.description || ''));
     if (g.imageUrl) {
@@ -300,7 +277,6 @@
       website: document.getElementById('ge-website').value.trim(),
       logoUrl: document.getElementById('ge-logo-url').value.trim(),
       industries: [...selectedIndustries],
-      meetingFormats: [...selectedFormats],
       contactEmail,
     };
 
@@ -438,6 +414,5 @@
   bindLogoUpload();
   bindWordCounter();
   renderIndustryChips();
-  bindFormatToggles();
   load();
 })();
