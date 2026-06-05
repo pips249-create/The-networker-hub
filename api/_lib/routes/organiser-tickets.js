@@ -106,16 +106,23 @@ module.exports = async function handler(req, res) {
           }
         }
 
+        const vatTreatment = String(body.vatTreatment || '').trim();
+        if (vatTreatment && !['included', 'added'].includes(vatTreatment)) {
+          return json(res, 400, { error: 'invalid_vat_treatment' });
+        }
+
         const result = await createTicketsForEvents({
           eventIds: ids,
           tickets: tiers,
           publish,
+          vatTreatment: vatTreatment || null,
           refund: publish
             ? {
                 refundPolicy: body.refundPolicy,
                 refundPolicyDetails: body.refundPolicyDetails || '',
                 refundCutoffDays: body.refundCutoffDays,
                 refundTermsAgreed: body.refundTermsAgreed,
+                vatTreatment: vatTreatment || null,
               }
             : null,
         });

@@ -61,6 +61,20 @@
           <p class="ee-tier-summary" id="ee-tier-summary" aria-live="polite">0 ticket types · unlimited available · from £0</p>
           <div id="ee-tier-rows"></div>
           <button type="button" class="ee-btn ee-btn-outline" id="ee-add-tier" style="margin-top:12px">+ Add another ticket type</button>
+          <div class="ee-field" style="margin-top:20px">
+            <label>VAT on ticket prices</label>
+            <p class="ee-hint" style="margin-top:0">Shown under tickets on your public listing so attendees know how VAT applies.</p>
+            <div class="ee-vat-options" role="radiogroup" aria-label="VAT on ticket prices">
+              <label class="ee-check">
+                <input type="radio" name="vat-treatment" value="included" checked />
+                <span>VAT included in ticket price</span>
+              </label>
+              <label class="ee-check">
+                <input type="radio" name="vat-treatment" value="added" />
+                <span>VAT added at checkout</span>
+              </label>
+            </div>
+          </div>
         </div>
 
         <div class="ee-card" id="ee-panel-osop" hidden>
@@ -171,7 +185,7 @@
             <input type="checkbox" id="refund-terms-agreed" />
             <span>I understand I am responsible for processing all refunds directly</span>
           </label>
-          <p class="ee-alert ee-alert-warn" id="ee-publish-warn" hidden>Add at least one ticket type and complete the refund policy before publishing.</p>
+          <p class="ee-alert ee-alert-warn" id="ee-publish-warn" hidden>Add at least one ticket type, choose how VAT applies, and complete the refund policy before publishing.</p>
         </div>
 
         <div class="ee-actions">
@@ -184,6 +198,6 @@
 
     <script src="../js/organiser-page-loading.js?v=20260614c"></script>
     <script src="../js/organiser-quarter-time.js?v=20260614c"></script>
-    <script src="../js/organiser-event-tickets.js?v=20260614c"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260615d"></script>
   </body>
 </html>

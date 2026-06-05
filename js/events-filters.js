@@ -1,40 +1,58 @@
 (function () {
   var searchInput = document.getElementById('search');
   var postcodeInput = document.getElementById('postcode');
-  var typeSelect = document.getElementById('filter-type');
   var sortSelect = document.getElementById('sort');
   var dateRangeInput = document.getElementById('date-range');
   var checkInPerson = document.getElementById('check-inperson');
   var checkOnline = document.getElementById('check-online');
+  var checkHybrid = document.getElementById('check-hybrid');
+  var checkFree = document.getElementById('check-free');
+  var checkPaid = document.getElementById('check-paid');
   var toggleNearMe = document.getElementById('toggle-nearme');
-  var priceMinInput = document.getElementById('price-min');
-  var priceMaxInput = document.getElementById('price-max');
-  var priceRangeMax = document.getElementById('price-range-max');
-  var priceTrigger = document.getElementById('price-trigger');
-  var priceWrap = document.getElementById('price-filter-wrap');
-  var priceApply = document.getElementById('price-apply');
   var resultsCount = document.getElementById('results-count');
   var spotlightPrev = document.getElementById('spotlight-prev');
   var spotlightNext = document.getElementById('spotlight-next');
   var spotlightTrack = document.getElementById('spotlight-track');
   var mapViewBtn = document.getElementById('map-view-btn');
-  var mapViewLabel = document.getElementById('map-view-label');
+  var typeTabs = document.querySelectorAll('.type-tab[data-type]');
 
-  var pricePanelOpen = false;
-  var priceFilterActive = false;
+  var activeTypeTab = 'all';
   var dateFromTs = null;
   var dateToTs = null;
   var flatpickrInstance = null;
 
-  function getActiveType() {
-    return typeSelect ? typeSelect.value || 'all' : 'all';
+  function getActiveTypeTab() {
+    return activeTypeTab || 'all';
+  }
+
+  function meetingTypeSlug(ev) {
+    var raw = String(ev.format || ev.meetingType || '').trim().toLowerCase();
+    if (!raw) return '';
+    if (raw.indexOf('hybrid') !== -1) return 'hybrid';
+    if (raw.indexOf('online') !== -1 && raw.indexOf('person') === -1) return 'online';
+    if (raw.indexOf('person') !== -1 || raw.indexOf('in person') !== -1) return 'in-person';
+    return ev.formatSlug || '';
+  }
+
+  function eventDateTs(ev) {
+    if (ev.nextDateTs != null && !Number.isNaN(ev.nextDateTs)) return ev.nextDateTs;
+    if (ev.dateTs != null && !Number.isNaN(ev.dateTs)) return ev.dateTs;
+    if (ev.nextDate) {
+      var t = new Date(ev.nextDate).getTime();
+      return Number.isNaN(t) ? null : t;
+    }
+    if (ev.dateRaw) {
+      var d = new Date(ev.dateRaw).getTime();
+      return Number.isNaN(d) ? null : d;
+    }
+    return null;
   }
 
   function eventMatchesFilters(ev) {
-    var type = getActiveType();
-    if (type !== 'all') {
-      var slug = ev.typeSlug || '';
-      if (slug !== type) return false;
+    var typeTab = getActiveTypeTab();
+    if (typeTab !== 'all') {
+      var category = ev.eventTypeCategory || 'meeting';
+      if (category !== typeTab) return false;
     }
 
     var q = (searchInput && searchInput.value) || '';
@@ -49,70 +67,52 @@
 
     var pc = (postcodeInput && postcodeInput.value) || '';
     pc = pc.trim();
-    var nearMe = toggleNearMe && toggleNearMe.checked;
-    var usePostcodeFilter = pc && (nearMe || window.hubParseOutcode(pc));
-
-    if (usePostcodeFilter && window.hubMatchOutcode) {
-      if (!window.hubMatchOutcode(pc, ev)) return false;
-    } else if (pc) {
-      var compact = pc.toLowerCase().replace(/\s+/g, '');
-      var locHay = [ev.location, ev.postcode, ev.venue, ev.outcode, ev.search]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      var locCompact = locHay.replace(/\s/g, '');
-      if (locHay.indexOf(pc.toLowerCase()) === -1 && locCompact.indexOf(compact) === -1) {
-        return false;
+    if (pc) {
+      if (window.hubMatchOutcode) {
+        if (!window.hubMatchOutcode(pc, ev)) return false;
+      } else if (window.hubParseOutcode) {
+        var userOc = window.hubParseOutcode(pc);
+        var eventOc = window.hubEventOutcode ? window.hubEventOutcode(ev) : '';
+        if (userOc && eventOc && userOc !== eventOc) return false;
       }
     }
 
     var wantInPerson = checkInPerson && checkInPerson.checked;
     var wantOnline = checkOnline && checkOnline.checked;
-    var fmt = ev.formatSlug || '';
-    if (checkInPerson || checkOnline) {
-      if (wantInPerson && !wantOnline) {
-        if (fmt && fmt !== 'in-person' && fmt !== 'hybrid') return false;
-      } else if (wantOnline && !wantInPerson) {
-        if (fmt && fmt !== 'online' && fmt !== 'hybrid') return false;
-      } else if (!wantInPerson && !wantOnline) {
-        return false;
-      }
+    var wantHybrid = checkHybrid && checkHybrid.checked;
+    var fmt = meetingTypeSlug(ev);
+    if (checkInPerson || checkOnline || checkHybrid) {
+      if (!wantInPerson && !wantOnline && !wantHybrid) return false;
+      if (!fmt) {
+        if (!wantInPerson) return false;
+      } else if (fmt === 'in-person' && !wantInPerson) return false;
+      else if (fmt === 'online' && !wantOnline) return false;
+      else if (fmt === 'hybrid' && !wantHybrid) return false;
     }
 
     if (dateFromTs || dateToTs) {
-      var evTs =
-        ev.dateTs != null
-          ? ev.dateTs
-          : ev.dateRaw
-            ? new Date(ev.dateRaw).getTime()
-            : null;
+      var evTs = eventDateTs(ev);
       if (evTs == null || Number.isNaN(evTs)) return false;
       if (dateFromTs && evTs < dateFromTs) return false;
       if (dateToTs && evTs > dateToTs) return false;
     }
 
-    if (priceFilterActive) {
-      var minP = priceMinInput ? parseFloat(priceMinInput.value) : 0;
-      var maxRaw = priceMaxInput ? priceMaxInput.value : '';
-      var maxP = maxRaw === '' ? Infinity : parseFloat(maxRaw);
-      if (!Number.isFinite(minP)) minP = 0;
-      if (!Number.isFinite(maxP)) maxP = Infinity;
-      var p = Number(ev.priceNum);
-      if (!Number.isFinite(p)) p = ev.priceKey === 'free' ? 0 : 0;
-      if (p < minP) return false;
-      if (p > maxP) return false;
+    var wantFree = checkFree && checkFree.checked;
+    var wantPaid = checkPaid && checkPaid.checked;
+    if (checkFree || checkPaid) {
+      if (!wantFree && !wantPaid) return false;
+      var hasFree = Boolean(ev.hasFreeTickets);
+      var hasPaid = Boolean(ev.hasPaidTickets);
+      if (!hasFree && !hasPaid) {
+        hasFree = ev.priceKey === 'free';
+        hasPaid = ev.priceKey === 'paid';
+      }
+      if (wantFree && !wantPaid && !hasFree) return false;
+      if (wantPaid && !wantFree && !hasPaid) return false;
+      if (wantFree && wantPaid && !hasFree && !hasPaid) return false;
     }
 
     return true;
-  }
-
-  function eventDateTs(ev) {
-    if (ev.dateTs != null && !Number.isNaN(ev.dateTs)) return ev.dateTs;
-    if (ev.dateRaw) {
-      var t = new Date(ev.dateRaw).getTime();
-      return Number.isNaN(t) ? null : t;
-    }
-    return null;
   }
 
   function sortEvents(list) {
@@ -151,25 +151,6 @@
     return sortEvents(list);
   };
 
-  function updatePriceLabel() {
-    if (!priceTrigger) return;
-    if (!priceFilterActive) {
-      priceTrigger.textContent = 'Any price';
-      return;
-    }
-    var min = priceMinInput ? priceMinInput.value : '0';
-    var maxRaw = priceMaxInput ? priceMaxInput.value : '';
-    if (maxRaw === '') {
-      priceTrigger.textContent = '£' + min + '+';
-      return;
-    }
-    if (min === maxRaw) {
-      priceTrigger.textContent = '£' + min;
-      return;
-    }
-    priceTrigger.textContent = '£' + min + ' – £' + maxRaw;
-  }
-
   function applyFilters() {
     var all = window.hubAllEvents || [];
     var filtered = window.hubGetFilteredEvents(all);
@@ -187,24 +168,32 @@
   function resetFilters() {
     if (searchInput) searchInput.value = '';
     if (postcodeInput) postcodeInput.value = '';
-    if (typeSelect) typeSelect.value = 'all';
     if (sortSelect) sortSelect.value = 'recommended';
     if (flatpickrInstance) flatpickrInstance.clear();
     dateFromTs = null;
     dateToTs = null;
     if (checkInPerson) checkInPerson.checked = true;
     if (checkOnline) checkOnline.checked = true;
+    if (checkHybrid) checkHybrid.checked = true;
+    if (checkFree) checkFree.checked = true;
+    if (checkPaid) checkPaid.checked = true;
     if (toggleNearMe) toggleNearMe.checked = false;
-    if (priceMinInput) priceMinInput.value = '0';
-    if (priceMaxInput) priceMaxInput.value = '';
-    if (priceRangeMax) priceRangeMax.value = '200';
-    priceFilterActive = false;
-    updatePriceLabel();
+    setActiveTypeTab('all');
     applyFilters();
+  }
+
+  function setActiveTypeTab(type) {
+    activeTypeTab = type || 'all';
+    typeTabs.forEach(function (tab) {
+      var active = tab.getAttribute('data-type') === activeTypeTab;
+      tab.classList.toggle('is-active', active);
+      tab.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
   }
 
   window.hubApplyFilters = applyFilters;
   window.hubResetFilters = resetFilters;
+  window.hubSetTypeTab = setActiveTypeTab;
 
   function bindFilter(el) {
     if (!el) return;
@@ -212,13 +201,7 @@
     el.addEventListener('change', applyFilters);
   }
 
-  [
-    searchInput,
-    typeSelect,
-    sortSelect,
-    checkInPerson,
-    checkOnline,
-  ].forEach(bindFilter);
+  [searchInput, sortSelect, checkInPerson, checkOnline, checkHybrid, checkFree, checkPaid].forEach(bindFilter);
 
   if (postcodeInput) {
     postcodeInput.addEventListener('input', onPostcodeInput);
@@ -228,61 +211,16 @@
     toggleNearMe.addEventListener('change', onPostcodeInput);
   }
 
-  if (priceApply) {
-    priceApply.addEventListener('click', function () {
-      priceFilterActive = true;
-      pricePanelOpen = false;
-      if (priceWrap) priceWrap.classList.remove('is-open');
-      updatePriceLabel();
+  typeTabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      setActiveTypeTab(tab.getAttribute('data-type') || 'all');
       applyFilters();
     });
-  }
-
-  if (priceMinInput) {
-    priceMinInput.addEventListener('input', function () {
-      if (priceFilterActive) applyFilters();
-    });
-  }
-  if (priceMaxInput) {
-    priceMaxInput.addEventListener('input', function () {
-      if (priceFilterActive) {
-        updatePriceLabel();
-        applyFilters();
-      }
-    });
-  }
-
-  if (priceRangeMax && priceMaxInput) {
-    priceRangeMax.addEventListener('input', function () {
-      priceMaxInput.value = priceRangeMax.value;
-      if (priceFilterActive) {
-        updatePriceLabel();
-        applyFilters();
-      }
-    });
-  }
-
-  if (priceTrigger && priceWrap) {
-    priceTrigger.addEventListener('click', function () {
-      pricePanelOpen = !pricePanelOpen;
-      priceWrap.classList.toggle('is-open', pricePanelOpen);
-      priceTrigger.setAttribute('aria-expanded', pricePanelOpen ? 'true' : 'false');
-    });
-    document.addEventListener('click', function (e) {
-      if (!priceWrap.contains(e.target)) {
-        pricePanelOpen = false;
-        priceWrap.classList.remove('is-open');
-        priceTrigger.setAttribute('aria-expanded', 'false');
-      }
-    });
-  }
+  });
 
   var clearBtn = document.getElementById('clear-filters');
   if (clearBtn) {
-    clearBtn.addEventListener('click', function () {
-      priceFilterActive = false;
-      resetFilters();
-    });
+    clearBtn.addEventListener('click', resetFilters);
   }
 
   document.addEventListener('click', function (e) {
@@ -352,10 +290,8 @@
   }
 
   if (location.hash === '#exhibitions' || location.search.indexOf('type=exhibition') !== -1) {
-    if (typeSelect) typeSelect.value = 'exhibition';
+    setActiveTypeTab('exhibition');
   } else if (location.hash === '#meetings' || location.search.indexOf('type=meeting') !== -1) {
-    if (typeSelect) typeSelect.value = 'meeting';
+    setActiveTypeTab('meeting');
   }
-
-  updatePriceLabel();
 })();

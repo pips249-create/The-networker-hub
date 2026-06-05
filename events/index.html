@@ -23,7 +23,7 @@
 <section class="hero events-hero">
   <div class="hero-inner">
     <h1>Find your next <span class="accent">event</span></h1>
-    <p class="hero-types">Networking meeting · Netwalking · Conference · Exhibition · Awards ceremony</p>
+    <p class="hero-types">Find networking events, exhibitions and conferences across the UK</p>
   </div>
 </section>
 
@@ -117,13 +117,25 @@
             <span class="filter-checkbox-box" aria-hidden="true"></span>
             Online
           </label>
+          <label class="filter-checkbox">
+            <input type="checkbox" id="check-hybrid" checked>
+            <span class="filter-checkbox-box" aria-hidden="true"></span>
+            Hybrid
+          </label>
         </fieldset>
-        <div class="filter-bar-select">
-          <label class="visually-hidden" for="filter-type">Type</label>
-          <select id="filter-type" aria-label="Event type">
-            <option value="all">Type: All</option>
-          </select>
-        </div>
+        <fieldset class="filter-price-tier-group">
+          <legend class="filter-bar-chip-label">Price</legend>
+          <label class="filter-checkbox">
+            <input type="checkbox" id="check-free" checked>
+            <span class="filter-checkbox-box" aria-hidden="true"></span>
+            Free
+          </label>
+          <label class="filter-checkbox">
+            <input type="checkbox" id="check-paid" checked>
+            <span class="filter-checkbox-box" aria-hidden="true"></span>
+            Paid
+          </label>
+        </fieldset>
         <div class="filter-date-wrap">
           <label class="visually-hidden" for="date-range">Date range</label>
           <input type="text" id="date-range" placeholder="Select dates" readonly aria-label="Date range">
@@ -133,25 +145,6 @@
           <span class="filter-checkbox-box" aria-hidden="true"></span>
           Near me
         </label>
-        <div class="filter-price-wrap" id="price-filter-wrap">
-          <button type="button" class="filter-price-trigger" id="price-trigger" aria-expanded="false" aria-haspopup="true">Any price</button>
-          <div class="filter-price-panel" role="dialog" aria-label="Price range">
-            <div class="filter-price-sliders">
-              <input type="range" id="price-range-max" min="0" max="500" step="5" value="200" aria-label="Maximum price">
-            </div>
-            <div class="filter-price-inputs">
-              <div>
-                <label for="price-min">Min (&pound;)</label>
-                <input type="number" id="price-min" min="0" value="0" step="1">
-              </div>
-              <div>
-                <label for="price-max">Max (&pound;)</label>
-                <input type="number" id="price-max" min="0" placeholder="Any" step="1">
-              </div>
-            </div>
-            <button type="button" class="filter-price-apply" id="price-apply">Apply price</button>
-          </div>
-        </div>
         <button type="button" class="filter-map-btn" id="map-view-btn" aria-pressed="false">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/></svg>
           <span id="map-view-label">Swap to Map View</span>
@@ -181,6 +174,13 @@
       <div id="events-map-panel" class="events-map-panel" hidden aria-label="Events map"></div>
 
       <section class="listings-block" id="listings-view" aria-labelledby="all-heading">
+        <div class="events-toolbar">
+          <nav class="type-tabs" aria-label="Event type">
+            <button type="button" class="type-tab is-active" data-type="all">All <span id="count-all">(0)</span></button>
+            <button type="button" class="type-tab" data-type="meeting">Meetings <span id="count-meeting">(0)</span></button>
+            <button type="button" class="type-tab" data-type="exhibition">Exhibitions <span id="count-exhibition">(0)</span></button>
+          </nav>
+        </div>
         <h2 class="listings-header" id="all-heading">All listings</h2>
         <div class="event-listings" id="event-listings"></div>
       </section>
@@ -207,10 +207,10 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="../js/postcode-outcode.js?v=20260613"></script>
 <script src="../js/postcode-geo.js?v=20260613"></script>
-<script src="../js/events-filters.js?v=20260613"></script>
-<script src="../js/events-map.js?v=20260613"></script>
-<script src="../js/meeting-types.js?v=20260613"></script>
-<script src="../js/hub-loading.js?v=20260613"></script>
-<script src="../js/events.js?v=20260614g"></script>
+<script src="../js/events-filters.js?v=20260616"></script>
+<script src="../js/events-map.js?v=20260616"></script>
+<script src="../js/hub-loading.js?v=20260616"></script>
+<script src="../js/flexible-event-image.js?v=20260616"></script>
+<script src="../js/events.js?v=20260616"></script>
 </body>
 </html>

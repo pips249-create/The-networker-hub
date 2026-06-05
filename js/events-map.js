@@ -120,7 +120,7 @@
         if (skipped && mapPanel) {
           mapPanel.setAttribute(
             'data-map-hint',
-            'Add a Postcode column in Airtable (or include it in Location) to place pins.'
+            'Add a postcode to events in Supabase to place pins on the map.'
           );
         }
         return;

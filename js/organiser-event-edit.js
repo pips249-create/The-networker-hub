@@ -557,17 +557,6 @@
     document.getElementById('ee-description').value = ev.description || '';
     const wc = document.getElementById('ee-word-count');
     if (wc) wc.textContent = String(countWords(ev.description || ''));
-    if (document.getElementById('ee-industry')) {
-      const ind = ev.industry || (ev.industries && ev.industries[0]) || '';
-      const indSel = document.getElementById('ee-industry');
-      if (ind && ![...indSel.options].some((o) => o.value === ind)) {
-        const opt = document.createElement('option');
-        opt.value = ind;
-        opt.textContent = ind;
-        indSel.appendChild(opt);
-      }
-      indSel.value = ind;
-    }
     document.getElementById('ee-venue').value = ev.venue || '';
     if (document.getElementById('ee-address1')) {
       document.getElementById('ee-address1').value = ev.addressLine1 || '';
@@ -714,12 +703,6 @@
       return;
     }
 
-    const industry = document.getElementById('ee-industry')?.value.trim();
-    if (!industry) {
-      showAlert('Select an industry.');
-      return;
-    }
-
     const dateKeys = getSelectedDateKeys();
     if (publish && !dateKeys.length) {
       showAlert('Select at least one date on the calendar before continuing.');
@@ -750,7 +733,6 @@
       organiserGroupId,
       title,
       type: document.getElementById('ee-type').value,
-      industry,
       description,
       photoUrl: document.getElementById('ee-photo-url').value.trim(),
       listingStatus: 'draft',

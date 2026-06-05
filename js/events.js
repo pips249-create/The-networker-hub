@@ -4,7 +4,6 @@
 (function () {
   const API = '/api/events';
   const PAGE_SIZE = 12;
-  const EVENT_PLACEHOLDER = '../assets/event-placeholder.svg';
 
   const els = {
     status: document.getElementById('load-status'),
@@ -38,9 +37,23 @@
       .replace(/</g, '&lt;');
   }
 
-  function photoImg(url, className) {
-    const src = url ? safePhotoUrl(url) : EVENT_PLACEHOLDER;
-    const fallback = EVENT_PLACEHOLDER.replace(/'/g, '%27');
+  function eventImageSrc(ev) {
+    if (window.getEventImage) return window.getEventImage(ev);
+    if (window.getFlexibleEventImage) {
+      return window.getFlexibleEventImage(ev.photo, ev.organiserLogo, ev.id);
+    }
+    return ev.photo || ev.organiserLogo || '';
+  }
+
+  function photoImg(url, className, eventId, eventType) {
+    const placementFn = window.getEventPlacementImage;
+    const fallbackRaw = placementFn
+      ? placementFn(eventId || '', eventType || '')
+      : window.getEventImage
+        ? window.getEventImage({ id: eventId, eventType: eventType })
+        : '';
+    const src = safePhotoUrl(url || fallbackRaw);
+    const fallback = safePhotoUrl(fallbackRaw).replace(/'/g, '%27');
     return (
       `<img class="${className}" src="${src}" alt="" loading="lazy" decoding="async" ` +
       `referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='${fallback}'">`
@@ -133,7 +146,7 @@
         data-format="${escapeHtml(ev.formatSlug)}"
         data-price="${escapeHtml(ev.priceKey)}">
         <a class="premium-card-link" href="${escapeHtml(detailHref(ev))}">
-          <div class="premium-card-bg">${photoImg(ev.photo, 'premium-card-img')}</div>
+          <div class="premium-card-bg">${photoImg(eventImageSrc(ev), 'premium-card-img', ev.id, ev.eventType || ev.typeRaw)}</div>
           <div class="premium-card-overlay"></div>
           <span class="premium-badge">Premium</span>
           <span class="premium-price">${escapeHtml(priceBadgeLabel(ev))}</span>
@@ -173,7 +186,7 @@
         data-format="${escapeHtml(ev.formatSlug)}"
         data-price="${escapeHtml(ev.priceKey)}">
         <div class="event-grid-media">
-          ${photoImg(ev.photo, 'event-grid-img')}
+          ${photoImg(eventImageSrc(ev), 'event-grid-img', ev.id, ev.eventType || ev.typeRaw)}
           ${premiumBadge}
           <span class="event-grid-category">${escapeHtml(meetingType)}</span>
           <span class="event-grid-price">${escapeHtml(priceBadgeLabel(ev))}</span>
@@ -292,39 +305,7 @@
     });
   }
 
-  function fillTypeFilterOptions() {
-    var sel = document.getElementById('filter-type');
-    if (!sel) return;
-    var keep = sel.value;
-    var bySlug = {};
-    var canonical = window.HUB_MEETING_TYPES || [];
-    canonical.forEach(function (t) {
-      var slug = String(t.value || t.label)
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
-      bySlug[slug] = t.label || t.value;
-    });
-    events.forEach(function (e) {
-      var slug = e.typeSlug || '';
-      var label = e.typeRaw || e.typeCategory || slug;
-      if (slug) bySlug[slug] = label;
-    });
-    var slugs = Object.keys(bySlug).sort(function (a, b) {
-      return String(bySlug[a]).localeCompare(String(bySlug[b]));
-    });
-    sel.innerHTML = '<option value="all">Type: All</option>';
-    slugs.forEach(function (slug) {
-      var opt = document.createElement('option');
-      opt.value = slug;
-      opt.textContent = bySlug[slug];
-      sel.appendChild(opt);
-    });
-    if (keep && (keep === 'all' || bySlug[keep])) sel.value = keep;
-  }
-
   function fillFilterOptions() {
-    fillTypeFilterOptions();
     if (!els.location) return;
     while (els.location.options.length > 1) els.location.remove(1);
     const locations = [...new Set(events.map((e) => e.location).filter(Boolean))].sort();
@@ -336,8 +317,8 @@
     });
   }
 
-  function renderSpotlight(list) {
-    const premium = list.filter((e) => e.featured);
+  function renderSpotlight() {
+    const premium = events.filter((e) => e.featured).slice(0, 3);
 
     if (els.spotlightTrack) {
       els.spotlightTrack.innerHTML = premium.length
@@ -346,14 +327,14 @@
     }
 
     if (els.featuredList) {
-      els.featuredList.innerHTML = premium.slice(0, 6).map(premiumCard).join('') || '';
+      els.featuredList.innerHTML = premium.map(premiumCard).join('') || '';
       els.featuredList.closest('.featured')?.classList.toggle('is-hidden', !premium.length);
     }
   }
 
   function updateCounts(list) {
-    const meetings = list.filter((e) => e.type === 'meeting').length;
-    const exhibitions = list.filter((e) => e.type === 'exhibition').length;
+    const meetings = list.filter((e) => (e.eventTypeCategory || 'meeting') === 'meeting').length;
+    const exhibitions = list.filter((e) => e.eventTypeCategory === 'exhibition').length;
     if (els.countAll) els.countAll.textContent = `(${list.length})`;
     if (els.countMeeting) els.countMeeting.textContent = `(${meetings})`;
     if (els.countExhibition) els.countExhibition.textContent = `(${exhibitions})`;
@@ -361,7 +342,7 @@
 
   function renderAll() {
     const filtered = getFilteredList();
-    renderSpotlight(filtered);
+    renderSpotlight();
     renderGridPage(filtered);
     updateCounts(events);
   }
@@ -482,9 +463,7 @@
 
       if (!data.configured) {
         setStatus(
-          provider === 'supabase'
-            ? 'Connect Supabase: set SUPABASE_URL, keys, and DATA_PROVIDER=supabase in Vercel, then redeploy.'
-            : 'Connect Airtable: set AIRTABLE_API_KEY and AIRTABLE_BASE_ID in Vercel (see README).',
+          'Connect Supabase: set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel, then redeploy.',
           true
         );
         events = [];
@@ -496,9 +475,7 @@
         setStatus(
           events.length
             ? ''
-            : provider === 'supabase'
-              ? 'No approved events yet. Add rows in Supabase (events.approval_status = Approved), or run: node scripts/seed-sample-event.js'
-              : 'No events in your Airtable table yet.',
+            : 'No published events yet. Approve events in Supabase so they appear in published_events.',
           false
         );
       }

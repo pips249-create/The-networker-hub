@@ -103,7 +103,8 @@
   color: var(--charcoal);
 }
 
-.filter-format-group {
+.filter-format-group,
+.filter-price-tier-group {
   border: none;
   margin: 0;
   padding: 0;

@@ -383,6 +383,10 @@
     return tiers;
   }
 
+  function collectVatTreatment() {
+    return document.querySelector('input[name="vat-treatment"]:checked')?.value || '';
+  }
+
   function collectRefundPayload() {
     const policy =
       selectedRefundPolicy ||
@@ -410,8 +414,9 @@
     try {
       const tiers = attendanceMode === 'osop' ? collectOsopTiers() : collectTiers();
       const refund = collectRefundPayload();
+      const vat = collectVatTreatment();
       const ready =
-        tiers.length > 0 && refund.refundPolicy && refund.refundTermsAgreed;
+        tiers.length > 0 && vat && refund.refundPolicy && refund.refundTermsAgreed;
       btn.disabled = !ready;
       if (warn) warn.hidden = ready;
     } catch {
@@ -552,6 +557,11 @@
 
     const refund = collectRefundPayload();
     if (publish) {
+      if (!collectVatTreatment()) {
+        showAlert('Choose whether VAT is included in the ticket price or added at checkout.');
+        updatePublishButton();
+        return;
+      }
       if (!refund.refundPolicy) {
         showAlert('Select a refund policy before publishing.');
         updatePublishButton();
@@ -574,6 +584,7 @@
       eventIds,
       tickets: tiers,
       publish,
+      vatTreatment: collectVatTreatment(),
       ...refund,
     };
 

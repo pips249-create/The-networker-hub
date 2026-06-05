@@ -17,6 +17,7 @@ function formatMoney(amount) {
 }
 
 const { normalizeEventType } = require('./event-types');
+const { ukOutcode } = require('./supabase-events');
 
 function mapEventType(type) {
   return normalizeEventType(type);
@@ -99,6 +100,7 @@ function rowToEvent(row) {
     refundPolicyDetails: row.refund_policy_details || null,
     refundCutoffDays: row.refund_cutoff_days != null ? Number(row.refund_cutoff_days) : null,
     refundTermsAgreed: Boolean(row.refund_terms_agreed),
+    vatTreatment: row.vat_treatment || null,
     lat: row.latitude != null ? Number(row.latitude) : null,
     lng: row.longitude != null ? Number(row.longitude) : null,
     rating: row.average_rating != null ? Number(row.average_rating) : null,
@@ -340,6 +342,7 @@ async function buildEventRow(payload, eventId, mode) {
     row.address = payload.addressLine1 || payload.fullAddress || null;
     row.city = payload.city || null;
     row.postcode = payload.postcode || null;
+    row.outcode = ukOutcode(payload.postcode) || null;
     row.location_label = payload.location || payload.city || payload.venue || null;
   }
 
@@ -484,6 +487,16 @@ async function publishOrganiserListingsForEventIds(sb, eventRows) {
   if (error) throw new Error(error.message);
 }
 
+async function updateEventVatTreatment(eventIds, vatTreatment) {
+  const value = String(vatTreatment || '').trim();
+  if (!value || !['included', 'added'].includes(value)) return;
+  const sb = getSupabaseAdmin();
+  const ids = (eventIds || []).filter(Boolean);
+  if (!ids.length) return;
+  const { error } = await sb.from('events').update({ vat_treatment: value }).in('id', ids);
+  if (error) throw new Error(error.message);
+}
+
 async function publishEventsWithRefund(eventIds, refundPayload) {
   const sb = getSupabaseAdmin();
   const { ensureEventSlug } = require('./event-slug');
@@ -503,6 +516,9 @@ async function publishEventsWithRefund(eventIds, refundPayload) {
     refund_terms_agreed: Boolean(refundPayload.refundTermsAgreed),
     refund_terms_agreed_at: refundPayload.refundTermsAgreed ? new Date().toISOString() : null,
   };
+  if (refundPayload.vatTreatment) {
+    patch.vat_treatment = refundPayload.vatTreatment;
+  }
 
   const { data: existing, error: loadErr } = await sb
     .from('events')
@@ -532,10 +548,14 @@ async function publishEventsWithRefund(eventIds, refundPayload) {
 }
 
 /** Same shape as Airtable API: { eventIds, tickets, publish, refund } */
-async function createTicketsForEvents({ eventIds, tickets, publish, refund }) {
+async function createTicketsForEvents({ eventIds, tickets, publish, refund, vatTreatment }) {
   const ids = Array.isArray(eventIds) ? eventIds.filter(Boolean) : [];
   const tiers = Array.isArray(tickets) ? tickets : [];
   if (!ids.length || !tiers.length) return { created: 0, tickets: [] };
+
+  if (vatTreatment) {
+    await updateEventVatTreatment(ids, vatTreatment);
+  }
 
   const out = [];
   for (const eventId of ids) {

@@ -45,10 +45,18 @@ function slugIndustry(ind) {
 }
 
 function slugFormat(fmt) {
-  return String(fmt || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+  const raw = String(fmt || '').trim().toLowerCase();
+  if (!raw) return '';
+  if (raw.includes('online') && !raw.includes('person')) return 'online';
+  if (raw.includes('hybrid')) return 'hybrid';
+  if (raw.includes('person') || raw.includes('in-person') || raw.includes('in person')) return 'in-person';
+  return raw.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function eventTypeTabCategory(raw) {
+  const t = String(raw || '').trim().toLowerCase();
+  if (t.includes('exhibition')) return 'exhibition';
+  return 'meeting';
 }
 
 function ukOutcode(postcode) {
@@ -147,7 +155,8 @@ function rowToEvent(row, organiser, ticketRows) {
   const postcode = String(row.postcode || '').trim();
   const venue = String(row.venue || '').trim();
   const industry = Array.isArray(row.industries) ? row.industries[0] || '' : '';
-  const parsedDate = formatDateParts(row.starts_at);
+  const nextDateRaw = row.next_date || row.starts_at;
+  const parsedDate = formatDateParts(nextDateRaw);
   const time = formatTimeRange(row.starts_at, row.ends_at) || parsedDate.time || '';
 
   const tiers = (ticketRows || [])
@@ -161,6 +170,8 @@ function rowToEvent(row, organiser, ticketRows) {
   let priceNum = tiers.length ? Math.min(...tiers.map((t) => t.priceNum).filter((n) => n >= 0)) : 0;
   if (!tiers.length) priceNum = 0;
   const { display: price, priceKey } = normalizePrice(priceNum);
+  const hasFreeTickets = tiers.some((t) => t.priceNum === 0);
+  const hasPaidTickets = tiers.some((t) => t.priceNum > 0);
 
   const orgName = organiser ? String(organiser.name || '').trim() : '';
   const spotsLeft = null;
@@ -180,12 +191,16 @@ function rowToEvent(row, organiser, ticketRows) {
     date: parsedDate.dateOnly || parsedDate.display,
     dateRaw: parsedDate.iso,
     dateTs: parsedDate.ts,
-    dateFieldRaw: row.starts_at ? String(row.starts_at) : '',
+    dateFieldRaw: nextDateRaw ? String(nextDateRaw) : '',
     endDateRaw: row.ends_at ? String(row.ends_at) : '',
     time,
     location,
     postcode,
-    outcode: ukOutcode(postcode),
+    outcode: String(row.outcode || '').trim() || ukOutcode(postcode),
+    nextDate: nextDateRaw ? String(nextDateRaw) : '',
+    nextDateTs: parsedDate.ts,
+    eventType: String(row.event_type || '').trim(),
+    eventTypeCategory: eventTypeTabCategory(row.event_type),
     venue,
     venueName: venue,
     venueAddress: [row.address, postcode].filter(Boolean).join(', ') || location,
@@ -216,7 +231,9 @@ function rowToEvent(row, organiser, ticketRows) {
     urgency: '',
     dateLine: buildDateLine(location, parsedDate, time),
     meetingType: format || typeRaw,
-    search: [title, descText, location, postcode, industry, orgName, typeRaw, format]
+    hasFreeTickets,
+    hasPaidTickets,
+    search: [title, descText, location, postcode, orgName, typeRaw, format, row.event_type]
       .filter(Boolean)
       .join(' ')
       .toLowerCase(),
@@ -229,6 +246,7 @@ function rowToEvent(row, organiser, ticketRows) {
     refundPolicy: row.refund_policy || null,
     refundPolicyDetails: row.refund_policy_details || null,
     refundCutoffDays: row.refund_cutoff_days != null ? Number(row.refund_cutoff_days) : null,
+    vatTreatment: row.vat_treatment || null,
   };
 
   if (!ev.tickets.length) ev.tickets = [fallbackTicketTier(ev)];
@@ -259,7 +277,10 @@ function isMissingPublishedEventsView(error) {
 }
 
 async function fetchPublishedEventRows(sb) {
-  const viewRes = await sb.from('published_events').select('*').order('starts_at', { ascending: true });
+  const viewRes = await sb
+    .from('published_events')
+    .select('*')
+    .order('next_date', { ascending: true, nullsFirst: false });
   if (!viewRes.error) return viewRes.data || [];
 
   if (!isMissingPublishedEventsView(viewRes.error)) {
@@ -409,4 +430,4 @@ async function handle(req, res) {
   }
 }
 
-module.exports = { handle, rowToEvent, fetchApprovedEvents };
+module.exports = { handle, rowToEvent, fetchApprovedEvents, ukOutcode, slugFormat, eventTypeTabCategory };

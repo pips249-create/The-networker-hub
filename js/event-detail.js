@@ -240,7 +240,7 @@
     if (empty) empty.hidden = true;
     if (section) section.classList.remove('is-empty-related');
 
-    const placeholder = '../assets/event-placeholder.svg';
+    const imageFn = window.getFlexibleEventImage;
 
     list.forEach((ev) => {
       const card = document.createElement('a');
@@ -251,12 +251,16 @@
       imgWrap.className = 'related-img';
 
       const img = document.createElement('img');
-      img.src = ev.photo || placeholder;
+      const resolvedSrc = imageFn
+        ? imageFn(ev.photo, ev.organiserLogo, ev.id)
+        : ev.photo || '';
+      const fallbackSrc = imageFn ? imageFn('', '', ev.id) : resolvedSrc;
+      img.src = resolvedSrc;
       img.alt = '';
       img.loading = 'lazy';
       img.onerror = function () {
         img.onerror = null;
-        img.src = placeholder;
+        img.src = fallbackSrc;
       };
       imgWrap.appendChild(img);
 
@@ -392,14 +396,18 @@
 
     const hero = document.getElementById('ev-hero-img');
     if (hero) {
-      const placeholder = '../assets/event-placeholder.svg';
+      const imageFn = window.getFlexibleEventImage;
+      const resolvedSrc = imageFn
+        ? imageFn(ev.photo, ev.organiserLogo, ev.id)
+        : ev.photo || '';
+      const fallbackSrc = imageFn ? imageFn('', '', ev.id) : resolvedSrc;
       hero.loading = 'lazy';
       hero.decoding = 'async';
-      hero.src = ev.photo || placeholder;
+      hero.src = resolvedSrc;
       hero.alt = ev.title;
       hero.onerror = function () {
         hero.onerror = null;
-        hero.src = placeholder;
+        hero.src = fallbackSrc;
       };
     }
 
@@ -511,6 +519,27 @@
     ];
   }
 
+  function renderVatNote(ev, tiers) {
+    const el = document.getElementById('ev-vat-note');
+    if (!el) return;
+
+    const treatment = String(ev.vatTreatment || ev.vat_treatment || '').trim();
+    const hasPaidTier = (tiers || []).some((t) => {
+      const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
+      return priceNum > 0;
+    });
+
+    if (!treatment || !hasPaidTier) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+
+    el.textContent =
+      treatment === 'added' ? 'VAT added at checkout' : 'Prices include VAT';
+    el.hidden = false;
+  }
+
   function renderTicketPanel(ev) {
     const tiersEl = document.getElementById('ticket-tiers');
     const urgencyEl = document.getElementById('ev-urgency');
@@ -567,6 +596,8 @@
       tiersEl.innerHTML =
         '<p class="ticket-load-hint">All ticket tiers are currently sold out.</p>';
     }
+
+    renderVatNote(ev, tiers);
 
     const fromPrice = ev.priceKey === 'free' ? 'Free' : ev.price || '—';
     setText('ev-ticket-from-price', fromPrice);
