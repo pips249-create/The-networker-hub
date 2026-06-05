@@ -81,6 +81,24 @@
     return window.location.pathname;
   }
 
+  /** Vercel rewrites /events/:slug → event.html without exposing ?slug= in the browser URL. */
+  function eventRouteFromLocation() {
+    const params = new URLSearchParams(window.location.search);
+    let id = params.get('id');
+    let slug = params.get('slug');
+
+    const path = String(window.location.pathname || '').replace(/\/+$/, '');
+    const pretty = path.match(/\/events\/([^/]+)$/i);
+    if (pretty) {
+      const segment = decodeURIComponent(pretty[1]);
+      if (segment !== 'event.html' && segment !== 'index.html' && !slug) {
+        slug = segment;
+      }
+    }
+
+    return { id, slug, params };
+  }
+
   function formatHeroLabel(fmt) {
     const m = String(fmt || '').toLowerCase();
     if (m.includes('hybrid')) return 'Hybrid event';
@@ -240,8 +258,6 @@
     if (empty) empty.hidden = true;
     if (section) section.classList.remove('is-empty-related');
 
-    const imageFn = window.getFlexibleEventImage;
-
     list.forEach((ev) => {
       const card = document.createElement('a');
       card.className = 'related-card';
@@ -251,10 +267,14 @@
       imgWrap.className = 'related-img';
 
       const img = document.createElement('img');
-      const resolvedSrc = imageFn
-        ? imageFn(ev.photo, ev.organiserLogo, ev.id)
-        : ev.photo || '';
-      const fallbackSrc = imageFn ? imageFn('', '', ev.id) : resolvedSrc;
+      const resolvedSrc = window.getEventImage
+        ? window.getEventImage(ev)
+        : window.getFlexibleEventImage
+          ? window.getFlexibleEventImage(ev.photo, ev.organiserLogo, ev.id)
+          : ev.photo || '';
+      const fallbackSrc = window.getEventPlacementImage
+        ? window.getEventPlacementImage(ev.id, ev.eventType || ev.typeRaw)
+        : resolvedSrc;
       img.src = resolvedSrc;
       img.alt = '';
       img.loading = 'lazy';
@@ -298,20 +318,21 @@
   }
 
   function updateBreadcrumbTrail(ev) {
-    const mid = String(ev.industry || ev.format || ev.typeRaw || '').trim();
+    const mid = String(ev.typeRaw || ev.typeCategory || ev.eventType || '').trim();
     const catEl = document.getElementById('ev-trail-category');
     if (!catEl) return;
     const sepBefore = catEl.previousElementSibling;
-    const sepAfter = catEl.nextElementSibling;
+    const sepAfter = document.getElementById('ev-trail-sep-after') || catEl.nextElementSibling;
     if (mid) {
       catEl.textContent = mid;
       catEl.href = 'index.html';
       catEl.hidden = false;
       if (sepBefore && sepBefore.classList.contains('sep')) sepBefore.hidden = false;
-      if (sepAfter && sepAfter.classList.contains('sep')) sepAfter.hidden = false;
+      if (sepAfter) sepAfter.hidden = false;
     } else {
       catEl.hidden = true;
       if (sepBefore && sepBefore.classList.contains('sep')) sepBefore.hidden = true;
+      if (sepAfter) sepAfter.hidden = true;
     }
   }
 
@@ -396,11 +417,14 @@
 
     const hero = document.getElementById('ev-hero-img');
     if (hero) {
-      const imageFn = window.getFlexibleEventImage;
-      const resolvedSrc = imageFn
-        ? imageFn(ev.photo, ev.organiserLogo, ev.id)
-        : ev.photo || '';
-      const fallbackSrc = imageFn ? imageFn('', '', ev.id) : resolvedSrc;
+      const resolvedSrc = window.getEventImage
+        ? window.getEventImage(ev)
+        : window.getFlexibleEventImage
+          ? window.getFlexibleEventImage(ev.photo, ev.organiserLogo, ev.id)
+          : ev.photo || '';
+      const fallbackSrc = window.getEventPlacementImage
+        ? window.getEventPlacementImage(ev.id, ev.eventType || ev.typeRaw)
+        : resolvedSrc;
       hero.loading = 'lazy';
       hero.decoding = 'async';
       hero.src = resolvedSrc;
@@ -1214,18 +1238,29 @@
     }
   }
 
+  function showEventLoadError(message) {
+    const lead = document.getElementById('ev-about-lead');
+    if (lead) lead.textContent = message;
+    const tiersEl = document.getElementById('ticket-tiers');
+    if (tiersEl) {
+      tiersEl.innerHTML =
+        '<p class="ticket-load-hint">' +
+        escapeHtml(message) +
+        ' <a href="index.html">Browse events</a></p>';
+    }
+    setText('ev-title', 'Event unavailable');
+    setText('ev-trail-current', 'Event unavailable');
+  }
+
   async function boot() {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
-    const slug = params.get('slug');
+    const route = eventRouteFromLocation();
+    const params = route.params;
+    const id = route.id;
+    const slug = route.slug;
 
     if (!id && !slug && !params.get('title')) {
       setEventLoading(false);
-      const tiersEl = document.getElementById('ticket-tiers');
-      if (tiersEl) {
-        tiersEl.innerHTML =
-          '<p class="ticket-load-hint">Open an event from <a href="index.html">Browse events</a> to load live ticket data.</p>';
-      }
+      showEventLoadError('Open an event from Browse events to view ticket details.');
       return;
     }
 
@@ -1252,8 +1287,14 @@
           initActions(ev);
           return;
         }
+        showEventLoadError(
+          data.message || 'This event could not be found. It may be unpublished or removed.'
+        );
+        return;
       } catch (e) {
         console.error(e);
+        showEventLoadError('Could not load this event. Please try again in a moment.');
+        return;
       }
     }
 
