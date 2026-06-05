@@ -149,9 +149,12 @@
       ev.dateLine ||
       [ev.location, ev.date || ev.dateFieldRaw, ev.time].filter(Boolean).join(' · ') ||
       'Date TBC';
+    const premiumBadge = ev.featured
+      ? '<span class="event-grid-premium">Premium</span>'
+      : '';
 
     return `
-      <a class="event-grid-card" href="${escapeHtml(detailHref(ev))}"
+      <a class="event-grid-card${ev.featured ? ' is-premium' : ''}" href="${escapeHtml(detailHref(ev))}"
         data-id="${escapeHtml(ev.id)}"
         data-type="${escapeHtml(ev.type)}"
         data-search="${escapeHtml(ev.search)}"
@@ -161,6 +164,7 @@
         data-price="${escapeHtml(ev.priceKey)}">
         <div class="event-grid-media">
           ${photoImg(ev.photo, 'event-grid-img')}
+          ${premiumBadge}
           <span class="event-grid-category">${escapeHtml(meetingType)}</span>
           <span class="event-grid-price">${escapeHtml(priceBadgeLabel(ev))}</span>
         </div>
@@ -220,8 +224,7 @@
   }
 
   function renderGridPage(list) {
-    const nonPremium = list.filter((e) => !e.featured);
-    const rows = nonPremium.length ? nonPremium : list;
+    const rows = list;
     const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
 
     if (currentPage > totalPages) currentPage = totalPages;
@@ -269,11 +272,7 @@
       const btn = e.target.closest('.page-btn');
       if (!btn || btn.disabled) return;
       const filtered = getFilteredList();
-      const nonPremium = filtered.filter(function (ev) {
-        return !ev.featured;
-      });
-      const rows = nonPremium.length ? nonPremium : filtered;
-      const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+      const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
       const p = parseInt(btn.getAttribute('data-page'), 10);
       if (!p || p === currentPage || p < 1 || p > totalPages) return;
       currentPage = p;
