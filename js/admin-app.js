@@ -121,6 +121,23 @@
     return d.innerHTML;
   }
 
+  function attrEsc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;');
+  }
+
+  function formField(form, name) {
+    if (!form || !form.elements) return null;
+    return form.elements.namedItem(name);
+  }
+
+  function formFieldVal(form, name) {
+    var el = formField(form, name);
+    return el ? String(el.value || '').trim() : '';
+  }
+
   function setActiveNav(route) {
     document.querySelectorAll('.admin-nav-link').forEach(function (a) {
       var on = a.getAttribute('data-route') === route;
@@ -150,17 +167,21 @@
   function fetchEventHealth() {
     return fetch('/api/admin/event-health', { credentials: 'include' })
       .then(function (r) {
-        return r.json();
-      })
-      .then(function (data) {
-        if (data && data.configured !== false) {
-          healthCache = data;
-          updateHealthBadge(data.count);
-        }
-        return data;
+        return r.json().then(function (data) {
+          if (!r.ok) {
+            data = data || {};
+            data.error = data.error || 'request_failed';
+            return data;
+          }
+          if (data && data.configured !== false) {
+            healthCache = data;
+            updateHealthBadge(data.count);
+          }
+          return data;
+        });
       })
       .catch(function () {
-        return null;
+        return { error: 'network_error' };
       });
   }
 
@@ -204,6 +225,113 @@
     }
   }
 
+  function organiserOptionsHtml(organisers, selectedId) {
+    var sorted = (organisers || []).slice().sort(function (a, b) {
+      var aPub = a.listingStatus === 'published' ? 0 : 1;
+      var bPub = b.listingStatus === 'published' ? 0 : 1;
+      if (aPub !== bPub) return aPub - bPub;
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+    return (
+      '<option value="">— Choose organiser —</option>' +
+      sorted
+        .map(function (o) {
+          var label = o.name || o.id;
+          if (o.listingStatus && o.listingStatus !== 'published') {
+            label += ' (' + o.listingStatus + ')';
+          }
+          return (
+            '<option value="' +
+            attrEsc(o.id) +
+            '"' +
+            (selectedId === o.id ? ' selected' : '') +
+            '>' +
+            esc(label) +
+            '</option>'
+          );
+        })
+        .join('')
+    );
+  }
+
+  function saveEventHealthForm(form) {
+    var article = form.closest('[data-event-id]');
+    var id = article && article.getAttribute('data-event-id');
+    var msg = form.querySelector('.event-health-msg');
+    var btn = form.querySelector('button[type="submit"]');
+    if (!id) return;
+
+    var payload = { id: id };
+    var starts = formFieldVal(form, 'starts_at');
+    if (starts) payload.starts_at = new Date(starts).toISOString();
+    else payload.starts_at = null;
+    payload.organiser_id = formFieldVal(form, 'organiser_id') || null;
+    payload.event_type = formFieldVal(form, 'event_type') || null;
+    payload.meeting_type = formFieldVal(form, 'meeting_type') || null;
+    payload.vat_treatment = formFieldVal(form, 'vat_treatment') || null;
+
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Saving…';
+      msg.className = 'event-health-msg text-xs text-slate-500';
+    }
+
+    fetch('/api/admin/events', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+      .then(function (r) {
+        return r.json().then(function (body) {
+          if (!r.ok || body.ok === false) {
+            throw new Error(body.message || body.error || 'Save failed (' + r.status + ')');
+          }
+          return body;
+        });
+      })
+      .then(function () {
+        if (msg) {
+          msg.textContent = 'Saved — rescanning…';
+          msg.className = 'event-health-msg text-xs text-emerald-700 font-semibold';
+        }
+        return fetchEventHealth();
+      })
+      .then(function () {
+        renderEventHealth();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not save';
+          msg.className = 'event-health-msg text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function bindEventHealthForms() {
+    if (!main || main.dataset.healthBound) return;
+    main.dataset.healthBound = '1';
+    main.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form || !form.classList || !form.classList.contains('event-health-form')) return;
+      e.preventDefault();
+      saveEventHealthForm(form);
+    });
+    main.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-use-first-organiser]');
+      if (!btn) return;
+      var article = btn.closest('[data-event-id]');
+      var form = article && article.querySelector('.event-health-form');
+      var select = form && formField(form, 'organiser_id');
+      var firstId = btn.getAttribute('data-use-first-organiser');
+      if (select && firstId) {
+        select.value = firstId;
+        select.focus();
+      }
+    });
+  }
+
   function renderEventHealth() {
     main.innerHTML =
       '<div class="space-y-4">' +
@@ -217,7 +345,15 @@
       var list = document.getElementById('event-health-list');
       if (!status || !summary || !list) return;
 
-      if (!data || data.configured === false) {
+      if (!data || data.error) {
+        status.innerHTML =
+          '<span class="text-red-700 font-semibold">Could not load event health (' +
+          esc(data && data.error ? data.error : 'unknown') +
+          '). Try signing in again.</span>';
+        return;
+      }
+
+      if (data.configured === false) {
         status.textContent = 'Supabase is not configured — event health checks are unavailable.';
         return;
       }
@@ -230,8 +366,18 @@
         return;
       }
 
-      status.textContent =
-        data.count + ' published event' + (data.count === 1 ? '' : 's') + ' need attention.';
+      var organisers = data.organisers || [];
+      status.innerHTML =
+        '<span class="text-brand-900 font-semibold">' +
+        data.count +
+        ' published event' +
+        (data.count === 1 ? '' : 's') +
+        ' need attention.</span>' +
+        (organisers.length
+          ? ' <span class="text-slate-500">(' +
+            organisers.length +
+            ' organisers available to link)</span>'
+          : ' <span class="text-red-700 font-semibold">No organisers found — create one in Organiser dashboard first.</span>');
 
       var issueCards = Object.keys(data.issuesByCode || {})
         .map(function (code) {
@@ -252,30 +398,24 @@
       summary.innerHTML = issueCards;
       summary.classList.remove('hidden');
 
-      var organisers = data.organisers || [];
+      var sortedOrganisers = organisers.slice().sort(function (a, b) {
+        var aPub = a.listingStatus === 'published' ? 0 : 1;
+        var bPub = b.listingStatus === 'published' ? 0 : 1;
+        if (aPub !== bPub) return aPub - bPub;
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      });
+      var firstOrganiserId = sortedOrganisers.length ? sortedOrganisers[0].id : '';
+
       list.innerHTML = (data.events || [])
         .map(function (ev) {
           var issueHtml = (ev.issues || []).map(issueBadge).join('');
-          var orgOptions =
-            '<option value="">— No organiser —</option>' +
-            organisers
-              .map(function (o) {
-                var sel = ev.organiser_id === o.id ? ' selected' : '';
-                return (
-                  '<option value="' +
-                  esc(o.id) +
-                  '"' +
-                  sel +
-                  '>' +
-                  esc(o.name || o.id) +
-                  '</option>'
-                );
-              })
-              .join('');
+          var needsOrganiser = (ev.issues || []).some(function (i) {
+            return i.code === 'missing_organiser';
+          });
           var typeOptions = EVENT_TYPES.map(function (t) {
             return (
               '<option value="' +
-              esc(t) +
+              attrEsc(t) +
               '"' +
               (ev.event_type === t ? ' selected' : '') +
               '>' +
@@ -286,7 +426,7 @@
           var formatOptions = MEETING_FORMATS.map(function (f) {
             return (
               '<option value="' +
-              esc(f) +
+              attrEsc(f) +
               '"' +
               (ev.meeting_type === f ? ' selected' : '') +
               '>' +
@@ -300,8 +440,8 @@
           });
 
           return (
-            '<article class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" data-event-id="' +
-            esc(ev.id) +
+            '<article class="bg-white rounded-xl border border-slate-200 shadow-sm" data-event-id="' +
+            attrEsc(ev.id) +
             '">' +
             '<div class="p-4 border-b border-slate-100 flex flex-wrap items-start justify-between gap-3">' +
             '<div class="min-w-0 flex-1">' +
@@ -313,7 +453,11 @@
             '</p>' +
             '<div class="mt-2">' +
             issueHtml +
-            '</div></div>' +
+            '</div>' +
+            (needsOrganiser
+              ? '<p class="text-xs text-red-800 mt-2">Select an organiser below, then click <strong>Save fixes</strong>.</p>'
+              : '') +
+            '</div>' +
             '<div class="flex flex-wrap gap-2 shrink-0">' +
             '<a href="../events/' +
             esc(ev.slug || '') +
@@ -324,25 +468,33 @@
             '</div></div>' +
             '<form class="event-health-form p-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">' +
             '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event date & time</label>' +
-            '<input type="datetime-local" name="starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2" value="' +
-            esc(toDatetimeLocalValue(ev.starts_at)) +
+            '<input type="datetime-local" name="starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white" value="' +
+            attrEsc(toDatetimeLocalValue(ev.starts_at)) +
             '"></div>' +
             '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser</label>' +
-            '<select name="organiser_id" class="w-full rounded-lg border border-slate-300 px-3 py-2">' +
-            orgOptions +
-            '</select></div>' +
+            '<select name="organiser_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white' +
+            (needsOrganiser ? ' ring-2 ring-red-200' : '') +
+            '">' +
+            organiserOptionsHtml(organisers, ev.organiser_id) +
+            '</select>' +
+            (needsOrganiser && firstOrganiserId
+              ? '<button type="button" class="mt-2 text-xs font-semibold text-brand-700 hover:underline" data-use-first-organiser="' +
+                attrEsc(firstOrganiserId) +
+                '">Use first available organiser</button>'
+              : '') +
+            '</div>' +
             '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
-            '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2">' +
+            '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white">' +
             '<option value="">—</option>' +
             typeOptions +
             '</select></div>' +
             '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Format</label>' +
-            '<select name="meeting_type" class="w-full rounded-lg border border-slate-300 px-3 py-2">' +
+            '<select name="meeting_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white">' +
             '<option value="">—</option>' +
             formatOptions +
             '</select></div>' +
             '<div><label class="block text-xs font-semibold text-slate-500 mb-1">VAT (paid tickets)</label>' +
-            '<select name="vat_treatment" class="w-full rounded-lg border border-slate-300 px-3 py-2">' +
+            '<select name="vat_treatment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white">' +
             '<option value="">—</option>' +
             '<option value="included"' +
             (vatVal === 'included' ? ' selected' : '') +
@@ -355,57 +507,12 @@
             (hasOrgProfileIssue
               ? '<p class="text-xs text-amber-800">Logo or organiser bio must be updated in the organiser profile.</p>'
               : '') +
-            '<button type="submit" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Save fixes</button>' +
+            '<button type="submit" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900 disabled:opacity-50">Save fixes</button>' +
             '<span class="event-health-msg text-xs text-slate-500"></span>' +
             '</div></form></article>'
           );
         })
         .join('');
-
-      list.querySelectorAll('.event-health-form').forEach(function (form) {
-        form.addEventListener('submit', function (e) {
-          e.preventDefault();
-          var article = form.closest('[data-event-id]');
-          var id = article && article.getAttribute('data-event-id');
-          var msg = form.querySelector('.event-health-msg');
-          var btn = form.querySelector('button[type="submit"]');
-          if (!id) return;
-
-          var payload = { id: id };
-          var starts = form.starts_at.value;
-          if (starts) payload.starts_at = new Date(starts).toISOString();
-          else payload.starts_at = null;
-          payload.organiser_id = form.organiser_id.value || null;
-          payload.event_type = form.event_type.value || null;
-          payload.meeting_type = form.meeting_type.value || null;
-          payload.vat_treatment = form.vat_treatment.value || null;
-
-          if (btn) btn.disabled = true;
-          if (msg) msg.textContent = 'Saving…';
-
-          fetch('/api/admin/events', {
-            method: 'PATCH',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          })
-            .then(function (r) {
-              return r.json();
-            })
-            .then(function (res) {
-              if (!res.ok) throw new Error(res.message || res.error || 'Save failed');
-              if (msg) msg.textContent = 'Saved — rescanning…';
-              return fetchEventHealth();
-            })
-            .then(function () {
-              renderEventHealth();
-            })
-            .catch(function (err) {
-              if (msg) msg.textContent = err.message || 'Could not save';
-              if (btn) btn.disabled = false;
-            });
-        });
-      });
     });
   }
 
@@ -919,6 +1026,7 @@
     gate.classList.add('hidden');
     shell.classList.remove('hidden');
     document.body.classList.add('hub-page-admin');
+    bindEventHealthForms();
     fetchEventHealth();
     route();
     window.addEventListener('hashchange', route);

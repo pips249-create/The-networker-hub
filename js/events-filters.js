@@ -5,7 +5,6 @@
   var dateRangeInput = document.getElementById('date-range');
   var checkInPerson = document.getElementById('check-inperson');
   var checkOnline = document.getElementById('check-online');
-  var checkHybrid = document.getElementById('check-hybrid');
   var checkFree = document.getElementById('check-free');
   var checkPaid = document.getElementById('check-paid');
   var toggleNearMe = document.getElementById('toggle-nearme');
@@ -79,15 +78,14 @@
 
     var wantInPerson = checkInPerson && checkInPerson.checked;
     var wantOnline = checkOnline && checkOnline.checked;
-    var wantHybrid = checkHybrid && checkHybrid.checked;
     var fmt = meetingTypeSlug(ev);
-    if (checkInPerson || checkOnline || checkHybrid) {
-      if (!wantInPerson && !wantOnline && !wantHybrid) return false;
+    if (checkInPerson || checkOnline) {
+      if (!wantInPerson && !wantOnline) return false;
       if (!fmt) {
         if (!wantInPerson) return false;
       } else if (fmt === 'in-person' && !wantInPerson) return false;
       else if (fmt === 'online' && !wantOnline) return false;
-      else if (fmt === 'hybrid' && !wantHybrid) return false;
+      else if (fmt === 'hybrid' && !wantInPerson && !wantOnline) return false;
     }
 
     if (dateFromTs || dateToTs) {
@@ -170,11 +168,11 @@
     if (postcodeInput) postcodeInput.value = '';
     if (sortSelect) sortSelect.value = 'recommended';
     if (flatpickrInstance) flatpickrInstance.clear();
+    syncDateWrapState([]);
     dateFromTs = null;
     dateToTs = null;
     if (checkInPerson) checkInPerson.checked = true;
     if (checkOnline) checkOnline.checked = true;
-    if (checkHybrid) checkHybrid.checked = true;
     if (checkFree) checkFree.checked = true;
     if (checkPaid) checkPaid.checked = true;
     if (toggleNearMe) toggleNearMe.checked = false;
@@ -201,7 +199,7 @@
     el.addEventListener('change', applyFilters);
   }
 
-  [searchInput, sortSelect, checkInPerson, checkOnline, checkHybrid, checkFree, checkPaid].forEach(bindFilter);
+  [searchInput, sortSelect, checkInPerson, checkOnline, checkFree, checkPaid].forEach(bindFilter);
 
   if (postcodeInput) {
     postcodeInput.addEventListener('input', onPostcodeInput);
@@ -250,6 +248,20 @@
     });
   }
 
+  var dateWrap = dateRangeInput && dateRangeInput.closest('.filter-date-wrap');
+
+  function syncDateWrapState(selectedDates) {
+    if (!dateWrap) return;
+    dateWrap.classList.toggle('is-active', Boolean(selectedDates && selectedDates.length));
+  }
+
+  if (dateWrap) {
+    dateWrap.addEventListener('click', function (e) {
+      if (e.target === dateRangeInput) return;
+      if (flatpickrInstance) flatpickrInstance.open();
+    });
+  }
+
   if (dateRangeInput && typeof flatpickr !== 'undefined') {
     flatpickrInstance = flatpickr(dateRangeInput, {
       mode: 'range',
@@ -258,8 +270,11 @@
       altFormat: 'j M Y',
       allowInput: false,
       clickOpens: true,
+      wrap: false,
+      static: false,
       locale: { rangeSeparator: ' – ' },
       onChange: function (selectedDates) {
+        syncDateWrapState(selectedDates);
         if (!selectedDates.length) {
           dateFromTs = null;
           dateToTs = null;

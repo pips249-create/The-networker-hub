@@ -38,6 +38,7 @@
   }
 
   function eventImageSrc(ev) {
+    if (window.getEventBrowseImage) return window.getEventBrowseImage(ev);
     if (window.getEventImage) return window.getEventImage(ev);
     if (window.getFlexibleEventImage) {
       return window.getFlexibleEventImage(ev.photo, ev.organiserLogo, ev.id);
@@ -45,12 +46,12 @@
     return ev.photo || ev.organiserLogo || '';
   }
 
-  function photoImg(url, className, eventId, eventType) {
+  function photoImg(url, className, eventId, eventType, eventTitle) {
     const placementFn = window.getEventPlacementImage;
     const fallbackRaw = placementFn
-      ? placementFn(eventId || '', eventType || '')
-      : window.getEventImage
-        ? window.getEventImage({ id: eventId, eventType: eventType })
+      ? placementFn(eventId || '', eventType || '', eventTitle || '')
+      : window.getEventBrowseImage
+        ? window.getEventBrowseImage({ id: eventId, eventType: eventType, title: eventTitle })
         : '';
     const src = safePhotoUrl(url || fallbackRaw);
     const fallback = safePhotoUrl(fallbackRaw).replace(/'/g, '%27');
@@ -146,7 +147,7 @@
         data-format="${escapeHtml(ev.formatSlug)}"
         data-price="${escapeHtml(ev.priceKey)}">
         <a class="premium-card-link" href="${escapeHtml(detailHref(ev))}">
-          <div class="premium-card-bg">${photoImg(eventImageSrc(ev), 'premium-card-img', ev.id, ev.eventType || ev.typeRaw)}</div>
+          <div class="premium-card-bg">${photoImg(eventImageSrc(ev), 'premium-card-img', ev.id, ev.eventType || ev.typeRaw, ev.title)}</div>
           <div class="premium-card-overlay"></div>
           <span class="premium-badge">Premium</span>
           <span class="premium-price">${escapeHtml(priceBadgeLabel(ev))}</span>
@@ -186,7 +187,7 @@
         data-format="${escapeHtml(ev.formatSlug)}"
         data-price="${escapeHtml(ev.priceKey)}">
         <div class="event-grid-media">
-          ${photoImg(eventImageSrc(ev), 'event-grid-img', ev.id, ev.eventType || ev.typeRaw)}
+          ${photoImg(eventImageSrc(ev), 'event-grid-img', ev.id, ev.eventType || ev.typeRaw, ev.title)}
           ${premiumBadge}
           <span class="event-grid-category">${escapeHtml(meetingType)}</span>
           <span class="event-grid-price">${escapeHtml(priceBadgeLabel(ev))}</span>

@@ -25,7 +25,7 @@ module.exports = async function handler(req, res) {
     return json(res, 503, { ok: false, error: 'supabase_not_configured' });
   }
 
-  if (req.method === 'PATCH') {
+  if (req.method === 'PATCH' || req.method === 'POST') {
     const body = parseBody(req);
     const id = String(body.id || '').trim();
     if (!id) return json(res, 400, { error: 'missing_id' });
