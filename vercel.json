@@ -10,7 +10,7 @@
     { "source": "/api/auth/:path*", "destination": "/api/auth" },
     { "source": "/api/organiser/:path*", "destination": "/api/organiser" },
     {
-      "source": "/events/:slug((?!index\\.html|event\\.html)[^/.]+)/?",
+      "source": "/events/:slug",
       "destination": "/events/event.html?slug=:slug"
     }
   ]
