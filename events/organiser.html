@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Organiser – The Networker Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/hub.css?v=20260627">
+  <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627">
+  <link rel="stylesheet" href="../css/hub-loading.css?v=20260605b">
+  <link rel="stylesheet" href="../css/organiser-profile.css?v=20260630">
+</head>
+<body class="organiser-profile-page">
+
+<div id="hub-site-nav"></div>
+<script src="../js/site-nav.js?v=20260627" data-root="../" data-page="events"></script>
+
+<div class="breadcrumb-wrap">
+  <a class="back-link" id="org-back" href="index.html#organisers">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M19 12H5M12 19l-7-7 7-7" />
+    </svg>
+    Back to organisers
+  </a>
+</div>
+
+<main class="org-profile-shell hub-page-buffer-host" id="org-profile-shell">
+  <div
+    class="hub-page-buffer hub-page-buffer--compact"
+    id="org-load-overlay"
+    hidden
+    data-buffer-host="org-profile-shell"
+    role="status"
+    aria-live="polite"
+    aria-busy="true"
+  >
+    <div class="hub-page-buffer-card">
+      <div class="hub-page-buffer-row">
+        <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
+        <div class="hub-page-buffer-copy">
+          <p class="hub-page-buffer-title">Loading organiser</p>
+          <p class="hub-page-buffer-message">Bear with us — almost there.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="load-status" id="org-load-status" hidden>Loading…</p>
+
+  <div id="org-profile-content" hidden>
+    <header class="org-profile-hero">
+      <div class="org-profile-logo-wrap" id="org-logo-wrap"></div>
+      <div>
+        <p class="org-profile-kicker">Organiser</p>
+        <h1 class="org-profile-name" id="org-name"></h1>
+        <span class="org-profile-industry" id="org-industry" hidden></span>
+        <div class="org-profile-rating">
+          <span class="stars" id="org-stars" aria-hidden="true"></span>
+          <span id="org-review-count"></span>
+        </div>
+        <div class="org-profile-actions">
+          <button type="button" class="org-profile-btn" id="org-share-btn">Share</button>
+          <a class="org-profile-btn org-profile-btn--primary" id="org-website" href="#" target="_blank" rel="noopener noreferrer" hidden>Visit website</a>
+        </div>
+      </div>
+    </header>
+
+    <section class="org-profile-section">
+      <h2>About this group</h2>
+      <p class="org-profile-desc" id="org-description"></p>
+    </section>
+
+    <section class="org-profile-section" id="org-formats-section" hidden>
+      <h2>Meeting formats</h2>
+      <div class="org-format-pills" id="org-formats"></div>
+    </section>
+
+    <section class="org-profile-section">
+      <h2>Upcoming listings</h2>
+      <div class="org-events-list" id="org-events"></div>
+      <p class="org-profile-empty" id="org-events-empty" hidden>No upcoming listings right now.</p>
+    </section>
+
+    <section class="org-profile-section">
+      <h2>Leave a review</h2>
+      <p class="org-profile-desc">Review this organiser after attending one of their events. Reviews help others choose the right networking group.</p>
+      <button type="button" class="org-profile-btn" id="org-review-btn" disabled title="Coming soon">Leave a review</button>
+    </section>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <a href="../index.html" aria-label="Home">
+      <img class="footer-logo" src="../assets/logo.png" alt="" width="160" height="60">
+    </a>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="index.html">Browse events</a>
+      <a href="../about.html">About us</a>
+      <a href="../faq.html">FAQ</a>
+      <a href="mailto:hello@the-networker.co.uk">Contact</a>
+    </nav>
+    <p class="footer-copy">© The Networker Group Ltd</p>
+  </div>
+</footer>
+
+<script src="../js/hub-loading.js?v=20260616"></script>
+<script src="../js/organiser-detail.js?v=20260630"></script>
+</body>
+</html>

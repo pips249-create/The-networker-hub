@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="../css/hub-loading.css?v=20260605b">
 <link rel="stylesheet" href="../css/events-page.css?v=20260629">
 <link rel="stylesheet" href="../css/events-filter-bar.css?v=20260629">
+<link rel="stylesheet" href="../css/organisers-browse.css?v=20260630">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 </head>
@@ -25,6 +26,12 @@
   <div class="hero-inner">
     <h1>Find your next <span class="accent">event</span></h1>
     <p class="hero-types">Find networking events, exhibitions and conferences across the UK</p>
+    <div class="browse-mode-bar">
+      <div class="browse-mode-toggle" role="tablist" aria-label="Browse mode">
+        <button type="button" class="browse-mode-btn is-active" data-browse-mode="events" role="tab" aria-selected="true">Events</button>
+        <button type="button" class="browse-mode-btn" data-browse-mode="organisers" role="tab" aria-selected="false">Organisers</button>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -97,7 +104,7 @@
           <input type="search" id="search" placeholder="Search all meetings, people, resources…" autocomplete="off" aria-describedby="search-hint">
           <span id="search-hint" class="visually-hidden">Searches titles, descriptions, locations, organisers, and formats from the events database</span>
         </div>
-        <div class="filter-field filter-field-postcode">
+        <div class="filter-field filter-field-postcode filter-event-only">
           <span class="filter-field-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
           </span>
@@ -107,7 +114,7 @@
       </div>
       <div class="filter-bar-row filter-bar-row-bottom">
         <div class="filter-bar-cluster">
-        <fieldset class="filter-format-group">
+        <fieldset class="filter-format-group filter-event-only">
           <legend class="filter-bar-chip-label">Format</legend>
           <label class="filter-checkbox">
             <input type="checkbox" id="check-inperson" checked>
@@ -120,7 +127,7 @@
             Online
           </label>
         </fieldset>
-        <fieldset class="filter-price-tier-group">
+        <fieldset class="filter-price-tier-group filter-event-only">
           <legend class="filter-bar-chip-label">Price</legend>
           <label class="filter-checkbox">
             <input type="checkbox" id="check-free" checked>
@@ -133,19 +140,19 @@
             Paid
           </label>
         </fieldset>
-        <div class="filter-date-wrap">
+        <div class="filter-date-wrap filter-event-only">
           <span class="filter-date-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
           </span>
           <label class="filter-date-label" for="date-range">Dates</label>
           <input type="text" id="date-range" placeholder="Any date" readonly aria-label="Filter by date range">
         </div>
-        <label class="filter-checkbox filter-checkbox-near">
+        <label class="filter-checkbox filter-checkbox-near filter-event-only">
           <input type="checkbox" id="toggle-nearme">
           <span class="filter-checkbox-box" aria-hidden="true"></span>
           Near me
         </label>
-        <label class="filter-near-radius" id="near-radius-wrap" hidden>
+        <label class="filter-near-radius filter-event-only" id="near-radius-wrap" hidden>
           <span class="visually-hidden" for="near-radius">Distance</span>
           <select id="near-radius" aria-label="Distance from you">
             <option value="10">Within 10 miles</option>
@@ -153,8 +160,34 @@
             <option value="50">Within 50 miles</option>
           </select>
         </label>
+        <div class="filter-organiser-only filter-bar-cluster">
+          <label class="filter-organiser-industry">
+            <span class="filter-bar-chip-label">Industry</span>
+            <select id="org-industry" aria-label="Filter by industry">
+              <option value="">All industries</option>
+            </select>
+          </label>
+          <fieldset class="filter-format-group">
+            <legend class="filter-bar-chip-label">Meeting format</legend>
+            <label class="filter-checkbox">
+              <input type="checkbox" id="org-check-inperson" checked>
+              <span class="filter-checkbox-box" aria-hidden="true"></span>
+              In person
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" id="org-check-online" checked>
+              <span class="filter-checkbox-box" aria-hidden="true"></span>
+              Online
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" id="org-check-hybrid" checked>
+              <span class="filter-checkbox-box" aria-hidden="true"></span>
+              Hybrid
+            </label>
+          </fieldset>
         </div>
-        <button type="button" class="filter-map-btn" id="map-view-btn" aria-pressed="false">
+        </div>
+        <button type="button" class="filter-map-btn filter-event-only" id="map-view-btn" aria-pressed="false">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/></svg>
           <span id="map-view-label">Swap to Map View</span>
         </button>
@@ -184,10 +217,14 @@
 
       <section class="listings-block" id="listings-view" aria-labelledby="all-heading">
         <div class="events-toolbar">
-          <nav class="type-tabs" aria-label="Event type">
+          <nav class="type-tabs events-type-tabs" aria-label="Event type">
             <button type="button" class="type-tab is-active" data-type="all">All <span id="count-all">(0)</span></button>
             <button type="button" class="type-tab" data-type="meeting">Meetings <span id="count-meeting">(0)</span></button>
             <button type="button" class="type-tab" data-type="exhibition">Exhibitions <span id="count-exhibition">(0)</span></button>
+          </nav>
+          <nav class="type-tabs organiser-type-tabs" aria-label="Organiser type">
+            <button type="button" class="type-tab org-type-tab is-active" data-org-tab="all">All <span id="org-count-all">(0)</span></button>
+            <button type="button" class="type-tab org-type-tab" data-org-tab="featured">Featured <span id="org-count-featured">(0)</span></button>
           </nav>
         </div>
         <h2 class="listings-header" id="all-heading">All listings</h2>
@@ -222,5 +259,8 @@
 <script src="../js/hub-loading.js?v=20260616"></script>
 <script src="../js/flexible-event-image.js?v=20260628a"></script>
 <script src="../js/events.js?v=20260629"></script>
+<script src="../js/organisers-filters.js?v=20260630"></script>
+<script src="../js/organisers.js?v=20260630"></script>
+<script src="../js/browse-mode.js?v=20260630"></script>
 </body>
 </html>

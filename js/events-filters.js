@@ -92,6 +92,7 @@
   }
 
   function applyNearMeFilters() {
+    if (document.body.classList.contains('browse-mode-organisers')) return;
     if (!toggleNearMe || !toggleNearMe.checked) {
       window.hubUserCoords = null;
       syncNearRadiusUi();
@@ -233,6 +234,7 @@
   };
 
   function applyFilters() {
+    if (document.body.classList.contains('browse-mode-organisers')) return;
     var all = window.hubAllEvents || [];
     var filtered = window.hubGetFilteredEvents(all);
 
@@ -243,6 +245,7 @@
   }
 
   function onPostcodeInput() {
+    if (document.body.classList.contains('browse-mode-organisers')) return;
     if (toggleNearMe && toggleNearMe.checked) {
       applyNearMeFilters();
       return;
@@ -308,6 +311,7 @@
 
   typeTabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
+      if (document.body.classList.contains('browse-mode-organisers')) return;
       setActiveTypeTab(tab.getAttribute('data-type') || 'all');
       applyFilters();
     });
@@ -315,11 +319,20 @@
 
   var clearBtn = document.getElementById('clear-filters');
   if (clearBtn) {
-    clearBtn.addEventListener('click', resetFilters);
+    clearBtn.addEventListener('click', function () {
+      if (document.body.classList.contains('browse-mode-organisers')) return;
+      resetFilters();
+    });
   }
 
   document.addEventListener('click', function (e) {
-    if (e.target.id === 'empty-reset') resetFilters();
+    if (e.target.id === 'empty-reset') {
+      if (document.body.classList.contains('browse-mode-organisers')) {
+        if (window.hubResetOrganiserFilters) window.hubResetOrganiserFilters();
+      } else {
+        resetFilters();
+      }
+    }
     var fav = e.target.closest('.fav-btn[data-event-id]');
     if (fav) {
       e.preventDefault();

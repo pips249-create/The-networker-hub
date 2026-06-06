@@ -508,4 +508,13 @@ async function handle(req, res) {
   }
 }
 
-module.exports = { handle, rowToEvent, fetchApprovedEvents, ukOutcode, slugFormat, eventTypeTabCategory };
+module.exports = {
+  handle,
+  rowToEvent,
+  fetchApprovedEvents,
+  fetchPublishedEventRows,
+  isPublicEvent,
+  ukOutcode,
+  slugFormat,
+  eventTypeTabCategory,
+};
