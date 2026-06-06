@@ -16,8 +16,11 @@
   }
 
   function taglineFromBlock(block) {
+    if (window.CmsSponsorFields) return window.CmsSponsorFields.tagline(block);
     var title = String(block.title || '').trim();
     if (title) return title;
+    var subtitle = String(block.subtitle || '').trim();
+    if (subtitle) return subtitle;
     var temp = document.createElement('div');
     temp.innerHTML = String(block.body || '');
     var h3 = temp.querySelector('h3');
@@ -68,9 +71,12 @@
 
   function renderSidebarAd(container, block) {
     if (!container || !block) return;
-    var company = String(block.company_name || '').trim();
+    var company = window.CmsSponsorFields
+      ? window.CmsSponsorFields.companyName(block)
+      : String(block.company_name || '').trim();
     var tagline = taglineFromBlock(block);
     var bullets = bulletsFromBody(block.body);
+    var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
     var ctaLabel = String(block.cta_label || '').trim() || 'Enquire now';
     var ctaUrl = normalizeCta(block.cta_url);
     var list =
@@ -90,7 +96,7 @@
       '<span class="sponsor-hub-badge">Sponsored</span>' +
       '<div class="sponsor-hub-head"><span class="icon" aria-hidden="true">★</span><span>Sponsor Hub</span></div>' +
       '<div class="sponsor-logo-wrap">' +
-      logoMarkup(block.logo_url, 'sponsor-logo', 'sponsor-logo-placeholder') +
+      logoMarkup(logo, 'sponsor-logo', 'sponsor-logo-placeholder') +
       '</div>' +
       (company ? '<p class="sponsor-company">' + esc(company) + '</p>' : '') +
       (tagline ? '<p class="sponsor-tagline">' + taglineHtml(tagline) + '</p>' : '') +
@@ -105,9 +111,12 @@
 
   function renderBannerAd(container, block) {
     if (!container || !block) return;
-    var company = String(block.company_name || '').trim();
+    var company = window.CmsSponsorFields
+      ? window.CmsSponsorFields.companyName(block)
+      : String(block.company_name || '').trim();
     var title = taglineFromBlock(block);
     var bodyText = bodyTextFromBlock(block);
+    var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
     var ctaLabel = String(block.cta_label || '').trim() || 'Learn more';
     var ctaUrl = normalizeCta(block.cta_url);
 
@@ -116,7 +125,7 @@
       '<aside class="cms-ad-banner">' +
       '<span class="cms-ad-banner-badge">Sponsored</span>' +
       '<div class="cms-ad-banner-logo">' +
-      logoMarkup(block.logo_url, 'cms-ad-banner-logo-img', 'cms-ad-banner-logo-placeholder') +
+      logoMarkup(logo, 'cms-ad-banner-logo-img', 'cms-ad-banner-logo-placeholder') +
       '</div>' +
       '<div class="cms-ad-banner-copy">' +
       (company ? '<p class="cms-ad-banner-company">' + esc(company) + '</p>' : '') +
@@ -132,7 +141,9 @@
   }
 
   function loadCmsAd(slot) {
-    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot))
+    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot) + '&_=' + Date.now(), {
+      cache: 'no-store',
+    })
       .then(function (res) {
         return res.json();
       })

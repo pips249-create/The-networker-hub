@@ -359,52 +359,22 @@ async function fetchFinancials(sb) {
 }
 
 const SPONSOR_HUB_SLOT = 'sponsor_hub';
+const { buildSponsorRow, normalizeSponsorBlock } = require('./cms-sponsor-fields');
 
 async function fetchSponsorBlock(sb) {
   const res = await sb.from('cms_blocks').select('*').eq('slot', SPONSOR_HUB_SLOT).maybeSingle();
   if (res.error) throw new Error(res.error.message);
-  return res.data || null;
+  return normalizeSponsorBlock(res.data);
 }
 
 async function saveSponsorBlock(sb, payload) {
-  const title = String(payload.title || '').trim();
   const body = String(payload.body || '').trim();
-  const cta_label = String(payload.cta_label || '').trim();
-  const cta_url = String(payload.cta_url || '').trim();
-  const logo_url = String(payload.logo_url || '').trim() || null;
-  const company_name = String(payload.company_name || '').trim() || null;
-  const active = payload.active !== false;
-
   if (!body) throw new Error('missing_body');
 
-  const existing = await sb
-    .from('cms_blocks')
-    .select('id')
-    .eq('slot', SPONSOR_HUB_SLOT)
-    .maybeSingle();
-  if (existing.error) throw new Error(existing.error.message);
-
-  const row = {
-    slot: SPONSOR_HUB_SLOT,
-    title,
-    body,
-    cta_label,
-    cta_url,
-    logo_url,
-    company_name,
-    active,
-    updated_at: new Date().toISOString(),
-  };
-
-  if (existing.data?.id) {
-    const res = await sb.from('cms_blocks').update(row).eq('id', existing.data.id).select().single();
-    if (res.error) throw new Error(res.error.message);
-    return res.data;
-  }
-
-  const res = await sb.from('cms_blocks').insert(row).select().single();
+  const row = buildSponsorRow(payload);
+  const res = await sb.from('cms_blocks').upsert(row, { onConflict: 'slot' }).select().single();
   if (res.error) throw new Error(res.error.message);
-  return res.data;
+  return normalizeSponsorBlock(res.data);
 }
 
 async function getAdminSponsor() {

@@ -969,8 +969,11 @@
   }
 
   function sponsorTaglineFromBlock(block) {
+    if (window.CmsSponsorFields) return window.CmsSponsorFields.tagline(block);
     var title = String(block.title || '').trim();
     if (title && title.toLowerCase() !== 'sponsor hub') return title;
+    var subtitle = String(block.subtitle || '').trim();
+    if (subtitle) return subtitle;
     var temp = document.createElement('div');
     temp.innerHTML = String(block.body || '');
     var h3 = temp.querySelector('h3');
@@ -1019,7 +1022,9 @@
     var lines = sponsorBulletsFromBody(block.body);
 
     if (company) company.value = String(block.company_name || '').trim();
-    if (logoUrl) logoUrl.value = String(block.logo_url || '').trim();
+    if (logoUrl) {
+      logoUrl.value = String(block.logo_url || block.image_url || '').trim();
+    }
     if (tagline) tagline.value = sponsorTaglineFromBlock(block);
     if (bullets && lines.length) bullets.value = lines.join('\n');
     if (ctaLabel && block.cta_label) ctaLabel.value = block.cta_label;

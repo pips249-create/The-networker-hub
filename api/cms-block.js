@@ -1,13 +1,14 @@
 /**
- * Public CMS block API — Supabase (active_cms_blocks by slot).
+ * Public CMS block API — Supabase cms_blocks by slot.
  *
  * GET /api/cms-block?slot=sponsor_hub
  */
 const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./_lib/supabase');
+const { normalizeSponsorBlock } = require('./_lib/cms-sponsor-fields');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 'public, max-age=60');
+  res.setHeader('Cache-Control', 'no-store');
 
   const slot = String(req.query?.slot || '').trim();
   if (!slot) {
@@ -32,28 +33,32 @@ module.exports = async function handler(req, res) {
 
   try {
     const sb = getSupabaseAdmin();
-    let data = null;
-    const viewRes = await sb.from('active_cms_blocks').select('*').eq('slot', slot).maybeSingle();
-    if (!viewRes.error) {
-      data = viewRes.data;
-    } else {
-      const msg = String(viewRes.error.message || '').toLowerCase();
-      const missingView =
-        msg.includes('active_cms_blocks') &&
-        (msg.includes('does not exist') || msg.includes('relation') || msg.includes('schema cache'));
-      if (!missingView) throw new Error(viewRes.error.message);
-      const tableRes = await sb
-        .from('cms_blocks')
-        .select('*')
-        .eq('slot', slot)
-        .eq('active', true)
-        .maybeSingle();
-      if (tableRes.error) throw new Error(tableRes.error.message);
-      data = tableRes.data;
+    const tableRes = await sb
+      .from('cms_blocks')
+      .select('*')
+      .eq('slot', slot)
+      .eq('active', true)
+      .maybeSingle();
+    if (tableRes.error) throw new Error(tableRes.error.message);
+
+    let block = tableRes.data || null;
+    if (!block) {
+      const viewRes = await sb.from('active_cms_blocks').select('*').eq('slot', slot).maybeSingle();
+      if (!viewRes.error) block = viewRes.data || null;
     }
-    return res.status(200).json({ ok: true, configured: true, provider: 'supabase', block: data || null });
+
+    if (slot === 'sponsor_hub' && block) {
+      block = normalizeSponsorBlock(block);
+    }
+
+    return res.status(200).json({ ok: true, configured: true, provider: 'supabase', block });
   } catch (e) {
-    return res.status(500).json({ ok: false, configured: true, provider: 'supabase', error: 'server_error', message: e.message });
+    return res.status(500).json({
+      ok: false,
+      configured: true,
+      provider: 'supabase',
+      error: 'server_error',
+      message: e.message,
+    });
   }
 };
-

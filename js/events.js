@@ -446,8 +446,11 @@
   }
 
   function sponsorTaglineFromBlock(block) {
+    if (window.CmsSponsorFields) return window.CmsSponsorFields.tagline(block);
     const title = String(block.title || '').trim();
     if (title && title.toLowerCase() !== 'sponsor hub') return title;
+    const subtitle = String(block.subtitle || '').trim();
+    if (subtitle) return subtitle;
     const temp = document.createElement('div');
     temp.innerHTML = String(block.body || '');
     const h3 = temp.querySelector('h3');
@@ -525,9 +528,13 @@
     els.sponsorHub.classList.add('sponsor-hub--active');
     els.sponsorHub.classList.remove('sponsor-hub--fallback');
 
-    const company = String(block.company_name || '').trim();
+    const company = window.CmsSponsorFields
+      ? window.CmsSponsorFields.companyName(block)
+      : String(block.company_name || '').trim();
     const tagline = sponsorTaglineFromBlock(block);
-    const logoUrl = String(block.logo_url || '').trim();
+    const logoUrl = window.CmsSponsorFields
+      ? window.CmsSponsorFields.logoUrl(block)
+      : String(block.logo_url || block.image_url || '').trim();
     const ctaLabel = String(block.cta_label || '').trim() || 'Enquire now';
     const ctaUrl = normalizeSponsorCtaUrl(block.cta_url);
     const bulletsHtml = sponsorBulletsHtml(block.body);
@@ -583,7 +590,9 @@
 
   async function loadSponsorBlock() {
     try {
-      const res = await fetch('/api/cms-block?slot=sponsor_hub');
+      const res = await fetch('/api/cms-block?slot=sponsor_hub&_=' + Date.now(), {
+        cache: 'no-store',
+      });
       const data = await res.json();
       if (data && data.ok && data.block) {
         renderSponsorBlock(data.block);
@@ -670,6 +679,7 @@
   }
 
   window.hubReloadEvents = load;
+  window.hubReloadSponsorBlock = loadSponsorBlock;
   initListingsPagination();
   loadSponsorBlock();
   load();

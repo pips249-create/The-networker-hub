@@ -118,6 +118,7 @@
       }
     } else if (!options.skipEventsRefresh && window.hubApplyFilters) {
       window.hubApplyFilters();
+      if (window.hubReloadSponsorBlock) window.hubReloadSponsorBlock();
     }
 
     try {
