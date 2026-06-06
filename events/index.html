@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="../css/hub.css?v=20260627">
 <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627">
 <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e">
-<link rel="stylesheet" href="../css/events-page.css?v=20260630d">
+<link rel="stylesheet" href="../css/events-page.css?v=20260630e">
 <link rel="stylesheet" href="../css/events-filter-bar.css?v=20260630c">
 <link rel="stylesheet" href="../css/organisers-browse.css?v=20260630d">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -41,30 +41,14 @@
   <div class="hero-inner">
     <h1>Find your next <span class="accent">event</span></h1>
     <p class="hero-types">Find networking events, exhibitions and conferences across the UK</p>
+    <div class="events-hero-actions">
+      <button type="button" class="btn btn-secondary" data-hub-action="add-group">Add your group profile</button>
+      <button type="button" class="btn btn-primary" data-hub-action="add-event">List an event</button>
+    </div>
   </div>
 </section>
 
-<main class="shell hub-page-buffer-host" id="events-shell">
-  <div
-    class="hub-page-buffer hub-page-buffer--compact"
-    id="events-load-overlay"
-    hidden
-    data-buffer-host="events-shell"
-    role="status"
-    aria-live="polite"
-    aria-busy="true"
-  >
-    <div class="hub-page-buffer-card">
-      <div class="hub-page-buffer-row">
-        <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
-        <div class="hub-page-buffer-copy">
-          <p class="hub-page-buffer-title">Loading your events</p>
-          <p class="hub-page-buffer-message">Bear with us — almost there.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
+<main class="shell" id="events-shell">
   <p class="load-status" id="load-status" hidden>Loading…</p>
 
   <div class="events-promo-section spotlight-sponsor-row">
@@ -239,6 +223,10 @@
             <button type="button" class="type-tab org-type-tab is-active" data-org-tab="all">All <span id="org-count-all">(0)</span></button>
             <button type="button" class="type-tab org-type-tab" data-org-tab="featured">Featured <span id="org-count-featured">(0)</span></button>
           </nav>
+          <div class="events-list-cta">
+            <button type="button" class="events-list-cta-btn" data-hub-action="add-group">Add group profile</button>
+            <button type="button" class="events-list-cta-btn events-list-cta-btn--primary" data-hub-action="add-event">List an event</button>
+          </div>
         </div>
         <h2 class="listings-header" id="all-heading">All listings</h2>
         <div class="event-listings" id="event-listings"></div>
@@ -275,6 +263,7 @@
 <script src="../js/events.js?v=20260630e"></script>
 <script src="../js/organisers-filters.js?v=20260630b"></script>
 <script src="../js/organisers.js?v=20260630e"></script>
+<script src="../js/hub-organiser-actions.js?v=20260630b" data-root="../"></script>
 <script src="../js/browse-mode.js?v=20260630c"></script>
 </body>
 </html>

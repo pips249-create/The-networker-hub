@@ -20,6 +20,69 @@
     font-size: 15px;
   }
 }
+
+.events-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.events-hero-actions .btn {
+  font-size: 14px;
+  padding: 12px 20px;
+}
+
+.events-list-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.events-list-cta-btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1.5px solid var(--lavender-deep);
+  background: #fff;
+  color: var(--lavender-deep);
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+
+.events-list-cta-btn:hover {
+  background: var(--lavender-light);
+}
+
+.events-list-cta-btn--primary {
+  background: var(--lavender-deep);
+  color: #fff;
+  border-color: var(--lavender-deep);
+}
+
+.events-list-cta-btn--primary:hover {
+  background: #6a3588;
+  color: #fff;
+}
+
+body.browse-mode-organisers .events-list-cta-btn[data-hub-action="add-event"],
+body.browse-mode-organisers .events-hero-actions [data-hub-action="add-event"] {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .events-list-cta {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 4px;
+  }
+}
+
 .events-page .shell {
   margin-top: 0;
   max-width: 1280px;

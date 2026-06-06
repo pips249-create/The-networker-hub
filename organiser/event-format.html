@@ -14,7 +14,6 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260626" />
-
   </head>
   <body class="organiser-event-edit-page">
     <div id="hub-site-nav"></div>
@@ -22,35 +21,35 @@
 
     <div class="ee-wrap ee-format-wrap">
       <a class="ee-back" href="index.html#events-list">← Back to My Events</a>
-      <h1 class="ee-title">How will people attend?</h1>
+      <h1 class="ee-title">Create a new event</h1>
       <p class="ee-lead">
-        Choose the format first — the next step shows only the fields that apply (venue address for in-person events, or join link for online).
+        First choose which group profile this listing belongs to, then pick how people will attend.
       </p>
 
-      <div class="ee-format-grid" role="list">
-        <a class="ee-format-card" href="event-edit.html?format=in-person" role="listitem">
+      <div class="ee-card ee-group-pick-card">
+        <h2>Step 1 — Group profile</h2>
+        <div class="ee-field">
+          <label for="ee-event-group">Which group is this event for?</label>
+          <select id="ee-event-group" required></select>
+          <p class="ee-hint" id="ee-group-pick-hint">Choose a group profile to continue.</p>
+        </div>
+      </div>
+
+      <h2 class="ee-format-step-title">Step 2 — Event format</h2>
+      <div class="ee-format-grid is-disabled" id="ee-format-grid" role="list">
+        <a class="ee-format-card" href="event-edit.html?format=in-person" role="listitem" aria-disabled="true" tabindex="-1">
           <span class="ee-format-icon" aria-hidden="true">📍</span>
           <strong>In person</strong>
           <span>Venue name, full address and postcode for your listing and map.</span>
         </a>
-        <a class="ee-format-card" href="event-edit.html?format=online" role="listitem">
+        <a class="ee-format-card" href="event-edit.html?format=online" role="listitem" aria-disabled="true" tabindex="-1">
           <span class="ee-format-icon" aria-hidden="true">💻</span>
           <strong>Online</strong>
           <span>Platform and join link (sent to ticket holders, not shown publicly).</span>
         </a>
       </div>
     </div>
-    <script>
-      document.querySelectorAll('.ee-format-card').forEach(function (link) {
-        link.addEventListener('click', function () {
-          var m = (link.getAttribute('href') || '').match(/format=([a-z-]+)/i);
-          if (m) {
-            try {
-              sessionStorage.setItem('hub_event_format', m[1]);
-            } catch (e) {}
-          }
-        });
-      });
-    </script>
+    <script src="../js/hub-organiser-actions.js?v=20260630b" data-root="../"></script>
+    <script src="../js/organiser-event-format.js?v=20260630b"></script>
   </body>
 </html>

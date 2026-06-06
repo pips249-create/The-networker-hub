@@ -1953,9 +1953,14 @@
     function goToNewEventEditor(e) {
       if (e && e.preventDefault) e.preventDefault();
       if (!state.groups.length) {
-        alert('Create a group profile first.');
+        alert('You must add a group profile first.');
         location.href = 'group-edit.html';
         return;
+      }
+      try {
+        sessionStorage.removeItem('hub_event_group_id');
+      } catch (err) {
+        /* ignore */
       }
       location.href = 'event-format.html';
     }
@@ -1987,6 +1992,10 @@
     }
 
     document.querySelectorAll('#btn-new-event, [data-action="new-event"]').forEach((el) => {
+      el.addEventListener('click', goToNewEventEditor);
+    });
+
+    document.querySelectorAll('.org-add-menu-item[href="event-format.html"]').forEach((el) => {
       el.addEventListener('click', goToNewEventEditor);
     });
 

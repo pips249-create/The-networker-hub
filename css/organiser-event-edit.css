@@ -550,6 +550,28 @@ body.hub-page-organiser.organiser-event-edit-page {
   box-shadow: 0 8px 24px rgba(122, 61, 138, 0.12);
 }
 
+.ee-format-grid.is-disabled .ee-format-card {
+  opacity: 0.45;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.ee-format-grid.is-disabled .ee-format-card:hover {
+  border-color: var(--ee-border);
+  box-shadow: none;
+}
+
+.ee-format-step-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 24px 0 12px;
+  color: var(--ee-text);
+}
+
+.ee-group-pick-card {
+  margin-bottom: 8px;
+}
+
 .ee-format-card strong {
   font-size: 16px;
   color: var(--ee-purple-dark);

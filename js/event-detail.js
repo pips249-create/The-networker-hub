@@ -49,6 +49,19 @@
     return s.indexOf('https:') === 0 || s.indexOf('http:') === 0 || s.indexOf('data:image/') === 0;
   }
 
+  async function requireSignedInAttendee() {
+    try {
+      const res = await fetch('/api/auth/session', { credentials: 'include' });
+      const data = await res.json();
+      if (data.ok && data.user) return true;
+    } catch (e) {
+      /* ignore */
+    }
+    const next = encodeURIComponent(location.pathname + location.search);
+    location.href = '/login.html?next=' + next;
+    return false;
+  }
+
   function starsFromAvg(avg) {
     const a = Number(avg);
     if (!Number.isFinite(a) || a <= 0) return '☆☆☆☆☆';
@@ -1166,8 +1179,9 @@
     }
 
     if (appForm) {
-      appForm.addEventListener('submit', (e) => {
+      appForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (!(await requireSignedInAttendee())) return;
         // TODO: Connect to seat approval workflow API when backend is live
         showSeatApplication(false);
         appForm.reset();
@@ -1176,8 +1190,9 @@
     }
 
     if (buy) {
-      buy.addEventListener('click', () => {
+      buy.addEventListener('click', async () => {
         if (buy.disabled) return;
+        if (!(await requireSignedInAttendee())) return;
 
         if (ev.isApprovalRequired) {
           showSeatApplication(true);

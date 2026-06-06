@@ -4,6 +4,7 @@
 (function () {
   const SERIES_STORAGE_KEY = 'hub_event_series';
   const FORMAT_STORAGE_KEY = 'hub_event_format';
+  const GROUP_STORAGE_KEY = 'hub_event_group_id';
   const params = new URLSearchParams(location.search);
   const editId = params.get('id') || '';
   function normalizeEventFormat(raw) {
@@ -473,7 +474,7 @@
     return copy;
   }
 
-  function fillGroupsSelect() {
+  function fillGroupsSelect(preselectedId, lockSelection) {
     const sel = document.getElementById('ee-group');
     const hint = document.getElementById('ee-group-hint');
     if (!sel) return;
@@ -490,14 +491,26 @@
       }
       return;
     }
-    sel.disabled = false;
-    if (hint) hint.textContent = 'Which organiser group this event belongs to.';
+    sel.disabled = Boolean(lockSelection);
+    if (hint) {
+      hint.textContent = lockSelection
+        ? 'This event belongs to the group profile you chose in the previous step.'
+        : 'Which organiser group this event belongs to.';
+    }
     groups.forEach((g) => {
       const opt = document.createElement('option');
       opt.value = g.id;
       opt.textContent = g.name;
       sel.appendChild(opt);
     });
+    if (preselectedId) {
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === preselectedId) {
+          sel.value = preselectedId;
+          break;
+        }
+      }
+    }
   }
 
   function applyFormatUi(format) {
@@ -633,10 +646,27 @@
     const { ok, data } = await api('/api/organiser/bootstrap');
     if (!ok) {
       if (loading) loading.hide();
-      showAlert('Please sign in to manage events.');
+      const next = encodeURIComponent(location.pathname + location.search);
+      location.href = '../login.html?next=' + next;
       return;
     }
     groups = data.groups || [];
+
+    const chosenGroupId =
+      sessionStorage.getItem(GROUP_STORAGE_KEY) || params.get('groupId') || '';
+
+    if (!editId && !chosenGroupId) {
+      if (loading) loading.hide();
+      location.href = 'event-format.html';
+      return;
+    }
+
+    if (!editId && chosenGroupId && !groups.some((g) => g.id === chosenGroupId)) {
+      if (loading) loading.hide();
+      sessionStorage.removeItem(GROUP_STORAGE_KEY);
+      location.href = 'event-format.html';
+      return;
+    }
 
     if (editId) {
       document.getElementById('ee-page-title').textContent = 'Edit event';
@@ -652,7 +682,7 @@
       if (!ev) {
         ev = (data.events || []).find((e) => e.id === editId);
       }
-      fillGroupsSelect();
+      fillGroupsSelect(ev ? ev.organiserGroupId || ev.groupId : '', false);
       if (ev) {
         prefillFromEvent(ev);
       } else {
@@ -664,7 +694,7 @@
       return;
     }
 
-    fillGroupsSelect();
+    fillGroupsSelect(chosenGroupId, true);
     if (loading) loading.hide();
   }
 

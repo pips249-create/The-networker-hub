@@ -357,7 +357,9 @@
   async function load() {
     const sessionRes = await api('/api/auth/session');
     if (!sessionRes.ok || !sessionRes.data.user) {
-      showAlert('Please sign in to manage group profiles.');
+      const nextPath =
+        '/organiser/group-edit.html' + (editId ? '?id=' + encodeURIComponent(editId) : '');
+      location.href = '../login.html?next=' + encodeURIComponent(nextPath);
       return;
     }
     const emailEl = document.getElementById('ge-page-email');
