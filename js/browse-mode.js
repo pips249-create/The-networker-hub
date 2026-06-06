@@ -111,6 +111,7 @@
       if (window.hubToggleMapView && document.body.classList.contains('events-view-map')) {
         window.hubToggleMapView();
       }
+      if (window.hubReloadSponsorBlock) window.hubReloadSponsorBlock();
       if (window.hubLoadOrganisers) {
         window.hubLoadOrganisers().then(function () {
           if (window.hubApplyOrganiserFilters) window.hubApplyOrganiserFilters();

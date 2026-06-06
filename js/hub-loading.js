@@ -10,6 +10,10 @@
     return typeof idOrEl === 'string' ? document.getElementById(idOrEl) : idOrEl;
   }
 
+  function isModal(el) {
+    return el && el.classList.contains('hub-page-buffer--modal');
+  }
+
   function show(idOrEl, options) {
     const el = getEl(idOrEl);
     if (!el) return;
@@ -25,6 +29,9 @@
     el.classList.add(ACTIVE);
     el.hidden = false;
     el.setAttribute('aria-busy', 'true');
+    if (isModal(el)) {
+      document.body.classList.add('hub-is-page-loading');
+    }
     const hostId = el.getAttribute('data-buffer-host');
     if (hostId) {
       const host = document.getElementById(hostId);
@@ -38,6 +45,9 @@
     el.classList.remove(ACTIVE);
     el.hidden = true;
     el.setAttribute('aria-busy', 'false');
+    if (isModal(el)) {
+      document.body.classList.remove('hub-is-page-loading');
+    }
     const hostId = el.getAttribute('data-buffer-host');
     if (hostId) {
       const host = document.getElementById(hostId);

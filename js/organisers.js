@@ -260,8 +260,14 @@
 
   function setLoading(on) {
     if (window.hubLoading) {
-      if (on) window.hubLoading.show('events-load-overlay');
-      else window.hubLoading.hide('events-load-overlay');
+      if (on) {
+        window.hubLoading.show('events-load-overlay', {
+          title: 'Loading organisers',
+          message: 'Bear with us — almost there.',
+        });
+      } else {
+        window.hubLoading.hide('events-load-overlay');
+      }
       return;
     }
     if (!els.loadOverlay) return;

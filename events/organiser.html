@@ -9,13 +9,28 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/hub.css?v=20260627">
   <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627">
-  <link rel="stylesheet" href="../css/hub-loading.css?v=20260605b">
-  <link rel="stylesheet" href="../css/organiser-profile.css?v=20260630">
+  <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e">
+  <link rel="stylesheet" href="../css/organiser-profile.css?v=20260630d">
 </head>
 <body class="organiser-profile-page">
 
 <div id="hub-site-nav"></div>
 <script src="../js/site-nav.js?v=20260627" data-root="../" data-page="events"></script>
+
+<div
+  class="hub-page-buffer hub-page-buffer--modal"
+  id="org-load-overlay"
+  hidden
+  role="status"
+  aria-live="polite"
+  aria-busy="true"
+>
+  <div class="hub-page-buffer-card">
+    <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
+    <h2 class="hub-page-buffer-title">Loading organiser</h2>
+    <p class="hub-page-buffer-message">Bear with us — almost there.</p>
+  </div>
+</div>
 
 <div class="breadcrumb-wrap">
   <a class="back-link" id="org-back" href="index.html#organisers">
@@ -26,46 +41,37 @@
   </a>
 </div>
 
-<main class="org-profile-shell hub-page-buffer-host" id="org-profile-shell">
-  <div
-    class="hub-page-buffer hub-page-buffer--compact"
-    id="org-load-overlay"
-    hidden
-    data-buffer-host="org-profile-shell"
-    role="status"
-    aria-live="polite"
-    aria-busy="true"
-  >
-    <div class="hub-page-buffer-card">
-      <div class="hub-page-buffer-row">
-        <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
-        <div class="hub-page-buffer-copy">
-          <p class="hub-page-buffer-title">Loading organiser</p>
-          <p class="hub-page-buffer-message">Bear with us — almost there.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
+<main class="org-profile-shell" id="org-profile-shell">
   <p class="load-status" id="org-load-status" hidden>Loading…</p>
 
   <div id="org-profile-content" hidden>
-    <header class="org-profile-hero">
-      <div class="org-profile-logo-wrap" id="org-logo-wrap"></div>
-      <div>
-        <p class="org-profile-kicker">Organiser</p>
-        <h1 class="org-profile-name" id="org-name"></h1>
-        <span class="org-profile-industry" id="org-industry" hidden></span>
-        <div class="org-profile-rating">
-          <span class="stars" id="org-stars" aria-hidden="true"></span>
-          <span id="org-review-count"></span>
-        </div>
-        <div class="org-profile-actions">
-          <button type="button" class="org-profile-btn" id="org-share-btn">Share</button>
-          <a class="org-profile-btn org-profile-btn--primary" id="org-website" href="#" target="_blank" rel="noopener noreferrer" hidden>Visit website</a>
+    <section class="org-showcase" aria-labelledby="org-showcase-heading">
+      <div class="org-showcase-visual">
+        <div class="org-showcase-photo" id="org-photo-wrap"></div>
+        <div class="org-showcase-identity">
+          <p class="org-profile-kicker">Organiser</p>
+          <h1 class="org-profile-name" id="org-name"></h1>
+          <div class="org-showcase-rating" id="org-rating-wrap">
+            <span class="stars" id="org-stars" aria-hidden="true"></span>
+            <span class="org-showcase-rating-text" id="org-review-summary"></span>
+          </div>
+          <span class="org-profile-industry" id="org-industry" hidden></span>
+          <div class="org-profile-actions">
+            <button type="button" class="org-profile-btn" id="org-share-btn">Share</button>
+            <a class="org-profile-btn org-profile-btn--primary" id="org-website" href="#" target="_blank" rel="noopener noreferrer" hidden>Visit website</a>
+          </div>
         </div>
       </div>
-    </header>
+
+      <div class="org-showcase-reviews">
+        <div class="org-reviews-intro">
+          <h2 class="org-reviews-heading" id="org-showcase-heading">What people are saying</h2>
+          <p class="org-reviews-lead" id="org-reviews-lead"></p>
+        </div>
+        <div class="org-reviews-feed" id="org-reviews-feed" aria-live="polite"></div>
+        <p class="org-reviews-empty" id="org-reviews-empty" hidden>No reviews yet — be the first after attending one of their events.</p>
+      </div>
+    </section>
 
     <section class="org-profile-section">
       <h2>About this group</h2>
@@ -83,7 +89,7 @@
       <p class="org-profile-empty" id="org-events-empty" hidden>No upcoming listings right now.</p>
     </section>
 
-    <section class="org-profile-section">
+    <section class="org-profile-section org-profile-section--cta">
       <h2>Leave a review</h2>
       <p class="org-profile-desc">Review this organiser after attending one of their events. Reviews help others choose the right networking group.</p>
       <button type="button" class="org-profile-btn" id="org-review-btn" disabled title="Coming soon">Leave a review</button>
@@ -106,7 +112,7 @@
   </div>
 </footer>
 
-<script src="../js/hub-loading.js?v=20260616"></script>
-<script src="../js/organiser-detail.js?v=20260630"></script>
+<script src="../js/hub-loading.js?v=20260630e"></script>
+<script src="../js/organiser-detail.js?v=20260630d"></script>
 </body>
 </html>

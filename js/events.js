@@ -404,8 +404,14 @@
   function setLoading(on) {
     const overlay = document.getElementById('events-load-overlay');
     const shell = document.getElementById('events-shell');
+    const loadingCopy = {
+      title: document.body.classList.contains('browse-mode-organisers')
+        ? 'Loading organisers'
+        : 'Loading your events',
+      message: 'Bear with us — almost there.',
+    };
     if (window.hubLoading) {
-      if (on) window.hubLoading.show('events-load-overlay');
+      if (on) window.hubLoading.show('events-load-overlay', loadingCopy);
       else window.hubLoading.hide('events-load-overlay');
       return;
     }

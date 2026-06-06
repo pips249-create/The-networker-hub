@@ -1,46 +1,53 @@
-/* Public organiser profile page */
+/* Public organiser profile — blue-tint showcase (photo + reviews) */
 .organiser-profile-page {
-  background: var(--surface-bg, #faf8fc);
+  background: linear-gradient(180deg, #eef4ff 0%, #f8fbff 220px, var(--surface-bg, #faf8fc) 480px);
 }
 
 .org-profile-shell {
-  max-width: 980px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 0 20px 48px;
 }
 
-.org-profile-hero {
+.org-showcase {
   display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 24px;
-  align-items: start;
-  padding: 28px 0 24px;
-  border-bottom: 1px solid var(--border-soft);
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  align-items: stretch;
+  background: #fff;
+  border: 1px solid rgba(37, 99, 235, 0.14);
+  border-radius: 18px;
+  overflow: hidden;
+  margin: 8px 0 32px;
+  box-shadow: 0 8px 32px rgba(30, 58, 95, 0.1);
 }
 
-.org-profile-logo-wrap {
-  width: 120px;
-  height: 120px;
-  border-radius: 16px;
+.org-showcase-visual {
+  border-left: 4px solid #2563eb;
+  padding: 24px 22px 26px;
+  background: linear-gradient(165deg, #f8fbff 0%, #fff 100%);
+}
+
+.org-showcase-photo {
+  aspect-ratio: 4 / 3;
+  border-radius: 14px;
+  overflow: hidden;
   background: linear-gradient(165deg, #e8f2ff 0%, #d6e8ff 100%);
-  border: 1px solid rgba(37, 99, 235, 0.15);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  margin-bottom: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
 }
 
-.org-profile-logo {
+.org-showcase-photo img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding: 12px;
+  object-fit: cover;
+  display: block;
 }
 
-.org-profile-logo-placeholder {
-  font-size: 42px;
-  font-weight: 700;
-  color: #64748b;
+.org-showcase-photo .org-profile-logo-placeholder {
+  font-size: 56px;
 }
 
 .org-profile-kicker {
@@ -54,47 +61,53 @@
 
 .org-profile-name {
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
   line-height: 1.15;
-  margin: 0 0 8px;
-  color: var(--charcoal);
+  margin: 0 0 10px;
+  color: #1e3a5f;
+}
+
+.org-showcase-rating {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.org-showcase-rating .stars {
+  display: inline-flex;
+  gap: 2px;
+  color: #cbd5e1;
+}
+
+.org-showcase-rating .star.is-full {
+  color: #e8a317;
+}
+
+.org-showcase-rating-text {
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .org-profile-industry {
   display: inline-block;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: #fff;
   background: #1e3a5f;
   border-radius: 999px;
-  padding: 5px 10px;
-  margin-bottom: 10px;
-}
-
-.org-profile-rating {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
+  padding: 6px 12px;
   margin-bottom: 14px;
-}
-
-.org-profile-rating .stars {
-  display: inline-flex;
-  gap: 2px;
-  color: #ddd;
-}
-
-.org-profile-rating .star.is-full {
-  color: #e8a317;
 }
 
 .org-profile-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  margin-top: 4px;
 }
 
 .org-profile-btn {
@@ -126,12 +139,92 @@
   background: #1d4ed8;
 }
 
+.org-showcase-reviews {
+  padding: 24px 26px 26px;
+  background: #f4f8ff;
+  border-left: 1px solid rgba(37, 99, 235, 0.1);
+  min-width: 0;
+}
+
+.org-reviews-heading {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #1e3a5f;
+}
+
+.org-reviews-lead {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0 0 18px;
+}
+
+.org-reviews-lead strong {
+  color: #1e3a5f;
+}
+
+.org-reviews-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.org-review-card {
+  background: #fff;
+  border: 1px solid rgba(37, 99, 235, 0.1);
+  border-left: 3px solid #2563eb;
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+
+.org-review-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.org-review-card-header strong {
+  font-size: 14px;
+  color: var(--charcoal);
+}
+
+.org-review-card-date {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.org-review-card-stars {
+  color: #e8a317;
+  font-size: 13px;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.org-review-card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--charcoal);
+}
+
+.org-reviews-empty {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0;
+  padding: 12px 0;
+}
+
 .org-profile-section {
   padding: 28px 0;
   border-bottom: 1px solid var(--border-soft);
 }
 
-.org-profile-section:last-child {
+.org-profile-section:last-child,
+.org-profile-section--cta {
   border-bottom: none;
 }
 
@@ -214,17 +307,26 @@
   color: var(--text-muted);
 }
 
-@media (max-width: 700px) {
-  .org-profile-hero {
+@media (max-width: 860px) {
+  .org-showcase {
     grid-template-columns: 1fr;
+  }
+
+  .org-showcase-reviews {
+    border-left: none;
+    border-top: 1px solid rgba(37, 99, 235, 0.1);
+  }
+}
+
+@media (max-width: 700px) {
+  .org-showcase-visual {
     text-align: center;
   }
-  .org-profile-logo-wrap {
-    margin: 0 auto;
-  }
+
   .org-profile-actions {
     justify-content: center;
   }
+
   .org-event-row {
     flex-direction: column;
     align-items: flex-start;

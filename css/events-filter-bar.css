@@ -471,6 +471,10 @@
   gap: 16px;
 }
 
+.events-results-actions .browse-mode-toggle {
+  flex-shrink: 0;
+}
+
 .clear-filters-link {
   font-family: inherit;
   font-size: 12px;

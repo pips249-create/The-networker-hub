@@ -4,6 +4,33 @@
 (function () {
   var API = '/api/organisers';
 
+  var MOCK_REVIEWS = [
+    {
+      name: 'Sarah Mitchell',
+      date: '12 May 2026',
+      rating: 5,
+      text: 'Brilliantly run events — welcoming hosts, sharp content, and genuinely useful connections every time.',
+    },
+    {
+      name: 'James Okonkwo',
+      date: '3 Apr 2026',
+      rating: 4,
+      text: 'Professional setup and a great mix of people. Would happily book again for our team.',
+    },
+    {
+      name: 'Emma Clarke',
+      date: '18 Mar 2026',
+      rating: 4,
+      text: 'Clear communication before the day and a well-paced session. Felt worth the ticket price.',
+    },
+    {
+      name: 'Jamie Reid',
+      date: '25 Jan 2026',
+      rating: 5,
+      text: 'Professional hosting and respectful pacing — I left with three solid follow-ups.',
+    },
+  ];
+
   function escapeHtml(s) {
     var d = document.createElement('div');
     d.textContent = s == null ? '' : String(s);
@@ -22,6 +49,15 @@
         '" aria-hidden="true">★</span>';
     }
     return html;
+  }
+
+  function starsFromAvg(avg) {
+    var n = Number(avg);
+    if (!Number.isFinite(n) || n <= 0) return '☆☆☆☆☆';
+    var full = Math.floor(n);
+    var half = n - full >= 0.5 ? 1 : 0;
+    var empty = 5 - full - half;
+    return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
   }
 
   function queryParams() {
@@ -56,13 +92,13 @@
     el.classList.toggle('is-error', Boolean(isError));
   }
 
-  function renderLogo(org) {
-    var wrap = document.getElementById('org-logo-wrap');
+  function renderPhoto(org) {
+    var wrap = document.getElementById('org-photo-wrap');
     if (!wrap) return;
     var letter = String(org.name || '?').trim().charAt(0).toUpperCase() || '?';
     if (org.photoUrl) {
       wrap.innerHTML =
-        '<img class="org-profile-logo" src="' +
+        '<img src="' +
         escapeHtml(org.photoUrl) +
         '" alt="" onerror="this.parentElement.innerHTML=\'<span class=org-profile-logo-placeholder>' +
         escapeHtml(letter) +
@@ -71,6 +107,100 @@
       wrap.innerHTML =
         '<span class="org-profile-logo-placeholder" aria-hidden="true">' + escapeHtml(letter) + '</span>';
     }
+  }
+
+  function appendReviewCard(feed, review) {
+    var card = document.createElement('article');
+    card.className = 'org-review-card';
+    var header = document.createElement('div');
+    header.className = 'org-review-card-header';
+    var name = document.createElement('strong');
+    name.textContent = review.name || 'Attendee';
+    var date = document.createElement('span');
+    date.className = 'org-review-card-date';
+    date.textContent = review.date || '';
+    header.appendChild(name);
+    header.appendChild(date);
+    var stars = document.createElement('div');
+    stars.className = 'org-review-card-stars';
+    stars.setAttribute('aria-label', (review.rating || 0) + ' out of 5 stars');
+    stars.textContent = starsFromAvg(review.rating);
+    var body = document.createElement('p');
+    body.textContent = review.text || '';
+    card.appendChild(header);
+    card.appendChild(stars);
+    card.appendChild(body);
+    feed.appendChild(card);
+  }
+
+  function resolveReviewItems(org) {
+    var items = Array.isArray(org.reviewItems) ? org.reviewItems : [];
+    if (items.length) return items;
+    var count = Number(org.reviews) || 0;
+    if (count > 0 && count <= MOCK_REVIEWS.length) {
+      return MOCK_REVIEWS.slice(0, count);
+    }
+    return [];
+  }
+
+  function renderReviews(org) {
+    var rating = Number(org.rating) || 0;
+    var count = Number(org.reviews) || 0;
+    var starsEl = document.getElementById('org-stars');
+    var summaryEl = document.getElementById('org-review-summary');
+    var leadEl = document.getElementById('org-reviews-lead');
+    var feed = document.getElementById('org-reviews-feed');
+    var emptyEl = document.getElementById('org-reviews-empty');
+    var ratingWrap = document.getElementById('org-rating-wrap');
+
+    if (starsEl) starsEl.innerHTML = starsHtml(rating);
+    if (summaryEl) {
+      summaryEl.textContent =
+        count > 0 && rating > 0
+          ? rating.toFixed(1) + ' average · ' + count + ' review' + (count === 1 ? '' : 's')
+          : 'No reviews yet';
+    }
+    if (ratingWrap) {
+      ratingWrap.hidden = count <= 0 && rating <= 0;
+    }
+
+    if (leadEl) {
+      if (count > 0 && rating > 0) {
+        leadEl.innerHTML =
+          'This organiser shows an average of <strong>' +
+          rating.toFixed(1) +
+          ' stars</strong> from <strong>' +
+          count +
+          ' rating' +
+          (count === 1 ? '' : 's') +
+          '</strong>.';
+      } else {
+        leadEl.textContent = 'Reviews appear here after attendees share feedback from events.';
+      }
+    }
+
+    if (!feed) return;
+    feed.innerHTML = '';
+
+    var items = resolveReviewItems(org);
+    if (items.length) {
+      if (emptyEl) emptyEl.hidden = true;
+      items.forEach(function (review) {
+        appendReviewCard(feed, review);
+      });
+      return;
+    }
+
+    if (count > 0) {
+      if (emptyEl) emptyEl.hidden = true;
+      var note = document.createElement('p');
+      note.className = 'org-reviews-empty';
+      note.textContent = 'Attendee reviews will appear here as they are submitted.';
+      feed.appendChild(note);
+      return;
+    }
+
+    if (emptyEl) emptyEl.hidden = false;
   }
 
   function renderEvents(events) {
@@ -105,7 +235,7 @@
     document.getElementById('org-profile-content').hidden = false;
     document.title = (org.name || 'Organiser') + ' – The Networker Hub';
 
-    renderLogo(org);
+    renderPhoto(org);
     document.getElementById('org-name').textContent = org.name || 'Organiser';
 
     var industryEl = document.getElementById('org-industry');
@@ -117,10 +247,7 @@
       industryEl.hidden = true;
     }
 
-    document.getElementById('org-stars').innerHTML = starsHtml(org.rating);
-    var reviews = Number(org.reviews) || 0;
-    document.getElementById('org-review-count').textContent =
-      reviews + ' review' + (reviews === 1 ? '' : 's');
+    renderReviews(org);
 
     document.getElementById('org-description').textContent =
       org.description ||

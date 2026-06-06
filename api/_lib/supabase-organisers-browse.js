@@ -76,6 +76,10 @@ function rowToPublicOrganiser(row, eventCount, options) {
     base.events = options.events;
   }
 
+  if (options.includeReviews && Array.isArray(options.reviewItems)) {
+    base.reviewItems = options.reviewItems;
+  }
+
   return base;
 }
 
@@ -139,6 +143,32 @@ function eventsForOrganiser(organiserId, visibleEvents, orgById) {
     });
 }
 
+async function fetchOrganiserReviews(sb, organiserId) {
+  const { data, error } = await sb
+    .from('reviews')
+    .select('id, rating, review_text, created_at, attendees(name, email)')
+    .eq('organiser_id', organiserId)
+    .order('created_at', { ascending: false })
+    .limit(12);
+  if (error) throw new Error(error.message);
+
+  return (data || [])
+    .map((row) => ({
+      id: row.id,
+      rating: Number(row.rating) || 0,
+      text: String(row.review_text || '').trim(),
+      name: row.attendees?.name || row.attendees?.email || 'Attendee',
+      date: row.created_at
+        ? new Date(row.created_at).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          })
+        : '',
+    }))
+    .filter((item) => item.rating > 0 && item.text);
+}
+
 async function listPublicOrganisers() {
   if (!isSupabaseConfigured()) return [];
   const sb = getSupabaseAdmin();
@@ -168,8 +198,14 @@ async function getPublicOrganiserBySlug(slug) {
 
   const { visibleEvents, orgById } = await loadPublishedEventIndex(sb);
   const events = eventsForOrganiser(row.id, visibleEvents, orgById);
+  const reviewItems = await fetchOrganiserReviews(sb, row.id);
 
-  return rowToPublicOrganiser(row, events.length, { includeEvents: true, events });
+  return rowToPublicOrganiser(row, events.length, {
+    includeEvents: true,
+    events,
+    includeReviews: true,
+    reviewItems,
+  });
 }
 
 async function getPublicOrganiserById(id) {
@@ -184,8 +220,14 @@ async function getPublicOrganiserById(id) {
 
   const { visibleEvents, orgById } = await loadPublishedEventIndex(sb);
   const events = eventsForOrganiser(row.id, visibleEvents, orgById);
+  const reviewItems = await fetchOrganiserReviews(sb, row.id);
 
-  return rowToPublicOrganiser(row, events.length, { includeEvents: true, events });
+  return rowToPublicOrganiser(row, events.length, {
+    includeEvents: true,
+    events,
+    includeReviews: true,
+    reviewItems,
+  });
 }
 
 module.exports = {
