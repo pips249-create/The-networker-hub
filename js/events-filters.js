@@ -323,7 +323,10 @@
   var clearBtn = document.getElementById('clear-filters');
   if (clearBtn) {
     clearBtn.addEventListener('click', function () {
-      if (document.body.classList.contains('browse-mode-organisers')) return;
+      if (document.body.classList.contains('browse-mode-organisers')) {
+        if (window.hubResetOrganiserFilters) window.hubResetOrganiserFilters();
+        return;
+      }
       resetFilters();
     });
   }

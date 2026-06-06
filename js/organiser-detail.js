@@ -62,9 +62,15 @@
 
   function queryParams() {
     var params = new URLSearchParams(location.search);
+    var slug = params.get('slug') || '';
+    var id = params.get('id') || '';
+    if (!slug && !id) {
+      var pathMatch = location.pathname.match(/\/organisers\/([^/]+)\/?$/i);
+      if (pathMatch) slug = decodeURIComponent(pathMatch[1]);
+    }
     return {
-      slug: params.get('slug') || '',
-      id: params.get('id') || '',
+      slug: slug,
+      id: id,
     };
   }
 

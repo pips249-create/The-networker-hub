@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome – The Networker Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/hub.css?v=20260626" />
+    <link rel="stylesheet" href="css/auth.css?v=20260605" />
+    <link rel="stylesheet" href="css/hub-mobile.css?v=20260626" />
+  </head>
+  <body class="auth-page">
+    <div id="hub-site-nav"></div>
+    <script src="js/site-nav.js?v=20260627" data-root="" data-page="auth"></script>
+
+    <main class="auth-main auth-main--wizard">
+      <div class="auth-wizard-shell auth-wizard-shell--wide">
+        <ol class="auth-wizard-steps" aria-label="Account setup progress">
+          <li class="auth-wizard-step is-done">
+            <span class="auth-wizard-num">1</span>
+            <span class="auth-wizard-label">Your account</span>
+          </li>
+          <li class="auth-wizard-step is-current" aria-current="step">
+            <span class="auth-wizard-num">2</span>
+            <span class="auth-wizard-label">Get started</span>
+          </li>
+        </ol>
+
+        <div class="auth-card auth-card--wizard auth-card--welcome">
+          <h1>What would you like to do?</h1>
+          <p class="auth-lede">
+            Pick the path that fits you best. You can always switch between browsing events and managing your organiser
+            dashboard later.
+          </p>
+
+          <div class="auth-path-grid" role="list">
+            <button type="button" class="auth-path-card" data-welcome-path="find-event">
+              <span class="auth-path-icon" aria-hidden="true">🔍</span>
+              <span class="auth-path-title">Find an event</span>
+              <span class="auth-path-desc">Browse networking meetings, exhibitions and conferences.</span>
+            </button>
+            <button type="button" class="auth-path-card" data-welcome-path="list-event">
+              <span class="auth-path-icon" aria-hidden="true">📅</span>
+              <span class="auth-path-title">List an event</span>
+              <span class="auth-path-desc">Create a group profile and publish your first event listing.</span>
+            </button>
+            <button type="button" class="auth-path-card" data-welcome-path="find-workshop">
+              <span class="auth-path-icon" aria-hidden="true">🎓</span>
+              <span class="auth-path-title">Find a workshop or seminar</span>
+              <span class="auth-path-desc">Explore training sessions on The Networker Academy.</span>
+            </button>
+            <button type="button" class="auth-path-card" data-welcome-path="list-workshop">
+              <span class="auth-path-icon" aria-hidden="true">✨</span>
+              <span class="auth-path-title">List a workshop or seminar</span>
+              <span class="auth-path-desc">Open your organiser dashboard to prepare an Academy session.</span>
+            </button>
+          </div>
+
+          <p class="auth-welcome-skip">
+            <a href="events/index.html">Skip for now — browse events</a>
+            ·
+            <a href="account/index.html">Go to my account</a>
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <script src="js/hub-organiser-actions.js?v=20260605" data-root=""></script>
+    <script src="js/welcome.js?v=20260605"></script>
+  </body>
+</html>

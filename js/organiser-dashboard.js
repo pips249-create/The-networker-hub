@@ -1053,6 +1053,34 @@
     if (location.hash.replace('#', '') !== hash) {
       history.replaceState(null, '', '#' + hash);
     }
+
+    if (page === 'team') {
+      markTeamNavSeen();
+    }
+  }
+
+  window.orgDashSetRoute = setRoute;
+
+  function markTeamNavSeen() {
+    const badge = document.getElementById('org-team-nav-badge');
+    if (badge) badge.hidden = true;
+    try {
+      localStorage.setItem('hub_team_nav_seen', '1');
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function updateTeamNavBadge() {
+    const badge = document.getElementById('org-team-nav-badge');
+    if (!badge) return;
+    let seen = false;
+    try {
+      seen = localStorage.getItem('hub_team_nav_seen') === '1';
+    } catch (e) {
+      /* ignore */
+    }
+    badge.hidden = seen;
   }
 
   function openModal(id) {
@@ -1536,6 +1564,10 @@
     if (!body) return;
     body.innerHTML = '';
     if (inviteBtn) inviteBtn.hidden = !state.canManageTeam;
+    const editorNote = document.getElementById('team-editor-note');
+    if (editorNote) {
+      editorNote.hidden = state.canManageTeam || state.organiserRole === 'owner';
+    }
     if (teamPage) {
       let errEl = teamPage.querySelector('.org-team-error');
       if (state.teamError) {
@@ -1792,6 +1824,10 @@
 
     applyPendingGroupSave();
     renderAll();
+    updateTeamNavBadge();
+    if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
+      window.HubOrganiserOnboarding.initAfterDashboardReady();
+    }
     } finally {
       setDashboardLoading(false);
     }

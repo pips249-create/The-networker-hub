@@ -117,8 +117,9 @@
           if (window.hubApplyOrganiserFilters) window.hubApplyOrganiserFilters();
         });
       }
-    } else if (!options.skipEventsRefresh && window.hubApplyFilters) {
-      window.hubApplyFilters();
+    } else if (!options.skipEventsRefresh) {
+      if (window.hubApplyFilters) window.hubApplyFilters();
+      else if (window.hubRefreshListings) window.hubRefreshListings();
       if (window.hubReloadSponsorBlock) window.hubReloadSponsorBlock();
     }
 
@@ -135,7 +136,8 @@
   }
 
   modeBtns.forEach(function (btn) {
-    btn.addEventListener('click', function () {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
       var mode = btn.getAttribute('data-browse-mode') || 'events';
       if (mode === currentMode()) return;
       setMode(mode);

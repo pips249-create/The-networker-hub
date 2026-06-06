@@ -37,6 +37,11 @@
     createAccountLink.setAttribute('href', withNextParam('register.html'));
   }
 
+  var createAccountHero = document.getElementById('login-create-account-hero');
+  if (createAccountHero) {
+    createAccountHero.setAttribute('href', withNextParam('register.html'));
+  }
+
   var registerSignInLink = document.getElementById('register-signin-link');
   if (registerSignInLink) {
     registerSignInLink.setAttribute('href', withNextParam('login.html'));
@@ -134,7 +139,7 @@
           }
           showMessage(msg, result.data.message || 'Account created — taking you in…', 'success');
           setTimeout(function () {
-            window.location.href = result.data.redirect || next || '/account/index.html';
+            window.location.href = result.data.redirect || next || '/welcome.html';
           }, 600);
         })
         .catch(function () {

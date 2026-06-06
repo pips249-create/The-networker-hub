@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260624" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
     <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260620" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260626" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
@@ -34,7 +35,10 @@
           <nav class="hub-side-nav hub-side-nav--minimal org-dash-bar" aria-label="Organiser dashboard">
             <a href="#dashboard" class="hub-side-nav-link is-active" data-org-route="dashboard">Overview</a>
             <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Group profiles</a>
-            <a href="#team" class="hub-side-nav-link" data-org-route="team">Team</a>
+            <a href="#team" class="hub-side-nav-link" data-org-route="team" id="org-nav-team">
+              Team &amp; invites
+              <span class="org-nav-badge" id="org-team-nav-badge" hidden>New</span>
+            </a>
             <a href="#academy" class="hub-side-nav-link" data-org-route="academy">The Academy</a>
             <span class="hub-side-nav-divider">My events</span>
             <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">Events</a>
@@ -58,6 +62,36 @@
 
         <!-- Overview -->
         <section class="org-page is-active" id="org-page-dashboard" data-org-page="dashboard">
+          <div class="org-getting-started" id="org-getting-started">
+            <div class="org-getting-started-head">
+              <div>
+                <h2 class="org-getting-started-title">Here&apos;s what to do first</h2>
+                <p class="org-section-sub org-getting-started-sub">
+                  A quick checklist to get your organiser workspace set up. Need a walkthrough?
+                  <button type="button" class="org-getting-started-link" id="org-start-tour">Take the dashboard tour</button>
+                </p>
+              </div>
+              <button type="button" class="org-btn org-btn-outline org-btn-sm" id="org-getting-started-dismiss">Dismiss</button>
+            </div>
+            <ol class="org-getting-started-list">
+              <li>
+                <strong>Create a group profile</strong>
+                <span>Your public organiser page on the hub.</span>
+                <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-getting-action="group">Add group profile</button>
+              </li>
+              <li>
+                <strong>List your first event</strong>
+                <span>Meetings, exhibitions and conferences under that group.</span>
+                <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-getting-action="event">List an event</button>
+              </li>
+              <li>
+                <strong>Invite team members</strong>
+                <span>Add editors from <em>Team &amp; invites</em> in the sidebar.</span>
+                <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-getting-action="team">Open team page</button>
+              </li>
+            </ol>
+          </div>
+
           <div class="org-overview-add" id="org-add-menu-wrap">
             <button
               type="button"
@@ -236,6 +270,9 @@
             <div>
               <h2 class="org-section-title">Team members</h2>
               <p class="org-section-sub">Invite editors to help manage events. Only the account owner can invite or remove team members.</p>
+              <p class="org-section-sub org-team-editor-note" id="team-editor-note" hidden>
+                You&apos;re signed in as an <strong>editor</strong>. You can manage events, but only the account owner can send invites.
+              </p>
             </div>
             <button type="button" class="org-btn org-btn-gold" id="btn-invite-team">Invite team member</button>
           </div>
@@ -651,7 +688,22 @@
       </div>
     </div>
 
+    <div id="org-onboard-tour" class="org-onboard" hidden aria-hidden="true">
+      <div class="org-onboard-backdrop" data-onboard-skip></div>
+      <div class="org-onboard-spotlight" aria-hidden="true"></div>
+      <div class="org-onboard-popover" role="dialog" aria-modal="true" aria-labelledby="org-onboard-title">
+        <p class="org-onboard-step">1 of 4</p>
+        <h2 class="org-onboard-title" id="org-onboard-title">Welcome</h2>
+        <p class="org-onboard-body"></p>
+        <div class="org-onboard-actions">
+          <button type="button" class="org-btn org-btn-outline org-btn-sm" data-onboard-skip>Skip tour</button>
+          <button type="button" class="org-btn org-btn-gold org-btn-sm" data-onboard-next>Next</button>
+        </div>
+      </div>
+    </div>
+
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
-    <script src="../js/organiser-dashboard.js?v=20260614e"></script>
+    <script src="../js/organiser-onboarding.js?v=20260605"></script>
+    <script src="../js/organiser-dashboard.js?v=20260605"></script>
   </body>
 </html>

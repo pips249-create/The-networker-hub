@@ -25,18 +25,16 @@
 .organiser-card-header {
   position: relative;
   background: linear-gradient(165deg, #e8f2ff 0%, #d6e8ff 100%);
-  padding: 16px 16px 20px;
-  min-height: 148px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
+  padding: 0;
+  min-height: 0;
+  display: block;
 }
 
 .organiser-card-industry {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -53,8 +51,9 @@
 
 .organiser-card-count {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
   font-size: 11px;
   font-weight: 600;
   color: #2563eb;
@@ -65,12 +64,13 @@
 }
 
 .organiser-card-logo-wrap {
-  width: 88px;
-  height: 88px;
-  border-radius: 12px;
+  width: 100%;
+  min-height: 112px;
+  aspect-ratio: 16 / 9;
+  border-radius: 0;
   background: #fff;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 4px 14px rgba(30, 58, 95, 0.12);
+  border: none;
+  box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -81,13 +81,21 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 8px;
+  object-position: center;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  background: #fff;
 }
 
 .organiser-card-logo-placeholder {
-  font-size: 28px;
+  font-size: 42px;
   font-weight: 700;
   color: #64748b;
+  width: 100%;
+  min-height: 112px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .organiser-card-body {
@@ -216,7 +224,7 @@ body.browse-mode-organisers .events-type-tabs {
 }
 
 body.browse-mode-organisers .events-promo-section.spotlight-sponsor-row {
-  grid-template-columns: minmax(340px, 400px);
+  grid-template-columns: minmax(260px, 300px);
   justify-content: start;
 }
 
@@ -270,8 +278,12 @@ body.browse-mode-organisers .events-filter-bar {
   border-color: rgba(37, 99, 235, 0.14);
 }
 
-body.browse-mode-organisers .browse-mode-btn.is-active {
+body.browse-mode-organisers .events-browse-switch .browse-mode-btn.is-active {
   background: #2563eb;
+}
+
+body.browse-mode-organisers .events-browse-switch {
+  background: rgba(255, 255, 255, 0.92);
 }
 
 body.browse-mode-organisers .filter-checkbox input:checked + .filter-checkbox-box {

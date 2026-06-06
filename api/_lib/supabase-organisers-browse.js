@@ -191,9 +191,22 @@ async function getPublicOrganiserBySlug(slug) {
   if (!s) return null;
   if (!isSupabaseConfigured()) return null;
   const sb = getSupabaseAdmin();
+  const slugLower = s.toLowerCase();
 
-  const { data: row, error } = await sb.from('organisers').select('*').eq('slug', s).maybeSingle();
+  let row = null;
+  const { data: byStored, error } = await sb.from('organisers').select('*').eq('slug', s).maybeSingle();
   if (error) throw new Error(error.message);
+  if (byStored && isPublicOrganiser(byStored)) row = byStored;
+
+  if (!row) {
+    const rows = await fetchPublicOrganiserRows(sb);
+    row =
+      rows.find((candidate) => {
+        const pub = publicOrganiserSlug(candidate);
+        return pub && String(pub).toLowerCase() === slugLower;
+      }) || null;
+  }
+
   if (!row || !isPublicOrganiser(row)) return null;
 
   const { visibleEvents, orgById } = await loadPublishedEventIndex(sb);

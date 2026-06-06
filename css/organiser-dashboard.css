@@ -1538,3 +1538,189 @@
     min-width: 720px;
   }
 }
+
+/* ─── Getting started checklist ─── */
+.org-getting-started {
+  margin-bottom: 24px;
+  padding: 20px 22px;
+  border-radius: var(--od-radius);
+  border: 1px solid var(--od-border-soft);
+  background: linear-gradient(135deg, var(--od-purple-pale) 0%, var(--od-white) 100%);
+}
+
+.org-getting-started-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.org-getting-started-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.org-getting-started-sub {
+  margin: 0;
+}
+
+.org-getting-started-link {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  color: var(--od-purple);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.org-getting-started-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.org-getting-started-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: var(--od-radius-sm);
+  background: var(--od-white);
+  border: 1px solid var(--od-border-soft);
+}
+
+.org-getting-started-list li strong {
+  grid-column: 1;
+  font-size: 14px;
+}
+
+.org-getting-started-list li span {
+  grid-column: 1;
+  font-size: 12px;
+  color: var(--od-text-soft);
+}
+
+.org-getting-started-list li .org-btn {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+.org-team-editor-note {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: var(--od-radius-sm);
+  background: var(--od-gold-light);
+  border: 1px solid #e8d4a8;
+}
+
+.org-nav-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  background: var(--od-gold);
+  color: #fff;
+  vertical-align: middle;
+}
+
+.hub-side-nav-link .org-nav-badge {
+  margin-left: 4px;
+}
+
+/* ─── First-login dashboard tour ─── */
+body.org-onboard-active {
+  overflow: hidden;
+}
+
+.org-onboard {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+}
+
+.org-onboard.is-open {
+  display: block;
+}
+
+.org-onboard-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 35, 45, 0.55);
+}
+
+.org-onboard-spotlight {
+  position: fixed;
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(15, 35, 45, 0.55);
+  pointer-events: none;
+  z-index: 1;
+  transition: top 0.2s, left 0.2s, width 0.2s, height 0.2s;
+}
+
+.org-onboard-popover {
+  position: fixed;
+  z-index: 2;
+  left: 50%;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(420px, calc(100vw - 32px));
+  padding: 20px 22px;
+  border-radius: 14px;
+  background: var(--od-white);
+  border: 1px solid var(--od-border-soft);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.org-onboard-step {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--od-text-soft);
+}
+
+.org-onboard-title {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.org-onboard-body {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--od-text-mid);
+}
+
+.org-onboard-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .org-getting-started-list li {
+    grid-template-columns: 1fr;
+  }
+
+  .org-getting-started-list li .org-btn {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+    margin-top: 6px;
+  }
+}

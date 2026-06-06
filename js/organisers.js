@@ -37,9 +37,12 @@
   }
 
   function organiserHref(org) {
+    if (org && org.id) {
+      return 'organiser.html?id=' + encodeURIComponent(org.id);
+    }
     var slug = org.slug ? String(org.slug).trim() : '';
     if (slug) return '/organisers/' + encodeURIComponent(slug);
-    return 'organiser.html?id=' + encodeURIComponent(org.id);
+    return 'organiser.html';
   }
 
   function logoHtml(org) {

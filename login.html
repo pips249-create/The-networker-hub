@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,51 +8,68 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260626">
-<link rel="stylesheet" href="css/auth.css">
-    <link rel="stylesheet" href="css/hub-mobile.css?v=20260626" />
-
+<link rel="stylesheet" href="css/auth.css?v=20260605">
+<link rel="stylesheet" href="css/hub-mobile.css?v=20260626">
 </head>
 <body class="auth-page">
 
 <div id="hub-site-nav"></div>
 <script src="js/site-nav.js?v=20260627" data-root="" data-page="auth"></script>
 
-<main class="auth-main">
-  <div class="auth-card">
-    <h1>Sign in</h1>
-    <p class="auth-lede">Use your Networker Hub account. Stay signed in as you browse — admin users can open the Admin panel from the top nav.</p>
+<main class="auth-main auth-main--split">
+  <div class="auth-split">
+    <aside class="auth-panel auth-panel--brand" aria-hidden="false">
+      <p class="auth-panel-kicker">The Networker Hub</p>
+      <h1 class="auth-panel-title">Events, workshops &amp; your organiser dashboard</h1>
+      <p class="auth-panel-lede">
+        Sign in to book tickets, manage group profiles, list events, and run your organiser workspace.
+      </p>
+      <ul class="auth-panel-points">
+        <li>Browse and book networking events</li>
+        <li>List events under your group profile</li>
+        <li>Workshops &amp; seminars via The Networker Academy</li>
+      </ul>
+      <a href="register.html" class="auth-panel-cta" id="login-create-account-hero">Create a free account</a>
+    </aside>
 
-    <div id="auth-message" class="auth-message" role="alert"></div>
+    <div class="auth-panel auth-panel--form">
+      <div class="auth-card auth-card--flat">
+        <h2 class="auth-form-title">Sign in</h2>
+        <p class="auth-lede">Welcome back — use the email and password for your Hub account.</p>
 
-    <form id="login-form" novalidate>
-      <div class="auth-field">
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@company.com">
-      </div>
-      <div class="auth-field">
-        <label for="password">Password</label>
-        <div class="password-input-wrap">
-          <input type="password" id="password" name="password" autocomplete="current-password" required placeholder="Your password">
-          <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">Show</button>
+        <div id="auth-message" class="auth-message" role="alert"></div>
+
+        <form id="login-form" novalidate>
+          <div class="auth-field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@company.com">
+          </div>
+          <div class="auth-field">
+            <label for="password">Password</label>
+            <div class="password-input-wrap">
+              <input type="password" id="password" name="password" autocomplete="current-password" required placeholder="Your password">
+              <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">Show</button>
+            </div>
+          </div>
+          <div class="auth-actions">
+            <button type="submit" class="auth-submit" id="login-submit">Sign in</button>
+          </div>
+        </form>
+
+        <div class="auth-register-cta">
+          <p class="auth-register-text">New to The Networker Hub?</p>
+          <a href="register.html" class="auth-secondary-btn auth-secondary-btn--prominent" id="login-create-account">Create an account</a>
+        </div>
+
+        <div class="auth-links">
+          <a href="forgot-password.html">Forgot password?</a>
+          <a href="events/index.html">← Back to events</a>
         </div>
       </div>
-      <div class="auth-actions">
-        <button type="submit" class="auth-submit" id="login-submit">Sign in</button>
-      </div>
-    </form>
-
-    <div class="auth-register-cta">
-      <p class="auth-register-text">New to The Networker Hub?</p>
-      <a href="register.html" class="auth-secondary-btn" id="login-create-account">Create an account</a>
-    </div>
-
-    <div class="auth-links">
-      <a href="forgot-password.html">Forgot password?</a>
-      <a href="events/index.html">← Back to events</a>
     </div>
   </div>
 </main>
 
-<script src="js/auth.js?v=20260623"></script>
+<script src="js/auth.js?v=20260605"></script>
 </body>
 </html>

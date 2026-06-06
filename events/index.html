@@ -11,9 +11,9 @@
 <link rel="stylesheet" href="../css/hub.css?v=20260627">
 <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627">
 <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e">
-<link rel="stylesheet" href="../css/events-page.css?v=20260630e">
+<link rel="stylesheet" href="../css/events-page.css?v=20260630f">
 <link rel="stylesheet" href="../css/events-filter-bar.css?v=20260630c">
-<link rel="stylesheet" href="../css/organisers-browse.css?v=20260630d">
+<link rel="stylesheet" href="../css/organisers-browse.css?v=20260630f">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 </head>
@@ -41,6 +41,12 @@
   <div class="hero-inner">
     <h1>Find your next <span class="accent">event</span></h1>
     <p class="hero-types">Find networking events, exhibitions and conferences across the UK</p>
+    <div class="events-browse-switch-wrap">
+      <div class="browse-mode-toggle events-browse-switch" role="tablist" aria-label="Browse mode">
+        <button type="button" class="browse-mode-btn is-active" data-browse-mode="events" role="tab" aria-selected="true">Events</button>
+        <button type="button" class="browse-mode-btn" data-browse-mode="organisers" role="tab" aria-selected="false">Organisers</button>
+      </div>
+    </div>
     <div class="events-hero-actions">
       <button type="button" class="btn btn-secondary" data-hub-action="add-group">Add your group profile</button>
       <button type="button" class="btn btn-primary" data-hub-action="add-event">List an event</button>
@@ -190,10 +196,6 @@
     <div class="events-results-meta">
       <span>Showing <strong id="results-count">0</strong> results</span>
       <div class="events-results-actions">
-        <div class="browse-mode-toggle" role="tablist" aria-label="Browse mode">
-          <button type="button" class="browse-mode-btn is-active" data-browse-mode="events" role="tab" aria-selected="true">Events</button>
-          <button type="button" class="browse-mode-btn" data-browse-mode="organisers" role="tab" aria-selected="false">Organisers</button>
-        </div>
         <button type="button" id="clear-filters" class="clear-filters-link">Clear filters</button>
         <div class="events-sort-wrap">
           <label for="sort">Sort by</label>
@@ -255,15 +257,15 @@
 <script src="../js/hub-favourites.js?v=20260629"></script>
 <script src="../js/postcode-outcode.js?v=20260613"></script>
 <script src="../js/postcode-geo.js?v=20260613"></script>
-<script src="../js/events-filters.js?v=20260630b"></script>
+<script src="../js/events-filters.js?v=20260630f"></script>
 <script src="../js/events-map.js?v=20260629"></script>
 <script src="../js/hub-loading.js?v=20260630e"></script>
 <script src="../js/cms-sponsor-fields.js?v=20260630c"></script>
 <script src="../js/flexible-event-image.js?v=20260628a"></script>
 <script src="../js/events.js?v=20260630e"></script>
 <script src="../js/organisers-filters.js?v=20260630b"></script>
-<script src="../js/organisers.js?v=20260630e"></script>
+<script src="../js/organisers.js?v=20260630f"></script>
 <script src="../js/hub-organiser-actions.js?v=20260630b" data-root="../"></script>
-<script src="../js/browse-mode.js?v=20260630c"></script>
+<script src="../js/browse-mode.js?v=20260630f"></script>
 </body>
 </html>
