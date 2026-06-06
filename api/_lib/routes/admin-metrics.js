@@ -1,5 +1,5 @@
-const { sessionFromRequest, requireAdmin, json, setCors } = require('../_lib/auth');
-const { getAdminDashboard } = require('../_lib/admin-supabase-data');
+const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
+const { getAdminDashboard } = require('../admin-supabase-data');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);

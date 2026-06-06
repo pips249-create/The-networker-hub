@@ -1,5 +1,5 @@
-const { sessionFromRequest, requireAdmin, json, setCors } = require('../_lib/auth');
-const { getAdminUsers } = require('../_lib/admin-supabase-data');
+const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
+const { scanEventHealth } = require('../admin-event-health');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -12,9 +12,9 @@ module.exports = async function handler(req, res) {
   if (!gate.ok) return json(res, gate.status, { error: gate.error });
 
   try {
-    const report = await getAdminUsers();
-    return json(res, 200, { ok: true, ...report });
+    const report = await scanEventHealth();
+    return json(res, 200, { ok: true, ...report, updatedAt: new Date().toISOString() });
   } catch (e) {
-    return json(res, 500, { ok: false, error: 'users_failed', message: e.message });
+    return json(res, 500, { ok: false, error: 'health_scan_failed', message: e.message });
   }
 };

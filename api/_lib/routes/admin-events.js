@@ -1,5 +1,5 @@
-const { sessionFromRequest, requireAdmin, json, setCors } = require('../_lib/auth');
-const { getSupabaseAdmin, isSupabaseConfigured } = require('../_lib/supabase');
+const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
+const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 
 function parseBody(req) {
   let body = req.body;

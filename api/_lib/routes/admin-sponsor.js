@@ -1,7 +1,7 @@
-const { sessionFromRequest, requireAdmin, json, setCors } = require('../_lib/auth');
-const { getAdminSponsor, saveSponsorBlock } = require('../_lib/admin-supabase-data');
-const { getSupabaseAdmin, isSupabaseConfigured } = require('../_lib/supabase');
-const { resolveImageUrl } = require('../_lib/supabase-storage');
+const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
+const { getAdminSponsor, saveSponsorBlock } = require('../admin-supabase-data');
+const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
+const { resolveImageUrl } = require('../supabase-storage');
 
 function parseBody(req) {
   let body = req.body;

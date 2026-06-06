@@ -6,9 +6,9 @@ const {
   setSessionCookie,
   normalizeRole,
   appendSystemLog,
-} = require('../_lib/auth');
-const { useSupabase } = require('../_lib/supabase');
-const sbAuth = require('../_lib/supabase-auth');
+} = require('../auth');
+const { useSupabase } = require('../supabase');
+const sbAuth = require('../supabase-auth');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -56,7 +56,7 @@ module.exports = async function handler(req, res) {
     if (useSupabase()) {
       target = await sbAuth.findUserByEmail(email);
     } else {
-      const { findUserByEmail } = require('../_lib/auth');
+      const { findUserByEmail } = require('../auth');
       target = await findUserByEmail(email);
     }
 

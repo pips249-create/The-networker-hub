@@ -307,7 +307,7 @@ body.nav-menu-open {
     padding: 20px 16px 24px;
   }
 
-  .events-page .events-hero h1 {
+  .events-page .events-hero-copy h1 {
     font-size: clamp(1.85rem, 8vw, 2.35rem);
   }
 
@@ -315,7 +315,7 @@ body.nav-menu-open {
     text-align: center;
   }
 
-  .events-page .events-hero .hero-types {
+  .events-page .events-hero-copy .hero-types {
     margin-left: auto;
     margin-right: auto;
   }
@@ -447,9 +447,14 @@ body.nav-menu-open {
   }
 
   body.browse-mode-organisers .events-hero-sponsor-slot {
-    max-width: 360px;
+    max-width: 320px;
     margin: 0 auto;
     width: 100%;
+  }
+
+  .premium-spotlight {
+    width: 100%;
+    max-width: 100%;
   }
 
   .events-organiser-footnote {

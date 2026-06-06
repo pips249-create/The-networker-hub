@@ -270,18 +270,72 @@ body.browse-mode-organisers .events-hero {
   padding-bottom: 28px;
 }
 
+body.browse-mode-organisers .shell {
+  max-width: 1200px;
+}
+
 body.browse-mode-organisers .sponsor-hub--in-hero {
   background: linear-gradient(165deg, #fff 0%, #f8fbff 55%, #eef4ff 100%);
   border-color: rgba(37, 99, 235, 0.18);
   box-shadow: 0 4px 18px rgba(37, 99, 235, 0.08);
+  padding: 12px 14px 14px;
+  height: auto;
+  position: static;
+  top: auto;
+}
+
+body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-hub-head {
+  margin-bottom: 10px;
+  padding-right: 64px;
+  font-size: 14px;
 }
 
 body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-hub-head .icon {
   color: #2563eb;
+  font-size: 14px;
+}
+
+body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-logo-wrap {
+  margin: 0 -14px 10px;
+  width: calc(100% + 28px);
+  min-height: 64px;
+  padding: 8px 10px;
+}
+
+body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-logo-wrap.sponsor-logo-band {
+  padding: 8px 10px;
+}
+
+body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-logo,
+body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-logo--full {
+  max-height: 64px;
+}
+
+body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-company {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-tagline {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-body,
+body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-list {
+  font-size: 11px;
+  line-height: 1.45;
+  margin-bottom: 10px;
+}
+
+body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-list li {
+  margin-bottom: 4px;
 }
 
 body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-cta {
   background: #1e3a5f;
+  padding: 10px 12px;
+  font-size: 12px;
 }
 
 body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-cta:hover {

@@ -2,13 +2,14 @@
   "version": 2,
   "functions": {
     "api/auth.js": { "maxDuration": 15 },
+    "api/admin.js": { "maxDuration": 15 },
     "api/organiser.js": { "maxDuration": 15 },
     "api/organisers.js": { "maxDuration": 15 },
-    "api/events.js": { "maxDuration": 15 },
-    "api/admin/metrics.js": { "maxDuration": 15 }
+    "api/events.js": { "maxDuration": 15 }
   },
   "rewrites": [
     { "source": "/api/auth/:path*", "destination": "/api/auth" },
+    { "source": "/api/admin/:path*", "destination": "/api/admin" },
     { "source": "/api/organiser/:path*", "destination": "/api/organiser" },
     {
       "source": "/events/:slug",
