@@ -5,8 +5,11 @@
   var dateRangeInput = document.getElementById('date-range');
   var checkInPerson = document.getElementById('check-inperson');
   var checkOnline = document.getElementById('check-online');
-  var checkFree = document.getElementById('check-free');
-  var checkPaid = document.getElementById('check-paid');
+  var priceMin = document.getElementById('price-min');
+  var priceMax = document.getElementById('price-max');
+  var priceMinOut = document.getElementById('price-min-out');
+  var priceMaxOut = document.getElementById('price-max-out');
+  var PRICE_SLIDER_MAX = 500;
   var toggleNearMe = document.getElementById('toggle-nearme');
   var nearRadius = document.getElementById('near-radius');
   var nearRadiusWrap = document.getElementById('near-radius-wrap');
@@ -48,6 +51,71 @@
     }
     return null;
   }
+
+  function eventTicketPrice(ev) {
+    var n = Number(ev.priceNum);
+    if (!Number.isNaN(n) && n >= 0) return n;
+    if (ev.priceKey === 'free') return 0;
+    return 0;
+  }
+
+  function formatPriceLabel(value, isMax) {
+    var n = Number(value) || 0;
+    var cap = priceMax ? Number(priceMax.max) || PRICE_SLIDER_MAX : PRICE_SLIDER_MAX;
+    if (isMax && n >= cap) return 'Any';
+    return '£' + n;
+  }
+
+  function syncPriceOutputs() {
+    if (priceMinOut && priceMin) priceMinOut.textContent = formatPriceLabel(priceMin.value, false);
+    if (priceMaxOut && priceMax) priceMaxOut.textContent = formatPriceLabel(priceMax.value, true);
+  }
+
+  function getPriceBounds() {
+    var minVal = priceMin ? Number(priceMin.value) || 0 : 0;
+    var maxVal = priceMax ? Number(priceMax.value) : PRICE_SLIDER_MAX;
+    if (maxVal < minVal) {
+      var swap = minVal;
+      minVal = maxVal;
+      maxVal = swap;
+      if (priceMin) priceMin.value = String(minVal);
+      if (priceMax) priceMax.value = String(maxVal);
+      syncPriceOutputs();
+    }
+    return { minVal: minVal, maxVal: maxVal };
+  }
+
+  function onPriceSliderInput(changed) {
+    var bounds = getPriceBounds();
+    if (changed === 'min' && priceMax && bounds.minVal > bounds.maxVal) {
+      priceMax.value = String(bounds.minVal);
+    }
+    if (changed === 'max' && priceMin && bounds.maxVal < bounds.minVal) {
+      priceMin.value = String(bounds.maxVal);
+    }
+    syncPriceOutputs();
+    applyFilters();
+  }
+
+  function initPriceSliderMax() {
+    var all = window.hubAllEvents || [];
+    if (!all.length || !priceMin || !priceMax) return;
+    var peak = 0;
+    all.forEach(function (ev) {
+      var n = eventTicketPrice(ev);
+      if (n > peak) peak = n;
+    });
+    var cap = PRICE_SLIDER_MAX;
+    if (peak > cap) cap = Math.ceil(peak / 10) * 10;
+    priceMin.max = String(cap);
+    priceMax.max = String(cap);
+    if (Number(priceMax.value) > cap || Number(priceMax.value) === PRICE_SLIDER_MAX) {
+      priceMax.value = String(cap);
+    }
+    syncPriceOutputs();
+  }
+
+  window.hubInitPriceFilter = initPriceSliderMax;
 
   function getNearRadiusMiles() {
     var n = nearRadius ? Number(nearRadius.value) : 25;
@@ -164,20 +232,11 @@
       if (dateToTs && evTs > dateToTs) return false;
     }
 
-    var wantFree = checkFree && checkFree.checked;
-    var wantPaid = checkPaid && checkPaid.checked;
-    if (checkFree || checkPaid) {
-      if (!wantFree && !wantPaid) return false;
-      var hasFree = Boolean(ev.hasFreeTickets);
-      var hasPaid = Boolean(ev.hasPaidTickets);
-      if (!hasFree && !hasPaid) {
-        hasFree = ev.priceKey === 'free';
-        hasPaid = ev.priceKey === 'paid';
-      }
-      if (wantFree && !wantPaid && !hasFree) return false;
-      if (wantPaid && !wantFree && !hasPaid) return false;
-      if (wantFree && wantPaid && !hasFree && !hasPaid) return false;
-    }
+    var bounds = getPriceBounds();
+    var ticketPrice = eventTicketPrice(ev);
+    var cap = priceMax ? Number(priceMax.max) || PRICE_SLIDER_MAX : PRICE_SLIDER_MAX;
+    if (ticketPrice < bounds.minVal) return false;
+    if (bounds.maxVal < cap && ticketPrice > bounds.maxVal) return false;
 
     if (toggleNearMe && toggleNearMe.checked) {
       var userCoords = window.hubUserCoords;
@@ -266,8 +325,11 @@
     dateToTs = null;
     if (checkInPerson) checkInPerson.checked = true;
     if (checkOnline) checkOnline.checked = true;
-    if (checkFree) checkFree.checked = true;
-    if (checkPaid) checkPaid.checked = true;
+    if (priceMin) priceMin.value = '0';
+    if (priceMax) {
+      priceMax.value = priceMax.max || String(PRICE_SLIDER_MAX);
+    }
+    syncPriceOutputs();
     if (toggleNearMe) toggleNearMe.checked = false;
     if (nearRadius) nearRadius.value = '25';
     window.hubUserCoords = null;
@@ -295,7 +357,19 @@
     el.addEventListener('change', applyFilters);
   }
 
-  [searchInput, sortSelect, checkInPerson, checkOnline, checkFree, checkPaid].forEach(bindFilter);
+  [searchInput, sortSelect, checkInPerson, checkOnline].forEach(bindFilter);
+
+  if (priceMin) {
+    priceMin.addEventListener('input', function () {
+      onPriceSliderInput('min');
+    });
+  }
+  if (priceMax) {
+    priceMax.addEventListener('input', function () {
+      onPriceSliderInput('max');
+    });
+  }
+  syncPriceOutputs();
 
   if (postcodeInput) {
     postcodeInput.addEventListener('input', onPostcodeInput);

@@ -391,6 +391,47 @@ body.hub-page-admin {
   padding-top: 0;
 }
 
+body.hub-page-admin .site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+}
+
+.hub-impersonation-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 10px 16px;
+  background: #2d1b4e;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.hub-impersonation-banner strong {
+  font-weight: 700;
+}
+
+.hub-impersonation-stop {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+}
+
+.hub-impersonation-stop:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
 body.hub-page-organiser,
 body.hub-page-account {
   padding-top: 0;

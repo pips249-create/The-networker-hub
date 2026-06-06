@@ -25,70 +25,81 @@
   margin-top: 18px;
 }
 
-.events-browse-switch {
-  display: inline-flex;
-}
-
-.events-hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 14px;
-}
-
-.events-hero-actions .btn {
+.events-hero-mode-switch {
   font-size: 14px;
-  padding: 12px 20px;
+  padding: 12px 22px;
 }
 
-.events-list-cta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.events-list-cta-btn {
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 8px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  border: 1.5px solid var(--lavender-deep);
-  background: #fff;
-  color: var(--lavender-deep);
-  white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
-}
-
-.events-list-cta-btn:hover {
-  background: var(--lavender-light);
-}
-
-.events-list-cta-btn--primary {
-  background: var(--lavender-deep);
-  color: #fff;
-  border-color: var(--lavender-deep);
-}
-
-.events-list-cta-btn--primary:hover {
-  background: #6a3588;
+body.browse-mode-organisers .events-hero-mode-switch {
+  background: #2563eb;
+  border-color: #2563eb;
   color: #fff;
 }
 
-body.browse-mode-organisers .events-list-cta-btn[data-hub-action="add-event"],
-body.browse-mode-organisers .events-hero-actions [data-hub-action="add-event"] {
+body.browse-mode-organisers .events-hero-mode-switch:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
+.events-list-cta-event-only {
   display: none;
 }
 
-@media (max-width: 700px) {
-  .events-list-cta {
-    width: 100%;
-    margin-left: 0;
-    margin-top: 4px;
-  }
+.events-list-cta-organiser-only {
+  display: none;
+}
+
+.events-organiser-footnote {
+  margin: 28px 0 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-soft);
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.events-organiser-footnote-label--organisers,
+.events-organiser-footnote-link--organisers {
+  display: none;
+}
+
+body.browse-mode-organisers .events-organiser-footnote-label--events,
+body.browse-mode-organisers .events-organiser-footnote-link--events {
+  display: none;
+}
+
+body.browse-mode-organisers .events-organiser-footnote-label--organisers,
+body.browse-mode-organisers .events-organiser-footnote-link--organisers {
+  display: inline;
+}
+
+.events-organiser-footnote-link {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  color: var(--lavender-deep);
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 4px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+body.browse-mode-organisers .events-organiser-footnote-link {
+  color: #2563eb;
+}
+
+.events-organiser-footnote-link:hover {
+  color: var(--charcoal);
+}
+
+/* Legacy toolbar CTAs removed — kept hidden if referenced elsewhere */
+.events-list-cta {
+  display: none !important;
 }
 
 .events-page .shell {

@@ -20,26 +20,33 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/hub.css?v=20260605">
+  <link rel="stylesheet" href="../css/hub-mobile.css?v=20260605">
 </head>
 <body class="bg-slate-50 font-sans text-slate-900 antialiased">
 
-  <div id="admin-gate" class="min-h-screen flex items-center justify-center p-6">
+  <div id="hub-site-nav"></div>
+  <script src="../js/site-nav.js?v=20260605" data-root="../" data-page="admin"></script>
+
+  <div id="admin-gate" class="min-h-[50vh] flex items-center justify-center p-6">
     <p class="text-slate-500" id="admin-gate-msg">Verifying admin access…</p>
   </div>
 
-  <div id="admin-shell" class="hidden min-h-screen">
-    <aside class="fixed inset-y-0 left-0 z-40 w-64 bg-brand-900 text-white flex flex-col shadow-xl">
+  <div id="admin-shell" class="hidden min-h-[calc(100vh-76px)]">
+    <aside class="fixed top-[76px] bottom-0 left-0 z-40 w-64 bg-brand-900 text-white flex flex-col shadow-xl">
       <div class="p-5 border-b border-white/10">
-        <a href="../index.html" class="text-xs uppercase tracking-widest text-brand-100/80 hover:text-white">← Hub</a>
-        <h1 class="mt-2 text-lg font-bold tracking-tight">Networker Admin</h1>
+        <h1 class="text-lg font-bold tracking-tight">Command Center</h1>
         <p class="text-xs text-brand-100/70 mt-1" id="sidebar-user">—</p>
       </div>
-      <nav class="flex-1 p-3 space-y-1" aria-label="Admin">
+      <nav class="flex-1 p-3 space-y-1 overflow-y-auto" aria-label="Admin">
         <a href="#dashboard" data-route="dashboard" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
           <span aria-hidden="true">◈</span> Overview
         </a>
         <a href="#users" data-route="users" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
           <span aria-hidden="true">◎</span> Users &amp; Accounts
+        </a>
+        <a href="#impersonate" data-route="impersonate" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
+          <span aria-hidden="true">⇄</span> Impersonate user
         </a>
         <a href="#event-health" data-route="event-health" class="admin-nav-link relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
           <span aria-hidden="true">⚠</span> Event data issues
@@ -60,8 +67,8 @@
       </div>
     </aside>
 
-    <main class="min-h-screen pl-64 relative z-10">
-      <header class="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+    <main class="min-h-[calc(100vh-76px)] pl-64 relative z-10">
+      <header class="sticky top-[76px] z-20 bg-white/90 backdrop-blur border-b border-slate-200 px-6 py-4 flex items-center justify-between">
         <div>
           <h2 class="text-xl font-bold text-brand-900" id="page-title">Overview Dashboard</h2>
           <p class="text-sm text-slate-500" id="page-subtitle">System-wide performance health check</p>
@@ -89,6 +96,6 @@
   </div>
 
     <script src="../js/cms-sponsor-fields.js?v=20260630c"></script>
-    <script src="../js/admin-app.js?v=20260630c"></script>
+    <script src="../js/admin-app.js?v=20260605"></script>
 </body>
 </html>

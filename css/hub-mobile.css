@@ -303,8 +303,32 @@ body.nav-menu-open {
 
 /* ─── Events browse ─── */
 @media (max-width: 720px) {
-  .events-page .hero {
+  .events-page .hero.events-hero {
     padding: 20px 16px 24px;
+  }
+
+  .events-page .events-hero h1 {
+    font-size: clamp(1.85rem, 8vw, 2.35rem);
+  }
+
+  .events-page .hero-inner {
+    text-align: center;
+  }
+
+  .events-page .events-hero .hero-types {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .events-browse-switch-wrap {
+    display: flex;
+    justify-content: center;
+  }
+
+  .events-hero-mode-switch {
+    width: 100%;
+    max-width: 280px;
+    justify-content: center;
   }
 
   .events-page .shell {
@@ -313,6 +337,55 @@ body.nav-menu-open {
     padding-bottom: 32px;
     max-width: 100%;
     box-sizing: border-box;
+  }
+
+  .events-filter-bar {
+    padding: 14px 14px 12px;
+  }
+
+  .filter-bar-row-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-bar-row-top .filter-field-grow,
+  .filter-bar-row-top .filter-field-postcode {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: none;
+  }
+
+  .filter-bar-cluster {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .filter-format-group,
+  .filter-price-range {
+    width: 100%;
+  }
+
+  .filter-date-wrap {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  .filter-map-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .events-results-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .events-results-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .events-toolbar {
@@ -361,6 +434,18 @@ body.nav-menu-open {
   .spotlight-sponsor-row {
     margin-left: 0;
     margin-right: 0;
+    gap: 10px;
+  }
+
+  .premium-spotlight,
+  .sponsor-hub {
+    min-width: 0;
+  }
+
+  .events-organiser-footnote {
+    margin-top: 20px;
+    padding-top: 16px;
+    font-size: 12px;
   }
 
   .event-grid {

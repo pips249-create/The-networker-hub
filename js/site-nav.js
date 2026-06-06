@@ -344,6 +344,65 @@
     });
   }
 
+  function renderImpersonationBanner(sessionData) {
+    var existing = document.getElementById('hub-impersonation-banner');
+    if (existing) existing.remove();
+    if (!sessionData || !sessionData.impersonating || !sessionData.user) return;
+
+    var banner = document.createElement('div');
+    banner.id = 'hub-impersonation-banner';
+    banner.className = 'hub-impersonation-banner';
+    banner.setAttribute('role', 'status');
+    banner.innerHTML =
+      'You are viewing the Hub as <strong>' +
+      (sessionData.user.email || 'this user') +
+      '</strong> (admin: ' +
+      (sessionData.impersonatorEmail || 'you') +
+      '). ' +
+      '<button type="button" class="hub-impersonation-stop" id="hub-stop-impersonating">Stop impersonating</button>';
+
+    if (mount.parentNode) {
+      mount.parentNode.insertBefore(banner, mount.nextSibling);
+    }
+
+    var stopBtn = document.getElementById('hub-stop-impersonating');
+    if (stopBtn) {
+      stopBtn.addEventListener('click', function () {
+        stopBtn.disabled = true;
+        fetch('/api/auth/stop-impersonate', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            cacheUser(null);
+            window.location.href = root + String(data.redirect || 'admin/index.html').replace(/^\//, '');
+          })
+          .catch(function () {
+            stopBtn.disabled = false;
+          });
+      });
+    }
+  }
+
+  function applySessionData(data) {
+    if (data.ok && data.user) {
+      data.user.hubView = data.hubView || 'attendee';
+      data.user.organiserProfiles = data.organiserProfiles || 0;
+      data.user.canToggleHubMode = data.canToggleHubMode === true;
+      cacheUser(data.user);
+      renderNav(data.user, false);
+      renderImpersonationBanner(data);
+      return;
+    }
+    cacheUser(null);
+    renderNav(null, false);
+    renderImpersonationBanner(null);
+  }
+
   function renderNav(user, pending) {
     var pendingClass = pending ? ' is-session-pending' : '';
     mount.innerHTML =
@@ -428,18 +487,12 @@
       return res.json();
     })
     .then(function (data) {
-      if (data.ok && data.user) {
-        data.user.hubView = data.hubView || 'attendee';
-        data.user.organiserProfiles = data.organiserProfiles || 0;
-        data.user.canToggleHubMode = data.canToggleHubMode === true;
-        cacheUser(data.user);
-        renderNav(data.user, false);
-        return;
-      }
-      cacheUser(null);
-      renderNav(null, false);
+      applySessionData(data);
     })
     .catch(function () {
-      if (!cachedUser) renderNav(null, false);
+      if (!cachedUser) {
+        renderNav(null, false);
+        renderImpersonationBanner(null);
+      }
     });
 })();

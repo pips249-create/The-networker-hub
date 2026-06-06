@@ -17,6 +17,7 @@ const routes = {
   'attendee-dashboard': require('./_lib/routes/auth-attendee-dashboard'),
   favourites: require('./_lib/routes/auth-favourites'),
   profile: require('./_lib/routes/auth-profile'),
+  'stop-impersonate': require('./_lib/routes/auth-stop-impersonate'),
 };
 
 module.exports = async function handler(req, res) {

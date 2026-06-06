@@ -5,12 +5,12 @@
   var MODE_KEY = 'hubBrowseMode';
   var heroTitle = document.querySelector('.events-hero h1');
   var heroSub = document.querySelector('.events-hero .hero-types');
+  var heroSwitch = document.getElementById('hero-browse-mode-switch');
   var listingsHeader = document.getElementById('all-heading');
   var searchInput = document.getElementById('search');
   var searchLabel = document.querySelector('label[for="search"]');
   var sortSelect = document.getElementById('sort');
   var filterBar = document.querySelector('.events-filter-bar');
-  var modeBtns = document.querySelectorAll('.browse-mode-btn[data-browse-mode]');
 
   var copy = {
     events: {
@@ -20,6 +20,8 @@
       searchPlaceholder: 'Search all meetings, people, resources…',
       searchLabel: 'Search events',
       filterLabel: 'Filter events',
+      switchLabel: 'Browse organisers',
+      switchTo: 'organisers',
     },
     organisers: {
       title: 'Find your next <span class="accent">organiser</span>',
@@ -28,6 +30,8 @@
       searchPlaceholder: 'Search organisers, industries, descriptions…',
       searchLabel: 'Search organisers',
       filterLabel: 'Filter organisers',
+      switchLabel: 'Browse events',
+      switchTo: 'events',
     },
   };
 
@@ -87,6 +91,10 @@
     if (searchInput) searchInput.placeholder = c.searchPlaceholder;
     if (searchLabel) searchLabel.textContent = c.searchLabel;
     if (filterBar) filterBar.setAttribute('aria-label', c.filterLabel);
+    if (heroSwitch) {
+      heroSwitch.textContent = c.switchLabel;
+      heroSwitch.setAttribute('data-switch-to', c.switchTo);
+    }
     document.title =
       mode === 'organisers'
         ? 'Find networking groups – The Networker Hub'
@@ -97,11 +105,6 @@
     options = options || {};
     var isOrganisers = mode === 'organisers';
     document.body.classList.toggle('browse-mode-organisers', isOrganisers);
-    modeBtns.forEach(function (btn) {
-      var active = btn.getAttribute('data-browse-mode') === mode;
-      btn.classList.toggle('is-active', active);
-      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-    });
 
     ensureOrganiserSortOptions();
     updateSortOptions(mode);
@@ -135,14 +138,14 @@
     }
   }
 
-  modeBtns.forEach(function (btn) {
-    btn.addEventListener('click', function (e) {
+  if (heroSwitch) {
+    heroSwitch.addEventListener('click', function (e) {
       e.preventDefault();
-      var mode = btn.getAttribute('data-browse-mode') || 'events';
-      if (mode === currentMode()) return;
-      setMode(mode);
+      var target = heroSwitch.getAttribute('data-switch-to') || 'organisers';
+      if (target === currentMode()) return;
+      setMode(target);
     });
-  });
+  }
 
   window.hubSetBrowseMode = setMode;
 
@@ -160,6 +163,8 @@
 
   if (initial === 'organisers') {
     setMode('organisers', { skipEventsRefresh: true, updateHash: true });
+  } else {
+    applyCopy('events');
   }
 
   window.addEventListener('hashchange', function () {

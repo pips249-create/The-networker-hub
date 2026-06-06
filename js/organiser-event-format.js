@@ -129,5 +129,18 @@
     }
   }
 
-  init();
+  init().then(function () {
+    if (window.HubFlowTour) {
+      window.HubFlowTour.consumeEventTourPending();
+      window.HubFlowTour.startEventFormatTour();
+    }
+  });
+  var backLink = document.querySelector('.ee-back');
+  if (backLink && window.HubOrganiserActions) {
+    window.HubOrganiserActions.applyBrowseReturnBack(
+      backLink,
+      'index.html#events-list',
+      '← Back to My Events'
+    );
+  }
 })();

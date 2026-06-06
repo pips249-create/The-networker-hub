@@ -206,6 +206,14 @@ function json(res, status, body) {
 
 function requireAdmin(session) {
   if (!session) return { ok: false, status: 401, error: 'not_authenticated' };
+  if (session.impersonator) {
+    return {
+      ok: false,
+      status: 403,
+      error: 'impersonating',
+      message: 'Stop impersonating to use the Command Center.',
+    };
+  }
   if (!isAdminRole(session.role)) return { ok: false, status: 403, error: 'admin_only' };
   return { ok: true };
 }

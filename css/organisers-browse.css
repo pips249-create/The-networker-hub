@@ -286,6 +286,12 @@ body.browse-mode-organisers .events-browse-switch {
   background: rgba(255, 255, 255, 0.92);
 }
 
+body.browse-mode-organisers .events-hero-mode-switch {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
 body.browse-mode-organisers .filter-checkbox input:checked + .filter-checkbox-box {
   background: #2563eb;
   border-color: #2563eb;

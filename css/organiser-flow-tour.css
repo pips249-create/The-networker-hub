@@ -1,0 +1,94 @@
+/* Guided walkthrough — group profile & event listing flows */
+body.hub-flow-tour-active {
+  overflow: hidden;
+}
+
+.hub-flow-tour {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+}
+
+.hub-flow-tour.is-open {
+  display: block;
+}
+
+.hub-flow-tour-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 35, 45, 0.55);
+}
+
+.hub-flow-tour-spotlight {
+  position: fixed;
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(15, 35, 45, 0.55);
+  pointer-events: none;
+  z-index: 1;
+  transition: top 0.2s, left 0.2s, width 0.2s, height 0.2s;
+}
+
+.hub-flow-tour-popover {
+  position: fixed;
+  z-index: 2;
+  left: 50%;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(420px, calc(100vw - 28px));
+  padding: 20px 22px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid #cfe4ea;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.hub-flow-tour-step {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7a94a3;
+}
+
+.hub-flow-tour-title {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a2e3b;
+}
+
+.hub-flow-tour-body {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #4a6272;
+}
+
+.hub-flow-tour-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hub-flow-tour-actions .ee-btn {
+  font-size: 13px;
+  padding: 9px 16px;
+}
+
+@media (max-width: 480px) {
+  .hub-flow-tour-popover {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    padding: 16px 18px;
+  }
+
+  .hub-flow-tour-actions {
+    justify-content: stretch;
+  }
+
+  .hub-flow-tour-actions .ee-btn {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+}

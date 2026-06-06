@@ -641,6 +641,14 @@
   }
 
   async function load() {
+    const backLink = document.getElementById('ee-back-link') || document.querySelector('.ee-back');
+    if (backLink && window.HubOrganiserActions) {
+      window.HubOrganiserActions.applyBrowseReturnBack(
+        backLink,
+        'index.html#events-list',
+        '← Back to My Events'
+      );
+    }
     const loading = window.organiserPageLoading;
     if (loading) loading.show('Loading event');
     const { ok, data } = await api('/api/organiser/bootstrap');
@@ -696,6 +704,10 @@
 
     fillGroupsSelect(chosenGroupId, true);
     if (loading) loading.hide();
+
+    if (!editId && window.HubFlowTour) {
+      window.HubFlowTour.startEventEditTour({ isEdit: false });
+    }
   }
 
   document.getElementById('ee-cal-prev').addEventListener('click', () => {

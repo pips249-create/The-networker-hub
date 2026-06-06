@@ -42,6 +42,9 @@ module.exports = async function handler(req, res) {
         role,
         name: user.name,
       };
+      if (session.impersonator) {
+        fresh.impersonator = session.impersonator;
+      }
 
       setSessionCookie(res, fresh);
 
@@ -53,7 +56,9 @@ module.exports = async function handler(req, res) {
         hubView: hubViewFromRequest(req),
         organiserProfiles,
         canOrganise: organiserProfiles > 0 || isAdminRole(role),
-        canToggleHubMode: isClientRole(role),
+        canToggleHubMode: isClientRole(role) && !session.impersonator,
+        impersonating: !!session.impersonator,
+        impersonatorEmail: session.impersonator ? session.impersonator.email : null,
       });
     }
 
@@ -72,6 +77,9 @@ module.exports = async function handler(req, res) {
       role,
       name: user.name,
     };
+    if (session.impersonator) {
+      fresh.impersonator = session.impersonator;
+    }
 
     setSessionCookie(res, fresh);
 
@@ -89,7 +97,9 @@ module.exports = async function handler(req, res) {
       hubView: hubViewFromRequest(req),
       organiserProfiles,
       canOrganise: organiserProfiles > 0 || isAdminRole(role),
-      canToggleHubMode: isClientRole(role),
+      canToggleHubMode: isClientRole(role) && !session.impersonator,
+      impersonating: !!session.impersonator,
+      impersonatorEmail: session.impersonator ? session.impersonator.email : null,
     });
   } catch {
     return json(res, 200, {
@@ -100,7 +110,9 @@ module.exports = async function handler(req, res) {
         name: session.name,
         sub: session.sub,
       },
-      canToggleHubMode: isClientRole(session.role),
+      canToggleHubMode: isClientRole(session.role) && !session.impersonator,
+      impersonating: !!session.impersonator,
+      impersonatorEmail: session.impersonator ? session.impersonator.email : null,
     });
   }
 };

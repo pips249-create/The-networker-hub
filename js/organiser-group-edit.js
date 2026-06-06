@@ -342,6 +342,9 @@
     if (logoWarning) msg = logoWarning + (saveWarnings.length ? ' ' + saveWarnings.join(' ') : '');
 
     showAlert(msg);
+    if (!editId && mode === 'continue' && window.HubFlowTour) {
+      window.HubFlowTour.markEventTourPending();
+    }
     const redirect =
       !editId && mode === 'continue' ? 'event-format.html' : 'index.html#groups';
     setTimeout(function () {
@@ -355,6 +358,14 @@
   }
 
   async function load() {
+    const backLink = document.querySelector('.ee-back');
+    if (backLink && window.HubOrganiserActions) {
+      window.HubOrganiserActions.applyBrowseReturnBack(
+        backLink,
+        'index.html#groups',
+        '← Back to group profiles'
+      );
+    }
     const sessionRes = await api('/api/auth/session');
     if (!sessionRes.ok || !sessionRes.data.user) {
       const nextPath =
@@ -416,5 +427,9 @@
   bindLogoUpload();
   bindWordCounter();
   renderIndustryChips();
-  load();
+  load().then(function () {
+    if (!editId && window.HubFlowTour) {
+      window.HubFlowTour.startGroupTour({ isEdit: false });
+    }
+  });
 })();

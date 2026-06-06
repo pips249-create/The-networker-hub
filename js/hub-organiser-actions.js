@@ -6,6 +6,7 @@
   var scriptEl = document.currentScript;
   var root = (scriptEl && scriptEl.getAttribute('data-root')) || '../';
   var GROUP_STORAGE_KEY = 'hub_event_group_id';
+  var BROWSE_RETURN_KEY = 'hub_browse_return';
 
   function path(relative) {
     if (!relative) return root;
@@ -28,8 +29,52 @@
     return sessionData.canOrganise === true && sessionData.user.role === 'admin';
   }
 
+  function isEventsBrowsePage() {
+    var p = String(global.location.pathname || '');
+    return /\/events\/?(index\.html)?$/i.test(p) || p.endsWith('/events/');
+  }
+
+  function saveBrowseReturn() {
+    if (!isEventsBrowsePage()) return;
+    var hash = global.location.hash || '#events';
+    try {
+      global.sessionStorage.setItem(BROWSE_RETURN_KEY, 'events/index.html' + hash);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function getBrowseReturnPath() {
+    try {
+      return global.sessionStorage.getItem(BROWSE_RETURN_KEY) || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function clearBrowseReturn() {
+    try {
+      global.sessionStorage.removeItem(BROWSE_RETURN_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function applyBrowseReturnBack(linkEl, fallbackHref, fallbackLabel) {
+    if (!linkEl) return;
+    var stored = getBrowseReturnPath();
+    if (stored) {
+      linkEl.href = path(stored);
+      linkEl.textContent = '← Back to browse events';
+      return;
+    }
+    linkEl.href = fallbackHref || 'index.html#events-list';
+    linkEl.textContent = fallbackLabel || '← Back to My Events';
+  }
+
   async function goToGroupProfile(options) {
     options = options || {};
+    saveBrowseReturn();
     var data = await fetchSession();
     if (!data.ok || !data.user) {
       global.location.href = loginUrl('/organiser/group-edit.html');
@@ -45,6 +90,7 @@
 
   async function goToAddEvent(options) {
     options = options || {};
+    saveBrowseReturn();
     var data = await fetchSession();
     if (!data.ok || !data.user) {
       global.location.href = loginUrl('/organiser/event-format.html');
@@ -104,6 +150,7 @@
 
   global.HubOrganiserActions = {
     GROUP_STORAGE_KEY: GROUP_STORAGE_KEY,
+    BROWSE_RETURN_KEY: BROWSE_RETURN_KEY,
     goToGroupProfile: goToGroupProfile,
     goToAddEvent: goToAddEvent,
     bindActions: bindActions,
@@ -111,6 +158,10 @@
     requireLogin: requireLogin,
     hasGroupProfile: hasGroupProfile,
     fetchSession: fetchSession,
+    saveBrowseReturn: saveBrowseReturn,
+    getBrowseReturnPath: getBrowseReturnPath,
+    clearBrowseReturn: clearBrowseReturn,
+    applyBrowseReturnBack: applyBrowseReturnBack,
   };
 
   if (document.readyState === 'loading') {

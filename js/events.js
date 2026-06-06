@@ -632,6 +632,7 @@
   function applyLoadedEvents() {
     window.hubAllEvents = events;
     fillFilterOptions();
+    if (window.hubInitPriceFilter) window.hubInitPriceFilter();
     currentPage = 1;
     if (window.hubApplyFilters) window.hubApplyFilters();
     else renderAll();

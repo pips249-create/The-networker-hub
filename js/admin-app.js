@@ -13,6 +13,10 @@
       subtitle: 'Fix published events missing dates, organisers, VAT, or profile data',
     },
     users: { title: 'User & Account Directory', subtitle: 'Manage all platform accounts' },
+    impersonate: {
+      title: 'Impersonate user',
+      subtitle: 'Sign in as any account to see exactly what they see on the Hub',
+    },
     moderation: { title: 'Content Moderation', subtitle: 'Review listings and attendee feedback' },
     financials: { title: 'Financial Hub', subtitle: 'Stripe ledger, payouts & automation logs' },
     sponsorship: {
@@ -117,6 +121,23 @@
 
   function adminGet(url) {
     return fetch(url, { credentials: 'include' }).then(function (r) {
+      return r.json().then(function (data) {
+        if (!r.ok) {
+          data = data || {};
+          data.error = data.error || data.message || 'request_failed';
+        }
+        return data;
+      });
+    });
+  }
+
+  function adminPost(url, body) {
+    return fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {}),
+    }).then(function (r) {
       return r.json().then(function (data) {
         if (!r.ok) {
           data = data || {};
@@ -728,11 +749,151 @@
     document.getElementById('user-role-filter').addEventListener('change', paint);
   }
 
+  function loadUsersDirectory(callback) {
+    if (liveUsers.length) {
+      callback(liveUsers);
+      return;
+    }
+    adminGet('/api/admin/users').then(function (data) {
+      if (data && !data.error && data.configured !== false) {
+        liveUsers = data.users || [];
+      }
+      callback(liveUsers);
+    });
+  }
+
+  function renderImpersonate() {
+    main.innerHTML =
+      '<div class="space-y-6 max-w-2xl">' +
+      '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">' +
+      '<p class="font-semibold">Support &amp; debugging only</p>' +
+      '<p class="mt-1 opacity-90">You will be signed in as the chosen user across the Hub. A banner lets you return to your admin account at any time. Admin accounts cannot be impersonated.</p>' +
+      '</div>' +
+      '<form id="impersonate-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">' +
+      '<div><label class="text-xs font-semibold text-slate-500 uppercase" for="impersonate-email">User email</label>' +
+      '<input type="email" id="impersonate-email" list="impersonate-email-list" required placeholder="user@company.com" autocomplete="off" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500">' +
+      '<datalist id="impersonate-email-list"></datalist>' +
+      '<p id="impersonate-user-hint" class="text-xs text-slate-500 mt-2">Start typing to match accounts from your user directory.</p></div>' +
+      '<div><label class="text-xs font-semibold text-slate-500 uppercase" for="impersonate-view">Open as them in</label>' +
+      '<select id="impersonate-view" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">' +
+      '<option value="account">Attendee account</option>' +
+      '<option value="organiser">Organiser dashboard</option>' +
+      '<option value="events">Events browse</option>' +
+      '</select></div>' +
+      '<div id="impersonate-message" class="hidden text-sm rounded-lg px-3 py-2"></div>' +
+      '<button type="submit" class="w-full rounded-lg bg-brand-700 text-white py-3 text-sm font-semibold hover:bg-brand-900 disabled:opacity-60" id="impersonate-submit">Impersonate user</button>' +
+      '</form>' +
+      '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
+      '<div class="px-4 py-3 border-b border-slate-100"><h3 class="text-sm font-bold text-slate-700">Quick pick</h3></div>' +
+      '<div id="impersonate-quick-list" class="divide-y divide-slate-100 max-h-80 overflow-y-auto">' +
+      '<p class="px-4 py-6 text-sm text-slate-500">Loading users…</p></div></div></div>';
+
+    var form = document.getElementById('impersonate-form');
+    var emailInput = document.getElementById('impersonate-email');
+    var datalist = document.getElementById('impersonate-email-list');
+    var quickList = document.getElementById('impersonate-quick-list');
+    var messageEl = document.getElementById('impersonate-message');
+    var hintEl = document.getElementById('impersonate-user-hint');
+
+    function showImpersonateMessage(text, isError) {
+      if (!messageEl) return;
+      messageEl.textContent = text;
+      messageEl.classList.remove('hidden', 'bg-red-50', 'text-red-800', 'bg-emerald-50', 'text-emerald-800');
+      messageEl.classList.add(isError ? 'bg-red-50' : 'bg-emerald-50', isError ? 'text-red-800' : 'text-emerald-800');
+    }
+
+    function submitImpersonation(email, view) {
+      var btn = document.getElementById('impersonate-submit');
+      if (btn) btn.disabled = true;
+      showImpersonateMessage('Switching session…', false);
+      adminPost('/api/admin/impersonate', { email: email, view: view })
+        .then(function (data) {
+          if (!data.ok) {
+            showImpersonateMessage(data.message || data.error || 'Could not impersonate user.', true);
+            if (btn) btn.disabled = false;
+            return;
+          }
+          try {
+            sessionStorage.removeItem('hub_nav_session_v1');
+          } catch (e) {
+            /* ignore */
+          }
+          window.location.href = '../' + String(data.redirect || 'account/index.html').replace(/^\//, '');
+        })
+        .catch(function () {
+          showImpersonateMessage('Request failed. Try again.', true);
+          if (btn) btn.disabled = false;
+        });
+    }
+
+    loadUsersDirectory(function (users) {
+      if (datalist) {
+        datalist.innerHTML = users
+          .map(function (u) {
+            return '<option value="' + attrEsc(u.email) + '">' + attrEsc(u.name || u.email) + '</option>';
+          })
+          .join('');
+      }
+      if (hintEl) {
+        hintEl.textContent = users.length
+          ? users.length + ' accounts available from Supabase.'
+          : 'No users loaded — you can still enter an email manually.';
+      }
+      if (!quickList) return;
+      if (!users.length) {
+        quickList.innerHTML =
+          '<p class="px-4 py-6 text-sm text-slate-500">No users in the directory yet.</p>';
+        return;
+      }
+      quickList.innerHTML = users
+        .filter(function (u) {
+          return u.role !== 'Admin';
+        })
+        .slice(0, 50)
+        .map(function (u) {
+          return (
+            '<button type="button" class="impersonate-quick-row w-full text-left px-4 py-3 hover:bg-brand-50/60 flex items-center justify-between gap-3" data-email="' +
+            attrEsc(u.email) +
+            '"><span><span class="block text-sm font-medium text-slate-800">' +
+            esc(u.name || '—') +
+            '</span><span class="block text-xs text-slate-500">' +
+            esc(u.email) +
+            '</span></span><span class="text-xs font-semibold text-brand-700 shrink-0">Use →</span></button>'
+          );
+        })
+        .join('');
+      quickList.querySelectorAll('.impersonate-quick-row').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var email = btn.getAttribute('data-email');
+          if (emailInput) emailInput.value = email;
+        });
+      });
+    });
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var email = (emailInput && emailInput.value || '').trim();
+        var view = document.getElementById('impersonate-view').value;
+        if (!email) {
+          showImpersonateMessage('Enter an email address.', true);
+          return;
+        }
+        submitImpersonation(email, view);
+      });
+    }
+  }
+
   function openUserDrawer(u) {
     selectedUser = u;
     document.getElementById('drawer-name').textContent = u.name;
     document.getElementById('drawer-email').textContent = u.email;
+    var impersonateAction =
+      u.role === 'Admin'
+        ? ''
+        : '<button type="button" class="w-full rounded-lg border border-brand-200 text-brand-800 py-2.5 text-sm font-semibold hover:bg-brand-50 mb-4" id="drawer-impersonate">Impersonate this user</button>';
     document.getElementById('drawer-body').innerHTML =
+      impersonateAction +
       '<button type="button" class="w-full rounded-lg bg-brand-700 text-white py-2.5 text-sm font-semibold hover:bg-brand-900">Change / Reset Password</button>' +
       '<div><h4 class="text-sm font-bold text-slate-700 mb-2">Edit profile</h4>' +
       '<label class="block text-xs text-slate-500 mb-1">Company / display name</label>' +
@@ -755,6 +916,23 @@
       ' w-4 h-4 bg-white rounded-full shadow transition-all"></span></button></div>' +
       '<button type="button" class="w-full rounded-lg border border-slate-300 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Save changes</button>';
     document.getElementById('user-drawer').classList.remove('hidden');
+    var impersonateBtn = document.getElementById('drawer-impersonate');
+    if (impersonateBtn) {
+      impersonateBtn.addEventListener('click', function () {
+        adminPost('/api/admin/impersonate', { email: u.email, view: 'account' }).then(function (data) {
+          if (!data.ok) {
+            alert(data.message || data.error || 'Could not impersonate user.');
+            return;
+          }
+          try {
+            sessionStorage.removeItem('hub_nav_session_v1');
+          } catch (e) {
+            /* ignore */
+          }
+          window.location.href = '../' + String(data.redirect || 'account/index.html').replace(/^\//, '');
+        });
+      });
+    }
   }
 
   function listingsTableHtml(listings) {
@@ -1293,6 +1471,7 @@
     dashboard: renderDashboard,
     'event-health': renderEventHealth,
     users: renderUsers,
+    impersonate: renderImpersonate,
     moderation: renderModeration,
     financials: renderFinancials,
     sponsorship: renderSponsorship,
@@ -1310,7 +1489,6 @@
     document.getElementById('sidebar-user').textContent = user.email;
     gate.classList.add('hidden');
     shell.classList.remove('hidden');
-    document.body.classList.add('hub-page-admin');
     bindEventHealthForms();
     fetchEventHealth();
     route();
@@ -1334,6 +1512,32 @@
       return res.json();
     })
     .then(function (data) {
+      if (data.impersonating) {
+        gate.innerHTML =
+          '<div class="text-center max-w-md space-y-4">' +
+          '<p class="text-slate-600">You are impersonating <strong>' +
+          esc(data.user && data.user.email ? data.user.email : 'a user') +
+          '</strong>. Stop impersonating to open the Command Center.</p>' +
+          '<button type="button" id="admin-gate-stop-impersonate" class="inline-block rounded-lg bg-brand-700 text-white px-5 py-2.5 font-semibold">Stop impersonating</button>' +
+          '<p><a href="../account/index.html" class="text-sm font-semibold text-brand-700">Continue as this user</a></p></div>';
+        var stopBtn = document.getElementById('admin-gate-stop-impersonate');
+        if (stopBtn) {
+          stopBtn.addEventListener('click', function () {
+            fetch('/api/auth/stop-impersonate', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+            })
+              .then(function (res) {
+                return res.json();
+              })
+              .then(function (result) {
+                window.location.href = '../' + String(result.redirect || 'admin/index.html').replace(/^\//, '');
+              });
+          });
+        }
+        return;
+      }
       if (!data.ok || !data.user || data.user.role !== 'admin') {
         gate.innerHTML =
           '<div class="text-center max-w-md"><p class="text-slate-600 mb-4">Admin access required. Sign in with an admin account.</p>' +
