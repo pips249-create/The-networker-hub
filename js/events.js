@@ -483,16 +483,27 @@
 
   function setSponsorLogo(logoUrl) {
     const url = String(logoUrl || '').trim();
-    const hasLogo = /^https?:\/\//i.test(url);
-    if (els.sponsorLogoWrap) els.sponsorLogoWrap.hidden = false;
+    const hasLogo = window.CmsSponsorFields
+      ? window.CmsSponsorFields.isLogoUrl(url)
+      : /^https?:\/\//i.test(url);
+    if (els.sponsorLogoWrap) {
+      els.sponsorLogoWrap.hidden = false;
+      els.sponsorLogoWrap.classList.toggle('has-logo', hasLogo);
+    }
     if (els.sponsorLogo) {
       if (hasLogo) {
         els.sponsorLogo.src = url;
         els.sponsorLogo.alt = '';
         els.sponsorLogo.hidden = false;
+        if (window.CmsSponsorFields) {
+          window.CmsSponsorFields.applyLogoBand(els.sponsorLogoWrap, els.sponsorLogo, true);
+        }
       } else {
         els.sponsorLogo.removeAttribute('src');
         els.sponsorLogo.hidden = true;
+        if (window.CmsSponsorFields) {
+          window.CmsSponsorFields.applyLogoBand(els.sponsorLogoWrap, null, false);
+        }
       }
     }
     if (els.sponsorLogoPlaceholder) {

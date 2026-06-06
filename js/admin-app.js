@@ -998,15 +998,19 @@
   }
 
   function sponsorPreviewLogoHtml(logoUrl) {
-    if (logoUrl && /^(https?:|\/)/i.test(logoUrl)) {
+    if (logoUrl && /^(https?:|\/|data:image\/)/i.test(logoUrl)) {
       return (
+        '<div class="sponsor-preview-logo-band mb-3" data-sponsor-preview-band>' +
         '<img src="' +
         esc(logoUrl) +
-        '" alt="" class="block max-w-[200px] max-h-[100px] object-contain mb-3">'
+        '" alt="" class="sponsor-preview-logo-img" crossorigin="anonymous" ' +
+        'onload="window.CmsSponsorFields&&window.CmsSponsorFields.applyLogoBand(this.parentElement,this,true)">' +
+        '</div>'
       );
     }
     return (
-      '<div class="w-[200px] h-[100px] mb-3 flex items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-100 text-[10px] font-semibold text-slate-500">Your logo here</div>'
+      '<div class="sponsor-preview-logo-band sponsor-preview-logo-band--empty mb-3">' +
+      '<span class="text-[10px] font-semibold text-slate-500">Your logo here</span></div>'
     );
   }
 
