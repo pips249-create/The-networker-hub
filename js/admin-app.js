@@ -999,11 +999,11 @@
       return (
         '<img src="' +
         esc(logoUrl) +
-        '" alt="" class="block max-w-[120px] max-h-[60px] object-contain mb-3">'
+        '" alt="" class="block max-w-[200px] max-h-[100px] object-contain mb-3">'
       );
     }
     return (
-      '<div class="w-[120px] h-[60px] mb-3 flex items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-100 text-[10px] font-semibold text-slate-500">Your logo here</div>'
+      '<div class="w-[200px] h-[100px] mb-3 flex items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-100 text-[10px] font-semibold text-slate-500">Your logo here</div>'
     );
   }
 
@@ -1058,7 +1058,7 @@
       '<input type="text" id="sponsor-logo-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mb-2" placeholder="https://…" value="' +
       esc(d.logoUrl) +
       '">' +
-      '<label class="block text-xs text-slate-500 mb-1" for="sponsor-logo-file">Or upload logo (max 2MB, 120×60 recommended)</label>' +
+      '<label class="block text-xs text-slate-500 mb-1" for="sponsor-logo-file">Or upload logo (max 2MB, 200×100 recommended)</label>' +
       '<input type="file" id="sponsor-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" class="block w-full text-sm text-slate-600"></div>' +
       '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-tagline">Tagline / offer</label>' +
       '<input type="text" id="sponsor-tagline" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +

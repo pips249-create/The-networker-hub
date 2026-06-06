@@ -34,6 +34,7 @@
           <nav class="hub-side-nav hub-side-nav--minimal ad-dash-bar" aria-label="Attend events">
             <a href="#overview" class="hub-side-nav-link is-active" data-ad-route="overview">Overview</a>
             <a href="#upcoming" class="hub-side-nav-link" data-ad-route="upcoming">Upcoming</a>
+            <a href="#saved" class="hub-side-nav-link" data-ad-route="saved">Saved</a>
             <a href="#past" class="hub-side-nav-link" data-ad-route="past">Past</a>
             <a href="#reviews-pending" class="hub-side-nav-link" data-ad-route="reviews-pending">Reviews</a>
             <div class="hub-side-nav-util">
@@ -101,6 +102,32 @@
                 <a href="../events/index.html">Browse events →</a>
               </p>
               <nav class="ad-pagination" id="ad-pagination-upcoming" aria-label="Upcoming events pages" hidden></nav>
+            </section>
+
+            <!-- Saved -->
+            <section class="ad-page" id="ad-page-saved" data-ad-page="saved">
+              <h2 class="ad-section-title">Saved events</h2>
+              <p class="ad-section-sub">Events you have favourited on the browse page. We will email you when ticket sales open.</p>
+              <div class="ad-table-scroll">
+                <div class="ad-table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th class="ad-th-thumb"></th>
+                        <th>Event</th>
+                        <th>Date</th>
+                        <th>Location</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="ad-saved-body"></tbody>
+                  </table>
+                </div>
+              </div>
+              <p class="ad-empty" id="ad-saved-empty" hidden>
+                No saved events yet.
+                <a href="../events/index.html">Browse events →</a>
+              </p>
             </section>
 
             <!-- Past -->
@@ -179,7 +206,8 @@
       </div>
     </div>
 
+    <script src="../js/hub-favourites.js?v=20260629"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260618"></script>
+    <script src="../js/attendee-dashboard.js?v=20260629"></script>
   </body>
 </html>

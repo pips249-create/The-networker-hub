@@ -15,6 +15,7 @@ const routes = {
   'forgot-password': require('./_lib/routes/auth-forgot-password'),
   'reset-password': require('./_lib/routes/auth-reset-password'),
   'attendee-dashboard': require('./_lib/routes/auth-attendee-dashboard'),
+  favourites: require('./_lib/routes/auth-favourites'),
   profile: require('./_lib/routes/auth-profile'),
 };
 

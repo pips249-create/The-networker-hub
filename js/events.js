@@ -138,7 +138,8 @@
 
   function starsHtml(rating) {
     const avg = Number(rating);
-    const full = Math.min(5, Math.max(0, Math.round(Number.isFinite(avg) ? avg : 4)));
+    const full =
+      Number.isFinite(avg) && avg > 0 ? Math.min(5, Math.max(0, Math.round(avg))) : 0;
     let html = '';
     for (let i = 1; i <= 5; i++) {
       html += `<span class="star ${i <= full ? 'is-full' : ''}" aria-hidden="true">★</span>`;
@@ -185,7 +186,7 @@
             <h3>${escapeHtml(ev.title)}</h3>
             <p class="premium-desc">${escapeHtml(ev.description).slice(0, 90)}${ev.description.length > 90 ? '…' : ''}</p>
             <p class="premium-meta">
-              <span>${escapeHtml(ev.location || 'TBC')}</span>
+              <span>${escapeHtml(cardLocation(ev))}</span>
               <span class="sep">|</span>
               <span>${escapeHtml(ev.date || 'Date TBC')}</span>
               ${ev.time ? `<span class="sep">|</span><span>${escapeHtml(ev.time)}</span>` : ''}
@@ -228,9 +229,9 @@
           <div class="event-grid-rating">
             <span class="stars">${starsHtml(ev.rating)}</span>
             <span class="review-count">(${reviewCount})</span>
-            <span class="fav-btn" role="presentation" aria-hidden="true">
+            <button type="button" class="fav-btn" data-event-id="${escapeHtml(ev.id)}" aria-label="Save event" aria-pressed="false">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-            </span>
+            </button>
           </div>
           <p class="event-grid-meta">${escapeHtml(dateLine)}</p>
         </div>
@@ -327,6 +328,8 @@
       paginationHtml(currentPage, totalPages);
 
     if (els.resultsCount) els.resultsCount.textContent = String(rows.length);
+
+    if (window.HubFavourites) window.HubFavourites.refreshButtons(els.listings);
   }
 
   function initListingsPagination() {
@@ -373,10 +376,20 @@
     }
   }
 
-  function updateCounts(list) {
-    const meetings = list.filter((e) => (e.eventTypeCategory || 'meeting') === 'meeting').length;
-    const exhibitions = list.filter((e) => e.eventTypeCategory === 'exhibition').length;
-    if (els.countAll) els.countAll.textContent = `(${list.length})`;
+  function updateCounts() {
+    const all = window.hubAllEvents || events;
+    if (window.hubGetFilteredEvents) {
+      const allList = window.hubGetFilteredEvents(all, { typeTab: 'all' });
+      const meetings = window.hubGetFilteredEvents(all, { typeTab: 'meeting' });
+      const exhibitions = window.hubGetFilteredEvents(all, { typeTab: 'exhibition' });
+      if (els.countAll) els.countAll.textContent = `(${allList.length})`;
+      if (els.countMeeting) els.countMeeting.textContent = `(${meetings.length})`;
+      if (els.countExhibition) els.countExhibition.textContent = `(${exhibitions.length})`;
+      return;
+    }
+    const meetings = all.filter((e) => (e.eventTypeCategory || 'meeting') === 'meeting').length;
+    const exhibitions = all.filter((e) => e.eventTypeCategory === 'exhibition').length;
+    if (els.countAll) els.countAll.textContent = `(${all.length})`;
     if (els.countMeeting) els.countMeeting.textContent = `(${meetings})`;
     if (els.countExhibition) els.countExhibition.textContent = `(${exhibitions})`;
   }
@@ -385,7 +398,7 @@
     const filtered = getFilteredList();
     renderSpotlight();
     renderGridPage(filtered);
-    updateCounts(events);
+    updateCounts();
   }
 
   function setLoading(on) {

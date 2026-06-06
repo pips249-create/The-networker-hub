@@ -5,6 +5,7 @@
   const PAGE_SIZE = 5;
   const listPages = { upcoming: 1, past: 1 };
   let registrations = [];
+  let savedEvents = [];
   let currentRoute = 'overview';
 
   const signin = document.getElementById('ad-signin');
@@ -93,7 +94,7 @@
 
   function parseRoute() {
     const hash = (location.hash.replace('#', '') || 'overview').toLowerCase();
-    const allowed = ['overview', 'upcoming', 'past', 'reviews-pending', 'reviews-done'];
+    const allowed = ['overview', 'upcoming', 'saved', 'past', 'reviews-pending', 'reviews-done'];
     return allowed.includes(hash) ? hash : 'overview';
   }
 
@@ -238,6 +239,92 @@
     renderPagination(navId, listKey, totalPages);
   }
 
+  function savedEventHref(item) {
+    const slug = item.slug ? String(item.slug).trim() : '';
+    if (slug) return '../events/' + encodeURIComponent(slug);
+    return '../events/event.html?id=' + encodeURIComponent(item.eventId || item.id || '');
+  }
+
+  function renderSavedTable() {
+    const body = document.getElementById('ad-saved-body');
+    const empty = document.getElementById('ad-saved-empty');
+    if (!body) return;
+
+    body.innerHTML = '';
+    if (!savedEvents.length) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    savedEvents.forEach((item) => {
+      const tr = document.createElement('tr');
+      const favItem = {
+        title: item.title,
+        imageUrl: item.photoUrl || item.photo_url || '',
+      };
+      tr.innerHTML =
+        '<td>' +
+        thumbHtml(favItem) +
+        '</td><td class="ad-td-name"><a href="' +
+        esc(savedEventHref(item)) +
+        '">' +
+        esc(item.title || 'Event') +
+        '</a></td><td>' +
+        esc(formatDateShort(item.startsAt || item.starts_at)) +
+        '</td><td>' +
+        esc(item.city || '—') +
+        '</td><td><button type="button" class="ad-btn ad-btn-ghost ad-saved-remove" data-event-id="' +
+        esc(item.eventId || item.event_id || '') +
+        '">Remove</button></td>';
+      body.appendChild(tr);
+    });
+
+    body.querySelectorAll('.ad-saved-remove').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const eventId = btn.getAttribute('data-event-id');
+        if (!eventId) return;
+        btn.disabled = true;
+        try {
+          if (window.HubFavourites) {
+            await window.HubFavourites.toggle(eventId);
+          } else {
+            await fetch('/api/auth/favourites', {
+              method: 'DELETE',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ eventId }),
+            });
+          }
+          savedEvents = savedEvents.filter((x) => String(x.eventId || x.event_id) !== String(eventId));
+          renderSavedTable();
+        } catch {
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  async function loadSavedEvents() {
+    try {
+      const res = await fetch('/api/auth/favourites', { credentials: 'include' });
+      const data = await res.json();
+      if (data && data.ok && Array.isArray(data.favourites)) {
+        savedEvents = data.favourites;
+      } else if (data && data.ok && Array.isArray(data.eventIds)) {
+        savedEvents = data.eventIds.map((id) => ({ eventId: id, title: 'Event' }));
+      } else {
+        savedEvents = [];
+      }
+      if (window.HubFavourites && Array.isArray(data.eventIds)) {
+        window.HubFavourites.writeLocal(data.eventIds);
+      }
+    } catch {
+      savedEvents = window.HubFavourites ? window.HubFavourites.ids().map((id) => ({ eventId: id })) : [];
+    }
+    renderSavedTable();
+  }
+
   function renderAllTables() {
     const up = upcomingList().sort((a, b) => {
       const da = a.date ? new Date(a.date).getTime() : 0;
@@ -315,6 +402,7 @@
     registrations = data.registrations || [];
     renderStats(data.stats || {});
     renderAllTables();
+    loadSavedEvents();
 
     const demoNote = document.getElementById('ad-demo-note');
     if (demoNote) demoNote.hidden = !data.isDemo;

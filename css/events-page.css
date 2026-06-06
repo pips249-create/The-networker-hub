@@ -284,6 +284,9 @@
   color: var(--text-soft);
   display: inline-flex;
   padding: 2px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
 }
 .event-grid-rating .fav-btn.is-active { color: #c44; }
 .event-grid-meta {
@@ -560,19 +563,19 @@
 }
 .sponsor-logo-wrap {
   margin: 4px 0 14px;
-  min-height: 60px;
+  min-height: 100px;
 }
 .sponsor-logo {
   display: block;
-  max-width: 120px;
-  max-height: 60px;
+  max-width: 200px;
+  max-height: 100px;
   width: auto;
   height: auto;
   object-fit: contain;
 }
 .sponsor-logo-placeholder {
-  width: 120px;
-  height: 60px;
+  width: 200px;
+  height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;

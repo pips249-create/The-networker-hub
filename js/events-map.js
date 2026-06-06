@@ -51,16 +51,26 @@
     if (mapLabel) {
       mapLabel.textContent = mapMode ? 'Swap to List View' : 'Swap to Map View';
     }
-    if (mapMode) {
+    if (!mapMode) return;
+
+    var list = window.hubGetFilteredEvents
+      ? window.hubGetFilteredEvents(window.hubAllEvents || [])
+      : window.hubAllEvents || [];
+
+    requestAnimationFrame(function () {
       initMap();
-      setTimeout(function () {
-        if (map) map.invalidateSize();
-      }, 120);
-      var list = window.hubGetFilteredEvents
-        ? window.hubGetFilteredEvents(window.hubAllEvents || [])
-        : window.hubAllEvents || [];
-      renderMarkers(list);
-    }
+      requestAnimationFrame(function () {
+        if (map) {
+          map.invalidateSize(true);
+          if (map.getSize().x === 0) {
+            setTimeout(function () {
+              if (map) map.invalidateSize(true);
+            }, 200);
+          }
+        }
+        renderMarkers(list);
+      });
+    });
   }
 
   window.hubToggleMapView = function () {
