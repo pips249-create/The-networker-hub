@@ -9,11 +9,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css?v=20260627">
-<link rel="stylesheet" href="../css/hub-mobile.css?v=20260606">
+<link rel="stylesheet" href="../css/hub-mobile.css?v=20260608">
 <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e">
-<link rel="stylesheet" href="../css/events-page.css?v=20260607">
+<link rel="stylesheet" href="../css/events-page.css?v=20260608">
 <link rel="stylesheet" href="../css/events-filter-bar.css?v=20260606">
-<link rel="stylesheet" href="../css/organisers-browse.css?v=20260606">
+<link rel="stylesheet" href="../css/organisers-browse.css?v=20260608">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 </head>
@@ -38,14 +38,17 @@
 </div>
 
 <section class="hero events-hero">
-  <div class="hero-inner">
-    <h1>Find your next <span class="accent">event</span></h1>
-    <p class="hero-types">Find networking events, exhibitions and conferences across the UK</p>
-    <div class="events-browse-switch-wrap">
-      <button type="button" class="btn btn-secondary events-hero-mode-switch" id="hero-browse-mode-switch" data-switch-to="organisers">
-        Browse organisers
-      </button>
+  <div class="hero-inner events-hero-layout">
+    <div class="events-hero-copy">
+      <h1>Find your next <span class="accent">event</span></h1>
+      <p class="hero-types">Find networking events, exhibitions and conferences across the UK</p>
+      <div class="events-browse-switch-wrap">
+        <button type="button" class="btn btn-secondary events-hero-mode-switch" id="hero-browse-mode-switch" data-switch-to="organisers">
+          Browse organisers
+        </button>
+      </div>
     </div>
+    <div class="events-hero-sponsor-slot" id="hero-sponsor-slot" hidden></div>
   </div>
 </section>
 
@@ -70,6 +73,7 @@
       </div>
     </section>
 
+    <div class="events-promo-sponsor-slot" id="promo-sponsor-slot">
     <aside class="sponsor-hub sponsor-hub--fallback" id="sponsor-hub" aria-labelledby="sponsor-heading">
       <span class="sponsor-hub-badge" id="sponsor-badge" hidden>Sponsored</span>
       <div class="sponsor-hub-head" id="sponsor-heading">
@@ -85,6 +89,7 @@
       <div id="sponsor-body" class="sponsor-body"></div>
       <a class="sponsor-cta" id="sponsor-cta" href="mailto:sales@the-networker.co.uk?subject=Sponsor%20Hub%20enquiry">Find out more →</a>
     </aside>
+    </div>
   </div>
 
   <div class="events-filter-shell">
@@ -163,22 +168,32 @@
               <option value="">All industries</option>
             </select>
           </label>
-          <fieldset class="filter-format-group">
-            <legend class="filter-bar-chip-label">Meeting format</legend>
+          <fieldset class="filter-org-rating-group">
+            <legend class="filter-bar-chip-label">Rating</legend>
             <label class="filter-checkbox">
-              <input type="checkbox" id="org-check-inperson" checked>
+              <input type="checkbox" id="org-rating-4" checked>
               <span class="filter-checkbox-box" aria-hidden="true"></span>
-              In person
+              4+ stars
             </label>
             <label class="filter-checkbox">
-              <input type="checkbox" id="org-check-online" checked>
+              <input type="checkbox" id="org-rating-3" checked>
               <span class="filter-checkbox-box" aria-hidden="true"></span>
-              Online
+              3+ stars
             </label>
             <label class="filter-checkbox">
-              <input type="checkbox" id="org-check-hybrid" checked>
+              <input type="checkbox" id="org-rating-2" checked>
               <span class="filter-checkbox-box" aria-hidden="true"></span>
-              Hybrid
+              2+ stars
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" id="org-rating-1" checked>
+              <span class="filter-checkbox-box" aria-hidden="true"></span>
+              1+ stars
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" id="org-rating-none" checked>
+              <span class="filter-checkbox-box" aria-hidden="true"></span>
+              No ratings
             </label>
           </fieldset>
         </div>
@@ -261,9 +276,9 @@
 <script src="../js/cms-sponsor-fields.js?v=20260630c"></script>
 <script src="../js/flexible-event-image.js?v=20260628a"></script>
 <script src="../js/events.js?v=20260630e"></script>
-<script src="../js/organisers-filters.js?v=20260630b"></script>
+<script src="../js/organisers-filters.js?v=20260608"></script>
 <script src="../js/organisers.js?v=20260630f"></script>
 <script src="../js/hub-organiser-actions.js?v=20260606" data-root="../"></script>
-<script src="../js/browse-mode.js?v=20260606"></script>
+<script src="../js/browse-mode.js?v=20260608"></script>
 </body>
 </html>

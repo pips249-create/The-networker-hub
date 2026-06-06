@@ -442,6 +442,16 @@ body.nav-menu-open {
     min-width: 0;
   }
 
+  body.browse-mode-organisers .events-hero-layout {
+    grid-template-columns: 1fr;
+  }
+
+  body.browse-mode-organisers .events-hero-sponsor-slot {
+    max-width: 360px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
   .events-organiser-footnote {
     margin-top: 20px;
     padding-top: 16px;

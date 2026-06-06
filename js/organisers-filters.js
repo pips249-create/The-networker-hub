@@ -2,9 +2,11 @@
   var searchInput = document.getElementById('search');
   var sortSelect = document.getElementById('sort');
   var industrySelect = document.getElementById('org-industry');
-  var checkInPerson = document.getElementById('org-check-inperson');
-  var checkOnline = document.getElementById('org-check-online');
-  var checkHybrid = document.getElementById('org-check-hybrid');
+  var rating4 = document.getElementById('org-rating-4');
+  var rating3 = document.getElementById('org-rating-3');
+  var rating2 = document.getElementById('org-rating-2');
+  var rating1 = document.getElementById('org-rating-1');
+  var ratingNone = document.getElementById('org-rating-none');
   var resultsCount = document.getElementById('results-count');
   var typeTabs = document.querySelectorAll('.org-type-tab[data-org-tab]');
 
@@ -14,13 +16,39 @@
     return activeTab || 'all';
   }
 
-  function formatSlug(fmt) {
-    var raw = String(fmt || '').trim().toLowerCase();
-    if (!raw) return '';
-    if (raw.indexOf('hybrid') !== -1) return 'hybrid';
-    if (raw.indexOf('online') !== -1 && raw.indexOf('person') === -1) return 'online';
-    if (raw.indexOf('person') !== -1 || raw.indexOf('in person') !== -1) return 'in-person';
-    return raw.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  function slugIndustryLabel(label) {
+    return String(label || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
+  function organiserRating(org) {
+    return Number(org.rating) || 0;
+  }
+
+  function organiserHasNoRatings(org) {
+    var rating = organiserRating(org);
+    var reviews = Number(org.reviews) || 0;
+    return rating <= 0 || reviews <= 0;
+  }
+
+  function matchesRatingFilter(org) {
+    var want4 = rating4 && rating4.checked;
+    var want3 = rating3 && rating3.checked;
+    var want2 = rating2 && rating2.checked;
+    var want1 = rating1 && rating1.checked;
+    var wantNone = ratingNone && ratingNone.checked;
+
+    if (!want4 && !want3 && !want2 && !want1 && !wantNone) return false;
+
+    var rating = organiserRating(org);
+    if (wantNone && organiserHasNoRatings(org)) return true;
+    if (want4 && rating >= 4) return true;
+    if (want3 && rating >= 3) return true;
+    if (want2 && rating >= 2) return true;
+    if (want1 && rating >= 1) return true;
+    return false;
   }
 
   var DEFAULT_INDUSTRIES = [
@@ -33,13 +61,6 @@
     'Marketing & Creative',
     'General Networking',
   ];
-
-  function slugIndustryLabel(label) {
-    return String(label || '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
-  }
 
   function organiserMatchesFilters(org) {
     var tab = getActiveTab();
@@ -64,25 +85,13 @@
         var label =
           industrySelect.options[industrySelect.selectedIndex] &&
           industrySelect.options[industrySelect.selectedIndex].text;
-        var hay = org.search || String(org.name || '').toLowerCase();
+        var hayIndustry = org.search || String(org.name || '').toLowerCase();
         var labelLower = String(label || '').toLowerCase();
-        if (!labelLower || hay.indexOf(labelLower) === -1) return false;
+        if (!labelLower || hayIndustry.indexOf(labelLower) === -1) return false;
       }
     }
 
-    var wantInPerson = checkInPerson && checkInPerson.checked;
-    var wantOnline = checkOnline && checkOnline.checked;
-    var wantHybrid = checkHybrid && checkHybrid.checked;
-    if (checkInPerson || checkOnline || checkHybrid) {
-      if (!wantInPerson && !wantOnline && !wantHybrid) return false;
-      var formats = org.formatSlugs || (org.meetingFormats || []).map(formatSlug);
-      if (!formats.length) return wantInPerson;
-      var match = false;
-      if (wantInPerson && formats.indexOf('in-person') !== -1) match = true;
-      if (wantOnline && formats.indexOf('online') !== -1) match = true;
-      if (wantHybrid && formats.indexOf('hybrid') !== -1) match = true;
-      if (!match) return false;
-    }
+    if (!matchesRatingFilter(org)) return false;
 
     return true;
   }
@@ -156,9 +165,9 @@
     if (searchInput) searchInput.value = '';
     if (industrySelect) industrySelect.value = '';
     if (sortSelect) sortSelect.value = 'recommended';
-    if (checkInPerson) checkInPerson.checked = true;
-    if (checkOnline) checkOnline.checked = true;
-    if (checkHybrid) checkHybrid.checked = true;
+    [rating4, rating3, rating2, rating1, ratingNone].forEach(function (el) {
+      if (el) el.checked = true;
+    });
     setActiveTab('all');
     applyFilters();
   }
@@ -184,7 +193,9 @@
     el.addEventListener('change', applyFilters);
   }
 
-  [searchInput, sortSelect, industrySelect, checkInPerson, checkOnline, checkHybrid].forEach(bindFilter);
+  [searchInput, sortSelect, industrySelect, rating4, rating3, rating2, rating1, ratingNone].forEach(
+    bindFilter
+  );
 
   typeTabs.forEach(function (tab) {
     tab.addEventListener('click', function () {

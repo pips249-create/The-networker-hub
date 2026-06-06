@@ -2,13 +2,51 @@
 .events-page .hero.events-hero {
   padding: 40px 24px 44px;
 }
-.events-page .events-hero h1 {
+
+.events-hero-layout {
+  display: block;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.events-hero-copy {
+  max-width: 36em;
+}
+
+body.browse-mode-organisers .events-hero-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  gap: 20px;
+  align-items: stretch;
+  max-width: 1200px;
+}
+
+body.browse-mode-organisers .events-hero-copy {
+  max-width: none;
+}
+
+.events-hero-sponsor-slot {
+  min-width: 0;
+  display: flex;
+}
+
+.events-hero-sponsor-slot .sponsor-hub {
+  flex: 1;
+  width: 100%;
+}
+
+.sponsor-hub--in-hero {
+  position: static;
+  top: auto;
+}
+
+.events-page .events-hero-copy h1 {
   font-size: clamp(2.35rem, 6vw, 3.5rem);
   line-height: 1.08;
   margin-bottom: 14px;
   letter-spacing: -0.02em;
 }
-.events-page .events-hero .hero-types {
+.events-page .events-hero-copy .hero-types {
   color: var(--text-muted);
   font-size: 14px;
   line-height: 1.6;
@@ -16,7 +54,7 @@
   margin: 0;
 }
 @media (min-width: 720px) {
-  .events-page .events-hero .hero-types {
+  .events-page .events-hero-copy .hero-types {
     font-size: 15px;
   }
 }

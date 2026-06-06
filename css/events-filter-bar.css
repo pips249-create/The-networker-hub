@@ -105,7 +105,8 @@
 
 .filter-format-group,
 .filter-price-tier-group,
-.filter-price-range {
+.filter-price-range,
+.filter-org-rating-group {
   border: none;
   margin: 0;
   padding: 0;
