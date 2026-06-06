@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../css/hub-loading.css?v=20260605b">
 <link rel="stylesheet" href="../css/events-page.css?v=20260629">
 <link rel="stylesheet" href="../css/events-filter-bar.css?v=20260629">
-<link rel="stylesheet" href="../css/organisers-browse.css?v=20260630">
+<link rel="stylesheet" href="../css/organisers-browse.css?v=20260630b">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 </head>
@@ -26,14 +26,15 @@
   <div class="hero-inner">
     <h1>Find your next <span class="accent">event</span></h1>
     <p class="hero-types">Find networking events, exhibitions and conferences across the UK</p>
-    <div class="browse-mode-bar">
-      <div class="browse-mode-toggle" role="tablist" aria-label="Browse mode">
-        <button type="button" class="browse-mode-btn is-active" data-browse-mode="events" role="tab" aria-selected="true">Events</button>
-        <button type="button" class="browse-mode-btn" data-browse-mode="organisers" role="tab" aria-selected="false">Organisers</button>
-      </div>
-    </div>
   </div>
 </section>
+
+<div class="browse-mode-bar shell">
+  <div class="browse-mode-toggle" role="tablist" aria-label="Browse mode">
+    <button type="button" class="browse-mode-btn is-active" data-browse-mode="events" role="tab" aria-selected="true">Events</button>
+    <button type="button" class="browse-mode-btn" data-browse-mode="organisers" role="tab" aria-selected="false">Organisers</button>
+  </div>
+</div>
 
 <main class="shell hub-page-buffer-host" id="events-shell">
   <div
@@ -254,14 +255,14 @@
 <script src="../js/hub-favourites.js?v=20260629"></script>
 <script src="../js/postcode-outcode.js?v=20260613"></script>
 <script src="../js/postcode-geo.js?v=20260613"></script>
-<script src="../js/events-filters.js?v=20260629"></script>
+<script src="../js/events-filters.js?v=20260630b"></script>
 <script src="../js/events-map.js?v=20260629"></script>
 <script src="../js/hub-loading.js?v=20260616"></script>
 <script src="../js/cms-sponsor-fields.js?v=20260630"></script>
 <script src="../js/flexible-event-image.js?v=20260628a"></script>
 <script src="../js/events.js?v=20260630"></script>
-<script src="../js/organisers-filters.js?v=20260630"></script>
-<script src="../js/organisers.js?v=20260630"></script>
-<script src="../js/browse-mode.js?v=20260630"></script>
+<script src="../js/organisers-filters.js?v=20260630b"></script>
+<script src="../js/organisers.js?v=20260630b"></script>
+<script src="../js/browse-mode.js?v=20260630b"></script>
 </body>
 </html>

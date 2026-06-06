@@ -234,7 +234,10 @@
   };
 
   function applyFilters() {
-    if (document.body.classList.contains('browse-mode-organisers')) return;
+    if (document.body.classList.contains('browse-mode-organisers')) {
+      if (window.hubApplyOrganiserFilters) window.hubApplyOrganiserFilters();
+      return;
+    }
     var all = window.hubAllEvents || [];
     var filtered = window.hubGetFilteredEvents(all);
 

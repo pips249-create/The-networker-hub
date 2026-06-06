@@ -23,6 +23,24 @@
     return raw.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
 
+  var DEFAULT_INDUSTRIES = [
+    'Technology & Digital',
+    'Professional Services',
+    'Finance & Insurance',
+    'Health & Wellbeing',
+    'Property & Construction',
+    'Retail & Hospitality',
+    'Marketing & Creative',
+    'General Networking',
+  ];
+
+  function slugIndustryLabel(label) {
+    return String(label || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
   function organiserMatchesFilters(org) {
     var tab = getActiveTab();
     if (tab === 'featured' && !org.featured) return false;
@@ -39,13 +57,17 @@
 
     var industry = (industrySelect && industrySelect.value) || '';
     if (industry) {
-      var slugs = (org.industries || []).map(function (ind) {
-        return String(ind || '')
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-|-$/g, '');
-      });
-      if (slugs.indexOf(industry) === -1 && org.industrySlug !== industry) return false;
+      var slugs = (org.industries || []).map(slugIndustryLabel);
+      if (slugs.indexOf(industry) !== -1 || org.industrySlug === industry) {
+        /* matched explicit industry */
+      } else {
+        var label =
+          industrySelect.options[industrySelect.selectedIndex] &&
+          industrySelect.options[industrySelect.selectedIndex].text;
+        var hay = org.search || String(org.name || '').toLowerCase();
+        var labelLower = String(label || '').toLowerCase();
+        if (!labelLower || hay.indexOf(labelLower) === -1) return false;
+      }
     }
 
     var wantInPerson = checkInPerson && checkInPerson.checked;
@@ -98,23 +120,28 @@
 
   function fillIndustryOptions() {
     if (!industrySelect) return;
+    var selected = industrySelect.value;
     while (industrySelect.options.length > 1) industrySelect.remove(1);
+    var labels = DEFAULT_INDUSTRIES.slice();
     var all = window.hubAllOrganisers || [];
-    var labels = [];
     all.forEach(function (org) {
       (org.industries || []).forEach(function (ind) {
         if (ind && labels.indexOf(ind) === -1) labels.push(ind);
       });
+      if (org.industry && labels.indexOf(org.industry) === -1) labels.push(org.industry);
     });
-    labels.sort().forEach(function (label) {
+    labels.sort(function (a, b) {
+      if (a === 'General Networking') return 1;
+      if (b === 'General Networking') return -1;
+      return String(a).localeCompare(String(b));
+    });
+    labels.forEach(function (label) {
       var opt = document.createElement('option');
-      opt.value = String(label)
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
+      opt.value = slugIndustryLabel(label);
       opt.textContent = label;
       industrySelect.appendChild(opt);
     });
+    if (selected) industrySelect.value = selected;
   }
 
   function applyFilters() {
@@ -146,7 +173,7 @@
   }
 
   window.hubApplyOrganiserFilters = function () {
-    fillIndustryOptions();
+    if (industrySelect && industrySelect.options.length <= 1) fillIndustryOptions();
     applyFilters();
   };
   window.hubResetOrganiserFilters = resetFilters;

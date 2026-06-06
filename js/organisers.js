@@ -108,6 +108,11 @@
   function paginationHtml(page, totalPages) {
     if (totalPages <= 1) return '';
     var items = [];
+    var maxVisible = 5;
+    var start = Math.max(1, page - 2);
+    var end = Math.min(totalPages, start + maxVisible - 1);
+    start = Math.max(1, end - maxVisible + 1);
+
     items.push(
       '<button type="button" class="page-btn page-prev" data-page="' +
         (page - 1) +
@@ -115,17 +120,33 @@
         (page <= 1 ? 'disabled' : '') +
         ' aria-label="Previous page">‹</button>'
     );
-    for (var p = 1; p <= totalPages; p++) {
+
+    if (start > 1) {
+      items.push('<button type="button" class="page-btn" data-page="1">1</button>');
+      if (start > 2) items.push('<span class="page-ellipsis" aria-hidden="true">…</span>');
+    }
+
+    for (var p = start; p <= end; p++) {
       items.push(
         '<button type="button" class="page-btn' +
           (p === page ? ' is-active' : '') +
           '" data-page="' +
           p +
-          '">' +
+          '" ' +
+          (p === page ? 'aria-current="page"' : '') +
+          '>' +
           p +
           '</button>'
       );
     }
+
+    if (end < totalPages) {
+      if (end < totalPages - 1) items.push('<span class="page-ellipsis" aria-hidden="true">…</span>');
+      items.push(
+        '<button type="button" class="page-btn" data-page="' + totalPages + '">' + totalPages + '</button>'
+      );
+    }
+
     items.push(
       '<button type="button" class="page-btn page-next" data-page="' +
         (page + 1) +
@@ -133,6 +154,7 @@
         (page >= totalPages ? 'disabled' : '') +
         ' aria-label="Next page">›</button>'
     );
+
     return '<nav class="listings-pagination" aria-label="Organiser pages">' + items.join('') + '</nav>';
   }
 
@@ -217,6 +239,10 @@
     renderAll();
   };
 
+  window.hubRenderOrganisers = function () {
+    renderAll();
+  };
+
   function initPagination() {
     if (!els.listings || els.listings.dataset.orgPaginationBound) return;
     els.listings.dataset.orgPaginationBound = '1';
@@ -288,6 +314,5 @@
   }
 
   window.hubLoadOrganisers = loadOrganisers;
-  window.hubRenderOrganisers = renderAll;
   initPagination();
 })();

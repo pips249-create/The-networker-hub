@@ -22,8 +22,8 @@
       filterLabel: 'Filter events',
     },
     organisers: {
-      title: 'Find networking <span class="accent">groups</span>',
-      sub: 'Discover organisers running meetings, mixers and events near you',
+      title: 'Find your next <span class="accent">organiser</span>',
+      sub: 'Networking groups, exhibition hosts, conference organisers and more across the UK',
       heading: 'All organisers',
       searchPlaceholder: 'Search organisers, industries, descriptions…',
       searchLabel: 'Search organisers',

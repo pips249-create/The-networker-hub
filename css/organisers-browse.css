@@ -178,7 +178,8 @@
 .browse-mode-bar {
   display: flex;
   justify-content: center;
-  margin: -8px 0 20px;
+  margin: 0 0 20px;
+  padding-top: 4px;
 }
 
 .browse-mode-toggle {
@@ -251,4 +252,47 @@ body:not(.browse-mode-organisers) .organiser-type-tabs {
   .organiser-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Organiser browse page — blue tint (distinct from events purple) */
+body.browse-mode-organisers.events-page {
+  background: linear-gradient(180deg, #eef4ff 0%, #f8fbff 280px, var(--surface-bg, #faf8fc) 520px);
+}
+
+body.browse-mode-organisers .events-hero {
+  background: linear-gradient(165deg, #c7dcff 0%, #e8f1ff 50%, #f4f8ff 100%);
+}
+
+body.browse-mode-organisers .events-hero h1 .accent {
+  color: #2563eb;
+}
+
+body.browse-mode-organisers .events-filter-bar {
+  background: linear-gradient(165deg, #f8fbff 0%, #eef4ff 55%, #fff 100%);
+  border-color: rgba(37, 99, 235, 0.14);
+}
+
+body.browse-mode-organisers .browse-mode-btn.is-active {
+  background: #2563eb;
+}
+
+body.browse-mode-organisers .filter-checkbox input:checked + .filter-checkbox-box {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+body.browse-mode-organisers .type-tab.is-active,
+body.browse-mode-organisers .org-type-tab.is-active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+body.browse-mode-organisers .events-filter-shell {
+  border-radius: 16px;
+}
+
+body.browse-mode-organisers .filter-field-icon,
+body.browse-mode-organisers .filter-date-icon {
+  color: #2563eb;
 }
