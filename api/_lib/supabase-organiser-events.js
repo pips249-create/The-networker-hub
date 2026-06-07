@@ -11,6 +11,21 @@ const sbOrg = require('./supabase-organiser');
 const { geocodeUkPostcode } = require('./postcode-geocode');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 
+const WORKSPACE_EVENTS_LIMIT_DEFAULT = 100;
+const WORKSPACE_EVENTS_LIMIT_MAX = 250;
+const WORKSPACE_UPCOMING_LIMIT = 20;
+
+function parseWorkspaceEventsQuery(req) {
+  const limitRaw = parseInt(String(req?.query?.eventsLimit || ''), 10);
+  const offsetRaw = parseInt(String(req?.query?.eventsOffset || ''), 10);
+  const limit = Math.min(
+    Math.max(Number.isFinite(limitRaw) ? limitRaw : WORKSPACE_EVENTS_LIMIT_DEFAULT, 1),
+    WORKSPACE_EVENTS_LIMIT_MAX
+  );
+  const offset = Math.max(Number.isFinite(offsetRaw) ? offsetRaw : 0, 0);
+  return { limit, offset };
+}
+
 function formatMoney(amount) {
   const n = Number(amount) || 0;
   return '£' + n.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -162,7 +177,7 @@ function deriveListingStatus(statusRaw, dateIso, eventStatus, endDateIso) {
   return { key: 'live', label: 'Live' };
 }
 
-function enrichOrganiserOverview(groups, events, tickets) {
+function enrichOrganiserOverview(groups, events, tickets, groupEventCounts) {
   const ticketsByEvent = {};
   tickets.forEach((t) => {
     if (!t.eventId) return;
@@ -194,11 +209,14 @@ function enrichOrganiserOverview(groups, events, tickets) {
   });
 
   const enrichedGroups = groups.map((g) => {
-    const groupEvents = enrichedEvents.filter((ev) => eventBelongsToGroup(ev, g.id));
+    const eventsListed =
+      groupEventCounts && typeof groupEventCounts.get === 'function'
+        ? groupEventCounts.get(g.id) || 0
+        : enrichedEvents.filter((ev) => eventBelongsToGroup(ev, g.id)).length;
     const status = deriveGroupListingStatus(g.statusRaw);
     return {
       ...g,
-      eventsListed: groupEvents.length,
+      eventsListed,
       revenueNum: 0,
       revenueDisplay: formatMoney(0),
       rating: g.rating,
@@ -225,23 +243,82 @@ async function listAllOrganiserEvents() {
   return (data || []).map(rowToEvent);
 }
 
-async function listEventsForOrganiser(email, groupIds) {
+async function countEventsForOrganiser(groupIds) {
   const sb = getSupabaseAdmin();
   const ids = groupIds || [];
-  if (!ids.length) return [];
-  // For the common case (single organiser), prefer a simple equality filter.
-  // This matches the dashboard behaviour and avoids `IN (...)` edge cases.
-  let query = sb.from('events').select('*');
+  if (!ids.length) return 0;
+  let query = sb.from('events').select('id', { count: 'exact', head: true });
   if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
   else query = query.in('organiser_id', ids);
-  const { data, error } = await query.order('starts_at', { ascending: true });
+  const { count, error } = await query;
+  if (error) throw new Error(error.message);
+  return count || 0;
+}
+
+async function countEventsByOrganiserGroup(groupIds) {
+  const counts = new Map();
+  for (const id of groupIds || []) {
+    const total = await countEventsForOrganiser([id]);
+    counts.set(id, total);
+  }
+  return counts;
+}
+
+async function listEventsForOrganiser(email, groupIds, options) {
+  const sb = getSupabaseAdmin();
+  const ids = groupIds || [];
+  const opts = options && typeof options === 'object' ? options : {};
+  if (!ids.length && !opts.allEvents) return [];
+
+  let query = sb.from('events').select('*');
+  if (!opts.allEvents) {
+    if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
+    else query = query.in('organiser_id', ids);
+  }
+  const orderAsc = opts.orderAsc !== false;
+  query = query.order('starts_at', { ascending: orderAsc, nullsFirst: false });
+  if (opts.limit != null) {
+    const offset = Math.max(Number(opts.offset) || 0, 0);
+    const limit = Math.max(Number(opts.limit) || 1, 1);
+    query = query.range(offset, offset + limit - 1);
+  }
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data || []).map(rowToEvent);
 }
 
-async function listEventsForSession(session, groupIds, _organiserRecords, adminView) {
-  if (adminView) return listAllOrganiserEvents();
-  return listEventsForOrganiser(session.email, groupIds);
+async function listUpcomingEventsForOrganiser(groupIds, limit) {
+  const sb = getSupabaseAdmin();
+  const ids = groupIds || [];
+  const max = Math.max(Number(limit) || WORKSPACE_UPCOMING_LIMIT, 1);
+  if (!ids.length) return [];
+
+  let query = sb.from('events').select('*');
+  if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
+  else query = query.in('organiser_id', ids);
+  query = query.order('starts_at', { ascending: true, nullsFirst: false }).limit(Math.max(max * 4, max));
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+
+  const cutoff = Date.now() - 86400000;
+  return (data || [])
+    .map(rowToEvent)
+    .filter((ev) => {
+      if (!ev.date) return true;
+      const d = new Date(ev.date);
+      return !Number.isNaN(d.getTime()) && d.getTime() >= cutoff;
+    })
+    .slice(0, max);
+}
+
+async function listEventsForSession(session, groupIds, _organiserRecords, adminView, options) {
+  if (adminView) {
+    if (options && options.limit != null) {
+      return listEventsForOrganiser(session.email, groupIds, { ...options, allEvents: true });
+    }
+    return listAllOrganiserEvents();
+  }
+  return listEventsForOrganiser(session.email, groupIds, options);
 }
 
 async function listTicketsForEventIds(eventIds) {
@@ -600,6 +677,61 @@ async function enrichGroupForDashboard(group, session, adminView) {
   return enrichOrganiserOverview([group], events, tickets).groups[0];
 }
 
+async function countAllEvents() {
+  const sb = getSupabaseAdmin();
+  const { count, error } = await sb.from('events').select('id', { count: 'exact', head: true });
+  if (error) throw new Error(error.message);
+  return count || 0;
+}
+
+async function loadOrganiserEventsPage(session, groups, groupIds, adminView, pagination) {
+  const { limit, offset } = pagination;
+
+  const [groupEventCounts, upcomingRaw, total] = await Promise.all([
+    countEventsByOrganiserGroup(groupIds),
+    listUpcomingEventsForOrganiser(groupIds, WORKSPACE_UPCOMING_LIMIT),
+    adminView ? countAllEvents() : countEventsForOrganiser(groupIds),
+  ]);
+
+  const events = await listEventsForSession(session, groupIds, [], adminView, {
+    limit,
+    offset,
+    orderAsc: false,
+    allEvents: adminView,
+  });
+
+  const eventIds = events.map((e) => e.id);
+  const upcomingIds = upcomingRaw.map((e) => e.id);
+  const ticketEventIds = [...new Set([...eventIds, ...upcomingIds])];
+  const tickets = await listTicketsForSession(session, ticketEventIds, adminView);
+  let overview = enrichOrganiserOverview(groups, events, tickets, groupEventCounts);
+  const upcomingOverview = enrichOrganiserOverview(groups, upcomingRaw, tickets, groupEventCounts);
+
+  try {
+    const { enrichEventsWithPayoutData } = require('./supabase-organiser-payouts');
+    overview = {
+      ...overview,
+      events: await enrichEventsWithPayoutData(overview.events),
+    };
+    upcomingOverview.events = await enrichEventsWithPayoutData(upcomingOverview.events);
+  } catch {
+    /* payout tables may not exist yet */
+  }
+
+  return {
+    groups: overview.groups,
+    events: overview.events,
+    upcomingEvents: upcomingOverview.events,
+    tickets,
+    eventsPagination: {
+      total,
+      limit,
+      offset,
+      hasMore: offset + events.length < total,
+    },
+  };
+}
+
 async function getOrganiserWorkspace(req) {
   const { requireOrganiserSession } = require('./organiser');
   const wsAuth = requireOrganiserSession(req);
@@ -609,6 +741,7 @@ async function getOrganiserWorkspace(req) {
   const isAdmin = sbOrg.isPlatformAdmin(session);
   const personalScope = isAdmin && organiserPersonalScopeFromRequest(req);
   const adminView = isAdmin && !personalScope;
+  const eventsPaginationQuery = parseWorkspaceEventsQuery(req);
 
   let displayName = session.name || '';
   try {
@@ -627,31 +760,64 @@ async function getOrganiserWorkspace(req) {
   }
 
   const groupIds = groups.map((g) => g.id);
+  const eventsOnly = String(req.query?.eventsOnly || '') === '1';
+
+  if (eventsOnly) {
+    try {
+      const page = await loadOrganiserEventsPage(
+        session,
+        groups,
+        groupIds,
+        adminView,
+        eventsPaginationQuery
+      );
+      return {
+        ok: true,
+        session,
+        groups: page.groups,
+        events: page.events,
+        upcomingEvents: page.upcomingEvents,
+        tickets: page.tickets,
+        eventsPagination: page.eventsPagination,
+      };
+    } catch (e) {
+      return { ok: false, status: 500, error: 'events_fetch_failed', message: e.message, groups };
+    }
+  }
+
   try {
     const { archivePastPublishedEvents } = require('./supabase-organiser-payouts');
     await archivePastPublishedEvents(groupIds);
   } catch {
     /* archive helper optional */
   }
+
   let events = [];
+  let upcomingEvents = [];
+  let tickets = [];
+  let eventsPagination = {
+    total: 0,
+    limit: eventsPaginationQuery.limit,
+    offset: eventsPaginationQuery.offset,
+    hasMore: false,
+  };
+  let overviewGroups = groups;
+
   try {
-    events = await listEventsForSession(session, groupIds, [], adminView);
+    const page = await loadOrganiserEventsPage(
+      session,
+      groups,
+      groupIds,
+      adminView,
+      eventsPaginationQuery
+    );
+    overviewGroups = page.groups;
+    events = page.events;
+    upcomingEvents = page.upcomingEvents;
+    tickets = page.tickets;
+    eventsPagination = page.eventsPagination;
   } catch (e) {
     return { ok: false, status: 500, error: 'events_fetch_failed', message: e.message, groups };
-  }
-
-  const eventIds = events.map((e) => e.id);
-  const tickets = await listTicketsForSession(session, eventIds, adminView);
-  let overview = enrichOrganiserOverview(groups, events, tickets);
-
-  try {
-    const { enrichEventsWithPayoutData } = require('./supabase-organiser-payouts');
-    overview = {
-      ...overview,
-      events: await enrichEventsWithPayoutData(overview.events),
-    };
-  } catch {
-    /* payout tables may not exist yet */
   }
 
   let access = null;
@@ -664,10 +830,11 @@ async function getOrganiserWorkspace(req) {
   return {
     ok: true,
     session,
-    groups: overview.groups,
-    events: overview.events,
-    upcomingEvents: overview.upcomingEvents,
+    groups: overviewGroups,
+    events,
+    upcomingEvents,
     tickets,
+    eventsPagination,
     groupsError,
     hubView: hubViewFromRequest(req),
     adminView,
@@ -691,6 +858,11 @@ function airtableSetupHint() {
 }
 
 module.exports = {
+  WORKSPACE_EVENTS_LIMIT_DEFAULT,
+  WORKSPACE_EVENTS_LIMIT_MAX,
+  parseWorkspaceEventsQuery,
+  countEventsForOrganiser,
+  loadOrganiserEventsPage,
   listEventsForSession,
   listEventsForOrganiser,
   listTicketsForEventIds,

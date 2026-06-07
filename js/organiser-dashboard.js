@@ -3,6 +3,7 @@
  */
 (function () {
   const ORG_PAGE_SIZE = 10;
+  const EVENTS_FETCH_SIZE = 100;
   const listPages = { groups: 1, events: 1, tickets: 1, attendees: 1, reviews: 1, revenue: 1 };
   let eventsSubRoute = 'events-list';
 
@@ -23,6 +24,10 @@
     groups: [],
     events: [],
     upcomingEvents: [],
+    eventsTotal: 0,
+    eventsChunkOffset: 0,
+    eventsHasMore: false,
+    eventsLoading: false,
     tickets: [],
     attendeesAll: [],
     reviews: [],
@@ -55,7 +60,7 @@
       const el = document.getElementById(id);
       if (el) el.textContent = val;
     };
-    set('stat-events', String(state.events.length));
+    set('stat-events', String(state.eventsTotal || state.events.length));
     set('stat-tickets', String(state.tickets.length));
     set('stat-revenue', rev);
   }
@@ -390,7 +395,7 @@
       const el = document.getElementById(id);
       if (el) el.textContent = text;
     };
-    set('tab-count-events', String(state.events.length));
+    set('tab-count-events', String(state.eventsTotal || state.events.length));
     set('tab-count-tickets', String(state.tickets.length));
     set('tab-count-reviews', String(state.reviews.length));
     set('tab-count-revenue', totalRevenueDisplay());
@@ -641,6 +646,71 @@
       html += '<span class="org-rating-star' + (i <= n ? '' : ' muted') + '" aria-hidden="true">★</span>';
     }
     return html;
+  }
+
+  function eventsChunkOffsetForUiPage(uiPage) {
+    return Math.floor(((uiPage - 1) * ORG_PAGE_SIZE) / EVENTS_FETCH_SIZE) * EVENTS_FETCH_SIZE;
+  }
+
+  function eventsFiltersActive() {
+    return (
+      filters.eventsSearch.trim() !== '' ||
+      filters.eventsStatus !== 'all' ||
+      filters.eventsType !== 'all'
+    );
+  }
+
+  async function ensureEventsChunkForUiPage(uiPage) {
+    const chunkOffset = eventsChunkOffsetForUiPage(uiPage);
+    if (!eventsFiltersActive() && state.eventsChunkOffset === chunkOffset && state.events.length) {
+      return;
+    }
+    if (eventsFiltersActive()) return;
+
+    state.eventsLoading = true;
+    try {
+      const { ok, data } = await api(
+        '/api/organiser/bootstrap?eventsOnly=1&eventsLimit=' +
+          EVENTS_FETCH_SIZE +
+          '&eventsOffset=' +
+          chunkOffset
+      );
+      if (!ok) throw new Error(data.message || data.error || 'events_load_failed');
+      state.events = data.events || [];
+      state.eventsChunkOffset = chunkOffset;
+      state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
+      state.eventsHasMore = Boolean(data.eventsPagination?.hasMore);
+      if (Array.isArray(data.tickets)) {
+        const byId = new Map(state.tickets.map((t) => [t.id, t]));
+        data.tickets.forEach((t) => {
+          if (t && t.id) byId.set(t.id, t);
+        });
+        state.tickets = [...byId.values()];
+      }
+    } finally {
+      state.eventsLoading = false;
+    }
+  }
+
+  function paginateEventsList(list, page) {
+    if (eventsFiltersActive()) {
+      return paginateList(list, page);
+    }
+
+    const total = state.eventsTotal || list.length;
+    const totalPages = Math.max(1, Math.ceil(total / ORG_PAGE_SIZE));
+    const p = Math.min(Math.max(1, page), totalPages);
+    const globalStart = (p - 1) * ORG_PAGE_SIZE;
+    const localStart = globalStart - state.eventsChunkOffset;
+    const localEnd = localStart + ORG_PAGE_SIZE;
+    return {
+      items: list.slice(localStart, localEnd),
+      page: p,
+      totalPages,
+      total,
+      start: total ? globalStart + 1 : 0,
+      end: Math.min(globalStart + ORG_PAGE_SIZE, total),
+    };
   }
 
   function paginateList(items, page) {
@@ -1197,7 +1267,10 @@
   }
 
   function overviewEventsForDashboard() {
-    const list = state.events.slice();
+    const list = (state.upcomingEvents && state.upcomingEvents.length
+      ? state.upcomingEvents
+      : state.events
+    ).slice();
     list.sort((a, b) => {
       const draftA = String(a.statusKey || '').toLowerCase() === 'draft';
       const draftB = String(b.statusKey || '').toLowerCase() === 'draft';
@@ -1309,7 +1382,7 @@
       return;
     }
     if (empty) empty.hidden = true;
-    const pageInfo = paginateList(list, listPages.events);
+    const pageInfo = paginateEventsList(list, listPages.events);
     listPages.events = pageInfo.page;
     updatePaginationNav('events', pageInfo);
 
@@ -1770,6 +1843,9 @@
     state.groups = data.groups || [];
     state.events = data.events || [];
     state.upcomingEvents = data.upcomingEvents || [];
+    state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
+    state.eventsChunkOffset = data.eventsPagination?.offset ?? 0;
+    state.eventsHasMore = Boolean(data.eventsPagination?.hasMore);
     state.tickets = data.tickets || [];
     listPages.groups = 1;
     listPages.events = 1;
@@ -2268,8 +2344,13 @@
       const p = parseInt(btn.getAttribute('data-page'), 10);
       if (!listKey || !p || p === listPages[listKey]) return;
       listPages[listKey] = p;
-      if (listKey === 'groups') renderGroups();
-      if (listKey === 'events') renderEvents();
+      if (listKey === 'events') {
+        ensureEventsChunkForUiPage(p)
+          .then(() => renderEvents())
+          .catch((err) => {
+            showAirtableAlert(err.message || 'Could not load events', true);
+          });
+      } else if (listKey === 'groups') renderGroups();
       if (listKey === 'tickets') renderTickets();
       if (listKey === 'reviews') renderReviews();
       if (listKey === 'attendees') renderAttendees();

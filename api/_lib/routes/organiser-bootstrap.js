@@ -27,6 +27,16 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (String(req.query?.eventsOnly || '') === '1') {
+      return json(res, 200, {
+        ok: true,
+        events: ws.events,
+        upcomingEvents: ws.upcomingEvents || [],
+        tickets: ws.tickets,
+        eventsPagination: ws.eventsPagination,
+      });
+    }
+
     return json(res, 200, {
       ok: true,
       dataProvider: 'supabase',
@@ -50,8 +60,14 @@ module.exports = async function handler(req, res) {
       canDeleteEvents: ws.canDeleteEvents,
       stats: {
         groups: ws.groups.length,
-        events: ws.events.length,
+        events: ws.eventsPagination?.total ?? ws.events.length,
         tickets: ws.tickets.length,
+      },
+      eventsPagination: ws.eventsPagination || {
+        total: ws.events.length,
+        limit: ws.events.length,
+        offset: 0,
+        hasMore: false,
       },
       groupsError: ws.groupsError,
       airtable: {
