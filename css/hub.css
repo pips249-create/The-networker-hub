@@ -954,3 +954,30 @@ body.hub-page-account .site-nav {
   border-top: 3px solid var(--lavender);
   padding: 24px 28px;
 }
+
+/* Command Centre — sponsor ad preview */
+.sponsor-preview-logo-band {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #f3f4f6;
+}
+
+.sponsor-preview-logo-band--compact {
+  min-height: 96px;
+}
+
+.sponsor-preview-logo-img,
+.sponsor-preview-logo-band .sponsor-logo--full {
+  display: block;
+  max-width: 100%;
+  max-height: 80px;
+  width: auto;
+  height: auto;
+  margin: 0 auto;
+  object-fit: contain;
+  object-position: center;
+}

@@ -55,21 +55,21 @@
       key: 'event_page_sidebar_ad',
       label: 'Event page — Sidebar ad',
       preview: 'compact',
-      help: 'Compact ad above ticket checkout. When inactive, the live Browse Sponsor Hub creative is shown instead.',
-      tagline: 'Reach engaged ticket buyers',
-      bullets: ['Short offer line beside checkout'],
+      help: 'Logo and CTA button beside ticket checkout. Set the button link to the sponsor website.',
+      tagline: '',
+      bullets: [],
       ctaLabel: 'Enquire now',
-      ctaUrl: 'mailto:sales@the-networker.co.uk?subject=Event%20page%20advert',
+      ctaUrl: 'https://',
     },
     {
       key: 'organiser_page_sidebar_ad',
       label: 'Organiser page — Sidebar ad',
       preview: 'compact',
-      help: 'Compact ad on organiser profiles. When inactive, the live Browse Sponsor Hub creative is shown instead.',
-      tagline: 'Connect with networkers',
-      bullets: ['Sidebar placement on organiser profiles'],
+      help: 'Logo and CTA button on organiser profiles. Set the button link to the sponsor website.',
+      tagline: '',
+      bullets: [],
       ctaLabel: 'Enquire now',
-      ctaUrl: 'mailto:sales@the-networker.co.uk?subject=Organiser%20page%20advert',
+      ctaUrl: 'https://',
     },
   ];
 
@@ -1203,10 +1203,15 @@
     return sponsorBulletsHtml(creative.bullets);
   }
 
-  function sponsorPreviewLogoHtml(logoUrl) {
+  function sponsorPreviewLogoHtml(logoUrl, compact) {
+    var bandClass =
+      'sponsor-preview-logo-band' +
+      (compact ? ' sponsor-preview-logo-band--compact' : ' mb-3');
     if (logoUrl && /^(https?:|\/|data:image\/)/i.test(logoUrl)) {
       return (
-        '<div class="sponsor-preview-logo-band mb-3" data-sponsor-preview-band>' +
+        '<div class="' +
+        bandClass +
+        '" data-sponsor-preview-band>' +
         '<img src="' +
         esc(logoUrl) +
         '" alt="" class="sponsor-preview-logo-img" crossorigin="anonymous" ' +
@@ -1215,7 +1220,9 @@
       );
     }
     return (
-      '<div class="sponsor-preview-logo-band sponsor-preview-logo-band--empty mb-3">' +
+      '<div class="' +
+      bandClass +
+      ' sponsor-preview-logo-band--empty">' +
       '<span class="text-[10px] font-semibold text-slate-500">Your logo here</span></div>'
     );
   }
@@ -1288,7 +1295,7 @@
       if (previewHint) {
         previewHint.textContent =
           d.preview === 'compact'
-            ? 'Matches the compact sidebar ad on detail pages.'
+            ? 'Logo centred above the button, as on event and organiser detail pages.'
             : 'Matches the browse page hero Sponsor Hub block.';
       }
       sponsorLogoBase64 = null;
@@ -1313,12 +1320,9 @@
       '<label class="flex items-center gap-2 text-sm text-slate-700">' +
       '<input type="checkbox" id="sponsor-active" class="rounded border-slate-300" checked> ' +
       'Ad active (uncheck to hide this placement on site)</label>' +
+      '<div id="sponsor-hero-fields" class="space-y-5">' +
       '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-company">Company name</label>' +
       '<input type="text" id="sponsor-company" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Acme Ltd"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-logo-url">Company logo URL</label>' +
-      '<input type="text" id="sponsor-logo-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mb-2" placeholder="https://…">' +
-      '<label class="block text-xs text-slate-500 mb-1" for="sponsor-logo-file">Or upload logo (max 2MB, 200×100 recommended)</label>' +
-      '<input type="file" id="sponsor-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" class="block w-full text-sm text-slate-600"></div>' +
       '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-tagline">Tagline / offer</label>' +
       '<input type="text" id="sponsor-tagline" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
       esc(slotDefaults().tagline) +
@@ -1326,13 +1330,17 @@
       '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-bullets">Bullet copy (one line each)</label>' +
       '<textarea id="sponsor-bullets" rows="4" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
       esc(slotDefaults().bullets.join('\n')) +
-      '</textarea></div>' +
+      '</textarea></div></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-logo-url">Company logo URL</label>' +
+      '<input type="text" id="sponsor-logo-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mb-2" placeholder="https://…">' +
+      '<label class="block text-xs text-slate-500 mb-1" for="sponsor-logo-file">Or upload logo (max 2MB, 200×100 recommended)</label>' +
+      '<input type="file" id="sponsor-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" class="block w-full text-sm text-slate-600"></div>' +
       '<div class="grid sm:grid-cols-2 gap-4">' +
       '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-label">CTA button label</label>' +
       '<input type="text" id="sponsor-cta-label" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
       esc(slotDefaults().ctaLabel) +
       '"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-url">CTA link (https:// or mailto:)</label>' +
+      '<div><label id="sponsor-cta-url-label" class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-url">CTA link (https:// or mailto:)</label>' +
       '<input type="text" id="sponsor-cta-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
       esc(slotDefaults().ctaUrl) +
       '"></div></div>' +
@@ -1381,6 +1389,19 @@
       };
     }
 
+    function syncSlotFormLayout() {
+      var slot = slotDefaults();
+      var heroFields = document.getElementById('sponsor-hero-fields');
+      var ctaUrlLabel = document.getElementById('sponsor-cta-url-label');
+      if (heroFields) heroFields.hidden = slot.preview === 'compact';
+      if (ctaUrlLabel) {
+        ctaUrlLabel.textContent =
+          slot.preview === 'compact'
+            ? 'Sponsor website URL (https://)'
+            : 'CTA link (https:// or mailto:)';
+      }
+    }
+
     function renderPreview() {
       var creative = readForm();
       var el = document.getElementById('sponsor-preview');
@@ -1404,18 +1425,10 @@
 
       if (slot.preview === 'compact') {
         el.innerHTML =
-          '<aside class="relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm max-w-xs">' +
+          '<aside class="relative rounded-xl border border-slate-200 bg-white p-4 pt-8 shadow-sm max-w-xs flex flex-col gap-3">' +
           '<span class="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider text-slate-500">Sponsored</span>' +
-          sponsorPreviewLogoHtml(creative.logoUrl) +
-          (creative.companyName
-            ? '<p class="text-sm font-extrabold mb-1 pr-12">' + esc(creative.companyName) + '</p>'
-            : '') +
-          (taglineHtml
-            ? '<p class="text-xs text-slate-600 mb-3 pr-2">' + taglineHtml + '</p>'
-            : creative.bullets[0]
-              ? '<p class="text-xs text-slate-600 mb-3 pr-2">' + esc(creative.bullets[0]) + '</p>'
-              : '') +
-          '<span class="inline-block w-full text-center rounded-lg bg-[#2d2636] text-white text-xs font-bold px-3 py-2">' +
+          sponsorPreviewLogoHtml(creative.logoUrl, true) +
+          '<span class="inline-block w-full text-center rounded-lg bg-[#2d2636] text-white text-xs font-bold px-3 py-2.5">' +
           esc(creative.ctaLabel) +
           '</span></aside>';
         return;
@@ -1425,7 +1438,7 @@
         '<aside class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 text-[#2d1b3d] max-w-md shadow-[0_4px_18px_rgba(91,47,153,0.1)]">' +
         '<span class="absolute top-4 right-4 text-[9px] font-bold uppercase tracking-wider text-slate-500">Sponsored</span>' +
         '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3 pr-16">★ Sponsor Hub</div>' +
-        sponsorPreviewLogoHtml(creative.logoUrl) +
+        sponsorPreviewLogoHtml(creative.logoUrl, false) +
         (creative.companyName
           ? '<p class="text-sm font-extrabold mb-1">' + esc(creative.companyName) + '</p>'
           : '') +
@@ -1503,8 +1516,11 @@
     document.getElementById('sponsor-slot').addEventListener('change', function (ev) {
       currentSlotKey = ev.target.value || CMS_AD_SLOTS[0].key;
       applyDefaultsToForm();
+      syncSlotFormLayout();
       loadCurrentSlot();
     });
+
+    syncSlotFormLayout();
 
     document.getElementById('sponsor-publish-btn').addEventListener('click', function () {
       var btn = document.getElementById('sponsor-publish-btn');
@@ -1522,14 +1538,21 @@
       if (
         creative.active &&
         slot.preview === 'compact' &&
-        !creative.tagline &&
-        !creative.bullets.length
+        !creative.logoUrl
       ) {
-        setSponsorStatus('Add a tagline or bullet line before publishing an active sidebar ad.', 'error');
+        setSponsorStatus('Upload or paste a logo before publishing an active sidebar ad.', 'error');
         return;
       }
       if (creative.active && (!creative.ctaLabel || !creative.ctaUrl)) {
         setSponsorStatus('CTA label and link are required for an active ad.', 'error');
+        return;
+      }
+      if (
+        creative.active &&
+        slot.preview === 'compact' &&
+        !/^https?:\/\//i.test(creative.ctaUrl)
+      ) {
+        setSponsorStatus('Enter the sponsor website URL (https://…).', 'error');
         return;
       }
 
@@ -1538,11 +1561,14 @@
 
       var payload = {
         slot: currentSlotKey,
-        title: creative.tagline,
-        body: body || '<ul class="sponsor-list"><li>Placeholder</li></ul>',
+        title: slot.preview === 'compact' ? '' : creative.tagline,
+        body:
+          slot.preview === 'compact'
+            ? ''
+            : body || '<ul class="sponsor-list"><li>Placeholder</li></ul>',
         cta_label: creative.ctaLabel,
         cta_url: creative.ctaUrl,
-        company_name: creative.companyName,
+        company_name: slot.preview === 'compact' ? '' : creative.companyName,
         logo_url: sponsorLogoBase64 ? '' : document.getElementById('sponsor-logo-url').value.trim(),
         active: creative.active,
       };

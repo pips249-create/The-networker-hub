@@ -153,30 +153,26 @@
       '</aside>';
   }
 
+  function ctaLinkAttrs(url) {
+    return /^https?:\/\//i.test(String(url || '')) ? ' target="_blank" rel="noopener noreferrer"' : '';
+  }
+
   function renderCompactAd(container, block) {
     if (!container || !block) return;
-    var company = window.CmsSponsorFields
-      ? window.CmsSponsorFields.companyName(block)
-      : String(block.company_name || '').trim();
-    var tagline = taglineFromBlock(block);
     var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
     var ctaLabel = String(block.cta_label || '').trim() || 'Learn more';
     var ctaUrl = normalizeCta(block.cta_url);
-    var bodyText = bodyTextFromBlock(block);
-    var summary = tagline || bodyText;
 
     container.hidden = false;
     container.innerHTML =
       '<aside class="cms-ad-compact">' +
       '<span class="cms-ad-compact-badge">Sponsored</span>' +
       logoMarkup(logo, 'cms-ad-compact-logo', 'cms-ad-compact-logo-placeholder') +
-      '<div class="cms-ad-compact-copy">' +
-      (company ? '<p class="cms-ad-compact-company">' + esc(company) + '</p>' : '') +
-      (summary ? '<p class="cms-ad-compact-tagline">' + esc(summary) + '</p>' : '') +
-      '</div>' +
       '<a class="cms-ad-compact-cta" href="' +
       esc(ctaUrl) +
-      '">' +
+      '"' +
+      ctaLinkAttrs(ctaUrl) +
+      '>' +
       esc(ctaLabel) +
       '</a>' +
       '</aside>';
