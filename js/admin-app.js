@@ -47,7 +47,7 @@
   var MEETING_FORMATS = ['In person', 'Online', 'Hybrid'];
   var healthCache = null;
   var groupCleanupCache = null;
-  var eventCleanupState = { organiserId: '', unlinked: false, q: '' };
+  var eventCleanupState = { organiserId: '', unlinked: false };
 
   /** CMS ad placements — each maps to a cms_blocks.slot row. */
   var CMS_AD_SLOTS = [
@@ -2105,9 +2105,610 @@
     loadTemplates();
   }
 
+  function normalizeOrganiserOption(o) {
+    return {
+      id: o.id,
+      name: o.name,
+      listingStatus: o.listingStatus || o.listing_status || '',
+      slug: o.slug || '',
+    };
+  }
+
+  function missingBadge(field) {
+    var labels = { description: 'No bio', logo: 'No logo', website: 'No website' };
+    return (
+      '<span class="inline-flex items-center rounded-full bg-amber-100 text-amber-900 text-[10px] font-semibold px-2 py-0.5 mr-1">' +
+      esc(labels[field] || field) +
+      '</span>'
+    );
+  }
+
+  function listingStatusBadge(status) {
+    var s = String(status || 'draft').toLowerCase();
+    var cls =
+      s === 'published'
+        ? 'bg-emerald-100 text-emerald-800'
+        : s === 'unpublished'
+          ? 'bg-slate-200 text-slate-700'
+          : 'bg-amber-100 text-amber-900';
+    return (
+      '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 ' +
+      cls +
+      '">' +
+      esc(s) +
+      '</span>'
+    );
+  }
+
+  function fetchGroupCleanup() {
+    return adminGet('/api/admin/organisers').then(function (data) {
+      if (data && data.ok !== false && !data.error) groupCleanupCache = data;
+      return data;
+    });
+  }
+
+  function fetchEventCleanup() {
+    var params = new URLSearchParams();
+    if (eventCleanupState.organiserId) params.set('organiser_id', eventCleanupState.organiserId);
+    if (eventCleanupState.unlinked) params.set('unlinked', '1');
+    var qs = params.toString();
+    return adminGet('/api/admin/events' + (qs ? '?' + qs : ''));
+  }
+
+  function saveGroupCleanupForm(form) {
+    var id = form.getAttribute('data-organiser-id');
+    var msg = form.querySelector('.group-cleanup-msg');
+    var btn = form.querySelector('[type="submit"]');
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Saving…';
+      msg.className = 'group-cleanup-msg text-xs text-slate-500';
+    }
+    adminPost('/api/admin/organisers', {
+      id: id,
+      description: formFieldVal(form, 'description'),
+      photo_url: formFieldVal(form, 'photo_url'),
+      website: formFieldVal(form, 'website'),
+    })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Save failed');
+        if (msg) {
+          msg.textContent = 'Saved.';
+          msg.className = 'group-cleanup-msg text-xs text-emerald-700 font-semibold';
+        }
+        return fetchGroupCleanup();
+      })
+      .then(function () {
+        renderGroupCleanup();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not save';
+          msg.className = 'group-cleanup-msg text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function saveEventCleanupForm(form) {
+    var id = form.getAttribute('data-event-id');
+    var msg = form.querySelector('.event-cleanup-msg');
+    var btn = form.querySelector('[type="submit"]');
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Saving…';
+      msg.className = 'event-cleanup-msg text-xs text-slate-500';
+    }
+    adminPost('/api/admin/events', {
+      id: id,
+      title: formFieldVal(form, 'title'),
+      organiser_id: formFieldVal(form, 'organiser_id') || null,
+      starts_at: formFieldVal(form, 'starts_at') || null,
+      event_type: formFieldVal(form, 'event_type') || null,
+      meeting_type: formFieldVal(form, 'meeting_type') || null,
+      status: formFieldVal(form, 'status') || null,
+      photo_url: formFieldVal(form, 'photo_url') || null,
+    })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Save failed');
+        if (msg) {
+          msg.textContent = 'Saved.';
+          msg.className = 'event-cleanup-msg text-xs text-emerald-700 font-semibold';
+        }
+        return fetchEventCleanup();
+      })
+      .then(function () {
+        renderEventCleanup();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not save';
+          msg.className = 'event-cleanup-msg text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function createEventCleanupForm(form) {
+    var msg = form.querySelector('.event-create-msg');
+    var btn = form.querySelector('[type="submit"]');
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Creating…';
+      msg.className = 'event-create-msg text-xs text-slate-500';
+    }
+    adminPost('/api/admin/events', {
+      action: 'create',
+      title: formFieldVal(form, 'title'),
+      organiser_id: formFieldVal(form, 'organiser_id'),
+      starts_at: formFieldVal(form, 'starts_at') || null,
+      event_type: formFieldVal(form, 'event_type') || 'Networking meeting',
+      meeting_type: formFieldVal(form, 'meeting_type') || 'In person',
+      status: formFieldVal(form, 'status') || 'draft',
+    })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
+        if (msg) {
+          msg.textContent = 'Event created.';
+          msg.className = 'event-create-msg text-xs text-emerald-700 font-semibold';
+        }
+        form.reset();
+        if (eventCleanupState.organiserId) {
+          var orgField = formField(form, 'organiser_id');
+          if (orgField) orgField.value = eventCleanupState.organiserId;
+        }
+        return fetchEventCleanup();
+      })
+      .then(function () {
+        renderEventCleanup();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not create event';
+          msg.className = 'event-create-msg text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function bindGroupCleanupForms() {
+    if (!main || main.dataset.groupCleanupBound) return;
+    main.dataset.groupCleanupBound = '1';
+    main.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form || !form.classList) return;
+      if (form.classList.contains('group-cleanup-form')) {
+        e.preventDefault();
+        saveGroupCleanupForm(form);
+      }
+    });
+    main.addEventListener('input', function (e) {
+      var search = e.target.closest('#group-cleanup-search');
+      if (search) renderGroupCleanupList(groupCleanupCache);
+    });
+    main.addEventListener('change', function (e) {
+      if (e.target.id === 'group-cleanup-incomplete') renderGroupCleanupList(groupCleanupCache);
+    });
+    main.addEventListener('click', function (e) {
+      var toggle = e.target.closest('[data-toggle-group-edit]');
+      if (!toggle) return;
+      var row = toggle.closest('[data-organiser-id-row]');
+      var panel = row && row.querySelector('.group-cleanup-panel');
+      if (panel) panel.classList.toggle('hidden');
+    });
+  }
+
+  function bindEventCleanupForms() {
+    if (!main || main.dataset.eventCleanupBound) return;
+    main.dataset.eventCleanupBound = '1';
+    main.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form || !form.classList) return;
+      if (form.classList.contains('event-cleanup-form')) {
+        e.preventDefault();
+        saveEventCleanupForm(form);
+      } else if (form.classList.contains('event-create-form')) {
+        e.preventDefault();
+        createEventCleanupForm(form);
+      }
+    });
+    main.addEventListener('change', function (e) {
+      if (e.target.id === 'event-cleanup-organiser') {
+        eventCleanupState.organiserId = e.target.value || '';
+        fetchEventCleanup().then(function () {
+          renderEventCleanup();
+        });
+      }
+      if (e.target.id === 'event-cleanup-unlinked') {
+        eventCleanupState.unlinked = e.target.checked;
+        fetchEventCleanup().then(function () {
+          renderEventCleanup();
+        });
+      }
+    });
+    main.addEventListener('input', function (e) {
+      if (e.target.id === 'event-cleanup-search') {
+        renderEventCleanupList();
+      }
+    });
+  }
+
+  function renderGroupCleanupList(data) {
+    var list = document.getElementById('group-cleanup-list');
+    var status = document.getElementById('group-cleanup-status');
+    if (!list) return;
+
+    if (!data || data.error) {
+      if (status) {
+        status.innerHTML =
+          '<span class="text-red-700 font-semibold">Could not load groups (' +
+          esc(data && data.error ? data.error : 'unknown') +
+          ').</span>';
+      }
+      list.innerHTML = '';
+      return;
+    }
+
+    var searchEl = document.getElementById('group-cleanup-search');
+    var incompleteOnly = document.getElementById('group-cleanup-incomplete');
+    var q = searchEl ? String(searchEl.value || '').trim().toLowerCase() : '';
+    var onlyIncomplete = incompleteOnly ? incompleteOnly.checked : false;
+    var organisers = (data.organisers || []).filter(function (o) {
+      if (onlyIncomplete && !(o.missing || []).length) return false;
+      if (!q) return true;
+      return String(o.name || '')
+        .toLowerCase()
+        .includes(q);
+    });
+
+    if (status) {
+      status.innerHTML =
+        '<span class="text-brand-900 font-semibold">' +
+        organisers.length +
+        ' group' +
+        (organisers.length === 1 ? '' : 's') +
+        '</span>' +
+        (data.incomplete
+          ? ' <span class="text-slate-500">(' + data.incomplete + ' with missing profile data)</span>'
+          : '');
+    }
+
+    if (!organisers.length) {
+      list.innerHTML =
+        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No groups match your filters.</p>';
+      return;
+    }
+
+    list.innerHTML = organisers
+      .map(function (o) {
+        var publicHref = o.slug ? '../organisers/' + encodeURIComponent(o.slug) : '';
+        var missingHtml = (o.missing || []).map(missingBadge).join('') || '<span class="text-xs text-emerald-700">Complete</span>';
+        return (
+          '<article class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden" data-organiser-id-row="' +
+          attrEsc(o.id) +
+          '">' +
+          '<div class="flex flex-wrap items-center justify-between gap-3 p-4">' +
+          '<div class="min-w-0 flex-1">' +
+          '<div class="flex flex-wrap items-center gap-2">' +
+          '<h3 class="font-semibold text-brand-900 truncate">' +
+          esc(o.name || 'Untitled') +
+          '</h3>' +
+          listingStatusBadge(o.listing_status) +
+          '</div>' +
+          '<p class="text-xs text-slate-500 mt-1">' +
+          (o.event_count || 0) +
+          ' event' +
+          (o.event_count === 1 ? '' : 's') +
+          ' · ' +
+          missingHtml +
+          '</p></div>' +
+          '<div class="flex flex-wrap gap-2 shrink-0">' +
+          (publicHref
+            ? '<a href="' +
+              attrEsc(publicHref) +
+              '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View public</a>'
+            : '') +
+          '<button type="button" data-toggle-group-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-3 py-1.5 hover:bg-brand-900">Edit profile</button>' +
+          '</div></div>' +
+          '<div class="group-cleanup-panel hidden border-t border-slate-200 bg-slate-50/80 p-4">' +
+          '<form class="group-cleanup-form space-y-3" data-organiser-id="' +
+          attrEsc(o.id) +
+          '">' +
+          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Description / bio</label>' +
+          '<textarea name="description" rows="4" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+          esc(o.description || '') +
+          '</textarea></div>' +
+          '<div class="grid sm:grid-cols-2 gap-3">' +
+          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Logo URL</label>' +
+          '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+          attrEsc(o.photo_url || '') +
+          '" placeholder="https://…"></div>' +
+          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Website</label>' +
+          '<input type="url" name="website" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+          attrEsc(o.website || '') +
+          '" placeholder="https://…"></div></div>' +
+          (o.photo_url
+            ? '<img src="' +
+              attrEsc(o.photo_url) +
+              '" alt="" class="h-12 w-12 rounded-lg object-cover border border-slate-200">'
+            : '') +
+          '<div class="flex flex-wrap items-center gap-3">' +
+          '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save profile</button>' +
+          '<a href="../organiser/group-edit.html?id=' +
+          encodeURIComponent(o.id) +
+          '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">Open full editor</a>' +
+          '<span class="group-cleanup-msg text-xs"></span></div></form></div></article>'
+        );
+      })
+      .join('');
+  }
+
+  function renderGroupCleanup() {
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<div id="group-cleanup-status" class="text-sm text-slate-500">Loading groups…</div>' +
+      '<div class="flex flex-wrap gap-3 items-center">' +
+      '<input type="search" id="group-cleanup-search" placeholder="Search by name…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full max-w-xs bg-white">' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="group-cleanup-incomplete" class="rounded border-slate-300"> Show incomplete only</label></div>' +
+      '<div id="group-cleanup-list" class="space-y-3"></div></div>';
+
+    var render = function (data) {
+      renderGroupCleanupList(data);
+    };
+    if (groupCleanupCache && groupCleanupCache.ok !== false) {
+      render(groupCleanupCache);
+    } else {
+      fetchGroupCleanup().then(render);
+    }
+  }
+
+  function eventTypeOptions(selected) {
+    return EVENT_TYPES.map(function (t) {
+      return (
+        '<option value="' +
+        attrEsc(t) +
+        '"' +
+        (selected === t ? ' selected' : '') +
+        '>' +
+        esc(t) +
+        '</option>'
+      );
+    }).join('');
+  }
+
+  function meetingFormatOptions(selected) {
+    return MEETING_FORMATS.map(function (f) {
+      return (
+        '<option value="' +
+        attrEsc(f) +
+        '"' +
+        (selected === f ? ' selected' : '') +
+        '>' +
+        esc(f) +
+        '</option>'
+      );
+    }).join('');
+  }
+
+  function eventStatusOptions(selected) {
+    var statuses = ['draft', 'published', 'unpublished', 'archived', 'cancelled'];
+    return statuses
+      .map(function (s) {
+        return (
+          '<option value="' +
+          attrEsc(s) +
+          '"' +
+          (selected === s ? ' selected' : '') +
+          '>' +
+          esc(s) +
+          '</option>'
+        );
+      })
+      .join('');
+  }
+
+  var eventCleanupCache = null;
+
+  function renderEventCleanupList() {
+    var list = document.getElementById('event-cleanup-list');
+    var status = document.getElementById('event-cleanup-status');
+    if (!list || !eventCleanupCache) return;
+
+    var data = eventCleanupCache;
+    var organisers = (data.organisers || []).map(normalizeOrganiserOption);
+    var searchEl = document.getElementById('event-cleanup-search');
+    var q = searchEl ? String(searchEl.value || '').trim().toLowerCase() : '';
+    var events = (data.events || []).filter(function (ev) {
+      if (!q) return true;
+      return (
+        String(ev.title || '')
+          .toLowerCase()
+          .includes(q) ||
+        String(ev.organiser_name || '')
+          .toLowerCase()
+          .includes(q) ||
+        String(ev.city || '')
+          .toLowerCase()
+          .includes(q)
+      );
+    });
+
+    if (status) {
+      var parts = [
+        '<span class="text-brand-900 font-semibold">' +
+          events.length +
+          ' event' +
+          (events.length === 1 ? '' : 's') +
+          '</span>',
+      ];
+      if (data.unlinked_count) {
+        parts.push(
+          '<span class="text-amber-800 font-semibold">' +
+            data.unlinked_count +
+            ' unlinked</span>'
+        );
+      }
+      status.innerHTML = parts.join(' · ');
+    }
+
+    if (!events.length) {
+      list.innerHTML =
+        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No events match your filters. Create one below or change the organiser filter.</p>';
+      return;
+    }
+
+    list.innerHTML = events
+      .map(function (ev) {
+        var publicHref = ev.slug ? '../events/' + encodeURIComponent(ev.slug) : '';
+        return (
+          '<article class="rounded-xl border border-slate-200 bg-white shadow-sm p-4 space-y-3" data-event-id="' +
+          attrEsc(ev.id) +
+          '">' +
+          '<div class="flex flex-wrap items-start justify-between gap-2">' +
+          '<div><h3 class="font-semibold text-brand-900">' +
+          esc(ev.title || 'Untitled') +
+          '</h3>' +
+          '<p class="text-xs text-slate-500 mt-1">' +
+          (ev.organiser_name ? esc(ev.organiser_name) : 'No organiser linked') +
+          (ev.starts_at ? ' · ' + esc(fmtTime(ev.starts_at)) : '') +
+          '</p></div>' +
+          (publicHref
+            ? '<a href="' +
+              attrEsc(publicHref) +
+              '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline shrink-0">View public</a>'
+            : '') +
+          '</div>' +
+          '<form class="event-cleanup-form grid sm:grid-cols-2 lg:grid-cols-3 gap-3" data-event-id="' +
+          attrEsc(ev.id) +
+          '">' +
+          '<div class="sm:col-span-2 lg:col-span-3"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
+          '<input type="text" name="title" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+          attrEsc(ev.title || '') +
+          '"></div>' +
+          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
+          '<select name="organiser_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+          organiserOptionsHtml(organisers, ev.organiser_id) +
+          '</select></div>' +
+          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event date</label>' +
+          '<input type="datetime-local" name="starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+          attrEsc(toDatetimeLocalValue(ev.starts_at)) +
+          '"></div>' +
+          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
+          '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+          eventStatusOptions(ev.status || 'draft') +
+          '</select></div>' +
+          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
+          '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+          '<option value="">—</option>' +
+          eventTypeOptions(ev.event_type) +
+          '</select></div>' +
+          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Format</label>' +
+          '<select name="meeting_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+          '<option value="">—</option>' +
+          meetingFormatOptions(ev.meeting_type) +
+          '</select></div>' +
+          '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Cover image URL</label>' +
+          '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+          attrEsc(ev.photo_url || '') +
+          '" placeholder="https://…"></div>' +
+          '<div class="sm:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-3">' +
+          '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save event</button>' +
+          '<span class="event-cleanup-msg text-xs"></span></div></form></article>'
+        );
+      })
+      .join('');
+  }
+
+  function renderEventCleanup() {
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<div id="event-cleanup-status" class="text-sm text-slate-500">Loading events…</div>' +
+      '<div class="rounded-xl border border-brand-200 bg-brand-50/50 p-4 space-y-3">' +
+      '<h3 class="font-semibold text-brand-900">Create event for a group</h3>' +
+      '<p class="text-xs text-slate-600">Add another event under an existing organiser profile. It starts as a draft until you publish it.</p>' +
+      '<form class="event-create-form grid sm:grid-cols-2 lg:grid-cols-3 gap-3">' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
+      '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Monthly networking breakfast"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
+      '<select name="organiser_id" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" id="event-create-organiser">' +
+      '<option value="">— Choose organiser —</option></select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">First date (optional)</label>' +
+      '<input type="datetime-local" name="starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
+      '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      eventTypeOptions('Networking meeting') +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Format</label>' +
+      '<select name="meeting_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      meetingFormatOptions('In person') +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
+      '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      eventStatusOptions('draft') +
+      '</select></div>' +
+      '<div class="sm:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-3">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create event</button>' +
+      '<span class="event-create-msg text-xs"></span></div></form></div>' +
+      '<div class="flex flex-wrap gap-3 items-center">' +
+      '<select id="event-cleanup-organiser" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white max-w-xs">' +
+      '<option value="">All organisers</option></select>' +
+      '<input type="search" id="event-cleanup-search" placeholder="Search events…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full max-w-xs bg-white">' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="event-cleanup-unlinked" class="rounded border-slate-300"' +
+      (eventCleanupState.unlinked ? ' checked' : '') +
+      '> Unlinked only</label></div>' +
+      '<div id="event-cleanup-list" class="space-y-3"></div></div>';
+
+    fetchEventCleanup()
+      .then(function (data) {
+        if (data.error) {
+          var status = document.getElementById('event-cleanup-status');
+          if (status) {
+            status.innerHTML =
+              '<span class="text-red-700 font-semibold">Could not load events (' +
+              esc(data.error) +
+              ').</span>';
+          }
+          return;
+        }
+        eventCleanupCache = data;
+        var organisers = (data.organisers || []).map(normalizeOrganiserOption);
+        var filterSelect = document.getElementById('event-cleanup-organiser');
+        var createSelect = document.getElementById('event-create-organiser');
+        var filterHtml =
+          '<option value="">All organisers</option>' +
+          organisers
+            .map(function (o) {
+              return (
+                '<option value="' +
+                attrEsc(o.id) +
+                '"' +
+                (eventCleanupState.organiserId === o.id ? ' selected' : '') +
+                '>' +
+                esc(o.name) +
+                (o.listingStatus === 'published' ? '' : ' (draft)') +
+                '</option>'
+              );
+            })
+            .join('');
+        if (filterSelect) filterSelect.innerHTML = filterHtml;
+        if (createSelect) {
+          createSelect.innerHTML = organiserOptionsHtml(organisers, eventCleanupState.organiserId);
+        }
+        renderEventCleanupList();
+      })
+      .catch(function () {
+        var status = document.getElementById('event-cleanup-status');
+        if (status) status.textContent = 'Could not load events.';
+      });
+  }
+
   var routes = {
     dashboard: renderDashboard,
     'event-health': renderEventHealth,
+    'group-cleanup': renderGroupCleanup,
+    'event-cleanup': renderEventCleanup,
     users: renderUsers,
     impersonate: renderImpersonate,
     moderation: renderModeration,
@@ -2129,6 +2730,8 @@
     gate.classList.add('hidden');
     shell.classList.remove('hidden');
     bindEventHealthForms();
+    bindGroupCleanupForms();
+    bindEventCleanupForms();
     fetchEventHealth();
     route();
     window.addEventListener('hashchange', route);
