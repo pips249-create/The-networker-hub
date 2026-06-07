@@ -611,9 +611,49 @@
     });
   }
 
+  function approvePendingEvent(eventId, btn) {
+    if (!eventId) return;
+    if (btn) btn.disabled = true;
+    fetch('/api/admin/events', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: eventId, status: 'published' }),
+    })
+      .then(function (r) {
+        return r.json().then(function (body) {
+          if (!r.ok || body.ok === false) {
+            throw new Error(body.message || body.error || 'Approve failed');
+          }
+          return body;
+        });
+      })
+      .then(function () {
+        renderModeration();
+      })
+      .catch(function (err) {
+        if (btn) btn.disabled = false;
+        window.alert(err.message || 'Could not approve event.');
+      });
+  }
+
+  function bindModerationActions() {
+    if (!main || main.dataset.moderationBound) return;
+    main.dataset.moderationBound = '1';
+    main.addEventListener('click', function (e) {
+      var btn = e.target.closest('.moderation-approve-btn');
+      if (!btn) return;
+      var eventId = btn.getAttribute('data-event-id');
+      if (!eventId) return;
+      if (!window.confirm('Approve this event and publish it on the Hub?')) return;
+      approvePendingEvent(eventId, btn);
+    });
+  }
+
   function renderEventHealth() {
     main.innerHTML =
       '<div class="space-y-4">' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Checks <strong>published</strong> events only. Listings awaiting approval are in <a href="#moderation" class="text-brand-700 font-semibold hover:underline">Content Moderation</a> — not here.</p>' +
       '<div id="event-health-status" class="text-sm text-slate-500">Scanning published events…</div>' +
       '<div id="event-health-summary" class="hidden admin-metric-grid admin-metric-grid--4"></div>' +
       '<div id="event-health-list" class="space-y-3"></div></div>';
@@ -1472,7 +1512,31 @@
     }
   }
 
-  function listingsTableHtml(listings, emptyMessage) {
+  function listingActionCell(l, opts) {
+    opts = opts || {};
+    var isPending = l.status === 'Pending' || l.pending;
+    if (isPending) {
+      if (opts.pendingQueue) {
+        return (
+          '<td class="px-4 py-3">' +
+          '<button type="button" class="moderation-approve-btn rounded-lg bg-brand-700 text-white px-2.5 py-1 text-xs font-semibold hover:bg-brand-900 disabled:opacity-50" data-event-id="' +
+          attrEsc(l.id) +
+          '">Approve</button></td>'
+        );
+      }
+      return (
+        '<td class="px-4 py-3"><span class="text-xs text-amber-800">Awaiting approval</span></td>'
+      );
+    }
+    if (l.status === 'Live') {
+      return (
+        '<td class="px-4 py-3"><a href="#event-health" class="text-brand-700 font-semibold text-xs hover:underline">Review data</a></td>'
+      );
+    }
+    return '<td class="px-4 py-3"><span class="text-xs text-slate-400">—</span></td>';
+  }
+
+  function listingsTableHtml(listings, emptyMessage, opts) {
     if (!listings.length) {
       return (
         '<tr><td colspan="7" class="px-4 py-6 text-slate-500">' +
@@ -1519,7 +1583,8 @@
           '<span class="text-xs text-slate-500">' +
           esc(soldLabel) +
           '</span></td>' +
-          '<td class="px-4 py-3"><a href="#event-health" class="text-brand-700 font-semibold text-xs hover:underline">Review data</a></td></tr>'
+          listingActionCell(l, opts) +
+          '</tr>'
         );
       })
       .join('');
@@ -1614,7 +1679,7 @@
       }
       if (pendingEl) {
         pendingEl.innerHTML = pendingListings.length
-          ? listingsTableHtml(pendingListings)
+          ? listingsTableHtml(pendingListings, undefined, { pendingQueue: true })
           : '<tr><td colspan="7" class="px-4 py-6 text-emerald-700">No events pending approval.</td></tr>';
       }
       if (pendingPanel && !pendingListings.length) {
@@ -3507,6 +3572,7 @@
     bindEventHealthForms();
     bindGroupCleanupForms();
     bindEventCleanupForms();
+    bindModerationActions();
     fetchEventHealth();
     route();
     window.addEventListener('hashchange', route);

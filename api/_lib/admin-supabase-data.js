@@ -324,13 +324,35 @@ async function fetchUsers(sb) {
   return users;
 }
 
+function mapEventToListing(e, soldByEvent) {
+  const sold = soldByEvent.get(e.id) || 0;
+  const approvalStatus = String(e.approval_status || '').trim();
+  const status = listingStatusLabel(approvalStatus);
+  return {
+    id: e.id,
+    title: String(e.title || '').trim(),
+    type: String(e.event_type || 'Event').trim(),
+    organiser: e.organisers?.name || '—',
+    city: e.city || '—',
+    status,
+    approvalStatus,
+    pending: approvalStatus === 'Pending Review',
+    sold,
+    capacity: null,
+  };
+}
+
 async function fetchModeration(sb) {
-  const [eventsRes, reviewsRes, regCountsRes] = await Promise.all([
+  const eventSelect =
+    'id, title, event_type, city, approval_status, organiser_id, organisers(name)';
+
+  const [eventsRes, pendingRes, reviewsRes, regCountsRes] = await Promise.all([
+    sb.from('events').select(eventSelect).order('created_at', { ascending: false }).limit(80),
     sb
       .from('events')
-      .select('id, title, event_type, city, approval_status, organiser_id, organisers(name)')
-      .order('created_at', { ascending: false })
-      .limit(80),
+      .select(eventSelect)
+      .eq('approval_status', 'Pending Review')
+      .order('created_at', { ascending: false }),
     sb
       .from('reviews')
       .select('id, rating, review_text, created_at, events(title), attendees(name, email)')
@@ -340,6 +362,7 @@ async function fetchModeration(sb) {
   ]);
 
   if (eventsRes.error) throw new Error(eventsRes.error.message);
+  if (pendingRes.error) throw new Error(pendingRes.error.message);
   if (reviewsRes.error) throw new Error(reviewsRes.error.message);
 
   const soldByEvent = new Map();
@@ -348,29 +371,21 @@ async function fetchModeration(sb) {
     soldByEvent.set(r.event_id, (soldByEvent.get(r.event_id) || 0) + 1);
   });
 
-  const listings = (eventsRes.data || [])
-    .map((e) => {
-      const sold = soldByEvent.get(e.id) || 0;
-      const status = listingStatusLabel(e.approval_status);
-      return {
-        id: e.id,
-        title: String(e.title || '').trim(),
-        type: String(e.event_type || 'Event').trim(),
-        organiser: e.organisers?.name || '—',
-        city: e.city || '—',
-        status,
-        pending: status === 'Pending',
-        sold,
-        capacity: null,
-      };
-    })
-    .sort((a, b) => {
-      if (a.pending && !b.pending) return -1;
-      if (!a.pending && b.pending) return 1;
-      return 0;
-    });
+  const listingById = new Map();
+  (eventsRes.data || []).forEach((e) => {
+    listingById.set(e.id, mapEventToListing(e, soldByEvent));
+  });
+  (pendingRes.data || []).forEach((e) => {
+    if (!listingById.has(e.id)) listingById.set(e.id, mapEventToListing(e, soldByEvent));
+  });
 
-  const pendingListings = listings.filter((l) => l.pending);
+  const listings = Array.from(listingById.values()).sort((a, b) => {
+    if (a.pending && !b.pending) return -1;
+    if (!a.pending && b.pending) return 1;
+    return 0;
+  });
+
+  const pendingListings = (pendingRes.data || []).map((e) => mapEventToListing(e, soldByEvent));
 
   const reviews = (reviewsRes.data || []).map((r) => {
     const text = String(r.review_text || '').trim();
