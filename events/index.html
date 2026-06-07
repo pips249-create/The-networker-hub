@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../css/hub-mobile.css?v=20260708m">
 <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e">
 <link rel="stylesheet" href="../css/events-page.css?v=20260708n">
-<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260708n">
+<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260708p">
 <link rel="stylesheet" href="../css/organisers-browse.css?v=20260708">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
@@ -142,6 +142,11 @@
             <span class="filter-checkbox-box" aria-hidden="true"></span>
             Online
           </label>
+          <label class="filter-checkbox filter-checkbox-free">
+            <input type="checkbox" id="filter-free-only">
+            <span class="filter-checkbox-box" aria-hidden="true"></span>
+            Free
+          </label>
         </fieldset>
         <div class="filter-bar-quick filter-event-only">
           <div class="filter-date-wrap">
@@ -159,8 +164,7 @@
           <div class="filter-price-range" id="filter-price-range">
             <span class="filter-bar-chip-label">Price</span>
             <div class="filter-price-range-controls">
-              <div class="filter-price-range-row">
-                <label for="price-max">Max</label>
+              <div class="filter-price-range-row filter-price-range-row--max">
                 <input type="range" id="price-max" min="0" max="500" step="5" value="500" aria-label="Maximum ticket price">
                 <output id="price-max-out" for="price-max">Any</output>
               </div>
@@ -225,20 +229,20 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="events-results-meta">
-      <span class="events-results-count">Showing <strong id="results-count">0</strong> results</span>
-      <div class="events-results-actions">
-        <button type="button" id="clear-filters" class="clear-filters-link">Clear filters</button>
-        <div class="events-sort-wrap">
-          <label for="sort">Sort by</label>
-          <select id="sort">
-            <option value="recommended">Recommended</option>
-            <option value="date">Date</option>
-            <option value="rating">Best rated</option>
-            <option value="price">Price</option>
-          </select>
-        </div>
+  <div class="events-results-meta">
+    <span class="events-results-count">Showing <strong id="results-count">0</strong> results</span>
+    <div class="events-results-actions">
+      <button type="button" id="clear-filters" class="clear-filters-link">Clear filters</button>
+      <div class="events-sort-wrap">
+        <label for="sort">Sort by</label>
+        <select id="sort">
+          <option value="recommended">Recommended</option>
+          <option value="date">Date</option>
+          <option value="rating">Best rated</option>
+          <option value="price">Price</option>
+        </select>
       </div>
     </div>
   </div>
@@ -321,7 +325,7 @@
 <script src="../js/postcode-outcode.js?v=20260708n"></script>
 <script src="../js/postcode-geo.js?v=20260708"></script>
 <script src="../js/events-filters.js?v=20260708m"></script>
-<script src="../js/events-map.js?v=20260708o"></script>
+<script src="../js/events-map.js?v=20260708p"></script>
 <script src="../js/hub-loading.js?v=20260630e"></script>
 <script src="../js/cms-sponsor-fields.js?v=20260630c"></script>
 <script src="../js/flexible-event-image.js?v=20260707"></script>

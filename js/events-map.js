@@ -288,17 +288,13 @@
 
   function scheduleMapFit(coordsList) {
     if (!map || !coordsList || !coordsList.length) return;
-    var attempts = 0;
-    function attemptFit() {
+    function doFit() {
       if (!map || !isMapView) return;
-      invalidateMapSize(attempts);
+      invalidateMapSize(0);
       fitMapToMarkers(coordsList);
-      attempts++;
-      if (attempts < 4) {
-        setTimeout(attemptFit, 120 * attempts);
-      }
     }
-    requestAnimationFrame(attemptFit);
+    requestAnimationFrame(doFit);
+    setTimeout(doFit, 150);
   }
 
   function popupHtml(ev, miles) {
@@ -365,10 +361,11 @@
   }
 
   function addMarker(ev, coords, miles) {
+    var popupMax = Math.min(280, Math.max(220, (window.innerWidth || 320) - 48));
     var marker = L.marker(coords).bindPopup(popupHtml(ev, miles), {
       className: 'map-event-popup',
-      maxWidth: 280,
-      minWidth: 220,
+      maxWidth: popupMax,
+      minWidth: Math.min(220, popupMax),
     });
     marker.on('popupopen', function () {
       highlightSidebarItem(ev.id);
@@ -380,6 +377,14 @@
     markerLayer.addLayer(marker);
   }
 
+  function sidebarItemLabel(item) {
+    var ev = item.ev;
+    var dist = distanceText(item.miles);
+    var parts = [ev.title, ev.dateLine || ev.date || 'Date TBC'];
+    if (dist) parts.push(dist);
+    return parts.join(', ');
+  }
+
   function sidebarItemHtml(item) {
     var ev = item.ev;
     var dist = distanceText(item.miles);
@@ -389,7 +394,9 @@
       '<li class="map-sidebar-item" data-event-id="' +
       escapeHtml(ev.id) +
       '">' +
-      '<button type="button" class="map-sidebar-item-btn">' +
+      '<button type="button" class="map-sidebar-item-btn" aria-label="' +
+      escapeHtml(sidebarItemLabel(item)) +
+      '">' +
       '<span class="map-sidebar-item-title">' +
       escapeHtml(ev.title) +
       '</span>' +

@@ -4,12 +4,24 @@
 }
 
 .events-filter-shell {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   padding: 4px;
   border-radius: 18px;
   background: #fff;
   border: 1px solid rgba(194, 153, 209, 0.22);
   box-shadow: 0 8px 28px rgba(45, 38, 54, 0.07);
+}
+
+.events-results-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 20px;
+  padding: 0 4px;
+  font-size: 14px;
+  color: var(--text-muted);
 }
 
 .events-filter-bar {
@@ -166,30 +178,37 @@
 
 .filter-price-range-row {
   display: grid;
-  grid-template-columns: 32px 1fr auto;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
-.filter-price-range-row label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-soft);
-}
-
-.filter-price-range-row input[type='range'] {
-  width: 100%;
-  accent-color: var(--lavender-deep);
-}
-
-.filter-price-range-row output {
+.filter-price-range-row--max output {
+  min-width: 3.5rem;
+  text-align: right;
   font-size: 12px;
   font-weight: 700;
   color: var(--charcoal);
-  min-width: 2.5rem;
-  text-align: right;
+  white-space: nowrap;
+}
+
+.filter-bar-row-bottom {
+  justify-content: flex-start;
+  gap: 10px 12px;
+}
+
+.filter-bar-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.filter-bar-cluster > .filter-map-btn {
+  margin-left: auto;
 }
 
 body.browse-mode-organisers .filter-price-range-row input[type='range'] {
@@ -885,9 +904,13 @@ body.events-view-map .events-map-wrap {
 }
 
 .events-map-sidebar.is-collapsed .events-map-sidebar-list,
-.events-map-sidebar.is-collapsed .events-map-sidebar-sub,
 .events-map-sidebar.is-collapsed .events-map-sidebar-foot {
   display: none;
+}
+
+.events-map-sidebar.is-collapsed .events-map-sidebar-sub {
+  margin-top: 4px;
+  margin-bottom: 0;
 }
 
 .events-map-sidebar-count,
@@ -1128,8 +1151,19 @@ body.events-view-map .events-filter-shell {
 
 .map-event-popup .leaflet-popup-content {
   margin: 0;
-  width: 250px !important;
+  width: min(280px, calc(100vw - 48px)) !important;
+  max-width: min(280px, calc(100vw - 48px));
   line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .map-event-popup .leaflet-popup-content-wrapper {
+    max-width: calc(100vw - 32px);
+  }
+
+  .map-event-popup .leaflet-popup-content {
+    width: min(280px, calc(100vw - 48px)) !important;
+  }
 }
 
 .map-event-popup .leaflet-popup-tip {
