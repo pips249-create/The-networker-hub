@@ -355,29 +355,18 @@ body.nav-menu-open {
   }
 
   .filter-bar-row-top {
-    flex-direction: row;
-    flex-wrap: nowrap;
+    flex-direction: column;
     align-items: stretch;
-    gap: 8px;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
   }
 
   .filter-bar-row-top .filter-field-grow,
-  .filter-bar-row-top .filter-field-postcode,
   .filter-bar-row-top .filter-field {
-    flex: 1 1 0;
-    width: auto;
+    flex: 0 0 auto;
+    width: 100%;
     max-width: none;
     min-width: 0;
-  }
-
-  .filter-bar-row-top .filter-field-search {
-    flex: 1.35 1 0;
-  }
-
-  .filter-bar-row-top .filter-field-postcode {
-    flex: 0.85 1 0;
   }
 
   .filter-bar-row-top .filter-field input {
@@ -389,6 +378,51 @@ body.nav-menu-open {
     padding-right: 34px;
   }
 
+  .filter-bar-row-location {
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+  }
+
+  .filter-bar-row-location .filter-field-postcode {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .filter-location-near {
+    flex: 0 1 auto;
+    flex-wrap: nowrap;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .filter-checkbox-near {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .filter-near-radius {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .filter-near-radius select {
+    max-width: 118px;
+    padding: 8px 8px;
+    font-size: 12px;
+  }
+
+  .premium-card {
+    flex: 0 0 min(78vw, 280px);
+    height: 168px;
+  }
+
+  .spotlight-wrap,
+  .spotlight-track {
+    min-height: 168px;
+  }
+
   .filter-bar-row-bottom .filter-bar-cluster {
     flex-direction: column;
     align-items: stretch;
@@ -398,8 +432,6 @@ body.nav-menu-open {
 
   .filter-bar-quick {
     display: flex;
-    gap: 8px;
-    align-items: stretch;
     width: 100%;
   }
 
@@ -409,11 +441,11 @@ body.nav-menu-open {
     min-height: 40px;
   }
 
-  .filter-bar-quick .filter-map-btn {
-    flex: 0 0 auto;
+  .filter-bar-cluster > .filter-map-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 12px;
     margin-left: 0;
-    padding: 8px 12px;
-    white-space: nowrap;
   }
 
   .filter-more-toggle {
@@ -421,23 +453,15 @@ body.nav-menu-open {
   }
 
   .filter-more-panel,
-  .filter-more-near {
-    display: flex;
-  }
-
   .filter-more-panel[hidden] {
-    display: none !important;
+    display: none;
   }
 
   .filter-more-panel:not([hidden]) {
+    display: flex;
     flex-direction: column;
     gap: 8px;
     width: 100%;
-  }
-
-  .filter-more-near {
-    flex-wrap: wrap;
-    align-items: center;
   }
 
   .filter-format-group {

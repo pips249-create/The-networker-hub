@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css?v=20260627">
-<link rel="stylesheet" href="../css/hub-mobile.css?v=20260708e">
+<link rel="stylesheet" href="../css/hub-mobile.css?v=20260708g">
 <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e">
 <link rel="stylesheet" href="../css/events-page.css?v=20260610">
-<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260708e">
+<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260708g">
 <link rel="stylesheet" href="../css/organisers-browse.css?v=20260708">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
@@ -101,12 +101,29 @@
           <input type="search" id="search" placeholder="Search all meetings, people, resources…" autocomplete="off" aria-describedby="search-hint">
           <span id="search-hint" class="visually-hidden">Searches titles, descriptions, locations, organisers, and formats from the events database</span>
         </div>
-        <div class="filter-field filter-field-postcode filter-event-only">
+      </div>
+      <div class="filter-bar-row filter-bar-row-location filter-event-only">
+        <div class="filter-field filter-field-postcode">
           <span class="filter-field-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
           </span>
           <label class="visually-hidden" for="postcode">Postcode</label>
           <input type="text" id="postcode" placeholder="Enter postcode" autocomplete="postal-code">
+        </div>
+        <div class="filter-location-near">
+          <label class="filter-checkbox filter-checkbox-near">
+            <input type="checkbox" id="toggle-nearme">
+            <span class="filter-checkbox-box" aria-hidden="true"></span>
+            Near me
+          </label>
+          <label class="filter-near-radius" id="near-radius-wrap">
+            <span class="visually-hidden" for="near-radius">Distance</span>
+            <select id="near-radius" aria-label="Distance from you">
+              <option value="5">Within 5 miles</option>
+              <option value="25" selected>Within 25 miles</option>
+              <option value="50">Within 50 miles</option>
+            </select>
+          </label>
         </div>
       </div>
       <div class="filter-bar-row filter-bar-row-bottom">
@@ -132,10 +149,6 @@
             <label class="filter-date-label" for="date-range">Dates</label>
             <input type="text" id="date-range" placeholder="Any date" readonly aria-label="Filter by date range">
           </div>
-          <button type="button" class="filter-map-btn" id="map-view-btn" aria-pressed="false">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/></svg>
-            <span id="map-view-label">Map</span>
-          </button>
         </div>
         <button type="button" class="filter-more-toggle filter-event-only" id="filter-more-toggle" aria-expanded="false" aria-controls="filter-more-panel">
           More filters <span class="filter-more-chevron" aria-hidden="true">▾</span>
@@ -208,6 +221,10 @@
             </label>
           </fieldset>
         </div>
+        <button type="button" class="filter-map-btn filter-event-only" id="map-view-btn" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/></svg>
+          <span id="map-view-label">Swap to Map View</span>
+        </button>
         </div>
       </div>
     </div>
@@ -229,7 +246,24 @@
     </div>
   </div>
 
-  <div id="events-map-panel" class="events-map-panel" hidden aria-label="Events map"></div>
+  <div class="events-map-wrap" id="events-map-wrap" hidden>
+    <div id="events-map-panel" class="events-map-panel" aria-label="Events map"></div>
+    <aside class="events-map-sidebar" id="events-map-sidebar" aria-label="Events on map">
+      <div class="events-map-sidebar-head">
+        <div class="events-map-sidebar-head-row">
+          <p class="events-map-sidebar-count">
+            <strong id="map-sidebar-count">0</strong>
+            <span id="map-sidebar-count-label">on map</span>
+          </p>
+          <button type="button" class="map-list-toggle" id="map-list-toggle" aria-expanded="true" aria-controls="map-sidebar-list">
+            <span id="map-list-toggle-label">Hide list</span>
+          </button>
+        </div>
+        <p class="events-map-sidebar-sub" id="map-sidebar-sub"></p>
+      </div>
+      <ul class="events-map-sidebar-list" id="map-sidebar-list"></ul>
+    </aside>
+  </div>
   <p class="events-map-hint" id="events-map-hint" hidden></p>
 
   <div class="events-body">
@@ -278,12 +312,12 @@
 <script src="../js/hub-favourites.js?v=20260629"></script>
 <script src="../js/postcode-outcode.js?v=20260613"></script>
 <script src="../js/postcode-geo.js?v=20260708"></script>
-<script src="../js/events-filters.js?v=20260708e"></script>
-<script src="../js/events-map.js?v=20260708e"></script>
+<script src="../js/events-filters.js?v=20260708h"></script>
+<script src="../js/events-map.js?v=20260708h"></script>
 <script src="../js/hub-loading.js?v=20260630e"></script>
 <script src="../js/cms-sponsor-fields.js?v=20260630c"></script>
 <script src="../js/flexible-event-image.js?v=20260707"></script>
-<script src="../js/events.js?v=20260707"></script>
+<script src="../js/events.js?v=20260708h"></script>
 <script src="../js/organisers-filters.js?v=20260608"></script>
 <script src="../js/organisers.js?v=20260630f"></script>
 <script src="../js/hub-organiser-actions.js?v=20260606" data-root="../"></script>

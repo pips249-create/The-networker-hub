@@ -367,7 +367,8 @@
   }
 
   function renderSpotlight() {
-    const premium = events.filter((e) => e.featured).slice(0, 3);
+    const source = window.hubAllEvents && window.hubAllEvents.length ? window.hubAllEvents : events;
+    const premium = source.filter((e) => e.featured).slice(0, 3);
 
     if (els.spotlightTrack) {
       els.spotlightTrack.innerHTML = premium.length

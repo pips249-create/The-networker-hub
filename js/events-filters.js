@@ -5,9 +5,7 @@
   var dateRangeInput = document.getElementById('date-range');
   var checkInPerson = document.getElementById('check-inperson');
   var checkOnline = document.getElementById('check-online');
-  var priceMin = document.getElementById('price-min');
   var priceMax = document.getElementById('price-max');
-  var priceMinOut = document.getElementById('price-min-out');
   var priceMaxOut = document.getElementById('price-max-out');
   var PRICE_SLIDER_MAX = 500;
   var toggleNearMe = document.getElementById('toggle-nearme');
@@ -66,39 +64,23 @@
   }
 
   function syncPriceOutputs() {
-    if (priceMinOut && priceMin) priceMinOut.textContent = formatPriceLabel(priceMin.value, false);
     if (priceMaxOut && priceMax) priceMaxOut.textContent = formatPriceLabel(priceMax.value, true);
   }
 
   function getPriceBounds() {
-    var minVal = priceMin ? Number(priceMin.value) || 0 : 0;
+    var minVal = 0;
     var maxVal = priceMax ? Number(priceMax.value) : PRICE_SLIDER_MAX;
-    if (maxVal < minVal) {
-      var swap = minVal;
-      minVal = maxVal;
-      maxVal = swap;
-      if (priceMin) priceMin.value = String(minVal);
-      if (priceMax) priceMax.value = String(maxVal);
-      syncPriceOutputs();
-    }
     return { minVal: minVal, maxVal: maxVal };
   }
 
-  function onPriceSliderInput(changed) {
-    var bounds = getPriceBounds();
-    if (changed === 'min' && priceMax && bounds.minVal > bounds.maxVal) {
-      priceMax.value = String(bounds.minVal);
-    }
-    if (changed === 'max' && priceMin && bounds.maxVal < bounds.minVal) {
-      priceMin.value = String(bounds.maxVal);
-    }
+  function onPriceSliderInput() {
     syncPriceOutputs();
     applyFilters();
   }
 
   function initPriceSliderMax() {
     var all = window.hubAllEvents || [];
-    if (!all.length || !priceMin || !priceMax) return;
+    if (!all.length || !priceMax) return;
     var peak = 0;
     all.forEach(function (ev) {
       var n = eventTicketPrice(ev);
@@ -106,7 +88,6 @@
     });
     var cap = PRICE_SLIDER_MAX;
     if (peak > cap) cap = Math.ceil(peak / 10) * 10;
-    priceMin.max = String(cap);
     priceMax.max = String(cap);
     if (Number(priceMax.value) > cap || Number(priceMax.value) === PRICE_SLIDER_MAX) {
       priceMax.value = String(cap);
@@ -118,12 +99,16 @@
 
   function getNearRadiusMiles() {
     var n = nearRadius ? Number(nearRadius.value) : 25;
-    return n === 10 || n === 50 ? n : 25;
+    return n === 5 || n === 50 ? n : 25;
   }
 
   function syncNearRadiusUi() {
-    if (nearRadiusWrap) {
-      nearRadiusWrap.hidden = !(toggleNearMe && toggleNearMe.checked);
+    if (!nearRadiusWrap || !nearRadius) return;
+    var mobile = window.matchMedia('(max-width: 720px)').matches;
+    nearRadiusWrap.hidden = false;
+    nearRadius.disabled = !(toggleNearMe && toggleNearMe.checked);
+    if (!mobile && !(toggleNearMe && toggleNearMe.checked)) {
+      nearRadiusWrap.hidden = true;
     }
   }
 
@@ -324,7 +309,6 @@
     dateToTs = null;
     if (checkInPerson) checkInPerson.checked = true;
     if (checkOnline) checkOnline.checked = true;
-    if (priceMin) priceMin.value = '0';
     if (priceMax) {
       priceMax.value = priceMax.max || String(PRICE_SLIDER_MAX);
     }
@@ -358,15 +342,8 @@
 
   [searchInput, sortSelect, checkInPerson, checkOnline].forEach(bindFilter);
 
-  if (priceMin) {
-    priceMin.addEventListener('input', function () {
-      onPriceSliderInput('min');
-    });
-  }
   if (priceMax) {
-    priceMax.addEventListener('input', function () {
-      onPriceSliderInput('max');
-    });
+    priceMax.addEventListener('input', onPriceSliderInput);
   }
   syncPriceOutputs();
 
@@ -379,8 +356,11 @@
   }
   if (nearRadius) {
     nearRadius.addEventListener('change', function () {
-      if (toggleNearMe && toggleNearMe.checked) applyNearMeFilters();
-      else applyFilters();
+      if (toggleNearMe && !toggleNearMe.checked) {
+        toggleNearMe.checked = true;
+      }
+      syncNearRadiusUi();
+      applyNearMeFilters();
     });
   }
   syncNearRadiusUi();
