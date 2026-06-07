@@ -13,7 +13,7 @@
     dashboard: { title: 'Overview Dashboard', subtitle: 'System-wide performance health check' },
     analytics: {
       title: 'Web Analytics',
-      subtitle: 'Visitor traffic, top pages, referrers, and demographics via Vercel',
+      subtitle: 'Visitor traffic on Vercel · platform activity from Supabase',
     },
     'event-health': {
       title: 'Event data issues',
@@ -803,31 +803,126 @@
     });
   }
 
+  function analyticsTrackingActive() {
+    return (
+      !!document.querySelector('script[src*="insights/script.js"]') ||
+      typeof window.va === 'function'
+    );
+  }
+
   function renderAnalytics() {
+    var trackingOn = analyticsTrackingActive();
     main.innerHTML =
-      '<div class="space-y-6 max-w-3xl">' +
-      '<div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">' +
-      '<div class="flex items-start gap-4">' +
+      '<div class="space-y-6">' +
+      '<div class="grid lg:grid-cols-3 gap-6">' +
+      '<div class="lg:col-span-2 space-y-6">' +
+      '<div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-5">' +
+      '<div class="flex flex-wrap items-start justify-between gap-4">' +
+      '<div class="flex items-start gap-4 min-w-0">' +
       '<span class="inline-flex shrink-0 items-center justify-center w-12 h-12 rounded-xl bg-brand-50 text-brand-700 text-xl" aria-hidden="true">▤</span>' +
-      '<div class="min-w-0 space-y-2">' +
-      '<h3 class="font-bold text-lg text-brand-900">Vercel Web Analytics</h3>' +
-      '<p class="text-sm text-slate-600">Tracking is active on every public page via the shared site layout. Page views appear in your Vercel project dashboard after deploy and real traffic.</p>' +
+      '<div class="min-w-0 space-y-1">' +
+      '<h3 class="font-bold text-lg text-brand-900">Visitor traffic</h3>' +
+      '<p class="text-sm text-slate-600">Page views, referrers, countries, and devices are collected by Vercel and viewed in their dashboard — Vercel does not expose a chart API for embedding here.</p>' +
       '</div></div>' +
-      '<ul class="text-sm text-slate-600 space-y-2 pl-1">' +
-      '<li class="flex gap-2"><span class="text-emerald-600 shrink-0" aria-hidden="true">✓</span> Privacy-friendly — anonymised, no cookies</li>' +
-      '<li class="flex gap-2"><span class="text-emerald-600 shrink-0" aria-hidden="true">✓</span> Top pages, referrers, countries, devices, and browsers</li>' +
-      '<li class="flex gap-2"><span class="text-emerald-600 shrink-0" aria-hidden="true">✓</span> Includes Command Center and all hub visitor sessions</li>' +
-      '</ul>' +
-      '<div class="flex flex-wrap gap-3 pt-2">' +
+      '<span id="analytics-tracking-badge" class="inline-flex shrink-0 items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full ' +
+      (trackingOn ? 'text-emerald-700 bg-emerald-50' : 'text-amber-800 bg-amber-50') +
+      '">' +
+      '<span class="w-2 h-2 rounded-full ' +
+      (trackingOn ? 'bg-emerald-500' : 'bg-amber-500') +
+      '"></span>' +
+      (trackingOn ? 'Tracking script loaded' : 'Tracking script not detected') +
+      '</span></div>' +
+      '<div class="grid sm:grid-cols-2 gap-3 text-sm">' +
+      '<div class="rounded-lg border border-slate-200 bg-slate-50 p-4">' +
+      '<p class="font-semibold text-slate-800">In Vercel you can see</p>' +
+      '<ul class="mt-2 space-y-1 text-slate-600">' +
+      '<li>Visitors &amp; page views</li><li>Top pages &amp; referrers</li><li>Countries, browsers &amp; devices</li>' +
+      '</ul></div>' +
+      '<div class="rounded-lg border border-slate-200 bg-slate-50 p-4">' +
+      '<p class="font-semibold text-slate-800">Best for</p>' +
+      '<ul class="mt-2 space-y-1 text-slate-600">' +
+      '<li>Marketing &amp; SEO decisions</li><li>Which events pages convert</li><li>Mobile vs desktop split</li>' +
+      '</ul></div></div>' +
+      '<div class="flex flex-wrap gap-3">' +
       '<a href="' +
       attrEsc(VERCEL_ANALYTICS_URL) +
       '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 hover:bg-brand-900 transition">Open Vercel Analytics <span aria-hidden="true">↗</span></a>' +
       '<a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold px-4 py-2.5 hover:bg-slate-50 transition">Vercel dashboard</a>' +
       '</div></div>' +
-      '<div class="rounded-xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">' +
-      '<p class="font-semibold text-slate-800 mb-2">First time here?</p>' +
-      '<p>In Vercel, open project <strong>the-networker-hub</strong> → <strong>Analytics</strong> in the sidebar. Data can take a few minutes after deploy; allow a day or two of traffic before trends are meaningful.</p>' +
-      '</div></div>';
+      '<div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">' +
+      '<h3 class="font-bold text-brand-900 mb-2">Hub platform activity</h3>' +
+      '<p class="text-sm text-slate-500 mb-4">Live Supabase counts — bookings, listings, and accounts. This is separate from anonymous visitor traffic above.</p>' +
+      '<div class="grid sm:grid-cols-2 gap-4" id="analytics-platform-metrics">' +
+      card('Hub accounts', '…', 'Loading…', 'blue') +
+      card('Live listings', '…', 'Loading…', 'brand') +
+      card('Organisers', '…', 'Loading…', 'violet') +
+      card('Revenue & fees', '…', 'Loading…', 'emerald') +
+      '</div></div></div>' +
+      '<aside class="space-y-4">' +
+      '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-sm text-slate-600 space-y-3">' +
+      '<h3 class="font-bold text-brand-900">Why two places?</h3>' +
+      '<p><strong class="text-slate-800">Vercel</strong> tracks anonymous site visits. <strong class="text-slate-800">Command Center</strong> tracks signed-up users, events, and revenue in Supabase.</p>' +
+      '<p>Use both: Vercel for traffic trends, Overview for business health.</p>' +
+      '</div>' +
+      '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+      '<h3 class="font-bold text-brand-900 mb-3 text-sm">Recent hub activity</h3>' +
+      '<ul id="analytics-activity" class="space-y-0"><li class="text-sm text-slate-500">Loading…</li></ul>' +
+      '</div></aside></div></div>';
+
+    adminGet('/api/admin/metrics').then(function (data) {
+      var metricsEl = document.getElementById('analytics-platform-metrics');
+      var activityEl = document.getElementById('analytics-activity');
+      if (!data || data.error || data.configured === false) {
+        if (metricsEl) {
+          metricsEl.innerHTML =
+            '<p class="sm:col-span-2 text-sm text-red-700">Could not load platform metrics. Check Supabase env vars on Vercel.</p>';
+        }
+        if (activityEl) {
+          activityEl.innerHTML =
+            '<li class="text-sm text-red-700">Activity feed unavailable.</li>';
+        }
+        return;
+      }
+      var m = data.metrics || {};
+      var listings = m.listings || {};
+      if (metricsEl) {
+        metricsEl.innerHTML =
+          card('Hub accounts', String(m.attendees || 0), 'Registered users & attendee profiles', 'blue') +
+          card(
+            'Live listings',
+            String(listings.total || 0),
+            'Meetings ' +
+              (listings.meetings || 0) +
+              ' · Exhibitions ' +
+              (listings.exhibitions || 0) +
+              ' · Training ' +
+              (listings.training || 0),
+            'brand'
+          ) +
+          card('Organisers', String(m.organisers || 0), 'Active organiser profiles', 'violet') +
+          card('Revenue & fees', fmtMoney(m.revenue || 0), 'Platform fees: ' + fmtMoney(m.fees || 0), 'emerald');
+      }
+      if (activityEl) {
+        var activity = data.activity || [];
+        activityEl.innerHTML = activity.length
+          ? activity
+              .slice(0, 6)
+              .map(function (item) {
+                return (
+                  '<li class="relative pl-5 pb-4 border-l-2 border-brand-200 last:pb-0">' +
+                  '<span class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-brand-500"></span>' +
+                  '<time class="text-xs text-slate-400 block">' +
+                  fmtTime(item.time) +
+                  '</time>' +
+                  '<p class="text-sm text-slate-700 mt-0.5">' +
+                  esc(item.text) +
+                  '</p></li>'
+                );
+              })
+              .join('')
+          : '<li class="text-sm text-slate-500">No recent activity yet.</li>';
+      }
+    });
   }
 
   function renderDashboard() {
