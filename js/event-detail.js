@@ -1272,14 +1272,9 @@
   async function loadEventPageAds() {
     if (!window.CmsAdBlocks) return;
     const sidebarEl = document.getElementById('event-page-sidebar-ad');
-    const bannerEl = document.getElementById('event-page-banner-ad');
     try {
-      const results = await Promise.all([
-        window.CmsAdBlocks.loadCmsAd('event_page_sidebar_ad'),
-        window.CmsAdBlocks.loadCmsAd('event_page_banner_ad'),
-      ]);
-      if (results[0] && sidebarEl) window.CmsAdBlocks.renderCompactAd(sidebarEl, results[0]);
-      if (results[1] && bannerEl) window.CmsAdBlocks.renderBannerAd(bannerEl, results[1]);
+      const block = await window.CmsAdBlocks.loadCmsAd('event_page_sidebar_ad');
+      if (block && sidebarEl) window.CmsAdBlocks.renderCompactAd(sidebarEl, block);
     } catch {
       /* non-fatal */
     }

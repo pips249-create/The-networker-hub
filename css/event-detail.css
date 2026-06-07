@@ -1402,10 +1402,6 @@ body.modal-open {
   margin: 0 0 18px;
 }
 
-.event-page-banner-ad {
-  margin: 8px 0 28px;
-}
-
 .cms-ad-compact {
   position: relative;
   background: var(--surface);
