@@ -640,8 +640,13 @@
     fillFilterOptions();
     if (window.hubInitPriceFilter) window.hubInitPriceFilter();
     currentPage = 1;
-    if (window.hubApplyFilters) window.hubApplyFilters();
-    else renderAll();
+    if (window.hubRestoreEventFilterPrefs) {
+      window.hubRestoreEventFilterPrefs();
+    } else if (window.hubApplyFilters) {
+      window.hubApplyFilters();
+    } else {
+      renderAll();
+    }
     if (window.hubTryRestoreMapView) window.hubTryRestoreMapView();
   }
 

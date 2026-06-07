@@ -265,10 +265,8 @@
       if (dateToTs && evTs > dateToTs) return false;
     }
 
-    if (checkFreeOnly && checkFreeOnly.checked) {
-      if (eventTicketPrice(ev) > 0 && ev.priceKey !== 'free' && !ev.hasFreeTickets) {
-        return false;
-      }
+    if (checkFreeOnly && checkFreeOnly.checked && eventTicketPrice(ev) > 0) {
+      return false;
     }
 
     var bounds = getPriceBounds();

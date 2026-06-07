@@ -288,7 +288,7 @@ function rowToEvent(row, organiser, ticketRows) {
     meetingType: format || typeRaw,
     hasFreeTickets,
     hasPaidTickets,
-    search: [title, descText, location, postcode, orgName, typeRaw, format, row.event_type]
+    search: [title, descText, location, city, postcode, orgName, typeRaw, format, row.event_type]
       .filter(Boolean)
       .join(' ')
       .toLowerCase(),
