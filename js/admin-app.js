@@ -47,7 +47,16 @@
   var MEETING_FORMATS = ['In person', 'Online', 'Hybrid'];
   var healthCache = null;
   var groupCleanupCache = null;
-  var eventCleanupState = { organiserId: '', unlinked: false };
+  var eventCleanupCache = null;
+  var groupCleanupState = { offset: 0, q: '', incomplete: false, hasMore: false, total: 0, loading: false, selected: {} };
+  var eventCleanupState = { organiserId: '', unlinked: false, offset: 0, q: '', hasMore: false, total: 0, loading: false };
+  var GROUP_PAGE_SIZE = 30;
+  var EVENT_PAGE_SIZE = 20;
+  var adminLogoPending = {};
+  var groupSearchTimer = null;
+  var eventSearchTimer = null;
+  var groupLoadObserver = null;
+  var eventLoadObserver = null;
 
   /** CMS ad placements — each maps to a cms_blocks.slot row. */
   var CMS_AD_SLOTS = [
@@ -162,15 +171,24 @@
   }
 
   function adminGet(url) {
-    return fetch(url, { credentials: 'include' }).then(function (r) {
-      return r.json().then(function (data) {
-        if (!r.ok) {
+    return fetch(url, { credentials: 'include' })
+      .then(function (r) {
+        return r.json().then(function (data) {
           data = data || {};
-          data.error = data.error || data.message || 'request_failed';
-        }
-        return data;
+          if (!r.ok) {
+            data.error = data.error || data.message || 'request_failed';
+            data.ok = false;
+          }
+          return data;
+        });
+      })
+      .catch(function (err) {
+        return {
+          ok: false,
+          error: 'network_error',
+          message: (err && err.message) || 'Request failed',
+        };
       });
-    });
   }
 
   function adminPost(url, body) {
@@ -298,7 +316,9 @@
     var codes = issueCodes(ev);
     return {
       showDate: codes.indexOf('missing_date') >= 0,
-      showOrganiser: codes.indexOf('missing_organiser') >= 0,
+      showOrganiser:
+        codes.indexOf('missing_organiser') >= 0 || codes.indexOf('invalid_organiser') >= 0,
+      showOrganiserNotPublished: codes.indexOf('organiser_not_published') >= 0,
       showEventType: codes.indexOf('missing_event_type') >= 0,
       showFormat: codes.indexOf('missing_meeting_type') >= 0,
       showVat: codes.indexOf('missing_vat') >= 0,
@@ -388,8 +408,15 @@
     }
 
     var organiserPayload = null;
-    if (organiserId && (formField(form, 'organiser_photo_url') || formField(form, 'organiser_description'))) {
-      organiserPayload = { id: organiserId };
+    var organiserFieldId =
+      (formField(form, 'organiser_id') && formFieldVal(form, 'organiser_id')) ||
+      organiserId ||
+      '';
+    if (
+      organiserFieldId &&
+      (formField(form, 'organiser_photo_url') || formField(form, 'organiser_description'))
+    ) {
+      organiserPayload = { id: organiserFieldId };
       if (formField(form, 'organiser_photo_url')) {
         organiserPayload.photo_url = formFieldVal(form, 'organiser_photo_url');
       }
@@ -505,7 +532,9 @@
 
       if (!data.count) {
         status.innerHTML =
-          '<span class="text-emerald-700 font-semibold">All published events look complete.</span>';
+          '<span class="text-emerald-700 font-semibold">All ' +
+          (data.totalPublished || 0) +
+          ' published events look complete.</span>';
         summary.classList.add('hidden');
         list.innerHTML = '';
         return;
@@ -513,7 +542,8 @@
 
       var organisers = data.organisers || [];
       var needsOrganiserLink = (data.events || []).some(function (ev) {
-        return issueCodes(ev).indexOf('missing_organiser') >= 0;
+        var codes = issueCodes(ev);
+        return codes.indexOf('missing_organiser') >= 0 || codes.indexOf('invalid_organiser') >= 0;
       });
       var statusHint = needsOrganiserLink
         ? organisers.length
@@ -523,7 +553,10 @@
       status.innerHTML =
         '<span class="text-brand-900 font-semibold">' +
         data.count +
+        ' of ' +
+        (data.totalPublished || data.count) +
         ' published event' +
+        (data.totalPublished === 1 ? '' : 's') +
         (data.count === 1 ? ' needs' : ' need') +
         ' attention.</span>' +
         statusHint;
@@ -580,7 +613,7 @@
             fields.showEventType ||
             fields.showFormat ||
             fields.showVat;
-          var hasOrgFields = fields.showOrgLogo || fields.showOrgBio;
+          var hasOrgFields = fields.showOrgLogo || fields.showOrgBio || fields.showOrganiserNotPublished;
           var organiserSelectList = mergeOrganisersForSelect(organisers, ev);
           var typeOptions = EVENT_TYPES.map(function (t) {
             return (
@@ -611,6 +644,7 @@
             ? '../organisers/' + encodeURIComponent(ev.organiser_slug)
             : '';
           var saveLabel = hasOrgFields && !hasEventFields ? 'Save organiser profile' : 'Save fixes';
+          var canSave = hasEventFields || fields.showOrgLogo || fields.showOrgBio;
 
           var eventFieldsHtml = '';
           if (fields.showDate) {
@@ -666,24 +700,36 @@
           var orgFieldsHtml = '';
           if (hasOrgFields) {
             orgFieldsHtml +=
-              '<div class="sm:col-span-2 lg:col-span-3 rounded-lg border border-amber-200 bg-amber-50/60 p-4 space-y-3">' +
-              '<div class="flex flex-wrap items-start justify-between gap-2">' +
-              '<div>' +
-              '<p class="text-sm font-semibold text-brand-900">Organiser: ' +
-              esc(ev.organiser_name || 'Unknown') +
-              '</p>' +
-              '<p class="text-xs text-slate-600 mt-1">Add the missing logo or bio here, or open the full profile editor.</p>' +
-              '</div>' +
-              '<div class="flex flex-wrap gap-2 shrink-0">' +
-              '<a href="' +
-              attrEsc(orgEditHref) +
-              '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">Full profile editor</a>' +
-              (orgPublicHref
-                ? '<a href="' +
-                  attrEsc(orgPublicHref) +
-                  '" target="_blank" rel="noopener" class="text-xs font-semibold text-slate-600 hover:underline">View public profile</a>'
-                : '') +
-              '</div></div>';
+              '<div class="sm:col-span-2 lg:col-span-3 rounded-lg border border-amber-200 bg-amber-50/60 p-4 space-y-3">';
+            if (fields.showOrganiserNotPublished) {
+              orgFieldsHtml +=
+                '<div class="rounded-lg border border-amber-300 bg-white/80 p-3">' +
+                '<p class="text-sm font-semibold text-brand-900">Organiser profile is not published</p>' +
+                '<p class="text-xs text-slate-600 mt-1">This event is published but the linked organiser is still <strong>' +
+                esc(ev.organiser_listing_status || 'draft') +
+                '</strong>. Complete and publish the group in ' +
+                '<a href="#group-cleanup" class="text-brand-700 font-semibold hover:underline">Group profile cleanup</a>.</p></div>';
+            }
+            if (fields.showOrgLogo || fields.showOrgBio) {
+              orgFieldsHtml +=
+                '<div class="flex flex-wrap items-start justify-between gap-2">' +
+                '<div>' +
+                '<p class="text-sm font-semibold text-brand-900">Organiser: ' +
+                esc(ev.organiser_name || 'Unknown') +
+                '</p>' +
+                '<p class="text-xs text-slate-600 mt-1">Add the missing logo or bio here, or open the full profile editor.</p>' +
+                '</div>' +
+                '<div class="flex flex-wrap gap-2 shrink-0">' +
+                '<a href="' +
+                attrEsc(orgEditHref) +
+                '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">Full profile editor</a>' +
+                (orgPublicHref
+                  ? '<a href="' +
+                    attrEsc(orgPublicHref) +
+                    '" target="_blank" rel="noopener" class="text-xs font-semibold text-slate-600 hover:underline">View public profile</a>'
+                  : '') +
+                '</div></div>';
+            }
             if (fields.showOrgLogo) {
               orgFieldsHtml +=
                 '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Logo image URL</label>' +
@@ -737,10 +783,12 @@
             eventFieldsHtml +
             orgFieldsHtml +
             '<div class="sm:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-3 pt-1">' +
-            '<button type="submit" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900 disabled:opacity-50">' +
-            esc(saveLabel) +
-            '</button>' +
-            '<span class="event-health-msg text-xs text-slate-500"></span>' +
+            (canSave
+              ? '<button type="submit" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900 disabled:opacity-50">' +
+                esc(saveLabel) +
+                '</button>' +
+                '<span class="event-health-msg text-xs text-slate-500"></span>'
+              : '') +
             '</div></form></article>'
           );
         })
@@ -2140,19 +2188,205 @@
     );
   }
 
-  function fetchGroupCleanup() {
-    return adminGet('/api/admin/organisers').then(function (data) {
-      if (data && data.ok !== false && !data.error) groupCleanupCache = data;
-      return data;
+  function readFileAsBase64(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        resolve(String(reader.result || ''));
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
     });
   }
 
-  function fetchEventCleanup() {
+  function adminLogoFieldHtml(key, photoUrl) {
+    var hasPhoto = !!photoUrl;
+    return (
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Logo</label>' +
+      '<p class="text-[11px] text-slate-500 mb-2">Click, paste (Ctrl+V), or drop an image — or paste a URL below.</p>' +
+      '<div class="admin-logo-zone border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:border-brand-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 transition bg-white" data-admin-logo-key="' +
+      attrEsc(key) +
+      '" tabindex="0" role="button" aria-label="Upload or paste logo">' +
+      '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>' +
+      '<img class="admin-logo-preview mx-auto h-16 w-16 rounded-lg object-cover border border-slate-200' +
+      (hasPhoto ? '' : ' hidden') +
+      '" src="' +
+      attrEsc(photoUrl || '') +
+      '" alt="">' +
+      '<p class="admin-logo-placeholder text-xs text-slate-500 mt-2' +
+      (hasPhoto ? ' hidden' : '') +
+      '">Drop image here or click to browse</p></div>' +
+      '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm mt-2" value="' +
+      attrEsc(photoUrl || '') +
+      '" placeholder="https://… (optional if you uploaded a file)"></div>'
+    );
+  }
+
+  function bindAdminLogoZone(zone) {
+    if (!zone || zone.dataset.logoBound) return;
+    zone.dataset.logoBound = '1';
+    var key = zone.getAttribute('data-admin-logo-key') || '';
+    var fileInput = zone.querySelector('input[type="file"]');
+    var preview = zone.querySelector('.admin-logo-preview');
+    var placeholder = zone.querySelector('.admin-logo-placeholder');
+    var form = zone.closest('form');
+    var urlInput = form && form.querySelector('input[name="photo_url"]');
+
+    function showPreview(src) {
+      if (preview) {
+        preview.src = src;
+        preview.classList.remove('hidden');
+      }
+      if (placeholder) placeholder.classList.add('hidden');
+    }
+
+    function setFile(file) {
+      adminLogoPending[key] = { file: file };
+      var reader = new FileReader();
+      reader.onload = function () {
+        adminLogoPending[key].dataUrl = reader.result;
+        showPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    if (window.hubBindImageUpload) {
+      window.hubBindImageUpload({ zone: zone, fileInput: fileInput, onFile: setFile });
+    } else if (fileInput) {
+      zone.addEventListener('click', function () {
+        fileInput.click();
+      });
+      fileInput.addEventListener('change', function () {
+        var file = fileInput.files && fileInput.files[0];
+        if (file) setFile(file);
+      });
+    }
+
+    if (urlInput) {
+      urlInput.addEventListener('input', function () {
+        var url = String(urlInput.value || '').trim();
+        if (url && preview) {
+          preview.src = url;
+          preview.classList.remove('hidden');
+          if (placeholder) placeholder.classList.add('hidden');
+          delete adminLogoPending[key];
+        }
+      });
+    }
+  }
+
+  function bindAdminLogoZones(root) {
+    (root || main).querySelectorAll('[data-admin-logo-key]').forEach(bindAdminLogoZone);
+  }
+
+  function getSelectedGroupIds() {
+    return Object.keys(groupCleanupState.selected).filter(function (id) {
+      return groupCleanupState.selected[id];
+    });
+  }
+
+  function updateGroupBulkBar() {
+    var bar = document.getElementById('group-cleanup-bulk');
+    var countEl = document.getElementById('group-bulk-count');
+    var ids = getSelectedGroupIds();
+    if (countEl) countEl.textContent = String(ids.length);
+    if (bar) bar.classList.toggle('hidden', ids.length === 0);
+  }
+
+  function logoPayloadForKey(key, form) {
+    var pending = adminLogoPending[key];
+    if (pending && pending.file) {
+      return readFileAsBase64(pending.file).then(function (b64) {
+        var payload = {
+          logoBase64: b64,
+          logoMime: pending.file.type,
+          logoFilename: pending.file.name,
+        };
+        if (form && formField(form, 'photo_url')) {
+          var url = formFieldVal(form, 'photo_url');
+          if (url) payload.photo_url = url;
+        }
+        return payload;
+      });
+    }
+    var payload = {};
+    if (form && formField(form, 'photo_url')) payload.photo_url = formFieldVal(form, 'photo_url');
+    return Promise.resolve(payload);
+  }
+
+  function fetchGroupCleanup(append) {
+    if (groupCleanupState.loading) return Promise.resolve(groupCleanupCache);
+    groupCleanupState.loading = true;
     var params = new URLSearchParams();
+    params.set('offset', append ? String(groupCleanupState.offset) : '0');
+    params.set('limit', String(GROUP_PAGE_SIZE));
+    if (groupCleanupState.q) params.set('q', groupCleanupState.q);
+    if (groupCleanupState.incomplete) params.set('incomplete', '1');
+    return adminGet('/api/admin/organisers?' + params.toString())
+      .then(function (data) {
+        groupCleanupState.loading = false;
+        if (!data || data.error) return data;
+        if (append && groupCleanupCache && groupCleanupCache.organisers) {
+          groupCleanupCache.organisers = groupCleanupCache.organisers.concat(data.organisers || []);
+          groupCleanupCache.incomplete = data.incomplete;
+        } else {
+          groupCleanupCache = data;
+        }
+        groupCleanupState.offset = (groupCleanupCache.organisers || []).length;
+        groupCleanupState.hasMore = !!data.hasMore;
+        groupCleanupState.total = data.total || groupCleanupState.offset;
+        return groupCleanupCache;
+      })
+      .catch(function () {
+        groupCleanupState.loading = false;
+        return { error: 'network_error' };
+      });
+  }
+
+  function loadMoreGroups() {
+    if (!groupCleanupState.hasMore || groupCleanupState.loading) return;
+    fetchGroupCleanup(true).then(function (data) {
+      renderGroupCleanupList(data);
+      bindAdminLogoZones(main);
+      attachGroupLoadMore();
+    });
+  }
+
+  function fetchEventCleanup(append) {
+    if (eventCleanupState.loading) return Promise.resolve(eventCleanupCache);
+    eventCleanupState.loading = true;
+    var params = new URLSearchParams();
+    params.set('offset', append ? String(eventCleanupState.offset) : '0');
+    params.set('limit', String(EVENT_PAGE_SIZE));
     if (eventCleanupState.organiserId) params.set('organiser_id', eventCleanupState.organiserId);
     if (eventCleanupState.unlinked) params.set('unlinked', '1');
-    var qs = params.toString();
-    return adminGet('/api/admin/events' + (qs ? '?' + qs : ''));
+    if (eventCleanupState.q) params.set('q', eventCleanupState.q);
+    return adminGet('/api/admin/events?' + params.toString())
+      .then(function (data) {
+        eventCleanupState.loading = false;
+        if (!data || data.error) return data;
+        if (append && eventCleanupCache && eventCleanupCache.events) {
+          eventCleanupCache.events = eventCleanupCache.events.concat(data.events || []);
+        } else {
+          eventCleanupCache = data;
+        }
+        eventCleanupState.offset = (eventCleanupCache.events || []).length;
+        eventCleanupState.hasMore = !!data.hasMore;
+        eventCleanupState.total = data.total || eventCleanupState.offset;
+        return eventCleanupCache;
+      })
+      .catch(function () {
+        eventCleanupState.loading = false;
+        return { error: 'network_error' };
+      });
+  }
+
+  function loadMoreEvents() {
+    if (!eventCleanupState.hasMore || eventCleanupState.loading) return;
+    fetchEventCleanup(true).then(function () {
+      renderEventCleanupList();
+      attachEventLoadMore();
+    });
   }
 
   function saveGroupCleanupForm(form) {
@@ -2164,27 +2398,92 @@
       msg.textContent = 'Saving…';
       msg.className = 'group-cleanup-msg text-xs text-slate-500';
     }
-    adminPost('/api/admin/organisers', {
-      id: id,
-      description: formFieldVal(form, 'description'),
-      photo_url: formFieldVal(form, 'photo_url'),
-      website: formFieldVal(form, 'website'),
-    })
+    logoPayloadForKey(id, form)
+      .then(function (logoPayload) {
+        return adminPost('/api/admin/organisers', {
+          id: id,
+          description: formFieldVal(form, 'description'),
+          website: formFieldVal(form, 'website'),
+          photo_url: logoPayload.photo_url,
+          logoBase64: logoPayload.logoBase64,
+          logoMime: logoPayload.logoMime,
+          logoFilename: logoPayload.logoFilename,
+        });
+      })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Save failed');
+        delete adminLogoPending[id];
         if (msg) {
           msg.textContent = 'Saved.';
           msg.className = 'group-cleanup-msg text-xs text-emerald-700 font-semibold';
         }
-        return fetchGroupCleanup();
+        groupCleanupState.offset = 0;
+        return fetchGroupCleanup(false);
       })
-      .then(function () {
-        renderGroupCleanup();
+      .then(function (data) {
+        renderGroupCleanupList(data);
+        bindAdminLogoZones(main);
+        updateGroupBulkBar();
+        attachGroupLoadMore();
       })
       .catch(function (err) {
         if (msg) {
           msg.textContent = err.message || 'Could not save';
           msg.className = 'group-cleanup-msg text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function saveGroupBulkForm(form) {
+    var ids = getSelectedGroupIds();
+    var msg = document.getElementById('group-bulk-msg');
+    var btn = form.querySelector('[type="submit"]');
+    if (!ids.length) return;
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Applying to ' + ids.length + ' groups…';
+      msg.className = 'text-xs text-slate-500';
+    }
+    logoPayloadForKey('bulk', form)
+      .then(function (logoPayload) {
+        var payload = { action: 'bulk_update', ids: ids };
+        var desc = formFieldVal(form, 'bulk_description');
+        var site = formFieldVal(form, 'bulk_website');
+        if (desc) payload.description = desc;
+        if (site) payload.website = site;
+        if (logoPayload.photo_url) payload.photo_url = logoPayload.photo_url;
+        if (logoPayload.logoBase64) {
+          payload.logoBase64 = logoPayload.logoBase64;
+          payload.logoMime = logoPayload.logoMime;
+          payload.logoFilename = logoPayload.logoFilename;
+        }
+        if (!payload.description && !payload.website && !payload.photo_url && !payload.logoBase64) {
+          throw new Error('Fill in at least one field to apply.');
+        }
+        return adminPost('/api/admin/organisers', payload);
+      })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Bulk update failed');
+        delete adminLogoPending.bulk;
+        groupCleanupState.selected = {};
+        groupCleanupState.offset = 0;
+        if (msg) {
+          msg.textContent = 'Updated ' + (data.updated || ids.length) + ' groups.';
+          msg.className = 'text-xs text-emerald-700 font-semibold';
+        }
+        return fetchGroupCleanup(false);
+      })
+      .then(function (data) {
+        renderGroupCleanupList(data);
+        bindAdminLogoZones(main);
+        updateGroupBulkBar();
+        attachGroupLoadMore();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not apply bulk update';
+          msg.className = 'text-xs text-red-700 font-semibold';
         }
         if (btn) btn.disabled = false;
       });
@@ -2215,10 +2514,7 @@
           msg.textContent = 'Saved.';
           msg.className = 'event-cleanup-msg text-xs text-emerald-700 font-semibold';
         }
-        return fetchEventCleanup();
-      })
-      .then(function () {
-        renderEventCleanup();
+        return refreshEventCleanupData();
       })
       .catch(function (err) {
         if (msg) {
@@ -2257,10 +2553,7 @@
           var orgField = formField(form, 'organiser_id');
           if (orgField) orgField.value = eventCleanupState.organiserId;
         }
-        return fetchEventCleanup();
-      })
-      .then(function () {
-        renderEventCleanup();
+        return refreshEventCleanupData();
       })
       .catch(function (err) {
         if (msg) {
@@ -2280,22 +2573,99 @@
       if (form.classList.contains('group-cleanup-form')) {
         e.preventDefault();
         saveGroupCleanupForm(form);
+      } else if (form.id === 'group-bulk-form') {
+        e.preventDefault();
+        saveGroupBulkForm(form);
       }
     });
     main.addEventListener('input', function (e) {
-      var search = e.target.closest('#group-cleanup-search');
-      if (search) renderGroupCleanupList(groupCleanupCache);
+      if (e.target.id !== 'group-cleanup-search') return;
+      clearTimeout(groupSearchTimer);
+      groupSearchTimer = setTimeout(function () {
+        groupCleanupState.q = e.target.value || '';
+        groupCleanupState.offset = 0;
+        fetchGroupCleanup(false).then(function (data) {
+          renderGroupCleanupList(data);
+          bindAdminLogoZones(main);
+          attachGroupLoadMore();
+        });
+      }, 300);
     });
     main.addEventListener('change', function (e) {
-      if (e.target.id === 'group-cleanup-incomplete') renderGroupCleanupList(groupCleanupCache);
+      if (e.target.id === 'group-cleanup-incomplete') {
+        groupCleanupState.incomplete = e.target.checked;
+        groupCleanupState.offset = 0;
+        fetchGroupCleanup(false).then(function (data) {
+          renderGroupCleanupList(data);
+          bindAdminLogoZones(main);
+          attachGroupLoadMore();
+        });
+        return;
+      }
+      if (e.target.classList && e.target.classList.contains('group-select-checkbox')) {
+        var gid = e.target.value;
+        if (e.target.checked) groupCleanupState.selected[gid] = true;
+        else delete groupCleanupState.selected[gid];
+        updateGroupBulkBar();
+        return;
+      }
+      if (e.target.id === 'group-cleanup-select-page') {
+        main.querySelectorAll('.group-select-checkbox').forEach(function (cb) {
+          cb.checked = e.target.checked;
+          if (e.target.checked) groupCleanupState.selected[cb.value] = true;
+          else delete groupCleanupState.selected[cb.value];
+        });
+        updateGroupBulkBar();
+      }
     });
     main.addEventListener('click', function (e) {
       var toggle = e.target.closest('[data-toggle-group-edit]');
-      if (!toggle) return;
-      var row = toggle.closest('[data-organiser-id-row]');
-      var panel = row && row.querySelector('.group-cleanup-panel');
-      if (panel) panel.classList.toggle('hidden');
+      if (toggle) {
+        var row = toggle.closest('[data-organiser-id-row]');
+        var panel = row && row.querySelector('.group-cleanup-panel');
+        if (panel) {
+          panel.classList.toggle('hidden');
+          if (!panel.classList.contains('hidden')) bindAdminLogoZones(panel);
+        }
+        return;
+      }
+      if (e.target.id === 'group-cleanup-load-more') loadMoreGroups();
+      if (e.target.id === 'group-bulk-clear') {
+        groupCleanupState.selected = {};
+        main.querySelectorAll('.group-select-checkbox').forEach(function (cb) {
+          cb.checked = false;
+        });
+        var selectPage = document.getElementById('group-cleanup-select-page');
+        if (selectPage) selectPage.checked = false;
+        updateGroupBulkBar();
+      }
     });
+  }
+
+  function attachGroupLoadMore() {
+    var sentinel = document.getElementById('group-cleanup-sentinel');
+    if (!sentinel || !groupCleanupState.hasMore) return;
+    if (groupLoadObserver) groupLoadObserver.disconnect();
+    groupLoadObserver = new IntersectionObserver(
+      function (entries) {
+        if (entries[0].isIntersecting) loadMoreGroups();
+      },
+      { rootMargin: '240px' }
+    );
+    groupLoadObserver.observe(sentinel);
+  }
+
+  function attachEventLoadMore() {
+    var sentinel = document.getElementById('event-cleanup-sentinel');
+    if (!sentinel || !eventCleanupState.hasMore) return;
+    if (eventLoadObserver) eventLoadObserver.disconnect();
+    eventLoadObserver = new IntersectionObserver(
+      function (entries) {
+        if (entries[0].isIntersecting) loadMoreEvents();
+      },
+      { rootMargin: '240px' }
+    );
+    eventLoadObserver.observe(sentinel);
   }
 
   function bindEventCleanupForms() {
@@ -2315,21 +2685,23 @@
     main.addEventListener('change', function (e) {
       if (e.target.id === 'event-cleanup-organiser') {
         eventCleanupState.organiserId = e.target.value || '';
-        fetchEventCleanup().then(function () {
-          renderEventCleanup();
-        });
+        refreshEventCleanupData();
       }
       if (e.target.id === 'event-cleanup-unlinked') {
         eventCleanupState.unlinked = e.target.checked;
-        fetchEventCleanup().then(function () {
-          renderEventCleanup();
-        });
+        refreshEventCleanupData();
       }
     });
     main.addEventListener('input', function (e) {
-      if (e.target.id === 'event-cleanup-search') {
-        renderEventCleanupList();
-      }
+      if (e.target.id !== 'event-cleanup-search') return;
+      clearTimeout(eventSearchTimer);
+      eventSearchTimer = setTimeout(function () {
+        eventCleanupState.q = e.target.value || '';
+        refreshEventCleanupData();
+      }, 300);
+    });
+    main.addEventListener('click', function (e) {
+      if (e.target.id === 'event-cleanup-load-more') loadMoreEvents();
     });
   }
 
@@ -2338,39 +2710,34 @@
     var status = document.getElementById('group-cleanup-status');
     if (!list) return;
 
-    if (!data || data.error) {
+    if (!data || data.error || data.ok === false) {
       if (status) {
         status.innerHTML =
           '<span class="text-red-700 font-semibold">Could not load groups (' +
-          esc(data && data.error ? data.error : 'unknown') +
+          esc((data && (data.error || data.message)) || 'unknown') +
           ').</span>';
       }
       list.innerHTML = '';
       return;
     }
 
-    var searchEl = document.getElementById('group-cleanup-search');
-    var incompleteOnly = document.getElementById('group-cleanup-incomplete');
-    var q = searchEl ? String(searchEl.value || '').trim().toLowerCase() : '';
-    var onlyIncomplete = incompleteOnly ? incompleteOnly.checked : false;
-    var organisers = (data.organisers || []).filter(function (o) {
-      if (onlyIncomplete && !(o.missing || []).length) return false;
-      if (!q) return true;
-      return String(o.name || '')
-        .toLowerCase()
-        .includes(q);
-    });
+    var organisers = data.organisers || [];
+    var shown = organisers.length;
+    var total = groupCleanupState.total || shown;
 
     if (status) {
       status.innerHTML =
-        '<span class="text-brand-900 font-semibold">' +
-        organisers.length +
+        '<span class="text-brand-900 font-semibold">Showing ' +
+        shown +
+        ' of ' +
+        total +
         ' group' +
-        (organisers.length === 1 ? '' : 's') +
+        (total === 1 ? '' : 's') +
         '</span>' +
         (data.incomplete
           ? ' <span class="text-slate-500">(' + data.incomplete + ' with missing profile data)</span>'
-          : '');
+          : '') +
+        (groupCleanupState.loading ? ' <span class="text-slate-400">Loading…</span>' : '');
     }
 
     if (!organisers.length) {
@@ -2379,88 +2746,119 @@
       return;
     }
 
-    list.innerHTML = organisers
-      .map(function (o) {
-        var publicHref = o.slug ? '../organisers/' + encodeURIComponent(o.slug) : '';
-        var missingHtml = (o.missing || []).map(missingBadge).join('') || '<span class="text-xs text-emerald-700">Complete</span>';
-        return (
-          '<article class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden" data-organiser-id-row="' +
-          attrEsc(o.id) +
-          '">' +
-          '<div class="flex flex-wrap items-center justify-between gap-3 p-4">' +
-          '<div class="min-w-0 flex-1">' +
-          '<div class="flex flex-wrap items-center gap-2">' +
-          '<h3 class="font-semibold text-brand-900 truncate">' +
-          esc(o.name || 'Untitled') +
-          '</h3>' +
-          listingStatusBadge(o.listing_status) +
-          '</div>' +
-          '<p class="text-xs text-slate-500 mt-1">' +
-          (o.event_count || 0) +
-          ' event' +
-          (o.event_count === 1 ? '' : 's') +
-          ' · ' +
-          missingHtml +
-          '</p></div>' +
-          '<div class="flex flex-wrap gap-2 shrink-0">' +
-          (publicHref
-            ? '<a href="' +
-              attrEsc(publicHref) +
-              '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View public</a>'
-            : '') +
-          '<button type="button" data-toggle-group-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-3 py-1.5 hover:bg-brand-900">Edit profile</button>' +
-          '</div></div>' +
-          '<div class="group-cleanup-panel hidden border-t border-slate-200 bg-slate-50/80 p-4">' +
-          '<form class="group-cleanup-form space-y-3" data-organiser-id="' +
-          attrEsc(o.id) +
-          '">' +
-          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Description / bio</label>' +
-          '<textarea name="description" rows="4" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-          esc(o.description || '') +
-          '</textarea></div>' +
-          '<div class="grid sm:grid-cols-2 gap-3">' +
-          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Logo URL</label>' +
-          '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-          attrEsc(o.photo_url || '') +
-          '" placeholder="https://…"></div>' +
-          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Website</label>' +
-          '<input type="url" name="website" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-          attrEsc(o.website || '') +
-          '" placeholder="https://…"></div></div>' +
-          (o.photo_url
-            ? '<img src="' +
-              attrEsc(o.photo_url) +
-              '" alt="" class="h-12 w-12 rounded-lg object-cover border border-slate-200">'
-            : '') +
-          '<div class="flex flex-wrap items-center gap-3">' +
-          '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save profile</button>' +
-          '<a href="../organiser/group-edit.html?id=' +
-          encodeURIComponent(o.id) +
-          '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">Open full editor</a>' +
-          '<span class="group-cleanup-msg text-xs"></span></div></form></div></article>'
-        );
-      })
-      .join('');
+    list.innerHTML =
+      organisers
+        .map(function (o) {
+          var publicHref = o.slug ? '../organisers/' + encodeURIComponent(o.slug) : '';
+          var missingHtml =
+            (o.missing || []).map(missingBadge).join('') ||
+            '<span class="text-xs text-emerald-700">Complete</span>';
+          var checked = groupCleanupState.selected[o.id] ? ' checked' : '';
+          return (
+            '<article class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden" data-organiser-id-row="' +
+            attrEsc(o.id) +
+            '">' +
+            '<div class="flex flex-wrap items-center justify-between gap-3 p-4">' +
+            '<div class="flex items-start gap-3 min-w-0 flex-1">' +
+            '<input type="checkbox" class="group-select-checkbox mt-1 rounded border-slate-300" value="' +
+            attrEsc(o.id) +
+            '"' +
+            checked +
+            ' aria-label="Select ' +
+            attrEsc(o.name || 'group') +
+            '">' +
+            '<div class="min-w-0">' +
+            '<div class="flex flex-wrap items-center gap-2">' +
+            '<h3 class="font-semibold text-brand-900 truncate">' +
+            esc(o.name || 'Untitled') +
+            '</h3>' +
+            listingStatusBadge(o.listing_status) +
+            '</div>' +
+            '<p class="text-xs text-slate-500 mt-1">' +
+            (o.event_count || 0) +
+            ' event' +
+            (o.event_count === 1 ? '' : 's') +
+            ' · ' +
+            missingHtml +
+            '</p></div></div>' +
+            '<div class="flex flex-wrap gap-2 shrink-0">' +
+            (publicHref
+              ? '<a href="' +
+                attrEsc(publicHref) +
+                '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View public</a>'
+              : '') +
+            '<button type="button" data-toggle-group-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-3 py-1.5 hover:bg-brand-900">Edit profile</button>' +
+            '</div></div>' +
+            '<div class="group-cleanup-panel hidden border-t border-slate-200 bg-slate-50/80 p-4">' +
+            '<form class="group-cleanup-form space-y-3" data-organiser-id="' +
+            attrEsc(o.id) +
+            '">' +
+            '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Description / bio</label>' +
+            '<textarea name="description" rows="4" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+            esc(o.description || '') +
+            '</textarea></div>' +
+            adminLogoFieldHtml(o.id, o.photo_url) +
+            '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Website</label>' +
+            '<input type="url" name="website" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+            attrEsc(o.website || '') +
+            '" placeholder="https://…"></div>' +
+            '<div class="flex flex-wrap items-center gap-3">' +
+            '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save profile</button>' +
+            '<a href="../organiser/group-edit.html?id=' +
+            encodeURIComponent(o.id) +
+            '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">Open full editor</a>' +
+            '<span class="group-cleanup-msg text-xs"></span></div></form></div></article>'
+          );
+        })
+        .join('') +
+      (groupCleanupState.hasMore
+        ? '<div id="group-cleanup-sentinel" class="py-6 text-center">' +
+          '<button type="button" id="group-cleanup-load-more" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-brand-900 hover:bg-slate-50">Load more groups</button>' +
+          '</div>'
+        : '');
+    updateGroupBulkBar();
   }
 
   function renderGroupCleanup() {
     main.innerHTML =
       '<div class="space-y-4">' +
       '<div id="group-cleanup-status" class="text-sm text-slate-500">Loading groups…</div>' +
+      '<div id="group-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
+      '<form id="group-bulk-form" class="space-y-3">' +
+      '<div class="flex flex-wrap items-center justify-between gap-2">' +
+      '<p class="text-sm font-semibold text-brand-900"><span id="group-bulk-count">0</span> groups selected</p>' +
+      '<button type="button" id="group-bulk-clear" class="text-xs font-semibold text-slate-600 hover:text-brand-900">Clear selection</button></div>' +
+      '<p class="text-xs text-slate-600">Only filled-in fields are applied to every selected group.</p>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Description / bio</label>' +
+      '<textarea name="bulk_description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Leave blank to keep existing bios"></textarea></div>' +
+      adminLogoFieldHtml('bulk', '') +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Website</label>' +
+      '<input type="url" name="bulk_website" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="https://…"></div>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Apply to selected</button>' +
+      '<span id="group-bulk-msg" class="text-xs"></span></div></form></div>' +
       '<div class="flex flex-wrap gap-3 items-center">' +
-      '<input type="search" id="group-cleanup-search" placeholder="Search by name…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full max-w-xs bg-white">' +
+      '<input type="search" id="group-cleanup-search" placeholder="Search by name…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full max-w-xs bg-white" value="' +
+      attrEsc(groupCleanupState.q) +
+      '">' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
-      '<input type="checkbox" id="group-cleanup-incomplete" class="rounded border-slate-300"> Show incomplete only</label></div>' +
+      '<input type="checkbox" id="group-cleanup-incomplete" class="rounded border-slate-300"' +
+      (groupCleanupState.incomplete ? ' checked' : '') +
+      '> Show incomplete only</label>' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="group-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +
       '<div id="group-cleanup-list" class="space-y-3"></div></div>';
 
-    var render = function (data) {
-      renderGroupCleanupList(data);
-    };
-    if (groupCleanupCache && groupCleanupCache.ok !== false) {
-      render(groupCleanupCache);
-    } else {
-      fetchGroupCleanup().then(render);
-    }
+    groupCleanupState.offset = 0;
+    fetchGroupCleanup(false)
+      .then(function (data) {
+        renderGroupCleanupList(data || { error: 'load_failed' });
+        bindAdminLogoZones(main);
+        attachGroupLoadMore();
+      })
+      .catch(function () {
+        renderGroupCleanupList({ error: 'network_error' });
+      });
   }
 
   function eventTypeOptions(selected) {
@@ -2508,7 +2906,60 @@
       .join('');
   }
 
-  var eventCleanupCache = null;
+  function eventCleanupFilterHtml(organisers) {
+    return (
+      '<option value="">All organisers</option>' +
+      organisers
+        .map(function (o) {
+          return (
+            '<option value="' +
+            attrEsc(o.id) +
+            '"' +
+            (eventCleanupState.organiserId === o.id ? ' selected' : '') +
+            '>' +
+            esc(o.name) +
+            (o.listingStatus === 'published' ? '' : ' (draft)') +
+            '</option>'
+          );
+        })
+        .join('')
+    );
+  }
+
+  function applyEventCleanupData(data) {
+    var status = document.getElementById('event-cleanup-status');
+    if (!data || data.error || data.ok === false) {
+      if (status) {
+        status.innerHTML =
+          '<span class="text-red-700 font-semibold">Could not load events (' +
+          esc((data && (data.error || data.message)) || 'unknown') +
+          ').</span>';
+      }
+      return;
+    }
+
+    eventCleanupCache = data;
+    var organisers = (data.organisers || []).map(normalizeOrganiserOption);
+    var filterSelect = document.getElementById('event-cleanup-organiser');
+    var createSelect = document.getElementById('event-create-organiser');
+    if (filterSelect) filterSelect.innerHTML = eventCleanupFilterHtml(organisers);
+    if (createSelect) {
+      createSelect.innerHTML = organiserOptionsHtml(organisers, eventCleanupState.organiserId);
+    }
+    renderEventCleanupList();
+    attachEventLoadMore();
+  }
+
+  function refreshEventCleanupData() {
+    eventCleanupState.offset = 0;
+    var status = document.getElementById('event-cleanup-status');
+    if (status) status.textContent = 'Loading events…';
+    return fetchEventCleanup(false)
+      .then(applyEventCleanupData)
+      .catch(function () {
+        applyEventCleanupData({ error: 'network_error' });
+      });
+  }
 
   function renderEventCleanupList() {
     var list = document.getElementById('event-cleanup-list');
@@ -2517,29 +2968,18 @@
 
     var data = eventCleanupCache;
     var organisers = (data.organisers || []).map(normalizeOrganiserOption);
-    var searchEl = document.getElementById('event-cleanup-search');
-    var q = searchEl ? String(searchEl.value || '').trim().toLowerCase() : '';
-    var events = (data.events || []).filter(function (ev) {
-      if (!q) return true;
-      return (
-        String(ev.title || '')
-          .toLowerCase()
-          .includes(q) ||
-        String(ev.organiser_name || '')
-          .toLowerCase()
-          .includes(q) ||
-        String(ev.city || '')
-          .toLowerCase()
-          .includes(q)
-      );
-    });
+    var events = data.events || [];
+    var shown = events.length;
+    var total = eventCleanupState.total || shown;
 
     if (status) {
       var parts = [
-        '<span class="text-brand-900 font-semibold">' +
-          events.length +
+        '<span class="text-brand-900 font-semibold">Showing ' +
+          shown +
+          ' of ' +
+          total +
           ' event' +
-          (events.length === 1 ? '' : 's') +
+          (total === 1 ? '' : 's') +
           '</span>',
       ];
       if (data.unlinked_count) {
@@ -2548,6 +2988,9 @@
             data.unlinked_count +
             ' unlinked</span>'
         );
+      }
+      if (eventCleanupState.loading) {
+        parts.push('<span class="text-slate-400">Loading…</span>');
       }
       status.innerHTML = parts.join(' · ');
     }
@@ -2558,8 +3001,9 @@
       return;
     }
 
-    list.innerHTML = events
-      .map(function (ev) {
+    list.innerHTML =
+      events
+        .map(function (ev) {
         var publicHref = ev.slug ? '../events/' + encodeURIComponent(ev.slug) : '';
         return (
           '<article class="rounded-xl border border-slate-200 bg-white shadow-sm p-4 space-y-3" data-event-id="' +
@@ -2617,7 +3061,12 @@
           '<span class="event-cleanup-msg text-xs"></span></div></form></article>'
         );
       })
-      .join('');
+      .join('') +
+      (eventCleanupState.hasMore
+        ? '<div id="event-cleanup-sentinel" class="py-6 text-center">' +
+          '<button type="button" id="event-cleanup-load-more" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-brand-900 hover:bg-slate-50">Load more events</button>' +
+          '</div>'
+        : '');
   }
 
   function renderEventCleanup() {
@@ -2653,55 +3102,16 @@
       '<div class="flex flex-wrap gap-3 items-center">' +
       '<select id="event-cleanup-organiser" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white max-w-xs">' +
       '<option value="">All organisers</option></select>' +
-      '<input type="search" id="event-cleanup-search" placeholder="Search events…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full max-w-xs bg-white">' +
+      '<input type="search" id="event-cleanup-search" placeholder="Search events…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full max-w-xs bg-white" value="' +
+      attrEsc(eventCleanupState.q) +
+      '">' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
       '<input type="checkbox" id="event-cleanup-unlinked" class="rounded border-slate-300"' +
       (eventCleanupState.unlinked ? ' checked' : '') +
       '> Unlinked only</label></div>' +
       '<div id="event-cleanup-list" class="space-y-3"></div></div>';
 
-    fetchEventCleanup()
-      .then(function (data) {
-        if (data.error) {
-          var status = document.getElementById('event-cleanup-status');
-          if (status) {
-            status.innerHTML =
-              '<span class="text-red-700 font-semibold">Could not load events (' +
-              esc(data.error) +
-              ').</span>';
-          }
-          return;
-        }
-        eventCleanupCache = data;
-        var organisers = (data.organisers || []).map(normalizeOrganiserOption);
-        var filterSelect = document.getElementById('event-cleanup-organiser');
-        var createSelect = document.getElementById('event-create-organiser');
-        var filterHtml =
-          '<option value="">All organisers</option>' +
-          organisers
-            .map(function (o) {
-              return (
-                '<option value="' +
-                attrEsc(o.id) +
-                '"' +
-                (eventCleanupState.organiserId === o.id ? ' selected' : '') +
-                '>' +
-                esc(o.name) +
-                (o.listingStatus === 'published' ? '' : ' (draft)') +
-                '</option>'
-              );
-            })
-            .join('');
-        if (filterSelect) filterSelect.innerHTML = filterHtml;
-        if (createSelect) {
-          createSelect.innerHTML = organiserOptionsHtml(organisers, eventCleanupState.organiserId);
-        }
-        renderEventCleanupList();
-      })
-      .catch(function () {
-        var status = document.getElementById('event-cleanup-status');
-        if (status) status.textContent = 'Could not load events.';
-      });
+    refreshEventCleanupData();
   }
 
   var routes = {
@@ -2721,7 +3131,18 @@
     var hash = (location.hash || '#dashboard').replace('#', '');
     if (!routes[hash]) hash = 'dashboard';
     setActiveNav(hash);
-    routes[hash]();
+    try {
+      routes[hash]();
+    } catch (err) {
+      if (main) {
+        main.innerHTML =
+          '<div class="rounded-xl border border-red-200 bg-red-50 p-6 text-red-900">' +
+          '<p class="font-semibold">Could not open this admin page.</p>' +
+          '<p class="text-sm mt-2">' +
+          esc((err && err.message) || 'Unknown error') +
+          '</p></div>';
+      }
+    }
   }
 
   function boot(user) {

@@ -1,8 +1,8 @@
 const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
-const { createEvent } = require('../supabase-organiser-events');
 const { publicEventSlug } = require('../event-slug');
 const { publicOrganiserSlug } = require('../organiser-slug');
+const { normalizeEventType } = require('../event-types');
 
 function parseBody(req) {
   let body = req.body;
@@ -14,6 +14,21 @@ function parseBody(req) {
     }
   }
   return body || {};
+}
+
+function queryFromRequest(req) {
+  const q = { ...(req.query || {}) };
+  if (req.url) {
+    try {
+      const url = new URL(req.url, 'https://internal.local');
+      url.searchParams.forEach((value, key) => {
+        if (q[key] == null || q[key] === '') q[key] = value;
+      });
+    } catch {
+      /* ignore */
+    }
+  }
+  return q;
 }
 
 async function fetchOrganiserOptions(sb) {
@@ -68,21 +83,30 @@ async function listEventsForAdmin(query) {
   const sb = getSupabaseAdmin();
   const organiserId = String(query.organiser_id || '').trim();
   const unlinked = query.unlinked === '1' || query.unlinked === 'true';
-  const search = String(query.q || '').trim().toLowerCase();
+  const search = String(query.q || '').trim();
+  const offset = Math.max(parseInt(String(query.offset || ''), 10) || 0, 0);
+  const limit = Math.min(Math.max(parseInt(String(query.limit || ''), 10) || 20, 1), 100);
 
   let dbQuery = sb
     .from('events')
     .select(
-      'id, title, description, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, created_at'
+      'id, title, description, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, created_at',
+      { count: 'exact' }
     )
-    .order('title', { ascending: true })
-    .limit(500);
+    .order('title', { ascending: true });
 
   if (unlinked) {
     dbQuery = dbQuery.is('organiser_id', null);
   } else if (organiserId) {
     dbQuery = dbQuery.eq('organiser_id', organiserId);
   }
+
+  if (search) {
+    const term = `%${search}%`;
+    dbQuery = dbQuery.or(`title.ilike.${term},city.ilike.${term}`);
+  }
+
+  dbQuery = dbQuery.range(offset, offset + limit - 1);
 
   const [eventsRes, organisers] = await Promise.all([dbQuery, fetchOrganiserOptions(sb)]);
   if (eventsRes.error) throw new Error(eventsRes.error.message);
@@ -91,16 +115,9 @@ async function listEventsForAdmin(query) {
     organisers.map((o) => [o.id, { id: o.id, name: o.name, slug: o.slug, listing_status: o.listing_status }])
   );
 
-  let events = (eventsRes.data || []).map((row) => mapEventRow(row, orgById));
-  if (search) {
-    events = events.filter(function (ev) {
-      return (
-        ev.title.toLowerCase().includes(search) ||
-        ev.organiser_name.toLowerCase().includes(search) ||
-        ev.city.toLowerCase().includes(search)
-      );
-    });
-  }
+  const rows = eventsRes.data || [];
+  const events = rows.map((row) => mapEventRow(row, orgById));
+  const total = eventsRes.count != null ? eventsRes.count : rows.length;
 
   const unlinkedCountRes = await sb
     .from('events')
@@ -112,6 +129,10 @@ async function listEventsForAdmin(query) {
     events,
     organisers,
     count: events.length,
+    total,
+    offset,
+    limit,
+    hasMore: offset + events.length < total,
     unlinked_count: unlinkedCountRes.count || 0,
   };
 }
@@ -130,7 +151,7 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const data = await listEventsForAdmin(req.query || {});
+      const data = await listEventsForAdmin(queryFromRequest(req));
       return json(res, 200, { ok: true, ...data });
     } catch (e) {
       return json(res, 500, { ok: false, error: 'list_failed', message: e.message });
@@ -147,10 +168,11 @@ module.exports = async function handler(req, res) {
       if (!organiserId) return json(res, 400, { error: 'missing_organiser_id' });
 
       try {
+        const { createEvent } = require('../supabase-organiser-events');
         const event = await createEvent({
           title,
           groupId: organiserId,
-          type: body.event_type || 'Networking meeting',
+          type: normalizeEventType(body.event_type || 'Networking meeting'),
           eventFormat: body.meeting_type || 'In person',
           date: body.starts_at || null,
           endDate: body.ends_at || null,
@@ -189,7 +211,7 @@ module.exports = async function handler(req, res) {
       patch.organiser_id = body.organiser_id ? String(body.organiser_id).trim() : null;
     }
     if (Object.prototype.hasOwnProperty.call(body, 'event_type')) {
-      patch.event_type = String(body.event_type || '').trim() || null;
+      patch.event_type = normalizeEventType(body.event_type || '');
     }
     if (Object.prototype.hasOwnProperty.call(body, 'meeting_type')) {
       patch.meeting_type = String(body.meeting_type || '').trim() || null;
