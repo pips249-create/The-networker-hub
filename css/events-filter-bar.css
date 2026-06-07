@@ -441,7 +441,12 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
 }
 
 .filter-bar-cluster {
-  display: contents;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 14px;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .filter-near-radius select {
@@ -642,13 +647,20 @@ body.events-view-map .events-map-panel {
     gap: 12px;
   }
 
-  .filter-bar-row-bottom > .filter-format-group,
-  .filter-bar-row-bottom > .filter-price-range,
-  .filter-bar-row-bottom > .filter-date-wrap,
-  .filter-bar-row-bottom > .filter-checkbox,
-  .filter-bar-row-bottom > .filter-near-radius,
-  .filter-bar-row-bottom > .filter-organiser-only,
-  .filter-bar-row-bottom > .filter-map-btn {
+  .filter-bar-row-bottom .filter-bar-cluster {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 12px;
+  }
+
+  .filter-bar-row-bottom .filter-bar-cluster > .filter-format-group,
+  .filter-bar-row-bottom .filter-bar-cluster > .filter-price-range,
+  .filter-bar-row-bottom .filter-bar-cluster > .filter-date-wrap,
+  .filter-bar-row-bottom .filter-bar-cluster > .filter-checkbox,
+  .filter-bar-row-bottom .filter-bar-cluster > .filter-near-radius,
+  .filter-bar-row-bottom .filter-bar-cluster > .filter-organiser-only,
+  .filter-bar-row-bottom .filter-bar-cluster > .filter-map-btn {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -658,9 +670,49 @@ body.events-view-map .events-map-panel {
     width: 100%;
   }
 
+  .filter-date-wrap {
+    min-width: 0;
+  }
+
+  .filter-format-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filter-organiser-only {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .filter-organiser-industry {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+  }
+
   .filter-organiser-industry select {
     width: 100%;
     min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .filter-org-rating-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+    align-items: center;
+    width: 100%;
+  }
+
+  .filter-org-rating-group legend {
+    grid-column: 1 / -1;
+  }
+
+  .filter-near-radius select {
+    width: 100%;
     box-sizing: border-box;
   }
 

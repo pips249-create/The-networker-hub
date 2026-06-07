@@ -359,10 +359,12 @@ body.nav-menu-open {
   }
 
   .filter-bar-row-top .filter-field-grow,
-  .filter-bar-row-top .filter-field-postcode {
+  .filter-bar-row-top .filter-field-postcode,
+  .filter-bar-row-top .filter-field {
     flex: 1 1 auto;
     width: 100%;
     max-width: none;
+    min-width: 0;
   }
 
   .filter-bar-row-bottom {
@@ -371,16 +373,27 @@ body.nav-menu-open {
     gap: 12px;
   }
 
-  .filter-bar-row-bottom > .filter-format-group,
-  .filter-bar-row-bottom > .filter-price-range,
-  .filter-bar-row-bottom > .filter-date-wrap,
-  .filter-bar-row-bottom > .filter-checkbox,
-  .filter-bar-row-bottom > .filter-near-radius,
-  .filter-bar-row-bottom > .filter-organiser-only,
-  .filter-bar-row-bottom > .filter-map-btn {
+  .filter-bar-row-bottom .filter-bar-cluster {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 12px;
+  }
+
+  .filter-bar-row-bottom .filter-bar-cluster > .filter-format-group,
+  .filter-bar-row-bottom .filter-bar-cluster > .filter-price-range,
+  .filter-bar-row-bottom .filter-bar-cluster > .filter-date-wrap,
+  .filter-bar-row-bottom .filter-bar-cluster > .filter-checkbox,
+  .filter-bar-row-bottom .filter-bar-cluster > .filter-near-radius,
+  .filter-bar-row-bottom .filter-bar-cluster > .filter-organiser-only,
+  .filter-bar-row-bottom .filter-bar-cluster > .filter-map-btn {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+  }
+
+  .filter-date-wrap {
+    min-width: 0;
   }
 
   .filter-format-group {
@@ -413,6 +426,7 @@ body.nav-menu-open {
     grid-template-columns: 1fr 1fr;
     gap: 8px 12px;
     align-items: center;
+    width: 100%;
   }
 
   .filter-org-rating-group legend {
