@@ -1,40 +1,48 @@
 /**
- * Event card images: event photo → organiser logo → local placeholder in /assets/placeholders/.
+ * Event card images: event photo → organiser logo → type-based Unsplash placeholder.
  */
 (function () {
-  var PLACEHOLDER_BASE = '/assets/placeholders/';
-
   var PLACEMENT_IMAGES = [
-    PLACEHOLDER_BASE + '1.svg',
-    PLACEHOLDER_BASE + '2.svg',
-    PLACEHOLDER_BASE + '3.svg',
-    PLACEHOLDER_BASE + '4.svg',
-    PLACEHOLDER_BASE + '5.svg',
-    PLACEHOLDER_BASE + '6.svg',
-    PLACEHOLDER_BASE + '7.svg',
-    PLACEHOLDER_BASE + '8.svg',
+    'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1560179707-f14e90ef3623?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1557804506-669a77965eba?q=80&w=800&auto=format&fit=crop',
   ];
 
   var TYPE_PLACEMENTS = {
     meeting: [
-      PLACEHOLDER_BASE + '1.svg',
-      PLACEHOLDER_BASE + '2.svg',
-      PLACEHOLDER_BASE + '3.svg',
-      PLACEHOLDER_BASE + '4.svg',
-      PLACEHOLDER_BASE + '5.svg',
+      'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1557804506-669a77965eba?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=800&auto=format&fit=crop',
     ],
-    exhibition: [PLACEHOLDER_BASE + '6.svg', PLACEHOLDER_BASE + '7.svg'],
+    exhibition: [
+      'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1560179707-f14e90ef3623?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=800&auto=format&fit=crop',
+    ],
     conference: [
-      PLACEHOLDER_BASE + '2.svg',
-      PLACEHOLDER_BASE + '4.svg',
-      PLACEHOLDER_BASE + '6.svg',
-      PLACEHOLDER_BASE + '8.svg',
+      'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=800&auto=format&fit=crop',
     ],
-    netwalking: [PLACEHOLDER_BASE + '3.svg', PLACEHOLDER_BASE + '5.svg'],
-    awards: [PLACEHOLDER_BASE + '7.svg', PLACEHOLDER_BASE + '8.svg'],
+    netwalking: [
+      'https://images.unsplash.com/photo-1557804506-669a77965eba?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=800&auto=format&fit=crop',
+    ],
+    awards: [
+      'https://images.unsplash.com/photo-1560179707-f14e90ef3623?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=800&auto=format&fit=crop',
+    ],
   };
 
-  var DEFAULT_PLACEHOLDER = PLACEHOLDER_BASE + 'default.svg';
+  var DEFAULT_PLACEHOLDER = PLACEMENT_IMAGES[0];
 
   function isUsableImageUrl(url) {
     var value = String(url || '').trim();

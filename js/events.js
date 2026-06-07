@@ -698,6 +698,7 @@
 
   window.hubReloadEvents = load;
   window.hubReloadSponsorBlock = loadSponsorBlock;
+  window.hubEventDetailHref = detailHref;
   initListingsPagination();
   loadSponsorBlock();
   load();

@@ -3,6 +3,22 @@
   background: linear-gradient(180deg, #eef4ff 0%, #f8fbff 220px, var(--surface-bg, #faf8fc) 480px);
 }
 
+.org-profile-breadcrumb {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 18px 20px 0;
+}
+
+.org-profile-back {
+  font-size: 13px;
+  padding: 10px 18px;
+  gap: 8px;
+}
+
+.org-profile-back svg {
+  flex-shrink: 0;
+}
+
 .org-profile-shell {
   max-width: 1120px;
   margin: 0 auto;

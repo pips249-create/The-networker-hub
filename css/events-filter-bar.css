@@ -578,14 +578,34 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
   display: none !important;
 }
 
-.events-map-panel[data-map-hint]::after {
-  content: attr(data-map-hint);
-  display: block;
+.events-map-hint {
+  margin: -16px 0 24px;
   padding: 12px 16px;
   font-size: 13px;
+  line-height: 1.45;
   color: var(--text-muted);
   background: var(--lavender-light);
-  border-top: 1px solid var(--border-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+
+.events-map-hint[hidden] {
+  display: none !important;
+}
+
+body.events-view-map .events-promo-section,
+body.events-view-map .events-results-meta {
+  display: none !important;
+}
+
+body.events-view-map .events-filter-shell {
+  margin-bottom: 12px;
+}
+
+body.events-view-map .events-map-panel {
+  height: min(70vh, 640px);
+  min-height: 360px;
+  margin-bottom: 16px;
 }
 
 .events-view-map .listings-block[hidden],
@@ -621,6 +641,11 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
   }
   .events-map-panel {
     height: 400px;
+  }
+
+  body.events-view-map .events-map-panel {
+    height: min(58vh, 520px);
+    min-height: 320px;
   }
 }
 
