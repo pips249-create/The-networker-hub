@@ -42,6 +42,11 @@
   color: var(--ad-text-mid);
 }
 
+.attendee-dashboard-page #ad-signin[hidden],
+.attendee-dashboard-page #ad-shell[hidden] {
+  display: none !important;
+}
+
 .ad-sidebar-label {
   font-size: 10px;
   font-weight: 700;

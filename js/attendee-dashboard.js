@@ -383,19 +383,19 @@
     const sessionData = await sessionRes.json();
     if (!sessionData.ok || !sessionData.user) {
       if (signin) signin.hidden = false;
+      if (shell) shell.hidden = true;
       return;
     }
 
+    if (signin) signin.hidden = true;
     if (shell) shell.hidden = false;
     renderWelcome(sessionData.user);
 
     const res = await fetch('/api/auth/attendee-dashboard', { credentials: 'include' });
     const data = await res.json();
     if (!data.ok) {
-      if (signin) {
-        signin.hidden = false;
-        shell.hidden = true;
-      }
+      if (signin) signin.hidden = false;
+      if (shell) shell.hidden = true;
       return;
     }
 

@@ -178,6 +178,7 @@
       return;
     }
     if (main) main.hidden = false;
+    if (signin) signin.hidden = true;
     try {
       await loadProfile();
     } catch (err) {
