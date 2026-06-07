@@ -175,14 +175,21 @@
     const sessionData = await sessionRes.json();
     if (!sessionData.ok || !sessionData.user) {
       if (signin) signin.hidden = false;
+      if (main) main.hidden = true;
       return;
     }
-    if (main) main.hidden = false;
     if (signin) signin.hidden = true;
+    if (main) main.hidden = false;
     try {
       await loadProfile();
     } catch (err) {
-      showAlert(err.message || 'Could not load your profile.', false);
+      const msg = String(err.message || 'Could not load your profile.');
+      showAlert(
+        msg === 'airtable_not_configured'
+          ? 'Account settings could not load. Check Supabase is configured on the server.'
+          : msg,
+        false
+      );
     }
   }
 

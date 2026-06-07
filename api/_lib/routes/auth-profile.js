@@ -14,6 +14,8 @@ const {
   getUsersTableFieldNames,
   profileWritableFlags,
 } = require('../auth');
+const { useSupabase } = require('../supabase');
+const sbProfile = require('../supabase-profile');
 
 function parseBody(req) {
   let body = req.body;
@@ -67,6 +69,66 @@ async function buildProfilePatch(user, body) {
   return { patch, skipped };
 }
 
+async function handleSupabase(req, res, session) {
+  if (req.method === 'GET') {
+    const { profile, writable } = await sbProfile.getProfile(session);
+    return json(res, 200, { ok: true, profile, writable });
+  }
+
+  if (req.method === 'PATCH') {
+    const body = parseBody(req);
+    const result = await sbProfile.updateProfile(session, body);
+    if (result.profile.name && result.profile.name !== session.name) {
+      setSessionCookie(res, {
+        sub: session.sub,
+        email: session.email,
+        role: session.role,
+        name: result.profile.name,
+      });
+    }
+    return json(res, 200, {
+      ok: true,
+      profile: result.profile,
+      writable: result.writable,
+      message: result.message,
+    });
+  }
+
+  if (req.method === 'POST') {
+    const body = parseBody(req);
+    if (body.action !== 'change-password') {
+      return json(res, 400, { error: 'invalid_action' });
+    }
+
+    const current = String(body.currentPassword || '');
+    const next = String(body.newPassword || '');
+    if (!current || !next) {
+      return json(res, 400, { error: 'missing_fields' });
+    }
+    if (next.length < 8) {
+      return json(res, 400, {
+        error: 'weak_password',
+        message: 'New password must be at least 8 characters.',
+      });
+    }
+
+    try {
+      const result = await sbProfile.changePassword(session, current, next);
+      return json(res, 200, { ok: true, message: result.message });
+    } catch (e) {
+      if (e.code === 'wrong_password' || e.status === 403) {
+        return json(res, 403, {
+          error: 'wrong_password',
+          message: e.message || 'Current password is incorrect.',
+        });
+      }
+      throw e;
+    }
+  }
+
+  return json(res, 405, { error: 'method_not_allowed' });
+}
+
 module.exports = async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, PATCH, POST, OPTIONS');
@@ -80,6 +142,10 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    if (useSupabase()) {
+      return handleSupabase(req, res, session);
+    }
+
     const user = await findUserByEmail(session.email);
     if (!user) {
       return json(res, 404, { error: 'user_not_found' });
@@ -169,8 +235,8 @@ module.exports = async function handler(req, res) {
 
     return json(res, 405, { error: 'method_not_allowed' });
   } catch (e) {
-    return json(res, 500, {
-      error: 'server_error',
+    return json(res, e.status || 500, {
+      error: e.code || 'server_error',
       message: e.message || 'Could not update your account.',
     });
   }
