@@ -408,9 +408,14 @@ body.nav-menu-open {
   }
 
   .filter-near-radius select {
-    max-width: 118px;
-    padding: 8px 8px;
-    font-size: 12px;
+    max-width: none;
+    width: 100%;
+    min-width: 118px;
+    padding: 8px 28px 8px 10px;
+    font-size: 13px;
+    min-height: 44px;
+    -webkit-appearance: menulist;
+    appearance: auto;
   }
 
   .premium-card {
@@ -495,7 +500,8 @@ body.nav-menu-open {
 
   .filter-near-radius select {
     width: 100%;
-    min-width: 0;
+    min-width: 118px;
+    min-height: 44px;
     box-sizing: border-box;
   }
 

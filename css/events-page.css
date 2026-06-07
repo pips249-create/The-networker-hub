@@ -1,6 +1,18 @@
 /* Events browse page layout */
 .events-page .hero.events-hero {
-  padding: 40px 24px 44px;
+  padding: 40px 24px 52px;
+  border-bottom: 1px solid rgba(194, 153, 209, 0.2);
+}
+
+.events-page .shell {
+  max-width: 1000px;
+  margin: 0 auto 48px;
+  padding: 28px 24px 48px;
+  background: #fff;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 12px 40px rgba(45, 38, 54, 0.06);
+  border: 1px solid rgba(194, 153, 209, 0.18);
+  border-top: none;
 }
 
 .events-hero-layout {
@@ -517,7 +529,8 @@ body.browse-mode-organisers .events-organiser-footnote-link {
 }
 
 .events-promo-section {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 4px;
 }
 
 .premium-spotlight {

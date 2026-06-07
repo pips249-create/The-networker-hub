@@ -1,0 +1,153 @@
+/**
+ * Command Center layout — fixed site nav, full-height shell, scrollable content only.
+ */
+:root {
+  --admin-nav-offset: 76px;
+  --admin-sidebar-width: 16rem;
+}
+
+body.hub-page-admin.hub-admin-active {
+  overflow: hidden;
+}
+
+body.hub-page-admin {
+  padding-top: var(--admin-nav-offset);
+}
+
+body.hub-page-admin .site-nav {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+}
+
+.admin-shell {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: calc(100vh - var(--admin-nav-offset));
+  min-height: calc(100vh - var(--admin-nav-offset));
+  overflow: hidden;
+}
+
+#admin-sidebar {
+  flex-shrink: 0;
+  width: var(--admin-sidebar-width);
+  max-width: 85vw;
+  height: 100%;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#admin-sidebar nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.admin-main-column {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Static page title bar — never overlaps scrolling content below */
+.admin-page-header {
+  flex-shrink: 0;
+  width: 100%;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+}
+
+#admin-main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-table-scroll table {
+  min-width: 36rem;
+}
+
+.admin-metric-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 1280px) {
+  .admin-metric-grid--4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.admin-activity-feed {
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+/* Side panels inside the scrolling content area */
+.admin-panel-sticky {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-height: calc(100vh - var(--admin-nav-offset) - 6rem);
+  overflow-y: auto;
+}
+
+#admin-sidebar-backdrop {
+  top: var(--admin-nav-offset);
+}
+
+@media (max-width: 1023px) {
+  body.hub-page-admin.hub-admin-active {
+    overflow: auto;
+  }
+
+  .admin-shell {
+    display: block;
+    height: auto;
+    min-height: calc(100vh - var(--admin-nav-offset));
+    overflow: visible;
+  }
+
+  #admin-sidebar {
+    position: fixed;
+    top: var(--admin-nav-offset);
+    left: 0;
+    bottom: 0;
+    height: auto;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease-out;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  }
+
+  #admin-sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .admin-main-column {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  #admin-main {
+    overflow: visible;
+    min-height: auto;
+  }
+}

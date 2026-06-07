@@ -9,8 +9,12 @@
   var mapSidebarCount = document.getElementById('map-sidebar-count');
   var mapSidebarSub = document.getElementById('map-sidebar-sub');
   var mapSidebar = document.getElementById('events-map-sidebar');
+  var mapSidebarHead = document.getElementById('events-map-sidebar-head');
+  var mapSidebarCountBtn = document.getElementById('map-sidebar-count-btn');
+  var mapSidebarCountHint = document.getElementById('map-sidebar-count-hint');
   var mapListToggle = document.getElementById('map-list-toggle');
   var mapListToggleLabel = document.getElementById('map-list-toggle-label');
+  var mapMobileListBtn = document.getElementById('map-mobile-list-btn');
   var mapSidebarFoot = document.getElementById('map-sidebar-foot');
   var mapSidebarLoadMore = document.getElementById('map-sidebar-load-more');
   var listingsView = document.getElementById('listings-view');
@@ -29,7 +33,9 @@
   var lastFilteredList = [];
   var sidebarItemsCache = [];
   var sidebarVisibleCount = 50;
+  var sidebarMetaTotal = 0;
   var SIDEBAR_PAGE = 50;
+  var lastLayoutMobile = null;
 
   function escapeHtml(s) {
     var d = document.createElement('div');
@@ -117,12 +123,77 @@
     }
   }
 
+  function isMobileMapLayout() {
+    return window.matchMedia('(max-width: 900px)').matches;
+  }
+
+  function mobilePanelHeightPx() {
+    var vh = window.innerHeight || document.documentElement.clientHeight || 600;
+    return Math.min(Math.round(vh * 0.52), 560);
+  }
+
+  function clearPanelInlineSize() {
+    if (!mapPanel) return;
+    mapPanel.style.height = '';
+    mapPanel.style.minHeight = '';
+  }
+
   function ensurePanelSize() {
     if (!mapPanel || !mapWrap || mapWrap.hidden) return;
     if (mapPanel.offsetHeight > 0 && mapPanel.offsetWidth > 0) return;
-    var mobile = window.matchMedia('(max-width: 900px)').matches;
-    mapPanel.style.height = mobile ? 'min(52dvh, 560px)' : '420px';
-    mapPanel.style.minHeight = mobile ? '300px' : '420px';
+    if (isMobileMapLayout()) {
+      mapPanel.style.height = mobilePanelHeightPx() + 'px';
+      mapPanel.style.minHeight = '300px';
+    } else {
+      mapPanel.style.height = '420px';
+      mapPanel.style.minHeight = '420px';
+    }
+  }
+
+  function formatSidebarSub(onMap, total, hasCoords) {
+    var shown = Math.min(sidebarVisibleCount, onMap);
+    var more = onMap > sidebarVisibleCount ? '+' : '';
+    if (hasCoords) {
+      return (
+        onMap +
+        ' of ' +
+        total +
+        ' matching · showing nearest ' +
+        shown +
+        more
+      );
+    }
+    return (
+      onMap +
+      ' of ' +
+      total +
+      ' matching · showing ' +
+      shown +
+      more +
+      ' · add postcode for distances'
+    );
+  }
+
+  function updateSidebarSub(onMap, total) {
+    if (!mapSidebarSub) return;
+    var t = total != null ? total : sidebarMetaTotal;
+    mapSidebarSub.textContent = formatSidebarSub(onMap, t, !!window.hubUserCoords);
+  }
+
+  function syncSidebarLayout() {
+    if (!isMapView || !mapSidebar || !mapListToggle) return;
+    var mobile = isMobileMapLayout();
+    if (lastLayoutMobile === mobile) return;
+    lastLayoutMobile = mobile;
+    clearPanelInlineSize();
+    if (!mobile) {
+      setSidebarListOpen(true);
+    }
+    if (map) {
+      setTimeout(function () {
+        invalidateMapSize(0);
+      }, 180);
+    }
   }
 
   function panelHasSize() {
@@ -188,7 +259,6 @@
 
   function setChromeHidden(mapMode) {
     if (promoSection) promoSection.hidden = mapMode;
-    if (resultsMeta) resultsMeta.hidden = mapMode;
   }
 
   function fitMapToCoords(coordsList) {
@@ -361,6 +431,7 @@
     var total = (allList || []).length;
     var onMap = (mappableList || []).length;
     sidebarVisibleCount = SIDEBAR_PAGE;
+    sidebarMetaTotal = total;
     mapSidebarCount.textContent = String(onMap);
 
     if (!onMap) {
@@ -391,26 +462,9 @@
           if (b.miles == null) return -1;
           return a.miles - b.miles;
         });
-        if (mapSidebarSub) {
-          mapSidebarSub.textContent =
-            onMap +
-            ' of ' +
-            total +
-            ' matching · showing nearest ' +
-            Math.min(sidebarVisibleCount, onMap) +
-            (onMap > sidebarVisibleCount ? '+' : '');
-        }
-      } else if (mapSidebarSub) {
-        mapSidebarSub.textContent =
-          onMap +
-          ' of ' +
-          total +
-          ' matching · showing ' +
-          Math.min(sidebarVisibleCount, onMap) +
-          (onMap > sidebarVisibleCount ? '+' : '') +
-          ' · add postcode for distances';
       }
 
+      updateSidebarSub(onMap, total);
       paintSidebarList(onMap);
     });
   }
@@ -428,37 +482,56 @@
   if (mapSidebarLoadMore) {
     mapSidebarLoadMore.addEventListener('click', function () {
       sidebarVisibleCount += SIDEBAR_PAGE;
-      paintSidebarList(sidebarItemsCache.length);
-      if (mapSidebarSub && sidebarItemsCache.length) {
-        var onMap = sidebarItemsCache.length;
-        var hasCoords = window.hubUserCoords;
-        if (hasCoords) {
-          mapSidebarSub.textContent =
-            onMap +
-            ' matching · showing nearest ' +
-            Math.min(sidebarVisibleCount, onMap) +
-            (onMap > sidebarVisibleCount ? '+' : '');
-        }
-      }
+      var onMap = sidebarItemsCache.length;
+      paintSidebarList(onMap);
+      if (onMap) updateSidebarSub(onMap, sidebarMetaTotal);
     });
   }
 
   if (mapListToggle && mapSidebar) {
-    mapListToggle.addEventListener('click', function () {
+    mapListToggle.addEventListener('click', function (e) {
+      e.stopPropagation();
       var open = mapListToggle.getAttribute('aria-expanded') === 'true';
-      var nextOpen = !open;
-      mapListToggle.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
-      mapSidebar.classList.toggle('is-collapsed', !nextOpen);
-      if (mapListToggleLabel) {
-        mapListToggleLabel.textContent = nextOpen ? 'Hide list' : 'Show list';
-      }
-      if (map) {
-        setTimeout(function () {
-          invalidateMapSize(0);
-        }, 180);
-      }
+      setSidebarListOpen(!open);
     });
   }
+
+  function setSidebarListOpen(open) {
+    if (!mapSidebar || !mapListToggle) return;
+    mapListToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    mapSidebar.classList.toggle('is-collapsed', !open);
+    if (mapSidebarCountBtn) {
+      mapSidebarCountBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    if (mapListToggleLabel) {
+      mapListToggleLabel.textContent = open ? 'Hide list' : 'Show list';
+    }
+    if (mapSidebarCountHint) {
+      mapSidebarCountHint.textContent = open ? 'Tap to hide events' : 'Tap to show events';
+    }
+    if (map) {
+      setTimeout(function () {
+        invalidateMapSize(0);
+      }, 180);
+    }
+  }
+
+  if (mapSidebarCountBtn) {
+    mapSidebarCountBtn.addEventListener('click', function () {
+      var open = mapListToggle && mapListToggle.getAttribute('aria-expanded') === 'true';
+      setSidebarListOpen(!open);
+    });
+  }
+
+  function bindMapExit(btn) {
+    if (!btn) return;
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (isMapView) window.hubToggleMapView();
+    });
+  }
+
+  bindMapExit(mapMobileListBtn);
 
   function setViewMode(mapMode) {
     isMapView = mapMode;
@@ -480,8 +553,12 @@
     if (!mapMode) {
       setMapHint('');
       highlightSidebarItem(null);
+      lastLayoutMobile = null;
+      clearPanelInlineSize();
       return;
     }
+
+    lastLayoutMobile = isMobileMapLayout();
 
     var list = window.hubGetFilteredEvents
       ? window.hubGetFilteredEvents(window.hubAllEvents || [])
@@ -491,17 +568,15 @@
     whenPanelReady(function () {
       initMap();
       invalidateMapSize(0);
-      if (
-        window.matchMedia('(max-width: 900px)').matches &&
-        mapSidebar &&
-        mapListToggle
-      ) {
-        mapSidebar.classList.add('is-collapsed');
-        mapListToggle.setAttribute('aria-expanded', 'false');
-        if (mapListToggleLabel) mapListToggleLabel.textContent = 'Show list';
+      if (window.matchMedia('(max-width: 900px)').matches && mapSidebar && mapListToggle) {
+        setSidebarListOpen(true);
       }
       renderMarkers(list);
-      if (mapWrap && mapWrap.scrollIntoView) {
+      if (
+        mapWrap &&
+        mapWrap.scrollIntoView &&
+        !window.matchMedia('(max-width: 900px)').matches
+      ) {
         mapWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
       setTimeout(function () {
@@ -514,11 +589,17 @@
   }
 
   window.addEventListener('resize', function () {
-    if (isMapView && map) invalidateMapSize(0);
+    if (!isMapView) return;
+    syncSidebarLayout();
+    ensurePanelSize();
+    if (map) invalidateMapSize(0);
   });
 
   window.addEventListener('orientationchange', function () {
     if (!isMapView || !map) return;
+    lastLayoutMobile = null;
+    syncSidebarLayout();
+    clearPanelInlineSize();
     ensurePanelSize();
     setTimeout(function () {
       invalidateMapSize(0);
@@ -530,7 +611,8 @@
   };
 
   if (mapBtn) {
-    mapBtn.addEventListener('click', function () {
+    mapBtn.addEventListener('click', function (e) {
+      e.preventDefault();
       window.hubToggleMapView();
     });
   }

@@ -26,6 +26,17 @@ function isSpamReview(text) {
   return /buy cheap|viagra|casino|click here|http:\/\//i.test(t);
 }
 
+/** Exclude E2E seeds and other automated test noise from admin activity feeds. */
+function isTestActivityText(text) {
+  const t = String(text || '').toLowerCase();
+  return (
+    /\be2e\b/.test(t) ||
+    /review test/.test(t) ||
+    /\btest attendee\b/.test(t) ||
+    /e2e review/.test(t)
+  );
+}
+
 async function fetchDashboardMetrics(sb) {
   const [eventsRes, workshopsRes, orgRes, attendeesRes, accountsRes, regsRes] = await Promise.all([
     sb.from('events').select('id, event_type, approval_status, starts_at'),
@@ -131,18 +142,18 @@ async function fetchActivity(sb) {
       .from('events')
       .select('title, approval_status, created_at')
       .order('created_at', { ascending: false })
-      .limit(6),
+      .limit(20),
     sb
       .from('registrations')
       .select('payment_status, amount_paid, created_at, events(title), attendees(name, email)')
       .order('created_at', { ascending: false })
-      .limit(6),
+      .limit(20),
     sb
       .from('reviews')
       .select('rating, created_at, events(title), attendees(name, email)')
       .order('created_at', { ascending: false })
-      .limit(4),
-    sb.from('organisers').select('name, created_at').order('created_at', { ascending: false }).limit(3),
+      .limit(15),
+    sb.from('organisers').select('name, created_at').order('created_at', { ascending: false }).limit(10),
   ]);
 
   (eventsRes.data || []).forEach((e) => {
@@ -187,7 +198,7 @@ async function fetchActivity(sb) {
   });
 
   return items
-    .filter((i) => i.time)
+    .filter((i) => i.time && !isTestActivityText(i.text))
     .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
     .slice(0, 12);
 }

@@ -94,6 +94,58 @@
 
   window.hubParseOutcode = parseOutcode;
 
+  var CITY_ALIASES = {
+    manchester: 'manchester',
+    mcr: 'manchester',
+    london: 'london',
+    birmingham: 'birmingham',
+    bham: 'birmingham',
+    leeds: 'leeds',
+    liverpool: 'liverpool',
+    bristol: 'bristol',
+    edinburgh: 'edinburgh',
+    glasgow: 'glasgow',
+    cambridge: 'cambridge',
+    oxford: 'oxford',
+  };
+
+  function normalizeLocationText(raw) {
+    if (!raw) return '';
+    return String(raw).trim().toLowerCase().replace(/\s+/g, ' ');
+  }
+
+  function cityRegionFromInput(raw) {
+    var norm = normalizeLocationText(raw);
+    if (!norm) return null;
+    if (CITY_ALIASES[norm]) return CITY_ALIASES[norm];
+    if (REGION_SECTORS[norm]) return norm;
+    var keys = Object.keys(REGION_SECTORS);
+    for (var i = 0; i < keys.length; i++) {
+      if (norm === keys[i] || norm.indexOf(keys[i]) !== -1) return keys[i];
+    }
+    return null;
+  }
+
+  function eventLocationHaystack(ev) {
+    return [ev.city, ev.locationShort, ev.location, ev.venue, ev.postcode]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+  }
+
+  function matchesCityRegion(region, ev) {
+    var hay = eventLocationHaystack(ev);
+    if (hay.indexOf(region) !== -1) return true;
+    var allowed = {};
+    sectorsForRegion(region).forEach(function (s) {
+      allowed[s] = true;
+    });
+    var eventOc = window.hubEventOutcode(ev);
+    if (!eventOc) return false;
+    var eventSec = sectorOf(eventOc);
+    return !!(allowed[eventOc] || allowed[eventSec]);
+  }
+
   window.hubEventOutcode = function (ev) {
     if (ev.outcode) return ev.outcode;
     var pc = ev.postcode || '';
@@ -101,20 +153,44 @@
     return parseOutcode(pc) || parseOutcode(fromLoc);
   };
 
-  /** True if event matches user postcode/outcode filter. */
+  /** True if event matches user postcode, outcode, or city filter. */
   window.hubMatchOutcode = function (userInput, ev) {
-    var allowed = allowedSectors(userInput);
-    if (!allowed) return true;
-    var eventOc = window.hubEventOutcode(ev);
-    if (!eventOc) return false;
-    var eventSec = sectorOf(eventOc);
-    return !!(allowed[eventOc] || allowed[eventSec]);
+    var raw = String(userInput || '').trim();
+    if (!raw) return true;
+
+    var oc = parseOutcode(raw);
+    if (oc) {
+      var allowed = allowedSectors(raw);
+      if (!allowed) return true;
+      var eventOc = window.hubEventOutcode(ev);
+      if (!eventOc) return false;
+      var eventSec = sectorOf(eventOc);
+      return !!(allowed[eventOc] || allowed[eventSec]);
+    }
+
+    var region = cityRegionFromInput(raw);
+    if (region) return matchesCityRegion(region, ev);
+
+    var norm = normalizeLocationText(raw);
+    if (norm.length >= 3) {
+      return eventLocationHaystack(ev).indexOf(norm) !== -1;
+    }
+
+    return true;
   };
 
   window.hubOutcodeLabel = function (userInput) {
-    var oc = parseOutcode(userInput);
-    if (!oc) return '';
-    var region = findRegionForSector(sectorOf(oc));
-    return region ? oc + ' (' + region.replace(/^\w/, function (c) { return c.toUpperCase(); }) + ' area)' : oc;
+    var raw = String(userInput || '').trim();
+    if (!raw) return '';
+    var oc = parseOutcode(raw);
+    if (oc) {
+      var region = findRegionForSector(sectorOf(oc));
+      return region ? oc + ' (' + region.replace(/^\w/, function (c) { return c.toUpperCase(); }) + ' area)' : oc;
+    }
+    var cityRegion = cityRegionFromInput(raw);
+    if (cityRegion) {
+      return cityRegion.replace(/^\w/, function (c) { return c.toUpperCase(); });
+    }
+    return raw;
   };
 })();

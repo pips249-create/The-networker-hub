@@ -10,7 +10,10 @@
     'https://vercel.com/pips249-create/the-networker-hub/analytics';
 
   var PAGE_META = {
-    dashboard: { title: 'Overview Dashboard', subtitle: 'System-wide performance health check' },
+    dashboard: {
+      title: 'Overview',
+      subtitle: 'Supabase counts, alerts, and recent genuine platform activity',
+    },
     analytics: {
       title: 'Web Analytics',
       subtitle: 'Visitor traffic on Vercel · platform activity from Supabase',
@@ -27,20 +30,29 @@
       title: 'Event cleanup',
       subtitle: 'Link events to groups, create new events, and fix basic event data',
     },
-    users: { title: 'User & Account Directory', subtitle: 'Manage all platform accounts' },
+    users: {
+      title: 'Users & accounts',
+      subtitle: 'Search Supabase accounts (read-only) — use Impersonate to debug as a user',
+    },
     impersonate: {
       title: 'Impersonate user',
-      subtitle: 'Sign in as any account to see exactly what they see on the Hub',
+      subtitle: 'Sign in as any non-admin account to see exactly what they see on the Hub',
     },
-    moderation: { title: 'Content Moderation', subtitle: 'Review listings and attendee feedback' },
-    financials: { title: 'Financial Hub', subtitle: 'Stripe ledger, payouts & automation logs' },
+    moderation: {
+      title: 'Content moderation',
+      subtitle: 'Read-only view of events and reviews in Supabase',
+    },
+    financials: {
+      title: 'Financial hub',
+      subtitle: 'Ticket revenue from registrations · Stripe Connect status per organiser',
+    },
     sponsorship: {
-      title: 'Sponsorship & Advertisement Management',
-      subtitle: 'Swap Sponsor Hub image, copy, and tracking link without code changes',
+      title: 'Sponsorship & ads',
+      subtitle: 'Edit CMS ad slots on browse, event, and organiser pages',
     },
     emails: {
-      title: 'Email Template Manager',
-      subtitle: 'Edit transactional email copy and send test messages via Resend',
+      title: 'Email templates',
+      subtitle: 'Edit transactional copy in Supabase · test sends need Resend configured',
     },
   };
 
@@ -72,7 +84,7 @@
       label: 'Browse pages — Hero Sponsor Hub',
       preview: 'hero',
       help: 'Shown in the hero on Events and Organisers browse pages.',
-      tagline: 'Get sponsored: Reach 10k founders monthly from £2,000/month',
+      tagline: 'Example offer — edit to match your sponsor package',
       bullets: [
         'Premium placement beside Featured events',
         'Short line of copy',
@@ -115,6 +127,24 @@
   var main = document.getElementById('admin-main');
   var currentUser = null;
   var selectedUser = null;
+  var adminLayoutResizeBound = false;
+
+  function syncAdminLayoutOffset() {
+    var nav = document.querySelector('.site-nav');
+    var banner = document.getElementById('hub-impersonation-banner');
+    var h = 0;
+    if (nav) h += nav.offsetHeight;
+    if (banner) h += banner.offsetHeight;
+    if (h < 1) h = 76;
+    document.documentElement.style.setProperty('--admin-nav-offset', Math.round(h) + 'px');
+  }
+
+  function bindAdminLayoutSync() {
+    syncAdminLayoutOffset();
+    if (adminLayoutResizeBound) return;
+    adminLayoutResizeBound = true;
+    window.addEventListener('resize', syncAdminLayoutOffset);
+  }
 
   function fmtMoney(n) {
     return '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -161,6 +191,7 @@
     var meta = PAGE_META[route] || PAGE_META.dashboard;
     document.getElementById('page-title').textContent = meta.title;
     document.getElementById('page-subtitle').textContent = meta.subtitle;
+    syncAdminLayoutOffset();
   }
 
   function updateHealthBadge(count) {
@@ -515,7 +546,7 @@
     main.innerHTML =
       '<div class="space-y-4">' +
       '<div id="event-health-status" class="text-sm text-slate-500">Scanning published events…</div>' +
-      '<div id="event-health-summary" class="hidden grid sm:grid-cols-2 xl:grid-cols-4 gap-3"></div>' +
+      '<div id="event-health-summary" class="hidden admin-metric-grid admin-metric-grid--4"></div>' +
       '<div id="event-health-list" class="space-y-3"></div></div>';
 
     fetchEventHealth().then(function (data) {
@@ -707,7 +738,7 @@
           var orgFieldsHtml = '';
           if (hasOrgFields) {
             orgFieldsHtml +=
-              '<div class="sm:col-span-2 lg:col-span-3 rounded-lg border border-amber-200 bg-amber-50/60 p-4 space-y-3">';
+              '<div class="sm:col-span-2 rounded-lg border border-amber-200 bg-amber-50/60 p-4 space-y-3">';
             if (fields.showOrganiserNotPublished) {
               orgFieldsHtml +=
                 '<div class="rounded-lg border border-amber-300 bg-white/80 p-3">' +
@@ -786,10 +817,10 @@
             esc(ev.slug || '') +
             '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View event page</a>' +
             '</div></div>' +
-            '<form class="event-health-form p-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">' +
+            '<form class="event-health-form p-4 grid sm:grid-cols-2 gap-4 text-sm">' +
             eventFieldsHtml +
             orgFieldsHtml +
-            '<div class="sm:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-3 pt-1">' +
+            '<div class="sm:col-span-2 flex flex-wrap items-center gap-3 pt-1">' +
             (canSave
               ? '<button type="submit" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900 disabled:opacity-50">' +
                 esc(saveLabel) +
@@ -810,64 +841,68 @@
     );
   }
 
+  function renderActivityList(activity, limit) {
+    var items = (activity || []).slice(0, limit || 6);
+    if (!items.length) {
+      return '<li class="text-sm text-slate-500">No recent genuine activity yet.</li>';
+    }
+    return items
+      .map(function (item) {
+        return (
+          '<li class="relative pl-5 pb-4 border-l-2 border-brand-200 last:pb-0">' +
+          '<span class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-brand-500"></span>' +
+          '<time class="text-xs text-slate-400 block">' +
+          fmtTime(item.time) +
+          '</time>' +
+          '<p class="text-sm text-slate-700 mt-0.5 break-words">' +
+          esc(item.text) +
+          '</p></li>'
+        );
+      })
+      .join('');
+  }
+
   function renderAnalytics() {
     var trackingOn = analyticsTrackingActive();
     main.innerHTML =
-      '<div class="space-y-6">' +
-      '<div class="grid lg:grid-cols-3 gap-6">' +
-      '<div class="lg:col-span-2 space-y-6">' +
-      '<div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-5">' +
-      '<div class="flex flex-wrap items-start justify-between gap-4">' +
-      '<div class="flex items-start gap-4 min-w-0">' +
-      '<span class="inline-flex shrink-0 items-center justify-center w-12 h-12 rounded-xl bg-brand-50 text-brand-700 text-xl" aria-hidden="true">▤</span>' +
-      '<div class="min-w-0 space-y-1">' +
-      '<h3 class="font-bold text-lg text-brand-900">Visitor traffic</h3>' +
-      '<p class="text-sm text-slate-600">Page views, referrers, countries, and devices are collected by Vercel and viewed in their dashboard — Vercel does not expose a chart API for embedding here.</p>' +
+      '<div class="space-y-5 min-w-0">' +
+      '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm">' +
+      '<div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">' +
+      '<div class="flex items-start gap-3 min-w-0">' +
+      '<span class="inline-flex shrink-0 items-center justify-center w-10 h-10 rounded-lg bg-brand-50 text-brand-700 text-lg" aria-hidden="true">▤</span>' +
+      '<div class="min-w-0">' +
+      '<h3 class="font-bold text-brand-900">Visitor traffic on Vercel</h3>' +
+      '<p class="text-sm text-slate-500 mt-0.5">Charts live in Vercel — visitors, pages, referrers, countries, and devices.</p>' +
       '</div></div>' +
-      '<span id="analytics-tracking-badge" class="inline-flex shrink-0 items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full ' +
+      '<div class="flex flex-wrap items-center gap-2 shrink-0">' +
+      '<span class="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full ' +
       (trackingOn ? 'text-emerald-700 bg-emerald-50' : 'text-amber-800 bg-amber-50') +
       '">' +
       '<span class="w-2 h-2 rounded-full ' +
       (trackingOn ? 'bg-emerald-500' : 'bg-amber-500') +
       '"></span>' +
-      (trackingOn ? 'Tracking script loaded' : 'Tracking script not detected') +
-      '</span></div>' +
-      '<div class="grid sm:grid-cols-2 gap-3 text-sm">' +
-      '<div class="rounded-lg border border-slate-200 bg-slate-50 p-4">' +
-      '<p class="font-semibold text-slate-800">In Vercel you can see</p>' +
-      '<ul class="mt-2 space-y-1 text-slate-600">' +
-      '<li>Visitors &amp; page views</li><li>Top pages &amp; referrers</li><li>Countries, browsers &amp; devices</li>' +
-      '</ul></div>' +
-      '<div class="rounded-lg border border-slate-200 bg-slate-50 p-4">' +
-      '<p class="font-semibold text-slate-800">Best for</p>' +
-      '<ul class="mt-2 space-y-1 text-slate-600">' +
-      '<li>Marketing &amp; SEO decisions</li><li>Which events pages convert</li><li>Mobile vs desktop split</li>' +
-      '</ul></div></div>' +
-      '<div class="flex flex-wrap gap-3">' +
+      (trackingOn ? 'Tracking active' : 'Tracking not detected') +
+      '</span>' +
       '<a href="' +
       attrEsc(VERCEL_ANALYTICS_URL) +
-      '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 hover:bg-brand-900 transition">Open Vercel Analytics <span aria-hidden="true">↗</span></a>' +
-      '<a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold px-4 py-2.5 hover:bg-slate-50 transition">Vercel dashboard</a>' +
-      '</div></div>' +
-      '<div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900 mb-2">Hub platform activity</h3>' +
-      '<p class="text-sm text-slate-500 mb-4">Live Supabase counts — bookings, listings, and accounts. This is separate from anonymous visitor traffic above.</p>' +
-      '<div class="grid sm:grid-cols-2 gap-4" id="analytics-platform-metrics">' +
+      '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 rounded-lg bg-brand-700 text-white text-sm font-semibold px-3.5 py-2 hover:bg-brand-900 transition">Open analytics <span aria-hidden="true">↗</span></a>' +
+      '</div></div></section>' +
+      '<div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">' +
+      '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm min-w-0">' +
+      '<h3 class="font-bold text-brand-900">Hub platform activity</h3>' +
+      '<p class="text-sm text-slate-500 mt-1 mb-4">Live Supabase counts — separate from anonymous visitor traffic.</p>' +
+      '<div class="admin-metric-grid admin-metric-grid--4" id="analytics-platform-metrics">' +
       card('Hub accounts', '…', 'Loading…', 'blue') +
-      card('Live listings', '…', 'Loading…', 'brand') +
+      card('Approved events', '…', 'Loading…', 'brand') +
       card('Organisers', '…', 'Loading…', 'violet') +
-      card('Revenue & fees', '…', 'Loading…', 'emerald') +
-      '</div></div></div>' +
-      '<aside class="space-y-4">' +
-      '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-sm text-slate-600 space-y-3">' +
-      '<h3 class="font-bold text-brand-900">Why two places?</h3>' +
-      '<p><strong class="text-slate-800">Vercel</strong> tracks anonymous site visits. <strong class="text-slate-800">Command Center</strong> tracks signed-up users, events, and revenue in Supabase.</p>' +
-      '<p>Use both: Vercel for traffic trends, Overview for business health.</p>' +
-      '</div>' +
-      '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900 mb-3 text-sm">Recent hub activity</h3>' +
-      '<ul id="analytics-activity" class="space-y-0"><li class="text-sm text-slate-500">Loading…</li></ul>' +
-      '</div></aside></div></div>';
+      card('Paid ticket revenue', '…', 'Loading…', 'emerald') +
+      '</div></section>' +
+      '<aside class="admin-panel-sticky bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm min-w-0 flex flex-col">' +
+      '<h3 class="font-bold text-brand-900 text-sm shrink-0">Recent genuine activity</h3>' +
+      '<p class="text-xs text-slate-500 mt-1 mb-3 shrink-0">Excludes E2E and test seed data.</p>' +
+      '<ul id="analytics-activity" class="admin-activity-feed space-y-0 min-h-0 pr-1 -mr-1">' +
+      '<li class="text-sm text-slate-500">Loading…</li></ul>' +
+      '</aside></div></div>';
 
     adminGet('/api/admin/metrics').then(function (data) {
       var metricsEl = document.getElementById('analytics-platform-metrics');
@@ -887,40 +922,28 @@
       var listings = m.listings || {};
       if (metricsEl) {
         metricsEl.innerHTML =
-          card('Hub accounts', String(m.attendees || 0), 'Registered users & attendee profiles', 'blue') +
+          card('Hub accounts', String(m.attendees || 0), 'hub_accounts and attendee profiles', 'blue') +
           card(
-            'Live listings',
+            'Approved events',
             String(listings.total || 0),
             'Meetings ' +
               (listings.meetings || 0) +
               ' · Exhibitions ' +
               (listings.exhibitions || 0) +
-              ' · Training ' +
+              ' · Workshops ' +
               (listings.training || 0),
             'brand'
           ) +
-          card('Organisers', String(m.organisers || 0), 'Active organiser profiles', 'violet') +
-          card('Revenue & fees', fmtMoney(m.revenue || 0), 'Platform fees: ' + fmtMoney(m.fees || 0), 'emerald');
+          card('Organisers', String(m.organisers || 0), String(m.providers || 0) + ' workshop listings', 'violet') +
+          card(
+            'Paid ticket revenue',
+            fmtMoney(m.revenue || 0),
+            'Est. fees: ' + fmtMoney(m.fees || 0),
+            'emerald'
+          );
       }
       if (activityEl) {
-        var activity = data.activity || [];
-        activityEl.innerHTML = activity.length
-          ? activity
-              .slice(0, 6)
-              .map(function (item) {
-                return (
-                  '<li class="relative pl-5 pb-4 border-l-2 border-brand-200 last:pb-0">' +
-                  '<span class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-brand-500"></span>' +
-                  '<time class="text-xs text-slate-400 block">' +
-                  fmtTime(item.time) +
-                  '</time>' +
-                  '<p class="text-sm text-slate-700 mt-0.5">' +
-                  esc(item.text) +
-                  '</p></li>'
-                );
-              })
-              .join('')
-          : '<li class="text-sm text-slate-500">No recent activity yet.</li>';
+        activityEl.innerHTML = renderActivityList(data.activity, 8);
       }
     });
   }
@@ -939,20 +962,21 @@
       '<p class="font-bold text-brand-900 mt-1">Web Analytics on Vercel</p>' +
       '<p class="text-sm text-slate-600 mt-1">View visitors, top pages, referrers, and device breakdown.</p></div>' +
       '<span class="text-sm font-semibold text-brand-700 group-hover:text-brand-900">Open →</span></div></a>' +
-      '<section class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4" id="dashboard-metrics">' +
-      card('Revenue & fees', '…', 'Loading…', 'emerald') +
-      card('Live listings', '…', 'Loading…', 'brand') +
-      card('Organisers & providers', '…', 'Loading…', 'violet') +
-      card('Attendees / users', '…', 'Loading…', 'blue') +
+      '<section class="admin-metric-grid admin-metric-grid--4" id="dashboard-metrics">' +
+      card('Paid ticket revenue', '…', 'Loading…', 'emerald') +
+      card('Approved events', '…', 'Loading…', 'brand') +
+      card('Organisers', '…', 'Loading…', 'violet') +
+      card('Hub accounts', '…', 'Loading…', 'blue') +
       '</section>' +
       '<section class="grid lg:grid-cols-2 gap-6">' +
-      '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900 mb-4">Recent system activity</h3>' +
-      '<ul id="dashboard-activity"><li class="text-sm text-slate-500">Loading…</li></ul></div>' +
-      '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900 mb-2">Supabase snapshot</h3>' +
-      '<p class="text-sm text-slate-500 mb-4">Live counts from events, registrations, organisers, and users.</p>' +
-      '<pre id="live-metrics" class="text-xs bg-slate-50 p-4 rounded-lg overflow-auto max-h-64 text-slate-600">Loading…</pre>' +
+      '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm min-w-0">' +
+      '<h3 class="font-bold text-brand-900 mb-1">Recent genuine activity</h3>' +
+      '<p class="text-xs text-slate-500 mb-3">Registrations, events, and reviews — test/E2E data excluded.</p>' +
+      '<ul id="dashboard-activity" class="admin-activity-feed"><li class="text-sm text-slate-500">Loading…</li></ul></div>' +
+      '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm min-w-0">' +
+      '<h3 class="font-bold text-brand-900 mb-2">Platform snapshot</h3>' +
+      '<p class="text-sm text-slate-500 mb-4">Key counts from Supabase (not visitor traffic — see Web Analytics).</p>' +
+      '<div id="live-metrics" class="text-sm text-slate-600">Loading…</div>' +
       '</div></section></div>';
 
     adminGet('/api/admin/metrics').then(function (data) {
@@ -966,7 +990,10 @@
           alertsEl.innerHTML =
             '<p class="text-sm text-red-700">Could not load dashboard data. Check Supabase env vars on Vercel.</p>';
         }
-        if (preEl) preEl.textContent = JSON.stringify(data || { error: 'unavailable' }, null, 2);
+        if (preEl) {
+          preEl.innerHTML =
+            '<p class="text-sm text-red-700">Snapshot unavailable. Check Supabase env vars on Vercel.</p>';
+        }
         return;
       }
 
@@ -975,25 +1002,25 @@
 
       if (metricsEl) {
         metricsEl.innerHTML =
-          card('Revenue & fees', fmtMoney(m.revenue || 0), 'Platform fees: ' + fmtMoney(m.fees || 0), 'emerald') +
           card(
-            'Live listings',
+            'Paid ticket revenue',
+            fmtMoney(m.revenue || 0),
+            'Est. platform fees: ' + fmtMoney(m.fees || 0) + ' · from paid registrations',
+            'emerald'
+          ) +
+          card(
+            'Approved events',
             String(listings.total || 0),
             'Meetings ' +
               (listings.meetings || 0) +
               ' · Exhibitions ' +
               (listings.exhibitions || 0) +
-              ' · Training ' +
+              ' · Workshops ' +
               (listings.training || 0),
             'brand'
           ) +
-          card(
-            'Organisers & providers',
-            String(m.organisers || 0),
-            'Workshops / training: ' + (m.providers || 0),
-            'violet'
-          ) +
-          card('Attendees / users', String(m.attendees || 0), 'Hub accounts & attendee profiles', 'blue');
+          card('Organisers', String(m.organisers || 0), String(m.providers || 0) + ' workshop listings', 'violet') +
+          card('Hub accounts', String(m.attendees || 0), 'hub_accounts and attendee profiles', 'blue');
       }
 
       if (alertsEl) {
@@ -1004,26 +1031,10 @@
       }
 
       if (activityEl) {
-        var activity = data.activity || [];
-        activityEl.innerHTML = activity.length
-          ? activity
-              .map(function (item) {
-                return (
-                  '<li class="relative pl-6 pb-6 border-l-2 border-brand-200 last:pb-0">' +
-                  '<span class="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-brand-500"></span>' +
-                  '<time class="text-xs text-slate-400 block">' +
-                  fmtTime(item.time) +
-                  '</time>' +
-                  '<p class="text-sm text-slate-700 mt-1">' +
-                  esc(item.text) +
-                  '</p></li>'
-                );
-              })
-              .join('')
-          : '<li class="text-sm text-slate-500">No recent activity yet.</li>';
+        activityEl.innerHTML = renderActivityList(data.activity, 12);
       }
 
-      if (preEl) preEl.textContent = JSON.stringify(data, null, 2);
+      if (preEl) preEl.innerHTML = renderMetricsSummary(data);
     });
 
     fetchEventHealth().then(function (data) {
@@ -1041,6 +1052,43 @@
     });
   }
 
+  function adminTableScroll(html) {
+    return '<div class="admin-table-scroll">' + html + '</div>';
+  }
+
+  function renderMetricsSummary(data) {
+    var m = data.metrics || {};
+    var listings = m.listings || {};
+    var updated = data.updatedAt ? fmtTime(data.updatedAt) : '—';
+    return (
+      '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">' +
+      '<div><dt class="text-slate-500">Approved events</dt><dd class="font-semibold text-brand-900">' +
+      esc(String(listings.total || 0)) +
+      '</dd></div>' +
+      '<div><dt class="text-slate-500">Upcoming live events (24h+)</dt><dd class="font-semibold text-brand-900">' +
+      esc(String(m.liveEvents || 0)) +
+      '</dd></div>' +
+      '<div><dt class="text-slate-500">Organisers</dt><dd class="font-semibold text-brand-900">' +
+      esc(String(m.organisers || 0)) +
+      '</dd></div>' +
+      '<div><dt class="text-slate-500">Workshop listings</dt><dd class="font-semibold text-brand-900">' +
+      esc(String(m.providers || 0)) +
+      '</dd></div>' +
+      '<div><dt class="text-slate-500">Hub accounts</dt><dd class="font-semibold text-brand-900">' +
+      esc(String(m.attendees || 0)) +
+      '</dd></div>' +
+      '<div><dt class="text-slate-500">Paid ticket revenue</dt><dd class="font-semibold text-brand-900">' +
+      esc(fmtMoney(m.revenue || 0)) +
+      '</dd></div>' +
+      '<div class="sm:col-span-2 text-xs text-slate-400 pt-1">Last loaded ' +
+      esc(updated) +
+      ' · <details class="inline"><summary class="cursor-pointer text-brand-700">Raw JSON</summary>' +
+      '<pre class="mt-2 text-[11px] bg-slate-50 p-3 rounded-lg overflow-auto max-h-40 text-slate-600">' +
+      esc(JSON.stringify(data, null, 2)) +
+      '</pre></details></div></dl>'
+    );
+  }
+
   function card(title, value, sub, color) {
     var accents = {
       emerald: 'from-emerald-500/10 to-emerald-500/5 border-emerald-200',
@@ -1051,7 +1099,7 @@
     return (
       '<article class="bg-gradient-to-br ' +
       (accents[color] || accents.brand) +
-      ' border rounded-xl p-5 shadow-sm">' +
+      ' border rounded-xl p-4 shadow-sm min-w-0">' +
       '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">' +
       esc(title) +
       '</p>' +
@@ -1078,10 +1126,15 @@
         return '<option>' + r + '</option>';
       }).join('') +
       '</select></div></div>' +
+      '<div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">' +
+      'This directory is <strong>read-only</strong>. Password reset, suspend, and profile edits are not wired up here — use <a href="#impersonate" class="font-semibold text-brand-800 hover:underline">Impersonate</a> to debug as a user.</div>' +
       '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
-      '<table class="w-full text-sm text-left"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
-      '<tr><th class="px-4 py-3">Name</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">Role</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Status</th></tr></thead>' +
-      '<tbody id="users-tbody"><tr><td colspan="5" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table></div></div>';
+      adminTableScroll(
+        '<table class="w-full text-sm text-left"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
+          '<tr><th class="px-4 py-3">Name</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">Role</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Status</th></tr></thead>' +
+          '<tbody id="users-tbody"><tr><td colspan="5" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+      ) +
+      '</div></div>';
 
     function filterUsers() {
       var q = (document.getElementById('user-search').value || '').toLowerCase();
@@ -1307,27 +1360,20 @@
         : '<button type="button" class="w-full rounded-lg border border-brand-200 text-brand-800 py-2.5 text-sm font-semibold hover:bg-brand-50 mb-4" id="drawer-impersonate">Impersonate this user</button>';
     document.getElementById('drawer-body').innerHTML =
       impersonateAction +
-      '<button type="button" class="w-full rounded-lg bg-brand-700 text-white py-2.5 text-sm font-semibold hover:bg-brand-900">Change / Reset Password</button>' +
-      '<div><h4 class="text-sm font-bold text-slate-700 mb-2">Edit profile</h4>' +
-      '<label class="block text-xs text-slate-500 mb-1">Company / display name</label>' +
-      '<input class="w-full border rounded-lg px-3 py-2 text-sm mb-3" value="' +
-      esc(u.name) +
-      '">' +
-      '<label class="block text-xs text-slate-500 mb-1">Industry preferences</label>' +
-      '<input class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="e.g. Technology, Hospitality"></div>' +
-      '<div class="flex items-center justify-between py-3 border-t border-slate-100">' +
-      '<span class="text-sm font-medium">Suspend / ban account</span>' +
-      '<button type="button" class="w-12 h-6 rounded-full ' +
-      (u.status === 'Suspended' ? 'bg-red-500' : 'bg-slate-300') +
-      ' relative"><span class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow"></span></button></div>' +
-      '<div class="flex items-center justify-between py-3 border-t border-slate-100">' +
-      '<span class="text-sm font-medium">Featured organiser (carousel)</span>' +
-      '<button type="button" class="w-12 h-6 rounded-full ' +
-      (u.featured ? 'bg-brand-500' : 'bg-slate-300') +
-      ' relative"><span class="absolute top-1 ' +
-      (u.featured ? 'left-7' : 'left-1') +
-      ' w-4 h-4 bg-white rounded-full shadow transition-all"></span></button></div>' +
-      '<button type="button" class="w-full rounded-lg border border-slate-300 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Save changes</button>';
+      '<dl class="space-y-3 text-sm border-t border-slate-100 pt-4">' +
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Role</dt><dd class="font-medium text-right">' +
+      esc(u.role) +
+      '</dd></div>' +
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">City</dt><dd class="font-medium text-right">' +
+      esc(u.city) +
+      '</dd></div>' +
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Status</dt><dd class="font-medium text-right">' +
+      esc(u.status) +
+      '</dd></div>' +
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Featured organiser</dt><dd class="font-medium text-right">' +
+      (u.featured ? 'Yes' : 'No') +
+      '</dd></div></dl>' +
+      '<p class="text-xs text-slate-500 border-t border-slate-100 pt-4">Profile edits and password reset are not available in Command Center yet. Change featured status in Supabase or the organiser dashboard.</p>';
     document.getElementById('user-drawer').classList.remove('hidden');
     var impersonateBtn = document.getElementById('drawer-impersonate');
     if (impersonateBtn) {
@@ -1424,12 +1470,17 @@
       '<div class="space-y-6">' +
       '<p id="moderation-status" class="text-sm text-slate-500">Loading listings and reviews from Supabase…</p>' +
       '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
-      '<div class="px-4 py-3 border-b border-slate-100 font-bold text-brand-900">All listings</div>' +
-      '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
-      '<tr><th class="px-4 py-3 text-left">Title</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Tickets</th><th class="px-4 py-3"></th></tr></thead>' +
-      '<tbody id="moderation-listings"><tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table></div>' +
+      '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">All events</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Read-only — approve or reject events in the organiser dashboard or Supabase.</p></div>' +
+      adminTableScroll(
+        '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
+          '<tr><th class="px-4 py-3 text-left">Title</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Tickets</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="moderation-listings"><tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+      ) +
+      '</div>' +
       '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900 mb-4">Review moderation</h3>' +
+      '<h3 class="font-bold text-brand-900 mb-1">Reviews</h3>' +
+      '<p class="text-xs text-slate-500 mb-4">Spam-like reviews are highlighted — removal is done in Supabase.</p>' +
       '<div class="space-y-3" id="moderation-reviews">Loading…</div></div></div>';
 
     adminGet('/api/admin/moderation').then(function (data) {
@@ -1460,17 +1511,22 @@
       '<div class="space-y-6">' +
       '<p id="financials-status" class="text-sm text-slate-500">Loading financial data from Supabase…</p>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
-      '<h3 class="px-4 py-3 font-bold border-b border-slate-100">Stripe Connect ledger</h3>' +
-      '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
-      '<tr><th class="px-4 py-3 text-left">Organiser</th><th class="px-4 py-3">Paid registrations</th><th class="px-4 py-3">Last payout</th><th class="px-4 py-3">Status</th></tr></thead>' +
-      '<tbody id="financials-stripe"><tr><td colspan="4" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table></section>' +
+      '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">Organiser ticket revenue</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Gross paid registration totals in Supabase — not live Stripe settlement or payout history.</p></div>' +
+      adminTableScroll(
+        '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
+          '<tr><th class="px-4 py-3 text-left">Organiser</th><th class="px-4 py-3">Ticket revenue</th><th class="px-4 py-3">Last payout</th><th class="px-4 py-3">Stripe Connect</th></tr></thead>' +
+          '<tbody id="financials-stripe"><tr><td colspan="4" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+      ) +
+      '</section>' +
       '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900 mb-2">Manual payout requests</h3>' +
-      '<p class="text-sm text-slate-500 mb-4">Payout queue is not stored in Supabase yet.</p>' +
+      '<h3 class="font-bold text-brand-900 mb-2">Payout queue</h3>' +
+      '<p class="text-sm text-slate-500 mb-4">Manual payout requests are not stored in Supabase yet.</p>' +
       '<div class="space-y-3" id="financials-queue"><p class="text-sm text-slate-500">None pending.</p></div></section>' +
       '<section class="bg-slate-900 rounded-xl p-5 text-slate-100 shadow-sm">' +
-      '<h3 class="font-bold text-sm uppercase tracking-wide text-brand-100 mb-4">Registration activity log</h3>' +
-      '<div id="financials-log">Loading…</div></section></div>';
+      '<h3 class="font-bold text-sm uppercase tracking-wide text-brand-100 mb-1">Recent registrations</h3>' +
+      '<p class="text-xs text-brand-100/70 mb-4">Last 40 registration rows from Supabase (payment status and amount).</p>' +
+      '<div id="financials-log" class="max-h-80 overflow-y-auto">Loading…</div></section></div>';
 
     adminGet('/api/admin/financials').then(function (data) {
       var status = document.getElementById('financials-status');
@@ -1514,8 +1570,11 @@
       }
 
       if (logEl) {
-        logEl.innerHTML = log.length
-          ? log
+        var genuineLog = log.filter(function (l) {
+          return !/\be2e\b/i.test(String(l.line || ''));
+        });
+        logEl.innerHTML = genuineLog.length
+          ? genuineLog
               .map(function (l) {
                 var cls =
                   l.status === 'error'
@@ -1693,8 +1752,8 @@
     main.innerHTML =
       '<div class="space-y-6">' +
       '<p id="sponsor-status" class="text-sm text-slate-500">Loading ad placement from Supabase…</p>' +
-      '<div class="grid lg:grid-cols-2 gap-6">' +
-      '<form id="sponsor-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">' +
+      '<div class="grid lg:grid-cols-2 gap-6 min-w-0">' +
+      '<form id="sponsor-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5 min-w-0">' +
       '<div><label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1" for="sponsor-slot">Ad placement</label>' +
       '<select id="sponsor-slot" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
       slotOptionsHtml() +
@@ -1733,8 +1792,8 @@
       '<button type="button" id="sponsor-preview-btn" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Update preview</button>' +
       '<button type="button" id="sponsor-publish-btn" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Publish to site</button>' +
       '</div></form>' +
-      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">' +
-      '<h3 class="font-bold text-brand-900 mb-1">Live preview</h3>' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 min-w-0">' +
+      '<h3 class="font-bold text-brand-900 mb-1">Preview</h3>' +
       '<p id="sponsor-preview-hint" class="text-xs text-slate-500 mb-4">Matches the browse page hero Sponsor Hub block.</p>' +
       '<div id="sponsor-preview" class="max-w-md"></div>' +
       '</section></div></div>';
@@ -1800,7 +1859,7 @@
             : '<div class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 text-[#2d1b3d] shadow-[0_4px_18px_rgba(91,47,153,0.1)]">' +
               '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Sponsor Hub</div>' +
               '<p class="text-base font-extrabold mb-2">Your brand here</p>' +
-              '<p class="text-sm text-slate-600 mb-4">Reach 10k+ professionals monthly</p>' +
+              '<p class="text-sm text-slate-600 mb-4">Your sponsor message appears here</p>' +
               '<span class="inline-block rounded-lg border border-[#c9a8d8] text-[#5b2f99] text-sm font-bold px-4 py-2">Find out more →</span></div>';
         return;
       }
@@ -2028,13 +2087,13 @@
     main.innerHTML =
       '<div class="space-y-6">' +
       '<p id="email-status" class="text-sm text-slate-500">Loading email templates…</p>' +
-      '<div class="grid lg:grid-cols-[minmax(220px,280px)_1fr] gap-6">' +
-      '<aside class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">' +
+      '<div class="grid lg:grid-cols-[minmax(200px,240px)_minmax(0,1fr)] gap-6 min-w-0">' +
+      '<aside class="admin-panel-sticky bg-white rounded-xl border border-slate-200 shadow-sm p-4 min-w-0">' +
       '<h3 class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">Templates</h3>' +
       '<ul id="email-template-list" class="space-y-1 text-sm"></ul>' +
       '</aside>' +
-      '<div class="space-y-6">' +
-      '<form id="email-editor" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5 hidden">' +
+      '<div class="space-y-6 min-w-0">' +
+      '<form id="email-editor" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5 hidden min-w-0">' +
       '<div><p id="email-template-name" class="font-bold text-brand-900 text-lg"></p>' +
       '<p id="email-template-desc" class="text-sm text-slate-500 mt-1"></p></div>' +
       '<div><label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1" for="email-subject">Subject line</label>' +
@@ -3158,10 +3217,10 @@
               '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline shrink-0">View public</a>'
             : '') +
           '</div>' +
-          '<form class="event-cleanup-form grid sm:grid-cols-2 lg:grid-cols-3 gap-3" data-event-id="' +
+          '<form class="event-cleanup-form grid sm:grid-cols-2 gap-3" data-event-id="' +
           attrEsc(ev.id) +
           '">' +
-          '<div class="sm:col-span-2 lg:col-span-3"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
+          '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
           '<input type="text" name="title" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
           attrEsc(ev.title || '') +
           '"></div>' +
@@ -3191,7 +3250,7 @@
           '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
           attrEsc(ev.photo_url || '') +
           '" placeholder="https://…"></div>' +
-          '<div class="sm:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-3">' +
+          '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
           '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save event</button>' +
           '<span class="event-cleanup-msg text-xs"></span></div></form></article>'
         );
@@ -3211,7 +3270,7 @@
       '<div class="rounded-xl border border-brand-200 bg-brand-50/50 p-4 space-y-3">' +
       '<h3 class="font-semibold text-brand-900">Create event for a group</h3>' +
       '<p class="text-xs text-slate-600">Add another event under an existing organiser profile. It starts as a draft until you publish it.</p>' +
-      '<form class="event-create-form grid sm:grid-cols-2 lg:grid-cols-3 gap-3">' +
+      '<form class="event-create-form grid sm:grid-cols-2 gap-3">' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
       '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Monthly networking breakfast"></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
@@ -3231,7 +3290,7 @@
       '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       eventStatusOptions('draft') +
       '</select></div>' +
-      '<div class="sm:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-3">' +
+      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create event</button>' +
       '<span class="event-create-msg text-xs"></span></div></form></div>' +
       '<div class="admin-filter-bar flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
@@ -3288,23 +3347,21 @@
     if (!toggle || !sidebar) return;
 
     function closeNav() {
-      sidebar.classList.add('-translate-x-full');
-      sidebar.classList.remove('translate-x-0');
+      sidebar.classList.remove('is-open');
       if (backdrop) backdrop.classList.add('hidden');
       toggle.setAttribute('aria-expanded', 'false');
       toggle.setAttribute('aria-label', 'Open Command Center menu');
     }
 
     function openNav() {
-      sidebar.classList.remove('-translate-x-full');
-      sidebar.classList.add('translate-x-0');
+      sidebar.classList.add('is-open');
       if (backdrop) backdrop.classList.remove('hidden');
       toggle.setAttribute('aria-expanded', 'true');
       toggle.setAttribute('aria-label', 'Close Command Center menu');
     }
 
     toggle.addEventListener('click', function () {
-      if (sidebar.classList.contains('translate-x-0')) closeNav();
+      if (sidebar.classList.contains('is-open')) closeNav();
       else openNav();
     });
     if (backdrop) backdrop.addEventListener('click', closeNav);
@@ -3323,6 +3380,9 @@
     document.getElementById('sidebar-user').textContent = user.email;
     gate.classList.add('hidden');
     shell.classList.remove('hidden');
+    document.body.classList.add('hub-admin-active');
+    bindAdminLayoutSync();
+    setTimeout(syncAdminLayoutOffset, 0);
     bindAdminMobileNav();
     bindEventHealthForms();
     bindGroupCleanupForms();
