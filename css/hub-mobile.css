@@ -339,8 +339,18 @@ body.nav-menu-open {
     box-sizing: border-box;
   }
 
+  .events-filter-shell {
+    min-width: 0;
+    max-width: 100%;
+  }
+
   .events-filter-bar {
     padding: 14px 14px 12px;
+    min-width: 0;
+  }
+
+  .filter-bar-row {
+    min-width: 0;
   }
 
   .filter-bar-row-top {
@@ -355,20 +365,73 @@ body.nav-menu-open {
     max-width: none;
   }
 
+  .filter-bar-row-bottom {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .filter-bar-cluster {
     flex-direction: column;
     align-items: stretch;
     width: 100%;
+    min-width: 0;
+    gap: 12px;
   }
 
   .filter-format-group,
-  .filter-price-range {
+  .filter-price-range,
+  .filter-org-rating-group,
+  .filter-organiser-only {
     width: 100%;
+    min-width: 0;
+  }
+
+  .filter-price-range {
+    flex: 1 1 auto;
+  }
+
+  .filter-format-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filter-organiser-only {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .filter-organiser-industry {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .filter-organiser-industry select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .filter-org-rating-group {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .filter-date-wrap {
     width: 100%;
     max-width: none;
+    box-sizing: border-box;
+  }
+
+  .filter-near-radius {
+    width: 100%;
+  }
+
+  .filter-near-radius select {
+    width: 100%;
     box-sizing: border-box;
   }
 

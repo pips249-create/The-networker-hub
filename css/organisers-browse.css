@@ -308,8 +308,23 @@ body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-cta:hover {
     justify-content: center;
   }
 
-  .filter-org-rating-group {
+  .filter-org-rating-group,
+  .filter-organiser-only {
     width: 100%;
+  }
+
+  .filter-organiser-industry {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .filter-organiser-industry select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 }
 

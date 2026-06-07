@@ -2837,8 +2837,8 @@
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Apply to selected</button>' +
       '<span id="group-bulk-msg" class="text-xs"></span></div></form></div>' +
-      '<div class="flex flex-wrap gap-3 items-center">' +
-      '<input type="search" id="group-cleanup-search" placeholder="Search by name…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full max-w-xs bg-white" value="' +
+      '<div class="admin-filter-bar flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
+      '<input type="search" id="group-cleanup-search" placeholder="Search by name…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:max-w-xs bg-white" value="' +
       attrEsc(groupCleanupState.q) +
       '">' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
@@ -3099,10 +3099,10 @@
       '<div class="sm:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create event</button>' +
       '<span class="event-create-msg text-xs"></span></div></form></div>' +
-      '<div class="flex flex-wrap gap-3 items-center">' +
-      '<select id="event-cleanup-organiser" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white max-w-xs">' +
+      '<div class="admin-filter-bar flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
+      '<select id="event-cleanup-organiser" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-xs">' +
       '<option value="">All organisers</option></select>' +
-      '<input type="search" id="event-cleanup-search" placeholder="Search events…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full max-w-xs bg-white" value="' +
+      '<input type="search" id="event-cleanup-search" placeholder="Search events…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:max-w-xs bg-white" value="' +
       attrEsc(eventCleanupState.q) +
       '">' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
@@ -3145,11 +3145,49 @@
     }
   }
 
+  function bindAdminMobileNav() {
+    var toggle = document.getElementById('admin-nav-toggle');
+    var sidebar = document.getElementById('admin-sidebar');
+    var backdrop = document.getElementById('admin-sidebar-backdrop');
+    if (!toggle || !sidebar) return;
+
+    function closeNav() {
+      sidebar.classList.add('-translate-x-full');
+      sidebar.classList.remove('translate-x-0');
+      if (backdrop) backdrop.classList.add('hidden');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', 'Open Command Center menu');
+    }
+
+    function openNav() {
+      sidebar.classList.remove('-translate-x-full');
+      sidebar.classList.add('translate-x-0');
+      if (backdrop) backdrop.classList.remove('hidden');
+      toggle.setAttribute('aria-expanded', 'true');
+      toggle.setAttribute('aria-label', 'Close Command Center menu');
+    }
+
+    toggle.addEventListener('click', function () {
+      if (sidebar.classList.contains('translate-x-0')) closeNav();
+      else openNav();
+    });
+    if (backdrop) backdrop.addEventListener('click', closeNav);
+    document.querySelectorAll('.admin-nav-link').forEach(function (link) {
+      link.addEventListener('click', function () {
+        if (window.matchMedia('(max-width: 1023px)').matches) closeNav();
+      });
+    });
+    window.addEventListener('resize', function () {
+      if (window.matchMedia('(min-width: 1024px)').matches) closeNav();
+    });
+  }
+
   function boot(user) {
     currentUser = user;
     document.getElementById('sidebar-user').textContent = user.email;
     gate.classList.add('hidden');
     shell.classList.remove('hidden');
+    bindAdminMobileNav();
     bindEventHealthForms();
     bindGroupCleanupForms();
     bindEventCleanupForms();
