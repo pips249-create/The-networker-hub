@@ -48,6 +48,8 @@ module.exports = async function handler(req, res) {
 
       setSessionCookie(res, fresh);
 
+      await sbAuth.backfillAttendeeUserId(fresh.sub, fresh.email);
+
       const organiserProfiles = await sbAuth.countOrganiserProfiles(fresh.sub, fresh.email);
 
       return json(res, 200, {

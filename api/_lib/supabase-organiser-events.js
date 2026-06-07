@@ -557,6 +557,10 @@ async function createTicketsForEvents({ eventIds, tickets, publish, refund, vatT
     await updateEventVatTreatment(ids, vatTreatment);
   }
 
+  const sb = getSupabaseAdmin();
+  const { error: deleteErr } = await sb.from('tickets').delete().in('event_id', ids);
+  if (deleteErr) throw new Error(deleteErr.message);
+
   const out = [];
   for (const eventId of ids) {
     for (const tier of tiers) {

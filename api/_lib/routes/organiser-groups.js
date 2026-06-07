@@ -146,7 +146,7 @@ module.exports = async function handler(req, res) {
         return json(res, e.status || 500, {
           error: 'group_unpublish_failed',
           message: e.message,
-          airtable: airtableSetupHint('groups'),
+          airtable: api.airtableSetupHint && api.airtableSetupHint('groups'),
         });
       }
     }
@@ -198,7 +198,7 @@ module.exports = async function handler(req, res) {
       return json(res, e.status || 500, {
         error: 'group_create_failed',
         message: e.message,
-        airtable: airtableSetupHint('groups'),
+        airtable: api.airtableSetupHint && api.airtableSetupHint('groups'),
       });
     }
   }

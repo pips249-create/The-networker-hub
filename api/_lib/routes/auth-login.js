@@ -81,6 +81,8 @@ module.exports = async function handler(req, res) {
       return json(res, 503, { error: 'session_failed' });
     }
 
+    await sbAuth.backfillAttendeeUserId(sessionUser.sub, sessionUser.email);
+
     let redirect = body.next || '/events/index.html';
     if (isAdminRole(role)) {
       redirect = '/admin/index.html';

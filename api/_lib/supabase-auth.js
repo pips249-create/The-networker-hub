@@ -175,6 +175,27 @@ async function countOrganiserProfiles(userId, email) {
   return count || 0;
 }
 
+/** Link imported attendee rows to the auth user on sign-in (mirrors organiser backfill). */
+async function backfillAttendeeUserId(userId, email) {
+  const sb = getSupabaseAdmin();
+  const em = String(email || '').toLowerCase();
+  const uid = String(userId || '').trim();
+  if (!uid || !em) return;
+
+  const { data, error } = await sb
+    .from('attendees')
+    .select('id, supabase_user_id')
+    .eq('email', em)
+    .maybeSingle();
+  if (error || !data || data.supabase_user_id) return;
+
+  try {
+    await sb.from('attendees').update({ supabase_user_id: uid }).eq('id', data.id);
+  } catch {
+    /* non-fatal */
+  }
+}
+
 function useSupabaseAuth() {
   return isSupabaseConfigured() && process.env.DATA_PROVIDER !== 'airtable';
 }
@@ -246,6 +267,7 @@ module.exports = {
   registerUser,
   ensureAdminUser,
   countOrganiserProfiles,
+  backfillAttendeeUserId,
   importAttendeeRow,
   importAuthUserSilent,
 };

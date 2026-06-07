@@ -90,38 +90,48 @@ async function resolveOrganiserAccess(session) {
   const account = await getOrCreateOrganiserAccount(session);
   const accountId = account ? account.id : null;
 
-  let role = 'owner';
-  let membership = null;
+  const isAccountOwner =
+    accountId &&
+    ((uid && account.supabase_user_id === uid) ||
+      (em && String(account.email || '').toLowerCase() === em));
 
-  if (accountId) {
-    const isAccountOwner =
-      (uid && account.supabase_user_id === uid) ||
-      (em && String(account.email || '').toLowerCase() === em);
-    if (!isAccountOwner) {
-      membership = await findTeamMembership(sb, uid, em);
-      if (membership && membership.organiser_account_id === accountId && membership.status === 'active') {
-        role = membership.role === 'owner' ? 'owner' : 'editor';
-      } else if (membership && membership.organiser_account_id !== accountId) {
-        role = membership.status === 'active' ? membership.role || 'editor' : null;
-      } else {
-        role = isAccountOwner ? 'owner' : null;
-      }
-    }
-  } else {
+  let membership = null;
+  if (!isAccountOwner) {
     membership = await findTeamMembership(sb, uid, em);
-    if (membership && membership.status === 'active') {
-      role = membership.role === 'owner' ? 'owner' : 'editor';
-    } else {
-      role = null;
-    }
   }
 
-  const effectiveAccountId =
-    membership && membership.organiser_account_id ? membership.organiser_account_id : accountId;
+  let effectiveAccountId = accountId;
+  if (membership && membership.status === 'active' && membership.organiser_account_id) {
+    effectiveAccountId = membership.organiser_account_id;
+  }
+
+  const legacyGroupIds = new Set();
+  if (uid || em) {
+    let legacyQuery = sb.from('organisers').select('id');
+    if (uid && em) legacyQuery = legacyQuery.or(`supabase_user_id.eq.${uid},email.eq.${em}`);
+    else if (uid) legacyQuery = legacyQuery.eq('supabase_user_id', uid);
+    else legacyQuery = legacyQuery.eq('email', em);
+    const { data: legacy } = await legacyQuery;
+    (legacy || []).forEach((r) => legacyGroupIds.add(r.id));
+  }
+  const isLegacyOwner = legacyGroupIds.size > 0;
+
+  let role = null;
+  if (isAccountOwner) {
+    role = 'owner';
+  } else if (membership && membership.status === 'active') {
+    role = membership.role === 'owner' ? 'owner' : 'editor';
+  } else if (isLegacyOwner) {
+    role = 'owner';
+  }
+
+  const isOwner = role === 'owner';
+  const isEditor = role === 'editor';
+  const hasAccess = isOwner || isEditor;
 
   const groupIds = new Set();
-
-  if (effectiveAccountId) {
+  legacyGroupIds.forEach((id) => groupIds.add(id));
+  if (hasAccess && effectiveAccountId) {
     const { data: byAccount } = await sb
       .from('organisers')
       .select('id')
@@ -129,27 +139,13 @@ async function resolveOrganiserAccess(session) {
     (byAccount || []).forEach((r) => groupIds.add(r.id));
   }
 
-  // Legacy ownership by user id / email
-  let legacyQuery = sb.from('organisers').select('id');
-  if (uid && em) legacyQuery = legacyQuery.or(`supabase_user_id.eq.${uid},email.eq.${em}`);
-  else if (uid) legacyQuery = legacyQuery.eq('supabase_user_id', uid);
-  else if (em) legacyQuery = legacyQuery.eq('email', em);
-  if (uid || em) {
-    const { data: legacy } = await legacyQuery;
-    (legacy || []).forEach((r) => groupIds.add(r.id));
-  }
-
-  const isOwner = role === 'owner';
-  const isEditor = role === 'editor';
-  const hasAccess = isOwner || isEditor || groupIds.size > 0;
-
   return {
     accountId: effectiveAccountId,
-    role: hasAccess ? (isOwner ? 'owner' : isEditor ? 'editor' : 'owner') : null,
-    isOwner: isOwner || (!membership && !!accountId),
+    role: hasAccess ? role : null,
+    isOwner: isOwner || (isAccountOwner && !membership),
     isEditor,
-    canManageTeam: isOwner || (!membership && !!accountId),
-    canDeleteEvents: isOwner || (!membership && !!accountId),
+    canManageTeam: isOwner || (isAccountOwner && !membership),
+    canDeleteEvents: isOwner || (isAccountOwner && !membership),
     membership: membership ? rowToTeamMember(membership) : null,
     groupIds: [...groupIds],
   };
