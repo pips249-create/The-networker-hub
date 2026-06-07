@@ -270,15 +270,84 @@
         : a.severity === 'medium'
           ? 'bg-amber-50 border-amber-200 text-amber-900'
           : 'bg-slate-50 border-slate-200 text-slate-700';
-    return (
-      '<div class="rounded-lg border p-4 ' +
-      bg +
-      '"><p class="font-semibold text-sm">' +
+    var inner =
+      '<p class="font-semibold text-sm">' +
       esc(a.title) +
       '</p><p class="text-xs mt-1 opacity-90">' +
       esc(a.detail) +
-      '</p></div>'
-    );
+      '</p>';
+    if (a.href) {
+      return (
+        '<a href="' +
+        esc(a.href) +
+        '" class="block rounded-lg border p-4 transition hover:opacity-90 ' +
+        bg +
+        '">' +
+        inner +
+        '</a>'
+      );
+    }
+    return '<div class="rounded-lg border p-4 ' + bg + '">' + inner + '</div>';
+  }
+
+  function renderAttentionQueue(attention) {
+    if (!attention) {
+      return '<p class="text-sm text-slate-500">Loading…</p>';
+    }
+    var pending = attention.pendingEvents || [];
+    var parts = [];
+
+    if (pending.length) {
+      parts.push(
+        '<div class="rounded-lg border border-amber-200 bg-amber-50 p-4">' +
+          '<p class="font-semibold text-sm text-amber-900">' +
+          pending.length +
+          ' event' +
+          (pending.length === 1 ? '' : 's') +
+          ' pending approval</p>' +
+          '<ul class="mt-2 space-y-1.5">'
+      );
+      pending.slice(0, 6).forEach(function (e) {
+        parts.push(
+          '<li class="text-sm text-amber-900"><span class="font-medium">' +
+            esc(e.title) +
+            '</span> <span class="text-xs text-amber-800/80">· ' +
+            esc(e.organiser) +
+            '</span></li>'
+        );
+      });
+      parts.push(
+        '</ul><a href="#moderation" class="text-xs font-semibold text-amber-900 mt-3 inline-block hover:underline">Open approval queue →</a></div>'
+      );
+    }
+
+    var links = [];
+    if (attention.incompleteOrganisers > 0) {
+      links.push(
+        '<a href="#group-cleanup" class="text-sm font-semibold text-brand-700 hover:underline">' +
+          attention.incompleteOrganisers +
+          ' organiser profile' +
+          (attention.incompleteOrganisers === 1 ? '' : 's') +
+          ' missing data</a>'
+      );
+    }
+    if (attention.spamReviews > 0) {
+      links.push(
+        '<a href="#moderation" class="text-sm font-semibold text-brand-700 hover:underline">' +
+          attention.spamReviews +
+          ' spam-like review' +
+          (attention.spamReviews === 1 ? '' : 's') +
+          '</a>'
+      );
+    }
+    if (links.length) {
+      parts.push('<div class="flex flex-wrap gap-x-4 gap-y-2 mt-3">' + links.join('') + '</div>');
+    }
+
+    if (!parts.length) {
+      return '<p class="text-sm text-emerald-700">Nothing needs immediate action right now.</p>';
+    }
+    return parts.join('');
   }
 
   function fetchEventHealth() {
@@ -956,6 +1025,10 @@
       '<h3 class="text-sm font-bold uppercase tracking-wide text-slate-500">Critical alerts</h3>' +
       '<div class="grid gap-3" id="dashboard-alerts"><p class="text-sm text-slate-500">Loading from Supabase…</p></div>' +
       '</section>' +
+      '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">' +
+      '<div><h3 class="font-bold text-brand-900">Needs your attention</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Pending approvals, broken event data, incomplete profiles, and spam reviews — check these regularly.</p></div>' +
+      '<div id="dashboard-attention"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
       '<a href="#analytics" class="block rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-5 shadow-sm hover:border-brand-300 transition group">' +
       '<div class="flex flex-wrap items-center justify-between gap-3">' +
       '<div><p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Traffic</p>' +
@@ -981,6 +1054,7 @@
 
     adminGet('/api/admin/metrics').then(function (data) {
       var alertsEl = document.getElementById('dashboard-alerts');
+      var attentionEl = document.getElementById('dashboard-attention');
       var metricsEl = document.getElementById('dashboard-metrics');
       var activityEl = document.getElementById('dashboard-activity');
       var preEl = document.getElementById('live-metrics');
@@ -1028,6 +1102,10 @@
         alertsEl.innerHTML = alerts.length
           ? alerts.map(alertCard).join('')
           : '<p class="text-sm text-emerald-700">No critical alerts right now.</p>';
+      }
+
+      if (attentionEl) {
+        attentionEl.innerHTML = renderAttentionQueue(data.attention);
       }
 
       if (activityEl) {
@@ -1394,16 +1472,27 @@
     }
   }
 
-  function listingsTableHtml(listings) {
+  function listingsTableHtml(listings, emptyMessage) {
     if (!listings.length) {
-      return '<tr><td colspan="7" class="px-4 py-6 text-slate-500">No events in Supabase yet.</td></tr>';
+      return (
+        '<tr><td colspan="7" class="px-4 py-6 text-slate-500">' +
+        esc(emptyMessage || 'No events in Supabase yet.') +
+        '</td></tr>'
+      );
     }
     return listings
       .map(function (l) {
         var soldLabel = l.capacity ? l.sold + '/' + l.capacity : String(l.sold || 0) + ' sold';
         var pct = l.capacity ? Math.round((l.sold / l.capacity) * 100) : 0;
+        var isPending = l.status === 'Pending' || l.pending;
+        var rowClass = isPending ? 'border-t border-amber-100 bg-amber-50/60' : 'border-t border-slate-100';
+        var statusClass = isPending
+          ? 'text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-900'
+          : 'text-xs font-semibold px-2 py-0.5 rounded bg-slate-100';
         return (
-          '<tr class="border-t border-slate-100">' +
+          '<tr class="' +
+          rowClass +
+          '">' +
           '<td class="px-4 py-3 font-medium">' +
           esc(l.title) +
           '</td>' +
@@ -1416,7 +1505,9 @@
           '<td class="px-4 py-3">' +
           esc(l.city) +
           '</td>' +
-          '<td class="px-4 py-3"><span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100">' +
+          '<td class="px-4 py-3"><span class="' +
+          statusClass +
+          '">' +
           esc(l.status) +
           '</span></td>' +
           '<td class="px-4 py-3 min-w-[120px]">' +
@@ -1469,9 +1560,18 @@
     main.innerHTML =
       '<div class="space-y-6">' +
       '<p id="moderation-status" class="text-sm text-slate-500">Loading listings and reviews from Supabase…</p>' +
+      '<div class="bg-white rounded-xl border border-amber-200 shadow-sm overflow-hidden" id="moderation-pending-panel">' +
+      '<div class="px-4 py-3 border-b border-amber-100 bg-amber-50"><h3 class="font-bold text-amber-900">Pending approval</h3>' +
+      '<p class="text-xs text-amber-800/80 mt-0.5">Events waiting for approval before they can go live. Approve or reject in the organiser dashboard or Supabase.</p></div>' +
+      adminTableScroll(
+        '<table class="w-full text-sm"><thead class="bg-amber-50/80 text-xs uppercase text-amber-900/70">' +
+          '<tr><th class="px-4 py-3 text-left">Title</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Tickets</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="moderation-pending"><tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+      ) +
+      '</div>' +
       '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">All events</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">Read-only — approve or reject events in the organiser dashboard or Supabase.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Read-only — pending events are highlighted and listed at the top.</p></div>' +
       adminTableScroll(
         '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
           '<tr><th class="px-4 py-3 text-left">Title</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Tickets</th><th class="px-4 py-3"></th></tr></thead>' +
@@ -1485,21 +1585,41 @@
 
     adminGet('/api/admin/moderation').then(function (data) {
       var status = document.getElementById('moderation-status');
+      var pendingEl = document.getElementById('moderation-pending');
+      var pendingPanel = document.getElementById('moderation-pending-panel');
       var listingsEl = document.getElementById('moderation-listings');
       var reviewsEl = document.getElementById('moderation-reviews');
       if (!data || data.error || data.configured === false) {
         liveListings = [];
         liveReviews = [];
         if (status) status.textContent = 'Could not load moderation data from Supabase.';
+        if (pendingEl) pendingEl.innerHTML = listingsTableHtml([], 'Could not load pending events.');
         if (listingsEl) listingsEl.innerHTML = listingsTableHtml([]);
         if (reviewsEl) reviewsEl.innerHTML = reviewsHtml([]);
         return;
       }
       liveListings = data.listings || [];
       liveReviews = data.reviews || [];
+      var pendingListings = data.pendingListings || liveListings.filter(function (l) {
+        return l.status === 'Pending' || l.pending;
+      });
       if (status) {
         status.textContent =
-          liveListings.length + ' events · ' + liveReviews.length + ' reviews from Supabase';
+          liveListings.length +
+          ' events · ' +
+          pendingListings.length +
+          ' pending · ' +
+          liveReviews.length +
+          ' reviews from Supabase';
+      }
+      if (pendingEl) {
+        pendingEl.innerHTML = pendingListings.length
+          ? listingsTableHtml(pendingListings)
+          : '<tr><td colspan="7" class="px-4 py-6 text-emerald-700">No events pending approval.</td></tr>';
+      }
+      if (pendingPanel && !pendingListings.length) {
+        pendingPanel.classList.remove('border-amber-200');
+        pendingPanel.classList.add('border-emerald-200');
       }
       if (listingsEl) listingsEl.innerHTML = listingsTableHtml(liveListings);
       if (reviewsEl) reviewsEl.innerHTML = reviewsHtml(liveReviews);
