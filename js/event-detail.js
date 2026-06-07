@@ -1278,7 +1278,7 @@
         window.CmsAdBlocks.loadCmsAd('event_page_sidebar_ad'),
         window.CmsAdBlocks.loadCmsAd('event_page_banner_ad'),
       ]);
-      if (results[0] && sidebarEl) window.CmsAdBlocks.renderSidebarAd(sidebarEl, results[0]);
+      if (results[0] && sidebarEl) window.CmsAdBlocks.renderCompactAd(sidebarEl, results[0]);
       if (results[1] && bannerEl) window.CmsAdBlocks.renderBannerAd(bannerEl, results[1]);
     } catch {
       /* non-fatal */

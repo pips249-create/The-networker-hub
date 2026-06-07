@@ -47,9 +47,10 @@ function buildSponsorRow(payload) {
   const logo = String(payload.logo_url || '').trim() || null;
   const company_name = String(payload.company_name || '').trim() || null;
   const active = payload.active !== false;
+  const slot = String(payload.slot || 'sponsor_hub').trim() || 'sponsor_hub';
 
   return {
-    slot: 'sponsor_hub',
+    slot,
     title,
     subtitle: title,
     body,

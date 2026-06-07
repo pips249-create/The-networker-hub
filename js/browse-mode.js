@@ -83,6 +83,15 @@
     }
   }
 
+  function initSponsorHub() {
+    var hub = document.getElementById('sponsor-hub');
+    var heroSlot = document.getElementById('hero-sponsor-slot');
+    if (!hub || !heroSlot) return;
+    if (hub.parentElement !== heroSlot) heroSlot.appendChild(hub);
+    heroSlot.hidden = false;
+    hub.classList.add('sponsor-hub--in-hero');
+  }
+
   function applyCopy(mode) {
     var c = copy[mode] || copy.events;
     if (heroTitle) heroTitle.innerHTML = c.title;
@@ -99,24 +108,7 @@
       mode === 'organisers'
         ? 'Find networking groups – The Networker Hub'
         : 'Find your next event – The Networker Hub';
-    placeSponsorHub(mode);
-  }
-
-  function placeSponsorHub(mode) {
-    var hub = document.getElementById('sponsor-hub');
-    var heroSlot = document.getElementById('hero-sponsor-slot');
-    var promoSlot = document.getElementById('promo-sponsor-slot');
-    if (!hub) return;
-
-    if (mode === 'organisers' && heroSlot) {
-      heroSlot.hidden = false;
-      heroSlot.appendChild(hub);
-      hub.classList.add('sponsor-hub--in-hero');
-    } else if (promoSlot) {
-      if (heroSlot) heroSlot.hidden = true;
-      promoSlot.appendChild(hub);
-      hub.classList.remove('sponsor-hub--in-hero');
-    }
+    initSponsorHub();
   }
 
   function setMode(mode, options) {
@@ -183,7 +175,6 @@
     setMode('organisers', { skipEventsRefresh: true, updateHash: true });
   } else {
     applyCopy('events');
-    placeSponsorHub('events');
   }
 
   window.addEventListener('hashchange', function () {

@@ -358,11 +358,12 @@ async function fetchFinancials(sb) {
   };
 }
 
-const SPONSOR_HUB_SLOT = 'sponsor_hub';
+const DEFAULT_CMS_SLOT = 'sponsor_hub';
 const { buildSponsorRow, normalizeSponsorBlock } = require('./cms-sponsor-fields');
 
-async function fetchSponsorBlock(sb) {
-  const res = await sb.from('cms_blocks').select('*').eq('slot', SPONSOR_HUB_SLOT).maybeSingle();
+async function fetchSponsorBlock(sb, slot) {
+  const key = String(slot || DEFAULT_CMS_SLOT).trim() || DEFAULT_CMS_SLOT;
+  const res = await sb.from('cms_blocks').select('*').eq('slot', key).maybeSingle();
   if (res.error) throw new Error(res.error.message);
   return normalizeSponsorBlock(res.data);
 }
@@ -377,13 +378,14 @@ async function saveSponsorBlock(sb, payload) {
   return normalizeSponsorBlock(res.data);
 }
 
-async function getAdminSponsor() {
+async function getAdminSponsor(slot) {
   if (!isSupabaseConfigured()) {
-    return { configured: false, provider: 'supabase', block: null };
+    return { configured: false, provider: 'supabase', block: null, slot: slot || DEFAULT_CMS_SLOT };
   }
   const sb = getSupabaseAdmin();
-  const block = await fetchSponsorBlock(sb);
-  return { configured: true, provider: 'supabase', block, updatedAt: new Date().toISOString() };
+  const key = String(slot || DEFAULT_CMS_SLOT).trim() || DEFAULT_CMS_SLOT;
+  const block = await fetchSponsorBlock(sb, key);
+  return { configured: true, provider: 'supabase', block, slot: key, updatedAt: new Date().toISOString() };
 }
 
 async function getAdminDashboard() {

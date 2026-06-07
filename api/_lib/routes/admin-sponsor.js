@@ -15,6 +15,16 @@ function parseBody(req) {
   return body || {};
 }
 
+function slotFromRequest(req) {
+  if (req.query && req.query.slot) return String(req.query.slot).trim();
+  try {
+    const url = new URL(req.url, 'https://internal.local');
+    return String(url.searchParams.get('slot') || '').trim();
+  } catch {
+    return '';
+  }
+}
+
 async function resolveLogoUrl(body) {
   let logo_url = String(body.logo_url || '').trim() || null;
   if (body.logoBase64) {
@@ -44,7 +54,8 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const report = await getAdminSponsor();
+      const slot = slotFromRequest(req) || 'sponsor_hub';
+      const report = await getAdminSponsor(slot);
       return json(res, 200, { ok: true, ...report });
     } catch (e) {
       return json(res, 500, { ok: false, error: 'sponsor_load_failed', message: e.message });
@@ -53,6 +64,7 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'POST') {
     const body = parseBody(req);
+    const slot = String(body.slot || 'sponsor_hub').trim() || 'sponsor_hub';
     const title = String(body.title || '').trim();
     const blockBody = String(body.body || '').trim();
     const cta_label = String(body.cta_label || '').trim();
@@ -70,6 +82,7 @@ module.exports = async function handler(req, res) {
       const sb = getSupabaseAdmin();
       const logo_url = await resolveLogoUrl(body);
       const block = await saveSponsorBlock(sb, {
+        slot,
         title,
         body: blockBody,
         cta_label,
@@ -78,7 +91,7 @@ module.exports = async function handler(req, res) {
         company_name,
         active: body.active !== false,
       });
-      return json(res, 200, { ok: true, block, updatedAt: new Date().toISOString() });
+      return json(res, 200, { ok: true, block, slot, updatedAt: new Date().toISOString() });
     } catch (e) {
       return json(res, 500, { ok: false, error: 'sponsor_save_failed', message: e.message });
     }

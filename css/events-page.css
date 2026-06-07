@@ -4,28 +4,19 @@
 }
 
 .events-hero-layout {
-  display: block;
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-.events-hero-copy {
-  max-width: 36em;
-}
-
-body.browse-mode-organisers .events-hero .hero-inner {
-  max-width: 1200px;
-}
-
-body.browse-mode-organisers .events-hero-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
   gap: 20px;
   align-items: start;
   max-width: 1200px;
+  margin: 0 auto;
 }
 
-body.browse-mode-organisers .events-hero-copy {
+.events-page .events-hero .hero-inner {
+  max-width: 1200px;
+}
+
+.events-hero-copy {
   max-width: none;
 }
 
@@ -42,6 +33,56 @@ body.browse-mode-organisers .events-hero-copy {
 .sponsor-hub--in-hero {
   position: static;
   top: auto;
+  padding: 12px 14px 14px;
+  height: auto;
+}
+
+.sponsor-hub--in-hero .sponsor-hub-head {
+  margin-bottom: 10px;
+  padding-right: 64px;
+  font-size: 14px;
+}
+
+.sponsor-hub--in-hero .sponsor-logo-wrap {
+  margin: 0 -14px 10px;
+  width: calc(100% + 28px);
+  min-height: 64px;
+  padding: 8px 10px;
+}
+
+.sponsor-hub--in-hero .sponsor-logo-wrap.sponsor-logo-band {
+  padding: 8px 10px;
+}
+
+.sponsor-hub--in-hero .sponsor-logo,
+.sponsor-hub--in-hero .sponsor-logo--full {
+  max-height: 64px;
+}
+
+.sponsor-hub--in-hero .sponsor-company {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.sponsor-hub--in-hero .sponsor-tagline {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.sponsor-hub--in-hero .sponsor-body,
+.sponsor-hub--in-hero .sponsor-list {
+  font-size: 11px;
+  line-height: 1.45;
+  margin-bottom: 10px;
+}
+
+.sponsor-hub--in-hero .sponsor-list li {
+  margin-bottom: 4px;
+}
+
+.sponsor-hub--in-hero .sponsor-cta {
+  padding: 10px 12px;
+  font-size: 12px;
 }
 
 .events-page .events-hero-copy h1 {
@@ -475,41 +516,8 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   color: inherit;
 }
 
-.spotlight-sponsor-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+.events-promo-section {
   margin-bottom: 16px;
-  align-items: stretch;
-  justify-content: flex-start;
-}
-
-.events-promo-sponsor-slot {
-  display: flex;
-  flex-direction: column;
-  flex: 0 0 280px;
-  width: 280px;
-  max-width: 100%;
-  min-width: 0;
-}
-
-.spotlight-sponsor-row .sponsor-hub {
-  position: static;
-  top: auto;
-  flex: 1;
-  width: 100%;
-}
-
-@media (max-width: 900px) {
-  .spotlight-sponsor-row {
-    flex-direction: column;
-  }
-
-  .events-promo-sponsor-slot {
-    flex: 1 1 auto;
-    width: 100%;
-    max-width: 360px;
-  }
 }
 
 .premium-spotlight {
@@ -520,10 +528,12 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  flex: 0 1 auto;
-  width: fit-content;
-  max-width: min(680px, calc(100% - 292px));
+}
+
+.events-promo-section .premium-spotlight {
+  width: 100%;
+  max-width: 100%;
+  flex: none;
 }
 .spotlight-header {
   display: flex;

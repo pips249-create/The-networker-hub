@@ -442,14 +442,24 @@ body.nav-menu-open {
     min-width: 0;
   }
 
-  body.browse-mode-organisers .events-hero-layout {
+  .events-hero-layout {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
-  body.browse-mode-organisers .events-hero-sponsor-slot {
+  .events-hero-sponsor-slot {
     max-width: 320px;
     margin: 0 auto;
     width: 100%;
+  }
+
+  .events-browse-switch-wrap {
+    display: flex;
+    justify-content: center;
+  }
+
+  body.browse-mode-organisers .events-hero-copy {
+    text-align: center;
   }
 
   .premium-spotlight {

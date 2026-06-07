@@ -307,6 +307,18 @@
     }
   }
 
+  async function loadOrganiserPageAd() {
+    if (!window.CmsAdBlocks) return;
+    var el = document.getElementById('organiser-page-sidebar-ad');
+    if (!el) return;
+    try {
+      var block = await window.CmsAdBlocks.loadCmsAd('organiser_page_sidebar_ad');
+      if (block) window.CmsAdBlocks.renderCompactAd(el, block);
+    } catch (e) {
+      /* non-fatal */
+    }
+  }
+
   async function load() {
     var q = queryParams();
     var url = API;
@@ -327,6 +339,7 @@
         return;
       }
       renderOrganiser(data.organiser);
+      loadOrganiserPageAd();
     } catch (e) {
       setStatus('Could not load organiser profile.', true);
     } finally {

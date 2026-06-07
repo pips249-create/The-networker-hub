@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260627" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627" />
     <link rel="stylesheet" href="../css/hub-loading.css" />
-    <link rel="stylesheet" href="../css/event-detail.css?v=20260630c" />
+    <link rel="stylesheet" href="../css/event-detail.css?v=20260611" />
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
@@ -234,15 +234,11 @@
             <div class="reviews-feed" id="ev-reviews-feed" aria-live="polite"></div>
           </div>
         </section>
-
-        <section class="content-section" id="ev-related-section">
-          <h2 id="ev-related-title">More from this organiser</h2>
-          <div class="related-grid" id="ev-related-grid" aria-live="polite"></div>
-          <p class="related-empty" id="ev-related-empty" hidden>No other upcoming events from this organiser yet.</p>
-        </section>
       </div>
 
       <aside class="side-col">
+        <div id="event-page-sidebar-ad" class="event-page-sidebar-ad" hidden></div>
+
         <div class="ticket-panel" id="tickets" data-approval-required="false" data-sold-out="false" data-sales-closed="false">
           <div class="ticket-header">
             <span class="from-label">Tickets from</span>
@@ -318,9 +314,13 @@
             Secure checkout
           </div>
         </div>
-
-        <div id="event-page-sidebar-ad" class="event-page-sidebar-ad" hidden></div>
       </aside>
+
+      <section class="content-section" id="ev-related-section">
+        <h2 id="ev-related-title">More from this organiser</h2>
+        <div class="related-grid" id="ev-related-grid" aria-live="polite"></div>
+        <p class="related-empty" id="ev-related-empty" hidden>No other upcoming events from this organiser yet.</p>
+      </section>
     </div>
 
     <div class="hub-modal" id="contact-host-modal" role="dialog" aria-modal="true" aria-labelledby="contact-host-title" hidden>
@@ -398,8 +398,8 @@
     <script src="../js/hub-loading.js?v=20260605"></script>
     <script src="../js/flexible-event-image.js?v=20260616"></script>
     <script src="../js/cms-sponsor-fields.js?v=20260630c"></script>
-    <script src="../js/cms-ad-blocks.js?v=20260630c"></script>
-    <script src="../js/event-detail.js?v=20260630b"></script>
+    <script src="../js/cms-ad-blocks.js?v=20260610"></script>
+    <script src="../js/event-detail.js?v=20260610"></script>
   </body>
 </html>
 <!-- legacy inline removed
