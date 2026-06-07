@@ -10,7 +10,6 @@
     resultsCount: document.getElementById('results-count'),
     countAll: document.getElementById('org-count-all'),
     countFeatured: document.getElementById('org-count-featured'),
-    loadOverlay: document.getElementById('events-load-overlay'),
   };
 
   var organisers = [];
@@ -262,19 +261,9 @@
   }
 
   function setLoading(on) {
-    if (window.hubLoading) {
-      if (on) {
-        window.hubLoading.show('events-load-overlay', {
-          title: 'Loading organisers',
-          message: 'Bear with us — almost there.',
-        });
-      } else {
-        window.hubLoading.hide('events-load-overlay');
-      }
-      return;
-    }
-    if (!els.loadOverlay) return;
-    els.loadOverlay.hidden = !on;
+    if (window.FactLoader) return;
+    const shell = document.getElementById('events-shell');
+    if (shell) shell.classList.toggle('is-loading', !!on);
   }
 
   function applyLoadedOrganisers() {
@@ -293,32 +282,41 @@
       return Promise.resolve(organisers);
     }
 
-    setLoading(true);
-    loadPromise = fetch(API)
-      .then(function (res) {
-        return res.json();
-      })
-      .then(function (data) {
-        if (!data.configured) {
+    const fetchOrganisers = function () {
+      return fetch(API)
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          if (!data.configured) {
+            organisers = [];
+          } else if (data.error) {
+            organisers = [];
+          } else {
+            organisers = data.organisers || [];
+          }
+          applyLoadedOrganisers();
+          return organisers;
+        })
+        .catch(function () {
           organisers = [];
-        } else if (data.error) {
-          organisers = [];
-        } else {
-          organisers = data.organisers || [];
-        }
-        applyLoadedOrganisers();
-        return organisers;
-      })
-      .catch(function () {
-        organisers = [];
-        applyLoadedOrganisers();
-        return organisers;
-      })
-      .finally(function () {
-        setLoading(false);
-        loadPromise = null;
-      });
+          applyLoadedOrganisers();
+          return organisers;
+        })
+        .finally(function () {
+          loadPromise = null;
+        });
+    };
 
+    if (window.FactLoader) {
+      loadPromise = window.FactLoader.run(fetchOrganisers);
+      return loadPromise;
+    }
+
+    setLoading(true);
+    loadPromise = fetchOrganisers().finally(function () {
+      setLoading(false);
+    });
     return loadPromise;
   }
 

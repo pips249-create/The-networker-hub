@@ -11,9 +11,6 @@
     spotlightTrack: document.getElementById('spotlight-track'),
     listings: document.getElementById('event-listings'),
     resultsCount: document.getElementById('results-count'),
-    countAll: document.getElementById('count-all'),
-    countMeeting: document.getElementById('count-meeting'),
-    countExhibition: document.getElementById('count-exhibition'),
     location: document.getElementById('location'),
     sponsorHub: document.getElementById('sponsor-hub'),
     sponsorBadge: document.getElementById('sponsor-badge'),
@@ -383,21 +380,9 @@
   }
 
   function updateCounts() {
-    const all = window.hubAllEvents || events;
-    if (window.hubGetFilteredEvents) {
-      const allList = window.hubGetFilteredEvents(all, { typeTab: 'all' });
-      const meetings = window.hubGetFilteredEvents(all, { typeTab: 'meeting' });
-      const exhibitions = window.hubGetFilteredEvents(all, { typeTab: 'exhibition' });
-      if (els.countAll) els.countAll.textContent = `(${allList.length})`;
-      if (els.countMeeting) els.countMeeting.textContent = `(${meetings.length})`;
-      if (els.countExhibition) els.countExhibition.textContent = `(${exhibitions.length})`;
-      return;
+    if (window.hubUpdateEventTypeChipCounts) {
+      window.hubUpdateEventTypeChipCounts();
     }
-    const meetings = all.filter((e) => (e.eventTypeCategory || 'meeting') === 'meeting').length;
-    const exhibitions = all.filter((e) => e.eventTypeCategory === 'exhibition').length;
-    if (els.countAll) els.countAll.textContent = `(${all.length})`;
-    if (els.countMeeting) els.countMeeting.textContent = `(${meetings})`;
-    if (els.countExhibition) els.countExhibition.textContent = `(${exhibitions})`;
   }
 
   function renderAll() {
@@ -408,29 +393,9 @@
   }
 
   function setLoading(on) {
-    const overlay = document.getElementById('events-load-overlay');
+    if (window.FactLoader) return;
     const shell = document.getElementById('events-shell');
-    const loadingCopy = {
-      title: document.body.classList.contains('browse-mode-organisers')
-        ? 'Loading organisers'
-        : 'Loading your events',
-      message: 'Bear with us — almost there.',
-    };
-    if (window.hubLoading) {
-      if (on) window.hubLoading.show('events-load-overlay', loadingCopy);
-      else window.hubLoading.hide('events-load-overlay');
-      return;
-    }
-    if (!overlay) return;
-    if (on) {
-      overlay.classList.add('is-active');
-      overlay.hidden = false;
-      if (shell) shell.classList.add('is-loading');
-    } else {
-      overlay.classList.remove('is-active');
-      overlay.hidden = true;
-      if (shell) shell.classList.remove('is-loading');
-    }
+    if (shell) shell.classList.toggle('is-loading', !!on);
   }
 
   function setStatus(msg, isError) {
@@ -665,46 +630,54 @@
   }
 
   async function load() {
+    const fetchAndRender = async () => {
+      setStatus('', false);
+      try {
+        const res = await fetch(API);
+        const data = await res.json();
+        const provider = data.provider || 'supabase';
+
+        if (!data.configured) {
+          setStatus(
+            'Connect Supabase: set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel, then redeploy.',
+            true
+          );
+          events = [];
+        } else if (data.error) {
+          setStatus('Could not load events: ' + (data.detail || data.message || data.error), true);
+          events = [];
+        } else {
+          events = data.events || [];
+          setStatus(
+            events.length
+              ? ''
+              : 'No published events yet. Approve events in Supabase so they appear in published_events.',
+            false
+          );
+        }
+        applyLoadedEvents();
+        await refreshAfterGeocode();
+      } catch (e) {
+        setStatus('Could not reach /api/events. Deploy on Vercel or run `vercel dev` locally.', true);
+        events = [];
+        applyLoadedEvents();
+      }
+    };
+
+    if (window.FactLoader) {
+      await window.FactLoader.run(fetchAndRender);
+      return;
+    }
+
     setLoading(true);
-    setStatus('', false);
     var safetyTimer = setTimeout(function () {
       setLoading(false);
     }, 6000);
     try {
-      const res = await fetch(API);
-      const data = await res.json();
-      const provider = data.provider || 'supabase';
-
-      if (!data.configured) {
-        setStatus(
-          'Connect Supabase: set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel, then redeploy.',
-          true
-        );
-        events = [];
-      } else if (data.error) {
-        setStatus('Could not load events: ' + (data.detail || data.message || data.error), true);
-        events = [];
-      } else {
-        events = data.events || [];
-        setStatus(
-          events.length
-            ? ''
-            : 'No published events yet. Approve events in Supabase so they appear in published_events.',
-          false
-        );
-      }
-      applyLoadedEvents();
-      refreshAfterGeocode();
-    } catch (e) {
-      setStatus('Could not reach /api/events. Deploy on Vercel or run `vercel dev` locally.', true);
-      events = [];
-      applyLoadedEvents();
+      await fetchAndRender();
     } finally {
       clearTimeout(safetyTimer);
       setLoading(false);
-      if (window.hubLoading && window.hubLoading.clear) {
-        window.hubLoading.clear('events-load-overlay');
-      }
     }
   }
 

@@ -649,64 +649,73 @@
         '← Back to My Events'
       );
     }
+
+    const loadWork = async () => {
+      const { ok, data } = await api('/api/organiser/bootstrap');
+      if (!ok) {
+        const next = encodeURIComponent(location.pathname + location.search);
+        location.href = '../login.html?next=' + next;
+        return;
+      }
+      groups = data.groups || [];
+
+      const chosenGroupId =
+        sessionStorage.getItem(GROUP_STORAGE_KEY) || params.get('groupId') || '';
+
+      if (!editId && !chosenGroupId) {
+        location.href = 'event-format.html';
+        return;
+      }
+
+      if (!editId && chosenGroupId && !groups.some((g) => g.id === chosenGroupId)) {
+        sessionStorage.removeItem(GROUP_STORAGE_KEY);
+        location.href = 'event-format.html';
+        return;
+      }
+
+      if (editId) {
+        document.getElementById('ee-page-title').textContent = 'Edit event';
+        document.getElementById('ee-page-lead').textContent =
+          'Update your listing, add more dates on the calendar, then continue to tickets.';
+        document.getElementById('ee-submit').textContent = 'Continue to tickets →';
+
+        let ev = null;
+        const evRes = await api('/api/organiser/events?id=' + encodeURIComponent(editId));
+        if (evRes.ok && evRes.data.event) {
+          ev = evRes.data.event;
+        }
+        if (!ev) {
+          ev = (data.events || []).find((e) => e.id === editId);
+        }
+        fillGroupsSelect(ev ? ev.organiserGroupId || ev.groupId : '', false);
+        if (ev) {
+          prefillFromEvent(ev);
+        } else {
+          showAlert(
+            'Could not load this event. Try again from My Events, or check you have access to this listing.'
+          );
+        }
+        return;
+      }
+
+      fillGroupsSelect(chosenGroupId, true);
+
+      if (!editId && window.HubFlowTour) {
+        window.HubFlowTour.startEventEditTour({ isEdit: false });
+      }
+    };
+
     const loading = window.organiserPageLoading;
+    if (loading && loading.run) {
+      await loading.run('Loading event', loadWork);
+      return;
+    }
+
     if (loading) loading.show('Loading event');
-    const { ok, data } = await api('/api/organiser/bootstrap');
-    if (!ok) {
+    try {
+      await loadWork();
+    } finally {
       if (loading) loading.hide();
-      const next = encodeURIComponent(location.pathname + location.search);
-      location.href = '../login.html?next=' + next;
-      return;
-    }
-    groups = data.groups || [];
-
-    const chosenGroupId =
-      sessionStorage.getItem(GROUP_STORAGE_KEY) || params.get('groupId') || '';
-
-    if (!editId && !chosenGroupId) {
-      if (loading) loading.hide();
-      location.href = 'event-format.html';
-      return;
-    }
-
-    if (!editId && chosenGroupId && !groups.some((g) => g.id === chosenGroupId)) {
-      if (loading) loading.hide();
-      sessionStorage.removeItem(GROUP_STORAGE_KEY);
-      location.href = 'event-format.html';
-      return;
-    }
-
-    if (editId) {
-      document.getElementById('ee-page-title').textContent = 'Edit event';
-      document.getElementById('ee-page-lead').textContent =
-        'Update your listing, add more dates on the calendar, then continue to tickets.';
-      document.getElementById('ee-submit').textContent = 'Continue to tickets →';
-
-      let ev = null;
-      const evRes = await api('/api/organiser/events?id=' + encodeURIComponent(editId));
-      if (evRes.ok && evRes.data.event) {
-        ev = evRes.data.event;
-      }
-      if (!ev) {
-        ev = (data.events || []).find((e) => e.id === editId);
-      }
-      fillGroupsSelect(ev ? ev.organiserGroupId || ev.groupId : '', false);
-      if (ev) {
-        prefillFromEvent(ev);
-      } else {
-        showAlert(
-          'Could not load this event. Try again from My Events, or check you have access to this listing.'
-        );
-      }
-      if (loading) loading.hide();
-      return;
-    }
-
-    fillGroupsSelect(chosenGroupId, true);
-    if (loading) loading.hide();
-
-    if (!editId && window.HubFlowTour) {
-      window.HubFlowTour.startEventEditTour({ isEdit: false });
     }
   }
 
@@ -796,25 +805,34 @@
     [submitBtn, draftBtn].forEach((b) => {
       if (b) b.disabled = true;
     });
-    if (loading) loading.show(publish ? 'Continuing to tickets' : 'Saving draft');
 
-    let res;
-    if (editId) {
-      res = await api('/api/organiser/events', {
-        method: 'PATCH',
-        body: JSON.stringify({ id: editId, ...payload }),
-      });
-    } else {
-      res = await api('/api/organiser/events', {
+    const saveWork = async () => {
+      if (editId) {
+        return api('/api/organiser/events', {
+          method: 'PATCH',
+          body: JSON.stringify({ id: editId, ...payload }),
+        });
+      }
+      return api('/api/organiser/events', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-    }
+    };
 
-    if (loading) loading.hide();
-    [submitBtn, draftBtn].forEach((b) => {
-      if (b) b.disabled = false;
-    });
+    let res;
+    try {
+      if (loading && loading.run) {
+        res = await loading.run(publish ? 'Continuing to tickets' : 'Saving draft', saveWork);
+      } else {
+        if (loading) loading.show(publish ? 'Continuing to tickets' : 'Saving draft');
+        res = await saveWork();
+        if (loading) loading.hide();
+      }
+    } finally {
+      [submitBtn, draftBtn].forEach((b) => {
+        if (b) b.disabled = false;
+      });
+    }
 
     if (!res.ok) {
       const err = res.data.error || '';

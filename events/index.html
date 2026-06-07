@@ -10,9 +10,10 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css?v=20260627">
 <link rel="stylesheet" href="../css/hub-mobile.css?v=20260708m">
-<link rel="stylesheet" href="../css/hub-loading.css?v=20260630e">
+<link rel="stylesheet" href="../css/fact-loader.css?v=20260709">
+<script src="../js/fact-loader.js?v=20260709"></script>
 <link rel="stylesheet" href="../css/events-page.css?v=20260708n">
-<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260708r">
+<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260708t">
 <link rel="stylesheet" href="../css/organisers-browse.css?v=20260708">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
@@ -23,21 +24,6 @@
 
 <div id="hub-site-nav"></div>
 <script src="../js/site-nav.js?v=20260710" data-root="../" data-page="events"></script>
-
-<div
-  class="hub-page-buffer hub-page-buffer--modal"
-  id="events-load-overlay"
-  hidden
-  role="status"
-  aria-live="polite"
-  aria-busy="true"
->
-  <div class="hub-page-buffer-card">
-    <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
-    <h2 class="hub-page-buffer-title">Loading your events</h2>
-    <p class="hub-page-buffer-message">Bear with us — almost there.</p>
-  </div>
-</div>
 
 <section class="hero events-hero">
   <div class="hero-inner events-hero-layout">
@@ -104,6 +90,9 @@
           <span id="search-hint" class="visually-hidden">Searches titles, descriptions, locations, organisers, and formats from the events database</span>
         </div>
       </div>
+      <div class="filter-bar-row filter-bar-row-types filter-event-only">
+        <nav class="event-type-chips" id="event-type-chips" aria-label="Event type"></nav>
+      </div>
       <div class="filter-bar-row filter-bar-row-location filter-event-only">
         <div class="filter-field filter-field-postcode">
           <span class="filter-field-icon" aria-hidden="true">
@@ -142,11 +131,6 @@
             <span class="filter-checkbox-box" aria-hidden="true"></span>
             Online
           </label>
-          <label class="filter-checkbox filter-checkbox-free">
-            <input type="checkbox" id="filter-free-only">
-            <span class="filter-checkbox-box" aria-hidden="true"></span>
-            Free
-          </label>
         </fieldset>
         <div class="filter-bar-quick filter-event-only">
           <div class="filter-date-wrap">
@@ -164,8 +148,13 @@
           <div class="filter-price-range" id="filter-price-range">
             <span class="filter-bar-chip-label">Price</span>
             <div class="filter-price-range-controls">
+              <label class="filter-checkbox filter-checkbox-free">
+                <input type="checkbox" id="filter-free-only">
+                <span class="filter-checkbox-box" aria-hidden="true"></span>
+                Free
+              </label>
               <div class="filter-price-range-row filter-price-range-row--max">
-                <input type="range" id="price-max" min="0" max="500" step="5" value="500" aria-label="Maximum ticket price">
+                <input type="range" id="price-max" min="0" max="100" step="5" value="100" aria-label="Maximum ticket price">
                 <output id="price-max-out" for="price-max">Any</output>
               </div>
             </div>
@@ -247,14 +236,6 @@
     </div>
   </div>
 
-  <div class="events-type-bar filter-event-only" id="events-type-bar">
-    <nav class="type-tabs events-type-tabs" aria-label="Event type">
-      <button type="button" class="type-tab is-active" data-type="all">All <span id="count-all">(0)</span></button>
-      <button type="button" class="type-tab" data-type="meeting">Meetings <span id="count-meeting">(0)</span></button>
-      <button type="button" class="type-tab" data-type="exhibition">Exhibitions <span id="count-exhibition">(0)</span></button>
-    </nav>
-  </div>
-
   <div class="events-map-wrap" id="events-map-wrap" hidden>
     <div class="events-map-mobile-bar" id="events-map-mobile-bar">
       <button type="button" class="events-map-mobile-list-btn" id="map-mobile-list-btn" aria-pressed="true">
@@ -333,16 +314,16 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
 <script src="../js/hub-favourites.js?v=20260629"></script>
+<script src="../js/meeting-types.js?v=20260708"></script>
 <script src="../js/postcode-outcode.js?v=20260708r"></script>
 <script src="../js/postcode-geo.js?v=20260708"></script>
-<script src="../js/events-filters.js?v=20260708r"></script>
-<script src="../js/events-map.js?v=20260708q"></script>
-<script src="../js/hub-loading.js?v=20260630e"></script>
+<script src="../js/events-filters.js?v=20260708t"></script>
+<script src="../js/events-map.js?v=20260708t"></script>
 <script src="../js/cms-sponsor-fields.js?v=20260630c"></script>
 <script src="../js/flexible-event-image.js?v=20260707"></script>
-<script src="../js/events.js?v=20260708r"></script>
+<script src="../js/events.js?v=20260709"></script>
 <script src="../js/organisers-filters.js?v=20260608"></script>
-<script src="../js/organisers.js?v=20260630f"></script>
+<script src="../js/organisers.js?v=20260709"></script>
 <script src="../js/hub-organiser-actions.js?v=20260606" data-root="../"></script>
 <script src="../js/browse-mode.js?v=20260610"></script>
 </body>

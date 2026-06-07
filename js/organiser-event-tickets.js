@@ -578,7 +578,6 @@
     const saveBtn = document.getElementById('ee-tickets-save');
     if (btn) btn.disabled = true;
     if (saveBtn) saveBtn.disabled = true;
-    if (loading) loading.show(publish ? 'Publishing event' : 'Saving tickets');
 
     const body = {
       eventIds,
@@ -588,18 +587,35 @@
       ...refund,
     };
 
-    const { ok, data } = await api('/api/organiser/tickets', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    });
+    const saveWork = async () => {
+      const { ok, data } = await api('/api/organiser/tickets', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
 
-    if (ok) {
-      await applyAttendeeExtrasToEvents();
+      if (ok) {
+        await applyAttendeeExtrasToEvents();
+      }
+
+      return { ok, data };
+    };
+
+    let result;
+    try {
+      if (loading && loading.run) {
+        result = await loading.run(publish ? 'Publishing event' : 'Saving tickets', saveWork);
+      } else {
+        if (loading) loading.show(publish ? 'Publishing event' : 'Saving tickets');
+        result = await saveWork();
+        if (loading) loading.hide();
+      }
+    } finally {
+      if (saveBtn) saveBtn.disabled = false;
+      updatePublishButton();
     }
 
-    if (loading) loading.hide();
-    if (saveBtn) saveBtn.disabled = false;
-    updatePublishButton();
+    const ok = result.ok;
+    const data = result.data;
 
     if (!ok) {
       showAlert(data.message || data.error || 'Could not save tickets');

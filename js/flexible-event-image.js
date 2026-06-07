@@ -58,6 +58,10 @@
     if (t.indexOf('conference') !== -1) return TYPE_PLACEMENTS.conference;
     if (t.indexOf('netwalk') !== -1) return TYPE_PLACEMENTS.netwalking;
     if (t.indexOf('award') !== -1) return TYPE_PLACEMENTS.awards;
+    if (t.indexOf('sport') !== -1 || t.indexOf('golf') !== -1 || t.indexOf('padel') !== -1) {
+      return TYPE_PLACEMENTS.netwalking;
+    }
+    if (t.indexOf('women') !== -1) return TYPE_PLACEMENTS.meeting;
     if (t.indexOf('meeting') !== -1 || t.indexOf('networking') !== -1) return TYPE_PLACEMENTS.meeting;
     return PLACEMENT_IMAGES;
   }

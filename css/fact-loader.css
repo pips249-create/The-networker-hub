@@ -1,0 +1,102 @@
+/* FactLoader — Duolingo-style lazy loading overlay with networking facts */
+.fact-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: rgba(250, 247, 242, 0.94);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.fact-loader.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.fact-loader[hidden] {
+  display: none !important;
+}
+
+.fact-loader__pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--lavender-light);
+  overflow: hidden;
+}
+
+.fact-loader__pulse-bar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--lavender-soft) 0%,
+    var(--lavender-deep) 50%,
+    var(--lavender-soft) 100%
+  );
+  transform-origin: left center;
+  animation: fact-loader-pulse 1.8s ease-in-out infinite;
+}
+
+.fact-loader__card {
+  max-width: 26rem;
+  width: 100%;
+  text-align: center;
+}
+
+.fact-loader__label {
+  display: block;
+  margin: 0 0 14px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.fact-loader__fact {
+  margin: 0;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(1.35rem, 4.5vw, 1.75rem);
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--charcoal);
+}
+
+body.fact-loader-active {
+  overflow: hidden;
+}
+
+@keyframes fact-loader-pulse {
+  0%,
+  100% {
+    transform: scaleX(0.12);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scaleX(0.92);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fact-loader {
+    transition: none;
+  }
+
+  .fact-loader__pulse-bar {
+    animation: none;
+    transform: scaleX(0.5);
+    opacity: 0.75;
+  }
+}

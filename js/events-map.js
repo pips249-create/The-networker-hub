@@ -45,6 +45,7 @@
   var suppressMapEvents = 0;
   var mapUserMoved = false;
   var moveEndTimer = null;
+  var nearMeCircle = null;
 
   function escapeHtml(s) {
     var d = document.createElement('div');
@@ -52,14 +53,25 @@
     return d.innerHTML;
   }
 
+  function formatClass(ev) {
+    var raw = String(ev.formatSlug || ev.format || ev.meetingType || '').toLowerCase();
+    if (raw.indexOf('online') !== -1 && raw.indexOf('person') === -1) return 'online';
+    if (raw.indexOf('hybrid') !== -1) return 'hybrid';
+    return 'in-person';
+  }
+
+  function isMapMappableFormat(ev) {
+    return formatClass(ev) === 'in-person';
+  }
+
   function coordsForEvent(ev) {
+    if (!isMapMappableFormat(ev)) return null;
     if (ev.mapLat != null && ev.mapLng != null) {
       return [ev.mapLat, ev.mapLng];
     }
     if (Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
       return [ev.lat, ev.lng];
     }
-    if (ev.formatSlug === 'online') return null;
     return null;
   }
 
@@ -69,13 +81,6 @@
     var uuidLike = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(slug);
     if (slug && !uuidLike) return '/events/' + encodeURIComponent(slug);
     return 'event.html?id=' + encodeURIComponent(ev.id);
-  }
-
-  function formatClass(ev) {
-    var raw = String(ev.formatSlug || ev.format || ev.meetingType || '').toLowerCase();
-    if (raw.indexOf('online') !== -1 && raw.indexOf('person') === -1) return 'online';
-    if (raw.indexOf('hybrid') !== -1) return 'hybrid';
-    return 'in-person';
   }
 
   function formatLabel(ev) {
@@ -159,15 +164,94 @@
     }
   }
 
+  function isNearMeActive() {
+    return !!(window.hubIsNearMeActive && window.hubIsNearMeActive());
+  }
+
+  function getNearRadiusMiles() {
+    return window.hubNearRadiusMiles ? window.hubNearRadiusMiles() : 25;
+  }
+
+  function eventWithinNearMe(ev, userCoords) {
+    if (!isNearMeActive()) return true;
+    if (!userCoords) return false;
+    var coords = coordsForEvent(ev);
+    if (!coords || !window.hubDistanceMiles) return false;
+    return (
+      window.hubDistanceMiles(userCoords[0], userCoords[1], coords[0], coords[1]) <=
+      getNearRadiusMiles()
+    );
+  }
+
+  function filterEventsForMap(events, userCoords) {
+    var list = events || [];
+    if (viewportFilterActive && map) {
+      list = filterEventsInBounds(list);
+    }
+    if (isNearMeActive()) {
+      list = list.filter(function (ev) {
+        return eventWithinNearMe(ev, userCoords);
+      });
+    }
+    return list;
+  }
+
+  function clearNearMeCircle() {
+    if (nearMeCircle && map) {
+      map.removeLayer(nearMeCircle);
+      nearMeCircle = null;
+    }
+  }
+
+  function updateNearMeCircle(userCoords) {
+    clearNearMeCircle();
+    if (!map || !isNearMeActive() || !userCoords) return;
+    var radiusMeters = getNearRadiusMiles() * 1609.344;
+    nearMeCircle = L.circle(userCoords, {
+      radius: radiusMeters,
+      color: '#9a7aa8',
+      fillColor: '#c299d1',
+      fillOpacity: 0.14,
+      weight: 2,
+    }).addTo(map);
+    nearMeCircle.bringToBack();
+  }
+
+  function fitMapToNearMe(userCoords) {
+    if (!map || !userCoords) return;
+    var radiusMeters = getNearRadiusMiles() * 1609.344;
+    var bounds = L.circle(userCoords, { radius: radiusMeters }).getBounds();
+    suppressMapEvents++;
+    map.fitBounds(bounds, { padding: [48, 48], maxZoom: 13 });
+    setTimeout(function () {
+      suppressMapEvents = Math.max(0, suppressMapEvents - 1);
+    }, 400);
+  }
+
+  function markerIconForEvent(ev) {
+    return L.divIcon({
+      className: 'hub-map-pin hub-map-pin--in-person',
+      html: '<span class="hub-map-pin-dot" aria-hidden="true"></span>',
+      iconSize: [26, 26],
+      iconAnchor: [13, 26],
+      popupAnchor: [0, -24],
+    });
+  }
+
+  function nearMeSubSuffix() {
+    return isNearMeActive() ? ' · within ' + getNearRadiusMiles() + ' miles' : '';
+  }
+
   function formatSidebarSub(onMap, total, hasCoords) {
     var shown = Math.min(sidebarVisibleCount, onMap);
     var more = onMap > sidebarVisibleCount ? '+' : '';
+    var nearSuffix = nearMeSubSuffix();
     if (viewportFilterActive) {
       var areaLead = onMap + ' in this area · ' + total + ' matching · showing ';
       if (hasCoords) {
-        return areaLead + 'nearest ' + shown + more;
+        return areaLead + 'nearest ' + shown + more + nearSuffix;
       }
-      return areaLead + shown + more + ' · add postcode for distances';
+      return areaLead + shown + more + ' · add postcode for distances' + nearSuffix;
     }
     if (hasCoords) {
       return (
@@ -176,7 +260,8 @@
         total +
         ' matching · showing nearest ' +
         shown +
-        more
+        more +
+        nearSuffix
       );
     }
     return (
@@ -186,7 +271,8 @@
       ' matching · showing ' +
       shown +
       more +
-      ' · add postcode for distances'
+      ' · add postcode for distances' +
+      nearSuffix
     );
   }
 
@@ -465,7 +551,7 @@
 
   function addMarker(ev, coords, miles) {
     var popupMax = Math.min(280, Math.max(220, (window.innerWidth || 320) - 48));
-    var marker = L.marker(coords).bindPopup(popupHtml(ev, miles), {
+    var marker = L.marker(coords, { icon: markerIconForEvent(ev) }).bindPopup(popupHtml(ev, miles), {
       className: 'map-event-popup',
       maxWidth: popupMax,
       minWidth: Math.min(220, popupMax),
@@ -549,9 +635,11 @@
       if (mapSidebarSub) {
         mapSidebarSub.textContent = viewportFilterActive && total
           ? 'No events in this map area · ' + total + ' match your filters'
-          : total
-            ? 'No mappable in-person events match your filters.'
-            : 'No events to show yet.';
+          : isNearMeActive() && total
+            ? 'No events within ' + getNearRadiusMiles() + ' miles · ' + total + ' match your filters'
+            : total
+              ? 'No mappable in-person events match your filters.'
+              : 'No events to show yet.';
       }
       mapSidebarList.innerHTML = '';
       if (mapSidebarFoot) mapSidebarFoot.hidden = true;
@@ -691,6 +779,7 @@
       lastLayoutMobile = null;
       clearPanelInlineSize();
       clearViewportFilter(false);
+      clearNearMeCircle();
       return;
     }
 
@@ -758,26 +847,27 @@
     });
   }
 
-  function finishMarkerRender(token, events, placed, skipped) {
+  function finishMarkerRender(token, events, placed, skipped, userCoords) {
     if (token !== renderToken || !isMapView || !map) return;
 
     invalidateMapSize(0);
+    updateNearMeCircle(userCoords);
 
     var sourceEvents = events || [];
-    var displayEvents =
-      viewportFilterActive && map ? filterEventsInBounds(sourceEvents) : sourceEvents;
+    var displayEvents = filterEventsForMap(sourceEvents, userCoords);
     var mappable = displayEvents.filter(function (ev) {
       return coordsForEvent(ev) != null;
     });
 
-    resolveUserCoords().then(function (userCoords) {
-      if (token !== renderToken || !isMapView) return;
-      renderSidebar(sourceEvents, mappable);
-    });
+    renderSidebar(sourceEvents, mappable);
 
     if (!placed) {
-      if (viewportFilterActive && sourceEvents.length) {
+      if (isNearMeActive() && !userCoords) {
+        setMapHint('Turn on location access or enter a postcode to use Near me on the map.');
+      } else if (viewportFilterActive && sourceEvents.length) {
         setMapHint('No events in this map area. Pan the map or tap Show all.');
+      } else if (isNearMeActive() && sourceEvents.length) {
+        setMapHint('No events within ' + getNearRadiusMiles() + ' miles. Try a wider radius.');
       } else {
         map.setView([54.5, -2.5], 6);
         if (skipped) {
@@ -792,6 +882,10 @@
     }
 
     setMapHint('');
+    if (isNearMeActive() && userCoords && !viewportFilterActive) {
+      fitMapToNearMe(userCoords);
+      return;
+    }
     var coordsList = mappable.map(function (ev) {
       return coordsForEvent(ev);
     });
@@ -817,9 +911,6 @@
     }
     lastFilteredList = events || [];
 
-    var list = viewportFilterActive
-      ? filterEventsInBounds(lastFilteredList)
-      : lastFilteredList;
     var placed = 0;
     var skipped = 0;
     var pending = [];
@@ -827,12 +918,14 @@
     resolveUserCoords().then(function (userCoords) {
       if (token !== renderToken || !isMapView) return;
 
+      var list = filterEventsForMap(lastFilteredList, userCoords);
+
       list.forEach(function (ev) {
         var coords = coordsForEvent(ev);
         if (coords) {
           addMarker(ev, coords, distanceMiles(ev, userCoords));
           placed++;
-        } else if (ev.formatSlug !== 'online') {
+        } else if (isMapMappableFormat(ev)) {
           pending.push(ev);
           skipped++;
         } else {
@@ -841,11 +934,11 @@
       });
 
       if (!pending.length) {
-        finishMarkerRender(token, lastFilteredList, placed, skipped);
+        finishMarkerRender(token, lastFilteredList, placed, skipped, userCoords);
         return;
       }
 
-      if (placed && !viewportFilterActive) {
+      if (placed && !viewportFilterActive && !(isNearMeActive() && userCoords)) {
         var initialCoords = [];
         list.forEach(function (ev) {
           var coords = coordsForEvent(ev);
@@ -864,16 +957,16 @@
 
           pending.forEach(function (ev) {
             var coords = coordsForEvent(ev);
-            if (!coords) return;
+            if (!coords || !eventWithinNearMe(ev, userCoords)) return;
             addMarker(ev, coords, distanceMiles(ev, userCoords));
             placed++;
             skipped--;
           });
 
-          finishMarkerRender(token, lastFilteredList, placed, skipped);
+          finishMarkerRender(token, lastFilteredList, placed, skipped, userCoords);
         })
         .catch(function () {
-          finishMarkerRender(token, lastFilteredList, placed, skipped);
+          finishMarkerRender(token, lastFilteredList, placed, skipped, userCoords);
         });
     });
   }
@@ -881,6 +974,7 @@
   window.hubRefreshMap = function (filtered) {
     if (!isMapView) return;
     clearViewportFilter(false);
+    clearNearMeCircle();
     renderMarkers(filtered || lastFilteredList || []);
   };
 
