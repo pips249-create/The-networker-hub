@@ -6,8 +6,15 @@
   var liveListings = [];
   var liveReviews = [];
 
+  var VERCEL_ANALYTICS_URL =
+    'https://vercel.com/pips249-create/the-networker-hub/analytics';
+
   var PAGE_META = {
     dashboard: { title: 'Overview Dashboard', subtitle: 'System-wide performance health check' },
+    analytics: {
+      title: 'Web Analytics',
+      subtitle: 'Visitor traffic, top pages, referrers, and demographics via Vercel',
+    },
     'event-health': {
       title: 'Event data issues',
       subtitle: 'Fix published events missing dates, organisers, VAT, or profile data',
@@ -796,6 +803,33 @@
     });
   }
 
+  function renderAnalytics() {
+    main.innerHTML =
+      '<div class="space-y-6 max-w-3xl">' +
+      '<div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">' +
+      '<div class="flex items-start gap-4">' +
+      '<span class="inline-flex shrink-0 items-center justify-center w-12 h-12 rounded-xl bg-brand-50 text-brand-700 text-xl" aria-hidden="true">▤</span>' +
+      '<div class="min-w-0 space-y-2">' +
+      '<h3 class="font-bold text-lg text-brand-900">Vercel Web Analytics</h3>' +
+      '<p class="text-sm text-slate-600">Tracking is active on every public page via the shared site layout. Page views appear in your Vercel project dashboard after deploy and real traffic.</p>' +
+      '</div></div>' +
+      '<ul class="text-sm text-slate-600 space-y-2 pl-1">' +
+      '<li class="flex gap-2"><span class="text-emerald-600 shrink-0" aria-hidden="true">✓</span> Privacy-friendly — anonymised, no cookies</li>' +
+      '<li class="flex gap-2"><span class="text-emerald-600 shrink-0" aria-hidden="true">✓</span> Top pages, referrers, countries, devices, and browsers</li>' +
+      '<li class="flex gap-2"><span class="text-emerald-600 shrink-0" aria-hidden="true">✓</span> Includes Command Center and all hub visitor sessions</li>' +
+      '</ul>' +
+      '<div class="flex flex-wrap gap-3 pt-2">' +
+      '<a href="' +
+      attrEsc(VERCEL_ANALYTICS_URL) +
+      '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 hover:bg-brand-900 transition">Open Vercel Analytics <span aria-hidden="true">↗</span></a>' +
+      '<a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold px-4 py-2.5 hover:bg-slate-50 transition">Vercel dashboard</a>' +
+      '</div></div>' +
+      '<div class="rounded-xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">' +
+      '<p class="font-semibold text-slate-800 mb-2">First time here?</p>' +
+      '<p>In Vercel, open project <strong>the-networker-hub</strong> → <strong>Analytics</strong> in the sidebar. Data can take a few minutes after deploy; allow a day or two of traffic before trends are meaningful.</p>' +
+      '</div></div>';
+  }
+
   function renderDashboard() {
     main.innerHTML =
       '<div class="space-y-6">' +
@@ -804,6 +838,12 @@
       '<h3 class="text-sm font-bold uppercase tracking-wide text-slate-500">Critical alerts</h3>' +
       '<div class="grid gap-3" id="dashboard-alerts"><p class="text-sm text-slate-500">Loading from Supabase…</p></div>' +
       '</section>' +
+      '<a href="#analytics" class="block rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-5 shadow-sm hover:border-brand-300 transition group">' +
+      '<div class="flex flex-wrap items-center justify-between gap-3">' +
+      '<div><p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Traffic</p>' +
+      '<p class="font-bold text-brand-900 mt-1">Web Analytics on Vercel</p>' +
+      '<p class="text-sm text-slate-600 mt-1">View visitors, top pages, referrers, and device breakdown.</p></div>' +
+      '<span class="text-sm font-semibold text-brand-700 group-hover:text-brand-900">Open →</span></div></a>' +
       '<section class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4" id="dashboard-metrics">' +
       card('Revenue & fees', '…', 'Loading…', 'emerald') +
       card('Live listings', '…', 'Loading…', 'brand') +
@@ -3116,6 +3156,7 @@
 
   var routes = {
     dashboard: renderDashboard,
+    analytics: renderAnalytics,
     'event-health': renderEventHealth,
     'group-cleanup': renderGroupCleanup,
     'event-cleanup': renderEventCleanup,

@@ -55,15 +55,40 @@
 
 /**
  * Shared site navigation — same bar on every page.
- * NAV_BUILD=20260627 — Session cache + pending auth skeleton (no logged-out flash).
+ * NAV_BUILD=20260710 — Vercel Web Analytics + session cache.
  */
 (function () {
-  var NAV_BUILD = '20260627';
+  var NAV_BUILD = '20260710';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
   var page = (script && script.getAttribute('data-page')) || '';
+
+  if (!window.__hubVercelAnalytics) {
+    window.__hubVercelAnalytics = true;
+    if (!window.va) {
+      window.va = function () {
+        (window.vaq = window.vaq || []).push(arguments);
+      };
+    }
+    var insightsSrc = '/_vercel/insights/script.js';
+    if (!document.head.querySelector('script[src*="insights/script.js"]')) {
+      var insights = document.createElement('script');
+      insights.src = insightsSrc;
+      insights.defer = true;
+      insights.dataset.sdkn = '@vercel/analytics';
+      insights.dataset.sdkv = '2.0.1';
+      insights.onerror = function () {
+        console.log(
+          '[Vercel Web Analytics] Failed to load ' +
+            insightsSrc +
+            '. Enable Web Analytics in Vercel and redeploy.'
+        );
+      };
+      document.head.appendChild(insights);
+    }
+  }
 
   var mount = document.getElementById('hub-site-nav');
   if (!mount) return;
