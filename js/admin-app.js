@@ -28,7 +28,7 @@
     },
     'event-cleanup': {
       title: 'Event cleanup',
-      subtitle: 'Link events to groups, create new events, and fix basic event data',
+      subtitle: 'Search and filter events, then expand a row to edit — built for large catalogues',
     },
     impersonate: {
       title: 'Impersonate user',
@@ -55,9 +55,11 @@
   var EVENT_TYPES = [
     'Networking meeting',
     'Netwalking',
+    'Sport & social',
     'Conference',
     'Exhibition',
     'Awards ceremony',
+    "Women's networking",
   ];
   var MEETING_FORMATS = ['In person', 'Online', 'Hybrid'];
   var healthCache = null;
@@ -66,9 +68,21 @@
   var analyticsState = { period: '30d' };
   var eventHealthState = { issueFilter: 'all' };
   var groupCleanupState = { offset: 0, q: '', incomplete: false, hasMore: false, total: 0, loading: false, selected: {} };
-  var eventCleanupState = { organiserId: '', unlinked: false, offset: 0, q: '', hasMore: false, total: 0, loading: false };
+  var eventCleanupState = {
+    organiserId: '',
+    unlinked: false,
+    noDate: false,
+    status: '',
+    approval: '',
+    sort: 'recent',
+    offset: 0,
+    q: '',
+    hasMore: false,
+    total: 0,
+    loading: false,
+  };
   var GROUP_PAGE_SIZE = 30;
-  var EVENT_PAGE_SIZE = 20;
+  var EVENT_PAGE_SIZE = 40;
   var adminLogoPending = {};
   var groupSearchTimer = null;
   var eventSearchTimer = null;
@@ -3217,6 +3231,105 @@
     );
   }
 
+  function approvalStatusBadge(status) {
+    var s = String(status || 'Pending Review');
+    var low = s.toLowerCase();
+    var cls =
+      low.indexOf('approved') >= 0 && low.indexOf('pending') < 0
+        ? 'bg-emerald-100 text-emerald-800'
+        : low.indexOf('reject') >= 0
+          ? 'bg-red-100 text-red-800'
+          : 'bg-amber-100 text-amber-900';
+    return (
+      '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 ' +
+      cls +
+      '">' +
+      esc(s) +
+      '</span>'
+    );
+  }
+
+  function eventCleanupHasActiveFilters() {
+    return !!(
+      eventCleanupState.q ||
+      eventCleanupState.organiserId ||
+      eventCleanupState.unlinked ||
+      eventCleanupState.noDate ||
+      eventCleanupState.status ||
+      eventCleanupState.approval
+    );
+  }
+
+  function syncEventCleanupFilterUi() {
+    var el;
+    el = document.getElementById('event-cleanup-organiser');
+    if (el) el.value = eventCleanupState.organiserId || '';
+    el = document.getElementById('event-cleanup-search');
+    if (el) el.value = eventCleanupState.q || '';
+    el = document.getElementById('event-cleanup-unlinked');
+    if (el) el.checked = !!eventCleanupState.unlinked;
+    el = document.getElementById('event-cleanup-no-date');
+    if (el) el.checked = !!eventCleanupState.noDate;
+    el = document.getElementById('event-cleanup-status-filter');
+    if (el) el.value = eventCleanupState.status || '';
+    el = document.getElementById('event-cleanup-approval-filter');
+    if (el) el.value = eventCleanupState.approval || '';
+    el = document.getElementById('event-cleanup-sort');
+    if (el) el.value = eventCleanupState.sort || 'recent';
+    main.querySelectorAll('[data-event-quick]').forEach(function (btn) {
+      var key = btn.getAttribute('data-event-quick');
+      var active = false;
+      if (key === 'unlinked') active = eventCleanupState.unlinked;
+      else if (key === 'no_date') active = eventCleanupState.noDate;
+      else if (key === 'draft') active = eventCleanupState.status === 'draft';
+      else if (key === 'pending') active = eventCleanupState.approval === 'Pending Review';
+      btn.classList.toggle('ring-2', active);
+      btn.classList.toggle('ring-brand-700', active);
+      btn.classList.toggle('bg-brand-50', active);
+    });
+  }
+
+  function eventCleanupEditFormHtml(ev, organisers) {
+    return (
+      '<form class="event-cleanup-form grid sm:grid-cols-2 gap-3" data-event-id="' +
+      attrEsc(ev.id) +
+      '">' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
+      '<input type="text" name="title" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(ev.title || '') +
+      '"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
+      '<select name="organiser_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      organiserOptionsHtml(organisers, ev.organiser_id) +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event date</label>' +
+      '<input type="datetime-local" name="starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(toDatetimeLocalValue(ev.starts_at)) +
+      '"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
+      '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      eventStatusOptions(ev.status || 'draft') +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
+      '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">—</option>' +
+      eventTypeOptions(ev.event_type) +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Format</label>' +
+      '<select name="meeting_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">—</option>' +
+      meetingFormatOptions(ev.meeting_type) +
+      '</select></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Cover image URL</label>' +
+      '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(ev.photo_url || '') +
+      '" placeholder="https://…"></div>' +
+      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save event</button>' +
+      '<span class="event-cleanup-msg text-xs"></span></div></form>'
+    );
+  }
+
   function readFileAsBase64(file) {
     return new Promise(function (resolve, reject) {
       var reader = new FileReader();
@@ -3389,6 +3502,10 @@
     params.set('limit', String(EVENT_PAGE_SIZE));
     if (eventCleanupState.organiserId) params.set('organiser_id', eventCleanupState.organiserId);
     if (eventCleanupState.unlinked) params.set('unlinked', '1');
+    if (eventCleanupState.noDate) params.set('no_date', '1');
+    if (eventCleanupState.status) params.set('status', eventCleanupState.status);
+    if (eventCleanupState.approval) params.set('approval_status', eventCleanupState.approval);
+    if (eventCleanupState.sort) params.set('sort', eventCleanupState.sort);
     if (eventCleanupState.q) params.set('q', eventCleanupState.q);
     return adminGet('/api/admin/events?' + params.toString())
       .then(function (data) {
@@ -3718,6 +3835,26 @@
       }
       if (e.target.id === 'event-cleanup-unlinked') {
         eventCleanupState.unlinked = e.target.checked;
+        syncEventCleanupFilterUi();
+        refreshEventCleanupData();
+      }
+      if (e.target.id === 'event-cleanup-no-date') {
+        eventCleanupState.noDate = e.target.checked;
+        syncEventCleanupFilterUi();
+        refreshEventCleanupData();
+      }
+      if (e.target.id === 'event-cleanup-status-filter') {
+        eventCleanupState.status = e.target.value || '';
+        syncEventCleanupFilterUi();
+        refreshEventCleanupData();
+      }
+      if (e.target.id === 'event-cleanup-approval-filter') {
+        eventCleanupState.approval = e.target.value || '';
+        syncEventCleanupFilterUi();
+        refreshEventCleanupData();
+      }
+      if (e.target.id === 'event-cleanup-sort') {
+        eventCleanupState.sort = e.target.value || 'recent';
         refreshEventCleanupData();
       }
     });
@@ -3730,6 +3867,43 @@
       }, 300);
     });
     main.addEventListener('click', function (e) {
+      var toggle = e.target.closest('[data-toggle-event-edit]');
+      if (toggle) {
+        var row = toggle.closest('[data-event-id-row]');
+        var panel = row && row.nextElementSibling;
+        if (panel && panel.classList.contains('event-cleanup-panel')) {
+          var opening = panel.classList.contains('hidden');
+          main.querySelectorAll('.event-cleanup-panel').forEach(function (p) {
+            p.classList.add('hidden');
+          });
+          if (opening) panel.classList.remove('hidden');
+        }
+        return;
+      }
+      var quick = e.target.closest('[data-event-quick]');
+      if (quick) {
+        var key = quick.getAttribute('data-event-quick');
+        if (key === 'clear') {
+          eventCleanupState.organiserId = '';
+          eventCleanupState.unlinked = false;
+          eventCleanupState.noDate = false;
+          eventCleanupState.status = '';
+          eventCleanupState.approval = '';
+          eventCleanupState.q = '';
+        } else if (key === 'unlinked') {
+          eventCleanupState.unlinked = !eventCleanupState.unlinked;
+        } else if (key === 'no_date') {
+          eventCleanupState.noDate = !eventCleanupState.noDate;
+        } else if (key === 'draft') {
+          eventCleanupState.status = eventCleanupState.status === 'draft' ? '' : 'draft';
+        } else if (key === 'pending') {
+          eventCleanupState.approval =
+            eventCleanupState.approval === 'Pending Review' ? '' : 'Pending Review';
+        }
+        syncEventCleanupFilterUi();
+        refreshEventCleanupData();
+        return;
+      }
       if (e.target.id === 'event-cleanup-load-more') loadMoreEvents();
     });
   }
@@ -3993,6 +4167,7 @@
   function renderEventCleanupList() {
     var list = document.getElementById('event-cleanup-list');
     var status = document.getElementById('event-cleanup-status');
+    var hint = document.getElementById('event-cleanup-hint');
     if (!list || !eventCleanupCache) return;
 
     var data = eventCleanupCache;
@@ -4015,7 +4190,7 @@
         parts.push(
           '<span class="text-amber-800 font-semibold">' +
             data.unlinked_count +
-            ' unlinked</span>'
+            ' unlinked in catalogue</span>'
         );
       }
       if (eventCleanupState.loading) {
@@ -4024,73 +4199,81 @@
       status.innerHTML = parts.join(' · ');
     }
 
+    if (hint) {
+      if (total > 100 && !eventCleanupHasActiveFilters()) {
+        hint.classList.remove('hidden');
+      } else {
+        hint.classList.add('hidden');
+      }
+    }
+
     if (!events.length) {
       list.innerHTML =
-        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No events match your filters. Create one below or change the organiser filter.</p>';
+        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No events match your filters. Try search, quick filters, or create a new event below.</p>';
       return;
     }
 
-    list.innerHTML =
-      events
-        .map(function (ev) {
+    var rows = events
+      .map(function (ev) {
         var publicHref = ev.slug ? '../events/' + encodeURIComponent(ev.slug) : '';
+        var organiserLabel = ev.organiser_name
+          ? esc(ev.organiser_name)
+          : '<span class="text-amber-800 font-semibold">Unlinked</span>';
+        var dateLabel = ev.starts_at
+          ? esc(fmtTime(ev.starts_at))
+          : '<span class="text-slate-400">No date</span>';
         return (
-          '<article class="rounded-xl border border-slate-200 bg-white shadow-sm p-4 space-y-3" data-event-id="' +
+          '<tr class="border-b border-slate-100 hover:bg-slate-50/80" data-event-id-row="' +
           attrEsc(ev.id) +
           '">' +
-          '<div class="flex flex-wrap items-start justify-between gap-2">' +
-          '<div><h3 class="font-semibold text-brand-900">' +
+          '<td class="py-2.5 pr-3 max-w-[14rem]"><div class="font-semibold text-brand-900 truncate" title="' +
+          attrEsc(ev.title || 'Untitled') +
+          '">' +
           esc(ev.title || 'Untitled') +
-          '</h3>' +
-          '<p class="text-xs text-slate-500 mt-1">' +
-          (ev.organiser_name ? esc(ev.organiser_name) : 'No organiser linked') +
-          (ev.starts_at ? ' · ' + esc(fmtTime(ev.starts_at)) : '') +
-          '</p></div>' +
+          '</div>' +
+          (ev.city ? '<div class="text-[11px] text-slate-500 truncate">' + esc(ev.city) + '</div>' : '') +
+          '</td>' +
+          '<td class="py-2.5 pr-3 text-xs text-slate-600 max-w-[10rem]"><span class="block truncate">' +
+          organiserLabel +
+          '</span></td>' +
+          '<td class="py-2.5 pr-3 text-xs text-slate-600 whitespace-nowrap">' +
+          dateLabel +
+          '</td>' +
+          '<td class="py-2.5 pr-3"><div class="flex flex-wrap gap-1">' +
+          listingStatusBadge(ev.status) +
+          approvalStatusBadge(ev.approval_status) +
+          '</div></td>' +
+          '<td class="py-2.5 text-right whitespace-nowrap">' +
+          '<div class="flex flex-wrap justify-end gap-2">' +
           (publicHref
             ? '<a href="' +
               attrEsc(publicHref) +
-              '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline shrink-0">View public</a>'
+              '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View</a>'
             : '') +
-          '</div>' +
-          '<form class="event-cleanup-form grid sm:grid-cols-2 gap-3" data-event-id="' +
-          attrEsc(ev.id) +
-          '">' +
-          '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
-          '<input type="text" name="title" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-          attrEsc(ev.title || '') +
-          '"></div>' +
-          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
-          '<select name="organiser_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-          organiserOptionsHtml(organisers, ev.organiser_id) +
-          '</select></div>' +
-          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event date</label>' +
-          '<input type="datetime-local" name="starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-          attrEsc(toDatetimeLocalValue(ev.starts_at)) +
-          '"></div>' +
-          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
-          '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-          eventStatusOptions(ev.status || 'draft') +
-          '</select></div>' +
-          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
-          '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-          '<option value="">—</option>' +
-          eventTypeOptions(ev.event_type) +
-          '</select></div>' +
-          '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Format</label>' +
-          '<select name="meeting_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-          '<option value="">—</option>' +
-          meetingFormatOptions(ev.meeting_type) +
-          '</select></div>' +
-          '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Cover image URL</label>' +
-          '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-          attrEsc(ev.photo_url || '') +
-          '" placeholder="https://…"></div>' +
-          '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
-          '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save event</button>' +
-          '<span class="event-cleanup-msg text-xs"></span></div></form></article>'
+          '<button type="button" data-toggle-event-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">Edit</button>' +
+          '</div></td></tr>' +
+          '<tr class="event-cleanup-panel hidden border-b border-slate-200 bg-slate-50/80">' +
+          '<td colspan="5" class="p-4">' +
+          eventCleanupEditFormHtml(ev, organisers) +
+          '</td></tr>'
         );
       })
-      .join('') +
+      .join('');
+
+    list.innerHTML =
+      adminTableScroll(
+        '<table class="w-full text-sm text-left border-collapse">' +
+          '<thead class="text-xs uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
+          '<tr>' +
+          '<th class="py-2 pr-3 font-semibold">Event</th>' +
+          '<th class="py-2 pr-3 font-semibold">Organiser</th>' +
+          '<th class="py-2 pr-3 font-semibold">Date</th>' +
+          '<th class="py-2 pr-3 font-semibold">Status</th>' +
+          '<th class="py-2 font-semibold text-right">Actions</th>' +
+          '</tr></thead><tbody>' +
+          rows +
+          '</tbody></table>'
+      ) +
       (eventCleanupState.hasMore
         ? '<div id="event-cleanup-sentinel" class="py-6 text-center">' +
           '<button type="button" id="event-cleanup-load-more" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-brand-900 hover:bg-slate-50">Load more events</button>' +
@@ -4102,9 +4285,60 @@
     main.innerHTML =
       '<div class="space-y-4">' +
       '<div id="event-cleanup-status" class="text-sm text-slate-500">Loading events…</div>' +
-      '<div class="rounded-xl border border-brand-200 bg-brand-50/50 p-4 space-y-3">' +
-      '<h3 class="font-semibold text-brand-900">Create event for a group</h3>' +
-      '<p class="text-xs text-slate-600">Add another event under an existing organiser profile. It starts as a draft until you publish it.</p>' +
+      '<p id="event-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
+      'Large catalogue — search by title or city, pick an organiser, or use quick filters below. Rows load in batches; expand a row only when you need to edit.</p>' +
+      '<div class="admin-filter-bar sticky top-0 z-10 rounded-xl border border-slate-200 bg-white/95 backdrop-blur p-4 space-y-3 shadow-sm">' +
+      '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
+      '<input type="search" id="event-cleanup-search" placeholder="Search title or city…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
+      attrEsc(eventCleanupState.q) +
+      '">' +
+      '<select id="event-cleanup-sort" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:w-44">' +
+      '<option value="recent"' +
+      (eventCleanupState.sort === 'recent' ? ' selected' : '') +
+      '>Newest first</option>' +
+      '<option value="date"' +
+      (eventCleanupState.sort === 'date' ? ' selected' : '') +
+      '>Event date</option>' +
+      '<option value="title"' +
+      (eventCleanupState.sort === 'title' ? ' selected' : '') +
+      '>Title A–Z</option></select></div>' +
+      '<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
+      '<select id="event-cleanup-organiser" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-xs">' +
+      '<option value="">All organisers</option></select>' +
+      '<select id="event-cleanup-status-filter" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[10rem]">' +
+      '<option value="">Any status</option>' +
+      eventStatusOptions(eventCleanupState.status) +
+      '</select>' +
+      '<select id="event-cleanup-approval-filter" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[11rem]">' +
+      '<option value="">Any approval</option>' +
+      '<option value="Pending Review"' +
+      (eventCleanupState.approval === 'Pending Review' ? ' selected' : '') +
+      '>Pending review</option>' +
+      '<option value="Approved"' +
+      (eventCleanupState.approval === 'Approved' ? ' selected' : '') +
+      '>Approved</option>' +
+      '<option value="Rejected"' +
+      (eventCleanupState.approval === 'Rejected' ? ' selected' : '') +
+      '>Rejected</option></select>' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="event-cleanup-unlinked" class="rounded border-slate-300"' +
+      (eventCleanupState.unlinked ? ' checked' : '') +
+      '> Unlinked</label>' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="event-cleanup-no-date" class="rounded border-slate-300"' +
+      (eventCleanupState.noDate ? ' checked' : '') +
+      '> No date</label></div>' +
+      '<div class="flex flex-wrap gap-2">' +
+      '<button type="button" data-event-quick="unlinked" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Unlinked</button>' +
+      '<button type="button" data-event-quick="no_date" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">No date</button>' +
+      '<button type="button" data-event-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
+      '<button type="button" data-event-quick="pending" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Pending approval</button>' +
+      '<button type="button" data-event-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div></div>' +
+      '<div id="event-cleanup-list"></div>' +
+      '<details class="rounded-xl border border-brand-200 bg-brand-50/50 group">' +
+      '<summary class="cursor-pointer list-none font-semibold text-brand-900 px-4 py-3 select-none">Create event for a group</summary>' +
+      '<div class="px-4 pb-4 space-y-3 border-t border-brand-100">' +
+      '<p class="text-xs text-slate-600 pt-3">Add another event under an existing organiser profile. It starts as a draft until you publish it.</p>' +
       '<form class="event-create-form grid sm:grid-cols-2 gap-3">' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
       '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Monthly networking breakfast"></div>' +
@@ -4127,19 +4361,9 @@
       '</select></div>' +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create event</button>' +
-      '<span class="event-create-msg text-xs"></span></div></form></div>' +
-      '<div class="admin-filter-bar flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
-      '<select id="event-cleanup-organiser" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-xs">' +
-      '<option value="">All organisers</option></select>' +
-      '<input type="search" id="event-cleanup-search" placeholder="Search events…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:max-w-xs bg-white" value="' +
-      attrEsc(eventCleanupState.q) +
-      '">' +
-      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
-      '<input type="checkbox" id="event-cleanup-unlinked" class="rounded border-slate-300"' +
-      (eventCleanupState.unlinked ? ' checked' : '') +
-      '> Unlinked only</label></div>' +
-      '<div id="event-cleanup-list" class="space-y-3"></div></div>';
+      '<span class="event-create-msg text-xs"></span></div></form></div></details></div>';
 
+    syncEventCleanupFilterUi();
     refreshEventCleanupData();
   }
 

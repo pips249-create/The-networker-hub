@@ -83,22 +83,45 @@ async function listEventsForAdmin(query) {
   const sb = getSupabaseAdmin();
   const organiserId = String(query.organiser_id || '').trim();
   const unlinked = query.unlinked === '1' || query.unlinked === 'true';
+  const noDate = query.no_date === '1' || query.no_date === 'true';
+  const status = String(query.status || '').trim();
+  const approvalStatus = String(query.approval_status || '').trim();
   const search = String(query.q || '').trim();
+  const sort = String(query.sort || 'recent').trim().toLowerCase();
   const offset = Math.max(parseInt(String(query.offset || ''), 10) || 0, 0);
-  const limit = Math.min(Math.max(parseInt(String(query.limit || ''), 10) || 20, 1), 100);
+  const limit = Math.min(Math.max(parseInt(String(query.limit || ''), 10) || 40, 1), 100);
 
   let dbQuery = sb
     .from('events')
     .select(
       'id, title, description, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, created_at',
       { count: 'exact' }
-    )
-    .order('title', { ascending: true });
+    );
+
+  if (sort === 'title') {
+    dbQuery = dbQuery.order('title', { ascending: true });
+  } else if (sort === 'date') {
+    dbQuery = dbQuery.order('starts_at', { ascending: false, nullsFirst: false });
+  } else {
+    dbQuery = dbQuery.order('created_at', { ascending: false });
+  }
 
   if (unlinked) {
     dbQuery = dbQuery.is('organiser_id', null);
   } else if (organiserId) {
     dbQuery = dbQuery.eq('organiser_id', organiserId);
+  }
+
+  if (noDate) {
+    dbQuery = dbQuery.is('starts_at', null);
+  }
+
+  if (status) {
+    dbQuery = dbQuery.eq('status', status);
+  }
+
+  if (approvalStatus) {
+    dbQuery = dbQuery.eq('approval_status', approvalStatus);
   }
 
   if (search) {
