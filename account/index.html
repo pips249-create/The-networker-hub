@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260626" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260708" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260607c" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260626" />
 
   </head>
@@ -89,6 +89,7 @@
                         <th>Date</th>
                         <th>Time</th>
                         <th>Tickets</th>
+                        <th>Payment</th>
                         <th>Review</th>
                         <th></th>
                       </tr>
@@ -98,7 +99,7 @@
                 </div>
               </div>
               <p class="ad-empty" id="ad-upcoming-empty" hidden>
-                No upcoming events.
+                No upcoming events — browse events to book your next ticket.
                 <a href="../events/index.html">Browse events →</a>
               </p>
               <nav class="ad-pagination" id="ad-pagination-upcoming" aria-label="Upcoming events pages" hidden></nav>
@@ -144,6 +145,7 @@
                         <th>Date</th>
                         <th>Time</th>
                         <th>Tickets</th>
+                        <th>Payment</th>
                         <th>Review</th>
                         <th></th>
                       </tr>
@@ -159,7 +161,7 @@
             <!-- Reviews pending -->
             <section class="ad-page" id="ad-page-reviews-pending" data-ad-page="reviews-pending">
               <h2 class="ad-section-title">Reviews to complete</h2>
-              <p class="ad-section-sub">Events you attended — leave feedback when review is open.</p>
+              <p class="ad-section-sub">Events you attended with a confirmed ticket — your review appears on the organiser's profile.</p>
               <div class="ad-table-scroll">
                 <div class="ad-table-wrap">
                   <table>
@@ -206,8 +208,54 @@
       </div>
     </div>
 
+    <div class="ad-review-modal" id="ad-review-modal" hidden>
+      <div class="ad-review-modal-backdrop" id="ad-review-modal-backdrop"></div>
+      <div
+        class="ad-review-modal-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ad-review-modal-title"
+      >
+        <button type="button" class="ad-review-modal-close" id="ad-review-modal-close" aria-label="Close">
+          ×
+        </button>
+        <h2 class="ad-review-modal-title" id="ad-review-modal-title">Leave a review</h2>
+        <p class="ad-review-modal-sub" id="ad-review-modal-sub"></p>
+        <form id="ad-review-form" class="ad-review-form" novalidate>
+          <input type="hidden" id="ad-review-event-id" name="eventId" value="" />
+          <fieldset class="ad-review-stars-field">
+            <legend>Your rating</legend>
+            <div class="ad-review-stars" id="ad-review-stars" role="radiogroup" aria-label="Rating out of 5">
+              <button type="button" class="ad-review-star" data-rating="1" aria-label="1 star">★</button>
+              <button type="button" class="ad-review-star" data-rating="2" aria-label="2 stars">★</button>
+              <button type="button" class="ad-review-star" data-rating="3" aria-label="3 stars">★</button>
+              <button type="button" class="ad-review-star" data-rating="4" aria-label="4 stars">★</button>
+              <button type="button" class="ad-review-star" data-rating="5" aria-label="5 stars">★</button>
+            </div>
+          </fieldset>
+          <label class="ad-review-label" for="ad-review-text">
+            Your feedback
+            <span class="ad-review-label-hint">Shown on the organiser's public profile (minimum 10 characters)</span>
+          </label>
+          <textarea
+            id="ad-review-text"
+            name="reviewText"
+            rows="4"
+            maxlength="2000"
+            required
+            placeholder="What was the host like? Would you attend again?"
+          ></textarea>
+          <p class="ad-review-error" id="ad-review-error" hidden></p>
+          <div class="ad-review-actions">
+            <button type="button" class="ad-btn" id="ad-review-cancel">Cancel</button>
+            <button type="submit" class="ad-btn ad-btn-gold" id="ad-review-submit">Submit review</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <script src="../js/hub-favourites.js?v=20260629"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260708"></script>
+    <script src="../js/attendee-dashboard.js?v=20260607c"></script>
   </body>
 </html>

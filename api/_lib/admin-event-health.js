@@ -3,6 +3,7 @@
  */
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { publicEventSlug } = require('./event-slug');
+const { publicOrganiserSlug } = require('./organiser-slug');
 
 const ISSUE_DEFS = {
   missing_date: { label: 'Missing event date', severity: 'high' },
@@ -13,6 +14,8 @@ const ISSUE_DEFS = {
   missing_event_type: { label: 'Event type not set', severity: 'low' },
   missing_meeting_type: { label: 'Format not set', severity: 'low' },
 };
+
+const SEVERITY_ORDER = { high: 0, medium: 1, low: 2 };
 
 function issuePayload(code) {
   const def = ISSUE_DEFS[code] || { label: code, severity: 'low' };
@@ -32,6 +35,27 @@ async function fetchPublishedRows(sb) {
   return tableRes.data || [];
 }
 
+async function fetchAllOrganisers(sb) {
+  const pageSize = 1000;
+  let from = 0;
+  const all = [];
+
+  while (true) {
+    const res = await sb
+      .from('organisers')
+      .select('id, name, listing_status, slug')
+      .order('name', { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (res.error) throw new Error(res.error.message);
+    const batch = res.data || [];
+    all.push(...batch);
+    if (batch.length < pageSize) break;
+    from += pageSize;
+  }
+
+  return all;
+}
+
 async function scanEventHealth() {
   if (!isSupabaseConfigured()) {
     return { configured: false, count: 0, events: [], organisers: [], issuesByCode: {} };
@@ -48,7 +72,7 @@ async function scanEventHealth() {
   if (orgIds.length) {
     const orgRes = await sb
       .from('organisers')
-      .select('id, name, photo_url, description, listing_status')
+      .select('id, name, photo_url, description, listing_status, slug')
       .in('id', orgIds);
     if (orgRes.error) throw new Error(orgRes.error.message);
     organisers = orgRes.data || [];
@@ -60,11 +84,7 @@ async function scanEventHealth() {
     tickets = tixRes.data || [];
   }
 
-  const allOrgRes = await sb
-    .from('organisers')
-    .select('id, name, listing_status')
-    .order('name', { ascending: true });
-  if (allOrgRes.error) throw new Error(allOrgRes.error.message);
+  const allOrganisers = await fetchAllOrganisers(sb);
 
   const orgById = new Map(organisers.map((o) => [o.id, o]));
   const tixByEvent = new Map();
@@ -108,6 +128,9 @@ async function scanEventHealth() {
       slug: publicEventSlug({ slug: row.slug, title: row.title }),
       organiser_id: row.organiser_id || '',
       organiser_name: org ? String(org.name || '').trim() : '',
+      organiser_slug: org ? publicOrganiserSlug(org) || '' : '',
+      organiser_photo_url: org ? String(org.photo_url || '').trim() : '',
+      organiser_description: org ? String(org.description || '').trim() : '',
       starts_at: row.starts_at || '',
       event_type: row.event_type || '',
       meeting_type: row.meeting_type || '',
@@ -121,12 +144,13 @@ async function scanEventHealth() {
     count: flagged.length,
     events: flagged,
     issuesByCode,
-    organisers: (allOrgRes.data || []).map((o) => ({
+    organisers: allOrganisers.map((o) => ({
       id: o.id,
       name: String(o.name || '').trim(),
       listingStatus: o.listing_status || '',
+      slug: publicOrganiserSlug(o) || '',
     })),
   };
 }
 
-module.exports = { scanEventHealth, ISSUE_DEFS, issuePayload };
+module.exports = { scanEventHealth, ISSUE_DEFS, issuePayload, SEVERITY_ORDER };

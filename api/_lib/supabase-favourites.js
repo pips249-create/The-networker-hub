@@ -137,4 +137,6 @@ module.exports = {
   addFavourite,
   removeFavourite,
   toggleFavourite,
+  resolveAttendeeId,
+  ensureAttendeeId,
 };

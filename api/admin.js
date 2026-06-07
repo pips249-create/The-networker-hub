@@ -11,7 +11,9 @@ const routes = {
   moderation: require('./_lib/routes/admin-moderation'),
   financials: require('./_lib/routes/admin-financials'),
   sponsor: require('./_lib/routes/admin-sponsor'),
+  emails: require('./_lib/routes/admin-emails'),
   'event-health': require('./_lib/routes/admin-event-health'),
+  organisers: require('./_lib/routes/admin-organisers'),
   impersonate: require('./_lib/routes/admin-impersonate'),
 };
 

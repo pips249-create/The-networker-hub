@@ -1,18 +1,20 @@
-const {
-  json,
-  setCors,
-  getOrganiserWorkspace,
-  airtableSetupHint,
-} = require('../organiser');
-const { listAttendeesForOrganiserEvents } = require('../organiser-attendees');
+const { getOrganiserApi } = require('../organiser-provider');
 
 module.exports = async function handler(req, res) {
+  const api = getOrganiserApi();
+  const { json, setCors, getOrganiserWorkspace, listAttendeesForOrganiserEvents, airtableSetupHint } =
+    api;
+
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return json(res, 405, { error: 'method_not_allowed' });
+
+  if (!listAttendeesForOrganiserEvents) {
+    return json(res, 501, { error: 'attendees_not_supported' });
+  }
 
   try {
     const ws = await getOrganiserWorkspace(req);
@@ -45,7 +47,7 @@ module.exports = async function handler(req, res) {
       ok: true,
       attendees,
       eventCount: eventIds.length,
-      airtable: airtableSetupHint('events'),
+      airtable: airtableSetupHint && airtableSetupHint('events'),
     });
   } catch (e) {
     return json(res, 500, { error: 'server_error', message: e.message, attendees: [] });

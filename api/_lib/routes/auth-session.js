@@ -65,7 +65,7 @@ module.exports = async function handler(req, res) {
     }
 
     const { findUserByEmail } = require('../auth');
-    const { listGroupsForUser } = require('../organiser');
+    const { listGroupsForUser } = require('../organiser-provider').getOrganiserApi();
     const user = await findUserByEmail(session.email);
     if (!user || !user.passwordHash) {
       clearSessionCookie(res);

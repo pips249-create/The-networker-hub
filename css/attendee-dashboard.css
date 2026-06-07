@@ -261,6 +261,16 @@
   color: var(--ad-slate);
 }
 
+.ad-td-name .ad-event-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.ad-td-name .ad-event-link:hover {
+  color: var(--ad-teal-dark);
+  text-decoration: underline;
+}
+
 .ad-badge {
   display: inline-flex;
   align-items: center;
@@ -389,4 +399,140 @@
   font-size: 12px;
   color: var(--ad-text-soft);
   margin: 0 8px;
+}
+
+body.ad-review-modal-open {
+  overflow: hidden;
+}
+
+.ad-review-modal[hidden] {
+  display: none !important;
+}
+
+.ad-review-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.ad-review-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(45, 27, 94, 0.45);
+}
+
+.ad-review-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 480px);
+  background: var(--ad-white);
+  border-radius: var(--ad-radius);
+  padding: 28px 24px 24px;
+  box-shadow: 0 20px 50px rgba(45, 27, 94, 0.2);
+}
+
+.ad-review-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--ad-text-soft);
+  cursor: pointer;
+}
+
+.ad-review-modal-title {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  color: var(--ad-slate);
+}
+
+.ad-review-modal-sub {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: var(--ad-text-mid);
+  line-height: 1.5;
+}
+
+.ad-review-form fieldset {
+  border: none;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.ad-review-form legend {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ad-text-dark);
+  margin-bottom: 8px;
+}
+
+.ad-review-stars {
+  display: flex;
+  gap: 6px;
+}
+
+.ad-review-star {
+  border: none;
+  background: transparent;
+  font-size: 28px;
+  line-height: 1;
+  color: #d8cfe0;
+  cursor: pointer;
+  padding: 0;
+}
+
+.ad-review-star.is-active {
+  color: var(--ad-coral);
+}
+
+.ad-review-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ad-text-dark);
+  margin-bottom: 8px;
+}
+
+.ad-review-label-hint {
+  display: block;
+  font-weight: 400;
+  color: var(--ad-text-soft);
+  margin-top: 4px;
+}
+
+.ad-review-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--ad-border-soft);
+  border-radius: var(--ad-radius-sm);
+  padding: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.ad-review-form textarea:focus {
+  outline: 2px solid var(--ad-teal-light);
+  border-color: var(--ad-teal);
+}
+
+.ad-review-error {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--ad-red);
+}
+
+.ad-review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
 }

@@ -12,6 +12,14 @@
       title: 'Event data issues',
       subtitle: 'Fix published events missing dates, organisers, VAT, or profile data',
     },
+    'group-cleanup': {
+      title: 'Group profile cleanup',
+      subtitle: 'Add descriptions, logos, and websites to organiser profiles in Supabase',
+    },
+    'event-cleanup': {
+      title: 'Event cleanup',
+      subtitle: 'Link events to groups, create new events, and fix basic event data',
+    },
     users: { title: 'User & Account Directory', subtitle: 'Manage all platform accounts' },
     impersonate: {
       title: 'Impersonate user',
@@ -22,6 +30,10 @@
     sponsorship: {
       title: 'Sponsorship & Advertisement Management',
       subtitle: 'Swap Sponsor Hub image, copy, and tracking link without code changes',
+    },
+    emails: {
+      title: 'Email Template Manager',
+      subtitle: 'Edit transactional email copy and send test messages via Resend',
     },
   };
 
@@ -34,6 +46,8 @@
   ];
   var MEETING_FORMATS = ['In person', 'Online', 'Hybrid'];
   var healthCache = null;
+  var groupCleanupCache = null;
+  var eventCleanupState = { organiserId: '', unlinked: false, q: '' };
 
   /** CMS ad placements — each maps to a cms_blocks.slot row. */
   var CMS_AD_SLOTS = [
@@ -176,6 +190,23 @@
     });
   }
 
+  function adminPatch(url, body) {
+    return fetch(url, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {}),
+    }).then(function (r) {
+      return r.json().then(function (data) {
+        if (!r.ok) {
+          data = data || {};
+          data.error = data.error || data.message || 'request_failed';
+        }
+        return data;
+      });
+    });
+  }
+
   function alertCard(a) {
     var bg =
       a.severity === 'high'
@@ -255,7 +286,47 @@
     }
   }
 
+  var HEALTH_SEVERITY_ORDER = { high: 0, medium: 1, low: 2 };
+
+  function issueCodes(ev) {
+    return (ev.issues || []).map(function (i) {
+      return i.code;
+    });
+  }
+
+  function healthFieldVisibility(ev) {
+    var codes = issueCodes(ev);
+    return {
+      showDate: codes.indexOf('missing_date') >= 0,
+      showOrganiser: codes.indexOf('missing_organiser') >= 0,
+      showEventType: codes.indexOf('missing_event_type') >= 0,
+      showFormat: codes.indexOf('missing_meeting_type') >= 0,
+      showVat: codes.indexOf('missing_vat') >= 0,
+      showOrgLogo: codes.indexOf('missing_organiser_logo') >= 0,
+      showOrgBio: codes.indexOf('missing_organiser_profile') >= 0,
+    };
+  }
+
+  function mergeOrganisersForSelect(allOrganisers, ev) {
+    var list = (allOrganisers || []).slice();
+    if (
+      ev.organiser_id &&
+      !list.some(function (o) {
+        return String(o.id) === String(ev.organiser_id);
+      })
+    ) {
+      list.unshift({
+        id: ev.organiser_id,
+        name: ev.organiser_name || ev.organiser_id,
+        listingStatus: '',
+        slug: ev.organiser_slug || '',
+      });
+    }
+    return list;
+  }
+
   function organiserOptionsHtml(organisers, selectedId) {
+    var selected = String(selectedId || '');
     var sorted = (organisers || []).slice().sort(function (a, b) {
       var aPub = a.listingStatus === 'published' ? 0 : 1;
       var bPub = b.listingStatus === 'published' ? 0 : 1;
@@ -274,7 +345,7 @@
             '<option value="' +
             attrEsc(o.id) +
             '"' +
-            (selectedId === o.id ? ' selected' : '') +
+            (selected && selected === String(o.id) ? ' selected' : '') +
             '>' +
             esc(label) +
             '</option>'
@@ -287,18 +358,47 @@
   function saveEventHealthForm(form) {
     var article = form.closest('[data-event-id]');
     var id = article && article.getAttribute('data-event-id');
+    var organiserId = article && article.getAttribute('data-organiser-id');
     var msg = form.querySelector('.event-health-msg');
     var btn = form.querySelector('button[type="submit"]');
     if (!id) return;
 
-    var payload = { id: id };
-    var starts = formFieldVal(form, 'starts_at');
-    if (starts) payload.starts_at = new Date(starts).toISOString();
-    else payload.starts_at = null;
-    payload.organiser_id = formFieldVal(form, 'organiser_id') || null;
-    payload.event_type = formFieldVal(form, 'event_type') || null;
-    payload.meeting_type = formFieldVal(form, 'meeting_type') || null;
-    payload.vat_treatment = formFieldVal(form, 'vat_treatment') || null;
+    var eventPayload = { id: id };
+    var hasEventPatch = false;
+    if (formField(form, 'starts_at')) {
+      var starts = formFieldVal(form, 'starts_at');
+      eventPayload.starts_at = starts ? new Date(starts).toISOString() : null;
+      hasEventPatch = true;
+    }
+    if (formField(form, 'organiser_id')) {
+      eventPayload.organiser_id = formFieldVal(form, 'organiser_id') || null;
+      hasEventPatch = true;
+    }
+    if (formField(form, 'event_type')) {
+      eventPayload.event_type = formFieldVal(form, 'event_type') || null;
+      hasEventPatch = true;
+    }
+    if (formField(form, 'meeting_type')) {
+      eventPayload.meeting_type = formFieldVal(form, 'meeting_type') || null;
+      hasEventPatch = true;
+    }
+    if (formField(form, 'vat_treatment')) {
+      eventPayload.vat_treatment = formFieldVal(form, 'vat_treatment') || null;
+      hasEventPatch = true;
+    }
+
+    var organiserPayload = null;
+    if (organiserId && (formField(form, 'organiser_photo_url') || formField(form, 'organiser_description'))) {
+      organiserPayload = { id: organiserId };
+      if (formField(form, 'organiser_photo_url')) {
+        organiserPayload.photo_url = formFieldVal(form, 'organiser_photo_url');
+      }
+      if (formField(form, 'organiser_description')) {
+        organiserPayload.description = formFieldVal(form, 'organiser_description');
+      }
+    }
+
+    if (!hasEventPatch && !organiserPayload) return;
 
     if (btn) btn.disabled = true;
     if (msg) {
@@ -306,20 +406,35 @@
       msg.className = 'event-health-msg text-xs text-slate-500';
     }
 
-    fetch('/api/admin/events', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-      .then(function (r) {
+    function postJson(url, payload) {
+      return fetch(url, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).then(function (r) {
         return r.json().then(function (body) {
           if (!r.ok || body.ok === false) {
             throw new Error(body.message || body.error || 'Save failed (' + r.status + ')');
           }
           return body;
         });
-      })
+      });
+    }
+
+    var chain = Promise.resolve();
+    if (hasEventPatch) {
+      chain = chain.then(function () {
+        return postJson('/api/admin/events', eventPayload);
+      });
+    }
+    if (organiserPayload) {
+      chain = chain.then(function () {
+        return postJson('/api/admin/organisers', organiserPayload);
+      });
+    }
+
+    chain
       .then(function () {
         if (msg) {
           msg.textContent = 'Saved — rescanning…';
@@ -397,30 +512,48 @@
       }
 
       var organisers = data.organisers || [];
+      var needsOrganiserLink = (data.events || []).some(function (ev) {
+        return issueCodes(ev).indexOf('missing_organiser') >= 0;
+      });
+      var statusHint = needsOrganiserLink
+        ? organisers.length
+          ? ' <span class="text-slate-500">Choose an organiser for each event below.</span>'
+          : ' <span class="text-red-700 font-semibold">No organisers found — create one in the Organiser dashboard first.</span>'
+        : ' <span class="text-slate-500">Only the flagged fields are shown — fill them in and save.</span>';
       status.innerHTML =
         '<span class="text-brand-900 font-semibold">' +
         data.count +
         ' published event' +
-        (data.count === 1 ? '' : 's') +
-        ' need attention.</span>' +
-        (organisers.length
-          ? ' <span class="text-slate-500">(' +
-            organisers.length +
-            ' organisers available to link)</span>'
-          : ' <span class="text-red-700 font-semibold">No organisers found — create one in Organiser dashboard first.</span>');
+        (data.count === 1 ? ' needs' : ' need') +
+        ' attention.</span>' +
+        statusHint;
 
       var issueCards = Object.keys(data.issuesByCode || {})
         .map(function (code) {
-          var sample = (data.events[0] && data.events[0].issues.find(function (i) {
-            return i.code === code;
-          })) || { label: code, severity: 'low' };
+          var sample = { label: code, severity: 'low' };
+          (data.events || []).some(function (ev) {
+            var hit = (ev.issues || []).find(function (i) {
+              return i.code === code;
+            });
+            if (hit) sample = hit;
+            return !!hit;
+          });
+          return { code: code, sample: sample, count: data.issuesByCode[code] };
+        })
+        .sort(function (a, b) {
+          var sa = HEALTH_SEVERITY_ORDER[a.sample.severity] != null ? HEALTH_SEVERITY_ORDER[a.sample.severity] : 9;
+          var sb = HEALTH_SEVERITY_ORDER[b.sample.severity] != null ? HEALTH_SEVERITY_ORDER[b.sample.severity] : 9;
+          if (sa !== sb) return sa - sb;
+          return String(a.sample.label).localeCompare(String(b.sample.label));
+        })
+        .map(function (row) {
           return (
             '<div class="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">' +
             '<p class="text-xs text-slate-500 uppercase font-semibold">' +
-            esc(sample.label) +
+            esc(row.sample.label) +
             '</p>' +
             '<p class="text-xl font-bold text-brand-900 mt-1">' +
-            data.issuesByCode[code] +
+            row.count +
             '</p></div>'
           );
         })
@@ -438,10 +571,17 @@
 
       list.innerHTML = (data.events || [])
         .map(function (ev) {
+          var fields = healthFieldVisibility(ev);
           var issueHtml = (ev.issues || []).map(issueBadge).join('');
-          var needsOrganiser = (ev.issues || []).some(function (i) {
-            return i.code === 'missing_organiser';
-          });
+          var needsOrganiser = fields.showOrganiser;
+          var hasEventFields =
+            fields.showDate ||
+            fields.showOrganiser ||
+            fields.showEventType ||
+            fields.showFormat ||
+            fields.showVat;
+          var hasOrgFields = fields.showOrgLogo || fields.showOrgBio;
+          var organiserSelectList = mergeOrganisersForSelect(organisers, ev);
           var typeOptions = EVENT_TYPES.map(function (t) {
             return (
               '<option value="' +
@@ -465,14 +605,109 @@
             );
           }).join('');
           var vatVal = ev.vat_treatment || '';
-          var hasOrgProfileIssue = (ev.issues || []).some(function (i) {
-            return i.code === 'missing_organiser_logo' || i.code === 'missing_organiser_profile';
-          });
+          var orgEditHref =
+            '../organiser/group-edit.html?id=' + encodeURIComponent(ev.organiser_id || '');
+          var orgPublicHref = ev.organiser_slug
+            ? '../organisers/' + encodeURIComponent(ev.organiser_slug)
+            : '';
+          var saveLabel = hasOrgFields && !hasEventFields ? 'Save organiser profile' : 'Save fixes';
+
+          var eventFieldsHtml = '';
+          if (fields.showDate) {
+            eventFieldsHtml +=
+              '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event date & time</label>' +
+              '<input type="datetime-local" name="starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white" value="' +
+              attrEsc(toDatetimeLocalValue(ev.starts_at)) +
+              '"></div>';
+          }
+          if (fields.showOrganiser) {
+            eventFieldsHtml +=
+              '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser</label>' +
+              '<select name="organiser_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white ring-2 ring-red-200">' +
+              organiserOptionsHtml(organiserSelectList, ev.organiser_id) +
+              '</select>' +
+              (firstOrganiserId
+                ? '<button type="button" class="mt-2 text-xs font-semibold text-brand-700 hover:underline" data-use-first-organiser="' +
+                  attrEsc(firstOrganiserId) +
+                  '">Use first available organiser</button>'
+                : '') +
+              '</div>';
+          }
+          if (fields.showEventType) {
+            eventFieldsHtml +=
+              '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
+              '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white">' +
+              '<option value="">—</option>' +
+              typeOptions +
+              '</select></div>';
+          }
+          if (fields.showFormat) {
+            eventFieldsHtml +=
+              '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Format</label>' +
+              '<select name="meeting_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white">' +
+              '<option value="">—</option>' +
+              formatOptions +
+              '</select></div>';
+          }
+          if (fields.showVat) {
+            eventFieldsHtml +=
+              '<div><label class="block text-xs font-semibold text-slate-500 mb-1">VAT (paid tickets)</label>' +
+              '<select name="vat_treatment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white">' +
+              '<option value="">—</option>' +
+              '<option value="included"' +
+              (vatVal === 'included' ? ' selected' : '') +
+              '>Prices include VAT</option>' +
+              '<option value="added"' +
+              (vatVal === 'added' ? ' selected' : '') +
+              '>VAT added at checkout</option>' +
+              '</select></div>';
+          }
+
+          var orgFieldsHtml = '';
+          if (hasOrgFields) {
+            orgFieldsHtml +=
+              '<div class="sm:col-span-2 lg:col-span-3 rounded-lg border border-amber-200 bg-amber-50/60 p-4 space-y-3">' +
+              '<div class="flex flex-wrap items-start justify-between gap-2">' +
+              '<div>' +
+              '<p class="text-sm font-semibold text-brand-900">Organiser: ' +
+              esc(ev.organiser_name || 'Unknown') +
+              '</p>' +
+              '<p class="text-xs text-slate-600 mt-1">Add the missing logo or bio here, or open the full profile editor.</p>' +
+              '</div>' +
+              '<div class="flex flex-wrap gap-2 shrink-0">' +
+              '<a href="' +
+              attrEsc(orgEditHref) +
+              '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">Full profile editor</a>' +
+              (orgPublicHref
+                ? '<a href="' +
+                  attrEsc(orgPublicHref) +
+                  '" target="_blank" rel="noopener" class="text-xs font-semibold text-slate-600 hover:underline">View public profile</a>'
+                : '') +
+              '</div></div>';
+            if (fields.showOrgLogo) {
+              orgFieldsHtml +=
+                '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Logo image URL</label>' +
+                '<input type="url" name="organiser_photo_url" placeholder="https://…" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white" value="' +
+                attrEsc(ev.organiser_photo_url || '') +
+                '">' +
+                '<p class="text-[11px] text-slate-500 mt-1">Paste a direct link to the organiser logo image.</p></div>';
+            }
+            if (fields.showOrgBio) {
+              orgFieldsHtml +=
+                '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser bio</label>' +
+                '<textarea name="organiser_description" rows="4" placeholder="A short description of this organiser…" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white">' +
+                esc(ev.organiser_description || '') +
+                '</textarea></div>';
+            }
+            orgFieldsHtml += '</div>';
+          }
 
           return (
             '<article class="bg-white rounded-xl border border-slate-200 shadow-sm" data-event-id="' +
             attrEsc(ev.id) +
-            '">' +
+            '"' +
+            (ev.organiser_id ? ' data-organiser-id="' + attrEsc(ev.organiser_id) + '"' : '') +
+            '>' +
             '<div class="p-4 border-b border-slate-100 flex flex-wrap items-start justify-between gap-3">' +
             '<div class="min-w-0 flex-1">' +
             '<h3 class="font-bold text-brand-900">' +
@@ -481,6 +716,11 @@
             '<p class="text-xs text-slate-500 mt-1">/' +
             esc(ev.slug || '') +
             '</p>' +
+            (ev.organiser_name
+              ? '<p class="text-xs text-slate-600 mt-1">Organiser: <span class="font-medium">' +
+                esc(ev.organiser_name) +
+                '</span></p>'
+              : '') +
             '<div class="mt-2">' +
             issueHtml +
             '</div>' +
@@ -491,53 +731,15 @@
             '<div class="flex flex-wrap gap-2 shrink-0">' +
             '<a href="../events/' +
             esc(ev.slug || '') +
-            '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View page</a>' +
-            (ev.organiser_id
-              ? '<a href="../organiser/group-edit.html" target="_blank" rel="noopener" class="text-xs font-semibold text-slate-600 hover:underline">Organiser profile</a>'
-              : '') +
+            '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View event page</a>' +
             '</div></div>' +
             '<form class="event-health-form p-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">' +
-            '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event date & time</label>' +
-            '<input type="datetime-local" name="starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white" value="' +
-            attrEsc(toDatetimeLocalValue(ev.starts_at)) +
-            '"></div>' +
-            '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser</label>' +
-            '<select name="organiser_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white' +
-            (needsOrganiser ? ' ring-2 ring-red-200' : '') +
-            '">' +
-            organiserOptionsHtml(organisers, ev.organiser_id) +
-            '</select>' +
-            (needsOrganiser && firstOrganiserId
-              ? '<button type="button" class="mt-2 text-xs font-semibold text-brand-700 hover:underline" data-use-first-organiser="' +
-                attrEsc(firstOrganiserId) +
-                '">Use first available organiser</button>'
-              : '') +
-            '</div>' +
-            '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
-            '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white">' +
-            '<option value="">—</option>' +
-            typeOptions +
-            '</select></div>' +
-            '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Format</label>' +
-            '<select name="meeting_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white">' +
-            '<option value="">—</option>' +
-            formatOptions +
-            '</select></div>' +
-            '<div><label class="block text-xs font-semibold text-slate-500 mb-1">VAT (paid tickets)</label>' +
-            '<select name="vat_treatment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white">' +
-            '<option value="">—</option>' +
-            '<option value="included"' +
-            (vatVal === 'included' ? ' selected' : '') +
-            '>Prices include VAT</option>' +
-            '<option value="added"' +
-            (vatVal === 'added' ? ' selected' : '') +
-            '>VAT added at checkout</option>' +
-            '</select></div>' +
+            eventFieldsHtml +
+            orgFieldsHtml +
             '<div class="sm:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-3 pt-1">' +
-            (hasOrgProfileIssue
-              ? '<p class="text-xs text-amber-800">Logo or organiser bio must be updated in the organiser profile.</p>'
-              : '') +
-            '<button type="submit" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900 disabled:opacity-50">Save fixes</button>' +
+            '<button type="submit" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900 disabled:opacity-50">' +
+            esc(saveLabel) +
+            '</button>' +
             '<span class="event-health-msg text-xs text-slate-500"></span>' +
             '</div></form></article>'
           );
@@ -1619,6 +1821,290 @@
     loadCurrentSlot();
   }
 
+  function renderEmails() {
+    var templates = [];
+    var selectedSlug = '';
+    var dirty = false;
+
+    var SAMPLE_VARS = {
+      user_name: 'Alex Morgan',
+      user_email: 'alex@example.com',
+      event_name: 'London Founders Breakfast',
+      event_date: 'Tuesday 12 August 2026',
+      event_time: '8:00 AM',
+      event_location: 'The Shard, London SE1',
+      event_url: 'https://the-networker-hub.vercel.app/events/london-founders-breakfast',
+      ticket_name: 'General admission',
+      amount_paid: '£25.00',
+      organiser_name: 'City Connectors',
+      meeting_link: 'https://meet.example.com/room',
+      dashboard_url: 'https://the-networker-hub.vercel.app/organiser-dashboard.html',
+      site_url: 'https://the-networker-hub.vercel.app',
+    };
+
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      '<p id="email-status" class="text-sm text-slate-500">Loading email templates…</p>' +
+      '<div class="grid lg:grid-cols-[minmax(220px,280px)_1fr] gap-6">' +
+      '<aside class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">' +
+      '<h3 class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">Templates</h3>' +
+      '<ul id="email-template-list" class="space-y-1 text-sm"></ul>' +
+      '</aside>' +
+      '<div class="space-y-6">' +
+      '<form id="email-editor" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5 hidden">' +
+      '<div><p id="email-template-name" class="font-bold text-brand-900 text-lg"></p>' +
+      '<p id="email-template-desc" class="text-sm text-slate-500 mt-1"></p></div>' +
+      '<div><label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1" for="email-subject">Subject line</label>' +
+      '<input type="text" id="email-subject" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Your ticket for {{event_name}}"></div>' +
+      '<div><label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1" for="email-body">HTML body</label>' +
+      '<textarea id="email-body" rows="14" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono text-xs leading-relaxed" spellcheck="false"></textarea>' +
+      '<p class="text-xs text-slate-500 mt-2">Use <code class="bg-slate-100 px-1 rounded">{{placeholders}}</code> for dynamic values. Available for this template:</p>' +
+      '<div id="email-placeholders" class="flex flex-wrap gap-2 mt-2"></div></div>' +
+      '<div class="flex flex-wrap gap-3 pt-1">' +
+      '<button type="button" id="email-save-btn" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Save template</button>' +
+      '<button type="button" id="email-preview-btn" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Refresh preview</button>' +
+      '</div>' +
+      '<div class="border-t border-slate-100 pt-5 space-y-3">' +
+      '<h4 class="text-sm font-bold text-brand-900">Send test email</h4>' +
+      '<div class="flex flex-wrap gap-3 items-end">' +
+      '<div class="flex-1 min-w-[200px]"><label class="block text-xs font-semibold text-slate-600 mb-1" for="email-test-to">Recipient</label>' +
+      '<input type="email" id="email-test-to" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="you@company.com"></div>' +
+      '<button type="button" id="email-test-btn" class="rounded-lg border border-brand-700 text-brand-700 px-4 py-2 text-sm font-semibold hover:bg-brand-50">Send test</button>' +
+      '</div></div></form>' +
+      '<section id="email-preview-panel" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 hidden">' +
+      '<h3 class="font-bold text-brand-900 mb-1">Preview</h3>' +
+      '<p id="email-preview-subject" class="text-sm text-slate-600 mb-4"></p>' +
+      '<div id="email-preview-html" class="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm prose prose-sm max-w-none"></div>' +
+      '</section></div></div></div>';
+
+    function setEmailStatus(text, tone) {
+      var el = document.getElementById('email-status');
+      if (!el) return;
+      el.textContent = text;
+      el.className =
+        'text-sm ' +
+        (tone === 'error'
+          ? 'text-red-700 font-semibold'
+          : tone === 'ok'
+            ? 'text-emerald-700 font-semibold'
+            : 'text-slate-500');
+    }
+
+    function currentTemplate() {
+      for (var i = 0; i < templates.length; i++) {
+        if (templates[i].slug === selectedSlug) return templates[i];
+      }
+      return null;
+    }
+
+    function renderTemplateList() {
+      var list = document.getElementById('email-template-list');
+      if (!list) return;
+      if (!templates.length) {
+        list.innerHTML = '<li class="text-slate-400">No templates yet — run migration 027 in Supabase.</li>';
+        return;
+      }
+      list.innerHTML = templates
+        .map(function (t) {
+          var active = t.slug === selectedSlug;
+          return (
+            '<li><button type="button" data-email-slug="' +
+            attrEsc(t.slug) +
+            '" class="w-full text-left rounded-lg px-3 py-2 transition ' +
+            (active
+              ? 'bg-brand-50 text-brand-900 font-semibold border border-brand-100'
+              : 'text-slate-700 hover:bg-slate-50') +
+            '">' +
+            esc(t.name) +
+            '<span class="block text-[11px] font-normal text-slate-400 mt-0.5">' +
+            esc(t.slug) +
+            '</span></button></li>'
+          );
+        })
+        .join('');
+      list.querySelectorAll('[data-email-slug]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (dirty && !window.confirm('Discard unsaved changes?')) return;
+          selectTemplate(btn.getAttribute('data-email-slug'));
+        });
+      });
+    }
+
+    function renderPlaceholderChips(placeholders) {
+      var wrap = document.getElementById('email-placeholders');
+      if (!wrap) return;
+      var keys = Array.isArray(placeholders) ? placeholders : [];
+      if (!keys.length) {
+        wrap.innerHTML = '<span class="text-xs text-slate-400">No placeholders documented.</span>';
+        return;
+      }
+      wrap.innerHTML = keys
+        .map(function (key) {
+          return (
+            '<button type="button" data-ph="' +
+            attrEsc(key) +
+            '" class="text-xs rounded-full bg-slate-100 text-slate-700 px-2.5 py-1 hover:bg-brand-50 hover:text-brand-900">{{' +
+            esc(key) +
+            '}}</button>'
+          );
+        })
+        .join('');
+      wrap.querySelectorAll('[data-ph]').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+          var key = chip.getAttribute('data-ph');
+          var body = document.getElementById('email-body');
+          if (!body) return;
+          var token = '{{' + key + '}}';
+          var start = body.selectionStart;
+          var end = body.selectionEnd;
+          var val = body.value;
+          body.value = val.slice(0, start) + token + val.slice(end);
+          body.focus();
+          body.selectionStart = body.selectionEnd = start + token.length;
+          dirty = true;
+        });
+      });
+    }
+
+    function fillEditor(template) {
+      var form = document.getElementById('email-editor');
+      var previewPanel = document.getElementById('email-preview-panel');
+      if (!template) {
+        if (form) form.classList.add('hidden');
+        if (previewPanel) previewPanel.classList.add('hidden');
+        return;
+      }
+      if (form) form.classList.remove('hidden');
+      if (previewPanel) previewPanel.classList.remove('hidden');
+      document.getElementById('email-template-name').textContent = template.name;
+      document.getElementById('email-template-desc').textContent =
+        template.description || 'Transactional email template.';
+      document.getElementById('email-subject').value = template.subject || '';
+      document.getElementById('email-body').value = template.body_html || '';
+      renderPlaceholderChips(template.placeholders);
+      dirty = false;
+      refreshPreview();
+    }
+
+    function selectTemplate(slug) {
+      selectedSlug = slug;
+      renderTemplateList();
+      fillEditor(currentTemplate());
+    }
+
+    function refreshPreview() {
+      if (!selectedSlug) return;
+      adminPost('/api/admin/emails', {
+        action: 'preview',
+        slug: selectedSlug,
+        variables: SAMPLE_VARS,
+      })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Preview failed');
+          document.getElementById('email-preview-subject').textContent = 'Subject: ' + data.subject;
+          document.getElementById('email-preview-html').innerHTML = data.html;
+        })
+        .catch(function (err) {
+          setEmailStatus(err.message || 'Could not render preview.', 'error');
+        });
+    }
+
+    function loadTemplates() {
+      setEmailStatus('Loading templates from Supabase…');
+      adminGet('/api/admin/emails')
+        .then(function (data) {
+          if (data.error === 'supabase_not_configured') {
+            setEmailStatus('Supabase is not configured.', 'error');
+            return;
+          }
+          if (data.error || !data.ok) {
+            setEmailStatus('Could not load templates: ' + (data.error || 'unknown'), 'error');
+            return;
+          }
+          templates = data.templates || [];
+          if (!selectedSlug && templates.length) selectedSlug = templates[0].slug;
+          renderTemplateList();
+          fillEditor(currentTemplate());
+          setEmailStatus(templates.length + ' template' + (templates.length === 1 ? '' : 's') + ' loaded.');
+        })
+        .catch(function () {
+          setEmailStatus('Could not load email templates.', 'error');
+        });
+    }
+
+    var testTo = document.getElementById('email-test-to');
+    if (testTo && currentUser && currentUser.email) testTo.value = currentUser.email;
+
+    document.getElementById('email-subject').addEventListener('input', function () {
+      dirty = true;
+    });
+    document.getElementById('email-body').addEventListener('input', function () {
+      dirty = true;
+    });
+
+    document.getElementById('email-save-btn').addEventListener('click', function () {
+      if (!selectedSlug) return;
+      var btn = document.getElementById('email-save-btn');
+      if (btn) btn.disabled = true;
+      setEmailStatus('Saving…');
+      adminPatch('/api/admin/emails', {
+        slug: selectedSlug,
+        subject: document.getElementById('email-subject').value,
+        body_html: document.getElementById('email-body').value,
+      })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Save failed');
+          for (var i = 0; i < templates.length; i++) {
+            if (templates[i].slug === selectedSlug) {
+              templates[i] = data.template;
+              break;
+            }
+          }
+          dirty = false;
+          setEmailStatus('Saved ' + data.template.name + '.', 'ok');
+          refreshPreview();
+        })
+        .catch(function (err) {
+          setEmailStatus(err.message || 'Could not save template.', 'error');
+        })
+        .finally(function () {
+          if (btn) btn.disabled = false;
+        });
+    });
+
+    document.getElementById('email-preview-btn').addEventListener('click', refreshPreview);
+
+    document.getElementById('email-test-btn').addEventListener('click', function () {
+      if (!selectedSlug) return;
+      var btn = document.getElementById('email-test-btn');
+      var to = (document.getElementById('email-test-to').value || '').trim();
+      if (!to) {
+        setEmailStatus('Enter a recipient email for the test send.', 'error');
+        return;
+      }
+      if (btn) btn.disabled = true;
+      setEmailStatus('Sending test email…');
+      adminPost('/api/admin/emails', {
+        action: 'test',
+        slug: selectedSlug,
+        to: to,
+        variables: SAMPLE_VARS,
+      })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Send failed');
+          setEmailStatus('Test sent to ' + data.to + '.', 'ok');
+        })
+        .catch(function (err) {
+          setEmailStatus(err.message || 'Could not send test email.', 'error');
+        })
+        .finally(function () {
+          if (btn) btn.disabled = false;
+        });
+    });
+
+    loadTemplates();
+  }
+
   var routes = {
     dashboard: renderDashboard,
     'event-health': renderEventHealth,
@@ -1627,6 +2113,7 @@
     moderation: renderModeration,
     financials: renderFinancials,
     sponsorship: renderSponsorship,
+    emails: renderEmails,
   };
 
   function route() {

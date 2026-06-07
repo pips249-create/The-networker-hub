@@ -1,7 +1,10 @@
 const { setCors, json, sessionFromRequest, findUserByEmail } = require('../auth');
 const { getAttendeeDashboard, buildStats } = require('../attendee');
+const { getAttendeeDashboardFromSupabase } = require('../supabase-attendee-dashboard');
+const { isSupabaseConfigured, useSupabase } = require('../supabase');
+const sbAuth = require('../supabase-auth');
 
-/** Demo rows so the dashboard layout matches the product mockup when no Registrations table yet. */
+/** Demo rows when Airtable is not configured and the user has no bookings yet. */
 function demoRegistrations() {
   return [
     {
@@ -12,6 +15,7 @@ function demoRegistrations() {
       endDate: '2026-04-10T12:00:00.000Z',
       imageUrl: null,
       ticketLabel: '1 × General Admission',
+      paymentStatus: 'Paid',
       reviewStatus: 'upcoming',
     },
     {
@@ -22,6 +26,7 @@ function demoRegistrations() {
       endDate: '2026-04-24T17:00:00.000Z',
       imageUrl: null,
       ticketLabel: '2 × General Admission',
+      paymentStatus: 'Paid',
       reviewStatus: 'upcoming',
     },
     {
@@ -32,6 +37,7 @@ function demoRegistrations() {
       endDate: '2026-05-15T16:00:00.000Z',
       imageUrl: null,
       ticketLabel: '1 × General Admission',
+      paymentStatus: 'Paid',
       reviewStatus: 'upcoming',
     },
     {
@@ -42,6 +48,7 @@ function demoRegistrations() {
       endDate: '2026-03-06T10:30:00.000Z',
       imageUrl: null,
       ticketLabel: '1 × General Admission',
+      paymentStatus: 'Paid',
       reviewStatus: 'reviewed',
     },
     {
@@ -52,6 +59,7 @@ function demoRegistrations() {
       endDate: '2026-02-20T20:30:00.000Z',
       imageUrl: null,
       ticketLabel: '1 × General Admission',
+      paymentStatus: 'Paid',
       reviewStatus: 'pending',
     },
   ];
@@ -70,23 +78,44 @@ module.exports = async function handler(req, res) {
   if (!session) return json(res, 401, { error: 'not_authenticated' });
 
   try {
-    const user = await findUserByEmail(session.email);
-    const dash = await getAttendeeDashboard(session.email);
-    let registrations = dash.registrations;
-    let stats = dash.stats;
+    let displayName = session.name || '';
+
+    if (useSupabase()) {
+      const user = await sbAuth.findUserByEmail(session.email);
+      if (user && user.name) displayName = user.name;
+    } else {
+      try {
+        const user = await findUserByEmail(session.email);
+        if (user && user.name) displayName = user.name;
+      } catch {
+        /* Airtable optional */
+      }
+    }
+
+    let registrations = [];
+    let stats = buildStats([]);
     let isDemo = false;
 
-    if (!registrations.length) {
-      registrations = demoRegistrations();
-      stats = buildStats(registrations);
-      isDemo = true;
+    if (isSupabaseConfigured()) {
+      const dash = await getAttendeeDashboardFromSupabase(session);
+      registrations = dash.registrations;
+      stats = dash.stats;
+    } else {
+      const dash = await getAttendeeDashboard(session.email);
+      registrations = dash.registrations;
+      stats = dash.stats;
+      if (!registrations.length) {
+        registrations = demoRegistrations();
+        stats = buildStats(registrations);
+        isDemo = true;
+      }
     }
 
     return json(res, 200, {
       ok: true,
       user: {
         email: session.email,
-        name: (user && user.name) || session.name || '',
+        name: displayName,
         role: session.role,
       },
       registrations,

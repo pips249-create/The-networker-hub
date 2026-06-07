@@ -5,6 +5,7 @@
   "scripts": {
     "seed-admin": "node scripts/seed-admin.js",
     "seed-sample-event": "node scripts/seed-sample-event.js",
+    "test-review-e2e": "node scripts/review-e2e-test.js",
     "import-attendees": "node scripts/import-attendees-csv.js"
   },
   "dependencies": {

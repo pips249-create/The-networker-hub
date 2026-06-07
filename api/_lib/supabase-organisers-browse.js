@@ -248,4 +248,5 @@ module.exports = {
   getPublicOrganiserBySlug,
   getPublicOrganiserById,
   rowToPublicOrganiser,
+  fetchOrganiserReviews,
 };

@@ -11,6 +11,7 @@ function getOrganiserApi() {
     const team = require('./supabase-organiser-team');
     const payouts = require('./supabase-organiser-payouts');
     const cancellations = require('./supabase-organiser-cancellations');
+    const attendees = require('./supabase-organiser-attendees');
     return {
       json: core.json,
       setCors: core.setCors,
@@ -19,11 +20,15 @@ function getOrganiserApi() {
       ...events,
       ...team,
       ...payouts,
+      ...attendees,
       cancelLockedEvent: cancellations.cancelLockedEvent,
       confirmRefundsIssued: cancellations.confirmRefundsIssued,
     };
   }
-  return require('./organiser');
+  return {
+    ...require('./organiser'),
+    listAttendeesForOrganiserEvents: require('./organiser-attendees').listAttendeesForOrganiserEvents,
+  };
 }
 
 module.exports = { getOrganiserApi };

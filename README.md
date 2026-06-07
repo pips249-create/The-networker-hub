@@ -8,6 +8,7 @@ Member and organiser platform for networking events, exhibitions, and the Academ
 
 | File / folder | Purpose |
 |---------------|---------|
+| **`PIPS-TODO.md`** | **Pip's to-do list** — tabbed checklist for things to do later (migrations, Resend, etc.) |
 | `index.html` | Hub home |
 | `events/index.html` | Events & exhibitions (filters, Premium Spotlight, Sponsor Hub) |
 | `api/events.js` | Vercel function — loads events from Airtable |

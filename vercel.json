@@ -5,7 +5,8 @@
     "api/admin.js": { "maxDuration": 15 },
     "api/organiser.js": { "maxDuration": 15 },
     "api/organisers.js": { "maxDuration": 15 },
-    "api/events.js": { "maxDuration": 15 }
+    "api/events.js": { "maxDuration": 15 },
+    "api/stripe-webhook.js": { "maxDuration": 15 }
   },
   "rewrites": [
     { "source": "/api/auth/:path*", "destination": "/api/auth" },
@@ -18,6 +19,10 @@
     {
       "source": "/organisers/:slug",
       "destination": "/events/organiser.html?slug=:slug"
+    },
+    {
+      "source": "/admin/emails",
+      "destination": "/admin/emails.html"
     }
   ]
 }

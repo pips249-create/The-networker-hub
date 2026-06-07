@@ -158,19 +158,6 @@
     }
 
     try {
-      const res = await fetch('/api/events?id=' + encodeURIComponent(primaryId), {
-        cache: 'no-store',
-      });
-      const data = await res.json();
-      if (data.event) {
-        renderPreview(data.event);
-        return;
-      }
-    } catch {
-      /* fall through */
-    }
-
-    try {
       const res = await fetch(
         '/api/organiser/events?id=' + encodeURIComponent(primaryId),
         { credentials: 'include', cache: 'no-store' }
@@ -187,6 +174,19 @@
           imageUrl: data.event.imageUrl,
           photo: data.event.imageUrl,
         });
+        return;
+      }
+    } catch {
+      /* fall through */
+    }
+
+    try {
+      const res = await fetch('/api/events?id=' + encodeURIComponent(primaryId), {
+        cache: 'no-store',
+      });
+      const data = await res.json();
+      if (data.event) {
+        renderPreview(data.event);
         return;
       }
     } catch {
