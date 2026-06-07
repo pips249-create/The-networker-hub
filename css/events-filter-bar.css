@@ -572,6 +572,14 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
   margin-bottom: 24px;
   overflow: hidden;
   z-index: 1;
+  position: relative;
+  background: var(--surface-card);
+}
+
+.events-map-panel .leaflet-container {
+  width: 100%;
+  height: 100%;
+  font: inherit;
 }
 
 .events-map-panel[hidden] {

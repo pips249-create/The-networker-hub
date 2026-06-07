@@ -52,15 +52,33 @@
     }
   }
 
+  function panelHasSize() {
+    if (!mapPanel || mapPanel.hidden) return false;
+    return mapPanel.offsetWidth > 0 && mapPanel.offsetHeight > 0;
+  }
+
   function invalidateMapSize(attempt) {
     if (!map) return;
     map.invalidateSize(true);
     var size = map.getSize();
-    if ((size.x === 0 || size.y === 0) && attempt < 5) {
+    if ((size.x === 0 || size.y === 0) && attempt < 8) {
       setTimeout(function () {
         invalidateMapSize(attempt + 1);
       }, 80 * (attempt + 1));
     }
+  }
+
+  function whenPanelReady(fn) {
+    var attempt = 0;
+    (function tick() {
+      if (!isMapView) return;
+      if (panelHasSize() || attempt >= 12) {
+        fn();
+        return;
+      }
+      attempt++;
+      requestAnimationFrame(tick);
+    })();
   }
 
   function initMap() {
@@ -77,6 +95,37 @@
   function setChromeHidden(mapMode) {
     if (promoSection) promoSection.hidden = mapMode;
     if (resultsMeta) resultsMeta.hidden = mapMode;
+  }
+
+  function fitMapToCoords(coordsList) {
+    if (!map || !coordsList.length) return;
+    if (coordsList.length === 1) {
+      map.setView(coordsList[0], 13);
+      return;
+    }
+    map.fitBounds(L.latLngBounds(coordsList), { padding: [40, 40], maxZoom: 12 });
+  }
+
+  function popupHtml(ev) {
+    var pc = ev.postcode || (window.hubExtractPostcode ? window.hubExtractPostcode(ev) : '');
+    return (
+      '<div class="map-popup">' +
+      '<strong>' +
+      escapeHtml(ev.title) +
+      '</strong><br>' +
+      escapeHtml(ev.dateLine || ev.date || 'Date TBC') +
+      (pc ? '<br>' + escapeHtml(pc) : '') +
+      '<br><span>' +
+      escapeHtml(ev.price) +
+      '</span><br>' +
+      '<a href="' +
+      escapeHtml(eventHref(ev)) +
+      '">View event</a></div>'
+    );
+  }
+
+  function addMarker(ev, coords) {
+    markerLayer.addLayer(L.marker(coords).bindPopup(popupHtml(ev)));
   }
 
   function setViewMode(mapMode) {
@@ -98,21 +147,48 @@
       ? window.hubGetFilteredEvents(window.hubAllEvents || [])
       : window.hubAllEvents || [];
 
-    requestAnimationFrame(function () {
+    whenPanelReady(function () {
       initMap();
-      requestAnimationFrame(function () {
+      invalidateMapSize(0);
+      renderMarkers(list);
+      if (mapPanel && mapPanel.scrollIntoView) {
+        mapPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      setTimeout(function () {
         invalidateMapSize(0);
-        renderMarkers(list);
-        if (mapPanel && mapPanel.scrollIntoView) {
-          mapPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      });
+      }, 250);
     });
   }
 
   window.hubToggleMapView = function () {
     setViewMode(!isMapView);
   };
+
+  function finishMarkerRender(token, events, placed, skipped) {
+    if (token !== renderToken || !isMapView || !map) return;
+
+    invalidateMapSize(0);
+
+    if (!placed) {
+      map.setView([54.5, -2.5], 6);
+      if (skipped) {
+        setMapHint(
+          (events || []).length
+            ? 'No mappable in-person events in your current filters. Try clearing filters or add postcodes to events in Supabase.'
+            : 'No events to show on the map yet.'
+        );
+      }
+      return;
+    }
+
+    setMapHint('');
+    var coordsList = [];
+    (events || []).forEach(function (ev) {
+      var coords = coordsForEvent(ev);
+      if (coords) coordsList.push(coords);
+    });
+    fitMapToCoords(coordsList);
+  }
 
   function renderMarkers(events) {
     if (!isMapView) return;
@@ -123,66 +199,67 @@
     markerLayer.clearLayers();
     setMapHint('');
 
-    var enrich = window.hubEnrichEventCoords
-      ? window.hubEnrichEventCoords(events || [])
-      : Promise.resolve();
+    var list = events || [];
+    var placed = 0;
+    var skipped = 0;
+    var pending = [];
 
-    enrich.then(function () {
-      if (token !== renderToken || !isMapView) return;
-
-      var bounds = [];
-      var placed = 0;
-      var skipped = 0;
-
-      (events || []).forEach(function (ev) {
-        var coords = coordsForEvent(ev);
-        if (!coords) {
-          skipped++;
-          return;
-        }
-        bounds.push(coords);
+    list.forEach(function (ev) {
+      var coords = coordsForEvent(ev);
+      if (coords) {
+        addMarker(ev, coords);
         placed++;
-        var pc = ev.postcode || (window.hubExtractPostcode ? window.hubExtractPostcode(ev) : '');
-        var popup =
-          '<div class="map-popup">' +
-          '<strong>' +
-          escapeHtml(ev.title) +
-          '</strong><br>' +
-          escapeHtml(ev.dateLine || ev.date || 'Date TBC') +
-          (pc ? '<br>' + escapeHtml(pc) : '') +
-          '<br><span>' +
-          escapeHtml(ev.price) +
-          '</span><br>' +
-          '<a href="' +
-          escapeHtml(eventHref(ev)) +
-          '">View event</a></div>';
-        markerLayer.addLayer(L.marker(coords).bindPopup(popup));
-      });
-
-      invalidateMapSize(0);
-
-      if (!placed) {
-        map.setView([54.5, -2.5], 6);
-        if (skipped) {
-          setMapHint(
-            (events || []).length
-              ? 'No mappable in-person events in your current filters. Try clearing filters or add postcodes to events in Supabase.'
-              : 'No events to show on the map yet.'
-          );
-        }
-        return;
-      }
-
-      if (bounds.length === 1) {
-        map.setView(bounds[0], 13);
+      } else if (ev.formatSlug !== 'online') {
+        pending.push(ev);
+        skipped++;
       } else {
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
+        skipped++;
       }
     });
+
+    if (!pending.length) {
+      finishMarkerRender(token, list, placed, skipped);
+      return;
+    }
+
+    if (placed) {
+      var initialCoords = [];
+      list.forEach(function (ev) {
+        var coords = coordsForEvent(ev);
+        if (coords) initialCoords.push(coords);
+      });
+      fitMapToCoords(initialCoords);
+    }
+
+    var enrich = window.hubEnrichEventCoords
+      ? window.hubEnrichEventCoords(pending, { noTimeout: true })
+      : Promise.resolve();
+
+    enrich
+      .then(function () {
+        if (token !== renderToken || !isMapView) return;
+
+        pending.forEach(function (ev) {
+          var coords = coordsForEvent(ev);
+          if (!coords) return;
+          addMarker(ev, coords);
+          placed++;
+          skipped--;
+        });
+
+        finishMarkerRender(token, list, placed, skipped);
+      })
+      .catch(function () {
+        finishMarkerRender(token, list, placed, skipped);
+      });
   }
 
   window.hubRefreshMap = function (filtered) {
     if (!isMapView) return;
     renderMarkers(filtered || []);
   };
+
+  window.addEventListener('resize', function () {
+    if (isMapView) invalidateMapSize(0);
+  });
 })();

@@ -154,8 +154,10 @@
       });
   }
 
-  window.hubEnrichEventCoords = function (events) {
+  window.hubEnrichEventCoords = function (events, options) {
+    options = options || {};
     var work = enrichEventCoords(events);
+    if (options.noTimeout) return work;
     return Promise.race([
       work,
       new Promise(function (resolve) {
