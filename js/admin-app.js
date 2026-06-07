@@ -413,6 +413,113 @@
   }
 
   var HEALTH_SEVERITY_ORDER = { high: 0, medium: 1, low: 2 };
+  var EVENT_HEALTH_HISTORY_KEY = 'tnh_event_health_completed_v1';
+  var EVENT_HEALTH_HISTORY_MAX = 15;
+
+  function loadEventHealthHistory() {
+    try {
+      var raw = localStorage.getItem(EVENT_HEALTH_HISTORY_KEY);
+      var list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function pushEventHealthCompletion(entry) {
+    var list = loadEventHealthHistory().filter(function (x) {
+      return x.eventId !== entry.eventId;
+    });
+    list.unshift(entry);
+    if (list.length > EVENT_HEALTH_HISTORY_MAX) {
+      list = list.slice(0, EVENT_HEALTH_HISTORY_MAX);
+    }
+    try {
+      localStorage.setItem(EVENT_HEALTH_HISTORY_KEY, JSON.stringify(list));
+    } catch (e) {
+      /* ignore quota errors */
+    }
+  }
+
+  function recordEventHealthCompletion(beforeEv, afterData) {
+    if (!beforeEv || !beforeEv.id) return;
+    var stillFlagged = (afterData.events || []).some(function (e) {
+      return e.id === beforeEv.id;
+    });
+    if (stillFlagged) return;
+    pushEventHealthCompletion({
+      eventId: beforeEv.id,
+      title: beforeEv.title || 'Untitled',
+      slug: beforeEv.slug || '',
+      fixedIssues: (beforeEv.issues || []).map(function (i) {
+        return i.label;
+      }),
+      completedAt: new Date().toISOString(),
+    });
+  }
+
+  function eventSeverityRank(ev) {
+    var rank = 9;
+    (ev.issues || []).forEach(function (i) {
+      var order = HEALTH_SEVERITY_ORDER[i.severity];
+      if (order != null && order < rank) rank = order;
+    });
+    return rank;
+  }
+
+  function renderEventHealthCompletedHtml() {
+    var list = loadEventHealthHistory();
+    if (!list.length) {
+      return (
+        '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">' +
+        '<h3 class="font-bold text-brand-900 text-sm">Recently completed</h3>' +
+        '<p class="text-sm text-slate-500 mt-2">Fixes you save here will appear in this list (stored in this browser).</p></section>'
+      );
+    }
+    return (
+      '<section class="bg-white rounded-xl border border-emerald-200 shadow-sm overflow-hidden">' +
+      '<div class="px-4 py-3 border-b border-emerald-100 bg-emerald-50/80">' +
+      '<h3 class="font-bold text-emerald-900 text-sm">Recently completed</h3>' +
+      '<p class="text-xs text-emerald-800/80 mt-0.5">Events that passed the health scan after your last save (this browser only).</p></div>' +
+      '<ul class="divide-y divide-slate-100">' +
+      list
+        .map(function (item) {
+          var issues =
+            item.fixedIssues && item.fixedIssues.length
+              ? item.fixedIssues.join(', ')
+              : 'All issues cleared';
+          var eventHref = item.slug
+            ? '../events/' + encodeURIComponent(item.slug)
+            : '';
+          return (
+            '<li class="px-4 py-3 flex flex-wrap items-start justify-between gap-3">' +
+            '<div class="min-w-0">' +
+            '<p class="font-medium text-brand-900">' +
+            esc(item.title) +
+            '</p>' +
+            '<p class="text-xs text-slate-500 mt-0.5">' +
+            esc(issues) +
+            '</p>' +
+            '<time class="text-xs text-slate-400 mt-1 block">' +
+            esc(fmtTime(item.completedAt)) +
+            '</time></div>' +
+            (eventHref
+              ? '<a href="' +
+                attrEsc(eventHref) +
+                '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline shrink-0">View event</a>'
+              : '') +
+            '</li>'
+          );
+        })
+        .join('') +
+      '</ul></section>'
+    );
+  }
+
+  function paintEventHealthCompleted() {
+    var slot = document.getElementById('event-health-completed');
+    if (slot) slot.innerHTML = renderEventHealthCompletedHtml();
+  }
 
   function issueCodes(ev) {
     return (ev.issues || []).map(function (i) {
@@ -535,6 +642,13 @@
 
     if (!hasEventPatch && !organiserPayload) return;
 
+    var beforeFix = null;
+    if (healthCache && healthCache.events) {
+      beforeFix = healthCache.events.find(function (e) {
+        return e.id === id;
+      });
+    }
+
     if (btn) btn.disabled = true;
     if (msg) {
       msg.textContent = 'Saving…';
@@ -577,7 +691,8 @@
         }
         return fetchEventHealth();
       })
-      .then(function () {
+      .then(function (data) {
+        if (beforeFix && data) recordEventHealthCompletion(beforeFix, data);
         renderEventHealth();
       })
       .catch(function (err) {
@@ -657,7 +772,10 @@
       '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Checks <strong>published</strong> events only. Listings awaiting approval are in <a href="#moderation" class="text-brand-700 font-semibold hover:underline">Content Moderation</a> — not here.</p>' +
       '<div id="event-health-status" class="text-sm text-slate-500">Scanning published events…</div>' +
       '<div id="event-health-summary" class="hidden admin-metric-grid admin-metric-grid--4"></div>' +
-      '<div id="event-health-list" class="space-y-3"></div></div>';
+      '<div id="event-health-list" class="space-y-3"></div>' +
+      '<div id="event-health-completed"></div></div>';
+
+    paintEventHealthCompleted();
 
     fetchEventHealth().then(function (data) {
       var status = document.getElementById('event-health-status');
@@ -685,6 +803,7 @@
           ' published events look complete.</span>';
         summary.classList.add('hidden');
         list.innerHTML = '';
+        paintEventHealthCompleted();
         return;
       }
 
@@ -941,6 +1060,7 @@
           );
         })
         .join('');
+      paintEventHealthCompleted();
     });
   }
 
