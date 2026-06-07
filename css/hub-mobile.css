@@ -345,73 +345,148 @@ body.nav-menu-open {
   }
 
   .events-filter-bar {
-    padding: 14px 14px 12px;
+    padding: 10px 12px;
     min-width: 0;
   }
 
   .filter-bar-row {
     min-width: 0;
+    gap: 8px;
   }
 
   .filter-bar-row-top {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: nowrap;
     align-items: stretch;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
   }
 
   .filter-bar-row-top .filter-field-grow,
   .filter-bar-row-top .filter-field-postcode,
   .filter-bar-row-top .filter-field {
-    flex: 1 1 auto;
-    width: 100%;
+    flex: 1 1 0;
+    width: auto;
     max-width: none;
     min-width: 0;
   }
 
-  .filter-bar-row-bottom {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
+  .filter-bar-row-top .filter-field-search {
+    flex: 1.35 1 0;
+  }
+
+  .filter-bar-row-top .filter-field-postcode {
+    flex: 0.85 1 0;
+  }
+
+  .filter-bar-row-top .filter-field input {
+    padding: 9px 10px 9px 34px;
+    font-size: 13px;
+  }
+
+  .filter-bar-row-top .filter-field-search input {
+    padding-right: 34px;
   }
 
   .filter-bar-row-bottom .filter-bar-cluster {
     flex-direction: column;
     align-items: stretch;
     width: 100%;
-    gap: 12px;
+    gap: 8px;
   }
 
-  .filter-bar-row-bottom .filter-bar-cluster > .filter-format-group,
-  .filter-bar-row-bottom .filter-bar-cluster > .filter-price-range,
-  .filter-bar-row-bottom .filter-bar-cluster > .filter-date-wrap,
-  .filter-bar-row-bottom .filter-bar-cluster > .filter-checkbox,
-  .filter-bar-row-bottom .filter-bar-cluster > .filter-near-radius,
-  .filter-bar-row-bottom .filter-bar-cluster > .filter-organiser-only,
-  .filter-bar-row-bottom .filter-bar-cluster > .filter-map-btn {
+  .filter-bar-quick {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
     width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
   }
 
-  .filter-date-wrap {
+  .filter-bar-quick .filter-date-wrap {
+    flex: 1 1 auto;
     min-width: 0;
+    min-height: 40px;
+  }
+
+  .filter-bar-quick .filter-map-btn {
+    flex: 0 0 auto;
+    margin-left: 0;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+
+  .filter-more-toggle {
+    display: flex;
+  }
+
+  .filter-more-panel,
+  .filter-more-near {
+    display: flex;
+  }
+
+  .filter-more-panel[hidden] {
+    display: none !important;
+  }
+
+  .filter-more-panel:not([hidden]) {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .filter-more-near {
+    flex-wrap: wrap;
+    align-items: center;
   }
 
   .filter-format-group {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    width: 100%;
+  }
+
+  .filter-format-group legend {
+    width: auto;
+    margin: 0;
+  }
+
+  .filter-more-panel .filter-price-range {
+    width: 100%;
+  }
+
+  .filter-price-range-controls {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .filter-price-range-row {
+    flex: 1;
+    min-width: 0;
+    grid-template-columns: 28px 1fr 2.5rem;
+    gap: 4px;
+  }
+
+  .filter-near-radius select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .filter-organiser-only {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 8px;
+    width: 100%;
   }
 
   .filter-organiser-industry {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 6px;
+    gap: 4px;
     width: 100%;
   }
 
@@ -422,24 +497,28 @@ body.nav-menu-open {
   }
 
   .filter-org-rating-group {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 12px;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 8px;
     align-items: center;
     width: 100%;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .filter-org-rating-group::-webkit-scrollbar {
+    display: none;
   }
 
   .filter-org-rating-group legend {
-    grid-column: 1 / -1;
+    flex: 0 0 100%;
+    margin-bottom: 0;
   }
 
-  .filter-near-radius select {
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .filter-map-btn {
-    justify-content: center;
+  .filter-date-wrap {
+    min-width: 0;
   }
 
   .events-results-meta {

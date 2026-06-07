@@ -449,6 +449,50 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
   min-width: 0;
 }
 
+.filter-bar-quick {
+  display: contents;
+}
+
+.filter-more-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lavender-deep);
+  background: #fff;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.filter-more-panel,
+.filter-more-near {
+  display: contents;
+}
+
+.filter-more-panel[hidden] {
+  display: contents !important;
+}
+
+.filter-more-toggle[aria-expanded='true'] .filter-more-chevron {
+  transform: rotate(180deg);
+}
+
+.filter-more-chevron {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.filter-more-near {
+  align-items: center;
+  gap: 8px 12px;
+}
+
 .filter-near-radius select {
   font-family: inherit;
   font-size: 13px;
@@ -641,85 +685,12 @@ body.events-view-map .events-map-panel {
 }
 
 @media (max-width: 900px) {
-  .filter-bar-row-bottom {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
+  .filter-bar-row-top .filter-field-grow,
+  .filter-bar-row-top .filter-field-postcode,
+  .filter-bar-row-top .filter-field {
+    flex: 0 0 auto;
   }
 
-  .filter-bar-row-bottom .filter-bar-cluster {
-    flex-direction: column;
-    align-items: stretch;
-    width: 100%;
-    gap: 12px;
-  }
-
-  .filter-bar-row-bottom .filter-bar-cluster > .filter-format-group,
-  .filter-bar-row-bottom .filter-bar-cluster > .filter-price-range,
-  .filter-bar-row-bottom .filter-bar-cluster > .filter-date-wrap,
-  .filter-bar-row-bottom .filter-bar-cluster > .filter-checkbox,
-  .filter-bar-row-bottom .filter-bar-cluster > .filter-near-radius,
-  .filter-bar-row-bottom .filter-bar-cluster > .filter-organiser-only,
-  .filter-bar-row-bottom .filter-bar-cluster > .filter-map-btn {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
-  .filter-price-range {
-    width: 100%;
-  }
-
-  .filter-date-wrap {
-    min-width: 0;
-  }
-
-  .filter-format-group {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .filter-organiser-only {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .filter-organiser-industry {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-    width: 100%;
-  }
-
-  .filter-organiser-industry select {
-    width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-  }
-
-  .filter-org-rating-group {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 12px;
-    align-items: center;
-    width: 100%;
-  }
-
-  .filter-org-rating-group legend {
-    grid-column: 1 / -1;
-  }
-
-  .filter-near-radius select {
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .filter-map-btn {
-    margin-left: 0;
-    justify-content: center;
-  }
   .events-map-panel {
     height: 400px;
   }

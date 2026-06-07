@@ -135,7 +135,14 @@
     if (listingsView) listingsView.hidden = mapMode;
     if (mapBtn) mapBtn.setAttribute('aria-pressed', mapMode ? 'true' : 'false');
     if (mapLabel) {
-      mapLabel.textContent = mapMode ? 'Swap to List View' : 'Swap to Map View';
+      var compact = window.matchMedia('(max-width: 720px)').matches;
+      mapLabel.textContent = mapMode
+        ? compact
+          ? 'List'
+          : 'Swap to List View'
+        : compact
+          ? 'Map'
+          : 'Swap to Map View';
     }
     setChromeHidden(mapMode);
     if (!mapMode) {
