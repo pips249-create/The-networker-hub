@@ -164,6 +164,12 @@
     setViewMode(!isMapView);
   };
 
+  if (mapBtn) {
+    mapBtn.addEventListener('click', function () {
+      window.hubToggleMapView();
+    });
+  }
+
   function finishMarkerRender(token, events, placed, skipped) {
     if (token !== renderToken || !isMapView || !map) return;
 

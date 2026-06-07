@@ -17,7 +17,6 @@
   var spotlightPrev = document.getElementById('spotlight-prev');
   var spotlightNext = document.getElementById('spotlight-next');
   var spotlightTrack = document.getElementById('spotlight-track');
-  var mapViewBtn = document.getElementById('map-view-btn');
   var typeTabs = document.querySelectorAll('.type-tab[data-type]');
 
   var activeTypeTab = 'all';
@@ -436,12 +435,6 @@
   if (spotlightNext && spotlightTrack) {
     spotlightNext.addEventListener('click', function () {
       spotlightTrack.scrollBy({ left: 280, behavior: 'smooth' });
-    });
-  }
-
-  if (mapViewBtn && window.hubToggleMapView) {
-    mapViewBtn.addEventListener('click', function () {
-      window.hubToggleMapView();
     });
   }
 

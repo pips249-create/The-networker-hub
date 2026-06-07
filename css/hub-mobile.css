@@ -368,26 +368,19 @@ body.nav-menu-open {
   .filter-bar-row-bottom {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .filter-bar-cluster {
-    flex-direction: column;
-    align-items: stretch;
-    width: 100%;
-    min-width: 0;
     gap: 12px;
   }
 
-  .filter-format-group,
-  .filter-price-range,
-  .filter-org-rating-group,
-  .filter-organiser-only {
+  .filter-bar-row-bottom > .filter-format-group,
+  .filter-bar-row-bottom > .filter-price-range,
+  .filter-bar-row-bottom > .filter-date-wrap,
+  .filter-bar-row-bottom > .filter-checkbox,
+  .filter-bar-row-bottom > .filter-near-radius,
+  .filter-bar-row-bottom > .filter-organiser-only,
+  .filter-bar-row-bottom > .filter-map-btn {
     width: 100%;
-    min-width: 0;
-  }
-
-  .filter-price-range {
-    flex: 1 1 auto;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .filter-format-group {
@@ -416,18 +409,14 @@ body.nav-menu-open {
   }
 
   .filter-org-rating-group {
-    flex-direction: column;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+    align-items: center;
   }
 
-  .filter-date-wrap {
-    width: 100%;
-    max-width: none;
-    box-sizing: border-box;
-  }
-
-  .filter-near-radius {
-    width: 100%;
+  .filter-org-rating-group legend {
+    grid-column: 1 / -1;
   }
 
   .filter-near-radius select {
@@ -436,7 +425,6 @@ body.nav-menu-open {
   }
 
   .filter-map-btn {
-    width: 100%;
     justify-content: center;
   }
 
