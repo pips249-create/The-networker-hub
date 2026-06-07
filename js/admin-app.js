@@ -16,7 +16,7 @@
     },
     analytics: {
       title: 'Web Analytics',
-      subtitle: 'Visitor traffic on Vercel · platform activity from Supabase',
+      subtitle: 'Visitor traffic on Vercel · platform insights and top performers from Supabase',
     },
     'event-health': {
       title: 'Event data issues',
@@ -67,6 +67,7 @@
   var healthCache = null;
   var groupCleanupCache = null;
   var eventCleanupCache = null;
+  var analyticsState = { period: '30d' };
   var groupCleanupState = { offset: 0, q: '', incomplete: false, hasMore: false, total: 0, loading: false, selected: {} };
   var eventCleanupState = { organiserId: '', unlinked: false, offset: 0, q: '', hasMore: false, total: 0, loading: false };
   var GROUP_PAGE_SIZE = 30;
@@ -971,6 +972,351 @@
       .join('');
   }
 
+  function analyticsPeriodLabel(period) {
+    if (period === '7d') return 'Last 7 days';
+    if (period === 'all') return 'All time';
+    return 'Last 30 days';
+  }
+
+  function analyticsPeriodBtn(period, label) {
+    var active = analyticsState.period === period;
+    return (
+      '<button type="button" data-analytics-period="' +
+      esc(period) +
+      '" class="rounded-lg px-3 py-1.5 text-xs font-semibold transition ' +
+      (active
+        ? 'bg-brand-700 text-white'
+        : 'bg-slate-100 text-slate-700 hover:bg-slate-200') +
+      '">' +
+      esc(label) +
+      '</button>'
+    );
+  }
+
+  function fmtPctChange(n) {
+    if (n == null || n === '') return '—';
+    var num = Number(n);
+    if (Number.isNaN(num)) return '—';
+    return (num > 0 ? '+' : '') + num + '%';
+  }
+
+  function fmtRating(n) {
+    if (n == null || n === '') return '—';
+    return String(n) + '★';
+  }
+
+  function insightsEmptyRow(colspan, message) {
+    return (
+      '<tr><td colspan="' +
+      colspan +
+      '" class="px-4 py-5 text-sm text-slate-500">' +
+      esc(message) +
+      '</td></tr>'
+    );
+  }
+
+  function renderInsightsTopOrganisers(rows) {
+    if (!rows.length) {
+      return insightsEmptyRow(5, 'No organiser activity in this period yet.');
+    }
+    return rows
+      .map(function (o, i) {
+        return (
+          '<tr class="border-t border-slate-100">' +
+          '<td class="px-3 py-2.5 text-slate-400 text-xs">' +
+          (i + 1) +
+          '</td>' +
+          '<td class="px-3 py-2.5 font-medium text-brand-900">' +
+          esc(o.name) +
+          '</td>' +
+          '<td class="px-3 py-2.5 text-right font-semibold">' +
+          esc(fmtMoney(o.revenue || 0)) +
+          '</td>' +
+          '<td class="px-3 py-2.5 text-right">' +
+          esc(String(o.registrations || 0)) +
+          '</td>' +
+          '<td class="px-3 py-2.5 text-right text-slate-600">' +
+          esc(fmtRating(o.avgRating)) +
+          (o.reviewCount ? ' <span class="text-slate-400">(' + o.reviewCount + ')</span>' : '') +
+          '</td></tr>'
+        );
+      })
+      .join('');
+  }
+
+  function renderInsightsTopEvents(rows) {
+    if (!rows.length) {
+      return insightsEmptyRow(6, 'No event activity in this period yet.');
+    }
+    return rows
+      .map(function (e, i) {
+        var fill =
+          e.fillRatePct != null
+            ? e.fillRatePct + '%' + (e.capacity ? ' of ' + e.capacity : '')
+            : '—';
+        return (
+          '<tr class="border-t border-slate-100">' +
+          '<td class="px-3 py-2.5 text-slate-400 text-xs">' +
+          (i + 1) +
+          '</td>' +
+          '<td class="px-3 py-2.5 min-w-[140px]"><span class="font-medium text-brand-900">' +
+          esc(e.title) +
+          '</span><span class="block text-xs text-slate-500">' +
+          esc(e.organiser) +
+          (e.city ? ' · ' + esc(e.city) : '') +
+          '</span></td>' +
+          '<td class="px-3 py-2.5 text-right font-semibold">' +
+          esc(fmtMoney(e.revenue || 0)) +
+          '</td>' +
+          '<td class="px-3 py-2.5 text-right">' +
+          esc(String(e.registrations || 0)) +
+          '</td>' +
+          '<td class="px-3 py-2.5 text-right text-slate-600">' +
+          esc(fmtRating(e.avgRating)) +
+          '</td>' +
+          '<td class="px-3 py-2.5 text-right text-xs text-slate-500">' +
+          esc(fill) +
+          '</td></tr>'
+        );
+      })
+      .join('');
+  }
+
+  function renderInsightsTopAttendees(rows) {
+    if (!rows.length) {
+      return insightsEmptyRow(4, 'No paid attendee activity in this period yet.');
+    }
+    return rows
+      .map(function (a, i) {
+        return (
+          '<tr class="border-t border-slate-100">' +
+          '<td class="px-3 py-2.5 text-slate-400 text-xs">' +
+          (i + 1) +
+          '</td>' +
+          '<td class="px-3 py-2.5"><span class="font-medium text-brand-900">' +
+          esc(a.name) +
+          '</span>' +
+          (a.email ? '<span class="block text-xs text-slate-500">' + esc(a.email) + '</span>' : '') +
+          '</td>' +
+          '<td class="px-3 py-2.5 text-right font-semibold">' +
+          esc(fmtMoney(a.spend || 0)) +
+          '</td>' +
+          '<td class="px-3 py-2.5 text-right">' +
+          esc(String(a.eventsAttended || 0)) +
+          '</td></tr>'
+        );
+      })
+      .join('');
+  }
+
+  function renderInsightsCities(rows) {
+    if (!rows.length) {
+      return '<p class="text-sm text-slate-500">No city data in this period yet.</p>';
+    }
+    return (
+      '<ul class="space-y-2">' +
+      rows
+        .map(function (c) {
+          return (
+            '<li class="flex items-center justify-between text-sm gap-3">' +
+            '<span class="font-medium text-brand-900">' +
+            esc(c.city) +
+            '</span>' +
+            '<span class="text-slate-500 shrink-0">' +
+            esc(String(c.registrations || 0)) +
+            ' regs · ' +
+            esc(fmtMoney(c.revenue || 0)) +
+            '</span></li>'
+          );
+        })
+        .join('') +
+      '</ul>'
+    );
+  }
+
+  function renderInsightsTypeMix(rows) {
+    if (!rows.length) {
+      return '<p class="text-sm text-slate-500">No registrations in this period yet.</p>';
+    }
+    return (
+      '<ul class="space-y-2">' +
+      rows
+        .map(function (t) {
+          return (
+            '<li class="flex items-center justify-between text-sm gap-3">' +
+            '<span class="font-medium text-brand-900 capitalize">' +
+            esc(t.type) +
+            '</span>' +
+            '<span class="text-slate-500 shrink-0">' +
+            esc(String(t.count || 0)) +
+            ' · ' +
+            esc(fmtMoney(t.revenue || 0)) +
+            '</span></li>'
+          );
+        })
+        .join('') +
+      '</ul>'
+    );
+  }
+
+  function renderInsightsRated(rows, kind) {
+    if (!rows.length) {
+      return (
+        '<p class="text-sm text-slate-500">No ' +
+        esc(kind) +
+        ' with 3+ reviews yet.</p>'
+      );
+    }
+    return (
+      '<ul class="space-y-2">' +
+      rows
+        .map(function (r) {
+          return (
+            '<li class="flex items-center justify-between text-sm gap-3">' +
+            '<span class="font-medium text-brand-900 min-w-0 truncate">' +
+            esc(r.title || r.name) +
+            '</span>' +
+            '<span class="text-slate-600 shrink-0 font-semibold">' +
+            esc(fmtRating(r.avgRating)) +
+            ' <span class="text-slate-400 font-normal">(' +
+            esc(String(r.reviewCount || 0)) +
+            ')</span></span></li>'
+          );
+        })
+        .join('') +
+      '</ul>'
+    );
+  }
+
+  function renderInsightsPanel(data) {
+    if (!data || data.error || data.configured === false) {
+      return '<p class="text-sm text-red-700">Could not load platform insights. Check Supabase env vars on Vercel.</p>';
+    }
+
+    var rev = data.revenueComparison || {};
+    var repeat = data.repeatAttendees || {};
+    var growth = data.growthPulse || {};
+    var funnel = data.applicationFunnel || {};
+    return (
+      '<div class="space-y-5">' +
+      '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm space-y-4">' +
+      '<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">' +
+      '<div><h3 class="font-bold text-brand-900">Top performers</h3>' +
+      '<p class="text-sm text-slate-500 mt-0.5">Ranked from Supabase registrations — ' +
+      esc(analyticsPeriodLabel(data.period || analyticsState.period)) +
+      '.</p></div>' +
+      '<div id="analytics-period-controls" class="flex flex-wrap gap-2">' +
+      analyticsPeriodBtn('7d', '7 days') +
+      analyticsPeriodBtn('30d', '30 days') +
+      analyticsPeriodBtn('all', 'All time') +
+      '</div></div>' +
+      '<div class="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">' +
+      '<div class="min-w-0 lg:col-span-1 xl:col-span-1 rounded-xl border border-slate-200 overflow-hidden">' +
+      '<div class="px-3 py-2.5 border-b border-slate-100 bg-slate-50"><h4 class="text-sm font-bold text-brand-900">Best groups</h4></div>' +
+      adminTableScroll(
+        '<table class="w-full text-sm"><thead class="text-xs uppercase text-slate-500 bg-white">' +
+          '<tr><th class="px-3 py-2 w-8"></th><th class="px-3 py-2 text-left">Organiser</th><th class="px-3 py-2 text-right">Revenue</th><th class="px-3 py-2 text-right">Regs</th><th class="px-3 py-2 text-right">Rating</th></tr></thead>' +
+          '<tbody id="insights-top-organisers">' +
+          renderInsightsTopOrganisers(data.topOrganisers || []) +
+          '</tbody></table>'
+      ) +
+      '</div>' +
+      '<div class="min-w-0 lg:col-span-1 xl:col-span-2 rounded-xl border border-slate-200 overflow-hidden">' +
+      '<div class="px-3 py-2.5 border-b border-slate-100 bg-slate-50"><h4 class="text-sm font-bold text-brand-900">Best events</h4></div>' +
+      adminTableScroll(
+        '<table class="w-full text-sm"><thead class="text-xs uppercase text-slate-500 bg-white">' +
+          '<tr><th class="px-3 py-2 w-8"></th><th class="px-3 py-2 text-left">Event</th><th class="px-3 py-2 text-right">Revenue</th><th class="px-3 py-2 text-right">Sold</th><th class="px-3 py-2 text-right">Rating</th><th class="px-3 py-2 text-right">Fill</th></tr></thead>' +
+          '<tbody id="insights-top-events">' +
+          renderInsightsTopEvents(data.topEvents || []) +
+          '</tbody></table>'
+      ) +
+      '</div>' +
+      '<div class="min-w-0 lg:col-span-2 xl:col-span-2 rounded-xl border border-slate-200 overflow-hidden">' +
+      '<div class="px-3 py-2.5 border-b border-slate-100 bg-slate-50"><h4 class="text-sm font-bold text-brand-900">Highest spending attendees</h4>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Admin view — top 5 by paid ticket spend (test/E2E excluded).</p></div>' +
+      adminTableScroll(
+        '<table class="w-full text-sm"><thead class="text-xs uppercase text-slate-500 bg-white">' +
+          '<tr><th class="px-3 py-2 w-8"></th><th class="px-3 py-2 text-left">Attendee</th><th class="px-3 py-2 text-right">Spend</th><th class="px-3 py-2 text-right">Events</th></tr></thead>' +
+          '<tbody id="insights-top-attendees">' +
+          renderInsightsTopAttendees(data.topAttendees || []) +
+          '</tbody></table>'
+      ) +
+      '</div></div></section>' +
+      '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm space-y-4">' +
+      '<div><h3 class="font-bold text-brand-900">Growth &amp; quality</h3>' +
+      '<p class="text-sm text-slate-500 mt-0.5">Trends and engagement signals from Supabase.</p></div>' +
+      '<div class="admin-metric-grid admin-metric-grid--4">' +
+      card(
+        'Revenue (30 days)',
+        fmtMoney(rev.current30d || 0),
+        'Prior 30d: ' + fmtMoney(rev.prior30d || 0) + ' · ' + fmtPctChange(rev.changePct),
+        'emerald'
+      ) +
+      card(
+        'Repeat attendees',
+        String(repeat.ratePct != null ? repeat.ratePct + '%' : '—'),
+        String(repeat.repeat || 0) + ' of ' + String(repeat.total || 0) + ' attendees (all time)',
+        'blue'
+      ) +
+      card(
+        'New this week',
+        String(growth.registrations7d || 0) + ' regs',
+        String(growth.newOrganisers7d || 0) + ' organisers · ' + String(growth.newAccounts7d || 0) + ' accounts',
+        'violet'
+      ) +
+      card(
+        'Applications',
+        String(funnel.pending || 0) + ' pending',
+        String(funnel.approved || 0) + ' approved · ' + String(funnel.denied || 0) + ' denied',
+        'brand'
+      ) +
+      '</div>' +
+      '<div class="grid gap-5 md:grid-cols-2 xl:grid-cols-4">' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-3">Top cities</h4><div id="insights-top-cities">' +
+      renderInsightsCities(data.topCities || []) +
+      '</div></div>' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-3">Event type mix</h4><div id="insights-type-mix">' +
+      renderInsightsTypeMix(data.eventTypeMix || []) +
+      '</div></div>' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-3">Highest rated groups</h4><p class="text-xs text-slate-500 mb-2">Min. 3 reviews</p><div id="insights-rated-orgs">' +
+      renderInsightsRated(data.topRatedOrganisers || [], 'groups') +
+      '</div></div>' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-3">Highest rated events</h4><p class="text-xs text-slate-500 mb-2">Min. 3 reviews</p><div id="insights-rated-events">' +
+      renderInsightsRated(data.topRatedEvents || [], 'events') +
+      '</div></div></div></section></div>'
+    );
+  }
+
+  function loadAnalyticsInsights() {
+    var panel = document.getElementById('analytics-insights');
+    var controls = document.getElementById('analytics-period-controls');
+    if (controls) {
+      controls.innerHTML =
+        analyticsPeriodBtn('7d', '7 days') +
+        analyticsPeriodBtn('30d', '30 days') +
+        analyticsPeriodBtn('all', 'All time');
+    }
+    if (panel) {
+      panel.innerHTML = '<p class="text-sm text-slate-500">Loading platform insights…</p>';
+    }
+    adminGet('/api/admin/insights?period=' + encodeURIComponent(analyticsState.period)).then(function (data) {
+      if (panel) panel.innerHTML = renderInsightsPanel(data);
+    });
+  }
+
+  function bindAnalyticsControls() {
+    if (!main || main.dataset.analyticsBound) return;
+    main.dataset.analyticsBound = '1';
+    main.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-analytics-period]');
+      if (!btn) return;
+      var period = btn.getAttribute('data-analytics-period');
+      if (!period || period === analyticsState.period) return;
+      analyticsState.period = period;
+      loadAnalyticsInsights();
+    });
+  }
+
   function renderAnalytics() {
     var trackingOn = analyticsTrackingActive();
     main.innerHTML =
@@ -1011,7 +1357,11 @@
       '<p class="text-xs text-slate-500 mt-1 mb-3 shrink-0">Excludes E2E and test seed data.</p>' +
       '<ul id="analytics-activity" class="admin-activity-feed space-y-0 min-h-0 pr-1 -mr-1">' +
       '<li class="text-sm text-slate-500">Loading…</li></ul>' +
-      '</aside></div></div>';
+      '</aside></div>' +
+      '<div id="analytics-insights"><p class="text-sm text-slate-500">Loading platform insights…</p></div></div>';
+
+    bindAnalyticsControls();
+    loadAnalyticsInsights();
 
     adminGet('/api/admin/metrics').then(function (data) {
       var metricsEl = document.getElementById('analytics-platform-metrics');

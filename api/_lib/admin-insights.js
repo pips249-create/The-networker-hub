@@ -1,0 +1,470 @@
+/**
+ * Admin platform insights — leaderboards and growth metrics from Supabase.
+ */
+const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
+const { parseTypeCategory } = require('./event-types');
+
+function round2(n) {
+  return Math.round(Number(n) * 100) / 100;
+}
+
+function isTestActivityText(text) {
+  const t = String(text || '').toLowerCase();
+  return (
+    /e2e review test/.test(t) ||
+    /review test attendee/.test(t) ||
+    /e2e review host/.test(t)
+  );
+}
+
+function isTestRegistration(reg) {
+  const who = reg.attendees?.name || reg.attendees?.email || '';
+  const eventTitle = reg.events?.title || '';
+  return isTestActivityText(who) || isTestActivityText(eventTitle);
+}
+
+function parsePeriod(raw) {
+  const p = String(raw || '30d').trim().toLowerCase();
+  return p === '7d' || p === '30d' || p === 'all' ? p : '30d';
+}
+
+function sinceIso(period) {
+  if (period === 'all') return null;
+  const days = period === '7d' ? 7 : 30;
+  return new Date(Date.now() - days * 86400000).toISOString();
+}
+
+function paidAmount(reg) {
+  return reg.payment_status === 'Paid' ? Number(reg.amount_paid) || 0 : 0;
+}
+
+function avgRating(sum, count) {
+  if (!count) return null;
+  return round2(sum / count);
+}
+
+function pctChange(current, prior) {
+  if (!prior) return current > 0 ? 100 : 0;
+  return round2(((current - prior) / prior) * 100);
+}
+
+async function fetchRegistrations(sb, since) {
+  let query = sb
+    .from('registrations')
+    .select(
+      'id, created_at, payment_status, amount_paid, application_status, screening_answer_industry, screening_answer_job_title, attendee_id, event_id, organiser_id, attendees(name, email, location), events(id, title, city, event_type), organisers(id, name)'
+    )
+    .order('created_at', { ascending: false });
+  if (since) query = query.gte('created_at', since);
+  const res = await query;
+  if (res.error) throw new Error(res.error.message);
+  return (res.data || []).filter((r) => !isTestRegistration(r));
+}
+
+async function fetchAllRegistrationsFiltered(sb) {
+  const res = await sb
+    .from('registrations')
+    .select('attendee_id, event_id, organiser_id, payment_status, amount_paid, attendees(name, email), events(title)')
+    .not('attendee_id', 'is', null);
+  if (res.error) throw new Error(res.error.message);
+  return (res.data || []).filter((r) => !isTestRegistration(r));
+}
+
+function buildRatingMaps(reviews) {
+  const byEvent = new Map();
+  const byOrganiser = new Map();
+
+  reviews.forEach((r) => {
+    const rating = Number(r.rating) || 0;
+    if (!rating) return;
+
+    if (r.event_id) {
+      const row = byEvent.get(r.event_id) || { sum: 0, count: 0 };
+      row.sum += rating;
+      row.count += 1;
+      byEvent.set(r.event_id, row);
+    }
+    if (r.organiser_id) {
+      const row = byOrganiser.get(r.organiser_id) || { sum: 0, count: 0 };
+      row.sum += rating;
+      row.count += 1;
+      byOrganiser.set(r.organiser_id, row);
+    }
+  });
+
+  return { byEvent, byOrganiser };
+}
+
+function ticketCapacityByEvent(tickets) {
+  const map = new Map();
+  (tickets || []).forEach((t) => {
+    if (!t.event_id || t.quantity == null) return;
+    const qty = Number(t.quantity) || 0;
+    if (qty <= 0) return;
+    map.set(t.event_id, (map.get(t.event_id) || 0) + qty);
+  });
+  return map;
+}
+
+function aggregateInsights(regs, ratingMaps, capacityByEvent) {
+  const { byEvent, byOrganiser } = ratingMaps;
+  const organiserStats = new Map();
+  const eventStats = new Map();
+  const attendeeStats = new Map();
+  const cityStats = new Map();
+  const typeStats = new Map();
+  const organiserAttendees = new Map();
+  const funnel = { pending: 0, approved: 0, denied: 0, total: 0 };
+
+  regs.forEach((reg) => {
+    const revenue = paidAmount(reg);
+    const event = reg.events || {};
+    const organiser = reg.organisers || {};
+    const attendee = reg.attendees || {};
+    const eventId = reg.event_id || event.id;
+    const organiserId = reg.organiser_id || organiser.id;
+
+    const isApplication =
+      reg.application_status === 'Pending' ||
+      reg.application_status === 'Denied' ||
+      Boolean(reg.screening_answer_industry || reg.screening_answer_job_title);
+    if (isApplication) {
+      if (reg.application_status === 'Pending') funnel.pending += 1;
+      else if (reg.application_status === 'Denied') funnel.denied += 1;
+      else if (reg.application_status === 'Approved') funnel.approved += 1;
+    }
+
+    if (organiserId) {
+      const o = organiserStats.get(organiserId) || {
+        id: organiserId,
+        name: String(organiser.name || '').trim() || '—',
+        revenue: 0,
+        registrations: 0,
+      };
+      o.registrations += 1;
+      o.revenue = round2(o.revenue + revenue);
+      organiserStats.set(organiserId, o);
+
+      if (reg.attendee_id) {
+        const set = organiserAttendees.get(organiserId) || new Map();
+        set.set(reg.attendee_id, (set.get(reg.attendee_id) || 0) + 1);
+        organiserAttendees.set(organiserId, set);
+      }
+    }
+
+    if (eventId) {
+      const e = eventStats.get(eventId) || {
+        id: eventId,
+        title: String(event.title || '').trim() || '—',
+        organiser: String(organiser.name || '').trim() || '—',
+        city: String(event.city || '').trim() || '—',
+        eventType: String(event.event_type || '').trim() || 'Event',
+        revenue: 0,
+        registrations: 0,
+      };
+      e.registrations += 1;
+      e.revenue = round2(e.revenue + revenue);
+      eventStats.set(eventId, e);
+    }
+
+    if (reg.attendee_id) {
+      const a = attendeeStats.get(reg.attendee_id) || {
+        id: reg.attendee_id,
+        name: String(attendee.name || '').trim() || 'Attendee',
+        email: String(attendee.email || '').trim() || '',
+        location: String(attendee.location || '').trim() || '',
+        spend: 0,
+        eventsAttended: 0,
+        eventIds: new Set(),
+      };
+      a.spend = round2(a.spend + revenue);
+      if (eventId && !a.eventIds.has(eventId)) {
+        a.eventIds.add(eventId);
+        a.eventsAttended += 1;
+      }
+      attendeeStats.set(reg.attendee_id, a);
+    }
+
+    const city = String(event.city || '').trim();
+    if (city) {
+      const c = cityStats.get(city) || { city, registrations: 0, revenue: 0 };
+      c.registrations += 1;
+      c.revenue = round2(c.revenue + revenue);
+      cityStats.set(city, c);
+    }
+
+    const eventType = String(event.event_type || 'Event').trim() || 'Event';
+    const category = parseTypeCategory(eventType);
+    const typeKey = category || eventType;
+    const t = typeStats.get(typeKey) || { type: typeKey, count: 0, revenue: 0 };
+    t.count += 1;
+    t.revenue = round2(t.revenue + revenue);
+    typeStats.set(typeKey, t);
+  });
+
+  const topOrganisers = Array.from(organiserStats.values())
+    .map((o) => {
+      const ratings = byOrganiser.get(o.id);
+      const repeatSet = organiserAttendees.get(o.id);
+      let repeatAttendees = 0;
+      if (repeatSet) {
+        repeatSet.forEach((n) => {
+          if (n > 1) repeatAttendees += 1;
+        });
+      }
+      return {
+        id: o.id,
+        name: o.name,
+        revenue: o.revenue,
+        registrations: o.registrations,
+        avgRating: ratings ? avgRating(ratings.sum, ratings.count) : null,
+        reviewCount: ratings ? ratings.count : 0,
+        repeatAttendees,
+      };
+    })
+    .sort((a, b) => b.revenue - a.revenue || b.registrations - a.registrations)
+    .slice(0, 10);
+
+  const topEvents = Array.from(eventStats.values())
+    .map((e) => {
+      const ratings = byEvent.get(e.id);
+      const capacity = capacityByEvent.get(e.id) || 0;
+      const fillRatePct =
+        capacity > 0 ? Math.round((e.registrations / capacity) * 100) : null;
+      return {
+        id: e.id,
+        title: e.title,
+        organiser: e.organiser,
+        city: e.city,
+        eventType: e.eventType,
+        revenue: e.revenue,
+        registrations: e.registrations,
+        avgRating: ratings ? avgRating(ratings.sum, ratings.count) : null,
+        reviewCount: ratings ? ratings.count : 0,
+        capacity: capacity || null,
+        fillRatePct,
+      };
+    })
+    .sort((a, b) => b.revenue - a.revenue || b.registrations - a.registrations)
+    .slice(0, 10);
+
+  const topAttendees = Array.from(attendeeStats.values())
+    .map((a) => ({
+      id: a.id,
+      name: a.name,
+      email: a.email,
+      location: a.location,
+      spend: a.spend,
+      eventsAttended: a.eventsAttended,
+    }))
+    .sort((a, b) => b.spend - a.spend || b.eventsAttended - a.eventsAttended)
+    .slice(0, 5);
+
+  const topCities = Array.from(cityStats.values())
+    .sort((a, b) => b.registrations - a.registrations || b.revenue - a.revenue)
+    .slice(0, 5);
+
+  const eventTypeMix = Array.from(typeStats.values()).sort((a, b) => b.count - a.count);
+
+  return {
+    topOrganisers,
+    topEvents,
+    topAttendees,
+    topCities,
+    eventTypeMix,
+    applicationFunnel: {
+      pending: funnel.pending,
+      approved: funnel.approved,
+      denied: funnel.denied,
+      total: funnel.pending + funnel.approved + funnel.denied,
+    },
+    eventStats,
+    organiserStats,
+  };
+}
+
+function buildRatedLists(byEvent, byOrganiser, eventStats, organiserStats, organiserNames) {
+  const topRatedOrganisers = Array.from(byOrganiser.entries())
+    .filter(([, r]) => r.count >= 3)
+    .map(([id, r]) => {
+      const org = organiserStats.get(id);
+      return {
+        id,
+        name: (org && org.name) || organiserNames.get(id) || '—',
+        avgRating: avgRating(r.sum, r.count),
+        reviewCount: r.count,
+      };
+    })
+    .sort((a, b) => b.avgRating - a.avgRating || b.reviewCount - a.reviewCount)
+    .slice(0, 5);
+
+  const topRatedEvents = Array.from(byEvent.entries())
+    .filter(([, r]) => r.count >= 3)
+    .map(([id, r]) => {
+      const ev = eventStats.get(id);
+      return {
+        id,
+        title: ev ? ev.title : '—',
+        organiser: ev ? ev.organiser : '—',
+        avgRating: avgRating(r.sum, r.count),
+        reviewCount: r.count,
+      };
+    })
+    .sort((a, b) => b.avgRating - a.avgRating || b.reviewCount - a.reviewCount)
+    .slice(0, 5);
+
+  return { topRatedOrganisers, topRatedEvents };
+}
+
+function computeRepeatAttendees(allRegs) {
+  const byAttendee = new Map();
+  allRegs.forEach((r) => {
+    if (!r.attendee_id) return;
+    byAttendee.set(r.attendee_id, (byAttendee.get(r.attendee_id) || 0) + 1);
+  });
+  const total = byAttendee.size;
+  let repeat = 0;
+  byAttendee.forEach((n) => {
+    if (n > 1) repeat += 1;
+  });
+  return {
+    total,
+    repeat,
+    ratePct: total ? round2((repeat / total) * 100) : 0,
+  };
+}
+
+function revenueInRange(regs, startIso, endIso) {
+  const start = new Date(startIso).getTime();
+  const end = endIso ? new Date(endIso).getTime() : Infinity;
+  return round2(
+    regs.reduce((sum, r) => {
+      const t = new Date(r.created_at).getTime();
+      if (Number.isNaN(t) || t < start || t >= end) return sum;
+      return sum + paidAmount(r);
+    }, 0)
+  );
+}
+
+async function getAdminInsights(periodRaw) {
+  if (!isSupabaseConfigured()) {
+    return { configured: false, provider: 'supabase' };
+  }
+
+  const period = parsePeriod(periodRaw);
+  const since = sinceIso(period);
+  const sb = getSupabaseAdmin();
+
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+  const sixtyDaysAgo = new Date(Date.now() - 60 * 86400000).toISOString();
+
+  const [
+    periodRegs,
+    allRegsFiltered,
+    reviewsRes,
+    ticketsRes,
+    organisersRes,
+    eventsRes,
+    regs7dRes,
+    orgs7dRes,
+    accounts7dRes,
+    revenueRegsRes,
+  ] = await Promise.all([
+    fetchRegistrations(sb, since),
+    fetchAllRegistrationsFiltered(sb),
+    sb.from('reviews').select('event_id, organiser_id, rating, created_at'),
+    sb.from('tickets').select('event_id, quantity'),
+    sb.from('organisers').select('id, name'),
+    sb.from('events').select('id, title, organisers(name)'),
+    sb
+      .from('registrations')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', sevenDaysAgo),
+    sb
+      .from('organisers')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', sevenDaysAgo),
+    sb
+      .from('hub_accounts')
+      .select('user_id', { count: 'exact', head: true })
+      .gte('created_at', sevenDaysAgo),
+    sb
+      .from('registrations')
+      .select('created_at, payment_status, amount_paid, attendees(name, email), events(title)')
+      .gte('created_at', sixtyDaysAgo),
+  ]);
+
+  if (reviewsRes.error) throw new Error(reviewsRes.error.message);
+  if (ticketsRes.error) throw new Error(ticketsRes.error.message);
+  if (organisersRes.error) throw new Error(organisersRes.error.message);
+  if (eventsRes.error) throw new Error(eventsRes.error.message);
+  if (revenueRegsRes.error) throw new Error(revenueRegsRes.error.message);
+
+  const organiserNames = new Map(
+    (organisersRes.data || []).map((o) => [o.id, String(o.name || '').trim() || '—'])
+  );
+  const eventTitles = new Map(
+    (eventsRes.data || []).map((e) => [e.id, String(e.title || '').trim() || '—'])
+  );
+
+  const reviews = reviewsRes.data || [];
+  const ratingMaps = buildRatingMaps(reviews);
+  const capacityByEvent = ticketCapacityByEvent(ticketsRes.data || []);
+  const aggregated = aggregateInsights(periodRegs, ratingMaps, capacityByEvent);
+
+  const eventStats = aggregated.eventStats;
+  eventTitles.forEach((title, id) => {
+    if (!eventStats.has(id)) {
+      eventStats.set(id, {
+        id,
+        title,
+        organiser: '—',
+        city: '—',
+        eventType: 'Event',
+        revenue: 0,
+        registrations: 0,
+      });
+    }
+  });
+
+  const rated = buildRatedLists(
+    ratingMaps.byEvent,
+    ratingMaps.byOrganiser,
+    eventStats,
+    aggregated.organiserStats,
+    organiserNames
+  );
+  delete aggregated.eventStats;
+  delete aggregated.organiserStats;
+
+  const revenueRegs = (revenueRegsRes.data || []).filter((r) => !isTestRegistration(r));
+  const revenueComparison = {
+    current30d: revenueInRange(revenueRegs, thirtyDaysAgo, null),
+    prior30d: revenueInRange(revenueRegs, sixtyDaysAgo, thirtyDaysAgo),
+    changePct: pctChange(
+      revenueInRange(revenueRegs, thirtyDaysAgo, null),
+      revenueInRange(revenueRegs, sixtyDaysAgo, thirtyDaysAgo)
+    ),
+  };
+
+  return {
+    configured: true,
+    provider: 'supabase',
+    period,
+    currency: 'GBP',
+    updatedAt: new Date().toISOString(),
+    revenueComparison,
+    repeatAttendees: computeRepeatAttendees(allRegsFiltered),
+    growthPulse: {
+      registrations7d: regs7dRes.count || 0,
+      newOrganisers7d: orgs7dRes.count || 0,
+      newAccounts7d: accounts7dRes.count || 0,
+    },
+    ...aggregated,
+    topRatedOrganisers: rated.topRatedOrganisers,
+    topRatedEvents: rated.topRatedEvents,
+  };
+}
+
+module.exports = { getAdminInsights };
