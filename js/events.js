@@ -43,6 +43,11 @@
       .replace(/</g, '&lt;');
   }
 
+  function jsPhotoUrl(url) {
+    if (!url) return '';
+    return String(url).replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
+  }
+
   function eventImageSrc(ev) {
     if (window.getEventBrowseImage) return window.getEventBrowseImage(ev);
     if (window.getEventImage) return window.getEventImage(ev);
@@ -71,11 +76,11 @@
           : '') || defaultPlaceholder();
     const resolved = url || fallbackRaw;
     const src = safePhotoUrl(resolved);
-    const fallback = safePhotoUrl(fallbackRaw || defaultPlaceholder()).replace(/'/g, '%27');
+    const errorFallback = jsPhotoUrl(defaultPlaceholder());
     const placeholderClass = isPlaceholderSrc(resolved) ? ' is-placeholder' : '';
     return (
-      `<img class="${className}${placeholderClass}" src="${src}" alt="" loading="lazy" decoding="async" ` +
-      `onerror="this.onerror=null;this.src='${fallback}';this.classList.add('is-placeholder')">`
+      `<img class="${className}${placeholderClass}" src="${src}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" ` +
+      `onerror="this.onerror=null;this.src='${errorFallback}';this.classList.add('is-placeholder')">`
     );
   }
 

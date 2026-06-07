@@ -6,6 +6,30 @@
 const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./_lib/supabase');
 const { normalizeSponsorBlock } = require('./_lib/cms-sponsor-fields');
 
+const SPONSOR_HUB_SLOT = 'sponsor_hub';
+
+/** Detail-page slots fall back to Sponsor Hub when not published separately. */
+const DETAIL_PAGE_SLOTS = new Set([
+  'event_page_sidebar_ad',
+  'organiser_page_sidebar_ad',
+  'event_page_banner_ad',
+]);
+
+async function fetchActiveBlock(sb, slotKey) {
+  const tableRes = await sb
+    .from('cms_blocks')
+    .select('*')
+    .eq('slot', slotKey)
+    .eq('active', true)
+    .maybeSingle();
+  if (tableRes.error) throw new Error(tableRes.error.message);
+  if (tableRes.data) return tableRes.data;
+
+  const viewRes = await sb.from('active_cms_blocks').select('*').eq('slot', slotKey).maybeSingle();
+  if (viewRes.error) throw new Error(viewRes.error.message);
+  return viewRes.data || null;
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'no-store');
@@ -33,25 +57,24 @@ module.exports = async function handler(req, res) {
 
   try {
     const sb = getSupabaseAdmin();
-    const tableRes = await sb
-      .from('cms_blocks')
-      .select('*')
-      .eq('slot', slot)
-      .eq('active', true)
-      .maybeSingle();
-    if (tableRes.error) throw new Error(tableRes.error.message);
+    let block = await fetchActiveBlock(sb, slot);
+    let fallbackFrom = null;
 
-    let block = tableRes.data || null;
-    if (!block) {
-      const viewRes = await sb.from('active_cms_blocks').select('*').eq('slot', slot).maybeSingle();
-      if (!viewRes.error) block = viewRes.data || null;
+    if (!block && DETAIL_PAGE_SLOTS.has(slot) && slot !== SPONSOR_HUB_SLOT) {
+      block = await fetchActiveBlock(sb, SPONSOR_HUB_SLOT);
+      if (block) fallbackFrom = SPONSOR_HUB_SLOT;
     }
 
-    if (slot === 'sponsor_hub' && block) {
-      block = normalizeSponsorBlock(block);
-    }
+    if (block) block = normalizeSponsorBlock(block);
 
-    return res.status(200).json({ ok: true, configured: true, provider: 'supabase', block });
+    return res.status(200).json({
+      ok: true,
+      configured: true,
+      provider: 'supabase',
+      slot,
+      fallbackFrom,
+      block,
+    });
   } catch (e) {
     return res.status(500).json({
       ok: false,
