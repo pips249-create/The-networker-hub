@@ -642,6 +642,7 @@
     currentPage = 1;
     if (window.hubApplyFilters) window.hubApplyFilters();
     else renderAll();
+    if (window.hubTryRestoreMapView) window.hubTryRestoreMapView();
   }
 
   function refreshAfterGeocode() {

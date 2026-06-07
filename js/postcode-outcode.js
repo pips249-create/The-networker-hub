@@ -127,7 +127,16 @@
   }
 
   function eventLocationHaystack(ev) {
-    return [ev.city, ev.locationShort, ev.location, ev.venue, ev.postcode]
+    return [
+      ev.city,
+      ev.locationShort,
+      ev.location,
+      ev.venue,
+      ev.postcode,
+      ev.address,
+      ev.venueAddress,
+      ev.outcode,
+    ]
       .filter(Boolean)
       .join(' ')
       .toLowerCase();
@@ -149,8 +158,80 @@
   window.hubEventOutcode = function (ev) {
     if (ev.outcode) return ev.outcode;
     var pc = ev.postcode || '';
-    var fromLoc = [ev.location, ev.venue].join(' ');
+    var fromLoc = [ev.location, ev.venue, ev.address, ev.city].join(' ');
     return parseOutcode(pc) || parseOutcode(fromLoc);
+  };
+
+  window.hubLocationFilterState = null;
+
+  function buildAllowedFromOutcodes(postcodes) {
+    var allowed = {};
+    (postcodes || []).forEach(function (row) {
+      var pc = typeof row === 'string' ? row : row && row.postcode;
+      var out = parseOutcode(pc);
+      if (!out) return;
+      allowed[out] = true;
+      var sec = sectorOf(out);
+      allowed[sec] = true;
+      var region = findRegionForSector(sec);
+      if (region) {
+        sectorsForRegion(region).forEach(function (s) {
+          allowed[s] = true;
+        });
+      }
+    });
+    return allowed;
+  }
+
+  window.hubResolveLocationFilter = function (input) {
+    var raw = String(input || '').trim();
+    if (!raw) {
+      window.hubLocationFilterState = null;
+      return Promise.resolve();
+    }
+
+    var oc = parseOutcode(raw);
+    if (oc) {
+      window.hubLocationFilterState = { query: raw, mode: 'outcode' };
+      return Promise.resolve();
+    }
+
+    var region = cityRegionFromInput(raw);
+    if (region) {
+      var regionAllowed = {};
+      sectorsForRegion(region).forEach(function (s) {
+        regionAllowed[s] = true;
+      });
+      window.hubLocationFilterState = {
+        query: raw,
+        mode: 'allowed',
+        allowed: regionAllowed,
+      };
+      return Promise.resolve();
+    }
+
+    var norm = normalizeLocationText(raw);
+
+    return fetch(
+      'https://api.postcodes.io/postcodes?q=' + encodeURIComponent(raw) + '&limit=10'
+    )
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (data.status === 200 && data.result && data.result.length) {
+          window.hubLocationFilterState = {
+            query: raw,
+            mode: 'allowed',
+            allowed: buildAllowedFromOutcodes(data.result),
+          };
+          return;
+        }
+        window.hubLocationFilterState = { query: raw, mode: 'text', text: norm };
+      })
+      .catch(function () {
+        window.hubLocationFilterState = { query: raw, mode: 'text', text: norm };
+      });
   };
 
   /** True if event matches user postcode, outcode, or city filter. */
@@ -158,18 +239,35 @@
     var raw = String(userInput || '').trim();
     if (!raw) return true;
 
-    var oc = parseOutcode(raw);
-    if (oc) {
-      var allowed = allowedSectors(raw);
-      if (!allowed) return true;
-      var eventOc = window.hubEventOutcode(ev);
-      if (!eventOc) return false;
-      var eventSec = sectorOf(eventOc);
-      return !!(allowed[eventOc] || allowed[eventSec]);
+    var state = window.hubLocationFilterState;
+    if (state && state.query === raw && state.mode === 'allowed' && state.allowed) {
+      var allowedOc = window.hubEventOutcode(ev);
+      if (allowedOc) {
+        var allowedSec = sectorOf(allowedOc);
+        if (state.allowed[allowedOc] || state.allowed[allowedSec]) return true;
+      }
+      var placeText = normalizeLocationText(raw);
+      if (placeText.length >= 3) {
+        return eventLocationHaystack(ev).indexOf(placeText) !== -1;
+      }
+      return false;
+    }
+    if (state && state.query === raw && state.mode === 'text' && state.text) {
+      return eventLocationHaystack(ev).indexOf(state.text) !== -1;
     }
 
-    var region = cityRegionFromInput(raw);
-    if (region) return matchesCityRegion(region, ev);
+    var parsedOc = parseOutcode(raw);
+    if (parsedOc) {
+      var allowed = allowedSectors(raw);
+      if (!allowed) return true;
+      var oc = window.hubEventOutcode(ev);
+      if (!oc) return false;
+      var sec = sectorOf(oc);
+      return !!(allowed[oc] || allowed[sec]);
+    }
+
+    var cityRegion = cityRegionFromInput(raw);
+    if (cityRegion) return matchesCityRegion(cityRegion, ev);
 
     var norm = normalizeLocationText(raw);
     if (norm.length >= 3) {

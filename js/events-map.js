@@ -17,6 +17,10 @@
   var mapMobileListBtn = document.getElementById('map-mobile-list-btn');
   var mapSidebarFoot = document.getElementById('map-sidebar-foot');
   var mapSidebarLoadMore = document.getElementById('map-sidebar-load-more');
+  var mapSearchAreaBtn = document.getElementById('map-search-area-btn');
+  var mapAreaActive = document.getElementById('map-area-active');
+  var mapAreaActiveLabel = document.getElementById('map-area-active-label');
+  var mapAreaResetBtn = document.getElementById('map-area-reset-btn');
   var listingsView = document.getElementById('listings-view');
   var mapBtn = document.getElementById('map-view-btn');
   var mapLabel = document.getElementById('map-view-label');
@@ -36,6 +40,11 @@
   var sidebarMetaTotal = 0;
   var SIDEBAR_PAGE = 50;
   var lastLayoutMobile = null;
+  var VIEW_MODE_KEY = 'hub-events-view-mode';
+  var viewportFilterActive = false;
+  var suppressMapEvents = 0;
+  var mapUserMoved = false;
+  var moveEndTimer = null;
 
   function escapeHtml(s) {
     var d = document.createElement('div');
@@ -153,6 +162,13 @@
   function formatSidebarSub(onMap, total, hasCoords) {
     var shown = Math.min(sidebarVisibleCount, onMap);
     var more = onMap > sidebarVisibleCount ? '+' : '';
+    if (viewportFilterActive) {
+      var areaLead = onMap + ' in this area · ' + total + ' matching · showing ';
+      if (hasCoords) {
+        return areaLead + 'nearest ' + shown + more;
+      }
+      return areaLead + shown + more + ' · add postcode for distances';
+    }
     if (hasCoords) {
       return (
         onMap +
@@ -178,6 +194,79 @@
     if (!mapSidebarSub) return;
     var t = total != null ? total : sidebarMetaTotal;
     mapSidebarSub.textContent = formatSidebarSub(onMap, t, !!window.hubUserCoords);
+  }
+
+  function filterEventsInBounds(events) {
+    if (!map) return events || [];
+    var bounds = map.getBounds();
+    return (events || []).filter(function (ev) {
+      var coords = coordsForEvent(ev);
+      return coords && bounds.contains(coords);
+    });
+  }
+
+  function hideSearchAreaPrompt() {
+    if (mapSearchAreaBtn) mapSearchAreaBtn.hidden = true;
+  }
+
+  function updateViewportControls(inAreaCount) {
+    if (!mapSearchAreaBtn || !mapAreaActive) return;
+    if (viewportFilterActive) {
+      hideSearchAreaPrompt();
+      mapAreaActive.hidden = false;
+      if (mapAreaActiveLabel) {
+        mapAreaActiveLabel.textContent = String(inAreaCount) + ' in this area';
+      }
+    } else {
+      mapAreaActive.hidden = true;
+    }
+  }
+
+  function clearViewportFilter(rerender) {
+    viewportFilterActive = false;
+    mapUserMoved = false;
+    hideSearchAreaPrompt();
+    if (mapAreaActive) mapAreaActive.hidden = true;
+    if (rerender !== false && lastFilteredList.length && isMapView) {
+      renderMarkers(lastFilteredList);
+    }
+  }
+
+  function applyViewportFilter() {
+    if (!map || !lastFilteredList.length) return;
+    viewportFilterActive = true;
+    mapUserMoved = false;
+    hideSearchAreaPrompt();
+    renderMarkers(lastFilteredList);
+  }
+
+  function onMapMoveEnd() {
+    if (!isMapView || suppressMapEvents > 0 || viewportFilterActive) return;
+    if (!mapUserMoved) return;
+    clearTimeout(moveEndTimer);
+    moveEndTimer = setTimeout(function () {
+      if (mapSearchAreaBtn && !viewportFilterActive) {
+        mapSearchAreaBtn.hidden = false;
+      }
+    }, 350);
+  }
+
+  function bindMapViewportEvents() {
+    if (!map || map._hubViewportBound) return;
+    map._hubViewportBound = true;
+    map.on('movestart zoomstart', function () {
+      if (suppressMapEvents > 0) return;
+      mapUserMoved = true;
+    });
+    map.on('moveend', onMapMoveEnd);
+  }
+
+  function saveViewMode(mode) {
+    try {
+      localStorage.setItem(VIEW_MODE_KEY, mode);
+    } catch (err) {
+      /* ignore */
+    }
   }
 
   function syncSidebarLayout() {
@@ -255,6 +344,7 @@
     }
     map.addLayer(markerLayer);
     mapReady = true;
+    bindMapViewportEvents();
   }
 
   function setChromeHidden(mapMode) {
@@ -263,26 +353,35 @@
 
   function fitMapToCoords(coordsList) {
     if (!map || !coordsList.length) return;
+    suppressMapEvents++;
     if (coordsList.length === 1) {
       map.setView(coordsList[0], 13);
-      return;
+    } else {
+      map.fitBounds(L.latLngBounds(coordsList), { padding: [48, 48], maxZoom: 13 });
     }
-    map.fitBounds(L.latLngBounds(coordsList), { padding: [48, 48], maxZoom: 13 });
+    setTimeout(function () {
+      suppressMapEvents = Math.max(0, suppressMapEvents - 1);
+    }, 400);
   }
 
   function fitMapToMarkers(coordsList) {
     if (!map) return;
+    suppressMapEvents++;
     if (markerLayer && typeof markerLayer.getBounds === 'function') {
       try {
         var bounds = markerLayer.getBounds();
         if (bounds && bounds.isValid && bounds.isValid()) {
           map.fitBounds(bounds, { padding: [48, 48], maxZoom: 13 });
+          setTimeout(function () {
+            suppressMapEvents = Math.max(0, suppressMapEvents - 1);
+          }, 400);
           return;
         }
       } catch (err) {
         /* fall through */
       }
     }
+    suppressMapEvents = Math.max(0, suppressMapEvents - 1);
     fitMapToCoords(coordsList);
   }
 
@@ -348,9 +447,13 @@
     if (!marker || !map) return;
 
     function openFocused() {
+      suppressMapEvents++;
       map.setView(marker.getLatLng(), Math.max(map.getZoom(), 13));
       marker.openPopup();
       highlightSidebarItem(eventId);
+      setTimeout(function () {
+        suppressMapEvents = Math.max(0, suppressMapEvents - 1);
+      }, 400);
     }
 
     if (markerLayer && typeof markerLayer.zoomToShowLayer === 'function') {
@@ -444,9 +547,11 @@
     if (!onMap) {
       sidebarItemsCache = [];
       if (mapSidebarSub) {
-        mapSidebarSub.textContent = total
-          ? 'No mappable in-person events match your filters.'
-          : 'No events to show yet.';
+        mapSidebarSub.textContent = viewportFilterActive && total
+          ? 'No events in this map area · ' + total + ' match your filters'
+          : total
+            ? 'No mappable in-person events match your filters.'
+            : 'No events to show yet.';
       }
       mapSidebarList.innerHTML = '';
       if (mapSidebarFoot) mapSidebarFoot.hidden = true;
@@ -473,6 +578,7 @@
 
       updateSidebarSub(onMap, total);
       paintSidebarList(onMap);
+      updateViewportControls(onMap);
     });
   }
 
@@ -540,6 +646,25 @@
 
   bindMapExit(mapMobileListBtn);
 
+  if (mapSearchAreaBtn) {
+    mapSearchAreaBtn.addEventListener('click', function () {
+      applyViewportFilter();
+    });
+  }
+
+  if (mapAreaResetBtn) {
+    mapAreaResetBtn.addEventListener('click', function () {
+      clearViewportFilter(true);
+      var mappable = lastFilteredList.filter(function (ev) {
+        return coordsForEvent(ev) != null;
+      });
+      var coordsList = mappable.map(function (ev) {
+        return coordsForEvent(ev);
+      });
+      if (coordsList.length) scheduleMapFit(coordsList);
+    });
+  }
+
   function setViewMode(mapMode) {
     isMapView = mapMode;
     document.body.classList.toggle('events-view-map', mapMode);
@@ -557,13 +682,22 @@
           : 'Swap to Map View';
     }
     setChromeHidden(mapMode);
+    if (!document.body.classList.contains('browse-mode-organisers')) {
+      saveViewMode(mapMode ? 'map' : 'list');
+    }
     if (!mapMode) {
       setMapHint('');
       highlightSidebarItem(null);
       lastLayoutMobile = null;
       clearPanelInlineSize();
+      clearViewportFilter(false);
       return;
     }
+
+    viewportFilterActive = false;
+    mapUserMoved = false;
+    hideSearchAreaPrompt();
+    if (mapAreaActive) mapAreaActive.hidden = true;
 
     lastLayoutMobile = isMobileMapLayout();
 
@@ -629,23 +763,30 @@
 
     invalidateMapSize(0);
 
-    var mappable = (events || []).filter(function (ev) {
+    var sourceEvents = events || [];
+    var displayEvents =
+      viewportFilterActive && map ? filterEventsInBounds(sourceEvents) : sourceEvents;
+    var mappable = displayEvents.filter(function (ev) {
       return coordsForEvent(ev) != null;
     });
 
     resolveUserCoords().then(function (userCoords) {
       if (token !== renderToken || !isMapView) return;
-      renderSidebar(events, mappable);
+      renderSidebar(sourceEvents, mappable);
     });
 
     if (!placed) {
-      map.setView([54.5, -2.5], 6);
-      if (skipped) {
-        setMapHint(
-          (events || []).length
-            ? 'No mappable in-person events in your current filters. Try clearing filters or add postcodes to events in Supabase.'
-            : 'No events to show on the map yet.'
-        );
+      if (viewportFilterActive && sourceEvents.length) {
+        setMapHint('No events in this map area. Pan the map or tap Show all.');
+      } else {
+        map.setView([54.5, -2.5], 6);
+        if (skipped) {
+          setMapHint(
+            sourceEvents.length
+              ? 'No mappable in-person events in your current filters. Try clearing filters or add postcodes to events in Supabase.'
+              : 'No events to show on the map yet.'
+          );
+        }
       }
       return;
     }
@@ -654,7 +795,9 @@
     var coordsList = mappable.map(function (ev) {
       return coordsForEvent(ev);
     });
-    scheduleMapFit(coordsList);
+    if (!viewportFilterActive) {
+      scheduleMapFit(coordsList);
+    }
   }
 
   function renderMarkers(events) {
@@ -669,10 +812,14 @@
     markersById = Object.create(null);
     sidebarVisibleCount = SIDEBAR_PAGE;
     sidebarItemsCache = [];
-    setMapHint('');
+    if (!viewportFilterActive) {
+      setMapHint('');
+    }
     lastFilteredList = events || [];
 
-    var list = events || [];
+    var list = viewportFilterActive
+      ? filterEventsInBounds(lastFilteredList)
+      : lastFilteredList;
     var placed = 0;
     var skipped = 0;
     var pending = [];
@@ -694,11 +841,11 @@
       });
 
       if (!pending.length) {
-        finishMarkerRender(token, list, placed, skipped);
+        finishMarkerRender(token, lastFilteredList, placed, skipped);
         return;
       }
 
-      if (placed) {
+      if (placed && !viewportFilterActive) {
         var initialCoords = [];
         list.forEach(function (ev) {
           var coords = coordsForEvent(ev);
@@ -723,16 +870,29 @@
             skipped--;
           });
 
-          finishMarkerRender(token, list, placed, skipped);
+          finishMarkerRender(token, lastFilteredList, placed, skipped);
         })
         .catch(function () {
-          finishMarkerRender(token, list, placed, skipped);
+          finishMarkerRender(token, lastFilteredList, placed, skipped);
         });
     });
   }
 
   window.hubRefreshMap = function (filtered) {
     if (!isMapView) return;
+    clearViewportFilter(false);
     renderMarkers(filtered || lastFilteredList || []);
+  };
+
+  window.hubTryRestoreMapView = function () {
+    if (isMapView) return;
+    if (document.body.classList.contains('browse-mode-organisers')) return;
+    try {
+      if (localStorage.getItem(VIEW_MODE_KEY) === 'map') {
+        setViewMode(true);
+      }
+    } catch (err) {
+      /* ignore */
+    }
   };
 })();

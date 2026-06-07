@@ -5,6 +5,7 @@
   var dateRangeInput = document.getElementById('date-range');
   var checkInPerson = document.getElementById('check-inperson');
   var checkOnline = document.getElementById('check-online');
+  var checkFreeOnly = document.getElementById('filter-free-only');
   var priceMax = document.getElementById('price-max');
   var priceMaxOut = document.getElementById('price-max-out');
   var PRICE_SLIDER_MAX = 500;
@@ -24,6 +25,8 @@
   var dateFromTs = null;
   var dateToTs = null;
   var flatpickrInstance = null;
+  var locationResolveTimer = null;
+  var FILTER_STORAGE_KEY = 'hubEventBrowseFilters';
 
   function getActiveTypeTab() {
     return activeTypeTab || 'all';
@@ -63,7 +66,7 @@
     var n = Number(value) || 0;
     var cap = priceMax ? Number(priceMax.max) || PRICE_SLIDER_MAX : PRICE_SLIDER_MAX;
     if (isMax && n >= cap) return 'Any';
-    return '£' + n;
+    return '£' + n + ' max';
   }
 
   function syncPriceOutputs() {
@@ -262,10 +265,15 @@
       if (dateToTs && evTs > dateToTs) return false;
     }
 
+    if (checkFreeOnly && checkFreeOnly.checked) {
+      if (eventTicketPrice(ev) > 0 && ev.priceKey !== 'free' && !ev.hasFreeTickets) {
+        return false;
+      }
+    }
+
     var bounds = getPriceBounds();
     var ticketPrice = eventTicketPrice(ev);
     var cap = priceMax ? Number(priceMax.max) || PRICE_SLIDER_MAX : PRICE_SLIDER_MAX;
-    if (ticketPrice < bounds.minVal) return false;
     if (bounds.maxVal < cap && ticketPrice > bounds.maxVal) return false;
 
     if (isNearMeActive()) {
@@ -334,15 +342,92 @@
 
     if (window.hubRefreshListings) window.hubRefreshListings();
     if (window.hubRefreshMap) window.hubRefreshMap(filtered);
+    saveFilterPrefs();
+  }
+
+  function saveFilterPrefs() {
+    if (document.body.classList.contains('browse-mode-organisers')) return;
+    try {
+      sessionStorage.setItem(
+        FILTER_STORAGE_KEY,
+        JSON.stringify({
+          search: searchInput ? searchInput.value : '',
+          postcode: postcodeInput ? postcodeInput.value : '',
+          nearMe: isNearMeActive(),
+          nearRadius: String(getNearRadiusMiles()),
+          freeOnly: !!(checkFreeOnly && checkFreeOnly.checked),
+          inPerson: !!(checkInPerson && checkInPerson.checked),
+          online: !!(checkOnline && checkOnline.checked),
+          priceMax: priceMax ? priceMax.value : '',
+          sort: sortSelect ? sortSelect.value : 'recommended',
+          typeTab: activeTypeTab,
+        })
+      );
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function restoreFilterPrefs() {
+    try {
+      var raw = sessionStorage.getItem(FILTER_STORAGE_KEY);
+      if (!raw) return Promise.resolve();
+      var prefs = JSON.parse(raw);
+      if (searchInput && prefs.search) searchInput.value = prefs.search;
+      if (postcodeInput && prefs.postcode) postcodeInput.value = prefs.postcode;
+      if (checkFreeOnly) checkFreeOnly.checked = !!prefs.freeOnly;
+      if (checkInPerson && prefs.inPerson === false) checkInPerson.checked = false;
+      if (checkOnline && prefs.online === false) checkOnline.checked = false;
+      if (priceMax && prefs.priceMax) priceMax.value = prefs.priceMax;
+      if (sortSelect && prefs.sort) sortSelect.value = prefs.sort;
+      if (toggleNearMe) toggleNearMe.checked = !!prefs.nearMe;
+      if (toggleNearMeMobile) toggleNearMeMobile.checked = !!prefs.nearMe;
+      if (nearRadius && prefs.nearRadius) nearRadius.value = prefs.nearRadius;
+      if (nearRadiusMobile && prefs.nearRadius) nearRadiusMobile.value = prefs.nearRadius;
+      if (prefs.typeTab) setActiveTypeTab(prefs.typeTab);
+      syncPriceOutputs();
+      syncNearRadiusUi();
+      if (postcodeInput && prefs.postcode && window.hubResolveLocationFilter) {
+        return window.hubResolveLocationFilter(prefs.postcode);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    return Promise.resolve();
+  }
+
+  window.hubRestoreEventFilterPrefs = function () {
+    return restoreFilterPrefs().then(function () {
+      if (isNearMeActive()) {
+        applyNearMeFilters();
+        return;
+      }
+      applyFilters();
+    });
+  };
+
+  function runLocationFilterRefresh() {
+    if (isNearMeActive()) applyNearMeFilters();
+    else applyFilters();
   }
 
   function onPostcodeInput() {
     if (document.body.classList.contains('browse-mode-organisers')) return;
-    if (isNearMeActive()) {
-      applyNearMeFilters();
+    clearTimeout(locationResolveTimer);
+    var value = (postcodeInput && postcodeInput.value) || '';
+    value = value.trim();
+    if (!value) {
+      window.hubLocationFilterState = null;
+      runLocationFilterRefresh();
       return;
     }
-    applyFilters();
+    if (window.hubResolveLocationFilter) {
+      locationResolveTimer = setTimeout(function () {
+        window.hubResolveLocationFilter(value).then(runLocationFilterRefresh);
+      }, 280);
+      return;
+    }
+    runLocationFilterRefresh();
   }
 
   function resetFilters() {
@@ -355,6 +440,7 @@
     dateToTs = null;
     if (checkInPerson) checkInPerson.checked = true;
     if (checkOnline) checkOnline.checked = true;
+    if (checkFreeOnly) checkFreeOnly.checked = false;
     if (priceMax) {
       priceMax.value = priceMax.max || String(PRICE_SLIDER_MAX);
     }
@@ -364,8 +450,14 @@
     if (nearRadius) nearRadius.value = '25';
     if (nearRadiusMobile) nearRadiusMobile.value = '25';
     window.hubUserCoords = null;
+    window.hubLocationFilterState = null;
     syncNearRadiusUi();
     setActiveTypeTab('all');
+    try {
+      sessionStorage.removeItem(FILTER_STORAGE_KEY);
+    } catch (e) {
+      /* ignore */
+    }
     applyFilters();
   }
 
@@ -388,7 +480,7 @@
     el.addEventListener('change', applyFilters);
   }
 
-  [searchInput, sortSelect, checkInPerson, checkOnline].forEach(bindFilter);
+  [searchInput, sortSelect, checkInPerson, checkOnline, checkFreeOnly].forEach(bindFilter);
 
   if (priceMax) {
     priceMax.addEventListener('input', onPriceSliderInput);
