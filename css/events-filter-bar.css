@@ -664,11 +664,34 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
 .events-map-panel {
   grid-column: 2;
   grid-row: 1;
+  width: 100%;
+  min-height: 360px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  margin-bottom: 0;
+  overflow: hidden;
+  z-index: 1;
+  position: relative;
+  background: var(--surface-card);
+}
+
+body.events-view-map .events-map-panel {
+  height: 100%;
+  min-height: 420px;
 }
 
 .events-map-sidebar {
   grid-column: 1;
   grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: var(--white);
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(45, 38, 54, 0.06);
 }
 
 .events-map-wrap[hidden] {
@@ -676,18 +699,46 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
 }
 
 body.events-view-map .events-map-wrap {
-  min-height: min(70vh, 640px);
+  height: clamp(420px, calc(100svh - 220px), 780px);
+  min-height: 420px;
 }
 
-.events-map-sidebar {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  border: 1px solid var(--border-soft);
-  border-radius: 14px;
-  background: var(--white);
-  overflow: hidden;
-  box-shadow: 0 2px 12px rgba(45, 38, 54, 0.06);
+@media (max-width: 900px) {
+  body.events-view-map .events-map-wrap {
+    height: auto;
+    min-height: 0;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    gap: 12px;
+  }
+
+  body.events-view-map .events-map-panel {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+    height: 52vh;
+    height: min(52dvh, 560px);
+    min-height: 300px;
+    max-height: 560px;
+  }
+
+  .events-map-sidebar {
+    grid-column: 1;
+    grid-row: 2;
+    height: auto;
+    max-height: 240px;
+  }
+
+  .map-list-toggle {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .filter-bar-row-top .filter-field-grow,
+  .filter-bar-row-top .filter-field-postcode,
+  .filter-bar-row-top .filter-field {
+    flex: 0 0 auto;
+  }
 }
 
 .events-map-sidebar-head {
@@ -722,7 +773,8 @@ body.events-view-map .events-map-wrap {
 }
 
 .events-map-sidebar.is-collapsed .events-map-sidebar-list,
-.events-map-sidebar.is-collapsed .events-map-sidebar-sub {
+.events-map-sidebar.is-collapsed .events-map-sidebar-sub,
+.events-map-sidebar.is-collapsed .events-map-sidebar-foot {
   display: none;
 }
 
@@ -753,6 +805,36 @@ body.events-view-map .events-map-wrap {
   overflow-y: auto;
   flex: 1;
   min-height: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.events-map-sidebar-foot {
+  flex: 0 0 auto;
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--border-soft);
+  background: #fffdf9;
+}
+
+.map-sidebar-load-more {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lavender-deep);
+  background: var(--lavender-light);
+  border: 1px solid var(--lavender-soft);
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.map-sidebar-load-more:hover {
+  background: var(--lavender-soft);
+}
+
+.events-map-sidebar-foot[hidden] {
+  display: none !important;
 }
 
 .map-sidebar-item-btn {
@@ -811,32 +893,36 @@ body.events-view-map .events-map-wrap {
   white-space: nowrap;
 }
 
-.events-map-panel {
-  width: 100%;
-  height: 100%;
-  min-height: 360px;
-  border-radius: 14px;
-  border: 1px solid var(--border-soft);
-  margin-bottom: 0;
-  overflow: hidden;
-  z-index: 1;
-  position: relative;
-  background: var(--surface-card);
-}
-
 .events-map-panel .leaflet-container {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   font: inherit;
 }
 
-.events-map-panel[hidden] {
-  display: none !important;
+.events-map-panel .leaflet-control-zoom {
+  border: none;
+  box-shadow: 0 2px 10px rgba(45, 38, 54, 0.12);
 }
 
-body.events-view-map .events-map-panel {
-  height: 100%;
-  min-height: 360px;
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large {
+  background-color: rgba(194, 153, 209, 0.35);
+}
+
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+  background-color: rgba(154, 122, 168, 0.92);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.events-map-panel[hidden] {
+  display: none !important;
 }
 
 .events-map-hint {
@@ -980,34 +1066,6 @@ body.events-view-map .events-filter-shell {
   text-decoration: none;
 }
 
-@media (max-width: 900px) {
-  .events-map-wrap {
-    grid-template-columns: 1fr;
-    grid-template-rows: minmax(320px, 58vh) auto;
-  }
-
-  .events-map-panel {
-    order: 1;
-    min-height: 320px;
-    height: auto;
-  }
-
-  .events-map-sidebar {
-    order: 2;
-    max-height: 260px;
-  }
-
-  .map-list-toggle {
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .filter-bar-row-top .filter-field-grow,
-  .filter-bar-row-top .filter-field-postcode,
-  .filter-bar-row-top .filter-field {
-    flex: 0 0 auto;
-  }
-}
 
 @media (max-width: 720px) {
   .filter-price-range-row {

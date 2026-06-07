@@ -11,6 +11,8 @@
   var mapSidebar = document.getElementById('events-map-sidebar');
   var mapListToggle = document.getElementById('map-list-toggle');
   var mapListToggleLabel = document.getElementById('map-list-toggle-label');
+  var mapSidebarFoot = document.getElementById('map-sidebar-foot');
+  var mapSidebarLoadMore = document.getElementById('map-sidebar-load-more');
   var listingsView = document.getElementById('listings-view');
   var mapBtn = document.getElementById('map-view-btn');
   var mapLabel = document.getElementById('map-view-label');
@@ -25,6 +27,9 @@
   var markersById = Object.create(null);
   var activeSidebarId = null;
   var lastFilteredList = [];
+  var sidebarItemsCache = [];
+  var sidebarVisibleCount = 50;
+  var SIDEBAR_PAGE = 50;
 
   function escapeHtml(s) {
     var d = document.createElement('div');
@@ -112,6 +117,14 @@
     }
   }
 
+  function ensurePanelSize() {
+    if (!mapPanel || !mapWrap || mapWrap.hidden) return;
+    if (mapPanel.offsetHeight > 0 && mapPanel.offsetWidth > 0) return;
+    var mobile = window.matchMedia('(max-width: 900px)').matches;
+    mapPanel.style.height = mobile ? 'min(52dvh, 560px)' : '420px';
+    mapPanel.style.minHeight = mobile ? '300px' : '420px';
+  }
+
   function panelHasSize() {
     if (!mapPanel || !mapWrap || mapWrap.hidden) return false;
     return mapPanel.offsetWidth > 0 && mapPanel.offsetHeight > 0;
@@ -132,30 +145,44 @@
     var attempt = 0;
     (function tick() {
       if (!isMapView) return;
-      if (panelHasSize() || attempt >= 12) {
+      ensurePanelSize();
+      if (panelHasSize() || attempt >= 24) {
         fn();
         return;
       }
       attempt++;
-      requestAnimationFrame(tick);
+      setTimeout(tick, 50);
     })();
   }
 
   function initMap() {
     if (mapReady || !mapPanel || typeof L === 'undefined') return;
+    ensurePanelSize();
     var touchDevice =
       window.matchMedia('(max-width: 900px)').matches ||
       (typeof window.matchMedia === 'function' &&
         window.matchMedia('(pointer: coarse)').matches);
     map = L.map(mapPanel, {
       scrollWheelZoom: !touchDevice,
-      tap: true,
     }).setView([54.5, -2.5], 6);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom: 18,
     }).addTo(map);
-    markerLayer = L.layerGroup().addTo(map);
+    try {
+      markerLayer =
+        typeof L.markerClusterGroup === 'function'
+          ? L.markerClusterGroup({
+              maxClusterRadius: 52,
+              spiderfyOnMaxZoom: true,
+              showCoverageOnHover: false,
+              zoomToBoundsOnClick: true,
+            })
+          : L.layerGroup();
+    } catch (err) {
+      markerLayer = L.layerGroup();
+    }
+    map.addLayer(markerLayer);
     mapReady = true;
   }
 
@@ -170,7 +197,38 @@
       map.setView(coordsList[0], 13);
       return;
     }
-    map.fitBounds(L.latLngBounds(coordsList), { padding: [40, 40], maxZoom: 12 });
+    map.fitBounds(L.latLngBounds(coordsList), { padding: [48, 48], maxZoom: 13 });
+  }
+
+  function fitMapToMarkers(coordsList) {
+    if (!map) return;
+    if (markerLayer && typeof markerLayer.getBounds === 'function') {
+      try {
+        var bounds = markerLayer.getBounds();
+        if (bounds && bounds.isValid && bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [48, 48], maxZoom: 13 });
+          return;
+        }
+      } catch (err) {
+        /* fall through */
+      }
+    }
+    fitMapToCoords(coordsList);
+  }
+
+  function scheduleMapFit(coordsList) {
+    if (!map || !coordsList || !coordsList.length) return;
+    var attempts = 0;
+    function attemptFit() {
+      if (!map || !isMapView) return;
+      invalidateMapSize(attempts);
+      fitMapToMarkers(coordsList);
+      attempts++;
+      if (attempts < 4) {
+        setTimeout(attemptFit, 120 * attempts);
+      }
+    }
+    requestAnimationFrame(attemptFit);
   }
 
   function popupHtml(ev, miles) {
@@ -222,9 +280,18 @@
   function focusMarker(eventId) {
     var marker = markersById[eventId];
     if (!marker || !map) return;
-    map.setView(marker.getLatLng(), Math.max(map.getZoom(), 13));
-    marker.openPopup();
-    highlightSidebarItem(eventId);
+
+    function openFocused() {
+      map.setView(marker.getLatLng(), Math.max(map.getZoom(), 13));
+      marker.openPopup();
+      highlightSidebarItem(eventId);
+    }
+
+    if (markerLayer && typeof markerLayer.zoomToShowLayer === 'function') {
+      markerLayer.zoomToShowLayer(marker, openFocused);
+    } else {
+      openFocused();
+    }
   }
 
   function addMarker(ev, coords, miles) {
@@ -243,27 +310,75 @@
     markerLayer.addLayer(marker);
   }
 
+  function sidebarItemHtml(item) {
+    var ev = item.ev;
+    var dist = distanceText(item.miles);
+    var meta = [ev.dateLine || ev.date || 'Date TBC'];
+    if (dist) meta.push(dist);
+    return (
+      '<li class="map-sidebar-item" data-event-id="' +
+      escapeHtml(ev.id) +
+      '">' +
+      '<button type="button" class="map-sidebar-item-btn">' +
+      '<span class="map-sidebar-item-title">' +
+      escapeHtml(ev.title) +
+      '</span>' +
+      '<span class="map-sidebar-item-meta">' +
+      escapeHtml(meta.join(' · ')) +
+      '</span>' +
+      '<span class="map-sidebar-item-price">' +
+      escapeHtml(ev.price || 'Free') +
+      '</span>' +
+      '</button></li>'
+    );
+  }
+
+  function updateSidebarLoadMore(onMap) {
+    if (!mapSidebarFoot || !mapSidebarLoadMore) return;
+    var remaining = onMap - sidebarVisibleCount;
+    if (remaining > 0) {
+      mapSidebarFoot.hidden = false;
+      mapSidebarLoadMore.textContent =
+        'Load more (' + Math.min(SIDEBAR_PAGE, remaining) + ' of ' + remaining + ' remaining)';
+    } else {
+      mapSidebarFoot.hidden = true;
+    }
+  }
+
+  function paintSidebarList(onMap) {
+    if (!mapSidebarList) return;
+    var slice = sidebarItemsCache.slice(0, sidebarVisibleCount);
+    mapSidebarList.innerHTML = slice.map(sidebarItemHtml).join('');
+    updateSidebarLoadMore(onMap);
+    if (activeSidebarId && !markersById[activeSidebarId]) {
+      highlightSidebarItem(null);
+    }
+  }
+
   function renderSidebar(allList, mappableList) {
     if (!mapSidebarList || !mapSidebarCount) return;
 
     var total = (allList || []).length;
     var onMap = (mappableList || []).length;
+    sidebarVisibleCount = SIDEBAR_PAGE;
     mapSidebarCount.textContent = String(onMap);
 
     if (!onMap) {
+      sidebarItemsCache = [];
       if (mapSidebarSub) {
         mapSidebarSub.textContent = total
           ? 'No mappable in-person events match your filters.'
           : 'No events to show yet.';
       }
       mapSidebarList.innerHTML = '';
+      if (mapSidebarFoot) mapSidebarFoot.hidden = true;
       return;
     }
 
     resolveUserCoords().then(function (userCoords) {
       if (!isMapView) return;
 
-      var items = mappableList.map(function (ev) {
+      sidebarItemsCache = mappableList.map(function (ev) {
         return {
           ev: ev,
           miles: distanceMiles(ev, userCoords),
@@ -271,7 +386,7 @@
       });
 
       if (userCoords) {
-        items.sort(function (a, b) {
+        sidebarItemsCache.sort(function (a, b) {
           if (a.miles == null) return 1;
           if (b.miles == null) return -1;
           return a.miles - b.miles;
@@ -281,44 +396,22 @@
             onMap +
             ' of ' +
             total +
-            ' matching · sorted nearest first';
+            ' matching · showing nearest ' +
+            Math.min(sidebarVisibleCount, onMap) +
+            (onMap > sidebarVisibleCount ? '+' : '');
         }
       } else if (mapSidebarSub) {
         mapSidebarSub.textContent =
           onMap +
           ' of ' +
           total +
-          ' matching · add your postcode above for distances';
+          ' matching · showing ' +
+          Math.min(sidebarVisibleCount, onMap) +
+          (onMap > sidebarVisibleCount ? '+' : '') +
+          ' · add postcode for distances';
       }
 
-      mapSidebarList.innerHTML = items
-        .map(function (item) {
-          var ev = item.ev;
-          var dist = distanceText(item.miles);
-          var meta = [ev.dateLine || ev.date || 'Date TBC'];
-          if (dist) meta.push(dist);
-          return (
-            '<li class="map-sidebar-item" data-event-id="' +
-            escapeHtml(ev.id) +
-            '">' +
-            '<button type="button" class="map-sidebar-item-btn">' +
-            '<span class="map-sidebar-item-title">' +
-            escapeHtml(ev.title) +
-            '</span>' +
-            '<span class="map-sidebar-item-meta">' +
-            escapeHtml(meta.join(' · ')) +
-            '</span>' +
-            '<span class="map-sidebar-item-price">' +
-            escapeHtml(ev.price || 'Free') +
-            '</span>' +
-            '</button></li>'
-          );
-        })
-        .join('');
-
-      if (activeSidebarId && !markersById[activeSidebarId]) {
-        highlightSidebarItem(null);
-      }
+      paintSidebarList(onMap);
     });
   }
 
@@ -329,6 +422,24 @@
       var item = btn.closest('.map-sidebar-item');
       if (!item) return;
       focusMarker(item.getAttribute('data-event-id'));
+    });
+  }
+
+  if (mapSidebarLoadMore) {
+    mapSidebarLoadMore.addEventListener('click', function () {
+      sidebarVisibleCount += SIDEBAR_PAGE;
+      paintSidebarList(sidebarItemsCache.length);
+      if (mapSidebarSub && sidebarItemsCache.length) {
+        var onMap = sidebarItemsCache.length;
+        var hasCoords = window.hubUserCoords;
+        if (hasCoords) {
+          mapSidebarSub.textContent =
+            onMap +
+            ' matching · showing nearest ' +
+            Math.min(sidebarVisibleCount, onMap) +
+            (onMap > sidebarVisibleCount ? '+' : '');
+        }
+      }
     });
   }
 
@@ -396,8 +507,23 @@
       setTimeout(function () {
         invalidateMapSize(0);
       }, 250);
+      setTimeout(function () {
+        invalidateMapSize(0);
+      }, 600);
     });
   }
+
+  window.addEventListener('resize', function () {
+    if (isMapView && map) invalidateMapSize(0);
+  });
+
+  window.addEventListener('orientationchange', function () {
+    if (!isMapView || !map) return;
+    ensurePanelSize();
+    setTimeout(function () {
+      invalidateMapSize(0);
+    }, 350);
+  });
 
   window.hubToggleMapView = function () {
     setViewMode(!isMapView);
@@ -439,7 +565,7 @@
     var coordsList = mappable.map(function (ev) {
       return coordsForEvent(ev);
     });
-    fitMapToCoords(coordsList);
+    scheduleMapFit(coordsList);
   }
 
   function renderMarkers(events) {
@@ -448,8 +574,12 @@
     if (!markerLayer || !map) return;
 
     var token = ++renderToken;
-    markerLayer.clearLayers();
+    if (markerLayer && typeof markerLayer.clearLayers === 'function') {
+      markerLayer.clearLayers();
+    }
     markersById = Object.create(null);
+    sidebarVisibleCount = SIDEBAR_PAGE;
+    sidebarItemsCache = [];
     setMapHint('');
     lastFilteredList = events || [];
 
@@ -485,7 +615,7 @@
           var coords = coordsForEvent(ev);
           if (coords) initialCoords.push(coords);
         });
-        fitMapToCoords(initialCoords);
+        scheduleMapFit(initialCoords);
       }
 
       var enrich = window.hubEnrichEventCoords
@@ -516,8 +646,4 @@
     if (!isMapView) return;
     renderMarkers(filtered || lastFilteredList || []);
   };
-
-  window.addEventListener('resize', function () {
-    if (isMapView) invalidateMapSize(0);
-  });
 })();

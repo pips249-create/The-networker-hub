@@ -12,10 +12,12 @@
 <link rel="stylesheet" href="../css/hub-mobile.css?v=20260708h">
 <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e">
 <link rel="stylesheet" href="../css/events-page.css?v=20260708h">
-<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260708h">
+<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260708k">
 <link rel="stylesheet" href="../css/organisers-browse.css?v=20260708">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin="">
 </head>
 <body class="events-page">
 
@@ -262,6 +264,9 @@
         <p class="events-map-sidebar-sub" id="map-sidebar-sub"></p>
       </div>
       <ul class="events-map-sidebar-list" id="map-sidebar-list"></ul>
+      <div class="events-map-sidebar-foot" id="map-sidebar-foot" hidden>
+        <button type="button" class="map-sidebar-load-more" id="map-sidebar-load-more">Load more</button>
+      </div>
     </aside>
   </div>
   <p class="events-map-hint" id="events-map-hint" hidden></p>
@@ -309,11 +314,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
 <script src="../js/hub-favourites.js?v=20260629"></script>
 <script src="../js/postcode-outcode.js?v=20260613"></script>
 <script src="../js/postcode-geo.js?v=20260708"></script>
 <script src="../js/events-filters.js?v=20260708h"></script>
-<script src="../js/events-map.js?v=20260708h"></script>
+<script src="../js/events-map.js?v=20260708k"></script>
 <script src="../js/hub-loading.js?v=20260630e"></script>
 <script src="../js/cms-sponsor-fields.js?v=20260630c"></script>
 <script src="../js/flexible-event-image.js?v=20260707"></script>
