@@ -30,13 +30,9 @@
       title: 'Event cleanup',
       subtitle: 'Link events to groups, create new events, and fix basic event data',
     },
-    users: {
-      title: 'Users & accounts',
-      subtitle: 'Search Supabase accounts (read-only) — use Impersonate to debug as a user',
-    },
     impersonate: {
       title: 'Impersonate user',
-      subtitle: 'Sign in as any non-admin account to see exactly what they see on the Hub',
+      subtitle: 'Browse Supabase accounts and sign in as any non-admin user to debug on the Hub',
     },
     moderation: {
       title: 'Content moderation',
@@ -68,6 +64,7 @@
   var groupCleanupCache = null;
   var eventCleanupCache = null;
   var analyticsState = { period: '30d' };
+  var eventHealthState = { issueFilter: 'all' };
   var groupCleanupState = { offset: 0, q: '', incomplete: false, hasMore: false, total: 0, loading: false, selected: {} };
   var eventCleanupState = { organiserId: '', unlinked: false, offset: 0, q: '', hasMore: false, total: 0, loading: false };
   var GROUP_PAGE_SIZE = 30;
@@ -467,20 +464,38 @@
     return rank;
   }
 
-  function renderEventHealthCompletedHtml() {
-    var list = loadEventHealthHistory();
+  function mergeHealthCompletions(serverList) {
+    var merged = [];
+    var seen = {};
+    (serverList || []).forEach(function (item) {
+      var key = item.eventId || item.title;
+      if (seen[key]) return;
+      seen[key] = true;
+      merged.push(item);
+    });
+    loadEventHealthHistory().forEach(function (item) {
+      var key = item.eventId || item.title;
+      if (seen[key]) return;
+      seen[key] = true;
+      merged.push(item);
+    });
+    return merged.slice(0, 15);
+  }
+
+  function renderEventHealthCompletedHtml(serverList) {
+    var list = mergeHealthCompletions(serverList);
     if (!list.length) {
       return (
         '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">' +
         '<h3 class="font-bold text-brand-900 text-sm">Recently completed</h3>' +
-        '<p class="text-sm text-slate-500 mt-2">Fixes you save here will appear in this list (stored in this browser).</p></section>'
+        '<p class="text-sm text-slate-500 mt-2">Fixes you save here will appear in this list (synced to Supabase when available).</p></section>'
       );
     }
     return (
       '<section class="bg-white rounded-xl border border-emerald-200 shadow-sm overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-emerald-100 bg-emerald-50/80">' +
       '<h3 class="font-bold text-emerald-900 text-sm">Recently completed</h3>' +
-      '<p class="text-xs text-emerald-800/80 mt-0.5">Events that passed the health scan after your last save (this browser only).</p></div>' +
+      '<p class="text-xs text-emerald-800/80 mt-0.5">Events that passed the health scan after your last save.</p></div>' +
       '<ul class="divide-y divide-slate-100">' +
       list
         .map(function (item) {
@@ -516,9 +531,88 @@
     );
   }
 
-  function paintEventHealthCompleted() {
+  function paintEventHealthCompleted(serverList) {
     var slot = document.getElementById('event-health-completed');
-    if (slot) slot.innerHTML = renderEventHealthCompletedHtml();
+    if (slot) slot.innerHTML = renderEventHealthCompletedHtml(serverList);
+  }
+
+  function eventMatchesIssueFilter(ev, filter) {
+    if (!filter || filter === 'all') return true;
+    return issueCodes(ev).indexOf(filter) >= 0;
+  }
+
+  function logEventHealthCompletionRemote(beforeEv) {
+    if (!beforeEv || !beforeEv.id) return Promise.resolve();
+    return fetch('/api/admin/event-health', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_id: beforeEv.id,
+        title: beforeEv.title || 'Untitled',
+        slug: beforeEv.slug || '',
+        fixed_issues: (beforeEv.issues || []).map(function (i) {
+          return i.label;
+        }),
+      }),
+    }).catch(function () {
+      return null;
+    });
+  }
+
+  function bulkAssignFirstOrganiser(events, organisers) {
+    var sorted = organisers.slice().sort(function (a, b) {
+      var aPub = a.listingStatus === 'published' ? 0 : 1;
+      var bPub = b.listingStatus === 'published' ? 0 : 1;
+      if (aPub !== bPub) return aPub - bPub;
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+    var firstId = sorted.length ? sorted[0].id : '';
+    if (!firstId) {
+      window.alert('No organisers available — create one first.');
+      return;
+    }
+    var targets = (events || []).filter(function (ev) {
+      var codes = issueCodes(ev);
+      return codes.indexOf('missing_organiser') >= 0 || codes.indexOf('invalid_organiser') >= 0;
+    });
+    if (!targets.length) return;
+    if (
+      !window.confirm(
+        'Assign "' +
+          (sorted[0].name || 'first organiser') +
+          '" to ' +
+          targets.length +
+          ' event' +
+          (targets.length === 1 ? '' : 's') +
+          ' missing an organiser?'
+      )
+    ) {
+      return;
+    }
+    var chain = Promise.resolve();
+    targets.forEach(function (ev) {
+      chain = chain.then(function () {
+        return fetch('/api/admin/events', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: ev.id, organiser_id: firstId }),
+        }).then(function (r) {
+          return r.json();
+        });
+      });
+    });
+    chain
+      .then(function () {
+        return fetchEventHealth();
+      })
+      .then(function () {
+        renderEventHealth();
+      })
+      .catch(function (err) {
+        window.alert(err.message || 'Bulk assign failed.');
+      });
   }
 
   function issueCodes(ev) {
@@ -530,7 +624,8 @@
   function healthFieldVisibility(ev) {
     var codes = issueCodes(ev);
     return {
-      showDate: codes.indexOf('missing_date') >= 0,
+      showDate:
+        codes.indexOf('missing_date') >= 0 || codes.indexOf('stale_past_date') >= 0,
       showOrganiser:
         codes.indexOf('missing_organiser') >= 0 || codes.indexOf('invalid_organiser') >= 0,
       showOrganiserNotPublished: codes.indexOf('organiser_not_published') >= 0,
@@ -692,7 +787,10 @@
         return fetchEventHealth();
       })
       .then(function (data) {
-        if (beforeFix && data) recordEventHealthCompletion(beforeFix, data);
+        if (beforeFix && data) {
+          recordEventHealthCompletion(beforeFix, data);
+          logEventHealthCompletionRemote(beforeFix);
+        }
         renderEventHealth();
       })
       .catch(function (err) {
@@ -772,16 +870,18 @@
       '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Checks <strong>published</strong> events only. Listings awaiting approval are in <a href="#moderation" class="text-brand-700 font-semibold hover:underline">Content Moderation</a> — not here.</p>' +
       '<div id="event-health-status" class="text-sm text-slate-500">Scanning published events…</div>' +
       '<div id="event-health-summary" class="hidden admin-metric-grid admin-metric-grid--4"></div>' +
+      '<div id="event-health-toolbar" class="hidden flex flex-wrap items-center gap-3"></div>' +
       '<div id="event-health-list" class="space-y-3"></div>' +
       '<div id="event-health-completed"></div></div>';
-
-    paintEventHealthCompleted();
 
     fetchEventHealth().then(function (data) {
       var status = document.getElementById('event-health-status');
       var summary = document.getElementById('event-health-summary');
+      var toolbar = document.getElementById('event-health-toolbar');
       var list = document.getElementById('event-health-list');
       if (!status || !summary || !list) return;
+
+      paintEventHealthCompleted(data.recentCompletions || []);
 
       if (!data || data.error) {
         status.innerHTML =
@@ -803,7 +903,10 @@
           ' published events look complete.</span>';
         summary.classList.add('hidden');
         list.innerHTML = '';
-        paintEventHealthCompleted();
+        if (toolbar) {
+          toolbar.classList.add('hidden');
+          toolbar.innerHTML = '';
+        }
         return;
       }
 
@@ -861,6 +964,67 @@
       summary.innerHTML = issueCards;
       summary.classList.remove('hidden');
 
+      var issueFilterOptions = Object.keys(data.issuesByCode || {})
+        .map(function (code) {
+          var sample = { label: code, severity: 'low' };
+          (data.events || []).some(function (ev) {
+            var hit = (ev.issues || []).find(function (i) {
+              return i.code === code;
+            });
+            if (hit) sample = hit;
+            return !!hit;
+          });
+          return { code: code, label: sample.label };
+        })
+        .sort(function (a, b) {
+          return String(a.label).localeCompare(String(b.label));
+        });
+
+      var needsOrganiserBulk = (data.events || []).filter(function (ev) {
+        var codes = issueCodes(ev);
+        return codes.indexOf('missing_organiser') >= 0 || codes.indexOf('invalid_organiser') >= 0;
+      }).length;
+
+      if (toolbar) {
+        toolbar.classList.remove('hidden');
+        toolbar.innerHTML =
+          '<label class="text-xs font-semibold text-slate-500">Filter by issue ' +
+          '<select id="event-health-filter" class="ml-2 rounded-lg border border-slate-300 px-2 py-1.5 text-sm bg-white">' +
+          '<option value="all">All issues</option>' +
+          issueFilterOptions
+            .map(function (opt) {
+              return (
+                '<option value="' +
+                attrEsc(opt.code) +
+                '"' +
+                (eventHealthState.issueFilter === opt.code ? ' selected' : '') +
+                '>' +
+                esc(opt.label) +
+                '</option>'
+              );
+            })
+            .join('') +
+          '</select></label>' +
+          (needsOrganiserBulk > 1
+            ? '<button type="button" id="event-health-bulk-organiser" class="rounded-lg border border-brand-200 bg-brand-50 text-brand-800 px-3 py-1.5 text-xs font-semibold hover:bg-brand-100">Assign first organiser to ' +
+              needsOrganiserBulk +
+              ' events</button>'
+            : '');
+        var filterEl = document.getElementById('event-health-filter');
+        if (filterEl) {
+          filterEl.addEventListener('change', function () {
+            eventHealthState.issueFilter = filterEl.value || 'all';
+            renderEventHealth();
+          });
+        }
+        var bulkBtn = document.getElementById('event-health-bulk-organiser');
+        if (bulkBtn) {
+          bulkBtn.addEventListener('click', function () {
+            bulkAssignFirstOrganiser(data.events || [], organisers);
+          });
+        }
+      }
+
       var sortedOrganisers = organisers.slice().sort(function (a, b) {
         var aPub = a.listingStatus === 'published' ? 0 : 1;
         var bPub = b.listingStatus === 'published' ? 0 : 1;
@@ -869,7 +1033,26 @@
       });
       var firstOrganiserId = sortedOrganisers.length ? sortedOrganisers[0].id : '';
 
-      list.innerHTML = (data.events || [])
+      var sortedEvents = (data.events || [])
+        .filter(function (ev) {
+          return eventMatchesIssueFilter(ev, eventHealthState.issueFilter);
+        })
+        .slice()
+        .sort(function (a, b) {
+          var ra = eventSeverityRank(a);
+          var rb = eventSeverityRank(b);
+          if (ra !== rb) return ra - rb;
+          return String(a.title || '').localeCompare(String(b.title || ''));
+        });
+
+      if (!sortedEvents.length) {
+        list.innerHTML =
+          '<p class="text-sm text-slate-500 rounded-lg border border-slate-200 bg-white p-4">No events match this filter.</p>';
+        paintEventHealthCompleted(data.recentCompletions || []);
+        return;
+      }
+
+      list.innerHTML = sortedEvents
         .map(function (ev) {
           var fields = healthFieldVisibility(ev);
           var issueHtml = (ev.issues || []).map(issueBadge).join('');
@@ -1060,7 +1243,7 @@
           );
         })
         .join('');
-      paintEventHealthCompleted();
+      paintEventHealthCompleted(data.recentCompletions || []);
     });
   }
 
@@ -1700,109 +1883,6 @@
     );
   }
 
-  function renderUsers() {
-    var roleOpts = ['All', 'Admin', 'Organiser', 'Attendee'];
-    main.innerHTML =
-      '<div class="space-y-4">' +
-      '<p id="users-status" class="text-sm text-slate-500">Loading users from Supabase…</p>' +
-      '<div class="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap gap-3 items-end shadow-sm">' +
-      '<div class="flex-1 min-w-[200px]"><label class="text-xs font-semibold text-slate-500 uppercase">Search</label>' +
-      '<input type="search" id="user-search" placeholder="Name or email…" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"></div>' +
-      '<div><label class="text-xs font-semibold text-slate-500 uppercase">Role</label>' +
-      '<select id="user-role-filter" class="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm">' +
-      roleOpts.map(function (r) {
-        return '<option>' + r + '</option>';
-      }).join('') +
-      '</select></div></div>' +
-      '<div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">' +
-      'This directory is <strong>read-only</strong>. Password reset, suspend, and profile edits are not wired up here — use <a href="#impersonate" class="font-semibold text-brand-800 hover:underline">Impersonate</a> to debug as a user.</div>' +
-      '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
-      adminTableScroll(
-        '<table class="w-full text-sm text-left"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
-          '<tr><th class="px-4 py-3">Name</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">Role</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Status</th></tr></thead>' +
-          '<tbody id="users-tbody"><tr><td colspan="5" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
-      ) +
-      '</div></div>';
-
-    function filterUsers() {
-      var q = (document.getElementById('user-search').value || '').toLowerCase();
-      var role = document.getElementById('user-role-filter').value;
-      return liveUsers.filter(function (u) {
-        if (role !== 'All' && u.role !== role) return false;
-        if (q && (u.name + u.email).toLowerCase().indexOf(q) === -1) return false;
-        return true;
-      });
-    }
-
-    function paint() {
-      var tbody = document.getElementById('users-tbody');
-      if (!tbody) return;
-      var rows = filterUsers();
-      if (!rows.length) {
-        tbody.innerHTML =
-          '<tr><td colspan="5" class="px-4 py-6 text-slate-500">No users match your filters.</td></tr>';
-        return;
-      }
-      tbody.innerHTML = rows
-        .map(function (u) {
-          var st =
-            u.status === 'Active'
-              ? 'bg-emerald-100 text-emerald-800'
-              : 'bg-red-100 text-red-800';
-          return (
-            '<tr class="border-t border-slate-100 hover:bg-brand-50/50 cursor-pointer user-row" data-user-id="' +
-            esc(u.id) +
-            '">' +
-            '<td class="px-4 py-3 font-medium">' +
-            esc(u.name) +
-            '</td>' +
-            '<td class="px-4 py-3 text-slate-600">' +
-            esc(u.email) +
-            '</td>' +
-            '<td class="px-4 py-3">' +
-            esc(u.role) +
-            '</td>' +
-            '<td class="px-4 py-3">' +
-            esc(u.city) +
-            '</td>' +
-            '<td class="px-4 py-3"><span class="text-xs font-semibold px-2 py-1 rounded-full ' +
-            st +
-            '">' +
-            esc(u.status) +
-            '</span></td></tr>'
-          );
-        })
-        .join('');
-      tbody.querySelectorAll('.user-row').forEach(function (row) {
-        row.addEventListener('click', function () {
-          var id = row.getAttribute('data-user-id');
-          var u = liveUsers.find(function (x) {
-            return x.id === id;
-          });
-          if (u) openUserDrawer(u);
-        });
-      });
-    }
-
-    adminGet('/api/admin/users').then(function (data) {
-      var status = document.getElementById('users-status');
-      if (!data || data.error || data.configured === false) {
-        liveUsers = [];
-        if (status) status.textContent = 'Could not load users from Supabase.';
-        paint();
-        return;
-      }
-      liveUsers = data.users || [];
-      if (status) {
-        status.textContent = liveUsers.length + ' account' + (liveUsers.length === 1 ? '' : 's') + ' from Supabase';
-      }
-      paint();
-    });
-
-    document.getElementById('user-search').addEventListener('input', paint);
-    document.getElementById('user-role-filter').addEventListener('change', paint);
-  }
-
   function loadUsersDirectory(callback) {
     if (liveUsers.length) {
       callback(liveUsers);
@@ -1817,8 +1897,9 @@
   }
 
   function renderImpersonate() {
+    var roleOpts = ['All', 'Admin', 'Organiser', 'Attendee'];
     main.innerHTML =
-      '<div class="space-y-6 max-w-2xl">' +
+      '<div class="space-y-6 max-w-4xl">' +
       '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">' +
       '<p class="font-semibold">Support &amp; debugging only</p>' +
       '<p class="mt-1 opacity-90">You will be signed in as the chosen user across the Hub. A banner lets you return to your admin account at any time. Admin accounts cannot be impersonated.</p>' +
@@ -1838,16 +1919,36 @@
       '<button type="submit" class="w-full rounded-lg bg-brand-700 text-white py-3 text-sm font-semibold hover:bg-brand-900 disabled:opacity-60" id="impersonate-submit">Impersonate user</button>' +
       '</form>' +
       '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
-      '<div class="px-4 py-3 border-b border-slate-100"><h3 class="text-sm font-bold text-slate-700">Quick pick</h3></div>' +
-      '<div id="impersonate-quick-list" class="divide-y divide-slate-100 max-h-80 overflow-y-auto">' +
-      '<p class="px-4 py-6 text-sm text-slate-500">Loading users…</p></div></div></div>';
+      '<div class="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">' +
+      '<div><h3 class="text-sm font-bold text-slate-700">Browse accounts</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Read-only directory from Supabase — click Impersonate on a row.</p></div>' +
+      '<p id="impersonate-directory-status" class="text-xs text-slate-500">Loading…</p></div>' +
+      '<div class="px-4 py-3 border-b border-slate-100 flex flex-wrap gap-3 items-end">' +
+      '<div class="flex-1 min-w-[200px]"><label class="text-xs font-semibold text-slate-500 uppercase">Search</label>' +
+      '<input type="search" id="impersonate-directory-search" placeholder="Name or email…" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></div>' +
+      '<div><label class="text-xs font-semibold text-slate-500 uppercase">Role</label>' +
+      '<select id="impersonate-directory-role" class="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm">' +
+      roleOpts.map(function (r) {
+        return '<option>' + esc(r) + '</option>';
+      }).join('') +
+      '</select></div></div>' +
+      adminTableScroll(
+        '<table class="w-full text-sm text-left"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
+          '<tr><th class="px-4 py-3">Name</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">Role</th><th class="px-4 py-3">City</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="impersonate-directory-body"><tr><td colspan="5" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+      ) +
+      '</div></div>';
 
     var form = document.getElementById('impersonate-form');
     var emailInput = document.getElementById('impersonate-email');
     var datalist = document.getElementById('impersonate-email-list');
-    var quickList = document.getElementById('impersonate-quick-list');
+    var directoryBody = document.getElementById('impersonate-directory-body');
+    var directoryStatus = document.getElementById('impersonate-directory-status');
+    var directorySearch = document.getElementById('impersonate-directory-search');
+    var directoryRole = document.getElementById('impersonate-directory-role');
     var messageEl = document.getElementById('impersonate-message');
     var hintEl = document.getElementById('impersonate-user-hint');
+    var impersonateView = document.getElementById('impersonate-view');
 
     function showImpersonateMessage(text, isError) {
       if (!messageEl) return;
@@ -1880,6 +1981,60 @@
         });
     }
 
+    function filterDirectoryUsers() {
+      var q = (directorySearch && directorySearch.value || '').toLowerCase();
+      var role = directoryRole ? directoryRole.value : 'All';
+      return liveUsers.filter(function (u) {
+        if (role !== 'All' && u.role !== role) return false;
+        if (q && (u.name + u.email).toLowerCase().indexOf(q) === -1) return false;
+        return true;
+      });
+    }
+
+    function paintDirectory() {
+      if (!directoryBody) return;
+      var rows = filterDirectoryUsers();
+      if (!rows.length) {
+        directoryBody.innerHTML =
+          '<tr><td colspan="5" class="px-4 py-6 text-slate-500">No accounts match your filters.</td></tr>';
+        return;
+      }
+      directoryBody.innerHTML = rows
+        .map(function (u) {
+          var canImpersonate = u.role !== 'Admin';
+          return (
+            '<tr class="border-t border-slate-100">' +
+            '<td class="px-4 py-3 font-medium">' +
+            esc(u.name) +
+            '</td>' +
+            '<td class="px-4 py-3 text-slate-600">' +
+            esc(u.email) +
+            '</td>' +
+            '<td class="px-4 py-3">' +
+            esc(u.role) +
+            '</td>' +
+            '<td class="px-4 py-3">' +
+            esc(u.city) +
+            '</td>' +
+            '<td class="px-4 py-3 text-right">' +
+            (canImpersonate
+              ? '<button type="button" class="impersonate-directory-btn text-xs font-semibold text-brand-700 hover:underline" data-email="' +
+                attrEsc(u.email) +
+                '">Impersonate</button>'
+              : '<span class="text-xs text-slate-400">Admin</span>') +
+            '</td></tr>'
+          );
+        })
+        .join('');
+      directoryBody.querySelectorAll('.impersonate-directory-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var email = btn.getAttribute('data-email');
+          if (emailInput) emailInput.value = email;
+          if (email) submitImpersonation(email, impersonateView ? impersonateView.value : 'account');
+        });
+      });
+    }
+
     loadUsersDirectory(function (users) {
       if (datalist) {
         datalist.innerHTML = users
@@ -1893,36 +2048,15 @@
           ? users.length + ' accounts available from Supabase.'
           : 'No users loaded — you can still enter an email manually.';
       }
-      if (!quickList) return;
-      if (!users.length) {
-        quickList.innerHTML =
-          '<p class="px-4 py-6 text-sm text-slate-500">No users in the directory yet.</p>';
-        return;
+      if (directoryStatus) {
+        directoryStatus.textContent =
+          users.length + ' account' + (users.length === 1 ? '' : 's') + ' loaded';
       }
-      quickList.innerHTML = users
-        .filter(function (u) {
-          return u.role !== 'Admin';
-        })
-        .slice(0, 50)
-        .map(function (u) {
-          return (
-            '<button type="button" class="impersonate-quick-row w-full text-left px-4 py-3 hover:bg-brand-50/60 flex items-center justify-between gap-3" data-email="' +
-            attrEsc(u.email) +
-            '"><span><span class="block text-sm font-medium text-slate-800">' +
-            esc(u.name || '—') +
-            '</span><span class="block text-xs text-slate-500">' +
-            esc(u.email) +
-            '</span></span><span class="text-xs font-semibold text-brand-700 shrink-0">Use →</span></button>'
-          );
-        })
-        .join('');
-      quickList.querySelectorAll('.impersonate-quick-row').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var email = btn.getAttribute('data-email');
-          if (emailInput) emailInput.value = email;
-        });
-      });
+      paintDirectory();
     });
+
+    if (directorySearch) directorySearch.addEventListener('input', paintDirectory);
+    if (directoryRole) directoryRole.addEventListener('change', paintDirectory);
 
     if (form) {
       form.addEventListener('submit', function (e) {
@@ -2060,6 +2194,42 @@
       .join('');
   }
 
+  function listingReportsHtml(reports) {
+    if (!reports.length) {
+      return '<p class="text-sm text-slate-500">No open listing reports.</p>';
+    }
+    var reasonLabels = {
+      misleading: 'Misleading',
+      spam: 'Spam',
+      wrong_details: 'Wrong details',
+      offensive: 'Offensive',
+      duplicate: 'Duplicate',
+      other: 'Other',
+    };
+    return reports
+      .map(function (r) {
+        return (
+          '<div class="rounded-lg border border-amber-200 bg-amber-50/50 p-3 text-sm">' +
+          '<div class="flex flex-wrap items-start justify-between gap-2">' +
+          '<p class="font-semibold text-brand-900">' +
+          esc(r.title) +
+          ' <span class="text-xs font-normal text-slate-500">(' +
+          esc(r.listingType === 'organiser' ? 'Group' : 'Event') +
+          ')</span></p>' +
+          '<time class="text-xs text-slate-400 shrink-0">' +
+          esc(fmtTime(r.time)) +
+          '</time></div>' +
+          '<p class="text-xs text-amber-900 mt-1">' +
+          esc(reasonLabels[r.reason] || r.reason) +
+          (r.reporterEmail ? ' · ' + esc(r.reporterEmail) : '') +
+          '</p>' +
+          (r.details ? '<p class="text-xs text-slate-600 mt-1">' + esc(r.details) + '</p>' : '') +
+          '<p class="text-xs text-slate-500 mt-2">Dismiss or action in Supabase <code class="text-[11px]">listing_reports</code>.</p></div>'
+        );
+      })
+      .join('');
+  }
+
   function reviewsHtml(reviews) {
     if (!reviews.length) {
       return '<p class="text-sm text-slate-500">No reviews yet.</p>';
@@ -2113,6 +2283,10 @@
           '<tbody id="moderation-listings"><tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
       ) +
       '</div>' +
+      '<div class="bg-white rounded-xl border border-amber-200 p-5 shadow-sm">' +
+      '<h3 class="font-bold text-amber-900 mb-1">Listing reports</h3>' +
+      '<p class="text-xs text-slate-500 mb-4">Submitted from event and group profile pages — review in Supabase.</p>' +
+      '<div class="space-y-3" id="moderation-reports">Loading…</div></div>' +
       '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
       '<h3 class="font-bold text-brand-900 mb-1">Reviews</h3>' +
       '<p class="text-xs text-slate-500 mb-4">Spam-like reviews are highlighted — removal is done in Supabase.</p>' +
@@ -2124,6 +2298,7 @@
       var pendingPanel = document.getElementById('moderation-pending-panel');
       var listingsEl = document.getElementById('moderation-listings');
       var reviewsEl = document.getElementById('moderation-reviews');
+      var reportsEl = document.getElementById('moderation-reports');
       if (!data || data.error || data.configured === false) {
         liveListings = [];
         liveReviews = [];
@@ -2131,10 +2306,12 @@
         if (pendingEl) pendingEl.innerHTML = listingsTableHtml([], 'Could not load pending events.');
         if (listingsEl) listingsEl.innerHTML = listingsTableHtml([]);
         if (reviewsEl) reviewsEl.innerHTML = reviewsHtml([]);
+        if (reportsEl) reportsEl.innerHTML = listingReportsHtml([]);
         return;
       }
       liveListings = data.listings || [];
       liveReviews = data.reviews || [];
+      var listingReports = data.listingReports || [];
       var pendingListings = data.pendingListings || liveListings.filter(function (l) {
         return l.status === 'Pending' || l.pending;
       });
@@ -2144,9 +2321,12 @@
           ' events · ' +
           pendingListings.length +
           ' pending · ' +
+          listingReports.length +
+          ' reports · ' +
           liveReviews.length +
           ' reviews from Supabase';
       }
+      if (reportsEl) reportsEl.innerHTML = listingReportsHtml(listingReports);
       if (pendingEl) {
         pendingEl.innerHTML = pendingListings.length
           ? listingsTableHtml(pendingListings, undefined, { pendingQueue: true })
@@ -3969,7 +4149,6 @@
     'event-health': renderEventHealth,
     'group-cleanup': renderGroupCleanup,
     'event-cleanup': renderEventCleanup,
-    users: renderUsers,
     impersonate: renderImpersonate,
     moderation: renderModeration,
     financials: renderFinancials,
@@ -3979,6 +4158,7 @@
 
   function route() {
     var hash = (location.hash || '#dashboard').replace('#', '');
+    if (hash === 'users') hash = 'impersonate';
     if (!routes[hash]) hash = 'dashboard';
     setActiveNav(hash);
     try {

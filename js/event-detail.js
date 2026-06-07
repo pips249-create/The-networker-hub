@@ -483,6 +483,17 @@
     setText('ev-related-title', 'More from ' + (ev.organiser || 'this organiser'));
     renderOrganiserReviews(ev);
     applyTicketPanelState(ev);
+    wireListingReport(ev);
+  }
+
+  function wireListingReport(ev) {
+    const btn = document.getElementById('ev-report-btn');
+    if (!btn || !window.ListingReport || !ev || !ev.id) return;
+    window.ListingReport.attachTrigger(btn, {
+      listingType: 'event',
+      eventId: ev.id,
+      title: ev.title || 'Event',
+    });
   }
 
   function renderRefundPolicy(ev) {
@@ -1182,10 +1193,19 @@
       appForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!(await requireSignedInAttendee())) return;
-        // TODO: Connect to seat approval workflow API when backend is live
-        showSeatApplication(false);
-        appForm.reset();
-        window.alert('Application submitted. The host will review your request and email you.');
+
+        const submitApplication = async () => {
+          // TODO: Connect to seat approval workflow API when backend is live
+          showSeatApplication(false);
+          appForm.reset();
+          window.alert('Application submitted. The host will review your request and email you.');
+        };
+
+        if (window.FactLoader) {
+          await window.FactLoader.run(submitApplication);
+        } else {
+          await submitApplication();
+        }
       });
     }
 
@@ -1280,20 +1300,7 @@
     }
   }
 
-  async function boot() {
-    const route = eventRouteFromLocation();
-    const params = route.params;
-    const id = route.id;
-    const slug = route.slug;
-
-    if (!id && !slug && !params.get('title')) {
-      setEventLoading(false);
-      showEventLoadError('Open an event from Browse events to view ticket details.');
-      return;
-    }
-
-    setEventLoading(true);
-    try {
+  async function bootWork(params, id, slug) {
     if (id || slug) {
       const tiersEl = document.getElementById('ticket-tiers');
       if (tiersEl) tiersEl.innerHTML = '<p class="ticket-load-hint">Loading tickets…</p>';
@@ -1371,6 +1378,28 @@
       initActions(ev);
       loadEventPageAds();
     }
+  }
+
+  async function boot() {
+    const route = eventRouteFromLocation();
+    const params = route.params;
+    const id = route.id;
+    const slug = route.slug;
+
+    if (!id && !slug && !params.get('title')) {
+      setEventLoading(false);
+      showEventLoadError('Open an event from Browse events to view ticket details.');
+      return;
+    }
+
+    if (window.FactLoader) {
+      await window.FactLoader.run(() => bootWork(params, id, slug));
+      return;
+    }
+
+    setEventLoading(true);
+    try {
+      await bootWork(params, id, slug);
     } finally {
       setEventLoading(false);
     }

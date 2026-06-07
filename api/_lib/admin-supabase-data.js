@@ -95,12 +95,14 @@ async function fetchDashboardMetrics(sb) {
 async function fetchAlerts(sb) {
   const alerts = [];
   const health = await scanEventHealth();
-  const [incompleteOrgs, recentReviews] = await Promise.all([
+  const [incompleteOrgs, recentReviews, openReportsRes] = await Promise.all([
     sb.from('organisers').select('id', { count: 'exact', head: true }).or(INCOMPLETE_ORGANISER_FILTER),
     sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
+    sb.from('listing_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
   ]);
 
   const spamReviewCount = (recentReviews.data || []).filter((r) => isSpamReview(r.review_text)).length;
+  const openReports = openReportsRes.error ? 0 : openReportsRes.count || 0;
 
   if (health.count > 0) {
     alerts.push({
@@ -160,6 +162,17 @@ async function fetchAlerts(sb) {
       severity: 'medium',
       title: `${spamReviewCount} spam-like review${spamReviewCount === 1 ? '' : 's'} detected`,
       detail: 'Highlighted on Content Moderation — remove in Supabase if needed.',
+      href: '#moderation',
+      time: new Date().toISOString(),
+    });
+  }
+
+  if (openReports > 0) {
+    alerts.push({
+      id: 'listing-reports',
+      severity: 'medium',
+      title: `${openReports} listing report${openReports === 1 ? '' : 's'} from users`,
+      detail: 'Review reports on Content Moderation.',
       href: '#moderation',
       time: new Date().toISOString(),
     });
@@ -346,7 +359,7 @@ async function fetchModeration(sb) {
   const eventSelect =
     'id, title, event_type, city, approval_status, organiser_id, organisers(name)';
 
-  const [eventsRes, pendingRes, reviewsRes, regCountsRes] = await Promise.all([
+  const [eventsRes, pendingRes, reviewsRes, regCountsRes, reportsRes] = await Promise.all([
     sb.from('events').select(eventSelect).order('created_at', { ascending: false }).limit(80),
     sb
       .from('events')
@@ -359,6 +372,12 @@ async function fetchModeration(sb) {
       .order('created_at', { ascending: false })
       .limit(30),
     sb.from('registrations').select('event_id'),
+    sb
+      .from('listing_reports')
+      .select('id, listing_type, listing_title, reason, details, reporter_email, created_at, status')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .limit(30),
   ]);
 
   if (eventsRes.error) throw new Error(eventsRes.error.message);
@@ -400,7 +419,18 @@ async function fetchModeration(sb) {
     };
   });
 
-  return { listings, pendingListings, reviews };
+  const listingReports = (reportsRes.error ? [] : reportsRes.data || []).map((r) => ({
+    id: r.id,
+    listingType: r.listing_type,
+    title: String(r.listing_title || '').trim() || '—',
+    reason: r.reason,
+    details: String(r.details || '').trim(),
+    reporterEmail: r.reporter_email || '',
+    time: r.created_at,
+    status: r.status,
+  }));
+
+  return { listings, pendingListings, reviews, listingReports };
 }
 
 async function fetchFinancials(sb) {
@@ -513,7 +543,7 @@ async function getAdminUsers() {
 
 async function getAdminModeration() {
   if (!isSupabaseConfigured()) {
-    return { configured: false, provider: 'supabase', listings: [], reviews: [] };
+    return { configured: false, provider: 'supabase', listings: [], reviews: [], listingReports: [] };
   }
   const sb = getSupabaseAdmin();
   const data = await fetchModeration(sb);

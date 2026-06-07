@@ -285,6 +285,15 @@
 
     renderEvents(org.events || []);
 
+    var reportBtn = document.getElementById('org-report-btn');
+    if (reportBtn && window.ListingReport && org.id) {
+      window.ListingReport.attachTrigger(reportBtn, {
+        listingType: 'organiser',
+        organiserId: org.id,
+        title: org.name || 'Organiser',
+      });
+    }
+
     var shareBtn = document.getElementById('org-share-btn');
     if (shareBtn) {
       shareBtn.onclick = function () {
@@ -329,19 +338,30 @@
       return;
     }
 
-    setLoading(true);
-    setStatus('', false);
-    try {
-      var res = await fetch(url);
-      var data = await res.json();
-      if (!res.ok || !data.organiser) {
-        setStatus(data.message || 'Organiser not found.', true);
-        return;
+    const fetchOrganiser = async () => {
+      setStatus('', false);
+      try {
+        var res = await fetch(url);
+        var data = await res.json();
+        if (!res.ok || !data.organiser) {
+          setStatus(data.message || 'Organiser not found.', true);
+          return;
+        }
+        renderOrganiser(data.organiser);
+        loadOrganiserPageAd();
+      } catch (e) {
+        setStatus('Could not load organiser profile.', true);
       }
-      renderOrganiser(data.organiser);
-      loadOrganiserPageAd();
-    } catch (e) {
-      setStatus('Could not load organiser profile.', true);
+    };
+
+    if (window.FactLoader) {
+      await window.FactLoader.run(fetchOrganiser);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await fetchOrganiser();
     } finally {
       setLoading(false);
     }

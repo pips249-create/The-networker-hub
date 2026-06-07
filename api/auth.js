@@ -20,6 +20,7 @@ const routes = {
   favourites: require('./_lib/routes/auth-favourites'),
   profile: require('./_lib/routes/auth-profile'),
   'stop-impersonate': require('./_lib/routes/auth-stop-impersonate'),
+  'report-listing': require('./_lib/routes/auth-report-listing'),
 };
 
 module.exports = async function handler(req, res) {

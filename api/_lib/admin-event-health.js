@@ -16,6 +16,7 @@ const ISSUE_DEFS = {
   missing_vat: { label: 'VAT not set (paid tickets)', severity: 'medium' },
   missing_event_type: { label: 'Event type not set', severity: 'low' },
   missing_meeting_type: { label: 'Format not set', severity: 'low' },
+  stale_past_date: { label: 'Event date is in the past', severity: 'medium' },
 };
 
 const SEVERITY_ORDER = { high: 0, medium: 1, low: 2 };
@@ -164,7 +165,14 @@ async function scanEventHealth() {
   for (const row of events) {
     const codes = [];
 
-    if (!row.starts_at) codes.push('missing_date');
+    if (!row.starts_at) {
+      codes.push('missing_date');
+    } else {
+      const startMs = new Date(row.starts_at).getTime();
+      if (!Number.isNaN(startMs) && startMs < Date.now() - 86400000) {
+        codes.push('stale_past_date');
+      }
+    }
 
     if (!row.organiser_id) {
       codes.push('missing_organiser');
