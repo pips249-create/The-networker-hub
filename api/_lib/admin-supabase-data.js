@@ -307,6 +307,7 @@ async function fetchUsers(sb) {
 
     users.push({
       id: acc.user_id,
+      organiserId: org?.id || null,
       name: acc.display_name || org?.name || att?.name || auth?.user_metadata?.full_name || '—',
       email: auth?.email || att?.email || org?.email || '—',
       role,

@@ -34,9 +34,21 @@
       title: 'Impersonate user',
       subtitle: 'Browse Supabase accounts and sign in as any non-admin user to debug on the Hub',
     },
+    users: {
+      title: 'Users & accounts',
+      subtitle: 'Manage featured organiser status and open account details',
+    },
+    system: {
+      title: 'System health',
+      subtitle: 'Environment checks, Supabase connection, and go-live checklist',
+    },
+    featured: {
+      title: 'Featured spotlight',
+      subtitle: 'Choose which approved events appear in the Premium Spotlight carousel',
+    },
     moderation: {
       title: 'Content moderation',
-      subtitle: 'Read-only view of events and reviews in Supabase',
+      subtitle: 'Approve or reject events, triage listing reports, and remove spam reviews',
     },
     financials: {
       title: 'Financial hub',
@@ -865,16 +877,74 @@
       });
   }
 
+  function rejectPendingEvent(eventId, btn) {
+    if (!eventId) return;
+    if (btn) btn.disabled = true;
+    adminPatch('/api/admin/moderation', { action: 'reject_event', id: eventId })
+      .then(function (data) {
+        if (!data || !data.ok) {
+          throw new Error((data && data.message) || (data && data.error) || 'Reject failed');
+        }
+        renderModeration();
+      })
+      .catch(function (err) {
+        if (btn) btn.disabled = false;
+        window.alert(err.message || 'Could not reject event.');
+      });
+  }
+
   function bindModerationActions() {
     if (!main || main.dataset.moderationBound) return;
     main.dataset.moderationBound = '1';
     main.addEventListener('click', function (e) {
-      var btn = e.target.closest('.moderation-approve-btn');
-      if (!btn) return;
-      var eventId = btn.getAttribute('data-event-id');
-      if (!eventId) return;
-      if (!window.confirm('Approve this event and publish it on the Hub?')) return;
-      approvePendingEvent(eventId, btn);
+      var approveBtn = e.target.closest('.moderation-approve-btn');
+      if (approveBtn) {
+        var approveId = approveBtn.getAttribute('data-event-id');
+        if (!approveId) return;
+        if (!window.confirm('Approve this event and publish it on the Hub?')) return;
+        approvePendingEvent(approveId, approveBtn);
+        return;
+      }
+      var rejectBtn = e.target.closest('.moderation-reject-btn');
+      if (rejectBtn) {
+        var rejectId = rejectBtn.getAttribute('data-event-id');
+        if (!rejectId) return;
+        if (!window.confirm('Reject this listing? The organiser will need to revise and resubmit.')) return;
+        rejectPendingEvent(rejectId, rejectBtn);
+        return;
+      }
+      var dismissBtn = e.target.closest('.moderation-dismiss-report-btn');
+      if (dismissBtn) {
+        var reportId = dismissBtn.getAttribute('data-report-id');
+        if (!reportId) return;
+        dismissBtn.disabled = true;
+        adminPatch('/api/admin/moderation', { action: 'dismiss_report', id: reportId })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Dismiss failed');
+            renderModeration();
+          })
+          .catch(function (err) {
+            dismissBtn.disabled = false;
+            window.alert(err.message || 'Could not dismiss report.');
+          });
+        return;
+      }
+      var deleteReviewBtn = e.target.closest('.moderation-delete-review-btn');
+      if (deleteReviewBtn) {
+        var reviewId = deleteReviewBtn.getAttribute('data-review-id');
+        if (!reviewId) return;
+        if (!window.confirm('Permanently delete this review?')) return;
+        deleteReviewBtn.disabled = true;
+        adminPatch('/api/admin/moderation', { action: 'delete_review', id: reviewId })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Delete failed');
+            renderModeration();
+          })
+          .catch(function (err) {
+            deleteReviewBtn.disabled = false;
+            window.alert(err.message || 'Could not delete review.');
+          });
+      }
     });
   }
 
@@ -1910,6 +1980,29 @@
     });
   }
 
+  function submitImpersonation(email, view) {
+    var btn = document.getElementById('impersonate-submit');
+    if (btn) btn.disabled = true;
+    adminPost('/api/admin/impersonate', { email: email, view: view || 'account' })
+      .then(function (data) {
+        if (!data.ok) {
+          window.alert(data.message || data.error || 'Could not impersonate user.');
+          if (btn) btn.disabled = false;
+          return;
+        }
+        try {
+          sessionStorage.removeItem('hub_nav_session_v1');
+        } catch (e) {
+          /* ignore */
+        }
+        window.location.href = '../' + String(data.redirect || 'account/index.html').replace(/^\//, '');
+      })
+      .catch(function () {
+        window.alert('Request failed. Try again.');
+        if (btn) btn.disabled = false;
+      });
+  }
+
   function renderImpersonate() {
     var roleOpts = ['All', 'Admin', 'Organiser', 'Attendee'];
     main.innerHTML =
@@ -1971,7 +2064,7 @@
       messageEl.classList.add(isError ? 'bg-red-50' : 'bg-emerald-50', isError ? 'text-red-800' : 'text-emerald-800');
     }
 
-    function submitImpersonation(email, view) {
+    function impersonateFromForm(email, view) {
       var btn = document.getElementById('impersonate-submit');
       if (btn) btn.disabled = true;
       showImpersonateMessage('Switching session…', false);
@@ -2081,7 +2174,7 @@
           showImpersonateMessage('Enter an email address.', true);
           return;
         }
-        submitImpersonation(email, view);
+        impersonateFromForm(email, view);
       });
     }
   }
@@ -2109,8 +2202,39 @@
       '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Featured organiser</dt><dd class="font-medium text-right">' +
       (u.featured ? 'Yes' : 'No') +
       '</dd></div></dl>' +
-      '<p class="text-xs text-slate-500 border-t border-slate-100 pt-4">Profile edits and password reset are not available in Command Center yet. Change featured status in Supabase or the organiser dashboard.</p>';
+      (u.organiserId
+        ? '<label class="flex items-center gap-2 text-sm mt-4 pt-4 border-t border-slate-100">' +
+          '<input type="checkbox" id="drawer-featured-toggle" ' +
+          (u.featured ? 'checked' : '') +
+          ' /> Featured organiser (Spotlight)</label>'
+        : '<p class="text-xs text-slate-500 border-t border-slate-100 pt-4">No organiser profile — featured status applies to group profiles only.</p>');
     document.getElementById('user-drawer').classList.remove('hidden');
+    var featuredToggle = document.getElementById('drawer-featured-toggle');
+    if (featuredToggle && u.organiserId) {
+      featuredToggle.addEventListener('change', function () {
+        featuredToggle.disabled = true;
+        adminPatch('/api/admin/users', {
+          organiserId: u.organiserId,
+          userId: u.id,
+          featured: featuredToggle.checked,
+        })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
+            u.featured = featuredToggle.checked;
+            var idx = liveUsers.findIndex(function (x) {
+              return x.id === u.id;
+            });
+            if (idx >= 0) liveUsers[idx].featured = u.featured;
+          })
+          .catch(function (err) {
+            featuredToggle.checked = !featuredToggle.checked;
+            window.alert(err.message || 'Could not update featured status.');
+          })
+          .finally(function () {
+            featuredToggle.disabled = false;
+          });
+      });
+    }
     var impersonateBtn = document.getElementById('drawer-impersonate');
     if (impersonateBtn) {
       impersonateBtn.addEventListener('click', function () {
@@ -2136,10 +2260,13 @@
     if (isPending) {
       if (opts.pendingQueue) {
         return (
-          '<td class="px-4 py-3">' +
+          '<td class="px-4 py-3 whitespace-nowrap">' +
           '<button type="button" class="moderation-approve-btn rounded-lg bg-brand-700 text-white px-2.5 py-1 text-xs font-semibold hover:bg-brand-900 disabled:opacity-50" data-event-id="' +
           attrEsc(l.id) +
-          '">Approve</button></td>'
+          '">Approve</button> ' +
+          '<button type="button" class="moderation-reject-btn rounded-lg border border-red-200 text-red-700 px-2.5 py-1 text-xs font-semibold hover:bg-red-50 disabled:opacity-50 ml-1" data-event-id="' +
+          attrEsc(l.id) +
+          '">Reject</button></td>'
         );
       }
       return (
@@ -2238,7 +2365,9 @@
           (r.reporterEmail ? ' · ' + esc(r.reporterEmail) : '') +
           '</p>' +
           (r.details ? '<p class="text-xs text-slate-600 mt-1">' + esc(r.details) + '</p>' : '') +
-          '<p class="text-xs text-slate-500 mt-2">Dismiss or action in Supabase <code class="text-[11px]">listing_reports</code>.</p></div>'
+          '<button type="button" class="moderation-dismiss-report-btn mt-2 rounded-lg border border-slate-200 text-slate-700 px-2.5 py-1 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50" data-report-id="' +
+          attrEsc(r.id) +
+          '">Dismiss report</button></div>'
         );
       })
       .join('');
@@ -2269,7 +2398,9 @@
           (r.spam
             ? '<p class="mt-2 text-xs font-semibold text-red-700">Flagged as possible spam</p>'
             : '') +
-          '</article>'
+          '<button type="button" class="moderation-delete-review-btn mt-3 rounded-lg border border-red-200 text-red-700 px-2.5 py-1 text-xs font-semibold hover:bg-red-50 disabled:opacity-50" data-review-id="' +
+          attrEsc(r.id) +
+          '">Delete review</button></article>'
         );
       })
       .join('');
@@ -2281,7 +2412,7 @@
       '<p id="moderation-status" class="text-sm text-slate-500">Loading listings and reviews from Supabase…</p>' +
       '<div class="bg-white rounded-xl border border-amber-200 shadow-sm overflow-hidden" id="moderation-pending-panel">' +
       '<div class="px-4 py-3 border-b border-amber-100 bg-amber-50"><h3 class="font-bold text-amber-900">Pending approval</h3>' +
-      '<p class="text-xs text-amber-800/80 mt-0.5">Events waiting for approval before they can go live. Approve or reject in the organiser dashboard or Supabase.</p></div>' +
+      '<p class="text-xs text-amber-800/80 mt-0.5">Events waiting for approval — approve to publish or reject to send back to the organiser.</p></div>' +
       adminTableScroll(
         '<table class="w-full text-sm"><thead class="bg-amber-50/80 text-xs uppercase text-amber-900/70">' +
           '<tr><th class="px-4 py-3 text-left">Title</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Tickets</th><th class="px-4 py-3"></th></tr></thead>' +
@@ -2299,11 +2430,11 @@
       '</div>' +
       '<div class="bg-white rounded-xl border border-amber-200 p-5 shadow-sm">' +
       '<h3 class="font-bold text-amber-900 mb-1">Listing reports</h3>' +
-      '<p class="text-xs text-slate-500 mb-4">Submitted from event and group profile pages — review in Supabase.</p>' +
+      '<p class="text-xs text-slate-500 mb-4">Submitted from event and group profile pages — dismiss when reviewed.</p>' +
       '<div class="space-y-3" id="moderation-reports">Loading…</div></div>' +
       '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
       '<h3 class="font-bold text-brand-900 mb-1">Reviews</h3>' +
-      '<p class="text-xs text-slate-500 mb-4">Spam-like reviews are highlighted — removal is done in Supabase.</p>' +
+      '<p class="text-xs text-slate-500 mb-4">Spam-like reviews are highlighted — delete to remove from the site.</p>' +
       '<div class="space-y-3" id="moderation-reviews">Loading…</div></div></div>';
 
     adminGet('/api/admin/moderation').then(function (data) {
@@ -4367,22 +4498,342 @@
     refreshEventCleanupData();
   }
 
+  function renderSystem() {
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      '<p id="system-status" class="text-sm text-slate-500">Checking environment and Supabase…</p>' +
+      '<div id="system-panels" class="space-y-4"></div></div>';
+
+    fetch('/api/auth/config-check', { credentials: 'include', cache: 'no-store' })
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        var status = document.getElementById('system-status');
+        var panels = document.getElementById('system-panels');
+        if (!panels) return;
+
+        var env = data.env || {};
+        var hints = data.hints || {};
+        var sb = data.supabase || {};
+        var admin = data.adminAccount || {};
+
+        if (status) {
+          status.textContent = data.authReady
+            ? 'Core services look ready — review any warnings below.'
+            : 'Some configuration is missing — fix env vars in Vercel and redeploy.';
+        }
+
+        function envRow(label, ok) {
+          return (
+            '<div class="flex justify-between gap-4 py-2 border-b border-slate-100 last:border-0">' +
+            '<span class="text-slate-600">' +
+            esc(label) +
+            '</span>' +
+            '<span class="font-semibold ' +
+            (ok ? 'text-emerald-700' : 'text-red-700') +
+            '">' +
+            (ok ? 'OK' : 'Missing') +
+            '</span></div>'
+          );
+        }
+
+        panels.innerHTML =
+          '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+          '<h3 class="font-bold text-brand-900 mb-3">Environment</h3>' +
+          '<div class="text-sm">' +
+          envRow('SESSION_SECRET', env.hasSessionSecret) +
+          envRow('SUPABASE_URL', env.hasSupabaseUrl) +
+          envRow('SUPABASE_SERVICE_ROLE_KEY', env.hasSupabaseServiceKey) +
+          envRow('SUPABASE_ANON_KEY', env.hasSupabaseAnonKey) +
+          envRow('SITE_URL', env.hasSiteUrl) +
+          '</div></section>' +
+          '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+          '<h3 class="font-bold text-brand-900 mb-2">Supabase connection</h3>' +
+          '<p class="text-sm ' +
+          (sb.ok ? 'text-emerald-700' : 'text-red-700') +
+          ' font-semibold">' +
+          esc(sb.ok ? 'Connected' : sb.message || 'Not connected') +
+          '</p>' +
+          (hints.supabaseConnection
+            ? '<p class="text-xs text-slate-500 mt-2">' + esc(hints.supabaseConnection) + '</p>'
+            : '') +
+          '</section>' +
+          '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+          '<h3 class="font-bold text-brand-900 mb-2">Admin account</h3>' +
+          '<p class="text-sm text-slate-600">' +
+          esc(admin.email || '—') +
+          ' · ' +
+          (admin.exists ? 'exists (' + esc(admin.role || 'user') + ')' : 'not created yet') +
+          '</p>' +
+          (hints.setupAdminRequired
+            ? '<p class="text-xs text-amber-800 mt-2">Run <code class="text-[11px]">npm run seed-admin</code> or POST <code class="text-[11px]">/api/auth/setup-admin</code></p>'
+            : '') +
+          '</section>' +
+          '<section class="bg-slate-900 rounded-xl p-5 text-slate-100 shadow-sm">' +
+          '<h3 class="font-bold text-sm uppercase tracking-wide text-brand-100 mb-3">Quick links</h3>' +
+          '<ul class="text-sm space-y-2">' +
+          '<li><a class="text-brand-100 hover:text-white font-semibold" href="../events/index.html" target="_blank" rel="noopener">Public events browse</a></li>' +
+          '<li><a class="text-brand-100 hover:text-white font-semibold" href="../organiser/index.html" target="_blank" rel="noopener">Organiser dashboard</a></li>' +
+          '<li><a class="text-brand-100 hover:text-white font-semibold" href="' +
+          esc(VERCEL_ANALYTICS_URL) +
+          '" target="_blank" rel="noopener">Vercel Analytics</a></li>' +
+          '<li><a class="text-brand-100 hover:text-white font-semibold" href="/api/auth/config-check" target="_blank" rel="noopener">Config check JSON</a></li>' +
+          '<li><a class="text-brand-100 hover:text-white font-semibold" href="/api/hub-listings" target="_blank" rel="noopener">Events API smoke test</a></li>' +
+          '</ul></section>';
+      })
+      .catch(function () {
+        var status = document.getElementById('system-status');
+        if (status) status.textContent = 'Could not load system health check.';
+      });
+  }
+
+  function renderUsers() {
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<p id="users-page-status" class="text-sm text-slate-500">Loading accounts from Supabase…</p>' +
+      '<div class="flex flex-wrap gap-3 items-center">' +
+      '<input type="search" id="users-page-search" class="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[200px]" placeholder="Search name or email" />' +
+      '<select id="users-page-role" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
+      '<option value="">All roles</option><option value="Admin">Admin</option><option value="Organiser">Organiser</option><option value="Attendee">Attendee</option>' +
+      '</select></div>' +
+      adminTableScroll(
+        '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
+          '<tr><th class="px-4 py-3 text-left">Name</th><th class="px-4 py-3 text-left">Email</th><th class="px-4 py-3">Role</th><th class="px-4 py-3">Featured</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="users-page-tbody"><tr><td colspan="5" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+      ) +
+      '</div>';
+
+    function paintUsersTable() {
+      var tbody = document.getElementById('users-page-tbody');
+      var q = (document.getElementById('users-page-search')?.value || '').trim().toLowerCase();
+      var role = document.getElementById('users-page-role')?.value || '';
+      var rows = liveUsers.filter(function (u) {
+        if (role && u.role !== role) return false;
+        if (!q) return true;
+        return (
+          String(u.name || '').toLowerCase().indexOf(q) >= 0 ||
+          String(u.email || '').toLowerCase().indexOf(q) >= 0
+        );
+      });
+      if (!tbody) return;
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-slate-500">No matching accounts.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows
+        .map(function (u) {
+          return (
+            '<tr class="border-t border-slate-100">' +
+            '<td class="px-4 py-3 font-medium">' +
+            esc(u.name) +
+            '</td>' +
+            '<td class="px-4 py-3">' +
+            esc(u.email) +
+            '</td>' +
+            '<td class="px-4 py-3 text-center">' +
+            esc(u.role) +
+            '</td>' +
+            '<td class="px-4 py-3 text-center">' +
+            (u.organiserId
+              ? '<input type="checkbox" class="users-featured-toggle" data-user-id="' +
+                attrEsc(u.id) +
+                '" data-organiser-id="' +
+                attrEsc(u.organiserId) +
+                '" ' +
+                (u.featured ? 'checked' : '') +
+                ' aria-label="Featured organiser" />'
+              : '<span class="text-xs text-slate-400">—</span>') +
+            '</td>' +
+            '<td class="px-4 py-3 text-right whitespace-nowrap">' +
+            '<button type="button" class="users-open-drawer text-brand-700 text-xs font-semibold hover:underline" data-user-id="' +
+            attrEsc(u.id) +
+            '">Details</button>' +
+            (u.role !== 'Admin'
+              ? ' · <button type="button" class="users-impersonate text-brand-700 text-xs font-semibold hover:underline" data-email="' +
+                attrEsc(u.email) +
+                '">Impersonate</button>'
+              : '') +
+            '</td></tr>'
+          );
+        })
+        .join('');
+    }
+
+    loadUsersDirectory(function (users) {
+      var status = document.getElementById('users-page-status');
+      if (status) {
+        status.textContent = users.length + ' account' + (users.length === 1 ? '' : 's') + ' in Supabase';
+      }
+      paintUsersTable();
+    });
+
+    var searchEl = document.getElementById('users-page-search');
+    var roleEl = document.getElementById('users-page-role');
+    if (searchEl) searchEl.addEventListener('input', paintUsersTable);
+    if (roleEl) roleEl.addEventListener('change', paintUsersTable);
+
+    if (!main.dataset.usersBound) {
+      main.dataset.usersBound = '1';
+      main.addEventListener('change', function (e) {
+        var toggle = e.target.closest('.users-featured-toggle');
+        if (!toggle) return;
+        toggle.disabled = true;
+        adminPatch('/api/admin/users', {
+          userId: toggle.getAttribute('data-user-id'),
+          organiserId: toggle.getAttribute('data-organiser-id'),
+          featured: toggle.checked,
+        })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
+            var uid = toggle.getAttribute('data-user-id');
+            var row = liveUsers.find(function (u) {
+              return u.id === uid;
+            });
+            if (row) row.featured = toggle.checked;
+          })
+          .catch(function (err) {
+            toggle.checked = !toggle.checked;
+            window.alert(err.message || 'Could not update featured status.');
+          })
+          .finally(function () {
+            toggle.disabled = false;
+          });
+      });
+      main.addEventListener('click', function (e) {
+        var openBtn = e.target.closest('.users-open-drawer');
+        if (openBtn) {
+          var uid = openBtn.getAttribute('data-user-id');
+          var user = liveUsers.find(function (u) {
+            return u.id === uid;
+          });
+          if (user) openUserDrawer(user);
+          return;
+        }
+        var impBtn = e.target.closest('.users-impersonate');
+        if (impBtn) {
+          submitImpersonation(impBtn.getAttribute('data-email'), 'account');
+        }
+      });
+    }
+  }
+
+  function renderFeatured() {
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Featured events appear in the <strong>Premium Spotlight</strong> carousel on the public browse page. Only approved, published listings should be featured.</p>' +
+      '<p id="featured-status" class="text-sm text-slate-500">Loading approved events…</p>' +
+      adminTableScroll(
+        '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
+          '<tr><th class="px-4 py-3 text-left">Featured</th><th class="px-4 py-3 text-left">Event</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">Date</th><th class="px-4 py-3">City</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="featured-tbody"><tr><td colspan="6" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+      ) +
+      '</div>';
+
+    adminGet('/api/admin/events?approval_status=Approved&limit=100&sort=date').then(function (data) {
+      var tbody = document.getElementById('featured-tbody');
+      var status = document.getElementById('featured-status');
+      if (!data || !data.ok) {
+        if (status) status.textContent = 'Could not load events.';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-red-700">Load failed.</td></tr>';
+        return;
+      }
+      var events = data.events || [];
+      var featuredCount = events.filter(function (e) {
+        return e.featured;
+      }).length;
+      if (status) {
+        status.textContent =
+          featuredCount +
+          ' featured · ' +
+          events.length +
+          ' approved events shown (upcoming first)';
+      }
+      if (!tbody) return;
+      if (!events.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No approved events yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = events
+        .map(function (ev) {
+          var dateLabel = ev.starts_at
+            ? fmtTime(ev.starts_at).split(',')[0]
+            : '—';
+          var viewUrl = ev.slug
+            ? '../events/event.html?slug=' + encodeURIComponent(ev.slug)
+            : '../events/event.html?id=' + encodeURIComponent(ev.id);
+          return (
+            '<tr class="border-t border-slate-100' +
+            (ev.featured ? ' bg-amber-50/40' : '') +
+            '">' +
+            '<td class="px-4 py-3"><input type="checkbox" class="featured-event-toggle" data-event-id="' +
+            attrEsc(ev.id) +
+            '" ' +
+            (ev.featured ? 'checked' : '') +
+            ' aria-label="Feature event" /></td>' +
+            '<td class="px-4 py-3 font-medium">' +
+            esc(ev.title) +
+            '</td>' +
+            '<td class="px-4 py-3">' +
+            esc(ev.organiser_name || '—') +
+            '</td>' +
+            '<td class="px-4 py-3">' +
+            esc(dateLabel) +
+            '</td>' +
+            '<td class="px-4 py-3">' +
+            esc(ev.city || '—') +
+            '</td>' +
+            '<td class="px-4 py-3"><a href="' +
+            attrEsc(viewUrl) +
+            '" target="_blank" rel="noopener" class="text-brand-700 text-xs font-semibold hover:underline">View</a></td></tr>'
+          );
+        })
+        .join('');
+    });
+
+    if (!main.dataset.featuredBound) {
+      main.dataset.featuredBound = '1';
+      main.addEventListener('change', function (e) {
+        var toggle = e.target.closest('.featured-event-toggle');
+        if (!toggle) return;
+        var eventId = toggle.getAttribute('data-event-id');
+        if (!eventId) return;
+        toggle.disabled = true;
+        adminPost('/api/admin/events', { id: eventId, featured: toggle.checked })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
+            var row = toggle.closest('tr');
+            if (row) row.classList.toggle('bg-amber-50/40', toggle.checked);
+          })
+          .catch(function (err) {
+            toggle.checked = !toggle.checked;
+            window.alert(err.message || 'Could not update featured status.');
+          })
+          .finally(function () {
+            toggle.disabled = false;
+          });
+      });
+    }
+  }
+
   var routes = {
     dashboard: renderDashboard,
     analytics: renderAnalytics,
+    system: renderSystem,
     'event-health': renderEventHealth,
     'group-cleanup': renderGroupCleanup,
     'event-cleanup': renderEventCleanup,
     impersonate: renderImpersonate,
+    users: renderUsers,
     moderation: renderModeration,
     financials: renderFinancials,
+    featured: renderFeatured,
     sponsorship: renderSponsorship,
     emails: renderEmails,
   };
 
   function route() {
     var hash = (location.hash || '#dashboard').replace('#', '');
-    if (hash === 'users') hash = 'impersonate';
     if (!routes[hash]) hash = 'dashboard';
     setActiveNav(hash);
     try {

@@ -76,6 +76,7 @@ function mapEventRow(row, orgById) {
     vat_treatment: row.vat_treatment || '',
     slug: publicEventSlug({ slug: row.slug, title: row.title }),
     city: row.city || '',
+    featured: Boolean(row.featured),
   };
 }
 
@@ -88,13 +89,14 @@ async function listEventsForAdmin(query) {
   const approvalStatus = String(query.approval_status || '').trim();
   const search = String(query.q || '').trim();
   const sort = String(query.sort || 'recent').trim().toLowerCase();
+  const featuredOnly = query.featured === '1' || query.featured === 'true';
   const offset = Math.max(parseInt(String(query.offset || ''), 10) || 0, 0);
   const limit = Math.min(Math.max(parseInt(String(query.limit || ''), 10) || 40, 1), 100);
 
   let dbQuery = sb
     .from('events')
     .select(
-      'id, title, description, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, created_at',
+      'id, title, description, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, featured, created_at',
       { count: 'exact' }
     );
 
@@ -122,6 +124,10 @@ async function listEventsForAdmin(query) {
 
   if (approvalStatus) {
     dbQuery = dbQuery.eq('approval_status', approvalStatus);
+  }
+
+  if (featuredOnly) {
+    dbQuery = dbQuery.eq('featured', true);
   }
 
   if (search) {
@@ -247,6 +253,16 @@ module.exports = async function handler(req, res) {
       patch.status = status || null;
       if (status === 'published') patch.approval_status = 'Approved';
       else if (status === 'draft') patch.approval_status = 'Pending Review';
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'approval_status')) {
+      const approval = String(body.approval_status || '').trim();
+      if (approval && !['Pending Review', 'Approved', 'Rejected'].includes(approval)) {
+        return json(res, 400, { error: 'invalid_approval_status' });
+      }
+      patch.approval_status = approval || null;
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'featured')) {
+      patch.featured = Boolean(body.featured);
     }
     if (Object.prototype.hasOwnProperty.call(body, 'vat_treatment')) {
       const vat = String(body.vat_treatment || '').trim();

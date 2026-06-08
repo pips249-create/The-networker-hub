@@ -94,6 +94,9 @@ function buildOrganiserPatch(body, photo_url) {
   if (Object.prototype.hasOwnProperty.call(body, 'website')) {
     patch.website = String(body.website || '').trim() || null;
   }
+  if (Object.prototype.hasOwnProperty.call(body, 'featured')) {
+    patch.featured = Boolean(body.featured);
+  }
   return patch;
 }
 

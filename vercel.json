@@ -24,6 +24,18 @@
     {
       "source": "/admin/emails",
       "destination": "/admin/emails.html"
+    },
+    {
+      "source": "/admin/system",
+      "destination": "/admin/system.html"
+    },
+    {
+      "source": "/admin/users",
+      "destination": "/admin/users.html"
+    },
+    {
+      "source": "/admin/featured",
+      "destination": "/admin/featured.html"
     }
   ]
 }
