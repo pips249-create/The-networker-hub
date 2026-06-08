@@ -36,6 +36,14 @@
     {
       "source": "/admin/featured",
       "destination": "/admin/featured.html"
+    },
+    {
+      "source": "/admin/campaigns",
+      "destination": "/admin/campaigns.html"
+    },
+    {
+      "source": "/admin/import",
+      "destination": "/admin/import.html"
     }
   ]
 }

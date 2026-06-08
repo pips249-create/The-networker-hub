@@ -46,13 +46,21 @@
       title: 'Featured spotlight',
       subtitle: 'Choose which approved events appear in the Premium Spotlight carousel',
     },
+    campaigns: {
+      title: 'Email campaigns',
+      subtitle: 'Send claim-profile invites and other bulk templates via Resend',
+    },
+    import: {
+      title: 'Data import',
+      subtitle: 'Upload CSV to add organisers or attendee records (no automatic emails)',
+    },
     moderation: {
       title: 'Content moderation',
       subtitle: 'Approve or reject events, triage listing reports, and remove spam reviews',
     },
     financials: {
       title: 'Financial hub',
-      subtitle: 'Ticket revenue from registrations · Stripe Connect status per organiser',
+      subtitle: 'Payout queue, ticket revenue, and Stripe Connect status per organiser',
     },
     sponsorship: {
       title: 'Sponsorship & ads',
@@ -2207,7 +2215,14 @@
           '<input type="checkbox" id="drawer-featured-toggle" ' +
           (u.featured ? 'checked' : '') +
           ' /> Featured organiser (Spotlight)</label>'
-        : '<p class="text-xs text-slate-500 border-t border-slate-100 pt-4">No organiser profile — featured status applies to group profiles only.</p>');
+        : '<p class="text-xs text-slate-500 border-t border-slate-100 pt-4">No organiser profile — featured status applies to group profiles only.</p>') +
+      (u.role !== 'Admin'
+        ? '<div class="border-t border-slate-100 pt-4 mt-4 space-y-2">' +
+          '<p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Password support</p>' +
+          '<button type="button" class="w-full rounded-lg border border-slate-200 text-slate-800 py-2 text-sm font-semibold hover:bg-slate-50" id="drawer-reset-link">Generate reset link</button>' +
+          '<button type="button" class="w-full rounded-lg border border-slate-200 text-slate-800 py-2 text-sm font-semibold hover:bg-slate-50" id="drawer-temp-password">Set temporary password</button>' +
+          '<p class="text-xs text-slate-500 hidden" id="drawer-password-result"></p></div>'
+        : '');
     document.getElementById('user-drawer').classList.remove('hidden');
     var featuredToggle = document.getElementById('drawer-featured-toggle');
     if (featuredToggle && u.organiserId) {
@@ -2232,6 +2247,52 @@
           })
           .finally(function () {
             featuredToggle.disabled = false;
+          });
+      });
+    }
+    var pwdResult = document.getElementById('drawer-password-result');
+    function showPwdResult(text, isError) {
+      if (!pwdResult) return;
+      pwdResult.textContent = text;
+      pwdResult.classList.remove('hidden', 'text-red-700', 'text-emerald-700');
+      pwdResult.classList.add(isError ? 'text-red-700' : 'text-emerald-700');
+    }
+    var resetBtn = document.getElementById('drawer-reset-link');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function () {
+        resetBtn.disabled = true;
+        adminPost('/api/admin/users', { action: 'send_password_reset', email: u.email, userId: u.id })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Could not generate link');
+            if (data.resetUrl) {
+              showPwdResult('Reset link (copy): ' + data.resetUrl, false);
+            } else {
+              showPwdResult(data.message || 'Link generated.', false);
+            }
+          })
+          .catch(function (err) {
+            showPwdResult(err.message || 'Failed.', true);
+          })
+          .finally(function () {
+            resetBtn.disabled = false;
+          });
+      });
+    }
+    var tempBtn = document.getElementById('drawer-temp-password');
+    if (tempBtn) {
+      tempBtn.addEventListener('click', function () {
+        if (!window.confirm('Generate a new temporary password for ' + u.email + '?')) return;
+        tempBtn.disabled = true;
+        adminPost('/api/admin/users', { action: 'generate_temp_password', email: u.email, userId: u.id })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Failed');
+            showPwdResult('Temporary password: ' + data.tempPassword + ' — share securely.', false);
+          })
+          .catch(function (err) {
+            showPwdResult(err.message || 'Failed.', true);
+          })
+          .finally(function () {
+            tempBtn.disabled = false;
           });
       });
     }
@@ -2499,10 +2560,15 @@
           '<tbody id="financials-stripe"><tr><td colspan="4" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
       ) +
       '</section>' +
-      '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900 mb-2">Payout queue</h3>' +
-      '<p class="text-sm text-slate-500 mb-4">Manual payout requests are not stored in Supabase yet.</p>' +
-      '<div class="space-y-3" id="financials-queue"><p class="text-sm text-slate-500">None pending.</p></div></section>' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
+      '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">Payout queue</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Organiser payout requests from the dashboard — approve then mark paid after transfer.</p></div>' +
+      adminTableScroll(
+        '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
+          '<tr><th class="px-4 py-3 text-left">Event</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">Net</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Requested</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="financials-queue"><tr><td colspan="6" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+      ) +
+      '</section>' +
       '<section class="bg-slate-900 rounded-xl p-5 text-slate-100 shadow-sm">' +
       '<h3 class="font-bold text-sm uppercase tracking-wide text-brand-100 mb-1">Recent registrations</h3>' +
       '<p class="text-xs text-brand-100/70 mb-4">Last 40 registration rows from Supabase (payment status and amount).</p>' +
@@ -2520,10 +2586,71 @@
 
       var stripe = data.stripeAccounts || [];
       var log = data.automationLog || [];
+      var queue = data.payoutQueue || [];
+      var queueEl = document.getElementById('financials-queue');
 
       if (status) {
         status.textContent =
-          stripe.length + ' organiser' + (stripe.length === 1 ? '' : 's') + ' · registration log from Supabase';
+          queue.length +
+          ' payout request' +
+          (queue.length === 1 ? '' : 's') +
+          ' · ' +
+          stripe.length +
+          ' organiser' +
+          (stripe.length === 1 ? '' : 's') +
+          ' · registration log from Supabase';
+      }
+
+      if (queueEl) {
+        queueEl.innerHTML = queue.length
+          ? queue
+              .map(function (p) {
+                var statusCls =
+                  p.status === 'paid'
+                    ? 'text-emerald-700 bg-emerald-50'
+                    : p.status === 'pending_review'
+                      ? 'text-amber-800 bg-amber-50'
+                      : 'text-slate-700 bg-slate-100';
+                var actions = '';
+                if (p.status === 'pending_review') {
+                  actions =
+                    '<button type="button" class="payout-status-btn rounded-lg bg-brand-700 text-white px-2 py-1 text-xs font-semibold" data-payout-id="' +
+                    attrEsc(p.id) +
+                    '" data-payout-status="approved">Approve</button>';
+                } else if (p.status === 'approved') {
+                  actions =
+                    '<button type="button" class="payout-status-btn rounded-lg bg-emerald-700 text-white px-2 py-1 text-xs font-semibold" data-payout-id="' +
+                    attrEsc(p.id) +
+                    '" data-payout-status="paid">Mark paid</button>';
+                } else {
+                  actions = '<span class="text-xs text-slate-400">—</span>';
+                }
+                return (
+                  '<tr class="border-t border-slate-100">' +
+                  '<td class="px-4 py-3 font-medium">' +
+                  esc(p.eventTitle) +
+                  '</td>' +
+                  '<td class="px-4 py-3">' +
+                  esc(p.organiser) +
+                  '</td>' +
+                  '<td class="px-4 py-3">' +
+                  esc(p.amount) +
+                  '</td>' +
+                  '<td class="px-4 py-3"><span class="text-xs font-semibold px-2 py-0.5 rounded ' +
+                  statusCls +
+                  '">' +
+                  esc(p.statusLabel) +
+                  '</span></td>' +
+                  '<td class="px-4 py-3 text-xs text-slate-500">' +
+                  esc(fmtTime(p.requestedAt)) +
+                  '</td>' +
+                  '<td class="px-4 py-3 whitespace-nowrap">' +
+                  actions +
+                  '</td></tr>'
+                );
+              })
+              .join('')
+          : '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No payout requests yet.</td></tr>';
       }
 
       if (stripeEl) {
@@ -4816,6 +4943,162 @@
     }
   }
 
+  function bindFinancialsActions() {
+    if (!main || main.dataset.financialsBound) return;
+    main.dataset.financialsBound = '1';
+    main.addEventListener('click', function (e) {
+      var btn = e.target.closest('.payout-status-btn');
+      if (!btn) return;
+      var id = btn.getAttribute('data-payout-id');
+      var status = btn.getAttribute('data-payout-status');
+      if (!id || !status) return;
+      var label = status === 'paid' ? 'Mark this payout as paid?' : 'Approve this payout request?';
+      if (!window.confirm(label)) return;
+      btn.disabled = true;
+      adminPatch('/api/admin/financials', { id: id, status: status })
+        .then(function (data) {
+          if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
+          renderFinancials();
+        })
+        .catch(function (err) {
+          btn.disabled = false;
+          window.alert(err.message || 'Could not update payout.');
+        });
+    });
+  }
+
+  function renderCampaigns() {
+    main.innerHTML =
+      '<div class="space-y-6 max-w-3xl">' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Bulk sends use <strong>Resend</strong> and email templates from Supabase. Max <strong>50 recipients</strong> per batch. Edit the <code class="text-xs">organiser_claim_invite</code> template under Email templates first.</p>' +
+      '<form id="campaign-form" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Template</label>' +
+      '<select id="campaign-slug" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
+      '<option value="organiser_claim_invite">Claim your organiser profile</option>' +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Recipients</label>' +
+      '<p class="text-xs text-slate-500 mb-2">One email per line, or CSV with an <code>email</code> column.</p>' +
+      '<textarea id="campaign-recipients" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[140px]" placeholder="organiser@example.com&#10;name@company.co.uk"></textarea></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Claim URL override <span class="font-normal normal-case">(optional)</span></label>' +
+      '<input type="url" id="campaign-claim-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Defaults to register page with email pre-filled" /></div>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900" id="campaign-submit">Send batch</button>' +
+      '<span id="campaign-status" class="text-sm text-slate-500"></span></div>' +
+      '<pre id="campaign-result" class="hidden text-xs bg-slate-900 text-slate-100 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap"></pre>' +
+      '</form></div>';
+
+    var form = document.getElementById('campaign-form');
+    if (!form) return;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var statusEl = document.getElementById('campaign-status');
+      var resultEl = document.getElementById('campaign-result');
+      var btn = document.getElementById('campaign-submit');
+      var raw = (document.getElementById('campaign-recipients').value || '').trim();
+      if (!raw) {
+        if (statusEl) statusEl.textContent = 'Add at least one email.';
+        return;
+      }
+      var lines = raw
+        .split(/\r?\n/)
+        .map(function (s) {
+          return s.trim();
+        })
+        .filter(Boolean);
+      var isCsv = lines[0] && /email/i.test(lines[0]);
+      var payload = {
+        action: 'bulk_send',
+        slug: document.getElementById('campaign-slug').value || 'organiser_claim_invite',
+      };
+      var claimUrl = (document.getElementById('campaign-claim-url').value || '').trim();
+      if (claimUrl) payload.variables = { claim_url: claimUrl };
+      if (isCsv) payload.csv = raw;
+      else payload.emails = lines;
+
+      btn.disabled = true;
+      if (statusEl) statusEl.textContent = 'Sending…';
+      if (resultEl) resultEl.classList.add('hidden');
+
+      adminPost('/api/admin/campaigns', payload)
+        .then(function (data) {
+          if (!data || !data.ok) throw new Error((data && data.message) || (data && data.error) || 'Send failed');
+          if (statusEl) statusEl.textContent = data.message || 'Done.';
+          if (resultEl) {
+            resultEl.textContent = JSON.stringify(
+              { sent: data.sent, failed: data.failed, failures: data.failures },
+              null,
+              2
+            );
+            resultEl.classList.remove('hidden');
+          }
+        })
+        .catch(function (err) {
+          if (statusEl) statusEl.textContent = err.message || 'Send failed.';
+        })
+        .finally(function () {
+          btn.disabled = false;
+        });
+    });
+  }
+
+  function renderImport() {
+    main.innerHTML =
+      '<div class="space-y-6 max-w-3xl">' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3"><strong>No emails are sent.</strong> Organiser import creates or updates group profiles. Attendee import adds browse records only — users still need to register to sign in.</p>' +
+      '<form id="import-form" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Import type</label>' +
+      '<select id="import-type" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
+      '<option value="organisers">Organisers (group profiles)</option>' +
+      '<option value="attendees">Attendees (directory only)</option>' +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">CSV data</label>' +
+      '<p class="text-xs text-slate-500 mb-2">Header row required. Columns: <code>email</code>, <code>name</code> (optional), <code>phone</code> (organisers only).</p>' +
+      '<textarea id="import-csv" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[160px]" placeholder="email,name&#10;organiser@example.com,Example Networking Group"></textarea></div>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900" id="import-submit">Run import</button>' +
+      '<span id="import-status" class="text-sm text-slate-500"></span></div>' +
+      '<pre id="import-result" class="hidden text-xs bg-slate-900 text-slate-100 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap"></pre>' +
+      '</form></div>';
+
+    var form = document.getElementById('import-form');
+    if (!form) return;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var csv = (document.getElementById('import-csv').value || '').trim();
+      var type = document.getElementById('import-type').value;
+      var statusEl = document.getElementById('import-status');
+      var resultEl = document.getElementById('import-result');
+      var btn = document.getElementById('import-submit');
+      if (!csv) {
+        if (statusEl) statusEl.textContent = 'Paste CSV data first.';
+        return;
+      }
+      if (!window.confirm('Import ' + type + ' from ' + csv.split(/\r?\n/).length + ' lines? No emails will be sent.')) return;
+      btn.disabled = true;
+      if (statusEl) statusEl.textContent = 'Importing…';
+      if (resultEl) resultEl.classList.add('hidden');
+      adminPost('/api/admin/import', { type: type, csv: csv })
+        .then(function (data) {
+          if (!data || !data.ok) throw new Error((data && data.message) || 'Import failed');
+          if (statusEl) statusEl.textContent = data.message || 'Import complete.';
+          if (resultEl) {
+            resultEl.textContent = JSON.stringify(
+              { ok: data.ok, fail: data.fail, total: data.total, errors: data.errors },
+              null,
+              2
+            );
+            resultEl.classList.remove('hidden');
+          }
+        })
+        .catch(function (err) {
+          if (statusEl) statusEl.textContent = err.message || 'Import failed.';
+        })
+        .finally(function () {
+          btn.disabled = false;
+        });
+    });
+  }
+
   var routes = {
     dashboard: renderDashboard,
     analytics: renderAnalytics,
@@ -4828,6 +5111,8 @@
     moderation: renderModeration,
     financials: renderFinancials,
     featured: renderFeatured,
+    campaigns: renderCampaigns,
+    import: renderImport,
     sponsorship: renderSponsorship,
     emails: renderEmails,
   };
@@ -4898,6 +5183,7 @@
     bindGroupCleanupForms();
     bindEventCleanupForms();
     bindModerationActions();
+    bindFinancialsActions();
     fetchEventHealth();
     route();
     window.addEventListener('hashchange', route);

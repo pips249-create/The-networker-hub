@@ -435,17 +435,25 @@ async function fetchModeration(sb) {
 }
 
 async function fetchFinancials(sb) {
-  const [orgsRes, regsRes] = await Promise.all([
+  const [orgsRes, regsRes, payoutsRes] = await Promise.all([
     sb.from('organisers').select('id, name, stripe_account_id, payout_email').order('name'),
     sb
       .from('registrations')
       .select('created_at, payment_status, amount_paid, organisers(name)')
       .order('created_at', { ascending: false })
       .limit(40),
+    sb
+      .from('organiser_payouts')
+      .select(
+        'id, status, amount, amount_net, amount_gross, requested_at, created_at, event_id, events(title, organisers(name))'
+      )
+      .order('created_at', { ascending: false })
+      .limit(50),
   ]);
 
   if (orgsRes.error) throw new Error(orgsRes.error.message);
   if (regsRes.error) throw new Error(regsRes.error.message);
+  if (payoutsRes.error) throw new Error(payoutsRes.error.message);
 
   const revenueByOrg = new Map();
   (regsRes.data || [])
@@ -476,9 +484,31 @@ async function fetchFinancials(sb) {
     return { ts: r.created_at, line, status };
   });
 
+  const payoutStatusLabels = {
+    pending_review: 'Pending review',
+    approved: 'Approved',
+    paid: 'Paid',
+    held: 'Held',
+  };
+
+  const payoutQueue = (payoutsRes.data || []).map((p) => {
+    const net = p.amount_net != null ? Number(p.amount_net) : Number(p.amount) || 0;
+    return {
+      id: p.id,
+      status: p.status || 'pending_review',
+      statusLabel: payoutStatusLabels[p.status] || p.status,
+      amount: net > 0 ? `£${round2(net).toFixed(2)}` : '—',
+      amountNet: net,
+      eventId: p.event_id,
+      eventTitle: p.events?.title || '—',
+      organiser: p.events?.organisers?.name || '—',
+      requestedAt: p.requested_at || p.created_at,
+    };
+  });
+
   return {
     stripeAccounts,
-    payoutQueue: [],
+    payoutQueue,
     automationLog,
   };
 }

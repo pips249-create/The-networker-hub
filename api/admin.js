@@ -16,6 +16,8 @@ const routes = {
   'event-health': require('./_lib/routes/admin-event-health'),
   organisers: require('./_lib/routes/admin-organisers'),
   impersonate: require('./_lib/routes/admin-impersonate'),
+  import: require('./_lib/routes/admin-import'),
+  campaigns: require('./_lib/routes/admin-campaigns'),
 };
 
 module.exports = async function handler(req, res) {
