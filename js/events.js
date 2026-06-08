@@ -171,7 +171,16 @@
     return 'event.html?id=' + encodeURIComponent(ev.id);
   }
 
+  const META_PIN_SVG =
+    '<svg class="premium-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+  const META_CAL_SVG =
+    '<svg class="premium-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>';
+  const META_CLOCK_SVG =
+    '<svg class="premium-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>';
+
   function premiumCard(ev) {
+    const dateLabel = ev.date || 'Date TBC';
+    const timeLabel = ev.time || '';
     return `
       <article class="premium-card" data-id="${escapeHtml(ev.id)}"
         data-type="${escapeHtml(ev.type)}"
@@ -180,19 +189,20 @@
         data-format="${escapeHtml(ev.formatSlug)}"
         data-price="${escapeHtml(ev.priceKey)}">
         <a class="premium-card-link" href="${escapeHtml(detailHref(ev))}">
-          <div class="premium-card-bg">${photoImg(eventImageSrc(ev), 'premium-card-img', ev.id, ev.eventType || ev.typeRaw, ev.title)}</div>
-          <div class="premium-card-overlay"></div>
-          <span class="premium-badge">Premium</span>
-          <span class="premium-price">${escapeHtml(priceBadgeLabel(ev))}</span>
+          <div class="premium-card-media" aria-hidden="true">
+            <div class="premium-card-bg">${photoImg(eventImageSrc(ev), 'premium-card-img', ev.id, ev.eventType || ev.typeRaw, ev.title)}</div>
+            <div class="premium-card-overlay"></div>
+          </div>
+          <div class="premium-card-top">
+            <span class="premium-badge">Premium</span>
+            <span class="premium-price">${escapeHtml(priceBadgeLabel(ev))}</span>
+          </div>
           <div class="premium-card-body">
-            <h3>${escapeHtml(ev.title)}</h3>
-            <p class="premium-desc">${escapeHtml(ev.description).slice(0, 90)}${ev.description.length > 90 ? '…' : ''}</p>
-            <p class="premium-meta">
-              <span>${escapeHtml(cardLocation(ev))}</span>
-              <span class="sep">|</span>
-              <span>${escapeHtml(ev.date || 'Date TBC')}</span>
-              ${ev.time ? `<span class="sep">|</span><span>${escapeHtml(ev.time)}</span>` : ''}
-            </p>
+            <h3 class="premium-card-title">${escapeHtml(ev.title)}</h3>
+            <div class="premium-card-meta">
+              <p class="premium-meta-row">${META_PIN_SVG}<span>${escapeHtml(cardLocation(ev))}</span></p>
+              <p class="premium-meta-row">${META_CAL_SVG}<span>${escapeHtml(dateLabel)}${timeLabel ? ' · ' + escapeHtml(timeLabel) : ''}</span></p>
+            </div>
           </div>
         </a>
       </article>`;

@@ -419,13 +419,13 @@ body.nav-menu-open {
   }
 
   .premium-card {
-    flex: 0 0 min(78vw, 280px);
-    height: 168px;
+    flex: 0 0 min(82vw, 300px);
+    min-height: 200px;
   }
 
   .spotlight-wrap,
   .spotlight-track {
-    min-height: 168px;
+    min-height: 200px;
   }
 
   .filter-bar-row-bottom .filter-bar-cluster {
