@@ -265,9 +265,9 @@
       '<button type="button" class="org-action-item" data-org-goto-sub="events-attendees" data-filter-event="' +
       esc(id) +
       '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>See attendees</strong><span>View who registered for this event</span></span></button>' +
-      '<button type="button" class="org-action-item" data-org-goto-sub="events-tickets" data-filter-event="' +
+      '<button type="button" class="org-action-item" data-manage-tickets="' +
       esc(id) +
-      '"><span class="org-action-icon">🎟️</span><span class="org-action-text"><strong>Ticket types</strong><span>Manage tiers and pricing</span></span></button>' +
+      '"><span class="org-action-icon">🎟️</span><span class="org-action-text"><strong>Ticket types</strong><span>Edit tiers and publish</span></span></button>' +
       '<button type="button" class="org-action-item" data-org-goto-sub="events-reviews" data-filter-event="' +
       esc(id) +
       '"><span class="org-action-icon">★</span><span class="org-action-text"><strong>Reviews</strong><span>Read &amp; reply to reviews</span></span></button>' +
@@ -302,9 +302,9 @@
       '<button type="button" class="org-action-item" data-org-goto-sub="events-attendees" data-filter-event="' +
       esc(id) +
       '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>See attendees</strong><span>View who registered for this event</span></span></button>' +
-      '<button type="button" class="org-action-item" data-org-goto-sub="events-tickets" data-filter-event="' +
+      '<button type="button" class="org-action-item" data-manage-tickets="' +
       esc(id) +
-      '"><span class="org-action-icon">🎟️</span><span class="org-action-text"><strong>Ticket types</strong><span>Manage tiers and pricing</span></span></button>' +
+      '"><span class="org-action-icon">🎟️</span><span class="org-action-text"><strong>Ticket types</strong><span>Edit tiers and publish</span></span></button>' +
       '<button type="button" class="org-action-item" data-org-goto-sub="events-revenue" data-filter-event="' +
       esc(id) +
       '"><span class="org-action-icon">£</span><span class="org-action-text"><strong>Revenue &amp; payout</strong><span>Request payout when eligible</span></span></button>' +
@@ -630,6 +630,33 @@
     location.href = eventEditorUrl(ev);
   }
 
+  function goToEventTickets(ev) {
+    if (!ev || !ev.id) return;
+    try {
+      sessionStorage.setItem(
+        'hub_event_series',
+        JSON.stringify({
+          title: ev.title || '',
+          organiserGroupId: ev.organiserGroupId || ev.groupId || '',
+          eventFormat: ev.eventFormat || ev.format || '',
+          eventIds: [ev.id],
+          imageUrl: ev.imageUrl || '',
+          events: [
+            {
+              id: ev.id,
+              title: ev.title,
+              date: ev.date,
+              imageUrl: ev.imageUrl || '',
+            },
+          ],
+        })
+      );
+    } catch {
+      /* ignore */
+    }
+    location.href = 'event-tickets.html?ids=' + encodeURIComponent(ev.id);
+  }
+
   function groupEditorUrl(g) {
     if (!g || !g.id) return 'group-edit.html';
     return 'group-edit.html?id=' + encodeURIComponent(g.id);
@@ -917,6 +944,18 @@
       const ev = findEventById(eid);
       if (ev) goToEventEditor(ev);
       else if (eid) location.href = 'event-edit.html?id=' + encodeURIComponent(eid);
+      return true;
+    }
+
+    const manageTicketsBtn = e.target.closest('[data-manage-tickets]');
+    if (manageTicketsBtn && !manageTicketsBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      const eid = manageTicketsBtn.getAttribute('data-manage-tickets');
+      const ev = findEventById(eid);
+      if (ev) goToEventTickets(ev);
+      else if (eid) location.href = 'event-tickets.html?ids=' + encodeURIComponent(eid);
       return true;
     }
 
@@ -1443,7 +1482,8 @@
       const ref = 'TNH-' + String(t.id).replace(/^rec/, '').slice(0, 8).toUpperCase();
       const tierBadge =
         /vip/i.test(t.name) ? 'org-badge-ticket-gold' : 'org-badge-ticket-purple';
-      const statusKey = /sold/i.test(t.status) ? 'draft' : 'live';
+      const statusLower = String(t.status || '').toLowerCase();
+      const statusKey = /sold/i.test(statusLower) ? 'cancelled' : 'live';
       const statusLabel = t.status || 'Available';
       const tr = document.createElement('tr');
       tr.innerHTML =

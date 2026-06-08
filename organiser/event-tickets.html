@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260614" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260708" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614c" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608a" />
   </head>
   <body class="organiser-event-edit-page">
     <div id="ee-page-loading" class="ee-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
@@ -26,7 +26,10 @@
     <script src="../js/site-nav.js?v=20260710" data-root="../" data-page="organiser"></script>
 
     <div class="ee-wrap">
-      <a class="ee-back" href="index.html#events-list">← Back to My Events</a>
+      <div class="ee-back-row">
+        <a class="ee-back" href="index.html#events-list">← Back to My Events</a>
+        <a class="ee-back ee-back-secondary" id="ee-edit-event-link" href="event-edit.html" hidden>← Edit event details</a>
+      </div>
       <h1 class="ee-title">Set up ticket types</h1>
       <p class="ee-lead" id="ee-tickets-lead">
         Define your ticket tiers once — we’ll create matching ticket types for every date in this series.
@@ -200,6 +203,6 @@
     <script src="../js/fact-loader.js?v=20260708"></script>
     <script src="../js/organiser-page-loading.js?v=20260614c"></script>
     <script src="../js/organiser-quarter-time.js?v=20260614c"></script>
-    <script src="../js/organiser-event-tickets.js?v=20260615d"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260608a"></script>
   </body>
 </html>

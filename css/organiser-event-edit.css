@@ -75,6 +75,14 @@ body.hub-page-organiser.organiser-event-edit-page {
   display: block;
 }
 
+.ee-back-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin-bottom: 4px;
+}
+
 .ee-back {
   display: inline-flex;
   align-items: center;
@@ -1203,6 +1211,12 @@ body.ee-is-loading {
   border-radius: var(--ee-radius);
   font-size: 13px;
   margin-top: 12px;
+}
+
+.ee-alert-ok {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
 }
 
 .ee-btn-danger {
