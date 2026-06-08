@@ -162,19 +162,15 @@
   var initial = 'events';
   if (location.hash === '#organisers' || location.search.indexOf('mode=organisers') !== -1) {
     initial = 'organisers';
-  } else {
-    try {
-      var stored = localStorage.getItem(MODE_KEY);
-      if (stored === 'organisers' || stored === 'events') initial = stored;
-    } catch (e) {
-      /* ignore */
-    }
+  } else if (location.hash === '#events') {
+    initial = 'events';
   }
+  /* No hash → always start on Events (nav "Browse events" links). Use #organisers to share organiser view. */
 
   if (initial === 'organisers') {
     setMode('organisers', { skipEventsRefresh: true, updateHash: true });
   } else {
-    applyCopy('events');
+    setMode('events', { skipEventsRefresh: true, updateHash: true });
   }
 
   window.addEventListener('hashchange', function () {

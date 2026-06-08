@@ -181,7 +181,7 @@
     }
 
     try {
-      const res = await fetch('/api/events?id=' + encodeURIComponent(primaryId), {
+      const res = await fetch('/api/hub-listings?id=' + encodeURIComponent(primaryId), {
         cache: 'no-store',
       });
       const data = await res.json();

@@ -6,6 +6,7 @@
     "api/organiser.js": { "maxDuration": 15 },
     "api/organisers.js": { "maxDuration": 15 },
     "api/events.js": { "maxDuration": 15 },
+    "api/hub-listings.js": { "maxDuration": 15 },
     "api/stripe-webhook.js": { "maxDuration": 15 }
   },
   "rewrites": [

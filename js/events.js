@@ -1,8 +1,8 @@
 /**
- * Loads events from /api/events (Supabase or Airtable via Vercel) and renders card grid + pagination.
+ * Loads event listings from /api/hub-listings (Supabase or Airtable via Vercel).
  */
 (function () {
-  const API = '/api/events';
+  const API_PATHS = ['/api/hub-listings', '/api/events'];
   const PAGE_SIZE = 12;
 
   const els = {
@@ -629,12 +629,45 @@
       });
   }
 
+  async function fetchEventsPayload() {
+    var lastError = null;
+    for (var i = 0; i < API_PATHS.length; i++) {
+      var path = API_PATHS[i];
+      try {
+        var res = await fetch(path, { cache: 'no-store', credentials: 'same-origin' });
+        if (!res.ok) {
+          lastError = new Error('HTTP ' + res.status + ' for ' + path);
+          continue;
+        }
+        return await res.json();
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    throw lastError || new Error('Failed to fetch');
+  }
+
   async function load() {
     const fetchAndRender = async () => {
       setStatus('', false);
+      var data;
       try {
-        const res = await fetch(API);
-        const data = await res.json();
+        data = await fetchEventsPayload();
+      } catch (e) {
+        var detail = e && e.message ? String(e.message) : 'network error';
+        var hint =
+          window.location.protocol === 'file:'
+            ? 'Open this page via your dev server: http://localhost:3000/events/ (run npm start first). Do not open the HTML file from Finder.'
+            : 'Could not load events (' +
+              detail +
+              '). Confirm npm start is running, use http://localhost:3000/events/, and disable ad blockers for localhost.';
+        setStatus(hint, true);
+        events = [];
+        applyLoadedEvents();
+        return;
+      }
+
+      try {
         const provider = data.provider || 'supabase';
 
         if (!data.configured) {
@@ -656,11 +689,14 @@
           );
         }
         applyLoadedEvents();
+      } catch (e) {
+        console.error('Events render error', e);
+      }
+
+      try {
         await refreshAfterGeocode();
       } catch (e) {
-        setStatus('Could not reach /api/events. Deploy on Vercel or run `vercel dev` locally.', true);
-        events = [];
-        applyLoadedEvents();
+        /* map coords are optional */
       }
     };
 

@@ -1234,7 +1234,7 @@
 
   async function loadRelatedFallback(ev) {
     try {
-      const res = await fetch('/api/events');
+      const res = await fetch('/api/hub-listings');
       const data = await res.json();
       const all = data.events || [];
       return all
@@ -1306,8 +1306,8 @@
       if (tiersEl) tiersEl.innerHTML = '<p class="ticket-load-hint">Loading tickets…</p>';
       try {
         const apiUrl = id
-          ? '/api/events?id=' + encodeURIComponent(id)
-          : '/api/events?slug=' + encodeURIComponent(slug);
+          ? '/api/hub-listings?id=' + encodeURIComponent(id)
+          : '/api/hub-listings?slug=' + encodeURIComponent(slug);
         const res = await fetch(apiUrl);
         const data = await res.json();
         if (data.event) {
