@@ -32,7 +32,7 @@
     this.shouldStart = options.shouldStart || function () {
       return true;
     };
-    this.delay = options.delay == null ? 500 : options.delay;
+    this.delay = options.delay == null ? 0 : options.delay;
     this.started = false;
     this.stepIndex = 0;
     this.root = null;
@@ -105,7 +105,7 @@
 
     var target = step.target ? document.querySelector(step.target) : null;
     if (target) {
-      target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+      target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
       this.positionSpotlight(target);
     } else {
       this.clearSpotlight();
@@ -154,9 +154,16 @@
     if (this.started || this.isDone() || !this.shouldStart()) return;
     this.started = true;
     var self = this;
-    global.setTimeout(function () {
+    function open() {
       self.show();
-    }, this.delay);
+    }
+    if (this.delay > 0) {
+      global.setTimeout(open, this.delay);
+    } else if (typeof global.requestAnimationFrame === 'function') {
+      global.requestAnimationFrame(open);
+    } else {
+      open();
+    }
   };
 
   var GROUP_STEPS = [

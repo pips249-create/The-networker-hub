@@ -129,12 +129,11 @@
     }
   }
 
-  init().then(function () {
-    if (window.HubFlowTour) {
-      window.HubFlowTour.consumeEventTourPending();
-      window.HubFlowTour.startEventFormatTour();
-    }
-  });
+  if (window.HubFlowTour) {
+    window.HubFlowTour.consumeEventTourPending();
+    window.HubFlowTour.startEventFormatTour({ delay: 0 });
+  }
+  init();
   var backLink = document.querySelector('.ee-back');
   if (backLink && window.HubOrganiserActions) {
     window.HubOrganiserActions.applyBrowseReturnBack(

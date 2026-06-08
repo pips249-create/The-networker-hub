@@ -47,6 +47,41 @@
     registerSignInLink.setAttribute('href', withNextParam('login.html'));
   }
 
+  var REMEMBER_KEY = 'hub_remember_me';
+  var EMAIL_KEY = 'hub_login_email';
+
+  function restoreLoginPrefs() {
+    var rememberEl = document.getElementById('remember-me');
+    var emailEl = document.getElementById('email');
+    if (!rememberEl || !emailEl) return;
+    try {
+      var remembered = localStorage.getItem(REMEMBER_KEY) === '1';
+      rememberEl.checked = remembered;
+      if (remembered) {
+        var savedEmail = localStorage.getItem(EMAIL_KEY);
+        if (savedEmail && !emailEl.value) emailEl.value = savedEmail;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function persistLoginPrefs(email, rememberMe) {
+    try {
+      if (rememberMe) {
+        localStorage.setItem(REMEMBER_KEY, '1');
+        localStorage.setItem(EMAIL_KEY, email);
+      } else {
+        localStorage.removeItem(REMEMBER_KEY);
+        localStorage.removeItem(EMAIL_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  restoreLoginPrefs();
+
   var loginForm = document.getElementById('login-form');
   if (loginForm) {
     loginForm.addEventListener('submit', function (e) {
@@ -55,6 +90,8 @@
       var btn = document.getElementById('login-submit');
       var email = document.getElementById('email').value.trim();
       var password = document.getElementById('password').value;
+      var rememberEl = document.getElementById('remember-me');
+      var rememberMe = rememberEl ? rememberEl.checked : false;
       var next = getNextParam();
 
       btn.disabled = true;
@@ -64,7 +101,12 @@
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, password: password, next: next }),
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          next: next,
+          rememberMe: rememberMe,
+        }),
       })
         .then(function (res) {
           return res.json().then(function (data) {
@@ -82,6 +124,7 @@
             btn.disabled = false;
             return;
           }
+          persistLoginPrefs(email, rememberMe);
           window.location.href = result.data.redirect || next || '/events/index.html';
         })
         .catch(function () {

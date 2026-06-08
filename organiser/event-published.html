@@ -11,13 +11,14 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260614" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
   </head>
   <body class="organiser-event-edit-page organiser-published-page">
     <div id="hub-site-nav"></div>
     <script src="../js/site-nav.js?v=20260710" data-root="../" data-page="organiser"></script>
 
     <div class="ee-wrap ep-wrap">
+      <div id="ee-wizard-mount"></div>
       <div class="ep-success" role="status">
         <span class="ep-success-icon" aria-hidden="true">✓</span>
         <h1 class="ep-title">Your event is now published</h1>
@@ -72,6 +73,7 @@
       </div>
     </div>
 
+    <script src="../js/organiser-event-wizard.js?v=20260608c" data-step="publish"></script>
     <script src="../js/organiser-event-published.js?v=20260610"></script>
   </body>
 </html>

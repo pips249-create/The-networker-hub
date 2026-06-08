@@ -151,20 +151,38 @@ function sessionFromRequest(req) {
   return verifySession(token, secret);
 }
 
-function setSessionCookie(res, payload) {
+const SESSION_MAX_AGE_DEFAULT_SEC = 60 * 60 * 24 * 7;
+const SESSION_MAX_AGE_REMEMBER_SEC = 60 * 60 * 24 * 30;
+const SESSION_MAX_AGE_BROWSER_SEC = 60 * 60 * 24;
+
+function setSessionCookie(res, payload, options) {
   const secret = process.env.SESSION_SECRET;
   if (!secret) return false;
+
+  let maxAgeSec = SESSION_MAX_AGE_DEFAULT_SEC;
+  let sessionOnly = false;
+
+  if (options && typeof options.rememberMe === 'boolean') {
+    if (options.rememberMe) {
+      maxAgeSec = SESSION_MAX_AGE_REMEMBER_SEC;
+    } else {
+      sessionOnly = true;
+      maxAgeSec = SESSION_MAX_AGE_BROWSER_SEC;
+    }
+  }
+
   const token = signSession(
     {
       ...payload,
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
+      exp: Math.floor(Date.now() / 1000) + maxAgeSec,
     },
     secret
   );
   const secure = process.env.VERCEL_ENV === 'production' ? '; Secure' : '';
+  const maxAgePart = sessionOnly ? '' : `; Max-Age=${maxAgeSec}`;
   res.setHeader(
     'Set-Cookie',
-    `hub_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}${secure}`
+    `hub_session=${token}; Path=/; HttpOnly; SameSite=Lax${maxAgePart}${secure}`
   );
   return true;
 }

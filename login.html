@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260626">
-<link rel="stylesheet" href="css/auth.css?v=20260605">
+<link rel="stylesheet" href="css/auth.css?v=20260608b">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260626">
 </head>
 <body class="auth-page">
@@ -51,6 +51,13 @@
               <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">Show</button>
             </div>
           </div>
+          <div class="auth-remember-row">
+            <label class="auth-remember">
+              <input type="checkbox" id="remember-me" name="remember" />
+              <span>Remember me</span>
+            </label>
+            <a href="forgot-password.html" class="auth-forgot-inline">Forgot password?</a>
+          </div>
           <div class="auth-actions">
             <button type="submit" class="auth-submit" id="login-submit">Sign in</button>
           </div>
@@ -62,7 +69,6 @@
         </div>
 
         <div class="auth-links">
-          <a href="forgot-password.html">Forgot password?</a>
           <a href="events/index.html">← Back to events</a>
         </div>
       </div>
@@ -70,6 +76,6 @@
   </div>
 </main>
 
-<script src="js/auth.js?v=20260605"></script>
+<script src="js/auth.js?v=20260608d"></script>
 </body>
 </html>

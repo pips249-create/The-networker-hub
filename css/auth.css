@@ -117,6 +117,46 @@
   outline-offset: 1px;
 }
 
+.auth-remember-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.auth-remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.auth-remember input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--lavender-deep);
+  cursor: pointer;
+}
+
+.auth-forgot-inline {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lavender-deep);
+  text-decoration: none;
+}
+
+.auth-forgot-inline:hover {
+  color: var(--charcoal);
+  text-decoration: underline;
+}
+
 .auth-actions {
   margin-top: 20px;
 }

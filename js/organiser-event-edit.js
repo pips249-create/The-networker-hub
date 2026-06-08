@@ -699,10 +699,6 @@
       }
 
       fillGroupsSelect(chosenGroupId, true);
-
-      if (!editId && window.HubFlowTour) {
-        window.HubFlowTour.startEventEditTour({ isEdit: false });
-      }
     };
 
     const loading = window.organiserPageLoading;
@@ -907,6 +903,9 @@
       QuarterTime.initPair('ee-start-time', 'ee-end-time', { start: '18:00', end: '20:00' });
     }
     bindTimeListRefresh();
+    if (!editId && window.HubFlowTour) {
+      window.HubFlowTour.startEventEditTour({ isEdit: false, delay: 0 });
+    }
     if (editId) {
       await load();
       return;

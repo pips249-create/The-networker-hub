@@ -50,6 +50,7 @@ module.exports = async function handler(req, res) {
     .trim()
     .toLowerCase();
   const password = String(body.password || '');
+  const rememberMe = Boolean(body.rememberMe);
 
   if (!email || !password) {
     return json(res, 400, { error: 'missing_credentials' });
@@ -77,7 +78,7 @@ module.exports = async function handler(req, res) {
       name: user.name,
     };
 
-    if (!setSessionCookie(res, sessionUser)) {
+    if (!setSessionCookie(res, sessionUser, { rememberMe })) {
       return json(res, 503, { error: 'session_failed' });
     }
 

@@ -427,9 +427,8 @@
   bindLogoUpload();
   bindWordCounter();
   renderIndustryChips();
-  load().then(function () {
-    if (!editId && window.HubFlowTour) {
-      window.HubFlowTour.startGroupTour({ isEdit: false });
-    }
-  });
+  if (!editId && window.HubFlowTour) {
+    window.HubFlowTour.startGroupTour({ isEdit: false, delay: 0 });
+  }
+  load();
 })();

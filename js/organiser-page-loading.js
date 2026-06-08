@@ -16,6 +16,13 @@
     const fn = typeof work === 'function' ? work : function () {
       return work;
     };
+    // Organiser editor pages use a fast overlay — FactLoader's min display time slows wizards.
+    if (document.getElementById('ee-page-loading')) {
+      setPageLoading(true, message);
+      return Promise.resolve().then(fn).finally(function () {
+        setPageLoading(false);
+      });
+    }
     if (global.FactLoader) {
       return global.FactLoader.run(fn);
     }
