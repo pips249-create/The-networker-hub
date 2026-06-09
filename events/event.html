@@ -320,7 +320,27 @@
           </form>
 
           <form class="checkout-details-form" id="checkout-details-form" hidden novalidate>
-            <p class="checkout-details-intro">Enter your details to complete your booking.</p>
+            <p class="checkout-details-intro">Review your order and enter your details to complete your booking.</p>
+            <div class="checkout-precontract" id="checkout-precontract">
+              <h3 class="checkout-precontract-title">Before you pay</h3>
+              <dl class="checkout-precontract-list">
+                <div class="checkout-precontract-row">
+                  <dt>Event organiser</dt>
+                  <dd id="checkout-organiser-name">—</dd>
+                </div>
+                <div class="checkout-precontract-row">
+                  <dt>Total price</dt>
+                  <dd id="checkout-total-price">—</dd>
+                </div>
+                <div class="checkout-precontract-row">
+                  <dt>Refund policy</dt>
+                  <dd id="checkout-refund-policy">—</dd>
+                </div>
+              </dl>
+              <p class="checkout-precontract-note">
+                Your contract to attend is with the event organiser named above. The Networker Hub provides the booking platform. Statutory consumer rights apply.
+              </p>
+            </div>
             <label class="form-field" for="checkout-name">
               <span id="checkout-name-label">Full name</span>
               <input type="text" id="checkout-name" name="name" autocomplete="name" required />
@@ -331,6 +351,10 @@
             </label>
             <div class="checkout-guest-names" id="checkout-guest-names" hidden></div>
             <p class="checkout-details-summary" id="checkout-order-summary" aria-live="polite"></p>
+            <label class="checkout-terms-check" for="checkout-terms-agree">
+              <input type="checkbox" id="checkout-terms-agree" name="terms_agree" required />
+              <span>I have read the refund policy and agree to proceed with this booking.</span>
+            </label>
             <button type="submit" class="cta-btn" id="checkout-confirm-btn">Confirm booking</button>
             <button type="button" class="btn-text-back" id="checkout-back-btn">← Back to tickets</button>
           </form>

@@ -701,6 +701,27 @@
     });
   }
 
+  function refundPolicyDetailText(ev) {
+    const policy = ev.refundPolicy || ev.refund_policy || '';
+    if (!policy) return 'No refund policy has been set for this event. Contact the organiser before booking.';
+    if (policy === 'full_refund') {
+      const days = ev.refundCutoffDays != null ? ev.refundCutoffDays : ev.refund_cutoff_days;
+      return days != null
+        ? 'Full refunds are available up to ' + days + ' day' + (days === 1 ? '' : 's') + ' before the event.'
+        : 'Full refunds are available before the event.';
+    }
+    if (policy === 'partial_refund') {
+      return ev.refundPolicyDetails || ev.refund_policy_details || 'Partial refunds apply — see organiser terms.';
+    }
+    if (policy === 'no_refunds') {
+      return 'Ticket sales are final for this event. The 14-day cooling-off right does not apply to leisure events on a specific date.';
+    }
+    if (policy === 'custom') {
+      return ev.refundPolicyDetails || ev.refund_policy_details || 'See organiser refund policy.';
+    }
+    return 'See organiser refund policy.';
+  }
+
   function renderRefundPolicy(ev) {
     const badge = document.getElementById('ev-refund-badge');
     const details = document.getElementById('ev-refund-details');
@@ -1239,9 +1260,27 @@
   function updateCheckoutSummary(label, qty, total) {
     const el = document.getElementById('checkout-order-summary');
     const confirmBtn = document.getElementById('checkout-confirm-btn');
+    const ev = currentEventDetail || currentEvent;
+    const organiserEl = document.getElementById('checkout-organiser-name');
+    const totalEl = document.getElementById('checkout-total-price');
+    const refundEl = document.getElementById('checkout-refund-policy');
+    const termsCheck = document.getElementById('checkout-terms-agree');
+
     if (el) {
       el.textContent =
         (label || 'Ticket') + ' × ' + String(qty || 1) + ' — Total ' + fmt(total || 0);
+    }
+    if (organiserEl && ev) {
+      organiserEl.textContent = ev.organiser || ev.organiserName || 'Event organiser';
+    }
+    if (totalEl) {
+      totalEl.textContent = fmt(total || 0) + (total > 0 ? ' (inc. booking fee where shown)' : '');
+    }
+    if (refundEl && ev) {
+      refundEl.textContent = refundPolicyDetailText(ev);
+    }
+    if (termsCheck) {
+      termsCheck.checked = false;
     }
     if (confirmBtn) {
       confirmBtn.textContent = total > 0 ? 'Continue to payment' : 'Confirm booking';
@@ -1804,6 +1843,12 @@
     if (checkoutForm) {
       checkoutForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const termsAgree = document.getElementById('checkout-terms-agree');
+        if (termsAgree && !termsAgree.checked) {
+          window.alert('Please confirm you have read the refund policy and agree to proceed.');
+          termsAgree.focus();
+          return;
+        }
         try {
           readCheckoutDetails(qty);
         } catch (err) {

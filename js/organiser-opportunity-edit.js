@@ -309,6 +309,14 @@
     const publish = options && options.publish;
     showAlert('');
 
+    if (publish && window.HubOrganiserTerms) {
+      try {
+        await window.HubOrganiserTerms.requireAcceptance();
+      } catch (e) {
+        return;
+      }
+    }
+
     const payload = buildPayload(publish ? 'published' : 'draft');
     const validationError = validatePayload(payload, !publish);
     if (validationError) {

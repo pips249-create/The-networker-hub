@@ -244,6 +244,20 @@ body.nav-menu-open {
     padding: 72px 16px 48px;
   }
 
+  .home-page .home-hero {
+    padding: 36px 16px 40px;
+  }
+
+  .home-page .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .home-page .hero-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .hero-title {
     font-size: clamp(1.5rem, 7vw, 2.25rem);
     line-height: 1.15;
@@ -293,6 +307,16 @@ body.nav-menu-open {
     flex-direction: column;
     text-align: center;
     gap: 16px;
+  }
+
+  .footer-columns {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 20px 28px;
+  }
+
+  .footer-col-links {
+    gap: 6px;
   }
 
   .footer-links {

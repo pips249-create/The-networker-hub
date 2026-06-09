@@ -872,9 +872,12 @@ body.hub-page-account .site-nav {
   margin: 0 auto;
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 24px;
+  gap: 28px 24px;
+}
+.footer-brand {
+  flex-shrink: 0;
 }
 .footer-logo {
   height: 40px;
@@ -883,6 +886,34 @@ body.hub-page-account .site-nav {
   padding: 6px 12px;
   border-radius: 8px;
   background: var(--charcoal);
+}
+.footer-columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px 40px;
+  flex: 1;
+  justify-content: flex-end;
+}
+.footer-col-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lavender-deep);
+  margin-bottom: 10px;
+}
+.footer-col-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+.footer-col-links a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.footer-col-links a:hover {
+  color: var(--lavender-deep);
 }
 .footer-links {
   display: flex;
@@ -899,10 +930,129 @@ body.hub-page-account .site-nav {
   width: 100%;
   text-align: center;
   font-size: 12px;
+  line-height: 1.65;
   padding-top: 24px;
   margin-top: 8px;
   border-top: 1px solid var(--border-soft);
   color: var(--text-soft);
+}
+
+.footer-cookie-settings {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+}
+
+.footer-cookie-settings:hover {
+  color: var(--lavender-deep);
+}
+
+body.hub-cookie-modal-open,
+body.hub-organiser-terms-open {
+  overflow: hidden;
+}
+
+.hub-organiser-terms-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(74, 68, 70, 0.45);
+}
+
+.hub-organiser-terms-modal[hidden] {
+  display: none !important;
+}
+
+.hub-organiser-terms-panel {
+  width: min(520px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--surface-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-lift);
+  padding: 28px;
+}
+
+.hub-organiser-terms-panel h2 {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.4rem;
+  font-weight: 400;
+  margin-bottom: 10px;
+  color: var(--charcoal);
+}
+
+.hub-organiser-terms-panel > p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.hub-organiser-terms-list {
+  margin: 0 0 18px 1.1rem;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-body);
+}
+
+.hub-organiser-terms-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-body);
+  margin-bottom: 18px;
+}
+
+.hub-organiser-terms-check input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.hub-organiser-terms-check a {
+  color: var(--lavender-deep);
+}
+
+.hub-organiser-terms-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.hub-organiser-terms-btn {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-soft);
+  background: var(--cream);
+  color: var(--charcoal);
+  cursor: pointer;
+}
+
+.hub-organiser-terms-btn--primary {
+  background: var(--lavender);
+  border-color: var(--lavender);
+}
+
+.hub-organiser-terms-btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ─── Events listing page ─── */

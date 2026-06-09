@@ -217,7 +217,13 @@
       var name = (document.getElementById('opp-enquire-name').value || '').trim();
       var email = (document.getElementById('opp-enquire-email').value || '').trim();
       var message = (document.getElementById('opp-enquire-message').value || '').trim();
+      var terms = document.getElementById('opp-enquire-terms');
       if (!name || !email || !message) return;
+      if (terms && !terms.checked) {
+        showEnquireStatus('Please confirm you understand this is not investment advice.', false);
+        terms.focus();
+        return;
+      }
 
       if (els.submit) {
         els.submit.disabled = true;

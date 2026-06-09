@@ -1,0 +1,326 @@
+/* Home page — aligned with events / training / opportunities browse heroes */
+html:has(.home-page) {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.home-page {
+  --home-navy: #1a1a2e;
+  --home-lavender: #d4b8e8;
+  --home-lavender-dim: rgba(194, 153, 209, 0.14);
+  --home-gold: #c9961f;
+  --home-gold-pale: #fdf6e3;
+  --home-nav-height: 64px;
+  overflow-x: hidden;
+  overflow-y: visible;
+  width: 100%;
+  max-width: 100%;
+  min-height: 100vh;
+}
+
+/* Home uses hub-page-home (no body padding) — hero bg fills to top, content clears fixed nav */
+.home-page.hub-page-home {
+  padding-top: 0;
+}
+
+.home-page .section,
+.home-page .site-footer {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ─── Hero (full-bleed block layout — not the legacy centred flex hero) ─── */
+.home-page .home-hero {
+  display: block;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: calc(var(--home-nav-height) + 48px) clamp(16px, 4vw, 28px) 56px;
+  text-align: left;
+  background: var(--home-navy);
+  color: #fff;
+  border-bottom: none;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-page .home-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 85% 40%, var(--home-lavender-dim), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 10% 80%, rgba(195, 151, 195, 0.08), transparent 50%);
+  pointer-events: none;
+}
+
+.home-page .home-hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1240px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.home-page .home-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--home-lavender);
+  border: 1px solid rgba(212, 184, 232, 0.45);
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  margin-bottom: 20px;
+}
+
+.home-page .home-hero-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--home-lavender);
+  box-shadow: 0 0 8px var(--home-lavender);
+}
+
+.home-page .hero-title {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(1.75rem, 4.5vw, 2.65rem);
+  font-weight: 400;
+  line-height: 1.18;
+  color: #fff;
+  margin: 0 0 16px;
+  max-width: 18em;
+  text-shadow: none;
+  text-align: left;
+}
+
+.home-page .hero-title .accent {
+  color: var(--home-lavender);
+  font-style: normal;
+}
+
+.home-page .hero-tagline {
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.82);
+  max-width: 40em;
+  margin: 0 0 28px;
+  text-shadow: none;
+  text-align: left;
+}
+
+.home-page .hero-tagline strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.home-page .hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.home-page .home-hero .btn-primary {
+  background: var(--home-lavender);
+  color: var(--home-navy);
+  box-shadow: 0 8px 28px rgba(212, 184, 232, 0.3);
+}
+
+.home-page .home-hero .btn-primary:hover {
+  background: #e4d0f0;
+  color: var(--home-navy);
+  box-shadow: 0 12px 36px rgba(212, 184, 232, 0.4);
+}
+
+.home-page .home-hero .btn-secondary {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: none;
+}
+
+.home-page .home-hero .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #fff;
+}
+
+.home-page .hero-scroll {
+  display: none;
+}
+
+/* ─── Hub cards (3 ways — merged explore + pillars) ─── */
+.home-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .home-hub-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.home-hub-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 28px 24px 26px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.home-hub-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lift);
+}
+
+.home-hub-card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  flex-shrink: 0;
+}
+
+.home-hub-card-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.home-hub-card--events .home-hub-card-icon {
+  background: var(--lavender-light);
+  color: var(--lavender-deep);
+}
+
+.home-hub-card--academy .home-hub-card-icon {
+  background: #ecfeff;
+  color: #0d9488;
+}
+
+.home-hub-card--opportunities .home-hub-card-icon {
+  background: var(--home-gold-pale);
+  color: #8a6918;
+}
+
+.home-hub-card .badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  margin-bottom: 10px;
+  width: fit-content;
+}
+
+.home-hub-card .badge-new {
+  background: var(--home-gold-pale);
+  color: #8a6918;
+}
+
+.home-hub-card h3 {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--charcoal);
+  margin-bottom: 10px;
+}
+
+.home-hub-card p {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  flex: 1;
+  margin-bottom: 18px;
+}
+
+.home-hub-card-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--lavender-deep);
+  text-decoration: none;
+}
+
+.home-hub-card-link:hover {
+  color: var(--charcoal);
+  text-decoration: underline;
+}
+
+.home-hub-card--academy {
+  opacity: 0.97;
+}
+
+/* ─── Feature lists in split panels ─── */
+.home-feature-list {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+}
+
+.home-feature-list li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-bottom: 8px;
+}
+
+.home-feature-list li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--lavender-deep);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.home-split-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.home-soon-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--cream);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+@media (max-width: 720px) {
+  .home-page {
+    --home-nav-height: 56px;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-page .home-hero {
+    padding: calc(var(--home-nav-height) + 36px) 16px 40px;
+  }
+}

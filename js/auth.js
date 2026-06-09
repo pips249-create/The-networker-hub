@@ -155,6 +155,12 @@
         return;
       }
 
+      var termsEl = document.getElementById('register-terms');
+      if (termsEl && !termsEl.checked) {
+        showMessage(msg, 'Please agree to the Terms & conditions and Privacy policy.', 'error');
+        return;
+      }
+
       btn.disabled = true;
       showMessage(msg, 'Creating your account…', 'success');
 

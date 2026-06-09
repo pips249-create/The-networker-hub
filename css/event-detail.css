@@ -1231,6 +1231,68 @@ a:hover {
   margin: 0 0 16px;
 }
 
+.checkout-precontract {
+  margin: 0 0 18px;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--purple-50);
+}
+
+.checkout-precontract-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--purple-dark);
+}
+
+.checkout-precontract-list {
+  margin: 0 0 10px;
+}
+
+.checkout-precontract-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.checkout-precontract-row dt {
+  margin: 0;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.checkout-precontract-row dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+.checkout-precontract-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.checkout-terms-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.checkout-terms-check input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
 .checkout-details-summary {
   font-size: 13px;
   color: var(--ink-soft);

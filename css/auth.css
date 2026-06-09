@@ -42,6 +42,27 @@
   margin-bottom: 16px;
 }
 
+.auth-terms-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 4px 0 18px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-body);
+  cursor: pointer;
+}
+
+.auth-terms-check input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.auth-terms-check a {
+  color: var(--lavender-deep);
+  text-decoration: underline;
+}
+
 .auth-field label {
   display: block;
   font-size: 11px;

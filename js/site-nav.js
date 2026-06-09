@@ -65,29 +65,29 @@
   var root = (script && script.getAttribute('data-root')) || '';
   var page = (script && script.getAttribute('data-page')) || '';
 
-  if (!window.__hubVercelAnalytics) {
-    window.__hubVercelAnalytics = true;
-    if (!window.va) {
-      window.va = function () {
-        (window.vaq = window.vaq || []).push(arguments);
-      };
+  function loadComplianceAsset(path) {
+    var full = root + path;
+    if (document.querySelector('[data-hub-compliance="' + path + '"]')) return;
+    if (path.indexOf('.css') !== -1) {
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = full;
+      link.setAttribute('data-hub-compliance', path);
+      document.head.appendChild(link);
+      return;
     }
-    var insightsSrc = '/_vercel/insights/script.js';
-    if (!document.head.querySelector('script[src*="insights/script.js"]')) {
-      var insights = document.createElement('script');
-      insights.src = insightsSrc;
-      insights.defer = true;
-      insights.dataset.sdkn = '@vercel/analytics';
-      insights.dataset.sdkv = '2.0.1';
-      insights.onerror = function () {
-        console.log(
-          '[Vercel Web Analytics] Failed to load ' +
-            insightsSrc +
-            '. Enable Web Analytics in Vercel and redeploy.'
-        );
-      };
-      document.head.appendChild(insights);
-    }
+    var s = document.createElement('script');
+    s.src = full;
+    s.defer = true;
+    s.setAttribute('data-hub-compliance', path);
+    document.head.appendChild(s);
+  }
+
+  if (!window.__hubComplianceAssets) {
+    window.__hubComplianceAssets = true;
+    loadComplianceAsset('css/cookie-consent.css?v=20260609');
+    loadComplianceAsset('js/hub-analytics.js?v=20260609');
+    loadComplianceAsset('js/cookie-consent.js?v=20260609');
   }
 
   var mount = document.getElementById('hub-site-nav');

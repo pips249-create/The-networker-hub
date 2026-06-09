@@ -1,9 +1,10 @@
 (function () {
   const PENDING_KEY = 'hub_booking_pending';
+  const SERIES_BOOKED_KEY = 'hub_series_booked';
   const lead = document.getElementById('booking-success-lead');
   const status = document.getElementById('booking-success-status');
   const actions = document.getElementById('booking-success-actions');
-  const steps = document.getElementById('booking-success-steps');
+  const note = document.getElementById('booking-success-note');
   const eventBlock = document.getElementById('booking-success-event');
   const eventTitle = document.getElementById('booking-success-event-title');
   const eventMeta = document.getElementById('booking-success-event-meta');
@@ -30,6 +31,230 @@
     } catch (e) {
       /* ignore */
     }
+  }
+
+  function readSeriesBooked() {
+    try {
+      const raw = sessionStorage.getItem(SERIES_BOOKED_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function writeSeriesBooked(map) {
+    try {
+      sessionStorage.setItem(SERIES_BOOKED_KEY, JSON.stringify(map || {}));
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function seriesKeyForEvent(ev) {
+    if (!ev) return '';
+    return (
+      's:' +
+      String(ev.organiserId || '').trim() +
+      ':' +
+      String(ev.title || '').trim().toLowerCase()
+    );
+  }
+
+  function recordSeriesBooking(seriesKey, eventId) {
+    if (!seriesKey || !eventId) return;
+    const map = readSeriesBooked();
+    const ids = new Set(map[seriesKey] || []);
+    ids.add(eventId);
+    map[seriesKey] = [...ids];
+    writeSeriesBooked(map);
+  }
+
+  function seriesEventPath(entry) {
+    if (entry.id) return '/events/event.html?id=' + encodeURIComponent(entry.id);
+    if (entry.slug) return '/events/' + encodeURIComponent(entry.slug);
+    return '/events/';
+  }
+
+  function formatSeriesDateLabel(entry) {
+    return [entry.date, entry.time].filter(Boolean).join(' · ') || 'View date';
+  }
+
+  function similarEventPath(ev) {
+    if (ev.slug) return '/events/' + encodeURIComponent(ev.slug);
+    if (ev.id) return '/events/event.html?id=' + encodeURIComponent(ev.id);
+    return '/events/';
+  }
+
+  function similarEventImage(ev) {
+    if (window.getEventImage) return window.getEventImage(ev);
+    if (window.getFlexibleEventImage) {
+      return window.getFlexibleEventImage(ev.photo, ev.organiserLogo, ev.id);
+    }
+    return ev.photo || '../assets/event-placeholder.svg';
+  }
+
+  function isUpcomingEvent(ev) {
+    const ts =
+      ev.dateTs != null
+        ? Number(ev.dateTs)
+        : ev.dateRaw
+          ? new Date(ev.dateRaw).getTime()
+          : ev.nextDateTs != null
+            ? Number(ev.nextDateTs)
+            : 0;
+    if (!ts || Number.isNaN(ts)) return true;
+    return ts >= Date.now() - 86400000;
+  }
+
+  function showSimilarEvents(listingData, bookedEventId) {
+    const section = document.getElementById('booking-success-similar');
+    const lede = document.getElementById('booking-success-similar-lede');
+    const grid = document.getElementById('booking-success-similar-grid');
+    if (!section || !grid) return false;
+
+    const ev = listingData && listingData.event;
+    const related = (listingData && listingData.related) || [];
+    const seriesIds = new Set(
+      ((listingData && listingData.seriesDates) || []).map(function (entry) {
+        return entry.id;
+      })
+    );
+
+    const picks = related
+      .filter(function (item) {
+        if (!item || !item.id) return false;
+        if (item.id === bookedEventId) return false;
+        if (seriesIds.has(item.id)) return false;
+        if (item.isSoldOut) return false;
+        return isUpcomingEvent(item);
+      })
+      .slice(0, 4);
+
+    if (!picks.length) {
+      section.hidden = true;
+      return false;
+    }
+
+    const organiser = ev && ev.organiser ? String(ev.organiser).trim() : '';
+    if (lede) {
+      lede.textContent = organiser
+        ? 'More upcoming events from ' + organiser + '.'
+        : 'More upcoming events you might enjoy.';
+    }
+
+    grid.innerHTML = picks
+      .map(function (item) {
+        const href = similarEventPath(item);
+        const img = similarEventImage(item);
+        const meta = item.dateLine || [item.date, item.time, item.location || item.city].filter(Boolean).join(' · ');
+        const price = item.priceKey === 'free' ? 'Free' : item.price || '';
+        return (
+          '<a class="bs-similar-card" href="' +
+          escapeHtml(href) +
+          '"><span class="bs-similar-thumb"><img src="' +
+          escapeHtml(img) +
+          '" alt="" loading="lazy" decoding="async" /></span><span class="bs-similar-body"><span class="bs-similar-title">' +
+          escapeHtml(item.title || 'Event') +
+          '</span><span class="bs-similar-meta">' +
+          escapeHtml(meta) +
+          '</span></span>' +
+          (price ? '<span class="bs-similar-price">' + escapeHtml(price) + '</span>' : '') +
+          '</a>'
+        );
+      })
+      .join('');
+
+    section.hidden = false;
+    return true;
+  }
+
+  async function showSeriesBookAnother(pending, evFromSummary) {
+    const section = document.getElementById('booking-success-series');
+    const lede = document.getElementById('booking-success-series-lede');
+    const list = document.getElementById('booking-success-series-dates');
+    const similarSection = document.getElementById('booking-success-similar');
+    if (!section || !list || !pending || !pending.eventId) return false;
+
+    let seriesDates = [];
+    let ev = evFromSummary;
+    let listingData = null;
+
+    try {
+      const res = await fetch('/api/hub-listings?id=' + encodeURIComponent(pending.eventId));
+      listingData = await res.json();
+      ev = listingData.event || evFromSummary;
+      seriesDates = listingData.seriesDates || [];
+    } catch (e) {
+      return false;
+    }
+
+    if (seriesDates.length <= 1) {
+      section.hidden = true;
+      showSimilarEvents(listingData, pending.eventId);
+      return false;
+    }
+
+    const seriesKey = pending.seriesKey || seriesKeyForEvent(ev);
+    recordSeriesBooking(seriesKey, pending.eventId);
+
+    const booked = new Set((readSeriesBooked()[seriesKey] || []));
+    const now = Date.now() - 86400000;
+    const remaining = seriesDates.filter(function (entry) {
+      if (booked.has(entry.id)) return false;
+      const ts =
+        entry.dateTs != null
+          ? Number(entry.dateTs)
+          : entry.dateRaw
+            ? new Date(entry.dateRaw).getTime()
+            : 0;
+      if (ts && ts < now) return false;
+      if (entry.isSoldOut) return false;
+      return true;
+    });
+
+    if (!remaining.length) {
+      section.hidden = true;
+      showSimilarEvents(listingData, pending.eventId);
+      return false;
+    }
+
+    if (similarSection) similarSection.hidden = true;
+
+    const total = seriesDates.length;
+    const word = total === 1 ? 'date' : 'dates';
+    if (lede) {
+      lede.textContent =
+        'This event has ' +
+        total +
+        ' ' +
+        word +
+        '. Pick another session if you would like to come again.';
+    }
+
+    list.innerHTML = remaining
+      .map(function (entry) {
+        const label = formatSeriesDateLabel(entry);
+        const href = seriesEventPath(entry);
+        const price =
+          entry.priceKey === 'free'
+            ? 'Free'
+            : entry.price
+              ? entry.price
+              : '';
+        return (
+          '<a class="bs-series-date" href="' +
+          escapeHtml(href) +
+          '"><span class="bs-series-date-label">' +
+          escapeHtml(label) +
+          '</span>' +
+          (price ? '<span class="bs-series-date-price">' + escapeHtml(price) + '</span>' : '') +
+          '</a>'
+        );
+      })
+      .join('');
+
+    section.hidden = false;
+    return true;
   }
 
   function metaRow(iconPath, text) {
@@ -160,7 +385,7 @@
       status.textContent = '';
       status.classList.remove('is-error');
     }
-    if (steps) steps.hidden = false;
+    if (note) note.hidden = false;
     if (actions) actions.hidden = false;
   }
 
@@ -172,8 +397,16 @@
         'Your booking should appear shortly. If it does not, contact support with your payment receipt.';
       status.classList.add('is-error');
     }
-    if (steps) steps.hidden = false;
+    if (note) note.hidden = false;
     if (actions) actions.hidden = false;
+  }
+
+  async function finishConfirmedBooking(pending, message) {
+    if (pending && pending.eventId) {
+      await showSeriesBookAnother(pending, loadedEvent);
+    }
+    clearPending();
+    showReady(message);
   }
 
   async function confirmBooking() {
@@ -189,8 +422,10 @@
     }
 
     if (alreadyConfirmed) {
-      clearPending();
-      showReady('Your free ticket is confirmed. We have emailed you the details.');
+      await finishConfirmedBooking(
+        pending,
+        'Your free ticket is confirmed. We have emailed you the details.'
+      );
       return;
     }
 
@@ -221,25 +456,26 @@
       const data = await res.json().catch(function () {
         return {};
       });
-      clearPending();
 
       if (!res.ok || !data.ok) {
         if (data.action === 'exists' || data.error === 'booking_failed') {
-          showReady('Your ticket is already confirmed.');
+          await finishConfirmedBooking(pending, 'Your ticket is already confirmed.');
           return;
         }
+        clearPending();
         showError((data && data.message) || (data && data.error) || 'Confirmation is still processing.');
         return;
       }
 
       if (data.action === 'exists') {
-        showReady('Your ticket is already confirmed.');
+        await finishConfirmedBooking(pending, 'Your ticket is already confirmed.');
         return;
       }
 
       const qtyMsg = qty > 1 ? 'Your ' + qty + ' tickets are confirmed.' : 'Your ticket is confirmed.';
-      showReady(qtyMsg + ' We have emailed you the details.');
+      await finishConfirmedBooking(pending, qtyMsg + ' We have emailed you the details.');
     } catch (e) {
+      clearPending();
       showError('Could not reach the server. Your webhook may still complete the booking shortly.');
     }
   }

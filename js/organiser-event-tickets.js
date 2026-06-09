@@ -718,6 +718,15 @@
 
   async function saveTickets(publish) {
     showAlert('');
+
+    if (publish && window.HubOrganiserTerms) {
+      try {
+        await window.HubOrganiserTerms.requireAcceptance();
+      } catch (e) {
+        return;
+      }
+    }
+
     const loading = window.organiserPageLoading;
     const tiers = attendanceMode === 'osop' ? collectOsopTiers() : collectTiers();
     if (!tiers.length) {
