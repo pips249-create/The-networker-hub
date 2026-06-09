@@ -1931,6 +1931,290 @@
   color: var(--opp-gold-light);
 }
 
+/* Premium Spotlight — featured opportunities carousel */
+.opp-browse-page .opp-promo-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px 4px;
+}
+
+.opp-browse-page .opp-premium-spotlight {
+  background: #fff;
+  border: 1px solid var(--opp-border);
+  border-radius: 12px;
+  padding: 12px 12px 10px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 18px rgba(13, 31, 60, 0.06);
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-title .icon {
+  background: var(--opp-gold-dim);
+  color: var(--opp-gold);
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-nav button:hover {
+  border-color: var(--opp-gold-border);
+  background: var(--opp-gold-pale);
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-view-all {
+  color: var(--opp-gold);
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-view-all:hover {
+  color: var(--opp-navy);
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--opp-navy);
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-title .icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-nav button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--opp-border);
+  background: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--opp-navy);
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-view-all {
+  font-size: 12px;
+  font-weight: 600;
+  margin-right: 4px;
+  text-decoration: none;
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-wrap {
+  position: relative;
+  flex: none;
+  min-height: 200px;
+  overflow: hidden;
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-track {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 4px;
+  width: 100%;
+  min-height: 200px;
+  align-items: stretch;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-track.spotlight-track--carousel {
+  overflow-x: auto;
+  scroll-snap-type: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-track.spotlight-track--carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-track .premium-card {
+  scroll-snap-align: start;
+}
+
+@media (min-width: 900px) {
+  .opp-browse-page .opp-premium-spotlight .spotlight-track .premium-card {
+    flex: 0 0 calc((100% - 28px) / 3);
+    max-width: 320px;
+    width: calc((100% - 28px) / 3);
+  }
+}
+
+.opp-browse-page .opp-premium-spotlight .spotlight-empty {
+  font-size: 13px;
+  color: var(--opp-mid-gray);
+  padding: 24px 8px;
+  margin: 0;
+}
+
+.opp-browse-page .opp-premium-card {
+  flex: 0 0 min(260px, 78vw);
+  min-height: 200px;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  color: #fff;
+}
+
+.opp-browse-page .opp-premium-card .premium-card-link {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  height: 100%;
+  min-height: 200px;
+  padding: 12px;
+  box-sizing: border-box;
+  text-decoration: none;
+  color: inherit;
+}
+
+.opp-browse-page .opp-premium-card .premium-card-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.opp-browse-page .opp-premium-card .premium-card-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.opp-browse-page .opp-premium-thumb-emoji {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  opacity: 0.35;
+}
+
+.opp-browse-page .opp-premium-card .premium-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(13, 31, 60, 0.45) 0%,
+    rgba(13, 31, 60, 0.3) 40%,
+    rgba(13, 31, 60, 0.88) 100%
+  );
+}
+
+.opp-browse-page .opp-premium-card .premium-card-top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.opp-browse-page .opp-premium-card .premium-badge {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--opp-gold);
+  color: var(--opp-navy);
+  padding: 4px 8px;
+  border-radius: 4px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.opp-browse-page .opp-premium-card .premium-price {
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--opp-navy);
+  padding: 4px 10px;
+  border-radius: 6px;
+  line-height: 1.2;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.opp-browse-page .opp-premium-card .premium-card-body {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  padding-top: 10px;
+  min-width: 0;
+}
+
+.opp-browse-page .opp-premium-type {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.opp-browse-page .opp-premium-card .premium-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 0 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.opp-browse-page .opp-premium-card .premium-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.opp-browse-page .opp-premium-card .premium-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  line-height: 1.35;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.opp-browse-page .opp-premium-card .premium-meta-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
 .opp-browse-page .opp-browse-layout {
   max-width: 1200px;
   margin: 0 auto;
@@ -2708,6 +2992,10 @@
 
   .opp-browse-page .opp-browse-hero h1 {
     font-size: 1.65rem;
+  }
+
+  .opp-browse-page .opp-promo-section {
+    padding: 0 16px 4px;
   }
 
   .opp-browse-page .opp-browse-layout {
