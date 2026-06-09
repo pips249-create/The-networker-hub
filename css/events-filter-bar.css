@@ -159,10 +159,23 @@
 
 .filter-location-near {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 8px 12px;
-  flex: 1 1 auto;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.filter-near-control {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.filter-near-control-desktop {
+  display: none;
+}
+
+.filter-near-control-mobile {
+  display: inline-flex;
 }
 
 .filter-near-radius select:disabled {
@@ -628,17 +641,6 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
   display: contents;
 }
 
-.filter-near-mobile {
-  display: flex;
-}
-
-.filter-near-desktop {
-  display: none;
-  align-items: center;
-  gap: 8px 12px;
-  flex: 0 0 auto;
-}
-
 .filter-more-panel[hidden] {
   display: none !important;
 }
@@ -650,7 +652,7 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
 
   .events-filter-bar {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
     grid-template-rows: auto auto auto;
     column-gap: 12px;
     row-gap: 0;
@@ -687,12 +689,17 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
     min-width: 0;
   }
 
-  .filter-bar-row-location .filter-location-radius {
+  .filter-bar-row-location .filter-location-radius,
+  .filter-bar-row-location .filter-location-near {
     flex: 0 0 auto;
   }
 
-  .filter-bar-row-location .filter-near-mobile {
+  .filter-near-control-mobile {
     display: none;
+  }
+
+  .filter-near-control-desktop {
+    display: inline-flex;
   }
 
   .filter-bar-row-bottom {
@@ -707,10 +714,6 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
     align-self: end;
   }
 
-  .filter-near-desktop {
-    display: inline-flex;
-  }
-
   .filter-bar-cluster {
     width: 100%;
   }
@@ -722,9 +725,6 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
     width: 100%;
   }
 
-  .filter-near-desktop {
-    display: none !important;
-  }
 }
 
 .filter-more-toggle[aria-expanded='true'] .filter-more-chevron {

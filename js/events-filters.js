@@ -261,33 +261,40 @@
       .toLowerCase();
   }
 
+  function isLocationFilterActive() {
+    var pc = (postcodeInput && postcodeInput.value) || '';
+    return pc.trim().length > 0 || isNearMeActive();
+  }
+
   function eventMatchesPostcodeArea(pc, ev, center) {
-    if (!pc) return true;
-    if (center && isNearMeActive() && !window.hubUserCoords) return false;
+    if (!isLocationFilterActive()) return true;
 
     var deliveryFmt = meetingTypeSlug(ev);
     if (deliveryFmt === 'online') return true;
 
-    var evCoords = eventCoords(ev);
-    if (center && evCoords && window.hubDistanceMiles) {
-      var distMiles = window.hubDistanceMiles(
-        center[0],
-        center[1],
-        evCoords[0],
-        evCoords[1]
-      );
-      return distMiles <= getLocationRadiusMiles();
+    if (isNearMeActive()) {
+      if (!window.hubUserCoords) return false;
+      center = window.hubUserCoords;
     }
 
-    if (isNearMeActive()) return false;
+    var evCoords = eventCoords(ev);
+    if (center && evCoords && window.hubDistanceMiles) {
+      return (
+        window.hubDistanceMiles(center[0], center[1], evCoords[0], evCoords[1]) <=
+        getLocationRadiusMiles()
+      );
+    }
 
-    if (window.hubMatchOutcode) return window.hubMatchOutcode(pc, ev);
-    if (window.hubParseOutcode) {
+    if (center) return false;
+
+    if (pc && window.hubMatchOutcode) return window.hubMatchOutcode(pc, ev);
+    if (pc && window.hubParseOutcode) {
       var userOc = window.hubParseOutcode(pc);
       var eventOc = window.hubEventOutcode ? window.hubEventOutcode(ev) : '';
       return !(userOc && eventOc && userOc !== eventOc);
     }
-    return true;
+
+    return !isNearMeActive();
   }
 
   function resolveLocationFilterCoords(value) {
@@ -341,7 +348,7 @@
     if (!isNearMeActive()) {
       window.hubUserCoords = null;
       syncNearRadiusUi();
-      applyFilters();
+      applyLocationFilters();
       return;
     }
     var all = window.hubAllEvents || [];
@@ -353,6 +360,30 @@
       .then(function () {
         applyFilters();
       });
+  }
+
+  function applyLocationFilters() {
+    if (document.body.classList.contains('browse-mode-organisers')) return;
+    if (isNearMeActive()) {
+      applyNearMeFilters();
+      return;
+    }
+
+    var pc = (postcodeInput && postcodeInput.value) || '';
+    pc = pc.trim();
+    if (!pc) {
+      window.hubLocationFilterCoords = null;
+      syncNearRadiusUi();
+      applyFilters();
+      return;
+    }
+
+    syncNearRadiusUi();
+    var all = window.hubAllEvents || [];
+    var enrich = window.hubEnrichEventCoords ? window.hubEnrichEventCoords(all) : Promise.resolve();
+    enrich.then(function () {
+      applyFilters();
+    });
   }
 
   function eventCoords(ev) {
@@ -378,7 +409,7 @@
 
     var pc = (postcodeInput && postcodeInput.value) || '';
     pc = pc.trim();
-    if (pc && !eventMatchesPostcodeArea(pc, ev, locationFilterCenter())) return false;
+    if (!eventMatchesPostcodeArea(pc, ev, locationFilterCenter())) return false;
 
     var wantInPerson = checkInPerson && checkInPerson.checked;
     var wantOnline = checkOnline && checkOnline.checked;
@@ -679,9 +710,7 @@
   }
   function onLocationRadiusChange() {
     syncLocationRadiusControls();
-    syncNearRadiusUi();
-    if (isNearMeActive()) applyNearMeFilters();
-    else applyFilters();
+    applyLocationFilters();
   }
 
   if (locationRadius) {

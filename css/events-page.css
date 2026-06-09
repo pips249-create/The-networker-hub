@@ -629,14 +629,17 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   min-height: 200px;
   align-items: stretch;
   -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+
+.spotlight-track .premium-card {
+  scroll-snap-align: start;
 }
 
 @media (min-width: 900px) {
-  .spotlight-track {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-    overflow-x: visible;
+  .spotlight-track .premium-card {
+    flex: 0 0 calc((100% - 28px) / 3);
+    max-width: 320px;
   }
 }
 .spotlight-empty {

@@ -25,6 +25,30 @@
 
   let events = [];
   let currentPage = 1;
+  let spotlightPremiumOrder = null;
+
+  function shuffleList(list) {
+    const copy = list.slice();
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = copy[i];
+      copy[i] = copy[j];
+      copy[j] = tmp;
+    }
+    return copy;
+  }
+
+  function resetSpotlightOrder() {
+    spotlightPremiumOrder = null;
+  }
+
+  function getSpotlightPremium() {
+    const source = window.hubAllEvents && window.hubAllEvents.length ? window.hubAllEvents : events;
+    if (!spotlightPremiumOrder) {
+      spotlightPremiumOrder = shuffleList(source.filter((e) => e.featured));
+    }
+    return spotlightPremiumOrder;
+  }
 
   function escapeHtml(s) {
     const d = document.createElement('div');
@@ -372,8 +396,7 @@
   }
 
   function renderSpotlight() {
-    const source = window.hubAllEvents && window.hubAllEvents.length ? window.hubAllEvents : events;
-    const premium = source.filter((e) => e.featured).slice(0, 3);
+    const premium = getSpotlightPremium();
 
     if (els.spotlightTrack) {
       els.spotlightTrack.innerHTML = premium.length
@@ -610,6 +633,7 @@
 
   function applyLoadedEvents() {
     window.hubAllEvents = events;
+    resetSpotlightOrder();
     fillFilterOptions();
     if (window.hubInitPriceFilter) window.hubInitPriceFilter();
     currentPage = 1;

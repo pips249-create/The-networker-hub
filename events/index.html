@@ -12,8 +12,8 @@
 <link rel="stylesheet" href="../css/hub-mobile.css?v=20260609b">
 <link rel="stylesheet" href="../css/fact-loader.css?v=20260709">
 <script src="../js/fact-loader.js?v=20260709"></script>
-<link rel="stylesheet" href="../css/events-page.css?v=20260608g">
-<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260609b">
+<link rel="stylesheet" href="../css/events-page.css?v=20260609f">
+<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260609e">
 <link rel="stylesheet" href="../css/organisers-browse.css?v=20260708">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
@@ -109,15 +109,28 @@
             <option value="50">50 mi</option>
           </select>
         </label>
-        <div class="filter-location-near filter-near-mobile">
-          <label class="filter-checkbox filter-checkbox-near">
+        <div class="filter-location-near">
+          <label class="filter-checkbox filter-checkbox-near filter-near-control filter-near-control-mobile">
             <input type="checkbox" id="toggle-nearme-mobile">
+            <span class="filter-checkbox-box" aria-hidden="true"></span>
+            Near me
+          </label>
+          <label class="filter-checkbox filter-checkbox-near filter-near-control filter-near-control-desktop">
+            <input type="checkbox" id="toggle-nearme">
             <span class="filter-checkbox-box" aria-hidden="true"></span>
             Near me
           </label>
           <label class="filter-near-radius filter-near-radius-legacy" id="near-radius-wrap-mobile" hidden>
             <span class="visually-hidden" for="near-radius-mobile">Distance</span>
             <select id="near-radius-mobile" aria-label="Distance from you" tabindex="-1" hidden>
+              <option value="5">Within 5 miles</option>
+              <option value="25" selected>Within 25 miles</option>
+              <option value="50">Within 50 miles</option>
+            </select>
+          </label>
+          <label class="filter-near-radius filter-near-radius-legacy" id="near-radius-wrap" hidden>
+            <span class="visually-hidden" for="near-radius">Distance</span>
+            <select id="near-radius" aria-label="Distance from you" tabindex="-1" hidden>
               <option value="5">Within 5 miles</option>
               <option value="25" selected>Within 25 miles</option>
               <option value="50">Within 50 miles</option>
@@ -167,21 +180,6 @@
               </div>
             </div>
           </div>
-        </div>
-        <div class="filter-location-near filter-near-desktop filter-event-only">
-          <label class="filter-checkbox filter-checkbox-near">
-            <input type="checkbox" id="toggle-nearme">
-            <span class="filter-checkbox-box" aria-hidden="true"></span>
-            Near me
-          </label>
-          <label class="filter-near-radius filter-near-radius-legacy" id="near-radius-wrap" hidden>
-            <span class="visually-hidden" for="near-radius">Distance</span>
-            <select id="near-radius" aria-label="Distance from you" tabindex="-1" hidden>
-              <option value="5">Within 5 miles</option>
-              <option value="25" selected>Within 25 miles</option>
-              <option value="50">Within 50 miles</option>
-            </select>
-          </label>
         </div>
         <div class="filter-organiser-only">
           <label class="filter-organiser-industry">
@@ -325,11 +323,11 @@
 <script src="../js/meeting-types.js?v=20260708"></script>
 <script src="../js/postcode-outcode.js?v=20260708r"></script>
 <script src="../js/postcode-geo.js?v=20260609b"></script>
-<script src="../js/events-filters.js?v=20260609c"></script>
+<script src="../js/events-filters.js?v=20260609d"></script>
 <script src="../js/events-map.js?v=20260609c"></script>
 <script src="../js/cms-sponsor-fields.js?v=20260630c"></script>
 <script src="../js/flexible-event-image.js?v=20260707"></script>
-<script src="../js/events.js?v=20260609a"></script>
+<script src="../js/events.js?v=20260609f"></script>
 <script src="../js/organisers-filters.js?v=20260608"></script>
 <script src="../js/organisers.js?v=20260709"></script>
 <script src="../js/hub-organiser-actions.js?v=20260606" data-root="../"></script>
