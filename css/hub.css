@@ -225,6 +225,25 @@ a:hover { color: var(--charcoal); }
   background: #1d4ed8;
 }
 
+.nav-cta-gold {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  background: #d4a853;
+  color: #1a1a2e !important;
+  text-decoration: none !important;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.nav-cta-gold:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(212, 168, 83, 0.45);
+  color: #1a1a2e !important;
+  background: #e4bc6a;
+}
+
 .nav-organiser {
   display: inline-flex !important;
   align-items: center;

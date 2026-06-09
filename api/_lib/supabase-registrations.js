@@ -1,5 +1,6 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { ensureAttendeeId } = require('./supabase-favourites');
+const { sendRegistrationEmails } = require('./registration-emails');
 
 /**
  * Insert a registration after successful checkout.
@@ -19,14 +20,54 @@ async function createRegistrationFromPayment(input) {
   const stripeCheckoutSessionId =
     input.stripeCheckoutSessionId || input.stripe_checkout_session_id || null;
 
+  if (stripeCheckoutSessionId) {
+    const existingSession = await sb
+      .from('registrations')
+      .select('id, attendee_id, event_id, ticket_id, amount_paid, ticket_email_sent, meeting_link')
+      .eq('stripe_checkout_session_id', stripeCheckoutSessionId)
+      .maybeSingle();
+    if (existingSession.error) throw new Error(existingSession.error.message);
+    if (existingSession.data?.id) {
+      let emailResult = null;
+      if (!existingSession.data.ticket_email_sent) {
+        try {
+          emailResult = await sendRegistrationEmails(sb, existingSession.data);
+        } catch (e) {
+          emailResult = { error: e.message || String(e) };
+        }
+      }
+      return {
+        action: 'exists',
+        id: existingSession.data.id,
+        registration: existingSession.data,
+        emailResult,
+      };
+    }
+  }
+
   if (stripePaymentIntentId) {
     const existing = await sb
       .from('registrations')
-      .select('id')
+      .select('id, attendee_id, event_id, ticket_id, amount_paid, ticket_email_sent, meeting_link')
       .eq('stripe_payment_intent_id', stripePaymentIntentId)
       .maybeSingle();
     if (existing.error) throw new Error(existing.error.message);
-    if (existing.data?.id) return { action: 'exists', id: existing.data.id };
+    if (existing.data?.id) {
+      let emailResult = null;
+      if (!existing.data.ticket_email_sent) {
+        try {
+          emailResult = await sendRegistrationEmails(sb, existing.data);
+        } catch (e) {
+          emailResult = { error: e.message || String(e) };
+        }
+      }
+      return {
+        action: 'exists',
+        id: existing.data.id,
+        registration: existing.data,
+        emailResult,
+      };
+    }
   }
 
   const session = {
@@ -60,34 +101,56 @@ async function createRegistrationFromPayment(input) {
     payment_status: paymentStatus,
     amount_paid: Number.isFinite(amountPaid) ? amountPaid : 0,
     stripe_payment_intent_id: stripePaymentIntentId,
+    stripe_checkout_session_id: stripeCheckoutSessionId,
     application_status: input.applicationStatus || input.application_status || 'Approved',
   };
 
-  const ins = await sb.from('registrations').insert(row).select('id').single();
+  const ins = await sb.from('registrations').insert(row).select('*').single();
   if (ins.error) throw new Error(ins.error.message);
+
+  let emailResult = null;
+  try {
+    emailResult = await sendRegistrationEmails(sb, ins.data);
+  } catch (e) {
+    emailResult = { error: e.message || String(e) };
+  }
 
   return {
     action: 'created',
     id: ins.data.id,
     attendeeId,
     stripeCheckoutSessionId,
+    registration: ins.data,
+    emailResult,
   };
 }
 
-function parseStripeEventBody(req) {
-  let body = req.body;
-  if (typeof body === 'string') {
-    try {
-      body = JSON.parse(body);
-    } catch {
-      body = null;
-    }
+function parseStripeEventBody(rawBody) {
+  if (!rawBody) return null;
+  if (typeof rawBody === 'object' && !Buffer.isBuffer(rawBody)) {
+    return rawBody;
   }
-  return body && typeof body === 'object' ? body : null;
+  const text = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : String(rawBody);
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+function parseClientReferenceId(ref) {
+  const raw = String(ref || '');
+  const eventMatch = raw.match(/id([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})/i);
+  const ticketMatch = raw.match(/ticket-([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})/i);
+  return {
+    eventId: eventMatch ? eventMatch[1] : null,
+    ticketId: ticketMatch ? ticketMatch[1] : null,
+  };
 }
 
 /**
- * Handle Stripe checkout.session.completed — expects metadata.event_id (+ optional ticket_id).
+ * Handle Stripe checkout.session.completed — expects metadata.event_id (+ optional ticket_id),
+ * or client_reference_id from the hub checkout URL (id<event-uuid>-ticket-<ticket-uuid>-...).
  */
 async function handleCheckoutSessionCompleted(session) {
   const customerEmail =
@@ -97,8 +160,14 @@ async function handleCheckoutSessionCompleted(session) {
     session.metadata?.email ||
     '';
   const metadata = session.metadata || {};
-  const eventId = metadata.event_id || metadata.eventId;
-  const ticketId = metadata.ticket_id || metadata.ticketId || null;
+  let eventId = metadata.event_id || metadata.eventId;
+  let ticketId = metadata.ticket_id || metadata.ticketId || null;
+
+  if (!eventId && session.client_reference_id) {
+    const parsed = parseClientReferenceId(session.client_reference_id);
+    eventId = parsed.eventId;
+    if (!ticketId) ticketId = parsed.ticketId;
+  }
 
   if (!eventId) {
     return { skipped: true, reason: 'missing_event_id_metadata' };

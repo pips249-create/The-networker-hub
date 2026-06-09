@@ -549,6 +549,101 @@
     }
   }
 
+  let currentEventDetail = null;
+  const BOOKING_PENDING_KEY = 'hub_booking_pending';
+
+  function isUuid(value) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      String(value || '')
+    );
+  }
+
+  function getStripeBaseUrl(ev, tierEl) {
+    const fromTier = tierEl && tierEl.getAttribute('data-stripe-link');
+    if (fromTier && fromTier.trim()) return fromTier.trim();
+    if (ev && ev.stripePaymentLink) return String(ev.stripePaymentLink).trim();
+    const meta = document.querySelector('meta[name="stripe-payment-link"]');
+    const fromMeta = meta && meta.getAttribute('content') ? meta.getAttribute('content').trim() : '';
+    const params = new URLSearchParams(window.location.search);
+    const fromQuery = params.get('stripe') || params.get('payment_link');
+    return (fromQuery || fromMeta || '').trim();
+  }
+
+  function getSelectedTierEl() {
+    return document.querySelector('#ticket-tiers .tier.selected:not(.sold-out):not(.tier-disabled)');
+  }
+
+  function buildStripeCheckoutUrl(ev, tierEl, qty, label) {
+    const base = getStripeBaseUrl(ev, tierEl);
+    if (!base) return null;
+    try {
+      const u = new URL(base);
+      const evId = ev && ev.id ? String(ev.id) : '';
+      const ticketId = tierEl ? tierEl.getAttribute('data-ticket-id') || '' : '';
+      const ref =
+        (evId ? 'id' + evId + '-' : '') +
+        (ticketId ? 'ticket-' + ticketId + '-' : '') +
+        'qty-' +
+        String(qty) +
+        '-' +
+        String(label || 'ticket')
+          .replace(/\s+/g, '-')
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, '');
+      u.searchParams.set('client_reference_id', ref.slice(0, 200));
+      if (qty > 1) u.searchParams.set('quantity', String(qty));
+      return u.toString();
+    } catch (err) {
+      return base;
+    }
+  }
+
+  function saveBookingPending(ev, ticketId, qty) {
+    try {
+      sessionStorage.setItem(
+        BOOKING_PENDING_KEY,
+        JSON.stringify({
+          eventId: ev.id,
+          ticketId: isUuid(ticketId) ? ticketId : null,
+          qty: qty,
+          ts: Date.now(),
+        })
+      );
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  async function completeFreeBooking(ev, ticketId) {
+    const res = await fetch('/api/auth/complete-booking', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventId: ev.id,
+        ticketId: isUuid(ticketId) ? ticketId : null,
+        amountPaid: 0,
+        paymentStatus: 'Free',
+      }),
+    });
+    const data = await res.json().catch(function () {
+      return {};
+    });
+    if (!res.ok || !data.ok) {
+      throw new Error((data && data.message) || (data && data.error) || 'booking_failed');
+    }
+    clearBookingPending();
+    window.location.assign('/events/booking-success.html?free=1&confirmed=1');
+  }
+
+  function clearBookingPending() {
+    try {
+      sessionStorage.removeItem(BOOKING_PENDING_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function ticketTiersForEvent(ev) {
     if (ev.tickets && ev.tickets.length) return ev.tickets;
     return [
@@ -613,6 +708,7 @@
       tier.setAttribute('data-ticket-id', t.id);
       tier.setAttribute('data-price', String(priceNum));
       tier.setAttribute('data-label', t.label || t.name || 'Ticket');
+      if (t.stripePaymentLink) tier.setAttribute('data-stripe-link', t.stripePaymentLink);
 
       if (!soldOut) {
         tier.setAttribute('role', 'button');
@@ -1112,6 +1208,7 @@
   }
 
   function initTicketPanel(ev) {
+    currentEventDetail = ev;
     const qtyDown = document.getElementById('qty-down');
     const qtyUp = document.getElementById('qty-up');
     const qtyValue = document.getElementById('qty-value');
@@ -1221,13 +1318,38 @@
           return;
         }
 
-        const meta = document.querySelector('meta[name="stripe-payment-link"]');
-        const base = (meta && meta.getAttribute('content')) || '';
-        if (!base.trim()) {
-          if (stripeHint) stripeHint.hidden = false;
+        update();
+        const tierEl = getSelectedTierEl();
+        const ticketId = tierEl ? tierEl.getAttribute('data-ticket-id') : null;
+        const tierPrice = tierEl ? parseFloat(tierEl.getAttribute('data-price')) || 0 : price;
+        const checkoutUrl = buildStripeCheckoutUrl(ev, tierEl, qty, label);
+
+        if (tierPrice <= 0 && !checkoutUrl) {
+          buy.disabled = true;
+          try {
+            await completeFreeBooking(ev, ticketId);
+          } catch (err) {
+            buy.disabled = false;
+            window.alert(
+              err && err.message
+                ? err.message
+                : 'Could not complete your free booking. Please try again or contact support.'
+            );
+          }
           return;
         }
-        window.location.assign(base);
+
+        if (!checkoutUrl) {
+          if (stripeHint) {
+            stripeHint.hidden = false;
+            stripeHint.focus();
+          }
+          return;
+        }
+
+        if (stripeHint) stripeHint.hidden = true;
+        saveBookingPending(ev, ticketId, qty);
+        window.location.assign(checkoutUrl);
       });
     }
   }

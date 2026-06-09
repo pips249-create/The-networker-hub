@@ -108,8 +108,7 @@
   }
 
   function link(path, label, key, extraClass) {
-    var isActive =
-      page === key || (key === 'browse' && (page === 'events' || page === 'browse'));
+    var isActive = page === key;
     var active = isActive ? ' aria-current="page"' : '';
     var cls = extraClass ? ' class="' + extraClass + '"' : '';
     return '<a href="' + href(path) + '"' + cls + active + '>' + label + '</a>';
@@ -198,13 +197,9 @@
 
   function buildNavLinks(user, pending) {
     var html = '';
-    html += link('events/index.html', 'Browse events', 'browse', 'nav-cta');
-    html += link(
-      'training/index.html',
-      'Browse training',
-      'training',
-      'nav-cta-blue nav-hide-mobile'
-    );
+    html += link('events/index.html', 'Events', 'events');
+    html += link('training/index.html', 'Training', 'training', 'nav-hide-mobile');
+    html += link('opportunities/index.html', 'Opportunities', 'opportunities', 'nav-hide-mobile');
     html += link('about.html', 'About us', 'about', 'nav-hide-mobile');
     html += link('faq.html', 'FAQ', 'faq', 'nav-hide-mobile');
     if (pending && !user) {
@@ -231,8 +226,9 @@
 
   function buildMobileDrawerLinks(user, pending) {
     var html = '';
-    html += link('events/index.html', 'Browse events', 'browse', 'nav-mobile-item');
-    html += link('training/index.html', 'Browse training', 'training', 'nav-mobile-item');
+    html += link('events/index.html', 'Events', 'events', 'nav-mobile-item');
+    html += link('training/index.html', 'Training', 'training', 'nav-mobile-item');
+    html += link('opportunities/index.html', 'Opportunities', 'opportunities', 'nav-mobile-item');
     html += link('about.html', 'About us', 'about', 'nav-mobile-item');
     html += link('faq.html', 'FAQ', 'faq', 'nav-mobile-item');
     if (pending && !user) {

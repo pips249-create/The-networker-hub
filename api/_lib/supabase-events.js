@@ -169,6 +169,7 @@ function ticketRowToTier(row, registrationCount) {
     quantityAvailable: qty,
     registrationsCount: sold,
     label: name.slice(0, 48) || 'Ticket',
+    stripePaymentLink: String(row.stripe_payment_link || '').trim(),
   };
 }
 
@@ -321,6 +322,7 @@ function rowToEvent(row, organiser, ticketRows) {
     refundPolicyDetails: row.refund_policy_details || null,
     refundCutoffDays: row.refund_cutoff_days != null ? Number(row.refund_cutoff_days) : null,
     vatTreatment: row.vat_treatment || null,
+    stripePaymentLink: String(row.stripe_payment_link || '').trim(),
   };
 
   if (!ev.tickets.length) ev.tickets = [fallbackTicketTier(ev)];

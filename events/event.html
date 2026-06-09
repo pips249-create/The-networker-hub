@@ -280,8 +280,11 @@
           </div>
 
           <p class="stripe-hint" id="stripe-hint" role="status" tabindex="-1" hidden>
-            Add your Stripe Payment Link in the page meta tag <code>stripe-payment-link</code>, or open this page with
-            <code>?stripe=</code> followed by your checkout URL.
+            This ticket needs a Stripe Payment Link. Add <code>stripe_payment_link</code> on the event or ticket in
+            Supabase, set the page meta tag <code>stripe-payment-link</code>, or open with
+            <code>?stripe=</code> followed by your checkout URL. The link must include metadata
+            <code>event_id</code> (and optional <code>ticket_id</code>), or use the hub checkout button so we pass
+            <code>client_reference_id</code>.
           </p>
           </div>
 
@@ -403,7 +406,7 @@
     <script src="../js/cms-sponsor-fields.js?v=20260630c"></script>
     <script src="../js/cms-ad-blocks.js?v=20260708"></script>
     <script src="../js/listing-report.js?v=20260719"></script>
-    <script src="../js/event-detail.js?v=20260719"></script>
+    <script src="../js/event-detail.js?v=20260609g"></script>
   </body>
 </html>
 <!-- legacy inline removed

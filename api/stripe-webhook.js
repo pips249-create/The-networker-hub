@@ -32,7 +32,33 @@ function verifyStripeSignature(rawBody, signatureHeader, secret) {
   }
 }
 
-module.exports = async function handler(req, res) {
+function readRawBody(req) {
+  return new Promise(function (resolve, reject) {
+    if (typeof req.body === 'string') {
+      resolve(req.body);
+      return;
+    }
+    if (Buffer.isBuffer(req.body)) {
+      resolve(req.body.toString('utf8'));
+      return;
+    }
+    if (req.body && typeof req.body === 'object') {
+      resolve(JSON.stringify(req.body));
+      return;
+    }
+
+    const chunks = [];
+    req.on('data', function (chunk) {
+      chunks.push(chunk);
+    });
+    req.on('end', function () {
+      resolve(Buffer.concat(chunks).toString('utf8'));
+    });
+    req.on('error', reject);
+  });
+}
+
+async function handler(req, res) {
   if (req.method !== 'POST') {
     res.statusCode = 405;
     return res.end('method_not_allowed');
@@ -44,8 +70,13 @@ module.exports = async function handler(req, res) {
   }
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  const rawBody =
-    typeof req.body === 'string' ? req.body : req.body ? JSON.stringify(req.body) : '';
+  let rawBody = '';
+  try {
+    rawBody = await readRawBody(req);
+  } catch (e) {
+    res.statusCode = 400;
+    return res.end('invalid_body');
+  }
 
   if (webhookSecret) {
     const sig = req.headers['stripe-signature'];
@@ -55,7 +86,7 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  const event = parseStripeEventBody(req);
+  const event = parseStripeEventBody(rawBody);
   if (!event || !event.type) {
     res.statusCode = 400;
     return res.end('invalid_payload');
@@ -74,4 +105,11 @@ module.exports = async function handler(req, res) {
     res.statusCode = 500;
     return res.end(JSON.stringify({ ok: false, error: e.message || String(e) }));
   }
+}
+
+module.exports = handler;
+module.exports.config = {
+  api: {
+    bodyParser: false,
+  },
 };
