@@ -61,18 +61,10 @@ async function setEmailsEnabled(userId, enabled) {
   return data;
 }
 
-async function findUserByEmail(email) {
-  const em = String(email || '').trim().toLowerCase();
-  if (!em) return null;
-
-  const sb = getSupabaseAdmin();
-  const { data: list, error } = await sb.auth.admin.listUsers({ perPage: 1000 });
-  if (error) throw new Error(error.message);
-
-  const authUser = (list.users || []).find((u) => u.email?.toLowerCase() === em);
+async function authUserRecordToAppUser(authUser, em) {
   if (!authUser) return null;
-
   const hub = await getHubAccount(authUser.id);
+  const sb = getSupabaseAdmin();
   const { data: attendee } = await sb
     .from('attendees')
     .select('name')
@@ -86,6 +78,49 @@ async function findUserByEmail(email) {
     name: hub?.display_name || attendee?.name || authUser.user_metadata?.full_name || '',
     passwordHash: 'supabase',
   };
+}
+
+async function findUserByEmail(email) {
+  const em = String(email || '').trim().toLowerCase();
+  if (!em) return null;
+
+  const sb = getSupabaseAdmin();
+
+  if (typeof sb.auth.admin.getUserByEmail === 'function') {
+    const { data, error } = await sb.auth.admin.getUserByEmail(em);
+    if (!error && data?.user) {
+      return authUserRecordToAppUser(data.user, em);
+    }
+    if (error && !/not found|user not found/i.test(String(error.message || ''))) {
+      throw new Error(error.message);
+    }
+  }
+
+  let page = 1;
+  const perPage = 1000;
+  while (page <= 20) {
+    const { data: list, error } = await sb.auth.admin.listUsers({ page, perPage });
+    if (error) throw new Error(error.message);
+    const authUser = (list.users || []).find((u) => u.email?.toLowerCase() === em);
+    if (authUser) return authUserRecordToAppUser(authUser, em);
+    if (!list.users?.length || list.users.length < perPage) break;
+    page += 1;
+  }
+
+  return null;
+}
+
+async function upsertHubAccount(patch) {
+  const sb = getSupabaseAdmin();
+  const { error } = await sb.from('hub_accounts').upsert(patch, { onConflict: 'user_id' });
+  if (error && /emails_enabled/i.test(error.message || '')) {
+    const fallback = { ...patch };
+    delete fallback.emails_enabled;
+    const retry = await sb.from('hub_accounts').upsert(fallback, { onConflict: 'user_id' });
+    if (retry.error) throw new Error(retry.error.message);
+    return;
+  }
+  if (error) throw new Error(error.message);
 }
 
 async function verifyLogin(email, password) {
@@ -330,7 +365,7 @@ async function provisionOrganiserLogin(organiserId) {
     if (!existingHub) hubPatch.emails_enabled = false;
   }
 
-  await sb.from('hub_accounts').upsert(hubPatch, { onConflict: 'user_id' });
+  await upsertHubAccount(hubPatch);
 
   await sb.from('attendees').upsert(
     { email: em, name: name || null, supabase_user_id: userId },
@@ -379,6 +414,36 @@ async function provisionOrganiserLogin(organiserId) {
   };
 }
 
+async function findOrganiserIdsByEmail(email) {
+  const em = String(email || '').trim().toLowerCase();
+  if (!em) return [];
+
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('organisers')
+    .select('id')
+    .or(`email.eq.${em},contact_email.eq.${em}`)
+    .order('created_at', { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data || []).map((r) => r.id);
+}
+
+/** Create/link a login from a group profile email (no mail sent). */
+async function provisionOrganiserLoginByEmail(email) {
+  const ids = await findOrganiserIdsByEmail(email);
+  if (!ids.length) return null;
+
+  const result = await provisionOrganiserLogin(ids[0]);
+  if (ids.length > 1) {
+    const sb = getSupabaseAdmin();
+    await sb
+      .from('organisers')
+      .update({ supabase_user_id: result.userId })
+      .in('id', ids.slice(1));
+  }
+  return result;
+}
+
 async function importAuthUserSilent({ email, name, role }) {
   const password = process.env.IMPORT_DEFAULT_PASSWORD || process.env.ADMIN_INITIAL_PASSWORD;
   if (!password || password.length < 8) {
@@ -422,6 +487,8 @@ module.exports = {
   registerUser,
   ensureAdminUser,
   provisionOrganiserLogin,
+  provisionOrganiserLoginByEmail,
+  findOrganiserIdsByEmail,
   countOrganiserProfiles,
   backfillAttendeeUserId,
   importAttendeeRow,

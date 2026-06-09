@@ -1991,7 +1991,7 @@
   function submitImpersonation(email, view) {
     var btn = document.getElementById('impersonate-submit');
     if (btn) btn.disabled = true;
-    adminPost('/api/admin/impersonate', { email: email, view: view || 'account' })
+    adminPost('/api/admin/impersonate', { email: email, view: view || 'account', provision: true })
       .then(function (data) {
         if (!data.ok) {
           window.alert(data.message || data.error || 'Could not impersonate user.');
@@ -2017,13 +2017,13 @@
       '<div class="space-y-6 max-w-4xl">' +
       '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">' +
       '<p class="font-semibold">Support &amp; debugging only</p>' +
-      '<p class="mt-1 opacity-90">You will be signed in as the chosen user across the Hub. A banner lets you return to your admin account at any time. Admin accounts cannot be impersonated.</p>' +
+      '<p class="mt-1 opacity-90">You will be signed in as the chosen user across the Hub. A banner lets you return to your admin account at any time. Admin accounts cannot be impersonated. Group profile emails without a login are created automatically (no email sent).</p>' +
       '</div>' +
       '<form id="impersonate-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">' +
       '<div><label class="text-xs font-semibold text-slate-500 uppercase" for="impersonate-email">User email</label>' +
       '<input type="email" id="impersonate-email" list="impersonate-email-list" required placeholder="user@company.com" autocomplete="off" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500">' +
       '<datalist id="impersonate-email-list"></datalist>' +
-      '<p id="impersonate-user-hint" class="text-xs text-slate-500 mt-2">Start typing to match accounts from your user directory.</p></div>' +
+      '<p id="impersonate-user-hint" class="text-xs text-slate-500 mt-2">Enter any user or networking group email — group profiles get a silent login if needed.</p></div>' +
       '<div><label class="text-xs font-semibold text-slate-500 uppercase" for="impersonate-view">Open as them in</label>' +
       '<select id="impersonate-view" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">' +
       '<option value="account">Attendee account</option>' +
@@ -2076,7 +2076,7 @@
       var btn = document.getElementById('impersonate-submit');
       if (btn) btn.disabled = true;
       showImpersonateMessage('Switching session…', false);
-      adminPost('/api/admin/impersonate', { email: email, view: view })
+      adminPost('/api/admin/impersonate', { email: email, view: view, provision: true })
         .then(function (data) {
           if (!data.ok) {
             showImpersonateMessage(data.message || data.error || 'Could not impersonate user.', true);
@@ -2343,6 +2343,7 @@
         adminPost('/api/admin/impersonate', {
           email: u.email,
           view: u.role === 'Organiser' ? 'organiser' : 'account',
+          provision: true,
         }).then(function (data) {
           if (!data.ok) {
             alert(data.message || data.error || 'Could not impersonate user.');

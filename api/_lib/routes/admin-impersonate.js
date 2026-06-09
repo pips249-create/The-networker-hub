@@ -98,10 +98,20 @@ module.exports = async function handler(req, res) {
       target = await findUserByEmail(email);
     }
 
+    if (!target && body.provision !== false) {
+      const provisioned = await sbAuth.provisionOrganiserLoginByEmail(email);
+      if (provisioned) {
+        target = await sbAuth.findUserByEmail(email);
+      }
+    }
+
     if (!target) {
+      const organiserIds = await sbAuth.findOrganiserIdsByEmail(email);
       return json(res, 404, {
         error: 'user_not_found',
-        message: 'No account found with that email address.',
+        message: organiserIds.length
+          ? 'Could not create a login for this group profile. Check Supabase migration 033_hub_emails_enabled.sql has been run.'
+          : 'No site login or group profile found for that email. Add the email on the group profile in Group profile cleanup, or create a login there first.',
       });
     }
 
