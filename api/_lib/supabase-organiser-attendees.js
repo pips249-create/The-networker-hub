@@ -28,6 +28,7 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       payment_status,
       amount_paid,
       quantity,
+      guest_names,
       attendees ( name, email ),
       events ( title ),
       tickets ( name )
@@ -49,6 +50,9 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
 
       const paymentStatus = String(row.payment_status || 'Pending').trim();
       const amountPaid = row.amount_paid != null ? Number(row.amount_paid) : 0;
+      const guestNames = Array.isArray(row.guest_names)
+        ? row.guest_names.map((n) => String(n || '').trim()).filter(Boolean)
+        : [];
 
       return {
         id: row.id,
@@ -56,6 +60,7 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
         eventTitle: String(event.title || 'Event').trim(),
         name,
         email,
+        guestNames,
         phone: '',
         ticketName: String(ticket.name || 'General admission').trim(),
         quantity: Math.max(1, Number(row.quantity) || 1),

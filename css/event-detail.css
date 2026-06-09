@@ -879,6 +879,66 @@ a:hover {
   color: var(--purple-dark);
 }
 
+.ev-series-dates--main {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.ev-series-dates--main h2 {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+  color: var(--purple-dark);
+}
+
+.ev-series-dates--main .ev-series-dates-hint {
+  margin-bottom: 16px;
+}
+
+.ev-calendar--main {
+  max-width: 420px;
+}
+
+.ev-series-cta {
+  margin: 14px 0 0;
+}
+
+.ev-series-tickets-link,
+.ev-series-change-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--purple-700);
+  text-decoration: none;
+}
+
+.ev-series-tickets-link:hover,
+.ev-series-change-link:hover {
+  text-decoration: underline;
+}
+
+.ev-series-change {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+.ev-series-dates--panel .ev-calendar,
+.ev-series-dates--panel .ev-series-dates-hint {
+  display: none;
+}
+
+.ev-series-panel-count {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+
+.ev-series-dates--panel .ev-series-dates-title {
+  margin-bottom: 4px;
+}
+
 /* ---- Ticket panel ---- */
 .ticket-panel {
   position: sticky;
@@ -1239,6 +1299,28 @@ a:hover {
   padding: 10px 12px;
   border-radius: 8px;
   background: rgba(91, 47, 153, 0.06);
+}
+
+.checkout-guest-names {
+  margin: 4px 0 16px;
+  padding: 14px 14px 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--purple-50);
+}
+
+.checkout-guest-names-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--purple-dark);
+}
+
+.checkout-guest-names-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-muted);
 }
 
 .seat-application-intro {

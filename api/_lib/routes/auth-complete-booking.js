@@ -54,6 +54,7 @@ module.exports = async function handler(req, res) {
       eventId: body.eventId || body.event_id,
       ticketId: body.ticketId || body.ticket_id,
       quantity: body.quantity ?? body.qty,
+      guestNames: body.guestNames || body.guest_names,
       amountPaid: Number.isFinite(amountPaid) ? amountPaid : 0,
       paymentStatus: paymentStatus || (Number.isFinite(amountPaid) && amountPaid > 0 ? 'Paid' : 'Free'),
       stripePaymentIntentId: body.stripePaymentIntentId || body.stripe_payment_intent_id,

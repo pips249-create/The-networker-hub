@@ -641,10 +641,21 @@
       alert('No attendees to export for this filter.');
       return;
     }
-    const header = ['Name', 'Email', 'Phone', 'Event', 'Ticket', 'Quantity', 'Paid', 'Registered'];
+    const header = [
+      'Name',
+      'Other attendees',
+      'Email',
+      'Phone',
+      'Event',
+      'Ticket',
+      'Quantity',
+      'Paid',
+      'Registered',
+    ];
     const lines = rows.map((a) =>
       [
         a.name,
+        (a.guestNames || []).join('; '),
         a.email,
         a.phone || '',
         a.eventTitle,
@@ -692,10 +703,16 @@
     updatePaginationNav('attendees', pageInfo);
 
     pageInfo.items.forEach((a) => {
+      const guestLabel =
+        a.guestNames && a.guestNames.length ? a.guestNames.join(', ') : '';
+      const nameCell =
+        guestLabel
+          ? esc(a.name) + '<span class="org-attendee-guests">+' + esc(guestLabel) + '</span>'
+          : esc(a.name);
       const tr = document.createElement('tr');
       tr.innerHTML =
         '<td class="org-td-name">' +
-        esc(a.name) +
+        nameCell +
         '</td><td>' +
         esc(a.email || '—') +
         '</td><td>' +

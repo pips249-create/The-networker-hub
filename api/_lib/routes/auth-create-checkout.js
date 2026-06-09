@@ -2,6 +2,7 @@ const { setCors, json, sessionFromRequest } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { calculateCheckoutTotals } = require('../booking-fees');
 const { isStripeCheckoutConfigured, createPaidCheckoutSession } = require('../stripe-checkout');
+const { normalizeGuestNames } = require('../supabase-registrations');
 
 function parseBody(req) {
   let body = req.body;
@@ -164,6 +165,10 @@ module.exports = async function handler(req, res) {
 
     const totals = calculateCheckoutTotals(unitPrice, requestedQty, maxQty);
     const qty = totals.qty;
+    const guestNames = normalizeGuestNames(body.guestNames || body.guest_names, qty);
+    if (qty > 1 && guestNames.length < qty - 1) {
+      return json(res, 400, { ok: false, error: 'missing_guest_names' });
+    }
     const siteUrl = String(process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(
       /\/$/,
       ''
@@ -174,6 +179,7 @@ module.exports = async function handler(req, res) {
     const checkoutSession = await createPaidCheckoutSession({
       email: checkoutEmail,
       name: checkoutName,
+      guestNames,
       eventId,
       ticketId,
       qty,

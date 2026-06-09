@@ -14,6 +14,7 @@
   let seriesCalMonth = new Date().getMonth();
   let seriesCalYear = new Date().getFullYear();
   let ticketPanelSetEvent = null;
+  let seriesCalendarNavBound = false;
 
   const MOCK_ORGANISER_REVIEWS = [
     {
@@ -475,17 +476,45 @@
     return map;
   }
 
-  function renderSeriesCalendar() {
-    const grid = document.getElementById('ev-cal-days');
-    const label = document.getElementById('ev-cal-month-label');
+  function seriesDateCountText(count, variant) {
+    const n = Math.max(0, Number(count) || 0);
+    const word = n === 1 ? 'date' : 'dates';
+    const lead = 'This event has ' + n + ' ' + word + '. Pick the one you want to attend.';
+    if (variant === 'main') {
+      return lead + ' Then get your tickets below.';
+    }
+    return lead;
+  }
+
+  function updateSeriesDateCopy() {
+    const count = seriesDatesList.length;
+    document.querySelectorAll('[data-ev-series-hint="main"]').forEach((el) => {
+      el.textContent = seriesDateCountText(count, 'main');
+    });
+    document.querySelectorAll('[data-ev-series-hint="panel"]').forEach((el) => {
+      el.textContent = seriesDateCountText(count, 'panel');
+    });
+    document.querySelectorAll('[data-ev-series-count]').forEach((el) => {
+      el.textContent = seriesDateCountText(count, 'panel');
+    });
+  }
+
+  function seriesPickerWraps() {
+    return document.querySelectorAll('.ev-series-dates');
+  }
+
+  function updateSeriesSelectedLabels(entry) {
+    const text = 'Selected: ' + formatSeriesSelectedLine(entry);
+    document.querySelectorAll('[data-ev-series-selected]').forEach((el) => {
+      el.textContent = text;
+    });
+  }
+
+  function renderSeriesCalendarGrid(grid) {
     if (!grid) return;
 
     const datesMap = seriesDatesByKey();
     const first = new Date(seriesCalYear, seriesCalMonth, 1);
-    if (label) {
-      label.textContent = first.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-    }
-
     const startDow = (first.getDay() + 6) % 7;
     const daysInMonth = new Date(seriesCalYear, seriesCalMonth + 1, 0).getDate();
     const today = new Date();
@@ -546,26 +575,68 @@
     }
   }
 
+  function renderSeriesCalendar() {
+    const first = new Date(seriesCalYear, seriesCalMonth, 1);
+    const monthLabel = first.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    document.querySelectorAll('[data-ev-cal-month]').forEach((el) => {
+      el.textContent = monthLabel;
+    });
+    document.querySelectorAll('[data-ev-cal-days]').forEach((grid) => {
+      renderSeriesCalendarGrid(grid);
+    });
+  }
+
+  function bindSeriesCalendarNav() {
+    if (seriesCalendarNavBound) return;
+    seriesCalendarNavBound = true;
+
+    document.querySelectorAll('[data-ev-cal-prev]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        seriesCalMonth -= 1;
+        if (seriesCalMonth < 0) {
+          seriesCalMonth = 11;
+          seriesCalYear -= 1;
+        }
+        renderSeriesCalendar();
+      });
+    });
+    document.querySelectorAll('[data-ev-cal-next]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        seriesCalMonth += 1;
+        if (seriesCalMonth > 11) {
+          seriesCalMonth = 0;
+          seriesCalYear += 1;
+        }
+        renderSeriesCalendar();
+      });
+    });
+  }
+
   function selectSeriesDate(entry) {
     if (!entry || !seriesBaseEvent) return;
     selectedSeriesEventId = entry.id;
     const merged = mergeSeriesDateEntry(seriesBaseEvent, entry);
     currentEvent = merged;
     updateEventDateMeta(merged);
-    const selectedEl = document.getElementById('ev-series-selected');
-    if (selectedEl) selectedEl.textContent = 'Selected: ' + formatSeriesSelectedLine(entry);
+    updateSeriesSelectedLabels(entry);
     renderSeriesCalendar();
     if (ticketPanelSetEvent) ticketPanelSetEvent(merged);
   }
 
   function initSeriesDatePicker(initialEv) {
-    const wrap = document.getElementById('ev-series-dates');
-    if (!wrap || seriesDatesList.length <= 1) {
-      if (wrap) wrap.hidden = true;
+    const wraps = seriesPickerWraps();
+    if (seriesDatesList.length <= 1) {
+      wraps.forEach((wrap) => {
+        wrap.hidden = true;
+      });
       return;
     }
 
-    wrap.hidden = false;
+    wraps.forEach((wrap) => {
+      wrap.hidden = false;
+    });
+    updateSeriesDateCopy();
+    bindSeriesCalendarNav();
 
     const now = Date.now() - 86400000;
     const upcoming = seriesDatesList.find((item) => {
@@ -588,26 +659,6 @@
       }
     }
 
-    if (!wrap.dataset.bound) {
-      wrap.dataset.bound = '1';
-      document.getElementById('ev-cal-prev')?.addEventListener('click', () => {
-        seriesCalMonth -= 1;
-        if (seriesCalMonth < 0) {
-          seriesCalMonth = 11;
-          seriesCalYear -= 1;
-        }
-        renderSeriesCalendar();
-      });
-      document.getElementById('ev-cal-next')?.addEventListener('click', () => {
-        seriesCalMonth += 1;
-        if (seriesCalMonth > 11) {
-          seriesCalMonth = 0;
-          seriesCalYear += 1;
-        }
-        renderSeriesCalendar();
-      });
-    }
-
     if (initialEntry && initialEntry.id !== initialEv.id && ticketPanelSetEvent) {
       selectSeriesDate(initialEntry);
       return;
@@ -615,10 +666,7 @@
 
     selectedSeriesEventId = initialEv.id;
     renderSeriesCalendar();
-    const selectedEl = document.getElementById('ev-series-selected');
-    if (selectedEl && initialEntry) {
-      selectedEl.textContent = 'Selected: ' + formatSeriesSelectedLine(initialEntry);
-    }
+    if (initialEntry) updateSeriesSelectedLabels(initialEntry);
   }
 
   function populateFromEvent(ev) {
@@ -819,6 +867,7 @@
         qty: qty,
         name: attendee?.name || '',
         email: attendee?.email || '',
+        guestNames: attendee?.guestNames || [],
       }),
     });
     const data = await res.json().catch(function () {
@@ -849,6 +898,7 @@
         paymentStatus: 'Free',
         name: attendee?.name || '',
         email: attendee?.email || '',
+        guestNames: attendee?.guestNames || [],
       }),
     });
     const data = await res.json().catch(function () {
@@ -1139,14 +1189,74 @@
     }
   }
 
-  function readCheckoutDetails() {
+  function renderCheckoutGuestNames(ticketQty) {
+    const wrap = document.getElementById('checkout-guest-names');
+    const nameLabel = document.getElementById('checkout-name-label');
+    const qtyNum = Math.max(1, parseInt(ticketQty, 10) || 1);
+    const extra = Math.max(0, qtyNum - 1);
+
+    if (nameLabel) {
+      nameLabel.textContent = extra > 0 ? 'Your name (attendee 1)' : 'Full name';
+    }
+
+    if (!wrap) return;
+
+    if (!extra) {
+      wrap.hidden = true;
+      wrap.innerHTML = '';
+      return;
+    }
+
+    wrap.hidden = false;
+    let html =
+      '<p class="checkout-guest-names-title">Other attendee names</p>' +
+      '<p class="checkout-guest-names-hint">Add a name for each additional ticket in this booking.</p>';
+
+    for (let i = 0; i < extra; i++) {
+      const attendeeNum = i + 2;
+      html +=
+        '<label class="form-field" for="checkout-guest-' +
+        i +
+        '">' +
+        '<span>Attendee ' +
+        attendeeNum +
+        '</span>' +
+        '<input type="text" id="checkout-guest-' +
+        i +
+        '" name="guest_name_' +
+        i +
+        '" autocomplete="name" required />' +
+        '</label>';
+    }
+
+    wrap.innerHTML = html;
+  }
+
+  function readCheckoutGuestNames(ticketQty) {
+    const qtyNum = Math.max(1, parseInt(ticketQty, 10) || 1);
+    const extra = Math.max(0, qtyNum - 1);
+    const guestNames = [];
+
+    for (let i = 0; i < extra; i++) {
+      const val = document.getElementById('checkout-guest-' + i)?.value.trim() || '';
+      if (!val) {
+        throw new Error('Please enter a name for attendee ' + (i + 2) + '.');
+      }
+      guestNames.push(val);
+    }
+
+    return guestNames;
+  }
+
+  function readCheckoutDetails(ticketQty) {
     const name = document.getElementById('checkout-name')?.value.trim() || '';
     const email = document.getElementById('checkout-email')?.value.trim() || '';
     if (!name) throw new Error('Please enter your full name.');
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       throw new Error('Please enter a valid email address.');
     }
-    return { name, email };
+    const guestNames = readCheckoutGuestNames(ticketQty);
+    return { name, email, guestNames };
   }
 
   function updateCheckoutSummary(label, qty, total) {
@@ -1662,7 +1772,7 @@
     }
 
     async function processCheckoutBooking() {
-      const attendee = readCheckoutDetails();
+      const attendee = readCheckoutDetails(qty);
       update();
       const tierEl = getSelectedTierEl();
       const ticketId = tierEl ? tierEl.getAttribute('data-ticket-id') : null;
@@ -1718,7 +1828,7 @@
       checkoutForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         try {
-          readCheckoutDetails();
+          readCheckoutDetails(qty);
         } catch (err) {
           window.alert(err.message || 'Please check your details.');
           return;
@@ -1756,6 +1866,7 @@
         const total = subtotal + fee;
 
         await prefillCheckoutDetails();
+        renderCheckoutGuestNames(qty);
         updateCheckoutSummary(label, qty, total);
         showCheckoutDetails(true);
         const nameInput = document.getElementById('checkout-name');

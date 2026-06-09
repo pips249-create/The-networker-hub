@@ -86,6 +86,10 @@ async function createRegistrationFromPayment(input) {
 
   const ticketId = input.ticketId || input.ticket_id || null;
   const quantity = parseQuantity(input.quantity ?? input.qty, 1);
+  const guestNames = normalizeGuestNames(input.guestNames || input.guest_names, quantity);
+  if (quantity > 1 && guestNames.length < quantity - 1) {
+    throw new Error('missing_guest_names');
+  }
   const amountPaid =
     input.amountPaid != null
       ? Number(input.amountPaid)
@@ -104,6 +108,7 @@ async function createRegistrationFromPayment(input) {
     stripe_payment_intent_id: stripePaymentIntentId,
     stripe_checkout_session_id: stripeCheckoutSessionId,
     quantity,
+    guest_names: guestNames.length ? guestNames : null,
     application_status: input.applicationStatus || input.application_status || 'Approved',
   };
 
@@ -160,6 +165,23 @@ function parseQuantity(input, fallback) {
   return Number.isFinite(fb) && fb > 0 ? Math.min(fb, 99) : 1;
 }
 
+function normalizeGuestNames(input, quantity) {
+  let names = input;
+  if (typeof names === 'string') {
+    try {
+      names = JSON.parse(names);
+    } catch {
+      names = [];
+    }
+  }
+  if (!Array.isArray(names)) return [];
+  const maxExtra = Math.max(0, parseQuantity(quantity, 1) - 1);
+  return names
+    .map((n) => String(n || '').trim())
+    .filter(Boolean)
+    .slice(0, maxExtra);
+}
+
 /**
  * Handle Stripe checkout.session.completed — expects metadata.event_id (+ optional ticket_id),
  * or client_reference_id from the hub checkout URL (id<event-uuid>-ticket-<ticket-uuid>-...).
@@ -199,6 +221,7 @@ async function handleCheckoutSessionCompleted(session) {
     eventId,
     ticketId,
     quantity,
+    guestNames: metadata.guest_names || metadata.guestNames || null,
     amountPaid: amountTotal,
     paymentStatus: amountTotal > 0 ? 'Paid' : 'Free',
     stripePaymentIntentId: paymentIntentId,
@@ -211,4 +234,6 @@ module.exports = {
   handleCheckoutSessionCompleted,
   parseStripeEventBody,
   parseClientReferenceId,
+  normalizeGuestNames,
+  parseQuantity,
 };
