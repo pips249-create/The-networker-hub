@@ -14,8 +14,8 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../css/hub.css?v=20260626" />
-    <link rel="stylesheet" href="../css/training-page.css?v=20260612" />
+    <link rel="stylesheet" href="../css/hub.css?v=20260609b" />
+    <link rel="stylesheet" href="../css/training-page.css?v=20260609c" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260626" />
 
   </head>
@@ -24,22 +24,51 @@
     <script src="../js/site-nav.js?v=20260710" data-root="../" data-page="training"></script>
 
     <section class="training-hero" aria-labelledby="training-hero-heading">
-      <div class="training-hero-inner">
-        <p class="training-hero-badge">New — Learning marketplace</p>
-        <h1 id="training-hero-heading">
-          List <span class="accent">workshops, seminars &amp; masterclasses</span> for thousands of UK
-          business owners
-        </h1>
-        <p class="training-hero-lede">
-          <strong>The Networker Academy</strong> is the home for live training on the platform — from
-          short workshops to deep-dive seminars and expert-led masterclasses. Reach SMEs, entrepreneurs and
-          professionals who already trust The Networker.
-        </p>
-        <div class="training-hero-actions">
-          <span class="training-btn training-btn-primary" aria-disabled="true" title="Coming soon"
-            >+ List a session</span
+      <div class="training-hero-inner training-hero-layout">
+        <div class="training-hero-copy">
+          <p class="training-hero-badge">New — Learning marketplace</p>
+          <h1 id="training-hero-heading">
+            List <span class="accent">workshops, seminars &amp; masterclasses</span> for thousands of UK
+            business owners
+          </h1>
+          <p class="training-hero-lede">
+            <strong>The Networker Academy</strong> is the home for live training on the platform — from
+            short workshops to deep-dive seminars and expert-led masterclasses. Reach SMEs, entrepreneurs and
+            professionals who already trust The Networker.
+          </p>
+          <div class="training-hero-actions">
+            <span class="training-btn training-btn-primary" aria-disabled="true" title="Coming soon"
+              >+ List a session</span
+            >
+            <a class="training-btn training-btn-ghost" href="#sessions-preview">Browse sessions</a>
+          </div>
+        </div>
+        <div class="training-hero-sponsor-slot" id="hero-sponsor-slot">
+          <aside
+            class="sponsor-hub sponsor-hub--fallback sponsor-hub--in-hero"
+            id="sponsor-hub"
+            data-slot="academy_sponsor_hub"
+            aria-labelledby="sponsor-heading"
           >
-          <a class="training-btn training-btn-ghost" href="#sessions-preview">Browse sessions</a>
+            <span class="sponsor-hub-badge" id="sponsor-badge" hidden>Sponsored</span>
+            <div class="sponsor-hub-head" id="sponsor-heading">
+              <span class="icon" aria-hidden="true">★</span>
+              <span>Sponsor Hub</span>
+            </div>
+            <div class="sponsor-logo-wrap sponsor-logo-band" id="sponsor-logo-wrap" hidden>
+              <img id="sponsor-logo" class="sponsor-logo" alt="" hidden />
+              <div id="sponsor-logo-placeholder" class="sponsor-logo-placeholder" hidden>Your logo</div>
+            </div>
+            <p class="sponsor-company" id="sponsor-company" hidden></p>
+            <p class="sponsor-tagline" id="sponsor-tagline"></p>
+            <div id="sponsor-body" class="sponsor-body"></div>
+            <a
+              class="sponsor-cta"
+              id="sponsor-cta"
+              href="mailto:sales@the-networker.co.uk?subject=Sponsor%20Hub%20enquiry"
+              >Find out more →</a
+            >
+          </aside>
         </div>
       </div>
     </section>
@@ -66,6 +95,8 @@
       </div>
     </main>
 
+    <script src="../js/cms-sponsor-fields.js?v=20260609c"></script>
+    <script src="../js/sponsor-hub.js?v=20260609c"></script>
     <script src="../js/training-page.js?v=20260612"></script>
   </body>
 </html>

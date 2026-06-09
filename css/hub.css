@@ -989,6 +989,10 @@ body.hub-page-account .site-nav {
   min-height: 96px;
 }
 
+.sponsor-preview-logo-band--hero {
+  min-height: 120px;
+}
+
 .sponsor-preview-logo-img,
 .sponsor-preview-logo-band .sponsor-logo--full {
   display: block;
@@ -999,4 +1003,26 @@ body.hub-page-account .site-nav {
   margin: 0 auto;
   object-fit: contain;
   object-position: center;
+}
+
+.sponsor-preview-logo-band--hero .sponsor-preview-logo-img,
+.sponsor-preview-logo-band--hero .sponsor-logo--full {
+  max-height: 120px;
+}
+
+/* CMS sponsor CTA — custom colour from Command Centre */
+.sponsor-cta.cms-cta--custom,
+.cms-ad-compact-cta.cms-cta--custom,
+.cms-ad-banner-cta.cms-cta--custom {
+  background: var(--sponsor-cta-bg) !important;
+  color: var(--sponsor-cta-fg, #fff) !important;
+  border-color: var(--sponsor-cta-bg) !important;
+}
+
+.sponsor-cta.cms-cta--custom:hover,
+.cms-ad-compact-cta.cms-cta--custom:hover,
+.cms-ad-banner-cta.cms-cta--custom:hover {
+  filter: brightness(0.9);
+  background: var(--sponsor-cta-bg) !important;
+  color: var(--sponsor-cta-fg, #fff) !important;
 }

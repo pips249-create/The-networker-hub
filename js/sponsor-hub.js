@@ -137,6 +137,10 @@
       els.sponsorCta.textContent = SPONSOR_FALLBACK.ctaLabel;
       els.sponsorCta.href = SPONSOR_FALLBACK.ctaUrl;
       els.sponsorCta.hidden = false;
+      if (window.CmsSponsorFields) {
+        window.CmsSponsorFields.applyCtaColor(els.sponsorCta, '');
+        window.CmsSponsorFields.applyCtaLink(els.sponsorCta, SPONSOR_FALLBACK.ctaUrl);
+      }
     }
   }
 
@@ -200,6 +204,13 @@
       els.sponsorCta.textContent = ctaLabel;
       els.sponsorCta.href = ctaUrl;
       els.sponsorCta.hidden = false;
+      if (window.CmsSponsorFields) {
+        window.CmsSponsorFields.applyCtaColor(
+          els.sponsorCta,
+          window.CmsSponsorFields.ctaColor(block)
+        );
+        window.CmsSponsorFields.applyCtaLink(els.sponsorCta, ctaUrl);
+      }
     }
   }
 
@@ -216,7 +227,9 @@
     var els = getEls();
     if (!els.sponsorHub) return;
 
-    var slotKey = String(slot || els.sponsorHub.getAttribute('data-slot') || 'sponsor_hub').trim() || 'sponsor_hub';
+    var slotKey =
+      String(slot || els.sponsorHub.getAttribute('data-slot') || 'events_sponsor_hub').trim() ||
+      'events_sponsor_hub';
 
     try {
       var res = await fetch('/api/cms-block?slot=' + encodeURIComponent(slotKey) + '&_=' + Date.now(), {

@@ -90,13 +90,23 @@
     }
   }
 
-  function initSponsorHub() {
+  function sponsorSlotForMode(mode) {
+    return mode === 'organisers' ? 'organisers_sponsor_hub' : 'events_sponsor_hub';
+  }
+
+  function initSponsorHub(mode) {
     var hub = document.getElementById('sponsor-hub');
     var heroSlot = document.getElementById('hero-sponsor-slot');
     if (!hub || !heroSlot) return;
     if (hub.parentElement !== heroSlot) heroSlot.appendChild(hub);
     heroSlot.hidden = false;
     hub.classList.add('sponsor-hub--in-hero');
+    hub.setAttribute('data-slot', sponsorSlotForMode(mode || currentMode()));
+  }
+
+  function reloadSponsorHub(mode) {
+    initSponsorHub(mode);
+    if (window.hubReloadSponsorBlock) window.hubReloadSponsorBlock();
   }
 
   function applyCopy(mode) {
@@ -116,7 +126,7 @@
       mode === 'organisers'
         ? 'Find networking groups – The Networker Hub'
         : 'Find your next event – The Networker Hub';
-    initSponsorHub();
+    initSponsorHub(mode);
   }
 
   function setMode(mode, options) {
@@ -132,7 +142,7 @@
       if (window.hubToggleMapView && document.body.classList.contains('events-view-map')) {
         window.hubToggleMapView();
       }
-      if (window.hubReloadSponsorBlock) window.hubReloadSponsorBlock();
+      reloadSponsorHub('organisers');
       if (window.hubLoadOrganisers) {
         window.hubLoadOrganisers().then(function () {
           if (window.hubApplyOrganiserFilters) window.hubApplyOrganiserFilters();
@@ -141,7 +151,7 @@
     } else if (!options.skipEventsRefresh) {
       if (window.hubApplyFilters) window.hubApplyFilters();
       else if (window.hubRefreshListings) window.hubRefreshListings();
-      if (window.hubReloadSponsorBlock) window.hubReloadSponsorBlock();
+      reloadSponsorHub('events');
     }
 
     try {

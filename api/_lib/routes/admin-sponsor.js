@@ -54,7 +54,7 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const slot = slotFromRequest(req) || 'sponsor_hub';
+      const slot = slotFromRequest(req) || 'events_sponsor_hub';
       const report = await getAdminSponsor(slot);
       return json(res, 200, { ok: true, ...report });
     } catch (e) {
@@ -64,16 +64,14 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'POST') {
     const body = parseBody(req);
-    const slot = String(body.slot || 'sponsor_hub').trim() || 'sponsor_hub';
+    const slot = String(body.slot || 'events_sponsor_hub').trim() || 'events_sponsor_hub';
     const title = String(body.title || '').trim();
     const blockBody = String(body.body || '').trim();
     const cta_label = String(body.cta_label || '').trim();
     const cta_url = String(body.cta_url || '').trim();
     const company_name = String(body.company_name || '').trim();
+    const cta_color = String(body.cta_color || '').trim();
 
-    if (!blockBody) {
-      return json(res, 400, { ok: false, error: 'missing_body' });
-    }
     if (!cta_label || !cta_url) {
       return json(res, 400, { ok: false, error: 'missing_cta' });
     }
@@ -87,6 +85,7 @@ module.exports = async function handler(req, res) {
         body: blockBody,
         cta_label,
         cta_url,
+        cta_color,
         logo_url,
         company_name,
         active: body.active !== false,

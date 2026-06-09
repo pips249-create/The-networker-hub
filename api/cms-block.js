@@ -6,14 +6,25 @@
 const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./_lib/supabase');
 const { normalizeSponsorBlock } = require('./_lib/cms-sponsor-fields');
 
-const SPONSOR_HUB_SLOT = 'sponsor_hub';
+const LEGACY_SPONSOR_HUB_SLOT = 'sponsor_hub';
 
-/** Detail-page slots fall back to Sponsor Hub when not published separately. */
+/** Browse hero slots — fall back to legacy sponsor_hub if not published separately. */
+const HERO_SPONSOR_SLOTS = new Set([
+  'events_sponsor_hub',
+  'organisers_sponsor_hub',
+  'opportunities_sponsor_hub',
+  'academy_sponsor_hub',
+  LEGACY_SPONSOR_HUB_SLOT,
+]);
+
+/** Detail-page slots fall back to events hero Sponsor Hub when not published separately. */
 const DETAIL_PAGE_SLOTS = new Set([
   'event_page_sidebar_ad',
   'organiser_page_sidebar_ad',
   'event_page_banner_ad',
 ]);
+
+const DETAIL_FALLBACK_SLOT = 'events_sponsor_hub';
 
 async function fetchActiveBlock(sb, slotKey) {
   const tableRes = await sb
@@ -60,9 +71,18 @@ module.exports = async function handler(req, res) {
     let block = await fetchActiveBlock(sb, slot);
     let fallbackFrom = null;
 
-    if (!block && DETAIL_PAGE_SLOTS.has(slot) && slot !== SPONSOR_HUB_SLOT) {
-      block = await fetchActiveBlock(sb, SPONSOR_HUB_SLOT);
-      if (block) fallbackFrom = SPONSOR_HUB_SLOT;
+    if (!block && HERO_SPONSOR_SLOTS.has(slot) && slot !== LEGACY_SPONSOR_HUB_SLOT) {
+      block = await fetchActiveBlock(sb, LEGACY_SPONSOR_HUB_SLOT);
+      if (block) fallbackFrom = LEGACY_SPONSOR_HUB_SLOT;
+    }
+
+    if (!block && DETAIL_PAGE_SLOTS.has(slot)) {
+      block = await fetchActiveBlock(sb, DETAIL_FALLBACK_SLOT);
+      if (block) fallbackFrom = DETAIL_FALLBACK_SLOT;
+      if (!block) {
+        block = await fetchActiveBlock(sb, LEGACY_SPONSOR_HUB_SLOT);
+        if (block) fallbackFrom = LEGACY_SPONSOR_HUB_SLOT;
+      }
     }
 
     if (block) block = normalizeSponsorBlock(block);

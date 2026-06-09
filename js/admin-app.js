@@ -104,18 +104,44 @@
   /** CMS ad placements — each maps to a cms_blocks.slot row. */
   var CMS_AD_SLOTS = [
     {
-      key: 'sponsor_hub',
-      label: 'Browse pages — Hero Sponsor Hub',
+      key: 'events_sponsor_hub',
+      label: 'Events browse — Hero Sponsor Hub',
       preview: 'hero',
-      help: 'Shown in the hero on Events, Organisers, and Business opportunities browse pages.',
+      help: 'Hero Sponsor Hub on the Events browse page (/events/). Logo, tagline, and CTA only.',
       tagline: 'Example offer — edit to match your sponsor package',
-      bullets: [
-        'Premium placement beside Featured events',
-        'Short line of copy',
-        'Direct link to your landing page',
-      ],
       ctaLabel: 'Enquire now',
-      ctaUrl: 'mailto:sales@the-networker.co.uk?subject=Sponsor%20Hub%20enquiry',
+      ctaUrl: 'https://',
+      ctaColor: '#2d2636',
+    },
+    {
+      key: 'organisers_sponsor_hub',
+      label: 'Organisers browse — Hero Sponsor Hub',
+      preview: 'hero',
+      help: 'Hero Sponsor Hub when visitors switch to Organisers on /events/. Separate from the Events browse ad.',
+      tagline: 'Example offer — edit to match your sponsor package',
+      ctaLabel: 'Enquire now',
+      ctaUrl: 'https://',
+      ctaColor: '#2d2636',
+    },
+    {
+      key: 'opportunities_sponsor_hub',
+      label: 'Opportunities browse — Hero Sponsor Hub',
+      preview: 'hero',
+      help: 'Hero Sponsor Hub on the Business opportunities browse page.',
+      tagline: 'Example offer — edit to match your sponsor package',
+      ctaLabel: 'Enquire now',
+      ctaUrl: 'https://',
+      ctaColor: '#2d2636',
+    },
+    {
+      key: 'academy_sponsor_hub',
+      label: 'Academy browse — Hero Sponsor Hub',
+      preview: 'hero',
+      help: 'Hero Sponsor Hub on The Networker Academy training browse page.',
+      tagline: 'Example offer — edit to match your sponsor package',
+      ctaLabel: 'Enquire now',
+      ctaUrl: 'https://',
+      ctaColor: '#2d2636',
     },
     {
       key: 'event_page_sidebar_ad',
@@ -123,9 +149,9 @@
       preview: 'compact',
       help: 'Logo and CTA button beside ticket checkout. Set the button link to the sponsor website.',
       tagline: '',
-      bullets: [],
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
+      ctaColor: '#2d2636',
     },
     {
       key: 'organiser_page_sidebar_ad',
@@ -133,9 +159,9 @@
       preview: 'compact',
       help: 'Logo and CTA button on organiser profiles. Set the button link to the sponsor website.',
       tagline: '',
-      bullets: [],
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
+      ctaColor: '#2d2636',
     },
   ];
 
@@ -2752,16 +2778,6 @@
     return safe;
   }
 
-  function sponsorBulletsFromBody(html) {
-    var temp = document.createElement('div');
-    temp.innerHTML = String(html || '');
-    return Array.prototype.map
-      .call(temp.querySelectorAll('li'), function (li) {
-        return li.textContent.trim();
-      })
-      .filter(Boolean);
-  }
-
   function sponsorTaglineFromBlock(block) {
     if (window.CmsSponsorFields) return window.CmsSponsorFields.tagline(block);
     var title = String(block.title || '').trim();
@@ -2774,27 +2790,10 @@
     return h3 ? h3.textContent.trim() : '';
   }
 
-  function sponsorBulletsHtml(bullets) {
-    if (!bullets.length) return '';
-    return (
-      '<ul class="sponsor-list">' +
-      bullets
-        .map(function (line) {
-          return '<li>' + esc(line) + '</li>';
-        })
-        .join('') +
-      '</ul>'
-    );
-  }
-
-  function sponsorBodyFromForm(creative) {
-    return sponsorBulletsHtml(creative.bullets);
-  }
-
   function sponsorPreviewLogoHtml(logoUrl, compact) {
     var bandClass =
       'sponsor-preview-logo-band' +
-      (compact ? ' sponsor-preview-logo-band--compact' : ' mb-3');
+      (compact ? ' sponsor-preview-logo-band--compact' : ' sponsor-preview-logo-band--hero mb-3');
     if (logoUrl && /^(https?:|\/|data:image\/)/i.test(logoUrl)) {
       return (
         '<div class="' +
@@ -2820,21 +2819,52 @@
     var company = document.getElementById('sponsor-company');
     var logoUrl = document.getElementById('sponsor-logo-url');
     var tagline = document.getElementById('sponsor-tagline');
-    var bullets = document.getElementById('sponsor-bullets');
     var ctaLabel = document.getElementById('sponsor-cta-label');
     var ctaUrl = document.getElementById('sponsor-cta-url');
     var active = document.getElementById('sponsor-active');
-    var lines = sponsorBulletsFromBody(block.body);
+    var savedColor =
+      window.CmsSponsorFields && window.CmsSponsorFields.ctaColor
+        ? window.CmsSponsorFields.ctaColor(block)
+        : String(block.cta_color || '').trim();
 
     if (company) company.value = String(block.company_name || '').trim();
     if (logoUrl) {
       logoUrl.value = String(block.logo_url || block.image_url || '').trim();
     }
     if (tagline) tagline.value = sponsorTaglineFromBlock(block);
-    if (bullets && lines.length) bullets.value = lines.join('\n');
     if (ctaLabel && block.cta_label) ctaLabel.value = block.cta_label;
     if (ctaUrl && block.cta_url) ctaUrl.value = block.cta_url;
     if (active) active.checked = block.active !== false;
+    setSponsorCtaColorFields(savedColor);
+  }
+
+  function defaultSponsorCtaColor() {
+    if (window.CmsSponsorFields && window.CmsSponsorFields.DEFAULT_CTA_COLOR) {
+      return window.CmsSponsorFields.DEFAULT_CTA_COLOR;
+    }
+    return '#2d2636';
+  }
+
+  function setSponsorCtaColorFields(color) {
+    var picker = document.getElementById('sponsor-cta-color');
+    var hex = document.getElementById('sponsor-cta-color-hex');
+    var safe =
+      window.CmsSponsorFields && window.CmsSponsorFields.sanitizeCtaColor
+        ? window.CmsSponsorFields.sanitizeCtaColor(color)
+        : '';
+    if (!safe) safe = defaultSponsorCtaColor();
+    if (picker) picker.value = safe;
+    if (hex) hex.value = safe;
+  }
+
+  function readSponsorCtaColor() {
+    var hex = document.getElementById('sponsor-cta-color-hex');
+    var picker = document.getElementById('sponsor-cta-color');
+    var raw = hex ? hex.value.trim() : picker ? picker.value : '';
+    if (window.CmsSponsorFields && window.CmsSponsorFields.sanitizeCtaColor) {
+      return window.CmsSponsorFields.sanitizeCtaColor(raw) || defaultSponsorCtaColor();
+    }
+    return defaultSponsorCtaColor();
   }
 
   function renderSponsorship() {
@@ -2866,7 +2896,6 @@
       var company = document.getElementById('sponsor-company');
       var logoUrl = document.getElementById('sponsor-logo-url');
       var tagline = document.getElementById('sponsor-tagline');
-      var bullets = document.getElementById('sponsor-bullets');
       var ctaLabel = document.getElementById('sponsor-cta-label');
       var ctaUrl = document.getElementById('sponsor-cta-url');
       var active = document.getElementById('sponsor-active');
@@ -2875,16 +2904,16 @@
       if (company) company.value = '';
       if (logoUrl) logoUrl.value = '';
       if (tagline) tagline.value = d.tagline;
-      if (bullets) bullets.value = d.bullets.join('\n');
       if (ctaLabel) ctaLabel.value = d.ctaLabel;
       if (ctaUrl) ctaUrl.value = d.ctaUrl;
+      setSponsorCtaColorFields(d.ctaColor || defaultSponsorCtaColor());
       if (active) active.checked = true;
       if (help) help.textContent = d.help;
       if (previewHint) {
         previewHint.textContent =
           d.preview === 'compact'
             ? 'Logo centred above the button, as on event and organiser detail pages.'
-            : 'Matches the browse page hero Sponsor Hub block.';
+            : 'Logo, tagline, and CTA — matches the browse page hero Sponsor Hub block.';
       }
       sponsorLogoBase64 = null;
       sponsorLogoMime = '';
@@ -2914,31 +2943,36 @@
       '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-tagline">Tagline / offer</label>' +
       '<input type="text" id="sponsor-tagline" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
       esc(slotDefaults().tagline) +
-      '"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-bullets">Bullet copy (one line each)</label>' +
-      '<textarea id="sponsor-bullets" rows="4" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
-      esc(slotDefaults().bullets.join('\n')) +
-      '</textarea></div></div>' +
+      '"></div></div>' +
       '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-logo-url">Company logo URL</label>' +
       '<input type="text" id="sponsor-logo-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mb-2" placeholder="https://…">' +
-      '<label class="block text-xs text-slate-500 mb-1" for="sponsor-logo-file">Or upload logo (max 2MB, 200×100 recommended)</label>' +
+      '<label class="block text-xs text-slate-500 mb-1" for="sponsor-logo-file">Or upload logo (max 2MB, wide format recommended)</label>' +
       '<input type="file" id="sponsor-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" class="block w-full text-sm text-slate-600"></div>' +
       '<div class="grid sm:grid-cols-2 gap-4">' +
       '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-label">CTA button label</label>' +
       '<input type="text" id="sponsor-cta-label" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
       esc(slotDefaults().ctaLabel) +
       '"></div>' +
-      '<div><label id="sponsor-cta-url-label" class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-url">CTA link (https:// or mailto:)</label>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-color">CTA button colour</label>' +
+      '<div class="flex items-center gap-2">' +
+      '<input type="color" id="sponsor-cta-color" class="h-10 w-14 rounded border border-slate-200 cursor-pointer bg-white p-1" value="' +
+      esc(slotDefaults().ctaColor || defaultSponsorCtaColor()) +
+      '" title="Pick CTA button colour">' +
+      '<input type="text" id="sponsor-cta-color-hex" class="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono" value="' +
+      esc(slotDefaults().ctaColor || defaultSponsorCtaColor()) +
+      '" placeholder="#2d2636" maxlength="7" spellcheck="false">' +
+      '</div></div></div>' +
+      '<div><label id="sponsor-cta-url-label" class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-url">CTA link (https:// opens in a new tab, or mailto:)</label>' +
       '<input type="text" id="sponsor-cta-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
       esc(slotDefaults().ctaUrl) +
-      '"></div></div>' +
+      '"></div>' +
       '<div class="flex flex-wrap gap-3 pt-2">' +
       '<button type="button" id="sponsor-preview-btn" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Update preview</button>' +
       '<button type="button" id="sponsor-publish-btn" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Publish to site</button>' +
       '</div></form>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 min-w-0">' +
       '<h3 class="font-bold text-brand-900 mb-1">Preview</h3>' +
-      '<p id="sponsor-preview-hint" class="text-xs text-slate-500 mb-4">Matches the browse page hero Sponsor Hub block.</p>' +
+      '<p id="sponsor-preview-hint" class="text-xs text-slate-500 mb-4">Logo, tagline, and CTA — matches the browse page hero Sponsor Hub block.</p>' +
       '<div id="sponsor-preview" class="max-w-md"></div>' +
       '</section></div></div>';
 
@@ -2957,12 +2991,6 @@
 
     function readForm() {
       var d = slotDefaults();
-      var bullets = (document.getElementById('sponsor-bullets').value || '')
-        .split('\n')
-        .map(function (line) {
-          return line.trim();
-        })
-        .filter(Boolean);
       var activeEl = document.getElementById('sponsor-active');
       var logoUrl = document.getElementById('sponsor-logo-url').value.trim();
       if (sponsorLogoBase64) logoUrl = sponsorLogoBase64;
@@ -2971,10 +2999,16 @@
         companyName: document.getElementById('sponsor-company').value.trim(),
         logoUrl: logoUrl,
         tagline: document.getElementById('sponsor-tagline').value.trim(),
-        bullets: bullets.length ? bullets : d.bullets.slice(),
         ctaLabel: document.getElementById('sponsor-cta-label').value.trim() || d.ctaLabel,
+        ctaColor: readSponsorCtaColor(),
         ctaUrl: document.getElementById('sponsor-cta-url').value.trim() || d.ctaUrl,
       };
+    }
+
+    function applyPreviewCtaColor(root, color) {
+      if (!root || !window.CmsSponsorFields) return;
+      var cta = root.querySelector('[data-sponsor-preview-cta]');
+      if (cta) window.CmsSponsorFields.applyCtaColor(cta, color);
     }
 
     function syncSlotFormLayout() {
@@ -2985,8 +3019,8 @@
       if (ctaUrlLabel) {
         ctaUrlLabel.textContent =
           slot.preview === 'compact'
-            ? 'Sponsor website URL (https://)'
-            : 'CTA link (https:// or mailto:)';
+            ? 'Sponsor website URL (https:// — opens in a new tab)'
+            : 'CTA link (https:// opens in a new tab, or mailto:)';
       }
     }
 
@@ -3002,23 +3036,23 @@
             ? '<div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">Inactive — this ad slot is hidden on site.</div>'
             : '<div class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 text-[#2d1b3d] shadow-[0_4px_18px_rgba(91,47,153,0.1)]">' +
               '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Sponsor Hub</div>' +
-              '<p class="text-base font-extrabold mb-2">Your brand here</p>' +
-              '<p class="text-sm text-slate-600 mb-4">Your sponsor message appears here</p>' +
+              '<p class="text-base font-extrabold mb-4">Your brand here</p>' +
               '<span class="inline-block rounded-lg border border-[#c9a8d8] text-[#5b2f99] text-sm font-bold px-4 py-2">Find out more →</span></div>';
         return;
       }
 
       var taglineHtml = sponsorHeadlineHtml(creative.tagline);
-      var list = sponsorBulletsHtml(creative.bullets);
+      var hasLogo = /^(https?:|\/|data:image\/)/i.test(String(creative.logoUrl || '').trim());
 
       if (slot.preview === 'compact') {
         el.innerHTML =
           '<aside class="relative rounded-xl border border-slate-200 bg-white p-4 pt-8 shadow-sm max-w-xs flex flex-col gap-3">' +
           '<span class="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider text-slate-500">Sponsored</span>' +
           sponsorPreviewLogoHtml(creative.logoUrl, true) +
-          '<span class="inline-block w-full text-center rounded-lg bg-[#2d2636] text-white text-xs font-bold px-3 py-2.5">' +
+          '<span data-sponsor-preview-cta class="inline-block w-full text-center rounded-lg bg-[#2d2636] text-white text-xs font-bold px-3 py-2.5">' +
           esc(creative.ctaLabel) +
           '</span></aside>';
+        applyPreviewCtaColor(el, creative.ctaColor);
         return;
       }
 
@@ -3027,16 +3061,14 @@
         '<span class="absolute top-4 right-4 text-[9px] font-bold uppercase tracking-wider text-slate-500">Sponsored</span>' +
         '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3 pr-16">★ Sponsor Hub</div>' +
         sponsorPreviewLogoHtml(creative.logoUrl, false) +
-        (creative.companyName
+        (creative.companyName && !hasLogo
           ? '<p class="text-sm font-extrabold mb-1">' + esc(creative.companyName) + '</p>'
           : '') +
-        (taglineHtml ? '<p class="text-sm font-semibold leading-snug mb-3">' + taglineHtml + '</p>' : '') +
-        '<div class="text-xs text-slate-600 mb-4">' +
-        list +
-        '</div>' +
-        '<span class="inline-block w-full text-center rounded-lg bg-[#2d2636] text-white text-sm font-bold px-4 py-2.5">' +
+        (taglineHtml ? '<p class="text-sm font-semibold leading-snug mb-4">' + taglineHtml + '</p>' : '') +
+        '<span data-sponsor-preview-cta class="inline-block w-full text-center rounded-lg bg-[#2d2636] text-white text-sm font-bold px-4 py-2.5">' +
         esc(creative.ctaLabel) +
         '</span></aside>';
+      applyPreviewCtaColor(el, creative.ctaColor);
     }
 
     function loadCurrentSlot() {
@@ -3072,8 +3104,8 @@
       'sponsor-company',
       'sponsor-logo-url',
       'sponsor-tagline',
-      'sponsor-bullets',
       'sponsor-cta-label',
+      'sponsor-cta-color-hex',
       'sponsor-cta-url',
       'sponsor-active',
     ].forEach(function (id) {
@@ -3081,6 +3113,14 @@
       if (input) input.addEventListener('input', renderPreview);
       if (input && input.type === 'checkbox') input.addEventListener('change', renderPreview);
     });
+
+    var sponsorCtaColorPicker = document.getElementById('sponsor-cta-color');
+    if (sponsorCtaColorPicker) {
+      sponsorCtaColorPicker.addEventListener('input', function () {
+        setSponsorCtaColorFields(sponsorCtaColorPicker.value);
+        renderPreview();
+      });
+    }
 
     document.getElementById('sponsor-logo-file').addEventListener('change', function (ev) {
       var file = ev.target.files && ev.target.files[0];
@@ -3114,13 +3154,13 @@
       var btn = document.getElementById('sponsor-publish-btn');
       var creative = readForm();
       var slot = slotDefaults();
-      var body = sponsorBodyFromForm(creative);
       if (
         creative.active &&
         slot.preview === 'hero' &&
-        !creative.bullets.length
+        !creative.logoUrl &&
+        !creative.tagline
       ) {
-        setSponsorStatus('Add at least one bullet before publishing an active hero ad.', 'error');
+        setSponsorStatus('Add a logo or tagline before publishing an active hero ad.', 'error');
         return;
       }
       if (
@@ -3140,7 +3180,7 @@
         slot.preview === 'compact' &&
         !/^https?:\/\//i.test(creative.ctaUrl)
       ) {
-        setSponsorStatus('Enter the sponsor website URL (https://…).', 'error');
+        setSponsorStatus('Enter the sponsor website URL (https://…) — opens in a new tab.', 'error');
         return;
       }
 
@@ -3150,12 +3190,10 @@
       var payload = {
         slot: currentSlotKey,
         title: slot.preview === 'compact' ? '' : creative.tagline,
-        body:
-          slot.preview === 'compact'
-            ? ''
-            : body || '<ul class="sponsor-list"><li>Placeholder</li></ul>',
+        body: '',
         cta_label: creative.ctaLabel,
         cta_url: creative.ctaUrl,
+        cta_color: creative.ctaColor,
         company_name: slot.preview === 'compact' ? '' : creative.companyName,
         logo_url: sponsorLogoBase64 ? '' : document.getElementById('sponsor-logo-url').value.trim(),
         active: creative.active,

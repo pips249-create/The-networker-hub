@@ -514,7 +514,7 @@ async function fetchFinancials(sb) {
   };
 }
 
-const DEFAULT_CMS_SLOT = 'sponsor_hub';
+const DEFAULT_CMS_SLOT = 'events_sponsor_hub';
 const { buildSponsorRow, normalizeSponsorBlock } = require('./cms-sponsor-fields');
 
 async function fetchSponsorBlock(sb, slot) {
@@ -525,9 +525,6 @@ async function fetchSponsorBlock(sb, slot) {
 }
 
 async function saveSponsorBlock(sb, payload) {
-  const body = String(payload.body || '').trim();
-  if (!body) throw new Error('missing_body');
-
   const row = buildSponsorRow(payload);
   const res = await sb.from('cms_blocks').upsert(row, { onConflict: 'slot' }).select().single();
   if (res.error) throw new Error(res.error.message);

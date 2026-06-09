@@ -39,10 +39,102 @@
 }
 
 .training-hero-inner {
-  max-width: 960px;
+  max-width: 1240px;
   margin: 0 auto;
   position: relative;
   z-index: 1;
+}
+
+.training-hero-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 20px;
+  align-items: start;
+}
+
+.training-hero-copy {
+  min-width: 0;
+}
+
+.training-hero-sponsor-slot {
+  min-width: 0;
+  display: flex;
+}
+
+.training-hero-sponsor-slot .sponsor-hub {
+  flex: 1;
+  width: 100%;
+}
+
+.training-page .sponsor-hub--in-hero {
+  position: static;
+  top: auto;
+  padding: 14px 18px 16px;
+  height: auto;
+  background: linear-gradient(165deg, #fff 0%, #f0fdfa 55%, #ecfeff 100%);
+  border: 1px solid rgba(45, 212, 191, 0.28);
+  box-shadow: 0 4px 18px rgba(10, 25, 47, 0.18);
+}
+
+.training-page .sponsor-hub--in-hero .sponsor-hub-head .icon {
+  color: #0d9488;
+}
+
+.training-page .sponsor-hub--in-hero .sponsor-logo-wrap {
+  margin: 0 -18px 10px;
+  width: calc(100% + 36px);
+  min-height: 120px;
+  padding: 10px 14px;
+  flex: 1 1 auto;
+}
+
+.training-page .sponsor-hub--in-hero .sponsor-logo,
+.training-page .sponsor-hub--in-hero .sponsor-logo--full {
+  width: 100%;
+  max-width: 100%;
+  max-height: 120px;
+  object-fit: contain;
+  object-position: center;
+}
+
+.training-page .sponsor-hub--in-hero .sponsor-body {
+  display: none;
+}
+
+.training-page .sponsor-hub--in-hero .sponsor-tagline {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  line-height: 1.35;
+}
+
+.training-page .sponsor-hub--in-hero .sponsor-cta {
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
+.training-page .sponsor-hub--fallback .sponsor-cta {
+  background: transparent;
+  color: #0d9488 !important;
+  border: 1px solid rgba(45, 212, 191, 0.45);
+}
+
+.training-page .sponsor-hub--fallback .sponsor-cta:hover {
+  background: rgba(45, 212, 191, 0.12);
+  color: #0f766e !important;
+}
+
+@media (max-width: 900px) {
+  .training-hero-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .training-hero-sponsor-slot {
+    max-width: 400px;
+    margin: 0 auto;
+    width: 100%;
+  }
 }
 
 .training-hero-badge {
