@@ -18,6 +18,10 @@
       "destination": "/events/event.html?slug=:slug"
     },
     {
+      "source": "/opportunities/:id",
+      "destination": "/opportunities/opportunity.html?id=:id"
+    },
+    {
       "source": "/events/booking-success",
       "destination": "/events/booking-success.html"
     },

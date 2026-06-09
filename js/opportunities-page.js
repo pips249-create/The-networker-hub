@@ -4,174 +4,14 @@
 (function () {
   var PAGE_SIZE = 36;
   var SEARCH_DEBOUNCE_MS = 200;
-  var SAVE_KEY = 'hubSavedOpportunityIds';
+
+  var catalog = window.HubOpportunitiesCatalog;
+  var saves = window.HubOpportunitySaves;
 
   var FAV_ICON =
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
     '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>' +
     '</svg>';
-
-  var TYPE_LABELS = {
-    franchise: 'Franchise',
-    'side-hustle': 'Side hustle',
-    partnership: 'Partnership',
-    networking: 'Networking',
-    distributorship: 'Distributorship',
-    'business-opportunity': 'Business opportunity',
-  };
-
-  var SEED_LISTINGS = [
-    {
-      type: 'franchise',
-      tags: ['franchise'],
-      featured: true,
-      host: 'Sparkle & Shine Ltd',
-      hostInitials: 'SS',
-      hostColor: '#7a5c0a',
-      title: 'Domestic Cleaning Franchise — Full Territory',
-      desc: 'Proven 12-year model. Full training, CRM, and branded materials. Territories across Yorkshire and the Midlands.',
-      meta: [
-        { key: 'Investment', val: '£9,500' },
-        { key: 'Return', val: '18–24 mo' },
-        { key: 'Location', val: 'Yorkshire' },
-      ],
-    },
-    {
-      type: 'side-hustle',
-      tags: ['side-hustle', 'remote', 'low-invest'],
-      featured: false,
-      host: 'Flat Lay Studio',
-      hostInitials: 'FL',
-      hostColor: '#0d5a52',
-      title: 'Branded Product Photography — Reseller Model',
-      desc: 'Edit product photos for e-commerce brands from home. Flexible hours; paid per project.',
-      meta: [
-        { key: 'Investment', val: '£0' },
-        { key: 'Earnings', val: '£400–£900/mo' },
-        { key: 'Location', val: 'Remote' },
-      ],
-    },
-    {
-      type: 'franchise',
-      tags: ['franchise'],
-      featured: false,
-      host: 'GreenBox Foods',
-      hostInitials: 'GB',
-      hostColor: '#166534',
-      title: 'Health Food Kiosk — Shopping Centres',
-      desc: 'Compact kiosk format for high-footfall retail. Full supply chain, POS, and branded packaging.',
-      meta: [
-        { key: 'Investment', val: '£22,000' },
-        { key: 'Return', val: '6–12 mo' },
-        { key: 'Spaces', val: '4 left' },
-      ],
-    },
-    {
-      type: 'partnership',
-      tags: ['partnership', 'remote', 'low-invest'],
-      featured: false,
-      host: 'Bolt Digital Agency',
-      hostInitials: 'BD',
-      hostColor: '#1d4ed8',
-      title: 'White-Label Web Design — Agency Reseller',
-      desc: 'Sell websites under your own brand. We build, you bill. Ideal for consultants and coaches.',
-      meta: [
-        { key: 'Investment', val: '£0' },
-        { key: 'Commission', val: '25–40%' },
-        { key: 'Location', val: 'Remote' },
-      ],
-    },
-    {
-      type: 'franchise',
-      tags: ['franchise'],
-      featured: false,
-      host: 'Pawfect Groom',
-      hostInitials: 'PG',
-      hostColor: '#6b21a8',
-      title: 'Dog Grooming Franchise — Mobile Van',
-      desc: 'Fully kitted mobile grooming van in your postcode. Training, booking software, and branding included.',
-      meta: [
-        { key: 'Investment', val: '£14,500' },
-        { key: 'Return', val: '12 mo' },
-        { key: 'Vans', val: '6 left' },
-      ],
-    },
-    {
-      type: 'side-hustle',
-      tags: ['side-hustle', 'low-invest'],
-      featured: false,
-      host: 'ClearLedger UK',
-      hostInitials: 'CL',
-      hostColor: '#374151',
-      title: 'Bookkeeping Partner — Sole Traders & SMEs',
-      desc: 'Licensed partner model for local small businesses. Ideal for those with admin or accounting experience.',
-      meta: [
-        { key: 'Investment', val: '£1,800' },
-        { key: 'Earnings', val: '£1.2–3k/mo' },
-        { key: 'Location', val: 'Your area' },
-      ],
-    },
-    {
-      type: 'networking',
-      tags: ['networking', 'low-invest'],
-      featured: false,
-      host: 'Connect Midlands',
-      hostInitials: 'CM',
-      hostColor: '#9d174d',
-      title: 'Regional Ambassador — Business Networking Groups',
-      desc: 'Launch and grow paid networking meetings in your area. Playbook, branding and member recruitment support included.',
-      meta: [
-        { key: 'Investment', val: '£2,500' },
-        { key: 'Earnings', val: '£2–5k/mo' },
-        { key: 'Location', val: 'West Midlands' },
-      ],
-    },
-    {
-      type: 'distributorship',
-      tags: ['distributorship', 'remote'],
-      featured: false,
-      host: 'BrewCraft Supplies',
-      hostInitials: 'BC',
-      hostColor: '#92400e',
-      title: 'Speciality Coffee Distributorship — Cafés & Offices',
-      desc: 'Exclusive territory for wholesale coffee and equipment. Training, samples and marketing materials provided.',
-      meta: [
-        { key: 'Investment', val: '£8,000' },
-        { key: 'Commission', val: '18–28%' },
-        { key: 'Location', val: 'South West' },
-      ],
-    },
-    {
-      type: 'business-opportunity',
-      tags: ['business-opportunity', 'franchise'],
-      featured: false,
-      host: 'FitSpace UK',
-      hostInitials: 'FS',
-      hostColor: '#0f766e',
-      title: 'Micro-Gym License — High Street Units',
-      desc: 'Turnkey small-format fitness studio model for town centres. Equipment lease, ops manual and launch marketing.',
-      meta: [
-        { key: 'Investment', val: '£35,000' },
-        { key: 'Return', val: '18 mo' },
-        { key: 'Territories', val: '3 left' },
-      ],
-    },
-  ];
-
-  var REGIONS = [
-    'Yorkshire',
-    'Manchester',
-    'Birmingham',
-    'London',
-    'Bristol',
-    'Scotland',
-    'Wales',
-    'Remote',
-    'UK-wide',
-    'Leeds',
-    'Liverpool',
-    'Newcastle',
-  ];
 
   var allListings = [];
   var activeFilter = 'all';
@@ -194,51 +34,8 @@
       .replace(/"/g, '&quot;');
   }
 
-  function buildSearchText(item) {
-    return [item.title, item.host, item.desc, item.type]
-      .concat(item.tags || [])
-      .concat((item.meta || []).map(function (m) {
-        return m.key + ' ' + m.val;
-      }))
-      .join(' ')
-      .toLowerCase();
-  }
-
-  function normalizeListing(seed, index) {
-    var item = Object.assign({}, seed);
-    item.id = 'opp-' + (index + 1);
-    item.tags = (seed.tags || []).slice();
-    item.meta = (seed.meta || []).map(function (m) {
-      return { key: m.key, val: m.val };
-    });
-    item.searchText = buildSearchText(item);
-    return item;
-  }
-
-  function expandCatalog(seeds, count) {
-    var out = [];
-    for (var i = 0; i < count; i++) {
-      var seed = seeds[i % seeds.length];
-      var item = normalizeListing(seed, i);
-      if (i >= seeds.length) {
-        var region = REGIONS[i % REGIONS.length];
-        item.title = seed.title.replace(/—.*/, '— ' + region);
-        if (item.meta.length > 2) {
-          item.meta[2] = { key: 'Location', val: region };
-        }
-        item.featured = i < 3;
-        item.searchText = buildSearchText(item);
-      }
-      out.push(item);
-    }
-    return out;
-  }
-
-  function resolveCatalogSize() {
-    var param = new URLSearchParams(window.location.search).get('listings');
-    var n = parseInt(param, 10);
-    if (n > 0) return Math.min(n, 5000);
-    return SEED_LISTINGS.length;
+  function detailHref(item) {
+    return catalog ? catalog.detailHref(item) : 'opportunity.html?id=' + encodeURIComponent(item.id);
   }
 
   function matchesFilter(item) {
@@ -262,65 +59,25 @@
     });
   }
 
-  function readSavedIds() {
-    try {
-      var raw = localStorage.getItem(SAVE_KEY);
-      var parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed.map(String) : [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  function writeSavedIds(ids) {
-    try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(ids));
-    } catch (e) {
-      /* ignore */
-    }
-  }
-
   function isOpportunitySaved(id) {
-    return readSavedIds().includes(String(id));
+    return saves ? saves.isSaved(id) : false;
   }
 
   function toggleOpportunitySave(id) {
-    var key = String(id || '');
-    if (!key) return false;
-    var ids = readSavedIds();
-    var nowSaved = !ids.includes(key);
-    if (nowSaved) ids.push(key);
-    else {
-      ids = ids.filter(function (x) {
-        return x !== key;
-      });
-    }
-    writeSavedIds(ids);
-    return nowSaved;
+    return saves ? saves.toggle(id) : false;
   }
 
   function refreshSaveButtons(root) {
-    var scope = root || document;
-    scope.querySelectorAll('.opp-fav-btn[data-opp-id]').forEach(function (btn) {
-      var saved = isOpportunitySaved(btn.getAttribute('data-opp-id'));
-      btn.classList.toggle('is-active', saved);
-      btn.setAttribute('aria-pressed', saved ? 'true' : 'false');
-      btn.setAttribute('aria-label', saved ? 'Remove from saved' : 'Save opportunity');
-    });
-  }
-
-  function typeClass(type) {
-    var map = {
-      'side-hustle': 'opp-type-sidehustle',
-      partnership: 'opp-type-partnership',
-      networking: 'opp-type-networking',
-      distributorship: 'opp-type-distributorship',
-      'business-opportunity': 'opp-type-business',
-    };
-    return map[type] || 'opp-type-franchise';
+    if (saves) saves.refreshButtons(root);
   }
 
   function cardHtml(item) {
+    var href = detailHref(item);
+    var typeLabels = catalog ? catalog.TYPE_LABELS : {};
+    var typeClassFn = catalog ? catalog.typeClass.bind(catalog) : function () {
+      return 'opp-type-franchise';
+    };
+
     var metaHtml = (item.meta || [])
       .slice(0, 3)
       .map(function (m) {
@@ -340,13 +97,6 @@
       '" data-type="' +
       escapeHtml(item.type) +
       '">' +
-      '<div class="opp-card-head">' +
-      '<span class="opp-type-badge ' +
-      typeClass(item.type) +
-      '">' +
-      escapeHtml(TYPE_LABELS[item.type] || item.type) +
-      '</span>' +
-      '<div class="opp-card-actions">' +
       '<button type="button" class="opp-fav-btn' +
       (isOpportunitySaved(item.id) ? ' is-active' : '') +
       '" data-opp-id="' +
@@ -358,20 +108,31 @@
       '">' +
       FAV_ICON +
       '</button>' +
-      (item.featured ? '<span class="opp-featured-pip">Featured</span>' : '') +
-      '</div></div>' +
-      '<div class="opp-card-body">' +
-      '<h3 class="opp-card-title">' +
-      escapeHtml(item.title) +
-      '</h3>' +
-      '<p class="opp-card-host">' +
-      '<span class="opp-host-avatar" style="background:' +
-      escapeHtml(item.hostColor) +
+      '<div class="opp-card-top">' +
+      '<span class="opp-type-badge ' +
+      typeClassFn(item.type) +
       '">' +
-      escapeHtml(item.hostInitials) +
+      escapeHtml(typeLabels[item.type] || item.type) +
       '</span>' +
+      (item.featured ? '<span class="opp-featured-pip">Featured</span>' : '') +
+      '</div>' +
+      '<div class="opp-card-body">' +
+      '<div class="opp-card-identity">' +
+      '<div class="opp-host-logo" style="background:' +
+      escapeHtml(item.hostColor) +
+      '" aria-hidden="true">' +
+      escapeHtml(item.hostInitials) +
+      '</div>' +
+      '<div class="opp-card-identity-text">' +
+      '<h3 class="opp-card-title"><a href="' +
+      escapeHtml(href) +
+      '">' +
+      escapeHtml(item.title) +
+      '</a></h3>' +
+      '<p class="opp-card-host">' +
       escapeHtml(item.host) +
       '</p>' +
+      '</div></div>' +
       '<p class="opp-card-desc">' +
       escapeHtml(item.desc) +
       '</p>' +
@@ -379,8 +140,8 @@
       metaHtml +
       '</div>' +
       '</div>' +
-      '<a href="mailto:hello@the-networker.co.uk?subject=' +
-      encodeURIComponent('Opportunity enquiry: ' + item.title) +
+      '<a href="' +
+      escapeHtml(href) +
       '" class="opp-enquire">Enquire →</a>' +
       '</article>'
     );
@@ -605,7 +366,7 @@
   }
 
   function init() {
-    allListings = expandCatalog(SEED_LISTINGS, resolveCatalogSize());
+    allListings = catalog ? catalog.loadCatalog() : [];
     initFilters();
     initPagination();
     initSmoothScroll();
@@ -614,17 +375,12 @@
 
   window.submitForm = submitForm;
   window.resetFilters = resetFilters;
-  window.HubOpportunitySaves = {
-    ids: readSavedIds,
-    isSaved: isOpportunitySaved,
-    toggle: toggleOpportunitySave,
-    refreshButtons: refreshSaveButtons,
-  };
 
   window.hubRenderOpportunities = function (listings) {
+    if (!catalog) return;
     allListings = (listings || []).map(function (item, i) {
-      var normalized = normalizeListing(item, i);
-      if (!normalized.searchText) normalized.searchText = buildSearchText(normalized);
+      var normalized = catalog.normalizeListing(item, i);
+      if (!normalized.searchText) normalized.searchText = catalog.buildSearchText(normalized);
       return normalized;
     });
     currentPage = 1;

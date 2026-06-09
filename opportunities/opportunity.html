@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Opportunity – The Networker Hub</title>
+    <meta name="description" content="View full details and enquire about this business opportunity on The Networker Hub." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css?v=20260626" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260626" />
+    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260609j" />
+    <link rel="stylesheet" href="../css/opportunity-detail.css?v=20260609j" />
+  </head>
+  <body class="opportunities-page opportunity-detail-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260710" data-root="../" data-page="opportunities"></script>
+
+    <div class="opp-detail-breadcrumb">
+      <a class="opp-detail-back" id="opp-back" href="browse.html">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        Back to all opportunities
+      </a>
+      <div class="opp-detail-trail">
+        <a href="index.html">Opportunities</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="browse.html">Find</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span id="opp-trail-current">Loading…</span>
+      </div>
+    </div>
+
+    <div class="opp-detail-shell" id="opp-detail-shell">
+      <div class="opp-detail-not-found" id="opp-not-found" hidden>
+        <h1>Opportunity not found</h1>
+        <p>We couldn&apos;t find that listing. It may have been removed or the link is incorrect.</p>
+        <a class="opp-detail-btn" href="browse.html">Browse opportunities</a>
+      </div>
+
+      <div class="opp-detail-layout" id="opp-detail-layout" hidden>
+        <main class="opp-detail-main">
+          <div class="opp-detail-hero">
+            <div class="opp-detail-host-logo" id="opp-host-logo" aria-hidden="true"></div>
+            <div class="opp-detail-hero-text">
+              <span class="opp-type-badge" id="opp-type-badge"></span>
+              <span class="opp-featured-pip" id="opp-featured-pip" hidden>Featured</span>
+              <h1 id="opp-title"></h1>
+              <p class="opp-detail-host-name" id="opp-host-name"></p>
+            </div>
+            <button type="button" class="opp-fav-btn opp-detail-save" id="opp-save-btn" aria-label="Save opportunity" aria-pressed="false">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="opp-detail-meta-grid" id="opp-meta-grid"></div>
+
+          <section class="opp-detail-section">
+            <h2>About this opportunity</h2>
+            <p class="opp-detail-lead" id="opp-desc"></p>
+            <div id="opp-about-extra"></div>
+          </section>
+
+          <section class="opp-detail-section">
+            <h2>Listed by</h2>
+            <div class="opp-detail-poster">
+              <div class="opp-host-logo opp-detail-poster-logo" id="opp-poster-logo" aria-hidden="true"></div>
+              <div>
+                <h3 id="opp-poster-name"></h3>
+                <p class="opp-detail-poster-note">Enquiries go directly to the poster — no middlemen or per-lead fees.</p>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <aside class="opp-detail-sidebar">
+          <div class="opp-enquire-card">
+            <h2>Enquire about this listing</h2>
+            <p class="opp-enquire-lede">Send a message and the poster will get back to you directly.</p>
+            <form class="opp-enquire-form" id="opp-enquire-form">
+              <label>
+                <span>Your name</span>
+                <input type="text" name="name" id="opp-enquire-name" required autocomplete="name" />
+              </label>
+              <label>
+                <span>Email</span>
+                <input type="email" name="email" id="opp-enquire-email" required autocomplete="email" />
+              </label>
+              <label>
+                <span>Message</span>
+                <textarea name="message" id="opp-enquire-message" rows="4" required></textarea>
+              </label>
+              <button type="submit" class="opp-detail-btn opp-detail-btn--gold" id="opp-enquire-submit">Send enquiry</button>
+            </form>
+            <p class="opp-enquire-alt">
+              Or email
+              <a href="mailto:hello@the-networker.co.uk" id="opp-enquire-mailto">hello@the-networker.co.uk</a>
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <a href="../index.html" aria-label="Home">
+          <img class="footer-logo" src="../assets/logo.png" alt="" width="160" height="60" />
+        </a>
+        <nav class="footer-links" aria-label="Footer">
+          <a href="../events/index.html">Browse events</a>
+          <a href="../about.html">About us</a>
+          <a href="../faq.html">FAQ</a>
+          <a href="mailto:hello@the-networker.co.uk">Contact</a>
+        </nav>
+        <p class="footer-copy">© The Networker Group Ltd</p>
+      </div>
+    </footer>
+
+    <script src="../js/opportunities-catalog.js?v=20260609j"></script>
+    <script src="../js/opportunities-saves.js?v=20260609j"></script>
+    <script src="../js/opportunity-detail.js?v=20260609j"></script>
+  </body>
+</html>

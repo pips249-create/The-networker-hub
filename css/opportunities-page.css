@@ -713,7 +713,7 @@
   flex-direction: column;
   background: #fff;
   border: 1px solid var(--opp-border);
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
   position: relative;
@@ -721,7 +721,7 @@
 }
 
 .opportunities-page .opp-card:hover {
-  box-shadow: 0 6px 20px rgba(13, 31, 60, 0.1);
+  box-shadow: 0 8px 24px rgba(13, 31, 60, 0.1);
   transform: translateY(-2px);
   border-color: rgba(201, 150, 31, 0.45);
 }
@@ -731,48 +731,49 @@
   box-shadow: 0 2px 12px rgba(201, 150, 31, 0.12);
 }
 
-.opportunities-page .opp-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 10px 0;
-}
-
-.opportunities-page .opp-card-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
 .opportunities-page .opp-fav-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   padding: 0;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--opp-border);
+  background: #fff;
   color: var(--opp-mid-gray);
   cursor: pointer;
   border-radius: 50%;
-  transition: color 0.15s, background 0.15s;
+  box-shadow: 0 2px 8px rgba(13, 31, 60, 0.08);
+  transition: color 0.15s, background 0.15s, border-color 0.15s, transform 0.15s;
 }
 
 .opportunities-page .opp-fav-btn:hover {
   color: #c44;
-  background: rgba(204, 68, 68, 0.08);
+  border-color: rgba(204, 68, 68, 0.35);
+  background: #fff5f5;
+  transform: scale(1.05);
 }
 
 .opportunities-page .opp-fav-btn.is-active {
   color: #c44;
+  border-color: rgba(204, 68, 68, 0.4);
+  background: #fff5f5;
 }
 
 .opportunities-page .opp-fav-btn.is-active svg path {
   fill: currentColor;
+}
+
+.opportunities-page .opp-card-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 52px 0 12px;
 }
 
 .opportunities-page .opp-type-badge {
@@ -830,15 +831,52 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 8px 10px 6px;
+  padding: 10px 12px 8px;
   min-height: 0;
+}
+
+.opportunities-page .opp-card-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.opportunities-page .opp-host-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  letter-spacing: -0.02em;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.opportunities-page .opp-card-identity-text {
+  min-width: 0;
+  flex: 1;
+  padding-right: 28px;
+}
+
+.opportunities-page .opp-card-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.opportunities-page .opp-card-title a:hover {
+  color: var(--opp-gold);
 }
 
 .opportunities-page .opp-card-title {
   font-size: 14px;
   font-weight: 600;
   color: var(--opp-navy);
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -847,28 +885,12 @@
 }
 
 .opportunities-page .opp-card-host {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 6px;
+  margin: 0;
   font-size: 12px;
   color: var(--opp-mid-gray);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.opportunities-page .opp-host-avatar {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 9px;
-  font-weight: 700;
-  color: #fff;
-  flex-shrink: 0;
 }
 
 .opportunities-page .opp-card-desc {
@@ -913,10 +935,10 @@
 .opportunities-page .opp-enquire {
   display: block;
   margin: 0;
-  padding: 8px 10px;
+  padding: 10px 12px;
   text-align: center;
   border-top: 1px solid var(--opp-light-gray);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--opp-gold);
   text-decoration: none;
