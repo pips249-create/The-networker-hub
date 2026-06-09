@@ -583,10 +583,15 @@
 
   const SPONSOR_FALLBACK = {
     headline: 'Your brand here',
-    subtitle: 'Reach 10k+ professionals monthly',
     ctaLabel: 'Find out more →',
     ctaUrl: SPONSOR_ENQUIRE_MAILTO,
   };
+
+  const SPONSOR_HERO_MAX_BULLETS = 2;
+
+  function isSponsorInHero() {
+    return !!(els.sponsorHub && els.sponsorHub.classList.contains('sponsor-hub--in-hero'));
+  }
 
   function normalizeSponsorCtaUrl(url) {
     const u = String(url || '').trim();
@@ -607,12 +612,15 @@
     return h3 ? h3.textContent.trim() : '';
   }
 
-  function sponsorBulletsHtml(body) {
+  function sponsorBulletsHtml(body, maxItems) {
     const temp = document.createElement('div');
     temp.innerHTML = String(body || '');
-    const items = Array.from(temp.querySelectorAll('li'))
+    let items = Array.from(temp.querySelectorAll('li'))
       .map((li) => li.textContent.trim())
       .filter(Boolean);
+    if (maxItems > 0 && items.length > maxItems) {
+      items = items.slice(0, maxItems);
+    }
     if (!items.length) return '';
     return (
       '<ul class="sponsor-list">' +
@@ -667,15 +675,15 @@
     els.sponsorHub.classList.add('sponsor-hub--fallback');
 
     if (els.sponsorBadge) els.sponsorBadge.hidden = true;
-    if (els.sponsorLogoWrap) els.sponsorLogoWrap.hidden = true;
+    setSponsorLogo('');
     if (els.sponsorCompany) els.sponsorCompany.hidden = true;
     if (els.sponsorTagline) {
       els.sponsorTagline.hidden = false;
       els.sponsorTagline.textContent = SPONSOR_FALLBACK.headline;
     }
     if (els.sponsorBody) {
-      els.sponsorBody.hidden = false;
-      els.sponsorBody.textContent = SPONSOR_FALLBACK.subtitle;
+      els.sponsorBody.hidden = true;
+      els.sponsorBody.textContent = '';
     }
     if (els.sponsorCta) {
       els.sponsorCta.textContent = SPONSOR_FALLBACK.ctaLabel;
@@ -698,13 +706,20 @@
       : String(block.logo_url || block.image_url || '').trim();
     const ctaLabel = String(block.cta_label || '').trim() || 'Enquire now';
     const ctaUrl = normalizeSponsorCtaUrl(block.cta_url);
-    const bulletsHtml = sponsorBulletsHtml(block.body);
+    const heroSponsor = isSponsorInHero();
+    const bulletsHtml = sponsorBulletsHtml(
+      block.body,
+      heroSponsor ? SPONSOR_HERO_MAX_BULLETS : 0
+    );
+    const hasLogo = window.CmsSponsorFields
+      ? window.CmsSponsorFields.isLogoUrl(logoUrl)
+      : /^https?:\/\//i.test(String(logoUrl || '').trim());
 
     if (els.sponsorBadge) els.sponsorBadge.hidden = false;
     setSponsorLogo(logoUrl);
 
     if (els.sponsorCompany) {
-      if (company) {
+      if (company && !(heroSponsor && hasLogo)) {
         els.sponsorCompany.textContent = company;
         els.sponsorCompany.hidden = false;
       } else {
