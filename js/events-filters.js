@@ -19,9 +19,6 @@
   var nearRadiusMobile = document.getElementById('near-radius-mobile');
   var nearRadiusWrapMobile = document.getElementById('near-radius-wrap-mobile');
   var resultsCount = document.getElementById('results-count');
-  var spotlightPrev = document.getElementById('spotlight-prev');
-  var spotlightNext = document.getElementById('spotlight-next');
-  var spotlightTrack = document.getElementById('spotlight-track');
   var typeTabs = document.querySelectorAll('.event-type-chip[data-type]');
   var typeChipsRoot = document.getElementById('event-type-chips');
 
@@ -765,17 +762,6 @@
       }
     }
   });
-
-  if (spotlightPrev && spotlightTrack) {
-    spotlightPrev.addEventListener('click', function () {
-      spotlightTrack.scrollBy({ left: -280, behavior: 'smooth' });
-    });
-  }
-  if (spotlightNext && spotlightTrack) {
-    spotlightNext.addEventListener('click', function () {
-      spotlightTrack.scrollBy({ left: 280, behavior: 'smooth' });
-    });
-  }
 
   var dateWrap = dateRangeInput && dateRangeInput.closest('.filter-date-wrap');
 

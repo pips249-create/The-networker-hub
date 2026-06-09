@@ -26,6 +26,11 @@
   let events = [];
   let currentPage = 1;
   let spotlightPremiumOrder = null;
+  let spotlightStartIndex = 0;
+  let spotlightTimer = null;
+  let spotlightAnimating = false;
+  let spotlightCarouselBound = false;
+  const SPOTLIGHT_AUTO_MS = 5000;
 
   function shuffleList(list) {
     const copy = list.slice();
@@ -40,6 +45,159 @@
 
   function resetSpotlightOrder() {
     spotlightPremiumOrder = null;
+    spotlightStartIndex = 0;
+  }
+
+  function stopSpotlightAuto() {
+    if (spotlightTimer) {
+      clearInterval(spotlightTimer);
+      spotlightTimer = null;
+    }
+  }
+
+  function startSpotlightAuto() {
+    stopSpotlightAuto();
+    if (!els.spotlightTrack) return;
+    const premium = getSpotlightPremium();
+    if (premium.length <= 1) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    spotlightTimer = window.setInterval(function () {
+      if (document.hidden || spotlightAnimating) return;
+      advanceSpotlight(1);
+    }, SPOTLIGHT_AUTO_MS);
+  }
+
+  function getSpotlightVisibleCount() {
+    const wrap = els.spotlightTrack && els.spotlightTrack.parentElement;
+    const w = (wrap && wrap.clientWidth) || window.innerWidth;
+    if (w < 520) return 1;
+    if (w < 900) return 2;
+    return 3;
+  }
+
+  function getSpotlightCardStep() {
+    const track = els.spotlightTrack;
+    if (!track) return 274;
+    const card = track.querySelector('.premium-card');
+    if (!card) return 274;
+    const gap = parseFloat(getComputedStyle(track).gap) || 14;
+    return card.getBoundingClientRect().width + gap;
+  }
+
+  function rotatePremiumOrder(dir) {
+    if (!spotlightPremiumOrder || !spotlightPremiumOrder.length) return;
+    if (dir > 0) {
+      spotlightPremiumOrder.push(spotlightPremiumOrder.shift());
+    } else {
+      spotlightPremiumOrder.unshift(spotlightPremiumOrder.pop());
+    }
+  }
+
+  function spotlightVisibleEvents(premium) {
+    const slots = getSpotlightVisibleCount();
+    const show = Math.min(slots, premium.length);
+    const out = [];
+    for (let i = 0; i < show; i++) {
+      out.push(premium[(spotlightStartIndex + i) % premium.length]);
+    }
+    return out;
+  }
+
+  function advanceSpotlight(dir) {
+    dir = dir < 0 ? -1 : 1;
+    const premium = getSpotlightPremium();
+    if (!premium.length || !els.spotlightTrack || spotlightAnimating) return;
+
+    const track = els.spotlightTrack;
+    const visibleSlots = getSpotlightVisibleCount();
+
+    if (premium.length <= visibleSlots) {
+      rotatePremiumOrder(dir);
+      spotlightStartIndex = 0;
+      renderSpotlight();
+      startSpotlightAuto();
+      return;
+    }
+
+    spotlightAnimating = true;
+    stopSpotlightAuto();
+    const step = getSpotlightCardStep();
+
+    function finishAdvance() {
+      track.classList.remove('is-sliding');
+      track.style.transform = '';
+      if (dir > 0) {
+        spotlightStartIndex = (spotlightStartIndex + 1) % premium.length;
+      } else {
+        spotlightStartIndex = (spotlightStartIndex - 1 + premium.length) % premium.length;
+      }
+      renderSpotlight();
+      spotlightAnimating = false;
+      startSpotlightAuto();
+    }
+
+    if (dir > 0) {
+      const nextIdx = (spotlightStartIndex + visibleSlots) % premium.length;
+      const holder = document.createElement('div');
+      holder.innerHTML = premiumCard(premium[nextIdx]);
+      const incoming = holder.firstElementChild;
+      track.appendChild(incoming);
+
+      requestAnimationFrame(function () {
+        track.classList.add('is-sliding');
+        track.style.transform = 'translateX(-' + step + 'px)';
+      });
+
+      track.addEventListener('transitionend', finishAdvance, { once: true });
+      return;
+    }
+
+    const prevIdx = (spotlightStartIndex - 1 + premium.length) % premium.length;
+    const holder = document.createElement('div');
+    holder.innerHTML = premiumCard(premium[prevIdx]);
+    const incoming = holder.firstElementChild;
+    track.insertBefore(incoming, track.firstChild);
+
+    track.classList.remove('is-sliding');
+    track.style.transform = 'translateX(-' + step + 'px)';
+    void track.offsetWidth;
+    track.classList.add('is-sliding');
+    track.style.transform = 'translateX(0)';
+    track.addEventListener('transitionend', finishAdvance, { once: true });
+  }
+
+  function bindSpotlightCarousel() {
+    if (spotlightCarouselBound) return;
+    spotlightCarouselBound = true;
+
+    const section = document.querySelector('.premium-spotlight');
+    const prev = document.getElementById('spotlight-prev');
+    const next = document.getElementById('spotlight-next');
+
+    if (prev) {
+      prev.addEventListener('click', function () {
+        advanceSpotlight(-1);
+      });
+    }
+    if (next) {
+      next.addEventListener('click', function () {
+        advanceSpotlight(1);
+      });
+    }
+    if (section) {
+      section.addEventListener('mouseenter', stopSpotlightAuto);
+      section.addEventListener('mouseleave', startSpotlightAuto);
+      section.addEventListener('focusin', stopSpotlightAuto);
+      section.addEventListener('focusout', startSpotlightAuto);
+    }
+
+    var resizeTimer;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () {
+        if (!spotlightAnimating) renderSpotlight();
+      }, 200);
+    });
   }
 
   function getSpotlightPremium() {
@@ -399,9 +557,19 @@
     const premium = getSpotlightPremium();
 
     if (els.spotlightTrack) {
-      els.spotlightTrack.innerHTML = premium.length
-        ? premium.map(premiumCard).join('')
-        : '<p class="spotlight-empty">No premium events yet — set <strong>featured</strong> on approved events in Supabase.</p>';
+      if (!premium.length) {
+        els.spotlightTrack.innerHTML =
+          '<p class="spotlight-empty">No premium events yet — set <strong>featured</strong> on approved events in Supabase.</p>';
+        els.spotlightTrack.classList.remove('spotlight-track--carousel', 'is-sliding');
+        els.spotlightTrack.style.transform = '';
+        stopSpotlightAuto();
+      } else {
+        const visible = spotlightVisibleEvents(premium);
+        els.spotlightTrack.innerHTML = visible.map(premiumCard).join('');
+        els.spotlightTrack.classList.add('spotlight-track--carousel');
+        bindSpotlightCarousel();
+        startSpotlightAuto();
+      }
     }
 
     if (els.featuredList) {
@@ -752,6 +920,7 @@
   window.hubReloadEvents = load;
   window.hubReloadSponsorBlock = loadSponsorBlock;
   window.hubEventDetailHref = detailHref;
+  window.hubSpotlightStep = advanceSpotlight;
   initListingsPagination();
   loadSponsorBlock();
   load();
