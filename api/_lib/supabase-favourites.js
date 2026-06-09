@@ -1,4 +1,5 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
+const { eventImageUrl } = require('./event-image');
 
 async function resolveAttendeeId(sb, session) {
   if (!session?.email) return null;
@@ -48,7 +49,7 @@ function mapFavouriteRow(row) {
     slug: ev.slug || '',
     startsAt: ev.starts_at || null,
     city: ev.city || '',
-    photoUrl: ev.photo_url || '',
+    photoUrl: eventImageUrl(ev),
   };
 }
 
@@ -60,7 +61,7 @@ async function listFavourites(session) {
 
   const res = await sb
     .from('event_favourites')
-    .select('id, created_at, event_id, notify_email, events(id, title, slug, starts_at, city, photo_url)')
+    .select('id, created_at, event_id, notify_email, events(id, title, slug, starts_at, city, image_url, photo_url)')
     .eq('attendee_id', attendeeId)
     .order('created_at', { ascending: false });
   if (res.error) throw new Error(res.error.message);

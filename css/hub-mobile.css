@@ -390,6 +390,13 @@ body.nav-menu-open {
     min-width: 0;
   }
 
+  .filter-location-radius select {
+    min-width: 72px;
+    padding: 9px 26px 9px 10px;
+    font-size: 12px;
+    min-height: 44px;
+  }
+
   .filter-location-near {
     flex: 0 1 auto;
     flex-wrap: nowrap;

@@ -2,6 +2,23 @@
  * Public events API — Supabase (replaces Airtable read path when DATA_PROVIDER=supabase).
  */
 const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./supabase');
+const { eventImageUrl } = require('./event-image');
+
+const IN_CHUNK_SIZE = 80;
+
+async function fetchRowsInChunks(sb, table, idColumn, ids, select = '*') {
+  const unique = [...new Set((ids || []).filter(Boolean))];
+  if (!unique.length) return [];
+
+  const rows = [];
+  for (let i = 0; i < unique.length; i += IN_CHUNK_SIZE) {
+    const chunk = unique.slice(i, i + IN_CHUNK_SIZE);
+    const { data, error } = await sb.from(table).select(select).in(idColumn, chunk);
+    if (error) throw new Error(error.message);
+    rows.push(...(data || []));
+  }
+  return rows;
+}
 
 function parsePriceNum(raw) {
   if (raw == null || raw === '') return 0;
@@ -159,19 +176,21 @@ async function fetchRegistrationCountsByTicket(sb, ticketRows) {
   const ids = (ticketRows || []).map((t) => t.id).filter(Boolean);
   if (!ids.length) return new Map();
 
-  const { data, error } = await sb
-    .from('registrations')
-    .select('ticket_id')
-    .in('ticket_id', ids)
-    .neq('payment_status', 'Refunded')
-    .neq('application_status', 'Denied');
-  if (error) throw new Error(error.message);
-
   const counts = new Map();
-  (data || []).forEach((row) => {
-    if (!row.ticket_id) return;
-    counts.set(row.ticket_id, (counts.get(row.ticket_id) || 0) + 1);
-  });
+  for (let i = 0; i < ids.length; i += IN_CHUNK_SIZE) {
+    const chunk = ids.slice(i, i + IN_CHUNK_SIZE);
+    const { data, error } = await sb
+      .from('registrations')
+      .select('ticket_id')
+      .in('ticket_id', chunk)
+      .neq('payment_status', 'Refunded')
+      .neq('application_status', 'Denied');
+    if (error) throw new Error(error.message);
+    (data || []).forEach((row) => {
+      if (!row.ticket_id) return;
+      counts.set(row.ticket_id, (counts.get(row.ticket_id) || 0) + 1);
+    });
+  }
   return counts;
 }
 
@@ -274,7 +293,7 @@ function rowToEvent(row, organiser, ticketRows) {
     price,
     priceKey,
     priceNum,
-    photo: String(row.photo_url || ''),
+    photo: eventImageUrl(row),
     organiser: orgName,
     rating: Number(row.average_rating) || 0,
     reviews: Number(row.review_count) || 0,
@@ -405,18 +424,14 @@ async function fetchApprovedEvents(sb) {
 
   let tickets = [];
   if (eventIds.length) {
-    const { data: tix, error: tixErr } = await sb.from('tickets').select('*').in('event_id', eventIds);
-    if (tixErr) throw new Error(tixErr.message);
-    tickets = tix || [];
+    tickets = await fetchRowsInChunks(sb, 'tickets', 'event_id', eventIds);
     const regCounts = await fetchRegistrationCountsByTicket(sb, tickets);
     tickets = tickets.map((t) => ({ ...t, _registrationCount: regCounts.get(t.id) || 0 }));
   }
 
   let organisers = [];
   if (orgIds.length) {
-    const { data: orgs, error: orgErr } = await sb.from('organisers').select('*').in('id', orgIds);
-    if (orgErr) throw new Error(orgErr.message);
-    organisers = orgs || [];
+    organisers = await fetchRowsInChunks(sb, 'organisers', 'id', orgIds);
   }
 
   const orgById = new Map(organisers.map((o) => [o.id, o]));

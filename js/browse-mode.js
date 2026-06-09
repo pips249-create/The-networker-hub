@@ -17,7 +17,7 @@
       title: 'Find your next <span class="accent">event</span>',
       sub: 'Find networking events, exhibitions and conferences across the UK',
       heading: 'All listings',
-      searchPlaceholder: 'Search all meetings, people, resources…',
+      searchPlaceholder: 'Search meetings by title, organiser, or location…',
       searchLabel: 'Search events',
       filterLabel: 'Filter events',
       switchLabel: 'Browse organisers',

@@ -71,6 +71,7 @@ function parseDateIso(dateStr, endStr) {
 }
 
 const { plainEventDescription, mapAttendeeExtrasToRow } = require('./event-description');
+const { eventImageUrl, eventImageDbValue } = require('./event-image');
 
 function rowToEvent(row) {
   if (!row) return null;
@@ -99,7 +100,7 @@ function rowToEvent(row) {
     eventFormat: String(row.meeting_type || '').trim(),
     onlinePlatform: '',
     onlineLink: String(row.meeting_link || '').trim(),
-    imageUrl: String(row.photo_url || '').trim(),
+    imageUrl: eventImageUrl(row),
     status: eventStatus,
     statusRaw: row.approval_status || 'Pending Review',
     listingStatus: eventStatus,
@@ -392,7 +393,7 @@ function mapEventStatus(payload) {
 
 async function buildEventRow(payload, eventId, mode) {
   const touchDate = mode !== 'update' || payloadTouchesDate(payload);
-  const photo_url = await resolveEventPhotoUrl(payload, eventId);
+  const image_url = await resolveEventPhotoUrl(payload, eventId);
   const isLocked = Boolean(payload._locked);
   const listingStatus = payload.listingStatus != null ? payload.listingStatus : null;
   const approval_status =
@@ -467,8 +468,8 @@ async function buildEventRow(payload, eventId, mode) {
   if (approval_status !== undefined) row.approval_status = approval_status;
   else if (mode === 'create') row.approval_status = 'Pending Review';
 
-  if (photo_url !== undefined) row.photo_url = photo_url;
-  else if (mode === 'create') row.photo_url = null;
+  if (image_url !== undefined) row.image_url = eventImageDbValue(image_url);
+  else if (mode === 'create') row.image_url = null;
 
   return row;
 }

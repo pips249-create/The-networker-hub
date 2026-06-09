@@ -2,6 +2,7 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { resolveAttendeeId } = require('./supabase-favourites');
 const { buildStats } = require('./attendee');
 const { eventHasEnded, isEligibleRegistration } = require('./supabase-reviews');
+const { eventImageUrl } = require('./event-image');
 
 function deriveReviewStatus(hasReview, row) {
   const ev = row.events || {};
@@ -27,7 +28,7 @@ function mapRegistrationRow(row, reviewByEventId) {
     title: ev.title || 'Event',
     date,
     endDate: ev.ends_at || null,
-    imageUrl: ev.photo_url || null,
+    imageUrl: eventImageUrl(ev) || null,
     ticketLabel: '1 × ' + ticketName,
     paymentStatus: row.payment_status || 'Pending',
     amountPaid: row.amount_paid != null ? Number(row.amount_paid) : 0,
@@ -58,6 +59,7 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
         slug,
         starts_at,
         ends_at,
+        image_url,
         photo_url,
         organiser_id,
         organisers (

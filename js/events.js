@@ -114,16 +114,14 @@
     return 'In-person';
   }
 
-  /** Meeting type label for cards (not industry). */
+  /** Meeting type label for cards (networking, conference, etc. — not online/in-person). */
   function meetingTypeLabel(ev) {
-    const raw =
-      ev.meetingType ||
-      ev.typeRaw ||
-      ev.typeCategory ||
-      ev.format ||
-      '';
+    let raw = ev.eventType || ev.typeRaw || ev.typeCategory || '';
+    if (typeof window !== 'undefined' && window.hubNormalizeEventType) {
+      raw = window.hubNormalizeEventType(raw);
+    }
     const label = String(raw).trim();
-    if (!label) return 'Event';
+    if (!label) return 'Networking meeting';
     if (label.length > 28) return label.slice(0, 26) + '…';
     return label;
   }

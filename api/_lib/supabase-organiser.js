@@ -5,6 +5,7 @@ const { getSupabaseAdmin } = require('./supabase');
 const { resolveImageUrl } = require('./supabase-storage');
 const { isAdminRole } = require('./auth');
 const { resolveOrganiserAccess, getOrCreateOrganiserAccount } = require('./supabase-organiser-access');
+const { eventImageUrl } = require('./event-image');
 
 function rowToGroup(row) {
   if (!row) return null;
@@ -283,7 +284,7 @@ async function listEventsForOrganiser(organiserId) {
   const sb = getSupabaseAdmin();
   const { data, error } = await sb
     .from('events')
-    .select('id, title, approval_status, starts_at, featured, photo_url, average_rating')
+    .select('id, title, approval_status, starts_at, featured, image_url, photo_url, average_rating')
     .eq('organiser_id', organiserId);
   if (error) return [];
   return (data || []).map((row) => ({
@@ -293,7 +294,7 @@ async function listEventsForOrganiser(organiserId) {
     date: row.starts_at,
     rating: row.average_rating,
     groupIds: [organiserId],
-    imageUrl: row.photo_url,
+    imageUrl: eventImageUrl(row),
     ticketsSold: 0,
     revenueNum: 0,
   }));

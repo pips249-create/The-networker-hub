@@ -116,14 +116,31 @@
     return Math.round(miles) + ' miles away';
   }
 
-  function resolveUserCoords() {
-    if (window.hubUserCoords) return Promise.resolve(window.hubUserCoords);
+  function postcodeQuery() {
     var pcInput = document.getElementById('postcode');
-    var pc = pcInput && pcInput.value ? pcInput.value.trim() : '';
-    if (pc && window.hubGeocodeUserPostcode) {
-      return window.hubGeocodeUserPostcode(pc);
+    return pcInput && pcInput.value ? pcInput.value.trim() : '';
+  }
+
+  function resolveUserCoords() {
+    if (isNearMeActive() && window.hubUserCoords) return Promise.resolve(window.hubUserCoords);
+    if (window.hubLocationFilterCoords) return Promise.resolve(window.hubLocationFilterCoords);
+    var pc = postcodeQuery();
+    if (pc && window.hubGeocodeLocationQuery) {
+      return window.hubGeocodeLocationQuery(pc).then(function (coords) {
+        window.hubLocationFilterCoords = coords;
+        return coords;
+      });
     }
+    if (window.hubUserCoords) return Promise.resolve(window.hubUserCoords);
     return Promise.resolve(null);
+  }
+
+  function hasDistanceCenter() {
+    return !!(window.hubUserCoords || window.hubLocationFilterCoords);
+  }
+
+  function isLocationRadiusActive() {
+    return isNearMeActive() || !!postcodeQuery();
   }
 
   function setMapHint(message) {
@@ -172,25 +189,30 @@
     return window.hubNearRadiusMiles ? window.hubNearRadiusMiles() : 25;
   }
 
-  function eventWithinNearMe(ev, userCoords) {
-    if (!isNearMeActive()) return true;
-    if (!userCoords) return false;
+  function eventWithinLocationRadius(ev, centerCoords) {
+    if (!isLocationRadiusActive() || !centerCoords) return true;
+    if (formatClass(ev) === 'online') return true;
     var coords = coordsForEvent(ev);
-    if (!coords || !window.hubDistanceMiles) return false;
-    return (
-      window.hubDistanceMiles(userCoords[0], userCoords[1], coords[0], coords[1]) <=
-      getNearRadiusMiles()
-    );
+    if (coords && window.hubDistanceMiles) {
+      return (
+        window.hubDistanceMiles(centerCoords[0], centerCoords[1], coords[0], coords[1]) <=
+        getNearRadiusMiles()
+      );
+    }
+    if (isNearMeActive()) return false;
+    var pc = postcodeQuery();
+    if (pc && window.hubMatchOutcode) return window.hubMatchOutcode(pc, ev);
+    return !pc;
   }
 
-  function filterEventsForMap(events, userCoords) {
+  function filterEventsForMap(events, centerCoords) {
     var list = events || [];
     if (viewportFilterActive && map) {
       list = filterEventsInBounds(list);
     }
-    if (isNearMeActive()) {
+    if (isLocationRadiusActive()) {
       list = list.filter(function (ev) {
-        return eventWithinNearMe(ev, userCoords);
+        return eventWithinLocationRadius(ev, centerCoords);
       });
     }
     return list;
@@ -203,11 +225,11 @@
     }
   }
 
-  function updateNearMeCircle(userCoords) {
+  function updateNearMeCircle(centerCoords) {
     clearNearMeCircle();
-    if (!map || !isNearMeActive() || !userCoords) return;
+    if (!map || !isLocationRadiusActive() || !centerCoords) return;
     var radiusMeters = getNearRadiusMiles() * 1609.344;
-    nearMeCircle = L.circle(userCoords, {
+    nearMeCircle = L.circle(centerCoords, {
       radius: radiusMeters,
       color: '#9a7aa8',
       fillColor: '#c299d1',
@@ -217,10 +239,10 @@
     nearMeCircle.bringToBack();
   }
 
-  function fitMapToNearMe(userCoords) {
-    if (!map || !userCoords) return;
+  function fitMapToLocationRadius(centerCoords) {
+    if (!map || !centerCoords) return;
     var radiusMeters = getNearRadiusMiles() * 1609.344;
-    var bounds = L.circle(userCoords, { radius: radiusMeters }).getBounds();
+    var bounds = L.circle(centerCoords, { radius: radiusMeters }).getBounds();
     suppressMapEvents++;
     map.fitBounds(bounds, { padding: [48, 48], maxZoom: 13 });
     setTimeout(function () {
@@ -239,7 +261,7 @@
   }
 
   function nearMeSubSuffix() {
-    return isNearMeActive() ? ' · within ' + getNearRadiusMiles() + ' miles' : '';
+    return isLocationRadiusActive() ? ' · within ' + getNearRadiusMiles() + ' miles' : '';
   }
 
   function formatSidebarSub(onMap, total, hasCoords) {
@@ -279,7 +301,7 @@
   function updateSidebarSub(onMap, total) {
     if (!mapSidebarSub) return;
     var t = total != null ? total : sidebarMetaTotal;
-    mapSidebarSub.textContent = formatSidebarSub(onMap, t, !!window.hubUserCoords);
+    mapSidebarSub.textContent = formatSidebarSub(onMap, t, hasDistanceCenter());
   }
 
   function filterEventsInBounds(events) {
@@ -635,7 +657,7 @@
       if (mapSidebarSub) {
         mapSidebarSub.textContent = viewportFilterActive && total
           ? 'No events in this map area · ' + total + ' match your filters'
-          : isNearMeActive() && total
+          : isLocationRadiusActive() && total
             ? 'No events within ' + getNearRadiusMiles() + ' miles · ' + total + ' match your filters'
             : total
               ? 'No mappable in-person events match your filters.'
@@ -866,7 +888,7 @@
         setMapHint('Turn on location access or enter a postcode to use Near me on the map.');
       } else if (viewportFilterActive && sourceEvents.length) {
         setMapHint('No events in this map area. Pan the map or tap Show all.');
-      } else if (isNearMeActive() && sourceEvents.length) {
+      } else if (isLocationRadiusActive() && sourceEvents.length) {
         setMapHint('No events within ' + getNearRadiusMiles() + ' miles. Try a wider radius.');
       } else {
         map.setView([54.5, -2.5], 6);
@@ -882,8 +904,8 @@
     }
 
     setMapHint('');
-    if (isNearMeActive() && userCoords && !viewportFilterActive) {
-      fitMapToNearMe(userCoords);
+    if (isLocationRadiusActive() && userCoords && !viewportFilterActive) {
+      fitMapToLocationRadius(userCoords);
       return;
     }
     var coordsList = mappable.map(function (ev) {
@@ -938,7 +960,7 @@
         return;
       }
 
-      if (placed && !viewportFilterActive && !(isNearMeActive() && userCoords)) {
+      if (placed && !viewportFilterActive && !(isLocationRadiusActive() && userCoords)) {
         var initialCoords = [];
         list.forEach(function (ev) {
           var coords = coordsForEvent(ev);

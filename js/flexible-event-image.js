@@ -40,6 +40,16 @@
       'https://images.unsplash.com/photo-1560179707-f14e90ef3623?q=80&w=800&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=800&auto=format&fit=crop',
     ],
+    'sport-social': [
+      'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1593113598332-cd288d649433?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?q=80&w=800&auto=format&fit=crop',
+    ],
+    'womens-networking': [
+      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=800&auto=format&fit=crop',
+    ],
   };
 
   var DEFAULT_PLACEHOLDER = PLACEMENT_IMAGES[0];
@@ -59,9 +69,9 @@
     if (t.indexOf('netwalk') !== -1) return TYPE_PLACEMENTS.netwalking;
     if (t.indexOf('award') !== -1) return TYPE_PLACEMENTS.awards;
     if (t.indexOf('sport') !== -1 || t.indexOf('golf') !== -1 || t.indexOf('padel') !== -1) {
-      return TYPE_PLACEMENTS.netwalking;
+      return TYPE_PLACEMENTS['sport-social'];
     }
-    if (t.indexOf('women') !== -1) return TYPE_PLACEMENTS.meeting;
+    if (t.indexOf('women') !== -1) return TYPE_PLACEMENTS['womens-networking'];
     if (t.indexOf('meeting') !== -1 || t.indexOf('networking') !== -1) return TYPE_PLACEMENTS.meeting;
     return PLACEMENT_IMAGES;
   }

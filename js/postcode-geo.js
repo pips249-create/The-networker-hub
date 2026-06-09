@@ -176,4 +176,44 @@
       return coords;
     });
   };
+
+  var locationQueryCache = Object.create(null);
+
+  /** Geocode a postcode or place name (postcodes.io). */
+  window.hubGeocodeLocationQuery = function (input) {
+    var raw = String(input || '').trim();
+    if (!raw) return Promise.resolve(null);
+    if (locationQueryCache[raw] !== undefined) {
+      return Promise.resolve(locationQueryCache[raw]);
+    }
+
+    return window.hubGeocodePostcode(raw).then(function (coords) {
+      if (coords) {
+        locationQueryCache[raw] = coords;
+        return coords;
+      }
+      return fetch(
+        'https://api.postcodes.io/postcodes?q=' + encodeURIComponent(raw) + '&limit=1'
+      )
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          if (data.status === 200 && data.result && data.result.length && data.result[0]) {
+            var row = data.result[0];
+            var c = [row.latitude, row.longitude];
+            locationQueryCache[raw] = c;
+            return c;
+          }
+          locationQueryCache[raw] = null;
+          return null;
+        })
+        .catch(function () {
+          locationQueryCache[raw] = null;
+          return null;
+        });
+    });
+  };
+
+  window.hubLocationFilterCoords = null;
 })();

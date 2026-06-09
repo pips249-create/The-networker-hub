@@ -11,6 +11,7 @@
     "check:live": "node scripts/smoke-test-api.js https://the-networker-hub.vercel.app",
     "seed-admin": "node scripts/seed-admin.js",
     "seed-sample-event": "node scripts/seed-sample-event.js",
+    "seed-browse-events": "node scripts/seed-browse-events.js",
     "test-review-e2e": "node scripts/review-e2e-test.js",
     "import-attendees": "node scripts/import-attendees-csv.js"
   },

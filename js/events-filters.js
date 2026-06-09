@@ -11,6 +11,8 @@
   var PRICE_SLIDER_FALLBACK = 100;
   var priceSliderCap = PRICE_SLIDER_FALLBACK;
   var toggleNearMe = document.getElementById('toggle-nearme');
+  var locationRadius = document.getElementById('location-radius');
+  var locationRadiusWrap = document.getElementById('location-radius-wrap');
   var nearRadius = document.getElementById('near-radius');
   var nearRadiusWrap = document.getElementById('near-radius-wrap');
   var toggleNearMeMobile = document.getElementById('toggle-nearme-mobile');
@@ -23,7 +25,7 @@
   var typeTabs = document.querySelectorAll('.event-type-chip[data-type]');
   var typeChipsRoot = document.getElementById('event-type-chips');
 
-  var activeTypeTab = 'all';
+  var activeTypeTabs = [];
   var dateFromTs = null;
   var dateToTs = null;
   var flatpickrInstance = null;
@@ -61,12 +63,13 @@
         ' <span class="event-type-chip-count">(0)</span></button>';
     });
     typeChipsRoot.innerHTML = html;
+    typeChipsRoot.setAttribute('aria-label', 'Event type — select one or more');
     typeTabs = document.querySelectorAll('.event-type-chip[data-type]');
-    setActiveTypeTab(activeTypeTab);
+    syncTypeChipUi();
     typeTabs.forEach(function (tab) {
       tab.addEventListener('click', function () {
         if (document.body.classList.contains('browse-mode-organisers')) return;
-        setActiveTypeTab(tab.getAttribute('data-type') || 'all');
+        toggleTypeTab(tab.getAttribute('data-type') || 'all');
         applyFilters();
       });
     });
@@ -77,7 +80,30 @@
   window.hubEventTypeSlug = eventTypeSlug;
 
   function getActiveTypeTab() {
-    return activeTypeTab || 'all';
+    return activeTypeTabs.length === 0 ? 'all' : activeTypeTabs[0];
+  }
+
+  function syncTypeChipUi() {
+    typeTabs = document.querySelectorAll('.event-type-chip[data-type]');
+    var hasSelection = activeTypeTabs.length > 0;
+    typeTabs.forEach(function (tab) {
+      var type = tab.getAttribute('data-type') || 'all';
+      var active = type === 'all' ? !hasSelection : activeTypeTabs.indexOf(type) !== -1;
+      tab.classList.toggle('is-active', active);
+      tab.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+
+  function toggleTypeTab(type) {
+    type = type || 'all';
+    if (type === 'all') {
+      activeTypeTabs = [];
+    } else {
+      var idx = activeTypeTabs.indexOf(type);
+      if (idx >= 0) activeTypeTabs.splice(idx, 1);
+      else activeTypeTabs.push(type);
+    }
+    syncTypeChipUi();
   }
 
   function meetingTypeSlug(ev) {
@@ -153,11 +179,21 @@
 
   window.hubInitPriceFilter = initPriceSliderMax;
 
-  function getNearRadiusMiles() {
-    var el =
-      isMobileFilterLayout() && nearRadiusMobile ? nearRadiusMobile : nearRadius;
+  function getLocationRadiusMiles() {
+    var el = locationRadius;
     var n = el ? Number(el.value) : 25;
     return n === 5 || n === 50 ? n : 25;
+  }
+
+  function getNearRadiusMiles() {
+    return getLocationRadiusMiles();
+  }
+
+  function syncLocationRadiusControls() {
+    var value = String(getLocationRadiusMiles());
+    if (locationRadius && locationRadius.value !== value) locationRadius.value = value;
+    if (nearRadius && nearRadius.value !== value) nearRadius.value = value;
+    if (nearRadiusMobile && nearRadiusMobile.value !== value) nearRadiusMobile.value = value;
   }
 
   function isMobileFilterLayout() {
@@ -169,18 +205,13 @@
       if (toggleNearMeMobile && toggleNearMe) {
         toggleNearMeMobile.checked = toggleNearMe.checked;
       }
-      if (nearRadiusMobile && nearRadius) {
-        nearRadiusMobile.value = nearRadius.value;
-      }
     }
     if (source !== 'desktop') {
       if (toggleNearMe && toggleNearMeMobile) {
         toggleNearMe.checked = toggleNearMeMobile.checked;
       }
-      if (nearRadius && nearRadiusMobile) {
-        nearRadius.value = nearRadiusMobile.value;
-      }
     }
+    syncLocationRadiusControls();
   }
 
   function isNearMeActive() {
@@ -198,17 +229,80 @@
 
   function syncNearRadiusUi() {
     syncNearControls(isMobileFilterLayout() ? 'mobile' : 'desktop');
-    var checked = isNearMeActive();
-    var mobile = isMobileFilterLayout();
+    var pc = (postcodeInput && postcodeInput.value) || '';
+    pc = pc.trim();
+    var enabled = pc.length > 0 || isNearMeActive();
+    if (locationRadius) locationRadius.disabled = !enabled;
+    if (locationRadiusWrap) locationRadiusWrap.hidden = false;
+  }
 
-    if (nearRadiusWrap && nearRadius) {
-      nearRadius.disabled = !checked;
-      nearRadiusWrap.hidden = mobile || !checked;
+  function locationFilterCenter() {
+    if (isNearMeActive() && window.hubUserCoords) return window.hubUserCoords;
+    if (window.hubLocationFilterCoords) return window.hubLocationFilterCoords;
+    return null;
+  }
+
+  function eventSearchHaystack(ev) {
+    var typeLabel = ev.eventType || ev.typeRaw || '';
+    if (window.hubNormalizeEventType) typeLabel = window.hubNormalizeEventType(typeLabel);
+    return [
+      ev.search,
+      ev.title,
+      typeLabel,
+      ev.organiser,
+      ev.location,
+      ev.city,
+      ev.venue,
+      ev.postcode,
+      ev.format,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+  }
+
+  function eventMatchesPostcodeArea(pc, ev, center) {
+    if (!pc) return true;
+    if (center && isNearMeActive() && !window.hubUserCoords) return false;
+
+    var deliveryFmt = meetingTypeSlug(ev);
+    if (deliveryFmt === 'online') return true;
+
+    var evCoords = eventCoords(ev);
+    if (center && evCoords && window.hubDistanceMiles) {
+      var distMiles = window.hubDistanceMiles(
+        center[0],
+        center[1],
+        evCoords[0],
+        evCoords[1]
+      );
+      return distMiles <= getLocationRadiusMiles();
     }
-    if (nearRadiusWrapMobile && nearRadiusMobile) {
-      nearRadiusMobile.disabled = false;
-      nearRadiusWrapMobile.hidden = false;
+
+    if (isNearMeActive()) return false;
+
+    if (window.hubMatchOutcode) return window.hubMatchOutcode(pc, ev);
+    if (window.hubParseOutcode) {
+      var userOc = window.hubParseOutcode(pc);
+      var eventOc = window.hubEventOutcode ? window.hubEventOutcode(ev) : '';
+      return !(userOc && eventOc && userOc !== eventOc);
     }
+    return true;
+  }
+
+  function resolveLocationFilterCoords(value) {
+    if (!value) {
+      window.hubLocationFilterCoords = null;
+      return Promise.resolve(null);
+    }
+    if (window.hubGeocodeLocationQuery) {
+      return window.hubGeocodeLocationQuery(value).then(function (coords) {
+        window.hubLocationFilterCoords = coords;
+        return coords;
+      });
+    }
+    window.hubLocationFilterCoords = null;
+    return Promise.resolve(null);
   }
 
   function resolveNearMeCoords() {
@@ -268,15 +362,14 @@
   }
 
   function eventMatchesFilters(ev) {
-    var typeTab = getActiveTypeTab();
-    if (typeTab !== 'all') {
-      if (eventTypeSlug(ev) !== typeTab) return false;
+    if (activeTypeTabs.length > 0) {
+      if (activeTypeTabs.indexOf(eventTypeSlug(ev)) === -1) return false;
     }
 
     var q = (searchInput && searchInput.value) || '';
     q = q.trim().toLowerCase();
     if (q) {
-      var hay = ev.search || '';
+      var hay = eventSearchHaystack(ev);
       var terms = q.split(/\s+/).filter(Boolean);
       for (var i = 0; i < terms.length; i++) {
         if (hay.indexOf(terms[i]) === -1) return false;
@@ -285,15 +378,7 @@
 
     var pc = (postcodeInput && postcodeInput.value) || '';
     pc = pc.trim();
-    if (pc) {
-      if (window.hubMatchOutcode) {
-        if (!window.hubMatchOutcode(pc, ev)) return false;
-      } else if (window.hubParseOutcode) {
-        var userOc = window.hubParseOutcode(pc);
-        var eventOc = window.hubEventOutcode ? window.hubEventOutcode(ev) : '';
-        if (userOc && eventOc && userOc !== eventOc) return false;
-      }
-    }
+    if (pc && !eventMatchesPostcodeArea(pc, ev, locationFilterCenter())) return false;
 
     var wantInPerson = checkInPerson && checkInPerson.checked;
     var wantOnline = checkOnline && checkOnline.checked;
@@ -321,17 +406,6 @@
     var bounds = getPriceBounds();
     var ticketPrice = eventTicketPrice(ev);
     if (bounds.maxVal < priceSliderCap && ticketPrice > bounds.maxVal) return false;
-
-    if (isNearMeActive()) {
-      var userCoords = window.hubUserCoords;
-      if (!userCoords) return false;
-      var coords = eventCoords(ev);
-      if (!coords) return false;
-      if (window.hubDistanceMiles) {
-        var miles = window.hubDistanceMiles(userCoords[0], userCoords[1], coords[0], coords[1]);
-        if (miles > getNearRadiusMiles()) return false;
-      }
-    }
 
     return true;
   }
@@ -369,10 +443,14 @@
 
   window.hubGetFilteredEvents = function (all, options) {
     options = options || {};
-    var savedTab = activeTypeTab;
-    if (options.typeTab != null) activeTypeTab = options.typeTab;
+    var savedTabs = activeTypeTabs.slice();
+    if (options.typeTabs != null) {
+      activeTypeTabs = options.typeTabs.slice();
+    } else if (options.typeTab != null) {
+      activeTypeTabs = options.typeTab === 'all' ? [] : [options.typeTab];
+    }
     var list = (all || window.hubAllEvents || []).filter(eventMatchesFilters);
-    if (options.typeTab != null) activeTypeTab = savedTab;
+    activeTypeTabs = savedTabs;
     return sortEvents(list);
   };
 
@@ -401,13 +479,14 @@
           search: searchInput ? searchInput.value : '',
           postcode: postcodeInput ? postcodeInput.value : '',
           nearMe: isNearMeActive(),
-          nearRadius: String(getNearRadiusMiles()),
+          locationRadius: String(getLocationRadiusMiles()),
+          nearRadius: String(getLocationRadiusMiles()),
           freeOnly: !!(checkFreeOnly && checkFreeOnly.checked),
           inPerson: !!(checkInPerson && checkInPerson.checked),
           online: !!(checkOnline && checkOnline.checked),
           priceMax: priceMax ? priceMax.value : '',
           sort: sortSelect ? sortSelect.value : 'recommended',
-          typeTab: activeTypeTab,
+          typeTabs: activeTypeTabs.slice(),
         })
       );
     } catch (e) {
@@ -433,17 +512,28 @@
       if (sortSelect && prefs.sort) sortSelect.value = prefs.sort;
       if (toggleNearMe) toggleNearMe.checked = !!prefs.nearMe;
       if (toggleNearMeMobile) toggleNearMeMobile.checked = !!prefs.nearMe;
-      if (nearRadius && prefs.nearRadius) nearRadius.value = prefs.nearRadius;
-      if (nearRadiusMobile && prefs.nearRadius) nearRadiusMobile.value = prefs.nearRadius;
-      if (prefs.typeTab) {
+      var restoredRadius = prefs.locationRadius || prefs.nearRadius;
+      if (locationRadius && restoredRadius) locationRadius.value = restoredRadius;
+      if (nearRadius && restoredRadius) nearRadius.value = restoredRadius;
+      if (nearRadiusMobile && restoredRadius) nearRadiusMobile.value = restoredRadius;
+      if (Array.isArray(prefs.typeTabs)) {
+        activeTypeTabs = prefs.typeTabs.slice();
+        syncTypeChipUi();
+      } else if (prefs.typeTab) {
         var restoredType = prefs.typeTab;
         if (restoredType === 'meeting') restoredType = 'networking-meeting';
         setActiveTypeTab(restoredType);
       }
       syncPriceOutputs();
       syncNearRadiusUi();
-      if (postcodeInput && prefs.postcode && window.hubResolveLocationFilter) {
-        return window.hubResolveLocationFilter(prefs.postcode);
+      if (postcodeInput && prefs.postcode) {
+        var restorePc = prefs.postcode;
+        var resolveFilter = window.hubResolveLocationFilter
+          ? window.hubResolveLocationFilter(restorePc)
+          : Promise.resolve();
+        return Promise.all([resolveFilter, resolveLocationFilterCoords(restorePc)]).then(function () {
+          syncNearRadiusUi();
+        });
       }
     } catch (e) {
       /* ignore */
@@ -473,16 +563,26 @@
     value = value.trim();
     if (!value) {
       window.hubLocationFilterState = null;
+      window.hubLocationFilterCoords = null;
+      syncNearRadiusUi();
       runLocationFilterRefresh();
       return;
     }
-    if (window.hubResolveLocationFilter) {
-      locationResolveTimer = setTimeout(function () {
-        window.hubResolveLocationFilter(value).then(runLocationFilterRefresh);
-      }, 280);
-      return;
-    }
-    runLocationFilterRefresh();
+    locationResolveTimer = setTimeout(function () {
+      var resolveFilter = window.hubResolveLocationFilter
+        ? window.hubResolveLocationFilter(value)
+        : Promise.resolve();
+      var resolveCoords = resolveLocationFilterCoords(value);
+      Promise.all([resolveFilter, resolveCoords])
+        .then(function () {
+          syncNearRadiusUi();
+          var all = window.hubAllEvents || [];
+          var enrich = window.hubEnrichEventCoords
+            ? window.hubEnrichEventCoords(all)
+            : Promise.resolve();
+          return enrich.then(runLocationFilterRefresh);
+        });
+    }, 280);
   }
 
   function resetFilters() {
@@ -502,10 +602,12 @@
     syncPriceOutputs();
     if (toggleNearMe) toggleNearMe.checked = false;
     if (toggleNearMeMobile) toggleNearMeMobile.checked = false;
+    if (locationRadius) locationRadius.value = '25';
     if (nearRadius) nearRadius.value = '25';
     if (nearRadiusMobile) nearRadiusMobile.value = '25';
     window.hubUserCoords = null;
     window.hubLocationFilterState = null;
+    window.hubLocationFilterCoords = null;
     syncNearRadiusUi();
     setActiveTypeTab('all');
     try {
@@ -517,13 +619,9 @@
   }
 
   function setActiveTypeTab(type) {
-    activeTypeTab = type || 'all';
-    typeTabs = document.querySelectorAll('.event-type-chip[data-type]');
-    typeTabs.forEach(function (tab) {
-      var active = tab.getAttribute('data-type') === activeTypeTab;
-      tab.classList.toggle('is-active', active);
-      tab.setAttribute('aria-pressed', active ? 'true' : 'false');
-    });
+    activeTypeTabs = [];
+    if (type && type !== 'all') activeTypeTabs = [type];
+    syncTypeChipUi();
   }
 
   window.hubUpdateEventTypeChipCounts = function () {
@@ -536,7 +634,7 @@
       var list =
         type === 'all'
           ? window.hubGetFilteredEvents(all, { typeTab: 'all' })
-          : window.hubGetFilteredEvents(all, { typeTab: type });
+          : window.hubGetFilteredEvents(all, { typeTabs: [type] });
       var count = list.length;
       countEl.textContent = '(' + count + ')';
       chip.classList.toggle('is-zero', count === 0);
@@ -548,6 +646,7 @@
   window.hubSetTypeTab = setActiveTypeTab;
   window.hubIsNearMeActive = isNearMeActive;
   window.hubNearRadiusMiles = getNearRadiusMiles;
+  window.hubLocationRadiusMiles = getLocationRadiusMiles;
 
   function bindFilter(el) {
     if (!el) return;
@@ -578,34 +677,15 @@
       applyNearMeFilters();
     });
   }
-  if (nearRadius) {
-    nearRadius.addEventListener('change', function () {
-      syncNearControls('desktop');
-      if (toggleNearMe && !toggleNearMe.checked) {
-        toggleNearMe.checked = true;
-        syncNearControls('desktop');
-      }
-      syncNearRadiusUi();
-      applyNearMeFilters();
-    });
+  function onLocationRadiusChange() {
+    syncLocationRadiusControls();
+    syncNearRadiusUi();
+    if (isNearMeActive()) applyNearMeFilters();
+    else applyFilters();
   }
-  if (nearRadiusMobile) {
-    nearRadiusMobile.addEventListener('focus', function () {
-      if (toggleNearMeMobile && !toggleNearMeMobile.checked) {
-        toggleNearMeMobile.checked = true;
-        syncNearControls('mobile');
-        syncNearRadiusUi();
-      }
-    });
-    nearRadiusMobile.addEventListener('change', function () {
-      syncNearControls('mobile');
-      if (toggleNearMeMobile && !toggleNearMeMobile.checked) {
-        toggleNearMeMobile.checked = true;
-        syncNearControls('mobile');
-      }
-      syncNearRadiusUi();
-      applyNearMeFilters();
-    });
+
+  if (locationRadius) {
+    locationRadius.addEventListener('change', onLocationRadiusChange);
   }
   syncNearRadiusUi();
 

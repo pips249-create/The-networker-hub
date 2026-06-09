@@ -3,6 +3,7 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { publicEventSlug } = require('../event-slug');
 const { publicOrganiserSlug } = require('../organiser-slug');
 const { normalizeEventType } = require('../event-types');
+const { eventImageUrl, eventImageDbValue } = require('../event-image');
 
 function parseBody(req) {
   let body = req.body;
@@ -63,7 +64,7 @@ function mapEventRow(row, orgById) {
     id: row.id,
     title: String(row.title || '').trim(),
     description: String(row.description || '').trim(),
-    photo_url: String(row.photo_url || '').trim(),
+    photo_url: eventImageUrl(row),
     organiser_id: row.organiser_id || '',
     organiser_name: org ? String(org.name || '').trim() : '',
     organiser_slug: org ? publicOrganiserSlug(org) || '' : '',
@@ -96,7 +97,7 @@ async function listEventsForAdmin(query) {
   let dbQuery = sb
     .from('events')
     .select(
-      'id, title, description, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, featured, created_at',
+      'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, featured, created_at',
       { count: 'exact' }
     );
 
@@ -226,7 +227,7 @@ module.exports = async function handler(req, res) {
       patch.description = String(body.description || '').trim() || null;
     }
     if (Object.prototype.hasOwnProperty.call(body, 'photo_url')) {
-      patch.photo_url = String(body.photo_url || '').trim() || null;
+      patch.image_url = eventImageDbValue(body.photo_url);
     }
     if (Object.prototype.hasOwnProperty.call(body, 'starts_at')) {
       const raw = body.starts_at;
