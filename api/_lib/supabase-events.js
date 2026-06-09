@@ -395,27 +395,40 @@ async function fetchPublishedEventById(sb, recordId) {
   return tableRes.data;
 }
 
+function slugMatchesPublicRow(row, requestedSlug) {
+  const want = String(requestedSlug || '').trim().toLowerCase();
+  if (!want || !row) return false;
+  const stored = row.slug ? String(row.slug).trim().toLowerCase() : '';
+  if (stored && stored === want) return true;
+  const computed = publicEventSlug({ slug: row.slug, title: row.title });
+  return computed && String(computed).trim().toLowerCase() === want;
+}
+
 async function fetchPublishedEventBySlug(sb, slug) {
   const s = String(slug || '').trim();
   if (!s) return null;
 
   const viewRes = await sb.from('published_events').select('*').eq('slug', s).maybeSingle();
-  if (!viewRes.error) return viewRes.data || null;
+  if (!viewRes.error && viewRes.data) return viewRes.data;
 
-  if (!isMissingPublishedEventsView(viewRes.error)) {
+  if (viewRes.error && !isMissingPublishedEventsView(viewRes.error)) {
     throw new Error(viewRes.error.message);
   }
 
   const tableRes = await sb.from('events').select('*').eq('slug', s).maybeSingle();
   if (tableRes.error) throw new Error(tableRes.error.message);
   if (
-    !tableRes.data ||
-    tableRes.data.approval_status !== 'Approved' ||
-    String(tableRes.data.status || 'published').toLowerCase() !== 'published'
+    tableRes.data &&
+    tableRes.data.approval_status === 'Approved' &&
+    String(tableRes.data.status || 'published').toLowerCase() === 'published'
   ) {
-    return null;
+    return tableRes.data;
   }
-  return tableRes.data;
+
+  // Browse links use publicEventSlug (title-derived when DB slug is missing or UUID-like).
+  const published = await fetchPublishedEventRows(sb);
+  const match = (published || []).find((row) => slugMatchesPublicRow(row, s));
+  return match || null;
 }
 
 async function fetchApprovedEvents(sb) {
