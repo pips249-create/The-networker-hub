@@ -177,6 +177,18 @@
     });
   }
 
+  function loadSidebarAd() {
+    if (!window.CmsAdBlocks) return;
+    var el = document.getElementById('opportunity-page-sidebar-ad');
+    if (!el) return;
+
+    window.CmsAdBlocks.loadCmsAd('opportunity_page_sidebar_ad')
+      .then(function (block) {
+        if (block) window.CmsAdBlocks.renderCompactAd(el, block);
+      })
+      .catch(function () {});
+  }
+
   function init() {
     if (!catalog) {
       showNotFound();
@@ -193,6 +205,7 @@
     render(item);
     bindSave();
     bindForm();
+    loadSidebarAd();
   }
 
   if (document.readyState === 'loading') {

@@ -64,7 +64,7 @@
     },
     sponsorship: {
       title: 'Sponsorship & ads',
-      subtitle: 'Edit CMS ad slots on browse, event, and organiser pages',
+      subtitle: 'Edit hero Sponsor Hub and sidebar ads on browse, event, organiser, and opportunity pages',
     },
     emails: {
       title: 'Email templates',
@@ -105,6 +105,7 @@
   var CMS_AD_SLOTS = [
     {
       key: 'events_sponsor_hub',
+      group: 'Browse pages',
       label: 'Events browse — Hero Sponsor Hub',
       preview: 'hero',
       help: 'Hero Sponsor Hub on the Events browse page (/events/). Logo, tagline, and CTA only.',
@@ -115,6 +116,7 @@
     },
     {
       key: 'organisers_sponsor_hub',
+      group: 'Browse pages',
       label: 'Organisers browse — Hero Sponsor Hub',
       preview: 'hero',
       help: 'Hero Sponsor Hub when visitors switch to Organisers on /events/. Separate from the Events browse ad.',
@@ -125,6 +127,7 @@
     },
     {
       key: 'opportunities_sponsor_hub',
+      group: 'Browse pages',
       label: 'Opportunities browse — Hero Sponsor Hub',
       preview: 'hero',
       help: 'Hero Sponsor Hub on the Business opportunities browse page.',
@@ -135,6 +138,7 @@
     },
     {
       key: 'academy_sponsor_hub',
+      group: 'Browse pages',
       label: 'Academy browse — Hero Sponsor Hub',
       preview: 'hero',
       help: 'Hero Sponsor Hub on The Networker Academy training browse page.',
@@ -145,6 +149,7 @@
     },
     {
       key: 'event_page_sidebar_ad',
+      group: 'Detail pages',
       label: 'Event page — Sidebar ad',
       preview: 'compact',
       help: 'Logo and CTA button beside ticket checkout. Set the button link to the sponsor website.',
@@ -155,9 +160,21 @@
     },
     {
       key: 'organiser_page_sidebar_ad',
+      group: 'Detail pages',
       label: 'Organiser page — Sidebar ad',
       preview: 'compact',
       help: 'Logo and CTA button on organiser profiles. Set the button link to the sponsor website.',
+      tagline: '',
+      ctaLabel: 'Enquire now',
+      ctaUrl: 'https://',
+      ctaColor: '#2d2636',
+    },
+    {
+      key: 'opportunity_page_sidebar_ad',
+      group: 'Detail pages',
+      label: 'Opportunity page — Sidebar ad',
+      preview: 'compact',
+      help: 'Compact logo + CTA above the enquiry form on individual business opportunity pages (/opportunities/opportunity.html).',
       tagline: '',
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
@@ -2878,17 +2895,40 @@
     }
 
     function slotOptionsHtml() {
-      return CMS_AD_SLOTS.map(function (slot) {
-        return (
-          '<option value="' +
-          esc(slot.key) +
-          '"' +
-          (slot.key === currentSlotKey ? ' selected' : '') +
-          '>' +
-          esc(slot.label) +
-          '</option>'
-        );
-      }).join('');
+      var groups = [];
+      var groupMap = {};
+      CMS_AD_SLOTS.forEach(function (slot) {
+        var groupName = slot.group || 'Other placements';
+        if (!groupMap[groupName]) {
+          groupMap[groupName] = [];
+          groups.push(groupName);
+        }
+        groupMap[groupName].push(slot);
+      });
+
+      return groups
+        .map(function (groupName) {
+          return (
+            '<optgroup label="' +
+            esc(groupName) +
+            '">' +
+            groupMap[groupName]
+              .map(function (slot) {
+                return (
+                  '<option value="' +
+                  esc(slot.key) +
+                  '"' +
+                  (slot.key === currentSlotKey ? ' selected' : '') +
+                  '>' +
+                  esc(slot.label) +
+                  '</option>'
+                );
+              })
+              .join('') +
+            '</optgroup>'
+          );
+        })
+        .join('');
     }
 
     function applyDefaultsToForm() {
@@ -3015,12 +3055,19 @@
       var slot = slotDefaults();
       var heroFields = document.getElementById('sponsor-hero-fields');
       var ctaUrlLabel = document.getElementById('sponsor-cta-url-label');
+      var previewHint = document.getElementById('sponsor-preview-hint');
       if (heroFields) heroFields.hidden = slot.preview === 'compact';
       if (ctaUrlLabel) {
         ctaUrlLabel.textContent =
           slot.preview === 'compact'
             ? 'Sponsor website URL (https:// — opens in a new tab)'
             : 'CTA link (https:// opens in a new tab, or mailto:)';
+      }
+      if (previewHint) {
+        previewHint.textContent =
+          slot.preview === 'compact'
+            ? 'Logo centred above the button — matches ' + slot.label.toLowerCase() + '.'
+            : 'Logo, tagline, and CTA — matches ' + slot.label.toLowerCase() + '.';
       }
     }
 

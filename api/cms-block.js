@@ -22,9 +22,22 @@ const DETAIL_PAGE_SLOTS = new Set([
   'event_page_sidebar_ad',
   'organiser_page_sidebar_ad',
   'event_page_banner_ad',
+  'opportunity_page_sidebar_ad',
 ]);
 
-const DETAIL_FALLBACK_SLOT = 'events_sponsor_hub';
+const DETAIL_FALLBACK_CHAINS = {
+  opportunity_page_sidebar_ad: [
+    'event_page_sidebar_ad',
+    'opportunities_sponsor_hub',
+    'events_sponsor_hub',
+    LEGACY_SPONSOR_HUB_SLOT,
+  ],
+  event_page_sidebar_ad: ['events_sponsor_hub', LEGACY_SPONSOR_HUB_SLOT],
+  organiser_page_sidebar_ad: ['events_sponsor_hub', LEGACY_SPONSOR_HUB_SLOT],
+  event_page_banner_ad: ['events_sponsor_hub', LEGACY_SPONSOR_HUB_SLOT],
+};
+
+const DEFAULT_DETAIL_FALLBACK_CHAIN = ['events_sponsor_hub', LEGACY_SPONSOR_HUB_SLOT];
 
 async function fetchActiveBlock(sb, slotKey) {
   const tableRes = await sb
@@ -77,11 +90,13 @@ module.exports = async function handler(req, res) {
     }
 
     if (!block && DETAIL_PAGE_SLOTS.has(slot)) {
-      block = await fetchActiveBlock(sb, DETAIL_FALLBACK_SLOT);
-      if (block) fallbackFrom = DETAIL_FALLBACK_SLOT;
-      if (!block) {
-        block = await fetchActiveBlock(sb, LEGACY_SPONSOR_HUB_SLOT);
-        if (block) fallbackFrom = LEGACY_SPONSOR_HUB_SLOT;
+      const chain = DETAIL_FALLBACK_CHAINS[slot] || DEFAULT_DETAIL_FALLBACK_CHAIN;
+      for (const fallbackSlot of chain) {
+        block = await fetchActiveBlock(sb, fallbackSlot);
+        if (block) {
+          fallbackFrom = fallbackSlot;
+          break;
+        }
       }
     }
 
