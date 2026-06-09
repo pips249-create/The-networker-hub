@@ -4,6 +4,12 @@
 (function () {
   var PAGE_SIZE = 36;
   var SEARCH_DEBOUNCE_MS = 200;
+  var SAVE_KEY = 'hubSavedOpportunityIds';
+
+  var FAV_ICON =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+    '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>' +
+    '</svg>';
 
   var TYPE_LABELS = {
     franchise: 'Franchise',
@@ -256,6 +262,53 @@
     });
   }
 
+  function readSavedIds() {
+    try {
+      var raw = localStorage.getItem(SAVE_KEY);
+      var parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function writeSavedIds(ids) {
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(ids));
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function isOpportunitySaved(id) {
+    return readSavedIds().includes(String(id));
+  }
+
+  function toggleOpportunitySave(id) {
+    var key = String(id || '');
+    if (!key) return false;
+    var ids = readSavedIds();
+    var nowSaved = !ids.includes(key);
+    if (nowSaved) ids.push(key);
+    else {
+      ids = ids.filter(function (x) {
+        return x !== key;
+      });
+    }
+    writeSavedIds(ids);
+    return nowSaved;
+  }
+
+  function refreshSaveButtons(root) {
+    var scope = root || document;
+    scope.querySelectorAll('.opp-fav-btn[data-opp-id]').forEach(function (btn) {
+      var saved = isOpportunitySaved(btn.getAttribute('data-opp-id'));
+      btn.classList.toggle('is-active', saved);
+      btn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+      btn.setAttribute('aria-label', saved ? 'Remove from saved' : 'Save opportunity');
+    });
+  }
+
   function typeClass(type) {
     var map = {
       'side-hustle': 'opp-type-sidehustle',
@@ -293,8 +346,20 @@
       '">' +
       escapeHtml(TYPE_LABELS[item.type] || item.type) +
       '</span>' +
+      '<div class="opp-card-actions">' +
+      '<button type="button" class="opp-fav-btn' +
+      (isOpportunitySaved(item.id) ? ' is-active' : '') +
+      '" data-opp-id="' +
+      escapeHtml(item.id) +
+      '" aria-label="' +
+      (isOpportunitySaved(item.id) ? 'Remove from saved' : 'Save opportunity') +
+      '" aria-pressed="' +
+      (isOpportunitySaved(item.id) ? 'true' : 'false') +
+      '">' +
+      FAV_ICON +
+      '</button>' +
       (item.featured ? '<span class="opp-featured-pip">Featured</span>' : '') +
-      '</div>' +
+      '</div></div>' +
       '<div class="opp-card-body">' +
       '<h3 class="opp-card-title">' +
       escapeHtml(item.title) +
@@ -419,6 +484,7 @@
       paginationHtml(currentPage, totalPages);
 
     updateResultsCount(filtered.length, rangeStart, rangeEnd);
+    refreshSaveButtons(els.mount);
   }
 
   function bindClearFilters() {
@@ -504,6 +570,15 @@
     els.mount.dataset.paginationBound = '1';
 
     els.mount.addEventListener('click', function (e) {
+      var fav = e.target.closest('.opp-fav-btn');
+      if (fav) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleOpportunitySave(fav.getAttribute('data-opp-id'));
+        refreshSaveButtons(els.mount);
+        return;
+      }
+
       var btn = e.target.closest('.opp-page-btn');
       if (!btn || btn.disabled) return;
       var filtered = getFilteredList();
@@ -539,6 +614,13 @@
 
   window.submitForm = submitForm;
   window.resetFilters = resetFilters;
+  window.HubOpportunitySaves = {
+    ids: readSavedIds,
+    isSaved: isOpportunitySaved,
+    toggle: toggleOpportunitySave,
+    refreshButtons: refreshSaveButtons,
+  };
+
   window.hubRenderOpportunities = function (listings) {
     allListings = (listings || []).map(function (item, i) {
       var normalized = normalizeListing(item, i);

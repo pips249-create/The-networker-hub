@@ -31,8 +31,35 @@
   background: var(--opp-off-white);
 }
 
+.opportunities-page.opportunities-landing .opp-hero {
+  padding: 44px 32px 40px;
+}
+
+.opportunities-page.opportunities-landing .opp-hero-inner {
+  gap: 36px;
+}
+
+.opportunities-page.opportunities-landing .opp-hero-badge {
+  margin-bottom: 12px;
+}
+
+.opportunities-page.opportunities-landing .opp-hero h1 {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.opportunities-page.opportunities-landing .opp-hero-lede {
+  margin-bottom: 0;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.opportunities-page.opportunities-landing .opp-stat-card {
+  padding: 16px 14px;
+}
+
 .opportunities-page .opp-landing-chooser {
-  padding: 48px 40px 72px;
+  padding: 32px 32px 56px;
 }
 
 .opportunities-page .opp-landing-shell {
@@ -710,6 +737,42 @@
   justify-content: space-between;
   gap: 8px;
   padding: 8px 10px 0;
+}
+
+.opportunities-page .opp-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.opportunities-page .opp-fav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--opp-mid-gray);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: color 0.15s, background 0.15s;
+}
+
+.opportunities-page .opp-fav-btn:hover {
+  color: #c44;
+  background: rgba(204, 68, 68, 0.08);
+}
+
+.opportunities-page .opp-fav-btn.is-active {
+  color: #c44;
+}
+
+.opportunities-page .opp-fav-btn.is-active svg path {
+  fill: currentColor;
 }
 
 .opportunities-page .opp-type-badge {
@@ -1428,8 +1491,24 @@
     padding: 56px 20px;
   }
 
+  .opportunities-page.opportunities-landing .opp-hero {
+    padding: 32px 20px 28px;
+  }
+
+  .opportunities-page.opportunities-landing .opp-hero-inner {
+    gap: 24px;
+  }
+
+  .opportunities-page.opportunities-landing .opp-hero h1 {
+    font-size: 28px;
+  }
+
   .opportunities-page .opp-hero h1 {
     font-size: 30px;
+  }
+
+  .opportunities-page .opp-landing-chooser {
+    padding: 24px 20px 48px;
   }
 
   .opportunities-page .opp-form-card {
