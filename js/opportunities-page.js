@@ -9,6 +9,9 @@
     franchise: 'Franchise',
     'side-hustle': 'Side hustle',
     partnership: 'Partnership',
+    networking: 'Networking',
+    distributorship: 'Distributorship',
+    'business-opportunity': 'Business opportunity',
   };
 
   var SEED_LISTINGS = [
@@ -100,6 +103,51 @@
         { key: 'Investment', val: '£1,800' },
         { key: 'Earnings', val: '£1.2–3k/mo' },
         { key: 'Location', val: 'Your area' },
+      ],
+    },
+    {
+      type: 'networking',
+      tags: ['networking', 'low-invest'],
+      featured: false,
+      host: 'Connect Midlands',
+      hostInitials: 'CM',
+      hostColor: '#9d174d',
+      title: 'Regional Ambassador — Business Networking Groups',
+      desc: 'Launch and grow paid networking meetings in your area. Playbook, branding and member recruitment support included.',
+      meta: [
+        { key: 'Investment', val: '£2,500' },
+        { key: 'Earnings', val: '£2–5k/mo' },
+        { key: 'Location', val: 'West Midlands' },
+      ],
+    },
+    {
+      type: 'distributorship',
+      tags: ['distributorship', 'remote'],
+      featured: false,
+      host: 'BrewCraft Supplies',
+      hostInitials: 'BC',
+      hostColor: '#92400e',
+      title: 'Speciality Coffee Distributorship — Cafés & Offices',
+      desc: 'Exclusive territory for wholesale coffee and equipment. Training, samples and marketing materials provided.',
+      meta: [
+        { key: 'Investment', val: '£8,000' },
+        { key: 'Commission', val: '18–28%' },
+        { key: 'Location', val: 'South West' },
+      ],
+    },
+    {
+      type: 'business-opportunity',
+      tags: ['business-opportunity', 'franchise'],
+      featured: false,
+      host: 'FitSpace UK',
+      hostInitials: 'FS',
+      hostColor: '#0f766e',
+      title: 'Micro-Gym License — High Street Units',
+      desc: 'Turnkey small-format fitness studio model for town centres. Equipment lease, ops manual and launch marketing.',
+      meta: [
+        { key: 'Investment', val: '£35,000' },
+        { key: 'Return', val: '18 mo' },
+        { key: 'Territories', val: '3 left' },
       ],
     },
   ];
@@ -209,9 +257,14 @@
   }
 
   function typeClass(type) {
-    if (type === 'side-hustle') return 'opp-type-sidehustle';
-    if (type === 'partnership') return 'opp-type-partnership';
-    return 'opp-type-franchise';
+    var map = {
+      'side-hustle': 'opp-type-sidehustle',
+      partnership: 'opp-type-partnership',
+      networking: 'opp-type-networking',
+      distributorship: 'opp-type-distributorship',
+      'business-opportunity': 'opp-type-business',
+    };
+    return map[type] || 'opp-type-franchise';
   }
 
   function cardHtml(item) {
@@ -386,11 +439,18 @@
     renderListings();
   }
 
+  function updateSearchClearVisibility() {
+    var clearBtn = document.getElementById('opp-search-clear');
+    if (!clearBtn || !els.search) return;
+    clearBtn.hidden = !els.search.value.trim();
+  }
+
   function resetFilters() {
     activeFilter = 'all';
     searchQ = '';
     currentPage = 1;
     if (els.search) els.search.value = '';
+    updateSearchClearVisibility();
     setFilter('all');
   }
 
@@ -414,12 +474,27 @@
     if (els.search) {
       els.search.addEventListener('input', function () {
         var val = els.search.value.trim().toLowerCase();
+        updateSearchClearVisibility();
         clearTimeout(searchTimer);
         searchTimer = setTimeout(function () {
           searchQ = val;
           currentPage = 1;
           renderListings();
         }, SEARCH_DEBOUNCE_MS);
+      });
+    }
+
+    var clearBtn = document.getElementById('opp-search-clear');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        if (els.search) {
+          els.search.value = '';
+          els.search.focus();
+        }
+        searchQ = '';
+        currentPage = 1;
+        updateSearchClearVisibility();
+        renderListings();
       });
     }
   }
