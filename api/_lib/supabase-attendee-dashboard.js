@@ -20,6 +20,7 @@ function mapRegistrationRow(row, reviewByEventId) {
   const review = reviewByEventId.get(eventId);
   const date = ev.starts_at || null;
   const ticketName = String(ticket.name || 'General Admission').trim();
+  const qty = Math.max(1, Number(row.quantity) || 1);
 
   return {
     id: row.id,
@@ -29,7 +30,8 @@ function mapRegistrationRow(row, reviewByEventId) {
     date,
     endDate: ev.ends_at || null,
     imageUrl: eventImageUrl(ev) || null,
-    ticketLabel: '1 × ' + ticketName,
+    ticketLabel: qty + ' × ' + ticketName,
+    quantity: qty,
     paymentStatus: row.payment_status || 'Pending',
     amountPaid: row.amount_paid != null ? Number(row.amount_paid) : 0,
     organiserId: ev.organiser_id || organiser.id || '',
@@ -53,6 +55,7 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
       payment_status,
       application_status,
       amount_paid,
+      quantity,
       events (
         id,
         title,

@@ -16,6 +16,7 @@ const routes = {
   'reset-password': require('./_lib/routes/auth-reset-password'),
   'attendee-dashboard': require('./_lib/routes/auth-attendee-dashboard'),
   'complete-booking': require('./_lib/routes/auth-complete-booking'),
+  'create-checkout': require('./_lib/routes/auth-create-checkout'),
   reviews: require('./_lib/routes/auth-reviews'),
   favourites: require('./_lib/routes/auth-favourites'),
   profile: require('./_lib/routes/auth-profile'),

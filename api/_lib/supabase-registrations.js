@@ -85,6 +85,7 @@ async function createRegistrationFromPayment(input) {
   }
 
   const ticketId = input.ticketId || input.ticket_id || null;
+  const quantity = parseQuantity(input.quantity ?? input.qty, 1);
   const amountPaid =
     input.amountPaid != null
       ? Number(input.amountPaid)
@@ -102,6 +103,7 @@ async function createRegistrationFromPayment(input) {
     amount_paid: Number.isFinite(amountPaid) ? amountPaid : 0,
     stripe_payment_intent_id: stripePaymentIntentId,
     stripe_checkout_session_id: stripeCheckoutSessionId,
+    quantity,
     application_status: input.applicationStatus || input.application_status || 'Approved',
   };
 
@@ -142,10 +144,20 @@ function parseClientReferenceId(ref) {
   const raw = String(ref || '');
   const eventMatch = raw.match(/id([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})/i);
   const ticketMatch = raw.match(/ticket-([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})/i);
+  const qtyMatch = raw.match(/qty-(\d+)/i);
+  const parsedQty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
   return {
     eventId: eventMatch ? eventMatch[1] : null,
     ticketId: ticketMatch ? ticketMatch[1] : null,
+    quantity: Number.isFinite(parsedQty) && parsedQty > 0 ? parsedQty : 1,
   };
+}
+
+function parseQuantity(input, fallback) {
+  const n = parseInt(input, 10);
+  if (Number.isFinite(n) && n > 0) return Math.min(n, 99);
+  const fb = parseInt(fallback, 10);
+  return Number.isFinite(fb) && fb > 0 ? Math.min(fb, 99) : 1;
 }
 
 /**
@@ -162,11 +174,13 @@ async function handleCheckoutSessionCompleted(session) {
   const metadata = session.metadata || {};
   let eventId = metadata.event_id || metadata.eventId;
   let ticketId = metadata.ticket_id || metadata.ticketId || null;
+  let quantity = parseQuantity(metadata.quantity, 1);
 
   if (!eventId && session.client_reference_id) {
     const parsed = parseClientReferenceId(session.client_reference_id);
     eventId = parsed.eventId;
     if (!ticketId) ticketId = parsed.ticketId;
+    quantity = parsed.quantity;
   }
 
   if (!eventId) {
@@ -184,6 +198,7 @@ async function handleCheckoutSessionCompleted(session) {
     name: session.customer_details?.name || metadata.attendee_name || null,
     eventId,
     ticketId,
+    quantity,
     amountPaid: amountTotal,
     paymentStatus: amountTotal > 0 ? 'Paid' : 'Free',
     stripePaymentIntentId: paymentIntentId,
@@ -195,4 +210,5 @@ module.exports = {
   createRegistrationFromPayment,
   handleCheckoutSessionCompleted,
   parseStripeEventBody,
+  parseClientReferenceId,
 };

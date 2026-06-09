@@ -125,7 +125,15 @@
     return n;
   }
 
+  function updateListingsStat() {
+    var stat = document.getElementById('opp-stat-listings');
+    if (!stat) return;
+    var n = allListings.length;
+    stat.textContent = n >= 84 ? '84+' : String(n);
+  }
+
   function updateFilterCounts() {
+    updateListingsStat();
     document.querySelectorAll('[data-count-for]').forEach(function (el) {
       var key = el.getAttribute('data-count-for');
       var n;

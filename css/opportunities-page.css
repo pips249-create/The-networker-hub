@@ -1616,21 +1616,256 @@
   color: var(--opp-gold-light);
 }
 
-.opp-browse-page .opp-page-strip h1 {
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-size: clamp(1.6rem, 3.5vw, 2rem);
-  font-weight: 400;
-  color: #fff;
-  margin: 0 0 6px;
-  letter-spacing: -0.3px;
+.opp-browse-page .opp-browse-hero {
+  background: transparent;
+  padding: 0 0 28px;
+  overflow: visible;
 }
 
-.opp-browse-page .opp-page-strip-lede {
+.opp-browse-page .opp-browse-hero::before,
+.opp-browse-page .opp-browse-hero::after {
+  display: none;
+}
+
+.opp-browse-page .opp-browse-hero .opp-hero-inner {
+  max-width: none;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: clamp(20px, 3vw, 32px);
+  align-items: start;
+}
+
+.opp-browse-page .opp-hero-sponsor-slot {
+  min-width: 0;
+  display: flex;
+}
+
+.opp-browse-page .opp-hero-sponsor-slot .sponsor-hub {
+  flex: 1;
+  width: 100%;
+}
+
+/* Sponsor Hub — matches events browse hero placement */
+.opp-browse-page .sponsor-hub {
+  position: relative;
+  background: linear-gradient(165deg, #fff 0%, #faf6fe 55%, #f5f0fb 100%);
+  border: 1px solid rgba(122, 61, 138, 0.28);
+  border-radius: 12px;
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 18px rgba(91, 47, 153, 0.1);
+  min-width: 0;
+}
+
+.opp-browse-page .sponsor-hub--in-hero {
+  position: static;
+  top: auto;
+  padding: 14px 18px 16px;
+  height: auto;
+}
+
+.opp-browse-page .sponsor-hub--in-hero .sponsor-hub-head {
+  margin-bottom: 10px;
+  padding-right: 64px;
+  font-size: 13px;
+}
+
+.opp-browse-page .sponsor-hub--in-hero .sponsor-logo-wrap {
+  margin: 0 -18px 10px;
+  width: calc(100% + 36px);
+  min-height: 80px;
+  padding: 10px 14px;
+}
+
+.opp-browse-page .sponsor-hub--in-hero .sponsor-logo,
+.opp-browse-page .sponsor-hub--in-hero .sponsor-logo--full {
+  width: 100%;
+  max-width: 100%;
+  max-height: 80px;
+  object-fit: contain;
+  object-position: center;
+}
+
+.opp-browse-page .sponsor-hub-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+  opacity: 0.9;
+}
+
+.opp-browse-page .sponsor-hub-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.6);
-  font-weight: 400;
-  margin: 0 0 24px;
-  max-width: 42em;
+  font-weight: 700;
+  color: #2d2636;
+  margin-bottom: 16px;
+  padding-right: 72px;
+}
+
+.opp-browse-page .sponsor-hub-head .icon {
+  color: #7a3d8a;
+  font-size: 16px;
+}
+
+.opp-browse-page .sponsor-logo-wrap {
+  margin: 0 -18px 14px;
+  width: calc(100% + 36px);
+  min-height: 96px;
+  box-sizing: border-box;
+}
+
+.opp-browse-page .sponsor-logo-wrap.sponsor-logo-band {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 16px;
+  background: #f3f4f6;
+  transition: background-color 0.2s ease;
+}
+
+.opp-browse-page .sponsor-logo-wrap.has-logo .sponsor-logo-placeholder {
+  display: none !important;
+}
+
+.opp-browse-page .sponsor-logo-wrap:not(.has-logo) .sponsor-logo {
+  display: none !important;
+}
+
+.opp-browse-page .sponsor-logo,
+.opp-browse-page .sponsor-logo--full {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: 108px;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+}
+
+.opp-browse-page .sponsor-logo-placeholder {
+  width: 100%;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #c9bdd4;
+  font-size: 10px;
+  font-weight: 600;
+  color: #8a8290;
+  text-align: center;
+  padding: 12px 16px;
+  box-sizing: border-box;
+}
+
+.opp-browse-page .sponsor-company {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: #2d2636;
+}
+
+.opp-browse-page .sponsor-tagline {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #2d2636;
+}
+
+.opp-browse-page .sponsor-hub--active .sponsor-tagline em {
+  font-style: normal;
+  color: #7a3d8a;
+}
+
+.opp-browse-page .sponsor-hub--fallback .sponsor-tagline {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.opp-browse-page .sponsor-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.55;
+}
+
+.opp-browse-page .sponsor-list li {
+  padding-left: 14px;
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.opp-browse-page .sponsor-list li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: #7a3d8a;
+  font-weight: 700;
+}
+
+.opp-browse-page .sponsor-cta {
+  margin-top: auto;
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #2d2636;
+  color: #faf8f5 !important;
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: none !important;
+}
+
+.opp-browse-page .sponsor-cta:hover {
+  background: #7a3d8a;
+  color: #fff !important;
+}
+
+.opp-browse-page .sponsor-hub--fallback .sponsor-cta {
+  background: transparent;
+  color: #7a3d8a !important;
+  border: 1px solid rgba(122, 61, 138, 0.35);
+}
+
+.opp-browse-page .sponsor-hub--fallback .sponsor-cta:hover {
+  background: #f3e8f8;
+  color: #7a3d8a !important;
+}
+
+.opp-browse-page .opp-browse-hero .opp-hero-copy {
+  min-width: 0;
+}
+
+.opp-browse-page .opp-browse-hero h1 {
+  font-size: clamp(1.75rem, 3.8vw, 2.5rem);
+  margin-bottom: 16px;
+}
+
+.opp-browse-page .opp-browse-hero .opp-hero-lede {
+  font-size: 16px;
+  line-height: 1.65;
+  margin-bottom: 0;
+  max-width: 36em;
+}
+
+.opp-browse-page .opp-browse-hero .opp-hero-stats {
+  min-width: 0;
+}
+
+.opp-browse-page .opp-browse-hero .opp-stat-card {
+  padding: 20px 18px;
 }
 
 .opp-browse-page .opp-strip-filters {
@@ -2449,9 +2684,25 @@
   }
 }
 
+@media (max-width: 900px) {
+  .opp-browse-page .opp-browse-hero .opp-hero-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .opp-browse-page .opp-hero-sponsor-slot {
+    max-width: 400px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
 @media (max-width: 600px) {
   .opp-browse-page .opp-page-strip {
     padding: 24px 20px 0;
+  }
+
+  .opp-browse-page .opp-browse-hero h1 {
+    font-size: 1.65rem;
   }
 
   .opp-browse-page .opp-browse-layout {

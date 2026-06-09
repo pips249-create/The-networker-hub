@@ -39,6 +39,7 @@ module.exports = async function handler(req, res) {
       userId: session.sub,
       eventId: body.eventId || body.event_id,
       ticketId: body.ticketId || body.ticket_id,
+      quantity: body.quantity ?? body.qty,
       amountPaid: body.amountPaid ?? body.amount_paid,
       paymentStatus: body.paymentStatus || body.payment_status || 'Paid',
       stripePaymentIntentId: body.stripePaymentIntentId || body.stripe_payment_intent_id,

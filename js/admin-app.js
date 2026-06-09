@@ -107,7 +107,7 @@
       key: 'sponsor_hub',
       label: 'Browse pages — Hero Sponsor Hub',
       preview: 'hero',
-      help: 'Shown in the hero on Events and Organisers browse pages.',
+      help: 'Shown in the hero on Events, Organisers, and Business opportunities browse pages.',
       tagline: 'Example offer — edit to match your sponsor package',
       bullets: [
         'Premium placement beside Featured events',

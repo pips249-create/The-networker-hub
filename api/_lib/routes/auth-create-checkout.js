@@ -1,0 +1,190 @@
+const { setCors, json, sessionFromRequest } = require('../auth');
+const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
+const { calculateCheckoutTotals } = require('../booking-fees');
+const { isStripeCheckoutConfigured, createPaidCheckoutSession } = require('../stripe-checkout');
+
+function parseBody(req) {
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      body = {};
+    }
+  }
+  return body || {};
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    String(value || '')
+  );
+}
+
+function parsePriceNum(raw) {
+  if (raw == null || raw === '') return 0;
+  const n = Number(String(raw).replace(/[£,\s]/g, ''));
+  return Number.isFinite(n) ? n : 0;
+}
+
+async function availableTicketQty(sb, ticketId) {
+  const tRes = await sb.from('tickets').select('id, quantity').eq('id', ticketId).maybeSingle();
+  if (tRes.error) throw new Error(tRes.error.message);
+  if (!tRes.data) return 0;
+  if (tRes.data.quantity == null) return 99;
+
+  const cap = Math.max(0, Number(tRes.data.quantity) || 0);
+  const regRes = await sb
+    .from('registrations')
+    .select('quantity')
+    .eq('ticket_id', ticketId)
+    .neq('payment_status', 'Refunded')
+    .neq('application_status', 'Denied');
+  if (regRes.error) throw new Error(regRes.error.message);
+  const sold = (regRes.data || []).reduce(
+    (sum, row) => sum + Math.max(1, Number(row.quantity) || 1),
+    0
+  );
+  return Math.max(0, cap - sold);
+}
+
+function buildClientReferenceId(eventId, ticketId, qty, label) {
+  const ref =
+    'id' +
+    eventId +
+    '-' +
+    (ticketId ? 'ticket-' + ticketId + '-' : '') +
+    'qty-' +
+    String(qty) +
+    '-' +
+    String(label || 'ticket')
+      .replace(/\s+/g, '-')
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '');
+  return ref.slice(0, 200);
+}
+
+/** Create a Stripe Checkout session with ticket price + booking fee line items. */
+module.exports = async function handler(req, res) {
+  setCors(req, res);
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Cache-Control', 'no-store');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
+
+  const session = sessionFromRequest(req);
+  if (!session) return json(res, 401, { error: 'not_authenticated' });
+
+  if (!isSupabaseConfigured()) {
+    return json(res, 503, { ok: false, error: 'supabase_not_configured' });
+  }
+
+  if (!isStripeCheckoutConfigured()) {
+    return json(res, 503, { ok: false, error: 'stripe_not_configured' });
+  }
+
+  try {
+    const body = parseBody(req);
+    const eventId = String(body.eventId || body.event_id || '').trim();
+    if (!isUuid(eventId)) {
+      return json(res, 400, { ok: false, error: 'invalid_event_id' });
+    }
+
+    const ticketIdRaw = body.ticketId || body.ticket_id || null;
+    let ticketId = ticketIdRaw && isUuid(ticketIdRaw) ? String(ticketIdRaw) : null;
+    let requestedQty = parseInt(body.qty, 10);
+    if (!Number.isFinite(requestedQty) || requestedQty < 1) requestedQty = 1;
+
+    const sb = getSupabaseAdmin();
+    const evRes = await sb
+      .from('events')
+      .select('id, title, slug, status')
+      .eq('id', eventId)
+      .maybeSingle();
+    if (evRes.error) throw new Error(evRes.error.message);
+    if (!evRes.data) return json(res, 404, { ok: false, error: 'event_not_found' });
+    if (String(evRes.data.status || '').toLowerCase() !== 'published') {
+      return json(res, 400, { ok: false, error: 'event_not_published' });
+    }
+
+    let ticketName = 'Ticket';
+    let unitPrice = 0;
+
+    if (ticketId) {
+      const tRes = await sb
+        .from('tickets')
+        .select('id, name, price, event_id')
+        .eq('id', ticketId)
+        .maybeSingle();
+      if (tRes.error) throw new Error(tRes.error.message);
+      if (!tRes.data || tRes.data.event_id !== eventId) {
+        return json(res, 404, { ok: false, error: 'ticket_not_found' });
+      }
+      ticketName = String(tRes.data.name || ticketName).trim() || ticketName;
+      unitPrice = parsePriceNum(tRes.data.price);
+    } else {
+      const tRes = await sb
+        .from('tickets')
+        .select('id, name, price')
+        .eq('event_id', eventId)
+        .order('created_at', { ascending: true });
+      if (tRes.error) throw new Error(tRes.error.message);
+      const paid = (tRes.data || []).find((t) => parsePriceNum(t.price) > 0);
+      if (paid) {
+        ticketId = paid.id;
+        ticketName = String(paid.name || ticketName).trim() || ticketName;
+        unitPrice = parsePriceNum(paid.price);
+      }
+    }
+
+    if (unitPrice <= 0) {
+      return json(res, 400, { ok: false, error: 'free_ticket_use_complete_booking' });
+    }
+
+    let maxQty = 99;
+    if (ticketId) {
+      maxQty = await availableTicketQty(sb, ticketId);
+      if (maxQty < 1) {
+        return json(res, 400, { ok: false, error: 'ticket_sold_out' });
+      }
+    }
+
+    const totals = calculateCheckoutTotals(unitPrice, requestedQty, maxQty);
+    const qty = totals.qty;
+    const siteUrl = String(process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(
+      /\/$/,
+      ''
+    );
+    const slug = String(evRes.data.slug || '').trim();
+    const cancelPath = slug ? `/events/${encodeURIComponent(slug)}` : `/events/event.html?id=${eventId}`;
+
+    const checkoutSession = await createPaidCheckoutSession({
+      email: session.email,
+      eventId,
+      ticketId,
+      qty,
+      eventTitle: evRes.data.title,
+      ticketName,
+      unitPricePounds: unitPrice,
+      bookingFeePounds: totals.fee,
+      successUrl: `${siteUrl}/events/booking-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${siteUrl}${cancelPath}`,
+      clientReferenceId: buildClientReferenceId(eventId, ticketId, qty, ticketName),
+    });
+
+    return json(res, 200, {
+      ok: true,
+      url: checkoutSession.url,
+      sessionId: checkoutSession.id,
+      totals,
+    });
+  } catch (e) {
+    return json(res, 500, {
+      ok: false,
+      error: 'checkout_failed',
+      message: e.message || String(e),
+    });
+  }
+};

@@ -14,16 +14,16 @@
     { "source": "/api/admin/:path*", "destination": "/api/admin" },
     { "source": "/api/organiser/:path*", "destination": "/api/organiser" },
     {
+      "source": "/events/booking-success",
+      "destination": "/events/booking-success.html"
+    },
+    {
       "source": "/events/:slug",
       "destination": "/events/event.html?slug=:slug"
     },
     {
       "source": "/opportunities/:id",
       "destination": "/opportunities/opportunity.html?id=:id"
-    },
-    {
-      "source": "/events/booking-success",
-      "destination": "/events/booking-success.html"
     },
     {
       "source": "/organisers/:slug",

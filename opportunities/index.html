@@ -15,7 +15,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260626" />
-    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260610a" />
+    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260610c" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260626" />
   </head>
   <body class="opportunities-page opp-browse-page">
@@ -29,10 +29,48 @@
           <span aria-hidden="true">›</span>
           <span>Browse opportunities</span>
         </nav>
-        <h1 id="opp-page-heading">Browse business opportunities</h1>
-        <p class="opp-page-strip-lede">
-          Side hustles, franchises, partnerships &amp; networking — posted by UK businesses across the network.
-        </p>
+
+        <section class="opp-hero opp-browse-hero" aria-labelledby="opp-hero-heading">
+          <div class="opp-hero-inner">
+            <div class="opp-hero-copy">
+              <p class="opp-hero-badge">New — Business opportunities</p>
+              <h1 id="opp-hero-heading">
+                Discover <span class="accent">franchises, side hustles &amp; business opportunities</span> across the UK
+                network
+              </h1>
+              <p class="opp-hero-lede">
+                <strong>The Networker Hub</strong> connects organisers and members with real business opportunities —
+                from franchise territories and side hustle models to referral partnerships and white-label arrangements.
+              </p>
+            </div>
+            <div class="opp-hero-sponsor-slot" id="hero-sponsor-slot">
+              <aside
+                class="sponsor-hub sponsor-hub--fallback sponsor-hub--in-hero"
+                id="sponsor-hub"
+                aria-labelledby="sponsor-heading"
+              >
+                <span class="sponsor-hub-badge" id="sponsor-badge" hidden>Sponsored</span>
+                <div class="sponsor-hub-head" id="sponsor-heading">
+                  <span class="icon" aria-hidden="true">★</span>
+                  <span>Sponsor Hub</span>
+                </div>
+                <div class="sponsor-logo-wrap sponsor-logo-band" id="sponsor-logo-wrap" hidden>
+                  <img id="sponsor-logo" class="sponsor-logo" alt="" hidden />
+                  <div id="sponsor-logo-placeholder" class="sponsor-logo-placeholder" hidden>Your logo</div>
+                </div>
+                <p class="sponsor-company" id="sponsor-company" hidden></p>
+                <p class="sponsor-tagline" id="sponsor-tagline"></p>
+                <div id="sponsor-body" class="sponsor-body"></div>
+                <a
+                  class="sponsor-cta"
+                  id="sponsor-cta"
+                  href="mailto:sales@the-networker.co.uk?subject=Sponsor%20Hub%20enquiry"
+                  >Find out more →</a>
+              </aside>
+            </div>
+          </div>
+        </section>
+
         <div class="opp-strip-filters" id="opp-strip-filters" role="tablist" aria-label="Opportunity type">
           <button type="button" class="opp-tab-btn active" role="tab" aria-selected="true" data-filter="all">
             All <span class="opp-tab-count" data-count-for="all">0</span>
@@ -246,8 +284,10 @@
       </div>
     </footer>
 
-    <script src="../js/opportunities-catalog.js?v=20260610a"></script>
+    <script src="../js/cms-sponsor-fields.js?v=20260630c"></script>
+    <script src="../js/sponsor-hub.js?v=20260610a"></script>
+    <script src="../js/opportunities-catalog.js?v=20260610c"></script>
     <script src="../js/opportunities-saves.js?v=20260610a"></script>
-    <script src="../js/opportunities-page.js?v=20260610a"></script>
+    <script src="../js/opportunities-page.js?v=20260610b"></script>
   </body>
 </html>

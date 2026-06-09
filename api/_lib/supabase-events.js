@@ -180,16 +180,27 @@ async function fetchRegistrationCountsByTicket(sb, ticketRows) {
   const counts = new Map();
   for (let i = 0; i < ids.length; i += IN_CHUNK_SIZE) {
     const chunk = ids.slice(i, i + IN_CHUNK_SIZE);
-    const { data, error } = await sb
+    let data;
+    let error;
+    ({ data, error } = await sb
       .from('registrations')
-      .select('ticket_id')
+      .select('ticket_id, quantity')
       .in('ticket_id', chunk)
       .neq('payment_status', 'Refunded')
-      .neq('application_status', 'Denied');
+      .neq('application_status', 'Denied'));
+    if (error && /quantity/i.test(String(error.message || ''))) {
+      ({ data, error } = await sb
+        .from('registrations')
+        .select('ticket_id')
+        .in('ticket_id', chunk)
+        .neq('payment_status', 'Refunded')
+        .neq('application_status', 'Denied'));
+    }
     if (error) throw new Error(error.message);
     (data || []).forEach((row) => {
       if (!row.ticket_id) return;
-      counts.set(row.ticket_id, (counts.get(row.ticket_id) || 0) + 1);
+      const sold = Math.max(1, Number(row.quantity) || 1);
+      counts.set(row.ticket_id, (counts.get(row.ticket_id) || 0) + sold);
     });
   }
   return counts;

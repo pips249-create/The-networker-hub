@@ -258,9 +258,21 @@ async function countEventsForOrganiser(groupIds) {
 
 async function countEventsByOrganiserGroup(groupIds) {
   const counts = new Map();
-  for (const id of groupIds || []) {
-    const total = await countEventsForOrganiser([id]);
-    counts.set(id, total);
+  const ids = [...new Set((groupIds || []).filter(Boolean))];
+  ids.forEach((id) => counts.set(id, 0));
+  if (!ids.length) return counts;
+
+  const sb = getSupabaseAdmin();
+  const CHUNK = 100;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK);
+    const { data, error } = await sb.from('events').select('organiser_id').in('organiser_id', chunk);
+    if (error) throw new Error(error.message);
+    (data || []).forEach((row) => {
+      const orgId = row.organiser_id;
+      if (!orgId) return;
+      counts.set(orgId, (counts.get(orgId) || 0) + 1);
+    });
   }
   return counts;
 }
@@ -339,12 +351,9 @@ async function listAllOrganiserTickets() {
 }
 
 async function listTicketsForSession(session, eventIds, adminView) {
-  if (adminView) {
-    const all = await listAllOrganiserTickets();
-    const set = new Set(eventIds || []);
-    return set.size ? all.filter((t) => set.has(t.eventId)) : all;
-  }
-  return listTicketsForEventIds(eventIds);
+  const ids = eventIds || [];
+  if (adminView && !ids.length) return listAllOrganiserTickets();
+  return listTicketsForEventIds(ids);
 }
 
 async function getEventById(eventId) {

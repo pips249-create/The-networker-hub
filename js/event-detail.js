@@ -614,7 +614,34 @@
     }
   }
 
-  async function completeFreeBooking(ev, ticketId) {
+  async function startPaidCheckout(ev, ticketId, qty) {
+    saveBookingPending(ev, ticketId, qty);
+    const res = await fetch('/api/auth/create-checkout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventId: ev.id,
+        ticketId: isUuid(ticketId) ? ticketId : null,
+        qty: qty,
+      }),
+    });
+    const data = await res.json().catch(function () {
+      return {};
+    });
+    if (res.ok && data.ok && data.url) {
+      window.location.assign(data.url);
+      return true;
+    }
+    if (data.error === 'stripe_not_configured') {
+      clearBookingPending();
+      return false;
+    }
+    clearBookingPending();
+    throw new Error((data && data.message) || (data && data.error) || 'checkout_failed');
+  }
+
+  async function completeFreeBooking(ev, ticketId, qty) {
     const res = await fetch('/api/auth/complete-booking', {
       method: 'POST',
       credentials: 'include',
@@ -622,6 +649,7 @@
       body: JSON.stringify({
         eventId: ev.id,
         ticketId: isUuid(ticketId) ? ticketId : null,
+        qty: qty || 1,
         amountPaid: 0,
         paymentStatus: 'Free',
       }),
@@ -685,6 +713,25 @@
     el.hidden = false;
   }
 
+  function tierRemainingCount(t) {
+    const cap = t.quantityAvailable;
+    if (cap == null || !Number.isFinite(Number(cap))) return null;
+    const sold = Math.max(0, Number(t.registrationsCount) || 0);
+    return Math.max(0, Number(cap) - sold);
+  }
+
+  function tierRemainingLabel(t) {
+    const left = tierRemainingCount(t);
+    if (left == null || left <= 0) return '';
+    if (left === 1) return 'Only 1 ticket left';
+    if (left <= 5) return 'Only ' + left + ' tickets left';
+    const cap = Number(t.quantityAvailable);
+    if (Number.isFinite(cap) && left <= Math.max(10, Math.ceil(cap * 0.2))) {
+      return left + ' tickets remaining';
+    }
+    return '';
+  }
+
   function renderTicketPanel(ev) {
     const tiersEl = document.getElementById('ticket-tiers');
     const urgencyEl = document.getElementById('ev-urgency');
@@ -700,7 +747,10 @@
       const soldOut = Boolean(t.soldOut) || panelClosed;
       const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
       const priceDisplay = t.priceKey === 'free' ? 'Free' : t.price || fmt(priceNum);
-      const subtitle = soldOut ? 'Sold out' : t.description || '';
+      const remainingLabel = soldOut ? '' : tierRemainingLabel(t);
+      const subtitle = soldOut
+        ? 'Sold out'
+        : remainingLabel || t.description || '';
 
       const tier = document.createElement('div');
       tier.className = 'tier' + (soldOut ? ' sold-out tier-disabled' : '');
@@ -709,6 +759,13 @@
       tier.setAttribute('data-price', String(priceNum));
       tier.setAttribute('data-label', t.label || t.name || 'Ticket');
       if (t.stripePaymentLink) tier.setAttribute('data-stripe-link', t.stripePaymentLink);
+      const cap = t.quantityAvailable;
+      const sold = Math.max(0, Number(t.registrationsCount) || 0);
+      if (cap != null && Number.isFinite(Number(cap))) {
+        tier.setAttribute('data-qty-max', String(Math.max(0, Number(cap) - sold)));
+      } else {
+        tier.setAttribute('data-qty-max', '99');
+      }
 
       if (!soldOut) {
         tier.setAttribute('role', 'button');
@@ -728,9 +785,13 @@
         '<div class="tier-radio" aria-hidden="true"></div>' +
         '<div class="tier-info"><strong>' +
         escapeHtml(t.name || 'Ticket') +
-        '</strong><span>' +
+        '</strong><span class="tier-subtitle">' +
         escapeHtml(subtitle) +
-        '</span></div>' +
+        '</span>' +
+        (remainingLabel
+          ? '<span class="tier-remaining-badge">' + escapeHtml(remainingLabel) + '</span>'
+          : '') +
+        '</div>' +
         '<div class="tier-price">' +
         escapeHtml(priceDisplay) +
         '</div>';
@@ -763,7 +824,17 @@
         urgencyEl.hidden = false;
         urgencyEl.classList.add('is-sold-out');
       } else {
-        urgencyEl.hidden = true;
+        const scarce = tiers
+          .filter((t) => !t.soldOut)
+          .map((t) => ({ t, left: tierRemainingCount(t), label: tierRemainingLabel(t) }))
+          .filter((x) => x.label);
+        if (scarce.length) {
+          const lowest = scarce.reduce((a, b) => (a.left < b.left ? a : b));
+          urgencyEl.textContent = lowest.label;
+          urgencyEl.hidden = false;
+        } else {
+          urgencyEl.hidden = true;
+        }
       }
     }
   }
@@ -1217,23 +1288,34 @@
     const sumSubtotal = document.getElementById('sum-subtotal');
     const sumFee = document.getElementById('sum-fee');
     const sumTotal = document.getElementById('sum-total');
+    const qtyHint = document.getElementById('qty-avail-hint');
     if (!qtyDown) return;
 
     let qty = 1;
     let price = ev.priceKey === 'free' ? 0 : Number(ev.priceNum) || 0;
     let label = 'Standard';
+    let maxQty = 99;
 
     function getSelectableTiers() {
       return document.querySelectorAll('#ticket-tiers .tier:not(.sold-out):not(.tier-disabled)');
+    }
+
+    function maxQtyForTier(tierEl) {
+      if (!tierEl) return 99;
+      const raw = tierEl.getAttribute('data-qty-max');
+      const n = parseInt(raw, 10);
+      return Number.isFinite(n) && n > 0 ? Math.min(n, 99) : 99;
     }
 
     const sel = document.querySelector('#ticket-tiers .tier.selected');
     if (sel) {
       price = parseFloat(sel.getAttribute('data-price')) || 0;
       label = sel.getAttribute('data-label') || label;
+      maxQty = maxQtyForTier(sel);
     }
 
     function update() {
+      if (qty > maxQty) qty = maxQty;
       const subtotal = price * qty;
       const fee = subtotal * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty;
       const total = subtotal + fee;
@@ -1244,7 +1326,19 @@
       if (sumTotal) sumTotal.textContent = fmt(total);
       if (qtyValue) qtyValue.textContent = String(qty);
       qtyDown.disabled = qty <= 1;
-      qtyUp.disabled = qty >= 10;
+      qtyUp.disabled = qty >= maxQty;
+      if (qtyHint) {
+        if (maxQty < 99) {
+          qtyHint.textContent =
+            maxQty === 1
+              ? 'Only 1 ticket available for this type.'
+              : 'Up to ' + maxQty + ' tickets available for this type.';
+          qtyHint.hidden = false;
+        } else {
+          qtyHint.hidden = true;
+          qtyHint.textContent = '';
+        }
+      }
     }
 
     function selectTier(tier) {
@@ -1256,6 +1350,8 @@
       tier.setAttribute('aria-pressed', 'true');
       price = parseFloat(tier.getAttribute('data-price')) || 0;
       label = tier.getAttribute('data-label') || 'Ticket';
+      maxQty = maxQtyForTier(tier);
+      if (qty > maxQty) qty = maxQty;
       update();
     }
 
@@ -1270,7 +1366,7 @@
       }
     });
     qtyUp.addEventListener('click', () => {
-      if (qty < 10) {
+      if (qty < maxQty) {
         qty++;
         update();
       }
@@ -1322,12 +1418,11 @@
         const tierEl = getSelectedTierEl();
         const ticketId = tierEl ? tierEl.getAttribute('data-ticket-id') : null;
         const tierPrice = tierEl ? parseFloat(tierEl.getAttribute('data-price')) || 0 : price;
-        const checkoutUrl = buildStripeCheckoutUrl(ev, tierEl, qty, label);
 
-        if (tierPrice <= 0 && !checkoutUrl) {
+        if (tierPrice <= 0) {
           buy.disabled = true;
           try {
-            await completeFreeBooking(ev, ticketId);
+            await completeFreeBooking(ev, ticketId, qty);
           } catch (err) {
             buy.disabled = false;
             window.alert(
@@ -1339,17 +1434,31 @@
           return;
         }
 
-        if (!checkoutUrl) {
-          if (stripeHint) {
-            stripeHint.hidden = false;
-            stripeHint.focus();
-          }
-          return;
-        }
-
         if (stripeHint) stripeHint.hidden = true;
-        saveBookingPending(ev, ticketId, qty);
-        window.location.assign(checkoutUrl);
+        buy.disabled = true;
+        try {
+          const usedCheckoutApi = await startPaidCheckout(ev, ticketId, qty);
+          if (usedCheckoutApi) return;
+
+          const checkoutUrl = buildStripeCheckoutUrl(ev, tierEl, qty, label);
+          if (!checkoutUrl) {
+            if (stripeHint) {
+              stripeHint.hidden = false;
+              stripeHint.focus();
+            }
+            return;
+          }
+          saveBookingPending(ev, ticketId, qty);
+          window.location.assign(checkoutUrl);
+        } catch (err) {
+          window.alert(
+            err && err.message
+              ? err.message
+              : 'Could not start checkout. Please try again or contact support.'
+          );
+        } finally {
+          buy.disabled = false;
+        }
       });
     }
   }

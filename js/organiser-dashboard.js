@@ -101,13 +101,27 @@
         'Content-Type': 'application/json',
         ...(options && options.headers),
       },
-    }).then((res) =>
-      res.json().then((data) => ({
-        ok: res.ok,
-        status: res.status,
-        data,
-      }))
-    );
+    }).then(async (res) => {
+      const text = await res.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        const snippet = String(text || '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .slice(0, 120);
+        throw new Error(
+          res.ok
+            ? 'Server returned an invalid response'
+            : 'Server error (' +
+                res.status +
+                ')' +
+                (snippet ? ': ' + snippet : '')
+        );
+      }
+      return { ok: res.ok, status: res.status, data };
+    });
   }
 
   function formatDate(raw) {

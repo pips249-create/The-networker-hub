@@ -12,6 +12,7 @@ Run once in [Supabase SQL Editor](https://supabase.com/dashboard):
 | `026_attendee_profile_fields.sql` | Attendee profile |
 | `027_email_templates.sql` | `booking_confirmation` template |
 | `034_registrations_checkout_session.sql` | Idempotent checkout session IDs |
+| `038_registrations_quantity.sql` | Multi-ticket quantity per registration |
 
 ## 2. Vercel environment variables
 
@@ -22,6 +23,7 @@ Run once in [Supabase SQL Editor](https://supabase.com/dashboard):
 | `SUPABASE_ANON_KEY` | Yes | Sign-in before checkout |
 | `SESSION_SECRET` | Yes | Auth cookies |
 | `SITE_URL` | Yes | Email links, e.g. `https://the-networker-hub.vercel.app` |
+| `STRIPE_SECRET_KEY` | **Yes (paid checkout)** | `sk_test_…` or `sk_live_…` — creates Checkout with booking fee |
 | `STRIPE_WEBHOOK_SECRET` | **Yes (prod)** | From Stripe webhook endpoint |
 | `RESEND_API_KEY` | For emails | Booking confirmation |
 | `RESEND_FROM` | For emails | Verified domain |
@@ -41,9 +43,22 @@ Local testing with Stripe CLI:
 stripe listen --forward-to localhost:3000/api/stripe-webhook
 ```
 
-## 4. Payment Links
+## 4. Paid checkout (booking fee)
 
-Create a [Payment Link](https://dashboard.stripe.com/payment-links) per paid ticket (or one per event).
+When `STRIPE_SECRET_KEY` is set, **Buy ticket** calls `POST /api/auth/create-checkout`, which opens Stripe Checkout with:
+
+- Ticket line item (price × quantity from Supabase)
+- **Booking fee** line item (4.5% + 20p per ticket)
+
+The attendee must be signed in. No manual fee math in Payment Links is required.
+
+Use the **same mode** as your key: `sk_test_…` with test cards, `sk_live_…` for real payments.
+
+## 5. Payment Links (fallback)
+
+If `STRIPE_SECRET_KEY` is missing, the hub falls back to a static [Payment Link](https://dashboard.stripe.com/payment-links) — **booking fee is not added automatically** in that mode.
+
+Create a Payment Link per paid ticket (or one per event) only when needed as fallback.
 
 **Required — choose one:**
 
@@ -68,11 +83,11 @@ update tickets set stripe_payment_link = 'https://buy.stripe.com/...' where id =
 
 The event API exposes these as `stripePaymentLink` on events and tickets.
 
-## 5. Free tickets
+## 6. Free tickets
 
 If a tier is **£0** and has no Payment Link, the hub calls `POST /api/auth/complete-booking` directly (attendee must be signed in).
 
-## 6. Production test checklist
+## 7. Production test checklist
 
 1. Sign in as an attendee on production
 2. Open an event with `stripe_payment_link` set (or `?stripe=` on URL for testing)
@@ -84,11 +99,12 @@ If a tier is **£0** and has no Payment Link, the hub calls `POST /api/auth/comp
    - `booking_confirmation` email received (if Resend configured)
    - Organiser receives `organiser_new_registration` (if organiser email set)
 
-## 7. API reference
+## 8. API reference
 
 | Endpoint | Purpose |
 |----------|---------|
 | `POST /api/stripe-webhook` | Stripe → create registration |
+| `POST /api/auth/create-checkout` | Stripe Checkout with ticket + booking fee (auth required) |
 | `POST /api/auth/complete-booking` | Success page / free ticket fallback (auth required) |
 
 ## Troubleshooting

@@ -1,0 +1,285 @@
+/* Booking confirmed — hub-branded post-checkout page */
+.booking-success-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(165deg, var(--lavender-light) 0%, var(--surface) 42%, var(--cream) 100%);
+}
+
+.bs-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 88px 20px 56px;
+}
+
+.bs-shell {
+  width: 100%;
+  max-width: 520px;
+}
+
+.bs-kicker {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lavender-deep);
+  margin-bottom: 14px;
+}
+
+.bs-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--shadow-lift);
+}
+
+.bs-card-hero {
+  padding: 28px 28px 20px;
+  text-align: center;
+  background: linear-gradient(135deg, var(--lavender-light) 0%, rgba(255, 255, 255, 0.6) 100%);
+  border-bottom: 1px dashed rgba(154, 122, 168, 0.35);
+}
+
+.bs-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, var(--lavender) 0%, var(--lavender-deep) 100%);
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(154, 122, 168, 0.35);
+}
+
+.bs-icon svg {
+  width: 34px;
+  height: 34px;
+}
+
+.bs-card-body {
+  padding: 28px 28px 32px;
+  text-align: center;
+}
+
+.bs-card-body h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.65rem, 5vw, 2rem);
+  font-weight: 400;
+  color: var(--charcoal);
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.bs-lead {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin-bottom: 22px;
+}
+
+.bs-event {
+  text-align: left;
+  margin-bottom: 22px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+}
+
+.bs-event-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  margin-bottom: 6px;
+}
+
+.bs-event-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--charcoal);
+  margin: 0 0 12px;
+  line-height: 1.3;
+}
+
+.bs-event-meta {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.bs-event-meta div {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-body);
+  line-height: 1.45;
+}
+
+.bs-event-meta svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: var(--lavender-deep);
+}
+
+.bs-next-steps {
+  list-style: none;
+  text-align: left;
+  margin: 0 0 22px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.bs-next-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-body);
+}
+
+.bs-step-num {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--lavender-deep);
+  background: var(--lavender-light);
+}
+
+.bs-status {
+  margin-bottom: 18px;
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.bs-status.is-error {
+  color: #b42318;
+}
+
+.bs-status:empty {
+  display: none;
+  margin: 0;
+}
+
+.bs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.bs-actions .btn {
+  min-width: 168px;
+}
+
+.bs-tool-section {
+  text-align: left;
+  margin-bottom: 22px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+}
+
+.bs-tool-section[hidden] {
+  display: none !important;
+}
+
+.bs-tool-heading {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lavender-deep);
+  margin: 0 0 8px;
+}
+
+.bs-tool-lede {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-muted);
+  margin: 0 0 12px;
+}
+
+.bs-tool-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bs-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 14px;
+  border-radius: var(--radius-pill);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--charcoal);
+  background: var(--surface-card);
+  border: 1px solid var(--lavender-soft);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.bs-tool-btn:hover {
+  background: var(--lavender-light);
+  border-color: var(--lavender);
+  color: var(--charcoal);
+  text-decoration: none;
+}
+
+.bs-tool-btn--share {
+  background: var(--lavender-light);
+}
+
+.bs-actions[hidden] {
+  display: none !important;
+}
+
+.bs-event[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 520px) {
+  .bs-main {
+    padding-top: 76px;
+  }
+
+  .bs-card-body,
+  .bs-card-hero {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .bs-actions {
+    flex-direction: column;
+  }
+
+  .bs-actions .btn {
+    width: 100%;
+  }
+}
