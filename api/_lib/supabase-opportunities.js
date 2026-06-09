@@ -120,6 +120,7 @@ function rowToListing(row) {
     category: row.category || 'general',
     contactEmail: String(row.contact_email || '').trim(),
     imageUrl: String(row.image_url || '').trim(),
+    logoUrl: String(row.logo_url || '').trim(),
     status: row.status || 'draft',
     approvalStatus: row.approval_status || 'Pending Review',
     organiserId: row.organiser_id || '',
@@ -135,7 +136,7 @@ function rowToListing(row) {
 async function resolveOpportunityImage(payload, opportunityId) {
   if (payload.photoBase64) {
     const url = await resolveImageUrl({
-      folder: `opportunities/${opportunityId || 'new'}`,
+      folder: `opportunities/${opportunityId || 'new'}/cover`,
       logoUrl: payload.photoUrl,
       logoBase64: payload.photoBase64,
       logoMime: payload.photoMime,
@@ -145,6 +146,25 @@ async function resolveOpportunityImage(payload, opportunityId) {
   }
   if (Object.prototype.hasOwnProperty.call(payload, 'photoUrl')) {
     const url = String(payload.photoUrl || '').trim();
+    if (url && /^https?:\/\//i.test(url)) return url;
+    return null;
+  }
+  return undefined;
+}
+
+async function resolveOpportunityLogo(payload, opportunityId) {
+  if (payload.logoBase64) {
+    const url = await resolveImageUrl({
+      folder: `opportunities/${opportunityId || 'new'}/logo`,
+      logoUrl: payload.logoUrl,
+      logoBase64: payload.logoBase64,
+      logoMime: payload.logoMime,
+      logoFilename: payload.logoFilename,
+    });
+    if (url) return url;
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, 'logoUrl')) {
+    const url = String(payload.logoUrl || '').trim();
     if (url && /^https?:\/\//i.test(url)) return url;
     return null;
   }
@@ -194,6 +214,9 @@ async function buildOpportunityRow(payload, opportunityId, mode) {
 
   const imageUrl = await resolveOpportunityImage(payload, opportunityId);
   if (imageUrl !== undefined) row.image_url = imageUrl;
+
+  const logoUrl = await resolveOpportunityLogo(payload, opportunityId);
+  if (logoUrl !== undefined) row.logo_url = logoUrl;
 
   if (mode === 'create') {
     const ownerEmail = String(payload.ownerEmail || payload.email || '').toLowerCase();
@@ -303,6 +326,116 @@ async function activateOpportunityPremium(opportunityId) {
   return rowToListing(data);
 }
 
+function enquiryRowToDto(row, opportunity) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    opportunityId: row.opportunity_id,
+    opportunityTitle: opportunity?.title || row.opportunity_title || '',
+    ownerEmail: String(row.owner_email || '').toLowerCase(),
+    enquirerName: String(row.enquirer_name || '').trim(),
+    enquirerEmail: String(row.enquirer_email || '').trim(),
+    message: String(row.message || '').trim(),
+    status: row.status || 'new',
+    createdAt: row.created_at || null,
+    readAt: row.read_at || null,
+    respondedAt: row.responded_at || null,
+  };
+}
+
+async function createOpportunityEnquiry(input) {
+  const opportunityId = String(input.opportunityId || '').trim();
+  const name = String(input.name || input.enquirerName || '').trim();
+  const email = String(input.email || input.enquirerEmail || '').trim();
+  const message = String(input.message || '').trim();
+  if (!isUuid(opportunityId)) throw new Error('invalid_opportunity_id');
+  if (!name) throw new Error('missing_name');
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('invalid_email');
+  if (!message) throw new Error('missing_message');
+
+  const opportunity = await getPublishedOpportunityById(opportunityId);
+  if (!opportunity) throw new Error('not_found');
+
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('opportunity_enquiries')
+    .insert({
+      opportunity_id: opportunityId,
+      owner_email: String(opportunity.ownerEmail || opportunity.contactEmail || '').toLowerCase() || null,
+      enquirer_name: name,
+      enquirer_email: email,
+      message,
+      status: 'new',
+    })
+    .select('*')
+    .single();
+  if (error) throw new Error(error.message);
+  return enquiryRowToDto(data, opportunity);
+}
+
+async function listOpportunityEnquiriesForSession(session) {
+  const email = String(session?.email || '').toLowerCase();
+  const uid = isUuid(session?.sub) ? session.sub : '';
+  if (!email && !uid) return [];
+
+  const sb = getSupabaseAdmin();
+  let oppQuery = sb.from('business_opportunities').select('id, title, owner_email, supabase_user_id');
+  if (uid && email) {
+    oppQuery = oppQuery.or(`owner_email.eq.${email},supabase_user_id.eq.${uid}`);
+  } else if (email) {
+    oppQuery = oppQuery.eq('owner_email', email);
+  } else {
+    oppQuery = oppQuery.eq('supabase_user_id', uid);
+  }
+  const oppRes = await oppQuery;
+  if (oppRes.error) throw new Error(oppRes.error.message);
+  const opportunities = oppRes.data || [];
+  const oppIds = opportunities.map((o) => o.id);
+  const oppById = {};
+  opportunities.forEach((o) => {
+    oppById[o.id] = o;
+  });
+  if (!oppIds.length) return [];
+
+  const { data, error } = await sb
+    .from('opportunity_enquiries')
+    .select('*')
+    .in('opportunity_id', oppIds)
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data || []).map((row) => enquiryRowToDto(row, oppById[row.opportunity_id]));
+}
+
+async function updateOpportunityEnquiryStatus(enquiryId, session, status) {
+  const id = String(enquiryId || '').trim();
+  const nextStatus = String(status || '').toLowerCase();
+  if (!isUuid(id)) throw new Error('invalid_enquiry_id');
+  if (!['read', 'responded'].includes(nextStatus)) throw new Error('invalid_status');
+
+  const enquiries = await listOpportunityEnquiriesForSession(session);
+  const enquiry = enquiries.find((e) => e.id === id);
+  if (!enquiry) throw new Error('not_found');
+
+  const patch = { status: nextStatus };
+  const now = new Date().toISOString();
+  if (nextStatus === 'read' && enquiry.status === 'new') patch.read_at = now;
+  if (nextStatus === 'responded') {
+    patch.responded_at = now;
+    if (!enquiry.readAt) patch.read_at = now;
+  }
+
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('opportunity_enquiries')
+    .update(patch)
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw new Error(error.message);
+  const opportunity = await getOpportunityById(data.opportunity_id);
+  return enquiryRowToDto(data, opportunity);
+}
+
 async function handleOpportunityPremiumCheckout(session) {
   const metadata = session?.metadata || {};
   if (metadata.checkout_type !== 'opportunity_premium') {
@@ -333,6 +466,9 @@ module.exports = {
   updateOpportunity,
   activateOpportunityPremium,
   handleOpportunityPremiumCheckout,
+  createOpportunityEnquiry,
+  listOpportunityEnquiriesForSession,
+  updateOpportunityEnquiryStatus,
   normalizeType,
   normalizeTypes,
   normalizeMeta,

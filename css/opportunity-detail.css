@@ -463,3 +463,18 @@
 .opportunity-detail-page .opp-enquire-alt a {
   color: var(--opp-gold-light, #e8b84b);
 }
+
+.opportunity-detail-page .opp-enquire-status {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.opportunity-detail-page .opp-enquire-status.is-ok {
+  color: #d8f5e4;
+}
+
+.opportunity-detail-page .opp-enquire-status.is-error {
+  color: #ffd8d8;
+}

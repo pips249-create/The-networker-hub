@@ -425,11 +425,12 @@
   }
 
   function companyAvatarHtml(item) {
-    if (item.imageUrl) {
+    var logo = item.logoUrl || '';
+    if (logo) {
       return (
         '<div class="opp-co-avatar opp-co-avatar--logo" aria-hidden="true">' +
         '<img src="' +
-        escapeHtml(item.imageUrl) +
+        escapeHtml(logo) +
         '" alt="" width="24" height="24" loading="lazy" />' +
         '</div>'
       );
@@ -445,34 +446,35 @@
 
   function thumbBlockHtml(item, thumb, typeClassFn, typeLabels) {
     var tags =
+      '<div class="opp-thumb-tags">' +
       '<span class="opp-type-tag ' +
       typeClassFn(item.type) +
       '">' +
       escapeHtml(typeLabels[item.type] || item.type) +
       '</span>' +
-      (item.featured ? '<span class="opp-feat-pip">Featured</span>' : '');
+      (item.featured ? '<span class="opp-feat-pip">Featured</span>' : '') +
+      '</div>';
 
+    var thumbInner;
     if (item.imageUrl) {
-      return (
+      thumbInner =
         '<div class="opp-thumb opp-thumb--image">' +
-        tags +
         '<img class="opp-thumb-img" src="' +
         escapeHtml(item.imageUrl) +
         '" alt="" loading="lazy" />' +
-        '</div>'
-      );
+        '</div>';
+    } else {
+      thumbInner =
+        '<div class="opp-thumb" style="background:' +
+        escapeHtml(thumb.gradient) +
+        '">' +
+        '<span class="opp-thumb-emoji" aria-hidden="true">' +
+        thumb.emoji +
+        '</span>' +
+        '</div>';
     }
 
-    return (
-      '<div class="opp-thumb" style="background:' +
-      escapeHtml(thumb.gradient) +
-      '">' +
-      tags +
-      '<span class="opp-thumb-emoji" aria-hidden="true">' +
-      thumb.emoji +
-      '</span>' +
-      '</div>'
-    );
+    return '<div class="opp-thumb-stack">' + tags + thumbInner + '</div>';
   }
 
   function cardHtml(item) {

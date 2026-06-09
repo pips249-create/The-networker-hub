@@ -2610,6 +2610,21 @@
   height: 34px;
 }
 
+.opp-browse-page .opp-thumb-stack {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.opp-browse-page .opp-thumb-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 44px 8px 10px;
+  background: #fff;
+  border-bottom: 1px solid var(--opp-light-gray);
+}
+
 .opp-browse-page .opp-thumb {
   height: 100px;
   display: flex;
@@ -2637,22 +2652,17 @@
 }
 
 .opp-browse-page .opp-type-tag {
-  position: absolute;
-  top: 10px;
-  left: 10px;
   font-size: 10px;
   font-weight: 700;
   padding: 3px 9px;
   border-radius: 20px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  z-index: 2;
+  flex-shrink: 0;
 }
 
 .opp-browse-page .opp-feat-pip {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+  margin-left: auto;
   background: var(--opp-gold);
   color: var(--opp-navy);
   font-size: 10px;
@@ -2660,11 +2670,7 @@
   padding: 3px 9px;
   border-radius: 5px;
   letter-spacing: 0.04em;
-  z-index: 2;
-}
-
-.opp-browse-page .opp-card.featured .opp-fav-btn {
-  top: 42px;
+  flex-shrink: 0;
 }
 
 .opp-browse-page .opp-card-body {
@@ -2823,11 +2829,15 @@
   flex-direction: row;
 }
 
+.opp-browse-page .opp-opps-grid.list-view .opp-thumb-stack {
+  width: 140px;
+  flex-shrink: 0;
+}
+
 .opp-browse-page .opp-opps-grid.list-view .opp-thumb {
-  width: 120px;
+  width: 100%;
   height: auto;
   min-height: 100px;
-  flex-shrink: 0;
 }
 
 .opp-browse-page .opp-opps-grid.list-view .opp-card-body {
@@ -3062,7 +3072,7 @@
     flex-direction: column;
   }
 
-  .opp-browse-page .opp-opps-grid.list-view .opp-thumb {
+  .opp-browse-page .opp-opps-grid.list-view .opp-thumb-stack {
     width: 100%;
   }
 

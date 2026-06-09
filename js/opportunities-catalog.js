@@ -680,6 +680,7 @@
       category: row.category || 'general',
       contactEmail: row.contactEmail || '',
       imageUrl: row.imageUrl || '',
+      logoUrl: row.logoUrl || '',
     };
   }
 
@@ -692,6 +693,7 @@
     });
     item.about = (seed.about || []).slice();
     item.imageUrl = String(seed.imageUrl || '').trim();
+    item.logoUrl = String(seed.logoUrl || '').trim();
     item.investAmount = parseInvestmentAmount(item.meta);
     item.category = seed.category || inferCategory(item);
     item.thumb = thumbFor(item);

@@ -39,6 +39,8 @@
     canManageTeam: true,
     canDeleteEvents: true,
     organiserRole: 'owner',
+    opportunityEnquiries: [],
+    opportunityEnquiriesNewCount: 0,
   };
 
   const ORGANISER_SCOPE_COOKIE = 'hub_organiser_scope';
@@ -1219,6 +1221,9 @@
     if (page === 'team') {
       markTeamNavSeen();
     }
+    if (page === 'opportunity-enquiries') {
+      loadOpportunityEnquiries();
+    }
   }
 
   window.orgDashSetRoute = setRoute;
@@ -1915,6 +1920,127 @@
     });
   }
 
+  function enquiryStatusLabel(status) {
+    const s = String(status || 'new').toLowerCase();
+    if (s === 'responded') return 'Responded';
+    if (s === 'read') return 'Read';
+    return 'New';
+  }
+
+  function enquiryReplyMailto(enquiry) {
+    const subject = 'Re: ' + (enquiry.opportunityTitle || 'your enquiry');
+    const body =
+      'Hi ' +
+      (enquiry.enquirerName || 'there') +
+      ',\n\nThank you for your enquiry about "' +
+      (enquiry.opportunityTitle || 'our opportunity') +
+      '".\n\n';
+    return (
+      'mailto:' +
+      encodeURIComponent(enquiry.enquirerEmail || '') +
+      '?subject=' +
+      encodeURIComponent(subject) +
+      '&body=' +
+      encodeURIComponent(body)
+    );
+  }
+
+  function updateOpportunityEnquiryUi() {
+    const newCount = Number(state.opportunityEnquiriesNewCount) || 0;
+    const alert = document.getElementById('org-opp-enquiry-alert');
+    const navBadge = document.getElementById('org-opp-enquiry-nav-badge');
+    const quickCard = document.getElementById('org-quick-opp-enquiries');
+    const quickHint = document.getElementById('org-quick-opp-enquiries-hint');
+
+    if (alert) alert.hidden = newCount < 1;
+    if (navBadge) {
+      navBadge.hidden = newCount < 1;
+      navBadge.textContent = newCount > 1 ? String(newCount) + ' new' : 'New';
+    }
+    if (quickCard) quickCard.hidden = !state.opportunityEnquiries.length;
+    if (quickHint) {
+      quickHint.textContent =
+        newCount > 0
+          ? newCount + ' new enquir' + (newCount === 1 ? 'y' : 'ies') + ' waiting for a reply'
+          : 'Messages about your business opportunity listings';
+    }
+  }
+
+  function renderOpportunityEnquiries() {
+    const body = document.getElementById('opp-enquiries-body');
+    const empty = document.getElementById('opp-enquiries-empty');
+    if (!body) return;
+
+    const list = state.opportunityEnquiries || [];
+    body.innerHTML = '';
+    if (!list.length) {
+      if (empty) empty.hidden = false;
+      updateOpportunityEnquiryUi();
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    list.forEach((enquiry) => {
+      const tr = document.createElement('tr');
+      const status = String(enquiry.status || 'new').toLowerCase();
+      const statusKey =
+        status === 'responded' ? 'live' : status === 'read' ? 'archived' : 'upcoming';
+      tr.innerHTML =
+        '<td>' +
+        esc(formatDate(enquiry.createdAt)) +
+        '</td><td class="org-td-name">' +
+        esc(enquiry.opportunityTitle || 'Listing') +
+        '</td><td>' +
+        esc(enquiry.enquirerName || '—') +
+        '<br><span class="org-payout-muted">' +
+        esc(enquiry.enquirerEmail || '') +
+        '</span></td><td class="org-enquiry-message">' +
+        esc(enquiry.message || '') +
+        '</td><td>' +
+        statusBadgeHtml(statusKey, enquiryStatusLabel(status)) +
+        '</td><td class="org-td-actions">' +
+        '<a class="org-btn org-btn-gold org-btn-sm" data-opp-enquiry-reply="' +
+        esc(enquiry.id) +
+        '" href="' +
+        esc(enquiryReplyMailto(enquiry)) +
+        '">Respond here</a>' +
+        '</td>';
+      body.appendChild(tr);
+    });
+    updateOpportunityEnquiryUi();
+  }
+
+  async function loadOpportunityEnquiries() {
+    const hint = document.getElementById('opp-enquiries-load-hint');
+    if (hint) hint.hidden = false;
+    try {
+      const { ok, data } = await api('/api/organiser/opportunity-enquiries');
+      if (!ok) throw new Error(data.message || data.error || 'load_failed');
+      state.opportunityEnquiries = data.enquiries || [];
+      state.opportunityEnquiriesNewCount = Number(data.newCount) || 0;
+    } catch (e) {
+      state.opportunityEnquiries = [];
+      state.opportunityEnquiriesNewCount = 0;
+    } finally {
+      if (hint) hint.hidden = true;
+      renderOpportunityEnquiries();
+    }
+  }
+
+  async function markOpportunityEnquiryResponded(enquiryId) {
+    const { ok, data } = await api('/api/organiser/opportunity-enquiries', {
+      method: 'PATCH',
+      body: JSON.stringify({ id: enquiryId, status: 'responded' }),
+    });
+    if (!ok) return;
+    const enquiry = data.enquiry;
+    if (!enquiry) return;
+    const idx = state.opportunityEnquiries.findIndex((e) => e.id === enquiry.id);
+    if (idx >= 0) state.opportunityEnquiries[idx] = enquiry;
+    state.opportunityEnquiriesNewCount = state.opportunityEnquiries.filter((e) => e.status === 'new').length;
+    renderOpportunityEnquiries();
+  }
+
   function renderAll() {
     renderStats();
     renderOverviewGroups();
@@ -1923,6 +2049,7 @@
     renderTeam();
     renderMyEventsHub();
     fillEventSelect(document.getElementById('ticket-event'));
+    updateOpportunityEnquiryUi();
   }
 
   function setDashboardLoading(on) {
@@ -1998,6 +2125,7 @@
 
     applyPendingGroupSave();
     renderAll();
+    loadOpportunityEnquiries();
     updateTeamNavBadge();
     if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
       window.HubOrganiserOnboarding.initAfterDashboardReady();
@@ -2360,6 +2488,13 @@
       'click',
       (e) => {
         if (handleActionMenuChoice(e)) return;
+
+        const enquiryReply = e.target.closest('[data-opp-enquiry-reply]');
+        if (enquiryReply) {
+          const enquiryId = enquiryReply.getAttribute('data-opp-enquiry-reply');
+          if (enquiryId) markOpportunityEnquiryResponded(enquiryId);
+          return;
+        }
 
         const payoutBtn = e.target.closest('[data-request-payout]');
         if (payoutBtn) {

@@ -16,6 +16,7 @@ const routes = {
   opportunities: require('./_lib/routes/organiser-opportunities'),
   'opportunity-premium-checkout': require('./_lib/routes/organiser-opportunity-premium-checkout'),
   'opportunity-premium-complete': require('./_lib/routes/organiser-opportunity-premium-complete'),
+  'opportunity-enquiries': require('./_lib/routes/organiser-opportunity-enquiries'),
 };
 
 module.exports = async function handler(req, res) {

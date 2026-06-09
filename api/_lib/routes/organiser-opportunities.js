@@ -41,6 +41,12 @@ function opportunityPayloadFromBody(body, session) {
     photoUrl: Object.prototype.hasOwnProperty.call(body, 'photoUrl')
       ? String(body.photoUrl || body.imageUrl || '').trim()
       : undefined,
+    logoBase64: body.logoBase64 || null,
+    logoMime: body.logoMime || null,
+    logoFilename: body.logoFilename || null,
+    logoUrl: Object.prototype.hasOwnProperty.call(body, 'logoUrl')
+      ? String(body.logoUrl || '').trim()
+      : undefined,
   };
 }
 

@@ -225,6 +225,15 @@
   padding-left: 40px;
 }
 
+.organiser-opportunity-edit-page .oe-logo-upload .ee-upload-preview img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--opp-border);
+}
+
 .organiser-opportunity-edit-page .hub-location-suggest {
   position: absolute;
   left: 0;

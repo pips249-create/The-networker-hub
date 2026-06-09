@@ -99,6 +99,22 @@
             <input type="email" id="oe-email" required placeholder="you@company.co.uk" />
             <p class="ee-hint">Interested members contact you directly at this address.</p>
           </div>
+          <div class="ee-field">
+            <label>Business logo (optional)</label>
+            <p class="ee-hint">Square logo shown beside your company name on cards and the detail page.</p>
+            <div class="ee-upload-zone oe-logo-upload" id="oe-logo-zone" tabindex="0" role="button" aria-label="Upload business logo">
+              <input type="file" id="oe-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+              <div class="ee-upload-preview" id="oe-logo-preview" hidden>
+                <img id="oe-logo-preview-img" alt="" width="72" height="72" />
+                <button type="button" class="ee-btn ee-btn-outline" id="oe-logo-clear" style="font-size: 11px; padding: 6px 10px">Remove</button>
+              </div>
+              <div class="ee-upload-placeholder" id="oe-logo-placeholder">
+                <strong>Upload business logo</strong>
+                <span>PNG or JPG, max 2MB — or paste a URL below</span>
+              </div>
+            </div>
+            <input type="url" id="oe-logo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top: 10px" />
+          </div>
         </div>
 
         <div class="ee-card" id="oe-card-meta">
@@ -158,9 +174,9 @@
         </div>
 
         <div class="ee-card" id="oe-card-photo">
-          <h2>Cover image (optional)</h2>
+          <h2>Opportunity photo (optional)</h2>
           <div class="ee-field">
-            <p class="auth-lede" style="margin: 0 0 8px; font-size: 13px">Upload, paste, or drop an image — or use a URL below.</p>
+            <p class="auth-lede" style="margin: 0 0 8px; font-size: 13px">Large photo on your detail page and listing card — separate from your business logo.</p>
             <div class="ee-upload-zone" id="oe-photo-zone" tabindex="0" role="button" aria-label="Upload opportunity image">
               <input type="file" id="oe-photo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
               <div class="ee-upload-preview" id="oe-photo-preview" hidden>
@@ -191,6 +207,6 @@
     <script src="../js/organiser-page-loading.js?v=20260608d"></script>
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
     <script src="../js/hub-location-autocomplete.js?v=20260609"></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260609b"></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260610a"></script>
   </body>
 </html>

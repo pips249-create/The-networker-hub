@@ -1724,3 +1724,36 @@ body.org-onboard-active {
     margin-top: 6px;
   }
 }
+
+.org-opp-enquiry-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border-radius: var(--od-radius);
+  background: var(--od-gold-light);
+  border: 1px solid rgba(189, 147, 46, 0.35);
+  color: var(--od-text-dark);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.org-opp-enquiry-alert strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.org-opp-enquiry-alert span {
+  color: var(--od-text-mid);
+}
+
+.org-enquiry-message {
+  max-width: 320px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13px;
+  color: var(--od-text-mid);
+}

@@ -6,6 +6,7 @@
   const editId = params.get('id') || '';
 
   let photoFile = null;
+  let logoFile = null;
 
   const OPPORTUNITY_TYPES = [
     'franchise',
@@ -117,6 +118,16 @@
       document.getElementById('oe-extra-val').value = extra.val;
     }
 
+    if (opp.logoUrl) {
+      document.getElementById('oe-logo-url').value = opp.logoUrl;
+      const logoPreview = document.getElementById('oe-logo-preview');
+      const logoPlaceholder = document.getElementById('oe-logo-placeholder');
+      const logoPreviewImg = document.getElementById('oe-logo-preview-img');
+      if (logoPreviewImg) logoPreviewImg.src = opp.logoUrl;
+      if (logoPreview) logoPreview.hidden = false;
+      if (logoPlaceholder) logoPlaceholder.hidden = true;
+    }
+
     if (opp.imageUrl) {
       document.getElementById('oe-photo-url').value = opp.imageUrl;
       const preview = document.getElementById('oe-photo-preview');
@@ -129,6 +140,56 @@
 
     showStatusBadge(opp);
     document.getElementById('oe-page-title').textContent = 'Edit opportunity';
+  }
+
+  function bindLogoUpload() {
+    const zone = document.getElementById('oe-logo-zone');
+    const fileInput = document.getElementById('oe-logo-file');
+    const preview = document.getElementById('oe-logo-preview');
+    const placeholder = document.getElementById('oe-logo-placeholder');
+    const previewImg = document.getElementById('oe-logo-preview-img');
+    const clearBtn = document.getElementById('oe-logo-clear');
+
+    function showPreview(src) {
+      if (previewImg) previewImg.src = src;
+      if (preview) preview.hidden = false;
+      if (placeholder) placeholder.hidden = true;
+    }
+
+    function resetPreview() {
+      logoFile = null;
+      if (fileInput) fileInput.value = '';
+      if (preview) preview.hidden = true;
+      if (placeholder) placeholder.hidden = false;
+      if (previewImg) previewImg.removeAttribute('src');
+    }
+
+    function setLogoFile(file) {
+      logoFile = file;
+      const reader = new FileReader();
+      reader.onload = () => showPreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+
+    if (zone && window.hubBindImageUpload) {
+      window.hubBindImageUpload({ zone, fileInput, onFile: setLogoFile });
+    }
+    if (zone) {
+      zone.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (fileInput) fileInput.click();
+        }
+      });
+    }
+    if (clearBtn) {
+      clearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        resetPreview();
+        const urlInput = document.getElementById('oe-logo-url');
+        if (urlInput) urlInput.value = '';
+      });
+    }
   }
 
   function bindPhotoUpload() {
@@ -227,6 +288,7 @@
       tags,
       listingStatus,
       photoUrl: document.getElementById('oe-photo-url').value.trim(),
+      logoUrl: document.getElementById('oe-logo-url').value.trim(),
     };
   }
 
@@ -258,6 +320,12 @@
       payload.photoBase64 = await readFileAsBase64(photoFile);
       payload.photoMime = photoFile.type;
       payload.photoFilename = photoFile.name;
+    }
+
+    if (logoFile) {
+      payload.logoBase64 = await readFileAsBase64(logoFile);
+      payload.logoMime = logoFile.type;
+      payload.logoFilename = logoFile.name;
     }
 
     const submitBtn = document.getElementById('oe-submit');
@@ -328,6 +396,7 @@
       if (!loggedIn) return;
     }
 
+    bindLogoUpload();
     bindPhotoUpload();
 
     if (window.hubBindLocationAutocomplete) {

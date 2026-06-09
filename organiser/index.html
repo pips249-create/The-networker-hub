@@ -46,6 +46,11 @@
             <a href="#events-attendees" class="hub-side-nav-link" data-org-route="events-attendees">Attendees</a>
             <a href="#events-reviews" class="hub-side-nav-link" data-org-route="events-reviews">Reviews</a>
             <a href="#events-revenue" class="hub-side-nav-link" data-org-route="events-revenue">Revenue</a>
+            <span class="hub-side-nav-divider">Business opportunities</span>
+            <a href="#opportunity-enquiries" class="hub-side-nav-link" data-org-route="opportunity-enquiries">
+              Opportunity enquiries
+              <span class="org-nav-badge" id="org-opp-enquiry-nav-badge" hidden>New</span>
+            </a>
             <div class="hub-side-nav-util">
               <a href="../events/index.html">Browse events</a>
             </div>
@@ -59,6 +64,13 @@
           </p>
           <div class="org-wrap">
         <div id="org-airtable-alert" class="org-alert" hidden></div>
+        <div class="org-opp-enquiry-alert" id="org-opp-enquiry-alert" hidden>
+          <div>
+            <strong>You have new opportunity enquiries.</strong>
+            <span>Please respond to interested members from your dashboard.</span>
+          </div>
+          <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="opportunity-enquiries">View enquiries</button>
+        </div>
 
         <!-- Overview -->
         <section class="org-page is-active" id="org-page-dashboard" data-org-page="dashboard">
@@ -151,6 +163,11 @@
                 <span class="org-quick-icon" aria-hidden="true">👥</span>
                 <span class="org-quick-label">Invite team members</span>
                 <span class="org-quick-hint">Add editors to help manage your events</span>
+              </button>
+              <button type="button" class="org-quick-card" data-org-shortcut="opportunity-enquiries" id="org-quick-opp-enquiries" hidden>
+                <span class="org-quick-icon" aria-hidden="true">✉</span>
+                <span class="org-quick-label">Respond to opportunity enquiries</span>
+                <span class="org-quick-hint" id="org-quick-opp-enquiries-hint">New messages about your listings</span>
               </button>
             </div>
           </div>
@@ -505,6 +522,32 @@
             <nav class="org-pagination" id="pagination-revenue" data-list="revenue" aria-label="Revenue pages" hidden></nav>
           </div>
         </section>
+
+        <section class="org-page" id="org-page-opportunity-enquiries" data-org-page="opportunity-enquiries">
+          <div class="org-overview-head">
+            <div class="org-overview-head-text">
+              <h2 class="org-section-title">Opportunity enquiries</h2>
+              <p class="org-section-sub">When someone enquires about your business opportunity listing, respond to them here by email.</p>
+            </div>
+          </div>
+          <p class="org-load-hint" id="opp-enquiries-load-hint" hidden>Loading enquiries…</p>
+          <div class="org-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Received</th>
+                  <th>Listing</th>
+                  <th>From</th>
+                  <th>Message</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="opp-enquiries-body"></tbody>
+            </table>
+            <p class="org-empty" id="opp-enquiries-empty" hidden>No enquiries yet. When someone uses the enquiry form on your listing, it will appear here.</p>
+          </div>
+        </section>
           </div>
         </div>
       </div>
@@ -709,6 +752,6 @@
 
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
     <script src="../js/organiser-onboarding.js?v=20260605"></script>
-    <script src="../js/organiser-dashboard.js?v=20260609l"></script>
+    <script src="../js/organiser-dashboard.js?v=20260610a"></script>
   </body>
 </html>

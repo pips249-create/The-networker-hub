@@ -26,6 +26,7 @@
     form: document.getElementById('opp-enquire-form'),
     mailto: document.getElementById('opp-enquire-mailto'),
     submit: document.getElementById('opp-enquire-submit'),
+    enquireStatus: document.getElementById('opp-enquire-status'),
   };
 
   function escapeHtml(s) {
@@ -57,7 +58,7 @@
     if (!els.cover || !els.coverImg || !item) return;
     if (item.imageUrl) {
       els.coverImg.src = item.imageUrl;
-      els.coverImg.alt = item.host ? item.host + ' logo' : 'Opportunity image';
+      els.coverImg.alt = item.title ? item.title + ' photo' : 'Opportunity photo';
       els.cover.hidden = false;
       return;
     }
@@ -66,15 +67,20 @@
     els.coverImg.alt = '';
   }
 
+  function hostLogoUrl(item) {
+    return String((item && item.logoUrl) || '').trim();
+  }
+
   function applyHostLogo(el, item) {
     if (!el || !item) return;
-    if (item.imageUrl) {
+    var logo = hostLogoUrl(item);
+    if (logo) {
       el.textContent = '';
       el.style.background = '#fff';
       el.classList.add('has-logo');
       el.innerHTML =
         '<img src="' +
-        escapeHtml(item.imageUrl) +
+        escapeHtml(logo) +
         '" alt="" width="40" height="40" loading="lazy" />';
       return;
     }
@@ -165,11 +171,7 @@
     applyHostLogo(els.hostLogo, item);
     applyHostLogo(els.posterLogo, item);
 
-    if (els.hostLogo && item.imageUrl) {
-      els.hostLogo.hidden = true;
-    } else if (els.hostLogo) {
-      els.hostLogo.hidden = false;
-    }
+    if (els.hostLogo) els.hostLogo.hidden = false;
 
     if (els.typeBadge) {
       els.typeBadge.textContent = catalog.TYPE_LABELS[item.type] || item.type;
@@ -199,6 +201,13 @@
     });
   }
 
+  function showEnquireStatus(msg, ok) {
+    if (!els.enquireStatus) return;
+    els.enquireStatus.hidden = false;
+    els.enquireStatus.textContent = msg;
+    els.enquireStatus.className = 'opp-enquire-status' + (ok ? ' is-ok' : ' is-error');
+  }
+
   function bindForm() {
     if (!els.form) return;
     els.form.addEventListener('submit', function (e) {
@@ -210,12 +219,54 @@
       var message = (document.getElementById('opp-enquire-message').value || '').trim();
       if (!name || !email || !message) return;
 
-      window.location.href = buildMailto(current, name, email, message);
-
       if (els.submit) {
-        els.submit.textContent = 'Opening your email app…';
         els.submit.disabled = true;
+        els.submit.textContent = 'Sending…';
       }
+      if (els.enquireStatus) els.enquireStatus.hidden = true;
+
+      fetch('/api/opportunities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          opportunityId: current.id,
+          name: name,
+          email: email,
+          message: message,
+        }),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data };
+          });
+        })
+        .then(function (result) {
+          if (result.ok && result.data && result.data.ok) {
+            showEnquireStatus(
+              'Enquiry sent — the poster has been notified and will respond to you by email.',
+              true
+            );
+            if (els.submit) els.submit.textContent = 'Enquiry sent';
+            els.form.reset();
+            return;
+          }
+          if (els.submit) {
+            els.submit.disabled = false;
+            els.submit.textContent = 'Send enquiry';
+          }
+          showEnquireStatus(
+            (result.data && (result.data.message || result.data.error)) ||
+              'Could not send your enquiry. Try the email link below.',
+            false
+          );
+        })
+        .catch(function () {
+          if (els.submit) {
+            els.submit.disabled = false;
+            els.submit.textContent = 'Send enquiry';
+          }
+          showEnquireStatus('Could not send your enquiry. Try the email link below.', false);
+        });
     });
   }
 
