@@ -223,9 +223,32 @@
         <header class="opp-section-header">
           <p class="opp-section-tag">Post an opportunity</p>
           <h2>Ready to reach thousands of business professionals?</h2>
-          <p>Submit your opportunity below and we'll have you live within 24 hours.</p>
+          <p>Create your listing with the same details shown on opportunity cards — type, investment, location, and more.</p>
         </header>
-        <form class="opp-form-card" onsubmit="return false;">
+        <div class="opp-form-card" style="text-align: center; padding: 36px 28px">
+          <p style="margin: 0 0 20px; color: rgba(255, 255, 255, 0.75); max-width: 36em; margin-left: auto; margin-right: auto">
+            Sign in, choose your group profile, and add your opportunity — for example a Tropic Skincare ambassador role,
+            franchise territory, or side hustle.
+          </p>
+          <a
+            href="../organiser/opportunity-edit.html"
+            class="opp-btn-primary"
+            data-hub-action="add-opportunity"
+            style="min-width: 220px; justify-content: center; display: inline-flex"
+          >
+            Create your listing
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path
+                d="M1 7h12M8 2l5 5-5 5"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </a>
+        </div>
+        <form class="opp-form-card" onsubmit="return false;" hidden aria-hidden="true">
           <div class="opp-form-grid">
             <div class="opp-form-group">
               <label for="opp-name">Your name</label>
@@ -404,6 +427,7 @@
       </div>
     </footer>
 
+    <script src="../js/hub-organiser-actions.js?v=20260606" data-root="../"></script>
     <script src="../js/opportunities-page.js?v=20260609f"></script>
   </body>
 </html>

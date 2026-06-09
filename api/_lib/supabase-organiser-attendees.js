@@ -25,6 +25,9 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       id,
       created_at,
       event_id,
+      payment_status,
+      amount_paid,
+      quantity,
       attendees ( name, email ),
       events ( title ),
       tickets ( name )
@@ -44,6 +47,9 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       const name =
         String(attendee.name || '').trim() || (email ? email.split('@')[0] : 'Attendee');
 
+      const paymentStatus = String(row.payment_status || 'Pending').trim();
+      const amountPaid = row.amount_paid != null ? Number(row.amount_paid) : 0;
+
       return {
         id: row.id,
         eventId: row.event_id,
@@ -52,7 +58,10 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
         email,
         phone: '',
         ticketName: String(ticket.name || 'General admission').trim(),
-        quantity: 1,
+        quantity: Math.max(1, Number(row.quantity) || 1),
+        paymentStatus,
+        amountPaid,
+        amountDisplay: amountPaid > 0 ? '£' + amountPaid.toFixed(2) : 'Free',
         registeredAt: row.created_at || '',
       };
     })

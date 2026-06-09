@@ -109,6 +109,21 @@
     global.location.href = path('organiser/event-format.html');
   }
 
+  async function goToAddOpportunity(options) {
+    options = options || {};
+    var data = await fetchSession();
+    if (!data.ok || !data.user) {
+      global.location.href = loginUrl('/organiser/opportunity-edit.html');
+      return;
+    }
+    if (!hasGroupProfile(data)) {
+      global.alert('You must add a group profile first.');
+      global.location.href = path('organiser/group-edit.html');
+      return;
+    }
+    global.location.href = path('organiser/opportunity-edit.html');
+  }
+
   function bindActions(scope) {
     var rootEl = scope && scope.querySelectorAll ? scope : document;
     rootEl.querySelectorAll('[data-hub-action="add-group"]').forEach(function (btn) {
@@ -121,6 +136,12 @@
       btn.addEventListener('click', function (e) {
         e.preventDefault();
         goToAddEvent();
+      });
+    });
+    rootEl.querySelectorAll('[data-hub-action="add-opportunity"]').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        goToAddOpportunity();
       });
     });
   }
@@ -153,6 +174,7 @@
     BROWSE_RETURN_KEY: BROWSE_RETURN_KEY,
     goToGroupProfile: goToGroupProfile,
     goToAddEvent: goToAddEvent,
+    goToAddOpportunity: goToAddOpportunity,
     bindActions: bindActions,
     requireGroupProfileForEventFlow: requireGroupProfileForEventFlow,
     requireLogin: requireLogin,

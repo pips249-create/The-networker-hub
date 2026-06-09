@@ -42,6 +42,53 @@ function isSettlementComplete(ev) {
   return new Date() >= earliest;
 }
 
+function isCountableRegistration(row) {
+  const payment = String(row.payment_status || '').trim();
+  if (payment === 'Refunded') return false;
+  if (String(row.application_status || '').trim() === 'Denied') return false;
+  return payment === 'Paid' || payment === 'Free' || payment === 'Pending';
+}
+
+function registrationTicketQty(row) {
+  return Math.max(1, Number(row.quantity) || 1);
+}
+
+function summarizeRegistrationSales(registrations) {
+  let ticketsSold = 0;
+  (registrations || []).forEach((row) => {
+    if (!isCountableRegistration(row)) return;
+    ticketsSold += registrationTicketQty(row);
+  });
+  return { ticketsSold };
+}
+
+function enrichTicketsWithSales(tickets, registrations) {
+  const soldByTicket = new Map();
+  const revenueByTicket = new Map();
+  (registrations || []).forEach((row) => {
+    if (!row.ticket_id || !isCountableRegistration(row)) return;
+    const q = registrationTicketQty(row);
+    soldByTicket.set(row.ticket_id, (soldByTicket.get(row.ticket_id) || 0) + q);
+    if (String(row.payment_status || '').trim() === 'Paid') {
+      revenueByTicket.set(
+        row.ticket_id,
+        (revenueByTicket.get(row.ticket_id) || 0) + Number(row.amount_paid || 0)
+      );
+    }
+  });
+
+  return (tickets || []).map((t) => {
+    const sold = soldByTicket.get(t.id) || 0;
+    const revenue = Math.round((revenueByTicket.get(t.id) || 0) * 100) / 100;
+    return {
+      ...t,
+      ticketsSold: sold,
+      revenueNum: revenue,
+      revenueDisplay: formatGbp(revenue),
+    };
+  });
+}
+
 function calculatePayoutBreakdown(registrations) {
   const paid = (registrations || []).filter((r) => r.payment_status === 'Paid');
   const amount_gross = paid.reduce((sum, r) => sum + Number(r.amount_paid || 0), 0);
@@ -266,14 +313,91 @@ async function enrichEventsWithPayoutData(events) {
   });
 
   return events.map((ev) => {
-    const breakdown = calculatePayoutBreakdown(regsByEvent[ev.id] || []);
+    const regs = regsByEvent[ev.id] || [];
+    const breakdown = calculatePayoutBreakdown(regs);
+    const { ticketsSold } = summarizeRegistrationSales(regs);
+    const capacity = Number(ev.ticketsCapacity) || 0;
+    const withSales = {
+      ...ev,
+      ticketsSold,
+      revenueNum: breakdown.amount_gross,
+      revenueDisplay: formatGbp(breakdown.amount_gross),
+      ticketsSoldLabel:
+        capacity > 0
+          ? `${ticketsSold} / ${capacity}`
+          : ticketsSold > 0
+            ? String(ticketsSold)
+            : '0',
+    };
     return enrichEventPayoutFields(
-      ev,
+      withSales,
       payoutsByEvent[ev.id] || null,
       cancellationsByEvent[ev.id] || null,
       breakdown
     );
   });
+}
+
+async function enrichOrganiserWorkspaceSales(events, tickets) {
+  const enrichedEvents = await enrichEventsWithPayoutData(events);
+  const eventIds = enrichedEvents.map((e) => e.id).filter(Boolean);
+  const registrations = await listRegistrationsForEvents(eventIds);
+  const enrichedTickets = enrichTicketsWithSales(tickets, registrations);
+  return { events: enrichedEvents, tickets: enrichedTickets };
+}
+
+async function buildOrganiserWorkspaceSummary(groupIds, adminView) {
+  const sb = getSupabaseAdmin();
+  const ids = groupIds || [];
+  if (!ids.length && !adminView) {
+    return {
+      totalRevenue: 0,
+      totalTicketsSold: 0,
+      revenueByGroupId: {},
+      ticketsSoldByGroupId: {},
+    };
+  }
+
+  let query = sb.from('events').select('id, organiser_id');
+  if (!adminView) {
+    if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
+    else query = query.in('organiser_id', ids);
+  }
+  const { data: eventRows, error } = await query;
+  if (error) throw new Error(error.message);
+
+  const events = eventRows || [];
+  const eventOrganiser = new Map(events.map((row) => [row.id, row.organiser_id]));
+  const eventIds = events.map((row) => row.id).filter(Boolean);
+  const registrations = await listRegistrationsForEvents(eventIds);
+
+  let totalRevenue = 0;
+  let totalTicketsSold = 0;
+  const revenueByGroupId = {};
+  const ticketsSoldByGroupId = {};
+
+  registrations.forEach((row) => {
+    if (!isCountableRegistration(row)) return;
+    const groupId = eventOrganiser.get(row.event_id);
+    if (!groupId) return;
+    const qty = registrationTicketQty(row);
+    totalTicketsSold += qty;
+    ticketsSoldByGroupId[groupId] = (ticketsSoldByGroupId[groupId] || 0) + qty;
+    if (String(row.payment_status || '').trim() === 'Paid') {
+      const amount = Number(row.amount_paid || 0);
+      totalRevenue += amount;
+      revenueByGroupId[groupId] = (revenueByGroupId[groupId] || 0) + amount;
+    }
+  });
+
+  totalRevenue = Math.round(totalRevenue * 100) / 100;
+
+  return {
+    totalRevenue,
+    totalTicketsSold,
+    revenueByGroupId,
+    ticketsSoldByGroupId,
+  };
 }
 
 async function getPayoutPreview(session, eventId) {
@@ -372,6 +496,10 @@ module.exports = {
   listRegistrationsForEvents,
   archivePastPublishedEvents,
   enrichEventsWithPayoutData,
+  enrichOrganiserWorkspaceSales,
+  enrichTicketsWithSales,
+  summarizeRegistrationSales,
+  buildOrganiserWorkspaceSummary,
   enrichEventPayoutFields,
   getPayoutPreview,
   requestPayout,

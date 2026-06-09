@@ -51,6 +51,37 @@ function sponsorCtaColor(block) {
   return sanitizeCtaColor(block.cta_color);
 }
 
+function hasSponsorLogo(block) {
+  const url = sponsorLogoUrl(block);
+  return /^(https?:|\/|data:image\/)/i.test(url);
+}
+
+function hasValidCtaUrl(url) {
+  const u = String(url || '').trim();
+  if (!u) return false;
+  if (/^mailto:/i.test(u)) return u.length > 7;
+  if (/^https?:\/\//i.test(u)) return u.replace(/^https?:\/\//i, '').trim().length > 0;
+  return false;
+}
+
+function isCompactSponsorSlot(slot) {
+  const key = String(slot || '').trim();
+  return key.endsWith('_sidebar_ad') || key === 'event_page_banner_ad';
+}
+
+/** Whether a cms_blocks row is ready to show on the public site for its slot. */
+function isPublishableSponsorBlock(block, slot) {
+  if (!block || block.active === false) return false;
+  const key = String(slot || block.slot || '').trim();
+  const ctaLabel = String(block.cta_label || '').trim();
+  const ctaUrl = String(block.cta_url || '').trim();
+  if (!ctaLabel || !hasValidCtaUrl(ctaUrl)) return false;
+  if (isCompactSponsorSlot(key)) return hasSponsorLogo(block);
+  const tagline = sponsorTagline(block);
+  const company = sponsorCompanyName(block);
+  return hasSponsorLogo(block) || Boolean(tagline) || Boolean(company);
+}
+
 function normalizeSponsorBlock(block) {
   if (!block) return null;
   return {
@@ -98,6 +129,10 @@ module.exports = {
   sponsorCompanyName,
   sanitizeCtaColor,
   sponsorCtaColor,
+  hasSponsorLogo,
+  hasValidCtaUrl,
+  isCompactSponsorSlot,
+  isPublishableSponsorBlock,
   normalizeSponsorBlock,
   buildSponsorRow,
 };

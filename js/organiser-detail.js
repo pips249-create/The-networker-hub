@@ -322,7 +322,7 @@
     if (!el) return;
     try {
       var block = await window.CmsAdBlocks.loadCmsAd('organiser_page_sidebar_ad');
-      if (block) window.CmsAdBlocks.renderCompactAd(el, block);
+      window.CmsAdBlocks.renderCompactAd(el, block);
     } catch (e) {
       /* non-fatal */
     }

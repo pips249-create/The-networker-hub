@@ -513,6 +513,8 @@
   }
 
   function renderSpotlight() {
+    if (document.body.classList.contains('browse-mode-organisers')) return;
+
     const premium = getSpotlightPremium();
 
     if (els.spotlightTrack) {

@@ -526,6 +526,7 @@
     { match: /book|ledger|finance/i, emoji: '📊', gradient: 'linear-gradient(135deg,#f8fafc,#e2e8f0)' },
     { match: /gym|fit|fitness/i, emoji: '🏋️', gradient: 'linear-gradient(135deg,#ecfdf5,#a7f3d0)' },
     { match: /network/i, emoji: '🔗', gradient: 'linear-gradient(135deg,#fdf4ff,#e9d5ff)' },
+    { match: /skin|beauty|tropic|cosmetic|wellness/i, emoji: '✨', gradient: 'linear-gradient(135deg,#fdf4ff,#fbcfe8)' },
   ];
 
   var CATEGORY_KEYWORDS = {
@@ -533,6 +534,7 @@
     food: /food|kiosk|coffee|brew|drink/i,
     tech: /web|digital|photo|software|tech/i,
     health: /gym|fit|fitness|health/i,
+    beauty: /skin|beauty|tropic|cosmetic|wellness/i,
     property: /property|maintenance|handyman/i,
     education: /course|coach|training|academy|education/i,
     pets: /dog|groom|pet|paw|animal/i,
@@ -650,9 +652,28 @@
       .toLowerCase();
   }
 
+  function apiRowToSeed(row) {
+    return {
+      id: row.id,
+      type: row.type,
+      tags: row.tags || [row.type],
+      featured: Boolean(row.featured),
+      host: row.host || '',
+      hostInitials: row.hostInitials || '',
+      hostColor: row.hostColor || '',
+      title: row.title || '',
+      desc: row.desc || '',
+      about: row.about || [],
+      meta: row.meta || [],
+      category: row.category || 'general',
+      contactEmail: row.contactEmail || '',
+      imageUrl: row.imageUrl || '',
+    };
+  }
+
   function normalizeListing(seed, index) {
     var item = Object.assign({}, seed);
-    item.id = 'opp-' + (index + 1);
+    if (!item.id) item.id = 'opp-' + (index + 1);
     item.tags = (seed.tags || []).slice();
     item.meta = (seed.meta || []).map(function (m) {
       return { key: m.key, val: m.val };
@@ -700,6 +721,26 @@
     return expandCatalog(SEED_LISTINGS, resolveCatalogSize());
   }
 
+  function loadCatalogAsync() {
+    var seeds = loadCatalog();
+    return fetch('/api/opportunities', { credentials: 'omit', cache: 'no-store' })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data || !data.ok || !Array.isArray(data.opportunities) || !data.opportunities.length) {
+          return seeds;
+        }
+        var live = data.opportunities.map(function (row, i) {
+          return normalizeListing(apiRowToSeed(row), i);
+        });
+        return live.concat(seeds);
+      })
+      .catch(function () {
+        return seeds;
+      });
+  }
+
   function getById(id) {
     var key = String(id || '');
     if (!key) return null;
@@ -708,6 +749,27 @@
       if (catalog[i].id === key) return catalog[i];
     }
     return null;
+  }
+
+  function fetchById(id) {
+    var key = String(id || '');
+    if (!key) return Promise.resolve(null);
+    var cached = getById(key);
+    if (cached) return Promise.resolve(cached);
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(key)) {
+      return Promise.resolve(null);
+    }
+    return fetch('/api/opportunities?id=' + encodeURIComponent(key), { credentials: 'omit', cache: 'no-store' })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data || !data.ok || !data.opportunity) return null;
+        return normalizeListing(apiRowToSeed(data.opportunity), 0);
+      })
+      .catch(function () {
+        return null;
+      });
   }
 
   function detailHref(item) {
@@ -735,7 +797,10 @@
     expandCatalog: expandCatalog,
     resolveCatalogSize: resolveCatalogSize,
     loadCatalog: loadCatalog,
+    loadCatalogAsync: loadCatalogAsync,
     getById: getById,
+    fetchById: fetchById,
+    apiRowToSeed: apiRowToSeed,
     detailHref: detailHref,
     typeClass: typeClass,
     cardDisplayMeta: cardDisplayMeta,

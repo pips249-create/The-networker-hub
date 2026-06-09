@@ -105,8 +105,67 @@ async function submitReview(session, input) {
   };
 }
 
+function reviewerDisplayName(attendee) {
+  const name = String(attendee?.name || '').trim();
+  if (name) return name;
+  const email = String(attendee?.email || '').trim();
+  if (email) return email.split('@')[0];
+  return 'Attendee';
+}
+
+function reviewerInitials(name) {
+  const parts = String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return '?';
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+async function listReviewsForOrganiserGroups(groupIds, groupsById, adminView) {
+  if (!isSupabaseConfigured()) return [];
+  const ids = groupIds || [];
+  const sb = getSupabaseAdmin();
+  let query = sb
+    .from('reviews')
+    .select(
+      'id, created_at, rating, review_text, organiser_response, organiser_id, event_id, events ( title ), attendees ( name, email )'
+    )
+    .order('created_at', { ascending: false })
+    .limit(500);
+
+  if (!adminView) {
+    if (!ids.length) return [];
+    if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
+    else query = query.in('organiser_id', ids);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+
+  return (data || []).map((row) => {
+    const groupId = row.organiser_id || '';
+    const group = groupsById && groupsById.get ? groupsById.get(groupId) : null;
+    const authorName = reviewerDisplayName(row.attendees);
+    return {
+      id: row.id,
+      rating: row.rating,
+      body: String(row.review_text || '').trim(),
+      reply: String(row.organiser_response || '').trim() || null,
+      authorName,
+      initials: reviewerInitials(authorName),
+      groupId,
+      groupName: group?.name || 'Group',
+      eventTitle: String(row.events?.title || 'Event').trim(),
+      date: row.created_at || '',
+    };
+  });
+}
+
 module.exports = {
   submitReview,
   eventHasEnded,
   isEligibleRegistration,
+  listReviewsForOrganiserGroups,
 };

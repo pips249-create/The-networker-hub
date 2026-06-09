@@ -14,6 +14,18 @@
 
   var organisers = [];
   var currentPage = 1;
+  var SPOTLIGHT_MAX = 10;
+  var SPOTLIGHT_AUTO_MS = 2800;
+  var spotlightFeaturedOrder = null;
+  var spotlightTimer = null;
+  var spotlightAnimating = false;
+  var spotlightCarouselBound = false;
+  var spotlightViewAllBound = false;
+
+  var META_PIN_SVG =
+    '<svg class="premium-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+  var META_STAR_SVG =
+    '<svg class="premium-meta-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.7 7-6.3-3.8-6.3 3.8 1.7-7-5.4-4.7 7.1-.6z"/></svg>';
 
   function escapeHtml(s) {
     var d = document.createElement('div');
@@ -63,6 +75,271 @@
     var count = Number(n) || 0;
     if (count === 0) return 'No listings yet';
     return count === 1 ? '1 listing' : count + ' listings';
+  }
+
+  function shuffleList(list) {
+    var copy = list.slice();
+    for (var i = copy.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = copy[i];
+      copy[i] = copy[j];
+      copy[j] = tmp;
+    }
+    return copy;
+  }
+
+  function resetSpotlightOrder() {
+    spotlightFeaturedOrder = null;
+  }
+
+  function stopSpotlightAuto() {
+    if (spotlightTimer) {
+      clearInterval(spotlightTimer);
+      spotlightTimer = null;
+    }
+  }
+
+  function getSpotlightTrack() {
+    return document.getElementById('org-spotlight-track');
+  }
+
+  function getSpotlightFeatured() {
+    var source = window.hubAllOrganisers && window.hubAllOrganisers.length ? window.hubAllOrganisers : organisers;
+    if (!spotlightFeaturedOrder) {
+      spotlightFeaturedOrder = shuffleList(
+        source
+          .filter(function (o) {
+            return o.featured;
+          })
+          .slice(0, SPOTLIGHT_MAX)
+      );
+    }
+    return spotlightFeaturedOrder;
+  }
+
+  function getSpotlightCardStep() {
+    var track = getSpotlightTrack();
+    if (!track) return 274;
+    var card = track.querySelector('.premium-card');
+    if (!card) return 274;
+    var gap = parseFloat(getComputedStyle(track).gap) || 14;
+    return card.getBoundingClientRect().width + gap;
+  }
+
+  function measureSpotlightLoopWidth() {
+    var track = getSpotlightTrack();
+    if (!track) return 0;
+    var cards = track.querySelectorAll('.premium-card');
+    if (cards.length < 2) return 0;
+    var half = Math.floor(cards.length / 2);
+    var width = 0;
+    var gap = parseFloat(getComputedStyle(track).gap) || 14;
+    for (var i = 0; i < half; i++) {
+      width += cards[i].getBoundingClientRect().width + (i < half - 1 ? gap : 0);
+    }
+    return width;
+  }
+
+  function syncSpotlightLoopScroll() {
+    var track = getSpotlightTrack();
+    if (!track) return;
+    var loopWidth = measureSpotlightLoopWidth();
+    if (!loopWidth) return;
+    track.dataset.loopWidth = String(loopWidth);
+    if (track.scrollLeft >= loopWidth) {
+      track.scrollLeft = track.scrollLeft - loopWidth;
+    }
+  }
+
+  function startSpotlightAuto() {
+    stopSpotlightAuto();
+    if (!getSpotlightTrack()) return;
+    if (getSpotlightFeatured().length <= 1) return;
+    spotlightTimer = window.setInterval(function () {
+      if (document.hidden || spotlightAnimating) return;
+      advanceSpotlight(1);
+    }, SPOTLIGHT_AUTO_MS);
+  }
+
+  function advanceSpotlight(dir) {
+    dir = dir < 0 ? -1 : 1;
+    var featured = getSpotlightFeatured();
+    var track = getSpotlightTrack();
+    if (!featured.length || featured.length <= 1 || !track || spotlightAnimating) return;
+
+    spotlightAnimating = true;
+    stopSpotlightAuto();
+
+    var step = getSpotlightCardStep() * dir;
+    var loopWidth = parseFloat(track.dataset.loopWidth) || measureSpotlightLoopWidth();
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var behavior = reduceMotion ? 'auto' : 'smooth';
+
+    function finishAdvance() {
+      syncSpotlightLoopScroll();
+      spotlightAnimating = false;
+      startSpotlightAuto();
+    }
+
+    if (dir < 0 && track.scrollLeft <= 4 && loopWidth > 0) {
+      track.scrollLeft = loopWidth;
+    }
+
+    track.scrollBy({ left: step, behavior: behavior });
+    window.setTimeout(finishAdvance, reduceMotion ? 0 : 380);
+  }
+
+  function bindSpotlightCarousel() {
+    if (spotlightCarouselBound) return;
+    spotlightCarouselBound = true;
+
+    var section = document.querySelector('.org-premium-spotlight');
+    var wrap = section && section.querySelector('.spotlight-wrap');
+    var prev = document.getElementById('org-spotlight-prev');
+    var next = document.getElementById('org-spotlight-next');
+
+    if (prev) {
+      prev.addEventListener('click', function () {
+        advanceSpotlight(-1);
+      });
+    }
+    if (next) {
+      next.addEventListener('click', function () {
+        advanceSpotlight(1);
+      });
+    }
+    if (wrap) {
+      wrap.addEventListener('mouseenter', stopSpotlightAuto);
+      wrap.addEventListener('mouseleave', startSpotlightAuto);
+    }
+
+    var resizeTimer;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () {
+        if (!spotlightAnimating) syncSpotlightLoopScroll();
+      }, 200);
+    });
+  }
+
+  function bindSpotlightViewAll() {
+    if (spotlightViewAllBound) return;
+    spotlightViewAllBound = true;
+    var link = document.getElementById('org-spotlight-view-all');
+    if (!link) return;
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      var tab = document.querySelector('.org-type-tab[data-org-tab="featured"]');
+      if (tab) tab.click();
+      var block = document.getElementById('listings-view');
+      if (block) block.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  function spotlightLogoHtml(org) {
+    var url = org.photoUrl || '';
+    var letter = String(org.name || '?').trim().charAt(0).toUpperCase() || '?';
+    if (url) {
+      return (
+        '<img class="org-premium-logo" src="' +
+        escapeHtml(url) +
+        '" alt="" loading="lazy" decoding="async" onerror="this.outerHTML=\'<span class=org-premium-logo-placeholder aria-hidden=true>' +
+        escapeHtml(letter) +
+        '</span>\'">'
+      );
+    }
+    return '<span class="org-premium-logo-placeholder" aria-hidden="true">' + escapeHtml(letter) + '</span>';
+  }
+
+  function ratingMetaLabel(org) {
+    var rating = Number(org.rating) || 0;
+    var reviews = Number(org.reviews) || 0;
+    if (reviews > 0 && rating > 0) return rating.toFixed(1) + ' · ' + reviews + ' reviews';
+    if (reviews > 0) return reviews + ' reviews';
+    return 'New on the hub';
+  }
+
+  function premiumSpotlightCard(org) {
+    var industry = org.industry || (org.industries && org.industries[0]) || 'Networking';
+    var desc = String(org.description || '').trim();
+    if (desc.length > 72) desc = desc.slice(0, 69) + '…';
+
+    return (
+      '<article class="premium-card org-premium-card" data-id="' +
+      escapeHtml(org.id) +
+      '">' +
+      '<a class="premium-card-link" href="' +
+      escapeHtml(organiserHref(org)) +
+      '">' +
+      '<div class="premium-card-media" aria-hidden="true">' +
+      '<div class="premium-card-bg">' +
+      spotlightLogoHtml(org) +
+      '</div>' +
+      '<div class="premium-card-overlay"></div></div>' +
+      '<div class="premium-card-top">' +
+      '<span class="premium-badge">Premium</span>' +
+      '<span class="premium-price">' +
+      escapeHtml(listingCountLabel(org.eventCount)) +
+      '</span></div>' +
+      '<div class="premium-card-body">' +
+      '<span class="org-premium-industry">' +
+      escapeHtml(industry) +
+      '</span>' +
+      '<h3 class="premium-card-title">' +
+      escapeHtml(org.name) +
+      '</h3>' +
+      '<div class="premium-card-meta">' +
+      '<p class="premium-meta-row">' +
+      META_PIN_SVG +
+      '<span>' +
+      escapeHtml(industry) +
+      '</span></p>' +
+      '<p class="premium-meta-row">' +
+      META_STAR_SVG +
+      '<span>' +
+      escapeHtml(ratingMetaLabel(org)) +
+      '</span></p>' +
+      (desc
+        ? '<p class="premium-meta-row premium-meta-row--muted"><span>' + escapeHtml(desc) + '</span></p>'
+        : '') +
+      '</div></div></a></article>'
+    );
+  }
+
+  function renderSpotlight() {
+    if (!document.body.classList.contains('browse-mode-organisers')) return;
+
+    var track = getSpotlightTrack();
+    var promo = document.getElementById('organisers-promo-section');
+    if (!track) return;
+
+    bindSpotlightViewAll();
+
+    var featured = getSpotlightFeatured();
+    if (!featured.length) {
+      track.innerHTML =
+        '<p class="spotlight-empty">No featured organisers yet — mark group profiles as <strong>featured</strong> in Command Centre (up to ' +
+        SPOTLIGHT_MAX +
+        ').</p>';
+      track.classList.remove('spotlight-track--carousel');
+      track.removeAttribute('data-loop-width');
+      track.scrollLeft = 0;
+      stopSpotlightAuto();
+      if (promo) promo.hidden = false;
+      return;
+    }
+
+    var cardsHtml = featured.map(premiumSpotlightCard).join('');
+    var loopHtml = featured.length > 1 ? cardsHtml : '';
+    track.innerHTML = cardsHtml + loopHtml;
+    track.classList.add('spotlight-track--carousel');
+    track.scrollLeft = 0;
+    if (promo) promo.hidden = false;
+    bindSpotlightCarousel();
+    requestAnimationFrame(function () {
+      syncSpotlightLoopScroll();
+      startSpotlightAuto();
+    });
   }
 
   function gridCard(org) {
@@ -231,6 +508,7 @@
   }
 
   function renderAll() {
+    renderSpotlight();
     var filtered = getFilteredList();
     renderGridPage(filtered);
     updateCounts();
@@ -268,6 +546,7 @@
 
   function applyLoadedOrganisers() {
     window.hubAllOrganisers = organisers;
+    resetSpotlightOrder();
     currentPage = 1;
     if (window.hubApplyOrganiserFilters) window.hubApplyOrganiserFilters();
     else renderAll();
@@ -321,5 +600,7 @@
   }
 
   window.hubLoadOrganisers = loadOrganisers;
+  window.hubRenderOrganiserSpotlight = renderSpotlight;
+  window.hubStopOrganiserSpotlight = stopSpotlightAuto;
   initPagination();
 })();

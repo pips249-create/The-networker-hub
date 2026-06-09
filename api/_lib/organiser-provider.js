@@ -12,6 +12,7 @@ function getOrganiserApi() {
     const payouts = require('./supabase-organiser-payouts');
     const cancellations = require('./supabase-organiser-cancellations');
     const attendees = require('./supabase-organiser-attendees');
+    const opportunities = require('./supabase-opportunities');
     return {
       json: core.json,
       setCors: core.setCors,
@@ -21,6 +22,7 @@ function getOrganiserApi() {
       ...team,
       ...payouts,
       ...attendees,
+      ...opportunities,
       cancelLockedEvent: cancellations.cancelLockedEvent,
       confirmRefundsIssued: cancellations.confirmRefundsIssued,
     };

@@ -62,7 +62,12 @@ module.exports = async function handler(req, res) {
         groups: ws.groups.length,
         events: ws.eventsPagination?.total ?? ws.events.length,
         tickets: ws.tickets.length,
+        ticketsSold: ws.workspaceSummary?.totalTicketsSold ?? null,
+        revenue: ws.workspaceSummary?.totalRevenue ?? null,
       },
+      workspaceSummary: ws.workspaceSummary || null,
+      eventSummaries: ws.eventSummaries || [],
+      reviews: ws.reviews || [],
       eventsPagination: ws.eventsPagination || {
         total: ws.events.length,
         limit: ws.events.length,

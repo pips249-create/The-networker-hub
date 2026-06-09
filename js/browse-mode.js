@@ -137,21 +137,26 @@
     ensureOrganiserSortOptions();
     updateSortOptions(mode);
     applyCopy(mode);
+    reloadSponsorHub(mode);
 
     if (isOrganisers) {
       if (window.hubToggleMapView && document.body.classList.contains('events-view-map')) {
         window.hubToggleMapView();
       }
-      reloadSponsorHub('organisers');
       if (window.hubLoadOrganisers) {
         window.hubLoadOrganisers().then(function () {
           if (window.hubApplyOrganiserFilters) window.hubApplyOrganiserFilters();
+          else if (window.hubRenderOrganiserSpotlight) window.hubRenderOrganiserSpotlight();
         });
+      } else if (window.hubRenderOrganiserSpotlight) {
+        window.hubRenderOrganiserSpotlight();
       }
-    } else if (!options.skipEventsRefresh) {
-      if (window.hubApplyFilters) window.hubApplyFilters();
-      else if (window.hubRefreshListings) window.hubRefreshListings();
-      reloadSponsorHub('events');
+    } else {
+      if (window.hubStopOrganiserSpotlight) window.hubStopOrganiserSpotlight();
+      if (!options.skipEventsRefresh) {
+        if (window.hubApplyFilters) window.hubApplyFilters();
+        else if (window.hubRefreshListings) window.hubRefreshListings();
+      }
     }
 
     try {

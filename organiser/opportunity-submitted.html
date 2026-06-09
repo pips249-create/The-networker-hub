@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Opportunity submitted – The Networker Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css?v=20260614" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260606" />
+  </head>
+  <body class="organiser-event-edit-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260710" data-root="../" data-page="organiser"></script>
+
+    <div class="ee-wrap" style="max-width: 640px; text-align: center; padding-top: 48px">
+      <div class="ee-card" style="padding: 36px 28px">
+        <p style="font-size: 40px; margin: 0 0 16px" aria-hidden="true">✓</p>
+        <h1 class="ee-title" style="margin-bottom: 12px">Opportunity submitted</h1>
+        <p class="ee-lead" id="oe-success-lede" style="margin-bottom: 24px">
+          Thanks — we'll review your listing within one working day. Once approved, it will appear in the business
+          opportunities directory.
+        </p>
+        <div class="ee-actions" style="justify-content: center; flex-wrap: wrap; gap: 10px">
+          <a class="ee-btn ee-btn-gold" href="../opportunities/index.html">Browse opportunities</a>
+          <a class="ee-btn ee-btn-outline" href="opportunity-edit.html" id="oe-add-another">List another</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var params = new URLSearchParams(location.search);
+        var title = params.get('title');
+        if (title) {
+          var lede = document.getElementById('oe-success-lede');
+          if (lede) {
+            lede.textContent =
+              'Thanks — "' +
+              title +
+              '" has been submitted. We will review it within one working day and email you once it is live.';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

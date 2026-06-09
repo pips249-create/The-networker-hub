@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>List a business opportunity – The Networker Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css?v=20260614" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
+    <link rel="stylesheet" href="../css/fact-loader.css?v=20260708" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260606" />
+  </head>
+  <body class="organiser-event-edit-page">
+    <div id="oe-page-loading" class="ee-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
+      <div class="ee-page-loading-card">
+        <div class="ee-page-loading-spinner" aria-hidden="true"></div>
+        <p class="ee-page-loading-text"><span class="ee-page-loading-label">Loading</span><span class="ee-page-loading-dots" aria-hidden="true"></span></p>
+      </div>
+    </div>
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260710" data-root="../" data-page="organiser"></script>
+
+    <div class="ee-wrap">
+      <header class="ee-page-head">
+        <div class="ee-top-bar">
+          <a class="ee-back" href="../opportunities/index.html">← Back to opportunities</a>
+        </div>
+        <p class="ee-status-badge" id="oe-status-badge" hidden></p>
+        <h1 class="ee-title" id="oe-page-title">List a business opportunity</h1>
+        <p class="ee-lead" id="oe-page-lead">
+          Add the details that appear on opportunity cards — type, investment, location, and what you're offering.
+          For example, a Tropic Skincare ambassador role or a franchise territory.
+        </p>
+      </header>
+      <div id="oe-alert" class="ee-alert" hidden></div>
+
+      <form id="oe-form">
+        <div class="ee-card" id="oe-card-group">
+          <h2>Which profile is this for?</h2>
+          <div class="ee-field">
+            <label for="oe-group">Group profile</label>
+            <select id="oe-group" required></select>
+            <p class="ee-hint">The business or brand name shown on your listing card.</p>
+          </div>
+        </div>
+
+        <div class="ee-card" id="oe-card-details">
+          <h2>Opportunity details</h2>
+          <div class="ee-field">
+            <label for="oe-title">Opportunity title</label>
+            <input type="text" id="oe-title" required placeholder="e.g. Tropic Skincare — Ambassador Programme" />
+          </div>
+          <div class="ee-field">
+            <label for="oe-type">Opportunity type</label>
+            <select id="oe-type" required>
+              <option value="">Select type…</option>
+              <option value="franchise">Franchise</option>
+              <option value="side-hustle">Side hustle</option>
+              <option value="partnership">Partnership / Affiliate</option>
+              <option value="networking">Networking group / Ambassador</option>
+              <option value="business-opportunity">Business opportunity</option>
+              <option value="distributorship">Distributorship / Reseller</option>
+            </select>
+          </div>
+          <div class="ee-field">
+            <label for="oe-category">Category</label>
+            <select id="oe-category">
+              <option value="">Select category…</option>
+              <option value="cleaning">Cleaning</option>
+              <option value="food">Food &amp; Drink</option>
+              <option value="tech">Tech &amp; Digital</option>
+              <option value="health">Health &amp; Fitness</option>
+              <option value="beauty">Beauty &amp; Wellness</option>
+              <option value="property">Property</option>
+              <option value="education">Education &amp; Coaching</option>
+              <option value="finance">Finance &amp; Admin</option>
+              <option value="pets">Pets &amp; Animals</option>
+              <option value="general">Other</option>
+            </select>
+          </div>
+          <div class="ee-field">
+            <label for="oe-desc">Short description</label>
+            <p class="ee-hint">Shown on the browse card — keep it concise and keyword-rich.</p>
+            <textarea id="oe-desc" rows="4" maxlength="400" required placeholder="What the opportunity is and who it suits — e.g. Flexible skincare business you can run around family commitments."></textarea>
+          </div>
+          <div class="ee-field">
+            <label for="oe-about">Full description</label>
+            <p class="ee-hint">Shown on the detail page. Separate paragraphs with a blank line.</p>
+            <textarea id="oe-about" rows="6" maxlength="3000" placeholder="Tell people what's included, what support you offer, and what you're looking for in a partner or ambassador."></textarea>
+          </div>
+        </div>
+
+        <div class="ee-card" id="oe-card-host">
+          <h2>Listed by</h2>
+          <div class="ee-field">
+            <label for="oe-host">Business / company name</label>
+            <input type="text" id="oe-host" required placeholder="e.g. Tropic Skincare" />
+          </div>
+          <div class="ee-field">
+            <label for="oe-email">Contact email for enquiries</label>
+            <input type="email" id="oe-email" required placeholder="you@company.co.uk" />
+            <p class="ee-hint">Interested members contact you directly at this address.</p>
+          </div>
+        </div>
+
+        <div class="ee-card" id="oe-card-meta">
+          <h2>Card highlights</h2>
+          <p class="ee-hint" style="margin-top: 0">These appear in the meta row on your listing card.</p>
+          <div class="ee-field">
+            <label for="oe-investment">Investment required</label>
+            <input type="text" id="oe-investment" required placeholder="e.g. £0 or £9,500" />
+          </div>
+          <div class="ee-field">
+            <label for="oe-location">Location</label>
+            <input type="text" id="oe-location" required placeholder="e.g. Remote / Yorkshire / UK-wide" />
+          </div>
+          <div class="ee-field">
+            <label for="oe-commitment">Commitment</label>
+            <select id="oe-commitment" required>
+              <option value="">Select…</option>
+              <option>Full-time</option>
+              <option>Part-time / Flexible</option>
+              <option>Event-based</option>
+              <option>Flexible</option>
+            </select>
+          </div>
+          <div class="ee-field">
+            <label for="oe-financial-key">Earnings / return (optional)</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+              <select id="oe-financial-key">
+                <option value="">None</option>
+                <option value="Earnings">Earnings</option>
+                <option value="Commission">Commission</option>
+                <option value="Return est.">Return est.</option>
+                <option value="Revenue">Revenue</option>
+                <option value="Income">Income</option>
+                <option value="Profit">Profit</option>
+              </select>
+              <input type="text" id="oe-financial-val" placeholder="e.g. £400–£900/mo" />
+            </div>
+          </div>
+          <div class="ee-field">
+            <label for="oe-extra-key">Extra highlight (optional)</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+              <input type="text" id="oe-extra-key" placeholder="e.g. Territories left" />
+              <input type="text" id="oe-extra-val" placeholder="e.g. 6" />
+            </div>
+          </div>
+        </div>
+
+        <div class="ee-card" id="oe-card-photo">
+          <h2>Cover image (optional)</h2>
+          <div class="ee-field">
+            <p class="auth-lede" style="margin: 0 0 8px; font-size: 13px">Upload, paste, or drop an image — or use a URL below.</p>
+            <div class="ee-upload-zone" id="oe-photo-zone" tabindex="0" role="button" aria-label="Upload opportunity image">
+              <input type="file" id="oe-photo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+              <div class="ee-upload-preview" id="oe-photo-preview" hidden>
+                <img id="oe-photo-preview-img" alt="" width="96" height="72" />
+                <button type="button" class="ee-btn ee-btn-outline" id="oe-photo-clear" style="font-size: 11px; padding: 6px 10px">Remove</button>
+              </div>
+              <div class="ee-upload-placeholder" id="oe-photo-placeholder">
+                <strong>Upload cover image</strong>
+                <span>PNG or JPG, max 2MB — or paste a URL below</span>
+              </div>
+            </div>
+            <input type="url" id="oe-photo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top: 10px" />
+          </div>
+        </div>
+
+        <div class="ee-card ee-card-actions">
+          <div class="ee-actions ee-actions--split">
+            <button type="button" class="ee-btn ee-btn-outline" id="oe-save-draft">Save as draft</button>
+            <button type="submit" class="ee-btn ee-btn-gold" id="oe-submit">Submit listing</button>
+          </div>
+          <p class="ee-hint ee-actions-note">Submitted listings are reviewed within one working day before going live.</p>
+        </div>
+      </form>
+    </div>
+
+    <script src="../js/hub-organiser-actions.js?v=20260606" data-root="../"></script>
+    <script src="../js/fact-loader.js?v=20260708"></script>
+    <script src="../js/organiser-page-loading.js?v=20260608d"></script>
+    <script src="../js/organiser-image-upload.js?v=20260605"></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260609"></script>
+  </body>
+</html>

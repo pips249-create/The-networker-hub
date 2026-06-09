@@ -4,7 +4,10 @@
  * GET /api/cms-block?slot=sponsor_hub
  */
 const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./_lib/supabase');
-const { normalizeSponsorBlock } = require('./_lib/cms-sponsor-fields');
+const {
+  normalizeSponsorBlock,
+  isPublishableSponsorBlock,
+} = require('./_lib/cms-sponsor-fields');
 
 const LEGACY_SPONSOR_HUB_SLOT = 'sponsor_hub';
 
@@ -39,19 +42,17 @@ const DETAIL_FALLBACK_CHAINS = {
 
 const DEFAULT_DETAIL_FALLBACK_CHAIN = ['events_sponsor_hub', LEGACY_SPONSOR_HUB_SLOT];
 
-async function fetchActiveBlock(sb, slotKey) {
-  const tableRes = await sb
-    .from('cms_blocks')
-    .select('*')
-    .eq('slot', slotKey)
-    .eq('active', true)
-    .maybeSingle();
-  if (tableRes.error) throw new Error(tableRes.error.message);
-  if (tableRes.data) return tableRes.data;
+async function fetchSlotRow(sb, slotKey) {
+  const res = await sb.from('cms_blocks').select('*').eq('slot', slotKey).maybeSingle();
+  if (res.error) throw new Error(res.error.message);
+  return res.data || null;
+}
 
-  const viewRes = await sb.from('active_cms_blocks').select('*').eq('slot', slotKey).maybeSingle();
-  if (viewRes.error) throw new Error(viewRes.error.message);
-  return viewRes.data || null;
+/** Return a slot row only when it is active and has the minimum content for that placement. */
+async function fetchPublishableBlock(sb, slotKey) {
+  const row = await fetchSlotRow(sb, slotKey);
+  if (isPublishableSponsorBlock(row, slotKey)) return row;
+  return null;
 }
 
 module.exports = async function handler(req, res) {
@@ -81,18 +82,18 @@ module.exports = async function handler(req, res) {
 
   try {
     const sb = getSupabaseAdmin();
-    let block = await fetchActiveBlock(sb, slot);
+    let block = await fetchPublishableBlock(sb, slot);
     let fallbackFrom = null;
 
     if (!block && HERO_SPONSOR_SLOTS.has(slot) && slot !== LEGACY_SPONSOR_HUB_SLOT) {
-      block = await fetchActiveBlock(sb, LEGACY_SPONSOR_HUB_SLOT);
+      block = await fetchPublishableBlock(sb, LEGACY_SPONSOR_HUB_SLOT);
       if (block) fallbackFrom = LEGACY_SPONSOR_HUB_SLOT;
     }
 
     if (!block && DETAIL_PAGE_SLOTS.has(slot)) {
       const chain = DETAIL_FALLBACK_CHAINS[slot] || DEFAULT_DETAIL_FALLBACK_CHAIN;
       for (const fallbackSlot of chain) {
-        block = await fetchActiveBlock(sb, fallbackSlot);
+        block = await fetchPublishableBlock(sb, fallbackSlot);
         if (block) {
           fallbackFrom = fallbackSlot;
           break;

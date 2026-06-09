@@ -525,7 +525,12 @@ async function fetchSponsorBlock(sb, slot) {
 }
 
 async function saveSponsorBlock(sb, payload) {
-  const row = buildSponsorRow(payload);
+  const key = String(payload.slot || DEFAULT_CMS_SLOT).trim() || DEFAULT_CMS_SLOT;
+  const existing = await fetchSponsorBlock(sb, key);
+  if (!String(payload.logo_url || '').trim() && existing) {
+    payload.logo_url = existing.logo_url || existing.image_url || '';
+  }
+  const row = buildSponsorRow({ ...payload, slot: key });
   const res = await sb.from('cms_blocks').upsert(row, { onConflict: 'slot' }).select().single();
   if (res.error) throw new Error(res.error.message);
   return normalizeSponsorBlock(res.data);

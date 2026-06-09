@@ -823,6 +823,15 @@
     });
   }
 
+  function bootListings(listings) {
+    allListings = listings || [];
+    updateFilterCounts();
+    syncTabUI();
+    resetSpotlightOrder();
+    renderSpotlight();
+    renderListings();
+  }
+
   function init() {
     cacheEls();
     allListings = catalog ? catalog.loadCatalog() : [];
@@ -838,6 +847,12 @@
     resetSpotlightOrder();
     renderSpotlight();
     renderListings();
+
+    if (catalog && catalog.loadCatalogAsync) {
+      catalog.loadCatalogAsync().then(function (merged) {
+        if (merged && merged.length) bootListings(merged);
+      });
+    }
   }
 
   window.submitForm = function (btn) {

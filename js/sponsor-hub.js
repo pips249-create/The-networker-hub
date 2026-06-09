@@ -249,13 +249,17 @@
   window.HubSponsorHub = { load: load };
   window.hubReloadSponsorBlock = load;
 
-  if (document.getElementById('sponsor-hub')) {
+  function scheduleAutoLoad() {
+    if (!document.getElementById('sponsor-hub')) return;
+    var run = function () {
+      Promise.resolve().then(load);
+    };
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function () {
-        load();
-      });
+      document.addEventListener('DOMContentLoaded', run);
     } else {
-      load();
+      run();
     }
   }
+
+  scheduleAutoLoad();
 })();

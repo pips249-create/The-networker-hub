@@ -1525,7 +1525,7 @@
     const sidebarEl = document.getElementById('event-page-sidebar-ad');
     try {
       const block = await window.CmsAdBlocks.loadCmsAd('event_page_sidebar_ad');
-      if (block && sidebarEl) window.CmsAdBlocks.renderCompactAd(sidebarEl, block);
+      if (sidebarEl) window.CmsAdBlocks.renderCompactAd(sidebarEl, block);
     } catch {
       /* non-fatal */
     }

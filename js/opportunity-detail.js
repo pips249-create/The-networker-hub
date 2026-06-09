@@ -97,6 +97,11 @@
       .join('');
   }
 
+  function enquiryEmail(item) {
+    var email = String((item && item.contactEmail) || '').trim();
+    return email || 'hello@the-networker.co.uk';
+  }
+
   function buildMailto(item, name, email, message) {
     var subject = 'Opportunity enquiry: ' + item.title;
     var body =
@@ -109,7 +114,9 @@
       '\n\n—\nSent via The Networker Hub\nListing: ' +
       window.location.href;
     return (
-      'mailto:hello@the-networker.co.uk?subject=' +
+      'mailto:' +
+      encodeURIComponent(enquiryEmail(item)) +
+      '?subject=' +
       encodeURIComponent(subject) +
       '&body=' +
       encodeURIComponent(body)
@@ -184,9 +191,20 @@
 
     window.CmsAdBlocks.loadCmsAd('opportunity_page_sidebar_ad')
       .then(function (block) {
-        if (block) window.CmsAdBlocks.renderCompactAd(el, block);
+        window.CmsAdBlocks.renderCompactAd(el, block);
       })
       .catch(function () {});
+  }
+
+  function finishInit(item) {
+    if (!item) {
+      showNotFound();
+      return;
+    }
+    render(item);
+    bindSave();
+    bindForm();
+    loadSidebarAd();
   }
 
   function init() {
@@ -197,15 +215,17 @@
 
     var id = resolveId();
     var item = catalog.getById(id);
-    if (!item) {
-      showNotFound();
+    if (item) {
+      finishInit(item);
       return;
     }
 
-    render(item);
-    bindSave();
-    bindForm();
-    loadSidebarAd();
+    if (catalog.fetchById) {
+      catalog.fetchById(id).then(finishInit);
+      return;
+    }
+
+    showNotFound();
   }
 
   if (document.readyState === 'loading') {

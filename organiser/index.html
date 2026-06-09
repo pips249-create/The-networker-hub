@@ -125,7 +125,7 @@
               <div class="org-stat-value" id="stat-events">0</div>
             </div>
             <div class="org-stat green">
-              <div class="org-stat-label">Ticket types</div>
+              <div class="org-stat-label">Tickets sold</div>
               <div class="org-stat-value" id="stat-tickets">0</div>
             </div>
             <div class="org-stat purple">
@@ -396,6 +396,7 @@
                     <th>Event</th>
                     <th>Ticket type</th>
                     <th>Price</th>
+                    <th>Sold</th>
                     <th>Qty available</th>
                     <th>Status</th>
                   </tr>
@@ -431,6 +432,7 @@
                     <th>Event</th>
                     <th>Ticket</th>
                     <th>Qty</th>
+                    <th>Paid</th>
                     <th>Registered</th>
                   </tr>
                 </thead>
@@ -459,6 +461,9 @@
           <!-- Revenue -->
           <div class="org-sub-page" id="sub-events-revenue" data-events-panel="events-revenue">
             <div class="org-payout-held-banner" id="payout-held-banner" hidden role="status"></div>
+            <p class="org-section-sub org-sub-lead">
+              Revenue and ticket counts come from hub registrations when checkout completes — including Stripe test payments while you are in sandbox mode.
+            </p>
             <div class="org-revenue-banner">
               <div class="org-rev-item">
                 <div class="org-rev-label">Events listed</div>
@@ -466,7 +471,7 @@
               </div>
               <div class="org-rev-sep" aria-hidden="true"></div>
               <div class="org-rev-item">
-                <div class="org-rev-label">Ticket types</div>
+                <div class="org-rev-label">Tickets sold</div>
                 <div class="org-rev-value" id="rev-stat-tickets">0</div>
               </div>
               <div class="org-rev-sep" aria-hidden="true"></div>
@@ -704,6 +709,6 @@
 
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
     <script src="../js/organiser-onboarding.js?v=20260605"></script>
-    <script src="../js/organiser-dashboard.js?v=20260609a"></script>
+    <script src="../js/organiser-dashboard.js?v=20260609k"></script>
   </body>
 </html>

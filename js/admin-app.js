@@ -3134,7 +3134,15 @@
           }
           if (data.block) {
             applySponsorBlockToForm(data.block);
-            setSponsorStatus('Loaded live creative for ' + slotDefaults().label + '.');
+            if (data.block.active === false) {
+              setSponsorStatus(
+                'Saved draft for ' +
+                  slotDefaults().label +
+                  ' — check Ad active and publish to show on site (detail pages may show a fallback until then).'
+              );
+            } else {
+              setSponsorStatus('Loaded live creative for ' + slotDefaults().label + '.');
+            }
           } else {
             applyDefaultsToForm();
             setSponsorStatus('No saved creative yet — edit below and publish.');
@@ -3225,9 +3233,12 @@
       if (
         creative.active &&
         slot.preview === 'compact' &&
-        !/^https?:\/\//i.test(creative.ctaUrl)
+        (!/^https?:\/\//i.test(creative.ctaUrl) ||
+          !String(creative.ctaUrl || '')
+            .replace(/^https?:\/\//i, '')
+            .trim())
       ) {
-        setSponsorStatus('Enter the sponsor website URL (https://…) — opens in a new tab.', 'error');
+        setSponsorStatus('Enter the full sponsor website URL (https://example.com) — opens in a new tab.', 'error');
         return;
       }
 

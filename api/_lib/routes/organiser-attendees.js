@@ -31,7 +31,15 @@ module.exports = async function handler(req, res) {
 
     const url = new URL(req.url, 'http://localhost');
     const filterEventId = url.searchParams.get('eventId') || 'all';
-    const eventIds = (ws.events || []).map((e) => e.id);
+    const groupIds = (ws.groups || []).map((g) => g.id);
+    let eventIds = (ws.events || []).map((e) => e.id);
+    if (api.listEventIdsForOrganiserGroups) {
+      try {
+        eventIds = await api.listEventIdsForOrganiserGroups(groupIds, ws.adminView);
+      } catch {
+        /* fall back to loaded events page */
+      }
+    }
     let attendees = [];
     try {
       attendees = await listAttendeesForOrganiserEvents(eventIds, filterEventId);

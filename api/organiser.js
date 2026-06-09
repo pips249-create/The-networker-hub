@@ -13,6 +13,7 @@ const routes = {
   team: require('./_lib/routes/organiser-team'),
   cancellations: require('./_lib/routes/organiser-cancellations'),
   payouts: require('./_lib/routes/organiser-payouts'),
+  opportunities: require('./_lib/routes/organiser-opportunities'),
 };
 
 module.exports = async function handler(req, res) {

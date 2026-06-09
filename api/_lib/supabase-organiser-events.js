@@ -201,7 +201,8 @@ function enrichOrganiserOverview(groups, events, tickets, groupEventCounts) {
       ...ev,
       ticketsSold: sold,
       ticketsCapacity: capacity,
-      ticketsSoldLabel: capacity > 0 ? `${sold} / ${capacity}` : '0',
+      ticketsSoldLabel:
+        capacity > 0 ? `${sold} / ${capacity}` : sold > 0 ? String(sold) : '0',
       revenueNum,
       revenueDisplay: formatMoney(revenueNum),
       statusKey: status.key,
@@ -210,16 +211,18 @@ function enrichOrganiserOverview(groups, events, tickets, groupEventCounts) {
   });
 
   const enrichedGroups = groups.map((g) => {
+    const groupEvents = enrichedEvents.filter((ev) => eventBelongsToGroup(ev, g.id));
     const eventsListed =
       groupEventCounts && typeof groupEventCounts.get === 'function'
         ? groupEventCounts.get(g.id) || 0
-        : enrichedEvents.filter((ev) => eventBelongsToGroup(ev, g.id)).length;
+        : groupEvents.length;
+    const revenueNum = groupEvents.reduce((sum, ev) => sum + (Number(ev.revenueNum) || 0), 0);
     const status = deriveGroupListingStatus(g.statusRaw);
     return {
       ...g,
       eventsListed,
-      revenueNum: 0,
-      revenueDisplay: formatMoney(0),
+      revenueNum,
+      revenueDisplay: formatMoney(revenueNum),
       rating: g.rating,
       statusKey: status.key,
       statusLabel: status.label,
@@ -242,6 +245,53 @@ async function listAllOrganiserEvents() {
   const { data, error } = await sb.from('events').select('*').order('starts_at', { ascending: true });
   if (error) throw new Error(error.message);
   return (data || []).map(rowToEvent);
+}
+
+async function listEventIdsForOrganiserGroups(groupIds, allEvents) {
+  const ids = groupIds || [];
+  if (!ids.length && !allEvents) return [];
+  const sb = getSupabaseAdmin();
+  let query = sb.from('events').select('id');
+  if (!allEvents) {
+    if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
+    else query = query.in('organiser_id', ids);
+  }
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return (data || []).map((row) => row.id).filter(Boolean);
+}
+
+async function listEventSummariesForOrganiserGroups(groupIds, allEvents) {
+  const ids = groupIds || [];
+  if (!ids.length && !allEvents) return [];
+  const sb = getSupabaseAdmin();
+  let query = sb.from('events').select('id, title, organiser_id, starts_at').order('starts_at', {
+    ascending: false,
+  });
+  if (!allEvents) {
+    if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
+    else query = query.in('organiser_id', ids);
+  }
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return (data || []).map((row) => ({
+    id: row.id,
+    title: String(row.title || 'Untitled event').trim(),
+    organiserId: row.organiser_id || null,
+  }));
+}
+
+function applyGroupSalesSummary(groups, summary) {
+  if (!summary || !groups?.length) return groups;
+  const revenueByGroupId = summary.revenueByGroupId || {};
+  return groups.map((g) => {
+    const revenueNum = Math.round((Number(revenueByGroupId[g.id]) || 0) * 100) / 100;
+    return {
+      ...g,
+      revenueNum,
+      revenueDisplay: formatMoney(revenueNum),
+    };
+  });
 }
 
 async function countEventsForOrganiser(groupIds) {
@@ -718,12 +768,16 @@ async function loadOrganiserEventsPage(session, groups, groupIds, adminView, pag
   const upcomingOverview = enrichOrganiserOverview(groups, upcomingRaw, tickets, groupEventCounts);
 
   try {
-    const { enrichEventsWithPayoutData } = require('./supabase-organiser-payouts');
+    const { enrichOrganiserWorkspaceSales } = require('./supabase-organiser-payouts');
+    const sales = await enrichOrganiserWorkspaceSales(overview.events, tickets);
     overview = {
       ...overview,
-      events: await enrichEventsWithPayoutData(overview.events),
+      events: sales.events,
+      groups: enrichOrganiserOverview(groups, sales.events, sales.tickets, groupEventCounts).groups,
     };
+    const { enrichEventsWithPayoutData } = require('./supabase-organiser-payouts');
     upcomingOverview.events = await enrichEventsWithPayoutData(upcomingOverview.events);
+    tickets = sales.tickets;
   } catch {
     /* payout tables may not exist yet */
   }
@@ -837,6 +891,32 @@ async function getOrganiserWorkspace(req) {
     access = null;
   }
 
+  let workspaceSummary = {
+    totalRevenue: 0,
+    totalTicketsSold: 0,
+    revenueByGroupId: {},
+    ticketsSoldByGroupId: {},
+  };
+  let eventSummaries = [];
+  let reviews = [];
+
+  try {
+    const { buildOrganiserWorkspaceSummary } = require('./supabase-organiser-payouts');
+    const { listReviewsForOrganiserGroups } = require('./supabase-reviews');
+    [workspaceSummary, eventSummaries, reviews] = await Promise.all([
+      buildOrganiserWorkspaceSummary(groupIds, adminView),
+      listEventSummariesForOrganiserGroups(groupIds, adminView),
+      listReviewsForOrganiserGroups(
+        groupIds,
+        new Map(overviewGroups.map((g) => [g.id, g])),
+        adminView
+      ),
+    ]);
+    overviewGroups = applyGroupSalesSummary(overviewGroups, workspaceSummary);
+  } catch {
+    /* summary/reviews optional */
+  }
+
   return {
     ok: true,
     session,
@@ -845,6 +925,9 @@ async function getOrganiserWorkspace(req) {
     upcomingEvents,
     tickets,
     eventsPagination,
+    workspaceSummary,
+    eventSummaries,
+    reviews,
     groupsError,
     hubView: hubViewFromRequest(req),
     adminView,
@@ -875,6 +958,9 @@ module.exports = {
   loadOrganiserEventsPage,
   listEventsForSession,
   listEventsForOrganiser,
+  listEventIdsForOrganiserGroups,
+  listEventSummariesForOrganiserGroups,
+  applyGroupSalesSummary,
   listTicketsForEventIds,
   listTicketsForSession,
   getEventById,

@@ -32,6 +32,8 @@
     attendeesAll: [],
     reviews: [],
     teamMembers: [],
+    workspaceSummary: null,
+    eventSummaries: [],
     groupsError: null,
     airtable: null,
     canManageTeam: true,
@@ -54,6 +56,33 @@
     }
   }
 
+  function totalTicketsSold() {
+    if (state.workspaceSummary && state.workspaceSummary.totalTicketsSold != null) {
+      return Number(state.workspaceSummary.totalTicketsSold) || 0;
+    }
+    return state.events.reduce((sum, ev) => sum + (Number(ev.ticketsSold) || 0), 0);
+  }
+
+  function formatGbpAmount(amount) {
+    const sum = Number(amount) || 0;
+    return '£' + (sum % 1 === 0 ? sum.toFixed(0) : sum.toFixed(2));
+  }
+
+  function totalRevenueDisplay() {
+    if (state.workspaceSummary && state.workspaceSummary.totalRevenue != null) {
+      return formatGbpAmount(state.workspaceSummary.totalRevenue);
+    }
+    const sum = state.events.reduce((s, ev) => s + (ev.revenueNum || 0), 0);
+    return formatGbpAmount(sum);
+  }
+
+  function allEventOptions() {
+    if (state.eventSummaries && state.eventSummaries.length) {
+      return state.eventSummaries.slice();
+    }
+    return state.events.map((ev) => ({ id: ev.id, title: ev.title }));
+  }
+
   function renderStats() {
     const rev = totalRevenueDisplay();
     const set = (id, val) => {
@@ -61,7 +90,7 @@
       if (el) el.textContent = val;
     };
     set('stat-events', String(state.eventsTotal || state.events.length));
-    set('stat-tickets', String(state.tickets.length));
+    set('stat-tickets', String(totalTicketsSold()));
     set('stat-revenue', rev);
   }
 
@@ -327,11 +356,6 @@
     );
   }
 
-  function totalRevenueDisplay() {
-    const sum = state.events.reduce((s, ev) => s + (ev.revenueNum || 0), 0);
-    return '£' + (sum % 1 === 0 ? sum.toFixed(0) : sum.toFixed(2));
-  }
-
   function averageRating() {
     const rated = state.events.filter((e) => e.rating != null && !Number.isNaN(e.rating));
     if (!rated.length) return null;
@@ -427,7 +451,7 @@
     const sel = document.getElementById('filter-attendees-event');
     if (!sel) return;
     sel.innerHTML = '<option value="all">All events</option>';
-    state.events.forEach((ev) => {
+    allEventOptions().forEach((ev) => {
       const opt = document.createElement('option');
       opt.value = ev.id;
       opt.textContent = ev.title;
@@ -454,9 +478,18 @@
       alert('No attendees to export for this filter.');
       return;
     }
-    const header = ['Name', 'Email', 'Phone', 'Event', 'Ticket', 'Quantity', 'Registered'];
+    const header = ['Name', 'Email', 'Phone', 'Event', 'Ticket', 'Quantity', 'Paid', 'Registered'];
     const lines = rows.map((a) =>
-      [a.name, a.email, a.phone || '', a.eventTitle, a.ticketName, a.quantity, a.registeredAt]
+      [
+        a.name,
+        a.email,
+        a.phone || '',
+        a.eventTitle,
+        a.ticketName,
+        a.quantity,
+        a.amountDisplay || a.paymentStatus || '',
+        a.registeredAt,
+      ]
         .map((c) => '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"')
         .join(',')
     );
@@ -508,6 +541,8 @@
         esc(a.ticketName) +
         '</td><td>' +
         esc(String(a.quantity)) +
+        '</td><td>' +
+        esc(a.amountDisplay || a.paymentStatus || '—') +
         '</td><td>' +
         esc(formatDateShort(a.registeredAt)) +
         '</td>';
@@ -598,7 +633,7 @@
     const ticketEventSel = document.getElementById('filter-tickets-event');
     if (ticketEventSel) {
       ticketEventSel.innerHTML = '<option value="all">All events</option>';
-      state.events.forEach((ev) => {
+      allEventOptions().forEach((ev) => {
         const opt = document.createElement('option');
         opt.value = ev.id;
         opt.textContent = ev.title;
@@ -1512,6 +1547,8 @@
         '</span></td><td class="org-revenue">' +
         (t.price === '' || t.price === '0' ? 'Free' : '£' + esc(t.price)) +
         '</td><td>' +
+        esc(String(t.ticketsSold != null ? t.ticketsSold : 0)) +
+        '</td><td>' +
         esc(t.quantityAvailable != null ? String(t.quantityAvailable) : '—') +
         '</td><td>' +
         statusBadgeHtml(statusKey, statusLabel) +
@@ -1607,8 +1644,8 @@
       const el = document.getElementById(id);
       if (el) el.textContent = val;
     };
-    setRev('rev-stat-events', String(state.events.length));
-    setRev('rev-stat-tickets', String(state.tickets.length));
+    setRev('rev-stat-events', String(state.eventsTotal || state.events.length));
+    setRev('rev-stat-tickets', String(totalTicketsSold()));
     setRev('rev-stat-revenue', totalRevenueDisplay());
     const avg = averageRating();
     setRev('rev-stat-rating', avg != null ? '★ ' + avg.toFixed(1) : '—');
@@ -1908,6 +1945,8 @@
     listPages.revenue = 1;
     listPages.attendees = 1;
     state.reviews = data.reviews || [];
+    state.workspaceSummary = data.workspaceSummary || null;
+    state.eventSummaries = data.eventSummaries || [];
     loadAttendeesAll();
     state.groupsError = data.groupsError;
     state.airtable = data.airtable;
