@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Business Opportunities – The Networker Hub</title>
+    <title>Browse business opportunities – The Networker Hub</title>
     <meta
       name="description"
-      content="Find or list franchises, side hustles and business opportunities on The Networker Hub — the UK's networking marketplace."
+      content="Browse franchises, side hustles, partnerships and business opportunities across the UK network — free to search on The Networker Hub."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,79 +15,221 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260626" />
-    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260609g" />
+    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260610a" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260626" />
   </head>
-  <body class="opportunities-page opportunities-landing">
+  <body class="opportunities-page opp-browse-page">
     <div id="hub-site-nav"></div>
     <script src="../js/site-nav.js?v=20260710" data-root="../" data-page="opportunities"></script>
 
-    <section class="opp-hero" aria-labelledby="opp-hero-heading">
-      <div class="opp-hero-inner">
-        <div>
-          <p class="opp-hero-badge">New — Business opportunities</p>
-          <h1 id="opp-hero-heading">
-            Discover <span class="accent">franchises, side hustles &amp; business opportunities</span> across the UK
-            network
-          </h1>
-          <p class="opp-hero-lede">
-            <strong>The Networker Hub</strong> connects organisers and members with real business opportunities —
-            from franchise territories and side hustle models to referral partnerships and white-label arrangements.
-          </p>
+    <header class="opp-page-strip" id="browse">
+      <div class="opp-page-strip-inner">
+        <nav class="opp-breadcrumb" aria-label="Breadcrumb">
+          <a href="../index.html">Home</a>
+          <span aria-hidden="true">›</span>
+          <span>Browse opportunities</span>
+        </nav>
+        <h1 id="opp-page-heading">Browse business opportunities</h1>
+        <p class="opp-page-strip-lede">
+          Side hustles, franchises, partnerships &amp; networking — posted by UK businesses across the network.
+        </p>
+        <div class="opp-strip-filters" id="opp-strip-filters" role="tablist" aria-label="Opportunity type">
+          <button type="button" class="opp-tab-btn active" role="tab" aria-selected="true" data-filter="all">
+            All <span class="opp-tab-count" data-count-for="all">0</span>
+          </button>
+          <button type="button" class="opp-tab-btn" role="tab" aria-selected="false" data-filter="franchise">
+            Franchise <span class="opp-tab-count" data-count-for="franchise">0</span>
+          </button>
+          <button type="button" class="opp-tab-btn" role="tab" aria-selected="false" data-filter="side-hustle">
+            Side hustle <span class="opp-tab-count" data-count-for="side-hustle">0</span>
+          </button>
+          <button type="button" class="opp-tab-btn" role="tab" aria-selected="false" data-filter="partnership">
+            Partnership <span class="opp-tab-count" data-count-for="partnership">0</span>
+          </button>
+          <button type="button" class="opp-tab-btn" role="tab" aria-selected="false" data-filter="networking">
+            Networking <span class="opp-tab-count" data-count-for="networking">0</span>
+          </button>
+          <button type="button" class="opp-tab-btn" role="tab" aria-selected="false" data-filter="distributorship">
+            Distributorship <span class="opp-tab-count" data-count-for="distributorship">0</span>
+          </button>
+          <button type="button" class="opp-tab-btn" role="tab" aria-selected="false" data-filter="business-opportunity">
+            Business opportunity <span class="opp-tab-count" data-count-for="business-opportunity">0</span>
+          </button>
         </div>
-        <div class="opp-hero-stats">
-          <div class="opp-stat-card">
-            <div class="opp-stat-num">50k+</div>
-            <div class="opp-stat-label">Registered members</div>
+      </div>
+    </header>
+
+    <div class="opp-browse-layout">
+      <aside class="opp-sidebar" aria-label="Filters">
+        <div class="opp-sidebar-card">
+          <h3>Investment</h3>
+          <label class="opp-filter-option">
+            <input type="checkbox" data-filter="low-invest" />
+            <span class="opp-filter-label">£0 – £2,500</span>
+            <span class="opp-filter-count" data-count-for="low-invest">0</span>
+          </label>
+          <label class="opp-filter-option">
+            <input type="checkbox" data-filter="mid-invest" />
+            <span class="opp-filter-label">£2,500 – £10k</span>
+            <span class="opp-filter-count" data-count-for="mid-invest">0</span>
+          </label>
+          <label class="opp-filter-option">
+            <input type="checkbox" data-filter="high-invest" />
+            <span class="opp-filter-label">£10k+</span>
+            <span class="opp-filter-count" data-count-for="high-invest">0</span>
+          </label>
+          <div class="opp-range-wrap">
+            <div class="opp-range-label">Custom range</div>
+            <div class="opp-range-inputs">
+              <input type="number" id="opp-min-invest" placeholder="Min £" min="0" step="100" aria-label="Minimum investment" />
+              <input type="number" id="opp-max-invest" placeholder="Max £" min="0" step="100" aria-label="Maximum investment" />
+            </div>
           </div>
-          <div class="opp-stat-card">
-            <div class="opp-stat-num">84+</div>
-            <div class="opp-stat-label">Active listings</div>
+        </div>
+
+        <div class="opp-sidebar-card">
+          <h3>Location</h3>
+          <label class="opp-filter-option">
+            <input type="checkbox" data-filter="remote" />
+            <span class="opp-filter-label">Remote / Online</span>
+            <span class="opp-filter-count" data-count-for="remote">0</span>
+          </label>
+          <label class="opp-filter-option">
+            <input type="checkbox" data-filter="yorkshire" />
+            <span class="opp-filter-label">Yorkshire</span>
+            <span class="opp-filter-count" data-count-for="yorkshire">0</span>
+          </label>
+          <label class="opp-filter-option">
+            <input type="checkbox" data-filter="north" />
+            <span class="opp-filter-label">North England</span>
+            <span class="opp-filter-count" data-count-for="north">0</span>
+          </label>
+          <label class="opp-filter-option">
+            <input type="checkbox" data-filter="midlands" />
+            <span class="opp-filter-label">Midlands</span>
+            <span class="opp-filter-count" data-count-for="midlands">0</span>
+          </label>
+          <label class="opp-filter-option">
+            <input type="checkbox" data-filter="south" />
+            <span class="opp-filter-label">South England</span>
+            <span class="opp-filter-count" data-count-for="south">0</span>
+          </label>
+          <label class="opp-filter-option">
+            <input type="checkbox" data-filter="uk-wide" />
+            <span class="opp-filter-label">UK-wide</span>
+            <span class="opp-filter-count" data-count-for="uk-wide">0</span>
+          </label>
+        </div>
+
+        <div class="opp-sidebar-card">
+          <h3>Commitment</h3>
+          <label class="opp-filter-option">
+            <input type="checkbox" data-filter="full-time" />
+            <span class="opp-filter-label">Full-time</span>
+            <span class="opp-filter-count" data-count-for="full-time">0</span>
+          </label>
+          <label class="opp-filter-option">
+            <input type="checkbox" data-filter="part-time" />
+            <span class="opp-filter-label">Part-time / Flexible</span>
+            <span class="opp-filter-count" data-count-for="part-time">0</span>
+          </label>
+          <label class="opp-filter-option">
+            <input type="checkbox" data-filter="event-based" />
+            <span class="opp-filter-label">Event-based</span>
+            <span class="opp-filter-count" data-count-for="event-based">0</span>
+          </label>
+        </div>
+
+        <div class="opp-sidebar-card">
+          <button type="button" class="opp-sidebar-clear" id="opp-sidebar-clear">✕ Clear all filters</button>
+        </div>
+
+        <div class="opp-sidebar-sponsor">
+          <p class="opp-sidebar-sponsor-tag">Featured placement</p>
+          <h4>Get your opportunity seen first</h4>
+          <p>Reach thousands of UK business professionals. Featured listings sit top of every relevant search.</p>
+          <a href="list.html#submit" class="opp-btn-gold-sm">Enquire about featuring →</a>
+        </div>
+      </aside>
+
+      <div class="opp-listings-area">
+        <div class="opp-listings-toolbar">
+          <p class="opp-results-info" id="opp-results-count" aria-live="polite">Loading listings…</p>
+          <div class="opp-toolbar-right">
+            <div class="opp-toolbar-search">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.4" />
+                <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+              </svg>
+              <input
+                type="search"
+                id="opp-search"
+                placeholder="Search opportunities…"
+                autocomplete="off"
+                enterkeyhint="search"
+                aria-label="Search opportunities"
+              />
+              <button type="button" id="opp-search-clear" class="opp-search-clear" aria-label="Clear search" hidden>×</button>
+            </div>
+            <select class="opp-sort-select" id="opp-sort" aria-label="Sort opportunities">
+              <option value="recommended">Recommended</option>
+              <option value="invest-asc">Investment: low–high</option>
+              <option value="invest-desc">Investment: high–low</option>
+              <option value="alpha">Name A–Z</option>
+            </select>
+            <div class="opp-view-toggle" role="group" aria-label="Results view">
+              <button type="button" class="opp-view-btn is-active" id="opp-view-grid" aria-pressed="true" title="Grid view">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <rect x="1" y="1" width="5" height="5" rx="1" fill="currentColor" />
+                  <rect x="8" y="1" width="5" height="5" rx="1" fill="currentColor" />
+                  <rect x="1" y="8" width="5" height="5" rx="1" fill="currentColor" />
+                  <rect x="8" y="8" width="5" height="5" rx="1" fill="currentColor" />
+                </svg>
+              </button>
+              <button type="button" class="opp-view-btn" id="opp-view-list" aria-pressed="false" title="List view">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <rect x="1" y="2" width="12" height="2" rx="1" fill="currentColor" />
+                  <rect x="1" y="6" width="12" height="2" rx="1" fill="currentColor" />
+                  <rect x="1" y="10" width="12" height="2" rx="1" fill="currentColor" />
+                </svg>
+              </button>
+            </div>
           </div>
-          <div class="opp-stat-card">
-            <div class="opp-stat-num">Free</div>
-            <div class="opp-stat-label">To browse &amp; enquire</div>
-          </div>
-          <div class="opp-stat-card">
-            <div class="opp-stat-num">UK #1</div>
-            <div class="opp-stat-label">Networking directory</div>
-          </div>
+        </div>
+
+        <div class="opp-featured-banner">
+          <p>
+            <strong>Featured placement available</strong> — put your opportunity at the top of every relevant search
+            result.
+          </p>
+          <a href="list.html">Find out more →</a>
+        </div>
+
+        <div class="opp-listings-mount" id="opp-listings-mount"></div>
+      </div>
+    </div>
+
+    <section class="opp-cat-strip" aria-labelledby="opp-cat-heading">
+      <div class="opp-cat-strip-inner">
+        <h3 id="opp-cat-heading">Browse by category</h3>
+        <div class="opp-cat-pills" id="opp-cat-pills">
+          <button type="button" class="opp-cat-pill" data-cat="cleaning">Cleaning</button>
+          <button type="button" class="opp-cat-pill" data-cat="food">Food &amp; Drink</button>
+          <button type="button" class="opp-cat-pill" data-cat="tech">Tech &amp; Digital</button>
+          <button type="button" class="opp-cat-pill" data-cat="health">Health &amp; Fitness</button>
+          <button type="button" class="opp-cat-pill" data-cat="property">Property</button>
+          <button type="button" class="opp-cat-pill" data-cat="education">Education &amp; Coaching</button>
+          <button type="button" class="opp-cat-pill" data-cat="pets">Pets &amp; Animals</button>
+          <button type="button" class="opp-cat-pill" data-cat="finance">Finance &amp; Admin</button>
         </div>
       </div>
     </section>
 
-    <main class="opp-landing-chooser">
-      <div class="opp-landing-shell">
-        <div class="opp-path-grid">
-          <a class="opp-path-card" href="browse.html">
-            <span class="opp-path-icon" aria-hidden="true">🔍</span>
-            <span class="opp-path-title">Find a business opportunity</span>
-            <span class="opp-path-desc">
-              Browse franchises, networking groups, side hustles, partnerships and more. Filter by type, investment and
-              location — free to search and enquire.
-            </span>
-            <span class="opp-path-cta">Browse listings →</span>
-          </a>
-
-          <a class="opp-path-card opp-path-card--list" href="list.html">
-            <span class="opp-path-icon" aria-hidden="true">📣</span>
-            <span class="opp-path-title">List a business opportunity</span>
-            <span class="opp-path-desc">
-              Reach The Networker's community of business professionals. Post your franchise, side hustle or partnership
-              and receive direct enquiries.
-            </span>
-            <span class="opp-path-cta">Post an opportunity →</span>
-          </a>
-        </div>
-
-        <p class="opp-landing-note">
-          Not sure yet?
-          <a href="browse.html">Take a look at current listings</a>
-          or email
-          <a href="mailto:hello@the-networker.co.uk">hello@the-networker.co.uk</a>
-        </p>
-      </div>
-    </main>
+    <section class="opp-cta-strip" aria-labelledby="opp-cta-heading">
+      <h2 id="opp-cta-heading">Got an opportunity worth sharing?</h2>
+      <p>Reach thousands of motivated UK business professionals. Listings from £25.</p>
+      <a href="list.html#submit" class="opp-btn-gold">+ Post your opportunity</a>
+    </section>
 
     <footer class="site-footer">
       <div class="footer-inner">
@@ -103,5 +245,9 @@
         <p class="footer-copy">© The Networker Group Ltd</p>
       </div>
     </footer>
+
+    <script src="../js/opportunities-catalog.js?v=20260610a"></script>
+    <script src="../js/opportunities-saves.js?v=20260610a"></script>
+    <script src="../js/opportunities-page.js?v=20260610a"></script>
   </body>
 </html>

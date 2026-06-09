@@ -209,9 +209,140 @@
     'Newcastle',
   ];
 
+  var THUMB_BY_TYPE = {
+    franchise: { emoji: '🏢', gradient: 'linear-gradient(135deg,#fdf6e3,#f5e0a0)' },
+    'side-hustle': { emoji: '💡', gradient: 'linear-gradient(135deg,#e6f7f5,#b2e8e2)' },
+    partnership: { emoji: '🤝', gradient: 'linear-gradient(135deg,#eff6ff,#bfdbfe)' },
+    networking: { emoji: '🔗', gradient: 'linear-gradient(135deg,#fdf4ff,#e9d5ff)' },
+    distributorship: { emoji: '📦', gradient: 'linear-gradient(135deg,#fff7ed,#fed7aa)' },
+    'business-opportunity': { emoji: '✦', gradient: 'linear-gradient(135deg,#ecfdf5,#a7f3d0)' },
+  };
+
+  var THUMB_BY_KEYWORD = [
+    { match: /clean/i, emoji: '🧹', gradient: 'linear-gradient(135deg,#fdf6e3,#f5e0a0)' },
+    { match: /food|kiosk|coffee|brew/i, emoji: '🥗', gradient: 'linear-gradient(135deg,#f0fdf4,#bbf7d0)' },
+    { match: /photo|web|digital/i, emoji: '📸', gradient: 'linear-gradient(135deg,#e6f7f5,#b2e8e2)' },
+    { match: /dog|groom|pet|paw/i, emoji: '🐾', gradient: 'linear-gradient(135deg,#fdf4ff,#e9d5ff)' },
+    { match: /book|ledger|finance/i, emoji: '📊', gradient: 'linear-gradient(135deg,#f8fafc,#e2e8f0)' },
+    { match: /gym|fit|fitness/i, emoji: '🏋️', gradient: 'linear-gradient(135deg,#ecfdf5,#a7f3d0)' },
+    { match: /network/i, emoji: '🔗', gradient: 'linear-gradient(135deg,#fdf4ff,#e9d5ff)' },
+  ];
+
+  var CATEGORY_KEYWORDS = {
+    cleaning: /clean/i,
+    food: /food|kiosk|coffee|brew|drink/i,
+    tech: /web|digital|photo|software|tech/i,
+    health: /gym|fit|fitness|health/i,
+    property: /property|maintenance|handyman/i,
+    education: /course|coach|training|academy|education/i,
+    pets: /dog|groom|pet|paw|animal/i,
+    finance: /book|ledger|finance|account/i,
+  };
+
+  function metaVal(meta, keyRe) {
+    for (var i = 0; i < (meta || []).length; i++) {
+      if (keyRe.test(meta[i].key)) return String(meta[i].val || '');
+    }
+    return '';
+  }
+
+  function parseInvestmentAmount(meta) {
+    var raw = metaVal(meta, /^investment$/i);
+    if (!raw) return null;
+    var num = parseInt(raw.replace(/[^0-9]/g, ''), 10);
+    return isNaN(num) ? null : num;
+  }
+
+  function isScarcityMeta(key, val) {
+    var k = String(key || '').toLowerCase();
+    var v = String(val || '').toLowerCase();
+    return (
+      /left|spaces?|vans?|territor|slots?|available|remaining/.test(k) ||
+      (/\d/.test(v) && /\bleft\b/.test(v))
+    );
+  }
+
+  function inferCategory(item) {
+    var text = (item.title + ' ' + item.desc + ' ' + item.host).toLowerCase();
+    var keys = Object.keys(CATEGORY_KEYWORDS);
+    for (var i = 0; i < keys.length; i++) {
+      if (CATEGORY_KEYWORDS[keys[i]].test(text)) return keys[i];
+    }
+    return 'general';
+  }
+
+  function thumbFor(item) {
+    var text = item.title + ' ' + item.desc;
+    for (var i = 0; i < THUMB_BY_KEYWORD.length; i++) {
+      if (THUMB_BY_KEYWORD[i].match.test(text)) return THUMB_BY_KEYWORD[i];
+    }
+    return THUMB_BY_TYPE[item.type] || THUMB_BY_TYPE.franchise;
+  }
+
+  function enrichFilterTags(item) {
+    var tags = (item.tags || []).slice();
+    var inv = item.investAmount;
+    if (inv !== null && inv !== undefined) {
+      if (inv <= 2500) tags.push('low-invest');
+      else if (inv <= 10000) tags.push('mid-invest');
+      else tags.push('high-invest');
+    }
+    var loc = metaVal(item.meta, /^location$/i).toLowerCase();
+    var searchBlob = (loc + ' ' + item.title + ' ' + item.desc).toLowerCase();
+    if (/remote|online/.test(searchBlob)) tags.push('remote');
+    if (/yorkshire|leeds/.test(searchBlob)) tags.push('yorkshire');
+    if (/north|manchester|liverpool|newcastle/.test(searchBlob)) tags.push('north');
+    if (/midlands|birmingham|west midlands/.test(searchBlob)) tags.push('midlands');
+    if (/south|london|bristol/.test(searchBlob)) tags.push('south');
+    if (/uk-wide|uk wide|your area|various/.test(searchBlob)) tags.push('uk-wide');
+    var comm = metaVal(item.meta, /^commitment$/i).toLowerCase();
+    if (/full/.test(comm)) tags.push('full-time');
+    if (/part|flex/.test(comm)) tags.push('part-time');
+    if (/event/.test(comm)) tags.push('event-based');
+    if (item.category && item.category !== 'general') tags.push('cat-' + item.category);
+    item.filterTags = tags;
+    return item;
+  }
+
+  function locationLabel(item) {
+    var loc = metaVal(item.meta, /^location$/i);
+    if (!loc) loc = metaVal(item.meta, /territor/i);
+    if (!loc) return 'UK';
+    if (/remote/i.test(loc)) return 'Remote — UK';
+    return loc;
+  }
+
+  function cardDisplayMeta(item) {
+    var meta = item.meta || [];
+    var investment = null;
+    var financial = null;
+    var scarcity = null;
+    var location = null;
+    var extra = [];
+
+    meta.forEach(function (m) {
+      if (/^investment$/i.test(m.key)) investment = m;
+      else if (/^(return(\s+est\.?)?|earnings|commission|revenue|income|profit)$/i.test(m.key)) financial = financial || m;
+      else if (isScarcityMeta(m.key, m.val)) scarcity = scarcity || m;
+      else if (/^location$/i.test(m.key)) location = location || m;
+      else extra.push(m);
+    });
+
+    var row3 = scarcity || location || extra[0] || null;
+    var row4 = null;
+    if (scarcity && location) row4 = location;
+    else if (extra.length) row4 = extra[0];
+
+    var commitment = metaVal(meta, /^commitment$/i);
+    if (!row4 && commitment) row4 = { key: 'Commitment', val: commitment };
+
+    return [investment, financial, row3, row4].filter(Boolean).slice(0, 4);
+  }
+
   function buildSearchText(item) {
-    return [item.title, item.host, item.desc, item.type]
+    return [item.title, item.host, item.desc, item.type, item.category]
       .concat(item.tags || [])
+      .concat(item.filterTags || [])
       .concat((item.meta || []).map(function (m) {
         return m.key + ' ' + m.val;
       }))
@@ -227,6 +358,11 @@
       return { key: m.key, val: m.val };
     });
     item.about = (seed.about || []).slice();
+    item.investAmount = parseInvestmentAmount(item.meta);
+    item.category = seed.category || inferCategory(item);
+    item.thumb = thumbFor(item);
+    item.locationLabel = locationLabel(item);
+    item = enrichFilterTags(item);
     item.searchText = buildSearchText(item);
     return item;
   }
@@ -243,6 +379,9 @@
           item.meta[2] = { key: 'Location', val: region };
         }
         item.featured = i < 3;
+        item.investAmount = parseInvestmentAmount(item.meta);
+        item.locationLabel = locationLabel(item);
+        item = enrichFilterTags(item);
         item.searchText = buildSearchText(item);
       }
       out.push(item);
@@ -273,7 +412,7 @@
 
   function detailHref(item) {
     var id = typeof item === 'string' ? item : item && item.id;
-    if (!id) return 'browse.html';
+    if (!id) return 'index.html';
     return 'opportunity.html?id=' + encodeURIComponent(id);
   }
 
@@ -299,6 +438,10 @@
     getById: getById,
     detailHref: detailHref,
     typeClass: typeClass,
+    cardDisplayMeta: cardDisplayMeta,
+    isScarcityMeta: isScarcityMeta,
+    parseInvestmentAmount: parseInvestmentAmount,
+    CATEGORY_KEYWORDS: CATEGORY_KEYWORDS,
   };
 
   window.hubOpportunityDetailHref = detailHref;
