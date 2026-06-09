@@ -15,8 +15,19 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260609b" />
-    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260610d" />
+    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260610f" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260626" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+      crossorigin=""
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+      crossorigin=""
+    />
   </head>
   <body class="opportunities-page opp-browse-page">
     <div id="hub-site-nav"></div>
@@ -135,6 +146,7 @@
 
     <div class="opp-browse-layout">
       <aside class="opp-sidebar" aria-label="Filters">
+        <div class="opp-sidebar-inner">
         <div class="opp-sidebar-card">
           <h3>Investment</h3>
           <label class="opp-filter-option">
@@ -217,6 +229,7 @@
         <div class="opp-sidebar-card">
           <button type="button" class="opp-sidebar-clear" id="opp-sidebar-clear">✕ Clear all filters</button>
         </div>
+        </div>
 
         <div class="opp-sidebar-sponsor">
           <p class="opp-sidebar-sponsor-tag">Featured placement</p>
@@ -267,17 +280,60 @@
                   <rect x="1" y="10" width="12" height="2" rx="1" fill="currentColor" />
                 </svg>
               </button>
+              <button type="button" class="opp-view-btn" id="opp-view-map" aria-pressed="false" title="Map view">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <polygon points="1 6 8 3 16 6 23 3 23 18 16 21 8 18 1 21 1 6" />
+                  <line x1="8" y1="3" x2="8" y2="18" />
+                  <line x1="16" y1="6" x2="16" y2="21" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
 
-        <div class="opp-featured-banner">
+        <div class="opp-featured-banner" id="opp-featured-banner">
           <p>
             <strong>Featured placement available</strong> — put your opportunity at the top of every relevant search
             result.
           </p>
           <a href="list.html">Find out more →</a>
         </div>
+
+        <div class="opp-map-wrap" id="opp-map-wrap" hidden>
+          <aside class="opp-map-sidebar" id="opp-map-sidebar" aria-label="Opportunities on map">
+            <div class="opp-map-sidebar-head" id="opp-map-sidebar-head">
+              <div class="opp-map-sidebar-head-row">
+                <button
+                  type="button"
+                  class="opp-map-sidebar-count-btn"
+                  id="opp-map-sidebar-count-btn"
+                  aria-expanded="true"
+                  aria-controls="opp-map-sidebar-list"
+                >
+                  <strong id="opp-map-sidebar-count">0</strong>
+                  <span>on map</span>
+                  <span class="opp-map-sidebar-count-hint" id="opp-map-sidebar-count-hint">Tap to show listings</span>
+                </button>
+                <button
+                  type="button"
+                  class="opp-map-list-toggle"
+                  id="opp-map-list-toggle"
+                  aria-expanded="true"
+                  aria-controls="opp-map-sidebar-list"
+                >
+                  <span id="opp-map-list-toggle-label">Hide list</span>
+                </button>
+              </div>
+              <p class="opp-map-sidebar-sub" id="opp-map-sidebar-sub"></p>
+            </div>
+            <ul class="opp-map-sidebar-list" id="opp-map-sidebar-list"></ul>
+            <div class="opp-map-sidebar-foot" id="opp-map-sidebar-foot" hidden>
+              <button type="button" class="opp-map-sidebar-load-more" id="opp-map-sidebar-load-more">Load more</button>
+            </div>
+          </aside>
+          <div id="opp-map-panel" class="opp-map-panel" aria-label="Opportunities map"></div>
+        </div>
+        <p class="opp-map-hint" id="opp-map-hint" hidden></p>
 
         <div class="opp-listings-mount" id="opp-listings-mount"></div>
       </div>
@@ -309,6 +365,10 @@
     <script src="../js/hub-organiser-actions.js?v=20260606" data-root="../"></script>
     <script src="../js/opportunities-catalog.js?v=20260610c"></script>
     <script src="../js/opportunities-saves.js?v=20260610a"></script>
-    <script src="../js/opportunities-page.js?v=20260610d"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
+    <script src="../js/postcode-geo.js?v=20260609b"></script>
+    <script src="../js/opportunities-page.js?v=20260610f"></script>
+    <script src="../js/opportunities-map.js?v=20260610a"></script>
   </body>
 </html>

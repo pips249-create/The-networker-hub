@@ -2,7 +2,7 @@
  * Opportunities — browse page with sidebar filters, tabs, sort & pagination.
  */
 (function () {
-  var PAGE_SIZE = 36;
+  var PAGE_SIZE = 12;
   var SEARCH_DEBOUNCE_MS = 200;
   var SPOTLIGHT_MAX = 10;
   var SPOTLIGHT_AUTO_MS = 2800;
@@ -40,6 +40,11 @@
   var minInvest = null;
   var maxInvest = null;
   var currentPage = 1;
+  var accumulatedCount = 0;
+  var lastRenderedCount = 0;
+  var visibleRangeStart = 1;
+  var loadingMore = false;
+  var lazyObserver = null;
   var searchTimer = null;
   var rangeTimer = null;
   var spotlightFeaturedOrder = null;
@@ -59,6 +64,7 @@
     els.catPills = document.getElementById('opp-cat-pills');
     els.viewGrid = document.getElementById('opp-view-grid');
     els.viewList = document.getElementById('opp-view-list');
+    els.viewMap = document.getElementById('opp-view-map');
     els.minInvest = document.getElementById('opp-min-invest');
     els.maxInvest = document.getElementById('opp-max-invest');
     els.sidebarClear = document.getElementById('opp-sidebar-clear');
@@ -225,7 +231,7 @@
     var mediaInner = cover
       ? '<img class="opp-premium-card-img" src="' +
         escapeHtml(cover) +
-        '" alt="" loading="lazy" />'
+        '" alt="" loading="lazy" decoding="async" />'
       : '<span class="opp-premium-thumb-emoji" aria-hidden="true">' + thumb.emoji + '</span>';
 
     return (
@@ -443,7 +449,7 @@
         '<div class="opp-co-avatar opp-co-avatar--logo" aria-hidden="true">' +
         '<img src="' +
         escapeHtml(logo) +
-        '" alt="" width="24" height="24" loading="lazy" />' +
+        '" alt="" width="24" height="24" loading="lazy" decoding="async" />' +
         '</div>'
       );
     }
@@ -476,7 +482,7 @@
         '<div class="opp-card-media opp-card-media--image">' +
         '<img class="opp-card-media-img" src="' +
         escapeHtml(item.imageUrl) +
-        '" alt="" loading="lazy" />' +
+        '" alt="" loading="lazy" decoding="async" />' +
         '</div>'
       );
     }
@@ -607,6 +613,81 @@
     return '<nav class="opp-pagination" aria-label="Opportunity pages">' + items.join('') + '</nav>';
   }
 
+  function resetListingPagination() {
+    accumulatedCount = 0;
+    lastRenderedCount = 0;
+    visibleRangeStart = 1;
+    loadingMore = false;
+    currentPage = 1;
+    disconnectLazyObserver();
+  }
+
+  function disconnectLazyObserver() {
+    if (lazyObserver) {
+      lazyObserver.disconnect();
+      lazyObserver = null;
+    }
+  }
+
+  function getListingSlice(filtered) {
+    var total = filtered.length;
+    var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    if (accumulatedCount > 0) {
+      var accEnd = Math.min(accumulatedCount, total);
+      return {
+        items: filtered.slice(0, accEnd),
+        rangeStart: total ? 1 : 0,
+        rangeEnd: accEnd,
+        totalPages: totalPages,
+        hasMore: accEnd < total,
+      };
+    }
+
+    var start = (currentPage - 1) * PAGE_SIZE;
+    var end = Math.min(start + PAGE_SIZE, total);
+    return {
+      items: filtered.slice(start, end),
+      rangeStart: total ? start + 1 : 0,
+      rangeEnd: end,
+      totalPages: totalPages,
+      hasMore: end < total,
+    };
+  }
+
+  function listingsRangeHtml(rangeStart, rangeEnd, total) {
+    if (!total || total <= PAGE_SIZE) return '';
+    return (
+      '<p class="opp-listings-range">Showing ' +
+      rangeStart +
+      '–' +
+      rangeEnd +
+      ' of ' +
+      total +
+      '</p>'
+    );
+  }
+
+  function loadMoreHtml(filtered, shown) {
+    var remaining = filtered.length - shown;
+    if (remaining <= 0) return '';
+    var batch = Math.min(PAGE_SIZE, remaining);
+    return (
+      '<div class="opp-load-more-wrap">' +
+      '<button type="button" class="opp-load-more-btn" id="opp-load-more-btn">' +
+      'Load more (' +
+      batch +
+      ' of ' +
+      remaining +
+      ' remaining)' +
+      '</button></div>' +
+      '<div class="opp-load-sentinel" id="opp-load-sentinel" aria-hidden="true"></div>'
+    );
+  }
+
   function updateResultsCount(shown, total, rangeStart, rangeEnd) {
     if (!els.resultsCount) return;
     if (!total) {
@@ -626,6 +707,103 @@
       '</strong> of <strong>' +
       total +
       '</strong> opportunities';
+  }
+
+  function updateLoadMoreControls(filtered, shown, hasMore) {
+    var wrap = els.mount && els.mount.querySelector('.opp-load-more-wrap');
+    var btn = document.getElementById('opp-load-more-btn');
+    var sentinel = document.getElementById('opp-load-sentinel');
+
+    if (!hasMore) {
+      if (wrap) wrap.remove();
+      if (sentinel) sentinel.remove();
+      disconnectLazyObserver();
+      return;
+    }
+
+    var remaining = filtered.length - shown;
+    var batch = Math.min(PAGE_SIZE, remaining);
+    if (btn) {
+      btn.disabled = loadingMore;
+      btn.textContent = 'Load more (' + batch + ' of ' + remaining + ' remaining)';
+    }
+    observeLazySentinel();
+  }
+
+  function observeLazySentinel() {
+    disconnectLazyObserver();
+    if (!els.mount) return;
+    var sentinel = els.mount.querySelector('.opp-load-sentinel');
+    if (!sentinel || typeof IntersectionObserver === 'undefined') return;
+
+    lazyObserver = new IntersectionObserver(
+      function (entries) {
+        if (!entries[0] || !entries[0].isIntersecting || loadingMore) return;
+        loadMoreListings();
+      },
+      { rootMargin: '280px 0px' }
+    );
+    lazyObserver.observe(sentinel);
+  }
+
+  function loadMoreListings() {
+    if (loadingMore || !els.mount) return;
+
+    var filtered = sortListings(getFilteredList());
+    var slice = getListingSlice(filtered);
+    if (!slice.hasMore) return;
+
+    loadingMore = true;
+    var prevShown = lastRenderedCount || slice.rangeEnd;
+    var nextShown = Math.min(prevShown + PAGE_SIZE, filtered.length);
+
+    if (!accumulatedCount) {
+      accumulatedCount = nextShown;
+    } else {
+      accumulatedCount = nextShown;
+    }
+
+    var newItems = filtered.slice(prevShown, nextShown);
+    var grid = els.mount.querySelector('.opp-opps-grid');
+
+    if (grid && newItems.length) {
+      grid.insertAdjacentHTML('beforeend', newItems.map(cardHtml).join(''));
+      lastRenderedCount = nextShown;
+      if (saves) saves.refreshButtons(els.mount);
+
+      var rangeEl = els.mount.querySelector('.opp-listings-range');
+      if (rangeEl) {
+        rangeEl.textContent =
+          'Showing ' + visibleRangeStart + '–' + nextShown + ' of ' + filtered.length;
+      } else if (filtered.length > PAGE_SIZE) {
+        var gridEl = els.mount.querySelector('.opp-opps-grid');
+        if (gridEl) {
+          gridEl.insertAdjacentHTML(
+            'beforebegin',
+            '<p class="opp-listings-range">Showing ' +
+              visibleRangeStart +
+              '–' +
+              nextShown +
+              ' of ' +
+              filtered.length +
+              '</p>'
+          );
+        }
+      }
+
+      updateResultsCount(
+        nextShown - visibleRangeStart + 1,
+        filtered.length,
+        visibleRangeStart,
+        nextShown
+      );
+      updateLoadMoreControls(filtered, nextShown, nextShown < filtered.length);
+      loadingMore = false;
+      return;
+    }
+
+    loadingMore = false;
+    renderListings();
   }
 
   function syncTabUI() {
@@ -648,15 +826,20 @@
     if (!els.mount) return;
 
     var filtered = sortListings(getFilteredList());
-    var totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 
-    if (currentPage > totalPages) currentPage = totalPages;
-    if (currentPage < 1) currentPage = 1;
-
-    var start = (currentPage - 1) * PAGE_SIZE;
-    var pageItems = filtered.slice(start, start + PAGE_SIZE);
+    if (viewMode === 'map') {
+      if (!filtered.length) {
+        updateResultsCount(0, 0, 0, 0);
+      } else if (els.resultsCount) {
+        els.resultsCount.innerHTML =
+          'Showing <strong>' + filtered.length + '</strong> opportunities';
+      }
+      if (window.hubRefreshOpportunitiesMap) window.hubRefreshOpportunitiesMap(filtered);
+      return;
+    }
 
     if (!filtered.length) {
+      disconnectLazyObserver();
       els.mount.innerHTML =
         '<div class="opp-no-results is-visible" role="status">' +
         '<div class="opp-no-results-icon" aria-hidden="true">🔍</div>' +
@@ -668,20 +851,24 @@
       return;
     }
 
-    var rangeStart = start + 1;
-    var rangeEnd = Math.min(start + PAGE_SIZE, filtered.length);
+    var slice = getListingSlice(filtered);
     var gridClass = 'opp-opps-grid' + (viewMode === 'list' ? ' list-view' : '');
 
     els.mount.innerHTML =
+      listingsRangeHtml(slice.rangeStart, slice.rangeEnd, filtered.length) +
       '<div class="' +
       gridClass +
       '">' +
-      pageItems.map(cardHtml).join('') +
+      slice.items.map(cardHtml).join('') +
       '</div>' +
-      paginationHtml(currentPage, totalPages);
+      (slice.hasMore ? loadMoreHtml(filtered, slice.rangeEnd) : '') +
+      paginationHtml(currentPage, slice.totalPages);
 
-    updateResultsCount(pageItems.length, filtered.length, rangeStart, rangeEnd);
+    lastRenderedCount = slice.rangeEnd;
+    updateResultsCount(slice.items.length, filtered.length, slice.rangeStart, slice.rangeEnd);
     if (saves) saves.refreshButtons(els.mount);
+    if (slice.hasMore) observeLazySentinel();
+    else disconnectLazyObserver();
   }
 
   function bindClearFilters() {
@@ -709,7 +896,7 @@
   function applyFilters() {
     readSidebarFilters();
     readInvestRange();
-    currentPage = 1;
+    resetListingPagination();
     renderListings();
   }
 
@@ -727,7 +914,7 @@
     sidebarFilters = [];
     minInvest = null;
     maxInvest = null;
-    currentPage = 1;
+    resetListingPagination();
 
     if (els.search) els.search.value = '';
     if (els.sort) els.sort.value = 'recommended';
@@ -791,7 +978,7 @@
       clearTimeout(searchTimer);
       searchTimer = setTimeout(function () {
         searchQ = val;
-        currentPage = 1;
+        resetListingPagination();
         renderListings();
       }, SEARCH_DEBOUNCE_MS);
     });
@@ -802,7 +989,7 @@
         els.search.value = '';
         els.search.focus();
         searchQ = '';
-        currentPage = 1;
+        resetListingPagination();
         updateSearchClearVisibility();
         renderListings();
       });
@@ -814,7 +1001,7 @@
     els.sort.dataset.bound = '1';
     els.sort.addEventListener('change', function () {
       sortBy = els.sort.value || 'recommended';
-      currentPage = 1;
+      resetListingPagination();
       renderListings();
     });
   }
@@ -828,12 +1015,23 @@
       els.viewList.classList.toggle('is-active', viewMode === 'list');
       els.viewList.setAttribute('aria-pressed', viewMode === 'list' ? 'true' : 'false');
     }
+    if (els.viewMap) {
+      els.viewMap.classList.toggle('is-active', viewMode === 'map');
+      els.viewMap.setAttribute('aria-pressed', viewMode === 'map' ? 'true' : 'false');
+    }
   }
 
   function initViewToggle() {
     function setView(mode) {
+      var wasMap = viewMode === 'map';
       viewMode = mode;
       syncViewToggleUI();
+      if (mode === 'map') {
+        if (window.hubSetOppMapView) window.hubSetOppMapView(true);
+        renderListings();
+        return;
+      }
+      if (wasMap && window.hubSetOppMapView) window.hubSetOppMapView(false);
       renderListings();
     }
 
@@ -842,6 +1040,9 @@
     });
     if (els.viewList) els.viewList.addEventListener('click', function () {
       setView('list');
+    });
+    if (els.viewMap) els.viewMap.addEventListener('click', function () {
+      setView('map');
     });
     syncViewToggleUI();
   }
@@ -856,7 +1057,7 @@
       var cat = pill.getAttribute('data-cat') || '';
       activeCategory = activeCategory === cat ? '' : cat;
       syncCatPills();
-      currentPage = 1;
+      resetListingPagination();
       renderListings();
     });
   }
@@ -875,16 +1076,25 @@
         return;
       }
 
+      var loadBtn = e.target.closest('.opp-load-more-btn');
+      if (loadBtn) {
+        loadMoreListings();
+        return;
+      }
+
       var btn = e.target.closest('.opp-page-btn');
       if (!btn || btn.disabled) return;
       var filtered = getFilteredList();
       var totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
       var p = parseInt(btn.getAttribute('data-page'), 10);
       if (!p || p === currentPage || p < 1 || p > totalPages) return;
+      accumulatedCount = 0;
+      lastRenderedCount = 0;
       currentPage = p;
+      visibleRangeStart = (p - 1) * PAGE_SIZE + 1;
       renderListings();
-      var browse = document.getElementById('browse');
-      if (browse) browse.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      var listingsArea = document.querySelector('.opp-listings-area');
+      if (listingsArea) listingsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
 
@@ -935,13 +1145,17 @@
   };
   window.resetFilters = resetFilters;
 
+  window.hubGetFilteredOpportunities = function () {
+    return sortListings(getFilteredList());
+  };
+
   window.hubRenderOpportunities = function (listings) {
     if (!catalog) return;
     allListings = (listings || []).map(function (item, i) {
       return catalog.normalizeListing(item, i);
     });
     updateFilterCounts();
-    currentPage = 1;
+    resetListingPagination();
     resetSpotlightOrder();
     renderSpotlight();
     renderListings();
