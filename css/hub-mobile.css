@@ -455,13 +455,6 @@ body.nav-menu-open {
     min-height: 40px;
   }
 
-  .filter-bar-cluster > .filter-map-btn {
-    width: 100%;
-    justify-content: center;
-    padding: 10px 12px;
-    margin-left: 0;
-  }
-
   .filter-more-toggle {
     display: flex;
   }
@@ -569,6 +562,15 @@ body.nav-menu-open {
   .events-results-actions {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .filter-bar-cluster > .events-view-toggle {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .filter-bar-cluster > .events-view-toggle .events-view-toggle-btn {
+    flex: 1;
   }
 
   .events-toolbar {

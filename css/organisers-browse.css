@@ -373,9 +373,16 @@ body.browse-mode-organisers .events-hero-btn-primary:hover {
   color: #fff;
 }
 
+body.browse-mode-organisers .events-filter-shell {
+  --filter-surface: #2563eb;
+  --filter-surface-deep: #1d4ed8;
+  background: var(--filter-surface);
+  box-shadow: 0 12px 36px rgba(29, 78, 216, 0.28);
+}
+
 body.browse-mode-organisers .events-filter-bar {
-  background: linear-gradient(165deg, #f8fbff 0%, #eef4ff 55%, #fff 100%);
-  border-color: rgba(37, 99, 235, 0.14);
+  background: transparent;
+  border-color: transparent;
 }
 
 body.browse-mode-organisers .events-browse-switch .browse-mode-btn.is-active {
@@ -387,9 +394,13 @@ body.browse-mode-organisers .events-browse-switch {
 }
 
 
-body.browse-mode-organisers .filter-checkbox input:checked + .filter-checkbox-box {
-  background: #2563eb;
-  border-color: #2563eb;
+body.browse-mode-organisers .events-filter-shell .filter-checkbox input:checked + .filter-checkbox-box {
+  background: #fff;
+  border-color: #fff;
+}
+
+body.browse-mode-organisers .events-filter-shell .filter-checkbox input:checked + .filter-checkbox-box::after {
+  border-color: var(--filter-surface-deep, #1d4ed8);
 }
 
 body.browse-mode-organisers .type-tab.is-active,
@@ -397,10 +408,6 @@ body.browse-mode-organisers .org-type-tab.is-active {
   background: #2563eb;
   border-color: #2563eb;
   color: #fff;
-}
-
-body.browse-mode-organisers .events-filter-shell {
-  border-radius: 16px;
 }
 
 body.browse-mode-organisers .filter-field-icon,

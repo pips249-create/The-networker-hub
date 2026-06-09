@@ -22,8 +22,8 @@
   var mapAreaActiveLabel = document.getElementById('map-area-active-label');
   var mapAreaResetBtn = document.getElementById('map-area-reset-btn');
   var listingsView = document.getElementById('listings-view');
+  var listBtn = document.getElementById('list-view-btn');
   var mapBtn = document.getElementById('map-view-btn');
-  var mapLabel = document.getElementById('map-view-label');
   var promoSection = document.querySelector('.events-promo-section');
   var resultsMeta = document.querySelector('.events-results-meta');
 
@@ -780,16 +780,13 @@
     document.body.classList.toggle('events-view-map', mapMode);
     if (mapWrap) mapWrap.hidden = !mapMode;
     if (listingsView) listingsView.hidden = mapMode;
-    if (mapBtn) mapBtn.setAttribute('aria-pressed', mapMode ? 'true' : 'false');
-    if (mapLabel) {
-      var compact = window.matchMedia('(max-width: 720px)').matches;
-      mapLabel.textContent = mapMode
-        ? compact
-          ? 'List'
-          : 'Swap to List View'
-        : compact
-          ? 'Map'
-          : 'Swap to Map View';
+    if (listBtn) {
+      listBtn.classList.toggle('is-active', !mapMode);
+      listBtn.setAttribute('aria-pressed', mapMode ? 'false' : 'true');
+    }
+    if (mapBtn) {
+      mapBtn.classList.toggle('is-active', mapMode);
+      mapBtn.setAttribute('aria-pressed', mapMode ? 'true' : 'false');
     }
     setChromeHidden(mapMode);
     if (!document.body.classList.contains('browse-mode-organisers')) {
@@ -862,10 +859,19 @@
     setViewMode(!isMapView);
   };
 
+  if (listBtn) {
+    listBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (!isMapView) return;
+      setViewMode(false);
+    });
+  }
+
   if (mapBtn) {
     mapBtn.addEventListener('click', function (e) {
       e.preventDefault();
-      window.hubToggleMapView();
+      if (isMapView) return;
+      setViewMode(true);
     });
   }
 

@@ -1,112 +1,70 @@
 /**
- * Opportunities — preview cards (coming soon; no live listings yet).
+ * Opportunities — filter, search, and submit form interactions.
  */
 (function () {
-  var LISTINGS = [
-    {
-      type: 'SPONSORSHIP',
-      typeClass: 'sponsor',
-      value: '£2,500',
-      host: 'London Business Network',
-      title: 'Annual gala — Title sponsor',
-      tags: 'Sponsorship · Events · London · In person',
-      date: 'Closes Fri 18 Apr',
-      location: 'London',
-    },
-    {
-      type: 'PARTNERSHIP',
-      typeClass: 'partner',
-      value: 'Revenue share',
-      host: 'Midlands Connect',
-      title: 'Referral partnership — B2B services',
-      tags: 'Partnership · Referrals · Birmingham · Hybrid',
-      date: 'Open · Rolling',
-      location: 'West Midlands',
-    },
-    {
-      type: 'SPEAKING',
-      typeClass: 'speaking',
-      value: 'Paid slot',
-      host: 'Northern Leaders Forum',
-      title: 'Keynote speaker — Growth summit',
-      tags: 'Speaking · Leadership · Manchester · In person',
-      date: 'Apply by Mon 28 Apr',
-      location: 'Manchester',
-    },
-    {
-      type: 'SPONSORSHIP',
-      typeClass: 'sponsor',
-      value: '£800',
-      host: 'Bristol Entrepreneurs',
-      title: 'Monthly breakfast — Exhibition stand',
-      tags: 'Sponsorship · Networking · Bristol · In person',
-      date: 'Closes Wed 09 Apr',
-      location: 'Bristol',
-    },
-    {
-      type: 'PARTNERSHIP',
-      typeClass: 'partner',
-      value: 'Co-marketing',
-      host: 'Scottish SME Alliance',
-      title: 'Joint webinar series partner',
-      tags: 'Partnership · Marketing · Edinburgh · Online',
-      date: 'Open · Rolling',
-      location: 'Scotland',
-    },
-    {
-      type: 'SPEAKING',
-      typeClass: 'speaking',
-      value: 'Free slot',
-      host: 'Cardiff Chamber',
-      title: 'Panel guest — Digital transformation',
-      tags: 'Speaking · Technology · Cardiff · In person',
-      date: 'Apply by Thu 01 May',
-      location: 'Cardiff',
-    },
-  ];
+  var activeFilter = 'all';
+  var searchQ = '';
 
-  function escapeHtml(s) {
-    return String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+  function filterOpp(el, type) {
+    document.querySelectorAll('.opp-filter-btn').forEach(function (b) {
+      b.classList.remove('active');
+    });
+    el.classList.add('active');
+    activeFilter = type;
+    applyFilters();
   }
 
-  function cardHtml(item) {
-    return (
-      '<article class="opportunities-card" aria-hidden="true">' +
-      '<div class="opportunities-card-media">' +
-      '<span class="opportunities-card-type opportunities-card-type--' +
-      escapeHtml(item.typeClass) +
-      '">' +
-      escapeHtml(item.type) +
-      '</span>' +
-      '<span class="opportunities-card-value">' +
-      escapeHtml(item.value) +
-      '</span>' +
-      '</div>' +
-      '<div class="opportunities-card-body">' +
-      '<p class="opportunities-card-host">' +
-      escapeHtml(item.host) +
-      '</p>' +
-      '<h3 class="opportunities-card-title">' +
-      escapeHtml(item.title) +
-      '</h3>' +
-      '<p class="opportunities-card-tags">' +
-      escapeHtml(item.tags) +
-      '</p>' +
-      '<p class="opportunities-card-detail"><span class="ico" aria-hidden="true">📅</span> ' +
-      escapeHtml(item.date) +
-      '</p>' +
-      '<p class="opportunities-card-detail"><span class="ico" aria-hidden="true">📍</span> ' +
-      escapeHtml(item.location) +
-      '</p>' +
-      '</div></article>'
-    );
+  function searchOpp(val) {
+    searchQ = val.toLowerCase();
+    applyFilters();
   }
 
-  var grid = document.getElementById('opportunities-grid');
-  if (!grid) return;
-  grid.innerHTML = LISTINGS.map(cardHtml).join('');
+  function applyFilters() {
+    var cards = document.querySelectorAll('.opp-card');
+    var shown = 0;
+    cards.forEach(function (card) {
+      var tags = card.dataset.tags || '';
+      var type = card.dataset.type || '';
+      var match =
+        (activeFilter === 'all' || type === activeFilter || tags.includes(activeFilter)) &&
+        (!searchQ || card.innerText.toLowerCase().includes(searchQ));
+      card.style.display = match ? '' : 'none';
+      if (match) shown++;
+    });
+    var noResults = document.getElementById('opp-no-results');
+    if (noResults) {
+      noResults.style.display = shown === 0 ? 'block' : 'none';
+    }
+  }
+
+  function resetFilters() {
+    activeFilter = 'all';
+    searchQ = '';
+    var firstBtn = document.querySelector('.opp-filter-btn');
+    if (firstBtn) firstBtn.click();
+    var searchInput = document.querySelector('.opp-search-box input');
+    if (searchInput) searchInput.value = '';
+  }
+
+  function submitForm(btn) {
+    btn.textContent = "✓ Submitted — we'll be in touch within 24 hours";
+    btn.style.background = '#166534';
+    btn.style.color = '#fff';
+    btn.disabled = true;
+  }
+
+  window.filterOpp = filterOpp;
+  window.searchOpp = searchOpp;
+  window.resetFilters = resetFilters;
+  window.submitForm = submitForm;
+
+  document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      var target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
 })();
