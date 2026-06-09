@@ -202,7 +202,7 @@ module.exports = async function handler(req, res) {
         const event = await createEvent({
           title,
           groupId: organiserId,
-          type: normalizeEventType(body.event_type || 'Networking meeting'),
+          type: normalizeEventType(body.event_type || 'Meeting'),
           eventFormat: body.meeting_type || 'In person',
           date: body.starts_at || null,
           endDate: body.ends_at || null,

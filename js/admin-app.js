@@ -72,15 +72,7 @@
     },
   };
 
-  var EVENT_TYPES = [
-    'Networking meeting',
-    'Netwalking',
-    'Sport & social',
-    'Conference',
-    'Exhibition',
-    'Awards ceremony',
-    "Women's networking",
-  ];
+  var EVENT_TYPES = ['Meeting', 'Events', 'Exhibition', 'Awards'];
   var MEETING_FORMATS = ['In person', 'Online', 'Hybrid'];
   var healthCache = null;
   var groupCleanupCache = null;
@@ -4168,7 +4160,7 @@
       title: formFieldVal(form, 'title'),
       organiser_id: formFieldVal(form, 'organiser_id'),
       starts_at: formFieldVal(form, 'starts_at') || null,
-      event_type: formFieldVal(form, 'event_type') || 'Networking meeting',
+      event_type: formFieldVal(form, 'event_type') || 'Meeting',
       meeting_type: formFieldVal(form, 'meeting_type') || 'In person',
       status: formFieldVal(form, 'status') || 'draft',
     })
@@ -4899,7 +4891,7 @@
       '<input type="datetime-local" name="starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
       '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      eventTypeOptions('Networking meeting') +
+      eventTypeOptions('Meeting') +
       '</select></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Format</label>' +
       '<select name="meeting_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +

@@ -271,7 +271,7 @@
       raw = window.hubNormalizeEventType(raw);
     }
     const label = String(raw).trim();
-    if (!label) return 'Networking meeting';
+    if (!label) return 'Meeting';
     if (label.length > 28) return label.slice(0, 26) + '…';
     return label;
   }

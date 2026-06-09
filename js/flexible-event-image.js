@@ -26,7 +26,7 @@
       'https://images.unsplash.com/photo-1560179707-f14e90ef3623?q=80&w=800&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=800&auto=format&fit=crop',
     ],
-    conference: [
+    events: [
       'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=800&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=800&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop',
@@ -65,9 +65,11 @@
   function typePool(eventType) {
     var t = String(eventType || '').toLowerCase();
     if (t.indexOf('exhibition') !== -1) return TYPE_PLACEMENTS.exhibition;
-    if (t.indexOf('conference') !== -1) return TYPE_PLACEMENTS.conference;
-    if (t.indexOf('netwalk') !== -1) return TYPE_PLACEMENTS.netwalking;
     if (t.indexOf('award') !== -1) return TYPE_PLACEMENTS.awards;
+    if (t === 'events' || t.indexOf('conference') !== -1 || t.indexOf('summit') !== -1) {
+      return TYPE_PLACEMENTS.events;
+    }
+    if (t.indexOf('netwalk') !== -1) return TYPE_PLACEMENTS.netwalking;
     if (t.indexOf('sport') !== -1 || t.indexOf('golf') !== -1 || t.indexOf('padel') !== -1) {
       return TYPE_PLACEMENTS['sport-social'];
     }

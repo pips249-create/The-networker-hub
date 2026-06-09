@@ -147,7 +147,7 @@ async function ensurePastEventWithRegistration(sb, attendee) {
         title: 'E2E review test evening',
         slug,
         description: 'Past event used to verify the attendee review flow.',
-        event_type: 'Networking meeting',
+        event_type: 'Meeting',
         industries: ['Business'],
         meeting_type: 'In person',
         city: 'Manchester',

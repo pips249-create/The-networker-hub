@@ -71,8 +71,10 @@ function slugFormat(fmt) {
 }
 
 function eventTypeTabCategory(raw) {
-  const t = String(raw || '').trim().toLowerCase();
-  if (t.includes('exhibition')) return 'exhibition';
+  const t = normalizeEventType(raw);
+  if (t === 'Exhibition') return 'exhibition';
+  if (t === 'Events') return 'events';
+  if (t === 'Awards') return 'awards';
   return 'meeting';
 }
 
@@ -85,8 +87,6 @@ function inferMeetingType(row) {
 }
 
 function resolvedEventType(row, typeRaw) {
-  const stored = String(row.event_type || '').trim();
-  if (stored) return stored;
   return typeRaw;
 }
 

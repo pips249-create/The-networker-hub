@@ -60,7 +60,7 @@ async function main() {
       title: 'Welcome networking evening',
       description:
         'Sample listing — replace with your own event details in the organiser dashboard.',
-      event_type: 'Networking meeting',
+      event_type: 'Meeting',
       industries: ['Business'],
       meeting_type: 'In person',
       venue: 'Sample Venue',

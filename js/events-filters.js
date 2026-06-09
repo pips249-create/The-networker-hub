@@ -821,9 +821,17 @@
 
   if (location.hash === '#exhibitions' || location.search.indexOf('type=exhibition') !== -1) {
     setActiveTypeTab('exhibition');
-  } else if (location.hash === '#netwalking' || location.search.indexOf('type=netwalking') !== -1) {
-    setActiveTypeTab('netwalking');
-  } else if (location.hash === '#meetings' || location.search.indexOf('type=meeting') !== -1) {
-    setActiveTypeTab('networking-meeting');
+  } else if (location.hash === '#awards' || location.search.indexOf('type=awards') !== -1) {
+    setActiveTypeTab('awards');
+  } else if (location.hash === '#events' || location.search.indexOf('type=events') !== -1) {
+    setActiveTypeTab('events');
+  } else if (
+    location.hash === '#meetings' ||
+    location.hash === '#netwalking' ||
+    location.search.indexOf('type=meeting') !== -1 ||
+    location.search.indexOf('type=netwalking') !== -1 ||
+    location.search.indexOf('type=networking-meeting') !== -1
+  ) {
+    setActiveTypeTab('meeting');
   }
 })();

@@ -17,11 +17,11 @@
     events: {
       badge: 'Event discovery',
       title:
-        'Find <span class="accent">networking events, exhibitions &amp; conferences</span> across the UK',
+        'Find <span class="accent">meetings, events, exhibitions &amp; awards</span> across the UK',
       sub:
-        '<strong>The Networker Hub</strong> lists meetings, netwalking, conferences, exhibitions and awards ceremonies — filter by type, date, and location.',
+        '<strong>The Networker Hub</strong> lists meetings, events, exhibitions and awards — filter by type, date, and location, or search for anything from breakfast networking to women only.',
       heading: 'All listings',
-      searchPlaceholder: 'Search meetings by title, organiser, or location…',
+      searchPlaceholder: 'Search anything — breakfast, women only, organiser, city…',
       searchLabel: 'Search events',
       filterLabel: 'Filter events',
       switchLabel: 'Browse organisers',

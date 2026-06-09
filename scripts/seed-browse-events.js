@@ -3,8 +3,7 @@
  * Seed 300 published browse events with canonical event_type values and Unsplash photos.
  * Idempotent: skips if seed-browse-* rows already exist (use --force to add another batch).
  *
- * Prerequisite: run supabase/migrations/030_event_type_sport_womens.sql in Supabase SQL Editor
- * so Sport & social and Women's networking pass the check constraint.
+ * Prerequisite: run supabase/migrations/035_event_types_four_categories.sql in Supabase SQL Editor.
  *
  * Usage: node scripts/seed-browse-events.js [--force] [--count=300]
  */
@@ -149,14 +148,19 @@ const TITLE_TEMPLATES = {
 };
 
 const TYPE_WEIGHTS = {
-  'Networking meeting': 80,
-  Netwalking: 35,
-  'Sport & social': 45,
-  Conference: 35,
+  Meeting: 120,
+  Events: 60,
   Exhibition: 30,
-  'Awards ceremony': 25,
-  "Women's networking": 50,
+  Awards: 25,
 };
+
+UNSPLASH.Meeting = UNSPLASH['Networking meeting'];
+UNSPLASH.Events = UNSPLASH.Conference;
+UNSPLASH.Awards = UNSPLASH['Awards ceremony'];
+
+TITLE_TEMPLATES.Meeting = TITLE_TEMPLATES['Networking meeting'];
+TITLE_TEMPLATES.Events = TITLE_TEMPLATES.Conference;
+TITLE_TEMPLATES.Awards = TITLE_TEMPLATES['Awards ceremony'];
 
 function parseArgs() {
   const force = process.argv.includes('--force');
@@ -178,7 +182,7 @@ function buildTypeQueue(total) {
     assigned += n;
   });
 
-  while (queue.length < total) queue.push('Networking meeting');
+  while (queue.length < total) queue.push('Meeting');
   while (queue.length > total) queue.pop();
   return queue;
 }
@@ -191,13 +195,13 @@ function capitalize(s) {
 }
 
 function titleFor(type, city, index) {
-  const templates = TITLE_TEMPLATES[type] || TITLE_TEMPLATES['Networking meeting'];
+  const templates = TITLE_TEMPLATES[type] || TITLE_TEMPLATES.Meeting;
   const template = templates[index % templates.length];
   return capitalize(template.replace(/\{city\}/g, city));
 }
 
 function photoFor(type, index) {
-  const pool = UNSPLASH[type] || UNSPLASH['Networking meeting'];
+  const pool = UNSPLASH[type] || UNSPLASH.Meeting;
   return pool[index % pool.length];
 }
 
