@@ -1,5 +1,4 @@
--- Repair script if 035 was run in the wrong order (updates before drop).
--- Safe to re-run: drops constraint, backfills legacy values, re-applies check.
+-- Reclassify legacy / migrated non-exhibition types as Meeting.
 
 alter table public.events drop constraint if exists events_event_type_check;
 
