@@ -36,7 +36,7 @@
   var sidebarFilters = [];
   var searchQ = '';
   var sortBy = 'recommended';
-  var viewMode = 'grid';
+  var viewMode = 'list';
   var minInvest = null;
   var maxInvest = null;
   var currentPage = 1;
@@ -214,7 +214,9 @@
 
   function spotlightInvestmentLabel(item) {
     var meta = catalog ? catalog.cardDisplayMeta(item) : (item.meta || []).slice(0, 1);
-    if (meta.length && meta[0].val) return meta[0].val;
+    if (meta.length && meta[0].val) {
+      return formatMetaVal(meta[0].key, meta[0].val);
+    }
     return 'Enquire';
   }
 
@@ -402,6 +404,13 @@
     });
   }
 
+  function formatMetaVal(key, val) {
+    if (catalog && catalog.formatMetaDisplayValue) {
+      return catalog.formatMetaDisplayValue(key, val);
+    }
+    return val;
+  }
+
   function metaCellHtml(m) {
     var scarcity = catalog && catalog.isScarcityMeta(m.key, m.val);
     return (
@@ -410,8 +419,59 @@
       '"><span class="opp-meta-k">' +
       escapeHtml(m.key) +
       '</span><span class="opp-meta-v">' +
-      escapeHtml(m.val) +
+      escapeHtml(formatMetaVal(m.key, m.val)) +
       '</span></div>'
+    );
+  }
+
+  function companyAvatarHtml(item) {
+    if (item.imageUrl) {
+      return (
+        '<div class="opp-co-avatar opp-co-avatar--logo" aria-hidden="true">' +
+        '<img src="' +
+        escapeHtml(item.imageUrl) +
+        '" alt="" width="24" height="24" loading="lazy" />' +
+        '</div>'
+      );
+    }
+    return (
+      '<div class="opp-co-avatar" style="background:' +
+      escapeHtml(item.hostColor) +
+      '" aria-hidden="true">' +
+      escapeHtml(item.hostInitials) +
+      '</div>'
+    );
+  }
+
+  function thumbBlockHtml(item, thumb, typeClassFn, typeLabels) {
+    var tags =
+      '<span class="opp-type-tag ' +
+      typeClassFn(item.type) +
+      '">' +
+      escapeHtml(typeLabels[item.type] || item.type) +
+      '</span>' +
+      (item.featured ? '<span class="opp-feat-pip">Featured</span>' : '');
+
+    if (item.imageUrl) {
+      return (
+        '<div class="opp-thumb opp-thumb--image">' +
+        tags +
+        '<img class="opp-thumb-img" src="' +
+        escapeHtml(item.imageUrl) +
+        '" alt="" loading="lazy" />' +
+        '</div>'
+      );
+    }
+
+    return (
+      '<div class="opp-thumb" style="background:' +
+      escapeHtml(thumb.gradient) +
+      '">' +
+      tags +
+      '<span class="opp-thumb-emoji" aria-hidden="true">' +
+      thumb.emoji +
+      '</span>' +
+      '</div>'
     );
   }
 
@@ -446,26 +506,10 @@
       '">' +
       FAV_ICON +
       '</button>' +
-      '<div class="opp-thumb" style="background:' +
-      escapeHtml(thumb.gradient) +
-      '">' +
-      '<span class="opp-type-tag ' +
-      typeClassFn(item.type) +
-      '">' +
-      escapeHtml(typeLabels[item.type] || item.type) +
-      '</span>' +
-      (item.featured ? '<span class="opp-feat-pip">Featured</span>' : '') +
-      '<span class="opp-thumb-emoji" aria-hidden="true">' +
-      thumb.emoji +
-      '</span>' +
-      '</div>' +
+      thumbBlockHtml(item, thumb, typeClassFn, typeLabels) +
       '<div class="opp-card-body">' +
       '<div class="opp-company">' +
-      '<div class="opp-co-avatar" style="background:' +
-      escapeHtml(item.hostColor) +
-      '" aria-hidden="true">' +
-      escapeHtml(item.hostInitials) +
-      '</div>' +
+      companyAvatarHtml(item) +
       '<span class="opp-co-name">' +
       escapeHtml(item.host) +
       '</span></div>' +
@@ -759,17 +803,21 @@
     });
   }
 
+  function syncViewToggleUI() {
+    if (els.viewGrid) {
+      els.viewGrid.classList.toggle('is-active', viewMode === 'grid');
+      els.viewGrid.setAttribute('aria-pressed', viewMode === 'grid' ? 'true' : 'false');
+    }
+    if (els.viewList) {
+      els.viewList.classList.toggle('is-active', viewMode === 'list');
+      els.viewList.setAttribute('aria-pressed', viewMode === 'list' ? 'true' : 'false');
+    }
+  }
+
   function initViewToggle() {
     function setView(mode) {
       viewMode = mode;
-      if (els.viewGrid) {
-        els.viewGrid.classList.toggle('is-active', mode === 'grid');
-        els.viewGrid.setAttribute('aria-pressed', mode === 'grid' ? 'true' : 'false');
-      }
-      if (els.viewList) {
-        els.viewList.classList.toggle('is-active', mode === 'list');
-        els.viewList.setAttribute('aria-pressed', mode === 'list' ? 'true' : 'false');
-      }
+      syncViewToggleUI();
       renderListings();
     }
 
@@ -779,6 +827,7 @@
     if (els.viewList) els.viewList.addEventListener('click', function () {
       setView('list');
     });
+    syncViewToggleUI();
   }
 
   function initCatPills() {
@@ -850,7 +899,14 @@
 
     if (catalog && catalog.loadCatalogAsync) {
       catalog.loadCatalogAsync().then(function (merged) {
-        if (merged && merged.length) bootListings(merged);
+        if (!merged || !merged.length) return;
+        var prevIds = allListings.map(function (item) {
+          return item.id;
+        }).join(',');
+        var nextIds = merged.map(function (item) {
+          return item.id;
+        }).join(',');
+        if (prevIds !== nextIds) bootListings(merged);
       });
     }
   }

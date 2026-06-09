@@ -116,11 +116,6 @@
       global.location.href = loginUrl('/organiser/opportunity-edit.html');
       return;
     }
-    if (!hasGroupProfile(data)) {
-      global.alert('You must add a group profile first.');
-      global.location.href = path('organiser/group-edit.html');
-      return;
-    }
     global.location.href = path('organiser/opportunity-edit.html');
   }
 

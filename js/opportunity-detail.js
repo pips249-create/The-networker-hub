@@ -53,6 +53,18 @@
 
   function applyHostLogo(el, item) {
     if (!el || !item) return;
+    if (item.imageUrl) {
+      el.textContent = '';
+      el.style.background = '#fff';
+      el.classList.add('has-logo');
+      el.innerHTML =
+        '<img src="' +
+        escapeHtml(item.imageUrl) +
+        '" alt="" width="40" height="40" loading="lazy" />';
+      return;
+    }
+    el.classList.remove('has-logo');
+    el.innerHTML = '';
     el.textContent = item.hostInitials || '';
     el.style.background = item.hostColor || '#0d1f3c';
   }
@@ -83,13 +95,14 @@
     if (!els.metaGrid) return;
     els.metaGrid.innerHTML = (item.meta || [])
       .map(function (m) {
+        var val = catalog && catalog.formatMetaDisplayValue ? catalog.formatMetaDisplayValue(m.key, m.val) : m.val;
         return (
           '<div class="opp-detail-meta-item">' +
           '<span class="opp-detail-meta-key">' +
           escapeHtml(m.key) +
           '</span>' +
           '<span class="opp-detail-meta-val">' +
-          escapeHtml(m.val) +
+          escapeHtml(val) +
           '</span>' +
           '</div>'
         );

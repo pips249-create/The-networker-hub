@@ -614,6 +614,18 @@
     return loc;
   }
 
+  function formatMetaDisplayValue(key, val) {
+    var v = String(val || '').trim();
+    if (!v || v === '—') return v;
+    if (/^£/.test(v)) return v;
+    var k = String(key || '').toLowerCase();
+    if (/^investment|earnings|commission|revenue|income|profit|return/.test(k)) {
+      if (/%/.test(v)) return v;
+      if (/\d/.test(v)) return '£' + v;
+    }
+    return v;
+  }
+
   function cardDisplayMeta(item) {
     var meta = item.meta || [];
     var investment = null;
@@ -679,6 +691,7 @@
       return { key: m.key, val: m.val };
     });
     item.about = (seed.about || []).slice();
+    item.imageUrl = String(seed.imageUrl || '').trim();
     item.investAmount = parseInvestmentAmount(item.meta);
     item.category = seed.category || inferCategory(item);
     item.thumb = thumbFor(item);
@@ -804,6 +817,7 @@
     detailHref: detailHref,
     typeClass: typeClass,
     cardDisplayMeta: cardDisplayMeta,
+    formatMetaDisplayValue: formatMetaDisplayValue,
     isScarcityMeta: isScarcityMeta,
     parseInvestmentAmount: parseInvestmentAmount,
     CATEGORY_KEYWORDS: CATEGORY_KEYWORDS,

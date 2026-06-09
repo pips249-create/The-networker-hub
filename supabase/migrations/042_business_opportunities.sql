@@ -1,7 +1,9 @@
--- Business opportunity listings (organiser-submitted)
+-- Business opportunity listings (user-submitted; not tied to group profiles)
 create table if not exists public.business_opportunities (
   id uuid primary key default gen_random_uuid(),
-  organiser_id uuid not null references public.organisers(id) on delete cascade,
+  organiser_id uuid references public.organisers(id) on delete set null,
+  owner_email text,
+  supabase_user_id uuid,
   status text not null default 'draft'
     check (status in ('draft', 'published', 'unpublished', 'archived')),
   approval_status text not null default 'Pending Review'
@@ -35,6 +37,12 @@ create table if not exists public.business_opportunities (
 
 create index if not exists business_opportunities_organiser_id_idx
   on public.business_opportunities (organiser_id);
+
+create index if not exists business_opportunities_owner_email_idx
+  on public.business_opportunities (lower(owner_email));
+
+create index if not exists business_opportunities_owner_user_idx
+  on public.business_opportunities (supabase_user_id);
 
 create index if not exists business_opportunities_status_idx
   on public.business_opportunities (status, approval_status);

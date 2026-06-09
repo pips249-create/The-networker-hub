@@ -12,9 +12,8 @@ function parseBody(req) {
   return body || {};
 }
 
-function opportunityPayloadFromBody(body) {
+function opportunityPayloadFromBody(body, session) {
   return {
-    groupId: String(body.organiserGroupId || body.groupId || '').trim(),
     title: String(body.title || '').trim(),
     type: String(body.type || '').trim(),
     category: String(body.category || '').trim(),
@@ -27,6 +26,8 @@ function opportunityPayloadFromBody(body) {
     tags: body.tags,
     packageTier: body.packageTier,
     listingStatus: body.listingStatus != null ? body.listingStatus : body.status,
+    ownerEmail: String(session?.email || '').toLowerCase(),
+    ownerUserId: session?.sub || '',
     photoBase64: body.photoBase64 || body.imageBase64 || null,
     photoMime: body.photoMime || body.imageMime || null,
     photoFilename: body.photoFilename || body.imageFilename || null,
@@ -42,11 +43,10 @@ module.exports = async function handler(req, res) {
     json,
     setCors,
     requireOrganiserSession,
-    listGroupsForSession,
-    groupOwnedBySession,
     isPlatformAdmin,
-    listOpportunitiesForOrganiserIds,
+    listOpportunitiesForSession,
     getOpportunityById,
+    opportunityOwnedBySession,
     createOpportunity,
     updateOpportunity,
     airtableSetupHint,
@@ -68,18 +68,16 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  async function ownedOpportunityIds() {
-    const groups = await listGroupsForSession(auth.session);
-    const groupIds = groups.map((g) => g.id);
-    const opportunities = await listOpportunitiesForOrganiserIds(groupIds);
-    return { groups, opportunities, allowed: new Set(opportunities.map((o) => o.id)) };
+  async function ownedOpportunities() {
+    const opportunities = await listOpportunitiesForSession(auth.session);
+    return { opportunities, allowed: new Set(opportunities.map((o) => o.id)) };
   }
 
   if (req.method === 'GET') {
     const opportunityId = String(req.query?.id || '').trim();
     try {
       if (opportunityId) {
-        const { groups, allowed } = await ownedOpportunityIds();
+        const { allowed } = await ownedOpportunities();
         if (!isPlatformAdmin(auth.session) && !allowed.has(opportunityId)) {
           return json(res, 403, { error: 'opportunity_not_owned' });
         }
@@ -87,9 +85,8 @@ module.exports = async function handler(req, res) {
         if (!opportunity) return json(res, 404, { error: 'not_found' });
         return json(res, 200, { ok: true, opportunity });
       }
-      const groups = await listGroupsForSession(auth.session);
-      const opportunities = await listOpportunitiesForOrganiserIds(groups.map((g) => g.id));
-      return json(res, 200, { ok: true, opportunities, groups });
+      const opportunities = await listOpportunitiesForSession(auth.session);
+      return json(res, 200, { ok: true, opportunities });
     } catch (e) {
       return json(res, e.status || 500, {
         error: 'opportunities_fetch_failed',
@@ -105,17 +102,18 @@ module.exports = async function handler(req, res) {
     if (!opportunityId) return json(res, 400, { error: 'missing_opportunity_id' });
 
     try {
-      const { groups, allowed } = await ownedOpportunityIds();
-      if (!isPlatformAdmin(auth.session) && !allowed.has(opportunityId)) {
+      const existing = await getOpportunityById(opportunityId);
+      if (!existing) return json(res, 404, { error: 'not_found' });
+      if (
+        !isPlatformAdmin(auth.session) &&
+        !opportunityOwnedBySession(auth.session, existing)
+      ) {
         return json(res, 403, { error: 'opportunity_not_owned' });
       }
-      const base = opportunityPayloadFromBody(body);
+
+      const base = opportunityPayloadFromBody(body, auth.session);
       if (!base.title) return json(res, 400, { error: 'missing_title' });
-      if (!base.groupId) return json(res, 400, { error: 'missing_group' });
       if (!base.host) return json(res, 400, { error: 'missing_host' });
-      if (!groupOwnedBySession(auth.session, groups, base.groupId)) {
-        return json(res, 403, { error: 'group_not_owned' });
-      }
       const opportunity = await updateOpportunity(opportunityId, base);
       return json(res, 200, { ok: true, opportunity });
     } catch (e) {
@@ -128,9 +126,9 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'POST') {
     const body = parseBody(req);
-    const base = opportunityPayloadFromBody(body);
+    const base = opportunityPayloadFromBody(body, auth.session);
     if (!base.title) return json(res, 400, { error: 'missing_title' });
-    if (!base.groupId) return json(res, 400, { error: 'missing_group' });
+    if (!base.ownerEmail) return json(res, 400, { error: 'missing_email' });
     if (base.listingStatus == null) base.listingStatus = 'draft';
     const isDraft = String(base.listingStatus).toLowerCase() === 'draft';
     if (!isDraft) {
@@ -139,10 +137,6 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-      const groups = await listGroupsForSession(auth.session);
-      if (!groupOwnedBySession(auth.session, groups, base.groupId)) {
-        return json(res, 403, { error: 'group_not_owned' });
-      }
       const opportunity = await createOpportunity(base);
       return json(res, 200, { ok: true, opportunity });
     } catch (e) {

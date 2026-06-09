@@ -108,6 +108,21 @@
   flex-shrink: 0;
 }
 
+.opportunity-detail-page .opp-detail-host-logo.has-logo {
+  background: #fff;
+  border: 1px solid #dde3ed;
+  padding: 4px;
+  overflow: hidden;
+}
+
+.opportunity-detail-page .opp-detail-host-logo.has-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: 8px;
+}
+
 .opportunity-detail-page .opp-detail-hero-text h1 {
   font-family: 'DM Serif Display', Georgia, serif;
   font-size: clamp(26px, 4vw, 34px);

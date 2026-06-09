@@ -127,6 +127,13 @@ function rowToPayout(row) {
   };
 }
 
+const REGISTRATION_QUERY_CHUNK = 100;
+
+function isMissingRelationError(error) {
+  const msg = String(error?.message || error || '').toLowerCase();
+  return /does not exist|could not find the table|relation .* does not exist/.test(msg);
+}
+
 async function listPayoutsForEvents(eventIds) {
   if (!eventIds.length) return [];
   const sb = getSupabaseAdmin();
@@ -135,7 +142,10 @@ async function listPayoutsForEvents(eventIds) {
     .select('*')
     .in('event_id', eventIds)
     .order('created_at', { ascending: false });
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (isMissingRelationError(error)) return [];
+    throw new Error(error.message);
+  }
   return (data || []).map(rowToPayout);
 }
 
@@ -147,16 +157,25 @@ async function listCancellationsForEvents(eventIds) {
     .select('*')
     .in('event_id', eventIds)
     .order('created_at', { ascending: false });
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (isMissingRelationError(error)) return [];
+    throw new Error(error.message);
+  }
   return data || [];
 }
 
 async function listRegistrationsForEvents(eventIds) {
-  if (!eventIds.length) return [];
+  const ids = (eventIds || []).filter(Boolean);
+  if (!ids.length) return [];
   const sb = getSupabaseAdmin();
-  const { data, error } = await sb.from('registrations').select('*').in('event_id', eventIds);
-  if (error) throw new Error(error.message);
-  return data || [];
+  const rows = [];
+  for (let i = 0; i < ids.length; i += REGISTRATION_QUERY_CHUNK) {
+    const chunk = ids.slice(i, i + REGISTRATION_QUERY_CHUNK);
+    const { data, error } = await sb.from('registrations').select('*').in('event_id', chunk);
+    if (error) throw new Error(error.message);
+    if (data?.length) rows.push(...data);
+  }
+  return rows;
 }
 
 async function archivePastPublishedEvents(groupIds) {
@@ -351,6 +370,7 @@ async function buildOrganiserWorkspaceSummary(groupIds, adminView) {
   const ids = groupIds || [];
   if (!ids.length && !adminView) {
     return {
+      computed: true,
       totalRevenue: 0,
       totalTicketsSold: 0,
       revenueByGroupId: {},
@@ -358,15 +378,23 @@ async function buildOrganiserWorkspaceSummary(groupIds, adminView) {
     };
   }
 
-  let query = sb.from('events').select('id, organiser_id');
-  if (!adminView) {
-    if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
-    else query = query.in('organiser_id', ids);
+  const events = [];
+  if (adminView) {
+    const { data, error } = await sb.from('events').select('id, organiser_id');
+    if (error) throw new Error(error.message);
+    if (data?.length) events.push(...data);
+  } else {
+    for (let i = 0; i < ids.length; i += REGISTRATION_QUERY_CHUNK) {
+      const chunk = ids.slice(i, i + REGISTRATION_QUERY_CHUNK);
+      let query = sb.from('events').select('id, organiser_id');
+      if (chunk.length === 1) query = query.eq('organiser_id', chunk[0]);
+      else query = query.in('organiser_id', chunk);
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      if (data?.length) events.push(...data);
+    }
   }
-  const { data: eventRows, error } = await query;
-  if (error) throw new Error(error.message);
 
-  const events = eventRows || [];
   const eventOrganiser = new Map(events.map((row) => [row.id, row.organiser_id]));
   const eventIds = events.map((row) => row.id).filter(Boolean);
   const registrations = await listRegistrationsForEvents(eventIds);
@@ -393,11 +421,43 @@ async function buildOrganiserWorkspaceSummary(groupIds, adminView) {
   totalRevenue = Math.round(totalRevenue * 100) / 100;
 
   return {
+    computed: true,
     totalRevenue,
     totalTicketsSold,
     revenueByGroupId,
     ticketsSoldByGroupId,
   };
+}
+
+/** Sales totals from registrations only — safe when payout tables are missing. */
+async function enrichEventsWithRegistrationSales(events) {
+  const ids = (events || []).map((e) => e.id).filter(Boolean);
+  if (!ids.length) return events || [];
+  const registrations = await listRegistrationsForEvents(ids);
+  const regsByEvent = {};
+  registrations.forEach((row) => {
+    if (!regsByEvent[row.event_id]) regsByEvent[row.event_id] = [];
+    regsByEvent[row.event_id].push(row);
+  });
+
+  return (events || []).map((ev) => {
+    const regs = regsByEvent[ev.id] || [];
+    const breakdown = calculatePayoutBreakdown(regs);
+    const { ticketsSold } = summarizeRegistrationSales(regs);
+    const capacity = Number(ev.ticketsCapacity) || 0;
+    return {
+      ...ev,
+      ticketsSold,
+      revenueNum: breakdown.amount_gross,
+      revenueDisplay: formatGbp(breakdown.amount_gross),
+      ticketsSoldLabel:
+        capacity > 0
+          ? `${ticketsSold} / ${capacity}`
+          : ticketsSold > 0
+            ? String(ticketsSold)
+            : '0',
+    };
+  });
 }
 
 async function getPayoutPreview(session, eventId) {
@@ -497,6 +557,7 @@ module.exports = {
   archivePastPublishedEvents,
   enrichEventsWithPayoutData,
   enrichOrganiserWorkspaceSales,
+  enrichEventsWithRegistrationSales,
   enrichTicketsWithSales,
   summarizeRegistrationSales,
   buildOrganiserWorkspaceSummary,

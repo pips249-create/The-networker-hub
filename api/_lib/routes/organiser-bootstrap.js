@@ -62,10 +62,10 @@ module.exports = async function handler(req, res) {
         groups: ws.groups.length,
         events: ws.eventsPagination?.total ?? ws.events.length,
         tickets: ws.tickets.length,
-        ticketsSold: ws.workspaceSummary?.totalTicketsSold ?? null,
-        revenue: ws.workspaceSummary?.totalRevenue ?? null,
+        ticketsSold: ws.workspaceSummary?.computed ? ws.workspaceSummary.totalTicketsSold : null,
+        revenue: ws.workspaceSummary?.computed ? ws.workspaceSummary.totalRevenue : null,
       },
-      workspaceSummary: ws.workspaceSummary || null,
+      workspaceSummary: ws.workspaceSummary?.computed ? ws.workspaceSummary : null,
       eventSummaries: ws.eventSummaries || [],
       reviews: ws.reviews || [],
       eventsPagination: ws.eventsPagination || {

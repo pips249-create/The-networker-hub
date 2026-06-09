@@ -2619,6 +2619,18 @@
   flex-shrink: 0;
 }
 
+.opp-browse-page .opp-thumb--image {
+  background: var(--opp-off-white);
+  overflow: hidden;
+}
+
+.opp-browse-page .opp-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .opp-browse-page .opp-thumb-emoji {
   font-size: 36px;
   line-height: 1;
@@ -2680,6 +2692,21 @@
   font-weight: 700;
   color: #fff;
   flex-shrink: 0;
+}
+
+.opp-browse-page .opp-co-avatar--logo {
+  background: #fff;
+  border: 1px solid var(--opp-border);
+  overflow: hidden;
+  padding: 2px;
+}
+
+.opp-browse-page .opp-co-avatar--logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+  display: block;
 }
 
 .opp-browse-page .opp-co-name {

@@ -6,7 +6,6 @@
   const editId = params.get('id') || '';
 
   let photoFile = null;
-  let groups = [];
 
   async function api(path, opts) {
     const res = await fetch(path, {
@@ -57,27 +56,6 @@
     badge.hidden = false;
   }
 
-  function fillGroupsSelect(preselectedId) {
-    const sel = document.getElementById('oe-group');
-    if (!sel) return;
-    sel.innerHTML = '';
-    if (!groups.length) {
-      const opt = document.createElement('option');
-      opt.value = '';
-      opt.textContent = 'Create a group first';
-      sel.appendChild(opt);
-      sel.disabled = true;
-      return;
-    }
-    groups.forEach((g) => {
-      const opt = document.createElement('option');
-      opt.value = g.id;
-      opt.textContent = g.name;
-      sel.appendChild(opt);
-    });
-    if (preselectedId) sel.value = preselectedId;
-  }
-
   function metaValue(meta, keyRe) {
     for (let i = 0; i < (meta || []).length; i++) {
       if (keyRe.test(meta[i].key)) return meta[i].val;
@@ -86,7 +64,6 @@
   }
 
   function prefillFromOpportunity(opp) {
-    document.getElementById('oe-group').value = opp.organiserId || '';
     document.getElementById('oe-title').value = opp.title || '';
     document.getElementById('oe-type').value = opp.type || '';
     document.getElementById('oe-category').value = opp.category || '';
@@ -215,7 +192,6 @@
     if (category && category !== 'general') tags.push('cat-' + category);
 
     return {
-      organiserGroupId: document.getElementById('oe-group').value.trim(),
       title: document.getElementById('oe-title').value.trim(),
       type,
       category,
@@ -231,7 +207,6 @@
   }
 
   function validatePayload(payload, isDraft) {
-    if (!payload.organiserGroupId) return 'Choose which group profile this opportunity is for.';
     if (!payload.title) return 'Enter an opportunity title.';
     if (isDraft) return '';
     if (!payload.type) return 'Select an opportunity type.';
@@ -317,7 +292,9 @@
     }
 
     location.href =
-      'opportunity-submitted.html?title=' + encodeURIComponent(payload.title);
+      'opportunity-submitted.html?title=' +
+      encodeURIComponent(payload.title) +
+      (opportunity.id ? '&id=' + encodeURIComponent(opportunity.id) : '');
   }
 
   async function init() {
@@ -325,27 +302,11 @@
     if (actions) {
       const loggedIn = await actions.requireLogin('/organiser/opportunity-edit.html' + location.search);
       if (!loggedIn) return;
-      const session = await actions.fetchSession();
-      if (!actions.hasGroupProfile(session)) {
-        alert('You must add a group profile first.');
-        location.href = 'group-edit.html';
-        return;
-      }
     }
 
     bindPhotoUpload();
 
     const loadWork = async () => {
-      const boot = await api('/api/organiser/bootstrap');
-      if (boot.ok && boot.data.groups) {
-        groups = boot.data.groups;
-      } else {
-        const res = await api('/api/organiser/opportunities');
-        if (res.ok) groups = res.data.groups || [];
-      }
-
-      fillGroupsSelect('');
-
       if (editId) {
         document.getElementById('oe-page-title').textContent = 'Edit opportunity';
         const res = await api('/api/organiser/opportunities?id=' + encodeURIComponent(editId));
@@ -357,10 +318,11 @@
         return;
       }
 
-      if (groups.length === 1) {
-        document.getElementById('oe-group').value = groups[0].id;
-        if (!document.getElementById('oe-host').value) {
-          document.getElementById('oe-host').value = groups[0].name || '';
+      if (actions) {
+        const session = await actions.fetchSession();
+        const emailEl = document.getElementById('oe-email');
+        if (emailEl && session?.user?.email && !emailEl.value) {
+          emailEl.value = session.user.email;
         }
       }
     };

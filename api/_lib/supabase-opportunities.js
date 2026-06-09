@@ -94,6 +94,8 @@ function rowToListing(row) {
     status: row.status || 'draft',
     approvalStatus: row.approval_status || 'Pending Review',
     organiserId: row.organiser_id || '',
+    ownerEmail: String(row.owner_email || '').toLowerCase(),
+    ownerUserId: row.supabase_user_id || '',
     packageTier: row.package_tier || null,
     createdAt: row.created_at || null,
     updatedAt: row.updated_at || null,
@@ -120,11 +122,26 @@ async function resolveOpportunityImage(payload, opportunityId) {
   return undefined;
 }
 
+function isUuid(v) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    String(v || '')
+  );
+}
+
+function opportunityOwnedBySession(session, opportunity) {
+  if (!session || !opportunity) return false;
+  const email = String(session.email || '').toLowerCase();
+  if (email && opportunity.ownerEmail && opportunity.ownerEmail === email) return true;
+  const uid = isUuid(session.sub) ? session.sub : '';
+  if (uid && opportunity.ownerUserId && opportunity.ownerUserId === uid) return true;
+  return false;
+}
+
 async function buildOpportunityRow(payload, opportunityId, mode) {
   const host = String(payload.host || payload.company || '').trim();
   const status = normalizeStatus(payload.listingStatus || payload.status);
   const row = {
-    organiser_id: payload.groupId || payload.organiserId || null,
+    organiser_id: null,
     type: normalizeType(payload.type),
     category: String(payload.category || '').trim() || null,
     title: String(payload.title || '').trim(),
@@ -148,10 +165,17 @@ async function buildOpportunityRow(payload, opportunityId, mode) {
   const imageUrl = await resolveOpportunityImage(payload, opportunityId);
   if (imageUrl !== undefined) row.image_url = imageUrl;
 
+  if (mode === 'create') {
+    const ownerEmail = String(payload.ownerEmail || payload.email || '').toLowerCase();
+    const ownerUserId = isUuid(payload.ownerUserId) ? payload.ownerUserId : null;
+    if (ownerEmail) row.owner_email = ownerEmail;
+    if (ownerUserId) row.supabase_user_id = ownerUserId;
+  }
+
   if (mode === 'create' || payload.listingStatus != null || payload.status != null) {
     row.status = status;
     if (status === 'published') {
-      row.approval_status = 'Pending Review';
+      row.approval_status = 'Approved';
       row.published_at = new Date().toISOString();
     }
   }
@@ -192,14 +216,21 @@ async function getOpportunityById(id) {
   return rowToListing(data);
 }
 
-async function listOpportunitiesForOrganiserIds(organiserIds) {
-  if (!organiserIds || !organiserIds.length) return [];
+async function listOpportunitiesForSession(session) {
   const sb = getSupabaseAdmin();
-  const { data, error } = await sb
-    .from('business_opportunities')
-    .select('*')
-    .in('organiser_id', organiserIds)
-    .order('updated_at', { ascending: false });
+  const email = String(session?.email || '').toLowerCase();
+  const uid = isUuid(session?.sub) ? session.sub : '';
+  let query = sb.from('business_opportunities').select('*');
+  if (uid && email) {
+    query = query.or(`owner_email.eq.${email},supabase_user_id.eq.${uid}`);
+  } else if (email) {
+    query = query.eq('owner_email', email);
+  } else if (uid) {
+    query = query.eq('supabase_user_id', uid);
+  } else {
+    return [];
+  }
+  const { data, error } = await query.order('updated_at', { ascending: false });
   if (error) throw new Error(error.message);
   return (data || []).map(rowToListing);
 }
@@ -207,7 +238,7 @@ async function listOpportunitiesForOrganiserIds(organiserIds) {
 async function createOpportunity(payload) {
   const sb = getSupabaseAdmin();
   const row = await buildOpportunityRow(payload, 'new', 'create');
-  if (!row.organiser_id) throw new Error('missing_group');
+  if (!row.owner_email && !row.supabase_user_id) throw new Error('missing_owner');
   if (!row.title) throw new Error('missing_title');
   if (!row.host) row.host = 'Draft listing';
   if (!row.type) row.type = 'business-opportunity';
@@ -219,7 +250,6 @@ async function createOpportunity(payload) {
 async function updateOpportunity(id, payload) {
   const sb = getSupabaseAdmin();
   const row = await buildOpportunityRow(payload, id, 'update');
-  delete row.organiser_id;
   const { data, error } = await sb.from('business_opportunities').update(row).eq('id', id).select('*').single();
   if (error) throw new Error(error.message);
   return rowToListing(data);
@@ -230,7 +260,8 @@ module.exports = {
   listPublishedOpportunities,
   getPublishedOpportunityById,
   getOpportunityById,
-  listOpportunitiesForOrganiserIds,
+  listOpportunitiesForSession,
+  opportunityOwnedBySession,
   createOpportunity,
   updateOpportunity,
   normalizeType,

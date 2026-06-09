@@ -23,11 +23,10 @@
         <p style="font-size: 40px; margin: 0 0 16px" aria-hidden="true">✓</p>
         <h1 class="ee-title" style="margin-bottom: 12px">Opportunity submitted</h1>
         <p class="ee-lead" id="oe-success-lede" style="margin-bottom: 24px">
-          Thanks — we'll review your listing within one working day. Once approved, it will appear in the business
-          opportunities directory.
+          Thanks — your listing is live in the business opportunities directory.
         </p>
         <div class="ee-actions" style="justify-content: center; flex-wrap: wrap; gap: 10px">
-          <a class="ee-btn ee-btn-gold" href="../opportunities/index.html">Browse opportunities</a>
+          <a class="ee-btn ee-btn-gold" href="../opportunities/index.html" id="oe-view-listing">View opportunities</a>
           <a class="ee-btn ee-btn-outline" href="opportunity-edit.html" id="oe-add-another">List another</a>
         </div>
       </div>
@@ -36,15 +35,17 @@
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
+        var id = params.get('id');
         var title = params.get('title');
-        if (title) {
-          var lede = document.getElementById('oe-success-lede');
-          if (lede) {
-            lede.textContent =
-              'Thanks — "' +
-              title +
-              '" has been submitted. We will review it within one working day and email you once it is live.';
-          }
+        var lede = document.getElementById('oe-success-lede');
+        var viewBtn = document.getElementById('oe-view-listing');
+        if (lede && title) {
+          lede.textContent =
+            'Thanks — "' + title + '" is now live in the business opportunities directory.';
+        }
+        if (viewBtn && id) {
+          viewBtn.href = '../opportunities/opportunity.html?id=' + encodeURIComponent(id);
+          viewBtn.textContent = 'View your listing';
         }
       })();
     </script>

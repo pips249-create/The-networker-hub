@@ -56,8 +56,12 @@
     }
   }
 
+  function hasComputedWorkspaceSummary() {
+    return Boolean(state.workspaceSummary && state.workspaceSummary.computed);
+  }
+
   function totalTicketsSold() {
-    if (state.workspaceSummary && state.workspaceSummary.totalTicketsSold != null) {
+    if (hasComputedWorkspaceSummary()) {
       return Number(state.workspaceSummary.totalTicketsSold) || 0;
     }
     return state.events.reduce((sum, ev) => sum + (Number(ev.ticketsSold) || 0), 0);
@@ -69,7 +73,7 @@
   }
 
   function totalRevenueDisplay() {
-    if (state.workspaceSummary && state.workspaceSummary.totalRevenue != null) {
+    if (hasComputedWorkspaceSummary()) {
       return formatGbpAmount(state.workspaceSummary.totalRevenue);
     }
     const sum = state.events.reduce((s, ev) => s + (ev.revenueNum || 0), 0);
@@ -1945,7 +1949,8 @@
     listPages.revenue = 1;
     listPages.attendees = 1;
     state.reviews = data.reviews || [];
-    state.workspaceSummary = data.workspaceSummary || null;
+    state.workspaceSummary =
+      data.workspaceSummary && data.workspaceSummary.computed ? data.workspaceSummary : null;
     state.eventSummaries = data.eventSummaries || [];
     loadAttendeesAll();
     state.groupsError = data.groupsError;
