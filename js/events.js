@@ -26,7 +26,6 @@
   let events = [];
   let currentPage = 1;
   let spotlightPremiumOrder = null;
-  let spotlightStartIndex = 0;
   let spotlightTimer = null;
   let spotlightAnimating = false;
   let spotlightCarouselBound = false;
@@ -45,7 +44,6 @@
 
   function resetSpotlightOrder() {
     spotlightPremiumOrder = null;
-    spotlightStartIndex = 0;
   }
 
   function stopSpotlightAuto() {
@@ -60,19 +58,10 @@
     if (!els.spotlightTrack) return;
     const premium = getSpotlightPremium();
     if (premium.length <= 1) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     spotlightTimer = window.setInterval(function () {
       if (document.hidden || spotlightAnimating) return;
       advanceSpotlight(1);
     }, SPOTLIGHT_AUTO_MS);
-  }
-
-  function getSpotlightVisibleCount() {
-    const wrap = els.spotlightTrack && els.spotlightTrack.parentElement;
-    const w = (wrap && wrap.clientWidth) || window.innerWidth;
-    if (w < 520) return 1;
-    if (w < 900) return 2;
-    return 3;
   }
 
   function getSpotlightCardStep() {
@@ -84,93 +73,72 @@
     return card.getBoundingClientRect().width + gap;
   }
 
-  function rotatePremiumOrder(dir) {
-    if (!spotlightPremiumOrder || !spotlightPremiumOrder.length) return;
-    if (dir > 0) {
-      spotlightPremiumOrder.push(spotlightPremiumOrder.shift());
-    } else {
-      spotlightPremiumOrder.unshift(spotlightPremiumOrder.pop());
+  function measureSpotlightLoopWidth() {
+    const track = els.spotlightTrack;
+    const premium = getSpotlightPremium();
+    if (!track || !premium.length) return 0;
+
+    const cards = track.querySelectorAll('.premium-card');
+    if (!cards.length) return 0;
+
+    const gap = parseFloat(getComputedStyle(track).gap) || 14;
+    let width = 0;
+    const count = Math.min(premium.length, cards.length);
+
+    for (let i = 0; i < count; i++) {
+      width += cards[i].getBoundingClientRect().width;
+      if (i < count - 1) width += gap;
     }
+
+    return width;
   }
 
-  function spotlightVisibleEvents(premium) {
-    const slots = getSpotlightVisibleCount();
-    const show = Math.min(slots, premium.length);
-    const out = [];
-    for (let i = 0; i < show; i++) {
-      out.push(premium[(spotlightStartIndex + i) % premium.length]);
+  function syncSpotlightLoopScroll() {
+    const track = els.spotlightTrack;
+    if (!track) return;
+    const loopWidth = measureSpotlightLoopWidth();
+    if (!loopWidth) return;
+
+    track.dataset.loopWidth = String(loopWidth);
+
+    if (track.scrollLeft >= loopWidth) {
+      track.scrollLeft = track.scrollLeft - loopWidth;
     }
-    return out;
   }
 
   function advanceSpotlight(dir) {
     dir = dir < 0 ? -1 : 1;
     const premium = getSpotlightPremium();
-    if (!premium.length || !els.spotlightTrack || spotlightAnimating) return;
-
     const track = els.spotlightTrack;
-    const visibleSlots = getSpotlightVisibleCount();
-
-    if (premium.length <= visibleSlots) {
-      rotatePremiumOrder(dir);
-      spotlightStartIndex = 0;
-      renderSpotlight();
-      startSpotlightAuto();
-      return;
-    }
+    if (!premium.length || premium.length <= 1 || !track || spotlightAnimating) return;
 
     spotlightAnimating = true;
     stopSpotlightAuto();
-    const step = getSpotlightCardStep();
+
+    const step = getSpotlightCardStep() * dir;
+    const loopWidth = parseFloat(track.dataset.loopWidth) || measureSpotlightLoopWidth();
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const behavior = reduceMotion ? 'auto' : 'smooth';
 
     function finishAdvance() {
-      track.classList.remove('is-sliding');
-      track.style.transform = '';
-      if (dir > 0) {
-        spotlightStartIndex = (spotlightStartIndex + 1) % premium.length;
-      } else {
-        spotlightStartIndex = (spotlightStartIndex - 1 + premium.length) % premium.length;
-      }
-      renderSpotlight();
+      syncSpotlightLoopScroll();
       spotlightAnimating = false;
       startSpotlightAuto();
     }
 
-    if (dir > 0) {
-      const nextIdx = (spotlightStartIndex + visibleSlots) % premium.length;
-      const holder = document.createElement('div');
-      holder.innerHTML = premiumCard(premium[nextIdx]);
-      const incoming = holder.firstElementChild;
-      track.appendChild(incoming);
-
-      requestAnimationFrame(function () {
-        track.classList.add('is-sliding');
-        track.style.transform = 'translateX(-' + step + 'px)';
-      });
-
-      track.addEventListener('transitionend', finishAdvance, { once: true });
-      return;
+    if (dir < 0 && track.scrollLeft <= 4 && loopWidth > 0) {
+      track.scrollLeft = loopWidth;
     }
 
-    const prevIdx = (spotlightStartIndex - 1 + premium.length) % premium.length;
-    const holder = document.createElement('div');
-    holder.innerHTML = premiumCard(premium[prevIdx]);
-    const incoming = holder.firstElementChild;
-    track.insertBefore(incoming, track.firstChild);
-
-    track.classList.remove('is-sliding');
-    track.style.transform = 'translateX(-' + step + 'px)';
-    void track.offsetWidth;
-    track.classList.add('is-sliding');
-    track.style.transform = 'translateX(0)';
-    track.addEventListener('transitionend', finishAdvance, { once: true });
+    track.scrollBy({ left: step, behavior: behavior });
+    window.setTimeout(finishAdvance, reduceMotion ? 0 : 520);
   }
 
   function bindSpotlightCarousel() {
     if (spotlightCarouselBound) return;
     spotlightCarouselBound = true;
 
-    const section = document.querySelector('.premium-spotlight');
+    const wrap = document.querySelector('.spotlight-wrap');
     const prev = document.getElementById('spotlight-prev');
     const next = document.getElementById('spotlight-next');
 
@@ -184,18 +152,18 @@
         advanceSpotlight(1);
       });
     }
-    if (section) {
-      section.addEventListener('mouseenter', stopSpotlightAuto);
-      section.addEventListener('mouseleave', startSpotlightAuto);
-      section.addEventListener('focusin', stopSpotlightAuto);
-      section.addEventListener('focusout', startSpotlightAuto);
+    if (wrap) {
+      wrap.addEventListener('mouseenter', stopSpotlightAuto);
+      wrap.addEventListener('mouseleave', startSpotlightAuto);
     }
 
     var resizeTimer;
     window.addEventListener('resize', function () {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function () {
-        if (!spotlightAnimating) renderSpotlight();
+        if (!spotlightAnimating) {
+          syncSpotlightLoopScroll();
+        }
       }, 200);
     });
   }
@@ -560,15 +528,21 @@
       if (!premium.length) {
         els.spotlightTrack.innerHTML =
           '<p class="spotlight-empty">No premium events yet — set <strong>featured</strong> on approved events in Supabase.</p>';
-        els.spotlightTrack.classList.remove('spotlight-track--carousel', 'is-sliding');
-        els.spotlightTrack.style.transform = '';
+        els.spotlightTrack.classList.remove('spotlight-track--carousel');
+        els.spotlightTrack.removeAttribute('data-loop-width');
+        els.spotlightTrack.scrollLeft = 0;
         stopSpotlightAuto();
       } else {
-        const visible = spotlightVisibleEvents(premium);
-        els.spotlightTrack.innerHTML = visible.map(premiumCard).join('');
+        const cardsHtml = premium.map(premiumCard).join('');
+        const loopHtml = premium.length > 1 ? cardsHtml : '';
+        els.spotlightTrack.innerHTML = cardsHtml + loopHtml;
         els.spotlightTrack.classList.add('spotlight-track--carousel');
+        els.spotlightTrack.scrollLeft = 0;
         bindSpotlightCarousel();
-        startSpotlightAuto();
+        requestAnimationFrame(function () {
+          syncSpotlightLoopScroll();
+          startSpotlightAuto();
+        });
       }
     }
 

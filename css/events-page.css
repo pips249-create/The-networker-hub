@@ -715,19 +715,14 @@ body.browse-mode-organisers .events-organiser-footnote-link {
 }
 
 .spotlight-track.spotlight-track--carousel {
-  overflow-x: hidden;
+  overflow-x: auto;
   scroll-snap-type: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.spotlight-track.is-sliding {
-  transition: transform 0.48s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .spotlight-track.is-sliding {
-    transition: none;
-  }
+.spotlight-track.spotlight-track--carousel::-webkit-scrollbar {
+  display: none;
 }
 
 .spotlight-track .premium-card {
@@ -738,6 +733,7 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   .spotlight-track .premium-card {
     flex: 0 0 calc((100% - 28px) / 3);
     max-width: 320px;
+    width: calc((100% - 28px) / 3);
   }
 }
 .spotlight-empty {
