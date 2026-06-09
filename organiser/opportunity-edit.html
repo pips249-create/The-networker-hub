@@ -48,16 +48,16 @@
             <input type="text" id="oe-title" required placeholder="e.g. Tropic Skincare — Ambassador Programme" />
           </div>
           <div class="ee-field">
-            <label for="oe-type">Opportunity type</label>
-            <select id="oe-type" required>
-              <option value="">Select type…</option>
-              <option value="franchise">Franchise</option>
-              <option value="side-hustle">Side hustle</option>
-              <option value="partnership">Partnership / Affiliate</option>
-              <option value="networking">Networking group / Ambassador</option>
-              <option value="business-opportunity">Business opportunity</option>
-              <option value="distributorship">Distributorship / Reseller</option>
-            </select>
+            <p class="ee-label-block" id="oe-type-label">Opportunity type</p>
+            <p class="ee-hint" id="oe-type-hint">Select all that apply — your listing can appear under multiple type filters.</p>
+            <div class="oe-type-group" id="oe-type-group" role="group" aria-labelledby="oe-type-label" aria-describedby="oe-type-hint">
+              <label class="oe-type-option"><input type="checkbox" name="oe-type" value="franchise" /> Franchise</label>
+              <label class="oe-type-option"><input type="checkbox" name="oe-type" value="side-hustle" /> Side hustle</label>
+              <label class="oe-type-option"><input type="checkbox" name="oe-type" value="partnership" /> Partnership / Affiliate</label>
+              <label class="oe-type-option"><input type="checkbox" name="oe-type" value="networking" /> Networking group / Ambassador</label>
+              <label class="oe-type-option"><input type="checkbox" name="oe-type" value="business-opportunity" /> Business opportunity</label>
+              <label class="oe-type-option"><input type="checkbox" name="oe-type" value="distributorship" /> Distributorship / Reseller</label>
+            </div>
           </div>
           <div class="ee-field">
             <label for="oe-category">Category</label>

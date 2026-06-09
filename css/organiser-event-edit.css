@@ -1392,3 +1392,43 @@ body.ee-is-loading {
   margin-top: 16px;
   flex-wrap: wrap;
 }
+
+.oe-type-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.oe-type-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--ee-border);
+  border-radius: 8px;
+  background: var(--ee-white);
+  font-size: 14px;
+  color: var(--ee-text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.oe-type-option:hover {
+  border-color: rgba(13, 110, 122, 0.35);
+  background: var(--ee-purple-pale);
+}
+
+.oe-type-option:has(input:checked) {
+  border-color: var(--ee-purple);
+  background: var(--ee-purple-pale);
+  font-weight: 600;
+}
+
+.oe-type-option input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--ee-purple);
+  flex-shrink: 0;
+  cursor: pointer;
+}

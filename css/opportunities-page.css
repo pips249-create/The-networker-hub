@@ -2912,8 +2912,10 @@
 
 .opp-browse-page .opp-cat-strip {
   border-top: 1px solid var(--opp-border);
+  border-bottom: 1px solid var(--opp-border);
   background: #fff;
-  padding: 32px 40px;
+  padding: 24px 40px;
+  margin-bottom: 4px;
 }
 
 .opp-browse-page .opp-cat-strip-inner {

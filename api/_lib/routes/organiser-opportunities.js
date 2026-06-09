@@ -13,9 +13,16 @@ function parseBody(req) {
 }
 
 function opportunityPayloadFromBody(body, session) {
+  const types = Array.isArray(body.types)
+    ? body.types.map((t) => String(t || '').trim()).filter(Boolean)
+    : body.type
+      ? [String(body.type || '').trim()].filter(Boolean)
+      : [];
+
   return {
     title: String(body.title || '').trim(),
-    type: String(body.type || '').trim(),
+    type: types[0] || String(body.type || '').trim(),
+    types,
     category: String(body.category || '').trim(),
     description: String(body.description || body.desc || '').trim(),
     about: body.about,
@@ -133,7 +140,7 @@ module.exports = async function handler(req, res) {
     const isDraft = String(base.listingStatus).toLowerCase() === 'draft';
     if (!isDraft) {
       if (!base.host) return json(res, 400, { error: 'missing_host' });
-      if (!base.type) return json(res, 400, { error: 'missing_type' });
+      if (!base.types.length && !base.type) return json(res, 400, { error: 'missing_type' });
     }
 
     try {

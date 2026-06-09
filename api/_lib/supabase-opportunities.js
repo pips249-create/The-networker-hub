@@ -64,6 +64,35 @@ function normalizeType(type) {
   return 'business-opportunity';
 }
 
+function normalizeTypes(payload) {
+  const raw = Array.isArray(payload?.types)
+    ? payload.types
+    : payload?.type
+      ? [payload.type]
+      : Array.isArray(payload?.tags)
+        ? payload.tags.filter((t) => VALID_TYPES.has(normalizeType(t)))
+        : [];
+  const out = [];
+  raw.forEach((t) => {
+    const norm = normalizeType(t);
+    if (VALID_TYPES.has(norm) && !out.includes(norm)) out.push(norm);
+  });
+  return out;
+}
+
+function buildOpportunityTags(types, payload) {
+  const tags = types.slice();
+  const category = String(payload.category || '').trim();
+  if (category && category !== 'general') tags.push('cat-' + category);
+  if (Array.isArray(payload.tags)) {
+    payload.tags.forEach((tag) => {
+      const t = String(tag || '').trim();
+      if (t && !tags.includes(t)) tags.push(t);
+    });
+  }
+  return tags;
+}
+
 function normalizeStatus(input) {
   const s = String(input || '')
     .toLowerCase()
@@ -140,9 +169,10 @@ function opportunityOwnedBySession(session, opportunity) {
 async function buildOpportunityRow(payload, opportunityId, mode) {
   const host = String(payload.host || payload.company || '').trim();
   const status = normalizeStatus(payload.listingStatus || payload.status);
+  const types = normalizeTypes(payload);
   const row = {
     organiser_id: null,
-    type: normalizeType(payload.type),
+    type: types[0] || normalizeType(payload.type),
     category: String(payload.category || '').trim() || null,
     title: String(payload.title || '').trim(),
     description: String(payload.description || payload.desc || '').trim() || null,
@@ -157,7 +187,7 @@ async function buildOpportunityRow(payload, opportunityId, mode) {
     host_color: payload.hostColor || hostColorFromName(host),
     contact_email: String(payload.contactEmail || '').trim() || null,
     meta: normalizeMeta(payload.meta),
-    tags: Array.isArray(payload.tags) && payload.tags.length ? payload.tags.slice() : [normalizeType(payload.type)],
+    tags: buildOpportunityTags(types, payload),
     package_tier: String(payload.packageTier || '').trim() || null,
     updated_at: new Date().toISOString(),
   };
@@ -265,5 +295,6 @@ module.exports = {
   createOpportunity,
   updateOpportunity,
   normalizeType,
+  normalizeTypes,
   normalizeMeta,
 };

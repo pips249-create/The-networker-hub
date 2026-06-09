@@ -7,6 +7,28 @@
 
   let photoFile = null;
 
+  const OPPORTUNITY_TYPES = [
+    'franchise',
+    'side-hustle',
+    'partnership',
+    'networking',
+    'business-opportunity',
+    'distributorship',
+  ];
+
+  function getSelectedTypes() {
+    return Array.from(document.querySelectorAll('#oe-type-group input[name="oe-type"]:checked'))
+      .map((input) => input.value.trim())
+      .filter(Boolean);
+  }
+
+  function setSelectedTypes(types) {
+    const selected = new Set((types || []).filter(Boolean));
+    document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach((input) => {
+      input.checked = selected.has(input.value);
+    });
+  }
+
   async function api(path, opts) {
     const res = await fetch(path, {
       credentials: 'include',
@@ -65,7 +87,8 @@
 
   function prefillFromOpportunity(opp) {
     document.getElementById('oe-title').value = opp.title || '';
-    document.getElementById('oe-type').value = opp.type || '';
+    const typeTags = (opp.tags || []).filter((tag) => OPPORTUNITY_TYPES.includes(tag));
+    setSelectedTypes(typeTags.length ? typeTags : opp.type ? [opp.type] : []);
     document.getElementById('oe-category').value = opp.category || '';
     document.getElementById('oe-desc').value = opp.desc || '';
     document.getElementById('oe-about').value = (opp.about || []).join('\n\n');
@@ -186,14 +209,15 @@
   }
 
   function buildPayload(listingStatus) {
-    const type = document.getElementById('oe-type').value.trim();
+    const types = getSelectedTypes();
     const category = document.getElementById('oe-category').value.trim();
-    const tags = [type];
+    const tags = types.slice();
     if (category && category !== 'general') tags.push('cat-' + category);
 
     return {
       title: document.getElementById('oe-title').value.trim(),
-      type,
+      type: types[0] || '',
+      types,
       category,
       description: document.getElementById('oe-desc').value.trim(),
       aboutText: document.getElementById('oe-about').value.trim(),
@@ -209,7 +233,7 @@
   function validatePayload(payload, isDraft) {
     if (!payload.title) return 'Enter an opportunity title.';
     if (isDraft) return '';
-    if (!payload.type) return 'Select an opportunity type.';
+    if (!payload.types || !payload.types.length) return 'Select at least one opportunity type.';
     if (!payload.description) return 'Add a short description for the card.';
     if (!payload.host) return 'Enter your business or company name.';
     if (!payload.contactEmail) return 'Enter a contact email for enquiries.';
