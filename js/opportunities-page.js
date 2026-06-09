@@ -220,6 +220,25 @@
     return 'Enquire';
   }
 
+  function premiumSpotlightMediaHtml(item, thumb) {
+    var cover = String(item.imageUrl || '').trim();
+    var mediaInner = cover
+      ? '<img class="opp-premium-card-img" src="' +
+        escapeHtml(cover) +
+        '" alt="" loading="lazy" />'
+      : '<span class="opp-premium-thumb-emoji" aria-hidden="true">' + thumb.emoji + '</span>';
+
+    return (
+      '<div class="premium-card-media" aria-hidden="true">' +
+      '<div class="premium-card-bg" style="background:' +
+      escapeHtml(thumb.gradient) +
+      '">' +
+      mediaInner +
+      '</div>' +
+      '<div class="premium-card-overlay"></div></div>'
+    );
+  }
+
   function premiumSpotlightCard(item) {
     var href = detailHref(item);
     var thumb = item.thumb || { emoji: '✦', gradient: 'linear-gradient(135deg,#fdf6e3,#f5e0a0)' };
@@ -237,14 +256,7 @@
       '<a class="premium-card-link" href="' +
       escapeHtml(href) +
       '">' +
-      '<div class="premium-card-media" aria-hidden="true">' +
-      '<div class="premium-card-bg" style="background:' +
-      escapeHtml(thumb.gradient) +
-      '">' +
-      '<span class="opp-premium-thumb-emoji" aria-hidden="true">' +
-      thumb.emoji +
-      '</span></div>' +
-      '<div class="premium-card-overlay"></div></div>' +
+      premiumSpotlightMediaHtml(item, thumb) +
       '<div class="premium-card-top">' +
       '<span class="premium-badge">Premium</span>' +
       '<span class="premium-price">' +
@@ -444,37 +456,38 @@
     );
   }
 
-  function thumbBlockHtml(item, thumb, typeClassFn, typeLabels) {
-    var tags =
-      '<div class="opp-thumb-tags">' +
+  function cardBadgesHtml(item, typeClassFn, typeLabels) {
+    return (
+      '<div class="opp-card-head">' +
+      '<div class="opp-card-badges">' +
       '<span class="opp-type-tag ' +
       typeClassFn(item.type) +
       '">' +
       escapeHtml(typeLabels[item.type] || item.type) +
       '</span>' +
       (item.featured ? '<span class="opp-feat-pip">Featured</span>' : '') +
-      '</div>';
+      '</div></div>'
+    );
+  }
 
-    var thumbInner;
+  function mediaBlockHtml(item, thumb) {
     if (item.imageUrl) {
-      thumbInner =
-        '<div class="opp-thumb opp-thumb--image">' +
-        '<img class="opp-thumb-img" src="' +
+      return (
+        '<div class="opp-card-media opp-card-media--image">' +
+        '<img class="opp-card-media-img" src="' +
         escapeHtml(item.imageUrl) +
         '" alt="" loading="lazy" />' +
-        '</div>';
-    } else {
-      thumbInner =
-        '<div class="opp-thumb" style="background:' +
-        escapeHtml(thumb.gradient) +
-        '">' +
-        '<span class="opp-thumb-emoji" aria-hidden="true">' +
-        thumb.emoji +
-        '</span>' +
-        '</div>';
+        '</div>'
+      );
     }
-
-    return '<div class="opp-thumb-stack">' + tags + thumbInner + '</div>';
+    return (
+      '<div class="opp-card-media opp-card-media--placeholder" style="background:' +
+      escapeHtml(thumb.gradient) +
+      '">' +
+      '<span class="opp-card-media-emoji" aria-hidden="true">' +
+      thumb.emoji +
+      '</span></div>'
+    );
   }
 
   function cardHtml(item) {
@@ -508,7 +521,8 @@
       '">' +
       FAV_ICON +
       '</button>' +
-      thumbBlockHtml(item, thumb, typeClassFn, typeLabels) +
+      cardBadgesHtml(item, typeClassFn, typeLabels) +
+      mediaBlockHtml(item, thumb) +
       '<div class="opp-card-body">' +
       '<div class="opp-company">' +
       companyAvatarHtml(item) +
