@@ -19,6 +19,8 @@
     metaGrid: document.getElementById('opp-meta-grid'),
     desc: document.getElementById('opp-desc'),
     aboutExtra: document.getElementById('opp-about-extra'),
+    cover: document.getElementById('opp-detail-cover'),
+    coverImg: document.getElementById('opp-detail-cover-img'),
     posterLogo: document.getElementById('opp-poster-logo'),
     posterName: document.getElementById('opp-poster-name'),
     form: document.getElementById('opp-enquire-form'),
@@ -49,6 +51,19 @@
     if (els.notFound) els.notFound.hidden = false;
     if (els.layout) els.layout.hidden = true;
     if (els.trailCurrent) els.trailCurrent.textContent = 'Not found';
+  }
+
+  function applyCoverImage(item) {
+    if (!els.cover || !els.coverImg || !item) return;
+    if (item.imageUrl) {
+      els.coverImg.src = item.imageUrl;
+      els.coverImg.alt = item.host ? item.host + ' logo' : 'Opportunity image';
+      els.cover.hidden = false;
+      return;
+    }
+    els.cover.hidden = true;
+    els.coverImg.removeAttribute('src');
+    els.coverImg.alt = '';
   }
 
   function applyHostLogo(el, item) {
@@ -146,8 +161,15 @@
     if (els.desc) els.desc.textContent = item.desc;
     if (els.posterName) els.posterName.textContent = item.host;
 
+    applyCoverImage(item);
     applyHostLogo(els.hostLogo, item);
     applyHostLogo(els.posterLogo, item);
+
+    if (els.hostLogo && item.imageUrl) {
+      els.hostLogo.hidden = true;
+    } else if (els.hostLogo) {
+      els.hostLogo.hidden = false;
+    }
 
     if (els.typeBadge) {
       els.typeBadge.textContent = catalog.TYPE_LABELS[item.type] || item.type;

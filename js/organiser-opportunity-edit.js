@@ -330,6 +330,12 @@
 
     bindPhotoUpload();
 
+    if (window.hubBindLocationAutocomplete) {
+      window.hubBindLocationAutocomplete(document.getElementById('oe-location'), {
+        listClass: 'hub-location-suggest oe-location-suggest',
+      });
+    }
+
     const loadWork = async () => {
       if (editId) {
         document.getElementById('oe-page-title').textContent = 'Edit opportunity';

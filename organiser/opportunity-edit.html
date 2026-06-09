@@ -7,16 +7,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Poppins:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260614" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260708" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260609" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260606" />
   </head>
-  <body class="organiser-event-edit-page">
+  <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page">
     <div id="oe-page-loading" class="ee-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
       <div class="ee-page-loading-card">
         <div class="ee-page-loading-spinner" aria-hidden="true"></div>
@@ -24,7 +25,7 @@
       </div>
     </div>
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260710" data-root="../" data-page="organiser"></script>
+    <script src="../js/site-nav.js?v=20260710" data-root="../" data-page="opportunities"></script>
 
     <div class="ee-wrap">
       <header class="ee-page-head">
@@ -109,7 +110,18 @@
           </div>
           <div class="ee-field">
             <label for="oe-location">Location</label>
-            <input type="text" id="oe-location" required placeholder="e.g. Remote / Yorkshire / UK-wide" />
+            <div class="hub-location-field oe-location-field">
+              <span class="hub-location-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+              </span>
+              <input
+                type="text"
+                id="oe-location"
+                required
+                placeholder="Postcode or city (e.g. M1, Manchester)"
+                autocomplete="off"
+              />
+            </div>
           </div>
           <div class="ee-field">
             <label for="oe-commitment">Commitment</label>
@@ -178,6 +190,7 @@
     <script src="../js/fact-loader.js?v=20260708"></script>
     <script src="../js/organiser-page-loading.js?v=20260608d"></script>
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260609"></script>
+    <script src="../js/hub-location-autocomplete.js?v=20260609"></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260609b"></script>
   </body>
 </html>
