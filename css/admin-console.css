@@ -171,3 +171,114 @@ body.hub-page-admin .site-nav {
     min-height: auto;
   }
 }
+
+/* Sponsorship & ads — placement picker */
+.admin-ad-picker-group + .admin-ad-picker-group {
+  margin-top: 0.5rem;
+}
+
+.admin-ad-picker-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+}
+
+.admin-ad-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.admin-ad-picker-grid--single {
+  max-width: 420px;
+}
+
+.admin-ad-picker-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.125rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.admin-ad-picker-card:hover {
+  border-color: #c9a8d8;
+  box-shadow: 0 4px 14px rgba(91, 47, 153, 0.1);
+  transform: translateY(-1px);
+}
+
+.admin-ad-picker-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.admin-ad-picker-type {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7a3d8a;
+}
+
+.admin-ad-picker-label {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #2d1b3d;
+  line-height: 1.35;
+}
+
+.admin-ad-picker-help {
+  font-size: 0.8125rem;
+  color: #64748b;
+  line-height: 1.45;
+  flex: 1;
+}
+
+.admin-ad-picker-action {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #5b2f99;
+  margin-top: 0.25rem;
+}
+
+.admin-ad-picker-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.admin-ad-picker-badge--live {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.admin-ad-picker-badge--hidden {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.admin-ad-picker-badge--empty {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.admin-ad-picker-badge--error {
+  background: #fee2e2;
+  color: #991b1b;
+}

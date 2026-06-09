@@ -64,7 +64,7 @@
     },
     sponsorship: {
       title: 'Sponsorship & ads',
-      subtitle: 'Edit page ads, sidebar placements, and the home page partners & sponsors strip',
+      subtitle: 'Choose an ad placement or the home page partners strip to edit',
     },
     emails: {
       title: 'Email templates',
@@ -189,6 +189,20 @@
     return CMS_AD_SLOTS[0];
   }
 
+  function cmsSlotExists(key) {
+    for (var i = 0; i < CMS_AD_SLOTS.length; i++) {
+      if (CMS_AD_SLOTS[i].key === key) return true;
+    }
+    return false;
+  }
+
+  function sponsorshipBackLinkHtml() {
+    return (
+      '<a href="#sponsorship" class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-900 mb-4">' +
+      '<span aria-hidden="true">←</span> All ad placements</a>'
+    );
+  }
+
   var shell = document.getElementById('admin-shell');
   var gate = document.getElementById('admin-gate');
   var main = document.getElementById('admin-main');
@@ -248,7 +262,7 @@
     return el ? String(el.value || '').trim() : '';
   }
 
-  function setActiveNav(route) {
+  function setActiveNav(route, fullHash) {
     document.querySelectorAll('.admin-nav-link').forEach(function (a) {
       var on = a.getAttribute('data-route') === route;
       a.classList.toggle('bg-white/15', on);
@@ -256,8 +270,24 @@
       a.classList.toggle('text-white/80', !on);
     });
     var meta = PAGE_META[route] || PAGE_META.dashboard;
-    document.getElementById('page-title').textContent = meta.title;
-    document.getElementById('page-subtitle').textContent = meta.subtitle;
+    var title = meta.title;
+    var subtitle = meta.subtitle;
+    if (route === 'sponsorship' && fullHash) {
+      if (fullHash === 'sponsorship/home-partners') {
+        title = 'Home page — Partners & sponsors';
+        subtitle =
+          'Logo strip on the home page. Add companies with logo, name, and CTA — shown when the section is active.';
+      } else if (fullHash.indexOf('sponsorship/') === 0) {
+        var slotKey = fullHash.slice('sponsorship/'.length);
+        if (cmsSlotExists(slotKey)) {
+          var slot = cmsSlotByKey(slotKey);
+          title = slot.label;
+          subtitle = slot.help;
+        }
+      }
+    }
+    document.getElementById('page-title').textContent = title;
+    document.getElementById('page-subtitle').textContent = subtitle;
     syncAdminLayoutOffset();
   }
 
@@ -2945,51 +2975,203 @@
     return defaultSponsorCtaColor();
   }
 
-  function renderSponsorship() {
-    var currentSlotKey = CMS_AD_SLOTS[0].key;
+  function renderSponsorship(fullHash) {
+    var hash = String(fullHash || 'sponsorship');
+    if (hash === 'sponsorship/home-partners') {
+      renderHomePartnersPage();
+      return;
+    }
+    if (hash.indexOf('sponsorship/') === 0) {
+      var slotKey = hash.slice('sponsorship/'.length);
+      if (cmsSlotExists(slotKey)) {
+        renderSponsorshipSlot(slotKey);
+        return;
+      }
+    }
+    renderSponsorshipPicker();
+  }
+
+  function sponsorSlotStatusBadge(block) {
+    if (!block) {
+      return '<span class="admin-ad-picker-badge admin-ad-picker-badge--empty">Not set yet</span>';
+    }
+    if (block.active === false) {
+      return '<span class="admin-ad-picker-badge admin-ad-picker-badge--hidden">Hidden</span>';
+    }
+    return '<span class="admin-ad-picker-badge admin-ad-picker-badge--live">Live</span>';
+  }
+
+  function renderSponsorshipPicker() {
+    var groups = [];
+    var groupMap = {};
+    CMS_AD_SLOTS.forEach(function (slot) {
+      var groupName = slot.group || 'Other placements';
+      if (!groupMap[groupName]) {
+        groupMap[groupName] = [];
+        groups.push(groupName);
+      }
+      groupMap[groupName].push(slot);
+    });
+
+    var groupsHtml = groups
+      .map(function (groupName) {
+        return (
+          '<section class="admin-ad-picker-group">' +
+          '<h3 class="admin-ad-picker-group-title">' +
+          esc(groupName) +
+          '</h3>' +
+          '<div class="admin-ad-picker-grid">' +
+          groupMap[groupName]
+            .map(function (slot) {
+              var typeLabel = slot.preview === 'compact' ? 'Sidebar ad' : 'Hero Sponsor Hub';
+              return (
+                '<a href="#sponsorship/' +
+                esc(slot.key) +
+                '" class="admin-ad-picker-card" data-ad-slot="' +
+                attrEsc(slot.key) +
+                '">' +
+                '<div class="admin-ad-picker-card-head">' +
+                '<span class="admin-ad-picker-type">' +
+                esc(typeLabel) +
+                '</span>' +
+                '<span class="admin-ad-picker-status" data-ad-status="' +
+                attrEsc(slot.key) +
+                '">…</span>' +
+                '</div>' +
+                '<p class="admin-ad-picker-label">' +
+                esc(slot.label) +
+                '</p>' +
+                '<p class="admin-ad-picker-help">' +
+                esc(slot.help) +
+                '</p>' +
+                '<span class="admin-ad-picker-action">Edit placement →</span>' +
+                '</a>'
+              );
+            })
+            .join('') +
+          '</div></section>'
+        );
+      })
+      .join('');
+
+    main.innerHTML =
+      '<div class="space-y-8">' +
+      '<p id="sponsor-picker-status" class="text-sm text-slate-500">Loading ad statuses…</p>' +
+      groupsHtml +
+      '<section class="admin-ad-picker-group">' +
+      '<h3 class="admin-ad-picker-group-title">Home page</h3>' +
+      '<div class="admin-ad-picker-grid admin-ad-picker-grid--single">' +
+      '<a href="#sponsorship/home-partners" class="admin-ad-picker-card admin-ad-picker-card--partners">' +
+      '<div class="admin-ad-picker-card-head">' +
+      '<span class="admin-ad-picker-type">Logo strip</span>' +
+      '<span class="admin-ad-picker-status" id="home-partners-picker-status">…</span>' +
+      '</div>' +
+      '<p class="admin-ad-picker-label">Home page — Partners &amp; sponsors</p>' +
+      '<p class="admin-ad-picker-help">Multiple company logos with links — shown in the partners section on the home page.</p>' +
+      '<span class="admin-ad-picker-action">Edit partners →</span>' +
+      '</a></div></section></div>';
+
+    var statusEl = document.getElementById('sponsor-picker-status');
+    function setPickerStatus(text, tone) {
+      if (!statusEl) return;
+      statusEl.textContent = text;
+      statusEl.className =
+        'text-sm ' +
+        (tone === 'error'
+          ? 'text-red-700 font-semibold'
+          : tone === 'ok'
+            ? 'text-emerald-700 font-semibold'
+            : 'text-slate-500');
+    }
+
+    var slotLoads = CMS_AD_SLOTS.map(function (slot) {
+      return adminGet('/api/admin/sponsor?slot=' + encodeURIComponent(slot.key))
+        .then(function (data) {
+          return { slot: slot.key, data: data };
+        })
+        .catch(function () {
+          return { slot: slot.key, data: null };
+        });
+    });
+
+    Promise.all(slotLoads)
+      .then(function (results) {
+        results.forEach(function (row) {
+          var el = document.querySelector('[data-ad-status="' + row.slot + '"]');
+          if (!el) return;
+          if (!row.data || row.data.error) {
+            el.innerHTML =
+              '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
+            return;
+          }
+          el.innerHTML = sponsorSlotStatusBadge(row.data.block);
+        });
+        setPickerStatus('Select a placement below to edit its creative.', 'ok');
+      })
+      .catch(function () {
+        setPickerStatus('Could not load ad statuses — you can still open a placement to edit.', 'error');
+      });
+
+    adminGet('/api/admin/home-partners')
+      .then(function (data) {
+        var el = document.getElementById('home-partners-picker-status');
+        if (!el) return;
+        if (!data || data.error || data.configured === false) {
+          el.innerHTML =
+            '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
+          return;
+        }
+        var partners = Array.isArray(data.partners) ? data.partners : [];
+        var activeCount = partners.filter(function (p) {
+          return p.active !== false;
+        }).length;
+        if (data.active === false) {
+          el.innerHTML = '<span class="admin-ad-picker-badge admin-ad-picker-badge--hidden">Hidden</span>';
+        } else if (activeCount) {
+          el.innerHTML =
+            '<span class="admin-ad-picker-badge admin-ad-picker-badge--live">' +
+            activeCount +
+            ' live</span>';
+        } else {
+          el.innerHTML = '<span class="admin-ad-picker-badge admin-ad-picker-badge--empty">Not set yet</span>';
+        }
+      })
+      .catch(function () {
+        var el = document.getElementById('home-partners-picker-status');
+        if (el) {
+          el.innerHTML =
+            '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
+        }
+      });
+  }
+
+  function renderHomePartnersPage() {
+    main.innerHTML =
+      '<div class="space-y-6 max-w-3xl">' +
+      sponsorshipBackLinkHtml() +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5" id="home-partners-admin">' +
+      '<div class="flex flex-wrap items-start justify-between gap-3">' +
+      '<div><h3 class="font-bold text-brand-900">Home page — Partners &amp; sponsors</h3>' +
+      '<p class="text-xs text-slate-500 mt-1">Logo strip on the home page. Add companies with logo, name, and CTA — shown when the section is active.</p></div>' +
+      '<label class="flex items-center gap-2 text-sm text-slate-700 shrink-0">' +
+      '<input type="checkbox" id="home-partners-active" class="rounded border-slate-300" checked> ' +
+      'Show on home page</label></div>' +
+      '<div id="home-partners-list" class="space-y-4 min-w-0"></div>' +
+      '<div class="flex flex-wrap gap-3">' +
+      '<button type="button" id="home-partners-add" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">+ Add company</button>' +
+      '<button type="button" id="home-partners-save" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Save partners</button>' +
+      '</div>' +
+      '<p id="home-partners-status" class="text-sm text-slate-500"></p></section></div>';
+    initHomePartnersAdmin();
+  }
+
+  function renderSponsorshipSlot(currentSlotKey) {
     var sponsorLogoBase64 = null;
     var sponsorLogoMime = '';
     var sponsorLogoFilename = '';
 
     function slotDefaults() {
       return cmsSlotByKey(currentSlotKey);
-    }
-
-    function slotOptionsHtml() {
-      var groups = [];
-      var groupMap = {};
-      CMS_AD_SLOTS.forEach(function (slot) {
-        var groupName = slot.group || 'Other placements';
-        if (!groupMap[groupName]) {
-          groupMap[groupName] = [];
-          groups.push(groupName);
-        }
-        groupMap[groupName].push(slot);
-      });
-
-      return groups
-        .map(function (groupName) {
-          return (
-            '<optgroup label="' +
-            esc(groupName) +
-            '">' +
-            groupMap[groupName]
-              .map(function (slot) {
-                return (
-                  '<option value="' +
-                  esc(slot.key) +
-                  '"' +
-                  (slot.key === currentSlotKey ? ' selected' : '') +
-                  '>' +
-                  esc(slot.label) +
-                  '</option>'
-                );
-              })
-              .join('') +
-            '</optgroup>'
-          );
-        })
-        .join('');
     }
 
     function applyDefaultsToForm() {
@@ -3000,7 +3182,6 @@
       var ctaLabel = document.getElementById('sponsor-cta-label');
       var ctaUrl = document.getElementById('sponsor-cta-url');
       var active = document.getElementById('sponsor-active');
-      var help = document.getElementById('sponsor-slot-help');
       var previewHint = document.getElementById('sponsor-preview-hint');
       if (company) company.value = '';
       if (logoUrl) logoUrl.value = '';
@@ -3009,7 +3190,6 @@
       if (ctaUrl) ctaUrl.value = d.ctaUrl;
       setSponsorCtaColorFields(d.ctaColor || defaultSponsorCtaColor());
       if (active) active.checked = true;
-      if (help) help.textContent = d.help;
       if (previewHint) {
         previewHint.textContent =
           d.preview === 'compact'
@@ -3025,16 +3205,13 @@
 
     main.innerHTML =
       '<div class="space-y-6">' +
+      sponsorshipBackLinkHtml() +
       '<p id="sponsor-status" class="text-sm text-slate-500">Loading ad placement from Supabase…</p>' +
       '<div class="grid lg:grid-cols-2 gap-6 min-w-0">' +
       '<form id="sponsor-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5 min-w-0">' +
-      '<div><label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1" for="sponsor-slot">Ad placement</label>' +
-      '<select id="sponsor-slot" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
-      slotOptionsHtml() +
-      '</select>' +
-      '<p id="sponsor-slot-help" class="text-xs text-slate-500 mt-1">' +
-      esc(slotDefaults().help) +
-      '</p></div>' +
+      '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">' +
+      esc(slotDefaults().label) +
+      '</p>' +
       '<label class="flex items-center gap-2 text-sm text-slate-700">' +
       '<input type="checkbox" id="sponsor-active" class="rounded border-slate-300" checked> ' +
       'Ad active (uncheck to hide this placement on site)</label>' +
@@ -3075,20 +3252,7 @@
       '<h3 class="font-bold text-brand-900 mb-1">Preview</h3>' +
       '<p id="sponsor-preview-hint" class="text-xs text-slate-500 mb-4">Logo, tagline, and CTA — matches the browse page hero Sponsor Hub block.</p>' +
       '<div id="sponsor-preview" class="max-w-md"></div>' +
-      '</section></div>' +
-      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5" id="home-partners-admin">' +
-      '<div class="flex flex-wrap items-start justify-between gap-3">' +
-      '<div><h3 class="font-bold text-brand-900">Home page — Partners &amp; sponsors</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Logo strip on the home page. Add companies with logo, name, and CTA — shown when the section is active.</p></div>' +
-      '<label class="flex items-center gap-2 text-sm text-slate-700 shrink-0">' +
-      '<input type="checkbox" id="home-partners-active" class="rounded border-slate-300" checked> ' +
-      'Show on home page</label></div>' +
-      '<div id="home-partners-list" class="space-y-4 min-w-0"></div>' +
-      '<div class="flex flex-wrap gap-3">' +
-      '<button type="button" id="home-partners-add" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">+ Add company</button>' +
-      '<button type="button" id="home-partners-save" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Save partners</button>' +
-      '</div>' +
-      '<p id="home-partners-status" class="text-sm text-slate-500"></p></section></div>';
+      '</section></div></div>';
 
     function setSponsorStatus(text, tone) {
       var el = document.getElementById('sponsor-status');
@@ -3270,13 +3434,6 @@
       reader.readAsDataURL(file);
     });
 
-    document.getElementById('sponsor-slot').addEventListener('change', function (ev) {
-      currentSlotKey = ev.target.value || CMS_AD_SLOTS[0].key;
-      applyDefaultsToForm();
-      syncSlotFormLayout();
-      loadCurrentSlot();
-    });
-
     syncSlotFormLayout();
 
     document.getElementById('sponsor-publish-btn').addEventListener('click', function () {
@@ -3375,7 +3532,6 @@
 
     renderPreview();
     loadCurrentSlot();
-    initHomePartnersAdmin();
   }
 
   function initHomePartnersAdmin() {
@@ -5821,16 +5977,22 @@
     featured: renderFeatured,
     campaigns: renderCampaigns,
     import: renderImport,
-    sponsorship: renderSponsorship,
+    sponsorship: function () {
+      renderSponsorship((location.hash || '#sponsorship').replace('#', ''));
+    },
     emails: renderEmails,
   };
 
   function route() {
     var hash = (location.hash || '#dashboard').replace('#', '');
-    if (!routes[hash]) hash = 'dashboard';
-    setActiveNav(hash);
+    var routeKey = hash.split('/')[0];
+    if (!routes[routeKey]) {
+      routeKey = 'dashboard';
+      hash = 'dashboard';
+    }
+    setActiveNav(routeKey, hash);
     try {
-      routes[hash]();
+      routes[routeKey]();
     } catch (err) {
       if (main) {
         main.innerHTML =
