@@ -9,6 +9,7 @@ const {
   parseStripeEventBody,
 } = require('./_lib/supabase-registrations');
 const { isSupabaseConfigured } = require('./_lib/supabase');
+const { handleOpportunityPremiumCheckout } = require('./_lib/supabase-opportunities');
 
 function verifyStripeSignature(rawBody, signatureHeader, secret) {
   if (!signatureHeader || !secret) return false;
@@ -94,9 +95,13 @@ async function handler(req, res) {
 
   try {
     if (event.type === 'checkout.session.completed') {
-      const result = await handleCheckoutSessionCompleted(event.data.object || {});
+      const session = event.data.object || {};
+      const premiumResult = await handleOpportunityPremiumCheckout(session);
+      const registrationResult = await handleCheckoutSessionCompleted(session);
       res.statusCode = 200;
-      return res.end(JSON.stringify({ ok: true, result }));
+      return res.end(
+        JSON.stringify({ ok: true, premiumResult, registrationResult })
+      );
     }
 
     res.statusCode = 200;

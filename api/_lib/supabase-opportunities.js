@@ -285,6 +285,43 @@ async function updateOpportunity(id, payload) {
   return rowToListing(data);
 }
 
+async function activateOpportunityPremium(opportunityId) {
+  const id = String(opportunityId || '').trim();
+  if (!isUuid(id)) throw new Error('invalid_opportunity_id');
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('business_opportunities')
+    .update({
+      featured: true,
+      package_tier: 'premium',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw new Error(error.message);
+  return rowToListing(data);
+}
+
+async function handleOpportunityPremiumCheckout(session) {
+  const metadata = session?.metadata || {};
+  if (metadata.checkout_type !== 'opportunity_premium') {
+    return { skipped: true, reason: 'not_opportunity_premium' };
+  }
+
+  const opportunityId = String(metadata.opportunity_id || '').trim();
+  if (!opportunityId) return { skipped: true, reason: 'missing_opportunity_id' };
+
+  const paid =
+    session.payment_status === 'paid' ||
+    session.payment_status === 'no_payment_required' ||
+    session.status === 'complete';
+  if (!paid) return { skipped: true, reason: 'payment_not_complete' };
+
+  const opportunity = await activateOpportunityPremium(opportunityId);
+  return { ok: true, opportunityId, featured: opportunity.featured };
+}
+
 module.exports = {
   rowToListing,
   listPublishedOpportunities,
@@ -294,6 +331,8 @@ module.exports = {
   opportunityOwnedBySession,
   createOpportunity,
   updateOpportunity,
+  activateOpportunityPremium,
+  handleOpportunityPremiumCheckout,
   normalizeType,
   normalizeTypes,
   normalizeMeta,

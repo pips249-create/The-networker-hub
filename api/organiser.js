@@ -14,6 +14,8 @@ const routes = {
   cancellations: require('./_lib/routes/organiser-cancellations'),
   payouts: require('./_lib/routes/organiser-payouts'),
   opportunities: require('./_lib/routes/organiser-opportunities'),
+  'opportunity-premium-checkout': require('./_lib/routes/organiser-opportunity-premium-checkout'),
+  'opportunity-premium-complete': require('./_lib/routes/organiser-opportunity-premium-complete'),
 };
 
 module.exports = async function handler(req, res) {

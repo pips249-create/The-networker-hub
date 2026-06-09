@@ -12,43 +12,55 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260614" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260609" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260609b" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260606" />
   </head>
-  <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page">
+  <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page oe-submitted-page">
     <div id="hub-site-nav"></div>
     <script src="../js/site-nav.js?v=20260710" data-root="../" data-page="opportunities"></script>
 
-    <div class="ee-wrap" style="max-width: 640px; text-align: center; padding-top: 48px">
-      <div class="ee-card" style="padding: 36px 28px">
-        <p style="font-size: 40px; margin: 0 0 16px" aria-hidden="true">✓</p>
-        <h1 class="ee-title" style="margin-bottom: 12px">Opportunity submitted</h1>
-        <p class="ee-lead" id="oe-success-lede" style="margin-bottom: 24px">
-          Thanks — your listing is live in the business opportunities directory.
+    <div class="ee-wrap oe-submitted-wrap">
+      <div class="ee-card oe-submitted-card">
+        <p class="oe-submitted-icon" aria-hidden="true">✓</p>
+        <h1 class="ee-title oe-submitted-title">Your listing is live</h1>
+        <p class="ee-lead" id="oe-success-lede">
+          Thanks — your opportunity is now in the business opportunities directory.
         </p>
-        <div class="ee-actions" style="justify-content: center; flex-wrap: wrap; gap: 10px">
-          <a class="ee-btn ee-btn-gold" href="../opportunities/index.html" id="oe-view-listing">View opportunities</a>
-          <a class="ee-btn ee-btn-outline" href="opportunity-edit.html" id="oe-add-another">List another</a>
+      </div>
+
+      <div class="ee-card oe-premium-upsell" id="oe-premium-upsell">
+        <p class="oe-premium-badge">Premium listing</p>
+        <h2 class="oe-premium-heading">Would you like to enhance your business opportunity?</h2>
+        <p class="oe-premium-lede">
+          Become a premium listing for only <strong>£50 per month</strong> and get maximum visibility across the hub.
+        </p>
+        <div class="oe-premium-price">
+          <span class="oe-premium-amount">£50</span>
+          <span class="oe-premium-period">per month</span>
         </div>
+        <ul class="oe-premium-features">
+          <li>Featured in the Premium Spotlight carousel</li>
+          <li>Top placement in search and category results</li>
+          <li>Featured badge on your listing card</li>
+          <li>Priority exposure to motivated members</li>
+        </ul>
+        <p class="oe-premium-note" id="oe-premium-error" hidden role="alert"></p>
+        <div class="oe-premium-actions">
+          <button type="button" class="ee-btn ee-btn-gold" id="oe-premium-yes">
+            Yes — upgrade to premium
+          </button>
+          <a class="ee-btn ee-btn-outline" href="../opportunities/index.html" id="oe-skip-premium">
+            No thanks — keep my standard listing
+          </a>
+        </div>
+      </div>
+
+      <div class="oe-submitted-links">
+        <a href="../opportunities/index.html" id="oe-view-listing">View opportunities directory</a>
+        <a href="opportunity-edit.html" id="oe-add-another">List another opportunity</a>
       </div>
     </div>
 
-    <script>
-      (function () {
-        var params = new URLSearchParams(location.search);
-        var id = params.get('id');
-        var title = params.get('title');
-        var lede = document.getElementById('oe-success-lede');
-        var viewBtn = document.getElementById('oe-view-listing');
-        if (lede && title) {
-          lede.textContent =
-            'Thanks — "' + title + '" is now live in the business opportunities directory.';
-        }
-        if (viewBtn && id) {
-          viewBtn.href = '../opportunities/opportunity.html?id=' + encodeURIComponent(id);
-          viewBtn.textContent = 'View your listing';
-        }
-      })();
-    </script>
+    <script src="../js/organiser-opportunity-submitted.js?v=20260609"></script>
   </body>
 </html>
