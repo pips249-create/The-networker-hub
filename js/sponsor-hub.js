@@ -11,7 +11,7 @@
     ctaUrl: SPONSOR_ENQUIRE_MAILTO,
   };
 
-  var SPONSOR_HERO_MAX_BULLETS = 2;
+  var SPONSOR_HERO_MAX_BULLETS = 0;
 
   function escapeHtml(s) {
     var d = document.createElement('div');

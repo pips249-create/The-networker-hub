@@ -1673,17 +1673,22 @@
 .opp-browse-page .sponsor-hub--in-hero .sponsor-logo-wrap {
   margin: 0 -18px 10px;
   width: calc(100% + 36px);
-  min-height: 80px;
+  min-height: 120px;
   padding: 10px 14px;
+  flex: 1 1 auto;
 }
 
 .opp-browse-page .sponsor-hub--in-hero .sponsor-logo,
 .opp-browse-page .sponsor-hub--in-hero .sponsor-logo--full {
   width: 100%;
   max-width: 100%;
-  max-height: 80px;
+  max-height: 120px;
   object-fit: contain;
   object-position: center;
+}
+
+.opp-browse-page .sponsor-hub--in-hero .sponsor-body {
+  display: none;
 }
 
 .opp-browse-page .sponsor-hub-badge {
