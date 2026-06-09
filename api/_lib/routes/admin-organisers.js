@@ -46,6 +46,7 @@ function mapOrganiserRow(row, eventCount) {
   const description = String(row.description || '').trim();
   const photoUrl = String(row.photo_url || '').trim();
   const website = String(row.website || '').trim();
+  const email = String(row.contact_email || row.email || '').trim().toLowerCase();
   const missing = [];
   if (!description) missing.push('description');
   if (!photoUrl) missing.push('logo');
@@ -54,6 +55,7 @@ function mapOrganiserRow(row, eventCount) {
   return {
     id: row.id,
     name: String(row.name || '').trim(),
+    email,
     description,
     photo_url: photoUrl,
     website,
@@ -106,9 +108,10 @@ async function listOrganisersForAdmin(query) {
 
   let dbQuery = sb
     .from('organisers')
-    .select('id, name, description, photo_url, website, listing_status, slug, created_at', {
-      count: 'exact',
-    })
+    .select(
+      'id, name, email, contact_email, description, photo_url, website, listing_status, slug, created_at',
+      { count: 'exact' }
+    )
     .order('name', { ascending: true });
 
   if (q) dbQuery = dbQuery.ilike('name', `%${q}%`);
@@ -139,6 +142,220 @@ async function listOrganisersForAdmin(query) {
     hasMore: offset + rows.length < total,
     incomplete: incompleteRes.count || 0,
   };
+}
+
+async function ensureOrganiserAccountId(sb, organiser) {
+  if (organiser.organiser_account_id) return organiser.organiser_account_id;
+
+  const em = String(organiser.contact_email || organiser.email || '')
+    .trim()
+    .toLowerCase();
+  const uid = organiser.supabase_user_id || null;
+
+  let account = null;
+  if (uid) {
+    const { data } = await sb.from('organiser_accounts').select('*').eq('supabase_user_id', uid).maybeSingle();
+    account = data;
+  }
+  if (!account && em) {
+    const { data } = await sb.from('organiser_accounts').select('*').eq('email', em).maybeSingle();
+    account = data;
+  }
+  if (!account) {
+    const { data: created, error } = await sb
+      .from('organiser_accounts')
+      .insert({ email: em || null, supabase_user_id: uid })
+      .select('*')
+      .single();
+    if (error) throw new Error(error.message);
+    account = created;
+  } else if (uid && !account.supabase_user_id) {
+    await sb.from('organiser_accounts').update({ supabase_user_id: uid }).eq('id', account.id);
+  }
+
+  const { error: linkErr } = await sb
+    .from('organisers')
+    .update({ organiser_account_id: account.id })
+    .eq('id', organiser.id);
+  if (linkErr) throw new Error(linkErr.message);
+
+  return account.id;
+}
+
+async function addTeamMemberIfNeeded(sb, accountId, owner, primaryOwnerEmails) {
+  const em = String(owner.email || '')
+    .trim()
+    .toLowerCase();
+  if (!em || primaryOwnerEmails.has(em)) return false;
+
+  const { data: existing } = await sb
+    .from('organiser_team_members')
+    .select('*')
+    .eq('organiser_account_id', accountId)
+    .eq('email', em)
+    .maybeSingle();
+
+  if (existing && existing.status === 'active') return false;
+
+  if (existing) {
+    const { error } = await sb
+      .from('organiser_team_members')
+      .update({
+        status: 'active',
+        role: 'editor',
+        supabase_user_id: owner.supabase_user_id || existing.supabase_user_id || null,
+      })
+      .eq('id', existing.id);
+    if (error) throw new Error(error.message);
+    return true;
+  }
+
+  const { error } = await sb.from('organiser_team_members').insert({
+    organiser_account_id: accountId,
+    email: em,
+    supabase_user_id: owner.supabase_user_id || null,
+    role: 'editor',
+    status: 'active',
+    invited_at: new Date().toISOString(),
+  });
+  if (error) throw new Error(error.message);
+  return true;
+}
+
+async function collectOwnersFromOrganiser(sb, organiser, accountId, primaryOwnerEmails, ownersToAdd) {
+  const dupEmail = String(organiser.contact_email || organiser.email || '')
+    .trim()
+    .toLowerCase();
+  if (dupEmail && !primaryOwnerEmails.has(dupEmail) && !ownersToAdd.some((o) => o.email === dupEmail)) {
+    ownersToAdd.push({ email: dupEmail, supabase_user_id: organiser.supabase_user_id || null });
+  }
+
+  if (!organiser.organiser_account_id || organiser.organiser_account_id === accountId) return;
+
+  const { data: dupAccount } = await sb
+    .from('organiser_accounts')
+    .select('*')
+    .eq('id', organiser.organiser_account_id)
+    .maybeSingle();
+  if (dupAccount) {
+    const accountEmail = String(dupAccount.email || '')
+      .trim()
+      .toLowerCase();
+    if (
+      accountEmail &&
+      !primaryOwnerEmails.has(accountEmail) &&
+      !ownersToAdd.some((o) => o.email === accountEmail)
+    ) {
+      ownersToAdd.push({
+        email: accountEmail,
+        supabase_user_id: dupAccount.supabase_user_id || null,
+      });
+    }
+  }
+
+  const { data: dupTeam } = await sb
+    .from('organiser_team_members')
+    .select('*')
+    .eq('organiser_account_id', organiser.organiser_account_id)
+    .in('status', ['active', 'pending']);
+  for (const tm of dupTeam || []) {
+    const tmEmail = String(tm.email || '')
+      .trim()
+      .toLowerCase();
+    if (tmEmail && !primaryOwnerEmails.has(tmEmail) && !ownersToAdd.some((o) => o.email === tmEmail)) {
+      ownersToAdd.push({ email: tmEmail, supabase_user_id: tm.supabase_user_id || null });
+    }
+  }
+}
+
+async function mergeOrganisers(body) {
+  const primaryId = String(body.primaryId || '').trim();
+  const ids = [
+    ...new Set(
+      (Array.isArray(body.ids) ? body.ids : [])
+        .map((id) => String(id || '').trim())
+        .filter(Boolean)
+    ),
+  ];
+
+  if (!primaryId) {
+    const err = new Error('missing_primary_id');
+    err.status = 400;
+    throw err;
+  }
+  if (!ids.includes(primaryId)) ids.unshift(primaryId);
+  if (ids.length < 2) {
+    const err = new Error('need_at_least_two_groups');
+    err.status = 400;
+    throw err;
+  }
+
+  const duplicateIds = ids.filter((id) => id !== primaryId);
+  if (!duplicateIds.length) {
+    const err = new Error('no_duplicates_to_merge');
+    err.status = 400;
+    throw err;
+  }
+
+  const sb = getSupabaseAdmin();
+  const { data: rows, error: fetchErr } = await sb.from('organisers').select('*').in('id', ids);
+  if (fetchErr) throw new Error(fetchErr.message);
+
+  const primary = (rows || []).find((r) => r.id === primaryId);
+  if (!primary) {
+    const err = new Error('primary_not_found');
+    err.status = 404;
+    throw err;
+  }
+
+  const accountId = await ensureOrganiserAccountId(sb, primary);
+  const primaryOwnerEmails = new Set();
+  const primaryEmail = String(primary.contact_email || primary.email || '')
+    .trim()
+    .toLowerCase();
+  if (primaryEmail) primaryOwnerEmails.add(primaryEmail);
+
+  const { data: primaryAccount } = await sb
+    .from('organiser_accounts')
+    .select('email')
+    .eq('id', accountId)
+    .maybeSingle();
+  if (primaryAccount?.email) {
+    primaryOwnerEmails.add(String(primaryAccount.email).toLowerCase());
+  }
+
+  const result = { merged: 0, teamAdded: 0, eventsMoved: 0, primaryId, primaryName: primary.name };
+
+  for (const dupId of duplicateIds) {
+    const dup = (rows || []).find((r) => r.id === dupId);
+    if (!dup) continue;
+
+    const { data: movedEvents, error: evErr } = await sb
+      .from('events')
+      .update({ organiser_id: primaryId })
+      .eq('organiser_id', dupId)
+      .select('id');
+    if (evErr) throw new Error(evErr.message);
+    result.eventsMoved += (movedEvents || []).length;
+
+    for (const table of ['registrations', 'reviews', 'workshops']) {
+      const { error } = await sb.from(table).update({ organiser_id: primaryId }).eq('organiser_id', dupId);
+      if (error) throw new Error(error.message);
+    }
+
+    const ownersToAdd = [];
+    await collectOwnersFromOrganiser(sb, dup, accountId, primaryOwnerEmails, ownersToAdd);
+    for (const owner of ownersToAdd) {
+      const added = await addTeamMemberIfNeeded(sb, accountId, owner, primaryOwnerEmails);
+      if (added) result.teamAdded += 1;
+    }
+
+    const { error: delErr } = await sb.from('organisers').delete().eq('id', dupId);
+    if (delErr) throw new Error(delErr.message);
+    result.merged += 1;
+  }
+
+  return result;
 }
 
 async function bulkUpdateOrganisers(body) {
@@ -203,6 +420,26 @@ module.exports = async function handler(req, res) {
     } catch (e) {
       const status = e.status || 500;
       return json(res, status, { ok: false, error: e.message || 'bulk_update_failed', message: e.message });
+    }
+  }
+
+  if (body.action === 'merge_groups') {
+    try {
+      const result = await mergeOrganisers(body);
+      return json(res, 200, { ok: true, ...result });
+    } catch (e) {
+      const status = e.status || 500;
+      const messages = {
+        missing_primary_id: 'Choose which group to keep as the primary profile.',
+        need_at_least_two_groups: 'Select at least two groups to merge.',
+        no_duplicates_to_merge: 'Select at least one duplicate to merge into the primary.',
+        primary_not_found: 'Primary group not found.',
+      };
+      return json(res, status, {
+        ok: false,
+        error: e.message || 'merge_failed',
+        message: messages[e.message] || e.message || 'Merge failed',
+      });
     }
   }
 

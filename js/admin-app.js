@@ -3685,12 +3685,46 @@
     });
   }
 
+  function selectedGroupRows() {
+    var ids = getSelectedGroupIds();
+    var organisers = (groupCleanupCache && groupCleanupCache.organisers) || [];
+    return ids
+      .map(function (id) {
+        return organisers.find(function (o) {
+          return String(o.id) === String(id);
+        });
+      })
+      .filter(Boolean);
+  }
+
   function updateGroupBulkBar() {
     var bar = document.getElementById('group-cleanup-bulk');
     var countEl = document.getElementById('group-bulk-count');
+    var mergeSection = document.getElementById('group-merge-section');
+    var primarySelect = document.getElementById('group-merge-primary');
     var ids = getSelectedGroupIds();
     if (countEl) countEl.textContent = String(ids.length);
     if (bar) bar.classList.toggle('hidden', ids.length === 0);
+    if (mergeSection) mergeSection.classList.toggle('hidden', ids.length < 2);
+    if (primarySelect) {
+      var rows = selectedGroupRows();
+      var current = primarySelect.value;
+      primarySelect.innerHTML = rows
+        .map(function (o) {
+          var label = (o.name || 'Untitled') + (o.email ? ' (' + o.email + ')' : '');
+          return (
+            '<option value="' +
+            attrEsc(o.id) +
+            '"' +
+            (current === o.id ? ' selected' : '') +
+            '>' +
+            esc(label) +
+            '</option>'
+          );
+        })
+        .join('');
+      if (!primarySelect.value && rows.length) primarySelect.value = rows[0].id;
+    }
   }
 
   function logoPayloadForKey(key, form) {
@@ -3834,6 +3868,81 @@
         if (msg) {
           msg.textContent = err.message || 'Could not save';
           msg.className = 'group-cleanup-msg text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function mergeSelectedGroups() {
+    var ids = getSelectedGroupIds();
+    var primarySelect = document.getElementById('group-merge-primary');
+    var msg = document.getElementById('group-merge-msg');
+    var btn = document.getElementById('group-merge-btn');
+    if (ids.length < 2) return;
+
+    var primaryId = primarySelect ? primarySelect.value : ids[0];
+    var rows = selectedGroupRows();
+    var primary = rows.find(function (o) {
+      return String(o.id) === String(primaryId);
+    });
+    var duplicateCount = ids.length - 1;
+    var primaryLabel = (primary && primary.name) || 'selected group';
+    var confirmMsg =
+      'Merge ' +
+      duplicateCount +
+      ' duplicate group' +
+      (duplicateCount === 1 ? '' : 's') +
+      ' into "' +
+      primaryLabel +
+      '"?\n\n' +
+      'Events will move to the primary profile. Other account owners will be added as team editors. Duplicate profiles will be deleted. This cannot be undone.';
+    if (!window.confirm(confirmMsg)) return;
+
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Merging groups…';
+      msg.className = 'text-xs text-slate-500';
+    }
+
+    adminPost('/api/admin/organisers', {
+      action: 'merge_groups',
+      primaryId: primaryId,
+      ids: ids,
+    })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Merge failed');
+        groupCleanupState.selected = {};
+        groupCleanupState.offset = 0;
+        if (msg) {
+          msg.textContent =
+            'Merged ' +
+            (data.merged || duplicateCount) +
+            ' group' +
+            ((data.merged || duplicateCount) === 1 ? '' : 's') +
+            ', moved ' +
+            (data.eventsMoved || 0) +
+            ' event' +
+            ((data.eventsMoved || 0) === 1 ? '' : 's') +
+            ', added ' +
+            (data.teamAdded || 0) +
+            ' team member' +
+            ((data.teamAdded || 0) === 1 ? '' : 's') +
+            '.';
+          msg.className = 'text-xs text-emerald-700 font-semibold';
+        }
+        return fetchGroupCleanup(false);
+      })
+      .then(function (data) {
+        renderGroupCleanupList(data);
+        bindAdminLogoZones(main);
+        updateGroupBulkBar();
+        attachGroupLoadMore();
+        if (btn) btn.disabled = false;
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not merge groups';
+          msg.className = 'text-xs text-red-700 font-semibold';
         }
         if (btn) btn.disabled = false;
       });
@@ -4043,6 +4152,7 @@
         if (selectPage) selectPage.checked = false;
         updateGroupBulkBar();
       }
+      if (e.target.id === 'group-merge-btn') mergeSelectedGroups();
     });
   }
 
@@ -4236,6 +4346,7 @@
             listingStatusBadge(o.listing_status) +
             '</div>' +
             '<p class="text-xs text-slate-500 mt-1">' +
+            (o.email ? esc(o.email) + ' · ' : '') +
             (o.event_count || 0) +
             ' event' +
             (o.event_count === 1 ? '' : 's') +
@@ -4297,7 +4408,15 @@
       '<input type="url" name="bulk_website" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="https://…"></div>' +
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Apply to selected</button>' +
-      '<span id="group-bulk-msg" class="text-xs"></span></div></form></div>' +
+      '<span id="group-bulk-msg" class="text-xs"></span></div></form>' +
+      '<div id="group-merge-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
+      '<p class="text-sm font-semibold text-brand-900">Merge duplicate groups</p>' +
+      '<p class="text-xs text-slate-600">Pick the profile to keep. Other selected groups are removed; their events move to the primary profile and their account owners become team editors.</p>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1" for="group-merge-primary">Keep this profile</label>' +
+      '<select id="group-merge-primary" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></select></div>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="button" id="group-merge-btn" class="rounded-lg bg-amber-600 text-white text-sm font-semibold px-4 py-2 hover:bg-amber-700">Merge into primary</button>' +
+      '<span id="group-merge-msg" class="text-xs"></span></div></div></div>' +
       '<div class="admin-filter-bar flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
       '<input type="search" id="group-cleanup-search" placeholder="Search by name…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:max-w-xs bg-white" value="' +
       attrEsc(groupCleanupState.q) +
