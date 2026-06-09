@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627" />
     <link rel="stylesheet" href="../css/hub-loading.css" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260708" />
-    <link rel="stylesheet" href="../css/event-detail.css?v=20260611b" />
+    <link rel="stylesheet" href="../css/event-detail.css?v=20260611c" />
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
@@ -166,26 +166,6 @@
           <button type="button" class="listing-report-trigger" id="ev-report-btn">Report this listing</button>
         </p>
 
-        <section class="content-section ev-series-dates ev-series-dates--main" id="ev-series-dates-main" hidden>
-          <h2>Choose your date</h2>
-          <p class="ev-series-dates-hint" data-ev-series-hint="main"></p>
-          <div class="ev-calendar ev-calendar--main" data-ev-calendar>
-            <div class="ev-cal-header">
-              <button type="button" data-ev-cal-prev aria-label="Previous month">‹</button>
-              <span class="ev-cal-month" data-ev-cal-month></span>
-              <button type="button" data-ev-cal-next aria-label="Next month">›</button>
-            </div>
-            <div class="ev-cal-weekdays" aria-hidden="true">
-              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-            </div>
-            <div class="ev-cal-days" data-ev-cal-days aria-label="Choose an event date"></div>
-          </div>
-          <p class="ev-series-selected" data-ev-series-selected aria-live="polite"></p>
-          <p class="ev-series-cta">
-            <a href="#tickets" class="ev-series-tickets-link">Get tickets for this date →</a>
-          </p>
-        </section>
-
         <section class="content-section" id="ev-about-section">
           <h2>About this event</h2>
           <p id="ev-about-lead">Loading event details…</p>
@@ -269,25 +249,21 @@
           <div class="ticket-urgency" id="ev-urgency" hidden></div>
 
           <div id="ticket-purchase-view">
-          <div class="ev-series-dates ev-series-dates--panel" id="ev-series-dates" hidden>
-            <h3 class="ev-series-dates-title">Your date</h3>
-            <p class="ev-series-panel-count" data-ev-series-count></p>
-            <p class="ev-series-dates-hint" data-ev-series-hint="panel" hidden></p>
-            <div class="ev-calendar" data-ev-calendar>
+          <div class="ev-series-dates" id="ev-series-dates" hidden>
+            <h3 class="ev-series-dates-title">Choose a date</h3>
+            <p class="ev-series-dates-hint" id="ev-series-dates-hint"></p>
+            <div class="ev-calendar" id="ev-date-calendar">
               <div class="ev-cal-header">
-                <button type="button" data-ev-cal-prev aria-label="Previous month">‹</button>
-                <span class="ev-cal-month" data-ev-cal-month></span>
-                <button type="button" data-ev-cal-next aria-label="Next month">›</button>
+                <button type="button" id="ev-cal-prev" aria-label="Previous month">‹</button>
+                <span class="ev-cal-month" id="ev-cal-month-label"></span>
+                <button type="button" id="ev-cal-next" aria-label="Next month">›</button>
               </div>
               <div class="ev-cal-weekdays" aria-hidden="true">
                 <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
               </div>
-              <div class="ev-cal-days" data-ev-cal-days aria-label="Choose an event date"></div>
+              <div class="ev-cal-days" id="ev-cal-days" aria-label="Choose an event date"></div>
             </div>
-            <p class="ev-series-selected" data-ev-series-selected aria-live="polite"></p>
-            <p class="ev-series-change">
-              <a href="#ev-series-dates-main" class="ev-series-change-link">Change date</a>
-            </p>
+            <p class="ev-series-selected" id="ev-series-selected" aria-live="polite"></p>
           </div>
           <div class="ticket-tiers" id="ticket-tiers">
             <p class="ticket-load-hint">Loading tickets…</p>
@@ -463,7 +439,7 @@
     <script src="../js/cms-sponsor-fields.js?v=20260609c"></script>
     <script src="../js/cms-ad-blocks.js?v=20260609e"></script>
     <script src="../js/listing-report.js?v=20260609"></script>
-    <script src="../js/event-detail.js?v=20260611b"></script>
+    <script src="../js/event-detail.js?v=20260611c"></script>
   </body>
 </html>
 <!-- legacy inline removed

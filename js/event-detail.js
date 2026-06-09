@@ -14,7 +14,6 @@
   let seriesCalMonth = new Date().getMonth();
   let seriesCalYear = new Date().getFullYear();
   let ticketPanelSetEvent = null;
-  let seriesCalendarNavBound = false;
 
   const MOCK_ORGANISER_REVIEWS = [
     {
@@ -476,45 +475,28 @@
     return map;
   }
 
-  function seriesDateCountText(count, variant) {
-    const n = Math.max(0, Number(count) || 0);
-    const word = n === 1 ? 'date' : 'dates';
-    const lead = 'This event has ' + n + ' ' + word + '. Pick the one you want to attend.';
-    if (variant === 'main') {
-      return lead + ' Then get your tickets below.';
-    }
-    return lead;
-  }
-
   function updateSeriesDateCopy() {
-    const count = seriesDatesList.length;
-    document.querySelectorAll('[data-ev-series-hint="main"]').forEach((el) => {
-      el.textContent = seriesDateCountText(count, 'main');
-    });
-    document.querySelectorAll('[data-ev-series-hint="panel"]').forEach((el) => {
-      el.textContent = seriesDateCountText(count, 'panel');
-    });
-    document.querySelectorAll('[data-ev-series-count]').forEach((el) => {
-      el.textContent = seriesDateCountText(count, 'panel');
-    });
+    const hint = document.getElementById('ev-series-dates-hint');
+    if (!hint) return;
+    const n = seriesDatesList.length;
+    const word = n === 1 ? 'date' : 'dates';
+    hint.textContent =
+      'This event runs on multiple ' +
+      word +
+      '. Pick the one you want to attend.';
   }
 
-  function seriesPickerWraps() {
-    return document.querySelectorAll('.ev-series-dates');
-  }
-
-  function updateSeriesSelectedLabels(entry) {
-    const text = 'Selected: ' + formatSeriesSelectedLine(entry);
-    document.querySelectorAll('[data-ev-series-selected]').forEach((el) => {
-      el.textContent = text;
-    });
-  }
-
-  function renderSeriesCalendarGrid(grid) {
+  function renderSeriesCalendar() {
+    const grid = document.getElementById('ev-cal-days');
+    const label = document.getElementById('ev-cal-month-label');
     if (!grid) return;
 
     const datesMap = seriesDatesByKey();
     const first = new Date(seriesCalYear, seriesCalMonth, 1);
+    if (label) {
+      label.textContent = first.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    }
+
     const startDow = (first.getDay() + 6) % 7;
     const daysInMonth = new Date(seriesCalYear, seriesCalMonth + 1, 0).getDate();
     const today = new Date();
@@ -575,68 +557,27 @@
     }
   }
 
-  function renderSeriesCalendar() {
-    const first = new Date(seriesCalYear, seriesCalMonth, 1);
-    const monthLabel = first.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-    document.querySelectorAll('[data-ev-cal-month]').forEach((el) => {
-      el.textContent = monthLabel;
-    });
-    document.querySelectorAll('[data-ev-cal-days]').forEach((grid) => {
-      renderSeriesCalendarGrid(grid);
-    });
-  }
-
-  function bindSeriesCalendarNav() {
-    if (seriesCalendarNavBound) return;
-    seriesCalendarNavBound = true;
-
-    document.querySelectorAll('[data-ev-cal-prev]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        seriesCalMonth -= 1;
-        if (seriesCalMonth < 0) {
-          seriesCalMonth = 11;
-          seriesCalYear -= 1;
-        }
-        renderSeriesCalendar();
-      });
-    });
-    document.querySelectorAll('[data-ev-cal-next]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        seriesCalMonth += 1;
-        if (seriesCalMonth > 11) {
-          seriesCalMonth = 0;
-          seriesCalYear += 1;
-        }
-        renderSeriesCalendar();
-      });
-    });
-  }
-
   function selectSeriesDate(entry) {
     if (!entry || !seriesBaseEvent) return;
     selectedSeriesEventId = entry.id;
     const merged = mergeSeriesDateEntry(seriesBaseEvent, entry);
     currentEvent = merged;
     updateEventDateMeta(merged);
-    updateSeriesSelectedLabels(entry);
+    const selectedEl = document.getElementById('ev-series-selected');
+    if (selectedEl) selectedEl.textContent = 'Selected: ' + formatSeriesSelectedLine(entry);
     renderSeriesCalendar();
     if (ticketPanelSetEvent) ticketPanelSetEvent(merged);
   }
 
   function initSeriesDatePicker(initialEv) {
-    const wraps = seriesPickerWraps();
-    if (seriesDatesList.length <= 1) {
-      wraps.forEach((wrap) => {
-        wrap.hidden = true;
-      });
+    const wrap = document.getElementById('ev-series-dates');
+    if (!wrap || seriesDatesList.length <= 1) {
+      if (wrap) wrap.hidden = true;
       return;
     }
 
-    wraps.forEach((wrap) => {
-      wrap.hidden = false;
-    });
+    wrap.hidden = false;
     updateSeriesDateCopy();
-    bindSeriesCalendarNav();
 
     const now = Date.now() - 86400000;
     const upcoming = seriesDatesList.find((item) => {
@@ -664,9 +605,32 @@
       return;
     }
 
+    if (!wrap.dataset.bound) {
+      wrap.dataset.bound = '1';
+      document.getElementById('ev-cal-prev')?.addEventListener('click', () => {
+        seriesCalMonth -= 1;
+        if (seriesCalMonth < 0) {
+          seriesCalMonth = 11;
+          seriesCalYear -= 1;
+        }
+        renderSeriesCalendar();
+      });
+      document.getElementById('ev-cal-next')?.addEventListener('click', () => {
+        seriesCalMonth += 1;
+        if (seriesCalMonth > 11) {
+          seriesCalMonth = 0;
+          seriesCalYear += 1;
+        }
+        renderSeriesCalendar();
+      });
+    }
+
     selectedSeriesEventId = initialEv.id;
     renderSeriesCalendar();
-    if (initialEntry) updateSeriesSelectedLabels(initialEntry);
+    const selectedEl = document.getElementById('ev-series-selected');
+    if (selectedEl && initialEntry) {
+      selectedEl.textContent = 'Selected: ' + formatSeriesSelectedLine(initialEntry);
+    }
   }
 
   function populateFromEvent(ev) {
@@ -839,7 +803,18 @@
     }
   }
 
+  function seriesKeyFromContext() {
+    if (!seriesDatesList || seriesDatesList.length <= 1 || !seriesBaseEvent) return '';
+    return (
+      's:' +
+      String(seriesBaseEvent.organiserId || '').trim() +
+      ':' +
+      String(seriesBaseEvent.title || '').trim().toLowerCase()
+    );
+  }
+
   function saveBookingPending(ev, ticketId, qty) {
+    const seriesKey = seriesKeyFromContext();
     try {
       sessionStorage.setItem(
         BOOKING_PENDING_KEY,
@@ -848,6 +823,8 @@
           ticketId: isUuid(ticketId) ? ticketId : null,
           qty: qty,
           ts: Date.now(),
+          seriesKey: seriesKey || null,
+          seriesTitle: seriesBaseEvent && seriesBaseEvent.title ? seriesBaseEvent.title : ev.title || '',
         })
       );
     } catch (e) {
@@ -886,6 +863,7 @@
   }
 
   async function completeFreeBooking(ev, ticketId, qty, attendee) {
+    saveBookingPending(ev, ticketId, qty);
     const res = await fetch('/api/auth/complete-booking', {
       method: 'POST',
       credentials: 'include',
@@ -907,7 +885,6 @@
     if (!res.ok || !data.ok) {
       throw new Error((data && data.message) || (data && data.error) || 'booking_failed');
     }
-    clearBookingPending();
     window.location.assign('/events/booking-success.html?free=1&confirmed=1');
   }
 
