@@ -3,8 +3,9 @@
  */
 (function () {
   var MODE_KEY = 'hubBrowseMode';
-  var heroTitle = document.querySelector('.events-hero-copy h1');
-  var heroSub = document.querySelector('.events-hero-copy .hero-types');
+  var heroBadge = document.getElementById('events-hero-badge');
+  var heroTitle = document.getElementById('events-hero-heading');
+  var heroSub = document.getElementById('events-hero-lede');
   var heroSwitch = document.getElementById('hero-browse-mode-switch');
   var listingsHeader = document.getElementById('all-heading');
   var searchInput = document.getElementById('search');
@@ -14,8 +15,11 @@
 
   var copy = {
     events: {
-      title: 'Find your next <span class="accent">event</span>',
-      sub: 'Find networking events, exhibitions and conferences across the UK',
+      badge: 'Event discovery',
+      title:
+        'Find <span class="accent">networking events, exhibitions &amp; conferences</span> across the UK',
+      sub:
+        '<strong>The Networker Hub</strong> lists meetings, netwalking, conferences, exhibitions and awards ceremonies — filter by type, date, and location.',
       heading: 'All listings',
       searchPlaceholder: 'Search meetings by title, organiser, or location…',
       searchLabel: 'Search events',
@@ -24,8 +28,11 @@
       switchTo: 'organisers',
     },
     organisers: {
-      title: 'Find your next <span class="accent">organiser</span>',
-      sub: 'Networking groups, exhibition hosts, conference organisers and more across the UK',
+      badge: 'Organiser directory',
+      title:
+        'Discover <span class="accent">networking groups &amp; event organisers</span> across the UK',
+      sub:
+        '<strong>The Networker Hub</strong> connects you with networking groups, exhibition hosts, conference organisers and more — find the right community for your business.',
       heading: 'All organisers',
       searchPlaceholder: 'Search organisers, industries, descriptions…',
       searchLabel: 'Search organisers',
@@ -94,8 +101,9 @@
 
   function applyCopy(mode) {
     var c = copy[mode] || copy.events;
+    if (heroBadge) heroBadge.textContent = c.badge;
     if (heroTitle) heroTitle.innerHTML = c.title;
-    if (heroSub) heroSub.textContent = c.sub;
+    if (heroSub) heroSub.innerHTML = c.sub;
     if (listingsHeader) listingsHeader.textContent = c.heading;
     if (searchInput) searchInput.placeholder = c.searchPlaceholder;
     if (searchLabel) searchLabel.textContent = c.searchLabel;

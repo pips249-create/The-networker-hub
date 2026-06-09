@@ -1,18 +1,140 @@
 /* Events browse page layout */
-.events-page .hero.events-hero {
-  padding: 40px 24px 52px;
-  border-bottom: 1px solid rgba(194, 153, 209, 0.2);
+.events-page {
+  --ev-navy: #1a1a2e;
+  --ev-lavender: #d4b8e8;
+  --ev-lavender-dim: rgba(194, 153, 209, 0.14);
+}
+
+.events-hero {
+  background: var(--ev-navy);
+  color: #fff;
+  padding: 48px 28px 56px;
+  position: relative;
+  overflow: hidden;
+}
+
+.events-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 85% 40%, var(--ev-lavender-dim), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 10% 80%, rgba(195, 151, 195, 0.08), transparent 50%);
+  pointer-events: none;
+}
+
+.events-hero-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.events-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ev-lavender);
+  border: 1px solid rgba(212, 184, 232, 0.45);
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  margin-bottom: 20px;
+}
+
+.events-hero-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ev-lavender);
+  box-shadow: 0 0 8px var(--ev-lavender);
+}
+
+.events-hero-copy h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.65rem, 4.2vw, 2.35rem);
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0 0 16px;
+  max-width: 22em;
+  color: #fff;
+}
+
+.events-hero-copy h1 .accent {
+  color: var(--ev-lavender);
+  font-style: normal;
+}
+
+.events-hero-lede {
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.82);
+  max-width: 42em;
+  margin: 0 0 28px;
+}
+
+.events-hero-lede strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.events-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.events-hero-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 22px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.events-hero-btn-primary {
+  background: var(--ev-lavender);
+  color: var(--ev-navy);
+}
+
+.events-hero-btn-primary:hover {
+  background: #e4d0f0;
+  color: var(--ev-navy);
+}
+
+.events-hero-btn-ghost {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.events-hero-btn-ghost:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #fff;
 }
 
 .events-page .shell {
   max-width: 1000px;
-  margin: 0 auto 48px;
+  margin: -12px auto 48px;
   padding: 28px 24px 48px;
   background: #fff;
-  border-radius: 0 0 20px 20px;
+  border-radius: 20px;
   box-shadow: 0 12px 40px rgba(45, 38, 54, 0.06);
   border: 1px solid rgba(194, 153, 209, 0.18);
-  border-top: none;
+  position: relative;
+  z-index: 2;
 }
 
 .events-hero-layout {
@@ -22,10 +144,6 @@
   align-items: start;
   max-width: 1200px;
   margin: 0 auto;
-}
-
-.events-page .events-hero .hero-inner {
-  max-width: 1200px;
 }
 
 .events-hero-copy {
@@ -97,52 +215,16 @@
   font-size: 12px;
 }
 
-.events-page .events-hero-copy h1 {
-  font-size: clamp(2.35rem, 6vw, 3.5rem);
-  line-height: 1.08;
-  margin-bottom: 14px;
-  letter-spacing: -0.02em;
-}
-.events-page .events-hero-copy .hero-types {
-  color: var(--text-muted);
-  font-size: 14px;
-  line-height: 1.6;
-  max-width: 36em;
-  margin: 0;
-}
-@media (min-width: 720px) {
-  .events-page .events-hero-copy .hero-types {
-    font-size: 15px;
-  }
-}
-
-.events-browse-switch-wrap {
-  margin-top: 18px;
-}
-
-.events-hero-mode-switch {
-  font-size: 14px;
-  padding: 12px 22px;
-}
-
-body.browse-mode-organisers .events-hero-mode-switch {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: #fff;
-}
-
-body.browse-mode-organisers .events-hero-mode-switch:hover {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-  color: #fff;
-}
-
-.events-list-cta-event-only {
-  display: none;
-}
-
 .events-list-cta-organiser-only {
   display: none;
+}
+
+body.browse-mode-organisers .events-list-cta-event-only {
+  display: none;
+}
+
+body.browse-mode-organisers .events-list-cta-organiser-only {
+  display: inline-flex;
 }
 
 .events-organiser-footnote {
@@ -198,7 +280,6 @@ body.browse-mode-organisers .events-organiser-footnote-link {
 }
 
 .events-page .shell {
-  margin-top: 0;
   max-width: 1280px;
   padding-bottom: 40px;
 }

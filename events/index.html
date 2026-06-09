@@ -9,12 +9,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css?v=20260627">
-<link rel="stylesheet" href="../css/hub-mobile.css?v=20260609b">
+<link rel="stylesheet" href="../css/hub-mobile.css?v=20260609c">
 <link rel="stylesheet" href="../css/fact-loader.css?v=20260709">
 <script src="../js/fact-loader.js?v=20260709"></script>
-<link rel="stylesheet" href="../css/events-page.css?v=20260609f">
+<link rel="stylesheet" href="../css/events-page.css?v=20260609g">
 <link rel="stylesheet" href="../css/events-filter-bar.css?v=20260609e">
-<link rel="stylesheet" href="../css/organisers-browse.css?v=20260708">
+<link rel="stylesheet" href="../css/organisers-browse.css?v=20260609">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="">
@@ -25,13 +25,38 @@
 <div id="hub-site-nav"></div>
 <script src="../js/site-nav.js?v=20260710" data-root="../" data-page="events"></script>
 
-<section class="hero events-hero">
-  <div class="hero-inner events-hero-layout">
+<section class="events-hero" aria-labelledby="events-hero-heading">
+  <div class="events-hero-inner events-hero-layout">
     <div class="events-hero-copy">
-      <h1>Find your next <span class="accent">event</span></h1>
-      <p class="hero-types">Find networking events, exhibitions and conferences across the UK</p>
-      <div class="events-browse-switch-wrap">
-        <button type="button" class="btn btn-secondary events-hero-mode-switch" id="hero-browse-mode-switch" data-switch-to="organisers">
+      <p class="events-hero-badge" id="events-hero-badge">Event discovery</p>
+      <h1 id="events-hero-heading">
+        Find <span class="accent">networking events, exhibitions &amp; conferences</span> across the UK
+      </h1>
+      <p class="events-hero-lede" id="events-hero-lede">
+        <strong>The Networker Hub</strong> lists meetings, netwalking, conferences, exhibitions and awards
+        ceremonies — filter by type, date, and location.
+      </p>
+      <div class="events-hero-actions">
+        <button
+          type="button"
+          class="events-hero-btn events-hero-btn-primary events-list-cta-event-only"
+          data-hub-action="add-event"
+        >
+          + List an event
+        </button>
+        <button
+          type="button"
+          class="events-hero-btn events-hero-btn-primary events-list-cta-organiser-only"
+          data-hub-action="add-group"
+        >
+          + Add a group profile
+        </button>
+        <button
+          type="button"
+          class="events-hero-btn events-hero-btn-ghost events-hero-mode-switch"
+          id="hero-browse-mode-switch"
+          data-switch-to="organisers"
+        >
           Browse organisers
         </button>
       </div>
@@ -331,6 +356,6 @@
 <script src="../js/organisers-filters.js?v=20260608"></script>
 <script src="../js/organisers.js?v=20260709"></script>
 <script src="../js/hub-organiser-actions.js?v=20260606" data-root="../"></script>
-<script src="../js/browse-mode.js?v=20260607b"></script>
+<script src="../js/browse-mode.js?v=20260609"></script>
 </body>
 </html>

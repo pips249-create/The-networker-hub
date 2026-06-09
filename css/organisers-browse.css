@@ -268,7 +268,7 @@ body:not(.browse-mode-organisers) .organiser-type-tabs {
 }
 
 body.browse-mode-organisers .events-hero {
-  padding-bottom: 28px;
+  padding-bottom: 48px;
 }
 
 body.browse-mode-organisers .shell {
@@ -303,9 +303,8 @@ body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-cta:hover {
     text-align: center;
   }
 
-  body.browse-mode-organisers .events-browse-switch-wrap {
-    display: flex;
-    justify-content: center;
+  body.browse-mode-organisers .events-hero-actions {
+    align-items: center;
   }
 
   .filter-org-rating-group,
@@ -339,12 +338,39 @@ body.browse-mode-organisers.events-page {
   background: linear-gradient(180deg, #eef4ff 0%, #f8fbff 280px, var(--surface-bg, #faf8fc) 520px);
 }
 
-body.browse-mode-organisers .events-hero {
-  background: linear-gradient(165deg, #c7dcff 0%, #e8f1ff 50%, #f4f8ff 100%);
+body.browse-mode-organisers.events-page {
+  --ev-lavender: #60a5fa;
+  --ev-lavender-dim: rgba(37, 99, 235, 0.14);
 }
 
-body.browse-mode-organisers .events-hero h1 .accent {
-  color: #2563eb;
+body.browse-mode-organisers .events-hero::before {
+  background:
+    radial-gradient(ellipse 80% 60% at 85% 40%, rgba(37, 99, 235, 0.14), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 10% 80%, rgba(100, 140, 200, 0.08), transparent 50%);
+}
+
+body.browse-mode-organisers .events-hero-badge {
+  color: #60a5fa;
+  border-color: rgba(96, 165, 250, 0.45);
+}
+
+body.browse-mode-organisers .events-hero-badge::before {
+  background: #60a5fa;
+  box-shadow: 0 0 8px #60a5fa;
+}
+
+body.browse-mode-organisers .events-hero-copy h1 .accent {
+  color: #60a5fa;
+}
+
+body.browse-mode-organisers .events-hero-btn-primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+body.browse-mode-organisers .events-hero-btn-primary:hover {
+  background: #1d4ed8;
+  color: #fff;
 }
 
 body.browse-mode-organisers .events-filter-bar {
@@ -360,11 +386,6 @@ body.browse-mode-organisers .events-browse-switch {
   background: rgba(255, 255, 255, 0.92);
 }
 
-body.browse-mode-organisers .events-hero-mode-switch {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: #fff;
-}
 
 body.browse-mode-organisers .filter-checkbox input:checked + .filter-checkbox-box {
   background: #2563eb;

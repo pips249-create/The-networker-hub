@@ -303,32 +303,34 @@ body.nav-menu-open {
 
 /* ─── Events browse ─── */
 @media (max-width: 720px) {
-  .events-page .hero.events-hero {
-    padding: 20px 16px 24px;
+  .events-page .events-hero {
+    padding: 20px 16px 28px;
   }
 
   .events-page .events-hero-copy h1 {
     font-size: clamp(1.85rem, 8vw, 2.35rem);
   }
 
-  .events-page .hero-inner {
+  .events-page .events-hero-inner {
     text-align: center;
   }
 
-  .events-page .events-hero-copy .hero-types {
+  .events-page .events-hero-lede {
     margin-left: auto;
     margin-right: auto;
   }
 
-  .events-browse-switch-wrap {
-    display: flex;
-    justify-content: center;
+  .events-hero-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
   }
 
-  .events-hero-mode-switch {
+  .events-hero-actions .events-hero-btn {
     width: 100%;
     max-width: 280px;
-    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .events-page .shell {
@@ -632,11 +634,6 @@ body.nav-menu-open {
     max-width: 320px;
     margin: 0 auto;
     width: 100%;
-  }
-
-  .events-browse-switch-wrap {
-    display: flex;
-    justify-content: center;
   }
 
   body.browse-mode-organisers .events-hero-copy {
