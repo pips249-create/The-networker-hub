@@ -24,7 +24,6 @@
   var listingsView = document.getElementById('listings-view');
   var listBtn = document.getElementById('list-view-btn');
   var mapBtn = document.getElementById('map-view-btn');
-  var promoSection = document.querySelector('.events-promo-section');
   var resultsMeta = document.querySelector('.events-results-meta');
 
   var map = null;
@@ -455,10 +454,6 @@
     bindMapViewportEvents();
   }
 
-  function setChromeHidden(mapMode) {
-    if (promoSection) promoSection.hidden = mapMode;
-  }
-
   function fitMapToCoords(coordsList) {
     if (!map || !coordsList.length) return;
     suppressMapEvents++;
@@ -788,7 +783,6 @@
       mapBtn.classList.toggle('is-active', mapMode);
       mapBtn.setAttribute('aria-pressed', mapMode ? 'true' : 'false');
     }
-    setChromeHidden(mapMode);
     if (!document.body.classList.contains('browse-mode-organisers')) {
       saveViewMode(mapMode ? 'map' : 'list');
     }

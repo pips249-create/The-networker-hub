@@ -1036,8 +1036,8 @@ body.events-view-map .events-map-panel {
 }
 
 body.events-view-map .events-map-wrap {
-  height: clamp(420px, calc(100svh - 220px), 780px);
-  min-height: 420px;
+  height: clamp(360px, calc(100svh - 320px), 720px);
+  min-height: 360px;
 }
 
 @media (max-width: 900px) {
@@ -1343,10 +1343,6 @@ body.events-view-map .events-map-wrap {
 }
 
 .events-map-hint[hidden] {
-  display: none !important;
-}
-
-body.events-view-map .events-promo-section {
   display: none !important;
 }
 

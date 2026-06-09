@@ -29,7 +29,7 @@
   let spotlightTimer = null;
   let spotlightAnimating = false;
   let spotlightCarouselBound = false;
-  const SPOTLIGHT_AUTO_MS = 5000;
+  const SPOTLIGHT_AUTO_MS = 2800;
 
   function shuffleList(list) {
     const copy = list.slice();
@@ -131,7 +131,7 @@
     }
 
     track.scrollBy({ left: step, behavior: behavior });
-    window.setTimeout(finishAdvance, reduceMotion ? 0 : 520);
+    window.setTimeout(finishAdvance, reduceMotion ? 0 : 380);
   }
 
   function bindSpotlightCarousel() {
