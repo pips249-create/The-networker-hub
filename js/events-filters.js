@@ -37,11 +37,25 @@
       .replace(/^-|-$/g, '');
   }
 
+  function normalizeTypeTabSlug(slug) {
+    var key = String(slug || '').trim();
+    if (!key || key === 'all') return key;
+    var legacy = {
+      'networking-meeting': 'meeting',
+      netwalking: 'meeting',
+      'sport-social': 'meeting',
+      'womens-networking': 'meeting',
+      conference: 'meeting',
+      'awards-ceremony': 'meeting',
+    };
+    return legacy[key] || key;
+  }
+
   function eventTypeSlug(ev) {
-    if (ev.typeSlug) return ev.typeSlug;
-    var raw = ev.eventType || ev.typeRaw || '';
+    if (ev.typeSlug) return normalizeTypeTabSlug(ev.typeSlug);
+    var raw = ev.eventType || ev.typeRaw || ev.type || '';
     if (window.hubNormalizeEventType) raw = window.hubNormalizeEventType(raw);
-    return slugForEventType(raw);
+    return normalizeTypeTabSlug(slugForEventType(raw));
   }
 
   function buildTypeChips() {
@@ -545,12 +559,12 @@
       if (nearRadius && restoredRadius) nearRadius.value = restoredRadius;
       if (nearRadiusMobile && restoredRadius) nearRadiusMobile.value = restoredRadius;
       if (Array.isArray(prefs.typeTabs)) {
-        activeTypeTabs = prefs.typeTabs.slice();
+        activeTypeTabs = prefs.typeTabs.map(normalizeTypeTabSlug).filter(function (slug) {
+          return slug && slug !== 'all';
+        });
         syncTypeChipUi();
       } else if (prefs.typeTab) {
-        var restoredType = prefs.typeTab;
-        if (restoredType === 'meeting') restoredType = 'networking-meeting';
-        setActiveTypeTab(restoredType);
+        setActiveTypeTab(normalizeTypeTabSlug(prefs.typeTab));
       }
       syncPriceOutputs();
       syncNearRadiusUi();

@@ -82,7 +82,7 @@ function rowToEvent(row) {
     title: String(row.title || 'Untitled event').trim(),
     date: dateIso,
     endDate: row.ends_at ? String(row.ends_at) : '',
-    type: String(row.event_type || '').trim(),
+    type: normalizeEventType(row.event_type || ''),
     industry: Array.isArray(row.industries) ? row.industries[0] || '' : '',
     ownerEmail: '',
     organiserGroupIds: row.organiser_id ? [row.organiser_id] : [],

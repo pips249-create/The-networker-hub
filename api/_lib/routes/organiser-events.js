@@ -34,7 +34,7 @@ function eventPayloadFromBody(body, email) {
     email,
     groupId: String(body.organiserGroupId || body.groupId || '').trim(),
     title: String(body.title || '').trim(),
-    type: String(body.type || body.format || 'Networking Event').trim(),
+    type: String(body.type || body.format || 'Meeting').trim(),
     description: String(body.description || '').trim(),
     location: String(body.location || '').trim(),
     venue: String(body.venue || '').trim(),

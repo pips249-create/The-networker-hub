@@ -433,10 +433,37 @@
     sel.value = gid;
   }
 
+  function canonicalEventType(value) {
+    const raw = fieldToString(value);
+    if (!raw) return 'Meeting';
+    if (window.hubNormalizeEventType) return window.hubNormalizeEventType(raw);
+    return raw;
+  }
+
+  function initEventTypeSelect(selected) {
+    const sel = document.getElementById('ee-type');
+    if (!sel) return;
+    const types = window.HUB_MEETING_TYPES || [
+      { value: 'Meeting', label: 'Meeting' },
+      { value: 'Events', label: 'Events' },
+      { value: 'Exhibition', label: 'Exhibition' },
+      { value: 'Awards', label: 'Awards' },
+    ];
+    const current = canonicalEventType(selected || sel.value || 'Meeting');
+    sel.innerHTML = '';
+    types.forEach((item) => {
+      const opt = document.createElement('option');
+      opt.value = item.value;
+      opt.textContent = item.label || item.value;
+      sel.appendChild(opt);
+    });
+    sel.value = types.some((item) => item.value === current) ? current : 'Meeting';
+  }
+
   function setMeetingTypeSelect(value) {
     const sel = document.getElementById('ee-type');
     if (!sel) return;
-    const v = fieldToString(value);
+    const v = canonicalEventType(value);
     if (!v) return;
     let matched = false;
     for (let i = 0; i < sel.options.length; i++) {
@@ -460,7 +487,7 @@
     const copy = { ...ev };
     copy.title = fieldToString(ev.title);
     copy.description = fieldToString(ev.description);
-    copy.type = fieldToString(ev.type || ev.typeRaw);
+    copy.type = canonicalEventType(ev.type || ev.typeRaw || ev.eventType);
     copy.venue = fieldToString(ev.venue);
     copy.addressLine1 = fieldToString(ev.addressLine1);
     copy.city = fieldToString(ev.city);
@@ -566,7 +593,7 @@
   function prefillFromEvent(rawEv) {
     const ev = normalizeEventForForm(rawEv);
     document.getElementById('ee-title').value = ev.title || '';
-    setMeetingTypeSelect(ev.type || 'Networking Event');
+    initEventTypeSelect(ev.type || 'Meeting');
     document.getElementById('ee-description').value = ev.description || '';
     const wc = document.getElementById('ee-word-count');
     if (wc) wc.textContent = String(countWords(ev.description || ''));
@@ -699,6 +726,7 @@
       }
 
       fillGroupsSelect(chosenGroupId, true);
+      initEventTypeSelect('Meeting');
     };
 
     const loading = window.organiserPageLoading;
@@ -779,7 +807,7 @@
     const payload = {
       organiserGroupId,
       title,
-      type: document.getElementById('ee-type').value,
+      type: canonicalEventType(document.getElementById('ee-type').value),
       description,
       photoUrl: document.getElementById('ee-photo-url').value.trim(),
       listingStatus: 'draft',

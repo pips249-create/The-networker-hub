@@ -66,12 +66,15 @@
           </div>
           <div class="ee-field">
             <label for="ee-type">Event type</label>
-            <select id="ee-type" required>
+            <select id="ee-type" required aria-describedby="ee-type-hint">
               <option value="Meeting">Meeting</option>
               <option value="Events">Events</option>
               <option value="Exhibition">Exhibition</option>
               <option value="Awards">Awards</option>
             </select>
+            <p class="ee-hint" id="ee-type-hint">
+              Meeting covers breakfasts, netwalking, women only and most networking listings. Use Events, Exhibition or Awards for larger formats.
+            </p>
           </div>
           <div class="ee-field">
             <label for="ee-description">Highlights / description</label>
@@ -203,8 +206,9 @@
     <script src="../js/organiser-flow-tour.js?v=20260608d"></script>
     <script src="../js/fact-loader.js?v=20260708"></script>
     <script src="../js/organiser-page-loading.js?v=20260608d"></script>
+    <script src="../js/meeting-types.js?v=20260609n"></script>
     <script src="../js/organiser-quarter-time.js?v=20260614c"></script>
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
-    <script src="../js/organiser-event-edit.js?v=20260608d"></script>
+    <script src="../js/organiser-event-edit.js?v=20260609o"></script>
   </body>
 </html>
