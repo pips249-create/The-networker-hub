@@ -1,5 +1,5 @@
--- Simplify event_type to Meeting, Events, Exhibition, Awards
--- Drop the old check constraint BEFORE backfill (updates to new values fail otherwise).
+-- Repair script if 035 was run in the wrong order (updates before drop).
+-- Safe to re-run: drops constraint, backfills legacy values, re-applies check.
 
 alter table public.events drop constraint if exists events_event_type_check;
 
