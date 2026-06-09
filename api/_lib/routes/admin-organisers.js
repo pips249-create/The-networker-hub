@@ -2,6 +2,7 @@ const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { resolveImageUrl } = require('../supabase-storage');
 const { publicOrganiserSlug } = require('../organiser-slug');
+const sbAuth = require('../supabase-auth');
 
 const INCOMPLETE_FILTER =
   'description.is.null,description.eq.,photo_url.is.null,photo_url.eq.,website.is.null,website.eq.';
@@ -42,7 +43,7 @@ async function eventCountsForOrganisers(sb, organiserIds) {
   return counts;
 }
 
-function mapOrganiserRow(row, eventCount) {
+function mapOrganiserRow(row, eventCount, loginMeta) {
   const description = String(row.description || '').trim();
   const photoUrl = String(row.photo_url || '').trim();
   const website = String(row.website || '').trim();
@@ -52,10 +53,16 @@ function mapOrganiserRow(row, eventCount) {
   if (!photoUrl) missing.push('logo');
   if (!website) missing.push('website');
 
+  const userId = loginMeta?.userId || row.supabase_user_id || null;
+  const hasLogin = loginMeta?.hasLogin != null ? loginMeta.hasLogin : Boolean(userId);
+
   return {
     id: row.id,
     name: String(row.name || '').trim(),
     email,
+    user_id: userId,
+    has_login: hasLogin,
+    emails_enabled: loginMeta?.emailsEnabled ?? null,
     description,
     photo_url: photoUrl,
     website,
@@ -64,6 +71,58 @@ function mapOrganiserRow(row, eventCount) {
     event_count: eventCount || 0,
     missing,
   };
+}
+
+async function loginMetaForOrganisers(sb, rows) {
+  const meta = new Map();
+  const userIds = [...new Set((rows || []).map((r) => r.supabase_user_id).filter(Boolean))];
+  const hubByUser = new Map();
+
+  if (userIds.length) {
+    const { data } = await sb
+      .from('hub_accounts')
+      .select('user_id, emails_enabled')
+      .in('user_id', userIds);
+    (data || []).forEach((h) => hubByUser.set(h.user_id, h));
+  }
+
+  const { data: authList, error: authErr } = await sb.auth.admin.listUsers({ perPage: 1000 });
+  if (authErr) throw new Error(authErr.message);
+  const authByEmail = new Map(
+    (authList?.users || []).map((u) => [String(u.email || '').toLowerCase(), u.id])
+  );
+
+  for (const row of rows || []) {
+    const em = String(row.contact_email || row.email || '')
+      .trim()
+      .toLowerCase();
+    let userId = row.supabase_user_id || null;
+    if (!userId && em) userId = authByEmail.get(em) || null;
+
+    if (!userId) {
+      meta.set(row.id, { userId: null, hasLogin: false, emailsEnabled: null });
+      continue;
+    }
+
+    let hub = hubByUser.get(userId);
+    if (!hub) {
+      const { data } = await sb
+        .from('hub_accounts')
+        .select('user_id, emails_enabled')
+        .eq('user_id', userId)
+        .maybeSingle();
+      hub = data;
+      if (hub) hubByUser.set(userId, hub);
+    }
+
+    meta.set(row.id, {
+      userId,
+      hasLogin: true,
+      emailsEnabled: hub ? hub.emails_enabled !== false : true,
+    });
+  }
+
+  return meta;
 }
 
 async function resolveOrganiserPhotoUrl(body, folder) {
@@ -109,7 +168,7 @@ async function listOrganisersForAdmin(query) {
   let dbQuery = sb
     .from('organisers')
     .select(
-      'id, name, email, contact_email, description, photo_url, website, listing_status, slug, created_at',
+      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, listing_status, slug, created_at',
       { count: 'exact' }
     )
     .order('name', { ascending: true });
@@ -121,10 +180,13 @@ async function listOrganisersForAdmin(query) {
   if (res.error) throw new Error(res.error.message);
 
   const rows = res.data || [];
-  const counts = await eventCountsForOrganisers(
-    sb,
-    rows.map((r) => r.id)
-  );
+  const [counts, loginMeta] = await Promise.all([
+    eventCountsForOrganisers(
+      sb,
+      rows.map((r) => r.id)
+    ),
+    loginMetaForOrganisers(sb, rows),
+  ]);
   const total = res.count != null ? res.count : rows.length;
 
   const incompleteRes = await sb
@@ -134,7 +196,7 @@ async function listOrganisersForAdmin(query) {
   if (incompleteRes.error) throw new Error(incompleteRes.error.message);
 
   return {
-    organisers: rows.map((row) => mapOrganiserRow(row, counts[row.id] || 0)),
+    organisers: rows.map((row) => mapOrganiserRow(row, counts[row.id] || 0, loginMeta.get(row.id))),
     count: rows.length,
     total,
     offset,
@@ -420,6 +482,85 @@ module.exports = async function handler(req, res) {
     } catch (e) {
       const status = e.status || 500;
       return json(res, status, { ok: false, error: e.message || 'bulk_update_failed', message: e.message });
+    }
+  }
+
+  if (body.action === 'provision_user') {
+    const organiserId = String(body.id || body.organiserId || body.organiser_id || '').trim();
+    if (!organiserId) {
+      return json(res, 400, { ok: false, error: 'missing_id', message: 'Organiser id is required.' });
+    }
+    try {
+      const result = await sbAuth.provisionOrganiserLogin(organiserId);
+      return json(res, 200, {
+        ok: true,
+        ...result,
+        message: result.createdAuth
+          ? 'Login created (no email sent). You can impersonate this group now.'
+          : 'Login linked to this group profile.',
+      });
+    } catch (e) {
+      const status = e.status || 500;
+      const messages = {
+        organiser_not_found: 'Group profile not found.',
+        organiser_missing_email: 'Add an email to this group before creating a login.',
+      };
+      return json(res, status, {
+        ok: false,
+        error: e.message || 'provision_failed',
+        message: messages[e.message] || e.message || 'Could not create login.',
+      });
+    }
+  }
+
+  if (body.action === 'set_emails_enabled') {
+    const organiserId = String(body.id || body.organiserId || body.organiser_id || '').trim();
+    const userId = String(body.userId || body.user_id || '').trim();
+    const enabled = Boolean(body.emails_enabled ?? body.emailsEnabled);
+
+    try {
+      let targetUserId = userId;
+      if (!targetUserId && organiserId) {
+        const sb = getSupabaseAdmin();
+        const { data: organiser } = await sb
+          .from('organisers')
+          .select('supabase_user_id, email, contact_email')
+          .eq('id', organiserId)
+          .maybeSingle();
+        targetUserId = organiser?.supabase_user_id || '';
+        if (!targetUserId) {
+          const em = String(organiser?.contact_email || organiser?.email || '')
+            .trim()
+            .toLowerCase();
+          if (em) {
+            const user = await sbAuth.findUserByEmail(em);
+            targetUserId = user?.id || '';
+          }
+        }
+      }
+
+      if (!targetUserId) {
+        return json(res, 400, {
+          ok: false,
+          error: 'no_login',
+          message: 'Create a login for this group first.',
+        });
+      }
+
+      const hub = await sbAuth.setEmailsEnabled(targetUserId, enabled);
+      return json(res, 200, {
+        ok: true,
+        userId: hub.user_id,
+        emails_enabled: hub.emails_enabled,
+        message: enabled ? 'Emails enabled for this account.' : 'Emails blocked for this account.',
+      });
+    } catch (e) {
+      const status = e.status || 500;
+      return json(res, status, {
+        ok: false,
+        error: e.message || 'update_failed',
+        message: e.message || 'Could not update email setting.',
+      });
     }
   }
 

@@ -7,7 +7,7 @@ const {
   normalizeRole,
   appendSystemLog,
 } = require('../auth');
-const { useSupabase } = require('../supabase');
+const { useSupabase, getSupabaseAdmin } = require('../supabase');
 const sbAuth = require('../supabase-auth');
 
 module.exports = async function handler(req, res) {
@@ -36,11 +36,49 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  const email = String(body.email || '')
+  let email = String(body.email || '')
     .trim()
     .toLowerCase();
+  const organiserId = String(body.organiserId || body.organiser_id || '').trim();
+
+  if (organiserId && useSupabase()) {
+    try {
+      const sb = getSupabaseAdmin();
+      const { data: organiser, error: orgErr } = await sb
+        .from('organisers')
+        .select('id, name, email, contact_email, supabase_user_id')
+        .eq('id', organiserId)
+        .maybeSingle();
+      if (orgErr) throw new Error(orgErr.message);
+      if (!organiser) {
+        return json(res, 404, {
+          error: 'organiser_not_found',
+          message: 'Group profile not found.',
+        });
+      }
+
+      if (body.provision !== false) {
+        await sbAuth.provisionOrganiserLogin(organiserId);
+      }
+
+      email = String(organiser.contact_email || organiser.email || email || '')
+        .trim()
+        .toLowerCase();
+    } catch (e) {
+      return json(res, e.status || 500, {
+        error: 'organiser_lookup_failed',
+        message: e.message || 'Could not prepare group login.',
+      });
+    }
+  }
+
   if (!email) {
-    return json(res, 400, { error: 'missing_email', message: 'Enter a user email address.' });
+    return json(res, 400, {
+      error: 'missing_email',
+      message: organiserId
+        ? 'This group has no email address. Add one in the profile first.'
+        : 'Enter a user email address.',
+    });
   }
 
   if (email === String(session.email || '').toLowerCase()) {

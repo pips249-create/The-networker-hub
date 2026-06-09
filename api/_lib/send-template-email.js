@@ -1,4 +1,5 @@
 const { getEmailTemplateBySlug } = require('./supabase-email-templates');
+const { getEmailsEnabledForEmail } = require('./supabase-auth');
 
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
@@ -90,7 +91,16 @@ async function sendViaResend({ to, subject, html }) {
  * @param {string} opts.to - recipient email
  * @param {object} [opts.variables] - e.g. { user_name, event_name, amount_paid }
  */
-async function sendTemplatedEmail({ slug, to, variables }) {
+async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck }) {
+  if (!skipEmailCheck) {
+    const allowed = await getEmailsEnabledForEmail(to);
+    if (!allowed) {
+      const err = new Error('emails_disabled');
+      err.code = 'emails_disabled';
+      throw err;
+    }
+  }
+
   const built = await buildEmailFromTemplate(slug, variables);
   const result = await sendViaResend({
     to,

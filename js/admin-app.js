@@ -2209,6 +2209,9 @@
       '</dd></div>' +
       '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Featured organiser</dt><dd class="font-medium text-right">' +
       (u.featured ? 'Yes' : 'No') +
+      '</dd></div>' +
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Emails</dt><dd class="font-medium text-right">' +
+      (u.emailsEnabled === false ? 'Blocked' : 'Enabled') +
       '</dd></div></dl>' +
       (u.organiserId
         ? '<label class="flex items-center gap-2 text-sm mt-4 pt-4 border-t border-slate-100">' +
@@ -2218,7 +2221,11 @@
         : '<p class="text-xs text-slate-500 border-t border-slate-100 pt-4">No organiser profile — featured status applies to group profiles only.</p>') +
       (u.role !== 'Admin'
         ? '<div class="border-t border-slate-100 pt-4 mt-4 space-y-2">' +
-          '<p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Password support</p>' +
+          '<p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Email delivery</p>' +
+          '<button type="button" class="w-full rounded-lg border border-slate-200 text-slate-800 py-2 text-sm font-semibold hover:bg-slate-50" id="drawer-toggle-emails">' +
+          (u.emailsEnabled === false ? 'Enable emails for this user' : 'Block emails for this user') +
+          '</button>' +
+          '<p class="text-xs font-semibold text-slate-500 uppercase tracking-wide pt-2">Password support</p>' +
           '<button type="button" class="w-full rounded-lg border border-slate-200 text-slate-800 py-2 text-sm font-semibold hover:bg-slate-50" id="drawer-reset-link">Generate reset link</button>' +
           '<button type="button" class="w-full rounded-lg border border-slate-200 text-slate-800 py-2 text-sm font-semibold hover:bg-slate-50" id="drawer-temp-password">Set temporary password</button>' +
           '<p class="text-xs text-slate-500 hidden" id="drawer-password-result"></p></div>'
@@ -2296,10 +2303,47 @@
           });
       });
     }
+    var emailsBtn = document.getElementById('drawer-toggle-emails');
+    if (emailsBtn) {
+      emailsBtn.addEventListener('click', function () {
+        var enable = u.emailsEnabled === false;
+        if (
+          !enable &&
+          !window.confirm('Block emails for ' + u.email + '? They will not receive transactional mail until you enable it again.')
+        ) {
+          return;
+        }
+        emailsBtn.disabled = true;
+        adminPost('/api/admin/users', {
+          action: 'set_emails_enabled',
+          userId: u.id,
+          email: u.email,
+          emails_enabled: enable,
+        })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
+            u.emailsEnabled = enable;
+            var idx = liveUsers.findIndex(function (x) {
+              return x.id === u.id;
+            });
+            if (idx >= 0) liveUsers[idx].emailsEnabled = enable;
+            openUserDrawer(u);
+          })
+          .catch(function (err) {
+            window.alert(err.message || 'Could not update email setting.');
+          })
+          .finally(function () {
+            emailsBtn.disabled = false;
+          });
+      });
+    }
     var impersonateBtn = document.getElementById('drawer-impersonate');
     if (impersonateBtn) {
       impersonateBtn.addEventListener('click', function () {
-        adminPost('/api/admin/impersonate', { email: u.email, view: 'account' }).then(function (data) {
+        adminPost('/api/admin/impersonate', {
+          email: u.email,
+          view: u.role === 'Organiser' ? 'organiser' : 'account',
+        }).then(function (data) {
           if (!data.ok) {
             alert(data.message || data.error || 'Could not impersonate user.');
             return;
@@ -3873,6 +3917,78 @@
       });
   }
 
+  function provisionGroupLogin(organiserId, btn) {
+    if (btn) btn.disabled = true;
+    return adminPost('/api/admin/organisers', { action: 'provision_user', id: organiserId })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Could not create login');
+        groupCleanupState.offset = 0;
+        return fetchGroupCleanup(false);
+      })
+      .then(function (listData) {
+        renderGroupCleanupList(listData);
+        bindAdminLogoZones(main);
+        attachGroupLoadMore();
+        updateGroupBulkBar();
+      })
+      .catch(function (err) {
+        window.alert(err.message || 'Could not create login');
+      })
+      .finally(function () {
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function impersonateOrganiserGroup(organiserId, email) {
+    adminPost('/api/admin/impersonate', {
+      organiserId: organiserId,
+      email: email || '',
+      view: 'organiser',
+      provision: true,
+    })
+      .then(function (data) {
+        if (!data.ok) {
+          window.alert(data.message || data.error || 'Could not impersonate group.');
+          return;
+        }
+        try {
+          sessionStorage.removeItem('hub_nav_session_v1');
+        } catch (e) {
+          /* ignore */
+        }
+        window.location.href = '../' + String(data.redirect || 'organiser/index.html').replace(/^\//, '');
+      })
+      .catch(function () {
+        window.alert('Request failed. Try again.');
+      });
+  }
+
+  function setGroupEmailsEnabled(organiserId, enabled, btn) {
+    if (btn) btn.disabled = true;
+    adminPost('/api/admin/organisers', {
+      action: 'set_emails_enabled',
+      id: organiserId,
+      emails_enabled: enabled,
+    })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Could not update emails');
+        groupCleanupState.offset = 0;
+        return fetchGroupCleanup(false);
+      })
+      .then(function (listData) {
+        renderGroupCleanupList(listData);
+        bindAdminLogoZones(main);
+        attachGroupLoadMore();
+        updateGroupBulkBar();
+      })
+      .catch(function (err) {
+        window.alert(err.message || 'Could not update email setting');
+      })
+      .finally(function () {
+        if (btn) btn.disabled = false;
+      });
+  }
+
   function mergeSelectedGroups() {
     var ids = getSelectedGroupIds();
     var primarySelect = document.getElementById('group-merge-primary');
@@ -4153,6 +4269,35 @@
         updateGroupBulkBar();
       }
       if (e.target.id === 'group-merge-btn') mergeSelectedGroups();
+      var provisionBtn = e.target.closest('[data-provision-group-login]');
+      if (provisionBtn) {
+        provisionGroupLogin(provisionBtn.getAttribute('data-provision-group-login'), provisionBtn);
+        return;
+      }
+      var impersonateGroupBtn = e.target.closest('[data-impersonate-group]');
+      if (impersonateGroupBtn) {
+        impersonateOrganiserGroup(
+          impersonateGroupBtn.getAttribute('data-impersonate-group'),
+          impersonateGroupBtn.getAttribute('data-group-email')
+        );
+        return;
+      }
+      var enableEmailsBtn = e.target.closest('[data-enable-group-emails]');
+      if (enableEmailsBtn) {
+        setGroupEmailsEnabled(enableEmailsBtn.getAttribute('data-enable-group-emails'), true, enableEmailsBtn);
+        return;
+      }
+      var disableEmailsBtn = e.target.closest('[data-disable-group-emails]');
+      if (disableEmailsBtn) {
+        if (
+          !window.confirm(
+            'Block emails for this group? They will not receive invites, reminders, or password-reset emails until you enable them again.'
+          )
+        ) {
+          return;
+        }
+        setGroupEmailsEnabled(disableEmailsBtn.getAttribute('data-disable-group-emails'), false, disableEmailsBtn);
+      }
     });
   }
 
@@ -4324,6 +4469,11 @@
           var missingHtml =
             (o.missing || []).map(missingBadge).join('') ||
             '<span class="text-xs text-emerald-700">Complete</span>';
+          var loginBadge = !o.has_login
+            ? '<span class="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">No login</span>'
+            : o.emails_enabled === false
+              ? '<span class="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">Emails off</span>'
+              : '<span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">Login ready</span>';
           var checked = groupCleanupState.selected[o.id] ? ' checked' : '';
           return (
             '<article class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden" data-organiser-id-row="' +
@@ -4344,6 +4494,7 @@
             esc(o.name || 'Untitled') +
             '</h3>' +
             listingStatusBadge(o.listing_status) +
+            loginBadge +
             '</div>' +
             '<p class="text-xs text-slate-500 mt-1">' +
             (o.email ? esc(o.email) + ' · ' : '') +
@@ -4358,6 +4509,27 @@
               ? '<a href="' +
                 attrEsc(publicHref) +
                 '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View public</a>'
+              : '') +
+            (!o.has_login && o.email
+              ? '<button type="button" data-provision-group-login="' +
+                attrEsc(o.id) +
+                '" class="text-xs font-semibold rounded-lg border border-brand-200 text-brand-800 px-3 py-1.5 hover:bg-brand-50">Create login</button>'
+              : '') +
+            (o.email || o.has_login
+              ? '<button type="button" data-impersonate-group="' +
+                attrEsc(o.id) +
+                '" data-group-email="' +
+                attrEsc(o.email || '') +
+                '" class="text-xs font-semibold rounded-lg border border-brand-700 text-brand-700 px-3 py-1.5 hover:bg-brand-50">Impersonate</button>'
+              : '') +
+            (o.has_login
+              ? o.emails_enabled === false
+                ? '<button type="button" data-enable-group-emails="' +
+                  attrEsc(o.id) +
+                  '" class="text-xs font-semibold rounded-lg border border-emerald-200 text-emerald-800 px-3 py-1.5 hover:bg-emerald-50">Enable emails</button>'
+                : '<button type="button" data-disable-group-emails="' +
+                  attrEsc(o.id) +
+                  '" class="text-xs font-semibold rounded-lg border border-slate-200 text-slate-700 px-3 py-1.5 hover:bg-slate-50">Block emails</button>'
               : '') +
             '<button type="button" data-toggle-group-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-3 py-1.5 hover:bg-brand-900">Edit profile</button>' +
             '</div></div>' +
@@ -4845,8 +5017,8 @@
       '</select></div>' +
       adminTableScroll(
         '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
-          '<tr><th class="px-4 py-3 text-left">Name</th><th class="px-4 py-3 text-left">Email</th><th class="px-4 py-3">Role</th><th class="px-4 py-3">Featured</th><th class="px-4 py-3"></th></tr></thead>' +
-          '<tbody id="users-page-tbody"><tr><td colspan="5" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+          '<tr><th class="px-4 py-3 text-left">Name</th><th class="px-4 py-3 text-left">Email</th><th class="px-4 py-3">Role</th><th class="px-4 py-3">Emails</th><th class="px-4 py-3">Featured</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="users-page-tbody"><tr><td colspan="6" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
       ) +
       '</div>';
 
@@ -4864,7 +5036,7 @@
       });
       if (!tbody) return;
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-slate-500">No matching accounts.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No matching accounts.</td></tr>';
         return;
       }
       tbody.innerHTML = rows
@@ -4879,6 +5051,11 @@
             '</td>' +
             '<td class="px-4 py-3 text-center">' +
             esc(u.role) +
+            '</td>' +
+            '<td class="px-4 py-3 text-center text-xs">' +
+            (u.emailsEnabled === false
+              ? '<span class="text-slate-500">Blocked</span>'
+              : '<span class="text-emerald-700">On</span>') +
             '</td>' +
             '<td class="px-4 py-3 text-center">' +
             (u.organiserId

@@ -276,7 +276,7 @@ async function fetchActivity(sb) {
 
 async function fetchUsers(sb) {
   const [accountsRes, attendeesRes, organisersRes, authRes] = await Promise.all([
-    sb.from('hub_accounts').select('user_id, role, display_name, hub_view'),
+    sb.from('hub_accounts').select('user_id, role, display_name, hub_view, emails_enabled'),
     sb.from('attendees').select('supabase_user_id, name, email, location'),
     sb.from('organisers').select('supabase_user_id, name, email, city, featured, listing_status'),
     sb.auth.admin.listUsers({ perPage: 1000 }),
@@ -315,6 +315,7 @@ async function fetchUsers(sb) {
       postcode: '—',
       status: 'Active',
       featured: Boolean(org?.featured),
+      emailsEnabled: acc.emails_enabled !== false,
     });
     seen.add(acc.user_id);
   }

@@ -25,6 +25,42 @@ async function getHubAccount(userId) {
   return data;
 }
 
+async function getEmailsEnabledForEmail(email) {
+  const em = String(email || '').trim().toLowerCase();
+  if (!em) return true;
+
+  const user = await findUserByEmail(em);
+  if (!user) return true;
+
+  const hub = await getHubAccount(user.id);
+  if (!hub) return true;
+  return hub.emails_enabled !== false;
+}
+
+async function setEmailsEnabled(userId, enabled) {
+  const sb = getSupabaseAdmin();
+  const uid = String(userId || '').trim();
+  if (!uid) {
+    const err = new Error('missing_user');
+    err.status = 400;
+    throw err;
+  }
+
+  const { data, error } = await sb
+    .from('hub_accounts')
+    .update({ emails_enabled: Boolean(enabled) })
+    .eq('user_id', uid)
+    .select('user_id, emails_enabled')
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) {
+    const err = new Error('hub_account_not_found');
+    err.status = 404;
+    throw err;
+  }
+  return data;
+}
+
 async function findUserByEmail(email) {
   const em = String(email || '').trim().toLowerCase();
   if (!em) return null;
@@ -117,6 +153,7 @@ async function registerUser({ email, password, name }) {
       role: USER_ROLES.CLIENT,
       hub_view: 'attendee',
       display_name: name || null,
+      emails_enabled: true,
     },
     { onConflict: 'user_id' }
   );
@@ -227,6 +264,121 @@ async function importAttendeeRow({ email, name }) {
  * Optional: create login without sending mail (same as migrate.js).
  * Set IMPORT_DEFAULT_PASSWORD in env for a shared temp password.
  */
+/**
+ * Create a site login for an organiser group profile (no emails sent).
+ * Links auth user, hub account (emails off), attendee row, and organiser profile.
+ */
+async function provisionOrganiserLogin(organiserId) {
+  const sb = getSupabaseAdmin();
+  const oid = String(organiserId || '').trim();
+  if (!oid) {
+    const err = new Error('missing_organiser_id');
+    err.status = 400;
+    throw err;
+  }
+
+  const { data: organiser, error: orgErr } = await sb
+    .from('organisers')
+    .select('*')
+    .eq('id', oid)
+    .maybeSingle();
+  if (orgErr) throw new Error(orgErr.message);
+  if (!organiser) {
+    const err = new Error('organiser_not_found');
+    err.status = 404;
+    throw err;
+  }
+
+  const em = String(organiser.contact_email || organiser.email || '')
+    .trim()
+    .toLowerCase();
+  if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+    const err = new Error('organiser_missing_email');
+    err.status = 400;
+    throw err;
+  }
+
+  const name = String(organiser.name || '').trim();
+  let userId = organiser.supabase_user_id || null;
+  let createdAuth = false;
+
+  if (!userId) {
+    const existing = await findUserByEmail(em);
+    if (existing) {
+      userId = existing.id;
+    } else {
+      const created = await createUserSilent({
+        email: em,
+        name,
+        metadata: { full_name: name, provisioned_organiser_id: oid },
+      });
+      userId = created.id;
+      createdAuth = !created.existed;
+    }
+  }
+
+  const hubPatch = {
+    user_id: userId,
+    role: USER_ROLES.CLIENT,
+    hub_view: 'organiser',
+    display_name: name || null,
+  };
+  if (createdAuth) {
+    hubPatch.emails_enabled = false;
+  } else {
+    const existingHub = await getHubAccount(userId);
+    if (!existingHub) hubPatch.emails_enabled = false;
+  }
+
+  await sb.from('hub_accounts').upsert(hubPatch, { onConflict: 'user_id' });
+
+  await sb.from('attendees').upsert(
+    { email: em, name: name || null, supabase_user_id: userId },
+    { onConflict: 'email' }
+  );
+
+  const organiserPatch = { supabase_user_id: userId };
+  if (!organiser.organiser_account_id) {
+    let account = null;
+    const { data: byUser } = await sb
+      .from('organiser_accounts')
+      .select('*')
+      .eq('supabase_user_id', userId)
+      .maybeSingle();
+    account = byUser;
+    if (!account) {
+      const { data: byEmail } = await sb.from('organiser_accounts').select('*').eq('email', em).maybeSingle();
+      account = byEmail;
+    }
+    if (!account) {
+      const { data: createdAccount, error: accErr } = await sb
+        .from('organiser_accounts')
+        .insert({ email: em, supabase_user_id: userId })
+        .select('*')
+        .single();
+      if (accErr) throw new Error(accErr.message);
+      account = createdAccount;
+    } else if (!account.supabase_user_id) {
+      await sb.from('organiser_accounts').update({ supabase_user_id: userId }).eq('id', account.id);
+    }
+    organiserPatch.organiser_account_id = account.id;
+  }
+
+  const { error: linkErr } = await sb.from('organisers').update(organiserPatch).eq('id', oid);
+  if (linkErr) throw new Error(linkErr.message);
+
+  const hub = await getHubAccount(userId);
+
+  return {
+    userId,
+    email: em,
+    name,
+    organiserId: oid,
+    createdAuth,
+    emailsEnabled: hub?.emails_enabled !== false,
+  };
+}
+
 async function importAuthUserSilent({ email, name, role }) {
   const password = process.env.IMPORT_DEFAULT_PASSWORD || process.env.ADMIN_INITIAL_PASSWORD;
   if (!password || password.length < 8) {
@@ -262,10 +414,14 @@ module.exports = {
   authEmailsEnabled,
   useSupabaseAuth,
   findUserByEmail,
+  getHubAccount,
+  getEmailsEnabledForEmail,
+  setEmailsEnabled,
   verifyLogin,
   createUserSilent,
   registerUser,
   ensureAdminUser,
+  provisionOrganiserLogin,
   countOrganiserProfiles,
   backfillAttendeeUserId,
   importAttendeeRow,

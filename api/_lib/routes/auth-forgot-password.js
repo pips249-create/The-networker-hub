@@ -34,6 +34,21 @@ async function handleSupabaseForgot(email) {
     };
   }
 
+  const emailsAllowed = await sbAuth.getEmailsEnabledForEmail(email);
+  if (!emailsAllowed) {
+    return {
+      status: 200,
+      body: {
+        ok: true,
+        emailSent: false,
+        accountFound: true,
+        emailsDisabled: true,
+        message:
+          'This account is not set up to receive emails yet. Ask your admin to enable emails, or use a password set by your admin.',
+      },
+    };
+  }
+
   if (sbAuth.authEmailsEnabled()) {
     const { getSupabaseAdmin } = require('../supabase');
     const sb = getSupabaseAdmin();

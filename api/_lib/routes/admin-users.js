@@ -153,6 +153,30 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    if (action === 'set_emails_enabled') {
+      const enabled = Boolean(body.emails_enabled ?? body.emailsEnabled);
+      try {
+        let targetId = userId;
+        if (!targetId && email) {
+          const user = await sbAuth.findUserByEmail(email);
+          if (!user) {
+            return json(res, 404, { ok: false, error: 'user_not_found', message: 'No account for this email.' });
+          }
+          targetId = user.id;
+        }
+        if (!targetId) return json(res, 400, { ok: false, error: 'missing_user' });
+
+        const hub = await sbAuth.setEmailsEnabled(targetId, enabled);
+        return json(res, 200, {
+          ok: true,
+          emails_enabled: hub.emails_enabled,
+          message: enabled ? 'Emails enabled for this user.' : 'Emails blocked for this user.',
+        });
+      } catch (e) {
+        return json(res, e.status || 500, { ok: false, error: 'update_failed', message: e.message });
+      }
+    }
+
     if (action === 'generate_temp_password') {
       try {
         let targetId = userId;

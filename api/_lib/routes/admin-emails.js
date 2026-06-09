@@ -117,6 +117,7 @@ module.exports = async function handler(req, res) {
           slug,
           to,
           variables: body.variables || {},
+          skipEmailCheck: true,
         });
         return json(res, 200, { ok: true, sent: true, ...result });
       } catch (e) {
