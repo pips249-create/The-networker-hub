@@ -187,4 +187,6 @@
     attachTrigger: attachTrigger,
     open: openModal,
   };
+
+  injectStyles();
 })(window);

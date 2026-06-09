@@ -205,6 +205,24 @@
   text-decoration: underline;
 }
 
+.org-series-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--od-purple-dark);
+  background: rgba(107, 70, 193, 0.12);
+  vertical-align: middle;
+}
+
+.org-table-loading {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--od-muted, #666);
+}
+
 .org-action-menu-header {
   padding: 8px 14px 6px;
   font-size: 10px;

@@ -737,6 +737,148 @@ a:hover {
   }
 }
 
+/* ---- Recurring date picker (ticket panel) ---- */
+.ev-series-dates {
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ev-series-dates-title {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--purple-dark);
+}
+
+.ev-series-dates-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+
+.ev-calendar {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: var(--purple-50);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.ev-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ev-cal-header button {
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--purple-dark);
+}
+
+.ev-cal-header button:hover {
+  background: var(--purple-100);
+}
+
+.ev-cal-month {
+  flex: 1;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--purple-dark);
+}
+
+.ev-cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.ev-cal-weekdays span {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ink-soft);
+  padding: 4px 0;
+}
+
+.ev-cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  min-height: 200px;
+}
+
+.ev-cal-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 36px;
+  aspect-ratio: 1;
+  max-height: 44px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  box-sizing: border-box;
+}
+
+.ev-cal-day.is-other {
+  opacity: 0.35;
+}
+
+.ev-cal-day.is-available {
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  border: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.ev-cal-day.is-available:hover {
+  background: var(--purple-100);
+  border-color: var(--border-strong);
+}
+
+.ev-cal-day.is-available.is-sold-out {
+  opacity: 0.65;
+}
+
+.ev-cal-day.is-selected {
+  background: var(--purple-700);
+  color: #fff;
+  border-color: var(--purple-700);
+}
+
+.ev-cal-day.is-past:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.ev-series-selected {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--purple-dark);
+}
+
 /* ---- Ticket panel ---- */
 .ticket-panel {
   position: sticky;
@@ -1065,17 +1207,38 @@ a:hover {
 }
 
 .ticket-panel.show-application #ticket-purchase-view,
-.ticket-panel.show-application #buy-btn {
+.ticket-panel.show-application #buy-btn,
+.ticket-panel.show-checkout #ticket-purchase-view,
+.ticket-panel.show-checkout #buy-btn {
   display: none;
 }
 
-.ticket-panel.show-application .seat-application-form {
+.ticket-panel.show-application .seat-application-form,
+.ticket-panel.show-checkout .checkout-details-form {
   display: block;
 }
 
-.seat-application-form {
+.seat-application-form,
+.checkout-details-form {
   display: none;
   margin-bottom: 16px;
+}
+
+.checkout-details-intro {
+  font-size: 14px;
+  color: var(--ink-muted);
+  line-height: 1.55;
+  margin: 0 0 16px;
+}
+
+.checkout-details-summary {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(91, 47, 153, 0.06);
 }
 
 .seat-application-intro {
@@ -1381,8 +1544,9 @@ a:hover {
 }
 
 .refund-badge.is-none {
-  background: #fdf0ef;
-  color: #a93226;
+  background: rgba(91, 47, 153, 0.06);
+  color: var(--ink-soft);
+  font-weight: 500;
 }
 
 .refund-badge.is-custom {

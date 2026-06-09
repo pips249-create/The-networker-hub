@@ -8,6 +8,12 @@
   const BOOKING_FEE_PER_TICKET = 0.2;
 
   let currentEvent = null;
+  let seriesDatesList = [];
+  let seriesBaseEvent = null;
+  let selectedSeriesEventId = null;
+  let seriesCalMonth = new Date().getMonth();
+  let seriesCalYear = new Date().getFullYear();
+  let ticketPanelSetEvent = null;
 
   const MOCK_ORGANISER_REVIEWS = [
     {
@@ -413,6 +419,208 @@
     }
   }
 
+  function pad2(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  function dateKeyFromParts(y, m, d) {
+    return y + '-' + pad2(m + 1) + '-' + pad2(d);
+  }
+
+  function dateKeyFromIso(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return dateKeyFromParts(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  function mergeSeriesDateEntry(baseEv, entry) {
+    return Object.assign({}, baseEv, entry, {
+      tickets: entry.tickets || baseEv.tickets,
+    });
+  }
+
+  function updateEventDateMeta(ev) {
+    const dateLabel =
+      ev.date ||
+      (ev.dateFieldRaw
+        ? new Date(ev.dateFieldRaw).toLocaleDateString('en-GB', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })
+        : '');
+    setText('ev-meta-starts', dateLabel || 'Date to be confirmed');
+    const timeRow = document.getElementById('ev-meta-time-row');
+    if (ev.time) {
+      setText('ev-meta-time', ev.time);
+      if (timeRow) timeRow.style.display = '';
+    } else if (timeRow) timeRow.style.display = 'none';
+  }
+
+  function formatSeriesSelectedLine(entry) {
+    const parts = [entry.date, entry.time].filter(Boolean);
+    let line = parts.join(' · ');
+    if (entry.isSoldOut) line += ' · Sold out';
+    return line;
+  }
+
+  function seriesDatesByKey() {
+    const map = new Map();
+    seriesDatesList.forEach((entry) => {
+      const key = dateKeyFromIso(entry.dateRaw || entry.dateFieldRaw);
+      if (key) map.set(key, entry);
+    });
+    return map;
+  }
+
+  function renderSeriesCalendar() {
+    const grid = document.getElementById('ev-cal-days');
+    const label = document.getElementById('ev-cal-month-label');
+    if (!grid) return;
+
+    const datesMap = seriesDatesByKey();
+    const first = new Date(seriesCalYear, seriesCalMonth, 1);
+    if (label) {
+      label.textContent = first.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    }
+
+    const startDow = (first.getDay() + 6) % 7;
+    const daysInMonth = new Date(seriesCalYear, seriesCalMonth + 1, 0).getDate();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    grid.innerHTML = '';
+    const prevMonthDays = new Date(seriesCalYear, seriesCalMonth, 0).getDate();
+
+    for (let i = 0; i < startDow; i++) {
+      const day = prevMonthDays - startDow + i + 1;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'ev-cal-day is-other';
+      btn.textContent = String(day);
+      btn.disabled = true;
+      btn.tabIndex = -1;
+      grid.appendChild(btn);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = dateKeyFromParts(seriesCalYear, seriesCalMonth, d);
+      const entry = datesMap.get(key);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'ev-cal-day';
+      btn.textContent = String(d);
+      const cellDate = new Date(seriesCalYear, seriesCalMonth, d);
+
+      if (entry) {
+        btn.classList.add('is-available');
+        if (entry.isSoldOut) btn.classList.add('is-sold-out');
+        if (entry.id === selectedSeriesEventId) btn.classList.add('is-selected');
+        btn.setAttribute('aria-label', formatSeriesSelectedLine(entry));
+        if (cellDate < today) {
+          btn.classList.add('is-past');
+          btn.disabled = true;
+        } else {
+          btn.addEventListener('click', () => selectSeriesDate(entry));
+        }
+      } else if (cellDate < today) {
+        btn.classList.add('is-past');
+        btn.disabled = true;
+      }
+
+      grid.appendChild(btn);
+    }
+
+    const totalCells = startDow + daysInMonth;
+    const trailing = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    for (let i = 1; i <= trailing; i++) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'ev-cal-day is-other';
+      btn.textContent = String(i);
+      btn.disabled = true;
+      btn.tabIndex = -1;
+      grid.appendChild(btn);
+    }
+  }
+
+  function selectSeriesDate(entry) {
+    if (!entry || !seriesBaseEvent) return;
+    selectedSeriesEventId = entry.id;
+    const merged = mergeSeriesDateEntry(seriesBaseEvent, entry);
+    currentEvent = merged;
+    updateEventDateMeta(merged);
+    const selectedEl = document.getElementById('ev-series-selected');
+    if (selectedEl) selectedEl.textContent = 'Selected: ' + formatSeriesSelectedLine(entry);
+    renderSeriesCalendar();
+    if (ticketPanelSetEvent) ticketPanelSetEvent(merged);
+  }
+
+  function initSeriesDatePicker(initialEv) {
+    const wrap = document.getElementById('ev-series-dates');
+    if (!wrap || seriesDatesList.length <= 1) {
+      if (wrap) wrap.hidden = true;
+      return;
+    }
+
+    wrap.hidden = false;
+
+    const now = Date.now() - 86400000;
+    const upcoming = seriesDatesList.find((item) => {
+      const ts =
+        item.dateTs != null
+          ? Number(item.dateTs)
+          : item.dateRaw
+            ? new Date(item.dateRaw).getTime()
+            : 0;
+      return ts >= now;
+    });
+    const initialEntry =
+      seriesDatesList.find((item) => item.id === initialEv.id) || upcoming || seriesDatesList[0];
+
+    if (initialEntry && initialEntry.dateRaw) {
+      const d = new Date(initialEntry.dateRaw);
+      if (!Number.isNaN(d.getTime())) {
+        seriesCalMonth = d.getMonth();
+        seriesCalYear = d.getFullYear();
+      }
+    }
+
+    if (!wrap.dataset.bound) {
+      wrap.dataset.bound = '1';
+      document.getElementById('ev-cal-prev')?.addEventListener('click', () => {
+        seriesCalMonth -= 1;
+        if (seriesCalMonth < 0) {
+          seriesCalMonth = 11;
+          seriesCalYear -= 1;
+        }
+        renderSeriesCalendar();
+      });
+      document.getElementById('ev-cal-next')?.addEventListener('click', () => {
+        seriesCalMonth += 1;
+        if (seriesCalMonth > 11) {
+          seriesCalMonth = 0;
+          seriesCalYear += 1;
+        }
+        renderSeriesCalendar();
+      });
+    }
+
+    if (initialEntry && initialEntry.id !== initialEv.id && ticketPanelSetEvent) {
+      selectSeriesDate(initialEntry);
+      return;
+    }
+
+    selectedSeriesEventId = initialEv.id;
+    renderSeriesCalendar();
+    const selectedEl = document.getElementById('ev-series-selected');
+    if (selectedEl && initialEntry) {
+      selectedEl.textContent = 'Selected: ' + formatSeriesSelectedLine(initialEntry);
+    }
+  }
+
   function populateFromEvent(ev) {
     currentEvent = ev;
     document.title = ev.title + ' – The Networker Hub';
@@ -448,22 +656,7 @@
       };
     }
 
-    const dateLabel =
-      ev.date ||
-      (ev.dateFieldRaw
-        ? new Date(ev.dateFieldRaw).toLocaleDateString('en-GB', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          })
-        : '');
-    setText('ev-meta-starts', dateLabel || 'Date to be confirmed');
-    const timeRow = document.getElementById('ev-meta-time-row');
-    if (ev.time) {
-      setText('ev-meta-time', ev.time);
-      if (timeRow) timeRow.style.display = '';
-    } else if (timeRow) timeRow.style.display = 'none';
+    updateEventDateMeta(ev);
 
     const cityLabel = ev.city || ev.outcode || ev.locationShort || 'Location TBC';
     setText('ev-meta-city', cityLabel);
@@ -526,9 +719,9 @@
       cls = 'is-partial';
       detailText = ev.refundPolicyDetails || ev.refund_policy_details || 'Partial refunds apply — see organiser terms.';
     } else if (policy === 'no_refunds') {
-      label = '✗ No refunds — all sales final';
+      label = 'All sales final — no refunds';
       cls = 'is-none';
-      detailText = 'All ticket sales are final. No refunds will be issued.';
+      detailText = 'Ticket sales are final for this event.';
     } else if (policy === 'custom') {
       label = 'ℹ Custom refund policy';
       cls = 'is-custom';
@@ -614,7 +807,7 @@
     }
   }
 
-  async function startPaidCheckout(ev, ticketId, qty) {
+  async function startPaidCheckout(ev, ticketId, qty, attendee) {
     saveBookingPending(ev, ticketId, qty);
     const res = await fetch('/api/auth/create-checkout', {
       method: 'POST',
@@ -624,6 +817,8 @@
         eventId: ev.id,
         ticketId: isUuid(ticketId) ? ticketId : null,
         qty: qty,
+        name: attendee?.name || '',
+        email: attendee?.email || '',
       }),
     });
     const data = await res.json().catch(function () {
@@ -641,7 +836,7 @@
     throw new Error((data && data.message) || (data && data.error) || 'checkout_failed');
   }
 
-  async function completeFreeBooking(ev, ticketId, qty) {
+  async function completeFreeBooking(ev, ticketId, qty, attendee) {
     const res = await fetch('/api/auth/complete-booking', {
       method: 'POST',
       credentials: 'include',
@@ -652,6 +847,8 @@
         qty: qty || 1,
         amountPaid: 0,
         paymentStatus: 'Free',
+        name: attendee?.name || '',
+        email: attendee?.email || '',
       }),
     });
     const data = await res.json().catch(function () {
@@ -911,7 +1108,57 @@
 
   function showSeatApplication(show) {
     const panel = document.getElementById('tickets');
-    if (panel) panel.classList.toggle('show-application', show);
+    if (panel) {
+      panel.classList.toggle('show-application', show);
+      if (show) panel.classList.remove('show-checkout');
+    }
+  }
+
+  function showCheckoutDetails(show) {
+    const panel = document.getElementById('tickets');
+    const form = document.getElementById('checkout-details-form');
+    if (panel) {
+      panel.classList.toggle('show-checkout', show);
+      if (show) panel.classList.remove('show-application');
+    }
+    if (form) form.hidden = !show;
+  }
+
+  async function prefillCheckoutDetails() {
+    const nameEl = document.getElementById('checkout-name');
+    const emailEl = document.getElementById('checkout-email');
+    if (!nameEl && !emailEl) return;
+    try {
+      const res = await fetch('/api/auth/session', { credentials: 'include' });
+      const data = await res.json();
+      if (!data.ok || !data.user) return;
+      if (nameEl && data.user.name && !nameEl.value.trim()) nameEl.value = data.user.name;
+      if (emailEl && data.user.email && !emailEl.value.trim()) emailEl.value = data.user.email;
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function readCheckoutDetails() {
+    const name = document.getElementById('checkout-name')?.value.trim() || '';
+    const email = document.getElementById('checkout-email')?.value.trim() || '';
+    if (!name) throw new Error('Please enter your full name.');
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new Error('Please enter a valid email address.');
+    }
+    return { name, email };
+  }
+
+  function updateCheckoutSummary(label, qty, total) {
+    const el = document.getElementById('checkout-order-summary');
+    const confirmBtn = document.getElementById('checkout-confirm-btn');
+    if (el) {
+      el.textContent =
+        (label || 'Ticket') + ' × ' + String(qty || 1) + ' — Total ' + fmt(total || 0);
+    }
+    if (confirmBtn) {
+      confirmBtn.textContent = total > 0 ? 'Continue to payment' : 'Confirm booking';
+    }
   }
 
   function applyTicketPanelState(ev) {
@@ -925,8 +1172,9 @@
     panel.dataset.soldOut = ev.isSoldOut ? 'true' : 'false';
     panel.dataset.salesClosed = ev.isSalesClosed ? 'true' : 'false';
 
-    panel.classList.remove('is-unavailable', 'is-approval-mode', 'show-application');
+    panel.classList.remove('is-unavailable', 'is-approval-mode', 'show-application', 'show-checkout');
     showSeatApplication(false);
+    showCheckoutDetails(false);
 
     const unavailable = ev.isSoldOut || ev.isSalesClosed;
     if (unavailable) {
@@ -956,7 +1204,7 @@
       panel.classList.add('is-approval-mode');
       buy.textContent = 'Apply for a Seat';
     } else {
-      buy.textContent = 'Buy ticket';
+      buy.textContent = ev.priceKey === 'free' ? 'Get free ticket' : 'Buy ticket';
     }
   }
 
@@ -1287,6 +1535,7 @@
     const sumQty = document.getElementById('sum-qty');
     const sumSubtotal = document.getElementById('sum-subtotal');
     const sumFee = document.getElementById('sum-fee');
+    const sumFeeRow = sumFee ? sumFee.closest('.summary-row') : null;
     const sumTotal = document.getElementById('sum-total');
     const qtyHint = document.getElementById('qty-avail-hint');
     if (!qtyDown) return;
@@ -1317,12 +1566,14 @@
     function update() {
       if (qty > maxQty) qty = maxQty;
       const subtotal = price * qty;
-      const fee = subtotal * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty;
+      const fee =
+        subtotal > 0 ? subtotal * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty : 0;
       const total = subtotal + fee;
       if (sumLabel) sumLabel.textContent = label;
       if (sumQty) sumQty.textContent = String(qty);
       if (sumSubtotal) sumSubtotal.textContent = fmt(subtotal);
       if (sumFee) sumFee.textContent = fmt(fee);
+      if (sumFeeRow) sumFeeRow.hidden = subtotal <= 0;
       if (sumTotal) sumTotal.textContent = fmt(total);
       if (qtyValue) qtyValue.textContent = String(qty);
       qtyDown.disabled = qty <= 1;
@@ -1402,12 +1653,95 @@
       });
     }
 
+    const checkoutForm = document.getElementById('checkout-details-form');
+    const checkoutBack = document.getElementById('checkout-back-btn');
+    const checkoutConfirm = document.getElementById('checkout-confirm-btn');
+
+    if (checkoutBack) {
+      checkoutBack.addEventListener('click', () => showCheckoutDetails(false));
+    }
+
+    async function processCheckoutBooking() {
+      const attendee = readCheckoutDetails();
+      update();
+      const tierEl = getSelectedTierEl();
+      const ticketId = tierEl ? tierEl.getAttribute('data-ticket-id') : null;
+      const tierPrice = tierEl ? parseFloat(tierEl.getAttribute('data-price')) || 0 : price;
+      const subtotal = tierPrice * qty;
+      const fee = subtotal > 0 ? subtotal * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty : 0;
+      const total = subtotal + fee;
+
+      if (tierPrice <= 0) {
+        if (checkoutConfirm) checkoutConfirm.disabled = true;
+        try {
+          await completeFreeBooking(currentEvent, ticketId, qty, attendee);
+        } catch (err) {
+          if (checkoutConfirm) checkoutConfirm.disabled = false;
+          window.alert(
+            err && err.message
+              ? err.message
+              : 'Could not complete your free booking. Please try again or contact support.'
+          );
+        }
+        return;
+      }
+
+      if (stripeHint) stripeHint.hidden = true;
+      if (checkoutConfirm) checkoutConfirm.disabled = true;
+      try {
+        const usedCheckoutApi = await startPaidCheckout(currentEvent, ticketId, qty, attendee);
+        if (usedCheckoutApi) return;
+
+        const checkoutUrl = buildStripeCheckoutUrl(currentEvent, tierEl, qty, label);
+        if (!checkoutUrl) {
+          showCheckoutDetails(false);
+          if (stripeHint) {
+            stripeHint.hidden = false;
+            stripeHint.focus();
+          }
+          return;
+        }
+        saveBookingPending(currentEvent, ticketId, qty);
+        window.location.assign(checkoutUrl);
+      } catch (err) {
+        window.alert(
+          err && err.message
+            ? err.message
+            : 'Could not start checkout. Please try again or contact support.'
+        );
+      } finally {
+        if (checkoutConfirm) checkoutConfirm.disabled = false;
+      }
+    }
+
+    if (checkoutForm) {
+      checkoutForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          readCheckoutDetails();
+        } catch (err) {
+          window.alert(err.message || 'Please check your details.');
+          return;
+        }
+
+        const runBooking = async () => {
+          await processCheckoutBooking();
+        };
+
+        if (window.FactLoader) {
+          await window.FactLoader.run(runBooking);
+        } else {
+          await runBooking();
+        }
+      });
+    }
+
     if (buy) {
       buy.addEventListener('click', async () => {
         if (buy.disabled) return;
-        if (!(await requireSignedInAttendee())) return;
 
-        if (ev.isApprovalRequired) {
+        if (currentEvent.isApprovalRequired) {
+          if (!(await requireSignedInAttendee())) return;
           showSeatApplication(true);
           const industry = document.getElementById('apply-industry');
           if (industry) industry.focus();
@@ -1416,51 +1750,38 @@
 
         update();
         const tierEl = getSelectedTierEl();
-        const ticketId = tierEl ? tierEl.getAttribute('data-ticket-id') : null;
         const tierPrice = tierEl ? parseFloat(tierEl.getAttribute('data-price')) || 0 : price;
+        const subtotal = tierPrice * qty;
+        const fee = subtotal > 0 ? subtotal * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty : 0;
+        const total = subtotal + fee;
 
-        if (tierPrice <= 0) {
-          buy.disabled = true;
-          try {
-            await completeFreeBooking(ev, ticketId, qty);
-          } catch (err) {
-            buy.disabled = false;
-            window.alert(
-              err && err.message
-                ? err.message
-                : 'Could not complete your free booking. Please try again or contact support.'
-            );
-          }
-          return;
-        }
-
-        if (stripeHint) stripeHint.hidden = true;
-        buy.disabled = true;
-        try {
-          const usedCheckoutApi = await startPaidCheckout(ev, ticketId, qty);
-          if (usedCheckoutApi) return;
-
-          const checkoutUrl = buildStripeCheckoutUrl(ev, tierEl, qty, label);
-          if (!checkoutUrl) {
-            if (stripeHint) {
-              stripeHint.hidden = false;
-              stripeHint.focus();
-            }
-            return;
-          }
-          saveBookingPending(ev, ticketId, qty);
-          window.location.assign(checkoutUrl);
-        } catch (err) {
-          window.alert(
-            err && err.message
-              ? err.message
-              : 'Could not start checkout. Please try again or contact support.'
-          );
-        } finally {
-          buy.disabled = false;
-        }
+        await prefillCheckoutDetails();
+        updateCheckoutSummary(label, qty, total);
+        showCheckoutDetails(true);
+        const nameInput = document.getElementById('checkout-name');
+        if (nameInput) nameInput.focus();
       });
     }
+
+    ticketPanelSetEvent = function (newEv) {
+      currentEvent = newEv;
+      currentEventDetail = newEv;
+      qty = 1;
+      price = newEv.priceKey === 'free' ? 0 : Number(newEv.priceNum) || 0;
+      label = 'Standard';
+      maxQty = 99;
+      renderTicketPanel(newEv);
+      applyTicketPanelState(newEv);
+      document.body.setAttribute('data-event-id', newEv.id);
+      showSeatApplication(false);
+      showCheckoutDetails(false);
+      const selectedTier =
+        document.querySelector('#ticket-tiers .tier.selected:not(.sold-out):not(.tier-disabled)') ||
+        document.querySelector('#ticket-tiers .tier:not(.sold-out):not(.tier-disabled)');
+      if (selectedTier) selectTier(selectedTier);
+      else update();
+      wireListingReport(newEv);
+    };
   }
 
   async function loadRelatedFallback(ev) {
@@ -1544,11 +1865,14 @@
         if (data.event) {
           const ev = normalizeEventFlags(data.event, params);
           currentEvent = ev;
+          seriesDatesList = data.seriesDates || [];
+          seriesBaseEvent = ev;
           populateFromEvent(ev);
           let related = data.related || [];
           if (!related.length) related = await loadRelatedFallback(ev);
           renderRelated(related);
           initTicketPanel(ev);
+          initSeriesDatePicker(ev);
           initContactHost(ev);
           initActions(ev);
           loadEventPageAds();

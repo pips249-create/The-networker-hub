@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627" />
     <link rel="stylesheet" href="../css/hub-loading.css" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260708" />
-    <link rel="stylesheet" href="../css/event-detail.css?v=20260708" />
+    <link rel="stylesheet" href="../css/event-detail.css?v=20260610b" />
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
@@ -249,6 +249,22 @@
           <div class="ticket-urgency" id="ev-urgency" hidden></div>
 
           <div id="ticket-purchase-view">
+          <div class="ev-series-dates" id="ev-series-dates" hidden>
+            <h3 class="ev-series-dates-title">Choose a date</h3>
+            <p class="ev-series-dates-hint">This event runs on multiple dates. Pick the one you want to attend.</p>
+            <div class="ev-calendar" id="ev-date-calendar">
+              <div class="ev-cal-header">
+                <button type="button" id="ev-cal-prev" aria-label="Previous month">‹</button>
+                <span class="ev-cal-month" id="ev-cal-month-label"></span>
+                <button type="button" id="ev-cal-next" aria-label="Next month">›</button>
+              </div>
+              <div class="ev-cal-weekdays" aria-hidden="true">
+                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+              </div>
+              <div class="ev-cal-days" id="ev-cal-days" aria-label="Choose an event date"></div>
+            </div>
+            <p class="ev-series-selected" id="ev-series-selected" aria-live="polite"></p>
+          </div>
           <div class="ticket-tiers" id="ticket-tiers">
             <p class="ticket-load-hint">Loading tickets…</p>
           </div>
@@ -301,6 +317,21 @@
             </label>
             <button type="submit" class="cta-btn" id="submit-application-btn">Submit Application</button>
             <button type="button" class="btn-text-back" id="application-back-btn">← Back to tickets</button>
+          </form>
+
+          <form class="checkout-details-form" id="checkout-details-form" hidden novalidate>
+            <p class="checkout-details-intro">Enter your details to complete your booking.</p>
+            <label class="form-field" for="checkout-name">
+              <span>Full name</span>
+              <input type="text" id="checkout-name" name="name" autocomplete="name" required />
+            </label>
+            <label class="form-field" for="checkout-email">
+              <span>Email address</span>
+              <input type="email" id="checkout-email" name="email" autocomplete="email" required />
+            </label>
+            <p class="checkout-details-summary" id="checkout-order-summary" aria-live="polite"></p>
+            <button type="submit" class="cta-btn" id="checkout-confirm-btn">Confirm booking</button>
+            <button type="button" class="btn-text-back" id="checkout-back-btn">← Back to tickets</button>
           </form>
 
           <button type="button" class="cta-btn" id="buy-btn">Buy ticket</button>
@@ -406,8 +437,8 @@
     <script src="../js/flexible-event-image.js?v=20260707"></script>
     <script src="../js/cms-sponsor-fields.js?v=20260609c"></script>
     <script src="../js/cms-ad-blocks.js?v=20260609e"></script>
-    <script src="../js/listing-report.js?v=20260719"></script>
-    <script src="../js/event-detail.js?v=20260609e"></script>
+    <script src="../js/listing-report.js?v=20260609"></script>
+    <script src="../js/event-detail.js?v=20260610b"></script>
   </body>
 </html>
 <!-- legacy inline removed

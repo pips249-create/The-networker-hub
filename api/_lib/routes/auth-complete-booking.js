@@ -25,7 +25,6 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
 
   const session = sessionFromRequest(req);
-  if (!session) return json(res, 401, { error: 'not_authenticated' });
 
   if (!isSupabaseConfigured()) {
     return json(res, 503, { ok: false, error: 'supabase_not_configured' });
@@ -33,15 +32,30 @@ module.exports = async function handler(req, res) {
 
   try {
     const body = parseBody(req);
+    const paymentStatus = String(body.paymentStatus || body.payment_status || '').trim();
+    const amountRaw = body.amountPaid ?? body.amount_paid;
+    const amountPaid = amountRaw != null ? Number(amountRaw) : null;
+
+    const email = String(body.email || session?.email || '')
+      .trim()
+      .toLowerCase();
+    const name = String(body.name || session?.name || '').trim();
+
+    if (!email) return json(res, 400, { ok: false, error: 'missing_email' });
+    if (!name) return json(res, 400, { ok: false, error: 'missing_name' });
+    if (!session && paymentStatus !== 'Free') {
+      return json(res, 401, { ok: false, error: 'not_authenticated' });
+    }
+
     const result = await createRegistrationFromPayment({
-      email: session.email,
-      name: session.name,
-      userId: session.sub,
+      email,
+      name,
+      userId: session?.sub || null,
       eventId: body.eventId || body.event_id,
       ticketId: body.ticketId || body.ticket_id,
       quantity: body.quantity ?? body.qty,
-      amountPaid: body.amountPaid ?? body.amount_paid,
-      paymentStatus: body.paymentStatus || body.payment_status || 'Paid',
+      amountPaid: Number.isFinite(amountPaid) ? amountPaid : 0,
+      paymentStatus: paymentStatus || (Number.isFinite(amountPaid) && amountPaid > 0 ? 'Paid' : 'Free'),
       stripePaymentIntentId: body.stripePaymentIntentId || body.stripe_payment_intent_id,
       stripeCheckoutSessionId: body.stripeCheckoutSessionId || body.stripe_checkout_session_id,
     });

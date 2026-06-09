@@ -334,6 +334,9 @@ function rowToEvent(row, organiser, ticketRows) {
     refundCutoffDays: row.refund_cutoff_days != null ? Number(row.refund_cutoff_days) : null,
     vatTreatment: row.vat_treatment || null,
     stripePaymentLink: String(row.stripe_payment_link || '').trim(),
+    recurrencePattern: row.recurrence_pattern || null,
+    recurrenceEndDate: row.recurrence_end_date || null,
+    seriesGroupId: row.series_group_id || null,
   };
 
   if (!ev.tickets.length) ev.tickets = [fallbackTicketTier(ev)];
@@ -352,6 +355,84 @@ function isPublicEvent(row, organiser) {
 function organiserMatch(a, b) {
   if (!a.organiserId || !b.organiserId) return a.organiser === b.organiser && a.organiser;
   return a.organiserId === b.organiserId;
+}
+
+function buildSeriesMatcher(sourceRow) {
+  if (!sourceRow) return null;
+  if (sourceRow.series_group_id) {
+    const seriesId = sourceRow.series_group_id;
+    return (row) => row.series_group_id === seriesId;
+  }
+
+  const title = String(sourceRow.title || '')
+    .trim()
+    .toLowerCase();
+  const organiserId = sourceRow.organiser_id || '';
+  const pattern = String(sourceRow.recurrence_pattern || '').trim();
+  const endDate = String(sourceRow.recurrence_end_date || '')
+    .trim()
+    .slice(0, 10);
+
+  if (pattern && endDate && title && organiserId) {
+    return (row) =>
+      String(row.title || '')
+        .trim()
+        .toLowerCase() === title &&
+      row.organiser_id === organiserId &&
+      String(row.recurrence_pattern || '').trim() === pattern &&
+      String(row.recurrence_end_date || '')
+        .trim()
+        .slice(0, 10) === endDate;
+  }
+
+  if (!title || !organiserId) return null;
+  return (row) =>
+    String(row.title || '')
+      .trim()
+      .toLowerCase() === title && row.organiser_id === organiserId;
+}
+
+function seriesDatePayload(ev) {
+  return {
+    id: ev.id,
+    slug: ev.slug,
+    dateRaw: ev.dateRaw,
+    endDateRaw: ev.endDateRaw,
+    date: ev.date,
+    time: ev.time,
+    dateTs: ev.dateTs,
+    isSoldOut: ev.isSoldOut,
+    isSalesClosed: ev.isSalesClosed,
+    price: ev.price,
+    priceKey: ev.priceKey,
+    priceNum: ev.priceNum,
+    tickets: ev.tickets,
+  };
+}
+
+async function fetchEventSeriesDates(sb, row, organiser) {
+  const matcher = buildSeriesMatcher(row);
+  if (!matcher) return [];
+
+  const allRows = await fetchPublishedEventRows(sb);
+  const siblings = allRows.filter((r) => matcher(r) && isPublicEvent(r, organiser));
+  const hasRecurrenceMeta = Boolean(row.series_group_id || row.recurrence_pattern);
+  if (siblings.length <= 1 || (!hasRecurrenceMeta && siblings.length < 2)) return [];
+
+  siblings.sort((a, b) => new Date(a.starts_at || 0) - new Date(b.starts_at || 0));
+
+  const eventIds = siblings.map((s) => s.id);
+  const ticketsRaw = await fetchRowsInChunks(sb, 'tickets', 'event_id', eventIds);
+  const regCounts = await fetchRegistrationCountsByTicket(sb, ticketsRaw);
+  const ticketsByEvent = new Map();
+  (ticketsRaw || []).forEach((t) => {
+    const count = regCounts.get(t.id) || 0;
+    const enriched = { ...t, _registrationCount: count };
+    if (!ticketsByEvent.has(t.event_id)) ticketsByEvent.set(t.event_id, []);
+    ticketsByEvent.get(t.event_id).push(enriched);
+  });
+
+  return siblings.map((r) => seriesDatePayload(rowToEvent(r, organiser, ticketsByEvent.get(r.id) || [])));
 }
 
 function isMissingPublishedEventsView(error) {
@@ -531,9 +612,25 @@ async function handle(req, res) {
         _registrationCount: regCounts.get(t.id) || 0,
       }));
       const event = rowToEvent(row, organiser, tickets);
+      const seriesDates = await fetchEventSeriesDates(sb, row, organiser);
+      event.isSeries = seriesDates.length > 1;
+      const seriesIds = new Set(seriesDates.map((d) => d.id));
       const all = await fetchApprovedEvents(sb);
-      const related = all.filter((e) => e.id !== event.id && organiserMatch(e, event)).slice(0, 6);
-      return res.status(200).json({ configured: true, provider: 'supabase', event, related });
+      const related = all
+        .filter(
+          (e) =>
+            e.id !== event.id &&
+            !seriesIds.has(e.id) &&
+            organiserMatch(e, event)
+        )
+        .slice(0, 6);
+      return res.status(200).json({
+        configured: true,
+        provider: 'supabase',
+        event,
+        seriesDates: seriesDates.length > 1 ? seriesDates : [],
+        related,
+      });
     }
 
     const events = await fetchApprovedEvents(sb);
@@ -554,6 +651,7 @@ module.exports = {
   rowToEvent,
   fetchApprovedEvents,
   fetchPublishedEventRows,
+  fetchEventSeriesDates,
   isPublicEvent,
   ukOutcode,
   slugFormat,

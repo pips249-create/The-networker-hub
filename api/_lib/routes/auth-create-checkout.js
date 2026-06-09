@@ -75,7 +75,18 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
 
   const session = sessionFromRequest(req);
-  if (!session) return json(res, 401, { error: 'not_authenticated' });
+  const bodyEarly = parseBody(req);
+  const checkoutEmail = String(bodyEarly.email || session?.email || '')
+    .trim()
+    .toLowerCase();
+  const checkoutName = String(bodyEarly.name || session?.name || '').trim();
+
+  if (!checkoutEmail) {
+    return json(res, 400, { ok: false, error: 'missing_email' });
+  }
+  if (!checkoutName) {
+    return json(res, 400, { ok: false, error: 'missing_name' });
+  }
 
   if (!isSupabaseConfigured()) {
     return json(res, 503, { ok: false, error: 'supabase_not_configured' });
@@ -86,7 +97,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const body = parseBody(req);
+    const body = bodyEarly;
     const eventId = String(body.eventId || body.event_id || '').trim();
     if (!isUuid(eventId)) {
       return json(res, 400, { ok: false, error: 'invalid_event_id' });
@@ -161,7 +172,8 @@ module.exports = async function handler(req, res) {
     const cancelPath = slug ? `/events/${encodeURIComponent(slug)}` : `/events/event.html?id=${eventId}`;
 
     const checkoutSession = await createPaidCheckoutSession({
-      email: session.email,
+      email: checkoutEmail,
+      name: checkoutName,
       eventId,
       ticketId,
       qty,

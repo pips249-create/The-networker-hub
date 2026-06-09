@@ -21,16 +21,26 @@ async function resolveAttendeeId(sb, session) {
 }
 
 async function ensureAttendeeId(sb, session) {
-  let id = await resolveAttendeeId(sb, session);
-  if (id) return id;
-
   const email = String(session.email).trim().toLowerCase();
+  const name = session.name ? String(session.name).trim() : null;
+  let id = await resolveAttendeeId(sb, session);
+
+  if (id) {
+    const patch = {};
+    if (name) patch.name = name;
+    if (session.sub) patch.supabase_user_id = session.sub;
+    if (Object.keys(patch).length) {
+      await sb.from('attendees').update(patch).eq('id', id);
+    }
+    return id;
+  }
+
   const insert = await sb
     .from('attendees')
     .insert({
       email,
       supabase_user_id: session.sub || null,
-      name: session.name || null,
+      name: name || null,
     })
     .select('id')
     .single();

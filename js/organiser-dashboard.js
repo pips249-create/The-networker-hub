@@ -28,6 +28,7 @@
     eventsChunkOffset: 0,
     eventsHasMore: false,
     eventsLoading: false,
+    eventsFullyLoaded: false,
     tickets: [],
     attendeesAll: [],
     reviews: [],
@@ -194,6 +195,162 @@
       if (!Number.isNaN(end.getTime())) return fmt(start) + ' – ' + fmt(end);
     }
     return fmt(start);
+  }
+
+  function eventOrganiserGroupId(ev) {
+    return String(ev.organiserGroupId || (ev.organiserGroupIds && ev.organiserGroupIds[0]) || '').trim();
+  }
+
+  function eventSeriesBucketKey(ev) {
+    const groupId = eventOrganiserGroupId(ev);
+    const title = String(ev.title || '').trim().toLowerCase();
+    const pattern = String(ev.recurrencePattern || '').trim();
+    const endDate = String(ev.recurrenceEndDate || '').trim().slice(0, 10);
+    if (pattern && endDate) {
+      return 'rec:' + groupId + '\0' + title + '\0' + pattern + '\0' + endDate;
+    }
+    return 'title:' + groupId + '\0' + title;
+  }
+
+  function sortEventsByDate(events) {
+    return (events || []).slice().sort((a, b) => {
+      const da = a.date ? new Date(a.date).getTime() : 0;
+      const db = b.date ? new Date(b.date).getTime() : 0;
+      if (da !== db) return da - db;
+      return String(a.title || '').localeCompare(String(b.title || ''));
+    });
+  }
+
+  function pickPrimarySeriesEvent(members) {
+    const sorted = sortEventsByDate(members);
+    const now = Date.now();
+    const upcoming = sorted.find((ev) => {
+      if (!ev.date) return false;
+      const d = new Date(ev.date).getTime();
+      return !Number.isNaN(d) && d >= now - 86400000;
+    });
+    return upcoming || sorted[0];
+  }
+
+  function seriesStatusFromMembers(members) {
+    const order = { live: 0, upcoming: 1, draft: 2, archived: 3, unpublished: 4, cancelled: 5 };
+    let best = members[0];
+    members.forEach((ev) => {
+      const key = String(ev.statusKey || 'draft').toLowerCase();
+      const bestKey = String(best.statusKey || 'draft').toLowerCase();
+      if ((order[key] ?? 99) < (order[bestKey] ?? 99)) best = ev;
+    });
+    return {
+      statusKey: best.statusKey || 'draft',
+      statusLabel: best.statusLabel || 'Draft',
+    };
+  }
+
+  function buildSeriesDisplayRow(members) {
+    const sorted = sortEventsByDate(members);
+    const primary = pickPrimarySeriesEvent(sorted);
+    let ticketsSold = 0;
+    let ticketsCapacity = 0;
+    let revenueNum = 0;
+    let needsRefundConfirmation = false;
+    let canRequestPayout = false;
+    let payoutHeld = false;
+
+    sorted.forEach((ev) => {
+      ticketsSold += Number(ev.ticketsSold) || 0;
+      ticketsCapacity += Number(ev.ticketsCapacity) || 0;
+      revenueNum += Number(ev.revenueNum) || 0;
+      if (ev.needsRefundConfirmation) needsRefundConfirmation = true;
+      if (ev.canRequestPayout) canRequestPayout = true;
+      if (ev.payoutHeld) payoutHeld = true;
+    });
+
+    revenueNum = Math.round(revenueNum * 100) / 100;
+    const status = seriesStatusFromMembers(sorted);
+
+    return {
+      ...primary,
+      id: primary.id,
+      isSeries: true,
+      seriesCount: sorted.length,
+      seriesEventIds: sorted.map((m) => m.id),
+      seriesEvents: sorted,
+      date: sorted[0].date,
+      endDate: sorted[sorted.length - 1].date || primary.endDate,
+      ticketsSold,
+      ticketsCapacity,
+      ticketsSoldLabel:
+        ticketsCapacity > 0
+          ? ticketsSold + ' / ' + ticketsCapacity
+          : ticketsSold > 0
+            ? String(ticketsSold)
+            : '0',
+      revenueNum,
+      revenueDisplay: formatGbpAmount(revenueNum),
+      needsRefundConfirmation,
+      canRequestPayout,
+      payoutHeld,
+      statusKey: status.statusKey,
+      statusLabel: status.statusLabel,
+    };
+  }
+
+  function groupEventsIntoSeries(events) {
+    const buckets = new Map();
+    (events || []).forEach((ev) => {
+      const key = eventSeriesBucketKey(ev);
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key).push(ev);
+    });
+
+    const grouped = [];
+    buckets.forEach((members, key) => {
+      if (members.length > 1 || key.startsWith('rec:')) {
+        grouped.push(buildSeriesDisplayRow(members));
+      } else {
+        grouped.push(members[0]);
+      }
+    });
+
+    return grouped.sort((a, b) => {
+      const draftA = String(a.statusKey || '').toLowerCase() === 'draft';
+      const draftB = String(b.statusKey || '').toLowerCase() === 'draft';
+      if (draftA !== draftB) return draftA ? 1 : -1;
+      const da = a.date ? new Date(a.date).getTime() : Number.POSITIVE_INFINITY;
+      const db = b.date ? new Date(b.date).getTime() : Number.POSITIVE_INFINITY;
+      if (da !== db) return da - db;
+      return String(a.title || '').localeCompare(String(b.title || ''));
+    });
+  }
+
+  function formatEventDateCell(ev) {
+    if (ev.isSeries && ev.seriesCount > 1 && ev.seriesEvents && ev.seriesEvents.length) {
+      const sorted = sortEventsByDate(ev.seriesEvents);
+      const firstStr = formatDateShort(sorted[0].date);
+      const lastStr = formatDateShort(sorted[sorted.length - 1].date);
+      if (firstStr === lastStr) {
+        return firstStr + ' · ' + ev.seriesCount + ' dates';
+      }
+      return firstStr + ' – ' + lastStr;
+    }
+    return formatDateShort(ev.date);
+  }
+
+  function eventTitleCellHtml(ev) {
+    const badge =
+      ev.isSeries && ev.seriesCount > 1
+        ? '<span class="org-series-badge">' +
+          esc(String(ev.seriesCount)) +
+          ' dates</span>'
+        : '';
+    return (
+      '<button type="button" class="org-td-name-click" data-edit-event="' +
+      esc(ev.id) +
+      '">' +
+      esc(ev.title) +
+      '</button>' +
+      badge
+    );
   }
 
   function thumbHtml(item) {
@@ -600,7 +757,39 @@
     if (filters.eventsType !== 'all') {
       list = list.filter((ev) => String(ev.type || '') === filters.eventsType);
     }
-    return list;
+    return groupEventsIntoSeries(list);
+  }
+
+  async function ensureAllEventsForGrouping() {
+    if (eventsFiltersActive() || state.eventsFullyLoaded || state.eventsLoading) return;
+    if (!state.eventsHasMore) {
+      state.eventsFullyLoaded = true;
+      return;
+    }
+
+    state.eventsLoading = true;
+    try {
+      let offset = state.events.length;
+      while (offset < (state.eventsTotal || 0)) {
+        const { ok, data } = await api(
+          '/api/organiser/bootstrap?eventsOnly=1&eventsLimit=' +
+            EVENTS_FETCH_SIZE +
+            '&eventsOffset=' +
+            offset
+        );
+        if (!ok) break;
+        const chunk = data.events || [];
+        if (!chunk.length) break;
+        state.events = state.events.concat(chunk);
+        offset += chunk.length;
+        state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
+        state.eventsHasMore = Boolean(data.eventsPagination?.hasMore);
+        if (!state.eventsHasMore) break;
+      }
+      state.eventsFullyLoaded = true;
+    } finally {
+      state.eventsLoading = false;
+    }
   }
 
   function filteredTicketsList() {
@@ -687,6 +876,19 @@
 
   function goToEventTickets(ev) {
     if (!ev || !ev.id) return;
+    const eventIds =
+      ev.isSeries && ev.seriesEventIds && ev.seriesEventIds.length ? ev.seriesEventIds : [ev.id];
+    const seriesEvents =
+      ev.isSeries && ev.seriesEvents && ev.seriesEvents.length
+        ? ev.seriesEvents
+        : [
+            {
+              id: ev.id,
+              title: ev.title,
+              date: ev.date,
+              imageUrl: ev.imageUrl || '',
+            },
+          ];
     try {
       sessionStorage.setItem(
         'hub_event_series',
@@ -694,22 +896,22 @@
           title: ev.title || '',
           organiserGroupId: ev.organiserGroupId || ev.groupId || '',
           eventFormat: ev.eventFormat || ev.format || '',
-          eventIds: [ev.id],
+          eventIds: eventIds,
           imageUrl: ev.imageUrl || '',
-          events: [
-            {
-              id: ev.id,
-              title: ev.title,
-              date: ev.date,
-              imageUrl: ev.imageUrl || '',
-            },
-          ],
+          events: seriesEvents.map(function (item) {
+            return {
+              id: item.id,
+              title: item.title,
+              date: item.date,
+              imageUrl: item.imageUrl || item.photo || '',
+            };
+          }),
         })
       );
     } catch {
       /* ignore */
     }
-    location.href = 'event-tickets.html?ids=' + encodeURIComponent(ev.id);
+    location.href = 'event-tickets.html?ids=' + encodeURIComponent(eventIds.join(','));
   }
 
   function groupEditorUrl(g) {
@@ -775,7 +977,7 @@
   }
 
   function paginateEventsList(list, page) {
-    if (eventsFiltersActive()) {
+    if (eventsFiltersActive() || state.eventsFullyLoaded) {
       return paginateList(list, page);
     }
 
@@ -891,10 +1093,18 @@
   }
 
   function findEventById(id) {
-    return (
-      state.events.find((x) => x.id === id) ||
-      (state.upcomingEvents || []).find((x) => x.id === id)
+    const allEvents = state.events.slice();
+    (state.upcomingEvents || []).forEach((ev) => {
+      if (ev && ev.id && !allEvents.some((e) => e.id === ev.id)) allEvents.push(ev);
+    });
+    const grouped = groupEventsIntoSeries(allEvents);
+    const seriesRow = grouped.find(
+      (row) =>
+        row.id === id ||
+        (row.isSeries && row.seriesEventIds && row.seriesEventIds.includes(id))
     );
+    if (seriesRow && seriesRow.isSeries) return seriesRow;
+    return allEvents.find((x) => x.id === id) || null;
   }
 
   async function confirmUnpublishGroup(groupId) {
@@ -1364,26 +1574,36 @@
   }
 
   function overviewEventsForDashboard() {
-    const list = (state.upcomingEvents && state.upcomingEvents.length
-      ? state.upcomingEvents
-      : state.events
-    ).slice();
-    list.sort((a, b) => {
-      const draftA = String(a.statusKey || '').toLowerCase() === 'draft';
-      const draftB = String(b.statusKey || '').toLowerCase() === 'draft';
-      if (draftA !== draftB) return draftA ? 1 : -1;
-      const da = a.date ? new Date(a.date).getTime() : Number.POSITIVE_INFINITY;
-      const db = b.date ? new Date(b.date).getTime() : Number.POSITIVE_INFINITY;
-      if (da !== db) return da - db;
-      return String(a.title || '').localeCompare(String(b.title || ''));
+    const grouped = groupEventsIntoSeries(state.events.slice());
+    const now = Date.now() - 86400000;
+    const upcoming = grouped.filter((ev) => {
+      if (ev.isSeries && ev.seriesEvents && ev.seriesEvents.length) {
+        return ev.seriesEvents.some((item) => {
+          const t = item.date ? new Date(item.date).getTime() : 0;
+          return !Number.isNaN(t) && t >= now;
+        });
+      }
+      if (!ev.date) return true;
+      const d = new Date(ev.date);
+      return !Number.isNaN(d.getTime()) && d.getTime() >= now;
     });
-    return list.slice(0, 6);
+    return upcoming.slice(0, 6);
   }
 
   function renderOverviewEvents() {
     const body = document.getElementById('dash-events-body');
     const empty = document.getElementById('dash-events-empty');
     if (!body) return;
+
+    if (!state.eventsFullyLoaded && state.eventsHasMore) {
+      if (!state.eventsLoading) {
+        ensureAllEventsForGrouping()
+          .then(() => renderOverviewEvents())
+          .catch(() => renderOverviewEvents());
+      }
+      return;
+    }
+
     body.innerHTML = '';
     const slice = overviewEventsForDashboard();
     if (!slice.length) {
@@ -1396,12 +1616,10 @@
       tr.innerHTML =
         '<td>' +
         thumbHtml(ev) +
-        '</td><td class="org-td-name"><button type="button" class="org-td-name-click" data-edit-event="' +
-        esc(ev.id) +
-        '">' +
-        esc(ev.title) +
-        '</button></td><td>' +
-        esc(formatDateShort(ev.date)) +
+        '</td><td class="org-td-name">' +
+        eventTitleCellHtml(ev) +
+        '</td><td>' +
+        esc(formatEventDateCell(ev)) +
         '</td><td>' +
         esc(formatTimeRange(ev.date, ev.endDate)) +
         '</td><td>' +
@@ -1411,7 +1629,7 @@
         '</td><td>' +
         statusBadgeHtml(ev.statusKey || 'upcoming', ev.statusLabel || 'Upcoming') +
         '</td><td class="org-td-actions">' +
-        actionMenuHtml('event', ev.id, ev.title) +
+        eventActionMenuHtmlWithItem(ev) +
         '</td>';
       body.appendChild(tr);
     });
@@ -1465,6 +1683,19 @@
     const body = document.getElementById('events-body');
     const empty = document.getElementById('events-empty');
     if (!body) return;
+
+    if (!eventsFiltersActive() && !state.eventsFullyLoaded && state.eventsHasMore) {
+      if (!state.eventsLoading) {
+        ensureAllEventsForGrouping()
+          .then(() => renderEvents())
+          .catch((err) => showAirtableAlert(err.message || 'Could not load events', true));
+      }
+      body.innerHTML =
+        '<tr><td colspan="8" class="org-table-loading">Loading events…</td></tr>';
+      if (empty) empty.hidden = true;
+      return;
+    }
+
     const list = filteredEventsList();
     body.innerHTML = '';
 
@@ -1490,12 +1721,10 @@
       tr.innerHTML =
         '<td>' +
         thumbHtml(ev) +
-        '</td><td class="org-td-name"><button type="button" class="org-td-name-click" data-edit-event="' +
-        esc(ev.id) +
-        '">' +
-        esc(ev.title) +
-        '</button></td><td>' +
-        esc(formatDateShort(ev.date)) +
+        '</td><td class="org-td-name">' +
+        eventTitleCellHtml(ev) +
+        '</td><td>' +
+        esc(formatEventDateCell(ev)) +
         '</td><td>' +
         esc(formatTimeRange(ev.date, ev.endDate)) +
         '</td><td>' +
@@ -1645,7 +1874,21 @@
   function renderRevenue() {
     const body = document.getElementById('revenue-body');
     if (!body) return;
-    const list = filteredEventsList().length ? filteredEventsList() : state.events.slice();
+
+    if (!eventsFiltersActive() && !state.eventsFullyLoaded && state.eventsHasMore) {
+      if (!state.eventsLoading) {
+        ensureAllEventsForGrouping()
+          .then(() => renderRevenue())
+          .catch((err) => showAirtableAlert(err.message || 'Could not load events', true));
+      }
+      body.innerHTML =
+        '<tr><td colspan="8" class="org-table-loading">Loading revenue…</td></tr>';
+      return;
+    }
+
+    const list = eventsFiltersActive()
+      ? filteredEventsList()
+      : groupEventsIntoSeries(state.events.slice());
     body.innerHTML = '';
     renderPayoutHeldBanner();
 
@@ -1669,11 +1912,8 @@
       tr.innerHTML =
         '<td>' +
         thumbHtml(ev) +
-        '</td><td class="org-td-name"><button type="button" class="org-td-name-click" data-edit-event="' +
-        esc(ev.id) +
-        '">' +
-        esc(ev.title) +
-        '</button>' +
+        '</td><td class="org-td-name">' +
+        eventTitleCellHtml(ev) +
         (ev.needsRefundConfirmation
           ? '<p class="org-payout-held-note">Payout on hold — confirm refunds issued</p>'
           : '') +
@@ -2068,6 +2308,7 @@
     state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
     state.eventsChunkOffset = data.eventsPagination?.offset ?? 0;
     state.eventsHasMore = Boolean(data.eventsPagination?.hasMore);
+    state.eventsFullyLoaded = !state.eventsHasMore;
     state.tickets = data.tickets || [];
     listPages.groups = 1;
     listPages.events = 1;
@@ -2578,11 +2819,15 @@
       if (!listKey || !p || p === listPages[listKey]) return;
       listPages[listKey] = p;
       if (listKey === 'events') {
-        ensureEventsChunkForUiPage(p)
-          .then(() => renderEvents())
-          .catch((err) => {
-            showAirtableAlert(err.message || 'Could not load events', true);
-          });
+        if (eventsFiltersActive() || state.eventsFullyLoaded) {
+          renderEvents();
+        } else {
+          ensureAllEventsForGrouping()
+            .then(() => renderEvents())
+            .catch((err) => {
+              showAirtableAlert(err.message || 'Could not load events', true);
+            });
+        }
       } else if (listKey === 'groups') renderGroups();
       if (listKey === 'tickets') renderTickets();
       if (listKey === 'reviews') renderReviews();

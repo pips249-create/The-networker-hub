@@ -16,6 +16,7 @@ function clampQty(qty, maxQty) {
 
 function calculateBookingFee(subtotalPounds, qty, maxQty) {
   const sub = Number(subtotalPounds) || 0;
+  if (sub <= 0) return 0;
   const q = clampQty(qty, maxQty);
   return roundMoney(sub * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * q);
 }
