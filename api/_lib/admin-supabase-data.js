@@ -361,7 +361,7 @@ async function fetchModeration(sb) {
   const eventSelect =
     'id, title, event_type, city, approval_status, organiser_id, organisers(name)';
 
-  const [eventsRes, pendingRes, reviewsRes, regCountsRes, reportsRes] = await Promise.all([
+  const [eventsRes, pendingRes, reviewsRes, regCountsRes, reportsRes, reviewReportsRes] = await Promise.all([
     sb.from('events').select(eventSelect).order('created_at', { ascending: false }).limit(80),
     sb
       .from('events')
@@ -377,6 +377,12 @@ async function fetchModeration(sb) {
     sb
       .from('listing_reports')
       .select('id, listing_type, listing_title, reason, details, reporter_email, created_at, status')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .limit(30),
+    sb
+      .from('review_reports')
+      .select('id, review_id, review_snippet, reason, details, reporter_email, created_at, status')
       .eq('status', 'open')
       .order('created_at', { ascending: false })
       .limit(30),
@@ -432,7 +438,18 @@ async function fetchModeration(sb) {
     status: r.status,
   }));
 
-  return { listings, pendingListings, reviews, listingReports };
+  const reviewReports = (reviewReportsRes.error ? [] : reviewReportsRes.data || []).map((r) => ({
+    id: r.id,
+    reviewId: r.review_id,
+    snippet: String(r.review_snippet || '').trim(),
+    reason: r.reason,
+    details: String(r.details || '').trim(),
+    reporterEmail: r.reporter_email || '',
+    time: r.created_at,
+    status: r.status,
+  }));
+
+  return { listings, pendingListings, reviews, listingReports, reviewReports };
 }
 
 async function fetchFinancials(sb) {
@@ -577,7 +594,14 @@ async function getAdminUsers() {
 
 async function getAdminModeration() {
   if (!isSupabaseConfigured()) {
-    return { configured: false, provider: 'supabase', listings: [], reviews: [], listingReports: [] };
+    return {
+      configured: false,
+      provider: 'supabase',
+      listings: [],
+      reviews: [],
+      listingReports: [],
+      reviewReports: [],
+    };
   }
   const sb = getSupabaseAdmin();
   const data = await fetchModeration(sb);

@@ -4,6 +4,7 @@
 const { getSupabaseAdmin, getSupabaseAnon, isSupabaseConfigured } = require('./supabase');
 
 const USER_ROLES = { ADMIN: 'admin', CLIENT: 'client' };
+const CURRENT_ORGANISER_TERMS_VERSION = 'v1';
 
 /** When false (default), the app never triggers Supabase/Resend auth emails. */
 function authEmailsEnabled() {
@@ -22,6 +23,36 @@ async function getHubAccount(userId) {
   const sb = getSupabaseAdmin();
   const { data, error } = await sb.from('hub_accounts').select('*').eq('user_id', userId).maybeSingle();
   if (error) throw new Error(error.message);
+  return data;
+}
+
+function organiserTermsAcceptedFromHub(hub, version = CURRENT_ORGANISER_TERMS_VERSION) {
+  if (!hub?.organiser_terms_accepted_at) return false;
+  const acceptedVersion = String(hub.organiser_terms_version || '').trim();
+  return !acceptedVersion || acceptedVersion === version;
+}
+
+async function hasOrganiserTermsAccepted(userId, version = CURRENT_ORGANISER_TERMS_VERSION) {
+  const hub = await getHubAccount(userId);
+  return organiserTermsAcceptedFromHub(hub, version);
+}
+
+async function acceptOrganiserTerms(userId, version = CURRENT_ORGANISER_TERMS_VERSION) {
+  const sb = getSupabaseAdmin();
+  const uid = String(userId || '').trim();
+  if (!uid) throw new Error('missing_user');
+
+  const { data, error } = await sb
+    .from('hub_accounts')
+    .update({
+      organiser_terms_accepted_at: new Date().toISOString(),
+      organiser_terms_version: version,
+    })
+    .eq('user_id', uid)
+    .select('user_id, organiser_terms_accepted_at, organiser_terms_version')
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('hub_account_not_found');
   return data;
 }
 
@@ -478,8 +509,11 @@ module.exports = {
   normalizeRole,
   authEmailsEnabled,
   useSupabaseAuth,
+  CURRENT_ORGANISER_TERMS_VERSION,
   findUserByEmail,
   getHubAccount,
+  hasOrganiserTermsAccepted,
+  acceptOrganiserTerms,
   getEmailsEnabledForEmail,
   setEmailsEnabled,
   verifyLogin,

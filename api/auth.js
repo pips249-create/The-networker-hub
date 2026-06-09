@@ -22,6 +22,8 @@ const routes = {
   profile: require('./_lib/routes/auth-profile'),
   'stop-impersonate': require('./_lib/routes/auth-stop-impersonate'),
   'report-listing': require('./_lib/routes/auth-report-listing'),
+  'report-review': require('./_lib/routes/auth-report-review'),
+  'accept-organiser-terms': require('./_lib/routes/auth-accept-organiser-terms'),
 };
 
 module.exports = async function handler(req, res) {

@@ -51,12 +51,14 @@ module.exports = async function handler(req, res) {
       await sbAuth.backfillAttendeeUserId(fresh.sub, fresh.email);
 
       const organiserProfiles = await sbAuth.countOrganiserProfiles(fresh.sub, fresh.email);
+      const organiserTermsAccepted = await sbAuth.hasOrganiserTermsAccepted(fresh.sub);
 
       return json(res, 200, {
         ok: true,
         user: fresh,
         hubView: hubViewFromRequest(req),
         organiserProfiles,
+        organiserTermsAccepted,
         canOrganise: organiserProfiles > 0 || isAdminRole(role),
         canToggleHubMode: isClientRole(role) && !session.impersonator,
         impersonating: !!session.impersonator,

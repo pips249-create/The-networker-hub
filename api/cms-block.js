@@ -10,6 +10,7 @@ const {
 } = require('./_lib/cms-sponsor-fields');
 
 const LEGACY_SPONSOR_HUB_SLOT = 'sponsor_hub';
+const { HOME_PARTNERS_SLOT, parsePartnersBody, publishablePartners } = require('./_lib/home-partners');
 
 /** Browse hero slots — fall back to legacy sponsor_hub if not published separately. */
 const HERO_SPONSOR_SLOTS = new Set([
@@ -82,6 +83,22 @@ module.exports = async function handler(req, res) {
 
   try {
     const sb = getSupabaseAdmin();
+
+    if (slot === HOME_PARTNERS_SLOT) {
+      const row = await fetchSlotRow(sb, slot);
+      const sectionActive = row ? row.active !== false : false;
+      const partners = sectionActive ? publishablePartners(parsePartnersBody(row?.body)) : [];
+      return res.status(200).json({
+        ok: true,
+        configured: true,
+        provider: 'supabase',
+        slot,
+        active: sectionActive,
+        partners,
+        block: row ? { ...row, partners } : null,
+      });
+    }
+
     let block = await fetchPublishableBlock(sb, slot);
     let fallbackFrom = null;
 

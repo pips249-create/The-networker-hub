@@ -22,7 +22,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/hub.css?v=20260609b">
   <link rel="stylesheet" href="../css/hub-mobile.css?v=20260605">
-  <link rel="stylesheet" href="../css/admin-console.css?v=20260715">
+  <link rel="stylesheet" href="../css/admin-console.css?v=20260716">
 </head>
 <body class="bg-slate-50 font-sans text-slate-900 antialiased">
 
@@ -40,13 +40,19 @@
         <h1 class="text-lg font-bold tracking-tight">Command Center</h1>
         <p class="text-xs text-brand-100/70 mt-1" id="sidebar-user">—</p>
       </div>
-      <nav class="flex-1 p-3 space-y-1 overflow-y-auto" aria-label="Admin">
+      <nav class="flex-1 p-3 overflow-y-auto" aria-label="Admin">
+        <span class="admin-nav-group">Overview</span>
+        <div class="admin-nav-group-links space-y-1">
         <a href="#dashboard" data-route="dashboard" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
           <span aria-hidden="true">◈</span> Overview
         </a>
         <a href="#analytics" data-route="analytics" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
           <span aria-hidden="true">▤</span> Web Analytics
         </a>
+        </div>
+
+        <span class="admin-nav-group">System</span>
+        <div class="admin-nav-group-links space-y-1">
         <a href="#system" data-route="system" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
           <span aria-hidden="true">⚙</span> System health
         </a>
@@ -56,6 +62,10 @@
         <a href="#users" data-route="users" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
           <span aria-hidden="true">◎</span> Users &amp; accounts
         </a>
+        </div>
+
+        <span class="admin-nav-group">Listings &amp; moderation</span>
+        <div class="admin-nav-group-links space-y-1">
         <a href="#event-health" data-route="event-health" class="admin-nav-link relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
           <span aria-hidden="true">⚠</span> Event data issues
           <span id="admin-health-badge" class="hidden ml-auto min-w-[1.25rem] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold leading-5 text-center" aria-label="Events needing fixes">0</span>
@@ -69,6 +79,13 @@
         <a href="#moderation" data-route="moderation" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
           <span aria-hidden="true">▣</span> Content Moderation
         </a>
+        <a href="#import" data-route="import" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
+          <span aria-hidden="true">⇪</span> Data import
+        </a>
+        </div>
+
+        <span class="admin-nav-group">Revenue &amp; promotion</span>
+        <div class="admin-nav-group-links space-y-1">
         <a href="#financials" data-route="financials" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
           <span aria-hidden="true">£</span> Financial Hub
         </a>
@@ -78,15 +95,17 @@
         <a href="#sponsorship" data-route="sponsorship" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
           <span aria-hidden="true">★</span> Sponsorship &amp; Ads
         </a>
+        </div>
+
+        <span class="admin-nav-group">Communications</span>
+        <div class="admin-nav-group-links space-y-1">
         <a href="#campaigns" data-route="campaigns" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
           <span aria-hidden="true">📣</span> Email campaigns
-        </a>
-        <a href="#import" data-route="import" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">⇪</span> Data import
         </a>
         <a href="#emails" data-route="emails" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
           <span aria-hidden="true">✉</span> Email templates
         </a>
+        </div>
       </nav>
       <div class="p-4 border-t border-white/10">
         <button type="button" id="admin-signout" class="w-full text-left text-sm text-white/70 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10">Sign out</button>

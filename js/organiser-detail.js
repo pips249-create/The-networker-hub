@@ -115,7 +115,7 @@
     }
   }
 
-  function appendReviewCard(feed, review) {
+  function appendReviewCard(feed, review, context) {
     var card = document.createElement('article');
     card.className = 'org-review-card';
     var header = document.createElement('div');
@@ -136,6 +136,13 @@
     card.appendChild(header);
     card.appendChild(stars);
     card.appendChild(body);
+    if (review.id && window.ReviewReport) {
+      window.ReviewReport.addReportButton(card, {
+        reviewId: review.id,
+        organiserId: context && context.organiserId,
+        snippet: String(review.text || '').slice(0, 500),
+      });
+    }
     feed.appendChild(card);
   }
 
@@ -192,7 +199,7 @@
     if (items.length) {
       if (emptyEl) emptyEl.hidden = true;
       items.forEach(function (review) {
-        appendReviewCard(feed, review);
+        appendReviewCard(feed, review, { organiserId: org.id });
       });
       return;
     }

@@ -11,6 +11,7 @@
     'cookies',
     'acceptable-use',
     'advertising',
+    'accessibility',
     'legal',
   ];
 

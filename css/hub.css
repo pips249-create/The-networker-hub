@@ -948,6 +948,8 @@ body.hub-page-account .site-nav {
   cursor: pointer;
   text-align: left;
   text-decoration: none;
+  display: block;
+  width: 100%;
 }
 
 .footer-cookie-settings:hover {
@@ -1024,6 +1026,12 @@ body.hub-organiser-terms-open {
 
 .hub-organiser-terms-check a {
   color: var(--lavender-deep);
+}
+
+.hub-organiser-terms-error {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #b91c1c;
 }
 
 .hub-organiser-terms-actions {

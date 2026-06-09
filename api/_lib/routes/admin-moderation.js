@@ -57,6 +57,17 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true, report: data });
       }
 
+      if (action === 'dismiss_review_report') {
+        const { data, error } = await sb
+          .from('review_reports')
+          .update({ status: 'dismissed' })
+          .eq('id', id)
+          .select('id, status')
+          .single();
+        if (error) throw new Error(error.message);
+        return json(res, 200, { ok: true, report: data });
+      }
+
       if (action === 'delete_review') {
         const { error } = await sb.from('reviews').delete().eq('id', id);
         if (error) throw new Error(error.message);

@@ -48,7 +48,9 @@
     '<a href="' +
     href('faq.html') +
     '">FAQ</a>' +
-    '<a href="mailto:hello@the-networker.co.uk">Contact</a>' +
+    '<a href="' +
+    href('contact.html') +
+    '">Contact</a>' +
     '</nav>' +
     '</div>' +
     '<div class="footer-col">' +

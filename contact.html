@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact us – The Networker Hub</title>
+<meta name="description" content="Get in touch with The Networker Hub — chat with our assistant or email the team.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/hub.css?v=20260626">
+<link rel="stylesheet" href="css/content-page.css">
+<link rel="stylesheet" href="css/contact-page.css?v=20260609">
+<link rel="icon" href="assets/favicon.png" type="image/png">
+<link rel="stylesheet" href="css/hub-mobile.css?v=20260626" />
+</head>
+<body>
+
+<div id="hub-site-nav"></div>
+<script src="js/site-nav.js?v=20260710" data-root="" data-page="contact"></script>
+
+<main class="content-page-main">
+  <header class="content-hero">
+    <div class="content-hero-inner">
+      <p class="section-kicker">Contact us</p>
+      <h1>We&rsquo;re here to help</h1>
+      <p class="content-hero-lede">
+        Ask our assistant about events, tickets, organiser listings, or business opportunities — or email the team directly.
+      </p>
+    </div>
+  </header>
+
+  <div class="contact-layout">
+    <aside class="contact-sidebar">
+      <h2>Get in touch</h2>
+      <p>
+        The Networker Hub is run by Rosie and Catherine (Pip) at <strong>The Networker Group Ltd</strong>.
+      </p>
+      <ul class="contact-details">
+        <li>
+          <span class="contact-details-label">Email</span>
+          <a href="mailto:hello@the-networker.co.uk">hello@the-networker.co.uk</a>
+        </li>
+        <li>
+          <span class="contact-details-label">Address</span>
+          <span>Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF</span>
+        </li>
+      </ul>
+      <p class="contact-sidebar-note">
+        For refunds or booking issues, include your event name and order reference so we can help faster.
+      </p>
+      <p>
+        <a class="btn btn-secondary" href="faq.html">Read the FAQ</a>
+      </p>
+    </aside>
+
+    <section class="contact-chat" aria-labelledby="contact-chat-heading">
+      <div class="contact-chat-head">
+        <div>
+          <h2 id="contact-chat-heading">Hub assistant</h2>
+          <p>Powered by AI — answers about the platform. For urgent or account-specific issues, email us.</p>
+        </div>
+        <button type="button" class="contact-chat-reset" id="contact-chat-reset" hidden>New chat</button>
+      </div>
+
+      <div class="contact-chat-messages" id="contact-chat-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+
+      <div class="contact-chat-suggestions" id="contact-chat-suggestions" aria-label="Suggested questions">
+        <button type="button" class="contact-chat-chip" data-prompt="How do I book a ticket?">How do I book a ticket?</button>
+        <button type="button" class="contact-chat-chip" data-prompt="How do I list an event as an organiser?">List an event</button>
+        <button type="button" class="contact-chat-chip" data-prompt="What are business opportunities?">Business opportunities</button>
+        <button type="button" class="contact-chat-chip" data-prompt="Do I need an account to browse?">Do I need an account?</button>
+      </div>
+
+      <form class="contact-chat-form" id="contact-chat-form">
+        <label class="visually-hidden" for="contact-chat-input">Your message</label>
+        <textarea
+          id="contact-chat-input"
+          rows="2"
+          placeholder="Ask about events, tickets, organisers, or opportunities…"
+          maxlength="2000"
+          required
+        ></textarea>
+        <button type="submit" class="btn btn-primary" id="contact-chat-send">Send</button>
+      </form>
+    </section>
+  </div>
+</main>
+
+<div id="hub-site-footer"></div>
+<script src="js/site-footer.js?v=20260609" data-root=""></script>
+<script src="js/contact-chat.js?v=20260609"></script>
+
+</body>
+</html>

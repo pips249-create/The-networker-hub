@@ -64,7 +64,7 @@
     },
     sponsorship: {
       title: 'Sponsorship & ads',
-      subtitle: 'Edit hero Sponsor Hub and sidebar ads on browse, event, organiser, and opportunity pages',
+      subtitle: 'Edit page ads, sidebar placements, and the home page partners & sponsors strip',
     },
     emails: {
       title: 'Email templates',
@@ -968,6 +968,22 @@
           })
           .catch(function (err) {
             dismissBtn.disabled = false;
+            window.alert(err.message || 'Could not dismiss report.');
+          });
+        return;
+      }
+      var dismissReviewReportBtn = e.target.closest('.moderation-dismiss-review-report-btn');
+      if (dismissReviewReportBtn) {
+        var reviewReportId = dismissReviewReportBtn.getAttribute('data-review-report-id');
+        if (!reviewReportId) return;
+        dismissReviewReportBtn.disabled = true;
+        adminPatch('/api/admin/moderation', { action: 'dismiss_review_report', id: reviewReportId })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Dismiss failed');
+            renderModeration();
+          })
+          .catch(function (err) {
+            dismissReviewReportBtn.disabled = false;
             window.alert(err.message || 'Could not dismiss report.');
           });
         return;
@@ -2476,6 +2492,41 @@
       .join('');
   }
 
+  function reviewReportsHtml(reports) {
+    if (!reports.length) {
+      return '<p class="text-sm text-slate-500">No open review reports.</p>';
+    }
+    var reasonLabels = {
+      fake_or_paid: 'Fake or paid',
+      not_attendee: 'Not an attendee',
+      misleading: 'Misleading',
+      offensive: 'Offensive',
+      spam: 'Spam',
+      other: 'Other',
+    };
+    return reports
+      .map(function (r) {
+        return (
+          '<div class="rounded-lg border border-violet-200 bg-violet-50/50 p-3 text-sm">' +
+          '<div class="flex flex-wrap items-start justify-between gap-2">' +
+          '<p class="font-semibold text-brand-900">Review report</p>' +
+          '<time class="text-xs text-slate-400 shrink-0">' +
+          esc(fmtTime(r.time)) +
+          '</time></div>' +
+          (r.snippet ? '<p class="text-xs text-slate-600 mt-1 italic">“' + esc(r.snippet) + '”</p>' : '') +
+          '<p class="text-xs text-violet-900 mt-1">' +
+          esc(reasonLabels[r.reason] || r.reason) +
+          (r.reporterEmail ? ' · ' + esc(r.reporterEmail) : '') +
+          '</p>' +
+          (r.details ? '<p class="text-xs text-slate-600 mt-1">' + esc(r.details) + '</p>' : '') +
+          '<button type="button" class="moderation-dismiss-review-report-btn mt-2 rounded-lg border border-slate-200 text-slate-700 px-2.5 py-1 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50" data-review-report-id="' +
+          attrEsc(r.id) +
+          '">Dismiss report</button></div>'
+        );
+      })
+      .join('');
+  }
+
   function listingReportsHtml(reports) {
     if (!reports.length) {
       return '<p class="text-sm text-slate-500">No open listing reports.</p>';
@@ -2573,6 +2624,10 @@
       '<h3 class="font-bold text-amber-900 mb-1">Listing reports</h3>' +
       '<p class="text-xs text-slate-500 mb-4">Submitted from event and group profile pages — dismiss when reviewed.</p>' +
       '<div class="space-y-3" id="moderation-reports">Loading…</div></div>' +
+      '<div class="bg-white rounded-xl border border-violet-200 p-5 shadow-sm">' +
+      '<h3 class="font-bold text-violet-900 mb-1">Review reports</h3>' +
+      '<p class="text-xs text-slate-500 mb-4">Submitted from organiser profiles — dismiss when reviewed.</p>' +
+      '<div class="space-y-3" id="moderation-review-reports">Loading…</div></div>' +
       '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
       '<h3 class="font-bold text-brand-900 mb-1">Reviews</h3>' +
       '<p class="text-xs text-slate-500 mb-4">Spam-like reviews are highlighted — delete to remove from the site.</p>' +
@@ -2585,6 +2640,7 @@
       var listingsEl = document.getElementById('moderation-listings');
       var reviewsEl = document.getElementById('moderation-reviews');
       var reportsEl = document.getElementById('moderation-reports');
+      var reviewReportsEl = document.getElementById('moderation-review-reports');
       if (!data || data.error || data.configured === false) {
         liveListings = [];
         liveReviews = [];
@@ -2593,11 +2649,13 @@
         if (listingsEl) listingsEl.innerHTML = listingsTableHtml([]);
         if (reviewsEl) reviewsEl.innerHTML = reviewsHtml([]);
         if (reportsEl) reportsEl.innerHTML = listingReportsHtml([]);
+        if (reviewReportsEl) reviewReportsEl.innerHTML = reviewReportsHtml([]);
         return;
       }
       liveListings = data.listings || [];
       liveReviews = data.reviews || [];
       var listingReports = data.listingReports || [];
+      var reviewReports = data.reviewReports || [];
       var pendingListings = data.pendingListings || liveListings.filter(function (l) {
         return l.status === 'Pending' || l.pending;
       });
@@ -2608,11 +2666,14 @@
           pendingListings.length +
           ' pending · ' +
           listingReports.length +
-          ' reports · ' +
+          ' listing reports · ' +
+          reviewReports.length +
+          ' review reports · ' +
           liveReviews.length +
           ' reviews from Supabase';
       }
       if (reportsEl) reportsEl.innerHTML = listingReportsHtml(listingReports);
+      if (reviewReportsEl) reviewReportsEl.innerHTML = reviewReportsHtml(reviewReports);
       if (pendingEl) {
         pendingEl.innerHTML = pendingListings.length
           ? listingsTableHtml(pendingListings, undefined, { pendingQueue: true })
@@ -3014,7 +3075,20 @@
       '<h3 class="font-bold text-brand-900 mb-1">Preview</h3>' +
       '<p id="sponsor-preview-hint" class="text-xs text-slate-500 mb-4">Logo, tagline, and CTA — matches the browse page hero Sponsor Hub block.</p>' +
       '<div id="sponsor-preview" class="max-w-md"></div>' +
-      '</section></div></div>';
+      '</section></div>' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5" id="home-partners-admin">' +
+      '<div class="flex flex-wrap items-start justify-between gap-3">' +
+      '<div><h3 class="font-bold text-brand-900">Home page — Partners &amp; sponsors</h3>' +
+      '<p class="text-xs text-slate-500 mt-1">Logo strip on the home page. Add companies with logo, name, and CTA — shown when the section is active.</p></div>' +
+      '<label class="flex items-center gap-2 text-sm text-slate-700 shrink-0">' +
+      '<input type="checkbox" id="home-partners-active" class="rounded border-slate-300" checked> ' +
+      'Show on home page</label></div>' +
+      '<div id="home-partners-list" class="space-y-4 min-w-0"></div>' +
+      '<div class="flex flex-wrap gap-3">' +
+      '<button type="button" id="home-partners-add" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">+ Add company</button>' +
+      '<button type="button" id="home-partners-save" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Save partners</button>' +
+      '</div>' +
+      '<p id="home-partners-status" class="text-sm text-slate-500"></p></section></div>';
 
     function setSponsorStatus(text, tone) {
       var el = document.getElementById('sponsor-status');
@@ -3301,6 +3375,255 @@
 
     renderPreview();
     loadCurrentSlot();
+    initHomePartnersAdmin();
+  }
+
+  function initHomePartnersAdmin() {
+    var listEl = document.getElementById('home-partners-list');
+    var statusEl = document.getElementById('home-partners-status');
+    var activeEl = document.getElementById('home-partners-active');
+    var addBtn = document.getElementById('home-partners-add');
+    var saveBtn = document.getElementById('home-partners-save');
+    if (!listEl || !saveBtn) return;
+
+    var partnersState = [];
+    var pendingLogos = {};
+
+    function setPartnersStatus(text, tone) {
+      if (!statusEl) return;
+      statusEl.textContent = text;
+      statusEl.className =
+        'text-sm ' +
+        (tone === 'error'
+          ? 'text-red-700 font-semibold'
+          : tone === 'ok'
+            ? 'text-emerald-700 font-semibold'
+            : 'text-slate-500');
+    }
+
+    function newPartnerId() {
+      return 'partner_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    }
+
+    function partnerRowHtml(p, index) {
+      var logo = p.logo_url || '';
+      var pending = pendingLogos[p.id];
+      if (pending && pending.preview) logo = pending.preview;
+      return (
+        '<div class="rounded-xl border border-slate-200 p-4 space-y-3 min-w-0" data-partner-id="' +
+        attrEsc(p.id) +
+        '">' +
+        '<div class="flex flex-wrap items-center justify-between gap-2">' +
+        '<p class="text-sm font-semibold text-brand-900">Company ' +
+        (index + 1) +
+        '</p>' +
+        '<div class="flex items-center gap-3">' +
+        '<label class="flex items-center gap-2 text-xs text-slate-600">' +
+        '<input type="checkbox" class="home-partner-active rounded border-slate-300"' +
+        (p.active !== false ? ' checked' : '') +
+        '> Active</label>' +
+        '<button type="button" class="home-partner-remove text-xs font-semibold text-red-700 hover:underline">Remove</button>' +
+        '</div></div>' +
+        '<div class="grid sm:grid-cols-2 gap-3">' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Company name</label>' +
+        '<input type="text" class="home-partner-name w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+        attrEsc(p.company_name || '') +
+        '" placeholder="Acme Ltd"></div>' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Logo URL</label>' +
+        '<input type="text" class="home-partner-logo-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+        attrEsc(pending ? '' : logo) +
+        '" placeholder="https://…"></div></div>' +
+        '<div><label class="block text-xs text-slate-500 mb-1">Or upload logo (max 2MB)</label>' +
+        '<input type="file" class="home-partner-logo-file block w-full text-sm text-slate-600" accept="image/png,image/jpeg,image/webp,image/gif">' +
+        (logo
+          ? '<img src="' + attrEsc(logo) + '" alt="" class="mt-2 max-h-12 max-w-[160px] object-contain rounded border border-slate-100 bg-white p-1" />'
+          : '') +
+        '</div>' +
+        '<div class="grid sm:grid-cols-2 gap-3">' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">CTA label</label>' +
+        '<input type="text" class="home-partner-cta-label w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+        attrEsc(p.cta_label || 'Visit website') +
+        '"></div>' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">CTA link</label>' +
+        '<input type="text" class="home-partner-cta-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+        attrEsc(p.cta_url || '') +
+        '" placeholder="https://… or mailto:…"></div></div></div>'
+      );
+    }
+
+    function readPartnersFromDom() {
+      var rows = listEl.querySelectorAll('[data-partner-id]');
+      var out = [];
+      rows.forEach(function (row) {
+        var id = row.getAttribute('data-partner-id') || newPartnerId();
+        var nameEl = row.querySelector('.home-partner-name');
+        var logoUrlEl = row.querySelector('.home-partner-logo-url');
+        var ctaLabelEl = row.querySelector('.home-partner-cta-label');
+        var ctaUrlEl = row.querySelector('.home-partner-cta-url');
+        var activeCheckbox = row.querySelector('.home-partner-active');
+        var existing = partnersState.find(function (p) {
+          return p.id === id;
+        });
+        var logoUrl = logoUrlEl ? logoUrlEl.value.trim() : '';
+        if (!logoUrl && existing && existing.logo_url) logoUrl = existing.logo_url;
+        if (!logoUrl && pendingLogos[id] && pendingLogos[id].existing) logoUrl = pendingLogos[id].existing;
+        out.push({
+          id: id,
+          company_name: nameEl ? nameEl.value.trim() : '',
+          logo_url: logoUrl,
+          cta_label: ctaLabelEl ? ctaLabelEl.value.trim() : 'Visit website',
+          cta_url: ctaUrlEl ? ctaUrlEl.value.trim() : '',
+          active: activeCheckbox ? activeCheckbox.checked : true,
+        });
+      });
+      return out;
+    }
+
+    function renderPartnerList() {
+      if (!partnersState.length) {
+        listEl.innerHTML =
+          '<p class="text-sm text-slate-500 rounded-lg border border-dashed border-slate-200 p-4">No partners yet — click <strong>Add company</strong> to create your first logo.</p>';
+        return;
+      }
+      listEl.innerHTML = partnersState.map(partnerRowHtml).join('');
+    }
+
+    function loadPartners() {
+      setPartnersStatus('Loading home page partners…');
+      adminGet('/api/admin/home-partners')
+        .then(function (data) {
+          if (!data || data.error || data.configured === false) {
+            setPartnersStatus('Could not load partners.', 'error');
+            return;
+          }
+          partnersState = Array.isArray(data.partners) ? data.partners : [];
+          if (activeEl) activeEl.checked = data.active !== false;
+          renderPartnerList();
+          setPartnersStatus(
+            partnersState.length
+              ? partnersState.length + ' partner' + (partnersState.length === 1 ? '' : 's') + ' saved.'
+              : 'No partners saved yet — add companies below.'
+          );
+        })
+        .catch(function () {
+          setPartnersStatus('Could not load partners.', 'error');
+        });
+    }
+
+    listEl.addEventListener('click', function (ev) {
+      var removeBtn = ev.target.closest('.home-partner-remove');
+      if (!removeBtn) return;
+      var row = removeBtn.closest('[data-partner-id]');
+      if (!row) return;
+      var id = row.getAttribute('data-partner-id');
+      partnersState = readPartnersFromDom().filter(function (p) {
+        return p.id !== id;
+      });
+      delete pendingLogos[id];
+      renderPartnerList();
+    });
+
+    listEl.addEventListener('change', function (ev) {
+      var fileInput = ev.target.closest('.home-partner-logo-file');
+      if (!fileInput) return;
+      var row = fileInput.closest('[data-partner-id]');
+      if (!row) return;
+      var id = row.getAttribute('data-partner-id');
+      var file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) {
+        setPartnersStatus('Logo must be under 2MB.', 'error');
+        fileInput.value = '';
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function () {
+        partnersState = readPartnersFromDom();
+        var existing = partnersState.find(function (p) {
+          return p.id === id;
+        });
+        pendingLogos[id] = {
+          preview: String(reader.result || ''),
+          data: String(reader.result || ''),
+          mime: file.type || 'image/jpeg',
+          filename: file.name || 'logo.jpg',
+          existing: existing ? existing.logo_url : '',
+        };
+        renderPartnerList();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    if (addBtn) {
+      addBtn.addEventListener('click', function () {
+        partnersState = readPartnersFromDom();
+        partnersState.push({
+          id: newPartnerId(),
+          company_name: '',
+          logo_url: '',
+          cta_label: 'Visit website',
+          cta_url: '',
+          active: true,
+        });
+        renderPartnerList();
+      });
+    }
+
+    saveBtn.addEventListener('click', function () {
+      var partners = readPartnersFromDom();
+      saveBtn.disabled = true;
+      setPartnersStatus('Saving…');
+
+      var payload = {
+        active: activeEl ? activeEl.checked : true,
+        partners: partners.map(function (p) {
+          var pending = pendingLogos[p.id];
+          var item = {
+            id: p.id,
+            company_name: p.company_name,
+            logo_url: p.logo_url,
+            cta_label: p.cta_label,
+            cta_url: p.cta_url,
+            active: p.active,
+          };
+          if (pending && pending.data) {
+            item.logoBase64 = pending.data;
+            item.logoMime = pending.mime;
+            item.logoFilename = pending.filename;
+          }
+          return item;
+        }),
+      };
+
+      fetch('/api/admin/home-partners', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then(function (r) {
+          return r.json().then(function (data) {
+            if (!r.ok || data.ok === false) {
+              throw new Error(data.message || data.error || 'Save failed');
+            }
+            return data;
+          });
+        })
+        .then(function (data) {
+          pendingLogos = {};
+          partnersState = Array.isArray(data.partners) ? data.partners : [];
+          renderPartnerList();
+          setPartnersStatus('Saved — home page partners updated.', 'ok');
+        })
+        .catch(function (err) {
+          setPartnersStatus(err.message || 'Could not save partners.', 'error');
+        })
+        .finally(function () {
+          saveBtn.disabled = false;
+        });
+    });
+
+    loadPartners();
   }
 
   function renderEmails() {

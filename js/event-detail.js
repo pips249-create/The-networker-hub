@@ -1116,9 +1116,20 @@
     if (!feed) return;
 
     feed.innerHTML = '';
+    const reviewItems = Array.isArray(ev.reviewItems) ? ev.reviewItems : [];
+    const reviewContext = {
+      organiserId: ev.organiserId || ev.organiser_id || null,
+      eventId: ev.id || null,
+    };
+    if (reviewItems.length) {
+      reviewItems.forEach((review) => {
+        appendReviewCard(feed, review, reviewContext);
+      });
+      return;
+    }
     if (c > 0 && c <= MOCK_ORGANISER_REVIEWS.length) {
       MOCK_ORGANISER_REVIEWS.slice(0, c).forEach((review) => {
-        appendReviewCard(feed, review);
+        appendReviewCard(feed, review, reviewContext);
       });
       return;
     }
@@ -1130,7 +1141,7 @@
     }
   }
 
-  function appendReviewCard(feed, review) {
+  function appendReviewCard(feed, review, context) {
     const card = document.createElement('article');
     card.className = 'review-card';
     const header = document.createElement('div');
@@ -1151,6 +1162,14 @@
     card.appendChild(header);
     card.appendChild(stars);
     card.appendChild(body);
+    if (review.id && window.ReviewReport) {
+      window.ReviewReport.addReportButton(card, {
+        reviewId: review.id,
+        organiserId: context && context.organiserId,
+        eventId: context && context.eventId,
+        snippet: String(review.text || '').slice(0, 500),
+      });
+    }
     feed.appendChild(card);
   }
 
@@ -1224,10 +1243,61 @@
         '" name="guest_name_' +
         i +
         '" autocomplete="name" required />' +
+        '</label>' +
+        '<label class="checkout-guest-same" for="checkout-guest-same-' +
+        i +
+        '">' +
+        '<input type="checkbox" id="checkout-guest-same-' +
+        i +
+        '" data-guest-same-as-first data-guest-index="' +
+        i +
+        '" />' +
+        '<span>Same as attendee 1</span>' +
         '</label>';
     }
 
     wrap.innerHTML = html;
+    bindCheckoutGuestSameHandlers();
+  }
+
+  function applyGuestSameAsFirst(index, checked) {
+    const guestInput = document.getElementById('checkout-guest-' + index);
+    const nameEl = document.getElementById('checkout-name');
+    if (!guestInput) return;
+    if (checked) {
+      guestInput.value = nameEl ? nameEl.value.trim() : '';
+      guestInput.readOnly = true;
+      guestInput.classList.add('is-same-as-primary');
+    } else {
+      guestInput.readOnly = false;
+      guestInput.classList.remove('is-same-as-primary');
+      if (guestInput.value === (nameEl ? nameEl.value.trim() : '')) {
+        guestInput.value = '';
+      }
+    }
+  }
+
+  function bindCheckoutGuestSameHandlers() {
+    const nameEl = document.getElementById('checkout-name');
+    const wrap = document.getElementById('checkout-guest-names');
+    if (!wrap) return;
+
+    wrap.querySelectorAll('[data-guest-same-as-first]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        const index = parseInt(cb.getAttribute('data-guest-index'), 10);
+        applyGuestSameAsFirst(index, cb.checked);
+      });
+    });
+
+    if (nameEl && !nameEl.dataset.guestSyncBound) {
+      nameEl.dataset.guestSyncBound = '1';
+      nameEl.addEventListener('input', function () {
+        wrap.querySelectorAll('[data-guest-same-as-first]:checked').forEach(function (cb) {
+          const index = parseInt(cb.getAttribute('data-guest-index'), 10);
+          applyGuestSameAsFirst(index, true);
+        });
+      });
+    }
   }
 
   function readCheckoutGuestNames(ticketQty) {
