@@ -11,9 +11,57 @@
   var typeTabs = document.querySelectorAll('.org-type-tab[data-org-tab]');
 
   var activeTab = 'all';
+  var browseRandomOrder = null;
 
   function getActiveTab() {
     return activeTab || 'all';
+  }
+
+  function shuffleList(list) {
+    var copy = list.slice();
+    for (var i = copy.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = copy[i];
+      copy[i] = copy[j];
+      copy[j] = tmp;
+    }
+    return copy;
+  }
+
+  function hasActiveOrganiserFilters() {
+    var q = (searchInput && searchInput.value) || '';
+    if (q.trim()) return true;
+    if (industrySelect && industrySelect.value) return true;
+    if (sortSelect && sortSelect.value && sortSelect.value !== 'recommended') return true;
+    if (getActiveTab() !== 'all') return true;
+    var ratingEls = [rating4, rating3, rating2, rating1, ratingNone];
+    for (var i = 0; i < ratingEls.length; i++) {
+      if (ratingEls[i] && !ratingEls[i].checked) return true;
+    }
+    return false;
+  }
+
+  function applyBrowseRandomOrder(list) {
+    if (!browseRandomOrder) {
+      browseRandomOrder = shuffleList(list).map(function (org) {
+        return org.id;
+      });
+    }
+    var byId = {};
+    list.forEach(function (org) {
+      byId[org.id] = org;
+    });
+    var ordered = [];
+    browseRandomOrder.forEach(function (id) {
+      if (byId[id]) {
+        ordered.push(byId[id]);
+        delete byId[id];
+      }
+    });
+    Object.keys(byId).forEach(function (id) {
+      ordered.push(byId[id]);
+    });
+    return ordered;
   }
 
   function slugIndustryLabel(label) {
@@ -96,7 +144,15 @@
     return true;
   }
 
-  function sortOrganisers(list) {
+  function sortOrganisers(list, options) {
+    options = options || {};
+    if (!options.tabOverride && !hasActiveOrganiserFilters()) {
+      return applyBrowseRandomOrder(list);
+    }
+    if (!options.tabOverride && hasActiveOrganiserFilters()) {
+      browseRandomOrder = null;
+    }
+
     var sort = (sortSelect && sortSelect.value) || 'recommended';
     var copy = list.slice();
     copy.sort(function (a, b) {
@@ -124,7 +180,7 @@
     if (options.tab != null) activeTab = options.tab;
     var list = (all || window.hubAllOrganisers || []).filter(organiserMatchesFilters);
     if (options.tab != null) activeTab = savedTab;
-    return sortOrganisers(list);
+    return sortOrganisers(list, { tabOverride: options.tab != null });
   };
 
   function fillIndustryOptions() {
@@ -168,6 +224,7 @@
     [rating4, rating3, rating2, rating1, ratingNone].forEach(function (el) {
       if (el) el.checked = true;
     });
+    browseRandomOrder = null;
     setActiveTab('all');
     applyFilters();
   }
@@ -186,6 +243,9 @@
     applyFilters();
   };
   window.hubResetOrganiserFilters = resetFilters;
+  window.hubResetOrganiserBrowseOrder = function () {
+    browseRandomOrder = null;
+  };
 
   function bindFilter(el) {
     if (!el) return;

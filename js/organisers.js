@@ -547,6 +547,7 @@
   function applyLoadedOrganisers() {
     window.hubAllOrganisers = organisers;
     resetSpotlightOrder();
+    if (window.hubResetOrganiserBrowseOrder) window.hubResetOrganiserBrowseOrder();
     currentPage = 1;
     if (window.hubApplyOrganiserFilters) window.hubApplyOrganiserFilters();
     else renderAll();

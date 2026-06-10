@@ -2,7 +2,9 @@
  * Organiser groups API — Supabase organisers table + Storage uploads.
  */
 const { getSupabaseAdmin } = require('./supabase');
-const { resolveImageUrl } = require('./supabase-storage');
+const { resolveImageUrl, decodeUploadBuffer } = require('./supabase-storage');
+const { imageDimensionsFromBuffer, imageDimensionsFromUrl } = require('./image-dimensions');
+const { logoResolutionWarning } = require('./logo-quality');
 const { isAdminRole } = require('./auth');
 const { resolveOrganiserAccess, getOrCreateOrganiserAccount } = require('./supabase-organiser-access');
 const { eventImageUrl } = require('./event-image');
@@ -154,7 +156,26 @@ async function getGroupById(groupId) {
   return rowToGroup(data);
 }
 
+async function resolutionWarningFromPayload(payload) {
+  if (payload.logoBase64) {
+    const buffer = decodeUploadBuffer(payload.logoBase64);
+    if (buffer) {
+      const dims = imageDimensionsFromBuffer(buffer);
+      if (dims) return logoResolutionWarning(dims.width, dims.height);
+    }
+  }
+
+  const url = String(payload.logoUrl || '').trim();
+  if (url && /^https?:\/\//i.test(url) && !payload.logoBase64) {
+    const dims = await imageDimensionsFromUrl(url);
+    if (dims) return logoResolutionWarning(dims.width, dims.height);
+  }
+
+  return null;
+}
+
 async function resolveLogo(payload, organiserId) {
+  const resolutionWarning = await resolutionWarningFromPayload(payload);
   try {
     const url = await resolveImageUrl({
       folder: `organisers/${organiserId || 'new'}`,
@@ -163,13 +184,13 @@ async function resolveLogo(payload, organiserId) {
       logoMime: payload.logoMime,
       logoFilename: payload.logoFilename,
     });
-    return { url, warning: null };
+    return { url, warning: null, resolutionWarning };
   } catch (e) {
     const warning =
       e.message === 'Image must be under 2MB'
         ? e.message
         : 'Could not upload image. Use a URL below, or run 004_organiser_storage.sql in Supabase.';
-    return { url: null, warning };
+    return { url: null, warning, resolutionWarning };
   }
 }
 
@@ -200,11 +221,13 @@ async function createGroup(payload) {
   if (error) throw new Error(error.message);
 
   let logoWarning = null;
+  let logoResolutionWarning = null;
   const hasLogo =
     payload.logoUrl || payload.logoBase64 || payload.logoMime || payload.logoFilename;
   if (hasLogo) {
-    const { url, warning } = await resolveLogo(payload, created.id);
+    const { url, warning, resolutionWarning } = await resolveLogo(payload, created.id);
     if (warning) logoWarning = warning;
+    if (resolutionWarning) logoResolutionWarning = resolutionWarning;
     if (url) {
       const { data: updated, error: upErr } = await sb
         .from('organisers')
@@ -215,12 +238,14 @@ async function createGroup(payload) {
       if (upErr) throw new Error(upErr.message);
       const group = rowToGroup(updated);
       if (logoWarning) group.logoWarning = logoWarning;
+      if (logoResolutionWarning) group.logoResolutionWarning = logoResolutionWarning;
       return group;
     }
   }
 
   const group = rowToGroup(created);
   if (logoWarning) group.logoWarning = logoWarning;
+  if (logoResolutionWarning) group.logoResolutionWarning = logoResolutionWarning;
   return group;
 }
 
@@ -248,9 +273,11 @@ async function updateGroup(groupId, payload) {
   const hasLogo =
     payload.logoUrl || payload.logoBase64 || payload.logoMime || payload.logoFilename;
   let logoWarning = null;
+  let logoResolutionWarning = null;
   if (hasLogo) {
-    const { url, warning } = await resolveLogo(payload, groupId);
+    const { url, warning, resolutionWarning } = await resolveLogo(payload, groupId);
     if (warning) logoWarning = warning;
+    if (resolutionWarning) logoResolutionWarning = resolutionWarning;
     if (url) patch.photo_url = url;
     else if (payload.logoUrl && /^https?:\/\//i.test(payload.logoUrl)) {
       patch.photo_url = payload.logoUrl.trim();
@@ -273,6 +300,7 @@ async function updateGroup(groupId, payload) {
 
   const group = rowToGroup(data);
   if (logoWarning) group.logoWarning = logoWarning;
+  if (logoResolutionWarning) group.logoResolutionWarning = logoResolutionWarning;
   return group;
 }
 

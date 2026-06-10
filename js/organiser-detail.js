@@ -104,9 +104,9 @@
     var letter = String(org.name || '?').trim().charAt(0).toUpperCase() || '?';
     if (org.photoUrl) {
       wrap.innerHTML =
-        '<img src="' +
+        '<img class="org-profile-logo" src="' +
         escapeHtml(org.photoUrl) +
-        '" alt="" onerror="this.parentElement.innerHTML=\'<span class=org-profile-logo-placeholder>' +
+        '" alt="" loading="eager" decoding="async" onerror="this.parentElement.innerHTML=\'<span class=org-profile-logo-placeholder>' +
         escapeHtml(letter) +
         '</span>\'">';
     } else {

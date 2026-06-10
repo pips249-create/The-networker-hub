@@ -47,18 +47,24 @@
   aspect-ratio: 4 / 3;
   border-radius: 14px;
   overflow: hidden;
-  background: linear-gradient(165deg, #e8f2ff 0%, #d6e8ff 100%);
+  background: #fff;
   border: 1px solid rgba(37, 99, 235, 0.12);
   margin-bottom: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
-.org-showcase-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.org-showcase-photo img,
+.org-showcase-photo .org-profile-logo {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center;
   display: block;
 }
 

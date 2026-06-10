@@ -113,6 +113,7 @@ module.exports = async function handler(req, res) {
         ok: true,
         group,
         logoWarning: updated.logoWarning || null,
+        logoResolutionWarning: updated.logoResolutionWarning || null,
         saveWarnings,
         message,
       });
@@ -189,6 +190,7 @@ module.exports = async function handler(req, res) {
         ok: true,
         group,
         logoWarning: created.logoWarning || null,
+        logoResolutionWarning: created.logoResolutionWarning || null,
         saveWarnings: created.saveWarnings || [],
         message: created.saveWarnings?.length
           ? 'Profile created. ' + created.saveWarnings.join(' ')

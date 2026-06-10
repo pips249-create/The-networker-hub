@@ -1467,6 +1467,21 @@
   margin-top: 0;
 }
 
+.org-logo-quality-hint {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #8a6d00;
+  background: #fff8e6;
+  border: 1px solid #f0d78c;
+  border-radius: var(--od-radius-sm, 10px);
+  padding: 10px 12px;
+}
+
+.org-logo-quality-hint[hidden] {
+  display: none !important;
+}
+
 .org-modal-panel h2 {
   font-size: 18px;
   margin-bottom: 6px;

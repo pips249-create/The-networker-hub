@@ -2396,10 +2396,12 @@
     const preview = document.getElementById('group-logo-preview');
     const placeholder = document.getElementById('group-logo-placeholder');
     const urlInput = document.getElementById('group-logo-url');
+    const qualityHint = document.getElementById('group-logo-quality');
     if (fileInput) fileInput.value = '';
     if (urlInput) urlInput.value = '';
     if (preview) preview.hidden = true;
     if (placeholder) placeholder.hidden = false;
+    if (window.hubClearLogoQualityHint) window.hubClearLogoQualityHint(qualityHint);
   }
 
   function bindGroupLogoPicker() {
@@ -2409,6 +2411,8 @@
     const previewImg = document.getElementById('group-logo-preview-img');
     const placeholder = document.getElementById('group-logo-placeholder');
     const clearBtn = document.getElementById('group-logo-clear');
+    const qualityHint = document.getElementById('group-logo-quality');
+    const urlInput = document.getElementById('group-logo-url');
     if (!zone || !fileInput) return;
 
     function setGroupLogoFile(file) {
@@ -2423,7 +2427,17 @@
     }
 
     if (window.hubBindImageUpload) {
-      window.hubBindImageUpload({ zone, fileInput, onFile: setGroupLogoFile });
+      window.hubBindImageUpload({
+        zone,
+        fileInput,
+        onFile: setGroupLogoFile,
+        qualityHintEl: qualityHint,
+      });
+    }
+    if (window.hubBindLogoUrlQualityCheck) {
+      window.hubBindLogoUrlQualityCheck(urlInput, qualityHint, function () {
+        return Boolean(groupLogoFile);
+      });
     }
     zone.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -2487,12 +2501,14 @@
         return;
       }
       const logoWarning = data.logoWarning || data.group?.logoWarning;
+      const logoResolutionWarning = data.logoResolutionWarning || data.group?.logoResolutionWarning;
       closeModals();
       document.getElementById('form-group').reset();
       resetGroupLogoPicker();
       await refresh();
       setRoute('groups');
       if (logoWarning) alert(logoWarning);
+      else if (logoResolutionWarning) alert(logoResolutionWarning);
     });
 
     document.getElementById('form-ticket').addEventListener('submit', async (e) => {
