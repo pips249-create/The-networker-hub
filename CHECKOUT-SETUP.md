@@ -25,8 +25,20 @@ Run once in [Supabase SQL Editor](https://supabase.com/dashboard):
 | `SITE_URL` | Yes | Email links, e.g. `https://the-networker-hub.vercel.app` |
 | `STRIPE_SECRET_KEY` | **Yes (paid checkout)** | `sk_test_…` or `sk_live_…` — creates Checkout with booking fee |
 | `STRIPE_WEBHOOK_SECRET` | **Yes (prod)** | From Stripe webhook endpoint |
-| `RESEND_API_KEY` | For emails | Booking confirmation |
-| `RESEND_FROM` | For emails | Verified domain |
+| `RESEND_API_KEY` | **Yes (emails)** | All transactional mail (bookings, welcome, reminders, saved events) |
+| `RESEND_FROM` | **Yes (emails)** | Verified sender, e.g. `The Networker Hub <hello@the-networker.co.uk>` |
+| `CRON_SECRET` | **Yes (production)** | Long random string — Vercel Cron sends `Authorization: Bearer <CRON_SECRET>` |
+
+**Local test sends:** copy `RESEND_API_KEY` and `RESEND_FROM` from Vercel into `local.env`, run `npm run sync-env`, restart `npm start`.
+
+**Cron jobs** (hourly, see `vercel.json`):
+
+| Path | Purpose |
+|------|---------|
+| `/api/cron/booking-reminders` | 24-hour event reminders |
+| `/api/cron/favourite-sales` | Saved-event “tickets on sale” alerts |
+
+Without `CRON_SECRET` in production, cron endpoints return `503 cron_secret_not_configured`.
 
 Redeploy after changing env vars.
 

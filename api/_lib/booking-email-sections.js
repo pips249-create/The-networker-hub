@@ -11,6 +11,14 @@ const {
   formatTicketQuantity,
   buildPaymentSummaryRow,
 } = require('./booking-payment-summary');
+const {
+  siteBase,
+  browseEventsUrl,
+  hubAccountUrl,
+  hubPaymentUrl,
+  legalPolicyUrl,
+  contactUrl,
+} = require('./hub-email-urls');
 
 const META_CELL =
   'padding:0 0 10px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.5;';
@@ -80,6 +88,13 @@ function wrapSponsorRow(sponsorInner) {
   return '<tr><td>' + inner + '</td></tr>';
 }
 
+function resolveSponsorSection(vars, dbSection) {
+  const input = vars && typeof vars === 'object' ? vars : {};
+  const fromVars = String(input.sponsor_row || input.sponsor_section || '').trim();
+  if (fromVars) return fromVars;
+  return String(dbSection || '').trim();
+}
+
 /**
  * Build all dynamic table rows for the booking confirmation email.
  * Always runs server-side so test sends and production sends match.
@@ -103,23 +118,25 @@ function enrichBookingConfirmationVars(vars, sponsorSection) {
   const ticketQuantityLabel =
     String(input.ticket_quantity_label || '').trim() ||
     formatTicketQuantity(input.ticket_quantity, input.ticket_name);
-  const hubAccountUrl =
-    String(input.hub_account_url || '').trim() ||
-    (String(input.site_url || '').replace(/\/$/, '') + '/account/index.html');
+  const site = siteBase(input.site_url);
+  const resolvedHubAccountUrl = String(input.hub_account_url || '').trim() || hubAccountUrl(site);
+  const resolvedHubPaymentUrl =
+    String(input.hub_payment_url || '').trim() || hubPaymentUrl(site, input.registration_id);
 
   const paymentInput = {
     ...input,
     booking_reference: bookingReference,
     booked_at: bookedAt,
     ticket_quantity_label: ticketQuantityLabel,
-    hub_account_url: hubAccountUrl,
+    hub_account_url: resolvedHubAccountUrl,
+    hub_payment_url: resolvedHubPaymentUrl,
   };
 
   const eventMetaRows = buildEventMetaRows(input, online);
   const paymentSummaryRow = buildPaymentSummaryRow(paymentInput);
   const meetingLinkRow = buildMeetingLinkRow(meetingLink, online);
   const refundPolicyRow = buildRefundPolicyRow(input);
-  const sponsorRow = wrapSponsorRow(sponsorSection);
+  const sponsorRow = wrapSponsorRow(resolveSponsorSection(input, sponsorSection));
   const eventLocationRow = buildEventLocationRow(input.event_location, online);
   const eventOnlineRow = buildEventOnlineRow(online);
 
@@ -130,7 +147,13 @@ function enrichBookingConfirmationVars(vars, sponsorSection) {
     booking_reference: bookingReference,
     booked_at: bookedAt,
     ticket_quantity_label: ticketQuantityLabel,
-    hub_account_url: hubAccountUrl,
+    hub_account_url: resolvedHubAccountUrl,
+    hub_payment_url: resolvedHubPaymentUrl,
+    browse_events_url: String(input.browse_events_url || '').trim() || browseEventsUrl(site),
+    contact_url: String(input.contact_url || '').trim() || contactUrl(site),
+    privacy_url: String(input.privacy_url || '').trim() || legalPolicyUrl(site, 'privacy'),
+    terms_url: String(input.terms_url || '').trim() || legalPolicyUrl(site, 'terms'),
+    refunds_url: String(input.refunds_url || '').trim() || legalPolicyUrl(site, 'refunds'),
     payment_summary_row: paymentSummaryRow,
     event_meta_rows: eventMetaRows,
     meeting_link_row: meetingLinkRow,
@@ -145,6 +168,79 @@ function enrichBookingConfirmationVars(vars, sponsorSection) {
   };
 
   return enriched;
+}
+
+/**
+ * Build dynamic sections for the 24-hour booking reminder email.
+ */
+function enrichBookingReminderVars(vars, sponsorSection) {
+  const input = vars && typeof vars === 'object' ? vars : {};
+  const meetingLink = String(input.meeting_link || '').trim();
+  const eventRow = {
+    meeting_type: input.meeting_type,
+    meeting_link: meetingLink,
+    venue: input.event_location,
+    location_label: input.event_location,
+  };
+  const online = isOnlineEvent(eventRow, meetingLink);
+  const meetingLinkRow = buildMeetingLinkRow(meetingLink, online);
+  const sponsorRow = wrapSponsorRow(resolveSponsorSection(input, sponsorSection));
+  const eventLocation = online ? 'Online event' : String(input.event_location || '').trim();
+
+  return {
+    ...input,
+    meeting_type: input.meeting_type || (online ? 'Online' : 'In person'),
+    event_location: eventLocation,
+    meeting_link_row: meetingLinkRow,
+    sponsor_row: sponsorRow,
+    meeting_link_section: meetingLinkRow,
+    sponsor_section: sponsorRow,
+  };
+}
+
+const ACCOUNT_WELCOME_SECTION_PLACEHOLDERS = ['sponsor_row', 'sponsor_section'];
+
+function enrichAccountWelcomeVars(vars, sponsorSection) {
+  const input = vars && typeof vars === 'object' ? vars : {};
+  const site = siteBase(input.site_url);
+  const sponsorRow = wrapSponsorRow(resolveSponsorSection(input, sponsorSection));
+
+  return {
+    ...input,
+    hub_account_url: String(input.hub_account_url || '').trim() || hubAccountUrl(site),
+    browse_events_url: String(input.browse_events_url || '').trim() || browseEventsUrl(site),
+    contact_url: String(input.contact_url || '').trim() || contactUrl(site),
+    privacy_url: String(input.privacy_url || '').trim() || legalPolicyUrl(site, 'privacy'),
+    terms_url: String(input.terms_url || '').trim() || legalPolicyUrl(site, 'terms'),
+    refunds_url: String(input.refunds_url || '').trim() || legalPolicyUrl(site, 'refunds'),
+    sponsor_row: sponsorRow,
+    sponsor_section: sponsorRow,
+  };
+}
+
+function stripUnresolvedAccountWelcomePlaceholders(html) {
+  let out = String(html || '');
+  for (const key of ACCOUNT_WELCOME_SECTION_PLACEHOLDERS) {
+    const re = new RegExp('\\{\\{\\s*' + key + '\\s*\\}\\}', 'g');
+    out = out.replace(re, '');
+  }
+  return out;
+}
+
+const BOOKING_REMINDER_SECTION_PLACEHOLDERS = [
+  'meeting_link_row',
+  'sponsor_row',
+  'meeting_link_section',
+  'sponsor_section',
+];
+
+function stripUnresolvedBookingReminderPlaceholders(html) {
+  let out = String(html || '');
+  for (const key of BOOKING_REMINDER_SECTION_PLACEHOLDERS) {
+    const re = new RegExp('\\{\\{\\s*' + key + '\\s*\\}\\}', 'g');
+    out = out.replace(re, '');
+  }
+  return out;
 }
 
 const BOOKING_SECTION_PLACEHOLDERS = [
@@ -171,8 +267,13 @@ function stripUnresolvedBookingPlaceholders(html) {
 
 module.exports = {
   enrichBookingConfirmationVars,
+  enrichBookingReminderVars,
+  enrichAccountWelcomeVars,
   stripUnresolvedBookingPlaceholders,
+  stripUnresolvedBookingReminderPlaceholders,
+  stripUnresolvedAccountWelcomePlaceholders,
   buildEventMetaRows,
   buildMeetingLinkRow,
   BOOKING_SECTION_PLACEHOLDERS,
+  BOOKING_REMINDER_SECTION_PLACEHOLDERS,
 };

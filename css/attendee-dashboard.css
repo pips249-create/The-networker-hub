@@ -401,8 +401,109 @@
   margin: 0 8px;
 }
 
-body.ad-review-modal-open {
+body.ad-review-modal-open,
+body.ad-payment-modal-open {
   overflow: hidden;
+}
+
+.ad-payment-modal[hidden] {
+  display: none !important;
+}
+
+.ad-payment-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.ad-payment-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(45, 27, 94, 0.45);
+}
+
+.ad-payment-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 520px);
+  background: var(--ad-white);
+  border-radius: var(--ad-radius);
+  padding: 28px 24px 24px;
+  box-shadow: 0 20px 50px rgba(45, 27, 94, 0.2);
+}
+
+.ad-payment-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--ad-text-soft);
+  cursor: pointer;
+}
+
+.ad-payment-modal-title {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  color: var(--ad-slate);
+}
+
+.ad-payment-modal-sub {
+  margin: 0 0 18px;
+  font-size: 14px;
+  color: var(--ad-text-mid);
+  line-height: 1.5;
+}
+
+.ad-payment-details {
+  margin: 0 0 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.ad-payment-details div {
+  display: grid;
+  gap: 4px;
+}
+
+.ad-payment-details dt {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ad-text-soft);
+}
+
+.ad-payment-details dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ad-text-dark);
+  font-weight: 600;
+}
+
+.ad-payment-note {
+  margin: 0 0 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ad-text-mid);
+}
+
+.ad-payment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+tr.ad-row-highlight td {
+  background: var(--ad-teal-pale);
 }
 
 .ad-review-modal[hidden] {

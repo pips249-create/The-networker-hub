@@ -26,13 +26,33 @@ function isStaleBookingTemplate(bodyHtml) {
   })) {
     return true;
   }
-  // Sponsor below the footer info band (056 and earlier) — canonical file places it higher.
+  // Sponsor should sit directly under the header logo (before "You're booked!").
   var sponsorAt = body.indexOf('{{sponsor_row}}');
+  var bookedAt = body.indexOf('You&rsquo;re booked!');
+  if (sponsorAt !== -1 && bookedAt !== -1 && sponsorAt > bookedAt) {
+    return true;
+  }
   var infoBandAt = body.indexOf('info-cell');
   if (sponsorAt !== -1 && infoBandAt !== -1 && sponsorAt > infoBandAt) {
     return true;
   }
   if (!body.includes('{{payment_summary_row}}')) {
+    return true;
+  }
+  const sponsorMatches = body.match(/\{\{sponsor_row\}\}/g);
+  if (sponsorMatches && sponsorMatches.length > 1) {
+    return true;
+  }
+  if (!body.includes('{{browse_events_url}}')) {
+    return true;
+  }
+  if (!body.includes('{{hub_payment_url}}')) {
+    return true;
+  }
+  if (!body.includes('{{privacy_url}}')) {
+    return true;
+  }
+  if (body.includes('{{site_url}}/events/')) {
     return true;
   }
   return false;

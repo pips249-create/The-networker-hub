@@ -3,6 +3,7 @@ const { resolveAttendeeId } = require('./supabase-favourites');
 const { buildStats } = require('./attendee');
 const { eventHasEnded, isEligibleRegistration } = require('./supabase-reviews');
 const { eventImageUrl } = require('./event-image');
+const { formatBookingReference } = require('./booking-payment-summary');
 
 function deriveReviewStatus(hasReview, row) {
   const ev = row.events || {};
@@ -34,6 +35,8 @@ function mapRegistrationRow(row, reviewByEventId) {
     quantity: qty,
     paymentStatus: row.payment_status || 'Pending',
     amountPaid: row.amount_paid != null ? Number(row.amount_paid) : 0,
+    createdAt: row.created_at || null,
+    bookingReference: formatBookingReference(row.id),
     organiserId: ev.organiser_id || organiser.id || '',
     organiserName: organiser.name || '',
     organiserSlug: organiser.slug || '',

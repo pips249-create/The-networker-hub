@@ -16,14 +16,84 @@ const BROWSER_HEADERS = {
 };
 
 function decodeHtmlEntities(value) {
+  const named = {
+    amp: '&',
+    lt: '<',
+    gt: '>',
+    quot: '"',
+    apos: "'",
+    nbsp: ' ',
+    mdash: '-',
+    ndash: '-',
+    hellip: '...',
+    rsquo: "'",
+    lsquo: "'",
+    rdquo: '"',
+    ldquo: '"',
+    copy: '(c)',
+    reg: '(R)',
+    trade: '(TM)',
+  };
+
   return String(value || '')
-    .replace(/&amp;/gi, '&')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)));
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => {
+      const code = parseInt(hex, 16);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : '';
+    })
+    .replace(/&#(\d+);/g, (_, num) => {
+      const code = parseInt(num, 10);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : '';
+    })
+    .replace(/&([a-z]+);/gi, (_, name) => named[name.toLowerCase()] ?? '&' + name + ';');
+}
+
+function fixMojibake(text) {
+  return String(text || '')
+    .replace(/\u00e2\u0080[\u0093-\u0094]/g, '-')
+    .replace(/\u00e2\u0080[\u0098-\u0099]/g, "'")
+    .replace(/\u00e2\u0080[\u009c-\u009d]/g, '"')
+    .replace(/\u00e2\u0080\u00a6/g, '...')
+    .replace(/\u00c2\u00a0/g, ' ')
+    .replace(/\u00c2(?=[\s'"\-.,!?])/g, '')
+    .replace(/â€™|â€˜|Ã¢â‚¬â„¢/g, "'")
+    .replace(/â€œ|â€\u009d|Ã¢â‚¬Å"/g, '"')
+    .replace(/â€"|Ã¢â‚¬"/g, '-')
+    .replace(/â€¦/g, '...')
+    .replace(/Â(?=[\s\u00a0'"\-.,!?])/g, '')
+    .replace(/\u00a0/g, ' ');
+}
+
+function stripMarkup(text) {
+  return String(text || '')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/!\[[^\]]*]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/^#+\s+/gm, '')
+    .replace(/^\s*[-*+]\s+/gm, '');
+}
+
+function cleanDescription(raw) {
+  let text = stripMarkup(decodeHtmlEntities(raw));
+  text = fixMojibake(text);
+  text = text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g, '');
+  text = text
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/\.{4,}/g, '...')
+    .replace(/!{2,}/g, '!')
+    .replace(/\?{2,}/g, '?')
+    .replace(/\\(['"])/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+  text = text.replace(/^(We use cookies[^.]*\.?\s*|This site uses cookies[^.]*\.?\s*)/i, '');
+  text = text.replace(/(\s*(Read more|Learn more|Click here|Find out more|View all)\.?)$/i, '');
+  text = text.replace(/\s*[|·]\s*(Home|Menu|Skip to content).*$/i, '');
+  return text.slice(0, 2000).trim();
 }
 
 function normalizeWebsiteUrl(input) {
@@ -175,13 +245,13 @@ function pickDescription(html) {
   ].filter(Boolean);
 
   for (const text of candidates) {
-    const clean = text.replace(/\s+/g, ' ').trim();
-    if (clean.length >= 20) return clean.slice(0, 2000);
+    const clean = cleanDescription(text);
+    if (clean.length >= 20) return clean;
   }
 
   for (const text of candidates) {
-    const clean = text.replace(/\s+/g, ' ').trim();
-    if (clean) return clean.slice(0, 2000);
+    const clean = cleanDescription(text);
+    if (clean) return clean;
   }
 
   return '';
@@ -222,7 +292,7 @@ async function fetchDescriptionViaReader(url) {
     if (contentMatch && contentMatch[1]) {
       const paragraph = contentMatch[1]
         .split(/\n{2,}/)
-        .map((block) => block.replace(/\s+/g, ' ').trim())
+        .map((block) => cleanDescription(block))
         .find((block) => {
           if (block.length < 40) return false;
           if (/^!\[/.test(block) || /^#+\s/.test(block) || /^\|/.test(block)) return false;
@@ -230,12 +300,12 @@ async function fetchDescriptionViaReader(url) {
           if (block.includes('![') && block.includes('](')) return false;
           return block.split(/\s+/).length >= 8;
         });
-      if (paragraph) return paragraph.slice(0, 2000);
+      if (paragraph) return paragraph;
     }
     const titleMatch = text.match(/^Title:\s*(.+)$/im);
     if (titleMatch && titleMatch[1]) {
-      const title = titleMatch[1].replace(/\s+/g, ' ').trim();
-      if (title.length >= 10) return title.slice(0, 2000);
+      const title = cleanDescription(titleMatch[1]);
+      if (title.length >= 10) return title;
     }
   } catch {
     /* optional fallback */
@@ -302,6 +372,8 @@ async function fetchWebsiteMeta(rawUrl) {
     if (description) blocked = true;
   }
 
+  description = cleanDescription(description);
+
   if (!logo_url && !description) {
     const err = new Error('no_meta');
     err.status = 422;
@@ -322,4 +394,5 @@ async function fetchWebsiteMeta(rawUrl) {
 module.exports = {
   fetchWebsiteMeta,
   normalizeWebsiteUrl,
+  cleanDescription,
 };

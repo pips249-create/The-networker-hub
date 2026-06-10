@@ -1,5 +1,6 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { eventImageUrl } = require('./event-image');
+const { skipFavouriteSalesAlertIfAlreadyOnSale } = require('./favourite-sales-emails');
 
 async function resolveAttendeeId(sb, session) {
   if (!session?.email) return null;
@@ -102,6 +103,11 @@ async function addFavourite(session, eventId) {
     .select('id')
     .single();
   if (ins.error) throw new Error(ins.error.message);
+  try {
+    await skipFavouriteSalesAlertIfAlreadyOnSale(sb, ins.data.id, eid);
+  } catch {
+    /* Non-blocking — favourite still saved */
+  }
   return { action: 'added', eventId: eid, id: ins.data.id };
 }
 

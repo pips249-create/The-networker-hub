@@ -1,0 +1,179 @@
+-- Saved event — tickets on sale notification email
+
+insert into public.email_templates (
+  slug,
+  name,
+  description,
+  subject,
+  body_html,
+  placeholders,
+  category
+)
+values (
+  'saved_event_tickets_open',
+  'Saved event — tickets on sale',
+  'Sent when ticket sales open for an event the attendee saved.',
+  'Tickets are on sale for {{event_name}}',
+  '<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Tickets on sale – The Networker Hub</title>
+  <style>
+    @import url(''https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap'');
+    body, table, td, p, a { margin:0; padding:0; border:0; font-size:100%; font:inherit; vertical-align:top; }
+    img { border:0; display:block; max-width:100%; }
+    body { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; background-color:#faf7f2; }
+    table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
+    @media only screen and (max-width:600px) {
+      .email-wrapper { width:100% !important; }
+      .hero-title { font-size:22px !important; }
+      .mobile-pad { padding-left:20px !important; padding-right:20px !important; }
+      .detail-cell { display:block !important; width:100% !important; padding:12px 0 !important; border-top:1px solid rgba(255,255,255,0.12) !important; }
+      .detail-cell:first-child { border-top:none !important; padding-top:0 !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#faf7f2;font-family:''DM Sans'',system-ui,sans-serif;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#faf7f2;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table class="email-wrapper" role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(74,68,70,0.10);">
+
+        <tr>
+          <td style="background:#f5f0e8;padding:32px 48px 0;text-align:center;">
+            <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
+              <img src="{{logo_url}}" alt="The Networker Hub" width="180" style="height:auto;display:inline-block;margin:0 auto;border:0;">
+            </a>
+          </td>
+        </tr>
+
+        {{sponsor_row}}
+
+        <tr>
+          <td style="background:#f5f0e8;padding:0;text-align:center;border-bottom:1px solid rgba(194,153,209,0.35);">
+            <div style="line-height:0;font-size:0;margin-top:8px;">
+              <svg viewBox="0 0 600 40" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:40px;">
+                <path d="M0,24 C150,46 450,4 600,24 L600,40 L0,40 Z" fill="#ffffff"/>
+              </svg>
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:28px 48px 20px;text-align:center;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 16px;">
+              <tr>
+                <td style="width:52px;height:52px;background:#ebe0f0;border-radius:50%;text-align:center;vertical-align:middle;font-size:22px;color:#9a7aa8;line-height:52px;">&#9733;</td>
+              </tr>
+            </table>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:3px;margin:0 0 8px;">Saved event</p>
+            <h1 class="hero-title" style="font-family:''DM Sans'',system-ui,sans-serif;font-size:26px;font-weight:600;color:#4a4446;letter-spacing:-0.03em;line-height:1.15;margin:0 0 10px;">Tickets are on sale</h1>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:14px;font-weight:400;color:#736b6e;line-height:1.7;margin:0;">
+              Hi {{user_name}}, you saved <strong style="color:#9a7aa8;font-weight:600;">{{event_name}}</strong> &mdash; ticket sales are open. Book before they sell out.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:0 48px 20px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#4a4446;border-radius:16px;">
+              <tr>
+                <td style="padding:24px;">
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;margin:0 0 8px;">Your saved event</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:19px;font-weight:600;color:#ffffff;margin:0 0 16px;line-height:1.3;">{{event_name}}</p>
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                      <td class="detail-cell" style="padding:0 0 10px;font-family:''DM Sans'',system-ui,sans-serif;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.5;">
+                        <span style="color:rgba(255,255,255,0.55);">Date</span><br>
+                        <span style="color:#ffffff;font-weight:600;">{{event_date}}</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="detail-cell" style="padding:0 0 10px;font-family:''DM Sans'',system-ui,sans-serif;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.5;">
+                        <span style="color:rgba(255,255,255,0.55);">Time</span><br>
+                        <span style="color:#ffffff;font-weight:600;">{{event_time}}</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="detail-cell" style="padding:0;font-family:''DM Sans'',system-ui,sans-serif;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.5;">
+                        <span style="color:rgba(255,255,255,0.55);">Location</span><br>
+                        <span style="color:#ffffff;font-weight:600;">{{event_location}}</span>
+                      </td>
+                    </tr>
+                  </table>
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:18px;">
+                    <tr>
+                      <td style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:999px;">
+                        <a href="{{event_url}}" style="display:inline-block;padding:10px 22px;font-family:''DM Sans'',system-ui,sans-serif;font-size:12px;font-weight:600;color:#ffffff;text-decoration:none;">Book your ticket &rarr;</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:0 48px 24px;text-align:center;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">
+              <tr>
+                <td style="background:#ffffff;border:1px solid #d9c4e0;border-radius:999px;">
+                  <a href="{{hub_account_url}}#saved" style="display:inline-block;padding:10px 24px;font-family:''DM Sans'',system-ui,sans-serif;font-size:12px;font-weight:600;color:#4a4446;text-decoration:none;">View saved events in My Hub</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="background:#f5f0e8;padding:28px 48px 30px;text-align:center;border-radius:0 0 20px 20px;border-top:1px solid rgba(194,153,209,0.35);">
+            <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
+              <img src="{{logo_url}}" alt="The Networker Hub" width="140" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;">
+            </a>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:12px;font-weight:600;color:#4a4446;margin:0 0 8px;">The Networker Hub</p>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:11px;font-weight:400;color:#736b6e;line-height:1.8;margin:0 0 10px;">
+              Operated by <strong style="font-weight:600;color:#4a4446;">The Networker Group Ltd</strong><br>
+              Registered in England &amp; Wales &nbsp;&middot;&nbsp; Company No. 15252227 &nbsp;&middot;&nbsp; VAT No. 454 4092 94<br>
+              Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF
+            </p>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:11px;font-weight:400;color:#736b6e;margin:0 0 14px;">
+              <a href="mailto:hello@the-networker.co.uk" style="color:#9a7aa8;text-decoration:none;font-weight:600;">hello@the-networker.co.uk</a>
+            </p>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:11px;font-weight:400;color:#9a9092;margin:0;">
+              <a href="{{privacy_url}}" style="color:#9a7aa8;text-decoration:none;">Privacy</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{terms_url}}" style="color:#9a7aa8;text-decoration:none;">Terms</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{refunds_url}}" style="color:#9a7aa8;text-decoration:none;">Refunds</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{contact_url}}" style="color:#9a7aa8;text-decoration:none;">Contact</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
+',
+  array[
+    'user_name', 'user_email', 'event_name', 'event_date', 'event_time', 'event_location', 'event_url',
+    'hub_account_url', 'browse_events_url', 'contact_url', 'privacy_url', 'terms_url', 'refunds_url',
+    'sponsor_row', 'site_url', 'logo_url'
+  ],
+  'attendees'
+)
+on conflict (slug) do update set
+  name = excluded.name,
+  description = excluded.description,
+  subject = excluded.subject,
+  body_html = excluded.body_html,
+  placeholders = excluded.placeholders,
+  category = excluded.category,
+  updated_at = now();

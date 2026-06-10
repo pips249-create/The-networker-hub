@@ -3955,6 +3955,14 @@
       ticket_quantity: 1,
       ticket_quantity_label: '1 × General admission',
       hub_account_url: previewOrigin + '/account/index.html',
+      hub_payment_url:
+        previewOrigin +
+        '/account/index.html?booking=00000000-0000-4000-8000-000000000001#payments',
+      browse_events_url: previewOrigin + '/events/',
+      contact_url: previewOrigin + '/contact.html',
+      privacy_url: previewOrigin + '/legal-policies.html#privacy',
+      terms_url: previewOrigin + '/legal-policies.html#terms',
+      refunds_url: previewOrigin + '/legal-policies.html#refunds',
       payment_summary_row: '',
       organiser_name: 'City Connectors',
       meeting_link: '',
@@ -3966,7 +3974,15 @@
       meeting_link_row: '',
       refund_policy_row: '',
       sponsor_row: '',
-      dashboard_url: previewOrigin + '/organiser-dashboard.html',
+      attendee_name: 'Alex Morgan',
+      attendee_email: 'alex@example.com',
+      attendee_initial: 'A',
+      booking_time: 'Tuesday 10 June 2026 at 2:30 pm',
+      tickets_sold: '24',
+      tickets_remaining: '16',
+      total_revenue: '£600.00',
+      welcome_url: previewOrigin + '/welcome.html',
+      dashboard_url: previewOrigin + '/organiser/index.html',
       site_url: previewOrigin,
       logo_url: previewOrigin + '/assets/logo-nav.png',
     };
@@ -4041,8 +4057,8 @@
         '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:14px;">' +
         '<tr><td style="background:#4a4446;border-radius:999px;">' +
         '<a href="' +
-        attrEsc(SAMPLE_VARS.hub_account_url) +
-        '" style="display:inline-block;padding:9px 20px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:600;color:#ffffff;text-decoration:none;">View in My Hub &rarr;</a>' +
+        attrEsc(SAMPLE_VARS.hub_payment_url) +
+        '" style="display:inline-block;padding:9px 20px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:600;color:#ffffff;text-decoration:none;">View payment details &rarr;</a>' +
         '</td></tr></table>' +
         '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:400;color:#9a9092;line-height:1.5;margin:12px 0 0;">Your card receipt is sent separately by our payment provider.</p>' +
         '</td></tr></table></td></tr>'
@@ -4058,6 +4074,16 @@
         '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:600;color:#4a4446;margin:0 0 8px;">Full refunds available</p>' +
         '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;color:#736b6e;line-height:1.65;margin:0;">Full refunds are available up to 7 days before the event.</p>' +
         '</td></tr></table></td></tr>'
+      );
+    }
+
+    function isBookingEmailSlug(slug) {
+      return (
+        slug === 'booking_confirmation' ||
+        slug === 'booking_reminder' ||
+        slug === 'account_welcome' ||
+        slug === 'saved_event_tickets_open' ||
+        slug === 'organiser_new_registration'
       );
     }
 
@@ -4077,7 +4103,39 @@
       SAMPLE_VARS.refund_policy_row = previewRefundPolicySection();
       SAMPLE_VARS.sponsor_row = SAMPLE_VARS.sponsor_row || '';
     }
-    applyPreviewEventFormat();
+
+    function applyPreviewReminderFormat() {
+      var online = previewIsOnline(SAMPLE_VARS);
+      SAMPLE_VARS.meeting_link_row = previewMeetingLinkSection(
+        online ? SAMPLE_VARS.meeting_link : '',
+        online
+      );
+      if (online) SAMPLE_VARS.event_location = 'Online event';
+      SAMPLE_VARS.sponsor_row = SAMPLE_VARS.sponsor_row || '';
+    }
+
+    function applyPreviewOrganiserFormat() {
+      SAMPLE_VARS.attendee_name = SAMPLE_VARS.user_name;
+      SAMPLE_VARS.attendee_email = SAMPLE_VARS.user_email;
+      SAMPLE_VARS.attendee_initial = String(SAMPLE_VARS.user_name || 'A').trim().charAt(0).toUpperCase() || 'A';
+      SAMPLE_VARS.booking_time = SAMPLE_VARS.booked_at;
+      SAMPLE_VARS.sponsor_row = SAMPLE_VARS.sponsor_row || '';
+    }
+
+    function applyPreviewAccountWelcomeFormat() {
+      SAMPLE_VARS.sponsor_row = SAMPLE_VARS.sponsor_row || '';
+    }
+
+    function applyPreviewForSlug(slug) {
+      if (slug === 'booking_confirmation') applyPreviewEventFormat();
+      else if (slug === 'booking_reminder') applyPreviewReminderFormat();
+      else if (slug === 'organiser_new_registration') applyPreviewOrganiserFormat();
+      else if (slug === 'account_welcome' || slug === 'saved_event_tickets_open') {
+        applyPreviewAccountWelcomeFormat();
+      }
+    }
+
+    applyPreviewForSlug('booking_confirmation');
     if (currentUser) {
       if (currentUser.name) SAMPLE_VARS.user_name = currentUser.name;
       if (currentUser.email) SAMPLE_VARS.user_email = currentUser.email;
@@ -4130,7 +4188,7 @@
       '<div id="email-sponsor-panel" class="hidden border-t border-slate-100 pt-5 space-y-4">' +
       '<div class="space-y-2">' +
       '<h4 class="text-sm font-bold text-brand-900">Email sponsor</h4>' +
-      '<p class="text-xs text-slate-500">Shown in the &ldquo;proudly powered by&rdquo; strip on booking confirmations. Defaults from your <strong>Events browse</strong> sponsor — change it here without affecting the website, or pull the latest from Events.</p>' +
+      '<p class="text-xs text-slate-500">Shown in the &ldquo;proudly powered by&rdquo; strip on booking confirmations, 24-hour reminders, and organiser new-booking alerts. Defaults from your <strong>Events browse</strong> sponsor — change it here without affecting the website, or pull the latest from Events.</p>' +
       '<p id="email-sponsor-status" class="text-xs text-slate-500"></p>' +
       '</div>' +
       '<div class="grid sm:grid-cols-2 gap-4">' +
@@ -4225,20 +4283,36 @@
     }
 
     var EMAIL_TEMPLATE_GROUPS = [
-      { key: 'events', label: 'Events' },
+      { key: 'attendees', label: 'Attendees' },
+      { key: 'organisers', label: 'Organisers' },
       { key: 'opportunities', label: 'Business opportunities' },
       { key: 'academy', label: 'Academy' },
     ];
 
+    var ATTENDEE_EMAIL_SLUGS = [
+      'booking_confirmation',
+      'booking_reminder',
+      'account_welcome',
+      'saved_event_tickets_open',
+    ];
+    var ORGANISER_EMAIL_SLUGS = ['organiser_new_registration', 'organiser_claim_invite'];
+
     function emailTemplateCategory(t) {
+      var slug = String((t && t.slug) || '');
+      if (ATTENDEE_EMAIL_SLUGS.indexOf(slug) !== -1) return 'attendees';
+      if (ORGANISER_EMAIL_SLUGS.indexOf(slug) !== -1 || slug.indexOf('organiser_') === 0) {
+        return 'organisers';
+      }
       var cat = String((t && t.category) || '')
         .trim()
         .toLowerCase();
-      if (cat === 'opportunities' || cat === 'academy' || cat === 'events') return cat;
-      var slug = String((t && t.slug) || '');
+      if (cat === 'attendees' || cat === 'organisers' || cat === 'opportunities' || cat === 'academy') {
+        return cat;
+      }
       if (slug.indexOf('opportunity') !== -1) return 'opportunities';
       if (slug.indexOf('academy') !== -1 || slug.indexOf('workshop') !== -1) return 'academy';
-      return 'events';
+      if (slug.indexOf('booking_') === 0 || slug.indexOf('account_') === 0) return 'attendees';
+      return 'organisers';
     }
 
     function renderTemplateList() {
@@ -4339,7 +4413,7 @@
           esc(label) +
           '</span>';
       return (
-        '<tr><td style="padding:18px 48px;text-align:center;background:#ffffff;border-top:1px solid #d9c4e0;border-bottom:1px solid #d9c4e0;">' +
+        '<tr><td style="padding:0 48px 18px;text-align:center;background:#f5f0e8;">' +
         '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:600;color:#9a9092;text-transform:uppercase;letter-spacing:2px;margin:0 0 12px;">Our event directory is proudly powered by</p>' +
         '<a href="' +
         attrEsc(link) +
@@ -4408,7 +4482,7 @@
     function toggleEmailSponsorPanel() {
       var panel = document.getElementById('email-sponsor-panel');
       if (!panel) return;
-      if (selectedSlug === 'booking_confirmation') {
+      if (isBookingEmailSlug(selectedSlug)) {
         panel.classList.remove('hidden');
         loadBookingEmailSponsor();
       } else {
@@ -4500,13 +4574,40 @@
       return out;
     }
 
+    function stripUnresolvedReminderPlaceholders(text) {
+      var keys = ['meeting_link_row', 'sponsor_row', 'meeting_link_section', 'sponsor_section'];
+      var out = String(text || '');
+      keys.forEach(function (key) {
+        out = out.replace(new RegExp('\\{\\{\\s*' + key + '\\s*\\}\\}', 'g'), '');
+      });
+      return out;
+    }
+
+    function stripUnresolvedOrganiserPlaceholders(text) {
+      var keys = ['sponsor_row', 'sponsor_section'];
+      var out = String(text || '');
+      keys.forEach(function (key) {
+        out = out.replace(new RegExp('\\{\\{\\s*' + key + '\\s*\\}\\}', 'g'), '');
+      });
+      return out;
+    }
+
+    function stripUnresolvedAccountWelcomePlaceholders(text) {
+      var keys = ['sponsor_row', 'sponsor_section'];
+      var out = String(text || '');
+      keys.forEach(function (key) {
+        out = out.replace(new RegExp('\\{\\{\\s*' + key + '\\s*\\}\\}', 'g'), '');
+      });
+      return out;
+    }
+
     function refreshPreview() {
       if (!selectedSlug) return;
       var subjectEl = document.getElementById('email-subject');
       var bodyEl = document.getElementById('email-body');
       if (!subjectEl || !bodyEl) return;
-      if (selectedSlug === 'booking_confirmation') {
-        applyPreviewEventFormat();
+      if (isBookingEmailSlug(selectedSlug)) {
+        applyPreviewForSlug(selectedSlug);
         updateSampleSponsorSection();
       }
       var subjectLine = document.getElementById('email-preview-subject');
@@ -4517,6 +4618,15 @@
       var html = replaceEmailPlaceholders(bodyEl.value, SAMPLE_VARS);
       if (selectedSlug === 'booking_confirmation') {
         html = stripUnresolvedBookingPlaceholders(html);
+      } else if (selectedSlug === 'booking_reminder') {
+        html = stripUnresolvedReminderPlaceholders(html);
+      } else if (selectedSlug === 'organiser_new_registration') {
+        html = stripUnresolvedOrganiserPlaceholders(html);
+      } else if (
+        selectedSlug === 'account_welcome' ||
+        selectedSlug === 'saved_event_tickets_open'
+      ) {
+        html = stripUnresolvedAccountWelcomePlaceholders(html);
       }
       setPreviewHtml(html);
     }
@@ -4841,8 +4951,8 @@
         return;
       }
       if (btn) btn.disabled = true;
-      if (selectedSlug === 'booking_confirmation') {
-        applyPreviewEventFormat();
+      if (isBookingEmailSlug(selectedSlug)) {
+        applyPreviewForSlug(selectedSlug);
         updateSampleSponsorSection();
       }
       setEmailStatus('Sending test email to ' + to + '…');
@@ -5154,6 +5264,8 @@
     if (countEl) countEl.textContent = String(ids.length);
     if (bar) bar.classList.toggle('hidden', ids.length === 0);
     if (mergeSection) mergeSection.classList.toggle('hidden', ids.length < 2);
+    var deleteSection = document.getElementById('group-delete-section');
+    if (deleteSection) deleteSection.classList.toggle('hidden', ids.length === 0);
     if (primarySelect) {
       var rows = selectedGroupRows();
       var current = primarySelect.value;
@@ -5606,6 +5718,90 @@
       });
   }
 
+  function groupDeleteConfirmMsg(count, label, eventCount) {
+    var msg =
+      'Delete ' +
+      (count === 1 && label ? '"' + label + '"' : count + ' selected group' + (count === 1 ? '' : 's')) +
+      '?\n\n';
+    if (eventCount > 0) {
+      msg +=
+        eventCount +
+        ' linked event' +
+        (eventCount === 1 ? '' : 's') +
+        ' will become unlinked from a group profile. ';
+    }
+    msg += 'This cannot be undone.';
+    return msg;
+  }
+
+  function deleteGroupsByIds(ids, opts) {
+    opts = opts || {};
+    var msgEl = opts.msgEl;
+    var btn = opts.btn;
+    if (!ids.length) return;
+
+    if (btn) btn.disabled = true;
+    if (msgEl) {
+      msgEl.textContent = 'Deleting group' + (ids.length === 1 ? '' : 's') + '…';
+      msgEl.className = 'text-xs text-slate-500';
+    }
+
+    adminPost('/api/admin/organisers', { action: 'delete_groups', ids: ids })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Delete failed');
+        ids.forEach(function (id) {
+          delete groupCleanupState.selected[id];
+          delete groupCleanupState.expanded[id];
+        });
+        if (msgEl) {
+          msgEl.textContent =
+            'Deleted ' +
+            (data.deleted || ids.length) +
+            ' group' +
+            ((data.deleted || ids.length) === 1 ? '' : 's') +
+            ((data.eventsUnlinked || 0)
+              ? ', ' + data.eventsUnlinked + ' event' + (data.eventsUnlinked === 1 ? '' : 's') + ' unlinked'
+              : '') +
+            '.';
+          msgEl.className = 'text-xs text-emerald-700 font-semibold';
+        }
+        return fetchGroupCleanup(groupCleanupState.page);
+      })
+      .then(function (data) {
+        renderGroupCleanupList(data);
+        bindGroupCleanupPageUi();
+        updateGroupBulkBar();
+        if (btn) btn.disabled = false;
+      })
+      .catch(function (err) {
+        if (msgEl) {
+          msgEl.textContent = err.message || 'Could not delete groups';
+          msgEl.className = 'text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function deleteSelectedGroups() {
+    var ids = getSelectedGroupIds();
+    if (!ids.length) return;
+    var rows = selectedGroupRows();
+    var eventCount = rows.reduce(function (sum, o) {
+      return sum + (o.event_count || 0);
+    }, 0);
+    if (!window.confirm(groupDeleteConfirmMsg(ids.length, null, eventCount))) return;
+    deleteGroupsByIds(ids, {
+      msgEl: document.getElementById('group-delete-msg'),
+      btn: document.getElementById('group-delete-btn'),
+    });
+  }
+
+  function deleteSingleGroup(id, name, eventCount, btn) {
+    if (!id) return;
+    if (!window.confirm(groupDeleteConfirmMsg(1, name || 'this group', eventCount || 0))) return;
+    deleteGroupsByIds([id], { btn: btn });
+  }
+
   function saveGroupBulkForm(form) {
     var ids = getSelectedGroupIds();
     var msg = document.getElementById('group-bulk-msg');
@@ -5788,6 +5984,22 @@
 
     if (e.target.closest('#group-merge-btn')) {
       mergeSelectedGroups();
+      return;
+    }
+
+    if (e.target.closest('#group-delete-btn')) {
+      deleteSelectedGroups();
+      return;
+    }
+
+    var deleteGroupBtn = e.target.closest('[data-delete-group]');
+    if (deleteGroupBtn) {
+      deleteSingleGroup(
+        deleteGroupBtn.getAttribute('data-delete-group'),
+        deleteGroupBtn.getAttribute('data-group-name'),
+        parseInt(deleteGroupBtn.getAttribute('data-group-event-count'), 10) || 0,
+        deleteGroupBtn
+      );
       return;
     }
 
@@ -6109,7 +6321,14 @@
               : '') +
             '<button type="button" data-toggle-group-edit="1" class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
             (isOpen ? 'Close' : 'Edit profile') +
-            '</button></div></div>' +
+            '</button>' +
+            '<button type="button" data-delete-group="' +
+            attrEsc(o.id) +
+            '" data-group-name="' +
+            attrEsc(o.name || '') +
+            '" data-group-event-count="' +
+            String(o.event_count || 0) +
+            '" class="text-xs font-semibold rounded-lg border border-red-200 text-red-700 px-2.5 py-1 hover:bg-red-50">Delete</button></div></div>' +
             '<div class="group-cleanup-panel border-t border-slate-100 bg-slate-50/80 px-4 py-3' +
             (isOpen ? '' : ' hidden') +
             '">' +
@@ -6148,7 +6367,13 @@
       '<select id="group-merge-primary" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></select></div>' +
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="button" id="group-merge-btn" class="rounded-lg bg-amber-600 text-white text-sm font-semibold px-4 py-2 hover:bg-amber-700">Merge into primary</button>' +
-      '<span id="group-merge-msg" class="text-xs"></span></div></div></div>' +
+      '<span id="group-merge-msg" class="text-xs"></span></div></div>' +
+      '<div id="group-delete-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
+      '<p class="text-sm font-semibold text-brand-900">Delete selected groups</p>' +
+      '<p class="text-xs text-slate-600">Permanently remove the selected group profiles. Linked events stay on the platform but become unlinked.</p>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="button" id="group-delete-btn" class="rounded-lg bg-red-600 text-white text-sm font-semibold px-4 py-2 hover:bg-red-700">Delete selected</button>' +
+      '<span id="group-delete-msg" class="text-xs"></span></div></div></div>' +
       '<div class="admin-filter-bar flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
       '<input type="search" id="group-cleanup-search" placeholder="Search by name…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:max-w-xs bg-white" value="' +
       attrEsc(groupCleanupState.q) +
@@ -6525,7 +6750,24 @@
           envRow('SUPABASE_SERVICE_ROLE_KEY', env.hasSupabaseServiceKey) +
           envRow('SUPABASE_ANON_KEY', env.hasSupabaseAnonKey) +
           envRow('SITE_URL', env.hasSiteUrl) +
+          envRow('RESEND_API_KEY', env.hasResendApiKey) +
+          envRow('RESEND_FROM', env.hasResendFrom) +
+          envRow('CRON_SECRET', env.hasCronSecret) +
           '</div></section>' +
+          '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+          '<h3 class="font-bold text-brand-900 mb-3">Email &amp; scheduled jobs</h3>' +
+          '<div class="text-sm">' +
+          envRow('Transactional email (Resend)', env.emailSendingConfigured) +
+          envRow('Cron jobs secured', env.cronReady) +
+          '</div>' +
+          (hints.missingResend
+            ? '<p class="text-xs text-amber-800 mt-3">' + esc(hints.missingResend) + '</p>'
+            : '') +
+          (hints.missingCronSecret
+            ? '<p class="text-xs text-amber-800 mt-2">' + esc(hints.missingCronSecret) + '</p>'
+            : '') +
+          '<p class="text-xs text-slate-500 mt-3">Hourly crons: 24-hour booking reminders and saved-event ticket alerts. Local dev: copy vars into <code class="text-[11px]">local.env</code>, run <code class="text-[11px]">npm run sync-env</code>, restart <code class="text-[11px]">npm start</code>.</p>' +
+          '</section>' +
           '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
           '<h3 class="font-bold text-brand-900 mb-2">Supabase connection</h3>' +
           '<p class="text-sm ' +

@@ -5,6 +5,17 @@ const {
   formatBookedAt,
   formatTicketQuantity,
 } = require('./booking-payment-summary');
+const {
+  siteBase,
+  browseEventsUrl,
+  hubAccountUrl,
+  hubPaymentUrl,
+  legalPolicyUrl,
+  contactUrl,
+  eventPublicUrl: buildEventPublicUrl,
+} = require('./hub-email-urls');
+const { computeEventTicketStats } = require('./organiser-registration-stats');
+const { attendeeInitial } = require('./organiser-email-sections');
 
 function formatAmount(amountPaid) {
   const n = Number(amountPaid);
@@ -32,10 +43,105 @@ function buildMeetingLinkSection(link) {
 }
 
 function eventPublicUrl(eventRow) {
-  const site = (process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
-  const slug = String(eventRow.slug || '').trim();
-  if (slug) return site + '/events/' + encodeURIComponent(slug);
-  return site + '/events/event.html?id=' + encodeURIComponent(eventRow.id);
+  return buildEventPublicUrl(eventRow);
+}
+
+function buildAttendeeEmailVars({
+  registration,
+  eventRow,
+  attendee,
+  ticketName,
+  organiserName,
+  amountPaid,
+}) {
+  const registrationId = registration.id;
+  const attendeeName = String(attendee?.name || '').trim() || 'there';
+  const attendeeEmail = String(attendee?.email || '').trim().toLowerCase();
+  const startsAt = eventRow.starts_at ? new Date(eventRow.starts_at) : null;
+  const eventDate = startsAt
+    ? startsAt.toLocaleDateString('en-GB', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : 'Date TBC';
+  const eventTime = startsAt
+    ? startsAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+    : '';
+  const eventLocation =
+    String(eventRow.location_label || eventRow.venue || eventRow.city || '').trim() ||
+    'See event page';
+  const siteUrl = siteBase();
+  const meetingLink = String(registration.meeting_link || eventRow.meeting_link || '').trim();
+  const online = isOnlineEvent(eventRow, meetingLink);
+  const ticketQuantity = Math.max(1, parseInt(registration.quantity, 10) || 1);
+  const bookedAtIso = registration.created_at || new Date().toISOString();
+  const resolvedTicketName = String(ticketName || 'Ticket').trim();
+  const resolvedAmountPaid =
+    amountPaid != null ? amountPaid : formatAmount(registration.amount_paid);
+
+  return {
+    user_name: attendeeName,
+    user_email: attendeeEmail,
+    event_name: String(eventRow.title || 'Event').trim(),
+    event_date: eventDate,
+    event_time: eventTime,
+    event_location: eventLocation,
+    event_url: eventPublicUrl(eventRow, siteUrl),
+    ticket_name: resolvedTicketName,
+    amount_paid: resolvedAmountPaid,
+    registration_id: registrationId,
+    booking_reference: formatBookingReference(registrationId),
+    booked_at: formatBookedAt(bookedAtIso),
+    booked_at_iso: bookedAtIso,
+    ticket_quantity: ticketQuantity,
+    ticket_quantity_label: formatTicketQuantity(ticketQuantity, resolvedTicketName),
+    payment_status: String(registration.payment_status || '').trim(),
+    hub_account_url: hubAccountUrl(siteUrl),
+    hub_payment_url: hubPaymentUrl(siteUrl, registrationId),
+    browse_events_url: browseEventsUrl(siteUrl),
+    contact_url: contactUrl(siteUrl),
+    privacy_url: legalPolicyUrl(siteUrl, 'privacy'),
+    terms_url: legalPolicyUrl(siteUrl, 'terms'),
+    refunds_url: legalPolicyUrl(siteUrl, 'refunds'),
+    organiser_name: organiserName || 'The organiser',
+    meeting_link: online ? meetingLink : '',
+    meeting_type: eventRow.meeting_type || (online ? 'Online' : 'In person'),
+    refund_policy: eventRow.refund_policy,
+    refund_policy_details: eventRow.refund_policy_details,
+    refund_cutoff_days: eventRow.refund_cutoff_days,
+    site_url: siteUrl,
+    logo_url: siteUrl + '/assets/logo-nav.png',
+    dashboard_url: siteUrl + '/organiser/index.html',
+  };
+}
+
+async function fetchEventRegistrationStats(sb, eventId) {
+  const [regsRes, ticketsRes] = await Promise.all([
+    sb
+      .from('registrations')
+      .select('payment_status, application_status, quantity, amount_paid')
+      .eq('event_id', eventId),
+    sb.from('tickets').select('id, quantity').eq('event_id', eventId),
+  ]);
+
+  if (regsRes.error) throw new Error(regsRes.error.message);
+  if (ticketsRes.error) throw new Error(ticketsRes.error.message);
+
+  return computeEventTicketStats(regsRes.data, ticketsRes.data);
+}
+
+function buildOrganiserEmailVars(attendeeVars, stats) {
+  const attendeeName = String(attendeeVars.user_name || '').trim() || 'Guest';
+  return {
+    ...attendeeVars,
+    ...stats,
+    attendee_name: attendeeName,
+    attendee_email: String(attendeeVars.user_email || '').trim(),
+    attendee_initial: attendeeInitial(attendeeName),
+    booking_time: String(attendeeVars.booked_at || '').trim(),
+  };
 }
 
 /**
@@ -71,7 +177,6 @@ async function sendRegistrationEmails(sb, registration) {
 
   const attendee = attendeeRes.data || {};
   const attendeeEmail = String(attendee.email || '').trim().toLowerCase();
-  const attendeeName = String(attendee.name || '').trim() || 'there';
 
   let organiserName = '';
   let organiserEmail = '';
@@ -86,54 +191,17 @@ async function sendRegistrationEmails(sb, registration) {
     organiserEmail = String(orgRes.data?.email || '').trim().toLowerCase();
   }
 
-  const startsAt = eventRow.starts_at ? new Date(eventRow.starts_at) : null;
-  const eventDate = startsAt
-    ? startsAt.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-    : 'Date TBC';
-  const eventTime = startsAt
-    ? startsAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-    : '';
-  const eventLocation =
-    String(eventRow.location_label || eventRow.venue || eventRow.city || '').trim() || 'See event page';
   const ticketName = String(ticketRes.data?.name || 'Ticket').trim();
   const amountPaid = formatAmount(registration.amount_paid);
-  const eventUrl = eventPublicUrl(eventRow);
-  const siteUrl = (process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
 
-  const meetingLink = String(registration.meeting_link || eventRow.meeting_link || '').trim();
-  const online = isOnlineEvent(eventRow, meetingLink);
-
-  const ticketQuantity = Math.max(1, parseInt(registration.quantity, 10) || 1);
-  const bookedAtIso = registration.created_at || new Date().toISOString();
-
-  const vars = {
-    user_name: attendeeName,
-    user_email: attendeeEmail,
-    event_name: String(eventRow.title || 'Event').trim(),
-    event_date: eventDate,
-    event_time: eventTime,
-    event_location: eventLocation,
-    event_url: eventUrl,
-    ticket_name: ticketName,
-    amount_paid: amountPaid,
-    registration_id: registrationId,
-    booking_reference: formatBookingReference(registrationId),
-    booked_at: formatBookedAt(bookedAtIso),
-    booked_at_iso: bookedAtIso,
-    ticket_quantity: ticketQuantity,
-    ticket_quantity_label: formatTicketQuantity(ticketQuantity, ticketName),
-    payment_status: String(registration.payment_status || '').trim(),
-    hub_account_url: siteUrl + '/account/index.html',
-    organiser_name: organiserName || 'The organiser',
-    meeting_link: online ? meetingLink : '',
-    meeting_type: eventRow.meeting_type || (online ? 'Online' : 'In person'),
-    refund_policy: eventRow.refund_policy,
-    refund_policy_details: eventRow.refund_policy_details,
-    refund_cutoff_days: eventRow.refund_cutoff_days,
-    site_url: siteUrl,
-    logo_url: siteUrl + '/assets/logo-nav.png',
-    dashboard_url: siteUrl + '/organiser/index.html',
-  };
+  const vars = buildAttendeeEmailVars({
+    registration,
+    eventRow,
+    attendee,
+    ticketName,
+    organiserName,
+    amountPaid,
+  });
 
   const sent = { attendee: false, organiser: false, errors: [] };
 
@@ -152,10 +220,12 @@ async function sendRegistrationEmails(sb, registration) {
 
   if (organiserEmail) {
     try {
+      const stats = await fetchEventRegistrationStats(sb, eventId);
+      const organiserVars = buildOrganiserEmailVars(vars, stats);
       await sendTemplatedEmail({
         slug: 'organiser_new_registration',
         to: organiserEmail,
-        variables: vars,
+        variables: organiserVars,
       });
       sent.organiser = true;
     } catch (e) {
@@ -175,6 +245,9 @@ async function sendRegistrationEmails(sb, registration) {
 
 module.exports = {
   sendRegistrationEmails,
+  buildAttendeeEmailVars,
+  buildOrganiserEmailVars,
+  fetchEventRegistrationStats,
   formatAmount,
   eventPublicUrl,
   buildMeetingLinkSection,

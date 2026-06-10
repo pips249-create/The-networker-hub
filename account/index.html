@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260627" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260607c" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260716" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627" />
 
   </head>
@@ -34,6 +34,7 @@
           <nav class="hub-side-nav hub-side-nav--minimal ad-dash-bar" aria-label="Attend events">
             <a href="#overview" class="hub-side-nav-link is-active" data-ad-route="overview">Overview</a>
             <a href="#upcoming" class="hub-side-nav-link" data-ad-route="upcoming">Upcoming</a>
+            <a href="#payments" class="hub-side-nav-link" data-ad-route="payments">Payments</a>
             <a href="#saved" class="hub-side-nav-link" data-ad-route="saved">Saved</a>
             <a href="#past" class="hub-side-nav-link" data-ad-route="past">Past</a>
             <a href="#reviews-pending" class="hub-side-nav-link" data-ad-route="reviews-pending">Reviews</a>
@@ -103,6 +104,35 @@
                 <a href="../events/index.html">Browse events →</a>
               </p>
               <nav class="ad-pagination" id="ad-pagination-upcoming" aria-label="Upcoming events pages" hidden></nav>
+            </section>
+
+            <!-- Payments -->
+            <section class="ad-page" id="ad-page-payments" data-ad-page="payments">
+              <h2 class="ad-section-title">Payments &amp; receipts</h2>
+              <p class="ad-section-sub">Booking references, amounts paid, and ticket details for your registrations.</p>
+              <div class="ad-table-scroll">
+                <div class="ad-table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th class="ad-th-thumb"></th>
+                        <th>Event</th>
+                        <th>Booked</th>
+                        <th>Reference</th>
+                        <th>Tickets</th>
+                        <th>Paid</th>
+                        <th>Status</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="ad-payments-body"></tbody>
+                  </table>
+                </div>
+              </div>
+              <p class="ad-empty" id="ad-payments-empty" hidden>
+                No bookings yet — your payment history will appear here after you book an event.
+                <a href="../events/index.html">Browse events →</a>
+              </p>
             </section>
 
             <!-- Saved -->
@@ -208,6 +238,30 @@
       </div>
     </div>
 
+    <div class="ad-payment-modal" id="ad-payment-modal" hidden>
+      <div class="ad-payment-modal-backdrop" id="ad-payment-modal-backdrop"></div>
+      <div
+        class="ad-payment-modal-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ad-payment-modal-title"
+      >
+        <button type="button" class="ad-payment-modal-close" id="ad-payment-modal-close" aria-label="Close">
+          ×
+        </button>
+        <h2 class="ad-payment-modal-title" id="ad-payment-modal-title">Payment details</h2>
+        <p class="ad-payment-modal-sub" id="ad-payment-modal-sub"></p>
+        <dl class="ad-payment-details" id="ad-payment-details"></dl>
+        <p class="ad-payment-note" id="ad-payment-note" hidden>
+          Your card receipt is sent separately by our payment provider when you pay by card.
+        </p>
+        <div class="ad-payment-actions">
+          <button type="button" class="ad-btn" id="ad-payment-close">Close</button>
+          <a class="ad-btn ad-btn-primary" id="ad-payment-event-link" href="#">View event</a>
+        </div>
+      </div>
+    </div>
+
     <div class="ad-review-modal" id="ad-review-modal" hidden>
       <div class="ad-review-modal-backdrop" id="ad-review-modal-backdrop"></div>
       <div
@@ -256,6 +310,6 @@
 
     <script src="../js/hub-favourites.js?v=20260629"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260607c"></script>
+    <script src="../js/attendee-dashboard.js?v=20260716"></script>
   </body>
 </html>

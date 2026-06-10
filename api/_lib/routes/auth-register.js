@@ -1,6 +1,7 @@
 const { setSessionCookie, json, setCors, hubViewFromRequest } = require('../auth');
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
+const { sendAccountWelcomeEmail } = require('../account-emails');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -72,6 +73,12 @@ module.exports = async function handler(req, res) {
     let redirect = body.next || '/welcome.html';
     if (hubViewFromRequest(req) === 'organiser' && !body.next) {
       redirect = '/welcome.html';
+    }
+
+    try {
+      await sendAccountWelcomeEmail({ email, name });
+    } catch {
+      /* Registration succeeds even if welcome email fails */
     }
 
     return json(res, 201, {

@@ -6,6 +6,8 @@ const {
   isSupabaseConfigured,
 } = require('../supabase');
 const sbAuth = require('../supabase-auth');
+const { emailConfigStatus } = require('../email-config');
+const { cronConfigStatus } = require('../cron-auth');
 
 /**
  * Safe diagnostic: which env vars are set (never returns secret values).
@@ -43,6 +45,8 @@ module.exports = async function handler(req, res) {
   const canSeedAdmin = authReady && env.hasAdminInitialPassword;
 
   const supabase = isSupabaseConfigured() ? await testSupabaseConnection() : { ok: false, configured: false };
+  const email = emailConfigStatus();
+  const cron = cronConfigStatus();
 
   const adminEmail = cleanEnvVal(process.env.ADMIN_EMAIL) || 'pips249@gmail.com';
   let adminAccount = { email: adminEmail, exists: false, hasPassword: false, role: null };
@@ -68,7 +72,17 @@ module.exports = async function handler(req, res) {
     dataProvider: provider,
     supabase,
     adminAccount,
-    env,
+    email,
+    cron,
+    env: {
+      ...env,
+      hasResendApiKey: email.hasResendApiKey,
+      hasResendFrom: email.hasResendFrom,
+      hasCronSecret: cron.hasCronSecret,
+      isProduction: cron.isProduction,
+      emailSendingConfigured: email.emailSendingConfigured,
+      cronReady: cron.cronReady,
+    },
     hints: {
       missingSessionSecret: !env.hasSessionSecret
         ? 'Add SESSION_SECRET in Vercel, then Redeploy.'
@@ -78,6 +92,14 @@ module.exports = async function handler(req, res) {
         : null,
       supabaseConnection: !supabase.ok && supabase.configured !== false ? supabase.message : null,
       setupAdminRequired: supabase.ok && !adminAccount.exists,
+      missingResend:
+        !email.emailSendingConfigured
+          ? 'Add RESEND_API_KEY and RESEND_FROM in Vercel (and local.env for localhost test sends), then redeploy.'
+          : null,
+      missingCronSecret:
+        cron.isProduction && !cron.hasCronSecret
+          ? 'Add CRON_SECRET in Vercel Production env vars. Vercel Cron sends Authorization: Bearer <CRON_SECRET> automatically.'
+          : null,
       nextStep: !supabase.ok
         ? 'Fix Supabase env vars in Vercel → Redeploy.'
         : !adminAccount.exists

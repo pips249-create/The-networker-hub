@@ -69,6 +69,13 @@ function isCompactSponsorSlot(slot) {
   return key.endsWith('_sidebar_ad') || key === 'event_page_banner_ad';
 }
 
+/** Whether a cms_blocks row is ready for booking emails (logo/name + website link). */
+function isEmailSponsorBlock(block) {
+  if (!block || block.active === false) return false;
+  if (!hasValidCtaUrl(block.cta_url)) return false;
+  return hasSponsorLogo(block) || Boolean(sponsorCompanyName(block)) || Boolean(sponsorTagline(block));
+}
+
 /** Whether a cms_blocks row is ready to show on the public site for its slot. */
 function isPublishableSponsorBlock(block, slot) {
   if (!block || block.active === false) return false;
@@ -132,6 +139,7 @@ module.exports = {
   hasSponsorLogo,
   hasValidCtaUrl,
   isCompactSponsorSlot,
+  isEmailSponsorBlock,
   isPublishableSponsorBlock,
   normalizeSponsorBlock,
   buildSponsorRow,

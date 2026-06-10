@@ -16,6 +16,9 @@ function demoRegistrations() {
       imageUrl: null,
       ticketLabel: '1 × General Admission',
       paymentStatus: 'Paid',
+      amountPaid: 25,
+      createdAt: '2026-03-01T10:15:00.000Z',
+      bookingReference: 'HUB-DEMO0001',
       reviewStatus: 'upcoming',
     },
     {
@@ -27,6 +30,9 @@ function demoRegistrations() {
       imageUrl: null,
       ticketLabel: '2 × General Admission',
       paymentStatus: 'Paid',
+      amountPaid: 50,
+      createdAt: '2026-03-05T14:20:00.000Z',
+      bookingReference: 'HUB-DEMO0002',
       reviewStatus: 'upcoming',
     },
     {
@@ -38,6 +44,9 @@ function demoRegistrations() {
       imageUrl: null,
       ticketLabel: '1 × General Admission',
       paymentStatus: 'Paid',
+      amountPaid: 35,
+      createdAt: '2026-03-12T09:45:00.000Z',
+      bookingReference: 'HUB-DEMO0003',
       reviewStatus: 'upcoming',
     },
     {
@@ -49,6 +58,9 @@ function demoRegistrations() {
       imageUrl: null,
       ticketLabel: '1 × General Admission',
       paymentStatus: 'Paid',
+      amountPaid: 18,
+      createdAt: '2026-02-28T16:30:00.000Z',
+      bookingReference: 'HUB-DEMO0004',
       reviewStatus: 'reviewed',
     },
     {
@@ -60,6 +72,9 @@ function demoRegistrations() {
       imageUrl: null,
       ticketLabel: '1 × General Admission',
       paymentStatus: 'Paid',
+      amountPaid: 12,
+      createdAt: '2026-02-15T11:00:00.000Z',
+      bookingReference: 'HUB-DEMO0005',
       reviewStatus: 'pending',
     },
   ];

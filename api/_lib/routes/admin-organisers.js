@@ -355,6 +355,48 @@ async function collectOwnersFromOrganiser(sb, organiser, accountId, primaryOwner
   }
 }
 
+async function deleteOrganisers(body) {
+  const ids = [
+    ...new Set(
+      (Array.isArray(body.ids) ? body.ids : body.id ? [body.id] : [])
+        .map((id) => String(id || '').trim())
+        .filter(Boolean)
+    ),
+  ];
+
+  if (!ids.length) {
+    const err = new Error('missing_ids');
+    err.status = 400;
+    throw err;
+  }
+
+  const sb = getSupabaseAdmin();
+  const { data: rows, error: fetchErr } = await sb
+    .from('organisers')
+    .select('id, name')
+    .in('id', ids);
+  if (fetchErr) throw new Error(fetchErr.message);
+
+  const foundIds = (rows || []).map((r) => r.id);
+  if (!foundIds.length) {
+    const err = new Error('groups_not_found');
+    err.status = 404;
+    throw err;
+  }
+
+  const eventCounts = await eventCountsForOrganisers(sb, foundIds);
+  const eventsUnlinked = foundIds.reduce((sum, id) => sum + (eventCounts[id] || 0), 0);
+
+  const { error: delErr } = await sb.from('organisers').delete().in('id', foundIds);
+  if (delErr) throw new Error(delErr.message);
+
+  return {
+    deleted: foundIds.length,
+    eventsUnlinked,
+    names: (rows || []).map((r) => String(r.name || '').trim()).filter(Boolean),
+  };
+}
+
 async function mergeOrganisers(body) {
   const primaryId = String(body.primaryId || '').trim();
   const ids = [
@@ -630,6 +672,24 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: e.message || 'merge_failed',
         message: messages[e.message] || e.message || 'Merge failed',
+      });
+    }
+  }
+
+  if (body.action === 'delete_groups') {
+    try {
+      const result = await deleteOrganisers(body);
+      return json(res, 200, { ok: true, ...result });
+    } catch (e) {
+      const status = e.status || 500;
+      const messages = {
+        missing_ids: 'Select at least one group to delete.',
+        groups_not_found: 'Group profile not found.',
+      };
+      return json(res, status, {
+        ok: false,
+        error: e.message || 'delete_failed',
+        message: messages[e.message] || e.message || 'Delete failed',
       });
     }
   }

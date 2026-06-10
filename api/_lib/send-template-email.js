@@ -2,10 +2,20 @@ const { getEmailTemplateBySlug } = require('./supabase-email-templates');
 const { getEmailsEnabledForEmail } = require('./supabase-auth');
 const { getBookingEmailDefaultVars } = require('./email-booking-defaults');
 const { resolveBookingConfirmationBody } = require('./booking-confirmation-template');
+const { resolveBookingReminderBody } = require('./booking-reminder-template');
+const { resolveOrganiserNewBookingBody } = require('./organiser-new-booking-template');
 const {
   enrichBookingConfirmationVars,
+  enrichBookingReminderVars,
+  enrichAccountWelcomeVars,
   stripUnresolvedBookingPlaceholders,
+  stripUnresolvedBookingReminderPlaceholders,
+  stripUnresolvedAccountWelcomePlaceholders,
 } = require('./booking-email-sections');
+const {
+  enrichOrganiserRegistrationVars,
+  stripUnresolvedOrganiserPlaceholders,
+} = require('./organiser-email-sections');
 
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
@@ -28,8 +38,13 @@ async function buildEmailFromTemplate(slug, variables) {
   }
 
   const siteUrl = (process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
-  const bookingDefaults =
-    slug === 'booking_confirmation' ? await getBookingEmailDefaultVars() : {};
+  const usesBookingEmailDefaults =
+    slug === 'booking_confirmation' ||
+    slug === 'booking_reminder' ||
+    slug === 'account_welcome' ||
+    slug === 'saved_event_tickets_open' ||
+    slug === 'organiser_new_registration';
+  const bookingDefaults = usesBookingEmailDefaults ? await getBookingEmailDefaultVars() : {};
   const sponsorSection = bookingDefaults.sponsor_section || '';
   delete bookingDefaults.sponsor_section;
 
@@ -42,6 +57,12 @@ async function buildEmailFromTemplate(slug, variables) {
 
   if (slug === 'booking_confirmation') {
     merged = enrichBookingConfirmationVars(merged, sponsorSection);
+  } else if (slug === 'booking_reminder') {
+    merged = enrichBookingReminderVars(merged, sponsorSection);
+  } else if (slug === 'account_welcome' || slug === 'saved_event_tickets_open') {
+    merged = enrichAccountWelcomeVars(merged, sponsorSection);
+  } else if (slug === 'organiser_new_registration') {
+    merged = enrichOrganiserRegistrationVars(merged, sponsorSection);
   }
 
   let bodyHtml = template.body_html;
@@ -50,11 +71,28 @@ async function buildEmailFromTemplate(slug, variables) {
     const resolved = resolveBookingConfirmationBody(template.body_html);
     bodyHtml = resolved.bodyHtml;
     templateSource = resolved.source;
+  } else if (slug === 'booking_reminder') {
+    const resolved = resolveBookingReminderBody(template.body_html);
+    bodyHtml = resolved.bodyHtml;
+    templateSource = resolved.source;
+  } else if (slug === 'organiser_new_registration') {
+    const resolved = resolveOrganiserNewBookingBody(template.body_html);
+    bodyHtml = resolved.bodyHtml;
+    templateSource = resolved.source;
   }
 
   let html = replacePlaceholders(bodyHtml, merged);
   if (slug === 'booking_confirmation') {
     html = stripUnresolvedBookingPlaceholders(html);
+    html = replacePlaceholders(html, merged);
+  } else if (slug === 'booking_reminder') {
+    html = stripUnresolvedBookingReminderPlaceholders(html);
+    html = replacePlaceholders(html, merged);
+  } else if (slug === 'account_welcome' || slug === 'saved_event_tickets_open') {
+    html = stripUnresolvedAccountWelcomePlaceholders(html);
+    html = replacePlaceholders(html, merged);
+  } else if (slug === 'organiser_new_registration') {
+    html = stripUnresolvedOrganiserPlaceholders(html);
     html = replacePlaceholders(html, merged);
   }
 

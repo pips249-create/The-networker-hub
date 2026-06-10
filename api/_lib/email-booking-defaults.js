@@ -1,6 +1,7 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
+const { escapeHtml } = require('./event-refund-policy');
 const {
-  isPublishableSponsorBlock,
+  isEmailSponsorBlock,
   sponsorLogoUrl,
   sponsorCompanyName,
 } = require('./cms-sponsor-fields');
@@ -31,7 +32,7 @@ function buildSponsorSection(block) {
       name +
       '</span>';
   return (
-    '<tr><td style="padding:18px 48px;text-align:center;background:#ffffff;border-top:1px solid #d9c4e0;border-bottom:1px solid #d9c4e0;">' +
+    '<tr><td style="padding:0 48px 18px;text-align:center;background:#f5f0e8;">' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:600;color:#9a9092;text-transform:uppercase;letter-spacing:2px;margin:0 0 12px;">Our event directory is proudly powered by</p>' +
     '<a href="' +
     safeUrl +
@@ -50,7 +51,7 @@ async function fetchSponsorBlockForSlot(sb, slot) {
 async function resolveBookingEmailSponsorBlock(sb) {
   for (const slot of SPONSOR_FALLBACK_SLOTS) {
     const data = await fetchSponsorBlockForSlot(sb, slot);
-    if (data && isPublishableSponsorBlock(data, slot)) return { block: data, slot };
+    if (data && isEmailSponsorBlock(data)) return { block: data, slot };
   }
   return { block: null, slot: '' };
 }

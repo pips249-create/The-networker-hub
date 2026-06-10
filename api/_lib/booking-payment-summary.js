@@ -57,8 +57,14 @@ function buildPaymentSummaryRow(vars) {
   if (!ref) return '';
 
   const site = String(vars.site_url || '').replace(/\/$/, '');
-  const hubUrl = String(vars.hub_account_url || '').trim() || (site ? site + '/account/index.html' : '');
-  const safeHubUrl = hubUrl.replace(/"/g, '&quot;');
+  const paymentUrl =
+    String(vars.hub_payment_url || '').trim() ||
+    (site && vars.registration_id
+      ? site + '/account/index.html?booking=' + encodeURIComponent(String(vars.registration_id)) + '#payments'
+      : site
+        ? site + '/account/index.html#payments'
+        : '');
+  const safePaymentUrl = paymentUrl.replace(/"/g, '&quot;');
   const paid = isPaidBooking(vars);
 
   let rows = '';
@@ -75,12 +81,12 @@ function buildPaymentSummaryRow(vars) {
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">' +
     rows +
     '</table>' +
-    (hubUrl
+    (paymentUrl
       ? '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:14px;">' +
         '<tr><td style="background:#4a4446;border-radius:999px;">' +
         '<a href="' +
-        safeHubUrl +
-        '" style="display:inline-block;padding:9px 20px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:600;color:#ffffff;text-decoration:none;">View in My Hub &rarr;</a>' +
+        safePaymentUrl +
+        '" style="display:inline-block;padding:9px 20px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:600;color:#ffffff;text-decoration:none;">View payment details &rarr;</a>' +
         '</td></tr></table>'
       : '') +
     (paid

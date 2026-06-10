@@ -24,6 +24,37 @@
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
+  function formatDateTimeLong(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    const date = d.toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return date + ' at ' + time;
+  }
+
+  function formatAmountPaid(amount, status) {
+    const paymentStatus = String(status || '').trim();
+    if (paymentStatus === 'Free') return 'Free';
+    const n = Number(amount);
+    if (!Number.isFinite(n) || n <= 0) return 'Free';
+    return n % 1 === 0 ? '£' + n.toFixed(0) : '£' + n.toFixed(2);
+  }
+
+  function formatBookingReference(registrationId) {
+    const raw = String(registrationId || '')
+      .replace(/-/g, '')
+      .toUpperCase();
+    if (raw.length >= 8) return 'HUB-' + raw.slice(0, 8);
+    if (raw) return 'HUB-' + raw;
+    return '—';
+  }
+
   function formatTimeRange(startRaw, endRaw) {
     if (!startRaw) return '—';
     const start = new Date(startRaw);
@@ -138,6 +169,8 @@
 
   let reviewRating = 0;
   let reviewModalOpen = false;
+  let paymentModalOpen = false;
+  let highlightRegistrationId = '';
 
   function setReviewStars(rating) {
     reviewRating = rating;
@@ -288,8 +321,167 @@
 
   function parseRoute() {
     const hash = (location.hash.replace('#', '') || 'overview').toLowerCase();
-    const allowed = ['overview', 'upcoming', 'saved', 'past', 'reviews-pending', 'reviews-done'];
+    const allowed = [
+      'overview',
+      'upcoming',
+      'payments',
+      'saved',
+      'past',
+      'reviews-pending',
+      'reviews-done',
+    ];
     return allowed.includes(hash) ? hash : 'overview';
+  }
+
+  function findRegistrationById(id) {
+    const key = String(id || '').trim();
+    if (!key) return null;
+    for (let i = 0; i < registrations.length; i++) {
+      if (String(registrations[i].id) === key) return registrations[i];
+    }
+    return null;
+  }
+
+  function openPaymentModal(reg) {
+    const modal = document.getElementById('ad-payment-modal');
+    const sub = document.getElementById('ad-payment-modal-sub');
+    const details = document.getElementById('ad-payment-details');
+    const note = document.getElementById('ad-payment-note');
+    const eventLink = document.getElementById('ad-payment-event-link');
+    if (!modal || !details || !reg) return;
+
+    if (sub) {
+      sub.textContent = 'Booking for “' + (reg.title || 'Event') + '”.';
+    }
+
+    const paid = formatAmountPaid(reg.amountPaid, reg.paymentStatus);
+    const isPaid =
+      String(reg.paymentStatus || '').toLowerCase() === 'paid' ||
+      (paid !== 'Free' && paid !== '—');
+
+    details.innerHTML =
+      '<div><dt>Booking reference</dt><dd>' +
+      esc(reg.bookingReference || formatBookingReference(reg.id)) +
+      '</dd></div>' +
+      '<div><dt>Booked on</dt><dd>' +
+      esc(formatDateTimeLong(reg.createdAt)) +
+      '</dd></div>' +
+      '<div><dt>Event date</dt><dd>' +
+      esc(formatDateShort(reg.date)) +
+      ' · ' +
+      esc(formatTimeRange(reg.date, reg.endDate)) +
+      '</dd></div>' +
+      '<div><dt>Tickets</dt><dd>' +
+      esc(reg.ticketLabel || '—') +
+      '</dd></div>' +
+      '<div><dt>Total paid</dt><dd>' +
+      esc(paid) +
+      '</dd></div>' +
+      '<div><dt>Payment status</dt><dd>' +
+      esc(reg.paymentStatus || 'Pending') +
+      '</dd></div>';
+
+    if (note) note.hidden = !isPaid;
+    if (eventLink) eventLink.href = eventHref(reg);
+
+    modal.hidden = false;
+    paymentModalOpen = true;
+    document.body.classList.add('ad-payment-modal-open');
+  }
+
+  function closePaymentModal() {
+    const modal = document.getElementById('ad-payment-modal');
+    if (modal) modal.hidden = true;
+    paymentModalOpen = false;
+    document.body.classList.remove('ad-payment-modal-open');
+  }
+
+  function bindPaymentModal() {
+    const modal = document.getElementById('ad-payment-modal');
+    const backdrop = document.getElementById('ad-payment-modal-backdrop');
+    const closeBtn = document.getElementById('ad-payment-modal-close');
+    const closeAction = document.getElementById('ad-payment-close');
+
+    [backdrop, closeBtn, closeAction].forEach((el) => {
+      if (!el) return;
+      el.addEventListener('click', closePaymentModal);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && paymentModalOpen) closePaymentModal();
+    });
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closePaymentModal();
+      });
+    }
+  }
+
+  function bindPaymentButtons(root) {
+    (root || document).querySelectorAll('.ad-view-payment').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const reg = findRegistrationById(btn.getAttribute('data-registration-id'));
+        if (reg) openPaymentModal(reg);
+      });
+    });
+  }
+
+  function renderPaymentsTable() {
+    const body = document.getElementById('ad-payments-body');
+    const empty = document.getElementById('ad-payments-empty');
+    if (!body) return;
+
+    const list = registrations.slice().sort((a, b) => {
+      const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return db - da;
+    });
+
+    body.innerHTML = '';
+    if (!list.length) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    list.forEach((reg) => {
+      const tr = document.createElement('tr');
+      if (highlightRegistrationId && String(reg.id) === highlightRegistrationId) {
+        tr.className = 'ad-row-highlight';
+      }
+      tr.innerHTML =
+        '<td>' +
+        thumbHtml(reg) +
+        '</td><td class="ad-td-name">' +
+        eventTitleCell(reg) +
+        '</td><td>' +
+        esc(formatDateShort(reg.createdAt)) +
+        '</td><td>' +
+        esc(reg.bookingReference || formatBookingReference(reg.id)) +
+        '</td><td>' +
+        esc(reg.ticketLabel || '—') +
+        '</td><td>' +
+        esc(formatAmountPaid(reg.amountPaid, reg.paymentStatus)) +
+        '</td><td>' +
+        paymentBadge(reg.paymentStatus) +
+        '</td><td><button type="button" class="ad-btn ad-btn-primary ad-view-payment" data-registration-id="' +
+        esc(reg.id || '') +
+        '">Payment details</button></td>';
+      body.appendChild(tr);
+    });
+
+    bindPaymentButtons(body);
+  }
+
+  function openPaymentFromQuery() {
+    const params = new URLSearchParams(location.search);
+    const bookingId = String(params.get('booking') || '').trim();
+    if (!bookingId) return;
+    highlightRegistrationId = bookingId;
+    setRoute('payments');
+    const reg = findRegistrationById(bookingId);
+    if (reg) openPaymentModal(reg);
   }
 
   function setRoute(route) {
@@ -301,7 +493,7 @@
       a.classList.toggle('is-active', a.getAttribute('data-ad-route') === currentRoute);
     });
     if (location.hash.replace('#', '') !== currentRoute) {
-      history.replaceState(null, '', '#' + currentRoute);
+      history.replaceState(null, '', (location.search || '') + '#' + currentRoute);
     }
   }
 
@@ -552,6 +744,7 @@
       doneReviewsList(),
       false
     );
+    renderPaymentsTable();
     updateSideCounts();
   }
 
@@ -585,6 +778,7 @@
   async function init() {
     bindNav();
     bindReviewModal();
+    bindPaymentModal();
     setRoute(parseRoute());
 
     const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
@@ -625,6 +819,8 @@
 
     const demoNote = document.getElementById('ad-demo-note');
     if (demoNote) demoNote.hidden = !data.isDemo;
+
+    openPaymentFromQuery();
   }
 
   init();
