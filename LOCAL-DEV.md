@@ -76,3 +76,31 @@ Edit code on your Mac → npm start → test on localhost → npm run deploy →
 
 Secrets for local: `local.env` (synced automatically by `npm start`).  
 Secrets for live: Vercel → Settings → Environment Variables (already set).
+
+---
+
+## Email test sends on localhost
+
+The live site can send email because **Resend keys exist on Vercel**. Local `vercel dev` does **not** read Vercel env automatically — you must copy them into `local.env`:
+
+1. Vercel → your project → **Settings** → **Environment Variables**
+2. Copy **`RESEND_API_KEY`** and **`RESEND_FROM`** (same values as Production)
+3. Add to **`local.env`** (in the project root):
+
+   ```
+   RESEND_API_KEY=re_xxxxxxxx
+   RESEND_FROM=The Networker Hub <onboarding@resend.dev>
+   ```
+
+4. Sync and restart:
+
+   ```bash
+   npm run sync-env
+   npm start
+   ```
+
+5. Hard refresh the admin page, then send a test email again.
+
+**Preview still works** without Resend — only **Send test** needs these keys.
+
+With `onboarding@resend.dev`, Resend usually only delivers to the email on your Resend account until your domain is verified.

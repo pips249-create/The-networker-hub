@@ -1,0 +1,222 @@
+-- Booking confirmation email — redesigned layout, logo, footer, sponsor slot
+
+update public.email_templates
+set
+  subject = 'You''re booked for {{event_name}}',
+  body_html = '<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Booking confirmed – The Networker Hub</title>
+  <style>
+    @import url(''https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap'');
+    body, table, td, p, a { margin:0; padding:0; border:0; font-size:100%; font:inherit; vertical-align:baseline; }
+    img { border:0; display:block; max-width:100%; }
+    body { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; background-color:#faf7f2; }
+    table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
+    @media only screen and (max-width:600px) {
+      .email-wrapper { width:100% !important; }
+      .hero-title { font-size:22px !important; }
+      .mobile-pad { padding-left:20px !important; padding-right:20px !important; }
+      .stat-cell { display:block !important; width:100% !important; padding-bottom:14px !important; border-left:none !important; border-right:none !important; border-top:1px solid rgba(255,255,255,0.12) !important; }
+      .stat-cell:first-child { border-top:none !important; }
+      .pill-wrap { display:block !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#faf7f2;font-family:''DM Sans'',system-ui,sans-serif;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#faf7f2;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table class="email-wrapper" role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(74,68,70,0.10);">
+
+        <tr>
+          <td style="background:#f5f0e8;padding:28px 48px 0;text-align:center;border-bottom:1px solid rgba(194,153,209,0.35);">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+              <tr>
+                <td style="text-align:center;padding-bottom:22px;">
+                  <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
+                    <img src="{{logo_url}}" alt="The Networker Hub" width="180" style="height:auto;display:inline-block;margin:0 auto;border:0;">
+                  </a>
+                  <p style="margin:10px 0 0;font-size:11px;font-weight:600;color:#736b6e;letter-spacing:3px;text-transform:uppercase;font-family:''DM Sans'',system-ui,sans-serif;">Stronger Together</p>
+                </td>
+              </tr>
+            </table>
+            <div style="line-height:0;font-size:0;">
+              <svg viewBox="0 0 600 40" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:40px;">
+                <path d="M0,24 C150,46 450,4 600,24 L600,40 L0,40 Z" fill="#ffffff"/>
+              </svg>
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:28px 48px 24px;text-align:center;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 18px;">
+              <tr>
+                <td style="width:52px;height:52px;background:#ebe0f0;border-radius:50%;text-align:center;vertical-align:middle;font-size:22px;color:#9a7aa8;line-height:52px;">&#10003;</td>
+              </tr>
+            </table>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:3px;margin:0 0 8px;">Booking confirmed</p>
+            <h1 class="hero-title" style="font-family:''DM Sans'',system-ui,sans-serif;font-size:26px;font-weight:600;color:#4a4446;letter-spacing:-0.03em;line-height:1.15;margin:0 0 10px;">You&rsquo;re booked!</h1>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:14px;font-weight:400;color:#736b6e;line-height:1.7;margin:0;">
+              Hi {{user_name}}, thanks for booking with <strong style="color:#9a7aa8;font-weight:600;">The Networker Hub</strong>. Your ticket is confirmed &mdash; details below.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:0 48px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+              <tr><td style="border-top:1px solid #d9c4e0;font-size:0;line-height:0;">&nbsp;</td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:24px 48px 0;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#4a4446;border-radius:16px;overflow:hidden;">
+              <tr>
+                <td style="padding:22px 24px;">
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;margin:0 0 6px;">Your event</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:18px;font-weight:600;color:#ffffff;margin:0 0 10px;line-height:1.25;">{{event_name}}</p>
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:16px;">
+                    <tr>
+                      <td style="padding-right:16px;font-family:''DM Sans'',system-ui,sans-serif;font-size:12px;color:rgba(255,255,255,0.65);">&#128197; {{event_date}}</td>
+                      <td style="padding-right:16px;font-family:''DM Sans'',system-ui,sans-serif;font-size:12px;color:rgba(255,255,255,0.65);">&#128336; {{event_time}}</td>
+                      <td style="font-family:''DM Sans'',system-ui,sans-serif;font-size:12px;color:rgba(255,255,255,0.65);">&#128205; {{event_location}}</td>
+                    </tr>
+                  </table>
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid rgba(255,255,255,0.14);margin-bottom:18px;">
+                    <tr>
+                      <td style="padding:14px 16px 14px 0;width:50%;vertical-align:top;">
+                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1.5px;margin:0 0 3px;">Ticket</p>
+                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:13px;font-weight:600;color:#ffffff;margin:0;">{{ticket_name}}</p>
+                      </td>
+                      <td style="padding:14px 16px 14px 0;width:25%;vertical-align:top;">
+                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1.5px;margin:0 0 3px;">Paid</p>
+                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:13px;font-weight:600;color:#ffffff;margin:0;">{{amount_paid}}</p>
+                      </td>
+                      <td style="padding:14px 0;width:25%;vertical-align:top;">
+                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1.5px;margin:0 0 3px;">Organiser</p>
+                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:13px;font-weight:600;color:#ffffff;margin:0;">{{organiser_name}}</p>
+                      </td>
+                    </tr>
+                  </table>
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                      <td style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:999px;">
+                        <a href="{{event_url}}" style="display:inline-block;padding:8px 20px;font-family:''DM Sans'',system-ui,sans-serif;font-size:12px;font-weight:600;color:#ffffff;text-decoration:none;">View event details &rarr;</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        {{meeting_link_section}}
+
+        <tr>
+          <td class="mobile-pad" style="padding:24px 48px 0;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">
+              <tr>
+                <td style="padding:22px 24px;">
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 6px;">While you&rsquo;re here</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#4a4446;margin:0 0 10px;line-height:1.35;">Could your next big opportunity be one event away?</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:13px;font-weight:400;color:#736b6e;line-height:1.65;margin:0 0 16px;">Every event you attend puts you in the room with people who can open doors &mdash; new clients, collaborators, referral partners, or even investors. Browse our full directory of upcoming events across the UK and make every meeting count.</p>
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:18px;">
+                    <tr class="pill-wrap">
+                      <td style="padding-right:8px;padding-bottom:6px;">
+                        <span style="display:inline-block;padding:5px 13px;background:#ebe0f0;border-radius:999px;font-family:''DM Sans'',system-ui,sans-serif;font-size:11px;font-weight:600;color:#6b4f78;">Peer networking</span>
+                      </td>
+                      <td style="padding-right:8px;padding-bottom:6px;">
+                        <span style="display:inline-block;padding:5px 13px;background:#ebe0f0;border-radius:999px;font-family:''DM Sans'',system-ui,sans-serif;font-size:11px;font-weight:600;color:#6b4f78;">Business expos</span>
+                      </td>
+                      <td style="padding-right:8px;padding-bottom:6px;">
+                        <span style="display:inline-block;padding:5px 13px;background:#ebe0f0;border-radius:999px;font-family:''DM Sans'',system-ui,sans-serif;font-size:11px;font-weight:600;color:#6b4f78;">Breakfast meetups</span>
+                      </td>
+                      <td style="padding-bottom:6px;">
+                        <span style="display:inline-block;padding:5px 13px;background:#ebe0f0;border-radius:999px;font-family:''DM Sans'',system-ui,sans-serif;font-size:11px;font-weight:600;color:#6b4f78;">Speed networking</span>
+                      </td>
+                    </tr>
+                  </table>
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                      <td style="background:#4a4446;border-radius:999px;">
+                        <a href="{{site_url}}/events/" style="display:inline-block;padding:10px 28px;font-family:''DM Sans'',system-ui,sans-serif;font-size:13px;font-weight:700;color:#ffffff;text-decoration:none;">Browse upcoming events &rarr;</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="background:#4a4446;padding:22px 48px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+              <tr>
+                <td class="stat-cell" style="text-align:center;width:33.33%;padding:0 8px;">
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:20px;font-weight:700;color:#ffffff;margin:0;line-height:1;">27,000+</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:10px;font-weight:400;color:rgba(255,255,255,0.5);margin:4px 0 0;text-transform:uppercase;letter-spacing:1.5px;">meetings annually</p>
+                </td>
+                <td class="stat-cell" style="text-align:center;width:33.33%;padding:0 8px;border-left:1px solid rgba(255,255,255,0.12);border-right:1px solid rgba(255,255,255,0.12);">
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:20px;font-weight:700;color:#ffffff;margin:0;line-height:1;">50+</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:10px;font-weight:400;color:rgba(255,255,255,0.5);margin:4px 0 0;text-transform:uppercase;letter-spacing:1.5px;">events every month</p>
+                </td>
+                <td class="stat-cell" style="text-align:center;width:33.33%;padding:0 8px;">
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:20px;font-weight:700;color:#ffffff;margin:0;line-height:1;">14</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:10px;font-weight:400;color:rgba(255,255,255,0.5);margin:4px 0 0;text-transform:uppercase;letter-spacing:1.5px;">UK regions covered</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        {{sponsor_section}}
+
+        <tr>
+          <td style="background:#f5f0e8;padding:28px 48px 30px;text-align:center;border-radius:0 0 20px 20px;border-top:1px solid rgba(194,153,209,0.35);">
+            <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
+              <img src="{{logo_url}}" alt="The Networker Hub" width="140" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;">
+            </a>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:12px;font-weight:600;color:#4a4446;margin:0 0 8px;">The Networker Hub</p>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:11px;font-weight:400;color:#736b6e;line-height:1.8;margin:0 0 10px;">
+              Operated by <strong style="font-weight:600;color:#4a4446;">The Networker Group Ltd</strong><br>
+              Registered in England &amp; Wales &nbsp;&middot;&nbsp; Company No. 15252227 &nbsp;&middot;&nbsp; VAT No. 454 4092 94<br>
+              Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF
+            </p>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:11px;font-weight:400;color:#736b6e;margin:0 0 14px;">
+              <a href="mailto:hello@the-networker.co.uk" style="color:#9a7aa8;text-decoration:none;font-weight:600;">hello@the-networker.co.uk</a>
+            </p>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:11px;font-weight:400;color:#9a9092;margin:0;">
+              <a href="{{site_url}}/legal-policies.html#privacy" style="color:#9a7aa8;text-decoration:none;">Privacy</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{site_url}}/legal-policies.html#terms" style="color:#9a7aa8;text-decoration:none;">Terms</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{site_url}}/legal-policies.html#refunds" style="color:#9a7aa8;text-decoration:none;">Refunds</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{site_url}}/contact.html" style="color:#9a7aa8;text-decoration:none;">Contact</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
+',
+  placeholders = array[
+    'user_name', 'user_email', 'event_name', 'event_date', 'event_time',
+    'event_location', 'event_url', 'ticket_name', 'amount_paid', 'organiser_name',
+    'meeting_link', 'meeting_link_section', 'sponsor_section', 'site_url', 'logo_url'
+  ],
+  updated_at = now()
+where slug = 'booking_confirmation';

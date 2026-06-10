@@ -553,6 +553,26 @@ async function saveSponsorBlock(sb, payload) {
   return normalizeSponsorBlock(res.data);
 }
 
+async function copySponsorBlock(sb, fromSlot, toSlot) {
+  const source = await fetchSponsorBlock(sb, fromSlot);
+  if (!source) {
+    const err = new Error('source_not_found');
+    err.code = 'source_not_found';
+    throw err;
+  }
+  return saveSponsorBlock(sb, {
+    slot: toSlot,
+    title: source.title || source.subtitle || '',
+    body: source.body || '',
+    cta_label: source.cta_label || 'Visit website',
+    cta_url: source.cta_url || '',
+    cta_color: source.cta_color || '',
+    logo_url: source.logo_url || source.image_url || '',
+    company_name: source.company_name || '',
+    active: source.active !== false,
+  });
+}
+
 async function getAdminSponsor(slot) {
   if (!isSupabaseConfigured()) {
     return { configured: false, provider: 'supabase', block: null, slot: slot || DEFAULT_CMS_SLOT };
@@ -630,5 +650,6 @@ module.exports = {
   getAdminFinancials,
   getAdminSponsor,
   saveSponsorBlock,
+  copySponsorBlock,
   fetchSponsorBlock,
 };

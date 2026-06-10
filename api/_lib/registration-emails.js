@@ -1,4 +1,5 @@
 const { sendTemplatedEmail } = require('./send-template-email');
+const { isOnlineEvent } = require('./event-refund-policy');
 
 function formatAmount(amountPaid) {
   const n = Number(amountPaid);
@@ -47,7 +48,7 @@ async function sendRegistrationEmails(sb, registration) {
     sb
       .from('events')
       .select(
-        'id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id, meeting_link'
+        'id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id, meeting_link, meeting_type, postcode, refund_policy, refund_policy_details, refund_cutoff_days'
       )
       .eq('id', eventId)
       .maybeSingle(),
@@ -95,6 +96,7 @@ async function sendRegistrationEmails(sb, registration) {
   const siteUrl = (process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
 
   const meetingLink = String(registration.meeting_link || eventRow.meeting_link || '').trim();
+  const online = isOnlineEvent(eventRow, meetingLink);
 
   const vars = {
     user_name: attendeeName,
@@ -107,8 +109,11 @@ async function sendRegistrationEmails(sb, registration) {
     ticket_name: ticketName,
     amount_paid: amountPaid,
     organiser_name: organiserName || 'The organiser',
-    meeting_link: meetingLink,
-    meeting_link_section: buildMeetingLinkSection(meetingLink),
+    meeting_link: online ? meetingLink : '',
+    meeting_type: eventRow.meeting_type || (online ? 'Online' : 'In person'),
+    refund_policy: eventRow.refund_policy,
+    refund_policy_details: eventRow.refund_policy_details,
+    refund_cutoff_days: eventRow.refund_cutoff_days,
     site_url: siteUrl,
     logo_url: siteUrl + '/assets/logo-nav.png',
     dashboard_url: siteUrl + '/organiser/index.html',
@@ -157,4 +162,5 @@ module.exports = {
   formatAmount,
   eventPublicUrl,
   buildMeetingLinkSection,
+  isOnlineEvent,
 };

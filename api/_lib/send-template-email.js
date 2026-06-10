@@ -1,5 +1,11 @@
 const { getEmailTemplateBySlug } = require('./supabase-email-templates');
 const { getEmailsEnabledForEmail } = require('./supabase-auth');
+const { getBookingEmailDefaultVars } = require('./email-booking-defaults');
+const { resolveBookingConfirmationBody } = require('./booking-confirmation-template');
+const {
+  enrichBookingConfirmationVars,
+  stripUnresolvedBookingPlaceholders,
+} = require('./booking-email-sections');
 
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
@@ -22,16 +28,41 @@ async function buildEmailFromTemplate(slug, variables) {
   }
 
   const siteUrl = (process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
-  const merged = {
+  const bookingDefaults =
+    slug === 'booking_confirmation' ? await getBookingEmailDefaultVars() : {};
+  const sponsorSection = bookingDefaults.sponsor_section || '';
+  delete bookingDefaults.sponsor_section;
+
+  let merged = {
     site_url: siteUrl,
     logo_url: siteUrl + '/assets/logo-nav.png',
     ...variables,
+    ...bookingDefaults,
   };
+
+  if (slug === 'booking_confirmation') {
+    merged = enrichBookingConfirmationVars(merged, sponsorSection);
+  }
+
+  let bodyHtml = template.body_html;
+  let templateSource = 'database';
+  if (slug === 'booking_confirmation') {
+    const resolved = resolveBookingConfirmationBody(template.body_html);
+    bodyHtml = resolved.bodyHtml;
+    templateSource = resolved.source;
+  }
+
+  let html = replacePlaceholders(bodyHtml, merged);
+  if (slug === 'booking_confirmation') {
+    html = stripUnresolvedBookingPlaceholders(html);
+    html = replacePlaceholders(html, merged);
+  }
 
   return {
     template,
     subject: replacePlaceholders(template.subject, merged),
-    html: replacePlaceholders(template.body_html, merged),
+    html,
+    templateSource,
   };
 }
 
@@ -39,7 +70,7 @@ async function sendViaResend({ to, subject, html }) {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
     const err = new Error(
-      'Email sending is not configured. Add RESEND_API_KEY and RESEND_FROM in Vercel environment variables.'
+      'Email sending is not configured. For local dev add RESEND_API_KEY and RESEND_FROM to local.env, then run npm run sync-env and restart npm start. On live, set them in Vercel → Environment Variables and redeploy.'
     );
     err.code = 'resend_not_configured';
     throw err;
@@ -111,7 +142,12 @@ async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck }) {
     subject: built.subject,
     html: built.html,
   });
-  return { ...result, subject: built.subject, slug: built.template.slug };
+  return {
+    ...result,
+    subject: built.subject,
+    slug: built.template.slug,
+    template_source: built.templateSource || 'database',
+  };
 }
 
 module.exports = {

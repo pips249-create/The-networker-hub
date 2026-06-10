@@ -203,33 +203,11 @@
   margin: 0 0 8px;
 }
 
-.bs-share-details .bs-tool-heading {
-  margin-bottom: 0;
-  cursor: pointer;
-  list-style: none;
-}
-
-.bs-share-details summary {
-  list-style: none;
-}
-
-.bs-share-details summary::-webkit-details-marker {
-  display: none;
-}
-
-.bs-share-details[open] .bs-tool-heading {
-  margin-bottom: 8px;
-}
-
 .bs-tool-lede {
   font-size: 12px;
   line-height: 1.35;
   color: var(--text-muted);
   margin: 0 0 8px;
-}
-
-.bs-share-lede {
-  display: none;
 }
 
 .bs-tool-row {
@@ -393,10 +371,6 @@
 
 .bs-similar-browse:hover {
   text-decoration: underline;
-}
-
-.bs-share-details[hidden] {
-  display: none !important;
 }
 
 .bs-actions[hidden] {

@@ -8,12 +8,15 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const templatePath = path.join(root, 'email-templates/booking-confirmation.html');
-const outPath = path.join(root, 'supabase/migrations/050_booking_confirmation_hub_branding.sql');
+const outPath = path.join(
+  root,
+  'supabase/migrations/056_booking_confirmation_email_fix.sql'
+);
 
 const bodyHtml = fs.readFileSync(templatePath, 'utf8');
 const escaped = bodyHtml.replace(/'/g, "''");
 
-const sql = `-- Booking confirmation email — Hub branding, hosted logo, DM Sans palette
+const sql = `-- Booking confirmation email — fix placeholder rendering and online/in-person layout
 
 update public.email_templates
 set
@@ -22,7 +25,9 @@ set
   placeholders = array[
     'user_name', 'user_email', 'event_name', 'event_date', 'event_time',
     'event_location', 'event_url', 'ticket_name', 'amount_paid', 'organiser_name',
-    'meeting_link', 'meeting_link_section', 'site_url', 'logo_url'
+    'meeting_link', 'meeting_type', 'refund_policy', 'refund_policy_details', 'refund_cutoff_days',
+    'event_meta_rows', 'meeting_link_row', 'refund_policy_row', 'sponsor_row',
+    'site_url', 'logo_url'
   ],
   updated_at = now()
 where slug = 'booking_confirmation';

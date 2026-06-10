@@ -1,5 +1,6 @@
 const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
-const { getAdminSponsor, saveSponsorBlock } = require('../admin-supabase-data');
+const { getAdminSponsor, saveSponsorBlock, copySponsorBlock } = require('../admin-supabase-data');
+const { BOOKING_EMAIL_SPONSOR_SLOT, EVENTS_SPONSOR_SLOT } = require('../email-booking-defaults');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { resolveImageUrl } = require('../supabase-storage');
 
@@ -64,6 +65,22 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'POST') {
     const body = parseBody(req);
+    const action = String(body.action || '').trim();
+
+    if (action === 'sync_from') {
+      const fromSlot = String(body.from_slot || EVENTS_SPONSOR_SLOT).trim() || EVENTS_SPONSOR_SLOT;
+      const toSlot = String(body.slot || BOOKING_EMAIL_SPONSOR_SLOT).trim() || BOOKING_EMAIL_SPONSOR_SLOT;
+      try {
+        const sb = getSupabaseAdmin();
+        const block = await copySponsorBlock(sb, fromSlot, toSlot);
+        return json(res, 200, { ok: true, block, slot: toSlot, syncedFrom: fromSlot });
+      } catch (e) {
+        const code = e.code || 'sponsor_sync_failed';
+        const status = code === 'source_not_found' ? 404 : 500;
+        return json(res, status, { ok: false, error: code, message: e.message });
+      }
+    }
+
     const slot = String(body.slot || 'events_sponsor_hub').trim() || 'events_sponsor_hub';
     const title = String(body.title || '').trim();
     const blockBody = String(body.body || '').trim();

@@ -81,6 +81,7 @@ module.exports = async function handler(req, res) {
         templates,
         testRecipients,
         testRecipientsWarning,
+        emailSendingConfigured: Boolean(String(process.env.RESEND_API_KEY || '').trim()),
       });
     } catch (e) {
       return json(res, 500, { ok: false, error: 'email_templates_load_failed', message: e.message });

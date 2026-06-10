@@ -159,6 +159,17 @@
       ctaColor: '#2d2636',
     },
     {
+      key: 'booking_email_sponsor',
+      group: 'Email',
+      label: 'Booking confirmation email — Sponsor',
+      preview: 'compact',
+      help: 'Logo and website link in booking confirmation emails. Pull from Events browse sponsor or set your own.',
+      tagline: '',
+      ctaLabel: 'Visit website',
+      ctaUrl: 'https://',
+      ctaColor: '#2d2636',
+    },
+    {
       key: 'event_page_sidebar_ad',
       group: 'Detail pages',
       label: 'Event page — Sidebar ad',
@@ -3920,6 +3931,11 @@
     var testRecipients = [];
     var selectedSlug = '';
     var dirty = false;
+    var emailSponsorLogoBase64 = null;
+    var emailSponsorLogoMime = '';
+    var emailSponsorLogoFilename = '';
+    var BOOKING_EMAIL_SPONSOR_SLOT = 'booking_email_sponsor';
+    var EVENTS_SPONSOR_SLOT = 'events_sponsor_hub';
     var previewOrigin = window.location.origin || 'https://the-networker-hub.vercel.app';
 
     var SAMPLE_VARS = {
@@ -3933,44 +3949,108 @@
       ticket_name: 'General admission',
       amount_paid: '£25.00',
       organiser_name: 'City Connectors',
-      meeting_link: 'https://meet.example.com/room',
-      meeting_link_section: '',
+      meeting_link: '',
+      meeting_type: 'In person',
+      refund_policy: 'full_refund',
+      refund_policy_details: '',
+      refund_cutoff_days: 7,
+      event_meta_rows: '',
+      meeting_link_row: '',
+      refund_policy_row: '',
+      sponsor_row: '',
       dashboard_url: previewOrigin + '/organiser-dashboard.html',
       site_url: previewOrigin,
       logo_url: previewOrigin + '/assets/logo-nav.png',
     };
-    SAMPLE_VARS.meeting_link_section = (function (link) {
-      var url = String(link || '').trim();
-      if (!url) return '';
+
+    function previewMetaRow(label, value) {
+      var text = String(value || '').trim();
+      if (!text) return '';
       return (
-        '<tr><td class="mobile-pad" style="padding:0 48px 8px;">' +
+        '<tr><td style="padding:0 0 10px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.5;">' +
+        '<span style="color:rgba(255,255,255,0.55);">' +
+        esc(label) +
+        '</span><br>' +
+        '<span style="color:#ffffff;font-weight:600;">' +
+        esc(text) +
+        '</span></td></tr>'
+      );
+    }
+
+    function previewIsOnline(vars) {
+      var fmt = String(vars.meeting_type || '').trim().toLowerCase();
+      if (fmt.indexOf('online') !== -1) return true;
+      if (fmt.indexOf('person') !== -1) return false;
+      return Boolean(String(vars.meeting_link || '').trim());
+    }
+
+    function previewMeetingLinkSection(link, online) {
+      var url = String(link || '').trim();
+      if (!online || !url) return '';
+      return (
+        '<tr><td class="mobile-pad" style="padding:0 48px 20px;">' +
         '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
         '<tr><td style="padding:20px 24px;text-align:center;">' +
-        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 8px;">Online event</p>' +
-        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:400;color:#736b6e;line-height:1.6;margin:0 0 14px;">Use the link below to join when the event starts.</p>' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 8px;">Join online</p>' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:400;color:#736b6e;line-height:1.6;margin:0 0 14px;">Use the link below when the event starts.</p>' +
         '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">' +
         '<tr><td style="background:#9a7aa8;border-radius:999px;">' +
         '<a href="' +
-        url +
+        attrEsc(url) +
         '" style="display:inline-block;padding:12px 32px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#ffffff;text-decoration:none;">Join online &rarr;</a>' +
         '</td></tr></table></td></tr></table></td></tr>'
       );
-    })(SAMPLE_VARS.meeting_link);
+    }
+
+    function previewRefundPolicySection() {
+      return (
+        '<tr><td class="mobile-pad" style="padding:0 48px 20px;">' +
+        '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#faf7f2;border-radius:14px;border:1px solid #d9c4e0;">' +
+        '<tr><td style="padding:20px 22px;">' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2px;margin:0 0 6px;">Refund policy</p>' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:600;color:#4a4446;margin:0 0 8px;">Full refunds available</p>' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;color:#736b6e;line-height:1.65;margin:0;">Full refunds are available up to 7 days before the event.</p>' +
+        '</td></tr></table></td></tr>'
+      );
+    }
+
+    function applyPreviewEventFormat() {
+      var online = previewIsOnline(SAMPLE_VARS);
+      var meta = '';
+      meta += previewMetaRow('Date', SAMPLE_VARS.event_date);
+      meta += previewMetaRow('Time', SAMPLE_VARS.event_time);
+      if (online) meta += previewMetaRow('Format', 'Online event');
+      else meta += previewMetaRow('Location', SAMPLE_VARS.event_location);
+      SAMPLE_VARS.event_meta_rows = meta;
+      SAMPLE_VARS.meeting_link_row = previewMeetingLinkSection(
+        online ? SAMPLE_VARS.meeting_link : '',
+        online
+      );
+      SAMPLE_VARS.refund_policy_row = previewRefundPolicySection();
+      SAMPLE_VARS.sponsor_row = SAMPLE_VARS.sponsor_row || '';
+    }
+    applyPreviewEventFormat();
     if (currentUser) {
       if (currentUser.name) SAMPLE_VARS.user_name = currentUser.name;
       if (currentUser.email) SAMPLE_VARS.user_email = currentUser.email;
+    }
+
+    function isLocalDevHost() {
+      var host = String(window.location.hostname || '').toLowerCase();
+      return host === 'localhost' || host === '127.0.0.1';
     }
 
     function emailActionMessage(code, fallback) {
       var messages = {
         recipient_not_allowed:
           'This address is not on the safe test list. Add it under Safe test recipients first.',
-        resend_not_configured:
-          'Email sending is not configured yet. Add RESEND_API_KEY and RESEND_FROM in Vercel, then redeploy.',
+        resend_not_configured: isLocalDevHost()
+          ? 'Email is not configured for local dev. Copy RESEND_API_KEY and RESEND_FROM from Vercel → Settings → Environment Variables into local.env, then run npm run sync-env and restart npm start.'
+          : 'Email sending is not configured yet. Add RESEND_API_KEY and RESEND_FROM in Vercel, then redeploy.',
         test_recipients_table_missing:
           'Safe test list is not set up yet. Run migrations 051 and 052 in Supabase.',
         template_not_found:
-          'Booking confirmation template not found. Run migration 050 in Supabase.',
+          'Booking confirmation template not found. Run migrations 027 and 056 in Supabase.',
         resend_send_failed:
           'Resend rejected the email. Check RESEND_FROM uses a verified domain and see Resend logs.',
       };
@@ -3999,6 +4079,28 @@
       '<button type="button" id="email-save-btn" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Save template</button>' +
       '<button type="button" id="email-preview-btn" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Refresh preview</button>' +
       '</div>' +
+      '<div id="email-sponsor-panel" class="hidden border-t border-slate-100 pt-5 space-y-4">' +
+      '<div class="space-y-2">' +
+      '<h4 class="text-sm font-bold text-brand-900">Email sponsor</h4>' +
+      '<p class="text-xs text-slate-500">Shown in the &ldquo;proudly powered by&rdquo; strip on booking confirmations. Defaults from your <strong>Events browse</strong> sponsor — change it here without affecting the website, or pull the latest from Events.</p>' +
+      '<p id="email-sponsor-status" class="text-xs text-slate-500"></p>' +
+      '</div>' +
+      '<div class="grid sm:grid-cols-2 gap-4">' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="email-sponsor-company">Company name</label>' +
+      '<input type="text" id="email-sponsor-company" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Sponsor name"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="email-sponsor-url">Website URL</label>' +
+      '<input type="url" id="email-sponsor-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="https://"></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-600 mb-1" for="email-sponsor-logo-url">Logo URL</label>' +
+      '<input type="url" id="email-sponsor-logo-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="https://… or upload below"></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-600 mb-1" for="email-sponsor-logo-file">Upload logo</label>' +
+      '<input type="file" id="email-sponsor-logo-file" accept="image/*" class="w-full text-sm"></div>' +
+      '</div>' +
+      '<div id="email-sponsor-preview" class="rounded-lg border border-slate-100 bg-slate-50 p-4 text-center text-xs text-slate-500">Sponsor preview will appear here.</div>' +
+      '<div class="flex flex-wrap gap-3">' +
+      '<button type="button" id="email-sponsor-save-btn" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Save email sponsor</button>' +
+      '<button type="button" id="email-sponsor-sync-btn" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Pull from Events browse sponsor</button>' +
+      '<a href="#sponsorship/events_sponsor_hub" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50 inline-flex items-center">Edit Events sponsor</a>' +
+      '</div></div>' +
       '<div class="border-t border-slate-100 pt-5 space-y-4">' +
       '<div class="space-y-3">' +
       '<h4 class="text-sm font-bold text-brand-900">Safe test recipients</h4>' +
@@ -4143,12 +4245,134 @@
       });
     }
 
+    function buildEmailSponsorSectionHtml(logo, url, name) {
+      var link = String(url || '').trim();
+      if (!link) return '';
+      var label = String(name || '').trim() || 'Our sponsor';
+      var logoHtml = String(logo || '').trim()
+        ? '<img src="' +
+          attrEsc(logo) +
+          '" alt="' +
+          attrEsc(label) +
+          '" width="140" style="height:auto;display:inline-block;opacity:0.9;">'
+        : '<span style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#9a7aa8;">' +
+          esc(label) +
+          '</span>';
+      return (
+        '<tr><td style="padding:18px 48px;text-align:center;background:#ffffff;border-top:1px solid #d9c4e0;border-bottom:1px solid #d9c4e0;">' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:600;color:#9a9092;text-transform:uppercase;letter-spacing:2px;margin:0 0 12px;">Our event directory is proudly powered by</p>' +
+        '<a href="' +
+        attrEsc(link) +
+        '" style="display:inline-block;text-decoration:none;">' +
+        logoHtml +
+        '</a></td></tr>'
+      );
+    }
+
+    function readEmailSponsorForm() {
+      return {
+        company: (document.getElementById('email-sponsor-company').value || '').trim(),
+        url: (document.getElementById('email-sponsor-url').value || '').trim(),
+        logoUrl: emailSponsorLogoBase64
+          ? ''
+          : (document.getElementById('email-sponsor-logo-url').value || '').trim(),
+      };
+    }
+
+    function applyEmailSponsorBlock(block) {
+      if (!block) return;
+      var logo = String(block.logo_url || block.image_url || '').trim();
+      document.getElementById('email-sponsor-company').value =
+        String(block.company_name || '').trim();
+      document.getElementById('email-sponsor-url').value = String(block.cta_url || '').trim();
+      document.getElementById('email-sponsor-logo-url').value = logo;
+      emailSponsorLogoBase64 = null;
+      emailSponsorLogoMime = '';
+      emailSponsorLogoFilename = '';
+      var fileInput = document.getElementById('email-sponsor-logo-file');
+      if (fileInput) fileInput.value = '';
+      updateSampleSponsorSection();
+      renderEmailSponsorMiniPreview();
+    }
+
+    function updateSampleSponsorSection() {
+      var form = readEmailSponsorForm();
+      var logo = form.logoUrl || emailSponsorLogoBase64 || '';
+      SAMPLE_VARS.sponsor_row = buildEmailSponsorSectionHtml(logo, form.url, form.company);
+    }
+
+    function renderEmailSponsorMiniPreview() {
+      var el = document.getElementById('email-sponsor-preview');
+      if (!el) return;
+      var form = readEmailSponsorForm();
+      var logo = form.logoUrl || emailSponsorLogoBase64 || '';
+      if (!form.url) {
+        el.innerHTML = '<span class="text-slate-400">Add a website URL to show the sponsor in emails.</span>';
+        return;
+      }
+      if (logo) {
+        el.innerHTML =
+          '<p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Our event directory is proudly powered by</p>' +
+          '<img src="' +
+          attrEsc(logo) +
+          '" alt="" class="mx-auto max-h-12 w-auto" style="max-width:140px;">';
+      } else {
+        el.innerHTML =
+          '<p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Our event directory is proudly powered by</p>' +
+          '<p class="font-semibold text-brand-900">' +
+          esc(form.company || 'Sponsor') +
+          '</p>';
+      }
+    }
+
+    function toggleEmailSponsorPanel() {
+      var panel = document.getElementById('email-sponsor-panel');
+      if (!panel) return;
+      if (selectedSlug === 'booking_confirmation') {
+        panel.classList.remove('hidden');
+        loadBookingEmailSponsor();
+      } else {
+        panel.classList.add('hidden');
+      }
+    }
+
+    function loadBookingEmailSponsor() {
+      var status = document.getElementById('email-sponsor-status');
+      if (status) status.textContent = 'Loading email sponsor…';
+      adminGet('/api/admin/sponsor?slot=' + encodeURIComponent(BOOKING_EMAIL_SPONSOR_SLOT))
+        .then(function (data) {
+          if (data.block) {
+            applyEmailSponsorBlock(data.block);
+            if (status) status.textContent = 'Using the booking email sponsor settings below.';
+          } else {
+            return adminGet('/api/admin/sponsor?slot=' + encodeURIComponent(EVENTS_SPONSOR_SLOT)).then(
+              function (eventsData) {
+                if (eventsData.block) {
+                  applyEmailSponsorBlock(eventsData.block);
+                  if (status) {
+                    status.textContent =
+                      'No email-only sponsor saved yet — showing your Events browse sponsor. Save below to set a separate email sponsor.';
+                  }
+                } else if (status) {
+                  status.textContent = 'No sponsor configured yet. Set one below or pull from Events.';
+                }
+              }
+            );
+          }
+          refreshPreview();
+        })
+        .catch(function () {
+          if (status) status.textContent = 'Could not load sponsor settings.';
+        });
+    }
+
     function fillEditor(template) {
       var form = document.getElementById('email-editor');
       var previewPanel = document.getElementById('email-preview-panel');
       if (!template) {
         if (form) form.classList.add('hidden');
         if (previewPanel) previewPanel.classList.add('hidden');
+        toggleEmailSponsorPanel();
         return;
       }
       if (form) form.classList.remove('hidden');
@@ -4160,6 +4384,7 @@
       document.getElementById('email-body').value = template.body_html || '';
       renderPlaceholderChips(template.placeholders);
       dirty = false;
+      toggleEmailSponsorPanel();
       refreshPreview();
     }
 
@@ -4175,17 +4400,44 @@
       frame.srcdoc = html || '';
     }
 
+    function stripUnresolvedBookingPlaceholders(text) {
+      var keys = [
+        'event_meta_rows',
+        'meeting_link_row',
+        'refund_policy_row',
+        'sponsor_row',
+        'event_location_row',
+        'event_online_row',
+        'meeting_link_section',
+        'refund_policy_section',
+        'sponsor_section',
+      ];
+      var out = String(text || '');
+      keys.forEach(function (key) {
+        out = out.replace(new RegExp('\\{\\{\\s*' + key + '\\s*\\}\\}', 'g'), '');
+      });
+      return out;
+    }
+
     function refreshPreview() {
       if (!selectedSlug) return;
       var subjectEl = document.getElementById('email-subject');
       var bodyEl = document.getElementById('email-body');
       if (!subjectEl || !bodyEl) return;
+      if (selectedSlug === 'booking_confirmation') {
+        applyPreviewEventFormat();
+        updateSampleSponsorSection();
+      }
       var subjectLine = document.getElementById('email-preview-subject');
       if (subjectLine) {
         subjectLine.textContent =
           'Subject: ' + replaceEmailPlaceholders(subjectEl.value, SAMPLE_VARS);
       }
-      setPreviewHtml(replaceEmailPlaceholders(bodyEl.value, SAMPLE_VARS));
+      var html = replaceEmailPlaceholders(bodyEl.value, SAMPLE_VARS);
+      if (selectedSlug === 'booking_confirmation') {
+        html = stripUnresolvedBookingPlaceholders(html);
+      }
+      setPreviewHtml(html);
     }
 
     function renderTestRecipientList() {
@@ -4283,7 +4535,14 @@
           renderTemplateList();
           renderTestRecipientList();
           fillEditor(currentTemplate());
-          if (data.testRecipientsWarning) {
+          if (!data.emailSendingConfigured) {
+            setEmailStatus(
+              isLocalDevHost()
+                ? 'Templates loaded. Test sends need RESEND_API_KEY and RESEND_FROM in local.env — copy from Vercel, run npm run sync-env, restart npm start.'
+                : 'Templates loaded. Test sends need RESEND_API_KEY and RESEND_FROM in Vercel environment variables.',
+              'warn'
+            );
+          } else if (data.testRecipientsWarning) {
             setEmailStatus(data.testRecipientsWarning, 'warn');
           } else {
             setEmailStatus(templates.length + ' template' + (templates.length === 1 ? '' : 's') + ' loaded.');
@@ -4334,6 +4593,107 @@
     });
 
     document.getElementById('email-preview-btn').addEventListener('click', refreshPreview);
+
+    ['email-sponsor-company', 'email-sponsor-url', 'email-sponsor-logo-url'].forEach(function (id) {
+      var input = document.getElementById(id);
+      if (!input) return;
+      input.addEventListener('input', function () {
+        updateSampleSponsorSection();
+        renderEmailSponsorMiniPreview();
+        refreshPreview();
+      });
+    });
+
+    document.getElementById('email-sponsor-logo-file').addEventListener('change', function (ev) {
+      var file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) {
+        setEmailStatus('Logo must be under 2MB.', 'error');
+        ev.target.value = '';
+        return;
+      }
+      emailSponsorLogoMime = file.type || 'image/jpeg';
+      emailSponsorLogoFilename = file.name || 'logo.jpg';
+      var reader = new FileReader();
+      reader.onload = function () {
+        emailSponsorLogoBase64 = String(reader.result || '');
+        document.getElementById('email-sponsor-logo-url').value = '';
+        updateSampleSponsorSection();
+        renderEmailSponsorMiniPreview();
+        refreshPreview();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('email-sponsor-save-btn').addEventListener('click', function () {
+      var btn = document.getElementById('email-sponsor-save-btn');
+      var form = readEmailSponsorForm();
+      if (!form.url || !/^https?:\/\//i.test(form.url)) {
+        setEmailStatus('Enter the sponsor website URL (https://…).', 'error');
+        return;
+      }
+      if (!form.logoUrl && !emailSponsorLogoBase64 && !form.company) {
+        setEmailStatus('Add a logo or company name for the email sponsor.', 'error');
+        return;
+      }
+      if (btn) btn.disabled = true;
+      setEmailStatus('Saving email sponsor…');
+      var payload = {
+        slot: BOOKING_EMAIL_SPONSOR_SLOT,
+        title: '',
+        body: '',
+        cta_label: 'Visit website',
+        cta_url: form.url,
+        company_name: form.company,
+        logo_url: form.logoUrl,
+        active: true,
+      };
+      if (emailSponsorLogoBase64) {
+        payload.logoBase64 = emailSponsorLogoBase64;
+        payload.logoMime = emailSponsorLogoMime;
+        payload.logoFilename = emailSponsorLogoFilename;
+      }
+      adminPost('/api/admin/sponsor', payload)
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Save failed');
+          if (data.block) applyEmailSponsorBlock(data.block);
+          setEmailStatus('Email sponsor saved.', 'ok');
+          refreshPreview();
+        })
+        .catch(function (err) {
+          setEmailStatus(err.message || 'Could not save email sponsor.', 'error');
+        })
+        .finally(function () {
+          if (btn) btn.disabled = false;
+        });
+    });
+
+    document.getElementById('email-sponsor-sync-btn').addEventListener('click', function () {
+      var btn = document.getElementById('email-sponsor-sync-btn');
+      if (btn) btn.disabled = true;
+      setEmailStatus('Pulling sponsor from Events browse…');
+      adminPost('/api/admin/sponsor', {
+        action: 'sync_from',
+        slot: BOOKING_EMAIL_SPONSOR_SLOT,
+        from_slot: EVENTS_SPONSOR_SLOT,
+      })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Sync failed');
+          if (data.block) applyEmailSponsorBlock(data.block);
+          setEmailStatus('Email sponsor updated from Events browse sponsor.', 'ok');
+          refreshPreview();
+        })
+        .catch(function (err) {
+          var msg = err.message || 'Could not sync sponsor.';
+          if (msg === 'source_not_found') {
+            msg = 'No Events browse sponsor found. Set one under Sponsorship first.';
+          }
+          setEmailStatus(msg, 'error');
+        })
+        .finally(function () {
+          if (btn) btn.disabled = false;
+        });
+    });
 
     document.getElementById('email-test-add-btn').addEventListener('click', function () {
       var addBtn = document.getElementById('email-test-add-btn');
@@ -4400,6 +4760,10 @@
         return;
       }
       if (btn) btn.disabled = true;
+      if (selectedSlug === 'booking_confirmation') {
+        applyPreviewEventFormat();
+        updateSampleSponsorSection();
+      }
       setEmailStatus('Sending test email to ' + to + '…');
       adminPost('/api/admin/emails', {
         action: 'test',
@@ -4417,6 +4781,9 @@
             'Test email sent to ' +
             (data.to || to) +
             '. Check your inbox and spam folder (may take a minute).';
+          if (data.template_source) {
+            okMsg += ' Template: ' + data.template_source + '.';
+          }
           setEmailStatus(okMsg, 'ok');
           setTestResult(okMsg, 'ok');
         })

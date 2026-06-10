@@ -10,7 +10,6 @@
   const eventMeta = document.getElementById('booking-success-event-meta');
   const calendarSection = document.getElementById('booking-success-calendar');
   const shareSection = document.getElementById('booking-success-share');
-  const shareText = document.getElementById('booking-success-share-text');
 
   let loadedEvent = null;
   let bookedQty = 1;
@@ -299,7 +298,6 @@
     }
 
     if (shareSection) {
-      if (shareText) shareText.textContent = share.text;
       const linkedIn = document.getElementById('bs-share-linkedin');
       const facebook = document.getElementById('bs-share-facebook');
       const twitter = document.getElementById('bs-share-twitter');
