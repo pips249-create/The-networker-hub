@@ -10,13 +10,13 @@ const root = path.join(__dirname, '..');
 const templatePath = path.join(root, 'email-templates/booking-confirmation.html');
 const outPath = path.join(
   root,
-  'supabase/migrations/056_booking_confirmation_email_fix.sql'
+  'supabase/migrations/057_booking_email_sponsor_position.sql'
 );
 
 const bodyHtml = fs.readFileSync(templatePath, 'utf8');
 const escaped = bodyHtml.replace(/'/g, "''");
 
-const sql = `-- Booking confirmation email — fix placeholder rendering and online/in-person layout
+const sql = `-- Booking confirmation email — move sponsor block above While you're here
 
 update public.email_templates
 set
