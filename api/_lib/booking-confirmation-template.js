@@ -32,6 +32,9 @@ function isStaleBookingTemplate(bodyHtml) {
   if (sponsorAt !== -1 && infoBandAt !== -1 && sponsorAt > infoBandAt) {
     return true;
   }
+  if (!body.includes('{{payment_summary_row}}')) {
+    return true;
+  }
   return false;
 }
 

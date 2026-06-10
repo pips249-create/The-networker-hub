@@ -5,6 +5,12 @@ const {
   buildEventOnlineRow,
   escapeHtml,
 } = require('./event-refund-policy');
+const {
+  formatBookingReference,
+  formatBookedAt,
+  formatTicketQuantity,
+  buildPaymentSummaryRow,
+} = require('./booking-payment-summary');
 
 const META_CELL =
   'padding:0 0 10px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.5;';
@@ -89,7 +95,28 @@ function enrichBookingConfirmationVars(vars, sponsorSection) {
   };
   const online = isOnlineEvent(eventRow, meetingLink);
 
+  const bookingReference =
+    String(input.booking_reference || '').trim() ||
+    formatBookingReference(input.registration_id);
+  const bookedAt =
+    String(input.booked_at || '').trim() || formatBookedAt(input.booked_at_iso);
+  const ticketQuantityLabel =
+    String(input.ticket_quantity_label || '').trim() ||
+    formatTicketQuantity(input.ticket_quantity, input.ticket_name);
+  const hubAccountUrl =
+    String(input.hub_account_url || '').trim() ||
+    (String(input.site_url || '').replace(/\/$/, '') + '/account/index.html');
+
+  const paymentInput = {
+    ...input,
+    booking_reference: bookingReference,
+    booked_at: bookedAt,
+    ticket_quantity_label: ticketQuantityLabel,
+    hub_account_url: hubAccountUrl,
+  };
+
   const eventMetaRows = buildEventMetaRows(input, online);
+  const paymentSummaryRow = buildPaymentSummaryRow(paymentInput);
   const meetingLinkRow = buildMeetingLinkRow(meetingLink, online);
   const refundPolicyRow = buildRefundPolicyRow(input);
   const sponsorRow = wrapSponsorRow(sponsorSection);
@@ -100,6 +127,11 @@ function enrichBookingConfirmationVars(vars, sponsorSection) {
     ...input,
     meeting_type: input.meeting_type || (online ? 'Online' : 'In person'),
     event_location: online ? '' : String(input.event_location || '').trim(),
+    booking_reference: bookingReference,
+    booked_at: bookedAt,
+    ticket_quantity_label: ticketQuantityLabel,
+    hub_account_url: hubAccountUrl,
+    payment_summary_row: paymentSummaryRow,
     event_meta_rows: eventMetaRows,
     meeting_link_row: meetingLinkRow,
     refund_policy_row: refundPolicyRow,
@@ -116,6 +148,7 @@ function enrichBookingConfirmationVars(vars, sponsorSection) {
 }
 
 const BOOKING_SECTION_PLACEHOLDERS = [
+  'payment_summary_row',
   'event_meta_rows',
   'meeting_link_row',
   'refund_policy_row',

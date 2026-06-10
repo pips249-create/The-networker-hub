@@ -3948,6 +3948,14 @@
       event_url: previewOrigin + '/events/london-founders-breakfast',
       ticket_name: 'General admission',
       amount_paid: '£25.00',
+      payment_status: 'Paid',
+      registration_id: '00000000-0000-4000-8000-000000000001',
+      booking_reference: 'HUB-00000000',
+      booked_at: 'Tuesday 10 June 2026 at 2:30 pm',
+      ticket_quantity: 1,
+      ticket_quantity_label: '1 × General admission',
+      hub_account_url: previewOrigin + '/account/index.html',
+      payment_summary_row: '',
       organiser_name: 'City Connectors',
       meeting_link: '',
       meeting_type: 'In person',
@@ -4002,6 +4010,45 @@
       );
     }
 
+    function previewPaymentSummarySection() {
+      return (
+        '<tr><td class="mobile-pad" style="padding:0 48px 20px;">' +
+        '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #d9c4e0;">' +
+        '<tr><td style="padding:20px 22px;">' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2px;margin:0 0 10px;">Payment summary</p>' +
+        '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">' +
+        '<tr><td style="padding:0 0 8px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;line-height:1.5;">' +
+        '<span style="color:#736b6e;">Booking reference:</span> ' +
+        '<span style="color:#4a4446;font-weight:600;">' +
+        esc(SAMPLE_VARS.booking_reference) +
+        '</span></td></tr>' +
+        '<tr><td style="padding:0 0 8px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;line-height:1.5;">' +
+        '<span style="color:#736b6e;">Booked on:</span> ' +
+        '<span style="color:#4a4446;font-weight:600;">' +
+        esc(SAMPLE_VARS.booked_at) +
+        '</span></td></tr>' +
+        '<tr><td style="padding:0 0 8px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;line-height:1.5;">' +
+        '<span style="color:#736b6e;">Tickets:</span> ' +
+        '<span style="color:#4a4446;font-weight:600;">' +
+        esc(SAMPLE_VARS.ticket_quantity_label) +
+        '</span></td></tr>' +
+        '<tr><td style="padding:0 0 8px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;line-height:1.5;">' +
+        '<span style="color:#736b6e;">Total paid:</span> ' +
+        '<span style="color:#4a4446;font-weight:600;">' +
+        esc(SAMPLE_VARS.amount_paid) +
+        '</span></td></tr>' +
+        '</table>' +
+        '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:14px;">' +
+        '<tr><td style="background:#4a4446;border-radius:999px;">' +
+        '<a href="' +
+        attrEsc(SAMPLE_VARS.hub_account_url) +
+        '" style="display:inline-block;padding:9px 20px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:600;color:#ffffff;text-decoration:none;">View in My Hub &rarr;</a>' +
+        '</td></tr></table>' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:400;color:#9a9092;line-height:1.5;margin:12px 0 0;">Your card receipt is sent separately by our payment provider.</p>' +
+        '</td></tr></table></td></tr>'
+      );
+    }
+
     function previewRefundPolicySection() {
       return (
         '<tr><td class="mobile-pad" style="padding:0 48px 20px;">' +
@@ -4022,6 +4069,7 @@
       if (online) meta += previewMetaRow('Format', 'Online event');
       else meta += previewMetaRow('Location', SAMPLE_VARS.event_location);
       SAMPLE_VARS.event_meta_rows = meta;
+      SAMPLE_VARS.payment_summary_row = previewPaymentSummarySection();
       SAMPLE_VARS.meeting_link_row = previewMeetingLinkSection(
         online ? SAMPLE_VARS.meeting_link : '',
         online
@@ -4176,6 +4224,23 @@
       return null;
     }
 
+    var EMAIL_TEMPLATE_GROUPS = [
+      { key: 'events', label: 'Events' },
+      { key: 'opportunities', label: 'Business opportunities' },
+      { key: 'academy', label: 'Academy' },
+    ];
+
+    function emailTemplateCategory(t) {
+      var cat = String((t && t.category) || '')
+        .trim()
+        .toLowerCase();
+      if (cat === 'opportunities' || cat === 'academy' || cat === 'events') return cat;
+      var slug = String((t && t.slug) || '');
+      if (slug.indexOf('opportunity') !== -1) return 'opportunities';
+      if (slug.indexOf('academy') !== -1 || slug.indexOf('workshop') !== -1) return 'academy';
+      return 'events';
+    }
+
     function renderTemplateList() {
       var list = document.getElementById('email-template-list');
       if (!list) return;
@@ -4183,24 +4248,39 @@
         list.innerHTML = '<li class="text-slate-400">No templates yet — run migration 027 in Supabase.</li>';
         return;
       }
-      list.innerHTML = templates
-        .map(function (t) {
-          var active = t.slug === selectedSlug;
-          return (
-            '<li><button type="button" data-email-slug="' +
-            attrEsc(t.slug) +
-            '" class="w-full text-left rounded-lg px-3 py-2 transition ' +
-            (active
-              ? 'bg-brand-50 text-brand-900 font-semibold border border-brand-100'
-              : 'text-slate-700 hover:bg-slate-50') +
-            '">' +
-            esc(t.name) +
-            '<span class="block text-[11px] font-normal text-slate-400 mt-0.5">' +
-            esc(t.slug) +
-            '</span></button></li>'
-          );
-        })
-        .join('');
+      list.innerHTML = EMAIL_TEMPLATE_GROUPS.map(function (group) {
+        var items = templates.filter(function (t) {
+          return emailTemplateCategory(t) === group.key;
+        });
+        var buttons = items
+          .map(function (t) {
+            var active = t.slug === selectedSlug;
+            return (
+              '<li><button type="button" data-email-slug="' +
+              attrEsc(t.slug) +
+              '" class="w-full text-left rounded-lg px-3 py-2 transition ' +
+              (active
+                ? 'bg-brand-50 text-brand-900 font-semibold border border-brand-100'
+                : 'text-slate-700 hover:bg-slate-50') +
+              '">' +
+              esc(t.name) +
+              '<span class="block text-[11px] font-normal text-slate-400 mt-0.5">' +
+              esc(t.slug) +
+              '</span></button></li>'
+            );
+          })
+          .join('');
+        return (
+          '<li class="mb-4 last:mb-0">' +
+          '<p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2 px-1">' +
+          esc(group.label) +
+          '</p>' +
+          (buttons
+            ? '<ul class="space-y-1">' + buttons + '</ul>'
+            : '<p class="text-xs text-slate-400 px-1">No templates yet</p>') +
+          '</li>'
+        );
+      }).join('');
       list.querySelectorAll('[data-email-slug]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           if (dirty && !window.confirm('Discard unsaved changes?')) return;
@@ -4402,6 +4482,7 @@
 
     function stripUnresolvedBookingPlaceholders(text) {
       var keys = [
+        'payment_summary_row',
         'event_meta_rows',
         'meeting_link_row',
         'refund_policy_row',

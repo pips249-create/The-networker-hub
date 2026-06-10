@@ -1,5 +1,10 @@
 const { sendTemplatedEmail } = require('./send-template-email');
 const { isOnlineEvent } = require('./event-refund-policy');
+const {
+  formatBookingReference,
+  formatBookedAt,
+  formatTicketQuantity,
+} = require('./booking-payment-summary');
 
 function formatAmount(amountPaid) {
   const n = Number(amountPaid);
@@ -98,6 +103,9 @@ async function sendRegistrationEmails(sb, registration) {
   const meetingLink = String(registration.meeting_link || eventRow.meeting_link || '').trim();
   const online = isOnlineEvent(eventRow, meetingLink);
 
+  const ticketQuantity = Math.max(1, parseInt(registration.quantity, 10) || 1);
+  const bookedAtIso = registration.created_at || new Date().toISOString();
+
   const vars = {
     user_name: attendeeName,
     user_email: attendeeEmail,
@@ -108,6 +116,14 @@ async function sendRegistrationEmails(sb, registration) {
     event_url: eventUrl,
     ticket_name: ticketName,
     amount_paid: amountPaid,
+    registration_id: registrationId,
+    booking_reference: formatBookingReference(registrationId),
+    booked_at: formatBookedAt(bookedAtIso),
+    booked_at_iso: bookedAtIso,
+    ticket_quantity: ticketQuantity,
+    ticket_quantity_label: formatTicketQuantity(ticketQuantity, ticketName),
+    payment_status: String(registration.payment_status || '').trim(),
+    hub_account_url: siteUrl + '/account/index.html',
     organiser_name: organiserName || 'The organiser',
     meeting_link: online ? meetingLink : '',
     meeting_type: eventRow.meeting_type || (online ? 'Online' : 'In person'),

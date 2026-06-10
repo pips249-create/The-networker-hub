@@ -1,5 +1,15 @@
 const { getSupabaseAdmin } = require('./supabase');
 
+const EMAIL_TEMPLATE_CATEGORIES = ['events', 'opportunities', 'academy'];
+
+function normalizeEmailCategory(value) {
+  const key = String(value || '')
+    .trim()
+    .toLowerCase();
+  if (EMAIL_TEMPLATE_CATEGORIES.includes(key)) return key;
+  return 'events';
+}
+
 function rowToTemplate(row) {
   if (!row) return null;
   return {
@@ -7,6 +17,7 @@ function rowToTemplate(row) {
     slug: row.slug,
     name: row.name,
     description: row.description || '',
+    category: row.category || 'events',
     subject: row.subject || '',
     body_html: row.body_html || '',
     placeholders: Array.isArray(row.placeholders) ? row.placeholders : [],
@@ -17,25 +28,39 @@ function rowToTemplate(row) {
 
 async function listEmailTemplates() {
   const sb = getSupabaseAdmin();
-  const { data, error } = await sb
+  let res = await sb
     .from('email_templates')
-    .select('id, slug, name, description, subject, body_html, placeholders, created_at, updated_at')
+    .select('id, slug, name, description, category, subject, body_html, placeholders, created_at, updated_at')
+    .order('category', { ascending: true })
     .order('name', { ascending: true });
-  if (error) throw error;
-  return (data || []).map(rowToTemplate);
+  if (res.error && /category/i.test(res.error.message || '')) {
+    res = await sb
+      .from('email_templates')
+      .select('id, slug, name, description, subject, body_html, placeholders, created_at, updated_at')
+      .order('name', { ascending: true });
+  }
+  if (res.error) throw res.error;
+  return (res.data || []).map(rowToTemplate);
 }
 
 async function getEmailTemplateBySlug(slug) {
   const key = String(slug || '').trim();
   if (!key) return null;
   const sb = getSupabaseAdmin();
-  const { data, error } = await sb
+  let res = await sb
     .from('email_templates')
-    .select('id, slug, name, description, subject, body_html, placeholders, created_at, updated_at')
+    .select('id, slug, name, description, category, subject, body_html, placeholders, created_at, updated_at')
     .eq('slug', key)
     .maybeSingle();
-  if (error) throw error;
-  return rowToTemplate(data);
+  if (res.error && /category/i.test(res.error.message || '')) {
+    res = await sb
+      .from('email_templates')
+      .select('id, slug, name, description, subject, body_html, placeholders, created_at, updated_at')
+      .eq('slug', key)
+      .maybeSingle();
+  }
+  if (res.error) throw res.error;
+  return rowToTemplate(res.data);
 }
 
 async function updateEmailTemplate(slug, patch) {
@@ -53,7 +78,7 @@ async function updateEmailTemplate(slug, patch) {
     .from('email_templates')
     .update(updates)
     .eq('slug', key)
-    .select('id, slug, name, description, subject, body_html, placeholders, created_at, updated_at')
+    .select('id, slug, name, description, category, subject, body_html, placeholders, created_at, updated_at')
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
@@ -64,4 +89,6 @@ module.exports = {
   listEmailTemplates,
   getEmailTemplateBySlug,
   updateEmailTemplate,
+  EMAIL_TEMPLATE_CATEGORIES,
+  normalizeEmailCategory,
 };
