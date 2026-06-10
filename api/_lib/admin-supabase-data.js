@@ -110,7 +110,7 @@ async function fetchAlerts(sb) {
       severity: 'high',
       title: `${health.count} published event${health.count === 1 ? '' : 's'} missing data`,
       detail: 'Open Event data issues to fix dates, organisers, VAT, or profile fields.',
-      href: '#event-health',
+      href: '#cleanup/issues',
       time: new Date().toISOString(),
     });
   }
@@ -151,7 +151,7 @@ async function fetchAlerts(sb) {
       severity: 'low',
       title: `${incompleteOrgs.count} organiser profile${incompleteOrgs.count === 1 ? '' : 's'} missing data`,
       detail: 'Add description, photo, or website in Group profile cleanup.',
-      href: '#group-cleanup',
+      href: '#cleanup/groups',
       time: new Date().toISOString(),
     });
   }

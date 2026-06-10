@@ -22,7 +22,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/hub.css?v=20260609b">
   <link rel="stylesheet" href="../css/hub-mobile.css?v=20260605">
-  <link rel="stylesheet" href="../css/admin-console.css?v=20260616">
+  <link rel="stylesheet" href="../css/admin-console.css?v=20260621">
 </head>
 <body class="bg-slate-50 font-sans text-slate-900 antialiased">
 
@@ -36,98 +36,53 @@
   <div id="admin-shell" class="admin-shell hidden">
     <div id="admin-sidebar-backdrop" class="hidden fixed inset-0 z-40 bg-slate-900/40 lg:hidden" aria-hidden="true"></div>
     <aside id="admin-sidebar" class="bg-brand-900 text-white shadow-xl" aria-label="Command Center navigation">
-      <div class="p-5 border-b border-white/10">
-        <h1 class="text-lg font-bold tracking-tight">Command Center</h1>
-        <p class="text-xs text-brand-100/70 mt-1" id="sidebar-user">—</p>
+      <div class="admin-sidebar-head">
+        <h1 class="text-base font-bold tracking-tight">Command Center</h1>
+        <p class="text-[11px] text-brand-100/70 mt-0.5 truncate" id="sidebar-user">—</p>
       </div>
-      <nav class="flex-1 p-3 overflow-y-auto" aria-label="Admin">
-        <span class="admin-nav-group">Overview</span>
-        <div class="admin-nav-group-links space-y-1">
-        <a href="#dashboard" data-route="dashboard" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">◈</span> Overview
-        </a>
-        <a href="#analytics" data-route="analytics" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">▤</span> Web Analytics
-        </a>
-        </div>
+      <nav class="flex-1 admin-sidebar-nav overflow-y-auto" aria-label="Admin">
+        <a href="#dashboard" data-route="dashboard" class="admin-nav-link">Overview</a>
 
-        <span class="admin-nav-group">System</span>
-        <div class="admin-nav-group-links space-y-1">
-        <a href="#system" data-route="system" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">⚙</span> System health
-        </a>
-        <a href="#impersonate" data-route="impersonate" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">⇄</span> Impersonate user
-        </a>
-        <a href="#users" data-route="users" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">◎</span> Users &amp; accounts
-        </a>
-        </div>
+        <span class="admin-nav-group">Platform</span>
+        <a href="#system" data-route="system" class="admin-nav-link">System</a>
+        <a href="#accounts/users" data-route="accounts" class="admin-nav-link">Accounts</a>
 
-        <span class="admin-nav-group">Listings &amp; moderation</span>
-        <div class="admin-nav-group-links space-y-1">
-        <a href="#event-health" data-route="event-health" class="admin-nav-link relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">⚠</span> Event data issues
-          <span id="admin-health-badge" class="hidden ml-auto min-w-[1.25rem] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold leading-5 text-center" aria-label="Events needing fixes">0</span>
+        <span class="admin-nav-group">Listings</span>
+        <a href="#cleanup/groups" data-route="cleanup" class="admin-nav-link relative">
+          Listing cleanup
+          <span id="admin-health-badge" class="hidden admin-nav-badge" aria-label="Events needing fixes">0</span>
         </a>
-        <a href="#group-cleanup" data-route="group-cleanup" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">◉</span> Group profile cleanup
-        </a>
-        <a href="#event-cleanup" data-route="event-cleanup" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">◫</span> Event cleanup
-        </a>
-        <a href="#moderation" data-route="moderation" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">▣</span> Content Moderation
-        </a>
-        <a href="#import" data-route="import" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">⇪</span> Data import
-        </a>
-        </div>
+        <a href="#moderation" data-route="moderation" class="admin-nav-link">Moderation</a>
 
-        <span class="admin-nav-group">Revenue &amp; promotion</span>
-        <div class="admin-nav-group-links space-y-1">
-        <a href="#financials" data-route="financials" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">£</span> Financial Hub
-        </a>
-        <a href="#featured" data-route="featured" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">✦</span> Featured spotlight
-        </a>
-        <a href="#sponsorship" data-route="sponsorship" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">★</span> Sponsorship &amp; Ads
-        </a>
-        </div>
+        <span class="admin-nav-group">Revenue</span>
+        <a href="#financials" data-route="financials" class="admin-nav-link">Financials</a>
+        <a href="#featured" data-route="featured" class="admin-nav-link">Featured</a>
+        <a href="#sponsorship" data-route="sponsorship" class="admin-nav-link">Sponsorship</a>
 
-        <span class="admin-nav-group">Communications</span>
-        <div class="admin-nav-group-links space-y-1">
-        <a href="#campaigns" data-route="campaigns" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">📣</span> Email campaigns
-        </a>
-        <a href="#emails" data-route="emails" class="admin-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span aria-hidden="true">✉</span> Email templates
-        </a>
-        </div>
+        <span class="admin-nav-group">Comms</span>
+        <a href="#email/campaigns" data-route="email" class="admin-nav-link">Email</a>
       </nav>
-      <div class="p-4 border-t border-white/10">
-        <button type="button" id="admin-signout" class="w-full text-left text-sm text-white/70 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10">Sign out</button>
+      <div class="admin-sidebar-foot">
+        <button type="button" id="admin-signout" class="admin-nav-link admin-nav-link--button w-full text-left">Sign out</button>
       </div>
     </aside>
 
     <div class="admin-main-column">
-      <header class="admin-page-header px-4 lg:px-6 py-3 lg:py-4 flex items-center justify-between gap-3">
+      <header class="admin-page-header px-4 lg:px-5 py-2.5 flex items-center justify-between gap-3">
         <div class="flex items-start gap-3 min-w-0 flex-1">
-          <button type="button" id="admin-nav-toggle" class="lg:hidden shrink-0 mt-0.5 inline-flex items-center justify-center w-10 h-10 rounded-lg border border-slate-200 bg-white text-brand-900 hover:bg-slate-50" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open Command Center menu">
+          <button type="button" id="admin-nav-toggle" class="lg:hidden shrink-0 mt-0.5 inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-brand-900 hover:bg-slate-50" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open Command Center menu">
             <span aria-hidden="true">☰</span>
           </button>
           <div class="min-w-0">
-            <h2 class="text-lg lg:text-xl font-bold text-brand-900 truncate" id="page-title">Overview</h2>
-            <p class="text-sm text-slate-500 line-clamp-2" id="page-subtitle">Supabase counts, alerts, and recent genuine platform activity</p>
+            <h2 class="text-base lg:text-lg font-bold text-brand-900 truncate" id="page-title">Overview</h2>
+            <p class="text-xs text-slate-500 line-clamp-2 admin-page-subtitle" id="page-subtitle">Supabase counts, alerts, and recent genuine platform activity</p>
           </div>
         </div>
-        <span id="admin-data-badge" class="inline-flex shrink-0 items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full" title="Counts and lists load from Supabase when you open each page">
-          Supabase data
+        <span id="admin-data-badge" class="hidden sm:inline-flex shrink-0 items-center text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full" title="Counts and lists load from Supabase when you open each page">
+          Supabase
         </span>
       </header>
-      <div id="admin-main" class="p-4 lg:p-6 max-w-7xl mx-auto min-w-0 w-full"></div>
+      <div id="admin-main" class="p-3 lg:p-5 max-w-7xl mx-auto min-w-0 w-full"></div>
     </div>
   </div>
 
@@ -147,6 +102,6 @@
 
     <script src="../js/organiser-image-upload.js?v=20260614"></script>
     <script src="../js/cms-sponsor-fields.js?v=20260609c"></script>
-    <script src="../js/admin-app.js?v=20260620"></script>
+    <script src="../js/admin-app.js?v=20260622"></script>
 </body>
 </html>

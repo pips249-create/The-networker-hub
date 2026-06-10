@@ -437,7 +437,7 @@
       '" aria-label="The Networker Hub home">' +
       '<img src="' +
       href('assets/logo-nav.png') +
-      '" alt="The Networker Hub" width="200" height="80">' +
+      '" alt="The Networker Hub" width="240" height="96">' +
       '</a>' +
       '<nav class="nav-links" aria-label="Main">' +
       buildNavLinks(user, pending) +

@@ -507,11 +507,13 @@ module.exports = async function handler(req, res) {
       return json(res, 200, {
         ok: true,
         ...meta,
-        message: meta.logo_url && meta.description
-          ? 'Found logo and description on the website.'
-          : meta.logo_url
-            ? 'Found logo on the website.'
-            : 'Found description on the website.',
+        message:
+          meta.message ||
+          (meta.logo_url && meta.description
+            ? 'Found logo and description on the website.'
+            : meta.logo_url
+              ? 'Found logo on the website.'
+              : 'Found description on the website.'),
       });
     } catch (e) {
       const status = e.status || 500;

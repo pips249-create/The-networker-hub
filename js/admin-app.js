@@ -22,13 +22,25 @@
       title: 'Event data issues',
       subtitle: 'Fix published events missing dates, organisers, VAT, or profile data',
     },
+    cleanup: {
+      title: 'Listing cleanup',
+      subtitle: 'Fix group profiles, edit events, and resolve published event data issues',
+    },
     'group-cleanup': {
-      title: 'Group profile cleanup',
+      title: 'Listing cleanup',
       subtitle: 'Expand a row to edit website, logo and description — or fill from the group website',
     },
     'event-cleanup': {
-      title: 'Event cleanup',
+      title: 'Listing cleanup',
       subtitle: 'Search and filter events, then expand a row to edit — built for large catalogues',
+    },
+    accounts: {
+      title: 'Accounts',
+      subtitle: 'Manage featured organisers and impersonate users for debugging',
+    },
+    email: {
+      title: 'Email',
+      subtitle: 'Bulk campaigns and transactional template copy',
     },
     impersonate: {
       title: 'Impersonate user',
@@ -261,16 +273,101 @@
     return el ? String(el.value || '').trim() : '';
   }
 
+  function normalizeAdminHash(hash) {
+    var h = String(hash || 'dashboard').replace(/^#/, '');
+    var legacy = {
+      'group-cleanup': 'cleanup/groups',
+      'event-cleanup': 'cleanup/events',
+      'event-health': 'cleanup/issues',
+      campaigns: 'email/campaigns',
+      emails: 'email/templates',
+      impersonate: 'accounts/impersonate',
+      users: 'accounts/users',
+      import: 'moderation/import',
+    };
+    return legacy[h] || h;
+  }
+
+  function navRouteKey(hash) {
+    var key = String(hash || '').split('/')[0];
+    var parents = {
+      'group-cleanup': 'cleanup',
+      'event-cleanup': 'cleanup',
+      'event-health': 'cleanup',
+      campaigns: 'email',
+      emails: 'email',
+      impersonate: 'accounts',
+      users: 'accounts',
+      import: 'moderation',
+    };
+    return parents[key] || key;
+  }
+
+  function hubSubtitle(route, fullHash) {
+    var hash = String(fullHash || '');
+    if (route === 'cleanup') {
+      if (hash.indexOf('issues') !== -1 || hash === 'event-health') {
+        return PAGE_META['event-health'].subtitle;
+      }
+      if (hash.indexOf('events') !== -1 || hash === 'event-cleanup') {
+        return PAGE_META['event-cleanup'].subtitle;
+      }
+      return PAGE_META['group-cleanup'].subtitle;
+    }
+    if (route === 'accounts') {
+      return hash.indexOf('impersonate') !== -1
+        ? PAGE_META.impersonate.subtitle
+        : PAGE_META.users.subtitle;
+    }
+    if (route === 'email') {
+      return hash.indexOf('templates') !== -1 ? PAGE_META.emails.subtitle : PAGE_META.campaigns.subtitle;
+    }
+    if (route === 'moderation' && hash.indexOf('import') !== -1) {
+      return PAGE_META.import.subtitle;
+    }
+    return null;
+  }
+
+  function adminHubTabsHtml(tabs, activeKey) {
+    return (
+      '<nav class="admin-hub-tabs" aria-label="Section tabs">' +
+      tabs
+        .map(function (t) {
+          var on = t.key === activeKey;
+          return (
+            '<a href="' +
+            attrEsc(t.href) +
+            '" class="admin-hub-tab' +
+            (on ? ' is-active' : '') +
+            '"' +
+            (on ? ' aria-current="page"' : '') +
+            '>' +
+            esc(t.label) +
+            (t.badgeHtml || '') +
+            '</a>'
+          );
+        })
+        .join('') +
+      '</nav>'
+    );
+  }
+
+  function withHubTabs(tabsHtml, renderFn) {
+    renderFn();
+    main.innerHTML = tabsHtml + main.innerHTML;
+  }
+
   function setActiveNav(route, fullHash) {
+    var navKey = navRouteKey(fullHash || route);
     document.querySelectorAll('.admin-nav-link').forEach(function (a) {
-      var on = a.getAttribute('data-route') === route;
+      var on = a.getAttribute('data-route') === navKey;
       a.classList.toggle('bg-white/15', on);
       a.classList.toggle('text-white', on);
       a.classList.toggle('text-white/80', !on);
     });
-    var meta = PAGE_META[route] || PAGE_META.dashboard;
+    var meta = PAGE_META[navKey] || PAGE_META[route] || PAGE_META.dashboard;
     var title = meta.title;
-    var subtitle = meta.subtitle;
+    var subtitle = hubSubtitle(navKey, fullHash) || meta.subtitle;
     if (route === 'sponsorship' && fullHash) {
       if (fullHash === 'sponsorship/home-partners') {
         title = 'Home page — Partners & sponsors';
@@ -420,7 +517,7 @@
     var links = [];
     if (attention.incompleteOrganisers > 0) {
       links.push(
-        '<a href="#group-cleanup" class="text-sm font-semibold text-brand-700 hover:underline">' +
+        '<a href="#cleanup/groups" class="text-sm font-semibold text-brand-700 hover:underline">' +
           attention.incompleteOrganisers +
           ' organiser profile' +
           (attention.incompleteOrganisers === 1 ? '' : 's') +
@@ -1330,7 +1427,7 @@
                 '<p class="text-xs text-slate-600 mt-1">This event is published but the linked organiser is still <strong>' +
                 esc(ev.organiser_listing_status || 'draft') +
                 '</strong>. Complete and publish the group in ' +
-                '<a href="#group-cleanup" class="text-brand-700 font-semibold hover:underline">Group profile cleanup</a>.</p></div>';
+                '<a href="#cleanup/groups" class="text-brand-700 font-semibold hover:underline">Listing cleanup</a>.</p></div>';
             }
             if (fields.showOrgLogo || fields.showOrgBio) {
               orgFieldsHtml +=
@@ -1984,7 +2081,7 @@
       var slot = document.getElementById('dashboard-event-health-alert');
       if (!slot || !data || !data.count) return;
       slot.innerHTML =
-        '<a href="#event-health" class="block rounded-lg border border-red-200 bg-red-50 p-4 text-red-900 hover:bg-red-100/80 transition">' +
+        '<a href="#cleanup/issues" class="block rounded-lg border border-red-200 bg-red-50 p-4 text-red-900 hover:bg-red-100/80 transition">' +
         '<p class="font-semibold text-sm">' +
         data.count +
         ' published event' +
@@ -2461,7 +2558,7 @@
     }
     if (l.status === 'Live') {
       return (
-        '<td class="px-4 py-3"><a href="#event-health" class="text-brand-700 font-semibold text-xs hover:underline">Review data</a></td>'
+        '<td class="px-4 py-3"><a href="#cleanup/issues" class="text-brand-700 font-semibold text-xs hover:underline">Review data</a></td>'
       );
     }
     return '<td class="px-4 py-3"><span class="text-xs text-slate-400">—</span></td>';
@@ -6139,28 +6236,114 @@
     });
   }
 
+  function renderCleanupHub(fullHash) {
+    var hash = String(fullHash || 'cleanup/groups');
+    var tab = 'groups';
+    if (hash.indexOf('events') !== -1 || hash === 'event-cleanup') tab = 'events';
+    else if (hash.indexOf('issues') !== -1 || hash === 'event-health') tab = 'issues';
+
+    var tabsHtml = adminHubTabsHtml(
+      [
+        { key: 'groups', label: 'Groups', href: '#cleanup/groups' },
+        { key: 'events', label: 'Events', href: '#cleanup/events' },
+        { key: 'issues', label: 'Data issues', href: '#cleanup/issues' },
+      ],
+      tab
+    );
+
+    if (tab === 'events') withHubTabs(tabsHtml, renderEventCleanup);
+    else if (tab === 'issues') withHubTabs(tabsHtml, renderEventHealth);
+    else withHubTabs(tabsHtml, renderGroupCleanup);
+  }
+
+  function renderAccountsHub(fullHash) {
+    var hash = String(fullHash || 'accounts/users');
+    var tab = hash.indexOf('impersonate') !== -1 ? 'impersonate' : 'users';
+    var tabsHtml = adminHubTabsHtml(
+      [
+        { key: 'users', label: 'Users', href: '#accounts/users' },
+        { key: 'impersonate', label: 'Impersonate', href: '#accounts/impersonate' },
+      ],
+      tab
+    );
+    if (tab === 'impersonate') withHubTabs(tabsHtml, renderImpersonate);
+    else withHubTabs(tabsHtml, renderUsers);
+  }
+
+  function renderEmailHub(fullHash) {
+    var hash = String(fullHash || 'email/campaigns');
+    var tab = hash.indexOf('templates') !== -1 ? 'templates' : 'campaigns';
+    var tabsHtml = adminHubTabsHtml(
+      [
+        { key: 'campaigns', label: 'Campaigns', href: '#email/campaigns' },
+        { key: 'templates', label: 'Templates', href: '#email/templates' },
+      ],
+      tab
+    );
+    if (tab === 'templates') withHubTabs(tabsHtml, renderEmails);
+    else withHubTabs(tabsHtml, renderCampaigns);
+  }
+
+  function renderModerationHub(fullHash) {
+    var hash = String(fullHash || 'moderation');
+    var tab = hash.indexOf('import') !== -1 ? 'import' : 'review';
+    var tabsHtml = adminHubTabsHtml(
+      [
+        { key: 'review', label: 'Review', href: '#moderation' },
+        { key: 'import', label: 'Import', href: '#moderation/import' },
+      ],
+      tab
+    );
+    if (tab === 'import') withHubTabs(tabsHtml, renderImport);
+    else withHubTabs(tabsHtml, renderModeration);
+  }
+
   var routes = {
     dashboard: renderDashboard,
     analytics: renderAnalytics,
     system: renderSystem,
-    'event-health': renderEventHealth,
-    'group-cleanup': renderGroupCleanup,
-    'event-cleanup': renderEventCleanup,
-    impersonate: renderImpersonate,
-    users: renderUsers,
-    moderation: renderModeration,
+    cleanup: renderCleanupHub,
+    accounts: renderAccountsHub,
+    email: renderEmailHub,
+    moderation: renderModerationHub,
     financials: renderFinancials,
     featured: renderFeatured,
-    campaigns: renderCampaigns,
-    import: renderImport,
     sponsorship: function () {
       renderSponsorship((location.hash || '#sponsorship').replace('#', ''));
     },
-    emails: renderEmails,
+    'event-health': function () {
+      location.replace('#cleanup/issues');
+    },
+    'group-cleanup': function () {
+      location.replace('#cleanup/groups');
+    },
+    'event-cleanup': function () {
+      location.replace('#cleanup/events');
+    },
+    impersonate: function () {
+      location.replace('#accounts/impersonate');
+    },
+    users: function () {
+      location.replace('#accounts/users');
+    },
+    campaigns: function () {
+      location.replace('#email/campaigns');
+    },
+    import: function () {
+      location.replace('#moderation/import');
+    },
+    emails: function () {
+      location.replace('#email/templates');
+    },
   };
 
   function route() {
-    var hash = (location.hash || '#dashboard').replace('#', '');
+    var rawHash = (location.hash || '#dashboard').replace('#', '');
+    var hash = normalizeAdminHash(rawHash);
+    if (hash !== rawHash) {
+      location.replace('#' + hash);
+      return;
+    }
     var routeKey = hash.split('/')[0];
     if (!routes[routeKey]) {
       routeKey = 'dashboard';
@@ -6168,7 +6351,7 @@
     }
     setActiveNav(routeKey, hash);
     try {
-      routes[routeKey]();
+      routes[routeKey](hash);
     } catch (err) {
       if (main) {
         main.innerHTML =

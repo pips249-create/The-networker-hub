@@ -1,6 +1,9 @@
 /**
- * Contact page — AI chat assistant.
+ * Contact page — Hubert AI chat assistant.
  */
+
+var HUBERT_GREETING =
+  "Hi — I'm Hubert, your Networker Hub assistant. Ask me about events, tickets, organiser listings, or business opportunities.";
 (function () {
   var messagesEl = document.getElementById('contact-chat-messages');
   var formEl = document.getElementById('contact-chat-form');
@@ -114,16 +117,10 @@
       messagesEl.innerHTML = '';
       if (suggestionsEl) suggestionsEl.hidden = false;
       resetBtn.hidden = true;
-      appendBubble(
-        'assistant',
-        'Hi — I\'m the Networker Hub assistant. Ask me about events, tickets, organiser listings, or business opportunities.'
-      );
+      appendBubble('assistant', HUBERT_GREETING);
       inputEl.focus();
     });
   }
 
-  appendBubble(
-    'assistant',
-    'Hi — I\'m the Networker Hub assistant. Ask me about events, tickets, organiser listings, or business opportunities.'
-  );
+  appendBubble('assistant', HUBERT_GREETING);
 })();

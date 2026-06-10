@@ -59,7 +59,7 @@ a:hover { color: var(--charcoal); }
   right: 0;
   z-index: 100;
   padding: 0 28px 0 0;
-  min-height: 64px;
+  min-height: 80px;
   display: flex;
   align-items: stretch;
   justify-content: space-between;
@@ -88,9 +88,9 @@ a:hover { color: var(--charcoal); }
   flex-shrink: 0;
 }
 .nav-logo img {
-  height: 52px;
+  height: 64px;
   width: auto;
-  max-width: min(240px, 48vw);
+  max-width: min(280px, 52vw);
   display: block;
   object-fit: contain;
   object-position: left center;
@@ -403,7 +403,7 @@ a:hover { color: var(--charcoal); }
 
 /* Fixed nav offset (home hero handles its own spacing) */
 body.has-site-nav {
-  padding-top: 76px;
+  padding-top: 80px;
 }
 
 body.hub-page-admin {

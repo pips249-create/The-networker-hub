@@ -19,7 +19,7 @@ html:has(.home-page) {
   --home-bg-warm: #fdf8f0;
   --home-border: #ddd0e8;
   --home-muted: #4a4458;
-  --home-nav-height: 64px;
+  --home-nav-height: 80px;
   overflow-x: hidden;
   width: 100%;
   min-height: 100vh;
@@ -1095,7 +1095,7 @@ html:has(.home-page) {
 
 @media (max-width: 720px) {
   .home-page {
-    --home-nav-height: 56px;
+    --home-nav-height: 60px;
   }
 }
 
