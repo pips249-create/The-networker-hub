@@ -24,6 +24,7 @@ const routes = {
   'report-listing': require('./_lib/routes/auth-report-listing'),
   'report-review': require('./_lib/routes/auth-report-review'),
   'accept-organiser-terms': require('./_lib/routes/auth-accept-organiser-terms'),
+  'cancel-booking': require('./_lib/routes/auth-cancel-booking'),
 };
 
 module.exports = async function handler(req, res) {

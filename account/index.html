@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260627" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260716" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260717" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627" />
 
   </head>
@@ -262,6 +262,54 @@
       </div>
     </div>
 
+    <div class="ad-cancel-modal" id="ad-cancel-modal" hidden>
+      <div class="ad-cancel-modal-backdrop" id="ad-cancel-modal-backdrop"></div>
+      <div
+        class="ad-cancel-modal-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ad-cancel-modal-title"
+      >
+        <button type="button" class="ad-cancel-modal-close" id="ad-cancel-modal-close" aria-label="Close">
+          ×
+        </button>
+        <h2 class="ad-cancel-modal-title" id="ad-cancel-modal-title">Cancel this booking</h2>
+        <p class="ad-cancel-modal-sub" id="ad-cancel-modal-sub"></p>
+
+        <div class="ad-cancel-summary" id="ad-cancel-summary"></div>
+
+        <div class="ad-cancel-policy" id="ad-cancel-policy">
+          <p class="ad-cancel-policy-kicker">Organiser refund policy</p>
+          <p class="ad-cancel-policy-label" id="ad-cancel-policy-label"></p>
+          <p class="ad-cancel-policy-text" id="ad-cancel-policy-text"></p>
+        </div>
+
+        <div class="ad-cancel-outcome" id="ad-cancel-outcome" hidden>
+          <p class="ad-cancel-outcome-text" id="ad-cancel-outcome-text"></p>
+        </div>
+
+        <p class="ad-cancel-disclaimer">
+          Refunds are handled by the event organiser through their payment account, not by The Networker Hub.
+          If you paid by card and a refund is due, allow 5–10 business days after the organiser issues it.
+          <a href="../legal-policies.html#refunds">Hub refunds policy</a>
+        </p>
+
+        <label class="ad-cancel-confirm">
+          <input type="checkbox" id="ad-cancel-confirm-check" />
+          <span>I understand the organiser's refund policy and that refunds are processed by the organiser.</span>
+        </label>
+
+        <p class="ad-cancel-error" id="ad-cancel-error" hidden></p>
+
+        <div class="ad-cancel-actions">
+          <button type="button" class="ad-btn" id="ad-cancel-keep">Keep booking</button>
+          <button type="button" class="ad-btn ad-btn-danger" id="ad-cancel-confirm" disabled>
+            Confirm cancellation
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="ad-review-modal" id="ad-review-modal" hidden>
       <div class="ad-review-modal-backdrop" id="ad-review-modal-backdrop"></div>
       <div
@@ -310,6 +358,6 @@
 
     <script src="../js/hub-favourites.js?v=20260629"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260716"></script>
+    <script src="../js/attendee-dashboard.js?v=20260717"></script>
   </body>
 </html>

@@ -10,6 +10,7 @@ const {
 } = require('./_lib/supabase-registrations');
 const { isSupabaseConfigured } = require('./_lib/supabase');
 const { handleOpportunityPremiumCheckout } = require('./_lib/supabase-opportunities');
+const { handleChargeRefunded } = require('./_lib/stripe-refund-webhook');
 
 function verifyStripeSignature(rawBody, signatureHeader, secret) {
   if (!signatureHeader || !secret) return false;
@@ -102,6 +103,13 @@ async function handler(req, res) {
       return res.end(
         JSON.stringify({ ok: true, premiumResult, registrationResult })
       );
+    }
+
+    if (event.type === 'charge.refunded') {
+      const charge = event.data.object || {};
+      const refundResult = await handleChargeRefunded(charge);
+      res.statusCode = 200;
+      return res.end(JSON.stringify({ ok: true, refundResult }));
     }
 
     res.statusCode = 200;

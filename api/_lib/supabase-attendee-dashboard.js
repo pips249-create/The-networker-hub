@@ -4,6 +4,11 @@ const { buildStats } = require('./attendee');
 const { eventHasEnded, isEligibleRegistration } = require('./supabase-reviews');
 const { eventImageUrl } = require('./event-image');
 const { formatBookingReference } = require('./booking-payment-summary');
+const {
+  formatRefundPolicyLabel,
+  formatRefundPolicyText,
+} = require('./event-refund-policy');
+const { isRefundEligibleForCancellation } = require('./cancellation-email-sections');
 
 function deriveReviewStatus(hasReview, row) {
   const ev = row.events || {};
@@ -11,6 +16,15 @@ function deriveReviewStatus(hasReview, row) {
   if (hasReview) return 'reviewed';
   if (!isEligibleRegistration(row)) return 'ineligible';
   return 'pending';
+}
+
+function canCancelRegistration(row, ev) {
+  if (row.cancelled_at || String(row.payment_status || '').trim() === 'Refunded') return false;
+  if (String(row.application_status || '').trim() === 'Denied') return false;
+  if (String(ev.status || '').toLowerCase() === 'cancelled') return false;
+  const startsAt = ev.starts_at ? new Date(ev.starts_at) : null;
+  if (startsAt && !Number.isNaN(startsAt.getTime()) && startsAt.getTime() < Date.now()) return false;
+  return true;
 }
 
 function mapRegistrationRow(row, reviewByEventId) {
@@ -44,6 +58,16 @@ function mapRegistrationRow(row, reviewByEventId) {
     rating: review?.rating ?? null,
     reviewText: review?.reviewText ?? null,
     canReview: deriveReviewStatus(Boolean(review), row) === 'pending',
+    canCancel: canCancelRegistration(row, ev),
+    refundPolicy: ev.refund_policy || null,
+    refundPolicyDetails: ev.refund_policy_details || null,
+    refundCutoffDays: ev.refund_cutoff_days != null ? Number(ev.refund_cutoff_days) : null,
+    refundPolicyLabel: formatRefundPolicyLabel(ev) || 'Refund policy',
+    refundPolicyText: formatRefundPolicyText(ev),
+    refundEligible: isRefundEligibleForCancellation(ev, row),
+    isPaid:
+      String(row.payment_status || '').trim() === 'Paid' &&
+      Number(row.amount_paid) > 0,
   };
 }
 
@@ -65,9 +89,13 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
         slug,
         starts_at,
         ends_at,
+        status,
         image_url,
         photo_url,
         organiser_id,
+        refund_policy,
+        refund_policy_details,
+        refund_cutoff_days,
         organisers (
           id,
           name,
@@ -82,6 +110,7 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
     )
     .eq('attendee_id', attendeeId)
     .neq('payment_status', 'Refunded')
+    .is('cancelled_at', null)
     .order('created_at', { ascending: false });
 
   if (res.error) throw new Error(res.error.message);

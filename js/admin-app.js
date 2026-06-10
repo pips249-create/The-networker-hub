@@ -6891,7 +6891,7 @@
           (hints.missingCronSecret
             ? '<p class="text-xs text-amber-800 mt-2">' + esc(hints.missingCronSecret) + '</p>'
             : '') +
-          '<p class="text-xs text-slate-500 mt-3">Hourly crons: 24-hour booking reminders and saved-event ticket alerts. Local dev: copy vars into <code class="text-[11px]">local.env</code>, run <code class="text-[11px]">npm run sync-env</code>, restart <code class="text-[11px]">npm start</code>.</p>' +
+          '<p class="text-xs text-slate-500 mt-3">Daily crons (07:00 &amp; 08:00 UTC): 24-hour booking reminders and saved-event ticket alerts. Local dev: copy vars into <code class="text-[11px]">local.env</code>, run <code class="text-[11px]">npm run sync-env</code>, restart <code class="text-[11px]">npm start</code>.</p>' +
           '</section>' +
           '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
           '<h3 class="font-bold text-brand-900 mb-2">Supabase connection</h3>' +

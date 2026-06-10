@@ -16,6 +16,14 @@ const {
   enrichOrganiserRegistrationVars,
   stripUnresolvedOrganiserPlaceholders,
 } = require('./organiser-email-sections');
+const {
+  enrichBookingCancelledVars,
+  enrichEventCancelledVars,
+  enrichRefundProcessedVars,
+  stripBookingCancelledPlaceholders,
+  stripEventCancelledPlaceholders,
+  stripRefundProcessedPlaceholders,
+} = require('./cancellation-email-sections');
 
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
@@ -43,7 +51,10 @@ async function buildEmailFromTemplate(slug, variables) {
     slug === 'booking_reminder' ||
     slug === 'account_welcome' ||
     slug === 'saved_event_tickets_open' ||
-    slug === 'organiser_new_registration';
+    slug === 'organiser_new_registration' ||
+    slug === 'booking_cancelled' ||
+    slug === 'event_cancelled' ||
+    slug === 'refund_processed';
   const bookingDefaults = usesBookingEmailDefaults ? await getBookingEmailDefaultVars() : {};
   const sponsorSection = bookingDefaults.sponsor_section || '';
   delete bookingDefaults.sponsor_section;
@@ -63,6 +74,12 @@ async function buildEmailFromTemplate(slug, variables) {
     merged = enrichAccountWelcomeVars(merged, sponsorSection);
   } else if (slug === 'organiser_new_registration') {
     merged = enrichOrganiserRegistrationVars(merged, sponsorSection);
+  } else if (slug === 'booking_cancelled') {
+    merged = enrichBookingCancelledVars(merged, sponsorSection);
+  } else if (slug === 'event_cancelled') {
+    merged = enrichEventCancelledVars(merged, sponsorSection);
+  } else if (slug === 'refund_processed') {
+    merged = enrichRefundProcessedVars(merged, sponsorSection);
   }
 
   let bodyHtml = template.body_html;
@@ -93,6 +110,15 @@ async function buildEmailFromTemplate(slug, variables) {
     html = replacePlaceholders(html, merged);
   } else if (slug === 'organiser_new_registration') {
     html = stripUnresolvedOrganiserPlaceholders(html);
+    html = replacePlaceholders(html, merged);
+  } else if (slug === 'booking_cancelled') {
+    html = stripBookingCancelledPlaceholders(html);
+    html = replacePlaceholders(html, merged);
+  } else if (slug === 'event_cancelled') {
+    html = stripEventCancelledPlaceholders(html);
+    html = replacePlaceholders(html, merged);
+  } else if (slug === 'refund_processed') {
+    html = stripRefundProcessedPlaceholders(html);
     html = replacePlaceholders(html, merged);
   }
 

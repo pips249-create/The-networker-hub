@@ -3,6 +3,10 @@
  */
 const { getSupabaseAdmin } = require('./supabase');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
+const {
+  sendEventCancelledEmailsForEvent,
+  sendRefundProcessedEmailsForEvent,
+} = require('./cancellation-emails');
 
 const CANCELLATION_REASONS = new Set([
   'Venue issue',
@@ -90,7 +94,15 @@ async function cancelLockedEvent(session, eventId, payload) {
   if (updateErr) throw new Error(updateErr.message);
 
   const { data: updated } = await sb.from('events').select('*').eq('id', eventId).single();
-  return { cancellation, event: updated };
+
+  let emailResult = null;
+  try {
+    emailResult = await sendEventCancelledEmailsForEvent(sb, eventId, cancellation);
+  } catch (e) {
+    emailResult = { error: e.message || String(e) };
+  }
+
+  return { cancellation, event: updated, emailResult };
 }
 
 async function confirmRefundsIssued(session, eventId) {
@@ -120,7 +132,15 @@ async function confirmRefundsIssued(session, eventId) {
     .select('*')
     .single();
   if (error) throw new Error(error.message);
-  return { cancellation: data };
+
+  let emailResult = null;
+  try {
+    emailResult = await sendRefundProcessedEmailsForEvent(sb, eventId);
+  } catch (e) {
+    emailResult = { error: e.message || String(e) };
+  }
+
+  return { cancellation: data, emailResult };
 }
 
 module.exports = {

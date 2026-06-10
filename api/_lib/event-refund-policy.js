@@ -122,6 +122,7 @@ function buildEventOnlineRow(isOnline) {
 
 module.exports = {
   escapeHtml,
+  formatMultilineHtml,
   inferMeetingType,
   isOnlineEvent,
   formatRefundPolicyLabel,

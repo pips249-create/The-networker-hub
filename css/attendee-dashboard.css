@@ -343,9 +343,26 @@
   color: #fff;
 }
 
+.ad-btn-danger {
+  background: var(--ad-red);
+  color: #fff;
+}
+
+.ad-btn-danger:hover {
+  background: #a82828;
+  color: #fff;
+}
+
 .ad-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.ad-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 
 .ad-empty {
@@ -402,7 +419,8 @@
 }
 
 body.ad-review-modal-open,
-body.ad-payment-modal-open {
+body.ad-payment-modal-open,
+body.ad-cancel-modal-open {
   overflow: hidden;
 }
 
@@ -636,4 +654,199 @@ tr.ad-row-highlight td {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 16px;
+}
+
+.ad-cancel-modal[hidden] {
+  display: none !important;
+}
+
+.ad-cancel-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.ad-cancel-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(45, 27, 94, 0.45);
+}
+
+.ad-cancel-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 560px);
+  max-height: min(92vh, 720px);
+  overflow-y: auto;
+  background: var(--ad-white);
+  border-radius: var(--ad-radius);
+  padding: 28px 24px 24px;
+  box-shadow: 0 20px 50px rgba(45, 27, 94, 0.2);
+}
+
+.ad-cancel-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--ad-text-soft);
+  cursor: pointer;
+}
+
+.ad-cancel-modal-title {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  color: var(--ad-slate);
+}
+
+.ad-cancel-modal-sub {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--ad-text-mid);
+  line-height: 1.5;
+}
+
+.ad-cancel-summary {
+  margin: 0 0 16px;
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--ad-teal-pale);
+  border-radius: var(--ad-radius-sm);
+  border: 1px solid var(--ad-border-soft);
+}
+
+.ad-cancel-summary div {
+  display: grid;
+  gap: 2px;
+}
+
+.ad-cancel-summary dt {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ad-text-soft);
+}
+
+.ad-cancel-summary dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ad-text-dark);
+  font-weight: 600;
+}
+
+.ad-cancel-policy {
+  margin: 0 0 14px;
+  padding: 16px 18px;
+  background: #faf7f2;
+  border: 1px solid var(--ad-border-soft);
+  border-radius: var(--ad-radius-sm);
+}
+
+.ad-cancel-policy-kicker {
+  margin: 0 0 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ad-teal);
+}
+
+.ad-cancel-policy-label {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ad-slate);
+  line-height: 1.35;
+}
+
+.ad-cancel-policy-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ad-text-mid);
+}
+
+.ad-cancel-outcome {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border-radius: var(--ad-radius-sm);
+  border: 1px solid var(--ad-border-soft);
+}
+
+.ad-cancel-outcome.is-eligible {
+  background: var(--ad-green-light);
+  border-color: #b8ddb8;
+}
+
+.ad-cancel-outcome.is-ineligible {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.ad-cancel-outcome.is-free {
+  background: var(--ad-teal-pale);
+  border-color: var(--ad-border-soft);
+}
+
+.ad-cancel-outcome-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ad-text-dark);
+}
+
+.ad-cancel-disclaimer {
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ad-text-mid);
+}
+
+.ad-cancel-disclaimer a {
+  color: var(--ad-teal);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ad-cancel-disclaimer a:hover {
+  text-decoration: underline;
+}
+
+.ad-cancel-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ad-text-mid);
+  cursor: pointer;
+}
+
+.ad-cancel-confirm input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.ad-cancel-error {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--ad-red);
+}
+
+.ad-cancel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
 }

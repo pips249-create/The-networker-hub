@@ -274,6 +274,8 @@ module.exports = {
   stripUnresolvedAccountWelcomePlaceholders,
   buildEventMetaRows,
   buildMeetingLinkRow,
+  wrapSponsorRow,
+  resolveSponsorSection,
   BOOKING_SECTION_PLACEHOLDERS,
   BOOKING_REMINDER_SECTION_PLACEHOLDERS,
 };

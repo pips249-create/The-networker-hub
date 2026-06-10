@@ -141,7 +141,8 @@
     );
   }
 
-  function actionCell(reg) {
+  function actionCell(reg, options) {
+    const opts = options || {};
     if (reg.reviewStatus === 'pending') {
       return (
         '<button type="button" class="ad-btn ad-btn-gold ad-leave-review" data-event-id="' +
@@ -160,6 +161,18 @@
         '">View event</a>'
       );
     }
+    if (opts.showCancel && reg.canCancel) {
+      return (
+        '<div class="ad-action-group">' +
+        '<a class="ad-btn ad-btn-primary" href="' +
+        esc(eventHref(reg)) +
+        '">View event</a>' +
+        '<button type="button" class="ad-btn ad-cancel-booking" data-registration-id="' +
+        esc(reg.id || '') +
+        '">Cancel booking</button>' +
+        '</div>'
+      );
+    }
     return (
       '<a class="ad-btn ad-btn-primary" href="' +
       esc(eventHref(reg)) +
@@ -170,6 +183,8 @@
   let reviewRating = 0;
   let reviewModalOpen = false;
   let paymentModalOpen = false;
+  let cancelModalOpen = false;
+  let pendingCancelRegistration = null;
   let highlightRegistrationId = '';
 
   function setReviewStars(rating) {
@@ -427,6 +442,182 @@
     });
   }
 
+  function buildCancelOutcomeText(reg) {
+    const paid = formatAmountPaid(reg.amountPaid, reg.paymentStatus);
+    const organiser = reg.organiserName ? String(reg.organiserName).trim() : 'the organiser';
+
+    if (!reg.isPaid) {
+      return 'This is a free booking — no payment was taken, so no refund applies.';
+    }
+    if (reg.refundEligible) {
+      return (
+        'Based on ' +
+        organiser +
+        '\'s policy, you may be eligible for a refund of ' +
+        paid +
+        '. The organiser — not The Networker Hub — will process any refund due through their payment account.'
+      );
+    }
+    return (
+      'Based on ' +
+      organiser +
+      '\'s policy, no refund is due for this cancellation. Your ticket will be deactivated.'
+    );
+  }
+
+  function openCancelModal(reg) {
+    const modal = document.getElementById('ad-cancel-modal');
+    const sub = document.getElementById('ad-cancel-modal-sub');
+    const summary = document.getElementById('ad-cancel-summary');
+    const policyLabel = document.getElementById('ad-cancel-policy-label');
+    const policyText = document.getElementById('ad-cancel-policy-text');
+    const outcome = document.getElementById('ad-cancel-outcome');
+    const outcomeText = document.getElementById('ad-cancel-outcome-text');
+    const confirmCheck = document.getElementById('ad-cancel-confirm-check');
+    const confirmBtn = document.getElementById('ad-cancel-confirm');
+    const err = document.getElementById('ad-cancel-error');
+    if (!modal || !reg) return;
+
+    pendingCancelRegistration = reg;
+
+    if (sub) {
+      sub.textContent =
+        'Review the organiser\'s refund policy before cancelling your booking for “' +
+        (reg.title || 'Event') +
+        '”.';
+    }
+
+    if (summary) {
+      summary.innerHTML =
+        '<div><dt>Event date</dt><dd>' +
+        esc(formatDateTimeLong(reg.date)) +
+        '</dd></div>' +
+        '<div><dt>Tickets</dt><dd>' +
+        esc(reg.ticketLabel || '—') +
+        '</dd></div>' +
+        '<div><dt>Amount paid</dt><dd>' +
+        esc(formatAmountPaid(reg.amountPaid, reg.paymentStatus)) +
+        '</dd></div>' +
+        '<div><dt>Organiser</dt><dd>' +
+        esc(reg.organiserName || '—') +
+        '</dd></div>';
+    }
+
+    if (policyLabel) {
+      policyLabel.textContent = reg.refundPolicyLabel || 'Refund policy';
+    }
+    if (policyText) {
+      policyText.textContent =
+        reg.refundPolicyText ||
+        'No refund policy has been set for this event. Contact the organiser if you have questions.';
+    }
+
+    if (outcome && outcomeText) {
+      outcome.hidden = false;
+      outcome.classList.remove('is-eligible', 'is-ineligible', 'is-free');
+      if (!reg.isPaid) outcome.classList.add('is-free');
+      else if (reg.refundEligible) outcome.classList.add('is-eligible');
+      else outcome.classList.add('is-ineligible');
+      outcomeText.textContent = buildCancelOutcomeText(reg);
+    }
+
+    if (confirmCheck) confirmCheck.checked = false;
+    if (confirmBtn) confirmBtn.disabled = true;
+    if (err) err.hidden = true;
+
+    modal.hidden = false;
+    cancelModalOpen = true;
+    document.body.classList.add('ad-cancel-modal-open');
+  }
+
+  function closeCancelModal() {
+    const modal = document.getElementById('ad-cancel-modal');
+    if (modal) modal.hidden = true;
+    cancelModalOpen = false;
+    pendingCancelRegistration = null;
+    document.body.classList.remove('ad-cancel-modal-open');
+  }
+
+  function bindCancelModal() {
+    const modal = document.getElementById('ad-cancel-modal');
+    const backdrop = document.getElementById('ad-cancel-modal-backdrop');
+    const closeBtn = document.getElementById('ad-cancel-modal-close');
+    const keepBtn = document.getElementById('ad-cancel-keep');
+    const confirmBtn = document.getElementById('ad-cancel-confirm');
+    const confirmCheck = document.getElementById('ad-cancel-confirm-check');
+    const err = document.getElementById('ad-cancel-error');
+
+    [backdrop, closeBtn, keepBtn].forEach((el) => {
+      if (!el) return;
+      el.addEventListener('click', closeCancelModal);
+    });
+
+    if (confirmCheck && confirmBtn) {
+      confirmCheck.addEventListener('change', () => {
+        confirmBtn.disabled = !confirmCheck.checked;
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && cancelModalOpen) closeCancelModal();
+    });
+
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', async () => {
+        if (!pendingCancelRegistration || !confirmCheck?.checked) return;
+        if (err) err.hidden = true;
+        confirmBtn.disabled = true;
+
+        try {
+          const res = await fetch('/api/auth/cancel-booking', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ registrationId: pendingCancelRegistration.id }),
+          });
+          const data = await res.json();
+          if (!data.ok) {
+            const msg =
+              data.message ||
+              (data.error === 'not_authenticated'
+                ? 'Please sign in again to cancel this booking.'
+                : data.error || 'Could not cancel booking.');
+            if (err) {
+              err.textContent = msg;
+              err.hidden = false;
+            }
+            confirmBtn.disabled = !confirmCheck.checked;
+            return;
+          }
+          closeCancelModal();
+          await reloadDashboard();
+          alert(data.message || 'Your booking has been cancelled.');
+        } catch {
+          if (err) {
+            err.textContent = 'Something went wrong. Please try again.';
+            err.hidden = false;
+          }
+          confirmBtn.disabled = !confirmCheck.checked;
+        }
+      });
+    }
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeCancelModal();
+      });
+    }
+  }
+
+  function bindCancelButtons(root) {
+    (root || document).querySelectorAll('.ad-cancel-booking').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const reg = findRegistrationById(btn.getAttribute('data-registration-id'));
+        if (reg) openCancelModal(reg);
+      });
+    });
+  }
+
   function renderPaymentsTable() {
     const body = document.getElementById('ad-payments-body');
     const empty = document.getElementById('ad-payments-empty');
@@ -465,13 +656,21 @@
         esc(formatAmountPaid(reg.amountPaid, reg.paymentStatus)) +
         '</td><td>' +
         paymentBadge(reg.paymentStatus) +
-        '</td><td><button type="button" class="ad-btn ad-btn-primary ad-view-payment" data-registration-id="' +
+        '</td><td><div class="ad-action-group">' +
+        '<button type="button" class="ad-btn ad-btn-primary ad-view-payment" data-registration-id="' +
         esc(reg.id || '') +
-        '">Payment details</button></td>';
+        '">Payment details</button>' +
+        (reg.canCancel
+          ? '<button type="button" class="ad-btn ad-cancel-booking" data-registration-id="' +
+            esc(reg.id || '') +
+            '">Cancel booking</button>'
+          : '') +
+        '</div></td>';
       body.appendChild(tr);
     });
 
     bindPaymentButtons(body);
+    bindCancelButtons(body);
   }
 
   function openPaymentFromQuery() {
@@ -605,7 +804,7 @@
           '</td><td>' +
           reviewBadge(reg.reviewStatus, reg) +
           '</td><td>' +
-          actionCell(reg) +
+          actionCell(reg, { showCancel: listKey === 'upcoming' }) +
           '</td>';
       } else {
         tr.innerHTML =
@@ -625,6 +824,7 @@
     });
 
     bindLeaveReviewButtons(body);
+    bindCancelButtons(body);
 
     renderPagination(navId, listKey, totalPages);
   }
@@ -779,6 +979,7 @@
     bindNav();
     bindReviewModal();
     bindPaymentModal();
+    bindCancelModal();
     setRoute(parseRoute());
 
     const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
