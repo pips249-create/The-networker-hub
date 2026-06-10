@@ -6,6 +6,25 @@ function formatAmount(amountPaid) {
   return n % 1 === 0 ? '£' + n.toFixed(0) : '£' + n.toFixed(2);
 }
 
+function buildMeetingLinkSection(link) {
+  const url = String(link || '').trim();
+  if (!url) return '';
+  const safeUrl = url.replace(/"/g, '&quot;');
+  return (
+    '<tr><td class="mobile-pad" style="padding:0 48px 8px;">' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
+    '<tr><td style="padding:20px 24px;text-align:center;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 8px;">Online event</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:400;color:#736b6e;line-height:1.6;margin:0 0 14px;">Use the link below to join when the event starts.</p>' +
+    '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">' +
+    '<tr><td style="background:#9a7aa8;border-radius:999px;">' +
+    '<a href="' +
+    safeUrl +
+    '" style="display:inline-block;padding:12px 32px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#ffffff;text-decoration:none;">Join online &rarr;</a>' +
+    '</td></tr></table></td></tr></table></td></tr>'
+  );
+}
+
 function eventPublicUrl(eventRow) {
   const site = (process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
   const slug = String(eventRow.slug || '').trim();
@@ -25,7 +44,13 @@ async function sendRegistrationEmails(sb, registration) {
   if (!registrationId || !eventId) return { skipped: true, reason: 'missing_ids' };
 
   const [eventRes, attendeeRes, ticketRes] = await Promise.all([
-    sb.from('events').select('id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id').eq('id', eventId).maybeSingle(),
+    sb
+      .from('events')
+      .select(
+        'id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id, meeting_link'
+      )
+      .eq('id', eventId)
+      .maybeSingle(),
     attendeeId
       ? sb.from('attendees').select('id, email, name').eq('id', attendeeId).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
@@ -69,6 +94,8 @@ async function sendRegistrationEmails(sb, registration) {
   const eventUrl = eventPublicUrl(eventRow);
   const siteUrl = (process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
 
+  const meetingLink = String(registration.meeting_link || eventRow.meeting_link || '').trim();
+
   const vars = {
     user_name: attendeeName,
     user_email: attendeeEmail,
@@ -80,8 +107,10 @@ async function sendRegistrationEmails(sb, registration) {
     ticket_name: ticketName,
     amount_paid: amountPaid,
     organiser_name: organiserName || 'The organiser',
-    meeting_link: String(registration.meeting_link || '').trim(),
+    meeting_link: meetingLink,
+    meeting_link_section: buildMeetingLinkSection(meetingLink),
     site_url: siteUrl,
+    logo_url: siteUrl + '/assets/logo-nav.png',
     dashboard_url: siteUrl + '/organiser/index.html',
   };
 
@@ -127,4 +156,5 @@ module.exports = {
   sendRegistrationEmails,
   formatAmount,
   eventPublicUrl,
+  buildMeetingLinkSection,
 };

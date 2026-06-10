@@ -21,8 +21,10 @@ async function buildEmailFromTemplate(slug, variables) {
     throw err;
   }
 
+  const siteUrl = (process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
   const merged = {
-    site_url: process.env.SITE_URL || 'https://the-networker-hub.vercel.app',
+    site_url: siteUrl,
+    logo_url: siteUrl + '/assets/logo-nav.png',
     ...variables,
   };
 
@@ -36,7 +38,9 @@ async function buildEmailFromTemplate(slug, variables) {
 async function sendViaResend({ to, subject, html }) {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
-    const err = new Error('resend_not_configured');
+    const err = new Error(
+      'Email sending is not configured. Add RESEND_API_KEY and RESEND_FROM in Vercel environment variables.'
+    );
     err.code = 'resend_not_configured';
     throw err;
   }

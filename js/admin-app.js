@@ -353,8 +353,17 @@
   }
 
   function withHubTabs(tabsHtml, renderFn) {
-    renderFn();
-    main.innerHTML = tabsHtml + main.innerHTML;
+    var rootMain = main;
+    rootMain.innerHTML = tabsHtml;
+    var panel = document.createElement('div');
+    panel.className = 'admin-hub-panel min-w-0';
+    rootMain.appendChild(panel);
+    main = panel;
+    try {
+      renderFn();
+    } finally {
+      main = rootMain;
+    }
   }
 
   function setActiveNav(route, fullHash) {
@@ -428,15 +437,24 @@
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body || {}),
-    }).then(function (r) {
-      return r.json().then(function (data) {
-        if (!r.ok) {
+    })
+      .then(function (r) {
+        return r.json().then(function (data) {
           data = data || {};
-          data.error = data.error || data.message || 'request_failed';
-        }
-        return data;
+          if (!r.ok) {
+            data.error = data.error || data.message || 'request_failed';
+            data.ok = false;
+          }
+          return data;
+        });
+      })
+      .catch(function (err) {
+        return {
+          ok: false,
+          error: 'network_error',
+          message: (err && err.message) || 'Request failed',
+        };
       });
-    });
   }
 
   function adminPatch(url, body) {
@@ -445,15 +463,24 @@
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body || {}),
-    }).then(function (r) {
-      return r.json().then(function (data) {
-        if (!r.ok) {
+    })
+      .then(function (r) {
+        return r.json().then(function (data) {
           data = data || {};
-          data.error = data.error || data.message || 'request_failed';
-        }
-        return data;
+          if (!r.ok) {
+            data.error = data.error || data.message || 'request_failed';
+            data.ok = false;
+          }
+          return data;
+        });
+      })
+      .catch(function (err) {
+        return {
+          ok: false,
+          error: 'network_error',
+          message: (err && err.message) || 'Request failed',
+        };
       });
-    });
   }
 
   function alertCard(a) {
@@ -3878,10 +3905,22 @@
     loadPartners();
   }
 
+  function replaceEmailPlaceholders(text, variables) {
+    var vars = variables && typeof variables === 'object' ? variables : {};
+    return String(text || '').replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, function (match, key) {
+      if (!Object.prototype.hasOwnProperty.call(vars, key)) return match;
+      var val = vars[key];
+      if (val == null) return '';
+      return String(val);
+    });
+  }
+
   function renderEmails() {
     var templates = [];
+    var testRecipients = [];
     var selectedSlug = '';
     var dirty = false;
+    var previewOrigin = window.location.origin || 'https://the-networker-hub.vercel.app';
 
     var SAMPLE_VARS = {
       user_name: 'Alex Morgan',
@@ -3890,14 +3929,53 @@
       event_date: 'Tuesday 12 August 2026',
       event_time: '8:00 AM',
       event_location: 'The Shard, London SE1',
-      event_url: 'https://the-networker-hub.vercel.app/events/london-founders-breakfast',
+      event_url: previewOrigin + '/events/london-founders-breakfast',
       ticket_name: 'General admission',
       amount_paid: '£25.00',
       organiser_name: 'City Connectors',
       meeting_link: 'https://meet.example.com/room',
-      dashboard_url: 'https://the-networker-hub.vercel.app/organiser-dashboard.html',
-      site_url: 'https://the-networker-hub.vercel.app',
+      meeting_link_section: '',
+      dashboard_url: previewOrigin + '/organiser-dashboard.html',
+      site_url: previewOrigin,
+      logo_url: previewOrigin + '/assets/logo-nav.png',
     };
+    SAMPLE_VARS.meeting_link_section = (function (link) {
+      var url = String(link || '').trim();
+      if (!url) return '';
+      return (
+        '<tr><td class="mobile-pad" style="padding:0 48px 8px;">' +
+        '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
+        '<tr><td style="padding:20px 24px;text-align:center;">' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 8px;">Online event</p>' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:400;color:#736b6e;line-height:1.6;margin:0 0 14px;">Use the link below to join when the event starts.</p>' +
+        '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">' +
+        '<tr><td style="background:#9a7aa8;border-radius:999px;">' +
+        '<a href="' +
+        url +
+        '" style="display:inline-block;padding:12px 32px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#ffffff;text-decoration:none;">Join online &rarr;</a>' +
+        '</td></tr></table></td></tr></table></td></tr>'
+      );
+    })(SAMPLE_VARS.meeting_link);
+    if (currentUser) {
+      if (currentUser.name) SAMPLE_VARS.user_name = currentUser.name;
+      if (currentUser.email) SAMPLE_VARS.user_email = currentUser.email;
+    }
+
+    function emailActionMessage(code, fallback) {
+      var messages = {
+        recipient_not_allowed:
+          'This address is not on the safe test list. Add it under Safe test recipients first.',
+        resend_not_configured:
+          'Email sending is not configured yet. Add RESEND_API_KEY and RESEND_FROM in Vercel, then redeploy.',
+        test_recipients_table_missing:
+          'Safe test list is not set up yet. Run migrations 051 and 052 in Supabase.',
+        template_not_found:
+          'Booking confirmation template not found. Run migration 050 in Supabase.',
+        resend_send_failed:
+          'Resend rejected the email. Check RESEND_FROM uses a verified domain and see Resend logs.',
+      };
+      return messages[code] || fallback || code || 'Something went wrong.';
+    }
 
     main.innerHTML =
       '<div class="space-y-6">' +
@@ -3921,17 +3999,33 @@
       '<button type="button" id="email-save-btn" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Save template</button>' +
       '<button type="button" id="email-preview-btn" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Refresh preview</button>' +
       '</div>' +
-      '<div class="border-t border-slate-100 pt-5 space-y-3">' +
+      '<div class="border-t border-slate-100 pt-5 space-y-4">' +
+      '<div class="space-y-3">' +
+      '<h4 class="text-sm font-bold text-brand-900">Safe test recipients</h4>' +
+      '<p class="text-xs text-slate-500">Only addresses on this list can receive test emails from the Command Centre.</p>' +
+      '<ul id="email-test-recipient-list" class="space-y-2 text-sm"></ul>' +
+      '<div class="flex flex-wrap gap-3 items-end">' +
+      '<div class="flex-1 min-w-[180px]"><label class="block text-xs font-semibold text-slate-600 mb-1" for="email-test-add-email">Email</label>' +
+      '<input type="email" id="email-test-add-email" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="you@company.com"></div>' +
+      '<div class="flex-1 min-w-[140px]"><label class="block text-xs font-semibold text-slate-600 mb-1" for="email-test-add-label">Label (optional)</label>' +
+      '<input type="text" id="email-test-add-label" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="My inbox"></div>' +
+      '<button type="button" id="email-test-add-btn" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Add to list</button>' +
+      '</div></div>' +
+      '<div class="space-y-3 border-t border-slate-100 pt-4">' +
       '<h4 class="text-sm font-bold text-brand-900">Send test email</h4>' +
+      '<p class="text-xs text-slate-500">Test sends use <strong>sample event and ticket data</strong> in the preview (or your name if you are signed in). When someone actually books, the email fills in their account name, the ticket they bought, the amount paid, and the event details automatically.</p>' +
       '<div class="flex flex-wrap gap-3 items-end">' +
       '<div class="flex-1 min-w-[200px]"><label class="block text-xs font-semibold text-slate-600 mb-1" for="email-test-to">Recipient</label>' +
-      '<input type="email" id="email-test-to" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="you@company.com"></div>' +
+      '<select id="email-test-to" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white">' +
+      '<option value="">Select a safe address…</option></select></div>' +
       '<button type="button" id="email-test-btn" class="rounded-lg border border-brand-700 text-brand-700 px-4 py-2 text-sm font-semibold hover:bg-brand-50">Send test</button>' +
+      '</div>' +
+      '<p id="email-test-result" class="hidden text-sm rounded-lg px-3 py-2"></p>' +
       '</div></div></form>' +
       '<section id="email-preview-panel" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 hidden">' +
       '<h3 class="font-bold text-brand-900 mb-1">Preview</h3>' +
       '<p id="email-preview-subject" class="text-sm text-slate-600 mb-4"></p>' +
-      '<div id="email-preview-html" class="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm prose prose-sm max-w-none"></div>' +
+      '<iframe id="email-preview-frame" title="Email preview" class="w-full rounded-lg border border-slate-100 bg-white" style="height:min(80vh,720px);border:0;" sandbox="allow-same-origin"></iframe>' +
       '</section></div></div></div>';
 
     function setEmailStatus(text, tone) {
@@ -3944,7 +4038,33 @@
           ? 'text-red-700 font-semibold'
           : tone === 'ok'
             ? 'text-emerald-700 font-semibold'
-            : 'text-slate-500');
+            : tone === 'warn'
+              ? 'text-amber-700 font-semibold'
+              : 'text-slate-500');
+      try {
+        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      } catch (e) {}
+    }
+
+    function setTestResult(text, tone) {
+      var el = document.getElementById('email-test-result');
+      if (!el) return;
+      if (!text) {
+        el.className = 'hidden text-sm rounded-lg px-3 py-2';
+        el.textContent = '';
+        return;
+      }
+      el.textContent = text;
+      el.className =
+        'text-sm rounded-lg px-3 py-2 ' +
+        (tone === 'error'
+          ? 'bg-red-50 text-red-800 border border-red-100'
+          : tone === 'ok'
+            ? 'bg-emerald-50 text-emerald-800 border border-emerald-100'
+            : 'bg-slate-50 text-slate-700 border border-slate-100');
+      try {
+        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      } catch (e2) {}
     }
 
     function currentTemplate() {
@@ -4049,21 +4169,100 @@
       fillEditor(currentTemplate());
     }
 
+    function setPreviewHtml(html) {
+      var frame = document.getElementById('email-preview-frame');
+      if (!frame) return;
+      frame.srcdoc = html || '';
+    }
+
     function refreshPreview() {
       if (!selectedSlug) return;
-      adminPost('/api/admin/emails', {
-        action: 'preview',
-        slug: selectedSlug,
-        variables: SAMPLE_VARS,
-      })
-        .then(function (data) {
-          if (!data.ok) throw new Error(data.message || data.error || 'Preview failed');
-          document.getElementById('email-preview-subject').textContent = 'Subject: ' + data.subject;
-          document.getElementById('email-preview-html').innerHTML = data.html;
-        })
-        .catch(function (err) {
-          setEmailStatus(err.message || 'Could not render preview.', 'error');
-        });
+      var subjectEl = document.getElementById('email-subject');
+      var bodyEl = document.getElementById('email-body');
+      if (!subjectEl || !bodyEl) return;
+      var subjectLine = document.getElementById('email-preview-subject');
+      if (subjectLine) {
+        subjectLine.textContent =
+          'Subject: ' + replaceEmailPlaceholders(subjectEl.value, SAMPLE_VARS);
+      }
+      setPreviewHtml(replaceEmailPlaceholders(bodyEl.value, SAMPLE_VARS));
+    }
+
+    function renderTestRecipientList() {
+      var list = document.getElementById('email-test-recipient-list');
+      var select = document.getElementById('email-test-to');
+      var previous = select ? select.value : '';
+      if (list) {
+        if (!testRecipients.length) {
+          list.innerHTML =
+            '<li class="text-slate-400 text-xs">No safe addresses yet — add one above before sending a test.</li>';
+        } else {
+          list.innerHTML = testRecipients
+            .map(function (r) {
+              var label = r.label ? ' <span class="text-slate-400">(' + esc(r.label) + ')</span>' : '';
+              return (
+                '<li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">' +
+                '<span><span class="font-medium text-slate-800">' +
+                esc(r.email) +
+                '</span>' +
+                label +
+                '</span>' +
+                '<button type="button" data-remove-test-recipient="' +
+                attrEsc(r.id) +
+                '" class="text-xs font-semibold text-red-600 hover:text-red-800">Remove</button></li>'
+              );
+            })
+            .join('');
+          list.querySelectorAll('[data-remove-test-recipient]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              var id = btn.getAttribute('data-remove-test-recipient');
+              if (!id || !window.confirm('Remove this address from the safe test list?')) return;
+              btn.disabled = true;
+              adminPost('/api/admin/emails', { action: 'remove_test_recipient', id: id })
+                .then(function (data) {
+                  if (!data.ok) throw new Error(data.message || data.error || 'Remove failed');
+                  testRecipients = testRecipients.filter(function (r) {
+                    return r.id !== id;
+                  });
+                  renderTestRecipientList();
+                  setEmailStatus('Removed from safe test list.', 'ok');
+                })
+                .catch(function (err) {
+                  setEmailStatus(err.message || 'Could not remove address.', 'error');
+                })
+                .finally(function () {
+                  btn.disabled = false;
+                });
+            });
+          });
+        }
+      }
+      if (select) {
+        var options =
+          '<option value="">Select a safe address…</option>' +
+          testRecipients
+            .map(function (r) {
+              var label = r.label ? r.label + ' — ' : '';
+              return (
+                '<option value="' +
+                attrEsc(r.email) +
+                '">' +
+                esc(label + r.email) +
+                '</option>'
+              );
+            })
+            .join('');
+        select.innerHTML = options;
+        if (previous && testRecipients.some(function (r) { return r.email === previous; })) {
+          select.value = previous;
+        } else if (
+          currentUser &&
+          currentUser.email &&
+          testRecipients.some(function (r) { return r.email === currentUser.email; })
+        ) {
+          select.value = currentUser.email;
+        }
+      }
     }
 
     function loadTemplates() {
@@ -4079,24 +4278,29 @@
             return;
           }
           templates = data.templates || [];
+          testRecipients = data.testRecipients || [];
           if (!selectedSlug && templates.length) selectedSlug = templates[0].slug;
           renderTemplateList();
+          renderTestRecipientList();
           fillEditor(currentTemplate());
-          setEmailStatus(templates.length + ' template' + (templates.length === 1 ? '' : 's') + ' loaded.');
+          if (data.testRecipientsWarning) {
+            setEmailStatus(data.testRecipientsWarning, 'warn');
+          } else {
+            setEmailStatus(templates.length + ' template' + (templates.length === 1 ? '' : 's') + ' loaded.');
+          }
         })
         .catch(function () {
           setEmailStatus('Could not load email templates.', 'error');
         });
     }
 
-    var testTo = document.getElementById('email-test-to');
-    if (testTo && currentUser && currentUser.email) testTo.value = currentUser.email;
-
     document.getElementById('email-subject').addEventListener('input', function () {
       dirty = true;
+      refreshPreview();
     });
     document.getElementById('email-body').addEventListener('input', function () {
       dirty = true;
+      refreshPreview();
     });
 
     document.getElementById('email-save-btn').addEventListener('click', function () {
@@ -4131,16 +4335,72 @@
 
     document.getElementById('email-preview-btn').addEventListener('click', refreshPreview);
 
+    document.getElementById('email-test-add-btn').addEventListener('click', function () {
+      var addBtn = document.getElementById('email-test-add-btn');
+      var email = (document.getElementById('email-test-add-email').value || '').trim();
+      var label = (document.getElementById('email-test-add-label').value || '').trim();
+      if (!email) {
+        setEmailStatus('Enter an email address to add to the safe test list.', 'error');
+        return;
+      }
+      if (addBtn) addBtn.disabled = true;
+      setEmailStatus('Adding to safe test list…');
+      adminPost('/api/admin/emails', {
+        action: 'add_test_recipient',
+        email: email,
+        label: label,
+      })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Add failed');
+          var exists = false;
+          for (var i = 0; i < testRecipients.length; i++) {
+            if (testRecipients[i].id === data.recipient.id) {
+              testRecipients[i] = data.recipient;
+              exists = true;
+              break;
+            }
+          }
+          if (!exists) testRecipients.push(data.recipient);
+          testRecipients.sort(function (a, b) {
+            return a.email.localeCompare(b.email);
+          });
+          document.getElementById('email-test-add-email').value = '';
+          document.getElementById('email-test-add-label').value = '';
+          renderTestRecipientList();
+          var select = document.getElementById('email-test-to');
+          if (select) select.value = data.recipient.email;
+          setEmailStatus('Added ' + data.recipient.email + ' to the safe test list.', 'ok');
+        })
+        .catch(function (err) {
+          var msg = err.message || 'Could not add address.';
+          if (msg === 'email_already_listed') {
+            msg = 'That address is already on the safe test list.';
+          } else if (msg === 'invalid_email') {
+            msg = 'Enter a valid email address.';
+          }
+          setEmailStatus(msg, 'error');
+        })
+        .finally(function () {
+          if (addBtn) addBtn.disabled = false;
+        });
+    });
+
     document.getElementById('email-test-btn').addEventListener('click', function () {
       if (!selectedSlug) return;
       var btn = document.getElementById('email-test-btn');
       var to = (document.getElementById('email-test-to').value || '').trim();
+      setTestResult('', '');
       if (!to) {
-        setEmailStatus('Enter a recipient email for the test send.', 'error');
+        var pickMsg =
+          testRecipients.length === 0
+            ? 'No safe test addresses yet. Run migrations 051 and 052 in Supabase, or add an address above.'
+            : 'Choose a safe test recipient from the dropdown before sending.';
+        setEmailStatus(pickMsg, 'error');
+        setTestResult(pickMsg, 'error');
         return;
       }
       if (btn) btn.disabled = true;
-      setEmailStatus('Sending test email…');
+      setEmailStatus('Sending test email to ' + to + '…');
       adminPost('/api/admin/emails', {
         action: 'test',
         slug: selectedSlug,
@@ -4148,11 +4408,22 @@
         variables: SAMPLE_VARS,
       })
         .then(function (data) {
-          if (!data.ok) throw new Error(data.message || data.error || 'Send failed');
-          setEmailStatus('Test sent to ' + data.to + '.', 'ok');
+          if (!data.ok) {
+            var err = new Error(data.message || data.error || 'Send failed');
+            err.code = data.error;
+            throw err;
+          }
+          var okMsg =
+            'Test email sent to ' +
+            (data.to || to) +
+            '. Check your inbox and spam folder (may take a minute).';
+          setEmailStatus(okMsg, 'ok');
+          setTestResult(okMsg, 'ok');
         })
         .catch(function (err) {
-          setEmailStatus(err.message || 'Could not send test email.', 'error');
+          var msg = emailActionMessage(err.code, err.message || 'Could not send test email.');
+          setEmailStatus(msg, 'error');
+          setTestResult(msg, 'error');
         })
         .finally(function () {
           if (btn) btn.disabled = false;

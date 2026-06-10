@@ -15,9 +15,9 @@
   window.HubertChatRenderSuggestions(suggestionsEl, [
     { label: 'Events in Manchester', prompt: 'What events are in Manchester?' },
     { label: 'Franchise opportunities', prompt: 'What franchise opportunities are available?' },
+    { label: 'Do I need an account?', prompt: 'Do I need an account to browse?' },
     { label: 'How do I book a ticket?', prompt: 'How do I book a ticket?' },
-    { label: 'Partnership deals', prompt: 'Show me partnership opportunities on the hub' },
-    { label: 'List an event', prompt: 'How do I list an event as an organiser?' },
+    { label: 'List as organiser', prompt: 'How do I list an event as an organiser?' },
   ]);
 
   new window.HubertChat({

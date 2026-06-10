@@ -5,6 +5,12 @@ const {
   getEmailTemplateBySlug,
   updateEmailTemplate,
 } = require('../supabase-email-templates');
+const {
+  listEmailTestRecipients,
+  isEmailTestRecipientAllowed,
+  addEmailTestRecipient,
+  removeEmailTestRecipient,
+} = require('../supabase-email-test-recipients');
 const { buildEmailFromTemplate, sendTemplatedEmail } = require('../send-template-email');
 
 function parseBody(req) {
@@ -46,13 +52,36 @@ module.exports = async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const slug = slugFromRequest(req);
+      const listTestRecipients =
+        req.query && String(req.query.test_recipients || '').trim() === '1';
+      if (listTestRecipients) {
+        const testRecipients = await listEmailTestRecipients();
+        return json(res, 200, { ok: true, testRecipients });
+      }
       if (slug) {
         const template = await getEmailTemplateBySlug(slug);
         if (!template) return json(res, 404, { ok: false, error: 'template_not_found' });
         return json(res, 200, { ok: true, template });
       }
       const templates = await listEmailTemplates();
-      return json(res, 200, { ok: true, templates });
+      let testRecipients = [];
+      let testRecipientsWarning = '';
+      try {
+        testRecipients = await listEmailTestRecipients();
+      } catch (e) {
+        if (/email_test_recipients/i.test(e.message || '')) {
+          testRecipientsWarning =
+            'Safe test list table not found — run migrations 051 and 052 in Supabase.';
+        } else {
+          throw e;
+        }
+      }
+      return json(res, 200, {
+        ok: true,
+        templates,
+        testRecipients,
+        testRecipientsWarning,
+      });
     } catch (e) {
       return json(res, 500, { ok: false, error: 'email_templates_load_failed', message: e.message });
     }
@@ -106,13 +135,66 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    if (action === 'add_test_recipient') {
+      const email = String(body.email || '').trim();
+      const label = body.label != null ? String(body.label).trim() : '';
+      if (!email) return json(res, 400, { ok: false, error: 'missing_email' });
+      try {
+        const recipient = await addEmailTestRecipient({
+          email,
+          label,
+          addedBy: session.email || '',
+        });
+        return json(res, 200, { ok: true, recipient });
+      } catch (e) {
+        const code = e.code || 'add_test_recipient_failed';
+        const status = code === 'invalid_email' || code === 'email_already_listed' ? 400 : 500;
+        return json(res, status, { ok: false, error: code, message: e.message });
+      }
+    }
+
+    if (action === 'remove_test_recipient') {
+      const id = String(body.id || '').trim();
+      if (!id) return json(res, 400, { ok: false, error: 'missing_id' });
+      try {
+        await removeEmailTestRecipient(id);
+        return json(res, 200, { ok: true });
+      } catch (e) {
+        return json(res, 500, { ok: false, error: 'remove_test_recipient_failed', message: e.message });
+      }
+    }
+
     if (action === 'test') {
       const slug = String(body.slug || '').trim();
-      const to = String(body.to || session.email || '').trim();
+      const to = String(body.to || session.email || '')
+        .trim()
+        .toLowerCase();
       if (!slug) return json(res, 400, { ok: false, error: 'missing_slug' });
       if (!to) return json(res, 400, { ok: false, error: 'missing_recipient' });
 
       try {
+        let allowed = false;
+        try {
+          allowed = await isEmailTestRecipientAllowed(to);
+        } catch (e) {
+          if (/email_test_recipients/i.test(e.message || '')) {
+            return json(res, 503, {
+              ok: false,
+              error: 'test_recipients_table_missing',
+              message:
+                'Safe test list is not set up yet. Run migrations 051_email_test_recipients.sql and 052_email_test_recipients_seed.sql in Supabase.',
+            });
+          }
+          throw e;
+        }
+        if (!allowed) {
+          return json(res, 403, {
+            ok: false,
+            error: 'recipient_not_allowed',
+            message:
+              'This address is not on the safe test list. Add it under Safe test recipients first.',
+          });
+        }
         const result = await sendTemplatedEmail({
           slug,
           to,

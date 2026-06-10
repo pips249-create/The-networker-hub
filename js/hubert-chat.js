@@ -3,13 +3,13 @@
  */
 (function (global) {
   var HUBERT_GREETING =
-    "Good day — I'm Hubert, your business butler and concierge at The Networker Hub. I can help you find events and business opportunities, book tickets, or point you in the right direction.";
+    "Good day — I'm Hubert, your business butler and concierge. Browse events and opportunities for free, or I can guide you through tickets, enquiries, and organiser tools.";
 
   var DEFAULT_SUGGESTIONS = [
-    { label: 'Events near me', prompt: 'What networking events are coming up?' },
-    { label: 'Franchise opportunities', prompt: 'What franchise opportunities are on the hub?' },
+    { label: 'Upcoming events', prompt: 'What networking events are coming up?' },
+    { label: 'Franchise deals', prompt: 'What franchise opportunities are on the hub?' },
+    { label: 'Do I need an account?', prompt: 'Do I need an account to browse?' },
     { label: 'Book a ticket', prompt: 'How do I book a ticket?' },
-    { label: 'Partnership deals', prompt: 'Show me partnership opportunities' },
   ];
 
   function esc(s) {

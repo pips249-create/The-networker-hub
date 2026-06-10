@@ -1,9 +1,9 @@
 /**
  * Shared site footer — same block on every public page.
- * FOOTER_BUILD=20260610b
+ * FOOTER_BUILD=20260610c
  */
 (function () {
-  var FOOTER_BUILD = '20260610b';
+  var FOOTER_BUILD = '20260610c';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -92,6 +92,15 @@
       }
     });
   }
+
+  var seoData = document.createElement('script');
+  seoData.src = href('js/hub-seo-data.js?v=' + FOOTER_BUILD);
+  seoData.onload = function () {
+    var seoInject = document.createElement('script');
+    seoInject.src = href('js/hub-seo-schema.js?v=' + FOOTER_BUILD);
+    document.body.appendChild(seoInject);
+  };
+  document.body.appendChild(seoData);
 
   if (script && script.getAttribute('data-hubert') === 'off') return;
   var pagePath = (window.location.pathname || '').toLowerCase();
