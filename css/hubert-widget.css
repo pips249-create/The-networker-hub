@@ -1,0 +1,294 @@
+/* Hubert — floating widget + shared chat bubbles */
+
+.hubert-widget {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 1200;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+.hubert-launcher {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 16px 8px 8px;
+  background: linear-gradient(135deg, #c8b4f0 0%, #7ec8f0 100%);
+  color: #2d2340;
+  box-shadow: 0 10px 28px rgba(91, 47, 153, 0.28);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.hubert-launcher:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(91, 47, 153, 0.34);
+}
+
+.hubert-widget--open .hubert-launcher {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.92);
+}
+
+.hubert-launcher-icon {
+  display: block;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #0d0d12;
+  object-fit: cover;
+}
+
+.hubert-launcher-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.hubert-panel {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: min(400px, calc(100vw - 32px));
+  height: min(620px, calc(100vh - 32px));
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-soft, #e8dff0);
+  border-radius: calc(var(--radius, 12px) + 6px);
+  background: var(--surface-card, #fff);
+  box-shadow: 0 18px 48px rgba(45, 35, 64, 0.22);
+  overflow: hidden;
+}
+
+.hubert-panel[hidden] {
+  display: none !important;
+}
+
+.hubert-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 14px;
+  border-bottom: 1px solid var(--border-soft, #e8dff0);
+  background: linear-gradient(180deg, var(--lavender-light, #f4eef9) 0%, var(--surface-card, #fff) 100%);
+}
+
+.hubert-panel-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.hubert-panel-avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #0d0d12;
+  object-fit: cover;
+}
+
+.hubert-panel-title {
+  margin: 0;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--charcoal, #2d2340);
+}
+
+.hubert-panel-sub {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted, #6b6478);
+}
+
+.hubert-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.hubert-panel-reset,
+.hubert-panel-close {
+  border: 1px solid var(--border-soft, #e8dff0);
+  background: #fff;
+  color: var(--text-muted, #6b6478);
+  border-radius: var(--radius-pill, 999px);
+  cursor: pointer;
+}
+
+.hubert-panel-reset {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+}
+
+.hubert-panel-close {
+  width: 34px;
+  height: 34px;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.hubert-panel-reset:hover,
+.hubert-panel-close:hover {
+  color: var(--charcoal, #2d2340);
+  border-color: rgba(91, 47, 153, 0.2);
+}
+
+.hubert-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 180px;
+}
+
+.hubert-bubble {
+  max-width: 88%;
+  padding: 11px 13px;
+  border-radius: 14px;
+  font-size: 0.93rem;
+  line-height: 1.55;
+}
+
+.hubert-bubble--assistant {
+  align-self: flex-start;
+  background: var(--lavender-light, #f4eef9);
+  color: var(--charcoal, #2d2340);
+  border: 1px solid rgba(212, 184, 232, 0.5);
+}
+
+.hubert-bubble--user {
+  align-self: flex-end;
+  background: var(--lavender-deep, #5b2f99);
+  color: #fff;
+}
+
+.hubert-bubble--typing {
+  opacity: 0.75;
+  font-style: italic;
+}
+
+.hubert-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 16px 12px;
+}
+
+.hubert-chip {
+  border: 1px solid rgba(212, 184, 232, 0.8);
+  background: #fff;
+  color: var(--charcoal, #2d2340);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--radius-pill, 999px);
+  padding: 7px 12px;
+  cursor: pointer;
+}
+
+.hubert-chip:hover {
+  border-color: rgba(91, 47, 153, 0.35);
+  background: var(--lavender-light, #f4eef9);
+}
+
+.hubert-form {
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--border-soft, #e8dff0);
+  background: var(--surface-card, #fff);
+}
+
+.hubert-form-compose {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.hubert-form textarea {
+  width: 100%;
+  min-width: 0;
+  resize: none;
+  min-height: 44px;
+  max-height: 120px;
+  border: 1px solid var(--border-soft, #e8dff0);
+  border-radius: var(--radius, 12px);
+  padding: 10px 12px;
+  font: inherit;
+  line-height: 1.45;
+  color: var(--charcoal, #2d2340);
+}
+
+.hubert-form textarea:focus {
+  outline: 2px solid rgba(91, 47, 153, 0.25);
+  outline-offset: 1px;
+  border-color: rgba(91, 47, 153, 0.35);
+}
+
+.hubert-form .btn {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Contact page inline chat — Hubert avatar in header */
+.contact-chat-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.contact-chat-avatar {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #0d0d12;
+  object-fit: cover;
+}
+
+@media (max-width: 640px) {
+  .hubert-launcher-label {
+    display: none;
+  }
+
+  .hubert-launcher {
+    padding: 6px;
+    border-radius: 50%;
+  }
+
+  .hubert-panel {
+    width: calc(100vw - 24px);
+    height: min(72vh, 620px);
+    right: -4px;
+  }
+
+  .hubert-form-compose {
+    grid-template-columns: 1fr;
+  }
+
+  .hubert-form .btn {
+    width: 100%;
+  }
+}

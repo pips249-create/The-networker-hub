@@ -1,9 +1,9 @@
 /**
  * Shared site footer — same block on every public page.
- * FOOTER_BUILD=20260609
+ * FOOTER_BUILD=20260610b
  */
 (function () {
-  var FOOTER_BUILD = '20260609';
+  var FOOTER_BUILD = '20260610b';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -92,4 +92,23 @@
       }
     });
   }
+
+  if (script && script.getAttribute('data-hubert') === 'off') return;
+  var pagePath = (window.location.pathname || '').toLowerCase();
+  if (/\/contact\.html$/.test(pagePath) || /\/contact\/?$/.test(pagePath)) return;
+
+  var hubertCss = document.createElement('link');
+  hubertCss.rel = 'stylesheet';
+  hubertCss.href = href('css/hubert-widget.css?v=' + FOOTER_BUILD);
+  document.head.appendChild(hubertCss);
+
+  var hubertChat = document.createElement('script');
+  hubertChat.src = href('js/hubert-chat.js?v=' + FOOTER_BUILD);
+  hubertChat.onload = function () {
+    var hubertWidget = document.createElement('script');
+    hubertWidget.src = href('js/hubert-widget.js?v=' + FOOTER_BUILD);
+    hubertWidget.setAttribute('data-root', root);
+    document.body.appendChild(hubertWidget);
+  };
+  document.body.appendChild(hubertChat);
 })();

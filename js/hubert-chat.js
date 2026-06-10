@@ -1,0 +1,171 @@
+/**
+ * Hubert — shared chat logic for inline (contact) and floating widget.
+ */
+(function (global) {
+  var HUBERT_GREETING =
+    "Good day — I'm Hubert, your business butler and concierge at The Networker Hub. I can help you find events and business opportunities, book tickets, or point you in the right direction.";
+
+  var DEFAULT_SUGGESTIONS = [
+    { label: 'Events near me', prompt: 'What networking events are coming up?' },
+    { label: 'Franchise opportunities', prompt: 'What franchise opportunities are on the hub?' },
+    { label: 'Book a ticket', prompt: 'How do I book a ticket?' },
+    { label: 'Partnership deals', prompt: 'Show me partnership opportunities' },
+  ];
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  function HubertChat(options) {
+    this.messagesEl = options.messagesEl;
+    this.formEl = options.formEl;
+    this.inputEl = options.inputEl;
+    this.sendBtn = options.sendBtn;
+    this.resetBtn = options.resetBtn;
+    this.suggestionsEl = options.suggestionsEl;
+    this.bubblePrefix = options.bubblePrefix || 'hubert-bubble';
+    this.apiUrl = options.apiUrl || '/api/contact-chat';
+    this.greeting = options.greeting || HUBERT_GREETING;
+    this.history = [];
+    this.busy = false;
+    this.bind();
+    this.showGreeting();
+  }
+
+  HubertChat.prototype.appendBubble = function (role, text, extraClass) {
+    var div = document.createElement('div');
+    div.className =
+      this.bubblePrefix +
+      ' ' +
+      this.bubblePrefix +
+      '--' +
+      role +
+      (extraClass ? ' ' + extraClass : '');
+    div.innerHTML = esc(text).replace(/\n/g, '<br>');
+    this.messagesEl.appendChild(div);
+    this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
+    return div;
+  };
+
+  HubertChat.prototype.setBusy = function (on) {
+    this.busy = on;
+    this.inputEl.disabled = on;
+    if (this.sendBtn) this.sendBtn.disabled = on;
+  };
+
+  HubertChat.prototype.hideSuggestions = function () {
+    if (this.suggestionsEl) this.suggestionsEl.hidden = true;
+  };
+
+  HubertChat.prototype.showReset = function () {
+    if (this.resetBtn) this.resetBtn.hidden = false;
+  };
+
+  HubertChat.prototype.showGreeting = function () {
+    this.appendBubble('assistant', this.greeting);
+  };
+
+  HubertChat.prototype.reset = function () {
+    this.history = [];
+    this.messagesEl.innerHTML = '';
+    if (this.suggestionsEl) this.suggestionsEl.hidden = false;
+    if (this.resetBtn) this.resetBtn.hidden = true;
+    this.showGreeting();
+    this.inputEl.focus();
+  };
+
+  HubertChat.prototype.sendMessage = function (text) {
+    var self = this;
+    var content = String(text || '').trim();
+    if (!content || self.busy) return;
+
+    self.hideSuggestions();
+    self.showReset();
+    self.appendBubble('user', content);
+    self.history.push({ role: 'user', content: content });
+    self.inputEl.value = '';
+
+    var typing = self.appendBubble('assistant', 'Thinking…', self.bubblePrefix + '--typing');
+    self.setBusy(true);
+
+    fetch(self.apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: self.history }),
+    })
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        typing.remove();
+        var reply =
+          (data && data.reply) ||
+          'Sorry — I could not get a reply just now. Please email hello@the-networker.co.uk.';
+        self.appendBubble('assistant', reply);
+        self.history.push({ role: 'assistant', content: reply });
+      })
+      .catch(function () {
+        typing.remove();
+        self.appendBubble(
+          'assistant',
+          'Something went wrong. Please try again or email hello@the-networker.co.uk.'
+        );
+      })
+      .finally(function () {
+        self.setBusy(false);
+        self.inputEl.focus();
+      });
+  };
+
+  HubertChat.prototype.bind = function () {
+    var self = this;
+
+    self.formEl.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      self.sendMessage(self.inputEl.value);
+    });
+
+    self.inputEl.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter' && !ev.shiftKey) {
+        ev.preventDefault();
+        self.formEl.requestSubmit();
+      }
+    });
+
+    if (self.suggestionsEl) {
+      self.suggestionsEl.addEventListener('click', function (ev) {
+        var chip = ev.target.closest('[data-prompt]');
+        if (!chip) return;
+        self.sendMessage(chip.getAttribute('data-prompt'));
+      });
+    }
+
+    if (self.resetBtn) {
+      self.resetBtn.addEventListener('click', function () {
+        self.reset();
+      });
+    }
+  };
+
+  function renderSuggestions(container, suggestions) {
+    if (!container) return;
+    container.innerHTML = (suggestions || DEFAULT_SUGGESTIONS)
+      .map(function (item) {
+        return (
+          '<button type="button" class="hubert-chip" data-prompt="' +
+          esc(item.prompt) +
+          '">' +
+          esc(item.label) +
+          '</button>'
+        );
+      })
+      .join('');
+  }
+
+  global.HubertChat = HubertChat;
+  global.HubertChatGreeting = HUBERT_GREETING;
+  global.HubertChatSuggestions = DEFAULT_SUGGESTIONS;
+  global.HubertChatRenderSuggestions = renderSuggestions;
+})(window);

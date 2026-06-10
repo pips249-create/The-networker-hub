@@ -4,13 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Contact us – The Networker Hub</title>
-<meta name="description" content="Get in touch with The Networker Hub — chat with Hubert, our AI assistant, or email the team.">
+<meta name="description" content="Get in touch with The Networker Hub — chat with Hubert, your business butler and concierge, or email the team.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260627">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/contact-page.css?v=20260609">
+<link rel="stylesheet" href="css/contact-page.css?v=20260610b">
+<link rel="stylesheet" href="css/hubert-widget.css?v=20260610b">
 <link rel="icon" href="assets/favicon.png" type="image/png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260627" />
 </head>
@@ -25,7 +26,7 @@
       <p class="section-kicker">Contact us</p>
       <h1>We&rsquo;re here to help</h1>
       <p class="content-hero-lede">
-        Chat with Hubert about events, tickets, organiser listings, or business opportunities — or email the team directly.
+        Hubert is your business butler and concierge — ask him about events, opportunities, tickets, or organiser listings, or email the team directly.
       </p>
     </div>
   </header>
@@ -56,9 +57,12 @@
 
     <section class="contact-chat" aria-labelledby="contact-chat-heading">
       <div class="contact-chat-head">
-        <div>
-          <h2 id="contact-chat-heading">Hubert</h2>
-          <p>Your AI assistant for the platform. For urgent or account-specific issues, email us.</p>
+        <div class="contact-chat-brand">
+          <img class="contact-chat-avatar" src="assets/hubert-icon.png" alt="" width="44" height="44">
+          <div>
+            <h2 id="contact-chat-heading">Hubert</h2>
+            <p>Your business butler &amp; concierge for the platform. For urgent or account-specific issues, email us.</p>
+          </div>
         </div>
         <button type="button" class="contact-chat-reset" id="contact-chat-reset" hidden>New chat</button>
       </div>
@@ -73,22 +77,25 @@
       </div>
 
       <form class="contact-chat-form" id="contact-chat-form">
-        <label class="visually-hidden" for="contact-chat-input">Your message</label>
-        <textarea
-          id="contact-chat-input"
-          rows="2"
-          placeholder="Ask about events, tickets, organisers, or opportunities…"
-          maxlength="2000"
-          required
-        ></textarea>
-        <button type="submit" class="btn btn-primary" id="contact-chat-send">Send</button>
+        <div class="contact-chat-form-compose">
+          <label class="visually-hidden" for="contact-chat-input">Your message</label>
+          <textarea
+            id="contact-chat-input"
+            rows="2"
+            placeholder="Ask Hubert to find events, opportunities, or guide you…"
+            maxlength="2000"
+            required
+          ></textarea>
+          <button type="submit" class="btn btn-primary" id="contact-chat-send">Send</button>
+        </div>
       </form>
     </section>
   </div>
 </main>
 
 <div id="hub-site-footer"></div>
-<script src="js/site-footer.js?v=20260609" data-root=""></script>
+<script src="js/site-footer.js?v=20260610" data-root=""></script>
+<script src="js/hubert-chat.js?v=20260610"></script>
 <script src="js/contact-chat.js?v=20260610"></script>
 
 </body>

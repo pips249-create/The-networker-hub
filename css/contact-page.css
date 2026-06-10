@@ -173,13 +173,16 @@
 }
 
 .contact-chat-form {
+  padding: 16px 22px 20px;
+  border-top: 1px solid var(--border-soft);
+  background: #fff;
+}
+
+.contact-chat-form-compose {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 10px;
   align-items: end;
-  padding: 16px 22px 20px;
-  border-top: 1px solid var(--border-soft);
-  background: #fff;
 }
 
 .contact-chat-form textarea {
@@ -231,7 +234,7 @@
 }
 
 @media (max-width: 560px) {
-  .contact-chat-form {
+  .contact-chat-form-compose {
     grid-template-columns: 1fr;
   }
 

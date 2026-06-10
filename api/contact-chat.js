@@ -4,6 +4,40 @@
  */
 const { json, setCors } = require('./_lib/auth');
 const { SYSTEM_PROMPT, fallbackReply } = require('./_lib/hubert-knowledge');
+const {
+  wantsEventSearch,
+  searchEventsForHubert,
+  buildEventContextBlock,
+  formatEventFallbackReply,
+} = require('./_lib/hubert-events');
+const {
+  wantsOpportunitySearch,
+  searchOpportunitiesForHubert,
+  buildOpportunityContextBlock,
+  formatOpportunityFallbackReply,
+} = require('./_lib/hubert-opportunities');
+
+function buildLiveContext(eventLookup, opportunityLookup) {
+  return [
+    buildEventContextBlock(eventLookup || { events: [], query: null }),
+    buildOpportunityContextBlock(opportunityLookup || { opportunities: [], query: null }),
+  ].join('\n\n');
+}
+
+function pickLiveFallbackReply(eventLookup, opportunityLookup) {
+  const events = eventLookup && eventLookup.events;
+  const opportunities = opportunityLookup && opportunityLookup.opportunities;
+  const eventCount = events ? events.length : 0;
+  const opportunityCount = opportunities ? opportunities.length : 0;
+
+  if (opportunityCount && (!eventCount || opportunityCount >= eventCount)) {
+    return formatOpportunityFallbackReply(opportunityLookup);
+  }
+  if (eventCount) {
+    return formatEventFallbackReply(eventLookup);
+  }
+  return null;
+}
 
 function sanitizeMessages(raw) {
   if (!Array.isArray(raw)) return [];
@@ -20,7 +54,7 @@ function sanitizeMessages(raw) {
     });
 }
 
-async function openAiReply(messages) {
+async function openAiReply(messages, systemPrompt) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) return null;
 
@@ -28,7 +62,7 @@ async function openAiReply(messages) {
     model: process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini',
     temperature: 0.3,
     max_tokens: 600,
-    messages: [{ role: 'system', content: SYSTEM_PROMPT }].concat(messages),
+    messages: [{ role: 'system', content: systemPrompt || SYSTEM_PROMPT }].concat(messages),
   };
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -84,20 +118,62 @@ module.exports = async function handler(req, res) {
     return json(res, 400, { error: 'message_required' });
   }
 
+  let eventLookup = null;
+  let opportunityLookup = null;
   try {
-    let reply = await openAiReply(messages);
+    const lookups = [];
+    if (wantsEventSearch(latestUser.content)) {
+      lookups.push(searchEventsForHubert(latestUser.content).then(function (result) {
+        eventLookup = result;
+      }));
+    }
+    if (wantsOpportunitySearch(latestUser.content)) {
+      lookups.push(searchOpportunitiesForHubert(latestUser.content).then(function (result) {
+        opportunityLookup = result;
+      }));
+    }
+    if (lookups.length) await Promise.all(lookups);
+
+    const systemPrompt = SYSTEM_PROMPT + '\n\n' + buildLiveContext(eventLookup, opportunityLookup);
+
+    let reply = await openAiReply(messages, systemPrompt);
     let mode = 'ai';
 
     if (!reply) {
-      reply = fallbackReply(latestUser.content);
+      reply = pickLiveFallbackReply(eventLookup, opportunityLookup) || fallbackReply(latestUser.content);
       mode = 'fallback';
     }
 
-    return json(res, 200, { ok: true, reply: reply, mode: mode });
-  } catch (err) {
     return json(res, 200, {
       ok: true,
-      reply: fallbackReply(latestUser.content),
+      reply: reply,
+      mode: mode,
+      eventsFound: eventLookup && eventLookup.events ? eventLookup.events.length : 0,
+      opportunitiesFound:
+        opportunityLookup && opportunityLookup.opportunities ? opportunityLookup.opportunities.length : 0,
+    });
+  } catch (err) {
+    let degradedReply = fallbackReply(latestUser.content);
+    try {
+      const lookups = [];
+      if (!eventLookup && wantsEventSearch(latestUser.content)) {
+        lookups.push(searchEventsForHubert(latestUser.content).then(function (result) {
+          eventLookup = result;
+        }));
+      }
+      if (!opportunityLookup && wantsOpportunitySearch(latestUser.content)) {
+        lookups.push(searchOpportunitiesForHubert(latestUser.content).then(function (result) {
+          opportunityLookup = result;
+        }));
+      }
+      if (lookups.length) await Promise.all(lookups);
+      degradedReply = pickLiveFallbackReply(eventLookup, opportunityLookup) || degradedReply;
+    } catch (lookupErr) {
+      /* keep generic fallback */
+    }
+    return json(res, 200, {
+      ok: true,
+      reply: degradedReply,
       mode: 'fallback',
       warning: 'assistant_degraded',
     });

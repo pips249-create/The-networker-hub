@@ -1,126 +1,32 @@
 /**
- * Contact page — Hubert AI chat assistant.
+ * Contact page — inline Hubert chat (uses shared hubert-chat.js).
  */
-
-var HUBERT_GREETING =
-  "Hi — I'm Hubert, your Networker Hub assistant. Ask me about events, tickets, organiser listings, or business opportunities.";
 (function () {
-  var messagesEl = document.getElementById('contact-chat-messages');
-  var formEl = document.getElementById('contact-chat-form');
-  var inputEl = document.getElementById('contact-chat-input');
-  var sendBtn = document.getElementById('contact-chat-send');
-  var resetBtn = document.getElementById('contact-chat-reset');
+  if (!window.HubertChat) return;
+  if (
+    !document.getElementById('contact-chat-messages') ||
+    !document.getElementById('contact-chat-form') ||
+    !document.getElementById('contact-chat-input')
+  ) {
+    return;
+  }
+
   var suggestionsEl = document.getElementById('contact-chat-suggestions');
+  window.HubertChatRenderSuggestions(suggestionsEl, [
+    { label: 'Events in Manchester', prompt: 'What events are in Manchester?' },
+    { label: 'Franchise opportunities', prompt: 'What franchise opportunities are available?' },
+    { label: 'How do I book a ticket?', prompt: 'How do I book a ticket?' },
+    { label: 'Partnership deals', prompt: 'Show me partnership opportunities on the hub' },
+    { label: 'List an event', prompt: 'How do I list an event as an organiser?' },
+  ]);
 
-  if (!messagesEl || !formEl || !inputEl) return;
-
-  var history = [];
-  var busy = false;
-
-  function esc(s) {
-    var d = document.createElement('div');
-    d.textContent = s == null ? '' : String(s);
-    return d.innerHTML;
-  }
-
-  function appendBubble(role, text, extraClass) {
-    var div = document.createElement('div');
-    div.className =
-      'contact-chat-bubble contact-chat-bubble--' +
-      role +
-      (extraClass ? ' ' + extraClass : '');
-    div.innerHTML = esc(text).replace(/\n/g, '<br>');
-    messagesEl.appendChild(div);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-    return div;
-  }
-
-  function setBusy(on) {
-    busy = on;
-    inputEl.disabled = on;
-    sendBtn.disabled = on;
-  }
-
-  function hideSuggestions() {
-    if (suggestionsEl) suggestionsEl.hidden = true;
-  }
-
-  function showReset() {
-    if (resetBtn) resetBtn.hidden = false;
-  }
-
-  function sendMessage(text) {
-    var content = String(text || '').trim();
-    if (!content || busy) return;
-
-    hideSuggestions();
-    showReset();
-    appendBubble('user', content);
-    history.push({ role: 'user', content: content });
-    inputEl.value = '';
-
-    var typing = appendBubble('assistant', 'Thinking…', 'contact-chat-bubble--typing');
-    setBusy(true);
-
-    fetch('/api/contact-chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: history }),
-    })
-      .then(function (r) {
-        return r.json();
-      })
-      .then(function (data) {
-        typing.remove();
-        var reply =
-          (data && data.reply) ||
-          'Sorry — I could not get a reply just now. Please email hello@the-networker.co.uk.';
-        appendBubble('assistant', reply);
-        history.push({ role: 'assistant', content: reply });
-      })
-      .catch(function () {
-        typing.remove();
-        appendBubble(
-          'assistant',
-          'Something went wrong. Please try again or email hello@the-networker.co.uk.'
-        );
-      })
-      .finally(function () {
-        setBusy(false);
-        inputEl.focus();
-      });
-  }
-
-  formEl.addEventListener('submit', function (ev) {
-    ev.preventDefault();
-    sendMessage(inputEl.value);
+  new window.HubertChat({
+    messagesEl: document.getElementById('contact-chat-messages'),
+    formEl: document.getElementById('contact-chat-form'),
+    inputEl: document.getElementById('contact-chat-input'),
+    sendBtn: document.getElementById('contact-chat-send'),
+    resetBtn: document.getElementById('contact-chat-reset'),
+    suggestionsEl: suggestionsEl,
+    bubblePrefix: 'contact-chat-bubble',
   });
-
-  inputEl.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Enter' && !ev.shiftKey) {
-      ev.preventDefault();
-      formEl.requestSubmit();
-    }
-  });
-
-  if (suggestionsEl) {
-    suggestionsEl.addEventListener('click', function (ev) {
-      var chip = ev.target.closest('[data-prompt]');
-      if (!chip) return;
-      sendMessage(chip.getAttribute('data-prompt'));
-    });
-  }
-
-  if (resetBtn) {
-    resetBtn.addEventListener('click', function () {
-      history = [];
-      messagesEl.innerHTML = '';
-      if (suggestionsEl) suggestionsEl.hidden = false;
-      resetBtn.hidden = true;
-      appendBubble('assistant', HUBERT_GREETING);
-      inputEl.focus();
-    });
-  }
-
-  appendBubble('assistant', HUBERT_GREETING);
 })();

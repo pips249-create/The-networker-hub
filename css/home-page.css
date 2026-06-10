@@ -107,7 +107,7 @@ html:has(.home-page) {
 /* ─── Hero ─── */
 .home-page .home-hero {
   padding: calc(var(--home-nav-height) + 64px) 0 72px;
-  background: var(--home-bg);
+  background: linear-gradient(180deg, var(--brand-cream) 0%, var(--cream) 55%, var(--home-bg-warm) 100%);
   border-bottom: 1px solid var(--home-border);
 }
 
