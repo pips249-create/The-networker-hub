@@ -1752,6 +1752,11 @@ body.org-onboard-active {
   }
 }
 
+.org-opp-enquiry-alert[hidden],
+.org-nav-badge[hidden] {
+  display: none !important;
+}
+
 .org-opp-enquiry-alert {
   display: flex;
   flex-wrap: wrap;

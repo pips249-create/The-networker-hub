@@ -1445,9 +1445,6 @@
       history.replaceState(null, '', '#' + hash);
     }
 
-    if (page === 'team') {
-      markTeamNavSeen();
-    }
     if (page === 'opportunity-enquiries') {
       loadOpportunityEnquiries();
     }
@@ -1455,26 +1452,14 @@
 
   window.orgDashSetRoute = setRoute;
 
-  function markTeamNavSeen() {
-    const badge = document.getElementById('org-team-nav-badge');
-    if (badge) badge.hidden = true;
-    try {
-      localStorage.setItem('hub_team_nav_seen', '1');
-    } catch (e) {
-      /* ignore */
-    }
-  }
-
   function updateTeamNavBadge() {
     const badge = document.getElementById('org-team-nav-badge');
     if (!badge) return;
-    let seen = false;
-    try {
-      seen = localStorage.getItem('hub_team_nav_seen') === '1';
-    } catch (e) {
-      /* ignore */
-    }
-    badge.hidden = seen;
+    const pendingCount = (state.teamMembers || []).filter(
+      (m) => String(m.status || '').toLowerCase() === 'pending'
+    ).length;
+    badge.hidden = pendingCount < 1;
+    badge.textContent = pendingCount > 1 ? String(pendingCount) + ' new' : 'New';
   }
 
   function openModal(id) {
@@ -2021,6 +2006,7 @@
     const list = state.teamMembers.slice();
     if (!list.length) {
       if (empty) empty.hidden = false;
+      updateTeamNavBadge();
       return;
     }
     if (empty) empty.hidden = true;
@@ -2055,6 +2041,7 @@
         '</td>';
       body.appendChild(tr);
     });
+    updateTeamNavBadge();
   }
 
   function bindTeamUi() {
@@ -2202,6 +2189,10 @@
     );
   }
 
+  function opportunityEnquiryNewCount(enquiries) {
+    return (enquiries || []).filter((e) => String(e.status || '').toLowerCase() === 'new').length;
+  }
+
   function updateOpportunityEnquiryUi() {
     const newCount = Number(state.opportunityEnquiriesNewCount) || 0;
     const alert = document.getElementById('org-opp-enquiry-alert');
@@ -2274,7 +2265,7 @@
       const { ok, data } = await api('/api/organiser/opportunity-enquiries');
       if (!ok) throw new Error(data.message || data.error || 'load_failed');
       state.opportunityEnquiries = data.enquiries || [];
-      state.opportunityEnquiriesNewCount = Number(data.newCount) || 0;
+      state.opportunityEnquiriesNewCount = opportunityEnquiryNewCount(state.opportunityEnquiries);
     } catch (e) {
       state.opportunityEnquiries = [];
       state.opportunityEnquiriesNewCount = 0;
@@ -2294,7 +2285,7 @@
     if (!enquiry) return;
     const idx = state.opportunityEnquiries.findIndex((e) => e.id === enquiry.id);
     if (idx >= 0) state.opportunityEnquiries[idx] = enquiry;
-    state.opportunityEnquiriesNewCount = state.opportunityEnquiries.filter((e) => e.status === 'new').length;
+    state.opportunityEnquiriesNewCount = opportunityEnquiryNewCount(state.opportunityEnquiries);
     renderOpportunityEnquiries();
   }
 

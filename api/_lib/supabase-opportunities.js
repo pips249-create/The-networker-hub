@@ -3,6 +3,7 @@
  */
 const { getSupabaseAdmin } = require('./supabase');
 const { resolveImageUrl } = require('./supabase-storage');
+const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 
 const HOST_COLORS = [
   '#7a5c0a',
@@ -269,23 +270,50 @@ async function getOpportunityById(id) {
   return rowToListing(data);
 }
 
-async function listOpportunitiesForSession(session) {
-  const sb = getSupabaseAdmin();
+async function listOwnedOpportunityRowsForSession(session, select) {
   const email = String(session?.email || '').toLowerCase();
   const uid = isUuid(session?.sub) ? session.sub : '';
-  let query = sb.from('business_opportunities').select('*');
-  if (uid && email) {
-    query = query.or(`owner_email.eq.${email},supabase_user_id.eq.${uid}`);
-  } else if (email) {
-    query = query.eq('owner_email', email);
-  } else if (uid) {
-    query = query.eq('supabase_user_id', uid);
-  } else {
-    return [];
+  if (!email && !uid) return [];
+
+  const sb = getSupabaseAdmin();
+  const access = await resolveOrganiserAccess(session);
+  const organiserIds = access.groupIds || [];
+  const rows = [];
+  const seen = new Set();
+
+  function addRows(data) {
+    for (const row of data || []) {
+      if (row?.id && !seen.has(row.id)) {
+        seen.add(row.id);
+        rows.push(row);
+      }
+    }
   }
-  const { data, error } = await query.order('updated_at', { ascending: false });
-  if (error) throw new Error(error.message);
-  return (data || []).map(rowToListing);
+
+  if (email) {
+    const res = await sb.from('business_opportunities').select(select).eq('owner_email', email);
+    if (res.error) throw new Error(res.error.message);
+    addRows(res.data);
+  }
+  if (uid) {
+    const res = await sb.from('business_opportunities').select(select).eq('supabase_user_id', uid);
+    if (res.error) throw new Error(res.error.message);
+    addRows(res.data);
+  }
+  if (organiserIds.length) {
+    const res = await sb.from('business_opportunities').select(select).in('organiser_id', organiserIds);
+    if (res.error) throw new Error(res.error.message);
+    addRows(res.data);
+  }
+
+  return rows;
+}
+
+async function listOpportunitiesForSession(session) {
+  const data = await listOwnedOpportunityRowsForSession(session, '*');
+  return data
+    .sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))
+    .map(rowToListing);
 }
 
 async function createOpportunity(payload) {
@@ -336,7 +364,7 @@ function enquiryRowToDto(row, opportunity) {
     enquirerName: String(row.enquirer_name || '').trim(),
     enquirerEmail: String(row.enquirer_email || '').trim(),
     message: String(row.message || '').trim(),
-    status: row.status || 'new',
+    status: String(row.status || '').trim().toLowerCase(),
     createdAt: row.created_at || null,
     readAt: row.read_at || null,
     respondedAt: row.responded_at || null,
@@ -374,22 +402,10 @@ async function createOpportunityEnquiry(input) {
 }
 
 async function listOpportunityEnquiriesForSession(session) {
-  const email = String(session?.email || '').toLowerCase();
-  const uid = isUuid(session?.sub) ? session.sub : '';
-  if (!email && !uid) return [];
-
-  const sb = getSupabaseAdmin();
-  let oppQuery = sb.from('business_opportunities').select('id, title, owner_email, supabase_user_id');
-  if (uid && email) {
-    oppQuery = oppQuery.or(`owner_email.eq.${email},supabase_user_id.eq.${uid}`);
-  } else if (email) {
-    oppQuery = oppQuery.eq('owner_email', email);
-  } else {
-    oppQuery = oppQuery.eq('supabase_user_id', uid);
-  }
-  const oppRes = await oppQuery;
-  if (oppRes.error) throw new Error(oppRes.error.message);
-  const opportunities = oppRes.data || [];
+  const opportunities = await listOwnedOpportunityRowsForSession(
+    session,
+    'id, title, owner_email, supabase_user_id, organiser_id'
+  );
   const oppIds = opportunities.map((o) => o.id);
   const oppById = {};
   opportunities.forEach((o) => {
@@ -397,6 +413,7 @@ async function listOpportunityEnquiriesForSession(session) {
   });
   if (!oppIds.length) return [];
 
+  const sb = getSupabaseAdmin();
   const { data, error } = await sb
     .from('opportunity_enquiries')
     .select('*')
