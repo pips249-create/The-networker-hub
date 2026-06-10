@@ -282,3 +282,79 @@ body.hub-page-admin .site-nav {
   background: #fee2e2;
   color: #991b1b;
 }
+
+/* Group profile cleanup — inline quick edit + pagination */
+.group-cleanup-quick-form {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .group-cleanup-quick-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-logo-zone--compact {
+  min-height: 4.5rem;
+}
+
+.admin-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 1.25rem 0 0.5rem;
+}
+
+.admin-page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #2d1b3d;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-page-btn:hover:not(.admin-page-btn--disabled):not(.admin-page-btn--active) {
+  background: #faf6fe;
+  border-color: #c9a8d8;
+}
+
+.admin-page-btn--active {
+  background: #5b2f99;
+  border-color: #5b2f99;
+  color: #fff;
+  cursor: default;
+}
+
+.admin-page-btn--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-page-ellipsis {
+  padding: 0 0.25rem;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  line-height: 2.25rem;
+}
+
+.admin-page-summary {
+  width: 100%;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.35rem;
+}

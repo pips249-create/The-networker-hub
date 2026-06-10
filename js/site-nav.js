@@ -55,10 +55,10 @@
 
 /**
  * Shared site navigation — same bar on every page.
- * NAV_BUILD=20260710 — Vercel Web Analytics + session cache.
+ * NAV_BUILD=20260712 — cream nav logo (logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260710';
+  var NAV_BUILD = '20260712';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -436,8 +436,8 @@
       href('index.html') +
       '" aria-label="The Networker Hub home">' +
       '<img src="' +
-      href('assets/logo-original.png') +
-      '" alt="The Networker Hub" width="200" height="97">' +
+      href('assets/logo-nav.png') +
+      '" alt="The Networker Hub" width="200" height="80">' +
       '</a>' +
       '<nav class="nav-links" aria-label="Main">' +
       buildNavLinks(user, pending) +

@@ -3,6 +3,7 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { resolveImageUrl } = require('../supabase-storage');
 const { publicOrganiserSlug } = require('../organiser-slug');
 const sbAuth = require('../supabase-auth');
+const { fetchWebsiteMeta } = require('../website-meta');
 
 const INCOMPLETE_FILTER =
   'description.is.null,description.eq.,photo_url.is.null,photo_url.eq.,website.is.null,website.eq.';
@@ -79,18 +80,52 @@ async function loginMetaForOrganisers(sb, rows) {
   const hubByUser = new Map();
 
   if (userIds.length) {
-    const { data } = await sb
-      .from('hub_accounts')
-      .select('user_id, emails_enabled')
-      .in('user_id', userIds);
-    (data || []).forEach((h) => hubByUser.set(h.user_id, h));
+    for (let i = 0; i < userIds.length; i += 80) {
+      const chunk = userIds.slice(i, i + 80);
+      const { data, error } = await sb
+        .from('hub_accounts')
+        .select('user_id, emails_enabled')
+        .in('user_id', chunk);
+      if (error) throw new Error(error.message);
+      (data || []).forEach((h) => hubByUser.set(h.user_id, h));
+    }
   }
 
-  const { data: authList, error: authErr } = await sb.auth.admin.listUsers({ perPage: 1000 });
-  if (authErr) throw new Error(authErr.message);
-  const authByEmail = new Map(
-    (authList?.users || []).map((u) => [String(u.email || '').toLowerCase(), u.id])
+  const emailsNeedingLookup = new Set();
+  for (const row of rows || []) {
+    if (row.supabase_user_id) continue;
+    const em = String(row.contact_email || row.email || '')
+      .trim()
+      .toLowerCase();
+    if (em) emailsNeedingLookup.add(em);
+  }
+
+  const authByEmail = new Map();
+  await Promise.all(
+    [...emailsNeedingLookup].map(async (em) => {
+      try {
+        const user = await sbAuth.findUserByEmail(em);
+        if (user?.id) authByEmail.set(em, user.id);
+      } catch {
+        /* ignore per-email lookup failures */
+      }
+    })
   );
+
+  const resolvedUserIds = [...new Set([...authByEmail.values()].filter(Boolean))].filter(
+    (id) => !hubByUser.has(id)
+  );
+  if (resolvedUserIds.length) {
+    for (let i = 0; i < resolvedUserIds.length; i += 80) {
+      const chunk = resolvedUserIds.slice(i, i + 80);
+      const { data, error } = await sb
+        .from('hub_accounts')
+        .select('user_id, emails_enabled')
+        .in('user_id', chunk);
+      if (error) throw new Error(error.message);
+      (data || []).forEach((h) => hubByUser.set(h.user_id, h));
+    }
+  }
 
   for (const row of rows || []) {
     const em = String(row.contact_email || row.email || '')
@@ -104,17 +139,7 @@ async function loginMetaForOrganisers(sb, rows) {
       continue;
     }
 
-    let hub = hubByUser.get(userId);
-    if (!hub) {
-      const { data } = await sb
-        .from('hub_accounts')
-        .select('user_id, emails_enabled')
-        .eq('user_id', userId)
-        .maybeSingle();
-      hub = data;
-      if (hub) hubByUser.set(userId, hub);
-    }
-
+    const hub = hubByUser.get(userId);
     meta.set(row.id, {
       userId,
       hasLogin: true,
@@ -474,6 +499,29 @@ module.exports = async function handler(req, res) {
   }
 
   const body = parseBody(req);
+
+  if (body.action === 'fetch_website_meta') {
+    const url = String(body.url || body.website || '').trim();
+    try {
+      const meta = await fetchWebsiteMeta(url);
+      return json(res, 200, {
+        ok: true,
+        ...meta,
+        message: meta.logo_url && meta.description
+          ? 'Found logo and description on the website.'
+          : meta.logo_url
+            ? 'Found logo on the website.'
+            : 'Found description on the website.',
+      });
+    } catch (e) {
+      const status = e.status || 500;
+      return json(res, status, {
+        ok: false,
+        error: e.message || 'fetch_website_meta_failed',
+        message: e.message || 'Could not read that website.',
+      });
+    }
+  }
 
   if (body.action === 'bulk_update') {
     try {

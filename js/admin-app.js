@@ -24,7 +24,7 @@
     },
     'group-cleanup': {
       title: 'Group profile cleanup',
-      subtitle: 'Add descriptions, logos, and websites to organiser profiles in Supabase',
+      subtitle: 'Expand a row to edit website, logo and description — or fill from the group website',
     },
     'event-cleanup': {
       title: 'Event cleanup',
@@ -79,7 +79,7 @@
   var eventCleanupCache = null;
   var analyticsState = { period: '30d' };
   var eventHealthState = { issueFilter: 'all' };
-  var groupCleanupState = { offset: 0, q: '', incomplete: false, hasMore: false, total: 0, loading: false, selected: {} };
+  var groupCleanupState = { page: 0, q: '', incomplete: false, total: 0, loading: false, selected: {}, expanded: {} };
   var eventCleanupState = {
     organiserId: '',
     unlinked: false,
@@ -98,7 +98,6 @@
   var adminLogoPending = {};
   var groupSearchTimer = null;
   var eventSearchTimer = null;
-  var groupLoadObserver = null;
   var eventLoadObserver = null;
 
   /** CMS ad placements — each maps to a cms_blocks.slot row. */
@@ -4211,8 +4210,29 @@
     });
   }
 
-  function adminLogoFieldHtml(key, photoUrl) {
+  function adminLogoFieldHtml(key, photoUrl, compact) {
     var hasPhoto = !!photoUrl;
+    if (compact) {
+      return (
+        '<div class="group-cleanup-logo-field min-w-0">' +
+        '<label class="block text-xs font-semibold text-slate-500 mb-1">Logo</label>' +
+        '<div class="admin-logo-zone admin-logo-zone--compact border-2 border-dashed border-slate-300 rounded-lg p-2 text-center cursor-pointer hover:border-brand-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 transition bg-white" data-admin-logo-key="' +
+        attrEsc(key) +
+        '" tabindex="0" role="button" aria-label="Upload or paste logo">' +
+        '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>' +
+        '<img class="admin-logo-preview mx-auto h-12 w-12 rounded-lg object-contain border border-slate-200' +
+        (hasPhoto ? '' : ' hidden') +
+        '" src="' +
+        attrEsc(photoUrl || '') +
+        '" alt="">' +
+        '<p class="admin-logo-placeholder text-[10px] text-slate-500 mt-1' +
+        (hasPhoto ? ' hidden' : '') +
+        '">Drop or click</p></div>' +
+        '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 bg-white text-xs mt-1.5" value="' +
+        attrEsc(photoUrl || '') +
+        '" placeholder="Logo URL"></div>'
+      );
+    }
     return (
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Logo</label>' +
       '<p class="text-[11px] text-slate-500 mb-2">Click, paste (Ctrl+V), or drop an image — or paste a URL below.</p>' +
@@ -4360,11 +4380,180 @@
     return Promise.resolve(payload);
   }
 
-  function fetchGroupCleanup(append) {
+  function adminPaginationHtml(page, total, pageSize, dataAttr) {
+    var totalPages = Math.max(1, Math.ceil(total / pageSize));
+    if (totalPages <= 1) return '';
+    var attr = dataAttr || 'data-admin-page';
+    var parts = [];
+    function btn(p, label, active, disabled) {
+      if (disabled) {
+        return (
+          '<span class="admin-page-btn admin-page-btn--disabled" aria-disabled="true">' + esc(label) + '</span>'
+        );
+      }
+      if (active) {
+        return (
+          '<span class="admin-page-btn admin-page-btn--active" aria-current="page">' + esc(label) + '</span>'
+        );
+      }
+      return (
+        '<button type="button" class="admin-page-btn" ' +
+        attr +
+        '="' +
+        p +
+        '">' +
+        esc(label) +
+        '</button>'
+      );
+    }
+    parts.push(btn(page - 1, '← Prev', false, page <= 0));
+    var i = 0;
+    while (i < totalPages) {
+      if (i === 0 || i === totalPages - 1 || (i >= page - 2 && i <= page + 2)) {
+        parts.push(btn(i, String(i + 1), i === page, false));
+        i += 1;
+      } else if (i < page - 2) {
+        parts.push('<span class="admin-page-ellipsis">…</span>');
+        i = Math.max(i + 1, page - 2);
+      } else {
+        parts.push('<span class="admin-page-ellipsis">…</span>');
+        i = totalPages - 1;
+      }
+    }
+    parts.push(btn(page + 1, 'Next →', false, page >= totalPages - 1));
+    return (
+      '<nav class="admin-pagination" aria-label="Page navigation">' +
+      parts.join('') +
+      '<span class="admin-page-summary">Page ' +
+      (page + 1) +
+      ' of ' +
+      totalPages +
+      '</span></nav>'
+    );
+  }
+
+  function groupCleanupQuickFormHtml(o) {
+    return (
+      '<form class="group-cleanup-form group-cleanup-quick-form" data-organiser-id="' +
+      attrEsc(o.id) +
+      '">' +
+      adminLogoFieldHtml(o.id, o.photo_url, true) +
+      '<div class="group-cleanup-quick-fields min-w-0 space-y-2">' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Website</label>' +
+      '<input type="url" name="website" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(o.website || '') +
+      '" placeholder="https://example.com"></div>' +
+      '<div class="flex flex-wrap items-center gap-2">' +
+      '<button type="button" class="group-fill-from-website rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50">Fill logo &amp; description from website</button>' +
+      '<span class="text-[11px] text-slate-500">Reads the site’s logo and intro text</span></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Description / bio</label>' +
+      '<textarea name="description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Short intro for this networking group">' +
+      esc(o.description || '') +
+      '</textarea></div></div>' +
+      '<div class="group-cleanup-quick-actions flex flex-col items-stretch gap-2 shrink-0">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900 whitespace-nowrap">Save</button>' +
+      '<a href="../organiser/group-edit.html?id=' +
+      encodeURIComponent(o.id) +
+      '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline text-center">Full editor</a>' +
+      '<span class="group-cleanup-msg text-xs text-center"></span></div></form>'
+    );
+  }
+
+  function applyLogoPreviewToForm(form, logoUrl) {
+    if (!form) return;
+    var urlInput = form.querySelector('input[name="photo_url"]');
+    if (urlInput) urlInput.value = logoUrl;
+    var key = form.getAttribute('data-organiser-id');
+    if (key) delete adminLogoPending[key];
+    var zone = form.querySelector('[data-admin-logo-key]');
+    if (!zone) return;
+    var preview = zone.querySelector('.admin-logo-preview');
+    var placeholder = zone.querySelector('.admin-logo-placeholder');
+    if (preview && logoUrl) {
+      preview.src = logoUrl;
+      preview.classList.remove('hidden');
+    }
+    if (placeholder) placeholder.classList.add('hidden');
+  }
+
+  function fillGroupFromWebsite(btn) {
+    var form = btn && btn.closest('.group-cleanup-form');
+    if (!form) return;
+    var msg = form.querySelector('.group-cleanup-msg');
+    var website = formFieldVal(form, 'website');
+    if (!website) {
+      if (msg) {
+        msg.textContent = 'Enter a website URL first.';
+        msg.className = 'group-cleanup-msg text-xs text-red-700 font-semibold text-center';
+      }
+      return;
+    }
+    btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Reading website…';
+      msg.className = 'group-cleanup-msg text-xs text-slate-500 text-center';
+    }
+    adminPost('/api/admin/organisers', { action: 'fetch_website_meta', url: website })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Could not read website');
+        if (data.logo_url) applyLogoPreviewToForm(form, data.logo_url);
+        if (data.description) {
+          var desc = form.querySelector('[name="description"]');
+          if (desc) desc.value = data.description;
+        }
+        if (msg) {
+          msg.textContent = data.message || 'Filled — review and Save.';
+          msg.className = 'group-cleanup-msg text-xs text-emerald-700 font-semibold text-center';
+        }
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not read website';
+          msg.className = 'group-cleanup-msg text-xs text-red-700 font-semibold text-center';
+        }
+      })
+      .finally(function () {
+        btn.disabled = false;
+      });
+  }
+
+  function refreshGroupCleanupPage() {
+    return fetchGroupCleanup(groupCleanupState.page).then(function (data) {
+      renderGroupCleanupList(data);
+      bindGroupCleanupPageUi();
+      updateGroupBulkBar();
+      return data;
+    });
+  }
+
+  function bindExpandedGroupPanels() {
+    if (!main) return;
+    main.querySelectorAll('.group-cleanup-panel:not(.hidden)').forEach(function (panel) {
+      bindAdminLogoZones(panel);
+    });
+  }
+
+  function goToGroupPage(page) {
+    var next = Math.max(0, page);
+    var listEl = document.getElementById('group-cleanup-list');
+    fetchGroupCleanup(next).then(function (data) {
+      renderGroupCleanupList(data);
+      bindGroupCleanupPageUi();
+      updateGroupBulkBar();
+      if (listEl && listEl.scrollIntoView) {
+        listEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }
+
+  function fetchGroupCleanup(pageIndex) {
     if (groupCleanupState.loading) return Promise.resolve(groupCleanupCache);
     groupCleanupState.loading = true;
+    var page =
+      typeof pageIndex === 'number' && !isNaN(pageIndex) ? Math.max(0, pageIndex) : groupCleanupState.page;
+    groupCleanupState.page = page;
     var params = new URLSearchParams();
-    params.set('offset', append ? String(groupCleanupState.offset) : '0');
+    params.set('offset', String(page * GROUP_PAGE_SIZE));
     params.set('limit', String(GROUP_PAGE_SIZE));
     if (groupCleanupState.q) params.set('q', groupCleanupState.q);
     if (groupCleanupState.incomplete) params.set('incomplete', '1');
@@ -4372,30 +4561,14 @@
       .then(function (data) {
         groupCleanupState.loading = false;
         if (!data || data.error) return data;
-        if (append && groupCleanupCache && groupCleanupCache.organisers) {
-          groupCleanupCache.organisers = groupCleanupCache.organisers.concat(data.organisers || []);
-          groupCleanupCache.incomplete = data.incomplete;
-        } else {
-          groupCleanupCache = data;
-        }
-        groupCleanupState.offset = (groupCleanupCache.organisers || []).length;
-        groupCleanupState.hasMore = !!data.hasMore;
-        groupCleanupState.total = data.total || groupCleanupState.offset;
+        groupCleanupCache = data;
+        groupCleanupState.total = data.total || (data.organisers || []).length;
         return groupCleanupCache;
       })
       .catch(function () {
         groupCleanupState.loading = false;
         return { error: 'network_error' };
       });
-  }
-
-  function loadMoreGroups() {
-    if (!groupCleanupState.hasMore || groupCleanupState.loading) return;
-    fetchGroupCleanup(true).then(function (data) {
-      renderGroupCleanupList(data);
-      bindAdminLogoZones(main);
-      attachGroupLoadMore();
-    });
   }
 
   function fetchEventCleanup(append) {
@@ -4467,20 +4640,15 @@
           msg.textContent = 'Saved.';
           msg.className = 'group-cleanup-msg text-xs text-emerald-700 font-semibold';
         }
-        groupCleanupState.offset = 0;
-        return fetchGroupCleanup(false);
-      })
-      .then(function (data) {
-        renderGroupCleanupList(data);
-        bindAdminLogoZones(main);
-        updateGroupBulkBar();
-        attachGroupLoadMore();
+        return refreshGroupCleanupPage();
       })
       .catch(function (err) {
         if (msg) {
           msg.textContent = err.message || 'Could not save';
           msg.className = 'group-cleanup-msg text-xs text-red-700 font-semibold';
         }
+      })
+      .finally(function () {
         if (btn) btn.disabled = false;
       });
   }
@@ -4490,13 +4658,9 @@
     return adminPost('/api/admin/organisers', { action: 'provision_user', id: organiserId })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Could not create login');
-        groupCleanupState.offset = 0;
-        return fetchGroupCleanup(false);
+        return refreshGroupCleanupPage();
       })
-      .then(function (listData) {
-        renderGroupCleanupList(listData);
-        bindAdminLogoZones(main);
-        attachGroupLoadMore();
+      .then(function () {
         updateGroupBulkBar();
       })
       .catch(function (err) {
@@ -4540,13 +4704,9 @@
     })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Could not update emails');
-        groupCleanupState.offset = 0;
-        return fetchGroupCleanup(false);
+        return refreshGroupCleanupPage();
       })
-      .then(function (listData) {
-        renderGroupCleanupList(listData);
-        bindAdminLogoZones(main);
-        attachGroupLoadMore();
+      .then(function () {
         updateGroupBulkBar();
       })
       .catch(function (err) {
@@ -4596,7 +4756,6 @@
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Merge failed');
         groupCleanupState.selected = {};
-        groupCleanupState.offset = 0;
         if (msg) {
           msg.textContent =
             'Merged ' +
@@ -4614,13 +4773,12 @@
             '.';
           msg.className = 'text-xs text-emerald-700 font-semibold';
         }
-        return fetchGroupCleanup(false);
+        return fetchGroupCleanup(0);
       })
       .then(function (data) {
         renderGroupCleanupList(data);
-        bindAdminLogoZones(main);
+        bindGroupCleanupPageUi();
         updateGroupBulkBar();
-        attachGroupLoadMore();
         if (btn) btn.disabled = false;
       })
       .catch(function (err) {
@@ -4664,18 +4822,14 @@
         if (!data.ok) throw new Error(data.message || data.error || 'Bulk update failed');
         delete adminLogoPending.bulk;
         groupCleanupState.selected = {};
-        groupCleanupState.offset = 0;
         if (msg) {
           msg.textContent = 'Updated ' + (data.updated || ids.length) + ' groups.';
           msg.className = 'text-xs text-emerald-700 font-semibold';
         }
-        return fetchGroupCleanup(false);
+        return refreshGroupCleanupPage();
       })
-      .then(function (data) {
-        renderGroupCleanupList(data);
-        bindAdminLogoZones(main);
+      .then(function () {
         updateGroupBulkBar();
-        attachGroupLoadMore();
       })
       .catch(function (err) {
         if (msg) {
@@ -4761,12 +4915,107 @@
       });
   }
 
+  function bindGroupCleanupPageUi() {
+    bindExpandedGroupPanels();
+    var bulk = document.getElementById('group-cleanup-bulk');
+    if (bulk) bindAdminLogoZones(bulk);
+  }
+
+  function handleGroupCleanupClick(e) {
+    if (!document.getElementById('group-cleanup-list')) return;
+
+    var pageBtn = e.target.closest('[data-group-page]');
+    if (pageBtn) {
+      var page = parseInt(pageBtn.getAttribute('data-group-page'), 10);
+      if (!isNaN(page)) goToGroupPage(page);
+      return;
+    }
+
+    var toggle = e.target.closest('[data-toggle-group-edit]');
+    if (toggle) {
+      var row = toggle.closest('[data-organiser-id-row]');
+      var id = row && row.getAttribute('data-organiser-id-row');
+      var panel = row && row.querySelector('.group-cleanup-panel');
+      if (panel && id) {
+        var opening = panel.classList.contains('hidden');
+        panel.classList.toggle('hidden');
+        if (opening) {
+          groupCleanupState.expanded[id] = true;
+          bindAdminLogoZones(panel);
+          toggle.textContent = 'Close';
+        } else {
+          delete groupCleanupState.expanded[id];
+          toggle.textContent = 'Edit profile';
+        }
+      }
+      return;
+    }
+
+    var fillBtn = e.target.closest('.group-fill-from-website');
+    if (fillBtn) {
+      fillGroupFromWebsite(fillBtn);
+      return;
+    }
+
+    if (e.target.closest('#group-bulk-clear')) {
+      groupCleanupState.selected = {};
+      if (main) {
+        main.querySelectorAll('.group-select-checkbox').forEach(function (cb) {
+          cb.checked = false;
+        });
+      }
+      var selectPage = document.getElementById('group-cleanup-select-page');
+      if (selectPage) selectPage.checked = false;
+      updateGroupBulkBar();
+      return;
+    }
+
+    if (e.target.closest('#group-merge-btn')) {
+      mergeSelectedGroups();
+      return;
+    }
+
+    var provisionBtn = e.target.closest('[data-provision-group-login]');
+    if (provisionBtn) {
+      provisionGroupLogin(provisionBtn.getAttribute('data-provision-group-login'), provisionBtn);
+      return;
+    }
+
+    var impersonateGroupBtn = e.target.closest('[data-impersonate-group]');
+    if (impersonateGroupBtn) {
+      impersonateOrganiserGroup(
+        impersonateGroupBtn.getAttribute('data-impersonate-group'),
+        impersonateGroupBtn.getAttribute('data-group-email')
+      );
+      return;
+    }
+
+    var enableEmailsBtn = e.target.closest('[data-enable-group-emails]');
+    if (enableEmailsBtn) {
+      setGroupEmailsEnabled(enableEmailsBtn.getAttribute('data-enable-group-emails'), true, enableEmailsBtn);
+      return;
+    }
+
+    var disableEmailsBtn = e.target.closest('[data-disable-group-emails]');
+    if (disableEmailsBtn) {
+      if (
+        !window.confirm(
+          'Block emails for this group? They will not receive invites, reminders, or password-reset emails until you enable them again.'
+        )
+      ) {
+        return;
+      }
+      setGroupEmailsEnabled(disableEmailsBtn.getAttribute('data-disable-group-emails'), false, disableEmailsBtn);
+    }
+  }
+
   function bindGroupCleanupForms() {
-    if (!main || main.dataset.groupCleanupBound) return;
-    main.dataset.groupCleanupBound = '1';
-    main.addEventListener('submit', function (e) {
+    if (window.__groupCleanupEventsBound) return;
+    window.__groupCleanupEventsBound = true;
+
+    document.body.addEventListener('submit', function (e) {
       var form = e.target;
-      if (!form || !form.classList) return;
+      if (!form || !form.classList || !form.closest('#admin-main')) return;
       if (form.classList.contains('group-cleanup-form')) {
         e.preventDefault();
         saveGroupCleanupForm(form);
@@ -4775,27 +5024,27 @@
         saveGroupBulkForm(form);
       }
     });
-    main.addEventListener('input', function (e) {
+
+    document.body.addEventListener('input', function (e) {
       if (e.target.id !== 'group-cleanup-search') return;
       clearTimeout(groupSearchTimer);
       groupSearchTimer = setTimeout(function () {
         groupCleanupState.q = e.target.value || '';
-        groupCleanupState.offset = 0;
-        fetchGroupCleanup(false).then(function (data) {
+        groupCleanupState.page = 0;
+        fetchGroupCleanup(0).then(function (data) {
           renderGroupCleanupList(data);
-          bindAdminLogoZones(main);
-          attachGroupLoadMore();
+          bindGroupCleanupPageUi();
         });
       }, 300);
     });
-    main.addEventListener('change', function (e) {
+
+    document.body.addEventListener('change', function (e) {
       if (e.target.id === 'group-cleanup-incomplete') {
         groupCleanupState.incomplete = e.target.checked;
-        groupCleanupState.offset = 0;
-        fetchGroupCleanup(false).then(function (data) {
+        groupCleanupState.page = 0;
+        fetchGroupCleanup(0).then(function (data) {
           renderGroupCleanupList(data);
-          bindAdminLogoZones(main);
-          attachGroupLoadMore();
+          bindGroupCleanupPageUi();
         });
         return;
       }
@@ -4806,7 +5055,7 @@
         updateGroupBulkBar();
         return;
       }
-      if (e.target.id === 'group-cleanup-select-page') {
+      if (e.target.id === 'group-cleanup-select-page' && main) {
         main.querySelectorAll('.group-select-checkbox').forEach(function (cb) {
           cb.checked = e.target.checked;
           if (e.target.checked) groupCleanupState.selected[cb.value] = true;
@@ -4815,71 +5064,8 @@
         updateGroupBulkBar();
       }
     });
-    main.addEventListener('click', function (e) {
-      var toggle = e.target.closest('[data-toggle-group-edit]');
-      if (toggle) {
-        var row = toggle.closest('[data-organiser-id-row]');
-        var panel = row && row.querySelector('.group-cleanup-panel');
-        if (panel) {
-          panel.classList.toggle('hidden');
-          if (!panel.classList.contains('hidden')) bindAdminLogoZones(panel);
-        }
-        return;
-      }
-      if (e.target.id === 'group-cleanup-load-more') loadMoreGroups();
-      if (e.target.id === 'group-bulk-clear') {
-        groupCleanupState.selected = {};
-        main.querySelectorAll('.group-select-checkbox').forEach(function (cb) {
-          cb.checked = false;
-        });
-        var selectPage = document.getElementById('group-cleanup-select-page');
-        if (selectPage) selectPage.checked = false;
-        updateGroupBulkBar();
-      }
-      if (e.target.id === 'group-merge-btn') mergeSelectedGroups();
-      var provisionBtn = e.target.closest('[data-provision-group-login]');
-      if (provisionBtn) {
-        provisionGroupLogin(provisionBtn.getAttribute('data-provision-group-login'), provisionBtn);
-        return;
-      }
-      var impersonateGroupBtn = e.target.closest('[data-impersonate-group]');
-      if (impersonateGroupBtn) {
-        impersonateOrganiserGroup(
-          impersonateGroupBtn.getAttribute('data-impersonate-group'),
-          impersonateGroupBtn.getAttribute('data-group-email')
-        );
-        return;
-      }
-      var enableEmailsBtn = e.target.closest('[data-enable-group-emails]');
-      if (enableEmailsBtn) {
-        setGroupEmailsEnabled(enableEmailsBtn.getAttribute('data-enable-group-emails'), true, enableEmailsBtn);
-        return;
-      }
-      var disableEmailsBtn = e.target.closest('[data-disable-group-emails]');
-      if (disableEmailsBtn) {
-        if (
-          !window.confirm(
-            'Block emails for this group? They will not receive invites, reminders, or password-reset emails until you enable them again.'
-          )
-        ) {
-          return;
-        }
-        setGroupEmailsEnabled(disableEmailsBtn.getAttribute('data-disable-group-emails'), false, disableEmailsBtn);
-      }
-    });
-  }
 
-  function attachGroupLoadMore() {
-    var sentinel = document.getElementById('group-cleanup-sentinel');
-    if (!sentinel || !groupCleanupState.hasMore) return;
-    if (groupLoadObserver) groupLoadObserver.disconnect();
-    groupLoadObserver = new IntersectionObserver(
-      function (entries) {
-        if (entries[0].isIntersecting) loadMoreGroups();
-      },
-      { rootMargin: '240px' }
-    );
-    groupLoadObserver.observe(sentinel);
+    document.body.addEventListener('click', handleGroupCleanupClick);
   }
 
   function attachEventLoadMore() {
@@ -5006,17 +5192,17 @@
     }
 
     var organisers = data.organisers || [];
-    var shown = organisers.length;
-    var total = groupCleanupState.total || shown;
+    var page = groupCleanupState.page;
+    var pageStart = page * GROUP_PAGE_SIZE + 1;
+    var pageEnd = page * GROUP_PAGE_SIZE + organisers.length;
+    var total = groupCleanupState.total || organisers.length;
 
     if (status) {
       status.innerHTML =
-        '<span class="text-brand-900 font-semibold">Showing ' +
-        shown +
-        ' of ' +
-        total +
-        ' group' +
-        (total === 1 ? '' : 's') +
+        '<span class="text-brand-900 font-semibold">' +
+        (organisers.length
+          ? 'Showing ' + pageStart + '–' + pageEnd + ' of ' + total + ' group' + (total === 1 ? '' : 's')
+          : 'No groups on this page') +
         '</span>' +
         (data.incomplete
           ? ' <span class="text-slate-500">(' + data.incomplete + ' with missing profile data)</span>'
@@ -5026,7 +5212,8 @@
 
     if (!organisers.length) {
       list.innerHTML =
-        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No groups match your filters.</p>';
+        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No groups match your filters.</p>' +
+        adminPaginationHtml(page, total, GROUP_PAGE_SIZE, 'data-group-page');
       return;
     }
 
@@ -5043,13 +5230,17 @@
               ? '<span class="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">Emails off</span>'
               : '<span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">Login ready</span>';
           var checked = groupCleanupState.selected[o.id] ? ' checked' : '';
+          var incomplete = (o.missing || []).length > 0;
+          var isOpen = !!groupCleanupState.expanded[o.id];
           return (
-            '<article class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden" data-organiser-id-row="' +
+            '<article class="rounded-xl border bg-white shadow-sm' +
+            (incomplete ? ' border-amber-200 ring-1 ring-amber-100' : ' border-slate-200') +
+            '" data-organiser-id-row="' +
             attrEsc(o.id) +
             '">' +
-            '<div class="flex flex-wrap items-center justify-between gap-3 p-4">' +
-            '<div class="flex items-start gap-3 min-w-0 flex-1">' +
-            '<input type="checkbox" class="group-select-checkbox mt-1 rounded border-slate-300" value="' +
+            '<div class="flex flex-wrap items-center justify-between gap-2 p-3">' +
+            '<div class="flex items-start gap-2.5 min-w-0 flex-1">' +
+            '<input type="checkbox" class="group-select-checkbox mt-0.5 rounded border-slate-300" value="' +
             attrEsc(o.id) +
             '"' +
             checked +
@@ -5058,80 +5249,65 @@
             '">' +
             '<div class="min-w-0">' +
             '<div class="flex flex-wrap items-center gap-2">' +
-            '<h3 class="font-semibold text-brand-900 truncate">' +
+            '<h3 class="text-sm font-semibold text-brand-900 truncate">' +
             esc(o.name || 'Untitled') +
             '</h3>' +
             listingStatusBadge(o.listing_status) +
             loginBadge +
             '</div>' +
-            '<p class="text-xs text-slate-500 mt-1">' +
+            '<p class="text-xs text-slate-500 mt-0.5">' +
             (o.email ? esc(o.email) + ' · ' : '') +
             (o.event_count || 0) +
             ' event' +
             (o.event_count === 1 ? '' : 's') +
             ' · ' +
             missingHtml +
+            (o.website && !isOpen ? ' · ' + esc(o.website) : '') +
             '</p></div></div>' +
-            '<div class="flex flex-wrap gap-2 shrink-0">' +
+            '<div class="flex flex-wrap gap-1.5 shrink-0">' +
             (publicHref
               ? '<a href="' +
                 attrEsc(publicHref) +
-                '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View public</a>'
+                '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline px-1 py-1">View</a>'
               : '') +
             (!o.has_login && o.email
               ? '<button type="button" data-provision-group-login="' +
                 attrEsc(o.id) +
-                '" class="text-xs font-semibold rounded-lg border border-brand-200 text-brand-800 px-3 py-1.5 hover:bg-brand-50">Create login</button>'
+                '" class="text-xs font-semibold rounded-lg border border-brand-200 text-brand-800 px-2.5 py-1 hover:bg-brand-50">Create login</button>'
               : '') +
             (o.email || o.has_login
               ? '<button type="button" data-impersonate-group="' +
                 attrEsc(o.id) +
                 '" data-group-email="' +
                 attrEsc(o.email || '') +
-                '" class="text-xs font-semibold rounded-lg border border-brand-700 text-brand-700 px-3 py-1.5 hover:bg-brand-50">Impersonate</button>'
+                '" class="text-xs font-semibold rounded-lg border border-brand-700 text-brand-700 px-2.5 py-1 hover:bg-brand-50">Impersonate</button>'
               : '') +
             (o.has_login
               ? o.emails_enabled === false
                 ? '<button type="button" data-enable-group-emails="' +
                   attrEsc(o.id) +
-                  '" class="text-xs font-semibold rounded-lg border border-emerald-200 text-emerald-800 px-3 py-1.5 hover:bg-emerald-50">Enable emails</button>'
+                  '" class="text-xs font-semibold rounded-lg border border-emerald-200 text-emerald-800 px-2.5 py-1 hover:bg-emerald-50">Enable emails</button>'
                 : '<button type="button" data-disable-group-emails="' +
                   attrEsc(o.id) +
-                  '" class="text-xs font-semibold rounded-lg border border-slate-200 text-slate-700 px-3 py-1.5 hover:bg-slate-50">Block emails</button>'
+                  '" class="text-xs font-semibold rounded-lg border border-slate-200 text-slate-700 px-2.5 py-1 hover:bg-slate-50">Block emails</button>'
               : '') +
-            '<button type="button" data-toggle-group-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-3 py-1.5 hover:bg-brand-900">Edit profile</button>' +
-            '</div></div>' +
-            '<div class="group-cleanup-panel hidden border-t border-slate-200 bg-slate-50/80 p-4">' +
-            '<form class="group-cleanup-form space-y-3" data-organiser-id="' +
-            attrEsc(o.id) +
+            '<button type="button" data-toggle-group-edit="1" class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
+            (isOpen ? 'Close' : 'Edit profile') +
+            '</button></div></div>' +
+            '<div class="group-cleanup-panel border-t border-slate-100 bg-slate-50/80 px-4 py-3' +
+            (isOpen ? '' : ' hidden') +
             '">' +
-            '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Description / bio</label>' +
-            '<textarea name="description" rows="4" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-            esc(o.description || '') +
-            '</textarea></div>' +
-            adminLogoFieldHtml(o.id, o.photo_url) +
-            '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Website</label>' +
-            '<input type="url" name="website" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-            attrEsc(o.website || '') +
-            '" placeholder="https://…"></div>' +
-            '<div class="flex flex-wrap items-center gap-3">' +
-            '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save profile</button>' +
-            '<a href="../organiser/group-edit.html?id=' +
-            encodeURIComponent(o.id) +
-            '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">Open full editor</a>' +
-            '<span class="group-cleanup-msg text-xs"></span></div></form></div></article>'
+            groupCleanupQuickFormHtml(o) +
+            '</div></article>'
           );
         })
         .join('') +
-      (groupCleanupState.hasMore
-        ? '<div id="group-cleanup-sentinel" class="py-6 text-center">' +
-          '<button type="button" id="group-cleanup-load-more" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-brand-900 hover:bg-slate-50">Load more groups</button>' +
-          '</div>'
-        : '');
+      adminPaginationHtml(page, total, GROUP_PAGE_SIZE, 'data-group-page');
     updateGroupBulkBar();
   }
 
   function renderGroupCleanup() {
+    groupCleanupState.loading = false;
     main.innerHTML =
       '<div class="space-y-4">' +
       '<div id="group-cleanup-status" class="text-sm text-slate-500">Loading groups…</div>' +
@@ -5167,14 +5343,14 @@
       '> Show incomplete only</label>' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
       '<input type="checkbox" id="group-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +
-      '<div id="group-cleanup-list" class="space-y-3"></div></div>';
+      '<p class="text-xs text-slate-500">Compact rows — click <strong>Edit profile</strong> to expand. Use page numbers below to browse.</p>' +
+      '<div id="group-cleanup-list" class="space-y-2"></div></div>';
 
-    groupCleanupState.offset = 0;
-    fetchGroupCleanup(false)
+    groupCleanupState.page = 0;
+    fetchGroupCleanup(0)
       .then(function (data) {
         renderGroupCleanupList(data || { error: 'load_failed' });
-        bindAdminLogoZones(main);
-        attachGroupLoadMore();
+        bindGroupCleanupPageUi();
       })
       .catch(function () {
         renderGroupCleanupList({ error: 'network_error' });
