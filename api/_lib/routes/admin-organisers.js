@@ -355,6 +355,35 @@ async function collectOwnersFromOrganiser(sb, organiser, accountId, primaryOwner
   }
 }
 
+const ORGANISER_REF_TABLES = [
+  'events',
+  'registrations',
+  'reviews',
+  'workshops',
+  'business_opportunities',
+  'listing_reports',
+];
+
+async function unlinkOrganiserRefs(sb, organiserIds) {
+  const ids = [...new Set((organiserIds || []).filter(Boolean))];
+  if (!ids.length) return { eventsUnlinked: 0 };
+
+  let eventsUnlinked = 0;
+  for (const id of ids) {
+    for (const table of ORGANISER_REF_TABLES) {
+      const { data, error } = await sb
+        .from(table)
+        .update({ organiser_id: null })
+        .eq('organiser_id', id)
+        .select('id');
+      if (error) throw new Error(error.message);
+      if (table === 'events') eventsUnlinked += (data || []).length;
+    }
+  }
+
+  return { eventsUnlinked };
+}
+
 async function deleteOrganisers(body) {
   const ids = [
     ...new Set(
@@ -378,21 +407,44 @@ async function deleteOrganisers(body) {
   if (fetchErr) throw new Error(fetchErr.message);
 
   const foundIds = (rows || []).map((r) => r.id);
+  const missingIds = ids.filter((id) => !foundIds.includes(id));
+
   if (!foundIds.length) {
-    const err = new Error('groups_not_found');
-    err.status = 404;
-    throw err;
+    const { eventsUnlinked } = await unlinkOrganiserRefs(sb, missingIds);
+    return {
+      deleted: 0,
+      alreadyGone: missingIds.length,
+      eventsUnlinked,
+      names: [],
+      message:
+        eventsUnlinked > 0
+          ? 'Group profile was already removed — cleared ' +
+            eventsUnlinked +
+            ' broken event link' +
+            (eventsUnlinked === 1 ? '' : 's') +
+            '.'
+          : 'Group profile was already removed.',
+    };
   }
 
   const eventCounts = await eventCountsForOrganisers(sb, foundIds);
   const eventsUnlinked = foundIds.reduce((sum, id) => sum + (eventCounts[id] || 0), 0);
 
+  await unlinkOrganiserRefs(sb, foundIds);
+
   const { error: delErr } = await sb.from('organisers').delete().in('id', foundIds);
   if (delErr) throw new Error(delErr.message);
 
+  let orphanEventsUnlinked = 0;
+  if (missingIds.length) {
+    const purged = await unlinkOrganiserRefs(sb, missingIds);
+    orphanEventsUnlinked = purged.eventsUnlinked;
+  }
+
   return {
     deleted: foundIds.length,
-    eventsUnlinked,
+    alreadyGone: missingIds.length,
+    eventsUnlinked: eventsUnlinked + orphanEventsUnlinked,
     names: (rows || []).map((r) => String(r.name || '').trim()).filter(Boolean),
   };
 }
@@ -684,7 +736,6 @@ module.exports = async function handler(req, res) {
       const status = e.status || 500;
       const messages = {
         missing_ids: 'Select at least one group to delete.',
-        groups_not_found: 'Group profile not found.',
       };
       return json(res, status, {
         ok: false,

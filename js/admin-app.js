@@ -861,6 +861,7 @@
         codes.indexOf('missing_date') >= 0 || codes.indexOf('stale_past_date') >= 0,
       showOrganiser:
         codes.indexOf('missing_organiser') >= 0 || codes.indexOf('invalid_organiser') >= 0,
+      showInvalidOrganiser: codes.indexOf('invalid_organiser') >= 0,
       showOrganiserNotPublished: codes.indexOf('organiser_not_published') >= 0,
       showEventType: codes.indexOf('missing_event_type') >= 0,
       showFormat: codes.indexOf('missing_meeting_type') >= 0,
@@ -1045,6 +1046,62 @@
       saveEventHealthForm(form);
     });
     main.addEventListener('click', function (e) {
+      var clearBtn = e.target.closest('[data-clear-broken-organiser]');
+      if (clearBtn) {
+        var eventId = clearBtn.getAttribute('data-clear-broken-organiser');
+        if (!eventId) return;
+        clearBtn.disabled = true;
+        fetch('/api/admin/events', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: eventId, organiser_id: null }),
+        })
+          .then(function (r) {
+            return r.json().then(function (body) {
+              if (!r.ok || body.ok === false) {
+                throw new Error(body.message || body.error || 'Could not unlink organiser');
+              }
+              return fetchEventHealth();
+            });
+          })
+          .then(function () {
+            renderEventHealth();
+          })
+          .catch(function (err) {
+            clearBtn.disabled = false;
+            window.alert(err.message || 'Could not unlink organiser');
+          });
+        return;
+      }
+
+      var purgeBtn = e.target.closest('[data-purge-gone-organiser]');
+      if (purgeBtn) {
+        var organiserId = purgeBtn.getAttribute('data-purge-gone-organiser');
+        if (!organiserId) return;
+        if (
+          !window.confirm(
+            'Clean up references to this deleted group profile?\n\nLinked events will be unlinked. This is safe if the networking group no longer exists on the Hub.'
+          )
+        ) {
+          return;
+        }
+        purgeBtn.disabled = true;
+        adminPost('/api/admin/organisers', { action: 'delete_groups', ids: [organiserId] })
+          .then(function (data) {
+            if (!data.ok) throw new Error(data.message || data.error || 'Cleanup failed');
+            return fetchEventHealth();
+          })
+          .then(function () {
+            renderEventHealth();
+          })
+          .catch(function (err) {
+            purgeBtn.disabled = false;
+            window.alert(err.message || 'Could not clean up profile references');
+          });
+        return;
+      }
+
       var btn = e.target.closest('[data-use-first-organiser]');
       if (!btn) return;
       var article = btn.closest('[data-event-id]');
@@ -1414,14 +1471,26 @@
           if (fields.showOrganiser) {
             eventFieldsHtml +=
               '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser</label>' +
+              (fields.showInvalidOrganiser
+                ? '<p class="text-xs text-amber-800 mb-2">This event points at a networking group profile that no longer exists. Unlink it here or assign a different group.</p>'
+                : '') +
               '<select name="organiser_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white ring-2 ring-red-200">' +
               organiserOptionsHtml(organiserSelectList, ev.organiser_id) +
               '</select>' +
-              (firstOrganiserId
-                ? '<button type="button" class="mt-2 text-xs font-semibold text-brand-700 hover:underline" data-use-first-organiser="' +
-                  attrEsc(firstOrganiserId) +
-                  '">Use first available organiser</button>'
-                : '') +
+              (fields.showInvalidOrganiser
+                ? '<button type="button" class="mt-2 mr-3 text-xs font-semibold text-red-700 hover:underline" data-clear-broken-organiser="' +
+                  attrEsc(ev.id) +
+                  '">Remove broken organiser link</button>' +
+                  (ev.organiser_id
+                    ? '<button type="button" class="mt-2 text-xs font-semibold text-red-700 hover:underline" data-purge-gone-organiser="' +
+                      attrEsc(ev.organiser_id) +
+                      '">Clean up deleted profile references</button>'
+                    : '')
+                : firstOrganiserId
+                  ? '<button type="button" class="mt-2 text-xs font-semibold text-brand-700 hover:underline" data-use-first-organiser="' +
+                    attrEsc(firstOrganiserId) +
+                    '">Use first available organiser</button>'
+                  : '') +
               '</div>';
           }
           if (fields.showEventType) {
@@ -5734,13 +5803,72 @@
     return msg;
   }
 
+  function groupDeleteResultMsg(data, requestedCount) {
+    if (data.message) return data.message;
+    var deleted = data.deleted || 0;
+    var alreadyGone = data.alreadyGone || 0;
+    if (!deleted && alreadyGone) {
+      var goneMsg =
+        alreadyGone === 1
+          ? 'Group profile was already removed'
+          : alreadyGone + ' group profiles were already removed';
+      if (data.eventsUnlinked) {
+        goneMsg +=
+          ' — cleared ' +
+          data.eventsUnlinked +
+          ' broken event link' +
+          (data.eventsUnlinked === 1 ? '' : 's');
+      }
+      return goneMsg + '.';
+    }
+    var msg =
+      'Deleted ' +
+      (deleted || requestedCount) +
+      ' group' +
+      ((deleted || requestedCount) === 1 ? '' : 's');
+    if (data.eventsUnlinked) {
+      msg +=
+        ', ' +
+        data.eventsUnlinked +
+        ' event' +
+        (data.eventsUnlinked === 1 ? '' : 's') +
+        ' unlinked';
+    }
+    if (alreadyGone) {
+      msg +=
+        ' (' +
+        alreadyGone +
+        ' profile' +
+        (alreadyGone === 1 ? ' was' : 's were') +
+        ' already removed)';
+    }
+    return msg + '.';
+  }
+
+  function showGroupDeleteFeedback(row, text, isError) {
+    if (!row) return;
+    var slot = row.querySelector('.group-delete-feedback');
+    if (!slot) {
+      slot = document.createElement('p');
+      slot.className = 'group-delete-feedback text-xs mt-1';
+      var header = row.querySelector('.flex.flex-wrap.items-center.justify-between');
+      if (header) header.appendChild(slot);
+    }
+    slot.textContent = text;
+    slot.className =
+      'group-delete-feedback text-xs mt-1 ' +
+      (isError ? 'text-red-700 font-semibold' : 'text-emerald-700 font-semibold');
+  }
+
   function deleteGroupsByIds(ids, opts) {
     opts = opts || {};
     var msgEl = opts.msgEl;
     var btn = opts.btn;
+    var row = opts.row;
     if (!ids.length) return;
 
     if (btn) btn.disabled = true;
+    if (row) showGroupDeleteFeedback(row, 'Deleting…', false);
     if (msgEl) {
       msgEl.textContent = 'Deleting group' + (ids.length === 1 ? '' : 's') + '…';
       msgEl.className = 'text-xs text-slate-500';
@@ -5753,18 +5881,12 @@
           delete groupCleanupState.selected[id];
           delete groupCleanupState.expanded[id];
         });
+        var resultMsg = groupDeleteResultMsg(data, ids.length);
         if (msgEl) {
-          msgEl.textContent =
-            'Deleted ' +
-            (data.deleted || ids.length) +
-            ' group' +
-            ((data.deleted || ids.length) === 1 ? '' : 's') +
-            ((data.eventsUnlinked || 0)
-              ? ', ' + data.eventsUnlinked + ' event' + (data.eventsUnlinked === 1 ? '' : 's') + ' unlinked'
-              : '') +
-            '.';
+          msgEl.textContent = resultMsg;
           msgEl.className = 'text-xs text-emerald-700 font-semibold';
         }
+        if (row) showGroupDeleteFeedback(row, resultMsg, false);
         return fetchGroupCleanup(groupCleanupState.page);
       })
       .then(function (data) {
@@ -5774,10 +5896,12 @@
         if (btn) btn.disabled = false;
       })
       .catch(function (err) {
+        var errMsg = err.message || 'Could not delete groups';
         if (msgEl) {
-          msgEl.textContent = err.message || 'Could not delete groups';
+          msgEl.textContent = errMsg;
           msgEl.className = 'text-xs text-red-700 font-semibold';
         }
+        if (row) showGroupDeleteFeedback(row, errMsg, true);
         if (btn) btn.disabled = false;
       });
   }
@@ -5799,7 +5923,8 @@
   function deleteSingleGroup(id, name, eventCount, btn) {
     if (!id) return;
     if (!window.confirm(groupDeleteConfirmMsg(1, name || 'this group', eventCount || 0))) return;
-    deleteGroupsByIds([id], { btn: btn });
+    var row = btn && btn.closest('[data-organiser-id-row]');
+    deleteGroupsByIds([id], { btn: btn, row: row });
   }
 
   function saveGroupBulkForm(form) {
