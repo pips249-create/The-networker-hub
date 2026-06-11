@@ -31,6 +31,17 @@ function rowToGroup(row) {
     rating: row.average_rating != null ? Number(row.average_rating) : null,
     revenueNum: 0,
     createdAt: row.created_at || null,
+    stripeAccountId: row.stripe_account_id || null,
+    stripeChargesEnabled: Boolean(row.stripe_charges_enabled),
+    stripePayoutsEnabled: Boolean(row.stripe_payouts_enabled),
+    stripeConnectDetailsSubmitted: Boolean(row.stripe_connect_details_submitted),
+    stripeConnectReady:
+      Boolean(row.stripe_account_id) &&
+      Boolean(row.stripe_charges_enabled) &&
+      Boolean(row.stripe_connect_details_submitted),
+    stripeConnectOnboardedAt: row.stripe_connect_onboarded_at || null,
+    ownershipClaimStatus: row.ownership_claim_status || null,
+    ownershipClaimedAt: row.ownership_claimed_at || null,
   };
 }
 
@@ -49,42 +60,20 @@ function isUuid(v) {
 
 async function listGroupsForUser(userId, email) {
   const sb = getSupabaseAdmin();
-  const em = String(email || '').toLowerCase();
   const uid = isUuid(userId) ? userId : null;
-  let query = sb.from('organisers').select('*');
-  if (uid && em) {
-    // Match either by explicit link OR by legacy email-only ownership.
-    query = query.or(`supabase_user_id.eq.${uid},email.eq.${em}`);
-  } else if (uid) {
-    query = query.eq('supabase_user_id', uid);
-  } else if (em) {
-    query = query.eq('email', em);
-  } else {
-    return [];
-  }
-  const { data, error } = await query.order('created_at', { ascending: false });
+  if (!uid) return [];
+
+  const { data, error } = await sb
+    .from('organisers')
+    .select('*')
+    .eq('supabase_user_id', uid)
+    .neq('ownership_claim_status', 'disputed')
+    .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
 
-  // Backfill `supabase_user_id` when we matched on email but the link is missing.
-  // This keeps subsequent lookups fast and consistent.
-  if (uid && em && Array.isArray(data) && data.length) {
-    const toBackfill = data.filter(
-      (row) =>
-        row &&
-        !row.supabase_user_id &&
-        String(row.email || '').toLowerCase() === em
-    );
-    for (const row of toBackfill) {
-      try {
-        await sb.from('organisers').update({ supabase_user_id: uid }).eq('id', row.id);
-        row.supabase_user_id = uid;
-      } catch {
-        // non-fatal: we still return the groups we found
-      }
-    }
-  }
-
-  return (data || []).map(rowToGroup);
+  return (data || [])
+    .filter((row) => row.ownership_claim_status === 'claimed')
+    .map(rowToGroup);
 }
 
 async function listAllGroups() {
@@ -129,7 +118,9 @@ async function listGroupsForAccount(session) {
     .in('id', access.groupIds)
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
-  return (data || []).map(rowToGroup);
+  return (data || [])
+    .filter((row) => row.ownership_claim_status === 'claimed')
+    .map(rowToGroup);
 }
 
 async function listGroupsForSession(session, adminView) {
@@ -202,6 +193,8 @@ async function createGroup(payload) {
     const account = await getOrCreateOrganiserAccount(payload.session);
     organiserAccountId = account ? account.id : null;
   }
+  const userCreated = Boolean(payload.session);
+  const claimedAt = userCreated ? new Date().toISOString() : null;
   const insert = {
     name: payload.name,
     email: (payload.contactEmail || payload.email || '').toLowerCase() || null,
@@ -213,8 +206,10 @@ async function createGroup(payload) {
     organiser_type: 'Events',
     verification_status: payload.verificationStatus || 'Pending',
     listing_status: listing,
-    supabase_user_id: payload.userId || null,
+    supabase_user_id: userCreated ? payload.userId || payload.session?.sub || null : payload.userId || null,
     organiser_account_id: organiserAccountId,
+    ownership_claim_status: userCreated ? 'claimed' : 'pending',
+    ownership_claimed_at: claimedAt,
   };
 
   const { data: created, error } = await sb.from('organisers').insert(insert).select('*').single();

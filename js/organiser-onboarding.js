@@ -206,6 +206,7 @@
   }
 
   function initAfterDashboardReady() {
+    if (window.hubPendingGroupClaims) return;
     bindGettingStarted();
     if (!tourAutoStarted && shouldAutoStart()) {
       tourAutoStarted = true;

@@ -47,6 +47,7 @@ module.exports = async function handler(req, res) {
         sub: ws.session.sub,
       },
       groups: ws.groups,
+      pendingClaimGroups: ws.pendingClaimGroups || [],
       events: ws.events,
       upcomingEvents: ws.upcomingEvents || [],
       tickets: ws.tickets,
@@ -75,6 +76,7 @@ module.exports = async function handler(req, res) {
         hasMore: false,
       },
       groupsError: ws.groupsError,
+      stripeConnectEnabled: Boolean(ws.stripeConnectEnabled),
       airtable: {
         groups: airtableSetupHint && airtableSetupHint('groups'),
         events: airtableSetupHint && airtableSetupHint('events'),

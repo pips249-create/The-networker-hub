@@ -95,14 +95,16 @@ async function fetchDashboardMetrics(sb) {
 async function fetchAlerts(sb) {
   const alerts = [];
   const health = await scanEventHealth();
-  const [incompleteOrgs, recentReviews, openReportsRes] = await Promise.all([
+  const [incompleteOrgs, recentReviews, openReportsRes, claimDisputesRes] = await Promise.all([
     sb.from('organisers').select('id', { count: 'exact', head: true }).or(INCOMPLETE_ORGANISER_FILTER),
     sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
     sb.from('listing_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+    sb.from('organiser_claim_disputes').select('id', { count: 'exact', head: true }).eq('status', 'open'),
   ]);
 
   const spamReviewCount = (recentReviews.data || []).filter((r) => isSpamReview(r.review_text)).length;
   const openReports = openReportsRes.error ? 0 : openReportsRes.count || 0;
+  const openClaimDisputes = claimDisputesRes.error ? 0 : claimDisputesRes.count || 0;
 
   if (health.count > 0) {
     alerts.push({
@@ -163,6 +165,18 @@ async function fetchAlerts(sb) {
       title: `${spamReviewCount} spam-like review${spamReviewCount === 1 ? '' : 's'} detected`,
       detail: 'Highlighted on Content Moderation — remove in Supabase if needed.',
       href: '#moderation',
+      time: new Date().toISOString(),
+    });
+  }
+
+  if (openClaimDisputes > 0) {
+    alerts.push({
+      id: 'organiser-claim-disputes',
+      severity: 'high',
+      title: `${openClaimDisputes} group profile dispute${openClaimDisputes === 1 ? '' : 's'} to review`,
+      detail:
+        'A signed-in user said a pre-imported group profile is not theirs. Check profile email and reassign or remove the listing.',
+      href: '#cleanup/groups',
       time: new Date().toISOString(),
     });
   }

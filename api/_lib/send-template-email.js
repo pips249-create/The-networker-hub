@@ -4,6 +4,7 @@ const { getBookingEmailDefaultVars } = require('./email-booking-defaults');
 const { resolveBookingConfirmationBody } = require('./booking-confirmation-template');
 const { resolveBookingReminderBody } = require('./booking-reminder-template');
 const { resolveOrganiserNewBookingBody } = require('./organiser-new-booking-template');
+const { resolveOrganiserBookingCancelledBody } = require('./organiser-booking-cancelled-template');
 const {
   enrichBookingConfirmationVars,
   enrichBookingReminderVars,
@@ -14,6 +15,7 @@ const {
 } = require('./booking-email-sections');
 const {
   enrichOrganiserRegistrationVars,
+  enrichOrganiserBookingCancelledVars,
   stripUnresolvedOrganiserPlaceholders,
 } = require('./organiser-email-sections');
 const {
@@ -52,6 +54,7 @@ async function buildEmailFromTemplate(slug, variables) {
     slug === 'account_welcome' ||
     slug === 'saved_event_tickets_open' ||
     slug === 'organiser_new_registration' ||
+    slug === 'organiser_booking_cancelled' ||
     slug === 'booking_cancelled' ||
     slug === 'event_cancelled' ||
     slug === 'refund_processed';
@@ -74,6 +77,8 @@ async function buildEmailFromTemplate(slug, variables) {
     merged = enrichAccountWelcomeVars(merged, sponsorSection);
   } else if (slug === 'organiser_new_registration') {
     merged = enrichOrganiserRegistrationVars(merged, sponsorSection);
+  } else if (slug === 'organiser_booking_cancelled') {
+    merged = enrichOrganiserBookingCancelledVars(merged, sponsorSection);
   } else if (slug === 'booking_cancelled') {
     merged = enrichBookingCancelledVars(merged, sponsorSection);
   } else if (slug === 'event_cancelled') {
@@ -96,6 +101,10 @@ async function buildEmailFromTemplate(slug, variables) {
     const resolved = resolveOrganiserNewBookingBody(template.body_html);
     bodyHtml = resolved.bodyHtml;
     templateSource = resolved.source;
+  } else if (slug === 'organiser_booking_cancelled') {
+    const resolved = resolveOrganiserBookingCancelledBody(template.body_html);
+    bodyHtml = resolved.bodyHtml;
+    templateSource = resolved.source;
   }
 
   let html = replacePlaceholders(bodyHtml, merged);
@@ -108,7 +117,7 @@ async function buildEmailFromTemplate(slug, variables) {
   } else if (slug === 'account_welcome' || slug === 'saved_event_tickets_open') {
     html = stripUnresolvedAccountWelcomePlaceholders(html);
     html = replacePlaceholders(html, merged);
-  } else if (slug === 'organiser_new_registration') {
+  } else if (slug === 'organiser_new_registration' || slug === 'organiser_booking_cancelled') {
     html = stripUnresolvedOrganiserPlaceholders(html);
     html = replacePlaceholders(html, merged);
   } else if (slug === 'booking_cancelled') {
@@ -218,4 +227,5 @@ module.exports = {
   replacePlaceholders,
   buildEmailFromTemplate,
   sendTemplatedEmail,
+  sendViaResend,
 };

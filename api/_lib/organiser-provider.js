@@ -13,6 +13,7 @@ function getOrganiserApi() {
     const cancellations = require('./supabase-organiser-cancellations');
     const attendees = require('./supabase-organiser-attendees');
     const opportunities = require('./supabase-opportunities');
+    const claims = require('./supabase-organiser-claims');
     return {
       json: core.json,
       setCors: core.setCors,
@@ -25,6 +26,9 @@ function getOrganiserApi() {
       ...opportunities,
       cancelLockedEvent: cancellations.cancelLockedEvent,
       confirmRefundsIssued: cancellations.confirmRefundsIssued,
+      listPendingClaimGroupsForSession: claims.listPendingClaimGroupsForSession,
+      claimGroupForSession: claims.claimGroupForSession,
+      rejectGroupForSession: claims.rejectGroupForSession,
     };
   }
   return {

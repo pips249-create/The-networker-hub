@@ -727,6 +727,14 @@ async function createTicketsForEvents({ eventIds, tickets, publish, refund, vatT
 
   let publishedEvents = null;
   if (publish && refund) {
+    const { data: eventRows, error: eventLoadErr } = await sb
+      .from('events')
+      .select('id, organiser_id')
+      .in('id', ids);
+    if (eventLoadErr) throw new Error(eventLoadErr.message);
+    const organiserIds = (eventRows || []).map((row) => row.organiser_id).filter(Boolean);
+    const { assertOrganiserReadyForPaidPublish } = require('./stripe-connect');
+    await assertOrganiserReadyForPaidPublish(sb, organiserIds, tiers);
     publishedEvents = await publishEventsWithRefund(ids, refund);
   }
 
@@ -841,9 +849,14 @@ async function getOrganiserWorkspace(req) {
   }
 
   let groups = [];
+  let pendingClaimGroups = [];
   let groupsError = null;
   try {
     groups = await sbOrg.listGroupsForSession(session, adminView);
+    if (!adminView) {
+      const { listPendingClaimGroupsForSession } = require('./supabase-organiser-claims');
+      pendingClaimGroups = await listPendingClaimGroupsForSession(session);
+    }
   } catch (e) {
     groupsError = e.message;
   }
@@ -960,10 +973,19 @@ async function getOrganiserWorkspace(req) {
     /* keep page-scoped tickets */
   }
 
+  let stripeConnectEnabled = false;
+  try {
+    const { isStripeConnectEnabled } = require('./stripe-connect');
+    stripeConnectEnabled = isStripeConnectEnabled();
+  } catch {
+    stripeConnectEnabled = false;
+  }
+
   return {
     ok: true,
     session,
     groups: overviewGroups,
+    pendingClaimGroups,
     events,
     upcomingEvents,
     tickets,
@@ -980,6 +1002,7 @@ async function getOrganiserWorkspace(req) {
     organiserRole: access ? access.role : null,
     canManageTeam: access ? access.canManageTeam : true,
     canDeleteEvents: access ? access.canDeleteEvents : true,
+    stripeConnectEnabled,
     user: {
       email: session.email,
       name: displayName,

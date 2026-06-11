@@ -7,11 +7,13 @@ const { json, setCors } = require('./_lib/auth');
 const routes = {
   bootstrap: require('./_lib/routes/organiser-bootstrap'),
   groups: require('./_lib/routes/organiser-groups'),
+  'group-claims': require('./_lib/routes/organiser-group-claims'),
   events: require('./_lib/routes/organiser-events'),
   tickets: require('./_lib/routes/organiser-tickets'),
   attendees: require('./_lib/routes/organiser-attendees'),
   team: require('./_lib/routes/organiser-team'),
   cancellations: require('./_lib/routes/organiser-cancellations'),
+  'stripe-connect': require('./_lib/routes/organiser-stripe-connect'),
   payouts: require('./_lib/routes/organiser-payouts'),
   opportunities: require('./_lib/routes/organiser-opportunities'),
   'opportunity-premium-checkout': require('./_lib/routes/organiser-opportunity-premium-checkout'),

@@ -42,7 +42,10 @@
     organiserRole: 'owner',
     opportunityEnquiries: [],
     opportunityEnquiriesNewCount: 0,
+    pendingClaimGroups: [],
   };
+
+  let groupClaimRejectMode = false;
 
   const ORGANISER_SCOPE_COOKIE = 'hub_organiser_scope';
   const signin = document.getElementById('org-signin');
@@ -1370,7 +1373,8 @@
   async function confirmRefundsForEvent(eventId) {
     if (
       !window.confirm(
-        'Confirm that you have issued refunds to all attendees for this event through your Stripe account?'
+        'We will verify in Stripe that every paid booking for this event has been fully refunded.\n\n' +
+          'Issue any outstanding refunds in your Stripe dashboard first, then continue.'
       )
     ) {
       return;
@@ -1383,9 +1387,63 @@
       alert(data.message || data.error || 'Could not confirm refunds');
       return;
     }
-    showAirtableAlert(data.message || 'Refunds confirmed.', false);
+    showAirtableAlert(data.message || 'Refunds verified.', false);
     await refresh();
     setRoute('events-revenue');
+  }
+
+  function primaryGroupForStripeConnect() {
+    const needsConnect = (state.groups || []).filter(
+      (g) => state.stripeConnectEnabled && !g.stripeConnectReady
+    );
+    return needsConnect[0] || (state.groups || [])[0] || null;
+  }
+
+  async function startStripeConnectOnboarding(groupId) {
+    const gid = groupId || primaryGroupForStripeConnect()?.id;
+    if (!gid) {
+      alert('No organiser profile found.');
+      return;
+    }
+    const { ok, data } = await api('/api/organiser/stripe-connect', {
+      method: 'POST',
+      body: JSON.stringify({
+        groupId: gid,
+        returnPath: '/organiser/index.html#events-revenue',
+      }),
+    });
+    if (!ok || !data.url) {
+      alert(data.message || data.error || 'Could not start Stripe Connect setup');
+      return;
+    }
+    window.location.href = data.url;
+  }
+
+  function renderStripeConnectBanner() {
+    const banner = document.getElementById('stripe-connect-banner');
+    if (!banner || !state.stripeConnectEnabled) {
+      if (banner) {
+        banner.hidden = true;
+        banner.innerHTML = '';
+      }
+      return;
+    }
+    const pending = (state.groups || []).filter((g) => !g.stripeConnectReady);
+    if (!pending.length) {
+      banner.hidden = true;
+      banner.innerHTML = '';
+      return;
+    }
+    const group = pending[0];
+    banner.hidden = false;
+    banner.innerHTML =
+      '<p><strong>Connect Stripe to sell paid tickets</strong> — ticket revenue goes to your connected account. ' +
+      'The Hub keeps the 3% platform fee and booking fee; Stripe processing is deducted automatically.</p>' +
+      '<button type="button" class="org-btn org-btn-primary org-btn-sm" data-stripe-connect="' +
+      esc(group.id) +
+      '">Connect Stripe for ' +
+      esc(group.name || 'your group') +
+      '</button>';
   }
 
   function groupNameById(id) {
@@ -1868,7 +1926,7 @@
     banner.hidden = false;
     const names = held.map((ev) => esc(ev.title)).join(', ');
     banner.innerHTML =
-      '<p><strong>Your payout is on hold</strong> — please confirm refunds have been issued to all attendees for: ' +
+      '<p><strong>Your payout is on hold</strong> — issue refunds in Stripe for all paid bookings, then click <em>Confirm refunds issued</em>. We verify each refund in Stripe before clearing the hold. Events: ' +
       names +
       '.</p>';
   }
@@ -1893,6 +1951,7 @@
       : groupEventsIntoSeries(state.events.slice());
     body.innerHTML = '';
     renderPayoutHeldBanner();
+    renderStripeConnectBanner();
 
     const setRev = (id, val) => {
       const el = document.getElementById(id);
@@ -2189,6 +2248,181 @@
     );
   }
 
+  function groupInitial(name) {
+    const n = String(name || 'G').trim();
+    return n ? n.charAt(0).toUpperCase() : 'G';
+  }
+
+  function syncPendingClaimFlag() {
+    window.hubPendingGroupClaims = (state.pendingClaimGroups || []).length > 0;
+  }
+
+  function updateGettingStartedVisibility() {
+    const panel = document.getElementById('org-getting-started');
+    if (!panel) return;
+    if ((state.pendingClaimGroups || []).length > 0) {
+      panel.hidden = true;
+      return;
+    }
+    if (state.groups.length > 0) {
+      const firstStep = panel.querySelector('.org-getting-started-list li');
+      if (firstStep) {
+        firstStep.classList.add('is-done');
+        const btn = firstStep.querySelector('[data-org-getting-action="group"]');
+        if (btn) btn.hidden = true;
+      }
+    }
+  }
+
+  function renderGroupClaimModal() {
+    const modal = document.getElementById('org-group-claim');
+    const list = state.pendingClaimGroups || [];
+    syncPendingClaimFlag();
+    updateGettingStartedVisibility();
+
+    if (!modal || !list.length || state.adminView) {
+      if (modal) {
+        modal.hidden = true;
+        modal.setAttribute('aria-hidden', 'true');
+      }
+      document.body.classList.remove('org-group-claim-active');
+      groupClaimRejectMode = false;
+      return;
+    }
+
+    const group = list[0];
+    const kicker = document.getElementById('org-group-claim-kicker');
+    const nameEl = document.getElementById('org-group-claim-name');
+    const emailEl = document.getElementById('org-group-claim-email');
+    const descEl = document.getElementById('org-group-claim-desc');
+    const avatarEl = document.getElementById('org-group-claim-avatar');
+    const notesWrap = document.getElementById('org-group-claim-notes-wrap');
+    const errEl = document.getElementById('org-group-claim-error');
+    const acceptBtn = document.getElementById('org-group-claim-accept');
+    const rejectBtn = document.getElementById('org-group-claim-reject');
+
+    if (kicker) {
+      kicker.textContent =
+        list.length > 1
+          ? 'Profile ' + (1) + ' of ' + list.length
+          : 'Before you add events';
+    }
+    if (nameEl) nameEl.textContent = group.name || 'Group profile';
+    if (emailEl) {
+      emailEl.textContent = group.contactEmail || group.ownerEmail || state.user?.email || '';
+    }
+    if (descEl) {
+      const desc = String(group.description || '').trim();
+      descEl.textContent = desc || 'No description yet — you can complete this after claiming the profile.';
+      descEl.hidden = false;
+    }
+    if (avatarEl) {
+      if (group.imageUrl) {
+        avatarEl.innerHTML =
+          '<img src="' + esc(group.imageUrl) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">';
+      } else {
+        avatarEl.textContent = groupInitial(group.name);
+      }
+    }
+    if (notesWrap) notesWrap.hidden = !groupClaimRejectMode;
+    if (errEl) errEl.hidden = true;
+    if (acceptBtn) {
+      acceptBtn.disabled = false;
+      acceptBtn.textContent = groupClaimRejectMode ? 'Back' : 'Yes, this is my group';
+    }
+    if (rejectBtn) {
+      rejectBtn.disabled = false;
+      rejectBtn.textContent = groupClaimRejectMode ? 'Confirm — not my group' : 'No, this isn\'t mine';
+      rejectBtn.classList.toggle('org-btn-danger', groupClaimRejectMode);
+      rejectBtn.classList.toggle('org-btn-outline', !groupClaimRejectMode);
+    }
+
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('org-group-claim-active');
+  }
+
+  async function submitGroupClaimAction(action) {
+    const list = state.pendingClaimGroups || [];
+    const group = list[0];
+    const errEl = document.getElementById('org-group-claim-error');
+    const acceptBtn = document.getElementById('org-group-claim-accept');
+    const rejectBtn = document.getElementById('org-group-claim-reject');
+    const notesEl = document.getElementById('org-group-claim-notes');
+    if (!group) return;
+
+    if (errEl) errEl.hidden = true;
+    if (acceptBtn) acceptBtn.disabled = true;
+    if (rejectBtn) rejectBtn.disabled = true;
+
+    try {
+      const body = { groupId: group.id, action: action };
+      if (action === 'reject' && notesEl && notesEl.value.trim()) {
+        body.notes = notesEl.value.trim();
+      }
+      const { ok, data } = await api('/api/organiser/group-claims', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+      if (!ok) throw new Error(data.message || data.error || 'claim_action_failed');
+
+      state.pendingClaimGroups = list.filter((g) => g.id !== group.id);
+      groupClaimRejectMode = false;
+      if (notesEl) notesEl.value = '';
+
+      if (action === 'claim') {
+        state.groups = [data.group].concat(state.groups.filter((g) => g.id !== data.group.id));
+      }
+
+      if (state.pendingClaimGroups.length) {
+        renderGroupClaimModal();
+        return;
+      }
+
+      await loadBootstrap();
+      if (action === 'reject') {
+        showAirtableAlert(data.message || 'Profile removed from your dashboard. The Hub team has been notified.', false);
+      } else {
+        showAirtableAlert(
+          data.message || 'Group profile claimed. Add your first event when you are ready.',
+          false
+        );
+      }
+    } catch (e) {
+      if (errEl) {
+        errEl.textContent = e.message || 'Something went wrong. Please try again.';
+        errEl.hidden = false;
+      }
+      if (acceptBtn) acceptBtn.disabled = false;
+      if (rejectBtn) rejectBtn.disabled = false;
+    }
+  }
+
+  function bindGroupClaimUi() {
+    const acceptBtn = document.getElementById('org-group-claim-accept');
+    const rejectBtn = document.getElementById('org-group-claim-reject');
+    if (acceptBtn) {
+      acceptBtn.addEventListener('click', function () {
+        if (groupClaimRejectMode) {
+          groupClaimRejectMode = false;
+          renderGroupClaimModal();
+          return;
+        }
+        submitGroupClaimAction('claim');
+      });
+    }
+    if (rejectBtn) {
+      rejectBtn.addEventListener('click', function () {
+        if (!groupClaimRejectMode) {
+          groupClaimRejectMode = true;
+          renderGroupClaimModal();
+          return;
+        }
+        submitGroupClaimAction('reject');
+      });
+    }
+  }
+
   function opportunityEnquiryNewCount(enquiries) {
     return (enquiries || []).filter((e) => String(e.status || '').toLowerCase() === 'new').length;
   }
@@ -2311,6 +2545,7 @@
     const { ok, data } = await api('/api/organiser/bootstrap');
     if (!ok) throw new Error(data.message || data.error || 'load_failed');
     state.groups = data.groups || [];
+    state.pendingClaimGroups = data.pendingClaimGroups || [];
     state.events = data.events || [];
     state.upcomingEvents = data.upcomingEvents || [];
     state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
@@ -2340,6 +2575,7 @@
     state.canManageTeam = data.canManageTeam !== false;
     state.canDeleteEvents = data.canDeleteEvents !== false;
     state.organiserRole = data.organiserRole || 'owner';
+    state.stripeConnectEnabled = Boolean(data.stripeConnectEnabled);
     loadTeamMembers().then(() => renderTeam());
 
     if (data.adminView) {
@@ -2363,7 +2599,7 @@
         '<strong>Could not load group profiles.</strong> ' + esc(data.groupsError),
         true
       );
-    } else if (!state.groups.length) {
+    } else if (!state.groups.length && !state.pendingClaimGroups.length) {
       showAirtableAlert(
         'Create your first <strong>group profile</strong> (Group profiles in the sidebar), then add events and ticket types.',
         false
@@ -2374,9 +2610,14 @@
 
     applyPendingGroupSave();
     renderAll();
+    renderGroupClaimModal();
     loadOpportunityEnquiries();
     updateTeamNavBadge();
-    if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
+    if (
+      window.HubOrganiserOnboarding &&
+      window.HubOrganiserOnboarding.initAfterDashboardReady &&
+      !window.hubPendingGroupClaims
+    ) {
       window.HubOrganiserOnboarding.initAfterDashboardReady();
     }
     } finally {
@@ -2773,6 +3014,12 @@
           confirmRefundsForEvent(refundsBtn.getAttribute('data-confirm-refunds'));
           return;
         }
+        const connectBtn = e.target.closest('[data-stripe-connect]');
+        if (connectBtn) {
+          e.preventDefault();
+          startStripeConnectOnboarding(connectBtn.getAttribute('data-stripe-connect'));
+          return;
+        }
 
         const toggle = e.target.closest('[data-org-action-toggle]');
         if (toggle) {
@@ -2900,11 +3147,31 @@
 
     bindForms();
     bindTeamUi();
+    bindGroupClaimUi();
     bindUi();
     const initial = parseRoute();
     setRoute(initial.sub || initial.page);
     try {
       await loadBootstrap();
+      const connectParam = new URLSearchParams(window.location.search).get('stripe_connect');
+      if (connectParam && state.stripeConnectEnabled && state.groups.length) {
+        const gid = state.groups[0].id;
+        await api('/api/organiser/stripe-connect?groupId=' + encodeURIComponent(gid));
+        await loadBootstrap();
+        if (connectParam === 'refresh') {
+          showAirtableAlert(
+            'Stripe setup was interrupted. Click Connect Stripe to continue where you left off.',
+            false
+          );
+        } else {
+          showAirtableAlert('Stripe account updated.', false);
+        }
+        if (window.history.replaceState) {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('stripe_connect');
+          window.history.replaceState({}, '', url.pathname + url.hash);
+        }
+      }
     } catch (e) {
       showAirtableAlert('Could not load dashboard: ' + esc(e.message), true);
     }

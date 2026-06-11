@@ -403,7 +403,11 @@ async function provisionOrganiserLogin(organiserId) {
     { onConflict: 'email' }
   );
 
-  const organiserPatch = { supabase_user_id: userId };
+  const organiserPatch = {
+    supabase_user_id: userId,
+    ownership_claim_status: 'pending',
+    ownership_claimed_at: null,
+  };
   if (!organiser.organiser_account_id) {
     let account = null;
     const { data: byUser } = await sb

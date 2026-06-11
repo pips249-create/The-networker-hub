@@ -112,7 +112,11 @@ async function resolveOrganiserAccess(session) {
     else if (uid) legacyQuery = legacyQuery.eq('supabase_user_id', uid);
     else legacyQuery = legacyQuery.eq('email', em);
     const { data: legacy } = await legacyQuery;
-    (legacy || []).forEach((r) => legacyGroupIds.add(r.id));
+    (legacy || []).forEach((r) => {
+      if (r && r.ownership_claim_status !== 'disputed' && r.ownership_claim_status !== 'pending') {
+        legacyGroupIds.add(r.id);
+      }
+    });
   }
   const isLegacyOwner = legacyGroupIds.size > 0;
 
