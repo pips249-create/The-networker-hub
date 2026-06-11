@@ -45,6 +45,8 @@
   function bindWordCounter() {
     const ta = document.getElementById('ee-description');
     const counter = document.getElementById('ee-word-count');
+    const maxEl = document.getElementById('ee-word-max');
+    if (maxEl) maxEl.textContent = String(DESCRIPTION_MAX_WORDS);
     if (!ta || !counter) return;
     const update = () => {
       counter.textContent = String(countWords(ta.value));

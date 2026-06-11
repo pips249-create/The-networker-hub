@@ -2805,6 +2805,8 @@
   function bindGroupDescriptionCounter() {
     const ta = document.getElementById('group-description');
     const counter = document.getElementById('group-description-word-count');
+    const maxEl = document.getElementById('group-description-word-max');
+    if (maxEl) maxEl.textContent = String(DESCRIPTION_MAX_WORDS);
     if (!ta || !counter) return;
     const update = () => {
       counter.textContent = String(countWords(ta.value));

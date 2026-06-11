@@ -115,6 +115,8 @@
   function bindWordCounter() {
     const ta = document.getElementById('ge-description');
     const counter = document.getElementById('ge-word-count');
+    const maxEl = document.getElementById('ge-word-max');
+    if (maxEl) maxEl.textContent = String(DESCRIPTION_MAX_WORDS);
     if (!ta || !counter) return;
     const update = () => {
       counter.textContent = String(countWords(ta.value));
