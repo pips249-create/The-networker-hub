@@ -11,6 +11,7 @@ const {
 } = require('../auth');
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
+const { isAdminMfaEnrolled, adminMfaStatusForSession, isAdminMfaEnforcementEnabled } = require('../admin-mfa');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -45,6 +46,14 @@ module.exports = async function handler(req, res) {
       if (session.impersonator) {
         fresh.impersonator = session.impersonator;
       }
+      if (session.adminMfaAt) fresh.adminMfaAt = session.adminMfaAt;
+
+      let adminMfa = null;
+      if (isAdminRole(role) && !session.impersonator && isAdminMfaEnforcementEnabled()) {
+        const enrolled = await isAdminMfaEnrolled(fresh.sub);
+        fresh.adminMfaEnrolled = enrolled;
+        adminMfa = adminMfaStatusForSession(fresh, enrolled);
+      }
 
       setSessionCookie(res, fresh);
 
@@ -63,6 +72,7 @@ module.exports = async function handler(req, res) {
         canToggleHubMode: isClientRole(role) && !session.impersonator,
         impersonating: !!session.impersonator,
         impersonatorEmail: session.impersonator ? session.impersonator.email : null,
+        adminMfa,
       });
     }
 

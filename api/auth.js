@@ -26,6 +26,7 @@ const routes = {
   'accept-organiser-terms': require('./_lib/routes/auth-accept-organiser-terms'),
   'cancel-booking': require('./_lib/routes/auth-cancel-booking'),
   'nudge-ticket-sales': require('./_lib/routes/auth-nudge-ticket-sales'),
+  'admin-mfa': require('./_lib/routes/auth-admin-mfa'),
 };
 
 module.exports = async function handler(req, res) {

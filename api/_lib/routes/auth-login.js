@@ -85,7 +85,7 @@ module.exports = async function handler(req, res) {
     await sbAuth.backfillAttendeeUserId(sessionUser.sub, sessionUser.email);
 
     let redirect = body.next || '/events/index.html';
-    if (isAdminRole(role)) {
+    if (isAdminRole(role) && !body.next) {
       redirect = '/admin/index.html';
     } else if (hubViewFromRequest(req) === 'organiser') {
       redirect = body.next || '/organiser/index.html';

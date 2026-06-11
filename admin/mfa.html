@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin verification – The Networker Hub</title>
+  <link rel="icon" href="../assets/hubert-icon.png" type="image/png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#faf6fe', 100: '#ebe0f0', 500: '#9a7aa8', 700: '#5b2f99', 900: '#2d1b4e' },
+          },
+          fontFamily: { sans: ['DM Sans', 'system-ui', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/hub.css?v=20260609b">
+  <link rel="stylesheet" href="../css/auth.css?v=20260608b">
+</head>
+<body class="bg-slate-50 font-sans text-slate-900 antialiased min-h-screen flex flex-col">
+
+  <div id="hub-site-nav"></div>
+  <script src="../js/site-nav.js?v=20260712" data-root="../" data-page="admin"></script>
+
+  <main class="flex-1 flex items-center justify-center p-6">
+    <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+      <p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Command Centre</p>
+      <h1 class="text-xl font-bold text-brand-900 mt-1" id="mfa-title">Verify your identity</h1>
+      <p class="text-sm text-slate-600 mt-2" id="mfa-lead">
+        Admin access needs a second step. Your organiser and attendee areas still work with password only.
+      </p>
+
+      <div id="mfa-message" class="auth-message mt-4" hidden role="alert"></div>
+
+      <div id="mfa-enroll-panel" class="mt-6 space-y-4" hidden>
+        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm">
+          <p class="font-semibold text-slate-800">1. Add to your authenticator app</p>
+          <p class="text-slate-600 mt-1 text-xs">Google Authenticator, 1Password, Authy, or similar.</p>
+          <p class="mt-3 break-all font-mono text-xs text-brand-900" id="mfa-secret"></p>
+          <a id="mfa-otpauth-link" href="#" class="inline-block mt-2 text-xs font-semibold text-brand-700 hover:underline" target="_blank" rel="noopener">Open setup link</a>
+        </div>
+        <label class="block">
+          <span class="text-sm font-semibold text-slate-700">2. Enter the 6-digit code</span>
+          <input type="text" id="mfa-enroll-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-center text-lg tracking-[0.3em] font-mono" placeholder="000000">
+        </label>
+        <button type="button" id="mfa-enroll-btn" class="w-full rounded-lg bg-brand-700 text-white font-semibold py-2.5 hover:bg-brand-900">Complete setup</button>
+      </div>
+
+      <div id="mfa-verify-panel" class="mt-6 space-y-4" hidden>
+        <label class="block">
+          <span class="text-sm font-semibold text-slate-700">Authenticator code</span>
+          <input type="text" id="mfa-verify-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-center text-lg tracking-[0.3em] font-mono" placeholder="000000">
+        </label>
+        <button type="button" id="mfa-verify-btn" class="w-full rounded-lg bg-brand-700 text-white font-semibold py-2.5 hover:bg-brand-900">Verify and continue</button>
+      </div>
+
+      <p class="text-xs text-slate-500 mt-6 text-center">
+        <a href="../organiser/index.html" class="font-semibold text-brand-700 hover:underline">Go to organiser dashboard</a>
+        ·
+        <a href="../account/index.html" class="font-semibold text-brand-700 hover:underline">Attendee account</a>
+      </p>
+    </div>
+  </main>
+
+  <script src="../js/admin-mfa.js?v=20260610"></script>
+</body>
+</html>
