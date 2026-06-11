@@ -87,6 +87,8 @@
   var EVENT_TYPES = ['Meeting', 'Events', 'Exhibition', 'Awards'];
   var MEETING_FORMATS = ['In person', 'Online', 'Hybrid'];
   var healthCache = null;
+  var adminMetricsCache = null;
+  var adminNotificationsTimer = null;
   var groupCleanupCache = null;
   var eventCleanupCache = null;
   var analyticsState = { period: '30d' };
@@ -424,15 +426,70 @@
     if (n > 0) {
       badge.textContent = n > 99 ? '99+' : String(n);
       badge.classList.remove('hidden');
-      badge.setAttribute('aria-label', n + ' events need data fixes');
+      badge.setAttribute('aria-label', n + ' items need attention');
     } else {
       badge.classList.add('hidden');
-      badge.setAttribute('aria-label', 'No event data issues');
+      badge.setAttribute('aria-label', 'No open admin alerts');
     }
   }
 
+  function updateAdminDataBadge(updatedAt) {
+    var badge = document.getElementById('admin-data-badge');
+    if (!badge) return;
+    badge.textContent = updatedAt ? 'Updated ' + fmtTime(updatedAt) : 'Supabase';
+    badge.title = updatedAt
+      ? 'Counts and alerts last refreshed at ' + fmtTime(updatedAt)
+      : 'Counts and lists load from Supabase when you open each page';
+  }
+
+  function applyDashboardNotifications(data) {
+    if (!data || data.error || data.configured === false) return;
+    adminMetricsCache = data;
+    updateAdminDataBadge(data.updatedAt);
+
+    var alertsEl = document.getElementById('dashboard-alerts');
+    if (alertsEl) {
+      var alerts = data.alerts || [];
+      alertsEl.innerHTML = alerts.length
+        ? alerts.map(alertCard).join('')
+        : '<p class="text-sm text-emerald-700">No critical alerts right now.</p>';
+    }
+
+    var attentionEl = document.getElementById('dashboard-attention');
+    if (attentionEl) {
+      attentionEl.innerHTML = renderAttentionQueue(data.attention);
+    }
+
+    var activityEl = document.getElementById('dashboard-activity');
+    if (activityEl) {
+      activityEl.innerHTML = renderActivityList(data.activity, 12);
+    }
+
+    var disputesEl = document.getElementById('group-claim-disputes');
+    if (disputesEl) {
+      disputesEl.innerHTML = renderClaimDisputesPanel(data.attention);
+    }
+
+    var notificationCount = Number(data.notificationCount);
+    if (!notificationCount && data.alerts) notificationCount = data.alerts.length;
+    var healthCount = healthCache && healthCache.count ? Number(healthCache.count) : 0;
+    updateHealthBadge(Math.max(notificationCount || 0, healthCount));
+  }
+
+  function refreshAdminNotifications() {
+    return Promise.all([adminGet('/api/admin/metrics'), fetchEventHealth()]).then(function (results) {
+      applyDashboardNotifications(results[0]);
+      return results[0];
+    });
+  }
+
+  function startAdminNotificationsPolling() {
+    if (adminNotificationsTimer) clearInterval(adminNotificationsTimer);
+    adminNotificationsTimer = setInterval(refreshAdminNotifications, 60000);
+  }
+
   function adminGet(url) {
-    return fetch(url, { credentials: 'include' })
+    return fetch(url, { credentials: 'include', cache: 'no-store' })
       .then(function (r) {
         return r.json().then(function (data) {
           data = data || {};
@@ -531,12 +588,97 @@
     return '<div class="rounded-lg border p-4 ' + bg + '">' + inner + '</div>';
   }
 
+  function renderClaimDisputesPanel(attention) {
+    var disputes = (attention && attention.openClaimDisputes) || [];
+    if (!disputes.length) {
+      return '<p class="text-sm text-emerald-700">No open group profile disputes.</p>';
+    }
+    return (
+      '<div class="space-y-2">' +
+      disputes
+        .map(function (d) {
+          return (
+            '<div class="rounded-lg border border-red-200 bg-red-50 p-4">' +
+            '<p class="font-semibold text-sm text-red-900">' +
+            esc(d.organiserName || 'Group profile') +
+            '</p>' +
+            '<p class="text-xs text-red-800/90 mt-1">Profile email: ' +
+            esc(d.profileEmail || '—') +
+            ' · Reported by ' +
+            esc(d.reporterEmail || '—') +
+            '</p>' +
+            (d.notes
+              ? '<p class="text-xs text-red-800/80 mt-2 italic">“' + esc(d.notes) + '”</p>'
+              : '') +
+            '<div class="flex flex-wrap gap-2 mt-3">' +
+            (d.organiserId
+              ? '<a href="#cleanup/groups" class="text-xs font-semibold text-red-900 hover:underline">Open group cleanup →</a>'
+              : '') +
+            '<button type="button" class="text-xs font-semibold rounded-lg bg-white border border-red-200 px-2.5 py-1 text-red-800 hover:bg-red-100" data-resolve-claim-dispute="' +
+            esc(d.id) +
+            '">Mark resolved</button></div></div>'
+          );
+        })
+        .join('') +
+      '</div>'
+    );
+  }
+
   function renderAttentionQueue(attention) {
     if (!attention) {
       return '<p class="text-sm text-slate-500">Loading…</p>';
     }
     var pending = attention.pendingEvents || [];
+    var disputes = attention.openClaimDisputes || [];
     var parts = [];
+
+    if (disputes.length) {
+      parts.push(
+        '<div class="rounded-lg border border-red-200 bg-red-50 p-4">' +
+          '<p class="font-semibold text-sm text-red-900">' +
+          disputes.length +
+          ' group profile dispute' +
+          (disputes.length === 1 ? '' : 's') +
+          '</p>' +
+          '<ul class="mt-2 space-y-1.5">'
+      );
+      disputes.slice(0, 4).forEach(function (d) {
+        parts.push(
+          '<li class="text-sm text-red-900"><span class="font-medium">' +
+            esc(d.organiserName || 'Profile') +
+            '</span> <span class="text-xs text-red-800/80">· reported by ' +
+            esc(d.reporterEmail || 'user') +
+            '</span></li>'
+        );
+      });
+      parts.push(
+        '</ul><a href="#cleanup/groups" class="text-xs font-semibold text-red-900 mt-3 inline-block hover:underline">Review in group cleanup →</a></div>'
+      );
+    }
+
+    if (attention.pendingOwnershipClaims > 0) {
+      parts.push(
+        '<div class="rounded-lg border border-brand-200 bg-brand-50 p-4">' +
+          '<p class="font-semibold text-sm text-brand-900">' +
+          attention.pendingOwnershipClaims +
+          ' group profile' +
+          (attention.pendingOwnershipClaims === 1 ? '' : 's') +
+          ' awaiting organiser claim on first login</p>' +
+          '<p class="text-xs text-brand-800/90 mt-1">Organisers will confirm ownership when they sign in — disputes appear here if they reject a match.</p></div>'
+      );
+    }
+
+    if (attention.openListingReports > 0) {
+      parts.push(
+        '<div class="rounded-lg border border-amber-200 bg-amber-50 p-4">' +
+          '<p class="font-semibold text-sm text-amber-900">' +
+          attention.openListingReports +
+          ' open listing report' +
+          (attention.openListingReports === 1 ? '' : 's') +
+          '</p>' +
+          '<a href="#moderation" class="text-xs font-semibold text-amber-900 mt-2 inline-block hover:underline">Open moderation →</a></div>'
+      );
+    }
 
     if (pending.length) {
       parts.push(
@@ -592,7 +734,7 @@
   }
 
   function fetchEventHealth() {
-    return fetch('/api/admin/event-health', { credentials: 'include' })
+    return fetch('/api/admin/event-health', { credentials: 'include', cache: 'no-store' })
       .then(function (r) {
         return r.json().then(function (data) {
           if (!r.ok) {
@@ -1144,6 +1286,7 @@
       })
       .then(function () {
         renderModeration();
+        refreshAdminNotifications();
       })
       .catch(function (err) {
         if (btn) btn.disabled = false;
@@ -1160,6 +1303,7 @@
           throw new Error((data && data.message) || (data && data.error) || 'Reject failed');
         }
         renderModeration();
+        refreshAdminNotifications();
       })
       .catch(function (err) {
         if (btn) btn.disabled = false;
@@ -1196,6 +1340,7 @@
           .then(function (data) {
             if (!data || !data.ok) throw new Error((data && data.message) || 'Dismiss failed');
             renderModeration();
+            refreshAdminNotifications();
           })
           .catch(function (err) {
             dismissBtn.disabled = false;
@@ -1212,6 +1357,7 @@
           .then(function (data) {
             if (!data || !data.ok) throw new Error((data && data.message) || 'Dismiss failed');
             renderModeration();
+            refreshAdminNotifications();
           })
           .catch(function (err) {
             dismissReviewReportBtn.disabled = false;
@@ -1229,6 +1375,7 @@
           .then(function (data) {
             if (!data || !data.ok) throw new Error((data && data.message) || 'Delete failed');
             renderModeration();
+            refreshAdminNotifications();
           })
           .catch(function (err) {
             deleteReviewBtn.disabled = false;
@@ -2132,13 +2279,11 @@
       '</div></section></div>';
 
     adminGet('/api/admin/metrics').then(function (data) {
-      var alertsEl = document.getElementById('dashboard-alerts');
-      var attentionEl = document.getElementById('dashboard-attention');
       var metricsEl = document.getElementById('dashboard-metrics');
-      var activityEl = document.getElementById('dashboard-activity');
       var preEl = document.getElementById('live-metrics');
 
       if (!data || data.error || data.configured === false) {
+        var alertsEl = document.getElementById('dashboard-alerts');
         if (alertsEl) {
           alertsEl.innerHTML =
             '<p class="text-sm text-red-700">Could not load dashboard data. Check Supabase env vars on Vercel.</p>';
@@ -2176,20 +2321,7 @@
           card('Hub accounts', String(m.attendees || 0), 'hub_accounts and attendee profiles', 'blue');
       }
 
-      if (alertsEl) {
-        var alerts = data.alerts || [];
-        alertsEl.innerHTML = alerts.length
-          ? alerts.map(alertCard).join('')
-          : '<p class="text-sm text-emerald-700">No critical alerts right now.</p>';
-      }
-
-      if (attentionEl) {
-        attentionEl.innerHTML = renderAttentionQueue(data.attention);
-      }
-
-      if (activityEl) {
-        activityEl.innerHTML = renderActivityList(data.activity, 12);
-      }
+      applyDashboardNotifications(data);
 
       if (preEl) preEl.innerHTML = renderMetricsSummary(data);
     });
@@ -6166,6 +6298,24 @@
   }
 
   function handleGroupCleanupClick(e) {
+    var resolveDisputeBtn = e.target.closest('[data-resolve-claim-dispute]');
+    if (resolveDisputeBtn) {
+      var disputeId = resolveDisputeBtn.getAttribute('data-resolve-claim-dispute');
+      if (!disputeId) return;
+      if (!window.confirm('Mark this dispute as resolved? The alert will clear from Command Centre.')) return;
+      resolveDisputeBtn.disabled = true;
+      adminPost('/api/admin/organisers', { action: 'resolve_claim_dispute', disputeId: disputeId })
+        .then(function (data) {
+          if (!data || !data.ok) throw new Error((data && data.message) || 'Could not resolve dispute');
+          return refreshAdminNotifications();
+        })
+        .catch(function (err) {
+          resolveDisputeBtn.disabled = false;
+          window.alert(err.message || 'Could not resolve dispute.');
+        });
+      return;
+    }
+
     if (!document.getElementById('group-cleanup-list')) return;
 
     var pageBtn = e.target.closest('[data-group-page]');
@@ -6597,6 +6747,10 @@
     groupCleanupState.loading = false;
     main.innerHTML =
       '<div class="space-y-4">' +
+      '<section class="rounded-xl border border-red-200 bg-white p-4 shadow-sm space-y-3">' +
+      '<div><h3 class="font-bold text-brand-900">Group profile disputes</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">When an organiser says a pre-imported profile is not theirs, review the listing here and mark resolved once handled.</p></div>' +
+      '<div id="group-claim-disputes"><p class="text-sm text-slate-500">Loading disputes…</p></div></section>' +
       '<div class="flex flex-wrap items-center justify-between gap-3">' +
       '<div id="group-cleanup-status" class="text-sm text-slate-500">Loading groups…</div>' +
       '<button type="button" id="group-create-toggle" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900 shrink-0" aria-expanded="' +
@@ -6663,6 +6817,7 @@
       '<div id="group-cleanup-list" class="space-y-2"></div></div>';
 
     groupCleanupState.page = 0;
+    refreshAdminNotifications();
     fetchGroupCleanup(0)
       .then(function (data) {
         renderGroupCleanupList(data || { error: 'load_failed' });
@@ -7644,7 +7799,19 @@
     bindEventCleanupForms();
     bindModerationActions();
     bindFinancialsActions();
-    fetchEventHealth();
+    var refreshBadge = document.getElementById('admin-data-badge');
+    if (refreshBadge) {
+      refreshBadge.classList.remove('hidden');
+      refreshBadge.addEventListener('click', function () {
+        refreshBadge.disabled = true;
+        refreshBadge.textContent = 'Refreshing…';
+        refreshAdminNotifications().finally(function () {
+          refreshBadge.disabled = false;
+        });
+      });
+    }
+    refreshAdminNotifications();
+    startAdminNotificationsPolling();
     route();
     window.addEventListener('hashchange', route);
   }

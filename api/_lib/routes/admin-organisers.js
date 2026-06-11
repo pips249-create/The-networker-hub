@@ -5,6 +5,7 @@ const { publicOrganiserSlug } = require('../organiser-slug');
 const sbAuth = require('../supabase-auth');
 const { fetchWebsiteMeta } = require('../website-meta');
 const { createGroup } = require('../supabase-organiser');
+const { resolveClaimDispute } = require('../admin-supabase-data');
 
 const INCOMPLETE_FILTER =
   'description.is.null,description.eq.,photo_url.is.null,photo_url.eq.,website.is.null,website.eq.';
@@ -836,6 +837,28 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: e.message || 'delete_failed',
         message: messages[e.message] || e.message || 'Delete failed',
+      });
+    }
+  }
+
+  if (body.action === 'resolve_claim_dispute') {
+    try {
+      const dispute = await resolveClaimDispute(body.disputeId || body.id);
+      return json(res, 200, {
+        ok: true,
+        dispute,
+        message: 'Dispute marked resolved. The alert will clear on the next refresh.',
+      });
+    } catch (e) {
+      const status = e.status || 500;
+      const messages = {
+        missing_dispute_id: 'Missing dispute id.',
+        dispute_not_found: 'This dispute is already resolved or could not be found.',
+      };
+      return json(res, status, {
+        ok: false,
+        error: e.message || 'resolve_dispute_failed',
+        message: messages[e.message] || e.message || 'Could not resolve dispute.',
       });
     }
   }

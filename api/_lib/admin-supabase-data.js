@@ -196,33 +196,70 @@ async function fetchAlerts(sb) {
 }
 
 async function fetchAttentionQueue(sb) {
-  const [pendingRes, incompleteRes, reviewsRes] = await Promise.all([
-    sb
-      .from('events')
-      .select('id, title, created_at, organisers(name)')
-      .eq('approval_status', 'Pending Review')
-      .order('created_at', { ascending: false })
-      .limit(10),
-    sb.from('organisers').select('id', { count: 'exact', head: true }).or(INCOMPLETE_ORGANISER_FILTER),
-    sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
-  ]);
+  const [pendingRes, incompleteRes, reviewsRes, claimDisputesRes, openReportsRes, pendingClaimsRes] =
+    await Promise.all([
+      sb
+        .from('events')
+        .select('id, title, created_at, organisers(name)')
+        .eq('approval_status', 'Pending Review')
+        .order('created_at', { ascending: false })
+        .limit(10),
+      sb.from('organisers').select('id', { count: 'exact', head: true }).or(INCOMPLETE_ORGANISER_FILTER),
+      sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
+      sb
+        .from('organiser_claim_disputes')
+        .select('id, organiser_id, organiser_name, profile_email, reporter_email, notes, created_at')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(10),
+      sb.from('listing_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+      sb
+        .from('organisers')
+        .select('id', { count: 'exact', head: true })
+        .eq('ownership_claim_status', 'pending'),
+    ]);
+
+  const pendingEvents = (pendingRes.data || []).map((e) => ({
+    id: e.id,
+    title: String(e.title || '').trim(),
+    organiser: e.organisers?.name || '—',
+    createdAt: e.created_at,
+  }));
+  const openClaimDisputes = (claimDisputesRes.data || []).map((d) => ({
+    id: d.id,
+    organiserId: d.organiser_id,
+    organiserName: String(d.organiser_name || '').trim() || 'Group profile',
+    profileEmail: String(d.profile_email || '').trim(),
+    reporterEmail: String(d.reporter_email || '').trim(),
+    notes: String(d.notes || '').trim(),
+    createdAt: d.created_at,
+  }));
+  const incompleteOrganisers = incompleteRes.error ? 0 : incompleteRes.count || 0;
+  const spamReviews = (reviewsRes.data || []).filter((r) => isSpamReview(r.review_text)).length;
+  const openListingReports = openReportsRes.error ? 0 : openReportsRes.count || 0;
+  const pendingOwnershipClaims = pendingClaimsRes.error ? 0 : pendingClaimsRes.count || 0;
 
   return {
-    pendingEvents: (pendingRes.data || []).map((e) => ({
-      id: e.id,
-      title: String(e.title || '').trim(),
-      organiser: e.organisers?.name || '—',
-      createdAt: e.created_at,
-    })),
-    incompleteOrganisers: incompleteRes.count || 0,
-    spamReviews: (reviewsRes.data || []).filter((r) => isSpamReview(r.review_text)).length,
+    pendingEvents,
+    incompleteOrganisers,
+    spamReviews,
+    openClaimDisputes,
+    openListingReports,
+    pendingOwnershipClaims,
+    totalCount:
+      pendingEvents.length +
+      openClaimDisputes.length +
+      (openListingReports > 0 ? 1 : 0) +
+      (incompleteOrganisers > 0 ? 1 : 0) +
+      (spamReviews > 0 ? 1 : 0) +
+      (pendingOwnershipClaims > 0 ? 1 : 0),
   };
 }
 
 async function fetchActivity(sb) {
   const items = [];
 
-  const [eventsRes, regsRes, reviewsRes, orgRes] = await Promise.all([
+  const [eventsRes, regsRes, reviewsRes, orgRes, disputesRes, reportsRes] = await Promise.all([
     sb
       .from('events')
       .select('title, approval_status, created_at')
@@ -239,6 +276,18 @@ async function fetchActivity(sb) {
       .order('created_at', { ascending: false })
       .limit(30),
     sb.from('organisers').select('name, created_at').order('created_at', { ascending: false }).limit(15),
+    sb
+      .from('organiser_claim_disputes')
+      .select('organiser_name, reporter_email, created_at')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .limit(15),
+    sb
+      .from('listing_reports')
+      .select('listing_title, reason, created_at')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .limit(15),
   ]);
 
   (eventsRes.data || []).forEach((e) => {
@@ -279,6 +328,22 @@ async function fetchActivity(sb) {
       time: o.created_at,
       text: `Organiser profile created: ${String(o.name || '').trim()}`,
       type: 'organiser',
+    });
+  });
+
+  (disputesRes.data || []).forEach((d) => {
+    items.push({
+      time: d.created_at,
+      text: `Group profile disputed: ${String(d.organiser_name || 'profile').trim()} (reported by ${String(d.reporter_email || 'user').trim()})`,
+      type: 'dispute',
+    });
+  });
+
+  (reportsRes.data || []).forEach((r) => {
+    items.push({
+      time: r.created_at,
+      text: `Listing reported: ${String(r.listing_title || 'listing').trim()} — ${String(r.reason || 'report').trim()}`,
+      type: 'report',
     });
   });
 
@@ -597,6 +662,30 @@ async function getAdminSponsor(slot) {
   return { configured: true, provider: 'supabase', block, slot: key, updatedAt: new Date().toISOString() };
 }
 
+async function resolveClaimDispute(disputeId) {
+  const id = String(disputeId || '').trim();
+  if (!id) {
+    const err = new Error('missing_dispute_id');
+    err.status = 400;
+    throw err;
+  }
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('organiser_claim_disputes')
+    .update({ status: 'resolved' })
+    .eq('id', id)
+    .eq('status', 'open')
+    .select('id, organiser_id, organiser_name')
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) {
+    const err = new Error('dispute_not_found');
+    err.status = 404;
+    throw err;
+  }
+  return data;
+}
+
 async function getAdminDashboard() {
   if (!isSupabaseConfigured()) {
     return { configured: false, provider: 'supabase' };
@@ -615,6 +704,7 @@ async function getAdminDashboard() {
     alerts,
     activity,
     attention,
+    notificationCount: Math.max((alerts || []).length, attention?.totalCount || 0),
     updatedAt: new Date().toISOString(),
   };
 }
@@ -666,4 +756,5 @@ module.exports = {
   saveSponsorBlock,
   copySponsorBlock,
   fetchSponsorBlock,
+  resolveClaimDispute,
 };
