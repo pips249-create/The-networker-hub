@@ -23,7 +23,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "How do organisers list an event on The Networker Hub?",
-      "answer": "Approved organisers sign in and open the organiser dashboard at /organiser/ to create events and manage attendees. New networking groups can email hello@the-networker.co.uk with their group name, event format, and location for onboarding help."
+      "answer": "Sign in, claim your group profile if prompted, then open the organiser dashboard at /organiser/ to create events and manage attendees. Your networking group may already be listed — search the organiser directory on /events/ and claim the profile linked to your email."
     },
     {
       "question": "Where does event information on The Networker Hub come from?",
@@ -208,7 +208,7 @@ window.HUB_SEO_DATA = {
               "name": "How do organisers list an event on The Networker Hub?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Approved organisers sign in and open the organiser dashboard at /organiser/ to create events and manage attendees. New networking groups can email hello@the-networker.co.uk with their group name, event format, and location for onboarding help."
+                "text": "Sign in, claim your group profile if prompted, then open the organiser dashboard at /organiser/ to create events and manage attendees. Your networking group may already be listed — search the organiser directory on /events/ and claim the profile linked to your email."
               }
             }
           ]
@@ -308,7 +308,7 @@ window.HUB_SEO_DATA = {
               "name": "How do organisers list an event on The Networker Hub?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Approved organisers sign in and open the organiser dashboard at /organiser/ to create events and manage attendees. New networking groups can email hello@the-networker.co.uk with their group name, event format, and location for onboarding help."
+                "text": "Sign in, claim your group profile if prompted, then open the organiser dashboard at /organiser/ to create events and manage attendees. Your networking group may already be listed — search the organiser directory on /events/ and claim the profile linked to your email."
               }
             },
             {
@@ -625,6 +625,224 @@ window.HUB_SEO_DATA = {
               }
             ]
           }
+        }
+      ]
+    },
+    "events": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "The Networker Hub",
+          "legalName": "The Networker Group Ltd",
+          "url": "https://the-networker.co.uk",
+          "logo": "https://the-networker.co.uk/assets/logo.png",
+          "image": "https://the-networker.co.uk/assets/logo.png",
+          "email": "hello@the-networker.co.uk",
+          "description": "UK platform for networking events, exhibitions, business opportunities, and professional training.",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
+            "addressLocality": "Huntingdon",
+            "addressRegion": "Cambridgeshire",
+            "postalCode": "PE28 4YF",
+            "addressCountry": "GB"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "hello@the-networker.co.uk",
+            "availableLanguage": [
+              "English"
+            ]
+          },
+          "founder": [
+            {
+              "@type": "Person",
+              "name": "Rosie"
+            },
+            {
+              "@type": "Person",
+              "name": "Catherine Hancher",
+              "alternateName": "Pip"
+            }
+          ]
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          "@id": "https://the-networker.co.uk/events/",
+          "url": "https://the-networker.co.uk/events/",
+          "name": "Networking events — The Networker Hub",
+          "description": "Browse UK networking events, meetings, exhibitions, and awards.",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "The Networker Hub",
+            "url": "https://the-networker.co.uk"
+          }
+        }
+      ]
+    },
+    "opportunities": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "The Networker Hub",
+          "legalName": "The Networker Group Ltd",
+          "url": "https://the-networker.co.uk",
+          "logo": "https://the-networker.co.uk/assets/logo.png",
+          "image": "https://the-networker.co.uk/assets/logo.png",
+          "email": "hello@the-networker.co.uk",
+          "description": "UK platform for networking events, exhibitions, business opportunities, and professional training.",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
+            "addressLocality": "Huntingdon",
+            "addressRegion": "Cambridgeshire",
+            "postalCode": "PE28 4YF",
+            "addressCountry": "GB"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "hello@the-networker.co.uk",
+            "availableLanguage": [
+              "English"
+            ]
+          },
+          "founder": [
+            {
+              "@type": "Person",
+              "name": "Rosie"
+            },
+            {
+              "@type": "Person",
+              "name": "Catherine Hancher",
+              "alternateName": "Pip"
+            }
+          ]
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          "@id": "https://the-networker.co.uk/opportunities/",
+          "url": "https://the-networker.co.uk/opportunities/",
+          "name": "Business opportunities — The Networker Hub",
+          "description": "Browse franchises, partnerships, and business opportunities across the UK.",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "The Networker Hub",
+            "url": "https://the-networker.co.uk"
+          }
+        }
+      ]
+    },
+    "training": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "The Networker Hub",
+          "legalName": "The Networker Group Ltd",
+          "url": "https://the-networker.co.uk",
+          "logo": "https://the-networker.co.uk/assets/logo.png",
+          "image": "https://the-networker.co.uk/assets/logo.png",
+          "email": "hello@the-networker.co.uk",
+          "description": "UK platform for networking events, exhibitions, business opportunities, and professional training.",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
+            "addressLocality": "Huntingdon",
+            "addressRegion": "Cambridgeshire",
+            "postalCode": "PE28 4YF",
+            "addressCountry": "GB"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "hello@the-networker.co.uk",
+            "availableLanguage": [
+              "English"
+            ]
+          },
+          "founder": [
+            {
+              "@type": "Person",
+              "name": "Rosie"
+            },
+            {
+              "@type": "Person",
+              "name": "Catherine Hancher",
+              "alternateName": "Pip"
+            }
+          ]
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          "@id": "https://the-networker.co.uk/training/",
+          "url": "https://the-networker.co.uk/training/",
+          "name": "Training & courses — The Networker Hub",
+          "description": "Workshops, seminars, and masterclasses from The Networker Academy.",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "The Networker Hub",
+            "url": "https://the-networker.co.uk"
+          }
+        }
+      ]
+    },
+    "legal": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "The Networker Hub",
+          "legalName": "The Networker Group Ltd",
+          "url": "https://the-networker.co.uk",
+          "logo": "https://the-networker.co.uk/assets/logo.png",
+          "image": "https://the-networker.co.uk/assets/logo.png",
+          "email": "hello@the-networker.co.uk",
+          "description": "UK platform for networking events, exhibitions, business opportunities, and professional training.",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
+            "addressLocality": "Huntingdon",
+            "addressRegion": "Cambridgeshire",
+            "postalCode": "PE28 4YF",
+            "addressCountry": "GB"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "hello@the-networker.co.uk",
+            "availableLanguage": [
+              "English"
+            ]
+          },
+          "founder": [
+            {
+              "@type": "Person",
+              "name": "Rosie"
+            },
+            {
+              "@type": "Person",
+              "name": "Catherine Hancher",
+              "alternateName": "Pip"
+            }
+          ]
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "url": "https://the-networker.co.uk/legal-policies.html",
+          "name": "Legal & policies — The Networker Hub",
+          "description": "Privacy policy, terms, refunds, and cookie information for The Networker Hub."
         }
       ]
     }

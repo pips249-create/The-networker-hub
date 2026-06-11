@@ -1154,6 +1154,17 @@ a:hover {
   color: var(--purple-900);
 }
 
+.summary-fee-note {
+  margin: -6px 0 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.checkout-fee-note {
+  margin-top: 8px;
+}
+
 .cta-btn {
   width: 100%;
   background: var(--purple-700);

@@ -4,7 +4,45 @@
 
 **Find this file:** search the repo for `PIPS-TODO` or open [`PIPS-TODO.md`](./PIPS-TODO.md) at the project root.
 
-*Last updated: 11 June 2026*
+*Last updated: 12 June 2026*
+
+---
+
+## Project status (snapshot)
+
+**Overall launch readiness: ~60%** — product code is ahead of production verification and comms.
+
+| Area | Progress | Status |
+|------|----------|--------|
+| Core platform (browse, auth, accounts) | ~85% | Live on preview |
+| Organiser groups & dashboard | ~75% | **~1,000+ groups already in Supabase**; claim + onboarding built |
+| Checkout & payments | ~65% | Code done; **prod webhook, Resend, Connect flag** not verified |
+| Email system | ~40% | 10+ templates in DB; **Resend on prod** not wired |
+| SEO | ~65% | Sitemap, middleware meta, canonical/OG on static pages, breadcrumbs |
+| AEO (AI / answer engines) | ~65% | `llms.txt`, 23 FAQs synced, head JSON-LD, machine discovery |
+| Redirect & launch comms | ~5% | the-networker.co.uk redirect + email waves not started |
+
+### Critical path (do these next)
+
+1. **Prod checkout gate** — `STRIPE_WEBHOOK_SECRET` + one real ticket on production
+2. **Resend on prod** — confirmation email after checkout
+3. **`STRIPE_CONNECT_ENABLED=true`** — organisers receive full ticket price; Hub keeps booking fee only
+4. **July beta email** — 50–100 groups: “Claim your profile, republish one event”
+5. **August redirect** — the-networker.co.uk → hub
+
+### Recently completed (June 2026)
+
+- Booking confirmation email flow fixed (`complete-booking` + pending checkout data)
+- Merged fee model: one booking fee (4.5% + 20p); organisers get full ticket price
+- Stripe Connect destination charges aligned to booking-fee-only `application_fee`
+- Event save/favourite wired to `/api/auth/favourites` on event detail
+- First-login onboarding: tour → claim → profile review → first event
+- Group profile claim flow; cancellation/refund emails; ticket-sales nudge cron
+- SEO/AEO: `robots.txt`, `agents.txt`, `/sitemap.xml`, `/api/seo-meta`, FAQ sync (23 entries), `noindex` on private pages
+
+### Post-launch (not September blockers)
+
+Academy, seat-approval workflow, organiser messaging, review replies, PDF tickets, calendar export polish.
 
 ---
 
@@ -14,12 +52,10 @@
 |-------|--------|
 | **the-networker.co.uk** | Live 1+ year — trusted brand; launch = redirect + upgrade, not cold start |
 | **Email database** | ~3,500 contacts — beta in July, wider rollout August, full list at launch |
-| **Organiser CSV** | ~1,300 rows in `data/networking-groups-organisers.csv` — bulk import target **1,000+ profiles** |
+| **Organiser groups** | **Already in Supabase** (~1,000+ networking group profiles) — ongoing Command Centre cleanup & quality |
 | **Existing behaviour** | Organisers already add their own events on the old site — new hub must match that |
 
-**September success (realistic):** 1,000+ organiser profiles live · 200–400 claimed & active · 500+ events · paid bookings + confirmation emails working · the-networker.co.uk redirecting to the hub.
-
-**Post-launch (not September blockers):** Academy, seat-approval workflow, PDF tickets, calendar export, organiser review replies.
+**September success (realistic):** 1,000+ group profiles browsable · 200–400 claimed & active · 500+ events · paid bookings + confirmation emails working · the-networker.co.uk redirecting to the hub.
 
 ---
 
@@ -35,27 +71,34 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 | [ ] | 1–2 | **Prod gate:** set `STRIPE_WEBHOOK_SECRET` in Vercel; verify webhook on live Stripe endpoint |
 | [x] | 2 | Code: `sendRegistrationEmails()` fires `booking_confirmation` + `organiser_new_registration` after checkout |
 | [ ] | 2 | **Prod gate:** Resend wired (Tab 2) + one real confirmation email received after test checkout |
-| [x] | 2–3 | Migrations **001–070** run in Supabase (all current schema + email templates) |
-| [x] | 3 | Attendee dashboard wired to Supabase registrations (no demo when Supabase configured) |
+| [x] | 2–3 | Migrations **001–070** run in Supabase |
+| [x] | 2–3 | Merged booking-fee model (organisers receive full ticket price; Hub keeps booking fee) |
+| [x] | 2–3 | Stripe Connect code + destination charges (flag: `STRIPE_CONNECT_ENABLED=true`) |
+| [x] | 3 | Attendee dashboard wired to Supabase registrations |
 | [x] | 3 | Attendee reviews — submit form + API + organiser profile display |
+| [x] | 3 | Booking success page passes attendee details for email retry |
 | [ ] | 3–4 | **Gate:** one real paid (or free) ticket end-to-end on production |
 | [ ] | 4 | Organiser can publish an event on Supabase path without Airtable fallback |
 | [x] | 4 | Event detail save/favourite wired to `hub-favourites.js` + `/api/auth/favourites` |
+| [x] | 4 | SEO foundations: `robots.txt`, `sitemap.xml`, dynamic meta for events/organisers |
 
-### July — Organiser readiness + beta
+### July — Claims, cleanup, beta + SEO scale
 
 | Done | Week | Task |
 |:----:|------|------|
-| [ ] | 5 | Bulk import organisers: `node scripts/import-organisers-csv.js data/networking-groups-organisers.csv` |
-| [x] | 5 | Organiser **claim flow** — sign in with CSV email → link to organiser profile |
+| [x] | 5 | Organiser groups live in Supabase (~1,000+ profiles) |
+| [x] | 5 | Organiser **claim flow** — sign in with email on file → link to group profile |
 | [x] | 5 | First-login onboarding: tour → claim → profile review → first event prompt |
-| [ ] | 5–6 | Finish Supabase cutover for organiser dashboard routes still on Airtable |
+| [ ] | 5–6 | Command Centre cleanup: incomplete profiles, logos, descriptions, VAT |
+| [ ] | 5–6 | Finish Supabase cutover for any organiser dashboard routes still on Airtable |
 | [x] | 6 | “New registration” email to organiser when someone books (code live; needs Resend on prod) |
 | [ ] | 6 | Admin moderation queue usable for events + reviews |
-| [x] | 6 | Stripe Connect code live — organisers onboard bank details via Express (needs `STRIPE_CONNECT_ENABLED=true`) |
+| [x] | 6 | Stripe Connect Express onboarding built (enable on prod when checkout gate passes) |
+| [ ] | 6–7 | Deploy SEO assets; confirm sitemap indexes all groups + published events |
 | [ ] | 7 | **Beta email** to 50–100 organisers from the 3,500 list — “Claim your profile, republish one event” |
-| [ ] | 7–8 | Fix beta feedback; target **20 organisers** with at least 1 published event |
-| [ ] | 8 | Load test: browse + organiser pages with 1,000+ profiles |
+| [ ] | 7–8 | Fix beta feedback; target **20 groups** with at least 1 published event |
+| [ ] | 8 | Load test: browse + organiser pages with 1,000+ group profiles |
+| [ ] | 8 | Optional: city landing pages or server-side meta for top SEO win |
 
 ### August — Scale, redirect, comms
 
@@ -75,7 +118,9 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 |:----:|------|
 | [ ] | the-networker.co.uk redirect live |
 | [ ] | Checkout + confirmation email verified on prod |
-| [ ] | 1,000+ organiser profiles browsable |
+| [ ] | Stripe Connect enabled; one paid ticket tested with destination charge |
+| [ ] | 1,000+ organiser group profiles browsable |
+| [ ] | 200+ claimed groups (stretch goal) |
 | [ ] | Support email monitored |
 | [ ] | Command Centre admin login tested |
 
@@ -83,9 +128,14 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 
 ## Tab 1 — Supabase migrations
 
-**Status: all migrations 001–070 have been run** in Supabase (confirmed 11 June 2026).
+**Status: migrations 001–070 confirmed run** in production Supabase (11 June 2026).
 
-Do not re-run. For new environments only, run each file in `supabase/migrations/` in order through `070_event_ticket_sales_nudge.sql`.
+| Migration | Status | Notes |
+|-----------|--------|-------|
+| 001–070 | [x] Run | Full schema, emails, claims, Connect, cancellations, nudge cron |
+| 071–072 | Optional | Admin MFA added then removed — **do not run unless you want MFA back** |
+
+Do not re-run 001–070. For new environments, run each file in `supabase/migrations/` in order through `070_event_ticket_sales_nudge.sql`.
 
 **Verify reviews setup:** `npm run test-review-e2e`
 
@@ -119,6 +169,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | Done | Step |
 |:----:|------|
 | [x] | `booking_confirmation`, `booking_reminder`, `organiser_new_registration` templates in DB (migrations 027+) |
+| [x] | Cancellation, refund, welcome, saved-event nudge templates (migrations 064–066, 070) |
 | [x] | `sendTemplatedEmail()` wired after checkout via `api/_lib/registration-emails.js` |
 | [ ] | Review/edit templates at [`/admin/emails`](https://the-networker-hub.vercel.app/admin/emails) |
 | [ ] | Launch invite template (organiser “claim your profile”) — add in admin or one-off campaign |
@@ -136,6 +187,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | Booking cancellation + refund policy emails |
 | [x] | Saved events — browse, account, and event detail pages use `/api/auth/favourites` |
 | [x] | Saved-event ticket-sales nudge cron (migration 070) |
+| [x] | Booking success page stores attendee email/name for confirmation flow |
 | [ ] | Checkout → insert into `registrations` on **prod** (webhook + payment link metadata) |
 | [ ] | Booking confirmation email on **prod** after checkout (needs Resend) |
 | [ ] | Polish (post-launch OK): calendar export, mobile table layout |
@@ -144,32 +196,62 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 
 ---
 
-## Tab 5 — Organiser migration (1,000+ profiles)
+## Tab 5 — Organiser groups (already in Supabase)
 
 | Done | Step |
 |:----:|------|
-| [ ] | Dry-run import locally against staging / small batch |
-| [ ] | Import full CSV: `node scripts/import-organisers-csv.js data/networking-groups-organisers.csv` |
-| [x] | Slugs + public pages: `/organisers/:slug` for imported rows |
+| [x] | ~1,000+ networking group profiles in Supabase (`organisers` table) |
+| [x] | Slugs + public pages: `/organisers/:slug` |
 | [x] | Claim flow: organiser signs in with email on file → linked to profile |
-| [ ] | Republish path: organiser copies or recreates events from old site |
+| [x] | First-login onboarding pipeline (tour, claim, profile review, first event) |
+| [ ] | Command Centre cleanup: incomplete profiles, logos, descriptions, VAT |
+| [ ] | Republish path: organisers copy or recreate events from old site |
 | [x] | Stripe Connect — Express onboarding for bank details (flag: `STRIPE_CONNECT_ENABLED=true`) |
-| [ ] | Enable Connect on staging/prod and test one paid ticket with destination charge |
+| [ ] | Enable Connect on prod and test one paid ticket with destination charge |
+| [ ] | July beta: **200+ groups claimed** and **20+ with a published event** |
+
+**Fee model (current):**
+
+- Attendee pays: ticket price + booking fee (4.5% + 20p per ticket)
+- Organiser receives: **full ticket price**
+- Hub keeps: booking fee (covers platform + payment processing)
+- With Connect: money routes at checkout; Hub does not hold organiser balances
 
 **How organisers add bank details (Stripe Connect):**
 
 1. Set `STRIPE_CONNECT_ENABLED=true` in Vercel (and `STRIPE_SECRET_KEY`).
-2. Organiser opens **Revenue & payout** on the dashboard — banner: **Connect Stripe**.
-3. Click → hub creates a Stripe Express account → redirects to Stripe’s hosted onboarding.
-4. Organiser enters bank account, identity, and business details on Stripe’s form.
-5. Returns to `/organiser/index.html#events-revenue` — status synced automatically.
-6. Paid ticket revenue routes to their connected account (Hub keeps the booking fee only).
+2. Organiser opens **Revenue & payout** → **Connect Stripe**.
+3. Stripe Express onboarding (bank details on Stripe’s form).
+4. Returns to dashboard — status syncs automatically.
+5. Paid ticket revenue goes to their connected account.
 
-Without Connect enabled, paid revenue stays on the Hub Stripe account and organisers use the legacy **Request payout** flow after the event is archived + 7-day settlement.
+Without Connect, paid revenue stays on the Hub Stripe account (legacy **Request payout** flow — avoid for production).
 
 ---
 
-## Tab 6 — Redirect & launch comms
+## Tab 6 — SEO & AEO
+
+| Done | Step |
+|:----:|------|
+| [x] | `llms.txt` + `agents.txt` for AI crawlers |
+| [x] | 23 FAQs synced: `hubert-faq.js` → `faq.html`, JSON-LD, `llms.txt` |
+| [x] | `robots.txt` — allow public; block admin, account, organiser dashboard |
+| [x] | `/sitemap.xml` — static pages + all groups + published events |
+| [x] | `/api/seo-meta` — title, description, canonical, OG, JSON-LD for events/organisers |
+| [x] | `noindex` on login, register, account, organiser dashboard, admin |
+| [x] | `npm run build-seo` — rebuild FAQ, schema, llms after copy changes |
+| [ ] | Verify sitemap after deploy: `/sitemap.xml` |
+| [x] | Server-side meta injection (`middleware.js`) for `/events/:slug` and `/organisers/:slug` |
+| [x] | Canonical + Open Graph on home, events browse, about, contact, FAQ, opportunities, training, legal |
+| [x] | JSON-LD in `<head>` on static pages; BreadcrumbList on event/organiser pages |
+| [x] | `/api/seo-meta?type=page&page=home` for static page meta |
+| [ ] | City/region landing pages (post-beta) |
+
+**Rebuild after FAQ edits:** `npm run build-seo`
+
+---
+
+## Tab 7 — Redirect & launch comms
 
 | Done | Step |
 |:----:|------|
@@ -182,7 +264,7 @@ Without Connect enabled, paid revenue stays on the Hub Stripe account and organi
 
 ---
 
-## Tab 7 — Quick links
+## Tab 8 — Quick links
 
 | What | Where |
 |------|--------|
@@ -190,20 +272,23 @@ Without Connect enabled, paid revenue stays on the Hub Stripe account and organi
 | Email templates | `/admin/emails` |
 | Attendee dashboard | `/account/index.html` |
 | Review E2E test | `npm run test-review-e2e` |
-| Organiser CSV import | `scripts/import-organisers-csv.js` |
 | Env var reference | `.env.example` |
+| Config check | `GET /api/auth/config-check` |
 | Supabase setup | `SUPABASE-SETUP.md` |
 | Checkout + email | `CHECKOUT-SETUP.md` |
+| SEO / AEO | `robots.txt`, `agents.txt`, `llms.txt`, `/sitemap.xml`, `/api/seo-meta` |
+| Rebuild FAQ + schema | `npm run build-seo` |
 | Stripe Connect + refunds | `docs/REFUNDS-AND-STRIPE-CONNECT.md` |
 | Auth & email notes | `AUTH-SETUP.md`, `SUPABASE-NO-EMAIL.md` |
-| Big-picture roadmap | `NETWORKER-HUB-ROADMAP.md` |
+| Compliance ops | `docs/COMPLIANCE-RUNBOOK.md` |
 
 ---
 
 ## Notes
 
-- Migrations are **one-time per database** — don't re-run after they've succeeded.
-- **June gate** is prod checkout + confirmation email — everything else depends on it.
-- Importing 1,300 organiser rows is fast; **getting 200+ to claim profiles** needs the July/August email waves.
-- Code for emails, Connect, claims, and cancellations is built — remaining work is mostly **env vars, prod verification, import, and comms**.
+- Migrations **001–070** are one-time per database — don't re-run after they've succeeded.
+- **June gate** is prod checkout + confirmation email + Connect enabled — everything else scales from there.
+- Organiser **groups are already in Supabase** — July/August focus is **claims, cleanup, republishing events**, and email waves (not a bulk import).
+- Code for emails, Connect, claims, cancellations, favourites, and SEO is built — remaining work is **env vars, prod verification, group quality, and comms**.
+- After editing FAQs run `npm run build-seo` before deploy.
 - Add new items here so launch tasks stay in one place.

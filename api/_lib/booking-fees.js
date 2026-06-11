@@ -9,6 +9,8 @@ const BOOKING_FEE_PER_TICKET = 0.2;
 const BOOKING_FEE_LABEL = 'Booking fee (4.5% + 20p per ticket)';
 const BOOKING_FEE_EXPLANATION =
   'The booking fee covers platform and payment processing. Organisers receive the full ticket price.';
+const BOOKING_FEE_NON_REFUNDABLE_NOTE =
+  'The Networker Hub booking fee (platform fee) is non-refundable.';
 
 function roundMoney(amount) {
   return Math.round(Number(amount) * 100) / 100;
@@ -72,6 +74,7 @@ module.exports = {
   BOOKING_FEE_PER_TICKET,
   BOOKING_FEE_LABEL,
   BOOKING_FEE_EXPLANATION,
+  BOOKING_FEE_NON_REFUNDABLE_NOTE,
   calculateBookingFee,
   calculateCheckoutTotals,
   ticketSubtotalFromCheckoutTotal,

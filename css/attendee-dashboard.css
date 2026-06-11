@@ -117,15 +117,44 @@
 
 .ad-stats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 32px;
 }
 
-@media (max-width: 520px) {
+@media (max-width: 720px) {
   .ad-stats {
     grid-template-columns: 1fr;
   }
+}
+
+.ad-side-count {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ad-text-soft);
+  background: var(--ad-teal-pale);
+  border-radius: 999px;
+  padding: 1px 7px;
+  vertical-align: middle;
+}
+
+.ad-enquiry-message {
+  max-width: 280px;
+  font-size: 13px;
+  color: var(--ad-text-mid);
+  line-height: 1.45;
+}
+
+.ad-btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.hub-side-nav-link.is-active .ad-side-count {
+  color: var(--ad-teal-dark);
+  background: var(--ad-teal-light);
 }
 
 .ad-stat {

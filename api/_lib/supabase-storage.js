@@ -52,27 +52,29 @@ function publicObjectUrl(path) {
  * @returns {Promise<string|null>} public https URL
  */
 async function resolveImageUrl({ folder, logoUrl, logoBase64, logoMime, logoFilename }) {
+  const buffer = decodeUploadBuffer(logoBase64);
+  if (buffer) {
+    const sb = getSupabaseAdmin();
+    await ensureBucket(sb);
+
+    const ext = extFromMime(logoMime || logoFilename);
+    const name = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
+    const type = logoMime || `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+
+    const { error } = await sb.storage.from(BUCKET).upload(name, buffer, {
+      contentType: type,
+      upsert: false,
+    });
+    if (error) throw new Error(error.message);
+
+    const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(name);
+    return (pub && pub.publicUrl) || publicObjectUrl(name);
+  }
+
   const url = String(logoUrl || '').trim();
   if (url && /^https?:\/\//i.test(url)) return url;
 
-  const buffer = decodeUploadBuffer(logoBase64);
-  if (!buffer) return null;
-
-  const sb = getSupabaseAdmin();
-  await ensureBucket(sb);
-
-  const ext = extFromMime(logoMime || logoFilename);
-  const name = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
-  const type = logoMime || `image/${ext === 'jpg' ? 'jpeg' : ext}`;
-
-  const { error } = await sb.storage.from(BUCKET).upload(name, buffer, {
-    contentType: type,
-    upsert: false,
-  });
-  if (error) throw new Error(error.message);
-
-  const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(name);
-  return (pub && pub.publicUrl) || publicObjectUrl(name);
+  return null;
 }
 
 module.exports = {

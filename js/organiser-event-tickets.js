@@ -647,6 +647,7 @@
           description: ev.description,
           location: ev.location,
           venue: ev.venue,
+          ...(ev.imageUrl ? { photoUrl: ev.imageUrl } : {}),
           attendeeExtras: extras,
         }),
       });
@@ -659,7 +660,7 @@
     el.className = 'ee-alert';
     el.hidden = false;
     el.innerHTML =
-      '<strong>Your event is listed on the hub</strong> but ticket sales are still off. Visitors can see it and nudge you from the public event page. When you are ready, enable sales below.' +
+      '<strong>Ticket sales are off for this event</strong> — visitors see a nudge instead of checkout. Turn sales on when you are ready.' +
       '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;">' +
       '<button type="button" class="ee-btn ee-btn-primary" id="ee-enable-sales-btn">Enable ticket sales</button>' +
       '</div>';
@@ -797,7 +798,7 @@
         return;
       }
       if (!refund.refundTermsAgreed) {
-        showAlert('Confirm you understand you are responsible for refunds.');
+        showAlert('Confirm you understand refunds are your responsibility under Stripe Connect.');
         updatePublishButton();
         return;
       }
@@ -854,17 +855,14 @@
     if (!publish) {
       existingTicketsLoaded = true;
       showAlert(
-        'Tickets saved as draft. Choose VAT and refund policy below, then click Publish event — or return to My Events and finish later.',
+        'Tickets saved as draft. Your event is not on Browse events yet — choose VAT and refund policy below, then click Publish event.',
         'ok'
       );
       document.getElementById('ee-refund-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       return;
     }
 
-    showAlert(
-      'Your event is now listed on the hub. Ticket sales stay off until you open the event tickets page and click Enable ticket sales.',
-      'ok'
-    );
+    showAlert('Your event is live on the hub and ticket sales are on.', 'ok');
 
     try {
       sessionStorage.removeItem(SERIES_STORAGE_KEY);

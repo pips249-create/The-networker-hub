@@ -33,23 +33,42 @@
     });
   }
 
+  function switchHubMode(mode, root) {
+    return fetch('/api/auth/hub-mode', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: mode }),
+    })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (data.ok && data.redirect) {
+          window.location.href = (root || '') + data.redirect.replace(/^\//, '');
+        }
+        return data;
+      });
+  }
+
   window.HubModeSwitch = {
     html: function (hubView) {
       var isOrg = hubView === 'organiser';
       return (
-        '<div class="hub-mode-switch" role="group" aria-label="Switch between attendee and organiser">' +
+        '<div class="hub-mode-switch" role="group" aria-label="Switch between your tickets and organiser workspace">' +
         '<button type="button" class="hub-mode-btn' +
         (!isOrg ? ' is-active' : '') +
-        '" data-hub-mode="attendee">Attendee</button>' +
+        '" data-hub-mode="attendee">My tickets</button>' +
         '<button type="button" class="hub-mode-btn' +
         (isOrg ? ' is-active' : '') +
-        '" data-hub-mode="organiser">Organiser</button>' +
+        '" data-hub-mode="organiser">Organiser hub</button>' +
         '</div>'
       );
     },
     bind: function (container, root) {
       bindSwitch(container, root || '');
     },
+    switchTo: switchHubMode,
   };
 })();
 
@@ -116,11 +135,11 @@
 
   function organiserNavLink(user) {
     if (user) {
-      return link('organiser/index.html', 'Organiser dashboard', 'organiser', 'nav-organiser');
+      return link('organiser/index.html', 'Organiser workspace', 'organiser', 'nav-organiser');
     }
     return link(
       'login.html?next=/organiser/index.html',
-      'Organiser dashboard',
+      'Organiser workspace',
       'organiser',
       'nav-organiser'
     );
@@ -153,12 +172,12 @@
       href('organiser/index.html') +
       '"' +
       organiserActive +
-      '>Organiser dashboard</a>' +
+      '>Organiser workspace</a>' +
       '<a role="menuitem" class="nav-dropdown-item" href="' +
       href('account/index.html') +
       '"' +
       accountActive +
-      '>Attend events</a>' +
+      '>My tickets &amp; reviews</a>' +
       '<a role="menuitem" class="nav-dropdown-item" href="' +
       href('account/settings.html') +
       '"' +

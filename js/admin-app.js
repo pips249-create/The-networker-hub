@@ -5472,22 +5472,32 @@
     (root || main).querySelectorAll('[data-admin-logo-key]').forEach(bindAdminLogoZone);
   }
 
+  function rememberSelectedGroup(o) {
+    if (!o || o.id == null) return;
+    groupCleanupState.selected[String(o.id)] = {
+      id: o.id,
+      name: o.name || 'Untitled',
+      email: o.email || '',
+      event_count: o.event_count || 0,
+    };
+  }
+
+  function forgetSelectedGroup(id) {
+    delete groupCleanupState.selected[String(id)];
+  }
+
+  function clearSelectedGroups() {
+    groupCleanupState.selected = {};
+  }
+
   function getSelectedGroupIds() {
-    return Object.keys(groupCleanupState.selected).filter(function (id) {
-      return groupCleanupState.selected[id];
-    });
+    return Object.keys(groupCleanupState.selected);
   }
 
   function selectedGroupRows() {
-    var ids = getSelectedGroupIds();
-    var organisers = (groupCleanupCache && groupCleanupCache.organisers) || [];
-    return ids
-      .map(function (id) {
-        return organisers.find(function (o) {
-          return String(o.id) === String(id);
-        });
-      })
-      .filter(Boolean);
+    return getSelectedGroupIds().map(function (id) {
+      return groupCleanupState.selected[id];
+    });
   }
 
   function updateGroupBulkBar() {
@@ -5495,14 +5505,36 @@
     var countEl = document.getElementById('group-bulk-count');
     var mergeSection = document.getElementById('group-merge-section');
     var primarySelect = document.getElementById('group-merge-primary');
+    var chipsEl = document.getElementById('group-selected-chips');
     var ids = getSelectedGroupIds();
+    var rows = selectedGroupRows();
     if (countEl) countEl.textContent = String(ids.length);
     if (bar) bar.classList.toggle('hidden', ids.length === 0);
     if (mergeSection) mergeSection.classList.toggle('hidden', ids.length < 2);
     var deleteSection = document.getElementById('group-delete-section');
     if (deleteSection) deleteSection.classList.toggle('hidden', ids.length === 0);
+    if (chipsEl) {
+      chipsEl.innerHTML = rows
+        .map(function (o) {
+          var label = o.name || 'Untitled';
+          if (o.email) label += ' (' + o.email + ')';
+          return (
+            '<span class="inline-flex items-center gap-1 rounded-full border border-brand-200 bg-white px-2.5 py-0.5 text-xs text-brand-900">' +
+            '<span class="truncate max-w-[14rem]" title="' +
+            attrEsc(label) +
+            '">' +
+            esc(label) +
+            '</span>' +
+            '<button type="button" class="group-unselect shrink-0 text-slate-400 hover:text-red-700 font-bold leading-none" data-unselect-group="' +
+            attrEsc(o.id) +
+            '" aria-label="Remove ' +
+            attrEsc(o.name || 'group') +
+            ' from selection">×</button></span>'
+          );
+        })
+        .join('');
+    }
     if (primarySelect) {
-      var rows = selectedGroupRows();
       var current = primarySelect.value;
       primarySelect.innerHTML = rows
         .map(function (o) {
@@ -5511,7 +5543,7 @@
             '<option value="' +
             attrEsc(o.id) +
             '"' +
-            (current === o.id ? ' selected' : '') +
+            (String(current) === String(o.id) ? ' selected' : '') +
             '>' +
             esc(label) +
             '</option>'
@@ -5519,6 +5551,15 @@
         })
         .join('');
       if (!primarySelect.value && rows.length) primarySelect.value = rows[0].id;
+    }
+    if (main) {
+      var selectPage = document.getElementById('group-cleanup-select-page');
+      var pageCbs = main.querySelectorAll('.group-select-checkbox');
+      var allPageChecked = pageCbs.length > 0;
+      pageCbs.forEach(function (cb) {
+        if (!groupCleanupState.selected[cb.value]) allPageChecked = false;
+      });
+      if (selectPage) selectPage.checked = allPageChecked;
     }
   }
 
@@ -5989,7 +6030,7 @@
     })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Merge failed');
-        groupCleanupState.selected = {};
+        clearSelectedGroups();
         if (msg) {
           msg.textContent =
             'Merged ' +
@@ -6116,7 +6157,7 @@
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Delete failed');
         ids.forEach(function (id) {
-          delete groupCleanupState.selected[id];
+          forgetSelectedGroup(id);
           delete groupCleanupState.expanded[id];
         });
         var resultMsg = groupDeleteResultMsg(data, ids.length);
@@ -6197,7 +6238,7 @@
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Bulk update failed');
         delete adminLogoPending.bulk;
-        groupCleanupState.selected = {};
+        clearSelectedGroups();
         if (msg) {
           msg.textContent = 'Updated ' + (data.updated || ids.length) + ' groups.';
           msg.className = 'text-xs text-emerald-700 font-semibold';
@@ -6369,7 +6410,7 @@
     }
 
     if (e.target.closest('#group-bulk-clear')) {
-      groupCleanupState.selected = {};
+      clearSelectedGroups();
       if (main) {
         main.querySelectorAll('.group-select-checkbox').forEach(function (cb) {
           cb.checked = false;
@@ -6377,6 +6418,19 @@
       }
       var selectPage = document.getElementById('group-cleanup-select-page');
       if (selectPage) selectPage.checked = false;
+      updateGroupBulkBar();
+      return;
+    }
+
+    var unselectBtn = e.target.closest('[data-unselect-group]');
+    if (unselectBtn) {
+      var unselectId = unselectBtn.getAttribute('data-unselect-group');
+      forgetSelectedGroup(unselectId);
+      if (main) {
+        main.querySelectorAll('.group-select-checkbox').forEach(function (cb) {
+          if (String(cb.value) === String(unselectId)) cb.checked = false;
+        });
+      }
       updateGroupBulkBar();
       return;
     }
@@ -6480,16 +6534,26 @@
       }
       if (e.target.classList && e.target.classList.contains('group-select-checkbox')) {
         var gid = e.target.value;
-        if (e.target.checked) groupCleanupState.selected[gid] = true;
-        else delete groupCleanupState.selected[gid];
+        if (e.target.checked) {
+          var organisers = (groupCleanupCache && groupCleanupCache.organisers) || [];
+          var row = organisers.find(function (o) {
+            return String(o.id) === String(gid);
+          });
+          if (row) rememberSelectedGroup(row);
+        } else forgetSelectedGroup(gid);
         updateGroupBulkBar();
         return;
       }
       if (e.target.id === 'group-cleanup-select-page' && main) {
+        var pageOrganisers = (groupCleanupCache && groupCleanupCache.organisers) || [];
         main.querySelectorAll('.group-select-checkbox').forEach(function (cb) {
           cb.checked = e.target.checked;
-          if (e.target.checked) groupCleanupState.selected[cb.value] = true;
-          else delete groupCleanupState.selected[cb.value];
+          if (e.target.checked) {
+            var pageRow = pageOrganisers.find(function (o) {
+              return String(o.id) === String(cb.value);
+            });
+            if (pageRow) rememberSelectedGroup(pageRow);
+          } else forgetSelectedGroup(cb.value);
         });
         updateGroupBulkBar();
       }
@@ -6659,6 +6723,7 @@
             : o.emails_enabled === false
               ? '<span class="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">Emails off</span>'
               : '<span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">Login ready</span>';
+          if (groupCleanupState.selected[o.id]) rememberSelectedGroup(o);
           var checked = groupCleanupState.selected[o.id] ? ' checked' : '';
           var incomplete = (o.missing || []).length > 0;
           var isOpen = !!groupCleanupState.expanded[o.id];
@@ -6780,6 +6845,8 @@
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
       '<p class="text-sm font-semibold text-brand-900"><span id="group-bulk-count">0</span> groups selected</p>' +
       '<button type="button" id="group-bulk-clear" class="text-xs font-semibold text-slate-600 hover:text-brand-900">Clear selection</button></div>' +
+      '<p class="text-xs text-slate-600">Search again to add more groups — your selection is kept until you merge, delete, or clear.</p>' +
+      '<div id="group-selected-chips" class="flex flex-wrap gap-1.5"></div>' +
       '<p class="text-xs text-slate-600">Only filled-in fields are applied to every selected group.</p>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Description / bio</label>' +
       '<textarea name="bulk_description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Leave blank to keep existing bios"></textarea></div>' +

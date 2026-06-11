@@ -117,6 +117,54 @@ function buildHubertSchema(origin) {
   };
 }
 
+function buildCollectionPageSchema(name, path, description, origin) {
+  const base = siteOrigin(origin);
+  const url = base + (path.startsWith('/') ? path : '/' + path);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': url,
+    url: url,
+    name: name + ' — ' + SITE_NAME,
+    description: description,
+    isPartOf: {
+      '@type': 'WebSite',
+      name: SITE_NAME,
+      url: base,
+    },
+  };
+}
+
+function buildBreadcrumbListSchema(items, origin) {
+  const base = siteOrigin(origin);
+  return {
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map(function (item, index) {
+      const path = item.path.startsWith('/') ? item.path : '/' + item.path;
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+        item: base + path,
+      };
+    }),
+  };
+}
+
+function stripSchemaContext(schema) {
+  if (!schema || typeof schema !== 'object') return schema;
+  const copy = Object.assign({}, schema);
+  delete copy['@context'];
+  return copy;
+}
+
+function buildSchemaGraphFromParts(parts, origin) {
+  return {
+    '@context': 'https://schema.org',
+    '@graph': parts.map(stripSchemaContext),
+  };
+}
+
 function buildContactPageSchema(origin) {
   const base = siteOrigin(origin);
   return {
@@ -152,6 +200,42 @@ function buildSchemaGraph(page, origin) {
       description:
         'The Networker Hub connects UK business owners and professionals with networking events, exhibitions, and training.',
       mainEntity: buildOrganizationSchema(base),
+    });
+  } else if (page === 'events') {
+    graph.push(
+      buildCollectionPageSchema(
+        'Networking events',
+        '/events/',
+        'Browse UK networking events, meetings, exhibitions, and awards.',
+        base
+      )
+    );
+  } else if (page === 'opportunities') {
+    graph.push(
+      buildCollectionPageSchema(
+        'Business opportunities',
+        '/opportunities/',
+        'Browse franchises, partnerships, and business opportunities across the UK.',
+        base
+      )
+    );
+  } else if (page === 'training') {
+    graph.push(
+      buildCollectionPageSchema(
+        'Training & courses',
+        '/training/',
+        'Workshops, seminars, and masterclasses from The Networker Academy.',
+        base
+      )
+    );
+  } else if (page === 'legal') {
+    graph.push({
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      url: base + '/legal-policies.html',
+      name: 'Legal & policies — The Networker Hub',
+      description:
+        'Privacy policy, terms, refunds, and cookie information for The Networker Hub.',
     });
   }
 
@@ -195,7 +279,23 @@ function buildLlmsTxt(origin) {
     '/about.html\n' +
     '- Legal: ' +
     base +
-    '/legal-policies.html\n\n' +
+    '/legal-policies.html\n' +
+    '- Sitemap: ' +
+    base +
+    '/sitemap.xml\n\n' +
+    '## Machine discovery\n' +
+    '- Sitemap: ' +
+    base +
+    '/sitemap.xml\n' +
+    '- AI crawler policy: ' +
+    base +
+    '/agents.txt\n' +
+    '- Dynamic page meta API: ' +
+    base +
+    '/api/seo-meta?type=event&slug={slug}\n' +
+    '- Organiser meta API: ' +
+    base +
+    '/api/seo-meta?type=organiser&slug={slug}\n\n' +
     '## Hubert — business butler & concierge\n' +
     'Hubert is the on-site AI assistant. He answers questions about browsing, accounts, tickets, opportunities, and organiser tools. He can look up live published events and business opportunities when asked.\n\n' +
     '## Frequently asked questions\n\n' +
@@ -213,6 +313,9 @@ module.exports = {
   buildFaqPageSchema,
   buildHubertSchema,
   buildContactPageSchema,
+  buildCollectionPageSchema,
+  buildBreadcrumbListSchema,
+  buildSchemaGraphFromParts,
   buildSchemaGraph,
   buildLlmsTxt,
   FAQ_AEO_ENTRIES,

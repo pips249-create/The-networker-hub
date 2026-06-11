@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260614" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260708" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260611" />
   </head>
   <body class="organiser-event-edit-page">
     <div id="ee-page-loading" class="ee-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
@@ -178,17 +178,17 @@
             </div>
           </div>
           <div class="ee-refund-agreement">
-            <p><strong>You are responsible for all refunds</strong></p>
+            <p><strong>Refunds and Stripe Connect</strong></p>
             <ul>
-              <li>Refunds are issued directly by you through your Stripe account</li>
-              <li>The Networker Hub does not hold or process attendee payments</li>
-              <li>The attendee booking fee is non-refundable to you as the organiser</li>
-              <li>If you cancel an event, you must refund all attendees within 14 days</li>
+              <li>When attendees buy tickets, the <strong>ticket price</strong> is paid to your connected Stripe account at checkout</li>
+              <li>The attendee <strong>booking fee</strong> (4.5% + 20p per ticket) is retained by The Networker Hub — it is separate from your ticket revenue</li>
+              <li>Refunds are processed through Stripe and debited from your connected account balance according to your refund policy</li>
+              <li>You must honour your refund policy and UK consumer law — including refunding all attendees within 14 days if you cancel the event</li>
             </ul>
           </div>
           <label class="ee-check ee-refund-check">
             <input type="checkbox" id="refund-terms-agreed" />
-            <span>I understand I am responsible for processing all refunds directly</span>
+            <span>I understand I am responsible for honouring refunds via my connected Stripe account</span>
           </label>
           <p class="ee-alert ee-alert-warn" id="ee-publish-warn" hidden>Add at least one ticket type, choose how VAT applies, and complete the refund policy before publishing.</p>
         </div>

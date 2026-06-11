@@ -1,4 +1,5 @@
 const Stripe = require('stripe');
+const { BOOKING_FEE_NON_REFUNDABLE_NOTE } = require('./booking-fees');
 
 function getStripeSecretKey() {
   return String(process.env.STRIPE_SECRET_KEY || '').trim();
@@ -44,7 +45,10 @@ async function createPaidCheckoutSession(opts) {
     lineItems.push({
       price_data: {
         currency: 'gbp',
-        product_data: { name: 'Booking fee' },
+        product_data: {
+          name: 'Booking fee',
+          description: BOOKING_FEE_NON_REFUNDABLE_NOTE,
+        },
         unit_amount: feePence,
       },
       quantity: 1,

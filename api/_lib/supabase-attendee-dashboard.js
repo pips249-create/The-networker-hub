@@ -9,6 +9,7 @@ const {
   formatRefundPolicyText,
 } = require('./event-refund-policy');
 const { isRefundEligibleForCancellation } = require('./cancellation-email-sections');
+const { listOpportunityEnquiriesSentBySession } = require('./supabase-opportunities');
 
 function deriveReviewStatus(hasReview, row) {
   const ev = row.events || {};
@@ -137,24 +138,29 @@ async function listReviewsForAttendee(sb, attendeeId) {
 
 async function getAttendeeDashboardFromSupabase(session) {
   if (!isSupabaseConfigured()) {
-    return { registrations: [], stats: buildStats([]) };
+    return { registrations: [], stats: buildStats([]), opportunityEnquiries: [] };
   }
 
   const sb = getSupabaseAdmin();
   const attendeeId = await resolveAttendeeId(sb, session);
+  const enquiryPromise = listOpportunityEnquiriesSentBySession(session);
+
   if (!attendeeId) {
-    return { registrations: [], stats: buildStats([]) };
+    const opportunityEnquiries = await enquiryPromise;
+    return { registrations: [], stats: buildStats([]), opportunityEnquiries };
   }
 
-  const [rows, reviewByEventId] = await Promise.all([
+  const [rows, reviewByEventId, opportunityEnquiries] = await Promise.all([
     listRegistrationsForAttendee(sb, attendeeId),
     listReviewsForAttendee(sb, attendeeId),
+    enquiryPromise,
   ]);
 
   const registrations = rows.map((row) => mapRegistrationRow(row, reviewByEventId));
   return {
     registrations,
     stats: buildStats(registrations),
+    opportunityEnquiries,
   };
 }
 

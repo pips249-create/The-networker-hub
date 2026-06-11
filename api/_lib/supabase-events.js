@@ -5,6 +5,7 @@ const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./su
 const { eventImageUrl } = require('./event-image');
 const { eventHasTicketsOnSale } = require('./ticket-sales');
 const { connectRequiredForPaidCheckout } = require('./stripe-connect');
+const { publicOrganiserSlug } = require('./organiser-slug');
 
 const IN_CHUNK_SIZE = 80;
 
@@ -315,6 +316,7 @@ function rowToEvent(row, organiser, ticketRows) {
     venueName: venue,
     venueAddress: [row.address, city, postcode].filter(Boolean).join(', '),
     organiserId: row.organiser_id || (organiser && organiser.id) || '',
+    organiserSlug: organiser ? publicOrganiserSlug(organiser) || '' : '',
     organiserLogo: organiser ? String(organiser.photo_url || '') : '',
     organiserProfile: organiser ? String(organiser.description || '') : '',
     industry: String(industry),
@@ -678,6 +680,7 @@ module.exports = {
   rowToEvent,
   fetchApprovedEvents,
   fetchPublishedEventRows,
+  fetchPublishedEventBySlug,
   fetchEventSeriesDates,
   isPublicEvent,
   ukOutcode,

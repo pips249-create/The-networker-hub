@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Attend events – The Networker Hub</title>
+    <title>My tickets &amp; reviews – The Networker Hub</title>
+    <meta name="robots" content="noindex, nofollow" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -11,18 +12,18 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260627" />
-    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260628" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260717" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260628" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627" />
 
   </head>
   <body class="attendee-dashboard-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260712" data-root="../" data-page="account"></script>
+    <script src="../js/site-nav.js?v=20260628" data-root="../" data-page="account"></script>
 
     <div id="ad-signin" class="ad-signin" hidden>
-      <p>Sign in to see your upcoming events, tickets, and reviews.</p>
+      <p>Sign in to see event tickets you have bought, reviews to leave, and business opportunity enquiries you have sent.</p>
       <p style="margin-top: 12px">
         <a class="ad-btn ad-btn-primary" href="../login.html?next=/account/index.html">Sign in</a>
       </p>
@@ -31,13 +32,28 @@
     <div id="ad-shell" hidden>
       <div class="ad-dashboard-layout">
         <aside class="ad-sidebar">
-          <nav class="hub-side-nav hub-side-nav--minimal ad-dash-bar" aria-label="Attend events">
+          <nav class="hub-side-nav hub-side-nav--minimal ad-dash-bar" aria-label="My tickets and reviews">
             <a href="#overview" class="hub-side-nav-link is-active" data-ad-route="overview">Overview</a>
-            <a href="#upcoming" class="hub-side-nav-link" data-ad-route="upcoming">Upcoming</a>
+            <span class="hub-side-nav-divider">Event tickets</span>
+            <a href="#upcoming" class="hub-side-nav-link" data-ad-route="upcoming">
+              Upcoming
+              <span class="ad-side-count" id="ad-side-upcoming">0</span>
+            </a>
             <a href="#payments" class="hub-side-nav-link" data-ad-route="payments">Payments</a>
-            <a href="#saved" class="hub-side-nav-link" data-ad-route="saved">Saved</a>
-            <a href="#past" class="hub-side-nav-link" data-ad-route="past">Past</a>
-            <a href="#reviews-pending" class="hub-side-nav-link" data-ad-route="reviews-pending">Reviews</a>
+            <a href="#saved" class="hub-side-nav-link" data-ad-route="saved">Saved events</a>
+            <a href="#past" class="hub-side-nav-link" data-ad-route="past">
+              Past events
+              <span class="ad-side-count" id="ad-side-past">0</span>
+            </a>
+            <span class="hub-side-nav-divider">Opportunities &amp; reviews</span>
+            <a href="#opportunity-enquiries" class="hub-side-nav-link" data-ad-route="opportunity-enquiries">
+              My enquiries
+              <span class="ad-side-count" id="ad-side-enquiries">0</span>
+            </a>
+            <a href="#reviews-pending" class="hub-side-nav-link" data-ad-route="reviews-pending">
+              Reviews to write
+              <span class="ad-side-count" id="ad-side-pending">0</span>
+            </a>
             <div class="hub-side-nav-util">
               <a href="../events/index.html">Browse events</a>
               <a href="settings.html">Settings</a>
@@ -48,10 +64,20 @@
         <div class="ad-main">
           <div class="ad-wrap">
             <header class="ad-page-head">
-              <p class="ad-hero-kicker">Attend events</p>
+              <p class="ad-hero-kicker">My tickets &amp; reviews</p>
               <h1 class="ad-welcome-name" id="ad-welcome-name">Welcome back</h1>
-              <p class="ad-welcome-sub" id="ad-welcome-sub">Your tickets and upcoming events in one place.</p>
+              <p class="ad-welcome-sub" id="ad-welcome-sub">
+                Everything you have bought or taken part in as an attendee — tickets, saved events, reviews, and enquiries you sent to business listings.
+              </p>
             </header>
+
+            <aside class="hub-dash-context hub-dash-context--attendee">
+              <p>
+                Running a networking group?
+                <button type="button" class="hub-dash-context-btn" data-hub-switch="organiser">Switch to Organiser workspace</button>
+                to manage your group profile, events, revenue, and opportunity listings.
+              </p>
+            </aside>
 
             <p class="ad-demo-note" id="ad-demo-note" hidden>
               Showing sample layout — your bookings will appear here once you register for events.
@@ -70,9 +96,14 @@
                   <div class="ad-stat-value" id="ad-stat-reviews">0</div>
                   <div class="ad-stat-meta" id="ad-stat-reviews-pending">—</div>
                 </div>
+                <div class="ad-stat">
+                  <div class="ad-stat-label">Opportunity enquiries sent</div>
+                  <div class="ad-stat-value" id="ad-stat-enquiries">0</div>
+                  <div class="ad-stat-meta" id="ad-stat-enquiries-hint">—</div>
+                </div>
               </div>
               <p class="ad-section-hint">
-                Use the menu on the left to view your registrations or leave reviews after events.
+                This area is for attending events and engaging with listings — not for managing a group. Use Organiser workspace in the nav for that.
               </p>
             </section>
 
@@ -186,6 +217,32 @@
               </div>
               <p class="ad-empty" id="ad-past-empty" hidden>You have no past events yet.</p>
               <nav class="ad-pagination" id="ad-pagination-past" aria-label="Past events pages" hidden></nav>
+            </section>
+
+            <!-- Opportunity enquiries sent -->
+            <section class="ad-page" id="ad-page-opportunity-enquiries" data-ad-page="opportunity-enquiries">
+              <h2 class="ad-section-title">My opportunity enquiries</h2>
+              <p class="ad-section-sub">Messages you sent to business opportunity listings on the Hub. Organisers reply by email.</p>
+              <div class="ad-table-scroll">
+                <div class="ad-table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Sent</th>
+                        <th>Listing</th>
+                        <th>Your message</th>
+                        <th>Status</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="ad-enquiries-body"></tbody>
+                  </table>
+                </div>
+              </div>
+              <p class="ad-empty" id="ad-enquiries-empty" hidden>
+                You have not enquired about any listings yet.
+                <a href="../opportunities/index.html">Browse opportunities →</a>
+              </p>
             </section>
 
             <!-- Reviews pending -->
@@ -358,6 +415,6 @@
 
     <script src="../js/hub-favourites.js?v=20260629"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260717"></script>
+    <script src="../js/attendee-dashboard.js?v=20260628"></script>
   </body>
 </html>

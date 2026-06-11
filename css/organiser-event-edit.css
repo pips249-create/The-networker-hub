@@ -274,7 +274,7 @@ a.ee-wizard-link:hover {
   margin-bottom: 14px;
 }
 
-.ee-field label {
+.ee-field > label {
   display: block;
   font-size: 12px;
   font-weight: 600;
@@ -286,7 +286,7 @@ a.ee-wizard-link:hover {
   cursor: pointer;
 }
 
-.ee-field input,
+.ee-field input:not([type='radio']):not([type='checkbox']),
 .ee-field select,
 .ee-field textarea {
   width: 100%;
@@ -811,7 +811,7 @@ a.ee-wizard-link:hover {
 
 .ee-check {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   font-size: 13px;
   color: var(--ee-text);
@@ -820,8 +820,23 @@ a.ee-wizard-link:hover {
 }
 
 .ee-check input {
-  margin-top: 3px;
+  width: auto;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
   accent-color: var(--ee-purple);
+}
+
+.ee-vat-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.ee-vat-options .ee-check {
+  margin-bottom: 0;
 }
 
 .ee-tier-row-expanded {

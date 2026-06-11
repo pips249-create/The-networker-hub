@@ -56,6 +56,55 @@ body.hub-page-organiser.organiser-event-edit-page {
   max-width: 100%;
 }
 
+.hub-dash-context {
+  margin: 0 0 24px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  border: 1px solid transparent;
+}
+
+.hub-dash-context p {
+  margin: 0;
+}
+
+.hub-dash-context-btn {
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.hub-dash-context-btn:hover {
+  opacity: 0.85;
+}
+
+.hub-dash-context--attendee {
+  background: #f3eef5;
+  border-color: #e8dbea;
+  color: #5a4a62;
+}
+
+.hub-dash-context--attendee .hub-dash-context-btn {
+  color: #7a3d8a;
+}
+
+.hub-dash-context--organiser {
+  background: #f0f4ff;
+  border-color: #d8e2f8;
+  color: #3d4a62;
+}
+
+.hub-dash-context--organiser .hub-dash-context-btn {
+  color: #1d4ed8;
+}
+
 .organiser-dashboard-page #hub-site-nav,
 .attendee-dashboard-page #hub-site-nav,
 .organiser-event-edit-page #hub-site-nav {

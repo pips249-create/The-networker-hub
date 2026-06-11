@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Organiser dashboard – The Networker Hub</title>
+    <title>Organiser workspace – The Networker Hub</title>
+    <meta name="robots" content="noindex, nofollow" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -11,18 +12,18 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260618" />
-    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260624" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260628" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260610d" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260628" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260708c" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260712" data-root="../" data-page="organiser"></script>
+    <script src="../js/site-nav.js?v=20260628" data-root="../" data-page="organiser"></script>
 
     <div id="org-signin" class="org-signin" hidden>
       <p class="org-section-sub">
-        Sign in to manage group profiles, events, Academy sessions, and tickets. Use <strong>Attendee</strong> mode in the nav to browse and book events.
+        Sign in to your organiser workspace — group profiles, events, business opportunities, reviews, revenue, and attendees. Use <strong>My tickets</strong> in the nav for bookings and reviews you leave as an attendee.
       </p>
       <p style="margin-top: 12px">
         <a class="org-btn org-btn-primary" href="../login.html?next=/organiser/index.html">Sign in</a>
@@ -32,7 +33,7 @@
     <div id="org-shell" hidden>
       <div class="org-dashboard-layout">
         <aside class="org-sidebar">
-          <nav class="hub-side-nav hub-side-nav--minimal org-dash-bar" aria-label="Organiser dashboard">
+          <nav class="hub-side-nav hub-side-nav--minimal org-dash-bar" aria-label="Organiser workspace">
             <a href="#dashboard" class="hub-side-nav-link is-active" data-org-route="dashboard">Overview</a>
             <span class="hub-side-nav-divider">Profiles &amp; team</span>
             <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Group profiles</a>
@@ -49,7 +50,7 @@
             <a href="#events-revenue" class="hub-side-nav-link" data-org-route="events-revenue">Revenue</a>
             <span class="hub-side-nav-divider">Business opportunities</span>
             <a href="#opportunity-enquiries" class="hub-side-nav-link" data-org-route="opportunity-enquiries">
-              Opportunity enquiries
+              Enquiries received
               <span class="org-nav-badge" id="org-opp-enquiry-nav-badge" hidden>New</span>
             </a>
             <div class="hub-side-nav-util">
@@ -75,6 +76,21 @@
 
         <!-- Overview -->
         <section class="org-page is-active" id="org-page-dashboard" data-org-page="dashboard">
+          <header class="org-page-head">
+            <p class="org-page-kicker">Organiser workspace</p>
+            <h1 class="org-page-title" id="org-page-title">Manage your group</h1>
+            <p class="org-page-lead" id="org-page-lead">
+              Update group profiles, publish events, list business opportunities, respond to reviews, and track revenue and attendees.
+            </p>
+          </header>
+
+          <aside class="hub-dash-context hub-dash-context--organiser">
+            <p>
+              Looking for tickets you bought or reviews to write?
+              <button type="button" class="hub-dash-context-btn" data-hub-switch="attendee">Go to My tickets &amp; reviews</button>.
+            </p>
+          </aside>
+
           <div class="org-getting-started" id="org-getting-started">
             <div class="org-getting-started-head">
               <div>
@@ -528,8 +544,8 @@
         <section class="org-page" id="org-page-opportunity-enquiries" data-org-page="opportunity-enquiries">
           <div class="org-overview-head">
             <div class="org-overview-head-text">
-              <h2 class="org-section-title">Opportunity enquiries</h2>
-              <p class="org-section-sub">When someone enquires about your business opportunity listing, respond to them here by email.</p>
+              <h2 class="org-section-title">Enquiries received</h2>
+              <p class="org-section-sub">Messages from members who enquired about your business opportunity listings — respond by email from here.</p>
             </div>
           </div>
           <p class="org-load-hint" id="opp-enquiries-load-hint" hidden>Loading enquiries…</p>

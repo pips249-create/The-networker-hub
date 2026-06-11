@@ -23,6 +23,7 @@
     "api/contact-chat.js": { "maxDuration": 30 }
   },
   "rewrites": [
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/api/auth/:path*", "destination": "/api/auth" },
     { "source": "/api/admin/:path*", "destination": "/api/admin" },
     { "source": "/api/cron/:path*", "destination": "/api/cron" },

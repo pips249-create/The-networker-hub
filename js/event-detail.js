@@ -174,6 +174,14 @@
       .trim();
   }
 
+  function organiserProfileHref(ev) {
+    const slug = String(ev.organiserSlug || ev.organiser_slug || '').trim();
+    if (slug) return '/organisers/' + encodeURIComponent(slug);
+    const id = String(ev.organiserId || ev.organiser_id || '').trim();
+    if (id) return 'organiser.html?id=' + encodeURIComponent(id);
+    return '';
+  }
+
   function applyHostBlock(ev) {
     const host = ev.organiser || 'Event organiser';
     setText('ev-host-name', host);
@@ -215,7 +223,14 @@
 
     const profileLink = document.getElementById('ev-host-profile-link');
     if (profileLink) {
-      profileLink.hidden = !ev.organiser;
+      const href = organiserProfileHref(ev);
+      if (href) {
+        profileLink.href = href;
+        profileLink.hidden = false;
+      } else {
+        profileLink.removeAttribute('href');
+        profileLink.hidden = true;
+      }
     }
 
     const indEl = document.getElementById('ev-host-industry');
@@ -1340,6 +1355,7 @@
     const organiserEl = document.getElementById('checkout-organiser-name');
     const totalEl = document.getElementById('checkout-total-price');
     const refundEl = document.getElementById('checkout-refund-policy');
+    const feeNoteEl = document.getElementById('checkout-fee-note');
     const termsCheck = document.getElementById('checkout-terms-agree');
 
     if (el) {
@@ -1354,6 +1370,9 @@
     }
     if (refundEl && ev) {
       refundEl.textContent = refundPolicyDetailText(ev);
+    }
+    if (feeNoteEl) {
+      feeNoteEl.hidden = !(total > 0);
     }
     if (termsCheck) {
       termsCheck.checked = false;
@@ -1807,6 +1826,7 @@
     const sumSubtotal = document.getElementById('sum-subtotal');
     const sumFee = document.getElementById('sum-fee');
     const sumFeeRow = sumFee ? sumFee.closest('.summary-row') : null;
+    const summaryFeeNote = document.getElementById('summary-fee-note');
     const sumTotal = document.getElementById('sum-total');
     const qtyHint = document.getElementById('qty-avail-hint');
     if (!qtyDown) return;
@@ -1845,6 +1865,7 @@
       if (sumSubtotal) sumSubtotal.textContent = fmt(subtotal);
       if (sumFee) sumFee.textContent = fmt(fee);
       if (sumFeeRow) sumFeeRow.hidden = subtotal <= 0;
+      if (summaryFeeNote) summaryFeeNote.hidden = subtotal <= 0;
       if (sumTotal) sumTotal.textContent = fmt(total);
       if (qtyValue) qtyValue.textContent = String(qty);
       qtyDown.disabled = qty <= 1;

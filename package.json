@@ -13,7 +13,8 @@
     "seed-sample-event": "node scripts/seed-sample-event.js",
     "seed-browse-events": "node scripts/seed-browse-events.js",
     "test-review-e2e": "node scripts/review-e2e-test.js",
-    "import-attendees": "node scripts/import-attendees-csv.js"
+    "import-attendees": "node scripts/import-attendees-csv.js",
+    "build-seo": "node scripts/build-hub-seo-data.js && node scripts/build-faq-html.js && node scripts/build-llms-txt.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",

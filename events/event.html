@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Event – The Networker Hub</title>
+    <meta name="description" content="Networking event on The Networker Hub — book tickets securely online." />
+    <script src="../js/hub-seo-head.js?v=20260612"></script>
     <!-- Stripe: set your Payment Link URL here and/or pass ?stripe=https://buy.stripe.com/... -->
     <meta name="stripe-payment-link" content="" />
     <!-- Optional theme (6-digit hex, # optional). URL query overrides: ?brand=5b2f99&bg=f5f0fb&accent=f5a623 -->
@@ -189,7 +191,7 @@
               </div>
               <p id="ev-host-profile"></p>
               <div class="organiser-actions">
-                <a href="#" id="ev-host-profile-link" class="btn-outline" hidden>View group profile →</a>
+                <a id="ev-host-profile-link" class="btn-outline" hidden>View group profile →</a>
                 <button type="button" class="btn-outline" id="contact-host-btn">Contact Host</button>
               </div>
             </div>
@@ -295,6 +297,9 @@
               <span class="value" id="sum-total">—</span>
             </div>
           </div>
+          <p class="summary-fee-note" id="summary-fee-note" hidden>
+            The Networker Hub booking fee (platform fee) is non-refundable.
+          </p>
 
           <p class="stripe-hint" id="stripe-hint" role="status" tabindex="-1" hidden>
             This ticket needs a Stripe Payment Link. Add <code>stripe_payment_link</code> on the event or ticket in
@@ -339,6 +344,9 @@
               </dl>
               <p class="checkout-precontract-note">
                 Your contract to attend is with the event organiser named above. The Networker Hub provides the booking platform. Statutory consumer rights apply.
+              </p>
+              <p class="checkout-precontract-note checkout-fee-note" id="checkout-fee-note" hidden>
+                The Networker Hub booking fee (platform fee) is non-refundable.
               </p>
             </div>
             <label class="form-field" for="checkout-name">
@@ -482,7 +490,9 @@
     <script src="../js/listing-report.js?v=20260609"></script>
     <script src="../js/review-report.js?v=20260609"></script>
     <script src="../js/hub-favourites.js?v=20260629"></script>
-    <script src="../js/event-detail.js?v=20260611"></script>
+    <script src="../js/event-detail.js?v=20260611a"></script>
+    <div id="hub-site-footer"></div>
+    <script src="../js/site-footer.js?v=20260610" data-root="../"></script>
   </body>
 </html>
 <!-- legacy inline removed

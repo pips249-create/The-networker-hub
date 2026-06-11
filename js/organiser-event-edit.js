@@ -2,6 +2,7 @@
  * Full-page event editor — recurring dates + ticket setup flow.
  */
 (function () {
+  const DESCRIPTION_MAX_WORDS = 500;
   const SERIES_STORAGE_KEY = 'hub_event_series';
   const FORMAT_STORAGE_KEY = 'hub_event_format';
   const GROUP_STORAGE_KEY = 'hub_event_group_id';
@@ -380,6 +381,8 @@
     function resetPreview() {
       photoFile = null;
       if (fileInput) fileInput.value = '';
+      const urlInput = document.getElementById('ee-photo-url');
+      if (urlInput) urlInput.value = '';
       if (preview) preview.hidden = true;
       if (placeholder) placeholder.hidden = false;
       if (previewImg) previewImg.removeAttribute('src');
@@ -387,6 +390,8 @@
 
     function setPhotoFile(file) {
       photoFile = file;
+      const urlInput = document.getElementById('ee-photo-url');
+      if (urlInput) urlInput.value = '';
       const reader = new FileReader();
       reader.onload = () => showPreview(reader.result);
       reader.readAsDataURL(file);
@@ -773,8 +778,8 @@
     }
 
     const description = document.getElementById('ee-description').value.trim();
-    if (countWords(description) > 150) {
-      showAlert('Description must be 150 words or fewer.');
+    if (countWords(description) > DESCRIPTION_MAX_WORDS) {
+      showAlert('Description must be ' + DESCRIPTION_MAX_WORDS + ' words or fewer.');
       return;
     }
 
@@ -809,13 +814,15 @@
       title,
       type: canonicalEventType(document.getElementById('ee-type').value),
       description,
-      photoUrl: document.getElementById('ee-photo-url').value.trim(),
       listingStatus: 'draft',
       recurrencePattern: recurrence.recurrencePattern,
       recurrenceEndDate: recurrence.recurrenceEndDate,
       occurrences,
       ...locFields,
     };
+
+    const photoUrl = document.getElementById('ee-photo-url').value.trim();
+    if (photoUrl) payload.photoUrl = photoUrl;
 
     if (photoFile) {
       payload.photoBase64 = await readFileAsBase64(photoFile);

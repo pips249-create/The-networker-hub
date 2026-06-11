@@ -6,6 +6,7 @@
   const listPages = { upcoming: 1, past: 1 };
   let registrations = [];
   let savedEvents = [];
+  let opportunityEnquiries = [];
   let currentRoute = 'overview';
 
   const signin = document.getElementById('ad-signin');
@@ -342,6 +343,7 @@
       'payments',
       'saved',
       'past',
+      'opportunity-enquiries',
       'reviews-pending',
       'reviews-done',
     ];
@@ -696,11 +698,66 @@
     }
   }
 
+  function enquiryStatusLabel(status) {
+    const s = String(status || '').toLowerCase();
+    if (s === 'responded') return 'Replied';
+    if (s === 'read') return 'Seen';
+    return 'Sent';
+  }
+
+  function enquiryStatusBadge(status) {
+    const s = String(status || '').toLowerCase();
+    if (s === 'responded') return '<span class="ad-badge ad-badge-green">' + esc(enquiryStatusLabel(s)) + '</span>';
+    if (s === 'read') return '<span class="ad-badge ad-badge-grey">' + esc(enquiryStatusLabel(s)) + '</span>';
+    return '<span class="ad-badge ad-badge-red">' + esc(enquiryStatusLabel(s)) + '</span>';
+  }
+
+  function opportunityListingHref(opportunityId) {
+    const id = String(opportunityId || '').trim();
+    if (!id) return '../opportunities/index.html';
+    return '../opportunities/opportunity.html?id=' + encodeURIComponent(id);
+  }
+
+  function renderOpportunityEnquiries() {
+    const body = document.getElementById('ad-enquiries-body');
+    const empty = document.getElementById('ad-enquiries-empty');
+    if (!body) return;
+
+    const list = opportunityEnquiries || [];
+    body.innerHTML = '';
+    if (!list.length) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    list.forEach((enquiry) => {
+      const tr = document.createElement('tr');
+      const message = String(enquiry.message || '').trim();
+      const preview = message.length > 120 ? message.slice(0, 117) + '…' : message;
+      tr.innerHTML =
+        '<td>' +
+        esc(formatDateShort(enquiry.createdAt)) +
+        '</td><td class="ad-td-name">' +
+        esc(enquiry.opportunityTitle || 'Listing') +
+        '</td><td class="ad-enquiry-message">' +
+        esc(preview || '—') +
+        '</td><td>' +
+        enquiryStatusBadge(enquiry.status) +
+        '</td><td><a class="ad-btn ad-btn-primary ad-btn-sm" href="' +
+        esc(opportunityListingHref(enquiry.opportunityId)) +
+        '">View listing</a></td>';
+      body.appendChild(tr);
+    });
+  }
+
   function renderStats(stats) {
     const upcoming = document.getElementById('ad-stat-upcoming');
     const next = document.getElementById('ad-stat-next');
     const reviews = document.getElementById('ad-stat-reviews');
     const pending = document.getElementById('ad-stat-reviews-pending');
+    const enquiries = document.getElementById('ad-stat-enquiries');
+    const enquiriesHint = document.getElementById('ad-stat-enquiries-hint');
     if (upcoming) upcoming.textContent = String(stats.upcomingCount || 0);
     if (next) {
       next.textContent = stats.nextEventDate
@@ -712,6 +769,18 @@
       const n = stats.reviewsPending || 0;
       pending.textContent = n ? '⭐ ' + n + ' pending' : '—';
     }
+    const enquiryCount = (opportunityEnquiries || []).length;
+    if (enquiries) enquiries.textContent = String(enquiryCount);
+    if (enquiriesHint) {
+      const waiting = (opportunityEnquiries || []).filter(
+        (e) => String(e.status || '').toLowerCase() === 'new'
+      ).length;
+      enquiriesHint.textContent = waiting
+        ? waiting + ' awaiting reply'
+        : enquiryCount
+          ? 'Track replies by email'
+          : '—';
+    }
   }
 
   function updateSideCounts() {
@@ -721,6 +790,7 @@
     };
     set('ad-side-upcoming', upcomingList().length);
     set('ad-side-past', pastList().length);
+    set('ad-side-enquiries', (opportunityEnquiries || []).length);
     set('ad-side-pending', pendingReviewsList().length);
     set('ad-side-reviewed', doneReviewsList().length);
   }
@@ -945,6 +1015,7 @@
       false
     );
     renderPaymentsTable();
+    renderOpportunityEnquiries();
     updateSideCounts();
   }
 
@@ -966,17 +1037,45 @@
     window.addEventListener('hashchange', () => setRoute(parseRoute()));
   }
 
+  function bindHubContextSwitch() {
+    document.querySelectorAll('[data-hub-switch]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-hub-switch');
+        if (!mode || !window.HubModeSwitch || !window.HubModeSwitch.switchTo) return;
+        btn.disabled = true;
+        window.HubModeSwitch.switchTo(mode, '../').catch(() => {
+          btn.disabled = false;
+        });
+      });
+    });
+  }
+
+  async function ensureAttendeeHubMode() {
+    try {
+      await fetch('/api/auth/hub-mode', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'attendee' }),
+      });
+    } catch {
+      /* non-fatal */
+    }
+  }
+
   async function reloadDashboard() {
     const res = await fetch('/api/auth/attendee-dashboard', { credentials: 'include' });
     const data = await res.json();
     if (!data.ok) return;
     registrations = data.registrations || [];
+    opportunityEnquiries = data.opportunityEnquiries || [];
     renderStats(data.stats || {});
     renderAllTables();
   }
 
   async function init() {
     bindNav();
+    bindHubContextSwitch();
     bindReviewModal();
     bindPaymentModal();
     bindCancelModal();
@@ -993,6 +1092,7 @@
     if (signin) signin.hidden = true;
     if (shell) shell.hidden = false;
     renderWelcome(sessionData.user);
+    await ensureAttendeeHubMode();
 
     const res = await fetch('/api/auth/attendee-dashboard', { credentials: 'include' });
     const data = await res.json();
@@ -1000,6 +1100,7 @@
       if (signin) signin.hidden = true;
       if (shell) shell.hidden = false;
       registrations = [];
+      opportunityEnquiries = [];
       renderStats({});
       renderAllTables();
       loadSavedEvents();
@@ -1014,6 +1115,7 @@
     }
 
     registrations = data.registrations || [];
+    opportunityEnquiries = data.opportunityEnquiries || [];
     renderStats(data.stats || {});
     renderAllTables();
     loadSavedEvents();

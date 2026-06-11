@@ -403,6 +403,39 @@
   flex-wrap: wrap;
 }
 
+.org-page-head {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--od-border-soft);
+}
+
+.org-page-kicker {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--od-gold);
+  margin: 0 0 8px;
+}
+
+.org-page-title {
+  font-size: clamp(1.35rem, 3.5vw, 1.75rem);
+  font-weight: 700;
+  color: var(--od-purple-dark);
+  margin: 0 0 8px;
+  line-height: 1.2;
+}
+
+.org-page-lead {
+  font-size: 14px;
+  color: var(--od-text-soft);
+  font-weight: 400;
+  margin: 0;
+  max-width: 40em;
+  line-height: 1.5;
+}
+
 .org-welcome-name {
   font-size: 26px;
   font-weight: 700;

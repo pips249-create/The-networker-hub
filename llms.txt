@@ -12,6 +12,13 @@ Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@the-n
 - Contact (Hubert assistant): https://the-networker.co.uk/contact.html
 - About: https://the-networker.co.uk/about.html
 - Legal: https://the-networker.co.uk/legal-policies.html
+- Sitemap: https://the-networker.co.uk/sitemap.xml
+
+## Machine discovery
+- Sitemap: https://the-networker.co.uk/sitemap.xml
+- AI crawler policy: https://the-networker.co.uk/agents.txt
+- Dynamic page meta API: https://the-networker.co.uk/api/seo-meta?type=event&slug={slug}
+- Organiser meta API: https://the-networker.co.uk/api/seo-meta?type=organiser&slug={slug}
 
 ## Hubert — business butler & concierge
 Hubert is the on-site AI assistant. He answers questions about browsing, accounts, tickets, opportunities, and organiser tools. He can look up live published events and business opportunities when asked.
@@ -34,7 +41,7 @@ Create a free account first, then open an event from the listing page, choose yo
 Browse opportunities for free at /opportunities/. When you find one you are interested in, sign in or create a free account to send a direct enquiry to the lister from the opportunity page.
 
 ## How do organisers list an event on The Networker Hub?
-Approved organisers sign in and open the organiser dashboard at /organiser/ to create events and manage attendees. New networking groups can email hello@the-networker.co.uk with their group name, event format, and location for onboarding help.
+Sign in, claim your group profile if prompted, then open the organiser dashboard at /organiser/ to create events and manage attendees. Your networking group may already be listed — search the organiser directory on /events/ and claim the profile linked to your email.
 
 ## Where does event information on The Networker Hub come from?
 Listings are managed in the events database and updated by organisers and the Networker Hub team. Dates, venues, and prices on each event page are the source of truth for that event.

@@ -436,6 +436,7 @@ async function resolveEventPhotoUrl(payload, eventId) {
         logoFilename: payload.photoFilename,
       });
       if (url) return url;
+      throw new Error('Could not upload event photo');
     } catch (e) {
       const err = new Error(e.message || 'Could not upload event photo');
       err.logoWarning = err.message;
@@ -445,9 +446,29 @@ async function resolveEventPhotoUrl(payload, eventId) {
   if (Object.prototype.hasOwnProperty.call(payload, 'photoUrl')) {
     const url = String(payload.photoUrl || '').trim();
     if (url && /^https?:\/\//i.test(url)) return url;
-    return null;
+    if (payload.clearPhoto) return null;
+    return undefined;
   }
   return undefined;
+}
+
+async function applyEventPhotoAfterSave(eventId, payload) {
+  const hasUpload = Boolean(payload.photoBase64);
+  const hasUrl = Object.prototype.hasOwnProperty.call(payload, 'photoUrl');
+  if (!hasUpload && !hasUrl) return null;
+
+  const image_url = await resolveEventPhotoUrl(payload, eventId);
+  if (image_url === undefined) return null;
+
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('events')
+    .update({ image_url: eventImageDbValue(image_url) })
+    .eq('id', eventId)
+    .select('*')
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 function mapEventStatus(payload) {
@@ -459,7 +480,7 @@ function mapEventStatus(payload) {
 
 async function buildEventRow(payload, eventId, mode) {
   const touchDate = mode !== 'update' || payloadTouchesDate(payload);
-  const image_url = await resolveEventPhotoUrl(payload, eventId);
+  const image_url = payload._deferImage ? undefined : await resolveEventPhotoUrl(payload, eventId);
   const isLocked = Boolean(payload._locked);
   const listingStatus = payload.listingStatus != null ? payload.listingStatus : null;
   const approval_status =
@@ -542,9 +563,20 @@ async function buildEventRow(payload, eventId, mode) {
 
 async function createEvent(payload) {
   const sb = getSupabaseAdmin();
-  const row = await buildEventRow(payload, 'new', 'create');
+  const deferImage = Boolean(payload.photoBase64);
+  const row = await buildEventRow(
+    deferImage ? { ...payload, _deferImage: true } : payload,
+    null,
+    'create'
+  );
   const { data, error } = await sb.from('events').insert(row).select('*').single();
   if (error) throw new Error(error.message);
+
+  if (deferImage || Object.prototype.hasOwnProperty.call(payload, 'photoUrl')) {
+    const updated = await applyEventPhotoAfterSave(data.id, payload);
+    if (updated) return rowToEvent(updated);
+  }
+
   return rowToEvent(data);
 }
 
@@ -564,9 +596,20 @@ async function updateEvent(eventId, payload) {
     patchPayload.endDate = existing.ends_at;
     patchPayload.location = existing.location_label;
   }
-  const row = await buildEventRow(patchPayload, eventId, 'update');
+  const deferImage = Boolean(payload.photoBase64);
+  const row = await buildEventRow(
+    deferImage ? { ...patchPayload, _deferImage: true } : patchPayload,
+    eventId,
+    'update'
+  );
   const { data, error } = await sb.from('events').update(row).eq('id', eventId).select('*').single();
   if (error) throw new Error(error.message);
+
+  if (payload.photoBase64) {
+    const updated = await applyEventPhotoAfterSave(eventId, payload);
+    if (updated) return rowToEvent(updated);
+  }
+
   return rowToEvent(data);
 }
 
@@ -653,7 +696,7 @@ async function publishEventsWithRefund(eventIds, refundPayload) {
   const patch = {
     status: 'published',
     approval_status: 'Approved',
-    ticket_sales_enabled: false,
+    ticket_sales_enabled: true,
     refund_policy: refundPayload.refundPolicy || null,
     refund_policy_details: refundPayload.refundPolicyDetails || null,
     refund_cutoff_days:
@@ -734,6 +777,9 @@ async function createTicketsForEvents({ eventIds, tickets, publish, refund, vatT
       .select('id, organiser_id')
       .in('id', ids);
     if (eventLoadErr) throw new Error(eventLoadErr.message);
+    const organiserIds = [...new Set((eventRows || []).map((row) => row.organiser_id).filter(Boolean))];
+    const { assertOrganiserReadyForPaidPublish } = require('./stripe-connect');
+    await assertOrganiserReadyForPaidPublish(sb, organiserIds, tiers);
     publishedEvents = await publishEventsWithRefund(ids, refund);
   }
 

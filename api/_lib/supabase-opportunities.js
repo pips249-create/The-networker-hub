@@ -401,6 +401,23 @@ async function createOpportunityEnquiry(input) {
   return enquiryRowToDto(data, opportunity);
 }
 
+async function listOpportunityEnquiriesSentBySession(session) {
+  const em = String(session?.email || '').trim();
+  if (!em) return [];
+
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('opportunity_enquiries')
+    .select('*, opportunities(id, title)')
+    .ilike('enquirer_email', em)
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data || []).map((row) => {
+    const opp = row.opportunities || null;
+    return enquiryRowToDto(row, opp ? { id: opp.id, title: opp.title } : null);
+  });
+}
+
 async function listOpportunityEnquiriesForSession(session) {
   const opportunities = await listOwnedOpportunityRowsForSession(
     session,
@@ -485,6 +502,7 @@ module.exports = {
   handleOpportunityPremiumCheckout,
   createOpportunityEnquiry,
   listOpportunityEnquiriesForSession,
+  listOpportunityEnquiriesSentBySession,
   updateOpportunityEnquiryStatus,
   normalizeType,
   normalizeTypes,

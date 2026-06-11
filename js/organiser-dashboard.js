@@ -2885,6 +2885,17 @@
   }
 
   function bindUi() {
+    document.querySelectorAll('[data-hub-switch]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-hub-switch');
+        if (!mode || !window.HubModeSwitch || !window.HubModeSwitch.switchTo) return;
+        btn.disabled = true;
+        window.HubModeSwitch.switchTo(mode, '../').catch(() => {
+          btn.disabled = false;
+        });
+      });
+    });
+
     document.querySelectorAll('[data-org-modal-close]').forEach((el) => {
       el.addEventListener('click', closeModals);
     });

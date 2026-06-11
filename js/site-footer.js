@@ -93,14 +93,17 @@
     });
   }
 
-  var seoData = document.createElement('script');
-  seoData.src = href('js/hub-seo-data.js?v=' + FOOTER_BUILD);
-  seoData.onload = function () {
-    var seoInject = document.createElement('script');
-    seoInject.src = href('js/hub-seo-schema.js?v=' + FOOTER_BUILD);
-    document.body.appendChild(seoInject);
-  };
-  document.body.appendChild(seoData);
+  if (!document.querySelector('script[src*="hub-seo-data"]')) {
+    var seoData = document.createElement('script');
+    seoData.src = href('js/hub-seo-data.js?v=' + FOOTER_BUILD);
+    seoData.onload = function () {
+      if (document.querySelector('script[src*="hub-seo-schema"]')) return;
+      var seoInject = document.createElement('script');
+      seoInject.src = href('js/hub-seo-schema.js?v=' + FOOTER_BUILD);
+      (document.head || document.body).appendChild(seoInject);
+    };
+    (document.head || document.body).appendChild(seoData);
+  }
 
   if (script && script.getAttribute('data-hubert') === 'off') return;
   var pagePath = (window.location.pathname || '').toLowerCase();
