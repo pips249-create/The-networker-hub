@@ -232,9 +232,7 @@
       'events_sponsor_hub';
 
     try {
-      var res = await fetch('/api/cms-block?slot=' + encodeURIComponent(slotKey) + '&_=' + Date.now(), {
-        cache: 'no-store',
-      });
+      var res = await fetch('/api/cms-block?slot=' + encodeURIComponent(slotKey));
       var data = await res.json();
       if (data && data.ok && data.block) {
         renderSponsorBlock(els, data.block);

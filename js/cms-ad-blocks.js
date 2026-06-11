@@ -205,9 +205,7 @@
   }
 
   function loadCmsAd(slot) {
-    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot) + '&_=' + Date.now(), {
-      cache: 'no-store',
-    })
+    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot))
       .then(function (res) {
         return res.json();
       })

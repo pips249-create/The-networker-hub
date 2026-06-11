@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { assertDescriptionLimit } = require('../text-limits');
 
 function parseBody(req) {
   let body = req.body;
@@ -63,6 +64,12 @@ function eventPayloadFromBody(body, email) {
     payload.listingStatus = 'published';
   }
   return payload;
+}
+
+function validateEventDescription(body) {
+  if (body.description !== undefined) {
+    assertDescriptionLimit(body.description, 'Event description');
+  }
 }
 
 module.exports = async function handler(req, res) {
@@ -145,6 +152,7 @@ module.exports = async function handler(req, res) {
       if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {
         return json(res, 403, { error: 'event_not_owned' });
       }
+      validateEventDescription(body);
       const occ = normalizeOccurrences(body);
       const base = eventPayloadFromBody(body, auth.session.email);
       if (!base.title) return json(res, 400, { error: 'missing_title' });
@@ -185,7 +193,7 @@ module.exports = async function handler(req, res) {
       });
     } catch (e) {
       return json(res, e.status || 500, {
-        error: 'event_update_failed',
+        error: e.code || 'event_update_failed',
         message: e.message,
         airtable: airtableSetupHint('events'),
       });
@@ -210,6 +218,7 @@ module.exports = async function handler(req, res) {
       if (!groupOwnedBySession(auth.session, groups, groupId)) {
         return json(res, 403, { error: 'group_not_owned' });
       }
+      validateEventDescription(body);
 
       let events;
       if (!occ.length && isDraft) {
@@ -254,7 +263,7 @@ module.exports = async function handler(req, res) {
       });
     } catch (e) {
       return json(res, e.status || 500, {
-        error: 'event_create_failed',
+        error: e.code || 'event_create_failed',
         message: e.message,
         airtable: airtableSetupHint('events'),
       });

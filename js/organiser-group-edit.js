@@ -3,6 +3,7 @@
  */
 (function () {
   const GROUP_SAVED_KEY = 'hub_group_last_saved';
+  const DESCRIPTION_MAX_WORDS = 500;
   const INDUSTRY_OPTIONS = [
     'Business',
     'Technology',
@@ -299,8 +300,8 @@
       showAlert('Enter a description for your group.');
       return null;
     }
-    if (countWords(description) > 150) {
-      showAlert('Description must be 150 words or fewer.');
+    if (countWords(description) > DESCRIPTION_MAX_WORDS) {
+      showAlert('Description must be ' + DESCRIPTION_MAX_WORDS + ' words or fewer.');
       return null;
     }
 

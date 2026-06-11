@@ -1,5 +1,6 @@
 const { organiserPersonalScopeFromRequest } = require('../auth');
 const { getOrganiserApi } = require('../organiser-provider');
+const { assertDescriptionLimit } = require('../text-limits');
 
 function organiserApi() {
   return getOrganiserApi();
@@ -83,6 +84,9 @@ module.exports = async function handler(req, res) {
       if (!api.groupOwnedBySession(auth.session, groups, groupId)) {
         return json(res, 403, { error: 'group_not_owned' });
       }
+      if (body.description !== undefined) {
+        assertDescriptionLimit(body.description, 'Profile description');
+      }
       const updated = await api.updateGroup(groupId, {
         name: name || undefined,
         description: body.description,
@@ -119,7 +123,7 @@ module.exports = async function handler(req, res) {
       });
     } catch (e) {
       return json(res, e.status || 500, {
-        error: 'group_update_failed',
+        error: e.code || 'group_update_failed',
         message: e.message,
         airtable: api.airtableSetupHint && api.airtableSetupHint('groups'),
       });
@@ -163,6 +167,7 @@ module.exports = async function handler(req, res) {
     if (!name) return json(res, 400, { error: 'missing_name' });
 
     try {
+      assertDescriptionLimit(description, 'Profile description');
       const created = await api.createGroup({
         session: auth.session,
         userId: auth.session.sub || '',
@@ -198,7 +203,7 @@ module.exports = async function handler(req, res) {
       });
     } catch (e) {
       return json(res, e.status || 500, {
-        error: 'group_create_failed',
+        error: e.code || 'group_create_failed',
         message: e.message,
         airtable: api.airtableSetupHint && api.airtableSetupHint('groups'),
       });

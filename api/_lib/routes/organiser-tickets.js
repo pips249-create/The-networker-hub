@@ -111,6 +111,9 @@ module.exports = async function handler(req, res) {
         if (vatTreatment && !['included', 'added'].includes(vatTreatment)) {
           return json(res, 400, { error: 'invalid_vat_treatment' });
         }
+        if (publish && !vatTreatment) {
+          return json(res, 400, { error: 'vat_treatment_required' });
+        }
 
         const result = await createTicketsForEvents({
           eventIds: ids,

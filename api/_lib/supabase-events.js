@@ -582,7 +582,7 @@ async function fetchApprovedEvents(sb) {
 
 async function handle(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 'public, max-age=60');
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
 
   const cfg = supabaseConfig();
   if (!isSupabaseConfigured()) {

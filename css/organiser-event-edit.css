@@ -831,8 +831,47 @@ a.ee-wizard-link:hover {
 .ee-vat-options {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
   margin-top: 4px;
+}
+
+.ee-vat-card {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 2px 12px;
+  align-items: start;
+  border: 1.5px solid var(--ee-border);
+  border-radius: var(--ee-radius);
+  padding: 12px 14px;
+  cursor: pointer;
+  background: var(--ee-white);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.ee-vat-card input[type='radio'] {
+  grid-row: 1 / span 2;
+  margin-top: 2px;
+  accent-color: var(--ee-purple);
+}
+
+.ee-vat-card strong {
+  display: block;
+  grid-column: 2;
+  font-size: 14px;
+  margin-bottom: 2px;
+  color: var(--ee-text);
+}
+
+.ee-vat-card > span {
+  grid-column: 2;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ee-text-mid);
+}
+
+.ee-vat-card.is-selected {
+  border-color: var(--ee-purple);
+  background: var(--ee-purple-pale);
 }
 
 .ee-vat-options .ee-check {

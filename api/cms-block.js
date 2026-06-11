@@ -58,7 +58,7 @@ async function fetchPublishableBlock(sb, slotKey) {
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=600');
 
   const slot = String(req.query?.slot || '').trim();
   if (!slot) {

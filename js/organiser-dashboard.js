@@ -4,6 +4,7 @@
 (function () {
   const ORG_PAGE_SIZE = 10;
   const EVENTS_FETCH_SIZE = 100;
+  const DESCRIPTION_MAX_WORDS = 500;
   const listPages = { groups: 1, events: 1, tickets: 1, attendees: 1, reviews: 1, revenue: 1 };
   let eventsSubRoute = 'events-list';
 
@@ -2794,6 +2795,24 @@
     }
   }
 
+  function countWords(text) {
+    return String(text || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length;
+  }
+
+  function bindGroupDescriptionCounter() {
+    const ta = document.getElementById('group-description');
+    const counter = document.getElementById('group-description-word-count');
+    if (!ta || !counter) return;
+    const update = () => {
+      counter.textContent = String(countWords(ta.value));
+    };
+    ta.addEventListener('input', update);
+    update();
+  }
+
   function readFileAsBase64(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -2809,11 +2828,16 @@
 
   function bindForms() {
     bindGroupLogoPicker();
+    bindGroupDescriptionCounter();
 
     document.getElementById('form-group').addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('group-name').value.trim();
       const description = document.getElementById('group-description').value.trim();
+      if (countWords(description) > DESCRIPTION_MAX_WORDS) {
+        alert('Description must be ' + DESCRIPTION_MAX_WORDS + ' words or fewer.');
+        return;
+      }
       const website = document.getElementById('group-website').value.trim();
       const logoUrl = document.getElementById('group-logo-url').value.trim();
       const payload = { name, description, website, logoUrl };

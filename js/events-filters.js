@@ -784,14 +784,8 @@
     dateWrap.classList.toggle('is-active', Boolean(selectedDates && selectedDates.length));
   }
 
-  if (dateWrap) {
-    dateWrap.addEventListener('click', function (e) {
-      if (e.target === dateRangeInput) return;
-      if (flatpickrInstance) flatpickrInstance.open();
-    });
-  }
-
-  if (dateRangeInput && typeof flatpickr !== 'undefined') {
+  function initFlatpickr() {
+    if (flatpickrInstance || !dateRangeInput || typeof flatpickr === 'undefined') return;
     flatpickrInstance = flatpickr(dateRangeInput, {
       mode: 'range',
       dateFormat: 'd M Y',
@@ -831,6 +825,42 @@
         }
       },
     });
+  }
+
+  function ensureFlatpickr(callback) {
+    if (typeof flatpickr !== 'undefined') {
+      initFlatpickr();
+      if (callback) callback();
+      return;
+    }
+    var load = window.hubLoadFlatpickr ? window.hubLoadFlatpickr() : Promise.resolve();
+    load
+      .then(function () {
+        initFlatpickr();
+        if (callback) callback();
+      })
+      .catch(function () {
+        /* date filter is optional */
+      });
+  }
+
+  if (dateWrap) {
+    dateWrap.addEventListener('click', function (e) {
+      if (e.target === dateRangeInput) return;
+      ensureFlatpickr(function () {
+        if (flatpickrInstance) flatpickrInstance.open();
+      });
+    });
+  }
+
+  if (dateRangeInput) {
+    dateRangeInput.addEventListener(
+      'focus',
+      function () {
+        ensureFlatpickr();
+      },
+      { once: true }
+    );
   }
 
   if (location.hash === '#exhibitions' || location.search.indexOf('type=exhibition') !== -1) {

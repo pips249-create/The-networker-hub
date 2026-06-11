@@ -809,25 +809,30 @@
     lastFilteredList = list;
 
     whenPanelReady(function () {
-      initMap();
-      invalidateMapSize(0);
-      if (window.matchMedia('(max-width: 900px)').matches && mapSidebar && mapListToggle) {
-        setSidebarListOpen(true);
-      }
-      renderMarkers(list);
-      if (
-        mapWrap &&
-        mapWrap.scrollIntoView &&
-        !window.matchMedia('(max-width: 900px)').matches
-      ) {
-        mapWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-      setTimeout(function () {
+      var ensureLeaflet = window.hubEnsureLeafletReady || function (cb) {
+        cb();
+      };
+      ensureLeaflet(function () {
+        initMap();
         invalidateMapSize(0);
-      }, 250);
-      setTimeout(function () {
-        invalidateMapSize(0);
-      }, 600);
+        if (window.matchMedia('(max-width: 900px)').matches && mapSidebar && mapListToggle) {
+          setSidebarListOpen(true);
+        }
+        renderMarkers(list);
+        if (
+          mapWrap &&
+          mapWrap.scrollIntoView &&
+          !window.matchMedia('(max-width: 900px)').matches
+        ) {
+          mapWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        setTimeout(function () {
+          invalidateMapSize(0);
+        }, 250);
+        setTimeout(function () {
+          invalidateMapSize(0);
+        }, 600);
+      });
     });
   }
 
@@ -918,7 +923,16 @@
 
   function renderMarkers(events) {
     if (!isMapView) return;
-    if (!mapReady) initMap();
+    if (!mapReady) {
+      var ensureLeaflet = window.hubEnsureLeafletReady || function (cb) {
+        cb();
+      };
+      ensureLeaflet(function () {
+        initMap();
+        renderMarkers(events);
+      });
+      return;
+    }
     if (!markerLayer || !map) return;
 
     var token = ++renderToken;

@@ -1004,7 +1004,8 @@
     if (!tiersEl) return;
 
     const tiers = ticketTiersForEvent(ev);
-    const panelClosed = ev.isSoldOut || ev.isSalesClosed;
+    const salesPending = Boolean(ev.isTicketSalesPending);
+    const panelClosed = ev.isSoldOut || (ev.isSalesClosed && !salesPending);
     tiersEl.innerHTML = '';
 
     let firstSelectable = null;
@@ -1066,8 +1067,10 @@
     });
 
     if (!firstSelectable && tiersEl.children.length) {
-      tiersEl.innerHTML =
-        '<p class="ticket-load-hint">All ticket tiers are currently sold out.</p>';
+      const hint = ev.isSoldOut
+        ? 'All ticket tiers are currently sold out.'
+        : 'Tickets are not currently available for this event.';
+      tiersEl.innerHTML = '<p class="ticket-load-hint">' + hint + '</p>';
     }
 
     renderVatNote(ev, tiers);
@@ -1468,10 +1471,10 @@
     if (nudgePanel) nudgePanel.hidden = true;
 
     if (ev.isTicketSalesPending) {
-      panel.classList.add('is-sales-pending', 'is-unavailable');
+      panel.classList.add('is-sales-pending');
       buy.disabled = true;
       buy.classList.add('cta-btn-disabled');
-      if (purchaseView) purchaseView.setAttribute('aria-hidden', 'true');
+      if (purchaseView) purchaseView.removeAttribute('aria-hidden');
       if (nudgePanel) {
         nudgePanel.hidden = false;
         bindTicketSalesNudgeUi(ev);

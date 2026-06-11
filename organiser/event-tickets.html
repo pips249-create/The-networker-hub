@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260614" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260708" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260611" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260611b" />
   </head>
   <body class="organiser-event-edit-page">
     <div id="ee-page-loading" class="ee-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
@@ -66,20 +66,6 @@
           <p class="ee-tier-summary" id="ee-tier-summary" aria-live="polite">0 ticket types · unlimited available · from £0</p>
           <div id="ee-tier-rows"></div>
           <button type="button" class="ee-btn ee-btn-outline" id="ee-add-tier" style="margin-top:12px">+ Add another ticket type</button>
-          <div class="ee-field" style="margin-top:20px">
-            <label>VAT on ticket prices</label>
-            <p class="ee-hint" style="margin-top:0">Shown under tickets on your public listing so attendees know how VAT applies.</p>
-            <div class="ee-vat-options" role="radiogroup" aria-label="VAT on ticket prices">
-              <label class="ee-check">
-                <input type="radio" name="vat-treatment" value="included" checked />
-                <span>VAT included in ticket price</span>
-              </label>
-              <label class="ee-check">
-                <input type="radio" name="vat-treatment" value="added" />
-                <span>VAT added at checkout</span>
-              </label>
-            </div>
-          </div>
         </div>
 
         <div class="ee-card" id="ee-panel-osop" hidden>
@@ -116,6 +102,25 @@
             <li>What is your job title?</li>
           </ul>
           <p class="ee-hint ee-hint-italic">These questions are fixed and cannot be changed.</p>
+        </div>
+
+        <div class="ee-card" id="ee-vat-card">
+          <h2>VAT on ticket prices</h2>
+          <p class="ee-hint" style="margin-top:0">
+            Required before publishing. Choose one option — shown under tickets on your public listing so attendees know how VAT applies.
+          </p>
+          <div class="ee-vat-options" role="radiogroup" aria-label="VAT on ticket prices" aria-required="true">
+            <div class="ee-vat-card" data-vat="included" role="radio" tabindex="0" aria-checked="false">
+              <input type="radio" name="vat-treatment" value="included" id="vat-treatment-included" required />
+              <strong>VAT included in ticket price</strong>
+              <span>The price shown is the final price including VAT</span>
+            </div>
+            <div class="ee-vat-card" data-vat="added" role="radio" tabindex="0" aria-checked="false">
+              <input type="radio" name="vat-treatment" value="added" id="vat-treatment-added" />
+              <strong>VAT added at checkout</strong>
+              <span>Ticket price excludes VAT; VAT is calculated at checkout</span>
+            </div>
+          </div>
         </div>
 
         <div class="ee-card">
@@ -206,6 +211,6 @@
     <script src="../js/organiser-page-loading.js?v=20260608d"></script>
     <script src="../js/organiser-quarter-time.js?v=20260614c"></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../"></script>
-    <script src="../js/organiser-event-tickets.js?v=20260610f"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260611"></script>
   </body>
 </html>

@@ -1217,6 +1217,18 @@ a:hover {
   display: none;
 }
 
+.ticket-panel.is-sales-pending .qty-row,
+.ticket-panel.is-sales-pending .summary,
+.ticket-panel.is-sales-pending .summary-fee-note,
+.ticket-panel.is-sales-pending .ticket-tiers .tier {
+  pointer-events: none;
+}
+
+.ticket-panel.is-sales-pending .qty-row,
+.ticket-panel.is-sales-pending .summary {
+  opacity: 0.55;
+}
+
 .ticket-panel.is-sales-pending .ticket-sales-nudge {
   display: block;
 }

@@ -738,7 +738,7 @@
 
   function loadCatalogAsync() {
     var seeds = loadCatalog();
-    return fetch('/api/opportunities', { credentials: 'omit', cache: 'no-store' })
+    return fetch('/api/opportunities', { credentials: 'omit' })
       .then(function (res) {
         return res.json();
       })
@@ -774,7 +774,7 @@
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(key)) {
       return Promise.resolve(null);
     }
-    return fetch('/api/opportunities?id=' + encodeURIComponent(key), { credentials: 'omit', cache: 'no-store' })
+    return fetch('/api/opportunities?id=' + encodeURIComponent(key), { credentials: 'omit' })
       .then(function (res) {
         return res.json();
       })

@@ -27,20 +27,83 @@
     );
   }
 
-  function measureImageFile(file) {
+  function loadImageFile(file) {
     return new Promise(function (resolve, reject) {
       const url = URL.createObjectURL(file);
       const img = new Image();
       img.onload = function () {
         URL.revokeObjectURL(url);
-        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        resolve(img);
       };
       img.onerror = function () {
         URL.revokeObjectURL(url);
-        reject(new Error('Could not read image dimensions'));
+        reject(new Error('Could not read image'));
       };
       img.src = url;
     });
+  }
+
+  function measureImageFile(file) {
+    return loadImageFile(file).then(function (img) {
+      return { width: img.naturalWidth, height: img.naturalHeight };
+    });
+  }
+
+  function scaledDimensions(width, height, maxLongEdge) {
+    const long = Math.max(width, height);
+    if (long <= maxLongEdge) return { width: width, height: height };
+    const scale = maxLongEdge / long;
+    return {
+      width: Math.max(1, Math.round(width * scale)),
+      height: Math.max(1, Math.round(height * scale)),
+    };
+  }
+
+  function canvasToBlob(canvas, type, quality) {
+    return new Promise(function (resolve, reject) {
+      canvas.toBlob(
+        function (blob) {
+          if (blob) resolve(blob);
+          else reject(new Error('Could not compress image'));
+        },
+        type,
+        quality
+      );
+    });
+  }
+
+  async function compressImageFile(file, maxBytes) {
+    if (file.size <= maxBytes) return file;
+
+    const img = await loadImageFile(file);
+    const srcW = img.naturalWidth;
+    const srcH = img.naturalHeight;
+    let maxLongEdge = Math.min(Math.max(srcW, srcH), 2400);
+    const qualities = [0.88, 0.78, 0.68, 0.58, 0.48, 0.38];
+    const outputType = 'image/jpeg';
+
+    while (maxLongEdge >= 320) {
+      const dims = scaledDimensions(srcW, srcH, maxLongEdge);
+      const canvas = document.createElement('canvas');
+      canvas.width = dims.width;
+      canvas.height = dims.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not compress image');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, dims.width, dims.height);
+      ctx.drawImage(img, 0, 0, dims.width, dims.height);
+
+      for (let i = 0; i < qualities.length; i++) {
+        const blob = await canvasToBlob(canvas, outputType, qualities[i]);
+        if (blob.size <= maxBytes) {
+          const base = String(file.name || 'image').replace(/\.[^.]+$/, '') || 'image';
+          return new File([blob], base + '.jpg', { type: outputType, lastModified: Date.now() });
+        }
+      }
+      maxLongEdge = Math.round(maxLongEdge * 0.8);
+    }
+
+    throw new Error('Could not compress image');
   }
 
   function measureImageUrl(src) {
@@ -113,14 +176,21 @@
     });
   }
 
-  function acceptImageFile(file, onFile, qualityHintEl) {
+  async function acceptImageFile(file, onFile, qualityHintEl) {
     if (!file || !String(file.type || '').startsWith('image/')) return false;
+    let ready = file;
     if (file.size > MAX_BYTES) {
-      alert('Image must be under 2MB');
-      return false;
+      try {
+        ready = await compressImageFile(file, MAX_BYTES);
+      } catch {
+        alert(
+          'This image is too large and could not be compressed automatically. Try a smaller file or paste a URL instead.'
+        );
+        return false;
+      }
     }
-    onFile(file);
-    if (qualityHintEl) checkLogoFileQuality(file, qualityHintEl);
+    onFile(ready);
+    if (qualityHintEl) checkLogoFileQuality(ready, qualityHintEl);
     return true;
   }
 
@@ -151,7 +221,7 @@
       });
       fileInput.addEventListener('change', function () {
         const file = fileInput.files && fileInput.files[0];
-        if (file) acceptImageFile(file, onFile, qualityHintEl);
+        if (file) void acceptImageFile(file, onFile, qualityHintEl);
       });
     }
 
@@ -159,7 +229,7 @@
       const file = fileFromClipboardEvent(e);
       if (!file) return;
       e.preventDefault();
-      acceptImageFile(file, onFile, qualityHintEl);
+      void acceptImageFile(file, onFile, qualityHintEl);
     });
 
     zone.addEventListener('dragover', function (e) {
@@ -173,7 +243,7 @@
       e.preventDefault();
       zone.classList.remove('is-dragover');
       const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-      if (file) acceptImageFile(file, onFile, qualityHintEl);
+      if (file) void acceptImageFile(file, onFile, qualityHintEl);
     });
   }
 

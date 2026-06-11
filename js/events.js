@@ -618,7 +618,7 @@
     for (var i = 0; i < API_PATHS.length; i++) {
       var path = API_PATHS[i];
       try {
-        var res = await fetch(path, { cache: 'no-store', credentials: 'same-origin' });
+        var res = await fetch(path, { credentials: 'same-origin' });
         if (!res.ok) {
           lastError = new Error('HTTP ' + res.status + ' for ' + path);
           continue;

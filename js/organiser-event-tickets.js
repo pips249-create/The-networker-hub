@@ -424,7 +424,7 @@
       const vatRadio = document.querySelector(
         'input[name="vat-treatment"][value="' + ev.vatTreatment + '"]'
       );
-      if (vatRadio) vatRadio.checked = true;
+      if (vatRadio) selectVatCard(vatRadio);
     }
     if (ev.refundPolicy) {
       const refundRadio = document.querySelector(
@@ -557,6 +557,37 @@
       btn.disabled = true;
       if (warn) warn.hidden = false;
     }
+  }
+
+  function selectVatCard(radio) {
+    if (!radio) return;
+    radio.checked = true;
+    document.querySelectorAll('.ee-vat-card').forEach((card) => {
+      const r = card.querySelector('input[type="radio"]');
+      const active = r && r.checked;
+      card.classList.toggle('is-selected', active);
+      card.setAttribute('aria-checked', active ? 'true' : 'false');
+    });
+    updatePublishButton();
+  }
+
+  function bindVatOptions() {
+    document.querySelectorAll('.ee-vat-card').forEach((card) => {
+      const radio = card.querySelector('input[type="radio"]');
+      if (!radio) return;
+      radio.addEventListener('change', () => selectVatCard(radio));
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('input')) return;
+        e.preventDefault();
+        selectVatCard(radio);
+      });
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectVatCard(radio);
+        }
+      });
+    });
   }
 
   function selectRefundCard(radio) {
@@ -748,6 +779,7 @@
       updatePublishButton();
     });
     bindRefundPolicy();
+    bindVatOptions();
     updatePublishButton();
   }
 

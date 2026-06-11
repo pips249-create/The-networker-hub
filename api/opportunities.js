@@ -51,6 +51,8 @@ module.exports = async function handler(req, res) {
 
   if (req.method !== 'GET') return json(res, 405, { error: 'method_not_allowed' });
 
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
+
   const id = String(req.query?.id || '').trim();
 
   try {
