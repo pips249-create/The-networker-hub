@@ -251,15 +251,6 @@
     renderPhoto(org);
     document.getElementById('org-name').textContent = org.name || 'Organiser';
 
-    var industryEl = document.getElementById('org-industry');
-    var industry = org.industry || (org.industries && org.industries[0]) || '';
-    if (industry && industryEl) {
-      industryEl.textContent = industry;
-      industryEl.hidden = false;
-    } else if (industryEl) {
-      industryEl.hidden = true;
-    }
-
     renderReviews(org);
 
     document.getElementById('org-description').textContent =

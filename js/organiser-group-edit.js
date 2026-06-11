@@ -4,27 +4,11 @@
 (function () {
   const GROUP_SAVED_KEY = 'hub_group_last_saved';
   const DESCRIPTION_MAX_WORDS = 500;
-  const INDUSTRY_OPTIONS = [
-    'Business',
-    'Technology',
-    'Creative',
-    'Finance',
-    'Healthcare',
-    'Property',
-    'Legal',
-    'Marketing',
-    'Education',
-    'Manufacturing',
-    'Retail',
-    'Hospitality',
-    'Other',
-  ];
   const params = new URLSearchParams(location.search);
   const editId = params.get('id') || '';
   const onboardReview = params.get('onboard') === 'review';
   let logoFile = null;
   let currentGroup = null;
-  const selectedIndustries = new Set();
 
   function showAlert(msg) {
     const el = document.getElementById('ge-alert');
@@ -139,24 +123,6 @@
     update();
   }
 
-  function renderIndustryChips() {
-    const wrap = document.getElementById('ge-industries');
-    if (!wrap) return;
-    wrap.innerHTML = '';
-    INDUSTRY_OPTIONS.forEach((label) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'ee-chip' + (selectedIndustries.has(label) ? ' is-active' : '');
-      btn.textContent = label;
-      btn.addEventListener('click', () => {
-        if (selectedIndustries.has(label)) selectedIndustries.delete(label);
-        else selectedIndustries.add(label);
-        renderIndustryChips();
-      });
-      wrap.appendChild(btn);
-    });
-  }
-
   function configureEditActions(g) {
     const saveChanges = document.getElementById('ge-save-changes');
     const continueBtn = document.getElementById('ge-save-continue');
@@ -234,9 +200,6 @@
     if (document.getElementById('ge-contact-email')) {
       document.getElementById('ge-contact-email').value = g.contactEmail || '';
     }
-    selectedIndustries.clear();
-    (g.industries || []).forEach((i) => selectedIndustries.add(i));
-    renderIndustryChips();
     const counter = document.getElementById('ge-word-count');
     if (counter) counter.textContent = String(countWords(g.description || ''));
     if (g.imageUrl) {
@@ -316,7 +279,6 @@
       description,
       website: document.getElementById('ge-website').value.trim(),
       logoUrl: document.getElementById('ge-logo-url').value.trim(),
-      industries: [...selectedIndustries],
       contactEmail,
     };
 
@@ -485,7 +447,6 @@
 
   bindLogoUpload();
   bindWordCounter();
-  renderIndustryChips();
   if (!editId && window.HubFlowTour) {
     window.HubFlowTour.startGroupTour({ isEdit: false, delay: 0 });
   }

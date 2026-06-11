@@ -182,9 +182,9 @@
       target: '#ge-description',
     },
     {
-      title: 'Industries and contact',
-      body: 'Confirm the industries you serve and a contact email so attendees and the Hub team can reach you.',
-      target: '#ge-industries',
+      title: 'Contact email',
+      body: 'Confirm a contact email so attendees and the Hub team can reach you.',
+      target: '#ge-contact-email',
     },
     {
       title: 'Ready for your first event?',
@@ -209,9 +209,9 @@
       target: '#ge-description',
     },
     {
-      title: 'Industries and contact',
-      body: 'Pick the industries you serve, then confirm a contact email so attendees and the Hub team can reach you.',
-      target: '#ge-industries',
+      title: 'Contact email',
+      body: 'Add a contact email so attendees and the Hub team can reach you.',
+      target: '#ge-contact-email',
     },
     {
       title: 'Save and list your first event',
