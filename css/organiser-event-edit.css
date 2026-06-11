@@ -282,6 +282,40 @@ a.ee-wizard-link:hover {
   margin-bottom: 6px;
 }
 
+.ee-field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.ee-field-label-row > label {
+  margin-bottom: 0;
+}
+
+.ee-btn-compact {
+  font-size: 11px;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.ee-inline-action {
+  font-weight: 600;
+  color: var(--ee-purple-dark, #5b2f99);
+  text-decoration: none;
+}
+
+.ee-inline-action:hover {
+  text-decoration: underline;
+}
+
+.ee-group-add-row {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
 .ee-field select {
   cursor: pointer;
 }

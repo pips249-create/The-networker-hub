@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260614" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260708" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260613" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260612" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260606" />
@@ -55,6 +55,9 @@
             <label for="ee-group">Group profile</label>
             <select id="ee-group" required></select>
             <p class="ee-hint" id="ee-group-hint">Which organiser group this event belongs to.</p>
+            <p class="ee-hint ee-group-add-row" id="ee-group-add-row" hidden>
+              <a class="ee-inline-action" href="group-edit.html">+ Add a new group profile</a>
+            </p>
           </div>
         </div>
 
@@ -62,7 +65,12 @@
         <div class="ee-card" id="ee-card-details">
           <h2>Basic event details</h2>
           <div class="ee-field">
-            <label for="ee-title">Event title</label>
+            <div class="ee-field-label-row">
+              <label for="ee-title">Event title</label>
+              <button type="button" class="ee-btn ee-btn-outline ee-btn-compact" id="ee-copy-title-from-group">
+                Copy from group profile
+              </button>
+            </div>
             <input type="text" id="ee-title" required placeholder="e.g. Lunch &amp; learn — Liverpool" />
           </div>
           <div class="ee-field">
@@ -78,7 +86,12 @@
             </p>
           </div>
           <div class="ee-field">
-            <label for="ee-description">Highlights / description</label>
+            <div class="ee-field-label-row">
+              <label for="ee-description">Highlights / description</label>
+              <button type="button" class="ee-btn ee-btn-outline ee-btn-compact" id="ee-copy-desc-from-group">
+                Copy from group profile
+              </button>
+            </div>
             <p class="ee-hint" id="ee-description-hint">
               Attendees search and filter events using this text — include who it is for, what happens, and useful keywords.
             </p>
@@ -162,7 +175,9 @@
         <!-- Section 4: Dates -->
         <div class="ee-card ee-card-dates" id="ee-card-dates">
           <h2>Dates</h2>
-          <p class="ee-hint" style="margin-top:0">Click days on the monthly calendar to add or remove dates for this event.</p>
+          <p class="ee-hint" style="margin-top:0">
+            Select <strong>one date</strong> for a single event, or click <strong>multiple days</strong> on the calendar to create a series — the same times apply to every date you pick.
+          </p>
           <div class="ee-calendar" id="ee-calendar">
             <div class="ee-cal-header">
               <button type="button" id="ee-cal-prev" aria-label="Previous month">‹</button>
@@ -212,6 +227,6 @@
     <script src="../js/meeting-types.js?v=20260609n"></script>
     <script src="../js/organiser-quarter-time.js?v=20260614c"></script>
     <script src="../js/organiser-image-upload.js?v=20260611"></script>
-    <script src="../js/organiser-event-edit.js?v=20260611c"></script>
+    <script src="../js/organiser-event-edit.js?v=20260613"></script>
   </body>
 </html>

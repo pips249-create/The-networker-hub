@@ -35,11 +35,17 @@
   }
 
   function selectedGroupId() {
-    return groupSelect && groupSelect.value ? String(groupSelect.value).trim() : '';
+    var val = groupSelect && groupSelect.value ? String(groupSelect.value).trim() : '';
+    if (!val || val === '__new_group__') return '';
+    return val;
   }
 
   function syncGroupSelection() {
     var id = selectedGroupId();
+    if (id === '__new_group__') {
+      window.location.href = 'group-edit.html';
+      return;
+    }
     setFormatEnabled(Boolean(id));
     if (groupHint) {
       groupHint.textContent = id
@@ -61,6 +67,10 @@
       opt.textContent = g.name || 'Group';
       groupSelect.appendChild(opt);
     });
+    var addNew = document.createElement('option');
+    addNew.value = '__new_group__';
+    addNew.textContent = '+ Add a new group profile…';
+    groupSelect.appendChild(addNew);
     if (list.length === 1) {
       groupSelect.value = list[0].id;
     }

@@ -238,6 +238,8 @@
     );
   }
 
+  const DEFAULT_TIER_NAME = 'General admission';
+
   function tierRowHtml(index) {
     return (
       '<div class="ee-tier-row ee-tier-row-expanded" data-tier-index="' +
@@ -256,7 +258,7 @@
       '</div>' +
       '<div class="ee-row-2">' +
       '<div class="ee-field"><label>Sale start <span class="ee-optional">(optional)</span></label>' +
-      '<p class="ee-hint" style="margin-top:0">Pick a date and time in 15-minute steps</p>' +
+      '<p class="ee-hint" style="margin-top:0">Leave blank and sales start today. Or pick a date and time in 15-minute steps.</p>' +
       '<div class="ee-datetime-split">' +
       '<input type="date" class="ee-tier-sale-start-date" />' +
       '<select class="ee-tier-sale-start-time" aria-label="Sale start time"></select>' +
@@ -350,7 +352,7 @@
     }
   }
 
-  function addTierRow() {
+  function addTierRow(options) {
     const wrap = document.getElementById('ee-tier-rows');
     if (!wrap) return;
     const index = wrap.children.length;
@@ -358,6 +360,10 @@
     div.innerHTML = tierRowHtml(index);
     const row = div.firstElementChild;
     bindTierRow(row);
+    const nameEl = row.querySelector('.ee-tier-name');
+    if (nameEl && index === 0 && options?.useDefaultName !== false && !nameEl.value.trim()) {
+      nameEl.value = DEFAULT_TIER_NAME;
+    }
     wrap.appendChild(row);
     updateTierSummary();
     updatePublishButton();
@@ -410,7 +416,7 @@
       .slice()
       .sort((a, b) => (Number(a.displayOrder) || 0) - (Number(b.displayOrder) || 0));
     sorted.forEach((ticket) => {
-      const row = addTierRow();
+      const row = addTierRow({ useDefaultName: false });
       fillTierFromTicket(row, ticket);
     });
     existingTicketsLoaded = sorted.length > 0;
@@ -768,7 +774,7 @@
       addTierRow();
     }
 
-    document.getElementById('ee-add-tier').addEventListener('click', addTierRow);
+    document.getElementById('ee-add-tier').addEventListener('click', () => addTierRow({ useDefaultName: false }));
     document.getElementById('ee-mode-tickets').addEventListener('click', () => {
       setAttendanceMode('tickets');
       updateTierSummary();

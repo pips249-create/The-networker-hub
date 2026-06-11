@@ -342,7 +342,7 @@
     },
     {
       title: 'Pick your date(s)',
-      body: 'Tap days on the calendar to add dates, then set start and end times. You can select multiple dates for a series.',
+      body: 'Select one date for a single event, or click multiple days to create a series — the same start and end times apply to every date.',
       target: '#ee-card-dates',
     },
     {

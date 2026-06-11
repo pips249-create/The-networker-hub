@@ -511,6 +511,7 @@
   function fillGroupsSelect(preselectedId, lockSelection) {
     const sel = document.getElementById('ee-group');
     const hint = document.getElementById('ee-group-hint');
+    const addRow = document.getElementById('ee-group-add-row');
     if (!sel) return;
     sel.innerHTML = '';
     if (!groups.length) {
@@ -521,8 +522,9 @@
       sel.disabled = true;
       if (hint) {
         hint.innerHTML =
-          'You need a group profile first. <a href="group-edit.html">Create a group profile</a> then return here.';
+          'You need a group profile first. <a href="group-edit.html" class="ee-inline-action">Create a group profile</a> then return here.';
       }
+      if (addRow) addRow.hidden = true;
       return;
     }
     sel.disabled = Boolean(lockSelection);
@@ -531,6 +533,7 @@
         ? 'This event belongs to the group profile you chose in the previous step.'
         : 'Which organiser group this event belongs to.';
     }
+    if (addRow) addRow.hidden = false;
     groups.forEach((g) => {
       const opt = document.createElement('option');
       opt.value = g.id;
@@ -545,6 +548,65 @@
         }
       }
     }
+    syncCopyFromGroupButtons();
+  }
+
+  function getSelectedGroup() {
+    const sel = document.getElementById('ee-group');
+    let gid = sel && sel.value ? String(sel.value).trim() : '';
+    if (!gid) {
+      try {
+        gid = sessionStorage.getItem(GROUP_STORAGE_KEY) || '';
+      } catch {
+        /* ignore */
+      }
+    }
+    return groups.find((g) => g.id === gid) || null;
+  }
+
+  function syncCopyFromGroupButtons() {
+    const group = getSelectedGroup();
+    const titleBtn = document.getElementById('ee-copy-title-from-group');
+    const descBtn = document.getElementById('ee-copy-desc-from-group');
+    const hasGroup = Boolean(group);
+    if (titleBtn) {
+      titleBtn.disabled = !hasGroup || !group.name;
+      titleBtn.title = hasGroup && group.name ? '' : 'Choose a group profile first';
+    }
+    if (descBtn) {
+      descBtn.disabled = !hasGroup || !group.description;
+      descBtn.title = hasGroup && group.description ? '' : 'This group has no description yet';
+    }
+  }
+
+  function bindCopyFromGroupButtons() {
+    const titleBtn = document.getElementById('ee-copy-title-from-group');
+    const descBtn = document.getElementById('ee-copy-desc-from-group');
+    const groupSel = document.getElementById('ee-group');
+
+    if (titleBtn) {
+      titleBtn.addEventListener('click', () => {
+        const group = getSelectedGroup();
+        if (!group || !group.name) return;
+        const titleEl = document.getElementById('ee-title');
+        if (titleEl) titleEl.value = group.name;
+      });
+    }
+    if (descBtn) {
+      descBtn.addEventListener('click', () => {
+        const group = getSelectedGroup();
+        if (!group || !group.description) return;
+        const descEl = document.getElementById('ee-description');
+        if (descEl) {
+          descEl.value = group.description;
+          descEl.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      });
+    }
+    if (groupSel) {
+      groupSel.addEventListener('change', syncCopyFromGroupButtons);
+    }
+    syncCopyFromGroupButtons();
   }
 
   function applyFormatUi(format) {
@@ -936,6 +998,7 @@
     bindPhotoUpload();
     bindWordCounter();
     bindFormatToggleButtons();
+    bindCopyFromGroupButtons();
     if (QuarterTime) {
       QuarterTime.initPair('ee-start-time', 'ee-end-time', { start: '18:00', end: '20:00' });
     }
