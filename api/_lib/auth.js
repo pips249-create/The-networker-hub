@@ -233,32 +233,6 @@ function requireAdmin(session) {
     };
   }
   if (!isAdminRole(session.role)) return { ok: false, status: 403, error: 'admin_only' };
-
-  let mfa;
-  try {
-    mfa = require('./admin-mfa');
-  } catch {
-    return { ok: true, session };
-  }
-
-  if (!mfa.isAdminMfaEnforcementEnabled()) return { ok: true, session };
-
-  if (!session.adminMfaEnrolled) {
-    return {
-      ok: false,
-      status: 403,
-      error: 'admin_mfa_enroll_required',
-      message: 'Set up an authenticator app before using the Command Centre.',
-    };
-  }
-  if (!mfa.isAdminMfaFresh(session)) {
-    return {
-      ok: false,
-      status: 403,
-      error: 'admin_mfa_required',
-      message: 'Enter your authenticator code to continue in the Command Centre.',
-    };
-  }
   return { ok: true, session };
 }
 

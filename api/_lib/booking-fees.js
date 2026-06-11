@@ -1,6 +1,14 @@
-/** Customer-facing booking fee: 4.5% + 20p per ticket (matches event detail UI). */
+/**
+ * Customer-facing booking fee: 4.5% + 20p per ticket.
+ * This is the merged Hub fee (3% platform + ~1.5% Stripe + 20p per ticket on the ticket price).
+ * Organisers receive the full ticket price; attendees pay the booking fee on top.
+ */
 const BOOKING_FEE_RATE = 0.045;
 const BOOKING_FEE_PER_TICKET = 0.2;
+
+const BOOKING_FEE_LABEL = 'Booking fee (4.5% + 20p per ticket)';
+const BOOKING_FEE_EXPLANATION =
+  'The booking fee covers platform and payment processing. Organisers receive the full ticket price.';
 
 function roundMoney(amount) {
   return Math.round(Number(amount) * 100) / 100;
@@ -30,9 +38,44 @@ function calculateCheckoutTotals(unitPricePounds, qty, maxQty) {
   return { subtotal, fee, total, qty: q, unitPrice: unit };
 }
 
+/** Ticket subtotal from checkout total (organiser revenue per registration). */
+function ticketSubtotalFromCheckoutTotal(checkoutTotal, qty, maxQty) {
+  const paid = Number(checkoutTotal) || 0;
+  const q = clampQty(qty, maxQty);
+  if (paid <= 0) return 0;
+  const subtotal = (paid - BOOKING_FEE_PER_TICKET * q) / (1 + BOOKING_FEE_RATE);
+  return roundMoney(Math.max(0, subtotal));
+}
+
+function bookingFeeFromCheckoutTotal(checkoutTotal, qty, maxQty) {
+  const subtotal = ticketSubtotalFromCheckoutTotal(checkoutTotal, qty, maxQty);
+  if (subtotal <= 0) return 0;
+  return calculateBookingFee(subtotal, qty, maxQty);
+}
+
+function registrationTicketRevenue(registration) {
+  const paid = Number(registration?.amount_paid || 0);
+  if (paid <= 0) return 0;
+  const qty = Math.max(1, parseInt(registration?.quantity, 10) || 1);
+  return ticketSubtotalFromCheckoutTotal(paid, qty);
+}
+
+function registrationBookingFee(registration) {
+  const paid = Number(registration?.amount_paid || 0);
+  if (paid <= 0) return 0;
+  const ticket = registrationTicketRevenue(registration);
+  return roundMoney(Math.max(0, paid - ticket));
+}
+
 module.exports = {
   BOOKING_FEE_RATE,
   BOOKING_FEE_PER_TICKET,
+  BOOKING_FEE_LABEL,
+  BOOKING_FEE_EXPLANATION,
   calculateBookingFee,
   calculateCheckoutTotals,
+  ticketSubtotalFromCheckoutTotal,
+  bookingFeeFromCheckoutTotal,
+  registrationTicketRevenue,
+  registrationBookingFee,
 };

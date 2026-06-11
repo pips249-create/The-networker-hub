@@ -4,13 +4,13 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { parseTypeCategory } = require('./event-types');
 const { scanEventHealth } = require('./admin-event-health');
+const {
+  registrationTicketRevenue,
+  registrationBookingFee,
+} = require('./booking-fees');
 
 function round2(n) {
   return Math.round(Number(n) * 100) / 100;
-}
-
-function platformFee(subtotal) {
-  return subtotal * 0.045 + 0.2;
 }
 
 function listingStatusLabel(status) {
@@ -64,9 +64,14 @@ async function fetchDashboardMetrics(sb) {
   });
 
   const training = workshopsRes.count || 0;
-  const totalRevenue = (regsRes.data || [])
+  let totalRevenue = 0;
+  let hubBookingFees = 0;
+  (regsRes.data || [])
     .filter((r) => r.payment_status === 'Paid')
-    .reduce((sum, r) => sum + (Number(r.amount_paid) || 0), 0);
+    .forEach((r) => {
+      totalRevenue += registrationTicketRevenue(r);
+      hubBookingFees += registrationBookingFee(r);
+    });
 
   const now = Date.now() - 86400000;
   const liveEvents = approved.filter((e) => {
@@ -77,7 +82,7 @@ async function fetchDashboardMetrics(sb) {
 
   return {
     revenue: round2(totalRevenue),
-    fees: round2(platformFee(totalRevenue)),
+    fees: round2(hubBookingFees),
     listings: {
       meetings,
       exhibitions,
@@ -557,7 +562,7 @@ async function fetchFinancials(sb) {
     .filter((r) => r.payment_status === 'Paid')
     .forEach((r) => {
       const name = r.organisers?.name || 'Unknown organiser';
-      revenueByOrg.set(name, (revenueByOrg.get(name) || 0) + (Number(r.amount_paid) || 0));
+      revenueByOrg.set(name, (revenueByOrg.get(name) || 0) + registrationTicketRevenue(r));
     });
 
   const stripeAccounts = (orgsRes.data || []).map((o) => {

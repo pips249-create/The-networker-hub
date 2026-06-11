@@ -36,7 +36,7 @@ const MEMBER_QUESTIONS = [
   { q: 'What does Rosie do?', expect: /co-founder|Rosie/i },
   { q: 'What does Pip do?', expect: /co-founder|Pip|Catherine/i },
   { q: 'Why did the networker hub start?', expect: /right room|careers|companies|mission/i },
-  { q: 'How much does The Networker Hub make per ticket?', expect: /4\.5%|3%|booking fee|platform fee/i },
+  { q: 'How much does The Networker Hub make per ticket?', expect: /4\.5%|booking fee|platform and payment/i },
   { q: 'How can I download the attendees for my next event', expect: /Attendees|CSV|\/organiser\//i },
   { q: 'How long between payouts for my event? Can I get it instantly?', expect: /7.day|not instant|settlement|Stripe/i },
 ];

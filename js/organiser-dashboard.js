@@ -1331,8 +1331,6 @@
       if (el) el.textContent = val;
     };
     set('payout-gross', fmt.amountGross || '£0.00');
-    set('payout-stripe', '-' + String(fmt.stripeFee || '£0.00').replace(/^-/, ''));
-    set('payout-platform', '-' + String(fmt.platformFee || '£0.00').replace(/^-/, ''));
     set('payout-net', fmt.amountNet || '£0.00');
 
     if (breakdownEl) breakdownEl.hidden = false;
@@ -1437,8 +1435,8 @@
     const group = pending[0];
     banner.hidden = false;
     banner.innerHTML =
-      '<p><strong>Connect Stripe to sell paid tickets</strong> — ticket revenue goes to your connected account. ' +
-      'The Hub keeps the 3% platform fee and booking fee; Stripe processing is deducted automatically.</p>' +
+      '<p><strong>Connect Stripe to sell paid tickets</strong> — you receive the full ticket price in your connected account. ' +
+      'Attendees pay a booking fee at checkout (4.5% + 20p per ticket), which covers platform and payment processing.</p>' +
       '<button type="button" class="org-btn org-btn-primary org-btn-sm" data-stripe-connect="' +
       esc(group.id) +
       '">Connect Stripe for ' +

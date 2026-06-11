@@ -99,11 +99,9 @@ async function verifyEventRefundsInStripe(registrations) {
   };
 }
 
-function calculatePlatformApplicationFeePence(ticketSubtotalPence, bookingFeePence) {
-  const ticket = Math.max(0, Number(ticketSubtotalPence) || 0);
-  const fee = Math.max(0, Number(bookingFeePence) || 0);
-  const platformOnTicket = Math.round(ticket * PLATFORM_FEE_RATE);
-  return platformOnTicket + fee;
+/** Hub keeps the booking fee only; organiser receives the full ticket subtotal via Connect transfer. */
+function calculatePlatformApplicationFeePence(_ticketSubtotalPence, bookingFeePence) {
+  return Math.max(0, Math.round(Number(bookingFeePence) || 0));
 }
 
 module.exports = {

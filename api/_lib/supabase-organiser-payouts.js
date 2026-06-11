@@ -3,6 +3,10 @@
  */
 const { getSupabaseAdmin } = require('./supabase');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
+const {
+  registrationTicketRevenue,
+  registrationBookingFee,
+} = require('./booking-fees');
 
 const PAYOUT_STATUS_LABELS = {
   pending_review: 'Pending review',
@@ -72,7 +76,7 @@ function enrichTicketsWithSales(tickets, registrations) {
     if (String(row.payment_status || '').trim() === 'Paid') {
       revenueByTicket.set(
         row.ticket_id,
-        (revenueByTicket.get(row.ticket_id) || 0) + Number(row.amount_paid || 0)
+        (revenueByTicket.get(row.ticket_id) || 0) + registrationTicketRevenue(row)
       );
     }
   });
@@ -91,18 +95,21 @@ function enrichTicketsWithSales(tickets, registrations) {
 
 function calculatePayoutBreakdown(registrations) {
   const paid = (registrations || []).filter((r) => r.payment_status === 'Paid');
-  const amount_gross = paid.reduce((sum, r) => sum + Number(r.amount_paid || 0), 0);
+  let amount_gross = 0;
+  let booking_fee_collected = 0;
+  paid.forEach((row) => {
+    amount_gross += registrationTicketRevenue(row);
+    booking_fee_collected += registrationBookingFee(row);
+  });
   const intentIds = paid.map((r) => r.stripe_payment_intent_id).filter(Boolean);
   const total_transactions = new Set(intentIds).size;
-  const stripe_fee = amount_gross * 0.015 + 0.2 * total_transactions;
-  const platform_fee = amount_gross * 0.03;
-  const amount_net = amount_gross - stripe_fee - platform_fee;
 
   return {
     amount_gross: Math.round(amount_gross * 100) / 100,
-    stripe_fee: Math.round(stripe_fee * 100) / 100,
-    platform_fee: Math.round(platform_fee * 100) / 100,
-    amount_net: Math.round(amount_net * 100) / 100,
+    stripe_fee: 0,
+    platform_fee: 0,
+    booking_fee_collected: Math.round(booking_fee_collected * 100) / 100,
+    amount_net: Math.round(amount_gross * 100) / 100,
     total_transactions,
   };
 }
@@ -412,7 +419,7 @@ async function buildOrganiserWorkspaceSummary(groupIds, adminView) {
     totalTicketsSold += qty;
     ticketsSoldByGroupId[groupId] = (ticketsSoldByGroupId[groupId] || 0) + qty;
     if (String(row.payment_status || '').trim() === 'Paid') {
-      const amount = Number(row.amount_paid || 0);
+      const amount = registrationTicketRevenue(row);
       totalRevenue += amount;
       revenueByGroupId[groupId] = (revenueByGroupId[groupId] || 0) + amount;
     }

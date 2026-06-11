@@ -69,8 +69,8 @@ const KNOWLEDGE_SECTIONS = [
       'Listing events on the hub is part of organiser onboarding — email hello@the-networker.co.uk with your group name, format, and location for setup help. Organiser terms: /legal-policies.html#organisers. ' +
       'EVENT NOT ON BROWSE PAGE? Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Finish the publish flow in /organiser/ (tickets, refund policy, publish). If it still does not appear, email hello@the-networker.co.uk with the event title. ' +
       'DOWNLOAD ATTENDEES: Sign in → /organiser/ → Events → Attendees. Filter by event, then use Download attendees CSV. ' +
-      'PAYOUTS: Not instant. After your event ends, a 7-day settlement period applies. Archive the event in your dashboard, then request a payout when eligible. Requests are reviewed before payment to your Stripe account. Breakdown shows gross sales minus Stripe processing and platform fee (3% of gross ticket revenue). Minimum net payout £1. ' +
-      'FEES: Attendees pay a booking fee at checkout (4.5% + 20p per ticket, shown before they pay). Organisers: platform fee 3% of gross ticket revenue plus Stripe processing — deducted in your payout breakdown, not added to the ticket price unless shown at checkout.',
+      'PAYOUTS: With Stripe Connect, you receive the full ticket price in your connected account when attendees pay. Legacy manual payouts (if Connect is off) pay out your gross ticket sales after the event is archived and a 7-day settlement period. Minimum payout £1. ' +
+      'FEES: Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before they pay). This covers platform and payment processing — organisers receive the full ticket price, with no separate platform or Stripe deductions.',
   },
   {
     title: 'TEAM & STORY',
@@ -152,7 +152,7 @@ const FALLBACK_REPLIES = [
   {
     match: /how much.*(hub|networker|platform).*(make|take|fee|charge|per ticket)|platform fee|booking fee|what do you charge/i,
     reply:
-      'For attendees: a booking fee applies at checkout — 4.5% + 20p per ticket, shown before payment. For organisers: the platform fee is 3% of gross ticket revenue, plus Stripe processing; both are deducted in your payout breakdown in /organiser/ (not added to the ticket price unless shown at checkout). Full terms: /legal-policies.html.',
+      'Attendees pay one booking fee at checkout — 4.5% + 20p per ticket, shown before payment. This single fee covers platform and payment processing. Organisers receive the full ticket price (no separate platform or Stripe deductions). Full terms: /legal-policies.html.',
   },
   {
     match: /download.*attendee|export.*attendee|attendee.*csv|attendees csv|get.*attendee list/i,

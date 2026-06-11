@@ -438,10 +438,27 @@
       qty: qty,
       stripeCheckoutSessionId: sessionId || null,
       paymentStatus: isFree ? 'Free' : 'Paid',
+      email: (pending && pending.email) || '',
+      name: (pending && pending.name) || '',
     };
 
     if (isFree) {
       body.amountPaid = 0;
+    }
+
+    if (!body.email || !body.name) {
+      try {
+        const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
+        const sessionData = await sessionRes.json().catch(function () {
+          return {};
+        });
+        if (sessionData && sessionData.ok && sessionData.user) {
+          if (!body.email) body.email = sessionData.user.email || '';
+          if (!body.name) body.name = sessionData.user.name || '';
+        }
+      } catch (e) {
+        /* non-fatal */
+      }
     }
 
     try {
@@ -471,7 +488,19 @@
       }
 
       const qtyMsg = qty > 1 ? 'Your ' + qty + ' tickets are confirmed.' : 'Your ticket is confirmed.';
-      await finishConfirmedBooking(pending, qtyMsg + ' We have emailed you the details.');
+      let tail = '';
+      const emailResult = data.emailResult || {};
+      if (emailResult.attendee) {
+        tail = ' We have emailed you the details.';
+      } else if (emailResult.skipped) {
+        tail = ' Check My tickets for your booking details.';
+      } else if (emailResult.errors && emailResult.errors.length) {
+        tail =
+          ' Your ticket is saved — if the confirmation email does not arrive shortly, check spam or My tickets.';
+      } else {
+        tail = ' We have emailed you the details.';
+      }
+      await finishConfirmedBooking(pending, qtyMsg + tail);
     } catch (e) {
       clearPending();
       showError('Could not reach the server. Your webhook may still complete the booking shortly.');

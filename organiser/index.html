@@ -481,7 +481,7 @@
             <div class="org-payout-held-banner" id="payout-held-banner" hidden role="status"></div>
             <div class="org-stripe-connect-banner" id="stripe-connect-banner" hidden role="status"></div>
             <p class="org-section-sub org-sub-lead">
-              Revenue and ticket counts come from hub registrations when checkout completes — including Stripe test payments while you are in sandbox mode.
+              Revenue shows your ticket sales (full ticket price). Attendees pay a separate booking fee at checkout (4.5% + 20p per ticket) which covers platform and payment processing.
             </p>
             <div class="org-revenue-banner">
               <div class="org-rev-item">
@@ -638,19 +638,15 @@
             <span>Gross ticket sales</span>
             <span id="payout-gross">£0.00</span>
           </div>
-          <div class="org-payout-line org-payout-deduct">
-            <span>Stripe fees (1.5% + 20p/transaction)</span>
-            <span id="payout-stripe">-£0.00</span>
-          </div>
-          <div class="org-payout-line org-payout-deduct">
-            <span>Platform fee (3%)</span>
-            <span id="payout-platform">-£0.00</span>
-          </div>
           <div class="org-payout-divider" aria-hidden="true"></div>
           <div class="org-payout-line org-payout-total">
             <span>Your payout</span>
             <span id="payout-net">£0.00</span>
           </div>
+          <p class="org-payout-fee-note">
+            Attendees pay a booking fee at checkout (4.5% + 20p per ticket), which covers platform and payment processing.
+            You receive the full ticket price on your listing.
+          </p>
         </div>
         <p class="org-payout-ineligible" id="modal-payout-ineligible" hidden></p>
         <div class="org-modal-actions">

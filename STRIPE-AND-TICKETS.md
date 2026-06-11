@@ -92,4 +92,4 @@ Create this in **test** sandbox for testing and separately in **live** for produ
 
 ## Organiser payouts (later)
 
-Platform fee (3%) and Stripe fee (1.5% + 20p per transaction) are calculated from `registrations.amount_paid` in organiser payout reports. The **booking fee** charged to attendees is included in `amount_paid`; payout logic allocates fees from gross accordingly.
+Organiser revenue in reports uses the **ticket price only** (booking fee stripped from `amount_paid`). The **booking fee** (4.5% + 20p per ticket) is Hub revenue and covers platform + payment processing. With Connect enabled, organisers receive the full ticket price via destination charges.

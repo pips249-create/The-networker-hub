@@ -838,7 +838,7 @@
     );
   }
 
-  function saveBookingPending(ev, ticketId, qty) {
+  function saveBookingPending(ev, ticketId, qty, attendee) {
     const seriesKey = seriesKeyFromContext();
     try {
       sessionStorage.setItem(
@@ -847,6 +847,8 @@
           eventId: ev.id,
           ticketId: isUuid(ticketId) ? ticketId : null,
           qty: qty,
+          email: attendee && attendee.email ? String(attendee.email).trim().toLowerCase() : '',
+          name: attendee && attendee.name ? String(attendee.name).trim() : '',
           ts: Date.now(),
           seriesKey: seriesKey || null,
           seriesTitle: seriesBaseEvent && seriesBaseEvent.title ? seriesBaseEvent.title : ev.title || '',
@@ -858,7 +860,7 @@
   }
 
   async function startPaidCheckout(ev, ticketId, qty, attendee) {
-    saveBookingPending(ev, ticketId, qty);
+    saveBookingPending(ev, ticketId, qty, attendee);
     const res = await fetch('/api/auth/create-checkout', {
       method: 'POST',
       credentials: 'include',
@@ -888,7 +890,7 @@
   }
 
   async function completeFreeBooking(ev, ticketId, qty, attendee) {
-    saveBookingPending(ev, ticketId, qty);
+    saveBookingPending(ev, ticketId, qty, attendee);
     const res = await fetch('/api/auth/complete-booking', {
       method: 'POST',
       credentials: 'include',
@@ -1621,24 +1623,6 @@
     if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
   }
 
-  function getSavedIds() {
-    try {
-      const raw = localStorage.getItem('hubSavedEventIds');
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed.map(String) : [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  function setSavedIds(ids) {
-    try {
-      localStorage.setItem('hubSavedEventIds', JSON.stringify(ids));
-    } catch (e) {
-      /* ignore */
-    }
-  }
-
   function initActions(ev) {
     const saveBtn = document.getElementById('save-btn');
     const shareBtn = document.getElementById('share-btn');
@@ -1650,25 +1634,29 @@
 
     function refreshSaveUi() {
       if (!saveBtn || !ev.id) return;
-      const saved = getSavedIds().includes(String(ev.id));
+      const id = String(ev.id);
+      const saved = window.HubFavourites ? window.HubFavourites.isSaved(id) : false;
       saveBtn.setAttribute('aria-pressed', saved ? 'true' : 'false');
       saveBtn.classList.toggle('is-saved', saved);
     }
 
     refreshSaveUi();
+    if (window.HubFavourites) {
+      window.HubFavourites.sync().then(function () {
+        refreshSaveUi();
+      });
+    }
 
     if (saveBtn) {
       saveBtn.addEventListener('click', function () {
         const id = String(ev.id || document.body.getAttribute('data-event-id') || '');
         if (!id) return;
-        let ids = getSavedIds();
-        if (ids.includes(id)) {
-          ids = ids.filter((x) => x !== id);
-        } else {
-          // TODO: Connect to Attendee Dashboard database storage when built
-          ids.push(id);
+        if (window.HubFavourites) {
+          window.HubFavourites.toggle(id).then(function () {
+            refreshSaveUi();
+          });
+          return;
         }
-        setSavedIds(ids);
         refreshSaveUi();
       });
     }

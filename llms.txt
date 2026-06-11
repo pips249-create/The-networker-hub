@@ -82,7 +82,7 @@ Sign in to /organiser/, open Events → Attendees, filter by event, and click Do
 Payouts are not instant. A 7-day settlement period applies after the event ends. Archive the event, then request a payout from the organiser dashboard when eligible. Stripe onboarding is required.
 
 ## What fees does The Networker Hub charge on tickets?
-Attendees pay a booking fee at checkout (4.5% + 20p per ticket, shown before payment). Organisers pay a 3% platform fee on gross ticket revenue plus Stripe processing, deducted in the payout breakdown.
+Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing. Organisers receive the full ticket price.
 
 ## Why did The Networker Hub start?
 Co-founders Rosie and Pip believe the right room at the right time changes careers and companies. They built one trusted UK platform for events, organiser profiles, business opportunities, and training.

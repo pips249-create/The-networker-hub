@@ -2303,7 +2303,7 @@
           card(
             'Paid ticket revenue',
             fmtMoney(m.revenue || 0),
-            'Est. platform fees: ' + fmtMoney(m.fees || 0) + ' · from paid registrations',
+            'Est. booking fees: ' + fmtMoney(m.fees || 0) + ' · Hub revenue from paid registrations',
             'emerald'
           ) +
           card(
@@ -7861,16 +7861,9 @@
       }
       if (!data.ok || !data.user || data.user.role !== 'admin') {
         gate.innerHTML =
-          '<div class="text-center max-w-md"><p class="text-slate-600 mb-4">Admin access required. Sign in with an admin account.</p>' +
-          '<a href="../login.html?next=/admin/index.html" class="inline-block rounded-lg bg-brand-700 text-white px-5 py-2.5 font-semibold">Sign in</a></div>';
-        return;
-      }
-      if (data.adminMfa && data.adminMfa.enrollRequired) {
-        window.location.href = 'mfa.html?mode=enroll';
-        return;
-      }
-      if (data.adminMfa && data.adminMfa.required) {
-        window.location.href = 'mfa.html?mode=verify';
+          '<div class="text-center max-w-md space-y-3"><p class="text-slate-600">Admin access required. Sign in with an admin account.</p>' +
+          '<a href="../login.html?next=/admin/index.html" class="inline-block rounded-lg bg-brand-700 text-white px-5 py-2.5 font-semibold">Sign in</a>' +
+          '<p class="text-sm text-slate-500">Forgot your password? <a href="../forgot-password.html" class="font-semibold text-brand-700 hover:underline">Email a reset link</a></p></div>';
         return;
       }
       boot(data.user);

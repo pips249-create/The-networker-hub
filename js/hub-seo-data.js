@@ -87,7 +87,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "What fees does The Networker Hub charge on tickets?",
-      "answer": "Attendees pay a booking fee at checkout (4.5% + 20p per ticket, shown before payment). Organisers pay a 3% platform fee on gross ticket revenue plus Stripe processing, deducted in the payout breakdown."
+      "answer": "Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing. Organisers receive the full ticket price."
     },
     {
       "question": "Why did The Networker Hub start?",
@@ -436,7 +436,7 @@ window.HUB_SEO_DATA = {
               "name": "What fees does The Networker Hub charge on tickets?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Attendees pay a booking fee at checkout (4.5% + 20p per ticket, shown before payment). Organisers pay a 3% platform fee on gross ticket revenue plus Stripe processing, deducted in the payout breakdown."
+                "text": "Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing. Organisers receive the full ticket price."
               }
             },
             {

@@ -39,10 +39,14 @@ module.exports = async function handler(req, res) {
     const email = String(body.email || session?.email || '')
       .trim()
       .toLowerCase();
-    const name = String(body.name || session?.name || '').trim();
+    let name = String(body.name || session?.name || '').trim();
+    if (!name && email) {
+      const local = email.split('@')[0] || '';
+      name = local.replace(/[._-]+/g, ' ').trim() || 'Guest';
+    }
+    if (!name) name = 'Guest';
 
     if (!email) return json(res, 400, { ok: false, error: 'missing_email' });
-    if (!name) return json(res, 400, { ok: false, error: 'missing_name' });
     if (!session && paymentStatus !== 'Free') {
       return json(res, 401, { ok: false, error: 'not_authenticated' });
     }
