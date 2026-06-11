@@ -1,42 +1,107 @@
 /**
- * Step-by-step walkthrough for first group profile and first event listing.
+ * Step-by-step walkthrough for group profile and event listing — Hubert left guide.
  */
 (function (global) {
+  function assetRoot() {
+    if (global.HubertOrganiserGuide && global.HubertOrganiserGuide.assetRoot) {
+      return global.HubertOrganiserGuide.assetRoot();
+    }
+    var s = document.querySelector('script[data-root][src*="organiser-flow-tour"]');
+    return (s && s.getAttribute('data-root')) || '../';
+  }
+
   function ensureShell() {
     var existing = document.getElementById('hub-flow-tour');
     if (existing) return existing;
 
+    var icon = assetRoot() + 'assets/hubert-icon.png';
     var root = document.createElement('div');
     root.id = 'hub-flow-tour';
     root.className = 'hub-flow-tour';
     root.hidden = true;
     root.setAttribute('aria-hidden', 'true');
     root.innerHTML =
-      '<div class="hub-flow-tour-backdrop" data-flow-tour-skip></div>' +
+      '<div class="hub-flow-tour-backdrop" data-flow-tour-skip aria-hidden="true"></div>' +
       '<div class="hub-flow-tour-spotlight" aria-hidden="true"></div>' +
-      '<div class="hub-flow-tour-popover" role="dialog" aria-modal="true" aria-labelledby="hub-flow-tour-title">' +
+      '<aside class="hub-hubert-guide-panel" role="complementary" aria-label="Hubert listing guide">' +
+      '<header class="hub-hubert-guide-head">' +
+      '<img class="hub-hubert-guide-avatar" src="' +
+      icon +
+      '" alt="" width="44" height="44">' +
+      '<div class="hub-hubert-guide-brand">' +
+      '<h2 class="hub-hubert-guide-name">Hubert</h2>' +
+      '<p class="hub-hubert-guide-tagline">Your listing guide</p>' +
+      '</div>' +
+      '<button type="button" class="hub-hubert-guide-collapse" aria-label="Minimise guide" title="Minimise">−</button>' +
+      '</header>' +
+      '<div class="hub-hubert-guide-step" id="hub-hubert-guide-step">' +
       '<p class="hub-flow-tour-step">1 of 1</p>' +
-      '<h2 class="hub-flow-tour-title" id="hub-flow-tour-title">Welcome</h2>' +
+      '<h3 class="hub-flow-tour-title" id="hub-flow-tour-title">Welcome</h3>' +
       '<p class="hub-flow-tour-body"></p>' +
       '<div class="hub-flow-tour-actions">' +
-      '<button type="button" class="ee-btn ee-btn-outline" data-flow-tour-skip>Skip</button>' +
+      '<button type="button" class="ee-btn ee-btn-outline" data-flow-tour-skip>Skip tour</button>' +
       '<button type="button" class="ee-btn ee-btn-gold" data-flow-tour-next>Next</button>' +
-      '</div></div>';
+      '</div></div>' +
+      '<div class="hub-hubert-guide-chat">' +
+      '<p class="hub-hubert-guide-chat-label">Questions?</p>' +
+      '<div class="hub-hubert-guide-messages" id="hub-hubert-guide-messages" role="log" aria-live="polite"></div>' +
+      '<button type="button" class="hub-hubert-guide-reset" id="hub-hubert-guide-reset" hidden>New chat</button>' +
+      '<div class="hub-hubert-guide-suggestions" id="hub-hubert-guide-suggestions" aria-label="Suggested questions"></div>' +
+      '<form class="hub-hubert-guide-form hubert-form" id="hub-hubert-guide-form">' +
+      '<div class="hubert-form-compose">' +
+      '<label class="visually-hidden" for="hub-hubert-guide-input">Ask Hubert</label>' +
+      '<textarea id="hub-hubert-guide-input" rows="2" placeholder="Ask about this step…" maxlength="2000" required></textarea>' +
+      '<button type="submit" class="ee-btn ee-btn-primary" id="hub-hubert-guide-send">Send</button>' +
+      '</div></form></div></aside>' +
+      '<button type="button" class="hub-hubert-guide-tab" aria-label="Open Hubert guide">' +
+      '<img src="' +
+      icon +
+      '" alt="" width="36" height="36">' +
+      '<span>Hubert</span></button>';
     document.body.appendChild(root);
+    bindShell(root);
     return root;
+  }
+
+  function bindShell(root) {
+    if (root.getAttribute('data-shell-bound') === '1') return;
+    root.setAttribute('data-shell-bound', '1');
+
+    var collapseBtn = root.querySelector('.hub-hubert-guide-collapse');
+    var tabBtn = root.querySelector('.hub-hubert-guide-tab');
+    if (collapseBtn) {
+      collapseBtn.addEventListener('click', function () {
+        root.classList.add('is-collapsed');
+        document.body.classList.add('hub-hubert-guide-collapsed');
+      });
+    }
+    if (tabBtn) {
+      tabBtn.addEventListener('click', function () {
+        root.classList.remove('is-collapsed');
+        document.body.classList.remove('hub-hubert-guide-collapsed');
+      });
+    }
+  }
+
+  function initGuideChat(root) {
+    if (global.HubertOrganiserGuide && global.HubertOrganiserGuide.initChat) {
+      global.HubertOrganiserGuide.initChat(root);
+    }
   }
 
   function FlowTour(options) {
     this.storageKey = options.storageKey;
     this.steps = options.steps || [];
-    this.shouldStart = options.shouldStart || function () {
-      return true;
-    };
+    this.shouldStart =
+      options.shouldStart ||
+      function () {
+        return true;
+      };
     this.delay = options.delay == null ? 0 : options.delay;
     this.started = false;
     this.stepIndex = 0;
     this.root = null;
-    this.popover = null;
+    this.stepSection = null;
     this.spotlight = null;
   }
 
@@ -48,21 +113,32 @@
     }
   };
 
+  FlowTour.prototype.enterQuestionsMode = function () {
+    if (!this.root) return;
+    this.root.classList.remove('is-open');
+    this.root.classList.add('is-questions-only');
+    this.root.setAttribute('aria-hidden', 'false');
+    this.root.hidden = false;
+    document.body.classList.remove('hub-flow-tour-active');
+    document.body.classList.add('hub-hubert-guide-active');
+    this.clearSpotlight();
+  };
+
   FlowTour.prototype.markDone = function () {
     try {
       global.localStorage.setItem(this.storageKey, '1');
     } catch (e) {
       /* ignore */
     }
-    this.hide();
+    this.enterQuestionsMode();
   };
 
   FlowTour.prototype.hide = function () {
     if (!this.root) return;
     this.root.hidden = true;
-    this.root.classList.remove('is-open');
+    this.root.classList.remove('is-open', 'is-questions-only', 'is-collapsed');
     this.root.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('hub-flow-tour-active');
+    document.body.classList.remove('hub-flow-tour-active', 'hub-hubert-guide-active', 'hub-hubert-guide-collapsed');
     this.clearSpotlight();
   };
 
@@ -85,14 +161,14 @@
 
   FlowTour.prototype.renderStep = function () {
     var step = this.steps[this.stepIndex];
-    if (!step || !this.popover) return;
+    if (!step || !this.stepSection) return;
 
     if (typeof step.afterShow === 'function') step.afterShow();
 
-    var stepLabel = this.popover.querySelector('.hub-flow-tour-step');
-    var titleEl = this.popover.querySelector('.hub-flow-tour-title');
-    var bodyEl = this.popover.querySelector('.hub-flow-tour-body');
-    var nextBtn = this.popover.querySelector('[data-flow-tour-next]');
+    var stepLabel = this.stepSection.querySelector('.hub-flow-tour-step');
+    var titleEl = this.stepSection.querySelector('.hub-flow-tour-title');
+    var bodyEl = this.stepSection.querySelector('.hub-flow-tour-body');
+    var nextBtn = this.root.querySelector('[data-flow-tour-next]');
 
     if (stepLabel) {
       stepLabel.textContent = this.stepIndex + 1 + ' of ' + this.steps.length;
@@ -114,8 +190,10 @@
 
   FlowTour.prototype.show = function () {
     this.root = ensureShell();
-    this.popover = this.root.querySelector('.hub-flow-tour-popover');
+    this.stepSection = this.root.querySelector('#hub-hubert-guide-step');
     this.spotlight = this.root.querySelector('.hub-flow-tour-spotlight');
+    initGuideChat(this.root);
+
     if (!this.bound) {
       this.bound = true;
       var self = this;
@@ -135,18 +213,20 @@
         });
       }
       global.addEventListener('resize', function () {
-        if (!self.root || self.root.hidden) return;
+        if (!self.root || self.root.hidden || !self.root.classList.contains('is-open')) return;
         var step = self.steps[self.stepIndex];
         var target = step && step.target ? document.querySelector(step.target) : null;
         self.positionSpotlight(target);
       });
     }
 
+    this.root.classList.remove('is-questions-only', 'is-collapsed');
+    document.body.classList.remove('hub-hubert-guide-collapsed');
     this.stepIndex = 0;
     this.root.hidden = false;
     this.root.classList.add('is-open');
     this.root.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('hub-flow-tour-active');
+    document.body.classList.add('hub-flow-tour-active', 'hub-hubert-guide-active');
     this.renderStep();
   };
 
@@ -165,6 +245,18 @@
       open();
     }
   };
+
+  function showQuestionsOnly() {
+    var root = ensureShell();
+    if (root.classList.contains('is-open')) return;
+    initGuideChat(root);
+    root.hidden = false;
+    root.classList.remove('is-open', 'is-collapsed');
+    root.classList.add('is-questions-only');
+    root.setAttribute('aria-hidden', 'false');
+    document.body.classList.remove('hub-flow-tour-active', 'hub-hubert-guide-collapsed');
+    document.body.classList.add('hub-hubert-guide-active');
+  }
 
   var GROUP_REVIEW_STEPS = [
     {
@@ -260,10 +352,38 @@
     },
   ];
 
+  var EVENT_TICKETS_STEPS = [
+    {
+      title: 'Set up ticket types',
+      body: 'You saved your event dates — now define ticket types. Each tier you add is copied to every date in the series.',
+    },
+    {
+      title: 'Add ticket tiers',
+      body: 'Add one row per tier (Standard, Early bird, VIP, etc.). Set price, quantity, and when sales end for each.',
+      target: '#ee-panel-tickets',
+    },
+    {
+      title: 'VAT on ticket prices',
+      body: 'Choose exactly one option: VAT included in the price, or VAT added at checkout. Required before you publish.',
+      target: '#ee-vat-card',
+    },
+    {
+      title: 'Refund policy',
+      body: 'Pick how refunds work and confirm you understand Stripe Connect handles payouts and refunds.',
+      target: '#ee-refund-card',
+    },
+    {
+      title: 'Publish when ready',
+      body: 'Save as draft anytime, or publish when ticket types, VAT, and refund policy are complete.',
+      target: '.ee-actions',
+    },
+  ];
+
   global.HubFlowTour = {
     create: function (options) {
       return new FlowTour(options);
     },
+    showQuestionsOnly: showQuestionsOnly,
     startGroupTour: function (opts) {
       opts = opts || {};
       var review = Boolean(opts.onboardReview);
@@ -284,9 +404,11 @@
       return new FlowTour({
         storageKey: 'hub_flow_tour_event_format_v1',
         steps: EVENT_FORMAT_STEPS,
-        shouldStart: opts.shouldStart || function () {
-          return true;
-        },
+        shouldStart:
+          opts.shouldStart ||
+          function () {
+            return true;
+          },
         delay: opts.delay,
       }).startIfNeeded();
     },
@@ -295,9 +417,24 @@
       return new FlowTour({
         storageKey: 'hub_flow_tour_event_edit_v1',
         steps: EVENT_EDIT_STEPS,
-        shouldStart: opts.shouldStart || function () {
-          return !opts.isEdit;
-        },
+        shouldStart:
+          opts.shouldStart ||
+          function () {
+            return !opts.isEdit;
+          },
+        delay: opts.delay,
+      }).startIfNeeded();
+    },
+    startEventTicketsTour: function (opts) {
+      opts = opts || {};
+      return new FlowTour({
+        storageKey: 'hub_flow_tour_event_tickets_v1',
+        steps: EVENT_TICKETS_STEPS,
+        shouldStart:
+          opts.shouldStart ||
+          function () {
+            return !opts.isEdit;
+          },
         delay: opts.delay,
       }).startIfNeeded();
     },

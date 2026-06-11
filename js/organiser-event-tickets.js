@@ -781,6 +781,10 @@
     bindRefundPolicy();
     bindVatOptions();
     updatePublishButton();
+
+    if (!loaded.tickets.length && window.HubFlowTour) {
+      window.HubFlowTour.startEventTicketsTour({ isEdit: false, delay: 0 });
+    }
   }
 
   async function saveTickets(publish) {
