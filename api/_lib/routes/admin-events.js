@@ -32,6 +32,30 @@ function queryFromRequest(req) {
   return q;
 }
 
+function mapOrganiserOptionRow(o) {
+  return {
+    id: o.id,
+    name: String(o.name || '').trim(),
+    listing_status: o.listing_status || '',
+    slug: publicOrganiserSlug(o) || '',
+  };
+}
+
+async function fetchOrganisersByIds(sb, organiserIds) {
+  const ids = [...new Set((organiserIds || []).filter(Boolean))];
+  if (!ids.length) return [];
+
+  const all = [];
+  for (let i = 0; i < ids.length; i += 80) {
+    const chunk = ids.slice(i, i + 80);
+    const res = await sb.from('organisers').select('id, name, listing_status, slug').in('id', chunk);
+    if (res.error) throw new Error(res.error.message);
+    all.push(...(res.data || []));
+  }
+
+  return all.map(mapOrganiserOptionRow);
+}
+
 async function fetchOrganiserOptions(sb) {
   const pageSize = 1000;
   let from = 0;
@@ -50,12 +74,7 @@ async function fetchOrganiserOptions(sb) {
     from += pageSize;
   }
 
-  return all.map((o) => ({
-    id: o.id,
-    name: String(o.name || '').trim(),
-    listing_status: o.listing_status || '',
-    slug: publicOrganiserSlug(o) || '',
-  }));
+  return all.map(mapOrganiserOptionRow);
 }
 
 function mapEventRow(row, orgById) {
@@ -138,14 +157,23 @@ async function listEventsForAdmin(query) {
 
   dbQuery = dbQuery.range(offset, offset + limit - 1);
 
-  const [eventsRes, organisers] = await Promise.all([dbQuery, fetchOrganiserOptions(sb)]);
+  const includeOrganisers =
+    query.include_organisers === '1' || query.include_organisers === 'true';
+
+  const eventsRes = await dbQuery;
   if (eventsRes.error) throw new Error(eventsRes.error.message);
+
+  const rows = eventsRes.data || [];
+  const organisers = includeOrganisers
+    ? await fetchOrganiserOptions(sb)
+    : await fetchOrganisersByIds(
+        sb,
+        rows.map((row) => row.organiser_id)
+      );
 
   const orgById = new Map(
     organisers.map((o) => [o.id, { id: o.id, name: o.name, slug: o.slug, listing_status: o.listing_status }])
   );
-
-  const rows = eventsRes.data || [];
   const events = rows.map((row) => mapEventRow(row, orgById));
   const total = eventsRes.count != null ? eventsRes.count : rows.length;
 
@@ -281,7 +309,7 @@ module.exports = async function handler(req, res) {
       const sb = getSupabaseAdmin();
       const { data, error } = await sb.from('events').update(patch).eq('id', id).select('*').single();
       if (error) throw new Error(error.message);
-      const organisers = await fetchOrganiserOptions(sb);
+      const organisers = await fetchOrganisersByIds(sb, [data.organiser_id]);
       const orgById = new Map(organisers.map((o) => [o.id, o]));
       return json(res, 200, { ok: true, event: mapEventRow(data, orgById) });
     } catch (e) {

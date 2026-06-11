@@ -5,6 +5,26 @@
  */
 
 const FETCH_TIMEOUT_MS = 12000;
+const META_CACHE_MS = 5 * 60 * 1000;
+const metaCache = new Map();
+
+function readMetaCache(url) {
+  const entry = metaCache.get(url);
+  if (!entry) return null;
+  if (Date.now() - entry.at > META_CACHE_MS) {
+    metaCache.delete(url);
+    return null;
+  }
+  return entry.data;
+}
+
+function writeMetaCache(url, data) {
+  if (metaCache.size > 48) {
+    const oldest = metaCache.keys().next().value;
+    if (oldest) metaCache.delete(oldest);
+  }
+  metaCache.set(url, { at: Date.now(), data });
+}
 const BROWSER_HEADERS = {
   Accept:
     'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -338,6 +358,9 @@ async function fetchWebsiteMeta(rawUrl) {
     throw err;
   }
 
+  const cached = readMetaCache(url);
+  if (cached) return { ...cached };
+
   const hostname = new URL(url).hostname;
   let logo_url = '';
   let description = '';
@@ -382,13 +405,15 @@ async function fetchWebsiteMeta(rawUrl) {
     throw err;
   }
 
-  return {
+  const result = {
     url,
     logo_url,
     description,
     blocked,
     message: buildResultMessage({ logo_url, description, blocked }),
   };
+  writeMetaCache(url, result);
+  return result;
 }
 
 module.exports = {

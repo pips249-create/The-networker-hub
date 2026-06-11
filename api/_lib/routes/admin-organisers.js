@@ -4,9 +4,31 @@ const { resolveImageUrl } = require('../supabase-storage');
 const { publicOrganiserSlug } = require('../organiser-slug');
 const sbAuth = require('../supabase-auth');
 const { fetchWebsiteMeta } = require('../website-meta');
+const { createGroup } = require('../supabase-organiser');
 
 const INCOMPLETE_FILTER =
   'description.is.null,description.eq.,photo_url.is.null,photo_url.eq.,website.is.null,website.eq.';
+const INCOMPLETE_COUNT_CACHE_MS = 60 * 1000;
+let incompleteCountCache = { value: null, at: 0 };
+
+function invalidateIncompleteOrganiserCount() {
+  incompleteCountCache = { value: null, at: 0 };
+}
+
+async function getIncompleteOrganiserCount(sb) {
+  const now = Date.now();
+  if (incompleteCountCache.value != null && now - incompleteCountCache.at < INCOMPLETE_COUNT_CACHE_MS) {
+    return incompleteCountCache.value;
+  }
+  const incompleteRes = await sb
+    .from('organisers')
+    .select('id', { count: 'exact', head: true })
+    .or(INCOMPLETE_FILTER);
+  if (incompleteRes.error) throw new Error(incompleteRes.error.message);
+  const count = incompleteRes.count || 0;
+  incompleteCountCache = { value: count, at: now };
+  return count;
+}
 
 function parseBody(req) {
   let body = req.body;
@@ -214,11 +236,7 @@ async function listOrganisersForAdmin(query) {
   ]);
   const total = res.count != null ? res.count : rows.length;
 
-  const incompleteRes = await sb
-    .from('organisers')
-    .select('id', { count: 'exact', head: true })
-    .or(INCOMPLETE_FILTER);
-  if (incompleteRes.error) throw new Error(incompleteRes.error.message);
+  const incompleteCount = await getIncompleteOrganiserCount(sb);
 
   return {
     organisers: rows.map((row) => mapOrganiserRow(row, counts[row.id] || 0, loginMeta.get(row.id))),
@@ -227,7 +245,7 @@ async function listOrganisersForAdmin(query) {
     offset,
     limit,
     hasMore: offset + rows.length < total,
-    incomplete: incompleteRes.count || 0,
+    incomplete: incompleteCount,
   };
 }
 
@@ -434,6 +452,7 @@ async function deleteOrganisers(body) {
 
   const { error: delErr } = await sb.from('organisers').delete().in('id', foundIds);
   if (delErr) throw new Error(delErr.message);
+  invalidateIncompleteOrganiserCount();
 
   let orphanEventsUnlinked = 0;
   if (missingIds.length) {
@@ -536,7 +555,56 @@ async function mergeOrganisers(body) {
     result.merged += 1;
   }
 
+  invalidateIncompleteOrganiserCount();
   return result;
+}
+
+async function createOrganiserGroupFromAdmin(body) {
+  const name = String(body.name || '').trim();
+  const email = String(body.contact_email || body.email || '')
+    .trim()
+    .toLowerCase();
+  if (!name) {
+    const err = new Error('missing_name');
+    err.status = 400;
+    err.message = 'Enter a group name.';
+    throw err;
+  }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    const err = new Error('missing_email');
+    err.status = 400;
+    err.message = 'Enter a valid contact email.';
+    throw err;
+  }
+
+  const created = await createGroup({
+    name,
+    contactEmail: email,
+    email,
+    description: String(body.description || '').trim() || null,
+    website: String(body.website || '').trim() || null,
+    listingStatus: 'draft',
+    verificationStatus: 'Pending',
+  });
+
+  let provision = null;
+  const shouldProvision = body.provision_login !== false && body.provision_login !== 'false';
+  if (shouldProvision) {
+    provision = await sbAuth.provisionOrganiserLogin(created.id);
+  }
+
+  invalidateIncompleteOrganiserCount();
+
+  const sb = getSupabaseAdmin();
+  const { data: row, error } = await sb.from('organisers').select('*').eq('id', created.id).single();
+  if (error) throw new Error(error.message);
+  const counts = await eventCountsForOrganisers(sb, [created.id]);
+  const loginMeta = await loginMetaForOrganisers(sb, [row]);
+
+  return {
+    organiser: mapOrganiserRow(row, counts[created.id] || 0, loginMeta.get(created.id)),
+    provision,
+  };
 }
 
 async function bulkUpdateOrganisers(body) {
@@ -560,6 +628,7 @@ async function bulkUpdateOrganisers(body) {
   const sb = getSupabaseAdmin();
   const { data, error } = await sb.from('organisers').update(patch).in('id', ids).select('*');
   if (error) throw new Error(error.message);
+  invalidateIncompleteOrganiserCount();
 
   return {
     updated: (data || []).length,
@@ -615,6 +684,32 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: e.message || 'fetch_website_meta_failed',
         message: e.message || 'Could not read that website.',
+      });
+    }
+  }
+
+  if (body.action === 'create_group') {
+    try {
+      const result = await createOrganiserGroupFromAdmin(body);
+      const provision = result.provision;
+      let message = 'Networking group created as a draft.';
+      if (provision) {
+        message = provision.createdAuth
+          ? 'Group created and login added for ' + provision.email + ' (no email sent).'
+          : 'Group created and linked to existing login for ' + provision.email + ' (no email sent).';
+      }
+      return json(res, 201, { ok: true, ...result, message });
+    } catch (e) {
+      const status = e.status || 500;
+      const messages = {
+        missing_name: 'Enter a group name.',
+        missing_email: 'Enter a valid contact email.',
+        organiser_missing_email: 'Enter a valid contact email.',
+      };
+      return json(res, status, {
+        ok: false,
+        error: e.message || 'create_group_failed',
+        message: messages[e.message] || e.message || 'Could not create group.',
       });
     }
   }
@@ -758,6 +853,7 @@ module.exports = async function handler(req, res) {
     const sb = getSupabaseAdmin();
     const { data, error } = await sb.from('organisers').update(patch).eq('id', id).select('*').single();
     if (error) throw new Error(error.message);
+    invalidateIncompleteOrganiserCount();
     return json(res, 200, { ok: true, organiser: mapOrganiserRow(data, undefined) });
   } catch (e) {
     return json(res, 500, { ok: false, error: 'update_failed', message: e.message });

@@ -91,7 +91,16 @@
   var eventCleanupCache = null;
   var analyticsState = { period: '30d' };
   var eventHealthState = { issueFilter: 'all' };
-  var groupCleanupState = { page: 0, q: '', incomplete: false, total: 0, loading: false, selected: {}, expanded: {} };
+  var groupCleanupState = {
+    page: 0,
+    q: '',
+    incomplete: false,
+    total: 0,
+    loading: false,
+    selected: {},
+    expanded: {},
+    createOpen: false,
+  };
   var eventCleanupState = {
     organiserId: '',
     unlinked: false,
@@ -107,6 +116,7 @@
   };
   var GROUP_PAGE_SIZE = 30;
   var EVENT_PAGE_SIZE = 40;
+  var eventOrganiserOptionsCache = null;
   var adminLogoPending = {};
   var groupSearchTimer = null;
   var eventSearchTimer = null;
@@ -5069,6 +5079,30 @@
     };
   }
 
+  function invalidateEventOrganiserOptionsCache() {
+    eventOrganiserOptionsCache = null;
+  }
+
+  function fetchEventOrganiserOptions(force) {
+    if (!force && eventOrganiserOptionsCache) {
+      return Promise.resolve(eventOrganiserOptionsCache);
+    }
+    return adminGet('/api/admin/organisers?limit=500&offset=0').then(function (data) {
+      if (!data || data.error) return [];
+      eventOrganiserOptionsCache = (data.organisers || []).map(normalizeOrganiserOption);
+      return eventOrganiserOptionsCache;
+    });
+  }
+
+  function populateEventOrganiserSelects(organisers) {
+    var filterSelect = document.getElementById('event-cleanup-organiser');
+    var createSelect = document.getElementById('event-create-organiser');
+    if (filterSelect) filterSelect.innerHTML = eventCleanupFilterHtml(organisers);
+    if (createSelect) {
+      createSelect.innerHTML = organiserOptionsHtml(organisers, eventCleanupState.organiserId);
+    }
+  }
+
   function missingBadge(field) {
     var labels = { description: 'No bio', logo: 'No logo', website: 'No website' };
     return (
@@ -5609,6 +5643,77 @@
     });
   }
 
+  function createGroupCleanupForm(form) {
+    var msg = document.getElementById('group-create-msg');
+    var btn = form.querySelector('[type="submit"]');
+    var name = formFieldVal(form, 'name').trim();
+    var email = formFieldVal(form, 'email').trim();
+    if (!name) {
+      if (msg) {
+        msg.textContent = 'Enter a group name.';
+        msg.className = 'text-xs text-red-700 font-semibold';
+      }
+      return;
+    }
+    if (!email) {
+      if (msg) {
+        msg.textContent = 'Enter a contact email.';
+        msg.className = 'text-xs text-red-700 font-semibold';
+      }
+      return;
+    }
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Creating group…';
+      msg.className = 'text-xs text-slate-500';
+    }
+    adminPost('/api/admin/organisers', {
+      action: 'create_group',
+      name: name,
+      contact_email: email,
+      website: formFieldVal(form, 'website').trim(),
+      description: formFieldVal(form, 'description').trim(),
+      provision_login: true,
+    })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
+        if (msg) {
+          msg.textContent = data.message || 'Group created.';
+          msg.className = 'text-xs text-emerald-700 font-semibold';
+        }
+        var newId = data.organiser && data.organiser.id;
+        form.reset();
+        groupCleanupState.createOpen = false;
+        groupCleanupState.page = 0;
+        groupCleanupState.q = '';
+        invalidateEventOrganiserOptionsCache();
+        var panel = document.getElementById('group-create-panel');
+        var toggle = document.getElementById('group-create-toggle');
+        if (panel) panel.classList.add('hidden');
+        if (toggle) {
+          toggle.setAttribute('aria-expanded', 'false');
+          toggle.textContent = '+ New networking group';
+        }
+        var search = document.getElementById('group-cleanup-search');
+        if (search) search.value = '';
+        if (newId) groupCleanupState.expanded[newId] = true;
+        return fetchGroupCleanup(0);
+      })
+      .then(function (data) {
+        renderGroupCleanupList(data);
+        bindGroupCleanupPageUi();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not create group';
+          msg.className = 'text-xs text-red-700 font-semibold';
+        }
+      })
+      .finally(function () {
+        if (btn) btn.disabled = false;
+      });
+  }
+
   function saveGroupCleanupForm(form) {
     var id = form.getAttribute('data-organiser-id');
     var msg = form.querySelector('.group-cleanup-msg');
@@ -5770,6 +5875,7 @@
             '.';
           msg.className = 'text-xs text-emerald-700 font-semibold';
         }
+        invalidateEventOrganiserOptionsCache();
         return fetchGroupCleanup(0);
       })
       .then(function (data) {
@@ -5887,6 +5993,7 @@
           msgEl.className = 'text-xs text-emerald-700 font-semibold';
         }
         if (row) showGroupDeleteFeedback(row, resultMsg, false);
+        invalidateEventOrganiserOptionsCache();
         return fetchGroupCleanup(groupCleanupState.page);
       })
       .then(function (data) {
@@ -6094,6 +6201,23 @@
       return;
     }
 
+    if (e.target.closest('#group-create-toggle')) {
+      var createPanel = document.getElementById('group-create-panel');
+      var createToggle = document.getElementById('group-create-toggle');
+      if (!createPanel || !createToggle) return;
+      groupCleanupState.createOpen = !groupCleanupState.createOpen;
+      createPanel.classList.toggle('hidden', !groupCleanupState.createOpen);
+      createToggle.setAttribute('aria-expanded', groupCleanupState.createOpen ? 'true' : 'false');
+      createToggle.textContent = groupCleanupState.createOpen
+        ? 'Cancel new group'
+        : '+ New networking group';
+      if (groupCleanupState.createOpen) {
+        var nameInput = createPanel.querySelector('[name="name"]');
+        if (nameInput) nameInput.focus();
+      }
+      return;
+    }
+
     if (e.target.closest('#group-bulk-clear')) {
       groupCleanupState.selected = {};
       if (main) {
@@ -6169,7 +6293,10 @@
     document.body.addEventListener('submit', function (e) {
       var form = e.target;
       if (!form || !form.classList || !form.closest('#admin-main')) return;
-      if (form.classList.contains('group-cleanup-form')) {
+      if (form.id === 'group-create-form') {
+        e.preventDefault();
+        createGroupCleanupForm(form);
+      } else if (form.classList.contains('group-cleanup-form')) {
         e.preventDefault();
         saveGroupCleanupForm(form);
       } else if (form.id === 'group-bulk-form') {
@@ -6470,7 +6597,30 @@
     groupCleanupState.loading = false;
     main.innerHTML =
       '<div class="space-y-4">' +
+      '<div class="flex flex-wrap items-center justify-between gap-3">' +
       '<div id="group-cleanup-status" class="text-sm text-slate-500">Loading groups…</div>' +
+      '<button type="button" id="group-create-toggle" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900 shrink-0" aria-expanded="' +
+      (groupCleanupState.createOpen ? 'true' : 'false') +
+      '" aria-controls="group-create-panel">' +
+      (groupCleanupState.createOpen ? 'Cancel new group' : '+ New networking group') +
+      '</button></div>' +
+      '<div id="group-create-panel" class="rounded-xl border border-brand-200 bg-brand-50/80 p-4 shadow-sm space-y-3' +
+      (groupCleanupState.createOpen ? '' : ' hidden') +
+      '">' +
+      '<h3 class="text-sm font-semibold text-brand-900">New networking group</h3>' +
+      '<p class="text-xs text-slate-600">Creates a draft group profile and adds a login for the contact email. No emails are sent.</p>' +
+      '<form id="group-create-form" class="grid sm:grid-cols-2 gap-3">' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1" for="group-create-name">Group name</label>' +
+      '<input type="text" id="group-create-name" name="name" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. Catalyst Networking Club"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1" for="group-create-email">Contact email</label>' +
+      '<input type="email" id="group-create-email" name="email" required autocomplete="email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="hello@theircompany.com"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1" for="group-create-website">Website <span class="font-normal text-slate-400">(optional)</span></label>' +
+      '<input type="url" id="group-create-website" name="website" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="https://…"></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1" for="group-create-description">Description <span class="font-normal text-slate-400">(optional)</span></label>' +
+      '<textarea id="group-create-description" name="description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Short intro for this networking group"></textarea></div>' +
+      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create group</button>' +
+      '<span id="group-create-msg" class="text-xs"></span></div></form></div>' +
       '<div id="group-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
       '<form id="group-bulk-form" class="space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
@@ -6601,15 +6751,9 @@
     }
 
     eventCleanupCache = data;
-    var organisers = (data.organisers || []).map(normalizeOrganiserOption);
-    var filterSelect = document.getElementById('event-cleanup-organiser');
-    var createSelect = document.getElementById('event-create-organiser');
-    if (filterSelect) filterSelect.innerHTML = eventCleanupFilterHtml(organisers);
-    if (createSelect) {
-      createSelect.innerHTML = organiserOptionsHtml(organisers, eventCleanupState.organiserId);
-    }
     renderEventCleanupList();
     attachEventLoadMore();
+    fetchEventOrganiserOptions().then(populateEventOrganiserSelects);
   }
 
   function refreshEventCleanupData() {
@@ -6630,7 +6774,8 @@
     if (!list || !eventCleanupCache) return;
 
     var data = eventCleanupCache;
-    var organisers = (data.organisers || []).map(normalizeOrganiserOption);
+    var organisers =
+      eventOrganiserOptionsCache || (data.organisers || []).map(normalizeOrganiserOption);
     var events = data.events || [];
     var shown = events.length;
     var total = eventCleanupState.total || shown;

@@ -97,7 +97,7 @@
     var icon = document.createElement('link');
     icon.rel = 'icon';
     icon.type = 'image/png';
-    icon.href = (script && script.getAttribute('data-root') || '') + 'assets/favicon.png';
+    icon.href = (script && script.getAttribute('data-root') || '') + 'assets/hubert-icon.png';
     document.head.appendChild(icon);
   }
 
