@@ -1,6 +1,8 @@
 (function () {
   var TOUR_KEY = 'hub_organiser_tour_v1';
   var CHECKLIST_KEY = 'hub_getting_started_dismissed';
+  var PROFILE_REVIEW_KEY = 'hub_organiser_profile_review_v1';
+  var READY_EVENT_KEY = 'hub_ready_event_dismissed';
 
   var steps = [
     {
@@ -20,7 +22,7 @@
     },
     {
       title: 'Invite your team',
-      body: 'Open Team & invites in the sidebar — or use the quick link on Overview — to add editors who can help manage events.',
+      body: 'Open Team & invites in the sidebar — or use the quick link on Overview — to add editors who can help manage events. When you finish the tour, we will confirm your group profile next.',
       target: '[data-org-route="team"]',
       afterShow: function () {
         if (typeof window.orgDashSetRoute === 'function') {
@@ -32,6 +34,7 @@
 
   var tourAutoStarted = false;
   var gettingStartedBound = false;
+  var afterTourStep = null;
   var tourEl;
   var popoverEl;
   var stepIndex = 0;
@@ -52,6 +55,43 @@
       /* ignore */
     }
     hideTour();
+    if (afterTourStep) afterTourStep();
+  }
+
+  function isProfileReviewDone() {
+    try {
+      return localStorage.getItem(PROFILE_REVIEW_KEY) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function markProfileReviewDone() {
+    try {
+      localStorage.setItem(PROFILE_REVIEW_KEY, '1');
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function isReadyEventDismissed() {
+    try {
+      return localStorage.getItem(READY_EVENT_KEY) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function markReadyEventDismissed() {
+    try {
+      localStorage.setItem(READY_EVENT_KEY, '1');
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function shouldDeferGroupClaim() {
+    return shouldAutoStart() && !isTourDone();
   }
 
   function shouldAutoStart() {
@@ -206,11 +246,12 @@
   }
 
   function initAfterDashboardReady() {
-    if (window.hubPendingGroupClaims) return;
     bindGettingStarted();
     if (!tourAutoStarted && shouldAutoStart()) {
       tourAutoStarted = true;
       window.setTimeout(showTour, 400);
+    } else if (isTourDone() && afterTourStep) {
+      afterTourStep();
     }
   }
 
@@ -218,6 +259,15 @@
     initAfterDashboardReady: initAfterDashboardReady,
     showTour: showTour,
     markTourDone: markTourDone,
+    isTourDone: isTourDone,
+    shouldDeferGroupClaim: shouldDeferGroupClaim,
+    setAfterTourStep: function (fn) {
+      afterTourStep = fn;
+    },
+    isProfileReviewDone: isProfileReviewDone,
+    markProfileReviewDone: markProfileReviewDone,
+    isReadyEventDismissed: isReadyEventDismissed,
+    markReadyEventDismissed: markReadyEventDismissed,
   };
 
   if (document.readyState === 'loading') {

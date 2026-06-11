@@ -2274,19 +2274,93 @@
     }
   }
 
+  function shouldDeferGroupClaimModal() {
+    return Boolean(
+      window.HubOrganiserOnboarding &&
+        window.HubOrganiserOnboarding.shouldDeferGroupClaim &&
+        window.HubOrganiserOnboarding.shouldDeferGroupClaim()
+    );
+  }
+
+  function hideGroupClaimModal() {
+    const modal = document.getElementById('org-group-claim');
+    if (modal) {
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    document.body.classList.remove('org-group-claim-active');
+    groupClaimRejectMode = false;
+  }
+
+  function hideReadyForEventModal() {
+    const modal = document.getElementById('org-ready-event');
+    if (modal) {
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    document.body.classList.remove('org-group-claim-active');
+  }
+
+  function hasListedEvents() {
+    return Boolean(state.events.length || state.eventsTotal);
+  }
+
+  function continueOnboardingAfterClaim() {
+    if (state.adminView) return;
+    if ((state.pendingClaimGroups || []).length > 0) return;
+    const onboarding = window.HubOrganiserOnboarding;
+    if (!onboarding) return;
+
+    if (
+      state.groups.length > 0 &&
+      !onboarding.isProfileReviewDone() &&
+      !hasListedEvents()
+    ) {
+      const group = state.groups[0];
+      if (group && group.id) {
+        window.location.href =
+          'group-edit.html?id=' + encodeURIComponent(group.id) + '&onboard=review';
+        return;
+      }
+    }
+
+    showReadyForEventPrompt();
+  }
+
+  function afterTourOnboardingStep() {
+    if (state.adminView) return;
+    if ((state.pendingClaimGroups || []).length > 0) {
+      renderGroupClaimModal();
+      return;
+    }
+    continueOnboardingAfterClaim();
+  }
+
+  function showReadyForEventPrompt() {
+    const modal = document.getElementById('org-ready-event');
+    if (!modal || state.adminView) return;
+    if (!state.groups.length || hasListedEvents()) {
+      hideReadyForEventModal();
+      return;
+    }
+    const onboarding = window.HubOrganiserOnboarding;
+    if (!onboarding || !onboarding.isProfileReviewDone()) return;
+    if (onboarding.isReadyEventDismissed && onboarding.isReadyEventDismissed()) return;
+
+    hideGroupClaimModal();
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('org-group-claim-active');
+  }
+
   function renderGroupClaimModal() {
     const modal = document.getElementById('org-group-claim');
     const list = state.pendingClaimGroups || [];
     syncPendingClaimFlag();
     updateGettingStartedVisibility();
 
-    if (!modal || !list.length || state.adminView) {
-      if (modal) {
-        modal.hidden = true;
-        modal.setAttribute('aria-hidden', 'true');
-      }
-      document.body.classList.remove('org-group-claim-active');
-      groupClaimRejectMode = false;
+    if (!modal || !list.length || state.adminView || shouldDeferGroupClaimModal()) {
+      if (modal) hideGroupClaimModal();
       return;
     }
 
@@ -2304,8 +2378,8 @@
     if (kicker) {
       kicker.textContent =
         list.length > 1
-          ? 'Profile ' + (1) + ' of ' + list.length
-          : 'Before you add events';
+          ? 'Step 2 — profile 1 of ' + list.length
+          : 'Step 2 — confirm your group';
     }
     if (nameEl) nameEl.textContent = group.name || 'Group profile';
     if (emailEl) {
@@ -2337,6 +2411,7 @@
       rejectBtn.classList.toggle('org-btn-outline', !groupClaimRejectMode);
     }
 
+    hideReadyForEventModal();
     modal.hidden = false;
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('org-group-claim-active');
@@ -2379,14 +2454,15 @@
         return;
       }
 
+      if (action === 'claim' && data.group && data.group.id) {
+        window.location.href =
+          'group-edit.html?id=' + encodeURIComponent(data.group.id) + '&onboard=review';
+        return;
+      }
+
       await loadBootstrap();
       if (action === 'reject') {
         showAirtableAlert(data.message || 'Profile removed from your dashboard. The Hub team has been notified.', false);
-      } else {
-        showAirtableAlert(
-          data.message || 'Group profile claimed. Add your first event when you are ready.',
-          false
-        );
       }
     } catch (e) {
       if (errEl) {
@@ -2396,6 +2472,35 @@
       if (acceptBtn) acceptBtn.disabled = false;
       if (rejectBtn) rejectBtn.disabled = false;
     }
+  }
+
+  function bindReadyEventUi() {
+    const laterBtn = document.getElementById('org-ready-event-later');
+    const goBtn = document.getElementById('org-ready-event-go');
+    if (laterBtn) {
+      laterBtn.addEventListener('click', function () {
+        hideReadyForEventModal();
+        if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.markReadyEventDismissed) {
+          window.HubOrganiserOnboarding.markReadyEventDismissed();
+        }
+        updateGettingStartedVisibility();
+      });
+    }
+    if (goBtn) {
+      goBtn.addEventListener('click', function () {
+        hideReadyForEventModal();
+        if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.markReadyEventDismissed) {
+          window.HubOrganiserOnboarding.markReadyEventDismissed();
+        }
+        if (window.HubFlowTour) window.HubFlowTour.markEventTourPending();
+        window.location.href = 'event-format.html';
+      });
+    }
+  }
+
+  function bindOnboardingPipeline() {
+    if (!window.HubOrganiserOnboarding || !window.HubOrganiserOnboarding.setAfterTourStep) return;
+    window.HubOrganiserOnboarding.setAfterTourStep(afterTourOnboardingStep);
   }
 
   function bindGroupClaimUi() {
@@ -2613,11 +2718,7 @@
     renderGroupClaimModal();
     loadOpportunityEnquiries();
     updateTeamNavBadge();
-    if (
-      window.HubOrganiserOnboarding &&
-      window.HubOrganiserOnboarding.initAfterDashboardReady &&
-      !window.hubPendingGroupClaims
-    ) {
+    if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
       window.HubOrganiserOnboarding.initAfterDashboardReady();
     }
     } finally {
@@ -3147,7 +3248,9 @@
 
     bindForms();
     bindTeamUi();
+    bindOnboardingPipeline();
     bindGroupClaimUi();
+    bindReadyEventUi();
     bindUi();
     const initial = parseRoute();
     setRoute(initial.sub || initial.page);

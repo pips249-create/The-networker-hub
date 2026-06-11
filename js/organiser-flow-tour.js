@@ -166,6 +166,33 @@
     }
   };
 
+  var GROUP_REVIEW_STEPS = [
+    {
+      title: 'Check your group profile',
+      body: 'We linked this networking group to your account. Please confirm the logo, name, and contact details are correct before you list events.',
+    },
+    {
+      title: 'Logo and group name',
+      body: 'Update your logo or photo and the name attendees will recognise — this appears on your organiser card and event listings.',
+      target: '#ge-logo-zone',
+    },
+    {
+      title: 'Tell people about your group',
+      body: 'Check the description matches how you present your group today. Attendees see this when browsing organisers.',
+      target: '#ge-description',
+    },
+    {
+      title: 'Industries and contact',
+      body: 'Confirm the industries you serve and a contact email so attendees and the Hub team can reach you.',
+      target: '#ge-industries',
+    },
+    {
+      title: 'Ready for your first event?',
+      body: 'When everything looks right, use Save and list my first event — we will walk you through creating a listing next.',
+      target: '.ge-actions-stack',
+    },
+  ];
+
   var GROUP_STEPS = [
     {
       title: 'Welcome — your group profile',
@@ -239,12 +266,16 @@
     },
     startGroupTour: function (opts) {
       opts = opts || {};
+      var review = Boolean(opts.onboardReview);
       return new FlowTour({
-        storageKey: 'hub_flow_tour_group_v1',
-        steps: GROUP_STEPS,
-        shouldStart: opts.shouldStart || function () {
-          return !opts.isEdit;
-        },
+        storageKey: review ? 'hub_flow_tour_group_review_v1' : 'hub_flow_tour_group_v1',
+        steps: review ? GROUP_REVIEW_STEPS : GROUP_STEPS,
+        shouldStart:
+          opts.shouldStart ||
+          function () {
+            if (opts.force) return true;
+            return !opts.isEdit;
+          },
         delay: opts.delay,
       }).startIfNeeded();
     },

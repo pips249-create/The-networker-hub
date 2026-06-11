@@ -20,6 +20,7 @@
   ];
   const params = new URLSearchParams(location.search);
   const editId = params.get('id') || '';
+  const onboardReview = params.get('onboard') === 'review';
   let logoFile = null;
   let currentGroup = null;
   const selectedIndustries = new Set();
@@ -175,6 +176,34 @@
     if (hint) {
       hint.innerHTML =
         '<strong>Save changes</strong> updates your profile. Use <strong>Publish now</strong> when ready for the public site.';
+    }
+    if (g) showStatusBadge(g);
+  }
+
+  function configureOnboardReviewActions(g) {
+    const saveChanges = document.getElementById('ge-save-changes');
+    const continueBtn = document.getElementById('ge-save-continue');
+    const publishBtn = document.getElementById('ge-publish');
+    const draftBtn = document.getElementById('ge-save-draft');
+    const hint = document.getElementById('ge-actions-hint');
+    const titleEl = document.getElementById('ge-page-title');
+    const leadEl = document.getElementById('ge-page-lead');
+
+    if (titleEl) titleEl.textContent = 'Check your group profile';
+    if (leadEl) {
+      leadEl.textContent =
+        'We linked this group to your account. Please confirm the name, logo, and contact details are correct before you list events.';
+    }
+    if (saveChanges) saveChanges.hidden = false;
+    if (continueBtn) {
+      continueBtn.hidden = false;
+      continueBtn.textContent = 'Looks good — list my first event →';
+    }
+    if (publishBtn) publishBtn.hidden = true;
+    if (draftBtn) draftBtn.hidden = true;
+    if (hint) {
+      hint.textContent =
+        'Update anything that needs changing, then continue to set up your first event listing.';
     }
     if (g) showStatusBadge(g);
   }
@@ -360,11 +389,14 @@
       qualityHint.textContent = logoResolutionWarning;
       qualityHint.hidden = false;
     }
-    if (!editId && mode === 'continue' && window.HubFlowTour) {
+    if ((onboardReview || (!editId && mode === 'continue')) && window.HubFlowTour) {
       window.HubFlowTour.markEventTourPending();
     }
+    if (onboardReview && mode === 'continue' && window.HubOrganiserOnboarding) {
+      window.HubOrganiserOnboarding.markProfileReviewDone();
+    }
     const redirect =
-      !editId && mode === 'continue' ? 'event-format.html' : 'index.html#groups';
+      onboardReview || (!editId && mode === 'continue') ? 'event-format.html' : 'index.html#groups';
     setTimeout(function () {
       location.href = redirect;
     }, logoWarning || logoResolutionWarning || saveWarnings.length ? 2200 : 700);
@@ -400,23 +432,31 @@
     if (contactEl && !editId && accountEmail) contactEl.value = accountEmail;
 
     if (editId) {
-      document.getElementById('ge-page-title').textContent = 'Edit group profile';
-      document.getElementById('ge-page-lead').textContent =
-        'Update your group page details — changes appear in your group profiles list after you save.';
-      configureEditActions(null);
+      if (!onboardReview) {
+        document.getElementById('ge-page-title').textContent = 'Edit group profile';
+        document.getElementById('ge-page-lead').textContent =
+          'Update your group page details — changes appear in your group profiles list after you save.';
+        configureEditActions(null);
+      }
 
       const res = await api('/api/organiser/groups?id=' + encodeURIComponent(editId));
       if (res.ok && res.data.group) {
         const g = enrichGroupFromApi(res.data.group);
         prefillGroup(g);
-        configureEditActions(g);
+        if (onboardReview) configureOnboardReviewActions(g);
+        else configureEditActions(g);
       } else {
         const boot = await api('/api/organiser/bootstrap');
         const local = enrichGroupFromApi((boot.data.groups || []).find((x) => x.id === editId));
         if (local) {
           prefillGroup(local);
-          configureEditActions(local);
+          if (onboardReview) configureOnboardReviewActions(local);
+          else configureEditActions(local);
         } else showAlert('Could not load this profile.');
+      }
+
+      if (onboardReview && window.HubFlowTour) {
+        window.HubFlowTour.startGroupTour({ onboardReview: true, force: true, delay: 350 });
       }
     } else {
       configureCreateActions();
