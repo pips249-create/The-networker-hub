@@ -24,11 +24,12 @@ module.exports = async function handler(req, res) {
     isPlatformAdmin,
     createTicket,
     createTicketsForEvents,
+    enableTicketSalesForEvent,
     airtableSetupHint,
   } = api;
 
   setCors(req, res);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -165,6 +166,34 @@ module.exports = async function handler(req, res) {
         error: 'ticket_create_failed',
         message: e.message,
         airtable: airtableSetupHint('tickets'),
+      });
+    }
+  }
+
+  if (req.method === 'PATCH') {
+    const body = parseBody(req);
+    const action = String(body.action || '').trim().toLowerCase();
+    const eventId = String(body.eventId || body.event_id || '').trim();
+    if (action !== 'enable_sales') {
+      return json(res, 400, { error: 'invalid_action' });
+    }
+    if (!eventId) return json(res, 400, { error: 'missing_event' });
+    if (!enableTicketSalesForEvent) {
+      return json(res, 503, { error: 'enable_sales_unavailable' });
+    }
+    try {
+      const groups = await listGroupsForSession(auth.session);
+      const groupIds = groups.map((g) => g.id);
+      const event = await enableTicketSalesForEvent(auth.session, eventId, groupIds);
+      return json(res, 200, {
+        ok: true,
+        event,
+        message: 'Ticket sales are now live on your public event page.',
+      });
+    } catch (e) {
+      return json(res, e.status || 500, {
+        error: e.code || 'enable_sales_failed',
+        message: e.message,
       });
     }
   }

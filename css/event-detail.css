@@ -1202,6 +1202,59 @@ a:hover {
   cursor: not-allowed;
 }
 
+.ticket-panel.is-sales-pending #buy-btn {
+  display: none;
+}
+
+.ticket-panel.is-sales-pending .ticket-sales-nudge {
+  display: block;
+}
+
+.ticket-sales-nudge {
+  display: none;
+  margin: 0 0 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f5f0e8;
+  border: 1px solid rgba(189, 147, 46, 0.35);
+}
+
+.ticket-sales-nudge-lead {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #4a4446;
+}
+
+.ticket-sales-nudge-sub {
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #7a5c0a;
+}
+
+.ticket-sales-nudge .form-field {
+  margin-bottom: 10px;
+}
+
+.ticket-nudge-status {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ticket-nudge-status.is-ok {
+  color: #166534;
+}
+
+.ticket-nudge-status.is-error {
+  color: #b91c1c;
+}
+
+.ticket-nudge-btn {
+  width: 100%;
+}
+
 .ticket-panel.is-approval-mode #buy-btn {
   background: var(--purple-700);
 }

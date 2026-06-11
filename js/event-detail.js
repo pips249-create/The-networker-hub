@@ -160,6 +160,10 @@
       isSoldOut: parseBoolFlag(ev.isSoldOut) || p.get('sold_out') === '1' || p.get('isSoldOut') === '1',
       isSalesClosed:
         parseBoolFlag(ev.isSalesClosed) || p.get('sales_closed') === '1' || p.get('isSalesClosed') === '1',
+      isTicketSalesPending:
+        parseBoolFlag(ev.isTicketSalesPending) ||
+        p.get('ticket_sales_pending') === '1' ||
+        p.get('isTicketSalesPending') === '1',
     };
   }
 
@@ -1357,20 +1361,103 @@
     }
   }
 
+  let nudgeUiBound = false;
+
+  async function prefillNudgeEmail() {
+    const emailEl = document.getElementById('ticket-nudge-email');
+    const nameEl = document.getElementById('ticket-nudge-name');
+    if (!emailEl) return;
+    try {
+      const res = await fetch('/api/auth/session', { credentials: 'include' });
+      const data = await res.json();
+      if (data.ok && data.user) {
+        if (!emailEl.value && data.user.email) emailEl.value = data.user.email;
+        if (nameEl && !nameEl.value && data.user.name) nameEl.value = data.user.name;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function bindTicketSalesNudgeUi(ev) {
+    if (nudgeUiBound) return;
+    nudgeUiBound = true;
+    const btn = document.getElementById('ticket-nudge-btn');
+    const statusEl = document.getElementById('ticket-nudge-status');
+    if (!btn) return;
+    btn.addEventListener('click', async function () {
+      const email = document.getElementById('ticket-nudge-email')?.value.trim() || '';
+      const name = document.getElementById('ticket-nudge-name')?.value.trim() || '';
+      if (!email) {
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.className = 'ticket-nudge-status is-error';
+          statusEl.textContent = 'Enter your email so the organiser can follow up.';
+        }
+        return;
+      }
+      btn.disabled = true;
+      if (statusEl) statusEl.hidden = true;
+      try {
+        const res = await fetch('/api/auth/nudge-ticket-sales', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventId: ev.id, email: email, name: name }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.message || data.error || 'nudge_failed');
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.className = 'ticket-nudge-status is-ok';
+          statusEl.textContent = data.message || 'Nudge sent — thank you!';
+        }
+      } catch (e) {
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.className = 'ticket-nudge-status is-error';
+          statusEl.textContent = e.message || 'Could not send nudge. Please try again.';
+        }
+        btn.disabled = false;
+      }
+    });
+  }
+
   function applyTicketPanelState(ev) {
     const panel = document.getElementById('tickets');
     const buy = document.getElementById('buy-btn');
     const purchaseView = document.getElementById('ticket-purchase-view');
     const appForm = document.getElementById('seat-application-form');
+    const nudgePanel = document.getElementById('ticket-sales-nudge');
     if (!panel || !buy) return;
 
     panel.dataset.approvalRequired = ev.isApprovalRequired ? 'true' : 'false';
     panel.dataset.soldOut = ev.isSoldOut ? 'true' : 'false';
     panel.dataset.salesClosed = ev.isSalesClosed ? 'true' : 'false';
 
-    panel.classList.remove('is-unavailable', 'is-approval-mode', 'show-application', 'show-checkout');
+    panel.classList.remove(
+      'is-unavailable',
+      'is-sales-pending',
+      'is-approval-mode',
+      'show-application',
+      'show-checkout'
+    );
     showSeatApplication(false);
     showCheckoutDetails(false);
+    if (nudgePanel) nudgePanel.hidden = true;
+
+    if (ev.isTicketSalesPending) {
+      panel.classList.add('is-sales-pending', 'is-unavailable');
+      buy.disabled = true;
+      buy.classList.add('cta-btn-disabled');
+      if (purchaseView) purchaseView.setAttribute('aria-hidden', 'true');
+      if (nudgePanel) {
+        nudgePanel.hidden = false;
+        bindTicketSalesNudgeUi(ev);
+        prefillNudgeEmail();
+      }
+      return;
+    }
 
     const unavailable = ev.isSoldOut || ev.isSalesClosed;
     if (unavailable) {

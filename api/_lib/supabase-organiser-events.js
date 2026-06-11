@@ -123,6 +123,7 @@ function rowToEvent(row) {
     ticketsSold: 0,
     revenueNum: 0,
     capacity: row.max_attendees != null ? Number(row.max_attendees) : null,
+    ticketSalesEnabled: row.ticket_sales_enabled === true,
   };
 }
 
@@ -652,6 +653,7 @@ async function publishEventsWithRefund(eventIds, refundPayload) {
   const patch = {
     status: 'published',
     approval_status: 'Approved',
+    ticket_sales_enabled: false,
     refund_policy: refundPayload.refundPolicy || null,
     refund_policy_details: refundPayload.refundPolicyDetails || null,
     refund_cutoff_days:
@@ -732,13 +734,59 @@ async function createTicketsForEvents({ eventIds, tickets, publish, refund, vatT
       .select('id, organiser_id')
       .in('id', ids);
     if (eventLoadErr) throw new Error(eventLoadErr.message);
-    const organiserIds = (eventRows || []).map((row) => row.organiser_id).filter(Boolean);
-    const { assertOrganiserReadyForPaidPublish } = require('./stripe-connect');
-    await assertOrganiserReadyForPaidPublish(sb, organiserIds, tiers);
     publishedEvents = await publishEventsWithRefund(ids, refund);
   }
 
   return { created: out.length, tickets: out, publishedEvents };
+}
+
+async function enableTicketSalesForEvent(session, eventId, groupIds) {
+  const sb = getSupabaseAdmin();
+  const id = String(eventId || '').trim();
+  const { data: event, error } = await sb
+    .from('events')
+    .select('id, organiser_id, status, approval_status, ticket_sales_enabled')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!event) {
+    const e = new Error('Event not found');
+    e.status = 404;
+    throw e;
+  }
+  if (!groupIds.includes(event.organiser_id)) {
+    const e = new Error('Not allowed');
+    e.status = 403;
+    throw e;
+  }
+  if (String(event.status || '').toLowerCase() !== 'published') {
+    const e = new Error('Publish the event before enabling ticket sales');
+    e.status = 400;
+    throw e;
+  }
+
+  const { data: tickets, error: ticketErr } = await sb.from('tickets').select('*').eq('event_id', id);
+  if (ticketErr) throw new Error(ticketErr.message);
+  if (!(tickets || []).length) {
+    const e = new Error('Add at least one ticket type before enabling sales');
+    e.status = 400;
+    throw e;
+  }
+
+  const hasPaid = (tickets || []).some((t) => Number(t.price) > 0);
+  if (hasPaid) {
+    const { assertOrganiserReadyForPaidPublish } = require('./stripe-connect');
+    await assertOrganiserReadyForPaidPublish(sb, [event.organiser_id], tickets);
+  }
+
+  const { data: updated, error: updateErr } = await sb
+    .from('events')
+    .update({ ticket_sales_enabled: true })
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (updateErr) throw new Error(updateErr.message);
+  return rowToEvent(updated);
 }
 
 async function enrichGroupForDashboard(group, session, adminView) {
@@ -1032,6 +1080,7 @@ module.exports = {
   getEventById,
   createEvent,
   updateEvent,
+  enableTicketSalesForEvent,
   createTicket,
   createTicketsForEvents,
   publishEventsWithRefund,

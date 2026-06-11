@@ -1,6 +1,7 @@
 const { sendTemplatedEmail } = require('./send-template-email');
 const {
   buildAttendeeEmailVars,
+  buildOrganiserEmailVars,
   formatAmount,
 } = require('./registration-emails');
 
@@ -82,6 +83,70 @@ function buildCancellationEmailVars(ctx, extra) {
     _registration: ctx.registration,
     _event_row: ctx.eventRow,
   };
+}
+
+function formatCancellationTime(iso) {
+  const d = iso ? new Date(iso) : new Date();
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+async function sendOrganiserBookingCancelledEmail(sb, registrationId) {
+  const ctx = await loadRegistrationContext(sb, registrationId);
+  if (!ctx || !ctx.eventRow) return { skipped: true, reason: 'registration_not_found' };
+
+  const { data: eventRowFull } = await sb
+    .from('events')
+    .select('id, organiser_id, refund_policy, refund_policy_details, refund_cutoff_days, starts_at')
+    .eq('id', ctx.eventRow.id)
+    .maybeSingle();
+
+  let organiserEmail = '';
+  let organiserName = ctx.organiserName;
+  if (eventRowFull?.organiser_id) {
+    const orgRes = await sb
+      .from('organisers')
+      .select('id, name, email, contact_email')
+      .eq('id', eventRowFull.organiser_id)
+      .maybeSingle();
+    if (orgRes.error) throw new Error(orgRes.error.message);
+    organiserName = String(orgRes.data?.name || organiserName).trim();
+    organiserEmail = String(orgRes.data?.email || orgRes.data?.contact_email || '')
+      .trim()
+      .toLowerCase();
+  }
+  if (!organiserEmail) return { skipped: true, reason: 'missing_organiser_email' };
+
+  const attendeeVars = buildAttendeeEmailVars({
+    registration: ctx.registration,
+    eventRow: ctx.eventRow,
+    attendee: ctx.attendee,
+    ticketName: ctx.ticketName,
+    organiserName,
+    amountPaid: formatAmount(ctx.registration.amount_paid),
+  });
+  const vars = buildOrganiserEmailVars(attendeeVars, {});
+  vars.cancellation_time = formatCancellationTime(ctx.registration.cancelled_at);
+  vars._registration = ctx.registration;
+  vars._event_row = eventRowFull || ctx.eventRow;
+
+  try {
+    await sendTemplatedEmail({
+      slug: 'organiser_booking_cancelled',
+      to: organiserEmail,
+      variables: vars,
+    });
+    return { sent: true, to: organiserEmail };
+  } catch (e) {
+    return { sent: false, error: e.message || String(e) };
+  }
 }
 
 async function sendBookingCancelledEmail(sb, registrationId) {
@@ -230,6 +295,7 @@ async function sendRefundProcessedEmailsForEvent(sb, eventId) {
 
 module.exports = {
   sendBookingCancelledEmail,
+  sendOrganiserBookingCancelledEmail,
   sendEventCancelledEmail,
   sendRefundProcessedEmail,
   sendEventCancelledEmailsForEvent,

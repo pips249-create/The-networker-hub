@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627" />
     <link rel="stylesheet" href="../css/hub-loading.css" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260708" />
-    <link rel="stylesheet" href="../css/event-detail.css?v=20260613" />
+    <link rel="stylesheet" href="../css/event-detail.css?v=20260610f" />
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
@@ -359,6 +359,23 @@
             <button type="button" class="btn-text-back" id="checkout-back-btn">← Back to tickets</button>
           </form>
 
+          <div class="ticket-sales-nudge" id="ticket-sales-nudge" hidden>
+            <p class="ticket-sales-nudge-lead">
+              Unfortunately you can&apos;t buy tickets for this event until the organiser allows ticket sales.
+            </p>
+            <p class="ticket-sales-nudge-sub">Why not nudge them now?</p>
+            <label class="form-field" for="ticket-nudge-email">
+              <span>Your email</span>
+              <input type="email" id="ticket-nudge-email" name="nudge_email" autocomplete="email" />
+            </label>
+            <label class="form-field" for="ticket-nudge-name">
+              <span>Your name <span class="field-optional">(optional)</span></span>
+              <input type="text" id="ticket-nudge-name" name="nudge_name" autocomplete="name" />
+            </label>
+            <p class="ticket-nudge-status" id="ticket-nudge-status" hidden role="status"></p>
+            <button type="button" class="cta-btn ticket-nudge-btn" id="ticket-nudge-btn">Nudge the organiser</button>
+          </div>
+
           <button type="button" class="cta-btn" id="buy-btn">Buy ticket</button>
 
           <p class="refund-badge" id="ev-refund-badge" hidden></p>
@@ -464,7 +481,7 @@
     <script src="../js/cms-ad-blocks.js?v=20260609e"></script>
     <script src="../js/listing-report.js?v=20260609"></script>
     <script src="../js/review-report.js?v=20260609"></script>
-    <script src="../js/event-detail.js?v=20260613"></script>
+    <script src="../js/event-detail.js?v=20260610f"></script>
   </body>
 </html>
 <!-- legacy inline removed

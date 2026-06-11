@@ -2,6 +2,11 @@ const { setCors, json, sessionFromRequest } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { calculateCheckoutTotals } = require('../booking-fees');
 const { isStripeCheckoutConfigured, createPaidCheckoutSession } = require('../stripe-checkout');
+const {
+  connectRequiredForPaidCheckout,
+  getOrganiserConnectForEvent,
+  buildConnectCheckoutParams,
+} = require('../stripe-connect');
 const { normalizeGuestNames } = require('../supabase-registrations');
 
 function parseBody(req) {
@@ -112,13 +117,21 @@ module.exports = async function handler(req, res) {
     const sb = getSupabaseAdmin();
     const evRes = await sb
       .from('events')
-      .select('id, title, slug, status')
+      .select('id, title, slug, status, ticket_sales_enabled')
       .eq('id', eventId)
       .maybeSingle();
     if (evRes.error) throw new Error(evRes.error.message);
     if (!evRes.data) return json(res, 404, { ok: false, error: 'event_not_found' });
     if (String(evRes.data.status || '').toLowerCase() !== 'published') {
       return json(res, 400, { ok: false, error: 'event_not_published' });
+    }
+    if (evRes.data.ticket_sales_enabled !== true) {
+      return json(res, 400, {
+        ok: false,
+        error: 'ticket_sales_disabled',
+        message:
+          'Ticket sales are not open for this event yet. Nudge the organiser from the event page.',
+      });
     }
 
     let ticketName = 'Ticket';
@@ -176,6 +189,27 @@ module.exports = async function handler(req, res) {
     const slug = String(evRes.data.slug || '').trim();
     const cancelPath = slug ? `/events/${encodeURIComponent(slug)}` : `/events/event.html?id=${eventId}`;
 
+    let paymentIntentData = null;
+    if (connectRequiredForPaidCheckout()) {
+      const connect = await getOrganiserConnectForEvent(sb, eventId);
+      if (!connect?.ready) {
+        return json(res, 400, {
+          ok: false,
+          error: 'stripe_connect_required',
+          message:
+            'This organiser has not finished Stripe Connect setup. Ticket sales are temporarily unavailable.',
+        });
+      }
+      const ticketSubtotalPence = Math.round(unitPrice * 100) * qty;
+      const bookingFeePence = Math.round(totals.fee * 100);
+      const connectParams = buildConnectCheckoutParams({
+        connect,
+        ticketSubtotalPence,
+        bookingFeePence,
+      });
+      paymentIntentData = connectParams?.payment_intent_data || null;
+    }
+
     const checkoutSession = await createPaidCheckoutSession({
       email: checkoutEmail,
       name: checkoutName,
@@ -190,6 +224,7 @@ module.exports = async function handler(req, res) {
       successUrl: `${siteUrl}/events/booking-success?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${siteUrl}${cancelPath}`,
       clientReferenceId: buildClientReferenceId(eventId, ticketId, qty, ticketName),
+      paymentIntentData,
     });
 
     return json(res, 200, {

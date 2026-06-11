@@ -39,10 +39,28 @@ module.exports = async function handler(req, res) {
   try {
     if (action === 'confirm_refunds') {
       const result = await confirmRefundsIssued(auth.session, eventId);
+      if (result.alreadyConfirmed) {
+        return json(res, 200, {
+          ok: true,
+          cancellation: result.cancellation,
+          message: 'Refunds were already confirmed for this event.',
+        });
+      }
+      const paidCount = result.verification?.totalPaid || 0;
+      const emailSent = result.emailResult?.sent || 0;
+      let message = 'Refunds verified in Stripe. Payout hold cleared.';
+      if (paidCount > 0) {
+        message +=
+          emailSent > 0
+            ? ` ${emailSent} refund confirmation email${emailSent === 1 ? '' : 's'} sent.`
+            : ' Refund confirmation emails will be sent as Stripe processes each refund.';
+      }
       return json(res, 200, {
         ok: true,
         cancellation: result.cancellation,
-        message: 'Thank you — we have recorded that refunds have been issued.',
+        verification: result.verification,
+        emailResult: result.emailResult,
+        message,
       });
     }
 

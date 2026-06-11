@@ -653,6 +653,36 @@
     }
   }
 
+  function renderSalesPendingBanner() {
+    const el = document.getElementById('ee-tickets-alert');
+    if (!el || !eventIds[0]) return;
+    el.className = 'ee-alert';
+    el.hidden = false;
+    el.innerHTML =
+      '<strong>Your event is listed on the hub</strong> but ticket sales are still off. Visitors can see it and nudge you from the public event page. When you are ready, enable sales below.' +
+      '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;">' +
+      '<button type="button" class="ee-btn ee-btn-primary" id="ee-enable-sales-btn">Enable ticket sales</button>' +
+      '</div>';
+    const btn = document.getElementById('ee-enable-sales-btn');
+    if (btn) {
+      btn.addEventListener('click', async function () {
+        btn.disabled = true;
+        const { ok, data } = await api('/api/organiser/tickets', {
+          method: 'PATCH',
+          body: JSON.stringify({ action: 'enable_sales', eventId: eventIds[0] }),
+        });
+        if (!ok) {
+          showAlert(data.message || data.error || 'Could not enable ticket sales', 'warn');
+          btn.disabled = false;
+          return;
+        }
+        el.hidden = true;
+        el.innerHTML = '';
+        showAlert(data.message || 'Ticket sales are now live.', 'ok');
+      });
+    }
+  }
+
   async function init() {
     loadSeriesMeta();
     if (!eventIds.length) {
@@ -687,6 +717,10 @@
     }
 
     renderSeriesSummary();
+
+    if (loaded.event && loaded.event.status === 'published' && !loaded.event.ticketSalesEnabled) {
+      renderSalesPendingBanner();
+    }
 
     if (loaded.tickets.length) {
       prefillTiers(loaded.tickets);
@@ -826,6 +860,11 @@
       document.getElementById('ee-refund-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       return;
     }
+
+    showAlert(
+      'Your event is now listed on the hub. Ticket sales stay off until you open the event tickets page and click Enable ticket sales.',
+      'ok'
+    );
 
     try {
       sessionStorage.removeItem(SERIES_STORAGE_KEY);

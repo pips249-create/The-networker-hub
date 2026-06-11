@@ -51,7 +51,7 @@ async function createPaidCheckoutSession(opts) {
     });
   }
 
-  return stripe.checkout.sessions.create({
+  const sessionParams = {
     mode: 'payment',
     customer_email: opts.email,
     client_reference_id: opts.clientReferenceId,
@@ -66,7 +66,13 @@ async function createPaidCheckoutSession(opts) {
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
     line_items: lineItems,
-  });
+  };
+
+  if (opts.paymentIntentData && typeof opts.paymentIntentData === 'object') {
+    sessionParams.payment_intent_data = opts.paymentIntentData;
+  }
+
+  return stripe.checkout.sessions.create(sessionParams);
 }
 
 function siteBaseUrl() {
@@ -130,6 +136,7 @@ async function retrieveCheckoutSession(sessionId) {
 module.exports = {
   getStripeSecretKey,
   isStripeCheckoutConfigured,
+  getStripeClient,
   createPaidCheckoutSession,
   createOpportunityPremiumCheckoutSession,
   retrieveCheckoutSession,

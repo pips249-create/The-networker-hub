@@ -359,6 +359,9 @@
     const premiumBadge = ev.featured
       ? '<span class="event-grid-premium">Premium</span>'
       : '';
+    const salesBadge = ev.isTicketSalesPending
+      ? '<span class="event-grid-sales-pending">Tickets soon</span>'
+      : '';
 
     return `
       <a class="event-grid-card${ev.featured ? ' is-premium' : ''}" href="${escapeHtml(detailHref(ev))}"
@@ -371,6 +374,7 @@
         <div class="event-grid-media">
           ${photoImg(eventImageSrc(ev), 'event-grid-img', ev.id, ev.eventType || ev.typeRaw, ev.title)}
           ${premiumBadge}
+          ${salesBadge}
           <span class="event-grid-category">${escapeHtml(meetingType)}</span>
           <span class="event-grid-price">${escapeHtml(priceBadgeLabel(ev))}</span>
         </div>

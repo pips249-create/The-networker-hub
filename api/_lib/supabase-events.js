@@ -3,6 +3,8 @@
  */
 const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./supabase');
 const { eventImageUrl } = require('./event-image');
+const { eventHasTicketsOnSale } = require('./ticket-sales');
+const { connectRequiredForPaidCheckout } = require('./stripe-connect');
 
 const IN_CHUNK_SIZE = 80;
 
@@ -259,6 +261,28 @@ function rowToEvent(row, organiser, ticketRows) {
   const orgName = organiser ? String(organiser.name || '').trim() : '';
   const spotsLeft = null;
   const isSoldOut = tiers.length > 0 && tiers.every((t) => t.soldOut);
+  const ticketSalesEnabled = row.ticket_sales_enabled === true;
+  const ticketsOnSale = eventHasTicketsOnSale(eventTickets);
+  const connectRequired = connectRequiredForPaidCheckout() && hasPaidTickets;
+  const connectReady =
+    !connectRequired ||
+    Boolean(
+      organiser &&
+        organiser.stripe_account_id &&
+        organiser.stripe_charges_enabled &&
+        organiser.stripe_connect_details_submitted
+    );
+  const isTicketSalesPending = !ticketSalesEnabled;
+  const isSalesClosed =
+    isSoldOut ||
+    !ticketSalesEnabled ||
+    !ticketsOnSale ||
+    (connectRequired && !connectReady);
+  let salesClosedReason = '';
+  if (!ticketSalesEnabled) salesClosedReason = 'organiser_pending';
+  else if (connectRequired && !connectReady) salesClosedReason = 'stripe_connect';
+  else if (!ticketsOnSale) salesClosedReason = 'no_tickets';
+  else if (isSoldOut) salesClosedReason = 'sold_out';
 
   const highlights = Array.isArray(row.highlights)
     ? row.highlights.map((h) => String(h || '').trim()).filter(Boolean)
@@ -311,7 +335,10 @@ function rowToEvent(row, organiser, ticketRows) {
     reviews: Number(row.review_count) || 0,
     isApprovalRequired: row.auto_approve === false,
     isSoldOut,
-    isSalesClosed: false,
+    isSalesClosed,
+    isTicketSalesPending,
+    ticketSalesEnabled,
+    salesClosedReason,
     spotsLeft,
     capacity: null,
     urgency: '',

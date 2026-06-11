@@ -13,6 +13,7 @@ Run once in [Supabase SQL Editor](https://supabase.com/dashboard):
 | `027_email_templates.sql` | `booking_confirmation` template |
 | `034_registrations_checkout_session.sql` | Idempotent checkout session IDs |
 | `038_registrations_quantity.sql` | Multi-ticket quantity per registration |
+| `067_organiser_cancel_connect.sql` | Organiser cancel alert email + Stripe Connect columns on `organisers` |
 
 ## 2. Vercel environment variables
 
@@ -24,6 +25,7 @@ Run once in [Supabase SQL Editor](https://supabase.com/dashboard):
 | `SESSION_SECRET` | Yes | Auth cookies |
 | `SITE_URL` | Yes | Email links, e.g. `https://the-networker-hub.vercel.app` |
 | `STRIPE_SECRET_KEY` | **Yes (paid checkout)** | `sk_test_…` or `sk_live_…` — creates Checkout with booking fee |
+| `STRIPE_CONNECT_ENABLED` | No (off by default) | Set `true` to route ticket revenue to organiser Connect accounts (destination charges) |
 | `STRIPE_WEBHOOK_SECRET` | **Yes (prod)** | From Stripe webhook endpoint |
 | `RESEND_API_KEY` | **Yes (emails)** | All transactional mail (bookings, welcome, reminders, saved events) |
 | `RESEND_FROM` | **Yes (emails)** | Verified sender, e.g. `The Networker Hub <hello@the-networker.co.uk>` |
@@ -69,6 +71,16 @@ Use the **same mode** as your key: `sk_test_…` with test cards, `sk_live_…` 
 ## 5. Payment Links (fallback)
 
 If `STRIPE_SECRET_KEY` is missing, the hub falls back to a static [Payment Link](https://dashboard.stripe.com/payment-links) — **booking fee is not added automatically** in that mode.
+
+### Stripe Connect (optional)
+
+When `STRIPE_CONNECT_ENABLED=true`:
+
+1. Organisers complete Express onboarding from **Revenue → Connect Stripe** (`POST /api/organiser/stripe-connect`).
+2. Paid ticket publish is blocked until Connect is ready (`charges_enabled` + details submitted).
+3. Checkout uses **destination charges**: `application_fee_amount` = 3% of ticket subtotal + full booking fee (kept by the Hub); the remainder transfers to the organiser's connected account. Stripe processing (1.5% + 20p) is deducted by Stripe from the charge.
+
+Leave `STRIPE_CONNECT_ENABLED` unset (or `false`) to keep the legacy single-account checkout while you roll out Connect.
 
 Create a Payment Link per paid ticket (or one per event) only when needed as fallback.
 

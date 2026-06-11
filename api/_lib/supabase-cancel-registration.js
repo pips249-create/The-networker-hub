@@ -1,6 +1,6 @@
 const { getSupabaseAdmin } = require('./supabase');
 const { resolveAttendeeId } = require('./supabase-favourites');
-const { sendBookingCancelledEmail } = require('./cancellation-emails');
+const { sendBookingCancelledEmail, sendOrganiserBookingCancelledEmail } = require('./cancellation-emails');
 const { isRefundEligibleForCancellation } = require('./cancellation-email-sections');
 
 async function cancelRegistrationForAttendee(session, registrationId) {
@@ -74,16 +74,23 @@ async function cancelRegistrationForAttendee(session, registrationId) {
   if (updateError) throw new Error(updateError.message);
 
   let emailResult = null;
+  let organiserEmailResult = null;
   try {
     emailResult = await sendBookingCancelledEmail(sb, registrationId);
   } catch (e) {
     emailResult = { error: e.message || String(e) };
+  }
+  try {
+    organiserEmailResult = await sendOrganiserBookingCancelledEmail(sb, registrationId);
+  } catch (e) {
+    organiserEmailResult = { error: e.message || String(e) };
   }
 
   return {
     registrationId,
     refundEligible: isRefundEligibleForCancellation(eventRow, registration),
     emailResult,
+    organiserEmailResult,
   };
 }
 

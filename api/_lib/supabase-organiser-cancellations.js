@@ -7,6 +7,7 @@ const {
   sendEventCancelledEmailsForEvent,
   sendRefundProcessedEmailsForEvent,
 } = require('./cancellation-emails');
+const { verifyEventRefundsInStripe } = require('./stripe-refunds');
 
 const CANCELLATION_REASONS = new Set([
   'Venue issue',
@@ -124,6 +125,35 @@ async function confirmRefundsIssued(session, eventId) {
     e.status = 404;
     throw e;
   }
+  if (cancellation.refunds_confirmed_at) {
+    return {
+      cancellation,
+      alreadyConfirmed: true,
+      verification: { allRefunded: true, totalPaid: 0 },
+      emailResult: { skipped: true, reason: 'already_confirmed' },
+    };
+  }
+
+  const { data: registrations, error: regErr } = await sb
+    .from('registrations')
+    .select('id, payment_status, stripe_payment_intent_id, amount_paid, refund_email_sent_at')
+    .eq('event_id', eventId)
+    .eq('payment_status', 'Paid');
+  if (regErr) throw new Error(regErr.message);
+
+  const verification = await verifyEventRefundsInStripe(registrations || []);
+  if (!verification.allRefunded) {
+    const pendingCount = verification.pending.length;
+    const e = new Error(
+      pendingCount === 1
+        ? '1 paid booking is not fully refunded in Stripe yet. Issue the refund in your Stripe dashboard, then try again.'
+        : `${pendingCount} paid bookings are not fully refunded in Stripe yet. Issue refunds in your Stripe dashboard, then try again.`
+    );
+    e.status = 400;
+    e.code = 'refunds_not_verified';
+    e.verification = verification;
+    throw e;
+  }
 
   const { data, error } = await sb
     .from('event_cancellations')
@@ -133,6 +163,12 @@ async function confirmRefundsIssued(session, eventId) {
     .single();
   if (error) throw new Error(error.message);
 
+  const { error: holdErr } = await sb
+    .from('events')
+    .update({ payout_held: false })
+    .eq('id', eventId);
+  if (holdErr) throw new Error(holdErr.message);
+
   let emailResult = null;
   try {
     emailResult = await sendRefundProcessedEmailsForEvent(sb, eventId);
@@ -140,7 +176,7 @@ async function confirmRefundsIssued(session, eventId) {
     emailResult = { error: e.message || String(e) };
   }
 
-  return { cancellation: data, emailResult };
+  return { cancellation: data, verification, emailResult };
 }
 
 module.exports = {
