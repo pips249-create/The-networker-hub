@@ -103,14 +103,16 @@
     return placementForEvent(eventId, eventType, title);
   }
 
-  /** Browse cards: event photo, then varied placeholder (skip shared organiser logos). */
+  /** Browse cards: event photo → organiser logo → type-based placeholder. */
   function getEventBrowseImage(ev) {
     var photo = (ev && (ev.photo || ev.imageUrl)) || '';
+    var logo = (ev && ev.organiserLogo) || '';
     var eventType = (ev && (ev.eventType || ev.event_type || ev.typeRaw)) || '';
     var eventId = ev && ev.id;
     var title = ev && ev.title;
 
     if (isUsableImageUrl(photo)) return String(photo).trim();
+    if (isUsableImageUrl(logo)) return String(logo).trim();
     return placementForEvent(eventId, eventType, title);
   }
 

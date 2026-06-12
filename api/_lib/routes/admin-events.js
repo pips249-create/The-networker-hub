@@ -280,8 +280,10 @@ module.exports = async function handler(req, res) {
         return json(res, 400, { error: 'invalid_status' });
       }
       patch.status = status || null;
-      if (status === 'published') patch.approval_status = 'Approved';
-      else if (status === 'draft') patch.approval_status = 'Pending Review';
+      if (status === 'published') {
+        patch.approval_status = 'Approved';
+        patch.ticket_sales_enabled = true;
+      } else if (status === 'draft') patch.approval_status = 'Pending Review';
     }
     if (Object.prototype.hasOwnProperty.call(body, 'approval_status')) {
       const approval = String(body.approval_status || '').trim();

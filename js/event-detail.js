@@ -1940,11 +1940,7 @@
           window.alert('Application submitted. The host will review your request and email you.');
         };
 
-        if (window.FactLoader) {
-          await window.FactLoader.run(submitApplication);
-        } else {
-          await submitApplication();
-        }
+        await submitApplication();
       });
     }
 
@@ -2029,11 +2025,7 @@
           await processCheckoutBooking();
         };
 
-        if (window.FactLoader) {
-          await window.FactLoader.run(runBooking);
-        } else {
-          await runBooking();
-        }
+        await runBooking();
       });
     }
 
@@ -2087,23 +2079,18 @@
   }
 
   async function loadRelatedFallback(ev) {
+    const organiserId = ev.organiserId || ev.organiser_id || '';
+    if (!organiserId) return [];
     try {
-      const res = await fetch('/api/hub-listings');
+      const qs =
+        'organiserId=' +
+        encodeURIComponent(organiserId) +
+        '&exclude=' +
+        encodeURIComponent(ev.id || '') +
+        '&limit=8';
+      const res = await fetch('/api/hub-listings?' + qs);
       const data = await res.json();
-      const all = data.events || [];
-      return all
-        .filter((e) => {
-          if (e.id === ev.id) return false;
-          if (ev.organiserId && e.organiserId) return e.organiserId === ev.organiserId;
-          const a = String(e.organiser || '')
-            .trim()
-            .toLowerCase();
-          const b = String(ev.organiser || '')
-            .trim()
-            .toLowerCase();
-          return a && b && a === b;
-        })
-        .slice(0, 6);
+      return (data.events || []).slice(0, 6);
     } catch (e) {
       return [];
     }
@@ -2246,11 +2233,6 @@
     if (!id && !slug && !params.get('title')) {
       setEventLoading(false);
       showEventLoadError('Open an event from Browse events to view ticket details.');
-      return;
-    }
-
-    if (window.FactLoader) {
-      await window.FactLoader.run(() => bootWork(params, id, slug));
       return;
     }
 

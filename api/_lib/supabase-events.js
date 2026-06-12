@@ -3,7 +3,7 @@
  */
 const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./supabase');
 const { eventImageUrl } = require('./event-image');
-const { eventHasTicketsOnSale } = require('./ticket-sales');
+const { eventHasTicketsOnSale, resolveTicketSalesEnabled } = require('./ticket-sales');
 const { connectRequiredForPaidCheckout } = require('./stripe-connect');
 const { publicOrganiserSlug } = require('./organiser-slug');
 
@@ -262,7 +262,7 @@ function rowToEvent(row, organiser, ticketRows) {
   const orgName = organiser ? String(organiser.name || '').trim() : '';
   const spotsLeft = null;
   const isSoldOut = tiers.length > 0 && tiers.every((t) => t.soldOut);
-  const ticketSalesEnabled = row.ticket_sales_enabled === true;
+  const ticketSalesEnabled = resolveTicketSalesEnabled(row, eventTickets);
   const ticketsOnSale = eventHasTicketsOnSale(eventTickets);
   const connectRequired = connectRequiredForPaidCheckout() && hasPaidTickets;
   const connectReady =
@@ -381,46 +381,6 @@ function isPublicEvent(row, organiser) {
   return true;
 }
 
-function organiserMatch(a, b) {
-  if (!a.organiserId || !b.organiserId) return a.organiser === b.organiser && a.organiser;
-  return a.organiserId === b.organiserId;
-}
-
-function buildSeriesMatcher(sourceRow) {
-  if (!sourceRow) return null;
-  if (sourceRow.series_group_id) {
-    const seriesId = sourceRow.series_group_id;
-    return (row) => row.series_group_id === seriesId;
-  }
-
-  const title = String(sourceRow.title || '')
-    .trim()
-    .toLowerCase();
-  const organiserId = sourceRow.organiser_id || '';
-  const pattern = String(sourceRow.recurrence_pattern || '').trim();
-  const endDate = String(sourceRow.recurrence_end_date || '')
-    .trim()
-    .slice(0, 10);
-
-  if (pattern && endDate && title && organiserId) {
-    return (row) =>
-      String(row.title || '')
-        .trim()
-        .toLowerCase() === title &&
-      row.organiser_id === organiserId &&
-      String(row.recurrence_pattern || '').trim() === pattern &&
-      String(row.recurrence_end_date || '')
-        .trim()
-        .slice(0, 10) === endDate;
-  }
-
-  if (!title || !organiserId) return null;
-  return (row) =>
-    String(row.title || '')
-      .trim()
-      .toLowerCase() === title && row.organiser_id === organiserId;
-}
-
 function seriesDatePayload(ev) {
   return {
     id: ev.id,
@@ -440,11 +400,9 @@ function seriesDatePayload(ev) {
 }
 
 async function fetchEventSeriesDates(sb, row, organiser) {
-  const matcher = buildSeriesMatcher(row);
-  if (!matcher) return [];
-
-  const allRows = await fetchPublishedEventRows(sb);
-  const siblings = allRows.filter((r) => matcher(r) && isPublicEvent(r, organiser));
+  const siblings = (await fetchSeriesSiblingRows(sb, row)).filter((r) =>
+    isPublicEvent(r, organiser)
+  );
   const hasRecurrenceMeta = Boolean(row.series_group_id || row.recurrence_pattern);
   if (siblings.length <= 1 || (!hasRecurrenceMeta && siblings.length < 2)) return [];
 
@@ -464,6 +422,117 @@ async function fetchEventSeriesDates(sb, row, organiser) {
   return siblings.map((r) => seriesDatePayload(rowToEvent(r, organiser, ticketsByEvent.get(r.id) || [])));
 }
 
+async function fetchSeriesSiblingRows(sb, row) {
+  if (!row) return [];
+
+  if (row.series_group_id) {
+    const { data, error } = await sb
+      .from('events')
+      .select('*')
+      .eq('series_group_id', row.series_group_id)
+      .eq('approval_status', 'Approved')
+      .eq('status', 'published')
+      .order('starts_at', { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data || []).map((r) => ({ ...r, next_date: r.starts_at }));
+  }
+
+  const titleKey = String(row.title || '')
+    .trim()
+    .toLowerCase();
+  const organiserId = row.organiser_id || '';
+  if (!titleKey || !organiserId) return [];
+
+  const pattern = String(row.recurrence_pattern || '').trim();
+  const endDate = String(row.recurrence_end_date || '')
+    .trim()
+    .slice(0, 10);
+
+  const { data, error } = await sb
+    .from('events')
+    .select('*')
+    .eq('organiser_id', organiserId)
+    .eq('approval_status', 'Approved')
+    .eq('status', 'published')
+    .order('starts_at', { ascending: true });
+  if (error) throw new Error(error.message);
+
+  return (data || [])
+    .filter((r) => {
+      if (
+        String(r.title || '')
+          .trim()
+          .toLowerCase() !== titleKey
+      ) {
+        return false;
+      }
+      if (pattern && endDate) {
+        return (
+          String(r.recurrence_pattern || '').trim() === pattern &&
+          String(r.recurrence_end_date || '')
+            .trim()
+            .slice(0, 10) === endDate
+        );
+      }
+      return true;
+    })
+    .map((r) => ({ ...r, next_date: r.starts_at }));
+}
+
+async function fetchRelatedPublishedRows(sb, organiserId, excludeIds, limit) {
+  const exclude = new Set((excludeIds || []).filter(Boolean));
+  if (!organiserId) return [];
+
+  const { data, error } = await sb
+    .from('events')
+    .select('*')
+    .eq('organiser_id', organiserId)
+    .eq('approval_status', 'Approved')
+    .eq('status', 'published')
+    .order('starts_at', { ascending: true })
+    .limit(Math.min(Math.max(limit + exclude.size + 4, limit), 24));
+  if (error) throw new Error(error.message);
+
+  return (data || [])
+    .map((r) => ({ ...r, next_date: r.starts_at }))
+    .filter((r) => !exclude.has(r.id))
+    .slice(0, limit);
+}
+
+async function eventsFromPublishedRows(sb, rows, knownOrganiser) {
+  const list = rows || [];
+  const eventIds = list.map((e) => e.id);
+  const orgIds = [...new Set(list.map((e) => e.organiser_id).filter(Boolean))];
+
+  let tickets = [];
+  if (eventIds.length) {
+    tickets = await fetchRowsInChunks(sb, 'tickets', 'event_id', eventIds);
+    const regCounts = await fetchRegistrationCountsByTicket(sb, tickets);
+    tickets = tickets.map((t) => ({ ...t, _registrationCount: regCounts.get(t.id) || 0 }));
+  }
+
+  let organisers = [];
+  if (
+    knownOrganiser &&
+    orgIds.length === 1 &&
+    String(knownOrganiser.id) === String(orgIds[0])
+  ) {
+    organisers = [knownOrganiser];
+  } else if (orgIds.length) {
+    organisers = await fetchRowsInChunks(sb, 'organisers', 'id', orgIds);
+  }
+
+  const orgById = new Map(organisers.map((o) => [o.id, o]));
+  return list
+    .map((row) => {
+      const org = row.organiser_id ? orgById.get(row.organiser_id) : null;
+      if (!isPublicEvent(row, org)) return null;
+      const eventTickets = tickets.filter((t) => t.event_id === row.id);
+      return rowToEvent(row, org, eventTickets);
+    })
+    .filter(Boolean);
+}
+
 function isMissingPublishedEventsView(error) {
   const msg = String(error?.message || error || '').toLowerCase();
   return (
@@ -475,35 +544,44 @@ function isMissingPublishedEventsView(error) {
   );
 }
 
-async function fetchPublishedEventRows(sb) {
-  const viewRes = await sb
-    .from('published_events')
-    .select('*')
-    .order('next_date', { ascending: true, nullsFirst: false });
-  if (!viewRes.error) return viewRes.data || [];
+function isStalePublishedEventsView(error) {
+  const msg = String(error?.message || error || '').toLowerCase();
+  return msg.includes('published_events') && msg.includes('image_url');
+}
 
-  if (!isMissingPublishedEventsView(viewRes.error)) {
-    throw new Error(viewRes.error.message);
-  }
-
+/** Query events table directly — published_events view can lag behind new columns (e.g. image_url). */
+async function fetchPublishedEventsFromTable(sb) {
   const tableRes = await sb
     .from('events')
     .select('*')
     .eq('approval_status', 'Approved')
     .eq('status', 'published')
-    .order('starts_at', { ascending: true });
+    .order('starts_at', { ascending: true, nullsFirst: false });
   if (tableRes.error) throw new Error(tableRes.error.message);
-  return tableRes.data || [];
+  return (tableRes.data || []).map((row) => ({ ...row, next_date: row.starts_at }));
 }
 
-async function fetchPublishedEventById(sb, recordId) {
-  const viewRes = await sb.from('published_events').select('*').eq('id', recordId).maybeSingle();
-  if (!viewRes.error) return viewRes.data || null;
+async function fetchPublishedEventRows(sb) {
+  const viewRes = await sb
+    .from('published_events')
+    .select('*')
+    .order('next_date', { ascending: true, nullsFirst: false });
+  if (!viewRes.error) {
+    const rows = viewRes.data || [];
+    if (rows.length && rows[0].image_url === undefined && rows[0].photo_url !== undefined) {
+      return fetchPublishedEventsFromTable(sb);
+    }
+    return rows;
+  }
 
-  if (!isMissingPublishedEventsView(viewRes.error)) {
+  if (!isMissingPublishedEventsView(viewRes.error) && !isStalePublishedEventsView(viewRes.error)) {
     throw new Error(viewRes.error.message);
   }
 
+  return fetchPublishedEventsFromTable(sb);
+}
+
+async function fetchPublishedEventById(sb, recordId) {
   const tableRes = await sb.from('events').select('*').eq('id', recordId).maybeSingle();
   if (tableRes.error) throw new Error(tableRes.error.message);
   if (
@@ -513,7 +591,7 @@ async function fetchPublishedEventById(sb, recordId) {
   ) {
     return null;
   }
-  return tableRes.data;
+  return { ...tableRes.data, next_date: tableRes.data.starts_at };
 }
 
 function slugMatchesPublicRow(row, requestedSlug) {
@@ -529,13 +607,6 @@ async function fetchPublishedEventBySlug(sb, slug) {
   const s = String(slug || '').trim();
   if (!s) return null;
 
-  const viewRes = await sb.from('published_events').select('*').eq('slug', s).maybeSingle();
-  if (!viewRes.error && viewRes.data) return viewRes.data;
-
-  if (viewRes.error && !isMissingPublishedEventsView(viewRes.error)) {
-    throw new Error(viewRes.error.message);
-  }
-
   const tableRes = await sb.from('events').select('*').eq('slug', s).maybeSingle();
   if (tableRes.error) throw new Error(tableRes.error.message);
   if (
@@ -543,7 +614,7 @@ async function fetchPublishedEventBySlug(sb, slug) {
     tableRes.data.approval_status === 'Approved' &&
     String(tableRes.data.status || 'published').toLowerCase() === 'published'
   ) {
-    return tableRes.data;
+    return { ...tableRes.data, next_date: tableRes.data.starts_at };
   }
 
   // Browse links use publicEventSlug (title-derived when DB slug is missing or UUID-like).
@@ -554,30 +625,7 @@ async function fetchPublishedEventBySlug(sb, slug) {
 
 async function fetchApprovedEvents(sb) {
   const events = await fetchPublishedEventRows(sb);
-
-  const eventIds = (events || []).map((e) => e.id);
-  const orgIds = [...new Set((events || []).map((e) => e.organiser_id).filter(Boolean))];
-
-  let tickets = [];
-  if (eventIds.length) {
-    tickets = await fetchRowsInChunks(sb, 'tickets', 'event_id', eventIds);
-    const regCounts = await fetchRegistrationCountsByTicket(sb, tickets);
-    tickets = tickets.map((t) => ({ ...t, _registrationCount: regCounts.get(t.id) || 0 }));
-  }
-
-  let organisers = [];
-  if (orgIds.length) {
-    organisers = await fetchRowsInChunks(sb, 'organisers', 'id', orgIds);
-  }
-
-  const orgById = new Map(organisers.map((o) => [o.id, o]));
-  return (events || [])
-    .map((row) => {
-      const org = row.organiser_id ? orgById.get(row.organiser_id) : null;
-      if (!isPublicEvent(row, org)) return null;
-      return rowToEvent(row, org, tickets);
-    })
-    .filter(Boolean);
+  return eventsFromPublishedRows(sb, events);
 }
 
 async function handle(req, res) {
@@ -603,6 +651,23 @@ async function handle(req, res) {
     const sb = getSupabaseAdmin();
     const recordId = req.query?.id;
     const slug = req.query?.slug;
+    const organiserId = String(req.query?.organiserId || '').trim();
+    const excludeId = String(req.query?.exclude || req.query?.excludeId || '').trim();
+
+    if (organiserId && !recordId && !slug) {
+      const limit = Math.min(Math.max(parseInt(String(req.query?.limit || ''), 10) || 8, 1), 12);
+      let organiser = null;
+      const { data: org } = await sb.from('organisers').select('*').eq('id', organiserId).maybeSingle();
+      organiser = org;
+      const rows = await fetchRelatedPublishedRows(
+        sb,
+        organiserId,
+        excludeId ? [excludeId] : [],
+        limit
+      );
+      const events = await eventsFromPublishedRows(sb, rows, organiser);
+      return res.status(200).json({ configured: true, provider: 'supabase', events });
+    }
 
     if (recordId || slug) {
       const row = recordId
@@ -644,15 +709,11 @@ async function handle(req, res) {
       const seriesDates = await fetchEventSeriesDates(sb, row, organiser);
       event.isSeries = seriesDates.length > 1;
       const seriesIds = new Set(seriesDates.map((d) => d.id));
-      const all = await fetchApprovedEvents(sb);
-      const related = all
-        .filter(
-          (e) =>
-            e.id !== event.id &&
-            !seriesIds.has(e.id) &&
-            organiserMatch(e, event)
-        )
-        .slice(0, 6);
+      const relatedRows = row.organiser_id
+        ? await fetchRelatedPublishedRows(sb, row.organiser_id, [row.id, ...seriesIds], 6)
+        : [];
+      const related = await eventsFromPublishedRows(sb, relatedRows, organiser);
+      res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=120, stale-while-revalidate=300');
       return res.status(200).json({
         configured: true,
         provider: 'supabase',

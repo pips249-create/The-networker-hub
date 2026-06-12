@@ -444,8 +444,8 @@ async function resolveEventPhotoUrl(payload, eventId) {
     }
   }
   if (Object.prototype.hasOwnProperty.call(payload, 'photoUrl')) {
-    const url = String(payload.photoUrl || '').trim();
-    if (url && /^https?:\/\//i.test(url)) return url;
+    const url = eventImageDbValue(payload.photoUrl);
+    if (url) return url;
     if (payload.clearPhoto) return null;
     return undefined;
   }
@@ -561,14 +561,34 @@ async function buildEventRow(payload, eventId, mode) {
   return row;
 }
 
+async function inheritGroupPhotoIfMissing(row, payload) {
+  if (row.image_url || payload.photoBase64) return row;
+  const hasUrlField = Object.prototype.hasOwnProperty.call(payload, 'photoUrl');
+  if (hasUrlField && String(payload.photoUrl || '').trim()) return row;
+  const organiserId = row.organiser_id || payload.groupId;
+  if (!organiserId) return row;
+
+  const sb = getSupabaseAdmin();
+  const { data: org, error } = await sb
+    .from('organisers')
+    .select('photo_url')
+    .eq('id', organiserId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  const logo = String(org?.photo_url || '').trim();
+  if (logo) row.image_url = eventImageDbValue(logo);
+  return row;
+}
+
 async function createEvent(payload) {
   const sb = getSupabaseAdmin();
   const deferImage = Boolean(payload.photoBase64);
-  const row = await buildEventRow(
+  let row = await buildEventRow(
     deferImage ? { ...payload, _deferImage: true } : payload,
     null,
     'create'
   );
+  row = await inheritGroupPhotoIfMissing(row, payload);
   const { data, error } = await sb.from('events').insert(row).select('*').single();
   if (error) throw new Error(error.message);
 

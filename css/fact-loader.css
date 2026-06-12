@@ -47,8 +47,23 @@
   animation: fact-loader-pulse 1.8s ease-in-out infinite;
 }
 
-.fact-loader__card {
+.fact-loader__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
   max-width: 26rem;
+  width: 100%;
+}
+
+.fact-loader__logo {
+  display: block;
+  width: min(200px, 72vw);
+  height: auto;
+  object-fit: contain;
+}
+
+.fact-loader__card {
   width: 100%;
   text-align: center;
 }

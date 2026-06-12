@@ -8,6 +8,7 @@ const {
   buildConnectCheckoutParams,
 } = require('../stripe-connect');
 const { normalizeGuestNames } = require('../supabase-registrations');
+const { resolveTicketSalesEnabled } = require('../ticket-sales');
 
 function parseBody(req) {
   let body = req.body;
@@ -117,7 +118,9 @@ module.exports = async function handler(req, res) {
     const sb = getSupabaseAdmin();
     const evRes = await sb
       .from('events')
-      .select('id, title, slug, status, ticket_sales_enabled')
+      .select(
+        'id, title, slug, status, approval_status, ticket_sales_enabled, refund_terms_agreed, refund_terms_agreed_at'
+      )
       .eq('id', eventId)
       .maybeSingle();
     if (evRes.error) throw new Error(evRes.error.message);
@@ -125,7 +128,14 @@ module.exports = async function handler(req, res) {
     if (String(evRes.data.status || '').toLowerCase() !== 'published') {
       return json(res, 400, { ok: false, error: 'event_not_published' });
     }
-    if (evRes.data.ticket_sales_enabled !== true) {
+
+    const { data: eventTickets, error: ticketsErr } = await sb
+      .from('tickets')
+      .select('*')
+      .eq('event_id', eventId);
+    if (ticketsErr) throw new Error(ticketsErr.message);
+
+    if (!resolveTicketSalesEnabled(evRes.data, eventTickets || [])) {
       return json(res, 400, {
         ok: false,
         error: 'ticket_sales_disabled',

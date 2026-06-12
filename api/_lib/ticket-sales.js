@@ -31,6 +31,18 @@ function isEventPublishedForSale(eventRow) {
   return true;
 }
 
+/** Whether buyers can purchase — honours DB flag, with fallback for stale rows after publish. */
+function resolveTicketSalesEnabled(eventRow, tickets) {
+  const ev = eventRow && typeof eventRow === 'object' ? eventRow : {};
+  if (ev.ticket_sales_enabled === true) return true;
+  const list = Array.isArray(tickets) ? tickets : [];
+  if (!list.length || !eventHasTicketsOnSale(list)) return false;
+  if (!isEventPublishedForSale(ev)) return false;
+  // Publish wizard sets refund terms; flag may be false if migration 073 was not run yet.
+  if (ev.refund_terms_agreed_at || ev.refund_terms_agreed === true) return true;
+  return false;
+}
+
 function groupTicketsByEventId(tickets) {
   const map = {};
   (tickets || []).forEach((ticket) => {
@@ -46,5 +58,6 @@ module.exports = {
   isTicketOnSale,
   eventHasTicketsOnSale,
   isEventPublishedForSale,
+  resolveTicketSalesEnabled,
   groupTicketsByEventId,
 };

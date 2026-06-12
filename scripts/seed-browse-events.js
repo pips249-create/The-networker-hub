@@ -248,6 +248,7 @@ function buildEventRow({ index, eventType, organiserId, existingSlugs }) {
     ends_at: endsAt.toISOString(),
     approval_status: 'Approved',
     status: 'published',
+    ticket_sales_enabled: true,
     featured: index % 17 === 0,
     organiser_id: organiserId,
     airtable_id: `${SEED_PREFIX}${String(index + 1).padStart(4, '0')}`,

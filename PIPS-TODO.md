@@ -135,7 +135,7 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 | 001–070 | [x] Run | Full schema, emails, claims, Connect, cancellations, nudge cron |
 | 071–072 | Optional | Admin MFA added then removed — **do not run unless you want MFA back** |
 
-Do not re-run 001–070. For new environments, run each file in `supabase/migrations/` in order through `070_event_ticket_sales_nudge.sql`.
+Do not re-run 001–070. For new environments, run each file in `supabase/migrations/` in order through `073_publish_enables_ticket_sales.sql`.
 
 **Verify reviews setup:** `npm run test-review-e2e`
 
