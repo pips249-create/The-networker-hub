@@ -184,9 +184,9 @@
     {
       key: 'event_page_carousel_ads',
       group: 'Detail pages',
-      label: 'Event page — Sponsor carousel (5 ads)',
+      label: 'Event & organiser pages — Sponsor carousel (5 ads)',
       preview: 'carousel',
-      help: 'Up to five rotating sidebar logos on individual event pages — each logo links to the sponsor website.',
+      help: 'Up to five rotating sidebar logos on individual event and organiser profile pages — each logo links to the sponsor website.',
       tagline: '',
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
@@ -406,9 +406,9 @@
         subtitle =
           'Logo strip on the home page. Add companies with logo, name, and CTA — shown when the section is active.';
       } else if (fullHash === 'sponsorship/event-page-carousel') {
-        title = 'Event page — Sponsor carousel (5 ads)';
+        title = 'Event & organiser pages — Sponsor carousel (5 ads)';
         subtitle =
-          'Manage up to five rotating sidebar logos on individual event pages. Each slot needs a logo and click-through link.';
+          'Manage up to five rotating sidebar logos on individual event and organiser profile pages. Each slot needs a logo and click-through link.';
       } else if (fullHash.indexOf('sponsorship/') === 0) {
         var slotKey = fullHash.slice('sponsorship/'.length);
         if (cmsSlotExists(slotKey)) {
@@ -4196,8 +4196,8 @@
       sponsorshipBackLinkHtml() +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5" id="event-carousel-admin">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
-      '<div><h3 class="font-bold text-brand-900">Event page — Sponsor carousel</h3>' +
-      '<p class="text-sm text-slate-600 mt-1">Five sidebar slots on individual event pages. Each active slot shows a clickable logo that rotates automatically beside ticket checkout.</p></div></div>' +
+      '<div><h3 class="font-bold text-brand-900">Event & organiser pages — Sponsor carousel</h3>' +
+      '<p class="text-sm text-slate-600 mt-1">Five sidebar slots on individual event and organiser profile pages. Each active slot shows a clickable logo that rotates automatically.</p></div></div>' +
       '<label class="flex items-center gap-2 text-sm text-slate-700">' +
       '<input type="checkbox" id="event-carousel-active" class="rounded border-slate-300" checked> ' +
       'Carousel active (uncheck to hide all event page sidebar ads)</label>' +

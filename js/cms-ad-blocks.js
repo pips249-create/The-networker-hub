@@ -247,25 +247,41 @@
       });
   }
 
-  function logoLinkMarkup(logoUrl, linkUrl, ariaLabel) {
+  function shuffleArray(list) {
+    var arr = list.slice();
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  function logoLinkMarkup(logoUrl, linkUrl, ariaLabel, fillBox) {
     var url = String(logoUrl || '').trim();
     var href = normalizeCta(linkUrl);
     var hasLogo = window.CmsSponsorFields ? window.CmsSponsorFields.isLogoUrl(url) : /^https?:\/\//i.test(url);
     var label = esc(String(ariaLabel || 'Sponsored partner').trim() || 'Sponsored partner');
+    var imgClass = 'cms-ad-logo-only-img sponsor-logo--full' + (fillBox ? ' cms-ad-logo-only-img--fill' : '');
     var inner = hasLogo
-      ? '<img class="cms-ad-logo-only-img sponsor-logo--full" src="' +
+      ? '<img class="' +
+        imgClass +
+        '" src="' +
         esc(url) +
-        '" alt="" loading="lazy" decoding="async" crossorigin="anonymous" ' +
-        'onload="window.CmsSponsorFields&&window.CmsSponsorFields.applyLogoBand(this.parentElement,this,true)">'
+        '" alt="" loading="lazy" decoding="async" crossorigin="anonymous">'
       : '<div class="cms-ad-logo-only-placeholder">Your logo here</div>';
     return (
-      '<a class="cms-ad-logo-link" href="' +
+      '<a class="cms-ad-logo-link' +
+      (fillBox ? ' cms-ad-logo-link--fill' : '') +
+      '" href="' +
       esc(href) +
       '" aria-label="' +
       label +
       '">' +
       '<div class="sponsor-logo-wrap sponsor-logo-band' +
       (hasLogo ? ' has-logo' : '') +
+      (fillBox ? ' sponsor-logo-wrap--fill' : '') +
       '">' +
       inner +
       '</div></a>'
@@ -295,9 +311,9 @@
     }
     container.hidden = false;
     container.innerHTML =
-      '<aside class="cms-ad-logo-only">' +
+      '<aside class="cms-ad-logo-only cms-ad-logo-only--fill">' +
       '<span class="cms-ad-logo-only-badge">Sponsored</span>' +
-      logoLinkMarkup(logo, linkUrl, carouselAriaLabel(block)) +
+      logoLinkMarkup(logo, linkUrl, carouselAriaLabel(block), true) +
       '</aside>';
     applyLogoLink(container.querySelector('.cms-ad-logo-link'), block.cta_url);
     return true;
@@ -317,9 +333,9 @@
       ' of ' +
       total +
       '">' +
-      '<aside class="cms-ad-logo-only">' +
+      '<aside class="cms-ad-logo-only cms-ad-logo-only--fill">' +
       '<span class="cms-ad-logo-only-badge">Sponsored</span>' +
-      logoLinkMarkup(logo, linkUrl, carouselAriaLabel(block)) +
+      logoLinkMarkup(logo, linkUrl, carouselAriaLabel(block), true) +
       '</aside></div>'
     );
   }
@@ -336,6 +352,8 @@
     if (list.length === 1) {
       return renderLogoOnlyAd(container, list[0]);
     }
+
+    list = shuffleArray(list);
 
     var dots = list
       .map(function (_ad, index) {
@@ -416,7 +434,7 @@
     var timer = setInterval(function () {
       var current = parseInt(root.getAttribute('data-carousel-index') || '0', 10) || 0;
       setCarouselSlide(root, current + 1);
-    }, 6000);
+    }, 4000);
     carouselTimers.set(root, timer);
   }
 
@@ -426,6 +444,7 @@
     setCarouselSlide(root, 0);
 
     root.addEventListener('click', function (ev) {
+      if (ev.target.closest('.cms-ad-logo-link')) return;
       var dot = ev.target.closest('[data-carousel-dot]');
       if (dot) {
         setCarouselSlide(root, parseInt(dot.getAttribute('data-carousel-dot'), 10) || 0);
@@ -445,20 +464,14 @@
       }
     });
 
-    root.addEventListener('mouseenter', function () {
-      stopCarouselAuto(root);
-    });
-    root.addEventListener('mouseleave', function () {
-      startCarouselAuto(root);
-    });
-    root.addEventListener('focusin', function () {
-      stopCarouselAuto(root);
-    });
-    root.addEventListener('focusout', function () {
-      startCarouselAuto(root);
-    });
-
     startCarouselAuto(root);
+  }
+
+  function loadPageCarouselAds(container) {
+    if (!container) return Promise.resolve(false);
+    return loadEventPageCarousel().then(function (ads) {
+      return renderCarouselAd(container, ads);
+    });
   }
 
   window.CmsAdBlocks = {
@@ -470,6 +483,7 @@
     isCompactRenderable: isCompactRenderable,
     loadCmsAd: loadCmsAd,
     loadEventPageCarousel: loadEventPageCarousel,
+    loadPageCarouselAds: loadPageCarouselAds,
     initCarousel: initCarousel,
   };
 })();

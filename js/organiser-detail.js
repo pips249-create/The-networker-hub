@@ -319,8 +319,7 @@
     var el = document.getElementById('organiser-page-sidebar-ad');
     if (!el) return;
     try {
-      var block = await window.CmsAdBlocks.loadCmsAd('organiser_page_sidebar_ad');
-      window.CmsAdBlocks.renderCompactAd(el, block);
+      await window.CmsAdBlocks.loadPageCarouselAds(el);
     } catch (e) {
       /* non-fatal */
     }

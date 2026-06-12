@@ -2162,8 +2162,7 @@
     const sidebarEl = document.getElementById('event-page-sidebar-ad');
     if (!sidebarEl) return;
     try {
-      const ads = await window.CmsAdBlocks.loadEventPageCarousel();
-      window.CmsAdBlocks.renderCarouselAd(sidebarEl, ads);
+      await window.CmsAdBlocks.loadPageCarouselAds(sidebarEl);
     } catch {
       /* non-fatal */
     }
