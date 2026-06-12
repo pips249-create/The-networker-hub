@@ -743,9 +743,9 @@
     });
   }
 
-  var clearBtn = document.getElementById('clear-filters');
-  if (clearBtn) {
-    clearBtn.addEventListener('click', function () {
+  function bindClearFilters(btn) {
+    if (!btn) return;
+    btn.addEventListener('click', function () {
       if (document.body.classList.contains('browse-mode-organisers')) {
         if (window.hubResetOrganiserFilters) window.hubResetOrganiserFilters();
         return;
@@ -753,6 +753,10 @@
       resetFilters();
     });
   }
+
+  bindClearFilters(document.getElementById('clear-filters'));
+  bindClearFilters(document.getElementById('clear-filters-bar'));
+  bindClearFilters(document.getElementById('events-map-clear-filters'));
 
   document.addEventListener('click', function (e) {
     if (e.target.id === 'empty-reset') {

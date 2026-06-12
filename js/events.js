@@ -17,6 +17,7 @@
   let events = [];
   let currentPage = 1;
   let spotlightPremiumOrder = null;
+  let spotlightFilterKey = '';
   let spotlightTimer = null;
   let spotlightAnimating = false;
   let spotlightCarouselBound = false;
@@ -35,6 +36,23 @@
 
   function resetSpotlightOrder() {
     spotlightPremiumOrder = null;
+    spotlightFilterKey = '';
+  }
+
+  function spotlightFilterSignature(featured) {
+    return featured
+      .map(function (ev) {
+        return String(ev.id || ev.slug || ev.title || '');
+      })
+      .sort()
+      .join('|');
+  }
+
+  function hasAnyFeaturedEvents() {
+    const source = window.hubAllEvents && window.hubAllEvents.length ? window.hubAllEvents : events;
+    return source.some(function (ev) {
+      return ev.featured;
+    });
   }
 
   function stopSpotlightAuto() {
@@ -160,9 +178,13 @@
   }
 
   function getSpotlightPremium() {
-    const source = window.hubAllEvents && window.hubAllEvents.length ? window.hubAllEvents : events;
-    if (!spotlightPremiumOrder) {
-      spotlightPremiumOrder = shuffleList(source.filter((e) => e.featured));
+    const featured = getFilteredList().filter(function (ev) {
+      return ev.featured;
+    });
+    const key = spotlightFilterSignature(featured);
+    if (key !== spotlightFilterKey || !spotlightPremiumOrder) {
+      spotlightFilterKey = key;
+      spotlightPremiumOrder = shuffleList(featured);
     }
     return spotlightPremiumOrder;
   }
@@ -532,8 +554,10 @@
 
     if (els.spotlightTrack) {
       if (!premium.length) {
-        els.spotlightTrack.innerHTML =
-          '<p class="spotlight-empty">No premium events yet — set <strong>featured</strong> on approved events in Supabase.</p>';
+        const emptyMsg = hasAnyFeaturedEvents()
+          ? 'No premium events match your current filters. Try clearing filters or widening your search area.'
+          : 'No premium events yet — set <strong>featured</strong> on approved events in Supabase.';
+        els.spotlightTrack.innerHTML = '<p class="spotlight-empty">' + emptyMsg + '</p>';
         els.spotlightTrack.classList.remove('spotlight-track--carousel');
         els.spotlightTrack.removeAttribute('data-loop-width');
         els.spotlightTrack.scrollLeft = 0;

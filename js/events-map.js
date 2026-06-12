@@ -5,6 +5,7 @@
   var mapWrap = document.getElementById('events-map-wrap');
   var mapPanel = document.getElementById('events-map-panel');
   var mapHint = document.getElementById('events-map-hint');
+  var mapHintBar = document.getElementById('events-map-hint-bar');
   var mapSidebarList = document.getElementById('map-sidebar-list');
   var mapSidebarCount = document.getElementById('map-sidebar-count');
   var mapSidebarSub = document.getElementById('map-sidebar-sub');
@@ -146,10 +147,10 @@
     if (!mapHint) return;
     if (message) {
       mapHint.textContent = message;
-      mapHint.hidden = false;
+      if (mapHintBar) mapHintBar.hidden = false;
     } else {
       mapHint.textContent = '';
-      mapHint.hidden = true;
+      if (mapHintBar) mapHintBar.hidden = true;
     }
   }
 
