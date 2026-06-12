@@ -245,7 +245,7 @@ body.nav-menu-open {
   }
 
   .home-page .home-hero {
-    padding: calc(var(--home-nav-height) + 20px) 16px 36px;
+    padding: calc(var(--home-nav-height) + 12px) 16px 20px;
   }
 
   .home-page .hero-actions {
