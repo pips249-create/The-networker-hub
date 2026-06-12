@@ -62,7 +62,7 @@ values (
           </tr>
           <tr>
             <td style="padding:0 40px 32px;text-align:center;font-size:13px;color:#718096;line-height:1.5;">
-              <p style="margin:0;">Choose 1 week (£15), 4 weeks (£55), or 2 months (£100) when you extend.</p>
+              <p style="margin:0;">Choose 1 week (£20), 1 month (£55), or 2 months (£100) when you extend.</p>
             </td>
           </tr>
         </table>

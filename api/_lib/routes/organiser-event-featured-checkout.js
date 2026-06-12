@@ -24,7 +24,7 @@ function isUuid(value) {
   );
 }
 
-/** Start Stripe Checkout for a featured event listing (1 week / 4 weeks / 2 months). */
+/** Start Stripe Checkout for a featured event listing (1 week / 1 month / 2 months). */
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
   const {
@@ -50,7 +50,12 @@ module.exports = async function handler(req, res) {
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
   if (!isStripeCheckoutConfigured()) {
-    return json(res, 503, { ok: false, error: 'stripe_not_configured' });
+    return json(res, 503, {
+      ok: false,
+      error: 'stripe_not_configured',
+      message:
+        'Add STRIPE_SECRET_KEY (sk_test_… for test mode) to your environment, then redeploy or restart vercel dev.',
+    });
   }
 
   try {

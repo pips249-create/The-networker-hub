@@ -1,12 +1,17 @@
 const FEATURED_PLANS = {
-  '1week': { label: '1 week', days: 7, amountPence: 1500, displayPrice: '£15.00' },
-  '4weeks': { label: '4 weeks', days: 28, amountPence: 5500, displayPrice: '£55.00' },
+  '1week': { label: '1 week', days: 7, amountPence: 2000, displayPrice: '£20.00' },
+  '1month': { label: '1 month', days: 30, amountPence: 5500, displayPrice: '£55.00' },
   '2months': { label: '2 months', days: 60, amountPence: 10000, displayPrice: '£100.00' },
+};
+
+const PLAN_ALIASES = {
+  '4weeks': '1month',
 };
 
 function normalizePlanId(planId) {
   const key = String(planId || '').trim().toLowerCase();
-  return FEATURED_PLANS[key] ? key : '';
+  const resolved = PLAN_ALIASES[key] || key;
+  return FEATURED_PLANS[resolved] ? resolved : '';
 }
 
 function isEventCurrentlyFeatured(row) {

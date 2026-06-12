@@ -284,7 +284,7 @@
 
       const msg =
         data.error === 'stripe_not_configured'
-          ? 'Featured checkout is not configured yet — your event is still live.'
+          ? 'Stripe is not configured for local checkout. Add STRIPE_SECRET_KEY=sk_test_… to local.env, run npm run sync-env, restart npm start, then try again. Your event is still live.'
           : data.message || data.error || 'Could not start checkout. Your event is still live.';
       if (featuredError) {
         featuredError.hidden = false;

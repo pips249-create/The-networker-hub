@@ -140,7 +140,7 @@ async function retrieveCheckoutSession(sessionId) {
 const { FEATURED_PLANS, normalizePlanId } = require('./event-featured-plans');
 
 /**
- * One-off featured event listing (£15 / £55 / £100 by duration).
+ * One-off featured event listing (£20 / £55 / £100 by duration).
  */
 async function createEventFeaturedCheckoutSession(opts) {
   const stripe = getStripeClient();

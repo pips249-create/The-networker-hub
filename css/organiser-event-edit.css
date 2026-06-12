@@ -926,7 +926,26 @@ a.ee-wizard-link:hover {
 
 /* Published confirmation */
 .organiser-published-page .ep-wrap {
-  max-width: 720px;
+  max-width: 1080px;
+}
+
+.organiser-published-page .ep-publish-row {
+  display: grid;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 900px) {
+  .organiser-published-page .ep-publish-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.organiser-published-page .ep-publish-row .ep-preview-card,
+.organiser-published-page .ep-publish-row .ep-featured-upsell {
+  margin-bottom: 0;
+  height: 100%;
 }
 
 .ep-success {
@@ -979,6 +998,12 @@ a.ee-wizard-link:hover {
   display: grid;
   gap: 16px;
   margin-top: 8px;
+}
+
+@media (min-width: 600px) {
+  .organiser-published-page .ep-publish-row .ep-listing-preview {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (min-width: 600px) {
@@ -1497,19 +1522,16 @@ body.ee-is-loading {
 }
 
 /* Featured listing upsell (post-publish) */
-.organiser-published-page .ep-featured-upsell {
-  margin-bottom: 20px;
-}
-
 .organiser-published-page .ep-featured-plans {
   display: grid;
   gap: 10px;
   margin: 0 0 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-@media (min-width: 560px) {
+@media (max-width: 520px) {
   .organiser-published-page .ep-featured-plans {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 }
 

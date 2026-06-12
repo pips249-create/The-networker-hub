@@ -11,7 +11,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260614" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260612b" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260609b" />
   </head>
   <body class="organiser-event-edit-page organiser-published-page oe-submitted-page">
@@ -23,73 +23,75 @@
       <div class="ep-success" role="status">
         <span class="ep-success-icon" aria-hidden="true">✓</span>
         <h1 class="ep-title">Your event is now published</h1>
-        <p class="ep-lead" id="ep-lead">Attendees can find it on the hub. Preview your listing below, then share it with your network.</p>
+        <p class="ep-lead" id="ep-lead">Attendees can find it on the hub. Preview your listing and choose featured placement, then share it with your network.</p>
       </div>
 
-      <section class="ee-card ep-preview-card" aria-labelledby="ep-preview-heading">
-        <h2 id="ep-preview-heading">Preview your listing</h2>
-        <p class="ee-hint ep-preview-hint">This is how your event appears on the browse page.</p>
-        <div id="ep-preview-loading" class="ep-preview-loading">Loading preview…</div>
-        <article class="ep-listing-preview" id="ep-listing-preview" hidden>
-          <a class="ep-preview-media" id="ep-preview-link" href="#" target="_blank" rel="noopener">
-            <img id="ep-preview-img" src="../assets/event-placeholder.svg" alt="" width="640" height="400" />
-          </a>
-          <div class="ep-preview-body">
-            <h3 class="ep-preview-title" id="ep-preview-title">Event title</h3>
-            <p class="ep-preview-meta" id="ep-preview-meta"></p>
-            <p class="ep-preview-desc" id="ep-preview-desc"></p>
-            <a class="ee-btn ee-btn-outline ep-open-listing" id="ep-open-listing" href="#" target="_blank" rel="noopener"
-              >Open full listing page</a
-            >
+      <div class="ep-publish-row">
+        <div class="ee-card oe-premium-upsell ep-featured-upsell" id="ep-featured-upsell">
+          <p class="oe-premium-badge">Featured listing</p>
+          <h2 class="oe-premium-heading" id="ep-featured-heading">Would you like to feature your event?</h2>
+          <p class="oe-premium-lede" id="ep-featured-lede">
+            Get maximum visibility in the Premium Spotlight carousel and top placement across the hub.
+          </p>
+          <div class="ep-featured-plans" role="radiogroup" aria-labelledby="ep-featured-heading">
+            <label class="ep-featured-plan">
+              <input type="radio" name="featured-plan" value="1week" checked />
+              <span class="ep-featured-plan-body">
+                <span class="ep-featured-plan-duration">1 week</span>
+                <span class="ep-featured-plan-price">£20.00</span>
+              </span>
+            </label>
+            <label class="ep-featured-plan">
+              <input type="radio" name="featured-plan" value="1month" />
+              <span class="ep-featured-plan-body">
+                <span class="ep-featured-plan-duration">1 month</span>
+                <span class="ep-featured-plan-price">£55.00</span>
+              </span>
+            </label>
+            <label class="ep-featured-plan ep-featured-plan--popular">
+              <span class="ep-featured-plan-tag">Best value</span>
+              <input type="radio" name="featured-plan" value="2months" />
+              <span class="ep-featured-plan-body">
+                <span class="ep-featured-plan-duration">2 months</span>
+                <span class="ep-featured-plan-price">£100.00</span>
+              </span>
+            </label>
           </div>
-        </article>
-      </section>
+          <ul class="oe-premium-features">
+            <li>Featured in the Premium Spotlight carousel</li>
+            <li>Top placement in search and category results</li>
+            <li>Featured badge on your listing card</li>
+            <li>Priority exposure to motivated attendees</li>
+          </ul>
+          <p class="oe-premium-note" id="ep-featured-error" hidden role="alert"></p>
+          <div class="oe-premium-actions">
+            <button type="button" class="ee-btn ee-btn-gold" id="ep-featured-yes">
+              Yes — feature my event
+            </button>
+            <button type="button" class="ee-btn ee-btn-outline" id="ep-featured-skip">
+              No thanks — keep my standard listing
+            </button>
+          </div>
+        </div>
 
-      <div class="ee-card oe-premium-upsell ep-featured-upsell" id="ep-featured-upsell">
-        <p class="oe-premium-badge">Featured listing</p>
-        <h2 class="oe-premium-heading" id="ep-featured-heading">Would you like to feature your event?</h2>
-        <p class="oe-premium-lede" id="ep-featured-lede">
-          Get maximum visibility in the Premium Spotlight carousel and top placement across the hub.
-        </p>
-        <div class="ep-featured-plans" role="radiogroup" aria-labelledby="ep-featured-heading">
-          <label class="ep-featured-plan">
-            <input type="radio" name="featured-plan" value="1week" checked />
-            <span class="ep-featured-plan-body">
-              <span class="ep-featured-plan-duration">1 week</span>
-              <span class="ep-featured-plan-price">£15.00</span>
-            </span>
-          </label>
-          <label class="ep-featured-plan">
-            <input type="radio" name="featured-plan" value="4weeks" />
-            <span class="ep-featured-plan-body">
-              <span class="ep-featured-plan-duration">4 weeks</span>
-              <span class="ep-featured-plan-price">£55.00</span>
-            </span>
-          </label>
-          <label class="ep-featured-plan ep-featured-plan--popular">
-            <span class="ep-featured-plan-tag">Best value</span>
-            <input type="radio" name="featured-plan" value="2months" />
-            <span class="ep-featured-plan-body">
-              <span class="ep-featured-plan-duration">2 months</span>
-              <span class="ep-featured-plan-price">£100.00</span>
-            </span>
-          </label>
-        </div>
-        <ul class="oe-premium-features">
-          <li>Featured in the Premium Spotlight carousel</li>
-          <li>Top placement in search and category results</li>
-          <li>Featured badge on your listing card</li>
-          <li>Priority exposure to motivated attendees</li>
-        </ul>
-        <p class="oe-premium-note" id="ep-featured-error" hidden role="alert"></p>
-        <div class="oe-premium-actions">
-          <button type="button" class="ee-btn ee-btn-gold" id="ep-featured-yes">
-            Yes — feature my event
-          </button>
-          <button type="button" class="ee-btn ee-btn-outline" id="ep-featured-skip">
-            No thanks — keep my standard listing
-          </button>
-        </div>
+        <section class="ee-card ep-preview-card" aria-labelledby="ep-preview-heading">
+          <h2 id="ep-preview-heading">Preview your listing</h2>
+          <p class="ee-hint ep-preview-hint">This is how your event appears on the browse page.</p>
+          <div id="ep-preview-loading" class="ep-preview-loading">Loading preview…</div>
+          <article class="ep-listing-preview" id="ep-listing-preview" hidden>
+            <a class="ep-preview-media" id="ep-preview-link" href="#" target="_blank" rel="noopener">
+              <img id="ep-preview-img" src="../assets/event-placeholder.svg" alt="" width="640" height="400" />
+            </a>
+            <div class="ep-preview-body">
+              <h3 class="ep-preview-title" id="ep-preview-title">Event title</h3>
+              <p class="ep-preview-meta" id="ep-preview-meta"></p>
+              <p class="ep-preview-desc" id="ep-preview-desc"></p>
+              <a class="ee-btn ee-btn-outline ep-open-listing" id="ep-open-listing" href="#" target="_blank" rel="noopener"
+                >Open full listing page</a
+              >
+            </div>
+          </article>
+        </section>
       </div>
 
       <section class="ee-card ep-share-card" aria-labelledby="ep-share-heading">
@@ -122,6 +124,6 @@
     </div>
 
     <script src="../js/organiser-event-wizard.js?v=20260608c" data-step="publish"></script>
-    <script src="../js/organiser-event-published.js?v=20260612"></script>
+    <script src="../js/organiser-event-published.js?v=20260612b"></script>
   </body>
 </html>

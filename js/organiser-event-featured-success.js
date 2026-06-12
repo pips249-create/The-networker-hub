@@ -15,7 +15,8 @@
 
   var planLabels = {
     '1week': '1 week',
-    '4weeks': '4 weeks',
+    '1month': '1 month',
+    '4weeks': '1 month',
     '2months': '2 months',
   };
 
