@@ -238,7 +238,7 @@
         return res.json();
       })
       .then(function (data) {
-        if (!data || !data.ok || data.active === false) return [];
+        if (!data || !data.ok) return [];
         if (Array.isArray(data.ads) && data.ads.length) return data.ads;
         return [];
       })
@@ -247,10 +247,65 @@
       });
   }
 
+  function logoLinkMarkup(logoUrl, linkUrl, ariaLabel) {
+    var url = String(logoUrl || '').trim();
+    var href = normalizeCta(linkUrl);
+    var hasLogo = window.CmsSponsorFields ? window.CmsSponsorFields.isLogoUrl(url) : /^https?:\/\//i.test(url);
+    var label = esc(String(ariaLabel || 'Sponsored partner').trim() || 'Sponsored partner');
+    var inner = hasLogo
+      ? '<img class="cms-ad-logo-only-img sponsor-logo--full" src="' +
+        esc(url) +
+        '" alt="" loading="lazy" decoding="async" crossorigin="anonymous" ' +
+        'onload="window.CmsSponsorFields&&window.CmsSponsorFields.applyLogoBand(this.parentElement,this,true)">'
+      : '<div class="cms-ad-logo-only-placeholder">Your logo here</div>';
+    return (
+      '<a class="cms-ad-logo-link" href="' +
+      esc(href) +
+      '" aria-label="' +
+      label +
+      '">' +
+      '<div class="sponsor-logo-wrap sponsor-logo-band' +
+      (hasLogo ? ' has-logo' : '') +
+      '">' +
+      inner +
+      '</div></a>'
+    );
+  }
+
+  function carouselAriaLabel(block) {
+    var company = window.CmsSponsorFields
+      ? window.CmsSponsorFields.companyName(block)
+      : String(block.company_name || '').trim();
+    return company ? 'Visit ' + company : 'Sponsored partner';
+  }
+
+  function applyLogoLink(el, linkUrl) {
+    if (!el || !window.CmsSponsorFields) return;
+    window.CmsSponsorFields.applyCtaLink(el, normalizeCta(linkUrl));
+  }
+
+  function renderLogoOnlyAd(container, block) {
+    if (!container || !block) return false;
+    var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
+    var linkUrl = normalizeCta(block.cta_url);
+    if (!logo || !linkUrl || linkUrl === '#') {
+      container.hidden = true;
+      container.innerHTML = '';
+      return false;
+    }
+    container.hidden = false;
+    container.innerHTML =
+      '<aside class="cms-ad-logo-only">' +
+      '<span class="cms-ad-logo-only-badge">Sponsored</span>' +
+      logoLinkMarkup(logo, linkUrl, carouselAriaLabel(block)) +
+      '</aside>';
+    applyLogoLink(container.querySelector('.cms-ad-logo-link'), block.cta_url);
+    return true;
+  }
+
   function renderCompactSlideHtml(block, slideIndex, total) {
     var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
-    var ctaLabel = String(block.cta_label || '').trim() || 'Learn more';
-    var ctaUrl = normalizeCta(block.cta_url);
+    var linkUrl = normalizeCta(block.cta_url);
     var isActive = slideIndex === 0 ? ' is-active' : '';
     return (
       '<div class="cms-ad-carousel-slide' +
@@ -262,14 +317,9 @@
       ' of ' +
       total +
       '">' +
-      '<aside class="cms-ad-compact">' +
-      '<span class="cms-ad-compact-badge">Sponsored</span>' +
-      logoMarkup(logo, 'cms-ad-compact-logo', 'cms-ad-compact-logo-placeholder') +
-      '<a class="cms-ad-compact-cta" href="' +
-      esc(ctaUrl) +
-      '">' +
-      esc(ctaLabel) +
-      '</a>' +
+      '<aside class="cms-ad-logo-only">' +
+      '<span class="cms-ad-logo-only-badge">Sponsored</span>' +
+      logoLinkMarkup(logo, linkUrl, carouselAriaLabel(block)) +
       '</aside></div>'
     );
   }
@@ -284,8 +334,7 @@
     }
 
     if (list.length === 1) {
-      renderCompactAd(container, list[0]);
-      return true;
+      return renderLogoOnlyAd(container, list[0]);
     }
 
     var dots = list
@@ -324,11 +373,7 @@
     list.forEach(function (block, index) {
       var slide = container.querySelector('[data-carousel-slide="' + index + '"]');
       if (!slide) return;
-      var cta = slide.querySelector('.cms-ad-compact-cta');
-      if (cta && window.CmsSponsorFields) {
-        window.CmsSponsorFields.applyCtaColor(cta, window.CmsSponsorFields.ctaColor(block));
-        window.CmsSponsorFields.applyCtaLink(cta, normalizeCta(block.cta_url));
-      }
+      applyLogoLink(slide.querySelector('.cms-ad-logo-link'), block.cta_url);
     });
 
     initCarousel(container.querySelector('.cms-ad-carousel'));
@@ -421,6 +466,7 @@
     renderBannerAd: renderBannerAd,
     renderCompactAd: renderCompactAd,
     renderCarouselAd: renderCarouselAd,
+    renderLogoOnlyAd: renderLogoOnlyAd,
     isCompactRenderable: isCompactRenderable,
     loadCmsAd: loadCmsAd,
     loadEventPageCarousel: loadEventPageCarousel,

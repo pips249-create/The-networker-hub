@@ -9,3 +9,8 @@ values (
   false
 )
 on conflict (slot) do nothing;
+
+-- New installs: carousel enabled by default (admins can hide via command centre).
+update public.cms_blocks
+set active = true
+where slot = 'event_page_carousel_ads';

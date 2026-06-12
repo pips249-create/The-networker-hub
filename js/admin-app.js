@@ -186,7 +186,7 @@
       group: 'Detail pages',
       label: 'Event page — Sponsor carousel (5 ads)',
       preview: 'carousel',
-      help: 'Up to five rotating sidebar ads beside ticket checkout on individual event pages.',
+      help: 'Up to five rotating sidebar logos on individual event pages — each logo links to the sponsor website.',
       tagline: '',
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
@@ -408,7 +408,7 @@
       } else if (fullHash === 'sponsorship/event-page-carousel') {
         title = 'Event page — Sponsor carousel (5 ads)';
         subtitle =
-          'Manage up to five rotating sidebar ads on individual event pages. Each slot needs a logo and CTA link.';
+          'Manage up to five rotating sidebar logos on individual event pages. Each slot needs a logo and click-through link.';
       } else if (fullHash.indexOf('sponsorship/') === 0) {
         var slotKey = fullHash.slice('sponsorship/'.length);
         if (cmsSlotExists(slotKey)) {
@@ -4197,7 +4197,7 @@
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5" id="event-carousel-admin">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
       '<div><h3 class="font-bold text-brand-900">Event page — Sponsor carousel</h3>' +
-      '<p class="text-sm text-slate-600 mt-1">Five sidebar slots on individual event pages. Active slots with a logo and CTA rotate automatically beside ticket checkout.</p></div></div>' +
+      '<p class="text-sm text-slate-600 mt-1">Five sidebar slots on individual event pages. Each active slot shows a clickable logo that rotates automatically beside ticket checkout.</p></div></div>' +
       '<label class="flex items-center gap-2 text-sm text-slate-700">' +
       '<input type="checkbox" id="event-carousel-active" class="rounded border-slate-300" checked> ' +
       'Carousel active (uncheck to hide all event page sidebar ads)</label>' +
@@ -4238,11 +4238,8 @@
         out.push({
           id: 'event_carousel_' + (i + 1),
           slot_index: i,
-          company_name: '',
           logo_url: '',
-          cta_label: 'Enquire now',
           cta_url: '',
-          cta_color: defaultSponsorCtaColor(),
           active: false,
         });
       }
@@ -4253,7 +4250,6 @@
       var logo = ad.logo_url || '';
       var pending = pendingLogos[ad.id];
       if (pending && pending.preview) logo = pending.preview;
-      var ctaColor = ad.cta_color || defaultSponsorCtaColor();
       return (
         '<div class="rounded-xl border border-slate-200 p-4 space-y-3 min-w-0" data-carousel-ad-id="' +
         attrEsc(ad.id) +
@@ -4266,38 +4262,20 @@
         '<input type="checkbox" class="event-carousel-ad-active rounded border-slate-300"' +
         (ad.active !== false ? ' checked' : '') +
         '> Active</label></div>' +
-        '<div class="grid sm:grid-cols-2 gap-3">' +
-        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Company name (optional)</label>' +
-        '<input type="text" class="event-carousel-ad-name w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
-        attrEsc(ad.company_name || '') +
-        '" placeholder="Acme Ltd"></div>' +
         '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Logo URL</label>' +
         '<input type="text" class="event-carousel-ad-logo-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
         attrEsc(pending ? '' : logo) +
-        '" placeholder="https://…"></div></div>' +
+        '" placeholder="https://…"></div>' +
         '<div><label class="block text-xs text-slate-500 mb-1">Or upload logo (max 2MB)</label>' +
         '<input type="file" class="event-carousel-ad-logo-file block w-full text-sm text-slate-600" accept="image/png,image/jpeg,image/webp,image/gif">' +
         (logo
           ? '<img src="' + attrEsc(logo) + '" alt="" class="mt-2 max-h-12 max-w-[160px] object-contain rounded border border-slate-100 bg-white p-1" />'
           : '') +
         '</div>' +
-        '<div class="grid sm:grid-cols-3 gap-3">' +
-        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">CTA label</label>' +
-        '<input type="text" class="event-carousel-ad-cta-label w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
-        attrEsc(ad.cta_label || 'Enquire now') +
-        '"></div>' +
-        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">CTA link</label>' +
-        '<input type="text" class="event-carousel-ad-cta-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Click-through link</label>' +
+        '<input type="text" class="event-carousel-ad-link-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
         attrEsc(ad.cta_url || '') +
-        '" placeholder="https://…"></div>' +
-        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">CTA colour</label>' +
-        '<div class="flex items-center gap-2">' +
-        '<input type="color" class="event-carousel-ad-cta-color h-10 w-14 rounded border border-slate-200 cursor-pointer bg-white p-1" value="' +
-        attrEsc(ctaColor) +
-        '">' +
-        '<input type="text" class="event-carousel-ad-cta-color-hex flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono" value="' +
-        attrEsc(ctaColor) +
-        '" maxlength="7" spellcheck="false"></div></div></div></div>'
+        '" placeholder="https://… — opens when someone clicks the logo"></div></div>'
       );
     }
 
@@ -4306,11 +4284,8 @@
       var out = [];
       rows.forEach(function (row, index) {
         var id = row.getAttribute('data-carousel-ad-id') || 'event_carousel_' + (index + 1);
-        var nameEl = row.querySelector('.event-carousel-ad-name');
         var logoUrlEl = row.querySelector('.event-carousel-ad-logo-url');
-        var ctaLabelEl = row.querySelector('.event-carousel-ad-cta-label');
-        var ctaUrlEl = row.querySelector('.event-carousel-ad-cta-url');
-        var ctaColorEl = row.querySelector('.event-carousel-ad-cta-color-hex');
+        var linkUrlEl = row.querySelector('.event-carousel-ad-link-url');
         var activeCheckbox = row.querySelector('.event-carousel-ad-active');
         var existing = adsState.find(function (ad) {
           return ad.id === id;
@@ -4318,18 +4293,11 @@
         var logoUrl = logoUrlEl ? logoUrlEl.value.trim() : '';
         if (!logoUrl && existing && existing.logo_url) logoUrl = existing.logo_url;
         if (!logoUrl && pendingLogos[id] && pendingLogos[id].existing) logoUrl = pendingLogos[id].existing;
-        var ctaColor = ctaColorEl ? ctaColorEl.value.trim() : defaultSponsorCtaColor();
-        if (window.CmsSponsorFields && window.CmsSponsorFields.sanitizeCtaColor) {
-          ctaColor = window.CmsSponsorFields.sanitizeCtaColor(ctaColor) || defaultSponsorCtaColor();
-        }
         out.push({
           id: id,
           slot_index: index,
-          company_name: nameEl ? nameEl.value.trim() : '',
           logo_url: logoUrl,
-          cta_label: ctaLabelEl ? ctaLabelEl.value.trim() : 'Enquire now',
-          cta_url: ctaUrlEl ? ctaUrlEl.value.trim() : '',
-          cta_color: ctaColor,
+          cta_url: linkUrlEl ? linkUrlEl.value.trim() : '',
           active: activeCheckbox ? activeCheckbox.checked : false,
         });
       });
@@ -4360,7 +4328,9 @@
           setCarouselStatus(
             liveCount
               ? liveCount + ' active ad' + (liveCount === 1 ? '' : 's') + ' in carousel.'
-              : 'No active ads yet — enable a slot and add logo + CTA below.'
+              : data.active === false
+                ? 'Carousel is hidden on site — tick “Carousel active” above, add logo + link per slot, then save.'
+                : 'No active ads yet — add a logo and click-through link for each slot you want live, then save.'
           );
         })
         .catch(function () {
@@ -4369,15 +4339,6 @@
           setCarouselStatus('Could not load carousel.', 'error');
         });
     }
-
-    listEl.addEventListener('input', function (ev) {
-      var colorPicker = ev.target.closest('.event-carousel-ad-cta-color');
-      if (!colorPicker) return;
-      var row = colorPicker.closest('[data-carousel-ad-id]');
-      if (!row) return;
-      var hex = row.querySelector('.event-carousel-ad-cta-color-hex');
-      if (hex) hex.value = colorPicker.value;
-    });
 
     listEl.addEventListener('change', function (ev) {
       var fileInput = ev.target.closest('.event-carousel-ad-logo-file');
@@ -4408,19 +4369,6 @@
           renderAdList();
         };
         reader.readAsDataURL(file);
-        return;
-      }
-
-      var colorHex = ev.target.closest('.event-carousel-ad-cta-color-hex');
-      if (colorHex) {
-        var colorRow = colorHex.closest('[data-carousel-ad-id]');
-        if (!colorRow) return;
-        var picker = colorRow.querySelector('.event-carousel-ad-cta-color');
-        var safe = colorHex.value.trim();
-        if (window.CmsSponsorFields && window.CmsSponsorFields.sanitizeCtaColor) {
-          safe = window.CmsSponsorFields.sanitizeCtaColor(safe);
-        }
-        if (picker && safe) picker.value = safe;
       }
     });
 
@@ -4436,11 +4384,8 @@
           var item = {
             id: ad.id,
             slot_index: ad.slot_index,
-            company_name: ad.company_name,
             logo_url: ad.logo_url,
-            cta_label: ad.cta_label,
             cta_url: ad.cta_url,
-            cta_color: ad.cta_color,
             active: ad.active,
           };
           if (pending && pending.data) {
@@ -4464,8 +4409,10 @@
               var msg = data.message || data.error || 'Save failed';
               if (data.error === 'missing_carousel_logo') {
                 msg = 'Ad slot ' + data.slot + ' is active but missing a logo.';
+              } else if (data.error === 'missing_carousel_link') {
+                msg = 'Ad slot ' + data.slot + ' is active but missing a valid click-through link.';
               } else if (data.error === 'missing_carousel_cta') {
-                msg = 'Ad slot ' + data.slot + ' is active but missing a valid CTA link.';
+                msg = 'Ad slot ' + data.slot + ' is active but missing a valid click-through link.';
               }
               throw new Error(msg);
             }
@@ -4475,6 +4422,7 @@
         .then(function (data) {
           pendingLogos = {};
           adsState = Array.isArray(data.ads) ? data.ads : defaultAds();
+          if (activeEl) activeEl.checked = data.active !== false;
           renderAdList();
           setCarouselStatus('Saved — event page carousel updated.', 'ok');
         })

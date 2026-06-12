@@ -92,8 +92,7 @@ function hasValidCarouselCta(url) {
 
 function isPublishableCarouselAd(ad) {
   if (!ad || ad.active === false) return false;
-  const ctaLabel = String(ad.cta_label || '').trim();
-  return hasValidCarouselLogo(ad.logo_url) && ctaLabel && hasValidCarouselCta(ad.cta_url);
+  return hasValidCarouselLogo(ad.logo_url) && hasValidCarouselCta(ad.cta_url);
 }
 
 function publishableCarouselAds(ads) {

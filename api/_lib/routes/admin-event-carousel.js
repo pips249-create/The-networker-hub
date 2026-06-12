@@ -33,15 +33,18 @@ async function resolveCarouselLogos(ads) {
   const out = [];
   for (let i = 0; i < ads.length; i++) {
     const ad = { ...ads[i] };
-    if (ad.logoBase64) {
-      const uploaded = await resolveImageUrl({
-        folder: `sponsor-logos/event-carousel/${ad.id || 'ad'}`,
-        logoUrl: ad.logo_url,
-        logoBase64: ad.logoBase64,
-        logoMime: ad.logoMime,
-        logoFilename: ad.logoFilename,
-      });
-      if (uploaded) ad.logo_url = uploaded;
+      if (ad.logoBase64) {
+        const uploaded = await resolveImageUrl({
+          folder: `sponsor-logos/event-carousel/${ad.id || 'ad'}`,
+          logoUrl: ad.logo_url,
+          logoBase64: ad.logoBase64,
+          logoMime: ad.logoMime,
+          logoFilename: ad.logoFilename,
+        });
+        if (uploaded) ad.logo_url = uploaded;
+        else if (ad.active) {
+          throw new Error(`Logo upload failed for ad slot ${(ad.slot_index || 0) + 1}`);
+        }
       delete ad.logoBase64;
       delete ad.logoMime;
       delete ad.logoFilename;
@@ -84,7 +87,6 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'POST') {
     const body = parseBody(req);
-    const sectionActive = body.active !== false;
     let incoming = Array.isArray(body.ads) ? body.ads : [];
 
     try {
@@ -105,7 +107,16 @@ module.exports = async function handler(req, res) {
         })
       );
 
-      const ads = normalizeCarouselAdsList(incoming);
+      const ads = normalizeCarouselAdsList(incoming).map((ad) => {
+        if (
+          !ad.active &&
+          hasValidCarouselLogo(ad.logo_url) &&
+          hasValidCarouselCta(ad.cta_url)
+        ) {
+          return { ...ad, active: true };
+        }
+        return ad;
+      });
 
       for (const ad of ads) {
         if (!ad.active) continue;
@@ -116,14 +127,17 @@ module.exports = async function handler(req, res) {
             slot: ad.slot_index + 1,
           });
         }
-        if (!ad.cta_label || !hasValidCarouselCta(ad.cta_url)) {
+        if (!hasValidCarouselCta(ad.cta_url)) {
           return json(res, 400, {
             ok: false,
-            error: 'missing_carousel_cta',
+            error: 'missing_carousel_link',
             slot: ad.slot_index + 1,
           });
         }
       }
+
+      const hasLiveAds = ads.some((ad) => ad.active);
+      const sectionActive = hasLiveAds ? true : body.active !== false;
 
       const row = {
         slot: EVENT_PAGE_CAROUSEL_SLOT,

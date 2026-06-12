@@ -2163,9 +2163,7 @@
     if (!sidebarEl) return;
     try {
       const ads = await window.CmsAdBlocks.loadEventPageCarousel();
-      if (window.CmsAdBlocks.renderCarouselAd(sidebarEl, ads)) return;
-      const block = await window.CmsAdBlocks.loadCmsAd('event_page_sidebar_ad');
-      window.CmsAdBlocks.renderCompactAd(sidebarEl, block);
+      window.CmsAdBlocks.renderCarouselAd(sidebarEl, ads);
     } catch {
       /* non-fatal */
     }
