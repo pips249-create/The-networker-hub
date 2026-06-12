@@ -1,12 +1,18 @@
 /**
- * Hubert — floating chat widget on public site pages.
+ * Hubert — floating chat widget on public site pages and organiser dashboard.
  */
 (function () {
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
+  var organiserDashMode = script && script.getAttribute('data-hubert') === 'organiser-dashboard';
 
   function href(path) {
     return root + path;
+  }
+
+  function isOrganiserDashboard() {
+    var path = (window.location.pathname || '').toLowerCase();
+    return /\/organiser\/?$/.test(path) || /\/organiser\/index\.html$/.test(path);
   }
 
   function shouldSkip() {
@@ -18,11 +24,31 @@
     return false;
   }
 
-  if (shouldSkip() || !window.HubertChat) return;
+  if (organiserDashMode) {
+    if (!isOrganiserDashboard() || !window.HubertChat) return;
+  } else if (shouldSkip() || !window.HubertChat) {
+    return;
+  }
+
+  var guide = window.HubertOrganiserGuide;
+  var greeting =
+    organiserDashMode && guide && guide.DASHBOARD_GREETING
+      ? guide.DASHBOARD_GREETING
+      : window.HubertChatGreeting;
+  var suggestions =
+    organiserDashMode && guide && guide.DASHBOARD_SUGGESTIONS
+      ? guide.DASHBOARD_SUGGESTIONS
+      : window.HubertChatSuggestions;
+  var panelSub = organiserDashMode
+    ? 'Got any questions? Ask me anything.'
+    : 'Your business butler &amp; concierge';
+  var inputPlaceholder = organiserDashMode
+    ? 'Ask about groups, events, tickets, or payouts…'
+    : 'Ask Hubert to find events, opportunities, or guide you…';
 
   var mount = document.createElement('div');
   mount.id = 'hubert-widget';
-  mount.className = 'hubert-widget';
+  mount.className = 'hubert-widget' + (organiserDashMode ? ' hubert-widget--organiser' : '');
   mount.innerHTML =
     '<button type="button" class="hubert-launcher" id="hubert-launcher" aria-label="Chat with Hubert" aria-expanded="false" aria-controls="hubert-panel">' +
     '<img class="hubert-launcher-icon" src="' +
@@ -38,7 +64,9 @@
     '" alt="" width="40" height="40">' +
     '<div>' +
     '<h2 class="hubert-panel-title" id="hubert-panel-title">Hubert</h2>' +
-    '<p class="hubert-panel-sub">Your business butler &amp; concierge</p>' +
+    '<p class="hubert-panel-sub">' +
+    panelSub +
+    '</p>' +
     '</div>' +
     '</div>' +
     '<div class="hubert-panel-actions">' +
@@ -51,7 +79,9 @@
     '<form class="hubert-form" id="hubert-form">' +
     '<div class="hubert-form-compose">' +
     '<label class="visually-hidden" for="hubert-input">Your message</label>' +
-    '<textarea id="hubert-input" rows="2" placeholder="Ask Hubert to find events, opportunities, or guide you…" maxlength="2000" required></textarea>' +
+    '<textarea id="hubert-input" rows="2" placeholder="' +
+    inputPlaceholder +
+    '" maxlength="2000" required></textarea>' +
     '<button type="submit" class="btn btn-primary" id="hubert-send">Send</button>' +
     '</div>' +
     '</form>' +
@@ -64,7 +94,7 @@
   var closeBtn = document.getElementById('hubert-close');
   var suggestionsEl = document.getElementById('hubert-suggestions');
 
-  window.HubertChatRenderSuggestions(suggestionsEl, window.HubertChatSuggestions);
+  window.HubertChatRenderSuggestions(suggestionsEl, suggestions);
 
   var chat = new window.HubertChat({
     messagesEl: document.getElementById('hubert-messages'),
@@ -73,6 +103,8 @@
     sendBtn: document.getElementById('hubert-send'),
     resetBtn: document.getElementById('hubert-reset'),
     suggestionsEl: suggestionsEl,
+    greeting: greeting,
+    hubertContext: organiserDashMode ? 'organiser-dashboard' : '',
     bubblePrefix: 'hubert-bubble',
   });
 
@@ -99,4 +131,9 @@
   document.addEventListener('keydown', function (ev) {
     if (ev.key === 'Escape' && !panel.hidden) closePanel();
   });
+
+  window.HubertWidget = {
+    open: openPanel,
+    close: closePanel,
+  };
 })();

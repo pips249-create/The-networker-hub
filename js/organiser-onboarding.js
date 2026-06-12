@@ -12,7 +12,7 @@
     },
     {
       title: 'Navigate from the sidebar',
-      body: 'Use the sidebar to jump between Overview, group profiles, events, tickets, and more. On mobile, swipe the menu bar horizontally.',
+      body: 'Use the sidebar to jump between Overview, My events (group profiles, listings, tickets), and more. On mobile, swipe the menu bar horizontally.',
       target: '.org-sidebar',
     },
     {
@@ -223,6 +223,15 @@
           localStorage.setItem(CHECKLIST_KEY, '1');
         } catch (e) {
           /* ignore */
+        }
+      });
+    }
+
+    var hubertBtn = document.getElementById('org-open-hubert');
+    if (hubertBtn) {
+      hubertBtn.addEventListener('click', function () {
+        if (window.HubertWidget && window.HubertWidget.open) {
+          window.HubertWidget.open();
         }
       });
     }

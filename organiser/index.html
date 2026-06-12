@@ -14,8 +14,8 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260628" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260617" />
-    <link rel="stylesheet" href="../css/hubert-widget.css?v=20260616" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260618" />
+    <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260708c" />
   </head>
   <body class="organiser-dashboard-page">
@@ -36,14 +36,14 @@
         <aside class="org-sidebar">
           <nav class="hub-side-nav hub-side-nav--minimal org-dash-bar" aria-label="Organiser workspace">
             <a href="#dashboard" class="hub-side-nav-link is-active" data-org-route="dashboard">Overview</a>
-            <span class="hub-side-nav-divider">Profiles &amp; team</span>
-            <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Group profiles</a>
+            <span class="hub-side-nav-divider">Team &amp; Academy</span>
             <a href="#team" class="hub-side-nav-link" data-org-route="team" id="org-nav-team">
               Team &amp; invites
               <span class="org-nav-badge" id="org-team-nav-badge" hidden>New</span>
             </a>
             <a href="#academy" class="hub-side-nav-link" data-org-route="academy">The Academy</a>
             <span class="hub-side-nav-divider">My events</span>
+            <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Group profiles</a>
             <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">Events</a>
             <a href="#events-tickets" class="hub-side-nav-link" data-org-route="events-tickets">Tickets</a>
             <a href="#events-attendees" class="hub-side-nav-link" data-org-route="events-attendees">Attendees</a>
@@ -126,8 +126,10 @@
                 <h2 class="org-getting-started-title">Here&apos;s what to do first</h2>
                 <p class="org-section-sub org-getting-started-sub">
                   <span id="org-getting-started-progress">3 steps to get your workspace ready.</span>
-                  Need a walkthrough?
-                  <button type="button" class="org-getting-started-link" id="org-start-tour">Take the dashboard tour</button>
+                  ·
+                  <button type="button" class="org-getting-started-link" id="org-start-tour">Take the tour</button>
+                  ·
+                  <button type="button" class="org-getting-started-link" id="org-open-hubert">Ask Hubert</button>
                 </p>
               </div>
               <button type="button" class="org-btn org-btn-outline org-btn-sm" id="org-getting-started-dismiss">Dismiss</button>
@@ -136,55 +138,19 @@
               <li data-getting-step="group">
                 <strong>Create a group profile</strong>
                 <span>Your public organiser page on the hub.</span>
-                <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-getting-action="group">Add group profile</button>
+                <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-getting-action="group">Add group</button>
               </li>
               <li data-getting-step="event">
                 <strong>List your first event</strong>
-                <span>Meetings, exhibitions and conferences under that group.</span>
-                <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-getting-action="event">List an event</button>
+                <span>Meetings, exhibitions and conferences.</span>
+                <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-getting-action="event">List event</button>
               </li>
               <li data-getting-step="team">
                 <strong>Invite team members</strong>
-                <span>Add editors from <em>Team &amp; invites</em> in the sidebar.</span>
-                <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-getting-action="team">Open team page</button>
+                <span>Add editors from Team &amp; invites.</span>
+                <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-getting-action="team">Open team</button>
               </li>
             </ol>
-            <div class="org-getting-started-hubert" id="org-getting-started-hubert">
-              <div class="org-getting-started-hubert-head">
-                <img
-                  class="org-getting-started-hubert-avatar"
-                  src="../assets/hubert-icon.png"
-                  alt=""
-                  width="36"
-                  height="36"
-                />
-                <div class="org-getting-started-hubert-brand">
-                  <strong class="org-getting-started-hubert-name">Hubert</strong>
-                  <span class="org-getting-started-hubert-tagline">Got any questions? Ask Hubert</span>
-                </div>
-              </div>
-              <div
-                class="org-hubert-chat-messages"
-                id="org-hubert-messages"
-                role="log"
-                aria-live="polite"
-              ></div>
-              <button type="button" class="org-hubert-chat-reset" id="org-hubert-reset" hidden>New chat</button>
-              <div class="org-hubert-chat-suggestions" id="org-hubert-suggestions" aria-label="Suggested questions"></div>
-              <form class="org-hubert-chat-form hubert-form" id="org-hubert-form">
-                <div class="hubert-form-compose">
-                  <label class="visually-hidden" for="org-hubert-input">Ask Hubert</label>
-                  <textarea
-                    id="org-hubert-input"
-                    rows="2"
-                    placeholder="Ask about groups, events, tickets, or payouts…"
-                    maxlength="2000"
-                    required
-                  ></textarea>
-                  <button type="submit" class="org-btn org-btn-primary org-btn-sm" id="org-hubert-send">Send</button>
-                </div>
-              </form>
-            </div>
           </div>
 
           <div class="org-stats org-stats--three" id="org-stats">
@@ -875,11 +841,12 @@
       </div>
     </div>
 
-    <script src="../js/hubert-chat.js?v=20260616"></script>
-    <script src="../js/hubert-organiser-guide.js?v=20260616" data-root="../"></script>
+    <script src="../js/hubert-chat.js?v=20260617"></script>
+    <script src="../js/hubert-organiser-guide.js?v=20260618" data-root="../"></script>
+    <script src="../js/hubert-widget.js?v=20260618" data-root="../" data-hubert="organiser-dashboard"></script>
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
     <script src="../js/organiser-flow-tour.js?v=20260610"></script>
-    <script src="../js/organiser-onboarding.js?v=20260610"></script>
-    <script src="../js/organiser-dashboard.js?v=20260616"></script>
+    <script src="../js/organiser-onboarding.js?v=20260618"></script>
+    <script src="../js/organiser-dashboard.js?v=20260618"></script>
   </body>
 </html>

@@ -1689,8 +1689,8 @@
 
 /* ─── Getting started checklist ─── */
 .org-getting-started {
-  margin-bottom: 24px;
-  padding: 22px 24px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
   border-radius: var(--od-radius);
   border: 1px solid var(--od-border-soft);
   background: linear-gradient(135deg, var(--od-purple-pale) 0%, var(--od-white) 55%);
@@ -1701,18 +1701,19 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
 .org-getting-started-title {
-  font-size: 1.15rem;
+  font-size: 1.02rem;
   font-weight: 700;
-  margin: 0 0 6px;
+  margin: 0 0 4px;
 }
 
 .org-getting-started-sub {
   margin: 0;
+  font-size: 12px;
 }
 
 .org-getting-started-link {
@@ -1732,155 +1733,38 @@
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .org-getting-started-list li {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 4px 12px;
-  align-items: center;
-  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px 12px;
   border-radius: var(--od-radius-sm);
   background: var(--od-white);
   border: 1px solid var(--od-border-soft);
 }
 
 .org-getting-started-list li strong {
-  grid-column: 1;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .org-getting-started-list li span {
-  grid-column: 1;
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.4;
   color: var(--od-text-soft);
 }
 
 .org-getting-started-list li .org-btn {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  align-self: center;
+  margin-top: 6px;
 }
 
 .org-getting-started.is-complete {
   border-color: #c8e6d0;
   background: linear-gradient(135deg, #f4faf6 0%, var(--od-white) 100%);
-}
-
-.org-getting-started-hubert {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--od-border-soft);
-}
-
-.org-getting-started-hubert-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.org-getting-started-hubert-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #0d0d12;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.org-getting-started-hubert-brand {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.org-getting-started-hubert-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--od-text);
-}
-
-.org-getting-started-hubert-tagline {
-  font-size: 12px;
-  color: var(--od-text-soft);
-}
-
-.org-hubert-chat-messages {
-  max-height: 140px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 8px;
-  padding: 2px 0;
-}
-
-.org-hubert-chat-messages .hubert-bubble {
-  font-size: 13px;
-  max-width: 92%;
-}
-
-.org-hubert-chat-suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.org-hubert-chat-suggestions .hubert-chip {
-  font-size: 11px;
-  padding: 6px 10px;
-}
-
-.org-hubert-chat-reset {
-  display: block;
-  margin: 0 0 8px;
-  border: 0;
-  background: none;
-  color: var(--od-text-soft);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  text-align: left;
-}
-
-.org-hubert-chat-reset[hidden] {
-  display: none !important;
-}
-
-.org-hubert-chat-reset:hover {
-  color: var(--od-text);
-}
-
-.org-hubert-chat-form textarea {
-  width: 100%;
-  min-width: 0;
-  resize: none;
-  min-height: 40px;
-  max-height: 88px;
-  border: 1px solid var(--od-border-soft);
-  border-radius: 8px;
-  padding: 9px 11px;
-  font: inherit;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.org-hubert-chat-form textarea:focus {
-  outline: 2px solid rgba(91, 47, 153, 0.22);
-  outline-offset: 1px;
-  border-color: rgba(91, 47, 153, 0.35);
-}
-
-.org-hubert-chat-form .hubert-form-compose {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  align-items: end;
 }
 
 .org-getting-started-list li.is-done {
@@ -1898,9 +1782,7 @@
 }
 
 .org-getting-done-badge {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  align-self: center;
+  margin-top: 6px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -2194,24 +2076,8 @@ body.org-onboard-active {
     justify-content: center;
   }
 
-  .org-getting-started-list li {
+  .org-getting-started-list {
     grid-template-columns: 1fr;
-  }
-
-  .org-getting-started-list li .org-btn,
-  .org-getting-done-badge {
-    grid-column: 1;
-    grid-row: auto;
-    justify-self: start;
-    margin-top: 6px;
-  }
-
-  .org-hubert-chat-form .hubert-form-compose {
-    grid-template-columns: 1fr;
-  }
-
-  .org-hubert-chat-form .org-btn {
-    width: 100%;
   }
 }
 

@@ -2857,7 +2857,7 @@
       );
     } else if (!state.groups.length && !state.pendingClaimGroups.length) {
       showAirtableAlert(
-        'Create your first <strong>group profile</strong> (Group profiles in the sidebar), then add events and ticket types.',
+        'Create your first <strong>group profile</strong> (under My events in the sidebar), then add events and ticket types.',
         false
       );
     } else if (!data.adminView) {
@@ -2871,9 +2871,6 @@
     updateTeamNavBadge();
     if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
       window.HubOrganiserOnboarding.initAfterDashboardReady();
-    }
-    if (window.HubertOrganiserGuide && window.HubertOrganiserGuide.initOrganiserDashboardChat) {
-      window.HubertOrganiserGuide.initOrganiserDashboardChat();
     }
     } finally {
       setDashboardLoading(false);

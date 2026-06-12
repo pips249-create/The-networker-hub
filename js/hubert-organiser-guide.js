@@ -64,7 +64,6 @@
   };
 
   var chatInstance = null;
-  var dashboardChatInstance = null;
 
   function assetRoot() {
     var s =
@@ -108,10 +107,7 @@
 
   function initChat(rootEl, options) {
     options = options || {};
-    var useDashboard = options.dashboard === true;
-    if (useDashboard) {
-      if (dashboardChatInstance || !global.HubertChat || !rootEl) return dashboardChatInstance;
-    } else if (chatInstance || !global.HubertChat || !rootEl) {
+    if (chatInstance || !global.HubertChat || !rootEl) {
       return chatInstance;
     }
 
@@ -143,33 +139,13 @@
       bubblePrefix: 'hubert-bubble',
     });
 
-    if (useDashboard) dashboardChatInstance = instance;
-    else chatInstance = instance;
+    chatInstance = instance;
 
     return instance;
   }
 
-  function initOrganiserDashboardChat() {
-    if (!isOrganiserDashboard()) return null;
-    var root = document.getElementById('org-getting-started-hubert');
-    if (!root) return null;
-    return initChat(root, {
-      dashboard: true,
-      pageKey: 'organiser-dashboard',
-      messagesSelector: '#org-hubert-messages',
-      formSelector: '#org-hubert-form',
-      inputSelector: '#org-hubert-input',
-      sendSelector: '#org-hubert-send',
-      resetSelector: '#org-hubert-reset',
-      suggestionsSelector: '#org-hubert-suggestions',
-    });
-  }
-
   function mountQuestionsOnlyIfNeeded() {
-    if (isOrganiserDashboard()) {
-      initOrganiserDashboardChat();
-      return;
-    }
+    if (isOrganiserDashboard()) return;
     var key = pageKey();
     if (!key || !global.HubFlowTour) return;
     if (key === 'event-edit' && !isNewEventEdit()) return;
@@ -193,9 +169,10 @@
   global.HubertOrganiserGuide = {
     assetRoot: assetRoot,
     initChat: initChat,
-    initOrganiserDashboardChat: initOrganiserDashboardChat,
     pageKey: pageKey,
     mountQuestionsOnlyIfNeeded: mountQuestionsOnlyIfNeeded,
+    DASHBOARD_GREETING: GREETINGS['organiser-dashboard'],
+    DASHBOARD_SUGGESTIONS: SUGGESTIONS['organiser-dashboard'],
   };
 
   if (document.readyState === 'loading') {
