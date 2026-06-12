@@ -628,6 +628,94 @@ window.HUB_SEO_DATA = {
         }
       ]
     },
+    "advertising": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "The Networker Hub",
+          "legalName": "The Networker Group Ltd",
+          "url": "https://the-networker.co.uk",
+          "logo": "https://the-networker.co.uk/assets/logo.png",
+          "image": "https://the-networker.co.uk/assets/logo.png",
+          "email": "hello@the-networker.co.uk",
+          "description": "UK platform for networking events, exhibitions, business opportunities, and professional training.",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
+            "addressLocality": "Huntingdon",
+            "addressRegion": "Cambridgeshire",
+            "postalCode": "PE28 4YF",
+            "addressCountry": "GB"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "hello@the-networker.co.uk",
+            "availableLanguage": [
+              "English"
+            ]
+          },
+          "founder": [
+            {
+              "@type": "Person",
+              "name": "Rosie"
+            },
+            {
+              "@type": "Person",
+              "name": "Catherine Hancher",
+              "alternateName": "Pip"
+            }
+          ]
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "url": "https://the-networker.co.uk/advertising.html",
+          "name": "Advertising & sponsorship – The Networker Hub",
+          "description": "Sponsor placements and advertising rates for the events directory, training browse, and business opportunities on The Networker Hub.",
+          "about": {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "The Networker Hub",
+            "legalName": "The Networker Group Ltd",
+            "url": "https://the-networker.co.uk",
+            "logo": "https://the-networker.co.uk/assets/logo.png",
+            "image": "https://the-networker.co.uk/assets/logo.png",
+            "email": "hello@the-networker.co.uk",
+            "description": "UK platform for networking events, exhibitions, business opportunities, and professional training.",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
+              "addressLocality": "Huntingdon",
+              "addressRegion": "Cambridgeshire",
+              "postalCode": "PE28 4YF",
+              "addressCountry": "GB"
+            },
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "contactType": "customer support",
+              "email": "hello@the-networker.co.uk",
+              "availableLanguage": [
+                "English"
+              ]
+            },
+            "founder": [
+              {
+                "@type": "Person",
+                "name": "Rosie"
+              },
+              {
+                "@type": "Person",
+                "name": "Catherine Hancher",
+                "alternateName": "Pip"
+              }
+            ]
+          }
+        }
+      ]
+    },
     "events": {
       "@context": "https://schema.org",
       "@graph": [

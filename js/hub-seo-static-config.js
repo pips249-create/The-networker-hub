@@ -49,6 +49,13 @@ window.HUB_SEO_STATIC = {
     "image": "/assets/logo.png",
     "ogType": "website"
   },
+  "advertising": {
+    "path": "/advertising.html",
+    "title": "Advertising & sponsorship – The Networker Hub",
+    "description": "Promote your brand on The Networker Hub — sponsor the events directory, training browse, business opportunities, and event page placements.",
+    "image": "/assets/logo.png",
+    "ogType": "website"
+  },
   "legal": {
     "path": "/legal-policies.html",
     "title": "Legal & policies – The Networker Hub",

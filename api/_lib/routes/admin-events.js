@@ -309,6 +309,29 @@ module.exports = async function handler(req, res) {
 
     try {
       const sb = getSupabaseAdmin();
+      const { data: current, error: currentErr } = await sb
+        .from('events')
+        .select('starts_at')
+        .eq('id', id)
+        .maybeSingle();
+      if (currentErr) throw new Error(currentErr.message);
+      if (!current) return json(res, 404, { error: 'not_found' });
+
+      const effectiveStartsAt =
+        Object.prototype.hasOwnProperty.call(patch, 'starts_at') ? patch.starts_at : current.starts_at;
+
+      if (!effectiveStartsAt) {
+        if (patch.status === 'published' || patch.approval_status === 'Approved') {
+          return json(res, 400, {
+            error: 'missing_date',
+            message: 'Events must have a date before they can be published or approved.',
+          });
+        }
+        patch.status = 'draft';
+        patch.approval_status = 'Pending Review';
+        patch.ticket_sales_enabled = false;
+      }
+
       const { data, error } = await sb.from('events').update(patch).eq('id', id).select('*').single();
       if (error) throw new Error(error.message);
       const organisers = await fetchOrganisersByIds(sb, [data.organiser_id]);

@@ -185,9 +185,9 @@
     {
       key: 'event_page_carousel_ads',
       group: 'Detail pages',
-      label: 'Event & organiser pages — Sponsor carousel (5 ads)',
+      label: 'Event & organiser pages — Mini Sponsors (5 slots)',
       preview: 'carousel',
-      help: 'Up to five rotating sidebar logos on individual event and organiser profile pages — each logo links to the sponsor website.',
+      help: 'Up to five rotating Mini Sponsor logos in the sidebar on individual event and organiser profile pages — same inventory on both page types. Each logo links to the sponsor website.',
       tagline: '',
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',

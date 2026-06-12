@@ -83,13 +83,14 @@ module.exports = async function handler(req, res) {
     groupOwnedBySession,
     createEvent,
     updateEvent,
+    deleteEventForSession,
     getEventById,
     isPlatformAdmin,
     airtableSetupHint,
   } = api;
 
   setCors(req, res);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -161,8 +162,11 @@ module.exports = async function handler(req, res) {
         return json(res, 403, { error: 'group_not_owned' });
       }
 
-      const isDraft =
-        base.listingStatus != null && String(base.listingStatus).toLowerCase() === 'draft';
+      const listingStatus = String(base.listingStatus || 'draft').toLowerCase();
+      const isDraft = listingStatus === 'draft';
+      if (!occ.length && !isDraft) {
+        return json(res, 400, { error: 'missing_dates', message: 'Select at least one date before publishing.' });
+      }
       const primary = occ[0] || {};
       const touchDate = Boolean(body.date || body.endDate || body.dateTime || occ.length);
       const event = await updateEvent(eventId, {
@@ -266,6 +270,30 @@ module.exports = async function handler(req, res) {
         error: e.code || 'event_create_failed',
         message: e.message,
         airtable: airtableSetupHint('events'),
+      });
+    }
+  }
+
+  if (req.method === 'DELETE') {
+    const body = parseBody(req);
+    const eventId = String(body.id || body.eventId || req.query?.id || '').trim();
+    if (!eventId) return json(res, 400, { error: 'missing_event_id' });
+
+    try {
+      const { groups, allowed } = await ownedEventIds();
+      if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {
+        return json(res, 403, { error: 'event_not_owned' });
+      }
+      const deleted = await deleteEventForSession(
+        auth.session,
+        eventId,
+        groups.map((g) => g.id)
+      );
+      return json(res, 200, { ok: true, event: deleted, message: 'Event deleted.' });
+    } catch (e) {
+      return json(res, e.status || 500, {
+        error: e.code || 'event_delete_failed',
+        message: e.message,
       });
     }
   }

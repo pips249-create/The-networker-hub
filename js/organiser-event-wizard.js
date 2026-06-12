@@ -164,5 +164,7 @@
   var script = document.currentScript;
   var step = script && script.getAttribute('data-step');
   var mount = document.getElementById('ee-wizard-mount');
-  if (step && mount) render(step, mount);
+  var params = new URLSearchParams(location.search);
+  var isEmbedDrawer = params.get('embed') === '1' || window.self !== window.top;
+  if (!isEmbedDrawer && step && mount) render(step, mount);
 })();

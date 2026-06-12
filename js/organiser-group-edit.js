@@ -290,6 +290,10 @@
     resetLogoPreview();
     const statusLine = el('ge-status-line');
     if (statusLine) statusLine.hidden = true;
+    ['ge-save-changes', 'ge-save-continue', 'ge-publish', 'ge-save-draft', 'ge-cancel'].forEach((id) => {
+      const btn = el(id);
+      if (btn) btn.hidden = true;
+    });
   }
 
   async function buildPayload() {

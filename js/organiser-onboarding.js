@@ -243,8 +243,8 @@
           window.location.href = 'group-edit.html';
           return;
         }
-        if (action === 'event') {
-          window.location.href = 'event-format.html';
+        if (action === 'event' && typeof window.orgDashSetRoute === 'function') {
+          window.orgDashSetRoute('events-overview');
           return;
         }
         if (action === 'team' && typeof window.orgDashSetRoute === 'function') {

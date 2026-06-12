@@ -7,7 +7,7 @@ const path = require('path');
 const { FAQ_AEO_ENTRIES, buildSchemaGraph } = require('../api/_lib/hubert-seo');
 const { STATIC_PAGES } = require('../api/_lib/seo-static-pages');
 
-const pages = ['home', 'faq', 'contact', 'about', 'events', 'opportunities', 'training', 'legal'];
+const pages = ['home', 'faq', 'contact', 'about', 'advertising', 'events', 'opportunities', 'training', 'legal'];
 const schemas = {};
 pages.forEach(function (page) {
   schemas[page] = buildSchemaGraph(page);

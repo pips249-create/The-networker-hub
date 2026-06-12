@@ -99,7 +99,7 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ADVERTISING & SPONSORSHIP',
     body:
-      'Paid Sponsor Hub placements appear on event, training, and opportunity pages — clearly labelled Sponsored. Enquiries: sales@the-networker.co.uk. Policy: /legal-policies.html#advertising. ' +
+      'Paid Sponsor Hub placements appear on event, training, and opportunity pages — clearly labelled Sponsored. Rate card: /advertising.html. Enquiries: sales@the-networker.co.uk. Policy: /legal-policies.html#advertising. ' +
       'Organisers can also reach audiences by listing events (/organiser/) or business opportunities (/opportunities/list.html). Featured placement may be available — ask sales@the-networker.co.uk.',
   },
   {
@@ -149,7 +149,7 @@ const FALLBACK_REPLIES = [
   {
     match: /advertis|sponsor|promote my business|marketing on (the )?site|get exposure/i,
     reply:
-      'For paid advertising, see Sponsor Hub placements on event, training, and opportunity pages — email sales@the-networker.co.uk. You can also list events from /organiser/ or a business opportunity at /opportunities/list.html to reach the network. Details: /legal-policies.html#advertising.',
+      'For paid advertising, see /advertising.html for placements and guide pricing on event, training, and opportunity pages — email sales@the-networker.co.uk. You can also list events from /organiser/ or a business opportunity at /opportunities/list.html to reach the network. Policy: /legal-policies.html#advertising.',
   },
   {
     match: /what does rosie do|who is rosie|rosie('s)? role/i,

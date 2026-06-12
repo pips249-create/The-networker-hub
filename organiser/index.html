@@ -11,13 +11,14 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e" />
     <link rel="stylesheet" href="../css/hub.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260628" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260619" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260708c" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260628" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
@@ -44,14 +45,15 @@
             </a>
             <a href="#academy" class="hub-side-nav-link" data-org-route="academy">Training &amp; workshops</a>
             <span class="hub-side-nav-divider">My events</span>
-            <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Group profiles</a>
             <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">Events</a>
+            <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Group profiles</a>
             <a href="#events-tickets" class="hub-side-nav-link" data-org-route="events-tickets">Tickets</a>
             <a href="#events-attendees" class="hub-side-nav-link" data-org-route="events-attendees">Attendees</a>
             <a href="#events-reviews" class="hub-side-nav-link" data-org-route="events-reviews">Reviews</a>
             <a href="#events-revenue" class="hub-side-nav-link" data-org-route="events-revenue">Revenue</a>
             <span class="hub-side-nav-divider">Business opportunities</span>
-            <a href="#opportunity-enquiries" class="hub-side-nav-link" data-org-route="opportunity-enquiries">
+            <a href="opportunity-edit.html" class="hub-side-nav-link">List an opportunity</a>
+            <a href="#business-overview" class="hub-side-nav-link" data-org-route="business-overview">
               Enquiries received
               <span class="org-nav-badge" id="org-opp-enquiry-nav-badge" hidden>New</span>
             </a>
@@ -62,28 +64,17 @@
         </aside>
 
         <div class="org-main" id="org-main">
-          <p class="org-dash-loading" id="org-dash-loading" hidden role="status" aria-live="polite">
-            <span class="org-dash-loading-spinner" aria-hidden="true"></span>
-            Loading dashboard…
-          </p>
           <div class="org-wrap">
         <div id="org-airtable-alert" class="org-alert" hidden></div>
-        <div class="org-opp-enquiry-alert" id="org-opp-enquiry-alert" hidden>
-          <div>
-            <strong>You have new opportunity enquiries.</strong>
-            <span>Please respond to interested members from your dashboard.</span>
-          </div>
-          <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="opportunity-enquiries">View enquiries</button>
-        </div>
 
         <!-- Overview -->
         <section class="org-page is-active" id="org-page-dashboard" data-org-page="dashboard">
           <header class="org-page-head org-page-head--split">
             <div class="org-page-head-text">
               <p class="org-page-kicker">Organiser workspace</p>
-              <h1 class="org-page-title" id="org-page-title">Manage your group</h1>
+              <h1 class="org-page-title" id="org-page-title">Your organiser dashboard</h1>
               <p class="org-page-lead" id="org-page-lead">
-                Update group profiles, publish events, list business opportunities, respond to reviews, and track revenue and attendees.
+                Choose an area below to manage events, training, or business opportunities — or use <strong>+ Add new</strong> to create something straight away.
               </p>
             </div>
             <div class="org-overview-add" id="org-add-menu-wrap">
@@ -154,6 +145,46 @@
             </ol>
           </div>
 
+          <div class="org-hub-portals" aria-label="Workspace areas">
+            <button type="button" class="org-hub-portal org-hub-portal--events" data-org-route="events-overview">
+              <span class="org-hub-portal-icon" aria-hidden="true">📅</span>
+              <span class="org-hub-portal-body">
+                <strong>Manage events</strong>
+                <span>Group profiles, listings, tickets, attendees, reviews &amp; revenue</span>
+                <span class="org-hub-portal-meta" id="hub-portal-meta-events">—</span>
+              </span>
+              <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
+            </button>
+            <button type="button" class="org-hub-portal org-hub-portal--training" data-org-route="training-overview">
+              <span class="org-hub-portal-icon" aria-hidden="true">🎓</span>
+              <span class="org-hub-portal-body">
+                <strong>Manage training</strong>
+                <span>Workshops, seminars, team editors &amp; learning sessions</span>
+                <span class="org-hub-portal-meta" id="hub-portal-meta-training">Coming soon</span>
+              </span>
+              <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
+            </button>
+            <button type="button" class="org-hub-portal org-hub-portal--business" data-org-route="business-overview">
+              <span class="org-hub-portal-icon" aria-hidden="true">💼</span>
+              <span class="org-hub-portal-body">
+                <strong>Business ops</strong>
+                <span>List opportunities and respond to member enquiries</span>
+                <span class="org-hub-portal-meta" id="hub-portal-meta-business">—</span>
+              </span>
+              <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Events overview hub -->
+        <section class="org-page" id="org-page-events-overview" data-org-page="events-overview">
+          <button type="button" class="org-hub-back" data-org-route="dashboard">← Back to overview</button>
+          <header class="org-hub-page-head">
+            <p class="org-page-kicker">My events</p>
+            <h1 class="org-page-title">Manage events</h1>
+            <p class="org-page-lead">Your event listings at a glance — open a section from the sidebar or the quick links below.</p>
+          </header>
+
           <div class="org-stats org-stats--three" id="org-stats">
             <div class="org-stat gold">
               <div class="org-stat-label">Events</div>
@@ -182,15 +213,10 @@
                 <span class="org-quick-label">View all events</span>
                 <span class="org-quick-hint">Edit listings, dates and status</span>
               </button>
-              <button type="button" class="org-quick-card" data-org-shortcut="team">
-                <span class="org-quick-icon" aria-hidden="true">👥</span>
-                <span class="org-quick-label">Invite team members</span>
-                <span class="org-quick-hint">Add editors to help manage your events</span>
-              </button>
-              <button type="button" class="org-quick-card" data-org-shortcut="opportunity-enquiries" id="org-quick-opp-enquiries" hidden>
-                <span class="org-quick-icon" aria-hidden="true">✉</span>
-                <span class="org-quick-label">Respond to opportunity enquiries</span>
-                <span class="org-quick-hint" id="org-quick-opp-enquiries-hint">New messages about your listings</span>
+              <button type="button" class="org-quick-card" data-org-shortcut="events-revenue">
+                <span class="org-quick-icon" aria-hidden="true">£</span>
+                <span class="org-quick-label">Revenue &amp; payouts</span>
+                <span class="org-quick-hint">Track sales and request payouts</span>
               </button>
             </div>
           </div>
@@ -258,6 +284,144 @@
             <button type="button" class="org-btn org-btn-outline" data-org-goto-view="events-list">
               View all events →
             </button>
+          </div>
+        </section>
+
+        <!-- Training overview hub -->
+        <section class="org-page" id="org-page-training-overview" data-org-page="training-overview">
+          <button type="button" class="org-hub-back" data-org-route="dashboard">← Back to overview</button>
+          <header class="org-hub-page-head">
+            <p class="org-page-kicker">Team &amp; training</p>
+            <h1 class="org-page-title">Manage training</h1>
+            <p class="org-page-lead">Invite editors to help run events, and get ready to list workshops and seminars when training launches.</p>
+          </header>
+
+          <div class="org-stats org-stats--three">
+            <div class="org-stat gold">
+              <div class="org-stat-label">Sessions listed</div>
+              <div class="org-stat-value" id="stat-training-sessions">0</div>
+            </div>
+            <div class="org-stat green">
+              <div class="org-stat-label">Team editors</div>
+              <div class="org-stat-value" id="stat-training-editors">0</div>
+            </div>
+            <div class="org-stat purple">
+              <div class="org-stat-label">Registrations</div>
+              <div class="org-stat-value" id="stat-training-registrations">0</div>
+            </div>
+          </div>
+
+          <div class="org-quick-actions org-quick-actions--compact" aria-label="Quick links">
+            <h2 class="org-quick-actions-title">Quick links</h2>
+            <div class="org-quick-actions-grid">
+              <button type="button" class="org-quick-card" data-org-shortcut="team">
+                <span class="org-quick-icon" aria-hidden="true">👥</span>
+                <span class="org-quick-label">Team &amp; invites</span>
+                <span class="org-quick-hint">Add editors who can help manage events</span>
+              </button>
+              <button type="button" class="org-quick-card" data-org-shortcut="academy">
+                <span class="org-quick-icon" aria-hidden="true">🎓</span>
+                <span class="org-quick-label">Training &amp; workshops</span>
+                <span class="org-quick-hint">Browse the upcoming learning marketplace</span>
+              </button>
+              <a class="org-quick-card" href="../training/index.html" target="_blank" rel="noopener">
+                <span class="org-quick-icon" aria-hidden="true">↗</span>
+                <span class="org-quick-label">Public training preview</span>
+                <span class="org-quick-hint">See how workshops will appear on the hub</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="org-academy-stage org-academy-stage--hub">
+            <div class="org-academy-preview" aria-hidden="true">
+              <div class="org-academy-preview-hero">
+                <p class="org-academy-preview-kicker">Learning marketplace</p>
+                <h2 class="org-academy-preview-title">
+                  Workshops, seminars &amp; <span>masterclasses</span>
+                </h2>
+                <p class="org-academy-preview-lede">
+                  Training and workshops — live learning for UK business owners.
+                </p>
+              </div>
+              <div class="org-academy-preview-grid" id="org-academy-preview-grid-hub"></div>
+            </div>
+            <div class="org-academy-coming" role="status">
+              <p class="org-academy-coming-label">Coming soon</p>
+              <p class="org-academy-coming-text">
+                List and manage workshops and training sessions from here soon — seminars and masterclasses alongside your
+                events.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Business ops overview hub -->
+        <section class="org-page" id="org-page-business-overview" data-org-page="business-overview">
+          <button type="button" class="org-hub-back" data-org-route="dashboard">← Back to overview</button>
+          <header class="org-hub-page-head">
+            <p class="org-page-kicker">Business opportunities</p>
+            <h1 class="org-page-title">Business ops</h1>
+            <p class="org-page-lead">List services for other members and respond when someone enquires about your listings.</p>
+          </header>
+
+          <div class="org-stats org-stats--three">
+            <div class="org-stat gold">
+              <div class="org-stat-label">Live listings</div>
+              <div class="org-stat-value" id="stat-opp-listings">0</div>
+            </div>
+            <div class="org-stat green">
+              <div class="org-stat-label">Enquiries received</div>
+              <div class="org-stat-value" id="stat-opp-enquiries">0</div>
+            </div>
+            <div class="org-stat purple">
+              <div class="org-stat-label">New enquiries</div>
+              <div class="org-stat-value" id="stat-opp-enquiries-new">0</div>
+            </div>
+          </div>
+
+          <div class="org-quick-actions org-quick-actions--compact" aria-label="Quick links">
+            <h2 class="org-quick-actions-title">Quick links</h2>
+            <div class="org-quick-actions-grid">
+              <a class="org-quick-card org-quick-card--primary" href="opportunity-edit.html">
+                <span class="org-quick-icon" aria-hidden="true">+</span>
+                <span class="org-quick-label">List an opportunity</span>
+                <span class="org-quick-hint">Promote a service to other hub members</span>
+              </a>
+              <button type="button" class="org-quick-card" data-org-shortcut="business-overview">
+                <span class="org-quick-icon" aria-hidden="true">✉</span>
+                <span class="org-quick-label">View enquiries</span>
+                <span class="org-quick-hint">Messages from members who got in touch</span>
+              </button>
+              <a class="org-quick-card" href="../opportunities/index.html" target="_blank" rel="noopener">
+                <span class="org-quick-icon" aria-hidden="true">↗</span>
+                <span class="org-quick-label">Browse opportunities</span>
+                <span class="org-quick-hint">See how listings appear on the hub</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="org-overview-head">
+            <div class="org-overview-head-text">
+              <h2 class="org-section-title">Enquiries received</h2>
+              <p class="org-section-sub">Messages from members who enquired about your business opportunity listings — respond by email from here.</p>
+            </div>
+          </div>
+          <p class="org-load-hint" id="opp-enquiries-load-hint" hidden>Loading enquiries…</p>
+          <div class="org-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Received</th>
+                  <th>Listing</th>
+                  <th>From</th>
+                  <th>Message</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="opp-enquiries-body"></tbody>
+            </table>
+            <p class="org-empty" id="opp-enquiries-empty" hidden>No enquiries yet. When someone uses the enquiry form on your listing, it will appear here.</p>
           </div>
         </section>
 
@@ -546,32 +710,6 @@
               </table>
             </div>
             <nav class="org-pagination" id="pagination-revenue" data-list="revenue" aria-label="Revenue pages" hidden></nav>
-          </div>
-        </section>
-
-        <section class="org-page" id="org-page-opportunity-enquiries" data-org-page="opportunity-enquiries">
-          <div class="org-overview-head">
-            <div class="org-overview-head-text">
-              <h2 class="org-section-title">Enquiries received</h2>
-              <p class="org-section-sub">Messages from members who enquired about your business opportunity listings — respond by email from here.</p>
-            </div>
-          </div>
-          <p class="org-load-hint" id="opp-enquiries-load-hint" hidden>Loading enquiries…</p>
-          <div class="org-table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Received</th>
-                  <th>Listing</th>
-                  <th>From</th>
-                  <th>Message</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="opp-enquiries-body"></tbody>
-            </table>
-            <p class="org-empty" id="opp-enquiries-empty" hidden>No enquiries yet. When someone uses the enquiry form on your listing, it will appear here.</p>
           </div>
         </section>
           </div>
@@ -926,25 +1064,63 @@
           </form>
         </div>
         <footer class="org-group-drawer-foot">
-          <div class="org-group-drawer-actions ge-actions-stack">
-            <button type="button" class="ee-btn ee-btn-primary" id="ge-save-changes" hidden>
+          <div class="org-group-drawer-actions">
+            <button type="button" class="org-btn org-btn-primary org-group-drawer-btn-main" id="ge-save-changes" hidden>
               Save changes
             </button>
-            <button type="button" class="ee-btn ee-btn-gold" id="ge-save-continue" hidden>
+            <button type="button" class="org-btn org-btn-gold org-group-drawer-btn-main" id="ge-save-continue" hidden>
               Save and create event →
             </button>
-            <button type="button" class="ee-btn ee-btn-outline" id="ge-publish" hidden>
-              Publish now
-            </button>
-            <button type="button" class="ee-btn ee-btn-outline" id="ge-save-draft" hidden>
-              Save as draft
-            </button>
-            <button type="button" class="ee-btn ee-btn-outline" id="ge-cancel" hidden>
+            <div class="org-group-drawer-actions-row" id="ge-secondary-actions">
+              <button type="button" class="org-btn org-btn-gold org-btn-sm" id="ge-publish" hidden>
+                Publish now
+              </button>
+              <button type="button" class="org-btn org-btn-outline org-btn-sm" id="ge-save-draft" hidden>
+                Save as draft
+              </button>
+            </div>
+            <button type="button" class="org-btn org-btn-outline org-btn-sm org-group-drawer-btn-cancel" id="ge-cancel" hidden>
               Cancel
             </button>
           </div>
           <p class="ee-hint org-group-drawer-actions-hint" id="ge-actions-hint"></p>
         </footer>
+      </aside>
+    </div>
+
+    <div id="org-event-drawer" class="org-group-drawer org-event-drawer" hidden aria-hidden="true">
+      <div class="org-group-drawer-backdrop" data-org-event-drawer-close tabindex="-1"></div>
+      <aside class="org-group-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="org-event-drawer-title">
+        <header class="org-group-drawer-head org-event-drawer-head">
+          <button
+            type="button"
+            class="org-group-drawer-close"
+            data-org-event-drawer-close
+            aria-label="Close event editor"
+          >
+            ×
+          </button>
+          <h2 class="org-group-drawer-title" id="org-event-drawer-title">Edit event</h2>
+        </header>
+        <div class="org-event-drawer-frame-wrap" id="org-event-drawer-frame-wrap">
+          <div
+            class="org-event-drawer-loading"
+            id="org-event-drawer-loading"
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+          >
+            <div class="org-event-drawer-loading-card">
+              <div class="org-event-drawer-loading-spinner" aria-hidden="true"></div>
+              <p class="org-event-drawer-loading-text">Loading event…</p>
+            </div>
+          </div>
+          <iframe
+            id="org-event-drawer-frame"
+            class="org-event-drawer-frame"
+            title="Edit event listing"
+          ></iframe>
+        </div>
       </aside>
     </div>
 
@@ -962,13 +1138,31 @@
       </div>
     </div>
 
+    <div
+      id="org-dash-loading"
+      class="hub-page-buffer hub-page-buffer--modal hub-page-buffer--dashboard"
+      hidden
+      aria-hidden="true"
+      role="status"
+      aria-live="polite"
+      aria-busy="false"
+    >
+      <div class="hub-page-buffer-card">
+        <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
+        <h2 class="hub-page-buffer-title">Loading dashboard</h2>
+        <p class="hub-page-buffer-message">Bear with us — almost there.</p>
+      </div>
+    </div>
+
+    <div id="org-action-menu-portal" aria-hidden="true"></div>
+
     <script src="../js/hubert-chat.js?v=20260617"></script>
     <script src="../js/hubert-organiser-guide.js?v=20260618" data-root="../"></script>
     <script src="../js/hubert-widget.js?v=20260618" data-root="../" data-hubert="organiser-dashboard"></script>
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
     <script src="../js/organiser-flow-tour.js?v=20260610"></script>
     <script src="../js/organiser-onboarding.js?v=20260618"></script>
-    <script src="../js/organiser-group-edit.js?v=20260619"></script>
-    <script src="../js/organiser-dashboard.js?v=20260619"></script>
+    <script src="../js/organiser-group-edit.js?v=20260621"></script>
+    <script src="../js/organiser-dashboard.js?v=20260630"></script>
   </body>
 </html>

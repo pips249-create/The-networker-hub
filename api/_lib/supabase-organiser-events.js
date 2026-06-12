@@ -478,6 +478,25 @@ function mapEventStatus(payload) {
   return 'draft';
 }
 
+function demoteToDraftWithoutDate(row) {
+  if (row.starts_at) return row;
+  row.status = 'draft';
+  row.approval_status = 'Pending Review';
+  row.ticket_sales_enabled = false;
+  return row;
+}
+
+function assertEventHasDateForPublish(row) {
+  if (!row?.starts_at) {
+    const e = new Error(
+      `Add a date before publishing${row?.title ? `: ${row.title}` : ''}.`
+    );
+    e.status = 400;
+    e.code = 'missing_date';
+    throw e;
+  }
+}
+
 async function buildEventRow(payload, eventId, mode) {
   const touchDate = mode !== 'update' || payloadTouchesDate(payload);
   const image_url = payload._deferImage ? undefined : await resolveEventPhotoUrl(payload, eventId);
@@ -558,6 +577,8 @@ async function buildEventRow(payload, eventId, mode) {
   if (image_url !== undefined) row.image_url = eventImageDbValue(image_url);
   else if (mode === 'create') row.image_url = null;
 
+  if (!row.starts_at) demoteToDraftWithoutDate(row);
+
   return row;
 }
 
@@ -622,6 +643,14 @@ async function updateEvent(eventId, payload) {
     eventId,
     'update'
   );
+  const effectiveStartsAt = row.starts_at !== undefined ? row.starts_at : existing?.starts_at ?? null;
+  if (!effectiveStartsAt) {
+    demoteToDraftWithoutDate(row);
+    if (payloadTouchesDate(patchPayload)) {
+      row.starts_at = null;
+      row.ends_at = null;
+    }
+  }
   const { data, error } = await sb.from('events').update(row).eq('id', eventId).select('*').single();
   if (error) throw new Error(error.message);
 
@@ -631,6 +660,54 @@ async function updateEvent(eventId, payload) {
   }
 
   return rowToEvent(data);
+}
+
+async function deleteEventForSession(session, eventId, groupIds) {
+  const sb = getSupabaseAdmin();
+  const { data: row, error } = await sb.from('events').select('*').eq('id', eventId).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!row) {
+    const e = new Error('Event not found');
+    e.status = 404;
+    throw e;
+  }
+
+  const organiserId = row.organiser_id;
+  if (Array.isArray(groupIds) && groupIds.length && !groupIds.includes(organiserId)) {
+    const e = new Error('You do not have access to this event');
+    e.status = 403;
+    e.code = 'event_not_owned';
+    throw e;
+  }
+
+  if (row.locked) {
+    const e = new Error(
+      'This event has active ticket sales and cannot be deleted. Cancel the event instead.'
+    );
+    e.status = 409;
+    e.code = 'event_locked';
+    throw e;
+  }
+
+  const { count, error: regErr } = await sb
+    .from('registrations')
+    .select('*', { count: 'exact', head: true })
+    .eq('event_id', eventId);
+  if (regErr) throw new Error(regErr.message);
+  if (count > 0) {
+    const e = new Error('This event has registrations and cannot be deleted.');
+    e.status = 409;
+    e.code = 'event_has_registrations';
+    throw e;
+  }
+
+  const { error: ticketErr } = await sb.from('tickets').delete().eq('event_id', eventId);
+  if (ticketErr) throw new Error(ticketErr.message);
+
+  const { error: delErr } = await sb.from('events').delete().eq('id', eventId);
+  if (delErr) throw new Error(delErr.message);
+
+  return { id: eventId, title: row.title || '' };
 }
 
 function mapTicketStatus(status) {
@@ -730,12 +807,13 @@ async function publishEventsWithRefund(eventIds, refundPayload) {
 
   const { data: existing, error: loadErr } = await sb
     .from('events')
-    .select('id, title, slug')
+    .select('id, title, slug, starts_at')
     .in('id', ids);
   if (loadErr) throw new Error(loadErr.message);
 
   const updated = [];
   for (const row of existing || []) {
+    assertEventHasDateForPublish(row);
     const slug = await ensureEventSlug(sb, {
       title: row.title,
       eventId: row.id,
@@ -1146,6 +1224,7 @@ module.exports = {
   getEventById,
   createEvent,
   updateEvent,
+  deleteEventForSession,
   enableTicketSalesForEvent,
   createTicket,
   createTicketsForEvents,

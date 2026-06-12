@@ -375,12 +375,44 @@ function rowToEvent(row, organiser, ticketRows) {
 }
 
 function isPublicEvent(row, organiser) {
+  if (!row.starts_at && !row.next_date) return false;
   if (row.approval_status !== 'Approved') return false;
   const status = String(row.status || 'published').toLowerCase();
   if (status !== 'published') return false;
   if (organiser && organiser.listing_status === 'draft') return false;
   if (organiser && organiser.listing_status === 'unpublished') return false;
   return true;
+}
+
+/** End instant used for browse/related listings (prefer ends_at over starts_at). */
+function browseEventEndRaw(source) {
+  if (!source) return null;
+  return (
+    source.ends_at ||
+    source.starts_at ||
+    source.next_date ||
+    source.endDateRaw ||
+    source.dateRaw ||
+    source.nextDate ||
+    source.dateFieldRaw ||
+    null
+  );
+}
+
+function isUpcomingBrowseEventRow(row) {
+  const endRaw = browseEventEndRaw(row);
+  if (!endRaw) return false;
+  const d = new Date(endRaw);
+  if (Number.isNaN(d.getTime())) return false;
+  return d >= new Date();
+}
+
+function isUpcomingBrowseEvent(ev) {
+  const endRaw = browseEventEndRaw(ev);
+  if (!endRaw) return false;
+  const d = new Date(endRaw);
+  if (Number.isNaN(d.getTime())) return false;
+  return d >= new Date();
 }
 
 function seriesDatePayload(ev) {
@@ -497,7 +529,7 @@ async function fetchRelatedPublishedRows(sb, organiserId, excludeIds, limit) {
 
   return (data || [])
     .map((r) => ({ ...r, next_date: r.starts_at }))
-    .filter((r) => !exclude.has(r.id))
+    .filter((r) => !exclude.has(r.id) && isUpcomingBrowseEventRow(r))
     .slice(0, limit);
 }
 
@@ -558,6 +590,7 @@ async function fetchPublishedEventsFromTable(sb) {
     .select('*')
     .eq('approval_status', 'Approved')
     .eq('status', 'published')
+    .not('starts_at', 'is', null)
     .order('starts_at', { ascending: true, nullsFirst: false });
   if (tableRes.error) throw new Error(tableRes.error.message);
   return (tableRes.data || []).map((row) => ({ ...row, next_date: row.starts_at }));
@@ -746,6 +779,8 @@ module.exports = {
   fetchPublishedEventBySlug,
   fetchEventSeriesDates,
   isPublicEvent,
+  isUpcomingBrowseEvent,
+  isUpcomingBrowseEventRow,
   ukOutcode,
   slugFormat,
   eventTypeTabCategory,

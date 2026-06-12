@@ -3,7 +3,7 @@
  * FOOTER_BUILD=20260610c
  */
 (function () {
-  var FOOTER_BUILD = '20260610c';
+  var FOOTER_BUILD = '20260612';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -48,6 +48,9 @@
     '<a href="' +
     href('faq.html') +
     '">FAQ</a>' +
+    '<a href="' +
+    href('advertising.html') +
+    '">Advertising</a>' +
     '<a href="' +
     href('contact.html') +
     '">Contact</a>' +

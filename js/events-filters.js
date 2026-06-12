@@ -140,6 +140,14 @@
     return null;
   }
 
+  function isUpcomingBrowseEvent(ev) {
+    var endRaw = ev.endDateRaw || ev.dateRaw || ev.nextDate || null;
+    if (!endRaw) return false;
+    var endTs = new Date(endRaw).getTime();
+    if (Number.isNaN(endTs)) return false;
+    return endTs >= Date.now();
+  }
+
   function eventTicketPrice(ev) {
     var n = Number(ev.priceNum);
     if (!Number.isNaN(n) && n >= 0) return n;
@@ -404,6 +412,8 @@
   }
 
   function eventMatchesFilters(ev) {
+    if (!isUpcomingBrowseEvent(ev)) return false;
+
     if (activeTypeTabs.length > 0) {
       if (activeTypeTabs.indexOf(eventTypeSlug(ev)) === -1) return false;
     }

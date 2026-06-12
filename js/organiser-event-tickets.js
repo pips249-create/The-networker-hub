@@ -3,8 +3,15 @@
  */
 (function () {
   const SERIES_STORAGE_KEY = 'hub_event_series';
+  const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
   const params = new URLSearchParams(location.search);
   const idsParam = params.get('ids') || '';
+  const isEmbedDrawer = params.get('embed') === '1' || window.self !== window.top;
+
+  if (isEmbedDrawer) {
+    document.documentElement.classList.add('ee-embed-drawer-root');
+    if (document.body) document.body.classList.add('ee-embed-drawer');
+  }
 
   let eventIds = idsParam
     .split(',')
@@ -194,13 +201,76 @@
         ' in this series.';
     }
     if (!pills) return;
-    const events = seriesMeta.events && seriesMeta.events.length ? seriesMeta.events : eventIds.map((id) => ({ id }));
+    const events =
+      seriesMeta.events && seriesMeta.events.length ? seriesMeta.events : eventIds.map((id) => ({ id }));
     pills.innerHTML = events
       .map((ev) => {
-        const label = ev.date ? formatDateShort(ev.date) : ev.id;
+        const label = ev.date
+          ? formatDateShort(ev.date)
+          : ev.title
+            ? ev.title
+            : 'Date TBC';
         return '<span class="ee-pill">' + esc(label) + '</span>';
       })
       .join('');
+  }
+
+  async function hydrateSeriesEvents() {
+    if (!eventIds.length) return;
+    const existing = seriesMeta.events && seriesMeta.events.length ? seriesMeta.events : [];
+    const byId = new Map(existing.map((ev) => [ev.id, ev]));
+    eventIds.forEach((id) => {
+      if (!byId.has(id)) byId.set(id, { id });
+    });
+
+    try {
+      const raw = sessionStorage.getItem(ORG_BOOTSTRAP_CACHE_KEY);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        (cached.events || []).forEach((ev) => {
+          if (!ev || !ev.id || !byId.has(ev.id)) return;
+          const cur = byId.get(ev.id);
+          byId.set(ev.id, {
+            id: ev.id,
+            title: cur.title || ev.title,
+            date: cur.date || ev.date,
+            imageUrl: cur.imageUrl || ev.imageUrl,
+          });
+        });
+      }
+    } catch {
+      /* ignore */
+    }
+
+    const missingDates = eventIds.filter((id) => {
+      const ev = byId.get(id);
+      return !ev || !ev.date;
+    });
+
+    if (missingDates.length) {
+      const results = await Promise.all(
+        missingDates.map((id) => api('/api/organiser/events?id=' + encodeURIComponent(id)))
+      );
+      missingDates.forEach((id, i) => {
+        const res = results[i];
+        const ev = res.ok && res.data.event ? res.data.event : null;
+        if (!ev) return;
+        byId.set(id, {
+          id: ev.id || id,
+          title: ev.title,
+          date: ev.date,
+          imageUrl: ev.imageUrl,
+        });
+      });
+    }
+
+    seriesMeta.events = eventIds.map((id) => byId.get(id) || { id });
+  }
+
+  function notifyEmbedDrawerReady() {
+    if (isEmbedDrawer && window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'hub-event-drawer-ready' }, window.location.origin);
+    }
   }
 
   function setAttendanceMode(mode) {
@@ -730,12 +800,29 @@
 
     const editLink = document.getElementById('ee-edit-event-link');
     if (editLink && eventIds[0]) {
-      editLink.href = 'event-edit.html?id=' + encodeURIComponent(eventIds[0]);
-      editLink.hidden = false;
+      if (isEmbedDrawer) {
+        editLink.hidden = false;
+        editLink.href = '#';
+        editLink.addEventListener('click', function (e) {
+          e.preventDefault();
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage(
+              { type: 'hub-event-goto-edit', eventId: eventIds[0] },
+              window.location.origin
+            );
+          }
+        });
+      } else {
+        editLink.href = 'event-edit.html?id=' + encodeURIComponent(eventIds[0]);
+        editLink.hidden = false;
+      }
     }
 
     const loading = window.organiserPageLoading;
-    const bootWork = async () => loadExistingData();
+    const bootWork = async () => {
+      await hydrateSeriesEvents();
+      return loadExistingData();
+    };
     let loaded;
     if (loading && loading.run) {
       loaded = await loading.run('Loading tickets', bootWork);
@@ -788,9 +875,11 @@
     bindVatOptions();
     updatePublishButton();
 
-    if (!loaded.tickets.length && window.HubFlowTour) {
+    if (!loaded.tickets.length && window.HubFlowTour && !isEmbedDrawer) {
       window.HubFlowTour.startEventTicketsTour({ isEdit: false, delay: 0 });
     }
+
+    notifyEmbedDrawerReady();
   }
 
   async function saveTickets(publish) {
@@ -910,6 +999,11 @@
       sessionStorage.removeItem(SERIES_STORAGE_KEY);
     } catch {
       /* ignore */
+    }
+
+    if (isEmbedDrawer && window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'hub-event-tickets-done' }, window.location.origin);
+      return;
     }
 
     const qs = new URLSearchParams();

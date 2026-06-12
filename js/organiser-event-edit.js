@@ -6,8 +6,16 @@
   const SERIES_STORAGE_KEY = 'hub_event_series';
   const FORMAT_STORAGE_KEY = 'hub_event_format';
   const GROUP_STORAGE_KEY = 'hub_event_group_id';
+  const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
+  const ORG_BOOTSTRAP_CACHE_MS = 120000;
   const params = new URLSearchParams(location.search);
   const editId = params.get('id') || '';
+  const isEmbedDrawer = params.get('embed') === '1' || window.self !== window.top;
+
+  if (isEmbedDrawer) {
+    document.documentElement.classList.add('ee-embed-drawer-root');
+    if (document.body) document.body.classList.add('ee-embed-drawer');
+  }
   function normalizeEventFormat(raw) {
     const s = String(raw || '')
       .toLowerCase()
@@ -204,6 +212,27 @@
       data = {};
     }
     return { ok: res.ok, status: res.status, data };
+  }
+
+  function readEmbedBootstrapCache() {
+    if (!isEmbedDrawer) return null;
+    try {
+      const raw = sessionStorage.getItem(ORG_BOOTSTRAP_CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || Date.now() - Number(parsed.at || 0) > ORG_BOOTSTRAP_CACHE_MS) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  async function loadOrganiserBootstrapData() {
+    const cached = readEmbedBootstrapCache();
+    if (cached) {
+      return { ok: true, data: { groups: cached.groups || [], events: cached.events || [] } };
+    }
+    return api('/api/organiser/bootstrap');
   }
 
   function pad2(n) {
@@ -533,7 +562,7 @@
     sel.disabled = Boolean(lockSelection);
     if (hint) {
       hint.textContent = lockSelection
-        ? 'This event belongs to the group profile you chose in the previous step.'
+        ? 'This event belongs to the group profile you selected.'
         : 'Which organiser group this event belongs to.';
     }
     if (addRow) addRow.hidden = false;
@@ -735,6 +764,7 @@
     } catch {
       /* ignore */
     }
+    if (isEmbedDrawer) return;
     const ids = (series.eventIds || []).join(',');
     location.href = 'event-tickets.html?ids=' + encodeURIComponent(ids);
   }
@@ -750,7 +780,7 @@
     }
 
     const loadWork = async () => {
-      const { ok, data } = await api('/api/organiser/bootstrap');
+      const { ok, data } = await loadOrganiserBootstrapData();
       if (!ok) {
         const next = encodeURIComponent(location.pathname + location.search);
         location.href = '../login.html?next=' + next;
@@ -758,16 +788,28 @@
       }
       groups = data.groups || [];
 
-      const chosenGroupId =
+      const explicitGroupId =
         sessionStorage.getItem(GROUP_STORAGE_KEY) || params.get('groupId') || '';
 
-      if (!editId && !chosenGroupId) {
+      if (!editId && !explicitGroupId) {
+        if (isEmbedDrawer) {
+          const autoGroupId = groups.length === 1 ? groups[0].id : '';
+          fillGroupsSelect(autoGroupId, Boolean(autoGroupId));
+          initEventTypeSelect('Meeting');
+          return;
+        }
         location.href = 'event-format.html';
         return;
       }
 
-      if (!editId && chosenGroupId && !groups.some((g) => g.id === chosenGroupId)) {
+      if (!editId && explicitGroupId && !groups.some((g) => g.id === explicitGroupId)) {
         sessionStorage.removeItem(GROUP_STORAGE_KEY);
+        if (isEmbedDrawer) {
+          const autoGroupId = groups.length === 1 ? groups[0].id : '';
+          fillGroupsSelect(autoGroupId, Boolean(autoGroupId));
+          initEventTypeSelect('Meeting');
+          return;
+        }
         location.href = 'event-format.html';
         return;
       }
@@ -778,13 +820,12 @@
           'Update your listing, add more dates on the calendar, then continue to tickets.';
         document.getElementById('ee-submit').textContent = 'Continue to tickets →';
 
-        let ev = null;
-        const evRes = await api('/api/organiser/events?id=' + encodeURIComponent(editId));
-        if (evRes.ok && evRes.data.event) {
-          ev = evRes.data.event;
-        }
+        let ev = (data.events || []).find((e) => e.id === editId) || null;
         if (!ev) {
-          ev = (data.events || []).find((e) => e.id === editId);
+          const evRes = await api('/api/organiser/events?id=' + encodeURIComponent(editId));
+          if (evRes.ok && evRes.data.event) {
+            ev = evRes.data.event;
+          }
         }
         fillGroupsSelect(ev ? ev.organiserGroupId || ev.groupId : '', false);
         if (ev) {
@@ -797,13 +838,14 @@
         return;
       }
 
-      fillGroupsSelect(chosenGroupId, true);
+      fillGroupsSelect(explicitGroupId, true);
       initEventTypeSelect('Meeting');
     };
 
     const loading = window.organiserPageLoading;
     if (loading && loading.run) {
       await loading.run('Loading event', loadWork);
+      notifyEmbedDrawerReady();
       return;
     }
 
@@ -812,6 +854,13 @@
       await loadWork();
     } finally {
       if (loading) loading.hide();
+    }
+    notifyEmbedDrawerReady();
+  }
+
+  function notifyEmbedDrawerReady() {
+    if (isEmbedDrawer && window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'hub-event-drawer-ready' }, window.location.origin);
     }
   }
 
@@ -943,6 +992,10 @@
     }
 
     if (!publish) {
+      if (isEmbedDrawer && window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'hub-event-saved', draft: true }, window.location.origin);
+        return;
+      }
       location.href = 'index.html#events-list';
       return;
     }
@@ -954,6 +1007,30 @@
       document.getElementById('ee-photo-preview-img')?.src ||
       document.getElementById('ee-photo-url')?.value.trim() ||
       '';
+    if (isEmbedDrawer && window.parent && window.parent !== window) {
+      goToTicketSetup({
+        title,
+        organiserGroupId,
+        eventFormat: locFields.eventFormat,
+        eventIds,
+        imageUrl: leadImage,
+        events: events.map((ev) => ({
+          id: ev.id,
+          title: ev.title,
+          date: ev.date,
+          imageUrl: ev.imageUrl || leadImage,
+        })),
+      });
+      window.parent.postMessage(
+        {
+          type: 'hub-event-goto-tickets',
+          eventIds,
+          title,
+        },
+        window.location.origin
+      );
+      return;
+    }
     goToTicketSetup({
       title,
       organiserGroupId,
@@ -990,8 +1067,12 @@
       }
     }
     if (!eventFormat) {
-      location.replace('event-format.html');
-      return false;
+      if (isEmbedDrawer || params.get('groupId') || params.get('format')) {
+        eventFormat = 'in-person';
+      } else {
+        location.replace('event-format.html');
+        return false;
+      }
     }
     applyFormatUi(eventFormat);
     return true;

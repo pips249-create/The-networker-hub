@@ -1598,3 +1598,45 @@ body.ee-is-loading {
   padding-top: 20px;
 }
 
+/* Dashboard drawer embed */
+body.ee-embed-drawer #hub-site-nav,
+body.ee-embed-drawer .ee-top-bar,
+body.ee-embed-drawer .ee-back-row,
+body.ee-embed-drawer #ee-page-loading,
+body.ee-embed-drawer #ee-wizard-mount {
+  display: none !important;
+}
+
+body.ee-embed-drawer .ee-wrap {
+  max-width: none;
+  padding: 16px 18px 24px;
+  margin: 0;
+}
+
+body.ee-embed-drawer .ee-page-head {
+  margin-bottom: 12px;
+}
+
+body.ee-embed-drawer .ee-title {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+body.ee-embed-drawer .ee-lead {
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+body.ee-embed-drawer .ee-card {
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+body.ee-embed-drawer .ee-actions {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding-bottom: 8px;
+  z-index: 2;
+}
+

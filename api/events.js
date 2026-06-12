@@ -1264,7 +1264,13 @@ module.exports = async function handler(req, res) {
         let allEvents = attachTicketsToEvents(all.map(recordToEvent), ticketRecords, all);
         allEvents = await enrichOrganisersForEvents(allEvents, apiKey, baseId);
         related = allEvents
-          .filter((e) => e.id !== event.id && organiserMatch(e, event) && isEventPubliclyVisible(e))
+          .filter(
+            (e) =>
+              e.id !== event.id &&
+              organiserMatch(e, event) &&
+              isEventPubliclyVisible(e) &&
+              supabaseEvents.isUpcomingBrowseEvent(e)
+          )
           .slice(0, 6);
       } catch (relErr) {
         console.error('related_events_fetch', relErr.message);
@@ -1310,7 +1316,7 @@ module.exports = async function handler(req, res) {
       return applyTicketsToEvent(ev, ticketRecords, linkIndexes, rec);
     });
     events = await enrichOrganisersForEvents(events, apiKey, baseId);
-    events = events.filter((ev) => isEventPubliclyVisible(ev));
+    events = events.filter((ev) => isEventPubliclyVisible(ev) && supabaseEvents.isUpcomingBrowseEvent(ev));
     const payload = { configured: true, events };
     if (req.query?.fields === '1') {
       if (all[0]) payload.airtableFieldNames = fieldKeys(all[0].fields || {});

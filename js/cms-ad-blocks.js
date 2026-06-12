@@ -218,18 +218,13 @@
       });
   }
 
-  function loadCmsAd(slot) {
-    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot))
-      .then(function (res) {
-        return res.json();
-      })
-      .then(function (data) {
-        if (data && data.ok && data.block) return data.block;
-        return null;
-      })
-      .catch(function () {
-        return null;
-      });
+  function renderHeroSponsorAd(container, block) {
+    if (!container || !block) return;
+    renderSidebarAd(container, block);
+    var aside = container.querySelector('.sponsor-hub');
+    if (aside) {
+      aside.classList.add('sponsor-hub--in-hero');
+    }
   }
 
   function loadEventPageCarousel() {
@@ -476,6 +471,7 @@
 
   window.CmsAdBlocks = {
     renderSidebarAd: renderSidebarAd,
+    renderHeroSponsorAd: renderHeroSponsorAd,
     renderBannerAd: renderBannerAd,
     renderCompactAd: renderCompactAd,
     renderCarouselAd: renderCarouselAd,

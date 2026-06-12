@@ -7,6 +7,7 @@
   const DESCRIPTION_MAX_WORDS = 500;
   const listPages = { groups: 1, events: 1, tickets: 1, attendees: 1, reviews: 1, revenue: 1 };
   let eventsSubRoute = 'events-list';
+  const expandedSeriesKeys = new Set();
 
   const filters = {
     eventsStatus: 'all',
@@ -43,6 +44,8 @@
     organiserRole: 'owner',
     opportunityEnquiries: [],
     opportunityEnquiriesNewCount: 0,
+    opportunities: [],
+    opportunitiesLoaded: false,
     pendingClaimGroups: [],
   };
 
@@ -103,6 +106,61 @@
     set('stat-events', String(state.eventsTotal || state.events.length));
     set('stat-tickets', String(totalTicketsSold()));
     set('stat-revenue', rev);
+
+    const editors = (state.teamMembers || []).filter(function (m) {
+      return (
+        String(m.role || '').toLowerCase() === 'editor' &&
+        String(m.status || '').toLowerCase() === 'active'
+      );
+    }).length;
+    set('stat-training-sessions', '0');
+    set('stat-training-editors', String(editors));
+    set('stat-training-registrations', '0');
+
+    const enquiries = state.opportunityEnquiries || [];
+    set('stat-opp-enquiries', String(enquiries.length));
+    set('stat-opp-enquiries-new', String(state.opportunityEnquiriesNewCount || 0));
+    const liveListings = (state.opportunities || []).filter(function (o) {
+      const status = String(o.status || o.listingStatus || '').toLowerCase();
+      return status === 'published' || status === 'live';
+    }).length;
+    set('stat-opp-listings', String(liveListings));
+
+    renderHubPortalMeta();
+  }
+
+  function renderHubPortalMeta() {
+    const eventsEl = document.getElementById('hub-portal-meta-events');
+    const trainingEl = document.getElementById('hub-portal-meta-training');
+    const businessEl = document.getElementById('hub-portal-meta-business');
+    if (eventsEl) {
+      const n = state.eventsTotal || state.events.length;
+      const rev = totalRevenueDisplay();
+      eventsEl.textContent = n + ' event' + (n === 1 ? '' : 's') + ' · ' + rev + ' revenue';
+    }
+    if (trainingEl) {
+      const editors = (state.teamMembers || []).filter(function (m) {
+        return (
+          String(m.role || '').toLowerCase() === 'editor' &&
+          String(m.status || '').toLowerCase() === 'active'
+        );
+      }).length;
+      trainingEl.textContent =
+        editors > 0
+          ? editors + ' team editor' + (editors === 1 ? '' : 's')
+          : 'Workshops coming soon';
+    }
+    if (businessEl) {
+      const newCount = Number(state.opportunityEnquiriesNewCount) || 0;
+      const total = (state.opportunityEnquiries || []).length;
+      if (newCount > 0) {
+        businessEl.textContent = newCount + ' new enquir' + (newCount === 1 ? 'y' : 'ies');
+      } else if (total > 0) {
+        businessEl.textContent = total + ' enquir' + (total === 1 ? 'y' : 'ies') + ' received';
+      } else {
+        businessEl.textContent = 'No enquiries yet';
+      }
+    }
   }
 
   function esc(s) {
@@ -130,6 +188,37 @@
     } catch {
       /* ignore */
     }
+  }
+
+  const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
+  const ORG_BOOTSTRAP_CACHE_MS = 120000;
+
+  function cacheBootstrapForEmbed(data) {
+    if (!data) return;
+    try {
+      sessionStorage.setItem(
+        ORG_BOOTSTRAP_CACHE_KEY,
+        JSON.stringify({
+          at: Date.now(),
+          groups: data.groups || [],
+          events: data.events || [],
+        })
+      );
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function prefetchEventsInBackground() {
+    if (state.eventsFullyLoaded || state.eventsLoading || !state.eventsHasMore) return;
+    ensureAllEventsForGrouping()
+      .then(function () {
+        renderOverviewEvents();
+        if (eventsSubRoute === 'events-list') renderEvents();
+      })
+      .catch(function () {
+        /* non-fatal */
+      });
   }
 
   function api(path, options) {
@@ -341,19 +430,50 @@
   }
 
   function eventTitleCellHtml(ev) {
-    const badge =
-      ev.isSeries && ev.seriesCount > 1
-        ? '<span class="org-series-badge">' +
-          esc(String(ev.seriesCount)) +
-          ' dates</span>'
-        : '';
+    if (ev.isSeries && ev.seriesCount > 1) {
+      const key = eventSeriesBucketKey(ev);
+      const expanded = expandedSeriesKeys.has(key);
+      return (
+        '<button type="button" class="org-series-toggle' +
+        (expanded ? ' is-open' : '') +
+        '" data-toggle-series="' +
+        esc(key) +
+        '" aria-expanded="' +
+        (expanded ? 'true' : 'false') +
+        '">' +
+        '<span class="org-series-chev" aria-hidden="true">' +
+        (expanded ? '▾' : '▸') +
+        '</span> ' +
+        esc(ev.title) +
+        '<span class="org-series-badge">' +
+        esc(String(ev.seriesCount)) +
+        ' dates</span></button>'
+      );
+    }
     return (
       '<button type="button" class="org-td-name-click" data-edit-event="' +
       esc(ev.id) +
       '">' +
       esc(ev.title) +
-      '</button>' +
-      badge
+      '</button>'
+    );
+  }
+
+  function eventCanDelete(ev) {
+    if (!ev || !ev.id || state.canDeleteEvents === false) return false;
+    if (ev.locked) return false;
+    if ((Number(ev.ticketsSold) || 0) > 0) return false;
+    const st = String(ev.statusKey || ev.status || '').toLowerCase();
+    if (st === 'cancelled') return false;
+    return true;
+  }
+
+  function eventDeleteActionHtml(ev) {
+    if (!eventCanDelete(ev)) return '';
+    return (
+      '<button type="button" class="org-action-item danger" data-delete-event="' +
+      esc(ev.id) +
+      '"><span class="org-action-icon">🗑</span><span class="org-action-text"><strong>Delete event</strong><span>Remove this listing permanently</span></span></button>'
     );
   }
 
@@ -463,11 +583,16 @@
         '</div></div>'
       );
     }
-    return eventActionMenuHtml(id, title);
+    return eventActionMenuHtml(item || { id: id, title: title });
   }
 
-  function eventActionMenuHtml(id, title) {
-    const shortTitle = String(title || 'Event').slice(0, 32);
+  function eventActionMenuHtml(evOrId, title) {
+    const ev =
+      typeof evOrId === 'object' && evOrId
+        ? evOrId
+        : { id: evOrId, title: title || 'Event' };
+    const id = ev.id;
+    const shortTitle = String(ev.title || title || 'Event').slice(0, 32);
     return (
       '<div class="org-action-wrap">' +
       '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
@@ -487,6 +612,7 @@
       '<button type="button" class="org-action-item" data-org-goto-sub="events-reviews" data-filter-event="' +
       esc(id) +
       '"><span class="org-action-icon">★</span><span class="org-action-text"><strong>Reviews</strong><span>Read &amp; reply to reviews</span></span></button>' +
+      eventDeleteActionHtml(ev) +
       '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Hide from directory</span></span></button>' +
       '</div></div>'
     );
@@ -525,6 +651,7 @@
       esc(id) +
       '"><span class="org-action-icon">£</span><span class="org-action-text"><strong>Revenue &amp; payout</strong><span>Request payout when eligible</span></span></button>' +
       cancelItem +
+      eventDeleteActionHtml(ev) +
       '</div></div>'
     );
   }
@@ -544,6 +671,10 @@
 
   function parseRoute() {
     const hash = (location.hash.replace('#', '') || 'dashboard').toLowerCase();
+    if (hash === 'opportunity-enquiries') return { page: 'business-overview', sub: null };
+    if (hash === 'events-overview') return { page: 'events-overview', sub: null };
+    if (hash === 'training-overview') return { page: 'training-overview', sub: null };
+    if (hash === 'business-overview') return { page: 'business-overview', sub: null };
     if (hash === 'tickets') return { page: 'events', sub: 'events-tickets' };
     if (hash.startsWith('events-')) return { page: 'events', sub: hash };
     if (hash === 'events') return { page: 'events', sub: 'events-list' };
@@ -559,8 +690,8 @@
     { type: 'WORKSHOP', title: 'Storytelling for leaders — Workshop', host: 'Summit Path Ltd' },
   ];
 
-  function renderAcademyPreview() {
-    const grid = document.getElementById('org-academy-preview-grid');
+  function renderAcademyPreviewGrid(gridId) {
+    const grid = document.getElementById(gridId);
     if (!grid || grid.dataset.rendered === '1') return;
     grid.dataset.rendered = '1';
     grid.innerHTML = ACADEMY_PREVIEW_SESSIONS.map(
@@ -575,6 +706,11 @@
         esc(s.host) +
         '</span></div></article>'
     ).join('');
+  }
+
+  function renderAcademyPreview() {
+    renderAcademyPreviewGrid('org-academy-preview-grid');
+    renderAcademyPreviewGrid('org-academy-preview-grid-hub');
   }
 
   function setEventsSub(sub) {
@@ -598,7 +734,19 @@
     if (eventsSubRoute === 'events-attendees') {
       fillAttendeesEventFilter();
       loadAttendeesAll().then(() => renderAttendees());
+    } else {
+      renderEventsPanel(eventsSubRoute);
     }
+  }
+
+  function renderEventsPanel(sub) {
+    updateMyEventsTabCounts();
+    fillMyEventsFilters();
+    if (sub === 'events-list') renderEvents();
+    else if (sub === 'events-tickets') renderTickets();
+    else if (sub === 'events-attendees') renderAttendees();
+    else if (sub === 'events-reviews') renderReviews();
+    else if (sub === 'events-revenue') renderRevenue();
   }
 
   function updateMyEventsTabCounts() {
@@ -898,7 +1046,191 @@
   }
 
   function goToEventEditor(ev) {
-    location.href = eventEditorUrl(ev);
+    openEventEditorDrawer(ev);
+  }
+
+  function eventEditorFrameUrl(opts) {
+    const params = new URLSearchParams();
+    params.set('embed', '1');
+    if (opts && opts.editId) {
+      params.set('id', opts.editId);
+    } else {
+      params.set('format', (opts && opts.format) || 'in-person');
+      if (opts && opts.groupId) params.set('groupId', opts.groupId);
+    }
+    return 'event-edit.html?' + params.toString();
+  }
+
+  function openNewEventEditorDrawer(options) {
+    options = options || {};
+    let groupId = options.groupId || '';
+    if (!groupId && state.groups.length === 1) {
+      groupId = state.groups[0].id;
+    }
+    const format = options.format || 'in-person';
+    try {
+      if (groupId) sessionStorage.setItem('hub_event_group_id', groupId);
+      else sessionStorage.removeItem('hub_event_group_id');
+      sessionStorage.setItem('hub_event_format', format);
+    } catch (err) {
+      /* ignore */
+    }
+    openEventEditorDrawer(null, { isNew: true, groupId: groupId, format: format });
+  }
+
+  function goToNewEventEditor(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!state.groups.length) {
+      alert('You must add a group profile first.');
+      openGroupEditorDrawer();
+      return;
+    }
+    openNewEventEditorDrawer();
+  }
+
+  let eventDrawerLoadTimeout = null;
+
+  function setEventDrawerLoading(on) {
+    const wrap = document.getElementById('org-event-drawer-frame-wrap');
+    const loading = document.getElementById('org-event-drawer-loading');
+    if (wrap) wrap.classList.toggle('is-loading', on);
+    if (loading) {
+      loading.hidden = !on;
+      loading.setAttribute('aria-hidden', on ? 'false' : 'true');
+      loading.setAttribute('aria-busy', on ? 'true' : 'false');
+    }
+    if (!on && eventDrawerLoadTimeout) {
+      clearTimeout(eventDrawerLoadTimeout);
+      eventDrawerLoadTimeout = null;
+    }
+  }
+
+  function closeEventEditorDrawer() {
+    const drawer = document.getElementById('org-event-drawer');
+    const frame = document.getElementById('org-event-drawer-frame');
+    if (!drawer) return;
+    drawer.classList.remove('is-open');
+    document.body.classList.remove('org-event-drawer-open');
+    setEventDrawerLoading(false);
+    if (frame) frame.removeAttribute('src');
+    setTimeout(function () {
+      if (!drawer.classList.contains('is-open')) {
+        drawer.hidden = true;
+        drawer.setAttribute('aria-hidden', 'true');
+      }
+    }, 280);
+  }
+
+  function eventTicketsFrameUrl(eventIds) {
+    return (
+      'event-tickets.html?ids=' + encodeURIComponent((eventIds || []).join(',')) + '&embed=1'
+    );
+  }
+
+  function openEventDrawerFrame(frameUrl, titleText) {
+    const drawer = document.getElementById('org-event-drawer');
+    const frame = document.getElementById('org-event-drawer-frame');
+    const titleEl = document.getElementById('org-event-drawer-title');
+    if (!drawer || !frame) {
+      location.href = frameUrl.replace('&embed=1', '').replace('embed=1&', '').replace('?embed=1', '?');
+      return false;
+    }
+
+    closeAllActionMenus();
+    if (titleEl && titleText) titleEl.textContent = titleText;
+    setEventDrawerLoading(true);
+    if (eventDrawerLoadTimeout) clearTimeout(eventDrawerLoadTimeout);
+    eventDrawerLoadTimeout = setTimeout(function () {
+      setEventDrawerLoading(false);
+    }, 12000);
+    frame.src = frameUrl;
+
+    drawer.hidden = false;
+    drawer.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(function () {
+      drawer.classList.add('is-open');
+    });
+    document.body.classList.add('org-event-drawer-open');
+    return true;
+  }
+
+  function openEventTicketsDrawer(eventIds, title) {
+    const label = title ? 'Tickets: ' + title : 'Set up tickets';
+    openEventDrawerFrame(eventTicketsFrameUrl(eventIds), label);
+  }
+
+  function openEventEditorDrawer(eventOrId, drawerOpts) {
+    drawerOpts = drawerOpts || {};
+    const drawer = document.getElementById('org-event-drawer');
+    const frame = document.getElementById('org-event-drawer-frame');
+    const titleEl = document.getElementById('org-event-drawer-title');
+    const isNew = Boolean(drawerOpts.isNew);
+    const editId =
+      !isNew && typeof eventOrId === 'object' && eventOrId && eventOrId.id
+        ? eventOrId.id
+        : !isNew
+          ? eventOrId || ''
+          : '';
+
+    if (!drawer || !frame) {
+      if (isNew) {
+        const qs = new URLSearchParams();
+        qs.set('format', drawerOpts.format || 'in-person');
+        if (drawerOpts.groupId) qs.set('groupId', drawerOpts.groupId);
+        location.href = 'event-edit.html?' + qs.toString();
+      } else {
+        location.href = editId
+          ? 'event-edit.html?id=' + encodeURIComponent(editId)
+          : 'event-edit.html?format=in-person';
+      }
+      return;
+    }
+
+    let frameUrl;
+    let drawerTitle = 'Edit event';
+    if (isNew) {
+      drawerTitle = 'New event';
+      frameUrl = eventEditorFrameUrl({
+        groupId: drawerOpts.groupId || '',
+        format: drawerOpts.format || 'in-person',
+      });
+    } else {
+      const ev =
+        typeof eventOrId === 'object' && eventOrId
+          ? eventOrId
+          : findEventById(editId) || { id: editId, title: 'Event' };
+      drawerTitle = ev.title ? 'Edit: ' + ev.title : 'Edit event';
+      frameUrl = eventEditorFrameUrl({ editId: editId });
+    }
+
+    openEventDrawerFrame(frameUrl, drawerTitle);
+  }
+
+  async function confirmDeleteEvent(eventId) {
+    if (!eventId) return;
+    const ev = findEventById(eventId);
+    const label = ev && ev.title ? ev.title : 'this event';
+    if (
+      !window.confirm(
+        'Delete "' +
+          label +
+          '" permanently?\n\nThis cannot be undone. Events with ticket sales must be cancelled instead.'
+      )
+    ) {
+      return;
+    }
+    const res = await api('/api/organiser/events', {
+      method: 'DELETE',
+      body: JSON.stringify({ id: eventId }),
+    });
+    if (!res.ok) {
+      window.alert(res.data.message || res.data.error || 'Could not delete this event.');
+      return;
+    }
+    showAirtableAlert(res.data.message || 'Event deleted.', false);
+    await loadBootstrap();
+    renderAll();
+    setRoute('events-list');
   }
 
   function goToEventTickets(ev) {
@@ -1187,14 +1519,17 @@
     (state.upcomingEvents || []).forEach((ev) => {
       if (ev && ev.id && !allEvents.some((e) => e.id === ev.id)) allEvents.push(ev);
     });
+    const direct = allEvents.find((x) => x.id === id);
+    if (direct) return direct;
     const grouped = groupEventsIntoSeries(allEvents);
-    const seriesRow = grouped.find(
-      (row) =>
-        row.id === id ||
-        (row.isSeries && row.seriesEventIds && row.seriesEventIds.includes(id))
-    );
-    if (seriesRow && seriesRow.isSeries) return seriesRow;
-    return allEvents.find((x) => x.id === id) || null;
+    for (let i = 0; i < grouped.length; i++) {
+      const row = grouped[i];
+      if (row.isSeries && row.seriesEvents) {
+        const child = row.seriesEvents.find((x) => x.id === id);
+        if (child) return child;
+      }
+    }
+    return grouped.find((row) => row.id === id) || null;
   }
 
   async function confirmDuplicateGroup(groupId) {
@@ -1229,13 +1564,7 @@
 
   function goToAddEventForGroup(groupId) {
     if (!groupId) return;
-    try {
-      sessionStorage.setItem('hub_event_group_id', groupId);
-      sessionStorage.removeItem('hub_event_format');
-    } catch (err) {
-      /* ignore */
-    }
-    location.href = 'event-format.html';
+    openNewEventEditorDrawer({ groupId: groupId });
   }
 
   async function confirmUnpublishGroup(groupId) {
@@ -1270,6 +1599,8 @@
       m.style.left = '';
       m.style.right = '';
       m.style.bottom = '';
+      m.style.visibility = '';
+      m.style.display = '';
       if (m._actionWrap) {
         m._actionWrap.appendChild(m);
         m._actionWrap = null;
@@ -1280,19 +1611,24 @@
     });
   }
 
+  function getActionMenuPortal() {
+    return document.getElementById('org-action-menu-portal') || document.body;
+  }
+
   function openActionMenu(menu, toggle) {
     const wrap = toggle.closest('.org-action-wrap');
-    if (wrap && menu.parentElement !== document.body) {
+    const portal = getActionMenuPortal();
+    if (wrap && menu.parentElement !== portal) {
       menu._actionWrap = wrap;
-      document.body.appendChild(menu);
+      portal.appendChild(menu);
     }
     menu.classList.add('is-open', 'is-floating');
     toggle.setAttribute('aria-expanded', 'true');
     menu.style.visibility = 'hidden';
     menu.style.display = 'block';
     const rect = toggle.getBoundingClientRect();
-    const menuW = menu.offsetWidth || 220;
-    const menuH = menu.offsetHeight || 180;
+    const menuW = menu.offsetWidth || 240;
+    const menuH = menu.offsetHeight || 200;
     let top = rect.bottom + 6;
     let left = rect.right - menuW;
     if (top + menuH > window.innerHeight - 12) {
@@ -1305,7 +1641,18 @@
     menu.style.top = top + 'px';
     menu.style.left = left + 'px';
     menu.style.right = 'auto';
+    menu.style.bottom = 'auto';
     menu.style.visibility = '';
+    requestAnimationFrame(function () {
+      if (!menu.classList.contains('is-open')) return;
+      const nextRect = toggle.getBoundingClientRect();
+      const nextH = menu.offsetHeight || menuH;
+      let nextTop = nextRect.bottom + 6;
+      if (nextTop + nextH > window.innerHeight - 12) {
+        nextTop = Math.max(12, nextRect.top - nextH - 6);
+      }
+      menu.style.top = nextTop + 'px';
+    });
   }
 
   function handleActionMenuChoice(e) {
@@ -1328,6 +1675,28 @@
       const g = findGroupById(gid);
       if (g) goToGroupEditor(g);
       else if (gid) openGroupEditorDrawer(gid);
+      return true;
+    }
+
+    const toggleSeriesBtn = e.target.closest('[data-toggle-series]');
+    if (toggleSeriesBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const key = toggleSeriesBtn.getAttribute('data-toggle-series');
+      if (key) {
+        if (expandedSeriesKeys.has(key)) expandedSeriesKeys.delete(key);
+        else expandedSeriesKeys.add(key);
+        renderEvents();
+      }
+      return true;
+    }
+
+    const deleteEventBtn = e.target.closest('[data-delete-event]');
+    if (deleteEventBtn && !deleteEventBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      confirmDeleteEvent(deleteEventBtn.getAttribute('data-delete-event'));
       return true;
     }
 
@@ -1357,7 +1726,7 @@
       const eid = editEventBtn.getAttribute('data-edit-event');
       const ev = findEventById(eid);
       if (ev) goToEventEditor(ev);
-      else if (eid) location.href = 'event-edit.html?id=' + encodeURIComponent(eid);
+      else if (eid) openEventEditorDrawer(eid);
       return true;
     }
 
@@ -1589,10 +1958,24 @@
     alertEl.innerHTML = message;
   }
 
+  function sidebarRouteForPage(page, sub) {
+    if (page === 'events-overview') return 'events-list';
+    if (page === 'training-overview') return 'academy';
+    if (page === 'business-overview') return 'business-overview';
+    if (page === 'events') return sub || 'events-list';
+    return page;
+  }
+
   function setRoute(route) {
     let page = route || 'dashboard';
     let sub = null;
-    if (route && route.startsWith('events-')) {
+    if (route === 'opportunity-enquiries' || route === 'business-overview') {
+      page = 'business-overview';
+    } else if (route === 'events-overview') {
+      page = 'events-overview';
+    } else if (route === 'training-overview') {
+      page = 'training-overview';
+    } else if (route && route.startsWith('events-')) {
       page = 'events';
       sub = route;
     } else if (route === 'events') {
@@ -1607,7 +1990,7 @@
       page = 'team';
     }
 
-    const activeRoute = page === 'events' ? sub || 'events-list' : page;
+    const activeRoute = sidebarRouteForPage(page, sub);
     document.querySelectorAll('.hub-side-nav-link[data-org-route]').forEach((a) => {
       a.classList.toggle('is-active', a.getAttribute('data-org-route') === activeRoute);
     });
@@ -1618,7 +2001,7 @@
     if (page === 'events') {
       setEventsSub(sub || eventsSubRoute || 'events-list');
     }
-    if (page === 'academy') {
+    if (page === 'academy' || page === 'training-overview') {
       renderAcademyPreview();
     }
     if (page === 'team') {
@@ -1627,14 +2010,19 @@
       updateGettingStartedPanel();
     });
     }
-
-    const hash = page === 'events' ? sub || 'events-list' : page;
-    if (location.hash.replace('#', '') !== hash) {
-      history.replaceState(null, '', '#' + hash);
+    if (page === 'business-overview') {
+      loadOpportunityEnquiries();
+      loadOpportunitiesList();
     }
 
-    if (page === 'opportunity-enquiries') {
-      loadOpportunityEnquiries();
+    const hash =
+      page === 'events'
+        ? sub || 'events-list'
+        : page === 'business-overview'
+          ? 'business-overview'
+          : page;
+    if (location.hash.replace('#', '') !== hash) {
+      history.replaceState(null, '', '#' + hash);
     }
   }
 
@@ -1652,7 +2040,7 @@
 
   function openModal(id) {
     if (id === 'modal-event') {
-      location.href = 'event-format.html';
+      goToNewEventEditor();
       return;
     }
     const el = document.getElementById(id);
@@ -1869,6 +2257,53 @@
     });
   }
 
+  function appendEventTableRow(body, ev, options) {
+    const opts = options || {};
+    const isChild = Boolean(opts.isChild);
+    const tr = document.createElement('tr');
+    if (isChild) tr.className = 'org-series-child-row';
+    else if (ev.isSeries && ev.seriesCount > 1) tr.className = 'org-series-parent-row';
+
+    const revClass = ev.revenueNum > 0 ? 'org-revenue' : 'org-revenue muted';
+    let nameHtml;
+    if (isChild) {
+      nameHtml =
+        '<span class="org-series-child-label" aria-hidden="true">↳</span>' +
+        '<button type="button" class="org-td-name-click org-series-child-name" data-edit-event="' +
+        esc(ev.id) +
+        '">' +
+        esc(formatDateShort(ev.date) || 'Date TBC') +
+        '</button>';
+    } else {
+      nameHtml = eventTitleCellHtml(ev);
+    }
+
+    tr.innerHTML =
+      '<td>' +
+      (isChild ? '<span class="org-series-child-thumb" aria-hidden="true"></span>' : thumbHtml(ev)) +
+      '</td><td class="org-td-name' +
+      (isChild ? ' org-td-name--series-child' : '') +
+      '">' +
+      nameHtml +
+      '</td><td>' +
+      esc(isChild ? formatDateShort(ev.date) : formatEventDateCell(ev)) +
+      '</td><td>' +
+      esc(formatTimeRange(ev.date, ev.endDate)) +
+      '</td><td>' +
+      esc(ev.ticketsSoldLabel || '0') +
+      '</td><td class="' +
+      revClass +
+      '">' +
+      esc(ev.revenueDisplay || '£0') +
+      '</td><td>' +
+      statusBadgeHtml(ev.statusKey || 'draft', ev.statusLabel || 'Draft') +
+      '</td><td class="org-td-actions">' +
+      eventActionMenuHtmlWithItem(ev) +
+      '</td>';
+    body.appendChild(tr);
+    return tr;
+  }
+
   function renderEvents() {
     const body = document.getElementById('events-body');
     const empty = document.getElementById('events-empty');
@@ -1905,30 +2340,15 @@
     updatePaginationNav('events', pageInfo);
 
     pageInfo.items.forEach((ev) => {
-      const tr = document.createElement('tr');
-      const revClass =
-        ev.revenueNum > 0 ? 'org-revenue' : 'org-revenue muted';
-      tr.innerHTML =
-        '<td>' +
-        thumbHtml(ev) +
-        '</td><td class="org-td-name">' +
-        eventTitleCellHtml(ev) +
-        '</td><td>' +
-        esc(formatEventDateCell(ev)) +
-        '</td><td>' +
-        esc(formatTimeRange(ev.date, ev.endDate)) +
-        '</td><td>' +
-        esc(ev.ticketsSoldLabel || '0') +
-        '</td><td class="' +
-        revClass +
-        '">' +
-        esc(ev.revenueDisplay || '£0') +
-        '</td><td>' +
-        statusBadgeHtml(ev.statusKey || 'draft', ev.statusLabel || 'Draft') +
-        '</td><td class="org-td-actions">' +
-        eventActionMenuHtmlWithItem(ev) +
-        '</td>';
-      body.appendChild(tr);
+      appendEventTableRow(body, ev);
+      if (ev.isSeries && ev.seriesCount > 1 && ev.seriesEvents && ev.seriesEvents.length) {
+        const key = eventSeriesBucketKey(ev);
+        if (expandedSeriesKeys.has(key)) {
+          ev.seriesEvents.forEach((child) => {
+            appendEventTableRow(body, child, { isChild: true });
+          });
+        }
+      }
     });
   }
 
@@ -2125,14 +2545,8 @@
     });
   }
 
-  function renderMyEventsHub() {
-    updateMyEventsTabCounts();
-    fillMyEventsFilters();
-    renderEvents();
-    renderTickets();
-    renderAttendees();
-    renderReviews();
-    renderRevenue();
+  function renderMyEventsHub(sub) {
+    renderEventsPanel(sub || eventsSubRoute);
   }
 
   function teamRoleLabel(role) {
@@ -2703,7 +3117,8 @@
           window.HubOrganiserOnboarding.markReadyEventDismissed();
         }
         if (window.HubFlowTour) window.HubFlowTour.markEventTourPending();
-        window.location.href = 'event-format.html';
+        const groupId = state.groups.length ? state.groups[0].id : '';
+        openNewEventEditorDrawer({ groupId: groupId });
       });
     }
   }
@@ -2744,22 +3159,11 @@
 
   function updateOpportunityEnquiryUi() {
     const newCount = Number(state.opportunityEnquiriesNewCount) || 0;
-    const alert = document.getElementById('org-opp-enquiry-alert');
     const navBadge = document.getElementById('org-opp-enquiry-nav-badge');
-    const quickCard = document.getElementById('org-quick-opp-enquiries');
-    const quickHint = document.getElementById('org-quick-opp-enquiries-hint');
 
-    if (alert) alert.hidden = newCount < 1;
     if (navBadge) {
       navBadge.hidden = newCount < 1;
       navBadge.textContent = newCount > 1 ? String(newCount) + ' new' : 'New';
-    }
-    if (quickCard) quickCard.hidden = !state.opportunityEnquiries.length;
-    if (quickHint) {
-      quickHint.textContent =
-        newCount > 0
-          ? newCount + ' new enquir' + (newCount === 1 ? 'y' : 'ies') + ' waiting for a reply'
-          : 'Messages about your business opportunity listings';
     }
   }
 
@@ -2807,6 +3211,19 @@
     updateOpportunityEnquiryUi();
   }
 
+  async function loadOpportunitiesList() {
+    if (state.opportunitiesLoaded) return;
+    try {
+      const { ok, data } = await api('/api/organiser/opportunities');
+      if (!ok) return;
+      state.opportunities = data.opportunities || [];
+      state.opportunitiesLoaded = true;
+      renderStats();
+    } catch {
+      /* ignore */
+    }
+  }
+
   async function loadOpportunityEnquiries() {
     const hint = document.getElementById('opp-enquiries-load-hint');
     if (hint) hint.hidden = false;
@@ -2852,14 +3269,21 @@
 
   function setDashboardLoading(on) {
     const el = document.getElementById('org-dash-loading');
-    if (el) el.hidden = !on;
+    if (!el) return;
+    el.hidden = !on;
+    el.classList.toggle('is-active', on);
+    el.setAttribute('aria-hidden', on ? 'false' : 'true');
+    el.setAttribute('aria-busy', on ? 'true' : 'false');
+    document.body.classList.toggle('hub-is-page-loading', on);
   }
 
-  async function loadBootstrap() {
-    setDashboardLoading(true);
+  async function loadBootstrap(options) {
+    const silent = Boolean(options && options.silent);
+    if (!silent) setDashboardLoading(true);
     try {
     const { ok, data } = await api('/api/organiser/bootstrap');
     if (!ok) throw new Error(data.message || data.error || 'load_failed');
+    cacheBootstrapForEmbed(data);
     state.groups = data.groups || [];
     state.pendingClaimGroups = data.pendingClaimGroups || [];
     state.events = data.events || [];
@@ -2931,17 +3355,19 @@
     renderAll();
     renderGroupClaimModal();
     loadOpportunityEnquiries();
+    loadOpportunitiesList();
     updateTeamNavBadge();
     if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
       window.HubOrganiserOnboarding.initAfterDashboardReady();
     }
+    prefetchEventsInBackground();
     } finally {
-      setDashboardLoading(false);
+      if (!silent) setDashboardLoading(false);
     }
   }
 
   async function refresh() {
-    await loadBootstrap();
+    await loadBootstrap({ silent: true });
   }
 
   let groupLogoFile = null;
@@ -3146,21 +3572,6 @@
       openGroupEditorDrawer();
     }
 
-    function goToNewEventEditor(e) {
-      if (e && e.preventDefault) e.preventDefault();
-      if (!state.groups.length) {
-        alert('You must add a group profile first.');
-        openGroupEditorDrawer();
-        return;
-      }
-      try {
-        sessionStorage.removeItem('hub_event_group_id');
-      } catch (err) {
-        /* ignore */
-      }
-      location.href = 'event-format.html';
-    }
-
     const addToggle = document.getElementById('org-add-toggle');
     const addMenu = document.getElementById('org-add-menu');
     const addWrap = document.getElementById('org-add-menu-wrap');
@@ -3235,21 +3646,21 @@
         if (!route) return;
         setRoute(route);
         if (route === 'groups') renderGroups();
-        else if (route === 'events-reviews') {
-          renderMyEventsHub();
-          renderReviews();
-        } else if (
+        else if (
           route === 'events-tickets' ||
           route === 'events-list' ||
           route === 'events-attendees' ||
+          route === 'events-reviews' ||
           route === 'events-revenue'
         ) {
-          renderMyEventsHub();
+          renderMyEventsHub(route);
         } else if (route === 'team') {
           loadTeamMembers().then(function () {
       renderTeam();
       updateGettingStartedPanel();
     });
+        } else if (route === 'academy') {
+          renderAcademyPreview();
         }
       });
     });
@@ -3470,8 +3881,45 @@
       el.addEventListener('click', closeGroupEditorDrawer);
     });
 
+    document.querySelectorAll('[data-org-event-drawer-close]').forEach((el) => {
+      el.addEventListener('click', closeEventEditorDrawer);
+    });
+
+    window.addEventListener('message', (e) => {
+      if (e.origin !== window.location.origin) return;
+      if (e.data && e.data.type === 'hub-event-saved') {
+        closeEventEditorDrawer();
+        loadBootstrap().then(renderAll);
+        return;
+      }
+      if (e.data && e.data.type === 'hub-event-drawer-ready') {
+        setEventDrawerLoading(false);
+        return;
+      }
+      if (e.data && e.data.type === 'hub-event-goto-tickets') {
+        const ids = Array.isArray(e.data.eventIds) ? e.data.eventIds : [];
+        if (ids.length) openEventTicketsDrawer(ids, e.data.title || '');
+        return;
+      }
+      if (e.data && e.data.type === 'hub-event-tickets-done') {
+        closeEventEditorDrawer();
+        loadBootstrap({ silent: true }).then(renderAll);
+        setRoute('events-list');
+        return;
+      }
+      if (e.data && e.data.type === 'hub-event-goto-edit') {
+        const editId = e.data.eventId || '';
+        if (editId) openEventEditorDrawer(editId);
+      }
+    });
+
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        const eventDrawer = document.getElementById('org-event-drawer');
+        if (eventDrawer && !eventDrawer.hidden && eventDrawer.classList.contains('is-open')) {
+          closeEventEditorDrawer();
+          return;
+        }
         const drawer = document.getElementById('org-group-drawer');
         if (drawer && !drawer.hidden && drawer.classList.contains('is-open')) {
           closeGroupEditorDrawer();
@@ -3510,6 +3958,7 @@
     state.user = user;
     if (signin) signin.hidden = true;
     shell.hidden = false;
+    setDashboardLoading(true);
     const payoutSubmit = document.getElementById('btn-payout-submit');
     if (payoutSubmit) {
       payoutSubmit.addEventListener('click', submitPayoutRequest);
@@ -3546,6 +3995,7 @@
       }
     } catch (e) {
       showAirtableAlert('Could not load dashboard: ' + esc(e.message), true);
+      setDashboardLoading(false);
     }
   }
 
