@@ -222,7 +222,7 @@
       title: 'Online Course Creator — 70% Revenue Share',
       desc: 'Package your expertise into a course on our marketplace. We handle payments, marketing and hosting.',
       about: [
-        'Turn your professional expertise into a sellable online course on The Networker Academy marketplace.',
+        'Turn your professional expertise into a sellable online course on The Networker Hub training marketplace.',
         'We handle hosting, checkout and promotion — you keep 70% of every sale with no upfront listing fee.',
       ],
       meta: [

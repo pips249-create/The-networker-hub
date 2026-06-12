@@ -2,6 +2,7 @@
  * Public events API — Supabase (replaces Airtable read path when DATA_PROVIDER=supabase).
  */
 const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./supabase');
+const { isEventCurrentlyFeatured } = require('./event-featured-plans');
 const { eventImageUrl } = require('./event-image');
 const { eventHasTicketsOnSale, resolveTicketSalesEnabled } = require('./ticket-sales');
 const { connectRequiredForPaidCheckout } = require('./stripe-connect');
@@ -327,7 +328,8 @@ function rowToEvent(row, organiser, ticketRows) {
     typeCategory,
     lat: row.latitude != null ? Number(row.latitude) : null,
     lng: row.longitude != null ? Number(row.longitude) : null,
-    featured: Boolean(row.featured),
+    featured: isEventCurrentlyFeatured(row),
+    featuredUntil: row.featured_until || null,
     price,
     priceKey,
     priceNum,

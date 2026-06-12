@@ -1,0 +1,124 @@
+const { getOrganiserApi } = require('../organiser-provider');
+const {
+  isStripeCheckoutConfigured,
+  createEventFeaturedCheckoutSession,
+  siteBaseUrl,
+} = require('../stripe-checkout');
+const { normalizePlanId } = require('../event-featured-plans');
+
+function parseBody(req) {
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      body = {};
+    }
+  }
+  return body || {};
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    String(value || '')
+  );
+}
+
+/** Start Stripe Checkout for a featured event listing (1 week / 4 weeks / 2 months). */
+module.exports = async function handler(req, res) {
+  const api = getOrganiserApi();
+  const {
+    json,
+    setCors,
+    requireOrganiserSession,
+    getEventById,
+    listGroupsForSession,
+    listEventsForSession,
+    groupOwnedBySession,
+    isPlatformAdmin,
+  } = api;
+
+  setCors(req, res);
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Cache-Control', 'no-store');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
+
+  const auth = requireOrganiserSession(req);
+  if (!auth.ok) return json(res, auth.status, { error: auth.error });
+
+  if (!isStripeCheckoutConfigured()) {
+    return json(res, 503, { ok: false, error: 'stripe_not_configured' });
+  }
+
+  try {
+    const body = parseBody(req);
+    const eventId = String(body.eventId || body.id || '').trim();
+    const planId = normalizePlanId(body.planId || body.plan || body.duration);
+    if (!isUuid(eventId)) return json(res, 400, { ok: false, error: 'invalid_event_id' });
+    if (!planId) return json(res, 400, { ok: false, error: 'invalid_plan' });
+
+    const groups = await listGroupsForSession(auth.session);
+    const events = await listEventsForSession(
+      auth.session,
+      groups.map((g) => g.id),
+      []
+    );
+    const allowed = new Set(events.map((e) => e.id));
+    if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {
+      return json(res, 403, { ok: false, error: 'event_not_owned' });
+    }
+
+    const event = await getEventById(eventId);
+    if (
+      !isPlatformAdmin(auth.session) &&
+      event.organiserGroupId &&
+      !groupOwnedBySession(auth.session, groups, event.organiserGroupId) &&
+      !allowed.has(eventId)
+    ) {
+      return json(res, 403, { ok: false, error: 'event_not_owned' });
+    }
+
+    const status = String(event.status || event.listingStatus || '').toLowerCase();
+    const approved = String(event.approvalStatus || event.statusRaw || '').toLowerCase() === 'approved';
+    if (status !== 'published' || !approved) {
+      return json(res, 400, { ok: false, error: 'event_not_live' });
+    }
+
+    const siteUrl = siteBaseUrl();
+    const title = encodeURIComponent(event.title || '');
+    const checkoutSession = await createEventFeaturedCheckoutSession({
+      email: auth.session.email,
+      eventId,
+      planId,
+      eventTitle: event.title,
+      successUrl:
+        siteUrl +
+        '/organiser/event-featured-success.html?session_id={CHECKOUT_SESSION_ID}&id=' +
+        encodeURIComponent(eventId) +
+        '&plan=' +
+        encodeURIComponent(planId) +
+        (title ? '&title=' + title : ''),
+      cancelUrl:
+        siteUrl +
+        '/organiser/event-published.html?ids=' +
+        encodeURIComponent(eventId) +
+        (title ? '&title=' + title : '') +
+        '&featured=cancelled',
+    });
+
+    return json(res, 200, {
+      ok: true,
+      url: checkoutSession.url,
+      sessionId: checkoutSession.id,
+    });
+  } catch (e) {
+    return json(res, 500, {
+      ok: false,
+      error: 'checkout_failed',
+      message: e.message || String(e),
+    });
+  }
+};

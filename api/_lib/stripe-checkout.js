@@ -137,12 +137,56 @@ async function retrieveCheckoutSession(sessionId) {
   });
 }
 
+const { FEATURED_PLANS, normalizePlanId } = require('./event-featured-plans');
+
+/**
+ * One-off featured event listing (£15 / £55 / £100 by duration).
+ */
+async function createEventFeaturedCheckoutSession(opts) {
+  const stripe = getStripeClient();
+  const eventId = String(opts.eventId || '').trim();
+  const planId = normalizePlanId(opts.planId);
+  if (!eventId) throw new Error('missing_event_id');
+  if (!planId) throw new Error('invalid_plan');
+
+  const plan = FEATURED_PLANS[planId];
+  const eventTitle = String(opts.eventTitle || 'Event').trim();
+
+  return stripe.checkout.sessions.create({
+    mode: 'payment',
+    customer_email: opts.email,
+    client_reference_id: 'event-featured-' + eventId + '-' + planId,
+    metadata: {
+      event_id: eventId,
+      featured_plan: planId,
+      checkout_type: 'event_featured',
+      owner_email: String(opts.email || '').toLowerCase(),
+    },
+    success_url: opts.successUrl,
+    cancel_url: opts.cancelUrl,
+    line_items: [
+      {
+        price_data: {
+          currency: 'gbp',
+          product_data: {
+            name: 'Featured event listing — ' + plan.label,
+            description: 'Premium spotlight placement for "' + eventTitle + '"',
+          },
+          unit_amount: plan.amountPence,
+        },
+        quantity: 1,
+      },
+    ],
+  });
+}
+
 module.exports = {
   getStripeSecretKey,
   isStripeCheckoutConfigured,
   getStripeClient,
   createPaidCheckoutSession,
   createOpportunityPremiumCheckoutSession,
+  createEventFeaturedCheckoutSession,
   retrieveCheckoutSession,
   siteBaseUrl,
 };

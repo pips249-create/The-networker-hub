@@ -11,6 +11,11 @@ const {
 
 const LEGACY_SPONSOR_HUB_SLOT = 'sponsor_hub';
 const { HOME_PARTNERS_SLOT, parsePartnersBody, publishablePartners } = require('./_lib/home-partners');
+const {
+  EVENT_PAGE_CAROUSEL_SLOT,
+  parseCarouselBody,
+  publishableCarouselAds,
+} = require('./_lib/event-page-carousel');
 
 /** Browse hero slots — fall back to legacy sponsor_hub if not published separately. */
 const HERO_SPONSOR_SLOTS = new Set([
@@ -96,6 +101,21 @@ module.exports = async function handler(req, res) {
         active: sectionActive,
         partners,
         block: row ? { ...row, partners } : null,
+      });
+    }
+
+    if (slot === EVENT_PAGE_CAROUSEL_SLOT) {
+      const row = await fetchSlotRow(sb, slot);
+      const sectionActive = row ? row.active !== false : false;
+      const ads = sectionActive ? publishableCarouselAds(parseCarouselBody(row?.body)) : [];
+      return res.status(200).json({
+        ok: true,
+        configured: true,
+        provider: 'supabase',
+        slot,
+        active: sectionActive,
+        ads,
+        block: row ? { ...row, ads } : null,
       });
     }
 

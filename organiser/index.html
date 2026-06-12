@@ -14,7 +14,8 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260628" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260618" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260619" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260708c" />
   </head>
@@ -36,12 +37,12 @@
         <aside class="org-sidebar">
           <nav class="hub-side-nav hub-side-nav--minimal org-dash-bar" aria-label="Organiser workspace">
             <a href="#dashboard" class="hub-side-nav-link is-active" data-org-route="dashboard">Overview</a>
-            <span class="hub-side-nav-divider">Team &amp; Academy</span>
+            <span class="hub-side-nav-divider">Team &amp; training</span>
             <a href="#team" class="hub-side-nav-link" data-org-route="team" id="org-nav-team">
               Team &amp; invites
               <span class="org-nav-badge" id="org-team-nav-badge" hidden>New</span>
             </a>
-            <a href="#academy" class="hub-side-nav-link" data-org-route="academy">The Academy</a>
+            <a href="#academy" class="hub-side-nav-link" data-org-route="academy">Training &amp; workshops</a>
             <span class="hub-side-nav-divider">My events</span>
             <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Group profiles</a>
             <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">Events</a>
@@ -106,7 +107,7 @@
                   <span>Meeting, exhibition or conference</span>
                 </a>
                 <button type="button" role="menuitem" class="org-add-menu-item" data-org-route="academy">
-                  <strong>Academy session</strong>
+                  <strong>Workshop or seminar</strong>
                   <span>Workshop, seminar or masterclass <em class="org-badge-soon-inline">Coming soon</em></span>
                 </button>
               </div>
@@ -333,7 +334,7 @@
           </div>
         </section>
 
-        <!-- The Academy — marketplace preview + coming soon -->
+        <!-- Training & workshops — marketplace preview + coming soon -->
         <section class="org-page" id="org-page-academy" data-org-page="academy">
           <div class="org-academy-stage">
             <div class="org-academy-preview" aria-hidden="true">
@@ -343,7 +344,7 @@
                   Workshops, seminars &amp; <span>masterclasses</span>
                 </h2>
                 <p class="org-academy-preview-lede">
-                  The Networker Academy — live training for UK business owners.
+                  Training and workshops — live learning for UK business owners.
                 </p>
               </div>
               <div class="org-academy-preview-grid" id="org-academy-preview-grid"></div>
@@ -351,7 +352,7 @@
             <div class="org-academy-coming" role="status">
               <p class="org-academy-coming-label">Coming soon</p>
               <p class="org-academy-coming-text">
-                List and manage Academy sessions from here soon — workshops, seminars and masterclasses alongside your
+                List and manage workshops and training sessions from here soon — seminars and masterclasses alongside your
                 events.
               </p>
               <a class="org-btn org-btn-outline" href="../training/index.html" target="_blank" rel="noopener"
@@ -827,6 +828,126 @@
       </div>
     </div>
 
+    <div id="org-group-drawer" class="org-group-drawer" hidden aria-hidden="true">
+      <div class="org-group-drawer-backdrop" data-org-group-drawer-close tabindex="-1"></div>
+      <aside
+        class="org-group-drawer-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ge-page-title"
+      >
+        <header class="org-group-drawer-head">
+          <button
+            type="button"
+            class="org-group-drawer-close"
+            data-org-group-drawer-close
+            aria-label="Close group editor"
+          >
+            ×
+          </button>
+          <p class="org-group-drawer-kicker">Group profile</p>
+          <h2 class="org-group-drawer-title" id="ge-page-title">Edit group profile</h2>
+          <p class="org-group-drawer-lead" id="ge-page-lead"></p>
+          <p class="org-group-drawer-email" id="ge-page-email"></p>
+          <p class="ge-status-line org-group-drawer-status" id="ge-status-line" hidden>
+            <span class="ge-status-pill" id="ge-status-pill"></span>
+          </p>
+        </header>
+        <div class="org-group-drawer-body">
+          <div id="ge-alert" class="ee-alert org-group-drawer-alert" hidden></div>
+          <form id="ge-form" class="org-group-drawer-form">
+            <div class="org-group-drawer-section">
+              <div class="ee-field org-group-drawer-field">
+                <label for="ge-logo-file">Photo / logo</label>
+                <div
+                  class="ee-upload-zone org-group-drawer-upload"
+                  id="ge-logo-zone"
+                  tabindex="0"
+                  role="button"
+                  aria-label="Upload or paste logo"
+                >
+                  <input
+                    type="file"
+                    id="ge-logo-file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    hidden
+                  />
+                  <div class="ee-upload-preview org-group-drawer-upload-preview" id="ge-logo-preview" hidden>
+                    <img id="ge-logo-preview-img" alt="" width="88" height="88" />
+                    <button type="button" class="org-group-drawer-upload-remove" id="ge-logo-clear">
+                      Remove image
+                    </button>
+                  </div>
+                  <div class="ee-upload-placeholder org-group-drawer-upload-placeholder" id="ge-logo-placeholder">
+                    <strong>Upload, paste, or drop</strong>
+                    <span>PNG or JPG — 800px+ recommended</span>
+                  </div>
+                </div>
+                <input
+                  type="url"
+                  class="org-group-drawer-url-input"
+                  id="ge-logo-url"
+                  placeholder="Or paste image URL (optional)"
+                />
+                <p class="ee-hint org-logo-quality-hint" id="ge-logo-quality" hidden role="status"></p>
+              </div>
+              <div class="ee-field org-group-drawer-field">
+                <label for="ge-name">Group name</label>
+                <input type="text" id="ge-name" required placeholder="e.g. Catalyst Sessions Ltd" />
+              </div>
+              <div class="ee-field org-group-drawer-field">
+                <label for="ge-description">Description <span class="ee-required">(required)</span></label>
+                <textarea
+                  id="ge-description"
+                  rows="3"
+                  required
+                  maxlength="4000"
+                  placeholder="Tell attendees about your group and the events you run"
+                ></textarea>
+                <p class="ee-hint org-group-drawer-word-count">
+                  <span id="ge-word-count">0</span> / <span id="ge-word-max">500</span> words
+                </p>
+              </div>
+              <div class="ee-field org-group-drawer-field">
+                <label for="ge-website">Website <span class="ee-optional">(optional)</span></label>
+                <input type="url" id="ge-website" placeholder="https://www.yourcompany.com" />
+              </div>
+              <div class="ee-field org-group-drawer-field">
+                <label for="ge-contact-email">Contact email</label>
+                <input
+                  type="email"
+                  id="ge-contact-email"
+                  required
+                  placeholder="hello@yourcompany.com"
+                  autocomplete="email"
+                />
+              </div>
+            </div>
+          </form>
+        </div>
+        <footer class="org-group-drawer-foot">
+          <div class="org-group-drawer-actions ge-actions-stack">
+            <button type="button" class="ee-btn ee-btn-primary" id="ge-save-changes" hidden>
+              Save changes
+            </button>
+            <button type="button" class="ee-btn ee-btn-gold" id="ge-save-continue" hidden>
+              Save and create event →
+            </button>
+            <button type="button" class="ee-btn ee-btn-outline" id="ge-publish" hidden>
+              Publish now
+            </button>
+            <button type="button" class="ee-btn ee-btn-outline" id="ge-save-draft" hidden>
+              Save as draft
+            </button>
+            <button type="button" class="ee-btn ee-btn-outline" id="ge-cancel" hidden>
+              Cancel
+            </button>
+          </div>
+          <p class="ee-hint org-group-drawer-actions-hint" id="ge-actions-hint"></p>
+        </footer>
+      </aside>
+    </div>
+
     <div id="org-onboard-tour" class="org-onboard" hidden aria-hidden="true">
       <div class="org-onboard-backdrop" data-onboard-skip></div>
       <div class="org-onboard-spotlight" aria-hidden="true"></div>
@@ -847,6 +968,7 @@
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
     <script src="../js/organiser-flow-tour.js?v=20260610"></script>
     <script src="../js/organiser-onboarding.js?v=20260618"></script>
-    <script src="../js/organiser-dashboard.js?v=20260618"></script>
+    <script src="../js/organiser-group-edit.js?v=20260619"></script>
+    <script src="../js/organiser-dashboard.js?v=20260619"></script>
   </body>
 </html>

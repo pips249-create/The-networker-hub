@@ -946,8 +946,71 @@
     return 'group-edit.html?id=' + encodeURIComponent(g.id);
   }
 
+  let groupEditReady = false;
+
+  function closeGroupEditorDrawer() {
+    const drawer = document.getElementById('org-group-drawer');
+    if (!drawer) return;
+    drawer.classList.remove('is-open');
+    document.body.classList.remove('org-group-drawer-open');
+    setTimeout(function () {
+      if (!drawer.classList.contains('is-open')) {
+        drawer.hidden = true;
+        drawer.setAttribute('aria-hidden', 'true');
+      }
+    }, 280);
+  }
+
+  function openGroupEditorDrawer(groupOrId) {
+    const drawer = document.getElementById('org-group-drawer');
+    if (!drawer || !window.HubGroupEdit) {
+      const id =
+        typeof groupOrId === 'object' && groupOrId && groupOrId.id
+          ? groupOrId.id
+          : groupOrId || '';
+      location.href = id ? 'group-edit.html?id=' + encodeURIComponent(id) : 'group-edit.html';
+      return;
+    }
+
+    closeAllActionMenus();
+    const editId =
+      typeof groupOrId === 'object' && groupOrId && groupOrId.id
+        ? groupOrId.id
+        : groupOrId || '';
+
+    if (!groupEditReady) {
+      window.HubGroupEdit.init({
+        root: drawer,
+        embedded: true,
+        onClose: closeGroupEditorDrawer,
+        onSaved: async function () {
+          await loadBootstrap();
+          renderAll();
+        },
+      });
+      groupEditReady = true;
+    }
+
+    window.HubGroupEdit.open({
+      editId,
+      embedded: true,
+      onClose: closeGroupEditorDrawer,
+      onSaved: async function () {
+        await loadBootstrap();
+        renderAll();
+      },
+    });
+
+    drawer.hidden = false;
+    drawer.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(function () {
+      drawer.classList.add('is-open');
+    });
+    document.body.classList.add('org-group-drawer-open');
+  }
+
   function goToGroupEditor(g) {
-    location.href = groupEditorUrl(g);
+    openGroupEditorDrawer(g);
   }
 
   function starsReviewHtml(rating) {
@@ -1160,7 +1223,7 @@
     renderAll();
     setRoute('groups');
     if (res.data.group && res.data.group.id) {
-      location.href = 'group-edit.html?id=' + encodeURIComponent(res.data.group.id);
+      openGroupEditorDrawer(res.data.group.id);
     }
   }
 
@@ -1264,7 +1327,7 @@
       const gid = editGroupBtn.getAttribute('data-edit-group');
       const g = findGroupById(gid);
       if (g) goToGroupEditor(g);
-      else if (gid) location.href = 'group-edit.html?id=' + encodeURIComponent(gid);
+      else if (gid) openGroupEditorDrawer(gid);
       return true;
     }
 
@@ -2836,7 +2899,7 @@
 
     if (data.adminView) {
       showAirtableAlert(
-        '<strong>Admin view</strong> — showing all group profiles, events, Academy sessions, and ticket types across the platform.' +
+        '<strong>Admin view</strong> — showing all group profiles, events, training sessions, and ticket types across the platform.' +
           '<div class="org-scope-actions"><button type="button" class="org-btn org-btn-primary org-btn-sm" id="btn-scope-my">View my organiser data only</button></div>',
         false
       );
@@ -3078,15 +3141,16 @@
       el.addEventListener('click', closeModals);
     });
 
-    function goToNewGroupEditor() {
-      location.href = 'group-edit.html';
+    function goToNewGroupEditor(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      openGroupEditorDrawer();
     }
 
     function goToNewEventEditor(e) {
       if (e && e.preventDefault) e.preventDefault();
       if (!state.groups.length) {
         alert('You must add a group profile first.');
-        location.href = 'group-edit.html';
+        openGroupEditorDrawer();
         return;
       }
       try {
@@ -3398,8 +3462,23 @@
       nav.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 
+    document.querySelectorAll('a[href="group-edit.html"]').forEach((link) => {
+      link.addEventListener('click', goToNewGroupEditor);
+    });
+
+    document.querySelectorAll('[data-org-group-drawer-close]').forEach((el) => {
+      el.addEventListener('click', closeGroupEditorDrawer);
+    });
+
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeModals();
+      if (e.key === 'Escape') {
+        const drawer = document.getElementById('org-group-drawer');
+        if (drawer && !drawer.hidden && drawer.classList.contains('is-open')) {
+          closeGroupEditorDrawer();
+          return;
+        }
+        closeModals();
+      }
     });
 
     const cancelRefundCheck = document.getElementById('event-cancel-refund-confirm');

@@ -1,5 +1,5 @@
 # The Networker Hub
-> UK business networking platform — events, business opportunities, and training (The Academy).
+> UK business networking platform — events, business opportunities, and training and workshops.
 
 Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@the-networker.co.uk
 
@@ -7,7 +7,7 @@ Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@the-n
 - Home: https://the-networker.co.uk/
 - Events: https://the-networker.co.uk/events/
 - Business opportunities: https://the-networker.co.uk/opportunities/
-- Training (Academy preview): https://the-networker.co.uk/training/
+- Training and workshops (preview): https://the-networker.co.uk/training/
 - FAQ: https://the-networker.co.uk/faq.html
 - Contact (Hubert assistant): https://the-networker.co.uk/contact.html
 - About: https://the-networker.co.uk/about.html
@@ -32,7 +32,7 @@ The Networker Hub is a UK platform for discovering networking meetings, exhibiti
 Use Browse events in the top navigation or visit the events listing at /events/. You can filter by type, date, industry, and location, and use map view on supported pages.
 
 ## Do I need an account to browse The Networker Hub?
-No — browsing is completely free. You can explore events, business opportunities, and The Academy without signing in. You only need a free account when you want to buy a ticket, enquire about a business opportunity, or book a course. Sign-up takes about 2 minutes.
+No — browsing is completely free. You can explore events, business opportunities, and training and workshops without signing in. You only need a free account when you want to buy a ticket, enquire about a business opportunity, or book a course. Sign-up takes about 2 minutes.
 
 ## How do I book a ticket on The Networker Hub?
 Create a free account first, then open an event from the listing page, choose your ticket type, and complete secure Stripe checkout. You can add guest names at checkout and view bookings in My tickets.
@@ -46,8 +46,8 @@ Sign in, claim your group profile if prompted, then open the organiser dashboard
 ## Where does event information on The Networker Hub come from?
 Listings are managed in the events database and updated by organisers and the Networker Hub team. Dates, venues, and prices on each event page are the source of truth for that event.
 
-## What is The Academy on The Networker Hub?
-The Academy is the training side of the hub — workshops, seminars, webinars, and masterclasses. You can browse sessions for free; you need a free account to book a course when booking opens.
+## What is training on The Networker Hub?
+Training and workshops are the learning side of the hub — seminars, webinars, and masterclasses. You can browse sessions for free; you need a free account to book a course when booking opens.
 
 ## Who operates The Networker Hub?
 The Networker Hub is operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94), co-founded by Rosie and Catherine (Pip).
@@ -56,7 +56,7 @@ The Networker Hub is operated by The Networker Group Ltd (Company No. 15252227, 
 Hubert is the business butler and concierge on The Networker Hub. He helps visitors find events and business opportunities, explains how tickets and enquiries work, and guides organisers to the right tools. Chat with Hubert on the contact page or via the floating assistant on public pages.
 
 ## Is The Networker Hub free to use?
-Yes — browsing events, business opportunities, and The Academy preview is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser.
+Yes — browsing events, business opportunities, and the training preview is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser.
 
 ## I forgot my password — how do I sign in?
 Go to /login.html and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@the-networker.co.uk from the address on your account.

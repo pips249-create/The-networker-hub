@@ -13,6 +13,7 @@ const routes = {
   financials: require('./_lib/routes/admin-financials'),
   sponsor: require('./_lib/routes/admin-sponsor'),
   'home-partners': require('./_lib/routes/admin-home-partners'),
+  'event-carousel': require('./_lib/routes/admin-event-carousel'),
   emails: require('./_lib/routes/admin-emails'),
   'event-health': require('./_lib/routes/admin-event-health'),
   organisers: require('./_lib/routes/admin-organisers'),

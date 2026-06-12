@@ -42,7 +42,7 @@
 
 ### Post-launch (not September blockers)
 
-Academy, seat-approval workflow, organiser messaging, review replies, PDF tickets, calendar export polish.
+Training and workshops, seat-approval workflow, organiser messaging, review replies, PDF tickets, calendar export polish.
 
 ---
 

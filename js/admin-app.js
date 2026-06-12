@@ -162,9 +162,9 @@
     {
       key: 'academy_sponsor_hub',
       group: 'Browse pages',
-      label: 'Academy browse — Hero Sponsor Hub',
+      label: 'Training browse — Hero Sponsor Hub',
       preview: 'hero',
-      help: 'Hero Sponsor Hub on The Networker Academy training browse page.',
+      help: 'Hero Sponsor Hub on the training and workshops browse page.',
       tagline: 'Example offer — edit to match your sponsor package',
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
@@ -182,11 +182,11 @@
       ctaColor: '#2d2636',
     },
     {
-      key: 'event_page_sidebar_ad',
+      key: 'event_page_carousel_ads',
       group: 'Detail pages',
-      label: 'Event page — Sidebar ad',
-      preview: 'compact',
-      help: 'Logo and CTA button beside ticket checkout. Set the button link to the sponsor website.',
+      label: 'Event page — Sponsor carousel (5 ads)',
+      preview: 'carousel',
+      help: 'Up to five rotating sidebar ads beside ticket checkout on individual event pages.',
       tagline: '',
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
@@ -225,7 +225,7 @@
 
   function cmsSlotExists(key) {
     for (var i = 0; i < CMS_AD_SLOTS.length; i++) {
-      if (CMS_AD_SLOTS[i].key === key) return true;
+      if (CMS_AD_SLOTS[i].key === key && CMS_AD_SLOTS[i].preview !== 'carousel') return true;
     }
     return false;
   }
@@ -405,6 +405,10 @@
         title = 'Home page — Partners & sponsors';
         subtitle =
           'Logo strip on the home page. Add companies with logo, name, and CTA — shown when the section is active.';
+      } else if (fullHash === 'sponsorship/event-page-carousel') {
+        title = 'Event page — Sponsor carousel (5 ads)';
+        subtitle =
+          'Manage up to five rotating sidebar ads on individual event pages. Each slot needs a logo and CTA link.';
       } else if (fullHash.indexOf('sponsorship/') === 0) {
         var slotKey = fullHash.slice('sponsorship/'.length);
         if (cmsSlotExists(slotKey)) {
@@ -3326,8 +3330,16 @@
       renderHomePartnersPage();
       return;
     }
+    if (hash === 'sponsorship/event-page-carousel') {
+      renderEventCarouselPage();
+      return;
+    }
     if (hash.indexOf('sponsorship/') === 0) {
       var slotKey = hash.slice('sponsorship/'.length);
+      if (slotKey === 'event_page_carousel_ads') {
+        renderEventCarouselPage();
+        return;
+      }
       if (cmsSlotExists(slotKey)) {
         renderSponsorshipSlot(slotKey);
         return;
@@ -3368,6 +3380,23 @@
           '<div class="admin-ad-picker-grid">' +
           groupMap[groupName]
             .map(function (slot) {
+              if (slot.preview === 'carousel') {
+                return (
+                  '<a href="#sponsorship/event-page-carousel" class="admin-ad-picker-card admin-ad-picker-card--carousel">' +
+                  '<div class="admin-ad-picker-card-head">' +
+                  '<span class="admin-ad-picker-type">Carousel</span>' +
+                  '<span class="admin-ad-picker-status" id="event-carousel-picker-status">…</span>' +
+                  '</div>' +
+                  '<p class="admin-ad-picker-label">' +
+                  esc(slot.label) +
+                  '</p>' +
+                  '<p class="admin-ad-picker-help">' +
+                  esc(slot.help) +
+                  '</p>' +
+                  '<span class="admin-ad-picker-action">Edit carousel →</span>' +
+                  '</a>'
+                );
+              }
               var typeLabel = slot.preview === 'compact' ? 'Sidebar ad' : 'Hero Sponsor Hub';
               return (
                 '<a href="#sponsorship/' +
@@ -3429,7 +3458,9 @@
             : 'text-slate-500');
     }
 
-    var slotLoads = CMS_AD_SLOTS.map(function (slot) {
+    var slotLoads = CMS_AD_SLOTS.filter(function (slot) {
+      return slot.preview !== 'carousel';
+    }).map(function (slot) {
       return adminGet('/api/admin/sponsor?slot=' + encodeURIComponent(slot.key))
         .then(function (data) {
           return { slot: slot.key, data: data };
@@ -3483,6 +3514,38 @@
       })
       .catch(function () {
         var el = document.getElementById('home-partners-picker-status');
+        if (el) {
+          el.innerHTML =
+            '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
+        }
+      });
+
+    adminGet('/api/admin/event-carousel')
+      .then(function (data) {
+        var el = document.getElementById('event-carousel-picker-status');
+        if (!el) return;
+        if (!data || data.error || data.configured === false) {
+          el.innerHTML =
+            '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
+          return;
+        }
+        var ads = Array.isArray(data.ads) ? data.ads : [];
+        var activeCount = ads.filter(function (ad) {
+          return ad.active !== false && ad.logo_url && ad.cta_url;
+        }).length;
+        if (data.active === false) {
+          el.innerHTML = '<span class="admin-ad-picker-badge admin-ad-picker-badge--hidden">Hidden</span>';
+        } else if (activeCount) {
+          el.innerHTML =
+            '<span class="admin-ad-picker-badge admin-ad-picker-badge--live">' +
+            activeCount +
+            ' live</span>';
+        } else {
+          el.innerHTML = '<span class="admin-ad-picker-badge admin-ad-picker-badge--empty">Not set yet</span>';
+        }
+      })
+      .catch(function () {
+        var el = document.getElementById('event-carousel-picker-status');
         if (el) {
           el.innerHTML =
             '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
@@ -4127,6 +4190,305 @@
     loadPartners();
   }
 
+  function renderEventCarouselPage() {
+    main.innerHTML =
+      '<div class="space-y-6 max-w-3xl">' +
+      sponsorshipBackLinkHtml() +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5" id="event-carousel-admin">' +
+      '<div class="flex flex-wrap items-start justify-between gap-3">' +
+      '<div><h3 class="font-bold text-brand-900">Event page — Sponsor carousel</h3>' +
+      '<p class="text-sm text-slate-600 mt-1">Five sidebar slots on individual event pages. Active slots with a logo and CTA rotate automatically beside ticket checkout.</p></div></div>' +
+      '<label class="flex items-center gap-2 text-sm text-slate-700">' +
+      '<input type="checkbox" id="event-carousel-active" class="rounded border-slate-300" checked> ' +
+      'Carousel active (uncheck to hide all event page sidebar ads)</label>' +
+      '<div id="event-carousel-list" class="space-y-4 min-w-0"></div>' +
+      '<div class="flex flex-wrap gap-3 pt-1">' +
+      '<button type="button" id="event-carousel-save" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Save carousel</button>' +
+      '</div>' +
+      '<p id="event-carousel-status" class="text-sm text-slate-500"></p></section></div>';
+    initEventCarouselAdmin();
+  }
+
+  function initEventCarouselAdmin() {
+    var listEl = document.getElementById('event-carousel-list');
+    var statusEl = document.getElementById('event-carousel-status');
+    var activeEl = document.getElementById('event-carousel-active');
+    var saveBtn = document.getElementById('event-carousel-save');
+    if (!listEl || !saveBtn) return;
+
+    var adsState = [];
+    var pendingLogos = {};
+    var CAROUSEL_SIZE = 5;
+
+    function setCarouselStatus(text, tone) {
+      if (!statusEl) return;
+      statusEl.textContent = text;
+      statusEl.className =
+        'text-sm ' +
+        (tone === 'error'
+          ? 'text-red-700 font-semibold'
+          : tone === 'ok'
+            ? 'text-emerald-700 font-semibold'
+            : 'text-slate-500');
+    }
+
+    function defaultAds() {
+      var out = [];
+      for (var i = 0; i < CAROUSEL_SIZE; i++) {
+        out.push({
+          id: 'event_carousel_' + (i + 1),
+          slot_index: i,
+          company_name: '',
+          logo_url: '',
+          cta_label: 'Enquire now',
+          cta_url: '',
+          cta_color: defaultSponsorCtaColor(),
+          active: false,
+        });
+      }
+      return out;
+    }
+
+    function adRowHtml(ad, index) {
+      var logo = ad.logo_url || '';
+      var pending = pendingLogos[ad.id];
+      if (pending && pending.preview) logo = pending.preview;
+      var ctaColor = ad.cta_color || defaultSponsorCtaColor();
+      return (
+        '<div class="rounded-xl border border-slate-200 p-4 space-y-3 min-w-0" data-carousel-ad-id="' +
+        attrEsc(ad.id) +
+        '">' +
+        '<div class="flex flex-wrap items-center justify-between gap-2">' +
+        '<p class="text-sm font-semibold text-brand-900">Ad slot ' +
+        (index + 1) +
+        '</p>' +
+        '<label class="flex items-center gap-2 text-xs text-slate-600">' +
+        '<input type="checkbox" class="event-carousel-ad-active rounded border-slate-300"' +
+        (ad.active !== false ? ' checked' : '') +
+        '> Active</label></div>' +
+        '<div class="grid sm:grid-cols-2 gap-3">' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Company name (optional)</label>' +
+        '<input type="text" class="event-carousel-ad-name w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+        attrEsc(ad.company_name || '') +
+        '" placeholder="Acme Ltd"></div>' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Logo URL</label>' +
+        '<input type="text" class="event-carousel-ad-logo-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+        attrEsc(pending ? '' : logo) +
+        '" placeholder="https://…"></div></div>' +
+        '<div><label class="block text-xs text-slate-500 mb-1">Or upload logo (max 2MB)</label>' +
+        '<input type="file" class="event-carousel-ad-logo-file block w-full text-sm text-slate-600" accept="image/png,image/jpeg,image/webp,image/gif">' +
+        (logo
+          ? '<img src="' + attrEsc(logo) + '" alt="" class="mt-2 max-h-12 max-w-[160px] object-contain rounded border border-slate-100 bg-white p-1" />'
+          : '') +
+        '</div>' +
+        '<div class="grid sm:grid-cols-3 gap-3">' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">CTA label</label>' +
+        '<input type="text" class="event-carousel-ad-cta-label w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+        attrEsc(ad.cta_label || 'Enquire now') +
+        '"></div>' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">CTA link</label>' +
+        '<input type="text" class="event-carousel-ad-cta-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+        attrEsc(ad.cta_url || '') +
+        '" placeholder="https://…"></div>' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">CTA colour</label>' +
+        '<div class="flex items-center gap-2">' +
+        '<input type="color" class="event-carousel-ad-cta-color h-10 w-14 rounded border border-slate-200 cursor-pointer bg-white p-1" value="' +
+        attrEsc(ctaColor) +
+        '">' +
+        '<input type="text" class="event-carousel-ad-cta-color-hex flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono" value="' +
+        attrEsc(ctaColor) +
+        '" maxlength="7" spellcheck="false"></div></div></div></div>'
+      );
+    }
+
+    function readAdsFromDom() {
+      var rows = listEl.querySelectorAll('[data-carousel-ad-id]');
+      var out = [];
+      rows.forEach(function (row, index) {
+        var id = row.getAttribute('data-carousel-ad-id') || 'event_carousel_' + (index + 1);
+        var nameEl = row.querySelector('.event-carousel-ad-name');
+        var logoUrlEl = row.querySelector('.event-carousel-ad-logo-url');
+        var ctaLabelEl = row.querySelector('.event-carousel-ad-cta-label');
+        var ctaUrlEl = row.querySelector('.event-carousel-ad-cta-url');
+        var ctaColorEl = row.querySelector('.event-carousel-ad-cta-color-hex');
+        var activeCheckbox = row.querySelector('.event-carousel-ad-active');
+        var existing = adsState.find(function (ad) {
+          return ad.id === id;
+        });
+        var logoUrl = logoUrlEl ? logoUrlEl.value.trim() : '';
+        if (!logoUrl && existing && existing.logo_url) logoUrl = existing.logo_url;
+        if (!logoUrl && pendingLogos[id] && pendingLogos[id].existing) logoUrl = pendingLogos[id].existing;
+        var ctaColor = ctaColorEl ? ctaColorEl.value.trim() : defaultSponsorCtaColor();
+        if (window.CmsSponsorFields && window.CmsSponsorFields.sanitizeCtaColor) {
+          ctaColor = window.CmsSponsorFields.sanitizeCtaColor(ctaColor) || defaultSponsorCtaColor();
+        }
+        out.push({
+          id: id,
+          slot_index: index,
+          company_name: nameEl ? nameEl.value.trim() : '',
+          logo_url: logoUrl,
+          cta_label: ctaLabelEl ? ctaLabelEl.value.trim() : 'Enquire now',
+          cta_url: ctaUrlEl ? ctaUrlEl.value.trim() : '',
+          cta_color: ctaColor,
+          active: activeCheckbox ? activeCheckbox.checked : false,
+        });
+      });
+      return out;
+    }
+
+    function renderAdList() {
+      listEl.innerHTML = adsState.map(adRowHtml).join('');
+    }
+
+    function loadCarousel() {
+      setCarouselStatus('Loading event page carousel…');
+      adminGet('/api/admin/event-carousel')
+        .then(function (data) {
+          if (!data || data.error || data.configured === false) {
+            adsState = defaultAds();
+            if (activeEl) activeEl.checked = true;
+            renderAdList();
+            setCarouselStatus('Could not load carousel — showing empty slots.', 'error');
+            return;
+          }
+          adsState = Array.isArray(data.ads) && data.ads.length ? data.ads : defaultAds();
+          if (activeEl) activeEl.checked = data.active !== false;
+          renderAdList();
+          var liveCount = adsState.filter(function (ad) {
+            return ad.active !== false && ad.logo_url && ad.cta_url;
+          }).length;
+          setCarouselStatus(
+            liveCount
+              ? liveCount + ' active ad' + (liveCount === 1 ? '' : 's') + ' in carousel.'
+              : 'No active ads yet — enable a slot and add logo + CTA below.'
+          );
+        })
+        .catch(function () {
+          adsState = defaultAds();
+          renderAdList();
+          setCarouselStatus('Could not load carousel.', 'error');
+        });
+    }
+
+    listEl.addEventListener('input', function (ev) {
+      var colorPicker = ev.target.closest('.event-carousel-ad-cta-color');
+      if (!colorPicker) return;
+      var row = colorPicker.closest('[data-carousel-ad-id]');
+      if (!row) return;
+      var hex = row.querySelector('.event-carousel-ad-cta-color-hex');
+      if (hex) hex.value = colorPicker.value;
+    });
+
+    listEl.addEventListener('change', function (ev) {
+      var fileInput = ev.target.closest('.event-carousel-ad-logo-file');
+      if (fileInput) {
+        var row = fileInput.closest('[data-carousel-ad-id]');
+        if (!row) return;
+        var id = row.getAttribute('data-carousel-ad-id');
+        var file = fileInput.files && fileInput.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+          setCarouselStatus('Logo must be under 2MB.', 'error');
+          fileInput.value = '';
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function () {
+          adsState = readAdsFromDom();
+          var existing = adsState.find(function (ad) {
+            return ad.id === id;
+          });
+          pendingLogos[id] = {
+            preview: String(reader.result || ''),
+            data: String(reader.result || ''),
+            mime: file.type || 'image/jpeg',
+            filename: file.name || 'logo.jpg',
+            existing: existing ? existing.logo_url : '',
+          };
+          renderAdList();
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      var colorHex = ev.target.closest('.event-carousel-ad-cta-color-hex');
+      if (colorHex) {
+        var colorRow = colorHex.closest('[data-carousel-ad-id]');
+        if (!colorRow) return;
+        var picker = colorRow.querySelector('.event-carousel-ad-cta-color');
+        var safe = colorHex.value.trim();
+        if (window.CmsSponsorFields && window.CmsSponsorFields.sanitizeCtaColor) {
+          safe = window.CmsSponsorFields.sanitizeCtaColor(safe);
+        }
+        if (picker && safe) picker.value = safe;
+      }
+    });
+
+    saveBtn.addEventListener('click', function () {
+      var ads = readAdsFromDom();
+      saveBtn.disabled = true;
+      setCarouselStatus('Saving…');
+
+      var payload = {
+        active: activeEl ? activeEl.checked : true,
+        ads: ads.map(function (ad) {
+          var pending = pendingLogos[ad.id];
+          var item = {
+            id: ad.id,
+            slot_index: ad.slot_index,
+            company_name: ad.company_name,
+            logo_url: ad.logo_url,
+            cta_label: ad.cta_label,
+            cta_url: ad.cta_url,
+            cta_color: ad.cta_color,
+            active: ad.active,
+          };
+          if (pending && pending.data) {
+            item.logoBase64 = pending.data;
+            item.logoMime = pending.mime;
+            item.logoFilename = pending.filename;
+          }
+          return item;
+        }),
+      };
+
+      fetch('/api/admin/event-carousel', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then(function (r) {
+          return r.json().then(function (data) {
+            if (!r.ok || data.ok === false) {
+              var msg = data.message || data.error || 'Save failed';
+              if (data.error === 'missing_carousel_logo') {
+                msg = 'Ad slot ' + data.slot + ' is active but missing a logo.';
+              } else if (data.error === 'missing_carousel_cta') {
+                msg = 'Ad slot ' + data.slot + ' is active but missing a valid CTA link.';
+              }
+              throw new Error(msg);
+            }
+            return data;
+          });
+        })
+        .then(function (data) {
+          pendingLogos = {};
+          adsState = Array.isArray(data.ads) ? data.ads : defaultAds();
+          renderAdList();
+          setCarouselStatus('Saved — event page carousel updated.', 'ok');
+        })
+        .catch(function (err) {
+          setCarouselStatus(err.message || 'Could not save carousel.', 'error');
+        })
+        .finally(function () {
+          saveBtn.disabled = false;
+        });
+    });
+
+    loadCarousel();
+  }
+
   function replaceEmailPlaceholders(text, variables) {
     var vars = variables && typeof variables === 'object' ? variables : {};
     return String(text || '').replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, function (match, key) {
@@ -4497,7 +4859,7 @@
       { key: 'attendees', label: 'Attendees' },
       { key: 'organisers', label: 'Organisers' },
       { key: 'opportunities', label: 'Business opportunities' },
-      { key: 'academy', label: 'Academy' },
+      { key: 'academy', label: 'Training' },
     ];
 
     var ATTENDEE_EMAIL_SLUGS = [

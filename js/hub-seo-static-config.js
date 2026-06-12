@@ -3,7 +3,7 @@ window.HUB_SEO_STATIC = {
   "home": {
     "path": "/",
     "title": "The Networker Hub — Events, training & business opportunities",
-    "description": "Browse UK networking events, business opportunities, and The Academy for free. Create a free account to buy tickets, enquire about opportunities, or book courses — it only takes 2 minutes.",
+    "description": "Browse UK networking events, business opportunities, and training and workshops for free. Create a free account to buy tickets, enquire about opportunities, or book courses — it only takes 2 minutes.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },
@@ -24,7 +24,7 @@ window.HUB_SEO_STATIC = {
   "training": {
     "path": "/training/",
     "title": "Browse training – The Networker Hub",
-    "description": "Workshops, seminars and masterclasses for UK business owners — The Networker Academy learning marketplace.",
+    "description": "Workshops, seminars and masterclasses for UK business owners — training and workshops on The Networker Hub.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },

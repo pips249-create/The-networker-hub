@@ -11,7 +11,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "Do I need an account to browse The Networker Hub?",
-      "answer": "No — browsing is completely free. You can explore events, business opportunities, and The Academy without signing in. You only need a free account when you want to buy a ticket, enquire about a business opportunity, or book a course. Sign-up takes about 2 minutes."
+      "answer": "No — browsing is completely free. You can explore events, business opportunities, and training and workshops without signing in. You only need a free account when you want to buy a ticket, enquire about a business opportunity, or book a course. Sign-up takes about 2 minutes."
     },
     {
       "question": "How do I book a ticket on The Networker Hub?",
@@ -30,8 +30,8 @@ window.HUB_SEO_DATA = {
       "answer": "Listings are managed in the events database and updated by organisers and the Networker Hub team. Dates, venues, and prices on each event page are the source of truth for that event."
     },
     {
-      "question": "What is The Academy on The Networker Hub?",
-      "answer": "The Academy is the training side of the hub — workshops, seminars, webinars, and masterclasses. You can browse sessions for free; you need a free account to book a course when booking opens."
+      "question": "What is training on The Networker Hub?",
+      "answer": "Training and workshops are the learning side of the hub — seminars, webinars, and masterclasses. You can browse sessions for free; you need a free account to book a course when booking opens."
     },
     {
       "question": "Who operates The Networker Hub?",
@@ -43,7 +43,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "Is The Networker Hub free to use?",
-      "answer": "Yes — browsing events, business opportunities, and The Academy preview is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser."
+      "answer": "Yes — browsing events, business opportunities, and the training preview is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser."
     },
     {
       "question": "I forgot my password — how do I sign in?",
@@ -184,7 +184,7 @@ window.HUB_SEO_DATA = {
               "name": "Do I need an account to browse The Networker Hub?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "No — browsing is completely free. You can explore events, business opportunities, and The Academy without signing in. You only need a free account when you want to buy a ticket, enquire about a business opportunity, or book a course. Sign-up takes about 2 minutes."
+                "text": "No — browsing is completely free. You can explore events, business opportunities, and training and workshops without signing in. You only need a free account when you want to buy a ticket, enquire about a business opportunity, or book a course. Sign-up takes about 2 minutes."
               }
             },
             {
@@ -284,7 +284,7 @@ window.HUB_SEO_DATA = {
               "name": "Do I need an account to browse The Networker Hub?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "No — browsing is completely free. You can explore events, business opportunities, and The Academy without signing in. You only need a free account when you want to buy a ticket, enquire about a business opportunity, or book a course. Sign-up takes about 2 minutes."
+                "text": "No — browsing is completely free. You can explore events, business opportunities, and training and workshops without signing in. You only need a free account when you want to buy a ticket, enquire about a business opportunity, or book a course. Sign-up takes about 2 minutes."
               }
             },
             {
@@ -321,10 +321,10 @@ window.HUB_SEO_DATA = {
             },
             {
               "@type": "Question",
-              "name": "What is The Academy on The Networker Hub?",
+              "name": "What is training on The Networker Hub?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "The Academy is the training side of the hub — workshops, seminars, webinars, and masterclasses. You can browse sessions for free; you need a free account to book a course when booking opens."
+                "text": "Training and workshops are the learning side of the hub — seminars, webinars, and masterclasses. You can browse sessions for free; you need a free account to book a course when booking opens."
               }
             },
             {
@@ -348,7 +348,7 @@ window.HUB_SEO_DATA = {
               "name": "Is The Networker Hub free to use?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Yes — browsing events, business opportunities, and The Academy preview is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser."
+                "text": "Yes — browsing events, business opportunities, and the training preview is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser."
               }
             },
             {
@@ -787,7 +787,7 @@ window.HUB_SEO_DATA = {
           "@id": "https://the-networker.co.uk/training/",
           "url": "https://the-networker.co.uk/training/",
           "name": "Training & courses — The Networker Hub",
-          "description": "Workshops, seminars, and masterclasses from The Networker Academy.",
+          "description": "Workshops, seminars, and masterclasses on The Networker Hub.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker Hub",

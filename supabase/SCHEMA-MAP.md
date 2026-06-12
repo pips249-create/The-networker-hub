@@ -9,7 +9,7 @@
 | Attendee profile | `attendees` | `supabase_user_id` → auth |
 | Bookings | `registrations` | |
 | Reviews | `reviews` | Rating trigger on `events` |
-| Academy sessions | `workshops` | Training browse (later) |
+| Training sessions | `workshops` | Training browse (later) |
 
 ## Auth model
 

@@ -187,13 +187,17 @@ function normalizeGuestNames(input, quantity) {
  * or client_reference_id from the hub checkout URL (id<event-uuid>-ticket-<ticket-uuid>-...).
  */
 async function handleCheckoutSessionCompleted(session) {
+  const metadata = session.metadata || {};
+  if (metadata.checkout_type === 'event_featured' || metadata.checkout_type === 'opportunity_premium') {
+    return { skipped: true, reason: 'not_ticket_checkout' };
+  }
+
   const customerEmail =
     session.customer_details?.email ||
     session.customer_email ||
     session.metadata?.attendee_email ||
     session.metadata?.email ||
     '';
-  const metadata = session.metadata || {};
   let eventId = metadata.event_id || metadata.eventId;
   let ticketId = metadata.ticket_id || metadata.ticketId || null;
   let quantity = parseQuantity(metadata.quantity, 1);

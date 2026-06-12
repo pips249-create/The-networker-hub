@@ -2160,9 +2160,12 @@
   async function loadEventPageAds() {
     if (!window.CmsAdBlocks) return;
     const sidebarEl = document.getElementById('event-page-sidebar-ad');
+    if (!sidebarEl) return;
     try {
+      const ads = await window.CmsAdBlocks.loadEventPageCarousel();
+      if (window.CmsAdBlocks.renderCarouselAd(sidebarEl, ads)) return;
       const block = await window.CmsAdBlocks.loadCmsAd('event_page_sidebar_ad');
-      if (sidebarEl) window.CmsAdBlocks.renderCompactAd(sidebarEl, block);
+      window.CmsAdBlocks.renderCompactAd(sidebarEl, block);
     } catch {
       /* non-fatal */
     }

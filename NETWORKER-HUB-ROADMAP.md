@@ -39,4 +39,4 @@ Full spec: `Redesign 2/NETWORKER-HUB-ROADMAP.md` → Phase 5 → Backend — Spo
 
 ## Phase 1+ (brief)
 
-Events, Academy, dashboards, Stripe, full admin — see `Redesign 2/NETWORKER-HUB-ROADMAP.md` for full page map and schema.
+Events, training and workshops, dashboards, Stripe, full admin — see `Redesign 2/NETWORKER-HUB-ROADMAP.md` for full page map and schema.

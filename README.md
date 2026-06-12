@@ -1,6 +1,6 @@
 # The Networker Hub
 
-Member and organiser platform for networking events, exhibitions, and the Academy (training).
+Member and organiser platform for networking events, exhibitions, and training and workshops.
 
 **Live preview:** https://the-networker-hub.vercel.app/
 

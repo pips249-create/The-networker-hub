@@ -10,6 +10,15 @@
   const primaryId = eventIds[0] || '';
   const fallbackTitle = params.get('title') || '';
   const fallbackImage = params.get('image') || '';
+  const featuredCancelled = params.get('featured') === 'cancelled';
+  const extendFeatured = params.get('extend') === 'featured';
+
+  const featuredUpsell = document.getElementById('ep-featured-upsell');
+  const featuredHeading = document.getElementById('ep-featured-heading');
+  const featuredLede = document.getElementById('ep-featured-lede');
+  const featuredYes = document.getElementById('ep-featured-yes');
+  const featuredSkip = document.getElementById('ep-featured-skip');
+  const featuredError = document.getElementById('ep-featured-error');
 
   const origin = location.origin;
   let listingUrl = primaryId
@@ -219,6 +228,89 @@
       }
     }
   });
+
+  function selectedPlanId() {
+    const checked = document.querySelector('input[name="featured-plan"]:checked');
+    return checked ? checked.value : '1week';
+  }
+
+  function hideFeaturedUpsell() {
+    if (featuredUpsell) featuredUpsell.hidden = true;
+  }
+
+  if (extendFeatured && featuredHeading) {
+    featuredHeading.textContent = 'Extend your featured listing';
+  }
+  if (extendFeatured && featuredLede) {
+    featuredLede.textContent =
+      'Your featured placement is ending soon. Choose how long you would like to extend it.';
+  }
+
+  if (featuredCancelled && featuredError) {
+    featuredError.hidden = false;
+    featuredError.textContent =
+      'Checkout was cancelled — your event is still live. You can feature it any time from this page.';
+  }
+
+  async function startFeaturedCheckout() {
+    if (!primaryId) {
+      if (featuredError) {
+        featuredError.hidden = false;
+        featuredError.textContent =
+          'Missing event id — refresh the page or open your event from the dashboard.';
+      }
+      return;
+    }
+
+    if (featuredYes) {
+      featuredYes.disabled = true;
+      featuredYes.textContent = 'Opening secure checkout…';
+    }
+    if (featuredError) featuredError.hidden = true;
+
+    try {
+      const res = await fetch('/api/organiser/event-featured-checkout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: primaryId, planId: selectedPlanId() }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.ok && data.url) {
+        location.href = data.url;
+        return;
+      }
+
+      const msg =
+        data.error === 'stripe_not_configured'
+          ? 'Featured checkout is not configured yet — your event is still live.'
+          : data.message || data.error || 'Could not start checkout. Your event is still live.';
+      if (featuredError) {
+        featuredError.hidden = false;
+        featuredError.textContent = msg;
+      }
+    } catch {
+      if (featuredError) {
+        featuredError.hidden = false;
+        featuredError.textContent = 'Could not reach checkout. Your event is still live.';
+      }
+    }
+
+    if (featuredYes) {
+      featuredYes.disabled = false;
+      featuredYes.textContent = extendFeatured
+        ? 'Yes — extend featured listing'
+        : 'Yes — feature my event';
+    }
+  }
+
+  if (extendFeatured && featuredYes) {
+    featuredYes.textContent = 'Yes — extend featured listing';
+  }
+
+  if (featuredYes) featuredYes.addEventListener('click', startFeaturedCheckout);
+  if (featuredSkip) featuredSkip.addEventListener('click', hideFeaturedUpsell);
 
   setShareUrls(fallbackTitle);
   fetchPreview();
