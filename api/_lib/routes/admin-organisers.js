@@ -5,7 +5,7 @@ const { publicOrganiserSlug } = require('../organiser-slug');
 const sbAuth = require('../supabase-auth');
 const { fetchWebsiteMeta } = require('../website-meta');
 const { createGroup } = require('../supabase-organiser');
-const { resolveClaimDispute } = require('../admin-supabase-data');
+const { resolveClaimDispute, clearDisputedProfileEmail } = require('../admin-supabase-data');
 
 const INCOMPLETE_FILTER =
   'description.is.null,description.eq.,photo_url.is.null,photo_url.eq.,website.is.null,website.eq.';
@@ -48,7 +48,8 @@ function parseListQuery(query) {
   const limit = Math.min(Math.max(parseInt(String(query?.limit || ''), 10) || 30, 1), 100);
   const q = String(query?.q || '').trim();
   const incomplete = query?.incomplete === '1' || query?.incomplete === 'true';
-  return { offset, limit, q, incomplete };
+  const organiserId = String(query?.id || query?.organiser || '').trim();
+  return { offset, limit, q, incomplete, organiserId };
 }
 
 async function eventCountsForOrganisers(sb, organiserIds) {
@@ -211,7 +212,7 @@ function buildOrganiserPatch(body, photo_url) {
 
 async function listOrganisersForAdmin(query) {
   const sb = getSupabaseAdmin();
-  const { offset, limit, q, incomplete } = parseListQuery(query);
+  const { offset, limit, q, incomplete, organiserId } = parseListQuery(query);
 
   let dbQuery = sb
     .from('organisers')
@@ -221,10 +222,13 @@ async function listOrganisersForAdmin(query) {
     )
     .order('name', { ascending: true });
 
-  if (q) dbQuery = dbQuery.ilike('name', `%${q}%`);
-  if (incomplete) dbQuery = dbQuery.or(INCOMPLETE_FILTER);
+  if (organiserId) dbQuery = dbQuery.eq('id', organiserId);
+  else {
+    if (q) dbQuery = dbQuery.ilike('name', `%${q}%`);
+    if (incomplete) dbQuery = dbQuery.or(INCOMPLETE_FILTER);
+  }
 
-  const res = await dbQuery.range(offset, offset + limit - 1);
+  const res = organiserId ? await dbQuery.limit(1) : await dbQuery.range(offset, offset + limit - 1);
   if (res.error) throw new Error(res.error.message);
 
   const rows = res.data || [];
@@ -235,7 +239,7 @@ async function listOrganisersForAdmin(query) {
     ),
     loginMetaForOrganisers(sb, rows),
   ]);
-  const total = res.count != null ? res.count : rows.length;
+  const total = organiserId ? rows.length : res.count != null ? res.count : rows.length;
 
   const incompleteCount = await getIncompleteOrganiserCount(sb);
 
@@ -844,6 +848,7 @@ module.exports = async function handler(req, res) {
   if (body.action === 'resolve_claim_dispute') {
     try {
       const dispute = await resolveClaimDispute(body.disputeId || body.id);
+      invalidateIncompleteOrganiserCount();
       return json(res, 200, {
         ok: true,
         dispute,
@@ -859,6 +864,29 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: e.message || 'resolve_dispute_failed',
         message: messages[e.message] || e.message || 'Could not resolve dispute.',
+      });
+    }
+  }
+
+  if (body.action === 'clear_disputed_profile_email') {
+    try {
+      const dispute = await clearDisputedProfileEmail(body.disputeId || body.id);
+      invalidateIncompleteOrganiserCount();
+      return json(res, 200, {
+        ok: true,
+        dispute,
+        message: 'Profile email cleared and dispute resolved. The reporter will no longer be matched to this listing.',
+      });
+    } catch (e) {
+      const status = e.status || 500;
+      const messages = {
+        missing_dispute_id: 'Missing dispute id.',
+        dispute_not_found: 'This dispute is already resolved or could not be found.',
+      };
+      return json(res, status, {
+        ok: false,
+        error: e.message || 'clear_dispute_email_failed',
+        message: messages[e.message] || e.message || 'Could not clear profile email.',
       });
     }
   }

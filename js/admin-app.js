@@ -102,6 +102,7 @@
     selected: {},
     expanded: {},
     createOpen: false,
+    focusOrganiserId: '',
   };
   var eventCleanupState = {
     organiserId: '',
@@ -296,6 +297,30 @@
     return el ? String(el.value || '').trim() : '';
   }
 
+  function parseAdminHashQuery(fullHash) {
+    var parts = String(fullHash || '').split('?');
+    try {
+      return new URLSearchParams(parts[1] || '');
+    } catch (e) {
+      return new URLSearchParams();
+    }
+  }
+
+  function groupCleanupHref(organiserId) {
+    return organiserId ? '#cleanup/groups?organiser=' + encodeURIComponent(organiserId) : '#cleanup/groups';
+  }
+
+  function focusOrganiserInGroupCleanup(organiserId) {
+    var id = String(organiserId || '').trim();
+    if (!id) return;
+    groupCleanupState.focusOrganiserId = id;
+    groupCleanupState.expanded[id] = true;
+    var row = document.querySelector('[data-organiser-id-row="' + id + '"]');
+    if (row && row.scrollIntoView) {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
   function normalizeAdminHash(hash) {
     var h = String(hash || 'dashboard').replace(/^#/, '');
     var legacy = {
@@ -469,9 +494,16 @@
       activityEl.innerHTML = renderActivityList(data.activity, 12);
     }
 
-    var disputesEl = document.getElementById('group-claim-disputes');
+    var disputesEl = document.getElementById('group-claim-disputes') || document.getElementById('dashboard-disputes');
     if (disputesEl) {
       disputesEl.innerHTML = renderClaimDisputesPanel(data.attention);
+      if (disputesEl.id === 'dashboard-disputes') {
+        var disputesSection = document.getElementById('dashboard-disputes-section');
+        if (disputesSection) {
+          var hasDisputes = data.attention && data.attention.openClaimDisputes && data.attention.openClaimDisputes.length;
+          disputesSection.hidden = !hasDisputes;
+        }
+      }
     }
 
     var notificationCount = Number(data.notificationCount);
@@ -598,27 +630,56 @@
       return '<p class="text-sm text-emerald-700">No open group profile disputes.</p>';
     }
     return (
-      '<div class="space-y-2">' +
+      '<div class="space-y-3">' +
       disputes
         .map(function (d) {
+          var profileEmail = d.profileEmail || '—';
+          var reporterEmail = d.reporterEmail || '—';
+          var emailsMatch =
+            profileEmail !== '—' &&
+            reporterEmail !== '—' &&
+            String(profileEmail).toLowerCase() === String(reporterEmail).toLowerCase();
           return (
             '<div class="rounded-lg border border-red-200 bg-red-50 p-4">' +
             '<p class="font-semibold text-sm text-red-900">' +
             esc(d.organiserName || 'Group profile') +
             '</p>' +
-            '<p class="text-xs text-red-800/90 mt-1">Profile email: ' +
-            esc(d.profileEmail || '—') +
-            ' · Reported by ' +
-            esc(d.reporterEmail || '—') +
-            '</p>' +
+            '<dl class="mt-2 grid sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-red-900/90">' +
+            '<div><dt class="font-semibold">Profile email on file</dt><dd>' +
+            esc(profileEmail) +
+            '</dd></div>' +
+            '<div><dt class="font-semibold">Signed-in user who disputed</dt><dd>' +
+            esc(reporterEmail) +
+            '</dd></div></dl>' +
+            (emailsMatch
+              ? '<p class="text-xs text-red-800/85 mt-2">This user was matched because their login email matches the profile. Clear the profile email so they are not prompted again, or delete the listing if it is wrong.</p>'
+              : '<p class="text-xs text-red-800/85 mt-2">Review the profile — update the contact email, delete the listing if it is wrong, or mark resolved once handled.</p>') +
             (d.notes
               ? '<p class="text-xs text-red-800/80 mt-2 italic">“' + esc(d.notes) + '”</p>'
               : '') +
             '<div class="flex flex-wrap gap-2 mt-3">' +
             (d.organiserId
-              ? '<a href="#cleanup/groups" class="text-xs font-semibold text-red-900 hover:underline">Open group cleanup →</a>'
+              ? '<a href="' +
+                attrEsc(groupCleanupHref(d.organiserId)) +
+                '" class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">Edit profile</a>'
               : '') +
-            '<button type="button" class="text-xs font-semibold rounded-lg bg-white border border-red-200 px-2.5 py-1 text-red-800 hover:bg-red-100" data-resolve-claim-dispute="' +
+            (d.organiserId
+              ? '<button type="button" class="text-xs font-semibold rounded-lg bg-white border border-red-200 px-2.5 py-1 text-red-800 hover:bg-red-100" data-clear-dispute-email="' +
+                attrEsc(d.id) +
+                '" data-dispute-organiser-name="' +
+                attrEsc(d.organiserName || 'this group') +
+                '">Clear profile email</button>'
+              : '') +
+            (d.organiserId
+              ? '<button type="button" class="text-xs font-semibold rounded-lg bg-white border border-red-300 px-2.5 py-1 text-red-900 hover:bg-red-100" data-dispute-delete-profile="' +
+                attrEsc(d.id) +
+                '" data-dispute-organiser-id="' +
+                attrEsc(d.organiserId) +
+                '" data-dispute-organiser-name="' +
+                attrEsc(d.organiserName || 'this group') +
+                '">Delete profile</button>'
+              : '') +
+            '<button type="button" class="text-xs font-semibold rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-slate-700 hover:bg-slate-100" data-resolve-claim-dispute="' +
             esc(d.id) +
             '">Mark resolved</button></div></div>'
           );
@@ -633,32 +694,7 @@
       return '<p class="text-sm text-slate-500">Loading…</p>';
     }
     var pending = attention.pendingEvents || [];
-    var disputes = attention.openClaimDisputes || [];
     var parts = [];
-
-    if (disputes.length) {
-      parts.push(
-        '<div class="rounded-lg border border-red-200 bg-red-50 p-4">' +
-          '<p class="font-semibold text-sm text-red-900">' +
-          disputes.length +
-          ' group profile dispute' +
-          (disputes.length === 1 ? '' : 's') +
-          '</p>' +
-          '<ul class="mt-2 space-y-1.5">'
-      );
-      disputes.slice(0, 4).forEach(function (d) {
-        parts.push(
-          '<li class="text-sm text-red-900"><span class="font-medium">' +
-            esc(d.organiserName || 'Profile') +
-            '</span> <span class="text-xs text-red-800/80">· reported by ' +
-            esc(d.reporterEmail || 'user') +
-            '</span></li>'
-        );
-      });
-      parts.push(
-        '</ul><a href="#cleanup/groups" class="text-xs font-semibold text-red-900 mt-3 inline-block hover:underline">Review in group cleanup →</a></div>'
-      );
-    }
 
     if (attention.pendingOwnershipClaims > 0) {
       parts.push(
@@ -687,11 +723,7 @@
     if (pending.length) {
       parts.push(
         '<div class="rounded-lg border border-amber-200 bg-amber-50 p-4">' +
-          '<p class="font-semibold text-sm text-amber-900">' +
-          pending.length +
-          ' event' +
-          (pending.length === 1 ? '' : 's') +
-          ' pending approval</p>' +
+          '<p class="text-xs font-semibold uppercase tracking-wide text-amber-800/80">Pending approval queue</p>' +
           '<ul class="mt-2 space-y-1.5">'
       );
       pending.slice(0, 6).forEach(function (e) {
@@ -2250,14 +2282,17 @@
   function renderDashboard() {
     main.innerHTML =
       '<div class="space-y-6">' +
-      '<div id="dashboard-event-health-alert"></div>' +
       '<section class="space-y-3">' +
       '<h3 class="text-sm font-bold uppercase tracking-wide text-slate-500">Critical alerts</h3>' +
       '<div class="grid gap-3" id="dashboard-alerts"><p class="text-sm text-slate-500">Loading from Supabase…</p></div>' +
       '</section>' +
+      '<section class="bg-white rounded-xl border border-red-200 p-5 shadow-sm space-y-3" id="dashboard-disputes-section" hidden>' +
+      '<div><h3 class="font-bold text-brand-900">Group profile disputes</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">An organiser signed in and said a pre-imported profile is not theirs — use the actions below to fix or dismiss.</p></div>' +
+      '<div id="dashboard-disputes"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
       '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">' +
       '<div><h3 class="font-bold text-brand-900">Needs your attention</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">Pending approvals, broken event data, incomplete profiles, and spam reviews — check these regularly.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Queues and quick links — counts also appear in Critical alerts above.</p></div>' +
       '<div id="dashboard-attention"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
       '<a href="#analytics" class="block rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-5 shadow-sm hover:border-brand-300 transition group">' +
       '<div class="flex flex-wrap items-center justify-between gap-3">' +
@@ -2328,20 +2363,6 @@
       applyDashboardNotifications(data);
 
       if (preEl) preEl.innerHTML = renderMetricsSummary(data);
-    });
-
-    fetchEventHealth().then(function (data) {
-      var slot = document.getElementById('dashboard-event-health-alert');
-      if (!slot || !data || !data.count) return;
-      slot.innerHTML =
-        '<a href="#cleanup/issues" class="block rounded-lg border border-red-200 bg-red-50 p-4 text-red-900 hover:bg-red-100/80 transition">' +
-        '<p class="font-semibold text-sm">' +
-        data.count +
-        ' published event' +
-        (data.count === 1 ? '' : 's') +
-        ' missing data</p>' +
-        '<p class="text-xs mt-1 opacity-90">Dates, organisers, VAT, or profile fields need fixing before pages show correctly. Open Event data issues to edit rows.</p>' +
-        '</a>';
     });
   }
 
@@ -6060,7 +6081,8 @@
     });
   }
 
-  function fetchGroupCleanup(pageIndex) {
+  function fetchGroupCleanup(pageIndex, options) {
+    options = options || {};
     if (groupCleanupState.loading) return Promise.resolve(groupCleanupCache);
     groupCleanupState.loading = true;
     var page =
@@ -6071,6 +6093,9 @@
     params.set('limit', String(GROUP_PAGE_SIZE));
     if (groupCleanupState.q) params.set('q', groupCleanupState.q);
     if (groupCleanupState.incomplete) params.set('incomplete', '1');
+    if (options.organiserId || groupCleanupState.focusOrganiserId) {
+      params.set('id', String(options.organiserId || groupCleanupState.focusOrganiserId));
+    }
     return adminGet('/api/admin/organisers?' + params.toString())
       .then(function (data) {
         groupCleanupState.loading = false;
@@ -6667,6 +6692,69 @@
       return;
     }
 
+    var clearDisputeBtn = e.target.closest('[data-clear-dispute-email]');
+    if (clearDisputeBtn) {
+      var clearDisputeId = clearDisputeBtn.getAttribute('data-clear-dispute-email');
+      var clearName = clearDisputeBtn.getAttribute('data-dispute-organiser-name') || 'this group';
+      if (!clearDisputeId) return;
+      if (
+        !window.confirm(
+          'Clear the contact email on “' +
+            clearName +
+            '” and mark this dispute resolved? The user will no longer be matched to this profile on login.'
+        )
+      ) {
+        return;
+      }
+      clearDisputeBtn.disabled = true;
+      adminPost('/api/admin/organisers', { action: 'clear_disputed_profile_email', disputeId: clearDisputeId })
+        .then(function (data) {
+          if (!data || !data.ok) throw new Error((data && data.message) || 'Could not clear profile email');
+          return refreshAdminNotifications().then(function () {
+            if (document.getElementById('group-cleanup-list')) return refreshGroupCleanupPage();
+          });
+        })
+        .catch(function (err) {
+          clearDisputeBtn.disabled = false;
+          window.alert(err.message || 'Could not clear profile email.');
+        });
+      return;
+    }
+
+    var deleteDisputeBtn = e.target.closest('[data-dispute-delete-profile]');
+    if (deleteDisputeBtn) {
+      var deleteDisputeId = deleteDisputeBtn.getAttribute('data-dispute-delete-profile');
+      var deleteOrganiserId = deleteDisputeBtn.getAttribute('data-dispute-organiser-id');
+      var deleteName = deleteDisputeBtn.getAttribute('data-dispute-organiser-name') || 'this group';
+      if (!deleteDisputeId || !deleteOrganiserId) return;
+      if (
+        !window.confirm(
+          'Permanently delete “' +
+            deleteName +
+            '”? Linked events will stay on the platform but become unlinked. The dispute will be marked resolved.'
+        )
+      ) {
+        return;
+      }
+      deleteDisputeBtn.disabled = true;
+      adminPost('/api/admin/organisers', { action: 'delete_groups', ids: [deleteOrganiserId] })
+        .then(function (data) {
+          if (!data || !data.ok) throw new Error((data && data.message) || 'Could not delete profile');
+          return adminPost('/api/admin/organisers', { action: 'resolve_claim_dispute', disputeId: deleteDisputeId });
+        })
+        .then(function (data) {
+          if (!data || !data.ok) throw new Error((data && data.message) || 'Profile deleted but dispute not cleared');
+          return refreshAdminNotifications().then(function () {
+            if (document.getElementById('group-cleanup-list')) return refreshGroupCleanupPage();
+          });
+        })
+        .catch(function (err) {
+          deleteDisputeBtn.disabled = false;
+          window.alert(err.message || 'Could not delete profile.');
+        });
+      return;
+    }
+
     if (!document.getElementById('group-cleanup-list')) return;
 
     var pageBtn = e.target.closest('[data-group-page]');
@@ -7118,13 +7206,18 @@
     updateGroupBulkBar();
   }
 
-  function renderGroupCleanup() {
+  function renderGroupCleanup(fullHash) {
+    var query = parseAdminHashQuery(fullHash || (location.hash || '').replace('#', ''));
+    var focusId = String(query.get('organiser') || query.get('id') || '').trim();
+    groupCleanupState.focusOrganiserId = focusId;
+    if (focusId) groupCleanupState.expanded[focusId] = true;
+
     groupCleanupState.loading = false;
     main.innerHTML =
       '<div class="space-y-4">' +
       '<section class="rounded-xl border border-red-200 bg-white p-4 shadow-sm space-y-3">' +
       '<div><h3 class="font-bold text-brand-900">Group profile disputes</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">When an organiser says a pre-imported profile is not theirs, review the listing here and mark resolved once handled.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-0.5">When an organiser says a pre-imported profile is not theirs, use Edit profile, Clear profile email, or Delete profile — then Mark resolved if needed.</p></div>' +
       '<div id="group-claim-disputes"><p class="text-sm text-slate-500">Loading disputes…</p></div></section>' +
       '<div class="flex flex-wrap items-center justify-between gap-3">' +
       '<div id="group-cleanup-status" class="text-sm text-slate-500">Loading groups…</div>' +
@@ -7195,10 +7288,11 @@
 
     groupCleanupState.page = 0;
     refreshAdminNotifications();
-    fetchGroupCleanup(0)
+    fetchGroupCleanup(0, { organiserId: focusId })
       .then(function (data) {
         renderGroupCleanupList(data || { error: 'load_failed' });
         bindGroupCleanupPageUi();
+        if (focusId) focusOrganiserInGroupCleanup(focusId);
       })
       .catch(function () {
         renderGroupCleanupList({ error: 'network_error' });
@@ -8016,7 +8110,9 @@
 
     if (tab === 'events') withHubTabs(tabsHtml, renderEventCleanup);
     else if (tab === 'issues') withHubTabs(tabsHtml, renderEventHealth);
-    else withHubTabs(tabsHtml, renderGroupCleanup);
+    else withHubTabs(tabsHtml, function () {
+      renderGroupCleanup(hash);
+    });
   }
 
   function renderAccountsHub(fullHash) {

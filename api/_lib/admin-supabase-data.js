@@ -100,16 +100,14 @@ async function fetchDashboardMetrics(sb) {
 async function fetchAlerts(sb) {
   const alerts = [];
   const health = await scanEventHealth();
-  const [incompleteOrgs, recentReviews, openReportsRes, claimDisputesRes] = await Promise.all([
+  const [incompleteOrgs, recentReviews, openReportsRes] = await Promise.all([
     sb.from('organisers').select('id', { count: 'exact', head: true }).or(INCOMPLETE_ORGANISER_FILTER),
     sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
     sb.from('listing_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
-    sb.from('organiser_claim_disputes').select('id', { count: 'exact', head: true }).eq('status', 'open'),
   ]);
 
   const spamReviewCount = (recentReviews.data || []).filter((r) => isSpamReview(r.review_text)).length;
   const openReports = openReportsRes.error ? 0 : openReportsRes.count || 0;
-  const openClaimDisputes = claimDisputesRes.error ? 0 : claimDisputesRes.count || 0;
 
   if (health.count > 0) {
     alerts.push({
@@ -170,18 +168,6 @@ async function fetchAlerts(sb) {
       title: `${spamReviewCount} spam-like review${spamReviewCount === 1 ? '' : 's'} detected`,
       detail: 'Highlighted on Content Moderation — remove in Supabase if needed.',
       href: '#moderation',
-      time: new Date().toISOString(),
-    });
-  }
-
-  if (openClaimDisputes > 0) {
-    alerts.push({
-      id: 'organiser-claim-disputes',
-      severity: 'high',
-      title: `${openClaimDisputes} group profile dispute${openClaimDisputes === 1 ? '' : 's'} to review`,
-      detail:
-        'A signed-in user said a pre-imported group profile is not theirs. Check profile email and reassign or remove the listing.',
-      href: '#cleanup/groups',
       time: new Date().toISOString(),
     });
   }
@@ -691,6 +677,47 @@ async function resolveClaimDispute(disputeId) {
   return data;
 }
 
+async function clearDisputedProfileEmail(disputeId) {
+  const id = String(disputeId || '').trim();
+  if (!id) {
+    const err = new Error('missing_dispute_id');
+    err.status = 400;
+    throw err;
+  }
+  const sb = getSupabaseAdmin();
+  const { data: dispute, error: disputeErr } = await sb
+    .from('organiser_claim_disputes')
+    .select('id, organiser_id, status')
+    .eq('id', id)
+    .eq('status', 'open')
+    .maybeSingle();
+  if (disputeErr) throw new Error(disputeErr.message);
+  if (!dispute) {
+    const err = new Error('dispute_not_found');
+    err.status = 404;
+    throw err;
+  }
+
+  if (dispute.organiser_id) {
+    const { error: updateErr } = await sb
+      .from('organisers')
+      .update({
+        email: null,
+        contact_email: null,
+        supabase_user_id: null,
+        organiser_account_id: null,
+        ownership_claim_status: null,
+        ownership_claimed_at: null,
+        ownership_disputed_at: null,
+        ownership_disputed_by_email: null,
+      })
+      .eq('id', dispute.organiser_id);
+    if (updateErr) throw new Error(updateErr.message);
+  }
+
+  return resolveClaimDispute(id);
+}
+
 async function getAdminDashboard() {
   if (!isSupabaseConfigured()) {
     return { configured: false, provider: 'supabase' };
@@ -762,4 +789,5 @@ module.exports = {
   copySponsorBlock,
   fetchSponsorBlock,
   resolveClaimDispute,
+  clearDisputedProfileEmail,
 };
