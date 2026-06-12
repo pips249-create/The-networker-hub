@@ -455,6 +455,13 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   object-fit: cover;
   object-position: center;
 }
+
+.event-grid-img.is-logo-cover,
+.premium-card-img.is-logo-cover {
+  object-fit: contain;
+  object-position: center;
+  background: linear-gradient(145deg, #f6f1fa 0%, #eef3f8 100%);
+}
 .event-grid-sales-pending {
   position: absolute;
   top: 12px;

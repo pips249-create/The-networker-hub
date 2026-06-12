@@ -224,7 +224,7 @@ function buildSchemaGraph(page, origin) {
       buildCollectionPageSchema(
         'Training & courses',
         '/training/',
-        'Workshops, seminars, and masterclasses from The Networker Academy.',
+        'Workshops, seminars, and masterclasses on The Networker Hub.',
         base
       )
     );
@@ -253,7 +253,7 @@ function buildLlmsTxt(origin) {
 
   return (
     '# The Networker Hub\n' +
-    '> UK business networking platform — events, business opportunities, and training (The Academy).\n\n' +
+    '> UK business networking platform — events, business opportunities, and training and workshops.\n\n' +
     'Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@the-networker.co.uk\n\n' +
     '## Canonical URLs\n' +
     '- Home: ' +
@@ -265,7 +265,7 @@ function buildLlmsTxt(origin) {
     '- Business opportunities: ' +
     base +
     '/opportunities/\n' +
-    '- Training (Academy preview): ' +
+    '- Training and workshops (preview): ' +
     base +
     '/training/\n' +
     '- FAQ: ' +

@@ -133,4 +133,23 @@
   window.getDefaultEventPlaceholder = function () {
     return DEFAULT_PLACEHOLDER;
   };
+
+  /** Group logos and small assets — use contain on browse cards, not cover stretch. */
+  function isLogoStyleCover(ev, url) {
+    var photo = String(url || '').trim();
+    if (!photo) return false;
+    var logo = ev && ev.organiserLogo ? String(ev.organiserLogo).trim() : '';
+    if (logo && photo === logo) return true;
+    if (/\/logo[.\-_/]/i.test(photo) || /\/img\/logo\./i.test(photo)) return true;
+    return false;
+  }
+
+  window.hubIsLogoStyleCover = isLogoStyleCover;
+
+  window.hubMarkSmallEventCover = function (img) {
+    if (!img || img.naturalWidth <= 0) return;
+    if (img.naturalWidth < 640 || img.naturalHeight < 400) {
+      img.classList.add('is-logo-cover');
+    }
+  };
 })();

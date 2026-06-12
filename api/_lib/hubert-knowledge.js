@@ -32,8 +32,8 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'BROWSING & ACCOUNTS',
     body:
-      'Browsing is completely free — no sign-in needed to explore events, business opportunities, or The Academy preview. ' +
-      'A free account is required only when you want to: buy a ticket, send a business opportunity enquiry, or book an Academy course (when booking opens). Sign-up takes about 2 minutes at /register.html. ' +
+      'Browsing is completely free — no sign-in needed to explore events, business opportunities, or the training preview. ' +
+      'A free account is required only when you want to: buy a ticket, send a business opportunity enquiry, or book a training course (when booking opens). Sign-up takes about 2 minutes at /register.html. ' +
       'Sign in at /login.html. Forgot password? Use the password reset link on the sign-in page. You must be 18+ to create an account. ' +
       'With an account you can save favourites, manage tickets in /account/, add guest names at checkout, and leave reviews after events you attended.',
   },
@@ -334,7 +334,7 @@ const FALLBACK_REPLIES = [
   {
     match: /account|register|sign up|create account|sign in|login/i,
     reply:
-      'Browsing is completely free — no account needed. You need a free account to buy tickets, enquire about opportunities, or book Academy courses when booking opens. Register at /register.html (about 2 minutes) or sign in at /login.html.',
+      'Browsing is completely free — no account needed. You need a free account to buy tickets, enquire about opportunities, or book training courses when booking opens. Register at /register.html (about 2 minutes) or sign in at /login.html.',
   },
   {
     match: /browse|find|search|filter|map view|near me|upcoming/i,
@@ -344,7 +344,7 @@ const FALLBACK_REPLIES = [
   {
     match: /academy|training|workshop|webinar|masterclass|course/i,
     reply:
-      'The Academy is our training marketplace — workshops, seminars, webinars, and masterclasses. Coming soon; preview at /training/. Browse free; a free account will be needed to book when booking opens.',
+      'Training and workshops are our learning marketplace — seminars, webinars, and masterclasses. Coming soon; preview at /training/. Browse free; a free account will be needed to book when booking opens.',
   },
   {
     match: /review|rating/i,
@@ -374,12 +374,12 @@ const FALLBACK_REPLIES = [
   {
     match: /is (this |the )?(site|hub) free|free to use/i,
     reply:
-      'Yes — browsing events, business opportunities, and The Academy preview is completely free with no sign-in. You only pay when you buy an event ticket at the price shown by the organiser. Opportunity enquiries are free.',
+      'Yes — browsing events, business opportunities, and the training preview is completely free with no sign-in. You only pay when you buy an event ticket at the price shown by the organiser. Opportunity enquiries are free.',
   },
   {
     match: /how much|cost|price|pay\b/i,
     reply:
-      'Browsing is free. Event ticket prices are set by organisers and shown on each event page. Business opportunity enquiries are free. Academy course pricing will appear on listings when booking opens.',
+      'Browsing is free. Event ticket prices are set by organisers and shown on each event page. Business opportunity enquiries are free. Training course pricing will appear on listings when booking opens.',
   },
 ];
 

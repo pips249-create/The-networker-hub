@@ -27,6 +27,22 @@
     );
   }
 
+  function eventCoverResolutionWarning(width, height) {
+    const w = Number(width) || 0;
+    const h = Number(height) || 0;
+    if (w <= 0 || h <= 0) return null;
+    const longEdge = Math.max(w, h);
+    const shortEdge = Math.min(w, h);
+    if (longEdge >= 1200 && shortEdge >= 720) return null;
+    return (
+      'This image is ' +
+      w +
+      '×' +
+      h +
+      'px and may look soft on the events browse page. Use a landscape photo at least 1200×750px for a sharp listing card.'
+    );
+  }
+
   function loadImageFile(file) {
     return new Promise(function (resolve, reject) {
       const url = URL.createObjectURL(file);
@@ -134,6 +150,20 @@
     el.classList.remove('is-visible');
   }
 
+  function updateEventCoverQualityHint(el, width, height) {
+    if (!el) return;
+    const msg = eventCoverResolutionWarning(width, height);
+    if (msg) {
+      el.textContent = msg;
+      el.hidden = false;
+      el.classList.add('is-visible');
+      return;
+    }
+    el.textContent = '';
+    el.hidden = true;
+    el.classList.remove('is-visible');
+  }
+
   function clearLogoQualityHint(el) {
     if (!el) return;
     el.textContent = '';
@@ -148,6 +178,20 @@
       updateLogoQualityHint(hintEl, dims.width, dims.height);
     } catch {
       clearLogoQualityHint(hintEl);
+    }
+  }
+
+  async function checkEventCoverFileQuality(file, hintEl) {
+    if (!file || !hintEl) return;
+    try {
+      const dims = await measureImageFile(file);
+      updateEventCoverQualityHint(hintEl, dims.width, dims.height);
+    } catch {
+      if (hintEl) {
+        hintEl.textContent = '';
+        hintEl.hidden = true;
+        hintEl.classList.remove('is-visible');
+      }
     }
   }
 
@@ -253,6 +297,7 @@
   global.hubClearLogoQualityHint = clearLogoQualityHint;
   global.hubCheckLogoFileQuality = checkLogoFileQuality;
   global.hubCheckLogoUrlQuality = checkLogoUrlQuality;
+  global.hubCheckEventCoverFileQuality = checkEventCoverFileQuality;
   global.hubBindLogoUrlQualityCheck = bindLogoUrlQualityCheck;
   global.hubMeasureImageUrl = measureImageUrl;
 })(window);

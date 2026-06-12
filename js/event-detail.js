@@ -2096,23 +2096,50 @@
     }
   }
 
-  function setEventLoading(on) {
+  var loadOverlayTimer = null;
+  var loadOverlayVisible = false;
+  var LOAD_OVERLAY_DELAY_MS = 800;
+
+  function showEventLoadOverlayNow() {
     const overlay = document.getElementById('event-detail-load-overlay');
     const shell = document.getElementById('event-detail-shell');
+    if (window.hubLoading) window.hubLoading.show('event-detail-load-overlay');
+    else if (overlay) {
+      overlay.classList.add('is-active');
+      overlay.hidden = false;
+      if (shell) shell.classList.add('is-loading');
+    }
+  }
+
+  function hideEventLoadOverlayNow() {
+    const overlay = document.getElementById('event-detail-load-overlay');
+    const shell = document.getElementById('event-detail-shell');
+    if (window.hubLoading) window.hubLoading.hide('event-detail-load-overlay');
+    else if (overlay) {
+      overlay.classList.remove('is-active');
+      overlay.hidden = true;
+      if (shell) shell.classList.remove('is-loading');
+    }
+  }
+
+  function setEventLoading(on) {
     if (on) {
-      if (window.hubLoading) window.hubLoading.show('event-detail-load-overlay');
-      else if (overlay) {
-        overlay.classList.add('is-active');
-        overlay.hidden = false;
-        if (shell) shell.classList.add('is-loading');
-      }
-    } else {
-      if (window.hubLoading) window.hubLoading.hide('event-detail-load-overlay');
-      else if (overlay) {
-        overlay.classList.remove('is-active');
-        overlay.hidden = true;
-        if (shell) shell.classList.remove('is-loading');
-      }
+      if (loadOverlayTimer || loadOverlayVisible) return;
+      loadOverlayTimer = window.setTimeout(function () {
+        loadOverlayTimer = null;
+        loadOverlayVisible = true;
+        showEventLoadOverlayNow();
+      }, LOAD_OVERLAY_DELAY_MS);
+      return;
+    }
+
+    if (loadOverlayTimer) {
+      window.clearTimeout(loadOverlayTimer);
+      loadOverlayTimer = null;
+    }
+    if (loadOverlayVisible) {
+      loadOverlayVisible = false;
+      hideEventLoadOverlayNow();
     }
   }
 

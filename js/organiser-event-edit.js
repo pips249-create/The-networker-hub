@@ -397,6 +397,9 @@
       const reader = new FileReader();
       reader.onload = () => showPreview(reader.result);
       reader.readAsDataURL(file);
+      if (window.hubCheckEventCoverFileQuality) {
+        window.hubCheckEventCoverFileQuality(file, document.getElementById('ee-photo-quality-hint'));
+      }
     }
 
     if (zone && window.hubBindImageUpload) {

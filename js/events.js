@@ -204,7 +204,14 @@
     return /\/assets\/placeholders\//i.test(url) || /event-placeholder/i.test(url);
   }
 
-  function photoImg(url, className, eventId, eventType, eventTitle) {
+  function isLogoStyleCover(ev, url) {
+    if (window.hubIsLogoStyleCover) return window.hubIsLogoStyleCover(ev, url);
+    const photo = String(url || '').trim();
+    const logo = ev && ev.organiserLogo ? String(ev.organiserLogo).trim() : '';
+    return Boolean(photo && logo && photo === logo);
+  }
+
+  function photoImg(url, className, eventId, eventType, eventTitle, ev) {
     const placementFn = window.getEventPlacementImage;
     const fallbackRaw =
       (placementFn
@@ -216,8 +223,10 @@
     const src = safePhotoUrl(resolved);
     const errorFallback = jsPhotoUrl(defaultPlaceholder());
     const placeholderClass = isPlaceholderSrc(resolved) ? ' is-placeholder' : '';
+    const logoCoverClass = isLogoStyleCover(ev, resolved) ? ' is-logo-cover' : '';
     return (
-      `<img class="${className}${placeholderClass}" src="${src}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" ` +
+      `<img class="${className}${placeholderClass}${logoCoverClass}" src="${src}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" ` +
+      `onload="window.hubMarkSmallEventCover&&window.hubMarkSmallEventCover(this)" ` +
       `onerror="this.onerror=null;this.src='${errorFallback}';this.classList.add('is-placeholder')">`
     );
   }
@@ -329,7 +338,7 @@
         data-price="${escapeHtml(ev.priceKey)}">
         <a class="premium-card-link" href="${escapeHtml(detailHref(ev))}">
           <div class="premium-card-media" aria-hidden="true">
-            <div class="premium-card-bg">${photoImg(eventImageSrc(ev), 'premium-card-img', ev.id, ev.eventType || ev.typeRaw, ev.title)}</div>
+            <div class="premium-card-bg">${photoImg(eventImageSrc(ev), 'premium-card-img', ev.id, ev.eventType || ev.typeRaw, ev.title, ev)}</div>
             <div class="premium-card-overlay"></div>
           </div>
           <div class="premium-card-top">
@@ -372,7 +381,7 @@
         data-format="${escapeHtml(ev.formatSlug)}"
         data-price="${escapeHtml(ev.priceKey)}">
         <div class="event-grid-media">
-          ${photoImg(eventImageSrc(ev), 'event-grid-img', ev.id, ev.eventType || ev.typeRaw, ev.title)}
+          ${photoImg(eventImageSrc(ev), 'event-grid-img', ev.id, ev.eventType || ev.typeRaw, ev.title, ev)}
           ${premiumBadge}
           ${salesBadge}
           <span class="event-grid-category">${escapeHtml(meetingType)}</span>
