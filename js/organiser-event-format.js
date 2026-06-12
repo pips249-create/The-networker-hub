@@ -73,6 +73,16 @@
     groupSelect.appendChild(addNew);
     if (list.length === 1) {
       groupSelect.value = list[0].id;
+    } else {
+      var preselected = '';
+      try {
+        preselected = sessionStorage.getItem(GROUP_KEY) || '';
+      } catch (err) {
+        /* ignore */
+      }
+      if (preselected && list.some(function (g) { return g.id === preselected; })) {
+        groupSelect.value = preselected;
+      }
     }
     syncGroupSelection();
   }

@@ -21,8 +21,10 @@
   --od-green-light: #e3f5eb;
   --od-red: #c03030;
   --od-red-light: #fbeaea;
-  --od-radius: 10px;
-  --od-radius-sm: 6px;
+  --od-radius: 12px;
+  --od-radius-sm: 8px;
+  --od-shadow-sm: 0 2px 10px rgba(26, 46, 59, 0.06);
+  --od-shadow-md: 0 4px 20px rgba(26, 46, 59, 0.08);
   font-family: 'Poppins', 'DM Sans', system-ui, sans-serif;
   background: var(--od-bg);
   color: var(--od-text-dark);
@@ -81,6 +83,8 @@
 
 .org-wrap {
   width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 28px clamp(16px, 3vw, 32px) 56px;
   box-sizing: border-box;
 }
@@ -409,6 +413,31 @@
   border-bottom: 1px solid var(--od-border-soft);
 }
 
+.org-page-head--split {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.org-page-head-text {
+  flex: 1;
+  min-width: min(100%, 280px);
+}
+
+.org-page-head--split .org-overview-add {
+  margin-bottom: 0;
+  flex-shrink: 0;
+  align-self: flex-start;
+  padding-top: 28px;
+}
+
+.org-page-head--split .org-add-menu {
+  right: 0;
+  left: auto;
+}
+
 .org-page-kicker {
   display: inline-block;
   font-size: 11px;
@@ -464,10 +493,17 @@
 .org-stat {
   background: var(--od-white);
   border-radius: var(--od-radius);
-  border: 0.5px solid var(--od-border-soft);
-  padding: 18px 20px;
+  border: 1px solid var(--od-border-soft);
+  padding: 20px 22px;
   position: relative;
   overflow: hidden;
+  box-shadow: var(--od-shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.org-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--od-shadow-md);
 }
 
 .org-stat::before {
@@ -516,16 +552,16 @@
 }
 
 .org-stat-value {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
   color: var(--od-purple-dark);
-  margin-top: 8px;
+  margin-top: 10px;
+  line-height: 1.1;
 }
 
-/* Overview — single gold “Add new” control */
+/* Overview — “Add new” in page header */
 .org-overview-add {
   position: relative;
-  margin-bottom: 24px;
 }
 
 .org-add-toggle {
@@ -775,18 +811,20 @@
   text-align: left;
   padding: 16px 18px;
   background: var(--od-white);
-  border: 1.5px solid var(--od-border-soft);
+  border: 1px solid var(--od-border-soft);
   border-radius: var(--od-radius);
+  box-shadow: var(--od-shadow-sm);
   cursor: pointer;
   font-family: inherit;
   text-decoration: none;
   color: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s, background 0.15s;
 }
 
 .org-quick-card:hover {
   border-color: var(--od-purple);
-  box-shadow: 0 6px 20px rgba(122, 61, 138, 0.1);
+  box-shadow: var(--od-shadow-md);
+  transform: translateY(-2px);
 }
 
 .org-quick-card--primary {
@@ -949,7 +987,9 @@
 .org-table-wrap {
   background: var(--od-white);
   border-radius: var(--od-radius);
-  border: 0.5px solid var(--od-border-soft);
+  border: 1px solid var(--od-border-soft);
+  box-shadow: var(--od-shadow-sm);
+  overflow: hidden;
 }
 
 .org-table-wrap table {
@@ -958,8 +998,8 @@
 }
 
 .org-table-wrap thead th {
-  background: var(--od-purple-pale);
-  padding: 11px 14px;
+  background: linear-gradient(180deg, var(--od-purple-pale) 0%, #eef8f9 100%);
+  padding: 12px 16px;
   text-align: left;
   font-size: 11px;
   font-weight: 700;
@@ -969,10 +1009,15 @@
 }
 
 .org-table-wrap tbody td {
-  padding: 12px 14px;
+  padding: 14px 16px;
   font-size: 13px;
   color: var(--od-text-mid);
-  border-top: 0.5px solid var(--od-border-soft);
+  border-top: 1px solid var(--od-border-soft);
+  transition: background 0.12s ease;
+}
+
+.org-table-wrap tbody tr:hover td {
+  background: rgba(232, 246, 248, 0.65);
 }
 
 .org-badge {
@@ -1041,7 +1086,11 @@
 }
 
 .org-section-footer {
-  margin: 16px 0 8px;
+  margin: 18px 0 4px;
+}
+
+.org-section-footer .org-btn-outline {
+  box-shadow: var(--od-shadow-sm);
 }
 
 .org-section-footer--split {
@@ -1053,15 +1102,17 @@
 
 .org-overview-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--od-purple-pale);
 }
 
 .org-overview-head--spaced {
-  margin-top: 36px;
+  margin-top: 40px;
 }
 
 .org-overview-head-text {
@@ -1639,10 +1690,11 @@
 /* ─── Getting started checklist ─── */
 .org-getting-started {
   margin-bottom: 24px;
-  padding: 20px 22px;
+  padding: 22px 24px;
   border-radius: var(--od-radius);
   border: 1px solid var(--od-border-soft);
-  background: linear-gradient(135deg, var(--od-purple-pale) 0%, var(--od-white) 100%);
+  background: linear-gradient(135deg, var(--od-purple-pale) 0%, var(--od-white) 55%);
+  box-shadow: var(--od-shadow-sm);
 }
 
 .org-getting-started-head {
@@ -1709,6 +1761,158 @@
   grid-column: 2;
   grid-row: 1 / span 2;
   align-self: center;
+}
+
+.org-getting-started.is-complete {
+  border-color: #c8e6d0;
+  background: linear-gradient(135deg, #f4faf6 0%, var(--od-white) 100%);
+}
+
+.org-getting-started-hubert {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--od-border-soft);
+}
+
+.org-getting-started-hubert-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.org-getting-started-hubert-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #0d0d12;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.org-getting-started-hubert-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.org-getting-started-hubert-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--od-text);
+}
+
+.org-getting-started-hubert-tagline {
+  font-size: 12px;
+  color: var(--od-text-soft);
+}
+
+.org-hubert-chat-messages {
+  max-height: 140px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 2px 0;
+}
+
+.org-hubert-chat-messages .hubert-bubble {
+  font-size: 13px;
+  max-width: 92%;
+}
+
+.org-hubert-chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.org-hubert-chat-suggestions .hubert-chip {
+  font-size: 11px;
+  padding: 6px 10px;
+}
+
+.org-hubert-chat-reset {
+  display: block;
+  margin: 0 0 8px;
+  border: 0;
+  background: none;
+  color: var(--od-text-soft);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.org-hubert-chat-reset[hidden] {
+  display: none !important;
+}
+
+.org-hubert-chat-reset:hover {
+  color: var(--od-text);
+}
+
+.org-hubert-chat-form textarea {
+  width: 100%;
+  min-width: 0;
+  resize: none;
+  min-height: 40px;
+  max-height: 88px;
+  border: 1px solid var(--od-border-soft);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.org-hubert-chat-form textarea:focus {
+  outline: 2px solid rgba(91, 47, 153, 0.22);
+  outline-offset: 1px;
+  border-color: rgba(91, 47, 153, 0.35);
+}
+
+.org-hubert-chat-form .hubert-form-compose {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.org-getting-started-list li.is-done {
+  background: #f4faf6;
+  border-color: #c8e6d0;
+}
+
+.org-getting-started-list li.is-done strong {
+  color: var(--od-text-soft);
+}
+
+.org-getting-started-list li.is-next {
+  border-color: var(--od-purple);
+  box-shadow: 0 0 0 1px rgba(91, 47, 153, 0.12);
+}
+
+.org-getting-done-badge {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #2d6a4f;
+  white-space: nowrap;
+}
+
+.org-getting-started-progress {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+  color: var(--od-text);
 }
 
 .org-team-editor-note {
@@ -1974,15 +2178,40 @@ body.org-onboard-active {
 }
 
 @media (max-width: 640px) {
+  .org-page-head--split .org-overview-add {
+    padding-top: 0;
+    width: 100%;
+  }
+
+  .org-page-head--split .org-add-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .org-overview-head .org-btn-gold {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
   .org-getting-started-list li {
     grid-template-columns: 1fr;
   }
 
-  .org-getting-started-list li .org-btn {
+  .org-getting-started-list li .org-btn,
+  .org-getting-done-badge {
     grid-column: 1;
     grid-row: auto;
     justify-self: start;
     margin-top: 6px;
+  }
+
+  .org-hubert-chat-form .hubert-form-compose {
+    grid-template-columns: 1fr;
+  }
+
+  .org-hubert-chat-form .org-btn {
+    width: 100%;
   }
 }
 

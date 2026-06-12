@@ -4,8 +4,13 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { fetchApprovedEvents } = require('./supabase-events');
 
-const EVENT_INTENT =
-  /\b(event|events|networking|exhibition|conferences?|meetings?|happening|upcoming|this week|next week|tonight|tomorrow|weekend|find|browse|search|near|in\s+[a-z]|free event)\b/i;
+/** Help / organiser listing questions — must not trigger live event browse. */
+const HELP_NOT_EVENT_BROWSE =
+  /\b(difference between|what is the difference|how do i|how can i|can i change|should i|my event|event description|event listing|event photo|event image|cover photo|event type|listing guide|after choosing|what do i fill|fill in after|what happens next|one seat|application question|ticket type|remove a date|too small|too large|too big|what should i write|organiser dashboard|publish my event|save as draft|early bird|vat included|attendee list|who has registered|who has attended|see attendees|download attendees)\b/i;
+
+/** Explicit browse / discovery intent only — not bare words like "event" or "meeting". */
+const EVENT_BROWSE_INTENT =
+  /\b(what events|find events|show events|any events|events in|events near|events around|events at|events coming|upcoming events|networking in|networking near|networking around|happening in|happening near|happening around|this week|next week|tonight|tomorrow|weekend|browse events|search events|free events?|what's on|whats on|coming up|near me|near\s+[a-z])\b/i;
 
 const LOCATION_IN = /\b(?:in|near|around|at)\s+([a-z][a-z\s'-]{1,40})/i;
 
@@ -76,8 +81,12 @@ const UK_LOCATIONS = [
   'online',
 ];
 
-function wantsEventSearch(text) {
-  return EVENT_INTENT.test(String(text || ''));
+function wantsEventSearch(text, options) {
+  const t = String(text || '');
+  if (!t) return false;
+  if (options && options.skipEventSearch) return false;
+  if (HELP_NOT_EVENT_BROWSE.test(t)) return false;
+  return EVENT_BROWSE_INTENT.test(t);
 }
 
 function normalizeLocation(value) {

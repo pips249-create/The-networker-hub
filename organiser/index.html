@@ -14,7 +14,8 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260628" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260628" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260617" />
+    <link rel="stylesheet" href="../css/hubert-widget.css?v=20260616" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260708c" />
   </head>
   <body class="organiser-dashboard-page">
@@ -76,12 +77,40 @@
 
         <!-- Overview -->
         <section class="org-page is-active" id="org-page-dashboard" data-org-page="dashboard">
-          <header class="org-page-head">
-            <p class="org-page-kicker">Organiser workspace</p>
-            <h1 class="org-page-title" id="org-page-title">Manage your group</h1>
-            <p class="org-page-lead" id="org-page-lead">
-              Update group profiles, publish events, list business opportunities, respond to reviews, and track revenue and attendees.
-            </p>
+          <header class="org-page-head org-page-head--split">
+            <div class="org-page-head-text">
+              <p class="org-page-kicker">Organiser workspace</p>
+              <h1 class="org-page-title" id="org-page-title">Manage your group</h1>
+              <p class="org-page-lead" id="org-page-lead">
+                Update group profiles, publish events, list business opportunities, respond to reviews, and track revenue and attendees.
+              </p>
+            </div>
+            <div class="org-overview-add" id="org-add-menu-wrap">
+              <button
+                type="button"
+                class="org-btn org-btn-gold org-add-toggle"
+                id="org-add-toggle"
+                aria-expanded="false"
+                aria-haspopup="true"
+                aria-controls="org-add-menu"
+              >
+                + Add new <span class="org-add-chev" aria-hidden="true">▾</span>
+              </button>
+              <div class="org-add-menu" id="org-add-menu" role="menu" hidden>
+                <a role="menuitem" class="org-add-menu-item" href="group-edit.html">
+                  <strong>Group profile</strong>
+                  <span>Your organiser page on the hub</span>
+                </a>
+                <a role="menuitem" class="org-add-menu-item" href="event-format.html">
+                  <strong>Event</strong>
+                  <span>Meeting, exhibition or conference</span>
+                </a>
+                <button type="button" role="menuitem" class="org-add-menu-item" data-org-route="academy">
+                  <strong>Academy session</strong>
+                  <span>Workshop, seminar or masterclass <em class="org-badge-soon-inline">Coming soon</em></span>
+                </button>
+              </div>
+            </div>
           </header>
 
           <aside class="hub-dash-context hub-dash-context--organiser">
@@ -96,55 +125,65 @@
               <div>
                 <h2 class="org-getting-started-title">Here&apos;s what to do first</h2>
                 <p class="org-section-sub org-getting-started-sub">
-                  A quick checklist to get your organiser workspace set up. Need a walkthrough?
+                  <span id="org-getting-started-progress">3 steps to get your workspace ready.</span>
+                  Need a walkthrough?
                   <button type="button" class="org-getting-started-link" id="org-start-tour">Take the dashboard tour</button>
                 </p>
               </div>
               <button type="button" class="org-btn org-btn-outline org-btn-sm" id="org-getting-started-dismiss">Dismiss</button>
             </div>
             <ol class="org-getting-started-list">
-              <li>
+              <li data-getting-step="group">
                 <strong>Create a group profile</strong>
                 <span>Your public organiser page on the hub.</span>
                 <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-getting-action="group">Add group profile</button>
               </li>
-              <li>
+              <li data-getting-step="event">
                 <strong>List your first event</strong>
                 <span>Meetings, exhibitions and conferences under that group.</span>
                 <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-getting-action="event">List an event</button>
               </li>
-              <li>
+              <li data-getting-step="team">
                 <strong>Invite team members</strong>
                 <span>Add editors from <em>Team &amp; invites</em> in the sidebar.</span>
                 <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-getting-action="team">Open team page</button>
               </li>
             </ol>
-          </div>
-
-          <div class="org-overview-add" id="org-add-menu-wrap">
-            <button
-              type="button"
-              class="org-btn org-btn-gold org-add-toggle"
-              id="org-add-toggle"
-              aria-expanded="false"
-              aria-haspopup="true"
-              aria-controls="org-add-menu"
-            >
-              + Add new <span class="org-add-chev" aria-hidden="true">▾</span>
-            </button>
-            <div class="org-add-menu" id="org-add-menu" role="menu" hidden>
-              <a role="menuitem" class="org-add-menu-item" href="group-edit.html">
-                <strong>Group profile</strong>
-                <span>Your organiser page on the hub</span>
-              </a>
-              <a role="menuitem" class="org-add-menu-item" href="event-format.html">
-                <strong>Event</strong>
-                <span>Meeting, exhibition or conference</span>
-              </a>
-              <button type="button" role="menuitem" class="org-add-menu-item" data-org-route="academy">
-                <strong>Academy session</strong>
-                <span>Workshop, seminar or masterclass <em class="org-badge-soon-inline">Coming soon</em></span>
-              </button>
+            <div class="org-getting-started-hubert" id="org-getting-started-hubert">
+              <div class="org-getting-started-hubert-head">
+                <img
+                  class="org-getting-started-hubert-avatar"
+                  src="../assets/hubert-icon.png"
+                  alt=""
+                  width="36"
+                  height="36"
+                />
+                <div class="org-getting-started-hubert-brand">
+                  <strong class="org-getting-started-hubert-name">Hubert</strong>
+                  <span class="org-getting-started-hubert-tagline">Got any questions? Ask Hubert</span>
+                </div>
+              </div>
+              <div
+                class="org-hubert-chat-messages"
+                id="org-hubert-messages"
+                role="log"
+                aria-live="polite"
+              ></div>
+              <button type="button" class="org-hubert-chat-reset" id="org-hubert-reset" hidden>New chat</button>
+              <div class="org-hubert-chat-suggestions" id="org-hubert-suggestions" aria-label="Suggested questions"></div>
+              <form class="org-hubert-chat-form hubert-form" id="org-hubert-form">
+                <div class="hubert-form-compose">
+                  <label class="visually-hidden" for="org-hubert-input">Ask Hubert</label>
+                  <textarea
+                    id="org-hubert-input"
+                    rows="2"
+                    placeholder="Ask about groups, events, tickets, or payouts…"
+                    maxlength="2000"
+                    required
+                  ></textarea>
+                  <button type="submit" class="org-btn org-btn-primary org-btn-sm" id="org-hubert-send">Send</button>
+                </div>
+              </form>
             </div>
           </div>
 
@@ -194,6 +233,7 @@
               <h2 class="org-section-title">Your group profiles</h2>
               <p class="org-section-sub">Click to edit your group profile page</p>
             </div>
+            <a href="group-edit.html" class="org-btn org-btn-gold org-btn-sm">+ Add group</a>
           </div>
           <div class="org-table-wrap org-overview-table">
             <table>
@@ -211,7 +251,7 @@
               <tbody id="dash-groups-body"></tbody>
             </table>
             <p class="org-empty" id="dash-groups-empty" hidden>
-              No group profiles yet — use <strong>Add new</strong> above to create your first.
+              No group profiles yet — use <strong>+ Add group</strong> above to create your first.
             </p>
           </div>
           <div class="org-section-footer">
@@ -225,6 +265,7 @@
               <h2 class="org-section-title">Your next events</h2>
               <p class="org-section-sub">Click an event name or Actions → Edit event to update a listing.</p>
             </div>
+            <button type="button" class="org-btn org-btn-gold org-btn-sm" data-action="new-event">+ Add event</button>
           </div>
           <div class="org-table-wrap org-overview-table">
             <table>
@@ -834,9 +875,11 @@
       </div>
     </div>
 
+    <script src="../js/hubert-chat.js?v=20260616"></script>
+    <script src="../js/hubert-organiser-guide.js?v=20260616" data-root="../"></script>
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
     <script src="../js/organiser-flow-tour.js?v=20260610"></script>
     <script src="../js/organiser-onboarding.js?v=20260610"></script>
-    <script src="../js/organiser-dashboard.js?v=20260611c"></script>
+    <script src="../js/organiser-dashboard.js?v=20260616"></script>
   </body>
 </html>

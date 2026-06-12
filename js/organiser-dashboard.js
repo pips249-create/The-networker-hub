@@ -452,6 +452,12 @@
         '<button type="button" class="org-action-item" data-edit-group="' +
         esc(id) +
         '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit profile</strong><span>Update organiser page details</span></span></button>' +
+        '<button type="button" class="org-action-item" data-add-event-for-group="' +
+        esc(id) +
+        '"><span class="org-action-icon">📅</span><span class="org-action-text"><strong>Add an event</strong><span>List a new event for this group</span></span></button>' +
+        '<button type="button" class="org-action-item" data-duplicate-group="' +
+        esc(id) +
+        '"><span class="org-action-icon">⧉</span><span class="org-action-text"><strong>Duplicate group</strong><span>Create a draft copy of this profile</span></span></button>' +
         '<button type="button" class="org-action-item" data-org-goto-sub="events-reviews"><span class="org-action-icon">★</span><span class="org-action-text"><strong>Reviews</strong><span>View feedback for this group</span></span></button>' +
         unpublishBtn +
         '</div></div>'
@@ -1128,6 +1134,47 @@
     return allEvents.find((x) => x.id === id) || null;
   }
 
+  async function confirmDuplicateGroup(groupId) {
+    if (!groupId) return;
+    const g = findGroupById(groupId);
+    const label = g && g.name ? g.name : 'this group';
+    if (
+      !window.confirm(
+        'Create a draft copy of "' +
+          label +
+          '"?\n\nYou can edit the name and details before publishing.'
+      )
+    ) {
+      return;
+    }
+    const res = await api('/api/organiser/groups', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'duplicate', id: groupId }),
+    });
+    if (!res.ok) {
+      window.alert(res.data.message || res.data.error || 'Could not duplicate this group.');
+      return;
+    }
+    showAirtableAlert(res.data.message || 'Group duplicated.', false);
+    await loadBootstrap();
+    renderAll();
+    setRoute('groups');
+    if (res.data.group && res.data.group.id) {
+      location.href = 'group-edit.html?id=' + encodeURIComponent(res.data.group.id);
+    }
+  }
+
+  function goToAddEventForGroup(groupId) {
+    if (!groupId) return;
+    try {
+      sessionStorage.setItem('hub_event_group_id', groupId);
+      sessionStorage.removeItem('hub_event_format');
+    } catch (err) {
+      /* ignore */
+    }
+    location.href = 'event-format.html';
+  }
+
   async function confirmUnpublishGroup(groupId) {
     if (!groupId) return;
     const g = findGroupById(groupId);
@@ -1218,6 +1265,24 @@
       const g = findGroupById(gid);
       if (g) goToGroupEditor(g);
       else if (gid) location.href = 'group-edit.html?id=' + encodeURIComponent(gid);
+      return true;
+    }
+
+    const addEventGroupBtn = e.target.closest('[data-add-event-for-group]');
+    if (addEventGroupBtn && !addEventGroupBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      goToAddEventForGroup(addEventGroupBtn.getAttribute('data-add-event-for-group'));
+      return true;
+    }
+
+    const duplicateGroupBtn = e.target.closest('[data-duplicate-group]');
+    if (duplicateGroupBtn && !duplicateGroupBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      confirmDuplicateGroup(duplicateGroupBtn.getAttribute('data-duplicate-group'));
       return true;
     }
 
@@ -1494,7 +1559,10 @@
       renderAcademyPreview();
     }
     if (page === 'team') {
-      loadTeamMembers().then(() => renderTeam());
+      loadTeamMembers().then(function () {
+      renderTeam();
+      updateGettingStartedPanel();
+    });
     }
 
     const hash = page === 'events' ? sub || 'events-list' : page;
@@ -2127,6 +2195,7 @@
         form.reset();
         await loadTeamMembers();
         renderTeam();
+        updateGettingStartedPanel();
         showAirtableAlert(data.message || 'Invite sent.', false);
       });
     }
@@ -2144,6 +2213,7 @@
           else {
             await loadTeamMembers();
             renderTeam();
+            updateGettingStartedPanel();
             showAirtableAlert(data.message || 'Invite resent.', false);
           }
           return;
@@ -2160,6 +2230,7 @@
           else {
             await loadTeamMembers();
             renderTeam();
+            updateGettingStartedPanel();
           }
         }
       });
@@ -2256,21 +2327,98 @@
     window.hubPendingGroupClaims = (state.pendingClaimGroups || []).length > 0;
   }
 
-  function updateGettingStartedVisibility() {
+  function gettingStartedProgress() {
+    const hasGroup = state.groups.length > 0;
+    const hasEvent = hasListedEvents();
+    const hasTeam = (state.teamMembers || []).some(function (m) {
+      return m.role === 'editor' || (m.status === 'pending' && !m.isAccountOwner);
+    });
+    return { hasGroup, hasEvent, hasTeam };
+  }
+
+  function updateGettingStartedPanel() {
     const panel = document.getElementById('org-getting-started');
     if (!panel) return;
+
+    try {
+      if (localStorage.getItem('hub_getting_started_dismissed') === '1') {
+        panel.hidden = true;
+        return;
+      }
+    } catch (err) {
+      /* ignore */
+    }
+
     if ((state.pendingClaimGroups || []).length > 0) {
       panel.hidden = true;
       return;
     }
-    if (state.groups.length > 0) {
-      const firstStep = panel.querySelector('.org-getting-started-list li');
-      if (firstStep) {
-        firstStep.classList.add('is-done');
-        const btn = firstStep.querySelector('[data-org-getting-action="group"]');
-        if (btn) btn.hidden = true;
+
+    const progress = gettingStartedProgress();
+    const flags = [progress.hasGroup, progress.hasEvent, progress.hasTeam];
+    const doneCount = flags.filter(Boolean).length;
+    const allDone = doneCount >= 3;
+
+    panel.hidden = false;
+
+    const titleEl = panel.querySelector('.org-getting-started-title');
+    if (titleEl) {
+      if (allDone) titleEl.textContent = "You're all set";
+      else if (doneCount === 0) titleEl.textContent = "Here's what to do first";
+      else titleEl.textContent = "Here's what's next";
+    }
+    panel.classList.toggle('is-complete', allDone);
+
+    const progressHint = document.getElementById('org-getting-started-progress');
+    if (progressHint) {
+      if (allDone) {
+        progressHint.textContent =
+          'Setup complete — you can dismiss this checklist whenever you like.';
+      } else {
+        const remaining = 3 - doneCount;
+        progressHint.textContent =
+          doneCount === 0
+            ? '3 steps to get your workspace ready.'
+            : remaining === 1
+              ? '1 step left on your setup checklist.'
+              : remaining + ' steps left on your setup checklist.';
       }
     }
+
+    const stepDone = {
+      group: progress.hasGroup,
+      event: progress.hasEvent,
+      team: progress.hasTeam,
+    };
+    let nextMarked = false;
+
+    panel.querySelectorAll('[data-getting-step]').forEach(function (li) {
+      const key = li.getAttribute('data-getting-step');
+      const done = Boolean(stepDone[key]);
+      li.classList.toggle('is-done', done);
+      li.classList.toggle('is-next', !done && !nextMarked);
+      if (!done && !nextMarked) nextMarked = true;
+
+      const btn = li.querySelector('[data-org-getting-action]');
+      if (btn) btn.hidden = done;
+
+      let badge = li.querySelector('.org-getting-done-badge');
+      if (done) {
+        if (!badge) {
+          badge = document.createElement('span');
+          badge.className = 'org-getting-done-badge';
+          badge.textContent = 'Done ✓';
+          li.appendChild(badge);
+        }
+      } else if (badge) {
+        badge.remove();
+      }
+    });
+  }
+
+  /** @deprecated use updateGettingStartedPanel */
+  function updateGettingStartedVisibility() {
+    updateGettingStartedPanel();
   }
 
   function shouldDeferGroupClaimModal() {
@@ -2636,6 +2784,7 @@
     renderMyEventsHub();
     fillEventSelect(document.getElementById('ticket-event'));
     updateOpportunityEnquiryUi();
+    updateGettingStartedPanel();
   }
 
   function setDashboardLoading(on) {
@@ -2680,7 +2829,10 @@
     state.canDeleteEvents = data.canDeleteEvents !== false;
     state.organiserRole = data.organiserRole || 'owner';
     state.stripeConnectEnabled = Boolean(data.stripeConnectEnabled);
-    loadTeamMembers().then(() => renderTeam());
+    loadTeamMembers().then(function () {
+      renderTeam();
+      updateGettingStartedPanel();
+    });
 
     if (data.adminView) {
       showAirtableAlert(
@@ -2719,6 +2871,9 @@
     updateTeamNavBadge();
     if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
       window.HubOrganiserOnboarding.initAfterDashboardReady();
+    }
+    if (window.HubertOrganiserGuide && window.HubertOrganiserGuide.initOrganiserDashboardChat) {
+      window.HubertOrganiserGuide.initOrganiserDashboardChat();
     }
     } finally {
       setDashboardLoading(false);
@@ -3030,7 +3185,10 @@
         ) {
           renderMyEventsHub();
         } else if (route === 'team') {
-          loadTeamMembers().then(() => renderTeam());
+          loadTeamMembers().then(function () {
+      renderTeam();
+      updateGettingStartedPanel();
+    });
         }
       });
     });

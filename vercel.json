@@ -55,13 +55,16 @@
     "api/organiser.js": { "maxDuration": 15 },
     "api/organisers.js": { "maxDuration": 15 },
     "api/events.js": { "maxDuration": 15 },
-    "api/hub-listings.js": { "maxDuration": 15 },
+    "api/seo.js": { "maxDuration": 15 },
     "api/opportunities.js": { "maxDuration": 15 },
     "api/stripe-webhook.js": { "maxDuration": 15 },
     "api/contact-chat.js": { "maxDuration": 30 }
   },
   "rewrites": [
-    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/sitemap.xml", "destination": "/api/seo/sitemap" },
+    { "source": "/api/seo-meta", "destination": "/api/seo/meta" },
+    { "source": "/api/hubert-schema", "destination": "/api/seo/hubert-schema" },
+    { "source": "/api/hub-listings", "destination": "/api/events" },
     { "source": "/api/auth/:path*", "destination": "/api/auth" },
     { "source": "/api/admin/:path*", "destination": "/api/admin" },
     { "source": "/api/cron/:path*", "destination": "/api/cron" },

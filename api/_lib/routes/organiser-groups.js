@@ -156,6 +156,50 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    if (action === 'duplicate' && actionGroupId) {
+      try {
+        const groups = await api.listGroupsForSession(auth.session);
+        if (!api.groupOwnedBySession(auth.session, groups, actionGroupId)) {
+          return json(res, 403, { error: 'group_not_owned' });
+        }
+        const source = await api.getGroupById(actionGroupId);
+        if (!source) return json(res, 404, { error: 'group_not_found' });
+        let copyName = String(source.name || 'Group').trim() || 'Group';
+        if (!/\(copy\)$/i.test(copyName)) copyName += ' (copy)';
+        const created = await api.createGroup({
+          session: auth.session,
+          userId: auth.session.sub || '',
+          email: auth.session.email,
+          contactEmail: source.contactEmail || auth.session.email,
+          name: copyName,
+          description: source.description || '',
+          website: source.website || '',
+          location: source.location || '',
+          industries: source.industries || [],
+          meetingFormats: source.meetingFormats || [],
+          logoUrl: source.imageUrl || '',
+          listingStatus: 'draft',
+          verificationStatus: 'Pending',
+        });
+        const group = await api.enrichGroupForDashboard(
+          created,
+          auth.session,
+          adminViewForRequest(req, auth.session)
+        );
+        return json(res, 201, {
+          ok: true,
+          group,
+          message: 'Group duplicated as a draft — review the copy and publish when ready.',
+        });
+      } catch (e) {
+        return json(res, e.status || 500, {
+          error: 'group_duplicate_failed',
+          message: e.message,
+          airtable: api.airtableSetupHint && api.airtableSetupHint('groups'),
+        });
+      }
+    }
+
     const name = String(body.name || '').trim();
     const description = String(body.description || '').trim();
     const website = String(body.website || '').trim();

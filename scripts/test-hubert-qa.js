@@ -39,6 +39,19 @@ const MEMBER_QUESTIONS = [
   { q: 'How much does The Networker Hub make per ticket?', expect: /4\.5%|booking fee|platform and payment/i },
   { q: 'How can I download the attendees for my next event', expect: /Attendees|CSV|\/organiser\//i },
   { q: 'How long between payouts for my event? Can I get it instantly?', expect: /7.day|not instant|settlement|Stripe/i },
+  { q: 'What is the difference between an event and a meeting?', expect: /browse filter|Meeting covers|regular networking/i },
+  { q: 'My event image is too small', expect: /800px|higher.resolution|URL/i },
+  { q: 'My event image is too big', expect: /2MB|compress|URL/i },
+  { q: "I've accidentally added an extra date — how do I remove it?", expect: /click.*highlighted|deselect|calendar/i },
+  {
+    q: 'I have 3 events with the same name but different start times',
+    expect: /separate listing|different time|My Events/i,
+  },
+  { q: 'What is One Seat Only Policy?', expect: /application|industry|job title|approve/i },
+  { q: 'Can I change the application questions asked?', expect: /fixed|cannot be changed|industry/i },
+  { q: 'How can I see who has attended my event?', expect: /Attendees|registered|\/organiser\//i },
+  { q: 'What do I fill in after choosing the event format?', expect: /listing details|title|tickets/i },
+  { q: 'What should I write in my event description?', expect: /who the event is for|keywords|filter/i },
 ];
 
 let failed = 0;

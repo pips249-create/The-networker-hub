@@ -1,7 +1,7 @@
 /**
- * GET /sitemap.xml — public URL sitemap (static pages + events + organiser groups).
+ * GET /api/seo/sitemap — public URL sitemap (static pages + events + organiser groups).
  */
-const { buildSitemapXml } = require('./_lib/seo-sitemap');
+const { buildSitemapXml } = require('../seo-sitemap');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {

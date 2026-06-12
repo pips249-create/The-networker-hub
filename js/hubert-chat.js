@@ -27,6 +27,7 @@
     this.suggestionsEl = options.suggestionsEl;
     this.bubblePrefix = options.bubblePrefix || 'hubert-bubble';
     this.apiUrl = options.apiUrl || '/api/contact-chat';
+    this.hubertContext = options.hubertContext || '';
     this.greeting = options.greeting || HUBERT_GREETING;
     this.history = [];
     this.busy = false;
@@ -93,7 +94,10 @@
     fetch(self.apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: self.history }),
+      body: JSON.stringify({
+        messages: self.history,
+        context: self.hubertContext || undefined,
+      }),
     })
       .then(function (r) {
         return r.json();

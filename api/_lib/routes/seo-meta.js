@@ -1,9 +1,9 @@
 /**
- * GET /api/seo-meta?type=event|organiser&slug=...
+ * GET /api/seo/meta?type=event|organiser&slug=...
  * Returns title, description, canonical, Open Graph tags, and JSON-LD.
  */
-const { setCors, json } = require('./_lib/auth');
-const { buildSeoMeta } = require('./_lib/seo-meta');
+const { setCors, json } = require('../auth');
+const { buildSeoMeta } = require('../seo-meta');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);

@@ -1,9 +1,9 @@
 /**
- * GET /api/hubert-schema — JSON-LD and llms.txt content from Hubert knowledge (SEO/AEO).
+ * GET /api/seo/hubert-schema — JSON-LD and llms.txt content from Hubert knowledge (SEO/AEO).
  * Query: page=home|faq|contact|about|all  ·  format=json|llms
  */
-const { json, setCors } = require('./_lib/auth');
-const { buildSchemaGraph, buildLlmsTxt, FAQ_AEO_ENTRIES } = require('./_lib/hubert-seo');
+const { json, setCors } = require('../auth');
+const { buildSchemaGraph, buildLlmsTxt, FAQ_AEO_ENTRIES } = require('../hubert-seo');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);

@@ -3,7 +3,13 @@
  * Body: { messages: [{ role: 'user'|'assistant', content: string }] }
  */
 const { json, setCors } = require('./_lib/auth');
-const { SYSTEM_PROMPT, fallbackReply } = require('./_lib/hubert-knowledge');
+const {
+  SYSTEM_PROMPT,
+  fallbackReply,
+  matchedFallbackReply,
+  buildOrganiserContextAddendum,
+  ORGANISER_PAGE_KEYS,
+} = require('./_lib/hubert-knowledge');
 const {
   wantsEventSearch,
   searchEventsForHubert,
@@ -24,7 +30,10 @@ function buildLiveContext(eventLookup, opportunityLookup) {
   ].join('\n\n');
 }
 
-function pickLiveFallbackReply(eventLookup, opportunityLookup) {
+function pickLiveFallbackReply(eventLookup, opportunityLookup, latestUserText) {
+  const knowledge = matchedFallbackReply(latestUserText);
+  if (knowledge) return knowledge;
+
   const events = eventLookup && eventLookup.events;
   const opportunities = opportunityLookup && opportunityLookup.opportunities;
   const eventCount = events ? events.length : 0;
@@ -118,11 +127,15 @@ module.exports = async function handler(req, res) {
     return json(res, 400, { error: 'message_required' });
   }
 
+  const pageContext = String(body.context || body.pageContext || '').trim();
+  const isOrganiserPage = ORGANISER_PAGE_KEYS.indexOf(pageContext) !== -1;
+  const lookupOptions = { skipEventSearch: isOrganiserPage };
+
   let eventLookup = null;
   let opportunityLookup = null;
   try {
     const lookups = [];
-    if (wantsEventSearch(latestUser.content)) {
+    if (wantsEventSearch(latestUser.content, lookupOptions)) {
       lookups.push(searchEventsForHubert(latestUser.content).then(function (result) {
         eventLookup = result;
       }));
@@ -134,13 +147,19 @@ module.exports = async function handler(req, res) {
     }
     if (lookups.length) await Promise.all(lookups);
 
-    const systemPrompt = SYSTEM_PROMPT + '\n\n' + buildLiveContext(eventLookup, opportunityLookup);
+    const systemPrompt =
+      SYSTEM_PROMPT +
+      buildOrganiserContextAddendum(pageContext) +
+      '\n\n' +
+      buildLiveContext(eventLookup, opportunityLookup);
 
     let reply = await openAiReply(messages, systemPrompt);
     let mode = 'ai';
 
     if (!reply) {
-      reply = pickLiveFallbackReply(eventLookup, opportunityLookup) || fallbackReply(latestUser.content);
+      reply =
+        pickLiveFallbackReply(eventLookup, opportunityLookup, latestUser.content) ||
+        fallbackReply(latestUser.content);
       mode = 'fallback';
     }
 
@@ -153,10 +172,11 @@ module.exports = async function handler(req, res) {
         opportunityLookup && opportunityLookup.opportunities ? opportunityLookup.opportunities.length : 0,
     });
   } catch (err) {
-    let degradedReply = fallbackReply(latestUser.content);
+    let degradedReply =
+      matchedFallbackReply(latestUser.content) || fallbackReply(latestUser.content);
     try {
       const lookups = [];
-      if (!eventLookup && wantsEventSearch(latestUser.content)) {
+      if (!eventLookup && wantsEventSearch(latestUser.content, lookupOptions)) {
         lookups.push(searchEventsForHubert(latestUser.content).then(function (result) {
           eventLookup = result;
         }));
@@ -167,7 +187,8 @@ module.exports = async function handler(req, res) {
         }));
       }
       if (lookups.length) await Promise.all(lookups);
-      degradedReply = pickLiveFallbackReply(eventLookup, opportunityLookup) || degradedReply;
+      degradedReply =
+        pickLiveFallbackReply(eventLookup, opportunityLookup, latestUser.content) || degradedReply;
     } catch (lookupErr) {
       /* keep generic fallback */
     }

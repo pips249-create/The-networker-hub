@@ -11,6 +11,8 @@
       'Almost there — ticket types and publishing next. Ask if VAT, refunds, or tier setup is unclear.',
     'group-edit':
       'Your group profile is the home for your events. Ask if anything on this page is unclear.',
+    'organiser-dashboard':
+      "I'm here on your organiser dashboard — ask about group profiles, listing events, tickets, payouts, or inviting your team.",
   };
 
   var SUGGESTIONS = {
@@ -20,11 +22,22 @@
       { label: 'What happens next', prompt: 'What do I fill in after choosing the event format?' },
     ],
     'event-edit': [
+      { label: 'Meeting vs Events type', prompt: 'What is the difference between an event and a meeting?' },
+      { label: 'Image too small', prompt: 'My event image is too small — what can I do?' },
+      { label: 'Image too large', prompt: 'My event image is too big — what do I do?' },
+      { label: 'Remove a date', prompt: "I've accidentally added an extra date — how do I remove it?" },
+      {
+        label: 'Same name, different details',
+        prompt:
+          'I have several sessions with the same name but different times or locations — what do I do?',
+      },
       { label: 'Description tips', prompt: 'What should I write in my event description?' },
-      { label: 'Multiple dates', prompt: 'How do I add more than one date to an event series?' },
-      { label: 'Cover photo', prompt: 'What photo works best for an event listing?' },
+      { label: 'Multiple dates (series)', prompt: 'How do I add more than one date to a recurring event series?' },
     ],
     'event-tickets': [
+      { label: 'One Seat Only Policy', prompt: 'What is One Seat Only Policy?' },
+      { label: 'Application questions', prompt: 'Can I change the application questions asked?' },
+      { label: 'See registrations', prompt: 'How can I see who has registered for my event?' },
       { label: 'Early bird pricing', prompt: 'How do I set up early bird ticket pricing?' },
       { label: 'VAT choice', prompt: 'Should VAT be included in my ticket price or added at checkout?' },
       { label: 'Save before publish', prompt: 'Can I save tickets as draft before publishing my event?' },
@@ -33,6 +46,12 @@
       { label: 'First event', prompt: 'What happens after I save my group profile?' },
       { label: 'Logo & name', prompt: 'What should I use for my group logo and name?' },
       { label: 'Contact email', prompt: 'Who sees the contact email on my organiser page?' },
+    ],
+    'organiser-dashboard': [
+      { label: 'Create a group', prompt: 'How do I create a group profile on the organiser dashboard?' },
+      { label: 'List an event', prompt: 'How do I list my first event?' },
+      { label: 'Stripe payouts', prompt: 'How do Stripe Connect payouts work for organisers?' },
+      { label: 'Invite my team', prompt: 'How do I invite team members to help manage events?' },
     ],
   };
 
@@ -45,6 +64,7 @@
   };
 
   var chatInstance = null;
+  var dashboardChatInstance = null;
 
   function assetRoot() {
     var s =
@@ -53,7 +73,13 @@
     return (s && s.getAttribute('data-root')) || '../';
   }
 
+  function isOrganiserDashboard() {
+    var path = (global.location.pathname || '').toLowerCase();
+    return /\/organiser\/?$/.test(path) || /\/organiser\/index\.html$/.test(path);
+  }
+
   function pageKey() {
+    if (isOrganiserDashboard()) return 'organiser-dashboard';
     var path = (global.location.pathname || '').toLowerCase();
     if (/\/event-format\.html$/.test(path)) return 'event-format';
     if (/\/event-edit\.html$/.test(path)) return 'event-edit';
@@ -80,38 +106,70 @@
     }
   }
 
-  function initChat(rootEl) {
-    if (chatInstance || !global.HubertChat || !rootEl) return chatInstance;
+  function initChat(rootEl, options) {
+    options = options || {};
+    var useDashboard = options.dashboard === true;
+    if (useDashboard) {
+      if (dashboardChatInstance || !global.HubertChat || !rootEl) return dashboardChatInstance;
+    } else if (chatInstance || !global.HubertChat || !rootEl) {
+      return chatInstance;
+    }
 
-    var messagesEl = rootEl.querySelector('#hub-hubert-guide-messages');
-    var formEl = rootEl.querySelector('#hub-hubert-guide-form');
-    var inputEl = rootEl.querySelector('#hub-hubert-guide-input');
-    var sendBtn = rootEl.querySelector('#hub-hubert-guide-send');
-    var resetBtn = rootEl.querySelector('#hub-hubert-guide-reset');
-    var suggestionsEl = rootEl.querySelector('#hub-hubert-guide-suggestions');
+    var messagesEl = rootEl.querySelector(options.messagesSelector || '#hub-hubert-guide-messages');
+    var formEl = rootEl.querySelector(options.formSelector || '#hub-hubert-guide-form');
+    var inputEl = rootEl.querySelector(options.inputSelector || '#hub-hubert-guide-input');
+    var sendBtn = rootEl.querySelector(options.sendSelector || '#hub-hubert-guide-send');
+    var resetBtn = rootEl.querySelector(options.resetSelector || '#hub-hubert-guide-reset');
+    var suggestionsEl = rootEl.querySelector(
+      options.suggestionsSelector || '#hub-hubert-guide-suggestions'
+    );
     if (!messagesEl || !formEl || !inputEl) return null;
 
-    var key = pageKey();
-    var cfgSuggestions = SUGGESTIONS[key] || SUGGESTIONS['event-edit'];
+    var key = options.pageKey || pageKey();
+    var cfgSuggestions = options.suggestions || SUGGESTIONS[key] || SUGGESTIONS['event-edit'];
     if (global.HubertChatRenderSuggestions) {
       global.HubertChatRenderSuggestions(suggestionsEl, cfgSuggestions);
     }
 
-    chatInstance = new global.HubertChat({
+    var instance = new global.HubertChat({
       messagesEl: messagesEl,
       formEl: formEl,
       inputEl: inputEl,
       sendBtn: sendBtn,
       resetBtn: resetBtn,
       suggestionsEl: suggestionsEl,
-      greeting: GREETINGS[key] || GREETINGS['event-edit'],
+      greeting: options.greeting || GREETINGS[key] || GREETINGS['event-edit'],
+      hubertContext: options.hubertContext || key,
       bubblePrefix: 'hubert-bubble',
     });
 
-    return chatInstance;
+    if (useDashboard) dashboardChatInstance = instance;
+    else chatInstance = instance;
+
+    return instance;
+  }
+
+  function initOrganiserDashboardChat() {
+    if (!isOrganiserDashboard()) return null;
+    var root = document.getElementById('org-getting-started-hubert');
+    if (!root) return null;
+    return initChat(root, {
+      dashboard: true,
+      pageKey: 'organiser-dashboard',
+      messagesSelector: '#org-hubert-messages',
+      formSelector: '#org-hubert-form',
+      inputSelector: '#org-hubert-input',
+      sendSelector: '#org-hubert-send',
+      resetSelector: '#org-hubert-reset',
+      suggestionsSelector: '#org-hubert-suggestions',
+    });
   }
 
   function mountQuestionsOnlyIfNeeded() {
+    if (isOrganiserDashboard()) {
+      initOrganiserDashboardChat();
+      return;
+    }
     var key = pageKey();
     if (!key || !global.HubFlowTour) return;
     if (key === 'event-edit' && !isNewEventEdit()) return;
@@ -135,6 +193,7 @@
   global.HubertOrganiserGuide = {
     assetRoot: assetRoot,
     initChat: initChat,
+    initOrganiserDashboardChat: initOrganiserDashboardChat,
     pageKey: pageKey,
     mountQuestionsOnlyIfNeeded: mountQuestionsOnlyIfNeeded,
   };

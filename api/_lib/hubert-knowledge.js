@@ -73,6 +73,23 @@ const KNOWLEDGE_SECTIONS = [
       'FEES: Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before they pay). This covers platform and payment processing — organisers receive the full ticket price, with no separate platform or Stripe deductions.',
   },
   {
+    title: 'ORGANISER EVENT LISTING',
+    body:
+      'Creating a listing: /organiser/ → create event → choose group and format (in person or online) → event-edit.html for title, type, description, photo, venue or join link, and dates → event-tickets.html for tiers, VAT, refund policy, publish. ' +
+      'EVENT TYPE (Meeting vs Events vs Exhibition vs Awards): this is a browse filter, not whether something counts as an event. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs (seminars, lunch & learns). Exhibition and Awards are for trade shows and ceremonies. ' +
+      'MULTI-DATE SERIES: click multiple days on the calendar — the same start time, end time, and venue (or online link) apply to every date. Ideal for a recurring meeting on different weeks. To remove a date, click the highlighted day again on the calendar. ' +
+      'SAME TITLE, DIFFERENT TIME OR LOCATION: create separate listings — one per session — from My Events. You can reuse the same title; each listing gets its own dates, times, and venue. ' +
+      'COVER PHOTO: upload, drag-and-drop, paste (Ctrl+V), or paste a URL. Files over 2MB are compressed automatically; if that fails, resize the file or use a hosted URL. For a sharp listing card, aim for at least 800px on the longest side (400px on the shortest). Use Remove to clear a photo and upload again.',
+  },
+  {
+    title: 'ORGANISER TICKETS & ATTENDEES',
+    body:
+      'TICKET SETUP (event-tickets.html): choose Standard ticket types for open booking, or One Seat Only Policy for application-based attendance — these are mutually exclusive. ' +
+      'ONE SEAT ONLY POLICY (OSOP): prospective attendees apply to join instead of buying straight away. They answer two fixed questions — their industry and job title. You approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. Set an optional price (leave at £0 for free), places limit, and application closing date. ' +
+      'APPLICATION QUESTIONS: under OSOP, the two questions (industry and job title) are fixed and cannot be changed. For standard open tickets, you can optionally tick boxes under Attendee information at booking to note food is included or to collect dietary or accessibility requirements at checkout. ' +
+      'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event to see everyone who has booked (name, email, ticket type, quantity, payment status). Download attendees CSV to export. This shows ticket registrations — not on-the-day check-in.',
+  },
+  {
     title: 'TEAM & STORY',
     body:
       'Co-founders Rosie and Catherine (Pip) built The Networker Hub to connect UK business owners and professionals with the right events, communities, and opportunities. Both are listed as Co-founders on /about.html. ' +
@@ -157,7 +174,7 @@ const FALLBACK_REPLIES = [
   {
     match: /download.*attendee|export.*attendee|attendee.*csv|attendees csv|get.*attendee list/i,
     reply:
-      'Sign in and open /organiser/, go to Events → Attendees, filter by your event, then click Download attendees CSV. The file includes registrations for your records.',
+      'Sign in and open /organiser/, go to Events → Attendees, filter by your event, then click Download attendees CSV. The file includes name, email, ticket type, and booking date for each registration.',
   },
   {
     match: /payout|when do i get paid|settlement|instant payout|how long.*paid/i,
@@ -260,6 +277,56 @@ const FALLBACK_REPLIES = [
       'Business opportunities — franchises, side hustles, partnerships, and more — are at /opportunities/. Browse free; listings are informational only so do your own due diligence. To enquire, create a free account and send a message from the listing page.',
   },
   {
+    match: /after choosing.*format|what do i fill in|fill in after|what happens next|after event format/i,
+    reply:
+      'After choosing your group and format (in person or online), you go to the listing details page: event title, event type, description, cover photo, venue or join link, and dates on the calendar. Save as draft anytime, then continue to tickets for pricing, VAT, refund policy, and publish.',
+  },
+  {
+    match: /event description|write.*description|description tips|what should i write/i,
+    reply:
+      'Include who the event is for, what happens on the day, and useful keywords people search for — location, industry, format, and who should come. Attendees filter listings using this text, so be specific rather than generic. You can also copy from your group profile using the button on the form.',
+  },
+  {
+    match: /difference.*(event|meeting)|meeting vs|event vs|what.*(event type|type of event)|meeting or event/i,
+    reply:
+      'Every listing is an event — the Event type dropdown is a browse filter. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs such as seminars or lunch & learns. Exhibition and Awards are for trade shows and ceremonies. Pick the type that best matches how people will search for it on /events/.',
+  },
+  {
+    match: /image.*(too small|blurry|low.?res|pixelat)|photo.*(too small|blurry|low.?res)|cover.*(too small|blurry)|logo.*too small/i,
+    reply:
+      'Use a higher-resolution photo so it stays sharp on the listing card — aim for at least 800px on the longest side and 400px on the shortest. Re-export from your original file, or paste a URL to a larger hosted image in the URL field below the upload zone. Click Remove on the preview, then upload the new file.',
+  },
+  {
+    match: /image.*(too (big|large)|won.?t upload)|photo.*(too (big|large)|won.?t upload)|cover.*too (big|large)|file.*too large|could not compress/i,
+    reply:
+      'Files over 2MB are compressed automatically when you upload. If that fails, resize the image on your computer first, or paste a hosted image URL in the URL field instead. PNG and JPG work best. You can also drag-and-drop or paste (Ctrl+V) a smaller file into the upload zone.',
+  },
+  {
+    match: /remove.*(date|day)|delete.*(date|day)|get rid of.*(date|day)|accident.*(date|day)|extra date|wrong date|deselect.*(date|day)/i,
+    reply:
+      'Click the highlighted date again on the calendar to deselect it — selected days show as highlighted and appear in the date list below. You need at least one date to continue to tickets. If you already saved and need to drop a date from a published series, open the listing from My Events — if ticket sales are locked, email hello@the-networker.co.uk.',
+  },
+  {
+    match: /same (name|title).*(different|another).*(time|location|venue|place)|different (time|location|venue).*(same name|same title)|several (session|event).*same name|multiple (event|session|listing).*(different time|different location|different venue)/i,
+    reply:
+      'A multi-date series on one listing shares the same start time, end time, and venue (or online link) for every date — use that for a recurring meeting on different weeks. If your sessions have different start times or locations, create separate listings from My Events (Create event). You can reuse the same title on each; set the dates, times, and venue for that session individually.',
+  },
+  {
+    match: /one seat only|osop\b|application.?based (ticket|attend|booking)|application to attend/i,
+    reply:
+      'One Seat Only Policy is an alternative to open ticket sales on the tickets step. Instead of buying straight away, prospective attendees apply to join — they answer two fixed questions (their industry and job title). You review and approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. You can set an optional price (leave at £0 for free), a places limit, and an application closing date. It is mutually exclusive with standard ticket types.',
+  },
+  {
+    match: /change.*application question|custom.*application question|edit.*application question|different application question|application question.*change|can i change.*question/i,
+    reply:
+      'For One Seat Only Policy events, the application questions are fixed: (1) What industry are you in? and (2) What is your job title? These cannot be changed. For standard open ticket booking, you can optionally turn on extra fields under Attendee information at booking on the tickets step — tick the boxes to note food is included, or to collect dietary or accessibility requirements at checkout.',
+  },
+  {
+    match: /who (has |)(attended|registered|booked)|see (who|my) (attendee|registration|book)|view.*attendee|who is coming|attendee list|see registrations/i,
+    reply:
+      'Sign in and open /organiser/ → Events → Attendees. You will see everyone who has registered for your events — name, email, ticket type, quantity, and booking date. Use the event filter dropdown to narrow to one event, or click Download attendees CSV to export. The Hub tracks ticket registrations; there is no separate on-the-day check-in list.',
+  },
+  {
     match: /organiser|organizer|dashboard|sell ticket|stripe onboard|payout/i,
     reply:
       'Sign in and open /organiser/ to create events, manage attendees, sell tickets, and list opportunities. Complete Stripe onboarding there for payouts. New groups: email hello@the-networker.co.uk with your group name, format, and location.',
@@ -316,6 +383,36 @@ const FALLBACK_REPLIES = [
   },
 ];
 
+const ORGANISER_PAGE_CONTEXT = {
+  'event-format':
+    'The user is creating an event and is on the format step (choose group profile + in person or online). Answer listing-setup questions from your organiser knowledge. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+  'event-edit':
+    'The user is on the event listing details step (title, type, description, photo, location, dates). Answer listing-setup questions from your organiser knowledge. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+  'event-tickets':
+    'The user is on the ticket setup step (ticket types, One Seat Only Policy, VAT, refund policy, publish). Answer organiser ticketing questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+  'group-edit':
+    'The user is editing their organiser group profile. Answer group-profile questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+  'organiser-dashboard':
+    'The user is on the organiser dashboard. Answer questions about groups, events, attendees, revenue, and team invites. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+};
+
+const ORGANISER_PAGE_KEYS = Object.keys(ORGANISER_PAGE_CONTEXT);
+
+function matchedFallbackReply(latestUser) {
+  const text = String(latestUser || '').trim();
+  if (!text) return null;
+  for (var i = 0; i < FALLBACK_REPLIES.length; i++) {
+    if (FALLBACK_REPLIES[i].match.test(text)) return FALLBACK_REPLIES[i].reply;
+  }
+  return null;
+}
+
+function buildOrganiserContextAddendum(pageContext) {
+  const key = String(pageContext || '').trim();
+  if (!key || !ORGANISER_PAGE_CONTEXT[key]) return '';
+  return '\n\nORGANISER LISTING CONTEXT: ' + ORGANISER_PAGE_CONTEXT[key];
+}
+
 function fallbackReply(latestUser) {
   const text = String(latestUser || '').trim();
   if (!text) {
@@ -325,9 +422,8 @@ function fallbackReply(latestUser) {
       ', your business butler and concierge at The Networker Hub. How may I help — finding events or opportunities, booking tickets, or getting started as an organiser?'
     );
   }
-  for (var i = 0; i < FALLBACK_REPLIES.length; i++) {
-    if (FALLBACK_REPLIES[i].match.test(text)) return FALLBACK_REPLIES[i].reply;
-  }
+  const matched = matchedFallbackReply(text);
+  if (matched) return matched;
   return (
     "Thank you for your message. For detailed help, email hello@the-networker.co.uk or read our FAQ at /faq.html. " +
     "I'm " +
@@ -343,5 +439,9 @@ module.exports = {
   KNOWLEDGE_BASE,
   SYSTEM_PROMPT,
   FALLBACK_REPLIES,
+  ORGANISER_PAGE_CONTEXT,
+  ORGANISER_PAGE_KEYS,
+  matchedFallbackReply,
+  buildOrganiserContextAddendum,
   fallbackReply,
 };
