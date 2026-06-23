@@ -2161,7 +2161,7 @@
 
   var loadOverlayTimer = null;
   var loadOverlayVisible = false;
-  var LOAD_OVERLAY_DELAY_MS = 800;
+  var LOAD_OVERLAY_DELAY_MS = 0;
 
   function showEventLoadOverlayNow() {
     const overlay = document.getElementById('event-detail-load-overlay');
@@ -2261,13 +2261,20 @@
           seriesDatesList = data.seriesDates || [];
           seriesBaseEvent = ev;
           populateFromEvent(ev);
-          let related = data.related || [];
-          if (!related.length) related = await loadRelatedFallback(ev);
-          renderRelated(related);
           initTicketPanel(ev);
           initSeriesDatePicker(ev);
           initContactHost(ev);
           initActions(ev);
+          setEventLoading(false);
+
+          const relatedFromApi = data.related || [];
+          if (relatedFromApi.length) {
+            renderRelated(relatedFromApi);
+          } else {
+            loadRelatedFallback(ev).then(function (related) {
+              renderRelated(related);
+            });
+          }
           loadEventPageAds();
           return;
         }

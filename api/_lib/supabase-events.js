@@ -638,24 +638,51 @@ function slugMatchesPublicRow(row, requestedSlug) {
   return computed && String(computed).trim().toLowerCase() === want;
 }
 
+function isPublishedApprovedEventRow(row) {
+  if (!row) return false;
+  if (row.approval_status !== 'Approved') return false;
+  if (String(row.status || 'published').toLowerCase() !== 'published') return false;
+  if (!row.starts_at) return false;
+  return true;
+}
+
+function asPublishedEventRow(row) {
+  return { ...row, next_date: row.starts_at };
+}
+
 async function fetchPublishedEventBySlug(sb, slug) {
   const s = String(slug || '').trim();
   if (!s) return null;
 
   const tableRes = await sb.from('events').select('*').eq('slug', s).maybeSingle();
   if (tableRes.error) throw new Error(tableRes.error.message);
-  if (
-    tableRes.data &&
-    tableRes.data.approval_status === 'Approved' &&
-    String(tableRes.data.status || 'published').toLowerCase() === 'published'
-  ) {
-    return { ...tableRes.data, next_date: tableRes.data.starts_at };
+  if (tableRes.data && isPublishedApprovedEventRow(tableRes.data)) {
+    return asPublishedEventRow(tableRes.data);
   }
 
-  // Browse links use publicEventSlug (title-derived when DB slug is missing or UUID-like).
-  const published = await fetchPublishedEventRows(sb);
-  const match = (published || []).find((row) => slugMatchesPublicRow(row, s));
-  return match || null;
+  const prefix = s.replace(/-\d+$/, '') || s;
+  const { data: slugCandidates, error: slugErr } = await sb
+    .from('events')
+    .select('*')
+    .eq('approval_status', 'Approved')
+    .eq('status', 'published')
+    .not('starts_at', 'is', null)
+    .ilike('slug', prefix + '%')
+    .limit(32);
+  if (slugErr) throw new Error(slugErr.message);
+  let match = (slugCandidates || []).find((row) => slugMatchesPublicRow(row, s));
+  if (match) return asPublishedEventRow(match);
+
+  // Title-derived slugs — scan id/slug/title only, then load the winning row.
+  const { data: slimRows, error: slimErr } = await sb
+    .from('published_events')
+    .select('id, slug, title')
+    .order('next_date', { ascending: false, nullsFirst: false })
+    .limit(2500);
+  if (slimErr) throw new Error(slimErr.message);
+  const slimHit = (slimRows || []).find((row) => slugMatchesPublicRow(row, s));
+  if (!slimHit) return null;
+  return fetchPublishedEventById(sb, slimHit.id);
 }
 
 async function fetchApprovedEvents(sb) {
@@ -733,7 +760,13 @@ async function handle(req, res) {
       }
 
       const eventId = row.id;
-      const { data: ticketsRaw } = await sb.from('tickets').select('*').eq('event_id', eventId);
+      const [{ data: ticketsRaw }, seriesDates, relatedRows] = await Promise.all([
+        sb.from('tickets').select('*').eq('event_id', eventId),
+        fetchEventSeriesDates(sb, row, organiser),
+        row.organiser_id
+          ? fetchRelatedPublishedRows(sb, row.organiser_id, [row.id], 6)
+          : Promise.resolve([]),
+      ]);
       const ticketsList = ticketsRaw || [];
       const regCounts = await fetchRegistrationCountsByTicket(sb, ticketsList);
       const tickets = ticketsList.map((t) => ({
@@ -741,13 +774,10 @@ async function handle(req, res) {
         _registrationCount: regCounts.get(t.id) || 0,
       }));
       const event = rowToEvent(row, organiser, tickets);
-      const seriesDates = await fetchEventSeriesDates(sb, row, organiser);
       event.isSeries = seriesDates.length > 1;
       const seriesIds = new Set(seriesDates.map((d) => d.id));
-      const relatedRows = row.organiser_id
-        ? await fetchRelatedPublishedRows(sb, row.organiser_id, [row.id, ...seriesIds], 6)
-        : [];
-      const related = await eventsFromPublishedRows(sb, relatedRows, organiser);
+      const relatedFiltered = (relatedRows || []).filter((r) => !seriesIds.has(r.id));
+      const related = await eventsFromPublishedRows(sb, relatedFiltered, organiser);
       res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=120, stale-while-revalidate=300');
       return res.status(200).json({
         configured: true,
