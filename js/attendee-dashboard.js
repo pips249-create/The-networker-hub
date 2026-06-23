@@ -146,6 +146,14 @@
     );
   }
 
+  function ticketButtonHtml(reg) {
+    return (
+      '<button type="button" class="ad-btn ad-btn-primary ad-view-payment" data-registration-id="' +
+      esc(reg.id || '') +
+      '">View ticket</button>'
+    );
+  }
+
   function actionCell(reg, options) {
     const opts = options || {};
     if (reg.reviewStatus === 'pending') {
@@ -178,12 +186,23 @@
     if (opts.showCancel && reg.canCancel) {
       return (
         '<div class="ad-action-group">' +
-        '<a class="ad-btn ad-btn-primary" href="' +
+        ticketButtonHtml(reg) +
+        '<a class="ad-btn" href="' +
         esc(eventHref(reg)) +
         '">View event</a>' +
         '<button type="button" class="ad-btn ad-cancel-booking" data-registration-id="' +
         esc(reg.id || '') +
         '">Cancel booking</button>' +
+        '</div>'
+      );
+    }
+    if (opts.showTicket) {
+      return (
+        '<div class="ad-action-group">' +
+        ticketButtonHtml(reg) +
+        '<a class="ad-btn" href="' +
+        esc(eventHref(reg)) +
+        '">View event</a>' +
         '</div>'
       );
     }
@@ -876,6 +895,7 @@
     if (location.hash.replace('#', '') !== currentRoute) {
       history.replaceState(null, '', (location.search || '') + '#' + currentRoute);
     }
+    if (dashboardReady) renderRouteTables(currentRoute);
   }
 
   function enquiryStatusLabel(status) {
@@ -1061,7 +1081,7 @@
           '</td><td>' +
           reviewBadge(reg.reviewStatus, reg) +
           '</td><td>' +
-          actionCell(reg, { showCancel: listKey === 'upcoming' }) +
+          actionCell(reg, { showCancel: listKey === 'upcoming', showTicket: true }) +
           '</td>';
       } else {
         tr.innerHTML =
@@ -1083,6 +1103,7 @@
     bindLeaveReviewButtons(body);
     bindViewReviewButtons(body);
     bindCancelButtons(body);
+    bindPaymentButtons(body);
 
     renderPagination(navId, listKey, totalPages);
   }
@@ -1170,40 +1191,86 @@
     } catch {
       savedEvents = window.HubFavourites ? window.HubFavourites.ids().map((id) => ({ eventId: id })) : [];
     }
-    renderSavedTable();
+    if (dashboardReady && currentRoute === 'saved') {
+      renderRouteTables('saved', { force: true });
+    }
   }
 
+  function renderRouteTables(route, options) {
+    const force = Boolean(options && options.force);
+    const key = route || 'overview';
+    if (!force && renderedRoutes.has(key)) return;
+
+    updateSideCounts();
+
+    if (key === 'overview') {
+      renderedRoutes.add(key);
+      return;
+    }
+
+    if (key === 'upcoming') {
+      const up = upcomingList().sort((a, b) => {
+        const da = a.date ? new Date(a.date).getTime() : 0;
+        const db = b.date ? new Date(b.date).getTime() : 0;
+        return da - db;
+      });
+      renderEventRows('ad-upcoming-body', 'ad-upcoming-empty', 'ad-pagination-upcoming', 'upcoming', up, true);
+    } else if (key === 'past') {
+      const past = pastList().sort((a, b) => {
+        const da = a.date ? new Date(a.date).getTime() : 0;
+        const db = b.date ? new Date(b.date).getTime() : 0;
+        return db - da;
+      });
+      renderEventRows('ad-past-body', 'ad-past-empty', 'ad-pagination-past', 'past', past, true);
+    } else if (key === 'reviews-pending') {
+      renderEventRows(
+        'ad-reviews-pending-body',
+        'ad-reviews-pending-empty',
+        null,
+        'reviews-pending',
+        pendingReviewsList(),
+        false
+      );
+    } else if (key === 'reviews-done') {
+      renderEventRows(
+        'ad-reviews-done-body',
+        'ad-reviews-done-empty',
+        null,
+        'reviews-done',
+        doneReviewsList(),
+        false
+      );
+    } else if (key === 'payments') {
+      renderPaymentsTable();
+    } else if (key === 'saved') {
+      renderSavedTable();
+    } else if (key === 'opportunity-enquiries') {
+      renderOpportunityEnquiries();
+    }
+
+    renderedRoutes.add(key);
+  }
+
+  function applyDashboardData(data) {
+    registrations = data.registrations || [];
+    opportunityEnquiries = data.opportunityEnquiries || [];
+    dashboardReady = true;
+    renderedRoutes.clear();
+    renderStats(data.stats || {});
+    renderRouteTables(currentRoute, { force: true });
+  }
+
+  let renderedRoutes = new Set();
+
   function renderAllTables() {
-    const up = upcomingList().sort((a, b) => {
-      const da = a.date ? new Date(a.date).getTime() : 0;
-      const db = b.date ? new Date(b.date).getTime() : 0;
-      return da - db;
-    });
-    const past = pastList().sort((a, b) => {
-      const da = a.date ? new Date(a.date).getTime() : 0;
-      const db = b.date ? new Date(b.date).getTime() : 0;
-      return db - da;
-    });
-    renderEventRows('ad-upcoming-body', 'ad-upcoming-empty', 'ad-pagination-upcoming', 'upcoming', up, true);
-    renderEventRows('ad-past-body', 'ad-past-empty', 'ad-pagination-past', 'past', past, true);
-    renderEventRows(
-      'ad-reviews-pending-body',
-      'ad-reviews-pending-empty',
-      null,
-      'reviews-pending',
-      pendingReviewsList(),
-      false
-    );
-    renderEventRows(
-      'ad-reviews-done-body',
-      'ad-reviews-done-empty',
-      null,
-      'reviews-done',
-      doneReviewsList(),
-      false
-    );
-    renderPaymentsTable();
-    renderOpportunityEnquiries();
+    renderedRoutes.clear();
+    renderRouteTables('upcoming', { force: true });
+    renderRouteTables('past', { force: true });
+    renderRouteTables('reviews-pending', { force: true });
+    renderRouteTables('reviews-done', { force: true });
+    renderRouteTables('payments', { force: true });
+    renderRouteTables('opportunity-enquiries', { force: true });
+    if (savedEvents.length) renderRouteTables('saved', { force: true });
     updateSideCounts();
   }
 
@@ -1257,11 +1324,7 @@
       const res = await fetch('/api/auth/attendee-dashboard', { credentials: 'include' });
       const data = await res.json();
       if (!data.ok) return;
-      registrations = data.registrations || [];
-      opportunityEnquiries = data.opportunityEnquiries || [];
-      dashboardReady = true;
-      renderStats(data.stats || {});
-      renderAllTables();
+      applyDashboardData(data);
     } finally {
       setDashboardLoading(false);
     }
