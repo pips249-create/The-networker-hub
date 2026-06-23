@@ -49,6 +49,7 @@
             <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Group profiles</a>
             <a href="#events-tickets" class="hub-side-nav-link" data-org-route="events-tickets">Tickets</a>
             <a href="#events-attendees" class="hub-side-nav-link" data-org-route="events-attendees">Attendees</a>
+            <a href="#events-cancellations" class="hub-side-nav-link" data-org-route="events-cancellations">Cancellations</a>
             <a href="#events-reviews" class="hub-side-nav-link" data-org-route="events-reviews">Reviews</a>
             <a href="#events-revenue" class="hub-side-nav-link" data-org-route="events-revenue">Revenue</a>
             <span class="hub-side-nav-divider">Business opportunities</span>
@@ -649,6 +650,39 @@
               </p>
             </div>
             <nav class="org-pagination" id="pagination-attendees" data-list="attendees" aria-label="Attendees pages" hidden></nav>
+          </div>
+
+          <!-- Attendee cancellations -->
+          <div class="org-sub-page" id="sub-events-cancellations" data-events-panel="events-cancellations">
+            <p class="org-section-sub org-sub-lead">
+              Bookings attendees cancelled themselves — filter by event to see who released their place and whether a refund may be due.
+            </p>
+            <div class="org-filter-bar">
+              <select id="filter-cancellations-event" aria-label="Filter by event">
+                <option value="all">All events</option>
+              </select>
+            </div>
+            <p class="org-load-hint" id="cancellations-load-hint" hidden>Loading cancellations…</p>
+            <div class="org-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Event</th>
+                    <th>Ticket</th>
+                    <th>Paid</th>
+                    <th>Cancelled</th>
+                    <th>Refund</th>
+                  </tr>
+                </thead>
+                <tbody id="cancellations-body"></tbody>
+              </table>
+              <p class="org-empty" id="cancellations-empty" hidden>
+                No attendee cancellations yet. When someone cancels their own booking, it will appear here.
+              </p>
+            </div>
+            <nav class="org-pagination" id="pagination-cancellations" data-list="cancellations" aria-label="Cancellations pages" hidden></nav>
           </div>
 
           <!-- Reviews -->

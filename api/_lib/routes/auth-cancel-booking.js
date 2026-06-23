@@ -35,14 +35,25 @@ module.exports = async function handler(req, res) {
 
   try {
     const result = await cancelRegistrationForAttendee(session, registrationId);
-    const message = result.refundEligible
-      ? 'Your booking has been cancelled. If you are due a refund, the organiser will process it through their payment account — not The Networker Hub.'
-      : 'Your booking has been cancelled. Based on the organiser\'s refund policy, no refund is due.';
+    const isFree =
+      String(result.paymentStatus || '').trim() === 'Free' ||
+      !(Number(result.amountPaid) > 0);
+    let message;
+    if (isFree) {
+      message = 'Your registration has been cancelled. Because this was a free ticket, no refund applies.';
+    } else if (result.refundEligible) {
+      message =
+        'Your booking has been cancelled. If you are due a refund, the organiser will process it through their payment account — not The Networker Hub.';
+    } else {
+      message =
+        'Your booking has been cancelled. Based on the organiser\'s refund policy, no refund is due.';
+    }
 
     return json(res, 200, {
       ok: true,
       registrationId: result.registrationId,
       refundEligible: result.refundEligible,
+      isFree,
       emailResult: result.emailResult,
       message,
     });

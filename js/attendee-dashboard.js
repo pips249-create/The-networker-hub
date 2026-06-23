@@ -594,7 +594,7 @@
     const organiser = reg.organiserName ? String(reg.organiserName).trim() : 'the organiser';
 
     if (!reg.isPaid) {
-      return 'This is a free booking — no payment was taken, so no refund applies.';
+      return 'Your place will be released. No payment was taken, so nothing needs to be refunded.';
     }
     if (reg.refundEligible) {
       return (
@@ -612,26 +612,44 @@
     );
   }
 
+  let adToastTimer = null;
+
+  function showAdToast(message) {
+    const toast = document.getElementById('ad-toast');
+    if (!toast) return;
+    toast.textContent = message || '';
+    toast.hidden = false;
+    toast.classList.add('is-visible');
+    if (adToastTimer) clearTimeout(adToastTimer);
+    adToastTimer = setTimeout(() => {
+      toast.classList.remove('is-visible');
+      toast.hidden = true;
+    }, 6000);
+  }
+
   function openCancelModal(reg) {
     const modal = document.getElementById('ad-cancel-modal');
     const sub = document.getElementById('ad-cancel-modal-sub');
     const summary = document.getElementById('ad-cancel-summary');
+    const policy = document.getElementById('ad-cancel-policy');
     const policyLabel = document.getElementById('ad-cancel-policy-label');
     const policyText = document.getElementById('ad-cancel-policy-text');
     const outcome = document.getElementById('ad-cancel-outcome');
     const outcomeText = document.getElementById('ad-cancel-outcome-text');
+    const disclaimer = document.getElementById('ad-cancel-disclaimer');
+    const confirmLabel = document.getElementById('ad-cancel-confirm-label');
     const confirmCheck = document.getElementById('ad-cancel-confirm-check');
     const confirmBtn = document.getElementById('ad-cancel-confirm');
     const err = document.getElementById('ad-cancel-error');
     if (!modal || !reg) return;
 
+    const isFree = !reg.isPaid;
     pendingCancelRegistration = reg;
 
     if (sub) {
-      sub.textContent =
-        'Review the organiser\'s refund policy before cancelling your booking for “' +
-        (reg.title || 'Event') +
-        '”.';
+      sub.textContent = isFree
+        ? 'You\'re about to cancel your free registration for “' + (reg.title || 'Event') + '”.'
+        : 'Review the organiser\'s refund policy before cancelling your booking for “' + (reg.title || 'Event') + '”.';
     }
 
     if (summary) {
@@ -642,7 +660,9 @@
         '<div><dt>Tickets</dt><dd>' +
         esc(reg.ticketLabel || '—') +
         '</dd></div>' +
-        '<div><dt>Amount paid</dt><dd>' +
+        '<div><dt>' +
+        (isFree ? 'Ticket price' : 'Amount paid') +
+        '</dt><dd>' +
         esc(formatAmountPaid(reg.amountPaid, reg.paymentStatus)) +
         '</dd></div>' +
         '<div><dt>Organiser</dt><dd>' +
@@ -650,22 +670,33 @@
         '</dd></div>';
     }
 
-    if (policyLabel) {
-      policyLabel.textContent = reg.refundPolicyLabel || 'Refund policy';
-    }
-    if (policyText) {
-      policyText.textContent =
-        reg.refundPolicyText ||
-        'No refund policy has been set for this event. Contact the organiser if you have questions.';
+    if (policy) policy.hidden = isFree;
+    if (disclaimer) disclaimer.hidden = isFree;
+
+    if (!isFree) {
+      if (policyLabel) {
+        policyLabel.textContent = reg.refundPolicyLabel || 'Refund policy';
+      }
+      if (policyText) {
+        policyText.textContent =
+          reg.refundPolicyText ||
+          'No refund policy has been set for this event. Contact the organiser if you have questions.';
+      }
     }
 
     if (outcome && outcomeText) {
       outcome.hidden = false;
       outcome.classList.remove('is-eligible', 'is-ineligible', 'is-free');
-      if (!reg.isPaid) outcome.classList.add('is-free');
+      if (isFree) outcome.classList.add('is-free');
       else if (reg.refundEligible) outcome.classList.add('is-eligible');
       else outcome.classList.add('is-ineligible');
       outcomeText.textContent = buildCancelOutcomeText(reg);
+    }
+
+    if (confirmLabel) {
+      confirmLabel.textContent = isFree
+        ? 'I understand this will cancel my registration and release my place.'
+        : 'I understand the organiser\'s refund policy and that refunds are processed by the organiser.';
     }
 
     if (confirmCheck) confirmCheck.checked = false;
@@ -736,9 +767,13 @@
             confirmBtn.disabled = !confirmCheck.checked;
             return;
           }
+          const wasFree = Boolean(data.isFree);
           closeCancelModal();
           await reloadDashboard();
-          alert(data.message || 'Your booking has been cancelled.');
+          showAdToast(
+            data.message ||
+              (wasFree ? 'Your registration has been cancelled.' : 'Your booking has been cancelled.')
+          );
         } catch {
           if (err) {
             err.textContent = 'Something went wrong. Please try again.';

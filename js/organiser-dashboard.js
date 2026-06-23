@@ -5,7 +5,7 @@
   const ORG_PAGE_SIZE = 10;
   const EVENTS_FETCH_SIZE = 100;
   const DESCRIPTION_MAX_WORDS = 500;
-  const listPages = { groups: 1, events: 1, tickets: 1, attendees: 1, reviews: 1, revenue: 1 };
+  const listPages = { groups: 1, events: 1, tickets: 1, attendees: 1, cancellations: 1, reviews: 1, revenue: 1 };
   let eventsSubRoute = 'events-list';
   const expandedSeriesKeys = new Set();
 
@@ -19,6 +19,7 @@
     ticketsType: 'all',
     reviewsGroup: 'all',
     attendeesEvent: 'all',
+    cancellationsEvent: 'all',
   };
 
   const state = {
@@ -33,6 +34,7 @@
     eventsFullyLoaded: false,
     tickets: [],
     attendeesAll: [],
+    cancellationsAll: [],
     reviews: [],
     teamMembers: [],
     workspaceSummary: null,
@@ -722,6 +724,7 @@
       'events-list': ['My Events', 'Manage all your event listings — click any event name to edit.'],
       'events-tickets': ['Tickets', 'All ticket types across your events.'],
       'events-attendees': ['Attendees', 'Registrations for your events — filter by event and download a CSV.'],
+      'events-cancellations': ['Cancellations', 'Bookings attendees cancelled themselves — see who released their place and whether a refund may be due.'],
       'events-reviews': ['Reviews', 'Read and reply to attendee feedback.'],
       'events-revenue': ['Revenue', 'Revenue and performance across your listings.'],
     };
@@ -734,6 +737,9 @@
     if (eventsSubRoute === 'events-attendees') {
       fillAttendeesEventFilter();
       loadAttendeesAll().then(() => renderAttendees());
+    } else if (eventsSubRoute === 'events-cancellations') {
+      fillCancellationsEventFilter();
+      loadCancellationsAll().then(() => renderCancellations());
     } else {
       renderEventsPanel(eventsSubRoute);
     }
@@ -745,6 +751,7 @@
     if (sub === 'events-list') renderEvents();
     else if (sub === 'events-tickets') renderTickets();
     else if (sub === 'events-attendees') renderAttendees();
+    else if (sub === 'events-cancellations') renderCancellations();
     else if (sub === 'events-reviews') renderReviews();
     else if (sub === 'events-revenue') renderRevenue();
   }
@@ -884,6 +891,85 @@
         '</td><td>' +
         esc(formatDateShort(a.registeredAt)) +
         '</td>';
+      body.appendChild(tr);
+    });
+  }
+
+  function filteredCancellationsList() {
+    let list = state.cancellationsAll.slice();
+    if (filters.cancellationsEvent !== 'all') {
+      list = list.filter((row) => row.eventId === filters.cancellationsEvent);
+    }
+    return list;
+  }
+
+  function fillCancellationsEventFilter() {
+    const sel = document.getElementById('filter-cancellations-event');
+    if (!sel) return;
+    sel.innerHTML = '<option value="all">All events</option>';
+    allEventOptions().forEach((ev) => {
+      const opt = document.createElement('option');
+      opt.value = ev.id;
+      opt.textContent = ev.title;
+      sel.appendChild(opt);
+    });
+    sel.value = filters.cancellationsEvent;
+  }
+
+  async function loadCancellationsAll() {
+    const hint = document.getElementById('cancellations-load-hint');
+    if (hint) hint.hidden = false;
+    const { ok, data } = await api('/api/organiser/attendees?eventId=all&view=cancellations');
+    if (hint) hint.hidden = true;
+    if (ok) {
+      state.cancellationsAll = data.cancellations || [];
+    }
+    return ok;
+  }
+
+  function renderCancellations() {
+    const body = document.getElementById('cancellations-body');
+    const empty = document.getElementById('cancellations-empty');
+    if (!body) return;
+    const list = filteredCancellationsList();
+    body.innerHTML = '';
+
+    if (!list.length) {
+      if (empty) {
+        empty.hidden = false;
+        empty.textContent = state.cancellationsAll.length
+          ? 'No cancellations match this event filter.'
+          : 'No attendee cancellations yet. When someone cancels their own booking, it will appear here.';
+      }
+      updatePaginationNav('cancellations', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
+      return;
+    }
+    if (empty) empty.hidden = true;
+    const pageInfo = paginateList(list, listPages.cancellations);
+    listPages.cancellations = pageInfo.page;
+    updatePaginationNav('cancellations', pageInfo);
+
+    pageInfo.items.forEach((row) => {
+      const tr = document.createElement('tr');
+      const refundClass = row.refundEligible ? 'org-badge org-badge-green' : 'org-badge org-badge-purple';
+      tr.innerHTML =
+        '<td class="org-td-name">' +
+        esc(row.name) +
+        '</td><td>' +
+        esc(row.email || '—') +
+        '</td><td>' +
+        esc(row.eventTitle) +
+        '</td><td>' +
+        esc(row.ticketName) +
+        '</td><td>' +
+        esc(row.amountDisplay || '—') +
+        '</td><td>' +
+        esc(formatDateShort(row.cancelledAt)) +
+        '</td><td><span class="' +
+        refundClass +
+        '">' +
+        esc(row.refundLabel || '—') +
+        '</span></td>';
       body.appendChild(tr);
     });
   }
@@ -1752,15 +1838,19 @@
       if (eventId) {
         filters.ticketsEvent = eventId;
         filters.attendeesEvent = eventId;
+        filters.cancellationsEvent = eventId;
         filters.reviewsGroup = 'all';
         const ticketSel = document.getElementById('filter-tickets-event');
         if (ticketSel) ticketSel.value = eventId;
         const attSel = document.getElementById('filter-attendees-event');
         if (attSel) attSel.value = eventId;
+        const cancelSel = document.getElementById('filter-cancellations-event');
+        if (cancelSel) cancelSel.value = eventId;
       }
       setRoute(sub || 'events-list');
       if (sub === 'events-tickets') renderTickets();
       if (sub === 'events-attendees') renderAttendees();
+      if (sub === 'events-cancellations') renderCancellations();
       if (sub === 'events-reviews') renderReviews();
       if (sub === 'events-revenue') renderRevenue();
       return true;
@@ -3650,6 +3740,7 @@
           route === 'events-tickets' ||
           route === 'events-list' ||
           route === 'events-attendees' ||
+          route === 'events-cancellations' ||
           route === 'events-reviews' ||
           route === 'events-revenue'
         ) {
@@ -3716,6 +3807,15 @@
         filters.attendeesEvent = attendeesEventFilter.value;
         listPages.attendees = 1;
         renderAttendees();
+      });
+    }
+
+    const cancellationsEventFilter = document.getElementById('filter-cancellations-event');
+    if (cancellationsEventFilter) {
+      cancellationsEventFilter.addEventListener('change', () => {
+        filters.cancellationsEvent = cancellationsEventFilter.value;
+        listPages.cancellations = 1;
+        renderCancellations();
       });
     }
 
@@ -3869,6 +3969,7 @@
       if (listKey === 'tickets') renderTickets();
       if (listKey === 'reviews') renderReviews();
       if (listKey === 'attendees') renderAttendees();
+      if (listKey === 'cancellations') renderCancellations();
       if (listKey === 'revenue') renderRevenue();
       nav.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });

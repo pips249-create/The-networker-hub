@@ -88,6 +88,8 @@ async function cancelRegistrationForAttendee(session, registrationId) {
 
   return {
     registrationId,
+    paymentStatus: registration.payment_status,
+    amountPaid: registration.amount_paid,
     refundEligible: isRefundEligibleForCancellation(eventRow, registration),
     emailResult,
     organiserEmailResult,
