@@ -14,11 +14,12 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260627" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260628" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260628" />
+    <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260631" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627" />
 
   </head>
-  <body class="attendee-dashboard-page">
+  <body class="attendee-dashboard-page hub-page-account hub-is-page-loading">
     <div id="hub-site-nav"></div>
     <script src="../js/site-nav.js?v=20260628" data-root="../" data-page="account"></script>
 
@@ -37,22 +38,22 @@
             <span class="hub-side-nav-divider">Event tickets</span>
             <a href="#upcoming" class="hub-side-nav-link" data-ad-route="upcoming">
               Upcoming
-              <span class="ad-side-count" id="ad-side-upcoming">0</span>
+              <span class="ad-side-count" id="ad-side-upcoming" hidden></span>
             </a>
             <a href="#payments" class="hub-side-nav-link" data-ad-route="payments">Payments</a>
             <a href="#saved" class="hub-side-nav-link" data-ad-route="saved">Saved events</a>
             <a href="#past" class="hub-side-nav-link" data-ad-route="past">
               Past events
-              <span class="ad-side-count" id="ad-side-past">0</span>
+              <span class="ad-side-count" id="ad-side-past" hidden></span>
             </a>
             <span class="hub-side-nav-divider">Opportunities &amp; reviews</span>
             <a href="#opportunity-enquiries" class="hub-side-nav-link" data-ad-route="opportunity-enquiries">
               My enquiries
-              <span class="ad-side-count" id="ad-side-enquiries">0</span>
+              <span class="ad-side-count" id="ad-side-enquiries" hidden></span>
             </a>
             <a href="#reviews-pending" class="hub-side-nav-link" data-ad-route="reviews-pending">
               Reviews to write
-              <span class="ad-side-count" id="ad-side-pending">0</span>
+              <span class="ad-side-count" id="ad-side-pending" hidden></span>
             </a>
             <div class="hub-side-nav-util">
               <a href="../events/index.html">Browse events</a>
@@ -85,20 +86,20 @@
 
             <!-- Overview -->
             <section class="ad-page is-active" id="ad-page-overview" data-ad-page="overview">
-              <div class="ad-stats">
-                <div class="ad-stat">
+              <div class="ad-stats" id="ad-stats">
+                <div class="ad-stat ad-stat--purple">
                   <div class="ad-stat-label">Upcoming events</div>
-                  <div class="ad-stat-value" id="ad-stat-upcoming">0</div>
+                  <div class="ad-stat-value" id="ad-stat-upcoming" aria-live="polite">—</div>
                   <div class="ad-stat-meta" id="ad-stat-next">—</div>
                 </div>
-                <div class="ad-stat ad-stat--accent">
-                  <div class="ad-stat-label">Reviews left</div>
-                  <div class="ad-stat-value" id="ad-stat-reviews">0</div>
+                <div class="ad-stat ad-stat--gold">
+                  <div class="ad-stat-label">Reviews submitted</div>
+                  <div class="ad-stat-value" id="ad-stat-reviews" aria-live="polite">—</div>
                   <div class="ad-stat-meta" id="ad-stat-reviews-pending">—</div>
                 </div>
-                <div class="ad-stat">
+                <div class="ad-stat ad-stat--purple">
                   <div class="ad-stat-label">Opportunity enquiries sent</div>
-                  <div class="ad-stat-value" id="ad-stat-enquiries">0</div>
+                  <div class="ad-stat-value" id="ad-stat-enquiries" aria-live="polite">—</div>
                   <div class="ad-stat-meta" id="ad-stat-enquiries-hint">—</div>
                 </div>
               </div>
@@ -271,7 +272,7 @@
             <!-- Reviews done -->
             <section class="ad-page" id="ad-page-reviews-done" data-ad-page="reviews-done">
               <h2 class="ad-section-title">Submitted reviews</h2>
-              <p class="ad-section-sub">Feedback you have already left for organisers.</p>
+              <p class="ad-section-sub">Feedback you have left — open a review to see any reply from the organiser.</p>
               <div class="ad-table-scroll">
                 <div class="ad-table-wrap">
                   <table>
@@ -391,30 +392,77 @@
               <button type="button" class="ad-review-star" data-rating="4" aria-label="4 stars">★</button>
               <button type="button" class="ad-review-star" data-rating="5" aria-label="5 stars">★</button>
             </div>
+            <p class="ad-review-rating-hint" id="ad-review-rating-hint">Choose a star rating to continue</p>
           </fieldset>
-          <label class="ad-review-label" for="ad-review-text">
-            Your feedback
-            <span class="ad-review-label-hint">Shown on the organiser's public profile (minimum 10 characters)</span>
-          </label>
-          <textarea
-            id="ad-review-text"
-            name="reviewText"
-            rows="4"
-            maxlength="2000"
-            required
-            placeholder="What was the host like? Would you attend again?"
-          ></textarea>
+          <div class="ad-review-feedback-step" id="ad-review-feedback-step" hidden>
+            <label class="ad-review-label" for="ad-review-text">
+              Your feedback
+              <span class="ad-review-label-hint">Optional — shown on the organiser's public profile if you add it</span>
+            </label>
+            <textarea
+              id="ad-review-text"
+              name="reviewText"
+              rows="4"
+              maxlength="2000"
+              placeholder="What was the host like? Would you attend again?"
+            ></textarea>
+            <button type="button" class="ad-review-change-rating" id="ad-review-change-rating">Change rating</button>
+          </div>
           <p class="ad-review-error" id="ad-review-error" hidden></p>
           <div class="ad-review-actions">
             <button type="button" class="ad-btn" id="ad-review-cancel">Cancel</button>
-            <button type="submit" class="ad-btn ad-btn-gold" id="ad-review-submit">Submit review</button>
+            <button type="submit" class="ad-btn ad-btn-gold" id="ad-review-submit" hidden>Submit review</button>
           </div>
         </form>
       </div>
     </div>
 
+    <div class="ad-view-review-modal" id="ad-view-review-modal" hidden>
+      <div class="ad-view-review-modal-backdrop" id="ad-view-review-modal-backdrop"></div>
+      <div
+        class="ad-view-review-modal-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ad-view-review-modal-title"
+      >
+        <button type="button" class="ad-view-review-modal-close" id="ad-view-review-modal-close" aria-label="Close">
+          ×
+        </button>
+        <h2 class="ad-view-review-modal-title" id="ad-view-review-modal-title">Your review</h2>
+        <p class="ad-view-review-modal-sub" id="ad-view-review-modal-sub"></p>
+        <div class="ad-view-review-stars" id="ad-view-review-stars" aria-hidden="true"></div>
+        <div class="ad-view-review-block" id="ad-view-review-feedback-block" hidden>
+          <div class="ad-view-review-block-label">Your feedback</div>
+          <p class="ad-view-review-text" id="ad-view-review-text"></p>
+        </div>
+        <div class="ad-view-review-block ad-view-review-organiser-block" id="ad-view-review-organiser-block">
+          <div class="ad-view-review-block-label" id="ad-view-review-organiser-label">Organiser response</div>
+          <p class="ad-view-review-organiser-text" id="ad-view-review-organiser-text"></p>
+        </div>
+        <div class="ad-view-review-actions">
+          <button type="button" class="ad-btn" id="ad-view-review-close">Close</button>
+          <a class="ad-btn ad-btn-primary" id="ad-view-review-event-link" href="#">View event</a>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="ad-dash-loading"
+      class="hub-page-buffer hub-page-buffer--modal hub-page-buffer--dashboard is-active"
+      aria-hidden="false"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div class="hub-page-buffer-card">
+        <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
+        <h2 class="hub-page-buffer-title">Loading your dashboard</h2>
+        <p class="hub-page-buffer-message">Fetching your tickets, reviews, and enquiries…</p>
+      </div>
+    </div>
+
     <script src="../js/hub-favourites.js?v=20260629"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260628"></script>
+    <script src="../js/attendee-dashboard.js?v=20260631"></script>
   </body>
 </html>

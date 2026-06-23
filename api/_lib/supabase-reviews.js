@@ -43,7 +43,6 @@ async function submitReview(session, input) {
   }
 
   const reviewText = String(input.reviewText || input.review_text || '').trim();
-  if (reviewText.length < 10) throw new Error('review_text_too_short');
   if (reviewText.length > 2000) throw new Error('review_text_too_long');
 
   const sb = getSupabaseAdmin();
@@ -87,7 +86,7 @@ async function submitReview(session, input) {
       event_id: eventId,
       organiser_id: organiserId,
       rating,
-      review_text: reviewText,
+      review_text: reviewText || null,
     })
     .select('id, rating, review_text, created_at')
     .single();

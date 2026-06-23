@@ -58,6 +58,7 @@ function mapRegistrationRow(row, reviewByEventId) {
     reviewStatus: deriveReviewStatus(Boolean(review), row),
     rating: review?.rating ?? null,
     reviewText: review?.reviewText ?? null,
+    organiserResponse: review?.organiserResponse ?? null,
     canReview: deriveReviewStatus(Boolean(review), row) === 'pending',
     canCancel: canCancelRegistration(row, ev),
     refundPolicy: ev.refund_policy || null,
@@ -121,7 +122,7 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
 async function listReviewsForAttendee(sb, attendeeId) {
   const res = await sb
     .from('reviews')
-    .select('event_id, rating, review_text')
+    .select('event_id, rating, review_text, organiser_response')
     .eq('attendee_id', attendeeId);
   if (res.error) throw new Error(res.error.message);
   const map = new Map();
@@ -130,6 +131,7 @@ async function listReviewsForAttendee(sb, attendeeId) {
       map.set(row.event_id, {
         rating: row.rating,
         reviewText: row.review_text,
+        organiserResponse: row.organiser_response,
       });
     }
   });
@@ -143,17 +145,21 @@ async function getAttendeeDashboardFromSupabase(session) {
 
   const sb = getSupabaseAdmin();
   const attendeeId = await resolveAttendeeId(sb, session);
-  const enquiryPromise = listOpportunityEnquiriesSentBySession(session);
+
+  let opportunityEnquiries = [];
+  try {
+    opportunityEnquiries = await listOpportunityEnquiriesSentBySession(session);
+  } catch {
+    opportunityEnquiries = [];
+  }
 
   if (!attendeeId) {
-    const opportunityEnquiries = await enquiryPromise;
     return { registrations: [], stats: buildStats([]), opportunityEnquiries };
   }
 
-  const [rows, reviewByEventId, opportunityEnquiries] = await Promise.all([
+  const [rows, reviewByEventId] = await Promise.all([
     listRegistrationsForAttendee(sb, attendeeId),
     listReviewsForAttendee(sb, attendeeId),
-    enquiryPromise,
   ]);
 
   const registrations = rows.map((row) => mapRegistrationRow(row, reviewByEventId));

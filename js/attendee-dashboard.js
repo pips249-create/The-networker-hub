@@ -107,7 +107,11 @@
   function reviewBadge(status, reg) {
     if (status === 'reviewed') {
       const stars = reg && reg.rating ? ' · ' + reg.rating + '★' : '';
-      return '<span class="ad-badge ad-badge-green">✓ Reviewed' + esc(stars) + '</span>';
+      const reply =
+        reg && reg.organiserResponse && String(reg.organiserResponse).trim()
+          ? ' · Reply'
+          : '';
+      return '<span class="ad-badge ad-badge-green">✓ Reviewed' + esc(stars + reply) + '</span>';
     }
     if (status === 'pending') {
       return '<span class="ad-badge ad-badge-red">⚠ Pending</span>';
@@ -156,10 +160,19 @@
       );
     }
     if (reg.reviewStatus === 'reviewed') {
+      const hasReply = reg.organiserResponse && String(reg.organiserResponse).trim();
       return (
-        '<a class="ad-btn" href="' +
-        esc(eventHref(reg)) +
-        '">View event</a>'
+        '<button type="button" class="ad-btn ad-view-review' +
+        (hasReply ? ' ad-view-review-has-reply' : '') +
+        '" data-event-id="' +
+        esc(reg.eventId || '') +
+        '" data-event-title="' +
+        esc(reg.title || 'Event') +
+        '" data-organiser-name="' +
+        esc(reg.organiserName || 'the organiser') +
+        '">' +
+        (hasReply ? 'View reply' : 'View review') +
+        '</button>'
       );
     }
     if (opts.showCancel && reg.canCancel) {
@@ -183,10 +196,24 @@
 
   let reviewRating = 0;
   let reviewModalOpen = false;
+  let viewReviewModalOpen = false;
   let paymentModalOpen = false;
   let cancelModalOpen = false;
   let pendingCancelRegistration = null;
   let highlightRegistrationId = '';
+  let dashboardReady = false;
+
+  function setDashboardLoading(on) {
+    const el = document.getElementById('ad-dash-loading');
+    if (el) {
+      el.hidden = !on;
+      el.classList.toggle('is-active', on);
+      el.setAttribute('aria-hidden', on ? 'false' : 'true');
+      el.setAttribute('aria-busy', on ? 'true' : 'false');
+    }
+    if (shell) shell.classList.toggle('ad-shell--loading', on);
+    document.body.classList.toggle('hub-is-page-loading', on);
+  }
 
   function setReviewStars(rating) {
     reviewRating = rating;
@@ -196,6 +223,35 @@
       btn.classList.toggle('is-active', n <= rating);
       btn.setAttribute('aria-checked', n === rating ? 'true' : 'false');
     });
+  }
+
+  function showReviewFeedbackStep() {
+    const feedbackStep = document.getElementById('ad-review-feedback-step');
+    const submitBtn = document.getElementById('ad-review-submit');
+    const hint = document.getElementById('ad-review-rating-hint');
+    const text = document.getElementById('ad-review-text');
+    if (feedbackStep) feedbackStep.hidden = false;
+    if (submitBtn) submitBtn.hidden = false;
+    if (hint) hint.hidden = true;
+    if (text) text.focus();
+  }
+
+  function resetReviewFeedbackStep() {
+    const feedbackStep = document.getElementById('ad-review-feedback-step');
+    const submitBtn = document.getElementById('ad-review-submit');
+    const hint = document.getElementById('ad-review-rating-hint');
+    if (feedbackStep) feedbackStep.hidden = true;
+    if (submitBtn) submitBtn.hidden = true;
+    if (hint) hint.hidden = false;
+  }
+
+  function starsHtml(rating) {
+    const n = Math.max(0, Math.min(5, Number(rating) || 0));
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+      html += '<span class="ad-view-review-star' + (i <= n ? ' is-active' : '') + '">★</span>';
+    }
+    return html;
   }
 
   function openReviewModal(reg) {
@@ -219,10 +275,10 @@
     if (text) text.value = '';
     if (err) err.hidden = true;
     setReviewStars(0);
+    resetReviewFeedbackStep();
     modal.hidden = false;
     reviewModalOpen = true;
     document.body.classList.add('ad-review-modal-open');
-    if (text) text.focus();
   }
 
   function closeReviewModal() {
@@ -230,6 +286,71 @@
     if (modal) modal.hidden = true;
     reviewModalOpen = false;
     document.body.classList.remove('ad-review-modal-open');
+    resetReviewFeedbackStep();
+  }
+
+  function findRegistrationByEventId(eventId) {
+    const key = String(eventId || '').trim();
+    if (!key) return null;
+    for (let i = 0; i < registrations.length; i++) {
+      if (String(registrations[i].eventId) === key) return registrations[i];
+    }
+    return null;
+  }
+
+  function openViewReviewModal(reg) {
+    const modal = document.getElementById('ad-view-review-modal');
+    const sub = document.getElementById('ad-view-review-modal-sub');
+    const starsEl = document.getElementById('ad-view-review-stars');
+    const feedbackBlock = document.getElementById('ad-view-review-feedback-block');
+    const feedbackText = document.getElementById('ad-view-review-text');
+    const organiserBlock = document.getElementById('ad-view-review-organiser-block');
+    const organiserLabel = document.getElementById('ad-view-review-organiser-label');
+    const organiserText = document.getElementById('ad-view-review-organiser-text');
+    const eventLink = document.getElementById('ad-view-review-event-link');
+    if (!modal || !reg) return;
+
+    const org = reg.organiserName ? String(reg.organiserName).trim() : 'the organiser';
+    if (sub) {
+      sub.textContent =
+        'Your review for “' + (reg.title || 'Event') + '” with ' + org + '.';
+    }
+    if (starsEl) starsEl.innerHTML = starsHtml(reg.rating);
+
+    const reviewBody = reg.reviewText ? String(reg.reviewText).trim() : '';
+    if (feedbackBlock && feedbackText) {
+      if (reviewBody) {
+        feedbackText.textContent = reviewBody;
+        feedbackBlock.hidden = false;
+      } else {
+        feedbackBlock.hidden = true;
+      }
+    }
+
+    const reply = reg.organiserResponse ? String(reg.organiserResponse).trim() : '';
+    if (organiserBlock && organiserLabel && organiserText) {
+      organiserBlock.classList.toggle('has-response', Boolean(reply));
+      if (reply) {
+        organiserLabel.textContent = 'Response from ' + org;
+        organiserText.textContent = reply;
+      } else {
+        organiserLabel.textContent = 'Organiser response';
+        organiserText.textContent = 'No response from the organiser yet.';
+      }
+    }
+
+    if (eventLink) eventLink.href = eventHref(reg);
+
+    modal.hidden = false;
+    viewReviewModalOpen = true;
+    document.body.classList.add('ad-view-review-modal-open');
+  }
+
+  function closeViewReviewModal() {
+    const modal = document.getElementById('ad-view-review-modal');
+    if (modal) modal.hidden = true;
+    viewReviewModalOpen = false;
+    document.body.classList.remove('ad-view-review-modal-open');
   }
 
   function bindReviewModal() {
@@ -237,6 +358,7 @@
     const backdrop = document.getElementById('ad-review-modal-backdrop');
     const closeBtn = document.getElementById('ad-review-modal-close');
     const cancelBtn = document.getElementById('ad-review-cancel');
+    const changeRatingBtn = document.getElementById('ad-review-change-rating');
     const form = document.getElementById('ad-review-form');
     const stars = document.getElementById('ad-review-stars');
 
@@ -245,16 +367,26 @@
       el.addEventListener('click', closeReviewModal);
     });
 
+    if (changeRatingBtn) {
+      changeRatingBtn.addEventListener('click', () => {
+        resetReviewFeedbackStep();
+        const firstStar = stars && stars.querySelector('.ad-review-star');
+        if (firstStar) firstStar.focus();
+      });
+    }
+
     if (stars) {
       stars.querySelectorAll('.ad-review-star').forEach((btn) => {
         btn.addEventListener('click', () => {
           setReviewStars(Number(btn.getAttribute('data-rating')) || 0);
+          showReviewFeedbackStep();
         });
       });
     }
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && reviewModalOpen) closeReviewModal();
+      if (e.key === 'Escape' && viewReviewModalOpen) closeViewReviewModal();
     });
 
     if (form) {
@@ -269,13 +401,6 @@
         if (!reviewRating) {
           if (err) {
             err.textContent = 'Please choose a star rating.';
-            err.hidden = false;
-          }
-          return;
-        }
-        if (reviewText.length < 10) {
-          if (err) {
-            err.textContent = 'Please write at least 10 characters of feedback.';
             err.hidden = false;
           }
           return;
@@ -331,6 +456,26 @@
           title: btn.getAttribute('data-event-title'),
           organiserName: btn.getAttribute('data-organiser-name'),
         });
+      });
+    });
+  }
+
+  function bindViewReviewModal() {
+    const backdrop = document.getElementById('ad-view-review-modal-backdrop');
+    const closeBtn = document.getElementById('ad-view-review-modal-close');
+    const closeFooterBtn = document.getElementById('ad-view-review-close');
+
+    [backdrop, closeBtn, closeFooterBtn].forEach((el) => {
+      if (!el) return;
+      el.addEventListener('click', closeViewReviewModal);
+    });
+  }
+
+  function bindViewReviewButtons(root) {
+    (root || document).querySelectorAll('.ad-view-review').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const reg = findRegistrationByEventId(btn.getAttribute('data-event-id'));
+        if (reg) openViewReviewModal(reg);
       });
     });
   }
@@ -786,7 +931,14 @@
   function updateSideCounts() {
     const set = (id, n) => {
       const el = document.getElementById(id);
-      if (el) el.textContent = String(n);
+      if (!el) return;
+      if (!dashboardReady) {
+        el.hidden = true;
+        el.textContent = '';
+        return;
+      }
+      el.hidden = false;
+      el.textContent = String(n);
     };
     set('ad-side-upcoming', upcomingList().length);
     set('ad-side-past', pastList().length);
@@ -894,6 +1046,7 @@
     });
 
     bindLeaveReviewButtons(body);
+    bindViewReviewButtons(body);
     bindCancelButtons(body);
 
     renderPagination(navId, listKey, totalPages);
@@ -1064,26 +1217,35 @@
   }
 
   async function reloadDashboard() {
-    const res = await fetch('/api/auth/attendee-dashboard', { credentials: 'include' });
-    const data = await res.json();
-    if (!data.ok) return;
-    registrations = data.registrations || [];
-    opportunityEnquiries = data.opportunityEnquiries || [];
-    renderStats(data.stats || {});
-    renderAllTables();
+    setDashboardLoading(true);
+    try {
+      const res = await fetch('/api/auth/attendee-dashboard', { credentials: 'include' });
+      const data = await res.json();
+      if (!data.ok) return;
+      registrations = data.registrations || [];
+      opportunityEnquiries = data.opportunityEnquiries || [];
+      dashboardReady = true;
+      renderStats(data.stats || {});
+      renderAllTables();
+    } finally {
+      setDashboardLoading(false);
+    }
   }
 
   async function init() {
     bindNav();
     bindHubContextSwitch();
     bindReviewModal();
+    bindViewReviewModal();
     bindPaymentModal();
     bindCancelModal();
     setRoute(parseRoute());
+    setDashboardLoading(true);
 
     const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
     const sessionData = await sessionRes.json();
     if (!sessionData.ok || !sessionData.user) {
+      setDashboardLoading(false);
       if (signin) signin.hidden = false;
       if (shell) shell.hidden = true;
       return;
@@ -1091,39 +1253,45 @@
 
     if (signin) signin.hidden = true;
     if (shell) shell.hidden = false;
+    setDashboardLoading(true);
     renderWelcome(sessionData.user);
-    await ensureAttendeeHubMode();
 
-    const res = await fetch('/api/auth/attendee-dashboard', { credentials: 'include' });
-    const data = await res.json();
-    if (!data.ok) {
-      if (signin) signin.hidden = true;
-      if (shell) shell.hidden = false;
-      registrations = [];
-      opportunityEnquiries = [];
-      renderStats({});
+    try {
+      await ensureAttendeeHubMode();
+
+      const res = await fetch('/api/auth/attendee-dashboard', { credentials: 'include' });
+      const data = await res.json();
+      if (!data.ok) {
+        dashboardReady = true;
+        registrations = [];
+        opportunityEnquiries = [];
+        renderStats({});
+        renderAllTables();
+        loadSavedEvents();
+        const sub = document.getElementById('ad-welcome-sub');
+        if (sub) {
+          sub.textContent =
+            data.message ||
+            data.error ||
+            'Could not load your dashboard right now. Try refreshing the page.';
+        }
+        return;
+      }
+
+      registrations = data.registrations || [];
+      opportunityEnquiries = data.opportunityEnquiries || [];
+      dashboardReady = true;
+      renderStats(data.stats || {});
       renderAllTables();
       loadSavedEvents();
-      const sub = document.getElementById('ad-welcome-sub');
-      if (sub) {
-        sub.textContent =
-          data.message ||
-          data.error ||
-          'Could not load your dashboard right now. Try refreshing the page.';
-      }
-      return;
+
+      const demoNote = document.getElementById('ad-demo-note');
+      if (demoNote) demoNote.hidden = !data.isDemo;
+
+      openPaymentFromQuery();
+    } finally {
+      setDashboardLoading(false);
     }
-
-    registrations = data.registrations || [];
-    opportunityEnquiries = data.opportunityEnquiries || [];
-    renderStats(data.stats || {});
-    renderAllTables();
-    loadSavedEvents();
-
-    const demoNote = document.getElementById('ad-demo-note');
-    if (demoNote) demoNote.hidden = !data.isDemo;
-
-    openPaymentFromQuery();
   }
 
   init();
