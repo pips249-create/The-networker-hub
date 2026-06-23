@@ -135,6 +135,21 @@ async function fetchAlerts(sb) {
     });
   }
 
+  const pendingOpportunities = await sb
+    .from('business_opportunities')
+    .select('id', { count: 'exact', head: true })
+    .eq('approval_status', 'Pending Review');
+  if (!pendingOpportunities.error && (pendingOpportunities.count || 0) > 0) {
+    alerts.push({
+      id: 'pending-opportunities',
+      severity: 'medium',
+      title: `${pendingOpportunities.count} business opportunit${pendingOpportunities.count === 1 ? 'y' : 'ies'} pending review`,
+      detail: 'Open Listing cleanup → Opportunities to approve or reject listings.',
+      href: '#cleanup/opportunities?approval=pending',
+      time: new Date().toISOString(),
+    });
+  }
+
   const pendingApps = await sb
     .from('registrations')
     .select('id', { count: 'exact', head: true })
@@ -187,11 +202,17 @@ async function fetchAlerts(sb) {
 }
 
 async function fetchAttentionQueue(sb) {
-  const [pendingRes, incompleteRes, reviewsRes, claimDisputesRes, openReportsRes, pendingClaimsRes] =
+  const [pendingRes, pendingOppsRes, incompleteRes, reviewsRes, claimDisputesRes, openReportsRes, pendingClaimsRes] =
     await Promise.all([
       sb
         .from('events')
         .select('id, title, created_at, organisers(name)')
+        .eq('approval_status', 'Pending Review')
+        .order('created_at', { ascending: false })
+        .limit(10),
+      sb
+        .from('business_opportunities')
+        .select('id, title, host, created_at')
         .eq('approval_status', 'Pending Review')
         .order('created_at', { ascending: false })
         .limit(10),
@@ -216,6 +237,12 @@ async function fetchAttentionQueue(sb) {
     organiser: e.organisers?.name || '—',
     createdAt: e.created_at,
   }));
+  const pendingOpportunities = (pendingOppsRes.data || []).map((o) => ({
+    id: o.id,
+    title: String(o.title || '').trim(),
+    host: String(o.host || '').trim() || '—',
+    createdAt: o.created_at,
+  }));
   const openClaimDisputes = (claimDisputesRes.data || []).map((d) => ({
     id: d.id,
     organiserId: d.organiser_id,
@@ -232,6 +259,7 @@ async function fetchAttentionQueue(sb) {
 
   return {
     pendingEvents,
+    pendingOpportunities,
     incompleteOrganisers,
     spamReviews,
     openClaimDisputes,
@@ -239,6 +267,7 @@ async function fetchAttentionQueue(sb) {
     pendingOwnershipClaims,
     totalCount:
       pendingEvents.length +
+      pendingOpportunities.length +
       openClaimDisputes.length +
       (openListingReports > 0 ? 1 : 0) +
       (incompleteOrganisers > 0 ? 1 : 0) +

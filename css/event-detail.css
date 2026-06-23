@@ -890,6 +890,62 @@ a:hover {
   box-shadow: var(--shadow-md);
 }
 
+.checkout-submitting {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  border-radius: inherit;
+  background: rgba(250, 247, 242, 0.94);
+  backdrop-filter: blur(4px);
+}
+
+.checkout-submitting[hidden] {
+  display: none !important;
+}
+
+.checkout-submitting-inner {
+  text-align: center;
+  max-width: 16rem;
+}
+
+.checkout-submitting-spinner {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 14px;
+  border: 3px solid var(--lavender-light);
+  border-top-color: var(--lavender-deep);
+  border-radius: 50%;
+  animation: hub-buffer-spin 0.85s linear infinite;
+}
+
+.checkout-submitting-title {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--charcoal);
+}
+
+.checkout-submitting-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+
+.ticket-panel.is-submitting .checkout-details-form,
+.ticket-panel.is-submitting #buy-btn {
+  pointer-events: none;
+}
+
+#checkout-confirm-btn:disabled {
+  opacity: 0.72;
+  cursor: wait;
+}
+
 @media (max-width: 1024px) {
   .ticket-panel {
     position: static;
@@ -1305,6 +1361,21 @@ a:hover {
   color: var(--ink-muted);
   line-height: 1.55;
   margin: 0 0 16px;
+}
+
+.checkout-details-form.is-free .checkout-precontract {
+  display: none;
+}
+
+.checkout-free-organiser {
+  margin: -8px 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--purple-dark);
+}
+
+.checkout-free-organiser[hidden] {
+  display: none !important;
 }
 
 .checkout-precontract {

@@ -195,6 +195,187 @@ async function listEventsForAdmin(query) {
   };
 }
 
+function buildEventPatchFromBody(body) {
+  const patch = {};
+  if (Object.prototype.hasOwnProperty.call(body, 'title')) {
+    patch.title = String(body.title || '').trim() || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'description')) {
+    patch.description = String(body.description || '').trim() || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'photo_url')) {
+    patch.image_url = eventImageDbValue(body.photo_url);
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'starts_at')) {
+    const raw = body.starts_at;
+    patch.starts_at = raw ? new Date(raw).toISOString() : null;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'ends_at')) {
+    const raw = body.ends_at;
+    patch.ends_at = raw ? new Date(raw).toISOString() : null;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'organiser_id')) {
+    patch.organiser_id = body.organiser_id ? String(body.organiser_id).trim() : null;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'unlink_organiser') && body.unlink_organiser) {
+    patch.organiser_id = null;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'event_type')) {
+    patch.event_type = normalizeEventType(body.event_type || '');
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'meeting_type')) {
+    patch.meeting_type = String(body.meeting_type || '').trim() || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'status')) {
+    const status = String(body.status || '').trim();
+    if (status && !['draft', 'published', 'unpublished', 'archived', 'cancelled'].includes(status)) {
+      const err = new Error('invalid_status');
+      err.status = 400;
+      throw err;
+    }
+    patch.status = status || null;
+    if (status === 'published') {
+      patch.approval_status = 'Approved';
+      patch.ticket_sales_enabled = true;
+    } else if (status === 'draft') patch.approval_status = 'Pending Review';
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'approval_status')) {
+    const approval = String(body.approval_status || '').trim();
+    if (approval && !['Pending Review', 'Approved', 'Rejected'].includes(approval)) {
+      const err = new Error('invalid_approval_status');
+      err.status = 400;
+      throw err;
+    }
+    patch.approval_status = approval || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'featured')) {
+    patch.featured = Boolean(body.featured);
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'vat_treatment')) {
+    const vat = String(body.vat_treatment || '').trim();
+    if (vat && !['included', 'added'].includes(vat)) {
+      const err = new Error('invalid_vat_treatment');
+      err.status = 400;
+      throw err;
+    }
+    patch.vat_treatment = vat || null;
+  }
+  return patch;
+}
+
+async function applyEventPatch(sb, id, patch) {
+  const { data: current, error: currentErr } = await sb
+    .from('events')
+    .select('starts_at, title')
+    .eq('id', id)
+    .maybeSingle();
+  if (currentErr) throw new Error(currentErr.message);
+  if (!current) {
+    const err = new Error('not_found');
+    err.status = 404;
+    throw err;
+  }
+
+  const effectiveStartsAt =
+    Object.prototype.hasOwnProperty.call(patch, 'starts_at') ? patch.starts_at : current.starts_at;
+
+  if (!effectiveStartsAt) {
+    if (patch.status === 'published' || patch.approval_status === 'Approved') {
+      const err = new Error('missing_date');
+      err.message = 'Events must have a date before they can be published or approved.';
+      err.status = 400;
+      throw err;
+    }
+    patch.status = 'draft';
+    patch.approval_status = 'Pending Review';
+    patch.ticket_sales_enabled = false;
+  }
+
+  const { data, error } = await sb.from('events').update(patch).eq('id', id).select('*').single();
+  if (error) throw new Error(error.message);
+  const organisers = await fetchOrganisersByIds(sb, [data.organiser_id]);
+  const orgById = new Map(organisers.map((o) => [o.id, o]));
+  return mapEventRow(data, orgById);
+}
+
+async function adminDeleteEvent(sb, eventId, opts) {
+  const force = Boolean(opts && opts.force);
+  const { data: row, error } = await sb.from('events').select('*').eq('id', eventId).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!row) {
+    return { id: eventId, skipped: true, reason: 'not_found', title: '' };
+  }
+
+  const title = String(row.title || '').trim() || 'Untitled';
+
+  if (row.locked && !force) {
+    return { id: eventId, skipped: true, reason: 'locked', title };
+  }
+
+  const { count, error: regErr } = await sb
+    .from('registrations')
+    .select('*', { count: 'exact', head: true })
+    .eq('event_id', eventId);
+  if (regErr) throw new Error(regErr.message);
+  if (count > 0 && !force) {
+    return { id: eventId, skipped: true, reason: 'has_registrations', title, registrationCount: count };
+  }
+
+  const { error: ticketErr } = await sb.from('tickets').delete().eq('event_id', eventId);
+  if (ticketErr) throw new Error(ticketErr.message);
+
+  const { error: delErr } = await sb.from('events').delete().eq('id', eventId);
+  if (delErr) throw new Error(delErr.message);
+
+  return { id: eventId, deleted: true, title };
+}
+
+async function bulkUpdateEvents(ids, body) {
+  const patch = buildEventPatchFromBody(body);
+  if (!Object.keys(patch).length) {
+    const err = new Error('no_fields');
+    err.status = 400;
+    throw err;
+  }
+
+  const sb = getSupabaseAdmin();
+  const updated = [];
+  const skipped = [];
+
+  for (const id of ids) {
+    try {
+      const event = await applyEventPatch(sb, id, { ...patch });
+      updated.push(event);
+    } catch (e) {
+      skipped.push({
+        id,
+        reason: e.message || String(e),
+        code: e.message || 'update_failed',
+      });
+    }
+  }
+
+  return { updated: updated.length, skipped, events: updated };
+}
+
+async function bulkDeleteEvents(ids, opts) {
+  const sb = getSupabaseAdmin();
+  const deleted = [];
+  const skipped = [];
+
+  for (const id of ids) {
+    try {
+      const result = await adminDeleteEvent(sb, id, opts);
+      if (result.deleted) deleted.push(result);
+      else skipped.push(result);
+    } catch (e) {
+      skipped.push({ id, skipped: true, reason: e.message || 'delete_failed', title: '' });
+    }
+  }
+
+  return { deleted: deleted.length, skipped, titles: deleted.map((d) => d.title) };
+}
+
 module.exports = async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Cache-Control', 'no-store');
@@ -244,63 +425,52 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    if (body.action === 'bulk_update') {
+      const ids = [
+        ...new Set(
+          (Array.isArray(body.ids) ? body.ids : [])
+            .map((id) => String(id || '').trim())
+            .filter(Boolean)
+        ),
+      ];
+      if (!ids.length) return json(res, 400, { error: 'missing_ids' });
+      try {
+        const result = await bulkUpdateEvents(ids, body);
+        return json(res, 200, { ok: true, ...result });
+      } catch (e) {
+        return json(res, e.status || 500, {
+          ok: false,
+          error: e.message || 'bulk_update_failed',
+          message: e.message,
+        });
+      }
+    }
+
+    if (body.action === 'bulk_delete') {
+      const ids = [
+        ...new Set(
+          (Array.isArray(body.ids) ? body.ids : [])
+            .map((id) => String(id || '').trim())
+            .filter(Boolean)
+        ),
+      ];
+      if (!ids.length) return json(res, 400, { error: 'missing_ids' });
+      try {
+        const result = await bulkDeleteEvents(ids, { force: Boolean(body.force) });
+        return json(res, 200, { ok: true, ...result });
+      } catch (e) {
+        return json(res, 500, { ok: false, error: 'bulk_delete_failed', message: e.message });
+      }
+    }
+
     const id = String(body.id || '').trim();
     if (!id) return json(res, 400, { error: 'missing_id' });
 
-    const patch = {};
-    if (Object.prototype.hasOwnProperty.call(body, 'title')) {
-      patch.title = String(body.title || '').trim() || null;
-    }
-    if (Object.prototype.hasOwnProperty.call(body, 'description')) {
-      patch.description = String(body.description || '').trim() || null;
-    }
-    if (Object.prototype.hasOwnProperty.call(body, 'photo_url')) {
-      patch.image_url = eventImageDbValue(body.photo_url);
-    }
-    if (Object.prototype.hasOwnProperty.call(body, 'starts_at')) {
-      const raw = body.starts_at;
-      patch.starts_at = raw ? new Date(raw).toISOString() : null;
-    }
-    if (Object.prototype.hasOwnProperty.call(body, 'ends_at')) {
-      const raw = body.ends_at;
-      patch.ends_at = raw ? new Date(raw).toISOString() : null;
-    }
-    if (Object.prototype.hasOwnProperty.call(body, 'organiser_id')) {
-      patch.organiser_id = body.organiser_id ? String(body.organiser_id).trim() : null;
-    }
-    if (Object.prototype.hasOwnProperty.call(body, 'event_type')) {
-      patch.event_type = normalizeEventType(body.event_type || '');
-    }
-    if (Object.prototype.hasOwnProperty.call(body, 'meeting_type')) {
-      patch.meeting_type = String(body.meeting_type || '').trim() || null;
-    }
-    if (Object.prototype.hasOwnProperty.call(body, 'status')) {
-      const status = String(body.status || '').trim();
-      if (status && !['draft', 'published', 'unpublished', 'archived', 'cancelled'].includes(status)) {
-        return json(res, 400, { error: 'invalid_status' });
-      }
-      patch.status = status || null;
-      if (status === 'published') {
-        patch.approval_status = 'Approved';
-        patch.ticket_sales_enabled = true;
-      } else if (status === 'draft') patch.approval_status = 'Pending Review';
-    }
-    if (Object.prototype.hasOwnProperty.call(body, 'approval_status')) {
-      const approval = String(body.approval_status || '').trim();
-      if (approval && !['Pending Review', 'Approved', 'Rejected'].includes(approval)) {
-        return json(res, 400, { error: 'invalid_approval_status' });
-      }
-      patch.approval_status = approval || null;
-    }
-    if (Object.prototype.hasOwnProperty.call(body, 'featured')) {
-      patch.featured = Boolean(body.featured);
-    }
-    if (Object.prototype.hasOwnProperty.call(body, 'vat_treatment')) {
-      const vat = String(body.vat_treatment || '').trim();
-      if (vat && !['included', 'added'].includes(vat)) {
-        return json(res, 400, { error: 'invalid_vat_treatment' });
-      }
-      patch.vat_treatment = vat || null;
+    let patch;
+    try {
+      patch = buildEventPatchFromBody(body);
+    } catch (e) {
+      return json(res, e.status || 400, { error: e.message });
     }
 
     if (!Object.keys(patch).length) {
@@ -309,35 +479,13 @@ module.exports = async function handler(req, res) {
 
     try {
       const sb = getSupabaseAdmin();
-      const { data: current, error: currentErr } = await sb
-        .from('events')
-        .select('starts_at')
-        .eq('id', id)
-        .maybeSingle();
-      if (currentErr) throw new Error(currentErr.message);
-      if (!current) return json(res, 404, { error: 'not_found' });
-
-      const effectiveStartsAt =
-        Object.prototype.hasOwnProperty.call(patch, 'starts_at') ? patch.starts_at : current.starts_at;
-
-      if (!effectiveStartsAt) {
-        if (patch.status === 'published' || patch.approval_status === 'Approved') {
-          return json(res, 400, {
-            error: 'missing_date',
-            message: 'Events must have a date before they can be published or approved.',
-          });
-        }
-        patch.status = 'draft';
-        patch.approval_status = 'Pending Review';
-        patch.ticket_sales_enabled = false;
-      }
-
-      const { data, error } = await sb.from('events').update(patch).eq('id', id).select('*').single();
-      if (error) throw new Error(error.message);
-      const organisers = await fetchOrganisersByIds(sb, [data.organiser_id]);
-      const orgById = new Map(organisers.map((o) => [o.id, o]));
-      return json(res, 200, { ok: true, event: mapEventRow(data, orgById) });
+      const event = await applyEventPatch(sb, id, patch);
+      return json(res, 200, { ok: true, event });
     } catch (e) {
+      if (e.message === 'missing_date') {
+        return json(res, 400, { error: 'missing_date', message: e.message });
+      }
+      if (e.message === 'not_found') return json(res, 404, { error: 'not_found' });
       return json(res, 500, { ok: false, error: 'update_failed', message: e.message });
     }
   }

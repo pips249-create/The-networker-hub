@@ -408,12 +408,12 @@ async function listOpportunityEnquiriesSentBySession(session) {
   const sb = getSupabaseAdmin();
   const { data, error } = await sb
     .from('opportunity_enquiries')
-    .select('*, opportunities(id, title)')
+    .select('*, business_opportunities(id, title)')
     .ilike('enquirer_email', em)
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   return (data || []).map((row) => {
-    const opp = row.opportunities || null;
+    const opp = row.business_opportunities || null;
     return enquiryRowToDto(row, opp ? { id: opp.id, title: opp.title } : null);
   });
 }

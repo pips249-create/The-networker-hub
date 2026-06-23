@@ -24,7 +24,7 @@
     },
     cleanup: {
       title: 'Listing cleanup',
-      subtitle: 'Fix group profiles, edit events, and resolve published event data issues',
+      subtitle: 'Fix group profiles, edit events and business opportunities, and resolve published event data issues',
     },
     'group-cleanup': {
       title: 'Listing cleanup',
@@ -33,6 +33,10 @@
     'event-cleanup': {
       title: 'Listing cleanup',
       subtitle: 'Search and filter events, then expand a row to edit — built for large catalogues',
+    },
+    'opportunity-cleanup': {
+      title: 'Listing cleanup',
+      subtitle: 'Search, filter, and approve business opportunity listings — toggle featured for the spotlight carousel',
     },
     accounts: {
       title: 'Accounts',
@@ -116,14 +120,32 @@
     hasMore: false,
     total: 0,
     loading: false,
+    selected: {},
+  };
+  var opportunityCleanupState = {
+    status: '',
+    approval: '',
+    type: '',
+    featured: false,
+    noImage: false,
+    sort: 'recent',
+    offset: 0,
+    q: '',
+    hasMore: false,
+    total: 0,
+    loading: false,
   };
   var GROUP_PAGE_SIZE = 30;
   var EVENT_PAGE_SIZE = 40;
+  var OPPORTUNITY_PAGE_SIZE = 40;
   var eventOrganiserOptionsCache = null;
+  var opportunityCleanupCache = null;
   var adminLogoPending = {};
   var groupSearchTimer = null;
   var eventSearchTimer = null;
+  var opportunitySearchTimer = null;
   var eventLoadObserver = null;
+  var opportunityLoadObserver = null;
 
   /** CMS ad placements — each maps to a cms_blocks.slot row. */
   var CMS_AD_SLOTS = [
@@ -326,6 +348,7 @@
     var legacy = {
       'group-cleanup': 'cleanup/groups',
       'event-cleanup': 'cleanup/events',
+      'opportunity-cleanup': 'cleanup/opportunities',
       'event-health': 'cleanup/issues',
       campaigns: 'email/campaigns',
       emails: 'email/templates',
@@ -341,6 +364,7 @@
     var parents = {
       'group-cleanup': 'cleanup',
       'event-cleanup': 'cleanup',
+      'opportunity-cleanup': 'cleanup',
       'event-health': 'cleanup',
       campaigns: 'email',
       emails: 'email',
@@ -359,6 +383,9 @@
       }
       if (hash.indexOf('events') !== -1 || hash === 'event-cleanup') {
         return PAGE_META['event-cleanup'].subtitle;
+      }
+      if (hash.indexOf('opportunities') !== -1 || hash === 'opportunity-cleanup') {
+        return PAGE_META['opportunity-cleanup'].subtitle;
       }
       return PAGE_META['group-cleanup'].subtitle;
     }
@@ -723,7 +750,7 @@
     if (pending.length) {
       parts.push(
         '<div class="rounded-lg border border-amber-200 bg-amber-50 p-4">' +
-          '<p class="text-xs font-semibold uppercase tracking-wide text-amber-800/80">Pending approval queue</p>' +
+          '<p class="text-xs font-semibold uppercase tracking-wide text-amber-800/80">Events pending approval</p>' +
           '<ul class="mt-2 space-y-1.5">'
       );
       pending.slice(0, 6).forEach(function (e) {
@@ -736,7 +763,28 @@
         );
       });
       parts.push(
-        '</ul><a href="#moderation" class="text-xs font-semibold text-amber-900 mt-3 inline-block hover:underline">Open approval queue →</a></div>'
+        '</ul><a href="#moderation" class="text-xs font-semibold text-amber-900 mt-3 inline-block hover:underline">Open event approval queue →</a></div>'
+      );
+    }
+
+    var pendingOpps = attention.pendingOpportunities || [];
+    if (pendingOpps.length) {
+      parts.push(
+        '<div class="rounded-lg border border-amber-200 bg-amber-50 p-4">' +
+          '<p class="text-xs font-semibold uppercase tracking-wide text-amber-800/80">Business opportunities pending review</p>' +
+          '<ul class="mt-2 space-y-1.5">'
+      );
+      pendingOpps.slice(0, 6).forEach(function (o) {
+        parts.push(
+          '<li class="text-sm text-amber-900"><span class="font-medium">' +
+            esc(o.title) +
+            '</span> <span class="text-xs text-amber-800/80">· ' +
+            esc(o.host) +
+            '</span></li>'
+        );
+      });
+      parts.push(
+        '</ul><a href="#cleanup/opportunities?approval=pending" class="text-xs font-semibold text-amber-900 mt-3 inline-block hover:underline">Review opportunities →</a></div>'
       );
     }
 
@@ -5564,6 +5612,7 @@
     if (createSelect) {
       createSelect.innerHTML = organiserOptionsHtml(organisers, eventCleanupState.organiserId);
     }
+    updateEventBulkBar();
   }
 
   function missingBadge(field) {
@@ -6985,6 +7034,9 @@
       } else if (form.classList.contains('event-create-form')) {
         e.preventDefault();
         createEventCleanupForm(form);
+      } else if (form.id === 'event-bulk-form') {
+        e.preventDefault();
+        saveEventBulkForm(form);
       }
     });
     main.addEventListener('change', function (e) {
@@ -7016,6 +7068,34 @@
         eventCleanupState.sort = e.target.value || 'recent';
         refreshEventCleanupData();
       }
+      if (e.target.classList && e.target.classList.contains('event-select-checkbox')) {
+        var evId = e.target.value;
+        if (e.target.checked) {
+          var row = e.target.closest('[data-event-id-row]');
+          var titleEl = row && row.querySelector('.font-semibold');
+          rememberSelectedEvent({
+            id: evId,
+            title: titleEl ? titleEl.textContent : 'Event',
+            organiser_name: '',
+            status: '',
+          });
+        } else {
+          forgetSelectedEvent(evId);
+        }
+        updateEventBulkBar();
+      }
+      if (e.target.id === 'event-cleanup-select-page') {
+        var checked = e.target.checked;
+        if (!eventCleanupCache || !eventCleanupCache.events) return;
+        eventCleanupCache.events.forEach(function (ev) {
+          if (checked) rememberSelectedEvent(ev);
+          else forgetSelectedEvent(ev.id);
+        });
+        main.querySelectorAll('.event-select-checkbox').forEach(function (cb) {
+          cb.checked = checked;
+        });
+        updateEventBulkBar();
+      }
     });
     main.addEventListener('input', function (e) {
       if (e.target.id !== 'event-cleanup-search') return;
@@ -7026,6 +7106,34 @@
       }, 300);
     });
     main.addEventListener('click', function (e) {
+      if (e.target.closest('#event-bulk-clear')) {
+        clearSelectedEvents();
+        main.querySelectorAll('.event-select-checkbox').forEach(function (cb) {
+          cb.checked = false;
+        });
+        var selectPage = document.getElementById('event-cleanup-select-page');
+        if (selectPage) selectPage.checked = false;
+        updateEventBulkBar();
+        return;
+      }
+      var unselectBtn = e.target.closest('[data-unselect-event]');
+      if (unselectBtn) {
+        var unselectId = unselectBtn.getAttribute('data-unselect-event');
+        forgetSelectedEvent(unselectId);
+        main.querySelectorAll('.event-select-checkbox').forEach(function (cb) {
+          if (String(cb.value) === String(unselectId)) cb.checked = false;
+        });
+        updateEventBulkBar();
+        return;
+      }
+      if (e.target.closest('#event-delete-btn')) {
+        deleteSelectedEvents(false);
+        return;
+      }
+      if (e.target.closest('#event-force-delete-btn')) {
+        deleteSelectedEvents(true);
+        return;
+      }
       var toggle = e.target.closest('[data-toggle-event-edit]');
       if (toggle) {
         var row = toggle.closest('[data-event-id-row]');
@@ -7364,6 +7472,234 @@
     );
   }
 
+  function rememberSelectedEvent(ev) {
+    if (!ev || ev.id == null) return;
+    eventCleanupState.selected[String(ev.id)] = {
+      id: ev.id,
+      title: ev.title || 'Untitled',
+      organiser_name: ev.organiser_name || '',
+      status: ev.status || '',
+    };
+  }
+
+  function forgetSelectedEvent(id) {
+    delete eventCleanupState.selected[String(id)];
+  }
+
+  function clearSelectedEvents() {
+    eventCleanupState.selected = {};
+  }
+
+  function getSelectedEventIds() {
+    return Object.keys(eventCleanupState.selected);
+  }
+
+  function selectedEventRows() {
+    return getSelectedEventIds().map(function (id) {
+      return eventCleanupState.selected[id];
+    });
+  }
+
+  function updateEventBulkBar() {
+    var bar = document.getElementById('event-cleanup-bulk');
+    var countEl = document.getElementById('event-bulk-count');
+    var chipsEl = document.getElementById('event-selected-chips');
+    var deleteSection = document.getElementById('event-delete-section');
+    var ids = getSelectedEventIds();
+    var rows = selectedEventRows();
+    if (countEl) countEl.textContent = String(ids.length);
+    if (bar) bar.classList.toggle('hidden', ids.length === 0);
+    if (deleteSection) deleteSection.classList.toggle('hidden', ids.length === 0);
+    if (chipsEl) {
+      chipsEl.innerHTML = rows
+        .map(function (ev) {
+          var label = ev.title || 'Untitled';
+          if (ev.organiser_name) label += ' · ' + ev.organiser_name;
+          return (
+            '<span class="inline-flex items-center gap-1 rounded-full border border-brand-200 bg-white px-2.5 py-0.5 text-xs text-brand-900">' +
+            '<span class="truncate max-w-[14rem]" title="' +
+            attrEsc(label) +
+            '">' +
+            esc(label) +
+            '</span>' +
+            '<button type="button" class="event-unselect shrink-0 text-slate-400 hover:text-red-700 font-bold leading-none" data-unselect-event="' +
+            attrEsc(ev.id) +
+            '" aria-label="Remove ' +
+            attrEsc(ev.title || 'event') +
+            ' from selection">×</button></span>'
+          );
+        })
+        .join('');
+    }
+    var bulkOrganiser = document.getElementById('event-bulk-organiser');
+    if (bulkOrganiser && eventOrganiserOptionsCache) {
+      var currentOrg = bulkOrganiser.value;
+      bulkOrganiser.innerHTML =
+        '<option value="">— Leave organiser unchanged —</option>' +
+        '<option value="__unlink__">— Unlink from organiser —</option>' +
+        eventOrganiserOptionsCache
+          .map(function (o) {
+            return (
+              '<option value="' +
+              attrEsc(o.id) +
+              '"' +
+              (String(currentOrg) === String(o.id) ? ' selected' : '') +
+              '>' +
+              esc(o.name) +
+              '</option>'
+            );
+          })
+          .join('');
+    }
+    if (main) {
+      var selectPage = document.getElementById('event-cleanup-select-page');
+      var pageCbs = main.querySelectorAll('.event-select-checkbox');
+      var allPageChecked = pageCbs.length > 0;
+      pageCbs.forEach(function (cb) {
+        if (!eventCleanupState.selected[cb.value]) allPageChecked = false;
+      });
+      if (selectPage) selectPage.checked = allPageChecked;
+    }
+  }
+
+  function eventDeleteConfirmMsg(count, force) {
+    var base =
+      'Permanently delete ' +
+      count +
+      ' selected event' +
+      (count === 1 ? '' : 's') +
+      '?';
+    if (force) {
+      return (
+        base +
+        '\n\nForce delete will remove events even if they have ticket registrations or are locked. This cannot be undone.'
+      );
+    }
+    return (
+      base +
+      '\n\nEvents with registrations or active ticket sales will be skipped. Use force delete only if you are sure.'
+    );
+  }
+
+  function formatEventBulkSkipped(skipped) {
+    if (!skipped || !skipped.length) return '';
+    var labels = {
+      locked: 'locked (active ticket sales)',
+      has_registrations: 'has registrations',
+      not_found: 'not found',
+    };
+    return skipped
+      .slice(0, 5)
+      .map(function (s) {
+        var reason = labels[s.reason] || s.reason || 'skipped';
+        var title = s.title ? '"' + s.title + '"' : s.id;
+        if (s.reason === 'has_registrations' && s.registrationCount) {
+          reason = s.registrationCount + ' registration' + (s.registrationCount === 1 ? '' : 's');
+        }
+        return title + ' (' + reason + ')';
+      })
+      .join('; ');
+  }
+
+  function deleteSelectedEvents(force) {
+    var ids = getSelectedEventIds();
+    if (!ids.length) return;
+    if (!window.confirm(eventDeleteConfirmMsg(ids.length, force))) return;
+    var msg = document.getElementById('event-delete-msg');
+    var btn = force
+      ? document.getElementById('event-force-delete-btn')
+      : document.getElementById('event-delete-btn');
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Deleting…';
+      msg.className = 'text-xs text-slate-500';
+    }
+    adminPost('/api/admin/events', { action: 'bulk_delete', ids: ids, force: !!force })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Delete failed');
+        clearSelectedEvents();
+        var parts = ['Deleted ' + (data.deleted || 0) + ' event' + ((data.deleted || 0) === 1 ? '' : 's') + '.'];
+        if (data.skipped && data.skipped.length) {
+          parts.push('Skipped ' + data.skipped.length + ': ' + formatEventBulkSkipped(data.skipped) + '.');
+        }
+        if (msg) {
+          msg.textContent = parts.join(' ');
+          msg.className = 'text-xs text-emerald-700 font-semibold';
+        }
+        return refreshEventCleanupData();
+      })
+      .then(function () {
+        updateEventBulkBar();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not delete events';
+          msg.className = 'text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function saveEventBulkForm(form) {
+    var ids = getSelectedEventIds();
+    var msg = document.getElementById('event-bulk-msg');
+    var btn = form.querySelector('[type="submit"]');
+    if (!ids.length) return;
+    var payload = { action: 'bulk_update', ids: ids };
+    var organiserVal = formFieldVal(form, 'bulk_organiser_id');
+    if (organiserVal === '__unlink__') payload.unlink_organiser = true;
+    else if (organiserVal) payload.organiser_id = organiserVal;
+    var status = formFieldVal(form, 'bulk_status');
+    if (status) payload.status = status;
+    var approval = formFieldVal(form, 'bulk_approval_status');
+    if (approval) payload.approval_status = approval;
+    var featuredVal = formFieldVal(form, 'bulk_featured');
+    if (featuredVal === 'true') payload.featured = true;
+    else if (featuredVal === 'false') payload.featured = false;
+    if (
+      !payload.organiser_id &&
+      !payload.unlink_organiser &&
+      !payload.status &&
+      !payload.approval_status &&
+      !Object.prototype.hasOwnProperty.call(payload, 'featured')
+    ) {
+      if (msg) {
+        msg.textContent = 'Choose at least one field to apply.';
+        msg.className = 'text-xs text-red-700 font-semibold';
+      }
+      return;
+    }
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Applying to ' + ids.length + ' events…';
+      msg.className = 'text-xs text-slate-500';
+    }
+    adminPost('/api/admin/events', payload)
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Bulk update failed');
+        clearSelectedEvents();
+        var parts = ['Updated ' + (data.updated || 0) + ' event' + ((data.updated || 0) === 1 ? '' : 's') + '.'];
+        if (data.skipped && data.skipped.length) {
+          parts.push('Skipped ' + data.skipped.length + '.');
+        }
+        if (msg) {
+          msg.textContent = parts.join(' ');
+          msg.className = 'text-xs text-emerald-700 font-semibold';
+        }
+        return refreshEventCleanupData();
+      })
+      .then(function () {
+        updateEventBulkBar();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not apply bulk update';
+          msg.className = 'text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
   function applyEventCleanupData(data) {
     var status = document.getElementById('event-cleanup-status');
     if (!data || data.error || data.ok === false) {
@@ -7452,10 +7788,21 @@
         var dateLabel = ev.starts_at
           ? esc(fmtTime(ev.starts_at))
           : '<span class="text-slate-400">No date</span>';
+        if (eventCleanupState.selected[ev.id]) rememberSelectedEvent(ev);
+        var checked = eventCleanupState.selected[ev.id] ? ' checked' : '';
         return (
           '<tr class="border-b border-slate-100 hover:bg-slate-50/80" data-event-id-row="' +
           attrEsc(ev.id) +
           '">' +
+          '<td class="py-2.5 pr-2 w-8">' +
+          '<input type="checkbox" class="event-select-checkbox rounded border-slate-300" value="' +
+          attrEsc(ev.id) +
+          '"' +
+          checked +
+          ' aria-label="Select ' +
+          attrEsc(ev.title || 'event') +
+          '">' +
+          '</td>' +
           '<td class="py-2.5 pr-3 max-w-[14rem]"><div class="font-semibold text-brand-900 truncate" title="' +
           attrEsc(ev.title || 'Untitled') +
           '">' +
@@ -7483,7 +7830,7 @@
           '<button type="button" data-toggle-event-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">Edit</button>' +
           '</div></td></tr>' +
           '<tr class="event-cleanup-panel hidden border-b border-slate-200 bg-slate-50/80">' +
-          '<td colspan="5" class="p-4">' +
+          '<td colspan="6" class="p-4">' +
           eventCleanupEditFormHtml(ev, organisers) +
           '</td></tr>'
         );
@@ -7495,6 +7842,7 @@
         '<table class="w-full text-sm text-left border-collapse">' +
           '<thead class="text-xs uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
           '<tr>' +
+          '<th class="py-2 pr-2 w-8"><span class="sr-only">Select</span></th>' +
           '<th class="py-2 pr-3 font-semibold">Event</th>' +
           '<th class="py-2 pr-3 font-semibold">Organiser</th>' +
           '<th class="py-2 pr-3 font-semibold">Date</th>' +
@@ -7509,6 +7857,7 @@
           '<button type="button" id="event-cleanup-load-more" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-brand-900 hover:bg-slate-50">Load more events</button>' +
           '</div>'
         : '');
+    updateEventBulkBar();
   }
 
   function renderEventCleanup() {
@@ -7517,6 +7866,44 @@
       '<div id="event-cleanup-status" class="text-sm text-slate-500">Loading events…</div>' +
       '<p id="event-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
       'Large catalogue — search by title or city, pick an organiser, or use quick filters below. Rows load in batches; expand a row only when you need to edit.</p>' +
+      '<div id="event-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
+      '<form id="event-bulk-form" class="space-y-3">' +
+      '<div class="flex flex-wrap items-center justify-between gap-2">' +
+      '<p class="text-sm font-semibold text-brand-900"><span id="event-bulk-count">0</span> events selected</p>' +
+      '<button type="button" id="event-bulk-clear" class="text-xs font-semibold text-slate-600 hover:text-brand-900">Clear selection</button></div>' +
+      '<p class="text-xs text-slate-600">Filter and load more to add events — your selection is kept until you apply changes, delete, or clear.</p>' +
+      '<div id="event-selected-chips" class="flex flex-wrap gap-1.5"></div>' +
+      '<p class="text-xs text-slate-600">Only fields you set below are applied to every selected event.</p>' +
+      '<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
+      '<select name="bulk_organiser_id" id="event-bulk-organiser" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">— Leave unchanged —</option></select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
+      '<select name="bulk_status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">— Leave unchanged —</option>' +
+      eventStatusOptions('') +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Approval</label>' +
+      '<select name="bulk_approval_status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">— Leave unchanged —</option>' +
+      '<option value="Pending Review">Pending review</option>' +
+      '<option value="Approved">Approved</option>' +
+      '<option value="Rejected">Rejected</option></select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Featured spotlight</label>' +
+      '<select name="bulk_featured" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">— Leave unchanged —</option>' +
+      '<option value="true">Mark featured</option>' +
+      '<option value="false">Remove featured</option></select></div></div>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Apply to selected</button>' +
+      '<span id="event-bulk-msg" class="text-xs"></span></div></form>' +
+      '<div id="event-delete-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
+      '<p class="text-sm font-semibold text-brand-900">Delete selected events</p>' +
+      '<p class="text-xs text-slate-600">Draft and test events without registrations are removed immediately. Events with registrations or active ticket sales are skipped unless you force delete.</p>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="button" id="event-delete-btn" class="rounded-lg bg-red-600 text-white text-sm font-semibold px-4 py-2 hover:bg-red-700">Delete selected</button>' +
+      '<button type="button" id="event-force-delete-btn" class="rounded-lg border border-red-300 bg-white text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50">Force delete</button>' +
+      '<span id="event-delete-msg" class="text-xs"></span></div></div></div>' +
       '<div class="admin-filter-bar sticky top-0 z-10 rounded-xl border border-slate-200 bg-white/95 backdrop-blur p-4 space-y-3 shadow-sm">' +
       '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
       '<input type="search" id="event-cleanup-search" placeholder="Search title or city…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
@@ -7563,7 +7950,9 @@
       '<button type="button" data-event-quick="no_date" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">No date</button>' +
       '<button type="button" data-event-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
       '<button type="button" data-event-quick="pending" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Pending approval</button>' +
-      '<button type="button" data-event-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div></div>' +
+      '<button type="button" data-event-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="event-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +
       '<div id="event-cleanup-list"></div>' +
       '<details class="rounded-xl border border-brand-200 bg-brand-50/50 group">' +
       '<summary class="cursor-pointer list-none font-semibold text-brand-900 px-4 py-3 select-none">Create event for a group</summary>' +
@@ -7648,6 +8037,9 @@
           envRow('SITE_URL', env.hasSiteUrl) +
           envRow('RESEND_API_KEY', env.hasResendApiKey) +
           envRow('RESEND_FROM', env.hasResendFrom) +
+          envRow('STRIPE_SECRET_KEY', env.hasStripeSecretKey) +
+          envRow('STRIPE_WEBHOOK_SECRET', env.hasStripeWebhookSecret) +
+          envRow('STRIPE_CONNECT_ENABLED', env.stripeConnectEnabled) +
           envRow('CRON_SECRET', env.hasCronSecret) +
           '</div></section>' +
           '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
@@ -7662,7 +8054,34 @@
           (hints.missingCronSecret
             ? '<p class="text-xs text-amber-800 mt-2">' + esc(hints.missingCronSecret) + '</p>'
             : '') +
-          '<p class="text-xs text-slate-500 mt-3">Daily crons (07:00 &amp; 08:00 UTC): 24-hour booking reminders and saved-event ticket alerts. Local dev: copy vars into <code class="text-[11px]">local.env</code>, run <code class="text-[11px]">npm run sync-env</code>, restart <code class="text-[11px]">npm start</code>.</p>' +
+          '<p class="text-xs text-slate-500 mt-3">Daily crons (07:00 &amp; 08:00 UTC): 24-hour booking reminders and saved-event ticket alerts.</p>' +
+          '</section>' +
+          '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+          '<h3 class="font-bold text-brand-900 mb-3">Stripe &amp; checkout</h3>' +
+          '<div class="text-sm">' +
+          envRow('Paid checkout (STRIPE_SECRET_KEY)', env.hasStripeSecretKey) +
+          envRow('Webhook signing secret', env.hasStripeWebhookSecret) +
+          envRow('Connect destination charges', env.stripeConnectEnabled) +
+          envRow('Checkout gate ready', env.checkoutReady && env.emailSendingConfigured) +
+          (env.stripeMode
+            ? '<p class="text-xs text-slate-500 mt-2">Stripe mode: <strong>' +
+              esc(env.stripeMode) +
+              '</strong></p>'
+            : '') +
+          '</div>' +
+          (hints.missingStripeSecret
+            ? '<p class="text-xs text-amber-800 mt-3">' + esc(hints.missingStripeSecret) + '</p>'
+            : '') +
+          (hints.missingStripeWebhook
+            ? '<p class="text-xs text-amber-800 mt-2">' + esc(hints.missingStripeWebhook) + '</p>'
+            : '') +
+          (hints.stripeModeMismatch
+            ? '<p class="text-xs text-amber-800 mt-2">' + esc(hints.stripeModeMismatch) + '</p>'
+            : '') +
+          (hints.checkoutGateReady
+            ? '<p class="text-xs text-emerald-800 mt-2">' + esc(hints.checkoutGateReady) + '</p>'
+            : '') +
+          '<p class="text-xs text-slate-500 mt-3">Webhook endpoint: <code class="text-[11px]">/api/stripe-webhook</code> · Event: <code class="text-[11px]">checkout.session.completed</code>. See <code class="text-[11px]">CHECKOUT-SETUP.md</code>.</p>' +
           '</section>' +
           '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
           '<h3 class="font-bold text-brand-900 mb-2">Supabase connection</h3>' +
@@ -8093,22 +8512,610 @@
     });
   }
 
+  var OPPORTUNITY_TYPES = [
+    ['franchise', 'Franchise'],
+    ['side-hustle', 'Side hustle'],
+    ['partnership', 'Partnership'],
+    ['networking', 'Networking'],
+    ['distributorship', 'Distributorship'],
+    ['business-opportunity', 'Business opportunity'],
+  ];
+
+  function opportunityTypeLabel(type) {
+    for (var i = 0; i < OPPORTUNITY_TYPES.length; i++) {
+      if (OPPORTUNITY_TYPES[i][0] === type) return OPPORTUNITY_TYPES[i][1];
+    }
+    return type || '—';
+  }
+
+  function opportunityTypeOptions(selected) {
+    return OPPORTUNITY_TYPES.map(function (pair) {
+      return (
+        '<option value="' +
+        attrEsc(pair[0]) +
+        '"' +
+        (selected === pair[0] ? ' selected' : '') +
+        '>' +
+        esc(pair[1]) +
+        '</option>'
+      );
+    }).join('');
+  }
+
+  function opportunityStatusOptions(selected) {
+    return ['draft', 'published', 'unpublished', 'archived']
+      .map(function (s) {
+        return (
+          '<option value="' +
+          attrEsc(s) +
+          '"' +
+          (selected === s ? ' selected' : '') +
+          '>' +
+          esc(s) +
+          '</option>'
+        );
+      })
+      .join('');
+  }
+
+  function opportunityCleanupHasActiveFilters() {
+    return !!(
+      opportunityCleanupState.q ||
+      opportunityCleanupState.status ||
+      opportunityCleanupState.approval ||
+      opportunityCleanupState.type ||
+      opportunityCleanupState.featured ||
+      opportunityCleanupState.noImage
+    );
+  }
+
+  function syncOpportunityCleanupFilterUi() {
+    var el;
+    el = document.getElementById('opportunity-cleanup-search');
+    if (el) el.value = opportunityCleanupState.q || '';
+    el = document.getElementById('opportunity-cleanup-sort');
+    if (el) el.value = opportunityCleanupState.sort || 'recent';
+    el = document.getElementById('opportunity-cleanup-status-filter');
+    if (el) el.value = opportunityCleanupState.status || '';
+    el = document.getElementById('opportunity-cleanup-approval-filter');
+    if (el) el.value = opportunityCleanupState.approval || '';
+    el = document.getElementById('opportunity-cleanup-type-filter');
+    if (el) el.value = opportunityCleanupState.type || '';
+    el = document.getElementById('opportunity-cleanup-featured');
+    if (el) el.checked = !!opportunityCleanupState.featured;
+    el = document.getElementById('opportunity-cleanup-no-image');
+    if (el) el.checked = !!opportunityCleanupState.noImage;
+    if (!main) return;
+    main.querySelectorAll('[data-opp-quick]').forEach(function (btn) {
+      var key = btn.getAttribute('data-opp-quick');
+      var active = false;
+      if (key === 'pending') active = opportunityCleanupState.approval === 'Pending Review';
+      else if (key === 'draft') active = opportunityCleanupState.status === 'draft';
+      else if (key === 'published') active = opportunityCleanupState.status === 'published';
+      else if (key === 'featured') active = opportunityCleanupState.featured;
+      else if (key === 'no_image') active = opportunityCleanupState.noImage;
+      btn.classList.toggle('ring-2', active);
+      btn.classList.toggle('ring-brand-700', active);
+      btn.classList.toggle('bg-brand-50', active);
+    });
+  }
+
+  function opportunityCleanupEditFormHtml(opp) {
+    return (
+      '<form class="opportunity-cleanup-form grid sm:grid-cols-2 gap-3" data-opportunity-id="' +
+      attrEsc(opp.id) +
+      '">' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
+      '<input type="text" name="title" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(opp.title || '') +
+      '"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Host / company</label>' +
+      '<input type="text" name="host" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(opp.host || '') +
+      '"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Type</label>' +
+      '<select name="type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      opportunityTypeOptions(opp.type) +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
+      '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      opportunityStatusOptions(opp.status || 'draft') +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Approval</label>' +
+      '<select name="approval_status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="Pending Review"' +
+      (opp.approval_status === 'Pending Review' ? ' selected' : '') +
+      '>Pending review</option>' +
+      '<option value="Approved"' +
+      (opp.approval_status === 'Approved' ? ' selected' : '') +
+      '>Approved</option>' +
+      '<option value="Rejected"' +
+      (opp.approval_status === 'Rejected' ? ' selected' : '') +
+      '>Rejected</option></select></div>' +
+      '<div class="flex items-end"><label class="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer pb-2">' +
+      '<input type="checkbox" name="featured" class="rounded border-slate-300"' +
+      (opp.featured ? ' checked' : '') +
+      '> Featured in spotlight</label></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Cover image URL</label>' +
+      '<input type="url" name="image_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(opp.image_url || '') +
+      '" placeholder="https://…"></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Description</label>' +
+      '<textarea name="description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      esc(opp.description || '') +
+      '</textarea></div>' +
+      (opp.owner_email
+        ? '<p class="sm:col-span-2 text-xs text-slate-500">Owner: ' + esc(opp.owner_email) + '</p>'
+        : '') +
+      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save listing</button>' +
+      '<span class="opportunity-cleanup-msg text-xs"></span></div></form>'
+    );
+  }
+
+  function fetchOpportunityCleanup(append) {
+    if (opportunityCleanupState.loading) return Promise.resolve(opportunityCleanupCache);
+    opportunityCleanupState.loading = true;
+    var params = new URLSearchParams();
+    params.set('offset', append ? String(opportunityCleanupState.offset) : '0');
+    params.set('limit', String(OPPORTUNITY_PAGE_SIZE));
+    if (opportunityCleanupState.status) params.set('status', opportunityCleanupState.status);
+    if (opportunityCleanupState.approval) params.set('approval_status', opportunityCleanupState.approval);
+    if (opportunityCleanupState.type) params.set('type', opportunityCleanupState.type);
+    if (opportunityCleanupState.featured) params.set('featured', '1');
+    if (opportunityCleanupState.noImage) params.set('no_image', '1');
+    if (opportunityCleanupState.sort) params.set('sort', opportunityCleanupState.sort);
+    if (opportunityCleanupState.q) params.set('q', opportunityCleanupState.q);
+    return adminGet('/api/admin/opportunities?' + params.toString())
+      .then(function (data) {
+        opportunityCleanupState.loading = false;
+        if (!data || data.error) return data;
+        if (append && opportunityCleanupCache && opportunityCleanupCache.opportunities) {
+          opportunityCleanupCache.opportunities = opportunityCleanupCache.opportunities.concat(
+            data.opportunities || []
+          );
+        } else {
+          opportunityCleanupCache = data;
+        }
+        opportunityCleanupState.offset = (opportunityCleanupCache.opportunities || []).length;
+        opportunityCleanupState.hasMore = !!data.hasMore;
+        opportunityCleanupState.total = data.total || opportunityCleanupState.offset;
+        return opportunityCleanupCache;
+      })
+      .catch(function () {
+        opportunityCleanupState.loading = false;
+        return { error: 'network_error' };
+      });
+  }
+
+  function loadMoreOpportunities() {
+    if (!opportunityCleanupState.hasMore || opportunityCleanupState.loading) return;
+    fetchOpportunityCleanup(true).then(function () {
+      renderOpportunityCleanupList();
+      attachOpportunityLoadMore();
+    });
+  }
+
+  function applyOpportunityCleanupData(data) {
+    var status = document.getElementById('opportunity-cleanup-status');
+    if (!data || data.error || data.ok === false) {
+      if (status) {
+        status.innerHTML =
+          '<span class="text-red-700 font-semibold">Could not load opportunities (' +
+          esc((data && (data.error || data.message)) || 'unknown') +
+          ').</span>';
+      }
+      return;
+    }
+    opportunityCleanupCache = data;
+    renderOpportunityCleanupList();
+    attachOpportunityLoadMore();
+  }
+
+  function refreshOpportunityCleanupData() {
+    opportunityCleanupState.offset = 0;
+    return fetchOpportunityCleanup(false).then(applyOpportunityCleanupData);
+  }
+
+  function renderOpportunityCleanupList() {
+    var list = document.getElementById('opportunity-cleanup-list');
+    var status = document.getElementById('opportunity-cleanup-status');
+    var hint = document.getElementById('opportunity-cleanup-hint');
+    if (!list || !opportunityCleanupCache) return;
+
+    var opportunities = opportunityCleanupCache.opportunities || [];
+    var shown = opportunities.length;
+    var total = opportunityCleanupState.total || shown;
+    var pendingCount = opportunityCleanupCache.pending_count || 0;
+
+    if (status) {
+      var parts = [
+        '<span class="text-brand-900 font-semibold">Showing ' +
+          shown +
+          ' of ' +
+          total +
+          ' listing' +
+          (total === 1 ? '' : 's') +
+          '</span>',
+      ];
+      if (pendingCount) {
+        parts.push(
+          '<span class="text-amber-800 font-semibold">' + pendingCount + ' pending review</span>'
+        );
+      }
+      if (opportunityCleanupState.loading) {
+        parts.push('<span class="text-slate-400">Loading…</span>');
+      }
+      status.innerHTML = parts.join(' · ');
+    }
+
+    if (hint) {
+      if (total > 80 && !opportunityCleanupHasActiveFilters()) {
+        hint.classList.remove('hidden');
+      } else {
+        hint.classList.add('hidden');
+      }
+    }
+
+    if (!opportunities.length) {
+      list.innerHTML =
+        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No business opportunities match your filters.</p>';
+      return;
+    }
+
+    var rows = opportunities
+      .map(function (opp) {
+        var publicHref = '../opportunities/' + encodeURIComponent(opp.id);
+        var isPending = opp.approval_status === 'Pending Review';
+        var rowClass = isPending ? 'border-b border-amber-100 bg-amber-50/40' : 'border-b border-slate-100';
+        return (
+          '<tr class="hover:bg-slate-50/80 ' +
+          rowClass +
+          '" data-opportunity-id-row="' +
+          attrEsc(opp.id) +
+          '">' +
+          '<td class="py-2.5 pr-3 max-w-[14rem]"><div class="font-semibold text-brand-900 truncate" title="' +
+          attrEsc(opp.title || 'Untitled') +
+          '">' +
+          esc(opp.title || 'Untitled') +
+          '</div>' +
+          '<div class="text-[11px] text-slate-500 truncate">' +
+          esc(opp.host || '—') +
+          '</div></td>' +
+          '<td class="py-2.5 pr-3 text-xs text-slate-600 whitespace-nowrap">' +
+          esc(opportunityTypeLabel(opp.type)) +
+          '</td>' +
+          '<td class="py-2.5 pr-3"><div class="flex flex-wrap gap-1">' +
+          listingStatusBadge(opp.status) +
+          approvalStatusBadge(opp.approval_status) +
+          (opp.featured
+            ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-violet-100 text-violet-800">Featured</span>'
+            : '') +
+          '</div></td>' +
+          '<td class="py-2.5 pr-3 text-xs text-slate-500 max-w-[10rem] truncate">' +
+          esc(opp.owner_email || '—') +
+          '</td>' +
+          '<td class="py-2.5 text-right whitespace-nowrap">' +
+          '<div class="flex flex-wrap justify-end gap-2">' +
+          (isPending
+            ? '<button type="button" data-opp-approve class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">Approve</button>' +
+              '<button type="button" data-opp-reject class="text-xs font-semibold rounded-lg border border-red-200 text-red-700 px-2.5 py-1 hover:bg-red-50">Reject</button>'
+            : '') +
+          '<a href="' +
+          attrEsc(publicHref) +
+          '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View</a>' +
+          '<button type="button" data-toggle-opp-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">Edit</button>' +
+          '</div></td></tr>' +
+          '<tr class="opportunity-cleanup-panel hidden border-b border-slate-200 bg-slate-50/80">' +
+          '<td colspan="5" class="p-4">' +
+          opportunityCleanupEditFormHtml(opp) +
+          '</td></tr>'
+        );
+      })
+      .join('');
+
+    list.innerHTML =
+      adminTableScroll(
+        '<table class="w-full text-sm text-left border-collapse">' +
+          '<thead class="text-xs uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
+          '<tr>' +
+          '<th class="py-2 pr-3 font-semibold">Listing</th>' +
+          '<th class="py-2 pr-3 font-semibold">Type</th>' +
+          '<th class="py-2 pr-3 font-semibold">Status</th>' +
+          '<th class="py-2 pr-3 font-semibold">Owner</th>' +
+          '<th class="py-2 font-semibold text-right">Actions</th>' +
+          '</tr></thead><tbody>' +
+          rows +
+          '</tbody></table>'
+      ) +
+      (opportunityCleanupState.hasMore
+        ? '<div id="opportunity-cleanup-sentinel" class="py-6 text-center">' +
+          '<button type="button" id="opportunity-cleanup-load-more" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-brand-900 hover:bg-slate-50">Load more listings</button>' +
+          '</div>'
+        : '');
+  }
+
+  function renderOpportunityCleanup(fullHash) {
+    var query = parseAdminHashQuery(fullHash || (location.hash || '').replace('#', ''));
+    var approvalQ = String(query.get('approval') || '').trim().toLowerCase();
+    if (approvalQ === 'pending' || approvalQ === 'pending review') {
+      opportunityCleanupState.approval = 'Pending Review';
+    }
+
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Manage business opportunity listings submitted by organisers. Approve pending listings, toggle <strong>featured</strong> for the Premium Spotlight carousel on <code class="text-[11px]">/opportunities/</code>, or expand a row to edit details.</p>' +
+      '<div id="opportunity-cleanup-status" class="text-sm text-slate-500">Loading business opportunities…</div>' +
+      '<p id="opportunity-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
+      'Large catalogue — use search and filters below. Rows load in batches.</p>' +
+      '<div class="admin-filter-bar sticky top-0 z-10 rounded-xl border border-slate-200 bg-white/95 backdrop-blur p-4 space-y-3 shadow-sm">' +
+      '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
+      '<input type="search" id="opportunity-cleanup-search" placeholder="Search title, host, or owner email…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
+      attrEsc(opportunityCleanupState.q) +
+      '">' +
+      '<select id="opportunity-cleanup-sort" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:w-44">' +
+      '<option value="recent"' +
+      (opportunityCleanupState.sort === 'recent' ? ' selected' : '') +
+      '>Recently updated</option>' +
+      '<option value="published"' +
+      (opportunityCleanupState.sort === 'published' ? ' selected' : '') +
+      '>Recently published</option>' +
+      '<option value="title"' +
+      (opportunityCleanupState.sort === 'title' ? ' selected' : '') +
+      '>Title A–Z</option>' +
+      '<option value="host"' +
+      (opportunityCleanupState.sort === 'host' ? ' selected' : '') +
+      '>Host A–Z</option></select></div>' +
+      '<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
+      '<select id="opportunity-cleanup-status-filter" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[10rem]">' +
+      '<option value="">Any status</option>' +
+      opportunityStatusOptions(opportunityCleanupState.status) +
+      '</select>' +
+      '<select id="opportunity-cleanup-approval-filter" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[11rem]">' +
+      '<option value="">Any approval</option>' +
+      '<option value="Pending Review"' +
+      (opportunityCleanupState.approval === 'Pending Review' ? ' selected' : '') +
+      '>Pending review</option>' +
+      '<option value="Approved"' +
+      (opportunityCleanupState.approval === 'Approved' ? ' selected' : '') +
+      '>Approved</option>' +
+      '<option value="Rejected"' +
+      (opportunityCleanupState.approval === 'Rejected' ? ' selected' : '') +
+      '>Rejected</option></select>' +
+      '<select id="opportunity-cleanup-type-filter" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[11rem]">' +
+      '<option value="">Any type</option>' +
+      opportunityTypeOptions(opportunityCleanupState.type) +
+      '</select>' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="opportunity-cleanup-featured" class="rounded border-slate-300"' +
+      (opportunityCleanupState.featured ? ' checked' : '') +
+      '> Featured only</label>' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="opportunity-cleanup-no-image" class="rounded border-slate-300"' +
+      (opportunityCleanupState.noImage ? ' checked' : '') +
+      '> No cover image</label></div>' +
+      '<div class="flex flex-wrap gap-2">' +
+      '<button type="button" data-opp-quick="pending" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Pending review</button>' +
+      '<button type="button" data-opp-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
+      '<button type="button" data-opp-quick="published" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Published</button>' +
+      '<button type="button" data-opp-quick="featured" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Featured</button>' +
+      '<button type="button" data-opp-quick="no_image" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">No image</button>' +
+      '<button type="button" data-opp-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div></div>' +
+      '<div id="opportunity-cleanup-list"></div></div>';
+
+    syncOpportunityCleanupFilterUi();
+    refreshOpportunityCleanupData();
+  }
+
+  function saveOpportunityCleanupForm(form) {
+    var id = form.getAttribute('data-opportunity-id');
+    var msg = form.querySelector('.opportunity-cleanup-msg');
+    var btn = form.querySelector('[type="submit"]');
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Saving…';
+      msg.className = 'opportunity-cleanup-msg text-xs text-slate-500';
+    }
+    adminPost('/api/admin/opportunities', {
+      id: id,
+      title: formFieldVal(form, 'title'),
+      host: formFieldVal(form, 'host'),
+      type: formFieldVal(form, 'type'),
+      status: formFieldVal(form, 'status'),
+      approval_status: formFieldVal(form, 'approval_status'),
+      featured: !!(form.querySelector('[name="featured"]') && form.querySelector('[name="featured"]').checked),
+      image_url: formFieldVal(form, 'image_url') || null,
+      description: formFieldVal(form, 'description') || null,
+    })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Save failed');
+        if (msg) {
+          msg.textContent = 'Saved.';
+          msg.className = 'opportunity-cleanup-msg text-xs text-emerald-700 font-semibold';
+        }
+        return refreshOpportunityCleanupData();
+      })
+      .then(function () {
+        refreshAdminNotifications();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not save';
+          msg.className = 'opportunity-cleanup-msg text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function attachOpportunityLoadMore() {
+    var sentinel = document.getElementById('opportunity-cleanup-sentinel');
+    if (!sentinel || !opportunityCleanupState.hasMore) return;
+    if (opportunityLoadObserver) opportunityLoadObserver.disconnect();
+    opportunityLoadObserver = new IntersectionObserver(
+      function (entries) {
+        if (entries[0].isIntersecting) loadMoreOpportunities();
+      },
+      { rootMargin: '240px' }
+    );
+    opportunityLoadObserver.observe(sentinel);
+  }
+
+  function bindOpportunityCleanupForms() {
+    if (!main || main.dataset.opportunityCleanupBound) return;
+    main.dataset.opportunityCleanupBound = '1';
+    main.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form || !form.classList || !form.classList.contains('opportunity-cleanup-form')) return;
+      e.preventDefault();
+      saveOpportunityCleanupForm(form);
+    });
+    main.addEventListener('change', function (e) {
+      if (e.target.id === 'opportunity-cleanup-status-filter') {
+        opportunityCleanupState.status = e.target.value || '';
+        syncOpportunityCleanupFilterUi();
+        refreshOpportunityCleanupData();
+      }
+      if (e.target.id === 'opportunity-cleanup-approval-filter') {
+        opportunityCleanupState.approval = e.target.value || '';
+        syncOpportunityCleanupFilterUi();
+        refreshOpportunityCleanupData();
+      }
+      if (e.target.id === 'opportunity-cleanup-type-filter') {
+        opportunityCleanupState.type = e.target.value || '';
+        syncOpportunityCleanupFilterUi();
+        refreshOpportunityCleanupData();
+      }
+      if (e.target.id === 'opportunity-cleanup-featured') {
+        opportunityCleanupState.featured = e.target.checked;
+        syncOpportunityCleanupFilterUi();
+        refreshOpportunityCleanupData();
+      }
+      if (e.target.id === 'opportunity-cleanup-no-image') {
+        opportunityCleanupState.noImage = e.target.checked;
+        syncOpportunityCleanupFilterUi();
+        refreshOpportunityCleanupData();
+      }
+      if (e.target.id === 'opportunity-cleanup-sort') {
+        opportunityCleanupState.sort = e.target.value || 'recent';
+        refreshOpportunityCleanupData();
+      }
+    });
+    main.addEventListener('input', function (e) {
+      if (e.target.id !== 'opportunity-cleanup-search') return;
+      clearTimeout(opportunitySearchTimer);
+      opportunitySearchTimer = setTimeout(function () {
+        opportunityCleanupState.q = e.target.value || '';
+        refreshOpportunityCleanupData();
+      }, 300);
+    });
+    main.addEventListener('click', function (e) {
+      var toggle = e.target.closest('[data-toggle-opp-edit]');
+      if (toggle) {
+        var row = toggle.closest('[data-opportunity-id-row]');
+        var panel = row && row.nextElementSibling;
+        if (panel && panel.classList.contains('opportunity-cleanup-panel')) {
+          var opening = panel.classList.contains('hidden');
+          main.querySelectorAll('.opportunity-cleanup-panel').forEach(function (p) {
+            p.classList.add('hidden');
+          });
+          if (opening) panel.classList.remove('hidden');
+        }
+        return;
+      }
+      var approveBtn = e.target.closest('[data-opp-approve]');
+      if (approveBtn) {
+        var approveRow = approveBtn.closest('[data-opportunity-id-row]');
+        var approveId = approveRow && approveRow.getAttribute('data-opportunity-id-row');
+        if (!approveId) return;
+        approveBtn.disabled = true;
+        adminPost('/api/admin/opportunities', { id: approveId, action: 'approve' })
+          .then(function (data) {
+            if (!data.ok) throw new Error(data.message || data.error || 'Approve failed');
+            return refreshOpportunityCleanupData();
+          })
+          .then(function () {
+            refreshAdminNotifications();
+          })
+          .catch(function (err) {
+            window.alert(err.message || 'Could not approve listing.');
+            approveBtn.disabled = false;
+          });
+        return;
+      }
+      var rejectBtn = e.target.closest('[data-opp-reject]');
+      if (rejectBtn) {
+        var rejectRow = rejectBtn.closest('[data-opportunity-id-row]');
+        var rejectId = rejectRow && rejectRow.getAttribute('data-opportunity-id-row');
+        if (!rejectId) return;
+        if (!window.confirm('Reject this business opportunity listing?')) return;
+        rejectBtn.disabled = true;
+        adminPost('/api/admin/opportunities', { id: rejectId, action: 'reject' })
+          .then(function (data) {
+            if (!data.ok) throw new Error(data.message || data.error || 'Reject failed');
+            return refreshOpportunityCleanupData();
+          })
+          .then(function () {
+            refreshAdminNotifications();
+          })
+          .catch(function (err) {
+            window.alert(err.message || 'Could not reject listing.');
+            rejectBtn.disabled = false;
+          });
+        return;
+      }
+      var quick = e.target.closest('[data-opp-quick]');
+      if (quick) {
+        var key = quick.getAttribute('data-opp-quick');
+        if (key === 'clear') {
+          opportunityCleanupState.status = '';
+          opportunityCleanupState.approval = '';
+          opportunityCleanupState.type = '';
+          opportunityCleanupState.featured = false;
+          opportunityCleanupState.noImage = false;
+          opportunityCleanupState.q = '';
+        } else if (key === 'pending') {
+          opportunityCleanupState.approval =
+            opportunityCleanupState.approval === 'Pending Review' ? '' : 'Pending Review';
+        } else if (key === 'draft') {
+          opportunityCleanupState.status = opportunityCleanupState.status === 'draft' ? '' : 'draft';
+        } else if (key === 'published') {
+          opportunityCleanupState.status =
+            opportunityCleanupState.status === 'published' ? '' : 'published';
+        } else if (key === 'featured') {
+          opportunityCleanupState.featured = !opportunityCleanupState.featured;
+        } else if (key === 'no_image') {
+          opportunityCleanupState.noImage = !opportunityCleanupState.noImage;
+        }
+        syncOpportunityCleanupFilterUi();
+        refreshOpportunityCleanupData();
+        return;
+      }
+      if (e.target.id === 'opportunity-cleanup-load-more') loadMoreOpportunities();
+    });
+  }
+
   function renderCleanupHub(fullHash) {
     var hash = String(fullHash || 'cleanup/groups');
     var tab = 'groups';
     if (hash.indexOf('events') !== -1 || hash === 'event-cleanup') tab = 'events';
+    else if (hash.indexOf('opportunities') !== -1 || hash === 'opportunity-cleanup') tab = 'opportunities';
     else if (hash.indexOf('issues') !== -1 || hash === 'event-health') tab = 'issues';
 
     var tabsHtml = adminHubTabsHtml(
       [
         { key: 'groups', label: 'Groups', href: '#cleanup/groups' },
         { key: 'events', label: 'Events', href: '#cleanup/events' },
+        { key: 'opportunities', label: 'Opportunities', href: '#cleanup/opportunities' },
         { key: 'issues', label: 'Data issues', href: '#cleanup/issues' },
       ],
       tab
     );
 
     if (tab === 'events') withHubTabs(tabsHtml, renderEventCleanup);
+    else if (tab === 'opportunities')
+      withHubTabs(tabsHtml, function () {
+        renderOpportunityCleanup(hash);
+      });
     else if (tab === 'issues') withHubTabs(tabsHtml, renderEventHealth);
     else withHubTabs(tabsHtml, function () {
       renderGroupCleanup(hash);
@@ -8178,6 +9185,9 @@
     },
     'event-cleanup': function () {
       location.replace('#cleanup/events');
+    },
+    'opportunity-cleanup': function () {
+      location.replace('#cleanup/opportunities');
     },
     impersonate: function () {
       location.replace('#accounts/impersonate');
@@ -8270,6 +9280,7 @@
     bindEventHealthForms();
     bindGroupCleanupForms();
     bindEventCleanupForms();
+    bindOpportunityCleanupForms();
     bindModerationActions();
     bindFinancialsActions();
     var refreshBadge = document.getElementById('admin-data-badge');

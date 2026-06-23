@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627" />
     <link rel="stylesheet" href="../css/hub-loading.css" />
     <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260612f" />
-    <link rel="stylesheet" href="../css/event-detail.css?v=20260612f" />
+    <link rel="stylesheet" href="../css/event-detail.css?v=20260623b" />
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
@@ -57,6 +57,7 @@
           <img
             class="hub-page-buffer-visual"
             src="../assets/event-placeholder.svg"
+            data-default-src="../assets/event-placeholder.svg"
             alt=""
             width="480"
             height="300"
@@ -244,6 +245,13 @@
         <div id="event-page-sidebar-ad" class="event-page-sidebar-ad" hidden></div>
 
         <div class="ticket-panel" id="tickets" data-approval-required="false" data-sold-out="false" data-sales-closed="false">
+          <div class="checkout-submitting" id="checkout-submitting" hidden aria-live="polite" aria-busy="false">
+            <div class="checkout-submitting-inner">
+              <div class="checkout-submitting-spinner" aria-hidden="true"></div>
+              <p class="checkout-submitting-title" id="checkout-submitting-title">Registering you…</p>
+              <p class="checkout-submitting-text">Please wait — we are confirming your place.</p>
+            </div>
+          </div>
           <div class="ticket-header">
             <span class="from-label">Tickets from</span>
             <span class="price" id="ev-ticket-from-price"></span>
@@ -325,7 +333,8 @@
           </form>
 
           <form class="checkout-details-form" id="checkout-details-form" hidden novalidate>
-            <p class="checkout-details-intro">Review your order and enter your details to complete your booking.</p>
+            <p class="checkout-details-intro" id="checkout-details-intro">Review your order and enter your details to complete your booking.</p>
+            <p class="checkout-free-organiser" id="checkout-free-organiser" hidden></p>
             <div class="checkout-precontract" id="checkout-precontract">
               <h3 class="checkout-precontract-title">Before you pay</h3>
               <dl class="checkout-precontract-list">
@@ -361,7 +370,7 @@
             <p class="checkout-details-summary" id="checkout-order-summary" aria-live="polite"></p>
             <label class="checkout-terms-check" for="checkout-terms-agree">
               <input type="checkbox" id="checkout-terms-agree" name="terms_agree" required />
-              <span>I have read the refund policy and agree to proceed with this booking.</span>
+              <span id="checkout-terms-label">I have read the refund policy and agree to proceed with this booking.</span>
             </label>
             <button type="submit" class="cta-btn" id="checkout-confirm-btn">Confirm booking</button>
             <button type="button" class="btn-text-back" id="checkout-back-btn">← Back to tickets</button>
@@ -393,7 +402,7 @@
             <div id="ev-refund-details-body"></div>
           </details>
 
-          <div class="ticket-foot">
+          <div class="ticket-foot" id="ticket-secure-foot">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <rect x="3" y="11" width="18" height="11" rx="2" />
               <path d="M7 11V7a5 5 0 0110 0v4" />
@@ -483,13 +492,14 @@
     </div>
 
     <script src="../js/hub-loading.js?v=20260605"></script>
+    <script src="../js/hub-event-preview.js?v=20260623"></script>
     <script src="../js/flexible-event-image.js?v=20260707"></script>
     <script src="../js/cms-sponsor-fields.js?v=20260609c"></script>
     <script src="../js/cms-ad-blocks.js?v=20260612f"></script>
     <script src="../js/listing-report.js?v=20260609"></script>
     <script src="../js/review-report.js?v=20260609"></script>
     <script src="../js/hub-favourites.js?v=20260629"></script>
-    <script src="../js/event-detail.js?v=20260612f"></script>
+    <script src="../js/event-detail.js?v=20260623c"></script>
     <div id="hub-site-footer"></div>
     <script src="../js/site-footer.js?v=20260610" data-root="../"></script>
   </body>

@@ -8,6 +8,7 @@ const {
 const sbAuth = require('../supabase-auth');
 const { emailConfigStatus } = require('../email-config');
 const { cronConfigStatus } = require('../cron-auth');
+const { stripeConfigStatus } = require('../stripe-config');
 
 /**
  * Safe diagnostic: which env vars are set (never returns secret values).
@@ -47,6 +48,7 @@ module.exports = async function handler(req, res) {
   const supabase = isSupabaseConfigured() ? await testSupabaseConnection() : { ok: false, configured: false };
   const email = emailConfigStatus();
   const cron = cronConfigStatus();
+  const stripe = stripeConfigStatus();
 
   const adminEmail = cleanEnvVal(process.env.ADMIN_EMAIL) || 'pips249@gmail.com';
   let adminAccount = { email: adminEmail, exists: false, hasPassword: false, role: null };
@@ -74,6 +76,7 @@ module.exports = async function handler(req, res) {
     adminAccount,
     email,
     cron,
+    stripe,
     env: {
       ...env,
       hasResendApiKey: email.hasResendApiKey,
@@ -82,6 +85,11 @@ module.exports = async function handler(req, res) {
       isProduction: cron.isProduction,
       emailSendingConfigured: email.emailSendingConfigured,
       cronReady: cron.cronReady,
+      hasStripeSecretKey: stripe.hasStripeSecretKey,
+      hasStripeWebhookSecret: stripe.hasStripeWebhookSecret,
+      stripeConnectEnabled: stripe.stripeConnectEnabled,
+      stripeMode: stripe.stripeMode,
+      checkoutReady: stripe.checkoutReady,
     },
     hints: {
       missingSessionSecret: !env.hasSessionSecret
@@ -99,6 +107,21 @@ module.exports = async function handler(req, res) {
       missingCronSecret:
         cron.isProduction && !cron.hasCronSecret
           ? 'Add CRON_SECRET in Vercel Production env vars. Vercel Cron sends Authorization: Bearer <CRON_SECRET> automatically.'
+          : null,
+      missingStripeSecret: !stripe.hasStripeSecretKey
+        ? 'Add STRIPE_SECRET_KEY (sk_test_… or sk_live_…) in Vercel → Environment Variables, then redeploy.'
+        : null,
+      missingStripeWebhook:
+        stripe.hasStripeSecretKey && !stripe.hasStripeWebhookSecret
+          ? 'Add STRIPE_WEBHOOK_SECRET from Stripe Dashboard → Developers → Webhooks → your endpoint signing secret, then redeploy.'
+          : null,
+      stripeModeMismatch:
+        stripe.stripeMode === 'test' && cron.isProduction
+          ? 'STRIPE_SECRET_KEY is test mode (sk_test_…). Use sk_live_… for real production payments, or keep test for a dry run.'
+          : null,
+      checkoutGateReady:
+        stripe.checkoutReady && email.emailSendingConfigured
+          ? 'Checkout + email env vars are set. Run one test purchase on production to confirm webhook → registration → confirmation email.'
           : null,
       nextStep: !supabase.ok
         ? 'Fix Supabase env vars in Vercel → Redeploy.'

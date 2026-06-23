@@ -8,11 +8,25 @@
   const eventBlock = document.getElementById('booking-success-event');
   const eventTitle = document.getElementById('booking-success-event-title');
   const eventMeta = document.getElementById('booking-success-event-meta');
+  const eventPhoto = document.getElementById('booking-success-event-photo');
+  const eventPhotoImg = document.getElementById('booking-success-event-img');
   const calendarSection = document.getElementById('booking-success-calendar');
   const shareSection = document.getElementById('booking-success-share');
+  const nextLoading = document.getElementById('booking-success-next-loading');
+  const nextContent = document.getElementById('booking-success-next-content');
 
   let loadedEvent = null;
   let bookedQty = 1;
+
+  function revealNextPanel() {
+    if (nextLoading) nextLoading.hidden = true;
+    if (nextContent) nextContent.hidden = false;
+  }
+
+  function showNextPanelLoading() {
+    if (nextLoading) nextLoading.hidden = false;
+    if (nextContent) nextContent.hidden = true;
+  }
 
   function readPending() {
     try {
@@ -278,10 +292,15 @@
   }
 
   function wireCalendarAndShare(ev, qty) {
-    if (!window.HubCalendarShare) return;
+    if (!window.HubCalendarShare) {
+      revealNextPanel();
+      return;
+    }
 
     const calendar = HubCalendarShare.buildCalendarLinks(ev);
     const share = HubCalendarShare.buildGoingShare(ev, qty);
+    const nextSteps = document.getElementById('booking-success-next-steps');
+    let hasStep = false;
 
     if (calendarSection) {
       const google = document.getElementById('bs-cal-google');
@@ -295,6 +314,7 @@
         });
       }
       calendarSection.hidden = false;
+      hasStep = true;
     }
 
     if (shareSection) {
@@ -338,11 +358,32 @@
       }
 
       shareSection.hidden = false;
+      hasStep = true;
+    }
+
+    if (nextSteps) nextSteps.hidden = !hasStep;
+    revealNextPanel();
+  }
+
+  function showPendingEventPreview(pending) {
+    if (!pending || !eventBlock) return;
+    if (pending.eventTitle && eventTitle) {
+      eventTitle.textContent = pending.eventTitle;
+    }
+    const imageSrc = pending.eventImage || '';
+    if (imageSrc && eventPhotoImg) {
+      eventPhotoImg.src = imageSrc;
+      eventPhotoImg.alt = pending.eventTitle || 'Event';
+      if (eventPhoto) eventPhoto.hidden = false;
+      eventBlock.hidden = false;
     }
   }
 
   async function loadEventSummary(eventId, qty) {
-    if (!eventId || !eventBlock) return;
+    if (!eventId || !eventBlock) {
+      revealNextPanel();
+      return;
+    }
     try {
       const res = await fetch('/api/hub-listings?id=' + encodeURIComponent(eventId));
       const data = await res.json();
@@ -353,6 +394,15 @@
       bookedQty = qty;
 
       if (eventTitle) eventTitle.textContent = ev.title || 'Your event';
+
+      const imageSrc = similarEventImage(ev);
+      if (eventPhotoImg && imageSrc) {
+        eventPhotoImg.src = imageSrc;
+        eventPhotoImg.alt = ev.title || 'Event';
+        if (eventPhoto) eventPhoto.hidden = false;
+      } else if (eventPhoto) {
+        eventPhoto.hidden = true;
+      }
 
       const dateLine = [ev.date, ev.time].filter(Boolean).join(' · ');
       const location = ev.location || ev.city || '';
@@ -372,8 +422,9 @@
       }
 
       wireCalendarAndShare(ev, qty);
+      revealNextPanel();
     } catch (e) {
-      /* non-fatal */
+      revealNextPanel();
     }
   }
 
@@ -405,6 +456,7 @@
     }
     clearPending();
     showReady(message);
+    revealNextPanel();
   }
 
   async function confirmBooking() {
@@ -416,6 +468,8 @@
     const qty = pending && pending.qty ? Math.max(1, parseInt(pending.qty, 10) || 1) : 1;
 
     if (pending && pending.eventId) {
+      showPendingEventPreview(pending);
+      showNextPanelLoading();
       await loadEventSummary(pending.eventId, qty);
     }
 
@@ -429,6 +483,7 @@
 
     if (!pending && !sessionId) {
       showReady('If you just paid, your ticket should appear in your account within a minute.');
+      revealNextPanel();
       return;
     }
 

@@ -133,18 +133,6 @@
     return '<a href="' + href(path) + '"' + cls + active + '>' + label + '</a>';
   }
 
-  function organiserNavLink(user) {
-    if (user) {
-      return link('organiser/index.html', 'Organiser workspace', 'organiser', 'nav-organiser');
-    }
-    return link(
-      'login.html?next=/organiser/index.html',
-      'Organiser workspace',
-      'organiser',
-      'nav-organiser'
-    );
-  }
-
   function myHubDropdownHtml(user) {
     var hubActive =
       page === 'organiser' || page === 'account' || page === 'settings' || page === 'admin';
@@ -238,7 +226,6 @@
       }
       html += myHubDropdownHtml(user);
     } else {
-      html += organiserNavLink(user);
       html += link('login.html', 'Sign in', 'auth');
     }
     return html;
@@ -281,7 +268,6 @@
       html +=
         '<button type="button" class="nav-mobile-item nav-mobile-signout" id="nav-mobile-signout">Sign out</button>';
     } else {
-      html += organiserNavLink(user).replace('nav-organiser', 'nav-mobile-item nav-organiser');
       html += link('login.html', 'Sign in', 'auth', 'nav-mobile-item');
     }
     return html;

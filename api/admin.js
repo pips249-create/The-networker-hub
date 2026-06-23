@@ -17,6 +17,7 @@ const routes = {
   emails: require('./_lib/routes/admin-emails'),
   'event-health': require('./_lib/routes/admin-event-health'),
   organisers: require('./_lib/routes/admin-organisers'),
+  opportunities: require('./_lib/routes/admin-opportunities'),
   impersonate: require('./_lib/routes/admin-impersonate'),
   import: require('./_lib/routes/admin-import'),
   campaigns: require('./_lib/routes/admin-campaigns'),

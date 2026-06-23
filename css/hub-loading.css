@@ -30,6 +30,20 @@
   animation: hub-buffer-pulse 2.4s ease-in-out infinite;
 }
 
+.hub-page-buffer-visual.is-event-photo {
+  width: min(100%, 360px);
+  height: 200px;
+  object-fit: cover;
+  animation: none;
+  opacity: 1;
+}
+
+@media (max-width: 560px) {
+  .hub-page-buffer-visual.is-event-photo {
+    height: 168px;
+  }
+}
+
 .hub-page-buffer-spinner {
   width: 36px;
   height: 36px;

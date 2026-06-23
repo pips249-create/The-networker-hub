@@ -19,7 +19,7 @@ html:has(.home-page) {
   --home-bg-warm: var(--cream);
   --home-border: var(--border-soft);
   --home-muted: var(--text-muted);
-  --home-nav-height: 80px;
+  --home-nav-height: 72px;
   overflow-x: hidden;
   width: 100%;
   min-height: 100vh;
