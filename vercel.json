@@ -90,6 +90,10 @@
       "destination": "/opportunities/opportunity.html?id=:id"
     },
     {
+      "source": "/advertising",
+      "destination": "/advertising.html"
+    },
+    {
       "source": "/organisers/:slug",
       "destination": "/events/organiser.html?slug=:slug"
     },

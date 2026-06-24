@@ -208,6 +208,7 @@
     html += link('training/index.html', 'Training', 'training', 'nav-hide-mobile');
     html += link('opportunities/index.html', 'Opportunities', 'opportunities', 'nav-hide-mobile');
     html += link('about.html', 'About us', 'about', 'nav-hide-mobile');
+    html += link('advertising.html', 'Advertising', 'advertising', 'nav-hide-mobile');
     html += link('contact.html', 'Contact', 'contact', 'nav-hide-mobile');
     html += link('faq.html', 'FAQ', 'faq', 'nav-hide-mobile');
     if (pending && !user) {
@@ -237,6 +238,7 @@
     html += link('training/index.html', 'Training', 'training', 'nav-mobile-item');
     html += link('opportunities/index.html', 'Opportunities', 'opportunities', 'nav-mobile-item');
     html += link('about.html', 'About us', 'about', 'nav-mobile-item');
+    html += link('advertising.html', 'Advertising', 'advertising', 'nav-mobile-item');
     html += link('contact.html', 'Contact', 'contact', 'nav-mobile-item');
     html += link('faq.html', 'FAQ', 'faq', 'nav-mobile-item');
     if (pending && !user) {

@@ -205,7 +205,7 @@ function buildSchemaGraph(page, origin) {
     graph.push({
       '@context': 'https://schema.org',
       '@type': 'WebPage',
-      url: base + '/advertising.html',
+      url: base + '/advertising',
       name: 'Advertising & sponsorship – The Networker Hub',
       description:
         'Sponsor placements and advertising rates for the events directory, training browse, and business opportunities on The Networker Hub.',
@@ -287,6 +287,9 @@ function buildLlmsTxt(origin) {
     '- About: ' +
     base +
     '/about.html\n' +
+    '- Advertising & sponsorship: ' +
+    base +
+    '/advertising\n' +
     '- Legal: ' +
     base +
     '/legal-policies.html\n' +

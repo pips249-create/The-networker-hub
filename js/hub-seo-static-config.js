@@ -50,7 +50,7 @@ window.HUB_SEO_STATIC = {
     "ogType": "website"
   },
   "advertising": {
-    "path": "/advertising.html",
+    "path": "/advertising",
     "title": "Advertising & sponsorship – The Networker Hub",
     "description": "Promote your brand on The Networker Hub — sponsor the events directory, training browse, business opportunities, and event page placements.",
     "image": "/assets/logo.png",

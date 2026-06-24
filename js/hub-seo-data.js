@@ -672,7 +672,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "WebPage",
-          "url": "https://the-networker.co.uk/advertising.html",
+          "url": "https://the-networker.co.uk/advertising",
           "name": "Advertising & sponsorship – The Networker Hub",
           "description": "Sponsor placements and advertising rates for the events directory, training browse, and business opportunities on The Networker Hub.",
           "about": {
