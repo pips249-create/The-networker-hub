@@ -11,7 +11,299 @@
     'business-opportunity': 'Business opportunity',
   };
 
+  var MLM_ASSET_SLUGS = {
+    'VitaBlend UK': 'vitablend-uk',
+    'GlowHaus Collective': 'glowhaus-collective',
+    'PureEssence Oils': 'pureessence-oils',
+    'SlimPath Nutrition': 'slimpath-nutrition',
+    'Scent & Flame Co': 'scent-flame-co',
+    'GreenLeaf CBD': 'greenleaf-cbd',
+    'EcoShine Home': 'ecoshine-home',
+    'LuxeLinks Jewellery': 'luxelinks-jewellery',
+    'GlobeTrek Travel Club': 'globetrek-travel',
+    'Bean & Boost Coffee': 'bean-boost-coffee',
+    'MindFuel Academy': 'mindfuel-academy',
+    'ActiveLife Sports Nutrition': 'activelife-sports',
+  };
+
+  function seedAssetSlug(seed) {
+    if (seed.assetSlug) return String(seed.assetSlug).trim();
+    return MLM_ASSET_SLUGS[seed.host] || '';
+  }
+
+  function seedLogoUrl(slug) {
+    return slug ? '/assets/opportunities/logos/' + slug + '.svg' : '';
+  }
+
+  function seedCoverUrl(slug) {
+    return slug ? '/assets/opportunities/covers/' + slug + '.svg' : '';
+  }
+
   var SEED_LISTINGS = [
+    {
+      type: 'business-opportunity',
+      category: 'mlm',
+      tags: ['business-opportunity', 'mlm', 'network-marketing', 'low-invest', 'remote'],
+      featured: true,
+      host: 'VitaBlend UK',
+      hostInitials: 'VB',
+      hostColor: '#15803d',
+      assetSlug: 'vitablend-uk',
+      title: 'Wellness Nutrition Consultant — Supplement & Shake Programme',
+      desc: 'Build a team selling plant-based nutrition shakes and supplements. Starter kit, online shop and mentor support included.',
+      about: [
+        'Join as an independent wellness consultant and sell premium plant-based nutrition shakes, supplements and meal plans through your own online shop.',
+        'Earn retail margin on personal sales plus team bonuses as you mentor others. Full training academy, sample packs and social-selling templates provided.',
+      ],
+      meta: [
+        { key: 'Investment', val: '£149' },
+        { key: 'Earnings', val: '£500–£3k/mo' },
+        { key: 'Location', val: 'Remote' },
+        { key: 'Commitment', val: 'Part-time OK' },
+      ],
+    },
+    {
+      type: 'business-opportunity',
+      category: 'mlm',
+      tags: ['business-opportunity', 'mlm', 'network-marketing', 'low-invest'],
+      featured: true,
+      host: 'GlowHaus Collective',
+      hostInitials: 'GH',
+      hostColor: '#be185d',
+      assetSlug: 'glowhaus-collective',
+      title: 'Skincare & Beauty Consultant — Direct Sales Network',
+      desc: 'Sell vegan skincare and colour cosmetics at home parties and online. Commission on sales plus team override bonuses.',
+      about: [
+        'Represent a fast-growing UK vegan skincare and cosmetics brand through home parties, pop-ups and social media.',
+        'Keep 25–35% on personal sales and earn override commissions as you build a team of beauty consultants in your area.',
+      ],
+      meta: [
+        { key: 'Investment', val: '£89' },
+        { key: 'Commission', val: '25–35%' },
+        { key: 'Location', val: 'UK-wide' },
+        { key: 'Commitment', val: 'Flexible' },
+      ],
+    },
+    {
+      type: 'business-opportunity',
+      category: 'mlm',
+      tags: ['business-opportunity', 'mlm', 'network-marketing', 'low-invest', 'remote'],
+      featured: true,
+      host: 'MindFuel Academy',
+      hostInitials: 'MF',
+      hostColor: '#4c1d95',
+      assetSlug: 'mindfuel-academy',
+      title: 'Personal Development Coach — Courses & Mastermind Network',
+      desc: 'License personal development courses and run local mastermind groups. Earn on course sales and team enrolments.',
+      about: [
+        'License a library of personal development and business mindset courses to sell through workshops, webinars and one-to-one coaching.',
+        'Combine course commissions with mastermind group fees — build a leadership team and earn matching bonuses on their enrolments.',
+      ],
+      meta: [
+        { key: 'Investment', val: '£249' },
+        { key: 'Earnings', val: '£1–5k/mo' },
+        { key: 'Location', val: 'Remote' },
+        { key: 'Commitment', val: 'Flexible' },
+      ],
+    },
+    {
+      type: 'business-opportunity',
+      category: 'mlm',
+      tags: ['business-opportunity', 'mlm', 'network-marketing', 'low-invest', 'remote'],
+      featured: false,
+      host: 'PureEssence Oils',
+      hostInitials: 'PE',
+      hostColor: '#7c3aed',
+      assetSlug: 'pureessence-oils',
+      title: 'Essential Oils Ambassador — Aromatherapy & Wellness',
+      desc: 'Share premium essential oils and diffusers with friends, family and local wellness groups. Residual income from repeat orders.',
+      about: [
+        'Introduce customers to therapeutic-grade essential oils, roller blends and home diffusers through workshops and one-to-one consultations.',
+        'Generous retail margins, monthly loyalty rewards and rank bonuses as your customer base and team grow.',
+      ],
+      meta: [
+        { key: 'Investment', val: '£120' },
+        { key: 'Earnings', val: '£300–£2k/mo' },
+        { key: 'Location', val: 'Remote' },
+        { key: 'Commitment', val: 'Part-time OK' },
+      ],
+    },
+    {
+      type: 'networking',
+      category: 'mlm',
+      tags: ['networking', 'mlm', 'network-marketing', 'low-invest'],
+      featured: false,
+      host: 'SlimPath Nutrition',
+      hostInitials: 'SP',
+      hostColor: '#0d9488',
+      assetSlug: 'slimpath-nutrition',
+      title: 'Weight Management Coach — Group Challenge Leader',
+      desc: 'Run 12-week slimming challenges in your community. Earn on product packs, coaching fees and team leadership bonuses.',
+      about: [
+        'Lead local 12-week weight management challenges combining meal-replacement products, weekly weigh-ins and peer support.',
+        'Ideal for fitness enthusiasts and former slimming-class members who want to build recurring income from repeat challenge cycles.',
+      ],
+      meta: [
+        { key: 'Investment', val: '£199' },
+        { key: 'Earnings', val: '£800–£4k/mo' },
+        { key: 'Location', val: 'Your area' },
+        { key: 'Commitment', val: 'Part-time OK' },
+      ],
+    },
+    {
+      type: 'distributorship',
+      category: 'mlm',
+      tags: ['distributorship', 'mlm', 'network-marketing', 'low-invest'],
+      featured: false,
+      host: 'Scent & Flame Co',
+      hostInitials: 'SF',
+      hostColor: '#b45309',
+      assetSlug: 'scent-flame-co',
+      title: 'Home Fragrance Distributor — Candles & Reed Diffusers',
+      desc: 'Build a catalogue business selling luxury candles and home fragrance. Party-plan model with team-building bonuses.',
+      about: [
+        'Sell hand-poured candles, wax melts and reed diffusers through catalogue drops, home parties and seasonal gift fairs.',
+        'Low starter kit, repeat-order commissions and leadership pools for consultants who mentor a downline.',
+      ],
+      meta: [
+        { key: 'Investment', val: '£75' },
+        { key: 'Commission', val: '30–40%' },
+        { key: 'Location', val: 'UK-wide' },
+        { key: 'Commitment', val: 'Flexible' },
+      ],
+    },
+    {
+      type: 'business-opportunity',
+      category: 'mlm',
+      tags: ['business-opportunity', 'mlm', 'network-marketing', 'low-invest', 'remote'],
+      featured: false,
+      host: 'GreenLeaf CBD',
+      hostInitials: 'GL',
+      hostColor: '#166534',
+      assetSlug: 'greenleaf-cbd',
+      title: 'CBD Wellness Advocate — Natural Health Products',
+      desc: 'Promote lab-tested CBD oils, balms and wellness drinks. Online storefront with compliance training and marketing assets.',
+      about: [
+        'Share a regulated range of CBD oils, topicals and wellness drinks with customers seeking natural health alternatives.',
+        'Fully compliant labelling, FSA guidance training and ready-made social content — earn on retail sales and team volume bonuses.',
+      ],
+      meta: [
+        { key: 'Investment', val: '£99' },
+        { key: 'Commission', val: '20–30%' },
+        { key: 'Location', val: 'Remote' },
+        { key: 'Commitment', val: 'Flexible' },
+      ],
+    },
+    {
+      type: 'business-opportunity',
+      category: 'mlm',
+      tags: ['business-opportunity', 'mlm', 'network-marketing', 'low-invest'],
+      featured: false,
+      host: 'EcoShine Home',
+      hostInitials: 'ES',
+      hostColor: '#0369a1',
+      assetSlug: 'ecoshine-home',
+      title: 'Eco Cleaning Products Consultant — Sustainable Home Range',
+      desc: 'Demonstrate concentrated eco cleaning refills door-to-door and at fairs. High repeat-order rate and team rewards.',
+      about: [
+        'Demonstrate a concentrated eco cleaning refill system that cuts plastic waste and saves households money.',
+        'Strong repeat-order model — customers reorder monthly. Build a team of local consultants and earn matching bonuses on their volume.',
+      ],
+      meta: [
+        { key: 'Investment', val: '£65' },
+        { key: 'Earnings', val: '£400–£1.5k/mo' },
+        { key: 'Location', val: 'Your area' },
+        { key: 'Commitment', val: 'Part-time OK' },
+      ],
+    },
+    {
+      type: 'business-opportunity',
+      category: 'mlm',
+      tags: ['business-opportunity', 'mlm', 'network-marketing', 'low-invest', 'remote'],
+      featured: false,
+      host: 'LuxeLinks Jewellery',
+      hostInitials: 'LJ',
+      hostColor: '#9d174d',
+      assetSlug: 'luxelinks-jewellery',
+      title: 'Jewellery Stylist — Pop-Up & Online Sales',
+      desc: 'Curate and sell fashion jewellery through trunk shows, Instagram lives and your personal online boutique.',
+      about: [
+        'Style and sell on-trend fashion jewellery through trunk shows, workplace pop-ups and your branded online boutique.',
+        'Keep up to 40% on personal sales with monthly styling challenges, free samples for hosts and team leadership trips.',
+      ],
+      meta: [
+        { key: 'Investment', val: '£129' },
+        { key: 'Commission', val: '30–40%' },
+        { key: 'Location', val: 'Remote' },
+        { key: 'Commitment', val: 'Flexible' },
+      ],
+    },
+    {
+      type: 'networking',
+      category: 'mlm',
+      tags: ['networking', 'mlm', 'network-marketing', 'low-invest', 'remote'],
+      featured: false,
+      host: 'GlobeTrek Travel Club',
+      hostInitials: 'GT',
+      hostColor: '#1d4ed8',
+      assetSlug: 'globetrek-travel',
+      title: 'Travel Club Ambassador — Discounted Holidays Network',
+      desc: 'Recruit members to a discounted travel club and earn on subscriptions plus team referral bonuses.',
+      about: [
+        'Introduce business owners and families to a members-only travel club offering discounted hotels, cruises and package holidays.',
+        'Earn on every new member subscription and build residual income through team referrals — all managed via your ambassador dashboard.',
+      ],
+      meta: [
+        { key: 'Investment', val: '£49' },
+        { key: 'Earnings', val: '£200–£2.5k/mo' },
+        { key: 'Location', val: 'Remote' },
+        { key: 'Commitment', val: 'Flexible' },
+      ],
+    },
+    {
+      type: 'distributorship',
+      category: 'mlm',
+      tags: ['distributorship', 'mlm', 'network-marketing', 'low-invest'],
+      featured: false,
+      host: 'Bean & Boost Coffee',
+      hostInitials: 'BB',
+      hostColor: '#92400e',
+      assetSlug: 'bean-boost-coffee',
+      title: 'Gourmet Coffee Distributor — Subscription Box Model',
+      desc: 'Sell premium coffee subscriptions to offices and homes. Monthly reorder commissions and team volume bonuses.',
+      about: [
+        'Build a book of office and home coffee subscribers with ethically sourced beans delivered monthly.',
+        'Recurring subscription model means predictable income — mentor other distributors and unlock car bonus tiers.',
+      ],
+      meta: [
+        { key: 'Investment', val: '£110' },
+        { key: 'Earnings', val: '£350–£1.8k/mo' },
+        { key: 'Location', val: 'UK-wide' },
+        { key: 'Commitment', val: 'Part-time OK' },
+      ],
+    },
+    {
+      type: 'business-opportunity',
+      category: 'mlm',
+      tags: ['business-opportunity', 'mlm', 'network-marketing', 'low-invest'],
+      featured: false,
+      host: 'ActiveLife Sports Nutrition',
+      hostInitials: 'AL',
+      hostColor: '#dc2626',
+      assetSlug: 'activelife-sports',
+      title: 'Sports Nutrition Partner — Gym & Fitness Community',
+      desc: 'Supply protein, pre-workout and recovery products to gym-goers and PT clients. Team-building rewards for top recruiters.',
+      about: [
+        'Partner with personal trainers and gym communities to supply sports nutrition products with competitive margins.',
+        'Sample packs, shaker bottles and social media assets included — grow a team of fitness ambassadors and unlock quarterly bonus pools.',
+      ],
+      meta: [
+        { key: 'Investment', val: '£159' },
+        { key: 'Commission', val: '25–35%' },
+        { key: 'Location', val: 'UK-wide' },
+        { key: 'Commitment', val: 'Part-time OK' },
+      ],
+    },
     {
       type: 'franchise',
       tags: ['franchise'],
@@ -527,6 +819,7 @@
     { match: /gym|fit|fitness/i, emoji: '🏋️', gradient: 'linear-gradient(135deg,#ecfdf5,#a7f3d0)' },
     { match: /network/i, emoji: '🔗', gradient: 'linear-gradient(135deg,#fdf4ff,#e9d5ff)' },
     { match: /skin|beauty|tropic|cosmetic|wellness/i, emoji: '✨', gradient: 'linear-gradient(135deg,#fdf4ff,#fbcfe8)' },
+    { match: /mlm|network marketing|consultant|ambassador|direct sales/i, emoji: '🌐', gradient: 'linear-gradient(135deg,#eff6ff,#c7d2fe)' },
   ];
 
   var CATEGORY_KEYWORDS = {
@@ -539,6 +832,7 @@
     education: /course|coach|training|academy|education/i,
     pets: /dog|groom|pet|paw|animal/i,
     finance: /book|ledger|finance|account/i,
+    mlm: /mlm|network marketing|direct sales|independent consultant|team build|downline|ambassador/i,
   };
 
   function metaVal(meta, keyRe) {
@@ -692,8 +986,9 @@
       return { key: m.key, val: m.val };
     });
     item.about = (seed.about || []).slice();
-    item.imageUrl = String(seed.imageUrl || '').trim();
-    item.logoUrl = String(seed.logoUrl || '').trim();
+    var assetSlug = seedAssetSlug(seed);
+    item.logoUrl = String(seed.logoUrl || seedLogoUrl(assetSlug) || '').trim();
+    item.imageUrl = String(seed.imageUrl || seedCoverUrl(assetSlug) || '').trim();
     item.investAmount = parseInvestmentAmount(item.meta);
     item.category = seed.category || inferCategory(item);
     item.thumb = thumbFor(item);
