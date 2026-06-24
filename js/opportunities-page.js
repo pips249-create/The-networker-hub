@@ -34,6 +34,7 @@
   var activeType = 'all';
   var activeCategory = '';
   var sidebarFilters = [];
+  var FILTER_OPTION_LABELS = {};
   var searchQ = '';
   var sortBy = 'recommended';
   var viewMode = 'list';
@@ -67,6 +68,10 @@
     els.viewMap = document.getElementById('opp-view-map');
     els.minInvest = document.getElementById('opp-min-invest');
     els.maxInvest = document.getElementById('opp-max-invest');
+    els.filterInvest = document.getElementById('opp-filter-invest');
+    els.filterLocation = document.getElementById('opp-filter-location');
+    els.filterCommitment = document.getElementById('opp-filter-commitment');
+    els.filterCategory = document.getElementById('opp-filter-category');
     els.sidebarClear = document.getElementById('opp-sidebar-clear');
     els.spotlightTrack = document.getElementById('opp-spotlight-track');
     els.spotlightSection = document.querySelector('.opp-premium-spotlight');
@@ -341,14 +346,25 @@
     return tags.indexOf(tag) !== -1;
   }
 
-  function matchesSidebar(item) {
-    if (!sidebarFilters.length && minInvest === null && maxInvest === null) return true;
+  function sidebarSelectValue(el) {
+    return el && el.value ? el.value : '';
+  }
 
-    if (sidebarFilters.length && !sidebarFilters.some(function (f) {
-      return hasTag(item, f);
-    })) {
-      return false;
-    }
+  function hasCustomInvestRange() {
+    return minInvest !== null || maxInvest !== null;
+  }
+
+  function matchesSidebar(item) {
+    var invest = sidebarSelectValue(els.filterInvest);
+    var location = sidebarSelectValue(els.filterLocation);
+    var commitment = sidebarSelectValue(els.filterCommitment);
+    var hasSidebarSelect = invest || location || commitment;
+
+    if (!hasSidebarSelect && !hasCustomInvestRange()) return true;
+
+    if (invest && !hasTag(item, invest)) return false;
+    if (location && !hasTag(item, location)) return false;
+    if (commitment && !hasTag(item, commitment)) return false;
 
     if (minInvest !== null && (item.investAmount === null || item.investAmount < minInvest)) return false;
     if (maxInvest !== null && (item.investAmount === null || item.investAmount > maxInvest)) return false;
@@ -403,22 +419,51 @@
     stat.textContent = n >= 84 ? '84+' : String(n);
   }
 
+  function rememberFilterOptionLabels() {
+    if (!els.sidebar) return;
+    els.sidebar.querySelectorAll('.opp-filter-select option[data-count-for], .opp-filter-select option[data-count-category]').forEach(function (opt) {
+      var key = opt.getAttribute('data-count-for') || opt.getAttribute('data-count-category');
+      if (key && !FILTER_OPTION_LABELS[key]) {
+        FILTER_OPTION_LABELS[key] = opt.textContent.replace(/\s*\(\d+\)\s*$/, '').trim();
+      }
+    });
+  }
+
+  function countForFilterKey(key) {
+    if (TAB_TYPES.indexOf(key) !== -1) {
+      return countBy(function (item) {
+        return key === 'all' || item.type === key || hasTag(item, key);
+      });
+    }
+    return countBy(function (item) {
+      return hasTag(item, key);
+    });
+  }
+
   function updateFilterCounts() {
     updateListingsStat();
-    document.querySelectorAll('[data-count-for]').forEach(function (el) {
+    rememberFilterOptionLabels();
+    document.querySelectorAll('[data-count-for], [data-count-category]').forEach(function (el) {
       var key = el.getAttribute('data-count-for');
+      var categoryKey = el.getAttribute('data-count-category');
       var n;
       if (key === 'all') n = allListings.length;
-      else if (TAB_TYPES.indexOf(key) !== -1) {
+      else if (categoryKey) {
         n = countBy(function (item) {
-          return key === 'all' || item.type === key || hasTag(item, key);
+          return item.category === categoryKey;
         });
+        key = categoryKey;
+      } else if (key) {
+        n = countForFilterKey(key);
       } else {
-        n = countBy(function (item) {
-          return hasTag(item, key);
-        });
+        return;
       }
-      el.textContent = n;
+      if (el.tagName === 'OPTION') {
+        var base = FILTER_OPTION_LABELS[key] || el.textContent.replace(/\s*\(\d+\)\s*$/, '').trim();
+        el.textContent = base + ' (' + n + ')';
+      } else {
+        el.textContent = n;
+      }
     });
   }
 
@@ -815,11 +860,14 @@
     });
   }
 
+  function syncCategorySelect() {
+    if (!els.filterCategory) return;
+    els.filterCategory.value = activeCategory || '';
+    els.filterCategory.classList.toggle('is-active', Boolean(activeCategory));
+  }
+
   function syncCatPills() {
-    if (!els.catPills) return;
-    els.catPills.querySelectorAll('.opp-cat-pill').forEach(function (pill) {
-      pill.classList.toggle('active', pill.getAttribute('data-cat') === activeCategory);
-    });
+    syncCategorySelect();
   }
 
   function renderListings() {
@@ -880,10 +928,12 @@
 
   function readSidebarFilters() {
     sidebarFilters = [];
-    if (!els.sidebar) return;
-    els.sidebar.querySelectorAll('input[type="checkbox"][data-filter]:checked').forEach(function (cb) {
-      sidebarFilters.push(cb.getAttribute('data-filter'));
-    });
+    var invest = sidebarSelectValue(els.filterInvest);
+    var location = sidebarSelectValue(els.filterLocation);
+    var commitment = sidebarSelectValue(els.filterCommitment);
+    if (invest) sidebarFilters.push(invest);
+    if (location) sidebarFilters.push(location);
+    if (commitment) sidebarFilters.push(commitment);
   }
 
   function readInvestRange() {
@@ -893,9 +943,17 @@
     if (isNaN(maxInvest)) maxInvest = null;
   }
 
+  function syncSidebarSelectUI() {
+    [els.filterCategory, els.filterInvest, els.filterLocation, els.filterCommitment].forEach(function (select) {
+      if (!select) return;
+      select.classList.toggle('is-active', Boolean(select.value));
+    });
+  }
+
   function applyFilters() {
     readSidebarFilters();
     readInvestRange();
+    syncSidebarSelectUI();
     resetListingPagination();
     renderListings();
   }
@@ -920,15 +978,20 @@
     if (els.sort) els.sort.value = 'recommended';
     if (els.minInvest) els.minInvest.value = '';
     if (els.maxInvest) els.maxInvest.value = '';
+    if (els.filterInvest) els.filterInvest.value = '';
+    if (els.filterLocation) els.filterLocation.value = '';
+    if (els.filterCommitment) els.filterCommitment.value = '';
+    if (els.filterCategory) els.filterCategory.value = '';
     if (els.sidebar) {
-      els.sidebar.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
-        cb.checked = false;
+      els.sidebar.querySelectorAll('details.opp-filter-details').forEach(function (details) {
+        details.open = false;
       });
     }
 
     updateSearchClearVisibility();
     syncTabUI();
     syncCatPills();
+    syncSidebarSelectUI();
     renderListings();
   }
 
@@ -951,14 +1014,31 @@
   function initSidebar() {
     if (!els.sidebar || els.sidebar.dataset.bound) return;
     els.sidebar.dataset.bound = '1';
+    rememberFilterOptionLabels();
 
     els.sidebar.addEventListener('change', function (e) {
-      if (e.target.matches('input[type="checkbox"][data-filter]')) applyFilters();
+      if (e.target === els.filterCategory) {
+        activeCategory = e.target.value || '';
+        applyFilters();
+        return;
+      }
+      if (e.target.matches('.opp-filter-select')) {
+        if (e.target === els.filterInvest && e.target.value) {
+          if ((els.minInvest && els.minInvest.value !== '') || (els.maxInvest && els.maxInvest.value !== '')) {
+            if (els.minInvest) els.minInvest.value = '';
+            if (els.maxInvest) els.maxInvest.value = '';
+            minInvest = null;
+            maxInvest = null;
+          }
+        }
+        applyFilters();
+      }
     });
 
     [els.minInvest, els.maxInvest].forEach(function (input) {
       if (!input) return;
       input.addEventListener('input', function () {
+        if (input.value !== '' && els.filterInvest) els.filterInvest.value = '';
         clearTimeout(rangeTimer);
         rangeTimer = setTimeout(applyFilters, SEARCH_DEBOUNCE_MS);
       });
@@ -1048,18 +1128,7 @@
   }
 
   function initCatPills() {
-    if (!els.catPills || els.catPills.dataset.bound) return;
-    els.catPills.dataset.bound = '1';
-
-    els.catPills.addEventListener('click', function (e) {
-      var pill = e.target.closest('.opp-cat-pill');
-      if (!pill) return;
-      var cat = pill.getAttribute('data-cat') || '';
-      activeCategory = activeCategory === cat ? '' : cat;
-      syncCatPills();
-      resetListingPagination();
-      renderListings();
-    });
+    syncCategorySelect();
   }
 
   function initPagination() {

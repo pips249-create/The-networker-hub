@@ -15,7 +15,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260610" />
-    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260610f" />
+    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260624b" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260626" />
     <script src="../js/hub-seo-static-config.js?v=20260612"></script>
     <script src="../js/hub-seo-static.js?v=20260612" data-page="opportunities"></script>
@@ -129,107 +129,70 @@
       </section>
     </div>
 
-    <section class="opp-cat-strip" aria-labelledby="opp-cat-heading">
-      <div class="opp-cat-strip-inner">
-        <h3 id="opp-cat-heading">Browse by category</h3>
-        <div class="opp-cat-pills" id="opp-cat-pills">
-          <button type="button" class="opp-cat-pill" data-cat="cleaning">Cleaning</button>
-          <button type="button" class="opp-cat-pill" data-cat="food">Food &amp; Drink</button>
-          <button type="button" class="opp-cat-pill" data-cat="tech">Tech &amp; Digital</button>
-          <button type="button" class="opp-cat-pill" data-cat="health">Health &amp; Fitness</button>
-          <button type="button" class="opp-cat-pill" data-cat="property">Property</button>
-          <button type="button" class="opp-cat-pill" data-cat="education">Education &amp; Coaching</button>
-          <button type="button" class="opp-cat-pill" data-cat="pets">Pets &amp; Animals</button>
-          <button type="button" class="opp-cat-pill" data-cat="finance">Finance &amp; Admin</button>
-          <button type="button" class="opp-cat-pill" data-cat="mlm">MLM &amp; Network Marketing</button>
-        </div>
-      </div>
-    </section>
-
     <div class="opp-browse-layout">
       <aside class="opp-sidebar" aria-label="Filters">
         <div class="opp-sidebar-inner">
-        <div class="opp-sidebar-card">
-          <h3>Investment</h3>
-          <label class="opp-filter-option">
-            <input type="checkbox" data-filter="low-invest" />
-            <span class="opp-filter-label">£0 – £2,500</span>
-            <span class="opp-filter-count" data-count-for="low-invest">0</span>
+        <div class="opp-sidebar-card opp-sidebar-filters">
+          <h3>Refine results</h3>
+
+          <label class="opp-filter-field" for="opp-filter-category">
+            <span class="opp-filter-field-label">Category</span>
+            <select id="opp-filter-category" class="opp-filter-select">
+              <option value="">All categories</option>
+              <option value="cleaning" data-count-category="cleaning">Cleaning</option>
+              <option value="food" data-count-category="food">Food &amp; Drink</option>
+              <option value="tech" data-count-category="tech">Tech &amp; Digital</option>
+              <option value="health" data-count-category="health">Health &amp; Fitness</option>
+              <option value="property" data-count-category="property">Property</option>
+              <option value="education" data-count-category="education">Education &amp; Coaching</option>
+              <option value="pets" data-count-category="pets">Pets &amp; Animals</option>
+              <option value="finance" data-count-category="finance">Finance &amp; Admin</option>
+              <option value="mlm" data-count-category="mlm">MLM &amp; Network Marketing</option>
+            </select>
           </label>
-          <label class="opp-filter-option">
-            <input type="checkbox" data-filter="mid-invest" />
-            <span class="opp-filter-label">£2,500 – £10k</span>
-            <span class="opp-filter-count" data-count-for="mid-invest">0</span>
+
+          <label class="opp-filter-field" for="opp-filter-invest">
+            <span class="opp-filter-field-label">Investment</span>
+            <select id="opp-filter-invest" class="opp-filter-select">
+              <option value="">Any investment</option>
+              <option value="low-invest" data-count-for="low-invest">£0 – £2,500</option>
+              <option value="mid-invest" data-count-for="mid-invest">£2,500 – £10k</option>
+              <option value="high-invest" data-count-for="high-invest">£10k+</option>
+            </select>
           </label>
-          <label class="opp-filter-option">
-            <input type="checkbox" data-filter="high-invest" />
-            <span class="opp-filter-label">£10k+</span>
-            <span class="opp-filter-count" data-count-for="high-invest">0</span>
-          </label>
-          <div class="opp-range-wrap">
-            <div class="opp-range-label">Custom range</div>
+
+          <details class="opp-filter-details">
+            <summary>Custom range</summary>
             <div class="opp-range-inputs">
               <input type="number" id="opp-min-invest" placeholder="Min £" min="0" step="100" aria-label="Minimum investment" />
               <input type="number" id="opp-max-invest" placeholder="Max £" min="0" step="100" aria-label="Maximum investment" />
             </div>
-          </div>
-        </div>
+          </details>
 
-        <div class="opp-sidebar-card">
-          <h3>Location</h3>
-          <label class="opp-filter-option">
-            <input type="checkbox" data-filter="remote" />
-            <span class="opp-filter-label">Remote / Online</span>
-            <span class="opp-filter-count" data-count-for="remote">0</span>
+          <label class="opp-filter-field" for="opp-filter-location">
+            <span class="opp-filter-field-label">Location</span>
+            <select id="opp-filter-location" class="opp-filter-select">
+              <option value="">Any location</option>
+              <option value="remote" data-count-for="remote">Remote / Online</option>
+              <option value="yorkshire" data-count-for="yorkshire">Yorkshire</option>
+              <option value="north" data-count-for="north">North England</option>
+              <option value="midlands" data-count-for="midlands">Midlands</option>
+              <option value="south" data-count-for="south">South England</option>
+              <option value="uk-wide" data-count-for="uk-wide">UK-wide</option>
+            </select>
           </label>
-          <label class="opp-filter-option">
-            <input type="checkbox" data-filter="yorkshire" />
-            <span class="opp-filter-label">Yorkshire</span>
-            <span class="opp-filter-count" data-count-for="yorkshire">0</span>
-          </label>
-          <label class="opp-filter-option">
-            <input type="checkbox" data-filter="north" />
-            <span class="opp-filter-label">North England</span>
-            <span class="opp-filter-count" data-count-for="north">0</span>
-          </label>
-          <label class="opp-filter-option">
-            <input type="checkbox" data-filter="midlands" />
-            <span class="opp-filter-label">Midlands</span>
-            <span class="opp-filter-count" data-count-for="midlands">0</span>
-          </label>
-          <label class="opp-filter-option">
-            <input type="checkbox" data-filter="south" />
-            <span class="opp-filter-label">South England</span>
-            <span class="opp-filter-count" data-count-for="south">0</span>
-          </label>
-          <label class="opp-filter-option">
-            <input type="checkbox" data-filter="uk-wide" />
-            <span class="opp-filter-label">UK-wide</span>
-            <span class="opp-filter-count" data-count-for="uk-wide">0</span>
-          </label>
-        </div>
 
-        <div class="opp-sidebar-card">
-          <h3>Commitment</h3>
-          <label class="opp-filter-option">
-            <input type="checkbox" data-filter="full-time" />
-            <span class="opp-filter-label">Full-time</span>
-            <span class="opp-filter-count" data-count-for="full-time">0</span>
+          <label class="opp-filter-field" for="opp-filter-commitment">
+            <span class="opp-filter-field-label">Commitment</span>
+            <select id="opp-filter-commitment" class="opp-filter-select">
+              <option value="">Any commitment</option>
+              <option value="full-time" data-count-for="full-time">Full-time</option>
+              <option value="part-time" data-count-for="part-time">Part-time / Flexible</option>
+              <option value="event-based" data-count-for="event-based">Event-based</option>
+            </select>
           </label>
-          <label class="opp-filter-option">
-            <input type="checkbox" data-filter="part-time" />
-            <span class="opp-filter-label">Part-time / Flexible</span>
-            <span class="opp-filter-count" data-count-for="part-time">0</span>
-          </label>
-          <label class="opp-filter-option">
-            <input type="checkbox" data-filter="event-based" />
-            <span class="opp-filter-label">Event-based</span>
-            <span class="opp-filter-count" data-count-for="event-based">0</span>
-          </label>
-        </div>
 
-        <div class="opp-sidebar-card">
-          <button type="button" class="opp-sidebar-clear" id="opp-sidebar-clear">✕ Clear all filters</button>
+          <button type="button" class="opp-sidebar-clear" id="opp-sidebar-clear">Clear filters</button>
         </div>
         </div>
 
@@ -356,7 +319,7 @@
     <script src="../js/opportunities-catalog.js?v=20260624"></script>
     <script src="../js/opportunities-saves.js?v=20260610a"></script>
     <script src="../js/postcode-geo.js?v=20260609b"></script>
-    <script src="../js/opportunities-page.js?v=20260610f"></script>
+    <script src="../js/opportunities-page.js?v=20260624b"></script>
     <script src="../js/opportunities-map.js?v=20260611"></script>
   </body>
 </html>
