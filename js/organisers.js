@@ -367,6 +367,21 @@
       '<h3 class="organiser-card-name">' +
       escapeHtml(org.name) +
       '</h3>' +
+      (org.ranking && org.ranking.label
+        ? '<span class="organiser-card-ranking hub-ranking-badge hub-ranking-badge--' +
+          escapeHtml(org.ranking.tier || 'top10') +
+          '" title="Ranked #' +
+          escapeHtml(String(org.ranking.rank)) +
+          ' of ' +
+          escapeHtml(String(org.ranking.totalRanked)) +
+          '">★ ' +
+          escapeHtml(
+            org.ranking.cardLabel ||
+              org.ranking.displayLabel ||
+              String(org.ranking.label).replace(' on the Hub', '')
+          ) +
+          '</span>'
+        : '') +
       '<p class="organiser-card-desc">' +
       escapeHtml(desc || (Number(org.eventCount) ? 'Networking group on The Networker Hub.' : 'Profile coming soon — no listings yet.')) +
       '</p>' +

@@ -111,6 +111,31 @@ async function listOpportunitiesForAdmin(query) {
   };
 }
 
+async function deleteOpportunities(ids) {
+  const sb = getSupabaseAdmin();
+  const unique = [...new Set((ids || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  if (!unique.length) return { deleted: 0, skipped: [], titles: [] };
+
+  const { data, error } = await sb
+    .from('business_opportunities')
+    .delete()
+    .in('id', unique)
+    .select('id, title');
+  if (error) throw new Error(error.message);
+
+  const deleted = data || [];
+  const deletedIds = new Set(deleted.map((row) => String(row.id)));
+  const skipped = unique
+    .filter((id) => !deletedIds.has(String(id)))
+    .map((id) => ({ id, reason: 'not_found' }));
+
+  return {
+    deleted: deleted.length,
+    skipped,
+    titles: deleted.map((row) => String(row.title || '').trim()).filter(Boolean),
+  };
+}
+
 module.exports = async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Cache-Control', 'no-store');
@@ -134,6 +159,24 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'PATCH' || req.method === 'POST') {
     const body = parseBody(req);
+
+    if (body.action === 'bulk_delete') {
+      const ids = [
+        ...new Set(
+          (Array.isArray(body.ids) ? body.ids : [])
+            .map((rowId) => String(rowId || '').trim())
+            .filter(Boolean)
+        ),
+      ];
+      if (!ids.length) return json(res, 400, { error: 'missing_ids' });
+      try {
+        const result = await deleteOpportunities(ids);
+        return json(res, 200, { ok: true, ...result });
+      } catch (e) {
+        return json(res, 500, { ok: false, error: 'bulk_delete_failed', message: e.message });
+      }
+    }
+
     const id = String(body.id || '').trim();
     if (!id) return json(res, 400, { error: 'missing_id' });
 
@@ -182,6 +225,18 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true, opportunity: mapOpportunityRow(data) });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'reject_failed', message: e.message });
+      }
+    }
+
+    if (body.action === 'delete') {
+      try {
+        const result = await deleteOpportunities([id]);
+        if (!result.deleted) {
+          return json(res, 404, { ok: false, error: 'not_found' });
+        }
+        return json(res, 200, { ok: true, ...result });
+      } catch (e) {
+        return json(res, 500, { ok: false, error: 'delete_failed', message: e.message });
       }
     }
 

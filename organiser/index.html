@@ -18,7 +18,8 @@
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260708c" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260628" />
+    <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260707" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
@@ -113,6 +114,28 @@
             </p>
           </aside>
 
+          <section class="org-ranking-panel" id="org-ranking-panel-overview" hidden>
+            <button
+              type="button"
+              class="org-ranking-panel-toggle"
+              aria-expanded="false"
+              aria-controls="org-ranking-panel-overview-body"
+            >
+              <span class="org-ranking-panel-title">Your ranking badge</span>
+              <span class="org-ranking-panel-summary" id="org-ranking-panel-overview-summary"></span>
+              <span class="org-ranking-panel-chev" aria-hidden="true">Show</span>
+            </button>
+            <div class="org-ranking-panel-body" id="org-ranking-panel-overview-body" hidden>
+              <aside class="org-ranking-banner" id="org-ranking-banner" role="status"></aside>
+              <p class="org-ranking-share-teaser" id="org-ranking-share-teaser">
+                Your group earned a monthly ranking badge.
+                <button type="button" class="org-ranking-share-teaser-link" data-org-route="events-overview">
+                  Open My events to share →
+                </button>
+              </p>
+            </div>
+          </section>
+
           <div class="org-getting-started" id="org-getting-started">
             <div class="org-getting-started-head">
               <div>
@@ -200,6 +223,35 @@
               <div class="org-stat-value" id="stat-revenue">£0</div>
             </div>
           </div>
+
+          <section class="org-ranking-panel" id="org-ranking-panel-events" hidden>
+            <button
+              type="button"
+              class="org-ranking-panel-toggle"
+              aria-expanded="false"
+              aria-controls="org-ranking-panel-events-body"
+            >
+              <span class="org-ranking-panel-title">Share your ranking badge</span>
+              <span class="org-ranking-panel-summary" id="org-ranking-panel-events-summary"></span>
+              <span class="org-ranking-panel-chev" aria-hidden="true">Show</span>
+            </button>
+            <div class="org-ranking-panel-body" id="org-ranking-panel-events-body" hidden>
+              <aside class="org-ranking-banner" id="org-events-ranking-banner" role="status"></aside>
+              <div class="org-ranking-share" id="org-ranking-share-events">
+                <div class="org-ranking-share-head">
+                  <h2 class="org-section-title">Share on social</h2>
+                  <p class="org-section-sub">
+                    Monthly badges are based on attendee reviews. Preview your social post, then copy it or your profile link.
+                  </p>
+                </div>
+                <div class="org-ranking-share-cards" id="org-ranking-share-cards"></div>
+                <details class="org-ranking-tier-guide">
+                  <summary>Badge tiers — what Top 10, 25 and 50 look like</summary>
+                  <div class="org-ranking-tier-examples" id="org-ranking-tier-examples"></div>
+                </details>
+              </div>
+            </div>
+          </section>
 
           <div class="org-quick-actions org-quick-actions--compact" aria-label="Quick links">
             <h2 class="org-quick-actions-title">Quick links</h2>
@@ -435,6 +487,7 @@
             </div>
             <a href="group-edit.html" class="org-btn org-btn-gold">+ New group profile</a>
           </div>
+          <div id="org-ranking-share-groups-mount"></div>
           <div class="org-filter-bar">
             <select id="filter-groups-status" aria-label="Filter groups by status">
               <option value="all">All statuses</option>
@@ -654,9 +707,6 @@
 
           <!-- Attendee cancellations -->
           <div class="org-sub-page" id="sub-events-cancellations" data-events-panel="events-cancellations">
-            <p class="org-section-sub org-sub-lead">
-              Bookings attendees cancelled themselves — filter by event to see who released their place and whether a refund may be due.
-            </p>
             <div class="org-filter-bar">
               <select id="filter-cancellations-event" aria-label="Filter by event">
                 <option value="all">All events</option>
@@ -669,6 +719,7 @@
                   <tr>
                     <th>Name</th>
                     <th>Email</th>
+                    <th>Booking ref</th>
                     <th>Event</th>
                     <th>Ticket</th>
                     <th>Paid</th>
@@ -688,8 +739,11 @@
           <!-- Reviews -->
           <div class="org-sub-page" id="sub-events-reviews" data-events-panel="events-reviews">
             <div class="org-reviews-toolbar">
-              <p class="org-reviews-summary" id="reviews-summary">0 reviews</p>
-              <select id="filter-reviews-group" aria-label="Filter by group">
+              <div class="org-reviews-toolbar-main">
+                <p class="org-reviews-summary" id="reviews-summary">0 reviews</p>
+                <p class="org-ranking-pill" id="reviews-ranking-pill" hidden></p>
+              </div>
+              <select id="filter-reviews-group" class="org-select" aria-label="Filter by group">
                 <option value="all">All your groups</option>
               </select>
             </div>
@@ -1197,6 +1251,6 @@
     <script src="../js/organiser-flow-tour.js?v=20260610"></script>
     <script src="../js/organiser-onboarding.js?v=20260618"></script>
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
-    <script src="../js/organiser-dashboard.js?v=20260630"></script>
+    <script src="../js/organiser-dashboard.js?v=20260707"></script>
   </body>
 </html>

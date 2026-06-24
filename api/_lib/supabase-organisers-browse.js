@@ -4,6 +4,7 @@
 const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./supabase');
 const { publicOrganiserSlug } = require('./organiser-slug');
 const { fetchPublishedEventRows, isPublicEvent } = require('./supabase-events');
+const { getGroupRankingsForOrganiser } = require('./organiser-group-ranking');
 
 function slugIndustry(ind) {
   return String(ind || '')
@@ -78,6 +79,18 @@ function rowToPublicOrganiser(row, eventCount, options) {
 
   if (options.includeReviews && Array.isArray(options.reviewItems)) {
     base.reviewItems = options.reviewItems;
+  }
+
+  if (options.ranking && options.ranking.label) {
+    base.ranking = {
+      rank: options.ranking.rank,
+      totalRanked: options.ranking.totalRanked,
+      tier: options.ranking.tier,
+      label: options.ranking.label,
+      periodLabel: options.ranking.periodLabel || '',
+      displayLabel: options.ranking.displayLabel || options.ranking.label,
+      cardLabel: options.ranking.cardLabel || options.ranking.displayLabel,
+    };
   }
 
   return base;
@@ -177,8 +190,17 @@ async function listPublicOrganisers() {
     loadPublishedEventIndex(sb),
   ]);
 
+  let rankings = {};
+  try {
+    rankings = await getGroupRankingsForOrganiser(organisers.map((org) => org.id));
+  } catch {
+    rankings = {};
+  }
+
   return organisers
-    .map((org) => rowToPublicOrganiser(org, counts.get(org.id) || 0))
+    .map((org) =>
+      rowToPublicOrganiser(org, counts.get(org.id) || 0, { ranking: rankings[org.id] || null })
+    )
     .sort((a, b) => {
       if (a.featured !== b.featured) return a.featured ? -1 : 1;
       if (b.rating !== a.rating) return b.rating - a.rating;
@@ -212,12 +234,19 @@ async function getPublicOrganiserBySlug(slug) {
   const { visibleEvents, orgById } = await loadPublishedEventIndex(sb);
   const events = eventsForOrganiser(row.id, visibleEvents, orgById);
   const reviewItems = await fetchOrganiserReviews(sb, row.id);
+  let rankings = {};
+  try {
+    rankings = await getGroupRankingsForOrganiser([row.id]);
+  } catch {
+    rankings = {};
+  }
 
   return rowToPublicOrganiser(row, events.length, {
     includeEvents: true,
     events,
     includeReviews: true,
     reviewItems,
+    ranking: rankings[row.id] || null,
   });
 }
 
@@ -234,12 +263,19 @@ async function getPublicOrganiserById(id) {
   const { visibleEvents, orgById } = await loadPublishedEventIndex(sb);
   const events = eventsForOrganiser(row.id, visibleEvents, orgById);
   const reviewItems = await fetchOrganiserReviews(sb, row.id);
+  let rankings = {};
+  try {
+    rankings = await getGroupRankingsForOrganiser([row.id]);
+  } catch {
+    rankings = {};
+  }
 
   return rowToPublicOrganiser(row, events.length, {
     includeEvents: true,
     events,
     includeReviews: true,
     reviewItems,
+    ranking: rankings[row.id] || null,
   });
 }
 

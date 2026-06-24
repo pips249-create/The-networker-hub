@@ -144,14 +144,10 @@ async function getAttendeeDashboardFromSupabase(session) {
   }
 
   const sb = getSupabaseAdmin();
-  const attendeeId = await resolveAttendeeId(sb, session);
-
-  let opportunityEnquiries = [];
-  try {
-    opportunityEnquiries = await listOpportunityEnquiriesSentBySession(session);
-  } catch {
-    opportunityEnquiries = [];
-  }
+  const [attendeeId, opportunityEnquiries] = await Promise.all([
+    resolveAttendeeId(sb, session),
+    listOpportunityEnquiriesSentBySession(session).catch(() => []),
+  ]);
 
   if (!attendeeId) {
     return { registrations: [], stats: buildStats([]), opportunityEnquiries };

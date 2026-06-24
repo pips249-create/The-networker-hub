@@ -244,12 +244,110 @@
       .join('');
   }
 
+  function rankingCollapseKey(orgId) {
+    return 'hub_org_public_ranking_collapsed_' + String(orgId || 'default');
+  }
+
+  function isRankingPanelCollapsed(orgId) {
+    try {
+      var stored = localStorage.getItem(rankingCollapseKey(orgId));
+      if (stored === null) return true;
+      return stored === '1';
+    } catch (e) {
+      return true;
+    }
+  }
+
+  function setRankingPanelCollapsed(orgId, collapsed) {
+    try {
+      localStorage.setItem(rankingCollapseKey(orgId), collapsed ? '1' : '0');
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function bindPublicRankingPanel(orgId) {
+    var panel = document.getElementById('org-ranking-panel');
+    var toggle = panel && panel.querySelector('.org-ranking-panel-toggle');
+    var body = document.getElementById('org-ranking-panel-body');
+    var chev = panel && panel.querySelector('.org-ranking-panel-chev');
+    if (!panel || !toggle || !body) return;
+
+    function applyCollapsed(collapsed) {
+      body.hidden = collapsed;
+      toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      if (chev) chev.textContent = collapsed ? 'Show' : 'Hide';
+      panel.classList.toggle('is-expanded', !collapsed);
+    }
+
+    applyCollapsed(isRankingPanelCollapsed(orgId));
+    toggle.onclick = function () {
+      var collapsed = !body.hidden;
+      applyCollapsed(collapsed);
+      setRankingPanelCollapsed(orgId, collapsed);
+    };
+  }
+
   function renderOrganiser(org) {
     document.getElementById('org-profile-content').hidden = false;
     document.title = (org.name || 'Organiser') + ' – The Networker Hub';
 
     renderPhoto(org);
     document.getElementById('org-name').textContent = org.name || 'Organiser';
+
+    var panel = document.getElementById('org-ranking-panel');
+    var summaryEl = document.getElementById('org-ranking-panel-summary');
+    var rankingEl = document.getElementById('org-ranking-badge');
+    var metaEl = document.getElementById('org-ranking-meta');
+
+    if (org.ranking && org.ranking.label) {
+      var tier = org.ranking.tier || 'top10';
+      var badgeText =
+        org.ranking.displayLabel ||
+        String(org.ranking.label).replace(' on the Hub', '') +
+          (org.ranking.periodLabel ? ' · ' + org.ranking.periodLabel : '');
+
+      if (panel) panel.hidden = false;
+      if (summaryEl) summaryEl.textContent = ' — ' + badgeText;
+
+      if (rankingEl) {
+        rankingEl.className =
+          'org-profile-ranking hub-ranking-badge hub-ranking-badge--' + tier + ' hub-ranking-badge--lg';
+        rankingEl.textContent = '★ ' + badgeText;
+        rankingEl.title =
+          'Ranked #' +
+          org.ranking.rank +
+          ' of ' +
+          org.ranking.totalRanked +
+          ' rated networking groups on the Hub';
+      }
+
+      if (metaEl) {
+        metaEl.textContent =
+          'Ranked #' +
+          org.ranking.rank +
+          ' of ' +
+          org.ranking.totalRanked +
+          ' rated networking groups on the Hub (★ ' +
+          Number(org.ranking.rating).toFixed(1) +
+          ' from ' +
+          org.ranking.reviewCount +
+          ' review' +
+          (Number(org.ranking.reviewCount) === 1 ? '' : 's') +
+          ').';
+      }
+
+      bindPublicRankingPanel(org.id);
+    } else {
+      if (panel) panel.hidden = true;
+      if (summaryEl) summaryEl.textContent = '';
+      if (rankingEl) {
+        rankingEl.className = 'org-profile-ranking hub-ranking-badge';
+        rankingEl.textContent = '';
+        rankingEl.removeAttribute('title');
+      }
+      if (metaEl) metaEl.textContent = '';
+    }
 
     renderReviews(org);
 

@@ -224,7 +224,7 @@ function fallbackTicketTier(event) {
   };
 }
 
-function rowToEvent(row, organiser, ticketRows) {
+function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   const title = String(row.title || '').trim();
   let descText = plainEventDescription(row.description);
   if (!descText && Array.isArray(row.highlights)) {
@@ -356,6 +356,8 @@ function rowToEvent(row, organiser, ticketRows) {
       .toLowerCase(),
     listingStatusRaw: row.approval_status || 'Approved',
     organiserListingStatusRaw: organiser ? organiser.listing_status || '' : '',
+    organiserRanking: organiserRanking || null,
+    organiserRankingLabel: organiserRanking?.cardLabel || '',
     locationSlug: slugLocation(location),
     industrySlug: slugIndustry(industry),
     formatSlug: slugFormat(format),
@@ -557,12 +559,21 @@ async function eventsFromPublishedRows(sb, rows, knownOrganiser) {
   }
 
   const orgById = new Map(organisers.map((o) => [o.id, o]));
+  let rankingsByOrg = {};
+  try {
+    const { loadCurrentRankingsByOrganiserId } = require('./organiser-ranking-snapshot');
+    rankingsByOrg = await loadCurrentRankingsByOrganiserId(orgIds);
+  } catch {
+    rankingsByOrg = {};
+  }
+
   return list
     .map((row) => {
       const org = row.organiser_id ? orgById.get(row.organiser_id) : null;
       if (!isPublicEvent(row, org)) return null;
       const eventTickets = tickets.filter((t) => t.event_id === row.id);
-      return rowToEvent(row, org, eventTickets);
+      const ranking = row.organiser_id ? rankingsByOrg[row.organiser_id] || null : null;
+      return rowToEvent(row, org, eventTickets, ranking);
     })
     .filter(Boolean);
 }
@@ -773,7 +784,17 @@ async function handle(req, res) {
         ...t,
         _registrationCount: regCounts.get(t.id) || 0,
       }));
-      const event = rowToEvent(row, organiser, tickets);
+      let organiserRanking = null;
+      if (organiser?.id) {
+        try {
+          const { loadCurrentRankingsByOrganiserId } = require('./organiser-ranking-snapshot');
+          const map = await loadCurrentRankingsByOrganiserId([organiser.id]);
+          organiserRanking = map[organiser.id] || null;
+        } catch {
+          organiserRanking = null;
+        }
+      }
+      const event = rowToEvent(row, organiser, tickets, organiserRanking);
       event.isSeries = seriesDates.length > 1;
       const seriesIds = new Set(seriesDates.map((d) => d.id));
       const relatedFiltered = (relatedRows || []).filter((r) => !seriesIds.has(r.id));

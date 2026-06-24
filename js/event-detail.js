@@ -186,6 +186,23 @@
     const host = ev.organiser || 'Event organiser';
     setText('ev-host-name', host);
 
+    const rankingEl = document.getElementById('ev-host-ranking');
+    if (rankingEl) {
+      const label = ev.organiserRanking?.displayLabel || '';
+      if (label) {
+        const tier = ev.organiserRanking?.tier || 'top10';
+        rankingEl.hidden = false;
+        rankingEl.className = 'ev-host-ranking hub-ranking-badge hub-ranking-badge--' + tier;
+        rankingEl.textContent = '★ ' + label;
+        rankingEl.title = ev.organiserRanking?.displayLabel || label;
+      } else {
+        rankingEl.hidden = true;
+        rankingEl.textContent = '';
+        rankingEl.className = 'ev-host-ranking';
+        rankingEl.removeAttribute('title');
+      }
+    }
+
     const logoEl = document.getElementById('ev-host-logo');
     const initialsEl = document.getElementById('ev-host-initials');
     const avatar = document.getElementById('ev-host-avatar');

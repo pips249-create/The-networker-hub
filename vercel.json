@@ -50,6 +50,10 @@
     {
       "path": "/api/cron/event-featured",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/organiser-rankings",
+      "schedule": "0 10 1 * *"
     }
   ],
   "functions": {

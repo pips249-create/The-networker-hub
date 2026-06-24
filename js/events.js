@@ -393,6 +393,15 @@
     const salesBadge = ev.isTicketSalesPending
       ? '<span class="event-grid-sales-pending">Tickets soon</span>'
       : '';
+    const rankingBadge = ev.organiserRankingLabel
+      ? '<span class="event-grid-ranking hub-ranking-badge hub-ranking-badge--' +
+        escapeHtml(ev.organiserRanking?.tier || 'top10') +
+        '" title="' +
+        escapeHtml(ev.organiserRanking?.displayLabel || ev.organiserRankingLabel) +
+        '">★ ' +
+        escapeHtml(ev.organiserRankingLabel) +
+        '</span>'
+      : '';
 
     return `
       <a class="event-grid-card${ev.featured ? ' is-premium' : ''}" href="${escapeHtml(detailHref(ev))}"
@@ -405,6 +414,7 @@
         <div class="event-grid-media">
           ${photoImg(eventImageSrc(ev), 'event-grid-img', ev.id, ev.eventType || ev.typeRaw, ev.title, ev)}
           ${premiumBadge}
+          ${rankingBadge}
           ${salesBadge}
           <span class="event-grid-category">${escapeHtml(meetingType)}</span>
           <span class="event-grid-price">${escapeHtml(priceBadgeLabel(ev))}</span>
@@ -522,6 +532,7 @@
     if (!els.listings || els.listings.dataset.paginationBound) return;
     els.listings.dataset.paginationBound = '1';
     els.listings.addEventListener('click', function (e) {
+      if (document.body.classList.contains('browse-mode-organisers')) return;
       const btn = e.target.closest('.page-btn');
       if (!btn || btn.disabled) return;
       const filtered = getFilteredList();
@@ -589,6 +600,7 @@
   }
 
   function renderAll() {
+    if (document.body.classList.contains('browse-mode-organisers')) return;
     const filtered = getFilteredList();
     renderSpotlight();
     renderGridPage(filtered);
@@ -609,6 +621,10 @@
   }
 
   window.hubRefreshListings = function () {
+    if (document.body.classList.contains('browse-mode-organisers')) {
+      if (window.hubRefreshOrganiserListings) window.hubRefreshOrganiserListings();
+      return;
+    }
     currentPage = 1;
     renderAll();
     if (window.hubRefreshMap && window.hubGetFilteredEvents) {
@@ -622,6 +638,10 @@
     fillFilterOptions();
     if (window.hubInitPriceFilter) window.hubInitPriceFilter();
     currentPage = 1;
+    if (document.body.classList.contains('browse-mode-organisers')) {
+      if (window.hubApplyOrganiserFilters) window.hubApplyOrganiserFilters();
+      return;
+    }
     if (window.hubRestoreEventFilterPrefs) {
       window.hubRestoreEventFilterPrefs();
     } else if (window.hubApplyFilters) {

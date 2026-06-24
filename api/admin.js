@@ -21,6 +21,7 @@ const routes = {
   impersonate: require('./_lib/routes/admin-impersonate'),
   import: require('./_lib/routes/admin-import'),
   campaigns: require('./_lib/routes/admin-campaigns'),
+  rankings: require('./_lib/routes/admin-rankings'),
 };
 
 module.exports = async function handler(req, res) {

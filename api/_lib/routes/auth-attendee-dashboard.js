@@ -95,10 +95,10 @@ module.exports = async function handler(req, res) {
   try {
     let displayName = session.name || '';
 
-    if (useSupabase()) {
+    if (!displayName && useSupabase()) {
       const user = await sbAuth.findUserByEmail(session.email);
       if (user && user.name) displayName = user.name;
-    } else {
+    } else if (!displayName) {
       try {
         const user = await findUserByEmail(session.email);
         if (user && user.name) displayName = user.name;

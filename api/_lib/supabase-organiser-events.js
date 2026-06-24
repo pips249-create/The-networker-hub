@@ -2,6 +2,7 @@
  * Organiser events + tickets + dashboard workspace — Supabase.
  */
 const { getSupabaseAdmin } = require('./supabase');
+const { formatTicketsSoldLabel } = require('./tickets-sold-label');
 const { resolveImageUrl } = require('./supabase-storage');
 const { isAdminRole } = require('./auth');
 const { findUserByEmail } = require('./supabase-auth');
@@ -202,8 +203,7 @@ function enrichOrganiserOverview(groups, events, tickets, groupEventCounts) {
       ...ev,
       ticketsSold: sold,
       ticketsCapacity: capacity,
-      ticketsSoldLabel:
-        capacity > 0 ? `${sold} / ${capacity}` : sold > 0 ? String(sold) : '0',
+      ticketsSoldLabel: formatTicketsSoldLabel(sold, capacity),
       revenueNum,
       revenueDisplay: formatMoney(revenueNum),
       statusKey: status.key,
@@ -1149,6 +1149,14 @@ async function getOrganiserWorkspace(req) {
     reviews = [];
   }
 
+  let groupRankings = {};
+  try {
+    const { getGroupRankingsForOrganiser } = require('./organiser-group-ranking');
+    groupRankings = await getGroupRankingsForOrganiser(groupIds);
+  } catch {
+    groupRankings = {};
+  }
+
   if (workspaceSummary?.computed) {
     overviewGroups = applyGroupSalesSummary(overviewGroups, workspaceSummary);
   }
@@ -1185,6 +1193,7 @@ async function getOrganiserWorkspace(req) {
     workspaceSummary,
     eventSummaries,
     reviews,
+    groupRankings,
     groupsError,
     hubView: hubViewFromRequest(req),
     adminView,

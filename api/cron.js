@@ -8,6 +8,7 @@ const routes = {
   'booking-reminders': require('./_lib/routes/cron-booking-reminders'),
   'favourite-sales': require('./_lib/routes/cron-favourite-sales'),
   'event-featured': require('./_lib/routes/cron-event-featured'),
+  'organiser-rankings': require('./_lib/routes/cron-organiser-rankings'),
 };
 
 module.exports = async function handler(req, res) {

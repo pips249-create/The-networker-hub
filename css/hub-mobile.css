@@ -865,12 +865,18 @@ body.nav-menu-open {
 
   .org-filter-bar select,
   .org-filter-bar input,
-  .org-table-search {
+  .org-table-search,
+  .org-reviews-toolbar select,
+  .org-reviews-toolbar .org-select {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
     min-height: 44px;
     box-sizing: border-box;
+  }
+
+  .org-reviews-toolbar {
+    align-items: stretch;
   }
 
   .org-stats,

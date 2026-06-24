@@ -7,6 +7,7 @@ const {
   registrationTicketRevenue,
   registrationBookingFee,
 } = require('./booking-fees');
+const { formatTicketsSoldLabel } = require('./tickets-sold-label');
 
 const PAYOUT_STATUS_LABELS = {
   pending_review: 'Pending review',
@@ -348,12 +349,7 @@ async function enrichEventsWithPayoutData(events) {
       ticketsSold,
       revenueNum: breakdown.amount_gross,
       revenueDisplay: formatGbp(breakdown.amount_gross),
-      ticketsSoldLabel:
-        capacity > 0
-          ? `${ticketsSold} / ${capacity}`
-          : ticketsSold > 0
-            ? String(ticketsSold)
-            : '0',
+      ticketsSoldLabel: formatTicketsSoldLabel(ticketsSold, capacity),
     };
     return enrichEventPayoutFields(
       withSales,
@@ -457,12 +453,7 @@ async function enrichEventsWithRegistrationSales(events) {
       ticketsSold,
       revenueNum: breakdown.amount_gross,
       revenueDisplay: formatGbp(breakdown.amount_gross),
-      ticketsSoldLabel:
-        capacity > 0
-          ? `${ticketsSold} / ${capacity}`
-          : ticketsSold > 0
-            ? String(ticketsSold)
-            : '0',
+      ticketsSoldLabel: formatTicketsSoldLabel(ticketsSold, capacity),
     };
   });
 }

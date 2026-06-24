@@ -182,6 +182,48 @@
   background: var(--od-white);
 }
 
+.org-select,
+.org-filter-bar select,
+.org-reviews-toolbar select {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 38px;
+  padding: 8px 36px 8px 14px;
+  border: 1.5px solid var(--od-border-soft);
+  border-radius: var(--od-radius-sm);
+  background-color: var(--od-white);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235a6a72' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--od-text-dark);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.org-reviews-toolbar .org-select,
+.org-reviews-toolbar select {
+  min-width: min(100%, 220px);
+  flex-shrink: 0;
+}
+
+.org-select:hover,
+.org-filter-bar select:hover,
+.org-reviews-toolbar select:hover {
+  border-color: #b8d4dc;
+}
+
+.org-select:focus,
+.org-filter-bar select:focus,
+.org-reviews-toolbar select:focus {
+  outline: none;
+  border-color: var(--od-purple);
+  box-shadow: 0 0 0 3px rgba(45, 125, 142, 0.14);
+}
+
 .org-table-search {
   flex: 1;
   min-width: 180px;
@@ -272,17 +314,305 @@
 
 .org-reviews-toolbar {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 16px;
 }
 
+.org-reviews-toolbar-main {
+  flex: 1;
+  min-width: 0;
+}
+
 .org-reviews-summary {
   font-size: 13px;
   color: var(--od-text-soft);
   margin: 0;
+}
+
+.org-ranking-pill {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--od-purple-dark);
+  background: var(--od-purple-pale);
+  border: 1px solid rgba(45, 125, 142, 0.2);
+  border-radius: 999px;
+  padding: 5px 12px;
+  display: inline-block;
+  line-height: 1.35;
+}
+
+.org-ranking-pill[hidden] {
+  display: none !important;
+}
+
+.org-ranking-banner {
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  border-radius: var(--od-radius-sm);
+  background: linear-gradient(135deg, #fdf8ec 0%, #f0f7f9 100%);
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--od-text-dark);
+}
+
+.org-ranking-banner[hidden] {
+  display: none !important;
+}
+
+.org-ranking-banner strong {
+  color: var(--od-purple-dark);
+}
+
+.org-ranking-panel {
+  margin: 0 0 20px;
+  border-radius: var(--od-radius);
+  border: 1px solid rgba(201, 168, 76, 0.28);
+  background: linear-gradient(135deg, #fdf8ec 0%, #f4f9fb 100%);
+  overflow: hidden;
+}
+
+.org-ranking-panel[hidden] {
+  display: none !important;
+}
+
+.org-ranking-panel-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--od-text-dark);
+}
+
+.org-ranking-panel-toggle:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.org-ranking-panel-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--od-purple-dark);
+}
+
+.org-ranking-panel-summary {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--od-text-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.org-ranking-panel-chev {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--od-purple-dark);
+}
+
+.org-ranking-panel-body {
+  padding: 0 16px 16px;
+  border-top: 1px solid rgba(201, 168, 76, 0.2);
+}
+
+.org-ranking-panel-body[hidden] {
+  display: none !important;
+}
+
+.org-ranking-panel-body .org-ranking-banner {
+  margin: 14px 0 10px;
+}
+
+.org-ranking-panel-body .org-ranking-share {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.org-ranking-share {
+  margin: 0 0 24px;
+  padding: 18px 20px;
+  border-radius: var(--od-radius);
+  background: linear-gradient(135deg, #fdf8ec 0%, #f4f9fb 100%);
+  border: 1px solid rgba(201, 168, 76, 0.28);
+}
+
+.org-ranking-share[hidden] {
+  display: none !important;
+}
+
+.org-ranking-share-teaser {
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  border-radius: var(--od-radius-sm);
+  background: linear-gradient(135deg, #fdf8ec 0%, #f4f9fb 100%);
+  border: 1px solid rgba(201, 168, 76, 0.28);
+  font-size: 13px;
+  color: var(--od-text-mid);
+}
+
+.org-ranking-share-teaser[hidden] {
+  display: none !important;
+}
+
+.org-ranking-share-teaser-link {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  color: var(--od-purple-dark);
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.org-ranking-share-head {
+  margin-bottom: 14px;
+}
+
+.org-ranking-share-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.org-ranking-share-card {
+  background: var(--od-white);
+  border: 1px solid var(--od-border-soft);
+  border-radius: var(--od-radius-sm);
+  padding: 14px 16px;
+}
+
+.org-ranking-share-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 8px;
+}
+
+.org-ranking-share-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--od-text-dark);
+  margin: 0;
+}
+
+.org-ranking-share-meta {
+  font-size: 12px;
+  color: var(--od-text-soft);
+  margin: 0 0 12px;
+}
+
+.org-ranking-share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.org-ranking-share-preview {
+  margin: 0 0 12px;
+}
+
+.org-ranking-share-preview-label {
+  margin: 0 0 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--od-text-soft);
+}
+
+.org-ranking-share-preview-card {
+  background: #f8fafc;
+  border: 1px solid var(--od-border-soft);
+  border-radius: var(--od-radius-sm);
+  padding: 12px 14px;
+  border-left: 3px solid var(--od-purple);
+}
+
+.org-ranking-share-preview-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--od-text-dark);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.org-ranking-tier-guide {
+  font-size: 13px;
+  color: var(--od-text-mid);
+}
+
+.org-ranking-tier-guide summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--od-purple-dark);
+  margin-bottom: 10px;
+}
+
+.org-ranking-tier-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0 4px;
+}
+
+.org-ranking-tier-example {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.org-ranking-tier-example-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--od-text-soft);
+  min-width: 4.5rem;
+}
+
+.org-ranking-inline {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  padding: 2px 8px;
+  line-height: 1.35;
+}
+
+.org-td-name .org-ranking-inline {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.org-review-body--rating-only {
+  margin: 0;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--od-text-soft);
 }
 
 .org-reviews-list {
@@ -1330,6 +1660,14 @@
 .org-td-name a:hover {
   color: var(--od-purple);
   text-decoration: underline;
+}
+
+.org-booking-ref {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--od-text-soft);
 }
 
 .org-revenue {

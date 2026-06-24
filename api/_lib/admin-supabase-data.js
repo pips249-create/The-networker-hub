@@ -3,7 +3,6 @@
  */
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { parseTypeCategory } = require('./event-types');
-const { scanEventHealth } = require('./admin-event-health');
 const {
   registrationTicketRevenue,
   registrationBookingFee,
@@ -40,21 +39,39 @@ function isTestActivityText(text) {
 }
 
 async function fetchDashboardMetrics(sb) {
-  const [eventsRes, workshopsRes, orgRes, attendeesRes, accountsRes, regsRes] = await Promise.all([
-    sb.from('events').select('id, event_type, approval_status, starts_at'),
+  const cutoff = new Date(Date.now() - 86400000).toISOString();
+  const [
+    approvedEventsRes,
+    workshopsRes,
+    orgRes,
+    attendeesRes,
+    accountsRes,
+    regsRes,
+    liveDatedRes,
+    liveUndatedRes,
+  ] = await Promise.all([
+    sb.from('events').select('event_type').eq('approval_status', 'Approved'),
     sb.from('workshops').select('id', { count: 'exact', head: true }),
     sb.from('organisers').select('id', { count: 'exact', head: true }),
     sb.from('attendees').select('id', { count: 'exact', head: true }),
     sb.from('hub_accounts').select('user_id', { count: 'exact', head: true }),
-    sb.from('registrations').select('amount_paid, payment_status'),
+    sb.from('registrations').select('amount_paid, payment_status').eq('payment_status', 'Paid'),
+    sb
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .eq('approval_status', 'Approved')
+      .gte('starts_at', cutoff),
+    sb
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .eq('approval_status', 'Approved')
+      .is('starts_at', null),
   ]);
 
-  if (eventsRes.error) throw new Error(eventsRes.error.message);
+  if (approvedEventsRes.error) throw new Error(approvedEventsRes.error.message);
   if (regsRes.error) throw new Error(regsRes.error.message);
 
-  const events = eventsRes.data || [];
-  const approved = events.filter((e) => e.approval_status === 'Approved');
-
+  const approved = approvedEventsRes.data || [];
   let meetings = 0;
   let exhibitions = 0;
   approved.forEach((e) => {
@@ -66,19 +83,10 @@ async function fetchDashboardMetrics(sb) {
   const training = workshopsRes.count || 0;
   let totalRevenue = 0;
   let hubBookingFees = 0;
-  (regsRes.data || [])
-    .filter((r) => r.payment_status === 'Paid')
-    .forEach((r) => {
-      totalRevenue += registrationTicketRevenue(r);
-      hubBookingFees += registrationBookingFee(r);
-    });
-
-  const now = Date.now() - 86400000;
-  const liveEvents = approved.filter((e) => {
-    if (!e.starts_at) return true;
-    const t = new Date(e.starts_at).getTime();
-    return !Number.isNaN(t) && t >= now;
-  }).length;
+  (regsRes.data || []).forEach((r) => {
+    totalRevenue += registrationTicketRevenue(r);
+    hubBookingFees += registrationBookingFee(r);
+  });
 
   return {
     revenue: round2(totalRevenue),
@@ -92,38 +100,35 @@ async function fetchDashboardMetrics(sb) {
     organisers: orgRes.count || 0,
     providers: training,
     attendees: Math.max(attendeesRes.count || 0, accountsRes.count || 0),
-    liveEvents,
+    liveEvents: (liveDatedRes.count || 0) + (liveUndatedRes.count || 0),
     currency: 'GBP',
   };
 }
 
 async function fetchAlerts(sb) {
   const alerts = [];
-  const health = await scanEventHealth();
-  const [incompleteOrgs, recentReviews, openReportsRes] = await Promise.all([
+  const [
+    incompleteOrgs,
+    recentReviews,
+    openReportsRes,
+    pendingEvents,
+    pendingOpportunities,
+    pendingApps,
+  ] = await Promise.all([
     sb.from('organisers').select('id', { count: 'exact', head: true }).or(INCOMPLETE_ORGANISER_FILTER),
     sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
     sb.from('listing_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+    sb.from('events').select('id', { count: 'exact', head: true }).eq('approval_status', 'Pending Review'),
+    sb
+      .from('business_opportunities')
+      .select('id', { count: 'exact', head: true })
+      .eq('approval_status', 'Pending Review'),
+    sb.from('registrations').select('id', { count: 'exact', head: true }).eq('application_status', 'Pending'),
   ]);
 
   const spamReviewCount = (recentReviews.data || []).filter((r) => isSpamReview(r.review_text)).length;
   const openReports = openReportsRes.error ? 0 : openReportsRes.count || 0;
 
-  if (health.count > 0) {
-    alerts.push({
-      id: 'event-health',
-      severity: 'high',
-      title: `${health.count} published event${health.count === 1 ? '' : 's'} missing data`,
-      detail: 'Open Event data issues to fix dates, organisers, VAT, or profile fields.',
-      href: '#cleanup/issues',
-      time: new Date().toISOString(),
-    });
-  }
-
-  const pendingEvents = await sb
-    .from('events')
-    .select('id', { count: 'exact', head: true })
-    .eq('approval_status', 'Pending Review');
   if (!pendingEvents.error && (pendingEvents.count || 0) > 0) {
     alerts.push({
       id: 'pending-events',
@@ -135,10 +140,6 @@ async function fetchAlerts(sb) {
     });
   }
 
-  const pendingOpportunities = await sb
-    .from('business_opportunities')
-    .select('id', { count: 'exact', head: true })
-    .eq('approval_status', 'Pending Review');
   if (!pendingOpportunities.error && (pendingOpportunities.count || 0) > 0) {
     alerts.push({
       id: 'pending-opportunities',
@@ -150,10 +151,6 @@ async function fetchAlerts(sb) {
     });
   }
 
-  const pendingApps = await sb
-    .from('registrations')
-    .select('id', { count: 'exact', head: true })
-    .eq('application_status', 'Pending');
   if (!pendingApps.error && (pendingApps.count || 0) > 0) {
     alerts.push({
       id: 'pending-apps',

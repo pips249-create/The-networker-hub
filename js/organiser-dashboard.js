@@ -36,6 +36,7 @@
     attendeesAll: [],
     cancellationsAll: [],
     reviews: [],
+    groupRankings: {},
     teamMembers: [],
     workspaceSummary: null,
     eventSummaries: [],
@@ -129,6 +130,368 @@
     set('stat-opp-listings', String(liveListings));
 
     renderHubPortalMeta();
+    renderOrganiserRankingBanner();
+    renderOrganiserRankingShare();
+  }
+
+  function rankingTierClass(tier) {
+    const t = String(tier || '').toLowerCase();
+    if (t === 'top10' || t === 'top25' || t === 'top50') return 'hub-ranking-badge--' + t;
+    return 'hub-ranking-badge--top50';
+  }
+
+  function rankingBadgeText(row) {
+    if (!row) return '';
+    return row.displayLabel || String(row.label || '').replace(' on the Hub', '') + (row.periodLabel ? ' · ' + row.periodLabel : '');
+  }
+
+  function groupPublicProfileUrl(groupId) {
+    return '../events/organiser.html?id=' + encodeURIComponent(groupId);
+  }
+
+  function rankingShareText(groupName, row) {
+    const badge = rankingBadgeText(row);
+    const url = groupPublicProfileUrl(row.id);
+    const absUrl =
+      (location.origin || '') +
+      '/events/organiser.html?id=' +
+      encodeURIComponent(row.id);
+    return (
+      'Proud to share that ' +
+      (groupName || 'our group') +
+      ' is a ' +
+      badge +
+      ' on The Networker Hub. ⭐ ' +
+      absUrl
+    );
+  }
+
+  function rankingBadgeHtml(row, options) {
+    const opts = options || {};
+    if (!row?.label && !row?.tier) return '';
+    const tier = row.tier || 'top50';
+    const lg = opts.large ? ' hub-ranking-badge--lg' : '';
+    const extra = opts.extraClass ? ' ' + opts.extraClass : '';
+    return (
+      '<span class="hub-ranking-badge ' +
+      rankingTierClass(tier) +
+      lg +
+      extra +
+      '" title="Ranked #' +
+      esc(String(row.rank)) +
+      ' of ' +
+      esc(String(row.totalRanked)) +
+      ' rated groups">★ ' +
+      esc(rankingBadgeText(row)) +
+      '</span>'
+    );
+  }
+
+  function copyOrganiserText(text, btn) {
+    const done = function () {
+      if (!btn) return;
+      const prev = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(function () {
+        btn.textContent = prev;
+      }, 2000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function () {
+        window.prompt('Copy this text:', text);
+      });
+    } else {
+      window.prompt('Copy this text:', text);
+      done();
+    }
+  }
+
+  function buildRankingShareCardHtml(g, row) {
+    const shareText = rankingShareText(g.name, row);
+    const profileUrl =
+      (location.origin || '') + '/events/organiser.html?id=' + encodeURIComponent(g.id);
+    return (
+      '<article class="org-ranking-share-card">' +
+      '<div class="org-ranking-share-card-head">' +
+      '<h3 class="org-ranking-share-card-name">' +
+      esc(g.name) +
+      '</h3>' +
+      rankingBadgeHtml(row, { large: true }) +
+      '</div>' +
+      '<p class="org-ranking-share-meta">Ranked #' +
+      esc(String(row.rank)) +
+      ' of ' +
+      esc(String(row.totalRanked)) +
+      ' rated groups · ★ ' +
+      esc(Number(row.rating).toFixed(1)) +
+      ' from ' +
+      esc(String(row.reviewCount)) +
+      ' reviews</p>' +
+      '<div class="org-ranking-share-preview">' +
+      '<p class="org-ranking-share-preview-label">Social post preview</p>' +
+      '<div class="org-ranking-share-preview-card" role="group" aria-label="Social post preview">' +
+      '<p class="org-ranking-share-preview-text">' +
+      esc(shareText) +
+      '</p></div></div>' +
+      '<div class="org-ranking-share-actions">' +
+      '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-copy-share="' +
+      esc(shareText) +
+      '">Copy social post</button>' +
+      '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-copy-link="' +
+      esc(profileUrl) +
+      '">Copy profile link</button>' +
+      '<a class="org-btn org-btn-outline org-btn-sm" href="' +
+      esc(groupPublicProfileUrl(g.id)) +
+      '" target="_blank" rel="noopener noreferrer">View public profile</a>' +
+      '</div></article>'
+    );
+  }
+
+  function bindRankingShareActions(root) {
+    if (!root) return;
+    root.querySelectorAll('[data-copy-share]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        copyOrganiserText(btn.getAttribute('data-copy-share') || '', btn);
+      });
+    });
+    root.querySelectorAll('[data-copy-link]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        copyOrganiserText(btn.getAttribute('data-copy-link') || '', btn);
+      });
+    });
+  }
+
+  const RANKING_PANEL_COLLAPSE_KEYS = {
+    overview: 'hub_org_ranking_panel_overview_collapsed_v1',
+    events: 'hub_org_ranking_panel_events_collapsed_v1',
+  };
+
+  const rankingPanelBound = new Set();
+
+  function isRankingPanelCollapsed(storageKey) {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored === null) return true;
+      return stored === '1';
+    } catch {
+      return true;
+    }
+  }
+
+  function setRankingPanelCollapsed(storageKey, collapsed) {
+    try {
+      localStorage.setItem(storageKey, collapsed ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function bindRankingPanel(panelId, storageKey) {
+    if (rankingPanelBound.has(panelId)) return;
+    const panel = document.getElementById(panelId);
+    if (!panel) return;
+    const toggle = panel.querySelector('.org-ranking-panel-toggle');
+    const body = panel.querySelector('.org-ranking-panel-body');
+    const chev = panel.querySelector('.org-ranking-panel-chev');
+    if (!toggle || !body) return;
+
+    function applyCollapsed(collapsed) {
+      body.hidden = collapsed;
+      toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      if (chev) chev.textContent = collapsed ? 'Show' : 'Hide';
+      panel.classList.toggle('is-expanded', !collapsed);
+    }
+
+    applyCollapsed(isRankingPanelCollapsed(storageKey));
+    toggle.addEventListener('click', function () {
+      const collapsed = !body.hidden;
+      applyCollapsed(collapsed);
+      setRankingPanelCollapsed(storageKey, collapsed);
+    });
+    rankingPanelBound.add(panelId);
+  }
+
+  function updateRankingPanelSummaries(summaryText) {
+    ['org-ranking-panel-overview-summary', 'org-ranking-panel-events-summary'].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = summaryText ? ' — ' + summaryText : '';
+    });
+  }
+
+  function renderOrganiserRankingShare() {
+    const shareRoot = document.getElementById('org-ranking-share-events');
+    const cardsEl = document.getElementById('org-ranking-share-cards');
+    const examplesEl = document.getElementById('org-ranking-tier-examples');
+    const groupsMount = document.getElementById('org-ranking-share-groups-mount');
+    const overviewPanel = document.getElementById('org-ranking-panel-overview');
+    const eventsPanel = document.getElementById('org-ranking-panel-events');
+
+    const periodLabel =
+      (bestGroupRanking() && bestGroupRanking().periodLabel) ||
+      new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+    if (examplesEl) {
+      examplesEl.innerHTML = [
+        { tier: 'top10', sample: 'Top 10 networking group' },
+        { tier: 'top25', sample: 'Top 25 networking group' },
+        { tier: 'top50', sample: 'Top 50 networking group' },
+      ]
+        .map(function (item) {
+          return (
+            '<div class="org-ranking-tier-example">' +
+            '<span class="org-ranking-tier-example-label">' +
+            esc(item.tier.replace('top', 'Top ')) +
+            '</span>' +
+            '<span class="hub-ranking-badge hub-ranking-badge--' +
+            esc(item.tier) +
+            ' hub-ranking-badge--lg">★ ' +
+            esc(item.sample + ' · ' + periodLabel) +
+            '</span></div>'
+          );
+        })
+        .join('');
+    }
+
+    const ranked = (state.groups || [])
+      .map(function (g) {
+        const row = state.groupRankings?.[g.id];
+        if (!row?.label) return null;
+        return { group: g, row: { ...row, id: g.id } };
+      })
+      .filter(Boolean);
+
+    const cardsHtml = ranked.length
+      ? ranked
+          .map(function (item) {
+            return buildRankingShareCardHtml(item.group, item.row);
+          })
+          .join('')
+      : '';
+
+    const summaryText = ranked.length ? rankingBadgeText(ranked[0].row) : '';
+    updateRankingPanelSummaries(summaryText);
+
+    if (overviewPanel) overviewPanel.hidden = !ranked.length;
+    if (eventsPanel) eventsPanel.hidden = !ranked.length;
+
+    bindRankingPanel('org-ranking-panel-overview', RANKING_PANEL_COLLAPSE_KEYS.overview);
+    bindRankingPanel('org-ranking-panel-events', RANKING_PANEL_COLLAPSE_KEYS.events);
+
+    if (shareRoot) {
+      if (cardsEl) cardsEl.innerHTML = cardsHtml;
+      bindRankingShareActions(shareRoot);
+    }
+
+    if (groupsMount) {
+      if (ranked.length) {
+        groupsMount.innerHTML =
+          '<section class="org-ranking-share org-ranking-share--compact">' +
+          '<h3 class="org-section-title">Your ranking badges</h3>' +
+          '<p class="org-section-sub">Share on social media — open <a href="#events-overview">My events</a> for the full preview.</p>' +
+          '<div class="org-ranking-share-cards">' +
+          cardsHtml +
+          '</div></section>';
+        bindRankingShareActions(groupsMount);
+      } else {
+        groupsMount.innerHTML = '';
+      }
+    }
+  }
+
+  function bestGroupRanking() {
+    const rankings = state.groupRankings || {};
+    const entries = Object.keys(rankings)
+      .map((id) => ({ id, ...rankings[id] }))
+      .filter((row) => row.label && row.rank);
+    if (!entries.length) return null;
+    entries.sort((a, b) => a.rank - b.rank);
+    const best = entries[0];
+    const group = state.groups.find((g) => g.id === best.id);
+    return {
+      ...best,
+      groupName: group?.name || 'Your group',
+    };
+  }
+
+  function rankingForGroup(groupId) {
+    const key = String(groupId || '').trim();
+    if (!key || key === 'all') return bestGroupRanking();
+    const row = state.groupRankings?.[key];
+    if (!row?.label) return null;
+    const group = state.groups.find((g) => g.id === key);
+    return { ...row, id: key, groupName: group?.name || 'Your group' };
+  }
+
+  function formatTicketsSoldLabel(sold, capacity) {
+    const n = Math.max(0, Number(sold) || 0);
+    const cap = Number(capacity);
+    if (Number.isFinite(cap) && cap > 0) return n + ' / ' + cap;
+    if (n > 0) return n + ' sold';
+    return '0 / —';
+  }
+
+  function groupRankingBadgeHtml(groupId) {
+    const row = state.groupRankings?.[groupId];
+    if (!row?.label) return '';
+    return rankingBadgeHtml(row, { extraClass: 'org-ranking-inline' });
+  }
+
+  function renderOrganiserRankingBanner() {
+    const best = bestGroupRanking();
+    const html = best
+      ? '<strong>' +
+        esc(best.displayLabel || best.label) +
+        '</strong> — <em>' +
+        esc(best.groupName) +
+        '</em> is ranked #' +
+        esc(String(best.rank)) +
+        ' of ' +
+        esc(String(best.totalRanked)) +
+        ' rated groups on the Hub (★ ' +
+        esc(Number(best.rating).toFixed(1)) +
+        ' from ' +
+        esc(String(best.reviewCount)) +
+        ' reviews).'
+      : '';
+    ['org-ranking-banner', 'org-events-ranking-banner'].forEach((id) => {
+      const banner = document.getElementById(id);
+      if (!banner) return;
+      if (!best) {
+        banner.hidden = true;
+        banner.innerHTML = '';
+        return;
+      }
+      banner.hidden = false;
+      banner.innerHTML = html;
+    });
+
+    const overviewPanel = document.getElementById('org-ranking-panel-overview');
+    const eventsPanel = document.getElementById('org-ranking-panel-events');
+    const hasRanking = Boolean(best);
+    if (overviewPanel) overviewPanel.hidden = !hasRanking;
+    if (eventsPanel) eventsPanel.hidden = !hasRanking;
+    if (hasRanking) {
+      updateRankingPanelSummaries(rankingBadgeText(best));
+      bindRankingPanel('org-ranking-panel-overview', RANKING_PANEL_COLLAPSE_KEYS.overview);
+      bindRankingPanel('org-ranking-panel-events', RANKING_PANEL_COLLAPSE_KEYS.events);
+    }
+  }
+
+  function renderReviewsRankingPill() {
+    const pill = document.getElementById('reviews-ranking-pill');
+    if (!pill) return;
+    const ranking = rankingForGroup(filters.reviewsGroup);
+    if (!ranking) {
+      pill.hidden = true;
+      pill.textContent = '';
+      return;
+    }
+    pill.hidden = false;
+    const prefix =
+      filters.reviewsGroup !== 'all' ? String(ranking.groupName || 'Your group') + ': ' : '';
+    pill.textContent =
+      prefix + rankingBadgeText(ranking) + ' (#' + ranking.rank + ' of ' + ranking.totalRanked + ')';
   }
 
   function renderHubPortalMeta() {
@@ -279,6 +642,15 @@
     });
   }
 
+  function formatBookingReference(registrationId) {
+    const raw = String(registrationId || '')
+      .replace(/-/g, '')
+      .toUpperCase();
+    if (raw.length >= 8) return 'HUB-' + raw.slice(0, 8);
+    if (raw) return 'HUB-' + raw;
+    return '—';
+  }
+
   function formatTimeRange(startRaw, endRaw) {
     if (!startRaw) return '—';
     const start = new Date(startRaw);
@@ -374,12 +746,7 @@
       endDate: sorted[sorted.length - 1].date || primary.endDate,
       ticketsSold,
       ticketsCapacity,
-      ticketsSoldLabel:
-        ticketsCapacity > 0
-          ? ticketsSold + ' / ' + ticketsCapacity
-          : ticketsSold > 0
-            ? String(ticketsSold)
-            : '0',
+      ticketsSoldLabel: formatTicketsSoldLabel(ticketsSold, ticketsCapacity),
       revenueNum,
       revenueDisplay: formatGbpAmount(revenueNum),
       needsRefundConfirmation,
@@ -574,6 +941,9 @@
         '<button type="button" class="org-action-item" data-edit-group="' +
         esc(id) +
         '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit profile</strong><span>Update organiser page details</span></span></button>' +
+        '<a class="org-action-item" href="../events/organiser.html?id=' +
+        esc(id) +
+        '" target="_blank" rel="noopener noreferrer"><span class="org-action-icon">↗</span><span class="org-action-text"><strong>View public profile</strong><span>See your group page and ranking badge</span></span></a>' +
         '<button type="button" class="org-action-item" data-add-event-for-group="' +
         esc(id) +
         '"><span class="org-action-icon">📅</span><span class="org-action-text"><strong>Add an event</strong><span>List a new event for this group</span></span></button>' +
@@ -724,7 +1094,10 @@
       'events-list': ['My Events', 'Manage all your event listings — click any event name to edit.'],
       'events-tickets': ['Tickets', 'All ticket types across your events.'],
       'events-attendees': ['Attendees', 'Registrations for your events — filter by event and download a CSV.'],
-      'events-cancellations': ['Cancellations', 'Bookings attendees cancelled themselves — see who released their place and whether a refund may be due.'],
+      'events-cancellations': [
+        'Cancellations',
+        'Bookings attendees cancelled themselves — use the booking reference for Stripe or support, and check whether a refund may be due.',
+      ],
       'events-reviews': ['Reviews', 'Read and reply to attendee feedback.'],
       'events-revenue': ['Revenue', 'Revenue and performance across your listings.'],
     };
@@ -918,13 +1291,24 @@
 
   async function loadCancellationsAll() {
     const hint = document.getElementById('cancellations-load-hint');
-    if (hint) hint.hidden = false;
+    const empty = document.getElementById('cancellations-empty');
+    if (hint) {
+      hint.hidden = false;
+      hint.textContent = 'Loading cancellations…';
+    }
     const { ok, data } = await api('/api/organiser/attendees?eventId=all&view=cancellations');
     if (hint) hint.hidden = true;
     if (ok) {
       state.cancellationsAll = data.cancellations || [];
+      return true;
     }
-    return ok;
+    state.cancellationsAll = [];
+    if (empty) {
+      empty.hidden = false;
+      empty.textContent =
+        'Could not load cancellations. ' + (data.message || data.error || 'Please refresh and try again.');
+    }
+    return false;
   }
 
   function renderCancellations() {
@@ -952,11 +1336,14 @@
     pageInfo.items.forEach((row) => {
       const tr = document.createElement('tr');
       const refundClass = row.refundEligible ? 'org-badge org-badge-green' : 'org-badge org-badge-purple';
+      const bookingRef = row.bookingReference || formatBookingReference(row.id);
       tr.innerHTML =
         '<td class="org-td-name">' +
         esc(row.name) +
         '</td><td>' +
         esc(row.email || '—') +
+        '</td><td class="org-booking-ref">' +
+        esc(bookingRef) +
         '</td><td>' +
         esc(row.eventTitle) +
         '</td><td>' +
@@ -2226,7 +2613,9 @@
         esc(g.id) +
         '">' +
         esc(g.name) +
-        '</button></td><td>' +
+        '</button>' +
+        groupRankingBadgeHtml(g.id) +
+        '</td><td>' +
         esc(String(g.eventsListed != null ? g.eventsListed : 0)) +
         '</td><td class="org-revenue">' +
         esc(g.revenueDisplay || '£0') +
@@ -2332,7 +2721,9 @@
         esc(g.id) +
         '">' +
         esc(g.name) +
-        '</button></td><td>' +
+        '</button>' +
+        groupRankingBadgeHtml(g.id) +
+        '</td><td>' +
         esc(String(g.eventsListed != null ? g.eventsListed : 0)) +
         '</td><td class="org-revenue">' +
         esc(g.revenueDisplay || '£0') +
@@ -2513,6 +2904,7 @@
           ? ' · Overall average: <strong class="org-rating">★ ' + avg.toFixed(1) + '</strong>'
           : '');
     }
+    renderReviewsRankingPill();
 
     if (!list.length) {
       if (empty) empty.hidden = false;
@@ -2546,9 +2938,10 @@
         esc(formatDateShort(r.date)) +
         '</div></div></div><div class="org-rating">' +
         starsReviewHtml(r.rating) +
-        '</div></div><div class="org-review-body">"' +
-        esc(r.body) +
-        '"</div>' +
+        '</div></div>' +
+        (r.body
+          ? '<div class="org-review-body">"' + esc(r.body) + '"</div>'
+          : '<p class="org-review-body org-review-body--rating-only">Rating only — no written feedback</p>') +
         replyBlock;
       listEl.appendChild(card);
     });
@@ -3347,6 +3740,7 @@
 
   function renderAll() {
     renderStats();
+    renderOrganiserRankingShare();
     renderOverviewGroups();
     renderOverviewEvents();
     renderGroups();
@@ -3390,10 +3784,14 @@
     listPages.revenue = 1;
     listPages.attendees = 1;
     state.reviews = data.reviews || [];
+    state.groupRankings = data.groupRankings || {};
     state.workspaceSummary =
       data.workspaceSummary && data.workspaceSummary.computed ? data.workspaceSummary : null;
     state.eventSummaries = data.eventSummaries || [];
     loadAttendeesAll();
+    if (eventsSubRoute === 'events-cancellations') {
+      loadCancellationsAll().then(() => renderCancellations());
+    }
     state.groupsError = data.groupsError;
     state.airtable = data.airtable;
     state.adminView = data.adminView;

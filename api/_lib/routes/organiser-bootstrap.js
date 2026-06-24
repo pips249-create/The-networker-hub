@@ -69,6 +69,7 @@ module.exports = async function handler(req, res) {
       workspaceSummary: ws.workspaceSummary?.computed ? ws.workspaceSummary : null,
       eventSummaries: ws.eventSummaries || [],
       reviews: ws.reviews || [],
+      groupRankings: ws.groupRankings || {},
       eventsPagination: ws.eventsPagination || {
         total: ws.events.length,
         limit: ws.events.length,

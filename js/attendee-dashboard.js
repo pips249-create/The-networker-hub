@@ -187,20 +187,21 @@
       return (
         '<div class="ad-action-group">' +
         ticketButtonHtml(reg) +
-        '<a class="ad-btn" href="' +
+        '<div class="ad-action-links">' +
+        '<a class="ad-action-link" href="' +
         esc(eventHref(reg)) +
         '">View event</a>' +
-        '<button type="button" class="ad-btn ad-cancel-booking" data-registration-id="' +
+        '<button type="button" class="ad-action-link ad-action-link--danger ad-cancel-booking" data-registration-id="' +
         esc(reg.id || '') +
         '">Cancel booking</button>' +
-        '</div>'
+        '</div></div>'
       );
     }
     if (opts.showTicket) {
       return (
         '<div class="ad-action-group">' +
         ticketButtonHtml(reg) +
-        '<a class="ad-btn" href="' +
+        '<a class="ad-action-link" href="' +
         esc(eventHref(reg)) +
         '">View event</a>' +
         '</div>'
@@ -221,6 +222,7 @@
   let pendingCancelRegistration = null;
   let highlightRegistrationId = '';
   let dashboardReady = false;
+  let renderedRoutes = new Set();
 
   function setDashboardLoading(on) {
     const el = document.getElementById('ad-dash-loading');
@@ -857,12 +859,12 @@
         esc(formatAmountPaid(reg.amountPaid, reg.paymentStatus)) +
         '</td><td>' +
         paymentBadge(reg.paymentStatus) +
-        '</td><td><div class="ad-action-group">' +
+        '</td><td class="ad-td-actions"><div class="ad-action-group">' +
         '<button type="button" class="ad-btn ad-btn-primary ad-view-payment" data-registration-id="' +
         esc(reg.id || '') +
         '">Payment details</button>' +
         (reg.canCancel
-          ? '<button type="button" class="ad-btn ad-cancel-booking" data-registration-id="' +
+          ? '<button type="button" class="ad-action-link ad-action-link--danger ad-cancel-booking" data-registration-id="' +
             esc(reg.id || '') +
             '">Cancel booking</button>'
           : '') +
@@ -1039,7 +1041,9 @@
         const key = btn.getAttribute('data-list');
         if (!p || !key || p < 1 || p > totalPages || p === listPages[key]) return;
         listPages[key] = p;
-        renderAllTables();
+        if (key === 'upcoming') renderRouteTables('upcoming', { force: true });
+        else if (key === 'past') renderRouteTables('past', { force: true });
+        else renderAllTables();
       });
     });
   }
@@ -1080,7 +1084,7 @@
           paymentBadge(reg.paymentStatus) +
           '</td><td>' +
           reviewBadge(reg.reviewStatus, reg) +
-          '</td><td>' +
+          '</td><td class="ad-td-actions">' +
           actionCell(reg, { showCancel: listKey === 'upcoming', showTicket: true }) +
           '</td>';
       } else {
@@ -1093,7 +1097,7 @@
           esc(formatDateShort(reg.date)) +
           '</td><td>' +
           reviewBadge(reg.reviewStatus, reg) +
-          '</td><td>' +
+          '</td><td class="ad-td-actions">' +
           actionCell(reg) +
           '</td>';
       }
@@ -1197,6 +1201,7 @@
   }
 
   function renderRouteTables(route, options) {
+    if (!dashboardReady) return;
     const force = Boolean(options && options.force);
     const key = route || 'overview';
     if (!force && renderedRoutes.has(key)) return;
@@ -1259,8 +1264,6 @@
     renderStats(data.stats || {});
     renderRouteTables(currentRoute, { force: true });
   }
-
-  let renderedRoutes = new Set();
 
   function renderAllTables() {
     renderedRoutes.clear();
@@ -1355,17 +1358,27 @@
     renderWelcome(sessionData.user);
 
     try {
-      await ensureAttendeeHubMode();
+      ensureAttendeeHubMode();
 
-      const res = await fetch('/api/auth/attendee-dashboard', { credentials: 'include' });
-      const data = await res.json();
+      const [dashRes, favRes] = await Promise.all([
+        fetch('/api/auth/attendee-dashboard', { credentials: 'include' }),
+        fetch('/api/auth/favourites', { credentials: 'include' }),
+      ]);
+      const data = await dashRes.json();
       if (!data.ok) {
         dashboardReady = true;
         registrations = [];
         opportunityEnquiries = [];
         renderStats({});
-        renderAllTables();
-        loadSavedEvents();
+        renderRouteTables(currentRoute, { force: true });
+        try {
+          const favData = await favRes.json();
+          if (favData && favData.ok && Array.isArray(favData.favourites)) {
+            savedEvents = favData.favourites;
+          }
+        } catch {
+          savedEvents = [];
+        }
         const sub = document.getElementById('ad-welcome-sub');
         if (sub) {
           sub.textContent =
@@ -1376,12 +1389,21 @@
         return;
       }
 
-      registrations = data.registrations || [];
-      opportunityEnquiries = data.opportunityEnquiries || [];
-      dashboardReady = true;
-      renderStats(data.stats || {});
-      renderAllTables();
-      loadSavedEvents();
+      try {
+        const favData = await favRes.json();
+        if (favData && favData.ok && Array.isArray(favData.favourites)) {
+          savedEvents = favData.favourites;
+        } else if (favData && favData.ok && Array.isArray(favData.eventIds)) {
+          savedEvents = favData.eventIds.map((id) => ({ eventId: id, title: 'Event' }));
+        }
+        if (window.HubFavourites && favData && Array.isArray(favData.eventIds)) {
+          window.HubFavourites.writeLocal(favData.eventIds);
+        }
+      } catch {
+        savedEvents = window.HubFavourites ? window.HubFavourites.ids().map((id) => ({ eventId: id })) : [];
+      }
+
+      applyDashboardData(data);
 
       const demoNote = document.getElementById('ad-demo-note');
       if (demoNote) demoNote.hidden = !data.isDemo;

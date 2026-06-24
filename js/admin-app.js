@@ -58,6 +58,10 @@
       title: 'System health',
       subtitle: 'Environment checks, Supabase connection, and go-live checklist',
     },
+    rankings: {
+      title: 'Group rankings',
+      subtitle: 'Monthly Top 10 / 25 / 50 badges, snapshot history, and congratulation emails',
+    },
     featured: {
       title: 'Featured spotlight',
       subtitle: 'Choose which approved events appear in the Premium Spotlight carousel',
@@ -91,7 +95,10 @@
   var EVENT_TYPES = ['Meeting', 'Events', 'Exhibition', 'Awards'];
   var MEETING_FORMATS = ['In person', 'Online', 'Hybrid'];
   var healthCache = null;
+  var healthCacheFetchedAt = 0;
   var adminMetricsCache = null;
+  var HEALTH_STALE_MS = 5 * 60 * 1000;
+  var METRICS_POLL_MS = 90000;
   var adminNotificationsTimer = null;
   var groupCleanupCache = null;
   var eventCleanupCache = null;
@@ -115,12 +122,12 @@
     status: '',
     approval: '',
     sort: 'recent',
-    offset: 0,
+    page: 0,
     q: '',
-    hasMore: false,
     total: 0,
     loading: false,
     selected: {},
+    expanded: {},
   };
   var opportunityCleanupState = {
     status: '',
@@ -129,23 +136,22 @@
     featured: false,
     noImage: false,
     sort: 'recent',
-    offset: 0,
+    page: 0,
     q: '',
-    hasMore: false,
     total: 0,
     loading: false,
+    expanded: {},
+    selected: {},
   };
   var GROUP_PAGE_SIZE = 30;
-  var EVENT_PAGE_SIZE = 40;
-  var OPPORTUNITY_PAGE_SIZE = 40;
+  var EVENT_PAGE_SIZE = 30;
+  var OPPORTUNITY_PAGE_SIZE = 30;
   var eventOrganiserOptionsCache = null;
   var opportunityCleanupCache = null;
   var adminLogoPending = {};
   var groupSearchTimer = null;
   var eventSearchTimer = null;
   var opportunitySearchTimer = null;
-  var eventLoadObserver = null;
-  var opportunityLoadObserver = null;
 
   /** CMS ad placements — each maps to a cms_blocks.slot row. */
   var CMS_AD_SLOTS = [
@@ -498,6 +504,36 @@
       : 'Counts and lists load from Supabase when you open each page';
   }
 
+  function dashboardAlertsHtml(data) {
+    var alerts = data && data.alerts ? data.alerts.slice() : [];
+    var healthCount = healthCache && Number(healthCache.count) > 0 ? Number(healthCache.count) : 0;
+    if (healthCount > 0 && !alerts.some(function (a) {
+      return a.id === 'event-health';
+    })) {
+      alerts.unshift({
+        id: 'event-health',
+        severity: 'high',
+        title:
+          healthCount +
+          ' published event' +
+          (healthCount === 1 ? '' : 's') +
+          ' missing data',
+        detail: 'Open Event data issues to fix dates, organisers, VAT, or profile fields.',
+        href: '#cleanup/issues',
+        time: new Date().toISOString(),
+      });
+    }
+    return alerts.length
+      ? alerts.map(alertCard).join('')
+      : '<p class="text-sm text-emerald-700">No critical alerts right now.</p>';
+  }
+
+  function shouldRefreshHealth() {
+    if (document.getElementById('event-health-list')) return true;
+    if (!healthCacheFetchedAt) return true;
+    return Date.now() - healthCacheFetchedAt > HEALTH_STALE_MS;
+  }
+
   function applyDashboardNotifications(data) {
     if (!data || data.error || data.configured === false) return;
     adminMetricsCache = data;
@@ -505,10 +541,7 @@
 
     var alertsEl = document.getElementById('dashboard-alerts');
     if (alertsEl) {
-      var alerts = data.alerts || [];
-      alertsEl.innerHTML = alerts.length
-        ? alerts.map(alertCard).join('')
-        : '<p class="text-sm text-emerald-700">No critical alerts right now.</p>';
+      alertsEl.innerHTML = dashboardAlertsHtml(data);
     }
 
     var attentionEl = document.getElementById('dashboard-attention');
@@ -539,8 +572,22 @@
     updateHealthBadge(Math.max(notificationCount || 0, healthCount));
   }
 
-  function refreshAdminNotifications() {
-    return Promise.all([adminGet('/api/admin/metrics'), fetchEventHealth()]).then(function (results) {
+  function refreshAdminNotifications(options) {
+    var opts = options || {};
+    var tasks = [adminGet('/api/admin/metrics')];
+    if (opts.forceHealth || shouldRefreshHealth()) {
+      tasks.push(
+        fetchEventHealth().then(function (data) {
+          if (data && !data.error && data.configured !== false) {
+            healthCacheFetchedAt = Date.now();
+          }
+          return data;
+        })
+      );
+    } else {
+      tasks.push(Promise.resolve(healthCache));
+    }
+    return Promise.all(tasks).then(function (results) {
       applyDashboardNotifications(results[0]);
       return results[0];
     });
@@ -548,7 +595,9 @@
 
   function startAdminNotificationsPolling() {
     if (adminNotificationsTimer) clearInterval(adminNotificationsTimer);
-    adminNotificationsTimer = setInterval(refreshAdminNotifications, 60000);
+    adminNotificationsTimer = setInterval(function () {
+      refreshAdminNotifications();
+    }, METRICS_POLL_MS);
   }
 
   function adminGet(url) {
@@ -2327,6 +2376,48 @@
     });
   }
 
+  function applyDashboardMetrics(data) {
+    var metricsEl = document.getElementById('dashboard-metrics');
+    var preEl = document.getElementById('live-metrics');
+    if (!metricsEl && !preEl) return;
+
+    if (!data || data.error || data.configured === false) {
+      if (preEl) {
+        preEl.innerHTML =
+          '<p class="text-sm text-red-700">Snapshot unavailable. Check Supabase env vars on Vercel.</p>';
+      }
+      return;
+    }
+
+    var m = data.metrics || {};
+    var listings = m.listings || {};
+
+    if (metricsEl) {
+      metricsEl.innerHTML =
+        card(
+          'Paid ticket revenue',
+          fmtMoney(m.revenue || 0),
+          'Est. booking fees: ' + fmtMoney(m.fees || 0) + ' · Hub revenue from paid registrations',
+          'emerald'
+        ) +
+        card(
+          'Approved events',
+          String(listings.total || 0),
+          'Meetings ' +
+            (listings.meetings || 0) +
+            ' · Exhibitions ' +
+            (listings.exhibitions || 0) +
+            ' · Workshops ' +
+            (listings.training || 0),
+          'brand'
+        ) +
+        card('Organisers', String(m.organisers || 0), String(m.providers || 0) + ' workshop listings', 'violet') +
+        card('Hub accounts', String(m.attendees || 0), 'hub_accounts and attendee profiles', 'blue');
+    }
+
+    if (preEl) preEl.innerHTML = renderMetricsSummary(data);
+  }
+
   function renderDashboard() {
     main.innerHTML =
       '<div class="space-y-6">' +
@@ -2365,52 +2456,13 @@
       '<div id="live-metrics" class="text-sm text-slate-600">Loading…</div>' +
       '</div></section></div>';
 
-    adminGet('/api/admin/metrics').then(function (data) {
-      var metricsEl = document.getElementById('dashboard-metrics');
-      var preEl = document.getElementById('live-metrics');
+    if (adminMetricsCache && !adminMetricsCache.error && adminMetricsCache.configured !== false) {
+      applyDashboardMetrics(adminMetricsCache);
+      applyDashboardNotifications(adminMetricsCache);
+    }
 
-      if (!data || data.error || data.configured === false) {
-        var alertsEl = document.getElementById('dashboard-alerts');
-        if (alertsEl) {
-          alertsEl.innerHTML =
-            '<p class="text-sm text-red-700">Could not load dashboard data. Check Supabase env vars on Vercel.</p>';
-        }
-        if (preEl) {
-          preEl.innerHTML =
-            '<p class="text-sm text-red-700">Snapshot unavailable. Check Supabase env vars on Vercel.</p>';
-        }
-        return;
-      }
-
-      var m = data.metrics || {};
-      var listings = m.listings || {};
-
-      if (metricsEl) {
-        metricsEl.innerHTML =
-          card(
-            'Paid ticket revenue',
-            fmtMoney(m.revenue || 0),
-            'Est. booking fees: ' + fmtMoney(m.fees || 0) + ' · Hub revenue from paid registrations',
-            'emerald'
-          ) +
-          card(
-            'Approved events',
-            String(listings.total || 0),
-            'Meetings ' +
-              (listings.meetings || 0) +
-              ' · Exhibitions ' +
-              (listings.exhibitions || 0) +
-              ' · Workshops ' +
-              (listings.training || 0),
-            'brand'
-          ) +
-          card('Organisers', String(m.organisers || 0), String(m.providers || 0) + ' workshop listings', 'violet') +
-          card('Hub accounts', String(m.attendees || 0), 'hub_accounts and attendee profiles', 'blue');
-      }
-
-      applyDashboardNotifications(data);
-
-      if (preEl) preEl.innerHTML = renderMetricsSummary(data);
+    refreshAdminNotifications({ forceHealth: !healthCacheFetchedAt }).then(function (data) {
+      applyDashboardMetrics(data);
     });
   }
 
@@ -6159,11 +6211,14 @@
       });
   }
 
-  function fetchEventCleanup(append) {
+  function fetchEventCleanup(pageIndex) {
     if (eventCleanupState.loading) return Promise.resolve(eventCleanupCache);
     eventCleanupState.loading = true;
+    var page =
+      typeof pageIndex === 'number' && !isNaN(pageIndex) ? Math.max(0, pageIndex) : eventCleanupState.page;
+    eventCleanupState.page = page;
     var params = new URLSearchParams();
-    params.set('offset', append ? String(eventCleanupState.offset) : '0');
+    params.set('offset', String(page * EVENT_PAGE_SIZE));
     params.set('limit', String(EVENT_PAGE_SIZE));
     if (eventCleanupState.organiserId) params.set('organiser_id', eventCleanupState.organiserId);
     if (eventCleanupState.unlinked) params.set('unlinked', '1');
@@ -6176,14 +6231,8 @@
       .then(function (data) {
         eventCleanupState.loading = false;
         if (!data || data.error) return data;
-        if (append && eventCleanupCache && eventCleanupCache.events) {
-          eventCleanupCache.events = eventCleanupCache.events.concat(data.events || []);
-        } else {
-          eventCleanupCache = data;
-        }
-        eventCleanupState.offset = (eventCleanupCache.events || []).length;
-        eventCleanupState.hasMore = !!data.hasMore;
-        eventCleanupState.total = data.total || eventCleanupState.offset;
+        eventCleanupCache = data;
+        eventCleanupState.total = data.total != null ? data.total : (data.events || []).length;
         return eventCleanupCache;
       })
       .catch(function () {
@@ -6192,11 +6241,15 @@
       });
   }
 
-  function loadMoreEvents() {
-    if (!eventCleanupState.hasMore || eventCleanupState.loading) return;
-    fetchEventCleanup(true).then(function () {
-      renderEventCleanupList();
-      attachEventLoadMore();
+  function goToEventPage(page) {
+    var next = Math.max(0, page);
+    var listEl = document.getElementById('event-cleanup-list');
+    eventCleanupState.expanded = {};
+    fetchEventCleanup(next).then(function (data) {
+      applyEventCleanupData(data);
+      if (listEl && listEl.scrollIntoView) {
+        listEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
   }
 
@@ -6666,7 +6719,7 @@
           msg.textContent = 'Saved.';
           msg.className = 'event-cleanup-msg text-xs text-emerald-700 font-semibold';
         }
-        return refreshEventCleanupData();
+        return refreshEventCleanupPage();
       })
       .catch(function (err) {
         if (msg) {
@@ -7009,22 +7062,97 @@
     document.body.addEventListener('click', handleGroupCleanupClick);
   }
 
-  function attachEventLoadMore() {
-    var sentinel = document.getElementById('event-cleanup-sentinel');
-    if (!sentinel || !eventCleanupState.hasMore) return;
-    if (eventLoadObserver) eventLoadObserver.disconnect();
-    eventLoadObserver = new IntersectionObserver(
-      function (entries) {
-        if (entries[0].isIntersecting) loadMoreEvents();
-      },
-      { rootMargin: '240px' }
-    );
-    eventLoadObserver.observe(sentinel);
+  function handleEventCleanupClick(e) {
+    if (!document.getElementById('event-cleanup-list')) return;
+
+    var pageBtn = e.target.closest('[data-event-page]');
+    if (pageBtn) {
+      var page = parseInt(pageBtn.getAttribute('data-event-page'), 10);
+      if (!isNaN(page)) goToEventPage(page);
+      return;
+    }
+
+    if (e.target.closest('#event-bulk-clear')) {
+      clearSelectedEvents();
+      main.querySelectorAll('.event-select-checkbox').forEach(function (cb) {
+        cb.checked = false;
+      });
+      var selectPage = document.getElementById('event-cleanup-select-page');
+      if (selectPage) selectPage.checked = false;
+      updateEventBulkBar();
+      return;
+    }
+    var unselectBtn = e.target.closest('[data-unselect-event]');
+    if (unselectBtn) {
+      var unselectId = unselectBtn.getAttribute('data-unselect-event');
+      forgetSelectedEvent(unselectId);
+      main.querySelectorAll('.event-select-checkbox').forEach(function (cb) {
+        if (String(cb.value) === String(unselectId)) cb.checked = false;
+      });
+      updateEventBulkBar();
+      return;
+    }
+    if (e.target.closest('#event-delete-btn')) {
+      deleteSelectedEvents(false);
+      return;
+    }
+    if (e.target.closest('#event-force-delete-btn')) {
+      deleteSelectedEvents(true);
+      return;
+    }
+    var toggle = e.target.closest('[data-toggle-event-edit]');
+    if (toggle) {
+      var row = toggle.closest('[data-event-id-row]');
+      var id = row && row.getAttribute('data-event-id-row');
+      var panel = id && main.querySelector('.event-cleanup-panel[data-event-panel-for="' + id + '"]');
+      if (panel && id) {
+        var opening = panel.classList.contains('hidden');
+        main.querySelectorAll('.event-cleanup-panel').forEach(function (p) {
+          p.classList.add('hidden');
+        });
+        main.querySelectorAll('[data-toggle-event-edit]').forEach(function (btn) {
+          btn.textContent = 'Edit';
+        });
+        if (opening) {
+          panel.classList.remove('hidden');
+          eventCleanupState.expanded[id] = true;
+          toggle.textContent = 'Close';
+        } else {
+          delete eventCleanupState.expanded[id];
+          toggle.textContent = 'Edit';
+        }
+      }
+      return;
+    }
+    var quick = e.target.closest('[data-event-quick]');
+    if (quick) {
+      var key = quick.getAttribute('data-event-quick');
+      if (key === 'clear') {
+        eventCleanupState.organiserId = '';
+        eventCleanupState.unlinked = false;
+        eventCleanupState.noDate = false;
+        eventCleanupState.status = '';
+        eventCleanupState.approval = '';
+        eventCleanupState.q = '';
+      } else if (key === 'unlinked') {
+        eventCleanupState.unlinked = !eventCleanupState.unlinked;
+      } else if (key === 'no_date') {
+        eventCleanupState.noDate = !eventCleanupState.noDate;
+      } else if (key === 'draft') {
+        eventCleanupState.status = eventCleanupState.status === 'draft' ? '' : 'draft';
+      } else if (key === 'pending') {
+        eventCleanupState.approval =
+          eventCleanupState.approval === 'Pending Review' ? '' : 'Pending Review';
+      }
+      syncEventCleanupFilterUi();
+      refreshEventCleanupData();
+    }
   }
 
   function bindEventCleanupForms() {
-    if (!main || main.dataset.eventCleanupBound) return;
-    main.dataset.eventCleanupBound = '1';
+    if (window.__eventCleanupEventsBound) return;
+    window.__eventCleanupEventsBound = true;
+
     main.addEventListener('submit', function (e) {
       var form = e.target;
       if (!form || !form.classList) return;
@@ -7105,74 +7233,7 @@
         refreshEventCleanupData();
       }, 300);
     });
-    main.addEventListener('click', function (e) {
-      if (e.target.closest('#event-bulk-clear')) {
-        clearSelectedEvents();
-        main.querySelectorAll('.event-select-checkbox').forEach(function (cb) {
-          cb.checked = false;
-        });
-        var selectPage = document.getElementById('event-cleanup-select-page');
-        if (selectPage) selectPage.checked = false;
-        updateEventBulkBar();
-        return;
-      }
-      var unselectBtn = e.target.closest('[data-unselect-event]');
-      if (unselectBtn) {
-        var unselectId = unselectBtn.getAttribute('data-unselect-event');
-        forgetSelectedEvent(unselectId);
-        main.querySelectorAll('.event-select-checkbox').forEach(function (cb) {
-          if (String(cb.value) === String(unselectId)) cb.checked = false;
-        });
-        updateEventBulkBar();
-        return;
-      }
-      if (e.target.closest('#event-delete-btn')) {
-        deleteSelectedEvents(false);
-        return;
-      }
-      if (e.target.closest('#event-force-delete-btn')) {
-        deleteSelectedEvents(true);
-        return;
-      }
-      var toggle = e.target.closest('[data-toggle-event-edit]');
-      if (toggle) {
-        var row = toggle.closest('[data-event-id-row]');
-        var panel = row && row.nextElementSibling;
-        if (panel && panel.classList.contains('event-cleanup-panel')) {
-          var opening = panel.classList.contains('hidden');
-          main.querySelectorAll('.event-cleanup-panel').forEach(function (p) {
-            p.classList.add('hidden');
-          });
-          if (opening) panel.classList.remove('hidden');
-        }
-        return;
-      }
-      var quick = e.target.closest('[data-event-quick]');
-      if (quick) {
-        var key = quick.getAttribute('data-event-quick');
-        if (key === 'clear') {
-          eventCleanupState.organiserId = '';
-          eventCleanupState.unlinked = false;
-          eventCleanupState.noDate = false;
-          eventCleanupState.status = '';
-          eventCleanupState.approval = '';
-          eventCleanupState.q = '';
-        } else if (key === 'unlinked') {
-          eventCleanupState.unlinked = !eventCleanupState.unlinked;
-        } else if (key === 'no_date') {
-          eventCleanupState.noDate = !eventCleanupState.noDate;
-        } else if (key === 'draft') {
-          eventCleanupState.status = eventCleanupState.status === 'draft' ? '' : 'draft';
-        } else if (key === 'pending') {
-          eventCleanupState.approval =
-            eventCleanupState.approval === 'Pending Review' ? '' : 'Pending Review';
-        }
-        syncEventCleanupFilterUi();
-        refreshEventCleanupData();
-        return;
-      }
-      if (e.target.id === 'event-cleanup-load-more') loadMoreEvents();
-    });
+    document.body.addEventListener('click', handleEventCleanupClick);
   }
 
   function renderGroupCleanupList(data) {
@@ -7714,19 +7775,23 @@
 
     eventCleanupCache = data;
     renderEventCleanupList();
-    attachEventLoadMore();
     fetchEventOrganiserOptions().then(populateEventOrganiserSelects);
   }
 
   function refreshEventCleanupData() {
-    eventCleanupState.offset = 0;
+    eventCleanupState.page = 0;
+    eventCleanupState.expanded = {};
     var status = document.getElementById('event-cleanup-status');
     if (status) status.textContent = 'Loading events…';
-    return fetchEventCleanup(false)
+    return fetchEventCleanup(0)
       .then(applyEventCleanupData)
       .catch(function () {
         applyEventCleanupData({ error: 'network_error' });
       });
+  }
+
+  function refreshEventCleanupPage() {
+    return fetchEventCleanup(eventCleanupState.page).then(applyEventCleanupData);
   }
 
   function renderEventCleanupList() {
@@ -7739,17 +7804,17 @@
     var organisers =
       eventOrganiserOptionsCache || (data.organisers || []).map(normalizeOrganiserOption);
     var events = data.events || [];
-    var shown = events.length;
-    var total = eventCleanupState.total || shown;
+    var page = eventCleanupState.page;
+    var pageStart = events.length ? page * EVENT_PAGE_SIZE + 1 : 0;
+    var pageEnd = page * EVENT_PAGE_SIZE + events.length;
+    var total = eventCleanupState.total || events.length;
 
     if (status) {
       var parts = [
-        '<span class="text-brand-900 font-semibold">Showing ' +
-          shown +
-          ' of ' +
-          total +
-          ' event' +
-          (total === 1 ? '' : 's') +
+        '<span class="text-brand-900 font-semibold">' +
+          (events.length
+            ? 'Showing ' + pageStart + '–' + pageEnd + ' of ' + total + ' event' + (total === 1 ? '' : 's')
+            : 'No events on this page') +
           '</span>',
       ];
       if (data.unlinked_count) {
@@ -7766,7 +7831,7 @@
     }
 
     if (hint) {
-      if (total > 100 && !eventCleanupHasActiveFilters()) {
+      if (total > EVENT_PAGE_SIZE && !eventCleanupHasActiveFilters()) {
         hint.classList.remove('hidden');
       } else {
         hint.classList.add('hidden');
@@ -7775,7 +7840,8 @@
 
     if (!events.length) {
       list.innerHTML =
-        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No events match your filters. Try search, quick filters, or create a new event below.</p>';
+        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No events match your filters. Try search, quick filters, or create a new event below.</p>' +
+        adminPaginationHtml(page, total, EVENT_PAGE_SIZE, 'data-event-page');
       return;
     }
 
@@ -7790,6 +7856,7 @@
           : '<span class="text-slate-400">No date</span>';
         if (eventCleanupState.selected[ev.id]) rememberSelectedEvent(ev);
         var checked = eventCleanupState.selected[ev.id] ? ' checked' : '';
+        var isOpen = !!eventCleanupState.expanded[ev.id];
         return (
           '<tr class="border-b border-slate-100 hover:bg-slate-50/80" data-event-id-row="' +
           attrEsc(ev.id) +
@@ -7827,9 +7894,15 @@
               attrEsc(publicHref) +
               '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View</a>'
             : '') +
-          '<button type="button" data-toggle-event-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">Edit</button>' +
+          '<button type="button" data-toggle-event-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
+          (isOpen ? 'Close' : 'Edit') +
+          '</button>' +
           '</div></td></tr>' +
-          '<tr class="event-cleanup-panel hidden border-b border-slate-200 bg-slate-50/80">' +
+          '<tr class="event-cleanup-panel' +
+          (isOpen ? '' : ' hidden') +
+          ' border-b border-slate-200 bg-slate-50/80" data-event-panel-for="' +
+          attrEsc(ev.id) +
+          '">' +
           '<td colspan="6" class="p-4">' +
           eventCleanupEditFormHtml(ev, organisers) +
           '</td></tr>'
@@ -7852,11 +7925,7 @@
           rows +
           '</tbody></table>'
       ) +
-      (eventCleanupState.hasMore
-        ? '<div id="event-cleanup-sentinel" class="py-6 text-center">' +
-          '<button type="button" id="event-cleanup-load-more" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-brand-900 hover:bg-slate-50">Load more events</button>' +
-          '</div>'
-        : '');
+      adminPaginationHtml(page, total, EVENT_PAGE_SIZE, 'data-event-page');
     updateEventBulkBar();
   }
 
@@ -7865,7 +7934,7 @@
       '<div class="space-y-4">' +
       '<div id="event-cleanup-status" class="text-sm text-slate-500">Loading events…</div>' +
       '<p id="event-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
-      'Large catalogue — search by title or city, pick an organiser, or use quick filters below. Rows load in batches; expand a row only when you need to edit.</p>' +
+      'Large catalogue — search by title or city, pick an organiser, or use quick filters below. Use page numbers below the table to browse.</p>' +
       '<div id="event-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
       '<form id="event-bulk-form" class="space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
@@ -7986,6 +8055,192 @@
     refreshEventCleanupData();
   }
 
+  function renderRankings() {
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      '<p id="rankings-status" class="text-sm text-slate-500">Loading ranking snapshot…</p>' +
+      '<div id="rankings-panels" class="space-y-4"></div></div>';
+
+    function tierBadge(tier) {
+      var label =
+        tier === 'top10' ? 'Top 10' : tier === 'top25' ? 'Top 25' : tier === 'top50' ? 'Top 50' : tier;
+      return (
+        '<span class="inline-flex items-center rounded-full bg-amber-100 text-amber-900 border border-amber-200 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide">' +
+        esc(label) +
+        '</span>'
+      );
+    }
+
+    function loadReport() {
+      return fetch('/api/admin/rankings', { credentials: 'include', cache: 'no-store' }).then(function (r) {
+        return r.json();
+      });
+    }
+
+    function paint(data) {
+      var status = document.getElementById('rankings-status');
+      var panels = document.getElementById('rankings-panels');
+      if (!panels) return;
+
+      if (!data.ok && data.error) {
+        if (status) status.textContent = data.message || 'Could not load rankings.';
+        return;
+      }
+
+      var snap = data.snapshot;
+      if (status) {
+        status.textContent = snap
+          ? 'Current period: ' +
+            snap.period_label +
+            ' (' +
+            snap.period_key +
+            ') · ' +
+            (data.badgeCount != null ? data.entries.length : snap.total_ranked) +
+            ' ranked groups'
+          : 'No snapshot yet — run the monthly snapshot to publish badges.';
+      }
+
+      var entryRows = (data.entries || [])
+        .map(function (row) {
+          var org = row.organisers || {};
+          return (
+            '<tr class="border-b border-slate-100 last:border-0">' +
+            '<td class="py-2 pr-3 text-sm font-semibold text-slate-800">#' +
+            esc(String(row.rank)) +
+            '</td>' +
+            '<td class="py-2 pr-3 text-sm">' +
+            esc(org.name || '—') +
+            '</td>' +
+            '<td class="py-2 pr-3">' +
+            tierBadge(row.tier) +
+            '</td>' +
+            '<td class="py-2 pr-3 text-sm text-slate-600">★ ' +
+            esc(Number(row.rating).toFixed(1)) +
+            ' · ' +
+            esc(String(row.review_count)) +
+            ' reviews</td></tr>'
+          );
+        })
+        .join('');
+
+      var historyRows = (data.snapshots || [])
+        .map(function (s) {
+          return (
+            '<tr class="border-b border-slate-100 last:border-0">' +
+            '<td class="py-2 pr-3 text-sm">' +
+            esc(s.period_label) +
+            '</td>' +
+            '<td class="py-2 pr-3 text-sm text-slate-600">' +
+            esc(String(s.total_ranked)) +
+            ' groups</td>' +
+            '<td class="py-2 pr-3 text-xs text-slate-500">' +
+            esc(s.triggered_by || 'cron') +
+            '</td></tr>'
+          );
+        })
+        .join('');
+
+      var emailRows = (data.recentEmails || [])
+        .map(function (m) {
+          return (
+            '<tr class="border-b border-slate-100 last:border-0">' +
+            '<td class="py-2 pr-3 text-sm text-slate-700">' +
+            esc(m.email_to) +
+            '</td>' +
+            '<td class="py-2 pr-3">' +
+            tierBadge(m.tier) +
+            '</td>' +
+            '<td class="py-2 pr-3 text-sm text-slate-600">' +
+            esc(m.period_label) +
+            '</td>' +
+            '<td class="py-2 pr-3 text-xs uppercase text-slate-500">' +
+            esc(m.reason) +
+            '</td></tr>'
+          );
+        })
+        .join('');
+
+      panels.innerHTML =
+        '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+        '<div class="flex flex-wrap items-start justify-between gap-3 mb-4">' +
+        '<div><h3 class="font-bold text-brand-900">Monthly snapshot</h3>' +
+        '<p class="text-xs text-slate-500 mt-1">Groups need at least ' +
+        esc(String(data.minReviews || 3)) +
+        ' reviews and a published profile. Cron runs on the 1st of each month at 10:00 UTC.</p></div>' +
+        '<div class="flex flex-wrap gap-2">' +
+        '<button type="button" id="rankings-run-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Run snapshot now</button>' +
+        '<button type="button" id="rankings-run-no-email-btn" class="rounded-lg border border-slate-300 text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Snapshot only (no emails)</button>' +
+        '</div></div>' +
+        '<p id="rankings-run-msg" class="text-xs text-slate-500 mb-3"></p>' +
+        (entryRows
+          ? '<div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
+            '<th class="py-2 pr-3">Rank</th><th class="py-2 pr-3">Group</th><th class="py-2 pr-3">Badge</th><th class="py-2 pr-3">Rating</th></tr></thead><tbody>' +
+            entryRows +
+            '</tbody></table></div>'
+          : '<p class="text-sm text-slate-500">No ranked groups in the current snapshot.</p>') +
+        '</section>' +
+        '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+        '<h3 class="font-bold text-brand-900 mb-3">Snapshot history</h3>' +
+        (historyRows
+          ? '<div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
+            '<th class="py-2 pr-3">Period</th><th class="py-2 pr-3">Ranked</th><th class="py-2 pr-3">Source</th></tr></thead><tbody>' +
+            historyRows +
+            '</tbody></table></div>'
+          : '<p class="text-sm text-slate-500">No history yet.</p>') +
+        '</section>' +
+        '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+        '<h3 class="font-bold text-brand-900 mb-3">Recent congratulation emails</h3>' +
+        (emailRows
+          ? '<div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
+            '<th class="py-2 pr-3">Sent to</th><th class="py-2 pr-3">Badge</th><th class="py-2 pr-3">Period</th><th class="py-2 pr-3">Reason</th></tr></thead><tbody>' +
+            emailRows +
+            '</tbody></table></div>'
+          : '<p class="text-sm text-slate-500">No ranking emails sent yet.</p>') +
+        '</section>';
+
+      function runSnapshot(sendEmails) {
+        var msg = document.getElementById('rankings-run-msg');
+        if (msg) msg.textContent = 'Running snapshot…';
+        fetch('/api/admin/rankings', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'run_snapshot', sendEmails: sendEmails }),
+        })
+          .then(function (r) {
+            return r.json();
+          })
+          .then(function (result) {
+            if (msg) {
+              msg.textContent = result.ok
+                ? 'Done — ' +
+                  result.badgeCount +
+                  ' badges · ' +
+                  result.emailsSent +
+                  ' emails sent'
+                : result.message || result.error || 'Snapshot failed';
+            }
+            return loadReport();
+          })
+          .then(paint)
+          .catch(function () {
+            if (msg) msg.textContent = 'Snapshot request failed.';
+          });
+      }
+
+      var runBtn = document.getElementById('rankings-run-btn');
+      var runNoEmailBtn = document.getElementById('rankings-run-no-email-btn');
+      if (runBtn) runBtn.addEventListener('click', function () { runSnapshot(true); });
+      if (runNoEmailBtn)
+        runNoEmailBtn.addEventListener('click', function () { runSnapshot(false); });
+    }
+
+    loadReport().then(paint).catch(function () {
+      var status = document.getElementById('rankings-status');
+      if (status) status.textContent = 'Could not load rankings.';
+    });
+  }
+
   function renderSystem() {
     main.innerHTML =
       '<div class="space-y-6">' +
@@ -8054,7 +8309,7 @@
           (hints.missingCronSecret
             ? '<p class="text-xs text-amber-800 mt-2">' + esc(hints.missingCronSecret) + '</p>'
             : '') +
-          '<p class="text-xs text-slate-500 mt-3">Daily crons (07:00 &amp; 08:00 UTC): 24-hour booking reminders and saved-event ticket alerts.</p>' +
+          '<p class="text-xs text-slate-500 mt-3">Daily crons (07:00–09:00 UTC): booking reminders, saved-event ticket alerts, and featured listing maintenance. Monthly rankings run on the 1st at 10:00 UTC.</p>' +
           '</section>' +
           '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
           '<h3 class="font-bold text-brand-900 mb-3">Stripe &amp; checkout</h3>' +
@@ -8602,9 +8857,20 @@
 
   function opportunityCleanupEditFormHtml(opp) {
     return (
-      '<form class="opportunity-cleanup-form grid sm:grid-cols-2 gap-3" data-opportunity-id="' +
+      '<form class="opportunity-cleanup-form space-y-4" data-opportunity-id="' +
       attrEsc(opp.id) +
       '">' +
+      '<div class="flex flex-wrap items-center justify-between gap-3 sticky top-0 z-[1] -mx-1 px-1 py-2 bg-slate-50/95 backdrop-blur border-b border-slate-200">' +
+      '<div class="flex flex-wrap items-center gap-2">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save listing</button>' +
+      '<button type="button" data-opp-delete-form="' +
+      attrEsc(opp.id) +
+      '" data-opp-delete-title="' +
+      attrEsc(opp.title || 'Untitled') +
+      '" class="rounded-lg border border-red-200 text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50">Delete listing</button>' +
+      '</div>' +
+      '<span class="opportunity-cleanup-msg text-xs"></span></div>' +
+      '<div class="grid sm:grid-cols-2 gap-3">' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
       '<input type="text" name="title" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(opp.title || '') +
@@ -8647,17 +8913,156 @@
       (opp.owner_email
         ? '<p class="sm:col-span-2 text-xs text-slate-500">Owner: ' + esc(opp.owner_email) + '</p>'
         : '') +
-      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
-      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save listing</button>' +
-      '<span class="opportunity-cleanup-msg text-xs"></span></div></form>'
+      '</div></form>'
     );
   }
 
-  function fetchOpportunityCleanup(append) {
+  function rememberSelectedOpportunity(opp) {
+    if (!opp || opp.id == null) return;
+    opportunityCleanupState.selected[String(opp.id)] = {
+      id: opp.id,
+      title: opp.title || 'Untitled',
+      host: opp.host || '',
+    };
+  }
+
+  function forgetSelectedOpportunity(id) {
+    delete opportunityCleanupState.selected[String(id)];
+  }
+
+  function clearSelectedOpportunities() {
+    opportunityCleanupState.selected = {};
+  }
+
+  function getSelectedOpportunityIds() {
+    return Object.keys(opportunityCleanupState.selected);
+  }
+
+  function selectedOpportunityRows() {
+    return getSelectedOpportunityIds().map(function (id) {
+      return opportunityCleanupState.selected[id];
+    });
+  }
+
+  function updateOpportunityBulkBar() {
+    var bar = document.getElementById('opportunity-cleanup-bulk');
+    var countEl = document.getElementById('opportunity-bulk-count');
+    var chipsEl = document.getElementById('opportunity-selected-chips');
+    var deleteSection = document.getElementById('opportunity-delete-section');
+    var ids = getSelectedOpportunityIds();
+    var rows = selectedOpportunityRows();
+    if (countEl) countEl.textContent = String(ids.length);
+    if (bar) bar.classList.toggle('hidden', ids.length === 0);
+    if (deleteSection) deleteSection.classList.toggle('hidden', ids.length === 0);
+    if (chipsEl) {
+      chipsEl.innerHTML = rows
+        .map(function (opp) {
+          var label = opp.title || 'Untitled';
+          if (opp.host) label += ' · ' + opp.host;
+          return (
+            '<span class="inline-flex items-center gap-1 rounded-full border border-brand-200 bg-white px-2.5 py-0.5 text-xs text-brand-900">' +
+            '<span class="truncate max-w-[14rem]" title="' +
+            attrEsc(label) +
+            '">' +
+            esc(label) +
+            '</span>' +
+            '<button type="button" class="shrink-0 text-slate-400 hover:text-red-700 font-bold leading-none" data-unselect-opp="' +
+            attrEsc(opp.id) +
+            '" aria-label="Remove ' +
+            attrEsc(opp.title || 'listing') +
+            ' from selection">×</button></span>'
+          );
+        })
+        .join('');
+    }
+    if (main) {
+      var selectPage = document.getElementById('opportunity-cleanup-select-page');
+      var pageCbs = main.querySelectorAll('.opportunity-select-checkbox');
+      var allPageChecked = pageCbs.length > 0;
+      pageCbs.forEach(function (cb) {
+        if (!opportunityCleanupState.selected[cb.value]) allPageChecked = false;
+      });
+      if (selectPage) selectPage.checked = allPageChecked;
+    }
+  }
+
+  function deleteSelectedOpportunities() {
+    var ids = getSelectedOpportunityIds();
+    if (!ids.length) return;
+    if (
+      !window.confirm(
+        'Permanently delete ' +
+          ids.length +
+          ' selected listing' +
+          (ids.length === 1 ? '' : 's') +
+          '? This cannot be undone.'
+      )
+    ) {
+      return;
+    }
+    var msg = document.getElementById('opportunity-delete-msg');
+    var btn = document.getElementById('opportunity-delete-btn');
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Deleting…';
+      msg.className = 'text-xs text-slate-500';
+    }
+    adminPost('/api/admin/opportunities', { action: 'bulk_delete', ids: ids })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Delete failed');
+        clearSelectedOpportunities();
+        if (msg) {
+          var skipped = data.skipped && data.skipped.length;
+          msg.textContent = skipped
+            ? 'Deleted ' + data.deleted + '. Skipped ' + skipped + '.'
+            : 'Deleted ' + data.deleted + ' listing' + (data.deleted === 1 ? '' : 's') + '.';
+          msg.className = 'text-xs text-emerald-700 font-semibold';
+        }
+        return refreshOpportunityCleanupData();
+      })
+      .then(function () {
+        refreshAdminNotifications();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not delete';
+          msg.className = 'text-xs text-red-700 font-semibold';
+        }
+      })
+      .finally(function () {
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function deleteOpportunityListing(id, title) {
+    if (!id) return;
+    var label = title || 'this listing';
+    if (!window.confirm('Permanently delete “' + label + '”? This cannot be undone.')) return;
+    adminPost('/api/admin/opportunities', { id: id, action: 'delete' })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Delete failed');
+        delete opportunityCleanupState.expanded[id];
+        forgetSelectedOpportunity(id);
+        return refreshOpportunityCleanupData();
+      })
+      .then(function () {
+        refreshAdminNotifications();
+      })
+      .catch(function (err) {
+        window.alert(err.message || 'Could not delete listing.');
+      });
+  }
+
+  function fetchOpportunityCleanup(pageIndex) {
     if (opportunityCleanupState.loading) return Promise.resolve(opportunityCleanupCache);
     opportunityCleanupState.loading = true;
+    var page =
+      typeof pageIndex === 'number' && !isNaN(pageIndex)
+        ? Math.max(0, pageIndex)
+        : opportunityCleanupState.page;
+    opportunityCleanupState.page = page;
     var params = new URLSearchParams();
-    params.set('offset', append ? String(opportunityCleanupState.offset) : '0');
+    params.set('offset', String(page * OPPORTUNITY_PAGE_SIZE));
     params.set('limit', String(OPPORTUNITY_PAGE_SIZE));
     if (opportunityCleanupState.status) params.set('status', opportunityCleanupState.status);
     if (opportunityCleanupState.approval) params.set('approval_status', opportunityCleanupState.approval);
@@ -8670,16 +9075,9 @@
       .then(function (data) {
         opportunityCleanupState.loading = false;
         if (!data || data.error) return data;
-        if (append && opportunityCleanupCache && opportunityCleanupCache.opportunities) {
-          opportunityCleanupCache.opportunities = opportunityCleanupCache.opportunities.concat(
-            data.opportunities || []
-          );
-        } else {
-          opportunityCleanupCache = data;
-        }
-        opportunityCleanupState.offset = (opportunityCleanupCache.opportunities || []).length;
-        opportunityCleanupState.hasMore = !!data.hasMore;
-        opportunityCleanupState.total = data.total || opportunityCleanupState.offset;
+        opportunityCleanupCache = data;
+        opportunityCleanupState.total =
+          data.total != null ? data.total : (data.opportunities || []).length;
         return opportunityCleanupCache;
       })
       .catch(function () {
@@ -8688,11 +9086,15 @@
       });
   }
 
-  function loadMoreOpportunities() {
-    if (!opportunityCleanupState.hasMore || opportunityCleanupState.loading) return;
-    fetchOpportunityCleanup(true).then(function () {
-      renderOpportunityCleanupList();
-      attachOpportunityLoadMore();
+  function goToOpportunityPage(page) {
+    var next = Math.max(0, page);
+    var listEl = document.getElementById('opportunity-cleanup-list');
+    opportunityCleanupState.expanded = {};
+    fetchOpportunityCleanup(next).then(function (data) {
+      applyOpportunityCleanupData(data);
+      if (listEl && listEl.scrollIntoView) {
+        listEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
   }
 
@@ -8709,12 +9111,20 @@
     }
     opportunityCleanupCache = data;
     renderOpportunityCleanupList();
-    attachOpportunityLoadMore();
   }
 
   function refreshOpportunityCleanupData() {
-    opportunityCleanupState.offset = 0;
-    return fetchOpportunityCleanup(false).then(applyOpportunityCleanupData);
+    opportunityCleanupState.page = 0;
+    opportunityCleanupState.expanded = {};
+    return fetchOpportunityCleanup(0).then(applyOpportunityCleanupData);
+  }
+
+  function refreshOpportunityCleanupPage() {
+    var savedExpanded = opportunityCleanupState.expanded;
+    return fetchOpportunityCleanup(opportunityCleanupState.page).then(function (data) {
+      opportunityCleanupState.expanded = savedExpanded;
+      applyOpportunityCleanupData(data);
+    });
   }
 
   function renderOpportunityCleanupList() {
@@ -8724,18 +9134,25 @@
     if (!list || !opportunityCleanupCache) return;
 
     var opportunities = opportunityCleanupCache.opportunities || [];
-    var shown = opportunities.length;
-    var total = opportunityCleanupState.total || shown;
+    var page = opportunityCleanupState.page;
+    var pageStart = opportunities.length ? page * OPPORTUNITY_PAGE_SIZE + 1 : 0;
+    var pageEnd = page * OPPORTUNITY_PAGE_SIZE + opportunities.length;
+    var total = opportunityCleanupState.total || opportunities.length;
     var pendingCount = opportunityCleanupCache.pending_count || 0;
 
     if (status) {
       var parts = [
-        '<span class="text-brand-900 font-semibold">Showing ' +
-          shown +
-          ' of ' +
-          total +
-          ' listing' +
-          (total === 1 ? '' : 's') +
+        '<span class="text-brand-900 font-semibold">' +
+          (opportunities.length
+            ? 'Showing ' +
+              pageStart +
+              '–' +
+              pageEnd +
+              ' of ' +
+              total +
+              ' listing' +
+              (total === 1 ? '' : 's')
+            : 'No listings on this page') +
           '</span>',
       ];
       if (pendingCount) {
@@ -8750,7 +9167,7 @@
     }
 
     if (hint) {
-      if (total > 80 && !opportunityCleanupHasActiveFilters()) {
+      if (total > OPPORTUNITY_PAGE_SIZE && !opportunityCleanupHasActiveFilters()) {
         hint.classList.remove('hidden');
       } else {
         hint.classList.add('hidden');
@@ -8759,7 +9176,8 @@
 
     if (!opportunities.length) {
       list.innerHTML =
-        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No business opportunities match your filters.</p>';
+        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No business opportunities match your filters.</p>' +
+        adminPaginationHtml(page, total, OPPORTUNITY_PAGE_SIZE, 'data-opp-page');
       return;
     }
 
@@ -8768,12 +9186,24 @@
         var publicHref = '../opportunities/' + encodeURIComponent(opp.id);
         var isPending = opp.approval_status === 'Pending Review';
         var rowClass = isPending ? 'border-b border-amber-100 bg-amber-50/40' : 'border-b border-slate-100';
+        var isOpen = !!opportunityCleanupState.expanded[opp.id];
+        if (opportunityCleanupState.selected[opp.id]) rememberSelectedOpportunity(opp);
+        var checked = opportunityCleanupState.selected[opp.id] ? ' checked' : '';
         return (
           '<tr class="hover:bg-slate-50/80 ' +
           rowClass +
           '" data-opportunity-id-row="' +
           attrEsc(opp.id) +
           '">' +
+          '<td class="py-2.5 pr-2 w-8">' +
+          '<input type="checkbox" class="opportunity-select-checkbox rounded border-slate-300" value="' +
+          attrEsc(opp.id) +
+          '"' +
+          checked +
+          ' aria-label="Select ' +
+          attrEsc(opp.title || 'listing') +
+          '">' +
+          '</td>' +
           '<td class="py-2.5 pr-3 max-w-[14rem]"><div class="font-semibold text-brand-900 truncate" title="' +
           attrEsc(opp.title || 'Untitled') +
           '">' +
@@ -8804,10 +9234,21 @@
           '<a href="' +
           attrEsc(publicHref) +
           '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View</a>' +
-          '<button type="button" data-toggle-opp-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">Edit</button>' +
+          '<button type="button" data-toggle-opp-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
+          (isOpen ? 'Close' : 'Edit') +
+          '</button>' +
+          '<button type="button" data-opp-delete="' +
+          attrEsc(opp.id) +
+          '" data-opp-delete-title="' +
+          attrEsc(opp.title || 'Untitled') +
+          '" class="text-xs font-semibold rounded-lg border border-red-200 text-red-700 px-2.5 py-1 hover:bg-red-50">Delete</button>' +
           '</div></td></tr>' +
-          '<tr class="opportunity-cleanup-panel hidden border-b border-slate-200 bg-slate-50/80">' +
-          '<td colspan="5" class="p-4">' +
+          '<tr class="opportunity-cleanup-panel' +
+          (isOpen ? '' : ' hidden') +
+          ' border-b border-slate-200 bg-slate-50/80" data-opp-panel-for="' +
+          attrEsc(opp.id) +
+          '">' +
+          '<td colspan="6" class="p-4">' +
           opportunityCleanupEditFormHtml(opp) +
           '</td></tr>'
         );
@@ -8819,6 +9260,7 @@
         '<table class="w-full text-sm text-left border-collapse">' +
           '<thead class="text-xs uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
           '<tr>' +
+          '<th class="py-2 pr-2 w-8"><span class="sr-only">Select</span></th>' +
           '<th class="py-2 pr-3 font-semibold">Listing</th>' +
           '<th class="py-2 pr-3 font-semibold">Type</th>' +
           '<th class="py-2 pr-3 font-semibold">Status</th>' +
@@ -8828,11 +9270,8 @@
           rows +
           '</tbody></table>'
       ) +
-      (opportunityCleanupState.hasMore
-        ? '<div id="opportunity-cleanup-sentinel" class="py-6 text-center">' +
-          '<button type="button" id="opportunity-cleanup-load-more" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-brand-900 hover:bg-slate-50">Load more listings</button>' +
-          '</div>'
-        : '');
+      adminPaginationHtml(page, total, OPPORTUNITY_PAGE_SIZE, 'data-opp-page');
+    updateOpportunityBulkBar();
   }
 
   function renderOpportunityCleanup(fullHash) {
@@ -8847,7 +9286,19 @@
       '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Manage business opportunity listings submitted by organisers. Approve pending listings, toggle <strong>featured</strong> for the Premium Spotlight carousel on <code class="text-[11px]">/opportunities/</code>, or expand a row to edit details.</p>' +
       '<div id="opportunity-cleanup-status" class="text-sm text-slate-500">Loading business opportunities…</div>' +
       '<p id="opportunity-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
-      'Large catalogue — use search and filters below. Rows load in batches.</p>' +
+      'Large catalogue — use search and filters below. Use page numbers below the table to browse.</p>' +
+      '<div id="opportunity-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
+      '<div class="flex flex-wrap items-center justify-between gap-2">' +
+      '<p class="text-sm font-semibold text-brand-900"><span id="opportunity-bulk-count">0</span> listings selected</p>' +
+      '<button type="button" id="opportunity-bulk-clear" class="text-xs font-semibold text-slate-600 hover:text-brand-900">Clear selection</button></div>' +
+      '<p class="text-xs text-slate-600">Use page numbers to browse — your selection is kept until you delete or clear.</p>' +
+      '<div id="opportunity-selected-chips" class="flex flex-wrap gap-1.5"></div>' +
+      '<div id="opportunity-delete-section" class="border-t border-brand-200 pt-4 space-y-3">' +
+      '<p class="text-sm font-semibold text-brand-900">Delete selected listings</p>' +
+      '<p class="text-xs text-slate-600">Permanently removes listings and related enquiries. This cannot be undone.</p>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="button" id="opportunity-delete-btn" class="rounded-lg bg-red-600 text-white text-sm font-semibold px-4 py-2 hover:bg-red-700">Delete selected</button>' +
+      '<span id="opportunity-delete-msg" class="text-xs"></span></div></div></div>' +
       '<div class="admin-filter-bar sticky top-0 z-10 rounded-xl border border-slate-200 bg-white/95 backdrop-blur p-4 space-y-3 shadow-sm">' +
       '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
       '<input type="search" id="opportunity-cleanup-search" placeholder="Search title, host, or owner email…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
@@ -8900,7 +9351,9 @@
       '<button type="button" data-opp-quick="published" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Published</button>' +
       '<button type="button" data-opp-quick="featured" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Featured</button>' +
       '<button type="button" data-opp-quick="no_image" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">No image</button>' +
-      '<button type="button" data-opp-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div></div>' +
+      '<button type="button" data-opp-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="opportunity-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +
       '<div id="opportunity-cleanup-list"></div></div>';
 
     syncOpportunityCleanupFilterUi();
@@ -8933,7 +9386,7 @@
           msg.textContent = 'Saved.';
           msg.className = 'opportunity-cleanup-msg text-xs text-emerald-700 font-semibold';
         }
-        return refreshOpportunityCleanupData();
+        return refreshOpportunityCleanupPage();
       })
       .then(function () {
         refreshAdminNotifications();
@@ -8947,29 +9400,194 @@
       });
   }
 
-  function attachOpportunityLoadMore() {
-    var sentinel = document.getElementById('opportunity-cleanup-sentinel');
-    if (!sentinel || !opportunityCleanupState.hasMore) return;
-    if (opportunityLoadObserver) opportunityLoadObserver.disconnect();
-    opportunityLoadObserver = new IntersectionObserver(
-      function (entries) {
-        if (entries[0].isIntersecting) loadMoreOpportunities();
-      },
-      { rootMargin: '240px' }
-    );
-    opportunityLoadObserver.observe(sentinel);
+  function handleOpportunityCleanupClick(e) {
+    if (!document.getElementById('opportunity-cleanup-list')) return;
+
+    var pageBtn = e.target.closest('[data-opp-page]');
+    if (pageBtn) {
+      var page = parseInt(pageBtn.getAttribute('data-opp-page'), 10);
+      if (!isNaN(page)) goToOpportunityPage(page);
+      return;
+    }
+
+    if (e.target.closest('#opportunity-bulk-clear')) {
+      clearSelectedOpportunities();
+      main.querySelectorAll('.opportunity-select-checkbox').forEach(function (cb) {
+        cb.checked = false;
+      });
+      var selectPage = document.getElementById('opportunity-cleanup-select-page');
+      if (selectPage) selectPage.checked = false;
+      updateOpportunityBulkBar();
+      return;
+    }
+    var unselectBtn = e.target.closest('[data-unselect-opp]');
+    if (unselectBtn) {
+      var unselectId = unselectBtn.getAttribute('data-unselect-opp');
+      forgetSelectedOpportunity(unselectId);
+      main.querySelectorAll('.opportunity-select-checkbox').forEach(function (cb) {
+        if (String(cb.value) === String(unselectId)) cb.checked = false;
+      });
+      updateOpportunityBulkBar();
+      return;
+    }
+    if (e.target.closest('#opportunity-delete-btn')) {
+      deleteSelectedOpportunities();
+      return;
+    }
+    var deleteBtn = e.target.closest('[data-opp-delete]');
+    if (deleteBtn) {
+      deleteOpportunityListing(
+        deleteBtn.getAttribute('data-opp-delete'),
+        deleteBtn.getAttribute('data-opp-delete-title')
+      );
+      return;
+    }
+    var deleteFormBtn = e.target.closest('[data-opp-delete-form]');
+    if (deleteFormBtn) {
+      deleteOpportunityListing(
+        deleteFormBtn.getAttribute('data-opp-delete-form'),
+        deleteFormBtn.getAttribute('data-opp-delete-title')
+      );
+      return;
+    }
+
+    var toggle = e.target.closest('[data-toggle-opp-edit]');
+    if (toggle) {
+      var row = toggle.closest('[data-opportunity-id-row]');
+      var id = row && row.getAttribute('data-opportunity-id-row');
+      var panel = id && main.querySelector('.opportunity-cleanup-panel[data-opp-panel-for="' + id + '"]');
+      if (panel && id) {
+        var opening = panel.classList.contains('hidden');
+        main.querySelectorAll('.opportunity-cleanup-panel').forEach(function (p) {
+          p.classList.add('hidden');
+        });
+        main.querySelectorAll('[data-toggle-opp-edit]').forEach(function (btn) {
+          btn.textContent = 'Edit';
+        });
+        if (opening) {
+          panel.classList.remove('hidden');
+          opportunityCleanupState.expanded[id] = true;
+          toggle.textContent = 'Close';
+        } else {
+          delete opportunityCleanupState.expanded[id];
+          toggle.textContent = 'Edit';
+        }
+      }
+      return;
+    }
+    var approveBtn = e.target.closest('[data-opp-approve]');
+    if (approveBtn) {
+      var approveRow = approveBtn.closest('[data-opportunity-id-row]');
+      var approveId = approveRow && approveRow.getAttribute('data-opportunity-id-row');
+      if (!approveId) return;
+      approveBtn.disabled = true;
+      adminPost('/api/admin/opportunities', { id: approveId, action: 'approve' })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Approve failed');
+          return refreshOpportunityCleanupData();
+        })
+        .then(function () {
+          refreshAdminNotifications();
+        })
+        .catch(function (err) {
+          window.alert(err.message || 'Could not approve listing.');
+          approveBtn.disabled = false;
+        });
+      return;
+    }
+    var rejectBtn = e.target.closest('[data-opp-reject]');
+    if (rejectBtn) {
+      var rejectRow = rejectBtn.closest('[data-opportunity-id-row]');
+      var rejectId = rejectRow && rejectRow.getAttribute('data-opportunity-id-row');
+      if (!rejectId) return;
+      if (!window.confirm('Reject this business opportunity listing?')) return;
+      rejectBtn.disabled = true;
+      adminPost('/api/admin/opportunities', { id: rejectId, action: 'reject' })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Reject failed');
+          return refreshOpportunityCleanupData();
+        })
+        .then(function () {
+          refreshAdminNotifications();
+        })
+        .catch(function (err) {
+          window.alert(err.message || 'Could not reject listing.');
+          rejectBtn.disabled = false;
+        });
+      return;
+    }
+    var quick = e.target.closest('[data-opp-quick]');
+    if (quick) {
+      var key = quick.getAttribute('data-opp-quick');
+      if (key === 'clear') {
+        opportunityCleanupState.status = '';
+        opportunityCleanupState.approval = '';
+        opportunityCleanupState.type = '';
+        opportunityCleanupState.featured = false;
+        opportunityCleanupState.noImage = false;
+        opportunityCleanupState.q = '';
+      } else if (key === 'pending') {
+        opportunityCleanupState.approval =
+          opportunityCleanupState.approval === 'Pending Review' ? '' : 'Pending Review';
+      } else if (key === 'draft') {
+        opportunityCleanupState.status = opportunityCleanupState.status === 'draft' ? '' : 'draft';
+      } else if (key === 'published') {
+        opportunityCleanupState.status =
+          opportunityCleanupState.status === 'published' ? '' : 'published';
+      } else if (key === 'featured') {
+        opportunityCleanupState.featured = !opportunityCleanupState.featured;
+      } else if (key === 'no_image') {
+        opportunityCleanupState.noImage = !opportunityCleanupState.noImage;
+      }
+      syncOpportunityCleanupFilterUi();
+      refreshOpportunityCleanupData();
+    }
   }
 
   function bindOpportunityCleanupForms() {
-    if (!main || main.dataset.opportunityCleanupBound) return;
-    main.dataset.opportunityCleanupBound = '1';
-    main.addEventListener('submit', function (e) {
+    if (window.__opportunityCleanupEventsBound) return;
+    window.__opportunityCleanupEventsBound = true;
+
+    document.body.addEventListener('submit', function (e) {
       var form = e.target;
-      if (!form || !form.classList || !form.classList.contains('opportunity-cleanup-form')) return;
+      if (!form || !form.classList || !form.closest('#admin-main')) return;
+      if (!form.classList.contains('opportunity-cleanup-form')) return;
       e.preventDefault();
       saveOpportunityCleanupForm(form);
     });
-    main.addEventListener('change', function (e) {
+
+    document.body.addEventListener('change', function (e) {
+      if (!e.target.closest('#admin-main')) return;
+      if (e.target.classList && e.target.classList.contains('opportunity-select-checkbox')) {
+        var oppId = e.target.value;
+        if (e.target.checked) {
+          var opportunities = (opportunityCleanupCache && opportunityCleanupCache.opportunities) || [];
+          var row = opportunities.find(function (o) {
+            return String(o.id) === String(oppId);
+          });
+          if (row) rememberSelectedOpportunity(row);
+        } else {
+          forgetSelectedOpportunity(oppId);
+        }
+        updateOpportunityBulkBar();
+        return;
+      }
+      if (e.target.id === 'opportunity-cleanup-select-page' && main) {
+        var pageOpportunities = (opportunityCleanupCache && opportunityCleanupCache.opportunities) || [];
+        main.querySelectorAll('.opportunity-select-checkbox').forEach(function (cb) {
+          cb.checked = e.target.checked;
+          if (e.target.checked) {
+            var pageRow = pageOpportunities.find(function (o) {
+              return String(o.id) === String(cb.value);
+            });
+            if (pageRow) rememberSelectedOpportunity(pageRow);
+          } else {
+            forgetSelectedOpportunity(cb.value);
+          }
+        });
+        updateOpportunityBulkBar();
+        return;
+      }
       if (e.target.id === 'opportunity-cleanup-status-filter') {
         opportunityCleanupState.status = e.target.value || '';
         syncOpportunityCleanupFilterUi();
@@ -9000,7 +9618,8 @@
         refreshOpportunityCleanupData();
       }
     });
-    main.addEventListener('input', function (e) {
+
+    document.body.addEventListener('input', function (e) {
       if (e.target.id !== 'opportunity-cleanup-search') return;
       clearTimeout(opportunitySearchTimer);
       opportunitySearchTimer = setTimeout(function () {
@@ -9008,90 +9627,8 @@
         refreshOpportunityCleanupData();
       }, 300);
     });
-    main.addEventListener('click', function (e) {
-      var toggle = e.target.closest('[data-toggle-opp-edit]');
-      if (toggle) {
-        var row = toggle.closest('[data-opportunity-id-row]');
-        var panel = row && row.nextElementSibling;
-        if (panel && panel.classList.contains('opportunity-cleanup-panel')) {
-          var opening = panel.classList.contains('hidden');
-          main.querySelectorAll('.opportunity-cleanup-panel').forEach(function (p) {
-            p.classList.add('hidden');
-          });
-          if (opening) panel.classList.remove('hidden');
-        }
-        return;
-      }
-      var approveBtn = e.target.closest('[data-opp-approve]');
-      if (approveBtn) {
-        var approveRow = approveBtn.closest('[data-opportunity-id-row]');
-        var approveId = approveRow && approveRow.getAttribute('data-opportunity-id-row');
-        if (!approveId) return;
-        approveBtn.disabled = true;
-        adminPost('/api/admin/opportunities', { id: approveId, action: 'approve' })
-          .then(function (data) {
-            if (!data.ok) throw new Error(data.message || data.error || 'Approve failed');
-            return refreshOpportunityCleanupData();
-          })
-          .then(function () {
-            refreshAdminNotifications();
-          })
-          .catch(function (err) {
-            window.alert(err.message || 'Could not approve listing.');
-            approveBtn.disabled = false;
-          });
-        return;
-      }
-      var rejectBtn = e.target.closest('[data-opp-reject]');
-      if (rejectBtn) {
-        var rejectRow = rejectBtn.closest('[data-opportunity-id-row]');
-        var rejectId = rejectRow && rejectRow.getAttribute('data-opportunity-id-row');
-        if (!rejectId) return;
-        if (!window.confirm('Reject this business opportunity listing?')) return;
-        rejectBtn.disabled = true;
-        adminPost('/api/admin/opportunities', { id: rejectId, action: 'reject' })
-          .then(function (data) {
-            if (!data.ok) throw new Error(data.message || data.error || 'Reject failed');
-            return refreshOpportunityCleanupData();
-          })
-          .then(function () {
-            refreshAdminNotifications();
-          })
-          .catch(function (err) {
-            window.alert(err.message || 'Could not reject listing.');
-            rejectBtn.disabled = false;
-          });
-        return;
-      }
-      var quick = e.target.closest('[data-opp-quick]');
-      if (quick) {
-        var key = quick.getAttribute('data-opp-quick');
-        if (key === 'clear') {
-          opportunityCleanupState.status = '';
-          opportunityCleanupState.approval = '';
-          opportunityCleanupState.type = '';
-          opportunityCleanupState.featured = false;
-          opportunityCleanupState.noImage = false;
-          opportunityCleanupState.q = '';
-        } else if (key === 'pending') {
-          opportunityCleanupState.approval =
-            opportunityCleanupState.approval === 'Pending Review' ? '' : 'Pending Review';
-        } else if (key === 'draft') {
-          opportunityCleanupState.status = opportunityCleanupState.status === 'draft' ? '' : 'draft';
-        } else if (key === 'published') {
-          opportunityCleanupState.status =
-            opportunityCleanupState.status === 'published' ? '' : 'published';
-        } else if (key === 'featured') {
-          opportunityCleanupState.featured = !opportunityCleanupState.featured;
-        } else if (key === 'no_image') {
-          opportunityCleanupState.noImage = !opportunityCleanupState.noImage;
-        }
-        syncOpportunityCleanupFilterUi();
-        refreshOpportunityCleanupData();
-        return;
-      }
-      if (e.target.id === 'opportunity-cleanup-load-more') loadMoreOpportunities();
-    });
+
+    document.body.addEventListener('click', handleOpportunityCleanupClick);
   }
 
   function renderCleanupHub(fullHash) {
@@ -9168,6 +9705,7 @@
     dashboard: renderDashboard,
     analytics: renderAnalytics,
     system: renderSystem,
+    rankings: renderRankings,
     cleanup: renderCleanupHub,
     accounts: renderAccountsHub,
     email: renderEmailHub,
@@ -9289,12 +9827,15 @@
       refreshBadge.addEventListener('click', function () {
         refreshBadge.disabled = true;
         refreshBadge.textContent = 'Refreshing…';
-        refreshAdminNotifications().finally(function () {
+        refreshAdminNotifications({ forceHealth: true }).finally(function () {
           refreshBadge.disabled = false;
         });
       });
     }
-    refreshAdminNotifications();
+    var routeKey = (location.hash || '#dashboard').replace('#', '').split('/')[0];
+    if (routeKey !== 'dashboard') {
+      refreshAdminNotifications();
+    }
     startAdminNotificationsPolling();
     route();
     window.addEventListener('hashchange', route);

@@ -13,6 +13,7 @@
     "seed-sample-event": "node scripts/seed-sample-event.js",
     "seed-browse-events": "node scripts/seed-browse-events.js",
     "test-review-e2e": "node scripts/review-e2e-test.js",
+    "seed-ranking-demo": "node scripts/seed-ranking-demo-reviews.js",
     "import-attendees": "node scripts/import-attendees-csv.js",
     "build-seo": "node scripts/build-hub-seo-data.js && node scripts/build-faq-html.js && node scripts/build-llms-txt.js"
   },
