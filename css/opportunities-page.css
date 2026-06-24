@@ -2243,7 +2243,7 @@
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .opp-browse-page .opp-listings-area {
@@ -2251,47 +2251,19 @@
 }
 
 .opp-browse-page .opp-sidebar {
-  position: sticky;
-  top: calc(64px + 16px);
+  position: static;
+  align-self: stretch;
+}
+
+.opp-browse-page .opp-sidebar-panel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: calc(100vh - 80px);
-  align-self: start;
-}
-
-.opp-browse-page .opp-sidebar-inner {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: var(--opp-gold-border) transparent;
-  padding-right: 2px;
-}
-
-.opp-browse-page .opp-sidebar-inner::-webkit-scrollbar {
-  width: 6px;
-}
-
-.opp-browse-page .opp-sidebar-inner::-webkit-scrollbar-thumb {
-  background: var(--opp-gold-border);
-  border-radius: 999px;
-}
-
-.opp-browse-page .opp-sidebar-sponsor {
-  flex: 0 0 auto;
-}
-
-.opp-browse-page .opp-sidebar-card {
-  border-radius: 12px;
-  padding: 0;
-  box-shadow: none;
-  background: transparent;
-  border: none;
+  height: 100%;
+  background: var(--opp-navy);
+  border: 1px solid rgba(201, 150, 31, 0.4);
+  border-left: 4px solid var(--opp-gold);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .opp-browse-page .opp-sidebar-filters {
@@ -2299,16 +2271,14 @@
   flex-direction: column;
   gap: 10px;
   padding: 14px 14px 12px;
-  background: linear-gradient(165deg, var(--opp-navy) 0%, #132a4d 55%, var(--opp-navy-mid) 100%);
-  border: 1px solid rgba(201, 150, 31, 0.38);
-  border-left: 4px solid var(--opp-gold);
-  border-radius: 12px;
-  box-shadow:
-    0 10px 28px rgba(13, 31, 60, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  background: var(--opp-navy);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
-.opp-browse-page .opp-sidebar-card h3 {
+.opp-browse-page .opp-sidebar-card h3,
+.opp-browse-page .opp-sidebar-filters h3 {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -2517,10 +2487,11 @@
 }
 
 .opp-browse-page .opp-sidebar-sponsor {
-  background: linear-gradient(135deg, var(--opp-navy) 0%, var(--opp-navy-mid) 100%);
-  border-radius: 10px;
+  margin-top: auto;
   padding: 14px;
-  border: 1px solid rgba(201, 150, 31, 0.2);
+  background: var(--opp-navy-mid);
+  border-top: 1px solid rgba(201, 150, 31, 0.28);
+  border-radius: 0;
 }
 
 .opp-browse-page .opp-sidebar-sponsor-tag {
@@ -3220,16 +3191,10 @@
 
   .opp-browse-page .opp-sidebar {
     position: static;
-    max-height: none;
-    flex-direction: column;
   }
 
-  .opp-browse-page .opp-sidebar-inner {
-    overflow: visible;
-    padding-right: 0;
-  }
-
-  .opp-browse-page .opp-sidebar-card,
+  .opp-browse-page .opp-sidebar-panel,
+  .opp-browse-page .opp-sidebar-filters,
   .opp-browse-page .opp-sidebar-sponsor {
     width: 100%;
   }
