@@ -14,9 +14,9 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260628" />
-    <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260612" />
+    <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260702" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260606" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260701" />
   </head>
   <body class="organiser-event-edit-page">
     <div id="ee-page-loading" class="ee-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
@@ -32,6 +32,7 @@
       <header class="ee-page-head">
         <div class="ee-top-bar">
           <a class="ee-back" href="index.html#events-list" id="ee-back-link">← Back to My Events</a>
+          <button type="button" class="ee-hubert-help-btn" data-hubert-help>Hubert's help</button>
         </div>
         <div id="ee-wizard-mount"></div>
         <p class="ee-format-badge" id="ee-format-badge" hidden></p>
@@ -47,7 +48,7 @@
       </header>
       <div id="ee-alert" class="ee-alert" hidden></div>
 
-      <form id="ee-form">
+      <form id="ee-form" novalidate>
         <!-- Section 1: Group -->
         <div class="ee-card" id="ee-card-group">
           <h2>Which group is this event for?</h2>
@@ -155,7 +156,9 @@
 
           <div class="ee-format-panel" id="ee-online-block" data-format-panel="online">
             <h3 class="ee-subheading">Online access</h3>
-            <p class="ee-hint" style="margin-top:0">Only shared with ticket holders — not shown on the public listing.</p>
+            <p class="ee-hint" style="margin-top:0">
+              Only shared with ticket holders — not shown on the public listing. You can add or update this link anytime before the event; ticket holders are emailed when a join link is first added.
+            </p>
             <div class="ee-field">
               <label for="ee-platform">Platform</label>
               <select id="ee-platform">
@@ -169,7 +172,8 @@
               </select>
             </div>
             <div class="ee-field">
-              <label for="ee-join-link">Meeting / join link</label>
+              <label for="ee-join-link">Meeting / join link <span class="ee-optional">(optional)</span></label>
+              <p class="ee-hint" style="margin-top:0">No link yet? Save your listing and paste the Zoom, Teams, or Meet URL here when it is ready.</p>
               <input type="url" id="ee-join-link" placeholder="https://zoom.us/j/… or Teams link" />
             </div>
           </div>
@@ -224,12 +228,12 @@
     <script src="../js/hub-organiser-actions.js?v=20260606" data-root="../"></script>
     <script src="../js/hubert-chat.js?v=20260612"></script>
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../"></script>
-    <script src="../js/organiser-flow-tour.js?v=20260612" data-root="../"></script>
+    <script src="../js/organiser-flow-tour.js?v=20260702" data-root="../"></script>
     <script src="../js/fact-loader.js?v=20260613"></script>
     <script src="../js/organiser-page-loading.js?v=20260608d"></script>
     <script src="../js/meeting-types.js?v=20260609n"></script>
     <script src="../js/organiser-quarter-time.js?v=20260614c"></script>
     <script src="../js/organiser-image-upload.js?v=20260611"></script>
-    <script src="../js/organiser-event-edit.js?v=20260630"></script>
+    <script src="../js/organiser-event-edit.js?v=20260702"></script>
   </body>
 </html>

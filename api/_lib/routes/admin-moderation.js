@@ -57,6 +57,84 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true, report: data });
       }
 
+      if (action === 'unpublish_from_report') {
+        const { data: report, error: loadErr } = await sb
+          .from('listing_reports')
+          .select('id, listing_type, event_id, organiser_id, listing_title, status')
+          .eq('id', id)
+          .maybeSingle();
+        if (loadErr) throw new Error(loadErr.message);
+        if (!report) {
+          return json(res, 404, { ok: false, error: 'not_found' });
+        }
+        if (String(report.status || '') !== 'open') {
+          return json(res, 400, { ok: false, error: 'report_not_open' });
+        }
+
+        let listing = null;
+        if (report.listing_type === 'event' && report.event_id) {
+          const { data, error } = await sb
+            .from('events')
+            .update({ status: 'unpublished', ticket_sales_enabled: false })
+            .eq('id', report.event_id)
+            .select('id, title, status')
+            .maybeSingle();
+          if (error) throw new Error(error.message);
+          listing = data ? { type: 'event', ...data } : null;
+        } else if (report.listing_type === 'organiser' && report.organiser_id) {
+          const { data, error } = await sb
+            .from('organisers')
+            .update({ listing_status: 'unpublished' })
+            .eq('id', report.organiser_id)
+            .select('id, name, listing_status')
+            .maybeSingle();
+          if (error) throw new Error(error.message);
+          listing = data ? { type: 'organiser', ...data } : null;
+        }
+
+        const { data: updatedReport, error: reportErr } = await sb
+          .from('listing_reports')
+          .update({ status: 'reviewed' })
+          .eq('id', id)
+          .select('id, status')
+          .single();
+        if (reportErr) throw new Error(reportErr.message);
+
+        return json(res, 200, {
+          ok: true,
+          report: updatedReport,
+          listing,
+          listingMissing: !listing && Boolean(report.event_id || report.organiser_id),
+        });
+      }
+
+      if (action === 'delete_review_from_report') {
+        const { data: report, error: loadErr } = await sb
+          .from('review_reports')
+          .select('id, review_id, status')
+          .eq('id', id)
+          .maybeSingle();
+        if (loadErr) throw new Error(loadErr.message);
+        if (!report) {
+          return json(res, 404, { ok: false, error: 'not_found' });
+        }
+        if (String(report.status || '') !== 'open') {
+          return json(res, 400, { ok: false, error: 'report_not_open' });
+        }
+        if (report.review_id) {
+          const { error: delErr } = await sb.from('reviews').delete().eq('id', report.review_id);
+          if (delErr) throw new Error(delErr.message);
+        }
+        const { data, error } = await sb
+          .from('review_reports')
+          .update({ status: 'reviewed' })
+          .eq('id', id)
+          .select('id, status')
+          .single();
+        if (error) throw new Error(error.message);
+        return json(res, 200, { ok: true, report: data, deletedReviewId: report.review_id || null });
+      }
+
       if (action === 'dismiss_review_report') {
         const { data, error } = await sb
           .from('review_reports')

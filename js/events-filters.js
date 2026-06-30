@@ -155,6 +155,11 @@
     return 0;
   }
 
+  function eventListingPrice(ev) {
+    if (window.HubBookingFees) return window.HubBookingFees.listingPriceNum(ev);
+    return eventTicketPrice(ev);
+  }
+
   function formatPriceLabel(value, isMax) {
     var n = Number(value) || 0;
     var cap = priceSliderCap;
@@ -182,7 +187,7 @@
     if (!all.length || !priceMax) return;
     var peak = 0;
     all.forEach(function (ev) {
-      var n = eventMaxTicketPrice(ev);
+      var n = eventListingPrice(ev);
       if (n > peak) peak = n;
     });
     var prevCap = priceSliderCap;
@@ -456,8 +461,8 @@
     }
 
     var bounds = getPriceBounds();
-    var ticketPrice = eventTicketPrice(ev);
-    if (bounds.maxVal < priceSliderCap && ticketPrice > bounds.maxVal) return false;
+    var listingPrice = eventListingPrice(ev);
+    if (bounds.maxVal < priceSliderCap && listingPrice > bounds.maxVal) return false;
 
     return true;
   }
@@ -473,10 +478,10 @@
         return (Number(a.rating) || 0) - (Number(b.rating) || 0);
       }
       if (sort === 'price' || sort === 'price-asc') {
-        return (Number(a.priceNum) || 0) - (Number(b.priceNum) || 0);
+        return eventListingPrice(a) - eventListingPrice(b);
       }
       if (sort === 'price-desc') {
-        return (Number(b.priceNum) || 0) - (Number(a.priceNum) || 0);
+        return eventListingPrice(b) - eventListingPrice(a);
       }
       if (sort === 'date') {
         var da = eventDateTs(a);

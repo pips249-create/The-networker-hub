@@ -66,6 +66,7 @@ async function createPaidCheckoutSession(opts) {
     metadata: {
       event_id: opts.eventId,
       ticket_id: opts.ticketId || '',
+      registration_id: opts.registrationId || '',
       attendee_email: opts.email || '',
       attendee_name: opts.name || '',
       guest_names: JSON.stringify(opts.guestNames || []).slice(0, 500),

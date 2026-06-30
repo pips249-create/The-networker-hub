@@ -2248,7 +2248,7 @@
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
   gap: 24px;
-  align-items: stretch;
+  align-items: start;
 }
 
 .opp-browse-page .opp-listings-area {
@@ -2256,14 +2256,14 @@
 }
 
 .opp-browse-page .opp-sidebar {
-  position: static;
-  align-self: stretch;
+  position: sticky;
+  top: calc(64px + 16px);
+  align-self: start;
 }
 
 .opp-browse-page .opp-sidebar-panel {
   display: flex;
   flex-direction: column;
-  height: 100%;
   background: var(--opp-navy);
   border: 1px solid rgba(201, 150, 31, 0.4);
   border-left: 4px solid var(--opp-gold);
@@ -2345,22 +2345,23 @@
 }
 
 .opp-browse-page .opp-filter-details {
-  border: 1px dashed rgba(232, 184, 75, 0.35);
-  border-radius: 8px;
-  padding: 0 9px;
-  background: rgba(255, 255, 255, 0.06);
+  margin-top: 2px;
 }
 
 .opp-browse-page .opp-filter-details summary {
   list-style: none;
   cursor: pointer;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.78);
-  padding: 7px 0;
+  color: rgba(232, 184, 75, 0.8);
+  padding: 4px 0;
   user-select: none;
+}
+
+.opp-browse-page .opp-filter-details summary:hover {
+  color: var(--opp-gold-light);
 }
 
 .opp-browse-page .opp-filter-details summary::-webkit-details-marker {
@@ -2380,7 +2381,7 @@
 }
 
 .opp-browse-page .opp-filter-details .opp-range-inputs {
-  padding-bottom: 9px;
+  padding-top: 4px;
 }
 
 .opp-browse-page .opp-filter-option {
@@ -2492,7 +2493,6 @@
 }
 
 .opp-browse-page .opp-sidebar-sponsor {
-  margin-top: auto;
   padding: 14px;
   background: var(--opp-navy-mid);
   border-top: 1px solid rgba(201, 150, 31, 0.28);

@@ -1,6 +1,6 @@
 /**
  * Mobile layout — load AFTER hub.css and page-specific CSS.
- * Version 20260626
+ * Version 20260701
  */
 
 /* ─── Prevent horizontal page scroll ─── */
@@ -20,6 +20,23 @@
   iframe {
     max-width: 100%;
     height: auto;
+  }
+
+  /* iOS Safari zooms focused inputs when font-size is below 16px */
+  .events-filter-shell input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']),
+  .events-filter-shell select,
+  .events-filter-shell textarea,
+  .events-filter-shell .flatpickr-input,
+  .events-sort-wrap select,
+  .opp-browse-page .opp-filter-select,
+  .opp-browse-page .opp-search-box input,
+  .opp-browse-page .opp-toolbar-search input,
+  .org-filter-bar select,
+  .org-filter-bar input,
+  .org-table-search,
+  .org-reviews-toolbar select,
+  .org-reviews-toolbar .org-select {
+    font-size: 16px;
   }
 }
 
@@ -196,7 +213,7 @@ body.nav-menu-open {
   flex-shrink: 0;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .site-nav {
     display: flex;
     align-items: center;
@@ -326,7 +343,7 @@ body.nav-menu-open {
 }
 
 /* ─── Events browse ─── */
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .events-page .events-hero {
     padding: 20px 16px 28px;
   }
@@ -397,7 +414,7 @@ body.nav-menu-open {
 
   .filter-bar-row-top .filter-field input {
     padding: 9px 10px 9px 34px;
-    font-size: 13px;
+    font-size: 16px;
   }
 
   .filter-bar-row-top .filter-field-search input {
@@ -419,7 +436,7 @@ body.nav-menu-open {
   .filter-location-radius select {
     min-width: 72px;
     padding: 9px 26px 9px 10px;
-    font-size: 12px;
+    font-size: 16px;
     min-height: 44px;
   }
 
@@ -445,7 +462,7 @@ body.nav-menu-open {
     width: 100%;
     min-width: 118px;
     padding: 8px 28px 8px 10px;
-    font-size: 13px;
+    font-size: 16px;
     min-height: 44px;
     -webkit-appearance: menulist;
     appearance: auto;
@@ -950,7 +967,7 @@ body.nav-menu-open {
 }
 
 /* ─── Training ─── */
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .training-page .training-hero,
   .training-hero {
     padding: 20px 16px 28px;

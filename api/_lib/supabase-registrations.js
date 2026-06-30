@@ -71,6 +71,62 @@ async function createRegistrationFromPayment(input) {
     }
   }
 
+  const linkedRegistrationId = String(
+    input.registrationId || input.registration_id || ''
+  ).trim();
+  if (linkedRegistrationId) {
+    const linkedRes = await sb
+      .from('registrations')
+      .select('*')
+      .eq('id', linkedRegistrationId)
+      .maybeSingle();
+    if (linkedRes.error) throw new Error(linkedRes.error.message);
+    const linked = linkedRes.data;
+    if (!linked?.id) throw new Error('registration_not_found');
+    if (String(linked.event_id || '') !== eventId) throw new Error('registration_event_mismatch');
+    if (String(linked.application_status || '').trim() !== 'Approved') {
+      throw new Error('registration_not_approved');
+    }
+    if (String(linked.payment_status || '').trim() === 'Paid') {
+      return { action: 'exists', id: linked.id, registration: linked };
+    }
+
+    const amountPaid =
+      input.amountPaid != null
+        ? Number(input.amountPaid)
+        : input.amount_paid != null
+          ? Number(input.amount_paid)
+          : 0;
+    const paymentStatus =
+      input.paymentStatus ||
+      input.payment_status ||
+      (amountPaid > 0 ? 'Paid' : String(linked.payment_status || 'Pending'));
+
+    const patch = {
+      payment_status: paymentStatus,
+      amount_paid: Number.isFinite(amountPaid) ? amountPaid : 0,
+      stripe_payment_intent_id: stripePaymentIntentId,
+      stripe_checkout_session_id: stripeCheckoutSessionId,
+    };
+    const upd = await sb.from('registrations').update(patch).eq('id', linked.id).select('*').single();
+    if (upd.error) throw new Error(upd.error.message);
+
+    let emailResult = null;
+    try {
+      emailResult = await sendRegistrationEmails(sb, upd.data);
+    } catch (e) {
+      emailResult = { error: e.message || String(e) };
+    }
+
+    return {
+      action: 'updated',
+      id: linked.id,
+      attendeeId: linked.attendee_id,
+      registration: upd.data,
+      emailResult,
+    };
+  }
+
   const session = {
     email,
     name: input.name || input.customerName || null,
@@ -231,6 +287,7 @@ async function handleCheckoutSessionCompleted(session) {
     paymentStatus: amountTotal > 0 ? 'Paid' : 'Free',
     stripePaymentIntentId: paymentIntentId,
     stripeCheckoutSessionId: session.id,
+    registrationId: metadata.registration_id || metadata.registrationId || null,
   });
 }
 

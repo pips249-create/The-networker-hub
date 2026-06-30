@@ -32,7 +32,7 @@
       '<h2 class="hub-hubert-guide-name">Hubert</h2>' +
       '<p class="hub-hubert-guide-tagline">Your listing guide</p>' +
       '</div>' +
-      '<button type="button" class="hub-hubert-guide-collapse" aria-label="Minimise guide" title="Minimise">−</button>' +
+      '<button type="button" class="hub-hubert-guide-collapse" aria-label="Close Hubert help" title="Close">×</button>' +
       '</header>' +
       '<div class="hub-hubert-guide-step" id="hub-hubert-guide-step">' +
       '<p class="hub-flow-tour-step">1 of 1</p>' +
@@ -52,15 +52,51 @@
       '<label class="visually-hidden" for="hub-hubert-guide-input">Ask Hubert</label>' +
       '<textarea id="hub-hubert-guide-input" rows="2" placeholder="Ask about this step…" maxlength="2000" required></textarea>' +
       '<button type="submit" class="ee-btn ee-btn-primary" id="hub-hubert-guide-send">Send</button>' +
-      '</div></form></div></aside>' +
-      '<button type="button" class="hub-hubert-guide-tab" aria-label="Open Hubert guide">' +
-      '<img src="' +
-      icon +
-      '" alt="" width="36" height="36">' +
-      '<span>Hubert</span></button>';
+      '</div></form></div></aside>';
     document.body.appendChild(root);
     bindShell(root);
     return root;
+  }
+
+  function openHelp() {
+    var root = ensureShell();
+    initGuideChat(root);
+    root.hidden = false;
+    root.classList.remove('is-open', 'is-collapsed');
+    root.classList.add('is-questions-only', 'is-help-open');
+    root.setAttribute('aria-hidden', 'false');
+    document.body.classList.remove('hub-flow-tour-active', 'hub-hubert-guide-collapsed');
+    document.body.classList.add('hub-hubert-help-open');
+  }
+
+  function closeHelp() {
+    var root = document.getElementById('hub-flow-tour');
+    if (!root) return;
+    root.hidden = true;
+    root.classList.remove('is-open', 'is-questions-only', 'is-help-open', 'is-collapsed');
+    root.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove(
+      'hub-flow-tour-active',
+      'hub-hubert-guide-active',
+      'hub-hubert-guide-collapsed',
+      'hub-hubert-help-open'
+    );
+    var spotlight = root.querySelector('.hub-flow-tour-spotlight');
+    if (spotlight) spotlight.style.cssText = '';
+    var backdrop = root.querySelector('.hub-flow-tour-backdrop');
+    if (backdrop) backdrop.style.pointerEvents = '';
+  }
+
+  function bindHelpTriggers(selector) {
+    document.querySelectorAll(selector).forEach(function (btn) {
+      if (btn.getAttribute('data-hubert-help-bound') === '1') return;
+      btn.setAttribute('data-hubert-help-bound', '1');
+      btn.addEventListener('click', function () {
+        var root = document.getElementById('hub-flow-tour');
+        if (root && !root.hidden && root.classList.contains('is-help-open')) closeHelp();
+        else openHelp();
+      });
+    });
   }
 
   function bindShell(root) {
@@ -68,17 +104,9 @@
     root.setAttribute('data-shell-bound', '1');
 
     var collapseBtn = root.querySelector('.hub-hubert-guide-collapse');
-    var tabBtn = root.querySelector('.hub-hubert-guide-tab');
     if (collapseBtn) {
       collapseBtn.addEventListener('click', function () {
-        root.classList.add('is-collapsed');
-        document.body.classList.add('hub-hubert-guide-collapsed');
-      });
-    }
-    if (tabBtn) {
-      tabBtn.addEventListener('click', function () {
-        root.classList.remove('is-collapsed');
-        document.body.classList.remove('hub-hubert-guide-collapsed');
+        closeHelp();
       });
     }
   }
@@ -130,20 +158,20 @@
     } catch (e) {
       /* ignore */
     }
-    this.enterQuestionsMode();
+    this.hide();
   };
 
   FlowTour.prototype.hide = function () {
-    if (!this.root) return;
-    this.root.hidden = true;
-    this.root.classList.remove('is-open', 'is-questions-only', 'is-collapsed');
-    this.root.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('hub-flow-tour-active', 'hub-hubert-guide-active', 'hub-hubert-guide-collapsed');
+    closeHelp();
     this.clearSpotlight();
   };
 
   FlowTour.prototype.clearSpotlight = function () {
     if (this.spotlight) this.spotlight.style.cssText = '';
+    if (this.root) {
+      var backdrop = this.root.querySelector('.hub-flow-tour-backdrop');
+      if (backdrop) backdrop.style.pointerEvents = '';
+    }
   };
 
   FlowTour.prototype.positionSpotlight = function (el) {
@@ -180,6 +208,10 @@
     }
 
     var target = step.target ? document.querySelector(step.target) : null;
+    var backdrop = this.root.querySelector('.hub-flow-tour-backdrop');
+    if (backdrop) {
+      backdrop.style.pointerEvents = target ? 'none' : 'auto';
+    }
     if (target) {
       target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
       this.positionSpotlight(target);
@@ -220,13 +252,13 @@
       });
     }
 
-    this.root.classList.remove('is-questions-only', 'is-collapsed');
-    document.body.classList.remove('hub-hubert-guide-collapsed');
+    this.root.classList.remove('is-questions-only', 'is-collapsed', 'is-help-open');
+    document.body.classList.remove('hub-hubert-guide-collapsed', 'hub-hubert-help-open');
     this.stepIndex = 0;
     this.root.hidden = false;
     this.root.classList.add('is-open');
     this.root.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('hub-flow-tour-active', 'hub-hubert-guide-active');
+    document.body.classList.add('hub-flow-tour-active');
     this.renderStep();
   };
 
@@ -247,15 +279,18 @@
   };
 
   function showQuestionsOnly() {
-    var root = ensureShell();
-    if (root.classList.contains('is-open')) return;
-    initGuideChat(root);
-    root.hidden = false;
-    root.classList.remove('is-open', 'is-collapsed');
-    root.classList.add('is-questions-only');
-    root.setAttribute('aria-hidden', 'false');
-    document.body.classList.remove('hub-flow-tour-active', 'hub-hubert-guide-collapsed');
-    document.body.classList.add('hub-hubert-guide-active');
+    openHelp();
+  }
+
+  function bindHelpMessageListener() {
+    global.addEventListener('message', function (e) {
+      if (e.origin !== global.location.origin) return;
+      if (e.data && e.data.type === 'hub-open-hubert-help') {
+        var root = document.getElementById('hub-flow-tour');
+        if (root && !root.hidden && root.classList.contains('is-help-open')) closeHelp();
+        else openHelp();
+      }
+    });
   }
 
   var GROUP_REVIEW_STEPS = [
@@ -384,6 +419,9 @@
       return new FlowTour(options);
     },
     showQuestionsOnly: showQuestionsOnly,
+    openHelp: openHelp,
+    closeHelp: closeHelp,
+    bindHelpTriggers: bindHelpTriggers,
     startGroupTour: function (opts) {
       opts = opts || {};
       var review = Boolean(opts.onboardReview);
@@ -455,4 +493,14 @@
       }
     },
   };
+
+  bindHelpMessageListener();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      bindHelpTriggers('[data-hubert-help]');
+    });
+  } else {
+    bindHelpTriggers('[data-hubert-help]');
+  }
 })(typeof window !== 'undefined' ? window : globalThis);

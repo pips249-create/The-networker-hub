@@ -17,7 +17,7 @@
     },
     {
       title: 'Add something new',
-      body: 'Tap + Add new to create a group profile, list an event, or (soon) publish a workshop or training session.',
+      body: 'Tap + Add new to create a group profile, list an event, publish a business opportunity, or (soon) add a workshop or training session.',
       target: '#org-add-menu-wrap',
     },
     {

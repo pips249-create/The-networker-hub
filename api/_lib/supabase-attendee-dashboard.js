@@ -28,6 +28,8 @@ function canCancelRegistration(row, ev) {
   return true;
 }
 
+const { isOnlineEvent } = require('./event-refund-policy');
+
 function mapRegistrationRow(row, reviewByEventId) {
   const ev = row.events || {};
   const organiser = ev.organisers || {};
@@ -37,10 +39,21 @@ function mapRegistrationRow(row, reviewByEventId) {
   const date = ev.starts_at || null;
   const ticketName = String(ticket.name || 'General Admission').trim();
   const qty = Math.max(1, Number(row.quantity) || 1);
+  const ticketPriceNum = ticket.price != null ? Number(ticket.price) : 0;
+  const applicationStatus = String(row.application_status || 'Approved').trim();
+  const paymentStatus = String(row.payment_status || 'Pending').trim();
+  const needsPayment =
+    applicationStatus === 'Approved' &&
+    paymentStatus === 'Pending' &&
+    Number.isFinite(ticketPriceNum) &&
+    ticketPriceNum > 0;
+  const meetingLink = String(row.meeting_link || ev.meeting_link || '').trim();
+  const online = isOnlineEvent(ev, meetingLink);
 
   return {
     id: row.id,
     eventId,
+    ticketId: row.ticket_id || ticket.id || '',
     slug: ev.slug || '',
     title: ev.title || 'Event',
     date,
@@ -49,6 +62,9 @@ function mapRegistrationRow(row, reviewByEventId) {
     ticketLabel: qty + ' × ' + ticketName,
     quantity: qty,
     paymentStatus: row.payment_status || 'Pending',
+    applicationStatus: row.application_status || 'Approved',
+    ticketPriceNum,
+    needsPayment,
     amountPaid: row.amount_paid != null ? Number(row.amount_paid) : 0,
     createdAt: row.created_at || null,
     bookingReference: formatBookingReference(row.id),
@@ -70,6 +86,9 @@ function mapRegistrationRow(row, reviewByEventId) {
     isPaid:
       String(row.payment_status || '').trim() === 'Paid' &&
       Number(row.amount_paid) > 0,
+    isOnline: online,
+    meetingLink: online ? meetingLink : '',
+    meetingType: ev.meeting_type || (online ? 'Online' : 'In person'),
   };
 }
 
@@ -81,6 +100,7 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
       id,
       created_at,
       event_id,
+      ticket_id,
       payment_status,
       application_status,
       amount_paid,
@@ -95,6 +115,8 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
         image_url,
         photo_url,
         organiser_id,
+        meeting_link,
+        meeting_type,
         refund_policy,
         refund_policy_details,
         refund_cutoff_days,
@@ -106,7 +128,8 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
       ),
       tickets (
         id,
-        name
+        name,
+        price
       )
     `
     )

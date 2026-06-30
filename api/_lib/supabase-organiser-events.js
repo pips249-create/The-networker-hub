@@ -11,6 +11,7 @@ const { hubViewFromRequest, organiserPersonalScopeFromRequest } = require('./aut
 const sbOrg = require('./supabase-organiser');
 const { geocodeUkPostcode } = require('./postcode-geocode');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
+const { eventHasTicketsOnSale } = require('./ticket-sales');
 
 const WORKSPACE_EVENTS_LIMIT_DEFAULT = 100;
 const WORKSPACE_EVENTS_LIMIT_MAX = 250;
@@ -624,6 +625,7 @@ async function createEvent(payload) {
 async function updateEvent(eventId, payload) {
   const sb = getSupabaseAdmin();
   const { data: existing } = await sb.from('events').select('*').eq('id', eventId).maybeSingle();
+  const previousLink = String(existing?.meeting_link || '').trim();
   const patchPayload = { ...payload, groupId: payload.groupId };
   if (existing && existing.locked) {
     patchPayload._locked = true;
@@ -656,10 +658,29 @@ async function updateEvent(eventId, payload) {
 
   if (payload.photoBase64) {
     const updated = await applyEventPhotoAfterSave(eventId, payload);
-    if (updated) return rowToEvent(updated);
+    if (updated) {
+      const event = rowToEvent(updated);
+      const linkStats = await maybeSendMeetingLinkEmails(sb, eventId, previousLink, updated.meeting_link);
+      if (linkStats && linkStats.sent > 0) event.linkUpdateEmails = linkStats;
+      return event;
+    }
   }
 
-  return rowToEvent(data);
+  const event = rowToEvent(data);
+  const linkStats = await maybeSendMeetingLinkEmails(sb, eventId, previousLink, data.meeting_link);
+  if (linkStats && linkStats.sent > 0) event.linkUpdateEmails = linkStats;
+  return event;
+}
+
+async function maybeSendMeetingLinkEmails(sb, eventId, previousLink, newLink) {
+  if (!String(newLink || '').trim() || String(previousLink || '').trim()) return null;
+  try {
+    const { sendMeetingLinkAddedEmails } = require('./registration-emails');
+    return await sendMeetingLinkAddedEmails(sb, eventId, { previousLink, newLink });
+  } catch (e) {
+    console.error('[meeting-link-email]', eventId, e.message || e);
+    return { sent: 0, errors: [{ message: e.message || String(e) }] };
+  }
 }
 
 async function deleteEventForSession(session, eventId, groupIds) {
@@ -781,7 +802,23 @@ async function updateEventVatTreatment(eventIds, vatTreatment) {
   if (error) throw new Error(error.message);
 }
 
-async function publishEventsWithRefund(eventIds, refundPayload) {
+async function assertEventsHaveTicketsForPublish(sb, eventIds) {
+  const ids = (eventIds || []).filter(Boolean);
+  if (!ids.length) return;
+  const { data, error } = await sb.from('tickets').select('event_id').in('event_id', ids);
+  if (error) throw new Error(error.message);
+  const withTickets = new Set((data || []).map((row) => row.event_id));
+  for (const id of ids) {
+    if (!withTickets.has(id)) {
+      const e = new Error('Add at least one ticket type before publishing this event.');
+      e.status = 400;
+      e.code = 'tickets_required_for_publish';
+      throw e;
+    }
+  }
+}
+
+async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales) {
   const sb = getSupabaseAdmin();
   const { ensureEventSlug } = require('./event-slug');
   const ids = (eventIds || []).filter(Boolean);
@@ -790,10 +827,14 @@ async function publishEventsWithRefund(eventIds, refundPayload) {
     e.status = 400;
     throw e;
   }
+
+  await assertEventsHaveTicketsForPublish(sb, ids);
+
+  const salesLiveNow = eventHasTicketsOnSale(ticketsForSales || []);
   const patch = {
     status: 'published',
     approval_status: 'Approved',
-    ticket_sales_enabled: true,
+    ticket_sales_enabled: salesLiveNow,
     published_at: new Date().toISOString(),
     refund_policy: refundPayload.refundPolicy || null,
     refund_policy_details: refundPayload.refundPolicyDetails || null,
@@ -869,6 +910,15 @@ async function createTicketsForEvents({ eventIds, tickets, publish, refund, vatT
     }
   }
 
+  const hasOsop = tiers.some(
+    (t) => t.oneSeatOnly || /application/i.test(String(t.ticketType || t.name || ''))
+  );
+  const { error: approvalErr } = await sb
+    .from('events')
+    .update({ auto_approve: !hasOsop })
+    .in('id', ids);
+  if (approvalErr) throw new Error(approvalErr.message);
+
   let publishedEvents = null;
   if (publish && refund) {
     const { data: eventRows, error: eventLoadErr } = await sb
@@ -879,7 +929,7 @@ async function createTicketsForEvents({ eventIds, tickets, publish, refund, vatT
     const organiserIds = [...new Set((eventRows || []).map((row) => row.organiser_id).filter(Boolean))];
     const { assertOrganiserReadyForPaidPublish } = require('./stripe-connect');
     await assertOrganiserReadyForPaidPublish(sb, organiserIds, tiers);
-    publishedEvents = await publishEventsWithRefund(ids, refund);
+    publishedEvents = await publishEventsWithRefund(ids, refund, out);
   }
 
   return { created: out.length, tickets: out, publishedEvents };

@@ -4,7 +4,7 @@
 const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./supabase');
 const { isEventCurrentlyFeatured } = require('./event-featured-plans');
 const { eventImageUrl } = require('./event-image');
-const { eventHasTicketsOnSale, resolveTicketSalesEnabled } = require('./ticket-sales');
+const { eventHasTicketsOnSale, resolveTicketSalesEnabled, earliestTicketSaleStart, formatTicketSalesOpensLabel, formatTicketSalesOpensShort, isEventPublishedForSale } = require('./ticket-sales');
 const { connectRequiredForPaidCheckout } = require('./stripe-connect');
 const { publicOrganiserSlug } = require('./organiser-slug');
 
@@ -155,6 +155,12 @@ function buildDateLine(location, parsedDate, time) {
   return parts.join(' · ');
 }
 
+function ticketIsApplication(row, name) {
+  const ticketType = String(row.ticket_type || '').toLowerCase();
+  const ticketName = String(name || row.name || '').toLowerCase();
+  return ticketType.includes('application') || /application to attend/.test(ticketName);
+}
+
 function ticketRowToTier(row, registrationCount) {
   const priceNum = parsePriceNum(row.price);
   const { display: price, priceKey } = normalizePrice(priceNum);
@@ -162,6 +168,7 @@ function ticketRowToTier(row, registrationCount) {
   const sold = Math.max(0, Number(registrationCount) || 0);
   const soldOut = qty !== null && Number.isFinite(qty) && sold >= qty;
   const name = String(row.name || 'Ticket').trim();
+  const ticketType = String(row.ticket_type || 'Standard').trim();
   return {
     id: row.id,
     name,
@@ -174,6 +181,9 @@ function ticketRowToTier(row, registrationCount) {
     registrationsCount: sold,
     label: name.slice(0, 48) || 'Ticket',
     stripePaymentLink: String(row.stripe_payment_link || '').trim(),
+    ticketType,
+    oneSeatOnly: ticketIsApplication(row, name),
+    saleEnd: row.sale_ends_at || null,
   };
 }
 
@@ -260,11 +270,23 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   const hasFreeTickets = tiers.some((t) => t.priceNum === 0);
   const hasPaidTickets = tiers.some((t) => t.priceNum > 0);
 
-  const orgName = organiser ? String(organiser.name || '').trim() : '';
+  const hasTicketTiers = eventTickets.length > 0;
   const spotsLeft = null;
-  const isSoldOut = tiers.length > 0 && tiers.every((t) => t.soldOut);
-  const ticketSalesEnabled = resolveTicketSalesEnabled(row, eventTickets);
+  const isSoldOut = hasTicketTiers && tiers.every((t) => t.soldOut);
   const ticketsOnSale = eventHasTicketsOnSale(eventTickets);
+  const ticketSalesOpensAtDate = earliestTicketSaleStart(eventTickets);
+  const ticketSalesOpensAt = ticketSalesOpensAtDate ? ticketSalesOpensAtDate.toISOString() : null;
+  const ticketSalesOpensLabel = ticketSalesOpensAt
+    ? formatTicketSalesOpensLabel(ticketSalesOpensAtDate)
+    : '';
+  const ticketSalesOpensShort = ticketSalesOpensAt
+    ? formatTicketSalesOpensShort(ticketSalesOpensAtDate)
+    : '';
+  const ticketSalesEnabled = resolveTicketSalesEnabled(row, eventTickets);
+  const isTicketSalesScheduled =
+    isEventPublishedForSale(row) && hasTicketTiers && !ticketsOnSale && Boolean(ticketSalesOpensAt);
+  const isTicketSalesPending =
+    isEventPublishedForSale(row) && hasTicketTiers && !ticketsOnSale && !isTicketSalesScheduled;
   const connectRequired = connectRequiredForPaidCheckout() && hasPaidTickets;
   const connectReady =
     !connectRequired ||
@@ -274,17 +296,20 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
         organiser.stripe_charges_enabled &&
         organiser.stripe_connect_details_submitted
     );
-  const isTicketSalesPending = !ticketSalesEnabled;
   const isSalesClosed =
     isSoldOut ||
     !ticketSalesEnabled ||
     !ticketsOnSale ||
     (connectRequired && !connectReady);
   let salesClosedReason = '';
-  if (!ticketSalesEnabled) salesClosedReason = 'organiser_pending';
+  if (isTicketSalesScheduled) salesClosedReason = 'scheduled';
+  else if (!hasTicketTiers) salesClosedReason = 'no_tickets';
+  else if (!ticketSalesEnabled) salesClosedReason = 'organiser_pending';
   else if (connectRequired && !connectReady) salesClosedReason = 'stripe_connect';
   else if (!ticketsOnSale) salesClosedReason = 'no_tickets';
   else if (isSoldOut) salesClosedReason = 'sold_out';
+
+  const orgName = organiser ? String(organiser.name || '').trim() : '';
 
   const highlights = Array.isArray(row.highlights)
     ? row.highlights.map((h) => String(h || '').trim()).filter(Boolean)
@@ -337,11 +362,17 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     organiser: orgName,
     rating: Number(row.average_rating) || 0,
     reviews: Number(row.review_count) || 0,
-    isApprovalRequired: row.auto_approve === false,
+    isApprovalRequired:
+      row.auto_approve === false || tiers.some((t) => t.oneSeatOnly || /application/i.test(t.ticketType || '')),
     isSoldOut,
     isSalesClosed,
     isTicketSalesPending,
+    isTicketSalesScheduled,
     ticketSalesEnabled,
+    ticketSalesOpensAt,
+    ticketSalesOpensLabel,
+    ticketSalesOpensShort,
+    hasTicketTiers,
     salesClosedReason,
     spotsLeft,
     capacity: null,
@@ -372,7 +403,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     seriesGroupId: row.series_group_id || null,
   };
 
-  if (!ev.tickets.length) ev.tickets = [fallbackTicketTier(ev)];
+  if (!ev.tickets.length && hasTicketTiers) ev.tickets = [fallbackTicketTier(ev)];
   return ev;
 }
 
@@ -573,7 +604,9 @@ async function eventsFromPublishedRows(sb, rows, knownOrganiser) {
       if (!isPublicEvent(row, org)) return null;
       const eventTickets = tickets.filter((t) => t.event_id === row.id);
       const ranking = row.organiser_id ? rankingsByOrg[row.organiser_id] || null : null;
-      return rowToEvent(row, org, eventTickets, ranking);
+      const ev = rowToEvent(row, org, eventTickets, ranking);
+      if (!ev.hasTicketTiers) return null;
+      return ev;
     })
     .filter(Boolean);
 }
@@ -795,6 +828,15 @@ async function handle(req, res) {
         }
       }
       const event = rowToEvent(row, organiser, tickets, organiserRanking);
+      if (!event.hasTicketTiers) {
+        return res.status(404).json({
+          configured: true,
+          provider: 'supabase',
+          error: 'not_found',
+          message: 'This event is not published.',
+          event: null,
+        });
+      }
       event.isSeries = seriesDates.length > 1;
       const seriesIds = new Set(seriesDates.map((d) => d.id));
       const relatedFiltered = (relatedRows || []).filter((r) => !seriesIds.has(r.id));

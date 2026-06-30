@@ -536,3 +536,22 @@ body.browse-mode-organisers .filter-field-icon,
 body.browse-mode-organisers .filter-date-icon {
   color: #2563eb;
 }
+
+/* Last in events page cascade — keeps filter inputs at 16px (prevents iOS zoom) */
+@media (max-width: 900px) {
+  .events-page .events-filter-shell input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']),
+  .events-page .events-filter-shell select,
+  .events-page .events-filter-shell textarea,
+  .events-page .events-filter-shell .flatpickr-input,
+  .events-page .events-filter-shell .filter-date-wrap input,
+  .events-page .events-filter-shell .filter-field input,
+  .events-page .events-filter-shell .filter-field select,
+  .events-page .events-filter-shell .filter-near-radius select,
+  .events-page .events-filter-shell .filter-location-radius select,
+  .events-page .events-filter-shell .filter-organiser-industry select,
+  .events-page .events-results-meta .events-sort-wrap select,
+  .events-page .events-filter-bar input.flatpickr-input,
+  .events-page .events-filter-shell input.flatpickr-input {
+    font-size: 16px;
+  }
+}

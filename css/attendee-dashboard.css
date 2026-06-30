@@ -697,6 +697,32 @@ body.ad-cancel-modal-open {
   font-weight: 600;
 }
 
+.ad-payment-details dd a {
+  font-weight: 700;
+}
+
+.ad-event-join {
+  margin-top: 6px;
+}
+
+.ad-join-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef6ff;
+  border: 1px solid #b8d4f5;
+  color: #1c4a7a;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.ad-join-link:hover {
+  background: #e3f0ff;
+  text-decoration: none;
+}
+
 .ad-payment-note {
   margin: 0 0 16px;
   font-size: 12px;

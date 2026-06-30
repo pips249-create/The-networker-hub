@@ -13,6 +13,13 @@ function computeEventTicketStats(registrations, tickets) {
   const { ticketsSold } = summarizeRegistrationSales(registrations);
   const breakdown = calculatePayoutBreakdown(registrations);
 
+  let pendingApplications = 0;
+  (registrations || []).forEach(function (row) {
+    if (String(row.application_status || '').trim() === 'Pending') {
+      pendingApplications += Math.max(1, Number(row.quantity) || 1);
+    }
+  });
+
   let capacity = 0;
   let hasUnlimited = false;
   (tickets || []).forEach(function (t) {
@@ -27,6 +34,7 @@ function computeEventTicketStats(registrations, tickets) {
     tickets_sold: String(ticketsSold),
     tickets_remaining: ticketsRemaining,
     total_revenue: formatGbp(breakdown.amount_gross),
+    pending_applications: String(pendingApplications),
   };
 }
 

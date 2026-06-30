@@ -15,7 +15,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260610" />
-    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260702" />
+    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260630" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260701" />
     <script src="../js/hub-seo-static-config.js?v=20260612"></script>
     <script src="../js/hub-seo-static.js?v=20260612" data-page="opportunities"></script>
@@ -151,23 +151,22 @@
             </select>
           </label>
 
-          <label class="opp-filter-field" for="opp-filter-invest">
-            <span class="opp-filter-field-label">Investment</span>
+          <div class="opp-filter-field">
+            <label class="opp-filter-field-label" for="opp-filter-invest">Investment</label>
             <select id="opp-filter-invest" class="opp-filter-select">
               <option value="">Any investment</option>
               <option value="low-invest" data-count-for="low-invest">£0 – £2,500</option>
               <option value="mid-invest" data-count-for="mid-invest">£2,500 – £10k</option>
               <option value="high-invest" data-count-for="high-invest">£10k+</option>
             </select>
-          </label>
-
-          <details class="opp-filter-details">
-            <summary>Custom range</summary>
-            <div class="opp-range-inputs">
-              <input type="number" id="opp-min-invest" placeholder="Min £" min="0" step="100" aria-label="Minimum investment" />
-              <input type="number" id="opp-max-invest" placeholder="Max £" min="0" step="100" aria-label="Maximum investment" />
-            </div>
-          </details>
+            <details class="opp-filter-details">
+              <summary>Custom range</summary>
+              <div class="opp-range-inputs">
+                <input type="number" id="opp-min-invest" placeholder="Min £" min="0" step="100" aria-label="Minimum investment" />
+                <input type="number" id="opp-max-invest" placeholder="Max £" min="0" step="100" aria-label="Maximum investment" />
+              </div>
+            </details>
+          </div>
 
           <label class="opp-filter-field" for="opp-filter-location">
             <span class="opp-filter-field-label">Location</span>

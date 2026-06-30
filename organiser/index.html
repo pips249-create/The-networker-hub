@@ -17,9 +17,9 @@
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260708c" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260707" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260713" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
@@ -49,7 +49,10 @@
             <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">Events</a>
             <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Group profiles</a>
             <a href="#events-tickets" class="hub-side-nav-link" data-org-route="events-tickets">Tickets</a>
-            <a href="#events-attendees" class="hub-side-nav-link" data-org-route="events-attendees">Attendees</a>
+            <a href="#events-attendees" class="hub-side-nav-link" data-org-route="events-attendees">
+              Attendees
+              <span class="org-nav-badge" id="org-pending-applications-nav-badge" hidden>New</span>
+            </a>
             <a href="#events-cancellations" class="hub-side-nav-link" data-org-route="events-cancellations">Cancellations</a>
             <a href="#events-reviews" class="hub-side-nav-link" data-org-route="events-reviews">Reviews</a>
             <a href="#events-revenue" class="hub-side-nav-link" data-org-route="events-revenue">Revenue</a>
@@ -68,6 +71,7 @@
         <div class="org-main" id="org-main">
           <div class="org-wrap">
         <div id="org-airtable-alert" class="org-alert" hidden></div>
+        <div class="org-join-link-banner" id="join-link-banner" hidden role="status"></div>
 
         <!-- Overview -->
         <section class="org-page is-active" id="org-page-dashboard" data-org-page="dashboard">
@@ -98,6 +102,10 @@
                 <a role="menuitem" class="org-add-menu-item" href="event-format.html">
                   <strong>Event</strong>
                   <span>Meeting, exhibition or conference</span>
+                </a>
+                <a role="menuitem" class="org-add-menu-item" href="opportunity-edit.html">
+                  <strong>Business opportunity</strong>
+                  <span>Franchise, partnership or side hustle listing</span>
                 </a>
                 <button type="button" role="menuitem" class="org-add-menu-item" data-org-route="academy">
                   <strong>Workshop or seminar</strong>
@@ -672,7 +680,7 @@
           <!-- Attendees -->
           <div class="org-sub-page" id="sub-events-attendees" data-events-panel="events-attendees">
             <p class="org-section-sub org-sub-lead">
-              Everyone registered for your events — filter by event and export a CSV for your records.
+              Everyone registered or applied for your events — filter by event and export a CSV for your records.
             </p>
             <div class="org-filter-bar">
               <select id="filter-attendees-event" aria-label="Filter by event">
@@ -692,8 +700,10 @@
                     <th>Event</th>
                     <th>Ticket</th>
                     <th>Qty</th>
+                    <th>Status</th>
                     <th>Paid</th>
                     <th>Registered</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody id="attendees-body"></tbody>
@@ -1182,6 +1192,14 @@
         <header class="org-group-drawer-head org-event-drawer-head">
           <button
             type="button"
+            class="org-event-drawer-help"
+            id="org-event-drawer-help"
+            aria-label="Open Hubert's help"
+          >
+            Hubert's help
+          </button>
+          <button
+            type="button"
             class="org-group-drawer-close"
             data-org-event-drawer-close
             aria-label="Close event editor"
@@ -1251,6 +1269,6 @@
     <script src="../js/organiser-flow-tour.js?v=20260610"></script>
     <script src="../js/organiser-onboarding.js?v=20260618"></script>
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
-    <script src="../js/organiser-dashboard.js?v=20260707"></script>
+    <script src="../js/organiser-dashboard.js?v=20260713"></script>
   </body>
 </html>

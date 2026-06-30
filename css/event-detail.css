@@ -1547,6 +1547,223 @@ a:hover {
   background: var(--purple-700);
 }
 
+.ticket-panel.is-approval-mode .qty-row,
+.ticket-panel.is-approval-mode .summary,
+.ticket-panel.is-approval-mode .qty-avail-hint,
+.ticket-panel.is-approval-mode .ticket-vat-note,
+.ticket-panel.is-approval-mode .summary-fee-note,
+.ticket-panel.is-approval-mode #ticket-secure-foot {
+  display: none !important;
+}
+
+.ticket-panel.is-approval-mode .ticket-tiers {
+  margin-bottom: 16px;
+}
+
+.tier.tier-osop {
+  display: block;
+  cursor: default;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.tier.tier-osop:hover,
+.tier.tier-osop.selected {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.tier.tier-osop .tier-radio {
+  display: none;
+}
+
+.osop-tier-card {
+  border: 1.5px solid var(--border-strong);
+  border-radius: 12px;
+  background: linear-gradient(160deg, var(--purple-50) 0%, var(--surface) 55%);
+  padding: 16px 16px 14px;
+  overflow: hidden;
+}
+
+.osop-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--purple-100);
+  color: var(--purple-dark);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.osop-tier-lead {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-muted);
+}
+
+.osop-tier-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.osop-tier-steps li {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 4px 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--border);
+}
+
+.osop-tier-steps strong {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--purple-dark);
+  line-height: 1.4;
+}
+
+.osop-tier-steps span {
+  grid-column: 2;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+
+.osop-tier-meta {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--purple-700);
+  line-height: 1.45;
+}
+
+.osop-tier-price-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.osop-tier-price-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.osop-tier-price {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--purple-900);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.osop-tier-card.is-sold-out {
+  opacity: 0.72;
+  background: #f3f4f6;
+}
+
+.ticket-panel.is-approval-mode .ticket-foot.osop-apply-foot[hidden] {
+  display: none !important;
+}
+
+.ticket-panel.is-approval-mode .ticket-foot.osop-apply-foot:not([hidden]) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.osop-application-status {
+  display: none;
+  margin-top: 4px;
+  padding: 18px 16px;
+  border-radius: 12px;
+  border: 1.5px solid var(--purple-200, #d9c4e0);
+  background: linear-gradient(160deg, var(--purple-50) 0%, var(--surface) 70%);
+  text-align: center;
+}
+
+.osop-application-status-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--purple-100);
+  color: var(--purple-dark);
+}
+
+.osop-application-status-title {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.osop-application-status-lead {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-muted);
+}
+
+.osop-application-status-link {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--purple-dark);
+  text-decoration: none;
+}
+
+.osop-application-status-link:hover {
+  text-decoration: underline;
+}
+
+.ticket-panel.is-application-submitted #buy-btn,
+.ticket-panel.is-application-submitted #ticket-paid-checkout,
+.ticket-panel.is-application-submitted .seat-application-form,
+.ticket-panel.is-application-submitted #ticket-secure-foot,
+.ticket-panel.is-application-submitted #ev-refund-badge,
+.ticket-panel.is-application-submitted .ticket-refund-details,
+.ticket-panel.is-application-submitted .osop-apply-foot {
+  display: none !important;
+}
+
+.ticket-panel.is-application-submitted .osop-application-status:not([hidden]) {
+  display: block;
+}
+
+.ticket-panel.is-application-submitted.is-approval-mode .ticket-tiers {
+  opacity: 0.72;
+}
+
 .ticket-panel.show-application #ticket-purchase-view,
 .ticket-panel.show-application #buy-btn,
 .ticket-panel.show-checkout #ticket-purchase-view,
@@ -1563,6 +1780,13 @@ a:hover {
 .checkout-details-form {
   display: none;
   margin-bottom: 16px;
+}
+
+.seat-application-form {
+  padding: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--purple-50);
 }
 
 .checkout-details-intro {
@@ -1748,9 +1972,10 @@ a:hover {
 
 .seat-application-intro {
   font-size: 14px;
-  color: var(--ink-muted);
+  color: var(--purple-dark);
   line-height: 1.55;
   margin: 0 0 16px;
+  font-weight: 600;
 }
 
 .btn-text-back {
@@ -2148,6 +2373,70 @@ body.modal-open {
   overflow: hidden;
 }
 
+.application-success-panel {
+  text-align: center;
+  padding-top: 32px;
+}
+
+.application-success-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, var(--purple-100), var(--purple-50));
+  color: var(--purple-700);
+  border: 1px solid var(--border-strong);
+}
+
+.application-success-panel .hub-modal-title {
+  margin-bottom: 10px;
+}
+
+.application-success-panel .hub-modal-lead {
+  margin-bottom: 18px;
+}
+
+.application-success-steps {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  text-align: left;
+  display: grid;
+  gap: 10px;
+}
+
+.application-success-steps li {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 4px 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--purple-50);
+  border: 1px solid var(--border);
+}
+
+.application-success-steps strong {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--purple-dark);
+  line-height: 1.4;
+}
+
+.application-success-steps span {
+  grid-column: 2;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+
+.application-success-btn {
+  width: 100%;
+}
+
 .stripe-hint {
   font-size: 13px;
   color: var(--ink-muted);
@@ -2524,8 +2813,6 @@ body.modal-open {
 @media (max-width: 900px) {
   .event-detail-page .form-field input,
   .event-detail-page .form-field textarea,
-  .event-detail-page .hub-modal-form input,
-  .event-detail-page .hub-modal-form textarea,
   .event-detail-page .checkout-details-form input,
   .event-detail-page .checkout-details-form textarea,
   .event-detail-page .seat-application-form input,

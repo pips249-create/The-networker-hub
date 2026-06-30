@@ -504,6 +504,111 @@
   }
 }
 
+@media (max-width: 768px) {
+  .organiser-profile-page {
+    overflow-x: hidden;
+  }
+
+  .org-profile-shell {
+    padding: 0 16px 48px;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .org-profile-breadcrumb {
+    padding: 12px 0 10px;
+  }
+
+  .org-showcase {
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 24px;
+    overflow: visible;
+    border-radius: 14px;
+  }
+
+  .org-showcase-visual {
+    border-left: none;
+    border-top: 4px solid #2563eb;
+    padding: 20px 16px 18px;
+    text-align: left;
+  }
+
+  .org-showcase-photo {
+    max-width: 280px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .org-showcase-reviews {
+    padding: 20px 16px 22px;
+    border-left: none;
+    border-top: 1px solid rgba(37, 99, 235, 0.1);
+    min-width: 0;
+  }
+
+  .org-profile-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .org-profile-main,
+  .org-profile-side {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .org-profile-side {
+    position: static;
+    order: 1;
+    margin: 0;
+    width: 100%;
+  }
+
+  .org-ranking-panel-summary {
+    white-space: normal;
+  }
+
+  .org-profile-name {
+    overflow-wrap: anywhere;
+  }
+
+  .org-profile-actions {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .org-profile-actions-primary {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .org-profile-btn {
+    min-height: 44px;
+  }
+
+  .org-review-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .org-review-card-date {
+    white-space: normal;
+  }
+
+  .org-event-row {
+    align-items: stretch;
+  }
+
+  .org-event-row-cta {
+    align-self: flex-start;
+  }
+}
+
 @media (max-width: 700px) {
   .org-profile-shell {
     padding: 0 20px 48px;

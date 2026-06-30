@@ -1131,7 +1131,7 @@ html:has(.home-page) {
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .home-page {
     --home-nav-height: 60px;
   }

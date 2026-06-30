@@ -74,6 +74,23 @@
   }
 }
 
+@media (max-width: 899px) {
+  .opportunity-detail-page .opp-detail-sidebar {
+    order: -1;
+  }
+
+  .opportunity-detail-page .opp-enquire-card {
+    position: static;
+    top: auto;
+  }
+
+  .opportunity-detail-page .opp-detail-shell,
+  .opportunity-detail-page .opp-detail-breadcrumb {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
 .opportunity-detail-page .opp-detail-main {
   background: #fff;
   border: 1px solid var(--opp-border, #dde3ed);

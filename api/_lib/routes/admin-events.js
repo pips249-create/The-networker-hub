@@ -4,6 +4,7 @@ const { publicEventSlug } = require('../event-slug');
 const { publicOrganiserSlug } = require('../organiser-slug');
 const { normalizeEventType } = require('../event-types');
 const { eventImageUrl, eventImageDbValue } = require('../event-image');
+const { eventHasTicketsOnSale } = require('../ticket-sales');
 
 function parseBody(req) {
   let body = req.body;
@@ -236,7 +237,6 @@ function buildEventPatchFromBody(body) {
     patch.status = status || null;
     if (status === 'published') {
       patch.approval_status = 'Approved';
-      patch.ticket_sales_enabled = true;
     } else if (status === 'draft') patch.approval_status = 'Pending Review';
   }
   if (Object.prototype.hasOwnProperty.call(body, 'approval_status')) {
@@ -289,6 +289,21 @@ async function applyEventPatch(sb, id, patch) {
     patch.status = 'draft';
     patch.approval_status = 'Pending Review';
     patch.ticket_sales_enabled = false;
+  }
+
+  if (patch.status === 'published') {
+    const { data: ticketRows, error: ticketErr } = await sb
+      .from('tickets')
+      .select('id, event_id, status, sale_starts_at, sale_ends_at')
+      .eq('event_id', id);
+    if (ticketErr) throw new Error(ticketErr.message);
+    if (!(ticketRows || []).length) {
+      const err = new Error('Add at least one ticket type before publishing this event.');
+      err.status = 400;
+      err.code = 'tickets_required_for_publish';
+      throw err;
+    }
+    patch.ticket_sales_enabled = eventHasTicketsOnSale(ticketRows);
   }
 
   const { data, error } = await sb.from('events').update(patch).eq('id', id).select('*').single();

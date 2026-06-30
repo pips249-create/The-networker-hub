@@ -107,6 +107,9 @@ module.exports = async function handler(req, res) {
 
     const ticketIdRaw = body.ticketId || body.ticket_id || null;
     let ticketId = ticketIdRaw && isUuid(ticketIdRaw) ? String(ticketIdRaw) : null;
+    const registrationIdRaw = body.registrationId || body.registration_id || null;
+    const registrationId =
+      registrationIdRaw && isUuid(registrationIdRaw) ? String(registrationIdRaw) : null;
     let requestedQty = parseInt(body.qty, 10);
     if (!Number.isFinite(requestedQty) || requestedQty < 1) requestedQty = 1;
 
@@ -135,8 +138,33 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: 'ticket_sales_disabled',
         message:
-          'Ticket sales are not open for this event yet. Nudge the organiser from the event page.',
+          'Ticket sales are not open for this event yet. Save the event to get notified when sales begin.',
       });
+    }
+
+    if (registrationId) {
+      const regRes = await sb
+        .from('registrations')
+        .select('id, event_id, ticket_id, application_status, payment_status, attendee_id, attendees(email)')
+        .eq('id', registrationId)
+        .maybeSingle();
+      if (regRes.error) throw new Error(regRes.error.message);
+      const reg = regRes.data;
+      if (!reg || reg.event_id !== eventId) {
+        return json(res, 404, { ok: false, error: 'registration_not_found' });
+      }
+      const regEmail = String(reg.attendees?.email || '').trim().toLowerCase();
+      if (regEmail && regEmail !== checkoutEmail) {
+        return json(res, 403, { ok: false, error: 'registration_email_mismatch' });
+      }
+      if (String(reg.application_status || '').trim() !== 'Approved') {
+        return json(res, 400, { ok: false, error: 'registration_not_approved' });
+      }
+      if (String(reg.payment_status || '').trim() === 'Paid') {
+        return json(res, 400, { ok: false, error: 'registration_already_paid' });
+      }
+      if (!ticketId && reg.ticket_id) ticketId = reg.ticket_id;
+      requestedQty = 1;
     }
 
     let ticketName = 'Ticket';
@@ -221,6 +249,7 @@ module.exports = async function handler(req, res) {
       guestNames,
       eventId,
       ticketId,
+      registrationId,
       qty,
       eventTitle: evRes.data.title,
       ticketName,

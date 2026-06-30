@@ -24,6 +24,7 @@ function getOrganiserApi() {
       ...payouts,
       ...attendees,
       ...opportunities,
+      reviewApplicationForOrganiser: require('./supabase-application-decisions').reviewApplicationForOrganiser,
       cancelLockedEvent: cancellations.cancelLockedEvent,
       confirmRefundsIssued: cancellations.confirmRefundsIssued,
       listPendingClaimGroupsForSession: claims.listPendingClaimGroupsForSession,

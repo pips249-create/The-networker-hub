@@ -500,6 +500,11 @@
     setTimeout(doFit, 150);
   }
 
+  function mapPriceLabel(ev) {
+    if (window.HubBookingFees) return window.HubBookingFees.listingPriceLabel(ev);
+    return ev.price || 'Free';
+  }
+
   function popupHtml(ev, miles) {
     var fmtClass = formatClass(ev);
     var fmtLabel = formatLabel(ev);
@@ -519,7 +524,7 @@
       escapeHtml(fmtLabel) +
       '</span>' +
       '<span class="map-event-card-price">' +
-      escapeHtml(ev.price || 'Free') +
+      escapeHtml(mapPriceLabel(ev)) +
       '</span>' +
       '</div>' +
       '<h3 class="map-event-card-title">' +
@@ -611,7 +616,7 @@
       escapeHtml(meta.join(' · ')) +
       '</span>' +
       '<span class="map-sidebar-item-price">' +
-      escapeHtml(ev.price || 'Free') +
+      escapeHtml(mapPriceLabel(ev)) +
       '</span>' +
       '</button></li>'
     );

@@ -642,6 +642,105 @@
     });
   }
 
+  function eventIsOnlineFormat(ev) {
+    const fmt = String(ev.eventFormat || ev.meetingType || ev.format || '').toLowerCase();
+    return /online|virtual|hybrid/.test(fmt);
+  }
+
+  function eventIsUpcomingLive(ev) {
+    const st = String(ev.statusKey || ev.status || '').toLowerCase();
+    if (st === 'cancelled' || st === 'archived' || st === 'draft' || st === 'unpublished') {
+      return false;
+    }
+    const endRaw = ev.endDate || ev.date;
+    const end = endRaw ? new Date(endRaw).getTime() : null;
+    if (end != null && !Number.isNaN(end) && end < Date.now() - 3600000) return false;
+    return true;
+  }
+
+  function eventNeedsJoinLink(ev) {
+    if (!ev || !eventIsOnlineFormat(ev)) return false;
+    if (!eventIsUpcomingLive(ev)) return false;
+    return !String(ev.onlineLink || '').trim();
+  }
+
+  function collectEventsNeedingJoinLink(events) {
+    const out = [];
+    const seen = new Set();
+    (events || []).forEach((ev) => {
+      const consider = (row) => {
+        if (!row || !row.id || seen.has(row.id)) return;
+        if (!eventNeedsJoinLink(row)) return;
+        seen.add(row.id);
+        out.push(row);
+      };
+      consider(ev);
+      if (ev.seriesEvents && ev.seriesEvents.length) {
+        ev.seriesEvents.forEach(consider);
+      }
+    });
+    return out.sort((a, b) => {
+      const da = a.date ? new Date(a.date).getTime() : 0;
+      const db = b.date ? new Date(b.date).getTime() : 0;
+      return da - db;
+    });
+  }
+
+  function joinLinkWarnHtml(ev) {
+    if (!eventNeedsJoinLink(ev)) return '';
+    return (
+      '<span class="org-join-link-warn" title="Add a join link before the event">No join link</span>'
+    );
+  }
+
+  function renderJoinLinkBanner() {
+    const banner = document.getElementById('join-link-banner');
+    if (!banner) return;
+    const missing = collectEventsNeedingJoinLink(state.events);
+    if (!missing.length) {
+      banner.hidden = true;
+      banner.innerHTML = '';
+      return;
+    }
+    const preview = missing
+      .slice(0, 3)
+      .map((ev) => {
+        const date = formatDateShort(ev.date);
+        const dateSuffix =
+          date && date !== '—' ? ' <span class="org-join-link-banner-date">(' + esc(date) + ')</span>' : '';
+        return (
+          '<button type="button" class="org-join-link-banner-link" data-edit-event="' +
+          esc(ev.id) +
+          '">' +
+          esc(ev.title) +
+          dateSuffix +
+          '</button>'
+        );
+      })
+      .join('');
+    const more =
+      missing.length > 3
+        ? ' <span class="org-join-link-banner-more">+' + String(missing.length - 3) + ' more</span>'
+        : '';
+    banner.hidden = false;
+    banner.innerHTML =
+      '<p><strong>Join link needed</strong> — ' +
+      (missing.length === 1
+        ? 'This online event is missing a meeting link. Ticket holders receive the link by email once you add it.'
+        : missing.length +
+          ' upcoming online events are missing a meeting link. Ticket holders receive the link by email once you add it.') +
+      '</p><p class="org-join-link-banner-events">' +
+      preview +
+      more +
+      '</p>';
+    banner.querySelectorAll('[data-edit-event]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-edit-event');
+        if (id) openEventEditorDrawer(state.events.find((e) => e.id === id) || { id });
+      });
+    });
+  }
+
   function formatBookingReference(registrationId) {
     const raw = String(registrationId || '')
       .replace(/-/g, '')
@@ -816,7 +915,8 @@
         esc(ev.title) +
         '<span class="org-series-badge">' +
         esc(String(ev.seriesCount)) +
-        ' dates</span></button>'
+        ' dates</span></button>' +
+        joinLinkWarnHtml(ev)
       );
     }
     return (
@@ -824,7 +924,8 @@
       esc(ev.id) +
       '">' +
       esc(ev.title) +
-      '</button>'
+      '</button>' +
+      joinLinkWarnHtml(ev)
     );
   }
 
@@ -1093,7 +1194,7 @@
     const titles = {
       'events-list': ['My Events', 'Manage all your event listings — click any event name to edit.'],
       'events-tickets': ['Tickets', 'All ticket types across your events.'],
-      'events-attendees': ['Attendees', 'Registrations for your events — filter by event and download a CSV.'],
+      'events-attendees': ['Attendees', 'Registrations and OSOP applications for your events — filter by event and download a CSV.'],
       'events-cancellations': [
         'Cancellations',
         'Bookings attendees cancelled themselves — use the booking reference for Stripe or support, and check whether a refund may be due.',
@@ -1121,6 +1222,7 @@
   function renderEventsPanel(sub) {
     updateMyEventsTabCounts();
     fillMyEventsFilters();
+    renderJoinLinkBanner();
     if (sub === 'events-list') renderEvents();
     else if (sub === 'events-tickets') renderTickets();
     else if (sub === 'events-attendees') renderAttendees();
@@ -1138,6 +1240,45 @@
     set('tab-count-tickets', String(state.tickets.length));
     set('tab-count-reviews', String(state.reviews.length));
     set('tab-count-revenue', totalRevenueDisplay());
+  }
+
+  function pendingApplicationsCount() {
+    return state.attendeesAll.filter((a) => String(a.applicationStatus || '') === 'Pending').length;
+  }
+
+  function updatePendingApplicationsNavBadge() {
+    const badge = document.getElementById('org-pending-applications-nav-badge');
+    if (!badge) return;
+    const count = pendingApplicationsCount();
+    badge.hidden = count < 1;
+    badge.textContent = count > 1 ? String(count) + ' pending' : 'New';
+  }
+
+  function attendeeStatusLabel(a) {
+    const applicationStatus = String(a.applicationStatus || 'Approved').trim();
+    if (applicationStatus === 'Pending') return 'Application pending';
+    if (applicationStatus === 'Denied') return 'Application denied';
+    return 'Confirmed';
+  }
+
+  function attendeeStatusBadgeHtml(a) {
+    const applicationStatus = String(a.applicationStatus || 'Approved').trim();
+    if (applicationStatus === 'Pending') {
+      return '<span class="org-badge org-badge-gold">Pending review</span>';
+    }
+    if (applicationStatus === 'Denied') {
+      return '<span class="org-badge org-badge-red">Denied</span>';
+    }
+    return '<span class="org-badge org-badge-green">Confirmed</span>';
+  }
+
+  function attendeePaidDisplay(a) {
+    const applicationStatus = String(a.applicationStatus || 'Approved').trim();
+    if (applicationStatus === 'Pending') return '—';
+    if (applicationStatus === 'Approved' && String(a.paymentStatus || '') === 'Pending') {
+      return 'Awaiting payment';
+    }
+    return esc(a.amountDisplay || a.paymentStatus || '—');
   }
 
   function filteredAttendeesList() {
@@ -1169,6 +1310,7 @@
     if (ok) {
       state.attendeesAll = data.attendees || [];
       updateMyEventsTabCounts();
+      updatePendingApplicationsNavBadge();
     }
     return ok;
   }
@@ -1187,6 +1329,9 @@
       'Event',
       'Ticket',
       'Quantity',
+      'Status',
+      'Industry',
+      'Job title',
       'Paid',
       'Registered',
     ];
@@ -1199,6 +1344,9 @@
         a.eventTitle,
         a.ticketName,
         a.quantity,
+        attendeeStatusLabel(a),
+        a.screeningIndustry || '',
+        a.screeningJobTitle || '',
         a.amountDisplay || a.paymentStatus || '',
         a.registeredAt,
       ]
@@ -1216,6 +1364,55 @@
     link.download = 'attendees' + suffix + '.csv';
     link.click();
     URL.revokeObjectURL(link.href);
+  }
+
+  function attendeeActionsHtml(a) {
+    if (String(a.applicationStatus || '') !== 'Pending') return '—';
+    return (
+      '<div class="org-attendee-actions">' +
+      '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-approve-application="' +
+      esc(a.id) +
+      '">Approve</button>' +
+      '<button type="button" class="org-btn org-btn-sm org-attendee-deny-btn" data-deny-application="' +
+      esc(a.id) +
+      '">Deny</button>' +
+      '</div>'
+    );
+  }
+
+  async function reviewApplication(registrationId, action) {
+    const attendee = state.attendeesAll.find((row) => row.id === registrationId);
+    const name = attendee ? attendee.name : 'this applicant';
+    if (action === 'deny') {
+      const ok = window.confirm(
+        'Deny the application from ' + name + '? They will be notified by email.'
+      );
+      if (!ok) return;
+    }
+
+    const { ok, data } = await api('/api/organiser/application-decisions', {
+      method: 'POST',
+      body: JSON.stringify({ registrationId, action }),
+    });
+
+    if (!ok || !data.ok) {
+      window.alert(data.message || data.error || 'Could not update this application.');
+      return;
+    }
+
+    if (attendee) {
+      attendee.applicationStatus = data.applicationStatus || (action === 'approve' ? 'Approved' : 'Denied');
+      if (action === 'approve' && String(data.paymentStatus || '') === 'Free') {
+        attendee.paymentStatus = 'Free';
+        attendee.amountDisplay = 'Free';
+      } else if (action === 'approve') {
+        attendee.paymentStatus = data.paymentStatus || 'Pending';
+        attendee.amountDisplay = 'Awaiting payment';
+      }
+    }
+    updatePendingApplicationsNavBadge();
+    renderAttendees();
+    window.alert(data.message || (action === 'approve' ? 'Application approved.' : 'Application denied.'));
   }
 
   function renderAttendees() {
@@ -1243,14 +1440,24 @@
     pageInfo.items.forEach((a) => {
       const guestLabel =
         a.guestNames && a.guestNames.length ? a.guestNames.join(', ') : '';
+      const screeningLabel =
+        a.screeningIndustry || a.screeningJobTitle
+          ? '<span class="org-attendee-screening">' +
+            esc([a.screeningIndustry, a.screeningJobTitle].filter(Boolean).join(' · ')) +
+            '</span>'
+          : '';
       const nameCell =
         guestLabel
           ? esc(a.name) + '<span class="org-attendee-guests">+' + esc(guestLabel) + '</span>'
           : esc(a.name);
       const tr = document.createElement('tr');
+      if (String(a.applicationStatus || '') === 'Pending') {
+        tr.className = 'org-attendee-row-pending';
+      }
       tr.innerHTML =
         '<td class="org-td-name">' +
         nameCell +
+        screeningLabel +
         '</td><td>' +
         esc(a.email || '—') +
         '</td><td>' +
@@ -1260,9 +1467,13 @@
         '</td><td>' +
         esc(String(a.quantity)) +
         '</td><td>' +
-        esc(a.amountDisplay || a.paymentStatus || '—') +
+        attendeeStatusBadgeHtml(a) +
+        '</td><td>' +
+        attendeePaidDisplay(a) +
         '</td><td>' +
         esc(formatDateShort(a.registeredAt)) +
+        '</td><td class="org-td-actions">' +
+        attendeeActionsHtml(a) +
         '</td>';
       body.appendChild(tr);
     });
@@ -4222,6 +4433,22 @@
       btnDownloadAttendees.addEventListener('click', exportAttendeesCsv);
     }
 
+    const attendeesBody = document.getElementById('attendees-body');
+    if (attendeesBody && !attendeesBody.dataset.reviewBound) {
+      attendeesBody.dataset.reviewBound = '1';
+      attendeesBody.addEventListener('click', (e) => {
+        const approveBtn = e.target.closest('[data-approve-application]');
+        const denyBtn = e.target.closest('[data-deny-application]');
+        if (approveBtn) {
+          reviewApplication(approveBtn.getAttribute('data-approve-application'), 'approve');
+          return;
+        }
+        if (denyBtn) {
+          reviewApplication(denyBtn.getAttribute('data-deny-application'), 'deny');
+        }
+      });
+    }
+
     const downloadCsv = document.getElementById('btn-download-tickets-csv');
     if (downloadCsv) {
       downloadCsv.addEventListener('click', () => {
@@ -4383,6 +4610,16 @@
     document.querySelectorAll('[data-org-event-drawer-close]').forEach((el) => {
       el.addEventListener('click', closeEventEditorDrawer);
     });
+
+    const eventDrawerHelp = document.getElementById('org-event-drawer-help');
+    if (eventDrawerHelp) {
+      eventDrawerHelp.addEventListener('click', () => {
+        const frame = document.getElementById('org-event-drawer-frame');
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'hub-open-hubert-help' }, window.location.origin);
+        }
+      });
+    }
 
     window.addEventListener('message', (e) => {
       if (e.origin !== window.location.origin) return;

@@ -14,8 +14,9 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260630" />
-    <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260612" />
+    <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260701" />
   </head>
   <body class="organiser-event-edit-page">
     <div id="ee-page-loading" class="ee-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
@@ -31,6 +32,7 @@
       <div class="ee-back-row">
         <a class="ee-back" href="index.html#events-list">← Back to My Events</a>
         <a class="ee-back ee-back-secondary" id="ee-edit-event-link" href="event-edit.html" hidden>← Edit event details</a>
+        <button type="button" class="ee-hubert-help-btn" data-hubert-help>Hubert's help</button>
       </div>
       <div id="ee-wizard-mount"></div>
       <h1 class="ee-title">Set up ticket types</h1>
@@ -94,9 +96,12 @@
             </div>
           </div>
           <div class="ee-field">
-            <label for="ee-osop-close">Application closing date <span class="ee-optional">(optional)</span></label>
-            <p class="ee-hint">After this date the application button will no longer appear on the listing.</p>
-            <input type="date" id="ee-osop-close" />
+            <label for="ee-osop-close-date">Applications close <span class="ee-optional">(optional)</span></label>
+            <p class="ee-hint" style="margin-top:0">After this date and time the apply button will no longer appear on the listing. Pick a date and time in 15-minute steps.</p>
+            <div class="ee-datetime-split">
+              <input type="date" id="ee-osop-close-date" aria-label="Application closing date" />
+              <select id="ee-osop-close-time" aria-label="Application closing time"></select>
+            </div>
           </div>
           <p class="ee-label-block">Application questions</p>
           <ul class="ee-fixed-questions">
@@ -197,7 +202,7 @@
             <input type="checkbox" id="refund-terms-agreed" />
             <span>I understand I am responsible for honouring refunds via my connected Stripe account</span>
           </label>
-          <p class="ee-alert ee-alert-warn" id="ee-publish-warn" hidden>Add at least one ticket type, choose how VAT applies, and complete the refund policy before publishing.</p>
+          <p class="ee-alert ee-alert-warn" id="ee-publish-warn" hidden>Your event is not live until you publish a ticket type — please add at least one ticket tier, choose how VAT applies, and complete the refund policy.</p>
         </div>
 
         <div class="ee-actions">
@@ -211,11 +216,11 @@
     <script src="../js/organiser-event-wizard.js?v=20260628" data-step="tickets"></script>
     <script src="../js/hubert-chat.js?v=20260612"></script>
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../"></script>
-    <script src="../js/organiser-flow-tour.js?v=20260612" data-root="../"></script>
+    <script src="../js/organiser-flow-tour.js?v=20260701" data-root="../"></script>
     <script src="../js/fact-loader.js?v=20260613"></script>
     <script src="../js/organiser-page-loading.js?v=20260608d"></script>
     <script src="../js/organiser-quarter-time.js?v=20260614c"></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../"></script>
-    <script src="../js/organiser-event-tickets.js?v=20260630"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260709"></script>
   </body>
 </html>

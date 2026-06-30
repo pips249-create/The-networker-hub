@@ -641,6 +641,13 @@
     syncCopyFromGroupButtons();
   }
 
+  function setFormatPanelFieldsDisabled(block, disabled) {
+    if (!block) return;
+    block.querySelectorAll('input, select, textarea').forEach((el) => {
+      el.disabled = disabled;
+    });
+  }
+
   function applyFormatUi(format) {
     eventFormat = normalizeEventFormat(format) || eventFormat || 'in-person';
     try {
@@ -655,6 +662,8 @@
     const showOnline = eventFormat === 'online';
     if (venueBlock) venueBlock.classList.toggle('is-visible', showVenue);
     if (onlineBlock) onlineBlock.classList.toggle('is-visible', showOnline);
+    setFormatPanelFieldsDisabled(venueBlock, !showVenue);
+    setFormatPanelFieldsDisabled(onlineBlock, !showOnline);
     if (badge) {
       badge.textContent = FORMAT_LABELS[eventFormat] || eventFormat;
       badge.hidden = false;
@@ -991,6 +1000,19 @@
       return;
     }
 
+    const savedEvent = res.data.event || {};
+    const linkEmails = savedEvent.linkUpdateEmails;
+    if (linkEmails && linkEmails.sent > 0) {
+      showAlert(
+        'Join link saved. We emailed ' +
+          linkEmails.sent +
+          ' ticket holder' +
+          (linkEmails.sent === 1 ? '' : 's') +
+          ' with the link.',
+        'ok'
+      );
+    }
+
     if (!publish) {
       if (isEmbedDrawer && window.parent && window.parent !== window) {
         window.parent.postMessage({ type: 'hub-event-saved', draft: true }, window.location.origin);
@@ -1000,8 +1022,13 @@
       return;
     }
 
-    const eventIds = res.data.eventIds || (res.data.events || []).map((ev) => ev.id);
     const events = res.data.events || (res.data.event ? [res.data.event] : []);
+    const eventIds =
+      res.data.eventIds || events.map((ev) => ev.id).filter(Boolean);
+    if (publish && !eventIds.length) {
+      showAlert('Event saved but could not open ticket setup. Try Manage tickets from My Events.');
+      return;
+    }
     const leadImage =
       (events[0] && events[0].imageUrl) ||
       document.getElementById('ee-photo-preview-img')?.src ||

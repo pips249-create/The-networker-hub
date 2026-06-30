@@ -11,6 +11,7 @@ const routes = {
   events: require('./_lib/routes/organiser-events'),
   tickets: require('./_lib/routes/organiser-tickets'),
   attendees: require('./_lib/routes/organiser-attendees'),
+  'application-decisions': require('./_lib/routes/organiser-application-decisions'),
   team: require('./_lib/routes/organiser-team'),
   cancellations: require('./_lib/routes/organiser-cancellations'),
   'stripe-connect': require('./_lib/routes/organiser-stripe-connect'),

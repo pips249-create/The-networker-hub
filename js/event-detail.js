@@ -40,6 +40,16 @@
     return '£' + Number(n).toFixed(2);
   }
 
+  function publicListingPriceLabel(ev, options) {
+    if (window.HubBookingFees) {
+      return window.HubBookingFees.listingPriceLabel(ev, options || {});
+    }
+    if (!ev || ev.priceKey === 'free') return 'Free';
+    const withFrom = !options || options.withFrom !== false;
+    const display = ev.price || '—';
+    return withFrom ? 'from ' + display : display;
+  }
+
   function hostInitials(name) {
     const parts = String(name || '')
       .trim()
@@ -258,12 +268,94 @@
     return s === 'true' || s === '1' || s === 'yes' || s === 'on';
   }
 
+  function tierIsApplication(t) {
+    if (!t) return false;
+    if (t.oneSeatOnly) return true;
+    const type = String(t.ticketType || t.ticket_type || '').toLowerCase();
+    if (type.includes('application')) return true;
+    return /application to attend/i.test(String(t.name || ''));
+  }
+
+  function eventIsOsop(ev) {
+    if (!ev) return false;
+    if (parseBoolFlag(ev.isApprovalRequired)) return true;
+    return ticketTiersForEvent(ev).some(tierIsApplication);
+  }
+
+  function formatOsopCloseDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const date = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return date + ' at ' + time;
+  }
+
+  function osopTierCardHtml(t, soldOut) {
+    const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
+    const priceDisplay = priceNum > 0 ? t.price || fmt(priceNum) : 'Free';
+    const remainingLabel = soldOut ? '' : tierRemainingLabel(t);
+    const closeDate = t.saleEnd ? formatOsopCloseDate(t.saleEnd) : '';
+    let html =
+      '<div class="osop-tier-card' +
+      (soldOut ? ' is-sold-out' : '') +
+      '">' +
+      '<div class="osop-tier-badge"><span aria-hidden="true">🪑</span> One Seat Only Policy</div>' +
+      (soldOut
+        ? '<p class="osop-tier-lead">Applications are no longer being accepted for this event.</p>'
+        : '<p class="osop-tier-lead">Apply to attend — the host reviews your industry and job title before approving your seat.</p>');
+    if (!soldOut) {
+      html +=
+        '<ol class="osop-tier-steps">' +
+        '<li><strong>1. Apply</strong><span>Answer two quick questions about you</span></li>' +
+        '<li><strong>2. Review</strong><span>The organiser approves or declines</span></li>' +
+        '<li><strong>3. Book</strong><span>Approved applicants receive a payment link</span></li>' +
+        '</ol>';
+    }
+    if (remainingLabel) {
+      html += '<p class="osop-tier-meta">' + escapeHtml(remainingLabel) + '</p>';
+    }
+    if (closeDate && !soldOut) {
+      html += '<p class="osop-tier-meta">Applications close ' + escapeHtml(closeDate) + '</p>';
+    }
+    if (!soldOut) {
+      html +=
+        '<div class="osop-tier-price-row">' +
+        '<span class="osop-tier-price-label">If approved</span>' +
+        '<span class="osop-tier-price">' +
+        escapeHtml(priceDisplay) +
+        '</span></div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function syncTicketHeader(ev) {
+    const labelEl = document.getElementById('ev-ticket-from-label');
+    const priceEl = document.getElementById('ev-ticket-from-price');
+    if (!labelEl || !priceEl || !ev) return;
+    if (eventIsOsop(ev)) {
+      labelEl.textContent = 'Price if approved';
+      const priceNum = ev.priceKey === 'free' ? 0 : Number(ev.priceNum) || 0;
+      priceEl.textContent =
+        priceNum > 0 ? publicListingPriceLabel(ev, { withFrom: false }) : 'Free';
+      return;
+    }
+    labelEl.textContent = 'Tickets from';
+    priceEl.textContent =
+      ev.priceKey === 'free' ? 'Free' : publicListingPriceLabel(ev, { withFrom: false });
+  }
+
   function normalizeEventFlags(ev, params) {
     const p = params || new URLSearchParams(window.location.search);
+    const approvalFromTickets = (ev.tickets || []).some(tierIsApplication);
     return {
       ...ev,
       isApprovalRequired:
-        parseBoolFlag(ev.isApprovalRequired) || p.get('approval') === '1' || p.get('isApprovalRequired') === '1',
+        parseBoolFlag(ev.isApprovalRequired) ||
+        approvalFromTickets ||
+        p.get('approval') === '1' ||
+        p.get('isApprovalRequired') === '1',
       isSoldOut: parseBoolFlag(ev.isSoldOut) || p.get('sold_out') === '1' || p.get('isSoldOut') === '1',
       isSalesClosed:
         parseBoolFlag(ev.isSalesClosed) || p.get('sales_closed') === '1' || p.get('isSalesClosed') === '1',
@@ -457,7 +549,7 @@
 
       const price = document.createElement('span');
       price.className = 'mini-price';
-      price.textContent = ev.priceKey === 'free' ? 'Free' : ev.price || '—';
+      price.textContent = publicListingPriceLabel(ev);
       imgWrap.appendChild(price);
 
       const body = document.createElement('div');
@@ -790,9 +882,8 @@
     updateBreadcrumbTrail(ev);
     updateCanonicalUrl(ev);
 
-    const priceLabel = ev.priceKey === 'free' ? 'Free' : ev.price;
-    setText('ev-price', ev.priceKey === 'free' ? 'Free' : 'from ' + ev.price);
-    setText('ev-ticket-from-price', priceLabel);
+    setText('ev-price', publicListingPriceLabel(ev));
+    syncTicketHeader(ev);
     setText('ev-format', formatHeroLabel(ev.format));
 
     const hero = document.getElementById('ev-hero-img');
@@ -835,6 +926,7 @@
     setText('ev-related-title', 'More from ' + (ev.organiser || 'this organiser'));
     renderOrganiserReviews(ev);
     applyTicketPanelState(ev);
+    refreshEventApplicationUi(ev);
     wireListingReport(ev);
   }
 
@@ -925,6 +1017,7 @@
   let currentEventDetail = null;
   const BOOKING_PENDING_KEY = 'hub_booking_pending';
   let checkoutSessionUser = null;
+  let eventApplicationState = null;
   let ticketPanelBound = false;
 
   function clearCheckoutInlineError() {
@@ -1218,10 +1311,44 @@
     const tiers = ticketTiersForEvent(ev);
     const salesPending = Boolean(ev.isTicketSalesPending || ev.isTicketSalesScheduled);
     const panelClosed = ev.isSoldOut || (ev.isSalesClosed && !salesPending);
+    const isOsop = eventIsOsop(ev);
     tiersEl.innerHTML = '';
 
     let firstSelectable = null;
 
+    if (isOsop && tiers.length) {
+      const t = tiers.find((tier) => tierIsApplication(tier)) || tiers[0];
+      let soldOut = Boolean(t.soldOut) || panelClosed;
+      const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
+
+      const tier = document.createElement('div');
+      tier.className = 'tier tier-osop' + (soldOut ? ' sold-out tier-disabled' : ' selected');
+      tier.id = 'ev-tier-osop';
+      tier.setAttribute('data-ticket-id', t.id);
+      tier.setAttribute('data-price', String(priceNum));
+      tier.setAttribute('data-label', t.label || t.name || 'Application');
+      if (t.stripePaymentLink) tier.setAttribute('data-stripe-link', t.stripePaymentLink);
+      const cap = t.quantityAvailable;
+      const sold = Math.max(0, Number(t.registrationsCount) || 0);
+      tier.setAttribute('data-qty-max', '1');
+      if (cap != null && Number.isFinite(Number(cap))) {
+        const left = Math.max(0, Number(cap) - sold);
+        if (left <= 0) {
+          soldOut = true;
+          tier.classList.add('sold-out', 'tier-disabled');
+        }
+      }
+
+      if (!soldOut) {
+        tier.setAttribute('aria-pressed', 'true');
+        firstSelectable = tier;
+      } else {
+        tier.setAttribute('aria-disabled', 'true');
+      }
+
+      tier.innerHTML = osopTierCardHtml(t, soldOut);
+      tiersEl.appendChild(tier);
+    } else {
     tiers.forEach((t, index) => {
       const soldOut = Boolean(t.soldOut) || panelClosed;
       const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
@@ -1277,8 +1404,9 @@
 
       tiersEl.appendChild(tier);
     });
+    }
 
-    if (!firstSelectable && tiersEl.children.length) {
+    if (!firstSelectable && tiersEl.children.length && !isOsop) {
       const hint = ev.isSoldOut
         ? 'All ticket tiers are currently sold out.'
         : 'Tickets are not currently available for this event.';
@@ -1287,11 +1415,10 @@
 
     renderVatNote(ev, tiers);
 
-    const fromPrice = ev.priceKey === 'free' ? 'Free' : ev.price || '—';
-    setText('ev-ticket-from-price', fromPrice);
+    syncTicketHeader(ev);
     const heroPrice = document.getElementById('ev-price');
     if (heroPrice && ev.priceKey !== 'free') {
-      heroPrice.textContent = 'from ' + (ev.price || fromPrice);
+      heroPrice.textContent = publicListingPriceLabel(ev);
     }
 
     if (urgencyEl) {
@@ -1416,6 +1543,47 @@
       if (show) panel.classList.remove('show-checkout');
     }
     refreshTicketJumpVisibility();
+  }
+
+  let applicationSuccessBound = false;
+
+  function showApplicationSuccessModal(ev) {
+    const modal = document.getElementById('application-success-modal');
+    const lead = document.getElementById('application-success-lead');
+    if (!modal) return;
+    const title = ev && ev.title ? String(ev.title).trim() : 'this event';
+    if (lead) {
+      lead.textContent =
+        'Thanks — your request to join “' + title + '” has been submitted to the host.';
+    }
+    modal.hidden = false;
+    document.body.classList.add('modal-open');
+    const done = document.getElementById('application-success-done');
+    if (done) done.focus();
+  }
+
+  function hideApplicationSuccessModal() {
+    const modal = document.getElementById('application-success-modal');
+    if (!modal || modal.hidden) return;
+    modal.hidden = true;
+    document.body.classList.remove('modal-open');
+  }
+
+  function initApplicationSuccessModal() {
+    if (applicationSuccessBound) return;
+    const modal = document.getElementById('application-success-modal');
+    if (!modal) return;
+    applicationSuccessBound = true;
+
+    const close = () => hideApplicationSuccessModal();
+    document.getElementById('application-success-close')?.addEventListener('click', close);
+    document.getElementById('application-success-done')?.addEventListener('click', close);
+    modal.querySelectorAll('[data-application-success-close]').forEach((el) => {
+      el.addEventListener('click', close);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal.hidden) close();
+    });
   }
 
   function showCheckoutDetails(show) {
@@ -1654,7 +1822,7 @@
 
     if (paidBlock) paidBlock.hidden = isFree;
     if (secureFoot) secureFoot.hidden = isFree;
-    if (buy && !ev?.isApprovalRequired) {
+    if (buy && !eventIsOsop(ev)) {
       buy.textContent = isFree ? 'Get free ticket' : 'Buy ticket';
     }
     if (organiserEl && ev) {
@@ -1856,6 +2024,100 @@
     });
   }
 
+  function applicationBlocksReapply(state) {
+    if (!state || !state.hasApplication) return false;
+    return String(state.applicationStatus || '').trim() !== 'Denied';
+  }
+
+  function applicationStatusCopy(state) {
+    const status = String(state?.applicationStatus || '').trim();
+    const payment = String(state?.paymentStatus || '').trim();
+    if (status === 'Pending') {
+      return {
+        title: 'Application submitted',
+        lead:
+          "You've already applied for this event. We'll let you know when the organiser has made a decision — check your email and My Hub for updates.",
+      };
+    }
+    if (status === 'Approved') {
+      if (payment === 'Paid' || payment === 'Free') {
+        return {
+          title: "You're registered",
+          lead: 'Your application was approved and your place is confirmed. View your ticket in My Hub.',
+        };
+      }
+      return {
+        title: 'Application approved',
+        lead: 'Good news — the organiser approved your application. Complete your booking in My Hub to secure your seat.',
+      };
+    }
+    return {
+      title: 'Application submitted',
+      lead: "You've already applied for this event.",
+    };
+  }
+
+  function applyEventApplicationUi(ev) {
+    const panel = document.getElementById('tickets');
+    const statusPanel = document.getElementById('osop-application-status');
+    const titleEl = document.getElementById('osop-application-status-title');
+    const leadEl = document.getElementById('osop-application-status-lead');
+    if (!panel) return;
+
+    const shouldShow = eventIsOsop(ev) && applicationBlocksReapply(eventApplicationState);
+    panel.classList.toggle('is-application-submitted', shouldShow);
+    if (!statusPanel) return;
+
+    if (!shouldShow) {
+      statusPanel.hidden = true;
+      return;
+    }
+
+    const copy = applicationStatusCopy(eventApplicationState);
+    if (titleEl) titleEl.textContent = copy.title;
+    if (leadEl) leadEl.textContent = copy.lead;
+    statusPanel.hidden = false;
+  }
+
+  async function refreshEventApplicationUi(ev) {
+    if (!ev || !ev.id || !eventIsOsop(ev)) {
+      eventApplicationState = null;
+      applyEventApplicationUi(ev);
+      return;
+    }
+
+    const signedIn = await isSignedInAttendee();
+    if (!signedIn) {
+      eventApplicationState = null;
+      applyEventApplicationUi(ev);
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        '/api/auth/event-application?eventId=' + encodeURIComponent(ev.id),
+        { credentials: 'include' }
+      );
+      const data = await res.json().catch(function () {
+        return {};
+      });
+      if (res.ok && data.ok && data.hasApplication) {
+        eventApplicationState = {
+          hasApplication: true,
+          applicationStatus: data.applicationStatus,
+          paymentStatus: data.paymentStatus,
+          registrationId: data.registrationId,
+          submittedAt: data.submittedAt,
+        };
+      } else {
+        eventApplicationState = null;
+      }
+    } catch (e) {
+      eventApplicationState = null;
+    }
+    applyEventApplicationUi(ev);
+  }
+
   function applyTicketPanelState(ev) {
     const panel = document.getElementById('tickets');
     const buy = document.getElementById('buy-btn');
@@ -1865,7 +2127,7 @@
     const scheduledPanel = document.getElementById('ticket-sales-scheduled');
     if (!panel || !buy) return;
 
-    panel.dataset.approvalRequired = ev.isApprovalRequired ? 'true' : 'false';
+    panel.dataset.approvalRequired = eventIsOsop(ev) ? 'true' : 'false';
     panel.dataset.soldOut = ev.isSoldOut ? 'true' : 'false';
     panel.dataset.salesClosed = ev.isSalesClosed ? 'true' : 'false';
 
@@ -1891,6 +2153,7 @@
         scheduledPanel.hidden = false;
         bindTicketSalesScheduledUi(ev);
       }
+      applyEventApplicationUi(ev);
       return;
     }
 
@@ -1906,6 +2169,7 @@
         bindTicketSalesNudgeUi(ev);
         prefillNudgeEmail();
       }
+      applyEventApplicationUi(ev);
       return;
     }
 
@@ -1926,6 +2190,7 @@
       if (qtyDown) qtyDown.disabled = true;
       if (qtyUp) qtyUp.disabled = true;
       if (appForm) appForm.hidden = true;
+      applyEventApplicationUi(ev);
       return;
     }
 
@@ -1933,13 +2198,18 @@
     buy.classList.remove('cta-btn-disabled');
     if (purchaseView) purchaseView.removeAttribute('aria-hidden');
 
-    if (ev.isApprovalRequired) {
+    if (eventIsOsop(ev)) {
       panel.classList.add('is-approval-mode');
       buy.textContent = 'Apply for a Seat';
+      const osopFoot = document.getElementById('osop-apply-foot');
+      if (osopFoot) osopFoot.hidden = false;
     } else {
+      const osopFoot = document.getElementById('osop-apply-foot');
+      if (osopFoot) osopFoot.hidden = true;
       buy.textContent = ev.priceKey === 'free' ? 'Get free ticket' : 'Buy ticket';
     }
     updateTicketJumpBar(ev);
+    applyEventApplicationUi(ev);
   }
 
   let ticketJumpBound = false;
@@ -1954,7 +2224,8 @@
     const inFlow =
       panel.classList.contains('show-checkout') ||
       panel.classList.contains('show-application') ||
-      panel.classList.contains('show-signin-gate');
+      panel.classList.contains('show-signin-gate') ||
+      panel.classList.contains('is-application-submitted');
     const show = mobile && !panelVisible && !inFlow;
 
     jump.hidden = !show;
@@ -2014,7 +2285,7 @@
     if (ev.isSoldOut) labelText = 'Sold out';
     else if (ev.isSalesClosed) labelText = 'Registration closed';
     else if (ev.isTicketSalesScheduled || ev.isTicketSalesPending) labelText = 'View tickets';
-    else if (ev.isApprovalRequired) labelText = 'Apply for a seat';
+    else if (eventIsOsop(ev)) labelText = 'Apply for a seat';
     else if (ev.priceKey === 'free') labelText = 'Get free ticket';
     else labelText = 'Buy ticket';
 
@@ -2362,54 +2633,12 @@
     });
   }
 
-  function initContactHost(ev) {
-    const openBtn = document.getElementById('contact-host-btn');
-    const modal = document.getElementById('contact-host-modal');
-    const closeBtn = document.getElementById('contact-host-close');
-    const form = document.getElementById('contact-host-form');
-    const nameSpan = document.getElementById('contact-host-name');
-    if (!openBtn || !modal) return;
-
-    if (nameSpan) nameSpan.textContent = ev.organiser || 'the organiser';
-
-    function openModal() {
-      modal.hidden = false;
-      document.body.classList.add('modal-open');
-      const first = document.getElementById('contact-name');
-      if (first) setTimeout(() => first.focus(), 50);
-    }
-
-    function closeModal() {
-      modal.hidden = true;
-      document.body.classList.remove('modal-open');
-    }
-
-    openBtn.addEventListener('click', openModal);
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-    modal.querySelectorAll('[data-modal-close]').forEach((el) => {
-      el.addEventListener('click', closeModal);
-    });
-
-    document.addEventListener('keydown', function escModal(e) {
-      if (e.key === 'Escape' && !modal.hidden) closeModal();
-    });
-
-    if (form) {
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        // TODO: Connect to organiser messaging API when backend is live
-        closeModal();
-        form.reset();
-        window.alert('Thanks — your message has been queued. The host will respond by email.');
-      });
-    }
-  }
-
   function initTicketPanel(ev) {
     if (ticketPanelBound) return;
     const qtyDown = document.getElementById('qty-down');
     if (!qtyDown) return;
     ticketPanelBound = true;
+    initApplicationSuccessModal();
 
     currentEventDetail = ev;
     const qtyUp = document.getElementById('qty-up');
@@ -2447,6 +2676,11 @@
     }
 
     function update() {
+      const evNow = activeEvent();
+      if (eventIsOsop(evNow)) {
+        qty = 1;
+        maxQty = 1;
+      }
       if (qty > maxQty) qty = maxQty;
       const subtotal = price * qty;
       const fee =
@@ -2515,6 +2749,8 @@
 
     loadCheckoutSessionUser().then(function () {
       update();
+      const evNow = activeEvent();
+      if (evNow && eventIsOsop(evNow)) refreshEventApplicationUi(evNow);
     });
 
     if (appBack) {
@@ -2524,13 +2760,68 @@
     if (appForm) {
       appForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (applicationBlocksReapply(eventApplicationState)) return;
         if (!(await requireSignedInAttendee())) return;
 
         const submitApplication = async () => {
-          // TODO: Connect to seat approval workflow API when backend is live
-          showSeatApplication(false);
-          appForm.reset();
-          window.alert('Application submitted. The host will review your request and email you.');
+          const industry = String(document.getElementById('apply-industry')?.value || '').trim();
+          const jobTitle = String(document.getElementById('apply-job-title')?.value || '').trim();
+          if (!industry || !jobTitle) {
+            window.alert('Please answer both application questions.');
+            return;
+          }
+
+          const ev = activeEvent();
+          const tierEl = getSelectedTierEl();
+          const ticketId = tierEl ? tierEl.getAttribute('data-ticket-id') : null;
+          const submitBtn = appForm.querySelector('button[type="submit"]');
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting…';
+          }
+
+          try {
+            const res = await fetch('/api/auth/submit-application', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                eventId: ev.id,
+                ticketId: isUuid(ticketId) ? ticketId : null,
+                industry,
+                jobTitle,
+              }),
+            });
+            const data = await res.json().catch(function () {
+              return {};
+            });
+            if (!res.ok || !data.ok) {
+              throw new Error(
+                (data && data.message) || (data && data.error) || 'application_failed'
+              );
+            }
+            eventApplicationState = {
+              hasApplication: true,
+              applicationStatus: 'Pending',
+              paymentStatus: 'Pending',
+              registrationId: data.id || data.registration?.id || null,
+            };
+            showSeatApplication(false);
+            appForm.reset();
+            applyEventApplicationUi(activeEvent());
+            showApplicationSuccessModal(activeEvent());
+          } catch (err) {
+            window.alert(
+              err && err.message
+                ? err.message
+                : 'Could not submit your application. Please try again.'
+            );
+          } finally {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Submit Application';
+            }
+          }
         };
 
         await submitApplication();
@@ -2622,7 +2913,10 @@
         buy.disabled = true;
 
         try {
-        if (evNow?.isApprovalRequired) {
+        if (evNow?.isApprovalRequired || eventIsOsop(evNow)) {
+          if (applicationBlocksReapply(eventApplicationState)) {
+            return;
+          }
           if (
             !(await requireSignedInAttendee({
               gate: {
@@ -2751,6 +3045,7 @@
       maxQty = 99;
       renderTicketPanel(newEv);
       applyTicketPanelState(newEv);
+      refreshEventApplicationUi(newEv);
       document.body.setAttribute('data-event-id', newEv.id);
       showSeatApplication(false);
       showCheckoutDetails(false);
@@ -2795,6 +3090,8 @@
       }
 
       if (intent.action === 'apply') {
+        await refreshEventApplicationUi(eventForResume);
+        if (applicationBlocksReapply(eventApplicationState)) return;
         showSeatApplication(true);
         const industry = document.getElementById('apply-industry');
         if (industry) industry.focus();
@@ -2949,7 +3246,6 @@
           populateFromEvent(ev);
           initTicketPanel(ev);
           initSeriesDatePicker(ev);
-          initContactHost(ev);
           initActions(ev);
           setEventLoading(false);
 
@@ -3015,7 +3311,6 @@
         renderRelated([]);
       }
       initTicketPanel(ev);
-      initContactHost(ev);
       initActions(ev);
       loadEventPageAds();
     }

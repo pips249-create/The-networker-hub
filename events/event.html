@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="../css/hub-loading.css" />
     <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260612f" />
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
-  <link rel="stylesheet" href="../css/event-detail.css?v=20260703" />
+  <link rel="stylesheet" href="../css/event-detail.css?v=20260712" />
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
@@ -196,7 +196,6 @@
               <p id="ev-host-profile"></p>
               <div class="organiser-actions">
                 <a id="ev-host-profile-link" class="btn-outline" hidden>View group profile →</a>
-                <button type="button" class="btn-outline" id="contact-host-btn">Contact Host</button>
               </div>
             </div>
           </div>
@@ -256,7 +255,7 @@
             </div>
           </div>
           <div class="ticket-header">
-            <span class="from-label">Tickets from</span>
+            <span class="from-label" id="ev-ticket-from-label">Tickets from</span>
             <span class="price" id="ev-ticket-from-price"></span>
           </div>
           <div class="ticket-urgency" id="ev-urgency" hidden></div>
@@ -346,7 +345,7 @@
           </div>
 
           <form class="seat-application-form" id="seat-application-form" hidden novalidate>
-            <p class="seat-application-intro">This event uses a one-seat approval policy. Tell the host a little about yourself.</p>
+            <p class="seat-application-intro">One Seat Only Policy — tell the host a little about yourself. They will review your application and email you if approved.</p>
             <label class="form-field" for="apply-industry">
               <span>What industry are you in?</span>
               <input type="text" id="apply-industry" name="industry" autocomplete="organization-title" required />
@@ -421,12 +420,32 @@
 
           <button type="button" class="cta-btn" id="buy-btn">Buy ticket</button>
 
+          <div class="osop-application-status" id="osop-application-status" hidden>
+            <div class="osop-application-status-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </div>
+            <h3 class="osop-application-status-title" id="osop-application-status-title">Application submitted</h3>
+            <p class="osop-application-status-lead" id="osop-application-status-lead">
+              You've already applied for this event. We'll email you when the organiser makes a decision.
+            </p>
+            <a class="osop-application-status-link" id="osop-application-status-link" href="/account/">View in My Hub</a>
+          </div>
+
           <p class="refund-badge" id="ev-refund-badge" hidden></p>
 
           <details class="ticket-refund-details" id="ev-refund-details" hidden>
             <summary>Ticket &amp; refund information</summary>
             <div id="ev-refund-details-body"></div>
           </details>
+
+          <div class="ticket-foot osop-apply-foot" id="osop-apply-foot" hidden>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            Application reviewed by the organiser
+          </div>
 
           <div class="ticket-foot" id="ticket-secure-foot">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -445,78 +464,6 @@
       </section>
     </div>
 
-    <div class="hub-modal" id="contact-host-modal" role="dialog" aria-modal="true" aria-labelledby="contact-host-title" hidden>
-      <div class="hub-modal-backdrop" data-modal-close></div>
-      <div class="hub-modal-panel">
-        <button type="button" class="hub-modal-close" id="contact-host-close" aria-label="Close">×</button>
-        <h2 class="hub-modal-title" id="contact-host-title">Contact Host</h2>
-        <p class="hub-modal-lead">Send a message to <span id="contact-host-name">the organiser</span>. They will reply by email.</p>
-        <form id="contact-host-form" class="hub-modal-form" novalidate>
-          <label class="form-field" for="contact-name">
-            <span>Your Name</span>
-            <input type="text" id="contact-name" name="name" autocomplete="name" required />
-          </label>
-          <label class="form-field" for="contact-email">
-            <span>Your Email</span>
-            <input type="email" id="contact-email" name="email" autocomplete="email" required />
-          </label>
-          <label class="form-field" for="contact-message">
-            <span>Your Message</span>
-            <textarea id="contact-message" name="message" rows="4" required></textarea>
-          </label>
-          <button type="submit" class="cta-btn" id="contact-host-send">Send Message</button>
-        </form>
-      </div>
-    </div>
-
-    <div class="hub-modal" id="contact-host-modal" role="dialog" aria-modal="true" aria-labelledby="contact-host-title" hidden>
-      <div class="hub-modal-backdrop" data-modal-close></div>
-      <div class="hub-modal-panel">
-        <button type="button" class="hub-modal-close" id="contact-host-close" aria-label="Close">×</button>
-        <h2 class="hub-modal-title" id="contact-host-title">Contact Host</h2>
-        <p class="hub-modal-lead">Send a message to <span id="contact-host-name">the organiser</span>. They will reply by email.</p>
-        <form id="contact-host-form" class="hub-modal-form" novalidate>
-          <label class="form-field" for="contact-name">
-            <span>Your Name</span>
-            <input type="text" id="contact-name" name="name" autocomplete="name" required />
-          </label>
-          <label class="form-field" for="contact-email">
-            <span>Your Email</span>
-            <input type="email" id="contact-email" name="email" autocomplete="email" required />
-          </label>
-          <label class="form-field" for="contact-message">
-            <span>Your Message</span>
-            <textarea id="contact-message" name="message" rows="4" required></textarea>
-          </label>
-          <button type="submit" class="cta-btn" id="contact-host-send">Send Message</button>
-        </form>
-      </div>
-    </div>
-
-    <div class="hub-modal" id="contact-host-modal" role="dialog" aria-modal="true" aria-labelledby="contact-host-title" hidden>
-      <div class="hub-modal-backdrop" data-modal-close></div>
-      <div class="hub-modal-panel">
-        <button type="button" class="hub-modal-close" id="contact-host-close" aria-label="Close">×</button>
-        <h2 class="hub-modal-title" id="contact-host-title">Contact Host</h2>
-        <p class="hub-modal-lead">Send a message to <span id="contact-host-name">the organiser</span>. They will reply by email.</p>
-        <form id="contact-host-form" class="hub-modal-form" novalidate>
-          <label class="form-field" for="contact-name">
-            <span>Your Name</span>
-            <input type="text" id="contact-name" name="name" autocomplete="name" required />
-          </label>
-          <label class="form-field" for="contact-email">
-            <span>Your Email</span>
-            <input type="email" id="contact-email" name="email" autocomplete="email" required />
-          </label>
-          <label class="form-field" for="contact-message">
-            <span>Your Message</span>
-            <textarea id="contact-message" name="message" rows="4" required></textarea>
-          </label>
-          <button type="submit" class="cta-btn" id="contact-host-send">Send Message</button>
-        </form>
-      </div>
-    </div>
-
     <script src="../js/hub-loading.js?v=20260605"></script>
     <script src="../js/hub-event-preview.js?v=20260623"></script>
     <script src="../js/flexible-event-image.js?v=20260707"></script>
@@ -525,8 +472,29 @@
     <script src="../js/listing-report.js?v=20260609"></script>
     <script src="../js/review-report.js?v=20260609"></script>
     <script src="../js/hub-favourites.js?v=20260629"></script>
-    <script src="../js/event-detail.js?v=20260702b"></script>
+    <script src="../js/booking-fees.js?v=20260630"></script>
+    <script src="../js/event-detail.js?v=20260712"></script>
     <div id="hub-site-footer"></div>
+
+    <div class="hub-modal application-success-modal" id="application-success-modal" role="dialog" aria-modal="true" aria-labelledby="application-success-title" hidden>
+      <div class="hub-modal-backdrop" data-application-success-close></div>
+      <div class="hub-modal-panel application-success-panel">
+        <button type="button" class="hub-modal-close" id="application-success-close" aria-label="Close">×</button>
+        <div class="application-success-icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        </div>
+        <h2 class="hub-modal-title" id="application-success-title">Application sent</h2>
+        <p class="hub-modal-lead" id="application-success-lead">Thanks — your request has been submitted to the host.</p>
+        <ul class="application-success-steps">
+          <li><strong>Review</strong><span>The organiser checks your industry and job title</span></li>
+          <li><strong>Update</strong><span>You'll receive an email when they decide</span></li>
+          <li><strong>Book</strong><span>If approved, you'll get a link to complete your booking</span></li>
+        </ul>
+        <button type="button" class="cta-btn application-success-btn" id="application-success-done">Done</button>
+      </div>
+    </div>
 
     <div class="ev-ticket-jump" id="ev-ticket-jump" hidden>
       <button type="button" class="ev-ticket-jump-btn" id="ev-ticket-jump-btn">

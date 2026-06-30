@@ -299,6 +299,9 @@
   }
 
   function priceBadgeLabel(ev) {
+    if (window.HubBookingFees) {
+      return window.HubBookingFees.listingPriceLabel(ev);
+    }
     if (ev.priceKey === 'free' || !ev.price || /^free$/i.test(ev.price)) return 'Free';
     const n = Number(ev.priceNum);
     if (n > 0) {
@@ -378,6 +381,16 @@
       </article>`;
   }
 
+  function rankingShortLabel(ev) {
+    const rank = ev.organiserRanking;
+    if (rank && rank.label) {
+      return String(rank.label).replace(/\s+networking group$/i, '').trim();
+    }
+    const raw = String(ev.organiserRankingLabel || '').trim();
+    if (!raw) return '';
+    return raw.split('·')[0].trim();
+  }
+
   function gridCard(ev) {
     const fmtClass = formatTagClass(ev.format);
     const fmtLabel = formatTagLabel(ev.format);
@@ -390,18 +403,25 @@
     const premiumBadge = ev.featured
       ? '<span class="event-grid-premium">Premium</span>'
       : '';
-    const salesBadge = ev.isTicketSalesPending
-      ? '<span class="event-grid-sales-pending">Tickets soon</span>'
-      : '';
-    const rankingBadge = ev.organiserRankingLabel
-      ? '<span class="event-grid-ranking hub-ranking-badge hub-ranking-badge--' +
-        escapeHtml(ev.organiserRanking?.tier || 'top10') +
-        '" title="' +
-        escapeHtml(ev.organiserRanking?.displayLabel || ev.organiserRankingLabel) +
-        '">★ ' +
-        escapeHtml(ev.organiserRankingLabel) +
+    const salesBadge = ev.isTicketSalesScheduled && ev.ticketSalesOpensShort
+      ? '<span class="event-grid-sales-pending">Tickets open ' +
+        escapeHtml(ev.ticketSalesOpensShort) +
         '</span>'
-      : '';
+      : ev.isTicketSalesPending || ev.isTicketSalesScheduled
+        ? '<span class="event-grid-sales-pending">Tickets soon</span>'
+        : '';
+    const rankingShort = rankingShortLabel(ev);
+    const rankingBadge =
+      !salesBadge && rankingShort
+        ? '<span class="event-grid-ranking hub-ranking-badge hub-ranking-badge--' +
+          escapeHtml(ev.organiserRanking?.tier || 'top10') +
+          '" title="' +
+          escapeHtml(ev.organiserRanking?.displayLabel || ev.organiserRankingLabel || rankingShort) +
+          '">★ ' +
+          escapeHtml(rankingShort) +
+          '</span>'
+        : '';
+    const statusBadge = salesBadge || rankingBadge;
 
     return `
       <a class="event-grid-card${ev.featured ? ' is-premium' : ''}" href="${escapeHtml(detailHref(ev))}"
@@ -414,13 +434,14 @@
         <div class="event-grid-media">
           ${photoImg(eventImageSrc(ev), 'event-grid-img', ev.id, ev.eventType || ev.typeRaw, ev.title, ev)}
           ${premiumBadge}
-          ${rankingBadge}
-          ${salesBadge}
+          ${statusBadge}
           <span class="event-grid-category">${escapeHtml(meetingType)}</span>
-          <span class="event-grid-price">${escapeHtml(priceBadgeLabel(ev))}</span>
         </div>
         <div class="event-grid-body">
-          <span class="event-grid-format ${escapeHtml(fmtClass)}">${escapeHtml(fmtLabel)}</span>
+          <div class="event-grid-body-top">
+            <span class="event-grid-format ${escapeHtml(fmtClass)}">${escapeHtml(fmtLabel)}</span>
+            <span class="event-grid-price">${escapeHtml(priceBadgeLabel(ev))}</span>
+          </div>
           <h3 class="event-grid-title">${escapeHtml(ev.title)}</h3>
           <div class="event-grid-rating">
             <span class="stars">${starsHtml(ev.rating)}</span>

@@ -21,6 +21,41 @@ function eventHasTicketsOnSale(tickets, at) {
   return list.some((ticket) => isTicketOnSale(ticket, at));
 }
 
+/** Earliest future sale_starts_at across active tiers (null if none scheduled ahead). */
+function earliestTicketSaleStart(tickets, at) {
+  const now = at instanceof Date ? at : new Date();
+  const list = Array.isArray(tickets) ? tickets : [];
+  let earliest = null;
+  for (const ticket of list) {
+    const status = String(ticket.status || 'Active').trim();
+    if (status !== 'Active') continue;
+    const starts = ticket.sale_starts_at ? new Date(ticket.sale_starts_at) : null;
+    if (!starts || Number.isNaN(starts.getTime()) || starts <= now) continue;
+    if (!earliest || starts < earliest) earliest = starts;
+  }
+  return earliest;
+}
+
+function formatTicketSalesOpensLabel(isoOrDate, at) {
+  const d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
+  if (!d || Number.isNaN(d.getTime())) return '';
+  const now = at instanceof Date ? at : new Date();
+  const datePart = d.toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+  });
+  const timePart = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return datePart + ' at ' + timePart;
+}
+
+function formatTicketSalesOpensShort(isoOrDate) {
+  const d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
+  if (!d || Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
 function isEventPublishedForSale(eventRow) {
   const ev = eventRow && typeof eventRow === 'object' ? eventRow : {};
   const status = String(ev.status || '').trim().toLowerCase();
@@ -31,15 +66,29 @@ function isEventPublishedForSale(eventRow) {
   return true;
 }
 
-/** Whether buyers can purchase — honours DB flag, with fallback for stale rows after publish. */
-function resolveTicketSalesEnabled(eventRow, tickets) {
+/** Whether buyers can purchase — requires published event, ticket tiers, and an active sale window. */
+function resolveTicketSalesEnabled(eventRow, tickets, at) {
   const ev = eventRow && typeof eventRow === 'object' ? eventRow : {};
-  if (ev.ticket_sales_enabled === true) return true;
-  const list = Array.isArray(tickets) ? tickets : [];
-  if (!list.length || !eventHasTicketsOnSale(list)) return false;
+  const now = at instanceof Date ? at : new Date();
   if (!isEventPublishedForSale(ev)) return false;
-  // Publish wizard sets refund terms; flag may be false if migration 073 was not run yet.
-  if (ev.refund_terms_agreed_at || ev.refund_terms_agreed === true) return true;
+  const list = Array.isArray(tickets) ? tickets : [];
+  if (!list.length || !eventHasTicketsOnSale(list, now)) return false;
+
+  if (ev.ticket_sales_enabled === true) return true;
+
+  const hasScheduledStarts = list.some((ticket) => {
+    const starts = ticket.sale_starts_at ? new Date(ticket.sale_starts_at) : null;
+    return starts && !Number.isNaN(starts.getTime());
+  });
+  // Scheduled tiers: auto-enable checkout once the sale window opens.
+  if (hasScheduledStarts && (ev.refund_terms_agreed_at || ev.refund_terms_agreed === true)) {
+    return true;
+  }
+
+  // Legacy rows or organiser-held sales until enable_sales is used.
+  if (ev.refund_terms_agreed_at || ev.refund_terms_agreed === true) {
+    return ev.ticket_sales_enabled !== false;
+  }
   return false;
 }
 
@@ -57,6 +106,9 @@ function groupTicketsByEventId(tickets) {
 module.exports = {
   isTicketOnSale,
   eventHasTicketsOnSale,
+  earliestTicketSaleStart,
+  formatTicketSalesOpensLabel,
+  formatTicketSalesOpensShort,
   isEventPublishedForSale,
   resolveTicketSalesEnabled,
   groupTicketsByEventId,

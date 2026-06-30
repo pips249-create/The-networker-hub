@@ -706,14 +706,58 @@
     });
   }
 
+  function formatCloseLabel(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const date = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return date + ' at ' + time;
+  }
+
+  function bindOsopCloseFields() {
+    populateQuarterTimeSelect(document.getElementById('ee-osop-close-time'), '18:00');
+  }
+
+  function isOsopTicket(ticket) {
+    const kind = ticket.ticketType || '';
+    return /application/i.test(kind) || /application to attend/i.test(ticket.name || '');
+  }
+
+  function prefillOsopFromTicket(ticket) {
+    if (!ticket) return;
+    const priceEl = document.getElementById('ee-osop-price');
+    if (priceEl) {
+      priceEl.value = ticket.price === '' || ticket.price == null ? '0' : String(ticket.price);
+    }
+    const placesEl = document.getElementById('ee-osop-places');
+    if (placesEl) {
+      placesEl.value =
+        ticket.quantityAvailable == null || ticket.quantityAvailable === ''
+          ? ''
+          : String(ticket.quantityAvailable);
+    }
+    const closeDateEl = document.getElementById('ee-osop-close-date');
+    const closeTimeEl = document.getElementById('ee-osop-close-time');
+    if (ticket.saleEnd) {
+      if (closeDateEl) closeDateEl.value = isoToDateInput(ticket.saleEnd);
+      if (closeTimeEl) populateQuarterTimeSelect(closeTimeEl, isoToTimeInput(ticket.saleEnd) || '18:00');
+    }
+    setAttendanceMode('osop');
+    existingTicketsLoaded = true;
+  }
+
   function collectOsopTiers() {
     const price = document.getElementById('ee-osop-price').value;
     const places = document.getElementById('ee-osop-places').value;
-    const closeDate = document.getElementById('ee-osop-close').value;
+    const saleEnd = combineDateAndQuarterTime(
+      document.getElementById('ee-osop-close-date')?.value,
+      document.getElementById('ee-osop-close-time')?.value
+    );
     let description =
       'One Seat Only Policy. Fixed application questions: (1) What industry are you in? (2) What is your job title?';
     if (places) description += ' Max approved places: ' + places + '.';
-    if (closeDate) description += ' Applications close: ' + closeDate + '.';
+    if (saleEnd) description += ' Applications close: ' + formatCloseLabel(saleEnd) + '.';
     return [
       {
         name: 'Application to attend',
@@ -721,7 +765,7 @@
         description,
         status: 'Available',
         quantityAvailable: places === '' ? null : Number(places),
-        saleEnd: closeDate ? new Date(closeDate + 'T23:59:00').toISOString() : null,
+        saleEnd,
         oneSeatOnly: true,
       },
     ];
@@ -793,6 +837,7 @@
 
   async function init() {
     loadSeriesMeta();
+    bindOsopCloseFields();
     if (!eventIds.length) {
       showAlert('No events in this series. Go back and save your event dates first.', 'warn');
       return;
@@ -848,15 +893,21 @@
     }
 
     if (loaded.tickets.length) {
-      prefillTiers(loaded.tickets);
-      showAlert(
-        'Loaded ' +
-          loaded.tickets.length +
-          ' existing ticket type' +
-          (loaded.tickets.length === 1 ? '' : 's') +
-          '. Saving will update all dates in this series.',
-        'ok'
-      );
+      const osopTicket = loaded.tickets.find(isOsopTicket);
+      if (osopTicket) {
+        prefillOsopFromTicket(osopTicket);
+        showAlert('Loaded your One Seat Only Policy settings. Saving will update all dates in this series.', 'ok');
+      } else {
+        prefillTiers(loaded.tickets);
+        showAlert(
+          'Loaded ' +
+            loaded.tickets.length +
+            ' existing ticket type' +
+            (loaded.tickets.length === 1 ? '' : 's') +
+            '. Saving will update all dates in this series.',
+          'ok'
+        );
+      }
     } else {
       addTierRow();
     }
@@ -896,7 +947,16 @@
     const loading = window.organiserPageLoading;
     const tiers = attendanceMode === 'osop' ? collectOsopTiers() : collectTiers();
     if (!tiers.length) {
-      showAlert('Add at least one ticket type with a name.');
+      const msg = publish
+        ? 'Your event is not live until you publish a ticket type — please add at least one ticket tier above.'
+        : 'Add at least one ticket type with a name.';
+      showAlert(msg, publish ? 'warn' : '');
+      if (publish) {
+        const panelId = attendanceMode === 'osop' ? 'ee-panel-osop' : 'ee-panel-tickets';
+        document.getElementById(panelId)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const warn = document.getElementById('ee-publish-warn');
+        if (warn) warn.hidden = false;
+      }
       updatePublishButton();
       return;
     }
@@ -983,6 +1043,12 @@
       return;
     }
 
+    const salesScheduled = tiers.some(function (tier) {
+      if (!tier.saleStart) return false;
+      const start = new Date(tier.saleStart);
+      return !Number.isNaN(start.getTime()) && start > new Date();
+    });
+
     if (!publish) {
       existingTicketsLoaded = true;
       showAlert(
@@ -993,7 +1059,12 @@
       return;
     }
 
-    showAlert('Your event is live on the hub and ticket sales are on.', 'ok');
+    showAlert(
+      salesScheduled
+        ? 'Your event is live on the hub. Ticket sales will open on the date you set — saved attendees will be emailed when sales begin.'
+        : 'Your event is live on the hub and ticket sales are on.',
+      'ok'
+    );
 
     try {
       sessionStorage.removeItem(SERIES_STORAGE_KEY);

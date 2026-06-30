@@ -145,25 +145,7 @@
   }
 
   function mountQuestionsOnlyIfNeeded() {
-    if (isOrganiserDashboard()) return;
-    var key = pageKey();
-    if (!key || !global.HubFlowTour) return;
-    if (key === 'event-edit' && !isNewEventEdit()) return;
-
-    var storageKey = TOUR_KEYS[key];
-    if (key === 'group-edit') {
-      try {
-        if (new URLSearchParams(global.location.search || '').get('id')) return;
-        if (new URLSearchParams(global.location.search || '').get('onboard') === 'review') {
-          storageKey = TOUR_KEYS['group-review'];
-        }
-      } catch (e) {
-        /* ignore */
-      }
-    }
-    if (!isTourDone(storageKey)) return;
-
-    global.HubFlowTour.showQuestionsOnly();
+    /* Hubert help opens on demand via Hubert's help — not automatically. */
   }
 
   global.HubertOrganiserGuide = {

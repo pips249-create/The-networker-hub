@@ -140,10 +140,27 @@
     return '../events/event.html?id=' + encodeURIComponent(reg.eventId || reg.id || '');
   }
 
+  function joinLinkHtml(reg) {
+    const link = String(reg.meetingLink || '').trim();
+    if (!reg.isOnline || !link) return '';
+    const safe = esc(link);
+    return (
+      '<a class="ad-join-link" href="' +
+      safe +
+      '" target="_blank" rel="noopener noreferrer">Join online</a>'
+    );
+  }
+
   function eventTitleCell(reg) {
     const title = reg.title || 'Event';
+    const join = joinLinkHtml(reg);
     return (
-      '<a class="ad-event-link" href="' + esc(eventHref(reg)) + '">' + esc(title) + '</a>'
+      '<a class="ad-event-link" href="' +
+      esc(eventHref(reg)) +
+      '">' +
+      esc(title) +
+      '</a>' +
+      (join ? '<div class="ad-event-join">' + join + '</div>' : '')
     );
   }
 
@@ -555,6 +572,15 @@
       ' · ' +
       esc(formatTimeRange(reg.date, reg.endDate)) +
       '</dd></div>' +
+      (reg.isOnline
+        ? '<div><dt>Online access</dt><dd>' +
+          (reg.meetingLink
+            ? '<a href="' +
+              esc(reg.meetingLink) +
+              '" target="_blank" rel="noopener noreferrer">Join online</a>'
+            : 'The organiser will email you the join link before the event starts.') +
+          '</dd></div>'
+        : '') +
       '<div><dt>Tickets</dt><dd>' +
       esc(reg.ticketLabel || '—') +
       '</dd></div>' +
@@ -567,6 +593,41 @@
 
     if (note) note.hidden = !isPaid;
     if (eventLink) eventLink.href = eventHref(reg);
+
+    const payBtn = document.getElementById('ad-payment-pay-btn');
+    if (payBtn) {
+      payBtn.hidden = !reg.needsPayment;
+      payBtn.disabled = false;
+      payBtn.textContent = 'Complete payment';
+      payBtn.onclick = async function () {
+        payBtn.disabled = true;
+        payBtn.textContent = 'Redirecting…';
+        try {
+          const res = await fetch('/api/auth/create-checkout', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              eventId: reg.eventId,
+              ticketId: reg.ticketId || null,
+              registrationId: reg.id,
+              qty: 1,
+            }),
+          });
+          const data = await res.json().catch(function () {
+            return {};
+          });
+          if (!res.ok || !data.ok || !data.url) {
+            throw new Error(data.message || data.error || 'checkout_failed');
+          }
+          window.location.assign(data.url);
+        } catch (err) {
+          payBtn.disabled = false;
+          payBtn.textContent = 'Complete payment';
+          window.alert(err.message || 'Could not start checkout. Please try again.');
+        }
+      };
+    }
 
     modal.hidden = false;
     paymentModalOpen = true;

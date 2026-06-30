@@ -4,6 +4,11 @@ const { getBookingEmailDefaultVars } = require('./email-booking-defaults');
 const { resolveBookingConfirmationBody } = require('./booking-confirmation-template');
 const { resolveBookingReminderBody } = require('./booking-reminder-template');
 const { resolveOrganiserNewBookingBody } = require('./organiser-new-booking-template');
+const { resolveOrganiserNewApplicationBody } = require('./organiser-new-application-template');
+const {
+  resolveApplicationApprovedBody,
+  resolveApplicationDeniedBody,
+} = require('./application-decision-template');
 const { resolveOrganiserBookingCancelledBody } = require('./organiser-booking-cancelled-template');
 const {
   enrichBookingConfirmationVars,
@@ -54,6 +59,10 @@ async function buildEmailFromTemplate(slug, variables) {
     slug === 'account_welcome' ||
     slug === 'saved_event_tickets_open' ||
     slug === 'organiser_new_registration' ||
+    slug === 'organiser_new_application' ||
+    slug === 'application_received' ||
+    slug === 'application_approved' ||
+    slug === 'application_denied' ||
     slug === 'organiser_booking_cancelled' ||
     slug === 'booking_cancelled' ||
     slug === 'event_cancelled' ||
@@ -77,6 +86,16 @@ async function buildEmailFromTemplate(slug, variables) {
     merged = enrichAccountWelcomeVars(merged, sponsorSection);
   } else if (slug === 'organiser_new_registration') {
     merged = enrichOrganiserRegistrationVars(merged, sponsorSection);
+  } else if (slug === 'organiser_new_application') {
+    merged = enrichOrganiserRegistrationVars(merged, sponsorSection);
+  } else if (slug === 'application_received') {
+    merged = enrichBookingConfirmationVars(merged, sponsorSection);
+    if (!merged.attendee_initial) {
+      const name = String(merged.user_name || '').trim();
+      merged.attendee_initial = name ? name.charAt(0).toUpperCase() : '?';
+    }
+  } else if (slug === 'application_approved' || slug === 'application_denied') {
+    merged = enrichBookingConfirmationVars(merged, sponsorSection);
   } else if (slug === 'organiser_booking_cancelled') {
     merged = enrichOrganiserBookingCancelledVars(merged, sponsorSection);
   } else if (slug === 'booking_cancelled') {
@@ -101,6 +120,22 @@ async function buildEmailFromTemplate(slug, variables) {
     const resolved = resolveOrganiserNewBookingBody(template.body_html);
     bodyHtml = resolved.bodyHtml;
     templateSource = resolved.source;
+  } else if (slug === 'organiser_new_application') {
+    const resolved = resolveOrganiserNewApplicationBody(template.body_html);
+    bodyHtml = resolved.bodyHtml;
+    templateSource = resolved.source;
+  } else if (slug === 'application_received') {
+    const resolved = resolveApplicationReceivedBody(template.body_html);
+    bodyHtml = resolved.bodyHtml;
+    templateSource = resolved.source;
+  } else if (slug === 'application_approved') {
+    const resolved = resolveApplicationApprovedBody(template.body_html);
+    bodyHtml = resolved.bodyHtml;
+    templateSource = resolved.source;
+  } else if (slug === 'application_denied') {
+    const resolved = resolveApplicationDeniedBody(template.body_html);
+    bodyHtml = resolved.bodyHtml;
+    templateSource = resolved.source;
   } else if (slug === 'organiser_booking_cancelled') {
     const resolved = resolveOrganiserBookingCancelledBody(template.body_html);
     bodyHtml = resolved.bodyHtml;
@@ -117,8 +152,11 @@ async function buildEmailFromTemplate(slug, variables) {
   } else if (slug === 'account_welcome' || slug === 'saved_event_tickets_open') {
     html = stripUnresolvedAccountWelcomePlaceholders(html);
     html = replacePlaceholders(html, merged);
-  } else if (slug === 'organiser_new_registration' || slug === 'organiser_booking_cancelled') {
+  } else if (slug === 'organiser_new_registration' || slug === 'organiser_new_application' || slug === 'organiser_booking_cancelled') {
     html = stripUnresolvedOrganiserPlaceholders(html);
+    html = replacePlaceholders(html, merged);
+  } else if (slug === 'application_received' || slug === 'application_approved' || slug === 'application_denied') {
+    html = stripUnresolvedBookingPlaceholders(html);
     html = replacePlaceholders(html, merged);
   } else if (slug === 'booking_cancelled') {
     html = stripBookingCancelledPlaceholders(html);
@@ -199,7 +237,7 @@ async function sendViaResend({ to, subject, html }) {
  * @param {string} opts.to - recipient email
  * @param {object} [opts.variables] - e.g. { user_name, event_name, amount_paid }
  */
-async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck }) {
+async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject }) {
   if (!skipEmailCheck) {
     const allowed = await getEmailsEnabledForEmail(to);
     if (!allowed) {
@@ -212,12 +250,12 @@ async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck }) {
   const built = await buildEmailFromTemplate(slug, variables);
   const result = await sendViaResend({
     to,
-    subject: built.subject,
+    subject: subject || built.subject,
     html: built.html,
   });
   return {
     ...result,
-    subject: built.subject,
+    subject: subject || built.subject,
     slug: built.template.slug,
     template_source: built.templateSource || 'database',
   };

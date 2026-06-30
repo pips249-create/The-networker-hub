@@ -1,0 +1,125 @@
+-- OSOP application decision emails
+
+insert into public.email_templates (slug, name, description, subject, body_html, placeholders, category)
+values
+  (
+    'application_approved',
+    'Application approved (attendee)',
+    'Sent when an organiser approves an OSOP application — includes My Hub payment link for paid events.',
+    'You are approved — complete your booking for {{event_name}}',
+    '<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application approved</title>
+</head>
+<body style="margin:0;padding:0;background:#e8ecf5;font-family:''DM Sans'',system-ui,sans-serif;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#e8ecf5;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;">
+        <tr>
+          <td style="background:#1c2040;padding:28px 40px;text-align:center;">
+            <img src="{{logo_url}}" alt="The Networker Hub" width="160" style="height:auto;border:0;">
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 40px 24px;text-align:center;">
+            <p style="font-size:10px;font-weight:700;color:#4aa8f0;text-transform:uppercase;letter-spacing:3px;margin:0 0 8px;">Application approved</p>
+            <h1 style="font-size:24px;font-weight:600;color:#1c2040;margin:0 0 12px;">You''re approved for {{event_name}}</h1>
+            <p style="font-size:14px;line-height:1.7;color:#736b6e;margin:0;">
+              Hi {{user_name}}, good news — the organiser approved your application to attend <strong>{{event_name}}</strong>.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 40px 28px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">
+              <tr>
+                <td style="padding:22px 24px;text-align:center;">
+                  <p style="font-size:13px;line-height:1.65;color:#736b6e;margin:0 0 16px;">
+                    Complete your booking to secure your seat. Ticket price: <strong>{{price_if_approved}}</strong> plus booking fee.
+                  </p>
+                  <a href="{{hub_payment_url}}" style="display:inline-block;padding:12px 28px;background:#9a7aa8;border-radius:999px;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;">Complete booking in My Hub</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 40px 32px;text-align:center;">
+            <p style="font-size:12px;line-height:1.6;color:#736b6e;margin:0;">
+              <a href="{{event_url}}" style="color:#4aa8f0;text-decoration:none;">View event details</a>
+              &nbsp;·&nbsp;
+              <a href="{{hub_account_url}}" style="color:#4aa8f0;text-decoration:none;">My Hub</a>
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
+',
+    array['user_name', 'user_email', 'event_name', 'event_date', 'event_time', 'event_url', 'price_if_approved', 'hub_payment_url', 'hub_account_url', 'browse_events_url', 'organiser_name', 'site_url', 'logo_url'],
+    'events'
+  ),
+  (
+    'application_denied',
+    'Application denied (attendee)',
+    'Sent when an organiser denies an OSOP application.',
+    'Update on your application for {{event_name}}',
+    '<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application update</title>
+</head>
+<body style="margin:0;padding:0;background:#e8ecf5;font-family:''DM Sans'',system-ui,sans-serif;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#e8ecf5;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;">
+        <tr>
+          <td style="background:#1c2040;padding:28px 40px;text-align:center;">
+            <img src="{{logo_url}}" alt="The Networker Hub" width="160" style="height:auto;border:0;">
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 40px 24px;text-align:center;">
+            <p style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:3px;margin:0 0 8px;">Application update</p>
+            <h1 style="font-size:24px;font-weight:600;color:#1c2040;margin:0 0 12px;">Update on {{event_name}}</h1>
+            <p style="font-size:14px;line-height:1.7;color:#736b6e;margin:0;">
+              Hi {{user_name}}, thank you for applying to <strong>{{event_name}}</strong>. On this occasion the organiser is unable to offer you a place.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 40px 32px;text-align:center;">
+            <p style="font-size:13px;line-height:1.65;color:#736b6e;margin:0 0 18px;">
+              You can browse other upcoming events on The Networker Hub.
+            </p>
+            <a href="{{browse_events_url}}" style="display:inline-block;padding:12px 28px;background:#1c2040;border-radius:999px;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;">Browse events</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
+',
+    array['user_name', 'user_email', 'event_name', 'event_url', 'browse_events_url', 'organiser_name', 'site_url', 'logo_url'],
+    'events'
+  )
+on conflict (slug) do update set
+  name = excluded.name,
+  description = excluded.description,
+  subject = excluded.subject,
+  body_html = excluded.body_html,
+  placeholders = excluded.placeholders,
+  category = excluded.category,
+  updated_at = now();
