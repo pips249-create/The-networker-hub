@@ -149,8 +149,19 @@
       if (register) register.href = authPageUrl('register', checkoutFlag);
     }
     gate.hidden = !show;
-    if (panel) panel.classList.toggle('show-signin-gate', show);
+    if (panel) {
+      panel.classList.toggle('show-signin-gate', show);
+      if (show) {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+    const buyBtn = document.getElementById('buy-btn');
+    if (buyBtn && !show && !panel?.classList.contains('is-submitting')) {
+      buyBtn.disabled = false;
+      buyBtn.dataset.busy = '0';
+    }
     if (notice && show) notice.hidden = true;
+    refreshTicketJumpVisibility();
   }
 
   async function requireSignedInAttendee(options) {
@@ -1404,6 +1415,7 @@
       panel.classList.toggle('show-application', show);
       if (show) panel.classList.remove('show-checkout');
     }
+    refreshTicketJumpVisibility();
   }
 
   function showCheckoutDetails(show) {
@@ -1420,6 +1432,7 @@
     }
     if (secureFoot && !show) secureFoot.hidden = false;
     if (!show) setCheckoutSubmitting(false);
+    refreshTicketJumpVisibility();
   }
 
   function showPaidGuestCheckout(show, isPaid) {
@@ -1926,6 +1939,97 @@
     } else {
       buy.textContent = ev.priceKey === 'free' ? 'Get free ticket' : 'Buy ticket';
     }
+    updateTicketJumpBar(ev);
+  }
+
+  let ticketJumpBound = false;
+
+  function refreshTicketJumpVisibility() {
+    const jump = document.getElementById('ev-ticket-jump');
+    const panel = document.getElementById('tickets');
+    if (!jump || !panel) return;
+
+    const mobile = window.matchMedia('(max-width: 768px)').matches;
+    const panelVisible = jump.dataset.panelVisible === '1';
+    const inFlow =
+      panel.classList.contains('show-checkout') ||
+      panel.classList.contains('show-application') ||
+      panel.classList.contains('show-signin-gate');
+    const show = mobile && !panelVisible && !inFlow;
+
+    jump.hidden = !show;
+    jump.classList.toggle('is-visible', show);
+    document.body.classList.toggle('ev-ticket-jump-active', show);
+  }
+
+  function initTicketJumpBar() {
+    if (ticketJumpBound) return;
+    const jump = document.getElementById('ev-ticket-jump');
+    const btn = document.getElementById('ev-ticket-jump-btn');
+    const panel = document.getElementById('tickets');
+    if (!jump || !btn || !panel) return;
+    ticketJumpBound = true;
+
+    btn.addEventListener('click', function () {
+      const navOffset = window.matchMedia('(max-width: 768px)').matches ? 64 : 80;
+      const top = panel.getBoundingClientRect().top + window.scrollY - navOffset;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    });
+
+    window.matchMedia('(max-width: 768px)').addEventListener('change', function () {
+      updateTicketJumpBar(activeEvent());
+    });
+
+    const observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          jump.dataset.panelVisible =
+            entry.isIntersecting && entry.intersectionRatio > 0.15 ? '1' : '0';
+          refreshTicketJumpVisibility();
+        });
+      },
+      { threshold: [0, 0.15, 0.35], rootMargin: '-56px 0px -72px 0px' }
+    );
+    observer.observe(panel);
+  }
+
+  function updateTicketJumpBar(ev) {
+    initTicketJumpBar();
+    const jump = document.getElementById('ev-ticket-jump');
+    const label = document.getElementById('ev-ticket-jump-label');
+    const priceEl = document.getElementById('ev-ticket-jump-price');
+    if (!jump) return;
+
+    if (!ev) {
+      jump.hidden = true;
+      jump.classList.remove('is-visible');
+      document.body.classList.remove('ev-ticket-jump-active');
+      return;
+    }
+
+    const priceNode = document.querySelector('.ticket-header .price');
+    const priceText = priceNode ? priceNode.textContent.trim() : '';
+
+    let labelText = 'Get tickets';
+    if (ev.isSoldOut) labelText = 'Sold out';
+    else if (ev.isSalesClosed) labelText = 'Registration closed';
+    else if (ev.isTicketSalesScheduled || ev.isTicketSalesPending) labelText = 'View tickets';
+    else if (ev.isApprovalRequired) labelText = 'Apply for a seat';
+    else if (ev.priceKey === 'free') labelText = 'Get free ticket';
+    else labelText = 'Buy ticket';
+
+    if (label) label.textContent = labelText;
+    if (priceEl) {
+      const showPrice =
+        priceText &&
+        labelText !== 'Sold out' &&
+        labelText !== 'Registration closed' &&
+        labelText !== 'View tickets';
+      priceEl.textContent = showPrice ? priceText : '';
+      priceEl.hidden = !showPrice;
+    }
+
+    refreshTicketJumpVisibility();
   }
 
   function parseEventStartEnd(ev) {
@@ -2509,10 +2613,15 @@
 
     if (buy) {
       buy.addEventListener('click', async () => {
-        if (buy.disabled) return;
+        if (buy.disabled || buy.dataset.busy === '1') return;
         clearCheckoutInlineError();
 
         const evNow = activeEvent();
+        const buyLabel = buy.textContent || 'Buy ticket';
+        buy.dataset.busy = '1';
+        buy.disabled = true;
+
+        try {
         if (evNow?.isApprovalRequired) {
           if (
             !(await requireSignedInAttendee({
@@ -2620,6 +2729,15 @@
           showCheckoutInlineError(
             err && err.message ? err.message : 'Could not start checkout. Please try again.'
           );
+        }
+        } finally {
+          buy.dataset.busy = '0';
+          if (!document.getElementById('tickets')?.classList.contains('show-signin-gate')) {
+            buy.disabled = false;
+            if (!document.getElementById('tickets')?.classList.contains('is-submitting')) {
+              buy.textContent = buyLabel;
+            }
+          }
         }
       });
     }
