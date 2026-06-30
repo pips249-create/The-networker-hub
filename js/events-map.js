@@ -40,7 +40,6 @@
   var sidebarMetaTotal = 0;
   var SIDEBAR_PAGE = 50;
   var lastLayoutMobile = null;
-  var VIEW_MODE_KEY = 'hub-events-view-mode';
   var viewportFilterActive = false;
   var suppressMapEvents = 0;
   var mapUserMoved = false;
@@ -367,14 +366,6 @@
       mapUserMoved = true;
     });
     map.on('moveend', onMapMoveEnd);
-  }
-
-  function saveViewMode(mode) {
-    try {
-      localStorage.setItem(VIEW_MODE_KEY, mode);
-    } catch (err) {
-      /* ignore */
-    }
   }
 
   function syncSidebarLayout() {
@@ -789,9 +780,6 @@
       mapBtn.classList.toggle('is-active', mapMode);
       mapBtn.setAttribute('aria-pressed', mapMode ? 'true' : 'false');
     }
-    if (!document.body.classList.contains('browse-mode-organisers')) {
-      saveViewMode(mapMode ? 'map' : 'list');
-    }
     if (!mapMode) {
       setMapHint('');
       highlightSidebarItem(null);
@@ -1020,15 +1008,4 @@
     renderMarkers(filtered || lastFilteredList || []);
   };
 
-  window.hubTryRestoreMapView = function () {
-    if (isMapView) return;
-    if (document.body.classList.contains('browse-mode-organisers')) return;
-    try {
-      if (localStorage.getItem(VIEW_MODE_KEY) === 'map') {
-        setViewMode(true);
-      }
-    } catch (err) {
-      /* ignore */
-    }
-  };
 })();

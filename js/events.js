@@ -670,7 +670,6 @@
     } else {
       renderAll();
     }
-    if (window.hubTryRestoreMapView) window.hubTryRestoreMapView();
   }
 
   function refreshAfterGeocode() {
