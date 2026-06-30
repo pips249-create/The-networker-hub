@@ -428,6 +428,12 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   outline: 2px solid var(--lavender-deep);
   outline-offset: 2px;
 }
+.event-grid-media,
+.event-grid-body {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
 
 .event-grid-media {
   position: relative;
@@ -603,14 +609,34 @@ body.browse-mode-organisers .events-organiser-footnote-link {
 }
 .event-grid-rating .fav-btn {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  pointer-events: auto;
   margin-left: auto;
   color: var(--text-soft);
   display: inline-flex;
-  padding: 2px;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 4px;
+  margin-right: -8px;
   border: none;
   background: transparent;
   cursor: pointer;
+  border-radius: 999px;
+  transition: color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+.event-grid-rating .fav-btn:hover {
+  color: #c44;
+  background: rgba(204, 68, 68, 0.08);
+}
+.event-grid-rating .fav-btn:active {
+  transform: scale(0.94);
+}
+.event-grid-rating .fav-btn svg {
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 .event-grid-rating .fav-btn.is-active { color: #c44; }
 .event-grid-rating .fav-btn.is-active svg path {
@@ -710,11 +736,14 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   }
 
   .event-grid-rating .fav-btn {
-    min-width: 36px;
-    min-height: 36px;
-    align-items: center;
-    justify-content: center;
-    margin-right: -6px;
+    min-width: 44px;
+    min-height: 44px;
+    margin-right: -10px;
+  }
+
+  .event-grid-rating .fav-btn svg {
+    width: 24px;
+    height: 24px;
   }
 
   .event-grid-meta {

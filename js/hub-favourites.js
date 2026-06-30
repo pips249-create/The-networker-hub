@@ -163,6 +163,7 @@
       var on = isSaved(id);
       btn.classList.toggle('is-active', on);
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.setAttribute('aria-label', on ? 'Remove from saved' : 'Save event');
     });
   }
 

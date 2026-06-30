@@ -447,7 +447,7 @@
             <span class="stars">${starsHtml(ev.rating)}</span>
             <span class="review-count">(${reviewCount})</span>
             <button type="button" class="fav-btn" data-event-id="${escapeHtml(ev.id)}" data-organiser-id="${escapeHtml(ev.organiserId || '')}" aria-label="Save event" aria-pressed="false">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
             </button>
           </div>
           <p class="event-grid-meta">${escapeHtml(dateLine)}</p>
@@ -567,6 +567,7 @@
             window.HubFavourites.refreshButtons(els.listings);
             if (window.HubOrganiserFavourites) window.HubOrganiserFavourites.refreshButtons(els.listings);
           });
+          window.HubFavourites.refreshButtons(els.listings);
         } else {
           fav.classList.toggle('is-active');
         }
