@@ -355,6 +355,63 @@
     return true;
   }
 
+  function isLiveOpportunity(opp) {
+    if (!opp) return false;
+    if (String(opp.status || '').toLowerCase() !== 'published') return false;
+    if (String(opp.approval_status || '').trim() !== 'Approved') return false;
+    if (opp.listing_expires_at) {
+      return new Date(opp.listing_expires_at).getTime() > Date.now();
+    }
+    return Boolean(opp.published_at);
+  }
+
+  function isBrowsableOpportunity(opp) {
+    if (!opp) return false;
+    if (String(opp.approval_status || '').trim() === 'Rejected') return false;
+    if (String(opp.status || '').toLowerCase() === 'archived') return false;
+    return true;
+  }
+
+  function sanitizeSearchQuery(q) {
+    return String(q || '')
+      .replace(/[%_,().]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function opportunityMeta(opp) {
+    var parts = [];
+    if (isLiveOpportunity(opp)) parts.push('Live on site');
+    else if (String(opp.status || '').toLowerCase() === 'published') parts.push('Published');
+    else if (opp.status) parts.push(String(opp.status));
+    if (opp.approval_status && opp.approval_status !== 'Approved') parts.push(opp.approval_status);
+    if (opp.host) parts.push(opp.host);
+    if (opp.published_at) parts.push(String(opp.published_at).slice(0, 10));
+    return parts.join(' · ');
+  }
+
+  function sortOpportunitiesForSocial(rows) {
+    return rows.slice().sort(function (a, b) {
+      var al = isLiveOpportunity(a) ? 0 : 1;
+      var bl = isLiveOpportunity(b) ? 0 : 1;
+      if (al !== bl) return al - bl;
+      return String(b.published_at || b.updated_at || '').localeCompare(
+        String(a.published_at || a.updated_at || '')
+      );
+    });
+  }
+
+  function mapOpportunitySearchRows(rows) {
+    return rows.map(function (opp) {
+      return {
+        id: opp.id,
+        title: opp.title || 'Untitled',
+        meta: opportunityMeta(opp),
+        raw: opp,
+      };
+    });
+  }
+
   function mentionFromUrl(url, platform) {
     var raw = String(url || '').trim();
     if (!raw) return '';
@@ -894,12 +951,14 @@
     function searchEndpoint(q) {
       var cfg = postTypeConfig(state.postTypeKey);
       var params = new URLSearchParams();
-      params.set('limit', '30');
-      if (q) params.set('q', q);
+      params.set('limit', '50');
+      var safeQ = sanitizeSearchQuery(q);
+      if (safeQ) params.set('q', safeQ);
       if (cfg.source === 'event') {
         params.set('approval_status', 'Approved');
         params.set('sort', 'date');
         return adminGet('/api/admin/events?' + params.toString()).then(function (data) {
+          if (data && data.ok === false) throw new Error(data.message || data.error || 'events_failed');
           var events = ((data && data.events) || []).filter(isLiveEvent);
           return events.map(function (ev) {
             return {
@@ -912,20 +971,19 @@
         });
       }
       if (cfg.source === 'opportunity' || cfg.source === 'opportunity_featured') {
-        params.set('status', 'published');
-        params.set('approval_status', 'Approved');
         params.set('sort', 'published');
         if (cfg.source === 'opportunity_featured') params.set('featured', '1');
-        return adminGet('/api/admin/opportunities?' + params.toString()).then(function (data) {
-          return ((data && data.opportunities) || []).map(function (opp) {
-            return {
-              id: opp.id,
-              title: opp.title || 'Untitled',
-              meta: [opp.host, opp.published_at ? String(opp.published_at).slice(0, 10) : ''].filter(Boolean).join(' · '),
-              raw: opp,
-            };
+        return adminGet('/api/admin/opportunities?' + params.toString())
+          .then(function (data) {
+            if (data && data.ok === false) throw new Error(data.message || data.error || 'opportunities_failed');
+            var rows = sortOpportunitiesForSocial(
+              ((data && data.opportunities) || []).filter(isBrowsableOpportunity)
+            );
+            return mapOpportunitySearchRows(rows);
+          })
+          .catch(function (err) {
+            throw err;
           });
-        });
       }
       if (cfg.source === 'organiser') {
         return adminGet('/api/admin/organisers?' + params.toString()).then(function (data) {
@@ -944,7 +1002,7 @@
 
     function selectSearchResult(id) {
       var item = state.searchResults.find(function (row) {
-        return row.id === id;
+        return row.id === id || String(row.id) === String(id);
       });
       if (!item) return;
       var cfg = postTypeConfig(state.postTypeKey);
@@ -977,15 +1035,15 @@
             ? items.length + ' result' + (items.length === 1 ? '' : 's')
             : query
               ? 'No matches — try a different search'
-              : 'Showing recent listings';
-          paintSearchResults(items, query ? 'No matches found' : 'No live listings found');
+              : 'No listings found — add or approve opportunities under Listing cleanup';
+          paintSearchResults(items, query ? 'No matches found' : 'No business opportunities in Supabase yet');
           if (!query && items[0] && !getSelectedRaw()) {
             selectSearchResult(items[0].id);
           }
         })
-        .catch(function () {
+        .catch(function (err) {
           state.searchLoading = false;
-          sourceStatusEl.textContent = 'Search failed — try again';
+          sourceStatusEl.textContent = err && err.message ? err.message : 'Search failed — try again';
           paintSearchResults([], 'Could not load listings');
         });
     }
@@ -1204,12 +1262,12 @@
         recentEl.classList.add('hidden');
         return;
       }
-      adminGet(
-        '/api/admin/opportunities?status=published&approval_status=Approved&sort=published&limit=40'
-      ).then(function (data) {
-        var opps = (data && data.opportunities) || [];
+      adminGet('/api/admin/opportunities?sort=published&limit=50').then(function (data) {
+        var opps = sortOpportunitiesForSocial(
+          ((data && data.opportunities) || []).filter(isBrowsableOpportunity)
+        );
         var recent = opps.filter(function (o) {
-          if (!o.published_at) return false;
+          if (!isLiveOpportunity(o) || !o.published_at) return false;
           var t = new Date(o.published_at).getTime();
           return t && Date.now() - t < cfg.recentDays * 24 * 60 * 60 * 1000;
         });

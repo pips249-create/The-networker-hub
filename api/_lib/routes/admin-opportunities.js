@@ -1,6 +1,7 @@
 const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { normalizeType } = require('../supabase-opportunities');
+const { sendOpportunityRejectedEmail } = require('../lifecycle-emails');
 
 function parseBody(req) {
   let body = req.body;
@@ -55,6 +56,8 @@ function mapOpportunityRow(row) {
     image_url: row.image_url || '',
     logo_url: row.logo_url || '',
     package_tier: row.package_tier || '',
+    listing_expires_at: row.listing_expires_at || '',
+    listing_paid_at: row.listing_paid_at || '',
     created_at: row.created_at || '',
     updated_at: row.updated_at || '',
     published_at: row.published_at || '',
@@ -232,6 +235,13 @@ module.exports = async function handler(req, res) {
           .select('*')
           .single();
         if (error) throw new Error(error.message);
+
+        try {
+          await sendOpportunityRejectedEmail(data, body.rejection_note || body.note || '');
+        } catch (emailErr) {
+          console.warn('[opportunity] reject email failed:', emailErr.message || emailErr);
+        }
+
         return json(res, 200, { ok: true, opportunity: mapOpportunityRow(data) });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'reject_failed', message: e.message });
