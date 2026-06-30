@@ -13,6 +13,7 @@ const routes = {
 module.exports = async function handler(req, res) {
   setCors(req, res);
   let route = getSubRoute(req, '/api/seo');
+  if (route === '-meta') route = 'meta';
   if (!route && (req.query?.type || req.query?.slug || req.query?.page)) {
     route = 'meta';
   }
