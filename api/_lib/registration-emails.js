@@ -150,6 +150,7 @@ function organiserAttendeesDashboardUrl(siteUrl, eventId) {
   return organiserDashboardUrl(siteUrl, {
     panel: 'events-attendees',
     eventId: eventId || '',
+    applications: 'pending',
   });
 }
 

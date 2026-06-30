@@ -19,6 +19,7 @@
     ticketsType: 'all',
     reviewsGroup: 'all',
     attendeesEvent: 'all',
+    attendeesPendingOnly: false,
     cancellationsEvent: 'all',
   };
 
@@ -1152,19 +1153,59 @@
     return rated.reduce((s, r) => s + Number(r.rating), 0) / rated.length;
   }
 
-  function applyAttendeesDeepLinkFromUrl() {
+  function parseDeepLinkFromUrl() {
     const params = new URLSearchParams(window.location.search);
+    const panel = String(params.get('panel') || '').trim().toLowerCase();
     const eventId = String(params.get('eventId') || params.get('event_id') || '').trim();
-    if (!eventId) return;
-    filters.attendeesEvent = eventId;
-    filters.ticketsEvent = eventId;
-    filters.cancellationsEvent = eventId;
+    const applications = String(params.get('applications') || '').trim().toLowerCase();
+    const hash = (location.hash.replace('#', '') || '').toLowerCase();
+    const route = panel || hash || '';
+    return {
+      route,
+      eventId,
+      pendingOnly: applications === 'pending' || applications === '1' || applications === 'true',
+    };
+  }
+
+  function applyAttendeesDeepLinkFromUrl() {
+    const { route, eventId, pendingOnly } = parseDeepLinkFromUrl();
+    if (eventId) {
+      filters.attendeesEvent = eventId;
+      filters.ticketsEvent = eventId;
+      filters.cancellationsEvent = eventId;
+    }
+    if (pendingOnly) {
+      filters.attendeesPendingOnly = true;
+    }
     const attSel = document.getElementById('filter-attendees-event');
-    if (attSel) attSel.value = eventId;
+    if (attSel && eventId) attSel.value = eventId;
     const ticketSel = document.getElementById('filter-tickets-event');
-    if (ticketSel) ticketSel.value = eventId;
+    if (ticketSel && eventId) ticketSel.value = eventId;
     const cancelSel = document.getElementById('filter-cancellations-event');
-    if (cancelSel) cancelSel.value = eventId;
+    if (cancelSel && eventId) cancelSel.value = eventId;
+    return route;
+  }
+
+  function resolveInitialRoute() {
+    const deepLinkRoute = applyAttendeesDeepLinkFromUrl();
+    if (deepLinkRoute && deepLinkRoute.startsWith('events-')) {
+      return { page: 'events', sub: deepLinkRoute };
+    }
+    if (deepLinkRoute === 'events') {
+      return { page: 'events', sub: 'events-list' };
+    }
+    return parseRoute();
+  }
+
+  function finishDeepLinkAfterBootstrap() {
+    const deepLinkRoute = applyAttendeesDeepLinkFromUrl();
+    if (deepLinkRoute && deepLinkRoute.startsWith('events-')) {
+      setRoute(deepLinkRoute);
+      return;
+    }
+    if (filters.attendeesEvent !== 'all' || filters.attendeesPendingOnly) {
+      setRoute('events-attendees');
+    }
   }
 
   function parseRoute() {
@@ -1347,6 +1388,7 @@
         const row = state.attendeesAll.find((a) => a.id === registrationId);
         if (row && row.eventId) {
           filters.attendeesEvent = row.eventId;
+          filters.attendeesPendingOnly = true;
           fillAttendeesEventFilter();
         }
         setRoute('events-attendees');
@@ -1354,7 +1396,10 @@
     });
     const cta = banner.querySelector('[data-org-route="events-attendees"]');
     if (cta) {
-      cta.addEventListener('click', () => setRoute('events-attendees'));
+      cta.addEventListener('click', () => {
+        filters.attendeesPendingOnly = true;
+        setRoute('events-attendees');
+      });
     }
   }
 
@@ -1396,6 +1441,9 @@
     let list = state.attendeesAll.slice();
     if (filters.attendeesEvent !== 'all') {
       list = list.filter((a) => a.eventId === filters.attendeesEvent);
+    }
+    if (filters.attendeesPendingOnly) {
+      list = list.filter((a) => String(a.applicationStatus || '') === 'Pending');
     }
     return list;
   }
@@ -1616,7 +1664,9 @@
       if (empty) {
         empty.hidden = false;
         empty.textContent = state.attendeesAll.length
-          ? 'No attendees match this event filter.'
+          ? filters.attendeesPendingOnly
+            ? 'No pending applications match this filter.'
+            : 'No attendees match this event filter.'
           : 'No registrations yet. Attendees appear here when people book tickets for your events.';
       }
       updatePaginationNav('attendees', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
@@ -2896,10 +2946,26 @@
         : page === 'business-overview'
           ? 'business-overview'
           : page;
-    if (location.hash.replace('#', '') !== hash) {
-      const url = new URL(window.location.href);
-      url.hash = hash;
-      history.replaceState(null, '', url.pathname + url.search + url.hash);
+    const url = new URL(window.location.href);
+    if (page === 'events' && sub) {
+      url.searchParams.set('panel', sub);
+    } else {
+      url.searchParams.delete('panel');
+    }
+    if (filters.attendeesEvent && filters.attendeesEvent !== 'all') {
+      url.searchParams.set('eventId', filters.attendeesEvent);
+    } else if (!parseDeepLinkFromUrl().eventId) {
+      url.searchParams.delete('eventId');
+    }
+    if (filters.attendeesPendingOnly && sub === 'events-attendees') {
+      url.searchParams.set('applications', 'pending');
+    } else {
+      url.searchParams.delete('applications');
+    }
+    url.hash = hash ? '#' + hash : '';
+    const nextUrl = url.pathname + url.search + url.hash;
+    if (window.location.pathname + window.location.search + window.location.hash !== nextUrl) {
+      history.replaceState(null, '', nextUrl);
     }
   }
 
@@ -4756,6 +4822,7 @@
     });
 
     window.addEventListener('hashchange', () => {
+      applyAttendeesDeepLinkFromUrl();
       const r = parseRoute();
       setRoute(r.sub || r.page);
       if (r.page === 'groups' || r.page === 'dashboard' || r.page === 'team') refresh();
@@ -4905,11 +4972,11 @@
     bindGroupClaimUi();
     bindReadyEventUi();
     bindUi();
-    applyAttendeesDeepLinkFromUrl();
-    const initial = parseRoute();
+    const initial = resolveInitialRoute();
     setRoute(initial.sub || initial.page);
     try {
       await loadBootstrap();
+      finishDeepLinkAfterBootstrap();
       const connectParam = new URLSearchParams(window.location.search).get('stripe_connect');
       if (connectParam && state.stripeConnectEnabled && state.groups.length) {
         const gid = state.groups[0].id;

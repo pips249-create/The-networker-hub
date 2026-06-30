@@ -60,9 +60,13 @@ function organiserDashboardUrl(siteUrl, options = {}) {
   const base = siteBase(siteUrl) + '/organiser/index.html';
   const panel = String(options.panel || '').trim();
   const eventId = String(options.eventId || '').trim();
+  const applications = String(options.applications || '').trim();
   const params = new URLSearchParams();
+  if (panel) params.set('panel', panel.replace(/^#/, ''));
   if (eventId) params.set('eventId', eventId);
+  if (applications) params.set('applications', applications);
   const qs = params.toString();
+  // Query params survive email clients better than hash-only routes.
   const hash = panel ? '#' + panel.replace(/^#/, '') : '';
   return base + (qs ? '?' + qs : '') + hash;
 }
