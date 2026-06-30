@@ -12,7 +12,10 @@ const routes = {
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
-  const route = getSubRoute(req, '/api/seo');
+  let route = getSubRoute(req, '/api/seo');
+  if (!route && (req.query?.type || req.query?.slug || req.query?.page)) {
+    route = 'meta';
+  }
   const fn = routes[route];
   if (!fn) {
     return json(res, 404, { error: 'not_found', path: route || '(empty)' });

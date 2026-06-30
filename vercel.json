@@ -74,7 +74,8 @@
   },
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/seo/sitemap" },
-    { "source": "/api/seo-meta", "destination": "/api/seo/meta" },
+    { "source": "/api/seo/:path*", "destination": "/api/seo" },
+    { "source": "/api/seo-meta", "destination": "/api/seo" },
     { "source": "/api/hubert-schema", "destination": "/api/seo/hubert-schema" },
     { "source": "/api/hub-listings", "destination": "/api/events" },
     { "source": "/api/auth/:path*", "destination": "/api/auth" },

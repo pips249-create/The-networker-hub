@@ -164,6 +164,10 @@
         parseBoolFlag(ev.isTicketSalesPending) ||
         p.get('ticket_sales_pending') === '1' ||
         p.get('isTicketSalesPending') === '1',
+      isTicketSalesScheduled:
+        parseBoolFlag(ev.isTicketSalesScheduled) ||
+        p.get('ticket_sales_scheduled') === '1' ||
+        p.get('isTicketSalesScheduled') === '1',
     };
   }
 
@@ -814,7 +818,26 @@
   let currentEventDetail = null;
   const BOOKING_PENDING_KEY = 'hub_booking_pending';
   let checkoutSessionUser = null;
-  let checkoutUseSlimPaid = false;
+  let ticketPanelBound = false;
+
+  function clearCheckoutInlineError() {
+    const el = document.getElementById('checkout-inline-error');
+    if (!el) return;
+    el.hidden = true;
+    el.textContent = '';
+  }
+
+  function showCheckoutInlineError(message) {
+    const el = document.getElementById('checkout-inline-error');
+    if (!el) return;
+    el.textContent = message;
+    el.hidden = false;
+    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  function activeEvent() {
+    return currentEventDetail || currentEvent;
+  }
 
   function isUuid(value) {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -920,6 +943,18 @@
     return Boolean(checkoutAttendeeFromSession());
   }
 
+  function readPaidCheckoutAttendee(qty) {
+    const attendee = checkoutAttendeeFromSession();
+    if (!attendee) {
+      throw new Error('Please sign in to buy tickets for this event.');
+    }
+    const qtyNum = Math.max(1, parseInt(qty, 10) || 1);
+    if (qtyNum > 1) {
+      attendee.guestNames = readCheckoutGuestNames(qty);
+    }
+    return attendee;
+  }
+
   function checkoutErrorMessage(data) {
     const code = data && data.error ? String(data.error) : '';
     const messages = {
@@ -942,13 +977,17 @@
   }
 
   async function startPaidCheckout(ev, ticketId, qty, attendee) {
-    saveBookingPending(ev, ticketId, qty, attendee);
+    const event = ev || activeEvent();
+    if (!event || !event.id) {
+      throw new Error('This event could not be loaded for checkout. Refresh the page and try again.');
+    }
+    saveBookingPending(event, ticketId, qty, attendee);
     const res = await fetch('/api/auth/create-checkout', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        eventId: ev.id,
+        eventId: event.id,
         ticketId: isUuid(ticketId) ? ticketId : null,
         qty: qty,
         name: attendee?.name || '',
@@ -962,10 +1001,6 @@
     if (res.ok && data.ok && data.url) {
       window.location.assign(data.url);
       return true;
-    }
-    if (data.error === 'stripe_not_configured') {
-      clearBookingPending();
-      return false;
     }
     clearBookingPending();
     throw new Error(checkoutErrorMessage(data));
@@ -1071,7 +1106,7 @@
     if (!tiersEl) return;
 
     const tiers = ticketTiersForEvent(ev);
-    const salesPending = Boolean(ev.isTicketSalesPending);
+    const salesPending = Boolean(ev.isTicketSalesPending || ev.isTicketSalesScheduled);
     const panelClosed = ev.isSoldOut || (ev.isSalesClosed && !salesPending);
     tiersEl.innerHTML = '';
 
@@ -1450,13 +1485,6 @@
   }
 
   function readCheckoutDetails(ticketQty) {
-    if (checkoutUseSlimPaid) {
-      const attendee = checkoutAttendeeFromSession();
-      if (!attendee) {
-        throw new Error('Please sign in or enter your details to continue.');
-      }
-      return attendee;
-    }
     const name = document.getElementById('checkout-name')?.value.trim() || '';
     const email = document.getElementById('checkout-email')?.value.trim() || '';
     if (!name) throw new Error('Please enter your full name.');
@@ -1467,31 +1495,37 @@
     return { name, email, guestNames };
   }
 
-  function updateCheckoutSummary(label, qty, total) {
-    const el = document.getElementById('checkout-order-summary');
-    const confirmBtn = document.getElementById('checkout-confirm-btn');
-    const ev = currentEventDetail || currentEvent;
+  function syncPaidCheckoutPanel(label, qty, total) {
+    const ev = activeEvent();
+    const paidBlock = document.getElementById('ticket-paid-checkout');
     const organiserEl = document.getElementById('checkout-organiser-name');
     const totalEl = document.getElementById('checkout-total-price');
     const refundEl = document.getElementById('checkout-refund-policy');
     const feeNoteEl = document.getElementById('checkout-fee-note');
-    const termsCheck = document.getElementById('checkout-terms-agree');
-    const form = document.getElementById('checkout-details-form');
-    const intro = document.getElementById('checkout-details-intro');
-    const freeOrganiser = document.getElementById('checkout-free-organiser');
-    const termsLabel = document.getElementById('checkout-terms-label');
-    const secureFoot = document.getElementById('ticket-secure-foot');
-    const isFree = !(total > 0);
-    checkoutUseSlimPaid = wantsSlimPaidCheckout(qty, total);
     const accountLine = document.getElementById('checkout-account-line');
-    const attendeeFields = document.getElementById('checkout-attendee-fields');
+    const secureFoot = document.getElementById('ticket-secure-foot');
+    const buy = document.getElementById('buy-btn');
+    const isFree = !(total > 0);
 
-    if (form) {
-      form.classList.toggle('is-free', isFree);
-      form.classList.toggle('is-slim-paid', checkoutUseSlimPaid && !isFree);
+    if (paidBlock) paidBlock.hidden = isFree;
+    if (secureFoot) secureFoot.hidden = isFree;
+    if (buy && !ev?.isApprovalRequired) {
+      buy.textContent = isFree ? 'Get free ticket' : 'Buy ticket';
     }
+    if (organiserEl && ev) {
+      organiserEl.textContent = ev.organiser || ev.organiserName || 'Event organiser';
+    }
+    if (totalEl) {
+      totalEl.textContent =
+        fmt(total || 0) +
+        (total > 0 ? ' — ' + (label || 'Ticket') + ' × ' + String(qty || 1) : '');
+    }
+    if (refundEl && ev) {
+      refundEl.textContent = refundPolicyDetailText(ev);
+    }
+    if (feeNoteEl) feeNoteEl.hidden = isFree;
     if (accountLine) {
-      if (checkoutUseSlimPaid && !isFree && checkoutSessionUser?.email) {
+      if (!isFree && checkoutSessionUser?.email) {
         accountLine.textContent = 'Booking as ' + checkoutSessionUser.email;
         accountLine.hidden = false;
       } else {
@@ -1499,50 +1533,14 @@
         accountLine.textContent = '';
       }
     }
-    if (attendeeFields) attendeeFields.hidden = checkoutUseSlimPaid && !isFree;
+  }
 
-    if (intro) {
-      intro.textContent = isFree
-        ? 'Enter your details to register for this free event.'
-        : checkoutUseSlimPaid
-          ? 'Review your order and confirm to continue to secure payment.'
-          : 'Review your order and enter your details to complete your booking.';
-    }
+  function updateFreeCheckoutSummary(ev) {
+    const freeOrganiser = document.getElementById('checkout-free-organiser');
     if (freeOrganiser) {
       const organiserName = ev ? ev.organiser || ev.organiserName || 'the event organiser' : 'the event organiser';
       freeOrganiser.textContent = 'Organised by ' + organiserName;
-      freeOrganiser.hidden = !isFree;
-    }
-    if (secureFoot) secureFoot.hidden = isFree;
-    if (el) {
-      el.hidden = isFree;
-      if (!isFree) {
-        el.textContent =
-          (label || 'Ticket') + ' × ' + String(qty || 1) + ' — Total ' + fmt(total || 0);
-      }
-    }
-    if (organiserEl && ev) {
-      organiserEl.textContent = ev.organiser || ev.organiserName || 'Event organiser';
-    }
-    if (totalEl) {
-      totalEl.textContent = fmt(total || 0) + (total > 0 ? ' (inc. booking fee where shown)' : '');
-    }
-    if (refundEl && ev) {
-      refundEl.textContent = refundPolicyDetailText(ev);
-    }
-    if (feeNoteEl) {
-      feeNoteEl.hidden = !total;
-    }
-    if (termsCheck) {
-      termsCheck.checked = false;
-    }
-    if (termsLabel) {
-      termsLabel.textContent = isFree
-        ? 'I confirm my details are correct and agree to register for this event.'
-        : 'I have read the refund policy and agree to proceed with this booking.';
-    }
-    if (confirmBtn) {
-      confirmBtn.textContent = total > 0 ? 'Continue to payment' : 'Confirm registration';
+      freeOrganiser.hidden = false;
     }
   }
 
@@ -1608,12 +1606,86 @@
     });
   }
 
+  let scheduledUiBound = false;
+
+  function formatTicketSalesOpensClient(ev) {
+    if (ev.ticketSalesOpensLabel) return ev.ticketSalesOpensLabel;
+    if (!ev.ticketSalesOpensAt) return '';
+    const d = new Date(ev.ticketSalesOpensAt);
+    if (Number.isNaN(d.getTime())) return '';
+    return (
+      d.toLocaleDateString('en-GB', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }) +
+      ' at ' +
+      d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+    );
+  }
+
+  function bindTicketSalesScheduledUi(ev) {
+    const panel = document.getElementById('ticket-sales-scheduled');
+    const lead = document.getElementById('ticket-sales-scheduled-lead');
+    const btn = document.getElementById('ticket-sales-scheduled-save-btn');
+    const statusEl = document.getElementById('ticket-sales-scheduled-status');
+    if (!panel || !btn) return;
+
+    const opensLabel = formatTicketSalesOpensClient(ev);
+    if (lead) {
+      lead.textContent = opensLabel
+        ? 'Tickets open ' + opensLabel + '.'
+        : 'Ticket sales are not open yet.';
+    }
+
+    function refreshScheduledSaveUi() {
+      const saved = window.HubFavourites ? window.HubFavourites.isSaved(ev.id) : false;
+      btn.textContent = saved ? "Saved — we'll notify you" : 'Save event';
+      btn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+      btn.classList.toggle('is-saved', saved);
+      btn.disabled = saved;
+    }
+
+    refreshScheduledSaveUi();
+    if (window.HubFavourites) {
+      window.HubFavourites.sync().then(function () {
+        refreshScheduledSaveUi();
+      });
+    }
+
+    if (scheduledUiBound) return;
+    scheduledUiBound = true;
+    btn.addEventListener('click', function () {
+      const organiserId = String(ev.organiserId || '').trim();
+      if (window.HubFavourites) {
+        window.HubFavourites.toggle(ev.id, { organiserId: organiserId }).then(function (saved) {
+          refreshScheduledSaveUi();
+          if (statusEl) {
+            statusEl.hidden = false;
+            statusEl.className = 'ticket-sales-scheduled-status is-ok';
+            statusEl.textContent = saved
+              ? "Saved — we'll email you when tickets go on sale."
+              : 'Removed from saved events.';
+          }
+        });
+        return;
+      }
+      if (statusEl) {
+        statusEl.hidden = false;
+        statusEl.className = 'ticket-sales-scheduled-status is-error';
+        statusEl.textContent = 'Sign in to save this event and get notified.';
+      }
+    });
+  }
+
   function applyTicketPanelState(ev) {
     const panel = document.getElementById('tickets');
     const buy = document.getElementById('buy-btn');
     const purchaseView = document.getElementById('ticket-purchase-view');
     const appForm = document.getElementById('seat-application-form');
     const nudgePanel = document.getElementById('ticket-sales-nudge');
+    const scheduledPanel = document.getElementById('ticket-sales-scheduled');
     if (!panel || !buy) return;
 
     panel.dataset.approvalRequired = ev.isApprovalRequired ? 'true' : 'false';
@@ -1623,6 +1695,7 @@
     panel.classList.remove(
       'is-unavailable',
       'is-sales-pending',
+      'is-sales-scheduled',
       'is-approval-mode',
       'show-application',
       'show-checkout'
@@ -1630,6 +1703,19 @@
     showSeatApplication(false);
     showCheckoutDetails(false);
     if (nudgePanel) nudgePanel.hidden = true;
+    if (scheduledPanel) scheduledPanel.hidden = true;
+
+    if (ev.isTicketSalesScheduled) {
+      panel.classList.add('is-sales-scheduled');
+      buy.disabled = true;
+      buy.classList.add('cta-btn-disabled');
+      if (purchaseView) purchaseView.removeAttribute('aria-hidden');
+      if (scheduledPanel) {
+        scheduledPanel.hidden = false;
+        bindTicketSalesScheduledUi(ev);
+      }
+      return;
+    }
 
     if (ev.isTicketSalesPending) {
       panel.classList.add('is-sales-pending');
@@ -1806,6 +1892,21 @@
     if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
   }
 
+  function buildEventShareContent(ev, shareUrl) {
+    const title = String(ev.title || 'Event on The Networker Hub').trim();
+    const details = [];
+    const dateLine = ev.dateLine || ev.date;
+    if (dateLine) details.push(dateLine);
+    if (ev.time) details.push(ev.time);
+    const location = ev.location || ev.city || ev.venue;
+    if (location) details.push(location);
+    if (ev.organiser) details.push('with ' + ev.organiser);
+    const summary = details.filter(Boolean).join(' · ');
+    const text = summary ? title + ' — ' + summary : title;
+    const message = text + '\n\n' + shareUrl;
+    return { title, text, summary, message, url: shareUrl };
+  }
+
   function initActions(ev) {
     const saveBtn = document.getElementById('save-btn');
     const shareBtn = document.getElementById('share-btn');
@@ -1813,7 +1914,7 @@
     const calBtn = document.getElementById('calendar-btn');
     const calMenu = document.getElementById('calendar-menu');
     const url = pageUrl();
-    const shareTitle = ev.title || 'Event on The Networker Hub';
+    const share = buildEventShareContent(ev, url);
 
     function refreshSaveUi() {
       if (!saveBtn || !ev.id) return;
@@ -1855,24 +1956,28 @@
     const shareEmail = document.getElementById('share-email');
     if (linkedIn) {
       linkedIn.href =
-        'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url);
+        'https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(share.message);
     }
     if (twitter) {
       twitter.href =
         'https://twitter.com/intent/tweet?url=' +
         encodeURIComponent(url) +
         '&text=' +
-        encodeURIComponent(shareTitle);
+        encodeURIComponent(share.text);
     }
     if (facebook) {
-      facebook.href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url);
+      facebook.href =
+        'https://www.facebook.com/sharer/sharer.php?u=' +
+        encodeURIComponent(url) +
+        '&quote=' +
+        encodeURIComponent(share.text);
     }
     if (shareEmail) {
       shareEmail.href =
         'mailto:?subject=' +
-        encodeURIComponent(shareTitle + ' – The Networker Hub') +
+        encodeURIComponent(share.title + ' – The Networker Hub') +
         '&body=' +
-        encodeURIComponent('I thought you might like this event:\n\n' + shareTitle + '\n' + url);
+        encodeURIComponent('I thought you might like this event:\n\n' + share.message);
     }
 
     const copyBtn = document.getElementById('share-copy');
@@ -1885,11 +1990,11 @@
           }, 2000);
         };
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(url).then(done).catch(function () {
-            window.prompt('Copy this link:', url);
+          navigator.clipboard.writeText(share.message).then(done).catch(function () {
+            window.prompt('Copy this message:', share.message);
           });
         } else {
-          window.prompt('Copy this link:', url);
+          window.prompt('Copy this message:', share.message);
         }
         if (shareMenu) shareMenu.hidden = true;
         if (shareBtn) shareBtn.setAttribute('aria-expanded', 'false');
@@ -2051,6 +2156,7 @@
           qtyHint.textContent = '';
         }
       }
+      syncPaidCheckoutPanel(label, qty, total);
     }
 
     function selectTier(tier) {
@@ -2086,9 +2192,12 @@
     update();
 
     const buy = document.getElementById('buy-btn');
-    const stripeHint = document.getElementById('stripe-hint');
     const appForm = document.getElementById('seat-application-form');
     const appBack = document.getElementById('application-back-btn');
+
+    loadCheckoutSessionUser().then(function () {
+      update();
+    });
 
     if (appBack) {
       appBack.addEventListener('click', () => showSeatApplication(false));
@@ -2118,8 +2227,9 @@
       checkoutBack.addEventListener('click', () => showCheckoutDetails(false));
     }
 
-    async function processCheckoutBooking() {
-      const attendee = readCheckoutDetails(qty);
+    async function processCheckoutBooking(isPaid) {
+      clearCheckoutInlineError();
+      const ev = activeEvent();
       update();
       const tierEl = getSelectedTierEl();
       const ticketId = tierEl ? tierEl.getAttribute('data-ticket-id') : null;
@@ -2127,56 +2237,41 @@
       const subtotal = tierPrice * qty;
       const fee = subtotal > 0 ? subtotal * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty : 0;
       const total = subtotal + fee;
+      const paid = isPaid != null ? isPaid : tierPrice > 0;
 
-      if (tierPrice <= 0) {
+      let attendee;
+      try {
+        attendee = paid ? readPaidCheckoutAttendee(qty) : readCheckoutDetails(qty);
+      } catch (err) {
+        throw err;
+      }
+
+      if (!paid) {
         setCheckoutSubmitting(true, 'Registering…');
         try {
-          await completeFreeBooking(currentEvent, ticketId, qty, attendee);
+          await completeFreeBooking(ev, ticketId, qty, attendee);
         } catch (err) {
           setCheckoutSubmitting(false);
-          window.alert(
-            err && err.message
-              ? err.message
-              : 'Could not complete your free booking. Please try again or contact support.'
-          );
+          throw err;
         }
         return;
       }
 
-      if (stripeHint) stripeHint.hidden = true;
       setCheckoutSubmitting(true, 'Redirecting to payment…');
       try {
-        const usedCheckoutApi = await startPaidCheckout(currentEvent, ticketId, qty, attendee);
-        if (usedCheckoutApi) return;
-
-        const checkoutUrl = buildStripeCheckoutUrl(currentEvent, tierEl, qty, label);
-        if (!checkoutUrl) {
-          setCheckoutSubmitting(false);
-          showCheckoutDetails(false);
-          if (stripeHint) {
-            stripeHint.hidden = false;
-            stripeHint.focus();
-          }
-          return;
-        }
-        saveBookingPending(currentEvent, ticketId, qty);
-        window.location.assign(checkoutUrl);
+        await startPaidCheckout(ev, ticketId, qty, attendee);
       } catch (err) {
         setCheckoutSubmitting(false);
-        window.alert(
-          err && err.message
-            ? err.message
-            : 'Could not start checkout. Please try again or contact support.'
-        );
+        throw err;
       }
     }
 
     if (checkoutForm) {
       checkoutForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const termsAgree = document.getElementById('checkout-terms-agree');
+        const termsAgree = document.getElementById('checkout-free-terms-agree');
         if (termsAgree && !termsAgree.checked) {
-          window.alert('Please confirm you have read the refund policy and agree to proceed.');
+          window.alert('Please confirm your details are correct before registering.');
           termsAgree.focus();
           return;
         }
@@ -2187,14 +2282,22 @@
           return;
         }
 
-        const runBooking = async () => {
-          await processCheckoutBooking();
-        };
-
         try {
-          await runBooking();
+          await processCheckoutBooking(false);
         } catch (err) {
           window.alert(err && err.message ? err.message : 'Could not complete your booking.');
+        }
+      });
+    }
+
+    if (checkoutForm) {
+      checkoutForm.addEventListener('submit', async function onPaidGuestSubmit(e) {
+        if (!checkoutForm.classList.contains('is-paid-guests')) return;
+        e.preventDefault();
+        try {
+          await processCheckoutBooking(true);
+        } catch (err) {
+          window.alert(err && err.message ? err.message : 'Could not start checkout.');
         }
       });
     }

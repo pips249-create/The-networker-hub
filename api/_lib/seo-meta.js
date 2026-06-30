@@ -183,7 +183,7 @@ async function buildEventMeta(slug, origin) {
     description: trimText(description, 160),
     canonical,
     image,
-    ogType: 'website',
+    ogType: 'article',
   };
 
   const eventSchema = buildEventSchema(ev, origin);
