@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260717" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
@@ -72,6 +72,7 @@
           <div class="org-wrap">
         <div id="org-airtable-alert" class="org-alert" hidden></div>
         <div class="org-join-link-banner" id="join-link-banner" hidden role="status"></div>
+        <div class="org-applications-banner" id="org-applications-banner" hidden role="status" aria-live="polite"></div>
 
         <!-- Overview -->
         <section class="org-page is-active" id="org-page-dashboard" data-org-page="dashboard">
@@ -264,6 +265,11 @@
           <div class="org-quick-actions org-quick-actions--compact" aria-label="Quick links">
             <h2 class="org-quick-actions-title">Quick links</h2>
             <div class="org-quick-actions-grid">
+              <button type="button" class="org-quick-card" data-org-shortcut="events-attendees" id="org-quick-review-applications" hidden>
+                <span class="org-quick-icon" aria-hidden="true">📝</span>
+                <span class="org-quick-label">Review applications <span class="org-quick-badge" id="org-quick-applications-badge" hidden></span></span>
+                <span class="org-quick-hint">Approve or deny One Seat Only applications</span>
+              </button>
               <button type="button" class="org-quick-card" data-org-shortcut="events-reviews">
                 <span class="org-quick-icon" aria-hidden="true">★</span>
                 <span class="org-quick-label">Respond to reviews</span>
@@ -1270,6 +1276,6 @@
     <script src="../js/organiser-flow-tour.js?v=20260610"></script>
     <script src="../js/organiser-onboarding.js?v=20260618"></script>
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
-    <script src="../js/organiser-dashboard.js?v=20260716"></script>
+    <script src="../js/organiser-dashboard.js?v=20260717"></script>
   </body>
 </html>

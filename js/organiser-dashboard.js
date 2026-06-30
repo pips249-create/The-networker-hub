@@ -501,7 +501,17 @@
     if (eventsEl) {
       const n = state.eventsTotal || state.events.length;
       const rev = totalRevenueDisplay();
-      eventsEl.textContent = n + ' event' + (n === 1 ? '' : 's') + ' · ' + rev + ' revenue';
+      const pendingApps = pendingApplicationsCount();
+      let text = n + ' event' + (n === 1 ? '' : 's') + ' · ' + rev + ' revenue';
+      if (pendingApps > 0) {
+        text +=
+          ' · ' +
+          pendingApps +
+          ' application' +
+          (pendingApps === 1 ? '' : 's') +
+          ' to review';
+      }
+      eventsEl.textContent = text;
     }
     if (trainingEl) {
       const editors = (state.teamMembers || []).filter(function (m) {
@@ -1258,15 +1268,98 @@
   }
 
   function pendingApplicationsCount() {
-    return state.attendeesAll.filter((a) => String(a.applicationStatus || '') === 'Pending').length;
+    return pendingApplicationsList().length;
+  }
+
+  function pendingApplicationsList() {
+    return state.attendeesAll.filter((a) => String(a.applicationStatus || '') === 'Pending');
+  }
+
+  function updatePendingApplicationsUi() {
+    const badge = document.getElementById('org-pending-applications-nav-badge');
+    const count = pendingApplicationsCount();
+    if (badge) {
+      badge.hidden = count < 1;
+      badge.textContent = count > 1 ? String(count) + ' pending' : 'New';
+    }
+    renderApplicationsBanner();
+    renderHubPortalMeta();
+    const quickCard = document.getElementById('org-quick-review-applications');
+    const quickBadge = document.getElementById('org-quick-applications-badge');
+    if (quickCard) quickCard.hidden = count < 1;
+    if (quickBadge) {
+      quickBadge.hidden = count < 1;
+      quickBadge.textContent = String(count);
+    }
+  }
+
+  function renderApplicationsBanner() {
+    const banner = document.getElementById('org-applications-banner');
+    if (!banner) return;
+    const pending = pendingApplicationsList();
+    if (!pending.length) {
+      banner.hidden = true;
+      banner.innerHTML = '';
+      return;
+    }
+
+    const preview = pending
+      .slice(0, 3)
+      .map((a) => {
+        return (
+          '<button type="button" class="org-applications-banner-link" data-review-application="' +
+          esc(a.id) +
+          '">' +
+          esc(a.name || 'Applicant') +
+          ' · ' +
+          esc(a.eventTitle || 'Event') +
+          '</button>'
+        );
+      })
+      .join('');
+    const more =
+      pending.length > 3
+        ? ' <span class="org-join-link-banner-more">+' + String(pending.length - 3) + ' more</span>'
+        : '';
+
+    const lead =
+      pending.length === 1
+        ? '<strong>New application</strong> — someone applied to attend <strong>' +
+          esc(pending[0].eventTitle || 'your event') +
+          '</strong>. Review their industry and job title before approving.'
+        : '<strong>' +
+          pending.length +
+          ' applications awaiting review</strong> — approve or deny seats for your One Seat Only events.';
+
+    banner.hidden = false;
+    banner.innerHTML =
+      '<p>' +
+      lead +
+      '</p><p class="org-applications-banner-actions">' +
+      preview +
+      more +
+      '<button type="button" class="org-applications-banner-cta" data-org-route="events-attendees">Review applications</button>' +
+      '</p>';
+
+    banner.querySelectorAll('[data-review-application]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const registrationId = btn.getAttribute('data-review-application');
+        const row = state.attendeesAll.find((a) => a.id === registrationId);
+        if (row && row.eventId) {
+          filters.attendeesEvent = row.eventId;
+          fillAttendeesEventFilter();
+        }
+        setRoute('events-attendees');
+      });
+    });
+    const cta = banner.querySelector('[data-org-route="events-attendees"]');
+    if (cta) {
+      cta.addEventListener('click', () => setRoute('events-attendees'));
+    }
   }
 
   function updatePendingApplicationsNavBadge() {
-    const badge = document.getElementById('org-pending-applications-nav-badge');
-    if (!badge) return;
-    const count = pendingApplicationsCount();
-    badge.hidden = count < 1;
-    badge.textContent = count > 1 ? String(count) + ' pending' : 'New';
+    updatePendingApplicationsUi();
   }
 
   function attendeeStatusLabel(a) {
