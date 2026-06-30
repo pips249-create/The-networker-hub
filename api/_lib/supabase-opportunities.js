@@ -486,7 +486,6 @@ async function createOpportunityEnquiry(input) {
     .select('*')
     .single();
   if (error) throw new Error(error.message);
-  const opportunity = rowToListing(data);
   const dto = enquiryRowToDto(data, opportunity);
 
   try {
