@@ -90,6 +90,10 @@
       title: 'Email templates',
       subtitle: 'Edit transactional copy in Supabase · test sends need Resend configured',
     },
+    social: {
+      title: 'Social posts',
+      subtitle: 'Draft captions from Hub listings — copy or open share links for LinkedIn, Facebook, and X',
+    },
   };
 
   var EVENT_TYPES = ['Meeting', 'Events', 'Exhibition', 'Awards'];
@@ -403,6 +407,9 @@
     }
     if (route === 'email') {
       return hash.indexOf('templates') !== -1 ? PAGE_META.emails.subtitle : PAGE_META.campaigns.subtitle;
+    }
+    if (route === 'social') {
+      return PAGE_META.social.subtitle;
     }
     if (route === 'moderation' && hash.indexOf('import') !== -1) {
       return PAGE_META.import.subtitle;
@@ -9116,6 +9123,15 @@
     });
   }
 
+  function renderSocialPosts() {
+    if (window.AdminSocialPosts && window.AdminSocialPosts.render) {
+      window.AdminSocialPosts.render(main, { adminGet: adminGet, esc: esc, attrEsc: attrEsc });
+      return;
+    }
+    main.innerHTML =
+      '<p class="text-sm text-slate-600">Social post composer failed to load. Refresh the page.</p>';
+  }
+
   function renderCampaigns() {
     main.innerHTML =
       '<div class="space-y-6 max-w-3xl">' +
@@ -10181,6 +10197,10 @@
     else withHubTabs(tabsHtml, renderUsers);
   }
 
+  function renderSocialHub() {
+    renderSocialPosts();
+  }
+
   function renderEmailHub(fullHash) {
     var hash = String(fullHash || 'email/campaigns');
     var tab = hash.indexOf('templates') !== -1 ? 'templates' : 'campaigns';
@@ -10217,6 +10237,7 @@
     cleanup: renderCleanupHub,
     accounts: renderAccountsHub,
     email: renderEmailHub,
+    social: renderSocialHub,
     moderation: renderModerationHub,
     financials: renderFinancials,
     featured: renderFeatured,

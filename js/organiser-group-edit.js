@@ -230,6 +230,10 @@
     if (el('ge-name')) el('ge-name').value = g.name || '';
     if (el('ge-description')) el('ge-description').value = g.description || '';
     if (el('ge-website')) el('ge-website').value = g.website || '';
+    if (el('ge-instagram')) el('ge-instagram').value = g.instagramUrl || '';
+    if (el('ge-facebook')) el('ge-facebook').value = g.facebookUrl || '';
+    if (el('ge-linkedin')) el('ge-linkedin').value = g.linkedinUrl || '';
+    if (el('ge-x')) el('ge-x').value = g.xUrl || '';
     if (el('ge-contact-email')) el('ge-contact-email').value = g.contactEmail || '';
     const counter = el('ge-word-count');
     if (counter) counter.textContent = String(countWords(g.description || ''));
@@ -323,6 +327,10 @@
       name,
       description,
       website: el('ge-website').value.trim(),
+      instagramUrl: el('ge-instagram') ? el('ge-instagram').value.trim() : '',
+      facebookUrl: el('ge-facebook') ? el('ge-facebook').value.trim() : '',
+      linkedinUrl: el('ge-linkedin') ? el('ge-linkedin').value.trim() : '',
+      xUrl: el('ge-x') ? el('ge-x').value.trim() : '',
       logoUrl: el('ge-logo-url').value.trim(),
       contactEmail,
     };

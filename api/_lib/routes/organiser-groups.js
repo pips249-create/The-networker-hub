@@ -74,6 +74,10 @@ module.exports = async function handler(req, res) {
       listingStatus != null ||
       body.description !== undefined ||
       body.website !== undefined ||
+      body.instagramUrl !== undefined ||
+      body.facebookUrl !== undefined ||
+      body.linkedinUrl !== undefined ||
+      body.xUrl !== undefined ||
       body.location !== undefined ||
       body.logoUrl ||
       body.logoBase64;
@@ -91,6 +95,10 @@ module.exports = async function handler(req, res) {
         name: name || undefined,
         description: body.description,
         website: body.website,
+        instagramUrl: body.instagramUrl,
+        facebookUrl: body.facebookUrl,
+        linkedinUrl: body.linkedinUrl,
+        xUrl: body.xUrl,
         location: body.location,
         contactEmail: body.contactEmail,
         industries: body.industries,
@@ -174,6 +182,10 @@ module.exports = async function handler(req, res) {
           name: copyName,
           description: source.description || '',
           website: source.website || '',
+          instagramUrl: source.instagramUrl || '',
+          facebookUrl: source.facebookUrl || '',
+          linkedinUrl: source.linkedinUrl || '',
+          xUrl: source.xUrl || '',
           location: source.location || '',
           industries: source.industries || [],
           meetingFormats: source.meetingFormats || [],

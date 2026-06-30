@@ -379,6 +379,42 @@
       }
     }
 
+    var actionsPrimary = document.querySelector('.org-profile-actions-primary');
+    var socialWrap = document.getElementById('org-social-links');
+    if (!socialWrap && actionsPrimary) {
+      socialWrap = document.createElement('div');
+      socialWrap.id = 'org-social-links';
+      socialWrap.className = 'org-profile-social-links';
+      actionsPrimary.appendChild(socialWrap);
+    }
+    if (socialWrap) {
+      var socialItems = [
+        { label: 'Instagram', url: org.instagramUrl },
+        { label: 'Facebook', url: org.facebookUrl },
+        { label: 'LinkedIn', url: org.linkedinUrl },
+        { label: 'X', url: org.xUrl },
+      ].filter(function (item) {
+        return item.url && /^https?:\/\//i.test(item.url);
+      });
+      if (socialItems.length) {
+        socialWrap.hidden = false;
+        socialWrap.innerHTML = socialItems
+          .map(function (item) {
+            return (
+              '<a class="org-profile-btn org-profile-btn--social" href="' +
+              escapeHtml(item.url) +
+              '" target="_blank" rel="noopener noreferrer">' +
+              escapeHtml(item.label) +
+              '</a>'
+            );
+          })
+          .join('');
+      } else {
+        socialWrap.hidden = true;
+        socialWrap.innerHTML = '';
+      }
+    }
+
     renderEvents(org.events || []);
 
     var reportBtn = document.getElementById('org-report-btn');

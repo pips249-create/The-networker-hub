@@ -257,6 +257,18 @@
   background: #1d4ed8;
 }
 
+.org-profile-social-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.org-profile-btn--social {
+  font-size: 12px;
+  padding: 8px 12px;
+}
+
 .org-profile-btn.is-saved {
   color: #c44;
   border-color: #f3c4c4;

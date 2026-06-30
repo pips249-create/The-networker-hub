@@ -91,6 +91,10 @@ function mapOrganiserRow(row, eventCount, loginMeta) {
     description,
     photo_url: photoUrl,
     website,
+    instagram_url: String(row.instagram_url || '').trim(),
+    facebook_url: String(row.facebook_url || '').trim(),
+    linkedin_url: String(row.linkedin_url || '').trim(),
+    x_url: String(row.x_url || '').trim(),
     listing_status: row.listing_status || '',
     slug: publicOrganiserSlug(row) || '',
     event_count: eventCount || 0,
@@ -204,6 +208,18 @@ function buildOrganiserPatch(body, photo_url) {
   if (Object.prototype.hasOwnProperty.call(body, 'website')) {
     patch.website = String(body.website || '').trim() || null;
   }
+  if (Object.prototype.hasOwnProperty.call(body, 'instagram_url')) {
+    patch.instagram_url = String(body.instagram_url || '').trim() || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'facebook_url')) {
+    patch.facebook_url = String(body.facebook_url || '').trim() || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'linkedin_url')) {
+    patch.linkedin_url = String(body.linkedin_url || '').trim() || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'x_url')) {
+    patch.x_url = String(body.x_url || '').trim() || null;
+  }
   if (Object.prototype.hasOwnProperty.call(body, 'featured')) {
     patch.featured = Boolean(body.featured);
   }
@@ -217,7 +233,7 @@ async function listOrganisersForAdmin(query) {
   let dbQuery = sb
     .from('organisers')
     .select(
-      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, listing_status, slug, created_at',
+      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, slug, created_at',
       { count: 'exact' }
     )
     .order('name', { ascending: true });

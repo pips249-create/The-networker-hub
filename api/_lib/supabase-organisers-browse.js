@@ -67,6 +67,10 @@ function rowToPublicOrganiser(row, eventCount, options) {
     eventCount: Number(eventCount) || 0,
     featured: Boolean(row.featured),
     website: String(row.website || '').trim(),
+    instagramUrl: String(row.instagram_url || '').trim(),
+    facebookUrl: String(row.facebook_url || '').trim(),
+    linkedinUrl: String(row.linkedin_url || '').trim(),
+    xUrl: String(row.x_url || '').trim(),
     search: [name, description, industry, industries.join(' '), meetingFormats.join(' ')]
       .filter(Boolean)
       .join(' ')

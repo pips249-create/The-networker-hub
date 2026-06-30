@@ -23,6 +23,10 @@ function rowToGroup(row) {
     organiserAccountId: row.organiser_account_id || null,
     imageUrl: String(row.photo_url || '').trim(),
     website: String(row.website || '').trim(),
+    instagramUrl: String(row.instagram_url || '').trim(),
+    facebookUrl: String(row.facebook_url || '').trim(),
+    linkedinUrl: String(row.linkedin_url || '').trim(),
+    xUrl: String(row.x_url || '').trim(),
     industries,
     meetingFormats,
     location: industries.join(', '),
@@ -201,6 +205,10 @@ async function createGroup(payload) {
     contact_email: (payload.contactEmail || payload.email || '').toLowerCase() || null,
     description: payload.description || null,
     website: payload.website || null,
+    instagram_url: payload.instagramUrl || payload.instagram_url || null,
+    facebook_url: payload.facebookUrl || payload.facebook_url || null,
+    linkedin_url: payload.linkedinUrl || payload.linkedin_url || null,
+    x_url: payload.xUrl || payload.x_url || null,
     industries: Array.isArray(payload.industries) ? payload.industries : [],
     meeting_formats: Array.isArray(payload.meetingFormats) ? payload.meetingFormats : [],
     organiser_type: 'Events',
@@ -251,6 +259,18 @@ async function updateGroup(groupId, payload) {
   if (payload.name) patch.name = payload.name;
   if (payload.description !== undefined) patch.description = payload.description || null;
   if (payload.website !== undefined) patch.website = payload.website || null;
+  if (payload.instagramUrl !== undefined || payload.instagram_url !== undefined) {
+    patch.instagram_url = String(payload.instagramUrl ?? payload.instagram_url ?? '').trim() || null;
+  }
+  if (payload.facebookUrl !== undefined || payload.facebook_url !== undefined) {
+    patch.facebook_url = String(payload.facebookUrl ?? payload.facebook_url ?? '').trim() || null;
+  }
+  if (payload.linkedinUrl !== undefined || payload.linkedin_url !== undefined) {
+    patch.linkedin_url = String(payload.linkedinUrl ?? payload.linkedin_url ?? '').trim() || null;
+  }
+  if (payload.xUrl !== undefined || payload.x_url !== undefined) {
+    patch.x_url = String(payload.xUrl ?? payload.x_url ?? '').trim() || null;
+  }
   if (payload.contactEmail !== undefined) {
     patch.contact_email = payload.contactEmail || null;
     patch.email = payload.contactEmail || null;
