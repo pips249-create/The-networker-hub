@@ -13,6 +13,7 @@ const {
   legalPolicyUrl,
   contactUrl,
   eventPublicUrl: buildEventPublicUrl,
+  organiserDashboardUrl,
 } = require('./hub-email-urls');
 const { computeEventTicketStats } = require('./organiser-registration-stats');
 const { attendeeInitial } = require('./organiser-email-sections');
@@ -114,7 +115,7 @@ function buildAttendeeEmailVars({
     refund_cutoff_days: eventRow.refund_cutoff_days,
     site_url: siteUrl,
     logo_url: siteUrl + '/assets/logo-nav.png',
-    dashboard_url: siteUrl + '/organiser/index.html',
+    dashboard_url: organiserDashboardUrl(siteUrl),
   };
 }
 
@@ -143,6 +144,13 @@ function buildOrganiserEmailVars(attendeeVars, stats) {
     attendee_initial: attendeeInitial(attendeeName),
     booking_time: String(attendeeVars.booked_at || '').trim(),
   };
+}
+
+function organiserAttendeesDashboardUrl(siteUrl, eventId) {
+  return organiserDashboardUrl(siteUrl, {
+    panel: 'events-attendees',
+    eventId: eventId || '',
+  });
 }
 
 /**
@@ -221,6 +229,7 @@ async function sendRegistrationEmails(sb, registration) {
     try {
       const stats = await fetchEventRegistrationStats(sb, eventId);
       const organiserVars = buildOrganiserEmailVars(vars, stats);
+      organiserVars.dashboard_url = organiserAttendeesDashboardUrl(siteBase(), eventId);
       await sendTemplatedEmail({
         slug: 'organiser_new_registration',
         to: organiserEmail,
@@ -328,6 +337,7 @@ async function sendApplicationEmails(sb, registration) {
       organiserVars.screening_job_title = vars.screening_job_title;
       organiserVars.price_if_approved = priceIfApproved;
       organiserVars.pending_applications = stats.pending_applications || '0';
+      organiserVars.dashboard_url = organiserAttendeesDashboardUrl(siteBase(), eventId);
       await sendTemplatedEmail({
         slug: 'organiser_new_application',
         to: organiserEmail,
@@ -403,6 +413,7 @@ async function sendOrganiserApplicationAlertEmail(sb, registration, options = {}
   organiserVars.screening_job_title = vars.screening_job_title;
   organiserVars.price_if_approved = priceIfApproved;
   organiserVars.pending_applications = stats.pending_applications || '0';
+  organiserVars.dashboard_url = organiserAttendeesDashboardUrl(siteBase(), eventId);
 
   await sendTemplatedEmail({
     slug: 'organiser_new_application',

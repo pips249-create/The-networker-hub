@@ -1142,6 +1142,21 @@
     return rated.reduce((s, r) => s + Number(r.rating), 0) / rated.length;
   }
 
+  function applyAttendeesDeepLinkFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const eventId = String(params.get('eventId') || params.get('event_id') || '').trim();
+    if (!eventId) return;
+    filters.attendeesEvent = eventId;
+    filters.ticketsEvent = eventId;
+    filters.cancellationsEvent = eventId;
+    const attSel = document.getElementById('filter-attendees-event');
+    if (attSel) attSel.value = eventId;
+    const ticketSel = document.getElementById('filter-tickets-event');
+    if (ticketSel) ticketSel.value = eventId;
+    const cancelSel = document.getElementById('filter-cancellations-event');
+    if (cancelSel) cancelSel.value = eventId;
+  }
+
   function parseRoute() {
     const hash = (location.hash.replace('#', '') || 'dashboard').toLowerCase();
     if (hash === 'opportunity-enquiries') return { page: 'business-overview', sub: null };
@@ -1401,16 +1416,19 @@
   function attendeeActionsHtml(a) {
     if (String(a.applicationStatus || '') !== 'Pending') return '—';
     return (
-      '<div class="org-attendee-actions">' +
-      '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-approve-application="' +
+      '<div class="org-application-review">' +
+      '<p class="org-application-review-label">Review application</p>' +
+      '<div class="org-application-review-buttons">' +
+      '<button type="button" class="org-application-approve-btn" data-approve-application="' +
       esc(a.id) +
-      '">Approve</button>' +
-      '<button type="button" class="org-btn org-btn-sm org-attendee-deny-btn" data-deny-application="' +
+      '"><span class="org-application-btn-icon" aria-hidden="true">✓</span>Approve</button>' +
+      '<button type="button" class="org-application-deny-btn" data-deny-application="' +
       esc(a.id) +
-      '">Deny</button>' +
-      '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-resend-application-alert="' +
+      '"><span class="org-application-btn-icon" aria-hidden="true">✕</span>Deny</button>' +
+      '</div>' +
+      '<button type="button" class="org-application-resend-link" data-resend-application-alert="' +
       esc(a.id) +
-      '" title="Send yourself an email about this application">Email me</button>' +
+      '" title="Send yourself an email about this application">Email me a copy</button>' +
       '</div>'
     );
   }
@@ -2754,7 +2772,9 @@
           ? 'business-overview'
           : page;
     if (location.hash.replace('#', '') !== hash) {
-      history.replaceState(null, '', '#' + hash);
+      const url = new URL(window.location.href);
+      url.hash = hash;
+      history.replaceState(null, '', url.pathname + url.search + url.hash);
     }
   }
 
@@ -4755,6 +4775,7 @@
     bindGroupClaimUi();
     bindReadyEventUi();
     bindUi();
+    applyAttendeesDeepLinkFromUrl();
     const initial = parseRoute();
     setRoute(initial.sub || initial.page);
     try {

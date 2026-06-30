@@ -56,6 +56,17 @@ function organiserPublicUrl(organiserRow, siteUrl) {
   return browseEventsUrl(site) + '#organisers';
 }
 
+function organiserDashboardUrl(siteUrl, options = {}) {
+  const base = siteBase(siteUrl) + '/organiser/index.html';
+  const panel = String(options.panel || '').trim();
+  const eventId = String(options.eventId || '').trim();
+  const params = new URLSearchParams();
+  if (eventId) params.set('eventId', eventId);
+  const qs = params.toString();
+  const hash = panel ? '#' + panel.replace(/^#/, '') : '';
+  return base + (qs ? '?' + qs : '') + hash;
+}
+
 module.exports = {
   siteBase,
   homeUrl,
@@ -67,4 +78,5 @@ module.exports = {
   contactUrl,
   eventPublicUrl,
   organiserPublicUrl,
+  organiserDashboardUrl,
 };
