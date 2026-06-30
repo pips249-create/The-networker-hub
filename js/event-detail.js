@@ -1315,9 +1315,26 @@
       panel.classList.toggle('show-checkout', show);
       if (show) panel.classList.remove('show-application');
     }
-    if (form) form.hidden = !show;
+    if (form) {
+      form.hidden = !show;
+      if (!show) form.classList.remove('is-paid-guests');
+    }
     if (secureFoot && !show) secureFoot.hidden = false;
     if (!show) setCheckoutSubmitting(false);
+  }
+
+  function showPaidGuestCheckout(show) {
+    const form = document.getElementById('checkout-details-form');
+    const confirmBtn = document.getElementById('checkout-confirm-btn');
+    const nameField = document.getElementById('checkout-name')?.closest('.form-field');
+    const emailField = document.getElementById('checkout-email')?.closest('.form-field');
+    const freeTerms = document.querySelector('.checkout-free-terms');
+    showCheckoutDetails(show);
+    if (form) form.classList.toggle('is-paid-guests', show);
+    if (nameField) nameField.hidden = show;
+    if (emailField) emailField.hidden = show;
+    if (freeTerms) freeTerms.hidden = show;
+    if (confirmBtn) confirmBtn.textContent = show ? 'Continue to payment' : 'Confirm registration';
   }
 
   function setCheckoutSubmitting(active, title) {
@@ -2091,8 +2108,12 @@
   }
 
   function initTicketPanel(ev) {
-    currentEventDetail = ev;
+    if (ticketPanelBound) return;
     const qtyDown = document.getElementById('qty-down');
+    if (!qtyDown) return;
+    ticketPanelBound = true;
+
+    currentEventDetail = ev;
     const qtyUp = document.getElementById('qty-up');
     const qtyValue = document.getElementById('qty-value');
     const sumLabel = document.getElementById('sum-label');
@@ -2103,7 +2124,6 @@
     const summaryFeeNote = document.getElementById('summary-fee-note');
     const sumTotal = document.getElementById('sum-total');
     const qtyHint = document.getElementById('qty-avail-hint');
-    if (!qtyDown) return;
 
     let qty = 1;
     let price = ev.priceKey === 'free' ? 0 : Number(ev.priceNum) || 0;
@@ -2269,6 +2289,15 @@
     if (checkoutForm) {
       checkoutForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (checkoutForm.classList.contains('is-paid-guests')) {
+          try {
+            await processCheckoutBooking(true);
+          } catch (err) {
+            window.alert(err && err.message ? err.message : 'Could not start checkout.');
+          }
+          return;
+        }
+
         const termsAgree = document.getElementById('checkout-free-terms-agree');
         if (termsAgree && !termsAgree.checked) {
           window.alert('Please confirm your details are correct before registering.');
@@ -2290,23 +2319,13 @@
       });
     }
 
-    if (checkoutForm) {
-      checkoutForm.addEventListener('submit', async function onPaidGuestSubmit(e) {
-        if (!checkoutForm.classList.contains('is-paid-guests')) return;
-        e.preventDefault();
-        try {
-          await processCheckoutBooking(true);
-        } catch (err) {
-          window.alert(err && err.message ? err.message : 'Could not start checkout.');
-        }
-      });
-    }
-
     if (buy) {
       buy.addEventListener('click', async () => {
         if (buy.disabled) return;
+        clearCheckoutInlineError();
 
-        if (currentEvent.isApprovalRequired) {
+        const evNow = activeEvent();
+        if (evNow?.isApprovalRequired) {
           if (!(await requireSignedInAttendee())) return;
           showSeatApplication(true);
           const industry = document.getElementById('apply-industry');
@@ -2317,18 +2336,43 @@
         update();
         const tierEl = getSelectedTierEl();
         const tierPrice = tierEl ? parseFloat(tierEl.getAttribute('data-price')) || 0 : price;
-        const subtotal = tierPrice * qty;
-        const fee = subtotal > 0 ? subtotal * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty : 0;
-        const total = subtotal + fee;
 
-        await prefillCheckoutDetails();
-        renderCheckoutGuestNames(qty);
-        updateCheckoutSummary(label, qty, total);
-        showCheckoutDetails(true);
+        if (tierPrice <= 0) {
+          await prefillCheckoutDetails();
+          renderCheckoutGuestNames(qty);
+          updateFreeCheckoutSummary(evNow);
+          showCheckoutDetails(true);
+          const nameInput = document.getElementById('checkout-name');
+          if (nameInput) nameInput.focus();
+          return;
+        }
+
         const termsAgree = document.getElementById('checkout-terms-agree');
-        const nameInput = document.getElementById('checkout-name');
-        if (checkoutUseSlimPaid && termsAgree) termsAgree.focus();
-        else if (nameInput) nameInput.focus();
+        if (termsAgree && !termsAgree.checked) {
+          showCheckoutInlineError(
+            'Please confirm you have read the refund policy and agree to proceed.'
+          );
+          termsAgree.focus();
+          return;
+        }
+
+        if (!(await requireSignedInAttendee())) return;
+        await loadCheckoutSessionUser();
+        syncPaidCheckoutPanel(label, qty, tierPrice * qty + (tierPrice > 0 ? tierPrice * qty * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty : 0));
+
+        if (qty > 1) {
+          renderCheckoutGuestNames(qty);
+          showPaidGuestCheckout(true);
+          return;
+        }
+
+        try {
+          await processCheckoutBooking(true);
+        } catch (err) {
+          showCheckoutInlineError(
+            err && err.message ? err.message : 'Could not start checkout. Please try again.'
+          );
+        }
       });
     }
 

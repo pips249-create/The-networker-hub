@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="../css/hub-loading.css" />
     <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260612f" />
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
-  <link rel="stylesheet" href="../css/event-detail.css?v=20260630" />
+  <link rel="stylesheet" href="../css/event-detail.css?v=20260630b" />
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
@@ -312,29 +312,7 @@
             The Networker Hub booking fee (platform fee) is non-refundable.
           </p>
 
-          <p class="stripe-hint" id="stripe-hint" role="status" tabindex="-1" hidden>
-            Online card checkout is not available on this site right now. Please try again shortly or email
-            <a href="mailto:hello@the-networker.co.uk">hello@the-networker.co.uk</a> if the problem continues.
-          </p>
-          </div>
-
-          <form class="seat-application-form" id="seat-application-form" hidden novalidate>
-            <p class="seat-application-intro">This event uses a one-seat approval policy. Tell the host a little about yourself.</p>
-            <label class="form-field" for="apply-industry">
-              <span>What industry are you in?</span>
-              <input type="text" id="apply-industry" name="industry" autocomplete="organization-title" required />
-            </label>
-            <label class="form-field" for="apply-job-title">
-              <span>What is your job title?</span>
-              <input type="text" id="apply-job-title" name="job_title" autocomplete="organization-title" required />
-            </label>
-            <button type="submit" class="cta-btn" id="submit-application-btn">Submit Application</button>
-            <button type="button" class="btn-text-back" id="application-back-btn">← Back to tickets</button>
-          </form>
-
-          <form class="checkout-details-form" id="checkout-details-form" hidden novalidate>
-            <p class="checkout-details-intro" id="checkout-details-intro">Review your order and enter your details to complete your booking.</p>
-            <p class="checkout-free-organiser" id="checkout-free-organiser" hidden></p>
+          <div class="ticket-paid-checkout" id="ticket-paid-checkout" hidden>
             <div class="checkout-precontract" id="checkout-precontract">
               <h3 class="checkout-precontract-title">Before you pay</h3>
               <dl class="checkout-precontract-list">
@@ -359,7 +337,31 @@
               </p>
             </div>
             <p class="checkout-account-line" id="checkout-account-line" hidden></p>
-            <div class="checkout-attendee-fields" id="checkout-attendee-fields">
+            <label class="checkout-terms-check" for="checkout-terms-agree">
+              <input type="checkbox" id="checkout-terms-agree" name="terms_agree" />
+              <span id="checkout-terms-label">I have read the refund policy and agree to proceed with this booking.</span>
+            </label>
+            <p class="checkout-inline-error" id="checkout-inline-error" hidden role="alert"></p>
+          </div>
+          </div>
+
+          <form class="seat-application-form" id="seat-application-form" hidden novalidate>
+            <p class="seat-application-intro">This event uses a one-seat approval policy. Tell the host a little about yourself.</p>
+            <label class="form-field" for="apply-industry">
+              <span>What industry are you in?</span>
+              <input type="text" id="apply-industry" name="industry" autocomplete="organization-title" required />
+            </label>
+            <label class="form-field" for="apply-job-title">
+              <span>What is your job title?</span>
+              <input type="text" id="apply-job-title" name="job_title" autocomplete="organization-title" required />
+            </label>
+            <button type="submit" class="cta-btn" id="submit-application-btn">Submit Application</button>
+            <button type="button" class="btn-text-back" id="application-back-btn">← Back to tickets</button>
+          </form>
+
+          <form class="checkout-details-form" id="checkout-details-form" hidden novalidate>
+            <p class="checkout-details-intro" id="checkout-details-intro">Enter your details to register for this free event.</p>
+            <p class="checkout-free-organiser" id="checkout-free-organiser" hidden></p>
             <label class="form-field" for="checkout-name">
               <span id="checkout-name-label">Full name</span>
               <input type="text" id="checkout-name" name="name" autocomplete="name" required />
@@ -368,16 +370,21 @@
               <span>Email address</span>
               <input type="email" id="checkout-email" name="email" autocomplete="email" required />
             </label>
-            </div>
             <div class="checkout-guest-names" id="checkout-guest-names" hidden></div>
-            <p class="checkout-details-summary" id="checkout-order-summary" aria-live="polite"></p>
-            <label class="checkout-terms-check" for="checkout-terms-agree">
-              <input type="checkbox" id="checkout-terms-agree" name="terms_agree" required />
-              <span id="checkout-terms-label">I have read the refund policy and agree to proceed with this booking.</span>
+            <label class="checkout-terms-check checkout-free-terms" for="checkout-free-terms-agree">
+              <input type="checkbox" id="checkout-free-terms-agree" name="terms_agree" required />
+              <span id="checkout-free-terms-label">I confirm my details are correct and agree to register for this event.</span>
             </label>
-            <button type="submit" class="cta-btn" id="checkout-confirm-btn">Confirm booking</button>
+            <button type="submit" class="cta-btn" id="checkout-confirm-btn">Confirm registration</button>
             <button type="button" class="btn-text-back" id="checkout-back-btn">← Back to tickets</button>
           </form>
+
+          <div class="ticket-sales-scheduled" id="ticket-sales-scheduled" hidden>
+            <p class="ticket-sales-scheduled-lead" id="ticket-sales-scheduled-lead"></p>
+            <p class="ticket-sales-scheduled-sub">Save this event and we&rsquo;ll email you when tickets go on sale.</p>
+            <p class="ticket-sales-scheduled-status" id="ticket-sales-scheduled-status" hidden role="status"></p>
+            <button type="button" class="cta-btn ticket-sales-scheduled-btn" id="ticket-sales-scheduled-save-btn">Save event</button>
+          </div>
 
           <div class="ticket-sales-nudge" id="ticket-sales-nudge" hidden>
             <p class="ticket-sales-nudge-lead">
@@ -502,7 +509,7 @@
     <script src="../js/listing-report.js?v=20260609"></script>
     <script src="../js/review-report.js?v=20260609"></script>
     <script src="../js/hub-favourites.js?v=20260629"></script>
-    <script src="../js/event-detail.js?v=20260630"></script>
+    <script src="../js/event-detail.js?v=20260701"></script>
     <div id="hub-site-footer"></div>
     <script src="../js/site-footer.js?v=20260610" data-root="../"></script>
   </body>

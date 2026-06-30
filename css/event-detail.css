@@ -1338,6 +1338,73 @@ a:hover {
   display: block;
 }
 
+.ticket-panel.is-sales-scheduled #buy-btn {
+  display: none;
+}
+
+.ticket-panel.is-sales-scheduled .qty-row,
+.ticket-panel.is-sales-scheduled .summary,
+.ticket-panel.is-sales-scheduled .summary-fee-note,
+.ticket-panel.is-sales-scheduled .ticket-tiers .tier {
+  pointer-events: none;
+}
+
+.ticket-panel.is-sales-scheduled .qty-row,
+.ticket-panel.is-sales-scheduled .summary {
+  opacity: 0.55;
+}
+
+.ticket-panel.is-sales-scheduled .ticket-sales-scheduled {
+  display: block;
+}
+
+.ticket-sales-scheduled {
+  display: none;
+  margin: 0 0 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f3ecfa;
+  border: 1px solid rgba(91, 47, 153, 0.22);
+}
+
+.ticket-sales-scheduled-lead {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--purple-900);
+}
+
+.ticket-sales-scheduled-sub {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-muted);
+}
+
+.ticket-sales-scheduled-status {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ticket-sales-scheduled-status.is-ok {
+  color: var(--green-600);
+}
+
+.ticket-sales-scheduled-status.is-error {
+  color: #a82828;
+}
+
+.ticket-sales-scheduled-btn.is-saved,
+.ticket-sales-scheduled-btn:disabled {
+  background: #fff;
+  color: var(--purple-800);
+  border: 1px solid var(--border-strong);
+  box-shadow: none;
+  cursor: default;
+}
+
 .ticket-sales-nudge {
   display: none;
   margin: 0 0 16px;
@@ -1414,6 +1481,29 @@ a:hover {
 
 .checkout-details-form.is-free .checkout-precontract {
   display: none;
+}
+
+.ticket-paid-checkout {
+  margin: 0 0 16px;
+}
+
+.checkout-inline-error {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fde8ea;
+  border: 1px solid #f2b8c0;
+  color: #8f1d2f;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.checkout-inline-error[hidden] {
+  display: none !important;
+}
+
+.checkout-details-form.is-paid-guests .checkout-free-terms {
+  display: none !important;
 }
 
 .checkout-account-line {
