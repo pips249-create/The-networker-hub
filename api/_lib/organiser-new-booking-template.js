@@ -14,6 +14,7 @@ function isStaleOrganiserNewBookingTemplate(bodyHtml) {
   const body = String(bodyHtml || '');
   if (!body.includes('Someone just booked your event')) return true;
   if (!body.includes('{{attendee_initial}}')) return true;
+  if (!body.includes('organiser-email-layout-v2')) return true;
   if (body.startsWith('<p>Hi {{organiser_name}}')) return true;
   return false;
 }

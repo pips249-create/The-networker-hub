@@ -14,6 +14,7 @@ function isStaleOrganiserBookingCancelledTemplate(bodyHtml) {
   const body = String(bodyHtml || '');
   if (!body.includes('An attendee cancelled their booking')) return true;
   if (!body.includes('{{refund_action_row}}')) return true;
+  if (!body.includes('organiser-email-layout-v2')) return true;
   return false;
 }
 

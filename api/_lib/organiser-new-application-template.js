@@ -14,6 +14,7 @@ function isStaleOrganiserNewApplicationTemplate(bodyHtml) {
   const body = String(bodyHtml || '');
   if (!body.includes('Someone applied to attend')) return true;
   if (!body.includes('{{screening_industry}}')) return true;
+  if (!body.includes('organiser-email-layout-v2')) return true;
   return false;
 }
 
