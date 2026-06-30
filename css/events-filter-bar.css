@@ -172,21 +172,18 @@
   flex: 0 0 auto;
   padding-right: 14px;
   border-right: 1px solid var(--border-soft);
+  flex-wrap: nowrap;
+  align-items: center;
 }
 
 .events-filter-shell .filter-format-group--with-chips {
   border-right-color: var(--filter-divider);
 }
 
-.filter-format-group--with-chips legend {
-  width: auto;
-  margin-bottom: 0;
-  margin-right: 4px;
-}
-
 .filter-bar-row-types .event-type-chips {
   flex: 1 1 200px;
   width: auto;
+  padding-bottom: 0;
 }
 
 .event-type-chips {
@@ -510,6 +507,14 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
   width: 100%;
   padding: 0;
   margin-bottom: 2px;
+}
+
+.filter-format-group--with-chips legend {
+  width: auto;
+  margin-bottom: 0;
+  margin-right: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .filter-checkbox {
@@ -837,8 +842,8 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
     grid-column: 1 / -1;
     grid-row: 2;
     margin-bottom: 0;
-    padding-top: 14px;
-    padding-bottom: 14px;
+    padding-top: 12px;
+    padding-bottom: 12px;
     border-bottom: none;
     border-top: 1px solid var(--border-soft);
   }
