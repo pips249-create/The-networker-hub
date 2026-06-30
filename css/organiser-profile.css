@@ -257,6 +257,17 @@
   background: #1d4ed8;
 }
 
+.org-profile-btn.is-saved {
+  color: #c44;
+  border-color: #f3c4c4;
+  background: #fff5f5;
+}
+
+.org-profile-btn.is-saved svg {
+  fill: #c44;
+  stroke: #c44;
+}
+
 .org-profile-report {
   font-family: inherit;
   font-size: 12px;

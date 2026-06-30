@@ -391,7 +391,12 @@
       '</span>' +
       '<span class="review-count">(' +
       reviewCount +
-      ')</span></div>' +
+      ')</span>' +
+      '<button type="button" class="fav-btn" data-organiser-id="' +
+      escapeHtml(org.id) +
+      '" aria-label="Save organiser" aria-pressed="false">' +
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>' +
+      '</button></div>' +
       '<div class="organiser-card-footer">' +
       '<a class="organiser-card-cta" href="' +
       escapeHtml(organiserHref(org)) +
@@ -520,6 +525,7 @@
       paginationHtml(currentPage, totalPages);
 
     if (els.resultsCount) els.resultsCount.textContent = String(rows.length);
+    if (window.HubOrganiserFavourites) window.HubOrganiserFavourites.refreshButtons(els.listings);
   }
 
   function renderAll() {

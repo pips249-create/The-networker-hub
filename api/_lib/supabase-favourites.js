@@ -1,6 +1,7 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { eventImageUrl } = require('./event-image');
 const { skipFavouriteSalesAlertIfAlreadyOnSale } = require('./favourite-sales-emails');
+const { addOrganiserFavourite } = require('./supabase-organiser-favourites');
 
 async function resolveAttendeeId(sb, session) {
   if (!session?.email) return null;
@@ -79,6 +80,21 @@ async function listFavourites(session) {
   return (res.data || []).map(mapFavouriteRow);
 }
 
+async function cascadeOrganiserFavouriteFromEvent(sb, session, eventId) {
+  const eid = String(eventId || '').trim();
+  if (!eid) return null;
+  const eventRes = await sb.from('events').select('organiser_id').eq('id', eid).maybeSingle();
+  if (eventRes.error) throw new Error(eventRes.error.message);
+  const organiserId = eventRes.data?.organiser_id ? String(eventRes.data.organiser_id) : '';
+  if (!organiserId) return null;
+  try {
+    await addOrganiserFavourite(session, organiserId);
+  } catch {
+    /* Non-blocking — event favourite still saved */
+  }
+  return organiserId;
+}
+
 async function addFavourite(session, eventId) {
   if (!isSupabaseConfigured()) throw new Error('supabase_not_configured');
   const sb = getSupabaseAdmin();
@@ -94,7 +110,8 @@ async function addFavourite(session, eventId) {
     .maybeSingle();
   if (existing.error) throw new Error(existing.error.message);
   if (existing.data?.id) {
-    return { action: 'exists', eventId: eid };
+    const organiserId = await cascadeOrganiserFavouriteFromEvent(sb, session, eid);
+    return { action: 'exists', eventId: eid, organiserId };
   }
 
   const ins = await sb
@@ -108,7 +125,8 @@ async function addFavourite(session, eventId) {
   } catch {
     /* Non-blocking — favourite still saved */
   }
-  return { action: 'added', eventId: eid, id: ins.data.id };
+  const organiserId = await cascadeOrganiserFavouriteFromEvent(sb, session, eid);
+  return { action: 'added', eventId: eid, id: ins.data.id, organiserId };
 }
 
 async function removeFavourite(session, eventId) {
@@ -145,8 +163,8 @@ async function toggleFavourite(session, eventId) {
     await removeFavourite(session, eid);
     return { action: 'removed', eventId: eid, saved: false };
   }
-  await addFavourite(session, eid);
-  return { action: 'added', eventId: eid, saved: true };
+  const added = await addFavourite(session, eid);
+  return { action: 'added', eventId: eid, saved: true, organiserId: added.organiserId || null };
 }
 
 module.exports = {

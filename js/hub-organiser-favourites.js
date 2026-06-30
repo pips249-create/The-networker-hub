@@ -1,8 +1,8 @@
 /**
- * Saved events — localStorage for guests, Supabase sync when signed in.
+ * Saved organisers — localStorage for guests, Supabase sync when signed in.
  */
 (function () {
-  var KEY = 'hubSavedEventIds';
+  var KEY = 'hubSavedOrganiserIds';
   var cache = null;
   var syncPromise = null;
 
@@ -31,8 +31,8 @@
     return cache.slice();
   }
 
-  function isSaved(eventId) {
-    return ids().includes(String(eventId));
+  function isSaved(organiserId) {
+    return ids().includes(String(organiserId));
   }
 
   function setCacheFromServer(serverIds) {
@@ -43,13 +43,13 @@
 
   function syncFromServer() {
     if (syncPromise) return syncPromise;
-    syncPromise = fetch('/api/auth/favourites', { credentials: 'include' })
+    syncPromise = fetch('/api/auth/organiser-favourites', { credentials: 'include' })
       .then(function (res) {
         return res.json();
       })
       .then(function (data) {
-        if (data && data.ok && Array.isArray(data.eventIds)) {
-          setCacheFromServer(data.eventIds);
+        if (data && data.ok && Array.isArray(data.organiserIds)) {
+          setCacheFromServer(data.organiserIds);
         }
         return data;
       })
@@ -67,7 +67,7 @@
     if (!local.length) return syncFromServer();
     return syncFromServer().then(function (data) {
       if (!data || !data.ok) return data;
-      var server = new Set((data.eventIds || []).map(String));
+      var server = new Set((data.organiserIds || []).map(String));
       var pending = local.filter(function (id) {
         return !server.has(id);
       });
@@ -75,11 +75,11 @@
       return pending
         .reduce(function (chain, id) {
           return chain.then(function () {
-            return fetch('/api/auth/favourites', {
+            return fetch('/api/auth/organiser-favourites', {
               method: 'POST',
               credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ eventId: id }),
+              body: JSON.stringify({ organiserId: id }),
             }).then(function (r) {
               return r.json();
             });
@@ -91,30 +91,8 @@
     });
   }
 
-  function cascadeOrganiserSave(organiserId) {
-    var oid = String(organiserId || '').trim();
-    if (!oid || !window.HubOrganiserFavourites) return;
-    var ids = window.HubOrganiserFavourites.ids();
-    if (ids.includes(oid)) return;
-    ids.push(oid);
-    window.HubOrganiserFavourites.writeLocal(ids);
-  }
-
-  function organiserIdForEvent(eventId) {
-    var id = String(eventId || '').trim();
-    if (!id || !window.hubAllEvents) return '';
-    for (var i = 0; i < window.hubAllEvents.length; i++) {
-      var ev = window.hubAllEvents[i];
-      if (String(ev.id) === id) {
-        return String(ev.organiserId || ev.organiser_id || '').trim();
-      }
-    }
-    return '';
-  }
-
-  function toggle(eventId, options) {
-    options = options || {};
-    var id = String(eventId || '');
+  function toggle(organiserId) {
+    var id = String(organiserId || '');
     if (!id) return Promise.resolve(false);
 
     var local = ids();
@@ -127,26 +105,18 @@
     }
     writeLocal(local);
 
-    if (nowSaved) {
-      var organiserId = options.organiserId || organiserIdForEvent(id);
-      if (organiserId) cascadeOrganiserSave(organiserId);
-    }
-
-    return fetch('/api/auth/favourites', {
+    return fetch('/api/auth/organiser-favourites', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ eventId: id }),
+      body: JSON.stringify({ organiserId: id }),
     })
       .then(function (res) {
         return res.json();
       })
       .then(function (data) {
-        if (data && data.ok && Array.isArray(data.eventIds)) {
-          setCacheFromServer(data.eventIds);
-          if (data.organiserId && window.HubOrganiserFavourites) {
-            cascadeOrganiserSave(data.organiserId);
-          }
+        if (data && data.ok && Array.isArray(data.organiserIds)) {
+          setCacheFromServer(data.organiserIds);
           return data.saved !== false;
         }
         return nowSaved;
@@ -158,15 +128,27 @@
 
   function refreshButtons(root) {
     var scope = root || document;
-    scope.querySelectorAll('.fav-btn[data-event-id]').forEach(function (btn) {
-      var id = btn.getAttribute('data-event-id');
+    scope.querySelectorAll('.fav-btn[data-organiser-id]').forEach(function (btn) {
+      var id = btn.getAttribute('data-organiser-id');
       var on = isSaved(id);
       btn.classList.toggle('is-active', on);
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.setAttribute('aria-label', on ? 'Remove from saved' : 'Save organiser');
     });
+    var saveBtn = scope.querySelector ? scope.querySelector('#org-save-btn') : null;
+    if (!saveBtn && scope.id === 'org-save-btn') saveBtn = scope;
+    if (!saveBtn) saveBtn = document.getElementById('org-save-btn');
+    if (saveBtn) {
+      var orgId = saveBtn.getAttribute('data-organiser-id');
+      if (orgId) {
+        var saved = isSaved(orgId);
+        saveBtn.classList.toggle('is-saved', saved);
+        saveBtn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+      }
+    }
   }
 
-  window.HubFavourites = {
+  window.HubOrganiserFavourites = {
     ids: ids,
     isSaved: isSaved,
     toggle: toggle,

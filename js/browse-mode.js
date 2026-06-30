@@ -50,18 +50,26 @@
     if (!sortSelect) return;
     var recommended = sortSelect.querySelector('option[value="recommended"]');
     var date = sortSelect.querySelector('option[value="date"]');
-    var rating = sortSelect.querySelector('option[value="rating"]');
-    var price = sortSelect.querySelector('option[value="price"]');
+    var priceAsc = sortSelect.querySelector('option[value="price-asc"]');
+    var priceDesc = sortSelect.querySelector('option[value="price-desc"]');
     var listings = sortSelect.querySelector('option[value="listings"]');
     var name = sortSelect.querySelector('option[value="name"]');
 
     if (date) date.hidden = mode === 'organisers';
-    if (price) price.hidden = mode === 'organisers';
+    if (priceAsc) priceAsc.hidden = mode === 'organisers';
+    if (priceDesc) priceDesc.hidden = mode === 'organisers';
     if (listings) listings.hidden = mode === 'events';
     if (name) name.hidden = mode === 'events';
 
     if (mode === 'organisers') {
-      if (sortSelect.value === 'date' || sortSelect.value === 'price') sortSelect.value = 'recommended';
+      if (
+        sortSelect.value === 'date' ||
+        sortSelect.value === 'price' ||
+        sortSelect.value === 'price-asc' ||
+        sortSelect.value === 'price-desc'
+      ) {
+        sortSelect.value = 'recommended';
+      }
     } else if (sortSelect.value === 'listings' || sortSelect.value === 'name') {
       sortSelect.value = 'recommended';
     }

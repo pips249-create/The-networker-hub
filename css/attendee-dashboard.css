@@ -305,9 +305,13 @@
   margin: 0 0 4px;
 }
 
+.ad-section-title--spaced {
+  margin-top: 32px;
+}
+
 .ad-section-sub {
   font-size: 13px;
-  color: var(--ad-text-soft);
+  color: var(--ad-text-mid);
   margin: 0 0 16px;
 }
 
@@ -450,14 +454,14 @@
 }
 
 .ad-btn-ghost {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: var(--ad-white);
+  color: var(--ad-teal-dark);
+  border: 1px solid var(--ad-teal);
 }
 
 .ad-btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  background: var(--ad-teal-pale);
+  color: var(--ad-teal-dark);
 }
 
 .ad-btn-gold {
@@ -542,16 +546,24 @@
 .ad-empty {
   padding: 32px 20px;
   text-align: center;
-  color: var(--ad-text-soft);
+  color: var(--ad-text-mid);
   font-size: 14px;
   background: var(--ad-white);
   border-radius: var(--ad-radius);
-  border: 1px dashed var(--ad-border-soft);
+  border: 1px dashed var(--ad-teal);
 }
 
 .ad-empty a {
-  color: var(--ad-teal);
+  color: var(--ad-teal-dark);
   font-weight: 600;
+}
+
+.ad-saved-block {
+  margin-bottom: 28px;
+}
+
+.ad-saved-block:last-child {
+  margin-bottom: 0;
 }
 
 .ad-pagination {

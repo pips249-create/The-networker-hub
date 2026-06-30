@@ -1835,8 +1835,10 @@
         const id = String(ev.id || document.body.getAttribute('data-event-id') || '');
         if (!id) return;
         if (window.HubFavourites) {
-          window.HubFavourites.toggle(id).then(function () {
+          const organiserId = String(ev.organiserId || ev.organiser_id || '').trim();
+          window.HubFavourites.toggle(id, { organiserId: organiserId }).then(function () {
             refreshSaveUi();
+            if (window.HubOrganiserFavourites) window.HubOrganiserFavourites.refreshButtons();
           });
           return;
         }

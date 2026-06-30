@@ -6,6 +6,7 @@
   const listPages = { upcoming: 1, past: 1 };
   let registrations = [];
   let savedEvents = [];
+  let savedOrganisers = [];
   let opportunityEnquiries = [];
   let currentRoute = 'overview';
 
@@ -1178,6 +1179,103 @@
     });
   }
 
+  function savedOrganiserHref(item) {
+    const slug = item.slug ? String(item.slug).trim() : '';
+    if (slug) return '../organisers/' + encodeURIComponent(slug);
+    return '../events/organiser.html?id=' + encodeURIComponent(item.organiserId || item.organiser_id || item.id || '');
+  }
+
+  function renderSavedOrganisersTable() {
+    const body = document.getElementById('ad-saved-organisers-body');
+    const empty = document.getElementById('ad-saved-organisers-empty');
+    if (!body) return;
+
+    body.innerHTML = '';
+    if (!savedOrganisers.length) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    savedOrganisers.forEach((item) => {
+      const tr = document.createElement('tr');
+      const favItem = {
+        title: item.name,
+        imageUrl: item.photoUrl || item.photo_url || '',
+      };
+      const rating = item.rating != null && Number(item.rating) > 0 ? Number(item.rating).toFixed(1) + '★' : '—';
+      tr.innerHTML =
+        '<td>' +
+        thumbHtml(favItem) +
+        '</td><td class="ad-td-name"><a href="' +
+        esc(savedOrganiserHref(item)) +
+        '">' +
+        esc(item.name || 'Organiser') +
+        '</a></td><td>' +
+        esc(item.industry || '—') +
+        '</td><td>' +
+        esc(rating) +
+        '</td><td><button type="button" class="ad-btn ad-btn-ghost ad-saved-organiser-remove" data-organiser-id="' +
+        esc(item.organiserId || item.organiser_id || '') +
+        '">Remove</button></td>';
+      body.appendChild(tr);
+    });
+
+    body.querySelectorAll('.ad-saved-organiser-remove').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const organiserId = btn.getAttribute('data-organiser-id');
+        if (!organiserId) return;
+        btn.disabled = true;
+        try {
+          if (window.HubOrganiserFavourites) {
+            await window.HubOrganiserFavourites.toggle(organiserId);
+          } else {
+            await fetch('/api/auth/organiser-favourites', {
+              method: 'DELETE',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ organiserId }),
+            });
+          }
+          savedOrganisers = savedOrganisers.filter(
+            (x) => String(x.organiserId || x.organiser_id) !== String(organiserId)
+          );
+          renderSavedOrganisersTable();
+        } catch {
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  function applySavedOrganiserData(data) {
+    if (data && data.ok && Array.isArray(data.favourites)) {
+      savedOrganisers = data.favourites;
+    } else if (data && data.ok && Array.isArray(data.organiserIds)) {
+      savedOrganisers = data.organiserIds.map((id) => ({ organiserId: id, name: 'Organiser' }));
+    } else {
+      savedOrganisers = [];
+    }
+    if (window.HubOrganiserFavourites && data && Array.isArray(data.organiserIds)) {
+      window.HubOrganiserFavourites.writeLocal(data.organiserIds);
+    }
+  }
+
+  async function loadSavedOrganisers() {
+    try {
+      const res = await fetch('/api/auth/organiser-favourites', { credentials: 'include' });
+      const data = await res.json();
+      applySavedOrganiserData(data);
+    } catch {
+      savedOrganisers = window.HubOrganiserFavourites
+        ? window.HubOrganiserFavourites.ids().map((id) => ({ organiserId: id }))
+        : [];
+    }
+    if (dashboardReady && currentRoute === 'saved') {
+      renderRouteTables('saved', { force: true });
+    }
+  }
+
   async function loadSavedEvents() {
     try {
       const res = await fetch('/api/auth/favourites', { credentials: 'include' });
@@ -1249,6 +1347,7 @@
       renderPaymentsTable();
     } else if (key === 'saved') {
       renderSavedTable();
+      renderSavedOrganisersTable();
     } else if (key === 'opportunity-enquiries') {
       renderOpportunityEnquiries();
     }
@@ -1273,7 +1372,7 @@
     renderRouteTables('reviews-done', { force: true });
     renderRouteTables('payments', { force: true });
     renderRouteTables('opportunity-enquiries', { force: true });
-    if (savedEvents.length) renderRouteTables('saved', { force: true });
+    if (savedEvents.length || savedOrganisers.length) renderRouteTables('saved', { force: true });
     updateSideCounts();
   }
 
@@ -1360,9 +1459,10 @@
     try {
       ensureAttendeeHubMode();
 
-      const [dashRes, favRes] = await Promise.all([
+      const [dashRes, favRes, orgFavRes] = await Promise.all([
         fetch('/api/auth/attendee-dashboard', { credentials: 'include' }),
         fetch('/api/auth/favourites', { credentials: 'include' }),
+        fetch('/api/auth/organiser-favourites', { credentials: 'include' }),
       ]);
       const data = await dashRes.json();
       if (!data.ok) {
@@ -1378,6 +1478,12 @@
           }
         } catch {
           savedEvents = [];
+        }
+        try {
+          const orgFavData = await orgFavRes.json();
+          applySavedOrganiserData(orgFavData);
+        } catch {
+          savedOrganisers = [];
         }
         const sub = document.getElementById('ad-welcome-sub');
         if (sub) {
@@ -1401,6 +1507,15 @@
         }
       } catch {
         savedEvents = window.HubFavourites ? window.HubFavourites.ids().map((id) => ({ eventId: id })) : [];
+      }
+
+      try {
+        const orgFavData = await orgFavRes.json();
+        applySavedOrganiserData(orgFavData);
+      } catch {
+        savedOrganisers = window.HubOrganiserFavourites
+          ? window.HubOrganiserFavourites.ids().map((id) => ({ organiserId: id }))
+          : [];
       }
 
       applyDashboardData(data);

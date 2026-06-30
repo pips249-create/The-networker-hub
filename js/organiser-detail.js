@@ -410,6 +410,28 @@
         }
       };
     }
+
+    var saveBtn = document.getElementById('org-save-btn');
+    if (saveBtn && org.id) {
+      saveBtn.setAttribute('data-organiser-id', String(org.id));
+      function refreshSaveUi() {
+        var saved = window.HubOrganiserFavourites ? window.HubOrganiserFavourites.isSaved(org.id) : false;
+        saveBtn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+        saveBtn.classList.toggle('is-saved', saved);
+      }
+      refreshSaveUi();
+      if (window.HubOrganiserFavourites) {
+        window.HubOrganiserFavourites.sync().then(function () {
+          refreshSaveUi();
+        });
+      }
+      saveBtn.onclick = function () {
+        if (!window.HubOrganiserFavourites) return;
+        window.HubOrganiserFavourites.toggle(org.id).then(function () {
+          refreshSaveUi();
+        });
+      };
+    }
   }
 
   async function loadOrganiserPageAd() {

@@ -19,6 +19,7 @@ const routes = {
   'create-checkout': require('./_lib/routes/auth-create-checkout'),
   reviews: require('./_lib/routes/auth-reviews'),
   favourites: require('./_lib/routes/auth-favourites'),
+  'organiser-favourites': require('./_lib/routes/auth-organiser-favourites'),
   profile: require('./_lib/routes/auth-profile'),
   'stop-impersonate': require('./_lib/routes/auth-stop-impersonate'),
   'report-listing': require('./_lib/routes/auth-report-listing'),

@@ -156,8 +156,11 @@
     var sort = (sortSelect && sortSelect.value) || 'recommended';
     var copy = list.slice();
     copy.sort(function (a, b) {
-      if (sort === 'rating') {
+      if (sort === 'rating' || sort === 'rating-desc') {
         return (Number(b.rating) || 0) - (Number(a.rating) || 0);
+      }
+      if (sort === 'rating-asc') {
+        return (Number(a.rating) || 0) - (Number(b.rating) || 0);
       }
       if (sort === 'listings') {
         return (Number(b.eventCount) || 0) - (Number(a.eventCount) || 0);

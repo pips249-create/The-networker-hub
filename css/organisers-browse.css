@@ -143,6 +143,20 @@
   margin-top: 4px;
 }
 
+.organiser-card-rating .fav-btn {
+  margin-left: auto;
+  color: var(--text-soft);
+  display: inline-flex;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.organiser-card-rating .fav-btn.is-active {
+  color: #c44;
+}
+
 .organiser-card-rating .stars {
   display: inline-flex;
   gap: 1px;

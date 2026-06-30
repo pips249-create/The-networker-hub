@@ -466,11 +466,17 @@
     var sort = (sortSelect && sortSelect.value) || 'recommended';
     var copy = list.slice();
     copy.sort(function (a, b) {
-      if (sort === 'rating') {
+      if (sort === 'rating' || sort === 'rating-desc') {
         return (Number(b.rating) || 0) - (Number(a.rating) || 0);
       }
-      if (sort === 'price') {
+      if (sort === 'rating-asc') {
+        return (Number(a.rating) || 0) - (Number(b.rating) || 0);
+      }
+      if (sort === 'price' || sort === 'price-asc') {
         return (Number(a.priceNum) || 0) - (Number(b.priceNum) || 0);
+      }
+      if (sort === 'price-desc') {
+        return (Number(b.priceNum) || 0) - (Number(a.priceNum) || 0);
       }
       if (sort === 'date') {
         var da = eventDateTs(a);
@@ -781,12 +787,28 @@
       e.preventDefault();
       e.stopPropagation();
       var eventId = fav.getAttribute('data-event-id');
+      var organiserId = fav.getAttribute('data-organiser-id');
       if (window.HubFavourites && eventId) {
-        window.HubFavourites.toggle(eventId).then(function () {
+        window.HubFavourites.toggle(eventId, { organiserId: organiserId }).then(function () {
           window.HubFavourites.refreshButtons();
+          if (window.HubOrganiserFavourites) window.HubOrganiserFavourites.refreshButtons();
         });
       } else {
         fav.classList.toggle('is-active');
+      }
+      return;
+    }
+    var orgFav = e.target.closest('.fav-btn[data-organiser-id]');
+    if (orgFav) {
+      e.preventDefault();
+      e.stopPropagation();
+      var organiserId = orgFav.getAttribute('data-organiser-id');
+      if (window.HubOrganiserFavourites && organiserId) {
+        window.HubOrganiserFavourites.toggle(organiserId).then(function () {
+          window.HubOrganiserFavourites.refreshButtons();
+        });
+      } else {
+        orgFav.classList.toggle('is-active');
       }
     }
   });
