@@ -12,7 +12,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260614" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260630a" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260630d" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260701" />
   </head>
   <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page oe-submitted-page">
@@ -28,7 +28,7 @@
         <div class="ee-actions oe-premium-success-actions" id="oe-listing-success-actions" hidden>
           <a class="ee-btn ee-btn-gold" href="../opportunities/index.html" id="oe-listing-view-directory">Browse opportunities</a>
           <a class="ee-btn ee-btn-outline" href="../opportunities/opportunity.html" id="oe-listing-view-yours">View your listing</a>
-          <a class="ee-btn ee-btn-outline" href="opportunity-edit.html" id="oe-listing-edit">Edit listing</a>
+          <button type="button" class="ee-btn ee-btn-outline" id="oe-listing-edit">Edit listing</button>
         </div>
       </div>
 
@@ -38,6 +38,17 @@
         <p class="oe-premium-lede">
           Upgrade to a <strong>premium spotlight</strong> listing for featured placement across the hub (optional, separate subscription).
         </p>
+        <div class="oe-premium-preview" id="oe-premium-preview" aria-labelledby="oe-premium-preview-label">
+          <p class="oe-premium-preview-label" id="oe-premium-preview-label">Preview — Premium Spotlight</p>
+          <div class="oe-premium-spotlight-frame" aria-hidden="true">
+            <div class="oe-premium-spotlight-frame-head">
+              <span class="oe-premium-spotlight-frame-title"><span class="icon">★</span> Premium Spotlight</span>
+              <span class="oe-premium-spotlight-frame-link">View all</span>
+            </div>
+            <div class="oe-premium-spotlight-frame-track" id="oe-premium-preview-card"></div>
+          </div>
+          <p class="oe-premium-preview-note">Your listing would appear here on the opportunities browse page.</p>
+        </div>
         <p class="oe-premium-note" id="oe-premium-error" hidden role="alert"></p>
         <div class="oe-premium-actions">
           <button type="button" class="ee-btn ee-btn-gold" id="oe-premium-yes">Upgrade to premium</button>
@@ -46,7 +57,39 @@
       </div>
     </div>
 
-    <script src="../js/organiser-opportunity-listing-success.js?v=20260630a"></script>
+    <div id="oe-opportunity-drawer" class="oe-opportunity-drawer" hidden aria-hidden="true">
+      <div class="oe-opportunity-drawer-backdrop" data-oe-opportunity-drawer-close tabindex="-1"></div>
+      <aside class="oe-opportunity-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="oe-opportunity-drawer-title">
+        <header class="oe-opportunity-drawer-head">
+          <button
+            type="button"
+            class="oe-opportunity-drawer-close"
+            data-oe-opportunity-drawer-close
+            aria-label="Close listing editor"
+          >
+            ×
+          </button>
+          <h2 class="oe-opportunity-drawer-title" id="oe-opportunity-drawer-title">Edit listing</h2>
+        </header>
+        <div class="oe-opportunity-drawer-frame-wrap" id="oe-opportunity-drawer-frame-wrap">
+          <div class="oe-opportunity-drawer-loading" id="oe-opportunity-drawer-loading" hidden role="status">
+            <div class="oe-opportunity-drawer-loading-card">
+              <div class="oe-opportunity-drawer-loading-spinner" aria-hidden="true"></div>
+              <p class="oe-opportunity-drawer-loading-text">Loading listing…</p>
+            </div>
+          </div>
+          <iframe
+            id="oe-opportunity-drawer-frame"
+            class="oe-opportunity-drawer-frame"
+            title="Edit business opportunity listing"
+            loading="lazy"
+          ></iframe>
+        </div>
+      </aside>
+    </div>
+
+    <script src="../js/opportunities-catalog.js?v=20260609"></script>
+    <script src="../js/organiser-opportunity-listing-success.js?v=20260630c"></script>
     <script>
       (function () {
         var params = new URLSearchParams(location.search);

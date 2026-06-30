@@ -5,6 +5,12 @@
   const params = new URLSearchParams(location.search);
   const editId = params.get('id') || '';
   const checkoutCancelled = params.get('checkout') === 'cancelled';
+  const isEmbedDrawer = params.get('embed') === '1' || window.self !== window.top;
+
+  if (isEmbedDrawer) {
+    document.documentElement.classList.add('ee-embed-drawer-root');
+    if (document.body) document.body.classList.add('ee-embed-drawer');
+  }
 
   let photoFile = null;
   let logoFile = null;
@@ -47,10 +53,24 @@
     return Math.min(n, LISTING_MAX_MONTHS);
   }
 
-  function updateListingPriceBreakdown() {
+  function monthsForPriceDisplay(value) {
+    const raw = String(value ?? '').trim();
+    if (raw === '') return LISTING_MIN_MONTHS;
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n) || n < 1) return LISTING_MIN_MONTHS;
+    return Math.min(n, LISTING_MAX_MONTHS);
+  }
+
+  function updateListingPriceBreakdown(options) {
+    const clamp = options && options.clamp;
     const input = document.getElementById('oe-listing-months');
-    const months = normalizeListingMonths(input ? input.value : LISTING_MIN_MONTHS);
-    if (input && String(input.value) !== String(months)) input.value = String(months);
+    let months;
+    if (clamp && input) {
+      months = normalizeListingMonths(input.value);
+      if (String(input.value) !== String(months)) input.value = String(months);
+    } else {
+      months = monthsForPriceDisplay(input ? input.value : null);
+    }
     const subtotal = LISTING_MONTHLY_EX_VAT * months;
     const vat = Math.round(subtotal * LISTING_VAT_RATE * 100) / 100;
     const total = subtotal + vat;
@@ -215,7 +235,7 @@
     showStatusBadge(opp);
     document.getElementById('oe-page-title').textContent = 'Edit opportunity';
     listingPaymentPanelVisible();
-    updateListingPriceBreakdown();
+    updateListingPriceBreakdown({ clamp: true });
     const submitBtn = document.getElementById('oe-submit');
     if (submitBtn) {
       submitBtn.textContent = opp.listingPaymentActive ? 'Update listing' : 'Continue to payment';
@@ -473,7 +493,27 @@
 
     if (!publish) {
       if (!editId && opportunity.id) {
+        if (isEmbedDrawer && window.parent && window.parent !== window) {
+          window.parent.postMessage(
+            { type: 'hub-opportunity-saved', draft: true, id: opportunity.id, title: opportunity.title || '' },
+            window.location.origin
+          );
+          location.replace('opportunity-edit.html?id=' + encodeURIComponent(opportunity.id) + '&embed=1');
+          return;
+        }
         location.href = 'opportunity-edit.html?id=' + encodeURIComponent(opportunity.id);
+        return;
+      }
+      if (isEmbedDrawer && window.parent && window.parent !== window) {
+        window.parent.postMessage(
+          {
+            type: 'hub-opportunity-saved',
+            draft: true,
+            id: opportunity.id || editId,
+            title: opportunity.title || '',
+          },
+          window.location.origin
+        );
         return;
       }
       showAlert('Draft saved.');
@@ -481,11 +521,23 @@
     }
 
     if (hasActiveListing) {
+      if (isEmbedDrawer && window.parent && window.parent !== window) {
+        window.parent.postMessage(
+          {
+            type: 'hub-opportunity-saved',
+            draft: false,
+            id: opportunity.id || editId,
+            title: opportunity.title || '',
+          },
+          window.location.origin
+        );
+        return;
+      }
       showAlert('Listing updated.');
       return;
     }
 
-    const months = updateListingPriceBreakdown();
+    const months = updateListingPriceBreakdown({ clamp: true });
     await startListingCheckout(opportunity.id, months);
   }
 
@@ -501,10 +553,17 @@
 
     const monthsInput = document.getElementById('oe-listing-months');
     if (monthsInput) {
-      monthsInput.addEventListener('input', updateListingPriceBreakdown);
-      monthsInput.addEventListener('change', updateListingPriceBreakdown);
+      monthsInput.addEventListener('input', function () {
+        updateListingPriceBreakdown({ clamp: false });
+      });
+      monthsInput.addEventListener('change', function () {
+        updateListingPriceBreakdown({ clamp: true });
+      });
+      monthsInput.addEventListener('blur', function () {
+        updateListingPriceBreakdown({ clamp: true });
+      });
     }
-    updateListingPriceBreakdown();
+    updateListingPriceBreakdown({ clamp: true });
     listingPaymentPanelVisible();
 
     if (checkoutCancelled) {
@@ -548,6 +607,13 @@
       } finally {
         if (loading) loading.hide();
       }
+    }
+    notifyEmbedDrawerReady();
+  }
+
+  function notifyEmbedDrawerReady() {
+    if (isEmbedDrawer && window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'hub-opportunity-drawer-ready' }, window.location.origin);
     }
   }
 
