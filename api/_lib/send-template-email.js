@@ -5,6 +5,7 @@ const { resolveBookingConfirmationBody } = require('./booking-confirmation-templ
 const { resolveBookingReminderBody } = require('./booking-reminder-template');
 const { resolveOrganiserNewBookingBody } = require('./organiser-new-booking-template');
 const { resolveOrganiserNewApplicationBody } = require('./organiser-new-application-template');
+const { resolveApplicationReceivedBody } = require('./application-received-template');
 const {
   resolveApplicationApprovedBody,
   resolveApplicationDeniedBody,
@@ -34,6 +35,13 @@ const {
 
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
+/** Business-critical organiser alerts — not blocked by hub email opt-out. */
+const ORGANISER_TRANSACTIONAL_SLUGS = new Set([
+  'organiser_new_registration',
+  'organiser_new_application',
+  'organiser_booking_cancelled',
+]);
+
 function replacePlaceholders(text, variables) {
   const vars = variables && typeof variables === 'object' ? variables : {};
   return String(text || '').replace(PLACEHOLDER_RE, function (match, key) {
@@ -44,12 +52,45 @@ function replacePlaceholders(text, variables) {
   });
 }
 
+function fileOnlyEmailTemplate(slug) {
+  const map = {
+    organiser_new_application: {
+      subject: 'New application: {{attendee_name}} — {{event_name}}',
+      resolveBody: resolveOrganiserNewApplicationBody,
+    },
+    application_received: {
+      subject: 'Application received — {{event_name}}',
+      resolveBody: resolveApplicationReceivedBody,
+    },
+    application_approved: {
+      subject: "You're approved — complete your booking for {{event_name}}",
+      resolveBody: resolveApplicationApprovedBody,
+    },
+    application_denied: {
+      subject: 'Update on your application for {{event_name}}',
+      resolveBody: resolveApplicationDeniedBody,
+    },
+  };
+  return map[slug] || null;
+}
+
 async function buildEmailFromTemplate(slug, variables) {
-  const template = await getEmailTemplateBySlug(slug);
+  let template = await getEmailTemplateBySlug(slug);
+  let templateSource = 'database';
   if (!template) {
-    const err = new Error('template_not_found');
-    err.code = 'template_not_found';
-    throw err;
+    const fileTpl = fileOnlyEmailTemplate(slug);
+    if (!fileTpl) {
+      const err = new Error('template_not_found');
+      err.code = 'template_not_found';
+      throw err;
+    }
+    const resolved = fileTpl.resolveBody('');
+    template = {
+      slug,
+      subject: fileTpl.subject,
+      body_html: resolved.bodyHtml,
+    };
+    templateSource = resolved.source || 'file';
   }
 
   const siteUrl = (process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
@@ -107,7 +148,7 @@ async function buildEmailFromTemplate(slug, variables) {
   }
 
   let bodyHtml = template.body_html;
-  let templateSource = 'database';
+  if (templateSource === 'database') {
   if (slug === 'booking_confirmation') {
     const resolved = resolveBookingConfirmationBody(template.body_html);
     bodyHtml = resolved.bodyHtml;
@@ -140,6 +181,7 @@ async function buildEmailFromTemplate(slug, variables) {
     const resolved = resolveOrganiserBookingCancelledBody(template.body_html);
     bodyHtml = resolved.bodyHtml;
     templateSource = resolved.source;
+  }
   }
 
   let html = replacePlaceholders(bodyHtml, merged);
@@ -238,7 +280,8 @@ async function sendViaResend({ to, subject, html }) {
  * @param {object} [opts.variables] - e.g. { user_name, event_name, amount_paid }
  */
 async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject }) {
-  if (!skipEmailCheck) {
+  const bypassEmailCheck = skipEmailCheck || ORGANISER_TRANSACTIONAL_SLUGS.has(slug);
+  if (!bypassEmailCheck) {
     const allowed = await getEmailsEnabledForEmail(to);
     if (!allowed) {
       const err = new Error('emails_disabled');

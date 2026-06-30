@@ -1,6 +1,10 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
-const { sendRegistrationEmails, sendApplicationDecisionEmails } = require('./registration-emails');
+const {
+  sendRegistrationEmails,
+  sendApplicationDecisionEmails,
+  sendOrganiserApplicationAlertEmail,
+} = require('./registration-emails');
 const { isUuid } = require('./uuid');
 
 function parsePriceNum(raw) {
@@ -159,7 +163,16 @@ async function reviewApplicationForOrganiser(session, registrationId, action) {
   };
 }
 
+async function resendApplicationOrganiserAlert(session, registrationId) {
+  const sb = getSupabaseAdmin();
+  const registration = await loadRegistrationForReview(sb, registrationId);
+  await assertOrganiserCanReviewRegistration(session, registration);
+  const fallbackEmail = String(session?.email || '').trim().toLowerCase();
+  return sendOrganiserApplicationAlertEmail(sb, registration, { fallbackEmail });
+}
+
 module.exports = {
   reviewApplicationForOrganiser,
+  resendApplicationOrganiserAlert,
   loadRegistrationForReview,
 };

@@ -428,6 +428,22 @@
   color: var(--ad-red);
 }
 
+.ad-row-application-pending td {
+  background: rgba(255, 244, 214, 0.45);
+}
+
+.ad-row-application-approved td {
+  background: rgba(232, 246, 248, 0.55);
+}
+
+.ad-row-application-denied td {
+  background: rgba(253, 232, 232, 0.35);
+}
+
+.ad-payment-details dd .ad-badge {
+  margin-top: 2px;
+}
+
 .ad-btn {
   font-family: inherit;
   font-size: 12px;

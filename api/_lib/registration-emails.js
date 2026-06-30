@@ -16,6 +16,7 @@ const {
 } = require('./hub-email-urls');
 const { computeEventTicketStats } = require('./organiser-registration-stats');
 const { attendeeInitial } = require('./organiser-email-sections');
+const { resolveOrganiserNotificationEmail } = require('./organiser-notification-email');
 
 function formatAmount(amountPaid) {
   const n = Number(amountPaid);
@@ -178,18 +179,11 @@ async function sendRegistrationEmails(sb, registration) {
   const attendee = attendeeRes.data || {};
   const attendeeEmail = String(attendee.email || '').trim().toLowerCase();
 
-  let organiserName = '';
-  let organiserEmail = '';
-  if (eventRow.organiser_id) {
-    const orgRes = await sb
-      .from('organisers')
-      .select('id, name, email')
-      .eq('id', eventRow.organiser_id)
-      .maybeSingle();
-    if (orgRes.error) throw new Error(orgRes.error.message);
-    organiserName = String(orgRes.data?.name || '').trim();
-    organiserEmail = String(orgRes.data?.email || '').trim().toLowerCase();
-  }
+  const organiserContact = eventRow.organiser_id
+    ? await resolveOrganiserNotificationEmail(sb, eventRow.organiser_id)
+    : { name: '', email: '' };
+  const organiserName = organiserContact.name;
+  const organiserEmail = organiserContact.email;
 
   const ticketName = String(ticketRes.data?.name || 'Ticket').trim();
   const amountPaid = formatAmount(registration.amount_paid);
@@ -236,6 +230,8 @@ async function sendRegistrationEmails(sb, registration) {
     } catch (e) {
       sent.errors.push({ target: 'organiser', message: e.message || String(e) });
     }
+  } else {
+    sent.errors.push({ target: 'organiser', message: 'organiser_email_missing' });
   }
 
   if (sent.attendee) {
@@ -284,18 +280,11 @@ async function sendApplicationEmails(sb, registration) {
   const attendee = attendeeRes.data || {};
   const attendeeEmail = String(attendee.email || '').trim().toLowerCase();
 
-  let organiserName = '';
-  let organiserEmail = '';
-  if (eventRow.organiser_id) {
-    const orgRes = await sb
-      .from('organisers')
-      .select('id, name, email')
-      .eq('id', eventRow.organiser_id)
-      .maybeSingle();
-    if (orgRes.error) throw new Error(orgRes.error.message);
-    organiserName = String(orgRes.data?.name || '').trim();
-    organiserEmail = String(orgRes.data?.email || '').trim().toLowerCase();
-  }
+  const organiserContact = eventRow.organiser_id
+    ? await resolveOrganiserNotificationEmail(sb, eventRow.organiser_id)
+    : { name: '', email: '' };
+  const organiserName = organiserContact.name;
+  const organiserEmail = organiserContact.email;
 
   const ticketName = String(ticketRes.data?.name || 'Application').trim();
   const ticketPrice = ticketRes.data?.price != null ? Number(ticketRes.data.price) : 0;
@@ -348,9 +337,80 @@ async function sendApplicationEmails(sb, registration) {
     } catch (e) {
       sent.errors.push({ target: 'organiser', message: e.message || String(e) });
     }
+  } else {
+    sent.errors.push({ target: 'organiser', message: 'organiser_email_missing' });
   }
 
   return sent;
+}
+
+async function sendOrganiserApplicationAlertEmail(sb, registration, options = {}) {
+  const registrationId = registration.id;
+  const eventId = registration.event_id;
+  const ticketId = registration.ticket_id;
+  const attendeeId = registration.attendee_id;
+  if (!registrationId || !eventId) return { skipped: true, reason: 'missing_ids' };
+  if (String(registration.application_status || '').trim() !== 'Pending') {
+    return { skipped: true, reason: 'not_pending_application' };
+  }
+
+  const [eventRes, attendeeRes, ticketRes] = await Promise.all([
+    sb
+      .from('events')
+      .select(
+        'id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id, meeting_link, meeting_type, postcode, refund_policy, refund_policy_details, refund_cutoff_days'
+      )
+      .eq('id', eventId)
+      .maybeSingle(),
+    attendeeId
+      ? sb.from('attendees').select('id, email, name').eq('id', attendeeId).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    ticketId
+      ? sb.from('tickets').select('id, name, price').eq('id', ticketId).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
+  if (eventRes.error) throw new Error(eventRes.error.message);
+  const eventRow = eventRes.data;
+  if (!eventRow) return { skipped: true, reason: 'event_not_found' };
+
+  const attendee = attendeeRes.data || {};
+  const organiserContact = eventRow.organiser_id
+    ? await resolveOrganiserNotificationEmail(sb, eventRow.organiser_id, options)
+    : { name: '', email: '' };
+  if (!organiserContact.email) {
+    const err = new Error('organiser_email_missing');
+    err.code = 'organiser_email_missing';
+    throw err;
+  }
+
+  const ticketName = String(ticketRes.data?.name || 'Application').trim();
+  const priceIfApproved = formatAmount(ticketRes.data?.price != null ? Number(ticketRes.data.price) : 0);
+  const vars = buildAttendeeEmailVars({
+    registration,
+    eventRow,
+    attendee,
+    ticketName,
+    organiserName: organiserContact.name,
+    amountPaid: priceIfApproved,
+  });
+  vars.screening_industry = String(registration.screening_answer_industry || '').trim();
+  vars.screening_job_title = String(registration.screening_answer_job_title || '').trim();
+  vars.price_if_approved = priceIfApproved;
+
+  const stats = await fetchEventRegistrationStats(sb, eventId);
+  const organiserVars = buildOrganiserEmailVars(vars, stats);
+  organiserVars.screening_industry = vars.screening_industry;
+  organiserVars.screening_job_title = vars.screening_job_title;
+  organiserVars.price_if_approved = priceIfApproved;
+  organiserVars.pending_applications = stats.pending_applications || '0';
+
+  await sendTemplatedEmail({
+    slug: 'organiser_new_application',
+    to: organiserContact.email,
+    variables: organiserVars,
+  });
+
+  return { organiser: true, to: organiserContact.email };
 }
 
 /**
@@ -540,6 +600,7 @@ async function sendMeetingLinkAddedEmails(sb, eventId, { previousLink, newLink }
 module.exports = {
   sendRegistrationEmails,
   sendApplicationEmails,
+  sendOrganiserApplicationAlertEmail,
   sendApplicationDecisionEmails,
   sendMeetingLinkAddedEmails,
   buildAttendeeEmailVars,

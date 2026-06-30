@@ -1512,6 +1512,50 @@
   color: var(--od-text-soft);
 }
 
+.org-td-application-answers {
+  min-width: 180px;
+  max-width: 260px;
+}
+
+.org-application-answers {
+  display: grid;
+  gap: 8px;
+}
+
+.org-application-answer {
+  display: grid;
+  gap: 2px;
+}
+
+.org-application-answer-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9a7aa8;
+}
+
+.org-application-answer-value {
+  display: block;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--od-text);
+}
+
+.org-application-answers-empty {
+  font-size: 12px;
+  color: var(--od-text-soft);
+  font-style: italic;
+}
+
+.org-attendee-row-pending .org-application-answers {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(189, 147, 46, 0.22);
+}
+
 .org-attendee-row-pending td {
   background: rgba(255, 244, 214, 0.35);
 }

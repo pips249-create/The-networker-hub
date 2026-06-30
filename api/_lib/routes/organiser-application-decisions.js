@@ -14,7 +14,13 @@ function parseBody(req) {
 
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
-  const { json, setCors, requireOrganiserSession, reviewApplicationForOrganiser } = api;
+  const {
+    json,
+    setCors,
+    requireOrganiserSession,
+    reviewApplicationForOrganiser,
+    resendApplicationOrganiserAlert,
+  } = api;
 
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -41,14 +47,27 @@ module.exports = async function handler(req, res) {
   if (!registrationId) {
     return json(res, 400, { ok: false, error: 'missing_registration_id' });
   }
-  if (action !== 'approve' && action !== 'deny') {
+  if (action !== 'approve' && action !== 'deny' && action !== 'resend_alert') {
     return json(res, 400, { ok: false, error: 'invalid_action' });
   }
 
   try {
+    if (action === 'resend_alert') {
+      if (!resendApplicationOrganiserAlert) {
+        return json(res, 501, {
+          error: 'resend_alert_not_supported',
+          message: 'Requires Supabase.',
+        });
+      }
+      const result = await resendApplicationOrganiserAlert(auth.session, registrationId);
+      return json(res, 200, {
+        ok: true,
+        ...result,
+        message: 'Application alert email sent to ' + (result.to || 'your inbox') + '.',
+      });
+    }
+
     const result = await reviewApplicationForOrganiser(auth.session, registrationId, action);
-    const name =
-      String(registrationId).slice(0, 8);
     const message =
       action === 'approve'
         ? 'Application approved. The attendee has been notified by email.'

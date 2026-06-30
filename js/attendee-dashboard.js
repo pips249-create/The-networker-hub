@@ -123,7 +123,10 @@
     return '<span class="ad-badge ad-badge-grey">Upcoming</span>';
   }
 
-  function paymentBadge(status) {
+  function paymentBadge(status, reg) {
+    if (reg && String(reg.applicationStatus || '').trim() === 'Pending') {
+      return '<span class="ad-badge ad-badge-grey">—</span>';
+    }
     const s = String(status || 'Pending');
     if (s === 'Paid' || s === 'Free') {
       return '<span class="ad-badge ad-badge-green">' + esc(s) + '</span>';
@@ -132,6 +135,59 @@
       return '<span class="ad-badge ad-badge-grey">' + esc(s) + '</span>';
     }
     return '<span class="ad-badge ad-badge-red">' + esc(s) + '</span>';
+  }
+
+  function hasApplicationDecision(reg) {
+    const status = String(reg?.applicationStatus || 'Approved').trim();
+    return status === 'Pending' || status === 'Denied' || Boolean(reg?.needsPayment);
+  }
+
+  function applicationStatusLabel(reg) {
+    const status = String(reg?.applicationStatus || 'Approved').trim();
+    const payment = String(reg?.paymentStatus || 'Pending').trim();
+    if (status === 'Pending') return 'Pending review';
+    if (status === 'Denied') return 'Not approved';
+    if (status === 'Approved' && reg?.needsPayment) return 'Approved — payment due';
+    if (status === 'Approved' && (payment === 'Paid' || payment === 'Free')) return 'Approved';
+    return '—';
+  }
+
+  function applicationStatusLead(reg) {
+    const status = String(reg?.applicationStatus || 'Approved').trim();
+    const payment = String(reg?.paymentStatus || 'Pending').trim();
+    if (status === 'Pending') {
+      return 'Your application is with the organiser. We will email you when they approve or deny it.';
+    }
+    if (status === 'Denied') {
+      return 'The organiser did not approve your application for this event.';
+    }
+    if (status === 'Approved' && reg?.needsPayment) {
+      return 'Good news — you are approved. Complete payment below to secure your seat.';
+    }
+    if (status === 'Approved' && (payment === 'Paid' || payment === 'Free')) {
+      return 'Your application was approved and your place is confirmed.';
+    }
+    return '';
+  }
+
+  function applicationBadge(reg) {
+    if (!hasApplicationDecision(reg)) {
+      return '<span class="ad-badge ad-badge-grey">—</span>';
+    }
+    const status = String(reg.applicationStatus || 'Approved').trim();
+    if (status === 'Pending') {
+      return '<span class="ad-badge ad-badge-gold">Pending review</span>';
+    }
+    if (status === 'Denied') {
+      return '<span class="ad-badge ad-badge-red">Not approved</span>';
+    }
+    if (reg.needsPayment) {
+      return '<span class="ad-badge ad-badge-gold">Approved — pay now</span>';
+    }
+    if (status === 'Approved') {
+      return '<span class="ad-badge ad-badge-green">Approved</span>';
+    }
+    return '<span class="ad-badge ad-badge-grey">—</span>';
   }
 
   function eventHref(reg) {
@@ -165,15 +221,53 @@
   }
 
   function ticketButtonHtml(reg) {
+    const pending = String(reg.applicationStatus || '').trim() === 'Pending';
+    const denied = String(reg.applicationStatus || '').trim() === 'Denied';
+    const label = pending ? 'View application' : denied ? 'Application details' : 'View ticket';
     return (
       '<button type="button" class="ad-btn ad-btn-primary ad-view-payment" data-registration-id="' +
       esc(reg.id || '') +
-      '">View ticket</button>'
+      '">' +
+      esc(label) +
+      '</button>'
     );
   }
 
   function actionCell(reg, options) {
     const opts = options || {};
+    const applicationStatus = String(reg.applicationStatus || 'Approved').trim();
+
+    if (applicationStatus === 'Denied') {
+      return (
+        '<a class="ad-btn ad-btn-primary" href="' +
+        esc(eventHref(reg)) +
+        '">View event</a>'
+      );
+    }
+
+    if (reg.needsPayment) {
+      return (
+        '<div class="ad-action-group">' +
+        '<button type="button" class="ad-btn ad-btn-gold ad-view-payment" data-registration-id="' +
+        esc(reg.id || '') +
+        '">Complete payment</button>' +
+        '<a class="ad-action-link" href="' +
+        esc(eventHref(reg)) +
+        '">View event</a>' +
+        '</div>'
+      );
+    }
+
+    if (applicationStatus === 'Pending') {
+      return (
+        '<div class="ad-action-group">' +
+        ticketButtonHtml(reg) +
+        '<a class="ad-action-link" href="' +
+        esc(eventHref(reg)) +
+        '">View event</a>' +
+        '</div>'
+      );
+    }
     if (reg.reviewStatus === 'pending') {
       return (
         '<button type="button" class="ad-btn ad-btn-gold ad-leave-review" data-event-id="' +
@@ -549,10 +643,26 @@
     const details = document.getElementById('ad-payment-details');
     const note = document.getElementById('ad-payment-note');
     const eventLink = document.getElementById('ad-payment-event-link');
+    const titleEl = document.getElementById('ad-payment-modal-title');
     if (!modal || !details || !reg) return;
 
+    const applicationStatus = String(reg.applicationStatus || 'Approved').trim();
+    const applicationLead = applicationStatusLead(reg);
+    const showApplication = hasApplicationDecision(reg);
+
+    if (titleEl) {
+      if (applicationStatus === 'Pending') titleEl.textContent = 'Your application';
+      else if (applicationStatus === 'Denied') titleEl.textContent = 'Application update';
+      else if (reg.needsPayment) titleEl.textContent = 'Complete your booking';
+      else titleEl.textContent = 'Your ticket';
+    }
+
     if (sub) {
-      sub.textContent = 'Booking for “' + (reg.title || 'Event') + '”.';
+      if (applicationLead) {
+        sub.textContent = applicationLead;
+      } else {
+        sub.textContent = 'Booking for “' + (reg.title || 'Event') + '”.';
+      }
     }
 
     const paid = formatAmountPaid(reg.amountPaid, reg.paymentStatus);
@@ -560,7 +670,14 @@
       String(reg.paymentStatus || '').toLowerCase() === 'paid' ||
       (paid !== 'Free' && paid !== '—');
 
-    details.innerHTML =
+    let detailsHtml = '';
+    if (showApplication) {
+      detailsHtml +=
+        '<div><dt>Application</dt><dd>' +
+        applicationBadge(reg) +
+        '</dd></div>';
+    }
+    detailsHtml +=
       '<div><dt>Booking reference</dt><dd>' +
       esc(reg.bookingReference || formatBookingReference(reg.id)) +
       '</dd></div>' +
@@ -578,18 +695,35 @@
             ? '<a href="' +
               esc(reg.meetingLink) +
               '" target="_blank" rel="noopener noreferrer">Join online</a>'
-            : 'The organiser will email you the join link before the event starts.') +
+            : applicationStatus === 'Pending' || reg.needsPayment
+              ? 'Available after your place is confirmed.'
+              : 'The organiser will email you the join link before the event starts.') +
           '</dd></div>'
         : '') +
       '<div><dt>Tickets</dt><dd>' +
       esc(reg.ticketLabel || '—') +
-      '</dd></div>' +
-      '<div><dt>Total paid</dt><dd>' +
-      esc(paid) +
-      '</dd></div>' +
-      '<div><dt>Payment status</dt><dd>' +
-      esc(reg.paymentStatus || 'Pending') +
       '</dd></div>';
+
+    if (applicationStatus !== 'Pending' && applicationStatus !== 'Denied') {
+      detailsHtml +=
+        '<div><dt>Total paid</dt><dd>' +
+        esc(paid) +
+        '</dd></div>' +
+        '<div><dt>Payment status</dt><dd>' +
+        esc(reg.paymentStatus || 'Pending') +
+        '</dd></div>';
+    } else if (reg.needsPayment) {
+      const price =
+        reg.ticketPriceNum != null && Number(reg.ticketPriceNum) > 0
+          ? formatAmountPaid(reg.ticketPriceNum, 'Paid')
+          : '—';
+      detailsHtml +=
+        '<div><dt>Price if approved</dt><dd>' +
+        esc(price) +
+        '</dd></div>';
+    }
+
+    details.innerHTML = detailsHtml;
 
     if (note) note.hidden = !isPaid;
     if (eventLink) eventLink.href = eventHref(reg);
@@ -902,9 +1036,16 @@
     if (empty) empty.hidden = true;
 
     list.forEach((reg) => {
+      const applicationStatus = String(reg.applicationStatus || 'Approved').trim();
       const tr = document.createElement('tr');
       if (highlightRegistrationId && String(reg.id) === highlightRegistrationId) {
         tr.className = 'ad-row-highlight';
+      } else if (applicationStatus === 'Pending') {
+        tr.className = 'ad-row-application-pending';
+      } else if (applicationStatus === 'Denied') {
+        tr.className = 'ad-row-application-denied';
+      } else if (reg.needsPayment) {
+        tr.className = 'ad-row-application-approved';
       }
       tr.innerHTML =
         '<td>' +
@@ -918,9 +1059,15 @@
         '</td><td>' +
         esc(reg.ticketLabel || '—') +
         '</td><td>' +
-        esc(formatAmountPaid(reg.amountPaid, reg.paymentStatus)) +
+        esc(
+          applicationStatus === 'Pending' || applicationStatus === 'Denied'
+            ? '—'
+            : formatAmountPaid(reg.amountPaid, reg.paymentStatus)
+        ) +
         '</td><td>' +
-        paymentBadge(reg.paymentStatus) +
+        applicationBadge(reg) +
+        '</td><td>' +
+        paymentBadge(reg.paymentStatus, reg) +
         '</td><td class="ad-td-actions"><div class="ad-action-group">' +
         '<button type="button" class="ad-btn ad-btn-primary ad-view-payment" data-registration-id="' +
         esc(reg.id || '') +
@@ -1130,6 +1277,13 @@
 
     slice.forEach((reg) => {
       const tr = document.createElement('tr');
+      if (String(reg.applicationStatus || '') === 'Pending') {
+        tr.className = 'ad-row-application-pending';
+      } else if (String(reg.applicationStatus || '') === 'Denied') {
+        tr.className = 'ad-row-application-denied';
+      } else if (reg.needsPayment) {
+        tr.className = 'ad-row-application-approved';
+      }
       if (fullColumns) {
         tr.innerHTML =
           '<td>' +
@@ -1143,7 +1297,9 @@
           '</td><td>' +
           esc(reg.ticketLabel || '—') +
           '</td><td>' +
-          paymentBadge(reg.paymentStatus) +
+          applicationBadge(reg) +
+          '</td><td>' +
+          paymentBadge(reg.paymentStatus, reg) +
           '</td><td>' +
           reviewBadge(reg.reviewStatus, reg) +
           '</td><td class="ad-td-actions">' +

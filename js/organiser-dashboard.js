@@ -1366,6 +1366,38 @@
     URL.revokeObjectURL(link.href);
   }
 
+  function attendeeApplicationAnswersHtml(a) {
+    const isPending = String(a.applicationStatus || '') === 'Pending';
+    const industry = String(a.screeningIndustry || '').trim();
+    const jobTitle = String(a.screeningJobTitle || '').trim();
+    if (!isPending && !industry && !jobTitle) return '—';
+    if (!industry && !jobTitle) {
+      return '<span class="org-application-answers-empty">No answers recorded</span>';
+    }
+    const rows = [];
+    if (industry) {
+      rows.push(
+        '<div class="org-application-answer">' +
+          '<span class="org-application-answer-label">Industry</span>' +
+          '<span class="org-application-answer-value">' +
+          esc(industry) +
+          '</span>' +
+          '</div>'
+      );
+    }
+    if (jobTitle) {
+      rows.push(
+        '<div class="org-application-answer">' +
+          '<span class="org-application-answer-label">Job title</span>' +
+          '<span class="org-application-answer-value">' +
+          esc(jobTitle) +
+          '</span>' +
+          '</div>'
+      );
+    }
+    return '<div class="org-application-answers">' + rows.join('') + '</div>';
+  }
+
   function attendeeActionsHtml(a) {
     if (String(a.applicationStatus || '') !== 'Pending') return '—';
     return (
@@ -1376,8 +1408,25 @@
       '<button type="button" class="org-btn org-btn-sm org-attendee-deny-btn" data-deny-application="' +
       esc(a.id) +
       '">Deny</button>' +
+      '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-resend-application-alert="' +
+      esc(a.id) +
+      '" title="Send yourself an email about this application">Email me</button>' +
       '</div>'
     );
+  }
+
+  async function resendApplicationAlert(registrationId) {
+    const { ok, data } = await api('/api/organiser/application-decisions', {
+      method: 'POST',
+      body: JSON.stringify({ registrationId, action: 'resend_alert' }),
+    });
+
+    if (!ok || !data.ok) {
+      window.alert(data.message || data.error || 'Could not send the application alert email.');
+      return;
+    }
+
+    window.alert(data.message || 'Application alert email sent.');
   }
 
   async function reviewApplication(registrationId, action) {
@@ -1440,12 +1489,6 @@
     pageInfo.items.forEach((a) => {
       const guestLabel =
         a.guestNames && a.guestNames.length ? a.guestNames.join(', ') : '';
-      const screeningLabel =
-        a.screeningIndustry || a.screeningJobTitle
-          ? '<span class="org-attendee-screening">' +
-            esc([a.screeningIndustry, a.screeningJobTitle].filter(Boolean).join(' · ')) +
-            '</span>'
-          : '';
       const nameCell =
         guestLabel
           ? esc(a.name) + '<span class="org-attendee-guests">+' + esc(guestLabel) + '</span>'
@@ -1457,7 +1500,6 @@
       tr.innerHTML =
         '<td class="org-td-name">' +
         nameCell +
-        screeningLabel +
         '</td><td>' +
         esc(a.email || '—') +
         '</td><td>' +
@@ -1468,6 +1510,8 @@
         esc(String(a.quantity)) +
         '</td><td>' +
         attendeeStatusBadgeHtml(a) +
+        '</td><td class="org-td-application-answers">' +
+        attendeeApplicationAnswersHtml(a) +
         '</td><td>' +
         attendeePaidDisplay(a) +
         '</td><td>' +
@@ -4439,12 +4483,17 @@
       attendeesBody.addEventListener('click', (e) => {
         const approveBtn = e.target.closest('[data-approve-application]');
         const denyBtn = e.target.closest('[data-deny-application]');
+        const resendBtn = e.target.closest('[data-resend-application-alert]');
         if (approveBtn) {
           reviewApplication(approveBtn.getAttribute('data-approve-application'), 'approve');
           return;
         }
         if (denyBtn) {
           reviewApplication(denyBtn.getAttribute('data-deny-application'), 'deny');
+          return;
+        }
+        if (resendBtn) {
+          resendApplicationAlert(resendBtn.getAttribute('data-resend-application-alert'));
         }
       });
     }
