@@ -813,10 +813,12 @@
 
   let currentEventDetail = null;
   const BOOKING_PENDING_KEY = 'hub_booking_pending';
+  let checkoutSessionUser = null;
+  let checkoutUseSlimPaid = false;
 
   function isUuid(value) {
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      String(value || '')
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      String(value || '').trim()
     );
   }
 
@@ -898,6 +900,47 @@
     }
   }
 
+  function checkoutAttendeeFromSession() {
+    if (!checkoutSessionUser) return null;
+    const email = String(checkoutSessionUser.email || '')
+      .trim()
+      .toLowerCase();
+    if (!email) return null;
+    let name = String(checkoutSessionUser.name || '').trim();
+    if (!name) {
+      const local = email.split('@')[0] || '';
+      name = local.replace(/[._-]+/g, ' ').trim() || 'Guest';
+    }
+    return { email, name, guestNames: [] };
+  }
+
+  function wantsSlimPaidCheckout(qty, total) {
+    if (!(total > 0)) return false;
+    if (Math.max(1, parseInt(qty, 10) || 1) !== 1) return false;
+    return Boolean(checkoutAttendeeFromSession());
+  }
+
+  function checkoutErrorMessage(data) {
+    const code = data && data.error ? String(data.error) : '';
+    const messages = {
+      invalid_event_id: 'This event could not be loaded for checkout. Refresh the page and try again.',
+      event_not_found: 'This event is no longer available.',
+      event_not_published: 'This event is not open for bookings yet.',
+      ticket_not_found: 'That ticket type is no longer available.',
+      ticket_sold_out: 'Sorry — that ticket tier is sold out.',
+      ticket_sales_disabled: 'Ticket sales are not open for this event yet.',
+      missing_email: 'Please enter your email address.',
+      missing_name: 'Please enter your full name.',
+      stripe_connect_required:
+        'The organiser has not finished payout setup. Ticket sales are temporarily unavailable.',
+      free_ticket_use_complete_booking: 'Use Confirm registration for free tickets.',
+    };
+    if (data && data.message) return String(data.message);
+    if (messages[code]) return messages[code];
+    if (code) return 'Checkout could not start (' + code + '). Please try again.';
+    return 'Could not start checkout. Please try again or contact support.';
+  }
+
   async function startPaidCheckout(ev, ticketId, qty, attendee) {
     saveBookingPending(ev, ticketId, qty, attendee);
     const res = await fetch('/api/auth/create-checkout', {
@@ -925,7 +968,7 @@
       return false;
     }
     clearBookingPending();
-    throw new Error((data && data.message) || (data && data.error) || 'checkout_failed');
+    throw new Error(checkoutErrorMessage(data));
   }
 
   async function completeFreeBooking(ev, ticketId, qty, attendee) {
@@ -1269,18 +1312,30 @@
     if (buyBtn) buyBtn.disabled = Boolean(active);
   }
 
-  async function prefillCheckoutDetails() {
-    const nameEl = document.getElementById('checkout-name');
-    const emailEl = document.getElementById('checkout-email');
-    if (!nameEl && !emailEl) return;
+  async function loadCheckoutSessionUser() {
+    checkoutSessionUser = null;
     try {
       const res = await fetch('/api/auth/session', { credentials: 'include' });
       const data = await res.json();
-      if (!data.ok || !data.user) return;
-      if (nameEl && data.user.name && !nameEl.value.trim()) nameEl.value = data.user.name;
-      if (emailEl && data.user.email && !emailEl.value.trim()) emailEl.value = data.user.email;
+      if (data.ok && data.user) checkoutSessionUser = data.user;
     } catch (e) {
       /* ignore */
+    }
+    return checkoutSessionUser;
+  }
+
+  async function prefillCheckoutDetails() {
+    await loadCheckoutSessionUser();
+    const nameEl = document.getElementById('checkout-name');
+    const emailEl = document.getElementById('checkout-email');
+    if (!nameEl && !emailEl) return;
+    if (checkoutSessionUser) {
+      if (nameEl && checkoutSessionUser.name && !nameEl.value.trim()) {
+        nameEl.value = checkoutSessionUser.name;
+      }
+      if (emailEl && checkoutSessionUser.email && !emailEl.value.trim()) {
+        emailEl.value = checkoutSessionUser.email;
+      }
     }
   }
 
@@ -1395,6 +1450,13 @@
   }
 
   function readCheckoutDetails(ticketQty) {
+    if (checkoutUseSlimPaid) {
+      const attendee = checkoutAttendeeFromSession();
+      if (!attendee) {
+        throw new Error('Please sign in or enter your details to continue.');
+      }
+      return attendee;
+    }
     const name = document.getElementById('checkout-name')?.value.trim() || '';
     const email = document.getElementById('checkout-email')?.value.trim() || '';
     if (!name) throw new Error('Please enter your full name.');
@@ -1420,12 +1482,31 @@
     const termsLabel = document.getElementById('checkout-terms-label');
     const secureFoot = document.getElementById('ticket-secure-foot');
     const isFree = !(total > 0);
+    checkoutUseSlimPaid = wantsSlimPaidCheckout(qty, total);
+    const accountLine = document.getElementById('checkout-account-line');
+    const attendeeFields = document.getElementById('checkout-attendee-fields');
 
-    if (form) form.classList.toggle('is-free', isFree);
+    if (form) {
+      form.classList.toggle('is-free', isFree);
+      form.classList.toggle('is-slim-paid', checkoutUseSlimPaid && !isFree);
+    }
+    if (accountLine) {
+      if (checkoutUseSlimPaid && !isFree && checkoutSessionUser?.email) {
+        accountLine.textContent = 'Booking as ' + checkoutSessionUser.email;
+        accountLine.hidden = false;
+      } else {
+        accountLine.hidden = true;
+        accountLine.textContent = '';
+      }
+    }
+    if (attendeeFields) attendeeFields.hidden = checkoutUseSlimPaid && !isFree;
+
     if (intro) {
       intro.textContent = isFree
         ? 'Enter your details to register for this free event.'
-        : 'Review your order and enter your details to complete your booking.';
+        : checkoutUseSlimPaid
+          ? 'Review your order and confirm to continue to secure payment.'
+          : 'Review your order and enter your details to complete your booking.';
     }
     if (freeOrganiser) {
       const organiserName = ev ? ev.organiser || ev.organiserName || 'the event organiser' : 'the event organiser';
@@ -2105,7 +2186,11 @@
           await processCheckoutBooking();
         };
 
-        await runBooking();
+        try {
+          await runBooking();
+        } catch (err) {
+          window.alert(err && err.message ? err.message : 'Could not complete your booking.');
+        }
       });
     }
 
@@ -2132,8 +2217,10 @@
         renderCheckoutGuestNames(qty);
         updateCheckoutSummary(label, qty, total);
         showCheckoutDetails(true);
+        const termsAgree = document.getElementById('checkout-terms-agree');
         const nameInput = document.getElementById('checkout-name');
-        if (nameInput) nameInput.focus();
+        if (checkoutUseSlimPaid && termsAgree) termsAgree.focus();
+        else if (nameInput) nameInput.focus();
       });
     }
 

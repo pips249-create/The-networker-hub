@@ -1,6 +1,7 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { ensureAttendeeId } = require('./supabase-favourites');
 const { sendRegistrationEmails } = require('./registration-emails');
+const { UUID_PATTERN } = require('./uuid');
 
 /**
  * Insert a registration after successful checkout.
@@ -147,8 +148,8 @@ function parseStripeEventBody(rawBody) {
 
 function parseClientReferenceId(ref) {
   const raw = String(ref || '');
-  const eventMatch = raw.match(/id([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})/i);
-  const ticketMatch = raw.match(/ticket-([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})/i);
+  const eventMatch = raw.match(new RegExp('id(' + UUID_PATTERN + ')', 'i'));
+  const ticketMatch = raw.match(new RegExp('ticket-(' + UUID_PATTERN + ')', 'i'));
   const qtyMatch = raw.match(/qty-(\d+)/i);
   const parsedQty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
   return {

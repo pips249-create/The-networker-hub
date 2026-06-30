@@ -9,6 +9,7 @@ const {
 } = require('../stripe-connect');
 const { normalizeGuestNames } = require('../supabase-registrations');
 const { resolveTicketSalesEnabled } = require('../ticket-sales');
+const { isUuid } = require('../uuid');
 
 function parseBody(req) {
   let body = req.body;
@@ -20,12 +21,6 @@ function parseBody(req) {
     }
   }
   return body || {};
-}
-
-function isUuid(value) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    String(value || '')
-  );
 }
 
 function parsePriceNum(raw) {

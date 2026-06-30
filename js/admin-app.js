@@ -8317,7 +8317,7 @@
           envRow('Paid checkout (STRIPE_SECRET_KEY)', env.hasStripeSecretKey) +
           envRow('Webhook signing secret', env.hasStripeWebhookSecret) +
           envRow('Connect destination charges', env.stripeConnectEnabled) +
-          envRow('Checkout gate ready', env.checkoutReady && env.emailSendingConfigured) +
+          envRow('Checkout webhook gate', env.checkoutReady) +
           (env.stripeMode
             ? '<p class="text-xs text-slate-500 mt-2">Stripe mode: <strong>' +
               esc(env.stripeMode) +
@@ -8333,8 +8333,11 @@
           (hints.stripeModeMismatch
             ? '<p class="text-xs text-amber-800 mt-2">' + esc(hints.stripeModeMismatch) + '</p>'
             : '') +
-          (hints.checkoutGateReady
-            ? '<p class="text-xs text-emerald-800 mt-2">' + esc(hints.checkoutGateReady) + '</p>'
+          (hints.checkoutWebhookReady
+            ? '<p class="text-xs text-emerald-800 mt-2">' + esc(hints.checkoutWebhookReady) + '</p>'
+            : '') +
+          (hints.checkoutEmailReady
+            ? '<p class="text-xs text-slate-600 mt-2">' + esc(hints.checkoutEmailReady) + '</p>'
             : '') +
           '<p class="text-xs text-slate-500 mt-3">Webhook endpoint: <code class="text-[11px]">/api/stripe-webhook</code> · Event: <code class="text-[11px]">checkout.session.completed</code>. See <code class="text-[11px]">CHECKOUT-SETUP.md</code>.</p>' +
           '</section>' +

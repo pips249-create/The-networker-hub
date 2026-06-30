@@ -119,9 +119,13 @@ module.exports = async function handler(req, res) {
         stripe.stripeMode === 'test' && cron.isProduction
           ? 'STRIPE_SECRET_KEY is test mode (sk_test_…). Use sk_live_… for real production payments, or keep test for a dry run.'
           : null,
-      checkoutGateReady:
+      checkoutWebhookReady:
+        stripe.checkoutReady
+          ? 'Stripe checkout + webhook env vars are set. Run one test purchase on production to confirm webhook → registration row in Supabase (email optional until Resend domain is verified).'
+          : null,
+      checkoutEmailReady:
         stripe.checkoutReady && email.emailSendingConfigured
-          ? 'Checkout + email env vars are set. Run one test purchase on production to confirm webhook → registration → confirmation email.'
+          ? 'Resend is configured — confirmation emails will send after checkout once the domain is verified.'
           : null,
       nextStep: !supabase.ok
         ? 'Fix Supabase env vars in Vercel → Redeploy.'

@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="../css/hub-loading.css" />
     <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260612f" />
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
-  <link rel="stylesheet" href="../css/event-detail.css?v=20260705" />
+  <link rel="stylesheet" href="../css/event-detail.css?v=20260630" />
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
@@ -55,6 +55,11 @@
         aria-busy="true"
       >
         <div class="hub-page-buffer-card">
+          <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
+          <h2 class="hub-page-buffer-title">Loading this event</h2>
+          <p class="hub-page-buffer-message">
+            We're fetching the details — bear with us, it won't take long.
+          </p>
           <img
             class="hub-page-buffer-visual"
             src="../assets/event-placeholder.svg"
@@ -64,11 +69,6 @@
             height="300"
             decoding="async"
           />
-          <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
-          <h2 class="hub-page-buffer-title">Loading this event</h2>
-          <p class="hub-page-buffer-message">
-            We're fetching the details — bear with us, it won't take long.
-          </p>
         </div>
       </div>
       <div class="main-col">
@@ -312,11 +312,8 @@
           </p>
 
           <p class="stripe-hint" id="stripe-hint" role="status" tabindex="-1" hidden>
-            This ticket needs a Stripe Payment Link. Add <code>stripe_payment_link</code> on the event or ticket in
-            Supabase, set the page meta tag <code>stripe-payment-link</code>, or open with
-            <code>?stripe=</code> followed by your checkout URL. The link must include metadata
-            <code>event_id</code> (and optional <code>ticket_id</code>), or use the hub checkout button so we pass
-            <code>client_reference_id</code>.
+            Online card checkout is not available on this site right now. Please try again shortly or email
+            <a href="mailto:hello@the-networker.co.uk">hello@the-networker.co.uk</a> if the problem continues.
           </p>
           </div>
 
@@ -360,6 +357,8 @@
                 The Networker Hub booking fee (platform fee) is non-refundable.
               </p>
             </div>
+            <p class="checkout-account-line" id="checkout-account-line" hidden></p>
+            <div class="checkout-attendee-fields" id="checkout-attendee-fields">
             <label class="form-field" for="checkout-name">
               <span id="checkout-name-label">Full name</span>
               <input type="text" id="checkout-name" name="name" autocomplete="name" required />
@@ -368,6 +367,7 @@
               <span>Email address</span>
               <input type="email" id="checkout-email" name="email" autocomplete="email" required />
             </label>
+            </div>
             <div class="checkout-guest-names" id="checkout-guest-names" hidden></div>
             <p class="checkout-details-summary" id="checkout-order-summary" aria-live="polite"></p>
             <label class="checkout-terms-check" for="checkout-terms-agree">
@@ -501,7 +501,7 @@
     <script src="../js/listing-report.js?v=20260609"></script>
     <script src="../js/review-report.js?v=20260609"></script>
     <script src="../js/hub-favourites.js?v=20260629"></script>
-    <script src="../js/event-detail.js?v=20260706"></script>
+    <script src="../js/event-detail.js?v=20260630"></script>
     <div id="hub-site-footer"></div>
     <script src="../js/site-footer.js?v=20260610" data-root="../"></script>
   </body>
