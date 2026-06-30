@@ -19,7 +19,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260609b" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260630" />
     <link rel="stylesheet" href="../css/hub-loading.css" />
     <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260612f" />
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
@@ -360,7 +360,7 @@
           </form>
 
           <form class="checkout-details-form" id="checkout-details-form" hidden novalidate>
-            <p class="checkout-details-intro" id="checkout-details-intro">Enter your details to register for this free event.</p>
+            <p class="checkout-details-intro" id="checkout-details-intro">Sign in to register — your ticket is saved to your Hub account.</p>
             <p class="checkout-free-organiser" id="checkout-free-organiser" hidden></p>
             <label class="form-field" for="checkout-name">
               <span id="checkout-name-label">Full name</span>
@@ -402,6 +402,22 @@
             <p class="ticket-nudge-status" id="ticket-nudge-status" hidden role="status"></p>
             <button type="button" class="cta-btn ticket-nudge-btn" id="ticket-nudge-btn">Nudge the organiser</button>
           </div>
+
+          <div class="checkout-signin-gate" id="checkout-signin-gate" hidden>
+            <h3 class="checkout-signin-gate-title" id="checkout-signin-gate-title">Sign in to buy tickets</h3>
+            <p class="checkout-signin-gate-lead" id="checkout-signin-gate-lead">
+              A free Hub account lets us take payment securely and save your ticket. Your selection below will be kept.
+            </p>
+            <div class="checkout-signin-gate-actions">
+              <a class="cta-btn" id="checkout-signin-btn" href="/login.html">Sign in</a>
+              <a class="checkout-signin-register" id="checkout-register-btn" href="/register.html">Create free account</a>
+            </div>
+            <button type="button" class="checkout-signin-back" id="checkout-signin-cancel">← Back to tickets</button>
+          </div>
+
+          <p class="checkout-resume-notice" id="checkout-resume-notice" hidden role="status">
+            <span id="checkout-resume-notice-text"></span>
+          </p>
 
           <button type="button" class="cta-btn" id="buy-btn">Buy ticket</button>
 

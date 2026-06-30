@@ -30,16 +30,20 @@ module.exports = async function handler(req, res) {
     return json(res, 503, { ok: false, error: 'supabase_not_configured' });
   }
 
+  if (!session) {
+    return json(res, 401, { ok: false, error: 'not_authenticated' });
+  }
+
   try {
     const body = parseBody(req);
     const paymentStatus = String(body.paymentStatus || body.payment_status || '').trim();
     const amountRaw = body.amountPaid ?? body.amount_paid;
     const amountPaid = amountRaw != null ? Number(amountRaw) : null;
 
-    const email = String(body.email || session?.email || '')
+    const email = String(session.email || body.email || '')
       .trim()
       .toLowerCase();
-    let name = String(body.name || session?.name || '').trim();
+    let name = String(session.name || body.name || '').trim();
     if (!name && email) {
       const local = email.split('@')[0] || '';
       name = local.replace(/[._-]+/g, ' ').trim() || 'Guest';
@@ -47,14 +51,11 @@ module.exports = async function handler(req, res) {
     if (!name) name = 'Guest';
 
     if (!email) return json(res, 400, { ok: false, error: 'missing_email' });
-    if (!session && paymentStatus !== 'Free') {
-      return json(res, 401, { ok: false, error: 'not_authenticated' });
-    }
 
     const result = await createRegistrationFromPayment({
       email,
       name,
-      userId: session?.sub || null,
+      userId: session.sub || null,
       eventId: body.eventId || body.event_id,
       ticketId: body.ticketId || body.ticket_id,
       quantity: body.quantity ?? body.qty,

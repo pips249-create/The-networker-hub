@@ -292,4 +292,36 @@
         });
     });
   }
+
+  function applyCheckoutContext() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('checkout') !== '1') return;
+
+    var title = '';
+    try {
+      var raw = sessionStorage.getItem('hub_checkout_intent');
+      if (raw) {
+        var intent = JSON.parse(raw);
+        title = intent && intent.eventTitle ? String(intent.eventTitle).trim() : '';
+      }
+    } catch (e) {
+      /* ignore */
+    }
+
+    var loginLede = document.querySelector('#login-form') && document.querySelector('.auth-lede');
+    if (loginLede) {
+      loginLede.textContent = title
+        ? 'You were about to get tickets for “' + title + '”. Sign in to pick up where you left off.'
+        : 'Sign in to continue with your ticket booking.';
+    }
+
+    var registerLede = document.querySelector('#register-form') && document.querySelector('.auth-lede');
+    if (registerLede) {
+      registerLede.textContent = title
+        ? 'Almost there — create a free account to complete your booking for “' + title + '”.'
+        : 'Create a free account to complete your ticket booking.';
+    }
+  }
+
+  applyCheckoutContext();
 })();

@@ -436,6 +436,7 @@
     }
     if (note) note.hidden = false;
     if (actions) actions.hidden = false;
+    customizeSuccessActions();
   }
 
   function showError(message) {
@@ -448,6 +449,47 @@
     }
     if (note) note.hidden = false;
     if (actions) actions.hidden = false;
+    customizeSuccessActions();
+  }
+
+  async function customizeSuccessActions() {
+    const noteSpan = document.querySelector('#booking-success-note span');
+    const accountBtn = document.getElementById('booking-success-account');
+    let signedIn = false;
+    try {
+      const res = await fetch('/api/auth/session', { credentials: 'include' });
+      const data = await res.json().catch(function () {
+        return {};
+      });
+      signedIn = !!(data.ok && data.user);
+    } catch (e) {
+      /* non-fatal */
+    }
+
+    if (signedIn) {
+      if (noteSpan) {
+        noteSpan.innerHTML = 'Confirmation email sent · Ticket saved in <strong>My Hub</strong>';
+      }
+      if (accountBtn) {
+        accountBtn.textContent = 'View my tickets';
+        accountBtn.href = '/account/index.html';
+      }
+      return;
+    }
+
+    if (noteSpan) {
+      noteSpan.innerHTML = 'Confirmation email sent with your ticket details.';
+    }
+    if (accountBtn) {
+      accountBtn.textContent = 'Create free account';
+      const pending = readPending();
+      const returnPath =
+        pending && pending.eventId
+          ? '/events/event.html?id=' + encodeURIComponent(pending.eventId)
+          : '/account/index.html';
+      accountBtn.href =
+        '/register.html?next=' + encodeURIComponent(returnPath) + '&checkout=1';
+    }
   }
 
   async function finishConfirmedBooking(pending, message) {

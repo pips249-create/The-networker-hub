@@ -1338,24 +1338,18 @@ a:hover {
   display: block;
 }
 
-.ticket-panel.is-sales-scheduled #buy-btn {
-  display: none;
-}
-
-.ticket-panel.is-sales-scheduled .qty-row,
-.ticket-panel.is-sales-scheduled .summary,
-.ticket-panel.is-sales-scheduled .summary-fee-note,
-.ticket-panel.is-sales-scheduled .ticket-tiers .tier {
-  pointer-events: none;
-}
-
-.ticket-panel.is-sales-scheduled .qty-row,
-.ticket-panel.is-sales-scheduled .summary {
-  opacity: 0.55;
+.ticket-panel.is-sales-scheduled #buy-btn,
+.ticket-panel.is-sales-scheduled .ticket-header,
+.ticket-panel.is-sales-scheduled #ticket-purchase-view,
+.ticket-panel.is-sales-scheduled .ticket-foot,
+.ticket-panel.is-sales-scheduled #ev-refund-badge,
+.ticket-panel.is-sales-scheduled .ticket-refund-details {
+  display: none !important;
 }
 
 .ticket-panel.is-sales-scheduled .ticket-sales-scheduled {
   display: block;
+  margin-top: 0;
 }
 
 .ticket-sales-scheduled {
@@ -1394,6 +1388,86 @@ a:hover {
 
 .ticket-sales-scheduled-status.is-error {
   color: #a82828;
+}
+
+.checkout-signin-gate {
+  margin: 16px 0 0;
+  padding: 18px 16px;
+  border-radius: var(--radius);
+  background: var(--purple-50);
+  border: 1px solid var(--purple-100);
+}
+
+.checkout-signin-gate[hidden] {
+  display: none;
+}
+
+.checkout-signin-gate-title {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--purple-900);
+}
+
+.checkout-signin-gate-lead {
+  margin: 0 0 16px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.checkout-signin-gate-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkout-signin-register {
+  display: block;
+  text-align: center;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--purple-700);
+  text-decoration: none;
+}
+
+.checkout-signin-register:hover {
+  text-decoration: underline;
+}
+
+.checkout-signin-back {
+  display: block;
+  margin: 14px auto 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.checkout-signin-back:hover {
+  color: var(--purple-800);
+  text-decoration: underline;
+}
+
+.checkout-resume-notice {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: #ecfdf3;
+  border: 1px solid #a7f3d0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: #065f46;
+}
+
+.checkout-resume-notice[hidden] {
+  display: none;
+}
+
+.ticket-panel.show-signin-gate #buy-btn {
+  display: none;
 }
 
 .ticket-sales-scheduled-btn.is-saved,

@@ -55,16 +55,112 @@
     return s.indexOf('https:') === 0 || s.indexOf('http:') === 0 || s.indexOf('data:image/') === 0;
   }
 
-  async function requireSignedInAttendee() {
+  async function isSignedInAttendee() {
     try {
       const res = await fetch('/api/auth/session', { credentials: 'include' });
       const data = await res.json();
-      if (data.ok && data.user) return true;
+      return !!(data.ok && data.user);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function authPageUrl(page, withCheckoutFlag) {
+    const next = encodeURIComponent(location.pathname + location.search);
+    let url = '/' + page + '.html?next=' + next;
+    if (withCheckoutFlag) url += '&checkout=1';
+    return url;
+  }
+
+  const CHECKOUT_INTENT_KEY = 'hub_checkout_intent';
+  let signInGateBound = false;
+
+  function saveCheckoutIntent(ev, data) {
+    if (!ev || !ev.id) return;
+    try {
+      sessionStorage.setItem(
+        CHECKOUT_INTENT_KEY,
+        JSON.stringify({
+          eventId: ev.id,
+          eventTitle: ev.title || '',
+          ticketId: data && data.ticketId ? String(data.ticketId) : null,
+          qty: Math.max(1, parseInt(data && data.qty, 10) || 1),
+          termsAgreed: !!(data && data.termsAgreed),
+          action: (data && data.action) || 'paid_buy',
+          ts: Date.now(),
+        })
+      );
     } catch (e) {
       /* ignore */
     }
-    const next = encodeURIComponent(location.pathname + location.search);
-    location.href = '/login.html?next=' + next;
+  }
+
+  function readCheckoutIntent() {
+    try {
+      const raw = sessionStorage.getItem(CHECKOUT_INTENT_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function clearCheckoutIntent() {
+    try {
+      sessionStorage.removeItem(CHECKOUT_INTENT_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function bindSignInGateOnce() {
+    if (signInGateBound) return;
+    signInGateBound = true;
+    const cancel = document.getElementById('checkout-signin-cancel');
+    if (cancel) {
+      cancel.addEventListener('click', function () {
+        showCheckoutSignInGate(false);
+      });
+    }
+  }
+
+  function showCheckoutSignInGate(show, config) {
+    const gate = document.getElementById('checkout-signin-gate');
+    const panel = document.getElementById('tickets');
+    const notice = document.getElementById('checkout-resume-notice');
+    if (!gate) {
+      if (show) location.href = authPageUrl('login', true);
+      return;
+    }
+    bindSignInGateOnce();
+    if (show && config) {
+      const title = document.getElementById('checkout-signin-gate-title');
+      const lead = document.getElementById('checkout-signin-gate-lead');
+      const signIn = document.getElementById('checkout-signin-btn');
+      const register = document.getElementById('checkout-register-btn');
+      if (title) title.textContent = config.title || 'Sign in to buy tickets';
+      if (lead) {
+        lead.textContent =
+          config.lead ||
+          'A free Hub account lets us take payment securely and save your ticket. Your selection below will be kept.';
+      }
+      const checkoutFlag = config.checkoutFlag !== false;
+      if (signIn) signIn.href = authPageUrl('login', checkoutFlag);
+      if (register) register.href = authPageUrl('register', checkoutFlag);
+    }
+    gate.hidden = !show;
+    if (panel) panel.classList.toggle('show-signin-gate', show);
+    if (notice && show) notice.hidden = true;
+  }
+
+  async function requireSignedInAttendee(options) {
+    if (await isSignedInAttendee()) return true;
+    if (options && options.gate) {
+      if (options.intent) saveCheckoutIntent(options.intent.ev, options.intent.data);
+      showCheckoutSignInGate(true, options.gate);
+      return false;
+    }
+    location.href = authPageUrl('login', true);
     return false;
   }
 
@@ -971,6 +1067,7 @@
       stripe_connect_required:
         'The organiser has not finished payout setup. Ticket sales are temporarily unavailable.',
       free_ticket_use_complete_booking: 'Use Confirm registration for free tickets.',
+      not_authenticated: 'Please sign in or create a free account to complete your booking.',
     };
     if (data && data.message) return String(data.message);
     if (messages[code]) return messages[code];
@@ -1325,9 +1422,11 @@
     if (!show) setCheckoutSubmitting(false);
   }
 
-  function showPaidGuestCheckout(show) {
+  function showPaidGuestCheckout(show, isPaid) {
+    if (isPaid === undefined) isPaid = true;
     const form = document.getElementById('checkout-details-form');
     const confirmBtn = document.getElementById('checkout-confirm-btn');
+    const intro = document.getElementById('checkout-details-intro');
     const nameField = document.getElementById('checkout-name')?.closest('.form-field');
     const emailField = document.getElementById('checkout-email')?.closest('.form-field');
     const freeTerms = document.querySelector('.checkout-free-terms');
@@ -1335,8 +1434,15 @@
     if (form) form.classList.toggle('is-paid-guests', show);
     if (nameField) nameField.hidden = show;
     if (emailField) emailField.hidden = show;
-    if (freeTerms) freeTerms.hidden = show;
-    if (confirmBtn) confirmBtn.textContent = show ? 'Continue to payment' : 'Confirm registration';
+    if (freeTerms) freeTerms.hidden = show && isPaid;
+    if (intro && show) {
+      intro.textContent = isPaid
+        ? 'Add names for additional attendees in your booking.'
+        : 'Add names for additional attendees, then confirm your registration.';
+    }
+    if (confirmBtn) {
+      confirmBtn.textContent = show ? (isPaid ? 'Continue to payment' : 'Confirm registration') : 'Confirm registration';
+    }
   }
 
   function setCheckoutSubmitting(active, title) {
@@ -1692,9 +1798,22 @@
     scheduledUiBound = true;
     btn.addEventListener('click', async function () {
       if (!window.HubFavourites) return;
-      if (!(await requireSignedInAttendee())) return;
-
       const current = activeEvent() || ev;
+      if (
+        !(await requireSignedInAttendee({
+          gate: {
+            title: 'Sign in to save this event',
+            lead: "Create a free account or sign in — we'll email you when tickets go on sale.",
+            checkoutFlag: true,
+          },
+          intent: {
+            ev: current,
+            data: { action: 'save_event', qty: 1, termsAgreed: false, ticketId: null },
+          },
+        }))
+      ) {
+        return;
+      }
       const eventId = String(document.body.getAttribute('data-event-id') || current.id || '');
       const organiserId = String(current.organiserId || '').trim();
 
@@ -2336,7 +2455,7 @@
 
       let attendee;
       try {
-        attendee = paid ? readPaidCheckoutAttendee(qty) : readCheckoutDetails(qty);
+        attendee = readPaidCheckoutAttendee(qty);
       } catch (err) {
         throw err;
       }
@@ -2365,32 +2484,26 @@
       checkoutForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (checkoutForm.classList.contains('is-paid-guests')) {
+          const tierEl = getSelectedTierEl();
+          const tierPrice = tierEl ? parseFloat(tierEl.getAttribute('data-price')) || 0 : price;
+          const isPaid = tierPrice > 0;
+          if (!isPaid) {
+            const termsAgree = document.getElementById('checkout-free-terms-agree');
+            if (termsAgree && !termsAgree.checked) {
+              window.alert('Please confirm your details are correct before registering.');
+              termsAgree.focus();
+              return;
+            }
+          }
           try {
-            await processCheckoutBooking(true);
+            await processCheckoutBooking(isPaid);
           } catch (err) {
-            window.alert(err && err.message ? err.message : 'Could not start checkout.');
+            window.alert(err && err.message ? err.message : 'Could not complete your booking.');
           }
           return;
         }
 
-        const termsAgree = document.getElementById('checkout-free-terms-agree');
-        if (termsAgree && !termsAgree.checked) {
-          window.alert('Please confirm your details are correct before registering.');
-          termsAgree.focus();
-          return;
-        }
-        try {
-          readCheckoutDetails(qty);
-        } catch (err) {
-          window.alert(err.message || 'Please check your details.');
-          return;
-        }
-
-        try {
-          await processCheckoutBooking(false);
-        } catch (err) {
-          window.alert(err && err.message ? err.message : 'Could not complete your booking.');
-        }
+        window.alert('Please sign in or create a free account to register for this event.');
       });
     }
 
@@ -2401,7 +2514,28 @@
 
         const evNow = activeEvent();
         if (evNow?.isApprovalRequired) {
-          if (!(await requireSignedInAttendee())) return;
+          if (
+            !(await requireSignedInAttendee({
+              gate: {
+                title: 'Sign in to apply for a seat',
+                lead: 'This event uses an approval process. Sign in or create a free account to submit your application.',
+                checkoutFlag: true,
+              },
+              intent: {
+                ev: evNow,
+                data: {
+                  action: 'apply',
+                  qty: qty,
+                  termsAgreed: false,
+                  ticketId: getSelectedTierEl()
+                    ? getSelectedTierEl().getAttribute('data-ticket-id')
+                    : null,
+                },
+              },
+            }))
+          ) {
+            return;
+          }
           showSeatApplication(true);
           const industry = document.getElementById('apply-industry');
           if (industry) industry.focus();
@@ -2413,12 +2547,36 @@
         const tierPrice = tierEl ? parseFloat(tierEl.getAttribute('data-price')) || 0 : price;
 
         if (tierPrice <= 0) {
-          await prefillCheckoutDetails();
-          renderCheckoutGuestNames(qty);
-          updateFreeCheckoutSummary(evNow);
-          showCheckoutDetails(true);
-          const nameInput = document.getElementById('checkout-name');
-          if (nameInput) nameInput.focus();
+          if (!(await isSignedInAttendee())) {
+            const tierElForIntent = getSelectedTierEl();
+            saveCheckoutIntent(evNow, {
+              ticketId: tierElForIntent ? tierElForIntent.getAttribute('data-ticket-id') : null,
+              qty: qty,
+              termsAgreed: false,
+              action: 'free_buy',
+            });
+            showCheckoutSignInGate(true, {
+              title: 'Sign in to get your free ticket',
+              lead:
+                'Create a free account or sign in to register. Your ticket is saved to My Hub — one account per person, no repeat guest bookings.',
+              checkoutFlag: true,
+            });
+            return;
+          }
+          await loadCheckoutSessionUser();
+          if (qty > 1) {
+            renderCheckoutGuestNames(qty);
+            updateFreeCheckoutSummary(evNow);
+            showPaidGuestCheckout(true, false);
+            return;
+          }
+          try {
+            await processCheckoutBooking(false);
+          } catch (err) {
+            window.alert(
+              err && err.message ? err.message : 'Could not complete your registration. Please try again.'
+            );
+          }
           return;
         }
 
@@ -2431,7 +2589,22 @@
           return;
         }
 
-        if (!(await requireSignedInAttendee())) return;
+        if (!(await isSignedInAttendee())) {
+          const tierElForIntent = getSelectedTierEl();
+          saveCheckoutIntent(evNow, {
+            ticketId: tierElForIntent ? tierElForIntent.getAttribute('data-ticket-id') : null,
+            qty: qty,
+            termsAgreed: termsAgree ? termsAgree.checked : false,
+            action: 'paid_buy',
+          });
+          showCheckoutSignInGate(true, {
+            title: 'Sign in to buy tickets',
+            lead:
+              'Create a free account or sign in to complete your booking. Your ticket is saved to My Hub — one account per person.',
+            checkoutFlag: true,
+          });
+          return;
+        }
         await loadCheckoutSessionUser();
         syncPaidCheckoutPanel(label, qty, tierPrice * qty + (tierPrice > 0 ? tierPrice * qty * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty : 0));
 
@@ -2463,13 +2636,77 @@
       document.body.setAttribute('data-event-id', newEv.id);
       showSeatApplication(false);
       showCheckoutDetails(false);
+      showCheckoutSignInGate(false);
       const selectedTier =
         document.querySelector('#ticket-tiers .tier.selected:not(.sold-out):not(.tier-disabled)') ||
         document.querySelector('#ticket-tiers .tier:not(.sold-out):not(.tier-disabled)');
       if (selectedTier) selectTier(selectedTier);
       else update();
       wireListingReport(newEv);
+      setTimeout(function () {
+        tryResumeCheckoutIntent(newEv);
+      }, 0);
     };
+
+    async function tryResumeCheckoutIntent(eventForResume) {
+      const intent = readCheckoutIntent();
+      if (!intent || String(intent.eventId) !== String(eventForResume.id)) return;
+      if (!(await isSignedInAttendee())) return;
+
+      if (intent.ticketId) {
+        const escaped = CSS.escape(String(intent.ticketId));
+        const tier = document.querySelector('#ticket-tiers .tier[data-ticket-id="' + escaped + '"]');
+        if (tier && !tier.classList.contains('sold-out') && !tier.classList.contains('tier-disabled')) {
+          selectTier(tier);
+        }
+      }
+      if (intent.qty > 1) {
+        qty = Math.min(intent.qty, maxQty);
+        update();
+      }
+      const terms = document.getElementById('checkout-terms-agree');
+      if (terms && intent.termsAgreed) terms.checked = true;
+
+      clearCheckoutIntent();
+      showCheckoutSignInGate(false);
+
+      if (intent.action === 'save_event') {
+        const saveBtn = document.getElementById('ticket-sales-scheduled-save-btn');
+        if (saveBtn && window.HubFavourites) saveBtn.click();
+        return;
+      }
+
+      if (intent.action === 'apply') {
+        showSeatApplication(true);
+        const industry = document.getElementById('apply-industry');
+        if (industry) industry.focus();
+        return;
+      }
+
+      const notice = document.getElementById('checkout-resume-notice');
+      const noticeText = document.getElementById('checkout-resume-notice-text');
+      if (notice && noticeText) {
+        const btnLabel = intent.action === 'free_buy' ? 'Get free ticket' : 'Buy ticket';
+        const step =
+          intent.action === 'free_buy' ? 'complete your registration' : 'continue to payment';
+        noticeText.innerHTML =
+          'You\u2019re signed in \u2014 your ticket selection is ready. Click <strong>' +
+          btnLabel +
+          '</strong> to ' +
+          step +
+          '.';
+        notice.hidden = false;
+      }
+
+      const panel = document.getElementById('tickets');
+      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      await loadCheckoutSessionUser();
+    }
+
+    setTimeout(function () {
+      tryResumeCheckoutIntent(ev);
+    }, 0);
   }
 
   async function loadRelatedFallback(ev) {
