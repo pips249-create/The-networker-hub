@@ -103,7 +103,7 @@
   var groupCleanupCache = null;
   var eventCleanupCache = null;
   var analyticsState = { period: '30d' };
-  var eventHealthState = { issueFilter: 'all' };
+  var eventHealthState = { issueFilter: 'all', selected: {} };
   var groupCleanupState = {
     page: 0,
     q: '',
@@ -1196,6 +1196,208 @@
       });
   }
 
+  function rememberSelectedHealthEvent(ev) {
+    if (!ev || ev.id == null) return;
+    eventHealthState.selected[String(ev.id)] = {
+      id: ev.id,
+      title: ev.title || 'Untitled',
+      organiser_name: ev.organiser_name || '',
+    };
+  }
+
+  function forgetSelectedHealthEvent(id) {
+    delete eventHealthState.selected[String(id)];
+  }
+
+  function clearSelectedHealthEvents() {
+    eventHealthState.selected = {};
+  }
+
+  function getSelectedHealthEventIds() {
+    return Object.keys(eventHealthState.selected);
+  }
+
+  function selectedHealthRows() {
+    return getSelectedHealthEventIds().map(function (id) {
+      return eventHealthState.selected[id];
+    });
+  }
+
+  function updateHealthBulkBar() {
+    var bar = document.getElementById('event-health-bulk');
+    var countEl = document.getElementById('health-bulk-count');
+    var chipsEl = document.getElementById('health-selected-chips');
+    var deleteSection = document.getElementById('health-delete-section');
+    var ids = getSelectedHealthEventIds();
+    var rows = selectedHealthRows();
+    if (countEl) countEl.textContent = String(ids.length);
+    if (bar) bar.classList.toggle('hidden', ids.length === 0);
+    if (deleteSection) deleteSection.classList.toggle('hidden', ids.length === 0);
+    if (chipsEl) {
+      chipsEl.innerHTML = rows
+        .map(function (ev) {
+          var label = ev.title || 'Untitled';
+          if (ev.organiser_name) label += ' · ' + ev.organiser_name;
+          return (
+            '<span class="inline-flex items-center gap-1 rounded-full border border-brand-200 bg-white px-2.5 py-0.5 text-xs text-brand-900">' +
+            '<span class="truncate max-w-[14rem]" title="' +
+            attrEsc(label) +
+            '">' +
+            esc(label) +
+            '</span>' +
+            '<button type="button" class="health-unselect shrink-0 text-slate-400 hover:text-red-700 font-bold leading-none" data-unselect-health-event="' +
+            attrEsc(ev.id) +
+            '" aria-label="Remove ' +
+            attrEsc(ev.title || 'event') +
+            ' from selection">×</button></span>'
+          );
+        })
+        .join('');
+    }
+    if (main) {
+      var selectPage = document.getElementById('event-health-select-page');
+      var pageCbs = main.querySelectorAll('.health-select-checkbox');
+      var allPageChecked = pageCbs.length > 0;
+      pageCbs.forEach(function (cb) {
+        if (!eventHealthState.selected[cb.value]) allPageChecked = false;
+      });
+      if (selectPage) selectPage.checked = allPageChecked;
+    }
+  }
+
+  function deleteSelectedHealthEvents(force) {
+    var ids = getSelectedHealthEventIds();
+    if (!ids.length) return;
+    if (!window.confirm(eventDeleteConfirmMsg(ids.length, force))) return;
+    var msg = document.getElementById('health-delete-msg');
+    var btn = force
+      ? document.getElementById('health-force-delete-btn')
+      : document.getElementById('health-delete-btn');
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Deleting…';
+      msg.className = 'text-xs text-slate-500';
+    }
+    adminPost('/api/admin/events', { action: 'bulk_delete', ids: ids, force: !!force })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Delete failed');
+        clearSelectedHealthEvents();
+        var parts = ['Deleted ' + (data.deleted || 0) + ' event' + ((data.deleted || 0) === 1 ? '' : 's') + '.'];
+        if (data.skipped && data.skipped.length) {
+          parts.push('Skipped ' + data.skipped.length + ': ' + formatEventBulkSkipped(data.skipped) + '.');
+        }
+        if (msg) {
+          msg.textContent = parts.join(' ');
+          msg.className = 'text-xs text-emerald-700 font-semibold';
+        }
+        return fetchEventHealth();
+      })
+      .then(function () {
+        renderEventHealth();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not delete events';
+          msg.className = 'text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function deleteSingleHealthEvent(eventId, title, triggerBtn) {
+    if (!eventId) return;
+    if (
+      !window.confirm(
+        'Permanently delete “' +
+          (title || 'this event') +
+          '”?\n\nEvents with registrations are skipped unless you force delete from the bulk bar.'
+      )
+    ) {
+      return;
+    }
+    if (triggerBtn) triggerBtn.disabled = true;
+    adminPost('/api/admin/events', { action: 'bulk_delete', ids: [eventId] })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Delete failed');
+        if (data.deleted) {
+          forgetSelectedHealthEvent(eventId);
+          return fetchEventHealth();
+        }
+        if (data.skipped && data.skipped.length) {
+          throw new Error(formatEventBulkSkipped(data.skipped) || 'Could not delete this event');
+        }
+        throw new Error('Could not delete this event');
+      })
+      .then(function () {
+        renderEventHealth();
+      })
+      .catch(function (err) {
+        if (triggerBtn) triggerBtn.disabled = false;
+        window.alert(err.message || 'Could not delete event');
+      });
+  }
+
+  function saveHealthBulkForm(form) {
+    var ids = getSelectedHealthEventIds();
+    var msg = document.getElementById('health-bulk-msg');
+    var btn = form.querySelector('[type="submit"]');
+    if (!ids.length) return;
+    var payload = { action: 'bulk_update', ids: ids };
+    var organiserVal = formFieldVal(form, 'bulk_organiser_id');
+    if (organiserVal === '__unlink__') payload.unlink_organiser = true;
+    else if (organiserVal) payload.organiser_id = organiserVal;
+    var startsAt = formFieldVal(form, 'bulk_starts_at');
+    if (startsAt) payload.starts_at = startsAt;
+    var eventType = formFieldVal(form, 'bulk_event_type');
+    if (eventType) payload.event_type = eventType;
+    var meetingType = formFieldVal(form, 'bulk_meeting_type');
+    if (meetingType) payload.meeting_type = meetingType;
+    var vat = formFieldVal(form, 'bulk_vat_treatment');
+    if (vat) payload.vat_treatment = vat;
+    if (
+      !payload.organiser_id &&
+      !payload.unlink_organiser &&
+      !payload.starts_at &&
+      !payload.event_type &&
+      !payload.meeting_type &&
+      !payload.vat_treatment
+    ) {
+      if (msg) {
+        msg.textContent = 'Choose at least one field to apply.';
+        msg.className = 'text-xs text-red-700 font-semibold';
+      }
+      return;
+    }
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Applying…';
+      msg.className = 'text-xs text-slate-500';
+    }
+    adminPost('/api/admin/events', payload)
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Bulk update failed');
+        var parts = ['Updated ' + (data.updated || 0) + ' event' + ((data.updated || 0) === 1 ? '' : 's') + '.'];
+        if (data.skipped && data.skipped.length) {
+          parts.push('Skipped ' + data.skipped.length + '.');
+        }
+        if (msg) {
+          msg.textContent = parts.join(' ');
+          msg.className = 'text-xs text-emerald-700 font-semibold';
+        }
+        return fetchEventHealth();
+      })
+      .then(function () {
+        renderEventHealth();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not apply fixes';
+          msg.className = 'text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
   function issueCodes(ev) {
     return (ev.issues || []).map(function (i) {
       return i.code;
@@ -1389,11 +1591,84 @@
     main.dataset.healthBound = '1';
     main.addEventListener('submit', function (e) {
       var form = e.target;
-      if (!form || !form.classList || !form.classList.contains('event-health-form')) return;
-      e.preventDefault();
-      saveEventHealthForm(form);
+      if (!form || !form.classList) return;
+      if (form.classList.contains('event-health-form')) {
+        e.preventDefault();
+        saveEventHealthForm(form);
+      } else if (form.id === 'event-health-bulk-form') {
+        e.preventDefault();
+        saveHealthBulkForm(form);
+      }
+    });
+    main.addEventListener('change', function (e) {
+      if (e.target.classList && e.target.classList.contains('health-select-checkbox')) {
+        var eid = e.target.value;
+        if (e.target.checked) {
+          var ev = (healthCache && healthCache.events) || [];
+          var row = ev.find(function (x) {
+            return String(x.id) === String(eid);
+          });
+          if (row) rememberSelectedHealthEvent(row);
+        } else forgetSelectedHealthEvent(eid);
+        updateHealthBulkBar();
+        return;
+      }
+      if (e.target.id === 'event-health-select-page') {
+        var visible = (healthCache && healthCache.events) || [];
+        if (eventHealthState.issueFilter && eventHealthState.issueFilter !== 'all') {
+          visible = visible.filter(function (ev) {
+            return eventMatchesIssueFilter(ev, eventHealthState.issueFilter);
+          });
+        }
+        visible.forEach(function (ev) {
+          if (e.target.checked) rememberSelectedHealthEvent(ev);
+          else forgetSelectedHealthEvent(ev.id);
+        });
+        main.querySelectorAll('.health-select-checkbox').forEach(function (cb) {
+          cb.checked = e.target.checked;
+        });
+        updateHealthBulkBar();
+      }
     });
     main.addEventListener('click', function (e) {
+      if (e.target.closest('#health-bulk-clear')) {
+        clearSelectedHealthEvents();
+        main.querySelectorAll('.health-select-checkbox').forEach(function (cb) {
+          cb.checked = false;
+        });
+        var selectPage = document.getElementById('event-health-select-page');
+        if (selectPage) selectPage.checked = false;
+        updateHealthBulkBar();
+        return;
+      }
+      var unselectBtn = e.target.closest('[data-unselect-health-event]');
+      if (unselectBtn) {
+        var unselectId = unselectBtn.getAttribute('data-unselect-health-event');
+        forgetSelectedHealthEvent(unselectId);
+        main.querySelectorAll('.health-select-checkbox').forEach(function (cb) {
+          if (String(cb.value) === String(unselectId)) cb.checked = false;
+        });
+        updateHealthBulkBar();
+        return;
+      }
+      if (e.target.closest('#health-delete-btn')) {
+        deleteSelectedHealthEvents(false);
+        return;
+      }
+      if (e.target.closest('#health-force-delete-btn')) {
+        deleteSelectedHealthEvents(true);
+        return;
+      }
+      var deleteBtn = e.target.closest('[data-delete-health-event]');
+      if (deleteBtn) {
+        deleteSingleHealthEvent(
+          deleteBtn.getAttribute('data-delete-health-event'),
+          deleteBtn.getAttribute('data-event-title'),
+          deleteBtn
+        );
+        return;
+      }
+
       var clearBtn = e.target.closest('[data-clear-broken-organiser]');
       if (clearBtn) {
         var eventId = clearBtn.getAttribute('data-clear-broken-organiser');
@@ -1484,6 +1759,33 @@
           });
         return;
       }
+      var unpublishBtn = e.target.closest('.moderation-unpublish-report-btn');
+      if (unpublishBtn) {
+        var unpublishReportId = unpublishBtn.getAttribute('data-report-id');
+        if (!unpublishReportId) return;
+        if (
+          !window.confirm(
+            'Unpublish this listing on the Hub? Ticket sales will stop and the report will be marked reviewed.'
+          )
+        ) {
+          return;
+        }
+        unpublishBtn.disabled = true;
+        adminPatch('/api/admin/moderation', { action: 'unpublish_from_report', id: unpublishReportId })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Unpublish failed');
+            if (data.listingMissing) {
+              window.alert('Report closed — the listing was already removed from Supabase.');
+            }
+            renderModeration();
+            refreshAdminNotifications();
+          })
+          .catch(function (err) {
+            unpublishBtn.disabled = false;
+            window.alert(err.message || 'Could not unpublish listing.');
+          });
+        return;
+      }
       var dismissReviewReportBtn = e.target.closest('.moderation-dismiss-review-report-btn');
       if (dismissReviewReportBtn) {
         var reviewReportId = dismissReviewReportBtn.getAttribute('data-review-report-id');
@@ -1498,6 +1800,24 @@
           .catch(function (err) {
             dismissReviewReportBtn.disabled = false;
             window.alert(err.message || 'Could not dismiss report.');
+          });
+        return;
+      }
+      var deleteReviewReportBtn = e.target.closest('.moderation-delete-review-report-btn');
+      if (deleteReviewReportBtn) {
+        var deleteReportId = deleteReviewReportBtn.getAttribute('data-review-report-id');
+        if (!deleteReportId) return;
+        if (!window.confirm('Remove the reported review from the site and close this report?')) return;
+        deleteReviewReportBtn.disabled = true;
+        adminPatch('/api/admin/moderation', { action: 'delete_review_from_report', id: deleteReportId })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Remove failed');
+            renderModeration();
+            refreshAdminNotifications();
+          })
+          .catch(function (err) {
+            deleteReviewReportBtn.disabled = false;
+            window.alert(err.message || 'Could not remove review.');
           });
         return;
       }
@@ -1528,6 +1848,45 @@
       '<div id="event-health-status" class="text-sm text-slate-500">Scanning published events…</div>' +
       '<div id="event-health-summary" class="hidden admin-metric-grid admin-metric-grid--4"></div>' +
       '<div id="event-health-toolbar" class="hidden flex flex-wrap items-center gap-3"></div>' +
+      '<div id="event-health-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
+      '<form id="event-health-bulk-form" class="space-y-3">' +
+      '<div class="flex flex-wrap items-center justify-between gap-2">' +
+      '<p class="text-sm font-semibold text-brand-900"><span id="health-bulk-count">0</span> events selected</p>' +
+      '<button type="button" id="health-bulk-clear" class="text-xs font-semibold text-slate-600 hover:text-brand-900">Clear selection</button></div>' +
+      '<p class="text-xs text-slate-600">Tick events below, then apply the same fix to all selected — or delete unwanted listings.</p>' +
+      '<div id="health-selected-chips" class="flex flex-wrap gap-1.5"></div>' +
+      '<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
+      '<select name="bulk_organiser_id" id="health-bulk-organiser" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">— Leave unchanged —</option>' +
+      '<option value="__unlink__">— Unlink from organiser —</option></select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event date & time</label>' +
+      '<input type="datetime-local" name="bulk_starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
+      '<select name="bulk_event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">— Leave unchanged —</option>' +
+      eventTypeOptions('') +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Format</label>' +
+      '<select name="bulk_meeting_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">— Leave unchanged —</option>' +
+      meetingFormatOptions('') +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">VAT (paid tickets)</label>' +
+      '<select name="bulk_vat_treatment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">— Leave unchanged —</option>' +
+      '<option value="included">VAT included</option>' +
+      '<option value="added">VAT added at checkout</option></select></div></div>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Apply fixes to selected</button>' +
+      '<span id="health-bulk-msg" class="text-xs"></span></div></form>' +
+      '<div id="health-delete-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
+      '<p class="text-sm font-semibold text-brand-900">Delete selected events</p>' +
+      '<p class="text-xs text-slate-600">Events with registrations or active ticket sales are skipped unless you force delete.</p>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="button" id="health-delete-btn" class="rounded-lg bg-red-600 text-white text-sm font-semibold px-4 py-2 hover:bg-red-700">Delete selected</button>' +
+      '<button type="button" id="health-force-delete-btn" class="rounded-lg border border-red-300 bg-white text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50">Force delete</button>' +
+      '<span id="health-delete-msg" class="text-xs"></span></div></div></div>' +
       '<div id="event-health-list" class="space-y-3"></div>' +
       '<div id="event-health-completed"></div></div>';
 
@@ -1642,6 +2001,14 @@
         return codes.indexOf('missing_organiser') >= 0 || codes.indexOf('invalid_organiser') >= 0;
       }).length;
 
+      var sortedOrganisers = organisers.slice().sort(function (a, b) {
+        var aPub = a.listingStatus === 'published' ? 0 : 1;
+        var bPub = b.listingStatus === 'published' ? 0 : 1;
+        if (aPub !== bPub) return aPub - bPub;
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      });
+      var firstOrganiserId = sortedOrganisers.length ? sortedOrganisers[0].id : '';
+
       if (toolbar) {
         toolbar.classList.remove('hidden');
         toolbar.innerHTML =
@@ -1662,6 +2029,8 @@
             })
             .join('') +
           '</select></label>' +
+          '<label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 cursor-pointer">' +
+          '<input type="checkbox" id="event-health-select-page" class="rounded border-slate-300"> Select all on page</label>' +
           (needsOrganiserBulk > 1
             ? '<button type="button" id="event-health-bulk-organiser" class="rounded-lg border border-brand-200 bg-brand-50 text-brand-800 px-3 py-1.5 text-xs font-semibold hover:bg-brand-100">Assign first organiser to ' +
               needsOrganiserBulk +
@@ -1680,15 +2049,25 @@
             bulkAssignFirstOrganiser(data.events || [], organisers);
           });
         }
+        var bulkOrganiser = document.getElementById('health-bulk-organiser');
+        if (bulkOrganiser) {
+          bulkOrganiser.innerHTML =
+            '<option value="">— Leave unchanged —</option>' +
+            '<option value="__unlink__">— Unlink from organiser —</option>' +
+            sortedOrganisers
+              .map(function (o) {
+                return (
+                  '<option value="' +
+                  attrEsc(o.id) +
+                  '">' +
+                  esc(o.name) +
+                  (o.listingStatus === 'published' ? '' : ' (draft profile)') +
+                  '</option>'
+                );
+              })
+              .join('');
+        }
       }
-
-      var sortedOrganisers = organisers.slice().sort(function (a, b) {
-        var aPub = a.listingStatus === 'published' ? 0 : 1;
-        var bPub = b.listingStatus === 'published' ? 0 : 1;
-        if (aPub !== bPub) return aPub - bPub;
-        return String(a.name || '').localeCompare(String(b.name || ''));
-      });
-      var firstOrganiserId = sortedOrganisers.length ? sortedOrganisers[0].id : '';
 
       var sortedEvents = (data.events || [])
         .filter(function (ev) {
@@ -1706,11 +2085,14 @@
         list.innerHTML =
           '<p class="text-sm text-slate-500 rounded-lg border border-slate-200 bg-white p-4">No events match this filter.</p>';
         paintEventHealthCompleted(data.recentCompletions || []);
+        updateHealthBulkBar();
         return;
       }
 
       list.innerHTML = sortedEvents
         .map(function (ev) {
+          if (eventHealthState.selected[ev.id]) rememberSelectedHealthEvent(ev);
+          var checked = eventHealthState.selected[ev.id] ? ' checked' : '';
           var fields = healthFieldVisibility(ev);
           var issueHtml = (ev.issues || []).map(issueBadge).join('');
           var needsOrganiser = fields.showOrganiser;
@@ -1874,6 +2256,14 @@
             (ev.organiser_id ? ' data-organiser-id="' + attrEsc(ev.organiser_id) + '"' : '') +
             '>' +
             '<div class="p-4 border-b border-slate-100 flex flex-wrap items-start justify-between gap-3">' +
+            '<div class="flex gap-3 min-w-0 flex-1">' +
+            '<input type="checkbox" class="health-select-checkbox mt-1 rounded border-slate-300 shrink-0" value="' +
+            attrEsc(ev.id) +
+            '"' +
+            checked +
+            ' aria-label="Select ' +
+            attrEsc(ev.title || 'event') +
+            '">' +
             '<div class="min-w-0 flex-1">' +
             '<h3 class="font-bold text-brand-900">' +
             esc(ev.title || 'Untitled') +
@@ -1892,11 +2282,16 @@
             (needsOrganiser
               ? '<p class="text-xs text-red-800 mt-2">Select an organiser below, then click <strong>Save fixes</strong>.</p>'
               : '') +
-            '</div>' +
+            '</div></div>' +
             '<div class="flex flex-wrap gap-2 shrink-0">' +
             '<a href="../events/' +
             esc(ev.slug || '') +
             '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View event page</a>' +
+            '<button type="button" class="text-xs font-semibold text-red-700 hover:underline" data-delete-health-event="' +
+            attrEsc(ev.id) +
+            '" data-event-title="' +
+            attrEsc(ev.title || 'Untitled') +
+            '">Delete event</button>' +
             '</div></div>' +
             '<form class="event-health-form p-4 grid sm:grid-cols-2 gap-4 text-sm">' +
             eventFieldsHtml +
@@ -1912,6 +2307,7 @@
           );
         })
         .join('');
+      updateHealthBulkBar();
       paintEventHealthCompleted(data.recentCompletions || []);
     });
   }
@@ -2979,6 +3375,53 @@
       .join('');
   }
 
+  function moderationActionBtn(className, label, attrs) {
+    return (
+      '<button type="button" class="' +
+      className +
+      ' rounded-lg px-2.5 py-1 text-xs font-semibold disabled:opacity-50" ' +
+      (attrs || '') +
+      '>' +
+      esc(label) +
+      '</button>'
+    );
+  }
+
+  function listingReportActionsHtml(r) {
+    var parts = [];
+    if (r.viewUrl) {
+      parts.push(
+        '<a href="' +
+          attrEsc(r.viewUrl) +
+          '" target="_blank" rel="noopener" class="rounded-lg border border-brand-200 bg-white text-brand-800 px-2.5 py-1 text-xs font-semibold hover:bg-brand-50">View on Hub</a>'
+      );
+    }
+    if (r.adminUrl) {
+      parts.push(
+        '<a href="' +
+          attrEsc(r.adminUrl) +
+          '" class="rounded-lg border border-slate-200 bg-white text-slate-700 px-2.5 py-1 text-xs font-semibold hover:bg-slate-50">Edit listing</a>'
+      );
+    }
+    if (r.canUnpublish) {
+      parts.push(
+        moderationActionBtn(
+          'moderation-unpublish-report-btn border border-red-200 text-red-700 hover:bg-red-50',
+          'Unpublish listing',
+          'data-report-id="' + attrEsc(r.id) + '"'
+        )
+      );
+    }
+    parts.push(
+      moderationActionBtn(
+        'moderation-dismiss-report-btn border border-slate-200 text-slate-700 hover:bg-slate-50',
+        'Dismiss report',
+        'data-report-id="' + attrEsc(r.id) + '"'
+      )
+    );
+    return '<div class="mt-3 flex flex-wrap gap-2">' + parts.join('') + '</div>';
+  }
+
   function reviewReportsHtml(reports) {
     if (!reports.length) {
       return '<p class="text-sm text-slate-500">No open review reports.</p>';
@@ -3006,9 +3449,20 @@
           (r.reporterEmail ? ' · ' + esc(r.reporterEmail) : '') +
           '</p>' +
           (r.details ? '<p class="text-xs text-slate-600 mt-1">' + esc(r.details) + '</p>' : '') +
-          '<button type="button" class="moderation-dismiss-review-report-btn mt-2 rounded-lg border border-slate-200 text-slate-700 px-2.5 py-1 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50" data-review-report-id="' +
-          attrEsc(r.id) +
-          '">Dismiss report</button></div>'
+          '<div class="mt-3 flex flex-wrap gap-2">' +
+          (r.reviewId
+            ? moderationActionBtn(
+                'moderation-delete-review-report-btn border border-red-200 text-red-700 hover:bg-red-50',
+                'Remove review',
+                'data-review-report-id="' + attrEsc(r.id) + '"'
+              )
+            : '') +
+          moderationActionBtn(
+            'moderation-dismiss-review-report-btn border border-slate-200 text-slate-700 hover:bg-slate-50',
+            'Dismiss report',
+            'data-review-report-id="' + attrEsc(r.id) + '"'
+          ) +
+          '</div></div>'
         );
       })
       .join('');
@@ -3044,9 +3498,8 @@
           (r.reporterEmail ? ' · ' + esc(r.reporterEmail) : '') +
           '</p>' +
           (r.details ? '<p class="text-xs text-slate-600 mt-1">' + esc(r.details) + '</p>' : '') +
-          '<button type="button" class="moderation-dismiss-report-btn mt-2 rounded-lg border border-slate-200 text-slate-700 px-2.5 py-1 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50" data-report-id="' +
-          attrEsc(r.id) +
-          '">Dismiss report</button></div>'
+          listingReportActionsHtml(r) +
+          '</div>'
         );
       })
       .join('');
@@ -3089,14 +3542,14 @@
     main.innerHTML =
       '<div class="space-y-6">' +
       '<p id="moderation-status" class="text-sm text-slate-500">Loading listings and reviews from Supabase…</p>' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Events go live automatically when organisers publish — no admin approval needed. Use this page for user reports and spam reviews.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Events go live automatically when organisers publish. For reports: view the listing, edit it in cleanup, unpublish if needed, or dismiss if it looks fine.</p>' +
       '<div class="bg-white rounded-xl border border-amber-200 p-5 shadow-sm" id="moderation-reports-panel">' +
       '<h3 class="font-bold text-amber-900 mb-1">Listing reports</h3>' +
-      '<p class="text-xs text-slate-500 mb-4">Submitted from event and group profile pages — dismiss when reviewed.</p>' +
+      '<p class="text-xs text-slate-500 mb-4">Submitted from event and group profile pages — view, unpublish, or dismiss when reviewed.</p>' +
       '<div class="space-y-3" id="moderation-reports">Loading…</div></div>' +
       '<div class="bg-white rounded-xl border border-violet-200 p-5 shadow-sm" id="moderation-review-reports-panel">' +
       '<h3 class="font-bold text-violet-900 mb-1">Review reports</h3>' +
-      '<p class="text-xs text-slate-500 mb-4">Submitted from organiser profiles — dismiss when reviewed.</p>' +
+      '<p class="text-xs text-slate-500 mb-4">Submitted from organiser profiles — remove the review or dismiss when reviewed.</p>' +
       '<div class="space-y-3" id="moderation-review-reports">Loading…</div></div>' +
       '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">All events</h3>' +
@@ -5775,6 +6228,11 @@
       '" placeholder="https://…"></div>' +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save event</button>' +
+      '<button type="button" class="rounded-lg border border-red-200 text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50" data-delete-event="' +
+      attrEsc(ev.id) +
+      '" data-event-title="' +
+      attrEsc(ev.title || 'Untitled') +
+      '">Delete event</button>' +
       '<span class="event-cleanup-msg text-xs"></span></div></form>'
     );
   }
@@ -7085,6 +7543,38 @@
     }
     if (e.target.closest('#event-force-delete-btn')) {
       deleteSelectedEvents(true);
+      return;
+    }
+    var deleteEventBtn = e.target.closest('[data-delete-event]');
+    if (deleteEventBtn) {
+      var delId = deleteEventBtn.getAttribute('data-delete-event');
+      var delTitle = deleteEventBtn.getAttribute('data-event-title');
+      if (
+        !window.confirm(
+          'Permanently delete “' +
+            (delTitle || 'this event') +
+            '”?\n\nUse force delete in the bulk bar if it has registrations.'
+        )
+      ) {
+        return;
+      }
+      deleteEventBtn.disabled = true;
+      adminPost('/api/admin/events', { action: 'bulk_delete', ids: [delId] })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Delete failed');
+          if (!data.deleted) {
+            throw new Error(formatEventBulkSkipped(data.skipped) || 'Could not delete this event');
+          }
+          forgetSelectedEvent(delId);
+          return refreshEventCleanupData();
+        })
+        .then(function () {
+          updateEventBulkBar();
+        })
+        .catch(function (err) {
+          deleteEventBtn.disabled = false;
+          window.alert(err.message || 'Could not delete event');
+        });
       return;
     }
     var toggle = e.target.closest('[data-toggle-event-edit]');
