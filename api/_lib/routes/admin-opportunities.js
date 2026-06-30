@@ -29,6 +29,16 @@ function queryFromRequest(req) {
   return q;
 }
 
+function normalizeApprovalStatus(input) {
+  const raw = String(input || '').trim();
+  if (!raw) return '';
+  const key = raw.toLowerCase();
+  if (key === 'pending' || key === 'pending review') return 'Pending Review';
+  if (key === 'approved') return 'Approved';
+  if (key === 'rejected') return 'Rejected';
+  return raw;
+}
+
 function mapOpportunityRow(row) {
   return {
     id: row.id,
@@ -54,7 +64,7 @@ function mapOpportunityRow(row) {
 async function listOpportunitiesForAdmin(query) {
   const sb = getSupabaseAdmin();
   const status = String(query.status || '').trim();
-  const approvalStatus = String(query.approval_status || '').trim();
+  const approvalStatus = normalizeApprovalStatus(query.approval_status || query.approval);
   const type = String(query.type || '').trim();
   const search = String(query.q || '').trim();
   const sort = String(query.sort || 'recent').trim().toLowerCase();

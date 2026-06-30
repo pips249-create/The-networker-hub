@@ -140,6 +140,7 @@
     q: '',
     total: 0,
     loading: false,
+    fetchToken: 0,
     expanded: {},
     selected: {},
   };
@@ -9534,7 +9535,7 @@
   }
 
   function fetchOpportunityCleanup(pageIndex) {
-    if (opportunityCleanupState.loading) return Promise.resolve(opportunityCleanupCache);
+    var fetchToken = ++opportunityCleanupState.fetchToken;
     opportunityCleanupState.loading = true;
     var page =
       typeof pageIndex === 'number' && !isNaN(pageIndex)
@@ -9553,6 +9554,7 @@
     if (opportunityCleanupState.q) params.set('q', opportunityCleanupState.q);
     return adminGet('/api/admin/opportunities?' + params.toString())
       .then(function (data) {
+        if (fetchToken !== opportunityCleanupState.fetchToken) return opportunityCleanupCache;
         opportunityCleanupState.loading = false;
         if (!data || data.error) return data;
         opportunityCleanupCache = data;
@@ -9561,7 +9563,9 @@
         return opportunityCleanupCache;
       })
       .catch(function () {
-        opportunityCleanupState.loading = false;
+        if (fetchToken === opportunityCleanupState.fetchToken) {
+          opportunityCleanupState.loading = false;
+        }
         return { error: 'network_error' };
       });
   }
@@ -9655,9 +9659,23 @@
     }
 
     if (!opportunities.length) {
-      list.innerHTML =
-        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No business opportunities match your filters.</p>' +
-        adminPaginationHtml(page, total, OPPORTUNITY_PAGE_SIZE, 'data-opp-page');
+      var emptyMsg =
+        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No business opportunities match your filters.</p>';
+      if (pendingCount > 0 && opportunityCleanupHasActiveFilters()) {
+        emptyMsg =
+          '<div class="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center space-y-3">' +
+          '<p class="text-sm text-amber-950 font-semibold">' +
+          pendingCount +
+          ' listing' +
+          (pendingCount === 1 ? ' is' : 's are') +
+          ' awaiting review, but ' +
+          (pendingCount === 1 ? 'it is' : 'they are') +
+          ' hidden by your current filters.</p>' +
+          '<p class="text-sm text-amber-900/90">Pending listings are usually drafts — try clearing filters or use the Pending review shortcut.</p>' +
+          '<button type="button" data-opp-quick="pending" class="text-xs font-semibold rounded-full border border-amber-300 bg-white px-3 py-1.5 text-amber-950 hover:bg-amber-100">Show pending review</button>' +
+          '</div>';
+      }
+      list.innerHTML = emptyMsg + adminPaginationHtml(page, total, OPPORTUNITY_PAGE_SIZE, 'data-opp-page');
       return;
     }
 
@@ -9759,6 +9777,12 @@
     var approvalQ = String(query.get('approval') || '').trim().toLowerCase();
     if (approvalQ === 'pending' || approvalQ === 'pending review') {
       opportunityCleanupState.approval = 'Pending Review';
+      opportunityCleanupState.status = '';
+      opportunityCleanupState.type = '';
+      opportunityCleanupState.featured = false;
+      opportunityCleanupState.noImage = false;
+      opportunityCleanupState.q = '';
+      opportunityCleanupState.page = 0;
     }
 
     main.innerHTML =
@@ -10007,8 +10031,12 @@
         opportunityCleanupState.noImage = false;
         opportunityCleanupState.q = '';
       } else if (key === 'pending') {
-        opportunityCleanupState.approval =
-          opportunityCleanupState.approval === 'Pending Review' ? '' : 'Pending Review';
+        if (opportunityCleanupState.approval === 'Pending Review') {
+          opportunityCleanupState.approval = '';
+        } else {
+          opportunityCleanupState.approval = 'Pending Review';
+          opportunityCleanupState.status = '';
+        }
       } else if (key === 'draft') {
         opportunityCleanupState.status = opportunityCleanupState.status === 'draft' ? '' : 'draft';
       } else if (key === 'published') {
