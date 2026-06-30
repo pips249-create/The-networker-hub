@@ -76,7 +76,7 @@
     },
     moderation: {
       title: 'Content moderation',
-      subtitle: 'Approve or reject events, triage listing reports, and remove spam reviews',
+      subtitle: 'Triage listing reports and remove spam reviews — events go live when organisers publish',
     },
     financials: {
       title: 'Financial hub',
@@ -481,6 +481,26 @@
     syncAdminLayoutOffset();
   }
 
+  function sumActionNotificationCounts(data) {
+    var counts = data && data.actionCounts;
+    if (counts) {
+      return (
+        (Number(counts.openListingReports) || 0) +
+        (Number(counts.openReviewReports) || 0) +
+        (Number(counts.spamReviews) || 0) +
+        (Number(counts.pendingOpportunities) || 0) +
+        (Number(counts.openClaimDisputes) || 0)
+      );
+    }
+    return Number(data && data.notificationCount) || 0;
+  }
+
+  function sidebarNotificationTotal(data) {
+    var actionCount = sumActionNotificationCounts(data);
+    var healthCount = healthCache && Number(healthCache.count) > 0 ? Number(healthCache.count) : 0;
+    return actionCount + healthCount;
+  }
+
   function updateHealthBadge(count) {
     var badge = document.getElementById('admin-health-badge');
     if (!badge) return;
@@ -566,10 +586,7 @@
       }
     }
 
-    var notificationCount = Number(data.notificationCount);
-    if (!notificationCount && data.alerts) notificationCount = data.alerts.length;
-    var healthCount = healthCache && healthCache.count ? Number(healthCache.count) : 0;
-    updateHealthBadge(Math.max(notificationCount || 0, healthCount));
+    updateHealthBadge(sidebarNotificationTotal(data));
   }
 
   function refreshAdminNotifications(options) {
@@ -588,6 +605,10 @@
       tasks.push(Promise.resolve(healthCache));
     }
     return Promise.all(tasks).then(function (results) {
+      var health = results[1];
+      if (health && !health.error && health.configured !== false) {
+        healthCache = health;
+      }
       applyDashboardNotifications(results[0]);
       return results[0];
     });
@@ -769,7 +790,6 @@
     if (!attention) {
       return '<p class="text-sm text-slate-500">Loading…</p>';
     }
-    var pending = attention.pendingEvents || [];
     var parts = [];
 
     if (attention.pendingOwnershipClaims > 0) {
@@ -785,42 +805,86 @@
     }
 
     if (attention.openListingReports > 0) {
+      var reportItems = attention.openListingReportItems || [];
       parts.push(
         '<div class="rounded-lg border border-amber-200 bg-amber-50 p-4">' +
           '<p class="font-semibold text-sm text-amber-900">' +
           attention.openListingReports +
           ' open listing report' +
           (attention.openListingReports === 1 ? '' : 's') +
-          '</p>' +
-          '<a href="#moderation" class="text-xs font-semibold text-amber-900 mt-2 inline-block hover:underline">Open moderation →</a></div>'
+          '</p>'
+      );
+      if (reportItems.length) {
+        parts.push('<div class="mt-3 space-y-2">');
+        reportItems.forEach(function (r) {
+          var reasonLabels = {
+            misleading: 'Misleading',
+            spam: 'Spam',
+            wrong_details: 'Wrong details',
+            offensive: 'Offensive',
+            duplicate: 'Duplicate',
+            other: 'Other',
+          };
+          parts.push(
+            '<div class="rounded-md border border-amber-200/80 bg-white/80 p-3 text-sm">' +
+              '<p class="font-semibold text-brand-900">' +
+              esc(r.title) +
+              ' <span class="text-xs font-normal text-slate-500">(' +
+              esc(r.listingType === 'organiser' ? 'Group' : 'Event') +
+              ')</span></p>' +
+              '<p class="text-xs text-amber-900 mt-1">' +
+              esc(reasonLabels[r.reason] || r.reason) +
+              (r.reporterEmail ? ' · ' + esc(r.reporterEmail) : '') +
+              '</p>' +
+              (r.details ? '<p class="text-xs text-slate-600 mt-1">' + esc(r.details) + '</p>' : '') +
+              '</div>'
+          );
+        });
+        parts.push('</div>');
+      }
+      parts.push(
+        '<a href="#moderation" class="text-xs font-semibold text-amber-900 mt-3 inline-block hover:underline">Dismiss on moderation page →</a></div>'
       );
     }
 
-    if (pending.length) {
+    if (attention.openReviewReports > 0) {
+      var reviewReportItems = attention.openReviewReportItems || [];
       parts.push(
-        '<div class="rounded-lg border border-amber-200 bg-amber-50 p-4">' +
-          '<p class="text-xs font-semibold uppercase tracking-wide text-amber-800/80">Events pending approval</p>' +
-          '<ul class="mt-2 space-y-1.5">'
+        '<div class="rounded-lg border border-violet-200 bg-violet-50 p-4">' +
+          '<p class="font-semibold text-sm text-violet-900">' +
+          attention.openReviewReports +
+          ' open review report' +
+          (attention.openReviewReports === 1 ? '' : 's') +
+          '</p>'
       );
-      pending.slice(0, 6).forEach(function (e) {
-        parts.push(
-          '<li class="text-sm text-amber-900"><span class="font-medium">' +
-            esc(e.title) +
-            '</span> <span class="text-xs text-amber-800/80">· ' +
-            esc(e.organiser) +
-            '</span></li>'
-        );
-      });
+      if (reviewReportItems.length) {
+        parts.push('<div class="mt-3 space-y-2">');
+        reviewReportItems.forEach(function (r) {
+          parts.push(
+            '<div class="rounded-md border border-violet-200/80 bg-white/80 p-3 text-sm">' +
+              '<p class="text-xs text-violet-900">' +
+              esc(r.snippet || 'Review report') +
+              (r.reporterEmail ? ' · ' + esc(r.reporterEmail) : '') +
+              '</p>' +
+              (r.details ? '<p class="text-xs text-slate-600 mt-1">' + esc(r.details) + '</p>' : '') +
+              '</div>'
+          );
+        });
+        parts.push('</div>');
+      }
       parts.push(
-        '</ul><a href="#moderation" class="text-xs font-semibold text-amber-900 mt-3 inline-block hover:underline">Open event approval queue →</a></div>'
+        '<a href="#moderation" class="text-xs font-semibold text-violet-900 mt-3 inline-block hover:underline">Dismiss on moderation page →</a></div>'
       );
     }
 
     var pendingOpps = attention.pendingOpportunities || [];
-    if (pendingOpps.length) {
+    var pendingOppsTotal = attention.pendingOpportunitiesTotal || pendingOpps.length;
+    if (pendingOppsTotal > 0) {
       parts.push(
         '<div class="rounded-lg border border-amber-200 bg-amber-50 p-4">' +
-          '<p class="text-xs font-semibold uppercase tracking-wide text-amber-800/80">Business opportunities pending review</p>' +
+          '<p class="text-xs font-semibold uppercase tracking-wide text-amber-800/80">Business opportunities pending review (' +
+          pendingOppsTotal +
+          ')</p>' +
           '<ul class="mt-2 space-y-1.5">'
       );
       pendingOpps.slice(0, 6).forEach(function (o) {
@@ -877,7 +941,6 @@
           }
           if (data && data.configured !== false) {
             healthCache = data;
-            updateHealthBadge(data.count);
           }
           return data;
         });
@@ -1400,70 +1463,10 @@
     });
   }
 
-  function approvePendingEvent(eventId, btn) {
-    if (!eventId) return;
-    if (btn) btn.disabled = true;
-    fetch('/api/admin/events', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: eventId, status: 'published' }),
-    })
-      .then(function (r) {
-        return r.json().then(function (body) {
-          if (!r.ok || body.ok === false) {
-            throw new Error(body.message || body.error || 'Approve failed');
-          }
-          return body;
-        });
-      })
-      .then(function () {
-        renderModeration();
-        refreshAdminNotifications();
-      })
-      .catch(function (err) {
-        if (btn) btn.disabled = false;
-        window.alert(err.message || 'Could not approve event.');
-      });
-  }
-
-  function rejectPendingEvent(eventId, btn) {
-    if (!eventId) return;
-    if (btn) btn.disabled = true;
-    adminPatch('/api/admin/moderation', { action: 'reject_event', id: eventId })
-      .then(function (data) {
-        if (!data || !data.ok) {
-          throw new Error((data && data.message) || (data && data.error) || 'Reject failed');
-        }
-        renderModeration();
-        refreshAdminNotifications();
-      })
-      .catch(function (err) {
-        if (btn) btn.disabled = false;
-        window.alert(err.message || 'Could not reject event.');
-      });
-  }
-
   function bindModerationActions() {
     if (!main || main.dataset.moderationBound) return;
     main.dataset.moderationBound = '1';
     main.addEventListener('click', function (e) {
-      var approveBtn = e.target.closest('.moderation-approve-btn');
-      if (approveBtn) {
-        var approveId = approveBtn.getAttribute('data-event-id');
-        if (!approveId) return;
-        if (!window.confirm('Approve this event and publish it on the Hub?')) return;
-        approvePendingEvent(approveId, approveBtn);
-        return;
-      }
-      var rejectBtn = e.target.closest('.moderation-reject-btn');
-      if (rejectBtn) {
-        var rejectId = rejectBtn.getAttribute('data-event-id');
-        if (!rejectId) return;
-        if (!window.confirm('Reject this listing? The organiser will need to revise and resubmit.')) return;
-        rejectPendingEvent(rejectId, rejectBtn);
-        return;
-      }
       var dismissBtn = e.target.closest('.moderation-dismiss-report-btn');
       if (dismissBtn) {
         var reportId = dismissBtn.getAttribute('data-report-id');
@@ -1521,7 +1524,7 @@
   function renderEventHealth() {
     main.innerHTML =
       '<div class="space-y-4">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Checks <strong>published</strong> events only. Listings awaiting approval are in <a href="#moderation" class="text-brand-700 font-semibold hover:underline">Content Moderation</a> — not here.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Checks <strong>published</strong> events only. Draft events still being built by organisers are not included.</p>' +
       '<div id="event-health-status" class="text-sm text-slate-500">Scanning published events…</div>' +
       '<div id="event-health-summary" class="hidden admin-metric-grid admin-metric-grid--4"></div>' +
       '<div id="event-health-toolbar" class="hidden flex flex-wrap items-center gap-3"></div>' +
@@ -2911,25 +2914,7 @@
     }
   }
 
-  function listingActionCell(l, opts) {
-    opts = opts || {};
-    var isPending = l.status === 'Pending' || l.pending;
-    if (isPending) {
-      if (opts.pendingQueue) {
-        return (
-          '<td class="px-4 py-3 whitespace-nowrap">' +
-          '<button type="button" class="moderation-approve-btn rounded-lg bg-brand-700 text-white px-2.5 py-1 text-xs font-semibold hover:bg-brand-900 disabled:opacity-50" data-event-id="' +
-          attrEsc(l.id) +
-          '">Approve</button> ' +
-          '<button type="button" class="moderation-reject-btn rounded-lg border border-red-200 text-red-700 px-2.5 py-1 text-xs font-semibold hover:bg-red-50 disabled:opacity-50 ml-1" data-event-id="' +
-          attrEsc(l.id) +
-          '">Reject</button></td>'
-        );
-      }
-      return (
-        '<td class="px-4 py-3"><span class="text-xs text-amber-800">Awaiting approval</span></td>'
-      );
-    }
+  function listingActionCell(l) {
     if (l.status === 'Live') {
       return (
         '<td class="px-4 py-3"><a href="#cleanup/issues" class="text-brand-700 font-semibold text-xs hover:underline">Review data</a></td>'
@@ -2938,7 +2923,7 @@
     return '<td class="px-4 py-3"><span class="text-xs text-slate-400">—</span></td>';
   }
 
-  function listingsTableHtml(listings, emptyMessage, opts) {
+  function listingsTableHtml(listings, emptyMessage) {
     if (!listings.length) {
       return (
         '<tr><td colspan="7" class="px-4 py-6 text-slate-500">' +
@@ -2950,11 +2935,13 @@
       .map(function (l) {
         var soldLabel = l.capacity ? l.sold + '/' + l.capacity : String(l.sold || 0) + ' sold';
         var pct = l.capacity ? Math.round((l.sold / l.capacity) * 100) : 0;
-        var isPending = l.status === 'Pending' || l.pending;
-        var rowClass = isPending ? 'border-t border-amber-100 bg-amber-50/60' : 'border-t border-slate-100';
-        var statusClass = isPending
-          ? 'text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-900'
-          : 'text-xs font-semibold px-2 py-0.5 rounded bg-slate-100';
+        var isDraft = l.status === 'Draft';
+        var rowClass = 'border-t border-slate-100';
+        var statusClass = isDraft
+          ? 'text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700'
+          : l.status === 'Live'
+            ? 'text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-900'
+            : 'text-xs font-semibold px-2 py-0.5 rounded bg-slate-100';
         return (
           '<tr class="' +
           rowClass +
@@ -2985,7 +2972,7 @@
           '<span class="text-xs text-slate-500">' +
           esc(soldLabel) +
           '</span></td>' +
-          listingActionCell(l, opts) +
+          listingActionCell(l) +
           '</tr>'
         );
       })
@@ -3102,32 +3089,24 @@
     main.innerHTML =
       '<div class="space-y-6">' +
       '<p id="moderation-status" class="text-sm text-slate-500">Loading listings and reviews from Supabase…</p>' +
-      '<div class="bg-white rounded-xl border border-amber-200 shadow-sm overflow-hidden" id="moderation-pending-panel">' +
-      '<div class="px-4 py-3 border-b border-amber-100 bg-amber-50"><h3 class="font-bold text-amber-900">Pending approval</h3>' +
-      '<p class="text-xs text-amber-800/80 mt-0.5">Events waiting for approval — approve to publish or reject to send back to the organiser.</p></div>' +
-      adminTableScroll(
-        '<table class="w-full text-sm"><thead class="bg-amber-50/80 text-xs uppercase text-amber-900/70">' +
-          '<tr><th class="px-4 py-3 text-left">Title</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Tickets</th><th class="px-4 py-3"></th></tr></thead>' +
-          '<tbody id="moderation-pending"><tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
-      ) +
-      '</div>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Events go live automatically when organisers publish — no admin approval needed. Use this page for user reports and spam reviews.</p>' +
+      '<div class="bg-white rounded-xl border border-amber-200 p-5 shadow-sm" id="moderation-reports-panel">' +
+      '<h3 class="font-bold text-amber-900 mb-1">Listing reports</h3>' +
+      '<p class="text-xs text-slate-500 mb-4">Submitted from event and group profile pages — dismiss when reviewed.</p>' +
+      '<div class="space-y-3" id="moderation-reports">Loading…</div></div>' +
+      '<div class="bg-white rounded-xl border border-violet-200 p-5 shadow-sm" id="moderation-review-reports-panel">' +
+      '<h3 class="font-bold text-violet-900 mb-1">Review reports</h3>' +
+      '<p class="text-xs text-slate-500 mb-4">Submitted from organiser profiles — dismiss when reviewed.</p>' +
+      '<div class="space-y-3" id="moderation-review-reports">Loading…</div></div>' +
       '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">All events</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">Read-only — pending events are highlighted and listed at the top.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Read-only overview — organisers publish events themselves.</p></div>' +
       adminTableScroll(
         '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
           '<tr><th class="px-4 py-3 text-left">Title</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Tickets</th><th class="px-4 py-3"></th></tr></thead>' +
           '<tbody id="moderation-listings"><tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
       ) +
       '</div>' +
-      '<div class="bg-white rounded-xl border border-amber-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-amber-900 mb-1">Listing reports</h3>' +
-      '<p class="text-xs text-slate-500 mb-4">Submitted from event and group profile pages — dismiss when reviewed.</p>' +
-      '<div class="space-y-3" id="moderation-reports">Loading…</div></div>' +
-      '<div class="bg-white rounded-xl border border-violet-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-violet-900 mb-1">Review reports</h3>' +
-      '<p class="text-xs text-slate-500 mb-4">Submitted from organiser profiles — dismiss when reviewed.</p>' +
-      '<div class="space-y-3" id="moderation-review-reports">Loading…</div></div>' +
       '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
       '<h3 class="font-bold text-brand-900 mb-1">Reviews</h3>' +
       '<p class="text-xs text-slate-500 mb-4">Spam-like reviews are highlighted — delete to remove from the site.</p>' +
@@ -3135,8 +3114,6 @@
 
     adminGet('/api/admin/moderation').then(function (data) {
       var status = document.getElementById('moderation-status');
-      var pendingEl = document.getElementById('moderation-pending');
-      var pendingPanel = document.getElementById('moderation-pending-panel');
       var listingsEl = document.getElementById('moderation-listings');
       var reviewsEl = document.getElementById('moderation-reviews');
       var reportsEl = document.getElementById('moderation-reports');
@@ -3145,7 +3122,6 @@
         liveListings = [];
         liveReviews = [];
         if (status) status.textContent = 'Could not load moderation data from Supabase.';
-        if (pendingEl) pendingEl.innerHTML = listingsTableHtml([], 'Could not load pending events.');
         if (listingsEl) listingsEl.innerHTML = listingsTableHtml([]);
         if (reviewsEl) reviewsEl.innerHTML = reviewsHtml([]);
         if (reportsEl) reportsEl.innerHTML = listingReportsHtml([]);
@@ -3156,35 +3132,46 @@
       liveReviews = data.reviews || [];
       var listingReports = data.listingReports || [];
       var reviewReports = data.reviewReports || [];
-      var pendingListings = data.pendingListings || liveListings.filter(function (l) {
-        return l.status === 'Pending' || l.pending;
-      });
       if (status) {
         status.textContent =
           liveListings.length +
           ' events · ' +
-          pendingListings.length +
-          ' pending · ' +
           listingReports.length +
           ' listing reports · ' +
           reviewReports.length +
           ' review reports · ' +
           liveReviews.length +
           ' reviews from Supabase';
+        if (listingReports.length || reviewReports.length) {
+          status.innerHTML =
+            esc(status.textContent) +
+            ' — <a href="#moderation-reports-panel" class="font-semibold text-amber-800 hover:underline">Jump to reports</a>';
+        }
       }
       if (reportsEl) reportsEl.innerHTML = listingReportsHtml(listingReports);
       if (reviewReportsEl) reviewReportsEl.innerHTML = reviewReportsHtml(reviewReports);
-      if (pendingEl) {
-        pendingEl.innerHTML = pendingListings.length
-          ? listingsTableHtml(pendingListings, undefined, { pendingQueue: true })
-          : '<tr><td colspan="7" class="px-4 py-6 text-emerald-700">No events pending approval.</td></tr>';
+      if (data.listingReportsError && status) {
+        status.innerHTML =
+          esc(status.textContent) +
+          ' <span class="text-red-700">(Could not load listing reports: ' +
+          esc(data.listingReportsError) +
+          ')</span>';
       }
-      if (pendingPanel && !pendingListings.length) {
-        pendingPanel.classList.remove('border-amber-200');
-        pendingPanel.classList.add('border-emerald-200');
+      var reportsPanel = document.getElementById('moderation-reports-panel');
+      var reviewReportsPanel = document.getElementById('moderation-review-reports-panel');
+      if (reportsPanel) {
+        reportsPanel.classList.toggle('ring-2', listingReports.length > 0);
+        reportsPanel.classList.toggle('ring-amber-300', listingReports.length > 0);
+      }
+      if (reviewReportsPanel) {
+        reviewReportsPanel.classList.toggle('ring-2', reviewReports.length > 0);
+        reviewReportsPanel.classList.toggle('ring-violet-300', reviewReports.length > 0);
       }
       if (listingsEl) listingsEl.innerHTML = listingsTableHtml(liveListings);
       if (reviewsEl) reviewsEl.innerHTML = reviewsHtml(liveReviews);
+      if (listingReports.length && reportsPanel) {
+        reportsPanel.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      }
     });
   }
 
@@ -8018,7 +8005,7 @@
       '<button type="button" data-event-quick="unlinked" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Unlinked</button>' +
       '<button type="button" data-event-quick="no_date" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">No date</button>' +
       '<button type="button" data-event-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
-      '<button type="button" data-event-quick="pending" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Pending approval</button>' +
+      '<button type="button" data-event-quick="pending" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft events</button>' +
       '<button type="button" data-event-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
       '<input type="checkbox" id="event-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +

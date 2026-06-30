@@ -15,7 +15,7 @@ function round2(n) {
 function listingStatusLabel(status) {
   const s = String(status || '').trim();
   if (s === 'Approved') return 'Live';
-  if (s === 'Pending Review') return 'Pending';
+  if (s === 'Pending Review') return 'Draft';
   if (s === 'Rejected') return 'Rejected';
   return s || 'Draft';
 }
@@ -27,6 +27,126 @@ function isSpamReview(text) {
 
 const INCOMPLETE_ORGANISER_FILTER =
   'description.is.null,description.eq.,photo_url.is.null,photo_url.eq.,website.is.null,website.eq.';
+
+/** Actionable admin queue totals — used for alerts, attention, and sidebar badge (excludes event-health scan). */
+async function fetchAdminActionCounts(sb) {
+  const [
+    openListingReportsRes,
+    openReviewReportsRes,
+    pendingOpportunitiesRes,
+    claimDisputesRes,
+    recentReviewsRes,
+    incompleteOrgsRes,
+  ] = await Promise.all([
+    sb.from('listing_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+    sb.from('review_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+    sb
+      .from('business_opportunities')
+      .select('id', { count: 'exact', head: true })
+      .eq('approval_status', 'Pending Review'),
+    sb
+      .from('organiser_claim_disputes')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'open'),
+    sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
+    sb.from('organisers').select('id', { count: 'exact', head: true }).or(INCOMPLETE_ORGANISER_FILTER),
+  ]);
+
+  const spamReviews = (recentReviewsRes.data || []).filter((r) => isSpamReview(r.review_text)).length;
+
+  return {
+    openListingReports: openListingReportsRes.error ? 0 : openListingReportsRes.count || 0,
+    openReviewReports: openReviewReportsRes.error ? 0 : openReviewReportsRes.count || 0,
+    pendingOpportunities: pendingOpportunitiesRes.error ? 0 : pendingOpportunitiesRes.count || 0,
+    openClaimDisputes: claimDisputesRes.error ? 0 : claimDisputesRes.count || 0,
+    spamReviews,
+    incompleteOrganisers: incompleteOrgsRes.error ? 0 : incompleteOrgsRes.count || 0,
+  };
+}
+
+function sumAdminNotificationCounts(counts) {
+  if (!counts) return 0;
+  return (
+    (counts.openListingReports || 0) +
+    (counts.openReviewReports || 0) +
+    (counts.spamReviews || 0) +
+    (counts.pendingOpportunities || 0) +
+    (counts.openClaimDisputes || 0)
+  );
+}
+
+function buildAlertsFromCounts(counts) {
+  const alerts = [];
+  if (!counts) return alerts;
+
+  if (counts.pendingOpportunities > 0) {
+    alerts.push({
+      id: 'pending-opportunities',
+      severity: 'medium',
+      title: `${counts.pendingOpportunities} business opportunit${counts.pendingOpportunities === 1 ? 'y' : 'ies'} pending review`,
+      detail: 'Open Listing cleanup → Opportunities to approve or reject listings.',
+      href: '#cleanup/opportunities?approval=pending',
+      time: new Date().toISOString(),
+    });
+  }
+
+  if (counts.incompleteOrganisers > 0) {
+    alerts.push({
+      id: 'incomplete-organisers',
+      severity: 'low',
+      title: `${counts.incompleteOrganisers} organiser profile${counts.incompleteOrganisers === 1 ? '' : 's'} missing data`,
+      detail: 'Add description, photo, or website in Group profile cleanup.',
+      href: '#cleanup/groups',
+      time: new Date().toISOString(),
+    });
+  }
+
+  if (counts.spamReviews > 0) {
+    alerts.push({
+      id: 'spam-reviews',
+      severity: 'medium',
+      title: `${counts.spamReviews} spam-like review${counts.spamReviews === 1 ? '' : 's'} detected`,
+      detail: 'Highlighted on Content Moderation — remove in Supabase if needed.',
+      href: '#moderation',
+      time: new Date().toISOString(),
+    });
+  }
+
+  if (counts.openListingReports > 0) {
+    alerts.push({
+      id: 'listing-reports',
+      severity: 'medium',
+      title: `${counts.openListingReports} listing report${counts.openListingReports === 1 ? '' : 's'} from users`,
+      detail: 'Review reports on Content Moderation.',
+      href: '#moderation',
+      time: new Date().toISOString(),
+    });
+  }
+
+  if (counts.openReviewReports > 0) {
+    alerts.push({
+      id: 'review-reports',
+      severity: 'medium',
+      title: `${counts.openReviewReports} review report${counts.openReviewReports === 1 ? '' : 's'} from users`,
+      detail: 'Review reports on Content Moderation.',
+      href: '#moderation',
+      time: new Date().toISOString(),
+    });
+  }
+
+  if (counts.openClaimDisputes > 0) {
+    alerts.push({
+      id: 'claim-disputes',
+      severity: 'high',
+      title: `${counts.openClaimDisputes} group profile dispute${counts.openClaimDisputes === 1 ? '' : 's'}`,
+      detail: 'An organiser rejected a matched profile — resolve on the dashboard overview.',
+      href: '#dashboard',
+      time: new Date().toISOString(),
+    });
+  }
+
+  return alerts;
+}
 
 /** Exclude E2E seed scripts only — avoid filtering legitimate titles or names. */
 function isTestActivityText(text) {
@@ -105,135 +225,43 @@ async function fetchDashboardMetrics(sb) {
   };
 }
 
-async function fetchAlerts(sb) {
-  const alerts = [];
-  const [
-    incompleteOrgs,
-    recentReviews,
-    openReportsRes,
-    pendingEvents,
-    pendingOpportunities,
-    pendingApps,
-  ] = await Promise.all([
-    sb.from('organisers').select('id', { count: 'exact', head: true }).or(INCOMPLETE_ORGANISER_FILTER),
-    sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
-    sb.from('listing_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
-    sb.from('events').select('id', { count: 'exact', head: true }).eq('approval_status', 'Pending Review'),
-    sb
-      .from('business_opportunities')
-      .select('id', { count: 'exact', head: true })
-      .eq('approval_status', 'Pending Review'),
-    sb.from('registrations').select('id', { count: 'exact', head: true }).eq('application_status', 'Pending'),
-  ]);
-
-  const spamReviewCount = (recentReviews.data || []).filter((r) => isSpamReview(r.review_text)).length;
-  const openReports = openReportsRes.error ? 0 : openReportsRes.count || 0;
-
-  if (!pendingEvents.error && (pendingEvents.count || 0) > 0) {
-    alerts.push({
-      id: 'pending-events',
-      severity: 'medium',
-      title: `${pendingEvents.count} event${pendingEvents.count === 1 ? '' : 's'} pending approval`,
-      detail: 'Open Content Moderation — pending events are listed in the approval queue at the top.',
-      href: '#moderation',
-      time: new Date().toISOString(),
-    });
-  }
-
-  if (!pendingOpportunities.error && (pendingOpportunities.count || 0) > 0) {
-    alerts.push({
-      id: 'pending-opportunities',
-      severity: 'medium',
-      title: `${pendingOpportunities.count} business opportunit${pendingOpportunities.count === 1 ? 'y' : 'ies'} pending review`,
-      detail: 'Open Listing cleanup → Opportunities to approve or reject listings.',
-      href: '#cleanup/opportunities?approval=pending',
-      time: new Date().toISOString(),
-    });
-  }
-
-  if (!pendingApps.error && (pendingApps.count || 0) > 0) {
-    alerts.push({
-      id: 'pending-apps',
-      severity: 'medium',
-      title: `${pendingApps.count} ticket application${pendingApps.count === 1 ? '' : 's'} awaiting review`,
-      detail: 'Organisers approve these in their dashboard — check Financials for recent registrations.',
-      href: '#financials',
-      time: new Date().toISOString(),
-    });
-  }
-
-  if (!incompleteOrgs.error && (incompleteOrgs.count || 0) > 0) {
-    alerts.push({
-      id: 'incomplete-organisers',
-      severity: 'low',
-      title: `${incompleteOrgs.count} organiser profile${incompleteOrgs.count === 1 ? '' : 's'} missing data`,
-      detail: 'Add description, photo, or website in Group profile cleanup.',
-      href: '#cleanup/groups',
-      time: new Date().toISOString(),
-    });
-  }
-
-  if (spamReviewCount > 0) {
-    alerts.push({
-      id: 'spam-reviews',
-      severity: 'medium',
-      title: `${spamReviewCount} spam-like review${spamReviewCount === 1 ? '' : 's'} detected`,
-      detail: 'Highlighted on Content Moderation — remove in Supabase if needed.',
-      href: '#moderation',
-      time: new Date().toISOString(),
-    });
-  }
-
-  if (openReports > 0) {
-    alerts.push({
-      id: 'listing-reports',
-      severity: 'medium',
-      title: `${openReports} listing report${openReports === 1 ? '' : 's'} from users`,
-      detail: 'Review reports on Content Moderation.',
-      href: '#moderation',
-      time: new Date().toISOString(),
-    });
-  }
-
-  return alerts;
+async function fetchAlerts(counts) {
+  return buildAlertsFromCounts(counts);
 }
 
-async function fetchAttentionQueue(sb) {
-  const [pendingRes, pendingOppsRes, incompleteRes, reviewsRes, claimDisputesRes, openReportsRes, pendingClaimsRes] =
+async function fetchAttentionQueue(sb, counts) {
+  const [pendingOppsRes, claimDisputesRes, openReportsRes, reviewReportsRes, pendingClaimsRes] =
     await Promise.all([
-      sb
-        .from('events')
-        .select('id, title, created_at, organisers(name)')
-        .eq('approval_status', 'Pending Review')
-        .order('created_at', { ascending: false })
-        .limit(10),
       sb
         .from('business_opportunities')
         .select('id, title, host, created_at')
         .eq('approval_status', 'Pending Review')
         .order('created_at', { ascending: false })
         .limit(10),
-      sb.from('organisers').select('id', { count: 'exact', head: true }).or(INCOMPLETE_ORGANISER_FILTER),
-      sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
       sb
         .from('organiser_claim_disputes')
         .select('id, organiser_id, organiser_name, profile_email, reporter_email, notes, created_at')
         .eq('status', 'open')
         .order('created_at', { ascending: false })
         .limit(10),
-      sb.from('listing_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+      sb
+        .from('listing_reports')
+        .select('id, listing_type, listing_title, reason, details, reporter_email, created_at')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(10),
+      sb
+        .from('review_reports')
+        .select('id, review_id, review_snippet, reason, details, reporter_email, created_at')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(10),
       sb
         .from('organisers')
         .select('id', { count: 'exact', head: true })
         .eq('ownership_claim_status', 'pending'),
     ]);
 
-  const pendingEvents = (pendingRes.data || []).map((e) => ({
-    id: e.id,
-    title: String(e.title || '').trim(),
-    organiser: e.organisers?.name || '—',
-    createdAt: e.created_at,
-  }));
   const pendingOpportunities = (pendingOppsRes.data || []).map((o) => ({
     id: o.id,
     title: String(o.title || '').trim(),
@@ -249,27 +277,39 @@ async function fetchAttentionQueue(sb) {
     notes: String(d.notes || '').trim(),
     createdAt: d.created_at,
   }));
-  const incompleteOrganisers = incompleteRes.error ? 0 : incompleteRes.count || 0;
-  const spamReviews = (reviewsRes.data || []).filter((r) => isSpamReview(r.review_text)).length;
-  const openListingReports = openReportsRes.error ? 0 : openReportsRes.count || 0;
+  const openListingReportItems = (openReportsRes.error ? [] : openReportsRes.data || []).map((r) => ({
+    id: r.id,
+    listingType: r.listing_type,
+    title: String(r.listing_title || '').trim() || '—',
+    reason: r.reason,
+    details: String(r.details || '').trim(),
+    reporterEmail: r.reporter_email || '',
+    time: r.created_at,
+  }));
+  const openReviewReportItems = (reviewReportsRes.error ? [] : reviewReportsRes.data || []).map((r) => ({
+    id: r.id,
+    reviewId: r.review_id,
+    snippet: String(r.review_snippet || '').trim(),
+    reason: r.reason,
+    details: String(r.details || '').trim(),
+    reporterEmail: r.reporter_email || '',
+    time: r.created_at,
+  }));
   const pendingOwnershipClaims = pendingClaimsRes.error ? 0 : pendingClaimsRes.count || 0;
+  const action = counts || {};
 
   return {
-    pendingEvents,
     pendingOpportunities,
-    incompleteOrganisers,
-    spamReviews,
+    pendingOpportunitiesTotal: action.pendingOpportunities || 0,
+    incompleteOrganisers: action.incompleteOrganisers || 0,
+    spamReviews: action.spamReviews || 0,
     openClaimDisputes,
-    openListingReports,
+    openListingReports: action.openListingReports || 0,
+    openListingReportItems,
+    openReviewReports: action.openReviewReports || 0,
+    openReviewReportItems,
     pendingOwnershipClaims,
-    totalCount:
-      pendingEvents.length +
-      pendingOpportunities.length +
-      openClaimDisputes.length +
-      (openListingReports > 0 ? 1 : 0) +
-      (incompleteOrganisers > 0 ? 1 : 0) +
-      (spamReviews > 0 ? 1 : 0) +
-      (pendingOwnershipClaims > 0 ? 1 : 0),
+    totalCount: sumAdminNotificationCounts(action),
   };
 }
 
@@ -447,7 +487,7 @@ function mapEventToListing(e, soldByEvent) {
     city: e.city || '—',
     status,
     approvalStatus,
-    pending: approvalStatus === 'Pending Review',
+    pending: false,
     sold,
     capacity: null,
   };
@@ -457,13 +497,8 @@ async function fetchModeration(sb) {
   const eventSelect =
     'id, title, event_type, city, approval_status, organiser_id, organisers(name)';
 
-  const [eventsRes, pendingRes, reviewsRes, regCountsRes, reportsRes, reviewReportsRes] = await Promise.all([
+  const [eventsRes, reviewsRes, regCountsRes, reportsRes, reviewReportsRes] = await Promise.all([
     sb.from('events').select(eventSelect).order('created_at', { ascending: false }).limit(80),
-    sb
-      .from('events')
-      .select(eventSelect)
-      .eq('approval_status', 'Pending Review')
-      .order('created_at', { ascending: false }),
     sb
       .from('reviews')
       .select('id, rating, review_text, created_at, events(title), attendees(name, email)')
@@ -472,7 +507,9 @@ async function fetchModeration(sb) {
     sb.from('registrations').select('event_id'),
     sb
       .from('listing_reports')
-      .select('id, listing_type, listing_title, reason, details, reporter_email, created_at, status')
+      .select(
+        'id, listing_type, listing_title, reason, details, reporter_email, created_at, status, event_id, organiser_id, events(slug), organisers(slug)'
+      )
       .eq('status', 'open')
       .order('created_at', { ascending: false })
       .limit(30),
@@ -485,7 +522,6 @@ async function fetchModeration(sb) {
   ]);
 
   if (eventsRes.error) throw new Error(eventsRes.error.message);
-  if (pendingRes.error) throw new Error(pendingRes.error.message);
   if (reviewsRes.error) throw new Error(reviewsRes.error.message);
 
   const soldByEvent = new Map();
@@ -494,21 +530,7 @@ async function fetchModeration(sb) {
     soldByEvent.set(r.event_id, (soldByEvent.get(r.event_id) || 0) + 1);
   });
 
-  const listingById = new Map();
-  (eventsRes.data || []).forEach((e) => {
-    listingById.set(e.id, mapEventToListing(e, soldByEvent));
-  });
-  (pendingRes.data || []).forEach((e) => {
-    if (!listingById.has(e.id)) listingById.set(e.id, mapEventToListing(e, soldByEvent));
-  });
-
-  const listings = Array.from(listingById.values()).sort((a, b) => {
-    if (a.pending && !b.pending) return -1;
-    if (!a.pending && b.pending) return 1;
-    return 0;
-  });
-
-  const pendingListings = (pendingRes.data || []).map((e) => mapEventToListing(e, soldByEvent));
+  const listings = (eventsRes.data || []).map((e) => mapEventToListing(e, soldByEvent));
 
   const reviews = (reviewsRes.data || []).map((r) => {
     const text = String(r.review_text || '').trim();
@@ -523,16 +545,41 @@ async function fetchModeration(sb) {
     };
   });
 
-  const listingReports = (reportsRes.error ? [] : reportsRes.data || []).map((r) => ({
-    id: r.id,
-    listingType: r.listing_type,
-    title: String(r.listing_title || '').trim() || '—',
-    reason: r.reason,
-    details: String(r.details || '').trim(),
-    reporterEmail: r.reporter_email || '',
-    time: r.created_at,
-    status: r.status,
-  }));
+  const listingReports = (reportsRes.error ? [] : reportsRes.data || []).map((r) => {
+    const title = String(r.listing_title || '').trim() || '—';
+    const eventId = r.event_id || null;
+    const organiserId = r.organiser_id || null;
+    const eventSlug = r.events?.slug ? String(r.events.slug).trim() : '';
+    const organiserSlug = r.organisers?.slug ? String(r.organisers.slug).trim() : '';
+    let viewUrl = null;
+    let adminUrl = null;
+    if (r.listing_type === 'event' && eventId) {
+      viewUrl = eventSlug
+        ? `../events/event.html?slug=${encodeURIComponent(eventSlug)}`
+        : `../events/event.html?id=${encodeURIComponent(eventId)}`;
+      adminUrl = `#cleanup/events?q=${encodeURIComponent(title)}`;
+    } else if (r.listing_type === 'organiser' && organiserId) {
+      viewUrl = organiserSlug
+        ? `../events/organiser.html?slug=${encodeURIComponent(organiserSlug)}`
+        : `../events/organiser.html?id=${encodeURIComponent(organiserId)}`;
+      adminUrl = `#cleanup/groups?organiser=${encodeURIComponent(organiserId)}`;
+    }
+    return {
+      id: r.id,
+      listingType: r.listing_type,
+      title,
+      reason: r.reason,
+      details: String(r.details || '').trim(),
+      reporterEmail: r.reporter_email || '',
+      time: r.created_at,
+      status: r.status,
+      eventId,
+      organiserId,
+      viewUrl,
+      adminUrl,
+      canUnpublish: Boolean(eventId || organiserId),
+    };
+  });
 
   const reviewReports = (reviewReportsRes.error ? [] : reviewReportsRes.data || []).map((r) => ({
     id: r.id,
@@ -545,7 +592,14 @@ async function fetchModeration(sb) {
     status: r.status,
   }));
 
-  return { listings, pendingListings, reviews, listingReports, reviewReports };
+  return {
+    listings,
+    reviews,
+    listingReports,
+    reviewReports,
+    listingReportsError: reportsRes.error ? reportsRes.error.message : null,
+    reviewReportsError: reviewReportsRes.error ? reviewReportsRes.error.message : null,
+  };
 }
 
 async function fetchFinancials(sb) {
@@ -749,12 +803,13 @@ async function getAdminDashboard() {
     return { configured: false, provider: 'supabase' };
   }
   const sb = getSupabaseAdmin();
-  const [metrics, alerts, activity, attention] = await Promise.all([
+  const actionCounts = await fetchAdminActionCounts(sb);
+  const [metrics, activity, attention] = await Promise.all([
     fetchDashboardMetrics(sb),
-    fetchAlerts(sb),
     fetchActivity(sb),
-    fetchAttentionQueue(sb),
+    fetchAttentionQueue(sb, actionCounts),
   ]);
+  const alerts = buildAlertsFromCounts(actionCounts);
   return {
     configured: true,
     provider: 'supabase',
@@ -762,7 +817,8 @@ async function getAdminDashboard() {
     alerts,
     activity,
     attention,
-    notificationCount: Math.max((alerts || []).length, attention?.totalCount || 0),
+    actionCounts,
+    notificationCount: sumAdminNotificationCounts(actionCounts),
     updatedAt: new Date().toISOString(),
   };
 }
@@ -816,4 +872,5 @@ module.exports = {
   fetchSponsorBlock,
   resolveClaimDispute,
   clearDisputedProfileEmail,
+  sumAdminNotificationCounts,
 };
