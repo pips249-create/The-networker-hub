@@ -369,22 +369,40 @@ async function runMonthlyOrganiserRankingSnapshot(options) {
   };
 }
 
-async function getRankingAdminReport() {
+async function getRankingAdminReport(options) {
+  options = options || {};
   if (!isSupabaseConfigured()) return { configured: false };
   const sb = getSupabaseAdmin();
-  const snapshot = await getLatestSnapshot(sb);
+  const snapshotId = String(options.snapshotId || '').trim();
+
+  let snapshot = null;
+  if (snapshotId) {
+    const { data, error } = await sb
+      .from('organiser_ranking_snapshots')
+      .select('*')
+      .eq('id', snapshotId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    snapshot = data;
+  } else {
+    snapshot = await getLatestSnapshot(sb);
+  }
+
   if (!snapshot) {
     return {
       configured: true,
       snapshot: null,
       entries: [],
       recentEmails: [],
+      snapshots: [],
     };
   }
 
   const { data: entries, error: entErr } = await sb
     .from('organiser_ranking_entries')
-    .select('*, organisers(id, name, email, contact_email, listing_status, verification_status)')
+    .select(
+      '*, organisers(id, name, email, contact_email, listing_status, verification_status, photo_url, slug)'
+    )
     .eq('snapshot_id', snapshot.id)
     .order('rank', { ascending: true })
     .limit(50);

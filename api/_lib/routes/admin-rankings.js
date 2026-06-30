@@ -26,7 +26,8 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const report = await getRankingAdminReport();
+      const snapshotId = String(req.query?.snapshot_id || '').trim();
+      const report = await getRankingAdminReport(snapshotId ? { snapshotId } : {});
       return json(res, 200, { ok: true, ...report });
     } catch (e) {
       return json(res, 500, { ok: false, error: 'rankings_report_failed', message: e.message });

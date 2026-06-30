@@ -6,6 +6,8 @@
     opportunity_new: {
       label: 'New business opportunity',
       source: 'opportunity',
+      searchLabel: 'Search business opportunities',
+      searchPlaceholder: 'Search by title or host…',
       recentDays: 14,
       styles: [
         {
@@ -40,6 +42,8 @@
     opportunity_featured: {
       label: 'Featured opportunity',
       source: 'opportunity_featured',
+      searchLabel: 'Search featured opportunities',
+      searchPlaceholder: 'Search featured listings…',
       styles: [
         {
           id: 'premium',
@@ -51,7 +55,8 @@
         {
           id: 'carousel',
           label: 'Carousel-friendly',
-          caption: '{{title}} — now in the spotlight on The Networker Hub.\n\nSwipe-worthy opportunity 👇\n{{url}}',
+          caption:
+            '{{title}} — now in the spotlight on The Networker Hub.\n\nSwipe-worthy opportunity 👇\n{{url}}',
           image: 'listing',
         },
         {
@@ -65,6 +70,8 @@
     event_spotlight: {
       label: 'Event spotlight',
       source: 'event',
+      searchLabel: 'Search live events',
+      searchPlaceholder: 'Search by title or city…',
       styles: [
         {
           id: 'upcoming',
@@ -105,6 +112,8 @@
     event_free: {
       label: 'Free event',
       source: 'event',
+      searchLabel: 'Search live events',
+      searchPlaceholder: 'Search by title or city…',
       styles: [
         {
           id: 'free_entry',
@@ -125,6 +134,8 @@
     organiser_spotlight: {
       label: 'Group spotlight',
       source: 'organiser',
+      searchLabel: 'Search group profiles',
+      searchPlaceholder: 'Search by group name…',
       styles: [
         {
           id: 'discover',
@@ -149,9 +160,38 @@
         },
       ],
     },
+    ranking_top10: {
+      label: 'Top 10 groups (monthly)',
+      source: 'ranking',
+      styles: [
+        {
+          id: 'leaderboard',
+          label: 'Leaderboard announce',
+          caption:
+            '🏆 Top 10 networking groups on The Networker Hub — {{period_label}}\n\n{{ranked_list}}\n\nBrowse events and groups: {{url}}',
+          image: 'ranking_card',
+        },
+        {
+          id: 'carousel',
+          label: 'Carousel caption',
+          caption:
+            'Who made the Top 10 this month? 🏆\n\n{{ranked_list_short}}\n\nFull leaderboard on The Networker Hub: {{url}}',
+          image: 'ranking_card',
+        },
+        {
+          id: 'congrats',
+          label: 'Congratulations all',
+          caption:
+            'Huge congratulations to our Top 10 networking groups for {{period_label}} 👏\n\n{{ranked_list}}\n\n{{url}}',
+          image: 'ranking_card',
+        },
+      ],
+    },
     organiser_ranking: {
-      label: 'Group ranking badge',
+      label: 'Single group ranking badge',
       source: 'organiser',
+      searchLabel: 'Search ranked group',
+      searchPlaceholder: 'Search by group name…',
       styles: [
         {
           id: 'celebrate',
@@ -243,9 +283,12 @@
     listing: { label: 'Listing / event photo' },
     logo: { label: 'Logo or brand image' },
     organiser: { label: 'Group profile photo' },
+    ranking_card: { label: 'Top 10 ranking graphic' },
     hub: { label: 'Networker Hub logo' },
     none: { label: 'No image' },
   };
+
+  var SEARCH_DEBOUNCE_MS = 280;
 
   function trimText(text, max) {
     var raw = String(text || '')
@@ -303,6 +346,15 @@
     return out.replace(/\n{3,}/g, '\n\n').trim();
   }
 
+  function isLiveEvent(ev) {
+    if (!ev) return false;
+    if (String(ev.approval_status || '').trim() !== 'Approved') return false;
+    var status = String(ev.status || 'published').toLowerCase();
+    if (['draft', 'unpublished', 'archived', 'cancelled'].indexOf(status) !== -1) return false;
+    if (!ev.starts_at) return false;
+    return true;
+  }
+
   function mentionFromUrl(url, platform) {
     var raw = String(url || '').trim();
     if (!raw) return '';
@@ -338,16 +390,14 @@
       ['x', org.x_url, 'X'],
     ];
     pairs.forEach(function (row) {
-      var platform = row[0];
       var url = String(row[1] || '').trim();
-      var label = row[2];
       if (!url) return;
-      var mention = mentionFromUrl(url, platform);
+      var mention = mentionFromUrl(url, row[0]);
       items.push({
-        platform: label,
+        platform: row[2],
         url: url,
         mention: mention,
-        line: mention ? mention + ' (' + label + ')' : url,
+        line: mention ? mention + ' (' + row[2] + ')' : url,
       });
     });
     return items;
@@ -411,6 +461,7 @@
   function resolveImageChoice(styleImage, override, context) {
     var choice = override === 'auto' || !override ? styleImage || 'listing' : override;
     if (choice === 'none') return '';
+    if (choice === 'ranking_card') return context.rankingCardUrl || hubLogoUrl();
     if (choice === 'hub') return hubLogoUrl();
     if (choice === 'organiser') {
       return (context.organiser && context.organiser.photo_url) || context.organiserPhoto || hubLogoUrl();
@@ -419,6 +470,161 @@
       return context.logoUrl || context.listingImage || hubLogoUrl();
     }
     return context.listingImage || context.logoUrl || hubLogoUrl();
+  }
+
+  function loadImage(url) {
+    return new Promise(function (resolve) {
+      var src = String(url || '').trim();
+      if (!src) {
+        resolve(null);
+        return;
+      }
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function () {
+        resolve(img);
+      };
+      img.onerror = function () {
+        resolve(null);
+      };
+      img.src = src;
+    });
+  }
+
+  function drawCircleImage(ctx, img, x, y, radius) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    if (img) {
+      ctx.drawImage(img, x - radius, y - radius, radius * 2, radius * 2);
+    } else {
+      ctx.fillStyle = '#e8e2ec';
+      ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+      ctx.fillStyle = '#736b6e';
+      ctx.font = '600 18px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('?', x, y);
+    }
+    ctx.restore();
+  }
+
+  function truncateCanvasText(ctx, text, maxWidth) {
+    var value = String(text || '');
+    if (ctx.measureText(value).width <= maxWidth) return value;
+    while (value.length > 1 && ctx.measureText(value + '…').width > maxWidth) {
+      value = value.slice(0, -1);
+    }
+    return value + '…';
+  }
+
+  async function generateRankingCardImage(top10, periodLabel) {
+    var width = 1080;
+    var rowHeight = 108;
+    var headerHeight = 220;
+    var footerHeight = 100;
+    var height = headerHeight + top10.length * rowHeight + footerHeight;
+    var canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    var ctx = canvas.getContext('2d');
+
+    var gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, '#1c2040');
+    gradient.addColorStop(1, '#2d3561');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 42px Georgia, "DM Serif Display", serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Top 10 Networking Groups', width / 2, 72);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    ctx.font = '500 24px system-ui, sans-serif';
+    ctx.fillText(String(periodLabel || ''), width / 2, 118);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(80, 150, width - 160, 2);
+
+    var logo = await loadImage(hubLogoUrl());
+    if (logo) {
+      ctx.drawImage(logo, width - 130, 36, 72, 72);
+    }
+
+    for (var i = 0; i < top10.length; i++) {
+      var row = top10[i];
+      var org = row.organisers || {};
+      var y = headerHeight + i * rowHeight + 12;
+      var cardY = y;
+      var cardH = rowHeight - 16;
+
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)';
+      roundRect(ctx, 56, cardY, width - 112, cardH, 16);
+      ctx.fill();
+
+      var rank = Number(row.rank) || i + 1;
+      ctx.fillStyle = rank <= 3 ? '#f5c842' : '#ffffff';
+      ctx.font = '700 34px system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('#' + rank, 84, cardY + cardH / 2 + 4);
+
+      var photoUrl = String(org.photo_url || '').trim();
+      var avatar = await loadImage(photoUrl);
+      drawCircleImage(ctx, avatar, 168, cardY + cardH / 2, 34);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '600 28px system-ui, sans-serif';
+      var name = truncateCanvasText(ctx, org.name || 'Networking group', width - 430);
+      ctx.fillText(name, 220, cardY + cardH / 2 - 8);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.78)';
+      ctx.font = '500 22px system-ui, sans-serif';
+      var rating = Number(row.rating);
+      var ratingLine =
+        '★ ' +
+        (Number.isFinite(rating) ? rating.toFixed(1) : '—') +
+        ' · ' +
+        String(row.review_count || 0) +
+        ' reviews';
+      ctx.fillText(ratingLine, 220, cardY + cardH / 2 + 24);
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.font = '500 20px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('The Networker Hub · the-networker.co.uk', width / 2, height - 42);
+
+    return canvas.toDataURL('image/png');
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  function rankedListText(top10, short) {
+    return top10
+      .map(function (row) {
+        var org = row.organisers || {};
+        var name = org.name || 'Networking group';
+        var rating = Number(row.rating);
+        var stars = Number.isFinite(rating) ? ' ★ ' + rating.toFixed(1) : '';
+        if (short) return String(row.rank) + '. ' + name;
+        return String(row.rank) + '. ' + name + stars;
+      })
+      .join('\n');
   }
 
   function render(main, deps) {
@@ -435,63 +641,55 @@
       postTypeKey: 'opportunity_new',
       styleId: '',
       imageOverride: 'auto',
-      opportunities: [],
-      featuredOpportunities: [],
-      events: [],
-      organisers: [],
       selectedOpportunityId: '',
       selectedEventId: '',
       selectedOrganiserId: '',
+      selectedOpportunity: null,
+      selectedEvent: null,
+      selectedOrganiser: null,
       linkedOrganiser: null,
       pageUrl: '',
+      imageUrl: '',
+      rankingCardUrl: '',
+      rankingSnapshots: [],
+      rankingEntries: [],
+      selectedSnapshotId: '',
+      searchQuery: '',
+      searchResults: [],
+      searchLoading: false,
+      searchTimer: null,
     };
 
     main.innerHTML =
       '<div class="space-y-6 max-w-4xl">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Draft social posts from live Hub listings. Pick a post type and caption style, tweak the image if needed, then copy or open a share link for Meta Business Suite, LinkedIn, or X.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Draft social posts from live Hub listings. Search for an event or group, pick a caption style, then copy or open a share link. Top 10 posts generate a leaderboard graphic you can download.</p>' +
       '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">' +
       '<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">' +
       '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Post type</label>' +
-      '<select id="social-template" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
-      Object.keys(POST_TYPES)
-        .map(function (key) {
-          return (
-            '<option value="' +
-            attrEsc(key) +
-            '">' +
-            esc(POST_TYPES[key].label) +
-            '</option>'
-          );
-        })
-        .join('') +
-      '</select></div>' +
+      '<select id="social-template" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></select></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Caption style</label>' +
       '<select id="social-style" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></select></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Image</label>' +
-      '<select id="social-image-choice" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
-      Object.keys(IMAGE_OPTIONS)
-        .map(function (key) {
-          return (
-            '<option value="' +
-            attrEsc(key) +
-            '">' +
-            esc(IMAGE_OPTIONS[key].label) +
-            '</option>'
-          );
-        })
-        .join('') +
-      '</select></div>' +
+      '<select id="social-image-choice" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></select></div>' +
       '</div>' +
-      '<div id="social-source-wrap"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" id="social-source-label">Listing</label>' +
-      '<select id="social-source" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"><option value="">Loading…</option></select></div>' +
+      '<div id="social-ranking-period-wrap" class="hidden">' +
+      '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Ranking month</label>' +
+      '<select id="social-ranking-period" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></select>' +
+      '</div>' +
+      '<div id="social-source-wrap" class="space-y-2">' +
+      '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" id="social-source-label">Search</label>' +
+      '<input type="search" id="social-source-search" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" autocomplete="off" />' +
+      '<p id="social-source-status" class="text-xs text-slate-500">Type to search listings…</p>' +
+      '<div id="social-source-results" class="max-h-52 overflow-y-auto rounded-lg border border-slate-200 divide-y divide-slate-100 bg-white"></div>' +
+      '<div id="social-source-selected" class="hidden rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-sm text-brand-900"></div>' +
+      '</div>' +
       '<div id="social-recent" class="hidden text-xs text-slate-600"></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Caption</label>' +
-      '<textarea id="social-caption" rows="8" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm leading-relaxed"></textarea>' +
-      '<p class="text-[11px] text-slate-500 mt-1">Edit freely — changing style or image resets from the template unless you edit after.</p></div>' +
+      '<textarea id="social-caption" rows="8" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm leading-relaxed"></textarea></div>' +
       '<div id="social-tags" class="hidden rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-950"></div>' +
       '<div class="flex flex-wrap items-start gap-4">' +
-      '<div id="social-image-wrap" class="hidden shrink-0 w-32 h-32 rounded-lg border border-slate-200 overflow-hidden bg-slate-100">' +
-      '<img id="social-image" alt="" class="w-full h-full object-cover" /></div>' +
+      '<div id="social-image-wrap" class="hidden shrink-0 max-w-[220px] rounded-lg border border-slate-200 overflow-hidden bg-slate-100">' +
+      '<img id="social-image" alt="" class="w-full h-auto block" /></div>' +
       '<div class="min-w-0 flex-1 space-y-2">' +
       '<p class="text-xs text-slate-500">Link in post · <span id="social-image-label" class="text-slate-400"></span></p>' +
       '<p id="social-url" class="text-sm font-mono text-brand-800 break-all">—</p>' +
@@ -499,6 +697,7 @@
       '<button type="button" id="social-copy-caption" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Copy caption</button>' +
       '<button type="button" id="social-copy-url" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Copy link</button>' +
       '<button type="button" id="social-copy-image" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Copy image URL</button>' +
+      '<button type="button" id="social-download-image" class="hidden rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Download image</button>' +
       '<a id="social-share-linkedin" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50" target="_blank" rel="noopener noreferrer">Open LinkedIn</a>' +
       '<a id="social-share-facebook" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50" target="_blank" rel="noopener noreferrer">Open Facebook</a>' +
       '<a id="social-share-twitter" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50" target="_blank" rel="noopener noreferrer">Open X</a>' +
@@ -508,9 +707,14 @@
     var templateEl = main.querySelector('#social-template');
     var styleEl = main.querySelector('#social-style');
     var imageChoiceEl = main.querySelector('#social-image-choice');
-    var sourceEl = main.querySelector('#social-source');
-    var sourceLabelEl = main.querySelector('#social-source-label');
+    var rankingPeriodWrap = main.querySelector('#social-ranking-period-wrap');
+    var rankingPeriodEl = main.querySelector('#social-ranking-period');
     var sourceWrapEl = main.querySelector('#social-source-wrap');
+    var sourceLabelEl = main.querySelector('#social-source-label');
+    var sourceSearchEl = main.querySelector('#social-source-search');
+    var sourceStatusEl = main.querySelector('#social-source-status');
+    var sourceResultsEl = main.querySelector('#social-source-results');
+    var sourceSelectedEl = main.querySelector('#social-source-selected');
     var captionEl = main.querySelector('#social-caption');
     var tagsEl = main.querySelector('#social-tags');
     var urlEl = main.querySelector('#social-url');
@@ -518,14 +722,34 @@
     var imageEl = main.querySelector('#social-image');
     var imageLabelEl = main.querySelector('#social-image-label');
     var recentEl = main.querySelector('#social-recent');
+    var downloadBtn = main.querySelector('#social-download-image');
+
+    templateEl.innerHTML = Object.keys(POST_TYPES)
+      .map(function (key) {
+        return (
+          '<option value="' + attrEsc(key) + '">' + esc(POST_TYPES[key].label) + '</option>'
+        );
+      })
+      .join('');
+
+    imageChoiceEl.innerHTML = Object.keys(IMAGE_OPTIONS)
+      .map(function (key) {
+        return (
+          '<option value="' + attrEsc(key) + '">' + esc(IMAGE_OPTIONS[key].label) + '</option>'
+        );
+      })
+      .join('');
 
     function currentStyle() {
       var cfg = postTypeConfig(state.postTypeKey);
       var styles = cfg.styles || [];
-      var found = styles.find(function (s) {
-        return s.id === state.styleId;
-      });
-      return found || styles[0] || { caption: '', image: 'listing' };
+      return (
+        styles.find(function (s) {
+          return s.id === state.styleId;
+        }) ||
+        styles[0] ||
+        { caption: '', image: 'listing' }
+      );
     }
 
     function refreshShareLinks() {
@@ -543,9 +767,11 @@
       if (imageUrl) {
         imageWrap.classList.remove('hidden');
         imageEl.src = imageUrl;
+        downloadBtn.classList.toggle('hidden', !String(imageUrl).startsWith('data:image/'));
       } else {
         imageWrap.classList.add('hidden');
         imageEl.removeAttribute('src');
+        downloadBtn.classList.add('hidden');
       }
       refreshShareLinks();
     }
@@ -562,7 +788,6 @@
         '<p class="font-semibold text-amber-900 mb-1">Suggested tags for ' +
         esc(org.name || 'this group') +
         '</p>' +
-        '<p class="text-xs text-amber-900/80 mb-2">Insert into your caption — organisers add URLs on their group profile.</p>' +
         '<ul class="space-y-1">' +
         tags
           .map(function (t) {
@@ -573,8 +798,7 @@
               '</code>' +
               '<button type="button" class="social-insert-tag text-xs font-semibold text-brand-800 hover:underline" data-tag="' +
               attrEsc(t.mention || t.url) +
-              '">Insert</button>' +
-              '</li>'
+              '">Insert</button></li>'
             );
           })
           .join('') +
@@ -613,13 +837,7 @@
       var cfg = postTypeConfig(state.postTypeKey);
       styleEl.innerHTML = (cfg.styles || [])
         .map(function (s) {
-          return (
-            '<option value="' +
-            attrEsc(s.id) +
-            '">' +
-            esc(s.label) +
-            '</option>'
-          );
+          return '<option value="' + attrEsc(s.id) + '">' + esc(s.label) + '</option>';
         })
         .join('');
       if (!state.styleId || !(cfg.styles || []).some(function (s) { return s.id === state.styleId; })) {
@@ -631,6 +849,160 @@
     function imageNoteForChoice(choice, style) {
       var effective = choice === 'auto' ? style.image : choice;
       return IMAGE_OPTIONS[effective] ? IMAGE_OPTIONS[effective].label : 'Custom';
+    }
+
+    function showSelectedItem(label, meta) {
+      if (!label) {
+        sourceSelectedEl.classList.add('hidden');
+        sourceSelectedEl.textContent = '';
+        return;
+      }
+      sourceSelectedEl.classList.remove('hidden');
+      sourceSelectedEl.innerHTML =
+        '<span class="font-semibold">Selected:</span> ' + esc(label) + (meta ? ' · ' + esc(meta) : '');
+    }
+
+    function paintSearchResults(items, emptyMsg) {
+      if (!items.length) {
+        sourceResultsEl.innerHTML =
+          '<p class="px-3 py-4 text-sm text-slate-500">' + esc(emptyMsg || 'No results') + '</p>';
+        return;
+      }
+      sourceResultsEl.innerHTML = items
+        .map(function (item) {
+          return (
+            '<button type="button" class="social-search-result w-full text-left px-3 py-2.5 hover:bg-slate-50 transition" data-id="' +
+            attrEsc(item.id) +
+            '">' +
+            '<span class="block text-sm font-semibold text-brand-900">' +
+            esc(item.title) +
+            '</span>' +
+            (item.meta
+              ? '<span class="block text-xs text-slate-500 mt-0.5">' + esc(item.meta) + '</span>'
+              : '') +
+            '</button>'
+          );
+        })
+        .join('');
+      sourceResultsEl.querySelectorAll('.social-search-result').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          selectSearchResult(btn.getAttribute('data-id') || '');
+        });
+      });
+    }
+
+    function searchEndpoint(q) {
+      var cfg = postTypeConfig(state.postTypeKey);
+      var params = new URLSearchParams();
+      params.set('limit', '30');
+      if (q) params.set('q', q);
+      if (cfg.source === 'event') {
+        params.set('approval_status', 'Approved');
+        params.set('sort', 'date');
+        return adminGet('/api/admin/events?' + params.toString()).then(function (data) {
+          var events = ((data && data.events) || []).filter(isLiveEvent);
+          return events.map(function (ev) {
+            return {
+              id: ev.id,
+              title: ev.title || 'Untitled event',
+              meta: [formatEventDate(ev.starts_at), ev.city, ev.organiser_name].filter(Boolean).join(' · '),
+              raw: ev,
+            };
+          });
+        });
+      }
+      if (cfg.source === 'opportunity' || cfg.source === 'opportunity_featured') {
+        params.set('status', 'published');
+        params.set('approval_status', 'Approved');
+        params.set('sort', 'published');
+        if (cfg.source === 'opportunity_featured') params.set('featured', '1');
+        return adminGet('/api/admin/opportunities?' + params.toString()).then(function (data) {
+          return ((data && data.opportunities) || []).map(function (opp) {
+            return {
+              id: opp.id,
+              title: opp.title || 'Untitled',
+              meta: [opp.host, opp.published_at ? String(opp.published_at).slice(0, 10) : ''].filter(Boolean).join(' · '),
+              raw: opp,
+            };
+          });
+        });
+      }
+      if (cfg.source === 'organiser') {
+        return adminGet('/api/admin/organisers?' + params.toString()).then(function (data) {
+          return ((data && data.organisers) || []).map(function (org) {
+            return {
+              id: org.id,
+              title: org.name || 'Untitled group',
+              meta: org.website || org.email || '',
+              raw: org,
+            };
+          });
+        });
+      }
+      return Promise.resolve([]);
+    }
+
+    function selectSearchResult(id) {
+      var item = state.searchResults.find(function (row) {
+        return row.id === id;
+      });
+      if (!item) return;
+      var cfg = postTypeConfig(state.postTypeKey);
+      if (cfg.source === 'event') {
+        state.selectedEventId = id;
+        state.selectedEvent = item.raw;
+        showSelectedItem(item.title, item.meta);
+      } else if (cfg.source === 'opportunity' || cfg.source === 'opportunity_featured') {
+        state.selectedOpportunityId = id;
+        state.selectedOpportunity = item.raw;
+        showSelectedItem(item.title, item.meta);
+      } else if (cfg.source === 'organiser') {
+        state.selectedOrganiserId = id;
+        state.selectedOrganiser = item.raw;
+        showSelectedItem(item.title, item.meta);
+      }
+      rebuildCaption();
+    }
+
+    function runSearch(query) {
+      var cfg = postTypeConfig(state.postTypeKey);
+      if (cfg.source === 'none' || cfg.source === 'ranking') return;
+      state.searchLoading = true;
+      sourceStatusEl.textContent = 'Searching…';
+      searchEndpoint(query)
+        .then(function (items) {
+          state.searchResults = items;
+          state.searchLoading = false;
+          sourceStatusEl.textContent = items.length
+            ? items.length + ' result' + (items.length === 1 ? '' : 's')
+            : query
+              ? 'No matches — try a different search'
+              : 'Showing recent listings';
+          paintSearchResults(items, query ? 'No matches found' : 'No live listings found');
+          if (!query && items[0] && !getSelectedRaw()) {
+            selectSearchResult(items[0].id);
+          }
+        })
+        .catch(function () {
+          state.searchLoading = false;
+          sourceStatusEl.textContent = 'Search failed — try again';
+          paintSearchResults([], 'Could not load listings');
+        });
+    }
+
+    function getSelectedRaw() {
+      var cfg = postTypeConfig(state.postTypeKey);
+      if (cfg.source === 'event') return state.selectedEvent;
+      if (cfg.source === 'opportunity' || cfg.source === 'opportunity_featured') return state.selectedOpportunity;
+      if (cfg.source === 'organiser') return state.selectedOrganiser;
+      return null;
+    }
+
+    function scheduleSearch() {
+      if (state.searchTimer) clearTimeout(state.searchTimer);
+      state.searchTimer = setTimeout(function () {
+        runSearch(state.searchQuery);
+      }, SEARCH_DEBOUNCE_MS);
     }
 
     function applyBuild(caption, pageUrl, imageContext, organiserId, fallbackOrg) {
@@ -645,6 +1017,7 @@
             organiserPhoto: org.photo_url,
             listingImage: imageContext.listingImage,
             logoUrl: imageContext.logoUrl,
+            rankingCardUrl: imageContext.rankingCardUrl,
           });
           if (refreshed && refreshed !== imageUrl) {
             setPreview(refreshed, pageUrl, imageNoteForChoice(state.imageOverride, style));
@@ -656,19 +1029,15 @@
     function buildFromOpportunity(opp) {
       if (!opp) return;
       var style = currentStyle();
-      var desc = trimText(opp.description, 140);
       var caption = applyTemplate(style.caption, {
         title: opp.title || 'Business opportunity',
-        description: desc || 'Explore this opportunity on The Networker Hub.',
+        description: trimText(opp.description, 140) || 'Explore this opportunity on The Networker Hub.',
         url: opportunityPublicUrl(opp.id),
       });
       applyBuild(
         caption,
         opportunityPublicUrl(opp.id),
-        {
-          listingImage: opp.image_url || '',
-          logoUrl: opp.logo_url || opp.image_url || '',
-        },
+        { listingImage: opp.image_url || '', logoUrl: opp.logo_url || opp.image_url || '' },
         opp.organiser_id
       );
     }
@@ -689,11 +1058,7 @@
       applyBuild(
         caption,
         eventPublicUrl(ev.slug),
-        {
-          listingImage: ev.photo_url || '',
-          logoUrl: ev.photo_url || '',
-          organiserPhoto: state.linkedOrganiser && state.linkedOrganiser.photo_url,
-        },
+        { listingImage: ev.photo_url || '', logoUrl: ev.photo_url || '' },
         ev.organiser_id
       );
     }
@@ -726,8 +1091,94 @@
       applyBuild(caption, url, { listingImage: hubLogoUrl(), logoUrl: hubLogoUrl() }, null);
     }
 
+    function top10Entries() {
+      return (state.rankingEntries || [])
+        .filter(function (row) {
+          return Number(row.rank) <= 10;
+        })
+        .sort(function (a, b) {
+          return Number(a.rank) - Number(b.rank);
+        });
+    }
+
+    function loadRankingSnapshot(snapshotId) {
+      var url = '/api/admin/rankings' + (snapshotId ? '?snapshot_id=' + encodeURIComponent(snapshotId) : '');
+      return adminGet(url).then(function (data) {
+        if (!data || !data.ok) throw new Error((data && data.message) || 'rankings_failed');
+        state.rankingEntries = data.entries || [];
+        if (data.snapshot) state.selectedSnapshotId = data.snapshot.id;
+        if (data.snapshots && data.snapshots.length) state.rankingSnapshots = data.snapshots;
+        return data;
+      });
+    }
+
+    function paintRankingPeriodOptions() {
+      var snaps = state.rankingSnapshots || [];
+      if (!snaps.length) {
+        rankingPeriodEl.innerHTML = '<option value="">No snapshots yet</option>';
+        return;
+      }
+      rankingPeriodEl.innerHTML = snaps
+        .map(function (snap) {
+          return (
+            '<option value="' +
+            attrEsc(snap.id) +
+            '">' +
+            esc(snap.period_label || snap.period_key || 'Period') +
+            ' · ' +
+            esc(String(snap.total_ranked || 0)) +
+            ' groups</option>'
+          );
+        })
+        .join('');
+      rankingPeriodEl.value = state.selectedSnapshotId || snaps[0].id;
+    }
+
+    function buildFromRanking() {
+      var top10 = top10Entries();
+      if (!top10.length) {
+        captionEl.value = 'No Top 10 ranking snapshot found yet. Run a snapshot under Group rankings first.';
+        setPreview('', hubEventsUrl(), 'No ranking data');
+        state.rankingCardUrl = '';
+        return;
+      }
+      var snap = (state.rankingSnapshots || []).find(function (s) {
+        return s.id === state.selectedSnapshotId;
+      });
+      var periodLabel = (snap && snap.period_label) || 'this month';
+      var style = currentStyle();
+      var listFull = rankedListText(top10, false);
+      var listShort = rankedListText(top10.slice(0, 5), true) + (top10.length > 5 ? '\n…see full list on the Hub' : '');
+      var caption = applyTemplate(style.caption, {
+        period_label: periodLabel,
+        ranked_list: listFull,
+        ranked_list_short: listShort,
+        url: hubEventsUrl(),
+      });
+      captionEl.value = caption;
+      setPreview(hubLogoUrl(), hubEventsUrl(), 'Generating ranking graphic…');
+      renderTags(null);
+      generateRankingCardImage(top10, periodLabel)
+        .then(function (dataUrl) {
+          state.rankingCardUrl = dataUrl;
+          var imageUrl = resolveImageChoice(style.image, state.imageOverride, {
+            rankingCardUrl: dataUrl,
+            listingImage: dataUrl,
+          });
+          setPreview(imageUrl, hubEventsUrl(), imageNoteForChoice(state.imageOverride, style));
+        })
+        .catch(function () {
+          state.rankingCardUrl = '';
+          setPreview(hubLogoUrl(), hubEventsUrl(), 'Could not generate ranking graphic');
+        });
+    }
+
     function rebuildCaption() {
       var cfg = postTypeConfig(state.postTypeKey);
+      if (cfg.source === 'ranking') {
+        buildFromRanking();
+        return;
+      }
       if (cfg.source === 'none') {
         if (state.postTypeKey === 'hub_events') buildHubOnly(hubEventsUrl(), { url: hubEventsUrl() });
         else if (state.postTypeKey === 'hub_opportunities') buildHubOnly(hubOpportunitiesUrl(), { url: hubOpportunitiesUrl() });
@@ -735,31 +1186,86 @@
         return;
       }
       if (cfg.source === 'opportunity' || cfg.source === 'opportunity_featured') {
-        var list = cfg.source === 'opportunity_featured' ? state.featuredOpportunities : state.opportunities;
-        var opp = list.find(function (o) {
-          return o.id === state.selectedOpportunityId;
-        });
-        buildFromOpportunity(opp);
+        buildFromOpportunity(state.selectedOpportunity);
         return;
       }
       if (cfg.source === 'event') {
-        var ev = state.events.find(function (e) {
-          return e.id === state.selectedEventId;
-        });
-        buildFromEvent(ev);
+        buildFromEvent(state.selectedEvent);
         return;
       }
       if (cfg.source === 'organiser') {
-        var org = state.organisers.find(function (o) {
-          return o.id === state.selectedOrganiserId;
-        });
-        buildFromOrganiser(org);
+        buildFromOrganiser(state.selectedOrganiser);
       }
     }
 
-    function fillSourceOptions() {
+    function paintRecentOpportunities() {
+      var cfg = postTypeConfig(state.postTypeKey);
+      if (cfg.source !== 'opportunity' || !cfg.recentDays) {
+        recentEl.classList.add('hidden');
+        return;
+      }
+      adminGet(
+        '/api/admin/opportunities?status=published&approval_status=Approved&sort=published&limit=40'
+      ).then(function (data) {
+        var opps = (data && data.opportunities) || [];
+        var recent = opps.filter(function (o) {
+          if (!o.published_at) return false;
+          var t = new Date(o.published_at).getTime();
+          return t && Date.now() - t < cfg.recentDays * 24 * 60 * 60 * 1000;
+        });
+        if (!recent.length) {
+          recentEl.classList.add('hidden');
+          return;
+        }
+        recentEl.classList.remove('hidden');
+        recentEl.innerHTML =
+          '<span class="font-semibold text-slate-700">New this fortnight:</span> ' +
+          recent
+            .slice(0, 6)
+            .map(function (o) {
+              return (
+                '<button type="button" class="social-quick-opp font-semibold text-brand-800 hover:underline" data-id="' +
+                attrEsc(o.id) +
+                '">' +
+                esc(o.title || 'Listing') +
+                '</button>'
+              );
+            })
+            .join(' · ');
+        recentEl.querySelectorAll('.social-quick-opp').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-id') || '';
+            var item = recent.find(function (o) { return o.id === id; });
+            if (!item) return;
+            state.selectedOpportunityId = id;
+            state.selectedOpportunity = item;
+            showSelectedItem(item.title, item.host || '');
+            rebuildCaption();
+          });
+        });
+      });
+    }
+
+    function configureSourceUi() {
       var cfg = postTypeConfig(state.postTypeKey);
       fillStyleOptions();
+
+      if (cfg.source === 'ranking') {
+        sourceWrapEl.classList.add('hidden');
+        recentEl.classList.add('hidden');
+        rankingPeriodWrap.classList.remove('hidden');
+        paintRankingPeriodOptions();
+        if (state.rankingEntries.length) rebuildCaption();
+        else {
+          loadRankingSnapshot(state.selectedSnapshotId).then(function () {
+            paintRankingPeriodOptions();
+            rebuildCaption();
+          });
+        }
+        return;
+      }
+
+      rankingPeriodWrap.classList.add('hidden');
 
       if (cfg.source === 'none') {
         sourceWrapEl.classList.add('hidden');
@@ -767,114 +1273,21 @@
         rebuildCaption();
         return;
       }
+
       sourceWrapEl.classList.remove('hidden');
-
-      if (cfg.source === 'opportunity' || cfg.source === 'opportunity_featured') {
-        sourceLabelEl.textContent =
-          cfg.source === 'opportunity_featured' ? 'Featured opportunity' : 'Business opportunity';
-        var opps = cfg.source === 'opportunity_featured' ? state.featuredOpportunities : state.opportunities;
-        sourceEl.innerHTML =
-          '<option value="">Choose a listing…</option>' +
-          opps
-            .map(function (o) {
-              return (
-                '<option value="' +
-                attrEsc(o.id) +
-                '">' +
-                esc(o.title || 'Untitled') +
-                (o.published_at ? ' · ' + esc(String(o.published_at).slice(0, 10)) : '') +
-                '</option>'
-              );
-            })
-            .join('');
-        if (!state.selectedOpportunityId && opps[0]) state.selectedOpportunityId = opps[0].id;
-        if (opps.length && !opps.some(function (o) { return o.id === state.selectedOpportunityId; })) {
-          state.selectedOpportunityId = opps[0].id;
-        }
-        sourceEl.value = state.selectedOpportunityId || '';
-
-        if (cfg.source === 'opportunity' && cfg.recentDays) {
-          var recent = opps.filter(function (o) {
-            if (!o.published_at) return false;
-            var t = new Date(o.published_at).getTime();
-            return t && Date.now() - t < cfg.recentDays * 24 * 60 * 60 * 1000;
-          });
-          if (recent.length) {
-            recentEl.classList.remove('hidden');
-            recentEl.innerHTML =
-              '<span class="font-semibold text-slate-700">New this fortnight:</span> ' +
-              recent
-                .slice(0, 6)
-                .map(function (o) {
-                  return (
-                    '<button type="button" class="social-quick-opp font-semibold text-brand-800 hover:underline" data-id="' +
-                    attrEsc(o.id) +
-                    '">' +
-                    esc(o.title || 'Listing') +
-                    '</button>'
-                  );
-                })
-                .join(' · ');
-            recentEl.querySelectorAll('.social-quick-opp').forEach(function (btn) {
-              btn.addEventListener('click', function () {
-                state.selectedOpportunityId = btn.getAttribute('data-id') || '';
-                sourceEl.value = state.selectedOpportunityId;
-                rebuildCaption();
-              });
-            });
-          } else {
-            recentEl.classList.add('hidden');
-          }
-        } else {
-          recentEl.classList.add('hidden');
-        }
-      } else if (cfg.source === 'event') {
-        sourceLabelEl.textContent = 'Event';
-        var events = state.events;
-        sourceEl.innerHTML =
-          '<option value="">Choose an event…</option>' +
-          events
-            .map(function (e) {
-              return (
-                '<option value="' +
-                attrEsc(e.id) +
-                '">' +
-                esc(e.title || 'Untitled') +
-                (e.starts_at ? ' · ' + esc(formatEventDate(e.starts_at)) : '') +
-                '</option>'
-              );
-            })
-            .join('');
-        if (!state.selectedEventId && events[0]) state.selectedEventId = events[0].id;
-        if (events.length && !events.some(function (e) { return e.id === state.selectedEventId; })) {
-          state.selectedEventId = events[0].id;
-        }
-        sourceEl.value = state.selectedEventId || '';
-        recentEl.classList.add('hidden');
-      } else if (cfg.source === 'organiser') {
-        sourceLabelEl.textContent = 'Group profile';
-        var orgs = state.organisers;
-        sourceEl.innerHTML =
-          '<option value="">Choose a group…</option>' +
-          orgs
-            .map(function (o) {
-              return (
-                '<option value="' +
-                attrEsc(o.id) +
-                '">' +
-                esc(o.name || 'Untitled') +
-                '</option>'
-              );
-            })
-            .join('');
-        if (!state.selectedOrganiserId && orgs[0]) state.selectedOrganiserId = orgs[0].id;
-        if (orgs.length && !orgs.some(function (o) { return o.id === state.selectedOrganiserId; })) {
-          state.selectedOrganiserId = orgs[0].id;
-        }
-        sourceEl.value = state.selectedOrganiserId || '';
-        recentEl.classList.add('hidden');
-      }
-      rebuildCaption();
+      sourceLabelEl.textContent = cfg.searchLabel || 'Search listings';
+      sourceSearchEl.placeholder = cfg.searchPlaceholder || 'Search…';
+      state.searchQuery = '';
+      sourceSearchEl.value = '';
+      state.selectedEvent = null;
+      state.selectedOpportunity = null;
+      state.selectedOrganiser = null;
+      state.selectedEventId = '';
+      state.selectedOpportunityId = '';
+      state.selectedOrganiserId = '';
+      showSelectedItem('', '');
+      paintRecentOpportunities();
+      runSearch('');
     }
 
     templateEl.addEventListener('change', function () {
@@ -882,7 +1295,7 @@
       state.styleId = '';
       state.imageOverride = 'auto';
       imageChoiceEl.value = 'auto';
-      fillSourceOptions();
+      configureSourceUi();
     });
 
     styleEl.addEventListener('change', function () {
@@ -895,13 +1308,16 @@
       rebuildCaption();
     });
 
-    sourceEl.addEventListener('change', function () {
-      var cfg = postTypeConfig(state.postTypeKey);
-      var val = sourceEl.value;
-      if (cfg.source === 'opportunity' || cfg.source === 'opportunity_featured') state.selectedOpportunityId = val;
-      else if (cfg.source === 'event') state.selectedEventId = val;
-      else if (cfg.source === 'organiser') state.selectedOrganiserId = val;
-      rebuildCaption();
+    rankingPeriodEl.addEventListener('change', function () {
+      state.selectedSnapshotId = rankingPeriodEl.value;
+      loadRankingSnapshot(state.selectedSnapshotId).then(function () {
+        rebuildCaption();
+      });
+    });
+
+    sourceSearchEl.addEventListener('input', function () {
+      state.searchQuery = sourceSearchEl.value.trim();
+      scheduleSearch();
     });
 
     captionEl.addEventListener('input', refreshShareLinks);
@@ -915,26 +1331,24 @@
     main.querySelector('#social-copy-image').addEventListener('click', function () {
       copyText(state.imageUrl || '', main.querySelector('#social-copy-image'));
     });
+    downloadBtn.addEventListener('click', function () {
+      if (!state.imageUrl || !String(state.imageUrl).startsWith('data:image/')) return;
+      var link = document.createElement('a');
+      link.href = state.imageUrl;
+      link.download = 'networker-top10-' + (state.selectedSnapshotId || 'ranking') + '.png';
+      link.click();
+    });
 
-    Promise.all([
-      adminGet(
-        '/api/admin/opportunities?status=published&approval_status=Approved&sort=published&limit=40'
-      ),
-      adminGet(
-        '/api/admin/opportunities?status=published&approval_status=Approved&featured=1&sort=published&limit=20'
-      ),
-      adminGet('/api/admin/events?sort=date&status=published&approval_status=Approved&limit=40'),
-      adminGet('/api/admin/organisers?limit=80'),
-    ])
-      .then(function (results) {
-        state.opportunities = (results[0] && results[0].opportunities) || [];
-        state.featuredOpportunities = (results[1] && results[1].opportunities) || [];
-        state.events = (results[2] && results[2].events) || [];
-        state.organisers = (results[3] && results[3].organisers) || [];
-        fillSourceOptions();
+    adminGet('/api/admin/rankings')
+      .then(function (data) {
+        if (data && data.ok) {
+          state.rankingSnapshots = data.snapshots || [];
+          state.rankingEntries = data.entries || [];
+          if (data.snapshot) state.selectedSnapshotId = data.snapshot.id;
+        }
       })
-      .catch(function () {
-        sourceEl.innerHTML = '<option value="">Could not load listings</option>';
+      .finally(function () {
+        configureSourceUi();
       });
   }
 
