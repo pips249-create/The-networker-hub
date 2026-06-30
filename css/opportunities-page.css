@@ -1872,14 +1872,9 @@
 
 .opp-browse-page .opp-browse-disclaimer {
   margin: 12px 0 0;
-  max-width: 36em;
-  font-size: 13px;
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.72);
-  padding: 10px 14px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .opp-browse-page .opp-browse-hero .opp-hero-stats {
