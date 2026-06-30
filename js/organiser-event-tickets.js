@@ -21,6 +21,7 @@
   let attendanceMode = 'tickets';
   let selectedRefundPolicy = '';
   let existingTicketsLoaded = false;
+  let paymentSetupState = null;
 
   const SALE_END_OPTIONS = [
     { value: 'at_start', label: 'When the event starts' },
@@ -403,8 +404,14 @@
     populateQuarterTimeSelect(row.querySelector('.ee-tier-sale-start-time'), '09:00');
     populateQuarterTimeSelect(row.querySelector('.ee-tier-sale-custom-time'), '18:00');
     row.querySelectorAll('input, textarea, select').forEach((el) => {
-      el.addEventListener('input', updateTierSummary);
-      el.addEventListener('change', updateTierSummary);
+      el.addEventListener('input', function () {
+        updateTierSummary();
+        updatePublishButton();
+      });
+      el.addEventListener('change', function () {
+        updateTierSummary();
+        updatePublishButton();
+      });
     });
     const up = row.querySelector('.ee-tier-up');
     const down = row.querySelector('.ee-tier-down');
@@ -617,6 +624,80 @@
     return payload;
   }
 
+  function tiersHavePaidPrice(tiers) {
+    return (tiers || []).some(function (tier) {
+      const price = Number(tier.price);
+      return Number.isFinite(price) && price > 0;
+    });
+  }
+
+  function paymentSetupReturnPath() {
+    const qs = new URLSearchParams();
+    if (eventIds.length) qs.set('ids', eventIds.join(','));
+    return '/organiser/event-tickets.html?' + qs.toString();
+  }
+
+  function paymentGroupForSeries() {
+    if (!paymentSetupState) return null;
+    return (
+      window.HubOrganiserPaymentSetup?.groupForEvent(
+        paymentSetupState,
+        seriesMeta.organiserGroupId
+      ) || paymentSetupState.primaryGroup
+    );
+  }
+
+  function refreshPaymentSetupCard(tiers) {
+    const mount = document.getElementById('ee-payment-setup-mount');
+    const payment = window.HubOrganiserPaymentSetup;
+    if (!mount || !payment || !paymentSetupState) return;
+
+    const hasPaid = tiersHavePaidPrice(tiers);
+    const group = paymentGroupForSeries();
+    const needsSetup = hasPaid && payment.groupNeedsSetup(paymentSetupState, group);
+
+    if (!needsSetup) {
+      mount.hidden = true;
+      mount.innerHTML = '';
+      return;
+    }
+
+    const wasHidden = mount.hidden;
+    payment.renderInto(mount, paymentSetupState, group, {
+      returnPath: paymentSetupReturnPath(),
+      buttonClass: 'hub-payment-setup-btn ee-btn ee-btn-primary',
+      title: 'Add bank details before you publish paid tickets',
+      lead: 'Stripe will ask for your UK bank account (about 5 minutes). Then come back here and click Publish event.',
+    });
+    if (wasHidden) {
+      mount.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  async function handleStripeConnectReturn() {
+    const connectParam = new URLSearchParams(window.location.search).get('stripe_connect');
+    if (connectParam !== 'return') return;
+    const group = paymentGroupForSeries();
+    if (group?.id) {
+      await api('/api/organiser/stripe-connect?groupId=' + encodeURIComponent(group.id));
+      await loadPaymentSetupState();
+      showAlert('Bank details saved — you can publish paid tickets now.', 'ok');
+    }
+    if (window.history.replaceState) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('stripe_connect');
+      window.history.replaceState({}, '', url.pathname + '?' + url.searchParams.toString());
+    }
+  }
+
+  async function loadPaymentSetupState() {
+    if (!window.HubOrganiserPaymentSetup) {
+      paymentSetupState = null;
+      return;
+    }
+    paymentSetupState = await window.HubOrganiserPaymentSetup.fetchState();
+  }
+
   function updatePublishButton() {
     const btn = document.getElementById('ee-tickets-submit');
     const warn = document.getElementById('ee-publish-warn');
@@ -625,10 +706,29 @@
       const tiers = attendanceMode === 'osop' ? collectOsopTiers() : collectTiers();
       const refund = collectRefundPayload();
       const vat = collectVatTreatment();
+      const hasPaid = tiersHavePaidPrice(tiers);
+      const paymentNeeded =
+        hasPaid &&
+        paymentSetupState &&
+        window.HubOrganiserPaymentSetup &&
+        window.HubOrganiserPaymentSetup.groupNeedsSetup(paymentSetupState, paymentGroupForSeries());
       const ready =
-        tiers.length > 0 && vat && refund.refundPolicy && refund.refundTermsAgreed;
+        tiers.length > 0 && vat && refund.refundPolicy && refund.refundTermsAgreed && !paymentNeeded;
       btn.disabled = !ready;
-      if (warn) warn.hidden = ready;
+      refreshPaymentSetupCard(tiers);
+      if (warn) {
+        if (paymentNeeded) {
+          warn.hidden = false;
+          warn.textContent =
+            'Add bank details above before publishing paid tickets. Free tickets (£0) can be published without this step.';
+        } else {
+          warn.hidden = ready;
+          if (!ready) {
+            warn.textContent =
+              'Your event is not live until you publish a ticket type — please add at least one ticket tier, choose how VAT applies, and complete the refund policy.';
+          }
+        }
+      }
     } catch {
       btn.disabled = true;
       if (warn) warn.hidden = false;
@@ -886,6 +986,9 @@
       prefillRefundFromEvent(loaded.event);
     }
 
+    await loadPaymentSetupState();
+    await handleStripeConnectReturn();
+
     renderSeriesSummary();
 
     if (loaded.event && loaded.event.status === 'published' && !loaded.event.ticketSalesEnabled) {
@@ -924,6 +1027,8 @@
     });
     bindRefundPolicy();
     bindVatOptions();
+    document.getElementById('ee-osop-price')?.addEventListener('input', updatePublishButton);
+    document.getElementById('ee-osop-price')?.addEventListener('change', updatePublishButton);
     updatePublishButton();
 
     if (!loaded.tickets.length && window.HubFlowTour && !isEmbedDrawer) {
@@ -993,6 +1098,17 @@
         updatePublishButton();
         return;
       }
+      if (
+        tiersHavePaidPrice(tiers) &&
+        paymentSetupState &&
+        window.HubOrganiserPaymentSetup &&
+        window.HubOrganiserPaymentSetup.groupNeedsSetup(paymentSetupState, paymentGroupForSeries())
+      ) {
+        refreshPaymentSetupCard(tiers);
+        showAlert('Add bank details above before publishing paid tickets.', 'warn');
+        updatePublishButton();
+        return;
+      }
     }
 
     const btn = document.getElementById('ee-tickets-submit');
@@ -1039,6 +1155,15 @@
     const data = result.data;
 
     if (!ok) {
+      if (data.error === 'stripe_connect_required' || /connect stripe|bank details/i.test(String(data.message || ''))) {
+        refreshPaymentSetupCard(attendanceMode === 'osop' ? collectOsopTiers() : collectTiers());
+        showAlert(
+          data.message ||
+            'Add bank details before publishing paid tickets — use the button above, then try again.',
+          'warn'
+        );
+        return;
+      }
       showAlert(data.message || data.error || 'Could not save tickets');
       return;
     }

@@ -1641,3 +1641,51 @@ body.ee-embed-drawer .ee-actions {
   z-index: 2;
 }
 
+.hub-payment-setup-card {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: linear-gradient(135deg, #fff9ec 0%, #f3ecfa 100%);
+  border: 2px solid rgba(189, 147, 46, 0.45);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin: 0 0 18px;
+  box-shadow: 0 8px 24px rgba(91, 47, 153, 0.08);
+}
+
+.hub-payment-setup-title {
+  margin: 0 0 6px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--purple-900, #3b1f6e);
+}
+
+.hub-payment-setup-lead {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #4a4446;
+}
+
+.hub-payment-setup-steps {
+  margin: 0 0 14px;
+  padding-left: 1.2rem;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4a4446;
+}
+
+.hub-payment-setup-steps li + li {
+  margin-top: 4px;
+}
+
+.hub-payment-setup-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #736b6e;
+}
+
+#ee-payment-setup-mount[hidden] {
+  display: none !important;
+}
+

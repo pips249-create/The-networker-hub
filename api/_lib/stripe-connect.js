@@ -218,7 +218,7 @@ async function assertOrganiserReadyForPaidPublish(sb, organiserIds, tickets) {
 
   if (blocked.length) {
     const e = new Error(
-      'Connect your Stripe account before publishing paid tickets. Open Revenue → Connect Stripe.'
+      'Add your bank details before publishing paid tickets. Use the “Add bank details” button on the tickets page or open Revenue in your dashboard.'
     );
     e.status = 400;
     e.code = 'stripe_connect_required';
