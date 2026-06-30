@@ -966,6 +966,8 @@
       ticket_sales_disabled: 'Ticket sales are not open for this event yet.',
       missing_email: 'Please enter your email address.',
       missing_name: 'Please enter your full name.',
+      stripe_not_configured:
+        'Card checkout is not set up on this server. If you are on localhost, add STRIPE_SECRET_KEY to local.env (copy sk_test_… from Vercel), run npm run dev, and restart npm start. On the live site, check Vercel env vars and redeploy.',
       stripe_connect_required:
         'The organiser has not finished payout setup. Ticket sales are temporarily unavailable.',
       free_ticket_use_complete_booking: 'Use Confirm registration for free tickets.',
