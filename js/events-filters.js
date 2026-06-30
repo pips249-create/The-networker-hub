@@ -7,7 +7,7 @@
   var checkOnline = document.getElementById('check-online');
   var checkFreeOnly = document.getElementById('filter-free-only');
   var priceMax = document.getElementById('price-max');
-  var priceMaxOut = document.getElementById('price-max-out');
+  var priceMaxInput = document.getElementById('price-max-input');
   var PRICE_SLIDER_FALLBACK = 100;
   var priceSliderCap = PRICE_SLIDER_FALLBACK;
   var toggleNearMe = document.getElementById('toggle-nearme');
@@ -160,26 +160,49 @@
     return eventTicketPrice(ev);
   }
 
-  function formatPriceLabel(value, isMax) {
-    var n = Number(value) || 0;
-    var cap = priceSliderCap;
-    if (isMax && n >= cap) return 'Any';
-    return '£' + n + ' max';
+  function syncPriceOutputs() {
+    if (!priceMax) return;
+    var cap = Number(priceMax.max) || priceSliderCap;
+    var val = Number(priceMax.value);
+    if (Number.isNaN(val)) val = cap;
+    if (priceMaxInput) {
+      if (val >= cap) {
+        priceMaxInput.value = '';
+        priceMaxInput.placeholder = 'Any';
+      } else {
+        priceMaxInput.value = String(val);
+        priceMaxInput.placeholder = 'Any';
+      }
+    }
   }
 
-  function syncPriceOutputs() {
-    if (priceMaxOut && priceMax) priceMaxOut.textContent = formatPriceLabel(priceMax.value, true);
+  function onPriceSliderInput() {
+    syncPriceOutputs();
+    applyFilters();
+  }
+
+  function onPriceMaxInputChange() {
+    if (!priceMax || !priceMaxInput) return;
+    var cap = Number(priceMax.max) || priceSliderCap;
+    var raw = priceMaxInput.value.trim();
+    if (!raw) {
+      priceMax.value = String(cap);
+    } else {
+      var n = Math.round(Number(raw));
+      if (Number.isNaN(n)) {
+        priceMax.value = String(cap);
+      } else {
+        priceMax.value = String(Math.max(0, Math.min(cap, n)));
+      }
+    }
+    syncPriceOutputs();
+    applyFilters();
   }
 
   function getPriceBounds() {
     var minVal = 0;
     var maxVal = priceMax ? Number(priceMax.value) : priceSliderCap;
     return { minVal: minVal, maxVal: maxVal };
-  }
-
-  function onPriceSliderInput() {
-    syncPriceOutputs();
-    applyFilters();
   }
 
   function initPriceSliderMax() {
@@ -721,6 +744,10 @@
 
   if (priceMax) {
     priceMax.addEventListener('input', onPriceSliderInput);
+  }
+  if (priceMaxInput) {
+    priceMaxInput.addEventListener('input', onPriceMaxInputChange);
+    priceMaxInput.addEventListener('change', onPriceMaxInputChange);
   }
   syncPriceOutputs();
 
