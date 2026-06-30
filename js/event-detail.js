@@ -1852,6 +1852,7 @@
     const linkedIn = document.getElementById('share-linkedin');
     const twitter = document.getElementById('share-twitter');
     const facebook = document.getElementById('share-facebook');
+    const shareEmail = document.getElementById('share-email');
     if (linkedIn) {
       linkedIn.href =
         'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url);
@@ -1865,6 +1866,13 @@
     }
     if (facebook) {
       facebook.href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url);
+    }
+    if (shareEmail) {
+      shareEmail.href =
+        'mailto:?subject=' +
+        encodeURIComponent(shareTitle + ' – The Networker Hub') +
+        '&body=' +
+        encodeURIComponent('I thought you might like this event:\n\n' + shareTitle + '\n' + url);
     }
 
     const copyBtn = document.getElementById('share-copy');
@@ -1890,14 +1898,6 @@
 
     if (shareBtn && shareMenu) {
       shareBtn.addEventListener('click', function () {
-        if (navigator.share) {
-          navigator
-            .share({ title: shareTitle, text: shareTitle, url: url })
-            .catch(function () {
-              toggleDropdown(shareMenu, shareBtn);
-            });
-          return;
-        }
         toggleDropdown(shareMenu, shareBtn);
       });
     }
