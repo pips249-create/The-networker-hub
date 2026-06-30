@@ -1820,7 +1820,10 @@
       const id = String(ev.id);
       const saved = window.HubFavourites ? window.HubFavourites.isSaved(id) : false;
       saveBtn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+      saveBtn.setAttribute('aria-label', saved ? 'Remove from saved' : 'Save event');
       saveBtn.classList.toggle('is-saved', saved);
+      const label = saveBtn.querySelector('.action-btn-label');
+      if (label) label.textContent = saved ? 'Saved' : 'Save event';
     }
 
     refreshSaveUi();

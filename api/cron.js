@@ -7,6 +7,7 @@ const { json, setCors } = require('./_lib/auth');
 const routes = {
   'booking-reminders': require('./_lib/routes/cron-booking-reminders'),
   'favourite-sales': require('./_lib/routes/cron-favourite-sales'),
+  'organiser-listing-alerts': require('./_lib/routes/cron-organiser-listing-alerts'),
   'event-featured': require('./_lib/routes/cron-event-featured'),
   'organiser-rankings': require('./_lib/routes/cron-organiser-rankings'),
 };

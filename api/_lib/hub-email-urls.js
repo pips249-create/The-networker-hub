@@ -47,6 +47,15 @@ function eventPublicUrl(eventRow, siteUrl) {
   return browseEventsUrl(site);
 }
 
+function organiserPublicUrl(organiserRow, siteUrl) {
+  const site = siteBase(siteUrl);
+  const slug = String(organiserRow?.slug || '').trim();
+  if (slug) return site + '/organisers/' + encodeURIComponent(slug);
+  const id = String(organiserRow?.id || '').trim();
+  if (id) return site + '/events/organiser.html?id=' + encodeURIComponent(id);
+  return browseEventsUrl(site) + '#organisers';
+}
+
 module.exports = {
   siteBase,
   homeUrl,
@@ -57,4 +66,5 @@ module.exports = {
   legalPolicyUrl,
   contactUrl,
   eventPublicUrl,
+  organiserPublicUrl,
 };

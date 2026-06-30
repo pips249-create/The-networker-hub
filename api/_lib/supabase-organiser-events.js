@@ -794,6 +794,7 @@ async function publishEventsWithRefund(eventIds, refundPayload) {
     status: 'published',
     approval_status: 'Approved',
     ticket_sales_enabled: true,
+    published_at: new Date().toISOString(),
     refund_policy: refundPayload.refundPolicy || null,
     refund_policy_details: refundPayload.refundPolicyDetails || null,
     refund_cutoff_days:

@@ -48,6 +48,10 @@
       "schedule": "0 8 * * *"
     },
     {
+      "path": "/api/cron/organiser-listing-alerts",
+      "schedule": "30 8 * * *"
+    },
+    {
       "path": "/api/cron/event-featured",
       "schedule": "0 9 * * *"
     },

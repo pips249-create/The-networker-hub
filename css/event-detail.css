@@ -362,6 +362,32 @@ a:hover {
   color: var(--purple-900);
 }
 
+.action-btn--save {
+  background: var(--purple-700);
+  border-color: var(--purple-700);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(91, 47, 153, 0.28);
+}
+
+.action-btn--save:hover {
+  background: var(--purple-800);
+  border-color: var(--purple-800);
+  color: #fff;
+}
+
+.action-btn--save.is-saved {
+  background: #fff5f7;
+  border-color: #c44;
+  color: #a82828;
+  box-shadow: none;
+}
+
+.action-btn--save.is-saved .action-btn-icon {
+  fill: #c44;
+  stroke: #c44;
+}
+
 .action-btn {
   background: var(--surface);
   border: 1px solid var(--border-strong);

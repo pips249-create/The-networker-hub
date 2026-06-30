@@ -26,6 +26,14 @@ alter table public.organiser_favourite_listing_alerts enable row level security;
 
 grant select, insert, update, delete on public.organiser_favourite_listing_alerts to service_role;
 
+-- Backfill organiser favourites from saved events
+insert into public.organiser_favourites (attendee_id, organiser_id, notify_email)
+select distinct ef.attendee_id, e.organiser_id, true
+from public.event_favourites ef
+join public.events e on e.id = ef.event_id
+where e.organiser_id is not null
+on conflict (attendee_id, organiser_id) do nothing;
+
 insert into public.email_templates (
   slug,
   name,
