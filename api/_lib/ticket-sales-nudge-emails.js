@@ -4,6 +4,12 @@
 const { getSupabaseAdmin } = require('./supabase');
 const { sendViaResend } = require('./send-template-email');
 const { siteBase } = require('./hub-email-urls');
+const {
+  resolveTicketSalesEnabled,
+  eventHasTicketsOnSale,
+  earliestTicketSaleStart,
+  isEventPublishedForSale,
+} = require('./ticket-sales');
 
 function escapeHtml(value) {
   return String(value || '')
@@ -32,7 +38,9 @@ async function loadNudgeContext(eventId) {
   const sb = getSupabaseAdmin();
   const { data: event, error } = await sb
     .from('events')
-    .select('id, title, slug, starts_at, organiser_id, ticket_sales_enabled, status, approval_status')
+    .select(
+      'id, title, slug, starts_at, organiser_id, ticket_sales_enabled, status, approval_status, refund_terms_agreed, refund_terms_agreed_at'
+    )
     .eq('id', eventId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -41,12 +49,33 @@ async function loadNudgeContext(eventId) {
     err.status = 404;
     throw err;
   }
-  if (String(event.status || '').toLowerCase() !== 'published') {
+  if (!isEventPublishedForSale(event)) {
     const err = new Error('event_not_public');
     err.status = 400;
     throw err;
   }
-  if (event.ticket_sales_enabled) {
+
+  const { data: ticketRows, error: ticketsError } = await sb
+    .from('tickets')
+    .select('id, status, sale_starts_at, sale_ends_at')
+    .eq('event_id', eventId);
+  if (ticketsError) throw new Error(ticketsError.message);
+
+  const tickets = ticketRows || [];
+  if (!tickets.length) {
+    const err = new Error('no_tickets');
+    err.status = 400;
+    throw err;
+  }
+
+  const ticketsOnSale = eventHasTicketsOnSale(tickets);
+  const isScheduled = !ticketsOnSale && Boolean(earliestTicketSaleStart(tickets));
+  if (isScheduled) {
+    const err = new Error('ticket_sales_scheduled');
+    err.status = 400;
+    throw err;
+  }
+  if (resolveTicketSalesEnabled(event, tickets)) {
     const err = new Error('ticket_sales_already_enabled');
     err.status = 400;
     throw err;

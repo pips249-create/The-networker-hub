@@ -1877,19 +1877,31 @@
 
   function bindTicketSalesNudgeUi(ev) {
     if (nudgeUiBound) return;
-    nudgeUiBound = true;
     const btn = document.getElementById('ticket-nudge-btn');
     const statusEl = document.getElementById('ticket-nudge-status');
     if (!btn) return;
-    btn.addEventListener('click', async function () {
+    nudgeUiBound = true;
+
+    async function submitTicketSalesNudge() {
+      const current = activeEvent() || ev;
+      const eventId = String(document.body.getAttribute('data-event-id') || current?.id || '').trim();
       const email = document.getElementById('ticket-nudge-email')?.value.trim() || '';
       const name = document.getElementById('ticket-nudge-name')?.value.trim() || '';
+      if (!eventId) {
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.className = 'ticket-nudge-status is-error';
+          statusEl.textContent = 'Could not identify this event. Refresh the page and try again.';
+        }
+        return;
+      }
       if (!email) {
         if (statusEl) {
           statusEl.hidden = false;
           statusEl.className = 'ticket-nudge-status is-error';
           statusEl.textContent = 'Enter your email so the organiser can follow up.';
         }
+        document.getElementById('ticket-nudge-email')?.focus();
         return;
       }
       btn.disabled = true;
@@ -1899,15 +1911,20 @@
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ eventId: ev.id, email: email, name: name }),
+          body: JSON.stringify({ eventId: eventId, email: email, name: name }),
         });
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.message || data.error || 'nudge_failed');
+        const data = await res.json().catch(function () {
+          return {};
+        });
+        if (!res.ok || !data.ok) {
+          throw new Error(data.message || data.error || 'Could not send nudge. Please try again.');
+        }
         if (statusEl) {
           statusEl.hidden = false;
           statusEl.className = 'ticket-nudge-status is-ok';
           statusEl.textContent = data.message || 'Nudge sent — thank you!';
         }
+        btn.textContent = 'Nudge sent';
       } catch (e) {
         if (statusEl) {
           statusEl.hidden = false;
@@ -1915,6 +1932,14 @@
           statusEl.textContent = e.message || 'Could not send nudge. Please try again.';
         }
         btn.disabled = false;
+      }
+    }
+
+    btn.addEventListener('click', submitTicketSalesNudge);
+    document.getElementById('ticket-nudge-email')?.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitTicketSalesNudge();
       }
     });
   }

@@ -76,6 +76,13 @@ module.exports = async function handler(req, res) {
         message: 'You already nudged the organiser about this event today. Please check back soon.',
       });
     }
+    if (msg === 'ticket_sales_scheduled') {
+      return json(res, 400, {
+        ok: false,
+        error: 'ticket_sales_scheduled',
+        message: 'Tickets are scheduled to open soon — save this event and we will email you when sales start.',
+      });
+    }
     if (msg === 'ticket_sales_already_enabled') {
       return json(res, 400, {
         ok: false,

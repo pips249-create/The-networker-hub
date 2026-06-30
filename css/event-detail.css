@@ -1336,6 +1336,7 @@ a:hover {
 
 .ticket-panel.is-sales-pending .ticket-sales-nudge {
   display: block;
+  pointer-events: auto;
 }
 
 .ticket-panel.is-sales-scheduled #buy-btn,
@@ -1505,20 +1506,31 @@ a:hover {
   border-radius: 12px;
   background: #f5f0e8;
   border: 1px solid rgba(189, 147, 46, 0.35);
+  pointer-events: auto;
 }
 
 .ticket-sales-nudge-lead {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   font-size: 14px;
   line-height: 1.55;
   color: #4a4446;
 }
 
 .ticket-sales-nudge-sub {
-  margin: 0 0 14px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #7a5c0a;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--purple-900);
+  text-align: center;
+  background: rgba(91, 47, 153, 0.1);
+  border: 1px solid rgba(91, 47, 153, 0.22);
+  border-radius: 10px;
+}
+
+.ticket-sales-nudge-sub strong {
+  font-weight: 800;
 }
 
 .ticket-sales-nudge .form-field {
@@ -1541,6 +1553,7 @@ a:hover {
 
 .ticket-nudge-btn {
   width: 100%;
+  pointer-events: auto;
 }
 
 .ticket-panel.is-approval-mode #buy-btn {
