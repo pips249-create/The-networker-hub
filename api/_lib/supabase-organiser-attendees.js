@@ -30,6 +30,7 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       application_status,
       screening_answer_industry,
       screening_answer_job_title,
+      application_denial_reason,
       amount_paid,
       quantity,
       guest_names,
@@ -86,6 +87,7 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
         needsPayment,
         screeningIndustry: String(row.screening_answer_industry || '').trim(),
         screeningJobTitle: String(row.screening_answer_job_title || '').trim(),
+        applicationDenialReason: String(row.application_denial_reason || '').trim(),
         amountPaid,
         amountDisplay:
           applicationStatus === 'Pending'

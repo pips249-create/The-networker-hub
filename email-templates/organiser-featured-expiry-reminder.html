@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Application update</title>
+  <title>Featured listing expiring</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
     body, table, td, p, a { margin:0; padding:0; border:0; font-size:100%; font:inherit; vertical-align:top; }
@@ -15,17 +15,16 @@
       .hero-title { font-size:22px !important; line-height:1.2 !important; }
       .mobile-pad { padding-left:20px !important; padding-right:20px !important; }
       .mobile-header-pad { padding-left:20px !important; padding-right:20px !important; }
-      .email-cta a { display:block !important; width:100% !important; box-sizing:border-box !important; text-align:center !important; }
+      .email-cta a { display:block !important; width:100% !important; box-sizing:border-box !important; text-align:center !important; margin-bottom:10px !important; }
     }
   </style>
 </head>
 <body style="margin:0;padding:0;background:#e8ecf5;font-family:'DM Sans',system-ui,sans-serif;">
-<!-- application-email-layout-v2 -->
+<!-- hub-email-layout-v2 -->
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#e8ecf5;">
   <tr>
     <td align="center" style="padding:32px 16px 56px;">
       <table class="email-wrapper" role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(28,32,64,0.12);">
-
         <tr>
           <td class="mobile-header-pad" style="background:#f5f0e8;padding:28px 40px 0;text-align:center;">
             <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
@@ -42,27 +41,18 @@
             </div>
           </td>
         </tr>
-
         <tr>
-          <td class="mobile-pad" style="padding:32px 40px 8px;text-align:center;">
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:3px;margin:0 0 8px;">Application update</p>
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:24px;font-weight:600;color:#1c2040;margin:0 0 12px;line-height:1.2;">Update on {{event_name}}</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.7;color:#736b6e;margin:0;text-align:left;">
-              Hi {{user_name}}, thank you for applying to <strong style="color:#1c2040;">{{event_name}}</strong>.{{denial_closing}}
-            </p>
-            {{denial_reason_block}}
+          <td class="mobile-pad" style="padding:28px 40px 16px;text-align:center;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 16px;">
+              <tr><td style="width:52px;height:52px;background:#fff4d6;border-radius:50%;text-align:center;vertical-align:middle;font-size:22px;color:#b8860b;line-height:52px;">&#9733;</td></tr>
+            </table>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:#b8860b;text-transform:uppercase;letter-spacing:3px;margin:0 0 8px;">Featured listing</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:26px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Your featured placement is ending soon</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.7;color:#736b6e;margin:0;">Hi {{organiser_name}}, your featured listing for <strong style="color:#1c2040;">{{event_name}}</strong> expires on <strong style="color:#1c2040;">{{expiry_date}}</strong>. Extend it to keep premium visibility on the hub.</p>
           </td>
-        </tr>
-
-        <tr>
-          <td class="mobile-pad email-cta" style="padding:20px 40px 32px;text-align:center;">
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;line-height:1.65;color:#736b6e;margin:0 0 18px;">
-              You can browse other upcoming events on The Networker Hub.
-            </p>
-            <a href="{{browse_events_url}}" style="display:block;text-align:center;padding:12px 28px;background:#1c2040;border-radius:999px;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;">Browse events</a>
-          </td>
-        </tr>
-
+        </tr><tr>
+          <td class="mobile-pad email-cta" style="padding:0 40px 28px;text-align:center;"><a href="{{extend_url}}" style="display:inline-block;text-align:center;padding:12px 28px;background:#1c2040;border-radius:999px;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;margin:0 6px 10px;">Extend featured listing &rarr;</a></td>
+        </tr><tr><td class="mobile-pad" style="padding:0 40px 28px;text-align:center;"><p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;line-height:1.65;color:#736b6e;margin:0;">Choose 1 week (&pound;20), 1 month (&pound;55), or 2 months (&pound;100) when you extend.</p></td></tr>
         <tr>
           <td class="mobile-pad" style="background:#1c2040;padding:28px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">
             <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
@@ -78,7 +68,6 @@
             </p>
           </td>
         </tr>
-
       </table>
     </td>
   </tr>

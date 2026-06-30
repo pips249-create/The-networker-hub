@@ -11,6 +11,19 @@ const {
   resolveApplicationDeniedBody,
 } = require('./application-decision-template');
 const { resolveOrganiserBookingCancelledBody } = require('./organiser-booking-cancelled-template');
+const { resolveOrganiserRankingBadgeBody } = require('./organiser-ranking-badge-template');
+const {
+  resolveBrandedEmailBody,
+  getBrandedEmailSubject,
+  isBrandedEmailSlug,
+  BRANDED_EMAIL_TEMPLATES,
+} = require('./branded-email-templates');
+const {
+  legalPolicyUrl,
+  contactUrl,
+  logoNavUrl,
+  logoFooterUrl,
+} = require('./hub-email-urls');
 const {
   enrichBookingConfirmationVars,
   enrichBookingReminderVars,
@@ -43,6 +56,15 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'application_received',
   'application_approved',
   'application_denied',
+  'organiser_ranking_badge',
+  'organiser_featured_expiry_reminder',
+  'organiser_claim_invite',
+  'opportunity_listing_live',
+  'opportunity_listing_expiry_reminder',
+  'opportunity_premium_expiry_reminder',
+  'opportunity_premium_live',
+  'opportunity_enquiry_received',
+  'opportunity_enquiry_sent',
   'booking_confirmation',
   'booking_reminder',
   'refund_processed',
@@ -61,6 +83,12 @@ function replacePlaceholders(text, variables) {
 }
 
 function fileOnlyEmailTemplate(slug) {
+  if (BRANDED_EMAIL_TEMPLATES[slug]) {
+    return {
+      subject: getBrandedEmailSubject(slug),
+      resolveBody: (dbHtml) => resolveBrandedEmailBody(slug, dbHtml),
+    };
+  }
   const map = {
     organiser_new_application: {
       subject: 'New application: {{attendee_name}} — {{event_name}}',
@@ -77,6 +105,10 @@ function fileOnlyEmailTemplate(slug) {
     application_denied: {
       subject: 'Update on your application for {{event_name}}',
       resolveBody: resolveApplicationDeniedBody,
+    },
+    organiser_ranking_badge: {
+      subject: 'Congratulations — {{badge_label}} for {{period_label}}',
+      resolveBody: resolveOrganiserRankingBadgeBody,
     },
   };
   return map[slug] || null;
@@ -122,7 +154,12 @@ async function buildEmailFromTemplate(slug, variables) {
 
   let merged = {
     site_url: siteUrl,
-    logo_url: siteUrl + '/assets/logo-nav.png',
+    logo_url: logoNavUrl(siteUrl),
+    logo_footer_url: logoFooterUrl(siteUrl),
+    privacy_url: legalPolicyUrl(siteUrl, 'privacy'),
+    terms_url: legalPolicyUrl(siteUrl, 'terms'),
+    refunds_url: legalPolicyUrl(siteUrl, 'refunds'),
+    contact_url: contactUrl(siteUrl),
     ...variables,
     ...bookingDefaults,
   };
@@ -183,6 +220,14 @@ async function buildEmailFromTemplate(slug, variables) {
     templateSource = resolved.source;
   } else if (slug === 'application_denied') {
     const resolved = resolveApplicationDeniedBody(template.body_html);
+    bodyHtml = resolved.bodyHtml;
+    templateSource = resolved.source;
+  } else if (slug === 'organiser_ranking_badge') {
+    const resolved = resolveOrganiserRankingBadgeBody(template.body_html);
+    bodyHtml = resolved.bodyHtml;
+    templateSource = resolved.source;
+  } else if (isBrandedEmailSlug(slug)) {
+    const resolved = resolveBrandedEmailBody(slug, template.body_html);
     bodyHtml = resolved.bodyHtml;
     templateSource = resolved.source;
   } else if (slug === 'organiser_booking_cancelled') {

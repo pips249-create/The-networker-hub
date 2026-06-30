@@ -71,6 +71,26 @@ function organiserDashboardUrl(siteUrl, options = {}) {
   return base + (qs ? '?' + qs : '') + hash;
 }
 
+function organiserBusinessDashboardUrl(siteUrl) {
+  const base = siteBase(siteUrl) + '/organiser/index.html';
+  return base + '?panel=business-overview#business-overview';
+}
+
+function opportunityPublicUrl(opportunityRow, siteUrl) {
+  const site = siteBase(siteUrl);
+  const id = String(opportunityRow?.id || opportunityRow || '').trim();
+  if (!id) return site + '/opportunities/';
+  return site + '/opportunities/opportunity.html?id=' + encodeURIComponent(id);
+}
+
+function logoNavUrl(siteUrl) {
+  return siteBase(siteUrl) + '/assets/logo-nav.png';
+}
+
+function logoFooterUrl(siteUrl) {
+  return siteBase(siteUrl) + '/assets/logo-email-footer.png';
+}
+
 module.exports = {
   siteBase,
   homeUrl,
@@ -83,4 +103,8 @@ module.exports = {
   eventPublicUrl,
   organiserPublicUrl,
   organiserDashboardUrl,
+  organiserBusinessDashboardUrl,
+  opportunityPublicUrl,
+  logoNavUrl,
+  logoFooterUrl,
 };

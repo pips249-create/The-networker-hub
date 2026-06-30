@@ -10,7 +10,7 @@ function makeResolver(filename, marker) {
   }
   return function resolve(dbBodyHtml) {
     const body = String(dbBodyHtml || '');
-    if (!body.includes(marker)) {
+    if (!body.includes('application-email-layout-v2')) {
       return { bodyHtml: getCanonical(), source: 'file' };
     }
     return { bodyHtml: body, source: 'database' };
@@ -20,7 +20,7 @@ function makeResolver(filename, marker) {
 module.exports = {
   resolveApplicationApprovedBody: makeResolver(
     'application-approved.html',
-    'Application approved'
+    'application-email-layout-v2'
   ),
-  resolveApplicationDeniedBody: makeResolver('application-denied.html', 'Application update'),
+  resolveApplicationDeniedBody: makeResolver('application-denied.html', 'application-email-layout-v2'),
 };

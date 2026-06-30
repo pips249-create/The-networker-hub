@@ -1528,13 +1528,13 @@
   }
 
   function attendeeApplicationAnswersHtml(a) {
-    const isPending = String(a.applicationStatus || '') === 'Pending';
+    const applicationStatus = String(a.applicationStatus || '').trim();
+    const isPending = applicationStatus === 'Pending';
+    const isDenied = applicationStatus === 'Denied';
     const industry = String(a.screeningIndustry || '').trim();
     const jobTitle = String(a.screeningJobTitle || '').trim();
-    if (!isPending && !industry && !jobTitle) return '—';
-    if (!industry && !jobTitle) {
-      return '<span class="org-application-answers-empty">No answers recorded</span>';
-    }
+    const denialReason = String(a.applicationDenialReason || '').trim();
+    if (!isPending && !isDenied && !industry && !jobTitle) return '—';
     const rows = [];
     if (industry) {
       rows.push(
@@ -1556,25 +1556,59 @@
           '</div>'
       );
     }
+    if (isDenied && denialReason) {
+      rows.push(
+        '<div class="org-application-answer org-application-answer--denial">' +
+          '<span class="org-application-answer-label">Denial note sent</span>' +
+          '<span class="org-application-answer-value">' +
+          esc(denialReason) +
+          '</span>' +
+          '</div>'
+      );
+    }
+    if (!rows.length) {
+      return '<span class="org-application-answers-empty">No answers recorded</span>';
+    }
     return '<div class="org-application-answers">' + rows.join('') + '</div>';
   }
 
   function attendeeActionsHtml(a) {
     if (String(a.applicationStatus || '') === 'Pending') {
       return (
-        '<div class="org-application-review">' +
+        '<div class="org-application-review" data-review-id="' +
+        esc(a.id) +
+        '">' +
+        '<div class="org-application-review-main">' +
         '<p class="org-application-review-label">Review application</p>' +
         '<div class="org-application-review-buttons">' +
         '<button type="button" class="org-application-approve-btn" data-approve-application="' +
         esc(a.id) +
         '"><span class="org-application-btn-icon" aria-hidden="true">✓</span>Approve</button>' +
-        '<button type="button" class="org-application-deny-btn" data-deny-application="' +
+        '<button type="button" class="org-application-deny-btn" data-show-deny-form="' +
         esc(a.id) +
         '"><span class="org-application-btn-icon" aria-hidden="true">✕</span>Deny</button>' +
         '</div>' +
         '<button type="button" class="org-application-resend-link" data-resend-application-alert="' +
         esc(a.id) +
         '" title="Send yourself an email about this application">Email me a copy</button>' +
+        '</div>' +
+        '<div class="org-application-deny-panel" hidden>' +
+        '<label class="org-application-deny-label" for="deny-note-' +
+        esc(a.id) +
+        '">Optional note for the attendee</label>' +
+        '<textarea id="deny-note-' +
+        esc(a.id) +
+        '" class="org-application-deny-note" maxlength="400" rows="3" placeholder="e.g. This session is full for founders in your sector. Try our open networking events instead."></textarea>' +
+        '<p class="org-application-deny-hint">Keep this professional and event-related. Leave blank for a standard message.</p>' +
+        '<div class="org-application-deny-panel-actions">' +
+        '<button type="button" class="org-application-deny-confirm-btn" data-confirm-deny-application="' +
+        esc(a.id) +
+        '">Send denial</button>' +
+        '<button type="button" class="org-application-deny-cancel-btn" data-cancel-deny-application="' +
+        esc(a.id) +
+        '">Cancel</button>' +
+        '</div>' +
+        '</div>' +
         '</div>'
       );
     }
@@ -1620,19 +1654,24 @@
     window.alert(data.message || 'Application alert email sent.');
   }
 
-  async function reviewApplication(registrationId, action) {
+  async function reviewApplication(registrationId, action, denialReason) {
     const attendee = state.attendeesAll.find((row) => row.id === registrationId);
     const name = attendee ? attendee.name : 'this applicant';
-    if (action === 'deny') {
+    if (action === 'deny' && denialReason === undefined) {
       const ok = window.confirm(
         'Deny the application from ' + name + '? They will be notified by email.'
       );
       if (!ok) return;
     }
 
+    const payload = { registrationId, action };
+    if (action === 'deny') {
+      payload.denialReason = String(denialReason || '').trim();
+    }
+
     const { ok, data } = await api('/api/organiser/application-decisions', {
       method: 'POST',
-      body: JSON.stringify({ registrationId, action }),
+      body: JSON.stringify(payload),
     });
 
     if (!ok || !data.ok) {
@@ -1642,6 +1681,10 @@
 
     if (attendee) {
       attendee.applicationStatus = data.applicationStatus || (action === 'approve' ? 'Approved' : 'Denied');
+      if (action === 'deny') {
+        attendee.applicationDenialReason =
+          String(data.registration?.application_denial_reason || denialReason || '').trim();
+      }
       if (action === 'approve' && String(data.paymentStatus || '') === 'Free') {
         attendee.paymentStatus = 'Free';
         attendee.amountDisplay = 'Free';
@@ -1653,6 +1696,28 @@
     updatePendingApplicationsNavBadge();
     renderAttendees();
     window.alert(data.message || (action === 'approve' ? 'Application approved.' : 'Application denied.'));
+  }
+
+  function showDenyPanel(registrationId) {
+    const review = document.querySelector('[data-review-id="' + registrationId + '"]');
+    if (!review) return;
+    const main = review.querySelector('.org-application-review-main');
+    const panel = review.querySelector('.org-application-deny-panel');
+    if (main) main.hidden = true;
+    if (panel) {
+      panel.hidden = false;
+      const textarea = panel.querySelector('.org-application-deny-note');
+      if (textarea) textarea.focus();
+    }
+  }
+
+  function hideDenyPanel(registrationId) {
+    const review = document.querySelector('[data-review-id="' + registrationId + '"]');
+    if (!review) return;
+    const main = review.querySelector('.org-application-review-main');
+    const panel = review.querySelector('.org-application-deny-panel');
+    if (main) main.hidden = false;
+    if (panel) panel.hidden = true;
   }
 
   function renderAttendees() {
@@ -2824,6 +2889,13 @@
 
   async function startStripeConnectOnboarding(groupId) {
     const gid = groupId || primaryGroupForStripeConnect()?.id;
+    if (window.HubOrganiserPaymentSetup) {
+      await window.HubOrganiserPaymentSetup.startSetup(
+        gid,
+        '/organiser/index.html#events-revenue'
+      );
+      return;
+    }
     if (!gid) {
       alert('No organiser profile found.');
       return;
@@ -2836,37 +2908,65 @@
       }),
     });
     if (!ok || !data.url) {
-      alert(data.message || data.error || 'Could not start Stripe Connect setup');
+      alert(data.message || data.error || 'Could not start bank details setup');
       return;
     }
     window.location.href = data.url;
   }
 
-  function renderStripeConnectBanner() {
-    const banner = document.getElementById('stripe-connect-banner');
-    if (!banner || !state.stripeConnectEnabled) {
-      if (banner) {
-        banner.hidden = true;
-        banner.innerHTML = '';
+  function paymentSetupStateFromDashboard() {
+    const pendingGroups = (state.groups || []).filter(function (g) {
+      return state.stripeConnectEnabled && !g.stripeConnectReady;
+    });
+    return {
+      enabled: Boolean(state.stripeConnectEnabled),
+      groups: state.groups || [],
+      pendingGroups: pendingGroups,
+      needsSetup: Boolean(state.stripeConnectEnabled && pendingGroups.length),
+      primaryGroup: pendingGroups[0] || (state.groups || [])[0] || null,
+    };
+  }
+
+  function renderPaymentSetupUi() {
+    const payment = window.HubOrganiserPaymentSetup;
+    const setupState = paymentSetupStateFromDashboard();
+    const group = setupState.primaryGroup;
+
+    const navBadge = document.getElementById('org-payment-setup-nav-badge');
+    if (navBadge) navBadge.hidden = !setupState.needsSetup;
+
+    const quickSetup = document.getElementById('org-quick-payment-setup');
+    if (quickSetup) {
+      quickSetup.hidden = !setupState.needsSetup;
+      if (!quickSetup.dataset.paymentQuickBound) {
+        quickSetup.dataset.paymentQuickBound = '1';
+        quickSetup.addEventListener('click', function () {
+          startStripeConnectOnboarding(group?.id);
+        });
       }
-      return;
     }
-    const pending = (state.groups || []).filter((g) => !g.stripeConnectReady);
-    if (!pending.length) {
-      banner.hidden = true;
-      banner.innerHTML = '';
-      return;
+
+    const legacyBanner = document.getElementById('stripe-connect-banner');
+    if (legacyBanner) {
+      legacyBanner.hidden = true;
+      legacyBanner.innerHTML = '';
     }
-    const group = pending[0];
-    banner.hidden = false;
-    banner.innerHTML =
-      '<p><strong>Connect Stripe to sell paid tickets</strong> — you receive the full ticket price in your connected account. ' +
-      'Attendees pay a booking fee at checkout (4.5% + 20p per ticket), which covers platform and payment processing.</p>' +
-      '<button type="button" class="org-btn org-btn-primary org-btn-sm" data-stripe-connect="' +
-      esc(group.id) +
-      '">Connect Stripe for ' +
-      esc(group.name || 'your group') +
-      '</button>';
+
+    if (!payment) return;
+
+    payment.renderInto(document.getElementById('org-payment-setup-revenue'), setupState, group, {
+      returnPath: '/organiser/index.html#events-revenue',
+      title: 'Add bank details to get paid for ticket sales',
+    });
+    payment.renderInto(document.getElementById('org-payment-setup-overview'), setupState, group, {
+      returnPath: '/organiser/index.html#events-overview',
+      compact: true,
+      title: 'Add bank details before you sell paid tickets',
+    });
+  }
+
+  function renderStripeConnectBanner() {
+    renderPaymentSetupUi();
   }
 
   function groupNameById(id) {
@@ -4695,15 +4795,28 @@
       attendeesBody.dataset.reviewBound = '1';
       attendeesBody.addEventListener('click', (e) => {
         const approveBtn = e.target.closest('[data-approve-application]');
-        const denyBtn = e.target.closest('[data-deny-application]');
+        const showDenyBtn = e.target.closest('[data-show-deny-form]');
+        const confirmDenyBtn = e.target.closest('[data-confirm-deny-application]');
+        const cancelDenyBtn = e.target.closest('[data-cancel-deny-application]');
         const resendBtn = e.target.closest('[data-resend-application-alert]');
         const resendApprovalBtn = e.target.closest('[data-resend-approval-email]');
         if (approveBtn) {
           reviewApplication(approveBtn.getAttribute('data-approve-application'), 'approve');
           return;
         }
-        if (denyBtn) {
-          reviewApplication(denyBtn.getAttribute('data-deny-application'), 'deny');
+        if (showDenyBtn) {
+          showDenyPanel(showDenyBtn.getAttribute('data-show-deny-form'));
+          return;
+        }
+        if (confirmDenyBtn) {
+          const registrationId = confirmDenyBtn.getAttribute('data-confirm-deny-application');
+          const review = document.querySelector('[data-review-id="' + registrationId + '"]');
+          const textarea = review ? review.querySelector('.org-application-deny-note') : null;
+          reviewApplication(registrationId, 'deny', textarea ? textarea.value : '');
+          return;
+        }
+        if (cancelDenyBtn) {
+          hideDenyPanel(cancelDenyBtn.getAttribute('data-cancel-deny-application'));
           return;
         }
         if (resendBtn) {
@@ -4986,11 +5099,11 @@
         await loadBootstrap();
         if (connectParam === 'refresh') {
           showAirtableAlert(
-            'Stripe setup was interrupted. Click Connect Stripe to continue where you left off.',
+            'Bank details setup was interrupted. Click Add bank details to continue where you left off.',
             false
           );
         } else {
-          showAirtableAlert('Stripe account updated.', false);
+          showAirtableAlert('Bank details saved.', false);
         }
         if (window.history.replaceState) {
           const url = new URL(window.location.href);

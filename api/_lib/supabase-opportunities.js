@@ -277,6 +277,7 @@ async function activateOpportunityListingPayment(opportunityId, months, sessionI
       listing_paid_at: now.toISOString(),
       listing_expires_at: expiresAt.toISOString(),
       listing_stripe_session_id: sessionId ? String(sessionId).trim() : null,
+      listing_expiry_reminder_sent_at: null,
       package_tier: 'standard',
       updated_at: now.toISOString(),
     })
@@ -284,7 +285,16 @@ async function activateOpportunityListingPayment(opportunityId, months, sessionI
     .select('*')
     .single();
   if (error) throw new Error(error.message);
-  return rowToListing(data);
+  const listing = rowToListing(data);
+
+  try {
+    const { sendOpportunityListingLiveEmail } = require('./opportunity-emails');
+    await sendOpportunityListingLiveEmail(listing);
+  } catch {
+    /* email failure must not block activation */
+  }
+
+  return listing;
 }
 
 async function listPublishedOpportunities() {
@@ -391,18 +401,45 @@ async function activateOpportunityPremium(opportunityId) {
   const id = String(opportunityId || '').trim();
   if (!isUuid(id)) throw new Error('invalid_opportunity_id');
   const sb = getSupabaseAdmin();
+
+  const { data: existing, error: loadErr } = await sb
+    .from('business_opportunities')
+    .select('id, featured_until')
+    .eq('id', id)
+    .maybeSingle();
+  if (loadErr) throw new Error(loadErr.message);
+  if (!existing) throw new Error('not_found');
+
+  const now = new Date();
+  let base = now;
+  if (existing.featured_until && new Date(existing.featured_until) > base) {
+    base = new Date(existing.featured_until);
+  }
+  const featuredUntil = addMonths(base, 1);
+
   const { data, error } = await sb
     .from('business_opportunities')
     .update({
       featured: true,
       package_tier: 'premium',
-      updated_at: new Date().toISOString(),
+      featured_until: featuredUntil.toISOString(),
+      featured_expiry_reminder_sent_at: null,
+      updated_at: now.toISOString(),
     })
     .eq('id', id)
     .select('*')
     .single();
   if (error) throw new Error(error.message);
-  return rowToListing(data);
+  const listing = rowToListing(data);
+
+  try {
+    const { sendOpportunityPremiumLiveEmail } = require('./opportunity-emails');
+    await sendOpportunityPremiumLiveEmail(listing);
+  } catch {
+    /* email failure must not block activation */
+  }
+
+  return listing;
 }
 
 function enquiryRowToDto(row, opportunity) {
@@ -449,7 +486,17 @@ async function createOpportunityEnquiry(input) {
     .select('*')
     .single();
   if (error) throw new Error(error.message);
-  return enquiryRowToDto(data, opportunity);
+  const opportunity = rowToListing(data);
+  const dto = enquiryRowToDto(data, opportunity);
+
+  try {
+    const { sendOpportunityEnquiryEmails } = require('./opportunity-emails');
+    await sendOpportunityEnquiryEmails(opportunity, dto);
+  } catch {
+    /* email failure must not block enquiry */
+  }
+
+  return dto;
 }
 
 async function listOpportunityEnquiriesSentBySession(session) {

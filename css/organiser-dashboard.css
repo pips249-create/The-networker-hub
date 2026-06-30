@@ -1698,6 +1698,79 @@
   border-color: #4aa8f0;
 }
 
+.org-application-deny-panel {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(28, 32, 64, 0.08);
+  text-align: left;
+}
+
+.org-application-deny-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1c2040;
+  margin-bottom: 6px;
+}
+
+.org-application-deny-note {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(28, 32, 64, 0.14);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #1c2040;
+  resize: vertical;
+  min-height: 72px;
+}
+
+.org-application-deny-note:focus {
+  outline: 2px solid rgba(74, 168, 240, 0.35);
+  border-color: #4aa8f0;
+}
+
+.org-application-deny-hint {
+  margin: 8px 0 12px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #736b6e;
+}
+
+.org-application-deny-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.org-application-deny-confirm-btn,
+.org-application-deny-cancel-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.org-application-deny-confirm-btn {
+  background: #c0392b;
+  color: #fff;
+}
+
+.org-application-deny-cancel-btn {
+  background: rgba(28, 32, 64, 0.08);
+  color: #1c2040;
+}
+
+.org-application-answer--denial .org-application-answer-value {
+  color: #5c5557;
+  font-style: italic;
+}
+
 .org-attendee-row-awaiting-payment td {
   background: rgba(232, 246, 248, 0.42);
 }
@@ -2085,18 +2158,86 @@
 }
 
 .org-stripe-connect-banner {
-  background: #eef6ff;
-  border: 1px solid #b8d4f5;
-  border-radius: var(--od-radius-sm);
-  padding: 14px 16px;
-  margin-bottom: 16px;
-  font-size: 13px;
-  line-height: 1.55;
-  color: #1c4a7a;
+  display: none;
 }
 
-.org-stripe-connect-banner .org-btn {
-  margin-top: 10px;
+.hub-payment-setup-card {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: linear-gradient(135deg, #fff9ec 0%, #f3ecfa 100%);
+  border: 2px solid rgba(189, 147, 46, 0.45);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 8px 24px rgba(91, 47, 153, 0.08);
+}
+
+.hub-payment-setup-card--compact {
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+
+.hub-payment-setup-icon {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.hub-payment-setup-title {
+  margin: 0 0 6px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--purple-900, #3b1f6e);
+}
+
+.hub-payment-setup-lead {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #4a4446;
+}
+
+.hub-payment-setup-steps {
+  margin: 0 0 14px;
+  padding-left: 1.2rem;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4a4446;
+}
+
+.hub-payment-setup-steps li + li {
+  margin-top: 4px;
+}
+
+.hub-payment-setup-btn {
+  margin-top: 2px;
+}
+
+.hub-payment-setup-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--od-text-soft, #736b6e);
+}
+
+.org-quick-card--highlight {
+  border-color: rgba(189, 147, 46, 0.65);
+  background: linear-gradient(135deg, #fff9ec 0%, #f3ecfa 100%);
+  box-shadow: 0 8px 24px rgba(91, 47, 153, 0.08);
+}
+
+.org-quick-card--highlight .org-quick-label {
+  color: var(--purple-900, #3b1f6e);
+}
+
+.org-nav-badge--action {
+  background: #bd932e;
+  color: #fff;
+}
+
+#org-payment-setup-overview[hidden],
+#ee-payment-setup-mount[hidden] {
+  display: none !important;
 }
 
 .org-payout-held-note {

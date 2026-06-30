@@ -86,7 +86,13 @@ async function assertOrganiserCanReviewRegistration(session, registration) {
 /**
  * Approve or deny a pending OSOP application (organiser only).
  */
-async function reviewApplicationForOrganiser(session, registrationId, action) {
+function normalizeDenialReason(raw) {
+  const text = String(raw || '').trim();
+  if (!text) return null;
+  return text.slice(0, 400);
+}
+
+async function reviewApplicationForOrganiser(session, registrationId, action, options = {}) {
   if (!isSupabaseConfigured()) throw new Error('supabase_not_configured');
 
   const id = String(registrationId || '').trim();
@@ -114,7 +120,10 @@ async function reviewApplicationForOrganiser(session, registrationId, action) {
 
   let patch;
   if (decision === 'deny') {
-    patch = { application_status: 'Denied' };
+    patch = {
+      application_status: 'Denied',
+      application_denial_reason: normalizeDenialReason(options.denialReason),
+    };
   } else if (isFree) {
     patch = {
       application_status: 'Approved',

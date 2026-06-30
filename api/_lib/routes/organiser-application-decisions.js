@@ -91,7 +91,11 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const result = await reviewApplicationForOrganiser(auth.session, registrationId, action);
+    const denialReason =
+      action === 'deny' ? String(body.denialReason || body.denial_reason || '').trim() : '';
+    const result = await reviewApplicationForOrganiser(auth.session, registrationId, action, {
+      denialReason,
+    });
     let message =
       action === 'approve'
         ? 'Application approved. The attendee has been notified by email.'

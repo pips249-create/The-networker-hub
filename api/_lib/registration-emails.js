@@ -1,5 +1,5 @@
 const { sendTemplatedEmail } = require('./send-template-email');
-const { isOnlineEvent } = require('./event-refund-policy');
+const { isOnlineEvent, escapeHtml } = require('./event-refund-policy');
 const {
   formatBookingReference,
   formatBookedAt,
@@ -425,6 +425,34 @@ async function sendOrganiserApplicationAlertEmail(sb, registration, options = {}
   return { organiser: true, to: organiserContact.email };
 }
 
+function buildDenialReasonBlock(reason) {
+  const text = String(reason || '').trim();
+  if (!text) return '';
+  const safe = escapeHtml(text).replace(/\r?\n/g, '<br>');
+  return (
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:16px 0 0;">' +
+    '<tr><td style="padding:16px 18px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;text-align:left;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 8px;">Message from the organiser</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.65;color:#475569;margin:0;">' +
+    safe +
+    '</p></td></tr></table>'
+  );
+}
+
+function buildDenialEmailVars(registration) {
+  const reason = String(registration.application_denial_reason || '').trim();
+  if (reason) {
+    return {
+      denial_closing: '',
+      denial_reason_block: buildDenialReasonBlock(reason),
+    };
+  }
+  return {
+    denial_closing: ' On this occasion the organiser is unable to offer you a place.',
+    denial_reason_block: '',
+  };
+}
+
 /**
  * Email attendee when an organiser approves (paid) or denies an OSOP application.
  */
@@ -489,6 +517,9 @@ async function sendApplicationDecisionEmails(sb, registration, { decision, ticke
     amountPaid: priceIfApproved,
   });
   vars.price_if_approved = priceIfApproved;
+  if (outcome === 'denied') {
+    Object.assign(vars, buildDenialEmailVars(registration));
+  }
 
   const slug = outcome === 'approved' ? 'application_approved' : 'application_denied';
   const subject =
