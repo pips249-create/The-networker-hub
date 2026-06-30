@@ -1522,6 +1522,13 @@
     const accountLine = document.getElementById('checkout-account-line');
     const secureFoot = document.getElementById('ticket-secure-foot');
     const buy = document.getElementById('buy-btn');
+
+    if (ev?.isTicketSalesScheduled || ev?.isTicketSalesPending) {
+      if (paidBlock) paidBlock.hidden = true;
+      if (secureFoot) secureFoot.hidden = true;
+      return;
+    }
+
     const isFree = !(total > 0);
 
     if (paidBlock) paidBlock.hidden = isFree;
@@ -1657,11 +1664,19 @@
     }
 
     function refreshScheduledSaveUi() {
-      const saved = window.HubFavourites ? window.HubFavourites.isSaved(ev.id) : false;
+      const eventId = String(document.body.getAttribute('data-event-id') || ev.id || '');
+      const saved = window.HubFavourites ? window.HubFavourites.isSaved(eventId) : false;
       btn.textContent = saved ? "Saved — we'll notify you" : 'Save event';
       btn.setAttribute('aria-pressed', saved ? 'true' : 'false');
       btn.classList.toggle('is-saved', saved);
-      btn.disabled = saved;
+      const saveBtn = document.getElementById('save-btn');
+      if (saveBtn && window.HubFavourites) {
+        saveBtn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+        saveBtn.setAttribute('aria-label', saved ? 'Remove from saved' : 'Save event');
+        saveBtn.classList.toggle('is-saved', saved);
+        const label = saveBtn.querySelector('.action-btn-label');
+        if (label) label.textContent = saved ? 'Saved' : 'Save event';
+      }
     }
 
     refreshScheduledSaveUi();
@@ -1673,25 +1688,36 @@
 
     if (scheduledUiBound) return;
     scheduledUiBound = true;
-    btn.addEventListener('click', function () {
-      const organiserId = String(ev.organiserId || '').trim();
-      if (window.HubFavourites) {
-        window.HubFavourites.toggle(ev.id, { organiserId: organiserId }).then(function (saved) {
-          refreshScheduledSaveUi();
-          if (statusEl) {
-            statusEl.hidden = false;
-            statusEl.className = 'ticket-sales-scheduled-status is-ok';
-            statusEl.textContent = saved
-              ? "Saved — we'll email you when tickets go on sale."
-              : 'Removed from saved events.';
-          }
-        });
-        return;
-      }
-      if (statusEl) {
-        statusEl.hidden = false;
-        statusEl.className = 'ticket-sales-scheduled-status is-error';
-        statusEl.textContent = 'Sign in to save this event and get notified.';
+    btn.addEventListener('click', async function () {
+      if (!window.HubFavourites) return;
+      if (!(await requireSignedInAttendee())) return;
+
+      const current = activeEvent() || ev;
+      const eventId = String(document.body.getAttribute('data-event-id') || current.id || '');
+      const organiserId = String(current.organiserId || '').trim();
+
+      btn.disabled = true;
+      if (statusEl) statusEl.hidden = true;
+
+      try {
+        const saved = await window.HubFavourites.toggle(eventId, { organiserId: organiserId });
+        refreshScheduledSaveUi();
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.className = 'ticket-sales-scheduled-status is-ok';
+          statusEl.textContent = saved
+            ? "Saved — we'll email you when tickets go on sale."
+            : 'Removed from saved events.';
+        }
+      } catch (e) {
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.className = 'ticket-sales-scheduled-status is-error';
+          statusEl.textContent = e.message || 'Could not save this event. Please try again.';
+        }
+      } finally {
+        btn.disabled = false;
+        refreshScheduledSaveUi();
       }
     });
   }
@@ -1726,13 +1752,15 @@
       panel.classList.add('is-sales-scheduled');
       buy.disabled = true;
       buy.classList.add('cta-btn-disabled');
-      if (purchaseView) purchaseView.removeAttribute('aria-hidden');
+      if (purchaseView) purchaseView.hidden = true;
       if (scheduledPanel) {
         scheduledPanel.hidden = false;
         bindTicketSalesScheduledUi(ev);
       }
       return;
     }
+
+    if (purchaseView) purchaseView.hidden = false;
 
     if (ev.isTicketSalesPending) {
       panel.classList.add('is-sales-pending');
@@ -1909,19 +1937,46 @@
     if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
   }
 
+  function isLocalDev() {
+    const host = window.location.hostname;
+    return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+  }
+
+  function shareUrlForEvent(ev) {
+    const path = canonicalEventPath(ev);
+    let origin = window.location.origin;
+    if (isLocalDev()) {
+      const canonical = document.querySelector('link[rel="canonical"]');
+      if (canonical && canonical.href) {
+        try {
+          origin = new URL(canonical.href).origin;
+        } catch (e) {
+          origin = 'https://the-networker-hub.vercel.app';
+        }
+      } else {
+        origin = 'https://the-networker-hub.vercel.app';
+      }
+    }
+    return origin.replace(/\/$/, '') + path;
+  }
+
   function buildEventShareContent(ev, shareUrl) {
     const title = String(ev.title || 'Event on The Networker Hub').trim();
-    const details = [];
-    const dateLine = ev.dateLine || ev.date;
-    if (dateLine) details.push(dateLine);
-    if (ev.time) details.push(ev.time);
-    const location = ev.location || ev.city || ev.venue;
-    if (location) details.push(location);
-    if (ev.organiser) details.push('with ' + ev.organiser);
-    const summary = details.filter(Boolean).join(' · ');
-    const text = summary ? title + ' — ' + summary : title;
+    const parts = [];
+    const whenWhere = String(ev.dateLine || '').trim();
+    if (whenWhere) {
+      parts.push(whenWhere);
+    } else {
+      if (ev.date) parts.push(ev.date);
+      if (ev.time) parts.push(ev.time);
+      const loc = ev.city || ev.location || ev.venue;
+      if (loc) parts.push(loc);
+    }
+    if (ev.organiser) parts.push('Hosted by ' + ev.organiser);
+    const details = parts.join(' · ');
+    const text = details ? title + ' — ' + details : title;
     const message = text + '\n\n' + shareUrl;
-    return { title, text, summary, message, url: shareUrl };
+    return { title, text, details, message, url: shareUrl };
   }
 
   function initActions(ev) {
@@ -1930,8 +1985,15 @@
     const shareMenu = document.getElementById('share-menu');
     const calBtn = document.getElementById('calendar-btn');
     const calMenu = document.getElementById('calendar-menu');
-    const url = pageUrl();
+    const url = shareUrlForEvent(ev);
     const share = buildEventShareContent(ev, url);
+
+    const shareMenuLabel = shareMenu && shareMenu.querySelector('.action-dropdown-label');
+    if (shareMenuLabel) {
+      shareMenuLabel.textContent = isLocalDev()
+        ? 'Share this event (link previews use the live site)'
+        : 'Share this event';
+    }
 
     function refreshSaveUi() {
       if (!saveBtn || !ev.id) return;
@@ -1971,30 +2033,40 @@
     const twitter = document.getElementById('share-twitter');
     const facebook = document.getElementById('share-facebook');
     const shareEmail = document.getElementById('share-email');
-    if (linkedIn) {
-      linkedIn.href =
-        'https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(share.message);
+    let shareState = { url: url, share: share };
+
+    function applyShareLinks() {
+      const publicUrl = shareUrlForEvent(ev);
+      shareState = {
+        url: publicUrl,
+        share: buildEventShareContent(ev, publicUrl),
+      };
+      if (linkedIn) {
+        linkedIn.href =
+          'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(publicUrl);
+      }
+      if (twitter) {
+        twitter.href =
+          'https://twitter.com/intent/tweet?url=' +
+          encodeURIComponent(publicUrl) +
+          '&text=' +
+          encodeURIComponent(shareState.share.text);
+      }
+      if (facebook) {
+        facebook.href = 'https://www.facebook.com/sharer.php?u=' + encodeURIComponent(publicUrl);
+      }
+      if (shareEmail) {
+        shareEmail.href =
+          'mailto:?subject=' +
+          encodeURIComponent(shareState.share.title + ' – The Networker Hub') +
+          '&body=' +
+          encodeURIComponent('I thought you might like this event:\n\n' + shareState.share.message);
+      }
     }
-    if (twitter) {
-      twitter.href =
-        'https://twitter.com/intent/tweet?url=' +
-        encodeURIComponent(url) +
-        '&text=' +
-        encodeURIComponent(share.text);
-    }
-    if (facebook) {
-      facebook.href =
-        'https://www.facebook.com/sharer/sharer.php?u=' +
-        encodeURIComponent(url) +
-        '&quote=' +
-        encodeURIComponent(share.text);
-    }
-    if (shareEmail) {
-      shareEmail.href =
-        'mailto:?subject=' +
-        encodeURIComponent(share.title + ' – The Networker Hub') +
-        '&body=' +
-        encodeURIComponent('I thought you might like this event:\n\n' + share.message);
+
+    applyShareLinks();
+    if (isLocalDev()) {
+      setTimeout(applyShareLinks, 2000);
     }
 
     const copyBtn = document.getElementById('share-copy');
@@ -2006,12 +2078,13 @@
             copyBtn.textContent = 'Copy link';
           }, 2000);
         };
+        const message = shareState.share.message;
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(share.message).then(done).catch(function () {
-            window.prompt('Copy this message:', share.message);
+          navigator.clipboard.writeText(message).then(done).catch(function () {
+            window.prompt('Copy this message:', message);
           });
         } else {
-          window.prompt('Copy this message:', share.message);
+          window.prompt('Copy this message:', message);
         }
         if (shareMenu) shareMenu.hidden = true;
         if (shareBtn) shareBtn.setAttribute('aria-expanded', 'false');
