@@ -51,10 +51,10 @@ function mapMeetingType(format) {
 function mapApprovalStatus(listingStatus) {
   if (listingStatus == null || listingStatus === '') return undefined;
   const s = String(listingStatus).toLowerCase();
-  if (s === 'published' || s === 'publish' || s === 'approved') return 'Approved';
+  if (s === 'approved') return 'Approved';
   if (s === 'rejected') return 'Rejected';
-  if (s === 'draft') return 'Pending Review';
-  return 'Pending Review';
+  if (s === 'pending review' || s === 'pending') return 'Pending Review';
+  return undefined;
 }
 
 function payloadTouchesDate(payload) {
@@ -160,10 +160,17 @@ function deriveGroupListingStatus(statusRaw) {
 
 function deriveListingStatus(statusRaw, dateIso, eventStatus, endDateIso) {
   const st = String(eventStatus || '').toLowerCase();
+  const approval = String(statusRaw || '').trim();
   if (st === 'cancelled') return { key: 'cancelled', label: 'Cancelled' };
   if (st === 'archived') return { key: 'archived', label: 'Archived' };
   if (st === 'draft') return { key: 'draft', label: 'Draft' };
   if (st === 'unpublished') return { key: 'unpublished', label: 'Unpublished' };
+  if (st === 'published' && approval === 'Pending Review') {
+    return { key: 'pending_approval', label: 'Incomplete listing' };
+  }
+  if (st === 'published' && approval === 'Rejected') {
+    return { key: 'unpublished', label: 'Rejected' };
+  }
   const raw = String(statusRaw || '').toLowerCase();
   if (/unpublish|reject/.test(raw)) return { key: 'unpublished', label: 'Unpublished' };
   if (/pending|draft/.test(raw)) return { key: 'draft', label: 'Draft' };
@@ -504,11 +511,7 @@ async function buildEventRow(payload, eventId, mode) {
   const isLocked = Boolean(payload._locked);
   const listingStatus = payload.listingStatus != null ? payload.listingStatus : null;
   const approval_status =
-    listingStatus != null
-      ? mapApprovalStatus(listingStatus)
-      : payload.publish === true
-        ? 'Approved'
-        : undefined;
+    listingStatus != null ? mapApprovalStatus(listingStatus) : undefined;
 
   const row = {
     title: payload.title,
@@ -821,6 +824,7 @@ async function assertEventsHaveTicketsForPublish(sb, eventIds) {
 async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales) {
   const sb = getSupabaseAdmin();
   const { ensureEventSlug } = require('./event-slug');
+  const { eventRowReadyForAutoApproval } = require('./supabase-events');
   const ids = (eventIds || []).filter(Boolean);
   if (!ids.length) {
     const e = new Error('No events to publish');
@@ -833,7 +837,6 @@ async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales)
   const salesLiveNow = eventHasTicketsOnSale(ticketsForSales || []);
   const patch = {
     status: 'published',
-    approval_status: 'Approved',
     ticket_sales_enabled: salesLiveNow,
     published_at: new Date().toISOString(),
     refund_policy: refundPayload.refundPolicy || null,
@@ -849,9 +852,30 @@ async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales)
 
   const { data: existing, error: loadErr } = await sb
     .from('events')
-    .select('id, title, slug, starts_at')
+    .select(
+      'id, title, slug, starts_at, organiser_id, event_type, meeting_type, vat_treatment, refund_policy, refund_terms_agreed, refund_terms_agreed_at, approval_status'
+    )
     .in('id', ids);
   if (loadErr) throw new Error(loadErr.message);
+
+  const orgIds = [...new Set((existing || []).map((row) => row.organiser_id).filter(Boolean))];
+  let orgById = new Map();
+  if (orgIds.length) {
+    const { data: orgs, error: orgErr } = await sb
+      .from('organisers')
+      .select('id, listing_status')
+      .in('id', orgIds);
+    if (orgErr) throw new Error(orgErr.message);
+    orgById = new Map((orgs || []).map((o) => [o.id, o]));
+  }
+
+  const ticketsByEvent = new Map();
+  (ticketsForSales || []).forEach((ticket) => {
+    const eventId = ticket.event_id || ticket.eventId;
+    if (!eventId) return;
+    if (!ticketsByEvent.has(eventId)) ticketsByEvent.set(eventId, []);
+    ticketsByEvent.get(eventId).push(ticket);
+  });
 
   const updated = [];
   for (const row of existing || []) {
@@ -861,9 +885,18 @@ async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales)
       eventId: row.id,
       currentSlug: row.slug,
     });
+    const rowPatch = { ...patch, slug };
+    const mergedRow = { ...row, ...patch };
+    const organiser = row.organiser_id ? orgById.get(row.organiser_id) : null;
+    const eventTickets = ticketsByEvent.get(row.id) || [];
+    if (eventRowReadyForAutoApproval(mergedRow, organiser, eventTickets, refundPayload)) {
+      rowPatch.approval_status = 'Approved';
+    } else if (String(row.approval_status || '').trim() !== 'Approved') {
+      rowPatch.approval_status = 'Pending Review';
+    }
     const { data, error } = await sb
       .from('events')
-      .update({ ...patch, slug })
+      .update(rowPatch)
       .eq('id', row.id)
       .select('*')
       .single();

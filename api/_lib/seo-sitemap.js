@@ -3,7 +3,7 @@
  */
 const { siteOrigin } = require('./hubert-seo');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
-const { fetchPublishedEventRows } = require('./supabase-events');
+const { fetchPublishedEventRows, isPublicEvent } = require('./supabase-events');
 const { publicEventSlug } = require('./event-slug');
 const { publicOrganiserSlug } = require('./organiser-slug');
 
@@ -78,10 +78,23 @@ async function buildSitemapXml(originOverride) {
   }
 
   const sb = getSupabaseAdmin();
-  const [events, organisers] = await Promise.all([
+  const [eventRows, organisers] = await Promise.all([
     fetchPublishedEventRows(sb),
     fetchAllOrganiserRows(sb),
   ]);
+
+  const orgIds = [...new Set((eventRows || []).map((row) => row.organiser_id).filter(Boolean))];
+  let orgById = new Map();
+  if (orgIds.length) {
+    const { data: orgs, error: orgErr } = await sb.from('organisers').select('*').in('id', orgIds);
+    if (orgErr) throw new Error(orgErr.message);
+    orgById = new Map((orgs || []).map((o) => [o.id, o]));
+  }
+
+  const events = (eventRows || []).filter((row) => {
+    const org = row.organiser_id ? orgById.get(row.organiser_id) : null;
+    return isPublicEvent(row, org);
+  });
 
   const eventSlugs = new Set();
   (events || []).forEach((row) => {

@@ -757,7 +757,9 @@
           setStatus('Could not load events: ' + (data.detail || data.message || data.error), true);
           events = [];
         } else {
-          events = data.events || [];
+          events = (data.events || []).filter(function (ev) {
+            return String(ev.listingStatusRaw || '').trim() === 'Approved';
+          });
           setStatus(
             events.length
               ? ''

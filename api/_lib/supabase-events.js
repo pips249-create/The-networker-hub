@@ -385,7 +385,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
       .filter(Boolean)
       .join(' ')
       .toLowerCase(),
-    listingStatusRaw: row.approval_status || 'Approved',
+    listingStatusRaw: row.approval_status || 'Pending Review',
     organiserListingStatusRaw: organiser ? organiser.listing_status || '' : '',
     organiserRanking: organiserRanking || null,
     organiserRankingLabel: organiserRanking?.cardLabel || '',
@@ -409,11 +409,52 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
 
 function isPublicEvent(row, organiser) {
   if (!row.starts_at && !row.next_date) return false;
-  if (row.approval_status !== 'Approved') return false;
+  if (String(row.approval_status || '').trim() !== 'Approved') return false;
   const status = String(row.status || 'published').toLowerCase();
   if (status !== 'published') return false;
   if (organiser && organiser.listing_status === 'draft') return false;
   if (organiser && organiser.listing_status === 'unpublished') return false;
+  return true;
+}
+
+function isApprovedPublicEventPayload(ev) {
+  return String(ev?.listingStatusRaw || '').trim() === 'Approved';
+}
+
+function ticketPriceNum(ticket) {
+  const n = Number(String(ticket?.price ?? '').replace(/[£,\s]/g, ''));
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** Auto-approve when the organiser has completed everything needed for public browse. */
+function eventRowReadyForAutoApproval(row, organiser, tickets, refundPayload) {
+  if (!row) return false;
+  if (!String(row.title || '').trim()) return false;
+  if (!row.starts_at) return false;
+  if (!row.organiser_id) return false;
+  if (!String(row.event_type || '').trim()) return false;
+  if (!String(row.meeting_type || '').trim()) return false;
+
+  const ticketList = Array.isArray(tickets) ? tickets : [];
+  if (!ticketList.length) return false;
+
+  const refundPolicy = String(refundPayload?.refundPolicy || row.refund_policy || '').trim();
+  if (!refundPolicy) return false;
+  const refundAgreed = Boolean(
+    refundPayload?.refundTermsAgreed ?? row.refund_terms_agreed ?? row.refund_terms_agreed_at
+  );
+  if (!refundAgreed) return false;
+
+  const hasPaidTickets = ticketList.some((t) => ticketPriceNum(t) > 0);
+  const vatTreatment = String(refundPayload?.vatTreatment || row.vat_treatment || '').trim();
+  if (hasPaidTickets && !vatTreatment) return false;
+
+  if (organiser) {
+    const listingStatus = String(organiser.listing_status || '').toLowerCase();
+    // Draft/null profiles are auto-published when the event goes live.
+    if (listingStatus === 'unpublished') return false;
+  }
+
   return true;
 }
 
@@ -731,7 +772,8 @@ async function fetchPublishedEventBySlug(sb, slug) {
 
 async function fetchApprovedEvents(sb) {
   const events = await fetchPublishedEventRows(sb);
-  return eventsFromPublishedRows(sb, events);
+  const mapped = await eventsFromPublishedRows(sb, events);
+  return mapped.filter((ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev));
 }
 
 async function handle(req, res) {
@@ -772,7 +814,13 @@ async function handle(req, res) {
         limit
       );
       const events = await eventsFromPublishedRows(sb, rows, organiser);
-      return res.status(200).json({ configured: true, provider: 'supabase', events });
+      return res.status(200).json({
+        configured: true,
+        provider: 'supabase',
+        events: events.filter(
+          (ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev)
+        ),
+      });
     }
 
     if (recordId || slug) {
@@ -841,13 +889,16 @@ async function handle(req, res) {
       const seriesIds = new Set(seriesDates.map((d) => d.id));
       const relatedFiltered = (relatedRows || []).filter((r) => !seriesIds.has(r.id));
       const related = await eventsFromPublishedRows(sb, relatedFiltered, organiser);
+      const publicRelated = related.filter(
+        (ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev)
+      );
       res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=120, stale-while-revalidate=300');
       return res.status(200).json({
         configured: true,
         provider: 'supabase',
         event,
         seriesDates: seriesDates.length > 1 ? seriesDates : [],
-        related,
+        related: publicRelated,
       });
     }
 
@@ -873,6 +924,7 @@ module.exports = {
   fetchEventSeriesDates,
   isPublicEvent,
   isUpcomingBrowseEvent,
+  eventRowReadyForAutoApproval,
   isUpcomingBrowseEventRow,
   ukOutcode,
   slugFormat,

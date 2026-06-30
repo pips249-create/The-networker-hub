@@ -146,7 +146,7 @@
     if (card) card.hidden = false;
 
     const lead = document.getElementById('ep-lead');
-    if (lead && eventIds.length > 1) {
+    if (lead && eventIds.length > 1 && String(ev.approvalStatus || '').trim() === 'Approved') {
       lead.textContent =
         'Your ' +
         eventIds.length +
@@ -157,12 +157,41 @@
   }
 
   async function fetchPreview() {
+    const previewHint = document.getElementById('ep-preview-hint');
+    const lead = document.getElementById('ep-lead');
+
+    function markLiveOnBrowse() {
+      const title = document.getElementById('ep-title');
+      if (title) title.textContent = 'Your event is now published';
+      if (previewHint) {
+        previewHint.textContent = 'This is how your event appears on the browse page.';
+      }
+      if (lead) {
+        lead.textContent =
+          'Attendees can find it on the hub. Preview your listing and choose featured placement, then share it with your network.';
+      }
+    }
+
+    function markPendingApproval() {
+      const title = document.getElementById('ep-title');
+      if (title) title.textContent = 'Finish your listing to go live';
+      if (previewHint) {
+        previewHint.textContent =
+          'Complete any missing event details and publish again to appear on the browse page.';
+      }
+      if (lead) {
+        lead.textContent =
+          'Your event is saved but is not on the public browse page yet. Check tickets, refund policy, VAT, and event details, then publish again.';
+      }
+    }
+
     if (!primaryId) {
       renderPreview({
         title: fallbackTitle,
         photo: fallbackImage,
         description: '',
       });
+      markPendingApproval();
       return;
     }
 
@@ -173,6 +202,9 @@
       );
       const data = await res.json();
       if (data.event) {
+        const approved = String(data.event.approvalStatus || '').trim() === 'Approved';
+        if (approved) markLiveOnBrowse();
+        else markPendingApproval();
         renderPreview({
           id: data.event.id,
           slug: data.event.slug,
@@ -182,6 +214,7 @@
           location: data.event.location,
           imageUrl: data.event.imageUrl,
           photo: data.event.imageUrl,
+          approvalStatus: data.event.approvalStatus,
         });
         return;
       }
@@ -195,11 +228,13 @@
       });
       const data = await res.json();
       if (data.event) {
+        markLiveOnBrowse();
         renderPreview(data.event);
         return;
       }
+      markPendingApproval();
     } catch {
-      /* ignore */
+      markPendingApproval();
     }
 
     renderPreview({
