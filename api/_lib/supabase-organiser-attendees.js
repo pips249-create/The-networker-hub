@@ -36,7 +36,7 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       cancelled_at,
       attendees ( name, email ),
       events ( title ),
-      tickets ( name )
+      tickets ( name, price )
     `
     )
     .in('event_id', targetIds)
@@ -61,6 +61,15 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
         ? row.guest_names.map((n) => String(n || '').trim()).filter(Boolean)
         : [];
 
+      const ticketName = String(ticket.name || 'General admission').trim();
+      const ticketPrice =
+        ticket.price != null && ticket.price !== '' ? Number(String(ticket.price).replace(/[£,\s]/g, '')) : 0;
+      const needsPayment =
+        applicationStatus === 'Approved' &&
+        paymentStatus === 'Pending' &&
+        Number.isFinite(ticketPrice) &&
+        ticketPrice > 0;
+
       return {
         id: row.id,
         bookingReference: formatBookingReference(row.id),
@@ -70,19 +79,22 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
         email,
         guestNames,
         phone: '',
-        ticketName: String(ticket.name || 'General admission').trim(),
+        ticketName,
         quantity: Math.max(1, Number(row.quantity) || 1),
         paymentStatus,
         applicationStatus,
+        needsPayment,
         screeningIndustry: String(row.screening_answer_industry || '').trim(),
         screeningJobTitle: String(row.screening_answer_job_title || '').trim(),
         amountPaid,
         amountDisplay:
           applicationStatus === 'Pending'
             ? 'Application pending'
-            : amountPaid > 0
-              ? '£' + amountPaid.toFixed(2)
-              : 'Free',
+            : needsPayment
+              ? 'Awaiting payment'
+              : amountPaid > 0
+                ? '£' + amountPaid.toFixed(2)
+                : 'Free',
         registeredAt: row.created_at || '',
       };
     })

@@ -20,6 +20,7 @@ module.exports = async function handler(req, res) {
     requireOrganiserSession,
     reviewApplicationForOrganiser,
     resendApplicationOrganiserAlert,
+    resendApprovalEmailForOrganiser,
   } = api;
 
   setCors(req, res);
@@ -47,7 +48,12 @@ module.exports = async function handler(req, res) {
   if (!registrationId) {
     return json(res, 400, { ok: false, error: 'missing_registration_id' });
   }
-  if (action !== 'approve' && action !== 'deny' && action !== 'resend_alert') {
+  if (
+    action !== 'approve' &&
+    action !== 'deny' &&
+    action !== 'resend_alert' &&
+    action !== 'resend_approval'
+  ) {
     return json(res, 400, { ok: false, error: 'invalid_action' });
   }
 
@@ -67,11 +73,36 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (action === 'resend_approval') {
+      if (!resendApprovalEmailForOrganiser) {
+        return json(res, 501, {
+          error: 'resend_approval_not_supported',
+          message: 'Requires Supabase.',
+        });
+      }
+      const result = await resendApprovalEmailForOrganiser(auth.session, registrationId);
+      const to = String(result.to || '').trim();
+      return json(res, 200, {
+        ok: true,
+        ...result,
+        message: to
+          ? 'Approval email with payment link sent to ' + to + '.'
+          : 'Approval email sent.',
+      });
+    }
+
     const result = await reviewApplicationForOrganiser(auth.session, registrationId, action);
-    const message =
+    let message =
       action === 'approve'
         ? 'Application approved. The attendee has been notified by email.'
         : 'Application denied. The attendee has been notified by email.';
+    const emailErr = result.emailResult?.error || result.emailResult?.errors?.[0]?.message;
+    if (emailErr) {
+      message +=
+        ' However, the notification email could not be sent (' +
+        String(emailErr) +
+        '). Use “Resend payment email” on the Attendees table.';
+    }
     return json(res, 200, { ok: true, ...result, message });
   } catch (e) {
     return json(res, e.status || 500, {

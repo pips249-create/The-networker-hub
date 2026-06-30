@@ -1377,6 +1377,9 @@
     if (applicationStatus === 'Denied') {
       return '<span class="org-badge org-badge-red">Denied</span>';
     }
+    if (a.needsPayment) {
+      return '<span class="org-badge org-badge-gold">Approved</span>';
+    }
     return '<span class="org-badge org-badge-green">Confirmed</span>';
   }
 
@@ -1507,23 +1510,50 @@
   }
 
   function attendeeActionsHtml(a) {
-    if (String(a.applicationStatus || '') !== 'Pending') return '—';
-    return (
-      '<div class="org-application-review">' +
-      '<p class="org-application-review-label">Review application</p>' +
-      '<div class="org-application-review-buttons">' +
-      '<button type="button" class="org-application-approve-btn" data-approve-application="' +
-      esc(a.id) +
-      '"><span class="org-application-btn-icon" aria-hidden="true">✓</span>Approve</button>' +
-      '<button type="button" class="org-application-deny-btn" data-deny-application="' +
-      esc(a.id) +
-      '"><span class="org-application-btn-icon" aria-hidden="true">✕</span>Deny</button>' +
-      '</div>' +
-      '<button type="button" class="org-application-resend-link" data-resend-application-alert="' +
-      esc(a.id) +
-      '" title="Send yourself an email about this application">Email me a copy</button>' +
-      '</div>'
-    );
+    if (String(a.applicationStatus || '') === 'Pending') {
+      return (
+        '<div class="org-application-review">' +
+        '<p class="org-application-review-label">Review application</p>' +
+        '<div class="org-application-review-buttons">' +
+        '<button type="button" class="org-application-approve-btn" data-approve-application="' +
+        esc(a.id) +
+        '"><span class="org-application-btn-icon" aria-hidden="true">✓</span>Approve</button>' +
+        '<button type="button" class="org-application-deny-btn" data-deny-application="' +
+        esc(a.id) +
+        '"><span class="org-application-btn-icon" aria-hidden="true">✕</span>Deny</button>' +
+        '</div>' +
+        '<button type="button" class="org-application-resend-link" data-resend-application-alert="' +
+        esc(a.id) +
+        '" title="Send yourself an email about this application">Email me a copy</button>' +
+        '</div>'
+      );
+    }
+    if (a.needsPayment) {
+      return (
+        '<div class="org-application-review org-application-review--awaiting">' +
+        '<p class="org-application-review-label">Awaiting payment</p>' +
+        '<p class="org-application-review-hint">The attendee can pay from My Hub.</p>' +
+        '<button type="button" class="org-application-resend-approval-btn" data-resend-approval-email="' +
+        esc(a.id) +
+        '">Resend payment email</button>' +
+        '</div>'
+      );
+    }
+    return '—';
+  }
+
+  async function resendApprovalEmail(registrationId) {
+    const { ok, data } = await api('/api/organiser/application-decisions', {
+      method: 'POST',
+      body: JSON.stringify({ registrationId, action: 'resend_approval' }),
+    });
+
+    if (!ok || !data.ok) {
+      window.alert(data.message || data.error || 'Could not resend the approval email.');
+      return;
+    }
+
+    window.alert(data.message || 'Approval email sent.');
   }
 
   async function resendApplicationAlert(registrationId) {
@@ -1607,6 +1637,8 @@
       const tr = document.createElement('tr');
       if (String(a.applicationStatus || '') === 'Pending') {
         tr.className = 'org-attendee-row-pending';
+      } else if (a.needsPayment) {
+        tr.className = 'org-attendee-row-awaiting-payment';
       }
       tr.innerHTML =
         '<td class="org-td-name">' +
@@ -4597,6 +4629,7 @@
         const approveBtn = e.target.closest('[data-approve-application]');
         const denyBtn = e.target.closest('[data-deny-application]');
         const resendBtn = e.target.closest('[data-resend-application-alert]');
+        const resendApprovalBtn = e.target.closest('[data-resend-approval-email]');
         if (approveBtn) {
           reviewApplication(approveBtn.getAttribute('data-approve-application'), 'approve');
           return;
@@ -4607,6 +4640,10 @@
         }
         if (resendBtn) {
           resendApplicationAlert(resendBtn.getAttribute('data-resend-application-alert'));
+          return;
+        }
+        if (resendApprovalBtn) {
+          resendApprovalEmail(resendApprovalBtn.getAttribute('data-resend-approval-email'));
         }
       });
     }

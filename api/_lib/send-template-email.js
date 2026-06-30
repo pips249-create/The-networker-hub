@@ -35,11 +35,19 @@ const {
 
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
-/** Business-critical organiser alerts — not blocked by hub email opt-out. */
-const ORGANISER_TRANSACTIONAL_SLUGS = new Set([
+/** Business-critical emails — not blocked by hub marketing opt-out. */
+const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_new_registration',
   'organiser_new_application',
   'organiser_booking_cancelled',
+  'application_received',
+  'application_approved',
+  'application_denied',
+  'booking_confirmation',
+  'booking_reminder',
+  'refund_processed',
+  'booking_cancelled',
+  'event_cancelled',
 ]);
 
 function replacePlaceholders(text, variables) {
@@ -280,7 +288,7 @@ async function sendViaResend({ to, subject, html }) {
  * @param {object} [opts.variables] - e.g. { user_name, event_name, amount_paid }
  */
 async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject }) {
-  const bypassEmailCheck = skipEmailCheck || ORGANISER_TRANSACTIONAL_SLUGS.has(slug);
+  const bypassEmailCheck = skipEmailCheck || TRANSACTIONAL_EMAIL_SLUGS.has(slug);
   if (!bypassEmailCheck) {
     const allowed = await getEmailsEnabledForEmail(to);
     if (!allowed) {

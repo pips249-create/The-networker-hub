@@ -171,8 +171,87 @@ async function resendApplicationOrganiserAlert(session, registrationId) {
   return sendOrganiserApplicationAlertEmail(sb, registration, { fallbackEmail });
 }
 
+async function assertOrganiserCanAccessRegistration(session, registration) {
+  if (!registration?.id) {
+    const err = new Error('registration_not_found');
+    err.status = 404;
+    err.code = 'registration_not_found';
+    throw err;
+  }
+  if (registration.cancelled_at) {
+    const err = new Error('registration_cancelled');
+    err.status = 400;
+    err.code = 'registration_cancelled';
+    throw err;
+  }
+
+  const access = await resolveOrganiserAccess(session);
+  if (!access.role) {
+    const err = new Error('not_authenticated');
+    err.status = 401;
+    err.code = 'not_authenticated';
+    throw err;
+  }
+
+  const event = registration.events || {};
+  const organiserId = String(registration.organiser_id || event.organiser_id || '').trim();
+  const allowed = new Set(access.groupIds || []);
+  if (!organiserId || !allowed.has(organiserId)) {
+    const err = new Error('not_allowed');
+    err.status = 403;
+    err.code = 'not_allowed';
+    throw err;
+  }
+
+  return access;
+}
+
+async function resendApprovalEmailForOrganiser(session, registrationId) {
+  const sb = getSupabaseAdmin();
+  const id = String(registrationId || '').trim();
+  if (!isUuid(id)) {
+    const err = new Error('invalid_registration_id');
+    err.status = 400;
+    err.code = 'invalid_registration_id';
+    throw err;
+  }
+
+  const registration = await loadRegistrationForReview(sb, id);
+  await assertOrganiserCanAccessRegistration(session, registration);
+
+  if (String(registration.application_status || '').trim() !== 'Approved') {
+    const err = new Error('application_not_approved');
+    err.status = 400;
+    err.code = 'application_not_approved';
+    throw err;
+  }
+  if (String(registration.payment_status || '').trim() !== 'Pending') {
+    const err = new Error('payment_not_pending');
+    err.status = 400;
+    err.code = 'payment_not_pending';
+    throw err;
+  }
+
+  const ticket = registration.tickets || {};
+  const unitPrice = parsePriceNum(ticket.price);
+  if (unitPrice <= 0) {
+    const err = new Error('not_awaiting_payment');
+    err.status = 400;
+    err.code = 'not_awaiting_payment';
+    throw err;
+  }
+
+  const emailResult = await sendApplicationDecisionEmails(sb, registration, {
+    decision: 'approved',
+    ticketPrice: unitPrice,
+  });
+
+  return { emailResult, to: registration.attendees?.email || '' };
+}
+
 module.exports = {
   reviewApplicationForOrganiser,
   resendApplicationOrganiserAlert,
+  resendApprovalEmailForOrganiser,
   loadRegistrationForReview,
 };
