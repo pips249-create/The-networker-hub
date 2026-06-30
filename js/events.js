@@ -424,7 +424,7 @@
     const statusBadge = salesBadge || rankingBadge;
 
     return `
-      <a class="event-grid-card${ev.featured ? ' is-premium' : ''}" href="${escapeHtml(detailHref(ev))}"
+      <article class="event-grid-card${ev.featured ? ' is-premium' : ''}"
         data-id="${escapeHtml(ev.id)}"
         data-type="${escapeHtml(ev.type)}"
         data-search="${escapeHtml(ev.search)}"
@@ -452,7 +452,8 @@
           </div>
           <p class="event-grid-meta">${escapeHtml(dateLine)}</p>
         </div>
-      </a>`;
+        <a class="event-grid-card-link" href="${escapeHtml(detailHref(ev))}" aria-label="View ${escapeHtml(ev.title)}"></a>
+      </article>`;
   }
 
   function paginationHtml(page, totalPages) {
@@ -554,6 +555,24 @@
     els.listings.dataset.paginationBound = '1';
     els.listings.addEventListener('click', function (e) {
       if (document.body.classList.contains('browse-mode-organisers')) return;
+
+      var fav = e.target.closest('.fav-btn[data-event-id]');
+      if (fav) {
+        e.preventDefault();
+        e.stopPropagation();
+        var eventId = fav.getAttribute('data-event-id');
+        var organiserId = fav.getAttribute('data-organiser-id');
+        if (window.HubFavourites && eventId) {
+          window.HubFavourites.toggle(eventId, { organiserId: organiserId }).then(function () {
+            window.HubFavourites.refreshButtons(els.listings);
+            if (window.HubOrganiserFavourites) window.HubOrganiserFavourites.refreshButtons(els.listings);
+          });
+        } else {
+          fav.classList.toggle('is-active');
+        }
+        return;
+      }
+
       const btn = e.target.closest('.page-btn');
       if (!btn || btn.disabled) return;
       const filtered = getFilteredList();
