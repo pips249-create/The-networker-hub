@@ -9,7 +9,7 @@ const {
   parseStripeEventBody,
 } = require('./_lib/supabase-registrations');
 const { isSupabaseConfigured } = require('./_lib/supabase');
-const { handleOpportunityPremiumCheckout } = require('./_lib/supabase-opportunities');
+const { handleOpportunityPremiumCheckout, handleOpportunityListingCheckout } = require('./_lib/supabase-opportunities');
 const { handleEventFeaturedCheckout } = require('./_lib/event-featured');
 const { handleChargeRefunded } = require('./_lib/stripe-refund-webhook');
 
@@ -99,11 +99,12 @@ async function handler(req, res) {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object || {};
       const premiumResult = await handleOpportunityPremiumCheckout(session);
+      const listingResult = await handleOpportunityListingCheckout(session);
       const featuredResult = await handleEventFeaturedCheckout(session);
       const registrationResult = await handleCheckoutSessionCompleted(session);
       res.statusCode = 200;
       return res.end(
-        JSON.stringify({ ok: true, premiumResult, featuredResult, registrationResult })
+        JSON.stringify({ ok: true, premiumResult, listingResult, featuredResult, registrationResult })
       );
     }
 

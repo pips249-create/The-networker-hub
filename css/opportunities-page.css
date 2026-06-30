@@ -1029,6 +1029,11 @@
   gap: 24px;
 }
 
+.opportunities-page .opp-pricing-grid--single {
+  grid-template-columns: minmax(0, 28rem);
+  justify-content: center;
+}
+
 .opportunities-page .opp-price-card {
   background: #fff;
   border: 1px solid var(--opp-border);
@@ -3274,6 +3279,149 @@
   }
 }
 
+/* Mobile browse: compact horizontal rows (grid + list modes) */
+@media (max-width: 768px) {
+  .opp-browse-page .opp-opps-grid,
+  .opp-browse-page .opp-opps-grid.list-view {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .opp-browse-page .opp-opps-grid .opp-card,
+  .opp-browse-page .opp-opps-grid.list-view .opp-card {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "media head"
+      "media body"
+      "media footer";
+    min-height: 0;
+    border-radius: 12px;
+  }
+
+  .opp-browse-page .opp-card:hover {
+    transform: none;
+    box-shadow: 0 4px 16px rgba(13, 31, 60, 0.08);
+  }
+
+  .opp-browse-page .opp-card-head,
+  .opp-browse-page .opp-opps-grid.list-view .opp-card-head {
+    grid-area: head;
+    min-height: 0;
+    padding: 10px 40px 2px 10px;
+    background: transparent;
+    border-bottom: none;
+  }
+
+  .opp-browse-page .opp-card-badges {
+    gap: 6px;
+  }
+
+  .opp-browse-page .opp-type-tag,
+  .opp-browse-page .opp-feat-pip {
+    font-size: 9px;
+    padding: 3px 8px;
+  }
+
+  .opp-browse-page .opp-card-media,
+  .opp-browse-page .opp-opps-grid.list-view .opp-card-media {
+    grid-area: media;
+    width: 88px;
+    height: auto;
+    min-height: 88px;
+    align-self: stretch;
+    border-right: none;
+    border-bottom: none;
+    border-radius: 12px 0 0 12px;
+  }
+
+  .opp-browse-page .opp-card-media-img {
+    min-height: 88px;
+    height: 100%;
+  }
+
+  .opp-browse-page .opp-card-media-emoji {
+    font-size: 28px;
+  }
+
+  .opp-browse-page .opp-fav-btn {
+    top: 6px;
+    right: 6px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .opp-browse-page .opp-card-body,
+  .opp-browse-page .opp-opps-grid.list-view .opp-card-body {
+    grid-area: body;
+    padding: 2px 10px 6px;
+    gap: 4px;
+    justify-content: flex-start;
+  }
+
+  .opp-browse-page .opp-card-desc,
+  .opp-browse-page .opp-meta-row,
+  .opp-browse-page .opp-opps-grid.list-view .opp-card-desc,
+  .opp-browse-page .opp-opps-grid.list-view .opp-meta-row {
+    display: none;
+  }
+
+  .opp-browse-page .opp-co-avatar {
+    width: 22px;
+    height: 22px;
+    font-size: 9px;
+  }
+
+  .opp-browse-page .opp-co-name {
+    font-size: 11px;
+  }
+
+  .opp-browse-page .opp-card-title,
+  .opp-browse-page .opp-opps-grid.list-view .opp-card-title {
+    font-size: 14px;
+  }
+
+  .opp-browse-page .opp-card-title a {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .opp-browse-page .opp-card-footer,
+  .opp-browse-page .opp-opps-grid.list-view .opp-card-footer {
+    grid-area: footer;
+    padding: 6px 10px 10px;
+    border-top: none;
+    background: transparent;
+    border-left: none;
+    min-width: 0;
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .opp-browse-page .opp-location {
+    font-size: 11px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .opp-browse-page .opp-enquire-btn {
+    flex-shrink: 0;
+    font-size: 11px;
+    padding: 6px 10px;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
 /* —— Map view —— */
 .opp-browse-page .opp-map-wrap {
   display: grid;
@@ -3668,5 +3816,14 @@ body.opp-view-map.opp-browse-page .opp-listings-toolbar {
   .opp-browse-page .opp-map-list-toggle {
     display: inline-flex;
     align-items: center;
+  }
+}
+
+@media (max-width: 900px) {
+  .opp-browse-page .opp-filter-select,
+  .opp-browse-page .opp-search-box input,
+  .opp-browse-page .opp-search-box--prominent input,
+  .opp-browse-page .opp-toolbar-search input {
+    font-size: 16px;
   }
 }

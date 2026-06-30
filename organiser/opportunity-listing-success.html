@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Listing payment confirmed – The Networker Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css?v=20260614" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260630a" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260701" />
+  </head>
+  <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page oe-submitted-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260712" data-root="../" data-page="opportunities"></script>
+
+    <div class="ee-wrap oe-submitted-wrap">
+      <div class="ee-card oe-submitted-card">
+        <p class="oe-submitted-icon" aria-hidden="true">✓</p>
+        <h1 class="ee-title oe-submitted-title">Payment received</h1>
+        <p class="ee-lead" id="oe-listing-success-lede">Activating your listing…</p>
+        <p class="oe-premium-status" id="oe-listing-success-status" role="status"></p>
+        <div class="ee-actions oe-premium-success-actions" id="oe-listing-success-actions" hidden>
+          <a class="ee-btn ee-btn-gold" href="../opportunities/index.html" id="oe-listing-view-directory">Browse opportunities</a>
+          <a class="ee-btn ee-btn-outline" href="../opportunities/opportunity.html" id="oe-listing-view-yours">View your listing</a>
+          <a class="ee-btn ee-btn-outline" href="opportunity-edit.html" id="oe-listing-edit">Edit listing</a>
+        </div>
+      </div>
+
+      <div class="ee-card oe-premium-upsell" id="oe-premium-upsell">
+        <p class="oe-premium-badge">Premium spotlight</p>
+        <h2 class="oe-premium-heading">Want extra visibility?</h2>
+        <p class="oe-premium-lede">
+          Upgrade to a <strong>premium spotlight</strong> listing for featured placement across the hub (optional, separate subscription).
+        </p>
+        <p class="oe-premium-note" id="oe-premium-error" hidden role="alert"></p>
+        <div class="oe-premium-actions">
+          <button type="button" class="ee-btn ee-btn-gold" id="oe-premium-yes">Upgrade to premium</button>
+          <a class="ee-btn ee-btn-outline" href="../opportunities/index.html" id="oe-skip-premium">No thanks</a>
+        </div>
+      </div>
+    </div>
+
+    <script src="../js/organiser-opportunity-listing-success.js?v=20260630a"></script>
+    <script>
+      (function () {
+        var params = new URLSearchParams(location.search);
+        var id = params.get('id') || '';
+        var premiumYes = document.getElementById('oe-premium-yes');
+        if (!premiumYes || !id) return;
+        premiumYes.addEventListener('click', function () {
+          premiumYes.disabled = true;
+          premiumYes.textContent = 'Opening secure checkout…';
+          fetch('/api/organiser/opportunity-premium-checkout', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ opportunityId: id }),
+          })
+            .then(function (r) {
+              return r.json();
+            })
+            .then(function (data) {
+              if (data.ok && data.url) {
+                location.href = data.url;
+                return;
+              }
+              throw new Error(data.message || data.error || 'Checkout failed');
+            })
+            .catch(function () {
+              premiumYes.disabled = false;
+              premiumYes.textContent = 'Upgrade to premium';
+            });
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -435,3 +435,79 @@
   flex-wrap: wrap;
   gap: 10px;
 }
+
+.oe-listing-payment {
+  margin-bottom: 18px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(122, 92, 10, 0.25);
+  background: linear-gradient(180deg, rgba(253, 244, 216, 0.55) 0%, rgba(255, 255, 255, 0.9) 100%);
+}
+
+.oe-listing-payment-title {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--opp-charcoal, #2d1b4e);
+}
+
+.oe-listing-payment-lead {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--opp-dark-gray, #4a4446);
+}
+
+.oe-listing-payment-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.oe-listing-months-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--opp-dark-gray, #4a4446);
+}
+
+.oe-listing-months-input {
+  width: 5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.oe-listing-price-breakdown {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.oe-listing-price-breakdown div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.oe-listing-price-breakdown dt {
+  margin: 0;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.oe-listing-price-breakdown dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--opp-charcoal, #2d1b4e);
+}
+
+.oe-listing-price-total dt,
+.oe-listing-price-total dd {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--opp-charcoal, #2d1b4e);
+}

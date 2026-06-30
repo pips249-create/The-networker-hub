@@ -189,7 +189,7 @@ function normalizeGuestNames(input, quantity) {
  */
 async function handleCheckoutSessionCompleted(session) {
   const metadata = session.metadata || {};
-  if (metadata.checkout_type === 'event_featured' || metadata.checkout_type === 'opportunity_premium') {
+  if (metadata.checkout_type === 'event_featured' || metadata.checkout_type === 'opportunity_premium' || metadata.checkout_type === 'opportunity_listing') {
     return { skipped: true, reason: 'not_ticket_checkout' };
   }
 

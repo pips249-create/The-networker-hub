@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260627" />
     <link rel="stylesheet" href="../css/opportunities-page.css?v=20260609f" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260627" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260701" />
   </head>
   <body class="opportunities-page">
     <div id="hub-site-nav"></div>
@@ -107,59 +107,25 @@
         <header class="opp-section-header">
           <p class="opp-section-tag">Pricing for businesses</p>
           <h2>Simple, transparent listing fees</h2>
-          <p>Choose the package that suits your opportunity. No hidden fees.</p>
+          <p>£20 per month + VAT, paid upfront for your chosen term. Minimum 3 months. Secure payment via Stripe to The Networker Hub.</p>
         </header>
-        <div class="opp-pricing-grid">
-          <div class="opp-price-card">
-            <h3>Standard listing</h3>
-            <p class="opp-price-tagline">Perfect for a single opportunity</p>
-            <div class="opp-price-amount">
-              <div class="amount">£25</div>
-              <div class="period">one-off listing fee</div>
-            </div>
-            <ul class="opp-price-features">
-              <li><span class="opp-check"></span>Single opportunity listing</li>
-              <li><span class="opp-check"></span>Live for up to 90 days</li>
-              <li><span class="opp-check"></span>Enquiries direct to your inbox</li>
-              <li><span class="opp-check"></span>Appears in member newsletter</li>
-              <li><span class="opp-check"></span>Edit or close at any time</li>
-            </ul>
-            <a href="#submit" class="opp-btn-primary">Get listed</a>
-          </div>
-
+        <div class="opp-pricing-grid opp-pricing-grid--single">
           <div class="opp-price-card featured">
-            <div class="opp-price-badge">Most popular</div>
-            <h3>Monthly partner</h3>
-            <p class="opp-price-tagline">For businesses with multiple listings</p>
+            <div class="opp-price-badge">Directory listing</div>
+            <h3>Business opportunity listing</h3>
+            <p class="opp-price-tagline">Reach UK networking members with direct enquiries</p>
             <div class="opp-price-amount">
-              <div class="amount">£49</div>
-              <div class="period">per month</div>
+              <div class="amount">£20</div>
+              <div class="period">per month + VAT</div>
             </div>
             <ul class="opp-price-features">
-              <li><span class="opp-check"></span>Unlimited opportunity listings</li>
-              <li><span class="opp-check"></span>Featured placement in directory</li>
-              <li><span class="opp-check"></span>Business profile page</li>
-              <li><span class="opp-check"></span>Priority in newsletter sends</li>
-              <li><span class="opp-check"></span>HubSpot CRM tracking</li>
+              <li><span class="opp-check"></span>Minimum 3-month term (you choose how many months)</li>
+              <li><span class="opp-check"></span>Example: 3 months = £60 + £12 VAT = <strong>£72 total</strong></li>
+              <li><span class="opp-check"></span>Enquiries direct to your inbox — no per-lead fees</li>
+              <li><span class="opp-check"></span>Edit your listing any time during your term</li>
+              <li><span class="opp-check"></span>Optional premium spotlight upgrade after you go live</li>
             </ul>
-            <a href="#submit" class="opp-btn-outline">Get started</a>
-          </div>
-
-          <div class="opp-price-card">
-            <h3>Featured opportunity</h3>
-            <p class="opp-price-tagline">Maximum visibility for one listing</p>
-            <div class="opp-price-amount">
-              <div class="amount">£99</div>
-              <div class="period">one-off promotion</div>
-            </div>
-            <ul class="opp-price-features">
-              <li><span class="opp-check"></span>Top of opportunities page</li>
-              <li><span class="opp-check"></span>Homepage banner placement</li>
-              <li><span class="opp-check"></span>Dedicated newsletter feature</li>
-              <li><span class="opp-check"></span>Social media promotion</li>
-              <li><span class="opp-check"></span>Live for up to 90 days</li>
-            </ul>
-            <a href="#submit" class="opp-btn-primary">Get featured</a>
+            <a href="../organiser/opportunity-edit.html" class="opp-btn-primary" data-hub-action="add-opportunity">Create your listing</a>
           </div>
         </div>
       </div>
@@ -389,10 +355,15 @@
             </p>
           </div>
           <div class="opp-faq-item">
+            <h4>How much does a listing cost?</h4>
+            <p>
+              Listings are <strong>£20 per month + VAT</strong>, paid upfront for your chosen term (minimum 3 months). For example, 3 months is £60 + £12 VAT = £72 total. You enter how many months you want when you submit your listing.
+            </p>
+          </div>
+          <div class="opp-faq-item">
             <h4>Is there a free option?</h4>
             <p>
-              Standard listings start at £25. There is no free tier for posted listings, but browsing and enquiring is
-              always free for members.
+              Browsing and enquiring is free for members. Business opportunity listings require the paid listing fee above — paid securely via Stripe to The Networker Hub.
             </p>
           </div>
           <div class="opp-faq-item">
@@ -409,7 +380,7 @@
     <div class="opp-cta-banner">
       <h2>Your next business partner is already here.</h2>
       <p>Thousands of UK business owners are on The Networker right now. Put your opportunity in front of them today.</p>
-      <a href="#submit" class="opp-btn-white">Post an opportunity — from £25</a>
+      <a href="#submit" class="opp-btn-white">Post an opportunity — from £72 for 3 months</a>
     </div>
 
     <div id="hub-site-footer"></div>

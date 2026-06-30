@@ -4,6 +4,11 @@
 const { getSupabaseAdmin } = require('./supabase');
 const { resolveImageUrl } = require('./supabase-storage');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
+const {
+  normalizeListingMonths,
+  addMonths,
+  listingPaymentCurrent,
+} = require('./opportunity-listing-pricing');
 
 const HOST_COLORS = [
   '#7a5c0a',
@@ -128,6 +133,10 @@ function rowToListing(row) {
     ownerEmail: String(row.owner_email || '').toLowerCase(),
     ownerUserId: row.supabase_user_id || '',
     packageTier: row.package_tier || null,
+    listingMonths: row.listing_months != null ? Number(row.listing_months) : null,
+    listingPaidAt: row.listing_paid_at || null,
+    listingExpiresAt: row.listing_expires_at || null,
+    listingPaymentActive: listingPaymentCurrent(row),
     createdAt: row.created_at || null,
     updatedAt: row.updated_at || null,
     publishedAt: row.published_at || null,
@@ -237,6 +246,47 @@ async function buildOpportunityRow(payload, opportunityId, mode) {
   return row;
 }
 
+async function activateOpportunityListingPayment(opportunityId, months, sessionId) {
+  const id = String(opportunityId || '').trim();
+  const termMonths = normalizeListingMonths(months);
+  if (!isUuid(id)) throw new Error('invalid_opportunity_id');
+
+  const sb = getSupabaseAdmin();
+  const { data: existing, error: loadErr } = await sb
+    .from('business_opportunities')
+    .select('id, listing_expires_at, published_at')
+    .eq('id', id)
+    .maybeSingle();
+  if (loadErr) throw new Error(loadErr.message);
+  if (!existing) throw new Error('not_found');
+
+  const now = new Date();
+  let base = now;
+  if (existing.listing_expires_at && new Date(existing.listing_expires_at) > base) {
+    base = new Date(existing.listing_expires_at);
+  }
+  const expiresAt = addMonths(base, termMonths);
+
+  const { data, error } = await sb
+    .from('business_opportunities')
+    .update({
+      status: 'published',
+      approval_status: 'Approved',
+      published_at: existing.published_at || now.toISOString(),
+      listing_months: termMonths,
+      listing_paid_at: now.toISOString(),
+      listing_expires_at: expiresAt.toISOString(),
+      listing_stripe_session_id: sessionId ? String(sessionId).trim() : null,
+      package_tier: 'standard',
+      updated_at: now.toISOString(),
+    })
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw new Error(error.message);
+  return rowToListing(data);
+}
+
 async function listPublishedOpportunities() {
   const sb = getSupabaseAdmin();
   const { data, error } = await sb
@@ -247,7 +297,7 @@ async function listPublishedOpportunities() {
     .order('published_at', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
-  return (data || []).map(rowToListing);
+  return (data || []).filter(listingPaymentCurrent).map(rowToListing);
 }
 
 async function getPublishedOpportunityById(id) {
@@ -260,6 +310,7 @@ async function getPublishedOpportunityById(id) {
     .eq('approval_status', 'Approved')
     .maybeSingle();
   if (error) throw new Error(error.message);
+  if (!data || !listingPaymentCurrent(data)) return null;
   return rowToListing(data);
 }
 
@@ -489,6 +540,35 @@ async function handleOpportunityPremiumCheckout(session) {
   return { ok: true, opportunityId, featured: opportunity.featured };
 }
 
+async function handleOpportunityListingCheckout(session) {
+  const metadata = session?.metadata || {};
+  if (metadata.checkout_type !== 'opportunity_listing') {
+    return { skipped: true, reason: 'not_opportunity_listing' };
+  }
+
+  const opportunityId = String(metadata.opportunity_id || '').trim();
+  const months = normalizeListingMonths(metadata.listing_months);
+  if (!opportunityId) return { skipped: true, reason: 'missing_opportunity_id' };
+
+  const paid =
+    session.payment_status === 'paid' ||
+    session.payment_status === 'no_payment_required' ||
+    session.status === 'complete';
+  if (!paid) return { skipped: true, reason: 'payment_not_complete' };
+
+  const opportunity = await activateOpportunityListingPayment(
+    opportunityId,
+    months,
+    session.id
+  );
+  return {
+    ok: true,
+    opportunityId,
+    listingExpiresAt: opportunity.listingExpiresAt,
+    listingMonths: opportunity.listingMonths,
+  };
+}
+
 module.exports = {
   rowToListing,
   listPublishedOpportunities,
@@ -499,7 +579,9 @@ module.exports = {
   createOpportunity,
   updateOpportunity,
   activateOpportunityPremium,
+  activateOpportunityListingPayment,
   handleOpportunityPremiumCheckout,
+  handleOpportunityListingCheckout,
   createOpportunityEnquiry,
   listOpportunityEnquiriesForSession,
   listOpportunityEnquiriesSentBySession,

@@ -4,9 +4,16 @@
 (function () {
   const params = new URLSearchParams(location.search);
   const editId = params.get('id') || '';
+  const checkoutCancelled = params.get('checkout') === 'cancelled';
 
   let photoFile = null;
   let logoFile = null;
+  let currentOpportunity = null;
+
+  const LISTING_MONTHLY_EX_VAT = 20;
+  const LISTING_VAT_RATE = 0.2;
+  const LISTING_MIN_MONTHS = 3;
+  const LISTING_MAX_MONTHS = 36;
 
   const OPPORTUNITY_TYPES = [
     'franchise',
@@ -28,6 +35,72 @@
     document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach((input) => {
       input.checked = selected.has(input.value);
     });
+  }
+
+  function formatGbp(amount) {
+    return '£' + amount.toFixed(2);
+  }
+
+  function normalizeListingMonths(value) {
+    const n = parseInt(value, 10);
+    if (!Number.isFinite(n) || n < LISTING_MIN_MONTHS) return LISTING_MIN_MONTHS;
+    return Math.min(n, LISTING_MAX_MONTHS);
+  }
+
+  function updateListingPriceBreakdown() {
+    const input = document.getElementById('oe-listing-months');
+    const months = normalizeListingMonths(input ? input.value : LISTING_MIN_MONTHS);
+    if (input && String(input.value) !== String(months)) input.value = String(months);
+    const subtotal = LISTING_MONTHLY_EX_VAT * months;
+    const vat = Math.round(subtotal * LISTING_VAT_RATE * 100) / 100;
+    const total = subtotal + vat;
+    const monthsEl = document.getElementById('oe-price-months');
+    const subtotalEl = document.getElementById('oe-price-subtotal');
+    const vatEl = document.getElementById('oe-price-vat');
+    const totalEl = document.getElementById('oe-price-total');
+    if (monthsEl) monthsEl.textContent = String(months);
+    if (subtotalEl) subtotalEl.textContent = formatGbp(subtotal);
+    if (vatEl) vatEl.textContent = formatGbp(vat);
+    if (totalEl) totalEl.textContent = formatGbp(total);
+    return months;
+  }
+
+  function listingPaymentPanelVisible() {
+    const panel = document.getElementById('oe-listing-payment');
+    if (!panel) return false;
+    if (currentOpportunity && currentOpportunity.listingPaymentActive) {
+      panel.hidden = true;
+      return false;
+    }
+    panel.hidden = false;
+    return true;
+  }
+
+  async function startListingCheckout(opportunityId, months) {
+    const submitBtn = document.getElementById('oe-submit');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Opening secure checkout…';
+    }
+    const res = await api('/api/organiser/opportunity-listing-checkout', {
+      method: 'POST',
+      body: JSON.stringify({ opportunityId: opportunityId, months: months }),
+    });
+    if (res.ok && res.data.url) {
+      location.href = res.data.url;
+      return;
+    }
+    const msg =
+      res.data.error === 'stripe_not_configured'
+        ? 'Listing checkout is not configured yet — contact support.'
+        : res.data.message || res.data.error || 'Could not start checkout';
+    showAlert(msg);
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = currentOpportunity && currentOpportunity.listingPaymentActive
+        ? 'Update listing'
+        : 'Continue to payment';
+    }
   }
 
   async function api(path, opts) {
@@ -87,6 +160,7 @@
   }
 
   function prefillFromOpportunity(opp) {
+    currentOpportunity = opp;
     document.getElementById('oe-title').value = opp.title || '';
     const typeTags = (opp.tags || []).filter((tag) => OPPORTUNITY_TYPES.includes(tag));
     setSelectedTypes(typeTags.length ? typeTags : opp.type ? [opp.type] : []);
@@ -140,6 +214,12 @@
 
     showStatusBadge(opp);
     document.getElementById('oe-page-title').textContent = 'Edit opportunity';
+    listingPaymentPanelVisible();
+    updateListingPriceBreakdown();
+    const submitBtn = document.getElementById('oe-submit');
+    if (submitBtn) {
+      submitBtn.textContent = opp.listingPaymentActive ? 'Update listing' : 'Continue to payment';
+    }
   }
 
   function bindLogoUpload() {
@@ -317,7 +397,11 @@
       }
     }
 
-    const payload = buildPayload(publish ? 'published' : 'draft');
+    const hasActiveListing =
+      currentOpportunity && currentOpportunity.listingPaymentActive && editId;
+    const payload = buildPayload(
+      publish && hasActiveListing ? 'published' : 'draft'
+    );
     const validationError = validatePayload(payload, !publish);
     if (validationError) {
       showAlert(validationError);
@@ -359,9 +443,12 @@
     let res;
     try {
       if (loading && loading.run) {
-        res = await loading.run(publish ? 'Submitting listing' : 'Saving draft', saveWork);
+        res = await loading.run(
+          publish ? (hasActiveListing ? 'Updating listing' : 'Saving listing') : 'Saving draft',
+          saveWork
+        );
       } else {
-        if (loading) loading.show(publish ? 'Submitting listing' : 'Saving draft');
+        if (loading) loading.show(publish ? 'Saving listing' : 'Saving draft');
         res = await saveWork();
         if (loading) loading.hide();
       }
@@ -382,6 +469,8 @@
     }
 
     const opportunity = res.data.opportunity || {};
+    currentOpportunity = opportunity;
+
     if (!publish) {
       if (!editId && opportunity.id) {
         location.href = 'opportunity-edit.html?id=' + encodeURIComponent(opportunity.id);
@@ -391,10 +480,13 @@
       return;
     }
 
-    location.href =
-      'opportunity-submitted.html?title=' +
-      encodeURIComponent(payload.title) +
-      (opportunity.id ? '&id=' + encodeURIComponent(opportunity.id) : '');
+    if (hasActiveListing) {
+      showAlert('Listing updated.');
+      return;
+    }
+
+    const months = updateListingPriceBreakdown();
+    await startListingCheckout(opportunity.id, months);
   }
 
   async function init() {
@@ -406,6 +498,18 @@
 
     bindLogoUpload();
     bindPhotoUpload();
+
+    const monthsInput = document.getElementById('oe-listing-months');
+    if (monthsInput) {
+      monthsInput.addEventListener('input', updateListingPriceBreakdown);
+      monthsInput.addEventListener('change', updateListingPriceBreakdown);
+    }
+    updateListingPriceBreakdown();
+    listingPaymentPanelVisible();
+
+    if (checkoutCancelled) {
+      showAlert('Checkout was cancelled — your draft is saved. Continue to payment when you are ready.');
+    }
 
     if (window.hubBindLocationAutocomplete) {
       window.hubBindLocationAutocomplete(document.getElementById('oe-location'), {

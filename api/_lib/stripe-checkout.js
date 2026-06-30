@@ -1,5 +1,9 @@
 const Stripe = require('stripe');
 const { BOOKING_FEE_NON_REFUNDABLE_NOTE } = require('./booking-fees');
+const {
+  calculateOpportunityListingTotals,
+  normalizeListingMonths,
+} = require('./opportunity-listing-pricing');
 
 function getStripeSecretKey() {
   return String(process.env.STRIPE_SECRET_KEY || '').trim();
@@ -81,6 +85,60 @@ async function createPaidCheckoutSession(opts) {
 
 function siteBaseUrl() {
   return String(process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
+}
+
+/**
+ * Prepaid business opportunity listing (£20/month ex VAT, minimum 3 months).
+ */
+async function createOpportunityListingCheckoutSession(opts) {
+  const stripe = getStripeClient();
+  const opportunityId = String(opts.opportunityId || '').trim();
+  const months = normalizeListingMonths(opts.months);
+  if (!opportunityId) throw new Error('missing_opportunity_id');
+
+  const totals = calculateOpportunityListingTotals(months);
+  const title = String(opts.opportunityTitle || 'Business opportunity').trim();
+
+  return stripe.checkout.sessions.create({
+    mode: 'payment',
+    customer_email: opts.email,
+    client_reference_id: 'opp-listing-' + opportunityId + '-' + months + 'm',
+    metadata: {
+      opportunity_id: opportunityId,
+      checkout_type: 'opportunity_listing',
+      listing_months: String(months),
+      owner_email: String(opts.email || '').toLowerCase(),
+    },
+    success_url: opts.successUrl,
+    cancel_url: opts.cancelUrl,
+    line_items: [
+      {
+        price_data: {
+          currency: 'gbp',
+          product_data: {
+            name: 'Business opportunity listing — ' + months + ' months',
+            description:
+              'Directory listing for "' +
+              title +
+              '" on The Networker Hub (£20/month ex VAT)',
+          },
+          unit_amount: totals.subtotalExVatPence,
+        },
+        quantity: 1,
+      },
+      {
+        price_data: {
+          currency: 'gbp',
+          product_data: {
+            name: 'VAT (20%)',
+            description: months + ' months listing VAT',
+          },
+          unit_amount: totals.vatPence,
+        },
+        quantity: 1,
+      },
+    ],
+  });
 }
 
 /**
@@ -185,6 +243,7 @@ module.exports = {
   isStripeCheckoutConfigured,
   getStripeClient,
   createPaidCheckoutSession,
+  createOpportunityListingCheckoutSession,
   createOpportunityPremiumCheckoutSession,
   createEventFeaturedCheckoutSession,
   retrieveCheckoutSession,

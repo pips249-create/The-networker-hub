@@ -18,6 +18,8 @@ const routes = {
   opportunities: require('./_lib/routes/organiser-opportunities'),
   'opportunity-premium-checkout': require('./_lib/routes/organiser-opportunity-premium-checkout'),
   'opportunity-premium-complete': require('./_lib/routes/organiser-opportunity-premium-complete'),
+  'opportunity-listing-checkout': require('./_lib/routes/organiser-opportunity-listing-checkout'),
+  'opportunity-listing-complete': require('./_lib/routes/organiser-opportunity-listing-complete'),
   'event-featured-checkout': require('./_lib/routes/organiser-event-featured-checkout'),
   'event-featured-complete': require('./_lib/routes/organiser-event-featured-complete'),
   'opportunity-enquiries': require('./_lib/routes/organiser-opportunity-enquiries'),

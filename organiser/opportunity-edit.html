@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260609" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260606" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260701" />
   </head>
   <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page">
     <div id="oe-page-loading" class="ee-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
@@ -193,11 +193,36 @@
         </div>
 
         <div class="ee-card ee-card-actions">
+          <div class="oe-listing-payment" id="oe-listing-payment">
+            <h2 class="oe-listing-payment-title">Listing fee</h2>
+            <p class="oe-listing-payment-lead">
+              Business opportunities are <strong>£20 per month + VAT</strong>, billed upfront for your chosen term (minimum 3 months). Payment is taken securely via Stripe to The Networker Hub.
+            </p>
+            <div class="oe-listing-payment-row">
+              <label class="oe-listing-months-label" for="oe-listing-months">How many months?</label>
+              <input
+                type="number"
+                id="oe-listing-months"
+                name="listing_months"
+                min="3"
+                max="36"
+                step="1"
+                value="3"
+                inputmode="numeric"
+                class="oe-listing-months-input"
+              />
+            </div>
+            <dl class="oe-listing-price-breakdown" id="oe-listing-price-breakdown">
+              <div><dt>£20 × <span id="oe-price-months">3</span> months</dt><dd id="oe-price-subtotal">£60.00</dd></div>
+              <div><dt>VAT (20%)</dt><dd id="oe-price-vat">£12.00</dd></div>
+              <div class="oe-listing-price-total"><dt>Total due today</dt><dd id="oe-price-total">£72.00</dd></div>
+            </dl>
+          </div>
           <div class="ee-actions ee-actions--split">
             <button type="button" class="ee-btn ee-btn-outline" id="oe-save-draft">Save as draft</button>
-            <button type="submit" class="ee-btn ee-btn-gold" id="oe-submit">Submit listing</button>
+            <button type="submit" class="ee-btn ee-btn-gold" id="oe-submit">Continue to payment</button>
           </div>
-          <p class="ee-hint ee-actions-note">Submitted listings are reviewed within one working day before going live.</p>
+          <p class="ee-hint ee-actions-note">You’ll complete payment on Stripe, then your listing goes live in the directory.</p>
         </div>
       </form>
     </div>
@@ -208,6 +233,6 @@
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
     <script src="../js/hub-location-autocomplete.js?v=20260609"></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../"></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260610b"></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260630a"></script>
   </body>
 </html>
