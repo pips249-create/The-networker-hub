@@ -277,6 +277,20 @@
     return true;
   };
 
+  window.hubAllowedOutcodesForQuery = function (input) {
+    var raw = String(input || '').trim();
+    if (!raw) return [];
+    var state = window.hubLocationFilterState;
+    if (state && state.query === raw && state.allowed) {
+      return Object.keys(state.allowed);
+    }
+    var allowed = allowedSectors(raw);
+    if (allowed) return Object.keys(allowed);
+    var region = cityRegionFromInput(raw);
+    if (region) return sectorsForRegion(region);
+    return [];
+  };
+
   window.hubOutcodeLabel = function (userInput) {
     var raw = String(userInput || '').trim();
     if (!raw) return '';

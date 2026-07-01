@@ -114,6 +114,7 @@
       if (idx >= 0) activeTypeTabs.splice(idx, 1);
       else activeTypeTabs.push(type);
     }
+    window.hubBrowseActiveTypeTabs = activeTypeTabs.slice();
     syncTypeChipUi();
   }
 
@@ -206,6 +207,18 @@
   }
 
   function initPriceSliderMax() {
+    if (window.hubServerBrowse && window.hubBrowsePricePeak != null) {
+      if (!priceMax) return;
+      var cap = Math.max(5, Number(window.hubBrowsePricePeak) || PRICE_SLIDER_FALLBACK);
+      priceSliderCap = cap;
+      priceMax.max = String(cap);
+      var currentVal = Number(priceMax.value);
+      if (currentVal > cap || currentVal >= priceSliderCap) {
+        priceMax.value = String(cap);
+      }
+      syncPriceOutputs();
+      return;
+    }
     var all = window.hubAllEvents || [];
     if (!all.length || !priceMax) return;
     var peak = 0;
@@ -398,15 +411,17 @@
       applyLocationFilters();
       return;
     }
-    var all = window.hubAllEvents || [];
-    var enrich = window.hubEnrichEventCoords ? window.hubEnrichEventCoords(all) : Promise.resolve();
-    enrich
-      .then(function () {
-        return resolveNearMeCoords();
-      })
-      .then(function () {
-        applyFilters();
-      });
+    resolveNearMeCoords().then(function () {
+      if (window.hubServerBrowse && window.hubBrowseFetchNow) {
+        window.hubBrowseFetchNow(1);
+      } else {
+        var all = window.hubAllEvents || [];
+        var enrich = window.hubEnrichEventCoords ? window.hubEnrichEventCoords(all) : Promise.resolve();
+        enrich.then(function () {
+          applyFilters();
+        });
+      }
+    });
   }
 
   function applyLocationFilters() {
@@ -426,10 +441,19 @@
     }
 
     syncNearRadiusUi();
-    var all = window.hubAllEvents || [];
-    var enrich = window.hubEnrichEventCoords ? window.hubEnrichEventCoords(all) : Promise.resolve();
-    enrich.then(function () {
-      applyFilters();
+    var resolveFilter = window.hubResolveLocationFilter
+      ? window.hubResolveLocationFilter(pc)
+      : Promise.resolve();
+    resolveFilter.then(function () {
+      if (window.hubServerBrowse && window.hubBrowseFetchNow) {
+        window.hubBrowseFetchNow(1);
+      } else {
+        var all = window.hubAllEvents || [];
+        var enrich = window.hubEnrichEventCoords ? window.hubEnrichEventCoords(all) : Promise.resolve();
+        enrich.then(function () {
+          applyFilters();
+        });
+      }
     });
   }
 
@@ -540,9 +564,20 @@
     return sortEvents(list);
   };
 
+  function syncBrowseDateParams() {
+    window.hubBrowseDateFrom = dateFromTs ? new Date(dateFromTs).toISOString() : '';
+    window.hubBrowseDateTo = dateToTs ? new Date(dateToTs).toISOString() : '';
+  }
+
   function applyFilters() {
     if (document.body.classList.contains('browse-mode-organisers')) {
       if (window.hubApplyOrganiserFilters) window.hubApplyOrganiserFilters();
+      return;
+    }
+    if (window.hubServerBrowse && window.hubBrowseFetchDebounced) {
+      window.hubBrowseCurrentPage = 1;
+      window.hubBrowseFetchDebounced(1);
+      saveFilterPrefs();
       return;
     }
     var all = window.hubAllEvents || [];
@@ -679,6 +714,7 @@
     syncDateWrapState([]);
     dateFromTs = null;
     dateToTs = null;
+    syncBrowseDateParams();
     if (checkInPerson) checkInPerson.checked = true;
     if (checkOnline) checkOnline.checked = true;
     if (checkFreeOnly) checkFreeOnly.checked = false;
@@ -707,21 +743,28 @@
   function setActiveTypeTab(type) {
     activeTypeTabs = [];
     if (type && type !== 'all') activeTypeTabs = [type];
+    window.hubBrowseActiveTypeTabs = activeTypeTabs.slice();
     syncTypeChipUi();
   }
 
   window.hubUpdateEventTypeChipCounts = function () {
-    var all = window.hubAllEvents || [];
+    var counts = window.hubBrowseTypeCounts;
     typeTabs = document.querySelectorAll('.event-type-chip[data-type]');
     typeTabs.forEach(function (chip) {
       var type = chip.getAttribute('data-type') || 'all';
       var countEl = chip.querySelector('.event-type-chip-count');
       if (!countEl) return;
-      var list =
-        type === 'all'
-          ? window.hubGetFilteredEvents(all, { typeTab: 'all' })
-          : window.hubGetFilteredEvents(all, { typeTabs: [type] });
-      var count = list.length;
+      var count;
+      if (counts) {
+        count = type === 'all' ? counts.all || 0 : counts[type] || 0;
+      } else {
+        var all = window.hubAllEvents || [];
+        var list =
+          type === 'all'
+            ? window.hubGetFilteredEvents(all, { typeTab: 'all' })
+            : window.hubGetFilteredEvents(all, { typeTabs: [type] });
+        count = list.length;
+      }
       countEl.textContent = '(' + count + ')';
       chip.classList.toggle('is-zero', count === 0);
     });
@@ -869,6 +912,7 @@
         if (!selectedDates.length) {
           dateFromTs = null;
           dateToTs = null;
+          syncBrowseDateParams();
           applyFilters();
           return;
         }
@@ -882,6 +926,7 @@
           endOne.setHours(23, 59, 59, 999);
           dateToTs = endOne.getTime();
         }
+        syncBrowseDateParams();
         applyFilters();
       },
       onClose: function (selectedDates) {
@@ -889,6 +934,7 @@
           var end = new Date(selectedDates[0]);
           end.setHours(23, 59, 59, 999);
           dateToTs = end.getTime();
+          syncBrowseDateParams();
           applyFilters();
         }
       },

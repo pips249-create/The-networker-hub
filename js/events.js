@@ -4,6 +4,7 @@
 (function () {
   const API_PATHS = ['/api/hub-listings', '/api/events'];
   const PAGE_SIZE = 12;
+  window.hubBrowsePageSize = PAGE_SIZE;
 
   const els = {
     status: document.getElementById('load-status'),
@@ -178,7 +179,13 @@
   }
 
   function getSpotlightPremium() {
-    const featured = getFilteredList().filter(function (ev) {
+    const source =
+      window.hubBrowseFeatured && window.hubBrowseFeatured.length
+        ? window.hubBrowseFeatured
+        : window.hubAllEvents && window.hubAllEvents.length
+          ? window.hubAllEvents
+          : events;
+    const featured = source.filter(function (ev) {
       return ev.featured;
     });
     const key = spotlightFilterSignature(featured);
@@ -493,22 +500,45 @@
   }
 
   function getFilteredList() {
+    if (window.hubServerBrowse && window.hubBrowsePins && window.hubBrowsePins.length) {
+      var mapBtn = document.getElementById('map-view-btn');
+      if (mapBtn && mapBtn.getAttribute('aria-pressed') === 'true') {
+        return window.hubBrowsePins;
+      }
+    }
+    if (window.hubServerBrowse && window.hubBrowseEvents) {
+      return window.hubBrowseEvents;
+    }
     return window.hubGetFilteredEvents ? window.hubGetFilteredEvents(events) : events.slice();
+  }
+
+  function browseTotalCount() {
+    if (window.hubServerBrowse && window.hubBrowseTotal != null) {
+      return Number(window.hubBrowseTotal) || 0;
+    }
+    return getFilteredList().length;
   }
 
   function renderGridPage(list) {
     const rows = list;
-    const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    const totalItems = window.hubServerBrowse ? browseTotalCount() : rows.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+    const page = window.hubServerBrowse ? window.hubBrowseCurrentPage || currentPage : currentPage;
 
-    if (currentPage > totalPages) currentPage = totalPages;
+    if (page > totalPages) {
+      currentPage = totalPages;
+      if (window.hubServerBrowse) window.hubBrowseCurrentPage = totalPages;
+    } else {
+      currentPage = page;
+    }
     if (currentPage < 1) currentPage = 1;
 
-    const start = (currentPage - 1) * PAGE_SIZE;
-    const pageItems = rows.slice(start, start + PAGE_SIZE);
+    const start = window.hubServerBrowse ? (currentPage - 1) * PAGE_SIZE : (currentPage - 1) * PAGE_SIZE;
+    const pageItems = window.hubServerBrowse ? rows : rows.slice(start, start + PAGE_SIZE);
 
     if (!els.listings) return;
 
-    if (!rows.length) {
+    if (!totalItems && !rows.length) {
       els.listings.innerHTML =
         '<div class="empty-state is-visible" role="status">' +
         '<div class="empty-state-inner">' +
@@ -525,16 +555,16 @@
       return;
     }
 
-    const rangeStart = rows.length ? start + 1 : 0;
-    const rangeEnd = Math.min(start + PAGE_SIZE, rows.length);
+    const rangeStart = totalItems ? start + 1 : 0;
+    const rangeEnd = Math.min(start + pageItems.length, totalItems);
     const rangeHtml =
-      rows.length > PAGE_SIZE
+      totalItems > PAGE_SIZE
         ? '<p class="listings-range">Showing ' +
           rangeStart +
           '–' +
           rangeEnd +
           ' of ' +
-          rows.length +
+          totalItems +
           '</p>'
         : '';
 
@@ -545,7 +575,7 @@
       '</div>' +
       paginationHtml(currentPage, totalPages);
 
-    if (els.resultsCount) els.resultsCount.textContent = String(rows.length);
+    if (els.resultsCount) els.resultsCount.textContent = String(totalItems);
 
     if (window.HubFavourites) window.HubFavourites.refreshButtons(els.listings);
   }
@@ -576,12 +606,21 @@
 
       const btn = e.target.closest('.page-btn');
       if (!btn || btn.disabled) return;
-      const filtered = getFilteredList();
-      const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+      const totalPages = Math.max(
+        1,
+        Math.ceil(browseTotalCount() / PAGE_SIZE)
+      );
       const p = parseInt(btn.getAttribute('data-page'), 10);
       if (!p || p === currentPage || p < 1 || p > totalPages) return;
       currentPage = p;
-      renderGridPage(filtered);
+      if (window.hubServerBrowse && window.hubBrowseFetchNow) {
+        window.hubBrowseFetchNow(p).then(function () {
+          renderSpotlight();
+          renderGridPage(getFilteredList());
+        });
+      } else {
+        renderGridPage(getFilteredList());
+      }
       const block = document.querySelector('.listings-block');
       if (block) block.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
@@ -666,10 +705,11 @@
       if (window.hubRefreshOrganiserListings) window.hubRefreshOrganiserListings();
       return;
     }
-    currentPage = 1;
+    if (!window.hubServerBrowse) currentPage = 1;
     renderAll();
     if (window.hubRefreshMap && window.hubGetFilteredEvents) {
-      window.hubRefreshMap(window.hubGetFilteredEvents(events));
+      var mapList = window.hubBrowsePins && window.hubBrowsePins.length ? window.hubBrowsePins : getFilteredList();
+      window.hubRefreshMap(mapList);
     }
   };
 
@@ -727,6 +767,32 @@
   async function load() {
     const fetchAndRender = async () => {
       setStatus('', false);
+      if (window.hubServerBrowse && window.hubBrowseFetchNow) {
+        try {
+          await window.hubBrowseFetchNow(1);
+          events = window.hubBrowseEvents || [];
+          setStatus(
+            browseTotalCount()
+              ? ''
+              : 'No published events yet. Approve events in Supabase so they appear in published_events.',
+            false
+          );
+          applyLoadedEvents();
+        } catch (e) {
+          var detail = e && e.message ? String(e.message) : 'network error';
+          var hint =
+            window.location.protocol === 'file:'
+              ? 'Open this page via your dev server: http://localhost:3000/events/ (run npm start first). Do not open the HTML file from Finder.'
+              : 'Could not load events (' +
+                detail +
+                '). Confirm npm start is running, use http://localhost:3000/events/, and disable ad blockers for localhost.';
+          setStatus(hint, true);
+          events = [];
+          applyLoadedEvents();
+        }
+        return;
+      }
+
       var data;
       try {
         data = await fetchEventsPayload();
@@ -774,6 +840,7 @@
     };
 
     const runGeocodeRefresh = function () {
+      if (window.hubServerBrowse) return;
       refreshAfterGeocode().catch(function () {
         /* map coords are optional */
       });

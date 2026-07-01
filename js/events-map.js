@@ -797,37 +797,47 @@
 
     lastLayoutMobile = isMobileMapLayout();
 
+    function startMapWithList(list) {
+      lastFilteredList = list;
+      whenPanelReady(function () {
+        var ensureLeaflet = window.hubEnsureLeafletReady || function (cb) {
+          cb();
+        };
+        ensureLeaflet(function () {
+          initMap();
+          invalidateMapSize(0);
+          if (window.matchMedia('(max-width: 900px)').matches && mapSidebar && mapListToggle) {
+            setSidebarListOpen(true);
+          }
+          renderMarkers(list);
+          if (
+            mapWrap &&
+            mapWrap.scrollIntoView &&
+            !window.matchMedia('(max-width: 900px)').matches
+          ) {
+            mapWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+          setTimeout(function () {
+            invalidateMapSize(0);
+          }, 250);
+          setTimeout(function () {
+            invalidateMapSize(0);
+          }, 600);
+        });
+      });
+    }
+
+    if (window.hubServerBrowse && window.hubBrowseFetchPins) {
+      window.hubBrowseFetchPins().then(function (pins) {
+        startMapWithList(pins && pins.length ? pins : window.hubBrowseEvents || []);
+      });
+      return;
+    }
+
     var list = window.hubGetFilteredEvents
       ? window.hubGetFilteredEvents(window.hubAllEvents || [])
       : window.hubAllEvents || [];
-    lastFilteredList = list;
-
-    whenPanelReady(function () {
-      var ensureLeaflet = window.hubEnsureLeafletReady || function (cb) {
-        cb();
-      };
-      ensureLeaflet(function () {
-        initMap();
-        invalidateMapSize(0);
-        if (window.matchMedia('(max-width: 900px)').matches && mapSidebar && mapListToggle) {
-          setSidebarListOpen(true);
-        }
-        renderMarkers(list);
-        if (
-          mapWrap &&
-          mapWrap.scrollIntoView &&
-          !window.matchMedia('(max-width: 900px)').matches
-        ) {
-          mapWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-        setTimeout(function () {
-          invalidateMapSize(0);
-        }, 250);
-        setTimeout(function () {
-          invalidateMapSize(0);
-        }, 600);
-      });
-    });
+    startMapWithList(list);
   }
 
   window.addEventListener('resize', function () {

@@ -1006,6 +1006,8 @@ module.exports = {
   fetchPublishedEventRows,
   fetchPublishedEventBySlug,
   fetchEventSeriesDates,
+  eventsFromPublishedRows,
+  isApprovedPublicEventPayload,
   isPublicEvent,
   isUpcomingBrowseEvent,
   eventRowReadyForAutoApproval,
