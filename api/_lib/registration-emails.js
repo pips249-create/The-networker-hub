@@ -16,6 +16,7 @@ const {
   organiserDashboardUrl,
 } = require('./hub-email-urls');
 const { computeEventTicketStats } = require('./organiser-registration-stats');
+const { sendEventAlmostFullEmail, buildMeetingLinkEmailSection } = require('./lifecycle-emails');
 const { attendeeInitial } = require('./organiser-email-sections');
 const { resolveOrganiserNotificationEmail } = require('./organiser-notification-email');
 
@@ -169,7 +170,7 @@ async function sendRegistrationEmails(sb, registration) {
     sb
       .from('events')
       .select(
-        'id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id, meeting_link, meeting_type, postcode, refund_policy, refund_policy_details, refund_cutoff_days'
+        'id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id, meeting_link, meeting_type, postcode, refund_policy, refund_policy_details, refund_cutoff_days, almost_full_email_sent_at'
       )
       .eq('id', eventId)
       .maybeSingle(),
@@ -237,6 +238,23 @@ async function sendRegistrationEmails(sb, registration) {
         variables: organiserVars,
       });
       sent.organiser = true;
+
+      const remaining = parseInt(stats.tickets_remaining, 10);
+      if (
+        Number.isFinite(remaining) &&
+        remaining > 0 &&
+        remaining <= 3 &&
+        !eventRow.almost_full_email_sent_at
+      ) {
+        try {
+          await sendEventAlmostFullEmail(sb, eventRow, stats);
+        } catch (almostFullErr) {
+          sent.errors.push({
+            target: 'organiser_almost_full',
+            message: almostFullErr.message || String(almostFullErr),
+          });
+        }
+      }
     } catch (e) {
       sent.errors.push({ target: 'organiser', message: e.message || String(e) });
     }
@@ -271,7 +289,7 @@ async function sendApplicationEmails(sb, registration) {
     sb
       .from('events')
       .select(
-        'id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id, meeting_link, meeting_type, postcode, refund_policy, refund_policy_details, refund_cutoff_days'
+        'id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id, meeting_link, meeting_type, postcode, refund_policy, refund_policy_details, refund_cutoff_days, almost_full_email_sent_at'
       )
       .eq('id', eventId)
       .maybeSingle(),
@@ -369,7 +387,7 @@ async function sendOrganiserApplicationAlertEmail(sb, registration, options = {}
     sb
       .from('events')
       .select(
-        'id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id, meeting_link, meeting_type, postcode, refund_policy, refund_policy_details, refund_cutoff_days'
+        'id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id, meeting_link, meeting_type, postcode, refund_policy, refund_policy_details, refund_cutoff_days, almost_full_email_sent_at'
       )
       .eq('id', eventId)
       .maybeSingle(),
@@ -472,7 +490,7 @@ async function sendApplicationDecisionEmails(sb, registration, { decision, ticke
     sb
       .from('events')
       .select(
-        'id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id, meeting_link, meeting_type, postcode, refund_policy, refund_policy_details, refund_cutoff_days'
+        'id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id, meeting_link, meeting_type, postcode, refund_policy, refund_policy_details, refund_cutoff_days, almost_full_email_sent_at'
       )
       .eq('id', eventId)
       .maybeSingle(),
@@ -565,7 +583,7 @@ async function sendMeetingLinkAddedEmails(sb, eventId, { previousLink, newLink }
     sb
       .from('events')
       .select(
-        'id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id, meeting_link, meeting_type, postcode, refund_policy, refund_policy_details, refund_cutoff_days'
+        'id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id, meeting_link, meeting_type, postcode, refund_policy, refund_policy_details, refund_cutoff_days, almost_full_email_sent_at'
       )
       .eq('id', eventId)
       .maybeSingle(),
@@ -620,10 +638,11 @@ async function sendMeetingLinkAddedEmails(sb, eventId, { previousLink, newLink }
       organiserName,
       amountPaid: formatAmount(registration.amount_paid),
     });
+    vars.meeting_link_section = buildMeetingLinkEmailSection(next);
 
     try {
       await sendTemplatedEmail({
-        slug: 'booking_confirmation',
+        slug: 'meeting_link_added',
         to: attendeeEmail,
         variables: vars,
         subject: 'Join link for ' + eventName,
@@ -648,6 +667,7 @@ module.exports = {
   sendMeetingLinkAddedEmails,
   buildAttendeeEmailVars,
   buildOrganiserEmailVars,
+  buildDenialEmailVars,
   fetchEventRegistrationStats,
   formatAmount,
   eventPublicUrl,

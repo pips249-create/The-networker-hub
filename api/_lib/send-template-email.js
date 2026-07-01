@@ -45,6 +45,10 @@ const {
   stripEventCancelledPlaceholders,
   stripRefundProcessedPlaceholders,
 } = require('./cancellation-email-sections');
+const {
+  getEmailSponsorVars,
+  stripUnresolvedSponsorPlaceholders,
+} = require('./email-sponsor-sections');
 
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
@@ -65,6 +69,19 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'opportunity_premium_live',
   'opportunity_enquiry_received',
   'opportunity_enquiry_sent',
+  'opportunity_listing_expired',
+  'opportunity_premium_expired',
+  'opportunity_listing_rejected',
+  'payout_requested',
+  'payout_approved',
+  'payout_paid',
+  'stripe_connect_nudge',
+  'meeting_link_added',
+  'osop_payment_reminder',
+  'event_almost_full',
+  'organiser_low_upcoming_events',
+  'password_reset',
+  'hub_newsletter',
   'booking_confirmation',
   'booking_reminder',
   'refund_processed',
@@ -114,9 +131,19 @@ function fileOnlyEmailTemplate(slug) {
   return map[slug] || null;
 }
 
-async function buildEmailFromTemplate(slug, variables) {
+async function buildEmailFromTemplate(slug, variables, options = {}) {
+  const overrides = options && typeof options === 'object' ? options : {};
   let template = await getEmailTemplateBySlug(slug);
   let templateSource = 'database';
+
+  if (template && (overrides.subject != null || overrides.body_html != null)) {
+    template = {
+      ...template,
+      subject: overrides.subject != null ? String(overrides.subject) : template.subject,
+      body_html: overrides.body_html != null ? String(overrides.body_html) : template.body_html,
+    };
+  }
+
   if (!template) {
     const fileTpl = fileOnlyEmailTemplate(slug);
     if (!fileTpl) {
@@ -148,8 +175,10 @@ async function buildEmailFromTemplate(slug, variables) {
     slug === 'booking_cancelled' ||
     slug === 'event_cancelled' ||
     slug === 'refund_processed';
+
+  const sponsorVars = await getEmailSponsorVars(slug);
   const bookingDefaults = usesBookingEmailDefaults ? await getBookingEmailDefaultVars() : {};
-  const sponsorSection = bookingDefaults.sponsor_section || '';
+  const sponsorSection = sponsorVars.sponsor_row || bookingDefaults.sponsor_section || '';
   delete bookingDefaults.sponsor_section;
 
   let merged = {
@@ -160,6 +189,9 @@ async function buildEmailFromTemplate(slug, variables) {
     terms_url: legalPolicyUrl(siteUrl, 'terms'),
     refunds_url: legalPolicyUrl(siteUrl, 'refunds'),
     contact_url: contactUrl(siteUrl),
+    sponsor_row: sponsorSection,
+    sponsor_section: sponsorSection,
+    mini_sponsors_row: sponsorVars.mini_sponsors_row || '',
     ...variables,
     ...bookingDefaults,
   };
@@ -227,7 +259,9 @@ async function buildEmailFromTemplate(slug, variables) {
     bodyHtml = resolved.bodyHtml;
     templateSource = resolved.source;
   } else if (isBrandedEmailSlug(slug)) {
-    const resolved = resolveBrandedEmailBody(slug, template.body_html);
+    const resolved = resolveBrandedEmailBody(slug, template.body_html, {
+      newsletterLayout: variables?.newsletter_layout || variables?.layout,
+    });
     bodyHtml = resolved.bodyHtml;
     templateSource = resolved.source;
   } else if (slug === 'organiser_booking_cancelled') {
@@ -261,6 +295,10 @@ async function buildEmailFromTemplate(slug, variables) {
     html = replacePlaceholders(html, merged);
   } else if (slug === 'refund_processed') {
     html = stripRefundProcessedPlaceholders(html);
+    html = replacePlaceholders(html, merged);
+  } else if (isBrandedEmailSlug(slug)) {
+    html = stripUnresolvedSponsorPlaceholders(html);
+    html = html.replace(/\{\{\s*article_hero_image_html\s*\}\}/g, '');
     html = replacePlaceholders(html, merged);
   }
 

@@ -177,16 +177,18 @@ const BOOKING_CANCELLED_SECTION_PLACEHOLDERS = [
   'refund_eligible_row',
   'no_refund_row',
   'sponsor_row',
+  'mini_sponsors_row',
   'sponsor_section',
 ];
 
 const EVENT_CANCELLED_SECTION_PLACEHOLDERS = [
   'organiser_message_row',
   'sponsor_row',
+  'mini_sponsors_row',
   'sponsor_section',
 ];
 
-const REFUND_PROCESSED_SECTION_PLACEHOLDERS = ['sponsor_row', 'sponsor_section'];
+const REFUND_PROCESSED_SECTION_PLACEHOLDERS = ['sponsor_row', 'mini_sponsors_row', 'sponsor_section'];
 
 function stripSectionPlaceholders(html, keys) {
   let out = String(html || '');

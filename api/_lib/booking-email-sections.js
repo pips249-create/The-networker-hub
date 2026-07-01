@@ -159,12 +159,13 @@ function enrichBookingConfirmationVars(vars, sponsorSection) {
     meeting_link_row: meetingLinkRow,
     refund_policy_row: refundPolicyRow,
     sponsor_row: sponsorRow,
+    sponsor_section: sponsorRow,
+    mini_sponsors_row: String(input.mini_sponsors_row || '').trim(),
     // Legacy keys (migration 055) — populated so older DB templates still render
     event_location_row: eventLocationRow,
     event_online_row: eventOnlineRow,
     meeting_link_section: meetingLinkRow,
     refund_policy_section: refundPolicyRow,
-    sponsor_section: sponsorRow,
   };
 
   return enriched;
@@ -195,10 +196,11 @@ function enrichBookingReminderVars(vars, sponsorSection) {
     sponsor_row: sponsorRow,
     meeting_link_section: meetingLinkRow,
     sponsor_section: sponsorRow,
+    mini_sponsors_row: String(input.mini_sponsors_row || '').trim(),
   };
 }
 
-const ACCOUNT_WELCOME_SECTION_PLACEHOLDERS = ['sponsor_row', 'sponsor_section'];
+const ACCOUNT_WELCOME_SECTION_PLACEHOLDERS = ['sponsor_row', 'sponsor_section', 'mini_sponsors_row'];
 
 function enrichAccountWelcomeVars(vars, sponsorSection) {
   const input = vars && typeof vars === 'object' ? vars : {};
@@ -215,6 +217,7 @@ function enrichAccountWelcomeVars(vars, sponsorSection) {
     refunds_url: String(input.refunds_url || '').trim() || legalPolicyUrl(site, 'refunds'),
     sponsor_row: sponsorRow,
     sponsor_section: sponsorRow,
+    mini_sponsors_row: String(input.mini_sponsors_row || '').trim(),
   };
 }
 
@@ -230,6 +233,7 @@ function stripUnresolvedAccountWelcomePlaceholders(html) {
 const BOOKING_REMINDER_SECTION_PLACEHOLDERS = [
   'meeting_link_row',
   'sponsor_row',
+  'mini_sponsors_row',
   'meeting_link_section',
   'sponsor_section',
 ];
@@ -249,6 +253,7 @@ const BOOKING_SECTION_PLACEHOLDERS = [
   'meeting_link_row',
   'refund_policy_row',
   'sponsor_row',
+  'mini_sponsors_row',
   'event_location_row',
   'event_online_row',
   'meeting_link_section',

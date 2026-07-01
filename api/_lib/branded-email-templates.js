@@ -42,7 +42,89 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: 'Your enquiry was sent — {{opportunity_title}}',
   },
+  opportunity_listing_expired: {
+    file: 'opportunity-listing-expired.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Your listing has expired — {{opportunity_title}}',
+  },
+  opportunity_premium_expired: {
+    file: 'opportunity-premium-expired.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Premium placement ended — {{opportunity_title}}',
+  },
+  opportunity_listing_rejected: {
+    file: 'opportunity-listing-rejected.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Your listing was not approved — {{opportunity_title}}',
+  },
+  payout_requested: {
+    file: 'payout-requested.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Payout request received — {{event_name}}',
+  },
+  payout_approved: {
+    file: 'payout-approved.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Payout approved — {{event_name}}',
+  },
+  payout_paid: {
+    file: 'payout-paid.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Payout sent — {{event_name}}',
+  },
+  stripe_connect_nudge: {
+    file: 'stripe-connect-nudge.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Add your bank details to receive payouts',
+  },
+  meeting_link_added: {
+    file: 'meeting-link-added.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Join link for {{event_name}}',
+  },
+  post_event_review_request: {
+    file: 'post-event-review-request.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'How was {{event_name}}?',
+  },
+  osop_payment_reminder: {
+    file: 'osop-payment-reminder.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Complete your booking — {{event_name}}',
+  },
+  event_almost_full: {
+    file: 'event-almost-full.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Almost full — {{event_name}}',
+  },
+  attendee_reengagement: {
+    file: 'attendee-reengagement.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Ready to network again?',
+  },
+  organiser_low_upcoming_events: {
+    file: 'organiser-low-upcoming-events.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Only {{upcoming_count}} events left on your calendar',
+  },
+  saved_organiser_new_listing: {
+    file: 'saved-organiser-new-listing.html',
+    marker: 'hub-email-layout-v2',
+    subject: '{{organiser_name}} has a new event',
+  },
+  hub_newsletter: {
+    file: 'hub-newsletter.html',
+    marker: 'hub-newsletter-magazine',
+    subject: '{{edition_label}} — {{newsletter_subject}}',
+  },
+  password_reset: {
+    file: 'password-reset.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Reset your Networker Hub password',
+  },
 };
+
+const { getNewsletterLayoutConfig, normalizeNewsletterLayout } = require('./newsletter-layouts');
 
 const cache = new Map();
 
@@ -54,7 +136,16 @@ function readTemplateFile(filename) {
   return html;
 }
 
-function resolveBrandedEmailBody(slug, dbBodyHtml) {
+function resolveBrandedEmailBody(slug, dbBodyHtml, options) {
+  if (slug === 'hub_newsletter') {
+    const layoutCfg = getNewsletterLayoutConfig(options?.newsletterLayout);
+    const body = String(dbBodyHtml || '');
+    if (!body.includes(layoutCfg.marker)) {
+      return { bodyHtml: readTemplateFile(layoutCfg.file), source: 'file' };
+    }
+    return { bodyHtml: body, source: 'database' };
+  }
+
   const cfg = BRANDED_EMAIL_TEMPLATES[slug];
   if (!cfg) {
     return { bodyHtml: String(dbBodyHtml || ''), source: 'database' };
@@ -79,4 +170,5 @@ module.exports = {
   resolveBrandedEmailBody,
   getBrandedEmailSubject,
   isBrandedEmailSlug,
+  normalizeNewsletterLayout,
 };

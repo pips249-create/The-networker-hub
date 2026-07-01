@@ -5,6 +5,8 @@ const {
   hubAccountUrl,
   legalPolicyUrl,
   contactUrl,
+  logoNavUrl,
+  logoFooterUrl,
   eventPublicUrl,
   organiserPublicUrl,
 } = require('./hub-email-urls');
@@ -37,7 +39,8 @@ function buildSavedOrganiserNewListingVars({ attendee, organiser, eventRow, site
     privacy_url: legalPolicyUrl(site, 'privacy'),
     terms_url: legalPolicyUrl(site, 'terms'),
     site_url: site,
-    logo_url: site + '/assets/logo-nav.png',
+    logo_url: logoNavUrl(site),
+    logo_footer_url: logoFooterUrl(site),
   };
 }
 

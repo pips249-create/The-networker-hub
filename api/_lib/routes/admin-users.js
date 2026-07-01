@@ -103,22 +103,35 @@ module.exports = async function handler(req, res) {
         if (!user) {
           return json(res, 404, { ok: false, error: 'user_not_found', message: 'No account for this email.' });
         }
-        const sb = getSupabaseAdmin();
-        const host = siteUrl();
-        const { data, error } = await sb.auth.admin.generateLink({
-          type: 'recovery',
-          email,
-          options: { redirectTo: host + '/reset-password.html' },
-        });
-        if (error) throw new Error(error.message);
-        const resetUrl = data?.properties?.action_link || null;
+        const { createPasswordResetLink, sendPasswordResetEmail } = require('../password-reset-email');
+        let resetUrl = null;
+        let emailSent = false;
+        const displayName = String(user.name || user.full_name || '').trim();
+
+        if (sbAuth.authEmailsEnabled()) {
+          try {
+            const sent = await sendPasswordResetEmail({ email, userName: displayName });
+            emailSent = Boolean(sent?.ok);
+            resetUrl = sent?.reset_url || null;
+          } catch (mailErr) {
+            if (mailErr.code !== 'resend_not_configured') throw mailErr;
+          }
+        }
+
+        if (!resetUrl) {
+          resetUrl = await createPasswordResetLink(email);
+        }
+
         return json(res, 200, {
           ok: true,
           email,
           resetUrl,
-          message: resetUrl
-            ? 'Recovery link generated — share with the user or open it yourself to set a new password.'
-            : 'Recovery link requested.',
+          emailSent,
+          message: emailSent
+            ? 'Branded reset email sent. The user can also use the link below if needed.'
+            : resetUrl
+              ? 'Recovery link generated — share with the user or open it yourself to set a new password.'
+              : 'Recovery link requested.',
         });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'reset_failed', message: e.message });

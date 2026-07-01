@@ -1,6 +1,7 @@
 const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
 const { getAdminFinancials } = require('../admin-supabase-data');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
+const { sendPayoutStatusEmail } = require('../lifecycle-emails');
 
 function parseBody(req) {
   let body = req.body;
@@ -51,13 +52,42 @@ module.exports = async function handler(req, res) {
 
     try {
       const sb = getSupabaseAdmin();
+      const { data: existing, error: fetchErr } = await sb
+        .from('organiser_payouts')
+        .select('id, status, event_id, amount_net, amount')
+        .eq('id', id)
+        .maybeSingle();
+      if (fetchErr) throw new Error(fetchErr.message);
+      if (!existing) return json(res, 404, { ok: false, error: 'not_found' });
+
       const { data, error } = await sb
         .from('organiser_payouts')
         .update({ status })
         .eq('id', id)
-        .select('id, status, event_id')
+        .select('id, status, event_id, amount_net, amount')
         .single();
       if (error) throw new Error(error.message);
+
+      if (existing.status !== status && (status === 'approved' || status === 'paid')) {
+        try {
+          const { data: eventRow } = await sb
+            .from('events')
+            .select('id, title, organiser_id')
+            .eq('id', data.event_id)
+            .maybeSingle();
+          if (eventRow?.organiser_id) {
+            await sendPayoutStatusEmail(sb, {
+              payout: data,
+              eventRow,
+              organiserId: eventRow.organiser_id,
+              status,
+            });
+          }
+        } catch (emailErr) {
+          console.warn('[payout] status email failed:', emailErr.message || emailErr);
+        }
+      }
+
       return json(res, 200, { ok: true, payout: data });
     } catch (e) {
       return json(res, 500, { ok: false, error: 'payout_update_failed', message: e.message });

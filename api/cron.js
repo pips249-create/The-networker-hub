@@ -10,6 +10,8 @@ const routes = {
   'organiser-listing-alerts': require('./_lib/routes/cron-organiser-listing-alerts'),
   'event-featured': require('./_lib/routes/cron-event-featured'),
   'opportunity-reminders': require('./_lib/routes/cron-opportunity-reminders'),
+  'engagement-emails': require('./_lib/routes/cron-engagement-emails'),
+  newsletter: require('./_lib/routes/cron-newsletter'),
   'organiser-rankings': require('./_lib/routes/cron-organiser-rankings'),
 };
 

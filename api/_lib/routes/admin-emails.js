@@ -12,6 +12,7 @@ const {
   removeEmailTestRecipient,
 } = require('../supabase-email-test-recipients');
 const { buildEmailFromTemplate, sendTemplatedEmail } = require('../send-template-email');
+const { mergeEmailPreviewVariables } = require('../email-preview-variables');
 const { emailConfigStatus } = require('../email-config');
 
 function parseBody(req) {
@@ -122,13 +123,18 @@ module.exports = async function handler(req, res) {
       const slug = String(body.slug || '').trim();
       if (!slug) return json(res, 400, { ok: false, error: 'missing_slug' });
       try {
-        const built = await buildEmailFromTemplate(slug, body.variables || {});
+        const variables = mergeEmailPreviewVariables(slug, body.variables || {});
+        const built = await buildEmailFromTemplate(slug, variables, {
+          subject: body.subject,
+          body_html: body.body_html,
+        });
         return json(res, 200, {
           ok: true,
           slug,
           subject: built.subject,
           html: built.html,
           placeholders: built.template.placeholders,
+          template_source: built.templateSource,
         });
       } catch (e) {
         const code = e.code || 'preview_failed';
@@ -200,7 +206,7 @@ module.exports = async function handler(req, res) {
         const result = await sendTemplatedEmail({
           slug,
           to,
-          variables: body.variables || {},
+          variables: mergeEmailPreviewVariables(slug, body.variables || {}),
           skipEmailCheck: true,
         });
         return json(res, 200, { ok: true, sent: true, ...result });

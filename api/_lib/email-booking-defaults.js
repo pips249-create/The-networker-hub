@@ -15,8 +15,10 @@ const SPONSOR_FALLBACK_SLOTS = [
   LEGACY_SPONSOR_SLOT,
 ];
 
-function buildSponsorSection(block) {
+function buildSponsorSection(block, options) {
   if (!block) return '';
+  const label =
+    String(options?.label || '').trim() || 'Our event directory is proudly powered by';
   const logo = sponsorLogoUrl(block);
   const url = String(block.cta_url || '').trim();
   const name = sponsorCompanyName(block) || 'Our sponsor';
@@ -33,7 +35,9 @@ function buildSponsorSection(block) {
       '</span>';
   return (
     '<tr><td style="padding:0 48px 18px;text-align:center;background:#f5f0e8;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:600;color:#9a9092;text-transform:uppercase;letter-spacing:2px;margin:0 0 12px;">Our event directory is proudly powered by</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:600;color:#9a9092;text-transform:uppercase;letter-spacing:2px;margin:0 0 12px;">' +
+    label +
+    '</p>' +
     '<a href="' +
     safeUrl +
     '" style="display:inline-block;text-decoration:none;">' +
@@ -74,4 +78,5 @@ module.exports = {
   buildSponsorSection,
   getBookingEmailDefaultVars,
   resolveBookingEmailSponsorBlock,
+  fetchSponsorBlockForSlot,
 };

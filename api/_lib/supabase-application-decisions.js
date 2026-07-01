@@ -119,22 +119,26 @@ async function reviewApplicationForOrganiser(session, registrationId, action, op
   const isFree = unitPrice <= 0;
 
   let patch;
+  const decidedAt = new Date().toISOString();
   if (decision === 'deny') {
     patch = {
       application_status: 'Denied',
       application_denial_reason: normalizeDenialReason(options.denialReason),
+      application_decided_at: decidedAt,
     };
   } else if (isFree) {
     patch = {
       application_status: 'Approved',
       payment_status: 'Free',
       amount_paid: 0,
+      application_decided_at: decidedAt,
     };
   } else {
     patch = {
       application_status: 'Approved',
       payment_status: 'Pending',
       amount_paid: 0,
+      application_decided_at: decidedAt,
     };
   }
 

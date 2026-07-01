@@ -50,26 +50,35 @@ async function handleSupabaseForgot(email) {
   }
 
   if (sbAuth.authEmailsEnabled()) {
-    const { getSupabaseAdmin } = require('../supabase');
-    const sb = getSupabaseAdmin();
-    const host = process.env.SITE_URL || 'https://the-networker-hub.vercel.app';
-    const { data, error } = await sb.auth.admin.generateLink({
-      type: 'recovery',
-      email,
-      options: { redirectTo: `${host}/reset-password.html` },
-    });
-    if (error) {
-      return { status: 500, body: { error: 'server_error', message: error.message } };
+    try {
+      const { sendPasswordResetEmail } = require('../password-reset-email');
+      await sendPasswordResetEmail({
+        email,
+        userName: user.name || user.full_name || '',
+      });
+      return {
+        status: 200,
+        body: {
+          ok: true,
+          emailSent: true,
+          accountFound: true,
+          message: 'Check your email for a reset link.',
+        },
+      };
+    } catch (e) {
+      const code = e.code || '';
+      if (code === 'resend_not_configured') {
+        return {
+          status: 503,
+          body: {
+            error: 'email_not_configured',
+            message:
+              'Password reset emails are not configured yet. Ask your admin to set RESEND_API_KEY and RESEND_FROM.',
+          },
+        };
+      }
+      return { status: 500, body: { error: 'server_error', message: e.message } };
     }
-    return {
-      status: 200,
-      body: {
-        ok: true,
-        emailSent: true,
-        accountFound: true,
-        message: 'Check your email for a reset link.',
-      },
-    };
   }
 
   return {
@@ -159,20 +168,21 @@ module.exports = async function handler(req, res) {
     const resendKey = process.env.RESEND_API_KEY;
     let emailSent = false;
     if (resendKey && sbAuth.authEmailsEnabled()) {
-      const mail = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${resendKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: process.env.RESEND_FROM || 'The Networker Hub <onboarding@resend.dev>',
-          to: [email],
-          subject: 'Reset your Networker Hub password',
-          html: `<p>Click to reset your password (valid 1 hour):</p><p><a href="${resetUrl}">${resetUrl}</a></p>`,
-        }),
-      });
-      emailSent = mail.ok;
+      try {
+        const { sendTemplatedEmail } = require('../send-template-email');
+        await sendTemplatedEmail({
+          slug: 'password_reset',
+          to: email,
+          variables: {
+            user_name: String(user.fields?.Name || user.fields?.name || email.split('@')[0]).trim(),
+            reset_url: resetUrl,
+          },
+          skipEmailCheck: true,
+        });
+        emailSent = true;
+      } catch {
+        emailSent = false;
+      }
     }
 
     const showLinkOnPage =

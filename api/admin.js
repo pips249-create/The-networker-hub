@@ -21,6 +21,7 @@ const routes = {
   impersonate: require('./_lib/routes/admin-impersonate'),
   import: require('./_lib/routes/admin-import'),
   campaigns: require('./_lib/routes/admin-campaigns'),
+  newsletter: require('./_lib/routes/admin-newsletter'),
   rankings: require('./_lib/routes/admin-rankings'),
 };
 

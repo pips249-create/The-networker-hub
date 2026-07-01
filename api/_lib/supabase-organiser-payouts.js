@@ -545,6 +545,25 @@ async function requestPayout(session, eventId) {
     .select('*')
     .single();
   if (insertErr) throw new Error(insertErr.message);
+
+  try {
+    const { sendPayoutRequestedEmail } = require('./lifecycle-emails');
+    const { data: eventRow } = await sb
+      .from('events')
+      .select('id, title, organiser_id')
+      .eq('id', eventId)
+      .maybeSingle();
+    if (eventRow?.organiser_id) {
+      await sendPayoutRequestedEmail(sb, {
+        payout: data,
+        eventRow,
+        organiserId: eventRow.organiser_id,
+      });
+    }
+  } catch (emailErr) {
+    console.warn('[payout] request confirmation email failed:', emailErr.message || emailErr);
+  }
+
   return { payout: rowToPayout(data), breakdown };
 }
 

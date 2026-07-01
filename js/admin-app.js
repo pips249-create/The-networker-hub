@@ -9,6 +9,30 @@
   var VERCEL_ANALYTICS_URL =
     'https://vercel.com/pips249-create/the-networker-hub/analytics';
 
+  function isLocalDevHost() {
+    var host = String(window.location.hostname || '').toLowerCase();
+    return host === 'localhost' || host === '127.0.0.1';
+  }
+
+  function hubEmailActionMessage(code, fallback) {
+    var messages = {
+      recipient_not_allowed:
+        'This address is not on the safe test list. Add it under Email → Safe test recipients first.',
+      resend_not_configured: isLocalDevHost()
+        ? 'Email is not configured for local dev. Copy RESEND_API_KEY and RESEND_FROM from Vercel into local.env, then run npm run sync-env and restart npm start.'
+        : 'Email sending is not configured yet. Add RESEND_API_KEY and RESEND_FROM in Vercel, then redeploy.',
+      test_recipients_table_missing:
+        'Safe test list is not set up yet. Run migrations 051 and 052 in Supabase.',
+      template_not_found:
+        'Email template not found. Run the latest Supabase email migrations (including 091 for password reset).',
+      resend_send_failed:
+        'Resend rejected the email. Check RESEND_FROM uses a verified domain and see Resend logs.',
+      newsletter_schema_missing:
+        'Newsletter tables are missing. Run Supabase migrations 089 and 090.',
+    };
+    return messages[code] || fallback || code || 'Something went wrong.';
+  }
+
   var PAGE_META = {
     dashboard: {
       title: 'Overview',
@@ -5075,6 +5099,36 @@
       dashboard_url: previewOrigin + '/organiser/index.html',
       site_url: previewOrigin,
       logo_url: previewOrigin + '/assets/logo-nav.png',
+      logo_footer_url: previewOrigin + '/assets/logo-email-footer.png',
+      screening_industry: 'Financial services',
+      screening_job_title: 'Business development manager',
+      denial_closing: '',
+      denial_reason_block: '',
+      meeting_link_section: '',
+      recommendations_html: '',
+      review_url: previewOrigin + '/account/index.html#reviews',
+      owner_name: 'Jordan',
+      opportunity_title: 'Marketing agency partnership',
+      opportunity_url: previewOrigin + '/opportunities/opportunity.html?id=sample',
+      renew_url: previewOrigin + '/organiser/opportunity-edit.html?id=sample',
+      edit_url: previewOrigin + '/organiser/opportunity-edit.html?id=sample',
+      rejection_note: 'Please add more detail before resubmitting.',
+      amount_net: '£240.00',
+      upcoming_count: '3',
+      create_event_url: previewOrigin + '/organiser/event-format.html',
+      connect_url: previewOrigin + '/organiser/index.html?panel=revenue',
+      group_name: 'City Connectors',
+      badge_label: 'Top 10 networking group on the Hub',
+      period_label: 'June 2026',
+      rank: '8',
+      total_ranked: '42',
+      average_rating: '4.8',
+      review_count: '27',
+      profile_url: previewOrigin + '/events/organiser.html?slug=city-connectors',
+      social_share_text:
+        'City Connectors is a Top 10 networking group on The Networker Hub for June 2026.',
+      organiser_url: previewOrigin + '/events/organiser.html?slug=city-connectors',
+      pending_applications: '2',
     };
 
     function previewMetaRow(label, value) {
@@ -5173,7 +5227,61 @@
         slug === 'booking_reminder' ||
         slug === 'account_welcome' ||
         slug === 'saved_event_tickets_open' ||
-        slug === 'organiser_new_registration'
+        slug === 'organiser_new_registration' ||
+        slug === 'organiser_new_application' ||
+        slug === 'application_received' ||
+        slug === 'application_approved' ||
+        slug === 'application_denied'
+      );
+    }
+
+    function previewDenialReasonBlock(reason) {
+      var text = String(reason || '').trim();
+      if (!text) return '';
+      return (
+        '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:16px 0 0;">' +
+        '<tr><td style="padding:16px 18px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;text-align:left;">' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 8px;">Message from the organiser</p>' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.65;color:#475569;margin:0;">' +
+        esc(text) +
+        '</p></td></tr></table>'
+      );
+    }
+
+    function previewMeetingLinkButton(link) {
+      var url = String(link || '').trim();
+      if (!url) return '';
+      return (
+        '<a href="' +
+        attrEsc(url) +
+        '" style="display:inline-block;padding:12px 28px;background:#9a7aa8;border-radius:999px;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;">Join online &rarr;</a>'
+      );
+    }
+
+    function previewRecommendationsHtml() {
+      function card(title, subtitle, url) {
+        return (
+          '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#1c2040;border-radius:14px;margin:0 0 12px;">' +
+          '<tr><td style="padding:18px 20px;">' +
+          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#ffffff;margin:0 0 6px;">' +
+          esc(title) +
+          '</p>' +
+          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;color:rgba(255,255,255,0.7);margin:0 0 12px;">' +
+          esc(subtitle) +
+          '</p>' +
+          '<a href="' +
+          attrEsc(url) +
+          '" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:700;color:#4aa8f0;text-decoration:none;">View &rarr;</a>' +
+          '</td></tr></table>'
+        );
+      }
+      return (
+        card(
+          'London Founders Breakfast',
+          'City Connectors · Tuesday 12 August 2026 · The Shard, London',
+          SAMPLE_VARS.event_url
+        ) +
+        card('Tech Leaders Lunch', 'Northbridge Network · Thursday 14 August 2026 · Manchester', SAMPLE_VARS.browse_events_url)
       );
     }
 
@@ -5219,9 +5327,23 @@
     function applyPreviewForSlug(slug) {
       if (slug === 'booking_confirmation') applyPreviewEventFormat();
       else if (slug === 'booking_reminder') applyPreviewReminderFormat();
-      else if (slug === 'organiser_new_registration') applyPreviewOrganiserFormat();
-      else if (slug === 'account_welcome' || slug === 'saved_event_tickets_open') {
+      else if (slug === 'organiser_new_registration' || slug === 'organiser_new_application') {
+        applyPreviewOrganiserFormat();
+      } else if (slug === 'account_welcome' || slug === 'saved_event_tickets_open') {
         applyPreviewAccountWelcomeFormat();
+      } else if (slug === 'application_denied') {
+        SAMPLE_VARS.denial_closing = '';
+        SAMPLE_VARS.denial_reason_block = previewDenialReasonBlock(
+          'This session is focused on early-stage founders. We hope to see you at a future event.'
+        );
+      } else if (slug === 'meeting_link_added') {
+        SAMPLE_VARS.meeting_type = 'Online';
+        SAMPLE_VARS.meeting_link = SAMPLE_VARS.meeting_link || 'https://meet.example.com/london-founders';
+        SAMPLE_VARS.meeting_link_section = previewMeetingLinkButton(SAMPLE_VARS.meeting_link);
+      } else if (slug === 'attendee_reengagement') {
+        SAMPLE_VARS.recommendations_html = previewRecommendationsHtml();
+      } else if (slug === 'saved_organiser_new_listing') {
+        SAMPLE_VARS.event_time = ' · ' + SAMPLE_VARS.event_time;
       }
     }
 
@@ -5237,20 +5359,7 @@
     }
 
     function emailActionMessage(code, fallback) {
-      var messages = {
-        recipient_not_allowed:
-          'This address is not on the safe test list. Add it under Safe test recipients first.',
-        resend_not_configured: isLocalDevHost()
-          ? 'Email is not configured for local dev. Copy RESEND_API_KEY and RESEND_FROM from Vercel → Settings → Environment Variables into local.env, then run npm run sync-env and restart npm start.'
-          : 'Email sending is not configured yet. Add RESEND_API_KEY and RESEND_FROM in Vercel, then redeploy.',
-        test_recipients_table_missing:
-          'Safe test list is not set up yet. Run migrations 051 and 052 in Supabase.',
-        template_not_found:
-          'Booking confirmation template not found. Run migrations 027 and 056 in Supabase.',
-        resend_send_failed:
-          'Resend rejected the email. Check RESEND_FROM uses a verified domain and see Resend logs.',
-      };
-      return messages[code] || fallback || code || 'Something went wrong.';
+      return hubEmailActionMessage(code, fallback);
     }
 
     main.innerHTML =
@@ -5691,34 +5800,54 @@
       return out;
     }
 
+    var previewRequestId = 0;
+
     function refreshPreview() {
       if (!selectedSlug) return;
       var subjectEl = document.getElementById('email-subject');
       var bodyEl = document.getElementById('email-body');
       if (!subjectEl || !bodyEl) return;
+
+      applyPreviewForSlug(selectedSlug);
       if (isBookingEmailSlug(selectedSlug)) {
-        applyPreviewForSlug(selectedSlug);
         updateSampleSponsorSection();
       }
+
+      var requestId = ++previewRequestId;
       var subjectLine = document.getElementById('email-preview-subject');
-      if (subjectLine) {
-        subjectLine.textContent =
-          'Subject: ' + replaceEmailPlaceholders(subjectEl.value, SAMPLE_VARS);
-      }
-      var html = replaceEmailPlaceholders(bodyEl.value, SAMPLE_VARS);
-      if (selectedSlug === 'booking_confirmation') {
-        html = stripUnresolvedBookingPlaceholders(html);
-      } else if (selectedSlug === 'booking_reminder') {
-        html = stripUnresolvedReminderPlaceholders(html);
-      } else if (selectedSlug === 'organiser_new_registration') {
-        html = stripUnresolvedOrganiserPlaceholders(html);
-      } else if (
-        selectedSlug === 'account_welcome' ||
-        selectedSlug === 'saved_event_tickets_open'
-      ) {
-        html = stripUnresolvedAccountWelcomePlaceholders(html);
-      }
-      setPreviewHtml(html);
+      if (subjectLine) subjectLine.textContent = 'Subject: Loading preview…';
+
+      adminPost('/api/admin/emails', {
+        action: 'preview',
+        slug: selectedSlug,
+        variables: SAMPLE_VARS,
+        subject: subjectEl.value,
+        body_html: bodyEl.value,
+      })
+        .then(function (data) {
+          if (requestId !== previewRequestId) return;
+          if (!data.ok) {
+            if (subjectLine) {
+              subjectLine.textContent =
+                'Preview failed: ' + (data.message || data.error || 'unknown error');
+            }
+            setPreviewHtml(
+              '<p style="font-family:system-ui,sans-serif;padding:24px;color:#b91c1c;">Could not render preview: ' +
+                esc(data.message || data.error || 'unknown error') +
+                '</p>'
+            );
+            return;
+          }
+          if (subjectLine) subjectLine.textContent = 'Subject: ' + (data.subject || '');
+          setPreviewHtml(data.html || '');
+        })
+        .catch(function (err) {
+          if (requestId !== previewRequestId) return;
+          if (subjectLine) subjectLine.textContent = 'Preview failed';
+          setPreviewHtml(
+            '<p style="font-family:system-ui,sans-serif;padding:24px;color:#b91c1c;">Could not render preview.</p>'
+          );
+        });
     }
 
     function renderTestRecipientList() {
@@ -6041,8 +6170,8 @@
         return;
       }
       if (btn) btn.disabled = true;
+      applyPreviewForSlug(selectedSlug);
       if (isBookingEmailSlug(selectedSlug)) {
-        applyPreviewForSlug(selectedSlug);
         updateSampleSponsorSection();
       }
       setEmailStatus('Sending test email to ' + to + '…');
@@ -9133,77 +9262,529 @@
   }
 
   function renderCampaigns() {
-    main.innerHTML =
-      '<div class="space-y-6 max-w-3xl">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Bulk sends use <strong>Resend</strong> and email templates from Supabase. Max <strong>50 recipients</strong> per batch. Edit the <code class="text-xs">organiser_claim_invite</code> template under Email templates first.</p>' +
-      '<form id="campaign-form" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">' +
-      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Template</label>' +
-      '<select id="campaign-slug" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
-      '<option value="organiser_claim_invite">Claim your organiser profile</option>' +
-      '</select></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Recipients</label>' +
-      '<p class="text-xs text-slate-500 mb-2">One email per line, or CSV with an <code>email</code> column.</p>' +
-      '<textarea id="campaign-recipients" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[140px]" placeholder="organiser@example.com&#10;name@company.co.uk"></textarea></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Claim URL override <span class="font-normal normal-case">(optional)</span></label>' +
-      '<input type="url" id="campaign-claim-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Defaults to register page with email pre-filled" /></div>' +
-      '<div class="flex flex-wrap items-center gap-3">' +
-      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900" id="campaign-submit">Send batch</button>' +
-      '<span id="campaign-status" class="text-sm text-slate-500"></span></div>' +
-      '<pre id="campaign-result" class="hidden text-xs bg-slate-900 text-slate-100 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap"></pre>' +
-      '</form></div>';
+    var selectedEditionId = '';
+    var editions = [];
+    var recipientCount = 0;
+    var nlTestRecipients = [];
 
-    var form = document.getElementById('campaign-form');
-    if (!form) return;
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var statusEl = document.getElementById('campaign-status');
-      var resultEl = document.getElementById('campaign-result');
-      var btn = document.getElementById('campaign-submit');
-      var raw = (document.getElementById('campaign-recipients').value || '').trim();
-      if (!raw) {
-        if (statusEl) statusEl.textContent = 'Add at least one email.';
+    function renderNlTestRecipientSelect() {
+      var select = document.getElementById('nl-test-to');
+      if (!select) return;
+      if (!nlTestRecipients.length) {
+        select.innerHTML =
+          '<option value="">No safe test addresses — add under Email templates</option>';
         return;
       }
-      var lines = raw
-        .split(/\r?\n/)
-        .map(function (s) {
-          return s.trim();
-        })
-        .filter(Boolean);
-      var isCsv = lines[0] && /email/i.test(lines[0]);
-      var payload = {
-        action: 'bulk_send',
-        slug: document.getElementById('campaign-slug').value || 'organiser_claim_invite',
-      };
-      var claimUrl = (document.getElementById('campaign-claim-url').value || '').trim();
-      if (claimUrl) payload.variables = { claim_url: claimUrl };
-      if (isCsv) payload.csv = raw;
-      else payload.emails = lines;
-
-      btn.disabled = true;
-      if (statusEl) statusEl.textContent = 'Sending…';
-      if (resultEl) resultEl.classList.add('hidden');
-
-      adminPost('/api/admin/campaigns', payload)
-        .then(function (data) {
-          if (!data || !data.ok) throw new Error((data && data.message) || (data && data.error) || 'Send failed');
-          if (statusEl) statusEl.textContent = data.message || 'Done.';
-          if (resultEl) {
-            resultEl.textContent = JSON.stringify(
-              { sent: data.sent, failed: data.failed, failures: data.failures },
-              null,
-              2
+      select.innerHTML =
+        '<option value="">Select a safe test address…</option>' +
+        nlTestRecipients
+          .map(function (row) {
+            var label = row.label ? row.label + ' (' + row.email + ')' : row.email;
+            return (
+              '<option value="' + attrEsc(row.email) + '">' + esc(label) + '</option>'
             );
-            resultEl.classList.remove('hidden');
-          }
+          })
+          .join('');
+    }
+
+    function editionPayloadFromForm() {
+      var autoFeaturedEl = document.getElementById('nl-auto-featured');
+      var autoFeatured = autoFeaturedEl ? autoFeaturedEl.checked : true;
+      var manualIds = autoFeatured
+        ? { featuredEventIds: [], featuredOrganiserIds: [], featuredOpportunityIds: [] }
+        : {
+            featuredEventIds: String((document.getElementById('nl-event-ids') || {}).value || '')
+              .split(/[\s,]+/)
+              .filter(Boolean),
+            featuredOrganiserIds: String((document.getElementById('nl-organiser-ids') || {}).value || '')
+              .split(/[\s,]+/)
+              .filter(Boolean),
+            featuredOpportunityIds: String((document.getElementById('nl-opportunity-ids') || {}).value || '')
+              .split(/[\s,]+/)
+              .filter(Boolean),
+          };
+      return {
+        id: selectedEditionId || undefined,
+        editionLabel: (document.getElementById('nl-label') || {}).value || '',
+        subject: (document.getElementById('nl-subject') || {}).value || '',
+        preheader: (document.getElementById('nl-preheader') || {}).value || '',
+        articleTitle: (document.getElementById('nl-article-title') || {}).value || '',
+        articleBody: (document.getElementById('nl-article-body') || {}).value || '',
+        articleImageUrl: (document.getElementById('nl-article-image') || {}).value || '',
+        layout: (document.getElementById('nl-layout') || {}).value || 'magazine',
+        hubNews: (document.getElementById('nl-hub-news') || {}).value || '',
+        memberSpotlightName: (document.getElementById('nl-spotlight-name') || {}).value || '',
+        memberSpotlightTitle: (document.getElementById('nl-spotlight-title') || {}).value || '',
+        memberSpotlightBody: (document.getElementById('nl-spotlight-body') || {}).value || '',
+        memberSpotlightImageUrl: (document.getElementById('nl-spotlight-image') || {}).value || '',
+        autoFeatured: autoFeatured,
+        useEventsSponsor: (document.getElementById('nl-use-sponsor') || { checked: true }).checked,
+        featuredEventIds: manualIds.featuredEventIds,
+        featuredOrganiserIds: manualIds.featuredOrganiserIds,
+        featuredOpportunityIds: manualIds.featuredOpportunityIds,
+      };
+    }
+
+    function setNlStatus(text, tone) {
+      var el = document.getElementById('nl-status');
+      if (!el) return;
+      el.textContent = text || '';
+      el.className =
+        'text-sm ' +
+        (tone === 'error' ? 'text-red-600' : tone === 'ok' ? 'text-emerald-700' : 'text-slate-500');
+    }
+
+    function statusBadge(status) {
+      var s = String(status || 'draft');
+      var cls =
+        s === 'sent'
+          ? 'bg-emerald-50 text-emerald-800'
+          : s === 'scheduled'
+            ? 'bg-sky-50 text-sky-800'
+            : s === 'sending'
+              ? 'bg-amber-50 text-amber-800'
+              : s === 'cancelled'
+                ? 'bg-slate-100 text-slate-500'
+                : 'bg-violet-50 text-violet-800';
+      return (
+        '<span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ' +
+        cls +
+        '">' +
+        esc(s) +
+        '</span>'
+      );
+    }
+
+    function fillEditionForm(edition) {
+      var e = edition || {};
+      selectedEditionId = e.id || '';
+      var set = function (id, val) {
+        var node = document.getElementById(id);
+        if (node) node.value = val == null ? '' : String(val);
+      };
+      var setCheck = function (id, val) {
+        var node = document.getElementById(id);
+        if (node) node.checked = val !== false;
+      };
+      set('nl-label', e.editionLabel || '');
+      set('nl-subject', e.subject || '');
+      set('nl-preheader', e.preheader || '');
+      set('nl-article-title', e.articleTitle || '');
+      set('nl-article-body', e.articleBody || '');
+      set('nl-article-image', e.articleImageUrl || '');
+      set('nl-layout', e.layout || 'magazine');
+      set('nl-hub-news', e.hubNews || '');
+      set('nl-spotlight-name', e.memberSpotlightName || '');
+      set('nl-spotlight-title', e.memberSpotlightTitle || '');
+      set('nl-spotlight-body', e.memberSpotlightBody || '');
+      set('nl-spotlight-image', e.memberSpotlightImageUrl || '');
+      setCheck('nl-auto-featured', e.autoFeatured);
+      setCheck('nl-use-sponsor', e.useEventsSponsor);
+      set(
+        'nl-event-ids',
+        Array.isArray(e.featuredEventIds) ? e.featuredEventIds.join(', ') : ''
+      );
+      set(
+        'nl-organiser-ids',
+        Array.isArray(e.featuredOrganiserIds) ? e.featuredOrganiserIds.join(', ') : ''
+      );
+      set(
+        'nl-opportunity-ids',
+        Array.isArray(e.featuredOpportunityIds) ? e.featuredOpportunityIds.join(', ') : ''
+      );
+      var sched = document.getElementById('nl-scheduled-at');
+      if (sched) {
+        if (e.scheduledAt) {
+          var d = new Date(e.scheduledAt);
+          if (!Number.isNaN(d.getTime())) {
+            sched.value = d.toISOString().slice(0, 16);
+          } else sched.value = '';
+        } else sched.value = '';
+      }
+      var manual = document.getElementById('nl-manual-ids');
+      if (manual) manual.hidden = e.autoFeatured !== false;
+      var meta = document.getElementById('nl-edition-meta');
+      if (meta) {
+        var layoutLabel =
+          e.layout === 'classic'
+            ? 'Classic'
+            : e.layout === 'editorial'
+              ? 'Editorial'
+              : 'Magazine';
+        meta.textContent = e.id
+          ? statusBadge(e.status) +
+            ' · ' +
+            layoutLabel +
+            ' · Sent ' +
+            (e.sentCount || 0) +
+            (e.recipientCount ? ' / ' + e.recipientCount : '') +
+            (e.scheduledAt ? ' · Scheduled ' + new Date(e.scheduledAt).toLocaleString('en-GB') : '')
+          : 'New draft';
+      }
+    }
+
+    function renderEditionList() {
+      var list = document.getElementById('nl-edition-list');
+      if (!list) return;
+      if (!editions.length) {
+        list.innerHTML =
+          '<li class="text-xs text-slate-400 px-2">No editions yet — create your first newsletter below.</li>';
+        return;
+      }
+      list.innerHTML = editions
+        .map(function (e) {
+          var active = e.id === selectedEditionId;
+          return (
+            '<li><button type="button" data-nl-id="' +
+            attrEsc(e.id) +
+            '" class="w-full text-left rounded-lg px-3 py-2 transition ' +
+            (active
+              ? 'bg-brand-50 text-brand-900 font-semibold border border-brand-100'
+              : 'text-slate-700 hover:bg-slate-50 border border-transparent') +
+            '"><span class="block text-sm">' +
+            esc(e.editionLabel || e.subject || 'Untitled') +
+            '</span><span class="block mt-1">' +
+            statusBadge(e.status) +
+            '</span></button></li>'
+          );
+        })
+        .join('');
+      list.querySelectorAll('[data-nl-id]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-nl-id');
+          var edition = editions.find(function (row) {
+            return row.id === id;
+          });
+          if (edition) fillEditionForm(edition);
+        });
+      });
+    }
+
+    function refreshPreview() {
+      var frame = document.getElementById('nl-preview-frame');
+      if (!frame) return;
+      setNlStatus('Rendering preview…');
+      adminPost('/api/admin/newsletter', {
+        action: 'preview',
+        edition: editionPayloadFromForm(),
+      })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Preview failed');
+          frame.srcdoc = data.html || '';
+          var subj = document.getElementById('nl-preview-subject');
+          if (subj) subj.textContent = 'Subject: ' + (data.subject || '');
+          setNlStatus('Preview updated.', 'ok');
         })
         .catch(function (err) {
-          if (statusEl) statusEl.textContent = err.message || 'Send failed.';
+          setNlStatus(hubEmailActionMessage(err.code, err.message || 'Preview failed.'), 'error');
+        });
+    }
+
+    function loadEditions(selectId) {
+      setNlStatus('Loading editions…');
+      Promise.all([
+        adminGet('/api/admin/newsletter'),
+        adminGet('/api/admin/newsletter?recipients=1'),
+        adminGet('/api/admin/emails?test_recipients=1'),
+      ])
+        .then(function (results) {
+          var data = results[0];
+          var rec = results[1];
+          var testRec = results[2];
+          if (!data.ok) throw new Error(data.message || data.error || 'Load failed');
+          editions = data.editions || [];
+          recipientCount = rec.ok ? Number(rec.count) || 0 : 0;
+          nlTestRecipients = testRec.ok ? testRec.testRecipients || [] : [];
+          renderNlTestRecipientSelect();
+          var countEl = document.getElementById('nl-recipient-count');
+          if (countEl) countEl.textContent = String(recipientCount);
+          if (selectId) selectedEditionId = selectId;
+          else if (!selectedEditionId && editions.length) selectedEditionId = editions[0].id;
+          renderEditionList();
+          var current = editions.find(function (e) {
+            return e.id === selectedEditionId;
+          });
+          fillEditionForm(current || {});
+          setNlStatus(editions.length + ' edition(s) · ' + recipientCount + ' potential recipients.');
+          refreshPreview();
         })
-        .finally(function () {
-          btn.disabled = false;
+        .catch(function (err) {
+          setNlStatus(err.message || 'Could not load newsletters.', 'error');
+        });
+    }
+
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Compose a <strong>Hub newsletter</strong> with the Events browse sponsor, an editorial article (optional image), Hub news, featured listings, and a member spotlight. Choose a <strong>layout</strong> — <strong>Magazine</strong> includes the live <strong>Top 10 organiser rankings</strong>; Classic and Editorial show featured organisers instead. Schedule sends <strong>50 members per day</strong> until complete (respects email preferences).</p>' +
+      '<div class="grid lg:grid-cols-[220px_minmax(0,1fr)] gap-6">' +
+      '<aside class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">' +
+      '<div class="flex items-center justify-between gap-2 mb-3">' +
+      '<h3 class="text-xs font-bold uppercase tracking-wide text-slate-500">Editions</h3>' +
+      '<button type="button" id="nl-new-btn" class="text-xs font-semibold text-brand-700 hover:text-brand-900">+ New</button>' +
+      '</div>' +
+      '<ul id="nl-edition-list" class="space-y-1 text-sm"></ul>' +
+      '<p class="text-[11px] text-slate-400 mt-4"><span id="nl-recipient-count">0</span> opted-in members</p>' +
+      '</aside>' +
+      '<div class="space-y-6">' +
+      '<form id="nl-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">' +
+      '<div class="flex flex-wrap items-start justify-between gap-3">' +
+      '<div><h3 class="font-bold text-brand-900 text-lg">Newsletter composer</h3>' +
+      '<p id="nl-edition-meta" class="text-xs text-slate-500 mt-1">New draft</p></div>' +
+      '<p id="nl-status" class="text-sm text-slate-500"></p></div>' +
+      '<div class="grid sm:grid-cols-2 gap-4">' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="nl-label">Edition label</label>' +
+      '<input id="nl-label" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="July 2026"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="nl-subject">Email subject</label>' +
+      '<input id="nl-subject" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Your monthly networking roundup"></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="nl-preheader">Preheader <span class="font-normal normal-case">(inbox preview)</span></label>' +
+      '<input id="nl-preheader" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Featured events, organisers and opportunities this month"></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="nl-layout">Email design</label>' +
+      '<select id="nl-layout" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white">' +
+      '<option value="magazine">Magazine — warm header, Top 10 rankings & wave</option>' +
+      '<option value="classic">Classic — navy header, compact cards</option>' +
+      '<option value="editorial">Editorial — story-led with hero image</option>' +
+      '</select></div>' +
+      '</div>' +
+      '<div class="border-t border-slate-100 pt-4 space-y-3">' +
+      '<h4 class="text-sm font-bold text-brand-900">Editorial article</h4>' +
+      '<input id="nl-article-title" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Article headline">' +
+      '<input id="nl-article-image" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Article image URL (optional — thumbnail in Magazine/Classic, wide hero in Editorial)">' +
+      '<textarea id="nl-article-body" rows="5" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="A short article or note from the editor. Blank lines become paragraphs."></textarea>' +
+      '</div>' +
+      '<div class="border-t border-slate-100 pt-4 space-y-3">' +
+      '<h4 class="text-sm font-bold text-brand-900">Hub news</h4>' +
+      '<textarea id="nl-hub-news" rows="4" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="One bullet per line, e.g.&#10;New organiser verification badges are live&#10;Business opportunities directory now includes premium placement"></textarea>' +
+      '</div>' +
+      '<div class="border-t border-slate-100 pt-4 space-y-3">' +
+      '<h4 class="text-sm font-bold text-brand-900">Member spotlight</h4>' +
+      '<div class="grid sm:grid-cols-2 gap-4">' +
+      '<input id="nl-spotlight-name" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Name">' +
+      '<input id="nl-spotlight-title" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Role / company">' +
+      '<input id="nl-spotlight-image" class="sm:col-span-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Photo URL (optional)">' +
+      '</div>' +
+      '<textarea id="nl-spotlight-body" rows="3" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Quote or short profile"></textarea>' +
+      '</div>' +
+      '<div class="border-t border-slate-100 pt-4 space-y-3">' +
+      '<h4 class="text-sm font-bold text-brand-900">Featured listings</h4>' +
+      '<label class="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="nl-auto-featured" class="rounded border-slate-300" checked> Auto-fill from Hub <span class="text-slate-400">(featured events, top organisers, opportunities)</span></label>' +
+      '<label class="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="nl-use-sponsor" class="rounded border-slate-300" checked> Include Events browse sponsor</label>' +
+      '<div id="nl-manual-ids" class="grid sm:grid-cols-1 gap-3 hidden">' +
+      '<input id="nl-event-ids" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono text-xs" placeholder="Event UUIDs (comma-separated)">' +
+      '<input id="nl-organiser-ids" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono text-xs" placeholder="Organiser UUIDs">' +
+      '<input id="nl-opportunity-ids" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono text-xs" placeholder="Opportunity UUIDs">' +
+      '</div></div>' +
+      '<div class="border-t border-slate-100 pt-4">' +
+      '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="nl-scheduled-at">Schedule send</label>' +
+      '<input type="datetime-local" id="nl-scheduled-at" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
+      '<p class="text-xs text-slate-500 mt-2">Sends start at this time (UTC on server). Large lists continue daily until complete.</p>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-2 pt-2">' +
+      '<button type="button" id="nl-save-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save draft</button>' +
+      '<button type="button" id="nl-preview-btn" class="rounded-lg border border-slate-200 text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Refresh preview</button>' +
+      '<button type="button" id="nl-schedule-btn" class="rounded-lg border border-brand-700 text-brand-700 text-sm font-semibold px-4 py-2 hover:bg-brand-50">Schedule</button>' +
+      '<button type="button" id="nl-cancel-btn" class="rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Cancel edition</button>' +
+      '<button type="button" id="nl-duplicate-btn" class="rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Duplicate</button>' +
+      '</div>' +
+      '<div class="border-t border-slate-100 pt-4 flex flex-wrap gap-3 items-end">' +
+      '<div class="flex-1 min-w-[200px]"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="nl-test-to">Send test to</label>' +
+      '<select id="nl-test-to" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white">' +
+      '<option value="">Loading safe test addresses…</option></select>' +
+      '<p class="text-[11px] text-slate-400 mt-1">Uses the same safe test list as Email templates.</p></div>' +
+      '<button type="button" id="nl-test-btn" class="rounded-lg border border-brand-700 text-brand-700 text-sm font-semibold px-4 py-2 hover:bg-brand-50">Send test</button>' +
+      '</div></form>' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">' +
+      '<h3 class="font-bold text-brand-900 mb-1">Preview</h3>' +
+      '<p id="nl-preview-subject" class="text-sm text-slate-600 mb-4"></p>' +
+      '<iframe id="nl-preview-frame" title="Newsletter preview" class="w-full rounded-lg border border-slate-100 bg-white" style="height:min(80vh,720px);border:0;" sandbox="allow-same-origin"></iframe>' +
+      '</section></div></div>' +
+      '<details class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">' +
+      '<summary class="text-sm font-bold text-slate-700 cursor-pointer">Legacy bulk campaign (organiser claim invite)</summary>' +
+      '<form id="campaign-form" class="mt-4 space-y-4">' +
+      '<textarea id="campaign-recipients" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[100px]" placeholder="organiser@example.com"></textarea>' +
+      '<input type="url" id="campaign-claim-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Claim URL override (optional)">' +
+      '<button type="submit" class="rounded-lg bg-slate-800 text-white text-sm font-semibold px-4 py-2" id="campaign-submit">Send batch (max 50)</button>' +
+      '<span id="campaign-status" class="text-sm text-slate-500 ml-2"></span>' +
+      '<pre id="campaign-result" class="hidden text-xs bg-slate-900 text-slate-100 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap"></pre>' +
+      '</form></details></div>';
+
+    document.getElementById('nl-auto-featured').addEventListener('change', function () {
+      var manual = document.getElementById('nl-manual-ids');
+      if (manual) manual.hidden = this.checked;
+      if (this.checked) {
+        ['nl-event-ids', 'nl-organiser-ids', 'nl-opportunity-ids'].forEach(function (id) {
+          var node = document.getElementById(id);
+          if (node) node.value = '';
+        });
+      }
+    });
+
+    var nlLayout = document.getElementById('nl-layout');
+    if (nlLayout) {
+      nlLayout.addEventListener('change', refreshPreview);
+    }
+
+    document.getElementById('nl-new-btn').addEventListener('click', function () {
+      selectedEditionId = '';
+      fillEditionForm({});
+      renderEditionList();
+      refreshPreview();
+    });
+
+    document.getElementById('nl-save-btn').addEventListener('click', function () {
+      setNlStatus('Saving…');
+      adminPost('/api/admin/newsletter', { action: 'save', edition: editionPayloadFromForm() })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Save failed');
+          if (data.edition && data.edition.id) {
+            selectedEditionId = data.edition.id;
+            var idx = editions.findIndex(function (row) {
+              return row.id === data.edition.id;
+            });
+            if (idx >= 0) editions[idx] = data.edition;
+            else editions.unshift(data.edition);
+            renderEditionList();
+            fillEditionForm(data.edition);
+          }
+          setNlStatus('Saved.', 'ok');
+        })
+        .catch(function (err) {
+          setNlStatus(err.message || 'Save failed.', 'error');
         });
     });
+
+    document.getElementById('nl-preview-btn').addEventListener('click', refreshPreview);
+
+    document.getElementById('nl-schedule-btn').addEventListener('click', function () {
+      var when = (document.getElementById('nl-scheduled-at') || {}).value;
+      if (!when) {
+        setNlStatus('Choose a schedule date and time first.', 'error');
+        return;
+      }
+      if (
+        !window.confirm(
+          'Schedule this newsletter? It will send to opted-in members starting at the chosen time.'
+        )
+      ) {
+        return;
+      }
+      setNlStatus('Scheduling…');
+      adminPost('/api/admin/newsletter', {
+        action: 'schedule',
+        edition: editionPayloadFromForm(),
+        scheduled_at: new Date(when).toISOString(),
+      })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Schedule failed');
+          loadEditions(data.edition.id);
+          setNlStatus('Scheduled.', 'ok');
+        })
+        .catch(function (err) {
+          setNlStatus(err.message || 'Schedule failed.', 'error');
+        });
+    });
+
+    document.getElementById('nl-cancel-btn').addEventListener('click', function () {
+      if (!selectedEditionId) return;
+      if (!window.confirm('Cancel this edition?')) return;
+      adminPost('/api/admin/newsletter', { action: 'cancel', id: selectedEditionId })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Cancel failed');
+          loadEditions();
+          setNlStatus('Edition cancelled.', 'ok');
+        })
+        .catch(function (err) {
+          setNlStatus(err.message || 'Cancel failed.', 'error');
+        });
+    });
+
+    document.getElementById('nl-duplicate-btn').addEventListener('click', function () {
+      if (!selectedEditionId) {
+        setNlStatus('Save the edition first before duplicating.', 'error');
+        return;
+      }
+      adminPost('/api/admin/newsletter', { action: 'duplicate', id: selectedEditionId })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Duplicate failed');
+          loadEditions(data.edition.id);
+          setNlStatus('Duplicated — edit dates and schedule the copy.', 'ok');
+        })
+        .catch(function (err) {
+          setNlStatus(err.message || 'Duplicate failed.', 'error');
+        });
+    });
+
+    document.getElementById('nl-test-btn').addEventListener('click', function () {
+      var to = String((document.getElementById('nl-test-to') || {}).value || '').trim();
+      if (!to) {
+        setNlStatus(
+          nlTestRecipients.length
+            ? 'Choose a safe test address from the dropdown.'
+            : 'No safe test addresses yet. Add one under Email → Safe test recipients.',
+          'error'
+        );
+        return;
+      }
+      setNlStatus('Sending test…');
+      adminPost('/api/admin/newsletter', {
+        action: 'send_test',
+        to: to,
+        edition: editionPayloadFromForm(),
+      })
+        .then(function (data) {
+          if (!data.ok) {
+            var err = new Error(data.message || data.error || 'Test send failed');
+            err.code = data.error;
+            throw err;
+          }
+          setNlStatus(
+            'Test sent to ' +
+              (data.to || to) +
+              '. Check your inbox and spam folder (may take a minute).',
+            'ok'
+          );
+        })
+        .catch(function (err) {
+          setNlStatus(hubEmailActionMessage(err.code, err.message || 'Test send failed.'), 'error');
+        });
+    });
+
+    var legacyForm = document.getElementById('campaign-form');
+    if (legacyForm) {
+      legacyForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var statusEl = document.getElementById('campaign-status');
+        var resultEl = document.getElementById('campaign-result');
+        var btn = document.getElementById('campaign-submit');
+        var raw = (document.getElementById('campaign-recipients').value || '').trim();
+        if (!raw) {
+          if (statusEl) statusEl.textContent = 'Add at least one email.';
+          return;
+        }
+        var lines = raw.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
+        var payload = { action: 'bulk_send', slug: 'organiser_claim_invite', emails: lines };
+        var claimUrl = (document.getElementById('campaign-claim-url').value || '').trim();
+        if (claimUrl) payload.variables = { claim_url: claimUrl };
+        btn.disabled = true;
+        if (statusEl) statusEl.textContent = 'Sending…';
+        adminPost('/api/admin/campaigns', payload)
+          .then(function (data) {
+            if (!data.ok) throw new Error(data.message || data.error || 'Send failed');
+            if (statusEl) statusEl.textContent = data.message || 'Done.';
+            if (resultEl) {
+              resultEl.textContent = JSON.stringify(data, null, 2);
+              resultEl.classList.remove('hidden');
+            }
+          })
+          .catch(function (err) {
+            if (statusEl) statusEl.textContent = err.message || 'Send failed.';
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+    }
+
+    loadEditions();
   }
 
   function renderImport() {
