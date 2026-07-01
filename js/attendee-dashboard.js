@@ -49,6 +49,116 @@
     return n % 1 === 0 ? '£' + n.toFixed(0) : '£' + n.toFixed(2);
   }
 
+  function needsBookingAction(reg) {
+    return Boolean(reg?.needsPayment || reg?.needsFreeConfirmation);
+  }
+
+  function bookingActionLabel(reg) {
+    if (reg?.needsFreeConfirmation) return 'Confirm registration';
+    return 'Complete payment';
+  }
+
+  function checkoutErrorMessage(data) {
+    const code = data && data.error ? String(data.error) : '';
+    const messages = {
+      invalid_event_id: 'This event could not be loaded for checkout. Refresh the page and try again.',
+      event_not_found: 'This event is no longer available.',
+      event_not_published: 'This event is not open for bookings yet.',
+      ticket_not_found: 'That ticket type is no longer available.',
+      ticket_sold_out: 'Sorry — that ticket tier is sold out.',
+      ticket_sales_disabled: 'Ticket sales are not open for this event yet.',
+      stripe_not_configured: 'Card checkout is not set up yet. Please try again later or contact support.',
+      stripe_connect_required:
+        'The organiser has not finished payout setup. Ticket sales are temporarily unavailable.',
+      free_ticket_use_complete_booking: 'This is a free ticket — no payment is required.',
+      not_authenticated: 'Please sign in to complete your booking.',
+      registration_not_found: 'We could not find that booking. Refresh the page and try again.',
+      registration_not_approved: 'Your application must be approved before you can complete your booking.',
+      registration_already_paid: 'This booking is already paid.',
+      registration_email_mismatch: 'This booking belongs to a different email address.',
+      booking_failed: 'Could not complete your booking. Please try again.',
+      checkout_failed: 'Could not start checkout. Please try again.',
+    };
+    if (data && data.message) return String(data.message);
+    if (messages[code]) return messages[code];
+    if (code) return 'Checkout could not start (' + code + '). Please try again.';
+    return 'Could not complete your booking. Please try again or contact support.';
+  }
+
+  async function completeFreeRegistration(reg) {
+    const res = await fetch('/api/auth/complete-booking', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventId: reg.eventId,
+        ticketId: reg.ticketId || null,
+        registrationId: reg.id,
+        qty: 1,
+        amountPaid: 0,
+        paymentStatus: 'Free',
+      }),
+    });
+    const data = await res.json().catch(function () {
+      return {};
+    });
+    if (!res.ok || !data.ok) {
+      throw new Error(checkoutErrorMessage(data));
+    }
+    return data;
+  }
+
+  async function startRegistrationCheckout(reg) {
+    const res = await fetch('/api/auth/create-checkout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventId: reg.eventId,
+        ticketId: reg.ticketId || null,
+        registrationId: reg.id,
+        qty: 1,
+      }),
+    });
+    const data = await res.json().catch(function () {
+      return {};
+    });
+    if (!res.ok || !data.ok) {
+      if (data.error === 'free_ticket_use_complete_booking') {
+        return completeFreeRegistration(reg);
+      }
+      throw new Error(checkoutErrorMessage(data));
+    }
+    if (data.completed) return data;
+    if (!data.url) throw new Error(checkoutErrorMessage(data));
+    window.location.assign(data.url);
+    return data;
+  }
+
+  async function finishRegistrationBooking(reg, payBtn) {
+    const isFree = Boolean(reg.needsFreeConfirmation);
+    if (payBtn) {
+      payBtn.disabled = true;
+      payBtn.textContent = isFree ? 'Confirming…' : 'Redirecting…';
+    }
+    try {
+      const result = isFree ? await completeFreeRegistration(reg) : await startRegistrationCheckout(reg);
+      if (result && !result.url) {
+        await reloadDashboard();
+        const updated = findRegistrationById(reg.id);
+        if (updated) openPaymentModal(updated);
+        else closePaymentModal();
+        showAdToast('Your place is confirmed.');
+      }
+    } catch (err) {
+      if (payBtn) {
+        payBtn.disabled = false;
+        payBtn.textContent = bookingActionLabel(reg);
+      }
+      window.alert(err.message || 'Could not complete your booking. Please try again.');
+    }
+  }
+
   function formatBookingReference(registrationId) {
     const raw = String(registrationId || '')
       .replace(/-/g, '')
@@ -140,7 +250,7 @@
 
   function hasApplicationDecision(reg) {
     const status = String(reg?.applicationStatus || 'Approved').trim();
-    return status === 'Pending' || status === 'Denied' || Boolean(reg?.needsPayment);
+    return status === 'Pending' || status === 'Denied' || needsBookingAction(reg);
   }
 
   function applicationStatusLabel(reg) {
@@ -149,6 +259,7 @@
     if (status === 'Pending') return 'Pending review';
     if (status === 'Denied') return 'Not approved';
     if (status === 'Approved' && reg?.needsPayment) return 'Approved — payment due';
+    if (status === 'Approved' && reg?.needsFreeConfirmation) return 'Approved — confirm your place';
     if (status === 'Approved' && (payment === 'Paid' || payment === 'Free')) return 'Approved';
     return '—';
   }
@@ -164,6 +275,9 @@
     }
     if (status === 'Approved' && reg?.needsPayment) {
       return 'Good news — you are approved. Complete payment below to secure your seat.';
+    }
+    if (status === 'Approved' && reg?.needsFreeConfirmation) {
+      return 'Good news — you are approved. Confirm your registration below to secure your place.';
     }
     if (status === 'Approved' && (payment === 'Paid' || payment === 'Free')) {
       return 'Your application was approved and your place is confirmed.';
@@ -182,8 +296,12 @@
     if (status === 'Denied') {
       return '<span class="ad-badge ad-badge-red">Not approved</span>';
     }
-    if (reg.needsPayment) {
-      return '<span class="ad-badge ad-badge-gold">Approved — pay now</span>';
+    if (needsBookingAction(reg)) {
+      return (
+        '<span class="ad-badge ad-badge-gold">' +
+        esc(reg.needsFreeConfirmation ? 'Approved — confirm place' : 'Approved — pay now') +
+        '</span>'
+      );
     }
     if (status === 'Approved') {
       return '<span class="ad-badge ad-badge-green">Approved</span>';
@@ -246,12 +364,14 @@
       );
     }
 
-    if (reg.needsPayment) {
+    if (needsBookingAction(reg)) {
       return (
         '<div class="ad-action-group">' +
         '<button type="button" class="ad-btn ad-btn-gold ad-view-payment" data-registration-id="' +
         esc(reg.id || '') +
-        '">Complete payment</button>' +
+        '">' +
+        esc(bookingActionLabel(reg)) +
+        '</button>' +
         '<a class="ad-action-link" href="' +
         esc(eventHref(reg)) +
         '">View event</a>' +
@@ -706,7 +826,7 @@
     if (titleEl) {
       if (applicationStatus === 'Pending') titleEl.textContent = 'Your application';
       else if (applicationStatus === 'Denied') titleEl.textContent = 'Application update';
-      else if (reg.needsPayment) titleEl.textContent = 'Complete your booking';
+      else if (needsBookingAction(reg)) titleEl.textContent = reg.needsFreeConfirmation ? 'Confirm your registration' : 'Complete your booking';
       else titleEl.textContent = 'Your ticket';
     }
 
@@ -748,7 +868,7 @@
             ? '<a href="' +
               esc(reg.meetingLink) +
               '" target="_blank" rel="noopener noreferrer">Join online</a>'
-            : applicationStatus === 'Pending' || reg.needsPayment
+            : applicationStatus === 'Pending' || needsBookingAction(reg)
               ? 'Available after your place is confirmed.'
               : 'The organiser will email you the join link before the event starts.') +
           '</dd></div>'
@@ -783,36 +903,11 @@
 
     const payBtn = document.getElementById('ad-payment-pay-btn');
     if (payBtn) {
-      payBtn.hidden = !reg.needsPayment;
+      payBtn.hidden = !needsBookingAction(reg);
       payBtn.disabled = false;
-      payBtn.textContent = 'Complete payment';
-      payBtn.onclick = async function () {
-        payBtn.disabled = true;
-        payBtn.textContent = 'Redirecting…';
-        try {
-          const res = await fetch('/api/auth/create-checkout', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              eventId: reg.eventId,
-              ticketId: reg.ticketId || null,
-              registrationId: reg.id,
-              qty: 1,
-            }),
-          });
-          const data = await res.json().catch(function () {
-            return {};
-          });
-          if (!res.ok || !data.ok || !data.url) {
-            throw new Error(data.message || data.error || 'checkout_failed');
-          }
-          window.location.assign(data.url);
-        } catch (err) {
-          payBtn.disabled = false;
-          payBtn.textContent = 'Complete payment';
-          window.alert(err.message || 'Could not start checkout. Please try again.');
-        }
+      payBtn.textContent = bookingActionLabel(reg);
+      payBtn.onclick = function () {
+        finishRegistrationBooking(reg, payBtn);
       };
     }
 
@@ -1097,7 +1192,7 @@
         tr.className = 'ad-row-application-pending';
       } else if (applicationStatus === 'Denied') {
         tr.className = 'ad-row-application-denied';
-      } else if (reg.needsPayment) {
+      } else if (needsBookingAction(reg)) {
         tr.className = 'ad-row-application-approved';
       }
       tr.innerHTML =
@@ -1356,7 +1451,7 @@
         tr.className = 'ad-row-application-pending';
       } else if (String(reg.applicationStatus || '') === 'Denied') {
         tr.className = 'ad-row-application-denied';
-      } else if (reg.needsPayment) {
+      } else if (needsBookingAction(reg)) {
         tr.className = 'ad-row-application-approved';
       }
       if (fullColumns) {

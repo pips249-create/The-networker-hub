@@ -1,5 +1,5 @@
 /**
- * Loads event listings from /api/hub-listings (Supabase or Airtable via Vercel).
+ * Loads event listings from /api/hub-listings (Supabase).
  */
 (function () {
   const API_PATHS = ['/api/hub-listings', '/api/events'];
@@ -714,7 +714,9 @@
   };
 
   function applyLoadedEvents() {
-    window.hubAllEvents = events;
+    if (!window.hubServerBrowse) {
+      window.hubAllEvents = events;
+    }
     resetSpotlightOrder();
     fillFilterOptions();
     if (window.hubInitPriceFilter) window.hubInitPriceFilter();

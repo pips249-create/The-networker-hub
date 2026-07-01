@@ -7,7 +7,7 @@ const {
   getOrganiserConnectForEvent,
   buildConnectCheckoutParams,
 } = require('../stripe-connect');
-const { normalizeGuestNames } = require('../supabase-registrations');
+const { normalizeGuestNames, createRegistrationFromPayment } = require('../supabase-registrations');
 const { resolveTicketSalesEnabled } = require('../ticket-sales');
 const { isUuid } = require('../uuid');
 
@@ -198,7 +198,30 @@ module.exports = async function handler(req, res) {
     }
 
     if (unitPrice <= 0) {
-      return json(res, 400, { ok: false, error: 'free_ticket_use_complete_booking' });
+      if (registrationId) {
+        const result = await createRegistrationFromPayment({
+          email: checkoutEmail,
+          name: checkoutName,
+          userId: session?.sub || null,
+          eventId,
+          ticketId,
+          registrationId,
+          quantity: requestedQty,
+          amountPaid: 0,
+          paymentStatus: 'Free',
+        });
+        return json(res, 200, {
+          ok: true,
+          completed: true,
+          registrationId: result.id,
+          action: result.action,
+        });
+      }
+      return json(res, 400, {
+        ok: false,
+        error: 'free_ticket_use_complete_booking',
+        message: 'This is a free ticket — no payment is required.',
+      });
     }
 
     let maxQty = 99;

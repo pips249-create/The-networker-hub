@@ -325,7 +325,7 @@ async function backfillAttendeeUserId(userId, email) {
 }
 
 function useSupabaseAuth() {
-  return isSupabaseConfigured() && process.env.DATA_PROVIDER !== 'airtable';
+  return isSupabaseConfigured();
 }
 
 /**

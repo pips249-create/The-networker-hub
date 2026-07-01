@@ -81,7 +81,13 @@
       tab.addEventListener('click', function () {
         if (document.body.classList.contains('browse-mode-organisers')) return;
         toggleTypeTab(tab.getAttribute('data-type') || 'all');
-        applyFilters();
+        if (window.hubServerBrowse && window.hubBrowseFetchNow) {
+          window.hubBrowseCurrentPage = 1;
+          window.hubBrowseFetchNow(1);
+          saveFilterPrefs();
+        } else {
+          applyFilters();
+        }
       });
     });
   }
@@ -641,6 +647,7 @@
         activeTypeTabs = prefs.typeTabs.map(normalizeTypeTabSlug).filter(function (slug) {
           return slug && slug !== 'all';
         });
+        window.hubBrowseActiveTypeTabs = activeTypeTabs.slice();
         syncTypeChipUi();
       } else if (prefs.typeTab) {
         setActiveTypeTab(normalizeTypeTabSlug(prefs.typeTab));
@@ -755,7 +762,15 @@
       var countEl = chip.querySelector('.event-type-chip-count');
       if (!countEl) return;
       var count;
-      if (counts) {
+      if (window.hubServerBrowse) {
+        if (counts) {
+          count = type === 'all' ? counts.all || 0 : counts[type] || 0;
+        } else if (type === 'all' && window.hubBrowseTotal != null) {
+          count = Number(window.hubBrowseTotal) || 0;
+        } else {
+          return;
+        }
+      } else if (counts) {
         count = type === 'all' ? counts.all || 0 : counts[type] || 0;
       } else {
         var all = window.hubAllEvents || [];

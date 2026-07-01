@@ -306,6 +306,31 @@ function pct(numerator, denominator) {
   return Math.round((num / den) * 1000) / 10;
 }
 
+function summarizeNewsletterSends(sends) {
+  const rows = Array.isArray(sends) ? sends : [];
+  const tracked = rows.length;
+  const delivered = rows.filter((row) => row.delivered_at).length;
+  const uniqueOpens = rows.filter((row) => row.first_opened_at).length;
+  const uniqueClicks = rows.filter((row) => row.first_clicked_at).length;
+  const bounced = rows.filter((row) => row.bounced_at).length;
+  const totalOpens = rows.reduce((sum, row) => sum + (Number(row.open_count) || 0), 0);
+  const totalClicks = rows.reduce((sum, row) => sum + (Number(row.click_count) || 0), 0);
+
+  return {
+    configured: true,
+    tracked,
+    delivered,
+    uniqueOpens,
+    uniqueClicks,
+    bounced,
+    totalOpens,
+    totalClicks,
+    openRatePct: pct(uniqueOpens, tracked),
+    clickRatePct: pct(uniqueClicks, tracked),
+    clickToOpenRatePct: pct(uniqueClicks, uniqueOpens),
+  };
+}
+
 async function getEditionAnalytics(sb, editionId) {
   const client = sb || getSupabaseAdmin();
   const edition_id = String(editionId || '').trim();
@@ -329,32 +354,44 @@ async function getEditionAnalytics(sb, editionId) {
   }
   if (linksRes.error) throw new Error(linksRes.error.message);
 
-  const sends = sendsRes.data || [];
-  const tracked = sends.length;
-  const delivered = sends.filter((row) => row.delivered_at).length;
-  const uniqueOpens = sends.filter((row) => row.first_opened_at).length;
-  const uniqueClicks = sends.filter((row) => row.first_clicked_at).length;
-  const bounced = sends.filter((row) => row.bounced_at).length;
-  const totalOpens = sends.reduce((sum, row) => sum + (Number(row.open_count) || 0), 0);
-  const totalClicks = sends.reduce((sum, row) => sum + (Number(row.click_count) || 0), 0);
-
   return {
-    configured: true,
-    tracked,
-    delivered,
-    uniqueOpens,
-    uniqueClicks,
-    bounced,
-    totalOpens,
-    totalClicks,
-    openRatePct: pct(uniqueOpens, tracked),
-    clickRatePct: pct(uniqueClicks, tracked),
-    clickToOpenRatePct: pct(uniqueClicks, uniqueOpens),
+    ...summarizeNewsletterSends(sendsRes.data || []),
     topLinks: (linksRes.data || []).map((row) => ({
       url: row.url,
       clickCount: Number(row.click_count) || 0,
     })),
   };
+}
+
+async function getAnalyticsByEditionId(sb) {
+  const client = sb || getSupabaseAdmin();
+  const { data, error } = await client
+    .from('newsletter_sends')
+    .select(
+      'edition_id, delivered_at, first_opened_at, first_clicked_at, open_count, click_count, bounced_at'
+    );
+
+  if (error) {
+    if (/newsletter_sends/i.test(error.message || '') && /does not exist/i.test(error.message || '')) {
+      return { schemaMissing: true, byEditionId: {} };
+    }
+    throw new Error(error.message);
+  }
+
+  const grouped = new Map();
+  (data || []).forEach((row) => {
+    const editionId = String(row.edition_id || '').trim();
+    if (!editionId) return;
+    if (!grouped.has(editionId)) grouped.set(editionId, []);
+    grouped.get(editionId).push(row);
+  });
+
+  const byEditionId = {};
+  grouped.forEach((sends, editionId) => {
+    byEditionId[editionId] = summarizeNewsletterSends(sends);
+  });
+
+  return { schemaMissing: false, byEditionId };
 }
 
 function newsletterResendTags(editionId) {
@@ -371,6 +408,8 @@ module.exports = {
   recordNewsletterSend,
   processResendWebhookEvent,
   getEditionAnalytics,
+  getAnalyticsByEditionId,
+  summarizeNewsletterSends,
   newsletterResendTags,
   editionIdFromTags,
 };

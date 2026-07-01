@@ -58,6 +58,7 @@ module.exports = async function handler(req, res) {
       userId: session.sub || null,
       eventId: body.eventId || body.event_id,
       ticketId: body.ticketId || body.ticket_id,
+      registrationId: body.registrationId || body.registration_id,
       quantity: body.quantity ?? body.qty,
       guestNames: body.guestNames || body.guest_names,
       amountPaid: Number.isFinite(amountPaid) ? amountPaid : 0,

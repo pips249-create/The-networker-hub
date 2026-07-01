@@ -58,7 +58,7 @@
   const ORGANISER_SCOPE_COOKIE = 'hub_organiser_scope';
   const signin = document.getElementById('org-signin');
   const shell = document.getElementById('org-shell');
-  const alertEl = document.getElementById('org-airtable-alert');
+  const alertEl = document.getElementById('org-dashboard-alert');
 
   function setOrganiserScopeCookie(mode) {
     const secure = location.protocol === 'https:' ? '; Secure' : '';
@@ -2215,7 +2215,7 @@
       window.alert(res.data.message || res.data.error || 'Could not delete this event.');
       return;
     }
-    showAirtableAlert(res.data.message || 'Event deleted.', false);
+    showOrganiserAlert(res.data.message || 'Event deleted.', false);
     await loadBootstrap();
     renderAll();
     setRoute('events-list');
@@ -2541,7 +2541,7 @@
       window.alert(res.data.message || res.data.error || 'Could not duplicate this group.');
       return;
     }
-    showAirtableAlert(res.data.message || 'Group duplicated.', false);
+    showOrganiserAlert(res.data.message || 'Group duplicated.', false);
     await loadBootstrap();
     renderAll();
     setRoute('groups');
@@ -2849,7 +2849,7 @@
     }
     closePayoutModal();
     closeModals();
-    showAirtableAlert(data.message || 'Payout request submitted.', false);
+    showOrganiserAlert(data.message || 'Payout request submitted.', false);
     await refresh();
     setRoute('events-revenue');
   }
@@ -2875,7 +2875,7 @@
       alert(data.message || data.error || 'Could not confirm refunds');
       return;
     }
-    showAirtableAlert(data.message || 'Refunds verified.', false);
+    showOrganiserAlert(data.message || 'Refunds verified.', false);
     await refresh();
     setRoute('events-revenue');
   }
@@ -2974,7 +2974,7 @@
     return g ? g.name : '—';
   }
 
-  function showAirtableAlert(message, isError) {
+  function showOrganiserAlert(message, isError) {
     if (!alertEl) return;
     if (!message) {
       alertEl.hidden = true;
@@ -3156,7 +3156,7 @@
       return;
     }
     closeModals();
-    showAirtableAlert(data.message || 'Event cancelled.', false);
+    showOrganiserAlert(data.message || 'Event cancelled.', false);
     await refresh();
     setRoute('events-list');
   }
@@ -3362,7 +3362,7 @@
       if (!state.eventsLoading) {
         ensureAllEventsForGrouping()
           .then(() => renderEvents())
-          .catch((err) => showAirtableAlert(err.message || 'Could not load events', true));
+          .catch((err) => showOrganiserAlert(err.message || 'Could not load events', true));
       }
       body.innerHTML =
         '<tr><td colspan="8" class="org-table-loading">Loading events…</td></tr>';
@@ -3540,7 +3540,7 @@
       if (!state.eventsLoading) {
         ensureAllEventsForGrouping()
           .then(() => renderRevenue())
-          .catch((err) => showAirtableAlert(err.message || 'Could not load events', true));
+          .catch((err) => showOrganiserAlert(err.message || 'Could not load events', true));
       }
       body.innerHTML =
         '<tr><td colspan="8" class="org-table-loading">Loading revenue…</td></tr>';
@@ -3724,7 +3724,7 @@
         await loadTeamMembers();
         renderTeam();
         updateGettingStartedPanel();
-        showAirtableAlert(data.message || 'Invite sent.', false);
+        showOrganiserAlert(data.message || 'Invite sent.', false);
       });
     }
     const teamPage = document.getElementById('org-page-team');
@@ -3742,7 +3742,7 @@
             await loadTeamMembers();
             renderTeam();
             updateGettingStartedPanel();
-            showAirtableAlert(data.message || 'Invite resent.', false);
+            showOrganiserAlert(data.message || 'Invite resent.', false);
           }
           return;
         }
@@ -3809,7 +3809,7 @@
   function bindScopeButtonOnce() {
     if (scopeButtonsBound) return;
     scopeButtonsBound = true;
-    document.getElementById('org-airtable-alert')?.addEventListener('click', (e) => {
+    document.getElementById('org-dashboard-alert')?.addEventListener('click', (e) => {
       if (e.target.id === 'btn-scope-my') {
         setOrganiserScopeCookie('my');
         refresh();
@@ -4137,7 +4137,7 @@
 
       await loadBootstrap();
       if (action === 'reject') {
-        showAirtableAlert(data.message || 'Profile removed from your dashboard. The Hub team has been notified.', false);
+        showOrganiserAlert(data.message || 'Profile removed from your dashboard. The Hub team has been notified.', false);
       }
     } catch (e) {
       if (errEl) {
@@ -4378,14 +4378,14 @@
     });
 
     if (data.adminView) {
-      showAirtableAlert(
+      showOrganiserAlert(
         '<strong>Admin view</strong> — showing all group profiles, events, training sessions, and ticket types across the platform.' +
           '<div class="org-scope-actions"><button type="button" class="org-btn org-btn-primary org-btn-sm" id="btn-scope-my">View my organiser data only</button></div>',
         false
       );
       bindScopeButtonOnce();
     } else if (data.personalScope && data.isAdmin) {
-      showAirtableAlert(
+      showOrganiserAlert(
         '<strong>My organiser view</strong> — showing only groups and events linked to your account (' +
           esc(state.user.email) +
           ').' +
@@ -4394,17 +4394,17 @@
       );
       bindScopeButtonOnce();
     } else if (data.groupsError) {
-      showAirtableAlert(
+      showOrganiserAlert(
         '<strong>Could not load group profiles.</strong> ' + esc(data.groupsError),
         true
       );
     } else if (!state.groups.length && !state.pendingClaimGroups.length) {
-      showAirtableAlert(
+      showOrganiserAlert(
         'Create your first <strong>group profile</strong> (under My events in the sidebar), then add events and ticket types.',
         false
       );
     } else if (!data.adminView) {
-      showAirtableAlert(null);
+      showOrganiserAlert(null);
     }
 
     applyPendingGroupSave();
@@ -4968,7 +4968,7 @@
           ensureAllEventsForGrouping()
             .then(() => renderEvents())
             .catch((err) => {
-              showAirtableAlert(err.message || 'Could not load events', true);
+              showOrganiserAlert(err.message || 'Could not load events', true);
             });
         }
       } else if (listKey === 'groups') renderGroups();
@@ -5098,12 +5098,12 @@
         await api('/api/organiser/stripe-connect?groupId=' + encodeURIComponent(gid));
         await loadBootstrap();
         if (connectParam === 'refresh') {
-          showAirtableAlert(
+          showOrganiserAlert(
             'Bank details setup was interrupted. Click Add bank details to continue where you left off.',
             false
           );
         } else {
-          showAirtableAlert('Bank details saved.', false);
+          showOrganiserAlert('Bank details saved.', false);
         }
         if (window.history.replaceState) {
           const url = new URL(window.location.href);
@@ -5112,7 +5112,7 @@
         }
       }
     } catch (e) {
-      showAirtableAlert('Could not load dashboard: ' + esc(e.message), true);
+      showOrganiserAlert('Could not load dashboard: ' + esc(e.message), true);
       setDashboardLoading(false);
     }
   }

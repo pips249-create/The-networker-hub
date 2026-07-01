@@ -22,13 +22,11 @@ function isSupabaseConfigured() {
 }
 
 function dataProvider() {
-  const p = cleanEnvVal(process.env.DATA_PROVIDER).toLowerCase();
-  if (p === 'airtable') return 'airtable';
   return 'supabase';
 }
 
 function useSupabase() {
-  return dataProvider() === 'supabase' && isSupabaseConfigured();
+  return isSupabaseConfigured();
 }
 
 let adminClient = null;

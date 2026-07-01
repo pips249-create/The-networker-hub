@@ -14,7 +14,7 @@ const {
   queueFeaturedToNewsletter,
   parseUuidList,
 } = require('../newsletter-editions');
-const { getEditionAnalytics } = require('../newsletter-analytics');
+const { getEditionAnalytics, getAnalyticsByEditionId } = require('../newsletter-analytics');
 
 function parseBody(req) {
   let body = req.body;
@@ -74,6 +74,35 @@ module.exports = async function handler(req, res) {
       if (req.query?.recipients === '1') {
         const recipients = await listNewsletterRecipients(sb);
         return json(res, 200, { ok: true, count: recipients.length });
+      }
+      if (String(req.query?.analytics_summary || '').trim() === '1') {
+        const editions = await listNewsletterEditions(sb);
+        const summary = await getAnalyticsByEditionId(sb);
+        if (summary.schemaMissing) {
+          return json(res, 200, { ok: true, schemaMissing: true, rows: [] });
+        }
+        const rows = editions.map((edition) => ({
+          edition,
+          analytics: summary.byEditionId[edition.id] || {
+            configured: true,
+            tracked: 0,
+            delivered: 0,
+            uniqueOpens: 0,
+            uniqueClicks: 0,
+            bounced: 0,
+            totalOpens: 0,
+            totalClicks: 0,
+            openRatePct: null,
+            clickRatePct: null,
+            clickToOpenRatePct: null,
+          },
+        }));
+        rows.sort((a, b) => {
+          const ta = a.edition.sentAt || a.edition.updatedAt || a.edition.createdAt || '';
+          const tb = b.edition.sentAt || b.edition.updatedAt || b.edition.createdAt || '';
+          return String(tb).localeCompare(String(ta));
+        });
+        return json(res, 200, { ok: true, schemaMissing: false, rows });
       }
       if (id) {
         const edition = await getNewsletterEdition(sb, id);

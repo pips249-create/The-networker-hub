@@ -124,6 +124,10 @@
       title: 'Newsletter',
       subtitle: 'Compose Hub newsletter editions, queue featured listings from social posts, and schedule sends',
     },
+    'newsletter-stats': {
+      title: 'Newsletter engagement',
+      subtitle: 'Open rates, click-through, and top links across all newsletter editions',
+    },
   };
 
   var EVENT_TYPES = ['Meeting', 'Events', 'Exhibition', 'Awards'];
@@ -442,7 +446,9 @@
       return PAGE_META.social.subtitle;
     }
     if (route === 'newsletter') {
-      return PAGE_META.newsletter.subtitle;
+      return hash.indexOf('/stats') !== -1
+        ? PAGE_META['newsletter-stats'].subtitle
+        : PAGE_META.newsletter.subtitle;
     }
     if (route === 'moderation' && hash.indexOf('import') !== -1) {
       return PAGE_META.import.subtitle;
@@ -516,6 +522,10 @@
           subtitle = slot.help;
         }
       }
+    }
+    if (navKey === 'newsletter' && fullHash && fullHash.indexOf('/stats') !== -1) {
+      title = PAGE_META['newsletter-stats'].title;
+      subtitle = PAGE_META['newsletter-stats'].subtitle;
     }
     document.getElementById('page-title').textContent = title;
     document.getElementById('page-subtitle').textContent = subtitle;
@@ -9325,7 +9335,294 @@
       '<p class="text-sm text-slate-600">Social post composer failed to load. Refresh the page.</p>';
   }
 
-  function renderNewsletter() {
+  function formatNlRate(pct) {
+    if (pct == null || pct === '') return '—';
+    return String(pct) + '%';
+  }
+
+  function newsletterStatusBadge(status) {
+    var s = String(status || 'draft');
+    var cls =
+      s === 'sent'
+        ? 'bg-emerald-50 text-emerald-800'
+        : s === 'scheduled'
+          ? 'bg-sky-50 text-sky-800'
+          : s === 'sending'
+            ? 'bg-amber-50 text-amber-800'
+            : s === 'cancelled'
+              ? 'bg-slate-100 text-slate-500'
+              : 'bg-violet-50 text-violet-800';
+    return (
+      '<span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ' +
+      cls +
+      '">' +
+      esc(s) +
+      '</span>'
+    );
+  }
+
+  function newsletterAnalyticsHtml(analytics) {
+    if (!analytics || analytics.schemaMissing) {
+      return (
+        '<p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">Run Supabase migration <strong>092_newsletter_analytics.sql</strong> to enable open and click tracking.</p>'
+      );
+    }
+
+    if (!analytics.configured || !analytics.tracked) {
+      return (
+        '<p class="text-sm text-slate-500">No tracked sends yet for this edition. Stats appear after test or scheduled sends, once Resend webhooks are configured.</p>' +
+        '<p class="text-xs text-slate-400 mt-2">Resend → Webhooks → <code class="bg-slate-100 px-1 rounded">/api/resend-webhook</code> · events: delivered, opened, clicked, bounced · set <code class="bg-slate-100 px-1 rounded">RESEND_WEBHOOK_SECRET</code> in Vercel.</p>'
+      );
+    }
+
+    var linksHtml =
+      analytics.topLinks && analytics.topLinks.length
+        ? '<ul class="mt-3 space-y-2 text-sm">' +
+          analytics.topLinks
+            .map(function (link) {
+              return (
+                '<li class="flex items-start justify-between gap-3 border-b border-slate-100 pb-2">' +
+                '<a href="' +
+                attrEsc(link.url) +
+                '" target="_blank" rel="noopener noreferrer" class="text-brand-700 hover:underline break-all text-xs">' +
+                esc(link.url) +
+                '</a>' +
+                '<span class="shrink-0 text-xs font-semibold text-slate-600">' +
+                esc(String(link.clickCount)) +
+                ' clicks</span></li>'
+              );
+            })
+            .join('') +
+          '</ul>'
+        : '<p class="text-xs text-slate-400 mt-2">No link clicks recorded yet.</p>';
+
+    return (
+      '<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">' +
+      '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Tracked sends</p><p class="text-lg font-bold text-brand-900">' +
+      esc(String(analytics.tracked)) +
+      '</p></div>' +
+      '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Open rate</p><p class="text-lg font-bold text-brand-900">' +
+      esc(formatNlRate(analytics.openRatePct)) +
+      '</p><p class="text-[11px] text-slate-500">' +
+      esc(String(analytics.uniqueOpens)) +
+      ' unique</p></div>' +
+      '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Click rate</p><p class="text-lg font-bold text-brand-900">' +
+      esc(formatNlRate(analytics.clickRatePct)) +
+      '</p><p class="text-[11px] text-slate-500">' +
+      esc(String(analytics.uniqueClicks)) +
+      ' unique</p></div>' +
+      '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">CTOR</p><p class="text-lg font-bold text-brand-900">' +
+      esc(formatNlRate(analytics.clickToOpenRatePct)) +
+      '</p><p class="text-[11px] text-slate-500">clicks ÷ opens</p></div>' +
+      '</div>' +
+      '<p class="text-xs text-slate-500 mt-3">Delivered ' +
+      esc(String(analytics.delivered)) +
+      ' · Bounced ' +
+      esc(String(analytics.bounced)) +
+      ' · Total opens ' +
+      esc(String(analytics.totalOpens)) +
+      ' · Total clicks ' +
+      esc(String(analytics.totalClicks)) +
+      '</p>' +
+      '<div class="mt-4"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">Top clicked links</p>' +
+      linksHtml +
+      '</div>' +
+      '<p class="text-[11px] text-slate-400 mt-3">Open rates can be understated (privacy filters block tracking pixels). Data from Resend webhooks — may take a few minutes to update.</p>'
+    );
+  }
+
+  function renderNewsletterHub(fullHash) {
+    var hash = String(fullHash || 'newsletter');
+    var tab = hash.indexOf('/stats') !== -1 ? 'stats' : 'compose';
+    var tabsHtml = adminHubTabsHtml(
+      [
+        { key: 'compose', label: 'Compose', href: '#newsletter' },
+        { key: 'stats', label: 'Engagement stats', href: '#newsletter/stats' },
+      ],
+      tab
+    );
+    if (tab === 'stats') withHubTabs(tabsHtml, renderNewsletterStats);
+    else withHubTabs(tabsHtml, renderNewsletterComposer);
+  }
+
+  function renderNewsletterStats() {
+    var selectedEditionId = '';
+    var summaryRows = [];
+
+    function setStatsStatus(text, tone) {
+      var el = document.getElementById('nl-stats-status');
+      if (!el) return;
+      el.textContent = text || '';
+      el.className =
+        'text-sm ' +
+        (tone === 'error' ? 'text-red-600' : tone === 'ok' ? 'text-emerald-700' : 'text-slate-500');
+    }
+
+    function pickDefaultEditionId() {
+      var withSends = summaryRows.filter(function (row) {
+        return row.analytics && row.analytics.tracked > 0;
+      });
+      if (withSends.length) return withSends[0].edition.id;
+      if (summaryRows.length) return summaryRows[0].edition.id;
+      return '';
+    }
+
+    function renderSummaryTable() {
+      var body = document.getElementById('nl-stats-table-body');
+      var empty = document.getElementById('nl-stats-empty');
+      if (!body) return;
+
+      if (!summaryRows.length) {
+        body.innerHTML = '';
+        if (empty) empty.hidden = false;
+        return;
+      }
+      if (empty) empty.hidden = true;
+
+      body.innerHTML = summaryRows
+        .map(function (row) {
+          var e = row.edition || {};
+          var a = row.analytics || {};
+          var active = e.id === selectedEditionId;
+          var label = e.editionLabel || e.subject || 'Untitled';
+          var sent =
+            e.sentCount != null && e.recipientCount
+              ? String(e.sentCount) + ' / ' + String(e.recipientCount)
+              : e.sentCount != null
+                ? String(e.sentCount)
+                : '—';
+          return (
+            '<tr class="nl-stats-row cursor-pointer transition ' +
+            (active ? 'bg-brand-50' : 'hover:bg-slate-50') +
+            '" data-nl-stats-id="' +
+            attrEsc(e.id) +
+            '">' +
+            '<td class="px-4 py-3 align-top"><span class="block text-sm font-semibold text-brand-900">' +
+            esc(label) +
+            '</span><span class="block mt-1">' +
+            newsletterStatusBadge(e.status) +
+            '</span></td>' +
+            '<td class="px-4 py-3 align-top text-sm text-slate-600">' +
+            esc(sent) +
+            '</td>' +
+            '<td class="px-4 py-3 align-top text-sm font-semibold text-slate-800">' +
+            esc(String(a.tracked || 0)) +
+            '</td>' +
+            '<td class="px-4 py-3 align-top text-sm text-slate-800">' +
+            esc(formatNlRate(a.openRatePct)) +
+            '</td>' +
+            '<td class="px-4 py-3 align-top text-sm text-slate-800">' +
+            esc(formatNlRate(a.clickRatePct)) +
+            '</td>' +
+            '<td class="px-4 py-3 align-top text-sm text-slate-800">' +
+            esc(formatNlRate(a.clickToOpenRatePct)) +
+            '</td></tr>'
+          );
+        })
+        .join('');
+
+      body.querySelectorAll('.nl-stats-row').forEach(function (tr) {
+        tr.addEventListener('click', function () {
+          selectedEditionId = tr.getAttribute('data-nl-stats-id') || '';
+          renderSummaryTable();
+          loadEditionDetail(selectedEditionId);
+        });
+      });
+    }
+
+    function loadEditionDetail(editionId) {
+      var panel = document.getElementById('nl-stats-detail-panel');
+      var title = document.getElementById('nl-stats-detail-title');
+      if (!panel) return;
+      if (!editionId) {
+        panel.innerHTML =
+          '<p class="text-sm text-slate-500">Select an edition to view open rates, click-through, and top links.</p>';
+        if (title) title.textContent = 'Edition detail';
+        return;
+      }
+
+      var row = summaryRows.find(function (r) {
+        return r.edition && r.edition.id === editionId;
+      });
+      if (title) {
+        title.textContent =
+          (row && (row.edition.editionLabel || row.edition.subject)) || 'Edition detail';
+      }
+
+      panel.innerHTML = '<p class="text-sm text-slate-500">Loading edition stats…</p>';
+      adminGet('/api/admin/newsletter?id=' + encodeURIComponent(editionId) + '&analytics=1')
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'analytics_failed');
+          panel.innerHTML = newsletterAnalyticsHtml(data.analytics || null);
+        })
+        .catch(function () {
+          panel.innerHTML =
+            '<p class="text-sm text-slate-500">Could not load stats for this edition.</p>';
+        });
+    }
+
+    function loadSummary() {
+      setStatsStatus('Loading engagement stats…');
+      adminGet('/api/admin/newsletter?analytics_summary=1')
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Load failed');
+          if (data.schemaMissing) {
+            summaryRows = [];
+            renderSummaryTable();
+            var panel = document.getElementById('nl-stats-detail-panel');
+            if (panel) panel.innerHTML = newsletterAnalyticsHtml({ schemaMissing: true });
+            setStatsStatus('Analytics tables not set up yet.', 'error');
+            return;
+          }
+          summaryRows = data.rows || [];
+          if (!selectedEditionId) selectedEditionId = pickDefaultEditionId();
+          renderSummaryTable();
+          loadEditionDetail(selectedEditionId);
+          var trackedTotal = summaryRows.reduce(function (sum, row) {
+            return sum + (Number(row.analytics && row.analytics.tracked) || 0);
+          }, 0);
+          setStatsStatus(
+            summaryRows.length +
+              ' edition(s) · ' +
+              trackedTotal +
+              ' tracked send(s). Data from Resend webhooks.',
+            'ok'
+          );
+        })
+        .catch(function (err) {
+          setStatsStatus(err.message || 'Could not load stats.', 'error');
+        });
+    }
+
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Review <strong>open rates</strong>, <strong>click-through</strong>, and <strong>top links</strong> for every newsletter edition. Stats update from Resend webhooks a few minutes after members open or click.</p>' +
+      '<div class="flex flex-wrap items-center justify-between gap-3">' +
+      '<p id="nl-stats-status" class="text-sm text-slate-500">Loading…</p>' +
+      '<button type="button" id="nl-stats-refresh" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Refresh</button>' +
+      '</div>' +
+      '<div class="grid xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-6">' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
+      '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">All editions</h3></div>' +
+      '<div class="overflow-x-auto">' +
+      '<table class="w-full text-left text-sm"><thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">' +
+      '<tr><th class="px-4 py-2 font-semibold">Edition</th><th class="px-4 py-2 font-semibold">Sent</th><th class="px-4 py-2 font-semibold">Tracked</th><th class="px-4 py-2 font-semibold">Opens</th><th class="px-4 py-2 font-semibold">Clicks</th><th class="px-4 py-2 font-semibold">CTOR</th></tr>' +
+      '</thead><tbody id="nl-stats-table-body"></tbody></table></div>' +
+      '<p id="nl-stats-empty" class="text-sm text-slate-500 px-4 py-6" hidden>No newsletter editions yet.</p>' +
+      '</section>' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">' +
+      '<div class="flex flex-wrap items-center justify-between gap-2 mb-4">' +
+      '<h3 id="nl-stats-detail-title" class="font-bold text-brand-900">Edition detail</h3>' +
+      '<a href="#newsletter" class="text-xs font-semibold text-brand-700 hover:text-brand-900">Edit in composer →</a>' +
+      '</div>' +
+      '<div id="nl-stats-detail-panel"><p class="text-sm text-slate-500">Select an edition to view details.</p></div>' +
+      '</section></div></div>';
+
+    document.getElementById('nl-stats-refresh').addEventListener('click', loadSummary);
+    loadSummary();
+  }
+
+  function renderNewsletterComposer() {
     var selectedEditionId = '';
     var editions = [];
     var recipientCount = 0;
@@ -9399,120 +9696,7 @@
     }
 
     function statusBadge(status) {
-      var s = String(status || 'draft');
-      var cls =
-        s === 'sent'
-          ? 'bg-emerald-50 text-emerald-800'
-          : s === 'scheduled'
-            ? 'bg-sky-50 text-sky-800'
-            : s === 'sending'
-              ? 'bg-amber-50 text-amber-800'
-              : s === 'cancelled'
-                ? 'bg-slate-100 text-slate-500'
-                : 'bg-violet-50 text-violet-800';
-      return (
-        '<span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ' +
-        cls +
-        '">' +
-        esc(s) +
-        '</span>'
-      );
-    }
-
-    function formatNlRate(pct) {
-      if (pct == null || pct === '') return '—';
-      return String(pct) + '%';
-    }
-
-    function renderNlAnalytics(analytics) {
-      var panel = document.getElementById('nl-analytics-panel');
-      if (!panel) return;
-
-      if (!analytics || analytics.schemaMissing) {
-        panel.innerHTML =
-          '<p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">Run Supabase migration <strong>092_newsletter_analytics.sql</strong> to enable open and click tracking.</p>';
-        return;
-      }
-
-      if (!analytics.configured || !analytics.tracked) {
-        panel.innerHTML =
-          '<p class="text-sm text-slate-500">No tracked sends yet. Stats appear after test or scheduled sends, once Resend webhooks are configured.</p>' +
-          '<p class="text-xs text-slate-400 mt-2">Resend → Webhooks → <code class="bg-slate-100 px-1 rounded">/api/resend-webhook</code> · events: delivered, opened, clicked, bounced · set <code class="bg-slate-100 px-1 rounded">RESEND_WEBHOOK_SECRET</code> in Vercel.</p>';
-        return;
-      }
-
-      var linksHtml =
-        analytics.topLinks && analytics.topLinks.length
-          ? '<ul class="mt-3 space-y-2 text-sm">' +
-            analytics.topLinks
-              .map(function (link) {
-                return (
-                  '<li class="flex items-start justify-between gap-3 border-b border-slate-100 pb-2">' +
-                  '<a href="' +
-                  attrEsc(link.url) +
-                  '" target="_blank" rel="noopener noreferrer" class="text-brand-700 hover:underline break-all text-xs">' +
-                  esc(link.url) +
-                  '</a>' +
-                  '<span class="shrink-0 text-xs font-semibold text-slate-600">' +
-                  esc(String(link.clickCount)) +
-                  ' clicks</span></li>'
-                );
-              })
-              .join('') +
-            '</ul>'
-          : '<p class="text-xs text-slate-400 mt-2">No link clicks recorded yet.</p>';
-
-      panel.innerHTML =
-        '<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">' +
-        '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Tracked sends</p><p class="text-lg font-bold text-brand-900">' +
-        esc(String(analytics.tracked)) +
-        '</p></div>' +
-        '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Open rate</p><p class="text-lg font-bold text-brand-900">' +
-        esc(formatNlRate(analytics.openRatePct)) +
-        '</p><p class="text-[11px] text-slate-500">' +
-        esc(String(analytics.uniqueOpens)) +
-        ' unique</p></div>' +
-        '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Click rate</p><p class="text-lg font-bold text-brand-900">' +
-        esc(formatNlRate(analytics.clickRatePct)) +
-        '</p><p class="text-[11px] text-slate-500">' +
-        esc(String(analytics.uniqueClicks)) +
-        ' unique</p></div>' +
-        '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">CTOR</p><p class="text-lg font-bold text-brand-900">' +
-        esc(formatNlRate(analytics.clickToOpenRatePct)) +
-        '</p><p class="text-[11px] text-slate-500">clicks ÷ opens</p></div>' +
-        '</div>' +
-        '<p class="text-xs text-slate-500 mt-3">Delivered ' +
-        esc(String(analytics.delivered)) +
-        ' · Bounced ' +
-        esc(String(analytics.bounced)) +
-        ' · Total opens ' +
-        esc(String(analytics.totalOpens)) +
-        ' · Total clicks ' +
-        esc(String(analytics.totalClicks)) +
-        '</p>' +
-        '<div class="mt-4 border-t border-slate-100 pt-3"><p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">Top clicked links</p>' +
-        linksHtml +
-        '</div>' +
-        '<p class="text-[11px] text-slate-400 mt-3">Open rates can be understated (privacy filters block tracking pixels). Data from Resend webhooks — may take a few minutes to update.</p>';
-    }
-
-    function loadNlAnalytics(editionId) {
-      var panel = document.getElementById('nl-analytics-panel');
-      if (!panel) return;
-      if (!editionId) {
-        renderNlAnalytics(null);
-        return;
-      }
-      panel.innerHTML = '<p class="text-sm text-slate-500">Loading engagement stats…</p>';
-      adminGet('/api/admin/newsletter?id=' + encodeURIComponent(editionId) + '&analytics=1')
-        .then(function (data) {
-          if (!data.ok) throw new Error(data.message || data.error || 'analytics_failed');
-          renderNlAnalytics(data.analytics || null);
-        })
-        .catch(function () {
-          panel.innerHTML =
-            '<p class="text-sm text-slate-500">Could not load engagement stats.</p>';
-        });
+      return newsletterStatusBadge(status);
     }
 
     function fillEditionForm(edition) {
@@ -9581,7 +9765,6 @@
             (e.scheduledAt ? ' · Scheduled ' + new Date(e.scheduledAt).toLocaleString('en-GB') : '')
           : 'New draft';
       }
-      loadNlAnalytics(e.id || '');
     }
 
     function renderEditionList() {
@@ -9758,12 +9941,8 @@
       '<p id="nl-preview-subject" class="text-sm text-slate-600 mb-4"></p>' +
       '<iframe id="nl-preview-frame" title="Newsletter preview" class="w-full rounded-lg border border-slate-100 bg-white" style="height:min(80vh,720px);border:0;" sandbox="allow-same-origin allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"></iframe>' +
       '</section>' +
-      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">' +
-      '<div class="flex flex-wrap items-center justify-between gap-2 mb-3">' +
-      '<h3 class="font-bold text-brand-900">Engagement stats</h3>' +
-      '<button type="button" id="nl-analytics-refresh" class="text-xs font-semibold text-brand-700 hover:text-brand-900">Refresh</button></div>' +
-      '<div id="nl-analytics-panel"><p class="text-sm text-slate-500">Select a saved edition to view open and click rates.</p></div>' +
-      '</section></div></div></div>';
+      '<p class="text-sm text-slate-600">After sending, view <a href="#newsletter/stats" class="text-brand-700 font-semibold hover:underline">Engagement stats</a> for opens, clicks, and top links.</p>' +
+      '</div></div></div>';
 
     document.getElementById('nl-auto-featured').addEventListener('change', function () {
       var manual = document.getElementById('nl-manual-ids');
@@ -9811,13 +9990,6 @@
     });
 
     document.getElementById('nl-preview-btn').addEventListener('click', refreshPreview);
-
-    var nlAnalyticsRefresh = document.getElementById('nl-analytics-refresh');
-    if (nlAnalyticsRefresh) {
-      nlAnalyticsRefresh.addEventListener('click', function () {
-        if (selectedEditionId) loadNlAnalytics(selectedEditionId);
-      });
-    }
 
     document.getElementById('nl-schedule-btn').addEventListener('click', function () {
       var when = (document.getElementById('nl-scheduled-at') || {}).value;
@@ -9904,10 +10076,9 @@
           setNlStatus(
             'Test sent to ' +
               (data.to || to) +
-              '. Check your inbox and spam folder (may take a minute).',
+              '. Check your inbox and spam folder (may take a minute). View stats under Engagement stats.',
             'ok'
           );
-          if (selectedEditionId) loadNlAnalytics(selectedEditionId);
         })
         .catch(function (err) {
           setNlStatus(hubEmailActionMessage(err.code, err.message || 'Test send failed.'), 'error');
@@ -11001,7 +11172,7 @@
     accounts: renderAccountsHub,
     email: renderEmailHub,
     social: renderSocialHub,
-    newsletter: renderNewsletter,
+    newsletter: renderNewsletterHub,
     moderation: renderModerationHub,
     financials: renderFinancials,
     featured: renderFeatured,

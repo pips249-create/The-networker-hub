@@ -523,7 +523,7 @@
       if (leadEl) {
         leadEl.textContent = isEmbedded()
           ? 'Linked to your account email.'
-          : 'Create your organiser group — linked to your account email in Airtable.';
+          : 'Create your organiser group — linked to your account email.';
       }
       configureCreateActions();
     }

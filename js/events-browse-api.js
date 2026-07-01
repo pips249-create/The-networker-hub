@@ -6,6 +6,7 @@
   var DEBOUNCE_MS = 320;
   var debounceTimer = null;
   var fetchToken = 0;
+  var lastTypeCounts = null;
 
   function el(id) {
     return document.getElementById(id);
@@ -77,11 +78,16 @@
     window.hubBrowseFeatured = (data.featured || []).slice();
     window.hubBrowseTotal = data.pagination ? Number(data.pagination.total) || 0 : window.hubBrowseEvents.length;
     window.hubBrowsePagination = data.pagination || null;
-    window.hubBrowseTypeCounts =
-      data.meta && data.meta.typeCounts ? data.meta.typeCounts : null;
+    if (data.meta && data.meta.typeCounts) {
+      lastTypeCounts = data.meta.typeCounts;
+      window.hubBrowseTypeCounts = lastTypeCounts;
+    } else if (lastTypeCounts) {
+      window.hubBrowseTypeCounts = lastTypeCounts;
+    } else {
+      window.hubBrowseTypeCounts = null;
+    }
     window.hubBrowsePricePeak =
       data.meta && data.meta.pricePeak != null ? Number(data.meta.pricePeak) : null;
-    window.hubAllEvents = window.hubBrowseEvents.slice();
     if (typeof page === 'number') {
       window.hubBrowseCurrentPage = page;
     }

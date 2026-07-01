@@ -1,5 +1,5 @@
 /**
- * Public events API — Supabase (replaces Airtable read path when DATA_PROVIDER=supabase).
+ * Public events API — Supabase.
  */
 const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./supabase');
 const { isEventCurrentlyFeatured } = require('./event-featured-plans');
