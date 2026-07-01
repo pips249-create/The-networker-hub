@@ -44,9 +44,6 @@
       text: 'UK business networking spans breakfast clubs, chamber events, sector meetups, exhibitions, and training days.',
     },
     {
-      text: 'Optional public attendee profiles at checkout let you see who else is registered before you arrive.',
-    },
-    {
       text: 'Listings are managed by verified organisers — dates, venues, and prices on each event page are kept up to date.',
     },
     {

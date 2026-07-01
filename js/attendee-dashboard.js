@@ -9,6 +9,7 @@
   let savedOrganisers = [];
   let opportunityEnquiries = [];
   let currentRoute = 'overview';
+  const REVIEW_EVENT_STORAGE_KEY = 'hub_review_event_id';
 
   const signin = document.getElementById('ad-signin');
   const shell = document.getElementById('ad-shell');
@@ -613,8 +614,58 @@
     });
   }
 
+  function reviewEventIdFromHash(hashRaw) {
+    const hash = String(hashRaw || '').replace(/^#/, '');
+    if (!hash) return '';
+    if (hash.toLowerCase().startsWith('review/')) {
+      return decodeURIComponent(hash.slice(7).split(/[?&]/)[0] || '').trim();
+    }
+    const qIndex = hash.indexOf('?');
+    if (qIndex >= 0) {
+      const fromHashQuery = new URLSearchParams(hash.slice(qIndex)).get('review');
+      if (fromHashQuery) return String(fromHashQuery).trim();
+    }
+    return '';
+  }
+
+  function reviewEventIdFromLocation() {
+    const fromQuery = new URLSearchParams(location.search).get('review');
+    if (fromQuery) return String(fromQuery).trim();
+    return reviewEventIdFromHash(location.hash);
+  }
+
+  const pendingReviewEventId = (function captureReviewIntent() {
+    try {
+      const id = reviewEventIdFromLocation();
+      if (id) {
+        sessionStorage.setItem(REVIEW_EVENT_STORAGE_KEY, id);
+        return id;
+      }
+      return String(sessionStorage.getItem(REVIEW_EVENT_STORAGE_KEY) || '').trim();
+    } catch {
+      return reviewEventIdFromLocation();
+    }
+  })();
+
+  function consumePendingReviewEventId() {
+    const id =
+      reviewEventIdFromLocation() ||
+      pendingReviewEventId ||
+      String(sessionStorage.getItem(REVIEW_EVENT_STORAGE_KEY) || '').trim();
+    return String(id || '').trim();
+  }
+
+  function clearPendingReviewEventId() {
+    try {
+      sessionStorage.removeItem(REVIEW_EVENT_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
+
   function parseRoute() {
     const hash = (location.hash.replace('#', '') || 'overview').toLowerCase();
+    if (hash.startsWith('review/')) return 'reviews-pending';
     const allowed = [
       'overview',
       'upcoming',
@@ -622,9 +673,11 @@
       'saved',
       'past',
       'opportunity-enquiries',
+      'reviews',
       'reviews-pending',
       'reviews-done',
     ];
+    if (hash === 'reviews') return 'reviews-pending';
     return allowed.includes(hash) ? hash : 'overview';
   }
 
@@ -1083,6 +1136,28 @@
 
     bindPaymentButtons(body);
     bindCancelButtons(body);
+  }
+
+  function openReviewFromQuery() {
+    const eventId = consumePendingReviewEventId();
+    if (!eventId) return;
+    setRoute('reviews-pending');
+    const reg = findRegistrationByEventId(eventId);
+    const launch = () => {
+      if (!reg) return;
+      if (reg.reviewStatus === 'pending') {
+        openReviewModal(reg);
+      } else if (reg.reviewStatus === 'reviewed') {
+        openViewReviewModal(reg);
+      }
+    };
+    if (reg) {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(launch);
+      });
+    }
+    clearPendingReviewEventId();
+    history.replaceState(null, '', location.pathname + '#reviews-pending');
   }
 
   function openPaymentFromQuery() {
@@ -1665,6 +1740,11 @@
       setDashboardLoading(false);
       if (signin) signin.hidden = false;
       if (shell) shell.hidden = true;
+      const signInLink = signin && signin.querySelector('a.ad-btn-primary');
+      if (signInLink) {
+        const returnTo = location.pathname + location.search + location.hash;
+        signInLink.href = '../login.html?next=' + encodeURIComponent(returnTo);
+      }
       return;
     }
 
@@ -1741,6 +1821,7 @@
       if (demoNote) demoNote.hidden = !data.isDemo;
 
       openPaymentFromQuery();
+      openReviewFromQuery();
     } finally {
       setDashboardLoading(false);
     }

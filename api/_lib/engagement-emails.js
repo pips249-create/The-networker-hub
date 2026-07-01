@@ -360,10 +360,12 @@ async function sendOrganiserLowUpcomingEventsNudges(sb) {
   return result;
 }
 
-async function sendDuePostEventReviewEmails(sb) {
+async function sendDuePostEventReviewEmails(sb, options) {
+  const opts = options && typeof options === 'object' ? options : {};
+  const dryRun = opts.dryRun === true;
   const windowStart = hoursAgo(POST_EVENT_REVIEW_HOURS + POST_EVENT_REVIEW_WINDOW_HOURS / 2);
   const windowEnd = hoursAgo(POST_EVENT_REVIEW_HOURS - POST_EVENT_REVIEW_WINDOW_HOURS / 2);
-  const result = { sent: 0, skipped: 0, errors: [] };
+  const result = { sent: 0, skipped: 0, errors: [], candidates: [] };
 
   const { data: events, error: evErr } = await sb
     .from('events')
@@ -429,6 +431,19 @@ async function sendDuePostEventReviewEmails(sb) {
     }
 
     try {
+      const reviewUrl = reviewUrlForEvent(eventRow, siteUrl);
+      if (dryRun) {
+        result.candidates.push({
+          registration_id: registration.id,
+          attendee_email: attendeeEmail,
+          event_id: eventRow.id,
+          event_title: eventRow.title,
+          review_url: reviewUrl,
+        });
+        result.sent += 1;
+        continue;
+      }
+
       await sendTemplatedEmail({
         slug: 'post_event_review_request',
         to: attendeeEmail,
@@ -436,8 +451,9 @@ async function sendDuePostEventReviewEmails(sb) {
           ...baseEmailVars(siteUrl),
           user_name: String(attendee?.name || '').trim() || 'there',
           event_name: String(eventRow.title || 'your event').trim(),
-          review_url: reviewUrlForEvent(eventRow, siteUrl),
+          review_url: reviewUrl,
         },
+        skipEmailCheck: true,
       });
 
       await sb

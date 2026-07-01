@@ -771,16 +771,17 @@
       } catch (e) {
         console.error('Events render error', e);
       }
+    };
 
-      try {
-        await refreshAfterGeocode();
-      } catch (e) {
+    const runGeocodeRefresh = function () {
+      refreshAfterGeocode().catch(function () {
         /* map coords are optional */
-      }
+      });
     };
 
     if (window.FactLoader) {
       await window.FactLoader.run(fetchAndRender);
+      runGeocodeRefresh();
       return;
     }
 
@@ -794,6 +795,7 @@
       clearTimeout(safetyTimer);
       setLoading(false);
     }
+    runGeocodeRefresh();
   }
 
   window.hubReloadEvents = load;

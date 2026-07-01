@@ -12,7 +12,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260627" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
-    <link rel="stylesheet" href="../css/account-settings.css?v=20260708" />
+    <link rel="stylesheet" href="../css/account-settings.css?v=20260730" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260701" />
 
   </head>
@@ -94,6 +94,36 @@
         </section>
       </form>
 
+      <form id="as-email-prefs-form">
+        <section class="as-card">
+          <h2>Email preferences</h2>
+          <p class="as-card-sub">
+            Choose which emails you receive from The Networker Hub. Booking confirmations and account security emails are always sent.
+          </p>
+          <div class="as-checkgroup as-email-prefs">
+            <label class="as-pref-master">
+              <input type="checkbox" id="as-email-master" checked />
+              Receive emails from The Networker Hub
+            </label>
+            <label>
+              <input type="checkbox" id="as-email-newsletter" checked />
+              Monthly newsletter and Hub updates
+            </label>
+            <label>
+              <input type="checkbox" id="as-email-reminders" checked />
+              Event reminders before bookings
+            </label>
+            <label>
+              <input type="checkbox" id="as-email-organiser-alerts" checked />
+              Alerts when saved groups publish new events
+            </label>
+          </div>
+          <div class="as-actions">
+            <button type="submit" class="as-btn as-btn-primary" id="as-save-email-prefs">Save email preferences</button>
+          </div>
+        </section>
+      </form>
+
       <form id="as-password-form">
         <section class="as-card">
           <h2>Password</h2>
@@ -118,6 +148,6 @@
       </form>
     </main>
 
-    <script src="../js/account-settings.js?v=20260708"></script>
+    <script src="../js/account-settings.js?v=20260730"></script>
   </body>
 </html>

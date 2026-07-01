@@ -77,6 +77,30 @@
     document.getElementById('as-sector').value = profile.businessSector || '';
     document.getElementById('as-prefs').value = profile.marketPreferences || '';
     syncPrefsFromTextarea();
+    fillEmailPrefs(profile);
+  }
+
+  function fillEmailPrefs(profile) {
+    const master = document.getElementById('as-email-master');
+    const newsletter = document.getElementById('as-email-newsletter');
+    const reminders = document.getElementById('as-email-reminders');
+    const organiserAlerts = document.getElementById('as-email-organiser-alerts');
+    if (master) master.checked = profile.emailsEnabled !== false;
+    if (newsletter) newsletter.checked = profile.emailPrefNewsletter !== false;
+    if (reminders) reminders.checked = profile.emailPrefEventReminders !== false;
+    if (organiserAlerts) organiserAlerts.checked = profile.emailPrefOrganiserAlerts !== false;
+    syncEmailPrefDisabled();
+  }
+
+  function syncEmailPrefDisabled() {
+    const master = document.getElementById('as-email-master');
+    const disabled = master ? !master.checked : false;
+    ['as-email-newsletter', 'as-email-reminders', 'as-email-organiser-alerts'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.disabled = disabled;
+      if (disabled) el.checked = false;
+    });
   }
 
   async function loadProfile() {
@@ -88,6 +112,40 @@
   }
 
   document.getElementById('as-prefs-quick')?.addEventListener('change', syncTextareaFromPrefs);
+  document.getElementById('as-email-master')?.addEventListener('change', syncEmailPrefDisabled);
+
+  document.getElementById('as-email-prefs-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert();
+    const btn = document.getElementById('as-save-email-prefs');
+    if (btn) btn.disabled = true;
+    const master = document.getElementById('as-email-master');
+    const emailsEnabled = master ? master.checked : true;
+    try {
+      const res = await fetch('/api/auth/profile', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emailsEnabled,
+          emailPrefNewsletter: document.getElementById('as-email-newsletter')?.checked ?? true,
+          emailPrefEventReminders: document.getElementById('as-email-reminders')?.checked ?? true,
+          emailPrefOrganiserAlerts:
+            document.getElementById('as-email-organiser-alerts')?.checked ?? true,
+        }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.message || data.error || 'save_failed');
+      await loadProfile();
+      showAlert(data.message || 'Email preferences saved.', true);
+      scrollAlertIntoView();
+    } catch (err) {
+      showAlert(err.message || 'Could not save email preferences.', false);
+      scrollAlertIntoView();
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
 
   document.getElementById('as-profile-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();

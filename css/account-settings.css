@@ -125,6 +125,19 @@
   cursor: pointer;
 }
 
+.as-email-prefs {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.as-pref-master {
+  font-weight: 600;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--as-border-soft);
+  width: 100%;
+}
+
 .as-actions {
   display: flex;
   flex-wrap: wrap;

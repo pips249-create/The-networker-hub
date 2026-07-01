@@ -81,6 +81,7 @@ module.exports = async function handler(req, res) {
       ...env,
       hasResendApiKey: email.hasResendApiKey,
       hasResendFrom: email.hasResendFrom,
+      hasResendWebhookSecret: email.hasResendWebhookSecret,
       hasCronSecret: cron.hasCronSecret,
       isProduction: cron.isProduction,
       emailSendingConfigured: email.emailSendingConfigured,

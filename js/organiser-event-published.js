@@ -154,6 +154,21 @@
     }
 
     setShareUrls(title);
+
+    const commsRoot = document.getElementById('ep-comms-preview');
+    if (window.HubCommsPack && commsRoot) {
+      const pack = window.HubCommsPack.buildEventCommsPack(
+        {
+          title,
+          date: ev.date || ev.dateLine,
+          location: ev.location,
+          description: plainDescription(ev.description),
+        },
+        listingUrl
+      );
+      commsRoot.hidden = false;
+      window.HubCommsPack.bindCommsPack(commsRoot, pack);
+    }
   }
 
   async function fetchPreview() {

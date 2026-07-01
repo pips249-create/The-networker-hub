@@ -11,8 +11,10 @@ const {
   listNewsletterRecipients,
   previewNewsletterEdition,
   sendNewsletterTest,
+  queueFeaturedToNewsletter,
   parseUuidList,
 } = require('../newsletter-editions');
+const { getEditionAnalytics } = require('../newsletter-analytics');
 
 function parseBody(req) {
   let body = req.body;
@@ -76,7 +78,11 @@ module.exports = async function handler(req, res) {
       if (id) {
         const edition = await getNewsletterEdition(sb, id);
         if (!edition) return json(res, 404, { ok: false, error: 'not_found' });
-        return json(res, 200, { ok: true, edition });
+        let analytics = null;
+        if (String(req.query?.analytics || '').trim() === '1') {
+          analytics = await getEditionAnalytics(sb, id);
+        }
+        return json(res, 200, { ok: true, edition, analytics });
       }
       const editions = await listNewsletterEditions(sb);
       return json(res, 200, { ok: true, editions });
@@ -150,6 +156,24 @@ module.exports = async function handler(req, res) {
         const edition = editionFromBody(body);
         const result = await sendNewsletterTest(sb, edition, to);
         return json(res, 200, { ok: true, sent: true, ...result });
+      }
+
+      if (action === 'queue_featured') {
+        const eventId = String(body.eventId || body.event_id || '').trim() || undefined;
+        const organiserId =
+          String(body.organiserId || body.organiser_id || '').trim() || undefined;
+        const opportunityId =
+          String(body.opportunityId || body.opportunity_id || '').trim() || undefined;
+        if (!eventId && !organiserId && !opportunityId) {
+          return json(res, 400, { ok: false, error: 'missing_listing_id' });
+        }
+        const edition = await queueFeaturedToNewsletter(sb, {
+          eventId,
+          organiserId,
+          opportunityId,
+          createdBy: session.email || '',
+        });
+        return json(res, 200, { ok: true, edition });
       }
 
       return json(res, 400, { ok: false, error: 'unknown_action' });

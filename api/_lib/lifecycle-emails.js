@@ -176,8 +176,17 @@ async function sendEventAlmostFullEmail(sb, eventRow, stats) {
 function reviewUrlForEvent(eventRow, siteUrl) {
   const site = siteBase(siteUrl);
   const eventId = String(eventRow?.id || '').trim();
-  if (eventId) return hubAccountUrl(site) + '?review=' + encodeURIComponent(eventId) + '#reviews';
-  return hubAccountUrl(site) + '#reviews';
+  if (eventId) {
+    const encoded = encodeURIComponent(eventId);
+    return (
+      hubAccountUrl(site) +
+      '?review=' +
+      encoded +
+      '#review/' +
+      encoded
+    );
+  }
+  return hubAccountUrl(site) + '#reviews-pending';
 }
 
 module.exports = {

@@ -56,15 +56,40 @@ async function acceptOrganiserTerms(userId, version = CURRENT_ORGANISER_TERMS_VE
   return data;
 }
 
-async function getEmailsEnabledForEmail(email) {
-  const em = String(email || '').trim().toLowerCase();
-  if (!em) return true;
-
-  const user = await findUserByEmail(em);
-  if (!user) return true;
-
-  const hub = await getHubAccount(user.id);
+function hubPrefEnabled(hub, column) {
   if (!hub) return true;
+  if (hub.emails_enabled === false) return false;
+  if (column && hub[column] === false) return false;
+  return true;
+}
+
+async function getHubAccountForEmail(email) {
+  const em = String(email || '').trim().toLowerCase();
+  if (!em) return null;
+  const user = await findUserByEmail(em);
+  if (!user) return null;
+  return getHubAccount(user.id);
+}
+
+async function getEmailsEnabledForEmail(email) {
+  const hub = await getHubAccountForEmail(email);
+  if (!hub) return true;
+  return hub.emails_enabled !== false;
+}
+
+/** @param {'newsletter'|'event_reminders'|'organiser_alerts'|'marketing'} category */
+async function canSendEmailCategory(email, category) {
+  const hub = await getHubAccountForEmail(email);
+  if (!hub) return true;
+  if (category === 'newsletter') {
+    return hubPrefEnabled(hub, 'email_pref_newsletter');
+  }
+  if (category === 'event_reminders') {
+    return hubPrefEnabled(hub, 'email_pref_event_reminders');
+  }
+  if (category === 'organiser_alerts') {
+    return hubPrefEnabled(hub, 'email_pref_organiser_alerts');
+  }
   return hub.emails_enabled !== false;
 }
 
@@ -519,6 +544,9 @@ module.exports = {
   hasOrganiserTermsAccepted,
   acceptOrganiserTerms,
   getEmailsEnabledForEmail,
+  getHubAccountForEmail,
+  hubPrefEnabled,
+  canSendEmailCategory,
   setEmailsEnabled,
   verifyLogin,
   createUserSilent,

@@ -97,7 +97,16 @@
 
       <section class="ee-card ep-share-card" aria-labelledby="ep-share-heading">
         <h2 id="ep-share-heading">Share on social media</h2>
-        <p class="ee-hint">Spread the word — copy your link or post directly.</p>
+        <p class="ee-hint">Your comms pack — copy a ready-made post and link, or share directly.</p>
+        <div class="ep-comms-preview" id="ep-comms-preview" hidden>
+          <p class="ep-comms-preview-label">Suggested social post</p>
+          <pre class="ep-comms-preview-text" id="ep-comms-caption" data-comms-caption></pre>
+          <p class="ep-comms-preview-url" id="ep-comms-url" data-comms-url></p>
+          <div class="ep-comms-actions">
+            <button type="button" class="ee-btn ee-btn-primary" data-comms-copy="caption">Copy social post</button>
+            <button type="button" class="ee-btn ee-btn-outline" data-comms-copy="url">Copy listing link</button>
+          </div>
+        </div>
         <div class="ep-share-link-row">
           <input type="text" class="ep-share-input" id="ep-share-url" readonly aria-label="Share link" />
           <button type="button" class="ee-btn ee-btn-primary" id="ep-copy-link">Copy link</button>
@@ -125,6 +134,7 @@
     </div>
 
     <script src="../js/organiser-event-wizard.js?v=20260608c" data-step="publish"></script>
-    <script src="../js/organiser-event-published.js?v=20260612b"></script>
+    <script src="../js/hub-comms-pack.js?v=20260730"></script>
+    <script src="../js/organiser-event-published.js?v=20260730"></script>
   </body>
 </html>

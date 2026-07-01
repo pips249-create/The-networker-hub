@@ -75,6 +75,10 @@ function rowToProfile(session, hub, attendee) {
     location: String(attendee?.location || '').trim(),
     marketPreferences: marketFromRow,
     businessSector: String(attendee?.business_sector || '').trim(),
+    emailsEnabled: hub?.emails_enabled !== false,
+    emailPrefNewsletter: hub?.email_pref_newsletter !== false,
+    emailPrefEventReminders: hub?.email_pref_event_reminders !== false,
+    emailPrefOrganiserAlerts: hub?.email_pref_organiser_alerts !== false,
   };
 }
 
@@ -165,16 +169,62 @@ async function updateProfile(session, body) {
   }
 
   let hubAccount = null;
+  const hubPatch = {};
   if (body.name !== undefined && uid) {
-    const displayName = String(body.name || '').trim();
-    const { data, error } = await sb
+    hubPatch.display_name = String(body.name || '').trim() || null;
+  }
+  if (body.emailsEnabled !== undefined && uid) {
+    hubPatch.emails_enabled = Boolean(body.emailsEnabled);
+  }
+  if (body.emailPrefNewsletter !== undefined && uid) {
+    hubPatch.email_pref_newsletter = Boolean(body.emailPrefNewsletter);
+  }
+  if (body.emailPrefEventReminders !== undefined && uid) {
+    hubPatch.email_pref_event_reminders = Boolean(body.emailPrefEventReminders);
+  }
+  if (body.emailPrefOrganiserAlerts !== undefined && uid) {
+    hubPatch.email_pref_organiser_alerts = Boolean(body.emailPrefOrganiserAlerts);
+  }
+
+  if (Object.keys(hubPatch).length && uid) {
+    let updated = null;
+    let updateErr = null;
+    const primary = await sb
       .from('hub_accounts')
-      .update({ display_name: displayName || null })
+      .update(hubPatch)
       .eq('user_id', uid)
       .select('*')
       .single();
-    if (error) throw new Error(error.message);
-    hubAccount = data;
+    if (!primary.error) {
+      updated = primary.data;
+    } else {
+      updateErr = primary.error;
+      const msg = String(primary.error.message || '').toLowerCase();
+      if (
+        msg.includes('email_pref_newsletter') ||
+        msg.includes('email_pref_event_reminders') ||
+        msg.includes('email_pref_organiser_alerts')
+      ) {
+        const fallback = { ...hubPatch };
+        delete fallback.email_pref_newsletter;
+        delete fallback.email_pref_event_reminders;
+        delete fallback.email_pref_organiser_alerts;
+        if (Object.keys(fallback).length) {
+          const retry = await sb
+            .from('hub_accounts')
+            .update(fallback)
+            .eq('user_id', uid)
+            .select('*')
+            .single();
+          if (!retry.error) updated = retry.data;
+          else updateErr = retry.error;
+        }
+      }
+    }
+    if (!updated && Object.keys(hubPatch).length) {
+      throw new Error(updateErr?.message || 'Could not save email preferences');
+    }
+    hubAccount = updated;
   } else if (uid) {
     const { data } = await sb.from('hub_accounts').select('*').eq('user_id', uid).maybeSingle();
     hubAccount = data;

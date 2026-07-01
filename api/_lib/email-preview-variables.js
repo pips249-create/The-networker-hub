@@ -87,7 +87,12 @@ function basePreviewVars(siteUrl) {
     dashboard_url: organiserDashboardUrl(site),
     create_event_url: site + '/organiser/event-format.html',
     connect_url: organiserDashboardUrl(site, { panel: 'revenue' }),
-    review_url: hubAccountUrl(site) + '?review=' + encodeURIComponent(eventRow.id) + '#reviews',
+    review_url:
+      hubAccountUrl(site) +
+      '?review=' +
+      encodeURIComponent(eventRow.id) +
+      '#review/' +
+      encodeURIComponent(eventRow.id),
     site_url: site,
     logo_url: logoNavUrl(site),
     logo_footer_url: logoFooterUrl(site),
@@ -224,7 +229,8 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     slug === 'attendee_reengagement' ||
     slug === 'application_received' ||
     slug === 'application_approved' ||
-    slug === 'application_denied'
+    slug === 'application_denied' ||
+    slug === 'post_event_review_request'
   ) {
     vars.sponsor_row = sampleSponsorRow(site);
     vars.sponsor_section = vars.sponsor_row;

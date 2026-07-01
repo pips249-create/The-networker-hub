@@ -249,6 +249,23 @@
     return null;
   }
 
+  function showCommsPack(opportunity) {
+    var root = document.getElementById('oe-comms-pack');
+    if (!root || !window.HubCommsPack) return;
+    var opp = opportunity || previewItemFromParams();
+    var url = listingUrl();
+    var pack = window.HubCommsPack.buildOpportunityCommsPack(
+      {
+        title: (opp && opp.title) || title,
+        host: (opp && (opp.host || opp.organiserName)) || '',
+        summary: (opp && (opp.summary || opp.description)) || '',
+      },
+      url
+    );
+    root.hidden = false;
+    window.HubCommsPack.bindCommsPack(root, pack);
+  }
+
   function showReady(opportunity) {
     var term = months ? months + ' month' + (months === '1' ? '' : 's') : 'your chosen term';
     if (lede) {
@@ -264,6 +281,7 @@
     }
     if (actions) actions.hidden = false;
     if (opportunity) renderPremiumPreview(opportunity);
+    showCommsPack(opportunity);
   }
 
   function showError(msg) {

@@ -10,6 +10,31 @@ const { publicOrganiserSlug } = require('./organiser-slug');
 
 const IN_CHUNK_SIZE = 80;
 
+const BROWSE_ORGANISER_COLUMNS =
+  'id,name,photo_url,description,listing_status,stripe_account_id,stripe_charges_enabled,stripe_connect_details_submitted,slug';
+
+const BROWSE_TICKET_COLUMNS =
+  'id,event_id,price,quantity,name,ticket_type,description,sale_ends_at,sale_starts_at,status';
+
+function upcomingBrowseOrFilter(nowIso) {
+  const now = nowIso || new Date().toISOString();
+  return `ends_at.gte.${now},and(ends_at.is.null,starts_at.gte.${now})`;
+}
+
+function stripBrowseListPayload(ev) {
+  if (!ev) return ev;
+  const desc = String(ev.description || '');
+  return {
+    ...ev,
+    description: desc.length > 400 ? desc.slice(0, 400) : desc,
+    tickets: [],
+    organiserProfile: ev.organiserProfile ? String(ev.organiserProfile).slice(0, 200) : '',
+    highlights: [],
+    refundPolicy: null,
+    refundPolicyDetails: null,
+  };
+}
+
 async function fetchRowsInChunks(sb, table, idColumn, ids, select = '*') {
   const unique = [...new Set((ids || []).filter(Boolean))];
   if (!unique.length) return [];
@@ -607,47 +632,66 @@ async function fetchRelatedPublishedRows(sb, organiserId, excludeIds, limit) {
     .slice(0, limit);
 }
 
-async function eventsFromPublishedRows(sb, rows, knownOrganiser) {
+async function eventsFromPublishedRows(sb, rows, knownOrganiser, options = {}) {
   const list = rows || [];
+  const browseList = Boolean(options.browseList);
   const eventIds = list.map((e) => e.id);
   const orgIds = [...new Set(list.map((e) => e.organiser_id).filter(Boolean))];
+  const ticketSelect = browseList ? BROWSE_TICKET_COLUMNS : '*';
+  const organiserSelect = browseList ? BROWSE_ORGANISER_COLUMNS : '*';
 
-  let tickets = [];
-  if (eventIds.length) {
-    tickets = await fetchRowsInChunks(sb, 'tickets', 'event_id', eventIds);
-    const regCounts = await fetchRegistrationCountsByTicket(sb, tickets);
-    tickets = tickets.map((t) => ({ ...t, _registrationCount: regCounts.get(t.id) || 0 }));
-  }
+  const ticketsPromise = eventIds.length
+    ? fetchRowsInChunks(sb, 'tickets', 'event_id', eventIds, ticketSelect)
+    : Promise.resolve([]);
 
-  let organisers = [];
+  let organisersPromise = Promise.resolve([]);
   if (
     knownOrganiser &&
     orgIds.length === 1 &&
     String(knownOrganiser.id) === String(orgIds[0])
   ) {
-    organisers = [knownOrganiser];
+    organisersPromise = Promise.resolve([knownOrganiser]);
   } else if (orgIds.length) {
-    organisers = await fetchRowsInChunks(sb, 'organisers', 'id', orgIds);
+    organisersPromise = fetchRowsInChunks(sb, 'organisers', 'id', orgIds, organiserSelect);
+  }
+
+  const rankingsPromise = (async () => {
+    if (!orgIds.length) return {};
+    try {
+      const { loadCurrentRankingsByOrganiserId } = require('./organiser-ranking-snapshot');
+      return await loadCurrentRankingsByOrganiserId(orgIds);
+    } catch {
+      return {};
+    }
+  })();
+
+  let [tickets, organisers, rankingsByOrg] = await Promise.all([
+    ticketsPromise,
+    organisersPromise,
+    rankingsPromise,
+  ]);
+
+  if (!browseList && tickets.length) {
+    const regCounts = await fetchRegistrationCountsByTicket(sb, tickets);
+    tickets = tickets.map((t) => ({ ...t, _registrationCount: regCounts.get(t.id) || 0 }));
   }
 
   const orgById = new Map(organisers.map((o) => [o.id, o]));
-  let rankingsByOrg = {};
-  try {
-    const { loadCurrentRankingsByOrganiserId } = require('./organiser-ranking-snapshot');
-    rankingsByOrg = await loadCurrentRankingsByOrganiserId(orgIds);
-  } catch {
-    rankingsByOrg = {};
-  }
+  const ticketsByEvent = new Map();
+  tickets.forEach((ticket) => {
+    if (!ticketsByEvent.has(ticket.event_id)) ticketsByEvent.set(ticket.event_id, []);
+    ticketsByEvent.get(ticket.event_id).push(ticket);
+  });
 
   return list
     .map((row) => {
       const org = row.organiser_id ? orgById.get(row.organiser_id) : null;
       if (!isPublicEvent(row, org)) return null;
-      const eventTickets = tickets.filter((t) => t.event_id === row.id);
+      const eventTickets = ticketsByEvent.get(row.id) || [];
       const ranking = row.organiser_id ? rankingsByOrg[row.organiser_id] || null : null;
       const ev = rowToEvent(row, org, eventTickets, ranking);
       if (!ev.hasTicketTiers) return null;
-      return ev;
+      return browseList ? stripBrowseListPayload(ev) : ev;
     })
     .filter(Boolean);
 }
@@ -669,27 +713,35 @@ function isStalePublishedEventsView(error) {
 }
 
 /** Query events table directly — published_events view can lag behind new columns (e.g. image_url). */
-async function fetchPublishedEventsFromTable(sb) {
-  const tableRes = await sb
+async function fetchPublishedEventsFromTable(sb, options = {}) {
+  let query = sb
     .from('events')
     .select('*')
     .eq('approval_status', 'Approved')
     .eq('status', 'published')
     .not('starts_at', 'is', null)
     .order('starts_at', { ascending: true, nullsFirst: false });
+  if (options.upcomingOnly) {
+    query = query.or(upcomingBrowseOrFilter());
+  }
+  const tableRes = await query;
   if (tableRes.error) throw new Error(tableRes.error.message);
   return (tableRes.data || []).map((row) => ({ ...row, next_date: row.starts_at }));
 }
 
-async function fetchPublishedEventRows(sb) {
-  const viewRes = await sb
+async function fetchPublishedEventRows(sb, options = {}) {
+  let query = sb
     .from('published_events')
     .select('*')
     .order('next_date', { ascending: true, nullsFirst: false });
+  if (options.upcomingOnly) {
+    query = query.or(upcomingBrowseOrFilter());
+  }
+  const viewRes = await query;
   if (!viewRes.error) {
     const rows = viewRes.data || [];
     if (rows.length && rows[0].image_url === undefined && rows[0].photo_url !== undefined) {
-      return fetchPublishedEventsFromTable(sb);
+      return fetchPublishedEventsFromTable(sb, options);
     }
     return rows;
   }
@@ -698,7 +750,7 @@ async function fetchPublishedEventRows(sb) {
     throw new Error(viewRes.error.message);
   }
 
-  return fetchPublishedEventsFromTable(sb);
+  return fetchPublishedEventsFromTable(sb, options);
 }
 
 async function fetchPublishedEventById(sb, recordId) {
@@ -770,9 +822,27 @@ async function fetchPublishedEventBySlug(sb, slug) {
   return fetchPublishedEventById(sb, slimHit.id);
 }
 
-async function fetchApprovedEvents(sb) {
-  const events = await fetchPublishedEventRows(sb);
-  const mapped = await eventsFromPublishedRows(sb, events);
+async function fetchTicketedEventIds(sb) {
+  const ids = new Set();
+  const { data, error } = await sb.from('tickets').select('event_id');
+  if (error) throw new Error(error.message);
+  (data || []).forEach((row) => {
+    if (row.event_id) ids.add(row.event_id);
+  });
+  return ids;
+}
+
+async function fetchApprovedEvents(sb, options = {}) {
+  const browseList = options.browseList !== false;
+  const [rows, ticketEventIds] = await Promise.all([
+    fetchPublishedEventRows(sb, { upcomingOnly: browseList }),
+    browseList ? fetchTicketedEventIds(sb) : Promise.resolve(null),
+  ]);
+  let list = rows;
+  if (browseList && ticketEventIds && list.length) {
+    list = list.filter((row) => ticketEventIds.has(row.id));
+  }
+  const mapped = await eventsFromPublishedRows(sb, list, null, { browseList });
   return mapped.filter((ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev));
 }
 
@@ -902,8 +972,22 @@ async function handle(req, res) {
       });
     }
 
-    const events = await fetchApprovedEvents(sb);
-    return res.status(200).json({ configured: true, provider: 'supabase', events });
+    if (String(req.query?.all || '') === '1') {
+      const events = await fetchApprovedEvents(sb);
+      return res.status(200).json({ configured: true, provider: 'supabase', events });
+    }
+
+    const { fetchBrowseEventsPage } = require('./browse-events-query');
+    const payload = await fetchBrowseEventsPage(sb, req.query || {});
+    return res.status(200).json({
+      configured: true,
+      provider: 'supabase',
+      browse: true,
+      events: payload.events,
+      featured: payload.featured || [],
+      pagination: payload.pagination,
+      meta: payload.meta,
+    });
   } catch (e) {
     return res.status(500).json({
       configured: true,

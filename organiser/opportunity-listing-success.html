@@ -32,6 +32,18 @@
         </div>
       </div>
 
+      <section class="ee-card oe-comms-pack" id="oe-comms-pack" hidden>
+        <h2 class="oe-comms-pack-title">Your comms pack</h2>
+        <p class="ee-hint">Copy a ready-made social post and listing link to promote your opportunity.</p>
+        <p class="oe-comms-preview-label">Suggested social post</p>
+        <pre class="oe-comms-preview-text" data-comms-caption></pre>
+        <p class="oe-comms-preview-url" data-comms-url></p>
+        <div class="ee-actions">
+          <button type="button" class="ee-btn ee-btn-gold" data-comms-copy="caption">Copy social post</button>
+          <button type="button" class="ee-btn ee-btn-outline" data-comms-copy="url">Copy listing link</button>
+        </div>
+      </section>
+
       <div class="ee-card oe-premium-upsell" id="oe-premium-upsell">
         <p class="oe-premium-badge">Premium spotlight</p>
         <h2 class="oe-premium-heading">Want extra visibility?</h2>
@@ -89,7 +101,8 @@
     </div>
 
     <script src="../js/opportunities-catalog.js?v=20260609"></script>
-    <script src="../js/organiser-opportunity-listing-success.js?v=20260630c"></script>
+    <script src="../js/hub-comms-pack.js?v=20260730"></script>
+    <script src="../js/organiser-opportunity-listing-success.js?v=20260730"></script>
     <script>
       (function () {
         var params = new URLSearchParams(location.search);

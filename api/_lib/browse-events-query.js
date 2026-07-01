@@ -1,0 +1,434 @@
+/**
+ * Paginated public event browse — server-side filters for scale.
+ */
+const { isEventCurrentlyFeatured } = require('./event-featured-plans');
+const { outcodeListForLocation, haversineMiles, cityRegionFromInput } = require('./uk-outcode');
+const {
+  eventsFromPublishedRows,
+  isUpcomingBrowseEvent,
+  isApprovedPublicEventPayload,
+} = require('./supabase-events');
+
+const BROWSE_VIEW = 'browse_events_index';
+const MAX_LIMIT = 48;
+const DEFAULT_LIMIT = 12;
+const MAX_PINS = 2500;
+const IN_CHUNK = 80;
+
+function upcomingOrFilter(nowIso) {
+  const now = nowIso || new Date().toISOString();
+  return `ends_at.gte.${now},and(ends_at.is.null,starts_at.gte.${now})`;
+}
+
+function sanitizeSearchTerm(term) {
+  return String(term || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[%_,.()\\]/g, '')
+    .slice(0, 48);
+}
+
+function parseBrowseQuery(query) {
+  const q = query || {};
+  const limit = Math.min(Math.max(parseInt(String(q.limit || ''), 10) || DEFAULT_LIMIT, 1), MAX_LIMIT);
+  const page = Math.max(parseInt(String(q.page || ''), 10) || 1, 1);
+  const offset =
+    q.offset != null
+      ? Math.max(parseInt(String(q.offset), 10) || 0, 0)
+      : (page - 1) * limit;
+
+  const sortOptions = [
+    'recommended',
+    'date',
+    'price-asc',
+    'price-desc',
+    'rating-asc',
+    'rating-desc',
+  ];
+
+  const types = String(q.type || q.types || '')
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s && s !== 'all');
+
+  const outcodes = String(q.outcodes || '')
+    .split(',')
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean);
+
+  return {
+    limit,
+    page,
+    offset,
+    mode: q.mode === 'pins' ? 'pins' : q.featured === '1' ? 'featured' : 'list',
+    includeMeta: q.meta !== '0',
+    q: String(q.q || '').trim(),
+    types,
+    inPerson: q.inPerson !== '0' && q.inPerson !== 'false',
+    online: q.online !== '0' && q.online !== 'false',
+    freeOnly: q.free === '1' || q.freeOnly === '1',
+    priceMax:
+      q.priceMax != null && String(q.priceMax).trim() !== ''
+        ? Number(q.priceMax)
+        : null,
+    dateFrom: q.dateFrom || null,
+    dateTo: q.dateTo || null,
+    location: String(q.location || '').trim(),
+    outcodes,
+    lat: q.lat != null && String(q.lat).trim() !== '' ? Number(q.lat) : null,
+    lng: q.lng != null && String(q.lng).trim() !== '' ? Number(q.lng) : null,
+    radiusMi:
+      q.radius != null && String(q.radius).trim() !== ''
+        ? Number(q.radius)
+        : q.radiusMi != null
+          ? Number(q.radiusMi)
+          : null,
+    sort: sortOptions.includes(String(q.sort || '')) ? String(q.sort) : 'recommended',
+  };
+}
+
+function hasGeoRadius(params) {
+  return (
+    Number.isFinite(params.lat) &&
+    Number.isFinite(params.lng) &&
+    Number.isFinite(params.radiusMi) &&
+    params.radiusMi > 0
+  );
+}
+
+function applyFormatFilter(query, params) {
+  const wantInPerson = params.inPerson;
+  const wantOnline = params.online;
+  if (wantInPerson && wantOnline) return query;
+  if (!wantInPerson && !wantOnline) {
+    return query.eq('id', '00000000-0000-0000-0000-000000000000');
+  }
+  if (wantInPerson && !wantOnline) {
+    return query.in('format_tab', ['in-person', 'hybrid']);
+  }
+  if (!wantInPerson && wantOnline) {
+    return query.in('format_tab', ['online', 'hybrid']);
+  }
+  return query;
+}
+
+function applySearchFilter(query, params) {
+  const terms = params.q
+    .toLowerCase()
+    .split(/\s+/)
+    .map(sanitizeSearchTerm)
+    .filter(Boolean);
+  if (!terms.length) return query;
+
+  let next = query;
+  terms.forEach((term) => {
+    const t = `%${term}%`;
+    next = next.or(
+      `title.ilike.${t},description.ilike.${t},city.ilike.${t},venue.ilike.${t},location_label.ilike.${t},postcode.ilike.${t}`
+    );
+  });
+  return next;
+}
+
+function applyOutcodeFilter(query, params) {
+  const outcodes = outcodeListForLocation(params.location, params.outcodes);
+  if (outcodes && outcodes.length) {
+    if (outcodes.length <= 120) {
+      return query.in('outcode', outcodes);
+    }
+    return query.in('outcode', outcodes.slice(0, 120));
+  }
+
+  const raw = params.location;
+  if (!raw) return query;
+  const region = cityRegionFromInput(raw);
+  if (region) return query;
+  const norm = raw.trim().toLowerCase();
+  if (norm.length >= 3) {
+    const t = `%${sanitizeSearchTerm(norm)}%`;
+    return query.or(`city.ilike.${t},location_label.ilike.${t},venue.ilike.${t}`);
+  }
+  return query;
+}
+
+function applyBrowseFilters(query, params) {
+  let next = query.or(upcomingOrFilter());
+
+  if (params.types.length) {
+    next = next.in('type_tab', params.types);
+  }
+
+  next = applyFormatFilter(next, params);
+  next = applySearchFilter(next, params);
+  next = applyOutcodeFilter(next, params);
+
+  if (params.freeOnly) {
+    next = next.eq('min_ticket_price', 0);
+  } else if (Number.isFinite(params.priceMax) && params.priceMax >= 0) {
+    next = next.lte('min_ticket_price', params.priceMax);
+  }
+
+  if (params.dateFrom) {
+    next = next.gte('starts_at', params.dateFrom);
+  }
+  if (params.dateTo) {
+    next = next.lte('starts_at', params.dateTo);
+  }
+
+  return next;
+}
+
+function sortRows(rows, sort) {
+  const list = rows.slice();
+  list.sort((a, b) => {
+    if (sort === 'rating-desc') {
+      return (Number(b.average_rating) || 0) - (Number(a.average_rating) || 0);
+    }
+    if (sort === 'rating-asc') {
+      return (Number(a.average_rating) || 0) - (Number(b.average_rating) || 0);
+    }
+    if (sort === 'price-asc') {
+      return (Number(a.min_ticket_price) || 0) - (Number(b.min_ticket_price) || 0);
+    }
+    if (sort === 'price-desc') {
+      return (Number(b.min_ticket_price) || 0) - (Number(a.min_ticket_price) || 0);
+    }
+    if (sort === 'date') {
+      return new Date(a.starts_at || 0) - new Date(b.starts_at || 0);
+    }
+    const af = isEventCurrentlyFeatured(a) ? 1 : 0;
+    const bf = isEventCurrentlyFeatured(b) ? 1 : 0;
+    if (bf !== af) return bf - af;
+    const ra = Number(a.average_rating) || 0;
+    const rb = Number(b.average_rating) || 0;
+    if (rb !== ra) return rb - ra;
+    return new Date(a.starts_at || 0) - new Date(b.starts_at || 0);
+  });
+  return list;
+}
+
+function applySqlSort(query, sort) {
+  if (sort === 'date') {
+    return query.order('starts_at', { ascending: true, nullsFirst: false });
+  }
+  if (sort === 'price-asc') {
+    return query
+      .order('min_ticket_price', { ascending: true })
+      .order('starts_at', { ascending: true });
+  }
+  if (sort === 'price-desc') {
+    return query
+      .order('min_ticket_price', { ascending: false })
+      .order('starts_at', { ascending: true });
+  }
+  if (sort === 'rating-asc') {
+    return query
+      .order('average_rating', { ascending: true, nullsFirst: true })
+      .order('starts_at', { ascending: true });
+  }
+  if (sort === 'rating-desc') {
+    return query
+      .order('average_rating', { ascending: false, nullsFirst: true })
+      .order('starts_at', { ascending: true });
+  }
+  return query
+    .order('featured', { ascending: false })
+    .order('average_rating', { ascending: false, nullsFirst: true })
+    .order('starts_at', { ascending: true, nullsFirst: false });
+}
+
+function rowPassesGeo(row, params) {
+  if (!hasGeoRadius(params)) return true;
+  const lat = row.latitude != null ? Number(row.latitude) : null;
+  const lng = row.longitude != null ? Number(row.longitude) : null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  if (row.format_tab === 'online') return true;
+  return haversineMiles(params.lat, params.lng, lat, lng) <= params.radiusMi;
+}
+
+function rowToBrowsePin(row) {
+  const lat = row.latitude != null ? Number(row.latitude) : null;
+  const lng = row.longitude != null ? Number(row.longitude) : null;
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    city: row.city,
+    format: row.format_tab,
+    formatSlug: row.format_tab,
+    lat,
+    lng,
+    mapLat: lat,
+    mapLng: lng,
+    starts_at: row.starts_at,
+    dateRaw: row.starts_at,
+    nextDate: row.starts_at,
+    outcode: row.outcode,
+  };
+}
+
+async function fetchMatchingRows(sb, params, select) {
+  let query = sb.from(BROWSE_VIEW).select(select);
+  query = applyBrowseFilters(query, params);
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+
+async function countWithFilters(sb, params) {
+  let query = sb.from(BROWSE_VIEW).select('id', { count: 'exact', head: true });
+  query = applyBrowseFilters(query, params);
+  const { count, error } = await query;
+  if (error) throw new Error(error.message);
+  return Number(count) || 0;
+}
+
+async function fetchBrowseTypeCounts(sb, params) {
+  const types = ['meeting', 'events', 'exhibition', 'awards'];
+  const base = { ...params, types: [] };
+  const [all, ...perType] = await Promise.all([
+    countWithFilters(sb, base),
+    ...types.map((type) => countWithFilters(sb, { ...base, types: [type] })),
+  ]);
+  const counts = { all };
+  types.forEach((type, i) => {
+    counts[type] = perType[i];
+  });
+  return counts;
+}
+
+async function fetchPricePeak(sb, params) {
+  const probe = { ...params, freeOnly: false, priceMax: null };
+  let query = sb.from(BROWSE_VIEW).select('min_ticket_price');
+  query = applyBrowseFilters(query, probe);
+  const { data, error } = await query
+    .order('min_ticket_price', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  const peak = Number(data?.min_ticket_price) || 0;
+  return peak > 0 ? Math.ceil(peak / 5) * 5 : 100;
+}
+
+async function hydrateBrowseEvents(sb, rows) {
+  const published = rows.map((row) => ({ ...row, next_date: row.starts_at }));
+  const mapped = await eventsFromPublishedRows(sb, published, null, { browseList: true });
+  return mapped.filter((ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev));
+}
+
+async function fetchBrowsePageIds(sb, params) {
+  const geo = hasGeoRadius(params);
+
+  if (geo) {
+    const slim = await fetchMatchingRows(
+      sb,
+      params,
+      'id, latitude, longitude, format_tab, starts_at, min_ticket_price, average_rating, featured, featured_until'
+    );
+    const filtered = slim.filter((row) => rowPassesGeo(row, params));
+    const sorted = sortRows(filtered, params.sort);
+    const total = sorted.length;
+    const slice = sorted.slice(params.offset, params.offset + params.limit);
+    return { ids: slice.map((r) => r.id), total, rows: slice };
+  }
+
+  let query = sb.from(BROWSE_VIEW).select(
+    'id, starts_at, min_ticket_price, average_rating, featured, featured_until',
+    { count: 'exact' }
+  );
+  query = applyBrowseFilters(query, params);
+  query = applySqlSort(query, params.sort);
+  query = query.range(params.offset, params.offset + params.limit - 1);
+
+  const { data, count, error } = await query;
+  if (error) throw new Error(error.message);
+  return {
+    ids: (data || []).map((r) => r.id),
+    total: Number(count) || 0,
+    rows: data || [],
+  };
+}
+
+async function fetchRowsByIds(sb, ids) {
+  const unique = [...new Set((ids || []).filter(Boolean))];
+  if (!unique.length) return [];
+  const rows = [];
+  for (let i = 0; i < unique.length; i += IN_CHUNK) {
+    const chunk = unique.slice(i, i + IN_CHUNK);
+    const { data, error } = await sb.from(BROWSE_VIEW).select('*').in('id', chunk);
+    if (error) throw new Error(error.message);
+    rows.push(...(data || []));
+  }
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  return unique.map((id) => byId.get(id)).filter(Boolean);
+}
+
+async function fetchBrowseEventsPage(sb, rawQuery) {
+  const params = parseBrowseQuery(rawQuery);
+
+  if (params.mode === 'pins') {
+    const pinParams = { ...params, limit: MAX_PINS, offset: 0 };
+    const slim = await fetchMatchingRows(
+      sb,
+      pinParams,
+      'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode'
+    );
+    const filtered = slim.filter((row) => rowPassesGeo(row, params));
+    const sorted = sortRows(filtered, params.sort);
+    return {
+      events: sorted.slice(0, MAX_PINS).map(rowToBrowsePin),
+      pagination: { total: filtered.length, page: 1, limit: MAX_PINS, totalPages: 1 },
+      meta: null,
+      featured: [],
+    };
+  }
+
+  const pageData = await fetchBrowsePageIds(sb, params);
+  const pageRows = await fetchRowsByIds(sb, pageData.ids);
+  const events = await hydrateBrowseEvents(sb, pageRows);
+
+  const order = new Map(pageData.ids.map((id, i) => [id, i]));
+  events.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+
+  let featured = [];
+  if (params.mode === 'featured' || params.includeMeta) {
+    let fq = sb.from(BROWSE_VIEW).select('*').eq('featured', true);
+    fq = applyBrowseFilters(fq, { ...params, types: [], freeOnly: false, priceMax: null });
+    fq = fq.order('starts_at', { ascending: true }).limit(24);
+    const { data: featuredRows, error: fErr } = await fq;
+    if (fErr) throw new Error(fErr.message);
+    const liveFeatured = (featuredRows || []).filter((row) => isEventCurrentlyFeatured(row));
+    featured = await hydrateBrowseEvents(sb, liveFeatured);
+  }
+
+  let meta = null;
+  if (params.includeMeta) {
+    const [typeCounts, pricePeak] = await Promise.all([
+      fetchBrowseTypeCounts(sb, params),
+      fetchPricePeak(sb, params),
+    ]);
+    meta = { typeCounts, pricePeak };
+  }
+
+  const total = pageData.total;
+  const totalPages = Math.max(1, Math.ceil(total / params.limit));
+
+  return {
+    events,
+    featured: params.mode === 'featured' ? featured : featured,
+    pagination: {
+      total,
+      page: params.page,
+      limit: params.limit,
+      offset: params.offset,
+      totalPages,
+    },
+    meta,
+  };
+}
+
+module.exports = {
+  parseBrowseQuery,
+  fetchBrowseEventsPage,
+  BROWSE_VIEW,
+};

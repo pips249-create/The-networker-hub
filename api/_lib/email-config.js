@@ -1,9 +1,11 @@
 function emailConfigStatus() {
   const hasResendApiKey = Boolean(String(process.env.RESEND_API_KEY || '').trim());
   const hasResendFrom = Boolean(String(process.env.RESEND_FROM || '').trim());
+  const hasResendWebhookSecret = Boolean(String(process.env.RESEND_WEBHOOK_SECRET || '').trim());
   return {
     hasResendApiKey,
     hasResendFrom,
+    hasResendWebhookSecret,
     emailSendingConfigured: hasResendApiKey && hasResendFrom,
   };
 }

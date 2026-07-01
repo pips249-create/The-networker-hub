@@ -2,7 +2,7 @@
  * Newsletter edition persistence and scheduled sending.
  */
 const { getSupabaseAdmin } = require('./supabase');
-const { getEmailsEnabledForEmail } = require('./supabase-auth');
+const { canSendEmailCategory } = require('./supabase-auth');
 const { sendTemplatedEmail } = require('./send-template-email');
 const {
   NEWSLETTER_SLUG,
@@ -11,6 +11,11 @@ const {
   buildNewsletterVariables,
   parseEditionUuidList,
 } = require('./newsletter-emails');
+const {
+  recordNewsletterSend,
+  getEditionAnalytics,
+  newsletterResendTags,
+} = require('./newsletter-analytics');
 
 const SEND_BATCH_SIZE = 50;
 
@@ -185,13 +190,99 @@ async function duplicateNewsletterEdition(sb, id, { createdBy } = {}) {
   return mapEditionRow(data);
 }
 
+async function getOrCreateDraftNewsletterEdition(sb, { createdBy } = {}) {
+  const client = sb || getSupabaseAdmin();
+  const { data: drafts, error } = await client
+    .from('newsletter_editions')
+    .select('*')
+    .eq('status', 'draft')
+    .order('created_at', { ascending: false })
+    .limit(1);
+  if (error) throw wrapNewsletterDbError(error);
+  if (drafts && drafts[0]) return mapEditionRow(drafts[0]);
+
+  return saveNewsletterEdition(
+    client,
+    {
+      editionLabel: '',
+      subject: '',
+      autoFeatured: false,
+      featuredEventIds: [],
+      featuredOrganiserIds: [],
+      featuredOpportunityIds: [],
+    },
+    { createdBy }
+  );
+}
+
+function mergeUuidList(existing, id) {
+  const next = Array.isArray(existing) ? [...existing] : [];
+  const value = String(id || '').trim();
+  if (!value || next.includes(value)) return next;
+  next.push(value);
+  return next;
+}
+
+async function queueFeaturedToNewsletter(
+  sb,
+  { eventId, organiserId, opportunityId, createdBy } = {}
+) {
+  const client = sb || getSupabaseAdmin();
+  const edition = await getOrCreateDraftNewsletterEdition(client, { createdBy });
+
+  const saved = await saveNewsletterEdition(
+    client,
+    {
+      ...edition,
+      autoFeatured: false,
+      featuredEventIds: eventId
+        ? mergeUuidList(edition.featuredEventIds, eventId)
+        : edition.featuredEventIds || [],
+      featuredOrganiserIds: organiserId
+        ? mergeUuidList(edition.featuredOrganiserIds, organiserId)
+        : edition.featuredOrganiserIds || [],
+      featuredOpportunityIds: opportunityId
+        ? mergeUuidList(edition.featuredOpportunityIds, opportunityId)
+        : edition.featuredOpportunityIds || [],
+    },
+    { createdBy }
+  );
+
+  return saved;
+}
+
 async function listNewsletterRecipients(sb) {
   const client = sb || getSupabaseAdmin();
   const { data, error } = await client
     .from('attendees')
-    .select('id, email, name')
+    .select('id, email, name, supabase_user_id')
     .not('email', 'is', null);
   if (error) throw new Error(error.message);
+
+  const userIds = [
+    ...new Set((data || []).map((row) => row.supabase_user_id).filter(Boolean)),
+  ];
+  const hubByUser = new Map();
+  if (userIds.length) {
+    const hubRes = await client
+      .from('hub_accounts')
+      .select('user_id, emails_enabled, email_pref_newsletter')
+      .in('user_id', userIds);
+    if (!hubRes.error) {
+      (hubRes.data || []).forEach((hub) => {
+        if (hub?.user_id) hubByUser.set(hub.user_id, hub);
+      });
+    }
+  }
+
+  function newsletterAllowed(row) {
+    if (!row.supabase_user_id) return true;
+    const hub = hubByUser.get(row.supabase_user_id);
+    if (!hub) return true;
+    if (hub.emails_enabled === false) return false;
+    if (hub.email_pref_newsletter === false) return false;
+    return true;
+  }
 
   const byEmail = new Map();
   (data || []).forEach((row) => {
@@ -199,6 +290,7 @@ async function listNewsletterRecipients(sb) {
       .trim()
       .toLowerCase();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    if (!newsletterAllowed(row)) return;
     if (!byEmail.has(email)) {
       byEmail.set(email, {
         id: row.id,
@@ -246,6 +338,21 @@ async function sendNewsletterTest(sb, edition, toEmail) {
       variables: { ...vars, newsletter_subject: subject },
       skipEmailCheck: true,
       subject: vars.edition_label + ' — ' + subject,
+      resendTags: newsletterResendTags(edition.id || edition.editionId),
+    }).then(async function (result) {
+      const editionId = String(edition.id || edition.editionId || '').trim();
+      if (editionId && result?.id) {
+        try {
+          await recordNewsletterSend(client, {
+            editionId,
+            recipientEmail: email,
+            resendEmailId: result.id,
+          });
+        } catch {
+          /* analytics must not block test sends */
+        }
+      }
+      return result;
     });
   } catch (e) {
     if (!e.code && /template_not_found/i.test(e.message || '')) {
@@ -323,16 +430,28 @@ async function processNewsletterSendBatch(sb, editionId) {
 
   for (const recipient of batch) {
     try {
-      const allowed = await getEmailsEnabledForEmail(recipient.email);
+      const allowed = await canSendEmailCategory(recipient.email, 'newsletter');
       if (!allowed) continue;
 
       const vars = await buildNewsletterVariables(client, rawEdition, recipient);
-      await sendTemplatedEmail({
+      const sendResult = await sendTemplatedEmail({
         slug: NEWSLETTER_SLUG,
         to: recipient.email,
         variables: { ...vars, newsletter_subject: subject },
         subject: vars.edition_label + ' — ' + subject,
+        resendTags: newsletterResendTags(editionId),
       });
+      if (sendResult?.id) {
+        try {
+          await recordNewsletterSend(client, {
+            editionId,
+            recipientEmail: recipient.email,
+            resendEmailId: sendResult.id,
+          });
+        } catch {
+          /* analytics must not block sends */
+        }
+      }
       sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') continue;
@@ -410,9 +529,12 @@ module.exports = {
   scheduleNewsletterEdition,
   cancelNewsletterEdition,
   duplicateNewsletterEdition,
+  getOrCreateDraftNewsletterEdition,
+  queueFeaturedToNewsletter,
   listNewsletterRecipients,
   previewNewsletterEdition,
   sendNewsletterTest,
   processNewsletterSendBatch,
   runNewsletterSendMaintenance,
+  getEditionAnalytics,
 };

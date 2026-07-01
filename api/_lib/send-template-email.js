@@ -1,5 +1,5 @@
 const { getEmailTemplateBySlug } = require('./supabase-email-templates');
-const { getEmailsEnabledForEmail } = require('./supabase-auth');
+const { getEmailsEnabledForEmail, canSendEmailCategory } = require('./supabase-auth');
 const { getBookingEmailDefaultVars } = require('./email-booking-defaults');
 const { resolveBookingConfirmationBody } = require('./booking-confirmation-template');
 const { resolveBookingReminderBody } = require('./booking-reminder-template');
@@ -81,6 +81,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'event_almost_full',
   'organiser_low_upcoming_events',
   'password_reset',
+  'post_event_review_request',
   'hub_newsletter',
   'booking_confirmation',
   'booking_reminder',
@@ -310,7 +311,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   };
 }
 
-async function sendViaResend({ to, subject, html }) {
+async function sendViaResend({ to, subject, html, tags }) {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
     const err = new Error(
@@ -329,18 +330,33 @@ async function sendViaResend({ to, subject, html }) {
     throw err;
   }
 
+  const tagList = Array.isArray(tags)
+    ? tags
+        .map(function (tag) {
+          if (!tag || typeof tag !== 'object') return null;
+          const name = String(tag.name || '').trim();
+          const value = String(tag.value || '').trim();
+          if (!name || !value) return null;
+          return { name, value };
+        })
+        .filter(Boolean)
+    : [];
+
+  const body = {
+    from: process.env.RESEND_FROM || 'The Networker Hub <onboarding@resend.dev>',
+    to: [recipient],
+    subject,
+    html,
+  };
+  if (tagList.length) body.tags = tagList;
+
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${resendKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM || 'The Networker Hub <onboarding@resend.dev>',
-      to: [recipient],
-      subject,
-      html,
-    }),
+    body: JSON.stringify(body),
   });
 
   let payload = null;
@@ -370,10 +386,23 @@ async function sendViaResend({ to, subject, html }) {
  * @param {string} opts.to - recipient email
  * @param {object} [opts.variables] - e.g. { user_name, event_name, amount_paid }
  */
-async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject }) {
+const PREFERENCE_EMAIL_SLUGS = {
+  hub_newsletter: 'newsletter',
+  booking_reminder: 'event_reminders',
+  saved_organiser_new_listing: 'organiser_alerts',
+};
+
+async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject, resendTags }) {
   const bypassEmailCheck = skipEmailCheck || TRANSACTIONAL_EMAIL_SLUGS.has(slug);
   if (!bypassEmailCheck) {
     const allowed = await getEmailsEnabledForEmail(to);
+    if (!allowed) {
+      const err = new Error('emails_disabled');
+      err.code = 'emails_disabled';
+      throw err;
+    }
+  } else if (!skipEmailCheck && PREFERENCE_EMAIL_SLUGS[slug]) {
+    const allowed = await canSendEmailCategory(to, PREFERENCE_EMAIL_SLUGS[slug]);
     if (!allowed) {
       const err = new Error('emails_disabled');
       err.code = 'emails_disabled';
@@ -386,6 +415,7 @@ async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject
     to,
     subject: subject || built.subject,
     html: built.html,
+    tags: resendTags,
   });
   return {
     ...result,

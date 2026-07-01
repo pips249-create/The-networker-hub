@@ -29,6 +29,8 @@
         'Resend rejected the email. Check RESEND_FROM uses a verified domain and see Resend logs.',
       newsletter_schema_missing:
         'Newsletter tables are missing. Run Supabase migrations 089 and 090.',
+      newsletter_analytics_missing:
+        'Newsletter analytics tables are missing. Run Supabase migration 092_newsletter_analytics.sql.',
     };
     return messages[code] || fallback || code || 'Something went wrong.';
   }
@@ -92,7 +94,7 @@
     },
     campaigns: {
       title: 'Email campaigns',
-      subtitle: 'Send claim-profile invites and other bulk templates via Resend',
+      subtitle: 'Legacy bulk send for organiser claim-profile invites',
     },
     import: {
       title: 'Data import',
@@ -117,6 +119,10 @@
     social: {
       title: 'Social posts',
       subtitle: 'Draft captions from Hub listings — copy or open share links for LinkedIn, Facebook, and X',
+    },
+    newsletter: {
+      title: 'Newsletter',
+      subtitle: 'Compose Hub newsletter editions, queue featured listings from social posts, and schedule sends',
     },
   };
 
@@ -434,6 +440,9 @@
     }
     if (route === 'social') {
       return PAGE_META.social.subtitle;
+    }
+    if (route === 'newsletter') {
+      return PAGE_META.newsletter.subtitle;
     }
     if (route === 'moderation' && hash.indexOf('import') !== -1) {
       return PAGE_META.import.subtitle;
@@ -5106,7 +5115,9 @@
       denial_reason_block: '',
       meeting_link_section: '',
       recommendations_html: '',
-      review_url: previewOrigin + '/account/index.html#reviews',
+      review_url:
+        previewOrigin +
+        '/account/index.html?review=sample-event-id#review/sample-event-id',
       owner_name: 'Jordan',
       opportunity_title: 'Marketing agency partnership',
       opportunity_url: previewOrigin + '/opportunities/opportunity.html?id=sample',
@@ -5324,6 +5335,27 @@
       SAMPLE_VARS.sponsor_row = SAMPLE_VARS.sponsor_row || '';
     }
 
+    function applyPreviewLifecycleFormat() {
+      if (!SAMPLE_VARS.sponsor_row) {
+        SAMPLE_VARS.sponsor_row = buildEmailSponsorSectionHtml(
+          '',
+          SAMPLE_VARS.browse_events_url || previewOrigin + '/advertising.html',
+          'Sample sponsor'
+        );
+      }
+      SAMPLE_VARS.sponsor_section = SAMPLE_VARS.sponsor_row;
+      if (!SAMPLE_VARS.mini_sponsors_row) {
+        SAMPLE_VARS.mini_sponsors_row =
+          '<tr><td class="mobile-pad" style="padding:0 40px 20px;text-align:center;">' +
+          '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
+          '<tr><td style="padding:14px 16px 10px;text-align:center;">' +
+          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:600;color:#9a9092;text-transform:uppercase;letter-spacing:2px;margin:0;">Our mini sponsors</p>' +
+          '</td></tr><tr><td style="padding:0 12px 16px;text-align:center;">' +
+          '<span style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;color:#9a7aa8;">Sample mini sponsors</span>' +
+          '</td></tr></table></td></tr>';
+      }
+    }
+
     function applyPreviewForSlug(slug) {
       if (slug === 'booking_confirmation') applyPreviewEventFormat();
       else if (slug === 'booking_reminder') applyPreviewReminderFormat();
@@ -5331,6 +5363,15 @@
         applyPreviewOrganiserFormat();
       } else if (slug === 'account_welcome' || slug === 'saved_event_tickets_open') {
         applyPreviewAccountWelcomeFormat();
+      } else if (
+        slug === 'post_event_review_request' ||
+        slug === 'attendee_reengagement' ||
+        slug === 'meeting_link_added' ||
+        slug === 'osop_payment_reminder' ||
+        slug === 'saved_organiser_new_listing' ||
+        slug === 'password_reset'
+      ) {
+        applyPreviewLifecycleFormat();
       } else if (slug === 'application_denied') {
         SAMPLE_VARS.denial_closing = '';
         SAMPLE_VARS.denial_reason_block = previewDenialReasonBlock(
@@ -5432,7 +5473,7 @@
       '<section id="email-preview-panel" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 hidden">' +
       '<h3 class="font-bold text-brand-900 mb-1">Preview</h3>' +
       '<p id="email-preview-subject" class="text-sm text-slate-600 mb-4"></p>' +
-      '<iframe id="email-preview-frame" title="Email preview" class="w-full rounded-lg border border-slate-100 bg-white" style="height:min(80vh,720px);border:0;" sandbox="allow-same-origin"></iframe>' +
+      '<iframe id="email-preview-frame" title="Email preview" class="w-full rounded-lg border border-slate-100 bg-white" style="height:min(80vh,720px);border:0;" sandbox="allow-same-origin allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"></iframe>' +
       '</section></div></div></div>';
 
     function setEmailStatus(text, tone) {
@@ -5493,6 +5534,18 @@
       'booking_reminder',
       'account_welcome',
       'saved_event_tickets_open',
+      'saved_organiser_new_listing',
+      'post_event_review_request',
+      'meeting_link_added',
+      'osop_payment_reminder',
+      'application_received',
+      'application_approved',
+      'application_denied',
+      'booking_cancelled',
+      'event_cancelled',
+      'refund_processed',
+      'attendee_reengagement',
+      'password_reset',
     ];
     var ORGANISER_EMAIL_SLUGS = ['organiser_new_registration', 'organiser_claim_invite'];
 
@@ -5843,9 +5896,14 @@
         })
         .catch(function (err) {
           if (requestId !== previewRequestId) return;
-          if (subjectLine) subjectLine.textContent = 'Preview failed';
+          if (subjectLine) {
+            subjectLine.textContent =
+              'Preview failed: ' + (err && err.message ? err.message : 'network error');
+          }
           setPreviewHtml(
-            '<p style="font-family:system-ui,sans-serif;padding:24px;color:#b91c1c;">Could not render preview.</p>'
+            '<p style="font-family:system-ui,sans-serif;padding:24px;color:#b91c1c;">Could not render preview: ' +
+              esc((err && err.message) || 'network error') +
+              '</p>'
           );
         });
     }
@@ -8906,6 +8964,7 @@
           envRow('SITE_URL', env.hasSiteUrl) +
           envRow('RESEND_API_KEY', env.hasResendApiKey) +
           envRow('RESEND_FROM', env.hasResendFrom) +
+          envRow('RESEND_WEBHOOK_SECRET', env.hasResendWebhookSecret) +
           envRow('STRIPE_SECRET_KEY', env.hasStripeSecretKey) +
           envRow('STRIPE_WEBHOOK_SECRET', env.hasStripeWebhookSecret) +
           envRow('STRIPE_CONNECT_ENABLED', env.stripeConnectEnabled) +
@@ -9254,14 +9313,19 @@
 
   function renderSocialPosts() {
     if (window.AdminSocialPosts && window.AdminSocialPosts.render) {
-      window.AdminSocialPosts.render(main, { adminGet: adminGet, esc: esc, attrEsc: attrEsc });
+      window.AdminSocialPosts.render(main, {
+        adminGet: adminGet,
+        adminPost: adminPost,
+        esc: esc,
+        attrEsc: attrEsc,
+      });
       return;
     }
     main.innerHTML =
       '<p class="text-sm text-slate-600">Social post composer failed to load. Refresh the page.</p>';
   }
 
-  function renderCampaigns() {
+  function renderNewsletter() {
     var selectedEditionId = '';
     var editions = [];
     var recipientCount = 0;
@@ -9355,6 +9419,102 @@
       );
     }
 
+    function formatNlRate(pct) {
+      if (pct == null || pct === '') return '—';
+      return String(pct) + '%';
+    }
+
+    function renderNlAnalytics(analytics) {
+      var panel = document.getElementById('nl-analytics-panel');
+      if (!panel) return;
+
+      if (!analytics || analytics.schemaMissing) {
+        panel.innerHTML =
+          '<p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">Run Supabase migration <strong>092_newsletter_analytics.sql</strong> to enable open and click tracking.</p>';
+        return;
+      }
+
+      if (!analytics.configured || !analytics.tracked) {
+        panel.innerHTML =
+          '<p class="text-sm text-slate-500">No tracked sends yet. Stats appear after test or scheduled sends, once Resend webhooks are configured.</p>' +
+          '<p class="text-xs text-slate-400 mt-2">Resend → Webhooks → <code class="bg-slate-100 px-1 rounded">/api/resend-webhook</code> · events: delivered, opened, clicked, bounced · set <code class="bg-slate-100 px-1 rounded">RESEND_WEBHOOK_SECRET</code> in Vercel.</p>';
+        return;
+      }
+
+      var linksHtml =
+        analytics.topLinks && analytics.topLinks.length
+          ? '<ul class="mt-3 space-y-2 text-sm">' +
+            analytics.topLinks
+              .map(function (link) {
+                return (
+                  '<li class="flex items-start justify-between gap-3 border-b border-slate-100 pb-2">' +
+                  '<a href="' +
+                  attrEsc(link.url) +
+                  '" target="_blank" rel="noopener noreferrer" class="text-brand-700 hover:underline break-all text-xs">' +
+                  esc(link.url) +
+                  '</a>' +
+                  '<span class="shrink-0 text-xs font-semibold text-slate-600">' +
+                  esc(String(link.clickCount)) +
+                  ' clicks</span></li>'
+                );
+              })
+              .join('') +
+            '</ul>'
+          : '<p class="text-xs text-slate-400 mt-2">No link clicks recorded yet.</p>';
+
+      panel.innerHTML =
+        '<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">' +
+        '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Tracked sends</p><p class="text-lg font-bold text-brand-900">' +
+        esc(String(analytics.tracked)) +
+        '</p></div>' +
+        '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Open rate</p><p class="text-lg font-bold text-brand-900">' +
+        esc(formatNlRate(analytics.openRatePct)) +
+        '</p><p class="text-[11px] text-slate-500">' +
+        esc(String(analytics.uniqueOpens)) +
+        ' unique</p></div>' +
+        '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Click rate</p><p class="text-lg font-bold text-brand-900">' +
+        esc(formatNlRate(analytics.clickRatePct)) +
+        '</p><p class="text-[11px] text-slate-500">' +
+        esc(String(analytics.uniqueClicks)) +
+        ' unique</p></div>' +
+        '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">CTOR</p><p class="text-lg font-bold text-brand-900">' +
+        esc(formatNlRate(analytics.clickToOpenRatePct)) +
+        '</p><p class="text-[11px] text-slate-500">clicks ÷ opens</p></div>' +
+        '</div>' +
+        '<p class="text-xs text-slate-500 mt-3">Delivered ' +
+        esc(String(analytics.delivered)) +
+        ' · Bounced ' +
+        esc(String(analytics.bounced)) +
+        ' · Total opens ' +
+        esc(String(analytics.totalOpens)) +
+        ' · Total clicks ' +
+        esc(String(analytics.totalClicks)) +
+        '</p>' +
+        '<div class="mt-4 border-t border-slate-100 pt-3"><p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">Top clicked links</p>' +
+        linksHtml +
+        '</div>' +
+        '<p class="text-[11px] text-slate-400 mt-3">Open rates can be understated (privacy filters block tracking pixels). Data from Resend webhooks — may take a few minutes to update.</p>';
+    }
+
+    function loadNlAnalytics(editionId) {
+      var panel = document.getElementById('nl-analytics-panel');
+      if (!panel) return;
+      if (!editionId) {
+        renderNlAnalytics(null);
+        return;
+      }
+      panel.innerHTML = '<p class="text-sm text-slate-500">Loading engagement stats…</p>';
+      adminGet('/api/admin/newsletter?id=' + encodeURIComponent(editionId) + '&analytics=1')
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'analytics_failed');
+          renderNlAnalytics(data.analytics || null);
+        })
+        .catch(function () {
+          panel.innerHTML =
+            '<p class="text-sm text-slate-500">Could not load engagement stats.</p>';
+        });
+    }
+
     function fillEditionForm(edition) {
       var e = edition || {};
       selectedEditionId = e.id || '';
@@ -9421,6 +9581,7 @@
             (e.scheduledAt ? ' · Scheduled ' + new Date(e.scheduledAt).toLocaleString('en-GB') : '')
           : 'New draft';
       }
+      loadNlAnalytics(e.id || '');
     }
 
     function renderEditionList() {
@@ -9515,7 +9676,7 @@
 
     main.innerHTML =
       '<div class="space-y-6">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Compose a <strong>Hub newsletter</strong> with the Events browse sponsor, an editorial article (optional image), Hub news, featured listings, and a member spotlight. Choose a <strong>layout</strong> — <strong>Magazine</strong> includes the live <strong>Top 10 organiser rankings</strong>; Classic and Editorial show featured organisers instead. Schedule sends <strong>50 members per day</strong> until complete (respects email preferences).</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Compose a <strong>Hub newsletter</strong> with the Events browse sponsor, an editorial article (optional image), Hub news, featured listings, and a member spotlight. Queue listings from <strong>Social posts</strong> with “Add to next newsletter”. Choose a <strong>layout</strong> — <strong>Magazine</strong> includes the live <strong>Top 10 organiser rankings</strong>. Schedule sends <strong>50 members per day</strong> until complete (respects member email preferences).</p>' +
       '<div class="grid lg:grid-cols-[220px_minmax(0,1fr)] gap-6">' +
       '<aside class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">' +
       '<div class="flex items-center justify-between gap-2 mb-3">' +
@@ -9595,17 +9756,14 @@
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">' +
       '<h3 class="font-bold text-brand-900 mb-1">Preview</h3>' +
       '<p id="nl-preview-subject" class="text-sm text-slate-600 mb-4"></p>' +
-      '<iframe id="nl-preview-frame" title="Newsletter preview" class="w-full rounded-lg border border-slate-100 bg-white" style="height:min(80vh,720px);border:0;" sandbox="allow-same-origin"></iframe>' +
-      '</section></div></div>' +
-      '<details class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">' +
-      '<summary class="text-sm font-bold text-slate-700 cursor-pointer">Legacy bulk campaign (organiser claim invite)</summary>' +
-      '<form id="campaign-form" class="mt-4 space-y-4">' +
-      '<textarea id="campaign-recipients" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[100px]" placeholder="organiser@example.com"></textarea>' +
-      '<input type="url" id="campaign-claim-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Claim URL override (optional)">' +
-      '<button type="submit" class="rounded-lg bg-slate-800 text-white text-sm font-semibold px-4 py-2" id="campaign-submit">Send batch (max 50)</button>' +
-      '<span id="campaign-status" class="text-sm text-slate-500 ml-2"></span>' +
-      '<pre id="campaign-result" class="hidden text-xs bg-slate-900 text-slate-100 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap"></pre>' +
-      '</form></details></div>';
+      '<iframe id="nl-preview-frame" title="Newsletter preview" class="w-full rounded-lg border border-slate-100 bg-white" style="height:min(80vh,720px);border:0;" sandbox="allow-same-origin allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"></iframe>' +
+      '</section>' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">' +
+      '<div class="flex flex-wrap items-center justify-between gap-2 mb-3">' +
+      '<h3 class="font-bold text-brand-900">Engagement stats</h3>' +
+      '<button type="button" id="nl-analytics-refresh" class="text-xs font-semibold text-brand-700 hover:text-brand-900">Refresh</button></div>' +
+      '<div id="nl-analytics-panel"><p class="text-sm text-slate-500">Select a saved edition to view open and click rates.</p></div>' +
+      '</section></div></div></div>';
 
     document.getElementById('nl-auto-featured').addEventListener('change', function () {
       var manual = document.getElementById('nl-manual-ids');
@@ -9653,6 +9811,13 @@
     });
 
     document.getElementById('nl-preview-btn').addEventListener('click', refreshPreview);
+
+    var nlAnalyticsRefresh = document.getElementById('nl-analytics-refresh');
+    if (nlAnalyticsRefresh) {
+      nlAnalyticsRefresh.addEventListener('click', function () {
+        if (selectedEditionId) loadNlAnalytics(selectedEditionId);
+      });
+    }
 
     document.getElementById('nl-schedule-btn').addEventListener('click', function () {
       var when = (document.getElementById('nl-scheduled-at') || {}).value;
@@ -9742,11 +9907,30 @@
               '. Check your inbox and spam folder (may take a minute).',
             'ok'
           );
+          if (selectedEditionId) loadNlAnalytics(selectedEditionId);
         })
         .catch(function (err) {
           setNlStatus(hubEmailActionMessage(err.code, err.message || 'Test send failed.'), 'error');
         });
     });
+
+    loadEditions();
+  }
+
+  function renderCampaigns() {
+    main.innerHTML =
+      '<div class="space-y-6 max-w-3xl">' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Legacy bulk send for <strong>organiser claim-profile invites</strong>. For the Hub newsletter, use <a href="#newsletter" class="text-brand-700 font-semibold hover:underline">Comms → Newsletter</a>.</p>' +
+      '<form id="campaign-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">' +
+      '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-recipients">Recipient emails</label>' +
+      '<textarea id="campaign-recipients" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[120px]" placeholder="organiser@example.com&#10;one per line"></textarea>' +
+      '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-claim-url">Claim URL override <span class="font-normal normal-case">(optional)</span></label>' +
+      '<input type="url" id="campaign-claim-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="https://…">' +
+      '<div class="flex flex-wrap items-center gap-3 pt-2">' +
+      '<button type="submit" class="rounded-lg bg-slate-800 text-white text-sm font-semibold px-4 py-2 hover:bg-slate-900" id="campaign-submit">Send batch (max 50)</button>' +
+      '<span id="campaign-status" class="text-sm text-slate-500"></span></div>' +
+      '<pre id="campaign-result" class="hidden text-xs bg-slate-900 text-slate-100 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap"></pre>' +
+      '</form></div>';
 
     var legacyForm = document.getElementById('campaign-form');
     if (legacyForm) {
@@ -9783,8 +9967,6 @@
           });
       });
     }
-
-    loadEditions();
   }
 
   function renderImport() {
@@ -10819,6 +11001,7 @@
     accounts: renderAccountsHub,
     email: renderEmailHub,
     social: renderSocialHub,
+    newsletter: renderNewsletter,
     moderation: renderModerationHub,
     financials: renderFinancials,
     featured: renderFeatured,
