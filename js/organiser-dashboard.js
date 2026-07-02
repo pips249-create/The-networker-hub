@@ -114,16 +114,6 @@
     set('stat-tickets', String(totalTicketsSold()));
     set('stat-revenue', rev);
 
-    const editors = (state.teamMembers || []).filter(function (m) {
-      return (
-        String(m.role || '').toLowerCase() === 'editor' &&
-        String(m.status || '').toLowerCase() === 'active'
-      );
-    }).length;
-    set('stat-training-sessions', '0');
-    set('stat-training-editors', String(editors));
-    set('stat-training-registrations', '0');
-
     const enquiries = state.opportunityEnquiries || [];
     set('stat-opp-enquiries', String(enquiries.length));
     set('stat-opp-enquiries-new', String(state.opportunityEnquiriesNewCount || 0));
@@ -500,7 +490,6 @@
 
   function renderHubPortalMeta() {
     const eventsEl = document.getElementById('hub-portal-meta-events');
-    const trainingEl = document.getElementById('hub-portal-meta-training');
     const businessEl = document.getElementById('hub-portal-meta-business');
     if (eventsEl) {
       const n = state.eventsTotal || state.events.length;
@@ -516,18 +505,6 @@
           ' to review';
       }
       eventsEl.textContent = text;
-    }
-    if (trainingEl) {
-      const editors = (state.teamMembers || []).filter(function (m) {
-        return (
-          String(m.role || '').toLowerCase() === 'editor' &&
-          String(m.status || '').toLowerCase() === 'active'
-        );
-      }).length;
-      trainingEl.textContent =
-        editors > 0
-          ? editors + ' team editor' + (editors === 1 ? '' : 's')
-          : 'Workshops coming soon';
     }
     if (businessEl) {
       const newCount = Number(state.opportunityEnquiriesNewCount) || 0;
@@ -1457,44 +1434,15 @@
     const hash = (location.hash.replace('#', '') || 'dashboard').toLowerCase();
     if (hash === 'opportunity-enquiries') return { page: 'business-overview', sub: null };
     if (hash === 'events-overview') return { page: 'events-overview', sub: null };
-    if (hash === 'training-overview') return { page: 'training-overview', sub: null };
     if (hash === 'business-overview') return { page: 'business-overview', sub: null };
     if (hash === 'tickets') return { page: 'events', sub: 'events-tickets' };
     if (hash.startsWith('events-')) return { page: 'events', sub: hash };
     if (hash === 'events') return { page: 'events', sub: 'events-list' };
-    if (hash === 'academy' || hash.startsWith('academy-')) return { page: 'academy', sub: null };
+    if (hash === 'academy' || hash.startsWith('academy-') || hash === 'training-overview') {
+      return { page: 'dashboard', sub: null };
+    }
     if (hash === 'team') return { page: 'team', sub: null };
     return { page: hash, sub: null };
-  }
-
-  const ACADEMY_PREVIEW_SESSIONS = [
-    { type: 'WORKSHOP', title: 'Pitch mastery — Workshop', host: 'Apex Events UK' },
-    { type: 'SEMINAR', title: 'Executive presence — Seminar', host: 'Meridian Business Group' },
-    { type: 'MASTERCLASS', title: 'Negotiation edge — Masterclass', host: 'Catalyst Collective' },
-    { type: 'WORKSHOP', title: 'Storytelling for leaders — Workshop', host: 'Summit Path Ltd' },
-  ];
-
-  function renderAcademyPreviewGrid(gridId) {
-    const grid = document.getElementById(gridId);
-    if (!grid || grid.dataset.rendered === '1') return;
-    grid.dataset.rendered = '1';
-    grid.innerHTML = ACADEMY_PREVIEW_SESSIONS.map(
-      (s) =>
-        '<article class="org-academy-mini-card">' +
-        '<div class="org-academy-mini-media"><span class="org-academy-mini-type">' +
-        esc(s.type) +
-        '</span></div>' +
-        '<div class="org-academy-mini-body"><strong>' +
-        esc(s.title) +
-        '</strong><span>' +
-        esc(s.host) +
-        '</span></div></article>'
-    ).join('');
-  }
-
-  function renderAcademyPreview() {
-    renderAcademyPreviewGrid('org-academy-preview-grid');
-    renderAcademyPreviewGrid('org-academy-preview-grid-hub');
   }
 
   function setEventsSub(sub) {
@@ -3493,7 +3441,6 @@
 
   function sidebarRouteForPage(page, sub) {
     if (page === 'events-overview') return 'events-list';
-    if (page === 'training-overview') return 'academy';
     if (page === 'business-overview') return 'business-overview';
     if (page === 'events') return sub || 'events-list';
     return page;
@@ -3506,8 +3453,6 @@
       page = 'business-overview';
     } else if (route === 'events-overview') {
       page = 'events-overview';
-    } else if (route === 'training-overview') {
-      page = 'training-overview';
     } else if (route && route.startsWith('events-')) {
       page = 'events';
       sub = route;
@@ -3517,8 +3462,6 @@
     } else if (route === 'tickets') {
       page = 'events';
       sub = 'events-tickets';
-    } else if (route === 'academy' || (route && route.startsWith('academy-'))) {
-      page = 'academy';
     } else if (route === 'team') {
       page = 'team';
     }
@@ -3533,9 +3476,6 @@
 
     if (page === 'events') {
       setEventsSub(sub || eventsSubRoute || 'events-list');
-    }
-    if (page === 'academy' || page === 'training-overview') {
-      renderAcademyPreview();
     }
     if (page === 'team') {
       loadTeamMembers().then(function () {
@@ -5111,7 +5051,7 @@
 
     if (data.adminView) {
       showOrganiserAlert(
-        '<strong>Admin view</strong> — showing all group profiles, events, training sessions, and ticket types across the platform.' +
+        '<strong>Admin view</strong> — showing all group profiles, events, and ticket types across the platform.' +
           '<div class="org-scope-actions"><button type="button" class="org-btn org-btn-primary org-btn-sm" id="btn-scope-my">View my organiser data only</button></div>',
         false
       );
@@ -5486,8 +5426,6 @@
       renderTeam();
       updateGettingStartedPanel();
     });
-        } else if (route === 'academy') {
-          renderAcademyPreview();
         }
       });
     });

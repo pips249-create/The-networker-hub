@@ -35,25 +35,13 @@
     go('organiser/event-format.html');
   }
 
-  async function goListWorkshop() {
-    markWelcomeDone();
-    try {
-      localStorage.setItem('hub_organiser_tour_v1', '');
-      localStorage.removeItem('hub_organiser_tour_v1');
-      localStorage.removeItem('hub_getting_started_dismissed');
-    } catch (e) {
-      /* ignore */
-    }
-    window.location.href = 'organiser/index.html?onboard=1#academy';
-  }
-
   document.querySelectorAll('[data-welcome-path]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var path = btn.getAttribute('data-welcome-path');
       if (path === 'find-event') go('events/index.html');
       else if (path === 'list-event') goListEvent();
-      else if (path === 'find-workshop') go('training/index.html');
-      else if (path === 'list-workshop') goListWorkshop();
+      else if (path === 'find-opportunity') go('opportunities/index.html');
+      else if (path === 'list-opportunity') go('opportunities/list.html');
     });
   });
 

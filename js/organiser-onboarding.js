@@ -7,7 +7,7 @@
   var steps = [
     {
       title: 'Welcome to your organiser dashboard',
-      body: 'This is your home for group profiles, events, tickets, and training sessions. We\'ll show you the essentials in a quick tour.',
+      body: 'This is your home for group profiles, events, and tickets. We\'ll show you the essentials in a quick tour.',
       target: null,
     },
     {
@@ -17,7 +17,7 @@
     },
     {
       title: 'Add something new',
-      body: 'Tap + Add new to create a group profile, list an event, publish a business opportunity, or (soon) add a workshop or training session.',
+      body: 'Tap + Add new to create a group profile, list an event, or publish a business opportunity.',
       target: '#org-add-menu-wrap',
     },
     {

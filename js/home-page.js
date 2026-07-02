@@ -6,7 +6,6 @@
     'events_sponsor_hub',
     'organisers_sponsor_hub',
     'opportunities_sponsor_hub',
-    'academy_sponsor_hub',
     'sponsor_hub',
   ];
 

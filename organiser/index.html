@@ -39,12 +39,11 @@
         <aside class="org-sidebar">
           <nav class="hub-side-nav hub-side-nav--minimal org-dash-bar" aria-label="Organiser workspace">
             <a href="#dashboard" class="hub-side-nav-link is-active" data-org-route="dashboard">Overview</a>
-            <span class="hub-side-nav-divider">Team &amp; training</span>
+            <span class="hub-side-nav-divider">Team</span>
             <a href="#team" class="hub-side-nav-link" data-org-route="team" id="org-nav-team">
               Team &amp; invites
               <span class="org-nav-badge" id="org-team-nav-badge" hidden>New</span>
             </a>
-            <a href="#academy" class="hub-side-nav-link" data-org-route="academy">Training &amp; workshops</a>
             <span class="hub-side-nav-divider">My events</span>
             <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">Events</a>
             <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Group profiles</a>
@@ -84,7 +83,7 @@
               <p class="org-page-kicker">Organiser workspace</p>
               <h1 class="org-page-title" id="org-page-title">Your organiser dashboard</h1>
               <p class="org-page-lead" id="org-page-lead">
-                Choose an area below to manage events, training, or business opportunities — or use <strong>+ Add new</strong> to create something straight away.
+                Choose an area below to manage events or business opportunities — or use <strong>+ Add new</strong> to create something straight away.
               </p>
             </div>
             <div class="org-overview-add" id="org-add-menu-wrap">
@@ -111,10 +110,6 @@
                   <strong>Business opportunity</strong>
                   <span>Franchise, partnership or side hustle listing</span>
                 </a>
-                <button type="button" role="menuitem" class="org-add-menu-item" data-org-route="academy">
-                  <strong>Workshop or seminar</strong>
-                  <span>Workshop, seminar or masterclass <em class="org-badge-soon-inline">Coming soon</em></span>
-                </button>
               </div>
             </div>
           </header>
@@ -188,15 +183,6 @@
                 <strong>Manage events</strong>
                 <span>Group profiles, listings, tickets, attendees, reviews &amp; revenue</span>
                 <span class="org-hub-portal-meta" id="hub-portal-meta-events">—</span>
-              </span>
-              <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
-            </button>
-            <button type="button" class="org-hub-portal org-hub-portal--training" data-org-route="training-overview">
-              <span class="org-hub-portal-icon" aria-hidden="true">🎓</span>
-              <span class="org-hub-portal-body">
-                <strong>Manage training</strong>
-                <span>Workshops, seminars, team editors &amp; learning sessions</span>
-                <span class="org-hub-portal-meta" id="hub-portal-meta-training">Coming soon</span>
               </span>
               <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
             </button>
@@ -364,74 +350,6 @@
           </div>
         </section>
 
-        <!-- Training overview hub -->
-        <section class="org-page" id="org-page-training-overview" data-org-page="training-overview">
-          <button type="button" class="org-hub-back" data-org-route="dashboard">← Back to overview</button>
-          <header class="org-hub-page-head">
-            <p class="org-page-kicker">Team &amp; training</p>
-            <h1 class="org-page-title">Manage training</h1>
-            <p class="org-page-lead">Invite editors to help run events, and get ready to list workshops and seminars when training launches.</p>
-          </header>
-
-          <div class="org-stats org-stats--three">
-            <div class="org-stat gold">
-              <div class="org-stat-label">Sessions listed</div>
-              <div class="org-stat-value" id="stat-training-sessions">0</div>
-            </div>
-            <div class="org-stat green">
-              <div class="org-stat-label">Team editors</div>
-              <div class="org-stat-value" id="stat-training-editors">0</div>
-            </div>
-            <div class="org-stat purple">
-              <div class="org-stat-label">Registrations</div>
-              <div class="org-stat-value" id="stat-training-registrations">0</div>
-            </div>
-          </div>
-
-          <div class="org-quick-actions org-quick-actions--compact" aria-label="Quick links">
-            <h2 class="org-quick-actions-title">Quick links</h2>
-            <div class="org-quick-actions-grid">
-              <button type="button" class="org-quick-card" data-org-shortcut="team">
-                <span class="org-quick-icon" aria-hidden="true">👥</span>
-                <span class="org-quick-label">Team &amp; invites</span>
-                <span class="org-quick-hint">Add editors who can help manage events</span>
-              </button>
-              <button type="button" class="org-quick-card" data-org-shortcut="academy">
-                <span class="org-quick-icon" aria-hidden="true">🎓</span>
-                <span class="org-quick-label">Training &amp; workshops</span>
-                <span class="org-quick-hint">Browse the upcoming learning marketplace</span>
-              </button>
-              <a class="org-quick-card" href="../training/index.html" target="_blank" rel="noopener">
-                <span class="org-quick-icon" aria-hidden="true">↗</span>
-                <span class="org-quick-label">Public training preview</span>
-                <span class="org-quick-hint">See how workshops will appear on the hub</span>
-              </a>
-            </div>
-          </div>
-
-          <div class="org-academy-stage org-academy-stage--hub">
-            <div class="org-academy-preview" aria-hidden="true">
-              <div class="org-academy-preview-hero">
-                <p class="org-academy-preview-kicker">Learning marketplace</p>
-                <h2 class="org-academy-preview-title">
-                  Workshops, seminars &amp; <span>masterclasses</span>
-                </h2>
-                <p class="org-academy-preview-lede">
-                  Training and workshops — live learning for UK business owners.
-                </p>
-              </div>
-              <div class="org-academy-preview-grid" id="org-academy-preview-grid-hub"></div>
-            </div>
-            <div class="org-academy-coming" role="status">
-              <p class="org-academy-coming-label">Coming soon</p>
-              <p class="org-academy-coming-text">
-                List and manage workshops and training sessions from here soon — seminars and masterclasses alongside your
-                events.
-              </p>
-            </div>
-          </div>
-        </section>
-
         <!-- Business ops overview hub -->
         <section class="org-page" id="org-page-business-overview" data-org-page="business-overview">
           <button type="button" class="org-hub-back" data-org-route="dashboard">← Back to overview</button>
@@ -573,34 +491,6 @@
               <tbody id="team-body"></tbody>
             </table>
             <p class="org-empty" id="team-empty" hidden>No team members yet.</p>
-          </div>
-        </section>
-
-        <!-- Training & workshops — marketplace preview + coming soon -->
-        <section class="org-page" id="org-page-academy" data-org-page="academy">
-          <div class="org-academy-stage">
-            <div class="org-academy-preview" aria-hidden="true">
-              <div class="org-academy-preview-hero">
-                <p class="org-academy-preview-kicker">Learning marketplace</p>
-                <h2 class="org-academy-preview-title">
-                  Workshops, seminars &amp; <span>masterclasses</span>
-                </h2>
-                <p class="org-academy-preview-lede">
-                  Training and workshops — live learning for UK business owners.
-                </p>
-              </div>
-              <div class="org-academy-preview-grid" id="org-academy-preview-grid"></div>
-            </div>
-            <div class="org-academy-coming" role="status">
-              <p class="org-academy-coming-label">Coming soon</p>
-              <p class="org-academy-coming-text">
-                List and manage workshops and training sessions from here soon — seminars and masterclasses alongside your
-                events.
-              </p>
-              <a class="org-btn org-btn-outline" href="../training/index.html" target="_blank" rel="noopener"
-                >View public preview ↗</a
-              >
-            </div>
           </div>
         </section>
 

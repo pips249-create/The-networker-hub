@@ -205,7 +205,6 @@
   function buildNavLinks(user, pending) {
     var html = '';
     html += link('events/index.html', 'Events', 'events');
-    html += link('training/index.html', 'Training', 'training', 'nav-hide-mobile');
     html += link('opportunities/index.html', 'Opportunities', 'opportunities', 'nav-hide-mobile');
     html += link('about.html', 'About us', 'about', 'nav-hide-mobile');
     html += link('advertising.html', 'Advertising', 'advertising', 'nav-hide-mobile');
@@ -235,7 +234,6 @@
   function buildMobileDrawerLinks(user, pending) {
     var html = '';
     html += link('events/index.html', 'Events', 'events', 'nav-mobile-item');
-    html += link('training/index.html', 'Training', 'training', 'nav-mobile-item');
     html += link('opportunities/index.html', 'Opportunities', 'opportunities', 'nav-mobile-item');
     html += link('about.html', 'About us', 'about', 'nav-mobile-item');
     html += link('advertising.html', 'Advertising', 'advertising', 'nav-mobile-item');

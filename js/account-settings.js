@@ -17,35 +17,6 @@
     if (alertEl) alertEl.hidden = true;
   }
 
-  function syncPrefsFromTextarea() {
-    const ta = document.getElementById('as-prefs');
-    const quick = document.getElementById('as-prefs-quick');
-    if (!ta || !quick) return;
-    const parts = ta.value
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
-    quick.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
-      cb.checked = parts.includes(cb.value);
-    });
-  }
-
-  function syncTextareaFromPrefs() {
-    const ta = document.getElementById('as-prefs');
-    const quick = document.getElementById('as-prefs-quick');
-    if (!ta || !quick) return;
-    const selected = [];
-    quick.querySelectorAll('input[type="checkbox"]:checked').forEach((cb) => {
-      selected.push(cb.value);
-    });
-    const existing = ta.value
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const merged = [...new Set([...selected, ...existing.filter((x) => !quick.querySelector('[value="' + x + '"]'))])];
-    ta.value = merged.join(', ');
-  }
-
   function setFieldWritable(id, enabled) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -65,9 +36,6 @@
     setFieldWritable('as-name', w.name !== false);
     setFieldWritable('as-location', !!w.location);
     setFieldWritable('as-sector', !!w.businessSector);
-    setFieldWritable('as-prefs', !!w.marketPreferences);
-    const quick = document.getElementById('as-prefs-quick');
-    if (quick) quick.hidden = !w.marketPreferences;
   }
 
   function fillForm(profile) {
@@ -75,8 +43,6 @@
     document.getElementById('as-name').value = profile.name || '';
     document.getElementById('as-location').value = profile.location || '';
     document.getElementById('as-sector').value = profile.businessSector || '';
-    document.getElementById('as-prefs').value = profile.marketPreferences || '';
-    syncPrefsFromTextarea();
     fillEmailPrefs(profile);
   }
 
@@ -111,7 +77,6 @@
     applyWritable(data.writable);
   }
 
-  document.getElementById('as-prefs-quick')?.addEventListener('change', syncTextareaFromPrefs);
   document.getElementById('as-email-master')?.addEventListener('change', syncEmailPrefDisabled);
 
   document.getElementById('as-email-prefs-form')?.addEventListener('submit', async (e) => {
@@ -152,7 +117,6 @@
     hideAlert();
     const btn = document.getElementById('as-save-profile');
     if (btn) btn.disabled = true;
-    syncTextareaFromPrefs();
     try {
       const res = await fetch('/api/auth/profile', {
         method: 'PATCH',
@@ -162,7 +126,6 @@
           name: document.getElementById('as-name').value.trim(),
           location: document.getElementById('as-location').value.trim(),
           businessSector: document.getElementById('as-sector').value.trim(),
-          marketPreferences: document.getElementById('as-prefs').value.trim(),
         }),
       });
       const data = await res.json();

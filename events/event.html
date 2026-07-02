@@ -483,7 +483,7 @@
     <script src="../js/review-report.js?v=20260609"></script>
     <script src="../js/hub-favourites.js?v=20260629"></script>
     <script src="../js/booking-fees.js?v=20260630"></script>
-    <script src="../js/event-detail.js?v=20260719"></script>
+    <script src="../js/event-detail.js?v=20260728"></script>
     <div id="hub-site-footer"></div>
 
     <div class="hub-modal application-success-modal" id="application-success-modal" role="dialog" aria-modal="true" aria-labelledby="application-success-title" hidden>
@@ -1045,6 +1045,7 @@
         var buy = document.getElementById("buy-btn");
         var stripeHint = document.getElementById("stripe-hint");
 
+        if (!window.hubEventDetailBooted && buy) {
         buy.addEventListener("click", function () {
           update();
           var url = buildStripeCheckoutUrl();
@@ -1058,6 +1059,7 @@
           if (stripeHint) stripeHint.hidden = true;
           window.location.assign(url);
         });
+        }
 
         document.getElementById("calendar-btn").addEventListener("click", function () {
           var tNode = document.getElementById("ev-title");

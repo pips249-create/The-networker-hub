@@ -32,9 +32,6 @@
     href('events/index.html') +
     '">Events</a>' +
     '<a href="' +
-    href('training/index.html') +
-    '">Training</a>' +
-    '<a href="' +
     href('opportunities/index.html') +
     '">Opportunities</a>' +
     '</nav>' +

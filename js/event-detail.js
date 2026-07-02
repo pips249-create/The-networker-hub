@@ -1027,11 +1027,18 @@
     el.textContent = '';
   }
 
+  function revealPaidCheckoutTerms() {
+    const paidBlock = document.getElementById('ticket-paid-checkout');
+    if (paidBlock) paidBlock.hidden = false;
+    paidBlock?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
   function showCheckoutInlineError(message) {
     const el = document.getElementById('checkout-inline-error');
     if (!el) return;
     el.textContent = message;
     el.hidden = false;
+    revealPaidCheckoutTerms();
     el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
@@ -1650,7 +1657,12 @@
     refreshTicketJumpVisibility();
   }
 
-  function showPaidGuestCheckout(show, isPaid) {
+  function currentTicketQty() {
+    const raw = document.getElementById('qty-value')?.textContent;
+    return Math.max(1, parseInt(raw, 10) || 1);
+  }
+
+  function showPaidGuestCheckout(show, isPaid, ticketQty) {
     if (isPaid === undefined) isPaid = true;
     const ev = activeEvent();
     const form = document.getElementById('checkout-details-form');
@@ -1660,7 +1672,8 @@
     const emailField = document.getElementById('checkout-email')?.closest('.form-field');
     const freeTerms = document.querySelector('.checkout-free-terms');
     const hasExtras = eventCollectsAttendeeExtras(ev);
-    const hasGuests = Math.max(0, qty - 1) > 0;
+    const qtyNum = Math.max(1, parseInt(ticketQty, 10) || currentTicketQty());
+    const hasGuests = qtyNum > 1;
     showCheckoutDetails(show);
     if (form) form.classList.toggle('is-paid-guests', show);
     if (nameField) nameField.hidden = show;
@@ -3063,7 +3076,7 @@
             renderCheckoutGuestNames(qty);
             renderCheckoutAttendeeExtras(evNow);
             updateFreeCheckoutSummary(evNow);
-            showPaidGuestCheckout(true, false);
+            showPaidGuestCheckout(true, false, qty);
             return;
           }
           try {
@@ -3078,6 +3091,7 @@
 
         const termsAgree = document.getElementById('checkout-terms-agree');
         if (termsAgree && !termsAgree.checked) {
+          revealPaidCheckoutTerms();
           showCheckoutInlineError(
             'Please confirm you have read the refund policy and agree to proceed.'
           );
@@ -3107,7 +3121,7 @@
         if (needsCheckoutDetailsStep(evNow, qty)) {
           renderCheckoutGuestNames(qty);
           renderCheckoutAttendeeExtras(evNow);
-          showPaidGuestCheckout(true);
+          showPaidGuestCheckout(true, true, qty);
           return;
         }
 
