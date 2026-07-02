@@ -38,11 +38,16 @@
     setFieldWritable('as-sector', !!w.businessSector);
   }
 
+  function setFieldValue(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.value = value ?? '';
+  }
+
   function fillForm(profile) {
-    document.getElementById('as-email').value = profile.email || '';
-    document.getElementById('as-name').value = profile.name || '';
-    document.getElementById('as-location').value = profile.location || '';
-    document.getElementById('as-sector').value = profile.businessSector || '';
+    setFieldValue('as-email', profile.email || '');
+    setFieldValue('as-name', profile.name || '');
+    setFieldValue('as-location', profile.location || '');
+    setFieldValue('as-sector', profile.businessSector || '');
     fillEmailPrefs(profile);
   }
 
