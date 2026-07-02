@@ -278,7 +278,7 @@ html:has(.home-page) {
   font-weight: 400;
   line-height: 1.06;
   color: #fff;
-  margin: 0 0 10px;
+  margin: 0 0 14px;
   max-width: none;
   letter-spacing: -0.02em;
   text-wrap: balance;
@@ -394,7 +394,7 @@ html:has(.home-page) {
 .home-what {
   position: relative;
   overflow: hidden;
-  padding: 64px 0 72px;
+  padding: 48px 0 64px;
   background:
     linear-gradient(165deg, rgba(237, 225, 245, 0.55) 0%, var(--home-bg) 42%, var(--home-bg-warm) 100%);
 }
@@ -685,8 +685,8 @@ html:has(.home-page) {
 .home-partners {
   position: relative;
   z-index: 4;
-  margin-top: -52px;
-  padding: 0 0 20px;
+  margin-top: -48px;
+  padding: 0 0 28px;
 }
 
 .home-partners-band {
@@ -696,7 +696,7 @@ html:has(.home-page) {
 
 .home-partners-panel {
   --home-partners-panel-x: clamp(16px, 4vw, 28px);
-  padding: 24px var(--home-partners-panel-x) 28px;
+  padding: 20px var(--home-partners-panel-x) 22px;
   border-radius: 20px;
   background: #fff;
   border: 1px solid var(--home-border);
@@ -705,7 +705,7 @@ html:has(.home-page) {
 }
 
 .home-partners .home-flow-head {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .home-partners .section-title {
@@ -1520,18 +1520,18 @@ html:has(.home-page) {
 
 @media (max-width: 640px) {
   .home-page .home-hero {
-    padding: calc(var(--home-nav-height) + 24px) 20px 44px;
+    padding: calc(var(--home-nav-height) + 20px) 20px 56px;
   }
 
   .home-page .hero-title {
     max-width: none;
     font-size: clamp(1.75rem, 7.5vw, 2.15rem);
     gap: 0.08em;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
   }
 
   .home-page .home-hero-kicker {
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
 
   .home-page .hero-title-accent {
@@ -1539,7 +1539,8 @@ html:has(.home-page) {
   }
 
   .home-page .hero-tagline {
-    margin-bottom: 18px;
+    font-size: 1rem;
+    line-height: 1.5;
   }
 
   .home-page .home-hero-stats {
@@ -1557,7 +1558,8 @@ html:has(.home-page) {
   }
 
   .home-partners {
-    margin-top: -32px;
+    margin-top: -36px;
+    padding-bottom: 20px;
   }
 
   .home-split .home-reveal-child:nth-child(1),

@@ -1409,6 +1409,7 @@ async function getOrganiserWorkspace(req) {
     organiserRole: access ? access.role : null,
     canManageTeam: access ? access.canManageTeam : true,
     canDeleteEvents: access ? access.canDeleteEvents : true,
+    useTeamWorkspace: access ? Boolean(access.useTeamWorkspace) : false,
     stripeConnectEnabled,
     user: {
       email: session.email,

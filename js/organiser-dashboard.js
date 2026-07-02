@@ -42,6 +42,10 @@
     reviews: [],
     groupRankings: {},
     teamMembers: [],
+    teamMax: 10,
+    teamCount: 0,
+    teamSlotsRemaining: 10,
+    useTeamWorkspace: false,
     workspaceSummary: null,
     eventSummaries: [],
     groupsError: null,
@@ -4501,6 +4505,47 @@
     state.canManageTeam = data.canManageTeam !== false;
     state.canDeleteEvents = data.canDeleteEvents !== false;
     state.organiserRole = data.role || state.organiserRole;
+    state.useTeamWorkspace = Boolean(data.useTeamWorkspace);
+    state.teamMax = Number(data.teamMax) || 10;
+    state.teamCount = Number(data.teamCount) || 0;
+    state.teamSlotsRemaining = Number(data.teamSlotsRemaining);
+    if (!Number.isFinite(state.teamSlotsRemaining)) {
+      state.teamSlotsRemaining = Math.max(0, state.teamMax - state.teamCount);
+    }
+  }
+
+  function updateTeamLimitUi() {
+    const note = document.getElementById('team-limit-note');
+    const modalNote = document.getElementById('modal-team-limit-note');
+    const inviteBtn = document.getElementById('btn-invite-team');
+    const inviteEmptyBtn = document.getElementById('btn-invite-team-empty');
+    const atCap = state.canManageTeam && state.teamSlotsRemaining <= 0;
+    const summary =
+      state.canManageTeam && state.teamMax
+        ? state.teamCount + ' of ' + state.teamMax + ' editor slots used'
+        : '';
+
+    if (note) {
+      if (summary) {
+        note.textContent = summary + (atCap ? ' — remove someone to invite another editor.' : '');
+        note.hidden = false;
+      } else {
+        note.hidden = true;
+      }
+    }
+    if (modalNote) {
+      modalNote.textContent = summary
+        ? summary + '. Invites are sent by email; editors become Active when they sign in with that address.'
+        : 'Invites are sent by email; editors become Active when they sign in with that address.';
+    }
+    if (inviteBtn) {
+      inviteBtn.disabled = atCap;
+      inviteBtn.title = atCap ? 'Team limit reached' : '';
+    }
+    if (inviteEmptyBtn) {
+      inviteEmptyBtn.disabled = atCap;
+      inviteEmptyBtn.title = atCap ? 'Team limit reached' : '';
+    }
   }
 
   function renderTeam() {
@@ -4513,8 +4558,9 @@
     if (inviteBtn) inviteBtn.hidden = !state.canManageTeam;
     const editorNote = document.getElementById('team-editor-note');
     if (editorNote) {
-      editorNote.hidden = state.canManageTeam || state.organiserRole === 'owner';
+      editorNote.hidden = state.organiserRole !== 'editor';
     }
+    updateTeamLimitUi();
     if (teamPage) {
       let errEl = teamPage.querySelector('.org-team-error');
       if (state.teamError) {
@@ -4577,7 +4623,17 @@
   }
 
   function bindTeamUi() {
-    const openInvite = () => openModal('modal-team-invite');
+    const openInvite = () => {
+      if (state.teamSlotsRemaining <= 0) {
+        showOrganiserAlert(
+          'You can invite up to ' + state.teamMax + ' editors. Remove someone to invite another.',
+          true
+        );
+        return;
+      }
+      updateTeamLimitUi();
+      openModal('modal-team-invite');
+    };
     const inviteBtn = document.getElementById('btn-invite-team');
     if (inviteBtn) {
       inviteBtn.addEventListener('click', openInvite);
@@ -4607,7 +4663,7 @@
         await loadTeamMembers();
         renderTeam();
         updateGettingStartedPanel();
-        showOrganiserAlert(data.message || 'Invite sent.', false);
+        showOrganiserAlert(data.message || (data.emailSent === false ? 'Invite saved but email not sent.' : 'Invite sent.'), data.emailSent === false);
       });
     }
     const teamPage = document.getElementById('org-page-team');
@@ -4625,7 +4681,7 @@
             await loadTeamMembers();
             renderTeam();
             updateGettingStartedPanel();
-            showOrganiserAlert(data.message || 'Invite resent.', false);
+            showOrganiserAlert(data.message || (data.emailSent === false ? 'Could not resend email.' : 'Invite resent.'), data.emailSent === false);
           }
           return;
         }
@@ -5537,6 +5593,7 @@
     state.canManageTeam = data.canManageTeam !== false;
     state.canDeleteEvents = data.canDeleteEvents !== false;
     state.organiserRole = data.organiserRole || 'owner';
+    state.useTeamWorkspace = Boolean(data.useTeamWorkspace);
     state.stripeConnectEnabled = Boolean(data.stripeConnectEnabled);
     loadTeamMembers().then(function () {
       renderTeam();

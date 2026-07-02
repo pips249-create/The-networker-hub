@@ -59,6 +59,7 @@ module.exports = async function handler(req, res) {
       organiserRole: ws.organiserRole,
       canManageTeam: ws.canManageTeam,
       canDeleteEvents: ws.canDeleteEvents,
+      useTeamWorkspace: ws.useTeamWorkspace,
       stats: {
         groups: ws.groups.length,
         events: ws.eventsPagination?.total ?? ws.events.length,

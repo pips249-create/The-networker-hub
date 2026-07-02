@@ -3362,6 +3362,71 @@ body.org-cancel-modal-open {
   border: 1px solid #e8d4a8;
 }
 
+.org-team-limit-note {
+  margin-top: 6px;
+  color: var(--od-text-muted);
+  font-size: 13px;
+}
+
+.org-team-permissions {
+  margin: 0 0 24px;
+  padding: 18px 20px;
+  border-radius: var(--od-radius-md);
+  border: 1px solid var(--od-border);
+  background: #fafbfd;
+}
+
+.org-team-permissions-title {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--od-text);
+}
+
+.org-team-permissions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.org-team-permissions-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--od-text-muted);
+}
+
+.org-team-permissions-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--od-text);
+}
+
+.org-team-permissions-list--can li::marker {
+  color: #2f9d62;
+}
+
+.org-team-permissions-list--cannot li::marker {
+  color: #c45c4a;
+}
+
+.org-modal-note {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--od-text-muted);
+}
+
+@media (max-width: 720px) {
+  .org-team-permissions-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
 .org-nav-badge {
   display: inline-block;
   margin-left: 6px;

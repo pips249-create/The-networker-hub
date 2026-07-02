@@ -323,6 +323,14 @@ module.exports = async function handler(req, res) {
       if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {
         return json(res, 403, { error: 'event_not_owned' });
       }
+      const { resolveOrganiserAccess } = require('../supabase-organiser-access');
+      const access = await resolveOrganiserAccess(auth.session);
+      if (!isPlatformAdmin(auth.session) && access && !access.canDeleteEvents) {
+        return json(res, 403, {
+          error: 'forbidden',
+          message: 'Only the account owner can delete events. Editors can edit events instead.',
+        });
+      }
       const deleted = await deleteEventForSession(
         auth.session,
         eventId,
