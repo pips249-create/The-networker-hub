@@ -72,7 +72,11 @@ function parseDateIso(dateStr, endStr) {
   };
 }
 
-const { plainEventDescription, mapAttendeeExtrasToRow } = require('./event-description');
+const {
+  plainEventDescription,
+  mapAttendeeExtrasToRow,
+  composeEventDescription,
+} = require('./event-description');
 const { eventImageUrl, eventImageDbValue } = require('./event-image');
 
 function rowToEvent(row) {
@@ -521,6 +525,8 @@ async function buildEventRow(payload, eventId, mode) {
 
   if (payload.attendeeExtras && typeof payload.attendeeExtras === 'object') {
     Object.assign(row, mapAttendeeExtrasToRow(payload.attendeeExtras));
+    row.description =
+      composeEventDescription(payload.description ?? row.description, payload.attendeeExtras) || null;
   }
 
   if (!isLocked) {
@@ -991,8 +997,37 @@ async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales)
   return updated.map(rowToEvent);
 }
 
+async function saveAttendeeExtrasForEvents(eventIds, attendeeExtras) {
+  const ids = Array.isArray(eventIds) ? eventIds.filter(Boolean) : [];
+  if (!ids.length || attendeeExtras == null || typeof attendeeExtras !== 'object') return;
+
+  const sb = getSupabaseAdmin();
+  const extrasRow = mapAttendeeExtrasToRow(attendeeExtras);
+  const { data: rows, error: loadErr } = await sb
+    .from('events')
+    .select('id, description')
+    .in('id', ids);
+  if (loadErr) throw new Error(loadErr.message);
+
+  for (const row of rows || []) {
+    const description = composeEventDescription(row.description, attendeeExtras);
+    const { error } = await sb
+      .from('events')
+      .update({ ...extrasRow, description: description || null })
+      .eq('id', row.id);
+    if (error) throw new Error(error.message);
+  }
+}
+
 /** Same shape as Airtable API: { eventIds, tickets, publish, refund } */
-async function createTicketsForEvents({ eventIds, tickets, publish, refund, vatTreatment }) {
+async function createTicketsForEvents({
+  eventIds,
+  tickets,
+  publish,
+  refund,
+  vatTreatment,
+  attendeeExtras,
+}) {
   const ids = Array.isArray(eventIds) ? eventIds.filter(Boolean) : [];
   const tiers = Array.isArray(tickets) ? tickets : [];
   if (!ids.length || !tiers.length) return { created: 0, tickets: [] };
@@ -1046,6 +1081,10 @@ async function createTicketsForEvents({ eventIds, tickets, publish, refund, vatT
     const { assertOrganiserReadyForPaidPublish } = require('./stripe-connect');
     await assertOrganiserReadyForPaidPublish(sb, organiserIds, tiers);
     publishedEvents = await publishEventsWithRefund(ids, refund, out);
+  }
+
+  if (attendeeExtras != null && typeof attendeeExtras === 'object') {
+    await saveAttendeeExtrasForEvents(ids, attendeeExtras);
   }
 
   return { created: out.length, tickets: out, publishedEvents };

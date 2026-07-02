@@ -987,7 +987,7 @@
         '<span class="org-series-badge">' +
         esc(String(ev.seriesCount)) +
         ' dates</span></span>' +
-        '<span class="org-series-row-hint">Click row for revenue by date</span>' +
+        '<span class="org-series-row-hint">Click row to expand dates — cancel or delete one date at a time</span>' +
         joinLinkWarnHtml(ev)
       );
     }
@@ -1001,13 +1001,44 @@
     );
   }
 
+  function eventTicketsSoldCount(ev) {
+    if (!ev) return 0;
+    const direct = Number(ev.ticketsSold);
+    if (Number.isFinite(direct) && direct > 0) return direct;
+    const label = String(ev.ticketsSoldLabel || '').trim();
+    const slash = label.match(/^(\d+)\s*\/\s*(\d+)/);
+    if (slash) return Number(slash[1]) || 0;
+    const plain = label.match(/^(\d+)$/);
+    if (plain) return Number(plain[1]) || 0;
+    return 0;
+  }
+
   function eventCanDelete(ev) {
     if (!ev || !ev.id || state.canDeleteEvents === false) return false;
     if (ev.locked) return false;
-    if ((Number(ev.ticketsSold) || 0) > 0) return false;
+    if (eventTicketsSoldCount(ev) > 0) return false;
     const st = String(ev.statusKey || ev.status || '').toLowerCase();
     if (st === 'cancelled') return false;
     return true;
+  }
+
+  function eventIsPublishedListing(ev) {
+    if (!ev) return false;
+    const st = String(ev.status || '').toLowerCase();
+    const key = String(ev.statusKey || '').toLowerCase();
+    if (st === 'cancelled' || key === 'cancelled') return false;
+    return (
+      st === 'published' ||
+      ev.approvalStatus === 'Approved' ||
+      key === 'live' ||
+      key === 'upcoming'
+    );
+  }
+
+  function eventCanCancel(ev) {
+    if (!ev || !ev.id) return false;
+    if (!eventIsPublishedListing(ev)) return false;
+    return eventTicketsSoldCount(ev) > 0 || Boolean(ev.locked);
   }
 
   function eventDeleteActionHtml(ev) {
@@ -1017,6 +1048,29 @@
       esc(ev.id) +
       '"><span class="org-action-icon">🗑</span><span class="org-action-text"><strong>Delete event</strong><span>Remove this listing permanently</span></span></button>'
     );
+  }
+
+  function seriesDateActionsCell(child) {
+    const parts = [
+      '<button type="button" class="org-series-date-btn" data-edit-event="' +
+        esc(child.id) +
+        '">Edit</button>',
+    ];
+    const cancelled = String(child.status || '').toLowerCase() === 'cancelled';
+    if (!cancelled && eventCanCancel(child)) {
+      parts.push(
+        '<button type="button" class="org-series-date-btn danger" data-cancel-event="' +
+          esc(child.id) +
+          '">Cancel</button>'
+      );
+    } else if (eventCanDelete(child)) {
+      parts.push(
+        '<button type="button" class="org-series-date-btn danger" data-delete-event="' +
+          esc(child.id) +
+          '">Delete</button>'
+      );
+    }
+    return '<td class="org-series-date-actions">' + parts.join('') + '</td>';
   }
 
   function thumbHtml(item) {
@@ -1172,22 +1226,27 @@
     const id = ev.id;
     const title = ev.title;
     const shortTitle = String(title || 'Event').slice(0, 32);
+    const isSeriesParent = ev.isSeries && ev.seriesCount > 1;
     const cancelled = String(ev.status || '').toLowerCase() === 'cancelled';
-    const published =
-      String(ev.status || '').toLowerCase() === 'published' || ev.approvalStatus === 'Approved';
     const cancelItem =
-      ev.locked && !cancelled && published
+      !isSeriesParent && eventCanCancel(ev) && !cancelled
         ? '<button type="button" class="org-action-item danger" data-cancel-event="' +
           esc(id) +
           '"><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Cancel this event</strong><span>Cancel a published event with ticket sales</span></span></button>'
         : '';
+    const seriesNote = isSeriesParent
+      ? '<p class="org-action-menu-note">Expand the row to cancel or delete individual dates.</p>'
+      : '';
+    const deleteItem = isSeriesParent ? '' : eventDeleteActionHtml(ev);
     return (
       '<div class="org-action-wrap">' +
       '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
       '<div class="org-action-menu" role="menu">' +
       '<div class="org-action-menu-header">' +
       esc(shortTitle) +
+      (isSeriesParent ? '<span class="org-action-menu-sub">' + esc(String(ev.seriesCount)) + ' dates</span>' : '') +
       '</div>' +
+      seriesNote +
       '<button type="button" class="org-action-item" data-edit-event="' +
       esc(id) +
       '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit event</strong><span>Update details, times &amp; tickets</span></span></button>' +
@@ -1204,7 +1263,7 @@
       esc(id) +
       '"><span class="org-action-icon">£</span><span class="org-action-text"><strong>Revenue &amp; payout</strong><span>Request payout when eligible</span></span></button>' +
       cancelItem +
-      eventDeleteActionHtml(ev) +
+      deleteItem +
       '</div></div>'
     );
   }
@@ -1236,6 +1295,30 @@
     };
   }
 
+
+  function clearAttendeesPendingFilter() {
+    if (!filters.attendeesPendingOnly) return;
+    filters.attendeesPendingOnly = false;
+    if (eventsSubRoute === 'events-attendees') {
+      setRoute('events-attendees');
+    }
+    renderAttendeesFilterNote();
+    renderAttendees();
+  }
+
+  function renderAttendeesFilterNote() {
+    const note = document.getElementById('attendees-filter-note');
+    if (!note) return;
+    note.hidden = !filters.attendeesPendingOnly;
+  }
+
+  function maybeClearAttendeesPendingFilter() {
+    if (!filters.attendeesPendingOnly) return;
+    if (!pendingApplicationsCount()) {
+      clearAttendeesPendingFilter();
+    }
+  }
+
   function applyAttendeesDeepLinkFromUrl() {
     const { route, eventId, pendingOnly } = parseDeepLinkFromUrl();
     if (eventId) {
@@ -1245,6 +1328,8 @@
     }
     if (pendingOnly) {
       filters.attendeesPendingOnly = true;
+    } else if (route === 'events-attendees' || eventsSubRoute === 'events-attendees') {
+      filters.attendeesPendingOnly = false;
     }
     const attSel = document.getElementById('filter-attendees-event');
     if (attSel && eventId) attSel.value = eventId;
@@ -1532,13 +1617,27 @@
 
   async function loadAttendeesAll() {
     const hint = document.getElementById('attendees-load-hint');
+    const errEl = document.getElementById('attendees-load-error');
     if (hint) hint.hidden = false;
+    if (errEl) {
+      errEl.hidden = true;
+      errEl.textContent = '';
+    }
     const { ok, data } = await api('/api/organiser/attendees?eventId=all');
     if (hint) hint.hidden = true;
     if (ok) {
       state.attendeesAll = data.attendees || [];
+      maybeClearAttendeesPendingFilter();
       updateMyEventsTabCounts();
       updatePendingApplicationsNavBadge();
+      renderAttendeesFilterNote();
+      if (eventsSubRoute === 'events-attendees') {
+        renderAttendees();
+      }
+    } else if (errEl) {
+      errEl.hidden = false;
+      errEl.textContent =
+        data.message || data.error || 'Could not load attendees. Try refreshing the page.';
     }
     return ok;
   }
@@ -1817,6 +1916,7 @@
     const body = document.getElementById('attendees-body');
     const empty = document.getElementById('attendees-empty');
     if (!body) return;
+    renderAttendeesFilterNote();
     const list = filteredAttendeesList();
     body.innerHTML = '';
 
@@ -2198,6 +2298,7 @@
     drawer.classList.remove('is-open');
     document.body.classList.remove('org-event-drawer-open');
     setEventDrawerLoading(false);
+    renderEventDrawerOverview(null);
     if (frame) frame.removeAttribute('src');
     setTimeout(function () {
       if (!drawer.classList.contains('is-open')) {
@@ -2213,7 +2314,7 @@
     );
   }
 
-  function openEventDrawerFrame(frameUrl, titleText) {
+  function openEventDrawerFrame(frameUrl, titleText, eventForOverview) {
     const drawer = document.getElementById('org-event-drawer');
     const frame = document.getElementById('org-event-drawer-frame');
     const titleEl = document.getElementById('org-event-drawer-title');
@@ -2223,6 +2324,7 @@
     }
 
     closeAllActionMenus();
+    renderEventDrawerOverview(eventForOverview || null);
     if (titleEl && titleText) titleEl.textContent = titleText;
     setEventDrawerLoading(true);
     if (eventDrawerLoadTimeout) clearTimeout(eventDrawerLoadTimeout);
@@ -2238,6 +2340,42 @@
     });
     document.body.classList.add('org-event-drawer-open');
     return true;
+  }
+
+  function renderEventDrawerOverview(ev) {
+    const wrap = document.getElementById('org-event-drawer-stats');
+    const cancelRow = document.getElementById('org-event-drawer-cancel');
+    if (!wrap) return;
+    if (!ev || !ev.id) {
+      wrap.hidden = true;
+      if (cancelRow) cancelRow.hidden = true;
+      return;
+    }
+    const ticketsEl = document.getElementById('org-event-drawer-stat-tickets');
+    const revenueEl = document.getElementById('org-event-drawer-stat-revenue');
+    const statusEl = document.getElementById('org-event-drawer-stat-status');
+    if (ticketsEl) {
+      ticketsEl.textContent =
+        ev.ticketsSoldLabel || formatTicketsSoldLabel(ev.ticketsSold, ev.ticketsCapacity);
+    }
+    if (revenueEl) {
+      revenueEl.textContent = ev.revenueDisplay || formatGbpAmount(ev.revenueNum || 0);
+    }
+    if (statusEl) {
+      statusEl.textContent = ev.statusLabel || ev.statusKey || 'Draft';
+    }
+    wrap.hidden = false;
+    if (cancelRow) {
+      const canCancel = eventCanCancel(ev);
+      cancelRow.hidden = !canCancel;
+      const btn = document.getElementById('org-event-drawer-cancel-btn');
+      if (btn) {
+        btn.setAttribute('data-cancel-event', ev.id);
+        const sold = eventTicketsSoldCount(ev);
+        btn.textContent =
+          sold > 0 ? 'Cancel this date (' + sold + ' sold)' : 'Cancel this event';
+      }
+    }
   }
 
   function openEventTicketsDrawer(eventIds, title) {
@@ -2287,36 +2425,101 @@
           : findEventById(editId) || { id: editId, title: 'Event' };
       drawerTitle = ev.title ? 'Edit: ' + ev.title : 'Edit event';
       frameUrl = eventEditorFrameUrl({ editId: editId });
-    }
-
-    openEventDrawerFrame(frameUrl, drawerTitle);
-  }
-
-  async function confirmDeleteEvent(eventId) {
-    if (!eventId) return;
-    const ev = findEventById(eventId);
-    const label = ev && ev.title ? ev.title : 'this event';
-    if (
-      !window.confirm(
-        'Delete "' +
-          label +
-          '" permanently?\n\nThis cannot be undone. Events with ticket sales must be cancelled instead.'
-      )
-    ) {
+      openEventDrawerFrame(frameUrl, drawerTitle, ev);
       return;
     }
+
+    openEventDrawerFrame(frameUrl, drawerTitle, null);
+  }
+
+  let pendingDeleteEventId = null;
+
+  function openDeleteEventModal(eventId) {
+    if (!eventId) return;
+    closeEventEditorDrawer();
+    pendingDeleteEventId = eventId;
+    const modal = document.getElementById('modal-event-delete');
+    const titleEl = document.getElementById('modal-event-delete-name');
+    const seriesEl = document.getElementById('modal-event-delete-series');
+    const soldEl = document.getElementById('modal-event-delete-sold');
+    const ev = findEventById(eventId);
+    const label = ev && ev.title ? ev.title : 'this event';
+    const dateLabel = ev && ev.date ? formatDateShort(ev.date) : '';
+    const sold = eventTicketsSoldCount(ev);
+    const isSeriesDate =
+      dateLabel &&
+      groupEventsIntoSeries(state.events || []).some(function (row) {
+        return (
+          row.isSeries &&
+          row.seriesCount > 1 &&
+          row.seriesEvents &&
+          row.seriesEvents.some(function (child) {
+            return child.id === eventId;
+          })
+        );
+      });
+
+    if (titleEl) {
+      titleEl.textContent =
+        '"' + label + '"' + (dateLabel ? ' · ' + dateLabel : '');
+    }
+    if (seriesEl) {
+      seriesEl.hidden = !isSeriesDate;
+      seriesEl.textContent = isSeriesDate
+        ? 'Only this date will be removed. Other dates in the series stay as they are.'
+        : '';
+    }
+    if (soldEl) {
+      if (sold > 0) {
+        soldEl.hidden = false;
+        soldEl.textContent =
+          'This date has ' +
+          sold +
+          ' ticket' +
+          (sold === 1 ? '' : 's') +
+          ' sold — use Cancel instead of Delete so attendees can be refunded.';
+      } else {
+        soldEl.hidden = true;
+        soldEl.textContent = '';
+      }
+    }
+    if (modal) {
+      modal.removeAttribute('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      modal.classList.add('is-open');
+      document.body.classList.add('org-cancel-modal-open');
+    }
+  }
+
+  async function submitDeleteEvent() {
+    if (!pendingDeleteEventId) return;
+    const eventId = pendingDeleteEventId;
+    const ev = findEventById(eventId);
+    if (eventTicketsSoldCount(ev) > 0) {
+      closeModals();
+      openCancelEventModal(eventId);
+      return;
+    }
+    const confirmBtn = document.getElementById('btn-event-delete-confirm');
+    if (confirmBtn) confirmBtn.disabled = true;
     const res = await api('/api/organiser/events', {
       method: 'DELETE',
       body: JSON.stringify({ id: eventId }),
     });
     if (!res.ok) {
-      window.alert(res.data.message || res.data.error || 'Could not delete this event.');
+      if (confirmBtn) confirmBtn.disabled = false;
+      showOrganiserAlert(res.data.message || res.data.error || 'Could not delete this event.', true);
       return;
     }
+    closeModals();
     showOrganiserAlert(res.data.message || 'Event deleted.', false);
     await loadBootstrap();
     renderAll();
     setRoute('events-list');
+  }
+
+  function confirmDeleteEvent(eventId) {
+    openDeleteEventModal(eventId);
   }
 
   function goToEventTickets(ev) {
@@ -2775,6 +2978,25 @@
   }
 
   function handleActionMenuChoice(e) {
+    const cancelBtn = e.target.closest('[data-cancel-event]');
+    if (cancelBtn && !cancelBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      const eid = cancelBtn.getAttribute('data-cancel-event');
+      if (eid) openCancelEventModal(eid);
+      return true;
+    }
+
+    const deleteEventBtn = e.target.closest('[data-delete-event]');
+    if (deleteEventBtn && !deleteEventBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      confirmDeleteEvent(deleteEventBtn.getAttribute('data-delete-event'));
+      return true;
+    }
+
     const unpublishBtn = e.target.closest('[data-unpublish-group]');
     if (unpublishBtn && !unpublishBtn.disabled) {
       e.preventDefault();
@@ -2800,20 +3022,13 @@
     const seriesParentRow = e.target.closest('tr.org-series-parent-row');
     if (
       seriesParentRow &&
-      !e.target.closest('.org-td-actions, .org-action-wrap, [data-org-action-toggle]')
+      !e.target.closest(
+        '.org-td-actions, .org-action-wrap, [data-org-action-toggle], .org-series-dates-panel'
+      )
     ) {
       e.preventDefault();
       e.stopPropagation();
       toggleSeriesExpand(seriesParentRow.getAttribute('data-series-key'));
-      return true;
-    }
-
-    const deleteEventBtn = e.target.closest('[data-delete-event]');
-    if (deleteEventBtn && !deleteEventBtn.disabled) {
-      e.preventDefault();
-      e.stopPropagation();
-      closeAllActionMenus();
-      confirmDeleteEvent(deleteEventBtn.getAttribute('data-delete-event'));
       return true;
     }
 
@@ -2893,16 +3108,6 @@
       if (sub === 'events-cancellations') renderCancellations();
       if (sub === 'events-reviews') renderReviews();
       if (sub === 'events-revenue') renderRevenue();
-      return true;
-    }
-
-    const cancelBtn = e.target.closest('[data-cancel-event]');
-    if (cancelBtn && !cancelBtn.disabled) {
-      e.preventDefault();
-      e.stopPropagation();
-      closeAllActionMenus();
-      const eid = cancelBtn.getAttribute('data-cancel-event');
-      openCancelEventModal(eid);
       return true;
     }
 
@@ -3234,11 +3439,14 @@
 
   function closeModals() {
     document.querySelectorAll('.org-modal').forEach((m) => {
-      m.hidden = true;
+      m.setAttribute('hidden', '');
+      m.setAttribute('aria-hidden', 'true');
       m.classList.remove('is-open');
     });
+    document.body.classList.remove('org-cancel-modal-open');
     pendingPayoutEventId = null;
     pendingCancelEventId = null;
+    pendingDeleteEventId = null;
     const cancelForm = document.getElementById('form-event-cancel');
     if (cancelForm) cancelForm.reset();
     const cancelConfirm = document.getElementById('btn-event-cancel-confirm');
@@ -3247,20 +3455,134 @@
   }
 
   function openCancelEventModal(eventId) {
+    if (!eventId) return;
+    closeEventEditorDrawer();
     pendingCancelEventId = eventId;
     const modal = document.getElementById('modal-event-cancel');
     const titleEl = document.getElementById('modal-event-cancel-name');
+    const headingEl = document.getElementById('modal-event-cancel-title');
+    const warningEl = document.getElementById('modal-event-cancel-warning');
+    const ticketsEl = document.getElementById('modal-event-cancel-tickets');
+    const policyEl = document.getElementById('modal-event-cancel-policy');
+    const refundLabel = document.getElementById('event-cancel-refund-label');
     const confirmBtn = document.getElementById('btn-event-cancel-confirm');
     const checkbox = document.getElementById('event-cancel-refund-confirm');
     const ev = findEventById(eventId);
+    const isSeriesDate =
+      ev &&
+      ev.date &&
+      groupEventsIntoSeries(state.events || []).some(function (row) {
+        return (
+          row.isSeries &&
+          row.seriesCount > 1 &&
+          row.seriesEvents &&
+          row.seriesEvents.some(function (child) {
+            return child.id === eventId;
+          })
+        );
+      });
+    const sold = eventTicketsSoldCount(ev);
+
+    if (headingEl) {
+      headingEl.textContent = isSeriesDate ? 'Cancel this date' : 'Cancel this event';
+    }
     if (titleEl) {
-      titleEl.textContent = ev && ev.title ? '“' + ev.title + '”' : '';
+      const dateLine = ev && ev.date ? ' · ' + formatDateShort(ev.date) : '';
+      titleEl.textContent = ev && ev.title ? '“' + ev.title + '”' + dateLine : '';
+    }
+    if (ticketsEl) {
+      if (sold > 0) {
+        ticketsEl.hidden = false;
+        ticketsEl.textContent =
+          'You have sold ' +
+          sold +
+          ' ticket' +
+          (sold === 1 ? '' : 's') +
+          ' for this event. You must refund every attendee within 14 days.';
+      } else {
+        ticketsEl.hidden = true;
+        ticketsEl.textContent = '';
+      }
+    }
+    if (policyEl) {
+      policyEl.hidden = false;
+      policyEl.textContent =
+        'Cancelling more than 3 events in a 12-month period may result in your account being suspended from The Networker Hub.';
+    }
+    if (warningEl) {
+      const base =
+        'Cancelling will place your payout on hold until refunds are confirmed. Failure to refund attendees within 14 days will result in your account being suspended.';
+      warningEl.textContent = isSeriesDate
+        ? 'Only this date will be cancelled — other dates in the series stay live. ' + base
+        : base;
+    }
+    if (refundLabel) {
+      refundLabel.textContent =
+        sold > 0
+          ? 'I confirm I will refund all ' +
+            sold +
+            ' attendee' +
+            (sold === 1 ? '' : 's') +
+            ' within 14 days through my Stripe account'
+          : 'I confirm I will refund all attendees within 14 days through my Stripe account';
     }
     if (confirmBtn) confirmBtn.disabled = !(checkbox && checkbox.checked);
     if (modal) {
-      modal.hidden = false;
+      modal.removeAttribute('hidden');
+      modal.setAttribute('aria-hidden', 'false');
       modal.classList.add('is-open');
+      document.body.classList.add('org-cancel-modal-open');
+      const reasonSelect = document.getElementById('event-cancel-reason');
+      if (reasonSelect) {
+        setTimeout(function () {
+          reasonSelect.focus();
+        }, 0);
+      }
     }
+
+    api('/api/organiser/cancellations?eventId=' + encodeURIComponent(eventId))
+      .then(function (res) {
+        if (!res.ok || !res.data) return;
+        const ctx = res.data;
+        const ctxSold = Number(ctx.ticketsSold) || sold;
+        if (ticketsEl && ctxSold > 0) {
+          ticketsEl.hidden = false;
+          ticketsEl.textContent =
+            'You have sold ' +
+            ctxSold +
+            ' ticket' +
+            (ctxSold === 1 ? '' : 's') +
+            ' for this event. You must refund every attendee within 14 days.';
+        }
+        if (refundLabel && ctxSold > 0) {
+          refundLabel.textContent =
+            'I confirm I will refund all ' +
+            ctxSold +
+            ' attendee' +
+            (ctxSold === 1 ? '' : 's') +
+            ' within 14 days through my Stripe account';
+        }
+        if (!policyEl || policyEl.hidden) return;
+        const past = Number(ctx.cancellationsPastYear) || 0;
+        const limit = Number(ctx.cancellationLimit) || 3;
+        let policyText =
+          'Cancelling more than ' +
+          limit +
+          ' events in a 12-month period may result in your account being suspended from The Networker Hub.';
+        if (past > 0) {
+          policyText +=
+            ' You have cancelled ' +
+            past +
+            ' event' +
+            (past === 1 ? '' : 's') +
+            ' in the past year' +
+            (past >= limit ? ' — further cancellations may lead to suspension.' : '.');
+        }
+        policyEl.textContent = policyText;
+      })
+      .catch(function () {
+        /* optional context */
+      });
   }
 
   async function submitEventCancellation() {
@@ -3484,6 +3806,30 @@
     return tr;
   }
 
+  function seriesOverviewStatsHtml(children) {
+    const dates = children.length;
+    let ticketsSold = 0;
+    let ticketsCapacity = 0;
+    let revenueNum = 0;
+    children.forEach(function (child) {
+      ticketsSold += Number(child.ticketsSold) || 0;
+      ticketsCapacity += Number(child.ticketsCapacity) || 0;
+      revenueNum += Number(child.revenueNum) || 0;
+    });
+    return (
+      '<div class="org-series-stats org-stats org-stats--three">' +
+      '<div class="org-stat gold"><div class="org-stat-label">Dates</div><div class="org-stat-value">' +
+      esc(String(dates)) +
+      '</div></div>' +
+      '<div class="org-stat green"><div class="org-stat-label">Tickets sold</div><div class="org-stat-value">' +
+      esc(formatTicketsSoldLabel(ticketsSold, ticketsCapacity)) +
+      '</div></div>' +
+      '<div class="org-stat purple"><div class="org-stat-label">Total revenue</div><div class="org-stat-value">' +
+      esc(formatGbpAmount(revenueNum)) +
+      '</div></div></div>'
+    );
+  }
+
   function appendSeriesDetailPanel(body, ev) {
     const key = eventSeriesBucketKey(ev);
     const children = sortSeriesMembers(ev.seriesEvents || []);
@@ -3507,9 +3853,7 @@
         return (
           '<tr class="org-series-date-row' +
           topClass +
-          '" data-edit-event="' +
-          esc(child.id) +
-          '" tabindex="0" role="button" title="Edit this date">' +
+          '">' +
           '<td>' +
           esc(formatDateShort(child.date) || 'Date TBC') +
           '</td><td>' +
@@ -3522,7 +3866,9 @@
           esc(child.revenueDisplay || '£0') +
           '</td><td>' +
           statusBadgeHtml(child.statusKey || 'draft', child.statusLabel || 'Draft') +
-          '</td></tr>'
+          '</td>' +
+          seriesDateActionsCell(child) +
+          '</tr>'
         );
       })
       .join('');
@@ -3530,6 +3876,7 @@
     tr.innerHTML =
       '<td colspan="8">' +
       '<div class="org-series-dates-panel">' +
+      seriesOverviewStatsHtml(children) +
       '<div class="org-series-dates-head">' +
       '<p class="org-series-dates-lede"><strong>' +
       esc(String(children.length)) +
@@ -3538,12 +3885,12 @@
       ' · Sorted by ' +
       esc(eventsSortLabel()) +
       '</p>' +
-      '<p class="org-series-dates-hint">Click a date to edit that occurrence. Use column headers above to sort by revenue.</p>' +
+      '<p class="org-series-dates-hint">Use Edit, Delete, or Cancel on each date — only that occurrence is affected.</p>' +
       '</div>' +
       '<div class="org-series-dates-scroll">' +
       '<table class="org-series-dates-table">' +
       '<thead><tr>' +
-      '<th>Date</th><th>Time</th><th>Tickets sold</th><th>Revenue</th><th>Status</th>' +
+      '<th>Date</th><th>Time</th><th>Tickets sold</th><th>Revenue</th><th>Status</th><th>Actions</th>' +
       '</tr></thead><tbody>' +
       rowsHtml +
       '</tbody></table></div></div></td>';
@@ -3999,6 +4346,71 @@
       opt.textContent = ev.title;
       select.appendChild(opt);
     });
+  }
+
+  function readTicketModalAttendeeExtras() {
+    return {
+      foodIncluded: Boolean(document.getElementById('ticket-food-included')?.checked),
+      collectDietary: Boolean(document.getElementById('ticket-collect-dietary')?.checked),
+      collectAccessibility: Boolean(document.getElementById('ticket-collect-access')?.checked),
+    };
+  }
+
+  function syncTicketModalAttendeeExtras(eventId) {
+    const id = String(eventId || document.getElementById('ticket-event')?.value || '').trim();
+    const ev = state.events.find((row) => row.id === id);
+    const food = document.getElementById('ticket-food-included');
+    const dietary = document.getElementById('ticket-collect-dietary');
+    const access = document.getElementById('ticket-collect-access');
+    if (food) food.checked = Boolean(ev?.foodIncluded);
+    if (dietary) dietary.checked = Boolean(ev?.collectDietary);
+    if (access) access.checked = Boolean(ev?.collectAccessibility);
+  }
+
+  async function saveTicketModalAttendeeExtras(eventId) {
+    const id = String(eventId || '').trim();
+    if (!id) return { ok: true };
+    let ev = state.events.find((row) => row.id === id);
+    if (!ev) {
+      const res = await api('/api/organiser/events?id=' + encodeURIComponent(id));
+      if (!res.ok || !res.data.event) {
+        return {
+          ok: false,
+          message: res.data?.message || res.data?.error || 'Could not load event for booking questions',
+        };
+      }
+      ev = res.data.event;
+    }
+    const extras = readTicketModalAttendeeExtras();
+    const { ok, data } = await api('/api/organiser/events', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        id,
+        title: ev.title,
+        organiserGroupId: ev.organiserGroupId || ev.organiserGroupIds?.[0] || '',
+        type: ev.type,
+        description: ev.description,
+        location: ev.location,
+        venue: ev.venue,
+        ...(ev.imageUrl ? { photoUrl: ev.imageUrl } : {}),
+        attendeeExtras: extras,
+      }),
+    });
+    if (!ok) {
+      return {
+        ok: false,
+        message: data?.message || data?.error || 'Could not save attendee booking questions',
+      };
+    }
+    const patch = {
+      foodIncluded: extras.foodIncluded,
+      collectDietary: extras.collectDietary,
+      collectAccessibility: extras.collectAccessibility,
+    };
+    if (ev) Object.assign(ev, patch);
+    const stateEv = state.events.find((row) => row.id === id);
+    if (stateEv) Object.assign(stateEv, patch);
+    return { ok: true };
   }
 
   let scopeButtonsBound = false;
@@ -4793,13 +5205,43 @@
       });
       if (btn) btn.disabled = false;
       if (!ok) {
-        alert(data.message || data.error || 'Could not create ticket');
+        showOrganiserAlert(
+          esc(data.message || data.error || 'Could not create ticket'),
+          true
+        );
+        alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         return;
       }
+      const extrasResult = await saveTicketModalAttendeeExtras(eventId);
+      const extras = readTicketModalAttendeeExtras();
+      const eventTitle =
+        state.events.find((row) => row.id === eventId)?.title || 'your event';
+      const priceNum = Number(price);
+      const priceLabel =
+        Number.isFinite(priceNum) && priceNum > 0
+          ? '£' + (priceNum % 1 === 0 ? priceNum.toFixed(0) : priceNum.toFixed(2))
+          : 'Free';
       closeModals();
       document.getElementById('form-ticket').reset();
       await refresh();
       setRoute('events-tickets');
+      let message =
+        '<strong>Ticket created.</strong> “' +
+        esc(name) +
+        '” (' +
+        esc(priceLabel) +
+        ') is now on <strong>' +
+        esc(eventTitle) +
+        '</strong>.';
+      if (extras.collectDietary || extras.collectAccessibility) {
+        message += extrasResult.ok
+          ? ' Attendees will be asked about dietary or accessibility needs at checkout.'
+          : ' Booking questions could not be saved — open the event tickets page and save again.';
+      } else if (extras.foodIncluded && extrasResult.ok) {
+        message += ' Food and drink is noted on your event listing.';
+      }
+      showOrganiserAlert(message, !extrasResult.ok);
+      alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
   }
 
@@ -4859,6 +5301,13 @@
     });
 
     const btnNewTicket = document.getElementById('btn-new-ticket');
+    const ticketEventSelect = document.getElementById('ticket-event');
+    if (ticketEventSelect && !ticketEventSelect.dataset.extrasBound) {
+      ticketEventSelect.dataset.extrasBound = '1';
+      ticketEventSelect.addEventListener('change', () => {
+        syncTicketModalAttendeeExtras(ticketEventSelect.value);
+      });
+    }
     if (btnNewTicket) {
       btnNewTicket.addEventListener('click', () => {
         if (!state.events.length) {
@@ -4867,6 +5316,7 @@
           return;
         }
         fillEventSelect(document.getElementById('ticket-event'));
+        syncTicketModalAttendeeExtras();
         openModal('modal-ticket');
       });
     }
@@ -5009,6 +5459,11 @@
     const btnDownloadAttendees = document.getElementById('btn-download-attendees-csv');
     if (btnDownloadAttendees) {
       btnDownloadAttendees.addEventListener('click', exportAttendeesCsv);
+    }
+
+    const btnAttendeesShowAll = document.getElementById('btn-attendees-show-all');
+    if (btnAttendeesShowAll) {
+      btnAttendeesShowAll.addEventListener('click', clearAttendeesPendingFilter);
     }
 
     const attendeesBody = document.getElementById('attendees-body');
@@ -5161,7 +5616,23 @@
       applyAttendeesDeepLinkFromUrl();
       const r = parseRoute();
       setRoute(r.sub || r.page);
-      if (r.page === 'groups' || r.page === 'dashboard' || r.page === 'team') refresh();
+      if (
+        r.page === 'groups' ||
+        r.page === 'dashboard' ||
+        r.page === 'team' ||
+        (r.page === 'events' && (r.sub === 'events-attendees' || r.sub === 'events-cancellations'))
+      ) {
+        refresh();
+      }
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible' || !shell || shell.hidden) return;
+      if (eventsSubRoute === 'events-attendees') {
+        loadAttendeesAll();
+      } else if (eventsSubRoute === 'events-cancellations') {
+        loadCancellationsAll().then(() => renderCancellations());
+      }
     });
 
     window.addEventListener('pageshow', (e) => {
@@ -5225,6 +5696,11 @@
 
     window.addEventListener('message', (e) => {
       if (e.origin !== window.location.origin) return;
+      if (e.data && e.data.type === 'hub-event-cancel-request') {
+        const cancelId = e.data.eventId || '';
+        if (cancelId) openCancelEventModal(cancelId);
+        return;
+      }
       if (e.data && e.data.type === 'hub-event-saved') {
         closeEventEditorDrawer();
         loadBootstrap().then(renderAll);
@@ -5279,6 +5755,12 @@
       cancelForm.addEventListener('submit', (e) => {
         e.preventDefault();
         submitEventCancellation();
+      });
+    }
+    const deleteConfirmBtn = document.getElementById('btn-event-delete-confirm');
+    if (deleteConfirmBtn) {
+      deleteConfirmBtn.addEventListener('click', () => {
+        submitDeleteEvent();
       });
     }
   }

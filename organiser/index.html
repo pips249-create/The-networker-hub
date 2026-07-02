@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260702c" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260723" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
@@ -722,7 +722,12 @@
                 ⬇ Download attendees CSV
               </button>
             </div>
+            <p class="org-attendees-filter-note" id="attendees-filter-note" hidden>
+              Showing pending applications only.
+              <button type="button" class="org-inline-link" id="btn-attendees-show-all">Show all attendees</button>
+            </p>
             <p class="org-load-hint" id="attendees-load-hint" hidden>Loading attendees…</p>
+            <p class="org-load-hint org-load-hint-error" id="attendees-load-error" hidden></p>
             <div class="org-table-wrap">
               <table>
                 <thead>
@@ -957,13 +962,15 @@
       <div class="org-modal-panel">
         <h2 id="modal-event-cancel-title">Cancel this event</h2>
         <p id="modal-event-cancel-name" class="org-modal-sub"></p>
+        <p class="org-modal-cancel-tickets" id="modal-event-cancel-tickets" hidden></p>
         <p class="org-payout-ineligible" id="modal-event-cancel-warning">
           Cancelling this event will place your payout on hold until refunds are confirmed. Failure to refund
           attendees within 14 days will result in your account being suspended.
         </p>
+        <p class="org-modal-cancel-policy" id="modal-event-cancel-policy" hidden></p>
         <form id="form-event-cancel">
           <div class="org-field">
-            <label for="event-cancel-reason">Reason for cancellation <span class="org-required">(required)</span></label>
+            <label for="event-cancel-reason">Why are you cancelling? <span class="org-required">(required)</span></label>
             <select id="event-cancel-reason" required>
               <option value="">Select a reason</option>
               <option>Venue issue</option>
@@ -973,18 +980,34 @@
             </select>
           </div>
           <div class="org-field">
-            <label for="event-cancel-details">Details</label>
-            <textarea id="event-cancel-details" rows="3" placeholder="Tell attendees what happened and what to expect"></textarea>
+            <label for="event-cancel-details">Tell attendees what happened</label>
+            <textarea id="event-cancel-details" rows="3" placeholder="Explain why you are cancelling and what attendees should expect next"></textarea>
           </div>
           <label class="org-check">
             <input type="checkbox" id="event-cancel-refund-confirm" />
-            <span>I confirm I will refund all attendees within 14 days through my Stripe account</span>
+            <span id="event-cancel-refund-label">I confirm I will refund all attendees within 14 days through my Stripe account</span>
           </label>
           <div class="org-modal-actions">
             <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Keep event</button>
             <button type="submit" class="org-btn org-btn-danger" id="btn-event-cancel-confirm" disabled>Confirm cancellation</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Modal: delete event -->
+    <div class="org-modal" id="modal-event-delete" role="dialog" aria-modal="true" aria-labelledby="modal-event-delete-title" hidden>
+      <div class="org-modal-backdrop" data-org-modal-close></div>
+      <div class="org-modal-panel">
+        <h2 id="modal-event-delete-title">Delete this date?</h2>
+        <p id="modal-event-delete-name" class="org-modal-sub"></p>
+        <p class="org-modal-delete-series" id="modal-event-delete-series" hidden></p>
+        <p class="org-modal-delete-sold" id="modal-event-delete-sold" hidden></p>
+        <p class="org-modal-delete-note">This permanently removes the listing. It cannot be undone.</p>
+        <div class="org-modal-actions">
+          <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Keep date</button>
+          <button type="button" class="org-btn org-btn-danger" id="btn-event-delete-confirm">Delete date</button>
+        </div>
       </div>
     </div>
 
@@ -1022,6 +1045,25 @@
             <label for="ticket-qty">Quantity available (optional)</label>
             <input type="number" id="ticket-qty" min="0" step="1" />
           </div>
+          <fieldset class="org-ticket-extras-fieldset" id="ticket-attendee-extras">
+            <legend>Attendee information at booking</legend>
+            <p class="org-field-hint">
+              Optional extras for events with catering or accessibility needs. We add a note to your listing
+              description and can collect these details at checkout.
+            </p>
+            <label class="org-check" for="ticket-food-included">
+              <input type="checkbox" id="ticket-food-included" />
+              <span>Food or drink is included (e.g. breakfast, lunch, refreshments)</span>
+            </label>
+            <label class="org-check" for="ticket-collect-dietary">
+              <input type="checkbox" id="ticket-collect-dietary" />
+              <span>Ask attendees about dietary requirements</span>
+            </label>
+            <label class="org-check" for="ticket-collect-access">
+              <input type="checkbox" id="ticket-collect-access" />
+              <span>Ask attendees about accessibility requirements</span>
+            </label>
+          </fieldset>
           <div class="org-modal-actions">
             <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
             <button type="submit" class="org-btn org-btn-primary">Create ticket</button>
@@ -1253,6 +1295,25 @@
             ×
           </button>
           <h2 class="org-group-drawer-title" id="org-event-drawer-title">Edit event</h2>
+          <div class="org-event-drawer-stats org-stats org-stats--three" id="org-event-drawer-stats" hidden>
+            <div class="org-stat gold">
+              <div class="org-stat-label">Tickets sold</div>
+              <div class="org-stat-value" id="org-event-drawer-stat-tickets">0</div>
+            </div>
+            <div class="org-stat green">
+              <div class="org-stat-label">Revenue</div>
+              <div class="org-stat-value" id="org-event-drawer-stat-revenue">£0</div>
+            </div>
+            <div class="org-stat purple">
+              <div class="org-stat-label">Status</div>
+              <div class="org-stat-value org-stat-value--text" id="org-event-drawer-stat-status">Draft</div>
+            </div>
+          </div>
+          <div class="org-event-drawer-cancel" id="org-event-drawer-cancel" hidden>
+            <button type="button" class="org-btn org-btn-danger org-btn-sm" id="org-event-drawer-cancel-btn" data-cancel-event="">
+              Cancel this event
+            </button>
+          </div>
         </header>
         <div class="org-event-drawer-frame-wrap" id="org-event-drawer-frame-wrap">
           <div
@@ -1316,6 +1377,6 @@
     <script src="../js/organiser-onboarding.js?v=20260618"></script>
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
     <script src="../js/organiser-payment-setup.js?v=20260718"></script>
-    <script src="../js/organiser-dashboard.js?v=20260702c"></script>
+    <script src="../js/organiser-dashboard.js?v=20260723"></script>
   </body>
 </html>

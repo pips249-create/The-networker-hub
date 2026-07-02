@@ -107,6 +107,40 @@
   display: none;
 }
 
+.org-load-hint-error {
+  color: #b42318;
+}
+
+.org-attendees-filter-note {
+  font-size: 13px;
+  color: var(--od-text-soft);
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  background: #fff8e8;
+  border: 1px solid #f0d9a8;
+  border-radius: 10px;
+}
+
+.org-attendees-filter-note[hidden] {
+  display: none;
+}
+
+.org-inline-link {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--od-gold, #b8860b);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.org-inline-link:hover {
+  color: #8a6508;
+}
+
 /* My Events hub — horizontal tabs removed; use left sidebar */
 .org-events-subnav {
   display: flex;
@@ -311,6 +345,25 @@
   color: var(--od-text-soft);
   text-transform: uppercase;
   letter-spacing: 0.07em;
+  border-bottom: 0.5px solid var(--od-border-soft);
+}
+
+.org-action-menu-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--od-text-soft);
+}
+
+.org-action-menu-note {
+  margin: 0;
+  padding: 8px 14px 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--od-text-soft);
   border-bottom: 0.5px solid var(--od-border-soft);
 }
 
@@ -1061,6 +1114,10 @@
   line-height: 1.1;
 }
 
+.org-stat-value--text {
+  font-size: 18px;
+}
+
 /* Overview — “Add new” in page header */
 .org-overview-add {
   position: relative;
@@ -1479,6 +1536,29 @@
 .org-check input {
   margin-top: 3px;
   flex-shrink: 0;
+}
+
+.org-ticket-extras-fieldset {
+  margin: 20px 0 8px;
+  padding: 16px;
+  border: 1px solid var(--od-border-soft);
+  border-radius: var(--od-radius);
+  background: rgba(91, 47, 153, 0.03);
+}
+
+.org-ticket-extras-fieldset legend {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--od-text-dark);
+  padding: 0 4px;
+}
+
+.org-ticket-extras-fieldset .org-field-hint {
+  margin: 0 0 12px;
+}
+
+.org-ticket-extras-fieldset .org-check {
+  margin: 10px 0;
 }
 
 .org-btn-sm {
@@ -2283,9 +2363,50 @@
 }
 
 .org-modal-sub {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--od-text-dark);
+}
+
+.org-modal-cancel-tickets {
+  margin: 0 0 10px;
+  padding: 10px 12px;
   font-size: 13px;
+  line-height: 1.45;
+  color: #9a3412;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+}
+
+.org-modal-cancel-policy {
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--od-text-soft);
+}
+
+.org-modal-delete-series,
+.org-modal-delete-sold {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.45;
   color: var(--od-text-mid);
-  margin: -4px 0 16px;
+}
+
+.org-modal-delete-sold {
+  padding: 10px 12px;
+  color: #9a3412;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+}
+
+.org-modal-delete-note {
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: var(--od-text-soft);
 }
 
 .org-payout-breakdown {
@@ -2517,8 +2638,17 @@
   padding: 20px;
 }
 
+.org-modal[hidden] {
+  display: none !important;
+}
+
 .org-modal.is-open {
-  display: flex;
+  display: flex !important;
+  z-index: 10150;
+}
+
+body.org-cancel-modal-open {
+  overflow: hidden;
 }
 
 .org-modal-backdrop {
@@ -3501,6 +3631,23 @@ body.org-event-drawer-open {
   flex-shrink: 0;
 }
 
+.org-event-drawer-stats {
+  margin: 12px 0 0;
+}
+
+.org-event-drawer-stats .org-stat {
+  padding: 12px 14px;
+}
+
+.org-event-drawer-stats .org-stat-value {
+  font-size: 22px;
+  margin-top: 6px;
+}
+
+.org-event-drawer-cancel {
+  margin-top: 10px;
+}
+
 .org-event-drawer-help {
   position: absolute;
   top: 18px;
@@ -3682,6 +3829,18 @@ body.org-event-drawer-open {
   padding: 12px 16px 14px 72px;
 }
 
+.org-series-stats {
+  margin-bottom: 12px;
+}
+
+.org-series-stats .org-stat {
+  padding: 14px 16px;
+}
+
+.org-series-stats .org-stat-value {
+  font-size: 22px;
+}
+
 .org-series-dates-lede {
   margin: 0 0 4px;
   font-size: 13px;
@@ -3731,11 +3890,44 @@ body.org-event-drawer-open {
 }
 
 .org-series-date-row {
+  cursor: default;
+}
+
+.org-series-date-actions {
+  white-space: nowrap;
+}
+
+.org-series-date-btn {
+  display: inline-block;
+  margin: 0 4px 0 0;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--od-text-dark);
+  background: #fff;
+  border: 1px solid #cfe8ec;
+  border-radius: 6px;
   cursor: pointer;
 }
 
-.org-series-date-row:hover td {
+.org-series-date-btn:hover {
   background: #f4fbfc;
+  border-color: #9fd4dc;
+}
+
+.org-series-date-btn.danger {
+  color: #b42318;
+  border-color: #f5c2c0;
+}
+
+.org-series-date-btn.danger:hover {
+  background: #fef3f2;
+  border-color: #f04438;
+}
+
+.org-series-date-row:hover td {
+  background: transparent;
 }
 
 .org-series-date-row--top td {

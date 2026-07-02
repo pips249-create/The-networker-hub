@@ -14,14 +14,20 @@ function parseBody(req) {
 
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
-  const { json, setCors, requireOrganiserSession, cancelLockedEvent, confirmRefundsIssued } = api;
+  const {
+    json,
+    setCors,
+    requireOrganiserSession,
+    cancelLockedEvent,
+    confirmRefundsIssued,
+    getCancellationContext,
+  } = api;
 
   setCors(req, res);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
 
   const auth = requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
@@ -29,6 +35,22 @@ module.exports = async function handler(req, res) {
   if (!cancelLockedEvent) {
     return json(res, 501, { error: 'cancellations_not_supported', message: 'Requires Supabase.' });
   }
+
+  if (req.method === 'GET') {
+    const eventId = String(req.query?.eventId || req.query?.id || '').trim();
+    if (!eventId) return json(res, 400, { error: 'missing_event_id' });
+    if (!getCancellationContext) {
+      return json(res, 501, { error: 'cancellations_not_supported', message: 'Requires Supabase.' });
+    }
+    try {
+      const context = await getCancellationContext(auth.session, eventId);
+      return json(res, 200, { ok: true, ...context });
+    } catch (e) {
+      return json(res, e.status || 500, { error: 'cancellation_context_failed', message: e.message });
+    }
+  }
+
+  if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
 
   const body = parseBody(req);
   const eventId = String(body.eventId || body.id || '').trim();

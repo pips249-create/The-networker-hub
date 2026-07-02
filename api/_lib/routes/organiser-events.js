@@ -118,6 +118,14 @@ module.exports = async function handler(req, res) {
           return json(res, 403, { error: 'event_not_owned' });
         }
         const event = await getEventById(eventId);
+        let enriched = event;
+        try {
+          const { enrichEventsWithRegistrationSales } = require('../supabase-organiser-payouts');
+          const [withSales] = await enrichEventsWithRegistrationSales([event]);
+          enriched = withSales || event;
+        } catch {
+          /* sales enrichment optional */
+        }
         if (
           !isPlatformAdmin(auth.session) &&
           event.organiserGroupId &&
@@ -129,7 +137,7 @@ module.exports = async function handler(req, res) {
             return json(res, 403, { error: 'event_not_owned' });
           }
         }
-        return json(res, 200, { ok: true, event });
+        return json(res, 200, { ok: true, event: enriched });
       }
       const groups = await listGroupsForSession(auth.session);
       const groupIds = groups.map((g) => g.id);

@@ -120,6 +120,10 @@ module.exports = async function handler(req, res) {
           tickets: tiers,
           publish,
           vatTreatment: vatTreatment || null,
+          attendeeExtras:
+            body.attendeeExtras != null && typeof body.attendeeExtras === 'object'
+              ? body.attendeeExtras
+              : null,
           refund: publish
             ? {
                 refundPolicy: body.refundPolicy,

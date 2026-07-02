@@ -38,6 +38,58 @@ async function assertEventOwned(sb, session, eventId, groupIds) {
   return row;
 }
 
+async function countOrganiserCancellationsPastYear(sb, groupIds) {
+  if (!groupIds.length) return 0;
+  const since = new Date();
+  since.setUTCFullYear(since.getUTCFullYear() - 1);
+  const { data: eventRows, error: evErr } = await sb
+    .from('events')
+    .select('id')
+    .in('organiser_id', groupIds);
+  if (evErr) throw new Error(evErr.message);
+  const ids = (eventRows || []).map((r) => r.id);
+  if (!ids.length) return 0;
+  const { count, error } = await sb
+    .from('event_cancellations')
+    .select('id', { count: 'exact', head: true })
+    .in('event_id', ids)
+    .gte('created_at', since.toISOString());
+  if (error) throw new Error(error.message);
+  return count || 0;
+}
+
+async function loadEventRegistrationCounts(sb, eventId) {
+  const { data: regs, error } = await sb
+    .from('registrations')
+    .select('id, payment_status, quantity, cancelled_at')
+    .eq('event_id', eventId);
+  if (error) throw new Error(error.message);
+  const active = (regs || []).filter(
+    (row) => !row.cancelled_at && String(row.payment_status || '').trim() !== 'Refunded'
+  );
+  const { summarizeRegistrationSales } = require('./supabase-organiser-payouts');
+  const { ticketsSold } = summarizeRegistrationSales(active);
+  const paidBookings = active.filter((row) => String(row.payment_status || '').trim() === 'Paid').length;
+  return { ticketsSold, paidBookings, activeBookings: active.length };
+}
+
+async function getCancellationContext(session, eventId) {
+  const access = await resolveOrganiserAccess(session);
+  const groupIds = access.groupIds || [];
+  const sb = getSupabaseAdmin();
+  await assertEventOwned(sb, session, eventId, groupIds);
+  const sales = await loadEventRegistrationCounts(sb, eventId);
+  const cancellationsPastYear = await countOrganiserCancellationsPastYear(sb, groupIds);
+  return {
+    eventId,
+    ticketsSold: sales.ticketsSold,
+    paidBookings: sales.paidBookings,
+    activeBookings: sales.activeBookings,
+    cancellationsPastYear,
+    cancellationLimit: 3,
+  };
+}
+
 async function cancelLockedEvent(session, eventId, payload) {
   const reason = String(payload.reason || '').trim();
   const details = String(payload.details || '').trim();
@@ -59,8 +111,9 @@ async function cancelLockedEvent(session, eventId, payload) {
   const sb = getSupabaseAdmin();
   const row = await assertEventOwned(sb, session, eventId, groupIds);
 
-  if (!row.locked) {
-    const e = new Error('This event is not locked — use the standard unpublish flow');
+  const sales = await loadEventRegistrationCounts(sb, eventId);
+  if (!row.locked && sales.ticketsSold < 1) {
+    const e = new Error('This event has no ticket sales — unpublish or delete it instead');
     e.status = 400;
     throw e;
   }
@@ -182,5 +235,6 @@ async function confirmRefundsIssued(session, eventId) {
 module.exports = {
   cancelLockedEvent,
   confirmRefundsIssued,
+  getCancellationContext,
   CANCELLATION_REASONS: [...CANCELLATION_REASONS],
 };

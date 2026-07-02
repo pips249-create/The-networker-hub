@@ -79,6 +79,82 @@
     badge.textContent = label;
     badge.className = 'ee-status-badge ' + cls;
     badge.hidden = false;
+    return label;
+  }
+
+  function formatGbpAmount(n) {
+    const num = Number(n) || 0;
+    return '£' + num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  function formatTicketsSoldLabel(sold, capacity) {
+    const s = Number(sold) || 0;
+    const c = Number(capacity) || 0;
+    if (c > 0) return s + ' / ' + c;
+    return String(s);
+  }
+
+  function eventIsPublishedListing(ev) {
+    if (!ev) return false;
+    const st = String(ev.status || '').toLowerCase();
+    if (st === 'cancelled') return false;
+    return st === 'published' || ev.approvalStatus === 'Approved';
+  }
+
+  function eventCanCancelListing(ev) {
+    if (!ev || !ev.id) return false;
+    if (!eventIsPublishedListing(ev)) return false;
+    const sold = Number(ev.ticketsSold) || 0;
+    return Boolean(ev.locked) || sold > 0;
+  }
+
+  function renderEventOverviewStats(ev) {
+    const wrap = document.getElementById('ee-event-stats');
+    if (!wrap || !ev || !ev.id) return;
+    const ticketsEl = document.getElementById('ee-stat-tickets');
+    const revenueEl = document.getElementById('ee-stat-revenue');
+    const statusEl = document.getElementById('ee-stat-status');
+    const sold = Number(ev.ticketsSold) || 0;
+    const capacity = Number(ev.ticketsCapacity) || 0;
+    if (ticketsEl) ticketsEl.textContent = formatTicketsSoldLabel(sold, capacity);
+    if (revenueEl) {
+      revenueEl.textContent =
+        ev.revenueDisplay || formatGbpAmount(ev.revenueNum != null ? ev.revenueNum : 0);
+    }
+    if (statusEl) {
+      const st = String(ev.status || '').toLowerCase();
+      statusEl.textContent =
+        ev.statusLabel ||
+        (st === 'cancelled'
+          ? 'Cancelled'
+          : st === 'published' || ev.approvalStatus === 'Approved'
+            ? 'Published'
+            : 'Draft');
+    }
+    wrap.hidden = false;
+
+    const cancelRow = document.getElementById('ee-cancel-row');
+    const cancelBtn = document.getElementById('ee-cancel-event-btn');
+    if (cancelRow && cancelBtn) {
+      const canCancel = eventCanCancelListing(ev);
+      cancelRow.hidden = !canCancel;
+      if (canCancel) {
+        cancelBtn.textContent =
+          sold > 0 ? 'Cancel this event (' + sold + ' tickets sold)' : 'Cancel this event';
+      }
+    }
+  }
+
+  function requestEventCancellation() {
+    if (!editId) return;
+    if (isEmbedDrawer && window.parent && window.parent !== window) {
+      window.parent.postMessage(
+        { type: 'hub-event-cancel-request', eventId: editId },
+        window.location.origin
+      );
+      return;
+    }
+    location.href = 'index.html#events-list';
   }
 
   function applyLockUi(locked) {
@@ -764,6 +840,7 @@
     renderCalendar();
     renderSelectedList();
     showEventStatusBadge(ev);
+    renderEventOverviewStats(ev);
     applyLockUi(ev.locked);
   }
 
@@ -1110,6 +1187,8 @@
     bindWordCounter();
     bindFormatToggleButtons();
     bindCopyFromGroupButtons();
+    const cancelBtn = document.getElementById('ee-cancel-event-btn');
+    if (cancelBtn) cancelBtn.addEventListener('click', requestEventCancellation);
     if (QuarterTime) {
       QuarterTime.initPair('ee-start-time', 'ee-end-time', { start: '18:00', end: '20:00' });
     }

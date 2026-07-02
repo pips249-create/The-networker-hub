@@ -15,6 +15,7 @@ const {
   isAdminRole,
   normalizeRole,
 } = require('./auth');
+const { composeEventDescription } = require('./event-description');
 
 const GROUP_FIELDS = {
   name: ['Organiser Name', 'Group Name', 'Name', 'Title'],
@@ -939,20 +940,6 @@ async function updateGroup(groupId, payload) {
 
 async function unpublishGroup(groupId) {
   return updateGroup(groupId, { listingStatus: 'unpublished' });
-}
-
-function composeEventDescription(description, extras) {
-  let text = String(description || '').trim();
-  const notes = [];
-  if (extras && extras.foodIncluded) notes.push('Food & drink included at this event.');
-  if (extras && extras.collectDietary) notes.push('Attendees will be asked about dietary requirements.');
-  if (extras && extras.collectAccessibility) {
-    notes.push('Attendees will be asked about accessibility requirements.');
-  }
-  if (notes.length) {
-    text = (text ? text + '\n\n' : '') + notes.join(' ');
-  }
-  return text;
 }
 
 async function buildEventRecordFields({

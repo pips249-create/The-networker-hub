@@ -57,9 +57,35 @@ function attendeeExtrasFromRow(row) {
   };
 }
 
+const ATTENDEE_EXTRA_NOTE_LINES = [
+  'Food & drink included at this event.',
+  'Attendees will be asked about dietary requirements.',
+  'Attendees will be asked about accessibility requirements.',
+];
+
+function composeEventDescription(description, extras) {
+  let text = plainEventDescription(description);
+  if (text) {
+    const lines = text.split('\n');
+    text = lines
+      .filter((line) => !ATTENDEE_EXTRA_NOTE_LINES.includes(String(line).trim()))
+      .join('\n')
+      .trim();
+  }
+  const notes = [];
+  if (extras && extras.foodIncluded) notes.push(ATTENDEE_EXTRA_NOTE_LINES[0]);
+  if (extras && extras.collectDietary) notes.push(ATTENDEE_EXTRA_NOTE_LINES[1]);
+  if (extras && extras.collectAccessibility) notes.push(ATTENDEE_EXTRA_NOTE_LINES[2]);
+  if (notes.length) {
+    text = (text ? text + '\n\n' : '') + notes.join(' ');
+  }
+  return text;
+}
+
 module.exports = {
   plainEventDescription,
   mapAttendeeExtrasToRow,
   attendeeExtrasFromRow,
+  composeEventDescription,
   isAttendeeExtrasJson,
 };

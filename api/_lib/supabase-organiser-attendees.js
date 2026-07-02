@@ -19,10 +19,7 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
     filterEventId && filterEventId !== 'all' ? [filterEventId] : [...allowed];
 
   const sb = getSupabaseAdmin();
-  const { data, error } = await sb
-    .from('registrations')
-    .select(
-      `
+  const baseSelect = `
       id,
       created_at,
       event_id,
@@ -34,16 +31,30 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       amount_paid,
       quantity,
       guest_names,
-      dietary_requirements,
-      accessibility_requirements,
       cancelled_at,
       attendees ( name, email ),
       events ( title ),
       tickets ( name, price )
-    `
-    )
-    .in('event_id', targetIds)
-    .is('cancelled_at', null);
+    `;
+  const extrasSelect = `
+      dietary_requirements,
+      accessibility_requirements,
+    `;
+
+  async function fetchRows(includeExtras) {
+    const select = includeExtras
+      ? baseSelect.replace('guest_names,', 'guest_names,\n' + extrasSelect)
+      : baseSelect;
+    return sb.from('registrations').select(select).in('event_id', targetIds).is('cancelled_at', null);
+  }
+
+  let { data, error } = await fetchRows(true);
+  if (
+    error &&
+    /dietary_requirements|accessibility_requirements|column/.test(String(error.message || ''))
+  ) {
+    ({ data, error } = await fetchRows(false));
+  }
 
   if (error) throw error;
 

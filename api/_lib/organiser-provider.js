@@ -26,6 +26,7 @@ function getOrganiserApi() {
     resendApplicationOrganiserAlert: require('./supabase-application-decisions').resendApplicationOrganiserAlert,
     resendApprovalEmailForOrganiser: require('./supabase-application-decisions').resendApprovalEmailForOrganiser,
     cancelLockedEvent: cancellations.cancelLockedEvent,
+    getCancellationContext: cancellations.getCancellationContext,
     confirmRefundsIssued: cancellations.confirmRefundsIssued,
     listPendingClaimGroupsForSession: claims.listPendingClaimGroupsForSession,
     claimGroupForSession: claims.claimGroupForSession,

@@ -881,14 +881,15 @@
 
   async function applyAttendeeExtrasToEvents() {
     const extras = attendeeExtras();
-    if (!extras.foodIncluded && !extras.collectDietary && !extras.collectAccessibility) {
-      return;
-    }
+    let lastError = '';
     for (const id of eventIds) {
       const res = await api('/api/organiser/events?id=' + encodeURIComponent(id));
-      if (!res.ok || !res.data.event) continue;
+      if (!res.ok || !res.data.event) {
+        lastError = res.data?.message || res.data?.error || 'Could not load event';
+        continue;
+      }
       const ev = res.data.event;
-      await api('/api/organiser/events', {
+      const patch = await api('/api/organiser/events', {
         method: 'PATCH',
         body: JSON.stringify({
           id,
@@ -902,7 +903,12 @@
           attendeeExtras: extras,
         }),
       });
+      if (!patch.ok) {
+        lastError = patch.data?.message || patch.data?.error || 'Could not save attendee booking questions';
+      }
     }
+    if (lastError) return { ok: false, message: lastError };
+    return { ok: true };
   }
 
   function renderSalesPendingBanner() {
@@ -1121,6 +1127,7 @@
       tickets: tiers,
       publish,
       vatTreatment: collectVatTreatment(),
+      attendeeExtras: attendeeExtras(),
       ...refund,
     };
 
@@ -1130,8 +1137,19 @@
         body: JSON.stringify(body),
       });
 
-      if (ok) {
-        await applyAttendeeExtrasToEvents();
+      if (!ok) return { ok, data };
+
+      const extrasResult = await applyAttendeeExtrasToEvents();
+      if (extrasResult && !extrasResult.ok) {
+        return {
+          ok: false,
+          data: {
+            error: 'attendee_extras_failed',
+            message:
+              extrasResult.message ||
+              'Tickets saved but attendee booking questions could not be updated. Try saving again.',
+          },
+        };
       }
 
       return { ok, data };
