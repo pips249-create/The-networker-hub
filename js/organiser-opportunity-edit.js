@@ -551,6 +551,12 @@
     bindLogoUpload();
     bindPhotoUpload();
 
+    const backLink = document.getElementById('oe-back-link');
+    if (backLink && editId) {
+      backLink.href = 'index.html#business-overview';
+      backLink.textContent = '← Back to Business ops';
+    }
+
     const monthsInput = document.getElementById('oe-listing-months');
     if (monthsInput) {
       monthsInput.addEventListener('input', function () {

@@ -54,6 +54,7 @@
     opportunities: [],
     opportunitiesLoaded: false,
     pendingClaimGroups: [],
+    dashboardScope: null,
   };
 
   let groupClaimRejectMode = false;
@@ -525,6 +526,24 @@
     return d.innerHTML;
   }
 
+  function setOrgEmpty(el, options) {
+    if (!el) return;
+    const opts = options || {};
+    const show = Boolean(opts.show);
+    el.hidden = !show;
+    if (!show) return;
+    if (!el.classList.contains('org-empty-state')) {
+      if (opts.text != null) el.textContent = opts.text;
+      return;
+    }
+    const titleEl = el.querySelector('.org-empty-state-title');
+    const textEl = el.querySelector('.org-empty-state-text');
+    const actionsEl = el.querySelector('.org-empty-state-actions');
+    if (titleEl && opts.title != null) titleEl.textContent = opts.title;
+    if (textEl && opts.text != null) textEl.textContent = opts.text;
+    if (actionsEl && opts.hideActions != null) actionsEl.hidden = Boolean(opts.hideActions);
+  }
+
   const GROUP_SAVED_KEY = 'hub_group_last_saved';
 
   function applyPendingGroupSave() {
@@ -684,52 +703,222 @@
     );
   }
 
-  function renderJoinLinkBanner() {
-    const banner = document.getElementById('join-link-banner');
-    if (!banner) return;
-    const missing = collectEventsNeedingJoinLink(state.events);
-    if (!missing.length) {
-      banner.hidden = true;
-      banner.innerHTML = '';
+  function renderOrganiserNotices() {
+    const root = document.getElementById('org-notices');
+    if (!root) return;
+    const notices = [];
+
+    const scope = state.dashboardScope;
+    if (scope) {
+      if (scope.kind === 'admin') {
+        notices.push({
+          id: 'scope-admin',
+          type: 'info',
+          title: "You're viewing the whole platform (admin)",
+          text:
+            'Every organiser\'s groups, events, and ticket types are visible here. Switch back when you want to work on your own account only.',
+          actions:
+            '<button type="button" class="org-btn org-btn-primary org-btn-sm" id="btn-scope-my">Show only my organiser data</button>',
+        });
+      } else if (scope.kind === 'personal_admin') {
+        notices.push({
+          id: 'scope-personal',
+          type: 'info',
+          title: 'Your organiser account only',
+          text:
+            'This workspace shows groups and events linked to <strong>' +
+            esc(state.user?.email || 'your account') +
+            '</strong> — not the full admin view across all organisers.',
+          actions:
+            '<button type="button" class="org-btn org-btn-outline org-btn-sm" id="btn-scope-all">View all organisers (admin)</button>',
+        });
+      } else if (scope.kind === 'groups_error') {
+        notices.push({
+          id: 'groups-error',
+          type: 'error',
+          title: 'Could not load your group profiles',
+          text: esc(scope.message || 'Please refresh the page or try again shortly.'),
+        });
+      } else if (scope.kind === 'onboarding') {
+        notices.push({
+          id: 'onboarding',
+          type: 'info',
+          title: 'Set up your organiser workspace',
+          text:
+            'Start with a <strong>group profile</strong> — your public organiser page on the hub. Then you can list events, add ticket types, and manage bookings.',
+          actions:
+            '<a class="org-btn org-btn-gold org-btn-sm" href="group-edit.html">Create group profile</a>',
+        });
+      }
+    }
+
+    const missingJoin = collectEventsNeedingJoinLink(state.events);
+    if (missingJoin.length) {
+      const preview = missingJoin
+        .slice(0, 3)
+        .map((ev) => {
+          const date = formatDateShort(ev.date);
+          const dateSuffix =
+            date && date !== '—' ? ' <span class="org-notice-chip-date">(' + esc(date) + ')</span>' : '';
+          return (
+            '<button type="button" class="org-notice-chip" data-edit-event="' +
+            esc(ev.id) +
+            '">' +
+            esc(ev.title) +
+            dateSuffix +
+            '</button>'
+          );
+        })
+        .join('');
+      const more =
+        missingJoin.length > 3
+          ? '<span class="org-notice-chip-more">+' + String(missingJoin.length - 3) + ' more</span>'
+          : '';
+      const first = missingJoin[0];
+      notices.push({
+        id: 'join-links',
+        type: 'warning',
+        title:
+          missingJoin.length === 1
+            ? 'Add a meeting link before your online event'
+            : 'Add meeting links for ' + missingJoin.length + ' online events',
+        text:
+          missingJoin.length === 1
+            ? '“' +
+              esc(first.title || 'Your event') +
+              '” is online but has no join URL yet. Ticket holders will not receive joining instructions by email until you paste the meeting link in the event editor.'
+            : missingJoin.length +
+              ' upcoming online events are missing a join URL. Attendees need this link by email before each event starts — open each event below to add it.',
+        actions: '<div class="org-notice-chips">' + preview + more + '</div>',
+      });
+    }
+
+    const pending = pendingApplicationsList();
+    if (pending.length) {
+      const preview = pending
+        .slice(0, 3)
+        .map((a) => {
+          return (
+            '<button type="button" class="org-notice-chip" data-review-application="' +
+            esc(a.id) +
+            '">' +
+            esc(a.name || 'Applicant') +
+            ' · ' +
+            esc(a.eventTitle || 'Event') +
+            '</button>'
+          );
+        })
+        .join('');
+      const more =
+        pending.length > 3
+          ? '<span class="org-notice-chip-more">+' + String(pending.length - 3) + ' more</span>'
+          : '';
+      const first = pending[0];
+      notices.push({
+        id: 'applications',
+        type: 'action',
+        title:
+          pending.length === 1
+            ? 'One Seat Only application needs your decision'
+            : pending.length + ' One Seat Only applications need your decision',
+        text:
+          pending.length === 1
+            ? '<strong>' +
+              esc(first.name || 'Someone') +
+              '</strong> applied for a seat at <strong>' +
+              esc(first.eventTitle || 'your event') +
+              '</strong>. Check their industry and job title match your event rules, then approve or decline their seat.'
+            : 'People have applied for seats at your One Seat Only events. Review each applicant\'s industry and job title, then approve or decline before the event.',
+        actions:
+          '<div class="org-notice-chips">' +
+          preview +
+          more +
+          '</div><button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="events-attendees">Open attendees &amp; applications</button>',
+      });
+    }
+
+    if (!notices.length) {
+      root.hidden = true;
+      root.innerHTML = '';
       return;
     }
-    const preview = missing
-      .slice(0, 3)
-      .map((ev) => {
-        const date = formatDateShort(ev.date);
-        const dateSuffix =
-          date && date !== '—' ? ' <span class="org-join-link-banner-date">(' + esc(date) + ')</span>' : '';
-        return (
-          '<button type="button" class="org-join-link-banner-link" data-edit-event="' +
-          esc(ev.id) +
-          '">' +
-          esc(ev.title) +
-          dateSuffix +
-          '</button>'
-        );
-      })
-      .join('');
-    const more =
-      missing.length > 3
-        ? ' <span class="org-join-link-banner-more">+' + String(missing.length - 3) + ' more</span>'
-        : '';
-    banner.hidden = false;
-    banner.innerHTML =
-      '<p><strong>Join link needed</strong> — ' +
-      (missing.length === 1
-        ? 'This online event is missing a meeting link. Ticket holders receive the link by email once you add it.'
-        : missing.length +
-          ' upcoming online events are missing a meeting link. Ticket holders receive the link by email once you add it.') +
-      '</p><p class="org-join-link-banner-events">' +
-      preview +
-      more +
-      '</p>';
-    banner.querySelectorAll('[data-edit-event]').forEach((btn) => {
+
+    const actionItems = notices.filter((n) => n.type === 'action' || n.type === 'warning').length;
+    const sub =
+      actionItems > 0
+        ? actionItems +
+          ' item' +
+          (actionItems === 1 ? '' : 's') +
+          ' need' +
+          (actionItems === 1 ? 's' : '') +
+          ' action'
+        : notices.length + ' update' + (notices.length === 1 ? '' : 's') + ' for you';
+
+    root.hidden = false;
+    root.innerHTML =
+      '<header class="org-notices-head">' +
+      '<div class="org-notices-head-text">' +
+      '<h2 class="org-notices-title">Needs your attention</h2>' +
+      '<p class="org-notices-sub">' +
+      esc(sub) +
+      '</p>' +
+      '</div>' +
+      '</header>' +
+      '<ul class="org-notices-list">' +
+      notices
+        .map((n) => {
+          return (
+            '<li class="org-notice org-notice--' +
+            esc(n.type) +
+            '" data-notice-id="' +
+            esc(n.id) +
+            '">' +
+            '<div class="org-notice-body">' +
+            '<h3 class="org-notice-title">' +
+            esc(n.title) +
+            '</h3>' +
+            '<p class="org-notice-text">' +
+            n.text +
+            '</p>' +
+            (n.actions ? '<div class="org-notice-actions">' + n.actions + '</div>' : '') +
+            '</div></li>'
+          );
+        })
+        .join('') +
+      '</ul>';
+
+    root.querySelectorAll('[data-edit-event]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-edit-event');
         if (id) openEventEditorDrawer(state.events.find((e) => e.id === id) || { id });
       });
     });
+
+    root.querySelectorAll('[data-review-application]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const registrationId = btn.getAttribute('data-review-application');
+        const row = state.attendeesAll.find((a) => a.id === registrationId);
+        if (row && row.eventId) {
+          filters.attendeesEvent = row.eventId;
+          filters.attendeesPendingOnly = true;
+        }
+        setRoute('events-attendees');
+        loadAttendeesAll().then(() => renderAttendees());
+      });
+    });
+
+    const attendeesCta = root.querySelector('[data-org-route="events-attendees"]');
+    if (attendeesCta) {
+      attendeesCta.addEventListener('click', () => {
+        filters.attendeesPendingOnly = true;
+        setRoute('events-attendees');
+        loadAttendeesAll().then(() => renderAttendees());
+      });
+    }
+  }
+
+  function renderJoinLinkBanner() {
+    renderOrganiserNotices();
   }
 
   function formatBookingReference(registrationId) {
@@ -1450,6 +1639,9 @@
     document.querySelectorAll('[data-events-panel]').forEach((panel) => {
       panel.classList.toggle('is-active', panel.getAttribute('data-events-panel') === eventsSubRoute);
     });
+    document.querySelectorAll('[data-events-tab]').forEach((tab) => {
+      tab.classList.toggle('is-active', tab.getAttribute('data-events-tab') === eventsSubRoute);
+    });
     const titles = {
       'events-list': ['My Events', 'Manage all your event listings — click any event name to edit.'],
       'events-tickets': ['Tickets', 'All ticket types across your events.'],
@@ -1516,7 +1708,12 @@
       badge.hidden = count < 1;
       badge.textContent = count > 1 ? String(count) + ' pending' : 'New';
     }
-    renderApplicationsBanner();
+    const tabBadge = document.getElementById('org-events-tab-applications-badge');
+    if (tabBadge) {
+      tabBadge.hidden = count < 1;
+      tabBadge.textContent = count > 1 ? String(count) : 'New';
+    }
+    renderOrganiserNotices();
     renderHubPortalMeta();
     const quickCard = document.getElementById('org-quick-review-applications');
     const quickBadge = document.getElementById('org-quick-applications-badge');
@@ -1524,75 +1721,6 @@
     if (quickBadge) {
       quickBadge.hidden = count < 1;
       quickBadge.textContent = String(count);
-    }
-  }
-
-  function renderApplicationsBanner() {
-    const banner = document.getElementById('org-applications-banner');
-    if (!banner) return;
-    const pending = pendingApplicationsList();
-    if (!pending.length) {
-      banner.hidden = true;
-      banner.innerHTML = '';
-      return;
-    }
-
-    const preview = pending
-      .slice(0, 3)
-      .map((a) => {
-        return (
-          '<button type="button" class="org-applications-banner-link" data-review-application="' +
-          esc(a.id) +
-          '">' +
-          esc(a.name || 'Applicant') +
-          ' · ' +
-          esc(a.eventTitle || 'Event') +
-          '</button>'
-        );
-      })
-      .join('');
-    const more =
-      pending.length > 3
-        ? ' <span class="org-join-link-banner-more">+' + String(pending.length - 3) + ' more</span>'
-        : '';
-
-    const lead =
-      pending.length === 1
-        ? '<strong>New application</strong> — someone applied to attend <strong>' +
-          esc(pending[0].eventTitle || 'your event') +
-          '</strong>. Review their industry and job title before approving.'
-        : '<strong>' +
-          pending.length +
-          ' applications awaiting review</strong> — approve or deny seats for your One Seat Only events.';
-
-    banner.hidden = false;
-    banner.innerHTML =
-      '<p>' +
-      lead +
-      '</p><p class="org-applications-banner-actions">' +
-      preview +
-      more +
-      '<button type="button" class="org-applications-banner-cta" data-org-route="events-attendees">Review applications</button>' +
-      '</p>';
-
-    banner.querySelectorAll('[data-review-application]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const registrationId = btn.getAttribute('data-review-application');
-        const row = state.attendeesAll.find((a) => a.id === registrationId);
-        if (row && row.eventId) {
-          filters.attendeesEvent = row.eventId;
-          filters.attendeesPendingOnly = true;
-          fillAttendeesEventFilter();
-        }
-        setRoute('events-attendees');
-      });
-    });
-    const cta = banner.querySelector('[data-org-route="events-attendees"]');
-    if (cta) {
-      cta.addEventListener('click', () => {
-        filters.attendeesPendingOnly = true;
-        setRoute('events-attendees');
-      });
     }
   }
 
@@ -1963,18 +2091,20 @@
     body.innerHTML = '';
 
     if (!list.length) {
-      if (empty) {
-        empty.hidden = false;
-        empty.textContent = state.attendeesAll.length
-          ? filters.attendeesPendingOnly
-            ? 'No pending applications match this filter.'
-            : 'No attendees match this event filter.'
-          : 'No registrations yet. Attendees appear here when people book tickets for your events.';
+      const hasAttendees = state.attendeesAll.length > 0;
+      let title = 'No registrations yet';
+      let text = 'Attendees appear here when people book tickets for your events.';
+      if (hasAttendees) {
+        title = filters.attendeesPendingOnly ? 'No pending applications' : 'No matching attendees';
+        text = filters.attendeesPendingOnly
+          ? 'No pending applications match this filter.'
+          : 'No attendees match this event filter.';
       }
+      setOrgEmpty(empty, { show: true, title, text });
       updatePaginationNav('attendees', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
       return;
     }
-    if (empty) empty.hidden = true;
+    setOrgEmpty(empty, { show: false });
     const pageInfo = paginateList(list, listPages.attendees);
     listPages.attendees = pageInfo.page;
     updatePaginationNav('attendees', pageInfo);
@@ -2054,9 +2184,11 @@
     }
     state.cancellationsAll = [];
     if (empty) {
-      empty.hidden = false;
-      empty.textContent =
-        'Could not load cancellations. ' + (data.message || data.error || 'Please refresh and try again.');
+      setOrgEmpty(empty, {
+        show: true,
+        title: 'Could not load cancellations',
+        text: (data.message || data.error || 'Please refresh and try again.') + '.',
+      });
     }
     return false;
   }
@@ -2069,16 +2201,18 @@
     body.innerHTML = '';
 
     if (!list.length) {
-      if (empty) {
-        empty.hidden = false;
-        empty.textContent = state.cancellationsAll.length
+      const hasRows = state.cancellationsAll.length > 0;
+      setOrgEmpty(empty, {
+        show: true,
+        title: hasRows ? 'No matching cancellations' : 'No cancellations yet',
+        text: hasRows
           ? 'No cancellations match this event filter.'
-          : 'No attendee cancellations yet. When someone cancels their own booking, it will appear here.';
-      }
+          : 'When someone cancels their own booking, it will appear here.',
+      });
       updatePaginationNav('cancellations', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
       return;
     }
-    if (empty) empty.hidden = true;
+    setOrgEmpty(empty, { show: false });
     const pageInfo = paginateList(list, listPages.cancellations);
     listPages.cancellations = pageInfo.page;
     updatePaginationNav('cancellations', pageInfo);
@@ -3692,10 +3826,10 @@
     body.innerHTML = '';
     const slice = state.groups.slice(0, 6);
     if (!slice.length) {
-      if (empty) empty.hidden = false;
+      setOrgEmpty(empty, { show: true });
       return;
     }
-    if (empty) empty.hidden = true;
+    setOrgEmpty(empty, { show: false });
     slice.forEach((g) => {
       const tr = document.createElement('tr');
       tr.innerHTML =
@@ -3756,10 +3890,10 @@
     body.innerHTML = '';
     const slice = overviewEventsForDashboard();
     if (!slice.length) {
-      if (empty) empty.hidden = false;
+      setOrgEmpty(empty, { show: true });
       return;
     }
-    if (empty) empty.hidden = true;
+    setOrgEmpty(empty, { show: false });
     slice.forEach((ev) => {
       const tr = document.createElement('tr');
       tr.innerHTML =
@@ -3791,16 +3925,19 @@
     body.innerHTML = '';
     const list = filteredGroupsList();
     if (!list.length) {
-      if (empty) {
-        empty.hidden = false;
-        empty.textContent = state.groups.length
-          ? 'No groups match your search or filters.'
-          : 'No groups yet. Create your first organiser group.';
-      }
+      const hasGroups = state.groups.length > 0;
+      setOrgEmpty(empty, {
+        show: true,
+        title: hasGroups ? 'No matching groups' : 'No group profiles yet',
+        text: hasGroups
+          ? 'Try adjusting your search or status filter.'
+          : 'Create your organiser page on the hub before listing events.',
+        hideActions: hasGroups,
+      });
       updatePaginationNav('groups', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
       return;
     }
-    if (empty) empty.hidden = true;
+    setOrgEmpty(empty, { show: false });
     const pageInfo = paginateList(list, listPages.groups);
     listPages.groups = pageInfo.page;
     updatePaginationNav('groups', pageInfo);
@@ -3982,16 +4119,19 @@
     body.innerHTML = '';
 
     if (!list.length) {
-      if (empty) {
-        empty.hidden = false;
-        empty.textContent = state.events.length
-          ? 'No events match your filters.'
-          : 'Create a group first, then add an event.';
-      }
+      const hasEvents = state.events.length > 0;
+      setOrgEmpty(empty, {
+        show: true,
+        title: hasEvents ? 'No matching events' : 'No events yet',
+        text: hasEvents
+          ? 'Try adjusting your filters or search.'
+          : 'Create a group profile first, then list your first event.',
+        hideActions: hasEvents,
+      });
       updatePaginationNav('events', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
       return;
     }
-    if (empty) empty.hidden = true;
+    setOrgEmpty(empty, { show: false });
     const pageInfo = paginateEventsList(list, listPages.events);
     listPages.events = pageInfo.page;
     updatePaginationNav('events', pageInfo);
@@ -4016,16 +4156,19 @@
     body.innerHTML = '';
 
     if (!list.length) {
-      if (empty) {
-        empty.hidden = false;
-        empty.textContent = state.tickets.length
-          ? 'No ticket types match your filters.'
-          : 'No ticket types yet.';
-      }
+      const hasTickets = state.tickets.length > 0;
+      setOrgEmpty(empty, {
+        show: true,
+        title: hasTickets ? 'No matching tickets' : 'No ticket types yet',
+        text: hasTickets
+          ? 'Try choosing a different event or ticket type filter.'
+          : 'Add ticket tiers when you create or edit an event.',
+        hideActions: hasTickets,
+      });
       updatePaginationNav('tickets', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
       return;
     }
-    if (empty) empty.hidden = true;
+    setOrgEmpty(empty, { show: false });
     const pageInfo = paginateList(list, listPages.tickets);
     listPages.tickets = pageInfo.page;
     updatePaginationNav('tickets', pageInfo);
@@ -4082,11 +4225,11 @@
     renderReviewsRankingPill();
 
     if (!list.length) {
-      if (empty) empty.hidden = false;
+      setOrgEmpty(empty, { show: true });
       updatePaginationNav('reviews', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
       return;
     }
-    if (empty) empty.hidden = true;
+    setOrgEmpty(empty, { show: false });
     const pageInfo = paginateList(list, listPages.reviews);
     listPages.reviews = pageInfo.page;
     updatePaginationNav('reviews', pageInfo);
@@ -4250,7 +4393,7 @@
         if (!errEl) {
           errEl = document.createElement('p');
           errEl.className = 'org-alert error org-team-error';
-          const toolbar = teamPage.querySelector('.org-toolbar');
+          const toolbar = teamPage.querySelector('.org-page-head, .org-toolbar');
           if (toolbar && toolbar.nextSibling) {
             teamPage.insertBefore(errEl, toolbar.nextSibling);
           } else {
@@ -4266,11 +4409,11 @@
 
     const list = state.teamMembers.slice();
     if (!list.length) {
-      if (empty) empty.hidden = false;
+      setOrgEmpty(empty, { show: true, hideActions: !state.canManageTeam });
       updateTeamNavBadge();
       return;
     }
-    if (empty) empty.hidden = true;
+    setOrgEmpty(empty, { show: false });
 
     list.forEach((m) => {
       const tr = document.createElement('tr');
@@ -4306,9 +4449,14 @@
   }
 
   function bindTeamUi() {
+    const openInvite = () => openModal('modal-team-invite');
     const inviteBtn = document.getElementById('btn-invite-team');
     if (inviteBtn) {
-      inviteBtn.addEventListener('click', () => openModal('modal-team-invite'));
+      inviteBtn.addEventListener('click', openInvite);
+    }
+    const inviteEmptyBtn = document.getElementById('btn-invite-team-empty');
+    if (inviteEmptyBtn) {
+      inviteEmptyBtn.addEventListener('click', openInvite);
     }
     const form = document.getElementById('form-team-invite');
     if (form) {
@@ -4478,19 +4626,22 @@
   }
 
   let scopeButtonsBound = false;
+  function scopeClickHandler(e) {
+    if (e.target.id === 'btn-scope-my') {
+      setOrganiserScopeCookie('my');
+      refresh();
+    }
+    if (e.target.id === 'btn-scope-all') {
+      setOrganiserScopeCookie('clear');
+      refresh();
+    }
+  }
+
   function bindScopeButtonOnce() {
     if (scopeButtonsBound) return;
     scopeButtonsBound = true;
-    document.getElementById('org-dashboard-alert')?.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-scope-my') {
-        setOrganiserScopeCookie('my');
-        refresh();
-      }
-      if (e.target.id === 'btn-scope-all') {
-        setOrganiserScopeCookie('clear');
-        refresh();
-      }
-    });
+    document.getElementById('org-dashboard-alert')?.addEventListener('click', scopeClickHandler);
+    document.getElementById('org-notices')?.addEventListener('click', scopeClickHandler);
   }
 
   function enquiryStatusLabel(status) {
@@ -4898,11 +5049,11 @@
     const list = state.opportunityEnquiries || [];
     body.innerHTML = '';
     if (!list.length) {
-      if (empty) empty.hidden = false;
+      setOrgEmpty(empty, { show: true });
       updateOpportunityEnquiryUi();
       return;
     }
-    if (empty) empty.hidden = true;
+    setOrgEmpty(empty, { show: false });
 
     list.forEach((enquiry) => {
       const tr = document.createElement('tr');
@@ -4934,14 +5085,71 @@
     updateOpportunityEnquiryUi();
   }
 
+  function opportunityStatusForBadge(o) {
+    const status = String(o.status || '').toLowerCase();
+    if (status === 'published' || status === 'live') return { key: 'live', label: 'Live' };
+    if (status === 'draft') return { key: 'draft', label: 'Draft' };
+    if (status === 'unpublished') return { key: 'unpublished', label: 'Unpublished' };
+    const approval = String(o.approvalStatus || '');
+    if (/pending/i.test(approval)) return { key: 'pending_approval', label: approval };
+    return { key: 'draft', label: status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Draft' };
+  }
+
+  function renderOpportunitiesList() {
+    const body = document.getElementById('opp-listings-body');
+    const empty = document.getElementById('opp-listings-empty');
+    if (!body) return;
+    body.innerHTML = '';
+    const list = (state.opportunities || []).slice();
+    if (!list.length) {
+      setOrgEmpty(empty, { show: true });
+      return;
+    }
+    setOrgEmpty(empty, { show: false });
+    list.forEach((o) => {
+      const st = opportunityStatusForBadge(o);
+      const enquiries = (state.opportunityEnquiries || []).filter(
+        (e) => String(e.opportunityId || '') === String(o.id)
+      ).length;
+      const updated = o.updatedAt ? formatDate(o.updatedAt) : '—';
+      const viewUrl = '../opportunities/opportunity.html?id=' + encodeURIComponent(o.id);
+      const editUrl = 'opportunity-edit.html?id=' + encodeURIComponent(o.id);
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td class="org-td-name"><a class="org-td-name-click" href="' +
+        esc(editUrl) +
+        '">' +
+        esc(o.title || 'Untitled') +
+        '</a></td><td>' +
+        statusBadgeHtml(st.key, st.label) +
+        '</td><td>' +
+        esc(String(enquiries)) +
+        '</td><td>' +
+        esc(updated) +
+        '</td><td class="org-td-actions">' +
+        '<a class="org-btn org-btn-outline org-btn-sm" href="' +
+        esc(editUrl) +
+        '">Edit</a> ' +
+        '<a class="org-btn org-btn-outline org-btn-sm" href="' +
+        esc(viewUrl) +
+        '" target="_blank" rel="noopener">View</a>' +
+        '</td>';
+      body.appendChild(tr);
+    });
+  }
+
   async function loadOpportunitiesList() {
-    if (state.opportunitiesLoaded) return;
+    if (state.opportunitiesLoaded) {
+      renderOpportunitiesList();
+      return;
+    }
     try {
       const { ok, data } = await api('/api/organiser/opportunities');
       if (!ok) return;
       state.opportunities = data.opportunities || [];
       state.opportunitiesLoaded = true;
       renderStats();
+      renderOpportunitiesList();
     } catch {
       /* ignore */
     }
@@ -4961,6 +5169,7 @@
     } finally {
       if (hint) hint.hidden = true;
       renderOpportunityEnquiries();
+      renderOpportunitiesList();
     }
   }
 
@@ -4980,6 +5189,7 @@
 
   function renderAll() {
     renderStats();
+    renderOrganiserNotices();
     renderOrganiserRankingShare();
     renderOverviewGroups();
     renderOverviewEvents();
@@ -4989,6 +5199,7 @@
     fillEventSelect(document.getElementById('ticket-event'));
     updateOpportunityEnquiryUi();
     updateGettingStartedPanel();
+    if (state.opportunitiesLoaded) renderOpportunitiesList();
   }
 
   function setDashboardLoading(on) {
@@ -5050,34 +5261,20 @@
     });
 
     if (data.adminView) {
-      showOrganiserAlert(
-        '<strong>Admin view</strong> — showing all group profiles, events, and ticket types across the platform.' +
-          '<div class="org-scope-actions"><button type="button" class="org-btn org-btn-primary org-btn-sm" id="btn-scope-my">View my organiser data only</button></div>',
-        false
-      );
+      state.dashboardScope = { kind: 'admin' };
       bindScopeButtonOnce();
     } else if (data.personalScope && data.isAdmin) {
-      showOrganiserAlert(
-        '<strong>My organiser view</strong> — showing only groups and events linked to your account (' +
-          esc(state.user.email) +
-          ').' +
-          '<div class="org-scope-actions"><button type="button" class="org-btn org-btn-outline org-btn-sm" id="btn-scope-all">View all (admin)</button></div>',
-        false
-      );
+      state.dashboardScope = { kind: 'personal_admin' };
       bindScopeButtonOnce();
     } else if (data.groupsError) {
-      showOrganiserAlert(
-        '<strong>Could not load group profiles.</strong> ' + esc(data.groupsError),
-        true
-      );
+      state.dashboardScope = { kind: 'groups_error', message: data.groupsError };
     } else if (!state.groups.length && !state.pendingClaimGroups.length) {
-      showOrganiserAlert(
-        'Create your first <strong>group profile</strong> (under My events in the sidebar), then add events and ticket types.',
-        false
-      );
-    } else if (!data.adminView) {
-      showOrganiserAlert(null);
+      state.dashboardScope = { kind: 'onboarding' };
+    } else {
+      state.dashboardScope = null;
     }
+
+    showOrganiserAlert(null);
 
     applyPendingGroupSave();
     renderAll();
@@ -5384,6 +5581,17 @@
         openModal('modal-ticket');
       });
     }
+    const btnNewTicketEmpty = document.getElementById('btn-new-ticket-empty');
+    if (btnNewTicketEmpty && btnNewTicket) {
+      btnNewTicketEmpty.addEventListener('click', () => btnNewTicket.click());
+    }
+
+    document.querySelectorAll('[data-events-tab]').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const route = tab.getAttribute('data-events-tab');
+        if (route) setRoute(route);
+      });
+    });
 
     document.querySelectorAll('[data-org-goto]').forEach((btn) => {
       btn.addEventListener('click', () => {

@@ -51,6 +51,19 @@ module.exports = async function handler(req, res) {
 
   if (req.method !== 'GET') return json(res, 405, { error: 'method_not_allowed' });
 
+  const meta = String(req.query?.meta || '').trim();
+
+  if (meta === 'premium-slots') {
+    try {
+      const { getPremiumSpotlightSlotStatus } = require('./_lib/opportunity-premium-slots');
+      const premiumSlots = await getPremiumSpotlightSlotStatus();
+      res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60');
+      return json(res, 200, { ok: true, premiumSlots });
+    } catch (e) {
+      return json(res, 500, { error: 'premium_slots_failed', message: e.message });
+    }
+  }
+
   res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
 
   const id = String(req.query?.id || '').trim();

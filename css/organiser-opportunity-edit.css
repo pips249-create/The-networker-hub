@@ -921,6 +921,26 @@ body.oe-opportunity-drawer-open {
   background: #fff;
 }
 
+.oe-premium-slot-note {
+  font-weight: 500;
+  color: var(--opp-mid-gray);
+}
+
+.oe-premium-slot-status {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--opp-gold-pale);
+  border: 1px solid var(--opp-gold-border);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--opp-navy);
+}
+
+.oe-premium-slot-status[hidden] {
+  display: none;
+}
+
 @media (max-width: 520px) {
   .oe-opportunity-drawer-panel {
     width: 100vw;
@@ -928,5 +948,171 @@ body.oe-opportunity-drawer-open {
 
   .oe-opportunity-drawer-head {
     padding-right: 44px;
+  }
+}
+
+/* ─── Opportunity intro (before listing form) ─── */
+.organiser-opportunity-intro-page .oe-intro-wrap {
+  max-width: 720px;
+}
+
+.oe-intro-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--opp-gold);
+  margin: 0 0 8px;
+}
+
+.oe-intro-steps {
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.oe-intro-step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px 18px;
+  background: var(--ee-white);
+  border: 1px solid var(--opp-border);
+  border-radius: var(--ee-radius);
+  box-shadow: 0 2px 10px rgba(13, 31, 60, 0.04);
+}
+
+.oe-intro-step-num {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--opp-gold-pale);
+  color: var(--opp-navy);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.oe-intro-step strong {
+  display: block;
+  font-size: 14px;
+  color: var(--opp-navy);
+  margin-bottom: 4px;
+}
+
+.oe-intro-step span {
+  display: block;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--opp-dark-gray);
+}
+
+.oe-intro-pricing h2,
+.oe-intro-faq h2 {
+  margin: 0 0 14px;
+  font-size: 1.1rem;
+  color: var(--opp-navy);
+}
+
+.oe-intro-price-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.oe-intro-price-card {
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--opp-border);
+  background: var(--opp-off-white);
+}
+
+.oe-intro-price-card--standard {
+  border-color: var(--opp-gold-border);
+  background: linear-gradient(180deg, var(--opp-gold-pale) 0%, #fff 100%);
+}
+
+.oe-intro-price-label {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--opp-dark-gray);
+}
+
+.oe-intro-price-optional {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--opp-mid-gray);
+}
+
+.oe-intro-price-amount {
+  margin: 0 0 8px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--opp-navy);
+  line-height: 1.1;
+}
+
+.oe-intro-price-amount span {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--opp-mid-gray);
+}
+
+.oe-intro-price-note {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--opp-dark-gray);
+}
+
+.oe-intro-price-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--opp-dark-gray);
+}
+
+.oe-intro-faq-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--opp-dark-gray);
+}
+
+.oe-intro-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+  padding-bottom: 48px;
+}
+
+.oe-intro-cta {
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .oe-intro-price-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .oe-intro-actions {
+    flex-direction: column;
+  }
+
+  .oe-intro-actions .ee-btn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
   }
 }

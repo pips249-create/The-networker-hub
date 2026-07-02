@@ -196,6 +196,21 @@
   color: #fff;
 }
 
+.org-events-tab-badge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--od-gold);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+.org-events-tab-badge[hidden] {
+  display: none;
+}
+
 .org-sub-page {
   display: none;
 }
@@ -1935,6 +1950,67 @@
   font-size: 14px;
 }
 
+.org-empty-state {
+  padding: 36px 24px;
+  text-align: center;
+  background: var(--od-white);
+  border: 1px dashed var(--od-border-soft);
+  border-radius: var(--od-radius);
+}
+
+.org-empty-state[hidden] {
+  display: none;
+}
+
+.org-empty-state--compact {
+  padding: 24px 16px;
+  background: transparent;
+  border: none;
+}
+
+.org-empty-state-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: var(--od-purple-pale);
+  color: var(--od-purple);
+}
+
+.org-empty-state-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--od-purple-dark);
+}
+
+.org-empty-state-text {
+  margin: 0 auto;
+  max-width: 28em;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--od-text-soft);
+}
+
+.org-empty-state-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.org-empty-state-actions[hidden] {
+  display: none;
+}
+
+.org-page-head .org-team-editor-note {
+  margin: 10px 0 0;
+}
+
 .org-alert {
   background: var(--od-gold-light);
   border: 1px solid #e8c97a;
@@ -1955,6 +2031,135 @@
   background: rgba(255, 255, 255, 0.7);
   padding: 1px 5px;
   border-radius: 4px;
+}
+
+/* Unified action notices (scope, join links, applications) */
+.org-notices {
+  margin-bottom: 20px;
+  background: var(--od-white);
+  border: 1px solid var(--od-border-soft);
+  border-radius: var(--od-radius);
+  box-shadow: var(--od-shadow-sm);
+  overflow: hidden;
+}
+
+.org-notices[hidden] {
+  display: none;
+}
+
+.org-notices-head {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--od-border-soft);
+  background: linear-gradient(180deg, var(--od-purple-pale) 0%, var(--od-white) 100%);
+}
+
+.org-notices-title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--od-purple-dark);
+}
+
+.org-notices-sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--od-text-soft);
+}
+
+.org-notices-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.org-notice {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--od-border-soft);
+}
+
+.org-notice:last-child {
+  border-bottom: none;
+}
+
+.org-notice--info {
+  border-left: 4px solid #6ba3d4;
+  background: #f8fbff;
+}
+
+.org-notice--warning {
+  border-left: 4px solid #4a8fd4;
+  background: #f3f8ff;
+}
+
+.org-notice--action {
+  border-left: 4px solid var(--od-gold);
+  background: #fffdf6;
+}
+
+.org-notice--error {
+  border-left: 4px solid var(--od-red);
+  background: var(--od-red-light);
+}
+
+.org-notice-title {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--od-purple-dark);
+}
+
+.org-notice-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--od-text-mid);
+}
+
+.org-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.org-notice-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.org-notice-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid var(--od-border-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--od-purple-dark);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.org-notice-chip:hover {
+  border-color: var(--od-purple);
+  background: var(--od-purple-pale);
+}
+
+.org-notice-chip-date {
+  font-weight: 500;
+  color: var(--od-text-soft);
+}
+
+.org-notice-chip-more {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--od-text-soft);
 }
 
 .org-signin {

@@ -13,6 +13,8 @@
   var addAnother = document.getElementById('oe-add-another');
   var premiumYes = document.getElementById('oe-premium-yes');
   var premiumError = document.getElementById('oe-premium-error');
+  var premiumSlotStatus = document.getElementById('oe-premium-slot-status');
+  var premiumUpsell = document.getElementById('oe-premium-upsell');
 
   function listingUrl() {
     if (!id) return '../opportunities/index.html';
@@ -73,7 +75,10 @@
       var msg =
         data.error === 'stripe_not_configured'
           ? 'Premium checkout is not configured yet — your listing is still live.'
-          : data.message || data.error || 'Could not start checkout. Your listing is still live.';
+          : data.error === 'premium_slots_full'
+            ? data.message ||
+              'All premium spotlight places are currently taken. Your standard listing stays live — try again later.'
+            : data.message || data.error || 'Could not start checkout. Your listing is still live.';
       if (premiumError) {
         premiumError.hidden = false;
         premiumError.textContent = msg;
@@ -92,4 +97,36 @@
   }
 
   if (premiumYes) premiumYes.addEventListener('click', startPremiumCheckout);
+
+  async function loadPremiumSlotStatus() {
+    if (!premiumUpsell) return;
+    try {
+      var res = await fetch('/api/opportunities?meta=premium-slots', { cache: 'no-store' });
+      var data = await res.json();
+      if (!res.ok || !data.premiumSlots) return;
+      var slots = data.premiumSlots;
+      if (premiumSlotStatus && slots.available > 0 && slots.available <= 3) {
+        premiumSlotStatus.hidden = false;
+        premiumSlotStatus.textContent =
+          slots.available === 1
+            ? 'Only 1 premium spotlight place left right now.'
+            : 'Only ' + slots.available + ' premium spotlight places left right now.';
+      }
+      if (slots.full) {
+        if (premiumSlotStatus) {
+          premiumSlotStatus.hidden = false;
+          premiumSlotStatus.textContent =
+            'All ' + slots.max + ' premium spotlight places are taken at the moment. Your standard listing is still live — check back soon.';
+        }
+        if (premiumYes) {
+          premiumYes.disabled = true;
+          premiumYes.textContent = 'Premium spotlight full';
+        }
+      }
+    } catch (e) {
+      /* non-fatal */
+    }
+  }
+
+  loadPremiumSlotStatus();
 })();

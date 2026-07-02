@@ -17,9 +17,9 @@
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260701" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260729" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260729" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260730" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
@@ -47,7 +47,6 @@
             <span class="hub-side-nav-divider">My events</span>
             <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">Events</a>
             <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Group profiles</a>
-            <a href="#events-tickets" class="hub-side-nav-link" data-org-route="events-tickets">Tickets</a>
             <a href="#events-attendees" class="hub-side-nav-link" data-org-route="events-attendees">
               Attendees
               <span class="org-nav-badge" id="org-pending-applications-nav-badge" hidden>New</span>
@@ -59,7 +58,7 @@
               <span class="org-nav-badge org-nav-badge--action" id="org-payment-setup-nav-badge" hidden>Setup</span>
             </a>
             <span class="hub-side-nav-divider">Business opportunities</span>
-            <a href="opportunity-edit.html" class="hub-side-nav-link">List an opportunity</a>
+            <a href="opportunity-intro.html" class="hub-side-nav-link">List an opportunity</a>
             <a href="#business-overview" class="hub-side-nav-link" data-org-route="business-overview">
               Enquiries received
               <span class="org-nav-badge" id="org-opp-enquiry-nav-badge" hidden>New</span>
@@ -73,8 +72,7 @@
         <div class="org-main" id="org-main">
           <div class="org-wrap">
         <div id="org-dashboard-alert" class="org-alert" hidden></div>
-        <div class="org-join-link-banner" id="join-link-banner" hidden role="status"></div>
-        <div class="org-applications-banner" id="org-applications-banner" hidden role="status" aria-live="polite"></div>
+        <div class="org-notices" id="org-notices" hidden aria-live="polite"></div>
 
         <!-- Overview -->
         <section class="org-page is-active" id="org-page-dashboard" data-org-page="dashboard">
@@ -106,7 +104,7 @@
                   <strong>Event</strong>
                   <span>Meeting, exhibition or conference</span>
                 </a>
-                <a role="menuitem" class="org-add-menu-item" href="opportunity-edit.html">
+                <a role="menuitem" class="org-add-menu-item" href="opportunity-intro.html">
                   <strong>Business opportunity</strong>
                   <span>Franchise, partnership or side hustle listing</span>
                 </a>
@@ -381,7 +379,7 @@
           <div class="org-quick-actions org-quick-actions--compact" aria-label="Quick links">
             <h2 class="org-quick-actions-title">Quick links</h2>
             <div class="org-quick-actions-grid">
-              <a class="org-quick-card org-quick-card--primary" href="opportunity-edit.html">
+              <a class="org-quick-card org-quick-card--primary" href="opportunity-intro.html">
                 <span class="org-quick-icon" aria-hidden="true">+</span>
                 <span class="org-quick-label">List an opportunity</span>
                 <span class="org-quick-hint">Promote a service to other hub members</span>
@@ -404,7 +402,7 @@
               <h2 class="org-section-title">Your listings</h2>
               <p class="org-section-sub">Business opportunities you&apos;ve published on the hub — edit a listing or check how many enquiries it has received.</p>
             </div>
-            <a href="opportunity-edit.html" class="org-btn org-btn-gold org-btn-sm">+ List an opportunity</a>
+            <a href="opportunity-intro.html" class="org-btn org-btn-gold org-btn-sm">+ List an opportunity</a>
           </div>
           <div class="org-table-wrap org-overview-table">
             <table>
@@ -426,7 +424,7 @@
               <h3 class="org-empty-state-title">No listings yet</h3>
               <p class="org-empty-state-text">Publish a business opportunity to start receiving member enquiries.</p>
               <div class="org-empty-state-actions">
-                <a href="opportunity-edit.html" class="org-btn org-btn-gold org-btn-sm">+ List an opportunity</a>
+                <a href="opportunity-intro.html" class="org-btn org-btn-gold org-btn-sm">+ List an opportunity</a>
               </div>
             </div>
           </div>
@@ -1379,6 +1377,6 @@
     <script src="../js/organiser-onboarding.js?v=20260618"></script>
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
     <script src="../js/organiser-payment-setup.js?v=20260718"></script>
-    <script src="../js/organiser-dashboard.js?v=20260727"></script>
+    <script src="../js/organiser-dashboard.js?v=20260730"></script>
   </body>
 </html>

@@ -4,6 +4,7 @@ const {
   createOpportunityPremiumCheckoutSession,
   siteBaseUrl,
 } = require('../stripe-checkout');
+const { assertPremiumSpotlightSlotAvailable } = require('../opportunity-premium-slots');
 
 function parseBody(req) {
   let body = req.body;
@@ -66,6 +67,24 @@ module.exports = async function handler(req, res) {
 
     if (String(opportunity.status || '').toLowerCase() !== 'published') {
       return json(res, 400, { ok: false, error: 'opportunity_not_live' });
+    }
+
+    try {
+      await assertPremiumSpotlightSlotAvailable(opportunityId);
+    } catch (slotErr) {
+      if (slotErr.code === 'premium_slots_full') {
+        const slots = slotErr.slots || {};
+        return json(res, 409, {
+          ok: false,
+          error: 'premium_slots_full',
+          message:
+            'All ' +
+            (slots.max || 10) +
+            ' premium spotlight places are currently taken. Your standard listing stays live — try again when a slot opens.',
+          premiumSlots: slots,
+        });
+      }
+      throw slotErr;
     }
 
     const siteUrl = siteBaseUrl();

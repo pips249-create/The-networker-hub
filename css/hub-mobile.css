@@ -362,17 +362,12 @@ body.nav-menu-open {
     margin-right: auto;
   }
 
-  .events-hero-actions {
-    flex-direction: column;
-    width: 100%;
-    gap: 10px;
+  .events-hero-organiser-cta {
+    text-align: center;
   }
 
-  .events-hero-actions .events-hero-btn {
-    width: 100%;
-    max-width: 280px;
-    margin-left: auto;
-    margin-right: auto;
+  .events-hero-browse-switch {
+    justify-content: center;
   }
 
   .events-page .shell {
@@ -860,7 +855,8 @@ body.nav-menu-open {
 
   .org-toolbar,
   .org-toolbar--section,
-  .org-overview-head {
+  .org-overview-head,
+  .org-page-head--split {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
@@ -868,11 +864,24 @@ body.nav-menu-open {
 
   .org-toolbar .org-btn,
   .org-toolbar a.org-btn,
-  .org-overview-head .org-btn {
+  .org-overview-head .org-btn,
+  .org-page-head--split .org-btn,
+  .org-page-head--split a.org-btn {
     width: 100%;
     max-width: 100%;
     justify-content: center;
     box-sizing: border-box;
+  }
+
+  .organiser-dashboard-page .org-events-subnav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--od-bg, #f4f8fa);
+    margin-left: -4px;
+    margin-right: -4px;
+    padding-left: 4px;
+    padding-right: 4px;
   }
 
   .org-filter-bar {
