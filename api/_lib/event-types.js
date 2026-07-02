@@ -1,17 +1,26 @@
 /** Canonical meeting types — keep in sync with js/meeting-types.js */
-const MEETING_TYPES = ['Meeting', 'Events', 'Exhibition', 'Awards'];
+const MEETING_TYPES = [
+  'Meeting',
+  'Events',
+  'Exhibition',
+  'Awards',
+  'Webinar',
+  'Workshop',
+  'Session',
+];
 
 const LEGACY_TYPE_MAP = {
   'networking meeting': 'Meeting',
   'networking event': 'Meeting',
   'networking / meeting': 'Meeting',
   netwalking: 'Meeting',
-  workshop: 'Meeting',
+  workshop: 'Workshop',
   "women's networking": 'Meeting',
   'women only': 'Meeting',
   'women-only': 'Meeting',
   conference: 'Meeting',
-  webinar: 'Meeting',
+  webinar: 'Webinar',
+  session: 'Session',
   'sport & social': 'Meeting',
   'sport and social': 'Meeting',
   'sports & social': 'Meeting',
@@ -29,6 +38,9 @@ function normalizeEventType(raw) {
   const legacy = LEGACY_TYPE_MAP[t.toLowerCase()];
   if (legacy) return legacy;
   if (/exhibit/i.test(t)) return 'Exhibition';
+  if (/webinar/i.test(t)) return 'Webinar';
+  if (/workshop/i.test(t)) return 'Workshop';
+  if (/\bsession\b/i.test(t)) return 'Session';
   if (/conference|summit|festival|award|netwalk|golf|padel|tennis|sport|social sport/i.test(t)) {
     return 'Meeting';
   }
@@ -49,6 +61,9 @@ function parseTypeCategory(raw) {
   if (t === 'Exhibition') return 'exhibition';
   if (t === 'Events') return 'events';
   if (t === 'Awards') return 'awards';
+  if (t === 'Webinar') return 'webinar';
+  if (t === 'Workshop') return 'workshop';
+  if (t === 'Session') return 'session';
   return 'meeting';
 }
 

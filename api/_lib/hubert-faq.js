@@ -6,7 +6,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'What is The Networker Hub?',
     answer:
-      'The Networker Hub is a UK platform for discovering networking meetings, exhibitions, conferences, business opportunities, and professional training. Members can search and book; organisers can list events and reach new audiences.',
+      'The Networker Hub is a UK platform for discovering networking meetings, exhibitions, conferences, and business opportunities. Members can search and book; organisers can list events and reach new audiences.',
   },
   {
     question: 'How do I find events on The Networker Hub?',
@@ -16,7 +16,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'Do I need an account to browse The Networker Hub?',
     answer:
-      'No — browsing is completely free. You can explore events, business opportunities, and training and workshops without signing in. You only need a free account when you want to buy a ticket, enquire about a business opportunity, or book a course. Sign-up takes about 2 minutes.',
+      'No — browsing is completely free. You can explore events and business opportunities without signing in. You only need a free account when you want to buy a ticket or enquire about a business opportunity. Sign-up takes about 2 minutes.',
   },
   {
     question: 'How do I book a ticket on The Networker Hub?',
@@ -39,11 +39,6 @@ const FAQ_AEO_ENTRIES = [
       'Listings are managed in the events database and updated by organisers and the Networker Hub team. Dates, venues, and prices on each event page are the source of truth for that event.',
   },
   {
-    question: 'What is training on The Networker Hub?',
-    answer:
-      'Training and workshops are the learning side of the hub — seminars, webinars, and masterclasses. You can browse sessions for free; you need a free account to book a course when booking opens.',
-  },
-  {
     question: 'Who operates The Networker Hub?',
     answer:
       'The Networker Hub is operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94), co-founded by Rosie and Catherine (Pip).',
@@ -56,7 +51,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'Is The Networker Hub free to use?',
     answer:
-      'Yes — browsing events, business opportunities, and the training preview is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser.',
+      'Yes — browsing events and business opportunities is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser.',
   },
   {
     question: 'I forgot my password — how do I sign in?',
@@ -96,7 +91,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'How can I advertise my business on The Networker Hub?',
     answer:
-      'Paid Sponsor Hub placements are available on event, training, and opportunity pages — email sales@the-networker.co.uk. You can also list events or business opportunities to reach the network organically.',
+      'Paid Sponsor Hub placements are available on event and opportunity pages — email sales@the-networker.co.uk. You can also list events or business opportunities to reach the network organically.',
   },
   {
     question: 'How do organisers download attendee lists?',
@@ -116,7 +111,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'Why did The Networker Hub start?',
     answer:
-      'Co-founders Rosie and Pip believe the right room at the right time changes careers and companies. They built one trusted UK platform for events, organiser profiles, business opportunities, and training.',
+      'Co-founders Rosie and Pip believe the right room at the right time changes careers and companies. They built one trusted UK platform for events, organiser profiles, and business opportunities.',
   },
 ];
 

@@ -23,7 +23,7 @@
 
   const networkingFacts = [
     {
-      text: 'The Networker Hub is a UK directory for networking meetings, exhibitions, conferences, and professional training.',
+      text: 'The Networker Hub is a UK directory for networking meetings, exhibitions, conferences, and business opportunities.',
     },
     {
       text: 'HubSpot research found that 85% of jobs are filled through personal and professional networks — not online applications alone.',
@@ -41,7 +41,7 @@
       text: 'Save events to your favourites and return when you are ready to register.',
     },
     {
-      text: 'UK business networking spans breakfast clubs, chamber events, sector meetups, exhibitions, and training days.',
+      text: 'UK business networking spans breakfast clubs, chamber events, sector meetups, and exhibitions.',
     },
     {
       text: 'Listings are managed by verified organisers — dates, venues, and prices on each event page are kept up to date.',

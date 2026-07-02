@@ -6,9 +6,9 @@ const { siteOrigin } = require('./hubert-seo');
 const STATIC_PAGES = {
   home: {
     path: '/',
-    title: 'The Networker Hub — Events, training & business opportunities',
+    title: 'The Networker Hub — Events & business opportunities',
     description:
-      'Browse UK networking events, business opportunities, and training and workshops for free. Create a free account to buy tickets, enquire about opportunities, or book courses — it only takes 2 minutes.',
+      'Browse UK networking events and business opportunities for free. Create a free account to buy tickets or send enquiries — it only takes 2 minutes.',
     image: '/assets/logo.png',
     ogType: 'website',
   },
@@ -28,14 +28,6 @@ const STATIC_PAGES = {
     image: '/assets/logo.png',
     ogType: 'website',
   },
-  training: {
-    path: '/training/',
-    title: 'Browse training – The Networker Hub',
-    description:
-      'Workshops, seminars and masterclasses for UK business owners — training and workshops on The Networker Hub.',
-    image: '/assets/logo.png',
-    ogType: 'website',
-  },
   faq: {
     path: '/faq.html',
     title: 'FAQ – The Networker Hub',
@@ -48,7 +40,7 @@ const STATIC_PAGES = {
     path: '/about.html',
     title: 'About us – The Networker Hub',
     description:
-      'Learn about The Networker Hub — the UK platform for networking events, exhibitions, and professional training.',
+      'Learn about The Networker Hub — the UK platform for networking events, exhibitions, and business opportunities.',
     image: '/assets/logo.png',
     ogType: 'website',
   },
@@ -64,7 +56,7 @@ const STATIC_PAGES = {
     path: '/advertising',
     title: 'Advertising & sponsorship – The Networker Hub',
     description:
-      'Promote your brand on The Networker Hub — sponsor the events directory, training browse, business opportunities, and event page placements.',
+      'Promote your brand on The Networker Hub — sponsor the events directory, business opportunities, and event page placements.',
     image: '/assets/logo.png',
     ogType: 'website',
   },

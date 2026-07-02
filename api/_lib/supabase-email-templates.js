@@ -1,6 +1,6 @@
 const { getSupabaseAdmin } = require('./supabase');
 
-const EMAIL_TEMPLATE_CATEGORIES = ['events', 'opportunities', 'academy'];
+const EMAIL_TEMPLATE_CATEGORIES = ['events', 'opportunities'];
 
 function normalizeEmailCategory(value) {
   const key = String(value || '')

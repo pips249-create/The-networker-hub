@@ -257,14 +257,14 @@
           id: 'welcome',
           label: 'Welcome / intro',
           caption:
-            'Find your next networking event, training session, or business opportunity on The Networker Hub — free to browse.\n\n{{url}}',
+            'Find your next networking event or business opportunity on The Networker Hub — free to browse.\n\n{{url}}',
           image: 'hub',
         },
         {
           id: 'three_things',
-          label: 'Events · Training · Opps',
+          label: 'Events · Opps',
           caption:
-            'The Networker Hub — your place for UK networking events, training workshops, and business opportunities.\n\nStart here: {{url}}',
+            'The Networker Hub — your place for UK networking events and business opportunities.\n\nStart here: {{url}}',
           image: 'hub',
         },
         {

@@ -125,21 +125,17 @@
   border-color: rgba(255, 255, 255, 0.55);
 }
 
-.events-filter-shell .filter-price-range-row--max output {
-  color: var(--filter-label);
-}
-
-.events-filter-shell .filter-price-max-input {
+.events-filter-shell .filter-price-bound-input {
   background: var(--cream);
   border-color: rgba(255, 255, 255, 0.45);
   color: var(--charcoal);
 }
 
-.events-filter-shell .filter-price-max-input::placeholder {
+.events-filter-shell .filter-price-bound-input::placeholder {
   color: rgba(74, 68, 70, 0.55);
 }
 
-.events-filter-shell .filter-price-max-input:focus {
+.events-filter-shell .filter-price-bound-input:focus {
   border-color: #fff;
   outline: 2px solid rgba(255, 255, 255, 0.65);
   outline-offset: 1px;
@@ -423,6 +419,54 @@
 
 .filter-price-range-controls .filter-checkbox-free {
   flex-shrink: 0;
+}
+
+.filter-price-range-controls .filter-price-bounds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.filter-price-bound {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.filter-price-bound-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-soft);
+}
+
+.filter-price-bound-input {
+  width: 100%;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--charcoal);
+}
+
+.filter-price-bound-input::-webkit-outer-spin-button,
+.filter-price-bound-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.filter-price-bound-input:focus {
+  border-color: var(--lavender-deep);
+  outline: 2px solid rgba(107, 78, 155, 0.2);
+  outline-offset: 1px;
 }
 
 .filter-price-range-controls .filter-price-range-row {
@@ -1747,7 +1791,7 @@ body.browse-mode-organisers .events-toolbar {
   .events-page .events-filter-shell .filter-near-radius select,
   .events-page .events-filter-shell .filter-location-radius select,
   .events-page .events-filter-shell .filter-organiser-industry select,
-  .events-page .events-filter-shell .filter-price-max-input,
+  .events-page .events-filter-shell .filter-price-bound-input,
   .events-page .events-results-meta .events-sort-wrap select,
   .events-page .events-filter-bar input.flatpickr-input,
   .events-page .events-filter-shell input.flatpickr-input {

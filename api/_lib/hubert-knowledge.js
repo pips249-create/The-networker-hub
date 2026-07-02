@@ -10,30 +10,29 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'WHO WE ARE',
     body:
-      'The Networker Hub (the-networker.co.uk) is a UK platform connecting business owners and professionals with networking events, exhibitions, conferences, business opportunities, and training. ' +
+      'The Networker Hub (the-networker.co.uk) is a UK platform connecting business owners and professionals with networking events, exhibitions, conferences, and business opportunities. ' +
       'Operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94). ' +
       'Co-founded and run by Rosie and Catherine (Pip). Mission: help people find the right room at the right time to grow their network and business. ' +
       'Contact: hello@the-networker.co.uk · Address: Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF.',
   },
   {
-    title: 'THREE PILLARS',
+    title: 'TWO PILLARS',
     body:
       'EVENTS (Live) — meetings, exhibitions, conferences, and awards across the UK. Browse at /events/ with filters for type, date, industry, and location, plus map view. Stripe checkout for paid tickets; many events are free. ' +
-      'BUSINESS OPPORTUNITIES (Live) — franchises, side hustles, partnerships, distributorships, referral deals, and white-label arrangements. Browse free at /opportunities/; filter and map view available. ' +
-      'THE ACADEMY (Coming soon) — workshops, seminars, webinars, and masterclasses. Preview at /training/; browse sessions for free; booking will require a free account when it opens.',
+      'BUSINESS OPPORTUNITIES (Live) — franchises, side hustles, partnerships, distributorships, referral deals, and white-label arrangements. Browse free at /opportunities/; filter and map view available.',
   },
   {
     title: 'KEY PAGES',
     body:
-      'Home / · Events /events/ · Training preview /training/ · Opportunities /opportunities/ · List an opportunity /opportunities/list.html · ' +
+      'Home / · Events /events/ · Opportunities /opportunities/ · List an opportunity /opportunities/list.html · ' +
       'My tickets & favourites /account/ · Organiser dashboard /organiser/ · Sign in /login.html · Register /register.html · ' +
       'FAQ /faq.html · About /about.html · Contact /contact.html (chat with Hubert) · Legal /legal-policies.html · Organiser profiles /organisers/{slug}.',
   },
   {
     title: 'BROWSING & ACCOUNTS',
     body:
-      'Browsing is completely free — no sign-in needed to explore events, business opportunities, or the training preview. ' +
-      'A free account is required only when you want to: buy a ticket, send a business opportunity enquiry, or book a training course (when booking opens). Sign-up takes about 2 minutes at /register.html. ' +
+      'Browsing is completely free — no sign-in needed to explore events and business opportunities. ' +
+      'A free account is required only when you want to: buy a ticket or send a business opportunity enquiry. Sign-up takes about 2 minutes at /register.html. ' +
       'Sign in at /login.html. Forgot password? Use the password reset link on the sign-in page. You must be 18+ to create an account. ' +
       'With an account you can save favourites, manage tickets in /account/, add guest names at checkout, and leave reviews after events you attended.',
   },
@@ -76,7 +75,7 @@ const KNOWLEDGE_SECTIONS = [
     title: 'ORGANISER EVENT LISTING',
     body:
       'Creating a listing: /organiser/ → create event → choose group and format (in person or online) → event-edit.html for title, type, description, photo, venue or join link, and dates → event-tickets.html for tiers, VAT, refund policy, publish. ' +
-      'EVENT TYPE (Meeting vs Events vs Exhibition vs Awards): this is a browse filter, not whether something counts as an event. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs (seminars, lunch & learns). Exhibition and Awards are for trade shows and ceremonies. ' +
+      'EVENT TYPE (Meeting, Events, Exhibition, Awards, Webinar, Workshop, Session): this is a browse filter, not whether something counts as an event. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs (seminars, lunch & learns). Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop and Session help people find online talks, hands-on training, and shorter focused sessions. ' +
       'MULTI-DATE SERIES: click multiple days on the calendar — the same start time, end time, and venue (or online link) apply to every date. Ideal for a recurring meeting on different weeks. To remove a date, click the highlighted day again on the calendar. ' +
       'SAME TITLE, DIFFERENT TIME OR LOCATION: create separate listings — one per session — from My Events. You can reuse the same title; each listing gets its own dates, times, and venue. ' +
       'COVER PHOTO: upload, drag-and-drop, paste (Ctrl+V), or paste a URL. Files over 2MB are compressed automatically; if that fails, resize the file or use a hosted URL. For a sharp listing card, aim for at least 800px on the longest side (400px on the shortest). Use Remove to clear a photo and upload again.',
@@ -93,13 +92,13 @@ const KNOWLEDGE_SECTIONS = [
     title: 'TEAM & STORY',
     body:
       'Co-founders Rosie and Catherine (Pip) built The Networker Hub to connect UK business owners and professionals with the right events, communities, and opportunities. Both are listed as Co-founders on /about.html. ' +
-      'Why it started: the mission is that the right room at the right time changes careers and companies — one trusted place for event listings, organiser profiles, business opportunities, and training. ' +
+      'Why it started: the mission is that the right room at the right time changes careers and companies — one trusted place for event listings, organiser profiles, and business opportunities. ' +
       'For specific questions about the team beyond what is on /about.html, email hello@the-networker.co.uk.',
   },
   {
     title: 'ADVERTISING & SPONSORSHIP',
     body:
-      'Paid Sponsor Hub placements appear on event, training, and opportunity pages — clearly labelled Sponsored. Rate card: /advertising.html. Enquiries: sales@the-networker.co.uk. Policy: /legal-policies.html#advertising. ' +
+      'Paid Sponsor Hub placements appear on event and opportunity pages — clearly labelled Sponsored. Rate card: /advertising.html. Enquiries: sales@the-networker.co.uk. Policy: /legal-policies.html#advertising. ' +
       'Organisers can also reach audiences by listing events (/organiser/) or business opportunities (/opportunities/list.html). Featured placement may be available — ask sales@the-networker.co.uk.',
   },
   {
@@ -149,7 +148,7 @@ const FALLBACK_REPLIES = [
   {
     match: /advertis|sponsor|promote my business|marketing on (the )?site|get exposure/i,
     reply:
-      'For paid advertising, see /advertising.html for placements and guide pricing on event, training, and opportunity pages — email sales@the-networker.co.uk. You can also list events from /organiser/ or a business opportunity at /opportunities/list.html to reach the network. Policy: /legal-policies.html#advertising.',
+      'For paid advertising, see /advertising.html for placements and guide pricing on event and opportunity pages — email sales@the-networker.co.uk. You can also list events from /organiser/ or a business opportunity at /opportunities/list.html to reach the network. Policy: /legal-policies.html#advertising.',
   },
   {
     match: /what does rosie do|who is rosie|rosie('s)? role/i,
@@ -164,7 +163,7 @@ const FALLBACK_REPLIES = [
   {
     match: /why.*(start|created|built)|how did (the )?hub start|origin of|story behind/i,
     reply:
-      'The Networker Hub started from a simple belief: the right room at the right time changes careers and companies. Rosie and Pip built one trusted UK platform for event listings, organiser profiles, business opportunities, and training — so members can find what matters and organisers can reach the audiences they deserve. /about.html',
+      'The Networker Hub started from a simple belief: the right room at the right time changes careers and companies. Rosie and Pip built one trusted UK platform for event listings, organiser profiles, and business opportunities — so members can find what matters and organisers can reach the audiences they deserve. /about.html',
   },
   {
     match: /how much.*(hub|networker|platform).*(make|take|fee|charge|per ticket)|platform fee|booking fee|what do you charge/i,
@@ -289,7 +288,7 @@ const FALLBACK_REPLIES = [
   {
     match: /difference.*(event|meeting)|meeting vs|event vs|what.*(event type|type of event)|meeting or event/i,
     reply:
-      'Every listing is an event — the Event type dropdown is a browse filter. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs such as seminars or lunch & learns. Exhibition and Awards are for trade shows and ceremonies. Pick the type that best matches how people will search for it on /events/.',
+      'Every listing is an event — the Event type dropdown is a browse filter. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs such as seminars or lunch & learns. Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop and Session help people find online talks, hands-on training, and shorter focused sessions. Pick the type that best matches how people will search for it on /events/.',
   },
   {
     match: /image.*(too small|blurry|low.?res|pixelat)|photo.*(too small|blurry|low.?res)|cover.*(too small|blurry)|logo.*too small/i,
@@ -334,17 +333,17 @@ const FALLBACK_REPLIES = [
   {
     match: /account|register|sign up|create account|sign in|login/i,
     reply:
-      'Browsing is completely free — no account needed. You need a free account to buy tickets, enquire about opportunities, or book training courses when booking opens. Register at /register.html (about 2 minutes) or sign in at /login.html.',
+      'Browsing is completely free — no account needed. You need a free account to buy tickets or enquire about opportunities. Register at /register.html (about 2 minutes) or sign in at /login.html.',
   },
   {
     match: /browse|find|search|filter|map view|near me|upcoming/i,
     reply:
-      'Go to /events/ for networking events (filter by type, date, industry, location; map view available). Business deals: /opportunities/. Training preview: /training/. Ask me something specific like "events in Manchester" for live listings.',
+      'Go to /events/ for networking events (filter by type, date, industry, location; map view available). Business deals: /opportunities/. Ask me something specific like "events in Manchester" for live listings.',
   },
   {
     match: /academy|training|workshop|webinar|masterclass|course/i,
     reply:
-      'Training and workshops are our learning marketplace — seminars, webinars, and masterclasses. Coming soon; preview at /training/. Browse free; a free account will be needed to book when booking opens.',
+      'The Networker Hub focuses on networking events and business opportunities. Browse events at /events/ or opportunities at /opportunities/. For seminars and learning-style meetups, try filtering the events directory by type.',
   },
   {
     match: /review|rating/i,
@@ -364,7 +363,7 @@ const FALLBACK_REPLIES = [
   {
     match: /what is (the )?networker|about (the )?hub/i,
     reply:
-      'The Networker Hub is a UK platform for networking events, exhibitions, business opportunities, and training — run by Rosie and Catherine (Pip) at The Networker Group Ltd. Browse free; create a free account when you are ready to book or enquire. /about.html · /faq.html',
+      'The Networker Hub is a UK platform for networking events, exhibitions, and business opportunities — run by Rosie and Catherine (Pip) at The Networker Group Ltd. Browse free; create a free account when you are ready to book or enquire. /about.html · /faq.html',
   },
   {
     match: /contact|support|email|phone|address|where are you/i,
@@ -374,12 +373,12 @@ const FALLBACK_REPLIES = [
   {
     match: /is (this |the )?(site|hub) free|free to use/i,
     reply:
-      'Yes — browsing events, business opportunities, and the training preview is completely free with no sign-in. You only pay when you buy an event ticket at the price shown by the organiser. Opportunity enquiries are free.',
+      'Yes — browsing events and business opportunities is completely free with no sign-in. You only pay when you buy an event ticket at the price shown by the organiser. Opportunity enquiries are free.',
   },
   {
     match: /how much|cost|price|pay\b/i,
     reply:
-      'Browsing is free. Event ticket prices are set by organisers and shown on each event page. Business opportunity enquiries are free. Training course pricing will appear on listings when booking opens.',
+      'Browsing is free. Event ticket prices are set by organisers and shown on each event page. Business opportunity enquiries are free.',
   },
 ];
 

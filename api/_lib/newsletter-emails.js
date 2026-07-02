@@ -39,6 +39,7 @@ const {
   normalizeNewsletterLayout,
   getNewsletterLayoutConfig,
 } = require('./newsletter-layouts');
+const { fetchNearbyEvents } = require('./nearby-events');
 
 function isEditionUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -412,6 +413,21 @@ function buildFeaturedEventsSection(events, site, ticketsByEventId) {
   return sectionWrap('Featured events', 'Coming up on the Hub', '<tr><td class="mobile-pad" style="padding:0 40px 8px;">' + cards + '</td></tr>');
 }
 
+function buildNearbyEventsSection(events, site, ticketsByEventId, locationLabel) {
+  if (!events.length) return '';
+  const ticketMap = ticketsByEventId instanceof Map ? ticketsByEventId : new Map();
+  const cards = events
+    .map(function (eventRow) {
+      const tickets = ticketMap.get(String(eventRow.id)) || [];
+      return eventListingCard(eventRow, site, tickets);
+    })
+    .join('');
+  const subtitle = locationLabel
+    ? 'Based on your profile: ' + locationLabel
+    : 'Upcoming events in your area';
+  return sectionWrap('Events near you', subtitle, '<tr><td class="mobile-pad" style="padding:0 40px 8px;">' + cards + '</td></tr>');
+}
+
 function buildFeaturedOrganisersSection(organisers, site) {
   if (!organisers.length) return '';
   const cards = organisers
@@ -717,6 +733,16 @@ async function buildNewsletterVariables(sb, edition, recipient) {
     events.map((row) => row.id)
   );
 
+  const recipientLocation = String(recipient?.location || '').trim();
+  const nearby = await fetchNearbyEvents(sb, recipientLocation, {
+    excludeEventIds: events.map((row) => row.id),
+    limit: 4,
+  });
+  const nearbyTicketsByEventId = await fetchTicketsByEventId(
+    sb,
+    nearby.events.map((row) => row.id)
+  );
+
   const intro =
     'Hi ' +
     escapeHtml(name) +
@@ -737,6 +763,12 @@ async function buildNewsletterVariables(sb, edition, recipient) {
     article_section_html: buildArticleSection(edition, layout),
     hub_news_section_html: buildHubNewsSection(edition),
     featured_events_section_html: buildFeaturedEventsSection(events, site, ticketsByEventId),
+    nearby_events_section_html: buildNearbyEventsSection(
+      nearby.events,
+      site,
+      nearbyTicketsByEventId,
+      nearby.locationLabel
+    ),
     top_ranked_organisers_section_html: showMagazineRankings
       ? buildTopRankedOrganisersSection(topRankedOrganisers, site)
       : '',

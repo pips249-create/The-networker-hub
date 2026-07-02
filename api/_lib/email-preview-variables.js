@@ -267,6 +267,18 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       vars.event_url +
       '" style="display:inline-block;padding:8px 16px;background:#5b2f99;border-radius:999px;color:#ffffff;font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:700;text-decoration:none;">Book tickets →</a>' +
       '</td></tr></table></td></tr>';
+    vars.nearby_events_section_html =
+      '<tr><td class="mobile-pad" style="padding:20px 40px 4px;text-align:left;"><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 6px;">Events near you</p><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:18px;font-weight:600;color:#452d5c;margin:0 0 14px;">Based on your profile: Manchester</p></td></tr>' +
+      '<tr><td class="mobile-pad" style="padding:0 40px 8px;">' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:12px;margin:0 0 12px;border:1px solid #e8dce8;">' +
+      '<tr><td style="padding:16px 18px 14px;">' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:600;color:#5b2f99;margin:0 0 6px;line-height:1.4;">Northern Networkers</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#452d5c;margin:0 0 6px;line-height:1.35;">Manchester Business Breakfast</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;color:#736b6e;margin:0 0 12px;line-height:1.5;">Wednesday 8 July 2026 · 7:30 AM · Manchester city centre</p>' +
+      '<a href="' +
+      vars.event_url +
+      '" style="display:inline-block;padding:8px 16px;background:#5b2f99;border-radius:999px;color:#ffffff;font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:700;text-decoration:none;">View event →</a>' +
+      '</td></tr></table></td></tr>';
     if (vars.newsletter_layout === 'magazine') {
       vars.top_ranked_organisers_section_html =
         '<tr><td class="mobile-pad" style="padding:20px 40px 4px;text-align:left;"><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 6px;">Hub rankings</p><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:18px;font-weight:600;color:#452d5c;margin:0 0 14px;">Top 10 networking groups · June 2026</p></td></tr>' +

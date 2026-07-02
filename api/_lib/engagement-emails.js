@@ -18,7 +18,10 @@ const {
   organiserPublicUrl,
   organiserDashboardUrl,
 } = require('./hub-email-urls');
-
+const {
+  locationTokens,
+  fetchNearbyEvents,
+} = require('./nearby-events');
 const REENGAGEMENT_INACTIVE_DAYS = 30;
 const REENGAGEMENT_COOLDOWN_DAYS = 60;
 const LOW_EVENTS_MAX_UPCOMING = 3;
@@ -34,28 +37,6 @@ function daysAgo(days) {
 
 function hoursAgo(hours) {
   return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
-}
-
-function locationTokens(location) {
-  const raw = String(location || '').trim().toLowerCase();
-  if (!raw) return [];
-  return raw
-    .split(/[,/]/)
-    .map((part) => part.trim())
-    .filter((part) => part.length >= 3);
-}
-
-function eventMatchesLocation(eventRow, tokens) {
-  if (!tokens.length) return false;
-  const haystack = [
-    eventRow.city,
-    eventRow.venue,
-    eventRow.location_label,
-    eventRow.postcode,
-  ]
-    .map((v) => String(v || '').toLowerCase())
-    .join(' ');
-  return tokens.some((token) => haystack.includes(token));
 }
 
 function recommendationCard(title, subtitle, url) {
@@ -152,22 +133,8 @@ async function buildRecommendationsHtml(sb, attendeeLocation) {
 
   const tokens = locationTokens(attendeeLocation);
   if (tokens.length) {
-    const { data: nearbyEvents, error: nearbyErr } = await sb
-      .from('events')
-      .select(
-        'id, title, slug, starts_at, city, venue, location_label, organiser_id, status, approval_status, published_at, organisers(name)'
-      )
-      .eq('status', 'published')
-      .eq('approval_status', 'Approved')
-      .gt('starts_at', now)
-      .order('starts_at', { ascending: true })
-      .limit(40);
-    if (nearbyErr) throw new Error(nearbyErr.message);
-
-    const matched = (nearbyEvents || [])
-      .filter(isEventPublishedForSale)
-      .filter((row) => eventMatchesLocation(row, tokens))
-      .slice(0, 4);
+    const nearby = await fetchNearbyEvents(sb, attendeeLocation, { limit: 4 });
+    const matched = nearby.events;
 
     if (matched.length) {
       parts.push(sectionHeading('Events near you'));

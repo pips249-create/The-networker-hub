@@ -21,14 +21,12 @@
       if (page === 'about') return 'about';
       if (page === 'events') return 'events';
       if (page === 'opportunities') return 'opportunities';
-      if (page === 'training') return 'training';
       if (page === 'legal') return 'legal';
     }
 
     var path = (window.location.pathname || '').toLowerCase();
     if (/\/events\/(?:index\.html)?$/.test(path) || /\/events\/?$/.test(path)) return 'events';
     if (/\/opportunities\//.test(path)) return 'opportunities';
-    if (/\/training\//.test(path)) return 'training';
     if (/\/faq\.html$/.test(path)) return 'faq';
     if (/\/contact\.html$/.test(path)) return 'contact';
     if (/\/about\.html$/.test(path)) return 'about';

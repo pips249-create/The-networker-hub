@@ -61,11 +61,11 @@ a:hover { color: var(--charcoal); }
   padding: 8px clamp(16px, 2.5vw, 32px);
   padding-left: max(16px, env(safe-area-inset-left));
   padding-right: max(16px, env(safe-area-inset-right));
-  min-height: 72px;
+  min-height: 84px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: clamp(12px, 2vw, 20px);
+  gap: clamp(16px, 2.5vw, 28px);
   background: var(--brand-cream);
   border-bottom: 1px solid rgba(194, 153, 209, 0.35);
   transition: box-shadow 0.25s, background 0.25s;
@@ -90,9 +90,9 @@ a:hover { color: var(--charcoal); }
   flex-shrink: 0;
 }
 .nav-logo img {
-  height: 54px;
+  height: 68px;
   width: auto;
-  max-width: min(240px, 42vw);
+  max-width: min(300px, 46vw);
   display: block;
   object-fit: contain;
   object-position: left center;
@@ -111,9 +111,10 @@ a:hover { color: var(--charcoal); }
   justify-content: flex-end;
   flex: 1 1 0;
   min-width: 0;
-  gap: 6px clamp(8px, 1.2vw, 14px);
-  font-size: 14px;
-  font-weight: 500;
+  gap: 10px clamp(20px, 2.8vw, 36px);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   line-height: 1.2;
   padding: 0;
   max-width: none;
@@ -121,7 +122,7 @@ a:hover { color: var(--charcoal); }
 .site-nav .nav-links a {
   display: inline-flex;
   align-items: center;
-  min-height: 36px;
+  min-height: 40px;
   color: var(--charcoal);
   text-decoration: none;
 }
@@ -130,7 +131,7 @@ a:hover { color: var(--charcoal); }
 }
 .site-nav .nav-links a[aria-current="page"] {
   color: var(--lavender-deep);
-  font-weight: 600;
+  font-weight: 700;
 }
 .site-nav.is-session-pending .nav-auth-pending {
   display: inline-flex;
@@ -323,8 +324,9 @@ a:hover { color: var(--charcoal); }
   align-items: center;
   gap: 4px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--charcoal);
   background: var(--surface-card);
   border: 1px solid var(--border-soft);
@@ -405,13 +407,9 @@ a:hover { color: var(--charcoal); }
   color: var(--charcoal);
 }
 
-@media (max-width: 1100px) {
-  .nav-links .nav-hide-mobile { display: none; }
-}
-
 /* Fixed nav offset (home hero handles its own spacing) */
 body.has-site-nav {
-  padding-top: 72px;
+  padding-top: 84px;
 }
 
 body.hub-page-admin {

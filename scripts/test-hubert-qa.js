@@ -19,7 +19,7 @@ const MEMBER_QUESTIONS = [
   { q: 'How do I enquire about a franchise?', expect: /enquir|account|\/opportunities\//i },
   { q: "I didn't get my booking confirmation email", expect: /email|spam|hello@/i },
   { q: 'How do I cancel my booking?', expect: /cancel|organiser|refund/i },
-  { q: 'What is training on The Networker Hub?', expect: /training|workshops|coming soon/i },
+  { q: 'What is training on The Networker Hub?', expect: /events|opportunities|focuses/i },
   { q: 'How do I save an event?', expect: /favourit|account/i },
   { q: 'How do I leave a review?', expect: /review/i },
   { q: 'Who runs this site?', expect: /Networker Group|Rosie|Pip/i },

@@ -134,7 +134,6 @@
   }
 
   function loadSectionHeroPreviews() {
-    renderHeroInShell(document.getElementById('ad-live-training-hero'), DEMO_SPONSOR);
     renderHeroInShell(document.getElementById('ad-live-opportunities-hero'), DEMO_SPONSOR);
   }
 
@@ -239,13 +238,13 @@
     });
 
     var hash = (location.hash || '').replace(/^#/, '');
-    var initial = hash === 'training' || hash === 'opportunities' ? hash : 'events';
+    var initial = hash === 'opportunities' ? hash : 'events';
     var startTab = tabsRoot.querySelector('[data-ad-tab="' + initial + '"]') || tabs[0];
     if (startTab) activateTab(startTab);
 
     window.addEventListener('hashchange', function () {
       var want = (location.hash || '').replace(/^#/, '');
-      if (want !== 'events' && want !== 'training' && want !== 'opportunities') return;
+      if (want !== 'events' && want !== 'opportunities') return;
       var tab = tabsRoot.querySelector('[data-ad-tab="' + want + '"]');
       if (tab) activateTab(tab);
     });

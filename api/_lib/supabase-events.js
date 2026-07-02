@@ -104,6 +104,9 @@ function eventTypeTabCategory(raw) {
   if (t === 'Exhibition') return 'exhibition';
   if (t === 'Events') return 'events';
   if (t === 'Awards') return 'awards';
+  if (t === 'Webinar') return 'webinar';
+  if (t === 'Workshop') return 'workshop';
+  if (t === 'Session') return 'session';
   return 'meeting';
 }
 

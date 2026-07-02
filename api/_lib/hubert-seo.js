@@ -24,7 +24,7 @@ function buildOrganizationSchema(origin) {
     image: base + '/assets/logo.png',
     email: 'hello@the-networker.co.uk',
     description:
-      'UK platform for networking events, exhibitions, business opportunities, and professional training.',
+      'UK platform for networking events, exhibitions, and business opportunities.',
     address: {
       '@type': 'PostalAddress',
       streetAddress: 'Magpas HQ, Barnwell Road, Alconbury Weald',
@@ -54,7 +54,7 @@ function buildWebSiteSchema(origin) {
     name: SITE_NAME,
     url: base,
     description:
-      'Browse UK networking events, business opportunities, and training. Free to explore; create a free account to buy tickets or send enquiries.',
+      'Browse UK networking events and business opportunities. Free to explore; create a free account to buy tickets or send enquiries.',
     publisher: {
       '@type': 'Organization',
       name: LEGAL_NAME,
@@ -198,7 +198,7 @@ function buildSchemaGraph(page, origin) {
       url: base + '/about.html',
       name: 'About The Networker Hub',
       description:
-        'The Networker Hub connects UK business owners and professionals with networking events, exhibitions, and training.',
+        'The Networker Hub connects UK business owners and professionals with networking events, exhibitions, and business opportunities.',
       mainEntity: buildOrganizationSchema(base),
     });
   } else if (page === 'advertising') {
@@ -208,7 +208,7 @@ function buildSchemaGraph(page, origin) {
       url: base + '/advertising',
       name: 'Advertising & sponsorship – The Networker Hub',
       description:
-        'Sponsor placements and advertising rates for the events directory, training browse, and business opportunities on The Networker Hub.',
+        'Sponsor placements and advertising rates for the events directory and business opportunities on The Networker Hub.',
       about: buildOrganizationSchema(base),
     });
   } else if (page === 'events') {
@@ -226,15 +226,6 @@ function buildSchemaGraph(page, origin) {
         'Business opportunities',
         '/opportunities/',
         'Browse franchises, partnerships, and business opportunities across the UK.',
-        base
-      )
-    );
-  } else if (page === 'training') {
-    graph.push(
-      buildCollectionPageSchema(
-        'Training & courses',
-        '/training/',
-        'Workshops, seminars, and masterclasses on The Networker Hub.',
         base
       )
     );
@@ -263,7 +254,7 @@ function buildLlmsTxt(origin) {
 
   return (
     '# The Networker Hub\n' +
-    '> UK business networking platform — events, business opportunities, and training and workshops.\n\n' +
+    '> UK business networking platform — events and business opportunities.\n\n' +
     'Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@the-networker.co.uk\n\n' +
     '## Canonical URLs\n' +
     '- Home: ' +
@@ -275,9 +266,6 @@ function buildLlmsTxt(origin) {
     '- Business opportunities: ' +
     base +
     '/opportunities/\n' +
-    '- Training and workshops (preview): ' +
-    base +
-    '/training/\n' +
     '- FAQ: ' +
     base +
     '/faq.html\n' +

@@ -133,9 +133,39 @@
     return Boolean(ev.locked) && eventIsPublishedListing(ev);
   }
 
+  function shouldShowEventOverviewStats(ev) {
+    if (!ev || !ev.id) return false;
+    const sold = eventTicketsSoldCount(ev);
+    if (sold > 0) return true;
+    const st = String(ev.status || '').toLowerCase();
+    const key = String(ev.statusKey || '').toLowerCase();
+    if (st === 'published' || String(ev.approvalStatus || '').trim() === 'Approved') {
+      return true;
+    }
+    return key === 'live' || key === 'upcoming' || key === 'pending_approval';
+  }
+
+  function updateEventCancelUi(ev) {
+    const cancelRow = document.getElementById('ee-cancel-row');
+    const cancelBtn = document.getElementById('ee-cancel-event-btn');
+    if (!cancelRow || !cancelBtn) return;
+    const canCancel = eventCanCancelListing(ev);
+    const sold = eventTicketsSoldCount(ev);
+    cancelRow.hidden = !canCancel;
+    if (canCancel) {
+      cancelBtn.textContent =
+        sold > 0 ? 'Cancel this event (' + sold + ' tickets sold)' : 'Cancel this event';
+    }
+  }
+
   function renderEventOverviewStats(ev) {
     const wrap = document.getElementById('ee-event-stats');
-    if (!wrap || !ev || !ev.id) return;
+    if (!wrap) return;
+    updateEventCancelUi(ev);
+    if (!shouldShowEventOverviewStats(ev)) {
+      wrap.hidden = true;
+      return;
+    }
     const ticketsEl = document.getElementById('ee-stat-tickets');
     const revenueEl = document.getElementById('ee-stat-revenue');
     const statusEl = document.getElementById('ee-stat-status');
@@ -160,17 +190,6 @@
             : 'Draft');
     }
     wrap.hidden = false;
-
-    const cancelRow = document.getElementById('ee-cancel-row');
-    const cancelBtn = document.getElementById('ee-cancel-event-btn');
-    if (cancelRow && cancelBtn) {
-      const canCancel = eventCanCancelListing(ev);
-      cancelRow.hidden = !canCancel;
-      if (canCancel) {
-        cancelBtn.textContent =
-          sold > 0 ? 'Cancel this event (' + sold + ' tickets sold)' : 'Cancel this event';
-      }
-    }
   }
 
   function requestEventCancellation() {
@@ -591,6 +610,9 @@
       { value: 'Events', label: 'Events' },
       { value: 'Exhibition', label: 'Exhibition' },
       { value: 'Awards', label: 'Awards' },
+      { value: 'Webinar', label: 'Webinar' },
+      { value: 'Workshop', label: 'Workshop' },
+      { value: 'Session', label: 'Session' },
     ];
     const current = canonicalEventType(selected || sel.value || 'Meeting');
     sel.innerHTML = '';

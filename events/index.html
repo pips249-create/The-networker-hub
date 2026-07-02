@@ -224,9 +224,15 @@
                 <span class="filter-checkbox-box" aria-hidden="true"></span>
                 Free
               </label>
-              <div class="filter-price-range-row filter-price-range-row--max">
-                <input type="range" id="price-max" min="0" max="100" step="5" value="100" aria-label="Maximum ticket price">
-                <input type="number" id="price-max-input" class="filter-price-max-input" min="0" step="1" inputmode="numeric" placeholder="Any" aria-label="Maximum price in pounds">
+              <div class="filter-price-bounds">
+                <label class="filter-price-bound">
+                  <span class="filter-price-bound-label">Min (£)</span>
+                  <input type="number" id="price-min-input" class="filter-price-bound-input" min="0" step="1" inputmode="numeric" placeholder="Any" aria-label="Minimum price in pounds">
+                </label>
+                <label class="filter-price-bound">
+                  <span class="filter-price-bound-label">Max (£)</span>
+                  <input type="number" id="price-max-input" class="filter-price-bound-input" min="0" step="1" inputmode="numeric" placeholder="Any" aria-label="Maximum price in pounds">
+                </label>
               </div>
             </div>
           </div>

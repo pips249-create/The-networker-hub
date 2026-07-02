@@ -719,7 +719,6 @@
     }
     resetSpotlightOrder();
     fillFilterOptions();
-    if (window.hubInitPriceFilter) window.hubInitPriceFilter();
     currentPage = 1;
     if (document.body.classList.contains('browse-mode-organisers')) {
       if (window.hubApplyOrganiserFilters) window.hubApplyOrganiserFilters();

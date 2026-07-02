@@ -152,6 +152,9 @@ const TYPE_WEIGHTS = {
   Events: 60,
   Exhibition: 30,
   Awards: 25,
+  Webinar: 20,
+  Workshop: 20,
+  Session: 20,
 };
 
 UNSPLASH.Meeting = UNSPLASH['Networking meeting'];

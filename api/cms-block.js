@@ -22,7 +22,6 @@ const HERO_SPONSOR_SLOTS = new Set([
   'events_sponsor_hub',
   'organisers_sponsor_hub',
   'opportunities_sponsor_hub',
-  'academy_sponsor_hub',
   LEGACY_SPONSOR_HUB_SLOT,
 ]);
 

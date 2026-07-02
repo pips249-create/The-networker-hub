@@ -130,7 +130,15 @@
     },
   };
 
-  var EVENT_TYPES = ['Meeting', 'Events', 'Exhibition', 'Awards'];
+  var EVENT_TYPES = [
+    'Meeting',
+    'Events',
+    'Exhibition',
+    'Awards',
+    'Webinar',
+    'Workshop',
+    'Session',
+  ];
   var MEETING_FORMATS = ['In person', 'Online', 'Hybrid'];
   var healthCache = null;
   var healthCacheFetchedAt = 0;
@@ -222,17 +230,6 @@
       label: 'Opportunities browse — Hero Sponsor Hub',
       preview: 'hero',
       help: 'Hero Sponsor Hub on the Business opportunities browse page.',
-      tagline: 'Example offer — edit to match your sponsor package',
-      ctaLabel: 'Enquire now',
-      ctaUrl: 'https://',
-      ctaColor: '#2d2636',
-    },
-    {
-      key: 'academy_sponsor_hub',
-      group: 'Browse pages',
-      label: 'Training browse — Hero Sponsor Hub',
-      preview: 'hero',
-      help: 'Hero Sponsor Hub on the training and workshops browse page.',
       tagline: 'Example offer — edit to match your sponsor package',
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
@@ -2807,12 +2804,10 @@
             'Meetings ' +
               (listings.meetings || 0) +
               ' · Exhibitions ' +
-              (listings.exhibitions || 0) +
-              ' · Workshops ' +
-              (listings.training || 0),
+              (listings.exhibitions || 0),
             'brand'
           ) +
-          card('Organisers', String(m.organisers || 0), String(m.providers || 0) + ' workshop listings', 'violet') +
+          card('Organisers', String(m.organisers || 0), String(m.providers || 0) + ' group profiles', 'violet') +
           card(
             'Paid ticket revenue',
             fmtMoney(m.revenue || 0),
@@ -2856,12 +2851,10 @@
           'Meetings ' +
             (listings.meetings || 0) +
             ' · Exhibitions ' +
-            (listings.exhibitions || 0) +
-            ' · Workshops ' +
-            (listings.training || 0),
+            (listings.exhibitions || 0),
           'brand'
         ) +
-        card('Organisers', String(m.organisers || 0), String(m.providers || 0) + ' workshop listings', 'violet') +
+        card('Organisers', String(m.organisers || 0), String(m.providers || 0) + ' group profiles', 'violet') +
         card('Hub accounts', String(m.attendees || 0), 'hub_accounts and attendee profiles', 'blue');
     }
 
@@ -5536,7 +5529,6 @@
       { key: 'attendees', label: 'Attendees' },
       { key: 'organisers', label: 'Organisers' },
       { key: 'opportunities', label: 'Business opportunities' },
-      { key: 'academy', label: 'Training' },
     ];
 
     var ATTENDEE_EMAIL_SLUGS = [
@@ -5568,11 +5560,10 @@
       var cat = String((t && t.category) || '')
         .trim()
         .toLowerCase();
-      if (cat === 'attendees' || cat === 'organisers' || cat === 'opportunities' || cat === 'academy') {
+      if (cat === 'attendees' || cat === 'organisers' || cat === 'opportunities') {
         return cat;
       }
       if (slug.indexOf('opportunity') !== -1) return 'opportunities';
-      if (slug.indexOf('academy') !== -1 || slug.indexOf('workshop') !== -1) return 'academy';
       if (slug.indexOf('booking_') === 0 || slug.indexOf('account_') === 0) return 'attendees';
       return 'organisers';
     }

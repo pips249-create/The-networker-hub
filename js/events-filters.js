@@ -6,10 +6,8 @@
   var checkInPerson = document.getElementById('check-inperson');
   var checkOnline = document.getElementById('check-online');
   var checkFreeOnly = document.getElementById('filter-free-only');
-  var priceMax = document.getElementById('price-max');
+  var priceMinInput = document.getElementById('price-min-input');
   var priceMaxInput = document.getElementById('price-max-input');
-  var PRICE_SLIDER_FALLBACK = 100;
-  var priceSliderCap = PRICE_SLIDER_FALLBACK;
   var toggleNearMe = document.getElementById('toggle-nearme');
   var locationRadius = document.getElementById('location-radius');
   var locationRadiusWrap = document.getElementById('location-radius-wrap');
@@ -167,83 +165,35 @@
     return eventTicketPrice(ev);
   }
 
-  function syncPriceOutputs() {
-    if (!priceMax) return;
-    var cap = Number(priceMax.max) || priceSliderCap;
-    var val = Number(priceMax.value);
-    if (Number.isNaN(val)) val = cap;
-    if (priceMaxInput) {
-      if (val >= cap) {
-        priceMaxInput.value = '';
-        priceMaxInput.placeholder = 'Any';
-      } else {
-        priceMaxInput.value = String(val);
-        priceMaxInput.placeholder = 'Any';
-      }
-    }
-  }
-
-  function onPriceSliderInput() {
-    syncPriceOutputs();
-    applyFilters();
-  }
-
-  function onPriceMaxInputChange() {
-    if (!priceMax || !priceMaxInput) return;
-    var cap = Number(priceMax.max) || priceSliderCap;
-    var raw = priceMaxInput.value.trim();
-    if (!raw) {
-      priceMax.value = String(cap);
-    } else {
-      var n = Math.round(Number(raw));
-      if (Number.isNaN(n)) {
-        priceMax.value = String(cap);
-      } else {
-        priceMax.value = String(Math.max(0, Math.min(cap, n)));
-      }
-    }
-    syncPriceOutputs();
-    applyFilters();
+  function parsePriceInput(el) {
+    if (!el) return null;
+    var raw = String(el.value || '').trim();
+    if (!raw) return null;
+    var n = Math.round(Number(raw));
+    return Number.isNaN(n) || n < 0 ? null : n;
   }
 
   function getPriceBounds() {
-    var minVal = 0;
-    var maxVal = priceMax ? Number(priceMax.value) : priceSliderCap;
-    return { minVal: minVal, maxVal: maxVal };
+    return {
+      minVal: parsePriceInput(priceMinInput),
+      maxVal: parsePriceInput(priceMaxInput),
+    };
   }
 
-  function initPriceSliderMax() {
-    if (window.hubServerBrowse && window.hubBrowsePricePeak != null) {
-      if (!priceMax) return;
-      var cap = Math.max(5, Number(window.hubBrowsePricePeak) || PRICE_SLIDER_FALLBACK);
-      priceSliderCap = cap;
-      priceMax.max = String(cap);
-      var currentVal = Number(priceMax.value);
-      if (currentVal > cap || currentVal >= priceSliderCap) {
-        priceMax.value = String(cap);
-      }
-      syncPriceOutputs();
-      return;
-    }
-    var all = window.hubAllEvents || [];
-    if (!all.length || !priceMax) return;
-    var peak = 0;
-    all.forEach(function (ev) {
-      var n = eventListingPrice(ev);
-      if (n > peak) peak = n;
-    });
-    var prevCap = priceSliderCap;
-    var cap = peak > 0 ? Math.ceil(peak / 5) * 5 : PRICE_SLIDER_FALLBACK;
-    priceSliderCap = cap;
-    priceMax.max = String(cap);
-    var currentVal = Number(priceMax.value);
-    if (currentVal > cap || currentVal >= prevCap) {
-      priceMax.value = String(cap);
-    }
-    syncPriceOutputs();
+  function onPriceInputChange() {
+    applyFilters();
   }
 
-  window.hubInitPriceFilter = initPriceSliderMax;
+  function syncPriceInputs() {
+    var bounds = getPriceBounds();
+    if (
+      bounds.minVal != null &&
+      bounds.maxVal != null &&
+      bounds.minVal > bounds.maxVal
+    ) {
+      if (priceMaxInput) priceMaxInput.value = String(bounds.minVal);
+    }
+  }
 
   function getLocationRadiusMiles() {
     var el = locationRadius;
@@ -515,9 +465,17 @@
 
     var bounds = getPriceBounds();
     var listingPrice = eventListingPrice(ev);
-    if (bounds.maxVal < priceSliderCap && listingPrice > bounds.maxVal) return false;
+    if (bounds.minVal != null && listingPrice < bounds.minVal) return false;
+    if (bounds.maxVal != null && listingPrice > bounds.maxVal) return false;
 
     return true;
+  }
+
+  function eventRatingSortKey(ev) {
+    var reviews = Number(ev.reviews) || 0;
+    var rating = Number(ev.rating);
+    if (reviews <= 0 || Number.isNaN(rating)) return null;
+    return rating;
   }
 
   function sortEvents(list) {
@@ -525,10 +483,20 @@
     var copy = list.slice();
     copy.sort(function (a, b) {
       if (sort === 'rating' || sort === 'rating-desc') {
-        return (Number(b.rating) || 0) - (Number(a.rating) || 0);
+        var rb = eventRatingSortKey(b);
+        var ra = eventRatingSortKey(a);
+        if (ra == null && rb == null) return 0;
+        if (ra == null) return 1;
+        if (rb == null) return -1;
+        return rb - ra;
       }
       if (sort === 'rating-asc') {
-        return (Number(a.rating) || 0) - (Number(b.rating) || 0);
+        var raAsc = eventRatingSortKey(a);
+        var rbAsc = eventRatingSortKey(b);
+        if (raAsc == null && rbAsc == null) return 0;
+        if (raAsc == null) return 1;
+        if (rbAsc == null) return -1;
+        return raAsc - rbAsc;
       }
       if (sort === 'price' || sort === 'price-asc') {
         return eventListingPrice(a) - eventListingPrice(b);
@@ -611,7 +579,8 @@
           freeOnly: !!(checkFreeOnly && checkFreeOnly.checked),
           inPerson: !!(checkInPerson && checkInPerson.checked),
           online: !!(checkOnline && checkOnline.checked),
-          priceMax: priceMax ? priceMax.value : '',
+          priceMin: priceMinInput ? priceMinInput.value : '',
+          priceMax: priceMaxInput ? priceMaxInput.value : '',
           sort: sortSelect ? sortSelect.value : 'recommended',
           typeTabs: activeTypeTabs.slice(),
         })
@@ -631,11 +600,8 @@
       if (checkFreeOnly) checkFreeOnly.checked = !!prefs.freeOnly;
       if (checkInPerson && prefs.inPerson === false) checkInPerson.checked = false;
       if (checkOnline && prefs.online === false) checkOnline.checked = false;
-      if (priceMax && prefs.priceMax) {
-        var restored = Number(prefs.priceMax);
-        var cap = Number(priceMax.max) || priceSliderCap;
-        priceMax.value = String(!Number.isNaN(restored) && restored <= cap ? restored : cap);
-      }
+      if (priceMinInput && prefs.priceMin) priceMinInput.value = prefs.priceMin;
+      if (priceMaxInput && prefs.priceMax) priceMaxInput.value = prefs.priceMax;
       if (sortSelect && prefs.sort) sortSelect.value = prefs.sort;
       if (toggleNearMe) toggleNearMe.checked = !!prefs.nearMe;
       if (toggleNearMeMobile) toggleNearMeMobile.checked = !!prefs.nearMe;
@@ -652,7 +618,6 @@
       } else if (prefs.typeTab) {
         setActiveTypeTab(normalizeTypeTabSlug(prefs.typeTab));
       }
-      syncPriceOutputs();
       syncNearRadiusUi();
       if (postcodeInput && prefs.postcode) {
         var restorePc = prefs.postcode;
@@ -725,10 +690,8 @@
     if (checkInPerson) checkInPerson.checked = true;
     if (checkOnline) checkOnline.checked = true;
     if (checkFreeOnly) checkFreeOnly.checked = false;
-    if (priceMax) {
-      priceMax.value = priceMax.max || String(priceSliderCap);
-    }
-    syncPriceOutputs();
+    if (priceMinInput) priceMinInput.value = '';
+    if (priceMaxInput) priceMaxInput.value = '';
     if (toggleNearMe) toggleNearMe.checked = false;
     if (toggleNearMeMobile) toggleNearMeMobile.checked = false;
     if (locationRadius) locationRadius.value = '25';
@@ -800,14 +763,17 @@
 
   [searchInput, sortSelect, checkInPerson, checkOnline, checkFreeOnly].forEach(bindFilter);
 
-  if (priceMax) {
-    priceMax.addEventListener('input', onPriceSliderInput);
-  }
-  if (priceMaxInput) {
-    priceMaxInput.addEventListener('input', onPriceMaxInputChange);
-    priceMaxInput.addEventListener('change', onPriceMaxInputChange);
-  }
-  syncPriceOutputs();
+  [priceMinInput, priceMaxInput].forEach(function (el) {
+    if (!el) return;
+    el.addEventListener('input', function () {
+      syncPriceInputs();
+      onPriceInputChange();
+    });
+    el.addEventListener('change', function () {
+      syncPriceInputs();
+      onPriceInputChange();
+    });
+  });
 
   if (postcodeInput) {
     postcodeInput.addEventListener('input', onPostcodeInput);

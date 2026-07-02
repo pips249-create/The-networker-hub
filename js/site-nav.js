@@ -74,10 +74,10 @@
 
 /**
  * Shared site navigation — same bar on every page.
- * NAV_BUILD=20260712 — cream nav logo (logo-nav.png).
+ * NAV_BUILD=20260713 — wider nav links, larger logo.
  */
 (function () {
-  var NAV_BUILD = '20260712';
+  var NAV_BUILD = '20260713';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -205,11 +205,9 @@
   function buildNavLinks(user, pending) {
     var html = '';
     html += link('events/index.html', 'Events', 'events');
-    html += link('opportunities/index.html', 'Opportunities', 'opportunities', 'nav-hide-mobile');
-    html += link('about.html', 'About us', 'about', 'nav-hide-mobile');
-    html += link('advertising.html', 'Advertising', 'advertising', 'nav-hide-mobile');
-    html += link('contact.html', 'Contact', 'contact', 'nav-hide-mobile');
-    html += link('faq.html', 'FAQ', 'faq', 'nav-hide-mobile');
+    html += link('opportunities/index.html', 'Opportunities', 'opportunities');
+    html += link('contact.html', 'Contact', 'contact');
+    html += link('faq.html', 'FAQ', 'faq');
     if (pending && !user) {
       html +=
         '<span class="nav-auth-pending" aria-hidden="true">' +
@@ -235,8 +233,6 @@
     var html = '';
     html += link('events/index.html', 'Events', 'events', 'nav-mobile-item');
     html += link('opportunities/index.html', 'Opportunities', 'opportunities', 'nav-mobile-item');
-    html += link('about.html', 'About us', 'about', 'nav-mobile-item');
-    html += link('advertising.html', 'Advertising', 'advertising', 'nav-mobile-item');
     html += link('contact.html', 'Contact', 'contact', 'nav-mobile-item');
     html += link('faq.html', 'FAQ', 'faq', 'nav-mobile-item');
     if (pending && !user) {
@@ -442,7 +438,7 @@
       '" aria-label="The Networker Hub home">' +
       '<img src="' +
       href('assets/logo-nav.png') +
-      '" alt="The Networker Hub" width="240" height="96">' +
+      '" alt="The Networker Hub" width="300" height="120">' +
       '</a>' +
       '<nav class="nav-links" aria-label="Main">' +
       buildNavLinks(user, pending) +

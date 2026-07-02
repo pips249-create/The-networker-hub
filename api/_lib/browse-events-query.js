@@ -67,6 +67,10 @@ function parseBrowseQuery(query) {
     inPerson: q.inPerson !== '0' && q.inPerson !== 'false',
     online: q.online !== '0' && q.online !== 'false',
     freeOnly: q.free === '1' || q.freeOnly === '1',
+    priceMin:
+      q.priceMin != null && String(q.priceMin).trim() !== ''
+        ? Number(q.priceMin)
+        : null,
     priceMax:
       q.priceMax != null && String(q.priceMax).trim() !== ''
         ? Number(q.priceMax)
@@ -164,8 +168,13 @@ function applyBrowseFilters(query, params) {
 
   if (params.freeOnly) {
     next = next.eq('min_ticket_price', 0);
-  } else if (Number.isFinite(params.priceMax) && params.priceMax >= 0) {
-    next = next.lte('min_ticket_price', params.priceMax);
+  } else {
+    if (Number.isFinite(params.priceMin) && params.priceMin >= 0) {
+      next = next.gte('min_ticket_price', params.priceMin);
+    }
+    if (Number.isFinite(params.priceMax) && params.priceMax >= 0) {
+      next = next.lte('min_ticket_price', params.priceMax);
+    }
   }
 
   if (params.dateFrom) {
@@ -178,14 +187,30 @@ function applyBrowseFilters(query, params) {
   return next;
 }
 
+function rowRatingSortKey(row) {
+  if (row.average_rating == null || row.average_rating === '') return null;
+  const rating = Number(row.average_rating);
+  return Number.isNaN(rating) ? null : rating;
+}
+
 function sortRows(rows, sort) {
   const list = rows.slice();
   list.sort((a, b) => {
     if (sort === 'rating-desc') {
-      return (Number(b.average_rating) || 0) - (Number(a.average_rating) || 0);
+      const rb = rowRatingSortKey(b);
+      const ra = rowRatingSortKey(a);
+      if (ra == null && rb == null) return 0;
+      if (ra == null) return 1;
+      if (rb == null) return -1;
+      return rb - ra;
     }
     if (sort === 'rating-asc') {
-      return (Number(a.average_rating) || 0) - (Number(b.average_rating) || 0);
+      const ra = rowRatingSortKey(a);
+      const rb = rowRatingSortKey(b);
+      if (ra == null && rb == null) return 0;
+      if (ra == null) return 1;
+      if (rb == null) return -1;
+      return ra - rb;
     }
     if (sort === 'price-asc') {
       return (Number(a.min_ticket_price) || 0) - (Number(b.min_ticket_price) || 0);
@@ -223,12 +248,12 @@ function applySqlSort(query, sort) {
   }
   if (sort === 'rating-asc') {
     return query
-      .order('average_rating', { ascending: true, nullsFirst: true })
+      .order('average_rating', { ascending: true, nullsFirst: false })
       .order('starts_at', { ascending: true });
   }
   if (sort === 'rating-desc') {
     return query
-      .order('average_rating', { ascending: false, nullsFirst: true })
+      .order('average_rating', { ascending: false, nullsFirst: false })
       .order('starts_at', { ascending: true });
   }
   return query
@@ -295,7 +320,7 @@ async function countWithFilters(sb, params) {
 }
 
 async function fetchBrowseTypeCounts(sb, params) {
-  const types = ['meeting', 'events', 'exhibition', 'awards'];
+  const types = ['meeting', 'events', 'exhibition', 'awards', 'webinar', 'workshop', 'session'];
   const base = { ...params, types: [] };
   const [all, ...perType] = await Promise.all([
     countWithFilters(sb, base),

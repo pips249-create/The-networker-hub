@@ -255,7 +255,7 @@ async function listNewsletterRecipients(sb) {
   const client = sb || getSupabaseAdmin();
   const { data, error } = await client
     .from('attendees')
-    .select('id, email, name, supabase_user_id')
+    .select('id, email, name, location, supabase_user_id')
     .not('email', 'is', null);
   if (error) throw new Error(error.message);
 
@@ -296,7 +296,13 @@ async function listNewsletterRecipients(sb) {
         id: row.id,
         email,
         name: String(row.name || '').trim(),
+        location: String(row.location || '').trim(),
       });
+    } else {
+      const existing = byEmail.get(email);
+      if (!existing.location && row.location) {
+        existing.location = String(row.location || '').trim();
+      }
     }
   });
 
@@ -305,7 +311,10 @@ async function listNewsletterRecipients(sb) {
 
 async function previewNewsletterEdition(sb, edition, recipient) {
   const client = sb || getSupabaseAdmin();
-  const vars = await buildNewsletterVariables(client, edition, recipient || { name: 'Alex Morgan' });
+  const vars = await buildNewsletterVariables(client, edition, recipient || {
+    name: 'Alex Morgan',
+    location: 'Manchester',
+  });
   const { buildEmailFromTemplate } = require('./send-template-email');
   const subject = String(edition.subject || edition.edition_label || vars.edition_label).trim();
   return await buildEmailFromTemplate(NEWSLETTER_SLUG, {
@@ -325,9 +334,17 @@ async function sendNewsletterTest(sb, edition, toEmail) {
     throw err;
   }
 
+  const attendeeRes = await client
+    .from('attendees')
+    .select('name, location')
+    .eq('email', email)
+    .maybeSingle();
+  const attendee = attendeeRes.data || {};
+
   const vars = await buildNewsletterVariables(client, edition, {
-    name: email.split('@')[0],
+    name: String(attendee.name || '').trim() || email.split('@')[0],
     email,
+    location: String(attendee.location || '').trim(),
   });
   const subject = String(edition.subject || edition.edition_label || vars.edition_label).trim();
 

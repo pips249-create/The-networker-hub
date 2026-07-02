@@ -35,7 +35,6 @@
     const w = writable || {};
     setFieldWritable('as-name', w.name !== false);
     setFieldWritable('as-location', !!w.location);
-    setFieldWritable('as-sector', !!w.businessSector);
   }
 
   function setFieldValue(id, value) {
@@ -47,7 +46,6 @@
     setFieldValue('as-email', profile.email || '');
     setFieldValue('as-name', profile.name || '');
     setFieldValue('as-location', profile.location || '');
-    setFieldValue('as-sector', profile.businessSector || '');
     fillEmailPrefs(profile);
   }
 
@@ -130,7 +128,6 @@
         body: JSON.stringify({
           name: document.getElementById('as-name').value.trim(),
           location: document.getElementById('as-location').value.trim(),
-          businessSector: document.getElementById('as-sector').value.trim(),
         }),
       });
       const data = await res.json();

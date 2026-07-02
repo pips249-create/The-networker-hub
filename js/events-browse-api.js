@@ -19,7 +19,8 @@
     var checkInPerson = el('check-inperson');
     var checkOnline = el('check-online');
     var checkFreeOnly = el('filter-free-only');
-    var priceMax = el('price-max');
+    var priceMinInput = el('price-min-input');
+    var priceMaxInput = el('price-max-input');
     var locationRadius = el('location-radius');
 
     var params = {
@@ -34,8 +35,11 @@
       location: postcodeInput ? postcodeInput.value.trim() : '',
     };
 
-    if (priceMax && Number(priceMax.value) < Number(priceMax.max)) {
-      params.priceMax = String(priceMax.value);
+    if (priceMinInput && String(priceMinInput.value).trim() !== '') {
+      params.priceMin = String(priceMinInput.value).trim();
+    }
+    if (priceMaxInput && String(priceMaxInput.value).trim() !== '') {
+      params.priceMax = String(priceMaxInput.value).trim();
     }
 
     if (window.hubIsNearMeActive && window.hubIsNearMeActive()) {
@@ -140,7 +144,6 @@
         }
         if (window.hubRefreshListings) window.hubRefreshListings();
         if (window.hubUpdateEventTypeChipCounts) window.hubUpdateEventTypeChipCounts();
-        if (window.hubInitPriceFilter) window.hubInitPriceFilter();
         return data;
       });
   }
