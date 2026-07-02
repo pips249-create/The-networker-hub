@@ -751,7 +751,7 @@ window.HUB_SEO_DATA = {
           "@id": "https://the-networker.co.uk/events/",
           "url": "https://the-networker.co.uk/events/",
           "name": "Networking events — The Networker Hub",
-          "description": "Browse UK networking events, meetings, exhibitions, and awards.",
+          "description": "Browse UK networking events, meetings, webinars, workshops, exhibitions, and awards.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker Hub",

@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260725" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260729" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
@@ -178,7 +178,9 @@
 
           <div class="org-hub-portals" aria-label="Workspace areas">
             <button type="button" class="org-hub-portal org-hub-portal--events" data-org-route="events-overview">
-              <span class="org-hub-portal-icon" aria-hidden="true">📅</span>
+              <span class="org-hub-portal-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </span>
               <span class="org-hub-portal-body">
                 <strong>Manage events</strong>
                 <span>Group profiles, listings, tickets, attendees, reviews &amp; revenue</span>
@@ -187,7 +189,9 @@
               <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
             </button>
             <button type="button" class="org-hub-portal org-hub-portal--business" data-org-route="business-overview">
-              <span class="org-hub-portal-icon" aria-hidden="true">💼</span>
+              <span class="org-hub-portal-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+              </span>
               <span class="org-hub-portal-body">
                 <strong>Business ops</strong>
                 <span>List opportunities and respond to member enquiries</span>
@@ -306,9 +310,9 @@
               </thead>
               <tbody id="dash-groups-body"></tbody>
             </table>
-            <p class="org-empty" id="dash-groups-empty" hidden>
-              No group profiles yet — use <strong>+ Add group</strong> above to create your first.
-            </p>
+            <div class="org-empty-state org-empty-state--compact" id="dash-groups-empty" hidden role="status">
+              <p class="org-empty-state-text">No group profiles yet — use <strong>+ Add group</strong> above to create your first.</p>
+            </div>
           </div>
           <div class="org-section-footer">
             <button type="button" class="org-btn org-btn-outline" data-org-goto-view="groups">
@@ -339,9 +343,9 @@
               </thead>
               <tbody id="dash-events-body"></tbody>
             </table>
-            <p class="org-empty" id="dash-events-empty" hidden>
-              No upcoming events — create a group, then add an event.
-            </p>
+            <div class="org-empty-state org-empty-state--compact" id="dash-events-empty" hidden role="status">
+              <p class="org-empty-state-text">No upcoming events — create a group, then add an event.</p>
+            </div>
           </div>
           <div class="org-section-footer">
             <button type="button" class="org-btn org-btn-outline" data-org-goto-view="events-list">
@@ -397,6 +401,38 @@
 
           <div class="org-overview-head">
             <div class="org-overview-head-text">
+              <h2 class="org-section-title">Your listings</h2>
+              <p class="org-section-sub">Business opportunities you&apos;ve published on the hub — edit a listing or check how many enquiries it has received.</p>
+            </div>
+            <a href="opportunity-edit.html" class="org-btn org-btn-gold org-btn-sm">+ List an opportunity</a>
+          </div>
+          <div class="org-table-wrap org-overview-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Status</th>
+                  <th>Enquiries</th>
+                  <th>Updated</th>
+                  <th class="org-th-actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="opp-listings-body"></tbody>
+            </table>
+            <div class="org-empty-state" id="opp-listings-empty" hidden role="status">
+              <div class="org-empty-state-icon" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+              </div>
+              <h3 class="org-empty-state-title">No listings yet</h3>
+              <p class="org-empty-state-text">Publish a business opportunity to start receiving member enquiries.</p>
+              <div class="org-empty-state-actions">
+                <a href="opportunity-edit.html" class="org-btn org-btn-gold org-btn-sm">+ List an opportunity</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="org-overview-head org-overview-head--spaced">
+            <div class="org-overview-head-text">
               <h2 class="org-section-title">Enquiries received</h2>
               <p class="org-section-sub">Messages from members who enquired about your business opportunity listings — respond by email from here.</p>
             </div>
@@ -416,19 +452,26 @@
               </thead>
               <tbody id="opp-enquiries-body"></tbody>
             </table>
-            <p class="org-empty" id="opp-enquiries-empty" hidden>No enquiries yet. When someone uses the enquiry form on your listing, it will appear here.</p>
+            <div class="org-empty-state" id="opp-enquiries-empty" hidden role="status">
+              <div class="org-empty-state-icon" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/></svg>
+              </div>
+              <h3 class="org-empty-state-title">No enquiries yet</h3>
+              <p class="org-empty-state-text">When someone uses the enquiry form on your listing, their message will appear here.</p>
+            </div>
           </div>
         </section>
 
         <!-- Group profiles -->
         <section class="org-page" id="org-page-groups" data-org-page="groups">
-          <div class="org-toolbar">
-            <div>
-              <h2 class="org-section-title">Group profiles</h2>
-              <p class="org-section-sub">Linked to your Users record and email. Events belong to a group profile.</p>
+          <header class="org-page-head org-page-head--split">
+            <div class="org-page-head-text">
+              <p class="org-page-kicker">My events</p>
+              <h1 class="org-page-title">Group profiles</h1>
+              <p class="org-page-lead">Your public organiser pages on the hub. Events belong to a group profile.</p>
             </div>
             <a href="group-edit.html" class="org-btn org-btn-gold">+ New group profile</a>
-          </div>
+          </header>
           <div id="org-ranking-share-groups-mount"></div>
           <div class="org-filter-bar">
             <select id="filter-groups-status" aria-label="Filter groups by status">
@@ -461,23 +504,33 @@
               </thead>
               <tbody id="groups-body"></tbody>
             </table>
-            <p class="org-empty" id="groups-empty" hidden>No groups yet. Create your first organiser group.</p>
+            <div class="org-empty-state" id="groups-empty" hidden role="status">
+              <div class="org-empty-state-icon" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+              </div>
+              <h3 class="org-empty-state-title">No group profiles yet</h3>
+              <p class="org-empty-state-text">Create your organiser page on the hub before listing events.</p>
+              <div class="org-empty-state-actions">
+                <a href="group-edit.html" class="org-btn org-btn-gold org-btn-sm">+ Add group profile</a>
+              </div>
+            </div>
           </div>
           <nav class="org-pagination" id="pagination-groups" data-list="groups" aria-label="Groups pages" hidden></nav>
         </section>
 
         <!-- Team members -->
         <section class="org-page" id="org-page-team" data-org-page="team">
-          <div class="org-toolbar">
-            <div>
-              <h2 class="org-section-title">Team members</h2>
-              <p class="org-section-sub">Invite editors to help manage events. Only the account owner can invite or remove team members.</p>
+          <header class="org-page-head org-page-head--split">
+            <div class="org-page-head-text">
+              <p class="org-page-kicker">Team</p>
+              <h1 class="org-page-title">Team &amp; invites</h1>
+              <p class="org-page-lead">Invite editors to help manage events. Only the account owner can invite or remove team members.</p>
               <p class="org-section-sub org-team-editor-note" id="team-editor-note" hidden>
                 You&apos;re signed in as an <strong>editor</strong>. You can manage events, but only the account owner can send invites.
               </p>
             </div>
             <button type="button" class="org-btn org-btn-gold" id="btn-invite-team">Invite team member</button>
-          </div>
+          </header>
           <div class="org-table-wrap">
             <table>
               <thead>
@@ -490,19 +543,47 @@
               </thead>
               <tbody id="team-body"></tbody>
             </table>
-            <p class="org-empty" id="team-empty" hidden>No team members yet.</p>
+            <div class="org-empty-state" id="team-empty" hidden role="status">
+              <div class="org-empty-state-icon" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20c0-3.3 3.1-6 7-6"/><path d="M14 20c0-2.2 2.7-4.5 6-4.5"/></svg>
+              </div>
+              <h3 class="org-empty-state-title">No team members yet</h3>
+              <p class="org-empty-state-text">Invite colleagues as editors so they can help manage your events.</p>
+              <div class="org-empty-state-actions">
+                <button type="button" class="org-btn org-btn-gold org-btn-sm" id="btn-invite-team-empty">Invite team member</button>
+              </div>
+            </div>
           </div>
         </section>
 
         <!-- My Events hub -->
         <section class="org-page" id="org-page-events" data-org-page="events">
-          <div class="org-toolbar">
-            <div>
-              <h2 class="org-section-title" id="my-events-title">My Events</h2>
-              <p class="org-section-sub" id="my-events-sub">Manage all your event listings — click any event name to edit.</p>
+          <header class="org-page-head org-page-head--split">
+            <div class="org-page-head-text">
+              <p class="org-page-kicker">My events</p>
+              <h1 class="org-page-title" id="my-events-title">My Events</h1>
+              <p class="org-page-lead" id="my-events-sub">Manage all your event listings — click any event name to edit.</p>
             </div>
             <a href="event-format.html" class="org-btn org-btn-gold" id="btn-new-event">+ New event</a>
-          </div>
+          </header>
+
+          <nav class="org-events-subnav" id="org-events-subnav" aria-label="Events sections">
+            <button type="button" class="org-events-tab is-active" data-events-tab="events-list">
+              Events <span class="org-events-tab-count" id="tab-count-events">0</span>
+            </button>
+            <button type="button" class="org-events-tab" data-events-tab="events-tickets">
+              Tickets <span class="org-events-tab-count" id="tab-count-tickets">0</span>
+            </button>
+            <button type="button" class="org-events-tab" data-events-tab="events-attendees">
+              Attendees
+              <span class="org-events-tab-badge" id="org-events-tab-applications-badge" hidden>New</span>
+            </button>
+            <button type="button" class="org-events-tab" data-events-tab="events-cancellations">Cancellations</button>
+            <button type="button" class="org-events-tab" data-events-tab="events-reviews">
+              Reviews <span class="org-events-tab-count" id="tab-count-reviews">0</span>
+            </button>
+            <button type="button" class="org-events-tab" data-events-tab="events-revenue">Revenue</button>
+          </nav>
 
           <!-- All events -->
           <div class="org-sub-page is-active" id="sub-events-list" data-events-panel="events-list">
@@ -557,7 +638,16 @@
                 </thead>
                 <tbody id="events-body"></tbody>
               </table>
-              <p class="org-empty" id="events-empty" hidden>Create a group first, then add an event.</p>
+              <div class="org-empty-state" id="events-empty" hidden role="status">
+                <div class="org-empty-state-icon" aria-hidden="true">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+                <h3 class="org-empty-state-title">No events yet</h3>
+                <p class="org-empty-state-text">Create a group profile first, then list your first event.</p>
+                <div class="org-empty-state-actions">
+                  <button type="button" class="org-btn org-btn-gold org-btn-sm" data-action="new-event">+ List event</button>
+                </div>
+              </div>
             </div>
             <nav class="org-pagination" id="pagination-events" data-list="events" aria-label="Events pages" hidden></nav>
           </div>
@@ -593,7 +683,16 @@
                 </thead>
                 <tbody id="tickets-body"></tbody>
               </table>
-              <p class="org-empty" id="tickets-empty" hidden>No ticket types yet.</p>
+              <div class="org-empty-state" id="tickets-empty" hidden role="status">
+                <div class="org-empty-state-icon" aria-hidden="true">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 9h18"/><path d="M7 13h.01"/><path d="M11 13h6"/><path d="M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>
+                </div>
+                <h3 class="org-empty-state-title">No ticket types yet</h3>
+                <p class="org-empty-state-text">Add ticket tiers when you create or edit an event.</p>
+                <div class="org-empty-state-actions">
+                  <button type="button" class="org-btn org-btn-outline org-btn-sm" id="btn-new-ticket-empty">+ New ticket type</button>
+                </div>
+              </div>
             </div>
             <nav class="org-pagination" id="pagination-tickets" data-list="tickets" aria-label="Tickets pages" hidden></nav>
             <button type="button" class="org-btn org-btn-outline org-download-btn" id="btn-download-tickets-csv">⬇ Download tickets CSV</button>
@@ -636,9 +735,13 @@
                 </thead>
                 <tbody id="attendees-body"></tbody>
               </table>
-              <p class="org-empty" id="attendees-empty" hidden>
-                No registrations yet. Attendees appear here when people book tickets for your events.
-              </p>
+              <div class="org-empty-state" id="attendees-empty" hidden role="status">
+                <div class="org-empty-state-icon" aria-hidden="true">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                </div>
+                <h3 class="org-empty-state-title">No registrations yet</h3>
+                <p class="org-empty-state-text">Attendees appear here when people book tickets for your events.</p>
+              </div>
             </div>
             <nav class="org-pagination" id="pagination-attendees" data-list="attendees" aria-label="Attendees pages" hidden></nav>
           </div>
@@ -667,9 +770,13 @@
                 </thead>
                 <tbody id="cancellations-body"></tbody>
               </table>
-              <p class="org-empty" id="cancellations-empty" hidden>
-                No attendee cancellations yet. When someone cancels their own booking, it will appear here.
-              </p>
+              <div class="org-empty-state" id="cancellations-empty" hidden role="status">
+                <div class="org-empty-state-icon" aria-hidden="true">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                </div>
+                <h3 class="org-empty-state-title">No cancellations yet</h3>
+                <p class="org-empty-state-text">When someone cancels their own booking, it will appear here.</p>
+              </div>
             </div>
             <nav class="org-pagination" id="pagination-cancellations" data-list="cancellations" aria-label="Cancellations pages" hidden></nav>
           </div>
@@ -686,7 +793,13 @@
               </select>
             </div>
             <div class="org-reviews-list" id="reviews-list"></div>
-            <p class="org-empty" id="reviews-empty" hidden>No reviews yet. They will appear here when attendees leave feedback.</p>
+            <div class="org-empty-state" id="reviews-empty" hidden role="status">
+              <div class="org-empty-state-icon" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="m12 3 2.4 4.9 5.4.8-3.9 3.8.9 5.3L12 15.8 7.2 17.8l.9-5.3L4.2 8.7l5.4-.8L12 3z"/></svg>
+              </div>
+              <h3 class="org-empty-state-title">No reviews yet</h3>
+              <p class="org-empty-state-text">Reviews appear here when attendees leave feedback after your events.</p>
+            </div>
             <nav class="org-pagination" id="pagination-reviews" data-list="reviews" aria-label="Reviews pages" hidden></nav>
           </div>
 

@@ -168,6 +168,15 @@ a:hover {
   min-width: 0;
 }
 
+.event-listing-report-footer {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-top: 28px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+  font-size: 13px;
+}
+
 @media (max-width: 1024px) {
   .side-col {
     grid-row: auto;

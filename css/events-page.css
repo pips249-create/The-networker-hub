@@ -8,7 +8,7 @@
 .events-hero {
   background: var(--ev-navy);
   color: #fff;
-  padding: 48px 28px 56px;
+  padding: 32px 24px 36px;
   position: relative;
   overflow: hidden;
 }
@@ -41,8 +41,8 @@
   color: var(--ev-lavender);
   border: 1px solid rgba(212, 184, 232, 0.45);
   border-radius: var(--radius-pill);
-  padding: 6px 14px;
-  margin-bottom: 20px;
+  padding: 5px 12px;
+  margin-bottom: 14px;
 }
 
 .events-hero-badge::before {
@@ -56,11 +56,11 @@
 
 .events-hero-copy h1 {
   font-family: 'DM Serif Display', serif;
-  font-size: clamp(1.65rem, 4.2vw, 2.35rem);
+  font-size: clamp(1.5rem, 3.8vw, 2rem);
   font-weight: 400;
   line-height: 1.2;
-  margin: 0 0 16px;
-  max-width: 22em;
+  margin: 0 0 14px;
+  max-width: 18em;
   color: #fff;
 }
 
@@ -70,11 +70,11 @@
 }
 
 .events-hero-lede {
-  font-size: 15px;
-  line-height: 1.65;
-  color: rgba(255, 255, 255, 0.82);
-  max-width: 42em;
-  margin: 0 0 28px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.78);
+  max-width: 34em;
+  margin: 0 0 16px;
 }
 
 .events-hero-lede strong {
@@ -1337,4 +1337,273 @@ body.browse-mode-organisers .events-organiser-footnote-link {
 .empty-state-btn:focus-visible {
   outline: 2px solid var(--lavender);
   outline-offset: 3px;
+}
+
+/* Hero browse switch — Events | Organisers */
+.events-hero-browse-switch {
+  margin: 0 0 12px;
+}
+
+.events-hero .browse-mode-toggle.browse-mode-toggle--hero {
+  display: inline-flex;
+  padding: 4px;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+.events-hero .browse-mode-toggle--hero .browse-mode-btn {
+  min-width: 100px;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.events-hero .browse-mode-toggle--hero .browse-mode-btn.is-active {
+  background: var(--ev-lavender);
+  color: var(--ev-navy);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.events-hero .browse-mode-toggle--hero .browse-mode-btn:hover:not(.is-active) {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+body.browse-mode-organisers .events-hero .browse-mode-toggle--hero .browse-mode-btn.is-active {
+  background: #60a5fa;
+  color: #0f172a;
+}
+
+/* List event primer modal */
+body.events-list-primer-open {
+  overflow: hidden;
+}
+
+.hub-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.hub-modal[hidden] {
+  display: none;
+}
+
+.hub-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(26, 16, 37, 0.52);
+}
+
+.hub-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 480px);
+  max-height: min(92vh, 720px);
+  overflow: auto;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 28px 24px 22px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+}
+
+.hub-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--purple-50);
+  color: var(--purple-800);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.hub-modal-title {
+  margin: 0 0 10px;
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.45rem;
+  font-weight: 400;
+  color: var(--charcoal);
+}
+
+.hub-modal-lead {
+  margin: 0 0 18px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.events-list-primer-kicker {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--lavender-deep);
+}
+
+.events-list-primer-steps {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.events-list-primer-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--purple-50);
+  border: 1px solid rgba(122, 61, 138, 0.12);
+}
+
+.events-list-primer-step.is-done {
+  background: rgba(34, 139, 84, 0.08);
+  border-color: rgba(34, 139, 84, 0.2);
+}
+
+.events-list-primer-step-marker {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(122, 61, 138, 0.2);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--lavender-deep);
+}
+
+.events-list-primer-step.is-done .events-list-primer-step-marker {
+  background: #228b54;
+  border-color: #228b54;
+  color: #fff;
+}
+
+.events-list-primer-step-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.events-list-primer-step-body strong {
+  font-size: 14px;
+  color: var(--charcoal);
+}
+
+.events-list-primer-step-body span {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.events-list-primer-ready {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--gold-light);
+  border: 1px solid rgba(201, 162, 39, 0.25);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--charcoal);
+}
+
+.events-list-primer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.events-list-primer-cancel,
+.events-list-primer-go {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+.events-list-primer-cancel {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-soft);
+}
+
+.events-list-primer-cancel:hover {
+  color: var(--charcoal);
+  border-color: var(--border);
+}
+
+.events-list-primer-go {
+  background: var(--lavender-deep);
+  color: #fff;
+}
+
+.events-list-primer-go:hover {
+  background: #6a3580;
+}
+
+.events-list-primer-dismiss {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.events-list-primer-dismiss input {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .events-hero-browse-switch {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .events-hero .browse-mode-toggle.browse-mode-toggle--hero {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .events-hero .browse-mode-toggle--hero .browse-mode-btn {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .events-list-primer-actions {
+    flex-direction: column-reverse;
+  }
+
+  .events-list-primer-cancel,
+  .events-list-primer-go {
+    width: 100%;
+    justify-content: center;
+  }
 }

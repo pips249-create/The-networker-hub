@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Find your next event – The Networker Hub</title>
-<meta name="description" content="Find meetings, events, exhibitions, and awards across the UK. Search by breakfast, women only, location, organiser, and more.">
+<meta name="description" content="Find meetings, webinars, workshops, exhibitions, and awards across the UK. Search by breakfast, women only, location, organiser, and more.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../css/fact-loader.css?v=20260613">
 <script src="../js/fact-loader.js?v=20260613"></script>
 <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
-<link rel="stylesheet" href="../css/events-page.css?v=20260630e">
+<link rel="stylesheet" href="../css/events-page.css?v=20260702b">
 <link rel="stylesheet" href="../css/events-filter-bar.css?v=20260718b">
 <link rel="stylesheet" href="../css/organisers-browse.css?v=20260702">
 <script src="../js/hub-lazy-vendor.js?v=20260611"></script>
@@ -32,15 +32,36 @@
     <div class="events-hero-copy">
       <p class="events-hero-badge" id="events-hero-badge">Event discovery</p>
       <h1 id="events-hero-heading">
-        Find <span class="accent">meetings, events, exhibitions &amp; awards</span> across the UK
+        Find your next <span class="accent">networking event</span> across the UK
       </h1>
+      <div
+        class="events-hero-browse-switch browse-mode-toggle browse-mode-toggle--hero"
+        role="tablist"
+        aria-label="Browse events or organisers"
+      >
+        <button
+          type="button"
+          class="browse-mode-btn is-active"
+          data-browse-mode="events"
+          role="tab"
+          aria-selected="true"
+          id="hero-browse-tab-events"
+        >
+          Events
+        </button>
+        <button
+          type="button"
+          class="browse-mode-btn"
+          data-browse-mode="organisers"
+          role="tab"
+          aria-selected="false"
+          id="hero-browse-tab-organisers"
+        >
+          Organisers
+        </button>
+      </div>
       <p class="events-hero-lede" id="events-hero-lede">
-        <strong>The Networker Hub</strong> lists meetings, events, exhibitions and awards — filter by type, date,
-        and location, or search for anything from breakfast networking to women only.
-      </p>
-      <p class="hub-access-note">
-        Browse events for free. To buy a ticket,
-        <a href="../register.html">create a free account</a> — it only takes 2 minutes.
+        Filter by type, date, and location — or search breakfast, women only, and more.
       </p>
       <div class="events-hero-actions">
         <button
@@ -56,14 +77,6 @@
           data-hub-action="add-group"
         >
           + Add a group profile
-        </button>
-        <button
-          type="button"
-          class="events-hero-btn events-hero-btn-ghost events-hero-mode-switch"
-          id="hero-browse-mode-switch"
-          data-switch-to="organisers"
-        >
-          Browse organisers
         </button>
       </div>
     </div>
@@ -292,6 +305,30 @@
   <div class="events-results-meta">
     <span class="events-results-count">Showing <strong id="results-count">0</strong> results</span>
     <div class="events-results-actions">
+      <div
+        class="browse-mode-toggle events-browse-switch"
+        role="tablist"
+        aria-label="Browse events or organisers"
+      >
+        <button
+          type="button"
+          class="browse-mode-btn is-active"
+          data-browse-mode="events"
+          role="tab"
+          aria-selected="true"
+        >
+          Events
+        </button>
+        <button
+          type="button"
+          class="browse-mode-btn"
+          data-browse-mode="organisers"
+          role="tab"
+          aria-selected="false"
+        >
+          Organisers
+        </button>
+      </div>
       <button type="button" id="clear-filters" class="clear-filters-link">Clear filters</button>
       <div class="events-sort-wrap">
         <label for="sort">Sort by</label>
@@ -369,6 +406,66 @@
   </div>
 </main>
 
+<div
+  class="hub-modal events-list-primer"
+  id="events-list-primer"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="events-list-primer-title"
+  hidden
+>
+  <div class="hub-modal-backdrop" data-list-primer-close></div>
+  <div class="hub-modal-panel events-list-primer-panel">
+    <button type="button" class="hub-modal-close" data-list-primer-close aria-label="Close">×</button>
+    <p class="events-list-primer-kicker">List an event</p>
+    <h2 class="hub-modal-title" id="events-list-primer-title">Before you start</h2>
+    <p class="hub-modal-lead">
+      Listing is free. We will walk you through four short steps — here is what you need first.
+    </p>
+    <ol class="events-list-primer-steps">
+      <li class="events-list-primer-step" data-primer-step="account">
+        <span class="events-list-primer-step-marker" aria-hidden="true">1</span>
+        <span class="events-list-primer-step-body">
+          <strong>Sign in or create a free account</strong>
+          <span>You need a Hub account to manage your listing.</span>
+        </span>
+      </li>
+      <li class="events-list-primer-step" data-primer-step="group">
+        <span class="events-list-primer-step-marker" aria-hidden="true">2</span>
+        <span class="events-list-primer-step-body">
+          <strong>Add a group profile</strong>
+          <span>Your networking group or business name, logo, and a short description.</span>
+        </span>
+      </li>
+      <li class="events-list-primer-step" data-primer-step="details">
+        <span class="events-list-primer-step-marker" aria-hidden="true">3</span>
+        <span class="events-list-primer-step-body">
+          <strong>Event format &amp; details</strong>
+          <span>In person or online, dates, venue, description, and cover image.</span>
+        </span>
+      </li>
+      <li class="events-list-primer-step" data-primer-step="tickets">
+        <span class="events-list-primer-step-marker" aria-hidden="true">4</span>
+        <span class="events-list-primer-step-body">
+          <strong>Tickets &amp; publish</strong>
+          <span>Set ticket types and prices, then submit for approval.</span>
+        </span>
+      </li>
+    </ol>
+    <p class="events-list-primer-ready">
+      <strong>Have ready:</strong> date and time, venue or online link, ticket prices, and a cover image.
+    </p>
+    <div class="events-list-primer-actions">
+      <button type="button" class="events-list-primer-cancel" data-list-primer-close>Not now</button>
+      <button type="button" class="events-list-primer-go" id="events-list-primer-go">Get started →</button>
+    </div>
+    <label class="events-list-primer-dismiss">
+      <input type="checkbox" id="events-list-primer-dismiss" />
+      <span>Don&rsquo;t show this again</span>
+    </label>
+  </div>
+</div>
+
 <div id="hub-site-footer"></div>
 <script src="../js/site-footer.js?v=20260610" data-root="../"></script>
 
@@ -388,7 +485,7 @@
 <script src="../js/events.js?v=20260702"></script>
 <script src="../js/organisers-filters.js?v=20260608"></script>
 <script src="../js/organisers.js?v=20260703"></script>
-<script src="../js/hub-organiser-actions.js?v=20260606" data-root="../"></script>
-<script src="../js/browse-mode.js?v=20260609e"></script>
+<script src="../js/hub-organiser-actions.js?v=20260702" data-root="../"></script>
+<script src="../js/browse-mode.js?v=20260702b"></script>
 </body>
 </html>

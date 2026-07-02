@@ -145,9 +145,25 @@ function haversineMiles(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+/** Bounding box for SQL prefilter before haversine (matches ~mile radius). */
+function bboxForRadiusMiles(lat, lng, radiusMi) {
+  const milesPerDegLat = 69;
+  const latRad = (lat * Math.PI) / 180;
+  const milesPerDegLng = Math.max(0.01, milesPerDegLat * Math.cos(latRad));
+  const latDelta = radiusMi / milesPerDegLat;
+  const lngDelta = radiusMi / milesPerDegLng;
+  return {
+    minLat: lat - latDelta,
+    maxLat: lat + latDelta,
+    minLng: lng - lngDelta,
+    maxLng: lng + lngDelta,
+  };
+}
+
 module.exports = {
   parseOutcode,
   outcodeListForLocation,
   haversineMiles,
+  bboxForRadiusMiles,
   cityRegionFromInput,
 };

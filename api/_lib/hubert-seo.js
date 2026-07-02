@@ -216,7 +216,7 @@ function buildSchemaGraph(page, origin) {
       buildCollectionPageSchema(
         'Networking events',
         '/events/',
-        'Browse UK networking events, meetings, exhibitions, and awards.',
+        'Browse UK networking events, meetings, webinars, workshops, exhibitions, and awards.',
         base
       )
     );

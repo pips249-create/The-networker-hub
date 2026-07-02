@@ -25,6 +25,7 @@
   var dateToTs = null;
   var flatpickrInstance = null;
   var locationResolveTimer = null;
+  var locationRadiusTimer = null;
   var FILTER_STORAGE_KEY = 'hubEventBrowseFilters';
 
   function slugForEventType(type) {
@@ -634,8 +635,10 @@
     return Promise.resolve();
   }
 
-  window.hubRestoreEventFilterPrefs = function () {
+  window.hubRestoreEventFilterPrefs = function (options) {
+    options = options || {};
     return restoreFilterPrefs().then(function () {
+      if (options.prepareOnly) return;
       if (isNearMeActive()) {
         applyNearMeFilters();
         return;
@@ -793,7 +796,11 @@
   }
   function onLocationRadiusChange() {
     syncLocationRadiusControls();
-    applyLocationFilters();
+    if (locationRadiusTimer) clearTimeout(locationRadiusTimer);
+    locationRadiusTimer = setTimeout(function () {
+      locationRadiusTimer = null;
+      applyLocationFilters();
+    }, 280);
   }
 
   if (locationRadius) {

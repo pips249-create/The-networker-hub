@@ -6,7 +6,6 @@
   var heroBadge = document.getElementById('events-hero-badge');
   var heroTitle = document.getElementById('events-hero-heading');
   var heroSub = document.getElementById('events-hero-lede');
-  var heroSwitch = document.getElementById('hero-browse-mode-switch');
   var listingsHeader = document.getElementById('all-heading');
   var searchInput = document.getElementById('search');
   var searchLabel = document.querySelector('label[for="search"]');
@@ -16,29 +15,22 @@
   var copy = {
     events: {
       badge: 'Event discovery',
-      title:
-        'Find <span class="accent">meetings, events, exhibitions &amp; awards</span> across the UK',
-      sub:
-        '<strong>The Networker Hub</strong> lists meetings, events, exhibitions and awards — filter by type, date, and location, or search for anything from breakfast networking to women only.',
+      title: 'Find your next <span class="accent">networking event</span> across the UK',
+      sub: 'Filter by type, date, and location — or search breakfast, women only, and more.',
       heading: 'All listings',
       searchPlaceholder: 'Search anything — breakfast, women only, organiser, city…',
       searchLabel: 'Search events',
       filterLabel: 'Filter events',
-      switchLabel: 'Browse organisers',
-      switchTo: 'organisers',
     },
     organisers: {
       badge: 'Organiser directory',
       title:
-        'Discover <span class="accent">networking groups &amp; event organisers</span> across the UK',
-      sub:
-        '<strong>The Networker Hub</strong> connects you with networking groups, exhibition hosts, conference organisers and more — find the right community for your business.',
+        'Find <span class="accent">networking groups &amp; organisers</span> across the UK',
+      sub: 'Browse groups, exhibition hosts, and conference organisers — then see their events.',
       heading: 'All organisers',
       searchPlaceholder: 'Search organisers, industries, descriptions…',
       searchLabel: 'Search organisers',
       filterLabel: 'Filter organisers',
-      switchLabel: 'Browse events',
-      switchTo: 'events',
     },
   };
 
@@ -75,9 +67,6 @@
     }
 
     if (recommended) recommended.textContent = mode === 'organisers' ? 'Recommended' : 'Recommended';
-    if (listings && !listings.parentNode) {
-      /* option added in HTML */
-    }
   }
 
   function ensureOrganiserSortOptions() {
@@ -117,6 +106,14 @@
     if (window.hubReloadSponsorBlock) window.hubReloadSponsorBlock();
   }
 
+  function syncBrowseToggles(mode) {
+    document.querySelectorAll('[data-browse-mode]').forEach(function (btn) {
+      var isActive = btn.getAttribute('data-browse-mode') === mode;
+      btn.classList.toggle('is-active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+  }
+
   function applyCopy(mode) {
     var c = copy[mode] || copy.events;
     if (heroBadge) heroBadge.textContent = c.badge;
@@ -126,15 +123,12 @@
     if (searchInput) searchInput.placeholder = c.searchPlaceholder;
     if (searchLabel) searchLabel.textContent = c.searchLabel;
     if (filterBar) filterBar.setAttribute('aria-label', c.filterLabel);
-    if (heroSwitch) {
-      heroSwitch.textContent = c.switchLabel;
-      heroSwitch.setAttribute('data-switch-to', c.switchTo);
-    }
     document.title =
       mode === 'organisers'
         ? 'Find networking groups – The Networker Hub'
         : 'Find your next event – The Networker Hub';
     initSponsorHub(mode);
+    syncBrowseToggles(mode);
   }
 
   function setMode(mode, options) {
@@ -179,14 +173,14 @@
     }
   }
 
-  if (heroSwitch) {
-    heroSwitch.addEventListener('click', function (e) {
+  document.querySelectorAll('[data-browse-mode]').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
       e.preventDefault();
-      var target = heroSwitch.getAttribute('data-switch-to') || 'organisers';
-      if (target === currentMode()) return;
+      var target = btn.getAttribute('data-browse-mode');
+      if (!target || target === currentMode()) return;
       setMode(target);
     });
-  }
+  });
 
   window.hubSetBrowseMode = setMode;
 
@@ -196,7 +190,6 @@
   } else if (location.hash === '#events') {
     initial = 'events';
   }
-  /* No hash → always start on Events (nav "Browse events" links). Use #organisers to share organiser view. */
 
   if (initial === 'organisers') {
     setMode('organisers', { skipEventsRefresh: true, updateHash: true });

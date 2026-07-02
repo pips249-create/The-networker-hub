@@ -713,7 +713,8 @@
     }
   };
 
-  function applyLoadedEvents() {
+  function applyLoadedEvents(options) {
+    options = options || {};
     if (!window.hubServerBrowse) {
       window.hubAllEvents = events;
     }
@@ -724,13 +725,18 @@
       if (window.hubApplyOrganiserFilters) window.hubApplyOrganiserFilters();
       return;
     }
-    if (window.hubRestoreEventFilterPrefs) {
+    if (!options.skipRestore && window.hubRestoreEventFilterPrefs) {
       window.hubRestoreEventFilterPrefs();
+      return;
+    }
+    if (window.hubRefreshListings) {
+      window.hubRefreshListings();
     } else if (window.hubApplyFilters) {
       window.hubApplyFilters();
     } else {
       renderAll();
     }
+    if (window.hubUpdateEventTypeChipCounts) window.hubUpdateEventTypeChipCounts();
   }
 
   function refreshAfterGeocode() {
@@ -770,6 +776,9 @@
       setStatus('', false);
       if (window.hubServerBrowse && window.hubBrowseFetchNow) {
         try {
+          if (window.hubRestoreEventFilterPrefs) {
+            await window.hubRestoreEventFilterPrefs({ prepareOnly: true });
+          }
           await window.hubBrowseFetchNow(1);
           events = window.hubBrowseEvents || [];
           setStatus(
@@ -778,7 +787,7 @@
               : 'No published events yet. Approve events in Supabase so they appear in published_events.',
             false
           );
-          applyLoadedEvents();
+          applyLoadedEvents({ skipRestore: true });
         } catch (e) {
           var detail = e && e.message ? String(e.message) : 'network error';
           var hint =

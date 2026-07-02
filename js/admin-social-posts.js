@@ -217,7 +217,7 @@
           id: 'directory',
           label: 'Events directory',
           caption:
-            'Find your next networking event on The Networker Hub — meetings, exhibitions, awards and more across the UK.\n\nBrowse free: {{url}}',
+            'Find your next networking event on The Networker Hub — meetings, webinars, workshops, exhibitions, awards and more across the UK.\n\nBrowse free: {{url}}',
           image: 'hub',
         },
         {

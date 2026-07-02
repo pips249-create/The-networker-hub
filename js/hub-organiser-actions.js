@@ -7,6 +7,8 @@
   var root = (scriptEl && scriptEl.getAttribute('data-root')) || '../';
   var GROUP_STORAGE_KEY = 'hub_event_group_id';
   var BROWSE_RETURN_KEY = 'hub_browse_return';
+  var PRIMER_SKIP_KEY = 'hub_list_event_primer_skip';
+  var primerContinueHandler = null;
 
   function path(relative) {
     if (!relative) return root;
@@ -72,6 +74,91 @@
     linkEl.textContent = fallbackLabel || '← Back to My Events';
   }
 
+  function shouldShowListEventPrimer() {
+    if (!isEventsBrowsePage()) return false;
+    if (document.getElementById('events-list-primer')) {
+      try {
+        if (global.sessionStorage.getItem(PRIMER_SKIP_KEY) === '1') return false;
+      } catch (e) {
+        /* ignore */
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function updateListEventPrimerSteps(sessionData) {
+    var signedIn = Boolean(sessionData && sessionData.ok && sessionData.user);
+    var hasGroup = hasGroupProfile(sessionData);
+    document.querySelectorAll('.events-list-primer-step').forEach(function (step, index) {
+      var key = step.getAttribute('data-primer-step');
+      var done = false;
+      if (key === 'account') done = signedIn;
+      if (key === 'group') done = hasGroup;
+      step.classList.toggle('is-done', done);
+      var marker = step.querySelector('.events-list-primer-step-marker');
+      if (marker) marker.textContent = done ? '✓' : String(index + 1);
+    });
+    var goBtn = document.getElementById('events-list-primer-go');
+    if (goBtn) {
+      goBtn.textContent = hasGroup ? 'Continue to event wizard →' : 'Get started →';
+    }
+  }
+
+  function closeListEventPrimer() {
+    var modal = document.getElementById('events-list-primer');
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove('events-list-primer-open');
+    var dismiss = document.getElementById('events-list-primer-dismiss');
+    if (dismiss && dismiss.checked) {
+      try {
+        global.sessionStorage.setItem(PRIMER_SKIP_KEY, '1');
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    primerContinueHandler = null;
+  }
+
+  function openListEventPrimer(sessionData, onContinue) {
+    var modal = document.getElementById('events-list-primer');
+    if (!modal) {
+      onContinue();
+      return;
+    }
+    primerContinueHandler = onContinue;
+    updateListEventPrimerSteps(sessionData);
+    modal.hidden = false;
+    document.body.classList.add('events-list-primer-open');
+    var goBtn = document.getElementById('events-list-primer-go');
+    if (goBtn) goBtn.focus();
+  }
+
+  function bindListEventPrimer() {
+    var modal = document.getElementById('events-list-primer');
+    if (!modal || modal.dataset.primerBound) return;
+    modal.dataset.primerBound = '1';
+    modal.querySelectorAll('[data-list-primer-close]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        closeListEventPrimer();
+      });
+    });
+    var goBtn = document.getElementById('events-list-primer-go');
+    if (goBtn) {
+      goBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        var next = primerContinueHandler;
+        closeListEventPrimer();
+        if (typeof next === 'function') next();
+      });
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !modal.hidden) closeListEventPrimer();
+    });
+  }
+
   async function goToGroupProfile(options) {
     options = options || {};
     saveBrowseReturn();
@@ -88,16 +175,12 @@
     global.location.href = path('organiser/group-edit.html');
   }
 
-  async function goToAddEvent(options) {
-    options = options || {};
-    saveBrowseReturn();
-    var data = await fetchSession();
+  function continueGoToAddEvent(data) {
     if (!data.ok || !data.user) {
       global.location.href = loginUrl('/organiser/event-format.html');
       return;
     }
     if (!hasGroupProfile(data)) {
-      global.alert('You must add a group profile first.');
       global.location.href = path('organiser/group-edit.html');
       return;
     }
@@ -107,6 +190,23 @@
       /* ignore */
     }
     global.location.href = path('organiser/event-format.html');
+  }
+
+  async function goToAddEvent(options) {
+    options = options || {};
+    saveBrowseReturn();
+    var data = await fetchSession();
+    if (hasGroupProfile(data)) {
+      continueGoToAddEvent(data);
+      return;
+    }
+    if (shouldShowListEventPrimer()) {
+      openListEventPrimer(data, function () {
+        continueGoToAddEvent(data);
+      });
+      return;
+    }
+    continueGoToAddEvent(data);
   }
 
   async function goToAddOpportunity(options) {
@@ -157,7 +257,6 @@
       return false;
     }
     if (!hasGroupProfile(data)) {
-      global.alert('You must add a group profile first.');
       global.location.href = path('organiser/group-edit.html');
       return false;
     }
@@ -181,11 +280,14 @@
     applyBrowseReturnBack: applyBrowseReturnBack,
   };
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
-      bindActions(document);
-    });
-  } else {
+  function init() {
+    bindListEventPrimer();
     bindActions(document);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
 })(typeof window !== 'undefined' ? window : globalThis);

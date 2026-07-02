@@ -18,7 +18,7 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'TWO PILLARS',
     body:
-      'EVENTS (Live) — meetings, exhibitions, conferences, and awards across the UK. Browse at /events/ with filters for type, date, industry, and location, plus map view. Stripe checkout for paid tickets; many events are free. ' +
+      'EVENTS (Live) — meetings, webinars, workshops, exhibitions, conferences, and awards across the UK. Browse at /events/ with filters for type, date, industry, and location, plus map view. Stripe checkout for paid tickets; many events are free. ' +
       'BUSINESS OPPORTUNITIES (Live) — franchises, side hustles, partnerships, distributorships, referral deals, and white-label arrangements. Browse free at /opportunities/; filter and map view available.',
   },
   {

@@ -2,7 +2,7 @@
  * Paginated public event browse — server-side filters for scale.
  */
 const { isEventCurrentlyFeatured } = require('./event-featured-plans');
-const { outcodeListForLocation, haversineMiles, cityRegionFromInput } = require('./uk-outcode');
+const { outcodeListForLocation, haversineMiles, bboxForRadiusMiles, cityRegionFromInput } = require('./uk-outcode');
 const {
   eventsFromPublishedRows,
   isUpcomingBrowseEvent,
@@ -155,6 +155,18 @@ function applyOutcodeFilter(query, params) {
   return query;
 }
 
+function applyGeoBboxFilter(query, params) {
+  if (!hasGeoRadius(params)) return query;
+  const box = bboxForRadiusMiles(params.lat, params.lng, params.radiusMi);
+  const minLat = box.minLat.toFixed(6);
+  const maxLat = box.maxLat.toFixed(6);
+  const minLng = box.minLng.toFixed(6);
+  const maxLng = box.maxLng.toFixed(6);
+  return query.or(
+    `format_tab.eq.online,and(latitude.gte.${minLat},latitude.lte.${maxLat},longitude.gte.${minLng},longitude.lte.${maxLng})`
+  );
+}
+
 function applyBrowseFilters(query, params) {
   let next = query.or(upcomingOrFilter());
 
@@ -165,6 +177,7 @@ function applyBrowseFilters(query, params) {
   next = applyFormatFilter(next, params);
   next = applySearchFilter(next, params);
   next = applyOutcodeFilter(next, params);
+  next = applyGeoBboxFilter(next, params);
 
   if (params.freeOnly) {
     next = next.eq('min_ticket_price', 0);
@@ -303,47 +316,35 @@ function rowToBrowsePin(row) {
   };
 }
 
-async function fetchMatchingRows(sb, params, select) {
+async function fetchMatchingRows(sb, params, select, options) {
+  const opts = options || {};
   let query = sb.from(BROWSE_VIEW).select(select);
   query = applyBrowseFilters(query, params);
+  if (opts.sort) query = applySqlSort(query, opts.sort);
+  if (opts.limit) query = query.limit(opts.limit);
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   return data || [];
 }
 
-async function countWithFilters(sb, params) {
-  let query = sb.from(BROWSE_VIEW).select('id', { count: 'exact', head: true });
-  query = applyBrowseFilters(query, params);
-  const { count, error } = await query;
-  if (error) throw new Error(error.message);
-  return Number(count) || 0;
-}
-
 async function fetchBrowseTypeCounts(sb, params) {
   const types = ['meeting', 'events', 'exhibition', 'awards', 'webinar', 'workshop', 'session'];
   const base = { ...params, types: [] };
-  const [all, ...perType] = await Promise.all([
-    countWithFilters(sb, base),
-    ...types.map((type) => countWithFilters(sb, { ...base, types: [type] })),
-  ]);
-  const counts = { all };
-  types.forEach((type, i) => {
-    counts[type] = perType[i];
+  let query = sb.from(BROWSE_VIEW).select('type_tab, latitude, longitude, format_tab');
+  query = applyBrowseFilters(query, base);
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+
+  const rows = (data || []).filter((row) => rowPassesGeo(row, params));
+  const counts = { all: rows.length };
+  types.forEach((type) => {
+    counts[type] = 0;
+  });
+  rows.forEach((row) => {
+    const type = String(row.type_tab || 'meeting').toLowerCase();
+    if (counts[type] != null) counts[type] += 1;
   });
   return counts;
-}
-
-async function fetchPricePeak(sb, params) {
-  const probe = { ...params, freeOnly: false, priceMax: null };
-  let query = sb.from(BROWSE_VIEW).select('min_ticket_price');
-  query = applyBrowseFilters(query, probe);
-  const { data, error } = await query
-    .order('min_ticket_price', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  const peak = Number(data?.min_ticket_price) || 0;
-  return peak > 0 ? Math.ceil(peak / 5) * 5 : 100;
 }
 
 async function hydrateBrowseEvents(sb, rows) {
@@ -404,16 +405,31 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
 
   if (params.mode === 'pins') {
     const pinParams = { ...params, limit: MAX_PINS, offset: 0 };
+    if (hasGeoRadius(params)) {
+      const slim = await fetchMatchingRows(
+        sb,
+        pinParams,
+        'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode, min_ticket_price, average_rating, featured, featured_until'
+      );
+      const filtered = slim.filter((row) => rowPassesGeo(row, params));
+      const sorted = sortRows(filtered, params.sort);
+      return {
+        events: sorted.slice(0, MAX_PINS).map(rowToBrowsePin),
+        pagination: { total: filtered.length, page: 1, limit: MAX_PINS, totalPages: 1 },
+        meta: null,
+        featured: [],
+      };
+    }
+
     const slim = await fetchMatchingRows(
       sb,
       pinParams,
-      'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode'
+      'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode',
+      { sort: params.sort, limit: MAX_PINS }
     );
-    const filtered = slim.filter((row) => rowPassesGeo(row, params));
-    const sorted = sortRows(filtered, params.sort);
     return {
-      events: sorted.slice(0, MAX_PINS).map(rowToBrowsePin),
-      pagination: { total: filtered.length, page: 1, limit: MAX_PINS, totalPages: 1 },
+      events: slim.map(rowToBrowsePin),
+      pagination: { total: slim.length, page: 1, limit: MAX_PINS, totalPages: 1 },
       meta: null,
       featured: [],
     };
@@ -439,11 +455,9 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
 
   let meta = null;
   if (params.includeMeta) {
-    const [typeCounts, pricePeak] = await Promise.all([
-      fetchBrowseTypeCounts(sb, params),
-      fetchPricePeak(sb, params),
-    ]);
-    meta = { typeCounts, pricePeak };
+    meta = {
+      typeCounts: await fetchBrowseTypeCounts(sb, params),
+    };
   }
 
   const total = pageData.total;

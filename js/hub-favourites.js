@@ -177,10 +177,15 @@
     writeLocal: writeLocal,
   };
 
-  fetch('/api/auth/session', { credentials: 'include' })
-    .then(function (r) {
-      return r.json();
-    })
+  var loadSession = window.hubFetchSession
+    ? window.hubFetchSession
+    : function () {
+        return fetch('/api/auth/session', { credentials: 'include' }).then(function (r) {
+          return r.json();
+        });
+      };
+
+  loadSession()
     .then(function (data) {
       if (data && data.ok && data.user) return mergeLocalToServer();
     })

@@ -506,10 +506,22 @@
     renderNav(null, true);
   }
 
-  fetch('/api/auth/session', { credentials: 'include' })
-    .then(function (res) {
-      return res.json();
-    })
+  var sessionPromise = null;
+  window.hubFetchSession = function () {
+    if (!sessionPromise) {
+      sessionPromise = fetch('/api/auth/session', { credentials: 'include' })
+        .then(function (res) {
+          return res.json();
+        })
+        .catch(function () {
+          sessionPromise = null;
+          return { ok: false };
+        });
+    }
+    return sessionPromise;
+  };
+
+  window.hubFetchSession()
     .then(function (data) {
       applySessionData(data);
     })

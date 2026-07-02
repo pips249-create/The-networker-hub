@@ -7,6 +7,22 @@
   var debounceTimer = null;
   var fetchToken = 0;
   var lastTypeCounts = null;
+  var lastPinsSignature = '';
+
+  function browseFilterSignature(params) {
+    var copy = Object.assign({}, params || {});
+    delete copy.page;
+    delete copy.limit;
+    delete copy.meta;
+    delete copy.mode;
+    delete copy.offset;
+    return JSON.stringify(copy);
+  }
+
+  function isMapViewOpen() {
+    var mapBtn = document.getElementById('map-view-btn');
+    return !!(mapBtn && mapBtn.getAttribute('aria-pressed') === 'true');
+  }
 
   function el(id) {
     return document.getElementById(id);
@@ -26,7 +42,7 @@
     var params = {
       page: page || 1,
       limit: window.hubBrowsePageSize || 12,
-      meta: '1',
+      meta: (page || 1) > 1 ? '0' : '1',
       sort: (sortSelect && sortSelect.value) || 'recommended',
       q: searchInput ? searchInput.value.trim() : '',
       inPerson: checkInPerson && checkInPerson.checked ? '1' : '0',
@@ -90,8 +106,6 @@
     } else {
       window.hubBrowseTypeCounts = null;
     }
-    window.hubBrowsePricePeak =
-      data.meta && data.meta.pricePeak != null ? Number(data.meta.pricePeak) : null;
     if (typeof page === 'number') {
       window.hubBrowseCurrentPage = page;
     }
@@ -106,12 +120,26 @@
       })
       .then(function (data) {
         window.hubBrowsePins = (data.events || []).slice();
+        lastPinsSignature = browseFilterSignature(params);
         return window.hubBrowsePins;
       })
       .catch(function () {
         window.hubBrowsePins = [];
+        lastPinsSignature = browseFilterSignature(params);
         return [];
       });
+  }
+
+  function fetchPinsIfNeeded(params) {
+    var signature = browseFilterSignature(params);
+    if (
+      signature === lastPinsSignature &&
+      Array.isArray(window.hubBrowsePins) &&
+      window.hubBrowsePins.length
+    ) {
+      return Promise.resolve(window.hubBrowsePins);
+    }
+    return fetchPins(params);
   }
 
   function hubBrowseFetch(page, options) {
@@ -130,14 +158,9 @@
         if (!data.configured) throw new Error('not_configured');
         if (data.error) throw new Error(data.message || data.error);
         applyBrowsePayload(data, page);
-        if (!options.skipPins) {
-          fetchPins(params).then(function () {
-            var mapBtn = document.getElementById('map-view-btn');
-            if (
-              window.hubRefreshMap &&
-              mapBtn &&
-              mapBtn.getAttribute('aria-pressed') === 'true'
-            ) {
+        if (!options.skipPins && isMapViewOpen()) {
+          fetchPinsIfNeeded(params).then(function () {
+            if (window.hubRefreshMap) {
               window.hubRefreshMap(window.hubBrowsePins || []);
             }
           });
@@ -168,8 +191,13 @@
 
   function hubBrowseFetchPins() {
     var params = gatherParams(1);
-    return fetchPins(params);
+    return fetchPinsIfNeeded(params);
   }
+
+  window.hubBrowseInvalidatePins = function () {
+    lastPinsSignature = '';
+    window.hubBrowsePins = [];
+  };
 
   window.hubServerBrowse = true;
   window.hubBrowseFetch = hubBrowseFetch;

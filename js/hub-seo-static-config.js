@@ -10,7 +10,7 @@ window.HUB_SEO_STATIC = {
   "events": {
     "path": "/events/",
     "title": "Find your next event – The Networker Hub",
-    "description": "Find meetings, events, exhibitions, and awards across the UK. Search by breakfast, women only, location, organiser, and more.",
+    "description": "Find meetings, webinars, workshops, exhibitions, and awards across the UK. Search by breakfast, women only, location, organiser, and more.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },
