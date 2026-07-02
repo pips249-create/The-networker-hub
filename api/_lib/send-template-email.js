@@ -63,6 +63,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_ranking_badge',
   'organiser_featured_expiry_reminder',
   'organiser_claim_invite',
+  'organiser_team_invite',
   'opportunity_listing_live',
   'opportunity_listing_expiry_reminder',
   'opportunity_premium_expiry_reminder',

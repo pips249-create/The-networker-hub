@@ -73,11 +73,11 @@
               <span class="org-nav-badge org-nav-badge--action" id="org-payment-setup-nav-badge" hidden>Setup</span>
             </a>
             <span class="hub-side-nav-divider">Business opportunities</span>
-            <a href="#business-list" class="hub-side-nav-link" data-org-route="business-list">My opportunities</a>
             <a href="#business-overview" class="hub-side-nav-link" data-org-route="business-overview">
-              Enquiries received
+              Business ops
               <span class="org-nav-badge" id="org-opp-enquiry-nav-badge" hidden>New</span>
             </a>
+            <a href="#business-list" class="hub-side-nav-link" data-org-route="business-list">List a listing</a>
             <div class="hub-side-nav-util">
               <a href="../events/index.html">Browse events</a>
             </div>
@@ -158,7 +158,7 @@
                   <strong>Event</strong>
                   <span>Meeting, exhibition or conference</span>
                 </a>
-                <button type="button" role="menuitem" class="org-add-menu-item" data-org-route="business-list">
+                <button type="button" role="menuitem" class="org-add-menu-item" data-action="add-opportunity-listing">
                   <strong>Business opportunity</strong>
                   <span>Franchise, partnership or side hustle listing</span>
                 </button>
@@ -406,14 +406,14 @@
           </div>
         </section>
 
-        <!-- My opportunities (how it works + listing performance) -->
+        <!-- List a listing (how it works + listing performance) -->
         <section class="org-page org-page--business-ops organiser-opportunity-edit-page" id="org-page-business-list" data-org-page="business-list">
           <button type="button" class="org-hub-back" data-org-route="business-overview">← Back to Business ops</button>
           <header class="org-hub-page-head">
             <p class="org-page-kicker org-biz-kicker">Business opportunities</p>
-            <h1 class="org-page-title">My opportunities</h1>
-            <p class="org-page-lead">
-              Track how your listings are performing, see how the process works, and add a new franchise, partnership, or side hustle to the hub directory.
+            <h1 class="org-page-title" id="org-business-list-title">List a listing</h1>
+            <p class="org-page-lead" id="org-business-list-lead">
+              See how listing works, what it costs, and start promoting a franchise, partnership, or side hustle on the hub.
             </p>
           </header>
 
@@ -423,7 +423,7 @@
                 <h2 class="org-section-title">How your listings are doing</h2>
                 <p class="org-section-sub">Enquiries, expiry dates, and premium placement — at a glance before you add another listing.</p>
               </div>
-              <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-route="business-overview">View all enquiries →</button>
+              <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-shortcut="business-overview-enquiries">View all enquiries →</button>
             </div>
             <div class="org-opp-listing-cards" id="org-opp-listing-cards" aria-live="polite"></div>
           </div>
@@ -456,7 +456,7 @@
                 <span class="oe-intro-step-num" aria-hidden="true">4</span>
                 <div>
                   <strong>Respond to enquiries</strong>
-                  <span>When someone is interested, their message appears in <em>Enquiries received</em> under Business ops.</span>
+                  <span>When someone is interested, their message appears in <em>Business ops</em> under Enquiries received.</span>
                 </div>
               </li>
             </ol>
@@ -530,11 +530,11 @@
             <h2 class="org-quick-actions-title">Quick links</h2>
             <div class="org-quick-actions-grid">
               <button type="button" class="org-quick-card org-quick-card--primary" data-org-route="business-list">
-                <span class="org-quick-icon" aria-hidden="true">📋</span>
-                <span class="org-quick-label">My opportunities</span>
-                <span class="org-quick-hint">Track listings or add a new one</span>
+                <span class="org-quick-icon" aria-hidden="true">+</span>
+                <span class="org-quick-label">List a listing</span>
+                <span class="org-quick-hint">Steps, pricing and how yours are doing</span>
               </button>
-              <button type="button" class="org-quick-card" data-org-shortcut="business-overview">
+              <button type="button" class="org-quick-card" data-org-shortcut="business-overview-enquiries">
                 <span class="org-quick-icon" aria-hidden="true">✉</span>
                 <span class="org-quick-label">View enquiries</span>
                 <span class="org-quick-hint">Messages from members who got in touch</span>
@@ -552,7 +552,7 @@
               <h2 class="org-section-title">Your listings</h2>
               <p class="org-section-sub">Business opportunities you&apos;ve published on the hub — edit a listing or check how many enquiries it has received.</p>
             </div>
-            <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="business-list">+ Add listing</button>
+            <button type="button" class="org-btn org-btn-gold org-btn-sm" data-action="add-opportunity-listing">+ Add listing</button>
           </div>
           <div class="org-table-wrap org-overview-table">
             <table>
@@ -575,12 +575,12 @@
               <h3 class="org-empty-state-title">No listings yet</h3>
               <p class="org-empty-state-text">Publish a business opportunity to start receiving member enquiries.</p>
               <div class="org-empty-state-actions">
-                <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="business-list">+ Add listing</button>
+                <button type="button" class="org-btn org-btn-gold org-btn-sm" data-action="add-opportunity-listing">+ Add listing</button>
               </div>
             </div>
           </div>
 
-          <div class="org-overview-head org-overview-head--spaced">
+          <div class="org-overview-head org-overview-head--spaced" id="org-opp-enquiries-section">
             <div class="org-overview-head-text">
               <h2 class="org-section-title">Enquiries received</h2>
               <p class="org-section-sub">Messages from members who enquired about your business opportunity listings — respond by email from here.</p>
@@ -1528,6 +1528,6 @@
     <script src="../js/organiser-onboarding.js?v=20260703"></script>
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
     <script src="../js/organiser-payment-setup.js?v=20260718"></script>
-    <script src="../js/organiser-dashboard.js?v=20260703a"></script>
+    <script src="../js/organiser-dashboard.js?v=20260703b"></script>
   </body>
 </html>

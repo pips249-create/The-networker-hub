@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260730">
-<link rel="stylesheet" href="css/home-page.css?v=20260732">
+<link rel="stylesheet" href="css/home-page.css?v=20260734">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260730" />
@@ -32,21 +32,16 @@
     <div class="home-flow-inner home-hero-inner">
       <p class="home-hero-kicker">UK business networking platform</p>
       <h1 class="hero-title">
-        <span class="hero-title-line">Connect and grow through</span>
-        <span class="hero-title-accent">events &amp; business opportunities</span>
-        <span class="hero-title-line">across the UK</span>
+        <span class="hero-title-line">Connect and grow across</span>
+        <span class="hero-title-accent">the UK&rsquo;s business network</span>
       </h1>
       <p class="hero-tagline">
-        Browse events and business opportunities for free — no sign-in needed.
+        Discover events, organiser communities, and opportunities — browse free, sign up only when you&rsquo;re ready to book or enquire.
       </p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="#what-is">Find out more</a>
-        <a class="btn btn-secondary" href="events/index.html">Browse events</a>
-      </div>
     </div>
   </section>
 
-  <section class="home-partners home-reveal" id="home-partners" aria-labelledby="home-partners-heading" hidden>
+  <section class="home-partners home-reveal is-visible" id="home-partners" aria-labelledby="home-partners-heading">
     <div class="home-partners-band">
       <div class="home-flow-inner home-partners-panel">
         <header class="home-flow-head home-flow-head--center">
@@ -54,7 +49,12 @@
           <h2 class="section-title" id="home-partners-heading">Our partners &amp; sponsors</h2>
         </header>
         <div class="home-partners-marquee">
-          <div class="home-partners-track" id="home-partners-logos" aria-live="polite"></div>
+          <div class="home-partners-track home-partners-track--loading" id="home-partners-logos" aria-live="polite" aria-busy="true">
+            <span class="home-partner-skeleton" aria-hidden="true"></span>
+            <span class="home-partner-skeleton" aria-hidden="true"></span>
+            <span class="home-partner-skeleton" aria-hidden="true"></span>
+            <span class="home-partner-skeleton" aria-hidden="true"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -221,7 +221,7 @@
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260610" data-root=""></script>
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
-<script src="js/home-page.js?v=20260732"></script>
+<script src="js/home-page.js?v=20260733"></script>
 
 </body>
 </html>

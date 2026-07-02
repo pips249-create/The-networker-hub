@@ -2,6 +2,12 @@
  * Organiser account access — owners, team members, and group scope.
  */
 const { getSupabaseAdmin } = require('./supabase');
+const {
+  ORGANISER_TEAM_MAX,
+  countTeamInviteSlots,
+  teamSlotsRemaining,
+} = require('./organiser-team-limits');
+const { sendOrganiserTeamInviteEmail } = require('./organiser-team-emails');
 
 function isUuid(v) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -40,6 +46,74 @@ async function findTeamMembership(sb, userId, email) {
   if (error) throw new Error(error.message);
   const active = (data || []).find((r) => r.status === 'active');
   return active || (data || [])[0] || null;
+}
+
+async function activatePendingTeamMembership(sb, userId, email) {
+  const em = String(email || '').toLowerCase();
+  const uid = isUuid(userId) ? userId : null;
+  if (!em) return null;
+
+  const { data: pending, error } = await sb
+    .from('organiser_team_members')
+    .select('*')
+    .eq('email', em)
+    .eq('status', 'pending')
+    .order('invited_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!pending) return null;
+
+  const patch = { status: 'active' };
+  if (uid) patch.supabase_user_id = uid;
+
+  const { data: updated, error: upErr } = await sb
+    .from('organiser_team_members')
+    .update(patch)
+    .eq('id', pending.id)
+    .eq('status', 'pending')
+    .select('*')
+    .single();
+  if (upErr) throw new Error(upErr.message);
+  return updated;
+}
+
+async function countClaimedGroupsOnAccount(sb, accountId) {
+  const id = String(accountId || '').trim();
+  if (!id) return 0;
+  const { count, error } = await sb
+    .from('organisers')
+    .select('id', { count: 'exact', head: true })
+    .eq('organiser_account_id', id)
+    .eq('ownership_claim_status', 'claimed');
+  if (error) throw new Error(error.message);
+  return Number(count) || 0;
+}
+
+async function getAccountOwnerEmail(sb, accountId) {
+  const { data, error } = await sb
+    .from('organiser_accounts')
+    .select('email')
+    .eq('id', accountId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return String(data?.email || '')
+    .trim()
+    .toLowerCase();
+}
+
+async function resolveOrganiserAccountLabel(sb, accountId, fallbackEmail) {
+  const { data, error } = await sb
+    .from('organisers')
+    .select('name')
+    .eq('organiser_account_id', accountId)
+    .order('created_at', { ascending: true })
+    .limit(3);
+  if (error) throw new Error(error.message);
+  const names = (data || []).map((row) => String(row.name || '').trim()).filter(Boolean);
+  if (names.length === 1) return names[0];
+  if (names.length > 1) return names[0] + ' and ' + (names.length - 1) + ' more';
+  return String(fallbackEmail || '').trim() || 'your organiser account';
 }
 
 async function getOrCreateOrganiserAccount(session) {
@@ -87,26 +161,34 @@ async function resolveOrganiserAccess(session) {
   const uid = isUuid(session.sub) ? session.sub : null;
   const em = String(session.email || '').toLowerCase();
 
+  await activatePendingTeamMembership(sb, uid, em);
+
   const account = await getOrCreateOrganiserAccount(session);
   const accountId = account ? account.id : null;
 
-  const isAccountOwner =
+  const isPersonalAccountOwner =
     accountId &&
     ((uid && account.supabase_user_id === uid) ||
       (em && String(account.email || '').toLowerCase() === em));
 
-  let membership = null;
-  if (!isAccountOwner) {
-    membership = await findTeamMembership(sb, uid, em);
-  }
+  const personalGroupCount = accountId ? await countClaimedGroupsOnAccount(sb, accountId) : 0;
+
+  const membership = await findTeamMembership(sb, uid, em);
+  const activeMembership =
+    membership && membership.status === 'active' ? membership : null;
+
+  const useTeamWorkspace =
+    activeMembership &&
+    activeMembership.organiser_account_id &&
+    (!isPersonalAccountOwner || personalGroupCount === 0);
 
   let effectiveAccountId = accountId;
-  if (membership && membership.status === 'active' && membership.organiser_account_id) {
-    effectiveAccountId = membership.organiser_account_id;
+  if (useTeamWorkspace) {
+    effectiveAccountId = activeMembership.organiser_account_id;
   }
 
   const legacyGroupIds = new Set();
-  if (uid || em) {
+  if (!useTeamWorkspace && (uid || em)) {
     let legacyQuery = sb.from('organisers').select('id');
     if (uid && em) legacyQuery = legacyQuery.or(`supabase_user_id.eq.${uid},email.eq.${em}`);
     else if (uid) legacyQuery = legacyQuery.eq('supabase_user_id', uid);
@@ -121,10 +203,12 @@ async function resolveOrganiserAccess(session) {
   const isLegacyOwner = legacyGroupIds.size > 0;
 
   let role = null;
-  if (isAccountOwner) {
+  if (useTeamWorkspace) {
+    role = activeMembership.role === 'owner' ? 'owner' : 'editor';
+  } else if (isPersonalAccountOwner) {
     role = 'owner';
-  } else if (membership && membership.status === 'active') {
-    role = membership.role === 'owner' ? 'owner' : 'editor';
+  } else if (activeMembership) {
+    role = activeMembership.role === 'owner' ? 'owner' : 'editor';
   } else if (isLegacyOwner) {
     role = 'owner';
   }
@@ -145,19 +229,22 @@ async function resolveOrganiserAccess(session) {
 
   return {
     accountId: effectiveAccountId,
+    personalAccountId: accountId,
     role: hasAccess ? role : null,
-    isOwner: isOwner || (isAccountOwner && !membership),
+    isOwner,
     isEditor,
-    canManageTeam: isOwner || (isAccountOwner && !membership),
-    canDeleteEvents: isOwner || (isAccountOwner && !membership),
+    useTeamWorkspace: Boolean(useTeamWorkspace),
+    canManageTeam: isOwner && !isEditor,
+    canDeleteEvents: isOwner && !isEditor,
     membership: membership ? rowToTeamMember(membership) : null,
     groupIds: [...groupIds],
+    teamMax: ORGANISER_TEAM_MAX,
   };
 }
 
 async function listTeamMembers(session) {
   const access = await resolveOrganiserAccess(session);
-  if (!access.accountId) return { access, members: [] };
+  if (!access.accountId) return { access, members: [], teamMax: ORGANISER_TEAM_MAX, teamCount: 0 };
   if (!access.canManageTeam && !access.isEditor) {
     const e = new Error('Not allowed to view team');
     e.status = 403;
@@ -173,23 +260,45 @@ async function listTeamMembers(session) {
   if (error) throw new Error(error.message);
 
   const members = (data || []).map(rowToTeamMember);
-  const ownerEmail = String(session.email || '').toLowerCase();
-  const hasOwner = members.some((m) => m.role === 'owner');
-  if (!hasOwner && access.isOwner) {
-    members.unshift({
-      id: 'account-owner',
-      organiserAccountId: access.accountId,
-      email: ownerEmail,
-      supabaseUserId: session.sub || null,
-      role: 'owner',
-      status: 'active',
-      invitedAt: null,
-      createdAt: null,
-      isAccountOwner: true,
-    });
+  const hasOwnerRow = members.some((m) => m.role === 'owner' || m.isAccountOwner);
+  if (!hasOwnerRow) {
+    const ownerEmail = await getAccountOwnerEmail(sb, access.accountId);
+    if (ownerEmail) {
+      members.unshift({
+        id: 'account-owner',
+        organiserAccountId: access.accountId,
+        email: ownerEmail,
+        supabaseUserId: null,
+        role: 'owner',
+        status: 'active',
+        invitedAt: null,
+        createdAt: null,
+        isAccountOwner: true,
+      });
+    }
   }
 
-  return { access, members };
+  const teamCount = await countTeamInviteSlots(sb, access.accountId);
+
+  return {
+    access,
+    members,
+    teamMax: ORGANISER_TEAM_MAX,
+    teamCount,
+    teamSlotsRemaining: teamSlotsRemaining(teamCount),
+  };
+}
+
+async function sendTeamInviteEmail(session, member, access) {
+  const sb = getSupabaseAdmin();
+  const inviterName = String(session.name || session.email || 'Your organiser').trim();
+  const ownerEmail = await getAccountOwnerEmail(sb, access.accountId);
+  const accountName = await resolveOrganiserAccountLabel(sb, access.accountId, ownerEmail);
+  return sendOrganiserTeamInviteEmail({
+    to: member.email,
+    inviterName,
+    accountName,
+  });
 }
 
 async function inviteTeamMember(session, { email, role }) {
@@ -207,9 +316,27 @@ async function inviteTeamMember(session, { email, role }) {
     e.status = 400;
     throw e;
   }
-  const memberRole = role === 'owner' ? 'editor' : 'editor';
 
   const sb = getSupabaseAdmin();
+  const ownerEmail = await getAccountOwnerEmail(sb, access.accountId);
+  if (ownerEmail && ownerEmail === em) {
+    const e = new Error('The account owner is already on the team');
+    e.status = 400;
+    throw e;
+  }
+
+  const teamCount = await countTeamInviteSlots(sb, access.accountId);
+  if (teamCount >= ORGANISER_TEAM_MAX) {
+    const e = new Error(
+      'You can invite up to ' + ORGANISER_TEAM_MAX + ' editors. Remove someone to invite another.'
+    );
+    e.status = 400;
+    e.code = 'team_limit_reached';
+    throw e;
+  }
+
+  const memberRole = role === 'owner' ? 'editor' : 'editor';
+
   const { data: existing } = await sb
     .from('organiser_team_members')
     .select('*')
@@ -239,7 +366,17 @@ async function inviteTeamMember(session, { email, role }) {
     .select('*')
     .single();
   if (error) throw new Error(error.message);
-  return { member: rowToTeamMember(data), access };
+
+  const member = rowToTeamMember(data);
+  let emailSent = false;
+  try {
+    await sendTeamInviteEmail(session, member, access);
+    emailSent = true;
+  } catch (inviteErr) {
+    console.error('[organiser-team-invite]', inviteErr.message || inviteErr);
+  }
+
+  return { member, access, emailSent };
 }
 
 async function removeTeamMember(session, memberId) {
@@ -309,7 +446,17 @@ async function resendTeamInvite(session, memberId) {
     .select('*')
     .single();
   if (error) throw new Error(error.message);
-  return { member: rowToTeamMember(data) };
+
+  const member = rowToTeamMember(data);
+  let emailSent = false;
+  try {
+    await sendTeamInviteEmail(session, member, access);
+    emailSent = true;
+  } catch (inviteErr) {
+    console.error('[organiser-team-invite-resend]', inviteErr.message || inviteErr);
+  }
+
+  return { member, emailSent };
 }
 
 module.exports = {
@@ -320,4 +467,5 @@ module.exports = {
   removeTeamMember,
   resendTeamInvite,
   rowToTeamMember,
+  ORGANISER_TEAM_MAX,
 };

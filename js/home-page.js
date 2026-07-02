@@ -129,12 +129,27 @@
     return '<div class="home-partner-item" title="' + title + '">' + inner + '</div>';
   }
 
+  function revealSection(section) {
+    if (!section) return;
+    section.hidden = false;
+    section.classList.add('is-visible');
+  }
+
   function renderPartners(partners) {
     var section = document.getElementById('home-partners');
     var track = document.getElementById('home-partners-logos');
-    if (!section || !track || !partners.length) return;
+    if (!section || !track) return;
 
-    section.hidden = false;
+    if (!partners.length) {
+      section.hidden = true;
+      track.setAttribute('aria-busy', 'false');
+      return;
+    }
+
+    revealSection(section);
+    track.classList.remove('home-partners-track--loading');
+    track.setAttribute('aria-busy', 'false');
+
     var items = partners.map(partnerItemHtml).join('');
     var useMarquee =
       partners.length > 5 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -144,6 +159,9 @@
   }
 
   function loadPartners() {
+    var section = document.getElementById('home-partners');
+    revealSection(section);
+
     fetchCmsSlot('home_partners').then(function (data) {
       var partners = [];
       var seen = new Set();

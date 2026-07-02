@@ -12,6 +12,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: 'Claim your profile on The Networker Hub',
   },
+  organiser_team_invite: {
+    file: 'organiser-team-invite.html',
+    marker: 'hub-email-layout-v2',
+    subject: '{{inviter_name}} invited you to help manage {{account_name}}',
+  },
   opportunity_listing_live: {
     file: 'opportunity-listing-live.html',
     marker: 'hub-email-layout-v2',

@@ -52,6 +52,7 @@ const EVENT_MAIN_SPONSOR_SLUGS = new Set([
   'hub_newsletter',
   'organiser_featured_expiry_reminder',
   'organiser_claim_invite',
+  'organiser_team_invite',
   'organiser_ranking_badge',
   'organiser_low_upcoming_events',
   'stripe_connect_nudge',

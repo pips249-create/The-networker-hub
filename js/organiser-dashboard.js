@@ -3744,6 +3744,7 @@
       loadOpportunityEnquiries();
       loadOpportunitiesList().then(function () {
         renderOpportunityPerformance();
+        updateBusinessListPageHead();
       });
     }
 
@@ -5215,6 +5216,45 @@
     updateOpportunityEnquiryUi();
   }
 
+  function hasOpportunityListings() {
+    return (state.opportunities || []).length > 0;
+  }
+
+  function goToAddOpportunityListing() {
+    const addMenu = document.getElementById('org-add-menu');
+    const addToggle = document.getElementById('org-add-toggle');
+    if (addMenu) addMenu.hidden = true;
+    if (addToggle) addToggle.setAttribute('aria-expanded', 'false');
+    if (hasOpportunityListings()) {
+      location.href = 'opportunity-edit.html';
+      return;
+    }
+    setRoute('business-list');
+  }
+
+  function scrollToBusinessEnquiries() {
+    setRoute('business-overview');
+    requestAnimationFrame(function () {
+      const el = document.getElementById('org-opp-enquiries-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  function updateBusinessListPageHead() {
+    const titleEl = document.getElementById('org-business-list-title');
+    const leadEl = document.getElementById('org-business-list-lead');
+    if (!titleEl || !leadEl) return;
+    if (hasOpportunityListings()) {
+      titleEl.textContent = 'My listings';
+      leadEl.textContent =
+        'See how your listings are performing, then add another franchise, partnership, or side hustle when you are ready.';
+    } else {
+      titleEl.textContent = 'List a listing';
+      leadEl.textContent =
+        'See how listing works, what it costs, and start promoting a franchise, partnership, or side hustle on the hub.';
+    }
+  }
+
   function opportunityEnquiriesForListing(opportunityId) {
     return (state.opportunityEnquiries || []).filter(
       (e) => String(e.opportunityId || '') === String(opportunityId)
@@ -5266,6 +5306,7 @@
     if (!list.length) {
       wrap.hidden = true;
       mount.innerHTML = '';
+      updateBusinessListPageHead();
       return;
     }
     wrap.hidden = false;
@@ -5315,11 +5356,12 @@
         esc(viewUrl) +
         '" target="_blank" rel="noopener">View live</a> ' +
         (enquiries.length
-          ? '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="business-overview">View enquiries</button>'
+          ? '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-shortcut="business-overview-enquiries">View enquiries</button>'
           : '') +
         '</div>';
       mount.appendChild(card);
     });
+    updateBusinessListPageHead();
   }
 
   function opportunityStatusForBadge(o) {
@@ -5381,6 +5423,7 @@
   async function loadOpportunitiesList() {
     if (state.opportunitiesLoaded) {
       renderOpportunitiesList();
+      updateBusinessListPageHead();
       return;
     }
     try {
@@ -5877,7 +5920,16 @@
       renderTeam();
       updateGettingStartedPanel();
     });
+        } else if (route === 'business-overview-enquiries') {
+          scrollToBusinessEnquiries();
         }
+      });
+    });
+
+    document.querySelectorAll('[data-action="add-opportunity-listing"]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        goToAddOpportunityListing();
       });
     });
 
@@ -6059,6 +6111,36 @@
         if (enquiryReply) {
           const enquiryId = enquiryReply.getAttribute('data-opp-enquiry-reply');
           if (enquiryId) markOpportunityEnquiryResponded(enquiryId);
+          return;
+        }
+
+        const shortcutBtn = e.target.closest('[data-org-shortcut]');
+        if (shortcutBtn) {
+          e.preventDefault();
+          const route = shortcutBtn.getAttribute('data-org-shortcut');
+          if (route === 'business-overview-enquiries') {
+            scrollToBusinessEnquiries();
+            return;
+          }
+          if (route) {
+            setRoute(route);
+            if (route === 'groups') renderGroups();
+            else if (
+              route === 'events-tickets' ||
+              route === 'events-list' ||
+              route === 'events-attendees' ||
+              route === 'events-cancellations' ||
+              route === 'events-reviews' ||
+              route === 'events-revenue'
+            ) {
+              renderMyEventsHub(route);
+            } else if (route === 'team') {
+              loadTeamMembers().then(function () {
+                renderTeam();
+                updateGettingStartedPanel();
+              });
+            }
+          }
           return;
         }
 

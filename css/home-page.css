@@ -108,6 +108,16 @@ html:has(.home-page) {
   100% { transform: translateX(-50%); }
 }
 
+@keyframes home-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes home-icon-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-reveal,
   .home-reveal-child {
@@ -121,7 +131,11 @@ html:has(.home-page) {
   .home-page .home-hero::after,
   .home-hero-orb,
   .home-what-pillar-icon,
-  .home-page .home-hero-kicker {
+  .home-page .home-hero-kicker,
+  .home-hub-card-icon,
+  .home-what::before,
+  .home-what::after,
+  .home-partner-skeleton {
     animation: none !important;
   }
 
@@ -138,7 +152,7 @@ html:has(.home-page) {
   isolation: isolate;
   overflow: hidden;
   min-height: auto;
-  padding: calc(var(--home-nav-height) + 32px) clamp(24px, 4vw, 40px) 52px;
+  padding: calc(var(--home-nav-height) + 28px) clamp(24px, 4vw, 40px) 72px;
   background-color: #a67fad;
   background-image:
     radial-gradient(ellipse 90% 55% at 12% 92%, rgba(74, 58, 82, 0.42) 0%, transparent 58%),
@@ -222,10 +236,6 @@ html:has(.home-page) {
   animation: home-hero-fade-up 0.7s ease 0.16s both;
 }
 
-.home-hero.is-entered .hero-actions {
-  animation: home-hero-fade-up 0.7s ease 0.24s both;
-}
-
 .home-hero:not(.is-entered) .home-hero-inner > * {
   opacity: 0;
 }
@@ -294,11 +304,11 @@ html:has(.home-page) {
 
 .home-page .hero-tagline {
   font-size: clamp(1rem, 2.1vw, 1.125rem);
-  line-height: 1.5;
-  font-weight: 600;
-  color: #fff;
-  max-width: 32em;
-  margin: 0 auto 22px;
+  line-height: 1.55;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.94);
+  max-width: 30em;
+  margin: 0 auto;
   text-wrap: pretty;
   text-shadow: 0 1px 3px rgba(45, 35, 50, 0.38);
 }
@@ -382,16 +392,57 @@ html:has(.home-page) {
 
 /* ─── What is The Networker? ─── */
 .home-what {
-  padding: 56px 0 64px;
-  background: var(--home-bg);
+  position: relative;
+  overflow: hidden;
+  padding: 64px 0 72px;
+  background:
+    linear-gradient(165deg, rgba(237, 225, 245, 0.55) 0%, var(--home-bg) 42%, var(--home-bg-warm) 100%);
+}
+
+.home-what::before,
+.home-what::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.home-what::before {
+  width: min(420px, 70vw);
+  height: min(420px, 70vw);
+  top: -120px;
+  right: -80px;
+  background: radial-gradient(circle, rgba(194, 153, 209, 0.22) 0%, transparent 68%);
+  animation: home-deco-drift 18s ease-in-out infinite;
+}
+
+.home-what::after {
+  width: min(300px, 55vw);
+  height: min(300px, 55vw);
+  bottom: -100px;
+  left: -60px;
+  background: radial-gradient(circle, rgba(184, 149, 106, 0.14) 0%, transparent 70%);
+  animation: home-deco-drift 22s ease-in-out infinite reverse;
+}
+
+.home-what .home-flow-inner {
+  position: relative;
+  z-index: 1;
 }
 
 .home-what .home-flow-lede:first-of-type {
   color: var(--text-body);
 }
 
+.home-what .home-flow-head {
+  margin-bottom: 36px;
+}
+
 .home-what .home-flow-head .section-title {
   max-width: 16em;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(1.65rem, 3.4vw, 2.15rem);
 }
 
 .home-flow-lede--muted {
@@ -411,7 +462,7 @@ html:has(.home-page) {
   padding: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 20px;
 }
 
 .home-what-pillar {
@@ -420,18 +471,32 @@ html:has(.home-page) {
   grid-template-rows: auto auto;
   column-gap: 14px;
   row-gap: 4px;
-  padding: 20px 18px;
+  padding: 22px 20px;
   border-radius: 16px;
-  background: #fff;
-  border: 1px solid var(--home-border);
-  box-shadow: var(--shadow-soft);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(194, 153, 209, 0.28);
+  box-shadow: 0 10px 28px rgba(91, 47, 153, 0.08);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.home-what-pillar:nth-child(1) {
+  border-left: 4px solid var(--lavender-deep);
+}
+
+.home-what-pillar:nth-child(2) {
+  border-left: 4px solid var(--home-gold);
+}
+
+.home-what-pillar:nth-child(3) {
+  border-left: 4px solid #0d9488;
 }
 
 .home-what-pillar:hover {
-  transform: translateY(-3px);
-  border-color: rgba(184, 149, 106, 0.35);
-  box-shadow: var(--shadow-lift);
+  transform: translateY(-5px);
+  border-color: rgba(194, 153, 209, 0.45);
+  box-shadow: 0 16px 36px rgba(91, 47, 153, 0.12);
 }
 
 .home-what-pillar-icon {
@@ -618,8 +683,10 @@ html:has(.home-page) {
 
 /* ─── Partners ─── */
 .home-partners {
-  padding: 28px 0 0;
-  background: var(--home-bg);
+  position: relative;
+  z-index: 4;
+  margin-top: -52px;
+  padding: 0 0 20px;
 }
 
 .home-partners-band {
@@ -629,11 +696,11 @@ html:has(.home-page) {
 
 .home-partners-panel {
   --home-partners-panel-x: clamp(16px, 4vw, 28px);
-  padding: 20px var(--home-partners-panel-x) 24px;
+  padding: 24px var(--home-partners-panel-x) 28px;
   border-radius: 20px;
   background: #fff;
   border: 1px solid var(--home-border);
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 22px 54px rgba(74, 68, 70, 0.14);
   overflow: hidden;
 }
 
@@ -681,6 +748,29 @@ html:has(.home-page) {
 
 .home-partners-track--marquee:hover {
   animation-play-state: paused;
+}
+
+.home-partners-track--loading {
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.home-partner-skeleton {
+  display: block;
+  width: 184px;
+  height: 84px;
+  border-radius: 16px;
+  background: linear-gradient(
+    90deg,
+    rgba(237, 225, 245, 0.5) 0%,
+    rgba(255, 255, 255, 0.95) 45%,
+    rgba(237, 225, 245, 0.5) 100%
+  );
+  background-size: 200% 100%;
+  animation: home-shimmer 1.6s ease-in-out infinite;
+  border: 1px solid var(--home-border);
 }
 
 .home-partner-item {
@@ -1017,7 +1107,7 @@ html:has(.home-page) {
 /* ─── Three ways hub cards ─── */
 .home-discover {
   padding: 56px 0 80px;
-  background: var(--home-bg);
+  background: var(--home-bg-alt);
 }
 
 .home-hub-grid {
@@ -1058,7 +1148,8 @@ html:has(.home-page) {
 }
 
 .home-hub-card:hover .home-hub-card-icon {
-  transform: scale(1.05);
+  animation-play-state: paused;
+  transform: scale(1.08);
 }
 
 .home-hub-card-icon {
@@ -1071,6 +1162,13 @@ html:has(.home-page) {
   margin-bottom: 24px;
   flex-shrink: 0;
   transition: transform 0.25s ease;
+  animation: home-icon-bob 5s ease-in-out infinite;
+}
+
+.home-hub-card--opportunities .home-hub-card-icon {
+  background: #f5d998;
+  color: #8a6918;
+  animation-delay: 0.8s;
 }
 
 .home-hub-card-icon svg {
@@ -1086,11 +1184,6 @@ html:has(.home-page) {
 .home-hub-card--academy .home-hub-card-icon {
   background: #b8ebe4;
   color: #0f766e;
-}
-
-.home-hub-card--opportunities .home-hub-card-icon {
-  background: #f5d998;
-  color: #8a6918;
 }
 
 .home-hub-card .badge {
@@ -1461,6 +1554,10 @@ html:has(.home-page) {
   .home-cta-top {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .home-partners {
+    margin-top: -32px;
   }
 
   .home-split .home-reveal-child:nth-child(1),

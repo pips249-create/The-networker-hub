@@ -30,13 +30,18 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const { access, members } = await api.listTeamMembers(auth.session);
+      const { access, members, teamMax, teamCount, teamSlotsRemaining } =
+        await api.listTeamMembers(auth.session);
       return json(res, 200, {
         ok: true,
         members,
         role: access.role,
         canManageTeam: access.canManageTeam,
         canDeleteEvents: access.canDeleteEvents,
+        useTeamWorkspace: access.useTeamWorkspace,
+        teamMax,
+        teamCount,
+        teamSlotsRemaining,
       });
     }
 
@@ -47,19 +52,31 @@ module.exports = async function handler(req, res) {
       if (action === 'resend') {
         const memberId = String(body.id || body.memberId || '').trim();
         if (!memberId) return json(res, 400, { error: 'missing_member_id' });
-        const { member } = await api.resendTeamInvite(auth.session, memberId);
-        return json(res, 200, { ok: true, member, message: 'Invite resent to ' + member.email });
+        const { member, emailSent } = await api.resendTeamInvite(auth.session, memberId);
+        return json(res, 200, {
+          ok: true,
+          member,
+          emailSent: emailSent !== false,
+          message: emailSent
+            ? 'Invite resent to ' + member.email
+            : 'Could not resend the invite email. Try again shortly.',
+        });
       }
 
       const email = String(body.email || '').trim();
-      const { member } = await api.inviteTeamMember(auth.session, {
+      const { member, emailSent } = await api.inviteTeamMember(auth.session, {
         email,
         role: body.role || 'editor',
       });
       return json(res, 201, {
         ok: true,
         member,
-        message: 'Invite sent to ' + member.email + ' — they will appear here once they accept',
+        emailSent: emailSent !== false,
+        message: emailSent
+          ? 'Invite sent to ' + member.email + ' — they will appear as Active once they sign in'
+          : 'Invite saved for ' +
+            member.email +
+            ', but the email could not be sent. Try resend or check email settings.',
       });
     }
 
