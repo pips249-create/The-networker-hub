@@ -13,6 +13,9 @@
     eventsStatus: 'all',
     eventsType: 'all',
     eventsSearch: '',
+    eventsHideArchived: true,
+    eventsSortColumn: 'date',
+    eventsSortDir: 'asc',
     groupsStatus: 'all',
     groupsSearch: '',
     ticketsEvent: 'all',
@@ -798,6 +801,75 @@
     });
   }
 
+  function compareEventsBySortColumn(a, b, column, direction) {
+    const dir = direction === 'desc' ? -1 : 1;
+    let cmp = 0;
+    if (column === 'revenue') {
+      cmp = (Number(a.revenueNum) || 0) - (Number(b.revenueNum) || 0);
+    } else if (column === 'tickets') {
+      cmp = (Number(a.ticketsSold) || 0) - (Number(b.ticketsSold) || 0);
+    } else {
+      const da = a.date ? new Date(a.date).getTime() : Number.POSITIVE_INFINITY;
+      const db = b.date ? new Date(b.date).getTime() : Number.POSITIVE_INFINITY;
+      cmp = da - db;
+    }
+    if (cmp !== 0) return cmp * dir;
+    return String(a.title || '').localeCompare(String(b.title || ''));
+  }
+
+  function sortGroupedEventsList(list) {
+    const column = filters.eventsSortColumn || 'date';
+    const direction = filters.eventsSortDir || 'asc';
+    return (list || []).slice().sort((a, b) => {
+      const draftA = String(a.statusKey || '').toLowerCase() === 'draft';
+      const draftB = String(b.statusKey || '').toLowerCase() === 'draft';
+      if (draftA !== draftB) return draftA ? 1 : -1;
+      return compareEventsBySortColumn(a, b, column, direction);
+    });
+  }
+
+  function sortSeriesMembers(members) {
+    const column = filters.eventsSortColumn || 'date';
+    const direction = filters.eventsSortDir || 'asc';
+    return (members || []).slice().sort((a, b) => {
+      return compareEventsBySortColumn(a, b, column, direction);
+    });
+  }
+
+  function toggleSeriesExpand(key) {
+    if (!key) return;
+    if (expandedSeriesKeys.has(key)) expandedSeriesKeys.delete(key);
+    else expandedSeriesKeys.add(key);
+    renderEvents();
+  }
+
+  function eventsSortLabel() {
+    const column = filters.eventsSortColumn || 'date';
+    const direction = filters.eventsSortDir || 'asc';
+    const names = { date: 'date', revenue: 'revenue', tickets: 'tickets sold' };
+    return (names[column] || column) + ' (' + (direction === 'desc' ? 'high to low' : 'low to high') + ')';
+  }
+
+  function toggleEventsSort(column) {
+    if (filters.eventsSortColumn === column) {
+      filters.eventsSortDir = filters.eventsSortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      filters.eventsSortColumn = column;
+      filters.eventsSortDir = column === 'revenue' || column === 'tickets' ? 'desc' : 'asc';
+    }
+    listPages.events = 1;
+    renderEvents();
+  }
+
+  function updateEventsSortHeaders() {
+    document.querySelectorAll('[data-events-sort]').forEach(function (btn) {
+      const col = btn.getAttribute('data-events-sort');
+      const active = filters.eventsSortColumn === col;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-sort', active ? (filters.eventsSortDir === 'asc' ? 'ascending' : 'descending') : 'none');
+    });
+  }
+
   function pickPrimarySeriesEvent(members) {
     const sorted = sortEventsByDate(members);
     const now = Date.now();
@@ -884,15 +956,7 @@
       }
     });
 
-    return grouped.sort((a, b) => {
-      const draftA = String(a.statusKey || '').toLowerCase() === 'draft';
-      const draftB = String(b.statusKey || '').toLowerCase() === 'draft';
-      if (draftA !== draftB) return draftA ? 1 : -1;
-      const da = a.date ? new Date(a.date).getTime() : Number.POSITIVE_INFINITY;
-      const db = b.date ? new Date(b.date).getTime() : Number.POSITIVE_INFINITY;
-      if (da !== db) return da - db;
-      return String(a.title || '').localeCompare(String(b.title || ''));
-    });
+    return sortGroupedEventsList(grouped);
   }
 
   function formatEventDateCell(ev) {
@@ -913,20 +977,17 @@
       const key = eventSeriesBucketKey(ev);
       const expanded = expandedSeriesKeys.has(key);
       return (
-        '<button type="button" class="org-series-toggle' +
+        '<span class="org-series-toggle' +
         (expanded ? ' is-open' : '') +
-        '" data-toggle-series="' +
-        esc(key) +
-        '" aria-expanded="' +
-        (expanded ? 'true' : 'false') +
-        '">' +
-        '<span class="org-series-chev" aria-hidden="true">' +
+        '" aria-hidden="true">' +
+        '<span class="org-series-chev">' +
         (expanded ? '▾' : '▸') +
         '</span> ' +
         esc(ev.title) +
         '<span class="org-series-badge">' +
         esc(String(ev.seriesCount)) +
-        ' dates</span></button>' +
+        ' dates</span></span>' +
+        '<span class="org-series-row-hint">Click row for revenue by date</span>' +
         joinLinkWarnHtml(ev)
       );
     }
@@ -1095,6 +1156,9 @@
       '<button type="button" class="org-action-item" data-manage-tickets="' +
       esc(id) +
       '"><span class="org-action-icon">🎟️</span><span class="org-action-text"><strong>Ticket types</strong><span>Edit tiers and publish</span></span></button>' +
+      '<button type="button" class="org-action-item" data-duplicate-event="' +
+      esc(id) +
+      '"><span class="org-action-icon">⧉</span><span class="org-action-text"><strong>Duplicate event</strong><span>Draft copy — add new dates &amp; publish</span></span></button>' +
       '<button type="button" class="org-action-item" data-org-goto-sub="events-reviews" data-filter-event="' +
       esc(id) +
       '"><span class="org-action-icon">★</span><span class="org-action-text"><strong>Reviews</strong><span>Read &amp; reply to reviews</span></span></button>' +
@@ -1133,6 +1197,9 @@
       '<button type="button" class="org-action-item" data-manage-tickets="' +
       esc(id) +
       '"><span class="org-action-icon">🎟️</span><span class="org-action-text"><strong>Ticket types</strong><span>Edit tiers and publish</span></span></button>' +
+      '<button type="button" class="org-action-item" data-duplicate-event="' +
+      esc(id) +
+      '"><span class="org-action-icon">⧉</span><span class="org-action-text"><strong>Duplicate event</strong><span>Draft copy — add new dates &amp; publish</span></span></button>' +
       '<button type="button" class="org-action-item" data-org-goto-sub="events-revenue" data-filter-event="' +
       esc(id) +
       '"><span class="org-action-icon">£</span><span class="org-action-text"><strong>Revenue &amp; payout</strong><span>Request payout when eligible</span></span></button>' +
@@ -1493,6 +1560,8 @@
       'Status',
       'Industry',
       'Job title',
+      'Dietary requirements',
+      'Accessibility requirements',
       'Paid',
       'Registered',
     ];
@@ -1508,6 +1577,8 @@
         attendeeStatusLabel(a),
         a.screeningIndustry || '',
         a.screeningJobTitle || '',
+        a.dietaryRequirements || '',
+        a.accessibilityRequirements || '',
         a.amountDisplay || a.paymentStatus || '',
         a.registeredAt,
       ]
@@ -1533,8 +1604,10 @@
     const isDenied = applicationStatus === 'Denied';
     const industry = String(a.screeningIndustry || '').trim();
     const jobTitle = String(a.screeningJobTitle || '').trim();
+    const dietary = String(a.dietaryRequirements || '').trim();
+    const accessibility = String(a.accessibilityRequirements || '').trim();
     const denialReason = String(a.applicationDenialReason || '').trim();
-    if (!isPending && !isDenied && !industry && !jobTitle) return '—';
+    if (!isPending && !isDenied && !industry && !jobTitle && !dietary && !accessibility) return '—';
     const rows = [];
     if (industry) {
       rows.push(
@@ -1552,6 +1625,26 @@
           '<span class="org-application-answer-label">Job title</span>' +
           '<span class="org-application-answer-value">' +
           esc(jobTitle) +
+          '</span>' +
+          '</div>'
+      );
+    }
+    if (dietary) {
+      rows.push(
+        '<div class="org-application-answer">' +
+          '<span class="org-application-answer-label">Dietary</span>' +
+          '<span class="org-application-answer-value">' +
+          esc(dietary) +
+          '</span>' +
+          '</div>'
+      );
+    }
+    if (accessibility) {
+      rows.push(
+        '<div class="org-application-answer">' +
+          '<span class="org-application-answer-label">Accessibility</span>' +
+          '<span class="org-application-answer-value">' +
+          esc(accessibility) +
           '</span>' +
           '</div>'
       );
@@ -1919,6 +2012,11 @@
     }
     if (filters.eventsType !== 'all') {
       list = list.filter((ev) => String(ev.type || '') === filters.eventsType);
+    }
+    if (filters.eventsHideArchived) {
+      list = list.filter(
+        (ev) => String(ev.statusKey || ev.status || '').toLowerCase() !== 'archived'
+      );
     }
     return groupEventsIntoSeries(list);
   }
@@ -2520,6 +2618,39 @@
     return grouped.find((row) => row.id === id) || null;
   }
 
+  async function confirmDuplicateEvent(eventId) {
+    if (!eventId) return;
+    const ev = findEventById(eventId);
+    const label = ev && ev.title ? ev.title : 'this event';
+    if (
+      !window.confirm(
+        'Create a draft copy of "' +
+          label +
+          '"?\n\nDates are cleared so you can set a new schedule. Ticket types are copied — review everything before publishing.'
+      )
+    ) {
+      return;
+    }
+    const res = await api('/api/organiser/events', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'duplicate', id: eventId }),
+    });
+    if (!res.ok) {
+      window.alert(res.data.message || res.data.error || 'Could not duplicate this event.');
+      return;
+    }
+    showOrganiserAlert(
+      res.data.message || 'Event duplicated as a draft — add dates and publish when ready.',
+      false
+    );
+    await loadBootstrap();
+    renderAll();
+    setRoute('events-list');
+    if (res.data.event && res.data.event.id) {
+      openEventEditorDrawer(res.data.event);
+    }
+  }
+
   async function confirmDuplicateGroup(groupId) {
     if (!groupId) return;
     const g = findGroupById(groupId);
@@ -2666,16 +2797,14 @@
       return true;
     }
 
-    const toggleSeriesBtn = e.target.closest('[data-toggle-series]');
-    if (toggleSeriesBtn) {
+    const seriesParentRow = e.target.closest('tr.org-series-parent-row');
+    if (
+      seriesParentRow &&
+      !e.target.closest('.org-td-actions, .org-action-wrap, [data-org-action-toggle]')
+    ) {
       e.preventDefault();
       e.stopPropagation();
-      const key = toggleSeriesBtn.getAttribute('data-toggle-series');
-      if (key) {
-        if (expandedSeriesKeys.has(key)) expandedSeriesKeys.delete(key);
-        else expandedSeriesKeys.add(key);
-        renderEvents();
-      }
+      toggleSeriesExpand(seriesParentRow.getAttribute('data-series-key'));
       return true;
     }
 
@@ -2694,6 +2823,15 @@
       e.stopPropagation();
       closeAllActionMenus();
       goToAddEventForGroup(addEventGroupBtn.getAttribute('data-add-event-for-group'));
+      return true;
+    }
+
+    const duplicateEventBtn = e.target.closest('[data-duplicate-event]');
+    if (duplicateEventBtn && !duplicateEventBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      confirmDuplicateEvent(duplicateEventBtn.getAttribute('data-duplicate-event'));
       return true;
     }
 
@@ -3308,34 +3446,27 @@
 
   function appendEventTableRow(body, ev, options) {
     const opts = options || {};
-    const isChild = Boolean(opts.isChild);
     const tr = document.createElement('tr');
-    if (isChild) tr.className = 'org-series-child-row';
-    else if (ev.isSeries && ev.seriesCount > 1) tr.className = 'org-series-parent-row';
+    const isSeriesParent = ev.isSeries && ev.seriesCount > 1;
+    if (isSeriesParent) {
+      const key = eventSeriesBucketKey(ev);
+      const expanded = expandedSeriesKeys.has(key);
+      tr.className = 'org-series-parent-row is-expandable';
+      tr.setAttribute('data-series-key', key);
+      tr.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      tr.setAttribute('title', 'Click to show each date in this series');
+      tr.tabIndex = 0;
+    }
 
     const revClass = ev.revenueNum > 0 ? 'org-revenue' : 'org-revenue muted';
-    let nameHtml;
-    if (isChild) {
-      nameHtml =
-        '<span class="org-series-child-label" aria-hidden="true">↳</span>' +
-        '<button type="button" class="org-td-name-click org-series-child-name" data-edit-event="' +
-        esc(ev.id) +
-        '">' +
-        esc(formatDateShort(ev.date) || 'Date TBC') +
-        '</button>';
-    } else {
-      nameHtml = eventTitleCellHtml(ev);
-    }
 
     tr.innerHTML =
       '<td>' +
-      (isChild ? '<span class="org-series-child-thumb" aria-hidden="true"></span>' : thumbHtml(ev)) +
-      '</td><td class="org-td-name' +
-      (isChild ? ' org-td-name--series-child' : '') +
-      '">' +
-      nameHtml +
+      thumbHtml(ev) +
+      '</td><td class="org-td-name">' +
+      eventTitleCellHtml(ev) +
       '</td><td>' +
-      esc(isChild ? formatDateShort(ev.date) : formatEventDateCell(ev)) +
+      esc(formatEventDateCell(ev)) +
       '</td><td>' +
       esc(formatTimeRange(ev.date, ev.endDate)) +
       '</td><td>' +
@@ -3351,6 +3482,72 @@
       '</td>';
     body.appendChild(tr);
     return tr;
+  }
+
+  function appendSeriesDetailPanel(body, ev) {
+    const key = eventSeriesBucketKey(ev);
+    const children = sortSeriesMembers(ev.seriesEvents || []);
+    const tr = document.createElement('tr');
+    tr.className = 'org-series-detail-row';
+    tr.setAttribute('data-series-detail-for', key);
+
+    const totalRevenue = children.reduce(function (sum, child) {
+      return sum + (Number(child.revenueNum) || 0);
+    }, 0);
+    const sortCol = filters.eventsSortColumn || 'date';
+    const highlightTop = sortCol === 'revenue' && filters.eventsSortDir === 'desc';
+
+    const rowsHtml = children
+      .map(function (child, index) {
+        const revClass = child.revenueNum > 0 ? 'org-revenue' : 'org-revenue muted';
+        const topClass =
+          highlightTop && index === 0 && (Number(child.revenueNum) || 0) > 0
+            ? ' org-series-date-row--top'
+            : '';
+        return (
+          '<tr class="org-series-date-row' +
+          topClass +
+          '" data-edit-event="' +
+          esc(child.id) +
+          '" tabindex="0" role="button" title="Edit this date">' +
+          '<td>' +
+          esc(formatDateShort(child.date) || 'Date TBC') +
+          '</td><td>' +
+          esc(formatTimeRange(child.date, child.endDate)) +
+          '</td><td>' +
+          esc(child.ticketsSoldLabel || '0') +
+          '</td><td class="' +
+          revClass +
+          '">' +
+          esc(child.revenueDisplay || '£0') +
+          '</td><td>' +
+          statusBadgeHtml(child.statusKey || 'draft', child.statusLabel || 'Draft') +
+          '</td></tr>'
+        );
+      })
+      .join('');
+
+    tr.innerHTML =
+      '<td colspan="8">' +
+      '<div class="org-series-dates-panel">' +
+      '<div class="org-series-dates-head">' +
+      '<p class="org-series-dates-lede"><strong>' +
+      esc(String(children.length)) +
+      ' dates</strong> · Total ' +
+      esc(formatGbpAmount(totalRevenue)) +
+      ' · Sorted by ' +
+      esc(eventsSortLabel()) +
+      '</p>' +
+      '<p class="org-series-dates-hint">Click a date to edit that occurrence. Use column headers above to sort by revenue.</p>' +
+      '</div>' +
+      '<div class="org-series-dates-scroll">' +
+      '<table class="org-series-dates-table">' +
+      '<thead><tr>' +
+      '<th>Date</th><th>Time</th><th>Tickets sold</th><th>Revenue</th><th>Status</th>' +
+      '</tr></thead><tbody>' +
+      rowsHtml +
+      '</tbody></table></div></div></td>';
+    body.appendChild(tr);
   }
 
   function renderEvents() {
@@ -3393,12 +3590,11 @@
       if (ev.isSeries && ev.seriesCount > 1 && ev.seriesEvents && ev.seriesEvents.length) {
         const key = eventSeriesBucketKey(ev);
         if (expandedSeriesKeys.has(key)) {
-          ev.seriesEvents.forEach((child) => {
-            appendEventTableRow(body, child, { isChild: true });
-          });
+          appendSeriesDetailPanel(body, ev);
         }
       }
     });
+    updateEventsSortHeaders();
   }
 
   function renderTickets() {
@@ -4733,6 +4929,31 @@
         listPages.events = 1;
         renderEvents();
       });
+    });
+
+    document.getElementById('sub-events-list')?.addEventListener('click', (e) => {
+      const sortBtn = e.target.closest('[data-events-sort]');
+      if (!sortBtn) return;
+      e.preventDefault();
+      toggleEventsSort(sortBtn.getAttribute('data-events-sort') || 'date');
+    });
+
+    const hideArchivedEl = document.getElementById('filter-events-hide-archived');
+    if (hideArchivedEl) {
+      hideArchivedEl.checked = filters.eventsHideArchived !== false;
+      hideArchivedEl.addEventListener('change', () => {
+        filters.eventsHideArchived = hideArchivedEl.checked;
+        listPages.events = 1;
+        renderEvents();
+      });
+    }
+
+    document.getElementById('events-body')?.addEventListener('keydown', (e) => {
+      const row = e.target.closest('tr.org-series-parent-row');
+      if (!row) return;
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      toggleSeriesExpand(row.getAttribute('data-series-key'));
     });
 
     ['filter-groups-status', 'filter-groups-search'].forEach((id) => {

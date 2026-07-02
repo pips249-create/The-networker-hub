@@ -84,6 +84,7 @@ module.exports = async function handler(req, res) {
     createEvent,
     updateEvent,
     deleteEventForSession,
+    duplicateEventForSession,
     getEventById,
     isPlatformAdmin,
     airtableSetupHint,
@@ -206,6 +207,36 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'POST') {
     const body = parseBody(req);
+
+    if (String(body.action || '').trim() === 'duplicate') {
+      const eventId = String(body.id || body.eventId || '').trim();
+      if (!eventId) return json(res, 400, { error: 'missing_event_id' });
+      try {
+        const { groups, allowed } = await ownedEventIds();
+        if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {
+          return json(res, 403, { error: 'event_not_owned' });
+        }
+        const result = await duplicateEventForSession(
+          auth.session,
+          eventId,
+          groups.map((g) => g.id)
+        );
+        return json(res, 201, {
+          ok: true,
+          event: result.event,
+          eventIds: [result.event.id],
+          ticketCount: result.ticketCount,
+          message:
+            'Event duplicated as a draft — add new dates, review ticket types, then publish.',
+        });
+      } catch (e) {
+        return json(res, e.status || 500, {
+          error: e.code || 'event_duplicate_failed',
+          message: e.message,
+        });
+      }
+    }
+
     const title = String(body.title || '').trim();
     const groupId = String(body.organiserGroupId || body.groupId || '').trim();
     const occ = normalizeOccurrences(body);

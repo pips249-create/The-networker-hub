@@ -108,6 +108,14 @@ async function createRegistrationFromPayment(input) {
       stripe_payment_intent_id: stripePaymentIntentId,
       stripe_checkout_session_id: stripeCheckoutSessionId,
     };
+    const dietaryRequirements = normalizeAttendeeExtraText(
+      input.dietaryRequirements ?? input.dietary_requirements
+    );
+    const accessibilityRequirements = normalizeAttendeeExtraText(
+      input.accessibilityRequirements ?? input.accessibility_requirements
+    );
+    if (dietaryRequirements) patch.dietary_requirements = dietaryRequirements;
+    if (accessibilityRequirements) patch.accessibility_requirements = accessibilityRequirements;
     const upd = await sb.from('registrations').update(patch).eq('id', linked.id).select('*').single();
     if (upd.error) throw new Error(upd.error.message);
 
@@ -147,6 +155,12 @@ async function createRegistrationFromPayment(input) {
   if (quantity > 1 && guestNames.length < quantity - 1) {
     throw new Error('missing_guest_names');
   }
+  const dietaryRequirements = normalizeAttendeeExtraText(
+    input.dietaryRequirements ?? input.dietary_requirements
+  );
+  const accessibilityRequirements = normalizeAttendeeExtraText(
+    input.accessibilityRequirements ?? input.accessibility_requirements
+  );
   const amountPaid =
     input.amountPaid != null
       ? Number(input.amountPaid)
@@ -166,6 +180,8 @@ async function createRegistrationFromPayment(input) {
     stripe_checkout_session_id: stripeCheckoutSessionId,
     quantity,
     guest_names: guestNames.length ? guestNames : null,
+    dietary_requirements: dietaryRequirements || null,
+    accessibility_requirements: accessibilityRequirements || null,
     application_status: input.applicationStatus || input.application_status || 'Approved',
   };
 
@@ -239,6 +255,11 @@ function normalizeGuestNames(input, quantity) {
     .slice(0, maxExtra);
 }
 
+function normalizeAttendeeExtraText(input) {
+  const text = String(input || '').trim();
+  return text ? text.slice(0, 500) : '';
+}
+
 /**
  * Handle Stripe checkout.session.completed — expects metadata.event_id (+ optional ticket_id),
  * or client_reference_id from the hub checkout URL (id<event-uuid>-ticket-<ticket-uuid>-...).
@@ -283,6 +304,9 @@ async function handleCheckoutSessionCompleted(session) {
     ticketId,
     quantity,
     guestNames: metadata.guest_names || metadata.guestNames || null,
+    dietaryRequirements: metadata.dietary_requirements || metadata.dietaryRequirements || null,
+    accessibilityRequirements:
+      metadata.accessibility_requirements || metadata.accessibilityRequirements || null,
     amountPaid: amountTotal,
     paymentStatus: amountTotal > 0 ? 'Paid' : 'Free',
     stripePaymentIntentId: paymentIntentId,
@@ -297,5 +321,6 @@ module.exports = {
   parseStripeEventBody,
   parseClientReferenceId,
   normalizeGuestNames,
+  normalizeAttendeeExtraText,
   parseQuantity,
 };

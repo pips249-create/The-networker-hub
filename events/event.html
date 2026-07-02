@@ -370,6 +370,16 @@
               <input type="email" id="checkout-email" name="email" autocomplete="email" required />
             </label>
             <div class="checkout-guest-names" id="checkout-guest-names" hidden></div>
+            <div class="checkout-attendee-extras" id="checkout-attendee-extras" hidden>
+              <label class="form-field" for="checkout-dietary" id="checkout-dietary-field" hidden>
+                <span>Dietary requirements</span>
+                <textarea id="checkout-dietary" name="dietary_requirements" rows="2" maxlength="500" placeholder="e.g. vegetarian, nut allergy — leave blank if none"></textarea>
+              </label>
+              <label class="form-field" for="checkout-accessibility" id="checkout-accessibility-field" hidden>
+                <span>Accessibility requirements</span>
+                <textarea id="checkout-accessibility" name="accessibility_requirements" rows="2" maxlength="500" placeholder="e.g. wheelchair access, hearing loop — leave blank if none"></textarea>
+              </label>
+            </div>
             <label class="checkout-terms-check checkout-free-terms" for="checkout-free-terms-agree">
               <input type="checkbox" id="checkout-free-terms-agree" name="terms_agree" required />
               <span id="checkout-free-terms-label">I confirm my details are correct and agree to register for this event.</span>
@@ -473,7 +483,7 @@
     <script src="../js/review-report.js?v=20260609"></script>
     <script src="../js/hub-favourites.js?v=20260629"></script>
     <script src="../js/booking-fees.js?v=20260630"></script>
-    <script src="../js/event-detail.js?v=20260712"></script>
+    <script src="../js/event-detail.js?v=20260719"></script>
     <div id="hub-site-footer"></div>
 
     <div class="hub-modal application-success-modal" id="application-success-modal" role="dialog" aria-modal="true" aria-labelledby="application-success-title" hidden>

@@ -117,7 +117,7 @@ module.exports = async function handler(req, res) {
     const evRes = await sb
       .from('events')
       .select(
-        'id, title, slug, status, approval_status, ticket_sales_enabled, refund_terms_agreed, refund_terms_agreed_at'
+        'id, title, slug, status, approval_status, ticket_sales_enabled, refund_terms_agreed, refund_terms_agreed_at, collect_dietary, collect_accessibility'
       )
       .eq('id', eventId)
       .maybeSingle();
@@ -207,6 +207,9 @@ module.exports = async function handler(req, res) {
           ticketId,
           registrationId,
           quantity: requestedQty,
+          guestNames,
+          dietaryRequirements,
+          accessibilityRequirements,
           amountPaid: 0,
           paymentStatus: 'Free',
         });
@@ -238,6 +241,14 @@ module.exports = async function handler(req, res) {
     if (qty > 1 && guestNames.length < qty - 1) {
       return json(res, 400, { ok: false, error: 'missing_guest_names' });
     }
+    const dietaryRequirements = String(body.dietaryRequirements || body.dietary_requirements || '')
+      .trim()
+      .slice(0, 500);
+    const accessibilityRequirements = String(
+      body.accessibilityRequirements || body.accessibility_requirements || ''
+    )
+      .trim()
+      .slice(0, 500);
     const siteUrl = String(process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(
       /\/$/,
       ''
@@ -270,6 +281,8 @@ module.exports = async function handler(req, res) {
       email: checkoutEmail,
       name: checkoutName,
       guestNames,
+      dietaryRequirements,
+      accessibilityRequirements,
       eventId,
       ticketId,
       registrationId,

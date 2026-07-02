@@ -184,7 +184,7 @@ async function getEmailSponsorVars(slug) {
       : '';
 
     let miniRow = '';
-    if (EVENT_MINI_SPONSOR_SLUGS.has(slug)) {
+    if (EVENT_MINI_SPONSOR_SLUGS.has(slug) || OPPORTUNITY_EMAIL_SLUGS.has(slug)) {
       const ads = await fetchMiniSponsorAds(sb, 3);
       miniRow = buildMiniSponsorsRow(ads);
     }

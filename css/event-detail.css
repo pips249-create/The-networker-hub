@@ -1983,6 +1983,18 @@ a:hover {
   color: var(--ink-muted);
 }
 
+.checkout-attendee-extras {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.checkout-attendee-extras textarea {
+  width: 100%;
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
 .seat-application-intro {
   font-size: 14px;
   color: var(--purple-dark);

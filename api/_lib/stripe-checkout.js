@@ -70,6 +70,8 @@ async function createPaidCheckoutSession(opts) {
       attendee_email: opts.email || '',
       attendee_name: opts.name || '',
       guest_names: JSON.stringify(opts.guestNames || []).slice(0, 500),
+      dietary_requirements: String(opts.dietaryRequirements || '').trim().slice(0, 500),
+      accessibility_requirements: String(opts.accessibilityRequirements || '').trim().slice(0, 500),
       quantity: String(opts.qty || 1),
     },
     success_url: opts.successUrl,

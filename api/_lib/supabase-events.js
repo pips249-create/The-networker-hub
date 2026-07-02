@@ -347,6 +347,8 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     description: descText,
     highlights,
     foodIncluded: Boolean(row.food_included),
+    collectDietary: Boolean(row.collect_dietary),
+    collectAccessibility: Boolean(row.collect_accessibility),
     date: parsedDate.dateOnly || parsedDate.display,
     dateRaw: parsedDate.iso,
     dateTs: parsedDate.ts,

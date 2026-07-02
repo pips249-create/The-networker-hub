@@ -61,6 +61,8 @@ module.exports = async function handler(req, res) {
       registrationId: body.registrationId || body.registration_id,
       quantity: body.quantity ?? body.qty,
       guestNames: body.guestNames || body.guest_names,
+      dietaryRequirements: body.dietaryRequirements || body.dietary_requirements,
+      accessibilityRequirements: body.accessibilityRequirements || body.accessibility_requirements,
       amountPaid: Number.isFinite(amountPaid) ? amountPaid : 0,
       paymentStatus: paymentStatus || (Number.isFinite(amountPaid) && amountPaid > 0 ? 'Paid' : 'Free'),
       stripePaymentIntentId: body.stripePaymentIntentId || body.stripe_payment_intent_id,

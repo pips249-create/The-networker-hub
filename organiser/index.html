@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260717" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260702c" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
@@ -634,6 +634,10 @@
                 placeholder="Search by title, type or location…"
                 aria-label="Search events"
               />
+              <label class="org-filter-check">
+                <input type="checkbox" id="filter-events-hide-archived" checked />
+                Hide archived
+              </label>
             </div>
             <div class="org-table-wrap">
               <table>
@@ -641,10 +645,22 @@
                   <tr>
                     <th class="org-th-thumb"></th>
                     <th>Event name</th>
-                    <th>Date</th>
+                    <th>
+                      <button type="button" class="org-th-sort" data-events-sort="date" aria-sort="ascending">
+                        Date <span class="org-th-sort-icon" aria-hidden="true">↕</span>
+                      </button>
+                    </th>
                     <th>Time</th>
-                    <th>Tickets sold</th>
-                    <th>Revenue</th>
+                    <th>
+                      <button type="button" class="org-th-sort" data-events-sort="tickets" aria-sort="none">
+                        Tickets sold <span class="org-th-sort-icon" aria-hidden="true">↕</span>
+                      </button>
+                    </th>
+                    <th>
+                      <button type="button" class="org-th-sort" data-events-sort="revenue" aria-sort="none">
+                        Revenue <span class="org-th-sort-icon" aria-hidden="true">↕</span>
+                      </button>
+                    </th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -1300,6 +1316,6 @@
     <script src="../js/organiser-onboarding.js?v=20260618"></script>
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
     <script src="../js/organiser-payment-setup.js?v=20260718"></script>
-    <script src="../js/organiser-dashboard.js?v=20260718"></script>
+    <script src="../js/organiser-dashboard.js?v=20260702c"></script>
   </body>
 </html>

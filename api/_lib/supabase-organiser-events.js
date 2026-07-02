@@ -625,6 +625,89 @@ async function createEvent(payload) {
   return rowToEvent(data);
 }
 
+async function duplicateEventForSession(session, sourceEventId, groupIds) {
+  const sb = getSupabaseAdmin();
+  const id = String(sourceEventId || '').trim();
+  if (!id) {
+    const e = new Error('missing_event_id');
+    e.status = 400;
+    throw e;
+  }
+
+  const { data: row, error } = await sb.from('events').select('*').eq('id', id).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!row) {
+    const e = new Error('Event not found');
+    e.status = 404;
+    throw e;
+  }
+
+  const organiserId = row.organiser_id;
+  if (Array.isArray(groupIds) && groupIds.length && !groupIds.includes(organiserId)) {
+    const e = new Error('You do not have access to this event');
+    e.status = 403;
+    e.code = 'event_not_owned';
+    throw e;
+  }
+
+  let title = String(row.title || 'Event').trim() || 'Event';
+  if (!/\(copy\)$/i.test(title)) title += ' (copy)';
+
+  const event = await createEvent({
+    groupId: organiserId,
+    title,
+    type: normalizeEventType(row.event_type || ''),
+    description: plainEventDescription(row.description),
+    location: String(row.location_label || row.city || row.venue || '').trim(),
+    venue: String(row.venue || '').trim(),
+    addressLine1: String(row.address || '').trim(),
+    city: String(row.city || '').trim(),
+    postcode: String(row.postcode || '').trim(),
+    eventFormat: String(row.meeting_type || '').trim(),
+    onlineLink: String(row.meeting_link || '').trim(),
+    industry: Array.isArray(row.industries) ? row.industries[0] || '' : '',
+    maxAttendees: row.max_attendees != null ? Number(row.max_attendees) : null,
+    recurrencePattern: row.recurrence_pattern || null,
+    recurrenceEndDate: row.recurrence_end_date || null,
+    photoUrl: eventImageUrl(row) || '',
+    listingStatus: 'draft',
+    date: '',
+    endDate: '',
+    attendeeExtras: {
+      foodIncluded: Boolean(row.food_included),
+      collectDietary: Boolean(row.collect_dietary),
+      collectAccessibility: Boolean(row.collect_accessibility),
+    },
+  });
+
+  const { data: sourceTickets, error: ticketErr } = await sb
+    .from('tickets')
+    .select('*')
+    .eq('event_id', id)
+    .order('display_order', { ascending: true });
+  if (ticketErr) throw new Error(ticketErr.message);
+
+  let ticketCount = 0;
+  for (const t of sourceTickets || []) {
+    await createTicket({
+      eventId: event.id,
+      name: t.name,
+      price: t.price,
+      description: t.description,
+      status: 'Active',
+      quantityAvailable: t.quantity,
+      saleStart: t.sale_starts_at,
+      saleEnd: t.sale_ends_at,
+      ticketType: t.ticket_type,
+      displayOrder: t.display_order,
+      oneSeatOnly: t.ticket_type === 'Application-based',
+    });
+    ticketCount += 1;
+  }
+
+  return { event, ticketCount };
+}
+
 async function updateEvent(eventId, payload) {
   const sb = getSupabaseAdmin();
   const { data: existing } = await sb.from('events').select('*').eq('id', eventId).maybeSingle();
@@ -1316,6 +1399,7 @@ module.exports = {
   listTicketsForSession,
   getEventById,
   createEvent,
+  duplicateEventForSession,
   updateEvent,
   deleteEventForSession,
   enableTicketSalesForEvent,

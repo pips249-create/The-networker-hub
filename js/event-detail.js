@@ -1123,6 +1123,47 @@
     }
   }
 
+  function eventCollectsAttendeeExtras(ev) {
+    return Boolean(ev && (ev.collectDietary || ev.collectAccessibility));
+  }
+
+  function needsCheckoutDetailsStep(ev, ticketQty) {
+    const qtyNum = Math.max(1, parseInt(ticketQty, 10) || 1);
+    if (qtyNum > 1) return true;
+    return eventCollectsAttendeeExtras(ev);
+  }
+
+  function renderCheckoutAttendeeExtras(ev) {
+    const wrap = document.getElementById('checkout-attendee-extras');
+    const dietaryField = document.getElementById('checkout-dietary-field');
+    const accessField = document.getElementById('checkout-accessibility-field');
+    const collectDietary = Boolean(ev && ev.collectDietary);
+    const collectAccessibility = Boolean(ev && ev.collectAccessibility);
+    const show = collectDietary || collectAccessibility;
+
+    if (wrap) wrap.hidden = !show;
+    if (dietaryField) dietaryField.hidden = !collectDietary;
+    if (accessField) accessField.hidden = !collectAccessibility;
+  }
+
+  function readCheckoutAttendeeExtras(ev) {
+    const extras = {};
+    if (ev && ev.collectDietary) {
+      extras.dietaryRequirements =
+        document.getElementById('checkout-dietary')?.value.trim().slice(0, 500) || '';
+    }
+    if (ev && ev.collectAccessibility) {
+      extras.accessibilityRequirements =
+        document.getElementById('checkout-accessibility')?.value.trim().slice(0, 500) || '';
+    }
+    return extras;
+  }
+
+  function mergeAttendeeExtras(attendee, ev) {
+    if (!attendee || !ev) return attendee;
+    return Object.assign(attendee, readCheckoutAttendeeExtras(ev));
+  }
+
   function checkoutAttendeeFromSession() {
     if (!checkoutSessionUser) return null;
     const email = String(checkoutSessionUser.email || '')
@@ -1140,10 +1181,12 @@
   function wantsSlimPaidCheckout(qty, total) {
     if (!(total > 0)) return false;
     if (Math.max(1, parseInt(qty, 10) || 1) !== 1) return false;
+    if (eventCollectsAttendeeExtras(activeEvent())) return false;
     return Boolean(checkoutAttendeeFromSession());
   }
 
   function readPaidCheckoutAttendee(qty) {
+    const ev = activeEvent();
     const attendee = checkoutAttendeeFromSession();
     if (!attendee) {
       throw new Error('Please sign in to buy tickets for this event.');
@@ -1152,7 +1195,7 @@
     if (qtyNum > 1) {
       attendee.guestNames = readCheckoutGuestNames(qty);
     }
-    return attendee;
+    return mergeAttendeeExtras(attendee, ev);
   }
 
   function checkoutErrorMessage(data) {
@@ -1196,6 +1239,8 @@
         name: attendee?.name || '',
         email: attendee?.email || '',
         guestNames: attendee?.guestNames || [],
+        dietaryRequirements: attendee?.dietaryRequirements || '',
+        accessibilityRequirements: attendee?.accessibilityRequirements || '',
       }),
     });
     const data = await res.json().catch(function () {
@@ -1224,6 +1269,8 @@
         name: attendee?.name || '',
         email: attendee?.email || '',
         guestNames: attendee?.guestNames || [],
+        dietaryRequirements: attendee?.dietaryRequirements || '',
+        accessibilityRequirements: attendee?.accessibilityRequirements || '',
       }),
     });
     const data = await res.json().catch(function () {
@@ -1605,25 +1652,44 @@
 
   function showPaidGuestCheckout(show, isPaid) {
     if (isPaid === undefined) isPaid = true;
+    const ev = activeEvent();
     const form = document.getElementById('checkout-details-form');
     const confirmBtn = document.getElementById('checkout-confirm-btn');
     const intro = document.getElementById('checkout-details-intro');
     const nameField = document.getElementById('checkout-name')?.closest('.form-field');
     const emailField = document.getElementById('checkout-email')?.closest('.form-field');
     const freeTerms = document.querySelector('.checkout-free-terms');
+    const hasExtras = eventCollectsAttendeeExtras(ev);
+    const hasGuests = Math.max(0, qty - 1) > 0;
     showCheckoutDetails(show);
     if (form) form.classList.toggle('is-paid-guests', show);
     if (nameField) nameField.hidden = show;
     if (emailField) emailField.hidden = show;
     if (freeTerms) freeTerms.hidden = show && isPaid;
     if (intro && show) {
-      intro.textContent = isPaid
-        ? 'Add names for additional attendees in your booking.'
-        : 'Add names for additional attendees, then confirm your registration.';
+      if (hasGuests && hasExtras && isPaid) {
+        intro.textContent =
+          'Add names for additional attendees and any dietary or accessibility needs.';
+      } else if (hasGuests && hasExtras && !isPaid) {
+        intro.textContent =
+          'Add names for additional attendees and any dietary or accessibility needs, then confirm your registration.';
+      } else if (hasGuests && isPaid) {
+        intro.textContent = 'Add names for additional attendees in your booking.';
+      } else if (hasGuests) {
+        intro.textContent =
+          'Add names for additional attendees, then confirm your registration.';
+      } else if (hasExtras && isPaid) {
+        intro.textContent =
+          'Tell us about any dietary or accessibility needs, then continue to payment.';
+      } else if (hasExtras) {
+        intro.textContent =
+          'Tell us about any dietary or accessibility needs, then confirm your registration.';
+      }
     }
     if (confirmBtn) {
       confirmBtn.textContent = show ? (isPaid ? 'Continue to payment' : 'Confirm registration') : 'Confirm registration';
     }
+    if (show) renderCheckoutAttendeeExtras(ev);
   }
 
   function setCheckoutSubmitting(active, title) {
@@ -1798,7 +1864,8 @@
       throw new Error('Please enter a valid email address.');
     }
     const guestNames = readCheckoutGuestNames(ticketQty);
-    return { name, email, guestNames };
+    const ev = activeEvent();
+    return Object.assign({ name, email, guestNames }, readCheckoutAttendeeExtras(ev));
   }
 
   function syncPaidCheckoutPanel(label, qty, total) {
@@ -2992,8 +3059,9 @@
             return;
           }
           await loadCheckoutSessionUser();
-          if (qty > 1) {
+          if (needsCheckoutDetailsStep(evNow, qty)) {
             renderCheckoutGuestNames(qty);
+            renderCheckoutAttendeeExtras(evNow);
             updateFreeCheckoutSummary(evNow);
             showPaidGuestCheckout(true, false);
             return;
@@ -3036,8 +3104,9 @@
         await loadCheckoutSessionUser();
         syncPaidCheckoutPanel(label, qty, tierPrice * qty + (tierPrice > 0 ? tierPrice * qty * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty : 0));
 
-        if (qty > 1) {
+        if (needsCheckoutDetailsStep(evNow, qty)) {
           renderCheckoutGuestNames(qty);
+          renderCheckoutAttendeeExtras(evNow);
           showPaidGuestCheckout(true);
           return;
         }
