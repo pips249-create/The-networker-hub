@@ -7,22 +7,22 @@
   var steps = [
     {
       title: 'Welcome to your organiser dashboard',
-      body: 'This is your home for group profiles, events, and tickets. We\'ll show you the essentials in a quick tour.',
+      body: 'This is your home for organiser pages, events, and tickets. We\'ll show you the essentials in a quick tour.',
       target: null,
     },
     {
       title: 'Navigate from the sidebar',
-      body: 'Use the sidebar to jump between Overview, My events (group profiles, listings, tickets), and more. On mobile, swipe the menu bar horizontally.',
+      body: 'Use the sidebar to jump between Overview, My events (organiser pages, listings, tickets), and more. On mobile, swipe the menu bar horizontally.',
       target: '.org-sidebar',
     },
     {
       title: 'Add something new',
-      body: 'Tap + Add new to create a group profile, list an event, or publish a business opportunity.',
+      body: 'Tap + Add new to create an organiser page, list an event, or publish a business opportunity.',
       target: '#org-add-menu-wrap',
     },
     {
       title: 'Invite your team',
-      body: 'Open Team & invites in the sidebar — or use the quick link on Overview — to add editors who can help manage events. When you finish the tour, we will confirm your group profile next.',
+      body: 'Open Team & invites in the sidebar — or use the quick link on Overview — to add editors who can help manage events. When you finish the tour, we will confirm your organiser page next.',
       target: '[data-org-route="team"]',
       afterShow: function () {
         if (typeof window.orgDashSetRoute === 'function') {

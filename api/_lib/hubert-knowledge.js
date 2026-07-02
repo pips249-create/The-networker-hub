@@ -283,7 +283,7 @@ const FALLBACK_REPLIES = [
   {
     match: /event description|write.*description|description tips|what should i write/i,
     reply:
-      'Include who the event is for, what happens on the day, and useful keywords people search for — location, industry, format, and who should come. Attendees filter listings using this text, so be specific rather than generic. You can also copy from your group profile using the button on the form.',
+      'Include who the event is for, what happens on the day, and useful keywords people search for — location, industry, format, and who should come. Attendees filter listings using this text, so be specific rather than generic. You can also copy from your organiser page using the button on the form.',
   },
   {
     match: /difference.*(event|meeting)|meeting vs|event vs|what.*(event type|type of event)|meeting or event/i,
@@ -384,13 +384,13 @@ const FALLBACK_REPLIES = [
 
 const ORGANISER_PAGE_CONTEXT = {
   'event-format':
-    'The user is creating an event and is on the format step (choose group profile + in person or online). Answer listing-setup questions from your organiser knowledge. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+    'The user is creating an event and is on the format step (choose organiser page + in person or online). Answer listing-setup questions from your organiser knowledge. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'event-edit':
     'The user is on the event listing details step (title, type, description, photo, location, dates). Answer listing-setup questions from your organiser knowledge. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'event-tickets':
     'The user is on the ticket setup step (ticket types, One Seat Only Policy, VAT, refund policy, publish). Answer organiser ticketing questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'group-edit':
-    'The user is editing their organiser group profile. Answer group-profile questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+    'The user is editing their organiser page. Answer organiser-page questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'organiser-dashboard':
     'The user is on the organiser dashboard. Answer questions about groups, events, attendees, revenue, and team invites. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
 };

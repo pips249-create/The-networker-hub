@@ -161,6 +161,12 @@
   function renderEventOverviewStats(ev) {
     const wrap = document.getElementById('ee-event-stats');
     if (!wrap) return;
+    if (isEmbedDrawer) {
+      wrap.hidden = true;
+      const cancelRow = document.getElementById('ee-cancel-row');
+      if (cancelRow) cancelRow.hidden = true;
+      return;
+    }
     updateEventCancelUi(ev);
     if (!shouldShowEventOverviewStats(ev)) {
       wrap.hidden = true;
@@ -680,7 +686,7 @@
       sel.disabled = true;
       if (hint) {
         hint.innerHTML =
-          'You need a group profile first. <a href="group-edit.html" class="ee-inline-action">Create a group profile</a> then return here.';
+          'You need an organiser page first. <a href="group-edit.html" class="ee-inline-action">Create your organiser page</a> then return here.';
       }
       if (addRow) addRow.hidden = true;
       return;
@@ -688,7 +694,7 @@
     sel.disabled = Boolean(lockSelection);
     if (hint) {
       hint.textContent = lockSelection
-        ? 'This event belongs to the group profile you selected.'
+        ? 'This event belongs to the organiser page you selected.'
         : 'Which organiser group this event belongs to.';
     }
     if (addRow) addRow.hidden = false;
@@ -729,7 +735,7 @@
     const hasGroup = Boolean(group);
     if (titleBtn) {
       titleBtn.disabled = !hasGroup || !group.name;
-      titleBtn.title = hasGroup && group.name ? '' : 'Choose a group profile first';
+      titleBtn.title = hasGroup && group.name ? '' : 'Choose an organiser page first';
     }
     if (descBtn) {
       descBtn.disabled = !hasGroup || !group.description;

@@ -5,118 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>List a business opportunity – The Networker Hub</title>
     <meta name="robots" content="noindex, nofollow" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="../css/hub.css?v=20260730" />
-    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260729" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
-  </head>
-  <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page organiser-opportunity-intro-page">
-    <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260713" data-root="../" data-page="organiser"></script>
-
-    <div class="ee-wrap oe-intro-wrap">
-      <header class="ee-page-head">
-        <div class="ee-top-bar">
-          <a class="ee-back" href="index.html#business-overview">← Back to Business ops</a>
-        </div>
-        <p class="oe-intro-kicker">Business opportunities</p>
-        <h1 class="ee-title">How listing works</h1>
-        <p class="ee-lead">
-          Promote a franchise, side hustle, partnership, or ambassador role to Networker Hub members.
-          They browse the directory, read your listing, and send you an enquiry — you reply by email.
-        </p>
-      </header>
-
-      <ol class="oe-intro-steps" aria-label="Listing steps">
-        <li class="oe-intro-step">
-          <span class="oe-intro-step-num" aria-hidden="true">1</span>
-          <div>
-            <strong>Add your listing details</strong>
-            <span>Title, opportunity type, investment, location, description, logo and cover photo.</span>
-          </div>
-        </li>
-        <li class="oe-intro-step">
-          <span class="oe-intro-step-num" aria-hidden="true">2</span>
-          <div>
-            <strong>Pay the listing fee</strong>
-            <span>£20 per month + VAT, billed upfront for your chosen term (minimum 3 months). Secure payment via Stripe.</span>
-          </div>
-        </li>
-        <li class="oe-intro-step">
-          <span class="oe-intro-step-num" aria-hidden="true">3</span>
-          <div>
-            <strong>Your listing goes live</strong>
-            <span>It appears in the business opportunities directory where members can filter by type and location.</span>
-          </div>
-        </li>
-        <li class="oe-intro-step">
-          <span class="oe-intro-step-num" aria-hidden="true">4</span>
-          <div>
-            <strong>Respond to enquiries</strong>
-            <span>When someone is interested, their message appears in your organiser workspace under <em>Enquiries received</em>.</span>
-          </div>
-        </li>
-      </ol>
-
-      <div class="ee-card oe-intro-pricing">
-        <h2>Pricing</h2>
-        <div class="oe-intro-price-grid">
-          <div class="oe-intro-price-card oe-intro-price-card--standard">
-            <p class="oe-intro-price-label">Standard listing</p>
-            <p class="oe-intro-price-amount">£20 <span>/ month + VAT</span></p>
-            <p class="oe-intro-price-note">Minimum 3 months upfront — <strong>£72.00</strong> inc. VAT for a 3-month term.</p>
-            <ul class="oe-intro-price-list">
-              <li>Live in the opportunities directory</li>
-              <li>Enquiry form on your listing page</li>
-              <li>Edit any time from your workspace</li>
-            </ul>
-          </div>
-          <div class="oe-intro-price-card">
-            <p class="oe-intro-price-label">Premium spotlight <span class="oe-intro-price-optional">Optional</span></p>
-            <p class="oe-intro-price-amount">£50 <span>/ month</span></p>
-            <p class="oe-intro-price-note">Add after your listing is live for extra visibility across the hub. <strong>Limited to 10 active premium listings</strong> in the spotlight carousel at any time.</p>
-            <ul class="oe-intro-price-list">
-              <li>Featured placement in the directory</li>
-              <li>Social comms pack to help you promote</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div class="oe-intro-faq ee-card">
-        <h2>Good to know</h2>
-        <ul class="oe-intro-faq-list">
-          <li>You keep full control — enquiries go to your email; there is no commission on deals you make.</li>
-          <li>Listings are reviewed before going live to keep the directory trustworthy.</li>
-          <li>Premium spotlight is optional (£50/month) and limited to <strong>10 active listings</strong> in the carousel at any time.</li>
-        </ul>
-      </div>
-
-      <div class="oe-intro-actions">
-        <a class="ee-btn ee-btn-primary oe-intro-cta" href="opportunity-edit.html" id="oe-intro-start">Start your listing →</a>
-        <a class="ee-btn ee-btn-outline" href="../opportunities/index.html" target="_blank" rel="noopener">Preview the directory</a>
-      </div>
-    </div>
-
-    <script src="../js/hub-organiser-actions.js?v=20260729" data-root="../"></script>
+    <meta http-equiv="refresh" content="0;url=index.html#business-list" />
     <script>
-      (function () {
-        var start = document.getElementById('oe-intro-start');
-        if (!start || !window.HubOrganiserActions || !window.HubOrganiserActions.requireLogin) return;
-        start.addEventListener('click', function (e) {
-          e.preventDefault();
-          window.HubOrganiserActions.requireLogin('/organiser/opportunity-edit.html').then(function (ok) {
-            if (ok) location.href = 'opportunity-edit.html';
-          });
-        });
-      })();
+      location.replace('index.html#business-list');
     </script>
+  </head>
+  <body>
+    <p><a href="index.html#business-list">Continue to My opportunities in your workspace</a></p>
   </body>
 </html>

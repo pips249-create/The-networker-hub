@@ -4,7 +4,7 @@
 (function () {
   var PAGE_SIZE = 12;
   var SEARCH_DEBOUNCE_MS = 200;
-  var SPOTLIGHT_MAX = 10; /* sync with api/_lib/opportunity-premium-slots.js */
+  var SPOTLIGHT_MAX = 12; /* sync with api/_lib/spotlight-carousel-limits.js */
   var SPOTLIGHT_AUTO_MS = 2800;
 
   var META_PIN_SVG =

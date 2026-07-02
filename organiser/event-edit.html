@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260730" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260721" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260702f" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260702" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
@@ -71,13 +71,13 @@
       <form id="ee-form" novalidate>
         <!-- Section 1: Group -->
         <div class="ee-card" id="ee-card-group">
-          <h2>Which group is this event for?</h2>
+          <h2>Which organiser is this event for?</h2>
           <div class="ee-field">
-            <label for="ee-group">Group profile</label>
+            <label for="ee-group">Organiser</label>
             <select id="ee-group" required></select>
-            <p class="ee-hint" id="ee-group-hint">Which organiser group this event belongs to.</p>
+            <p class="ee-hint" id="ee-group-hint">Which organiser page this event belongs to.</p>
             <p class="ee-hint ee-group-add-row" id="ee-group-add-row" hidden>
-              <a class="ee-inline-action" href="group-edit.html">+ Add a new group profile</a>
+              <a class="ee-inline-action" href="group-edit.html">+ Add a new organiser page</a>
             </p>
           </div>
         </div>
@@ -89,7 +89,7 @@
             <div class="ee-field-label-row">
               <label for="ee-title">Event title</label>
               <button type="button" class="ee-btn ee-btn-outline ee-btn-compact" id="ee-copy-title-from-group">
-                Copy from group profile
+                Copy from organiser page
               </button>
             </div>
             <input type="text" id="ee-title" required placeholder="e.g. Lunch &amp; learn — Liverpool" />
@@ -113,7 +113,7 @@
             <div class="ee-field-label-row">
               <label for="ee-description">Highlights / description</label>
               <button type="button" class="ee-btn ee-btn-outline ee-btn-compact" id="ee-copy-desc-from-group">
-                Copy from group profile
+                Copy from organiser page
               </button>
             </div>
             <p class="ee-hint" id="ee-description-hint">
@@ -257,6 +257,6 @@
     <script src="../js/meeting-types.js?v=20260609n"></script>
     <script src="../js/organiser-quarter-time.js?v=20260614c"></script>
     <script src="../js/organiser-image-upload.js?v=20260611"></script>
-    <script src="../js/organiser-event-edit.js?v=20260731"></script>
+    <script src="../js/organiser-event-edit.js?v=20260702f"></script>
   </body>
 </html>

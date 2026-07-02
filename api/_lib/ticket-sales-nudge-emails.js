@@ -154,7 +154,7 @@ async function sendOrganiserTicketSalesNudgeEmail({ event, organiser, to, nudger
     '<p>Or open your <a href="' +
     escapeHtml(dashboardUrl) +
     '">organiser dashboard</a>, review tickets for this event, and switch on sales when you are ready.</p>' +
-    '<p style="color:#736b6e;font-size:13px;">If you are not the organiser for this group, sign in and use the group profile claim flow, or contact hello@the-networker.co.uk.</p>' +
+    '<p style="color:#736b6e;font-size:13px;">If you are not the organiser for this group, sign in and use the organiser page claim flow, or contact hello@the-networker.co.uk.</p>' +
     '<p>— The Networker Hub</p>';
 
   return sendViaResend({ to, subject, html });

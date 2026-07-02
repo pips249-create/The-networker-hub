@@ -116,6 +116,7 @@ function rowToListing(row) {
     type: row.type,
     tags: Array.isArray(row.tags) && row.tags.length ? row.tags.slice() : [row.type],
     featured: Boolean(row.featured),
+    featuredUntil: row.featured_until || null,
     host: String(row.host || '').trim(),
     hostInitials: row.host_initials || hostInitials(row.host),
     hostColor: row.host_color || hostColorFromName(row.host),

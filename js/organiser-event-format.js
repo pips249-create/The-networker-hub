@@ -50,7 +50,7 @@
     if (groupHint) {
       groupHint.textContent = id
         ? 'Group selected — now choose how people will attend.'
-        : 'Choose a group profile to continue.';
+        : 'Choose an organiser page to continue.';
     }
   }
 
@@ -59,7 +59,7 @@
     groupSelect.innerHTML = '';
     var placeholder = document.createElement('option');
     placeholder.value = '';
-    placeholder.textContent = 'Select a group profile…';
+    placeholder.textContent = 'Select an organiser page…';
     groupSelect.appendChild(placeholder);
     list.forEach(function (g) {
       var opt = document.createElement('option');
@@ -69,7 +69,7 @@
     });
     var addNew = document.createElement('option');
     addNew.value = '__new_group__';
-    addNew.textContent = '+ Add a new group profile…';
+    addNew.textContent = '+ Add a new organiser page…';
     groupSelect.appendChild(addNew);
     if (list.length === 1) {
       groupSelect.value = list[0].id;
@@ -94,7 +94,7 @@
         e.preventDefault();
         var groupId = selectedGroupId();
         if (!groupId) {
-          window.alert('Please choose a group profile first.');
+          window.alert('Please choose an organiser page first.');
           if (groupSelect) groupSelect.focus();
           return;
         }
@@ -125,7 +125,7 @@
     var profiles = Number(session.data.organiserProfiles) || 0;
     var isAdmin = session.data.user.role === 'admin';
     if (profiles === 0 && !(isAdmin && session.data.canOrganise)) {
-      window.alert('You must add a group profile first.');
+      window.alert('You must add an organiser page first.');
       window.location.href = 'group-edit.html';
       return;
     }
@@ -138,7 +138,7 @@
 
     groups = boot.data.groups || [];
     if (!groups.length) {
-      window.alert('You must add a group profile first.');
+      window.alert('You must add an organiser page first.');
       window.location.href = 'group-edit.html';
       return;
     }

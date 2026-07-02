@@ -213,10 +213,10 @@
     options = options || {};
     var data = await fetchSession();
     if (!data.ok || !data.user) {
-      global.location.href = loginUrl('/organiser/opportunity-intro.html');
+      global.location.href = loginUrl('/organiser/index.html#business-list');
       return;
     }
-    global.location.href = path('organiser/opportunity-intro.html');
+    global.location.href = path('organiser/index.html#business-list');
   }
 
   function bindActions(scope) {

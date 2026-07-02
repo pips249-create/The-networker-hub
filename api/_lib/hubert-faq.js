@@ -31,7 +31,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'How do organisers list an event on The Networker Hub?',
     answer:
-      'Sign in, claim your group profile if prompted, then open the organiser dashboard at /organiser/ to create events and manage attendees. Your networking group may already be listed — search the organiser directory on /events/ and claim the profile linked to your email.',
+      'Sign in, claim your organiser page if prompted, then open the organiser dashboard at /organiser/ to create events and manage attendees. Your networking group may already be listed — search the organiser directory on /events/ and claim the page linked to your email.',
   },
   {
     question: 'Where does event information on The Networker Hub come from?',

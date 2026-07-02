@@ -75,6 +75,19 @@
   flex-shrink: 0;
 }
 
+.organiser-dashboard-page .hub-page-buffer--dashboard {
+  background: rgba(232, 246, 248, 0.92);
+}
+
+.organiser-dashboard-page .hub-page-buffer--dashboard .hub-page-buffer-spinner {
+  border: 3px solid var(--od-purple-pale);
+  border-top-color: var(--od-purple);
+}
+
+.organiser-dashboard-page .hub-page-buffer--dashboard .hub-page-buffer-card {
+  border-color: rgba(13, 110, 122, 0.12);
+}
+
 @keyframes org-dash-spin {
   to {
     transform: rotate(360deg);
@@ -2043,8 +2056,175 @@
   overflow: hidden;
 }
 
+.org-notices--panel {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
 .org-notices[hidden] {
   display: none;
+}
+
+/* Sidebar notifications nav + slide-out panel */
+.org-notifications-nav {
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.org-notifications-nav-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.org-notifications-count {
+  flex-shrink: 0;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+}
+
+.org-notifications-count[hidden] {
+  display: none;
+}
+
+.organiser-dashboard-page .hub-side-nav--minimal .org-notifications-nav:hover {
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--od-purple);
+}
+
+.organiser-dashboard-page .hub-side-nav--minimal .org-notifications-nav.is-active {
+  border-left-color: var(--od-purple);
+  background: var(--od-white);
+  color: var(--od-purple);
+}
+
+body.org-notifications-open {
+  overflow: hidden;
+}
+
+.org-notifications-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 10040;
+}
+
+.org-notifications-panel[hidden] {
+  display: none;
+}
+
+.org-notifications-panel-backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  padding: 0;
+  background: rgba(26, 16, 37, 0.38);
+  cursor: pointer;
+}
+
+.org-notifications-panel-sheet {
+  position: absolute;
+  top: 0;
+  left: 200px;
+  bottom: 0;
+  width: min(100%, 420px);
+  display: flex;
+  flex-direction: column;
+  background: var(--od-white);
+  border-right: 1px solid var(--od-border-soft);
+  box-shadow: 8px 0 32px rgba(45, 38, 54, 0.14);
+}
+
+.org-notifications-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--od-border-soft);
+  background: linear-gradient(180deg, var(--od-purple-pale) 0%, var(--od-white) 100%);
+  flex-shrink: 0;
+}
+
+.org-notifications-panel-title {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--od-purple-dark);
+}
+
+.org-notifications-panel-sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--od-text-soft);
+}
+
+.org-notifications-panel-close {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(91, 47, 153, 0.1);
+  color: var(--od-purple-dark);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.org-notifications-panel-close:hover {
+  background: rgba(91, 47, 153, 0.16);
+}
+
+.org-notifications-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.org-notifications-empty {
+  margin: 0;
+  padding: 28px 20px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--od-text-soft);
+  text-align: center;
+}
+
+.org-notifications-empty[hidden] {
+  display: none;
+}
+
+.org-notices--panel .org-notice {
+  border-left-width: 4px;
+}
+
+  .org-notices--panel .org-notice:first-child {
+  border-top: none;
+}
+
+@media (max-width: 900px) {
+  .org-notifications-panel-sheet {
+    left: 0;
+    width: min(100%, 420px);
+  }
+}
+
+@media (max-width: 768px) {
+  .org-notifications-panel-sheet {
+    width: 100%;
+    max-width: none;
+  }
 }
 
 .org-notices-head {
@@ -4178,4 +4358,291 @@ body.org-event-drawer-open {
 .org-series-child-thumb {
   display: block;
   width: 44px;
+}
+
+/* ─── Business ops: list opportunity (workspace + intro palette) ─── */
+.org-page--business-ops {
+  --opp-navy: #0d1f3c;
+  --opp-navy-mid: #162847;
+  --opp-gold: #c9961f;
+  --opp-gold-light: #e8b84b;
+  --opp-gold-pale: #fdf6e3;
+  --opp-gold-dim: rgba(201, 150, 31, 0.15);
+  --opp-gold-border: rgba(201, 150, 31, 0.3);
+  --opp-off-white: #f8f9fb;
+  --opp-mid-gray: #8d99ae;
+  --opp-dark-gray: #3d4557;
+  --opp-text: #1a2336;
+  --opp-border: #dde3ed;
+  --ee-white: #fff;
+  --ee-radius: 12px;
+
+  font-family: 'DM Sans', Poppins, system-ui, sans-serif;
+  color: var(--opp-text);
+}
+
+.org-page--business-ops .org-hub-back {
+  color: var(--opp-gold);
+}
+
+.org-page--business-ops .org-hub-back:hover {
+  color: var(--opp-navy);
+}
+
+.org-page--business-ops .org-page-title {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(1.75rem, 3.5vw, 2.25rem);
+  color: var(--opp-navy);
+}
+
+.org-page--business-ops .org-page-lead {
+  color: var(--opp-dark-gray);
+}
+
+.org-page--business-ops .org-biz-kicker {
+  color: var(--opp-gold);
+  letter-spacing: 0.12em;
+}
+
+.org-page--business-ops .org-section-title,
+.org-page--business-ops .org-overview-head .org-section-title {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-weight: 400;
+  color: var(--opp-navy);
+}
+
+.org-page--business-ops .org-section-sub {
+  color: var(--opp-mid-gray);
+}
+
+.org-page--business-ops .org-btn-gold {
+  background: var(--opp-gold);
+  color: var(--opp-navy);
+  border-color: var(--opp-gold-border);
+}
+
+.org-page--business-ops .org-btn-gold:hover {
+  background: var(--opp-gold-light);
+}
+
+.org-page--business-ops .org-btn-outline {
+  color: var(--opp-dark-gray);
+  border-color: rgba(13, 31, 60, 0.14);
+}
+
+.org-page--business-ops .org-btn-outline:hover {
+  border-color: var(--opp-gold-border);
+  color: var(--opp-gold);
+  background: var(--opp-gold-pale);
+}
+
+.org-page--business-ops .org-business-intro {
+  margin-top: 8px;
+}
+
+.org-page--business-ops .org-business-intro > .org-section-title {
+  margin: 0 0 14px;
+  font-size: 1.35rem;
+}
+
+.org-page--business-ops .oe-intro-step {
+  align-items: center;
+  background: var(--ee-white);
+  border-color: var(--opp-border);
+  box-shadow: 0 2px 10px rgba(13, 31, 60, 0.04);
+}
+
+.org-page--business-ops .oe-intro-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  background: var(--opp-gold-pale);
+  color: var(--opp-navy);
+}
+
+.org-page--business-ops .oe-intro-step strong {
+  color: var(--opp-navy);
+}
+
+.org-page--business-ops .oe-intro-step span {
+  color: var(--opp-dark-gray);
+}
+
+.org-page--business-ops .org-business-intro-card {
+  margin-bottom: 16px;
+  padding: 20px 22px;
+  background: var(--ee-white);
+  border: 1px solid rgba(13, 31, 60, 0.12);
+  border-radius: var(--ee-radius);
+  box-shadow: 0 2px 10px rgba(13, 31, 60, 0.05);
+}
+
+.org-page--business-ops .org-business-intro-card h2,
+.org-page--business-ops .oe-intro-pricing h2,
+.org-page--business-ops .oe-intro-faq h2 {
+  margin: 0 0 14px;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-weight: 400;
+  font-size: 1.1rem;
+  color: var(--opp-navy);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.org-page--business-ops .oe-intro-price-card {
+  border-color: var(--opp-border);
+  background: var(--opp-off-white);
+}
+
+.org-page--business-ops .oe-intro-price-card--standard {
+  border-color: var(--opp-gold-border);
+  background: linear-gradient(180deg, var(--opp-gold-pale) 0%, #fff 100%);
+}
+
+.org-page--business-ops .oe-intro-price-label {
+  color: var(--opp-dark-gray);
+}
+
+.org-page--business-ops .oe-intro-price-amount {
+  color: var(--opp-navy);
+}
+
+.org-page--business-ops .oe-intro-price-amount span,
+.org-page--business-ops .oe-intro-price-note,
+.org-page--business-ops .oe-intro-faq-list {
+  color: var(--opp-dark-gray);
+}
+
+.org-page--business-ops .org-business-intro-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.org-page--business-ops .org-opp-listing-card {
+  border-color: rgba(13, 31, 60, 0.12);
+}
+
+.org-page--business-ops .org-opp-listing-card-title a:hover {
+  color: var(--opp-gold);
+}
+
+.org-page--business-ops .org-stat.gold::before {
+  background: var(--opp-gold);
+}
+
+.org-page--business-ops .org-stat.purple .org-stat-value {
+  color: var(--opp-navy);
+}
+
+.org-opp-listing-cards {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.org-opp-listing-card {
+  background: var(--od-white);
+  border: 1px solid var(--od-border-soft);
+  border-radius: var(--od-radius);
+  padding: 18px 20px;
+  box-shadow: var(--od-shadow-sm);
+}
+
+.org-opp-listing-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 14px;
+}
+
+.org-opp-listing-card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--od-text-dark);
+}
+
+.org-opp-listing-card-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.org-opp-listing-card-title a:hover {
+  color: var(--opp-gold, #c9961f);
+}
+
+.org-opp-listing-card-stats {
+  margin-bottom: 14px;
+}
+
+.org-opp-listing-card-stats .org-stat {
+  padding: 14px 16px;
+}
+
+.org-opp-listing-card-stats .org-stat-value.is-danger {
+  color: #b42318;
+}
+
+.org-opp-listing-card-stats .org-stat-value.is-warn {
+  color: #b45309;
+}
+
+.org-opp-listing-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.org-stats--four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.org-opp-expiry.is-danger {
+  color: #b42318;
+  font-weight: 600;
+}
+
+.org-opp-expiry.is-warn {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.org-opp-new-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--od-gold-light);
+  color: var(--od-text-dark);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .org-stats--four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .org-stats--four {
+    grid-template-columns: 1fr;
+  }
+
+  .org-page--business-ops .org-business-intro-actions {
+    flex-direction: column;
+  }
+
+  .org-page--business-ops .org-business-intro-actions .org-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }

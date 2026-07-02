@@ -10,15 +10,15 @@
     'event-tickets':
       'Almost there — ticket types and publishing next. Ask if VAT, refunds, or tier setup is unclear.',
     'group-edit':
-      'Your group profile is the home for your events. Ask if anything on this page is unclear.',
+      'Your organiser page is the home for your events. Ask if anything on this page is unclear.',
     'organiser-dashboard':
-      "I'm here on your organiser dashboard — ask about group profiles, listing events, tickets, payouts, or inviting your team.",
+      "I'm here on your organiser dashboard — ask about organiser pages, listing events, tickets, payouts, or inviting your team.",
   };
 
   var SUGGESTIONS = {
     'event-format': [
       { label: 'In person vs online', prompt: 'Should I list my event as in person or online?' },
-      { label: 'Multiple groups', prompt: 'Can I run events under more than one group profile?' },
+      { label: 'Multiple organiser pages', prompt: 'Can I run events under more than one organiser page?' },
       { label: 'What happens next', prompt: 'What do I fill in after choosing the event format?' },
     ],
     'event-edit': [
@@ -43,12 +43,12 @@
       { label: 'Save before publish', prompt: 'Can I save tickets as draft before publishing my event?' },
     ],
     'group-edit': [
-      { label: 'First event', prompt: 'What happens after I save my group profile?' },
+      { label: 'First event', prompt: 'What happens after I save my organiser page?' },
       { label: 'Logo & name', prompt: 'What should I use for my group logo and name?' },
       { label: 'Contact email', prompt: 'Who sees the contact email on my organiser page?' },
     ],
     'organiser-dashboard': [
-      { label: 'Create a group', prompt: 'How do I create a group profile on the organiser dashboard?' },
+      { label: 'Create an organiser page', prompt: 'How do I create an organiser page on the organiser dashboard?' },
       { label: 'List an event', prompt: 'How do I list my first event?' },
       { label: 'Stripe payouts', prompt: 'How do Stripe Connect payouts work for organisers?' },
       { label: 'Invite my team', prompt: 'How do I invite team members to help manage events?' },

@@ -185,7 +185,7 @@
     const titleEl = el('ge-page-title');
     const leadEl = el('ge-page-lead');
 
-    if (titleEl) titleEl.textContent = 'Check your group profile';
+    if (titleEl) titleEl.textContent = 'Check your organiser page';
     if (leadEl) {
       leadEl.textContent =
         'We linked this group to your account. Please confirm the name, logo, and contact details are correct before you list events.';
@@ -454,7 +454,7 @@
         window.HubOrganiserActions.applyBrowseReturnBack(
           backLink,
           'index.html#groups',
-          '← Back to group profiles'
+          '← Back to organiser pages'
         );
       }
     }
@@ -490,11 +490,11 @@
 
     if (editId) {
       if (!onboardReview) {
-        if (titleEl) titleEl.textContent = 'Edit group profile';
+        if (titleEl) titleEl.textContent = 'Edit organiser page';
         if (leadEl) {
           leadEl.textContent = isEmbedded()
             ? ''
-            : 'Update your group page details — changes appear in your group profiles list after you save.';
+            : 'Update your organiser page — changes appear in your organiser pages list after you save.';
         }
         configureEditActions(null);
       }
@@ -519,7 +519,7 @@
         window.HubFlowTour.startGroupTour({ onboardReview: true, force: true, delay: 350 });
       }
     } else {
-      if (titleEl) titleEl.textContent = 'New group profile';
+      if (titleEl) titleEl.textContent = 'New organiser page';
       if (leadEl) {
         leadEl.textContent = isEmbedded()
           ? 'Linked to your account email.'

@@ -982,6 +982,19 @@ async function handle(req, res) {
       return res.status(200).json({ configured: true, provider: 'supabase', events });
     }
 
+    const meta = String(req.query?.meta || '').trim();
+    if (meta === 'featured-slots') {
+      const { getFeaturedSpotlightSlotStatus } = require('./event-featured-slots');
+      const featuredSlots = await getFeaturedSpotlightSlotStatus();
+      res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60');
+      return res.status(200).json({
+        configured: true,
+        provider: 'supabase',
+        ok: true,
+        featuredSlots,
+      });
+    }
+
     const { fetchBrowseEventsPage } = require('./browse-events-query');
     const payload = await fetchBrowseEventsPage(sb, req.query || {});
     return res.status(200).json({

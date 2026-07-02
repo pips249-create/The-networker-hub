@@ -79,7 +79,7 @@ module.exports = async function handler(req, res) {
           error: 'premium_slots_full',
           message:
             'All ' +
-            (slots.max || 10) +
+            (slots.max || 12) +
             ' premium spotlight places are currently taken. Your standard listing stays live — try again when a slot opens.',
           premiumSlots: slots,
         });

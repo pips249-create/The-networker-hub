@@ -5,6 +5,7 @@ const {
   siteBaseUrl,
 } = require('../stripe-checkout');
 const { normalizePlanId } = require('../event-featured-plans');
+const { assertFeaturedSpotlightSlotAvailable } = require('../event-featured-slots');
 
 function parseBody(req) {
   let body = req.body;
@@ -90,6 +91,24 @@ module.exports = async function handler(req, res) {
     const approved = String(event.approvalStatus || event.statusRaw || '').toLowerCase() === 'approved';
     if (status !== 'published' || !approved) {
       return json(res, 400, { ok: false, error: 'event_not_live' });
+    }
+
+    try {
+      await assertFeaturedSpotlightSlotAvailable(eventId);
+    } catch (slotErr) {
+      if (slotErr.code === 'featured_slots_full') {
+        const slots = slotErr.slots || {};
+        return json(res, 409, {
+          ok: false,
+          error: 'featured_slots_full',
+          message:
+            'All ' +
+            (slots.max || 12) +
+            ' featured spotlight places are currently taken. Your event stays live — try again when a slot opens, or choose a shorter plan later.',
+          featuredSlots: slots,
+        });
+      }
+      throw slotErr;
     }
 
     const siteUrl = siteBaseUrl();

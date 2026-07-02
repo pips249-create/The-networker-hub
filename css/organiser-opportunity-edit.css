@@ -976,7 +976,7 @@ body.oe-opportunity-drawer-open {
 .oe-intro-step {
   display: flex;
   gap: 14px;
-  align-items: flex-start;
+  align-items: center;
   padding: 16px 18px;
   background: var(--ee-white);
   border: 1px solid var(--opp-border);
@@ -988,8 +988,10 @@ body.oe-opportunity-drawer-open {
   flex-shrink: 0;
   width: 32px;
   height: 32px;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   border-radius: 50%;
   background: var(--opp-gold-pale);
   color: var(--opp-navy);

@@ -703,9 +703,7 @@
     );
   }
 
-  function renderOrganiserNotices() {
-    const root = document.getElementById('org-notices');
-    if (!root) return;
+  function buildOrganiserNotices() {
     const notices = [];
 
     const scope = state.dashboardScope;
@@ -736,7 +734,7 @@
         notices.push({
           id: 'groups-error',
           type: 'error',
-          title: 'Could not load your group profiles',
+          title: 'Could not load your organiser pages',
           text: esc(scope.message || 'Please refresh the page or try again shortly.'),
         });
       } else if (scope.kind === 'onboarding') {
@@ -745,9 +743,9 @@
           type: 'info',
           title: 'Set up your organiser workspace',
           text:
-            'Start with a <strong>group profile</strong> — your public organiser page on the hub. Then you can list events, add ticket types, and manage bookings.',
+            'Start with your <strong>organiser page</strong> — your public page on the hub for your group, business, or brand. Then you can list events, add ticket types, and manage bookings.',
           actions:
-            '<a class="org-btn org-btn-gold org-btn-sm" href="group-edit.html">Create group profile</a>',
+            '<a class="org-btn org-btn-gold org-btn-sm" href="group-edit.html">Create organiser page</a>',
         });
       }
     }
@@ -837,33 +835,148 @@
       });
     }
 
+    const paymentState = paymentSetupStateFromDashboard();
+    if (paymentState.needsSetup && paymentState.primaryGroup) {
+      const groupName = esc(paymentState.primaryGroup.name || 'your group');
+      notices.push({
+        id: 'payment-setup',
+        type: 'action',
+        title: 'Complete payment setup to receive payouts',
+        text:
+          'Stripe Connect is not finished for <strong>' +
+          groupName +
+          '</strong>. Connect your bank account so ticket revenue can reach you after each event.',
+        actions:
+          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="events-revenue">Open revenue &amp; setup</button>',
+      });
+    }
+
+    const newEnquiries = Number(state.opportunityEnquiriesNewCount) || 0;
+    if (newEnquiries > 0) {
+      notices.push({
+        id: 'opp-enquiries',
+        type: 'action',
+        title:
+          newEnquiries === 1
+            ? '1 new business opportunity enquiry'
+            : newEnquiries + ' new business opportunity enquiries',
+        text:
+          newEnquiries === 1
+            ? 'A member sent a message about one of your opportunity listings. Reply from your workspace while the lead is still warm.'
+            : 'Members have sent new messages about your opportunity listings. Review and reply from Enquiries received.',
+        actions:
+          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="business-overview">View enquiries</button>',
+      });
+    }
+
+    return notices;
+  }
+
+  function organiserNoticeBadgeCount(notices) {
+    return (notices || []).filter(function (n) {
+      return n.type === 'action' || n.type === 'warning' || n.type === 'error';
+    }).length;
+  }
+
+  function updateNotificationsNavBadge(notices) {
+    const badge = document.getElementById('org-notifications-count');
+    const navBtn = document.getElementById('org-notifications-nav');
+    const count = organiserNoticeBadgeCount(notices);
+    if (badge) {
+      badge.hidden = count < 1;
+      badge.textContent = count > 99 ? '99+' : String(count);
+      badge.setAttribute('aria-hidden', count < 1 ? 'true' : 'false');
+    }
+    if (navBtn) {
+      navBtn.setAttribute(
+        'aria-label',
+        count > 0 ? 'Notifications, ' + count + ' need action' : 'Notifications'
+      );
+    }
+  }
+
+  let notificationsPanelBound = false;
+  let notificationsPanelOpen = false;
+
+  function openNotificationsPanel() {
+    const panel = document.getElementById('org-notifications-panel');
+    const navBtn = document.getElementById('org-notifications-nav');
+    if (!panel) return;
+    renderOrganiserNotices();
+    panel.hidden = false;
+    panel.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('org-notifications-open');
+    notificationsPanelOpen = true;
+    if (navBtn) {
+      navBtn.setAttribute('aria-expanded', 'true');
+      navBtn.classList.add('is-active');
+    }
+    const closeBtn = document.getElementById('org-notifications-close');
+    if (closeBtn) closeBtn.focus();
+  }
+
+  function closeNotificationsPanel() {
+    const panel = document.getElementById('org-notifications-panel');
+    const navBtn = document.getElementById('org-notifications-nav');
+    if (!panel) return;
+    panel.hidden = true;
+    panel.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('org-notifications-open');
+    notificationsPanelOpen = false;
+    if (navBtn) {
+      navBtn.setAttribute('aria-expanded', 'false');
+      navBtn.classList.remove('is-active');
+    }
+  }
+
+  function bindNotificationsPanelOnce() {
+    if (notificationsPanelBound) return;
+    notificationsPanelBound = true;
+    document.getElementById('org-notifications-nav')?.addEventListener('click', function () {
+      if (notificationsPanelOpen) closeNotificationsPanel();
+      else openNotificationsPanel();
+    });
+    document.getElementById('org-notifications-close')?.addEventListener('click', closeNotificationsPanel);
+    document.getElementById('org-notifications-backdrop')?.addEventListener('click', closeNotificationsPanel);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && notificationsPanelOpen) closeNotificationsPanel();
+    });
+  }
+
+  function renderOrganiserNotices() {
+    const root = document.getElementById('org-notices');
+    const emptyEl = document.getElementById('org-notifications-empty');
+    const subEl = document.getElementById('org-notifications-sub');
+    const notices = buildOrganiserNotices();
+
+    updateNotificationsNavBadge(notices);
+
+    if (!root) return;
+
     if (!notices.length) {
       root.hidden = true;
       root.innerHTML = '';
+      if (emptyEl) emptyEl.hidden = false;
+      if (subEl) subEl.textContent = '';
       return;
     }
 
-    const actionItems = notices.filter((n) => n.type === 'action' || n.type === 'warning').length;
-    const sub =
-      actionItems > 0
-        ? actionItems +
-          ' item' +
-          (actionItems === 1 ? '' : 's') +
-          ' need' +
-          (actionItems === 1 ? 's' : '') +
-          ' action'
-        : notices.length + ' update' + (notices.length === 1 ? '' : 's') + ' for you';
+    const actionItems = organiserNoticeBadgeCount(notices);
+    if (subEl) {
+      subEl.textContent =
+        actionItems > 0
+          ? actionItems +
+            ' item' +
+            (actionItems === 1 ? '' : 's') +
+            ' need' +
+            (actionItems === 1 ? 's' : '') +
+            ' action'
+          : notices.length + ' update' + (notices.length === 1 ? '' : 's');
+    }
+    if (emptyEl) emptyEl.hidden = true;
 
     root.hidden = false;
     root.innerHTML =
-      '<header class="org-notices-head">' +
-      '<div class="org-notices-head-text">' +
-      '<h2 class="org-notices-title">Needs your attention</h2>' +
-      '<p class="org-notices-sub">' +
-      esc(sub) +
-      '</p>' +
-      '</div>' +
-      '</header>' +
       '<ul class="org-notices-list">' +
       notices
         .map((n) => {
@@ -890,6 +1003,7 @@
     root.querySelectorAll('[data-edit-event]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-edit-event');
+        closeNotificationsPanel();
         if (id) openEventEditorDrawer(state.events.find((e) => e.id === id) || { id });
       });
     });
@@ -902,19 +1016,21 @@
           filters.attendeesEvent = row.eventId;
           filters.attendeesPendingOnly = true;
         }
+        closeNotificationsPanel();
         setRoute('events-attendees');
         loadAttendeesAll().then(() => renderAttendees());
       });
     });
 
-    const attendeesCta = root.querySelector('[data-org-route="events-attendees"]');
-    if (attendeesCta) {
-      attendeesCta.addEventListener('click', () => {
-        filters.attendeesPendingOnly = true;
-        setRoute('events-attendees');
-        loadAttendeesAll().then(() => renderAttendees());
+    root.querySelectorAll('[data-org-route]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const route = btn.getAttribute('data-org-route');
+        closeNotificationsPanel();
+        if (route === 'events-attendees') filters.attendeesPendingOnly = true;
+        setRoute(route);
+        if (route === 'events-attendees') loadAttendeesAll().then(() => renderAttendees());
       });
-    }
+    });
   }
 
   function renderJoinLinkBanner() {
@@ -1621,6 +1737,7 @@
 
   function parseRoute() {
     const hash = (location.hash.replace('#', '') || 'dashboard').toLowerCase();
+    if (hash === 'business-list') return { page: 'business-list', sub: null };
     if (hash === 'opportunity-enquiries') return { page: 'business-overview', sub: null };
     if (hash === 'events-overview') return { page: 'events-overview', sub: null };
     if (hash === 'business-overview') return { page: 'business-overview', sub: null };
@@ -2443,7 +2560,7 @@
   function goToNewEventEditor(e) {
     if (e && e.preventDefault) e.preventDefault();
     if (!state.groups.length) {
-      alert('You must add a group profile first.');
+      alert('You must add an organiser page first.');
       openGroupEditorDrawer();
       return;
     }
@@ -3576,11 +3693,13 @@
   function sidebarRouteForPage(page, sub) {
     if (page === 'events-overview') return 'events-list';
     if (page === 'business-overview') return 'business-overview';
+    if (page === 'business-list') return 'business-list';
     if (page === 'events') return sub || 'events-list';
     return page;
   }
 
   function setRoute(route) {
+    closeNotificationsPanel();
     let page = route || 'dashboard';
     let sub = null;
     if (route === 'opportunity-enquiries' || route === 'business-overview') {
@@ -3621,13 +3740,21 @@
       loadOpportunityEnquiries();
       loadOpportunitiesList();
     }
+    if (page === 'business-list') {
+      loadOpportunityEnquiries();
+      loadOpportunitiesList().then(function () {
+        renderOpportunityPerformance();
+      });
+    }
 
     const hash =
       page === 'events'
         ? sub || 'events-list'
         : page === 'business-overview'
           ? 'business-overview'
-          : page;
+          : page === 'business-list'
+            ? 'business-list'
+            : page;
     const url = new URL(window.location.href);
     if (page === 'events' && sub) {
       url.searchParams.set('panel', sub);
@@ -3928,7 +4055,7 @@
       const hasGroups = state.groups.length > 0;
       setOrgEmpty(empty, {
         show: true,
-        title: hasGroups ? 'No matching groups' : 'No group profiles yet',
+        title: hasGroups ? 'No matching organiser pages' : 'No organiser pages yet',
         text: hasGroups
           ? 'Try adjusting your search or status filter.'
           : 'Create your organiser page on the hub before listing events.',
@@ -4125,7 +4252,7 @@
         title: hasEvents ? 'No matching events' : 'No events yet',
         text: hasEvents
           ? 'Try adjusting your filters or search.'
-          : 'Create a group profile first, then list your first event.',
+          : 'Create your organiser page first, then list your first event.',
         hideActions: hasEvents,
       });
       updatePaginationNav('events', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
@@ -4629,10 +4756,12 @@
   function scopeClickHandler(e) {
     if (e.target.id === 'btn-scope-my') {
       setOrganiserScopeCookie('my');
+      closeNotificationsPanel();
       refresh();
     }
     if (e.target.id === 'btn-scope-all') {
       setOrganiserScopeCookie('clear');
+      closeNotificationsPanel();
       refresh();
     }
   }
@@ -4879,7 +5008,7 @@
           ? 'Step 2 — profile 1 of ' + list.length
           : 'Step 2 — confirm your group';
     }
-    if (nameEl) nameEl.textContent = group.name || 'Group profile';
+    if (nameEl) nameEl.textContent = group.name || 'Organiser page';
     if (emailEl) {
       emailEl.textContent = group.contactEmail || group.ownerEmail || state.user?.email || '';
     }
@@ -5039,6 +5168,7 @@
       navBadge.hidden = newCount < 1;
       navBadge.textContent = newCount > 1 ? String(newCount) + ' new' : 'New';
     }
+    renderOrganiserNotices();
   }
 
   function renderOpportunityEnquiries() {
@@ -5085,6 +5215,113 @@
     updateOpportunityEnquiryUi();
   }
 
+  function opportunityEnquiriesForListing(opportunityId) {
+    return (state.opportunityEnquiries || []).filter(
+      (e) => String(e.opportunityId || '') === String(opportunityId)
+    );
+  }
+
+  function opportunityExpiryMeta(opportunity) {
+    const raw = opportunity?.listingExpiresAt;
+    if (!raw) return { label: '—', tone: 'muted' };
+    const expires = new Date(raw);
+    if (Number.isNaN(expires.getTime())) return { label: '—', tone: 'muted' };
+    const label = formatDateShort(raw);
+    if (expires.getTime() < Date.now()) return { label: 'Expired ' + label, tone: 'danger' };
+    const daysLeft = Math.ceil((expires.getTime() - Date.now()) / 86400000);
+    if (daysLeft <= 14) return { label: label + ' (' + daysLeft + 'd)', tone: 'warn' };
+    return { label: label, tone: 'ok' };
+  }
+
+  function opportunityPremiumMeta(opportunity) {
+    if (!opportunity?.featured) return { label: '—', tone: 'muted' };
+    const raw = opportunity.featuredUntil;
+    if (!raw) return { label: 'Active', tone: 'ok' };
+    const until = new Date(raw);
+    if (Number.isNaN(until.getTime())) return { label: 'Active', tone: 'ok' };
+    const label = formatDateShort(raw);
+    if (until.getTime() < Date.now()) return { label: 'Ended', tone: 'muted' };
+    const daysLeft = Math.ceil((until.getTime() - Date.now()) / 86400000);
+    if (daysLeft <= 14) return { label: label + ' (' + daysLeft + 'd)', tone: 'warn' };
+    return { label: label, tone: 'ok' };
+  }
+
+  function opportunityExpiryCellHtml(opportunity) {
+    const meta = opportunityExpiryMeta(opportunity);
+    if (meta.tone === 'muted') return '<span class="org-opp-expiry muted">' + esc(meta.label) + '</span>';
+    const cls =
+      meta.tone === 'danger'
+        ? 'org-opp-expiry is-danger'
+        : meta.tone === 'warn'
+          ? 'org-opp-expiry is-warn'
+          : 'org-opp-expiry';
+    return '<span class="' + cls + '">' + esc(meta.label) + '</span>';
+  }
+
+  function renderOpportunityPerformance() {
+    const wrap = document.getElementById('org-opp-performance-wrap');
+    const mount = document.getElementById('org-opp-listing-cards');
+    if (!wrap || !mount) return;
+    const list = (state.opportunities || []).slice();
+    if (!list.length) {
+      wrap.hidden = true;
+      mount.innerHTML = '';
+      return;
+    }
+    wrap.hidden = false;
+    mount.innerHTML = '';
+    list.forEach((o) => {
+      const st = opportunityStatusForBadge(o);
+      const enquiries = opportunityEnquiriesForListing(o.id);
+      const newCount = enquiries.filter((e) => String(e.status || '').toLowerCase() === 'new').length;
+      const expiry = opportunityExpiryMeta(o);
+      const premium = opportunityPremiumMeta(o);
+      const editUrl = 'opportunity-edit.html?id=' + encodeURIComponent(o.id);
+      const viewUrl = '../opportunities/opportunity.html?id=' + encodeURIComponent(o.id);
+      const card = document.createElement('article');
+      card.className = 'org-opp-listing-card';
+      card.innerHTML =
+        '<header class="org-opp-listing-card-head">' +
+        '<h3 class="org-opp-listing-card-title"><a href="' +
+        esc(editUrl) +
+        '">' +
+        esc(o.title || 'Untitled') +
+        '</a></h3>' +
+        statusBadgeHtml(st.key, st.label) +
+        '</header>' +
+        '<div class="org-stats org-stats--four org-opp-listing-card-stats">' +
+        '<div class="org-stat gold"><div class="org-stat-label">Enquiries</div><div class="org-stat-value">' +
+        esc(String(enquiries.length)) +
+        '</div></div>' +
+        '<div class="org-stat green"><div class="org-stat-label">New</div><div class="org-stat-value">' +
+        esc(String(newCount)) +
+        '</div></div>' +
+        '<div class="org-stat purple"><div class="org-stat-label">Listing expires</div><div class="org-stat-value org-stat-value--text' +
+        (expiry.tone === 'danger' ? ' is-danger' : expiry.tone === 'warn' ? ' is-warn' : '') +
+        '">' +
+        esc(expiry.label) +
+        '</div></div>' +
+        '<div class="org-stat gold"><div class="org-stat-label">Premium</div><div class="org-stat-value org-stat-value--text' +
+        (premium.tone === 'warn' ? ' is-warn' : '') +
+        '">' +
+        esc(premium.label) +
+        '</div></div>' +
+        '</div>' +
+        '<div class="org-opp-listing-card-actions">' +
+        '<a class="org-btn org-btn-outline org-btn-sm" href="' +
+        esc(editUrl) +
+        '">Edit listing</a> ' +
+        '<a class="org-btn org-btn-outline org-btn-sm" href="' +
+        esc(viewUrl) +
+        '" target="_blank" rel="noopener">View live</a> ' +
+        (enquiries.length
+          ? '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="business-overview">View enquiries</button>'
+          : '') +
+        '</div>';
+      mount.appendChild(card);
+    });
+  }
+
   function opportunityStatusForBadge(o) {
     const status = String(o.status || '').toLowerCase();
     if (status === 'published' || status === 'live') return { key: 'live', label: 'Live' };
@@ -5108,10 +5345,8 @@
     setOrgEmpty(empty, { show: false });
     list.forEach((o) => {
       const st = opportunityStatusForBadge(o);
-      const enquiries = (state.opportunityEnquiries || []).filter(
-        (e) => String(e.opportunityId || '') === String(o.id)
-      ).length;
-      const updated = o.updatedAt ? formatDate(o.updatedAt) : '—';
+      const enquiries = opportunityEnquiriesForListing(o.id);
+      const newCount = enquiries.filter((e) => String(e.status || '').toLowerCase() === 'new').length;
       const viewUrl = '../opportunities/opportunity.html?id=' + encodeURIComponent(o.id);
       const editUrl = 'opportunity-edit.html?id=' + encodeURIComponent(o.id);
       const tr = document.createElement('tr');
@@ -5123,9 +5358,13 @@
         '</a></td><td>' +
         statusBadgeHtml(st.key, st.label) +
         '</td><td>' +
-        esc(String(enquiries)) +
+        esc(String(enquiries.length)) +
         '</td><td>' +
-        esc(updated) +
+        (newCount
+          ? '<span class="org-opp-new-count">' + esc(String(newCount)) + '</span>'
+          : '<span class="muted">0</span>') +
+        '</td><td>' +
+        opportunityExpiryCellHtml(o) +
         '</td><td class="org-td-actions">' +
         '<a class="org-btn org-btn-outline org-btn-sm" href="' +
         esc(editUrl) +
@@ -5136,6 +5375,7 @@
         '</td>';
       body.appendChild(tr);
     });
+    renderOpportunityPerformance();
   }
 
   async function loadOpportunitiesList() {
@@ -5507,6 +5747,9 @@
   }
 
   function bindUi() {
+    bindNotificationsPanelOnce();
+    bindScopeButtonOnce();
+
     document.querySelectorAll('[data-hub-switch]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const mode = btn.getAttribute('data-hub-switch');

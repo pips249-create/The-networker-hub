@@ -19,6 +19,7 @@
   const featuredYes = document.getElementById('ep-featured-yes');
   const featuredSkip = document.getElementById('ep-featured-skip');
   const featuredError = document.getElementById('ep-featured-error');
+  const featuredSlotStatus = document.getElementById('ep-featured-slot-status');
 
   const origin = location.origin;
   let listingUrl = primaryId
@@ -335,7 +336,10 @@
       const msg =
         data.error === 'stripe_not_configured'
           ? 'Stripe is not configured for local checkout. Add STRIPE_SECRET_KEY=sk_test_… to local.env, run npm run sync-env, restart npm start, then try again. Your event is still live.'
-          : data.message || data.error || 'Could not start checkout. Your event is still live.';
+          : data.error === 'featured_slots_full'
+            ? data.message ||
+              'All featured spotlight places are currently taken. Your event stays live — try again when a slot opens.'
+            : data.message || data.error || 'Could not start checkout. Your event is still live.';
       if (featuredError) {
         featuredError.hidden = false;
         featuredError.textContent = msg;
@@ -361,6 +365,38 @@
 
   if (featuredYes) featuredYes.addEventListener('click', startFeaturedCheckout);
   if (featuredSkip) featuredSkip.addEventListener('click', hideFeaturedUpsell);
+
+  async function loadFeaturedSlotStatus() {
+    if (!featuredUpsell) return;
+    try {
+      const res = await fetch('/api/hub-listings?meta=featured-slots', { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok || !data.featuredSlots) return;
+      const slots = data.featuredSlots;
+      if (featuredSlotStatus && slots.available > 0 && slots.available <= 3) {
+        featuredSlotStatus.hidden = false;
+        featuredSlotStatus.textContent =
+          slots.available === 1
+            ? 'Only 1 featured spotlight place left right now.'
+            : 'Only ' + slots.available + ' featured spotlight places left right now.';
+      }
+      if (slots.full && !extendFeatured) {
+        if (featuredSlotStatus) {
+          featuredSlotStatus.hidden = false;
+          featuredSlotStatus.textContent =
+            'All ' + slots.max + ' featured spotlight places are taken at the moment. Your event stays live — check back soon.';
+        }
+        if (featuredYes) {
+          featuredYes.disabled = true;
+          featuredYes.textContent = 'Featured spotlight full';
+        }
+      }
+    } catch {
+      /* non-fatal */
+    }
+  }
+
+  loadFeaturedSlotStatus();
 
   setShareUrls(fallbackTitle);
   fetchPreview();

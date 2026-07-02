@@ -1737,6 +1737,11 @@ body.ee-embed-drawer #ee-wizard-mount {
   display: none !important;
 }
 
+body.ee-embed-drawer #ee-event-stats,
+body.ee-embed-drawer #ee-cancel-row {
+  display: none !important;
+}
+
 body.ee-embed-drawer .ee-wrap {
   max-width: none;
   padding: 16px 18px 24px;

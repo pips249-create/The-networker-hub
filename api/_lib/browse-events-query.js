@@ -2,6 +2,7 @@
  * Paginated public event browse — server-side filters for scale.
  */
 const { isEventCurrentlyFeatured } = require('./event-featured-plans');
+const { SPOTLIGHT_CAROUSEL_MAX } = require('./spotlight-carousel-limits');
 const { outcodeListForLocation, haversineMiles, bboxForRadiusMiles, cityRegionFromInput } = require('./uk-outcode');
 const {
   eventsFromPublishedRows,
@@ -128,7 +129,7 @@ function applySearchFilter(query, params) {
   terms.forEach((term) => {
     const t = `%${term}%`;
     next = next.or(
-      `title.ilike.${t},description.ilike.${t},city.ilike.${t},venue.ilike.${t},location_label.ilike.${t},postcode.ilike.${t}`
+      `title.ilike.${t},description.ilike.${t},city.ilike.${t},venue.ilike.${t},location_label.ilike.${t},postcode.ilike.${t},organiser_name.ilike.${t}`
     );
   });
   return next;
@@ -446,7 +447,7 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
   if (params.mode === 'featured' || params.includeMeta) {
     let fq = sb.from(BROWSE_VIEW).select('*').eq('featured', true);
     fq = applyBrowseFilters(fq, { ...params, types: [], freeOnly: false, priceMax: null });
-    fq = fq.order('starts_at', { ascending: true }).limit(24);
+    fq = fq.order('starts_at', { ascending: true }).limit(SPOTLIGHT_CAROUSEL_MAX);
     const { data: featuredRows, error: fErr } = await fq;
     if (fErr) throw new Error(fErr.message);
     const liveFeatured = (featuredRows || []).filter((row) => isEventCurrentlyFeatured(row));

@@ -437,7 +437,7 @@
           ' hosts curated networking events across the UK. Full company profile coming soon.';
       } else {
         profileEl.textContent =
-          'The organiser is completing their group profile. Check back soon for host details.';
+          'The organiser is completing their organiser page. Check back soon for host details.';
       }
     }
 

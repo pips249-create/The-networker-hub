@@ -8,18 +8,23 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e" />
     <link rel="stylesheet" href="../css/hub.css?v=20260730" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260628" />
-    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260702d" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260730" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260702g" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260702b" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
@@ -27,7 +32,7 @@
 
     <div id="org-signin" class="org-signin" hidden>
       <p class="org-section-sub">
-        Sign in to your organiser workspace — group profiles, events, business opportunities, reviews, revenue, and attendees. Use <strong>My tickets</strong> in the nav for bookings and reviews you leave as an attendee.
+        Sign in to your organiser workspace — organiser pages, events, business opportunities, reviews, revenue, and attendees. Use <strong>My tickets</strong> in the nav for bookings and reviews you leave as an attendee.
       </p>
       <p style="margin-top: 12px">
         <a class="org-btn org-btn-primary" href="../login.html?next=/organiser/index.html">Sign in</a>
@@ -39,6 +44,16 @@
         <aside class="org-sidebar">
           <nav class="hub-side-nav hub-side-nav--minimal org-dash-bar" aria-label="Organiser workspace">
             <a href="#dashboard" class="hub-side-nav-link is-active" data-org-route="dashboard">Overview</a>
+            <button
+              type="button"
+              class="hub-side-nav-link org-notifications-nav"
+              id="org-notifications-nav"
+              aria-expanded="false"
+              aria-controls="org-notifications-panel"
+            >
+              <span class="org-notifications-nav-label">Notifications</span>
+              <span class="org-notifications-count" id="org-notifications-count" hidden aria-hidden="true">0</span>
+            </button>
             <span class="hub-side-nav-divider">Team</span>
             <a href="#team" class="hub-side-nav-link" data-org-route="team" id="org-nav-team">
               Team &amp; invites
@@ -46,7 +61,7 @@
             </a>
             <span class="hub-side-nav-divider">My events</span>
             <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">Events</a>
-            <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Group profiles</a>
+            <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Organiser pages</a>
             <a href="#events-attendees" class="hub-side-nav-link" data-org-route="events-attendees">
               Attendees
               <span class="org-nav-badge" id="org-pending-applications-nav-badge" hidden>New</span>
@@ -58,7 +73,7 @@
               <span class="org-nav-badge org-nav-badge--action" id="org-payment-setup-nav-badge" hidden>Setup</span>
             </a>
             <span class="hub-side-nav-divider">Business opportunities</span>
-            <a href="opportunity-intro.html" class="hub-side-nav-link">List an opportunity</a>
+            <a href="#business-list" class="hub-side-nav-link" data-org-route="business-list">My opportunities</a>
             <a href="#business-overview" class="hub-side-nav-link" data-org-route="business-overview">
               Enquiries received
               <span class="org-nav-badge" id="org-opp-enquiry-nav-badge" hidden>New</span>
@@ -67,12 +82,51 @@
               <a href="../events/index.html">Browse events</a>
             </div>
           </nav>
+          <div
+            class="org-notifications-panel"
+            id="org-notifications-panel"
+            hidden
+            aria-hidden="true"
+          >
+            <button
+              type="button"
+              class="org-notifications-panel-backdrop"
+              id="org-notifications-backdrop"
+              aria-label="Close notifications"
+            ></button>
+            <div
+              class="org-notifications-panel-sheet"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="org-notifications-title"
+            >
+              <header class="org-notifications-panel-head">
+                <div>
+                  <h2 class="org-notifications-panel-title" id="org-notifications-title">Notifications</h2>
+                  <p class="org-notifications-panel-sub" id="org-notifications-sub"></p>
+                </div>
+                <button
+                  type="button"
+                  class="org-notifications-panel-close"
+                  id="org-notifications-close"
+                  aria-label="Close notifications"
+                >
+                  ×
+                </button>
+              </header>
+              <div class="org-notifications-panel-body">
+                <p class="org-notifications-empty" id="org-notifications-empty" hidden>
+                  You&apos;re all caught up — nothing needs your attention right now.
+                </p>
+                <div id="org-notices" class="org-notices org-notices--panel" hidden aria-live="polite"></div>
+              </div>
+            </div>
+          </div>
         </aside>
 
         <div class="org-main" id="org-main">
           <div class="org-wrap">
         <div id="org-dashboard-alert" class="org-alert" hidden></div>
-        <div class="org-notices" id="org-notices" hidden aria-live="polite"></div>
 
         <!-- Overview -->
         <section class="org-page is-active" id="org-page-dashboard" data-org-page="dashboard">
@@ -97,17 +151,17 @@
               </button>
               <div class="org-add-menu" id="org-add-menu" role="menu" hidden>
                 <a role="menuitem" class="org-add-menu-item" href="group-edit.html">
-                  <strong>Group profile</strong>
-                  <span>Your organiser page on the hub</span>
+                  <strong>Organiser page</strong>
+                  <span>Your public page on the hub</span>
                 </a>
                 <a role="menuitem" class="org-add-menu-item" href="event-format.html">
                   <strong>Event</strong>
                   <span>Meeting, exhibition or conference</span>
                 </a>
-                <a role="menuitem" class="org-add-menu-item" href="opportunity-intro.html">
+                <button type="button" role="menuitem" class="org-add-menu-item" data-org-route="business-list">
                   <strong>Business opportunity</strong>
                   <span>Franchise, partnership or side hustle listing</span>
-                </a>
+                </button>
               </div>
             </div>
           </header>
@@ -157,9 +211,9 @@
             </div>
             <ol class="org-getting-started-list">
               <li data-getting-step="group">
-                <strong>Create a group profile</strong>
-                <span>Your public organiser page on the hub.</span>
-                <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-getting-action="group">Add group</button>
+                <strong>Create your organiser page</strong>
+                <span>Your public page — group, business, or brand on the hub.</span>
+                <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-getting-action="group">Add organiser page</button>
               </li>
               <li data-getting-step="event">
                 <strong>List your first event</strong>
@@ -181,7 +235,7 @@
               </span>
               <span class="org-hub-portal-body">
                 <strong>Manage events</strong>
-                <span>Group profiles, listings, tickets, attendees, reviews &amp; revenue</span>
+                <span>Organiser pages, listings, tickets, attendees, reviews &amp; revenue</span>
                 <span class="org-hub-portal-meta" id="hub-portal-meta-events">—</span>
               </span>
               <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
@@ -288,10 +342,10 @@
 
           <div class="org-overview-head">
             <div class="org-overview-head-text">
-              <h2 class="org-section-title">Your group profiles</h2>
-              <p class="org-section-sub">Click to edit your group profile page</p>
+              <h2 class="org-section-title">Your organiser pages</h2>
+              <p class="org-section-sub">Click to edit your public organiser page</p>
             </div>
-            <a href="group-edit.html" class="org-btn org-btn-gold org-btn-sm">+ Add group</a>
+            <a href="group-edit.html" class="org-btn org-btn-gold org-btn-sm">+ Add page</a>
           </div>
           <div class="org-table-wrap org-overview-table">
             <table>
@@ -309,12 +363,12 @@
               <tbody id="dash-groups-body"></tbody>
             </table>
             <div class="org-empty-state org-empty-state--compact" id="dash-groups-empty" hidden role="status">
-              <p class="org-empty-state-text">No group profiles yet — use <strong>+ Add group</strong> above to create your first.</p>
+              <p class="org-empty-state-text">No organiser pages yet — use <strong>+ Add page</strong> above to create your first.</p>
             </div>
           </div>
           <div class="org-section-footer">
             <button type="button" class="org-btn org-btn-outline" data-org-goto-view="groups">
-              View all group profiles →
+              View all organiser pages →
             </button>
           </div>
 
@@ -352,6 +406,102 @@
           </div>
         </section>
 
+        <!-- My opportunities (how it works + listing performance) -->
+        <section class="org-page org-page--business-ops organiser-opportunity-edit-page" id="org-page-business-list" data-org-page="business-list">
+          <button type="button" class="org-hub-back" data-org-route="business-overview">← Back to Business ops</button>
+          <header class="org-hub-page-head">
+            <p class="org-page-kicker org-biz-kicker">Business opportunities</p>
+            <h1 class="org-page-title">My opportunities</h1>
+            <p class="org-page-lead">
+              Track how your listings are performing, see how the process works, and add a new franchise, partnership, or side hustle to the hub directory.
+            </p>
+          </header>
+
+          <div id="org-opp-performance-wrap" hidden>
+            <div class="org-overview-head">
+              <div class="org-overview-head-text">
+                <h2 class="org-section-title">How your listings are doing</h2>
+                <p class="org-section-sub">Enquiries, expiry dates, and premium placement — at a glance before you add another listing.</p>
+              </div>
+              <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-route="business-overview">View all enquiries →</button>
+            </div>
+            <div class="org-opp-listing-cards" id="org-opp-listing-cards" aria-live="polite"></div>
+          </div>
+
+          <div class="org-business-intro">
+            <h2 class="org-section-title">How listing works</h2>
+            <ol class="oe-intro-steps" aria-label="Listing steps">
+              <li class="oe-intro-step">
+                <span class="oe-intro-step-num" aria-hidden="true">1</span>
+                <div>
+                  <strong>Add your listing details</strong>
+                  <span>Title, opportunity type, investment, location, description, logo and cover photo.</span>
+                </div>
+              </li>
+              <li class="oe-intro-step">
+                <span class="oe-intro-step-num" aria-hidden="true">2</span>
+                <div>
+                  <strong>Pay the listing fee</strong>
+                  <span>£20 per month + VAT, billed upfront for your chosen term (minimum 3 months). Secure payment via Stripe.</span>
+                </div>
+              </li>
+              <li class="oe-intro-step">
+                <span class="oe-intro-step-num" aria-hidden="true">3</span>
+                <div>
+                  <strong>Your listing goes live</strong>
+                  <span>It appears in the business opportunities directory where members can filter by type and location.</span>
+                </div>
+              </li>
+              <li class="oe-intro-step">
+                <span class="oe-intro-step-num" aria-hidden="true">4</span>
+                <div>
+                  <strong>Respond to enquiries</strong>
+                  <span>When someone is interested, their message appears in <em>Enquiries received</em> under Business ops.</span>
+                </div>
+              </li>
+            </ol>
+
+            <div class="org-business-intro-card oe-intro-pricing">
+              <h2>Pricing</h2>
+              <div class="oe-intro-price-grid">
+                <div class="oe-intro-price-card oe-intro-price-card--standard">
+                  <p class="oe-intro-price-label">Standard listing</p>
+                  <p class="oe-intro-price-amount">£20 <span>/ month + VAT</span></p>
+                  <p class="oe-intro-price-note">Minimum 3 months upfront — <strong>£72.00</strong> inc. VAT for a 3-month term.</p>
+                  <ul class="oe-intro-price-list">
+                    <li>Live in the opportunities directory</li>
+                    <li>Enquiry form on your listing page</li>
+                    <li>Edit any time from your workspace</li>
+                  </ul>
+                </div>
+                <div class="oe-intro-price-card">
+                  <p class="oe-intro-price-label">Premium spotlight <span class="oe-intro-price-optional">Optional</span></p>
+                  <p class="oe-intro-price-amount">£50 <span>/ month</span></p>
+                  <p class="oe-intro-price-note">Add after your listing is live for extra visibility across the hub. <strong>Limited to 12 active premium listings</strong> in the spotlight carousel at any time.</p>
+                  <ul class="oe-intro-price-list">
+                    <li>Featured placement in the directory</li>
+                    <li>Social comms pack to help you promote</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="org-business-intro-card oe-intro-faq">
+              <h2>Good to know</h2>
+              <ul class="oe-intro-faq-list">
+                <li>You keep full control — enquiries go to your email; there is no commission on deals you make.</li>
+                <li>Listings are reviewed before going live to keep the directory trustworthy.</li>
+                <li>Premium spotlight is optional (£50/month) and limited to <strong>12 active listings</strong> in the carousel at any time.</li>
+              </ul>
+            </div>
+
+            <div class="org-business-intro-actions">
+              <a class="org-btn org-btn-gold" href="opportunity-edit.html" id="org-opp-start-listing">Start your listing →</a>
+              <a class="org-btn org-btn-outline" href="../opportunities/index.html" target="_blank" rel="noopener">Preview the directory</a>
+            </div>
+          </div>
+        </section>
+
         <!-- Business ops overview hub -->
         <section class="org-page" id="org-page-business-overview" data-org-page="business-overview">
           <button type="button" class="org-hub-back" data-org-route="dashboard">← Back to overview</button>
@@ -379,11 +529,11 @@
           <div class="org-quick-actions org-quick-actions--compact" aria-label="Quick links">
             <h2 class="org-quick-actions-title">Quick links</h2>
             <div class="org-quick-actions-grid">
-              <a class="org-quick-card org-quick-card--primary" href="opportunity-intro.html">
-                <span class="org-quick-icon" aria-hidden="true">+</span>
-                <span class="org-quick-label">List an opportunity</span>
-                <span class="org-quick-hint">Promote a service to other hub members</span>
-              </a>
+              <button type="button" class="org-quick-card org-quick-card--primary" data-org-route="business-list">
+                <span class="org-quick-icon" aria-hidden="true">📋</span>
+                <span class="org-quick-label">My opportunities</span>
+                <span class="org-quick-hint">Track listings or add a new one</span>
+              </button>
               <button type="button" class="org-quick-card" data-org-shortcut="business-overview">
                 <span class="org-quick-icon" aria-hidden="true">✉</span>
                 <span class="org-quick-label">View enquiries</span>
@@ -402,7 +552,7 @@
               <h2 class="org-section-title">Your listings</h2>
               <p class="org-section-sub">Business opportunities you&apos;ve published on the hub — edit a listing or check how many enquiries it has received.</p>
             </div>
-            <a href="opportunity-intro.html" class="org-btn org-btn-gold org-btn-sm">+ List an opportunity</a>
+            <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="business-list">+ Add listing</button>
           </div>
           <div class="org-table-wrap org-overview-table">
             <table>
@@ -411,7 +561,8 @@
                   <th>Title</th>
                   <th>Status</th>
                   <th>Enquiries</th>
-                  <th>Updated</th>
+                  <th>New</th>
+                  <th>Expires</th>
                   <th class="org-th-actions">Actions</th>
                 </tr>
               </thead>
@@ -424,7 +575,7 @@
               <h3 class="org-empty-state-title">No listings yet</h3>
               <p class="org-empty-state-text">Publish a business opportunity to start receiving member enquiries.</p>
               <div class="org-empty-state-actions">
-                <a href="opportunity-intro.html" class="org-btn org-btn-gold org-btn-sm">+ List an opportunity</a>
+                <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="business-list">+ Add listing</button>
               </div>
             </div>
           </div>
@@ -460,15 +611,15 @@
           </div>
         </section>
 
-        <!-- Group profiles -->
+        <!-- Organiser pages -->
         <section class="org-page" id="org-page-groups" data-org-page="groups">
           <header class="org-page-head org-page-head--split">
             <div class="org-page-head-text">
               <p class="org-page-kicker">My events</p>
-              <h1 class="org-page-title">Group profiles</h1>
-              <p class="org-page-lead">Your public organiser pages on the hub. Events belong to a group profile.</p>
+              <h1 class="org-page-title">Organiser pages</h1>
+              <p class="org-page-lead">Your public pages on the hub — for your networking group, business, or brand. Events belong to an organiser page.</p>
             </div>
-            <a href="group-edit.html" class="org-btn org-btn-gold">+ New group profile</a>
+            <a href="group-edit.html" class="org-btn org-btn-gold">+ New organiser page</a>
           </header>
           <div id="org-ranking-share-groups-mount"></div>
           <div class="org-filter-bar">
@@ -506,10 +657,10 @@
               <div class="org-empty-state-icon" aria-hidden="true">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
               </div>
-              <h3 class="org-empty-state-title">No group profiles yet</h3>
+              <h3 class="org-empty-state-title">No organiser pages yet</h3>
               <p class="org-empty-state-text">Create your organiser page on the hub before listing events.</p>
               <div class="org-empty-state-actions">
-                <a href="group-edit.html" class="org-btn org-btn-gold org-btn-sm">+ Add group profile</a>
+                <a href="group-edit.html" class="org-btn org-btn-gold org-btn-sm">+ Add organiser page</a>
               </div>
             </div>
           </div>
@@ -641,7 +792,7 @@
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 </div>
                 <h3 class="org-empty-state-title">No events yet</h3>
-                <p class="org-empty-state-text">Create a group profile first, then list your first event.</p>
+                <p class="org-empty-state-text">Create your organiser page first, then list your first event.</p>
                 <div class="org-empty-state-actions">
                   <button type="button" class="org-btn org-btn-gold org-btn-sm" data-action="new-event">+ List event</button>
                 </div>
@@ -859,7 +1010,7 @@
     <div class="org-modal" id="modal-group" role="dialog" aria-modal="true" aria-labelledby="modal-group-title" hidden>
       <div class="org-modal-backdrop" data-org-modal-close></div>
       <div class="org-modal-panel org-modal-panel--wide">
-        <h2 id="modal-group-title">New group profile</h2>
+        <h2 id="modal-group-title">New organiser page</h2>
         <p>Linked to your account <strong id="modal-group-email">email</strong>.</p>
         <form id="form-group">
           <div class="org-field">
@@ -1083,7 +1234,7 @@
         <p class="org-group-claim-kicker">Step 4 — your first event</p>
         <h2 class="org-group-claim-title" id="org-ready-event-title">Ready to add an event?</h2>
         <p class="org-group-claim-intro">
-          Your group profile is set up. List your first meeting, exhibition, or conference — we will walk you through the format and details.
+          Your organiser page is set up. List your first meeting, exhibition, or conference — we will walk you through the format and details.
         </p>
         <div class="org-group-claim-actions">
           <button type="button" class="org-btn org-btn-outline" id="org-ready-event-later">Not yet</button>
@@ -1101,9 +1252,9 @@
         aria-labelledby="org-group-claim-title"
       >
         <p class="org-group-claim-kicker" id="org-group-claim-kicker">Step 1 of 1</p>
-        <h2 class="org-group-claim-title" id="org-group-claim-title">Is this your group profile?</h2>
+        <h2 class="org-group-claim-title" id="org-group-claim-title">Is this your organiser page?</h2>
         <p class="org-group-claim-intro" id="org-group-claim-intro">
-          We found a group profile linked to your account. Please confirm you manage this networking group before you check the details and list events.
+          We found an organiser page linked to your account. Please confirm you manage this networking group or business before you check the details and list events.
         </p>
 
         <div class="org-group-claim-card" id="org-group-claim-card">
@@ -1157,8 +1308,8 @@
           >
             ×
           </button>
-          <p class="org-group-drawer-kicker">Group profile</p>
-          <h2 class="org-group-drawer-title" id="ge-page-title">Edit group profile</h2>
+          <p class="org-group-drawer-kicker">Organiser page</p>
+          <h2 class="org-group-drawer-title" id="ge-page-title">Edit organiser page</h2>
           <p class="org-group-drawer-lead" id="ge-page-lead"></p>
           <p class="org-group-drawer-email" id="ge-page-email"></p>
           <p class="ge-status-line org-group-drawer-status" id="ge-status-line" hidden>
@@ -1370,13 +1521,13 @@
     <div id="org-action-menu-portal" aria-hidden="true"></div>
 
     <script src="../js/hubert-chat.js?v=20260617"></script>
-    <script src="../js/hubert-organiser-guide.js?v=20260618" data-root="../"></script>
+    <script src="../js/hubert-organiser-guide.js?v=20260703" data-root="../"></script>
     <script src="../js/hubert-widget.js?v=20260618" data-root="../" data-hubert="organiser-dashboard"></script>
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
-    <script src="../js/organiser-flow-tour.js?v=20260610"></script>
-    <script src="../js/organiser-onboarding.js?v=20260618"></script>
+    <script src="../js/organiser-flow-tour.js?v=20260703"></script>
+    <script src="../js/organiser-onboarding.js?v=20260703"></script>
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
     <script src="../js/organiser-payment-setup.js?v=20260718"></script>
-    <script src="../js/organiser-dashboard.js?v=20260730"></script>
+    <script src="../js/organiser-dashboard.js?v=20260703a"></script>
   </body>
 </html>

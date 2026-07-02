@@ -318,7 +318,7 @@
     var featured = getSpotlightFeatured();
     if (!featured.length) {
       track.innerHTML =
-        '<p class="spotlight-empty">No featured organisers yet — mark group profiles as <strong>featured</strong> in Command Centre (up to ' +
+        '<p class="spotlight-empty">No featured organisers yet — mark organiser pages as <strong>featured</strong> in Command Centre (up to ' +
         SPOTLIGHT_MAX +
         ').</p>';
       track.classList.remove('spotlight-track--carousel');

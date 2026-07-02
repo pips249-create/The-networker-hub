@@ -35,8 +35,26 @@
     return '';
   }
 
+  function initHeroEntrance() {
+    var hero = document.querySelector('.home-hero');
+    if (!hero) return;
+
+    hero.classList.add('is-visible');
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      hero.classList.add('is-entered');
+      return;
+    }
+
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        hero.classList.add('is-entered');
+      });
+    });
+  }
+
   function initReveal() {
-    var sections = document.querySelectorAll('.home-reveal');
+    var sections = document.querySelectorAll('.home-reveal:not(.home-hero)');
     if (!sections.length) return;
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -162,6 +180,7 @@
     });
   }
 
+  initHeroEntrance();
   initReveal();
   loadPartners();
 })();

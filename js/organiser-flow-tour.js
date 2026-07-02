@@ -295,7 +295,7 @@
 
   var GROUP_REVIEW_STEPS = [
     {
-      title: 'Check your group profile',
+      title: 'Check your organiser page',
       body: 'We linked this networking group to your account. Please confirm the logo, name, and contact details are correct before you list events.',
     },
     {
@@ -322,8 +322,8 @@
 
   var GROUP_STEPS = [
     {
-      title: 'Welcome — your group profile',
-      body: 'This is your public organiser page on The Networker Hub. A quick walkthrough of what to fill in before your first event.',
+      title: 'Welcome — your organiser page',
+      body: 'This is your public page on The Networker Hub. A quick walkthrough of what to fill in before your first event.',
     },
     {
       title: 'Logo and group name',
@@ -350,11 +350,11 @@
   var EVENT_FORMAT_STEPS = [
     {
       title: 'Create your first event',
-      body: 'You have a group profile — now choose which group this listing belongs to and how people will attend.',
+      body: 'You have an organiser page — now choose which organiser this listing belongs to and how people will attend.',
     },
     {
-      title: 'Pick your group',
-      body: 'Confirm the group profile this event is published under. You can run many events under one group.',
+      title: 'Pick your organiser',
+      body: 'Confirm the organiser page this event is published under. You can run many events under one organiser.',
       target: '.ee-group-pick-card',
     },
     {

@@ -57,7 +57,7 @@ module.exports = async function handler(req, res) {
         ok: true,
         action: 'claim',
         group,
-        message: 'Group profile claimed. You can now manage events and tickets for ' + group.name + '.',
+        message: 'Organiser page claimed. You can now manage events and tickets for ' + group.name + '.',
       });
     }
 
@@ -73,7 +73,7 @@ module.exports = async function handler(req, res) {
   } catch (e) {
     const msg = e.message || String(e);
     if (msg === 'claim_not_available') {
-      return json(res, e.status || 404, { error: 'claim_not_available', message: 'This group profile is not available to claim.' });
+      return json(res, e.status || 404, { error: 'claim_not_available', message: 'This organiser page is not available to claim.' });
     }
     return json(res, e.status || 500, { error: 'claim_action_failed', message: msg });
   }

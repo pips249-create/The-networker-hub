@@ -4,8 +4,9 @@
  */
 const { getSupabaseAdmin } = require('./supabase');
 const { listingPaymentCurrent } = require('./opportunity-listing-pricing');
+const { SPOTLIGHT_CAROUSEL_MAX } = require('./spotlight-carousel-limits');
 
-const OPPORTUNITY_PREMIUM_SPOTLIGHT_MAX = 10;
+const OPPORTUNITY_PREMIUM_SPOTLIGHT_MAX = SPOTLIGHT_CAROUSEL_MAX;
 
 function isPremiumSpotlightActiveRow(row) {
   if (!row || !row.featured) return false;

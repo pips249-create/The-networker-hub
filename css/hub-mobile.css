@@ -813,6 +813,21 @@ body.nav-menu-open {
     font-size: 12px;
   }
 
+  .hub-side-nav.hub-side-nav--minimal .org-notifications-nav {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    border-left: none !important;
+    border-bottom: 3px solid transparent;
+    padding: 10px 12px;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  .organiser-dashboard-page .hub-side-nav--minimal .org-notifications-nav.is-active {
+    border-bottom-color: var(--od-purple) !important;
+    background: var(--od-white);
+  }
+
   .organiser-dashboard-page .org-main,
   .attendee-dashboard-page .ad-main {
     flex: 1 1 auto;

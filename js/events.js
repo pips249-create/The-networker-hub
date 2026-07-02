@@ -22,6 +22,7 @@
   let spotlightTimer = null;
   let spotlightAnimating = false;
   let spotlightCarouselBound = false;
+  const SPOTLIGHT_MAX = 12; /* sync with api/_lib/spotlight-carousel-limits.js */
   const SPOTLIGHT_AUTO_MS = 2800;
 
   function shuffleList(list) {
@@ -191,7 +192,11 @@
     const key = spotlightFilterSignature(featured);
     if (key !== spotlightFilterKey || !spotlightPremiumOrder) {
       spotlightFilterKey = key;
-      spotlightPremiumOrder = shuffleList(featured);
+      const pool =
+        featured.length > SPOTLIGHT_MAX
+          ? shuffleList(featured).slice(0, SPOTLIGHT_MAX)
+          : shuffleList(featured);
+      spotlightPremiumOrder = pool;
     }
     return spotlightPremiumOrder;
   }
