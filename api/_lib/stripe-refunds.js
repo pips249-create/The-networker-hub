@@ -1,5 +1,5 @@
 /**
- * Stripe refund verification — used before confirming organiser refunds or sending emails.
+ * Stripe refund verification and issuance — organiser event cancellation.
  */
 const { getStripeClient, isStripeCheckoutConfigured } = require('./stripe-checkout');
 
@@ -104,11 +104,126 @@ function calculatePlatformApplicationFeePence(_ticketSubtotalPence, bookingFeePe
   return Math.max(0, Math.round(Number(bookingFeePence) || 0));
 }
 
+/**
+ * Issue a full Stripe refund for one paid registration (idempotent if already refunded).
+ */
+async function issueRefundForRegistration(registration, options = {}) {
+  const paymentIntentId = String(registration?.stripe_payment_intent_id || '').trim();
+  if (!paymentIntentId) {
+    return {
+      registrationId: registration?.id,
+      required: false,
+      issued: true,
+      skipped: true,
+      reason: 'no_payment_intent',
+    };
+  }
+
+  const state = await retrievePaymentIntentRefundState(paymentIntentId);
+  if (state.refunded) {
+    return {
+      registrationId: registration.id,
+      required: true,
+      issued: true,
+      skipped: true,
+      reason: 'already_refunded',
+      paymentIntentId,
+    };
+  }
+
+  if (!isStripeRefundsConfigured()) {
+    return {
+      registrationId: registration.id,
+      required: true,
+      issued: false,
+      error: 'Stripe is not configured',
+      code: 'stripe_not_configured',
+      paymentIntentId,
+    };
+  }
+
+  const stripe = getStripeClient();
+  const connectEnabled =
+    options.connectEnabled != null
+      ? Boolean(options.connectEnabled)
+      : (() => {
+          try {
+            const { isStripeConnectEnabled } = require('./stripe-connect');
+            return isStripeConnectEnabled();
+          } catch {
+            return false;
+          }
+        })();
+  const params = { payment_intent: paymentIntentId };
+  if (connectEnabled) {
+    params.refund_application_fee = true;
+    params.reverse_transfer = true;
+  }
+
+  try {
+    const refund = await stripe.refunds.create(params);
+    return {
+      registrationId: registration.id,
+      required: true,
+      issued: true,
+      skipped: false,
+      refundId: refund.id,
+      status: refund.status,
+      amount: refund.amount,
+      paymentIntentId,
+    };
+  } catch (err) {
+    return {
+      registrationId: registration.id,
+      required: true,
+      issued: false,
+      error: err.message || String(err),
+      code: err.code || 'refund_failed',
+      paymentIntentId,
+    };
+  }
+}
+
+/**
+ * Issue full refunds for every paid registration on an event.
+ */
+async function issueEventRefundsInStripe(registrations, options = {}) {
+  const paid = (registrations || []).filter(
+    (row) => String(row.payment_status || '').trim() === 'Paid'
+  );
+
+  if (!paid.length) {
+    return {
+      allIssued: true,
+      totalPaid: 0,
+      issued: [],
+      failed: [],
+      skipped: [],
+    };
+  }
+
+  const results = await Promise.all(paid.map((row) => issueRefundForRegistration(row, options)));
+  const failed = results.filter((row) => row.required && !row.issued);
+  const issued = results.filter((row) => row.issued && !row.skipped);
+  const skipped = results.filter((row) => row.skipped);
+
+  return {
+    allIssued: failed.length === 0,
+    totalPaid: paid.length,
+    issued,
+    failed,
+    skipped,
+    results,
+  };
+}
+
 module.exports = {
   PLATFORM_FEE_RATE,
   isStripeRefundsConfigured,
   retrievePaymentIntentRefundState,
   verifyRegistrationRefunded,
   verifyEventRefundsInStripe,
+  issueRefundForRegistration,
+  issueEventRefundsInStripe,
   calculatePlatformApplicationFeePence,
 };

@@ -7,7 +7,8 @@ const {
   sendEventCancelledEmailsForEvent,
   sendRefundProcessedEmailsForEvent,
 } = require('./cancellation-emails');
-const { verifyEventRefundsInStripe } = require('./stripe-refunds');
+const { verifyEventRefundsInStripe, issueEventRefundsInStripe } = require('./stripe-refunds');
+const { isStripeConnectEnabled } = require('./stripe-connect');
 
 const CANCELLATION_REASONS = new Set([
   'Venue issue',
@@ -93,15 +94,10 @@ async function getCancellationContext(session, eventId) {
 async function cancelLockedEvent(session, eventId, payload) {
   const reason = String(payload.reason || '').trim();
   const details = String(payload.details || '').trim();
-  const refundTermsConfirmed = Boolean(payload.refundTermsConfirmed);
+  let refundTermsConfirmed = Boolean(payload.refundTermsConfirmed);
 
   if (!CANCELLATION_REASONS.has(reason)) {
     const e = new Error('Select a cancellation reason');
-    e.status = 400;
-    throw e;
-  }
-  if (!refundTermsConfirmed) {
-    const e = new Error('You must confirm you will refund all attendees within 14 days');
     e.status = 400;
     throw e;
   }
@@ -112,10 +108,22 @@ async function cancelLockedEvent(session, eventId, payload) {
   const row = await assertEventOwned(sb, session, eventId, groupIds);
 
   const sales = await loadEventRegistrationCounts(sb, eventId);
-  if (!row.locked && sales.ticketsSold < 1) {
-    const e = new Error('This event has no ticket sales — unpublish or delete it instead');
+  const published = String(row.status || '').toLowerCase() === 'published';
+  const salesLive = row.ticket_sales_enabled === true;
+  if (!row.locked && sales.ticketsSold < 1 && !published && !salesLive) {
+    const e = new Error('This event has no ticket sales — delete it instead');
     e.status = 400;
     throw e;
+  }
+  if (sales.paidBookings > 0 && !refundTermsConfirmed) {
+    const e = new Error(
+      'You must confirm that paying attendees will receive an automatic refund'
+    );
+    e.status = 400;
+    throw e;
+  }
+  if (sales.paidBookings < 1) {
+    refundTermsConfirmed = true;
   }
   if (String(row.status || '').toLowerCase() === 'cancelled') {
     const e = new Error('This event is already cancelled');
@@ -156,7 +164,67 @@ async function cancelLockedEvent(session, eventId, payload) {
     emailResult = { error: e.message || String(e) };
   }
 
-  return { cancellation, event: updated, emailResult };
+  let refundResult = null;
+  let refundsConfirmed = false;
+  let refundsConfirmedResult = null;
+
+  if (sales.paidBookings > 0) {
+    const { data: registrations, error: regErr } = await sb
+      .from('registrations')
+      .select('id, payment_status, stripe_payment_intent_id, amount_paid, refund_email_sent_at')
+      .eq('event_id', eventId)
+      .eq('payment_status', 'Paid');
+    if (regErr) throw new Error(regErr.message);
+
+    refundResult = await issueEventRefundsInStripe(registrations || [], {
+      connectEnabled: isStripeConnectEnabled(),
+    });
+
+    if (refundResult.allIssued) {
+      const verification = await verifyEventRefundsInStripe(registrations || []);
+      if (verification.allRefunded) {
+        refundsConfirmedResult = await finalizeEventRefundsConfirmed(sb, cancellation.id, eventId);
+        refundsConfirmed = true;
+      }
+    }
+  }
+
+  const cancellationOut = refundsConfirmedResult?.cancellation || cancellation;
+
+  return {
+    cancellation: cancellationOut,
+    event: updated,
+    emailResult,
+    refundResult,
+    refundsConfirmed,
+    paidBookings: sales.paidBookings,
+    refundsEmailResult: refundsConfirmedResult?.emailResult || null,
+  };
+}
+
+async function finalizeEventRefundsConfirmed(sb, cancellationId, eventId) {
+  const { data, error } = await sb
+    .from('event_cancellations')
+    .update({ refunds_confirmed_at: new Date().toISOString() })
+    .eq('id', cancellationId)
+    .select('*')
+    .single();
+  if (error) throw new Error(error.message);
+
+  const { error: holdErr } = await sb
+    .from('events')
+    .update({ payout_held: false })
+    .eq('id', eventId);
+  if (holdErr) throw new Error(holdErr.message);
+
+  let emailResult = null;
+  try {
+    emailResult = await sendRefundProcessedEmailsForEvent(sb, eventId);
+  } catch (e) {
+    emailResult = { error: e.message || String(e) };
+  }
+
+  return { cancellation: data, emailResult };
 }
 
 async function confirmRefundsIssued(session, eventId) {
@@ -194,42 +262,39 @@ async function confirmRefundsIssued(session, eventId) {
     .eq('payment_status', 'Paid');
   if (regErr) throw new Error(regErr.message);
 
+  const refundIssue = await issueEventRefundsInStripe(registrations || [], {
+    connectEnabled: isStripeConnectEnabled(),
+  });
+
   const verification = await verifyEventRefundsInStripe(registrations || []);
   if (!verification.allRefunded) {
     const pendingCount = verification.pending.length;
-    const e = new Error(
+    const issueFailed = refundIssue.failed?.length || 0;
+    let message =
       pendingCount === 1
-        ? '1 paid booking is not fully refunded in Stripe yet. Issue the refund in your Stripe dashboard, then try again.'
-        : `${pendingCount} paid bookings are not fully refunded in Stripe yet. Issue refunds in your Stripe dashboard, then try again.`
-    );
+        ? '1 paid booking is not fully refunded in Stripe yet.'
+        : `${pendingCount} paid bookings are not fully refunded in Stripe yet.`;
+    if (issueFailed > 0) {
+      message += ' We could not issue every refund automatically — try again shortly or contact support.';
+    } else {
+      message += ' Stripe may still be processing — wait a moment and try again.';
+    }
+    const e = new Error(message);
     e.status = 400;
     e.code = 'refunds_not_verified';
     e.verification = verification;
+    e.refundIssue = refundIssue;
     throw e;
   }
 
-  const { data, error } = await sb
-    .from('event_cancellations')
-    .update({ refunds_confirmed_at: new Date().toISOString() })
-    .eq('id', cancellation.id)
-    .select('*')
-    .single();
-  if (error) throw new Error(error.message);
+  const finalized = await finalizeEventRefundsConfirmed(sb, cancellation.id, eventId);
 
-  const { error: holdErr } = await sb
-    .from('events')
-    .update({ payout_held: false })
-    .eq('id', eventId);
-  if (holdErr) throw new Error(holdErr.message);
-
-  let emailResult = null;
-  try {
-    emailResult = await sendRefundProcessedEmailsForEvent(sb, eventId);
-  } catch (e) {
-    emailResult = { error: e.message || String(e) };
-  }
-
-  return { cancellation: data, verification, emailResult };
+  return {
+    cancellation: finalized.cancellation,
+    verification,
+    refundIssue,
+    emailResult: finalized.emailResult,
+  };
 }
 
 module.exports = {

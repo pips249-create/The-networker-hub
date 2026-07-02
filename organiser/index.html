@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260724" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260725" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
@@ -964,8 +964,7 @@
         <p id="modal-event-cancel-name" class="org-modal-sub"></p>
         <p class="org-modal-cancel-tickets" id="modal-event-cancel-tickets" hidden></p>
         <p class="org-payout-ineligible" id="modal-event-cancel-warning">
-          Cancelling this event will place your payout on hold until refunds are confirmed. Failure to refund
-          attendees within 14 days will result in your account being suspended.
+          Cancelling will automatically refund all paying attendees through Stripe. This cannot be undone.
         </p>
         <p class="org-modal-cancel-policy" id="modal-event-cancel-policy" hidden></p>
         <form id="form-event-cancel">
@@ -983,9 +982,9 @@
             <label for="event-cancel-details">Tell attendees what happened</label>
             <textarea id="event-cancel-details" rows="3" placeholder="Explain why you are cancelling and what attendees should expect next"></textarea>
           </div>
-          <label class="org-check">
+          <label class="org-check" id="event-cancel-refund-row">
             <input type="checkbox" id="event-cancel-refund-confirm" />
-            <span id="event-cancel-refund-label">I confirm I will refund all attendees within 14 days through my Stripe account</span>
+            <span id="event-cancel-refund-label">I understand paying attendees will receive an automatic full refund</span>
           </label>
           <div class="org-modal-actions">
             <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Keep event</button>
@@ -1377,6 +1376,6 @@
     <script src="../js/organiser-onboarding.js?v=20260618"></script>
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
     <script src="../js/organiser-payment-setup.js?v=20260718"></script>
-    <script src="../js/organiser-dashboard.js?v=20260724"></script>
+    <script src="../js/organiser-dashboard.js?v=20260727"></script>
   </body>
 </html>

@@ -1001,6 +1001,50 @@
     );
   }
 
+  function resolveEventRecord(evOrId) {
+    if (!evOrId) return null;
+    const id = typeof evOrId === 'object' ? evOrId.id : evOrId;
+    if (!id) return typeof evOrId === 'object' ? evOrId : null;
+    const fresh = state.events.find(function (e) {
+      return e.id === id;
+    });
+    return fresh || (typeof evOrId === 'object' ? evOrId : { id: id });
+  }
+
+  function eventSoldCountFromTicketTypes(eventId) {
+    if (!eventId || !state.tickets || !state.tickets.length) return 0;
+    return state.tickets
+      .filter(function (t) {
+        return t.eventId === eventId;
+      })
+      .reduce(function (sum, t) {
+        return sum + (Number(t.ticketsSold) || 0);
+      }, 0);
+  }
+
+  function eventSoldCountFromAttendees(eventId) {
+    if (!eventId || !state.attendeesAll || !state.attendeesAll.length) return 0;
+    let count = 0;
+    state.attendeesAll.forEach(function (row) {
+      if (row.eventId !== eventId) return;
+      const payment = String(row.paymentStatus || row.status || '').trim();
+      if (payment === 'Refunded') return;
+      if (String(row.applicationStatus || '') === 'Denied') return;
+      count += Math.max(1, Number(row.quantity) || 1);
+    });
+    return count;
+  }
+
+  function eventEffectiveTicketsSold(ev) {
+    const resolved = resolveEventRecord(ev);
+    if (!resolved) return 0;
+    return Math.max(
+      eventTicketsSoldCount(resolved),
+      eventSoldCountFromTicketTypes(resolved.id),
+      eventSoldCountFromAttendees(resolved.id)
+    );
+  }
+
   function isEventCancelled(ev) {
     if (!ev) return false;
     const st = String(ev.status || '').toLowerCase();
@@ -1023,10 +1067,10 @@
   }
 
   function eventCanDelete(ev) {
-    if (!ev || !ev.id || state.canDeleteEvents === false) return false;
-    if (ev.locked) return false;
-    if (eventTicketsSoldCount(ev) > 0) return false;
-    if (isEventCancelled(ev)) return false;
+    const resolved = resolveEventRecord(ev);
+    if (!resolved || !resolved.id || state.canDeleteEvents === false) return false;
+    if (eventCanCancel(resolved)) return false;
+    if (isEventCancelled(resolved)) return false;
     return true;
   }
 
@@ -1046,11 +1090,47 @@
     );
   }
 
-  function eventCanCancel(ev) {
-    if (!ev || !ev.id || isEventCancelled(ev)) return false;
-    if (eventTicketsSoldCount(ev) > 0) return true;
-    if (ev.locked) return eventIsPublishedListing(ev);
+  function isEventDraftListing(ev) {
+    const resolved = resolveEventRecord(ev);
+    if (!resolved) return true;
+    const key = String(resolved.statusKey || '').toLowerCase();
+    const st = String(resolved.status || '').toLowerCase();
+    return key === 'draft' || st === 'draft' || key === 'unpublished';
+  }
+
+  function eventPaidBookingsFromAttendees(eventId) {
+    if (!eventId || !state.attendeesAll || !state.attendeesAll.length) return null;
+    let count = 0;
+    state.attendeesAll.forEach(function (row) {
+      if (row.eventId !== eventId) return;
+      if (String(row.applicationStatus || '') === 'Denied') return;
+      if (String(row.paymentStatus || '').trim() !== 'Paid') return;
+      count += Math.max(1, Number(row.quantity) || 1);
+    });
+    return count;
+  }
+
+  /** Refund checkbox only when published/live and there are paid bookings to refund. */
+  function cancelRequiresRefundConfirmation(ev, ctx) {
+    const resolved = resolveEventRecord(ev);
+    if (!resolved || isEventDraftListing(resolved)) return false;
+    if (ctx && ctx.paidBookings != null) return Number(ctx.paidBookings) > 0;
+    const localPaid = eventPaidBookingsFromAttendees(resolved.id);
+    if (localPaid != null) return localPaid > 0;
     return false;
+  }
+
+  function eventCanCancel(ev) {
+    const resolved = resolveEventRecord(ev);
+    if (!resolved || !resolved.id || isEventCancelled(resolved)) return false;
+    if (eventEffectiveTicketsSold(resolved) > 0) return true;
+    if (resolved.locked) return true;
+    const key = String(resolved.statusKey || '').toLowerCase();
+    const published = String(resolved.status || '').toLowerCase() === 'published';
+    if (key === 'upcoming' || key === 'live' || key === 'pending_approval') {
+      return published || Boolean(resolved.ticketSalesEnabled);
+    }
+    return published && Boolean(resolved.ticketSalesEnabled);
   }
 
   function eventDeleteActionHtml(ev) {
@@ -1063,22 +1143,22 @@
   }
 
   function seriesDateActionsCell(child) {
+    const ev = resolveEventRecord(child);
     const parts = [
       '<button type="button" class="org-series-date-btn" data-edit-event="' +
-        esc(child.id) +
+        esc(ev.id) +
         '">Edit</button>',
     ];
-    const cancelled = isEventCancelled(child);
-    if (!cancelled && eventCanCancel(child)) {
+    if (eventCanCancel(ev)) {
       parts.push(
         '<button type="button" class="org-series-date-btn danger" data-cancel-event="' +
-          esc(child.id) +
+          esc(ev.id) +
           '">Cancel</button>'
       );
-    } else if (eventCanDelete(child)) {
+    } else if (eventCanDelete(ev)) {
       parts.push(
         '<button type="button" class="org-series-date-btn danger" data-delete-event="' +
-          esc(child.id) +
+          esc(ev.id) +
           '">Delete</button>'
       );
     }
@@ -1644,6 +1724,9 @@
       renderAttendeesFilterNote();
       if (eventsSubRoute === 'events-attendees') {
         renderAttendees();
+      }
+      if (eventsSubRoute === 'events-list') {
+        renderEvents();
       }
     } else if (errEl) {
       errEl.hidden = false;
@@ -2382,7 +2465,7 @@
       const btn = document.getElementById('org-event-drawer-cancel-btn');
       if (btn) {
         btn.setAttribute('data-cancel-event', ev.id);
-        const sold = eventTicketsSoldCount(ev);
+        const sold = eventEffectiveTicketsSold(ev);
         btn.textContent =
           sold > 0 ? 'Cancel this date (' + sold + ' sold)' : 'Cancel this event';
       }
@@ -3127,6 +3210,76 @@
 
   let pendingPayoutEventId = null;
   let pendingCancelEventId = null;
+  let pendingCancelRefundRequired = false;
+
+  function syncCancelModalRefundUi(opts) {
+    const ev = opts.ev;
+    const sold = opts.sold;
+    const ctx = opts.ctx || null;
+    const isSeriesDate = opts.isSeriesDate;
+    const refundRow = document.getElementById('event-cancel-refund-row');
+    const ticketsEl = document.getElementById('modal-event-cancel-tickets');
+    const warningEl = document.getElementById('modal-event-cancel-warning');
+    const refundLabel = document.getElementById('event-cancel-refund-label');
+    const confirmBtn = document.getElementById('btn-event-cancel-confirm');
+    const checkbox = document.getElementById('event-cancel-refund-confirm');
+    const requiresRefund = cancelRequiresRefundConfirmation(ev, ctx);
+    pendingCancelRefundRequired = requiresRefund;
+    const paidCount =
+      ctx && ctx.paidBookings != null ? Number(ctx.paidBookings) : requiresRefund ? sold : 0;
+
+    if (refundRow) refundRow.hidden = !requiresRefund;
+    if (checkbox && !requiresRefund) checkbox.checked = false;
+
+    if (ticketsEl) {
+      if (requiresRefund) {
+        ticketsEl.hidden = false;
+        ticketsEl.textContent =
+          'You have sold ' +
+          paidCount +
+          ' paid ticket' +
+          (paidCount === 1 ? '' : 's') +
+          ' for this event. We will refund every paying attendee automatically when you confirm.';
+      } else if (sold > 0) {
+        ticketsEl.hidden = false;
+        ticketsEl.textContent =
+          sold +
+          ' registration' +
+          (sold === 1 ? '' : 's') +
+          ' on this date — all free, so no Stripe refund is required.';
+      } else {
+        ticketsEl.hidden = false;
+        ticketsEl.textContent =
+          'No tickets have been sold for this date. It will be removed from your listings.';
+      }
+    }
+
+    if (warningEl) {
+      if (requiresRefund) {
+        const base =
+          'Cancelling will automatically refund all paying attendees through Stripe. This cannot be undone.';
+        warningEl.textContent = isSeriesDate
+          ? 'Only this date will be cancelled — other dates in the series stay live. ' + base
+          : base;
+      } else {
+        warningEl.textContent = isSeriesDate
+          ? 'Only this date will be cancelled — other dates in the series stay live. No attendee refunds are required.'
+          : 'This event will be cancelled and removed from listings. No attendee refunds are required.';
+      }
+    }
+
+    if (refundLabel) {
+      refundLabel.textContent = requiresRefund
+        ? 'I understand all ' +
+          paidCount +
+          ' paying attendee' +
+          (paidCount === 1 ? '' : 's') +
+          ' will receive an automatic full refund'
+        : '';
+    }
+
+    if (confirmBtn) confirmBtn.disabled = requiresRefund ? !(checkbox && checkbox.checked) : false;
+  }
 
   function closePayoutModal() {
     pendingPayoutEventId = null;
@@ -3215,8 +3368,7 @@
   async function confirmRefundsForEvent(eventId) {
     if (
       !window.confirm(
-        'We will verify in Stripe that every paid booking for this event has been fully refunded.\n\n' +
-          'Issue any outstanding refunds in your Stripe dashboard first, then continue.'
+        'We will issue any outstanding refunds and verify in Stripe before clearing your payout hold.\n\nContinue?'
       )
     ) {
       return;
@@ -3457,6 +3609,7 @@
     document.body.classList.remove('org-cancel-modal-open');
     pendingPayoutEventId = null;
     pendingCancelEventId = null;
+    pendingCancelRefundRequired = false;
     pendingDeleteEventId = null;
     const cancelForm = document.getElementById('form-event-cancel');
     if (cancelForm) cancelForm.reset();
@@ -3492,7 +3645,8 @@
           })
         );
       });
-    const sold = eventTicketsSoldCount(ev);
+    const sold = eventEffectiveTicketsSold(ev);
+    if (checkbox) checkbox.checked = false;
 
     if (headingEl) {
       headingEl.textContent = isSeriesDate ? 'Cancel this date' : 'Cancel this event';
@@ -3501,43 +3655,12 @@
       const dateLine = ev && ev.date ? ' · ' + formatDateShort(ev.date) : '';
       titleEl.textContent = ev && ev.title ? '“' + ev.title + '”' + dateLine : '';
     }
-    if (ticketsEl) {
-      if (sold > 0) {
-        ticketsEl.hidden = false;
-        ticketsEl.textContent =
-          'You have sold ' +
-          sold +
-          ' ticket' +
-          (sold === 1 ? '' : 's') +
-          ' for this event. You must refund every attendee within 14 days.';
-      } else {
-        ticketsEl.hidden = true;
-        ticketsEl.textContent = '';
-      }
-    }
     if (policyEl) {
       policyEl.hidden = false;
       policyEl.textContent =
         'Cancelling more than 3 events in a 12-month period may result in your account being suspended from The Networker Hub.';
     }
-    if (warningEl) {
-      const base =
-        'Cancelling will place your payout on hold until refunds are confirmed. Failure to refund attendees within 14 days will result in your account being suspended.';
-      warningEl.textContent = isSeriesDate
-        ? 'Only this date will be cancelled — other dates in the series stay live. ' + base
-        : base;
-    }
-    if (refundLabel) {
-      refundLabel.textContent =
-        sold > 0
-          ? 'I confirm I will refund all ' +
-            sold +
-            ' attendee' +
-            (sold === 1 ? '' : 's') +
-            ' within 14 days through my Stripe account'
-          : 'I confirm I will refund all attendees within 14 days through my Stripe account';
-    }
-    if (confirmBtn) confirmBtn.disabled = !(checkbox && checkbox.checked);
+    syncCancelModalRefundUi({ ev: ev, sold: sold, isSeriesDate: isSeriesDate });
     if (modal) {
       modal.removeAttribute('hidden');
       modal.setAttribute('aria-hidden', 'false');
@@ -3555,24 +3678,13 @@
       .then(function (res) {
         if (!res.ok || !res.data) return;
         const ctx = res.data;
-        const ctxSold = Number(ctx.ticketsSold) || sold;
-        if (ticketsEl && ctxSold > 0) {
-          ticketsEl.hidden = false;
-          ticketsEl.textContent =
-            'You have sold ' +
-            ctxSold +
-            ' ticket' +
-            (ctxSold === 1 ? '' : 's') +
-            ' for this event. You must refund every attendee within 14 days.';
-        }
-        if (refundLabel && ctxSold > 0) {
-          refundLabel.textContent =
-            'I confirm I will refund all ' +
-            ctxSold +
-            ' attendee' +
-            (ctxSold === 1 ? '' : 's') +
-            ' within 14 days through my Stripe account';
-        }
+        syncCancelModalRefundUi({
+          ev: ev,
+          sold: Number(ctx.ticketsSold) || sold,
+          ctx: ctx,
+          isSeriesDate: isSeriesDate,
+        });
+        const policyEl = document.getElementById('modal-event-cancel-policy');
         if (!policyEl || policyEl.hidden) return;
         const past = Number(ctx.cancellationsPastYear) || 0;
         const limit = Number(ctx.cancellationLimit) || 3;
@@ -3600,14 +3712,15 @@
     if (!pendingCancelEventId) return;
     const reason = document.getElementById('event-cancel-reason')?.value;
     const details = document.getElementById('event-cancel-details')?.value.trim() || '';
-    const refundTermsConfirmed = document.getElementById('event-cancel-refund-confirm')?.checked;
+    const refundCheckbox = document.getElementById('event-cancel-refund-confirm');
+    const refundTermsConfirmed = refundCheckbox ? refundCheckbox.checked : false;
     const confirmBtn = document.getElementById('btn-event-cancel-confirm');
     if (!reason) {
       alert('Select a cancellation reason.');
       return;
     }
-    if (!refundTermsConfirmed) {
-      alert('Confirm you will refund all attendees within 14 days.');
+    if (pendingCancelRefundRequired && !refundTermsConfirmed) {
+      alert('Confirm that paying attendees will receive an automatic refund.');
       return;
     }
     if (confirmBtn) confirmBtn.disabled = true;
@@ -3618,7 +3731,7 @@
         eventId,
         reason,
         details,
-        refundTermsConfirmed,
+        refundTermsConfirmed: pendingCancelRefundRequired ? refundTermsConfirmed : true,
       }),
     });
     if (!ok) {
@@ -4081,7 +4194,7 @@
     banner.hidden = false;
     const names = held.map((ev) => esc(ev.title)).join(', ');
     banner.innerHTML =
-      '<p><strong>Your payout is on hold</strong> — issue refunds in Stripe for all paid bookings, then click <em>Confirm refunds issued</em>. We verify each refund in Stripe before clearing the hold. Events: ' +
+      '<p><strong>Your payout is on hold</strong> — automatic refunds are being processed in Stripe. If this takes more than a few minutes, click <em>Confirm refunds issued</em> on Revenue to retry. Events: ' +
       names +
       '.</p>';
   }
@@ -4131,7 +4244,7 @@
         '</td><td class="org-td-name">' +
         eventTitleCellHtml(ev) +
         (ev.needsRefundConfirmation
-          ? '<p class="org-payout-held-note">Payout on hold — confirm refunds issued</p>'
+          ? '<p class="org-payout-held-note">Payout on hold — refunds processing</p>'
           : '') +
         '</td><td>' +
         esc(ev.ticketsSoldLabel || '0') +

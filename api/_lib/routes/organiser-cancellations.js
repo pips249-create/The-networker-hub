@@ -91,11 +91,34 @@ module.exports = async function handler(req, res) {
       details: body.details,
       refundTermsConfirmed: body.refundTermsConfirmed,
     });
+
+    let message = 'Event cancelled.';
+    const paid = Number(result.paidBookings) || 0;
+    if (paid > 0) {
+      if (result.refundsConfirmed) {
+        message =
+          paid === 1
+            ? 'Event cancelled. The paying attendee will receive an automatic refund.'
+            : `Event cancelled. All ${paid} paying attendees will receive an automatic refund.`;
+      } else if (result.refundResult?.failed?.length) {
+        const failed = result.refundResult.failed.length;
+        message =
+          failed === 1
+            ? 'Event cancelled, but 1 refund could not be issued automatically. Open Revenue and click “Confirm refunds issued”, or contact support.'
+            : `Event cancelled, but ${failed} refunds could not be issued automatically. Open Revenue and click “Confirm refunds issued”, or contact support.`;
+      } else {
+        message =
+          'Event cancelled. Refunds are being processed in Stripe — your payout hold will clear once each refund is confirmed.';
+      }
+    }
+
     return json(res, 200, {
       ok: true,
       event: result.event,
       cancellation: result.cancellation,
-      message: 'Event cancelled. Your payout is on hold until refunds are confirmed.',
+      refundResult: result.refundResult,
+      refundsConfirmed: result.refundsConfirmed,
+      message,
     });
   } catch (e) {
     return json(res, e.status || 500, { error: 'cancellation_failed', message: e.message });
