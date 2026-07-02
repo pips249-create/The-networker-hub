@@ -94,18 +94,43 @@
     return String(s);
   }
 
+  function eventTicketsSoldCount(ev) {
+    if (!ev) return 0;
+    const label = String(ev.ticketsSoldLabel || '').trim();
+    if (label) {
+      const slash = label.match(/^(\d+)\s*\/\s*(\d+|—|-)/);
+      if (slash) return Number(slash[1]) || 0;
+      const soldWord = label.match(/^(\d+)\s+sold$/i);
+      if (soldWord) return Number(soldWord[1]) || 0;
+      if (/^\d+$/.test(label)) return Number(label) || 0;
+    }
+    const direct = Number(ev.ticketsSold);
+    return Number.isFinite(direct) && direct > 0 ? direct : 0;
+  }
+
   function eventIsPublishedListing(ev) {
     if (!ev) return false;
     const st = String(ev.status || '').toLowerCase();
-    if (st === 'cancelled') return false;
-    return st === 'published' || ev.approvalStatus === 'Approved';
+    const key = String(ev.statusKey || '').toLowerCase();
+    if (st === 'cancelled' || key === 'cancelled') return false;
+    const approval = String(ev.approvalStatus || '').toLowerCase();
+    return (
+      st === 'published' ||
+      approval === 'approved' ||
+      key === 'live' ||
+      key === 'upcoming' ||
+      key === 'pending_approval' ||
+      key === 'archived'
+    );
   }
 
   function eventCanCancelListing(ev) {
     if (!ev || !ev.id) return false;
-    if (!eventIsPublishedListing(ev)) return false;
-    const sold = Number(ev.ticketsSold) || 0;
-    return Boolean(ev.locked) || sold > 0;
+    const st = String(ev.status || '').toLowerCase();
+    const key = String(ev.statusKey || '').toLowerCase();
+    if (st === 'cancelled' || key === 'cancelled') return false;
+    if (eventTicketsSoldCount(ev) > 0) return true;
+    return Boolean(ev.locked) && eventIsPublishedListing(ev);
   }
 
   function renderEventOverviewStats(ev) {
@@ -114,9 +139,12 @@
     const ticketsEl = document.getElementById('ee-stat-tickets');
     const revenueEl = document.getElementById('ee-stat-revenue');
     const statusEl = document.getElementById('ee-stat-status');
-    const sold = Number(ev.ticketsSold) || 0;
+    const sold = eventTicketsSoldCount(ev);
     const capacity = Number(ev.ticketsCapacity) || 0;
-    if (ticketsEl) ticketsEl.textContent = formatTicketsSoldLabel(sold, capacity);
+    if (ticketsEl) {
+      ticketsEl.textContent =
+        ev.ticketsSoldLabel || formatTicketsSoldLabel(sold, capacity);
+    }
     if (revenueEl) {
       revenueEl.textContent =
         ev.revenueDisplay || formatGbpAmount(ev.revenueNum != null ? ev.revenueNum : 0);

@@ -1001,44 +1001,56 @@
     );
   }
 
+  function isEventCancelled(ev) {
+    if (!ev) return false;
+    const st = String(ev.status || '').toLowerCase();
+    const key = String(ev.statusKey || '').toLowerCase();
+    return st === 'cancelled' || key === 'cancelled';
+  }
+
   function eventTicketsSoldCount(ev) {
     if (!ev) return 0;
-    const direct = Number(ev.ticketsSold);
-    if (Number.isFinite(direct) && direct > 0) return direct;
     const label = String(ev.ticketsSoldLabel || '').trim();
-    const slash = label.match(/^(\d+)\s*\/\s*(\d+)/);
-    if (slash) return Number(slash[1]) || 0;
-    const plain = label.match(/^(\d+)$/);
-    if (plain) return Number(plain[1]) || 0;
-    return 0;
+    if (label) {
+      const slash = label.match(/^(\d+)\s*\/\s*(\d+|—|-)/);
+      if (slash) return Number(slash[1]) || 0;
+      const soldWord = label.match(/^(\d+)\s+sold$/i);
+      if (soldWord) return Number(soldWord[1]) || 0;
+      if (/^\d+$/.test(label)) return Number(label) || 0;
+    }
+    const direct = Number(ev.ticketsSold);
+    return Number.isFinite(direct) && direct > 0 ? direct : 0;
   }
 
   function eventCanDelete(ev) {
     if (!ev || !ev.id || state.canDeleteEvents === false) return false;
     if (ev.locked) return false;
     if (eventTicketsSoldCount(ev) > 0) return false;
-    const st = String(ev.statusKey || ev.status || '').toLowerCase();
-    if (st === 'cancelled') return false;
+    if (isEventCancelled(ev)) return false;
     return true;
   }
 
   function eventIsPublishedListing(ev) {
     if (!ev) return false;
+    if (isEventCancelled(ev)) return false;
     const st = String(ev.status || '').toLowerCase();
     const key = String(ev.statusKey || '').toLowerCase();
-    if (st === 'cancelled' || key === 'cancelled') return false;
+    const approval = String(ev.approvalStatus || '').toLowerCase();
     return (
       st === 'published' ||
-      ev.approvalStatus === 'Approved' ||
+      approval === 'approved' ||
       key === 'live' ||
-      key === 'upcoming'
+      key === 'upcoming' ||
+      key === 'pending_approval' ||
+      key === 'archived'
     );
   }
 
   function eventCanCancel(ev) {
-    if (!ev || !ev.id) return false;
-    if (!eventIsPublishedListing(ev)) return false;
-    return eventTicketsSoldCount(ev) > 0 || Boolean(ev.locked);
+    if (!ev || !ev.id || isEventCancelled(ev)) return false;
+    if (eventTicketsSoldCount(ev) > 0) return true;
+    if (ev.locked) return eventIsPublishedListing(ev);
+    return false;
   }
 
   function eventDeleteActionHtml(ev) {
@@ -1056,7 +1068,7 @@
         esc(child.id) +
         '">Edit</button>',
     ];
-    const cancelled = String(child.status || '').toLowerCase() === 'cancelled';
+    const cancelled = isEventCancelled(child);
     if (!cancelled && eventCanCancel(child)) {
       parts.push(
         '<button type="button" class="org-series-date-btn danger" data-cancel-event="' +
@@ -1227,9 +1239,8 @@
     const title = ev.title;
     const shortTitle = String(title || 'Event').slice(0, 32);
     const isSeriesParent = ev.isSeries && ev.seriesCount > 1;
-    const cancelled = String(ev.status || '').toLowerCase() === 'cancelled';
     const cancelItem =
-      !isSeriesParent && eventCanCancel(ev) && !cancelled
+      !isSeriesParent && eventCanCancel(ev)
         ? '<button type="button" class="org-action-item danger" data-cancel-event="' +
           esc(id) +
           '"><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Cancel this event</strong><span>Cancel a published event with ticket sales</span></span></button>'
