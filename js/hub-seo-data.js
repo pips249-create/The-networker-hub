@@ -71,7 +71,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "How can I advertise my business on The Networker Hub?",
-      "answer": "Paid Sponsor Hub placements on the events directory, organisers browse, and business opportunities — see /advertising.html for guide pricing. Email sales@the-networker.co.uk. You can also list events or business opportunities organically."
+      "answer": "Paid Sponsor Hub placements are available on the events directory, organisers browse, and business opportunities — see /advertising.html for guide pricing. Email sales@the-networker.co.uk. You can also list events or business opportunities to reach the network organically."
     },
     {
       "question": "How do organisers download attendee lists?",
@@ -99,9 +99,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "https://the-networker.co.uk",
-          "logo": "https://the-networker.co.uk/assets/logo.png",
-          "image": "https://the-networker.co.uk/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@the-networker.co.uk",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -135,18 +135,18 @@ window.HUB_SEO_DATA = {
           "@context": "https://schema.org",
           "@type": "WebSite",
           "name": "The Networker Hub",
-          "url": "https://the-networker.co.uk",
+          "url": "https://www.thenetworkerhub.com",
           "description": "Browse UK networking events and business opportunities. Free to explore; create a free account to buy tickets or send enquiries.",
           "publisher": {
             "@type": "Organization",
             "name": "The Networker Group Ltd",
-            "url": "https://the-networker.co.uk"
+            "url": "https://www.thenetworkerhub.com"
           },
           "potentialAction": {
             "@type": "SearchAction",
             "target": {
               "@type": "EntryPoint",
-              "urlTemplate": "https://the-networker.co.uk/events/?q={search_term_string}"
+              "urlTemplate": "https://www.thenetworkerhub.com/events/?q={search_term_string}"
             },
             "query-input": "required name=search_term_string"
           }
@@ -154,8 +154,8 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          "@id": "https://the-networker.co.uk/faq.html#faq",
-          "url": "https://the-networker.co.uk/faq.html",
+          "@id": "https://www.thenetworkerhub.com/faq.html#faq",
+          "url": "https://www.thenetworkerhub.com/faq.html",
           "name": "The Networker Hub — Frequently asked questions",
           "mainEntity": [
             {
@@ -218,9 +218,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "https://the-networker.co.uk",
-          "logo": "https://the-networker.co.uk/assets/logo.png",
-          "image": "https://the-networker.co.uk/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@the-networker.co.uk",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -253,8 +253,8 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          "@id": "https://the-networker.co.uk/faq.html#faq",
-          "url": "https://the-networker.co.uk/faq.html",
+          "@id": "https://www.thenetworkerhub.com/faq.html#faq",
+          "url": "https://www.thenetworkerhub.com/faq.html",
           "name": "The Networker Hub — Frequently asked questions",
           "mainEntity": [
             {
@@ -398,7 +398,7 @@ window.HUB_SEO_DATA = {
               "name": "How can I advertise my business on The Networker Hub?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Paid Sponsor Hub placements on the events directory, organisers browse, and business opportunities — see /advertising.html for guide pricing. Email sales@the-networker.co.uk. You can also list events or business opportunities organically."
+                "text": "Paid Sponsor Hub placements are available on the events directory, organisers browse, and business opportunities — see /advertising.html for guide pricing. Email sales@the-networker.co.uk. You can also list events or business opportunities to reach the network organically."
               }
             },
             {
@@ -445,9 +445,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "https://the-networker.co.uk",
-          "logo": "https://the-networker.co.uk/assets/logo.png",
-          "image": "https://the-networker.co.uk/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@the-networker.co.uk",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -480,8 +480,8 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "ContactPage",
-          "@id": "https://the-networker.co.uk/contact.html",
-          "url": "https://the-networker.co.uk/contact.html",
+          "@id": "https://www.thenetworkerhub.com/contact.html",
+          "url": "https://www.thenetworkerhub.com/contact.html",
           "name": "Contact The Networker Hub",
           "description": "Contact The Networker Hub or chat with Hubert, your business butler and concierge, for help with events, tickets, and business opportunities.",
           "mainEntity": {
@@ -490,7 +490,7 @@ window.HUB_SEO_DATA = {
             "name": "Hubert",
             "applicationCategory": "BusinessApplication",
             "operatingSystem": "Web",
-            "url": "https://the-networker.co.uk/contact.html",
+            "url": "https://www.thenetworkerhub.com/contact.html",
             "description": "Hubert is the business butler and concierge for The Networker Hub — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, and navigate organiser tools.",
             "offers": {
               "@type": "Offer",
@@ -500,7 +500,7 @@ window.HUB_SEO_DATA = {
             "provider": {
               "@type": "Organization",
               "name": "The Networker Group Ltd",
-              "url": "https://the-networker.co.uk"
+              "url": "https://www.thenetworkerhub.com"
             }
           }
         },
@@ -510,7 +510,7 @@ window.HUB_SEO_DATA = {
           "name": "Hubert",
           "applicationCategory": "BusinessApplication",
           "operatingSystem": "Web",
-          "url": "https://the-networker.co.uk/contact.html",
+          "url": "https://www.thenetworkerhub.com/contact.html",
           "description": "Hubert is the business butler and concierge for The Networker Hub — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, and navigate organiser tools.",
           "offers": {
             "@type": "Offer",
@@ -520,7 +520,7 @@ window.HUB_SEO_DATA = {
           "provider": {
             "@type": "Organization",
             "name": "The Networker Group Ltd",
-            "url": "https://the-networker.co.uk"
+            "url": "https://www.thenetworkerhub.com"
           }
         }
       ]
@@ -533,9 +533,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "https://the-networker.co.uk",
-          "logo": "https://the-networker.co.uk/assets/logo.png",
-          "image": "https://the-networker.co.uk/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@the-networker.co.uk",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -568,7 +568,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "AboutPage",
-          "url": "https://the-networker.co.uk/about.html",
+          "url": "https://www.thenetworkerhub.com/about.html",
           "name": "About The Networker Hub",
           "description": "The Networker Hub connects UK business owners and professionals with networking events, exhibitions, and business opportunities.",
           "mainEntity": {
@@ -576,9 +576,9 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker Hub",
             "legalName": "The Networker Group Ltd",
-            "url": "https://the-networker.co.uk",
-            "logo": "https://the-networker.co.uk/assets/logo.png",
-            "image": "https://the-networker.co.uk/assets/logo.png",
+            "url": "https://www.thenetworkerhub.com",
+            "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+            "image": "https://www.thenetworkerhub.com/assets/logo.png",
             "email": "hello@the-networker.co.uk",
             "description": "UK platform for networking events, exhibitions, and business opportunities.",
             "address": {
@@ -619,9 +619,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "https://the-networker.co.uk",
-          "logo": "https://the-networker.co.uk/assets/logo.png",
-          "image": "https://the-networker.co.uk/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@the-networker.co.uk",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -654,7 +654,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "WebPage",
-          "url": "https://the-networker.co.uk/advertising",
+          "url": "https://www.thenetworkerhub.com/advertising",
           "name": "Advertising & sponsorship – The Networker Hub",
           "description": "Sponsor placements and advertising rates for the events directory and business opportunities on The Networker Hub.",
           "about": {
@@ -662,9 +662,9 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker Hub",
             "legalName": "The Networker Group Ltd",
-            "url": "https://the-networker.co.uk",
-            "logo": "https://the-networker.co.uk/assets/logo.png",
-            "image": "https://the-networker.co.uk/assets/logo.png",
+            "url": "https://www.thenetworkerhub.com",
+            "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+            "image": "https://www.thenetworkerhub.com/assets/logo.png",
             "email": "hello@the-networker.co.uk",
             "description": "UK platform for networking events, exhibitions, and business opportunities.",
             "address": {
@@ -705,9 +705,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "https://the-networker.co.uk",
-          "logo": "https://the-networker.co.uk/assets/logo.png",
-          "image": "https://the-networker.co.uk/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@the-networker.co.uk",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -740,14 +740,14 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          "@id": "https://the-networker.co.uk/events/",
-          "url": "https://the-networker.co.uk/events/",
+          "@id": "https://www.thenetworkerhub.com/events/",
+          "url": "https://www.thenetworkerhub.com/events/",
           "name": "Networking events — The Networker Hub",
           "description": "Browse UK networking events, meetings, webinars, workshops, exhibitions, and awards.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker Hub",
-            "url": "https://the-networker.co.uk"
+            "url": "https://www.thenetworkerhub.com"
           }
         }
       ]
@@ -760,9 +760,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "https://the-networker.co.uk",
-          "logo": "https://the-networker.co.uk/assets/logo.png",
-          "image": "https://the-networker.co.uk/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@the-networker.co.uk",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -795,14 +795,14 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          "@id": "https://the-networker.co.uk/opportunities/",
-          "url": "https://the-networker.co.uk/opportunities/",
+          "@id": "https://www.thenetworkerhub.com/opportunities/",
+          "url": "https://www.thenetworkerhub.com/opportunities/",
           "name": "Business opportunities — The Networker Hub",
           "description": "Browse franchises, partnerships, and business opportunities across the UK.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker Hub",
-            "url": "https://the-networker.co.uk"
+            "url": "https://www.thenetworkerhub.com"
           }
         }
       ]
@@ -815,9 +815,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "https://the-networker.co.uk",
-          "logo": "https://the-networker.co.uk/assets/logo.png",
-          "image": "https://the-networker.co.uk/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@the-networker.co.uk",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -850,7 +850,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "WebPage",
-          "url": "https://the-networker.co.uk/legal-policies.html",
+          "url": "https://www.thenetworkerhub.com/legal-policies.html",
           "name": "Legal & policies — The Networker Hub",
           "description": "Privacy policy, terms, refunds, and cookie information for The Networker Hub."
         }

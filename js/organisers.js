@@ -48,11 +48,12 @@
   }
 
   function organiserHref(org) {
-    if (org && org.id) {
-      return 'organiser.html?id=' + encodeURIComponent(org.id);
+    if (window.HubPublicUrls && window.HubPublicUrls.organiserDetailHref) {
+      return window.HubPublicUrls.organiserDetailHref(org);
     }
-    var slug = org.slug ? String(org.slug).trim() : '';
+    var slug = org && org.slug ? String(org.slug).trim() : '';
     if (slug) return '/organisers/' + encodeURIComponent(slug);
+    if (org && org.id) return 'organiser.html?id=' + encodeURIComponent(org.id);
     return 'organiser.html';
   }
 

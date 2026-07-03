@@ -959,8 +959,13 @@
   }
 
   function apiRowToSeed(row) {
+    var slug = row.slug ? String(row.slug).trim() : '';
+    if (!slug && row.title && window.HubPublicUrls && window.HubPublicUrls.slugifyTitle) {
+      slug = window.HubPublicUrls.slugifyTitle(row.title);
+    }
     return {
       id: row.id,
+      slug: slug,
       type: row.type,
       tags: row.tags || [row.type],
       featured: Boolean(row.featured),
@@ -1051,9 +1056,26 @@
       });
   }
 
+  function getBySlug(slug) {
+    var key = String(slug || '').trim().toLowerCase();
+    if (!key) return null;
+    var catalog = loadCatalog();
+    for (var i = 0; i < catalog.length; i++) {
+      var item = catalog[i];
+      if (String(item.slug || '').trim().toLowerCase() === key) return item;
+      if (window.HubPublicUrls && window.HubPublicUrls.slugifyTitle) {
+        var derived = window.HubPublicUrls.slugifyTitle(item.title);
+        if (derived && derived === key) return item;
+      }
+    }
+    return null;
+  }
+
   function getById(id) {
     var key = String(id || '');
     if (!key) return null;
+    var bySlug = getBySlug(key);
+    if (bySlug) return bySlug;
     var catalog = loadCatalog();
     for (var i = 0; i < catalog.length; i++) {
       if (catalog[i].id === key) return catalog[i];
@@ -1061,15 +1083,12 @@
     return null;
   }
 
-  function fetchById(id) {
-    var key = String(id || '');
-    if (!key) return Promise.resolve(null);
-    var cached = getById(key);
+  function fetchBySlugOrId(key) {
+    var lookup = String(key || '').trim();
+    if (!lookup) return Promise.resolve(null);
+    var cached = getBySlug(lookup) || getById(lookup);
     if (cached) return Promise.resolve(cached);
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(key)) {
-      return Promise.resolve(null);
-    }
-    return fetch('/api/opportunities?id=' + encodeURIComponent(key), { credentials: 'omit' })
+    return fetch('/api/opportunities?slug=' + encodeURIComponent(lookup), { credentials: 'omit' })
       .then(function (res) {
         return res.json();
       })
@@ -1082,10 +1101,17 @@
       });
   }
 
+  function fetchById(id) {
+    return fetchBySlugOrId(id);
+  }
+
   function detailHref(item) {
+    if (window.HubPublicUrls && window.HubPublicUrls.opportunityDetailHref) {
+      return window.HubPublicUrls.opportunityDetailHref(item);
+    }
     var id = typeof item === 'string' ? item : item && item.id;
-    if (!id) return 'index.html';
-    return 'opportunity.html?id=' + encodeURIComponent(id);
+    if (!id) return '/opportunities/';
+    return '/opportunities/' + encodeURIComponent(id);
   }
 
   function typeClass(type) {
@@ -1109,7 +1135,9 @@
     loadCatalog: loadCatalog,
     loadCatalogAsync: loadCatalogAsync,
     getById: getById,
+    getBySlug: getBySlug,
     fetchById: fetchById,
+    fetchBySlugOrId: fetchBySlugOrId,
     apiRowToSeed: apiRowToSeed,
     detailHref: detailHref,
     typeClass: typeClass,

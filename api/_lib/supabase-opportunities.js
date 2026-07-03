@@ -9,6 +9,8 @@ const {
   addMonths,
   listingPaymentCurrent,
 } = require('./opportunity-listing-pricing');
+const { ensureOpportunitySlug, publicOpportunitySlug, slugMatchesPublicRow, isUuidSlug } =
+  require('./opportunity-slug');
 
 const HOST_COLORS = [
   '#7a5c0a',
@@ -113,6 +115,7 @@ function rowToListing(row) {
   const meta = normalizeMeta(row.meta);
   return {
     id: row.id,
+    slug: publicOpportunitySlug(row),
     type: row.type,
     tags: Array.isArray(row.tags) && row.tags.length ? row.tags.slice() : [row.type],
     featured: Boolean(row.featured),
@@ -255,7 +258,7 @@ async function activateOpportunityListingPayment(opportunityId, months, sessionI
   const sb = getSupabaseAdmin();
   const { data: existing, error: loadErr } = await sb
     .from('business_opportunities')
-    .select('id, listing_expires_at, published_at')
+    .select('id, listing_expires_at, published_at, title, slug')
     .eq('id', id)
     .maybeSingle();
   if (loadErr) throw new Error(loadErr.message);
@@ -267,12 +270,18 @@ async function activateOpportunityListingPayment(opportunityId, months, sessionI
     base = new Date(existing.listing_expires_at);
   }
   const expiresAt = addMonths(base, termMonths);
+  const slug = await ensureOpportunitySlug(sb, {
+    title: existing.title,
+    opportunityId: id,
+    currentSlug: existing.slug,
+  });
 
   const { data, error } = await sb
     .from('business_opportunities')
     .update({
       status: 'published',
       approval_status: 'Approved',
+      slug,
       published_at: existing.published_at || now.toISOString(),
       listing_months: termMonths,
       listing_paid_at: now.toISOString(),
@@ -323,6 +332,54 @@ async function getPublishedOpportunityById(id) {
   if (error) throw new Error(error.message);
   if (!data || !listingPaymentCurrent(data)) return null;
   return rowToListing(data);
+}
+
+async function getPublishedOpportunityBySlug(slug) {
+  const s = String(slug || '').trim();
+  if (!s) return null;
+  const sb = getSupabaseAdmin();
+
+  if (isUuidSlug(s)) {
+    return getPublishedOpportunityById(s);
+  }
+
+  const exact = await sb
+    .from('business_opportunities')
+    .select('*')
+    .eq('slug', s)
+    .eq('status', 'published')
+    .eq('approval_status', 'Approved')
+    .maybeSingle();
+  if (exact.error) throw new Error(exact.error.message);
+  if (exact.data && listingPaymentCurrent(exact.data)) {
+    return rowToListing(exact.data);
+  }
+
+  const prefix = s.replace(/-\d+$/, '') || s;
+  const { data: candidates, error: candErr } = await sb
+    .from('business_opportunities')
+    .select('*')
+    .eq('status', 'published')
+    .eq('approval_status', 'Approved')
+    .ilike('slug', prefix + '%')
+    .limit(32);
+  if (candErr) throw new Error(candErr.message);
+  let match = (candidates || []).find((row) => slugMatchesPublicRow(row, s));
+  if (match && listingPaymentCurrent(match)) {
+    return rowToListing(match);
+  }
+
+  const { data: published, error: pubErr } = await sb
+    .from('business_opportunities')
+    .select('id, slug, title')
+    .eq('status', 'published')
+    .eq('approval_status', 'Approved')
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .limit(2500);
+  if (pubErr) throw new Error(pubErr.message);
+  const hit = (published || []).find((row) => slugMatchesPublicRow(row, s));
+  if (!hit) return null;
+  return getPublishedOpportunityById(hit.id);
 }
 
 async function getOpportunityById(id) {
@@ -385,6 +442,11 @@ async function createOpportunity(payload) {
   if (!row.title) throw new Error('missing_title');
   if (!row.host) row.host = 'Draft listing';
   if (!row.type) row.type = 'business-opportunity';
+  row.slug = await ensureOpportunitySlug(sb, {
+    title: row.title,
+    opportunityId: null,
+    currentSlug: null,
+  });
   const { data, error } = await sb.from('business_opportunities').insert(row).select('*').single();
   if (error) throw new Error(error.message);
   return rowToListing(data);
@@ -392,7 +454,13 @@ async function createOpportunity(payload) {
 
 async function updateOpportunity(id, payload) {
   const sb = getSupabaseAdmin();
+  const existing = await getOpportunityById(id);
   const row = await buildOpportunityRow(payload, id, 'update');
+  row.slug = await ensureOpportunitySlug(sb, {
+    title: row.title || existing?.title,
+    opportunityId: id,
+    currentSlug: existing?.slug,
+  });
   const { data, error } = await sb.from('business_opportunities').update(row).eq('id', id).select('*').single();
   if (error) throw new Error(error.message);
   return rowToListing(data);
@@ -620,6 +688,7 @@ module.exports = {
   rowToListing,
   listPublishedOpportunities,
   getPublishedOpportunityById,
+  getPublishedOpportunityBySlug,
   getOpportunityById,
   listOpportunitiesForSession,
   opportunityOwnedBySession,

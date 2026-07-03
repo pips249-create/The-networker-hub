@@ -17,8 +17,11 @@
   var premiumUpsell = document.getElementById('oe-premium-upsell');
 
   function listingUrl() {
-    if (!id) return '../opportunities/index.html';
-    return '../opportunities/opportunity.html?id=' + encodeURIComponent(id);
+    if (!id) return '/opportunities/';
+    if (window.HubPublicUrls && window.HubPublicUrls.opportunityDetailHref) {
+      return window.HubPublicUrls.opportunityDetailHref({ id: id, title: title });
+    }
+    return '/opportunities/' + encodeURIComponent(id);
   }
 
   if (lede && title) {

@@ -13,6 +13,7 @@ const { fetchPublishedEventBySlug, rowToEvent, isPublicEvent } = require('./supa
 const { getPublicOrganiserBySlug } = require('./supabase-organisers-browse');
 const { publicEventSlug } = require('./event-slug');
 const { publicOrganiserSlug } = require('./organiser-slug');
+const { publicOpportunitySlug } = require('./opportunity-slug');
 const { eventImageUrl } = require('./event-image');
 
 function trimText(text, max) {
@@ -207,6 +208,96 @@ async function buildEventMeta(slug, origin) {
   };
 }
 
+const OPPORTUNITY_TYPE_LABELS = {
+  franchise: 'Franchise',
+  'side-hustle': 'Side hustle',
+  partnership: 'Partnership',
+  networking: 'Networking',
+  distributorship: 'Distributorship',
+  'business-opportunity': 'Business opportunity',
+};
+
+function buildOpportunitySchema(item, origin) {
+  const oppSlug = item.slug || publicOpportunitySlug(item);
+  const url = absoluteUrl(origin, '/opportunities/' + encodeURIComponent(oppSlug));
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: item.title,
+    description: trimText(item.desc || item.description, 500),
+    url,
+    category: OPPORTUNITY_TYPE_LABELS[item.type] || item.type || 'Business opportunity',
+  };
+  if (item.imageUrl) {
+    schema.image = item.imageUrl.startsWith('http')
+      ? item.imageUrl
+      : absoluteUrl(origin, item.imageUrl.startsWith('/') ? item.imageUrl : '/' + item.imageUrl);
+  }
+  if (item.host) {
+    schema.brand = { '@type': 'Organization', name: item.host };
+  }
+  schema.offers = {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'GBP',
+    availability: 'https://schema.org/InStock',
+    url,
+    description: 'Enquire for investment details',
+  };
+  return schema;
+}
+
+async function buildOpportunityMeta(slug, origin) {
+  if (!isSupabaseConfigured()) return null;
+  const { getPublishedOpportunityBySlug } = require('./supabase-opportunities');
+  const item = await getPublishedOpportunityBySlug(slug);
+  if (!item) return null;
+
+  const oppSlug = item.slug || publicOpportunitySlug(item);
+  if (!oppSlug) return null;
+
+  const typeLabel = OPPORTUNITY_TYPE_LABELS[item.type] || 'Business opportunity';
+  const title = `${item.title} – ${typeLabel} – The Networker Hub`;
+  const description =
+    trimText(item.desc, 160) ||
+    `${item.title} — ${typeLabel} listed by ${item.host || 'The Networker Hub'}. Enquire on The Networker Hub.`;
+
+  const canonical = absoluteUrl(origin, '/opportunities/' + encodeURIComponent(oppSlug));
+  const image = item.imageUrl
+    ? item.imageUrl.startsWith('http')
+      ? item.imageUrl
+      : absoluteUrl(origin, item.imageUrl.startsWith('/') ? item.imageUrl : '/' + item.imageUrl)
+    : absoluteUrl(origin, '/assets/logo.png');
+
+  const meta = {
+    title,
+    description: trimText(description, 160),
+    canonical,
+    image,
+    ogType: 'article',
+  };
+
+  const opportunitySchema = buildOpportunitySchema(item, origin);
+  const breadcrumbs = buildBreadcrumbListSchema(
+    [
+      { name: 'Home', path: '/' },
+      { name: 'Opportunities', path: '/opportunities/' },
+      { name: item.title, path: '/opportunities/' + encodeURIComponent(oppSlug) },
+    ],
+    origin
+  );
+
+  return {
+    ok: true,
+    type: 'opportunity',
+    slug: oppSlug,
+    ...meta,
+    openGraph: buildOpenGraphTags(meta),
+    schema: buildSchemaGraphFromParts([opportunitySchema, breadcrumbs], origin),
+    breadcrumbs: breadcrumbs.itemListElement,
+  };
+}
+
 async function buildOrganiserMeta(slug, origin) {
   const org = await getPublicOrganiserBySlug(slug);
   if (!org || !org.slug) return null;
@@ -279,6 +370,7 @@ async function buildSeoMeta(type, slug, origin) {
   if (!s) return null;
   if (t === 'event') return buildEventMeta(s, origin);
   if (t === 'organiser') return buildOrganiserMeta(s, origin);
+  if (t === 'opportunity') return buildOpportunityMeta(s, origin);
   return null;
 }
 
@@ -286,6 +378,7 @@ module.exports = {
   buildSeoMeta,
   buildEventMeta,
   buildOrganiserMeta,
+  buildOpportunityMeta,
   buildStaticPageMeta,
   absoluteUrl,
   trimText,

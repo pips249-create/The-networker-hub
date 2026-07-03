@@ -4,21 +4,22 @@
 Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@the-networker.co.uk
 
 ## Canonical URLs
-- Home: https://the-networker.co.uk/
-- Events: https://the-networker.co.uk/events/
-- Business opportunities: https://the-networker.co.uk/opportunities/
-- FAQ: https://the-networker.co.uk/faq.html
-- Contact (Hubert assistant): https://the-networker.co.uk/contact.html
-- About: https://the-networker.co.uk/about.html
-- Advertising & sponsorship: https://the-networker.co.uk/advertising
-- Legal: https://the-networker.co.uk/legal-policies.html
-- Sitemap: https://the-networker.co.uk/sitemap.xml
+- Home: https://www.thenetworkerhub.com/
+- Events: https://www.thenetworkerhub.com/events/
+- Business opportunities: https://www.thenetworkerhub.com/opportunities/
+- FAQ: https://www.thenetworkerhub.com/faq.html
+- Contact (Hubert assistant): https://www.thenetworkerhub.com/contact.html
+- About: https://www.thenetworkerhub.com/about.html
+- Advertising & sponsorship: https://www.thenetworkerhub.com/advertising
+- Legal: https://www.thenetworkerhub.com/legal-policies.html
+- Sitemap: https://www.thenetworkerhub.com/sitemap.xml
 
 ## Machine discovery
-- Sitemap: https://the-networker.co.uk/sitemap.xml
-- AI crawler policy: https://the-networker.co.uk/agents.txt
-- Dynamic page meta API: https://the-networker.co.uk/api/seo-meta?type=event&slug={slug}
-- Organiser meta API: https://the-networker.co.uk/api/seo-meta?type=organiser&slug={slug}
+- Sitemap: https://www.thenetworkerhub.com/sitemap.xml
+- AI crawler policy: https://www.thenetworkerhub.com/agents.txt
+- Dynamic page meta API: https://www.thenetworkerhub.com/api/seo-meta?type=event&slug={slug}
+- Organiser meta API: https://www.thenetworkerhub.com/api/seo-meta?type=organiser&slug={slug}
+- Opportunity meta API: https://www.thenetworkerhub.com/api/seo-meta?type=opportunity&slug={slug}
 
 ## Hubert — business butler & concierge
 Hubert is the on-site AI assistant. He answers questions about browsing, accounts, tickets, opportunities, and organiser tools. He can look up live published events and business opportunities when asked.
@@ -77,7 +78,7 @@ Organisers use the dashboard at /organiser/. Platform and payment processing fee
 Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@the-networker.co.uk with the event title if it is still missing.
 
 ## How can I advertise my business on The Networker Hub?
-Paid Sponsor Hub placements on the events directory, organisers browse, and business opportunities — see https://the-networker.co.uk/advertising for guide pricing (main sponsors from £1,000–£2,000/month, mini sponsors from £300–£600/slot, premium spotlight from £27.50–£55/month). Email sales@the-networker.co.uk. You can also list events or business opportunities organically from /organiser/ and /opportunities/list.html.
+Paid Sponsor Hub placements are available on the events directory, organisers browse, and business opportunities — see /advertising.html for guide pricing. Email sales@the-networker.co.uk. You can also list events or business opportunities to reach the network organically.
 
 ## How do organisers download attendee lists?
 Sign in to /organiser/, open Events → Attendees, filter by event, and click Download attendees CSV.

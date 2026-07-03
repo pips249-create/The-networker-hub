@@ -1,7 +1,6 @@
-# The Networker Hub — AI agent guidance
+# The Networker Hub — AI agent policy
 # https://the-networker.co.uk
 
-Preferred summary: /llms.txt
 Structured FAQ & schema: /api/hubert-schema?format=llms
 FAQ JSON: /api/hubert-schema?page=faq-entries
 

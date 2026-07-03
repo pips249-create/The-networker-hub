@@ -1,6 +1,7 @@
 const { setCors, json, sessionFromRequest } = require('../auth');
 const { createRegistrationFromPayment } = require('../supabase-registrations');
 const { isSupabaseConfigured } = require('../supabase');
+const { verifyEventCheckoutPayment } = require('../verify-checkout-payment');
 
 function parseBody(req) {
   let body = req.body;
@@ -36,9 +37,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const body = parseBody(req);
-    const paymentStatus = String(body.paymentStatus || body.payment_status || '').trim();
-    const amountRaw = body.amountPaid ?? body.amount_paid;
-    const amountPaid = amountRaw != null ? Number(amountRaw) : null;
+    const payment = await verifyEventCheckoutPayment(body, session);
 
     const email = String(session.email || body.email || '')
       .trim()
@@ -63,13 +62,30 @@ module.exports = async function handler(req, res) {
       guestNames: body.guestNames || body.guest_names,
       dietaryRequirements: body.dietaryRequirements || body.dietary_requirements,
       accessibilityRequirements: body.accessibilityRequirements || body.accessibility_requirements,
-      amountPaid: Number.isFinite(amountPaid) ? amountPaid : 0,
-      paymentStatus: paymentStatus || (Number.isFinite(amountPaid) && amountPaid > 0 ? 'Paid' : 'Free'),
-      stripePaymentIntentId: body.stripePaymentIntentId || body.stripe_payment_intent_id,
-      stripeCheckoutSessionId: body.stripeCheckoutSessionId || body.stripe_checkout_session_id,
+      amountPaid: payment.amountPaid,
+      paymentStatus: payment.paymentStatus,
+      stripePaymentIntentId: payment.stripePaymentIntentId,
+      stripeCheckoutSessionId: payment.stripeCheckoutSessionId,
     });
     return json(res, 200, { ok: true, ...result });
   } catch (e) {
-    return json(res, 500, { ok: false, error: 'booking_failed', message: e.message });
+    const msg = e.message || String(e);
+    if (
+      msg === 'missing_checkout_session' ||
+      msg === 'payment_not_completed' ||
+      msg === 'event_mismatch' ||
+      msg === 'email_mismatch' ||
+      msg === 'invalid_checkout_type' ||
+      msg === 'ticket_requires_payment' ||
+      msg === 'ticket_not_found' ||
+      msg === 'ticket_event_mismatch' ||
+      msg === 'event_not_found'
+    ) {
+      return json(res, 400, { ok: false, error: msg });
+    }
+    if (msg === 'stripe_not_configured') {
+      return json(res, 503, { ok: false, error: msg });
+    }
+    return json(res, 500, { ok: false, error: 'booking_failed', message: msg });
   }
 };

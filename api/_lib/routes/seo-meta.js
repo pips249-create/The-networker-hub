@@ -5,6 +5,13 @@
 const { setCors, json } = require('../auth');
 const { buildSeoMeta } = require('../seo-meta');
 
+function isSeoMetaAllowed(req) {
+  const gate = String(process.env.SITE_ACCESS_PASSWORD || '').trim();
+  if (!gate) return true;
+  const internal = String(req.headers['x-hub-internal-seo'] || '').trim();
+  return internal === gate;
+}
+
 module.exports = async function handler(req, res) {
   setCors(req, res);
 
@@ -15,6 +22,10 @@ module.exports = async function handler(req, res) {
 
   if (req.method !== 'GET') {
     return json(res, 405, { error: 'method_not_allowed' });
+  }
+
+  if (!isSeoMetaAllowed(req)) {
+    return json(res, 403, { ok: false, error: 'site_private' });
   }
 
   const type = String(req.query?.type || '').trim().toLowerCase();

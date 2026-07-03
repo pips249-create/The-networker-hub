@@ -1,6 +1,21 @@
 {
   "version": 2,
+  "redirects": [
+    { "source": "/index.html", "destination": "/", "permanent": true },
+    { "source": "/events/index.html", "destination": "/events/", "permanent": true },
+    { "source": "/opportunities/index.html", "destination": "/opportunities/", "permanent": true },
+    { "source": "/advertising.html", "destination": "/advertising", "permanent": true }
+  ],
   "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+      ]
+    },
     {
       "source": "/assets/(.*)",
       "headers": [
@@ -100,8 +115,8 @@
       "destination": "/events/event.html?slug=:slug"
     },
     {
-      "source": "/opportunities/:id",
-      "destination": "/opportunities/opportunity.html?id=:id"
+      "source": "/opportunities/:slug",
+      "destination": "/opportunities/opportunity.html?slug=:slug"
     },
     {
       "source": "/advertising",

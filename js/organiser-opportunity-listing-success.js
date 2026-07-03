@@ -28,9 +28,14 @@
     return d.innerHTML;
   }
 
+  var listingSlug = '';
+
   function listingUrl() {
-    if (!id) return '../opportunities/index.html';
-    return '../opportunities/opportunity.html?id=' + encodeURIComponent(id);
+    if (!id) return '/opportunities/';
+    if (window.HubPublicUrls && window.HubPublicUrls.opportunityDetailHref) {
+      return window.HubPublicUrls.opportunityDetailHref({ id: id, slug: listingSlug, title: title });
+    }
+    return '/opportunities/' + encodeURIComponent(listingSlug || id);
   }
 
   function setOpportunityDrawerLoading(on) {
@@ -238,6 +243,7 @@
         data = {};
       }
       if (res.ok && data.ok && data.opportunity) {
+        if (data.opportunity.slug) listingSlug = String(data.opportunity.slug);
         renderPremiumPreview(data.opportunity);
         return data.opportunity;
       }
@@ -291,7 +297,7 @@
   }
 
   if (viewYours && id) viewYours.href = listingUrl();
-  if (viewDirectory) viewDirectory.href = '../opportunities/index.html';
+  if (viewDirectory) viewDirectory.href = '/opportunities/';
   if (editBtn && !id) editBtn.disabled = true;
   bindOpportunityEditorDrawer();
 

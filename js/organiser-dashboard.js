@@ -5371,7 +5371,9 @@
       const expiry = opportunityExpiryMeta(o);
       const premium = opportunityPremiumMeta(o);
       const editUrl = 'opportunity-edit.html?id=' + encodeURIComponent(o.id);
-      const viewUrl = '../opportunities/opportunity.html?id=' + encodeURIComponent(o.id);
+      const viewUrl = o.slug
+        ? '/opportunities/' + encodeURIComponent(o.slug)
+        : '/opportunities/' + encodeURIComponent(o.id);
       const card = document.createElement('article');
       card.className = 'org-opp-listing-card';
       card.innerHTML =
@@ -5442,7 +5444,9 @@
       const st = opportunityStatusForBadge(o);
       const enquiries = opportunityEnquiriesForListing(o.id);
       const newCount = enquiries.filter((e) => String(e.status || '').toLowerCase() === 'new').length;
-      const viewUrl = '../opportunities/opportunity.html?id=' + encodeURIComponent(o.id);
+      const viewUrl = o.slug
+        ? '/opportunities/' + encodeURIComponent(o.slug)
+        : '/opportunities/' + encodeURIComponent(o.id);
       const editUrl = 'opportunity-edit.html?id=' + encodeURIComponent(o.id);
       const tr = document.createElement('tr');
       tr.innerHTML =

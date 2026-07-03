@@ -4,6 +4,7 @@ const {
   calculateOpportunityListingTotals,
   normalizeListingMonths,
 } = require('./opportunity-listing-pricing');
+const { getCatalogPriceId } = require('./hub-stripe-catalog');
 
 function getStripeSecretKey() {
   return String(process.env.STRIPE_SECRET_KEY || '').trim();
@@ -90,6 +91,12 @@ function siteBaseUrl() {
   return String(process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
 }
 
+function lineItemFromCatalog(catalogKey, fallbackPriceData) {
+  const priceId = getCatalogPriceId(catalogKey);
+  if (priceId) return { price: priceId, quantity: 1 };
+  return { price_data: fallbackPriceData, quantity: 1 };
+}
+
 /**
  * Prepaid business opportunity listing (£25/month ex VAT, minimum 3 months).
  */
@@ -152,22 +159,19 @@ async function createOpportunityPremiumCheckoutSession(opts) {
   const opportunityId = String(opts.opportunityId || '').trim();
   if (!opportunityId) throw new Error('missing_opportunity_id');
 
-  const priceId = String(process.env.STRIPE_OPPORTUNITY_PREMIUM_PRICE_ID || '').trim();
+  const priceId = getCatalogPriceId('opportunity_premium');
   const lineItems = priceId
     ? [{ price: priceId, quantity: 1 }]
     : [
-        {
-          price_data: {
-            currency: 'gbp',
-            product_data: {
-              name: 'Premium business opportunity listing',
-              description: 'Featured placement in the opportunities directory',
-            },
-            unit_amount: 5500,
-            recurring: { interval: 'month' },
+        lineItemFromCatalog('opportunity_premium', {
+          currency: 'gbp',
+          product_data: {
+            name: 'Premium business opportunity listing',
+            description: 'Featured placement in the opportunities directory',
           },
-          quantity: 1,
-        },
+          unit_amount: 5500,
+          recurring: { interval: 'month' },
+        }),
       ];
 
   return stripe.checkout.sessions.create({
@@ -226,17 +230,26 @@ async function createEventFeaturedCheckoutSession(opts) {
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
     line_items: [
-      {
-        price_data: {
-          currency: 'gbp',
-          product_data: {
-            name: 'Featured event listing — ' + plan.label,
-            description: 'Premium spotlight placement for "' + eventTitle + '"',
+      planId === '1month'
+        ? lineItemFromCatalog('event_featured_1month', {
+            currency: 'gbp',
+            product_data: {
+              name: 'Featured event listing — ' + plan.label,
+              description: 'Premium spotlight placement for "' + eventTitle + '"',
+            },
+            unit_amount: plan.amountPence,
+          })
+        : {
+            price_data: {
+              currency: 'gbp',
+              product_data: {
+                name: 'Featured event listing — ' + plan.label,
+                description: 'Premium spotlight placement for "' + eventTitle + '"',
+              },
+              unit_amount: plan.amountPence,
+            },
+            quantity: 1,
           },
-          unit_amount: plan.amountPence,
-        },
-        quantity: 1,
-      },
     ],
   });
 }

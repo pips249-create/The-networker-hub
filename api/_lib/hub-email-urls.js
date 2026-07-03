@@ -82,9 +82,12 @@ function organiserBusinessDashboardUrl(siteUrl) {
 
 function opportunityPublicUrl(opportunityRow, siteUrl) {
   const site = siteBase(siteUrl);
+  const { publicOpportunitySlug } = require('./opportunity-slug');
+  const slug = publicOpportunitySlug(opportunityRow);
+  if (slug) return site + '/opportunities/' + encodeURIComponent(slug);
   const id = String(opportunityRow?.id || opportunityRow || '').trim();
   if (!id) return site + '/opportunities/';
-  return site + '/opportunities/opportunity.html?id=' + encodeURIComponent(id);
+  return site + '/opportunities/' + encodeURIComponent(id);
 }
 
 function logoNavUrl(siteUrl) {

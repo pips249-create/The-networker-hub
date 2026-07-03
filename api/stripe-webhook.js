@@ -74,6 +74,13 @@ async function handler(req, res) {
   }
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    if (process.env.VERCEL_ENV === 'production') {
+      res.statusCode = 503;
+      return res.end('webhook_secret_not_configured');
+    }
+  }
+
   let rawBody = '';
   try {
     rawBody = await readRawBody(req);

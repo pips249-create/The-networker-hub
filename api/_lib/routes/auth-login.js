@@ -9,6 +9,7 @@ const {
 } = require('../auth');
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
+const { enforceRateLimit } = require('../rate-limit');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -54,6 +55,15 @@ module.exports = async function handler(req, res) {
 
   if (!email || !password) {
     return json(res, 400, { error: 'missing_credentials' });
+  }
+
+  const limited = enforceRateLimit(req, res, 'auth_login', { max: 12, windowMs: 300_000 });
+  if (!limited.allowed) {
+    return json(res, 429, {
+      error: 'rate_limited',
+      message: 'Too many sign-in attempts. Please wait a few minutes and try again.',
+      retryAfterSec: limited.retryAfterSec,
+    });
   }
 
   try {

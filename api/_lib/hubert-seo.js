@@ -5,7 +5,7 @@ const { FAQ_AEO_ENTRIES } = require('./hubert-faq');
 
 const SITE_NAME = 'The Networker Hub';
 const LEGAL_NAME = 'The Networker Group Ltd';
-const DEFAULT_ORIGIN = 'https://the-networker.co.uk';
+const DEFAULT_ORIGIN = 'https://www.thenetworkerhub.com';
 
 function siteOrigin(override) {
   const raw = String(override || process.env.SITE_URL || DEFAULT_ORIGIN).trim();
@@ -296,7 +296,10 @@ function buildLlmsTxt(origin) {
     '/api/seo-meta?type=event&slug={slug}\n' +
     '- Organiser meta API: ' +
     base +
-    '/api/seo-meta?type=organiser&slug={slug}\n\n' +
+    '/api/seo-meta?type=organiser&slug={slug}\n' +
+    '- Opportunity meta API: ' +
+    base +
+    '/api/seo-meta?type=opportunity&slug={slug}\n\n' +
     '## Hubert — business butler & concierge\n' +
     'Hubert is the on-site AI assistant. He answers questions about browsing, accounts, tickets, opportunities, and organiser tools. He can look up live published events and business opportunities when asked.\n\n' +
     '## Frequently asked questions\n\n' +

@@ -204,8 +204,8 @@
 
   function buildNavLinks(user, pending) {
     var html = '';
-    html += link('events/index.html', 'Events', 'events');
-    html += link('opportunities/index.html', 'Opportunities', 'opportunities');
+    html += link('/events/', 'Events', 'events');
+    html += link('/opportunities/', 'Opportunities', 'opportunities');
     html += link('contact.html', 'Contact', 'contact');
     html += link('faq.html', 'Help', 'faq');
     if (pending && !user) {
@@ -231,8 +231,8 @@
 
   function buildMobileDrawerLinks(user, pending) {
     var html = '';
-    html += link('events/index.html', 'Events', 'events', 'nav-mobile-item');
-    html += link('opportunities/index.html', 'Opportunities', 'opportunities', 'nav-mobile-item');
+    html += link('/events/', 'Events', 'events', 'nav-mobile-item');
+    html += link('/opportunities/', 'Opportunities', 'opportunities', 'nav-mobile-item');
     html += link('contact.html', 'Contact', 'contact', 'nav-mobile-item');
     html += link('faq.html', 'Help', 'faq', 'nav-mobile-item');
     if (pending && !user) {
@@ -442,7 +442,7 @@
       pendingClass +
       '" id="site-nav">' +
       '<a class="nav-logo" href="' +
-      href('index.html') +
+      href('/') +
       '" aria-label="The Networker Hub home">' +
       '<img src="' +
       href('assets/logo-nav.png') +

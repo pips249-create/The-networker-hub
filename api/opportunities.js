@@ -18,6 +18,7 @@ module.exports = async function handler(req, res) {
   const {
     listPublishedOpportunities,
     getPublishedOpportunityById,
+    getPublishedOpportunityBySlug,
     createOpportunityEnquiry,
   } = require('./_lib/supabase-opportunities');
 
@@ -67,10 +68,13 @@ module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
 
   const id = String(req.query?.id || '').trim();
+  const slug = String(req.query?.slug || req.query?.page || '').trim();
 
   try {
-    if (id) {
-      const opportunity = await getPublishedOpportunityById(id);
+    if (slug || id) {
+      const opportunity = slug
+        ? await getPublishedOpportunityBySlug(slug)
+        : await getPublishedOpportunityById(id);
       if (!opportunity) return json(res, 404, { error: 'not_found' });
       return json(res, 200, { ok: true, opportunity });
     }

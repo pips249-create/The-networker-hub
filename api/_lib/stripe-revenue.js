@@ -42,6 +42,7 @@ const PLACEMENT_CATEGORIES = {
   organisers_main_sponsor: 'browse_organisers',
   organisers_directory_sponsor: 'browse_organisers',
   organisers_mini_sponsor: 'browse_organisers',
+  organisers_featured: 'browse_organisers',
   browse_organisers_main_sponsor: 'browse_organisers',
   awards_sponsor: 'awards',
   awards: 'awards',

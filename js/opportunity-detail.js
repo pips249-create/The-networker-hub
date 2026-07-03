@@ -1,5 +1,5 @@
 /**
- * Opportunity detail page — ?id=opp-1
+ * Opportunity detail page — /opportunities/:slug
  */
 (function () {
   var catalog = window.HubOpportunitiesCatalog;
@@ -42,9 +42,22 @@
     return t.length > 48 ? t.slice(0, 45) + '…' : t;
   }
 
-  function resolveId() {
+  function resolveSlug() {
+    var pathMatch = window.location.pathname.match(/\/opportunities\/([^/]+)\/?$/i);
+    if (pathMatch && pathMatch[1]) {
+      return decodeURIComponent(pathMatch[1]);
+    }
     var params = new URLSearchParams(window.location.search);
-    return params.get('id') || '';
+    return params.get('slug') || params.get('id') || '';
+  }
+
+  function maybeRedirectToCanonicalSlug(item) {
+    if (!item || !item.slug) return;
+    var canonical = '/opportunities/' + encodeURIComponent(item.slug);
+    var currentPath = window.location.pathname.replace(/\/$/, '');
+    if (currentPath !== canonical) {
+      window.history.replaceState({}, '', canonical);
+    }
   }
 
   function showNotFound() {
@@ -293,6 +306,7 @@
       showNotFound();
       return;
     }
+    maybeRedirectToCanonicalSlug(item);
     render(item);
     bindSave();
     bindForm();
@@ -305,15 +319,16 @@
       return;
     }
 
-    var id = resolveId();
-    var item = catalog.getById(id);
+    var slug = resolveSlug();
+    var item = catalog.getBySlug ? catalog.getBySlug(slug) : catalog.getById(slug);
     if (item) {
       finishInit(item);
       return;
     }
 
-    if (catalog.fetchById) {
-      catalog.fetchById(id).then(finishInit);
+    var fetcher = catalog.fetchBySlugOrId || catalog.fetchById;
+    if (fetcher) {
+      fetcher(slug).then(finishInit);
       return;
     }
 

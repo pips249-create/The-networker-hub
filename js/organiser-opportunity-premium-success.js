@@ -30,7 +30,7 @@
   }
 
   if (viewYours && id) {
-    viewYours.href = '../opportunities/opportunity.html?id=' + encodeURIComponent(id);
+    viewYours.href = '/opportunities/' + encodeURIComponent(id);
   }
 
   async function confirmPremium() {

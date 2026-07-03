@@ -293,7 +293,7 @@
       group: 'Detail pages',
       label: 'Opportunity page — Sidebar ad',
       preview: 'compact',
-      help: 'Compact logo + CTA above the enquiry form on individual business opportunity pages (/opportunities/opportunity.html).',
+      help: 'Compact logo + CTA above the enquiry form on individual business opportunity pages (/opportunities/{id}).',
       tagline: '',
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
@@ -5820,7 +5820,7 @@
         '/account/index.html?review=sample-event-id#review/sample-event-id',
       owner_name: 'Jordan',
       opportunity_title: 'Marketing agency partnership',
-      opportunity_url: previewOrigin + '/opportunities/opportunity.html?id=sample',
+      opportunity_url: previewOrigin + '/opportunities/sample',
       renew_url: previewOrigin + '/organiser/opportunity-edit.html?id=sample',
       edit_url: previewOrigin + '/organiser/opportunity-edit.html?id=sample',
       rejection_note: 'Please add more detail before resubmitting.',
@@ -10165,7 +10165,9 @@
     tbody.innerHTML = rows
       .map(function (o) {
         var expiryLabel = formatSpotlightExpiry(o.featured, o.featured_until || o.featuredUntil);
-        var viewUrl = '../opportunities/opportunity.html?id=' + encodeURIComponent(o.id);
+        var viewUrl = o.slug
+          ? '/opportunities/' + encodeURIComponent(o.slug)
+          : '/opportunities/' + encodeURIComponent(o.id);
         return (
           '<tr class="border-t border-slate-100' +
           (o.featured ? ' bg-amber-50/40' : '') +

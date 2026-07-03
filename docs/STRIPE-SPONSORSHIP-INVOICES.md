@@ -8,6 +8,18 @@ Sponsorship and advertising deals invoiced through Stripe are logged automatical
 2. In [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks), add **`invoice.paid`** to your existing endpoint:
    - `https://the-networker-hub.vercel.app/api/stripe-webhook`
 3. Redeploy so the updated webhook handler is live.
+4. **Sync Stripe products & prices** (automated — run once per Stripe mode):
+
+```bash
+# Test mode (sk_test_… in local.env)
+npm run sync-stripe -- --write-local
+npm run sync-env
+
+# Production — use sk_live_… in local.env, then repeat and copy env vars to Vercel
+npm run sync-stripe -- --write-local
+```
+
+This creates Products, Prices, and Payment Links for all sponsorship tiers and writes IDs into `local.env`. Copy the printed variables to Vercel. Re-run after any rate card change (old payment links are deactivated when prices change).
 
 `checkout.session.completed` is already enabled — it also records sponsorship if you use Stripe Checkout / Payment Links with the metadata below.
 
@@ -79,7 +91,21 @@ cms_slot = events_sponsor_hub
 | Directory listing | Opportunities (self-serve) | £25 / month + VAT |
 | Premium Spotlight | Opportunities (self-serve) | £55 / month |
 
-Self-serve Stripe checkouts (featured events, opportunity listing, opportunity premium) use dynamic `price_data` in code — update `STRIPE_OPPORTUNITY_PREMIUM_PRICE_ID` in Vercel if you use a fixed Stripe Price object (set to £55/month).
+Self-serve Stripe checkouts use catalog Price IDs when env vars are set (run `npm run sync-stripe`). Opportunity listing fees stay dynamic (`price_data`) because the term length varies.
+
+### Env vars created by `npm run sync-stripe`
+
+| Env var | Purpose |
+|---------|---------|
+| `STRIPE_EVENTS_MAIN_SPONSOR_PRICE_ID` / `_PAYMENT_LINK` | Events main sponsor £2,000/mo |
+| `STRIPE_EVENTS_MINI_SPONSOR_PRICE_ID` / `_PAYMENT_LINK` | Events mini sponsor £600/mo |
+| `STRIPE_ORGANISERS_MAIN_SPONSOR_PRICE_ID` / `_PAYMENT_LINK` | Organisers main sponsor £1,000/mo |
+| `STRIPE_ORGANISERS_MINI_SPONSOR_PRICE_ID` / `_PAYMENT_LINK` | Organisers mini sponsor £300/mo |
+| `STRIPE_OPPORTUNITIES_MAIN_SPONSOR_PRICE_ID` / `_PAYMENT_LINK` | Opportunities main sponsor £2,000/mo |
+| `STRIPE_OPPORTUNITIES_MINI_SPONSOR_PRICE_ID` / `_PAYMENT_LINK` | Opportunities mini sponsor £600/mo |
+| `STRIPE_EVENT_FEATURED_1MONTH_PRICE_ID` | Featured event £55 (organiser checkout) |
+| `STRIPE_OPPORTUNITY_PREMIUM_PRICE_ID` | Premium opportunity £55/mo |
+| `STRIPE_ORGANISER_FEATURED_PRICE_ID` / `_PAYMENT_LINK` | Featured organiser profile £27.50/mo |
 
 ## What happens when the invoice is paid
 

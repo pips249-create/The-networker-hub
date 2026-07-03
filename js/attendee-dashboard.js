@@ -1296,7 +1296,7 @@
   function opportunityListingHref(opportunityId) {
     const id = String(opportunityId || '').trim();
     if (!id) return '../opportunities/index.html';
-    return '../opportunities/opportunity.html?id=' + encodeURIComponent(id);
+    return '/opportunities/' + encodeURIComponent(id);
   }
 
   function renderOpportunityEnquiries() {

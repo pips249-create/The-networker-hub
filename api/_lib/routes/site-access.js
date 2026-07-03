@@ -6,6 +6,7 @@ const {
   siteAccessStatus,
 } = require('../site-access');
 const { addPreviewWaitlistEmail } = require('../preview-waitlist');
+const { enforceRateLimit } = require('../rate-limit');
 
 function parseBody(req) {
   let body = req.body;
@@ -20,6 +21,15 @@ function parseBody(req) {
 }
 
 async function handleWaitlistSignup(req, res, body) {
+  const limited = enforceRateLimit(req, res, 'site_access_waitlist', { max: 6, windowMs: 300_000 });
+  if (!limited.allowed) {
+    return json(res, 429, {
+      error: 'rate_limited',
+      message: 'Too many sign-up attempts. Please try again shortly.',
+      retryAfterSec: limited.retryAfterSec,
+    });
+  }
+
   if (String(body.website || '').trim()) {
     return json(res, 200, {
       ok: true,
@@ -49,6 +59,15 @@ async function handleWaitlistSignup(req, res, body) {
 
 async function handlePasswordUnlock(req, res, body) {
   try {
+    const limited = enforceRateLimit(req, res, 'site_access_password', { max: 8, windowMs: 300_000 });
+    if (!limited.allowed) {
+      return json(res, 429, {
+        error: 'rate_limited',
+        message: 'Too many attempts. Please wait a few minutes and try again.',
+        retryAfterSec: limited.retryAfterSec,
+      });
+    }
+
     if (!isSiteAccessRequired()) {
       return json(res, 200, { ok: true, message: 'Site access gate is not enabled.' });
     }

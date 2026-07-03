@@ -9,6 +9,7 @@ const SKIP_EVENT_SLUGS = new Set([
   'event.html',
   'organiser.html',
 ]);
+const SKIP_OPPORTUNITY_SLUGS = new Set(['index.html', 'opportunity.html']);
 const SITE_ACCESS_COOKIE = 'hub_site_preview';
 const SITE_PREVIEW_TOKEN_TYPE = 'site_preview';
 const NOINDEX_HEADER = 'noindex, nofollow';
@@ -179,6 +180,15 @@ async function maybeGateSiteAccess(request, url) {
 
   if (isGateBypassPath(pathname)) return null;
 
+  const previewInternalSeo =
+    String(request.headers.get('x-hub-internal-seo') || '').trim() === password;
+  if (
+    previewInternalSeo &&
+    (pathname === '/api/seo-meta' || pathname.startsWith('/api/seo/meta'))
+  ) {
+    return null;
+  }
+
   if (await hasSiteAccess(request)) {
     return { authorized: true };
   }
@@ -230,6 +240,7 @@ export default async function middleware(request) {
 
   const eventMatch = pathname.match(/^\/events\/([^/]+)$/);
   const orgMatch = pathname.match(/^\/organisers\/([^/]+)$/);
+  const oppMatch = pathname.match(/^\/opportunities\/([^/]+)$/);
 
   if (eventMatch) {
     slug = decodeURIComponent(eventMatch[1]);
@@ -241,6 +252,11 @@ export default async function middleware(request) {
     if (slug === 'organiser.html') return passThroughIfGated(siteGated);
     type = 'organiser';
     templatePath = '/events/organiser.html';
+  } else if (oppMatch) {
+    slug = decodeURIComponent(oppMatch[1]);
+    if (SKIP_OPPORTUNITY_SLUGS.has(slug)) return passThroughIfGated(siteGated);
+    type = 'opportunity';
+    templatePath = '/opportunities/opportunity.html';
   } else {
     return passThroughIfGated(siteGated);
   }
@@ -253,6 +269,9 @@ export default async function middleware(request) {
     const metaRes = await fetch(metaUrl.toString(), {
       headers: {
         'x-forwarded-host': url.host,
+        ...(String(process.env.SITE_ACCESS_PASSWORD || '').trim()
+          ? { 'x-hub-internal-seo': String(process.env.SITE_ACCESS_PASSWORD).trim() }
+          : {}),
       },
     });
     if (!metaRes.ok) return passThroughIfGated(siteGated);
@@ -260,16 +279,33 @@ export default async function middleware(request) {
     const meta = await metaRes.json();
     if (!meta || !meta.ok) return passThroughIfGated(siteGated);
 
+    if (meta.canonical && type === 'opportunity') {
+      try {
+        const canonicalPath = new URL(meta.canonical).pathname.replace(/\/$/, '') || '/';
+        const currentPath = pathname.replace(/\/$/, '') || '/';
+        if (canonicalPath !== currentPath) {
+          return Response.redirect(meta.canonical, 301);
+        }
+      } catch {
+        /* continue with SEO injection */
+      }
+    }
+
     const htmlRes = await fetch(new URL(templatePath, url.origin).toString());
     if (!htmlRes.ok) return passThroughIfGated(siteGated);
 
     const html = injectSeoIntoHtml(await htmlRes.text(), meta);
 
+    const seoHeaders = {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'public, max-age=300, s-maxage=300',
+    };
+    if (siteGated) {
+      seoHeaders['X-Robots-Tag'] = NOINDEX_HEADER;
+    }
+
     return new Response(html, {
-      headers: withNoIndexHeaders({
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'public, max-age=300, s-maxage=300',
-      }),
+      headers: seoHeaders,
     });
   } catch {
     return passThroughIfGated(siteGated);

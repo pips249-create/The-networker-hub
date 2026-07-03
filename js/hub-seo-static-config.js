@@ -28,13 +28,6 @@ window.HUB_SEO_STATIC = {
     "image": "/assets/logo.png",
     "ogType": "website"
   },
-  "guides": {
-    "path": "/guides.html",
-    "title": "Organiser guides – The Networker Hub",
-    "description": "Step-by-step guides for organisers — list events, publish business opportunities, and invite team editors.",
-    "image": "/assets/logo.png",
-    "ogType": "website"
-  },
   "about": {
     "path": "/about.html",
     "title": "About us – The Networker Hub",

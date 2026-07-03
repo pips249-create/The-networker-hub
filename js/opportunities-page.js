@@ -338,7 +338,9 @@
   }
 
   function detailHref(item) {
-    return catalog ? catalog.detailHref(item) : 'opportunity.html?id=' + encodeURIComponent(item.id);
+    return window.HubPublicUrls
+      ? window.HubPublicUrls.opportunityDetailHref(item)
+      : '/opportunities/' + encodeURIComponent(item.id);
   }
 
   function hasTag(item, tag) {

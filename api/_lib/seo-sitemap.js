@@ -6,6 +6,7 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { fetchPublishedEventRows, isPublicEvent } = require('./supabase-events');
 const { publicEventSlug } = require('./event-slug');
 const { publicOrganiserSlug } = require('./organiser-slug');
+const { publicOpportunitySlug } = require('./opportunity-slug');
 
 const STATIC_PATHS = [
   '/',
@@ -14,8 +15,9 @@ const STATIC_PATHS = [
   '/faq.html',
   '/contact.html',
   '/about.html',
-  '/advertising.html',
+  '/advertising',
   '/legal-policies.html',
+  '/guides.html',
 ];
 
 function xmlEscape(value) {
@@ -77,10 +79,17 @@ async function buildSitemapXml(originOverride) {
   }
 
   const sb = getSupabaseAdmin();
-  const [eventRows, organisers] = await Promise.all([
+  const [eventRows, organisers, opportunityRows] = await Promise.all([
     fetchPublishedEventRows(sb),
     fetchAllOrganiserRows(sb),
+    sb
+      .from('business_opportunities')
+      .select('id, title, slug, updated_at, published_at, status, approval_status, listing_expires_at')
+      .eq('status', 'published')
+      .eq('approval_status', 'Approved')
+      .order('published_at', { ascending: false, nullsFirst: false }),
   ]);
+  if (opportunityRows.error) throw new Error(opportunityRows.error.message);
 
   const orgIds = [...new Set((eventRows || []).map((row) => row.organiser_id).filter(Boolean))];
   let orgById = new Map();
@@ -94,6 +103,10 @@ async function buildSitemapXml(originOverride) {
     const org = row.organiser_id ? orgById.get(row.organiser_id) : null;
     return isPublicEvent(row, org);
   });
+
+  const organiserIdsWithPublicEvents = new Set(
+    (events || []).map((row) => row.organiser_id).filter(Boolean)
+  );
 
   const eventSlugs = new Set();
   (events || []).forEach((row) => {
@@ -109,6 +122,7 @@ async function buildSitemapXml(originOverride) {
 
   const organiserSlugs = new Set();
   (organisers || []).forEach((row) => {
+    if (!organiserIdsWithPublicEvents.has(row.id)) return;
     const name = String(row.name || '').trim();
     if (!name) return;
     const slug = publicOrganiserSlug(row);
@@ -120,6 +134,21 @@ async function buildSitemapXml(originOverride) {
       isoDate(row.updated_at || row.created_at)
     );
   });
+
+  const { listingPaymentCurrent } = require('./opportunity-listing-pricing');
+  const opportunitySlugs = new Set();
+  (opportunityRows.data || [])
+    .filter((row) => listingPaymentCurrent(row))
+    .forEach((row) => {
+      const slug = publicOpportunitySlug(row);
+      if (!slug || opportunitySlugs.has(slug)) return;
+      opportunitySlugs.add(slug);
+      body += urlEntry(
+        origin,
+        '/opportunities/' + encodeURIComponent(slug),
+        isoDate(row.updated_at || row.published_at || row.created_at)
+      );
+    });
 
   return (
     '<?xml version="1.0" encoding="UTF-8"?>\n' +

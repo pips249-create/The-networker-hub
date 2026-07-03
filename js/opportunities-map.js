@@ -60,7 +60,9 @@
 
   function detailHref(item) {
     if (catalog && catalog.detailHref) return catalog.detailHref(item);
-    return 'opportunity.html?id=' + encodeURIComponent(item.id);
+    return window.HubPublicUrls
+      ? window.HubPublicUrls.opportunityDetailHref(item)
+      : '/opportunities/' + encodeURIComponent(item.id);
   }
 
   function typeLabel(item) {
