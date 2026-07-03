@@ -68,10 +68,6 @@
       "schedule": "0 10 * * *"
     },
     {
-      "path": "/api/cron/newsletter",
-      "schedule": "0 11 * * *"
-    },
-    {
       "path": "/api/cron/organiser-rankings",
       "schedule": "0 10 1 * *"
     }
@@ -86,7 +82,7 @@
     "api/seo.js": { "maxDuration": 15 },
     "api/opportunities.js": { "maxDuration": 15 },
     "api/stripe-webhook.js": { "maxDuration": 15 },
-    "api/resend-webhook.js": { "maxDuration": 15 },
+    "api/site-access.js": { "maxDuration": 10 },
     "api/contact-chat.js": { "maxDuration": 30 }
   },
   "rewrites": [

@@ -187,6 +187,28 @@ This comes from **Airtable**, not Vercel login. Your `AIRTABLE_API_KEY` in Verce
 
 ---
 
+## Pre-launch site access gate
+
+While the live domain is up but the site is not yet public, lock it behind a shared preview password.
+
+| Key | Value | Notes |
+|-----|--------|--------|
+| `SITE_ACCESS_PASSWORD` | *your chosen preview password* | When set, all pages require this password (or an admin sign-in) |
+
+**Requires** `SESSION_SECRET` (same as login) — the gate stores a signed cookie after a correct password.
+
+**Still works without the gate:** Stripe webhooks, Vercel crons (`CRON_SECRET`), and static assets for the gate page.
+
+**Bypass without the preview password:** anyone signed in with an **admin** account (`hub_session` cookie).
+
+**To open the site:** remove `SITE_ACCESS_PASSWORD` from Vercel → **Redeploy**. No code change needed.
+
+**Preview waitlist:** run migration `109_preview_waitlist.sql` in Supabase. Emails from the launch page are stored in `preview_waitlist` (view in Supabase Table Editor).
+
+After deploy, check `/api/auth/config-check` — `siteAccess.siteAccessRequired` should be `true` while the gate is on.
+
+---
+
 ## Optional later
 
 | Key | Purpose |

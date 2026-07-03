@@ -9,6 +9,7 @@ const sbAuth = require('../supabase-auth');
 const { emailConfigStatus } = require('../email-config');
 const { cronConfigStatus } = require('../cron-auth');
 const { stripeConfigStatus } = require('../stripe-config');
+const { siteAccessStatus } = require('../site-access');
 
 /**
  * Safe diagnostic: which env vars are set (never returns secret values).
@@ -30,7 +31,8 @@ module.exports = async function handler(req, res) {
     hasAdminEmail: Boolean(process.env.ADMIN_EMAIL),
     hasAdminInitialPassword: Boolean(process.env.ADMIN_INITIAL_PASSWORD),
     hasAdminSetupSecret: Boolean(process.env.ADMIN_SETUP_SECRET),
-    hasSiteUrl: Boolean(process.env.SITE_URL),
+      hasSiteUrl: Boolean(process.env.SITE_URL),
+      hasSiteAccessPassword: Boolean(String(process.env.SITE_ACCESS_PASSWORD || '').trim()),
     dataProvider: provider,
     hasSupabaseUrl: Boolean(sbCfg.url),
     hasSupabaseServiceKey: Boolean(sbCfg.serviceKey),
@@ -49,6 +51,7 @@ module.exports = async function handler(req, res) {
   const email = emailConfigStatus();
   const cron = cronConfigStatus();
   const stripe = stripeConfigStatus();
+  const siteAccess = siteAccessStatus();
 
   const adminEmail = cleanEnvVal(process.env.ADMIN_EMAIL) || 'pips249@gmail.com';
   let adminAccount = { email: adminEmail, exists: false, hasPassword: false, role: null };
@@ -77,6 +80,7 @@ module.exports = async function handler(req, res) {
     email,
     cron,
     stripe,
+    siteAccess,
     env: {
       ...env,
       hasResendApiKey: email.hasResendApiKey,
@@ -128,6 +132,12 @@ module.exports = async function handler(req, res) {
         stripe.checkoutReady && email.emailSendingConfigured
           ? 'Resend is configured — confirmation emails will send after checkout once the domain is verified.'
           : null,
+      siteAccessGate:
+        siteAccess.siteAccessRequired && !siteAccess.siteAccessReady
+          ? 'SITE_ACCESS_PASSWORD is set but SESSION_SECRET is missing — the gate cannot issue access cookies until SESSION_SECRET is configured.'
+          : siteAccess.siteAccessRequired
+            ? 'Site access gate is ON. Visitors need the preview password at /site-access.html. Signed-in admins bypass automatically. Remove SITE_ACCESS_PASSWORD when you launch.'
+            : null,
       nextStep: !supabase.ok
         ? 'Fix Supabase env vars in Vercel → Redeploy.'
         : !adminAccount.exists
