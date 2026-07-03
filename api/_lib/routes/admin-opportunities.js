@@ -51,6 +51,8 @@ function mapOpportunityRow(row) {
     status: row.status || 'draft',
     approval_status: row.approval_status || 'Pending Review',
     featured: Boolean(row.featured),
+    featured_until: row.featured_until || null,
+    featuredUntil: row.featured_until || null,
     owner_email: String(row.owner_email || '').toLowerCase(),
     organiser_id: row.organiser_id || '',
     image_url: row.image_url || '',

@@ -96,6 +96,8 @@ function mapOrganiserRow(row, eventCount, loginMeta) {
     linkedin_url: String(row.linkedin_url || '').trim(),
     x_url: String(row.x_url || '').trim(),
     listing_status: row.listing_status || '',
+    featured: Boolean(row.featured),
+    city: String(row.city || '').trim(),
     slug: publicOrganiserSlug(row) || '',
     event_count: eventCount || 0,
     missing,
@@ -233,7 +235,7 @@ async function listOrganisersForAdmin(query) {
   let dbQuery = sb
     .from('organisers')
     .select(
-      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, slug, created_at',
+      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, slug, city, featured, created_at',
       { count: 'exact' }
     )
     .order('name', { ascending: true });

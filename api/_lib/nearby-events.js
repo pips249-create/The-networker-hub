@@ -1,4 +1,12 @@
 const { isEventPublishedForSale } = require('./ticket-sales');
+const { parseOutcode, haversineMiles, bboxForRadiusMiles, cityRegionFromInput } = require('./uk-outcode');
+const { geocodeUkLocation } = require('./postcode-geocode');
+
+/** Max distance for "events near you" blocks in lifecycle and newsletter emails. */
+const NEARBY_EMAIL_RADIUS_MILES = 25;
+
+const EVENT_SELECT_FIELDS =
+  'id, title, slug, starts_at, city, venue, location_label, postcode, outcode, latitude, longitude, status, approval_status, published_at, featured, ticket_sales_enabled, refund_terms_agreed_at, refund_terms_agreed, organisers(name)';
 
 function locationTokens(location) {
   const raw = String(location || '').trim().toLowerCase();
@@ -29,12 +37,49 @@ function nearbyLocationLabel(location) {
   return raw.split(',')[0].trim();
 }
 
-/**
- * Upcoming published events whose city/venue/postcode matches the member location string.
- */
-async function fetchNearbyEvents(sb, location, options = {}) {
+function eventWithinRadiusMiles(eventRow, lat, lng, radiusMi) {
+  const eventLat = Number(eventRow.latitude);
+  const eventLng = Number(eventRow.longitude);
+  if (!Number.isFinite(eventLat) || !Number.isFinite(eventLng)) return false;
+  return haversineMiles(lat, lng, eventLat, eventLng) <= radiusMi;
+}
+
+async function fetchNearbyEventsByRadius(sb, lat, lng, options = {}) {
+  const excludeIds = new Set((options.excludeEventIds || []).map((id) => String(id || '').trim()).filter(Boolean));
+  const limit = Math.max(1, Math.min(Number(options.limit) || 4, 8));
+  const radiusMi = Math.min(
+    Math.max(Number(options.radiusMiles) || NEARBY_EMAIL_RADIUS_MILES, 1),
+    NEARBY_EMAIL_RADIUS_MILES
+  );
+  const now = new Date().toISOString();
+  const box = bboxForRadiusMiles(lat, lng, radiusMi);
+
+  const { data, error } = await sb
+    .from('events')
+    .select(EVENT_SELECT_FIELDS)
+    .eq('status', 'published')
+    .eq('approval_status', 'Approved')
+    .gt('starts_at', now)
+    .gte('latitude', box.minLat)
+    .lte('latitude', box.maxLat)
+    .gte('longitude', box.minLng)
+    .lte('longitude', box.maxLng)
+    .not('latitude', 'is', null)
+    .not('longitude', 'is', null)
+    .order('starts_at', { ascending: true })
+    .limit(120);
+  if (error) throw new Error(error.message);
+
+  return (data || [])
+    .filter(isEventPublishedForSale)
+    .filter((row) => eventWithinRadiusMiles(row, lat, lng, radiusMi))
+    .filter((row) => !excludeIds.has(String(row.id)))
+    .slice(0, limit);
+}
+
+async function fetchNearbyEventsByText(sb, location, options = {}) {
   const tokens = locationTokens(location);
-  if (!tokens.length) return { events: [], locationLabel: '' };
+  if (!tokens.length) return [];
 
   const excludeIds = new Set((options.excludeEventIds || []).map((id) => String(id || '').trim()).filter(Boolean));
   const limit = Math.max(1, Math.min(Number(options.limit) || 4, 8));
@@ -42,9 +87,7 @@ async function fetchNearbyEvents(sb, location, options = {}) {
 
   const { data, error } = await sb
     .from('events')
-    .select(
-      'id, title, slug, starts_at, city, venue, location_label, postcode, outcode, status, approval_status, published_at, featured, ticket_sales_enabled, refund_terms_agreed_at, refund_terms_agreed, organisers(name)'
-    )
+    .select(EVENT_SELECT_FIELDS)
     .eq('status', 'published')
     .eq('approval_status', 'Approved')
     .gt('starts_at', now)
@@ -52,15 +95,42 @@ async function fetchNearbyEvents(sb, location, options = {}) {
     .limit(60);
   if (error) throw new Error(error.message);
 
-  const events = (data || [])
+  return (data || [])
     .filter(isEventPublishedForSale)
     .filter((row) => eventMatchesLocation(row, tokens))
     .filter((row) => !excludeIds.has(String(row.id)))
     .slice(0, limit);
+}
 
+/**
+ * Upcoming published events near the member location (25-mile radius when geocodable).
+ */
+async function fetchNearbyEvents(sb, location, options = {}) {
+  const raw = String(location || '').trim();
+  if (!raw) return { events: [], locationLabel: '' };
+
+  const radiusMi = Math.min(
+    Math.max(Number(options.radiusMiles) || NEARBY_EMAIL_RADIUS_MILES, 1),
+    NEARBY_EMAIL_RADIUS_MILES
+  );
+  const coords = await geocodeUkLocation(raw);
+  if (coords?.latitude != null && coords?.longitude != null) {
+    const events = await fetchNearbyEventsByRadius(sb, coords.latitude, coords.longitude, {
+      ...options,
+      radiusMiles: radiusMi,
+    });
+    return {
+      events,
+      locationLabel: nearbyLocationLabel(raw) || String(coords.city || '').trim(),
+      radiusMiles: radiusMi,
+    };
+  }
+
+  const events = await fetchNearbyEventsByText(sb, raw, options);
   return {
     events,
-    locationLabel: nearbyLocationLabel(location),
+    locationLabel: nearbyLocationLabel(raw),
+    radiusMiles: null,
   };
 }
 
@@ -153,6 +223,7 @@ async function fetchPopularEvents(sb, options = {}) {
 }
 
 module.exports = {
+  NEARBY_EMAIL_RADIUS_MILES,
   locationTokens,
   eventMatchesLocation,
   nearbyLocationLabel,

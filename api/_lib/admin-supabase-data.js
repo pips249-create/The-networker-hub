@@ -37,6 +37,8 @@ async function fetchAdminActionCounts(sb) {
     claimDisputesRes,
     recentReviewsRes,
     incompleteOrgsRes,
+    pendingPayoutsRes,
+    stripeOnboardingRes,
   ] = await Promise.all([
     sb.from('listing_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
     sb.from('review_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
@@ -50,6 +52,15 @@ async function fetchAdminActionCounts(sb) {
       .eq('status', 'open'),
     sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
     sb.from('organisers').select('id', { count: 'exact', head: true }).or(INCOMPLETE_ORGANISER_FILTER),
+    sb
+      .from('organiser_payouts')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending_review'),
+    sb
+      .from('organisers')
+      .select('id', { count: 'exact', head: true })
+      .not('stripe_account_id', 'is', null)
+      .eq('stripe_charges_enabled', false),
   ]);
 
   const spamReviews = (recentReviewsRes.data || []).filter((r) => isSpamReview(r.review_text)).length;
@@ -61,6 +72,8 @@ async function fetchAdminActionCounts(sb) {
     openClaimDisputes: claimDisputesRes.error ? 0 : claimDisputesRes.count || 0,
     spamReviews,
     incompleteOrganisers: incompleteOrgsRes.error ? 0 : incompleteOrgsRes.count || 0,
+    pendingPayouts: pendingPayoutsRes.error ? 0 : pendingPayoutsRes.count || 0,
+    stripeOnboarding: stripeOnboardingRes.error ? 0 : stripeOnboardingRes.count || 0,
   };
 }
 
@@ -71,7 +84,8 @@ function sumAdminNotificationCounts(counts) {
     (counts.openReviewReports || 0) +
     (counts.spamReviews || 0) +
     (counts.pendingOpportunities || 0) +
-    (counts.openClaimDisputes || 0)
+    (counts.openClaimDisputes || 0) +
+    (counts.pendingPayouts || 0)
   );
 }
 
@@ -141,6 +155,28 @@ function buildAlertsFromCounts(counts) {
       title: `${counts.openClaimDisputes} group profile dispute${counts.openClaimDisputes === 1 ? '' : 's'}`,
       detail: 'An organiser rejected a matched profile — resolve on the dashboard overview.',
       href: '#dashboard',
+      time: new Date().toISOString(),
+    });
+  }
+
+  if (counts.pendingPayouts > 0) {
+    alerts.push({
+      id: 'pending-payouts',
+      severity: 'high',
+      title: `${counts.pendingPayouts} payout request${counts.pendingPayouts === 1 ? '' : 's'} awaiting review`,
+      detail: 'Approve organiser payout requests in Financials, then mark paid after transfer.',
+      href: '#financials',
+      time: new Date().toISOString(),
+    });
+  }
+
+  if (counts.stripeOnboarding > 0) {
+    alerts.push({
+      id: 'stripe-onboarding',
+      severity: 'medium',
+      title: `${counts.stripeOnboarding} organiser${counts.stripeOnboarding === 1 ? '' : 's'} stuck in Stripe Connect onboarding`,
+      detail: 'They started Connect but cannot receive charges yet — check Financials.',
+      href: '#financials',
       time: new Date().toISOString(),
     });
   }
@@ -309,6 +345,8 @@ async function fetchAttentionQueue(sb, counts) {
     openReviewReports: action.openReviewReports || 0,
     openReviewReportItems,
     pendingOwnershipClaims,
+    pendingPayouts: action.pendingPayouts || 0,
+    stripeOnboarding: action.stripeOnboarding || 0,
     totalCount: sumAdminNotificationCounts(action),
   };
 }

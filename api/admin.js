@@ -23,6 +23,8 @@ const routes = {
   campaigns: require('./_lib/routes/admin-campaigns'),
   newsletter: require('./_lib/routes/admin-newsletter'),
   rankings: require('./_lib/routes/admin-rankings'),
+  spotlight: require('./_lib/routes/admin-spotlight'),
+  bookings: require('./_lib/routes/admin-bookings'),
 };
 
 module.exports = async function handler(req, res) {

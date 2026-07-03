@@ -531,6 +531,15 @@ body.nav-menu-open {
     width: 100%;
   }
 
+  .filter-price-bounds {
+    width: 100%;
+  }
+
+  .filter-price-bound {
+    flex: 1 1 calc(50% - 6px);
+    max-width: none;
+  }
+
   .filter-price-range-controls {
     flex-direction: row;
     gap: 8px;

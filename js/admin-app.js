@@ -89,8 +89,16 @@
       subtitle: 'Monthly Top 10 / 25 / 50 badges, snapshot history, and congratulation emails',
     },
     featured: {
-      title: 'Featured spotlight',
+      title: 'Premium Spotlight',
       subtitle: 'Choose which approved events appear in the Premium Spotlight carousel',
+    },
+    spotlight: {
+      title: 'Premium Spotlight',
+      subtitle: 'Manage featured events, organisers, and opportunities for the public browse carousels',
+    },
+    support: {
+      title: 'Support',
+      subtitle: 'Look up bookings and help members with tickets and payments',
     },
     campaigns: {
       title: 'Email campaigns',
@@ -203,6 +211,14 @@
     when: '',
   };
   var featuredSpotlightSearchTimer = null;
+  var featuredSpotlightOrganisers = [];
+  var featuredSpotlightOpportunities = [];
+  var spotlightSlotsCache = null;
+  var spotlightOrganiserState = { q: '', featured: '' };
+  var spotlightOpportunityState = { q: '', featured: '' };
+  var spotlightOrganiserSearchTimer = null;
+  var spotlightOpportunitySearchTimer = null;
+  var bookingsSearchState = { q: '' };
   var adminLogoPending = {};
   var groupSearchTimer = null;
   var eventSearchTimer = null;
@@ -405,6 +421,7 @@
       impersonate: 'accounts/impersonate',
       users: 'accounts/users',
       import: 'moderation/import',
+      featured: 'spotlight/events',
     };
     return legacy[h] || h;
   }
@@ -421,6 +438,7 @@
       impersonate: 'accounts',
       users: 'accounts',
       import: 'moderation',
+      featured: 'spotlight',
     };
     return parents[key] || key;
   }
@@ -457,6 +475,14 @@
     }
     if (route === 'moderation' && hash.indexOf('import') !== -1) {
       return PAGE_META.import.subtitle;
+    }
+    if (route === 'spotlight') {
+      if (hash.indexOf('organisers') !== -1) return 'Featured networking groups on the Events browse page.';
+      if (hash.indexOf('opportunities') !== -1) return 'Featured business opportunities on /opportunities/.';
+      return PAGE_META.spotlight.subtitle;
+    }
+    if (route === 'support') {
+      return PAGE_META.support.subtitle;
     }
     return null;
   }
@@ -857,6 +883,30 @@
           (attention.pendingOwnershipClaims === 1 ? '' : 's') +
           ' awaiting organiser claim on first login</p>' +
           '<p class="text-xs text-brand-800/90 mt-1">Organisers will confirm ownership when they sign in — disputes appear here if they reject a match.</p></div>'
+      );
+    }
+
+    if (attention.pendingPayouts > 0) {
+      parts.push(
+        '<div class="rounded-lg border border-red-200 bg-red-50 p-4">' +
+          '<p class="font-semibold text-sm text-red-900">' +
+          attention.pendingPayouts +
+          ' payout request' +
+          (attention.pendingPayouts === 1 ? '' : 's') +
+          ' awaiting review</p>' +
+          '<a href="#financials" class="text-xs font-semibold text-red-900 mt-2 inline-block hover:underline">Open Financials →</a></div>'
+      );
+    }
+
+    if (attention.stripeOnboarding > 0) {
+      parts.push(
+        '<div class="rounded-lg border border-amber-200 bg-amber-50 p-4">' +
+          '<p class="font-semibold text-sm text-amber-900">' +
+          attention.stripeOnboarding +
+          ' organiser' +
+          (attention.stripeOnboarding === 1 ? '' : 's') +
+          ' stuck in Stripe Connect onboarding</p>' +
+          '<a href="#financials" class="text-xs font-semibold text-amber-900 mt-2 inline-block hover:underline">Check Stripe status →</a></div>'
       );
     }
 
@@ -9316,6 +9366,62 @@
     }
   }
 
+  function formatSpotlightExpiry(featured, untilIso) {
+    if (!featured) return '—';
+    if (!untilIso) return 'Admin grant';
+    var d = new Date(untilIso);
+    if (isNaN(d.getTime())) return '—';
+    if (d.getTime() <= Date.now()) return 'Expired';
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function spotlightSlotCard(label, slot, note) {
+    var used = slot && slot.used != null ? slot.used : 0;
+    var max = slot && slot.max != null ? slot.max : 0;
+    var full = slot && slot.full;
+    return (
+      '<div class="rounded-xl border p-4 shadow-sm ' +
+      (full ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-white') +
+      '"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">' +
+      esc(label) +
+      '</p><p class="text-xl font-bold text-brand-900 mt-1">' +
+      esc(String(used) + ' / ' + String(max)) +
+      '</p>' +
+      (note ? '<p class="text-xs text-slate-500 mt-1">' + esc(note) + '</p>' : '') +
+      '</div>'
+    );
+  }
+
+  function spotlightSlotCardsHtml(slots) {
+    slots = slots || {};
+    return (
+      '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="spotlight-slot-cards">' +
+      spotlightSlotCard('Events carousel', slots.events, 'Browse /events/ spotlight') +
+      spotlightSlotCard('Organisers carousel', slots.organisers, 'Group spotlight on Events page') +
+      spotlightSlotCard('Opportunities carousel', slots.opportunities, 'Browse /opportunities/') +
+      '</div>'
+    );
+  }
+
+  function loadSpotlightSlotBanner() {
+    var el = document.getElementById('spotlight-slots-wrap');
+    if (!el) return;
+    if (spotlightSlotsCache) {
+      el.innerHTML = spotlightSlotCardsHtml(spotlightSlotsCache);
+      return;
+    }
+    adminGet('/api/admin/spotlight').then(function (data) {
+      if (!data || !data.ok || !data.slots) return;
+      spotlightSlotsCache = data.slots;
+      el.innerHTML = spotlightSlotCardsHtml(data.slots);
+    });
+  }
+
+  function invalidateSpotlightSlotsCache() {
+    spotlightSlotsCache = null;
+    loadSpotlightSlotBanner();
+  }
+
   function filterFeaturedSpotlightEvents(events) {
     var q = String(featuredSpotlightState.q || '').trim().toLowerCase();
     var featured = featuredSpotlightState.featured;
@@ -9367,17 +9473,18 @@
     }
     if (!tbody) return;
     if (!events.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No approved events yet.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-slate-500">No approved events yet.</td></tr>';
       return;
     }
     if (!rows.length) {
       tbody.innerHTML =
-        '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No events match your filters. Try clearing search or filters.</td></tr>';
+        '<tr><td colspan="7" class="px-4 py-6 text-slate-500">No events match your filters. Try clearing search or filters.</td></tr>';
       return;
     }
     tbody.innerHTML = rows
       .map(function (ev) {
         var dateLabel = ev.starts_at ? fmtTime(ev.starts_at).split(',')[0] : '—';
+        var expiryLabel = formatSpotlightExpiry(ev.featured, ev.featured_until || ev.featuredUntil);
         var viewUrl = ev.slug
           ? '../events/event.html?slug=' + encodeURIComponent(ev.slug)
           : '../events/event.html?id=' + encodeURIComponent(ev.id);
@@ -9385,7 +9492,7 @@
           '<tr class="border-t border-slate-100' +
           (ev.featured ? ' bg-amber-50/40' : '') +
           '">' +
-          '<td class="px-4 py-3"><input type="checkbox" class="featured-event-toggle" data-event-id="' +
+          '<td class="px-4 py-3"><input type="checkbox" class="spotlight-event-toggle" data-event-id="' +
           attrEsc(ev.id) +
           '" ' +
           (ev.featured ? 'checked' : '') +
@@ -9401,6 +9508,135 @@
           '</td>' +
           '<td class="px-4 py-3">' +
           esc(ev.city || '—') +
+          '</td>' +
+          '<td class="px-4 py-3 text-xs">' +
+          esc(expiryLabel) +
+          '</td>' +
+          '<td class="px-4 py-3"><a href="' +
+          attrEsc(viewUrl) +
+          '" target="_blank" rel="noopener" class="text-brand-700 text-xs font-semibold hover:underline">View</a></td></tr>'
+        );
+      })
+      .join('');
+  }
+
+  function filterSpotlightOrganisers(rows) {
+    var q = String(spotlightOrganiserState.q || '').trim().toLowerCase();
+    var featured = spotlightOrganiserState.featured;
+    return (rows || []).filter(function (o) {
+      if (featured === 'yes' && !o.featured) return false;
+      if (featured === 'no' && o.featured) return false;
+      if (!q) return true;
+      var hay = (String(o.name || '') + ' ' + String(o.city || '') + ' ' + String(o.email || '')).toLowerCase();
+      return hay.indexOf(q) >= 0;
+    });
+  }
+
+  function paintSpotlightOrganisersTable() {
+    var tbody = document.getElementById('spotlight-organisers-tbody');
+    var status = document.getElementById('spotlight-organisers-status');
+    var rows = filterSpotlightOrganisers(featuredSpotlightOrganisers);
+    var featuredCount = featuredSpotlightOrganisers.filter(function (o) {
+      return o.featured;
+    }).length;
+    if (status) {
+      status.textContent = featuredCount + ' featured · ' + rows.length + ' shown';
+    }
+    if (!tbody) return;
+    if (!featuredSpotlightOrganisers.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-slate-500">No organiser profiles found.</td></tr>';
+      return;
+    }
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-slate-500">No organisers match your filters.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows
+      .map(function (o) {
+        var viewUrl = o.slug
+          ? '../events/organiser.html?slug=' + encodeURIComponent(o.slug)
+          : '../events/organiser.html?id=' + encodeURIComponent(o.id);
+        return (
+          '<tr class="border-t border-slate-100' +
+          (o.featured ? ' bg-amber-50/40' : '') +
+          '">' +
+          '<td class="px-4 py-3"><input type="checkbox" class="spotlight-organiser-toggle" data-organiser-id="' +
+          attrEsc(o.id) +
+          '" ' +
+          (o.featured ? 'checked' : '') +
+          ' aria-label="Feature organiser" /></td>' +
+          '<td class="px-4 py-3 font-medium">' +
+          esc(o.name) +
+          '</td>' +
+          '<td class="px-4 py-3">' +
+          esc(o.city || '—') +
+          '</td>' +
+          '<td class="px-4 py-3 text-xs">' +
+          esc(o.listing_status || '—') +
+          '</td>' +
+          '<td class="px-4 py-3"><a href="' +
+          attrEsc(viewUrl) +
+          '" target="_blank" rel="noopener" class="text-brand-700 text-xs font-semibold hover:underline">View</a></td></tr>'
+        );
+      })
+      .join('');
+  }
+
+  function filterSpotlightOpportunities(rows) {
+    var q = String(spotlightOpportunityState.q || '').trim().toLowerCase();
+    var featured = spotlightOpportunityState.featured;
+    return (rows || []).filter(function (o) {
+      if (featured === 'yes' && !o.featured) return false;
+      if (featured === 'no' && o.featured) return false;
+      if (!q) return true;
+      var hay = (String(o.title || '') + ' ' + String(o.host || '') + ' ' + String(o.owner_email || '')).toLowerCase();
+      return hay.indexOf(q) >= 0;
+    });
+  }
+
+  function paintSpotlightOpportunitiesTable() {
+    var tbody = document.getElementById('spotlight-opportunities-tbody');
+    var status = document.getElementById('spotlight-opportunities-status');
+    var rows = filterSpotlightOpportunities(featuredSpotlightOpportunities);
+    var featuredCount = featuredSpotlightOpportunities.filter(function (o) {
+      return o.featured;
+    }).length;
+    if (status) {
+      status.textContent = featuredCount + ' featured · ' + rows.length + ' shown';
+    }
+    if (!tbody) return;
+    if (!featuredSpotlightOpportunities.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No approved opportunities found.</td></tr>';
+      return;
+    }
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No opportunities match your filters.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows
+      .map(function (o) {
+        var expiryLabel = formatSpotlightExpiry(o.featured, o.featured_until || o.featuredUntil);
+        var viewUrl = '../opportunities/opportunity.html?id=' + encodeURIComponent(o.id);
+        return (
+          '<tr class="border-t border-slate-100' +
+          (o.featured ? ' bg-amber-50/40' : '') +
+          '">' +
+          '<td class="px-4 py-3"><input type="checkbox" class="spotlight-opportunity-toggle" data-opportunity-id="' +
+          attrEsc(o.id) +
+          '" ' +
+          (o.featured ? 'checked' : '') +
+          ' aria-label="Feature opportunity" /></td>' +
+          '<td class="px-4 py-3 font-medium">' +
+          esc(o.title) +
+          '</td>' +
+          '<td class="px-4 py-3">' +
+          esc(o.host || '—') +
+          '</td>' +
+          '<td class="px-4 py-3">' +
+          esc(o.type || '—') +
+          '</td>' +
+          '<td class="px-4 py-3 text-xs">' +
+          esc(expiryLabel) +
           '</td>' +
           '<td class="px-4 py-3"><a href="' +
           attrEsc(viewUrl) +
@@ -9449,7 +9685,149 @@
     }
   }
 
-  function renderFeatured() {
+  function bindSpotlightOrganiserFilters() {
+    var searchEl = document.getElementById('spotlight-organisers-search');
+    var featuredEl = document.getElementById('spotlight-organisers-featured');
+    var clearBtn = document.getElementById('spotlight-organisers-clear');
+    function sync() {
+      spotlightOrganiserState.q = searchEl ? searchEl.value : '';
+      spotlightOrganiserState.featured = featuredEl ? featuredEl.value : '';
+      paintSpotlightOrganisersTable();
+    }
+    if (searchEl) {
+      searchEl.addEventListener('input', function () {
+        if (spotlightOrganiserSearchTimer) clearTimeout(spotlightOrganiserSearchTimer);
+        spotlightOrganiserSearchTimer = setTimeout(sync, 200);
+      });
+    }
+    if (featuredEl) featuredEl.addEventListener('change', sync);
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        spotlightOrganiserState.q = '';
+        spotlightOrganiserState.featured = '';
+        if (searchEl) searchEl.value = '';
+        if (featuredEl) featuredEl.value = '';
+        paintSpotlightOrganisersTable();
+      });
+    }
+  }
+
+  function bindSpotlightOpportunityFilters() {
+    var searchEl = document.getElementById('spotlight-opportunities-search');
+    var featuredEl = document.getElementById('spotlight-opportunities-featured');
+    var clearBtn = document.getElementById('spotlight-opportunities-clear');
+    function sync() {
+      spotlightOpportunityState.q = searchEl ? searchEl.value : '';
+      spotlightOpportunityState.featured = featuredEl ? featuredEl.value : '';
+      paintSpotlightOpportunitiesTable();
+    }
+    if (searchEl) {
+      searchEl.addEventListener('input', function () {
+        if (spotlightOpportunitySearchTimer) clearTimeout(spotlightOpportunitySearchTimer);
+        spotlightOpportunitySearchTimer = setTimeout(sync, 200);
+      });
+    }
+    if (featuredEl) featuredEl.addEventListener('change', sync);
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        spotlightOpportunityState.q = '';
+        spotlightOpportunityState.featured = '';
+        if (searchEl) searchEl.value = '';
+        if (featuredEl) featuredEl.value = '';
+        paintSpotlightOpportunitiesTable();
+      });
+    }
+  }
+
+  function bindSpotlightToggleHandlers() {
+    if (window.__spotlightTogglesBound) return;
+    window.__spotlightTogglesBound = true;
+    document.body.addEventListener('change', function (e) {
+      var eventToggle = e.target.closest('.spotlight-event-toggle');
+      if (eventToggle) {
+        var eventId = eventToggle.getAttribute('data-event-id');
+        if (!eventId) return;
+        eventToggle.disabled = true;
+        adminPost('/api/admin/events', { id: eventId, featured: eventToggle.checked })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
+            var idx = featuredSpotlightEvents.findIndex(function (ev) {
+              return ev.id === eventId;
+            });
+            if (idx >= 0) {
+              featuredSpotlightEvents[idx].featured = eventToggle.checked;
+              if (data.event && data.event.featured_until) {
+                featuredSpotlightEvents[idx].featured_until = data.event.featured_until;
+              }
+            }
+            invalidateSpotlightSlotsCache();
+            paintFeaturedSpotlightTable();
+          })
+          .catch(function (err) {
+            eventToggle.checked = !eventToggle.checked;
+            window.alert(err.message || 'Could not update featured status.');
+          })
+          .finally(function () {
+            eventToggle.disabled = false;
+          });
+        return;
+      }
+      var orgToggle = e.target.closest('.spotlight-organiser-toggle');
+      if (orgToggle) {
+        var organiserId = orgToggle.getAttribute('data-organiser-id');
+        if (!organiserId) return;
+        orgToggle.disabled = true;
+        adminPost('/api/admin/organisers', { id: organiserId, featured: orgToggle.checked })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
+            var idx = featuredSpotlightOrganisers.findIndex(function (o) {
+              return o.id === organiserId;
+            });
+            if (idx >= 0) featuredSpotlightOrganisers[idx].featured = orgToggle.checked;
+            invalidateSpotlightSlotsCache();
+            paintSpotlightOrganisersTable();
+          })
+          .catch(function (err) {
+            orgToggle.checked = !orgToggle.checked;
+            window.alert(err.message || 'Could not update featured status.');
+          })
+          .finally(function () {
+            orgToggle.disabled = false;
+          });
+        return;
+      }
+      var oppToggle = e.target.closest('.spotlight-opportunity-toggle');
+      if (oppToggle) {
+        var oppId = oppToggle.getAttribute('data-opportunity-id');
+        if (!oppId) return;
+        oppToggle.disabled = true;
+        adminPost('/api/admin/opportunities', { id: oppId, featured: oppToggle.checked })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
+            var idx = featuredSpotlightOpportunities.findIndex(function (o) {
+              return o.id === oppId;
+            });
+            if (idx >= 0) {
+              featuredSpotlightOpportunities[idx].featured = oppToggle.checked;
+              if (data.opportunity && data.opportunity.featured_until) {
+                featuredSpotlightOpportunities[idx].featured_until = data.opportunity.featured_until;
+              }
+            }
+            invalidateSpotlightSlotsCache();
+            paintSpotlightOpportunitiesTable();
+          })
+          .catch(function (err) {
+            oppToggle.checked = !oppToggle.checked;
+            window.alert(err.message || 'Could not update featured status.');
+          })
+          .finally(function () {
+            oppToggle.disabled = false;
+          });
+      }
+    });
+  }
+
+  function renderSpotlightEventsTab() {
     var typeOptions = EVENT_TYPES.map(function (t) {
       return (
         '<option value="' +
@@ -9464,7 +9842,8 @@
 
     main.innerHTML =
       '<div class="space-y-4">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Featured events appear in the <strong>Premium Spotlight</strong> carousel on the public browse page. Only approved, published listings should be featured.</p>' +
+      '<div id="spotlight-slots-wrap" class="text-sm text-slate-500">Loading carousel slot usage…</div>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Toggle featured events for the <strong>Premium Spotlight</strong> on <code class="text-[11px]">/events/</code>. Paid placements show an expiry date; admin grants stay until you remove them.</p>' +
       '<p id="featured-status" class="text-sm text-slate-500">Loading approved events…</p>' +
       '<div class="admin-filter-bar rounded-xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm">' +
       '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
@@ -9499,53 +9878,255 @@
       '<button type="button" id="featured-spotlight-clear" class="text-sm font-semibold text-slate-600 hover:text-brand-900 px-2 py-1">Clear filters</button></div></div>' +
       adminTableScroll(
         '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
-          '<tr><th class="px-4 py-3 text-left">Featured</th><th class="px-4 py-3 text-left">Event</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">Date</th><th class="px-4 py-3">City</th><th class="px-4 py-3"></th></tr></thead>' +
-          '<tbody id="featured-tbody"><tr><td colspan="6" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+          '<tr><th class="px-4 py-3 text-left">Featured</th><th class="px-4 py-3 text-left">Event</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">Date</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Expires</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="featured-tbody"><tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
       ) +
       '</div>';
 
+    loadSpotlightSlotBanner();
     bindFeaturedSpotlightFilters();
+    bindSpotlightToggleHandlers();
 
     adminGet('/api/admin/events?approval_status=Approved&limit=100&sort=date').then(function (data) {
       var tbody = document.getElementById('featured-tbody');
       var status = document.getElementById('featured-status');
       if (!data || !data.ok) {
         if (status) status.textContent = 'Could not load events.';
-        if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-red-700">Load failed.</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-red-700">Load failed.</td></tr>';
         return;
       }
       featuredSpotlightEvents = data.events || [];
       paintFeaturedSpotlightTable();
     });
+  }
 
-    if (!main.dataset.featuredBound) {
-      main.dataset.featuredBound = '1';
-      main.addEventListener('change', function (e) {
-        var toggle = e.target.closest('.featured-event-toggle');
-        if (!toggle) return;
-        var eventId = toggle.getAttribute('data-event-id');
-        if (!eventId) return;
-        toggle.disabled = true;
-        adminPost('/api/admin/events', { id: eventId, featured: toggle.checked })
-          .then(function (data) {
-            if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
-            var row = toggle.closest('tr');
-            if (row) row.classList.toggle('bg-amber-50/40', toggle.checked);
-            var idx = featuredSpotlightEvents.findIndex(function (ev) {
-              return ev.id === eventId;
-            });
-            if (idx >= 0) featuredSpotlightEvents[idx].featured = toggle.checked;
-            paintFeaturedSpotlightTable();
-          })
-          .catch(function (err) {
-            toggle.checked = !toggle.checked;
-            window.alert(err.message || 'Could not update featured status.');
-          })
-          .finally(function () {
-            toggle.disabled = false;
-          });
+  function renderSpotlightOrganisersTab() {
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<div id="spotlight-slots-wrap" class="text-sm text-slate-500">Loading carousel slot usage…</div>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Featured organisers appear in the group spotlight carousel on the Events browse page.</p>' +
+      '<p id="spotlight-organisers-status" class="text-sm text-slate-500">Loading organisers…</p>' +
+      '<div class="admin-filter-bar rounded-xl border border-slate-200 bg-white p-4 flex flex-col gap-3 sm:flex-row sm:items-center">' +
+      '<input type="search" id="spotlight-organisers-search" placeholder="Search name, city, or email…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
+      attrEsc(spotlightOrganiserState.q) +
+      '">' +
+      '<select id="spotlight-organisers-featured" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:w-44">' +
+      '<option value=""' +
+      (spotlightOrganiserState.featured === '' ? ' selected' : '') +
+      '>All groups</option>' +
+      '<option value="yes"' +
+      (spotlightOrganiserState.featured === 'yes' ? ' selected' : '') +
+      '>Featured only</option>' +
+      '<option value="no"' +
+      (spotlightOrganiserState.featured === 'no' ? ' selected' : '') +
+      '>Not featured</option></select>' +
+      '<button type="button" id="spotlight-organisers-clear" class="text-sm font-semibold text-slate-600 hover:text-brand-900 px-2 py-1">Clear</button></div>' +
+      adminTableScroll(
+        '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
+          '<tr><th class="px-4 py-3 text-left">Featured</th><th class="px-4 py-3 text-left">Group</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Listing</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="spotlight-organisers-tbody"><tr><td colspan="5" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+      ) +
+      '</div>';
+
+    loadSpotlightSlotBanner();
+    bindSpotlightOrganiserFilters();
+    bindSpotlightToggleHandlers();
+
+    adminGet('/api/admin/organisers?limit=100').then(function (data) {
+      var tbody = document.getElementById('spotlight-organisers-tbody');
+      var status = document.getElementById('spotlight-organisers-status');
+      if (!data || !data.ok) {
+        if (status) status.textContent = 'Could not load organisers.';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-red-700">Load failed.</td></tr>';
+        return;
+      }
+      featuredSpotlightOrganisers = data.organisers || [];
+      paintSpotlightOrganisersTable();
+    });
+  }
+
+  function renderSpotlightOpportunitiesTab() {
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<div id="spotlight-slots-wrap" class="text-sm text-slate-500">Loading carousel slot usage…</div>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Featured opportunities appear in the Premium Spotlight on <code class="text-[11px]">/opportunities/</code>. Only approved, published listings should be featured.</p>' +
+      '<p id="spotlight-opportunities-status" class="text-sm text-slate-500">Loading opportunities…</p>' +
+      '<div class="admin-filter-bar rounded-xl border border-slate-200 bg-white p-4 flex flex-col gap-3 sm:flex-row sm:items-center">' +
+      '<input type="search" id="spotlight-opportunities-search" placeholder="Search title, host, or owner email…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
+      attrEsc(spotlightOpportunityState.q) +
+      '">' +
+      '<select id="spotlight-opportunities-featured" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:w-44">' +
+      '<option value=""' +
+      (spotlightOpportunityState.featured === '' ? ' selected' : '') +
+      '>All listings</option>' +
+      '<option value="yes"' +
+      (spotlightOpportunityState.featured === 'yes' ? ' selected' : '') +
+      '>Featured only</option>' +
+      '<option value="no"' +
+      (spotlightOpportunityState.featured === 'no' ? ' selected' : '') +
+      '>Not featured</option></select>' +
+      '<button type="button" id="spotlight-opportunities-clear" class="text-sm font-semibold text-slate-600 hover:text-brand-900 px-2 py-1">Clear</button></div>' +
+      adminTableScroll(
+        '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
+          '<tr><th class="px-4 py-3 text-left">Featured</th><th class="px-4 py-3 text-left">Listing</th><th class="px-4 py-3">Host</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Expires</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="spotlight-opportunities-tbody"><tr><td colspan="6" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+      ) +
+      '</div>';
+
+    loadSpotlightSlotBanner();
+    bindSpotlightOpportunityFilters();
+    bindSpotlightToggleHandlers();
+
+    adminGet('/api/admin/opportunities?approval_status=Approved&limit=100&sort=title').then(function (data) {
+      var tbody = document.getElementById('spotlight-opportunities-tbody');
+      var status = document.getElementById('spotlight-opportunities-status');
+      if (!data || !data.ok) {
+        if (status) status.textContent = 'Could not load opportunities.';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-red-700">Load failed.</td></tr>';
+        return;
+      }
+      featuredSpotlightOpportunities = data.opportunities || [];
+      paintSpotlightOpportunitiesTable();
+    });
+  }
+
+  function renderSpotlightHub(fullHash) {
+    var hash = String(fullHash || 'spotlight/events');
+    var tab = 'events';
+    if (hash.indexOf('organisers') !== -1) tab = 'organisers';
+    else if (hash.indexOf('opportunities') !== -1) tab = 'opportunities';
+
+    var tabsHtml = adminHubTabsHtml(
+      [
+        { key: 'events', label: 'Events', href: '#spotlight/events' },
+        { key: 'organisers', label: 'Organisers', href: '#spotlight/organisers' },
+        { key: 'opportunities', label: 'Opportunities', href: '#spotlight/opportunities' },
+      ],
+      tab
+    );
+
+    if (tab === 'organisers') withHubTabs(tabsHtml, renderSpotlightOrganisersTab);
+    else if (tab === 'opportunities') withHubTabs(tabsHtml, renderSpotlightOpportunitiesTab);
+    else withHubTabs(tabsHtml, renderSpotlightEventsTab);
+  }
+
+  function renderFeatured() {
+    location.replace('#spotlight/events');
+  }
+
+  function renderSupportBookings() {
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Search by attendee email, booking reference (<code class="text-[11px]">HUB-…</code>), registration ID, or event title. Use results to answer payment and ticket questions — refunds are handled via Stripe and organiser flows.</p>' +
+      '<form id="bookings-search-form" class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
+      '<input type="search" id="bookings-search-input" required placeholder="Email, HUB- reference, ID, or event title…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
+      attrEsc(bookingsSearchState.q) +
+      '">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-800">Search</button></form>' +
+      '<p id="bookings-search-status" class="text-sm text-slate-500">Enter a search term above.</p>' +
+      '<div id="bookings-search-results"></div></div>';
+
+    var form = document.getElementById('bookings-search-form');
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var input = document.getElementById('bookings-search-input');
+        var q = (input && input.value ? input.value : '').trim();
+        bookingsSearchState.q = q;
+        runBookingsSearch(q);
       });
     }
+    if (bookingsSearchState.q) runBookingsSearch(bookingsSearchState.q);
+  }
+
+  function runBookingsSearch(q) {
+    var status = document.getElementById('bookings-search-status');
+    var results = document.getElementById('bookings-search-results');
+    if (!q) {
+      if (status) status.textContent = 'Enter a search term above.';
+      if (results) results.innerHTML = '';
+      return;
+    }
+    if (status) status.textContent = 'Searching…';
+    if (results) results.innerHTML = '';
+    adminGet('/api/admin/bookings?q=' + encodeURIComponent(q)).then(function (data) {
+      if (!data || !data.ok) {
+        if (status) status.textContent = (data && data.message) || 'Search failed.';
+        return;
+      }
+      var bookings = data.bookings || [];
+      if (status) {
+        status.textContent = bookings.length
+          ? bookings.length + ' booking' + (bookings.length === 1 ? '' : 's') + ' found'
+          : data.message || 'No bookings match that search.';
+      }
+      if (!results) return;
+      if (!bookings.length) {
+        results.innerHTML = '';
+        return;
+      }
+      results.innerHTML = adminTableScroll(
+        '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
+          '<tr><th class="px-4 py-3 text-left">Reference</th><th class="px-4 py-3 text-left">Attendee</th><th class="px-4 py-3 text-left">Event</th><th class="px-4 py-3">Paid</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Booked</th><th class="px-4 py-3"></th></tr></thead><tbody>' +
+          bookings
+            .map(function (b) {
+              var eventDate = b.eventStartsAt ? fmtTime(b.eventStartsAt).split(',')[0] : '—';
+              var payLabel = b.amountPaid > 0 ? fmtMoney(b.amountPaid) : 'Free';
+              var statusCls =
+                b.paymentStatus === 'Paid'
+                  ? 'text-emerald-700'
+                  : b.paymentStatus === 'Refunded'
+                    ? 'text-slate-500'
+                    : 'text-amber-800';
+              var accountUrl =
+                '../account/index.html?booking=' + encodeURIComponent(b.id) + '#payments';
+              return (
+                '<tr class="border-t border-slate-100">' +
+                '<td class="px-4 py-3 font-mono text-xs">' +
+                esc(b.bookingReference) +
+                '</td>' +
+                '<td class="px-4 py-3"><span class="font-medium">' +
+                esc(b.attendeeName) +
+                '</span><br><span class="text-xs text-slate-500">' +
+                esc(b.attendeeEmail) +
+                '</span></td>' +
+                '<td class="px-4 py-3"><span class="font-medium">' +
+                esc(b.eventTitle) +
+                '</span><br><span class="text-xs text-slate-500">' +
+                esc(eventDate) +
+                ' · ' +
+                esc(b.ticketName) +
+                (b.quantity > 1 ? ' ×' + b.quantity : '') +
+                '</span></td>' +
+                '<td class="px-4 py-3">' +
+                esc(payLabel) +
+                '</td>' +
+                '<td class="px-4 py-3"><span class="text-xs font-semibold ' +
+                statusCls +
+                '">' +
+                esc(b.paymentStatus) +
+                (b.cancelledAt ? ' · Cancelled' : '') +
+                (b.refundEmailSentAt ? ' · Refund emailed' : '') +
+                '</span></td>' +
+                '<td class="px-4 py-3 text-xs">' +
+                esc(formatAccountDate(b.createdAt)) +
+                '</td>' +
+                '<td class="px-4 py-3"><a href="' +
+                attrEsc(accountUrl) +
+                '" target="_blank" rel="noopener" class="text-brand-700 text-xs font-semibold hover:underline">Open</a></td></tr>'
+              );
+            })
+            .join('') +
+          '</tbody></table>'
+      );
+    });
+  }
+
+  function renderSupportHub(fullHash) {
+    var hash = String(fullHash || 'support/bookings');
+    var tab = hash.indexOf('bookings') !== -1 || hash === 'support' ? 'bookings' : 'bookings';
+    var tabsHtml = adminHubTabsHtml([{ key: 'bookings', label: 'Bookings', href: '#support/bookings' }], tab);
+    withHubTabs(tabsHtml, renderSupportBookings);
   }
 
   function bindFinancialsActions() {
@@ -11426,7 +12007,9 @@
     newsletter: renderNewsletterHub,
     moderation: renderModerationHub,
     financials: renderFinancials,
+    spotlight: renderSpotlightHub,
     featured: renderFeatured,
+    support: renderSupportHub,
     sponsorship: function () {
       renderSponsorship((location.hash || '#sponsorship').replace('#', ''));
     },

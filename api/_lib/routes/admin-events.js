@@ -98,6 +98,8 @@ function mapEventRow(row, orgById) {
     slug: publicEventSlug({ slug: row.slug, title: row.title }),
     city: row.city || '',
     featured: Boolean(row.featured),
+    featured_until: row.featured_until || null,
+    featuredUntil: row.featured_until || null,
   };
 }
 
@@ -117,7 +119,7 @@ async function listEventsForAdmin(query) {
   let dbQuery = sb
     .from('events')
     .select(
-      'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, featured, created_at',
+      'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, featured, featured_until, created_at',
       { count: 'exact' }
     );
 
