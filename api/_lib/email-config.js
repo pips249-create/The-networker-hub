@@ -1,3 +1,5 @@
+const { emailAllowlistStatus } = require('./email-allowlist');
+
 function emailConfigStatus() {
   const hasResendApiKey = Boolean(String(process.env.RESEND_API_KEY || '').trim());
   const hasResendFrom = Boolean(String(process.env.RESEND_FROM || '').trim());
@@ -7,6 +9,7 @@ function emailConfigStatus() {
     hasResendFrom,
     hasResendWebhookSecret,
     emailSendingConfigured: hasResendApiKey && hasResendFrom,
+    ...emailAllowlistStatus(),
   };
 }
 

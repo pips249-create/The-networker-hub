@@ -32,6 +32,7 @@ const {
   stripUnresolvedBookingReminderPlaceholders,
   stripUnresolvedAccountWelcomePlaceholders,
 } = require('./booking-email-sections');
+const { isRecipientAllowed } = require('./email-allowlist');
 const {
   enrichOrganiserRegistrationVars,
   enrichOrganiserBookingCancelledVars,
@@ -326,6 +327,14 @@ async function sendViaResend({ to, subject, html, tags }) {
   if (!recipient) {
     const err = new Error('missing_recipient');
     err.code = 'missing_recipient';
+    throw err;
+  }
+
+  if (!isRecipientAllowed(recipient)) {
+    const err = new Error(
+      'This recipient is not on the pre-launch email allowlist. Add them to EMAIL_RECIPIENT_ALLOWLIST in Vercel, or set EMAIL_ALLOWLIST_DISABLED=true when you launch.'
+    );
+    err.code = 'recipient_not_allowlisted';
     throw err;
   }
 

@@ -89,6 +89,8 @@ module.exports = async function handler(req, res) {
       hasCronSecret: cron.hasCronSecret,
       isProduction: cron.isProduction,
       emailSendingConfigured: email.emailSendingConfigured,
+      emailAllowlistEnabled: email.emailAllowlistEnabled,
+      emailAllowlistCount: email.emailAllowlistCount,
       cronReady: cron.cronReady,
       hasStripeSecretKey: stripe.hasStripeSecretKey,
       hasStripeWebhookSecret: stripe.hasStripeWebhookSecret,
@@ -131,6 +133,10 @@ module.exports = async function handler(req, res) {
       checkoutEmailReady:
         stripe.checkoutReady && email.emailSendingConfigured
           ? 'Resend is configured — confirmation emails will send after checkout once the domain is verified.'
+          : null,
+      emailAllowlist:
+        email.emailAllowlistEnabled
+          ? `Pre-launch email allowlist is ON (${email.emailAllowlistCount} addresses). Only whitelisted recipients receive mail. Set EMAIL_ALLOWLIST_DISABLED=true in Vercel when you launch.`
           : null,
       siteAccessGate:
         siteAccess.siteAccessRequired && !siteAccess.siteAccessReady

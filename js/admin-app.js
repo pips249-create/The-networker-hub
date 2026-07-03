@@ -27,6 +27,8 @@
         'Email template not found. Run the latest Supabase email migrations (including 091 for password reset).',
       resend_send_failed:
         'Resend rejected the email. Check RESEND_FROM uses a verified domain and see Resend logs.',
+      recipient_not_allowlisted:
+        'That address is not on the pre-launch email allowlist. Only team test addresses receive mail until launch.',
     };
     return messages[code] || fallback || code || 'Something went wrong.';
   }
@@ -9698,10 +9700,14 @@
           '<h3 class="font-bold text-brand-900 mb-3">Email &amp; scheduled jobs</h3>' +
           '<div class="text-sm">' +
           envRow('Transactional email (Resend)', env.emailSendingConfigured) +
+          envRow('Pre-launch email allowlist', env.emailAllowlistEnabled) +
           envRow('Cron jobs secured', env.cronReady) +
           '</div>' +
           (hints.missingResend
             ? '<p class="text-xs text-amber-800 mt-3">' + esc(hints.missingResend) + '</p>'
+            : '') +
+          (hints.emailAllowlist
+            ? '<p class="text-xs text-amber-800 mt-2">' + esc(hints.emailAllowlist) + '</p>'
             : '') +
           (hints.missingCronSecret
             ? '<p class="text-xs text-amber-800 mt-2">' + esc(hints.missingCronSecret) + '</p>'
