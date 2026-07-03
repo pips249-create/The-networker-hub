@@ -30,7 +30,7 @@ const NL = {
   lightBorder: '#e8dce8',
   cream: '#f5f0e8',
   text: '#4a4446',
-  textMuted: '#736b6e',
+  textMuted: '#635c5e',
   outerBg: '#ebe8f2',
 };
 
@@ -128,7 +128,7 @@ function paragraphsHtml(text) {
         .filter(Boolean)
         .join('<br>');
       return (
-        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.7;color:#736b6e;margin:0 0 12px;">' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0 0 12px;">' +
         lines +
         '</p>'
       );
@@ -140,7 +140,7 @@ function sectionWrap(kicker, title, innerRows) {
   const body = String(innerRows || '').trim();
   if (!body) return '';
   const kickerHtml = String(kicker || '').trim()
-    ? '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 6px;">' +
+    ? '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">' +
       escapeHtml(kicker) +
       '</p>'
     : '';
@@ -215,7 +215,7 @@ function eventListingCard(eventRow, site, tickets) {
   const ctaLabel = eventCtaLabel(eventRow, tickets);
 
   const organiserHtml = organiserName
-    ? '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:600;color:' +
+    ? '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:' +
       NL.accent +
       ';margin:0 0 6px;line-height:1.4;">' +
       escapeHtml(organiserName) +
@@ -231,14 +231,14 @@ function eventListingCard(eventRow, site, tickets) {
     ';margin:0 0 6px;line-height:1.35;">' +
     escapeHtml(title) +
     '</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;color:#736b6e;margin:0 0 12px;line-height:1.5;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;color:#635c5e;margin:0 0 12px;line-height:1.5;">' +
     escapeHtml(whenWhere) +
     '</p>' +
     '<a href="' +
     escapeHtml(url) +
-    '" style="display:inline-block;padding:8px 16px;background:' +
+    '" style="display:inline-block;padding:12px 22px;background:' +
     NL.primary +
-    ';border-radius:999px;color:#ffffff;font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:700;text-decoration:none;">' +
+    ';border-radius:999px;color:#ffffff;font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;text-decoration:none;">' +
     escapeHtml(ctaLabel) +
     '</a>' +
     '</td></tr></table>'
@@ -259,9 +259,9 @@ async function fetchTicketsByEventId(sb, eventIds) {
 
 function listingCard(title, subtitle, url, badge) {
   const badgeHtml = badge
-    ? '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:' +
+    ? '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:' +
       NL.accent +
-      ';text-transform:uppercase;letter-spacing:1.5px;margin:0 0 6px;">' +
+      ';text-transform:uppercase;letter-spacing:0.5px;margin:0 0 6px;">' +
       escapeHtml(badge) +
       '</p>'
     : '';
@@ -279,7 +279,7 @@ function listingCard(title, subtitle, url, badge) {
     ';text-decoration:none;">' +
     escapeHtml(title) +
     '</a></p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;color:#736b6e;margin:0;line-height:1.5;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;color:#635c5e;margin:0;line-height:1.5;">' +
     escapeHtml(subtitle) +
     '</p></td></tr></table>'
   );
@@ -296,7 +296,7 @@ function buildArticleSection(edition, layout) {
 
   if (resolvedLayout === 'editorial') {
     const titleHtml = title
-      ? '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:22px;font-weight:600;color:' +
+      ? '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:24px;font-weight:600;color:' +
         NL.dark +
         ';margin:0 0 14px;line-height:1.25;">' +
         escapeHtml(title) +
@@ -304,7 +304,7 @@ function buildArticleSection(edition, layout) {
       : '';
     const inner =
       '<tr><td class="mobile-pad" style="padding:16px 44px 8px;text-align:left;">' +
-      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 10px;">Editorial</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 10px;">Editorial</p>' +
       titleHtml +
       bodyHtml +
       '</td></tr>';
@@ -330,9 +330,9 @@ function buildArticleSection(edition, layout) {
       '</td>';
     return (
       '<tr><td class="mobile-pad" style="padding:16px 36px 4px;text-align:left;">' +
-      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:' +
       NL.accent +
-      ';text-transform:uppercase;letter-spacing:2.5px;margin:0;">Editorial</p>' +
+      ';text-transform:uppercase;letter-spacing:1px;margin:0;">Editorial</p>' +
       '</td></tr>' +
       '<tr><td class="mobile-pad" style="padding:0 36px 16px;">' +
       '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:' +
@@ -360,7 +360,7 @@ function buildArticleSection(edition, layout) {
           escapeHtml(title) +
           '</p>'
         : '') +
-      bodyHtml.replace(/#736b6e/g, 'rgba(255,255,255,0.82)')
+      bodyHtml.replace(/#635c5e/g, 'rgba(255,255,255,0.82)')
   );
   return sectionWrap('Editorial', '', inner);
 }
@@ -368,7 +368,7 @@ function buildArticleSection(edition, layout) {
 function buildHubNewsSection(edition) {
   const body = String(edition.hubNews || edition.hub_news || '').trim();
   if (!body) return '';
-  return sectionWrap('Hub news', 'What is new on the Hub', accentCard(paragraphsHtml(body).replace(/#736b6e/g, 'rgba(255,255,255,0.82)')));
+  return sectionWrap('Hub news', 'What is new on the Hub', accentCard(paragraphsHtml(body).replace(/#635c5e/g, 'rgba(255,255,255,0.82)')));
 }
 
 function buildMemberSpotlightSection(edition) {
@@ -392,11 +392,11 @@ function buildMemberSpotlightSection(edition) {
           '</p>'
         : '') +
       (role
-        ? '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;color:rgba(255,255,255,0.7);margin:0 0 12px;text-align:center;">' +
+        ? '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;color:rgba(255,255,255,0.7);margin:0 0 12px;text-align:center;">' +
           escapeHtml(role) +
           '</p>'
         : '') +
-      paragraphsHtml(body).replace(/#736b6e/g, 'rgba(255,255,255,0.82)')
+      paragraphsHtml(body).replace(/#635c5e/g, 'rgba(255,255,255,0.82)')
   );
   return sectionWrap('Member spotlight', '', inner);
 }
@@ -466,11 +466,11 @@ function topRankedOrganiserRow(row, site, rank) {
     '<td width="40" valign="top" style="width:40px;padding-right:10px;">' +
     '<span style="display:inline-block;width:30px;height:30px;line-height:30px;text-align:center;border-radius:50%;background:' +
     NL.primary +
-    ';color:#ffffff;font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:700;">' +
+    ';color:#ffffff;font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;">' +
     String(rank) +
     '</span></td>' +
     '<td valign="top" style="padding-right:8px;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:600;color:' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:' +
     NL.dark +
     ';margin:0 0 4px;line-height:1.35;">' +
     '<a href="' +
@@ -480,7 +480,7 @@ function topRankedOrganiserRow(row, site, rank) {
     ';text-decoration:none;">' +
     escapeHtml(name) +
     '</a></p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;color:' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;color:' +
     NL.textMuted +
     ';margin:0;line-height:1.4;">' +
     escapeHtml(meta) +
@@ -488,7 +488,7 @@ function topRankedOrganiserRow(row, site, rank) {
     '<td valign="middle" align="right" style="white-space:nowrap;">' +
     '<a href="' +
     escapeHtml(url) +
-    '" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:700;color:' +
+    '" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:' +
     NL.primary +
     ';text-decoration:none;">View →</a>' +
     '</td></tr></table></td></tr></table>'
@@ -506,7 +506,7 @@ function buildTopRankedOrganisersSection(organisers, site, periodLabel) {
     .join('');
   const browseUrl = siteBase(site) + '/events/#organisers';
   const footer =
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;margin:12px 0 0;text-align:center;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;margin:12px 0 0;text-align:center;">' +
     '<a href="' +
     escapeHtml(browseUrl) +
     '" style="color:' +

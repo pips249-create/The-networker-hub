@@ -42,8 +42,8 @@ function summaryLine(label, value) {
   const text = String(value || '').trim();
   if (!text) return '';
   return (
-    '<tr><td style="padding:0 0 8px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;line-height:1.5;">' +
-    '<span style="color:#736b6e;">' +
+    '<tr><td style="padding:0 0 8px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.5;">' +
+    '<span style="color:#635c5e;">' +
     escapeHtml(label) +
     '</span> ' +
     '<span style="color:#4a4446;font-weight:600;">' +
@@ -77,7 +77,7 @@ function buildPaymentSummaryRow(vars) {
     '<tr><td class="mobile-pad" style="padding:0 48px 20px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #d9c4e0;">' +
     '<tr><td style="padding:20px 22px;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2px;margin:0 0 10px;">Payment summary</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 10px;">Payment summary</p>' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">' +
     rows +
     '</table>' +
@@ -86,11 +86,11 @@ function buildPaymentSummaryRow(vars) {
         '<tr><td style="background:#4a4446;border-radius:999px;">' +
         '<a href="' +
         safePaymentUrl +
-        '" style="display:inline-block;padding:9px 20px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:600;color:#ffffff;text-decoration:none;">View payment details &rarr;</a>' +
+        '" style="display:inline-block;padding:12px 24px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;">View payment details &rarr;</a>' +
         '</td></tr></table>'
       : '') +
     (paid
-      ? '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:400;color:#9a9092;line-height:1.5;margin:12px 0 0;">Your card receipt is sent separately by our payment provider.</p>'
+      ? '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:400;color:#7a7274;line-height:1.5;margin:12px 0 0;">Your card receipt is sent separately by our payment provider.</p>'
       : '') +
     '</td></tr></table></td></tr>'
   );

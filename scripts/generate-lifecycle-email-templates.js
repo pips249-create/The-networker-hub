@@ -22,10 +22,10 @@ const shell = (pageTitle, bodyRows) => `<!DOCTYPE html>
     table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
     @media only screen and (max-width:600px) {
       .email-wrapper { width:100% !important; }
-      .hero-title { font-size:22px !important; line-height:1.2 !important; }
+      .hero-title { font-size:24px !important; line-height:1.2 !important; }
       .mobile-pad { padding-left:20px !important; padding-right:20px !important; }
       .mobile-header-pad { padding-left:20px !important; padding-right:20px !important; }
-      .email-cta a { display:block !important; width:100% !important; box-sizing:border-box !important; text-align:center !important; margin-bottom:10px !important; }
+      .email-cta a { display:block !important; width:100% !important; box-sizing:border-box !important; text-align:center !important; margin-bottom:10px !important; padding:14px 24px !important; font-size:16px !important; }
     }
   </style>
 </head>
@@ -79,9 +79,9 @@ function hero(icon, iconBg, iconColor, eyebrow, eyebrowColor, title, intro) {
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 16px;">
               <tr><td style="width:52px;height:52px;background:${iconBg};border-radius:50%;text-align:center;vertical-align:middle;font-size:22px;color:${iconColor};line-height:52px;">${icon}</td></tr>
             </table>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:${eyebrowColor};text-transform:uppercase;letter-spacing:3px;margin:0 0 8px;">${eyebrow}</p>
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:26px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">${title}</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.7;color:#736b6e;margin:0;">${intro}</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:${eyebrowColor};text-transform:uppercase;letter-spacing:1.5px;margin:0 0 8px;">${eyebrow}</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">${title}</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">${intro}</p>
           </td>
         </tr>`;
 }
@@ -91,7 +91,7 @@ function ctaRow(buttons) {
 }
 
 function btn(href, label, bg) {
-  return `<a href="${href}" style="display:inline-block;text-align:center;padding:12px 28px;background:${bg};border-radius:999px;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;margin:0 6px 10px;">${label}</a>`;
+  return `<a href="${href}" style="display:inline-block;text-align:center;padding:14px 32px;background:${bg};border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">${label}</a>`;
 }
 
 function cardBlock(inner) {
@@ -111,11 +111,11 @@ const templates = [
     ctaRow(btn('{{renew_url}}', 'Upgrade again &rarr;', '#1c2040'))],
   ['opportunity-listing-rejected.html', 'Listing not approved', hero('&#10005;', '#fde8e6', '#c0392b', 'Listing update', '#c0392b', 'Your listing was not approved',
     'Hi {{owner_name}}, we could not approve <strong style="color:#1c2040;">{{opportunity_title}}</strong> for the business opportunities directory at this time.') +
-    cardBlock(navyCard('<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.65;color:#ffffff;margin:0;">{{rejection_note}}</p>')) +
+    cardBlock(navyCard('<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.65;color:#ffffff;margin:0;">{{rejection_note}}</p>')) +
     ctaRow(btn('{{edit_url}}', 'Edit and resubmit &rarr;', '#1c2040'))],
   ['payout-requested.html', 'Payout requested', hero('&#163;', '#daeeff', '#4aa8f0', 'Payout', '#4aa8f0', 'Payout request received',
     'Hi {{organiser_name}}, we received your payout request for <strong style="color:#1c2040;">{{event_name}}</strong>. Net amount: <strong>{{amount_net}}</strong>.') +
-    cardBlock(navyCard('<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.65;color:rgba(255,255,255,0.85);margin:0;">We will review your request and email you when it is approved and paid.</p>')) +
+    cardBlock(navyCard('<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.65;color:rgba(255,255,255,0.85);margin:0;">We will review your request and email you when it is approved and paid.</p>')) +
     ctaRow(btn('{{dashboard_url}}', 'View revenue &rarr;', '#1c2040'))],
   ['payout-approved.html', 'Payout approved', hero('&#10003;', '#ebe0f0', '#9a7aa8', 'Payout approved', '#9a7aa8', 'Your payout was approved',
     'Hi {{organiser_name}}, your payout for <strong style="color:#1c2040;">{{event_name}}</strong> has been approved. We will transfer <strong>{{amount_net}}</strong> shortly.') +
@@ -128,7 +128,7 @@ const templates = [
     ctaRow(btn('{{connect_url}}', 'Add bank details &rarr;', '#1c2040'))],
   ['meeting-link-added.html', 'Join link added', hero('&#128279;', '#daeeff', '#4aa8f0', 'Online event', '#4aa8f0', 'Your join link is ready',
     'Hi {{user_name}}, the organiser added an online join link for <strong style="color:#1c2040;">{{event_name}}</strong>.') +
-    cardBlock(navyCard('<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.65;color:#ffffff;margin:0 0 14px;">{{meeting_link_section}}</p>')) +
+    cardBlock(navyCard('<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.65;color:#ffffff;margin:0 0 14px;">{{meeting_link_section}}</p>')) +
     ctaRow(btn('{{event_url}}', 'View event &rarr;', '#4aa8f0'))],
   ['post-event-review-request.html', 'Leave a review', hero('&#9733;', '#fff4d6', '#b8860b', 'How was it?', '#b8860b', 'Share your experience',
     'Hi {{user_name}}, we hope you enjoyed <strong style="color:#1c2040;">{{event_name}}</strong>. A quick review helps other networkers discover great groups.') +
@@ -148,7 +148,7 @@ const templates = [
     ctaRow(btn('{{create_event_url}}', 'Add another event &rarr;', '#1c2040') + btn('{{dashboard_url}}', 'Open dashboard', '#4aa8f0'))],
   ['saved-organiser-new-listing.html', 'New listing alert', hero('&#9733;', '#ebe0f0', '#9a7aa8', 'New listing', '#9a7aa8', '{{organiser_name}} has a new event',
     'Hi {{user_name}}, <strong style="color:#1c2040;">{{organiser_name}}</strong> just published a new listing you might like.') +
-    cardBlock(navyCard('<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:17px;font-weight:600;color:#ffffff;margin:0 0 8px;line-height:1.35;">{{event_name}}</p><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;color:rgba(255,255,255,0.75);margin:0;">{{event_date}}{{event_time}} &middot; {{event_location}}</p>')) +
+    cardBlock(navyCard('<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:17px;font-weight:600;color:#ffffff;margin:0 0 8px;line-height:1.35;">{{event_name}}</p><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);margin:0;">{{event_date}}{{event_time}} &middot; {{event_location}}</p>')) +
     ctaRow(btn('{{event_url}}', 'View event &rarr;', '#4aa8f0'))],
 ];
 

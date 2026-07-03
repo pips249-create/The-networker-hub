@@ -23,6 +23,12 @@
   }
 
   /* iOS Safari zooms focused inputs when font-size is below 16px */
+  .auth-field > input[type='email'],
+  .auth-field > input[type='text'],
+  .auth-field > input[type='password'],
+  .password-input-wrap input,
+  .auth-card select,
+  .auth-card textarea,
   .events-filter-shell input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']),
   .events-filter-shell select,
   .events-filter-shell textarea,

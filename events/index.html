@@ -14,7 +14,7 @@
 <script src="../js/fact-loader.js?v=20260613"></script>
 <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
 <link rel="stylesheet" href="../css/events-page.css?v=20260702c">
-<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260718b">
+<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260718c">
 <link rel="stylesheet" href="../css/organisers-browse.css?v=20260702">
 <script src="../js/hub-lazy-vendor.js?v=20260611"></script>
 <script src="../js/hub-seo-static-config.js?v=20260612"></script>
@@ -149,22 +149,6 @@
           <span id="search-hint" class="visually-hidden">Search listings by title, organiser, location, keywords like breakfast or women only, and event type</span>
         </div>
       </div>
-      <div class="filter-bar-row filter-bar-row-types filter-event-only">
-        <fieldset class="filter-format-group filter-format-group--with-chips">
-          <legend class="filter-bar-chip-label">Format</legend>
-          <label class="filter-checkbox">
-            <input type="checkbox" id="check-inperson" checked>
-            <span class="filter-checkbox-box" aria-hidden="true"></span>
-            In person
-          </label>
-          <label class="filter-checkbox">
-            <input type="checkbox" id="check-online" checked>
-            <span class="filter-checkbox-box" aria-hidden="true"></span>
-            Online
-          </label>
-        </fieldset>
-        <nav class="event-type-chips" id="event-type-chips" aria-label="Event type"></nav>
-      </div>
       <div class="filter-bar-row filter-bar-row-location filter-event-only">
         <div class="filter-field filter-field-postcode">
           <span class="filter-field-icon" aria-hidden="true">
@@ -225,6 +209,22 @@
           More filters <span class="filter-more-chevron" aria-hidden="true">▾</span>
         </button>
         <div class="filter-more-panel filter-event-only" id="filter-more-panel" hidden>
+          <div class="filter-bar-row filter-bar-row-types filter-bar-row-types--nested filter-event-only">
+            <fieldset class="filter-format-group filter-format-group--with-chips">
+              <legend class="filter-bar-chip-label">Format</legend>
+              <label class="filter-checkbox">
+                <input type="checkbox" id="check-inperson" checked>
+                <span class="filter-checkbox-box" aria-hidden="true"></span>
+                In person
+              </label>
+              <label class="filter-checkbox">
+                <input type="checkbox" id="check-online" checked>
+                <span class="filter-checkbox-box" aria-hidden="true"></span>
+                Online
+              </label>
+            </fieldset>
+            <nav class="event-type-chips" id="event-type-chips" aria-label="Event type"></nav>
+          </div>
           <div class="filter-price-range" id="filter-price-range">
             <span class="filter-bar-chip-label">Price</span>
             <div class="filter-price-range-controls">

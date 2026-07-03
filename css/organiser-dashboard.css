@@ -25,7 +25,7 @@
   --od-radius-sm: 8px;
   --od-shadow-sm: 0 2px 10px rgba(26, 46, 59, 0.06);
   --od-shadow-md: 0 4px 20px rgba(26, 46, 59, 0.08);
-  font-family: 'Poppins', 'DM Sans', system-ui, sans-serif;
+  font-family: 'DM Sans', 'Poppins', system-ui, sans-serif;
   background: var(--od-bg);
   color: var(--od-text-dark);
   min-height: 100vh;
@@ -40,9 +40,9 @@
 }
 
 .org-sidebar-label {
-  font-size: 10px;
+  font-size: var(--text-size-label);
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--od-text-soft);
   padding: 20px 20px 8px;
@@ -53,7 +53,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
+  font-size: var(--text-size-small);
   color: var(--od-text-soft);
   margin: 0 0 12px;
   padding: 10px 14px;

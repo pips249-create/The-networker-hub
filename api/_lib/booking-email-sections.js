@@ -21,7 +21,7 @@ const {
 } = require('./hub-email-urls');
 
 const META_CELL =
-  'padding:0 0 10px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.5;';
+  'padding:0 0 10px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);line-height:1.5;';
 
 function metaRow(label, value) {
   const text = String(value || '').trim();
@@ -59,13 +59,13 @@ function buildMeetingLinkRow(link, online) {
     '<tr><td class="mobile-pad" style="padding:0 48px 20px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
     '<tr><td style="padding:20px 24px;text-align:center;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 8px;">Join online</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:400;color:#736b6e;line-height:1.6;margin:0 0 14px;">Use the link below when the event starts.</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Join online</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:400;color:#635c5e;line-height:1.6;margin:0 0 14px;">Use the link below when the event starts.</p>' +
     '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">' +
     '<tr><td style="background:#9a7aa8;border-radius:999px;">' +
     '<a href="' +
     safeUrl +
-    '" style="display:inline-block;padding:12px 32px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#ffffff;text-decoration:none;">Join online &rarr;</a>' +
+    '" style="display:inline-block;padding:12px 32px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;">Join online &rarr;</a>' +
     '</td></tr></table></td></tr></table></td></tr>'
   );
 }

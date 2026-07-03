@@ -13,7 +13,7 @@
     table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
     @media only screen and (max-width:600px) {
       .email-wrapper { width:100% !important; }
-      .hero-title { font-size:22px !important; }
+      .hero-title { font-size:24px !important; }
       .mobile-pad { padding-left:20px !important; padding-right:20px !important; }
       .stat-cell { display:block !important; width:100% !important; padding:14px 0 !important; border-left:none !important; border-top:1px solid rgba(74,168,240,0.2) !important; text-align:center !important; }
       .stat-cell:first-child { border-top:none !important; }
@@ -54,12 +54,12 @@
           <td class="mobile-pad" style="padding:28px 48px 20px;text-align:center;">
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 16px;">
               <tr>
-                <td style="width:52px;height:52px;background:#daeeff;border-radius:50%;text-align:center;vertical-align:middle;font-size:22px;color:#4aa8f0;line-height:52px;">&#9733;</td>
+                <td style="width:52px;height:52px;background:#daeeff;border-radius:50%;text-align:center;vertical-align:middle;font-size:24px;color:#4aa8f0;line-height:52px;">&#9733;</td>
               </tr>
             </table>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:#4aa8f0;text-transform:uppercase;letter-spacing:3px;margin:0 0 8px;">Application received</p>
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:26px;font-weight:600;color:#1c2040;letter-spacing:-0.03em;line-height:1.15;margin:0 0 10px;">Your application has been received</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;font-weight:400;color:#736b6e;line-height:1.7;margin:0;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#4aa8f0;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Application received</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;letter-spacing:-0.03em;line-height:1.15;margin:0 0 10px;">Your application has been received</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:400;color:#635c5e;line-height:1.7;margin:0;">
               Hi {{user_name}}, thanks for applying to <strong style="color:#4aa8f0;font-weight:600;">{{event_name}}</strong>. The organiser will review your application and email you if you are approved.
             </p>
           </td>
@@ -70,14 +70,14 @@
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#1c2040;border-radius:16px;">
               <tr>
                 <td style="padding:24px;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;margin:0 0 8px;">Your details</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Your details</p>
 
                   <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:18px;">
                     <tr>
                       <td style="width:40px;height:40px;background:#4aa8f0;border-radius:50%;text-align:center;vertical-align:middle;font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#ffffff;line-height:40px;">{{attendee_initial}}</td>
                       <td style="padding-left:12px;vertical-align:middle;">
                         <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:17px;font-weight:600;color:#ffffff;margin:0;line-height:1.2;">{{user_name}}</p>
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:400;color:rgba(255,255,255,0.6);margin:0;">{{user_email}}</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:400;color:rgba(255,255,255,0.6);margin:0;">{{user_email}}</p>
                       </td>
                     </tr>
                   </table>
@@ -85,16 +85,16 @@
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid rgba(255,255,255,0.14);">
                     <tr>
                       <td class="detail-cell" style="padding:14px 12px 14px 0;width:33.33%;vertical-align:top;">
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1.5px;margin:0 0 4px;">When</p>
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:600;color:#ffffff;margin:0;line-height:1.4;">{{event_date}}</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">When</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.4;">{{event_date}}</p>
                       </td>
                       <td class="detail-cell" style="padding:14px 12px 14px 0;width:33.33%;vertical-align:top;">
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1.5px;margin:0 0 4px;">Time</p>
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:600;color:#ffffff;margin:0;">{{event_time}}</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Time</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;">{{event_time}}</p>
                       </td>
                       <td class="detail-cell" style="padding:14px 0;width:33.33%;vertical-align:top;">
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1.5px;margin:0 0 4px;">If approved</p>
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:600;color:#ffffff;margin:0;">{{price_if_approved}}</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">If approved</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;">{{price_if_approved}}</p>
                       </td>
                     </tr>
                   </table>
@@ -109,11 +109,11 @@
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f0f4ff;border-radius:14px;border:1px solid #b8d4f5;">
               <tr>
                 <td style="padding:22px 24px 16px;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:#4aa8f0;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 6px;">What happens next</p>
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.65;color:#1c2040;margin:0 0 14px;">
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#4aa8f0;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">What happens next</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.65;color:#1c2040;margin:0 0 14px;">
                     The organiser will review your application and email you if you are approved. You can check the status any time in My Hub.
                   </p>
-                  <a href="{{hub_account_url}}" style="display:inline-block;padding:10px 24px;font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:#ffffff;text-decoration:none;background:#4aa8f0;border-radius:999px;">Open My Hub</a>
+                  <a href="{{hub_account_url}}" style="display:inline-block;padding:14px 28px;font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;background:#4aa8f0;border-radius:999px;">Open My Hub</a>
                 </td>
               </tr>
             </table>
@@ -125,13 +125,13 @@
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
               <tr>
                 <td class="info-cell" style="text-align:center;width:33.33%;padding:0 10px;vertical-align:top;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Payouts are processed after your event</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Payouts are processed after your event</p>
                 </td>
                 <td class="info-cell" style="text-align:center;width:33.33%;padding:0 10px;border-left:1px solid rgba(255,255,255,0.12);border-right:1px solid rgba(255,255,255,0.12);vertical-align:top;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Refund requests are managed in My Hub</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Refund requests are managed in My Hub</p>
                 </td>
                 <td class="info-cell" style="text-align:center;width:33.33%;padding:0 10px;vertical-align:top;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Need help? <a href="mailto:hello@the-networker.co.uk" style="color:#4aa8f0;text-decoration:none;">hello@the-networker.co.uk</a></p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Need help? <a href="mailto:hello@the-networker.co.uk" style="color:#4aa8f0;text-decoration:none;">hello@the-networker.co.uk</a></p>
                 </td>
               </tr>
             </table>
@@ -145,15 +145,15 @@
             <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
               <img src="{{logo_url}}" alt="The Networker Hub" width="200" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
             </a>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:11px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.8;margin:0 0 10px;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.8;margin:0 0 10px;">
               Operated by <strong style="font-weight:600;color:rgba(255,255,255,0.8);">The Networker Group Ltd</strong><br>
               Registered in England &amp; Wales &nbsp;&middot;&nbsp; Company No. 15252227 &nbsp;&middot;&nbsp; VAT No. 454 4092 94<br>
               Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF
             </p>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:11px;font-weight:400;color:rgba(255,255,255,0.55);margin:0 0 14px;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);margin:0 0 14px;">
               <a href="mailto:hello@the-networker.co.uk" style="color:#4aa8f0;text-decoration:none;font-weight:600;">hello@the-networker.co.uk</a>
             </p>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:11px;font-weight:400;color:rgba(255,255,255,0.4);margin:0;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.4);margin:0;">
               <a href="{{privacy_url}}" style="color:#4aa8f0;text-decoration:none;">Privacy</a>
               &nbsp;&middot;&nbsp;
               <a href="{{terms_url}}" style="color:#4aa8f0;text-decoration:none;">Terms</a>

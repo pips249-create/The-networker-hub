@@ -48,22 +48,22 @@ function recommendationCard(title, subtitle, url) {
   return (
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#1c2040;border-radius:14px;margin:0 0 12px;">' +
     '<tr><td style="padding:18px 20px;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#ffffff;margin:0 0 6px;line-height:1.35;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0 0 6px;line-height:1.35;">' +
     title +
     '</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;color:rgba(255,255,255,0.7);margin:0 0 12px;line-height:1.5;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;color:rgba(255,255,255,0.7);margin:0 0 12px;line-height:1.5;">' +
     subtitle +
     '</p>' +
     '<a href="' +
     url +
-    '" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:700;color:#4aa8f0;text-decoration:none;">View &rarr;</a>' +
+    '" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#4aa8f0;text-decoration:none;">View &rarr;</a>' +
     '</td></tr></table>'
   );
 }
 
 function sectionHeading(text) {
   return (
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">' +
     text +
     '</p>'
   );
@@ -90,19 +90,19 @@ function lightRecommendationCard(title, subtitle, url) {
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#452d5c;margin:0 0 6px;line-height:1.35;">' +
     title +
     '</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;color:#736b6e;margin:0 0 12px;line-height:1.5;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;color:#635c5e;margin:0 0 12px;line-height:1.5;">' +
     subtitle +
     '</p>' +
     '<a href="' +
     url +
-    '" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:700;color:#5b2f99;text-decoration:none;">View event &rarr;</a>' +
+    '" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#5b2f99;text-decoration:none;">View event &rarr;</a>' +
     '</td></tr></table>'
   );
 }
 
 function lightSectionHeading(text) {
   return (
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">' +
     text +
     '</p>'
   );
@@ -293,7 +293,7 @@ async function buildRecommendationsHtml(sb, attendeeLocation) {
 
   if (!parts.length) {
     parts.push(
-      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.65;color:#736b6e;margin:0;">Browse upcoming networking events across the UK.</p>'
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.65;color:#635c5e;margin:0;">Browse upcoming networking events across the UK.</p>'
     );
   }
 

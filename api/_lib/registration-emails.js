@@ -34,13 +34,13 @@ function buildMeetingLinkSection(link) {
     '<tr><td class="mobile-pad" style="padding:0 48px 8px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
     '<tr><td style="padding:20px 24px;text-align:center;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 8px;">Online event</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:400;color:#736b6e;line-height:1.6;margin:0 0 14px;">Use the link below to join when the event starts.</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Online event</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:400;color:#635c5e;line-height:1.6;margin:0 0 14px;">Use the link below to join when the event starts.</p>' +
     '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">' +
     '<tr><td style="background:#9a7aa8;border-radius:999px;">' +
     '<a href="' +
     safeUrl +
-    '" style="display:inline-block;padding:12px 32px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#ffffff;text-decoration:none;">Join online &rarr;</a>' +
+    '" style="display:inline-block;padding:12px 32px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;">Join online &rarr;</a>' +
     '</td></tr></table></td></tr></table></td></tr>'
   );
 }
@@ -450,8 +450,8 @@ function buildDenialReasonBlock(reason) {
   return (
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:16px 0 0;">' +
     '<tr><td style="padding:16px 18px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;text-align:left;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 8px;">Message from the organiser</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.65;color:#475569;margin:0;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Message from the organiser</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.65;color:#475569;margin:0;">' +
     safe +
     '</p></td></tr></table>'
   );

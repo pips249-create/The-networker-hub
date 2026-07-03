@@ -5470,6 +5470,7 @@
         slug === 'attendee_signup_events_nudge' ||
         slug === 'attendee_signup_events_nudge_followup' ||
         slug === 'meeting_link_added' ||
+        slug === 'online_join_reminder' ||
         slug === 'osop_payment_reminder' ||
         slug === 'saved_organiser_new_listing' ||
         slug === 'password_reset'
@@ -5484,6 +5485,11 @@
         SAMPLE_VARS.meeting_type = 'Online';
         SAMPLE_VARS.meeting_link = SAMPLE_VARS.meeting_link || 'https://meet.example.com/london-founders';
         SAMPLE_VARS.meeting_link_section = previewMeetingLinkButton(SAMPLE_VARS.meeting_link);
+      } else if (slug === 'online_join_reminder') {
+        SAMPLE_VARS.meeting_type = 'Online';
+        SAMPLE_VARS.meeting_link = SAMPLE_VARS.meeting_link || 'https://meet.example.com/london-founders';
+        SAMPLE_VARS.meeting_link_section = previewMeetingLinkButton(SAMPLE_VARS.meeting_link);
+        applyPreviewReminderFormat();
       } else if (slug === 'attendee_reengagement') {
         SAMPLE_VARS.recommendations_html = previewRecommendationsHtml();
       } else if (slug === 'attendee_signup_events_nudge') {
@@ -5653,6 +5659,7 @@
       'saved_event_tickets_open',
       'saved_organiser_new_listing',
       'post_event_review_request',
+      'online_join_reminder',
       'meeting_link_added',
       'osop_payment_reminder',
       'application_received',

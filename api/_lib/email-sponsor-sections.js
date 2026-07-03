@@ -32,6 +32,7 @@ const OPPORTUNITY_EMAIL_SLUGS = new Set([
 const EVENT_MAIN_SPONSOR_SLUGS = new Set([
   'booking_confirmation',
   'booking_reminder',
+  'online_join_reminder',
   'saved_event_tickets_open',
   'saved_organiser_new_listing',
   'organiser_new_registration',
@@ -66,6 +67,7 @@ const EVENT_MAIN_SPONSOR_SLUGS = new Set([
 const EVENT_MINI_SPONSOR_SLUGS = new Set([
   'booking_confirmation',
   'booking_reminder',
+  'online_join_reminder',
   'saved_event_tickets_open',
   'saved_organiser_new_listing',
   'application_received',
@@ -124,7 +126,7 @@ function buildMiniSponsorsRow(ads) {
     '<tr><td class="mobile-pad" style="padding:0 40px 20px;text-align:center;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
     '<tr><td style="padding:14px 16px 10px;text-align:center;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:600;color:#9a9092;text-transform:uppercase;letter-spacing:2px;margin:0;">Our mini sponsors</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0;">Our mini sponsors</p>' +
     '</td></tr>' +
     '<tr><td style="padding:0 12px 16px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>' +

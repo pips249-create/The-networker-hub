@@ -86,6 +86,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'hub_newsletter',
   'booking_confirmation',
   'booking_reminder',
+  'online_join_reminder',
   'refund_processed',
   'booking_cancelled',
   'event_cancelled',
@@ -390,6 +391,7 @@ async function sendViaResend({ to, subject, html, tags }) {
 const PREFERENCE_EMAIL_SLUGS = {
   hub_newsletter: 'newsletter',
   booking_reminder: 'event_reminders',
+  online_join_reminder: 'event_reminders',
   saved_organiser_new_listing: 'organiser_alerts',
 };
 

@@ -77,7 +77,7 @@
  * NAV_BUILD=20260713 — wider nav links, larger logo.
  */
 (function () {
-  var NAV_BUILD = '20260713';
+  var NAV_BUILD = '20260713b';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -207,7 +207,7 @@
     html += link('events/index.html', 'Events', 'events');
     html += link('opportunities/index.html', 'Opportunities', 'opportunities');
     html += link('contact.html', 'Contact', 'contact');
-    html += link('faq.html', 'FAQ', 'faq');
+    html += link('faq.html', 'Help', 'faq');
     if (pending && !user) {
       html +=
         '<span class="nav-auth-pending" aria-hidden="true">' +
@@ -234,7 +234,7 @@
     html += link('events/index.html', 'Events', 'events', 'nav-mobile-item');
     html += link('opportunities/index.html', 'Opportunities', 'opportunities', 'nav-mobile-item');
     html += link('contact.html', 'Contact', 'contact', 'nav-mobile-item');
-    html += link('faq.html', 'FAQ', 'faq', 'nav-mobile-item');
+    html += link('faq.html', 'Help', 'faq', 'nav-mobile-item');
     if (pending && !user) {
       html +=
         '<span class="nav-mobile-auth-pending" aria-hidden="true">' +
@@ -427,9 +427,17 @@
     renderImpersonationBanner(null);
   }
 
+  function ensureMainSkipTarget() {
+    var mainEl = document.querySelector('main');
+    if (mainEl && !mainEl.id) mainEl.id = 'hub-main-content';
+    var skip = document.querySelector('.skip-to-content');
+    if (skip && mainEl && mainEl.id) skip.setAttribute('href', '#' + mainEl.id);
+  }
+
   function renderNav(user, pending) {
     var pendingClass = pending ? ' is-session-pending' : '';
     mount.innerHTML =
+      '<a class="skip-to-content" href="#hub-main-content">Skip to main content</a>' +
       '<header class="site-nav on-light' +
       pendingClass +
       '" id="site-nav">' +
@@ -531,4 +539,10 @@
         renderImpersonationBanner(null);
       }
     });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ensureMainSkipTarget);
+  } else {
+    ensureMainSkipTarget();
+  }
 })();

@@ -3,7 +3,7 @@
  * FOOTER_BUILD=20260610c
  */
 (function () {
-  var FOOTER_BUILD = '20260612';
+  var FOOTER_BUILD = '20260713';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -37,11 +37,8 @@
     '</nav>' +
     '</div>' +
     '<div class="footer-col">' +
-    '<p class="footer-col-title">Company</p>' +
-    '<nav class="footer-col-links" aria-label="Company">' +
-    '<a href="' +
-    href('about.html') +
-    '">About us</a>' +
+    '<p class="footer-col-title">Help</p>' +
+    '<nav class="footer-col-links" aria-label="Help">' +
     '<a href="' +
     href('faq.html') +
     '">FAQ</a>' +
@@ -49,11 +46,19 @@
     href('guides.html') +
     '">Organiser guides</a>' +
     '<a href="' +
+    href('contact.html') +
+    '">Contact us</a>' +
+    '</nav>' +
+    '</div>' +
+    '<div class="footer-col">' +
+    '<p class="footer-col-title">Company</p>' +
+    '<nav class="footer-col-links" aria-label="Company">' +
+    '<a href="' +
+    href('about.html') +
+    '">About us</a>' +
+    '<a href="' +
     href('advertising.html') +
     '">Advertising</a>' +
-    '<a href="' +
-    href('contact.html') +
-    '">Contact</a>' +
     '</nav>' +
     '</div>' +
     '<div class="footer-col">' +

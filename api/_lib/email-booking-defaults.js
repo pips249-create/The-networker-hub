@@ -35,7 +35,7 @@ function buildSponsorSection(block, options) {
       '</span>';
   return (
     '<tr><td style="padding:0 48px 18px;text-align:center;background:#f5f0e8;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:600;color:#9a9092;text-transform:uppercase;letter-spacing:2px;margin:0 0 12px;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">' +
     label +
     '</p>' +
     '<a href="' +

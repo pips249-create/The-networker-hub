@@ -39,7 +39,7 @@ function buildMeetingLinkEmailSection(link) {
   return (
     '<a href="' +
     safeUrl +
-    '" style="display:inline-block;padding:12px 28px;background:#9a7aa8;border-radius:999px;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;">Join online &rarr;</a>'
+    '" style="display:inline-block;padding:14px 32px;background:#9a7aa8;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;">Join online &rarr;</a>'
   );
 }
 

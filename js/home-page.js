@@ -151,8 +151,7 @@
     track.setAttribute('aria-busy', 'false');
 
     var items = partners.map(partnerItemHtml).join('');
-    var useMarquee =
-      partners.length > 3 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var useMarquee = false;
     track.classList.toggle('home-partners-track--marquee', useMarquee);
     track.classList.toggle('home-partners-track--static', !useMarquee);
     track.innerHTML = useMarquee ? items + items : items;

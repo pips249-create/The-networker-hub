@@ -20,9 +20,9 @@ function buildOrganiserRefundRequiredRow(amountPaid) {
     '<tr><td class="mobile-pad" style="padding:0 48px 20px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#fff8e6;border-radius:14px;border:1px solid #f0c674;">' +
     '<tr><td style="padding:22px 24px;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#b7791f;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 6px;">Action required</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#b7791f;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Action required</p>' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#4a4446;margin:0 0 10px;line-height:1.35;">Refund required</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:400;color:#736b6e;line-height:1.65;margin:0;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.65;margin:0;">' +
     'This cancellation is eligible for a refund under your event policy. Please issue a refund of <strong style="color:#4a4446;">' +
     escapeHtml(amount) +
     '</strong> to the attendee via your Stripe dashboard. The Hub does not process attendee refunds on your behalf.</p>' +
@@ -35,9 +35,9 @@ function buildOrganiserNoRefundRow() {
     '<tr><td class="mobile-pad" style="padding:0 48px 20px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;">' +
     '<tr><td style="padding:22px 24px;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 6px;">Refund</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Refund</p>' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#4a4446;margin:0 0 10px;line-height:1.35;">No refund due</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:400;color:#736b6e;line-height:1.65;margin:0;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.65;margin:0;">' +
     'This cancellation falls outside your refund window or was a free booking. No refund action is needed.</p>' +
     '</td></tr></table></td></tr>'
   );

@@ -12,7 +12,7 @@
     table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
     @media only screen and (max-width:600px) {
       .email-wrapper { width:100% !important; }
-      .hero-title { font-size:22px !important; line-height:1.2 !important; }
+      .hero-title { font-size:24px !important; line-height:1.2 !important; }
       .mobile-pad { padding-left:20px !important; padding-right:20px !important; }
       .mobile-header-pad { padding-left:20px !important; padding-right:20px !important; }
       .email-cta a { display:block !important; width:100% !important; box-sizing:border-box !important; text-align:center !important; margin-bottom:10px !important; }
@@ -50,9 +50,9 @@
                 <td style="width:52px;height:52px;background:#fff4d6;border-radius:50%;text-align:center;vertical-align:middle;font-size:24px;line-height:52px;">&#9733;</td>
               </tr>
             </table>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:#b8860b;text-transform:uppercase;letter-spacing:3px;margin:0 0 8px;">Ranking badge</p>
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:26px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Congratulations!</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.7;color:#736b6e;margin:0;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#b8860b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Ranking badge</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Congratulations!</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">
               Hi {{organiser_name}}, great news &mdash; <strong style="color:#1c2040;">{{group_name}}</strong> is a <strong style="color:#4aa8f0;">{{badge_label}}</strong> on The Networker Hub for <strong>{{period_label}}</strong>.
             </p>
           </td>
@@ -63,19 +63,19 @@
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#1c2040;border-radius:16px;">
               <tr>
                 <td style="padding:24px;text-align:center;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;margin:0 0 10px;">Your ranking</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin:0 0 10px;">Your ranking</p>
                   <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:34px;font-weight:700;color:#ffffff;margin:0;letter-spacing:-0.03em;line-height:1;">#{{rank}}</p>
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.7);margin:8px 0 0;">of {{total_ranked}} rated networking groups this month</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:500;color:rgba(255,255,255,0.7);margin:8px 0 0;">of {{total_ranked}} rated networking groups this month</p>
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid rgba(255,255,255,0.14);margin-top:18px;">
                     <tr>
                       <td style="padding:14px 0 0;text-align:center;">
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1.5px;margin:0 0 4px;">Average rating</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Average rating</p>
                         <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:18px;font-weight:700;color:#ffffff;margin:0;">{{average_rating}} stars</p>
                       </td>
                     </tr>
                     <tr>
                       <td style="padding:14px 0 0;border-top:1px solid rgba(255,255,255,0.14);text-align:center;">
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1.5px;margin:0 0 4px;">Reviews</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Reviews</p>
                         <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:18px;font-weight:700;color:#ffffff;margin:0;">{{review_count}}</p>
                       </td>
                     </tr>
@@ -88,18 +88,18 @@
 
         <tr>
           <td class="mobile-pad email-cta" style="padding:0 40px 20px;text-align:center;">
-            <a href="{{profile_url}}" style="display:inline-block;text-align:center;padding:12px 28px;background:#1c2040;border-radius:999px;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;margin:0 6px 10px;">View public profile</a>
-            <a href="{{dashboard_url}}" style="display:inline-block;text-align:center;padding:12px 28px;background:#4aa8f0;border-radius:999px;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;margin:0 6px 10px;">Open organiser dashboard</a>
+            <a href="{{profile_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#1c2040;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">View public profile</a>
+            <a href="{{dashboard_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#4aa8f0;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">Open organiser dashboard</a>
           </td>
         </tr>
 
         <tr>
           <td class="mobile-pad" style="padding:0 40px 24px;">
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:2px;margin:0 0 10px;text-align:center;">Share the news</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin:0 0 10px;text-align:center;">Share the news</p>
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f8f4ec;border-radius:12px;border:1px solid #e8d9a8;">
               <tr>
                 <td style="padding:16px 18px;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.6;color:#5c5557;margin:0;word-break:break-word;">{{social_share_text}}</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.6;color:#5c5557;margin:0;word-break:break-word;">{{social_share_text}}</p>
                 </td>
               </tr>
             </table>
@@ -108,7 +108,7 @@
 
         <tr>
           <td class="mobile-pad" style="padding:0 40px 28px;text-align:center;">
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.7;color:#736b6e;margin:0;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">
               Thank you for creating great networking experiences on the Hub.
             </p>
           </td>
@@ -119,7 +119,7 @@
             <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
               <img src="{{logo_footer_url}}" alt="The Networker Hub" width="200" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
             </a>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:11px;font-weight:400;color:rgba(255,255,255,0.55);margin:0;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);margin:0;">
               <a href="{{privacy_url}}" style="color:#4aa8f0;text-decoration:none;">Privacy</a>
               &nbsp;&middot;&nbsp;
               <a href="{{terms_url}}" style="color:#4aa8f0;text-decoration:none;">Terms</a>

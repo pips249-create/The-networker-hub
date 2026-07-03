@@ -83,14 +83,14 @@ function buildRefundPolicySection(eventRow, siteUrl) {
     '<tr><td class="mobile-pad" style="padding:0 48px 20px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#faf7f2;border-radius:14px;border:1px solid #d9c4e0;">' +
     '<tr><td style="padding:20px 22px;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2px;margin:0 0 6px;">Refund policy</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:600;color:#4a4446;margin:0 0 8px;line-height:1.4;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Refund policy</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#4a4446;margin:0 0 8px;line-height:1.4;">' +
     escapeHtml(label) +
     '</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:400;color:#736b6e;line-height:1.65;margin:0;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.65;margin:0;">' +
     formatMultilineHtml(text) +
     '</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:400;color:#9a9092;line-height:1.5;margin:12px 0 0;">Set by the event organiser. Platform terms: ' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:400;color:#7a7274;line-height:1.5;margin:12px 0 0;">Set by the event organiser. Platform terms: ' +
     '<a href="' +
     escapeHtml(refundsHref) +
     '" style="color:#9a7aa8;text-decoration:none;">Hub refunds policy</a>.</p>' +
@@ -103,7 +103,7 @@ function buildEventLocationRow(location, isOnline) {
   const loc = String(location || '').trim();
   if (!loc) return '';
   return (
-    '<tr><td style="padding:6px 0 0;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.5;">' +
+    '<tr><td style="padding:6px 0 0;font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);line-height:1.5;">' +
     '<span style="color:rgba(255,255,255,0.55);">Location</span><br>' +
     '<span style="color:#ffffff;font-weight:600;">' +
     escapeHtml(loc) +
@@ -114,7 +114,7 @@ function buildEventLocationRow(location, isOnline) {
 function buildEventOnlineRow(isOnline) {
   if (!isOnline) return '';
   return (
-    '<tr><td style="padding:6px 0 0;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.5;">' +
+    '<tr><td style="padding:6px 0 0;font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);line-height:1.5;">' +
     '<span style="color:rgba(255,255,255,0.55);">Format</span><br>' +
     '<span style="color:#ffffff;font-weight:600;">Online event</span></td></tr>'
   );

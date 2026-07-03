@@ -70,9 +70,9 @@
 }
 
 .events-hero-lede {
-  font-size: 14px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.78);
+  font-size: var(--text-size-body);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
   max-width: 34em;
   margin: 0;
 }

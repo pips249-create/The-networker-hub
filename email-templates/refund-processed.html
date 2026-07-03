@@ -13,7 +13,7 @@
     table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
     @media only screen and (max-width:600px) {
       .email-wrapper { width:100% !important; }
-      .hero-title { font-size:22px !important; }
+      .hero-title { font-size:24px !important; }
       .mobile-pad { padding-left:20px !important; padding-right:20px !important; }
       .detail-cell { display:block !important; width:100% !important; padding:12px 0 !important; border-top:1px solid rgba(255,255,255,0.12) !important; }
       .detail-cell:first-child { border-top:none !important; padding-top:0 !important; }
@@ -47,12 +47,12 @@
           <td class="mobile-pad" style="padding:28px 48px 20px;text-align:center;">
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 16px;">
               <tr>
-                <td style="width:52px;height:52px;background:#dcfce7;border-radius:50%;text-align:center;vertical-align:middle;font-size:22px;line-height:52px;">&#10003;</td>
+                <td style="width:52px;height:52px;background:#dcfce7;border-radius:50%;text-align:center;vertical-align:middle;font-size:24px;line-height:52px;">&#10003;</td>
               </tr>
             </table>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:3px;margin:0 0 8px;">Refund processed</p>
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:26px;font-weight:600;color:#4a4446;letter-spacing:-0.03em;line-height:1.15;margin:0 0 10px;">Your refund is on its way</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;font-weight:400;color:#736b6e;line-height:1.7;margin:0;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Refund processed</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#4a4446;letter-spacing:-0.03em;line-height:1.15;margin:0 0 10px;">Your refund is on its way</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:400;color:#635c5e;line-height:1.7;margin:0;">
               Hi {{user_name}}, your refund for <strong style="color:#4a4446;">{{event_name}}</strong> has been processed. Here are the details.
             </p>
           </td>
@@ -64,14 +64,14 @@
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#4a4446;border-radius:16px;">
               <tr>
                 <td style="padding:24px;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;margin:0 0 6px;">Refund summary</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Refund summary</p>
 
                   <!-- Big refund amount -->
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:20px;">
                     <tr>
                       <td style="vertical-align:middle;">
                         <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:38px;font-weight:700;color:#ffffff;margin:0;letter-spacing:-0.04em;line-height:1;">{{refund_amount}}</p>
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:400;color:rgba(255,255,255,0.6);margin:6px 0 0;">returning to your original payment method</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.6);margin:6px 0 0;">returning to your original payment method</p>
                       </td>
                       <td style="text-align:right;vertical-align:middle;width:60px;">
                         <div style="width:44px;height:44px;background:#16a34a;border-radius:50%;text-align:center;line-height:44px;font-size:20px;margin-left:auto;">&#10003;</div>
@@ -83,16 +83,16 @@
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid rgba(255,255,255,0.14);">
                     <tr>
                       <td class="detail-cell" style="padding:14px 12px 0 0;width:33.33%;vertical-align:top;">
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1.5px;margin:0 0 4px;">Event</p>
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:600;color:#ffffff;margin:0;line-height:1.4;">{{event_name}}</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Event</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.4;">{{event_name}}</p>
                       </td>
                       <td class="detail-cell" style="padding:14px 12px 0 0;width:33.33%;vertical-align:top;">
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1.5px;margin:0 0 4px;">Ticket</p>
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:600;color:#ffffff;margin:0;line-height:1.4;">{{ticket_name}}</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Ticket</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.4;">{{ticket_name}}</p>
                       </td>
                       <td class="detail-cell" style="padding:14px 0 0;width:33.33%;vertical-align:top;">
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1.5px;margin:0 0 4px;">Processed</p>
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:600;color:#ffffff;margin:0;">{{refund_date}}</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Processed</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;">{{refund_date}}</p>
                       </td>
                     </tr>
                   </table>
@@ -108,7 +108,7 @@
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f0fdf4;border-radius:14px;border:1px solid #86efac;">
               <tr>
                 <td style="padding:22px 24px;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 6px;">What to expect</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">What to expect</p>
                   <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#4a4446;margin:0 0 16px;line-height:1.35;">When will I see the money?</p>
 
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
@@ -119,7 +119,7 @@
                             <td style="width:30px;vertical-align:top;padding-top:2px;">
                               <div style="width:8px;height:8px;background:#16a34a;border-radius:50%;margin-top:4px;"></div>
                             </td>
-                            <td style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;color:#4a4446;line-height:1.55;">
+                            <td style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;color:#4a4446;line-height:1.55;">
                               <strong style="font-weight:600;">Today</strong> &mdash; the refund has been issued from our end
                             </td>
                           </tr>
@@ -133,7 +133,7 @@
                             <td style="width:30px;vertical-align:top;padding-top:2px;">
                               <div style="width:8px;height:8px;background:#86efac;border-radius:50%;margin-top:4px;"></div>
                             </td>
-                            <td style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;color:#4a4446;line-height:1.55;">
+                            <td style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;color:#4a4446;line-height:1.55;">
                               <strong style="font-weight:600;">3&ndash;5 business days</strong> &mdash; most cards show the credit by now
                             </td>
                           </tr>
@@ -147,7 +147,7 @@
                             <td style="width:30px;vertical-align:top;padding-top:2px;">
                               <div style="width:8px;height:8px;background:#bbf7d0;border-radius:50%;margin-top:4px;"></div>
                             </td>
-                            <td style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;color:#4a4446;line-height:1.55;">
+                            <td style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;color:#4a4446;line-height:1.55;">
                               <strong style="font-weight:600;">Up to 10 business days</strong> &mdash; the latest some banks process it. If nothing arrives after this, contact us.
                             </td>
                           </tr>
@@ -167,13 +167,13 @@
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid rgba(194,153,209,0.35);">
               <tr>
                 <td style="padding:22px 24px;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 6px;">While you&rsquo;re here</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">While you&rsquo;re here</p>
                   <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#4a4446;margin:0 0 10px;line-height:1.35;">Your next event is out there</p>
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:400;color:#736b6e;line-height:1.65;margin:0 0 16px;">Browse upcoming events across the UK and keep building your network.</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.65;margin:0 0 16px;">Browse upcoming events across the UK and keep building your network.</p>
                   <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                     <tr>
                       <td style="background:#4a4446;border-radius:999px;">
-                        <a href="{{site_url}}/events/" style="display:inline-block;padding:10px 28px;font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:#ffffff;text-decoration:none;">Browse upcoming events &rarr;</a>
+                        <a href="{{site_url}}/events/" style="display:inline-block;padding:14px 32px;font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;">Browse upcoming events &rarr;</a>
                       </td>
                     </tr>
                   </table>
@@ -191,13 +191,13 @@
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
               <tr>
                 <td class="info-cell" style="text-align:center;width:33.33%;padding:0 10px;vertical-align:top;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Refund sent to your original payment method</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Refund sent to your original payment method</p>
                 </td>
                 <td class="info-cell" style="text-align:center;width:33.33%;padding:0 10px;border-left:1px solid rgba(255,255,255,0.12);border-right:1px solid rgba(255,255,255,0.12);vertical-align:top;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Allow up to 10 business days to appear</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Allow up to 10 business days to appear</p>
                 </td>
                 <td class="info-cell" style="text-align:center;width:33.33%;padding:0 10px;vertical-align:top;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Questions? <a href="mailto:hello@the-networker.co.uk" style="color:#ebe0f0;text-decoration:none;">hello@the-networker.co.uk</a></p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Questions? <a href="mailto:hello@the-networker.co.uk" style="color:#ebe0f0;text-decoration:none;">hello@the-networker.co.uk</a></p>
                 </td>
               </tr>
             </table>
@@ -211,16 +211,16 @@
             <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
               <img src="{{logo_url}}" alt="The Networker Hub" width="200" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
             </a>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:600;color:#4a4446;margin:0 0 8px;">The Networker Hub</p>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:11px;font-weight:400;color:#736b6e;line-height:1.8;margin:0 0 10px;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#4a4446;margin:0 0 8px;">The Networker Hub</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.8;margin:0 0 10px;">
               Operated by <strong style="font-weight:600;color:#4a4446;">The Networker Group Ltd</strong><br>
               Registered in England &amp; Wales &nbsp;&middot;&nbsp; Company No. 15252227 &nbsp;&middot;&nbsp; VAT No. 454 4092 94<br>
               Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF
             </p>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:11px;font-weight:400;color:#736b6e;margin:0 0 14px;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;margin:0 0 14px;">
               <a href="mailto:hello@the-networker.co.uk" style="color:#9a7aa8;text-decoration:none;font-weight:600;">hello@the-networker.co.uk</a>
             </p>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:11px;font-weight:400;color:#9a9092;margin:0;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:#7a7274;margin:0;">
               <a href="{{site_url}}/legal-policies.html#privacy" style="color:#9a7aa8;text-decoration:none;">Privacy</a>
               &nbsp;&middot;&nbsp;
               <a href="{{site_url}}/legal-policies.html#terms" style="color:#9a7aa8;text-decoration:none;">Terms</a>

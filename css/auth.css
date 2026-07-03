@@ -32,10 +32,10 @@
 }
 
 .auth-lede {
-  font-size: 14px;
+  font-size: var(--text-size-body);
   color: var(--text-muted);
   margin-bottom: 24px;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .auth-field {
@@ -47,7 +47,7 @@
   align-items: flex-start;
   gap: 10px;
   margin: 4px 0 18px;
-  font-size: 13px;
+  font-size: var(--text-size-small);
   line-height: 1.55;
   color: var(--text-body);
   cursor: pointer;
@@ -65,11 +65,10 @@
 
 .auth-field label {
   display: block;
-  font-size: 11px;
+  font-size: var(--text-size-small);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-soft);
+  letter-spacing: 0.01em;
+  color: var(--text-body);
   margin-bottom: 6px;
 }
 
@@ -78,7 +77,7 @@
   width: 100%;
   box-sizing: border-box;
   font-family: inherit;
-  font-size: 15px;
+  font-size: var(--text-size-body);
   padding: 12px 14px;
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-sm);
@@ -99,7 +98,7 @@
 .password-input-wrap input {
   width: 100%;
   font-family: inherit;
-  font-size: 15px;
+  font-size: var(--text-size-body);
   padding: 12px 72px 12px 14px;
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-sm);
@@ -117,7 +116,7 @@
   top: 50%;
   transform: translateY(-50%);
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--text-size-small);
   font-weight: 600;
   color: var(--lavender-deep);
   background: transparent;
@@ -482,7 +481,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: var(--text-size-small);
   font-weight: 700;
   background: var(--border-soft);
   color: var(--text-soft);

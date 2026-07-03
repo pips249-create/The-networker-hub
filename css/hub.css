@@ -16,7 +16,10 @@
   --surface-warm: #f5f0e8;
   --surface-card: #ffffff;
   --text-body: #4a4446;
-  --text-muted: #736b6e;
+  --text-muted: #635c5e;
+  --text-size-body: 16px;
+  --text-size-small: 14px;
+  --text-size-label: 13px;
   --radius: 14px;
   --radius-pill: 999px;
   --shadow-soft: 0 12px 40px rgba(194, 153, 209, 0.12);
@@ -34,7 +37,7 @@
   --border: var(--lavender-soft);
   --text-dark: var(--text-body);
   --text-mid: var(--text-muted);
-  --text-soft: #9a9092;
+  --text-soft: #7a7274;
   --bg: var(--surface);
   --radius-sm: 8px;
 }
@@ -43,10 +46,33 @@
 html { scroll-behavior: smooth; }
 body {
   font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: var(--text-size-body);
   background: var(--surface);
   color: var(--text-body);
   min-height: 100vh;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+}
+
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: 12px;
+  z-index: 10000;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  background: var(--charcoal);
+  color: var(--brand-cream);
+  font-size: var(--text-size-small);
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-lift);
+}
+
+.skip-to-content:focus {
+  left: 12px;
+  outline: 2px solid var(--lavender);
+  outline-offset: 2px;
 }
 a { color: var(--lavender-deep); text-decoration: none; }
 a:hover { color: var(--charcoal); }
@@ -112,7 +138,7 @@ a:hover { color: var(--charcoal); }
   flex: 1 1 0;
   min-width: 0;
   gap: 10px clamp(20px, 2.8vw, 36px);
-  font-size: 15px;
+  font-size: var(--text-size-body);
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1.2;
@@ -178,9 +204,9 @@ a:hover { color: var(--charcoal); }
   background: transparent;
   color: var(--text-muted);
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--text-size-small);
   font-weight: 600;
-  padding: 7px 14px;
+  padding: 9px 16px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
@@ -590,8 +616,9 @@ body.hub-page-account .site-nav {
   padding: 14px 28px;
   border-radius: var(--radius-pill);
   font-family: inherit;
-  font-size: 15px;
+  font-size: var(--text-size-body);
   font-weight: 600;
+  min-height: 48px;
   border: none;
   cursor: pointer;
   text-decoration: none;
@@ -662,9 +689,9 @@ body.hub-page-account .site-nav {
   margin: 0 auto 48px;
 }
 .section-kicker {
-  font-size: 11px;
+  font-size: var(--text-size-label);
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--lavender-deep);
   margin-bottom: 10px;
