@@ -32,7 +32,6 @@ const OPPORTUNITY_EMAIL_SLUGS = new Set([
 const EVENT_MAIN_SPONSOR_SLUGS = new Set([
   'booking_confirmation',
   'booking_reminder',
-  'account_welcome',
   'saved_event_tickets_open',
   'saved_organiser_new_listing',
   'organiser_new_registration',
@@ -45,6 +44,8 @@ const EVENT_MAIN_SPONSOR_SLUGS = new Set([
   'post_event_review_request',
   'osop_payment_reminder',
   'attendee_reengagement',
+  'attendee_signup_events_nudge',
+  'attendee_signup_events_nudge_followup',
   'event_almost_full',
   'booking_cancelled',
   'event_cancelled',
@@ -65,7 +66,6 @@ const EVENT_MAIN_SPONSOR_SLUGS = new Set([
 const EVENT_MINI_SPONSOR_SLUGS = new Set([
   'booking_confirmation',
   'booking_reminder',
-  'account_welcome',
   'saved_event_tickets_open',
   'saved_organiser_new_listing',
   'application_received',
@@ -75,6 +75,8 @@ const EVENT_MINI_SPONSOR_SLUGS = new Set([
   'post_event_review_request',
   'osop_payment_reminder',
   'attendee_reengagement',
+  'attendee_signup_events_nudge',
+  'attendee_signup_events_nudge_followup',
   'hub_newsletter',
   'booking_cancelled',
   'event_cancelled',

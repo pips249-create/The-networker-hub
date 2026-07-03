@@ -13,6 +13,10 @@ function browseEventsUrl(siteUrl) {
   return siteBase(siteUrl) + '/events/';
 }
 
+function opportunitiesBrowseUrl(siteUrl) {
+  return siteBase(siteUrl) + '/opportunities/';
+}
+
 function hubAccountUrl(siteUrl) {
   return siteBase(siteUrl) + '/account/index.html';
 }
@@ -95,6 +99,7 @@ module.exports = {
   siteBase,
   homeUrl,
   browseEventsUrl,
+  opportunitiesBrowseUrl,
   hubAccountUrl,
   welcomeUrl,
   hubPaymentUrl,

@@ -46,6 +46,9 @@
     href('faq.html') +
     '">FAQ</a>' +
     '<a href="' +
+    href('guides.html') +
+    '">Organiser guides</a>' +
+    '<a href="' +
     href('advertising.html') +
     '">Advertising</a>' +
     '<a href="' +

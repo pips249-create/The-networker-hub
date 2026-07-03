@@ -82,6 +82,15 @@
 
   restoreLoginPrefs();
 
+  function prefillEmailFromQuery() {
+    var params = new URLSearchParams(window.location.search);
+    var queryEmail = (params.get('email') || '').trim();
+    var emailEl = document.getElementById('email');
+    if (queryEmail && emailEl && !emailEl.value) emailEl.value = queryEmail;
+  }
+
+  prefillEmailFromQuery();
+
   var loginForm = document.getElementById('login-form');
   if (loginForm) {
     loginForm.addEventListener('submit', function (e) {

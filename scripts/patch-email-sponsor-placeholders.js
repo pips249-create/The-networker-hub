@@ -22,6 +22,8 @@ const EVENT_MINI_FILES = [
   'post-event-review-request.html',
   'osop-payment-reminder.html',
   'attendee-reengagement.html',
+  'attendee-signup-events-nudge.html',
+  'attendee-signup-events-nudge-followup.html',
   'saved-organiser-new-listing.html',
   'application-approved.html',
   'application-denied.html',

@@ -89,6 +89,20 @@ const KNOWLEDGE_SECTIONS = [
       'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event to see everyone who has booked (name, email, ticket type, quantity, payment status). Download attendees CSV to export. This shows ticket registrations — not on-the-day check-in.',
   },
   {
+    title: 'ORGANISER GUIDES',
+    body:
+      'Organiser step-by-step guides live at /guides.html — list an event (/guides/list-an-event.html), list a business opportunity (/guides/list-a-business-opportunity.html), invite team editors (/guides/invite-your-team.html). Attendees should use the FAQ or Hubert chat instead.',
+  },
+  {
+    title: 'ORGANISER TEAM & EDITORS',
+    body:
+      'Team invites live under /organiser/ → Team & invites. Only the account owner can invite or remove editors (up to 10 editors per organiser account). ' +
+      'INVITE FLOW: owner enters colleague email → invite email is sent → colleague signs in with that exact email → they become Active and see the same networking groups and events on that account. ' +
+      'EDITOR ACCESS: view all groups on the account; create and edit events, tickets, and attendees; view revenue and reviews; manage business opportunities. ' +
+      'EDITORS CANNOT: invite or remove team members; delete events (cancel instead if needed). Access is account-wide — not limited to one group. ' +
+      'If someone already runs their own organiser account with claimed groups, their own workspace takes priority over an editor invite.',
+  },
+  {
     title: 'TEAM & STORY',
     body:
       'Co-founders Rosie and Catherine (Pip) built The Networker Hub to connect UK business owners and professionals with the right events, communities, and opportunities. Both are listed as Co-founders on /about.html. ' +
@@ -392,7 +406,7 @@ const ORGANISER_PAGE_CONTEXT = {
   'group-edit':
     'The user is editing their organiser page. Answer organiser-page questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'organiser-dashboard':
-    'The user is on the organiser dashboard. Answer questions about groups, events, attendees, revenue, and team invites. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+    'The user is on the organiser dashboard. Answer questions about groups, events, attendees, revenue, and team invites. Team editors can manage events and view revenue but cannot invite others or delete events; up to 10 editors per account. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
 };
 
 const ORGANISER_PAGE_KEYS = Object.keys(ORGANISER_PAGE_CONTEXT);

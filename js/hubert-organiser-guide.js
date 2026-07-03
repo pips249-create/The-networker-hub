@@ -48,6 +48,7 @@
       { label: 'Contact email', prompt: 'Who sees the contact email on my organiser page?' },
     ],
     'organiser-dashboard': [
+      { label: 'List an event guide', prompt: 'Where is the step-by-step guide for listing an event?' },
       { label: 'Create an organiser page', prompt: 'How do I create an organiser page on the organiser dashboard?' },
       { label: 'List an event', prompt: 'How do I list my first event?' },
       { label: 'Stripe payouts', prompt: 'How do Stripe Connect payouts work for organisers?' },

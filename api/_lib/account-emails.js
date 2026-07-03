@@ -2,10 +2,13 @@ const { sendTemplatedEmail } = require('./send-template-email');
 const {
   siteBase,
   browseEventsUrl,
+  opportunitiesBrowseUrl,
   hubAccountUrl,
   welcomeUrl,
   legalPolicyUrl,
   contactUrl,
+  logoNavUrl,
+  logoFooterUrl,
 } = require('./hub-email-urls');
 
 function buildAccountWelcomeVars({ email, name, siteUrl }) {
@@ -18,13 +21,15 @@ function buildAccountWelcomeVars({ email, name, siteUrl }) {
     user_email: userEmail,
     hub_account_url: hubAccountUrl(site),
     browse_events_url: browseEventsUrl(site),
+    opportunities_url: opportunitiesBrowseUrl(site),
     welcome_url: welcomeUrl(site),
     contact_url: contactUrl(site),
     privacy_url: legalPolicyUrl(site, 'privacy'),
     terms_url: legalPolicyUrl(site, 'terms'),
     refunds_url: legalPolicyUrl(site, 'refunds'),
     site_url: site,
-    logo_url: site + '/assets/logo-nav.png',
+    logo_url: logoNavUrl(site),
+    logo_footer_url: logoFooterUrl(site),
   };
 }
 

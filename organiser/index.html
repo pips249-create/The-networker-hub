@@ -69,16 +69,17 @@
             <a href="#events-cancellations" class="hub-side-nav-link" data-org-route="events-cancellations">Cancellations</a>
             <a href="#events-reviews" class="hub-side-nav-link" data-org-route="events-reviews">Reviews</a>
             <a href="#events-revenue" class="hub-side-nav-link" data-org-route="events-revenue">
-              Revenue
+              Revenue &amp; payouts
               <span class="org-nav-badge org-nav-badge--action" id="org-payment-setup-nav-badge" hidden>Setup</span>
             </a>
             <span class="hub-side-nav-divider">Business opportunities</span>
             <a href="#business-overview" class="hub-side-nav-link" data-org-route="business-overview">
-              Business ops
+              Overview
               <span class="org-nav-badge" id="org-opp-enquiry-nav-badge" hidden>New</span>
             </a>
             <a href="#business-list" class="hub-side-nav-link" data-org-route="business-list">List a listing</a>
             <div class="hub-side-nav-util">
+              <a href="../guides.html">Organiser guides</a>
               <a href="../events/index.html">Browse events</a>
             </div>
           </nav>
@@ -133,10 +134,8 @@
           <header class="org-page-head org-page-head--split">
             <div class="org-page-head-text">
               <p class="org-page-kicker">Organiser workspace</p>
-              <h1 class="org-page-title" id="org-page-title">Your organiser dashboard</h1>
-              <p class="org-page-lead" id="org-page-lead">
-                Choose an area below to manage events or business opportunities — or use <strong>+ Add new</strong> to create something straight away.
-              </p>
+              <h1 class="org-page-title" id="org-page-title">Overview</h1>
+              <p class="org-page-lead" id="org-page-lead">Open an area below to get started.</p>
             </div>
             <div class="org-overview-add" id="org-add-menu-wrap">
               <button
@@ -166,76 +165,13 @@
             </div>
           </header>
 
-          <aside class="hub-dash-context hub-dash-context--organiser">
-            <p>
-              Looking for tickets you bought or reviews to write?
-              <button type="button" class="hub-dash-context-btn" data-hub-switch="attendee">Go to My tickets &amp; reviews</button>.
-            </p>
-          </aside>
-
-          <section class="org-ranking-panel" id="org-ranking-panel-overview" hidden>
-            <button
-              type="button"
-              class="org-ranking-panel-toggle"
-              aria-expanded="false"
-              aria-controls="org-ranking-panel-overview-body"
-            >
-              <span class="org-ranking-panel-title">Your ranking badge</span>
-              <span class="org-ranking-panel-summary" id="org-ranking-panel-overview-summary"></span>
-              <span class="org-ranking-panel-chev" aria-hidden="true">Show</span>
-            </button>
-            <div class="org-ranking-panel-body" id="org-ranking-panel-overview-body" hidden>
-              <aside class="org-ranking-banner" id="org-ranking-banner" role="status"></aside>
-              <p class="org-ranking-share-teaser" id="org-ranking-share-teaser">
-                Your group earned a monthly ranking badge.
-                <button type="button" class="org-ranking-share-teaser-link" data-org-route="events-overview">
-                  Open My events to share →
-                </button>
-              </p>
-            </div>
-          </section>
-
-          <div class="org-getting-started" id="org-getting-started">
-            <div class="org-getting-started-head">
-              <div>
-                <h2 class="org-getting-started-title">Here&apos;s what to do first</h2>
-                <p class="org-section-sub org-getting-started-sub">
-                  <span id="org-getting-started-progress">3 steps to get your workspace ready.</span>
-                  ·
-                  <button type="button" class="org-getting-started-link" id="org-start-tour">Take the tour</button>
-                  ·
-                  <button type="button" class="org-getting-started-link" id="org-open-hubert">Ask Hubert</button>
-                </p>
-              </div>
-              <button type="button" class="org-btn org-btn-outline org-btn-sm" id="org-getting-started-dismiss">Dismiss</button>
-            </div>
-            <ol class="org-getting-started-list">
-              <li data-getting-step="group">
-                <strong>Create your organiser page</strong>
-                <span>Your public page — group, business, or brand on the hub.</span>
-                <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-getting-action="group">Add organiser page</button>
-              </li>
-              <li data-getting-step="event">
-                <strong>List your first event</strong>
-                <span>Meetings, exhibitions and conferences.</span>
-                <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-getting-action="event">List event</button>
-              </li>
-              <li data-getting-step="team">
-                <strong>Invite team members</strong>
-                <span>Add editors from Team &amp; invites.</span>
-                <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-getting-action="team">Open team</button>
-              </li>
-            </ol>
-          </div>
-
           <div class="org-hub-portals" aria-label="Workspace areas">
             <button type="button" class="org-hub-portal org-hub-portal--events" data-org-route="events-overview">
               <span class="org-hub-portal-icon" aria-hidden="true">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               </span>
               <span class="org-hub-portal-body">
-                <strong>Manage events</strong>
-                <span>Organiser pages, listings, tickets, attendees, reviews &amp; revenue</span>
+                <strong>Manage My events</strong>
                 <span class="org-hub-portal-meta" id="hub-portal-meta-events">—</span>
               </span>
               <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
@@ -245,13 +181,46 @@
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
               </span>
               <span class="org-hub-portal-body">
-                <strong>Business ops</strong>
-                <span>List opportunities and respond to member enquiries</span>
+                <strong>My business opportunities</strong>
                 <span class="org-hub-portal-meta" id="hub-portal-meta-business">—</span>
               </span>
               <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
             </button>
           </div>
+
+          <div id="org-payment-setup-dashboard" hidden></div>
+
+          <div class="org-getting-started" id="org-getting-started">
+            <div class="org-getting-started-head">
+              <div>
+                <h2 class="org-getting-started-title">Here&apos;s what to do first</h2>
+                <p class="org-section-sub org-getting-started-sub">
+                  <span id="org-getting-started-progress">2 steps to get your workspace ready.</span>
+                  <a href="../guides.html" class="org-getting-started-guides">Organiser guides</a>
+                </p>
+              </div>
+              <button type="button" class="org-btn org-btn-outline org-btn-sm" id="org-getting-started-dismiss">Dismiss</button>
+            </div>
+            <ol class="org-getting-started-list">
+              <li data-getting-step="group">
+                <strong>Create your organiser page</strong>
+                <span>Your public page on the hub.</span>
+                <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-getting-action="group">Add organiser page</button>
+              </li>
+              <li data-getting-step="event">
+                <strong>List your first event</strong>
+                <span>Meetings, exhibitions and conferences.</span>
+                <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-getting-action="event">List event</button>
+              </li>
+            </ol>
+          </div>
+
+          <aside class="hub-dash-context hub-dash-context--organiser hub-dash-context--overview-foot">
+            <p>
+              Looking for tickets you bought?
+              <button type="button" class="hub-dash-context-btn" data-hub-switch="attendee">Go to My tickets &amp; reviews</button>
+            </p>
+          </aside>
         </section>
 
         <!-- Events overview hub -->
@@ -259,7 +228,7 @@
           <button type="button" class="org-hub-back" data-org-route="dashboard">← Back to overview</button>
           <header class="org-hub-page-head">
             <p class="org-page-kicker">My events</p>
-            <h1 class="org-page-title">Manage events</h1>
+            <h1 class="org-page-title">Manage My events</h1>
             <p class="org-page-lead">Your event listings at a glance — open a section from the sidebar or the quick links below.</p>
           </header>
 
@@ -408,7 +377,7 @@
 
         <!-- List a listing (how it works + listing performance) -->
         <section class="org-page org-page--business-ops organiser-opportunity-edit-page" id="org-page-business-list" data-org-page="business-list">
-          <button type="button" class="org-hub-back" data-org-route="business-overview">← Back to Business ops</button>
+          <button type="button" class="org-hub-back" data-org-route="business-overview">← Back to My business opportunities</button>
           <header class="org-hub-page-head">
             <p class="org-page-kicker org-biz-kicker">Business opportunities</p>
             <h1 class="org-page-title" id="org-business-list-title">List a listing</h1>
@@ -456,7 +425,7 @@
                 <span class="oe-intro-step-num" aria-hidden="true">4</span>
                 <div>
                   <strong>Respond to enquiries</strong>
-                  <span>When someone is interested, their message appears in <em>Business ops</em> under Enquiries received.</span>
+                  <span>When someone is interested, their message appears under <em>Enquiries received</em> in My business opportunities.</span>
                 </div>
               </li>
             </ol>
@@ -502,12 +471,12 @@
           </div>
         </section>
 
-        <!-- Business ops overview hub -->
+        <!-- Business opportunities overview hub -->
         <section class="org-page" id="org-page-business-overview" data-org-page="business-overview">
           <button type="button" class="org-hub-back" data-org-route="dashboard">← Back to overview</button>
           <header class="org-hub-page-head">
             <p class="org-page-kicker">Business opportunities</p>
-            <h1 class="org-page-title">Business ops</h1>
+            <h1 class="org-page-title">My business opportunities</h1>
             <p class="org-page-lead">List services for other members and respond when someone enquires about your listings.</p>
           </header>
 

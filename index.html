@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260730">
-<link rel="stylesheet" href="css/home-page.css?v=20260734">
+<link rel="stylesheet" href="css/home-page.css?v=20260737">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260730" />
@@ -38,6 +38,11 @@
       <p class="hero-tagline">
         Discover events, organiser communities, and opportunities — browse free, sign up only when you&rsquo;re ready to book or enquire.
       </p>
+      <nav class="home-hero-quicklinks" aria-label="Explore the hub">
+        <a class="home-hero-quicklink" href="events/index.html">Browse events</a>
+        <a class="home-hero-quicklink" href="opportunities/index.html">Opportunities</a>
+        <a class="home-hero-quicklink" href="events/index.html?mode=organisers">Organisers</a>
+      </nav>
     </div>
   </section>
 
@@ -74,89 +79,67 @@
         <a class="home-flow-link" href="about.html">Meet the team behind the hub →</a>
       </header>
       <ul class="home-what-pillars">
-        <li class="home-what-pillar home-reveal-child">
-          <span class="home-what-pillar-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          </span>
-          <strong>Events &amp; exhibitions</strong>
-          <span>Meetings, webinars, workshops, and awards across the UK</span>
+        <li class="home-reveal-child">
+          <a class="home-what-pillar home-what-pillar--events" href="events/index.html">
+            <div class="home-what-pillar-visual">
+              <img src="assets/home-pillar-events.svg" alt="" width="480" height="280" loading="lazy" decoding="async" />
+            </div>
+            <div class="home-what-pillar-body">
+              <strong>Events &amp; exhibitions</strong>
+              <span>Meetings, webinars, workshops, and awards across the UK</span>
+            </div>
+            <span class="home-what-pillar-go" aria-hidden="true">Explore →</span>
+          </a>
         </li>
-        <li class="home-what-pillar home-reveal-child">
-          <span class="home-what-pillar-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </span>
-          <strong>Organiser pages</strong>
-          <span>Discover who runs your local networking community</span>
+        <li class="home-reveal-child">
+          <a class="home-what-pillar home-what-pillar--organisers" href="events/index.html?mode=organisers">
+            <div class="home-what-pillar-visual">
+              <img src="assets/home-pillar-organisers.svg" alt="" width="480" height="280" loading="lazy" decoding="async" />
+            </div>
+            <div class="home-what-pillar-body">
+              <strong>Organiser pages</strong>
+              <span>Discover who runs your local networking community</span>
+            </div>
+            <span class="home-what-pillar-go" aria-hidden="true">Explore →</span>
+          </a>
         </li>
-        <li class="home-what-pillar home-reveal-child">
-          <span class="home-what-pillar-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-          </span>
-          <strong>Business opportunities</strong>
-          <span>Franchises, partnerships, and deals from across the network</span>
+        <li class="home-reveal-child">
+          <a class="home-what-pillar home-what-pillar--opportunities" href="opportunities/index.html">
+            <div class="home-what-pillar-visual">
+              <img src="assets/home-pillar-opportunities.svg" alt="" width="480" height="280" loading="lazy" decoding="async" />
+            </div>
+            <div class="home-what-pillar-body">
+              <strong>Business opportunities</strong>
+              <span>Franchises, partnerships, and deals from across the network</span>
+            </div>
+            <span class="home-what-pillar-go" aria-hidden="true">Explore →</span>
+          </a>
         </li>
       </ul>
-    </div>
-  </section>
-
-  <section class="home-discover home-reveal" id="discover" aria-labelledby="home-discover-heading">
-    <div class="home-flow-inner">
-      <header class="home-flow-head home-flow-head--center">
-        <p class="section-kicker">Explore the hub</p>
-        <h2 class="section-title" id="home-discover-heading">Two ways to grow your network</h2>
-        <p class="home-flow-lede home-flow-lede--center">
-          Browse and view everything for free. You only need an account when you&rsquo;re ready to buy a ticket or enquire about an opportunity.
-        </p>
-      </header>
-      <div class="home-hub-grid">
-        <article class="home-hub-card home-hub-card--events home-reveal-child">
-          <div class="home-hub-card-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2"/>
-              <path d="M16 2v4M8 2v4M3 10h18"/>
-              <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
-            </svg>
-          </div>
-          <span class="badge badge-live">Live</span>
-          <h3>Events &amp; exhibitions</h3>
-          <p>Search meetings, webinars, workshops, exhibitions, and awards across the UK. Filter by type, date, industry, and location — with map view and Stripe checkout.</p>
-          <a class="home-hub-card-link" href="events/index.html">Browse all events →</a>
-        </article>
-        <article class="home-hub-card home-hub-card--opportunities home-reveal-child">
-          <div class="home-hub-card-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
-              <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-              <path d="M12 12v.01M8 12v.01M16 12v.01"/>
-            </svg>
-          </div>
-          <span class="badge badge-live">Live</span>
-          <h3>Business opportunities</h3>
-          <p>Franchise territories, side hustle models, referral partnerships, and white-label deals — browse free across the network. Enquire directly with organisers when you&rsquo;re ready (account required).</p>
-          <a class="home-hub-card-link" href="opportunities/index.html">Browse opportunities →</a>
-        </article>
-      </div>
     </div>
   </section>
 
   <section class="home-split home-reveal" id="for-you" aria-labelledby="home-split-heading">
     <div class="home-flow-inner">
       <header class="home-flow-head">
-        <p class="section-kicker">Built for both sides</p>
-        <h2 class="section-title" id="home-split-heading">Attendees &amp; organisers</h2>
+        <p class="section-kicker">Whether you&rsquo;re joining or listing</p>
+        <h2 class="section-title" id="home-split-heading">Members &amp; organisers</h2>
+        <p class="home-flow-lede">
+          Book tickets for events, or send enquiries for business opportunities — the same free account covers both.
+        </p>
       </header>
       <div class="home-split-grid">
         <div class="home-split-col home-reveal-child">
-          <h3>For attendees</h3>
+          <h3>For members</h3>
           <ul class="home-feature-list">
-            <li>Browse events and opportunities for free — no sign-in needed</li>
-            <li>Filter by type (including webinars &amp; workshops), date, location, and map view</li>
-            <li>Save favourite events and organiser pages for ticket-sale alerts</li>
-            <li>Book via secure Stripe checkout; add guest names and manage tickets in your account</li>
+            <li>Browse events and business opportunities for free — no sign-in needed</li>
+            <li>Filter events by type, date, location, and map view; save favourites for ticket alerts</li>
+            <li>Book tickets via secure Stripe checkout; add guest names and manage bookings in your account</li>
+            <li>Found a franchise, partnership, or deal? Send a direct enquiry from the opportunity page — free account required</li>
           </ul>
           <div class="home-split-actions">
             <a class="btn btn-secondary" href="events/index.html">Browse events</a>
-            <a class="btn btn-secondary" href="register.html">Create free account</a>
+            <a class="btn btn-secondary" href="opportunities/index.html">Browse opportunities</a>
           </div>
         </div>
         <div class="home-split-col home-reveal-child">
@@ -164,8 +147,8 @@
           <ul class="home-feature-list">
             <li>Create or claim your organiser page in the directory</li>
             <li>List meetings, webinars, workshops, and exhibitions with free or paid tickets</li>
-            <li>Manage attendees, applications, and exports from your dashboard</li>
-            <li>Sell via Stripe Connect and list business opportunities to reach new audiences</li>
+            <li>Publish business opportunities and respond to member enquiries from your dashboard</li>
+            <li>Manage bookings, applications, and registration exports — payouts via Stripe Connect</li>
           </ul>
           <div class="home-split-actions">
             <a class="btn btn-secondary" href="login.html?next=/organiser/index.html">Organiser dashboard</a>
@@ -209,7 +192,7 @@
           </article>
           <article class="home-faq-box home-reveal-child">
             <h3>I&rsquo;m an organiser — how do I list an event?</h3>
-            <p>Sign in, claim your organiser page if prompted, then open the <a href="login.html?next=/organiser/index.html">organiser dashboard</a> to create events and manage attendees. Search the <a href="events/index.html?mode=organisers">organiser directory</a> to find your group. Email <a href="mailto:hello@the-networker.co.uk">hello@the-networker.co.uk</a> if you need help.</p>
+            <p>Sign in, claim your organiser page if prompted, then open the <a href="login.html?next=/organiser/index.html">organiser dashboard</a> to create events and manage bookings. See our <a href="guides/list-an-event.html">step-by-step guide</a>. Search the <a href="events/index.html?mode=organisers">organiser directory</a> to find your group.</p>
           </article>
         </div>
       </div>
@@ -221,7 +204,7 @@
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260610" data-root=""></script>
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
-<script src="js/home-page.js?v=20260733"></script>
+<script src="js/home-page.js?v=20260735"></script>
 
 </body>
 </html>

@@ -195,6 +195,14 @@
   var OPPORTUNITY_PAGE_SIZE = 30;
   var eventOrganiserOptionsCache = null;
   var opportunityCleanupCache = null;
+  var featuredSpotlightEvents = [];
+  var featuredSpotlightState = {
+    q: '',
+    featured: '',
+    eventType: '',
+    when: '',
+  };
+  var featuredSpotlightSearchTimer = null;
   var adminLogoPending = {};
   var groupSearchTimer = null;
   var eventSearchTimer = null;
@@ -2969,6 +2977,38 @@
     );
   }
 
+  function sortUsersAlphabetically(rows) {
+    return rows.slice().sort(function (a, b) {
+      var nameA = String(a.name || '').trim().toLowerCase();
+      var nameB = String(b.name || '').trim().toLowerCase();
+      if (nameA !== nameB) return nameA.localeCompare(nameB, 'en', { sensitivity: 'base' });
+      return String(a.email || '').localeCompare(String(b.email || ''), 'en', { sensitivity: 'base' });
+    });
+  }
+
+  function formatAccountDate(iso) {
+    if (!iso) return '—';
+    try {
+      return fmtTime(iso);
+    } catch (e) {
+      return '—';
+    }
+  }
+
+  function hubViewLabel(view) {
+    return String(view || 'attendee') === 'organiser' ? 'Organiser' : 'Attendee';
+  }
+
+  function emailPrefRow(label, on) {
+    return (
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">' +
+      esc(label) +
+      '</dt><dd class="font-medium text-right">' +
+      (on ? 'On' : 'Off') +
+      '</dd></div>'
+    );
+  }
+
   function loadUsersDirectory(callback) {
     if (liveUsers.length) {
       callback(liveUsers);
@@ -3102,7 +3142,7 @@
 
     function paintDirectory() {
       if (!directoryBody) return;
-      var rows = filterDirectoryUsers();
+      var rows = sortUsersAlphabetically(filterDirectoryUsers());
       if (!rows.length) {
         directoryBody.innerHTML =
           '<tr><td colspan="5" class="px-4 py-6 text-slate-500">No accounts match your filters.</td></tr>';
@@ -3195,24 +3235,47 @@
       '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Role</dt><dd class="font-medium text-right">' +
       esc(u.role) +
       '</dd></div>' +
-      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">City</dt><dd class="font-medium text-right">' +
-      esc(u.city) +
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Hub view</dt><dd class="font-medium text-right">' +
+      esc(hubViewLabel(u.hubView)) +
       '</dd></div>' +
-      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Status</dt><dd class="font-medium text-right">' +
-      esc(u.status) +
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Location</dt><dd class="font-medium text-right">' +
+      esc(u.location || u.city || '—') +
       '</dd></div>' +
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Last sign-in</dt><dd class="font-medium text-right text-xs">' +
+      esc(formatAccountDate(u.lastSignInAt)) +
+      '</dd></div>' +
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Account created</dt><dd class="font-medium text-right text-xs">' +
+      esc(formatAccountDate(u.accountCreatedAt || u.authCreatedAt)) +
+      '</dd></div>' +
+      (u.organiserListingStatus
+        ? '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Organiser page</dt><dd class="font-medium text-right">' +
+          esc(u.organiserListingStatus) +
+          '</dd></div>'
+        : '') +
       '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Featured organiser</dt><dd class="font-medium text-right">' +
       (u.featured ? 'Yes' : 'No') +
-      '</dd></div>' +
-      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Emails</dt><dd class="font-medium text-right">' +
-      (u.emailsEnabled === false ? 'Blocked' : 'Enabled') +
       '</dd></div></dl>' +
+      '<div class="border-t border-slate-100 pt-4 mt-4">' +
+      '<p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Account settings (as user sees)</p>' +
+      '<dl class="space-y-3 text-sm">' +
+      emailPrefRow('All hub emails', u.emailsEnabled !== false) +
+      emailPrefRow('Newsletter', u.emailPrefNewsletter !== false) +
+      emailPrefRow('Event reminders', u.emailPrefEventReminders !== false) +
+      emailPrefRow('Organiser alerts', u.emailPrefOrganiserAlerts !== false) +
+      (u.organiserTermsAcceptedAt
+        ? '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Organiser terms</dt><dd class="font-medium text-right text-xs">' +
+          esc(formatAccountDate(u.organiserTermsAcceptedAt)) +
+          '</dd></div>'
+        : '') +
+      '</dl>' +
+      '<a href="../account/settings.html" target="_blank" rel="noopener" class="inline-block mt-3 text-xs font-semibold text-brand-700 hover:underline">Open account settings page ↗</a>' +
+      '</div>' +
       (u.organiserId
         ? '<label class="flex items-center gap-2 text-sm mt-4 pt-4 border-t border-slate-100">' +
           '<input type="checkbox" id="drawer-featured-toggle" ' +
           (u.featured ? 'checked' : '') +
           ' /> Featured organiser (Spotlight)</label>'
-        : '<p class="text-xs text-slate-500 border-t border-slate-100 pt-4">No organiser profile — featured status applies to group profiles only.</p>') +
+        : '<p class="text-xs text-slate-500 border-t border-slate-100 pt-4 mt-4">No organiser profile — featured status applies to group profiles only.</p>') +
       (u.role !== 'Admin'
         ? '<div class="border-t border-slate-100 pt-4 mt-4 space-y-2">' +
           '<p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Email delivery</p>' +
@@ -3220,7 +3283,7 @@
           (u.emailsEnabled === false ? 'Enable emails for this user' : 'Block emails for this user') +
           '</button>' +
           '<p class="text-xs font-semibold text-slate-500 uppercase tracking-wide pt-2">Password support</p>' +
-          '<button type="button" class="w-full rounded-lg border border-slate-200 text-slate-800 py-2 text-sm font-semibold hover:bg-slate-50" id="drawer-reset-link">Generate reset link</button>' +
+          '<button type="button" class="w-full rounded-lg border border-brand-200 text-brand-800 py-2 text-sm font-semibold hover:bg-brand-50" id="drawer-reset-link">Send password reset email</button>' +
           '<button type="button" class="w-full rounded-lg border border-slate-200 text-slate-800 py-2 text-sm font-semibold hover:bg-slate-50" id="drawer-temp-password">Set temporary password</button>' +
           '<p class="text-xs text-slate-500 hidden" id="drawer-password-result"></p></div>'
         : '');
@@ -3264,11 +3327,13 @@
         resetBtn.disabled = true;
         adminPost('/api/admin/users', { action: 'send_password_reset', email: u.email, userId: u.id })
           .then(function (data) {
-            if (!data || !data.ok) throw new Error((data && data.message) || 'Could not generate link');
-            if (data.resetUrl) {
-              showPwdResult('Reset link (copy): ' + data.resetUrl, false);
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Could not send reset email');
+            if (data.emailSent) {
+              showPwdResult(data.message || 'Password reset email sent.', false);
+            } else if (data.resetUrl) {
+              showPwdResult('Email not sent — copy reset link: ' + data.resetUrl, false);
             } else {
-              showPwdResult(data.message || 'Link generated.', false);
+              showPwdResult(data.message || 'Reset link generated.', false);
             }
           })
           .catch(function (err) {
@@ -3676,9 +3741,10 @@
     main.innerHTML =
       '<div class="space-y-6">' +
       '<p id="financials-status" class="text-sm text-slate-500">Loading financial data from Supabase…</p>' +
+      '<div id="financials-summary" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">Organiser ticket revenue</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">Gross paid registration totals in Supabase — not live Stripe settlement or payout history.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Total paid ticket revenue per organiser (all time) — organisers receive full ticket price; booking fees shown in summary.</p></div>' +
       adminTableScroll(
         '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
           '<tr><th class="px-4 py-3 text-left">Organiser</th><th class="px-4 py-3">Ticket revenue</th><th class="px-4 py-3">Last payout</th><th class="px-4 py-3">Stripe Connect</th></tr></thead>' +
@@ -3703,27 +3769,54 @@
       var status = document.getElementById('financials-status');
       var stripeEl = document.getElementById('financials-stripe');
       var logEl = document.getElementById('financials-log');
+      var summaryEl = document.getElementById('financials-summary');
 
-      if (!data || data.error || data.configured === false) {
-        if (status) status.textContent = 'Could not load financial data from Supabase.';
+      if (!data || data.ok === false || data.error || data.configured === false) {
+        if (status) {
+          status.textContent =
+            (data && (data.message || data.error)) || 'Could not load financial data from Supabase.';
+        }
         return;
       }
 
       var stripe = data.stripeAccounts || [];
       var log = data.automationLog || [];
       var queue = data.payoutQueue || [];
+      var summary = data.summary || {};
       var queueEl = document.getElementById('financials-queue');
+
+      function money(n) {
+        var v = Number(n) || 0;
+        return '£' + (v % 1 === 0 ? v.toFixed(0) : v.toFixed(2));
+      }
+
+      if (summaryEl) {
+        summaryEl.innerHTML =
+          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Ticket revenue</p><p class="text-xl font-bold text-brand-900 mt-1">' +
+          money(summary.totalTicketRevenue) +
+          '</p></div>' +
+          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Booking fees</p><p class="text-xl font-bold text-brand-900 mt-1">' +
+          money(summary.totalBookingFees) +
+          '</p></div>' +
+          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Paid bookings</p><p class="text-xl font-bold text-brand-900 mt-1">' +
+          String(summary.paidRegistrationCount || 0) +
+          '</p></div>' +
+          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Payouts pending</p><p class="text-xl font-bold text-brand-900 mt-1">' +
+          String(summary.pendingPayoutCount || 0) +
+          '</p></div>';
+      }
 
       if (status) {
         status.textContent =
+          money(summary.totalTicketRevenue) +
+          ' ticket revenue · ' +
           queue.length +
-          ' payout request' +
+          ' payout row' +
           (queue.length === 1 ? '' : 's') +
           ' · ' +
           stripe.length +
           ' organiser' +
-          (stripe.length === 1 ? '' : 's') +
-          ' · registration log from Supabase';
+          (stripe.length === 1 ? '' : 's');
       }
 
       if (queueEl) {
@@ -3782,7 +3875,12 @@
         stripeEl.innerHTML = stripe.length
           ? stripe
               .map(function (s) {
-                var statusCls = s.status === 'Connected' ? 'text-emerald-600' : 'text-slate-500';
+                var statusCls =
+                  s.status === 'Connected'
+                    ? 'text-emerald-600'
+                    : s.status === 'Onboarding'
+                      ? 'text-amber-700'
+                      : 'text-slate-500';
                 return (
                   '<tr class="border-t border-slate-100"><td class="px-4 py-3 font-medium">' +
                   esc(s.organiser) +
@@ -5369,6 +5467,8 @@
       } else if (
         slug === 'post_event_review_request' ||
         slug === 'attendee_reengagement' ||
+        slug === 'attendee_signup_events_nudge' ||
+        slug === 'attendee_signup_events_nudge_followup' ||
         slug === 'meeting_link_added' ||
         slug === 'osop_payment_reminder' ||
         slug === 'saved_organiser_new_listing' ||
@@ -5386,6 +5486,21 @@
         SAMPLE_VARS.meeting_link_section = previewMeetingLinkButton(SAMPLE_VARS.meeting_link);
       } else if (slug === 'attendee_reengagement') {
         SAMPLE_VARS.recommendations_html = previewRecommendationsHtml();
+      } else if (slug === 'attendee_signup_events_nudge') {
+        SAMPLE_VARS.nearby_events_html =
+          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Events near London</p>' +
+          previewRecommendationsHtml();
+        SAMPLE_VARS.popular_events_html =
+          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Popular right now</p>' +
+          previewRecommendationsHtml();
+      } else if (slug === 'attendee_signup_events_nudge_followup') {
+        SAMPLE_VARS.opportunities_url = SAMPLE_VARS.opportunities_url || previewOrigin + '/opportunities/';
+        SAMPLE_VARS.popular_events_html =
+          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Popular right now</p>' +
+          previewRecommendationsHtml();
+        SAMPLE_VARS.nearby_events_html =
+          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Events near London</p>' +
+          previewRecommendationsHtml();
       } else if (slug === 'saved_organiser_new_listing') {
         SAMPLE_VARS.event_time = ' · ' + SAMPLE_VARS.event_time;
       }
@@ -5547,6 +5662,8 @@
       'event_cancelled',
       'refund_processed',
       'attendee_reengagement',
+      'attendee_signup_events_nudge',
+      'attendee_signup_events_nudge_followup',
       'password_reset',
     ];
     var ORGANISER_EMAIL_SLUGS = ['organiser_new_registration', 'organiser_claim_invite'];
@@ -9075,14 +9192,16 @@
       var tbody = document.getElementById('users-page-tbody');
       var q = (document.getElementById('users-page-search')?.value || '').trim().toLowerCase();
       var role = document.getElementById('users-page-role')?.value || '';
-      var rows = liveUsers.filter(function (u) {
-        if (role && u.role !== role) return false;
-        if (!q) return true;
-        return (
-          String(u.name || '').toLowerCase().indexOf(q) >= 0 ||
-          String(u.email || '').toLowerCase().indexOf(q) >= 0
-        );
-      });
+      var rows = sortUsersAlphabetically(
+        liveUsers.filter(function (u) {
+          if (role && u.role !== role) return false;
+          if (!q) return true;
+          return (
+            String(u.name || '').toLowerCase().indexOf(q) >= 0 ||
+            String(u.email || '').toLowerCase().indexOf(q) >= 0
+          );
+        })
+      );
       if (!tbody) return;
       if (!rows.length) {
         tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No matching accounts.</td></tr>';
@@ -9190,17 +9309,195 @@
     }
   }
 
+  function filterFeaturedSpotlightEvents(events) {
+    var q = String(featuredSpotlightState.q || '').trim().toLowerCase();
+    var featured = featuredSpotlightState.featured;
+    var type = featuredSpotlightState.eventType;
+    var when = featuredSpotlightState.when;
+    var now = Date.now();
+    return (events || []).filter(function (ev) {
+      if (featured === 'yes' && !ev.featured) return false;
+      if (featured === 'no' && ev.featured) return false;
+      if (type && String(ev.event_type || '') !== type) return false;
+      if (when === 'upcoming') {
+        if (!ev.starts_at) return false;
+        if (new Date(ev.starts_at).getTime() < now) return false;
+      } else if (when === 'past') {
+        if (!ev.starts_at) return false;
+        if (new Date(ev.starts_at).getTime() >= now) return false;
+      }
+      if (!q) return true;
+      var hay = (
+        String(ev.title || '') +
+        ' ' +
+        String(ev.organiser_name || '') +
+        ' ' +
+        String(ev.city || '')
+      ).toLowerCase();
+      return hay.indexOf(q) >= 0;
+    });
+  }
+
+  function paintFeaturedSpotlightTable() {
+    var tbody = document.getElementById('featured-tbody');
+    var status = document.getElementById('featured-status');
+    var events = featuredSpotlightEvents || [];
+    var rows = filterFeaturedSpotlightEvents(events);
+    var featuredCount = events.filter(function (e) {
+      return e.featured;
+    }).length;
+    if (status) {
+      var filterActive =
+        featuredSpotlightState.q ||
+        featuredSpotlightState.featured ||
+        featuredSpotlightState.eventType ||
+        featuredSpotlightState.when;
+      status.textContent =
+        featuredCount +
+        ' featured · ' +
+        (filterActive ? rows.length + ' shown · ' + events.length + ' loaded' : events.length + ' approved events') +
+        ' (upcoming first)';
+    }
+    if (!tbody) return;
+    if (!events.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No approved events yet.</td></tr>';
+      return;
+    }
+    if (!rows.length) {
+      tbody.innerHTML =
+        '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No events match your filters. Try clearing search or filters.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows
+      .map(function (ev) {
+        var dateLabel = ev.starts_at ? fmtTime(ev.starts_at).split(',')[0] : '—';
+        var viewUrl = ev.slug
+          ? '../events/event.html?slug=' + encodeURIComponent(ev.slug)
+          : '../events/event.html?id=' + encodeURIComponent(ev.id);
+        return (
+          '<tr class="border-t border-slate-100' +
+          (ev.featured ? ' bg-amber-50/40' : '') +
+          '">' +
+          '<td class="px-4 py-3"><input type="checkbox" class="featured-event-toggle" data-event-id="' +
+          attrEsc(ev.id) +
+          '" ' +
+          (ev.featured ? 'checked' : '') +
+          ' aria-label="Feature event" /></td>' +
+          '<td class="px-4 py-3 font-medium">' +
+          esc(ev.title) +
+          '</td>' +
+          '<td class="px-4 py-3">' +
+          esc(ev.organiser_name || '—') +
+          '</td>' +
+          '<td class="px-4 py-3">' +
+          esc(dateLabel) +
+          '</td>' +
+          '<td class="px-4 py-3">' +
+          esc(ev.city || '—') +
+          '</td>' +
+          '<td class="px-4 py-3"><a href="' +
+          attrEsc(viewUrl) +
+          '" target="_blank" rel="noopener" class="text-brand-700 text-xs font-semibold hover:underline">View</a></td></tr>'
+        );
+      })
+      .join('');
+  }
+
+  function bindFeaturedSpotlightFilters() {
+    var searchEl = document.getElementById('featured-spotlight-search');
+    var featuredEl = document.getElementById('featured-spotlight-featured');
+    var typeEl = document.getElementById('featured-spotlight-type');
+    var whenEl = document.getElementById('featured-spotlight-when');
+    var clearBtn = document.getElementById('featured-spotlight-clear');
+
+    function syncFromControls() {
+      featuredSpotlightState.q = searchEl ? searchEl.value : '';
+      featuredSpotlightState.featured = featuredEl ? featuredEl.value : '';
+      featuredSpotlightState.eventType = typeEl ? typeEl.value : '';
+      featuredSpotlightState.when = whenEl ? whenEl.value : '';
+      paintFeaturedSpotlightTable();
+    }
+
+    if (searchEl) {
+      searchEl.addEventListener('input', function () {
+        if (featuredSpotlightSearchTimer) clearTimeout(featuredSpotlightSearchTimer);
+        featuredSpotlightSearchTimer = setTimeout(syncFromControls, 200);
+      });
+    }
+    if (featuredEl) featuredEl.addEventListener('change', syncFromControls);
+    if (typeEl) typeEl.addEventListener('change', syncFromControls);
+    if (whenEl) whenEl.addEventListener('change', syncFromControls);
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        featuredSpotlightState.q = '';
+        featuredSpotlightState.featured = '';
+        featuredSpotlightState.eventType = '';
+        featuredSpotlightState.when = '';
+        if (searchEl) searchEl.value = '';
+        if (featuredEl) featuredEl.value = '';
+        if (typeEl) typeEl.value = '';
+        if (whenEl) whenEl.value = '';
+        paintFeaturedSpotlightTable();
+      });
+    }
+  }
+
   function renderFeatured() {
+    var typeOptions = EVENT_TYPES.map(function (t) {
+      return (
+        '<option value="' +
+        attrEsc(t) +
+        '"' +
+        (featuredSpotlightState.eventType === t ? ' selected' : '') +
+        '>' +
+        esc(t) +
+        '</option>'
+      );
+    }).join('');
+
     main.innerHTML =
       '<div class="space-y-4">' +
       '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Featured events appear in the <strong>Premium Spotlight</strong> carousel on the public browse page. Only approved, published listings should be featured.</p>' +
       '<p id="featured-status" class="text-sm text-slate-500">Loading approved events…</p>' +
+      '<div class="admin-filter-bar rounded-xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm">' +
+      '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
+      '<input type="search" id="featured-spotlight-search" placeholder="Search event, organiser, or city…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
+      attrEsc(featuredSpotlightState.q) +
+      '">' +
+      '<select id="featured-spotlight-featured" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:w-44">' +
+      '<option value=""' +
+      (featuredSpotlightState.featured === '' ? ' selected' : '') +
+      '>All spotlight</option>' +
+      '<option value="yes"' +
+      (featuredSpotlightState.featured === 'yes' ? ' selected' : '') +
+      '>Featured only</option>' +
+      '<option value="no"' +
+      (featuredSpotlightState.featured === 'no' ? ' selected' : '') +
+      '>Not featured</option></select></div>' +
+      '<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
+      '<select id="featured-spotlight-type" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[11rem]">' +
+      '<option value="">Any type</option>' +
+      typeOptions +
+      '</select>' +
+      '<select id="featured-spotlight-when" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[11rem]">' +
+      '<option value=""' +
+      (featuredSpotlightState.when === '' ? ' selected' : '') +
+      '>Any date</option>' +
+      '<option value="upcoming"' +
+      (featuredSpotlightState.when === 'upcoming' ? ' selected' : '') +
+      '>Upcoming</option>' +
+      '<option value="past"' +
+      (featuredSpotlightState.when === 'past' ? ' selected' : '') +
+      '>Past</option></select>' +
+      '<button type="button" id="featured-spotlight-clear" class="text-sm font-semibold text-slate-600 hover:text-brand-900 px-2 py-1">Clear filters</button></div></div>' +
       adminTableScroll(
         '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
           '<tr><th class="px-4 py-3 text-left">Featured</th><th class="px-4 py-3 text-left">Event</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">Date</th><th class="px-4 py-3">City</th><th class="px-4 py-3"></th></tr></thead>' +
           '<tbody id="featured-tbody"><tr><td colspan="6" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
       ) +
       '</div>';
+
+    bindFeaturedSpotlightFilters();
 
     adminGet('/api/admin/events?approval_status=Approved&limit=100&sort=date').then(function (data) {
       var tbody = document.getElementById('featured-tbody');
@@ -9210,57 +9507,8 @@
         if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-red-700">Load failed.</td></tr>';
         return;
       }
-      var events = data.events || [];
-      var featuredCount = events.filter(function (e) {
-        return e.featured;
-      }).length;
-      if (status) {
-        status.textContent =
-          featuredCount +
-          ' featured · ' +
-          events.length +
-          ' approved events shown (upcoming first)';
-      }
-      if (!tbody) return;
-      if (!events.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No approved events yet.</td></tr>';
-        return;
-      }
-      tbody.innerHTML = events
-        .map(function (ev) {
-          var dateLabel = ev.starts_at
-            ? fmtTime(ev.starts_at).split(',')[0]
-            : '—';
-          var viewUrl = ev.slug
-            ? '../events/event.html?slug=' + encodeURIComponent(ev.slug)
-            : '../events/event.html?id=' + encodeURIComponent(ev.id);
-          return (
-            '<tr class="border-t border-slate-100' +
-            (ev.featured ? ' bg-amber-50/40' : '') +
-            '">' +
-            '<td class="px-4 py-3"><input type="checkbox" class="featured-event-toggle" data-event-id="' +
-            attrEsc(ev.id) +
-            '" ' +
-            (ev.featured ? 'checked' : '') +
-            ' aria-label="Feature event" /></td>' +
-            '<td class="px-4 py-3 font-medium">' +
-            esc(ev.title) +
-            '</td>' +
-            '<td class="px-4 py-3">' +
-            esc(ev.organiser_name || '—') +
-            '</td>' +
-            '<td class="px-4 py-3">' +
-            esc(dateLabel) +
-            '</td>' +
-            '<td class="px-4 py-3">' +
-            esc(ev.city || '—') +
-            '</td>' +
-            '<td class="px-4 py-3"><a href="' +
-            attrEsc(viewUrl) +
-            '" target="_blank" rel="noopener" class="text-brand-700 text-xs font-semibold hover:underline">View</a></td></tr>'
-          );
-        })
-        .join('');
+      featuredSpotlightEvents = data.events || [];
+      paintFeaturedSpotlightTable();
     });
 
     if (!main.dataset.featuredBound) {
@@ -9276,6 +9524,11 @@
             if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
             var row = toggle.closest('tr');
             if (row) row.classList.toggle('bg-amber-50/40', toggle.checked);
+            var idx = featuredSpotlightEvents.findIndex(function (ev) {
+              return ev.id === eventId;
+            });
+            if (idx >= 0) featuredSpotlightEvents[idx].featured = toggle.checked;
+            paintFeaturedSpotlightTable();
           })
           .catch(function (err) {
             toggle.checked = !toggle.checked;

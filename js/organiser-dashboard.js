@@ -311,11 +311,9 @@
   }
 
   function updateRankingPanelSummaries(summaryText) {
-    ['org-ranking-panel-overview-summary', 'org-ranking-panel-events-summary'].forEach(function (id) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.textContent = summaryText ? ' — ' + summaryText : '';
-    });
+    const el = document.getElementById('org-ranking-panel-events-summary');
+    if (!el) return;
+    el.textContent = summaryText ? ' — ' + summaryText : '';
   }
 
   function renderOrganiserRankingShare() {
@@ -323,7 +321,6 @@
     const cardsEl = document.getElementById('org-ranking-share-cards');
     const examplesEl = document.getElementById('org-ranking-tier-examples');
     const groupsMount = document.getElementById('org-ranking-share-groups-mount');
-    const overviewPanel = document.getElementById('org-ranking-panel-overview');
     const eventsPanel = document.getElementById('org-ranking-panel-events');
 
     const periodLabel =
@@ -371,10 +368,8 @@
     const summaryText = ranked.length ? rankingBadgeText(ranked[0].row) : '';
     updateRankingPanelSummaries(summaryText);
 
-    if (overviewPanel) overviewPanel.hidden = !ranked.length;
     if (eventsPanel) eventsPanel.hidden = !ranked.length;
 
-    bindRankingPanel('org-ranking-panel-overview', RANKING_PANEL_COLLAPSE_KEYS.overview);
     bindRankingPanel('org-ranking-panel-events', RANKING_PANEL_COLLAPSE_KEYS.events);
 
     if (shareRoot) {
@@ -453,7 +448,7 @@
         esc(String(best.reviewCount)) +
         ' reviews).'
       : '';
-    ['org-ranking-banner', 'org-events-ranking-banner'].forEach((id) => {
+    ['org-events-ranking-banner'].forEach((id) => {
       const banner = document.getElementById(id);
       if (!banner) return;
       if (!best) {
@@ -465,14 +460,11 @@
       banner.innerHTML = html;
     });
 
-    const overviewPanel = document.getElementById('org-ranking-panel-overview');
     const eventsPanel = document.getElementById('org-ranking-panel-events');
     const hasRanking = Boolean(best);
-    if (overviewPanel) overviewPanel.hidden = !hasRanking;
     if (eventsPanel) eventsPanel.hidden = !hasRanking;
     if (hasRanking) {
       updateRankingPanelSummaries(rankingBadgeText(best));
-      bindRankingPanel('org-ranking-panel-overview', RANKING_PANEL_COLLAPSE_KEYS.overview);
       bindRankingPanel('org-ranking-panel-events', RANKING_PANEL_COLLAPSE_KEYS.events);
     }
   }
@@ -3672,6 +3664,12 @@
       compact: true,
       title: 'Add bank details before you sell paid tickets',
     });
+    payment.renderInto(document.getElementById('org-payment-setup-dashboard'), setupState, group, {
+      returnPath: '/organiser/index.html#dashboard',
+      compact: true,
+      title: 'Add bank details to receive payouts',
+      lead: 'Connect Stripe so ticket revenue can reach you after each event.',
+    });
   }
 
   function renderStripeConnectBanner() {
@@ -4892,34 +4890,32 @@
     }
 
     const progress = gettingStartedProgress();
-    const flags = [progress.hasGroup, progress.hasEvent, progress.hasTeam];
-    const doneCount = flags.filter(Boolean).length;
-    const allDone = doneCount >= 3;
+    const coreDone = progress.hasGroup && progress.hasEvent;
+    const requiredDone = [progress.hasGroup, progress.hasEvent].filter(Boolean).length;
+
+    if (coreDone) {
+      panel.hidden = true;
+      return;
+    }
 
     panel.hidden = false;
 
     const titleEl = panel.querySelector('.org-getting-started-title');
     if (titleEl) {
-      if (allDone) titleEl.textContent = "You're all set";
-      else if (doneCount === 0) titleEl.textContent = "Here's what to do first";
+      if (requiredDone === 0) titleEl.textContent = "Here's what to do first";
       else titleEl.textContent = "Here's what's next";
     }
-    panel.classList.toggle('is-complete', allDone);
+    panel.classList.remove('is-complete');
 
     const progressHint = document.getElementById('org-getting-started-progress');
     if (progressHint) {
-      if (allDone) {
-        progressHint.textContent =
-          'Setup complete — you can dismiss this checklist whenever you like.';
-      } else {
-        const remaining = 3 - doneCount;
-        progressHint.textContent =
-          doneCount === 0
-            ? '3 steps to get your workspace ready.'
-            : remaining === 1
-              ? '1 step left on your setup checklist.'
-              : remaining + ' steps left on your setup checklist.';
-      }
+      const remaining = 2 - requiredDone;
+      progressHint.textContent =
+        requiredDone === 0
+          ? '2 steps to get your workspace ready.'
+          : remaining === 1
+            ? '1 step left on your setup checklist.'
+            : remaining + ' steps left on your setup checklist.';
     }
 
     const stepDone = {
@@ -4934,6 +4930,7 @@
       const done = Boolean(stepDone[key]);
       li.classList.toggle('is-done', done);
       li.classList.toggle('is-next', !done && !nextMarked);
+      li.hidden = done;
       if (!done && !nextMarked) nextMarked = true;
 
       const btn = li.querySelector('[data-org-getting-action]');

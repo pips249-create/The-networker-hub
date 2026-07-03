@@ -554,7 +554,7 @@
     const backLink = document.getElementById('oe-back-link');
     if (backLink && editId) {
       backLink.href = 'index.html#business-overview';
-      backLink.textContent = '← Back to Business ops';
+      backLink.textContent = '← Back to My business opportunities';
     }
 
     const monthsInput = document.getElementById('oe-listing-months');

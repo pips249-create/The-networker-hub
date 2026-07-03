@@ -64,6 +64,7 @@ function basePreviewVars(siteUrl) {
     hub_account_url: hubAccountUrl(site) + '#saved',
     hub_payment_url: hubPaymentUrl(site, registrationId),
     browse_events_url: browseEventsUrl(site),
+    opportunities_url: site + '/opportunities/',
     contact_url: contactUrl(site),
     privacy_url: legalPolicyUrl(site, 'privacy'),
     terms_url: legalPolicyUrl(site, 'terms'),
@@ -208,6 +209,46 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       );
   }
 
+  if (slug === 'attendee_signup_events_nudge') {
+    vars.nearby_events_html =
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Events near London</p>' +
+      sampleRecommendationCard(
+        'London Founders Breakfast',
+        'City Connectors · Tuesday 12 August 2026 · 8:00 AM · The Shard, London',
+        vars.event_url
+      ) +
+      sampleRecommendationCard(
+        'West End Networking Lunch',
+        'Capital Connect · Wednesday 13 August 2026 · 12:30 PM · Covent Garden',
+        vars.event_url
+      );
+    vars.popular_events_html =
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Popular right now</p>' +
+      sampleRecommendationCard(
+        'Tech Leaders Roundtable',
+        'Northbridge Network · Thursday 14 August 2026 · 6:00 PM · Manchester',
+        vars.browse_events_url
+      );
+  }
+
+  if (slug === 'attendee_signup_events_nudge_followup') {
+    vars.opportunities_url = vars.opportunities_url || site + '/opportunities/';
+    vars.popular_events_html =
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Popular right now</p>' +
+      sampleRecommendationCard(
+        'Tech Leaders Roundtable',
+        'Northbridge Network · Thursday 14 August 2026 · 6:00 PM · Manchester',
+        vars.browse_events_url
+      );
+    vars.nearby_events_html =
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Events near London</p>' +
+      sampleRecommendationCard(
+        'London Founders Breakfast',
+        'City Connectors · Tuesday 12 August 2026 · 8:00 AM · The Shard, London',
+        vars.event_url
+      );
+  }
+
   if (slug === 'saved_organiser_new_listing') {
     vars.event_time = ' · 8:00 AM';
   }
@@ -227,6 +268,8 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     slug === 'booking_reminder' ||
     slug === 'account_welcome' ||
     slug === 'attendee_reengagement' ||
+    slug === 'attendee_signup_events_nudge' ||
+    slug === 'attendee_signup_events_nudge_followup' ||
     slug === 'application_received' ||
     slug === 'application_approved' ||
     slug === 'application_denied' ||

@@ -152,7 +152,7 @@
 
     var items = partners.map(partnerItemHtml).join('');
     var useMarquee =
-      partners.length > 5 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      partners.length > 3 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     track.classList.toggle('home-partners-track--marquee', useMarquee);
     track.classList.toggle('home-partners-track--static', !useMarquee);
     track.innerHTML = useMarquee ? items + items : items;

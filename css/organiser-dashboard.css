@@ -912,7 +912,8 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
-  margin-top: 8px;
+  margin-top: 0;
+  margin-bottom: 20px;
 }
 
 .org-hub-portal {
@@ -986,22 +987,18 @@
 }
 
 .org-hub-portal-body strong {
-  font-size: 15px;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--od-purple-dark);
-}
-
-.org-hub-portal-body > span:not(.org-hub-portal-meta) {
-  font-size: 13px;
-  color: var(--od-text-soft);
-  line-height: 1.45;
+  line-height: 1.3;
 }
 
 .org-hub-portal-meta {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--od-purple);
   margin-top: 2px;
+  line-height: 1.4;
 }
 
 .org-hub-portal--events .org-hub-portal-meta {
@@ -2737,9 +2734,15 @@ body.org-notifications-open {
   color: #fff;
 }
 
+#org-payment-setup-dashboard,
 #org-payment-setup-overview[hidden],
 #ee-payment-setup-mount[hidden] {
   display: none !important;
+}
+
+#org-payment-setup-dashboard:not([hidden]) {
+  display: block !important;
+  margin-bottom: 16px;
 }
 
 .org-payout-held-note {
@@ -3273,6 +3276,19 @@ body.org-cancel-modal-open {
   font-size: 12px;
 }
 
+.org-getting-started-guides {
+  display: inline-block;
+  margin-left: 8px;
+  font-weight: 600;
+  color: var(--od-purple);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.org-getting-started-guides:hover {
+  color: var(--od-text);
+}
+
 .org-getting-started-link {
   font-family: inherit;
   font-size: inherit;
@@ -3290,7 +3306,7 @@ body.org-cancel-modal-open {
   padding: 0;
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 

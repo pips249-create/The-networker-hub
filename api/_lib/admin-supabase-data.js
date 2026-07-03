@@ -412,9 +412,15 @@ async function fetchActivity(sb) {
 
 async function fetchUsers(sb) {
   const [accountsRes, attendeesRes, organisersRes, authRes] = await Promise.all([
-    sb.from('hub_accounts').select('user_id, role, display_name, hub_view, emails_enabled'),
+    sb
+      .from('hub_accounts')
+      .select(
+        'user_id, role, display_name, hub_view, emails_enabled, email_pref_newsletter, email_pref_event_reminders, email_pref_organiser_alerts, organiser_terms_accepted_at, created_at'
+      ),
     sb.from('attendees').select('supabase_user_id, name, email, location'),
-    sb.from('organisers').select('supabase_user_id, name, email, city, featured, listing_status'),
+    sb
+      .from('organisers')
+      .select('id, supabase_user_id, name, email, city, featured, listing_status'),
     sb.auth.admin.listUsers({ perPage: 1000 }),
   ]);
 
@@ -448,10 +454,21 @@ async function fetchUsers(sb) {
       email: auth?.email || att?.email || org?.email || '—',
       role,
       city: org?.city || att?.location || '—',
+      location: att?.location || org?.city || '—',
       postcode: '—',
       status: 'Active',
       featured: Boolean(org?.featured),
       emailsEnabled: acc.emails_enabled !== false,
+      hubView: acc.hub_view || 'attendee',
+      displayName: acc.display_name || null,
+      emailPrefNewsletter: acc.email_pref_newsletter !== false,
+      emailPrefEventReminders: acc.email_pref_event_reminders !== false,
+      emailPrefOrganiserAlerts: acc.email_pref_organiser_alerts !== false,
+      organiserTermsAcceptedAt: acc.organiser_terms_accepted_at || null,
+      organiserListingStatus: org?.listing_status || null,
+      accountCreatedAt: acc.created_at || auth?.created_at || null,
+      lastSignInAt: auth?.last_sign_in_at || null,
+      authCreatedAt: auth?.created_at || null,
     });
     seen.add(acc.user_id);
   }
@@ -461,17 +478,39 @@ async function fetchUsers(sb) {
     const auth = authById.get(att.supabase_user_id);
     users.push({
       id: att.supabase_user_id,
+      organiserId: null,
       name: att.name || '—',
       email: att.email || auth?.email || '—',
       role: 'Attendee',
       city: att.location || '—',
+      location: att.location || '—',
       postcode: '—',
       status: 'Active',
       featured: false,
+      emailsEnabled: true,
+      hubView: 'attendee',
+      displayName: null,
+      emailPrefNewsletter: true,
+      emailPrefEventReminders: true,
+      emailPrefOrganiserAlerts: true,
+      organiserTermsAcceptedAt: null,
+      organiserListingStatus: null,
+      accountCreatedAt: auth?.created_at || null,
+      lastSignInAt: auth?.last_sign_in_at || null,
+      authCreatedAt: auth?.created_at || null,
     });
   }
 
-  users.sort((a, b) => String(a.email).localeCompare(String(b.email)));
+  users.sort((a, b) => {
+    const nameA = String(a.name || '').trim().toLowerCase();
+    const nameB = String(b.name || '').trim().toLowerCase();
+    if (nameA !== nameB) {
+      return nameA.localeCompare(nameB, 'en', { sensitivity: 'base' });
+    }
+    return String(a.email || '').localeCompare(String(b.email || ''), 'en', {
+      sensitivity: 'base',
+    });
+  });
   return users;
 }
 
@@ -603,48 +642,100 @@ async function fetchModeration(sb) {
 }
 
 async function fetchFinancials(sb) {
-  const [orgsRes, regsRes, payoutsRes] = await Promise.all([
-    sb.from('organisers').select('id, name, stripe_account_id, payout_email').order('name'),
+  const [orgsRes, paidRegsRes, recentRegsRes, payoutsRes] = await Promise.all([
+    sb
+      .from('organisers')
+      .select(
+        'id, name, stripe_account_id, stripe_charges_enabled, stripe_connect_details_submitted, stripe_payouts_enabled'
+      )
+      .order('name'),
     sb
       .from('registrations')
-      .select('created_at, payment_status, amount_paid, organisers(name)')
+      .select('organiser_id, amount_paid, payment_status, quantity')
+      .eq('payment_status', 'Paid'),
+    sb
+      .from('registrations')
+      .select(
+        'created_at, payment_status, amount_paid, quantity, organiser_id, organisers(name), events(title)'
+      )
       .order('created_at', { ascending: false })
       .limit(40),
     sb
       .from('organiser_payouts')
       .select(
-        'id, status, amount, amount_net, amount_gross, requested_at, created_at, event_id, events(title, organisers(name))'
+        'id, status, amount, amount_net, amount_gross, requested_at, created_at, event_id, events(title, organiser_id, organisers(name))'
       )
       .order('created_at', { ascending: false })
-      .limit(50),
+      .limit(100),
   ]);
 
   if (orgsRes.error) throw new Error(orgsRes.error.message);
-  if (regsRes.error) throw new Error(regsRes.error.message);
+  if (paidRegsRes.error) throw new Error(paidRegsRes.error.message);
+  if (recentRegsRes.error) throw new Error(recentRegsRes.error.message);
   if (payoutsRes.error) throw new Error(payoutsRes.error.message);
 
-  const revenueByOrg = new Map();
-  (regsRes.data || [])
-    .filter((r) => r.payment_status === 'Paid')
-    .forEach((r) => {
-      const name = r.organisers?.name || 'Unknown organiser';
-      revenueByOrg.set(name, (revenueByOrg.get(name) || 0) + registrationTicketRevenue(r));
-    });
+  const revenueByOrgId = new Map();
+  let totalTicketRevenue = 0;
+  let totalBookingFees = 0;
+  (paidRegsRes.data || []).forEach((r) => {
+    totalTicketRevenue += registrationTicketRevenue(r);
+    totalBookingFees += registrationBookingFee(r);
+    const orgId = r.organiser_id;
+    if (!orgId) return;
+    revenueByOrgId.set(orgId, (revenueByOrgId.get(orgId) || 0) + registrationTicketRevenue(r));
+  });
+
+  const lastPayoutByOrgId = new Map();
+  (payoutsRes.data || []).forEach((p) => {
+    if (String(p.status || '') !== 'paid') return;
+    const orgId = p.events?.organiser_id;
+    if (!orgId) return;
+    const at = p.requested_at || p.created_at;
+    if (!at) return;
+    const prev = lastPayoutByOrgId.get(orgId);
+    if (!prev || new Date(at) > new Date(prev)) {
+      lastPayoutByOrgId.set(orgId, at);
+    }
+  });
+
+  function stripeConnectLabel(o) {
+    if (o.stripe_account_id && o.stripe_charges_enabled) return 'Connected';
+    if (o.stripe_account_id) return 'Onboarding';
+    return 'Not connected';
+  }
+
+  function formatPayoutDate(iso) {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return '—';
+    }
+  }
 
   const stripeAccounts = (orgsRes.data || []).map((o) => {
-    const earned = revenueByOrg.get(o.name) || 0;
+    const earned = revenueByOrgId.get(o.id) || 0;
     return {
+      organiserId: o.id,
       organiser: o.name || '—',
       balance: earned > 0 ? `£${round2(earned).toFixed(2)}` : '—',
-      lastPayout: '—',
-      status: o.stripe_account_id ? 'Connected' : 'Not connected',
+      balanceNum: round2(earned),
+      lastPayout: formatPayoutDate(lastPayoutByOrgId.get(o.id)),
+      status: stripeConnectLabel(o),
     };
   });
 
-  const automationLog = (regsRes.data || []).map((r) => {
-    const orgName = r.organisers?.name || 'Platform';
+  stripeAccounts.sort((a, b) => (b.balanceNum || 0) - (a.balanceNum || 0));
+
+  const automationLog = (recentRegsRes.data || []).map((r) => {
+    const orgName = r.organisers?.name || 'Unknown organiser';
+    const eventTitle = r.events?.title ? ` · ${r.events.title}` : '';
     const amt = Number(r.amount_paid) || 0;
-    let line = `${orgName}: registration — ${r.payment_status}`;
+    let line = `${orgName}${eventTitle}: registration — ${r.payment_status}`;
     if (r.payment_status === 'Paid') line += ` (£${round2(amt).toFixed(2)})`;
     let status = 'info';
     if (r.payment_status === 'Paid') status = 'ok';
@@ -674,7 +765,16 @@ async function fetchFinancials(sb) {
     };
   });
 
+  const pendingPayouts = payoutQueue.filter((p) => p.status === 'pending_review').length;
+
   return {
+    summary: {
+      totalTicketRevenue: round2(totalTicketRevenue),
+      totalBookingFees: round2(totalBookingFees),
+      paidRegistrationCount: (paidRegsRes.data || []).length,
+      pendingPayoutCount: pendingPayouts,
+      organiserCount: (orgsRes.data || []).length,
+    },
     stripeAccounts,
     payoutQueue,
     automationLog,

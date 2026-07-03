@@ -105,6 +105,19 @@ body.hub-page-organiser.organiser-event-edit-page {
   color: #1d4ed8;
 }
 
+.hub-dash-context--overview-foot {
+  margin: 4px 0 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 12px;
+  color: var(--od-text-soft, #6b7280);
+}
+
+.hub-dash-context--overview-foot .hub-dash-context-btn {
+  color: #1d4ed8;
+}
+
 .organiser-dashboard-page #hub-site-nav,
 .attendee-dashboard-page #hub-site-nav,
 .organiser-event-edit-page #hub-site-nav {
