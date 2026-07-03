@@ -17,6 +17,7 @@ const GATE_BYPASS_PREFIXES = [
   '/api/stripe-webhook',
   '/api/cron/',
   '/api/site-access',
+  '/api/auth/site-access',
   '/api/seo-meta',
   '/site-access.html',
   '/css/',

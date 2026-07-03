@@ -4,6 +4,15 @@
 const { getSubRoute } = require('./_lib/route-path');
 const { json, setCors } = require('./_lib/auth');
 
+function requestPathname(req) {
+  if (!req.url) return '';
+  try {
+    return new URL(req.url, 'https://internal.local').pathname;
+  } catch {
+    return String(req.url).split('?')[0];
+  }
+}
+
 const routes = {
   login: require('./_lib/routes/auth-login'),
   register: require('./_lib/routes/auth-register'),
@@ -34,6 +43,12 @@ const routes = {
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
+
+  const pathname = requestPathname(req);
+  if (pathname === '/api/site-access' || pathname === '/api/auth/site-access') {
+    return routes['site-access'](req, res);
+  }
+
   const route = getSubRoute(req, '/api/auth');
   const fn = routes[route];
   if (!fn) {

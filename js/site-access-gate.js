@@ -6,23 +6,56 @@
     return next;
   }
 
-  function showMessage(el, text, type) {
+  function showAlert(el, text, type) {
     if (!el) return;
     el.textContent = text;
-    el.className =
-      (el.id === 'site-access-message' ? 'auth-message site-access-message ' : 'site-access-message ') +
-      'site-access-message--' +
-      (type || 'error');
+    el.className = 'site-access-alert site-access-alert--' + (type || 'error');
     el.hidden = !text;
+    if (text) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }
 
-  var teamToggle = document.getElementById('team-access-toggle');
-  var teamPanel = document.getElementById('team-access-panel');
-  if (teamToggle && teamPanel) {
-    teamToggle.addEventListener('click', function () {
-      var open = teamPanel.hidden;
-      teamPanel.hidden = !open;
-      teamToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  function parseResponse(res, text) {
+    var data = {};
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        data = {};
+      }
+    }
+    return { ok: res.ok, status: res.status, data: data, text: text };
+  }
+
+  function friendlyError(result) {
+    if (result.data && result.data.message) return result.data.message;
+    if (result.data && result.data.error === 'invalid_password') {
+      return 'Incorrect preview password. Please try again.';
+    }
+    if (result.data && result.data.error === 'site_private') {
+      return 'Preview access is temporarily unavailable. Try again in a moment.';
+    }
+    if (result.status === 404) {
+      return 'Preview service not found — the latest deploy may still be building.';
+    }
+    if (result.data && result.data.error) return String(result.data.error).replace(/_/g, ' ');
+    if (result.text && result.text.indexOf('NOT_FOUND') !== -1) {
+      return 'Preview service not found — the latest deploy may still be building.';
+    }
+    return 'Something went wrong. Please try again.';
+  }
+
+  function postSiteAccess(body) {
+    return fetch('/api/site-access', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).then(function (res) {
+      return res.text().then(function (text) {
+        return parseResponse(res, text);
+      });
     });
   }
 
@@ -36,41 +69,35 @@
     waitlistForm.addEventListener('submit', function (e) {
       e.preventDefault();
       var email = waitlistEmail.value.trim();
+      if (!email) {
+        showAlert(waitlistMsg, 'Please enter your email address.', 'error');
+        return;
+      }
 
       waitlistBtn.disabled = true;
-      showMessage(waitlistMsg, 'Saving…', 'success');
+      showAlert(waitlistMsg, 'Saving your place…', 'success');
 
-      fetch('/api/site-access', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          intent: 'waitlist',
-          email: email,
-          website: honeypot ? honeypot.value : '',
-        }),
+      postSiteAccess({
+        intent: 'waitlist',
+        email: email,
+        website: honeypot ? honeypot.value : '',
       })
-        .then(function (res) {
-          return res.json().then(function (data) {
-            return { ok: res.ok, data: data };
-          });
-        })
         .then(function (result) {
           if (!result.ok) {
-            showMessage(
-              waitlistMsg,
-              result.data.message || result.data.error || 'Could not save your email.',
-              'error'
-            );
+            showAlert(waitlistMsg, friendlyError(result), 'error');
             waitlistBtn.disabled = false;
             return;
           }
-          showMessage(waitlistMsg, result.data.message || 'Thanks — you are on the list.', 'success');
+          showAlert(
+            waitlistMsg,
+            result.data.message || 'Thanks — you are on the preview list.',
+            'success'
+          );
           waitlistForm.reset();
           waitlistBtn.disabled = false;
         })
         .catch(function () {
-          showMessage(waitlistMsg, 'Could not reach the server. Try again shortly.', 'error');
+          showAlert(waitlistMsg, 'Could not reach the server. Try again shortly.', 'error');
           waitlistBtn.disabled = false;
         });
     });
@@ -82,7 +109,7 @@
   var msg = document.getElementById('site-access-message');
   var btn = document.getElementById('site-access-submit');
   var passwordInput = document.getElementById('site-access-password');
-  var toggle = accessForm.querySelector('.password-toggle');
+  var toggle = accessForm.querySelector('.site-access-password-toggle');
 
   if (toggle && passwordInput) {
     toggle.addEventListener('click', function () {
@@ -99,30 +126,26 @@
     var password = passwordInput.value;
     var next = getNextParam();
 
-    btn.disabled = true;
-    showMessage(msg, 'Checking…', 'success');
+    if (!password) {
+      showAlert(msg, 'Please enter the preview password.', 'error');
+      return;
+    }
 
-    fetch('/api/site-access', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: password, next: next }),
-    })
-      .then(function (res) {
-        return res.json().then(function (data) {
-          return { ok: res.ok, data: data };
-        });
-      })
+    btn.disabled = true;
+    showAlert(msg, 'Checking password…', 'success');
+
+    postSiteAccess({ password: password, next: next })
       .then(function (result) {
         if (!result.ok) {
-          showMessage(msg, result.data.message || result.data.error || 'Access denied.', 'error');
+          showAlert(msg, friendlyError(result), 'error');
           btn.disabled = false;
           return;
         }
-        window.location.href = result.data.redirect || next || '/';
+        showAlert(msg, 'Access granted — opening the site…', 'success');
+        window.location.replace(result.data.redirect || next || '/');
       })
       .catch(function () {
-        showMessage(msg, 'Could not reach the server. Try again shortly.', 'error');
+        showAlert(msg, 'Could not reach the server. Try again shortly.', 'error');
         btn.disabled = false;
       });
   });
