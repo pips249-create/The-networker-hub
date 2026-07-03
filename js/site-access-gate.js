@@ -46,8 +46,10 @@
     return 'Something went wrong. Please try again.';
   }
 
+  var SITE_ACCESS_API = '/api/auth/site-access';
+
   function postSiteAccess(body) {
-    return fetch('/api/site-access', {
+    return fetch(SITE_ACCESS_API, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
