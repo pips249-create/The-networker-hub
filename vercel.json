@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "outputDirectory": ".",
   "redirects": [
     { "source": "/index.html", "destination": "/", "permanent": true },
     { "source": "/events/index.html", "destination": "/events/", "permanent": true },
