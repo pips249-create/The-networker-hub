@@ -14,11 +14,10 @@ const SITE_ACCESS_COOKIE = 'hub_site_preview';
 const SITE_PREVIEW_TOKEN_TYPE = 'site_preview';
 const NOINDEX_HEADER = 'noindex, nofollow';
 
-// TEMP: disabled for PageSpeed testing — set DISABLE_SITE_ACCESS_GATE=false in Vercel before launch
 function isSiteAccessGateActive() {
   const flag = String(process.env.DISABLE_SITE_ACCESS_GATE || '').trim().toLowerCase();
   if (flag === 'true' || flag === '1' || flag === 'yes') return false;
-  return false;
+  return true;
 }
 
 const GATE_BYPASS_PREFIXES = [
