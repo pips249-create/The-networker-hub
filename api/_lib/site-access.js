@@ -4,7 +4,15 @@ const COOKIE_NAME = 'hub_site_preview';
 const COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 7;
 const TOKEN_TYPE = 'site_preview';
 
+/** TEMP: off for PageSpeed testing — set to false before launch (or use DISABLE_SITE_ACCESS_GATE in Vercel). */
+function isSiteAccessGateDisabled() {
+  const flag = String(process.env.DISABLE_SITE_ACCESS_GATE || '').trim().toLowerCase();
+  if (flag === 'true' || flag === '1' || flag === 'yes') return true;
+  return true;
+}
+
 function isSiteAccessRequired() {
+  if (isSiteAccessGateDisabled()) return false;
   return Boolean(String(process.env.SITE_ACCESS_PASSWORD || '').trim());
 }
 

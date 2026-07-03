@@ -14,13 +14,21 @@ const SITE_ACCESS_COOKIE = 'hub_site_preview';
 const SITE_PREVIEW_TOKEN_TYPE = 'site_preview';
 const NOINDEX_HEADER = 'noindex, nofollow';
 
+// TEMP: disabled for PageSpeed testing — set DISABLE_SITE_ACCESS_GATE=false in Vercel before launch
+function isSiteAccessGateActive() {
+  const flag = String(process.env.DISABLE_SITE_ACCESS_GATE || '').trim().toLowerCase();
+  if (flag === 'true' || flag === '1' || flag === 'yes') return false;
+  return false;
+}
+
 const GATE_BYPASS_PREFIXES = [
   '/api/stripe-webhook',
   '/api/cron/',
   '/api/site-access',
   '/api/auth/site-access',
-  '/api/seo-meta',
   '/site-access.html',
+  '/llms.txt',
+  '/agents.txt',
   '/css/',
   '/js/',
   '/assets/',
@@ -172,6 +180,8 @@ async function hasSiteAccess(request) {
 }
 
 async function maybeGateSiteAccess(request, url) {
+  if (!isSiteAccessGateActive()) return null;
+
   const password = String(process.env.SITE_ACCESS_PASSWORD || '').trim();
   if (!password) return null;
 
@@ -269,7 +279,7 @@ export default async function middleware(request) {
     const metaRes = await fetch(metaUrl.toString(), {
       headers: {
         'x-forwarded-host': url.host,
-        ...(String(process.env.SITE_ACCESS_PASSWORD || '').trim()
+        ...(isSiteAccessGateActive() && String(process.env.SITE_ACCESS_PASSWORD || '').trim()
           ? { 'x-hub-internal-seo': String(process.env.SITE_ACCESS_PASSWORD).trim() }
           : {}),
       },

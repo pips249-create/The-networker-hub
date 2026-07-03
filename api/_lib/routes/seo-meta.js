@@ -6,6 +6,8 @@ const { setCors, json } = require('../auth');
 const { buildSeoMeta } = require('../seo-meta');
 
 function isSeoMetaAllowed(req) {
+  const { isSiteAccessRequired } = require('../site-access');
+  if (!isSiteAccessRequired()) return true;
   const gate = String(process.env.SITE_ACCESS_PASSWORD || '').trim();
   if (!gate) return true;
   const internal = String(req.headers['x-hub-internal-seo'] || '').trim();
