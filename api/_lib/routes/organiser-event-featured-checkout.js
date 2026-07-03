@@ -25,7 +25,7 @@ function isUuid(value) {
   );
 }
 
-/** Start Stripe Checkout for a featured event listing (1 week / 1 month / 2 months). */
+/** Start Stripe Checkout for a featured event listing (£55/month). */
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
   const {

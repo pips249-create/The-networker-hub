@@ -8,6 +8,7 @@
   var fetchToken = 0;
   var lastTypeCounts = null;
   var lastPinsSignature = '';
+  var lastFilterSignature = '';
 
   function browseFilterSignature(params) {
     var copy = Object.assign({}, params || {});
@@ -73,8 +74,14 @@
       }
     }
 
-    if (window.hubBrowseActiveTypeTabs && window.hubBrowseActiveTypeTabs.length) {
-      params.type = window.hubBrowseActiveTypeTabs.join(',');
+    var typeTabs =
+      window.hubGetActiveTypeTabs && window.hubGetActiveTypeTabs().length
+        ? window.hubGetActiveTypeTabs()
+        : window.hubBrowseActiveTypeTabs && window.hubBrowseActiveTypeTabs.length
+          ? window.hubBrowseActiveTypeTabs
+          : [];
+    if (typeTabs.length) {
+      params.types = typeTabs.join(',');
     }
 
     if (window.hubBrowseDateFrom) params.dateFrom = window.hubBrowseDateFrom;
@@ -142,13 +149,30 @@
     return fetchPins(params);
   }
 
+  function onBrowseFetchError(err) {
+    console.error('Browse fetch failed', err);
+    var status = document.getElementById('load-status');
+    if (status) {
+      status.textContent = 'Could not refresh results. Try again or clear filters.';
+      status.hidden = false;
+      status.classList.add('is-error');
+    }
+  }
+
   function hubBrowseFetch(page, options) {
     options = options || {};
     var token = ++fetchToken;
     var params = gatherParams(page);
     var url = buildUrl(params);
+    var filterSignature = browseFilterSignature(params);
 
-    return fetch(url, { credentials: 'same-origin' })
+    if (filterSignature !== lastFilterSignature) {
+      lastFilterSignature = filterSignature;
+      lastTypeCounts = null;
+      if (window.hubBrowseInvalidatePins) window.hubBrowseInvalidatePins();
+    }
+
+    return fetch(url, { credentials: 'same-origin', cache: 'no-store' })
       .then(function (res) {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
@@ -158,6 +182,12 @@
         if (!data.configured) throw new Error('not_configured');
         if (data.error) throw new Error(data.message || data.error);
         applyBrowsePayload(data, page);
+        var status = document.getElementById('load-status');
+        if (status && status.classList.contains('is-error')) {
+          status.textContent = '';
+          status.hidden = true;
+          status.classList.remove('is-error');
+        }
         if (!options.skipPins && isMapViewOpen()) {
           fetchPinsIfNeeded(params).then(function () {
             if (window.hubRefreshMap) {
@@ -168,6 +198,10 @@
         if (window.hubRefreshListings) window.hubRefreshListings();
         if (window.hubUpdateEventTypeChipCounts) window.hubUpdateEventTypeChipCounts();
         return data;
+      })
+      .catch(function (err) {
+        if (token === fetchToken) onBrowseFetchError(err);
+        throw err;
       });
   }
 
@@ -175,8 +209,8 @@
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(function () {
       debounceTimer = null;
-      hubBrowseFetch(page || 1).catch(function (err) {
-        console.error('Browse fetch failed', err);
+      hubBrowseFetch(page || 1).catch(function () {
+        /* surfaced in hubBrowseFetch */
       });
     }, DEBOUNCE_MS);
   }

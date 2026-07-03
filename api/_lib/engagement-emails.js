@@ -20,9 +20,9 @@ const {
   organiserDashboardUrl,
 } = require('./hub-email-urls');
 const {
-  locationTokens,
   fetchNearbyEvents,
   fetchPopularEvents,
+  nearbySectionHeading,
 } = require('./nearby-events');
 const REENGAGEMENT_INACTIVE_DAYS = 30;
 const REENGAGEMENT_COOLDOWN_DAYS = 60;
@@ -119,10 +119,7 @@ async function buildSignupNudgeEventsHtml(sb, attendeeLocation) {
 
   const nearbyParts = [];
   if (nearbyResult.events.length) {
-    const heading = nearbyResult.locationLabel
-      ? 'Events near ' + nearbyResult.locationLabel
-      : 'Events near you';
-    nearbyParts.push(sectionHeading(heading));
+    nearbyParts.push(sectionHeading(nearbySectionHeading(nearbyResult)));
     for (const ev of nearbyResult.events) {
       nearbyParts.push(
         recommendationCard(
@@ -179,10 +176,7 @@ async function buildSignupNudgeFollowupEventsHtml(sb, attendeeLocation) {
 
   const nearbyParts = [];
   if (nearbyResult.events.length) {
-    const heading = nearbyResult.locationLabel
-      ? 'Events near ' + nearbyResult.locationLabel
-      : 'Events near you';
-    nearbyParts.push(lightSectionHeading(heading));
+    nearbyParts.push(lightSectionHeading(nearbySectionHeading(nearbyResult)));
     for (const ev of nearbyResult.events) {
       nearbyParts.push(
         lightRecommendationCard(
@@ -267,27 +261,22 @@ async function buildRecommendationsHtml(sb, attendeeLocation) {
     }
   }
 
-  const tokens = locationTokens(attendeeLocation);
-  if (tokens.length) {
-    const nearby = await fetchNearbyEvents(sb, attendeeLocation, { limit: 4 });
-    const matched = nearby.events;
-
-    if (matched.length) {
-      parts.push(sectionHeading('Events near you'));
-      for (const ev of matched) {
-        const { event_date, event_time } = formatEventDateTime(ev.starts_at);
-        const loc =
-          String(ev.location_label || ev.venue || ev.city || '').trim() || 'See event page';
-        const orgName = String(ev.organisers?.name || 'Organiser').trim();
-        const subtitle =
-          orgName +
-          ' · ' +
-          event_date +
-          (event_time ? ' · ' + event_time : '') +
-          ' · ' +
-          loc;
-        parts.push(recommendationCard(String(ev.title || 'Event').trim(), subtitle, eventPublicUrl(ev, siteUrl)));
-      }
+  const nearby = await fetchNearbyEvents(sb, attendeeLocation, { limit: 4 });
+  if (nearby.events.length) {
+    parts.push(sectionHeading(nearbySectionHeading(nearby)));
+    for (const ev of nearby.events) {
+      const { event_date, event_time } = formatEventDateTime(ev.starts_at);
+      const loc =
+        String(ev.location_label || ev.venue || ev.city || '').trim() || 'See event page';
+      const orgName = String(ev.organisers?.name || 'Organiser').trim();
+      const subtitle =
+        orgName +
+        ' · ' +
+        event_date +
+        (event_time ? ' · ' + event_time : '') +
+        ' · ' +
+        loc;
+      parts.push(recommendationCard(String(ev.title || 'Event').trim(), subtitle, eventPublicUrl(ev, siteUrl)));
     }
   }
 

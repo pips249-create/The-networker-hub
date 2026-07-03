@@ -78,7 +78,6 @@
     "api/seo.js": { "maxDuration": 15 },
     "api/opportunities.js": { "maxDuration": 15 },
     "api/stripe-webhook.js": { "maxDuration": 15 },
-    "api/site-access.js": { "maxDuration": 10 },
     "api/contact-chat.js": { "maxDuration": 30 }
   },
   "rewrites": [
@@ -88,6 +87,7 @@
     { "source": "/api/hubert-schema", "destination": "/api/seo/hubert-schema" },
     { "source": "/api/hub-listings", "destination": "/api/events" },
     { "source": "/api/auth/:path*", "destination": "/api/auth" },
+    { "source": "/api/site-access", "destination": "/api/auth/site-access" },
     { "source": "/api/admin/:path*", "destination": "/api/admin" },
     { "source": "/api/cron/:path*", "destination": "/api/cron" },
     { "source": "/api/organiser/:path*", "destination": "/api/organiser" },

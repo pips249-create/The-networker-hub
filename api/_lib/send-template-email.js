@@ -83,7 +83,6 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_low_upcoming_events',
   'password_reset',
   'post_event_review_request',
-  'hub_newsletter',
   'booking_confirmation',
   'booking_reminder',
   'online_join_reminder',
@@ -262,9 +261,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     bodyHtml = resolved.bodyHtml;
     templateSource = resolved.source;
   } else if (isBrandedEmailSlug(slug)) {
-    const resolved = resolveBrandedEmailBody(slug, template.body_html, {
-      newsletterLayout: variables?.newsletter_layout || variables?.layout,
-    });
+    const resolved = resolveBrandedEmailBody(slug, template.body_html);
     bodyHtml = resolved.bodyHtml;
     templateSource = resolved.source;
   } else if (slug === 'organiser_booking_cancelled') {
@@ -389,7 +386,6 @@ async function sendViaResend({ to, subject, html, tags }) {
  * @param {object} [opts.variables] - e.g. { user_name, event_name, amount_paid }
  */
 const PREFERENCE_EMAIL_SLUGS = {
-  hub_newsletter: 'newsletter',
   booking_reminder: 'event_reminders',
   online_join_reminder: 'event_reminders',
   saved_organiser_new_listing: 'organiser_alerts',

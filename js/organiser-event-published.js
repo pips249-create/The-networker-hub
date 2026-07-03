@@ -282,7 +282,10 @@
 
   function selectedPlanId() {
     const checked = document.querySelector('input[name="featured-plan"]:checked');
-    return checked ? checked.value : '1week';
+    const hidden = document.querySelector('input[name="featured-plan"][type="hidden"]');
+    if (checked) return checked.value;
+    if (hidden) return hidden.value;
+    return '1month';
   }
 
   function hideFeaturedUpsell() {
@@ -294,7 +297,7 @@
   }
   if (extendFeatured && featuredLede) {
     featuredLede.textContent =
-      'Your featured placement is ending soon. Choose how long you would like to extend it.';
+      'Your featured placement is ending soon. Extend for <strong>£55 per month</strong> to keep premium visibility.';
   }
 
   if (featuredCancelled && featuredError) {

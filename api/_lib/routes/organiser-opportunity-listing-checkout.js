@@ -24,7 +24,7 @@ function isUuid(value) {
   );
 }
 
-/** Start Stripe Checkout for a prepaid opportunity listing (£20/month ex VAT, min 3 months). */
+/** Start Stripe Checkout for a prepaid opportunity listing (£25/month ex VAT, min 3 months). */
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
   const { json, setCors, requireOrganiserSession, getOpportunityById, opportunityOwnedBySession, isPlatformAdmin } =

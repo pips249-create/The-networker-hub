@@ -7,7 +7,7 @@ const { getPremiumSpotlightSlotStatus } = require('./opportunity-premium-slots')
 const { SPOTLIGHT_CAROUSEL_MAX } = require('./spotlight-carousel-limits');
 
 /** Keep in sync with SPOTLIGHT_MAX in js/organisers.js */
-const ORGANISER_SPOTLIGHT_MAX = 10;
+const ORGANISER_SPOTLIGHT_MAX = 12;
 
 async function getOrganiserSpotlightSlotStatus(sb) {
   const res = await sb

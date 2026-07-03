@@ -80,13 +80,7 @@
       tab.addEventListener('click', function () {
         if (document.body.classList.contains('browse-mode-organisers')) return;
         toggleTypeTab(tab.getAttribute('data-type') || 'all');
-        if (window.hubServerBrowse && window.hubBrowseFetchNow) {
-          window.hubBrowseCurrentPage = 1;
-          window.hubBrowseFetchNow(1);
-          saveFilterPrefs();
-        } else {
-          applyFilters();
-        }
+        applyFilters({ immediate: true });
       });
     });
   }
@@ -544,14 +538,19 @@
     window.hubBrowseDateTo = dateToTs ? new Date(dateToTs).toISOString() : '';
   }
 
-  function applyFilters() {
+  function applyFilters(options) {
+    options = options || {};
     if (document.body.classList.contains('browse-mode-organisers')) {
       if (window.hubApplyOrganiserFilters) window.hubApplyOrganiserFilters();
       return;
     }
-    if (window.hubServerBrowse && window.hubBrowseFetchDebounced) {
+    if (window.hubServerBrowse && (window.hubBrowseFetchDebounced || window.hubBrowseFetchNow)) {
       window.hubBrowseCurrentPage = 1;
-      window.hubBrowseFetchDebounced(1);
+      if (options.immediate && window.hubBrowseFetchNow) {
+        window.hubBrowseFetchNow(1);
+      } else if (window.hubBrowseFetchDebounced) {
+        window.hubBrowseFetchDebounced(1);
+      }
       saveFilterPrefs();
       return;
     }
@@ -754,6 +753,12 @@
   window.hubApplyFilters = applyFilters;
   window.hubResetFilters = resetFilters;
   window.hubSetTypeTab = setActiveTypeTab;
+  window.hubGetActiveTypeTabs = function () {
+    return activeTypeTabs.slice();
+  };
+  window.hubFilterServerBrowseEvents = function (list) {
+    return (list || []).filter(eventMatchesFilters);
+  };
   window.hubIsNearMeActive = isNearMeActive;
   window.hubNearRadiusMiles = getNearRadiusMiles;
   window.hubLocationRadiusMiles = getLocationRadiusMiles;

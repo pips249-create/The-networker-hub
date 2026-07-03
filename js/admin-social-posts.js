@@ -753,7 +753,6 @@
       '<p id="social-url" class="text-sm font-mono text-brand-800 break-all">—</p>' +
       '<div class="flex flex-wrap gap-2 pt-1">' +
       '<button type="button" id="social-copy-caption" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Copy caption</button>' +
-      '<button type="button" id="social-queue-newsletter" class="rounded-lg border border-amber-500 text-amber-900 bg-amber-50 text-sm font-semibold px-4 py-2 hover:bg-amber-100">Add to next newsletter</button>' +
       '<button type="button" id="social-copy-url" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Copy link</button>' +
       '<button type="button" id="social-copy-image" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Copy image URL</button>' +
       '<button type="button" id="social-download-image" class="hidden rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Download image</button>' +
@@ -914,13 +913,11 @@
       if (!label) {
         sourceSelectedEl.classList.add('hidden');
         sourceSelectedEl.textContent = '';
-        refreshNewsletterQueueButton();
         return;
       }
       sourceSelectedEl.classList.remove('hidden');
       sourceSelectedEl.innerHTML =
         '<span class="font-semibold">Selected:</span> ' + esc(label) + (meta ? ' · ' + esc(meta) : '');
-      refreshNewsletterQueueButton();
     }
 
     function paintSearchResults(items, emptyMsg) {
@@ -1258,7 +1255,6 @@
       if (cfg.source === 'organiser') {
         buildFromOrganiser(state.selectedOrganiser);
       }
-      refreshNewsletterQueueButton();
     }
 
     function paintRecentOpportunities() {
@@ -1309,34 +1305,6 @@
       });
     }
 
-    function newsletterQueuePayload() {
-      var cfg = postTypeConfig(state.postTypeKey);
-      if (!cfg) return null;
-      if (cfg.source === 'event' && state.selectedEventId) {
-        return { eventId: state.selectedEventId };
-      }
-      if (
-        (cfg.source === 'opportunity' || cfg.source === 'opportunity_featured') &&
-        state.selectedOpportunityId
-      ) {
-        return { opportunityId: state.selectedOpportunityId };
-      }
-      if (cfg.source === 'organiser' && state.selectedOrganiserId) {
-        return { organiserId: state.selectedOrganiserId };
-      }
-      return null;
-    }
-
-    function refreshNewsletterQueueButton() {
-      var btn = main.querySelector('#social-queue-newsletter');
-      if (!btn) return;
-      var payload = newsletterQueuePayload();
-      btn.disabled = !payload || !adminPost;
-      btn.title = payload
-        ? 'Queue this listing in the next draft newsletter edition'
-        : 'Select an event, group, or opportunity first';
-    }
-
     function configureSourceUi() {
       var cfg = postTypeConfig(state.postTypeKey);
       fillStyleOptions();
@@ -1353,7 +1321,6 @@
             rebuildCaption();
           });
         }
-        refreshNewsletterQueueButton();
         return;
       }
 
@@ -1363,7 +1330,6 @@
         sourceWrapEl.classList.add('hidden');
         recentEl.classList.add('hidden');
         rebuildCaption();
-        refreshNewsletterQueueButton();
         return;
       }
 
@@ -1381,7 +1347,6 @@
       showSelectedItem('', '');
       paintRecentOpportunities();
       runSearch('');
-      refreshNewsletterQueueButton();
     }
 
     templateEl.addEventListener('change', function () {
@@ -1419,36 +1384,6 @@
     main.querySelector('#social-copy-caption').addEventListener('click', function () {
       copyText(captionEl.value, main.querySelector('#social-copy-caption'));
     });
-    var queueNewsletterBtn = main.querySelector('#social-queue-newsletter');
-    if (queueNewsletterBtn) {
-      queueNewsletterBtn.addEventListener('click', function () {
-        if (!adminPost) return;
-        var payload = newsletterQueuePayload();
-        if (!payload) return;
-        queueNewsletterBtn.disabled = true;
-        var original = queueNewsletterBtn.textContent;
-        queueNewsletterBtn.textContent = 'Queuing…';
-        adminPost('/api/admin/newsletter', Object.assign({ action: 'queue_featured' }, payload))
-          .then(function (data) {
-            if (!data.ok) throw new Error(data.message || data.error || 'Queue failed');
-            queueNewsletterBtn.textContent = 'Queued for newsletter';
-            var label = (data.edition && (data.edition.editionLabel || data.edition.subject)) || 'draft';
-            window.setTimeout(function () {
-              queueNewsletterBtn.textContent = original;
-              refreshNewsletterQueueButton();
-            }, 2500);
-            if (sourceStatusEl) {
-              sourceStatusEl.textContent =
-                'Added to newsletter draft' + (label ? ' (“' + label + '”)' : '') + '.';
-            }
-          })
-          .catch(function (err) {
-            queueNewsletterBtn.textContent = original;
-            refreshNewsletterQueueButton();
-            if (sourceStatusEl) sourceStatusEl.textContent = err.message || 'Could not queue.';
-          });
-      });
-    }
     main.querySelector('#social-copy-url').addEventListener('click', function () {
       copyText(state.pageUrl, main.querySelector('#social-copy-url'));
     });
@@ -1473,7 +1408,6 @@
       })
       .finally(function () {
         configureSourceUi();
-        refreshNewsletterQueueButton();
       });
   }
 

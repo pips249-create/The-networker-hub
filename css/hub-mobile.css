@@ -282,12 +282,12 @@ body.nav-menu-open {
     font-size: 15px;
   }
 
-  .home-page .hero-actions {
-    flex-direction: column;
-    align-items: stretch;
+  .home-page .home-hero .hero-actions {
+    grid-template-columns: 1fr;
+    width: min(100%, 18rem);
   }
 
-  .home-page .hero-actions .btn {
+  .home-page .home-hero .home-hero-cta {
     width: 100%;
     justify-content: center;
   }

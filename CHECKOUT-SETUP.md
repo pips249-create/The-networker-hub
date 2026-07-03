@@ -48,8 +48,10 @@ Redeploy after changing env vars.
 
 1. [Stripe Dashboard](https://dashboard.stripe.com) → **Developers → Webhooks**
 2. **Add endpoint:** `https://the-networker-hub.vercel.app/api/stripe-webhook`
-3. Events: **`checkout.session.completed`**
+3. Events: **`checkout.session.completed`**, **`invoice.paid`**, and **`charge.refunded`**
 4. Copy **Signing secret** → `STRIPE_WEBHOOK_SECRET` in Vercel
+
+`invoice.paid` logs sponsorship & advertising invoices into Revenue targets when invoice metadata includes `revenue_category` (see `docs/STRIPE-SPONSORSHIP-INVOICES.md`).
 
 Local testing with Stripe CLI:
 

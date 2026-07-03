@@ -1,11 +1,11 @@
-const { json, setCors, sessionFromRequest, isAdminRole } = require('./_lib/auth');
+const { json, setCors, sessionFromRequest, isAdminRole } = require('../auth');
 const {
   getSiteAccessPassword,
   isSiteAccessRequired,
   setSiteAccessCookie,
   siteAccessStatus,
-} = require('./_lib/site-access');
-const { addPreviewWaitlistEmail } = require('./_lib/preview-waitlist');
+} = require('../site-access');
+const { addPreviewWaitlistEmail } = require('../preview-waitlist');
 
 function parseBody(req) {
   let body = req.body;

@@ -12,7 +12,7 @@ const KNOWLEDGE_SECTIONS = [
     body:
       'The Networker Hub (the-networker.co.uk) is a UK platform connecting business owners and professionals with networking events, exhibitions, conferences, and business opportunities. ' +
       'Operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94). ' +
-      'Co-founded and run by Rosie and Catherine (Pip). Mission: help people find the right room at the right time to grow their network and business. ' +
+      'Co-founded and run by Rosie and Catherine. Mission: help people find the right room at the right time to grow their network and business. ' +
       'Contact: hello@the-networker.co.uk · Address: Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF.',
   },
   {
@@ -105,14 +105,14 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'TEAM & STORY',
     body:
-      'Co-founders Rosie and Catherine (Pip) built The Networker Hub to connect UK business owners and professionals with the right events, communities, and opportunities. Both are listed as Co-founders on /about.html. ' +
+      'Co-founders Rosie and Catherine built The Networker Hub to connect UK business owners and professionals with the right events, communities, and opportunities. Both are listed as Co-founders on /about.html. ' +
       'Why it started: the mission is that the right room at the right time changes careers and companies — one trusted place for event listings, organiser profiles, and business opportunities. ' +
       'For specific questions about the team beyond what is on /about.html, email hello@the-networker.co.uk.',
   },
   {
     title: 'ADVERTISING & SPONSORSHIP',
     body:
-      'Paid Sponsor Hub placements appear on event and opportunity pages — clearly labelled Sponsored. Rate card: /advertising.html. Enquiries: sales@the-networker.co.uk. Policy: /legal-policies.html#advertising. ' +
+      'Paid Sponsor Hub placements appear on event and opportunity pages — clearly labelled Sponsored. Rate card at /advertising.html (events main sponsor £2,000/mo, mini sponsors £600/slot ×3, featured events £55/mo; organisers main sponsor £1,000/mo, mini £300/slot ×3, featured profiles £27.50/mo; opportunities main sponsor £2,000/mo, mini £600/slot ×3, listings £25/mo + VAT, premium £55/mo). Enquiries: sales@the-networker.co.uk. Policy: /legal-policies.html#advertising. ' +
       'Organisers can also reach audiences by listing events (/organiser/) or business opportunities (/opportunities/list.html). Featured placement may be available — ask sales@the-networker.co.uk.',
   },
   {
@@ -162,22 +162,22 @@ const FALLBACK_REPLIES = [
   {
     match: /advertis|sponsor|promote my business|marketing on (the )?site|get exposure/i,
     reply:
-      'For paid advertising, see /advertising.html for placements and guide pricing on event and opportunity pages — email sales@the-networker.co.uk. You can also list events from /organiser/ or a business opportunity at /opportunities/list.html to reach the network. Policy: /legal-policies.html#advertising.',
+      'For paid advertising, see /advertising.html — events main sponsor £2,000/mo, mini sponsors £600/slot (max 3), featured events £55/mo; organisers directory main sponsor £1,000/mo, mini £300/slot (max 3), featured profiles £27.50/mo; opportunities main sponsor £2,000/mo, mini £600/slot (max 3), listings £25/mo + VAT, premium £55/mo. Email sales@the-networker.co.uk. You can also list events from /organiser/ or a business opportunity at /opportunities/list.html. Policy: /legal-policies.html#advertising.',
   },
   {
     match: /what does rosie do|who is rosie|rosie('s)? role/i,
     reply:
-      'Rosie is co-founder of The Networker Hub alongside Catherine (Pip). Together they built the platform to connect UK business owners and professionals with events, communities, and opportunities. More on /about.html — for specific enquiries, hello@the-networker.co.uk.',
+      'Rosie is co-founder of The Networker Hub alongside Catherine. Together they built the platform to connect UK business owners and professionals with events, communities, and opportunities. More on /about.html — for specific enquiries, hello@the-networker.co.uk.',
   },
   {
-    match: /what does pip do|who is pip|pip('s)? role|catherine/i,
+    match: /who is catherine|catherine.*co-founder|what does catherine do/i,
     reply:
-      'Catherine (Pip) is co-founder of The Networker Hub alongside Rosie. Together they run The Networker Group Ltd and built the hub as a trusted place to discover networking events and business opportunities across the UK. More on /about.html.',
+      'Catherine is co-founder of The Networker Hub alongside Rosie. Together they run The Networker Group Ltd and built the hub as a trusted place to discover networking events and business opportunities across the UK. More on /about.html.',
   },
   {
     match: /why.*(start|created|built)|how did (the )?hub start|origin of|story behind/i,
     reply:
-      'The Networker Hub started from a simple belief: the right room at the right time changes careers and companies. Rosie and Pip built one trusted UK platform for event listings, organiser profiles, and business opportunities — so members can find what matters and organisers can reach the audiences they deserve. /about.html',
+      'The Networker Hub started from a simple belief: the right room at the right time changes careers and companies. Rosie and Catherine built one trusted UK platform for event listings, organiser profiles, and business opportunities — so members can find what matters and organisers can reach the audiences they deserve. /about.html',
   },
   {
     match: /how much.*(hub|networker|platform).*(make|take|fee|charge|per ticket)|platform fee|booking fee|what do you charge/i,
@@ -267,7 +267,7 @@ const FALLBACK_REPLIES = [
   {
     match: /who (runs|operates) (this |the )?(site|hub|platform)/i,
     reply:
-      'The Networker Hub is operated by The Networker Group Ltd (Company No. 15252227), co-founded by Rosie and Catherine (Pip). More at /about.html and /faq.html.',
+      'The Networker Hub is operated by The Networker Group Ltd (Company No. 15252227), co-founded by Rosie and Catherine. More at /about.html and /faq.html.',
   },
   {
     match: /favourit|favorit/i,
@@ -377,7 +377,7 @@ const FALLBACK_REPLIES = [
   {
     match: /what is (the )?networker|about (the )?hub/i,
     reply:
-      'The Networker Hub is a UK platform for networking events, exhibitions, and business opportunities — run by Rosie and Catherine (Pip) at The Networker Group Ltd. Browse free; create a free account when you are ready to book or enquire. /about.html · /faq.html',
+      'The Networker Hub is a UK platform for networking events, exhibitions, and business opportunities — run by Rosie and Catherine at The Networker Group Ltd. Browse free; create a free account when you are ready to book or enquire. /about.html · /faq.html',
   },
   {
     match: /contact|support|email|phone|address|where are you/i,

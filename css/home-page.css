@@ -145,7 +145,6 @@ html:has(.home-page) {
   .home-hub-card-icon,
   .home-what::before,
   .home-what::after,
-  .home-hero-quicklink,
   .home-page .hero-title-accent,
   .home-partners-panel::before,
   .home-hub-card .badge-live::before {
@@ -253,7 +252,7 @@ html:has(.home-page) {
   animation: home-hero-fade-up 0.7s ease 0.16s both;
 }
 
-.home-hero.is-entered .home-hero-quicklinks {
+.home-hero.is-entered .home-hero-cta-block {
   animation: home-hero-fade-up 0.7s ease 0.24s both;
 }
 
@@ -264,10 +263,14 @@ html:has(.home-page) {
 .home-page .home-hero-inner {
   position: relative;
   z-index: 1;
-  max-width: 40rem;
+  max-width: 44rem;
   margin: 0 auto;
   text-align: center;
   padding: 0 clamp(8px, 2vw, 20px);
+}
+
+.home-hero-copy {
+  margin: 0;
 }
 
 .home-page .home-hero-kicker {
@@ -338,43 +341,6 @@ html:has(.home-page) {
   text-shadow: 0 1px 3px rgba(45, 35, 50, 0.38);
 }
 
-.home-hero-quicklinks {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-.home-hero-quicklink {
-  display: inline-flex;
-  align-items: center;
-  padding: 12px 20px;
-  border-radius: var(--radius-pill);
-  font-size: 15px;
-  font-weight: 600;
-  color: #fff;
-  text-decoration: none;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.42);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 6px 20px rgba(45, 35, 50, 0.12);
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.home-hero-quicklink:hover {
-  background: rgba(255, 255, 255, 0.28);
-  border-color: rgba(255, 255, 255, 0.75);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(45, 35, 50, 0.18);
-  color: #fff;
-}
-
-.home-hero-quicklink:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
-}
 
 .home-page .hub-access-note {
   margin: 0 auto 20px;
@@ -398,59 +364,50 @@ html:has(.home-page) {
 }
 
 .home-page .home-hero-cta-block {
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
-.home-page .hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  justify-content: center;
-  margin-bottom: 0;
+.home-page .home-hero .hero-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: min(100%, 38rem);
+  margin: 0 auto;
 }
 
-.home-page .home-hero .btn {
-  min-width: 10.5rem;
+.home-page .home-hero .home-hero-cta {
+  width: 100%;
+  min-width: 0;
+  min-height: 50px;
+  padding: 14px 16px;
   border-radius: var(--radius-pill);
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   letter-spacing: 0.01em;
-}
-
-.home-page .home-hero .btn-primary {
-  background: var(--brand-cream);
-  color: var(--charcoal);
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  box-shadow: 0 10px 32px rgba(74, 68, 70, 0.2);
-  padding: 13px 26px;
-  font-size: 15px;
-  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.home-page .home-hero .btn-primary:hover {
+  text-align: center;
+  line-height: 1.2;
   background: #fff;
+  color: var(--charcoal);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 10px 28px rgba(45, 35, 50, 0.28),
+    0 2px 0 rgba(255, 255, 255, 0.65) inset;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.home-page .home-hero .home-hero-cta:hover {
+  background: var(--brand-cream);
+  border-color: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 14px 36px rgba(74, 68, 70, 0.24);
+  box-shadow:
+    0 14px 36px rgba(45, 35, 50, 0.32),
+    0 2px 0 rgba(255, 255, 255, 0.75) inset;
   color: var(--charcoal);
 }
 
-.home-page .home-hero .btn-secondary {
-  background: rgba(255, 255, 255, 0.22);
-  color: #fff;
-  border: 1.5px solid rgba(255, 255, 255, 0.55);
-  padding: 13px 26px;
-  font-size: 15px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 6px 20px rgba(74, 68, 70, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.home-page .home-hero .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.32);
-  border-color: rgba(255, 255, 255, 0.8);
-  color: #fff;
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(74, 68, 70, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+.home-page .home-hero .home-hero-cta:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
 }
 
 /* ─── What is The Networker? ─── */
@@ -1691,14 +1648,15 @@ html:has(.home-page) {
     margin-bottom: 18px;
   }
 
-  .home-hero-quicklinks {
-    gap: 8px;
+  .home-page .home-hero .hero-actions {
+    grid-template-columns: 1fr;
+    width: min(100%, 18rem);
+    gap: 10px;
   }
 
-  .home-hero-quicklink {
-    padding: 12px 18px;
-    font-size: 15px;
-    min-height: 44px;
+  .home-page .home-hero .home-hero-cta {
+    min-height: 48px;
+    padding: 14px 20px;
   }
 
   .home-page .home-hero-stats {

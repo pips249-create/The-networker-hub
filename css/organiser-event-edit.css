@@ -1651,6 +1651,29 @@ body.ee-is-loading {
 }
 
 /* Featured listing upsell (post-publish) */
+.organiser-published-page .ep-featured-single-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 18px;
+  padding: 18px 16px;
+  border-radius: 12px;
+  border: 2px solid #e8d9a8;
+  background: linear-gradient(180deg, #fffdf6 0%, #fff9eb 100%);
+}
+
+.organiser-published-page .ep-featured-single-price .ep-featured-plan-price {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1c2040;
+}
+
+.organiser-published-page .ep-featured-single-price .ep-featured-plan-duration {
+  font-size: 1rem;
+  color: #635c5e;
+}
+
 .organiser-published-page .ep-featured-plans {
   display: grid;
   gap: 10px;

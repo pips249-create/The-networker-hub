@@ -135,6 +135,7 @@
 
   function loadSectionHeroPreviews() {
     renderHeroInShell(document.getElementById('ad-live-opportunities-hero'), DEMO_SPONSOR);
+    renderHeroInShell(document.getElementById('ad-live-organisers-hero'), DEMO_SPONSOR);
   }
 
   function loadOpportunitySidebarPreview() {
@@ -190,6 +191,12 @@
         }
       });
     }
+    var miniOrganisersDir = document.getElementById('ad-live-mini-organisers-dir');
+    if (miniOrganisersDir) {
+      window.CmsAdBlocks.loadPageCarouselAds(miniOrganisersDir).then(function (ok) {
+        if (!ok) renderEmptyPreview(miniOrganisersDir, 'Mini Sponsors not configured yet.');
+      });
+    }
 
   }
 
@@ -238,13 +245,14 @@
     });
 
     var hash = (location.hash || '').replace(/^#/, '');
-    var initial = hash === 'opportunities' ? hash : 'events';
+    var initial =
+      hash === 'opportunities' || hash === 'organisers' ? hash : 'events';
     var startTab = tabsRoot.querySelector('[data-ad-tab="' + initial + '"]') || tabs[0];
     if (startTab) activateTab(startTab);
 
     window.addEventListener('hashchange', function () {
       var want = (location.hash || '').replace(/^#/, '');
-      if (want !== 'events' && want !== 'opportunities') return;
+      if (want !== 'events' && want !== 'opportunities' && want !== 'organisers') return;
       var tab = tabsRoot.querySelector('[data-ad-tab="' + want + '"]');
       if (tab) activateTab(tab);
     });

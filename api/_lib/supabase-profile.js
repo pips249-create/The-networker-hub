@@ -76,7 +76,6 @@ function rowToProfile(session, hub, attendee) {
     marketPreferences: marketFromRow,
     businessSector: String(attendee?.business_sector || '').trim(),
     emailsEnabled: hub?.emails_enabled !== false,
-    emailPrefNewsletter: hub?.email_pref_newsletter !== false,
     emailPrefEventReminders: hub?.email_pref_event_reminders !== false,
     emailPrefOrganiserAlerts: hub?.email_pref_organiser_alerts !== false,
   };
@@ -176,9 +175,6 @@ async function updateProfile(session, body) {
   if (body.emailsEnabled !== undefined && uid) {
     hubPatch.emails_enabled = Boolean(body.emailsEnabled);
   }
-  if (body.emailPrefNewsletter !== undefined && uid) {
-    hubPatch.email_pref_newsletter = Boolean(body.emailPrefNewsletter);
-  }
   if (body.emailPrefEventReminders !== undefined && uid) {
     hubPatch.email_pref_event_reminders = Boolean(body.emailPrefEventReminders);
   }
@@ -201,12 +197,10 @@ async function updateProfile(session, body) {
       updateErr = primary.error;
       const msg = String(primary.error.message || '').toLowerCase();
       if (
-        msg.includes('email_pref_newsletter') ||
         msg.includes('email_pref_event_reminders') ||
         msg.includes('email_pref_organiser_alerts')
       ) {
         const fallback = { ...hubPatch };
-        delete fallback.email_pref_newsletter;
         delete fallback.email_pref_event_reminders;
         delete fallback.email_pref_organiser_alerts;
         if (Object.keys(fallback).length) {

@@ -31,7 +31,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "Who operates The Networker Hub?",
-      "answer": "The Networker Hub is operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94), co-founded by Rosie and Catherine (Pip)."
+      "answer": "The Networker Hub is operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94), co-founded by Rosie and Catherine."
     },
     {
       "question": "Who is Hubert on The Networker Hub?",
@@ -71,7 +71,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "How can I advertise my business on The Networker Hub?",
-      "answer": "Paid Sponsor Hub placements are available on event and opportunity pages — email sales@the-networker.co.uk. You can also list events or business opportunities to reach the network organically."
+      "answer": "Paid Sponsor Hub placements on the events directory, organisers browse, and business opportunities — see /advertising.html for guide pricing. Email sales@the-networker.co.uk. You can also list events or business opportunities organically."
     },
     {
       "question": "How do organisers download attendee lists?",
@@ -87,7 +87,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "Why did The Networker Hub start?",
-      "answer": "Co-founders Rosie and Pip believe the right room at the right time changes careers and companies. They built one trusted UK platform for events, organiser profiles, and business opportunities."
+      "answer": "Co-founders Rosie and Catherine believe the right room at the right time changes careers and companies. They built one trusted UK platform for events, organiser profiles, and business opportunities."
     }
   ],
   "schemas": {
@@ -127,8 +127,7 @@ window.HUB_SEO_DATA = {
             },
             {
               "@type": "Person",
-              "name": "Catherine Hancher",
-              "alternateName": "Pip"
+              "name": "Catherine Hancher"
             }
           ]
         },
@@ -247,8 +246,7 @@ window.HUB_SEO_DATA = {
             },
             {
               "@type": "Person",
-              "name": "Catherine Hancher",
-              "alternateName": "Pip"
+              "name": "Catherine Hancher"
             }
           ]
         },
@@ -320,7 +318,7 @@ window.HUB_SEO_DATA = {
               "name": "Who operates The Networker Hub?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "The Networker Hub is operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94), co-founded by Rosie and Catherine (Pip)."
+                "text": "The Networker Hub is operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94), co-founded by Rosie and Catherine."
               }
             },
             {
@@ -400,7 +398,7 @@ window.HUB_SEO_DATA = {
               "name": "How can I advertise my business on The Networker Hub?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Paid Sponsor Hub placements are available on event and opportunity pages — email sales@the-networker.co.uk. You can also list events or business opportunities to reach the network organically."
+                "text": "Paid Sponsor Hub placements on the events directory, organisers browse, and business opportunities — see /advertising.html for guide pricing. Email sales@the-networker.co.uk. You can also list events or business opportunities organically."
               }
             },
             {
@@ -432,7 +430,7 @@ window.HUB_SEO_DATA = {
               "name": "Why did The Networker Hub start?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Co-founders Rosie and Pip believe the right room at the right time changes careers and companies. They built one trusted UK platform for events, organiser profiles, and business opportunities."
+                "text": "Co-founders Rosie and Catherine believe the right room at the right time changes careers and companies. They built one trusted UK platform for events, organiser profiles, and business opportunities."
               }
             }
           ]
@@ -475,8 +473,7 @@ window.HUB_SEO_DATA = {
             },
             {
               "@type": "Person",
-              "name": "Catherine Hancher",
-              "alternateName": "Pip"
+              "name": "Catherine Hancher"
             }
           ]
         },
@@ -564,8 +561,7 @@ window.HUB_SEO_DATA = {
             },
             {
               "@type": "Person",
-              "name": "Catherine Hancher",
-              "alternateName": "Pip"
+              "name": "Catherine Hancher"
             }
           ]
         },
@@ -608,8 +604,7 @@ window.HUB_SEO_DATA = {
               },
               {
                 "@type": "Person",
-                "name": "Catherine Hancher",
-                "alternateName": "Pip"
+                "name": "Catherine Hancher"
               }
             ]
           }
@@ -652,8 +647,7 @@ window.HUB_SEO_DATA = {
             },
             {
               "@type": "Person",
-              "name": "Catherine Hancher",
-              "alternateName": "Pip"
+              "name": "Catherine Hancher"
             }
           ]
         },
@@ -696,8 +690,7 @@ window.HUB_SEO_DATA = {
               },
               {
                 "@type": "Person",
-                "name": "Catherine Hancher",
-                "alternateName": "Pip"
+                "name": "Catherine Hancher"
               }
             ]
           }
@@ -740,8 +733,7 @@ window.HUB_SEO_DATA = {
             },
             {
               "@type": "Person",
-              "name": "Catherine Hancher",
-              "alternateName": "Pip"
+              "name": "Catherine Hancher"
             }
           ]
         },
@@ -796,8 +788,7 @@ window.HUB_SEO_DATA = {
             },
             {
               "@type": "Person",
-              "name": "Catherine Hancher",
-              "alternateName": "Pip"
+              "name": "Catherine Hancher"
             }
           ]
         },
@@ -852,8 +843,7 @@ window.HUB_SEO_DATA = {
             },
             {
               "@type": "Person",
-              "name": "Catherine Hancher",
-              "alternateName": "Pip"
+              "name": "Catherine Hancher"
             }
           ]
         },

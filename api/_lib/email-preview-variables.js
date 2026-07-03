@@ -269,7 +269,6 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.sponsor_row = sampleOpportunitySponsorRow(site);
     vars.sponsor_section = vars.sponsor_row;
   } else if (
-    slug === 'hub_newsletter' ||
     slug === 'booking_confirmation' ||
     slug === 'booking_reminder' ||
     slug === 'online_join_reminder' ||
@@ -289,69 +288,6 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
 
   if (slug === 'password_reset') {
     vars.reset_url = site + '/reset-password.html?token=sample';
-  }
-
-  if (slug === 'hub_newsletter') {
-    vars.edition_label = 'June 2026 edition';
-    vars.newsletter_subject = 'Networking highlights for members';
-    vars.newsletter_layout = String(extraVars?.newsletter_layout || extraVars?.layout || 'magazine');
-    vars.preheader = 'Featured events, organisers and opportunities on the Hub';
-    vars.intro_html =
-      'Hi Alex, welcome to <strong style="color:#452d5c;">June 2026 edition</strong> — your roundup of networking on The Networker Hub.';
-    vars.article_hero_image_html =
-      vars.newsletter_layout === 'editorial'
-        ? '<tr><td class="mobile-pad" style="padding:8px 44px 0;"><img src="https://placehold.co/512x240/f3ecfa/452d5c?text=Editorial" alt="" width="512" style="width:100%;max-width:512px;height:auto;border-radius:16px;display:block;"></td></tr>'
-        : '';
-    vars.article_section_html =
-      '<tr><td class="mobile-pad" style="padding:20px 40px 4px;text-align:left;"><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Editorial</p></td></tr>' +
-      '<tr><td class="mobile-pad" style="padding:0 40px 16px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#452d5c;border-radius:14px;"><tr><td style="padding:20px 22px;"><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:17px;font-weight:600;color:#ffffff;margin:0 0 12px;">Why consistency beats intensity in networking</p><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.7;color:rgba(255,255,255,0.82);margin:0;">Showing up regularly to the same groups builds trust faster than chasing every new event.</p></td></tr></table></td></tr>';
-    vars.featured_events_section_html =
-      '<tr><td class="mobile-pad" style="padding:20px 40px 4px;text-align:left;"><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Featured events</p><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:18px;font-weight:600;color:#452d5c;margin:0 0 14px;">Coming up on the Hub</p></td></tr>' +
-      '<tr><td class="mobile-pad" style="padding:0 40px 8px;">' +
-      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:12px;margin:0 0 12px;border:1px solid #e8dce8;">' +
-      '<tr><td style="padding:16px 18px 14px;">' +
-      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#5b2f99;margin:0 0 6px;line-height:1.4;">City Connectors</p>' +
-      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#452d5c;margin:0 0 6px;line-height:1.35;">London Founders Breakfast</p>' +
-      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;color:#635c5e;margin:0 0 12px;line-height:1.5;">Tuesday 12 August 2026 · 8:00 AM · The Shard, London</p>' +
-      '<a href="' +
-      vars.event_url +
-      '" style="display:inline-block;padding:12px 22px;background:#5b2f99;border-radius:999px;color:#ffffff;font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;text-decoration:none;">Book tickets →</a>' +
-      '</td></tr></table></td></tr>';
-    vars.nearby_events_section_html =
-      '<tr><td class="mobile-pad" style="padding:20px 40px 4px;text-align:left;"><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Events near you</p><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:18px;font-weight:600;color:#452d5c;margin:0 0 14px;">Based on your profile: Manchester</p></td></tr>' +
-      '<tr><td class="mobile-pad" style="padding:0 40px 8px;">' +
-      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:12px;margin:0 0 12px;border:1px solid #e8dce8;">' +
-      '<tr><td style="padding:16px 18px 14px;">' +
-      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#5b2f99;margin:0 0 6px;line-height:1.4;">Northern Networkers</p>' +
-      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#452d5c;margin:0 0 6px;line-height:1.35;">Manchester Business Breakfast</p>' +
-      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;color:#635c5e;margin:0 0 12px;line-height:1.5;">Wednesday 8 July 2026 · 7:30 AM · Manchester city centre</p>' +
-      '<a href="' +
-      vars.event_url +
-      '" style="display:inline-block;padding:12px 22px;background:#5b2f99;border-radius:999px;color:#ffffff;font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;text-decoration:none;">View event →</a>' +
-      '</td></tr></table></td></tr>';
-    if (vars.newsletter_layout === 'magazine') {
-      vars.top_ranked_organisers_section_html =
-        '<tr><td class="mobile-pad" style="padding:20px 40px 4px;text-align:left;"><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Hub rankings</p><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:18px;font-weight:600;color:#452d5c;margin:0 0 14px;">Top 10 networking groups · June 2026</p></td></tr>' +
-        '<tr><td class="mobile-pad" style="padding:0 40px 8px;background:#f3ecfa;">' +
-        '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 8px;border:1px solid #e8dce8;border-radius:10px;background:#ffffff;"><tr><td style="padding:12px 14px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td width="40" valign="top" style="width:40px;padding-right:10px;"><span style="display:inline-block;width:30px;height:30px;line-height:30px;text-align:center;border-radius:50%;background:#5b2f99;color:#ffffff;font-size:16px;font-weight:700;">1</span></td><td valign="top"><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#452d5c;margin:0 0 4px;">City Connectors</p><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;color:#635c5e;margin:0;">★ 4.9 · 28 reviews</p></td><td valign="middle" align="right"><a href="' +
-        vars.organiser_url +
-        '" style="font-size:16px;font-weight:700;color:#5b2f99;text-decoration:none;">View →</a></td></tr></table></td></tr></table>' +
-        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;margin:12px 0 0;text-align:center;"><a href="' +
-        site +
-        '/events/#organisers" style="color:#5b2f99;font-weight:700;text-decoration:none;">Browse all networking groups →</a></p></td></tr>';
-      vars.featured_organisers_section_html = '';
-    } else {
-      vars.top_ranked_organisers_section_html = '';
-      vars.featured_organisers_section_html =
-        '<tr><td class="mobile-pad" style="padding:20px 40px 4px;text-align:left;"><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Featured organisers</p><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:18px;font-weight:600;color:#452d5c;margin:0 0 14px;">Groups members love</p></td></tr>' +
-        sampleRecommendationCard('City Connectors', '4.9 average · 28 reviews', vars.organiser_url)
-          .replace(/background:#1c2040/g, 'background:#f5f0e8')
-          .replace(/color:#ffffff/g, 'color:#452d5c')
-          .replace(/color:rgba\(255,255,255,0\.7\)/g, 'color:#635c5e')
-          .replace(/color:#4aa8f0/g, 'color:#5b2f99');
-    }
-    vars.opportunities_url = site + '/opportunities/';
-    vars.unsubscribe_url = site + '/account/settings.html';
   }
 
   return vars;

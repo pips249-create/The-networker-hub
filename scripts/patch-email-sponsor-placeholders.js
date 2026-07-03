@@ -28,7 +28,6 @@ const EVENT_MINI_FILES = [
   'saved-organiser-new-listing.html',
   'application-approved.html',
   'application-denied.html',
-  'hub-newsletter.html',
 ];
 
 const EVENT_MAIN_ONLY_FILES = [

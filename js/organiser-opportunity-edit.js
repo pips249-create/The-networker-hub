@@ -16,7 +16,7 @@
   let logoFile = null;
   let currentOpportunity = null;
 
-  const LISTING_MONTHLY_EX_VAT = 20;
+  const LISTING_MONTHLY_EX_VAT = 25;
   const LISTING_VAT_RATE = 0.2;
   const LISTING_MIN_MONTHS = 3;
   const LISTING_MAX_MONTHS = 36;

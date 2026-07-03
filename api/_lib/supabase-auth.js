@@ -77,13 +77,10 @@ async function getEmailsEnabledForEmail(email) {
   return hub.emails_enabled !== false;
 }
 
-/** @param {'newsletter'|'event_reminders'|'organiser_alerts'|'marketing'} category */
+/** @param {'event_reminders'|'organiser_alerts'|'marketing'} category */
 async function canSendEmailCategory(email, category) {
   const hub = await getHubAccountForEmail(email);
   if (!hub) return true;
-  if (category === 'newsletter') {
-    return hubPrefEnabled(hub, 'email_pref_newsletter');
-  }
   if (category === 'event_reminders') {
     return hubPrefEnabled(hub, 'email_pref_event_reminders');
   }

@@ -1,12 +1,13 @@
 const { isEventPublishedForSale } = require('./ticket-sales');
-const { parseOutcode, haversineMiles, bboxForRadiusMiles, cityRegionFromInput } = require('./uk-outcode');
+const { isOnlineEvent } = require('./event-refund-policy');
+const { haversineMiles, bboxForRadiusMiles } = require('./uk-outcode');
 const { geocodeUkLocation } = require('./postcode-geocode');
 
-/** Max distance for "events near you" blocks in lifecycle and newsletter emails. */
+/** Max distance for "events near you" blocks in lifecycle emails. */
 const NEARBY_EMAIL_RADIUS_MILES = 25;
 
 const EVENT_SELECT_FIELDS =
-  'id, title, slug, starts_at, city, venue, location_label, postcode, outcode, latitude, longitude, status, approval_status, published_at, featured, ticket_sales_enabled, refund_terms_agreed_at, refund_terms_agreed, organisers(name)';
+  'id, title, slug, starts_at, city, venue, location_label, postcode, outcode, latitude, longitude, meeting_type, meeting_link, status, approval_status, published_at, featured, ticket_sales_enabled, refund_terms_agreed_at, refund_terms_agreed, organisers(name)';
 
 function locationTokens(location) {
   const raw = String(location || '').trim().toLowerCase();
@@ -35,6 +36,48 @@ function nearbyLocationLabel(location) {
   const raw = String(location || '').trim();
   if (!raw) return '';
   return raw.split(',')[0].trim();
+}
+
+function nearbySectionHeading(nearbyResult) {
+  const source = String(nearbyResult?.source || 'nearby').trim();
+  if (source === 'popular_online') return 'Popular online events';
+  if (source === 'upcoming') return 'Coming up on the Hub';
+
+  const label = String(nearbyResult?.locationLabel || '').trim();
+  const radiusMi = nearbyResult?.radiusMiles;
+  const hasRadius = radiusMi != null && Number.isFinite(Number(radiusMi));
+  const radiusLabel = hasRadius ? Math.round(Number(radiusMi)) : NEARBY_EMAIL_RADIUS_MILES;
+
+  if (label && hasRadius) {
+    return 'Events within ' + radiusLabel + ' miles of ' + label;
+  }
+  if (label) {
+    return 'Events near ' + label;
+  }
+  if (hasRadius) {
+    return 'Events within ' + radiusLabel + ' miles of you';
+  }
+  return 'Events near you';
+}
+
+function nearbySectionSubtitle(nearbyResult) {
+  const source = String(nearbyResult?.source || 'nearby').trim();
+  const label = String(nearbyResult?.locationLabel || '').trim();
+
+  if (source === 'popular_online') {
+    return label
+      ? 'Nothing within 25 miles of ' + label + ' — members are booking these online'
+      : 'Online events members are booking right now';
+  }
+  if (source === 'upcoming') {
+    return label
+      ? 'Nothing within 25 miles of ' + label + ' — here\u2019s what\u2019s next on the Hub'
+      : 'The next upcoming events on the Hub';
+  }
+  if (label) {
+    return 'Within 25 miles of ' + label;
+  }
+  return 'Upcoming events within 25 miles of your profile';
 }
 
 function eventWithinRadiusMiles(eventRow, lat, lng, radiusMi) {
@@ -105,9 +148,11 @@ async function fetchNearbyEventsByText(sb, location, options = {}) {
 /**
  * Upcoming published events near the member location (25-mile radius when geocodable).
  */
-async function fetchNearbyEvents(sb, location, options = {}) {
+async function fetchNearbyEventsByLocation(sb, location, options = {}) {
   const raw = String(location || '').trim();
-  if (!raw) return { events: [], locationLabel: '' };
+  if (!raw) {
+    return { events: [], locationLabel: '', radiusMiles: null };
+  }
 
   const radiusMi = Math.min(
     Math.max(Number(options.radiusMiles) || NEARBY_EMAIL_RADIUS_MILES, 1),
@@ -134,6 +179,75 @@ async function fetchNearbyEvents(sb, location, options = {}) {
   };
 }
 
+async function fetchUpcomingEvents(sb, options = {}) {
+  const excludeIds = new Set((options.excludeEventIds || []).map((id) => String(id || '').trim()).filter(Boolean));
+  const limit = Math.max(1, Math.min(Number(options.limit) || 4, 8));
+  const now = new Date().toISOString();
+
+  const { data, error } = await sb
+    .from('events')
+    .select(EVENT_SELECT_FIELDS)
+    .eq('status', 'published')
+    .eq('approval_status', 'Approved')
+    .gt('starts_at', now)
+    .order('starts_at', { ascending: true })
+    .limit(Math.max(limit * 4, 24));
+  if (error) throw new Error(error.message);
+
+  return (data || [])
+    .filter(isEventPublishedForSale)
+    .filter((row) => !excludeIds.has(String(row.id)))
+    .slice(0, limit);
+}
+
+async function fetchPopularOnlineEvents(sb, options = {}) {
+  const limit = Math.max(1, Math.min(Number(options.limit) || 4, 8));
+  const popular = await fetchPopularEvents(sb, {
+    ...options,
+    limit: Math.min(limit * 3, 12),
+  });
+  return (popular.events || []).filter((row) => isOnlineEvent(row)).slice(0, limit);
+}
+
+async function fetchNearbyEvents(sb, location, options = {}) {
+  const limit = Math.max(1, Math.min(Number(options.limit) || 4, 8));
+  const nearby = await fetchNearbyEventsByLocation(sb, location, options);
+
+  if (nearby.events.length) {
+    return {
+      ...nearby,
+      source: 'nearby',
+      usedFallback: false,
+    };
+  }
+
+  const fallbackOptions = {
+    ...options,
+    limit,
+    excludeEventIds: options.excludeEventIds || [],
+  };
+
+  const popularOnline = await fetchPopularOnlineEvents(sb, fallbackOptions);
+  if (popularOnline.length) {
+    return {
+      events: popularOnline,
+      locationLabel: nearby.locationLabel,
+      radiusMiles: nearby.radiusMiles,
+      source: 'popular_online',
+      usedFallback: true,
+    };
+  }
+
+  const upcoming = await fetchUpcomingEvents(sb, fallbackOptions);
+  return {
+    events: upcoming,
+    locationLabel: nearby.locationLabel,
+    radiusMiles: nearby.radiusMiles,
+    source: upcoming.length ? 'upcoming' : null,
+    usedFallback: Boolean(upcoming.length),
+  };
+}
+
 /**
  * Upcoming events ranked by recent booking volume (last 30 days), with featured/rating fallback.
  */
@@ -147,7 +261,7 @@ async function fetchPopularEvents(sb, options = {}) {
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const now = new Date().toISOString();
   const selectFields =
-    'id, title, slug, starts_at, city, venue, location_label, postcode, outcode, status, approval_status, published_at, featured, average_rating, ticket_sales_enabled, refund_terms_agreed_at, refund_terms_agreed, organisers(name)';
+    'id, title, slug, starts_at, city, venue, location_label, postcode, outcode, meeting_type, meeting_link, status, approval_status, published_at, featured, average_rating, ticket_sales_enabled, refund_terms_agreed_at, refund_terms_agreed, organisers(name)';
 
   const { data: regs, error: regErr } = await sb
     .from('registrations')
@@ -227,6 +341,10 @@ module.exports = {
   locationTokens,
   eventMatchesLocation,
   nearbyLocationLabel,
+  nearbySectionHeading,
+  nearbySectionSubtitle,
   fetchNearbyEvents,
   fetchPopularEvents,
+  fetchPopularOnlineEvents,
+  fetchUpcomingEvents,
 };

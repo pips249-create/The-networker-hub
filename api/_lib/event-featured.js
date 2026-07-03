@@ -32,7 +32,8 @@ async function getEventRow(eventId) {
 
 async function activateEventFeatured(eventId, planId) {
   const id = String(eventId || '').trim();
-  const plan = FEATURED_PLANS[normalizePlanId(planId)];
+  const resolvedPlanId = normalizePlanId(planId);
+  const plan = FEATURED_PLANS[resolvedPlanId];
   if (!isUuid(id)) throw new Error('invalid_event_id');
   if (!plan) throw new Error('invalid_plan');
 
@@ -47,6 +48,9 @@ async function activateEventFeatured(eventId, planId) {
       featured: true,
       featured_until,
       featured_expiry_reminder_sent_at: null,
+      featured_plan: resolvedPlanId,
+      featured_paid_at: new Date().toISOString(),
+      featured_amount_gbp: plan.amountPence / 100,
     })
     .eq('id', id)
     .select('*')

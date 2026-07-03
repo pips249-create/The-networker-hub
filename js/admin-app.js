@@ -27,10 +27,6 @@
         'Email template not found. Run the latest Supabase email migrations (including 091 for password reset).',
       resend_send_failed:
         'Resend rejected the email. Check RESEND_FROM uses a verified domain and see Resend logs.',
-      newsletter_schema_missing:
-        'Newsletter tables are missing. Run Supabase migrations 089 and 090.',
-      newsletter_analytics_missing:
-        'Newsletter analytics tables are missing. Run Supabase migration 092_newsletter_analytics.sql.',
     };
     return messages[code] || fallback || code || 'Something went wrong.';
   }
@@ -116,6 +112,10 @@
       title: 'Financial hub',
       subtitle: 'Payout queue, ticket revenue, and Stripe Connect status per organiser',
     },
+    'revenue-targets': {
+      title: 'Revenue targets',
+      subtitle: 'Progress to September 2027 — auto-tracked fees, forecasting, and manual sponsorship entries',
+    },
     sponsorship: {
       title: 'Sponsorship & ads',
       subtitle: 'Choose an ad placement or the home page partners strip to edit',
@@ -127,14 +127,6 @@
     social: {
       title: 'Social posts',
       subtitle: 'Draft captions from Hub listings — copy or open share links for LinkedIn, Facebook, and X',
-    },
-    newsletter: {
-      title: 'Newsletter',
-      subtitle: 'Compose Hub newsletter editions, queue featured listings from social posts, and schedule sends',
-    },
-    'newsletter-stats': {
-      title: 'Newsletter engagement',
-      subtitle: 'Open rates, click-through, and top links across all newsletter editions',
     },
   };
 
@@ -157,6 +149,10 @@
   var groupCleanupCache = null;
   var eventCleanupCache = null;
   var analyticsState = { period: '30d' };
+  var revenueTargetsChartsCache = null;
+  var revenueTargetsChartInstance = null;
+  var revenueTargetsChartView = 'overall';
+  var revenueTargetsChartMode = 'monthly';
   var eventHealthState = { issueFilter: 'all', selected: {} };
   var groupCleanupState = {
     page: 0,
@@ -273,9 +269,9 @@
     {
       key: 'event_page_carousel_ads',
       group: 'Detail pages',
-      label: 'Event & organiser pages — Mini Sponsors (5 slots)',
+      label: 'Event & organiser pages — Mini Sponsors (3 slots)',
       preview: 'carousel',
-      help: 'Up to five rotating Mini Sponsor logos in the sidebar on individual event and organiser profile pages — same inventory on both page types. Each logo links to the sponsor website.',
+      help: 'Up to three rotating Mini Sponsor logos in the sidebar on individual event and organiser profile pages — same inventory on both page types. Each logo links to the sponsor website.',
       tagline: '',
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
@@ -468,11 +464,6 @@
     if (route === 'social') {
       return PAGE_META.social.subtitle;
     }
-    if (route === 'newsletter') {
-      return hash.indexOf('/stats') !== -1
-        ? PAGE_META['newsletter-stats'].subtitle
-        : PAGE_META.newsletter.subtitle;
-    }
     if (route === 'moderation' && hash.indexOf('import') !== -1) {
       return PAGE_META.import.subtitle;
     }
@@ -542,9 +533,9 @@
         subtitle =
           'Logo strip on the home page. Add companies with logo, name, and CTA — shown when the section is active.';
       } else if (fullHash === 'sponsorship/event-page-carousel') {
-        title = 'Event & organiser pages — Sponsor carousel (5 ads)';
+        title = 'Event & organiser pages — Sponsor carousel (3 ads)';
         subtitle =
-          'Manage up to five rotating sidebar logos on individual event and organiser profile pages. Each slot needs a logo and click-through link.';
+          'Manage up to three rotating sidebar logos on individual event and organiser profile pages. Each slot needs a logo and click-through link.';
       } else if (fullHash.indexOf('sponsorship/') === 0) {
         var slotKey = fullHash.slice('sponsorship/'.length);
         if (cmsSlotExists(slotKey)) {
@@ -553,10 +544,6 @@
           subtitle = slot.help;
         }
       }
-    }
-    if (navKey === 'newsletter' && fullHash && fullHash.indexOf('/stats') !== -1) {
-      title = PAGE_META['newsletter-stats'].title;
-      subtitle = PAGE_META['newsletter-stats'].subtitle;
     }
     document.getElementById('page-title').textContent = title;
     document.getElementById('page-subtitle').textContent = subtitle;
@@ -2919,6 +2906,569 @@
     if (preEl) preEl.innerHTML = renderMetricsSummary(data);
   }
 
+  function revenueTargetStatusClass(status) {
+    if (status === 'achieved' || status === 'on_track') return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+    if (status === 'at_risk') return 'text-amber-800 bg-amber-50 border-amber-200';
+    return 'text-red-800 bg-red-50 border-red-200';
+  }
+
+  function revenueTargetBarColor(status) {
+    if (status === 'achieved' || status === 'on_track') return 'bg-emerald-500';
+    if (status === 'at_risk') return 'bg-amber-500';
+    return 'bg-red-500';
+  }
+
+  function renderRevenueTargetsPanel(targets) {
+    if (!targets || targets.error) {
+      return (
+        '<p class="text-sm text-red-700">Could not load revenue targets' +
+        (targets && targets.error ? ': ' + esc(targets.error) : '.') +
+        '</p>'
+      );
+    }
+
+    var period = targets.period || {};
+    var totals = targets.totals || {};
+    var categories = targets.categories || [];
+    var assessment = targets.assessment || {};
+
+    var summary =
+      '<div class="rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-4 sm:p-5">' +
+      '<div class="flex flex-wrap items-start justify-between gap-3">' +
+      '<div><p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Revenue targets</p>' +
+      '<p class="text-lg font-bold text-brand-900 mt-1">' +
+      esc(period.label || 'Target period') +
+      '</p>' +
+      '<p class="text-sm text-slate-600 mt-1">' +
+      esc(String(period.daysElapsed || 0)) +
+      ' of ' +
+      esc(String(period.daysTotal || 0)) +
+      ' days elapsed · ' +
+      esc(String(period.daysRemaining || 0)) +
+      ' days remaining</p></div>' +
+      '<div class="text-right"><p class="text-2xl font-bold text-brand-900">' +
+      esc(fmtMoney(totals.actual || 0)) +
+      '</p>' +
+      '<p class="text-xs text-slate-500">of ' +
+      esc(fmtMoney(totals.target || 0)) +
+      ' target</p>' +
+      '<span class="inline-block mt-2 text-xs font-semibold px-2 py-0.5 rounded-full border ' +
+      revenueTargetStatusClass(totals.status) +
+      '">' +
+      esc(totals.statusLabel || '') +
+      '</span></div></div>' +
+      '<div class="mt-4"><div class="h-2.5 rounded-full bg-white/80 border border-brand-100 overflow-hidden">' +
+      '<div class="h-full ' +
+      revenueTargetBarColor(totals.status) +
+      ' transition-all" style="width:' +
+      Math.min(100, Number(totals.progressPct) || 0) +
+      '%"></div></div>' +
+      '<div class="flex flex-wrap justify-between gap-2 mt-2 text-xs text-slate-600">' +
+      '<span>' +
+      esc(String(totals.progressPct || 0)) +
+      '% achieved</span>' +
+      '<span>Forecast: ' +
+      esc(fmtMoney(totals.forecast || 0)) +
+      ' (' +
+      esc(String(totals.forecastPct || 0)) +
+      '%)</span></div></div></div>';
+
+    var assessmentHtml =
+      '<div class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">' +
+      '<p class="font-semibold text-brand-900">Are these targets achievable?</p>' +
+      '<p class="mt-2">' +
+      esc(assessment.headline || '') +
+      '</p>' +
+      (assessment.notes && assessment.notes.length
+        ? '<ul class="mt-3 space-y-1.5 text-xs text-slate-600 list-disc pl-4">' +
+          assessment.notes
+            .map(function (note) {
+              return '<li>' + esc(note) + '</li>';
+            })
+            .join('') +
+          '</ul>'
+        : '') +
+      '</div>';
+
+    var chartTabs =
+      '<div class="flex flex-wrap gap-1.5" id="revenue-chart-tabs" role="tablist" aria-label="Revenue chart category">' +
+      '<button type="button" class="revenue-chart-tab is-active" data-revenue-chart-view="overall" role="tab" aria-selected="true">All revenue</button>' +
+      categories
+        .map(function (cat) {
+          return (
+            '<button type="button" class="revenue-chart-tab" data-revenue-chart-view="' +
+            attrEsc(cat.id) +
+            '" role="tab" aria-selected="false">' +
+            esc(cat.label) +
+            '</button>'
+          );
+        })
+        .join('') +
+      '</div>';
+
+    var chartSection =
+      '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">' +
+      '<div class="flex flex-wrap items-start justify-between gap-3">' +
+      '<div><h3 class="font-bold text-brand-900">Revenue trend</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Monthly actuals, current-month forecast, and target pace — switch category to compare streams.</p></div>' +
+      '<div class="flex rounded-lg border border-slate-200 p-0.5 text-xs" role="group" aria-label="Chart mode">' +
+      '<button type="button" class="revenue-chart-mode px-3 py-1.5 rounded-md font-semibold is-active" data-revenue-chart-mode="monthly">Monthly</button>' +
+      '<button type="button" class="revenue-chart-mode px-3 py-1.5 rounded-md font-semibold" data-revenue-chart-mode="cumulative">Cumulative</button>' +
+      '</div></div>' +
+      chartTabs +
+      '<div class="relative h-72 sm:h-80"><canvas id="revenue-targets-chart" aria-label="Revenue line chart"></canvas></div>' +
+      '<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">' +
+      '<span class="inline-flex items-center gap-1.5"><span class="inline-block w-3 h-0.5 bg-brand-700 rounded"></span> Actual</span>' +
+      '<span class="inline-flex items-center gap-1.5"><span class="inline-block w-3 h-0.5 bg-violet-500 rounded border-b border-dashed border-violet-500"></span> Current month forecast</span>' +
+      '<span class="inline-flex items-center gap-1.5"><span class="inline-block w-3 h-0.5 bg-slate-400 rounded opacity-70"></span> Target pace</span>' +
+      '</div></section>';
+
+    var categoryCards = categories
+      .map(function (cat) {
+        var progress = Math.min(100, Number(cat.progressPct) || 0);
+        return (
+          '<article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">' +
+          '<div class="flex items-start justify-between gap-2">' +
+          '<div><h4 class="font-bold text-brand-900 text-sm">' +
+          esc(cat.label) +
+          '</h4>' +
+          '<p class="text-xs text-slate-500 mt-0.5">' +
+          esc(cat.description || '') +
+          '</p></div>' +
+          '<span class="text-xs font-semibold px-2 py-0.5 rounded-full border shrink-0 ' +
+          revenueTargetStatusClass(cat.status) +
+          '">' +
+          esc(cat.statusLabel || '') +
+          '</span></div>' +
+          '<div class="mt-3 flex items-end justify-between gap-2">' +
+          '<div><p class="text-xl font-bold text-brand-900">' +
+          esc(fmtMoney(cat.actual || 0)) +
+          '</p>' +
+          '<p class="text-xs text-slate-500">Target ' +
+          esc(fmtMoney(cat.target || 0)) +
+          '</p></div>' +
+          '<div class="text-right text-xs text-slate-500">' +
+          '<p>Forecast ' +
+          esc(fmtMoney(cat.forecast || 0)) +
+          '</p>' +
+          '<p>Need ' +
+          esc(fmtMoney(cat.monthlyNeeded || 0)) +
+          '/mo</p></div></div>' +
+          '<div class="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">' +
+          '<div class="h-full ' +
+          revenueTargetBarColor(cat.status) +
+          '" style="width:' +
+          progress +
+          '%"></div></div>' +
+          (cat.breakdown && cat.breakdown.length
+            ? '<details class="mt-3 text-xs"><summary class="cursor-pointer text-brand-700 font-semibold">' +
+              esc(String(cat.breakdown.length)) +
+              ' revenue item' +
+              (cat.breakdown.length === 1 ? '' : 's') +
+              '</summary><ul class="mt-2 space-y-1 text-slate-600">' +
+              cat.breakdown
+                .slice(0, 8)
+                .map(function (item) {
+                  return (
+                    '<li class="flex justify-between gap-2"><span>' +
+                    esc(item.source) +
+                    (item.type === 'manual'
+                      ? ' <span class="text-slate-400">(manual)</span>'
+                      : item.type === 'stripe'
+                        ? ' <span class="text-slate-400">(Stripe)</span>'
+                        : '') +
+                    '</span><span class="font-medium shrink-0">' +
+                    esc(fmtMoney(item.amount || 0)) +
+                    '</span></li>'
+                  );
+                })
+                .join('') +
+              (cat.breakdown.length > 8
+                ? '<li class="text-slate-400">+' + (cat.breakdown.length - 8) + ' more</li>'
+                : '') +
+              '</ul></details>'
+            : '<p class="mt-3 text-xs text-slate-400">No revenue recorded yet in this category.</p>') +
+          '</article>'
+        );
+      })
+      .join('');
+
+    var dealsMissing =
+      targets.dealsTableMissing
+        ? '<p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">Run migration <code class="text-[11px]">105_hub_revenue_deals.sql</code> in Supabase to log sponsorship revenue manually.</p>'
+        : '';
+
+    var stripeHelp =
+      '<div class="rounded-lg border border-brand-200 bg-brand-50 p-4 text-sm text-slate-700 mb-4">' +
+      '<p class="font-semibold text-brand-900">Stripe invoices (recommended)</p>' +
+      '<p class="mt-1 text-xs text-slate-600">Create sponsorship invoices in Stripe and add metadata <code class="text-[11px] bg-white px-1 rounded">revenue_category</code> ' +
+      '(e.g. <code class="text-[11px] bg-white px-1 rounded">events</code>, <code class="text-[11px] bg-white px-1 rounded">browse_organisers</code>). ' +
+      'When the invoice is paid, revenue appears here automatically. See <code class="text-[11px]">docs/STRIPE-SPONSORSHIP-INVOICES.md</code>.</p></div>';
+
+    var manualForm =
+      '<form id="revenue-deal-form" class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">' +
+      '<label class="block text-xs"><span class="font-semibold text-slate-600">Category</span>' +
+      '<select name="category" class="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm" required>' +
+      categories
+        .map(function (cat) {
+          return (
+            '<option value="' +
+            attrEsc(cat.id) +
+            '">' +
+            esc(cat.label) +
+            '</option>'
+          );
+        })
+        .join('') +
+      '</select></label>' +
+      '<label class="block text-xs sm:col-span-2"><span class="font-semibold text-slate-600">Source / sponsor</span>' +
+      '<input name="source_label" type="text" class="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm" placeholder="e.g. Main Events Directory Sponsor — Acme Ltd" required /></label>' +
+      '<label class="block text-xs"><span class="font-semibold text-slate-600">Amount (£)</span>' +
+      '<input name="amount_gbp" type="number" min="0.01" step="0.01" class="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm" required /></label>' +
+      '<label class="block text-xs"><span class="font-semibold text-slate-600">Paid on</span>' +
+      '<input name="recorded_at" type="date" class="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm" /></label>' +
+      '<div class="sm:col-span-2 lg:col-span-5 flex flex-wrap items-center gap-3">' +
+      '<label class="block text-xs flex-1 min-w-[12rem]"><span class="font-semibold text-slate-600">Notes (optional)</span>' +
+      '<input name="notes" type="text" class="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm" placeholder="Invoice ref, months covered, etc." /></label>' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Log revenue</button>' +
+      '<p id="revenue-deal-form-status" class="text-xs text-slate-500" role="status"></p></div></form>';
+
+    var manualList =
+      (targets.manualDeals || []).length > 0
+        ? '<div class="mt-4 border-t border-slate-100 pt-4"><h4 class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Manual entries</h4><ul class="space-y-2 text-sm">' +
+          targets.manualDeals
+            .map(function (deal) {
+              var isStripe = deal.source_type && deal.source_type !== 'manual';
+              return (
+                '<li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-100 px-3 py-2">' +
+                '<div><span class="font-medium text-brand-900">' +
+                esc(deal.source_label || '—') +
+                '</span>' +
+                '<span class="text-xs text-slate-500 ml-2">' +
+                esc(deal.category || '') +
+                (isStripe ? ' · Stripe' : '') +
+                '</span></div>' +
+                '<div class="flex items-center gap-3">' +
+                '<span class="font-semibold">' +
+                esc(fmtMoney(deal.amount_gbp || 0)) +
+                '</span>' +
+                (isStripe
+                  ? ''
+                  : '<button type="button" class="text-xs text-red-700 hover:underline" data-delete-revenue-deal="' +
+                    attrEsc(deal.id) +
+                    '">Remove</button>') +
+                '</div></li>'
+              );
+            })
+            .join('') +
+          '</ul></div>'
+        : '';
+
+    return (
+      '<div class="space-y-4">' +
+      summary +
+      chartSection +
+      assessmentHtml +
+      '<div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">' +
+      categoryCards +
+      '</div>' +
+      '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+      '<h3 class="font-bold text-brand-900">Log sponsorship &amp; advertising revenue</h3>' +
+      '<p class="text-xs text-slate-500 mt-1">Stripe invoices with the correct metadata are logged automatically when paid. Use the form below only for offline payments not invoiced through Stripe.</p>' +
+      dealsMissing +
+      stripeHelp +
+      '<div class="mt-4">' +
+      manualForm +
+      manualList +
+      '</div></section></div>'
+    );
+  }
+
+  function ensureChartJs() {
+    if (window.Chart) return Promise.resolve(window.Chart);
+    return new Promise(function (resolve, reject) {
+      var existing = document.querySelector('script[data-revenue-chartjs]');
+      if (existing) {
+        existing.addEventListener('load', function () {
+          resolve(window.Chart);
+        });
+        existing.addEventListener('error', reject);
+        return;
+      }
+      var script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+      script.async = true;
+      script.setAttribute('data-revenue-chartjs', '1');
+      script.onload = function () {
+        resolve(window.Chart);
+      };
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  function revenueChartSeriesData(chartData, mode) {
+    var months = (chartData && chartData.months) || [];
+    var labels = months.map(function (m) {
+      return m.isCurrent ? m.label + ' (current)' : m.label;
+    });
+
+    if (mode === 'cumulative') {
+      return {
+        labels: labels,
+        actual: months.map(function (m) {
+          return m.cumulativeActual;
+        }),
+        forecast: months.map(function (m) {
+          return m.isCurrent ? m.cumulativeForecast : null;
+        }),
+        target: months.map(function (m) {
+          return m.cumulativeTarget;
+        }),
+      };
+    }
+
+    return {
+      labels: labels,
+      actual: months.map(function (m) {
+        return m.actual;
+      }),
+      forecast: months.map(function (m) {
+        return m.isCurrent ? m.forecast : null;
+      }),
+      target: months.map(function (m) {
+        return m.targetMonthly;
+      }),
+    };
+  }
+
+  function destroyRevenueTargetsChart() {
+    if (revenueTargetsChartInstance) {
+      revenueTargetsChartInstance.destroy();
+      revenueTargetsChartInstance = null;
+    }
+  }
+
+  function renderRevenueTargetsChart() {
+    var canvas = document.getElementById('revenue-targets-chart');
+    if (!canvas || !revenueTargetsChartsCache) return;
+
+    var chartData =
+      revenueTargetsChartView === 'overall'
+        ? revenueTargetsChartsCache.overall
+        : revenueTargetsChartsCache.byCategory[revenueTargetsChartView];
+    if (!chartData) return;
+
+    ensureChartJs()
+      .then(function (Chart) {
+        destroyRevenueTargetsChart();
+        var series = revenueChartSeriesData(chartData, revenueTargetsChartMode);
+        var yTitle = revenueTargetsChartMode === 'cumulative' ? 'Cumulative £' : 'Monthly £';
+
+        revenueTargetsChartInstance = new Chart(canvas, {
+          type: 'line',
+          data: {
+            labels: series.labels,
+            datasets: [
+              {
+                label: 'Actual',
+                data: series.actual,
+                borderColor: '#5b2f99',
+                backgroundColor: 'rgba(91, 47, 153, 0.08)',
+                borderWidth: 2.5,
+                pointRadius: 4,
+                pointHoverRadius: 5,
+                tension: 0.25,
+                spanGaps: false,
+                fill: false,
+              },
+              {
+                label: 'Current month forecast',
+                data: series.forecast,
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                borderWidth: 2,
+                borderDash: [6, 4],
+                pointRadius: 5,
+                pointStyle: 'rectRot',
+                tension: 0.15,
+                spanGaps: false,
+                fill: false,
+              },
+              {
+                label: 'Target pace',
+                data: series.target,
+                borderColor: '#94a3b8',
+                backgroundColor: 'transparent',
+                borderWidth: 1.5,
+                borderDash: [4, 4],
+                pointRadius: 0,
+                tension: 0,
+                fill: false,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    var value = ctx.parsed.y;
+                    if (value == null) return null;
+                    return ctx.dataset.label + ': £' + Number(value).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  },
+                },
+              },
+              title: {
+                display: true,
+                text:
+                  (chartData.label || 'Revenue') +
+                  ' — ' +
+                  (revenueTargetsChartMode === 'cumulative' ? 'cumulative' : 'monthly'),
+                color: '#2d1b4e',
+                font: { size: 13, weight: '600' },
+              },
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { maxRotation: 45, minRotation: 0, font: { size: 11 } },
+              },
+              y: {
+                title: { display: true, text: yTitle, font: { size: 11 } },
+                ticks: {
+                  callback: function (value) {
+                    return '£' + Number(value).toLocaleString('en-GB');
+                  },
+                },
+              },
+            },
+          },
+        });
+      })
+      .catch(function () {
+        var wrap = canvas.parentElement;
+        if (wrap) {
+          wrap.innerHTML =
+            '<p class="text-sm text-red-700">Could not load chart library. Check your connection and refresh.</p>';
+        }
+      });
+  }
+
+  function syncRevenueChartTabs() {
+    document.querySelectorAll('[data-revenue-chart-view]').forEach(function (btn) {
+      var active = btn.getAttribute('data-revenue-chart-view') === revenueTargetsChartView;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    document.querySelectorAll('[data-revenue-chart-mode]').forEach(function (btn) {
+      var active = btn.getAttribute('data-revenue-chart-mode') === revenueTargetsChartMode;
+      btn.classList.toggle('is-active', active);
+    });
+  }
+
+  function loadRevenueTargets() {
+    var panel = document.getElementById('revenue-targets-panel');
+    if (!panel) return Promise.resolve();
+    panel.innerHTML = '<p class="text-sm text-slate-500">Loading revenue targets…</p>';
+    return adminGet('/api/admin/revenue-targets').then(function (data) {
+      if (!data || data.ok === false || data.error || data.configured === false) {
+        panel.innerHTML =
+          '<p class="text-sm text-red-700">' +
+          esc((data && (data.message || data.error)) || 'Could not load revenue targets.') +
+          '</p>';
+        return;
+      }
+      panel.innerHTML = renderRevenueTargetsPanel(data.revenueTargets);
+      revenueTargetsChartsCache = data.revenueTargets.charts || null;
+      revenueTargetsChartView = 'overall';
+      revenueTargetsChartMode = 'monthly';
+      syncRevenueChartTabs();
+      renderRevenueTargetsChart();
+    });
+  }
+
+  function bindRevenueTargetsEvents() {
+    var mainEl = main;
+    if (!mainEl || mainEl._revenueTargetsBound) return;
+    mainEl._revenueTargetsBound = true;
+
+    mainEl.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form || form.id !== 'revenue-deal-form') return;
+      e.preventDefault();
+      var status = document.getElementById('revenue-deal-form-status');
+      if (status) status.textContent = 'Saving…';
+
+      var body = {
+        category: form.category.value,
+        source_label: form.source_label.value,
+        amount_gbp: form.amount_gbp.value,
+        notes: form.notes.value,
+      };
+      if (form.recorded_at && form.recorded_at.value) {
+        body.recorded_at = form.recorded_at.value;
+      }
+
+      adminPost('/api/admin/revenue-deals', body).then(function (data) {
+        if (!data || data.ok === false || data.error) {
+          if (status) status.textContent = data.message || data.error || 'Could not save.';
+          return;
+        }
+        if (status) status.textContent = 'Saved.';
+        form.reset();
+        loadRevenueTargets();
+      });
+    });
+
+    mainEl.addEventListener('click', function (e) {
+      var chartTab = e.target.closest('[data-revenue-chart-view]');
+      if (chartTab) {
+        revenueTargetsChartView = chartTab.getAttribute('data-revenue-chart-view') || 'overall';
+        syncRevenueChartTabs();
+        renderRevenueTargetsChart();
+        return;
+      }
+
+      var chartMode = e.target.closest('[data-revenue-chart-mode]');
+      if (chartMode) {
+        revenueTargetsChartMode = chartMode.getAttribute('data-revenue-chart-mode') || 'monthly';
+        syncRevenueChartTabs();
+        renderRevenueTargetsChart();
+        return;
+      }
+
+      var btn = e.target.closest('[data-delete-revenue-deal]');
+      if (!btn) return;
+      var id = btn.getAttribute('data-delete-revenue-deal');
+      if (!id || !window.confirm('Remove this revenue entry?')) return;
+      fetch('/api/admin/revenue-deals?id=' + encodeURIComponent(id), {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+        .then(function (r) {
+          return r.json();
+        })
+        .then(function () {
+          loadRevenueTargets();
+        });
+    });
+  }
+
+  function renderRevenueTargets() {
+    destroyRevenueTargetsChart();
+    revenueTargetsChartsCache = null;
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      '<div id="revenue-targets-panel"><p class="text-sm text-slate-500">Loading revenue targets…</p></div></div>';
+    bindRevenueTargetsEvents();
+    loadRevenueTargets();
+  }
+
   function renderDashboard() {
     main.innerHTML =
       '<div class="space-y-6">' +
@@ -3309,7 +3859,6 @@
       '<p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Account settings (as user sees)</p>' +
       '<dl class="space-y-3 text-sm">' +
       emailPrefRow('All hub emails', u.emailsEnabled !== false) +
-      emailPrefRow('Newsletter', u.emailPrefNewsletter !== false) +
       emailPrefRow('Event reminders', u.emailPrefEventReminders !== false) +
       emailPrefRow('Organiser alerts', u.emailPrefOrganiserAlerts !== false) +
       (u.organiserTermsAcceptedAt
@@ -4950,7 +5499,7 @@
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5" id="event-carousel-admin">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
       '<div><h3 class="font-bold text-brand-900">Event & organiser pages — Sponsor carousel</h3>' +
-      '<p class="text-sm text-slate-600 mt-1">Five sidebar slots on individual event and organiser profile pages. Each active slot shows a clickable logo that rotates automatically.</p></div></div>' +
+      '<p class="text-sm text-slate-600 mt-1">Three sidebar slots on individual event and organiser profile pages. Each active slot shows a clickable logo that rotates automatically.</p></div></div>' +
       '<label class="flex items-center gap-2 text-sm text-slate-700">' +
       '<input type="checkbox" id="event-carousel-active" class="rounded border-slate-300" checked> ' +
       'Carousel active (uncheck to hide all event page sidebar ads)</label>' +
@@ -4971,7 +5520,7 @@
 
     var adsState = [];
     var pendingLogos = {};
-    var CAROUSEL_SIZE = 5;
+    var CAROUSEL_SIZE = 3;
 
     function setCarouselStatus(text, tone) {
       if (!statusEl) return;
@@ -5544,7 +6093,7 @@
         SAMPLE_VARS.recommendations_html = previewRecommendationsHtml();
       } else if (slug === 'attendee_signup_events_nudge') {
         SAMPLE_VARS.nearby_events_html =
-          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Events near London</p>' +
+          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Events within 25 miles of London</p>' +
           previewRecommendationsHtml();
         SAMPLE_VARS.popular_events_html =
           '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Popular right now</p>' +
@@ -5555,7 +6104,7 @@
           '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Popular right now</p>' +
           previewRecommendationsHtml();
         SAMPLE_VARS.nearby_events_html =
-          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Events near London</p>' +
+          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Events within 25 miles of London</p>' +
           previewRecommendationsHtml();
       } else if (slug === 'saved_organiser_new_listing') {
         SAMPLE_VARS.event_time = ' · ' + SAMPLE_VARS.event_time;
@@ -10167,763 +10716,11 @@
       '<p class="text-sm text-slate-600">Social post composer failed to load. Refresh the page.</p>';
   }
 
-  function formatNlRate(pct) {
-    if (pct == null || pct === '') return '—';
-    return String(pct) + '%';
-  }
-
-  function newsletterStatusBadge(status) {
-    var s = String(status || 'draft');
-    var cls =
-      s === 'sent'
-        ? 'bg-emerald-50 text-emerald-800'
-        : s === 'scheduled'
-          ? 'bg-sky-50 text-sky-800'
-          : s === 'sending'
-            ? 'bg-amber-50 text-amber-800'
-            : s === 'cancelled'
-              ? 'bg-slate-100 text-slate-500'
-              : 'bg-violet-50 text-violet-800';
-    return (
-      '<span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ' +
-      cls +
-      '">' +
-      esc(s) +
-      '</span>'
-    );
-  }
-
-  function newsletterAnalyticsHtml(analytics) {
-    if (!analytics || analytics.schemaMissing) {
-      return (
-        '<p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">Run Supabase migration <strong>092_newsletter_analytics.sql</strong> to enable open and click tracking.</p>'
-      );
-    }
-
-    if (!analytics.configured || !analytics.tracked) {
-      return (
-        '<p class="text-sm text-slate-500">No tracked sends yet for this edition. Stats appear after test or scheduled sends, once Resend webhooks are configured.</p>' +
-        '<p class="text-xs text-slate-400 mt-2">Resend → Webhooks → <code class="bg-slate-100 px-1 rounded">/api/resend-webhook</code> · events: delivered, opened, clicked, bounced · set <code class="bg-slate-100 px-1 rounded">RESEND_WEBHOOK_SECRET</code> in Vercel.</p>'
-      );
-    }
-
-    var linksHtml =
-      analytics.topLinks && analytics.topLinks.length
-        ? '<ul class="mt-3 space-y-2 text-sm">' +
-          analytics.topLinks
-            .map(function (link) {
-              return (
-                '<li class="flex items-start justify-between gap-3 border-b border-slate-100 pb-2">' +
-                '<a href="' +
-                attrEsc(link.url) +
-                '" target="_blank" rel="noopener noreferrer" class="text-brand-700 hover:underline break-all text-xs">' +
-                esc(link.url) +
-                '</a>' +
-                '<span class="shrink-0 text-xs font-semibold text-slate-600">' +
-                esc(String(link.clickCount)) +
-                ' clicks</span></li>'
-              );
-            })
-            .join('') +
-          '</ul>'
-        : '<p class="text-xs text-slate-400 mt-2">No link clicks recorded yet.</p>';
-
-    return (
-      '<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">' +
-      '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Tracked sends</p><p class="text-lg font-bold text-brand-900">' +
-      esc(String(analytics.tracked)) +
-      '</p></div>' +
-      '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Open rate</p><p class="text-lg font-bold text-brand-900">' +
-      esc(formatNlRate(analytics.openRatePct)) +
-      '</p><p class="text-[11px] text-slate-500">' +
-      esc(String(analytics.uniqueOpens)) +
-      ' unique</p></div>' +
-      '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Click rate</p><p class="text-lg font-bold text-brand-900">' +
-      esc(formatNlRate(analytics.clickRatePct)) +
-      '</p><p class="text-[11px] text-slate-500">' +
-      esc(String(analytics.uniqueClicks)) +
-      ' unique</p></div>' +
-      '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">CTOR</p><p class="text-lg font-bold text-brand-900">' +
-      esc(formatNlRate(analytics.clickToOpenRatePct)) +
-      '</p><p class="text-[11px] text-slate-500">clicks ÷ opens</p></div>' +
-      '</div>' +
-      '<p class="text-xs text-slate-500 mt-3">Delivered ' +
-      esc(String(analytics.delivered)) +
-      ' · Bounced ' +
-      esc(String(analytics.bounced)) +
-      ' · Total opens ' +
-      esc(String(analytics.totalOpens)) +
-      ' · Total clicks ' +
-      esc(String(analytics.totalClicks)) +
-      '</p>' +
-      '<div class="mt-4"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">Top clicked links</p>' +
-      linksHtml +
-      '</div>' +
-      '<p class="text-[11px] text-slate-400 mt-3">Open rates can be understated (privacy filters block tracking pixels). Data from Resend webhooks — may take a few minutes to update.</p>'
-    );
-  }
-
-  function renderNewsletterHub(fullHash) {
-    var hash = String(fullHash || 'newsletter');
-    var tab = hash.indexOf('/stats') !== -1 ? 'stats' : 'compose';
-    var tabsHtml = adminHubTabsHtml(
-      [
-        { key: 'compose', label: 'Compose', href: '#newsletter' },
-        { key: 'stats', label: 'Engagement stats', href: '#newsletter/stats' },
-      ],
-      tab
-    );
-    if (tab === 'stats') withHubTabs(tabsHtml, renderNewsletterStats);
-    else withHubTabs(tabsHtml, renderNewsletterComposer);
-  }
-
-  function renderNewsletterStats() {
-    var selectedEditionId = '';
-    var summaryRows = [];
-
-    function setStatsStatus(text, tone) {
-      var el = document.getElementById('nl-stats-status');
-      if (!el) return;
-      el.textContent = text || '';
-      el.className =
-        'text-sm ' +
-        (tone === 'error' ? 'text-red-600' : tone === 'ok' ? 'text-emerald-700' : 'text-slate-500');
-    }
-
-    function pickDefaultEditionId() {
-      var withSends = summaryRows.filter(function (row) {
-        return row.analytics && row.analytics.tracked > 0;
-      });
-      if (withSends.length) return withSends[0].edition.id;
-      if (summaryRows.length) return summaryRows[0].edition.id;
-      return '';
-    }
-
-    function renderSummaryTable() {
-      var body = document.getElementById('nl-stats-table-body');
-      var empty = document.getElementById('nl-stats-empty');
-      if (!body) return;
-
-      if (!summaryRows.length) {
-        body.innerHTML = '';
-        if (empty) empty.hidden = false;
-        return;
-      }
-      if (empty) empty.hidden = true;
-
-      body.innerHTML = summaryRows
-        .map(function (row) {
-          var e = row.edition || {};
-          var a = row.analytics || {};
-          var active = e.id === selectedEditionId;
-          var label = e.editionLabel || e.subject || 'Untitled';
-          var sent =
-            e.sentCount != null && e.recipientCount
-              ? String(e.sentCount) + ' / ' + String(e.recipientCount)
-              : e.sentCount != null
-                ? String(e.sentCount)
-                : '—';
-          return (
-            '<tr class="nl-stats-row cursor-pointer transition ' +
-            (active ? 'bg-brand-50' : 'hover:bg-slate-50') +
-            '" data-nl-stats-id="' +
-            attrEsc(e.id) +
-            '">' +
-            '<td class="px-4 py-3 align-top"><span class="block text-sm font-semibold text-brand-900">' +
-            esc(label) +
-            '</span><span class="block mt-1">' +
-            newsletterStatusBadge(e.status) +
-            '</span></td>' +
-            '<td class="px-4 py-3 align-top text-sm text-slate-600">' +
-            esc(sent) +
-            '</td>' +
-            '<td class="px-4 py-3 align-top text-sm font-semibold text-slate-800">' +
-            esc(String(a.tracked || 0)) +
-            '</td>' +
-            '<td class="px-4 py-3 align-top text-sm text-slate-800">' +
-            esc(formatNlRate(a.openRatePct)) +
-            '</td>' +
-            '<td class="px-4 py-3 align-top text-sm text-slate-800">' +
-            esc(formatNlRate(a.clickRatePct)) +
-            '</td>' +
-            '<td class="px-4 py-3 align-top text-sm text-slate-800">' +
-            esc(formatNlRate(a.clickToOpenRatePct)) +
-            '</td></tr>'
-          );
-        })
-        .join('');
-
-      body.querySelectorAll('.nl-stats-row').forEach(function (tr) {
-        tr.addEventListener('click', function () {
-          selectedEditionId = tr.getAttribute('data-nl-stats-id') || '';
-          renderSummaryTable();
-          loadEditionDetail(selectedEditionId);
-        });
-      });
-    }
-
-    function loadEditionDetail(editionId) {
-      var panel = document.getElementById('nl-stats-detail-panel');
-      var title = document.getElementById('nl-stats-detail-title');
-      if (!panel) return;
-      if (!editionId) {
-        panel.innerHTML =
-          '<p class="text-sm text-slate-500">Select an edition to view open rates, click-through, and top links.</p>';
-        if (title) title.textContent = 'Edition detail';
-        return;
-      }
-
-      var row = summaryRows.find(function (r) {
-        return r.edition && r.edition.id === editionId;
-      });
-      if (title) {
-        title.textContent =
-          (row && (row.edition.editionLabel || row.edition.subject)) || 'Edition detail';
-      }
-
-      panel.innerHTML = '<p class="text-sm text-slate-500">Loading edition stats…</p>';
-      adminGet('/api/admin/newsletter?id=' + encodeURIComponent(editionId) + '&analytics=1')
-        .then(function (data) {
-          if (!data.ok) throw new Error(data.message || data.error || 'analytics_failed');
-          panel.innerHTML = newsletterAnalyticsHtml(data.analytics || null);
-        })
-        .catch(function () {
-          panel.innerHTML =
-            '<p class="text-sm text-slate-500">Could not load stats for this edition.</p>';
-        });
-    }
-
-    function loadSummary() {
-      setStatsStatus('Loading engagement stats…');
-      adminGet('/api/admin/newsletter?analytics_summary=1')
-        .then(function (data) {
-          if (!data.ok) throw new Error(data.message || data.error || 'Load failed');
-          if (data.schemaMissing) {
-            summaryRows = [];
-            renderSummaryTable();
-            var panel = document.getElementById('nl-stats-detail-panel');
-            if (panel) panel.innerHTML = newsletterAnalyticsHtml({ schemaMissing: true });
-            setStatsStatus('Analytics tables not set up yet.', 'error');
-            return;
-          }
-          summaryRows = data.rows || [];
-          if (!selectedEditionId) selectedEditionId = pickDefaultEditionId();
-          renderSummaryTable();
-          loadEditionDetail(selectedEditionId);
-          var trackedTotal = summaryRows.reduce(function (sum, row) {
-            return sum + (Number(row.analytics && row.analytics.tracked) || 0);
-          }, 0);
-          setStatsStatus(
-            summaryRows.length +
-              ' edition(s) · ' +
-              trackedTotal +
-              ' tracked send(s). Data from Resend webhooks.',
-            'ok'
-          );
-        })
-        .catch(function (err) {
-          setStatsStatus(err.message || 'Could not load stats.', 'error');
-        });
-    }
-
-    main.innerHTML =
-      '<div class="space-y-6">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Review <strong>open rates</strong>, <strong>click-through</strong>, and <strong>top links</strong> for every newsletter edition. Stats update from Resend webhooks a few minutes after members open or click.</p>' +
-      '<div class="flex flex-wrap items-center justify-between gap-3">' +
-      '<p id="nl-stats-status" class="text-sm text-slate-500">Loading…</p>' +
-      '<button type="button" id="nl-stats-refresh" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Refresh</button>' +
-      '</div>' +
-      '<div class="grid xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-6">' +
-      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
-      '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">All editions</h3></div>' +
-      '<div class="overflow-x-auto">' +
-      '<table class="w-full text-left text-sm"><thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">' +
-      '<tr><th class="px-4 py-2 font-semibold">Edition</th><th class="px-4 py-2 font-semibold">Sent</th><th class="px-4 py-2 font-semibold">Tracked</th><th class="px-4 py-2 font-semibold">Opens</th><th class="px-4 py-2 font-semibold">Clicks</th><th class="px-4 py-2 font-semibold">CTOR</th></tr>' +
-      '</thead><tbody id="nl-stats-table-body"></tbody></table></div>' +
-      '<p id="nl-stats-empty" class="text-sm text-slate-500 px-4 py-6" hidden>No newsletter editions yet.</p>' +
-      '</section>' +
-      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">' +
-      '<div class="flex flex-wrap items-center justify-between gap-2 mb-4">' +
-      '<h3 id="nl-stats-detail-title" class="font-bold text-brand-900">Edition detail</h3>' +
-      '<a href="#newsletter" class="text-xs font-semibold text-brand-700 hover:text-brand-900">Edit in composer →</a>' +
-      '</div>' +
-      '<div id="nl-stats-detail-panel"><p class="text-sm text-slate-500">Select an edition to view details.</p></div>' +
-      '</section></div></div>';
-
-    document.getElementById('nl-stats-refresh').addEventListener('click', loadSummary);
-    loadSummary();
-  }
-
-  function renderNewsletterComposer() {
-    var selectedEditionId = '';
-    var editions = [];
-    var recipientCount = 0;
-    var nlTestRecipients = [];
-
-    function renderNlTestRecipientSelect() {
-      var select = document.getElementById('nl-test-to');
-      if (!select) return;
-      if (!nlTestRecipients.length) {
-        select.innerHTML =
-          '<option value="">No safe test addresses — add under Email templates</option>';
-        return;
-      }
-      select.innerHTML =
-        '<option value="">Select a safe test address…</option>' +
-        nlTestRecipients
-          .map(function (row) {
-            var label = row.label ? row.label + ' (' + row.email + ')' : row.email;
-            return (
-              '<option value="' + attrEsc(row.email) + '">' + esc(label) + '</option>'
-            );
-          })
-          .join('');
-    }
-
-    function editionPayloadFromForm() {
-      var autoFeaturedEl = document.getElementById('nl-auto-featured');
-      var autoFeatured = autoFeaturedEl ? autoFeaturedEl.checked : true;
-      var manualIds = autoFeatured
-        ? { featuredEventIds: [], featuredOrganiserIds: [], featuredOpportunityIds: [] }
-        : {
-            featuredEventIds: String((document.getElementById('nl-event-ids') || {}).value || '')
-              .split(/[\s,]+/)
-              .filter(Boolean),
-            featuredOrganiserIds: String((document.getElementById('nl-organiser-ids') || {}).value || '')
-              .split(/[\s,]+/)
-              .filter(Boolean),
-            featuredOpportunityIds: String((document.getElementById('nl-opportunity-ids') || {}).value || '')
-              .split(/[\s,]+/)
-              .filter(Boolean),
-          };
-      return {
-        id: selectedEditionId || undefined,
-        editionLabel: (document.getElementById('nl-label') || {}).value || '',
-        subject: (document.getElementById('nl-subject') || {}).value || '',
-        preheader: (document.getElementById('nl-preheader') || {}).value || '',
-        articleTitle: (document.getElementById('nl-article-title') || {}).value || '',
-        articleBody: (document.getElementById('nl-article-body') || {}).value || '',
-        articleImageUrl: (document.getElementById('nl-article-image') || {}).value || '',
-        layout: (document.getElementById('nl-layout') || {}).value || 'magazine',
-        hubNews: (document.getElementById('nl-hub-news') || {}).value || '',
-        memberSpotlightName: (document.getElementById('nl-spotlight-name') || {}).value || '',
-        memberSpotlightTitle: (document.getElementById('nl-spotlight-title') || {}).value || '',
-        memberSpotlightBody: (document.getElementById('nl-spotlight-body') || {}).value || '',
-        memberSpotlightImageUrl: (document.getElementById('nl-spotlight-image') || {}).value || '',
-        autoFeatured: autoFeatured,
-        useEventsSponsor: (document.getElementById('nl-use-sponsor') || { checked: true }).checked,
-        featuredEventIds: manualIds.featuredEventIds,
-        featuredOrganiserIds: manualIds.featuredOrganiserIds,
-        featuredOpportunityIds: manualIds.featuredOpportunityIds,
-      };
-    }
-
-    function setNlStatus(text, tone) {
-      var el = document.getElementById('nl-status');
-      if (!el) return;
-      el.textContent = text || '';
-      el.className =
-        'text-sm ' +
-        (tone === 'error' ? 'text-red-600' : tone === 'ok' ? 'text-emerald-700' : 'text-slate-500');
-    }
-
-    function statusBadge(status) {
-      return newsletterStatusBadge(status);
-    }
-
-    function fillEditionForm(edition) {
-      var e = edition || {};
-      selectedEditionId = e.id || '';
-      var set = function (id, val) {
-        var node = document.getElementById(id);
-        if (node) node.value = val == null ? '' : String(val);
-      };
-      var setCheck = function (id, val) {
-        var node = document.getElementById(id);
-        if (node) node.checked = val !== false;
-      };
-      set('nl-label', e.editionLabel || '');
-      set('nl-subject', e.subject || '');
-      set('nl-preheader', e.preheader || '');
-      set('nl-article-title', e.articleTitle || '');
-      set('nl-article-body', e.articleBody || '');
-      set('nl-article-image', e.articleImageUrl || '');
-      set('nl-layout', e.layout || 'magazine');
-      set('nl-hub-news', e.hubNews || '');
-      set('nl-spotlight-name', e.memberSpotlightName || '');
-      set('nl-spotlight-title', e.memberSpotlightTitle || '');
-      set('nl-spotlight-body', e.memberSpotlightBody || '');
-      set('nl-spotlight-image', e.memberSpotlightImageUrl || '');
-      setCheck('nl-auto-featured', e.autoFeatured);
-      setCheck('nl-use-sponsor', e.useEventsSponsor);
-      set(
-        'nl-event-ids',
-        Array.isArray(e.featuredEventIds) ? e.featuredEventIds.join(', ') : ''
-      );
-      set(
-        'nl-organiser-ids',
-        Array.isArray(e.featuredOrganiserIds) ? e.featuredOrganiserIds.join(', ') : ''
-      );
-      set(
-        'nl-opportunity-ids',
-        Array.isArray(e.featuredOpportunityIds) ? e.featuredOpportunityIds.join(', ') : ''
-      );
-      var sched = document.getElementById('nl-scheduled-at');
-      if (sched) {
-        if (e.scheduledAt) {
-          var d = new Date(e.scheduledAt);
-          if (!Number.isNaN(d.getTime())) {
-            sched.value = d.toISOString().slice(0, 16);
-          } else sched.value = '';
-        } else sched.value = '';
-      }
-      var manual = document.getElementById('nl-manual-ids');
-      if (manual) manual.hidden = e.autoFeatured !== false;
-      var meta = document.getElementById('nl-edition-meta');
-      if (meta) {
-        var layoutLabel =
-          e.layout === 'classic'
-            ? 'Classic'
-            : e.layout === 'editorial'
-              ? 'Editorial'
-              : 'Magazine';
-        meta.textContent = e.id
-          ? statusBadge(e.status) +
-            ' · ' +
-            layoutLabel +
-            ' · Sent ' +
-            (e.sentCount || 0) +
-            (e.recipientCount ? ' / ' + e.recipientCount : '') +
-            (e.scheduledAt ? ' · Scheduled ' + new Date(e.scheduledAt).toLocaleString('en-GB') : '')
-          : 'New draft';
-      }
-    }
-
-    function renderEditionList() {
-      var list = document.getElementById('nl-edition-list');
-      if (!list) return;
-      if (!editions.length) {
-        list.innerHTML =
-          '<li class="text-xs text-slate-400 px-2">No editions yet — create your first newsletter below.</li>';
-        return;
-      }
-      list.innerHTML = editions
-        .map(function (e) {
-          var active = e.id === selectedEditionId;
-          return (
-            '<li><button type="button" data-nl-id="' +
-            attrEsc(e.id) +
-            '" class="w-full text-left rounded-lg px-3 py-2 transition ' +
-            (active
-              ? 'bg-brand-50 text-brand-900 font-semibold border border-brand-100'
-              : 'text-slate-700 hover:bg-slate-50 border border-transparent') +
-            '"><span class="block text-sm">' +
-            esc(e.editionLabel || e.subject || 'Untitled') +
-            '</span><span class="block mt-1">' +
-            statusBadge(e.status) +
-            '</span></button></li>'
-          );
-        })
-        .join('');
-      list.querySelectorAll('[data-nl-id]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var id = btn.getAttribute('data-nl-id');
-          var edition = editions.find(function (row) {
-            return row.id === id;
-          });
-          if (edition) fillEditionForm(edition);
-        });
-      });
-    }
-
-    function refreshPreview() {
-      var frame = document.getElementById('nl-preview-frame');
-      if (!frame) return;
-      setNlStatus('Rendering preview…');
-      adminPost('/api/admin/newsletter', {
-        action: 'preview',
-        edition: editionPayloadFromForm(),
-      })
-        .then(function (data) {
-          if (!data.ok) throw new Error(data.message || data.error || 'Preview failed');
-          frame.srcdoc = data.html || '';
-          var subj = document.getElementById('nl-preview-subject');
-          if (subj) subj.textContent = 'Subject: ' + (data.subject || '');
-          setNlStatus('Preview updated.', 'ok');
-        })
-        .catch(function (err) {
-          setNlStatus(hubEmailActionMessage(err.code, err.message || 'Preview failed.'), 'error');
-        });
-    }
-
-    function loadEditions(selectId) {
-      setNlStatus('Loading editions…');
-      Promise.all([
-        adminGet('/api/admin/newsletter'),
-        adminGet('/api/admin/newsletter?recipients=1'),
-        adminGet('/api/admin/emails?test_recipients=1'),
-      ])
-        .then(function (results) {
-          var data = results[0];
-          var rec = results[1];
-          var testRec = results[2];
-          if (!data.ok) throw new Error(data.message || data.error || 'Load failed');
-          editions = data.editions || [];
-          recipientCount = rec.ok ? Number(rec.count) || 0 : 0;
-          nlTestRecipients = testRec.ok ? testRec.testRecipients || [] : [];
-          renderNlTestRecipientSelect();
-          var countEl = document.getElementById('nl-recipient-count');
-          if (countEl) countEl.textContent = String(recipientCount);
-          if (selectId) selectedEditionId = selectId;
-          else if (!selectedEditionId && editions.length) selectedEditionId = editions[0].id;
-          renderEditionList();
-          var current = editions.find(function (e) {
-            return e.id === selectedEditionId;
-          });
-          fillEditionForm(current || {});
-          setNlStatus(editions.length + ' edition(s) · ' + recipientCount + ' potential recipients.');
-          refreshPreview();
-        })
-        .catch(function (err) {
-          setNlStatus(err.message || 'Could not load newsletters.', 'error');
-        });
-    }
-
-    main.innerHTML =
-      '<div class="space-y-6">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Compose a <strong>Hub newsletter</strong> with the Events browse sponsor, an editorial article (optional image), Hub news, featured listings, and a member spotlight. Queue listings from <strong>Social posts</strong> with “Add to next newsletter”. Choose a <strong>layout</strong> — <strong>Magazine</strong> includes the live <strong>Top 10 organiser rankings</strong>. Schedule sends <strong>50 members per day</strong> until complete (respects member email preferences).</p>' +
-      '<div class="grid lg:grid-cols-[220px_minmax(0,1fr)] gap-6">' +
-      '<aside class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">' +
-      '<div class="flex items-center justify-between gap-2 mb-3">' +
-      '<h3 class="text-xs font-bold uppercase tracking-wide text-slate-500">Editions</h3>' +
-      '<button type="button" id="nl-new-btn" class="text-xs font-semibold text-brand-700 hover:text-brand-900">+ New</button>' +
-      '</div>' +
-      '<ul id="nl-edition-list" class="space-y-1 text-sm"></ul>' +
-      '<p class="text-[11px] text-slate-400 mt-4"><span id="nl-recipient-count">0</span> opted-in members</p>' +
-      '</aside>' +
-      '<div class="space-y-6">' +
-      '<form id="nl-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">' +
-      '<div class="flex flex-wrap items-start justify-between gap-3">' +
-      '<div><h3 class="font-bold text-brand-900 text-lg">Newsletter composer</h3>' +
-      '<p id="nl-edition-meta" class="text-xs text-slate-500 mt-1">New draft</p></div>' +
-      '<p id="nl-status" class="text-sm text-slate-500"></p></div>' +
-      '<div class="grid sm:grid-cols-2 gap-4">' +
-      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="nl-label">Edition label</label>' +
-      '<input id="nl-label" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="July 2026"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="nl-subject">Email subject</label>' +
-      '<input id="nl-subject" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Your monthly networking roundup"></div>' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="nl-preheader">Preheader <span class="font-normal normal-case">(inbox preview)</span></label>' +
-      '<input id="nl-preheader" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Featured events, organisers and opportunities this month"></div>' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="nl-layout">Email design</label>' +
-      '<select id="nl-layout" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white">' +
-      '<option value="magazine">Magazine — warm header, Top 10 rankings & wave</option>' +
-      '<option value="classic">Classic — navy header, compact cards</option>' +
-      '<option value="editorial">Editorial — story-led with hero image</option>' +
-      '</select></div>' +
-      '</div>' +
-      '<div class="border-t border-slate-100 pt-4 space-y-3">' +
-      '<h4 class="text-sm font-bold text-brand-900">Editorial article</h4>' +
-      '<input id="nl-article-title" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Article headline">' +
-      '<input id="nl-article-image" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Article image URL (optional — thumbnail in Magazine/Classic, wide hero in Editorial)">' +
-      '<textarea id="nl-article-body" rows="5" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="A short article or note from the editor. Blank lines become paragraphs."></textarea>' +
-      '</div>' +
-      '<div class="border-t border-slate-100 pt-4 space-y-3">' +
-      '<h4 class="text-sm font-bold text-brand-900">Hub news</h4>' +
-      '<textarea id="nl-hub-news" rows="4" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="One bullet per line, e.g.&#10;New organiser verification badges are live&#10;Business opportunities directory now includes premium placement"></textarea>' +
-      '</div>' +
-      '<div class="border-t border-slate-100 pt-4 space-y-3">' +
-      '<h4 class="text-sm font-bold text-brand-900">Member spotlight</h4>' +
-      '<div class="grid sm:grid-cols-2 gap-4">' +
-      '<input id="nl-spotlight-name" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Name">' +
-      '<input id="nl-spotlight-title" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Role / company">' +
-      '<input id="nl-spotlight-image" class="sm:col-span-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Photo URL (optional)">' +
-      '</div>' +
-      '<textarea id="nl-spotlight-body" rows="3" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Quote or short profile"></textarea>' +
-      '</div>' +
-      '<div class="border-t border-slate-100 pt-4 space-y-3">' +
-      '<h4 class="text-sm font-bold text-brand-900">Featured listings</h4>' +
-      '<label class="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="nl-auto-featured" class="rounded border-slate-300" checked> Auto-fill from Hub <span class="text-slate-400">(featured events, top organisers, opportunities)</span></label>' +
-      '<label class="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="nl-use-sponsor" class="rounded border-slate-300" checked> Include Events browse sponsor</label>' +
-      '<div id="nl-manual-ids" class="grid sm:grid-cols-1 gap-3 hidden">' +
-      '<input id="nl-event-ids" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono text-xs" placeholder="Event UUIDs (comma-separated)">' +
-      '<input id="nl-organiser-ids" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono text-xs" placeholder="Organiser UUIDs">' +
-      '<input id="nl-opportunity-ids" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono text-xs" placeholder="Opportunity UUIDs">' +
-      '</div></div>' +
-      '<div class="border-t border-slate-100 pt-4">' +
-      '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="nl-scheduled-at">Schedule send</label>' +
-      '<input type="datetime-local" id="nl-scheduled-at" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
-      '<p class="text-xs text-slate-500 mt-2">Sends start at this time (UTC on server). Large lists continue daily until complete.</p>' +
-      '</div>' +
-      '<div class="flex flex-wrap gap-2 pt-2">' +
-      '<button type="button" id="nl-save-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save draft</button>' +
-      '<button type="button" id="nl-preview-btn" class="rounded-lg border border-slate-200 text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Refresh preview</button>' +
-      '<button type="button" id="nl-schedule-btn" class="rounded-lg border border-brand-700 text-brand-700 text-sm font-semibold px-4 py-2 hover:bg-brand-50">Schedule</button>' +
-      '<button type="button" id="nl-cancel-btn" class="rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Cancel edition</button>' +
-      '<button type="button" id="nl-duplicate-btn" class="rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Duplicate</button>' +
-      '</div>' +
-      '<div class="border-t border-slate-100 pt-4 flex flex-wrap gap-3 items-end">' +
-      '<div class="flex-1 min-w-[200px]"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="nl-test-to">Send test to</label>' +
-      '<select id="nl-test-to" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white">' +
-      '<option value="">Loading safe test addresses…</option></select>' +
-      '<p class="text-[11px] text-slate-400 mt-1">Uses the same safe test list as Email templates.</p></div>' +
-      '<button type="button" id="nl-test-btn" class="rounded-lg border border-brand-700 text-brand-700 text-sm font-semibold px-4 py-2 hover:bg-brand-50">Send test</button>' +
-      '</div></form>' +
-      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">' +
-      '<h3 class="font-bold text-brand-900 mb-1">Preview</h3>' +
-      '<p id="nl-preview-subject" class="text-sm text-slate-600 mb-4"></p>' +
-      '<iframe id="nl-preview-frame" title="Newsletter preview" class="w-full rounded-lg border border-slate-100 bg-white" style="height:min(80vh,720px);border:0;" sandbox="allow-same-origin allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"></iframe>' +
-      '</section>' +
-      '<p class="text-sm text-slate-600">After sending, view <a href="#newsletter/stats" class="text-brand-700 font-semibold hover:underline">Engagement stats</a> for opens, clicks, and top links.</p>' +
-      '</div></div></div>';
-
-    document.getElementById('nl-auto-featured').addEventListener('change', function () {
-      var manual = document.getElementById('nl-manual-ids');
-      if (manual) manual.hidden = this.checked;
-      if (this.checked) {
-        ['nl-event-ids', 'nl-organiser-ids', 'nl-opportunity-ids'].forEach(function (id) {
-          var node = document.getElementById(id);
-          if (node) node.value = '';
-        });
-      }
-    });
-
-    var nlLayout = document.getElementById('nl-layout');
-    if (nlLayout) {
-      nlLayout.addEventListener('change', refreshPreview);
-    }
-
-    document.getElementById('nl-new-btn').addEventListener('click', function () {
-      selectedEditionId = '';
-      fillEditionForm({});
-      renderEditionList();
-      refreshPreview();
-    });
-
-    document.getElementById('nl-save-btn').addEventListener('click', function () {
-      setNlStatus('Saving…');
-      adminPost('/api/admin/newsletter', { action: 'save', edition: editionPayloadFromForm() })
-        .then(function (data) {
-          if (!data.ok) throw new Error(data.message || data.error || 'Save failed');
-          if (data.edition && data.edition.id) {
-            selectedEditionId = data.edition.id;
-            var idx = editions.findIndex(function (row) {
-              return row.id === data.edition.id;
-            });
-            if (idx >= 0) editions[idx] = data.edition;
-            else editions.unshift(data.edition);
-            renderEditionList();
-            fillEditionForm(data.edition);
-          }
-          setNlStatus('Saved.', 'ok');
-        })
-        .catch(function (err) {
-          setNlStatus(err.message || 'Save failed.', 'error');
-        });
-    });
-
-    document.getElementById('nl-preview-btn').addEventListener('click', refreshPreview);
-
-    document.getElementById('nl-schedule-btn').addEventListener('click', function () {
-      var when = (document.getElementById('nl-scheduled-at') || {}).value;
-      if (!when) {
-        setNlStatus('Choose a schedule date and time first.', 'error');
-        return;
-      }
-      if (
-        !window.confirm(
-          'Schedule this newsletter? It will send to opted-in members starting at the chosen time.'
-        )
-      ) {
-        return;
-      }
-      setNlStatus('Scheduling…');
-      adminPost('/api/admin/newsletter', {
-        action: 'schedule',
-        edition: editionPayloadFromForm(),
-        scheduled_at: new Date(when).toISOString(),
-      })
-        .then(function (data) {
-          if (!data.ok) throw new Error(data.message || data.error || 'Schedule failed');
-          loadEditions(data.edition.id);
-          setNlStatus('Scheduled.', 'ok');
-        })
-        .catch(function (err) {
-          setNlStatus(err.message || 'Schedule failed.', 'error');
-        });
-    });
-
-    document.getElementById('nl-cancel-btn').addEventListener('click', function () {
-      if (!selectedEditionId) return;
-      if (!window.confirm('Cancel this edition?')) return;
-      adminPost('/api/admin/newsletter', { action: 'cancel', id: selectedEditionId })
-        .then(function (data) {
-          if (!data.ok) throw new Error(data.message || data.error || 'Cancel failed');
-          loadEditions();
-          setNlStatus('Edition cancelled.', 'ok');
-        })
-        .catch(function (err) {
-          setNlStatus(err.message || 'Cancel failed.', 'error');
-        });
-    });
-
-    document.getElementById('nl-duplicate-btn').addEventListener('click', function () {
-      if (!selectedEditionId) {
-        setNlStatus('Save the edition first before duplicating.', 'error');
-        return;
-      }
-      adminPost('/api/admin/newsletter', { action: 'duplicate', id: selectedEditionId })
-        .then(function (data) {
-          if (!data.ok) throw new Error(data.message || data.error || 'Duplicate failed');
-          loadEditions(data.edition.id);
-          setNlStatus('Duplicated — edit dates and schedule the copy.', 'ok');
-        })
-        .catch(function (err) {
-          setNlStatus(err.message || 'Duplicate failed.', 'error');
-        });
-    });
-
-    document.getElementById('nl-test-btn').addEventListener('click', function () {
-      var to = String((document.getElementById('nl-test-to') || {}).value || '').trim();
-      if (!to) {
-        setNlStatus(
-          nlTestRecipients.length
-            ? 'Choose a safe test address from the dropdown.'
-            : 'No safe test addresses yet. Add one under Email → Safe test recipients.',
-          'error'
-        );
-        return;
-      }
-      setNlStatus('Sending test…');
-      adminPost('/api/admin/newsletter', {
-        action: 'send_test',
-        to: to,
-        edition: editionPayloadFromForm(),
-      })
-        .then(function (data) {
-          if (!data.ok) {
-            var err = new Error(data.message || data.error || 'Test send failed');
-            err.code = data.error;
-            throw err;
-          }
-          setNlStatus(
-            'Test sent to ' +
-              (data.to || to) +
-              '. Check your inbox and spam folder (may take a minute). View stats under Engagement stats.',
-            'ok'
-          );
-        })
-        .catch(function (err) {
-          setNlStatus(hubEmailActionMessage(err.code, err.message || 'Test send failed.'), 'error');
-        });
-    });
-
-    loadEditions();
-  }
 
   function renderCampaigns() {
     main.innerHTML =
       '<div class="space-y-6 max-w-3xl">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Legacy bulk send for <strong>organiser claim-profile invites</strong>. For the Hub newsletter, use <a href="#newsletter" class="text-brand-700 font-semibold hover:underline">Comms → Newsletter</a>.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Legacy bulk send for <strong>organiser claim-profile invites</strong>.</p>' +
       '<form id="campaign-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">' +
       '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-recipients">Recipient emails</label>' +
       '<textarea id="campaign-recipients" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[120px]" placeholder="organiser@example.com&#10;one per line"></textarea>' +
@@ -12004,9 +11801,9 @@
     accounts: renderAccountsHub,
     email: renderEmailHub,
     social: renderSocialHub,
-    newsletter: renderNewsletterHub,
     moderation: renderModerationHub,
     financials: renderFinancials,
+    'revenue-targets': renderRevenueTargets,
     spotlight: renderSpotlightHub,
     featured: renderFeatured,
     support: renderSupportHub,

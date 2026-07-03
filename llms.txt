@@ -47,7 +47,7 @@ Sign in, claim your organiser page if prompted, then open the organiser dashboar
 Listings are managed in the events database and updated by organisers and the Networker Hub team. Dates, venues, and prices on each event page are the source of truth for that event.
 
 ## Who operates The Networker Hub?
-The Networker Hub is operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94), co-founded by Rosie and Catherine (Pip).
+The Networker Hub is operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94), co-founded by Rosie and Catherine.
 
 ## Who is Hubert on The Networker Hub?
 Hubert is the business butler and concierge on The Networker Hub. He helps visitors find events and business opportunities, explains how tickets and enquiries work, and guides organisers to the right tools. Chat with Hubert on the contact page or via the floating assistant on public pages.
@@ -77,7 +77,7 @@ Organisers use the dashboard at /organiser/. Platform and payment processing fee
 Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@the-networker.co.uk with the event title if it is still missing.
 
 ## How can I advertise my business on The Networker Hub?
-Paid Sponsor Hub placements are available on event and opportunity pages — email sales@the-networker.co.uk. You can also list events or business opportunities to reach the network organically.
+Paid Sponsor Hub placements on the events directory, organisers browse, and business opportunities — see https://the-networker.co.uk/advertising for guide pricing (main sponsors from £1,000–£2,000/month, mini sponsors from £300–£600/slot, premium spotlight from £27.50–£55/month). Email sales@the-networker.co.uk. You can also list events or business opportunities organically from /organiser/ and /opportunities/list.html.
 
 ## How do organisers download attendee lists?
 Sign in to /organiser/, open Events → Attendees, filter by event, and click Download attendees CSV.
@@ -89,4 +89,4 @@ Payouts are not instant. A 7-day settlement period applies after the event ends.
 Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing. Organisers receive the full ticket price.
 
 ## Why did The Networker Hub start?
-Co-founders Rosie and Pip believe the right room at the right time changes careers and companies. They built one trusted UK platform for events, organiser profiles, and business opportunities.
+Co-founders Rosie and Catherine believe the right room at the right time changes careers and companies. They built one trusted UK platform for events, organiser profiles, and business opportunities.

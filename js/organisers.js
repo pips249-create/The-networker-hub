@@ -14,7 +14,7 @@
 
   var organisers = [];
   var currentPage = 1;
-  var SPOTLIGHT_MAX = 10;
+  var SPOTLIGHT_MAX = 12;
   var SPOTLIGHT_AUTO_MS = 2800;
   var spotlightFeaturedOrder = null;
   var spotlightTimer = null;

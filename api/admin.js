@@ -21,10 +21,11 @@ const routes = {
   impersonate: require('./_lib/routes/admin-impersonate'),
   import: require('./_lib/routes/admin-import'),
   campaigns: require('./_lib/routes/admin-campaigns'),
-  newsletter: require('./_lib/routes/admin-newsletter'),
   rankings: require('./_lib/routes/admin-rankings'),
   spotlight: require('./_lib/routes/admin-spotlight'),
   bookings: require('./_lib/routes/admin-bookings'),
+  'revenue-deals': require('./_lib/routes/admin-revenue-deals'),
+  'revenue-targets': require('./_lib/routes/admin-revenue-targets'),
 };
 
 module.exports = async function handler(req, res) {

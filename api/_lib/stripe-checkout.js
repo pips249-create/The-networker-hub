@@ -91,7 +91,7 @@ function siteBaseUrl() {
 }
 
 /**
- * Prepaid business opportunity listing (£20/month ex VAT, minimum 3 months).
+ * Prepaid business opportunity listing (£25/month ex VAT, minimum 3 months).
  */
 async function createOpportunityListingCheckoutSession(opts) {
   const stripe = getStripeClient();
@@ -123,7 +123,7 @@ async function createOpportunityListingCheckoutSession(opts) {
             description:
               'Directory listing for "' +
               title +
-              '" on The Networker Hub (£20/month ex VAT)',
+              '" on The Networker Hub (£25/month ex VAT)',
           },
           unit_amount: totals.subtotalExVatPence,
         },
@@ -145,7 +145,7 @@ async function createOpportunityListingCheckoutSession(opts) {
 }
 
 /**
- * Monthly premium business opportunity listing (£50/month subscription).
+ * Monthly premium business opportunity listing (£55/month subscription).
  */
 async function createOpportunityPremiumCheckoutSession(opts) {
   const stripe = getStripeClient();
@@ -163,7 +163,7 @@ async function createOpportunityPremiumCheckoutSession(opts) {
               name: 'Premium business opportunity listing',
               description: 'Featured placement in the opportunities directory',
             },
-            unit_amount: 5000,
+            unit_amount: 5500,
             recurring: { interval: 'month' },
           },
           quantity: 1,
@@ -201,7 +201,7 @@ async function retrieveCheckoutSession(sessionId) {
 const { FEATURED_PLANS, normalizePlanId } = require('./event-featured-plans');
 
 /**
- * One-off featured event listing (£20 / £55 / £100 by duration).
+ * One-off featured event listing (£55/month).
  */
 async function createEventFeaturedCheckoutSession(opts) {
   const stripe = getStripeClient();

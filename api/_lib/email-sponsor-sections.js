@@ -51,7 +51,6 @@ const EVENT_MAIN_SPONSOR_SLUGS = new Set([
   'booking_cancelled',
   'event_cancelled',
   'refund_processed',
-  'hub_newsletter',
   'organiser_featured_expiry_reminder',
   'organiser_claim_invite',
   'organiser_team_invite',
@@ -79,7 +78,6 @@ const EVENT_MINI_SPONSOR_SLUGS = new Set([
   'attendee_reengagement',
   'attendee_signup_events_nudge',
   'attendee_signup_events_nudge_followup',
-  'hub_newsletter',
   'booking_cancelled',
   'event_cancelled',
   'refund_processed',
@@ -167,7 +165,12 @@ async function fetchMiniSponsorAds(sb, limit) {
 
 async function getEmailSponsorVars(slug) {
   const empty = { sponsor_row: '', sponsor_section: '', mini_sponsors_row: '' };
-  if (!slug || (!EVENT_MAIN_SPONSOR_SLUGS.has(slug) && !OPPORTUNITY_EMAIL_SLUGS.has(slug))) {
+  if (
+    !slug ||
+    (!EVENT_MAIN_SPONSOR_SLUGS.has(slug) &&
+      !EVENT_MINI_SPONSOR_SLUGS.has(slug) &&
+      !OPPORTUNITY_EMAIL_SLUGS.has(slug))
+  ) {
     return empty;
   }
   if (!isSupabaseConfigured()) return empty;

@@ -12,7 +12,6 @@ const routes = {
   'opportunity-reminders': require('./_lib/routes/cron-opportunity-reminders'),
   'engagement-emails': require('./_lib/routes/cron-engagement-emails'),
   'online-join-reminders': require('./_lib/routes/cron-online-join-reminders'),
-  newsletter: require('./_lib/routes/cron-newsletter'),
   'organiser-rankings': require('./_lib/routes/cron-organiser-rankings'),
 };
 

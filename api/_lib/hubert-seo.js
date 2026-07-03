@@ -41,7 +41,7 @@ function buildOrganizationSchema(origin) {
     },
     founder: [
       { '@type': 'Person', name: 'Rosie' },
-      { '@type': 'Person', name: 'Catherine Hancher', alternateName: 'Pip' },
+      { '@type': 'Person', name: 'Catherine Hancher' },
     ],
   };
 }

@@ -1,6 +1,6 @@
-/** Business opportunity directory listing — £20/month ex VAT, 3-month minimum. */
+/** Business opportunity directory listing — £25/month ex VAT, 3-month minimum. */
 
-const OPPORTUNITY_LISTING_MONTHLY_EX_VAT_PENCE = 2000;
+const OPPORTUNITY_LISTING_MONTHLY_EX_VAT_PENCE = 2500;
 const OPPORTUNITY_LISTING_VAT_RATE = 0.2;
 const OPPORTUNITY_LISTING_MIN_MONTHS = 3;
 const OPPORTUNITY_LISTING_MAX_MONTHS = 36;

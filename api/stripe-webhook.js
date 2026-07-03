@@ -12,6 +12,7 @@ const { isSupabaseConfigured } = require('./_lib/supabase');
 const { handleOpportunityPremiumCheckout, handleOpportunityListingCheckout } = require('./_lib/supabase-opportunities');
 const { handleEventFeaturedCheckout } = require('./_lib/event-featured');
 const { handleChargeRefunded } = require('./_lib/stripe-refund-webhook');
+const { handleInvoicePaid, handleSponsorshipCheckoutCompleted } = require('./_lib/stripe-revenue');
 
 function verifyStripeSignature(rawBody, signatureHeader, secret) {
   if (!signatureHeader || !secret) return false;
@@ -98,14 +99,29 @@ async function handler(req, res) {
   try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object || {};
+      const sponsorshipResult = await handleSponsorshipCheckoutCompleted(session);
       const premiumResult = await handleOpportunityPremiumCheckout(session);
       const listingResult = await handleOpportunityListingCheckout(session);
       const featuredResult = await handleEventFeaturedCheckout(session);
       const registrationResult = await handleCheckoutSessionCompleted(session);
       res.statusCode = 200;
       return res.end(
-        JSON.stringify({ ok: true, premiumResult, listingResult, featuredResult, registrationResult })
+        JSON.stringify({
+          ok: true,
+          sponsorshipResult,
+          premiumResult,
+          listingResult,
+          featuredResult,
+          registrationResult,
+        })
       );
+    }
+
+    if (event.type === 'invoice.paid') {
+      const invoice = event.data.object || {};
+      const revenueResult = await handleInvoicePaid(invoice);
+      res.statusCode = 200;
+      return res.end(JSON.stringify({ ok: true, revenueResult }));
     }
 
     if (event.type === 'charge.refunded') {

@@ -1,5 +1,5 @@
 /**
- * Post-submit upsell — optional £50/month premium listing via Stripe Checkout.
+ * Post-submit upsell — optional £55/month premium listing via Stripe Checkout.
  */
 (function () {
   var params = new URLSearchParams(location.search);

@@ -132,19 +132,12 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: '{{organiser_name}} has a new event',
   },
-  hub_newsletter: {
-    file: 'hub-newsletter.html',
-    marker: 'hub-newsletter-magazine',
-    subject: '{{edition_label}} — {{newsletter_subject}}',
-  },
   password_reset: {
     file: 'password-reset.html',
     marker: 'hub-email-layout-v2',
     subject: 'Reset your Networker Hub password',
   },
 };
-
-const { getNewsletterLayoutConfig, normalizeNewsletterLayout } = require('./newsletter-layouts');
 
 const cache = new Map();
 
@@ -156,16 +149,7 @@ function readTemplateFile(filename) {
   return html;
 }
 
-function resolveBrandedEmailBody(slug, dbBodyHtml, options) {
-  if (slug === 'hub_newsletter') {
-    const layoutCfg = getNewsletterLayoutConfig(options?.newsletterLayout);
-    const body = String(dbBodyHtml || '');
-    if (!body.includes(layoutCfg.marker)) {
-      return { bodyHtml: readTemplateFile(layoutCfg.file), source: 'file' };
-    }
-    return { bodyHtml: body, source: 'database' };
-  }
-
+function resolveBrandedEmailBody(slug, dbBodyHtml) {
   const cfg = BRANDED_EMAIL_TEMPLATES[slug];
   if (!cfg) {
     return { bodyHtml: String(dbBodyHtml || ''), source: 'database' };
@@ -190,5 +174,4 @@ module.exports = {
   resolveBrandedEmailBody,
   getBrandedEmailSubject,
   isBrandedEmailSlug,
-  normalizeNewsletterLayout,
 };

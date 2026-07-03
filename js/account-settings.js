@@ -51,11 +51,9 @@
 
   function fillEmailPrefs(profile) {
     const master = document.getElementById('as-email-master');
-    const newsletter = document.getElementById('as-email-newsletter');
     const reminders = document.getElementById('as-email-reminders');
     const organiserAlerts = document.getElementById('as-email-organiser-alerts');
     if (master) master.checked = profile.emailsEnabled !== false;
-    if (newsletter) newsletter.checked = profile.emailPrefNewsletter !== false;
     if (reminders) reminders.checked = profile.emailPrefEventReminders !== false;
     if (organiserAlerts) organiserAlerts.checked = profile.emailPrefOrganiserAlerts !== false;
     syncEmailPrefDisabled();
@@ -64,7 +62,7 @@
   function syncEmailPrefDisabled() {
     const master = document.getElementById('as-email-master');
     const disabled = master ? !master.checked : false;
-    ['as-email-newsletter', 'as-email-reminders', 'as-email-organiser-alerts'].forEach((id) => {
+    ['as-email-reminders', 'as-email-organiser-alerts'].forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       el.disabled = disabled;
@@ -96,7 +94,6 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           emailsEnabled,
-          emailPrefNewsletter: document.getElementById('as-email-newsletter')?.checked ?? true,
           emailPrefEventReminders: document.getElementById('as-email-reminders')?.checked ?? true,
           emailPrefOrganiserAlerts:
             document.getElementById('as-email-organiser-alerts')?.checked ?? true,

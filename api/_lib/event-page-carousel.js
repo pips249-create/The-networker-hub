@@ -1,5 +1,5 @@
 const EVENT_PAGE_CAROUSEL_SLOT = 'event_page_carousel_ads';
-const EVENT_PAGE_CAROUSEL_SIZE = 5;
+const EVENT_PAGE_CAROUSEL_SIZE = 3;
 
 function parseCarouselBody(body) {
   if (!body) return [];
