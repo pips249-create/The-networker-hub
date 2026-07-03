@@ -1,4 +1,4 @@
-const { signSession, verifySession } = require('./auth');
+const crypto = require('crypto');
 
 const COOKIE_NAME = 'hub_site_preview';
 const COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 7;
@@ -16,21 +16,26 @@ function getPreviewCookieSecret() {
   return getSiteAccessPassword();
 }
 
-function signSiteAccessToken(secret) {
-  if (!secret) return null;
-  return signSession(
-    {
-      type: TOKEN_TYPE,
-      exp: Math.floor(Date.now() / 1000) + COOKIE_MAX_AGE_SEC,
-    },
-    secret
-  );
+function b64url(input) {
+  return Buffer.from(input)
+    .toString('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
 }
 
-function verifySiteAccessToken(token, secret) {
-  const payload = verifySession(token, secret);
-  if (!payload || payload.type !== TOKEN_TYPE) return null;
-  return payload;
+function signSiteAccessToken(secret) {
+  if (!secret) return null;
+  const header = b64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const body = b64url(
+    JSON.stringify({
+      type: TOKEN_TYPE,
+      exp: Math.floor(Date.now() / 1000) + COOKIE_MAX_AGE_SEC,
+    })
+  );
+  const data = `${header}.${body}`;
+  const sig = crypto.createHmac('sha256', secret).update(data).digest('base64url');
+  return `${data}.${sig}`;
 }
 
 function buildSiteAccessCookie(token) {
@@ -39,10 +44,8 @@ function buildSiteAccessCookie(token) {
 }
 
 function setSiteAccessCookie(res) {
-  const secret = getPreviewCookieSecret();
-  const token = signSiteAccessToken(secret);
+  const token = signSiteAccessToken(getPreviewCookieSecret());
   if (!token) return false;
-
   res.setHeader('Set-Cookie', buildSiteAccessCookie(token));
   return true;
 }
@@ -66,7 +69,6 @@ module.exports = {
   getSiteAccessPassword,
   getPreviewCookieSecret,
   signSiteAccessToken,
-  verifySiteAccessToken,
   buildSiteAccessCookie,
   setSiteAccessCookie,
   siteAccessStatus,
