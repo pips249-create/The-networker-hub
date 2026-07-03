@@ -134,7 +134,7 @@ module.exports = async function handler(req, res) {
           : null,
       siteAccessGate:
         siteAccess.siteAccessRequired && !siteAccess.siteAccessReady
-          ? 'SITE_ACCESS_PASSWORD is set but SESSION_SECRET is missing — the gate cannot issue access cookies until SESSION_SECRET is configured.'
+          ? 'SITE_ACCESS_PASSWORD is set but empty — the gate cannot issue access cookies until a password value is configured.'
           : siteAccess.siteAccessRequired
             ? 'Site access gate is ON. Visitors need the preview password at /site-access.html. Signed-in admins bypass automatically. Remove SITE_ACCESS_PASSWORD when you launch.'
             : null,

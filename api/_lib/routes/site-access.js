@@ -52,25 +52,28 @@ async function handlePasswordUnlock(req, res, body) {
     return json(res, 200, { ok: true, message: 'Site access gate is not enabled.' });
   }
 
-  if (!process.env.SESSION_SECRET) {
+  const expected = getSiteAccessPassword();
+  if (!expected) {
     return json(res, 503, {
       error: 'not_configured',
-      message: 'Set SESSION_SECRET in Vercel to enable the site access gate.',
+      message: 'Set SITE_ACCESS_PASSWORD in Vercel to enable the site access gate.',
     });
   }
 
-  const password = String(body.password || '');
-  const expected = getSiteAccessPassword();
+  const password = String(body.password || '').trim();
 
   if (!password || password !== expected) {
     return json(res, 401, {
       error: 'invalid_password',
-      message: 'Incorrect access password.',
+      message: 'Incorrect preview password. Check SITE_ACCESS_PASSWORD in Vercel matches exactly.',
     });
   }
 
   if (!setSiteAccessCookie(res)) {
-    return json(res, 503, { error: 'cookie_failed' });
+    return json(res, 503, {
+      error: 'cookie_failed',
+      message: 'Could not save preview access. Try again shortly.',
+    });
   }
 
   const session = sessionFromRequest(req);

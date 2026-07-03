@@ -153,15 +153,19 @@ function gateRedirect(url, pathname, search) {
 }
 
 async function hasSiteAccess(request) {
-  const secret = process.env.SESSION_SECRET;
-  if (!secret) return false;
-
   const cookies = parseCookies(request);
-  const preview = await verifySignedToken(cookies[SITE_ACCESS_COOKIE], secret);
-  if (preview && preview.type === SITE_PREVIEW_TOKEN_TYPE) return true;
+  const previewSecret = String(process.env.SITE_ACCESS_PASSWORD || '').trim();
 
-  const session = await verifySignedToken(cookies.hub_session, secret);
-  if (session && String(session.role || '').toLowerCase() === 'admin') return true;
+  if (previewSecret) {
+    const preview = await verifySignedToken(cookies[SITE_ACCESS_COOKIE], previewSecret);
+    if (preview && preview.type === SITE_PREVIEW_TOKEN_TYPE) return true;
+  }
+
+  const sessionSecret = process.env.SESSION_SECRET;
+  if (sessionSecret) {
+    const session = await verifySignedToken(cookies.hub_session, sessionSecret);
+    if (session && String(session.role || '').toLowerCase() === 'admin') return true;
+  }
 
   return false;
 }

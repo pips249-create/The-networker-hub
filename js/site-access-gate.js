@@ -31,17 +31,22 @@
   function friendlyError(result) {
     if (result.data && result.data.message) return result.data.message;
     if (result.data && result.data.error === 'invalid_password') {
-      return 'Incorrect preview password. Please try again.';
+      return 'Incorrect preview password. Check it matches SITE_ACCESS_PASSWORD in Vercel exactly.';
     }
     if (result.data && result.data.error === 'site_private') {
       return 'Preview access is temporarily unavailable. Try again in a moment.';
     }
-    if (result.status === 404) {
-      return 'Preview service not found — the latest deploy may still be building.';
+    if (result.data && result.data.error === 'cookie_failed') {
+      return 'Could not save preview access. Try again shortly.';
     }
-    if (result.data && result.data.error) return String(result.data.error).replace(/_/g, ' ');
-    if (result.text && result.text.indexOf('NOT_FOUND') !== -1) {
-      return 'Preview service not found — the latest deploy may still be building.';
+    if (result.status === 404 || (result.text && result.text.indexOf('NOT_FOUND') !== -1)) {
+      return 'Preview service not found — wait for the latest deploy to finish, then refresh.';
+    }
+    if (result.data && result.data.error) {
+      return String(result.data.error).replace(/_/g, ' ');
+    }
+    if (result.status) {
+      return 'Request failed (HTTP ' + result.status + '). Try again shortly.';
     }
     return 'Something went wrong. Please try again.';
   }
@@ -125,7 +130,7 @@
 
   accessForm.addEventListener('submit', function (e) {
     e.preventDefault();
-    var password = passwordInput.value;
+    var password = passwordInput.value.trim();
     var next = getNextParam();
 
     if (!password) {
@@ -144,7 +149,9 @@
           return;
         }
         showAlert(msg, 'Access granted — opening the site…', 'success');
-        window.location.replace(result.data.redirect || next || '/');
+        window.setTimeout(function () {
+          window.location.replace(result.data.redirect || next || '/');
+        }, 150);
       })
       .catch(function () {
         showAlert(msg, 'Could not reach the server. Try again shortly.', 'error');

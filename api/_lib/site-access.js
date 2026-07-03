@@ -12,6 +12,10 @@ function getSiteAccessPassword() {
   return String(process.env.SITE_ACCESS_PASSWORD || '').trim();
 }
 
+function getPreviewCookieSecret() {
+  return getSiteAccessPassword();
+}
+
 function signSiteAccessToken(secret) {
   if (!secret) return null;
   return signSession(
@@ -29,25 +33,28 @@ function verifySiteAccessToken(token, secret) {
   return payload;
 }
 
+function buildSiteAccessCookie(token) {
+  const secure = process.env.VERCEL_ENV === 'production' ? '; Secure' : '';
+  return `${COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${COOKIE_MAX_AGE_SEC}${secure}`;
+}
+
 function setSiteAccessCookie(res) {
-  const secret = process.env.SESSION_SECRET;
+  const secret = getPreviewCookieSecret();
   const token = signSiteAccessToken(secret);
   if (!token) return false;
 
-  const secure = process.env.VERCEL_ENV === 'production' ? '; Secure' : '';
-  res.setHeader(
-    'Set-Cookie',
-    `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${COOKIE_MAX_AGE_SEC}${secure}`
-  );
+  res.setHeader('Set-Cookie', buildSiteAccessCookie(token));
   return true;
 }
 
 function siteAccessStatus() {
   const required = isSiteAccessRequired();
+  const hasPassword = Boolean(getSiteAccessPassword());
   return {
     siteAccessRequired: required,
+    hasSiteAccessPassword: hasPassword,
     hasSessionSecret: Boolean(process.env.SESSION_SECRET),
-    siteAccessReady: !required || Boolean(process.env.SESSION_SECRET),
+    siteAccessReady: !required || hasPassword,
   };
 }
 
@@ -57,8 +64,10 @@ module.exports = {
   TOKEN_TYPE,
   isSiteAccessRequired,
   getSiteAccessPassword,
+  getPreviewCookieSecret,
   signSiteAccessToken,
   verifySiteAccessToken,
+  buildSiteAccessCookie,
   setSiteAccessCookie,
   siteAccessStatus,
 };
