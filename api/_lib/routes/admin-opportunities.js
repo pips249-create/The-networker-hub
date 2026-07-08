@@ -1,7 +1,69 @@
 const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
-const { normalizeType } = require('../supabase-opportunities');
+const { normalizeType, normalizeMeta } = require('../supabase-opportunities');
 const { sendOpportunityRejectedEmail } = require('../lifecycle-emails');
+const { ensureOpportunitySlug } = require('../opportunity-slug');
+const { addMonths } = require('../opportunity-listing-pricing');
+
+const ADMIN_TEST_OWNER_EMAIL = 'hello@the-networker.co.uk';
+
+const TEST_SAMPLE_LISTINGS = [
+  {
+    title: '[TEST] Café franchise — Yorkshire territory',
+    host: 'Brew & Connect Co',
+    type: 'franchise',
+    description: 'Sample test listing for preview — safe to delete from Command Centre.',
+    about: [
+      'Run a neighbourhood coffee and networking lounge under an established brand.',
+      'Includes barista training, launch marketing pack, and ongoing franchise support.',
+    ],
+    meta: [
+      { key: 'Investment', val: '£25,000' },
+      { key: 'Return est.', val: '18 months' },
+      { key: 'Location', val: 'Yorkshire' },
+      { key: 'Commitment', val: 'Full-time' },
+    ],
+    image_url: '/assets/opportunities/covers/bean-boost-coffee.svg',
+    logo_url: '/assets/opportunities/logos/bean-boost-coffee.svg',
+    featured: true,
+  },
+  {
+    title: '[TEST] Side hustle — social media for local businesses',
+    host: 'BrightPost Studio',
+    type: 'side-hustle',
+    description: 'Sample test listing for preview — safe to delete from Command Centre.',
+    about: [
+      'Offer done-for-you social content to salons, cafés, and trades in your area.',
+      'Flexible hours — build a client roster alongside your day job.',
+    ],
+    meta: [
+      { key: 'Investment', val: '£500' },
+      { key: 'Earnings', val: '£800–£2k/mo' },
+      { key: 'Location', val: 'Remote' },
+      { key: 'Commitment', val: 'Part-time OK' },
+    ],
+    featured: false,
+  },
+  {
+    title: '[TEST] Partnership — marketing agency white-label',
+    host: 'North Star Digital',
+    type: 'partnership',
+    description: 'Sample test listing for preview — safe to delete from Command Centre.',
+    about: [
+      'Refer SME clients to a white-label web and SEO agency and earn recurring commission.',
+      'Ideal for networkers who already introduce business owners.',
+    ],
+    meta: [
+      { key: 'Investment', val: '£0' },
+      { key: 'Commission', val: '15%' },
+      { key: 'Location', val: 'UK-wide' },
+      { key: 'Commitment', val: 'Flexible' },
+    ],
+    image_url: '/assets/opportunities/covers/mindfuel-academy.svg',
+    logo_url: '/assets/opportunities/logos/mindfuel-academy.svg',
+    featured: false,
+  },
+];
 
 function parseBody(req) {
   let body = req.body;
@@ -126,6 +188,72 @@ async function listOpportunitiesForAdmin(query) {
   };
 }
 
+function hostInitials(name) {
+  const parts = String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+async function createAdminOpportunity(input) {
+  const sb = getSupabaseAdmin();
+  const title = String(input.title || '').trim();
+  const host = String(input.host || '').trim() || 'Test listing';
+  if (!title) throw new Error('missing_title');
+
+  const status = String(input.status || 'published').trim().toLowerCase();
+  const published = status === 'published';
+  const now = new Date();
+  const listingExpiresAt = addMonths(now, 12);
+
+  const row = {
+    organiser_id: null,
+    owner_email: String(input.owner_email || ADMIN_TEST_OWNER_EMAIL).toLowerCase(),
+    type: normalizeType(input.type || 'business-opportunity'),
+    category: String(input.category || 'general').trim() || 'general',
+    title,
+    description: String(input.description || '').trim() || null,
+    about: Array.isArray(input.about)
+      ? input.about.map((p) => String(p).trim()).filter(Boolean)
+      : [],
+    host,
+    host_initials: hostInitials(host),
+    host_color: input.host_color || '#374151',
+    meta: normalizeMeta(input.meta),
+    tags: ['admin-test', normalizeType(input.type || 'business-opportunity')],
+    image_url: String(input.image_url || '').trim() || null,
+    logo_url: String(input.logo_url || '').trim() || null,
+    status: published ? 'published' : 'draft',
+    approval_status: published ? 'Approved' : 'Pending Review',
+    featured: Boolean(input.featured),
+    listing_expires_at: listingExpiresAt.toISOString(),
+    listing_paid_at: now.toISOString(),
+    published_at: published ? now.toISOString() : null,
+    updated_at: now.toISOString(),
+  };
+
+  row.slug = await ensureOpportunitySlug(sb, {
+    title: row.title,
+    opportunityId: null,
+    currentSlug: null,
+  });
+
+  const { data, error } = await sb.from('business_opportunities').insert(row).select('*').single();
+  if (error) throw new Error(error.message);
+  return mapOpportunityRow(data);
+}
+
+async function createAdminTestSamples() {
+  const created = [];
+  for (const sample of TEST_SAMPLE_LISTINGS) {
+    created.push(await createAdminOpportunity(sample));
+  }
+  return created;
+}
+
 async function deleteOpportunities(ids) {
   const sb = getSupabaseAdmin();
   const unique = [...new Set((ids || []).map((id) => String(id || '').trim()).filter(Boolean))];
@@ -189,6 +317,38 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true, ...result });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'bulk_delete_failed', message: e.message });
+      }
+    }
+
+    if (body.action === 'create') {
+      const title = String(body.title || '').trim();
+      if (!title) return json(res, 400, { error: 'missing_title' });
+      try {
+        const opportunity = await createAdminOpportunity({
+          title,
+          host: body.host,
+          type: body.type,
+          status: body.status,
+          description: body.description,
+          featured: body.featured,
+          image_url: body.image_url,
+        });
+        return json(res, 201, { ok: true, opportunity });
+      } catch (e) {
+        return json(res, 500, { ok: false, error: 'create_failed', message: e.message });
+      }
+    }
+
+    if (body.action === 'create_test_samples') {
+      try {
+        const opportunities = await createAdminTestSamples();
+        return json(res, 201, {
+          ok: true,
+          created: opportunities.length,
+          opportunities,
+        });
+      } catch (e) {
+        return json(res, 500, { ok: false, error: 'create_test_samples_failed', message: e.message });
       }
     }
 

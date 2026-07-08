@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { isAllowedOrigin } = require('./allowed-origins');
 
 /** Airtable Users.Role values: `admin` (platform) | `client` (attendee ↔ organiser toggle). */
 const USER_ROLES = {
@@ -135,7 +136,7 @@ function parseCookies(req) {
 
 function setCors(req, res) {
   const origin = req.headers.origin;
-  if (origin) {
+  if (origin && isAllowedOrigin(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Vary', 'Origin');

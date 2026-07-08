@@ -2,6 +2,7 @@ const { setSessionCookie, json, setCors, hubViewFromRequest } = require('../auth
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
 const { sendAccountWelcomeEmail } = require('../account-emails');
+const { enforceRateLimit } = require('../rate-limit');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -53,6 +54,15 @@ module.exports = async function handler(req, res) {
     return json(res, 400, {
       error: 'weak_password',
       message: 'Password must be at least 8 characters.',
+    });
+  }
+
+  const limited = enforceRateLimit(req, res, 'auth_register', { max: 8, windowMs: 300_000 });
+  if (!limited.allowed) {
+    return json(res, 429, {
+      error: 'rate_limited',
+      message: 'Too many sign-up attempts. Please wait a few minutes and try again.',
+      retryAfterSec: limited.retryAfterSec,
     });
   }
 

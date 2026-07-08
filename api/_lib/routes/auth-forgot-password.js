@@ -10,6 +10,7 @@ const {
 } = require('../auth');
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
+const { enforceRateLimit } = require('../rate-limit');
 
 function fieldNameOnRecord(recordFields, candidates, fallback) {
   const f = recordFields || {};
@@ -115,6 +116,15 @@ module.exports = async function handler(req, res) {
     .toLowerCase();
 
   if (!email) return json(res, 400, { error: 'missing_email' });
+
+  const limited = enforceRateLimit(req, res, 'auth_forgot_password', { max: 6, windowMs: 300_000 });
+  if (!limited.allowed) {
+    return json(res, 429, {
+      error: 'rate_limited',
+      message: 'Too many reset requests. Please wait a few minutes and try again.',
+      retryAfterSec: limited.retryAfterSec,
+    });
+  }
 
   if (useSupabase()) {
     try {

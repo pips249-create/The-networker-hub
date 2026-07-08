@@ -2,6 +2,7 @@
  * Public business opportunities API — published listings only.
  */
 const { json, setCors } = require('./_lib/auth');
+const { enforceRateLimit } = require('./_lib/rate-limit');
 const { useSupabase } = require('./_lib/supabase');
 
 module.exports = async function handler(req, res) {
@@ -23,6 +24,16 @@ module.exports = async function handler(req, res) {
   } = require('./_lib/supabase-opportunities');
 
   if (req.method === 'POST') {
+    const limited = enforceRateLimit(req, res, 'opportunity_enquiry', { max: 10, windowMs: 300_000 });
+    if (!limited.allowed) {
+      return json(res, 429, {
+        ok: false,
+        error: 'rate_limited',
+        message: 'Too many enquiries. Please wait a few minutes and try again.',
+        retryAfterSec: limited.retryAfterSec,
+      });
+    }
+
     let body = req.body;
     if (typeof body === 'string') {
       try {

@@ -133,6 +133,17 @@ If a tier is **£0** and has no Payment Link, the hub calls `POST /api/auth/comp
 | `POST /api/auth/create-checkout` | Stripe Checkout with ticket + booking fee (auth required) |
 | `POST /api/auth/complete-booking` | Success page / free ticket fallback (auth required) |
 
+## 9. Hub advertising prices (automated)
+
+Sponsorship tiers and self-serve listing prices live in `api/_lib/hub-stripe-catalog.js`. Sync Products, Prices, and Payment Links to Stripe:
+
+```bash
+npm run sync-stripe -- --write-local
+npm run sync-env
+```
+
+Run in **test** and **live** modes separately (`sk_test_…` vs `sk_live_…` in `local.env`), then copy env vars to Vercel. Details: `docs/STRIPE-SPONSORSHIP-INVOICES.md`.
+
 ## Troubleshooting
 
 | Symptom | Fix |

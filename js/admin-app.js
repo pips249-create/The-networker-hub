@@ -11445,10 +11445,108 @@
       '<button type="button" data-opp-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
       '<input type="checkbox" id="opportunity-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +
-      '<div id="opportunity-cleanup-list"></div></div>';
+      '<div id="opportunity-cleanup-list"></div>' +
+      '<details class="rounded-xl border border-brand-200 bg-brand-50/50 group" open>' +
+      '<summary class="cursor-pointer list-none font-semibold text-brand-900 px-4 py-3 select-none">Add test listings</summary>' +
+      '<div class="px-4 pb-4 space-y-4 border-t border-brand-100">' +
+      '<p class="text-xs text-slate-600 pt-3">Create sample listings for previewing the business opportunities page. Titles are prefixed with <code class="text-[11px]">[TEST]</code> where noted — delete them from this table when you are done.</p>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="button" id="opportunity-test-samples-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Add 3 sample test listings</button>' +
+      '<span id="opportunity-test-samples-msg" class="text-xs"></span></div>' +
+      '<form class="opportunity-create-form grid sm:grid-cols-2 gap-3 border-t border-brand-100 pt-4">' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
+      '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="[TEST] Your listing title"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Host / company</label>' +
+      '<input type="text" name="host" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Acme Ltd"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Type</label>' +
+      '<select name="type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      opportunityTypeOptions('business-opportunity') +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
+      '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      opportunityStatusOptions('published') +
+      '</select></div>' +
+      '<div class="flex items-end"><label class="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer pb-2">' +
+      '<input type="checkbox" name="featured" class="rounded border-slate-300"> Featured in spotlight</label></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Description</label>' +
+      '<textarea name="description" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Short summary for the listing card"></textarea></div>' +
+      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create test listing</button>' +
+      '<span class="opportunity-create-msg text-xs"></span></div></form></div></details></div>';
 
     syncOpportunityCleanupFilterUi();
     refreshOpportunityCleanupData();
+  }
+
+  function createOpportunityCleanupForm(form) {
+    var msg = form.querySelector('.opportunity-create-msg');
+    var btn = form.querySelector('[type="submit"]');
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Creating…';
+      msg.className = 'opportunity-create-msg text-xs text-slate-500';
+    }
+    adminPost('/api/admin/opportunities', {
+      action: 'create',
+      title: formFieldVal(form, 'title'),
+      host: formFieldVal(form, 'host'),
+      type: formFieldVal(form, 'type') || 'business-opportunity',
+      status: formFieldVal(form, 'status') || 'published',
+      description: formFieldVal(form, 'description') || null,
+      featured: !!(form.querySelector('[name="featured"]') && form.querySelector('[name="featured"]').checked),
+    })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
+        if (msg) {
+          msg.textContent = 'Test listing created.';
+          msg.className = 'opportunity-create-msg text-xs text-emerald-700 font-semibold';
+        }
+        form.reset();
+        var statusField = formField(form, 'status');
+        if (statusField) statusField.value = 'published';
+        return refreshOpportunityCleanupData();
+      })
+      .then(function () {
+        refreshAdminNotifications();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not create listing';
+          msg.className = 'opportunity-create-msg text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function createOpportunityTestSamples() {
+    var msg = document.getElementById('opportunity-test-samples-msg');
+    var btn = document.getElementById('opportunity-test-samples-btn');
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Creating sample listings…';
+      msg.className = 'text-xs text-slate-500';
+    }
+    adminPost('/api/admin/opportunities', { action: 'create_test_samples' })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
+        if (msg) {
+          msg.textContent = 'Created ' + (data.created || 0) + ' sample test listings.';
+          msg.className = 'text-xs text-emerald-700 font-semibold';
+        }
+        return refreshOpportunityCleanupData();
+      })
+      .then(function () {
+        refreshAdminNotifications();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not create sample listings';
+          msg.className = 'text-xs text-red-700 font-semibold';
+        }
+      })
+      .finally(function () {
+        if (btn) btn.disabled = false;
+      });
   }
 
   function saveOpportunityCleanupForm(form) {
@@ -11523,6 +11621,17 @@
     }
     if (e.target.closest('#opportunity-delete-btn')) {
       deleteSelectedOpportunities();
+      return;
+    }
+    if (e.target.closest('#opportunity-test-samples-btn')) {
+      if (
+        !window.confirm(
+          'Add 3 sample test listings? They will appear on /opportunities/ and can be deleted from this page later.'
+        )
+      ) {
+        return;
+      }
+      createOpportunityTestSamples();
       return;
     }
     var deleteBtn = e.target.closest('[data-opp-delete]');
@@ -11646,9 +11755,15 @@
     document.body.addEventListener('submit', function (e) {
       var form = e.target;
       if (!form || !form.classList || !form.closest('#admin-main')) return;
-      if (!form.classList.contains('opportunity-cleanup-form')) return;
-      e.preventDefault();
-      saveOpportunityCleanupForm(form);
+      if (form.classList.contains('opportunity-cleanup-form')) {
+        e.preventDefault();
+        saveOpportunityCleanupForm(form);
+        return;
+      }
+      if (form.classList.contains('opportunity-create-form')) {
+        e.preventDefault();
+        createOpportunityCleanupForm(form);
+      }
     });
 
     document.body.addEventListener('change', function (e) {

@@ -3,6 +3,7 @@
  * Body: { messages: [{ role: 'user'|'assistant', content: string }] }
  */
 const { json, setCors } = require('./_lib/auth');
+const { enforceRateLimit } = require('./_lib/rate-limit');
 const {
   SYSTEM_PROMPT,
   fallbackReply,
@@ -106,6 +107,15 @@ module.exports = async function handler(req, res) {
 
   if (req.method !== 'POST') {
     return json(res, 405, { error: 'method_not_allowed' });
+  }
+
+  const limited = enforceRateLimit(req, res, 'contact_chat', { max: 20, windowMs: 300_000 });
+  if (!limited.allowed) {
+    return json(res, 429, {
+      error: 'rate_limited',
+      message: 'Too many messages. Please wait a few minutes and try again.',
+      retryAfterSec: limited.retryAfterSec,
+    });
   }
 
   let body = req.body;
