@@ -23,6 +23,46 @@ function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
 }
 
+function metadataText(value) {
+  const text = String(value || '').trim();
+  return text || null;
+}
+
+function metadataGuestNames(raw) {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function checkoutBookingFields(checkout, input) {
+  const metadata = checkout?.metadata || {};
+  return {
+    eventId:
+      metadataText(input.eventId || input.event_id) || metadataText(metadata.event_id) || null,
+    ticketId:
+      metadataText(input.ticketId || input.ticket_id) || metadataText(metadata.ticket_id) || null,
+    registrationId:
+      metadataText(input.registrationId || input.registration_id) ||
+      metadataText(metadata.registration_id) ||
+      null,
+    quantity: metadataText(metadata.quantity) || input.quantity || input.qty || null,
+    guestNames:
+      input.guestNames ||
+      input.guest_names ||
+      metadataGuestNames(metadata.guest_names || metadata.guestNames),
+    dietaryRequirements:
+      metadataText(input.dietaryRequirements || input.dietary_requirements) ||
+      metadataText(metadata.dietary_requirements || metadata.dietaryRequirements),
+    accessibilityRequirements:
+      metadataText(input.accessibilityRequirements || input.accessibility_requirements) ||
+      metadataText(metadata.accessibility_requirements || metadata.accessibilityRequirements),
+  };
+}
+
 async function assertFreeTicketAllowed(input) {
   const sb = getSupabaseAdmin();
   const eventId = String(input.eventId || input.event_id || '').trim();
@@ -74,6 +114,7 @@ async function verifyEventCheckoutPayment(input, sessionUser) {
       amountPaid: 0,
       stripePaymentIntentId: null,
       stripeCheckoutSessionId: null,
+      ...checkoutBookingFields(null, input),
     };
   }
 
@@ -120,6 +161,7 @@ async function verifyEventCheckoutPayment(input, sessionUser) {
     amountPaid,
     stripePaymentIntentId: paymentIntent,
     stripeCheckoutSessionId: sessionId,
+    ...checkoutBookingFields(checkout, input),
   };
 }
 

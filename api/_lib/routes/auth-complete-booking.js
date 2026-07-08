@@ -55,13 +55,17 @@ module.exports = async function handler(req, res) {
       email,
       name,
       userId: session.sub || null,
-      eventId: body.eventId || body.event_id,
-      ticketId: body.ticketId || body.ticket_id,
-      registrationId: body.registrationId || body.registration_id,
-      quantity: body.quantity ?? body.qty,
-      guestNames: body.guestNames || body.guest_names,
-      dietaryRequirements: body.dietaryRequirements || body.dietary_requirements,
-      accessibilityRequirements: body.accessibilityRequirements || body.accessibility_requirements,
+      eventId: body.eventId || body.event_id || payment.eventId,
+      ticketId: body.ticketId || body.ticket_id || payment.ticketId,
+      registrationId: body.registrationId || body.registration_id || payment.registrationId,
+      quantity: body.quantity ?? body.qty ?? payment.quantity,
+      guestNames: body.guestNames || body.guest_names || payment.guestNames,
+      dietaryRequirements:
+        body.dietaryRequirements || body.dietary_requirements || payment.dietaryRequirements,
+      accessibilityRequirements:
+        body.accessibilityRequirements ||
+        body.accessibility_requirements ||
+        payment.accessibilityRequirements,
       amountPaid: payment.amountPaid,
       paymentStatus: payment.paymentStatus,
       stripePaymentIntentId: payment.stripePaymentIntentId,

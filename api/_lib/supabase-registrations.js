@@ -11,15 +11,29 @@ async function createRegistrationFromPayment(input) {
   if (!isSupabaseConfigured()) throw new Error('supabase_not_configured');
 
   const sb = getSupabaseAdmin();
-  const eventId = String(input.eventId || input.event_id || '').trim();
-  if (!eventId) throw new Error('missing_event_id');
-
-  const email = String(input.email || '').trim().toLowerCase();
-  if (!email) throw new Error('missing_email');
+  let eventId = String(input.eventId || input.event_id || '').trim();
+  const linkedRegistrationIdEarly = String(
+    input.registrationId || input.registration_id || ''
+  ).trim();
 
   const stripePaymentIntentId = input.stripePaymentIntentId || input.stripe_payment_intent_id || null;
   const stripeCheckoutSessionId =
     input.stripeCheckoutSessionId || input.stripe_checkout_session_id || null;
+
+  if (!eventId && linkedRegistrationIdEarly) {
+    const linkedEventRes = await sb
+      .from('registrations')
+      .select('event_id')
+      .eq('id', linkedRegistrationIdEarly)
+      .maybeSingle();
+    if (linkedEventRes.error) throw new Error(linkedEventRes.error.message);
+    eventId = String(linkedEventRes.data?.event_id || '').trim();
+  }
+
+  if (!eventId) throw new Error('missing_event_id');
+
+  const email = String(input.email || '').trim().toLowerCase();
+  if (!email) throw new Error('missing_email');
 
   if (stripeCheckoutSessionId) {
     const existingSession = await sb

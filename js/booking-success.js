@@ -532,6 +532,7 @@
     const body = {
       eventId: pending && pending.eventId,
       ticketId: pending && pending.ticketId,
+      registrationId: pending && pending.registrationId,
       qty: qty,
       stripeCheckoutSessionId: sessionId || null,
       paymentStatus: isFree ? 'Free' : 'Paid',

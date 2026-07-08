@@ -2108,11 +2108,13 @@
     });
 
     if (!ok || !data.ok) {
-      window.alert(data.message || data.error || 'Could not resend the approval email.');
+      showOrganiserAlert(data.message || data.error || 'Could not resend the approval email.', true);
+      alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       return;
     }
 
-    window.alert(data.message || 'Approval email sent.');
+    showOrganiserAlert(data.message || 'Approval email sent.', false);
+    alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   async function resendApplicationAlert(registrationId) {
@@ -2122,11 +2124,13 @@
     });
 
     if (!ok || !data.ok) {
-      window.alert(data.message || data.error || 'Could not send the application alert email.');
+      showOrganiserAlert(data.message || data.error || 'Could not send the application alert email.', true);
+      alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       return;
     }
 
-    window.alert(data.message || 'Application alert email sent.');
+    showOrganiserAlert(data.message || 'Application alert email sent.', false);
+    alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   async function reviewApplication(registrationId, action, denialReason) {
@@ -2150,7 +2154,8 @@
     });
 
     if (!ok || !data.ok) {
-      window.alert(data.message || data.error || 'Could not update this application.');
+      showOrganiserAlert(data.message || data.error || 'Could not update this application.', true);
+      alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       return;
     }
 
@@ -2170,7 +2175,11 @@
     }
     updatePendingApplicationsNavBadge();
     renderAttendees();
-    window.alert(data.message || (action === 'approve' ? 'Application approved.' : 'Application denied.'));
+    showOrganiserAlert(
+      data.message || (action === 'approve' ? 'Application approved.' : 'Application denied.'),
+      false
+    );
+    alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   function showDenyPanel(registrationId) {

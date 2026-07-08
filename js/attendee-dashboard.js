@@ -131,6 +131,23 @@
     }
     if (data.completed) return data;
     if (!data.url) throw new Error(checkoutErrorMessage(data));
+    try {
+      sessionStorage.setItem(
+        'hub_booking_pending',
+        JSON.stringify({
+          eventId: reg.eventId,
+          ticketId: reg.ticketId || null,
+          registrationId: reg.id,
+          qty: 1,
+          email: String(reg.email || '').trim().toLowerCase(),
+          name: String(reg.name || '').trim(),
+          eventTitle: String(reg.eventTitle || '').trim(),
+          ts: Date.now(),
+        })
+      );
+    } catch (e) {
+      /* ignore */
+    }
     window.location.assign(data.url);
     return data;
   }
