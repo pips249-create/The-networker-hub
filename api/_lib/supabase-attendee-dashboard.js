@@ -48,10 +48,19 @@ function mapRegistrationRow(row, reviewByEventId) {
   const ticketPriceNum = parsePriceNum(ticket.price);
   const applicationStatus = String(row.application_status || 'Approved').trim();
   const paymentStatus = String(row.payment_status || 'Pending').trim();
+  const amountPaid = row.amount_paid != null ? Number(row.amount_paid) : 0;
+  const bookingComplete =
+    paymentStatus === 'Paid' || paymentStatus === 'Free' || amountPaid > 0;
   const needsPayment =
-    applicationStatus === 'Approved' && paymentStatus === 'Pending' && ticketPriceNum > 0;
+    !bookingComplete &&
+    applicationStatus === 'Approved' &&
+    paymentStatus === 'Pending' &&
+    ticketPriceNum > 0;
   const needsFreeConfirmation =
-    applicationStatus === 'Approved' && paymentStatus === 'Pending' && ticketPriceNum <= 0;
+    !bookingComplete &&
+    applicationStatus === 'Approved' &&
+    paymentStatus === 'Pending' &&
+    ticketPriceNum <= 0;
   const meetingLink = String(row.meeting_link || ev.meeting_link || '').trim();
   const online = isOnlineEvent(ev, meetingLink);
 
@@ -71,7 +80,7 @@ function mapRegistrationRow(row, reviewByEventId) {
     ticketPriceNum,
     needsPayment,
     needsFreeConfirmation,
-    amountPaid: row.amount_paid != null ? Number(row.amount_paid) : 0,
+    amountPaid,
     createdAt: row.created_at || null,
     bookingReference: formatBookingReference(row.id),
     organiserId: ev.organiser_id || organiser.id || '',

@@ -60,7 +60,7 @@ module.exports = async function handler(req, res) {
       if (action === 'unpublish_from_report') {
         const { data: report, error: loadErr } = await sb
           .from('listing_reports')
-          .select('id, listing_type, event_id, organiser_id, listing_title, status')
+          .select('id, listing_type, event_id, organiser_id, opportunity_id, listing_title, status')
           .eq('id', id)
           .maybeSingle();
         if (loadErr) throw new Error(loadErr.message);
@@ -90,6 +90,19 @@ module.exports = async function handler(req, res) {
             .maybeSingle();
           if (error) throw new Error(error.message);
           listing = data ? { type: 'organiser', ...data } : null;
+        } else if (report.listing_type === 'opportunity' && report.opportunity_id) {
+          const { data, error } = await sb
+            .from('business_opportunities')
+            .update({
+              status: 'unpublished',
+              approval_status: 'Rejected',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', report.opportunity_id)
+            .select('id, title, status, approval_status')
+            .maybeSingle();
+          if (error) throw new Error(error.message);
+          listing = data ? { type: 'opportunity', ...data } : null;
         }
 
         const { data: updatedReport, error: reportErr } = await sb
@@ -104,7 +117,7 @@ module.exports = async function handler(req, res) {
           ok: true,
           report: updatedReport,
           listing,
-          listingMissing: !listing && Boolean(report.event_id || report.organiser_id),
+          listingMissing: !listing && Boolean(report.event_id || report.organiser_id || report.opportunity_id),
         });
       }
 

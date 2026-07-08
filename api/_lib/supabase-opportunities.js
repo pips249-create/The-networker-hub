@@ -11,6 +11,7 @@ const {
 } = require('./opportunity-listing-pricing');
 const { ensureOpportunitySlug, publicOpportunitySlug, slugMatchesPublicRow, isUuidSlug } =
   require('./opportunity-slug');
+const { scanOpportunityRedFlags } = require('./opportunity-moderation');
 
 const HOST_COLORS = [
   '#7a5c0a',
@@ -143,8 +144,48 @@ function rowToListing(row) {
     listingPaymentActive: listingPaymentCurrent(row),
     createdAt: row.created_at || null,
     updatedAt: row.updated_at || null,
+    rejectionNote: row.rejection_note || null,
     publishedAt: row.published_at || null,
   };
+}
+
+async function rejectOpportunityListing(opportunityId, rejectionNote, options) {
+  const id = String(opportunityId || '').trim();
+  if (!isUuid(id)) throw new Error('invalid_opportunity_id');
+
+  const note = String(rejectionNote || '').trim();
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('business_opportunities')
+    .update({
+      approval_status: 'Rejected',
+      status: 'unpublished',
+      rejection_note: note || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw new Error(error.message);
+
+  if (!options || options.sendEmail !== false) {
+    try {
+      const { sendOpportunityRejectedEmail } = require('./lifecycle-emails');
+      await sendOpportunityRejectedEmail(data, note);
+    } catch {
+      /* email failure must not block rejection */
+    }
+  }
+
+  return rowToListing(data);
+}
+
+async function maybeAutoRejectOpportunity(row) {
+  if (!row) return { rejected: false };
+  const scan = scanOpportunityRedFlags(row);
+  if (!scan) return { rejected: false };
+  const listing = await rejectOpportunityListing(row.id, scan.rejectionNote, { automated: true });
+  return { rejected: true, listing, scan };
 }
 
 async function resolveOpportunityImage(payload, opportunityId) {
@@ -242,8 +283,10 @@ async function buildOpportunityRow(payload, opportunityId, mode) {
   if (mode === 'create' || payload.listingStatus != null || payload.status != null) {
     row.status = status;
     if (status === 'published') {
-      row.approval_status = 'Approved';
       row.published_at = new Date().toISOString();
+      if (mode === 'create') {
+        row.approval_status = 'Pending Review';
+      }
     }
   }
 
@@ -280,7 +323,7 @@ async function activateOpportunityListingPayment(opportunityId, months, sessionI
     .from('business_opportunities')
     .update({
       status: 'published',
-      approval_status: 'Approved',
+      approval_status: 'Pending Review',
       slug,
       published_at: existing.published_at || now.toISOString(),
       listing_months: termMonths,
@@ -295,14 +338,13 @@ async function activateOpportunityListingPayment(opportunityId, months, sessionI
     .select('*')
     .single();
   if (error) throw new Error(error.message);
-  const listing = rowToListing(data);
 
-  try {
-    const { sendOpportunityListingLiveEmail } = require('./opportunity-emails');
-    await sendOpportunityListingLiveEmail(listing);
-  } catch {
-    /* email failure must not block activation */
+  const autoReject = await maybeAutoRejectOpportunity(data);
+  if (autoReject.rejected) {
+    return autoReject.listing;
   }
+
+  const listing = rowToListing(data);
 
   return listing;
 }
@@ -439,8 +481,21 @@ async function updateOpportunity(id, payload) {
     opportunityId: id,
     currentSlug: existing?.slug,
   });
+  if (row.status === 'published') {
+    if (existing?.approvalStatus === 'Approved') {
+      delete row.approval_status;
+    } else {
+      row.approval_status = 'Pending Review';
+    }
+  }
   const { data, error } = await sb.from('business_opportunities').update(row).eq('id', id).select('*').single();
   if (error) throw new Error(error.message);
+
+  if (data.status === 'published') {
+    const autoReject = await maybeAutoRejectOpportunity(data);
+    if (autoReject.rejected) return autoReject.listing;
+  }
+
   return rowToListing(data);
 }
 
@@ -672,6 +727,8 @@ module.exports = {
   opportunityOwnedBySession,
   createOpportunity,
   updateOpportunity,
+  rejectOpportunityListing,
+  maybeAutoRejectOpportunity,
   activateOpportunityPremium,
   activateOpportunityListingPayment,
   handleOpportunityPremiumCheckout,

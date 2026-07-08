@@ -576,7 +576,11 @@ async function buildEventRow(payload, eventId, mode) {
   }
 
   if (listingStatus != null) {
-    row.status = mapEventStatus(payload);
+    const nextStatus = mapEventStatus(payload);
+    // "draft" on update means save details without publishing — do not demote a live event.
+    if (!(mode === 'update' && nextStatus === 'draft')) {
+      row.status = nextStatus;
+    }
   } else if (mode === 'create') {
     row.status = 'draft';
   }
@@ -738,11 +742,14 @@ async function updateEvent(eventId, payload) {
     'update'
   );
   const effectiveStartsAt = row.starts_at !== undefined ? row.starts_at : existing?.starts_at ?? null;
+  const wasPublished = String(existing?.status || '').toLowerCase() === 'published';
   if (!effectiveStartsAt) {
-    demoteToDraftWithoutDate(row);
-    if (payloadTouchesDate(patchPayload)) {
-      row.starts_at = null;
-      row.ends_at = null;
+    if (!wasPublished || payloadTouchesDate(patchPayload)) {
+      demoteToDraftWithoutDate(row);
+      if (payloadTouchesDate(patchPayload)) {
+        row.starts_at = null;
+        row.ends_at = null;
+      }
     }
   }
   const { data, error } = await sb.from('events').update(row).eq('id', eventId).select('*').single();

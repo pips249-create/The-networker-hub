@@ -400,7 +400,9 @@
     if (!payload.host) return 'Enter your business or company name.';
     if (!payload.contactEmail) return 'Enter a contact email for enquiries.';
     if (!payload.meta.some((m) => /^investment$/i.test(m.key))) return 'Enter the investment required.';
-    if (!payload.meta.some((m) => /^location$/i.test(m.key))) return 'Enter a location.';
+    if (!payload.meta.some((m) => /^location$/i.test(m.key) || /^territory$/i.test(m.key))) {
+      return 'Enter the territory or location for this opportunity.';
+    }
     if (!payload.meta.some((m) => /^commitment$/i.test(m.key))) return 'Select a commitment level.';
     return '';
   }

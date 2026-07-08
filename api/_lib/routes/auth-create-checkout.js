@@ -257,6 +257,7 @@ module.exports = async function handler(req, res) {
     const cancelPath = slug ? `/events/${encodeURIComponent(slug)}` : `/events/event.html?id=${eventId}`;
 
     let paymentIntentData = null;
+    let stripeAccountId = null;
     if (connectRequiredForPaidCheckout()) {
       const connect = await getOrganiserConnectForEvent(sb, eventId);
       if (!connect?.ready) {
@@ -274,7 +275,8 @@ module.exports = async function handler(req, res) {
         ticketSubtotalPence,
         bookingFeePence,
       });
-      paymentIntentData = connectParams?.payment_intent_data || null;
+      paymentIntentData = connectParams?.paymentIntentData || null;
+      stripeAccountId = connectParams?.stripeAccountId || null;
     }
 
     const checkoutSession = await createPaidCheckoutSession({
@@ -295,6 +297,7 @@ module.exports = async function handler(req, res) {
       cancelUrl: `${siteUrl}${cancelPath}`,
       clientReferenceId: buildClientReferenceId(eventId, ticketId, qty, ticketName),
       paymentIntentData,
+      stripeAccountId,
     });
 
     return json(res, 200, {

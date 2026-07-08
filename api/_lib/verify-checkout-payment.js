@@ -3,6 +3,7 @@
  */
 const { getSupabaseAdmin } = require('./supabase');
 const { retrieveCheckoutSession, isStripeCheckoutConfigured } = require('./stripe-checkout');
+const { getOrganiserConnectForEvent, connectRequiredForPaidCheckout } = require('./stripe-connect');
 
 const NON_EVENT_CHECKOUT_TYPES = new Set([
   'opportunity_listing',
@@ -128,7 +129,25 @@ async function verifyEventCheckoutPayment(input, sessionUser) {
     throw new Error('stripe_not_configured');
   }
 
-  const checkout = await retrieveCheckoutSession(sessionId);
+  const eventId = String(input.eventId || input.event_id || '').trim();
+  let stripeAccountId = null;
+  if (connectRequiredForPaidCheckout() && eventId) {
+    const sb = getSupabaseAdmin();
+    const connect = await getOrganiserConnectForEvent(sb, eventId);
+    stripeAccountId = connect?.stripeAccountId || null;
+  }
+
+  let checkout = null;
+  if (stripeAccountId) {
+    try {
+      checkout = await retrieveCheckoutSession(sessionId, { stripeAccountId });
+    } catch {
+      checkout = null;
+    }
+  }
+  if (!checkout) {
+    checkout = await retrieveCheckoutSession(sessionId);
+  }
   if (!checkoutSessionPaid(checkout)) {
     throw new Error('payment_not_completed');
   }

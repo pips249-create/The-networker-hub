@@ -44,7 +44,7 @@ Focus moderation and reporting on content that is **illegal**:
 - Acceptable use policy (`legal-policies.html`)
 - Admin moderation (opportunities, reviews)
 - Review report workflow (`js/review-report.js` + Command Centre)
-- Listing report (`js/listing-report.js` — verify deployed on opportunity pages)
+- Listing report (`js/listing-report.js` on event, organiser, and opportunity pages)
 
 ---
 
@@ -61,7 +61,7 @@ Focus moderation and reporting on content that is **illegal**:
 | Content type | Report path | Status |
 |--------------|-------------|--------|
 | Reviews | “Report review” on event/organiser pages + organiser dashboard | ✓ / extending to organiser dashboard |
-| Opportunity listings | “Report listing” on detail page | Verify wired |
+| Opportunity listings | “Report listing” on detail page | ☑ Wired |
 | General / illegal content | hello@the-networker.co.uk — subject “Content report” | Document in footer/help |
 
 ### C. Moderation capability
@@ -97,7 +97,7 @@ Focus moderation and reporting on content that is **illegal**:
 | # | Action | Owner | Status |
 |---|--------|-------|--------|
 | 1 | Annual OSA scope review with solicitor | Director | ☐ |
-| 2 | Ensure “Report listing” on all opportunity detail pages | Product | ☐ |
+| 2 | Ensure “Report listing” on all opportunity detail pages | Product | ☑ |
 | 3 | Add “Report a problem” link in footer → content report email | Product | ☐ |
 | 4 | Log content reports in moderation register | Ops | ☐ |
 | 5 | Train moderator on illegal content escalation | Ops | ☐ |

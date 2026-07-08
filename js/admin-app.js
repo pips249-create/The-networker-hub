@@ -4198,7 +4198,13 @@
           '<p class="font-semibold text-brand-900">' +
           esc(r.title) +
           ' <span class="text-xs font-normal text-slate-500">(' +
-          esc(r.listingType === 'organiser' ? 'Group' : 'Event') +
+          esc(
+            r.listingType === 'organiser'
+              ? 'Group'
+              : r.listingType === 'opportunity'
+                ? 'Opportunity'
+                : 'Event'
+          ) +
           ')</span></p>' +
           '<time class="text-xs text-slate-400 shrink-0">' +
           esc(fmtTime(r.time)) +
@@ -11714,9 +11720,22 @@
       var rejectRow = rejectBtn.closest('[data-opportunity-id-row]');
       var rejectId = rejectRow && rejectRow.getAttribute('data-opportunity-id-row');
       if (!rejectId) return;
-      if (!window.confirm('Reject this business opportunity listing?')) return;
+      var rejectionNote = window.prompt(
+        'Why is this listing being rejected? This reason will be emailed to the lister.',
+        ''
+      );
+      if (rejectionNote == null) return;
+      rejectionNote = String(rejectionNote).trim();
+      if (!rejectionNote) {
+        window.alert('Please enter a rejection reason so the lister knows what to fix.');
+        return;
+      }
       rejectBtn.disabled = true;
-      adminPost('/api/admin/opportunities', { id: rejectId, action: 'reject' })
+      adminPost('/api/admin/opportunities', {
+        id: rejectId,
+        action: 'reject',
+        rejection_note: rejectionNote,
+      })
         .then(function (data) {
           if (!data.ok) throw new Error(data.message || data.error || 'Reject failed');
           return refreshOpportunityCleanupData();

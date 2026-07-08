@@ -3601,29 +3601,21 @@
 
   async function startStripeConnectOnboarding(groupId) {
     const gid = groupId || primaryGroupForStripeConnect()?.id;
-    if (window.HubOrganiserPaymentSetup) {
-      await window.HubOrganiserPaymentSetup.startSetup(
-        gid,
-        '/organiser/index.html#events-revenue'
-      );
-      return;
-    }
     if (!gid) {
       alert('No organiser profile found.');
       return;
     }
-    const { ok, data } = await api('/api/organiser/stripe-connect', {
-      method: 'POST',
-      body: JSON.stringify({
-        groupId: gid,
-        returnPath: '/organiser/index.html#events-revenue',
-      }),
-    });
-    if (!ok || !data.url) {
-      alert(data.message || data.error || 'Could not start bank details setup');
+    if (window.HubOrganiserPaymentSetup && window.HubOrganiserPaymentSetup.startSetup) {
+      window.HubOrganiserPaymentSetup.startSetup(gid, '/organiser/index.html#events-revenue');
       return;
     }
-    window.location.href = data.url;
+    const href =
+      '/organiser/payment-setup.html?groupId=' +
+      encodeURIComponent(gid) +
+      '&returnPath=' +
+      encodeURIComponent('/organiser/index.html#events-revenue');
+    const tab = window.open(href, '_blank', 'noopener,noreferrer');
+    if (!tab) window.location.href = href;
   }
 
   function paymentSetupStateFromDashboard() {
@@ -6555,6 +6547,14 @@
         setRoute('events-list');
         return;
       }
+      if (e.data && e.data.type === 'hub-open-stripe-connect' && e.data.url) {
+        // Legacy: older drawer scripts post Stripe URLs. Open top-level only.
+        const stripeTab = window.open(String(e.data.url), '_blank', 'noopener,noreferrer');
+        if (!stripeTab) {
+          window.location.href = String(e.data.url);
+        }
+        return;
+      }
       if (e.data && e.data.type === 'hub-event-goto-edit') {
         const editId = e.data.eventId || '';
         if (editId) openEventEditorDrawer(editId);
@@ -6631,16 +6631,24 @@
       finishDeepLinkAfterBootstrap();
       const connectParam = new URLSearchParams(window.location.search).get('stripe_connect');
       if (connectParam && state.stripeConnectEnabled && state.groups.length) {
-        const gid = state.groups[0].id;
-        await api('/api/organiser/stripe-connect?groupId=' + encodeURIComponent(gid));
+        const gid =
+          primaryGroupForStripeConnect()?.id ||
+          state.groups.find((g) => !g.stripeConnectReady)?.id ||
+          state.groups[0].id;
+        const { ok, data } = await api(
+          '/api/organiser/stripe-connect?groupId=' + encodeURIComponent(gid)
+        );
         await loadBootstrap();
-        if (connectParam === 'refresh') {
+        if (ok && data && data.ready) {
+          showOrganiserAlert('Bank details saved. You can publish paid tickets now.', false);
+        } else if (connectParam === 'refresh' || (data && !data.ready)) {
           showOrganiserAlert(
-            'Bank details setup was interrupted. Click Add bank details to continue where you left off.',
-            false
+            (data && data.incompleteHint) ||
+              'Stripe setup is not finished yet. Open Add bank details again to complete the remaining steps.',
+            true
           );
         } else {
-          showOrganiserAlert('Bank details saved.', false);
+          showOrganiserAlert('Bank details updated.', false);
         }
         if (window.history.replaceState) {
           const url = new URL(window.location.href);

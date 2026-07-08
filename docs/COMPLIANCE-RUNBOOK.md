@@ -52,9 +52,10 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 |------|--------|-------|--------|
 | Review reporting | Report on event/organiser pages + organiser dashboard; remove in Command Centre | Product | ☑ |
 | Refund policy enforcement | Block publishing paid events without refund policy selected — verify in QA | QA | ☐ |
-| Opportunity moderation | Follow `docs/OPPORTUNITY-MODERATION.md` before listings go live | Ops | ☐ |
+| Opportunity moderation | Follow `docs/OPPORTUNITY-MODERATION.md` — pre-publish review enforced in code | Ops | ☑ Enforced |
 | OSA annual review | Follow `docs/ONLINE-SAFETY-ACT.md` checklist; solicitor scope review | Director | ☐ |
-| Report listing on opportunities | Wire `listing-report.js` on all opportunity detail pages if not already | Product | ☐ |
+| Report listing on opportunities | `listing-report.js` on opportunity detail pages | Product | ☑ |
+| Opportunity disclaimer solicitor review | One-off UK lawyer review of browse/detail/enquiry disclaimer wording before scaling listings | Director | ☐ |
 
 ## Related documents
 

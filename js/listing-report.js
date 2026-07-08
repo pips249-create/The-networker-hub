@@ -1,5 +1,5 @@
 /**
- * Report misleading or inappropriate event / organiser listings.
+ * Report misleading or inappropriate event / organiser / opportunity listings.
  */
 (function (global) {
   var REASONS = [
@@ -133,6 +133,7 @@
       };
       if (pending.listingType === 'event') payload.event_id = pending.eventId;
       if (pending.listingType === 'organiser') payload.organiser_id = pending.organiserId;
+      if (pending.listingType === 'opportunity') payload.opportunity_id = pending.opportunityId;
 
       if (btn) btn.disabled = true;
       if (msg) {

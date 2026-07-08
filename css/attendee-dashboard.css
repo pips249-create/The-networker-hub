@@ -753,6 +753,10 @@ body.ad-cancel-modal-open {
   justify-content: flex-end;
 }
 
+.ad-payment-actions .ad-btn[hidden] {
+  display: none !important;
+}
+
 tr.ad-row-highlight td {
   background: var(--ad-teal-pale);
 }

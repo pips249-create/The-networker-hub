@@ -2767,6 +2767,15 @@ body.org-notifications-open {
 
 .hub-payment-setup-btn {
   margin-top: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+a.hub-payment-setup-btn {
+  cursor: pointer;
 }
 
 .hub-payment-setup-note {

@@ -4,6 +4,7 @@
 (function () {
   const SERIES_STORAGE_KEY = 'hub_event_series';
   const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
+  const TICKET_DRAFT_KEY = 'hub_ticket_setup_draft';
   const params = new URLSearchParams(location.search);
   const idsParam = params.get('ids') || '';
   const isEmbedDrawer = params.get('embed') === '1' || window.self !== window.top;
@@ -22,6 +23,7 @@
   let selectedRefundPolicy = '';
   let existingTicketsLoaded = false;
   let paymentSetupState = null;
+  let returnedFromStripe = false;
 
   const SALE_END_OPTIONS = [
     { value: 'at_start', label: 'When the event starts' },
@@ -634,7 +636,94 @@
   function paymentSetupReturnPath() {
     const qs = new URLSearchParams();
     if (eventIds.length) qs.set('ids', eventIds.join(','));
+    // Keep drawer context out of Stripe return — open tickets full-page with draft restored.
     return '/organiser/event-tickets.html?' + qs.toString();
+  }
+
+  function draftStorageKey() {
+    return TICKET_DRAFT_KEY + ':' + (eventIds.slice().sort().join(',') || 'none');
+  }
+
+  function saveTicketDraft() {
+    try {
+      const payload = {
+        savedAt: Date.now(),
+        eventIds: eventIds.slice(),
+        attendanceMode: attendanceMode,
+        tiers: attendanceMode === 'osop' ? collectOsopTiers() : collectTiers(),
+        vatTreatment: collectVatTreatment(),
+        refund: collectRefundPayload(),
+        foodOrDrinkIncluded: !!document.getElementById('ee-food-or-drink')?.checked,
+        askDietary: !!document.getElementById('ee-ask-dietary')?.checked,
+        askAccessibility: !!document.getElementById('ee-ask-accessibility')?.checked,
+      };
+      sessionStorage.setItem(draftStorageKey(), JSON.stringify(payload));
+    } catch {
+      /* ignore quota / private mode */
+    }
+  }
+
+  function readTicketDraft() {
+    try {
+      const raw = sessionStorage.getItem(draftStorageKey());
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  function clearTicketDraft() {
+    try {
+      sessionStorage.removeItem(draftStorageKey());
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function restoreTicketDraft(draft) {
+    if (!draft || typeof draft !== 'object') return false;
+    if (draft.attendanceMode === 'osop') {
+      setAttendanceMode('osop');
+      if (Array.isArray(draft.tiers) && draft.tiers[0]) prefillOsopFromTicket(draft.tiers[0]);
+    } else if (Array.isArray(draft.tiers) && draft.tiers.length) {
+      setAttendanceMode('tickets');
+      prefillTiers(draft.tiers);
+    } else {
+      return false;
+    }
+    if (draft.vatTreatment) {
+      const vatVal = String(draft.vatTreatment);
+      const radio = Array.from(document.querySelectorAll('input[name="vat-treatment"]')).find(
+        (el) => el.value === vatVal
+      );
+      if (radio) selectVatCard(radio);
+    }
+    if (draft.refund && draft.refund.refundPolicy) {
+      selectedRefundPolicy = draft.refund.refundPolicy;
+      const policyVal = String(draft.refund.refundPolicy);
+      const policyRadio = Array.from(document.querySelectorAll('input[name="refund-policy"]')).find(
+        (el) => el.value === policyVal
+      );
+      if (policyRadio) selectRefundCard(policyRadio);
+      const agree = document.getElementById('refund-terms-agreed');
+      if (agree && draft.refund.refundTermsAgreed) agree.checked = true;
+      const partial = document.getElementById('refund-partial-details');
+      if (partial && draft.refund.refundPolicyDetails && policyVal === 'partial') {
+        partial.value = draft.refund.refundPolicyDetails;
+      }
+      const custom = document.getElementById('refund-custom-details');
+      if (custom && draft.refund.refundPolicyDetails && policyVal === 'custom') {
+        custom.value = draft.refund.refundPolicyDetails;
+      }
+    }
+    const food = document.getElementById('ee-food-or-drink');
+    if (food) food.checked = !!draft.foodOrDrinkIncluded;
+    const dietary = document.getElementById('ee-ask-dietary');
+    if (dietary) dietary.checked = !!draft.askDietary;
+    const access = document.getElementById('ee-ask-accessibility');
+    if (access) access.checked = !!draft.askAccessibility;
+    return true;
   }
 
   function paymentGroupForSeries() {
@@ -669,6 +758,14 @@
       title: 'Add bank details before you publish paid tickets',
       lead: 'Stripe will ask for your UK bank account (about 5 minutes). Then come back here and click Publish event.',
     });
+    // Persist ticket form before leaving for Stripe, so return does not lose tiers.
+    mount.querySelectorAll('[data-payment-setup]').forEach(function (btn) {
+      if (btn.dataset.draftBound === '1') return;
+      btn.dataset.draftBound = '1';
+      btn.addEventListener('click', function () {
+        saveTicketDraft();
+      });
+    });
     if (wasHidden) {
       mount.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -676,12 +773,25 @@
 
   async function handleStripeConnectReturn() {
     const connectParam = new URLSearchParams(window.location.search).get('stripe_connect');
-    if (connectParam !== 'return') return;
+    if (connectParam !== 'return' && connectParam !== 'refresh') return;
+    returnedFromStripe = true;
     const group = paymentGroupForSeries();
+    let status = null;
     if (group?.id) {
-      await api('/api/organiser/stripe-connect?groupId=' + encodeURIComponent(group.id));
+      const { ok, data } = await api(
+        '/api/organiser/stripe-connect?groupId=' + encodeURIComponent(group.id)
+      );
+      status = ok ? data : null;
       await loadPaymentSetupState();
+    }
+    if (status && status.ready) {
       showAlert('Bank details saved — you can publish paid tickets now.', 'ok');
+    } else {
+      showAlert(
+        (status && status.incompleteHint) ||
+          'Stripe setup is not finished yet. Keep your ticket details below, then click Add bank details again to complete identity and bank account.',
+        'warn'
+      );
     }
     if (window.history.replaceState) {
       const url = new URL(window.location.href);
@@ -1001,7 +1111,15 @@
       renderSalesPendingBanner();
     }
 
-    if (loaded.tickets.length) {
+    const draft = readTicketDraft();
+    let restoredDraft = false;
+    if (draft && (returnedFromStripe || !loaded.tickets.length)) {
+      restoredDraft = restoreTicketDraft(draft);
+    }
+
+    if (restoredDraft) {
+      showAlert('Restored your ticket details from before bank setup. Review them, then publish when ready.', 'ok');
+    } else if (loaded.tickets.length) {
       const osopTicket = loaded.tickets.find(isOsopTicket);
       if (osopTicket) {
         prefillOsopFromTicket(osopTicket);
@@ -1186,6 +1304,22 @@
       return;
     }
 
+    if (publish) {
+      const publishedRows = Array.isArray(data.publishedEvents) ? data.publishedEvents : [];
+      const allLive =
+        publishedRows.length > 0 &&
+        publishedRows.every(function (ev) {
+          return String(ev.status || ev.listingStatus || '').toLowerCase() === 'published';
+        });
+      if (!allLive) {
+        showAlert(
+          'Tickets were saved but the event did not go live. Open My Events, check refund policy and VAT, then publish again.',
+          'warn'
+        );
+        return;
+      }
+    }
+
     const salesScheduled = tiers.some(function (tier) {
       if (!tier.saleStart) return false;
       const start = new Date(tier.saleStart);
@@ -1194,6 +1328,7 @@
 
     if (!publish) {
       existingTicketsLoaded = true;
+      clearTicketDraft();
       showAlert(
         'Tickets saved as draft. Your event is not on Browse events yet — choose VAT and refund policy below, then click Publish event.',
         'ok'
@@ -1214,6 +1349,7 @@
     } catch {
       /* ignore */
     }
+    clearTicketDraft();
 
     if (isEmbedDrawer && window.parent && window.parent !== window) {
       window.parent.postMessage({ type: 'hub-event-tickets-done' }, window.location.origin);

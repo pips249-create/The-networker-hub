@@ -26,10 +26,10 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 
 ### Tier 1 — Keep (implement now)
 
-1. **Pre-publish review** — All opportunity listings require admin approval before going live (verify this is enforced in QA; organiser copy says “reviewed before going live”).
-2. **Structured listing fields** — Investment amount, opportunity type, territory — already collected; reject vague “unlimited income” listings.
-3. **Automated red flags** — Extend pattern checks for: MLM, “passive income”, “financial freedom”, guaranteed returns, crypto schemes, unlicensed investment.
-4. **Reject + email** — Use `opportunity_listing_rejected` template with clear reason; allow edit and resubmit.
+1. **Pre-publish review** — All opportunity listings require admin approval before going live (`activateOpportunityListingPayment` sets `Pending Review`; live email on admin approve).
+2. **Structured listing fields** — Investment amount, opportunity type, territory / location — required on submit; automated rejection if missing or vague.
+3. **Automated red flags** — Server-side pattern checks in `api/_lib/opportunity-moderation.js` for MLM, guaranteed income, passive income, crypto, and unregulated investment language.
+4. **Reject + email** — `opportunity_listing_rejected` template with required admin reason (or automated reason); edit and resubmit.
 5. **Enquiry disclaimer** — Keep on browse, detail, and enquiry form (already implemented).
 6. **Organiser terms** — Prohibit pyramid selling and unregulated financial products (already in legal policies).
 
@@ -37,8 +37,8 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 
 7. **FCA disclaimer on high-risk types** — Extra checkbox for listers: “This is not a regulated investment; I will not make guaranteed return claims.”
 8. **Annual re-review** — Expired listings re-checked on renewal.
-9. **Member report listing** — Reuse `listing-report.js` pattern for “Report this opportunity” on detail pages.
-10. **Solicitor review** — One-off review of opportunity disclaimer wording before scaling listings.
+9. **Member report listing** — `listing-report.js` on opportunity detail pages (implemented).
+10. **Solicitor review** — One-off review of opportunity disclaimer wording before scaling listings — **Director action item** (see `docs/COMPLIANCE-RUNBOOK.md`).
 
 ### Tier 3 — If you scale significantly
 
@@ -90,4 +90,5 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 
 | Date | Change |
 |------|--------|
+| 2026-07-08 | Pre-publish review enforced; automated red flags; report listing; admin rejection reasons |
 | 2026-07-08 | Initial moderation guide |

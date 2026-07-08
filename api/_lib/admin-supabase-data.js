@@ -589,7 +589,7 @@ async function fetchModeration(sb) {
     sb
       .from('listing_reports')
       .select(
-        'id, listing_type, listing_title, reason, details, reporter_email, created_at, status, event_id, organiser_id, events(slug), organisers(slug)'
+        'id, listing_type, listing_title, reason, details, reporter_email, created_at, status, event_id, organiser_id, opportunity_id, events(slug), organisers(slug), business_opportunities(slug)'
       )
       .eq('status', 'open')
       .order('created_at', { ascending: false })
@@ -630,8 +630,12 @@ async function fetchModeration(sb) {
     const title = String(r.listing_title || '').trim() || '—';
     const eventId = r.event_id || null;
     const organiserId = r.organiser_id || null;
+    const opportunityId = r.opportunity_id || null;
     const eventSlug = r.events?.slug ? String(r.events.slug).trim() : '';
     const organiserSlug = r.organisers?.slug ? String(r.organisers.slug).trim() : '';
+    const opportunitySlug = r.business_opportunities?.slug
+      ? String(r.business_opportunities.slug).trim()
+      : '';
     let viewUrl = null;
     let adminUrl = null;
     if (r.listing_type === 'event' && eventId) {
@@ -644,6 +648,11 @@ async function fetchModeration(sb) {
         ? `../events/organiser.html?slug=${encodeURIComponent(organiserSlug)}`
         : `../events/organiser.html?id=${encodeURIComponent(organiserId)}`;
       adminUrl = `#cleanup/groups?organiser=${encodeURIComponent(organiserId)}`;
+    } else if (r.listing_type === 'opportunity' && opportunityId) {
+      viewUrl = opportunitySlug
+        ? `../opportunities/${encodeURIComponent(opportunitySlug)}`
+        : `../opportunities/opportunity.html?id=${encodeURIComponent(opportunityId)}`;
+      adminUrl = `#cleanup/opportunities?q=${encodeURIComponent(title)}`;
     }
     return {
       id: r.id,
@@ -656,9 +665,10 @@ async function fetchModeration(sb) {
       status: r.status,
       eventId,
       organiserId,
+      opportunityId,
       viewUrl,
       adminUrl,
-      canUnpublish: Boolean(eventId || organiserId),
+      canUnpublish: Boolean(eventId || organiserId || opportunityId),
     };
   });
 

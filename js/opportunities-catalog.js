@@ -88,7 +88,9 @@
     education: /course|coach|training|academy|education/i,
     pets: /dog|groom|pet|paw|animal/i,
     finance: /book|ledger|finance|account/i,
-    mlm: /mlm|network marketing|direct sales|independent consultant|team build|downline|ambassador/i,
+    mlm: /mlm|multi[\s-]?level|network marketing|direct sales|independent consultant|team build|downline|upline|ambassador/i,
+    guaranteed_income: /guaranteed\s+(income|earnings|profit|return)|passive income|financial freedom|unlimited income|quit your job/i,
+    unregulated_investment: /crypto(?:currency)?|forex|binary option|unregulated investment|high[\s-]?yield|hyip|ponzi/i,
   };
 
   function metaVal(meta, keyRe) {

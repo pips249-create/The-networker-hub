@@ -1,5 +1,5 @@
 /**
- * Stripe Connect — organiser onboarding and checkout destination charges.
+ * Stripe Connect — organiser onboarding and checkout direct charges.
  */
 const { getSupabaseAdmin } = require('./supabase');
 const { getStripeClient, isStripeCheckoutConfigured, siteBaseUrl } = require('./stripe-checkout');
@@ -13,6 +13,26 @@ function isStripeConnectEnabled() {
 
 function connectRequiredForPaidCheckout() {
   return isStripeConnectEnabled();
+}
+
+function isStripeLiveMode() {
+  const key = String(process.env.STRIPE_SECRET_KEY || '').trim();
+  return key.startsWith('sk_live_');
+}
+
+/** Stripe live mode rejects http:// return/refresh URLs — use a public HTTPS site. */
+function connectCallbackBaseUrl() {
+  const site = siteBaseUrl();
+  if (/^https:\/\//i.test(site)) return site;
+  if (isStripeLiveMode()) {
+    const fallback = String(
+      process.env.STRIPE_CONNECT_CALLBACK_URL ||
+        process.env.PUBLIC_SITE_URL ||
+        'https://the-networker-hub.vercel.app'
+    ).replace(/\/$/, '');
+    if (/^https:\/\//i.test(fallback)) return fallback;
+  }
+  return site;
 }
 
 async function retrieveConnectAccount(accountId) {
@@ -29,11 +49,20 @@ function mapConnectStatus(account) {
       payoutsEnabled: false,
       detailsSubmitted: false,
       ready: false,
+      currentlyDue: [],
+      pastDue: [],
+      disabledReason: null,
     };
   }
   const chargesEnabled = Boolean(account.charges_enabled);
   const payoutsEnabled = Boolean(account.payouts_enabled);
   const detailsSubmitted = Boolean(account.details_submitted);
+  const currentlyDue = Array.isArray(account.requirements?.currently_due)
+    ? account.requirements.currently_due
+    : [];
+  const pastDue = Array.isArray(account.requirements?.past_due)
+    ? account.requirements.past_due
+    : [];
   return {
     connected: true,
     accountId: account.id,
@@ -41,6 +70,9 @@ function mapConnectStatus(account) {
     payoutsEnabled,
     detailsSubmitted,
     ready: chargesEnabled && detailsSubmitted,
+    currentlyDue,
+    pastDue,
+    disabledReason: account.requirements?.disabled_reason || null,
   };
 }
 
@@ -80,16 +112,22 @@ async function syncOrganiserConnectStatus(organiserId) {
 async function createConnectAccountForOrganiser(organiser) {
   const stripe = getStripeClient();
   const email = String(organiser.email || organiser.contact_email || '').trim().toLowerCase();
+  const businessName = String(organiser.name || 'Event organiser').trim() || 'Event organiser';
+  const site = connectCallbackBaseUrl();
   const account = await stripe.accounts.create({
     type: 'express',
     country: 'GB',
     email: email || undefined,
+    business_type: 'individual',
     capabilities: {
       card_payments: { requested: true },
       transfers: { requested: true },
     },
     business_profile: {
-      name: String(organiser.name || 'Event organiser').trim() || undefined,
+      name: businessName,
+      url: site,
+      mcc: '8699',
+      product_description: 'Networking events and ticket sales via The Networker Hub',
     },
     metadata: {
       organiser_id: String(organiser.id),
@@ -130,11 +168,34 @@ async function createConnectOnboardingLink(organiserId, returnPath) {
   if (!accountId) {
     const account = await createConnectAccountForOrganiser(organiser);
     accountId = account.id;
+  } else {
+    // Keep business profile populated — helps Express onboarding render reliably.
+    try {
+      const stripe = getStripeClient();
+      const site = connectCallbackBaseUrl();
+      await stripe.accounts.update(accountId, {
+        business_profile: {
+          name: String(organiser.name || 'Event organiser').trim() || undefined,
+          url: site,
+          mcc: '8699',
+          product_description: 'Networking events and ticket sales via The Networker Hub',
+        },
+      });
+    } catch {
+      /* non-fatal */
+    }
   }
 
-  const site = siteBaseUrl();
-  const returnUrl = site + String(returnPath || '/organiser/index.html#events-revenue');
-  const refreshUrl = site + '/organiser/index.html?stripe_connect=refresh';
+  const site = connectCallbackBaseUrl();
+  const safeReturn = String(returnPath || '/organiser/index.html#events-revenue');
+  const returnUrl = site + safeReturn;
+  // Account Links are single-use; refreshing Stripe should reopen our launcher for a new link.
+  const refreshUrl =
+    site +
+    '/organiser/payment-setup.html?groupId=' +
+    encodeURIComponent(organiserId) +
+    '&returnPath=' +
+    encodeURIComponent(safeReturn);
 
   const stripe = getStripeClient();
   const link = await stripe.accountLinks.create({
@@ -142,6 +203,9 @@ async function createConnectOnboardingLink(organiserId, returnPath) {
     refresh_url: refreshUrl,
     return_url: returnUrl,
     type: 'account_onboarding',
+    collection_options: {
+      fields: 'eventually_due',
+    },
   });
 
   return {
@@ -237,15 +301,15 @@ function buildConnectCheckoutParams({ connect, ticketSubtotalPence, bookingFeePe
   );
   if (applicationFeeAmount <= 0) return null;
 
+  // Direct charge on the connected account — platform dashboard shows only application fees,
+  // not the full ticket amount passing through the Hub Stripe balance.
   return {
-    payment_intent_data: {
+    stripeAccountId: connect.stripeAccountId,
+    paymentIntentData: {
       application_fee_amount: applicationFeeAmount,
-      transfer_data: {
-        destination: connect.stripeAccountId,
-      },
       metadata: {
         organiser_id: connect.organiserId,
-        hub_checkout: 'connect_destination',
+        hub_checkout: 'connect_direct',
       },
     },
   };

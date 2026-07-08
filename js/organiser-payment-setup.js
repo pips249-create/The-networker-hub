@@ -1,5 +1,7 @@
 /**
  * Simple “add bank details” flow for paid ticket sales (Stripe Connect).
+ * Always launches Stripe via a top-level Hub page in a new tab so Stripe is
+ * never embedded in the organiser tickets drawer iframe.
  */
 (function (global) {
   function esc(value) {
@@ -60,41 +62,62 @@
     return !group.stripeConnectReady;
   }
 
-  function appendStripeReturnFlag(path) {
-    const base = String(path || global.location.pathname + global.location.search + global.location.hash);
-    if (base.includes('stripe_connect=')) return base;
-    return base + (base.includes('?') ? '&' : '?') + 'stripe_connect=return';
+  function launcherHref(groupId, returnPath) {
+    const qs = new URLSearchParams();
+    qs.set('groupId', String(groupId || '').trim());
+    qs.set(
+      'returnPath',
+      String(returnPath || '/organiser/index.html#events-revenue').trim() ||
+        '/organiser/index.html#events-revenue'
+    );
+    // Absolute path so this works from both organiser/index.html and event-tickets.html (incl. iframe).
+    return '/organiser/payment-setup.html?' + qs.toString();
   }
 
-  async function startSetup(groupId, returnPath) {
+  function startSetup(groupId, returnPath) {
     const gid = String(groupId || '').trim();
     if (!gid) {
       alert('No organiser profile found.');
       return false;
     }
-    const res = await fetch('/api/organiser/stripe-connect', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        groupId: gid,
-        returnPath: appendStripeReturnFlag(
-          returnPath || global.location.pathname + global.location.search + global.location.hash
-        ),
-      }),
-    });
-    let data = {};
-    try {
-      data = await res.json();
-    } catch {
-      data = {};
+    const href = launcherHref(gid, returnPath);
+    const tab = global.open(href, '_blank', 'noopener,noreferrer');
+    if (!tab) {
+      // Last resort: leave the drawer and open launcher top-level.
+      try {
+        if (global.top && global.top !== global.self) {
+          global.top.location.href = href;
+          return true;
+        }
+      } catch {
+        /* ignore */
+      }
+      global.location.href = href;
     }
-    if (!res.ok || !data.url) {
-      alert(data.message || data.error || 'Could not start bank details setup. Try again in a moment.');
-      return false;
-    }
-    global.location.href = data.url;
     return true;
+  }
+
+  function openStripeOnboarding(url) {
+    // Legacy helper — if given a Stripe URL, bounce via launcher is preferred.
+    // Keep a top-level open for callers that already have a URL.
+    if (!url) return false;
+    try {
+      if (global.top && global.top !== global.self) {
+        global.top.open(url, '_blank', 'noopener,noreferrer');
+        return true;
+      }
+    } catch {
+      /* ignore */
+    }
+    const tab = global.open(url, '_blank', 'noopener,noreferrer');
+    if (tab) return true;
+    try {
+      global.top.location.href = url;
+      return true;
+    } catch {
+      global.location.href = url;
+      return true;
+    }
   }
 
   function cardHtml(group, options) {
@@ -111,6 +134,7 @@
         '<li><strong>Add bank details</strong> — about 5 minutes on Stripe</li>' +
         '<li><strong>Return here</strong> and publish your paid tickets</li>' +
         '</ol>';
+    const href = launcherHref(group?.id, opts.returnPath);
 
     return (
       '<div class="hub-payment-setup-card' +
@@ -125,27 +149,24 @@
       esc(lead) +
       '</p>' +
       steps +
-      '<button type="button" class="' +
+      '<a class="' +
       esc(opts.buttonClass || 'hub-payment-setup-btn org-btn org-btn-primary') +
-      '" data-payment-setup="' +
+      '" href="' +
+      esc(href) +
+      '" target="_blank" rel="noopener noreferrer" data-payment-setup="' +
       esc(group?.id || '') +
       '">Add bank details' +
       (group?.name ? ' for ' + groupName : '') +
-      '</button>' +
-      '<p class="hub-payment-setup-note">Free events do not need bank details.</p>' +
+      '</a>' +
+      '<p class="hub-payment-setup-note">Opens in a new tab — return here when finished. Free events do not need bank details.</p>' +
       '</div></div>'
     );
   }
 
-  function bindCard(root, returnPath) {
+  function bindCard(root) {
+    // Links already open the launcher in a new tab via target="_blank".
+    // No click handler required (avoids iframe / popup-blocker issues).
     if (!root) return;
-    root.querySelectorAll('[data-payment-setup]').forEach(function (btn) {
-      if (btn.dataset.paymentSetupBound === '1') return;
-      btn.dataset.paymentSetupBound = '1';
-      btn.addEventListener('click', function () {
-        startSetup(btn.getAttribute('data-payment-setup'), returnPath);
-      });
-    });
   }
 
   function renderInto(container, state, group, options) {
@@ -166,6 +187,8 @@
     groupForEvent: groupForEvent,
     groupNeedsSetup: groupNeedsSetup,
     startSetup: startSetup,
+    openStripeOnboarding: openStripeOnboarding,
+    launcherHref: launcherHref,
     cardHtml: cardHtml,
     bindCard: bindCard,
     renderInto: renderInto,

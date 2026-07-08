@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { isAdminRole } = require('../auth');
 const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
 const {
   isStripeConnectEnabled,
@@ -55,14 +56,31 @@ module.exports = async function handler(req, res) {
 
   const { resolveOrganiserAccess } = require('../supabase-organiser-access');
   const access = await resolveOrganiserAccess(auth.session);
-  if (!access.groupIds.includes(groupId)) {
-    return json(res, 403, { error: 'forbidden' });
+  // Platform admins can open Connect for any group (dashboard admin overview).
+  // Non-admins must own / have team access to the group.
+  if (!isAdminRole(auth.session.role) && !access.groupIds.includes(groupId)) {
+    return json(res, 403, {
+      error: 'forbidden',
+      message:
+        'You can only add bank details for organiser pages linked to your account. Switch to your own workspace or ask the group owner.',
+    });
   }
 
   try {
     if (req.method === 'GET') {
       const status = await syncOrganiserConnectStatus(groupId);
-      return json(res, 200, { ok: true, ...status });
+      const due = [...new Set([...(status.currentlyDue || []), ...(status.pastDue || [])])];
+      const incompleteHint = !status.ready
+        ? due.some((f) => String(f).includes('external_account'))
+          ? 'Stripe still needs your bank account and identity details. Click Add bank details again to finish.'
+          : 'Stripe setup is incomplete. Click Add bank details again to finish the remaining steps.'
+        : null;
+      return json(res, 200, {
+        ok: true,
+        ...status,
+        incompleteHint,
+        fieldsStillDue: due,
+      });
     }
 
     const action = String(body.action || 'onboard').toLowerCase();

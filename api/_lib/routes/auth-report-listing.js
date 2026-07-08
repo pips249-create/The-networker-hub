@@ -38,9 +38,10 @@ module.exports = async function handler(req, res) {
   const details = String(body.details || '').trim().slice(0, 2000);
   const eventId = body.event_id || body.eventId || null;
   const organiserId = body.organiser_id || body.organiserId || null;
+  const opportunityId = body.opportunity_id || body.opportunityId || null;
   const listingTitle = String(body.listing_title || body.listingTitle || '').trim().slice(0, 300);
 
-  if (!['event', 'organiser'].includes(listingType)) {
+  if (!['event', 'organiser', 'opportunity'].includes(listingType)) {
     return json(res, 400, { ok: false, error: 'invalid_listing_type' });
   }
   if (!REASONS.has(reason)) {
@@ -52,6 +53,9 @@ module.exports = async function handler(req, res) {
   if (listingType === 'organiser' && !organiserId) {
     return json(res, 400, { ok: false, error: 'organiser_id_required' });
   }
+  if (listingType === 'opportunity' && !opportunityId) {
+    return json(res, 400, { ok: false, error: 'opportunity_id_required' });
+  }
 
   const session = sessionFromRequest(req);
   const reporterEmail = session?.email ? String(session.email).trim() : String(body.reporter_email || '').trim() || null;
@@ -62,7 +66,10 @@ module.exports = async function handler(req, res) {
       listing_type: listingType,
       event_id: listingType === 'event' ? eventId : null,
       organiser_id: listingType === 'organiser' ? organiserId : null,
-      listing_title: listingTitle || (listingType === 'event' ? 'Event' : 'Organiser'),
+      opportunity_id: listingType === 'opportunity' ? opportunityId : null,
+      listing_title:
+        listingTitle ||
+        (listingType === 'event' ? 'Event' : listingType === 'organiser' ? 'Organiser' : 'Opportunity'),
       reporter_user_id: session?.userId || null,
       reporter_email: reporterEmail,
       reason,

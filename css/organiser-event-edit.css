@@ -1842,6 +1842,21 @@ body.ee-embed-drawer .ee-actions {
   color: #736b6e;
 }
 
+.hub-payment-setup-btn,
+a.hub-payment-setup-btn {
+  margin-top: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+a.ee-btn.ee-btn-primary {
+  text-decoration: none;
+}
+
 #ee-payment-setup-mount[hidden] {
   display: none !important;
 }

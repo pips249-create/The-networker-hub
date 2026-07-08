@@ -1,7 +1,7 @@
 const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
-const { normalizeType, normalizeMeta } = require('../supabase-opportunities');
-const { sendOpportunityRejectedEmail } = require('../lifecycle-emails');
+const { normalizeType, normalizeMeta, rejectOpportunityListing, rowToListing } = require('../supabase-opportunities');
+const { sendOpportunityListingLiveEmail } = require('../opportunity-emails');
 const { ensureOpportunitySlug } = require('../opportunity-slug');
 const { addMonths } = require('../opportunity-listing-pricing');
 
@@ -380,6 +380,7 @@ module.exports = async function handler(req, res) {
         const now = new Date();
         const patch = {
           approval_status: 'Approved',
+          rejection_note: null,
           updated_at: now.toISOString(),
         };
         const { data: current } = await sb
@@ -395,6 +396,13 @@ module.exports = async function handler(req, res) {
           .select('*')
           .single();
         if (error) throw new Error(error.message);
+
+        try {
+          await sendOpportunityListingLiveEmail(rowToListing(data));
+        } catch (emailErr) {
+          console.warn('[opportunity] approve live email failed:', emailErr.message || emailErr);
+        }
+
         return json(res, 200, { ok: true, opportunity: mapOpportunityRow(data) });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'approve_failed', message: e.message });
@@ -402,26 +410,19 @@ module.exports = async function handler(req, res) {
     }
 
     if (body.action === 'reject') {
+      const rejectionNote = String(body.rejection_note || body.note || '').trim();
+      if (!rejectionNote) {
+        return json(res, 400, { ok: false, error: 'missing_rejection_note' });
+      }
       try {
+        await rejectOpportunityListing(id, rejectionNote);
         const sb = getSupabaseAdmin();
         const { data, error } = await sb
           .from('business_opportunities')
-          .update({
-            approval_status: 'Rejected',
-            status: 'unpublished',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', id)
           .select('*')
+          .eq('id', id)
           .single();
         if (error) throw new Error(error.message);
-
-        try {
-          await sendOpportunityRejectedEmail(data, body.rejection_note || body.note || '');
-        } catch (emailErr) {
-          console.warn('[opportunity] reject email failed:', emailErr.message || emailErr);
-        }
-
         return json(res, 200, { ok: true, opportunity: mapOpportunityRow(data) });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'reject_failed', message: e.message });

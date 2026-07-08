@@ -84,6 +84,11 @@ async function createPaidCheckoutSession(opts) {
     sessionParams.payment_intent_data = opts.paymentIntentData;
   }
 
+  const stripeAccountId = String(opts.stripeAccountId || '').trim();
+  if (stripeAccountId) {
+    return stripe.checkout.sessions.create(sessionParams, { stripeAccount: stripeAccountId });
+  }
+
   return stripe.checkout.sessions.create(sessionParams);
 }
 
@@ -195,11 +200,15 @@ async function createOpportunityPremiumCheckoutSession(opts) {
   });
 }
 
-async function retrieveCheckoutSession(sessionId) {
+async function retrieveCheckoutSession(sessionId, options = {}) {
   const stripe = getStripeClient();
-  return stripe.checkout.sessions.retrieve(String(sessionId || '').trim(), {
-    expand: ['subscription'],
-  });
+  const id = String(sessionId || '').trim();
+  const params = { expand: ['subscription'] };
+  const stripeAccountId = String(options.stripeAccountId || '').trim();
+  if (stripeAccountId) {
+    return stripe.checkout.sessions.retrieve(id, params, { stripeAccount: stripeAccountId });
+  }
+  return stripe.checkout.sessions.retrieve(id, params);
 }
 
 const { FEATURED_PLANS, normalizePlanId } = require('./event-featured-plans');

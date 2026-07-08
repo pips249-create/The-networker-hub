@@ -301,6 +301,16 @@
       .catch(function () {});
   }
 
+  function wireListingReport(item) {
+    var btn = document.getElementById('opp-report-btn');
+    if (!btn || !window.ListingReport || !item || !item.id) return;
+    window.ListingReport.attachTrigger(btn, {
+      listingType: 'opportunity',
+      opportunityId: item.id,
+      title: item.title || 'Opportunity',
+    });
+  }
+
   function finishInit(item) {
     if (!item) {
       showNotFound();
@@ -310,6 +320,7 @@
     render(item);
     bindSave();
     bindForm();
+    wireListingReport(item);
     loadSidebarAd();
   }
 

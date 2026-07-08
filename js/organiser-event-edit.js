@@ -1072,12 +1072,12 @@
       title,
       type: canonicalEventType(document.getElementById('ee-type').value),
       description,
-      listingStatus: 'draft',
       recurrencePattern: recurrence.recurrencePattern,
       recurrenceEndDate: recurrence.recurrenceEndDate,
       occurrences,
       ...locFields,
     };
+    if (!editId) payload.listingStatus = 'draft';
 
     const photoUrl = document.getElementById('ee-photo-url').value.trim();
     if (photoUrl) payload.photoUrl = photoUrl;

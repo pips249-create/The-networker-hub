@@ -107,6 +107,20 @@
     }
   }
 
+  function formatDateLine(raw) {
+    if (!raw) return '';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return String(raw);
+    return d.toLocaleString('en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  }
+
   function renderPreview(ev) {
     const loading = document.getElementById('ep-preview-loading');
     const card = document.getElementById('ep-listing-preview');
@@ -121,7 +135,7 @@
 
     const title = ev.title || fallbackTitle || 'Your event';
     const photo = ev.photo || ev.imageUrl || fallbackImage || '../assets/event-placeholder.svg';
-    const meta = [ev.date || ev.dateLine, ev.location, ev.meetingType || ev.format]
+    const meta = [formatDateLine(ev.date || ev.dateLine), ev.location, ev.meetingType || ev.format]
       .filter(Boolean)
       .join(' · ');
 
@@ -161,7 +175,7 @@
       const pack = window.HubCommsPack.buildEventCommsPack(
         {
           title,
-          date: ev.date || ev.dateLine,
+          date: formatDateLine(ev.date || ev.dateLine),
           location: ev.location,
           description: plainDescription(ev.description),
         },

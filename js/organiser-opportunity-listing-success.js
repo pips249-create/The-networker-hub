@@ -274,20 +274,53 @@
 
   function showReady(opportunity) {
     var term = months ? months + ' month' + (months === '1' ? '' : 's') : 'your chosen term';
+    var pendingReview =
+      opportunity &&
+      String(opportunity.approvalStatus || opportunity.approval_status || '').toLowerCase() ===
+        'pending review';
+    var rejected =
+      opportunity &&
+      String(opportunity.approvalStatus || opportunity.approval_status || '').toLowerCase() ===
+        'rejected';
+
     if (lede) {
-      lede.textContent = title
-        ? '"' + title + '" is now live in the business opportunities directory.'
-        : 'Your opportunity is now live in the business opportunities directory.';
+      if (rejected) {
+        lede.textContent = title
+          ? '"' + title + '" could not be approved. Check your email for details and next steps.'
+          : 'Your listing could not be approved. Check your email for details and next steps.';
+      } else if (pendingReview) {
+        lede.textContent = title
+          ? '"' + title + '" has been submitted for review.'
+          : 'Your opportunity has been submitted for review.';
+      } else {
+        lede.textContent = title
+          ? '"' + title + '" is now live in the business opportunities directory.'
+          : 'Your opportunity is now live in the business opportunities directory.';
+      }
     }
     if (status) {
       var expiry = opportunity && opportunity.listingExpiresAt;
-      status.textContent = expiry
-        ? 'Paid for ' + term + '. Listing active until ' + new Date(expiry).toLocaleDateString('en-GB') + '.'
-        : 'Thank you — your listing fee has been received.';
+      if (rejected) {
+        status.textContent =
+          'Payment received. Edit your listing to address the issues in our email, then resubmit when ready.';
+      } else if (pendingReview) {
+        status.textContent = expiry
+          ? 'Paid for ' +
+            term +
+            '. We typically review within 1–2 working days — you will receive an email when your listing goes live.'
+          : 'Thank you — your listing fee has been received. We will email you once review is complete.';
+      } else {
+        status.textContent = expiry
+          ? 'Paid for ' + term + '. Listing active until ' + new Date(expiry).toLocaleDateString('en-GB') + '.'
+          : 'Thank you — your listing fee has been received.';
+      }
+    }
+    if (viewDirectory && pendingReview) {
+      viewDirectory.textContent = 'Browse opportunities';
     }
     if (actions) actions.hidden = false;
     if (opportunity) renderPremiumPreview(opportunity);
-    showCommsPack(opportunity);
+    showCommsPack(rejected || pendingReview ? null : opportunity);
   }
 
   function showError(msg) {

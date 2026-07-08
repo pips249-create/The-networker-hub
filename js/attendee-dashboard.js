@@ -49,7 +49,15 @@
     return n % 1 === 0 ? '£' + n.toFixed(0) : '£' + n.toFixed(2);
   }
 
+  function isRegistrationPaid(reg) {
+    const payment = String(reg?.paymentStatus || 'Pending').trim();
+    if (payment === 'Paid' || payment === 'Free') return true;
+    const amount = Number(reg?.amountPaid);
+    return Number.isFinite(amount) && amount > 0;
+  }
+
   function needsBookingAction(reg) {
+    if (isRegistrationPaid(reg)) return false;
     return Boolean(reg?.needsPayment || reg?.needsFreeConfirmation);
   }
 
@@ -920,7 +928,8 @@
 
     const payBtn = document.getElementById('ad-payment-pay-btn');
     if (payBtn) {
-      payBtn.hidden = !needsBookingAction(reg);
+      const showPayAction = needsBookingAction(reg);
+      payBtn.hidden = !showPayAction;
       payBtn.disabled = false;
       payBtn.textContent = bookingActionLabel(reg);
       payBtn.onclick = function () {

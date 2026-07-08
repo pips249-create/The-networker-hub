@@ -2,6 +2,7 @@
  * Stripe refund verification and issuance — organiser event cancellation.
  */
 const { getStripeClient, isStripeCheckoutConfigured } = require('./stripe-checkout');
+const { getSupabaseAdmin } = require('./supabase');
 
 const PLATFORM_FEE_RATE = 0.03;
 
@@ -9,13 +10,55 @@ function isStripeRefundsConfigured() {
   return isStripeCheckoutConfigured();
 }
 
-async function retrievePaymentIntentRefundState(paymentIntentId) {
+function isDestinationConnectCharge(paymentIntent) {
+  const hubCheckout = String(paymentIntent?.metadata?.hub_checkout || '').trim();
+  if (hubCheckout === 'connect_destination') return true;
+  if (hubCheckout === 'connect_direct') return false;
+  return Boolean(paymentIntent?.transfer_data?.destination);
+}
+
+async function resolveConnectStripeAccount(registration) {
+  const organiserId = String(registration?.organiser_id || '').trim();
+  if (!organiserId) return null;
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('organisers')
+    .select('stripe_account_id')
+    .eq('id', organiserId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return String(data?.stripe_account_id || '').trim() || null;
+}
+
+async function retrieveConnectPaymentIntent(paymentIntentId, registration) {
+  const stripe = getStripeClient();
+  const id = String(paymentIntentId || '').trim();
+  const stripeAccountId = await resolveConnectStripeAccount(registration);
+
+  if (stripeAccountId) {
+    try {
+      const directPi = await stripe.paymentIntents.retrieve(id, { stripeAccount: stripeAccountId });
+      if (directPi?.id) return { paymentIntent: directPi, stripeAccountId };
+    } catch {
+      /* fall back to platform lookup for legacy destination charges */
+    }
+  }
+
+  const platformPi = await stripe.paymentIntents.retrieve(id);
+  return { paymentIntent: platformPi, stripeAccountId: null };
+}
+
+async function retrievePaymentIntentRefundState(paymentIntentId, registration = null) {
   if (!paymentIntentId || !isStripeRefundsConfigured()) {
     return { checked: false, refunded: false, amountRefunded: 0, amountPaid: 0 };
   }
 
+  const { paymentIntent: pi, stripeAccountId } = await retrieveConnectPaymentIntent(
+    paymentIntentId,
+    registration
+  );
   const stripe = getStripeClient();
-  const pi = await stripe.paymentIntents.retrieve(String(paymentIntentId));
+  const requestOpts = stripeAccountId ? { stripeAccount: stripeAccountId } : undefined;
   const amountPaid = Number(pi.amount_received || pi.amount || 0);
   let amountRefunded = 0;
   let refunded = pi.status === 'canceled';
@@ -24,7 +67,7 @@ async function retrievePaymentIntentRefundState(paymentIntentId) {
     typeof pi.latest_charge === 'string' ? pi.latest_charge : pi.latest_charge?.id || null;
 
   if (chargeId) {
-    const charge = await stripe.charges.retrieve(chargeId);
+    const charge = await stripe.charges.retrieve(chargeId, requestOpts);
     amountRefunded = Number(charge.amount_refunded || 0);
     if (charge.refunded || (amountPaid > 0 && amountRefunded >= amountPaid)) {
       refunded = true;
@@ -37,6 +80,9 @@ async function retrievePaymentIntentRefundState(paymentIntentId) {
     amountRefunded,
     amountPaid,
     paymentIntentId: String(paymentIntentId),
+    hubCheckout: pi.metadata?.hub_checkout || null,
+    stripeAccountId,
+    destinationCharge: isDestinationConnectCharge(pi),
   };
 }
 
@@ -51,7 +97,7 @@ async function verifyRegistrationRefunded(registration) {
     };
   }
 
-  const state = await retrievePaymentIntentRefundState(paymentIntentId);
+  const state = await retrievePaymentIntentRefundState(paymentIntentId, registration);
   return {
     registrationId: registration.id,
     required: true,
@@ -119,7 +165,7 @@ async function issueRefundForRegistration(registration, options = {}) {
     };
   }
 
-  const state = await retrievePaymentIntentRefundState(paymentIntentId);
+  const state = await retrievePaymentIntentRefundState(paymentIntentId, registration);
   if (state.refunded) {
     return {
       registrationId: registration.id,
@@ -154,14 +200,26 @@ async function issueRefundForRegistration(registration, options = {}) {
             return false;
           }
         })();
+
+  const { paymentIntent, stripeAccountId } = await retrieveConnectPaymentIntent(
+    paymentIntentId,
+    registration
+  );
+  const destinationCharge = isDestinationConnectCharge(paymentIntent);
+  const directCharge =
+    connectEnabled &&
+    !destinationCharge &&
+    Boolean(stripeAccountId || String(paymentIntent?.metadata?.hub_checkout || '') === 'connect_direct');
+
   const params = { payment_intent: paymentIntentId };
+  const requestOpts = directCharge && stripeAccountId ? { stripeAccount: stripeAccountId } : undefined;
   if (connectEnabled) {
     params.refund_application_fee = true;
-    params.reverse_transfer = true;
+    if (destinationCharge) params.reverse_transfer = true;
   }
 
   try {
-    const refund = await stripe.refunds.create(params);
+    const refund = await stripe.refunds.create(params, requestOpts);
     return {
       registrationId: registration.id,
       required: true,

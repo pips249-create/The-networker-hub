@@ -519,6 +519,13 @@
   color: #d8f5e4;
 }
 
+.opportunity-detail-page .opp-listing-report-footer {
+  margin: 8px 0 0;
+  padding-top: 24px;
+  border-top: 1px solid rgba(13, 31, 60, 0.08);
+  text-align: center;
+}
+
 .opportunity-detail-page .opp-enquire-status.is-error {
   color: #ffd8d8;
 }
