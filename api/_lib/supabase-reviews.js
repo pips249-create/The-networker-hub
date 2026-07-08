@@ -235,7 +235,9 @@ async function listReviewsForOrganiserGroups(groupIds, groupsById, adminView) {
       authorName,
       initials: reviewerInitials(authorName),
       groupId,
+      organiserId: groupId,
       groupName: group?.name || 'Group',
+      eventId: row.event_id || null,
       eventTitle: String(row.events?.title || 'Event').trim(),
       date: row.created_at || '',
     };

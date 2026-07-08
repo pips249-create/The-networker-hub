@@ -340,21 +340,67 @@
     return null;
   }
 
-  function fetchBySlugOrId(key) {
-    var lookup = String(key || '').trim();
-    if (!lookup) return Promise.resolve(null);
-    var cached = getBySlug(lookup) || getById(lookup);
-    if (cached) return Promise.resolve(cached);
+  function matchesLookup(item, lookup) {
+    var key = String(lookup || '').trim().toLowerCase();
+    if (!key || !item) return false;
+    if (String(item.id || '').toLowerCase() === key) return true;
+    if (String(item.slug || '').trim().toLowerCase() === key) return true;
+    if (window.HubPublicUrls && window.HubPublicUrls.slugifyTitle) {
+      var derived = window.HubPublicUrls.slugifyTitle(item.title);
+      if (derived && derived.toLowerCase() === key) return true;
+    }
+    return false;
+  }
+
+  function fetchOpportunityRecord(lookup) {
     return fetch('/api/opportunities?slug=' + encodeURIComponent(lookup), {
       credentials: 'same-origin',
       cache: 'no-store',
     })
       .then(function (res) {
-        return res.json();
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
       })
-      .then(function (data) {
-        if (!data || !data.ok || !data.opportunity) return null;
-        return normalizeListing(apiRowToSeed(data.opportunity), 0);
+      .then(function (result) {
+        var data = result.data;
+        if (result.ok && data && data.ok && data.opportunity) {
+          return normalizeListing(apiRowToSeed(data.opportunity), 0);
+        }
+        return null;
+      });
+  }
+
+  function fetchOpportunityFromCatalog(lookup) {
+    return fetch('/api/opportunities', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        var data = result.data;
+        if (!result.ok || !data || !data.ok || !Array.isArray(data.opportunities)) {
+          return null;
+        }
+        for (var i = 0; i < data.opportunities.length; i++) {
+          var row = data.opportunities[i];
+          var item = normalizeListing(apiRowToSeed(row), i);
+          if (matchesLookup(item, lookup)) return item;
+        }
+        return null;
+      });
+  }
+
+  function fetchBySlugOrId(key) {
+    var lookup = String(key || '').trim();
+    if (!lookup) return Promise.resolve(null);
+    var cached = getBySlug(lookup) || getById(lookup);
+    if (cached) return Promise.resolve(cached);
+    return fetchOpportunityRecord(lookup)
+      .then(function (item) {
+        if (item) return item;
+        return fetchOpportunityFromCatalog(lookup);
       })
       .catch(function () {
         return null;

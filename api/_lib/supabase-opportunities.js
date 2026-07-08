@@ -337,49 +337,27 @@ async function getPublishedOpportunityById(id) {
 async function getPublishedOpportunityBySlug(slug) {
   const s = String(slug || '').trim();
   if (!s) return null;
-  const sb = getSupabaseAdmin();
 
   if (isUuidSlug(s)) {
     return getPublishedOpportunityById(s);
   }
 
-  const exact = await sb
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
     .from('business_opportunities')
     .select('*')
-    .eq('slug', s)
-    .eq('status', 'published')
-    .eq('approval_status', 'Approved')
-    .maybeSingle();
-  if (exact.error) throw new Error(exact.error.message);
-  if (exact.data && listingPaymentCurrent(exact.data)) {
-    return rowToListing(exact.data);
-  }
-
-  const prefix = s.replace(/-\d+$/, '') || s;
-  const { data: candidates, error: candErr } = await sb
-    .from('business_opportunities')
-    .select('*')
-    .eq('status', 'published')
-    .eq('approval_status', 'Approved')
-    .ilike('slug', prefix + '%')
-    .limit(32);
-  if (candErr) throw new Error(candErr.message);
-  let match = (candidates || []).find((row) => slugMatchesPublicRow(row, s));
-  if (match && listingPaymentCurrent(match)) {
-    return rowToListing(match);
-  }
-
-  const { data: published, error: pubErr } = await sb
-    .from('business_opportunities')
-    .select('id, slug, title')
     .eq('status', 'published')
     .eq('approval_status', 'Approved')
     .order('published_at', { ascending: false, nullsFirst: false })
-    .limit(2500);
-  if (pubErr) throw new Error(pubErr.message);
-  const hit = (published || []).find((row) => slugMatchesPublicRow(row, s));
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+
+  // Match browse page rules: only payment-active listings, then resolve slug/title.
+  const hit = (data || [])
+    .filter(listingPaymentCurrent)
+    .find((row) => slugMatchesPublicRow(row, s));
   if (!hit) return null;
-  return getPublishedOpportunityById(hit.id);
+  return rowToListing(hit);
 }
 
 async function getOpportunityById(id) {

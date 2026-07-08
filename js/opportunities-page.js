@@ -582,11 +582,9 @@
       '<span class="opp-co-name">' +
       escapeHtml(item.host) +
       '</span></div>' +
-      '<h3 class="opp-card-title"><a href="' +
-      escapeHtml(href) +
-      '">' +
+      '<h3 class="opp-card-title">' +
       escapeHtml(item.title) +
-      '</a></h3>' +
+      '</h3>' +
       '<p class="opp-card-desc">' +
       escapeHtml(item.desc) +
       '</p>' +
@@ -604,6 +602,11 @@
       escapeHtml(href) +
       '" class="opp-enquire-btn">Enquire →</a>' +
       '</div>' +
+      '<a class="opp-card-link" href="' +
+      escapeHtml(href) +
+      '" aria-label="View ' +
+      escapeHtml(item.title) +
+      '"></a>' +
       '</article>'
     );
   }

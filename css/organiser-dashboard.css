@@ -124,6 +124,11 @@
   color: #b42318;
 }
 
+.org-attendee-data-notice {
+  margin: 0 0 16px;
+  border-radius: 10px;
+}
+
 .org-attendees-filter-note {
   font-size: 13px;
   color: var(--od-text-soft);

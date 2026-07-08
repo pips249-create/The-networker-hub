@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="../css/hub-loading.css" />
     <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260612f" />
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
-  <link rel="stylesheet" href="../css/event-detail.css?v=20260729" />
+  <link rel="stylesheet" href="../css/event-detail.css?v=20260708c" />
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
@@ -328,6 +328,10 @@
               <p class="checkout-precontract-note">
                 Your contract to attend is with the event organiser named above. The Networker Hub provides the booking platform. Statutory consumer rights apply.
               </p>
+              <p class="checkout-precontract-note checkout-data-sharing-note">
+                Your name and email will be shared with <strong id="checkout-data-sharing-organiser">the event organiser</strong> so they can manage your booking and attendance. Guest names and any dietary or accessibility details you provide are shared for the same purpose.
+                <a href="/legal-policies.html#privacy" target="_blank" rel="noopener noreferrer">Privacy policy</a>
+              </p>
               <p class="checkout-precontract-note checkout-fee-note" id="checkout-fee-note" hidden>
                 The Networker Hub booking fee (platform fee) is non-refundable.
               </p>
@@ -342,7 +346,7 @@
           </div>
 
           <form class="seat-application-form" id="seat-application-form" hidden novalidate>
-            <p class="seat-application-intro">One Seat Only Policy — tell the host a little about yourself. They will review your application and email you if approved.</p>
+            <p class="seat-application-intro">One Seat Only Policy — tell the host a little about yourself. They will review your application and email you if approved. Your name, email, and answers below are shared with the organiser to review your application.</p>
             <label class="form-field" for="apply-industry">
               <span>What industry are you in?</span>
               <input type="text" id="apply-industry" name="industry" autocomplete="organization-title" required />
@@ -377,6 +381,10 @@
                 <textarea id="checkout-accessibility" name="accessibility_requirements" rows="2" maxlength="500" placeholder="e.g. wheelchair access, hearing loop — leave blank if none"></textarea>
               </label>
             </div>
+            <p class="checkout-data-sharing-note" id="checkout-free-data-sharing-note" hidden>
+              Your name and email will be shared with <strong id="checkout-free-data-sharing-organiser">the event organiser</strong> so they can manage your registration and attendance. Guest names and any dietary or accessibility details you provide are shared for the same purpose.
+              <a href="/legal-policies.html#privacy" target="_blank" rel="noopener noreferrer">Privacy policy</a>
+            </p>
             <label class="checkout-terms-check checkout-free-terms" for="checkout-free-terms-agree">
               <input type="checkbox" id="checkout-free-terms-agree" name="terms_agree" required />
               <span id="checkout-free-terms-label">I confirm my details are correct and agree to register for this event.</span>
@@ -484,7 +492,7 @@
     <script src="../js/review-report.js?v=20260609"></script>
     <script src="../js/hub-favourites.js?v=20260629"></script>
     <script src="../js/booking-fees.js?v=20260630"></script>
-    <script src="../js/event-detail.js?v=20260708b"></script>
+    <script src="../js/event-detail.js?v=20260708c"></script>
     <div id="hub-site-footer"></div>
 
     <div class="hub-modal application-success-modal" id="application-success-modal" role="dialog" aria-modal="true" aria-labelledby="application-success-title" hidden>

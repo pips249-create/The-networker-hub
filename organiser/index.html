@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260708a" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260708b" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260702b" />
   </head>
   <body class="organiser-dashboard-page">
@@ -844,6 +844,14 @@
             <p class="org-section-sub org-sub-lead">
               Everyone registered or applied for your events — filter by event and export a CSV for your records.
             </p>
+            <div class="org-attendee-data-notice org-notice org-notice--info" role="note">
+              <p class="org-notice-title">Using attendee contact details</p>
+              <p class="org-notice-text">
+                You receive name and email so you can run the event — for example join links, venue updates, or questions about this booking.
+                Please do not add attendees to marketing lists or contact them about unrelated services without their consent.
+                Export a CSV when you need your own records; the Hub still sends booking confirmations and reminders on your behalf.
+              </p>
+            </div>
             <div class="org-filter-bar">
               <select id="filter-attendees-event" aria-label="Filter by event">
                 <option value="all">All events</option>
@@ -1521,6 +1529,7 @@
     <script src="../js/organiser-onboarding.js?v=20260703"></script>
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
     <script src="../js/organiser-payment-setup.js?v=20260718"></script>
+    <script src="../js/review-report.js?v=20260708"></script>
     <script src="../js/organiser-dashboard.js?v=20260708a"></script>
   </body>
 </html>

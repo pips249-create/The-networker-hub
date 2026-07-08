@@ -1922,6 +1922,21 @@ a:hover {
   color: var(--ink-muted);
 }
 
+.checkout-data-sharing-note {
+  margin-top: 10px;
+}
+
+.checkout-data-sharing-note a {
+  color: var(--purple-dark);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.checkout-data-sharing-note a:hover {
+  color: var(--purple);
+}
+
 .checkout-terms-check {
   display: flex;
   align-items: flex-start;

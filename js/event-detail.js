@@ -1670,6 +1670,8 @@
       form.hidden = !show;
       if (!show) form.classList.remove('is-paid-guests');
     }
+    const freeDataSharingNote = document.getElementById('checkout-free-data-sharing-note');
+    if (freeDataSharingNote && !show) freeDataSharingNote.hidden = true;
     if (secureFoot && !show) secureFoot.hidden = false;
     if (!show) setCheckoutSubmitting(false);
     refreshTicketJumpVisibility();
@@ -1697,6 +1699,8 @@
     if (nameField) nameField.hidden = show;
     if (emailField) emailField.hidden = show;
     if (freeTerms) freeTerms.hidden = show && isPaid;
+    const freeDataSharingNote = document.getElementById('checkout-free-data-sharing-note');
+    if (freeDataSharingNote) freeDataSharingNote.hidden = !show || isPaid;
     if (intro && show) {
       if (hasGuests && hasExtras && isPaid) {
         intro.textContent =
@@ -1923,8 +1927,13 @@
     if (buy && !eventIsOsop(ev)) {
       buy.textContent = isFree ? 'Get free ticket' : 'Buy ticket';
     }
+    const organiserName = ev ? ev.organiser || ev.organiserName || 'Event organiser' : 'Event organiser';
     if (organiserEl && ev) {
-      organiserEl.textContent = ev.organiser || ev.organiserName || 'Event organiser';
+      organiserEl.textContent = organiserName;
+    }
+    const dataSharingOrganiser = document.getElementById('checkout-data-sharing-organiser');
+    if (dataSharingOrganiser && ev) {
+      dataSharingOrganiser.textContent = organiserName;
     }
     if (totalEl) {
       totalEl.textContent =
@@ -1947,12 +1956,16 @@
   }
 
   function updateFreeCheckoutSummary(ev) {
+    const organiserName = ev ? ev.organiser || ev.organiserName || 'the event organiser' : 'the event organiser';
     const freeOrganiser = document.getElementById('checkout-free-organiser');
     if (freeOrganiser) {
-      const organiserName = ev ? ev.organiser || ev.organiserName || 'the event organiser' : 'the event organiser';
       freeOrganiser.textContent = 'Organised by ' + organiserName;
       freeOrganiser.hidden = false;
     }
+    const dataSharingNote = document.getElementById('checkout-free-data-sharing-note');
+    const dataSharingOrganiser = document.getElementById('checkout-free-data-sharing-organiser');
+    if (dataSharingNote) dataSharingNote.hidden = false;
+    if (dataSharingOrganiser) dataSharingOrganiser.textContent = organiserName;
   }
 
   let nudgeUiBound = false;

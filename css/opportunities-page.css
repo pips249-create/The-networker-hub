@@ -2699,6 +2699,33 @@
   transition: all 0.25s;
   position: relative;
   min-height: 0;
+  cursor: pointer;
+}
+
+.opp-browse-page .opp-card-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.opp-browse-page .opp-card-link:focus-visible {
+  outline: 2px solid var(--opp-gold);
+  outline-offset: 2px;
+}
+
+.opp-browse-page .opp-card-head,
+.opp-browse-page .opp-card-media,
+.opp-browse-page .opp-card-body,
+.opp-browse-page .opp-card-footer {
+  pointer-events: none;
+}
+
+.opp-browse-page .opp-fav-btn,
+.opp-browse-page .opp-enquire-btn {
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
 }
 
 .opp-browse-page .opp-card:hover {
@@ -3375,9 +3402,6 @@
   .opp-browse-page .opp-card-title,
   .opp-browse-page .opp-opps-grid.list-view .opp-card-title {
     font-size: 14px;
-  }
-
-  .opp-browse-page .opp-card-title a {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;

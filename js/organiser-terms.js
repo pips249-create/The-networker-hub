@@ -82,7 +82,7 @@
       '<ul class="hub-organiser-terms-list">' +
       '<li>You are responsible for delivering events and honouring your stated refund policy</li>' +
       '<li>Business opportunity listings must be truthful and not misleading</li>' +
-      '<li>You will handle attendee data only for event administration</li>' +
+      '<li>Use attendee contact details only to run your events — not for unrelated marketing</li>' +
       '</ul>' +
       '<label class="hub-organiser-terms-check">' +
       '<input type="checkbox" id="hub-organiser-terms-checkbox" />' +
