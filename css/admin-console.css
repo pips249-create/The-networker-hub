@@ -6,6 +6,11 @@
   --admin-sidebar-width: 12.5rem;
 }
 
+/* Tailwind utility fallback — keep gate/shell toggles working if CDN is blocked */
+.hidden {
+  display: none;
+}
+
 body.hub-page-admin.hub-admin-active {
   overflow: hidden;
 }
