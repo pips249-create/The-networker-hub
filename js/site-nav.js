@@ -140,6 +140,16 @@
     var accountActive = page === 'account' ? ' aria-current="page"' : '';
     var settingsActive = page === 'settings' ? ' aria-current="page"' : '';
     var adminActive = page === 'admin' ? ' aria-current="page"' : '';
+    var showOrganiserLink = user && user.organiserUiVisible;
+    var organiserItem = '';
+    if (showOrganiserLink) {
+      organiserItem =
+        '<a role="menuitem" class="nav-dropdown-item nav-organiser-in-menu" href="' +
+        href('organiser/index.html') +
+        '"' +
+        organiserActive +
+        '>Organiser workspace</a>';
+    }
     var adminItem = '';
     if (user && user.role === 'admin') {
       adminItem =
@@ -156,11 +166,7 @@
       '" id="nav-my-hub-toggle" aria-expanded="false" aria-haspopup="true" aria-controls="nav-my-hub-menu">' +
       'My Hub <span class="nav-dropdown-chev" aria-hidden="true">▾</span></button>' +
       '<div class="nav-dropdown-menu" id="nav-my-hub-menu" role="menu" hidden>' +
-      '<a role="menuitem" class="nav-dropdown-item nav-organiser-in-menu" href="' +
-      href('organiser/index.html') +
-      '"' +
-      organiserActive +
-      '>Organiser workspace</a>' +
+      organiserItem +
       '<a role="menuitem" class="nav-dropdown-item" href="' +
       href('account/index.html') +
       '"' +
@@ -218,7 +224,10 @@
     }
     if (user) {
       var hubView = user.hubView || 'attendee';
-      var showHubToggle = user.canToggleHubMode === true && user.role === 'client';
+      var showHubToggle =
+        user.canToggleHubMode === true &&
+        user.role === 'client' &&
+        user.organiserUiVisible;
       if (showHubToggle && window.HubModeSwitch) {
         html += window.HubModeSwitch.html(hubView);
       }
@@ -245,18 +254,23 @@
     }
     if (user) {
       var hubView = user.hubView || 'attendee';
-      var showHubToggle = user.canToggleHubMode === true && user.role === 'client';
+      var showHubToggle =
+        user.canToggleHubMode === true &&
+        user.role === 'client' &&
+        user.organiserUiVisible;
       if (showHubToggle && window.HubModeSwitch) {
         html +=
           '<div class="nav-mobile-hub-mode">' + window.HubModeSwitch.html(hubView) + '</div>';
       }
-      html += link(
-        'organiser/index.html',
-        'Organiser workspace',
-        'organiser',
-        'nav-mobile-item'
-      );
       html += link('account/index.html', 'My tickets &amp; reviews', 'account', 'nav-mobile-item');
+      if (user.organiserUiVisible) {
+        html += link(
+          'organiser/index.html',
+          'Organiser workspace',
+          'organiser',
+          'nav-mobile-item'
+        );
+      }
       html += link('account/settings.html', 'Account settings', 'settings', 'nav-mobile-item');
       if (user.role === 'admin') {
         html += link('admin/index.html', 'Command Center', 'admin', 'nav-mobile-item');
@@ -416,6 +430,10 @@
     if (data.ok && data.user) {
       data.user.hubView = data.hubView || 'attendee';
       data.user.organiserProfiles = data.organiserProfiles || 0;
+      data.user.organiserAccess = data.organiserAccess === true;
+      data.user.organiserUiVisible = data.organiserUiVisible === true;
+      data.user.organiserEmailVerified = data.organiserEmailVerified === true;
+      data.user.pendingClaimCount = data.pendingClaimCount || 0;
       data.user.canToggleHubMode = data.canToggleHubMode === true;
       cacheUser(data.user);
       renderNav(data.user, false);

@@ -1,0 +1,169 @@
+/**
+ * Email verification for organiser actions (publish, attendees, payouts, claims).
+ */
+const crypto = require('crypto');
+const { getSupabaseAdmin } = require('./supabase');
+const { sendViaResend } = require('./send-template-email');
+const { getHubAccount } = require('./supabase-auth');
+
+const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+
+function siteHost() {
+  return String(process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
+}
+
+function hashToken(token) {
+  return crypto.createHash('sha256').update(String(token || '')).digest('hex');
+}
+
+function newVerifyToken() {
+  return crypto.randomBytes(32).toString('base64url');
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+async function storeVerifyToken(userId, token) {
+  const sb = getSupabaseAdmin();
+  const uid = String(userId || '').trim();
+  if (!uid) throw new Error('missing_user');
+
+  const expiresAt = new Date(Date.now() + TOKEN_TTL_MS).toISOString();
+  const { error } = await sb
+    .from('hub_accounts')
+    .update({
+      organiser_email_verify_token_hash: hashToken(token),
+      organiser_email_verify_expires_at: expiresAt,
+    })
+    .eq('user_id', uid);
+  if (error) throw new Error(error.message);
+  return expiresAt;
+}
+
+async function clearVerifyToken(userId) {
+  const sb = getSupabaseAdmin();
+  await sb
+    .from('hub_accounts')
+    .update({
+      organiser_email_verify_token_hash: null,
+      organiser_email_verify_expires_at: null,
+    })
+    .eq('user_id', String(userId || '').trim());
+}
+
+async function markOrganiserEmailVerified(userId) {
+  const sb = getSupabaseAdmin();
+  const uid = String(userId || '').trim();
+  if (!uid) throw new Error('missing_user');
+
+  const now = new Date().toISOString();
+  const { data, error } = await sb
+    .from('hub_accounts')
+    .update({
+      organiser_email_verified_at: now,
+      organiser_email_verify_token_hash: null,
+      organiser_email_verify_expires_at: null,
+    })
+    .eq('user_id', uid)
+    .select('user_id, organiser_email_verified_at')
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('hub_account_not_found');
+  return data;
+}
+
+async function sendOrganiserEmailVerification({ userId, email, name }) {
+  const address = String(email || '')
+    .trim()
+    .toLowerCase();
+  if (!address) {
+    const err = new Error('missing_email');
+    err.code = 'missing_email';
+    throw err;
+  }
+
+  const token = newVerifyToken();
+  await storeVerifyToken(userId, token);
+
+  const verifyUrl =
+    siteHost() +
+    '/organiser/verify-email.html?token=' +
+    encodeURIComponent(token) +
+    '&email=' +
+    encodeURIComponent(address);
+  const displayName = String(name || '').trim() || address.split('@')[0];
+
+  const subject = 'Confirm your email for organiser access';
+  const html =
+    '<p>Hi ' +
+    escapeHtml(displayName) +
+    ',</p>' +
+    '<p>Please confirm you own <strong>' +
+    escapeHtml(address) +
+    '</strong> before publishing events or viewing attendee details on The Networker Hub.</p>' +
+    '<p><a href="' +
+    escapeHtml(verifyUrl) +
+    '">Confirm my email</a></p>' +
+    '<p>This link expires in 24 hours. If you did not request organiser access, you can ignore this email.</p>' +
+    '<p>— The Networker Hub</p>';
+
+  try {
+    const result = await sendViaResend({ to: address, subject, html });
+    return { ok: true, emailSent: true, verifyUrl: null, ...result };
+  } catch (e) {
+    const code = e.code || '';
+    if (code === 'resend_not_configured') {
+      const err = new Error('email_not_configured');
+      err.code = 'email_not_configured';
+      err.verifyUrl = verifyUrl;
+      throw err;
+    }
+    throw e;
+  }
+}
+
+async function verifyOrganiserEmailToken({ userId, token }) {
+  const uid = String(userId || '').trim();
+  const raw = String(token || '').trim();
+  if (!uid || !raw) {
+    const err = new Error('invalid_token');
+    err.status = 400;
+    throw err;
+  }
+
+  const hub = await getHubAccount(uid);
+  if (!hub) {
+    const err = new Error('hub_account_not_found');
+    err.status = 404;
+    throw err;
+  }
+
+  const expected = String(hub.organiser_email_verify_token_hash || '');
+  const expires = hub.organiser_email_verify_expires_at
+    ? new Date(hub.organiser_email_verify_expires_at).getTime()
+    : 0;
+  if (!expected || hashToken(raw) !== expected) {
+    const err = new Error('invalid_token');
+    err.status = 400;
+    throw err;
+  }
+  if (!expires || expires < Date.now()) {
+    await clearVerifyToken(uid);
+    const err = new Error('token_expired');
+    err.status = 400;
+    throw err;
+  }
+
+  return markOrganiserEmailVerified(uid);
+}
+
+module.exports = {
+  sendOrganiserEmailVerification,
+  verifyOrganiserEmailToken,
+  markOrganiserEmailVerified,
+};

@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { getOrganiserAccessStatus } = require('../organiser-access-guard');
 
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
@@ -27,6 +28,14 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    const accessStatus = ws.session
+      ? await getOrganiserAccessStatus(ws.session)
+      : {
+          organiserAccess: false,
+          organiserEmailVerified: false,
+          pendingClaimCount: 0,
+        };
+
     if (String(req.query?.eventsOnly || '') === '1') {
       return json(res, 200, {
         ok: true,
@@ -34,6 +43,8 @@ module.exports = async function handler(req, res) {
         upcomingEvents: ws.upcomingEvents || [],
         tickets: ws.tickets,
         eventsPagination: ws.eventsPagination,
+        organiserAccess: accessStatus.organiserAccess,
+        organiserEmailVerified: accessStatus.organiserEmailVerified,
       });
     }
 
@@ -56,6 +67,10 @@ module.exports = async function handler(req, res) {
       personalScope: ws.personalScope,
       isAdmin: ws.isAdmin,
       canOrganise: ws.canOrganise,
+        organiserAccess: accessStatus.organiserAccess,
+        organiserUiVisible: accessStatus.organiserUiVisible,
+        organiserEmailVerified: accessStatus.organiserEmailVerified,
+        pendingClaimCount: accessStatus.pendingClaimCount,
       organiserRole: ws.organiserRole,
       canManageTeam: ws.canManageTeam,
       canDeleteEvents: ws.canDeleteEvents,

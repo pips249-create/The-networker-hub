@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { assertOrganiserEmailVerified, isPublishIntent } = require('../organiser-access-guard');
 
 function parseBody(req) {
   let body = req.body;
@@ -36,6 +37,19 @@ module.exports = async function handler(req, res) {
 
   const auth = requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
+
+  if (req.method === 'POST') {
+    const bodyEarly = parseBody(req);
+    if (isPublishIntent(bodyEarly)) {
+      const verified = await assertOrganiserEmailVerified(auth.session);
+      if (!verified.ok) {
+        return json(res, verified.status, {
+          error: verified.error,
+          message: verified.message,
+        });
+      }
+    }
+  }
 
   async function ownedEventIds() {
     const groups = await listGroupsForSession(auth.session);

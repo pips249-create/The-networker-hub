@@ -36,6 +36,8 @@ const routes = {
   'report-listing': require('./_lib/routes/auth-report-listing'),
   'report-review': require('./_lib/routes/auth-report-review'),
   'accept-organiser-terms': require('./_lib/routes/auth-accept-organiser-terms'),
+  'organiser-access': require('./_lib/routes/auth-organiser-access'),
+  'verify-organiser-email': require('./_lib/routes/auth-verify-organiser-email'),
   'cancel-booking': require('./_lib/routes/auth-cancel-booking'),
   'nudge-ticket-sales': require('./_lib/routes/auth-nudge-ticket-sales'),
   'site-access': require('./_lib/routes/site-access'),

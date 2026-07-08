@@ -1,6 +1,7 @@
 const { organiserPersonalScopeFromRequest } = require('../auth');
 const { getOrganiserApi } = require('../organiser-provider');
 const { assertDescriptionLimit } = require('../text-limits');
+const { assertOrganiserEmailVerified, isPublishIntent } = require('../organiser-access-guard');
 
 function organiserApi() {
   return getOrganiserApi();
@@ -68,6 +69,15 @@ module.exports = async function handler(req, res) {
     const groupId = String(body.id || body.groupId || req.query?.id || '').trim();
     const name = String(body.name || '').trim();
     const listingStatus = body.listingStatus != null ? body.listingStatus : null;
+    if (isPublishIntent({ listingStatus })) {
+      const verified = await assertOrganiserEmailVerified(auth.session);
+      if (!verified.ok) {
+        return json(res, verified.status, {
+          error: verified.error,
+          message: verified.message,
+        });
+      }
+    }
     if (!groupId) return json(res, 400, { error: 'missing_group_id' });
     const hasProfileFields =
       name ||

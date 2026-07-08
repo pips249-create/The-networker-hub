@@ -11,6 +11,7 @@ const {
 } = require('../auth');
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
+const { getOrganiserAccessStatus } = require('../organiser-access-guard');
 module.exports = async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Cache-Control', 'no-store');
@@ -50,6 +51,7 @@ module.exports = async function handler(req, res) {
 
       const organiserProfiles = await sbAuth.countOrganiserProfiles(fresh.sub, fresh.email);
       const organiserTermsAccepted = await sbAuth.hasOrganiserTermsAccepted(fresh.sub);
+      const accessStatus = await getOrganiserAccessStatus(fresh);
 
       return json(res, 200, {
         ok: true,
@@ -57,8 +59,19 @@ module.exports = async function handler(req, res) {
         hubView: hubViewFromRequest(req),
         organiserProfiles,
         organiserTermsAccepted,
-        canOrganise: organiserProfiles > 0 || isAdminRole(role),
-        canToggleHubMode: isClientRole(role) && !session.impersonator,
+        organiserAccess: accessStatus.organiserAccess,
+        organiserUiVisible: accessStatus.organiserUiVisible,
+        organiserEmailVerified: accessStatus.organiserEmailVerified,
+        pendingClaimCount: accessStatus.pendingClaimCount,
+        canOrganise:
+          accessStatus.organiserAccess ||
+          organiserProfiles > 0 ||
+          accessStatus.pendingClaimCount > 0 ||
+          isAdminRole(role),
+        canToggleHubMode:
+          isClientRole(role) &&
+          !session.impersonator &&
+          accessStatus.organiserUiVisible,
         impersonating: !!session.impersonator,
         impersonatorEmail: session.impersonator ? session.impersonator.email : null,
       });

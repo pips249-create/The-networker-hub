@@ -54,7 +54,8 @@
       await window.HubOrganiserActions.goToAddEvent();
       return;
     }
-    go('organiser/event-format.html');
+    markWelcomeDone();
+    window.location.href = 'organiser/enable.html';
   }
 
   document.querySelectorAll('[data-welcome-path]').forEach(function (btn) {
@@ -63,7 +64,14 @@
       if (path === 'find-event') go('events/index.html');
       else if (path === 'list-event') goListEvent();
       else if (path === 'find-opportunity') go('opportunities/index.html');
-      else if (path === 'list-opportunity') go('opportunities/list.html');
+      else if (path === 'list-opportunity') {
+        markWelcomeDone();
+        if (window.HubOrganiserActions && window.HubOrganiserActions.goToAddOpportunity) {
+          window.HubOrganiserActions.goToAddOpportunity();
+        } else {
+          go('organiser/enable.html');
+        }
+      }
     });
   });
 

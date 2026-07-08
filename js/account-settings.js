@@ -53,7 +53,7 @@
     const master = document.getElementById('as-email-master');
     const reminders = document.getElementById('as-email-reminders');
     const organiserAlerts = document.getElementById('as-email-organiser-alerts');
-    if (master) master.checked = profile.emailsEnabled !== false;
+    if (master) master.checked = profile.emailsEnabled === true;
     if (reminders) reminders.checked = profile.emailPrefEventReminders !== false;
     if (organiserAlerts) organiserAlerts.checked = profile.emailPrefOrganiserAlerts !== false;
     syncEmailPrefDisabled();
@@ -78,6 +78,106 @@
     applyWritable(data.writable);
   }
 
+  function renderOrganiserWorkspace(sessionData) {
+    const attendeeOnly = document.getElementById('as-organiser-attendee-only');
+    const hiddenPanel = document.getElementById('as-organiser-hidden');
+    const hideForm = document.getElementById('as-organiser-hide-form');
+    const linkedPanel = document.getElementById('as-organiser-linked');
+    [attendeeOnly, hiddenPanel, hideForm, linkedPanel].forEach((el) => {
+      if (el) el.hidden = true;
+    });
+
+    if (!sessionData || !sessionData.ok) return;
+
+    const profiles = sessionData.organiserProfiles || 0;
+    const pending = sessionData.pendingClaimCount || 0;
+    const access = sessionData.organiserAccess === true;
+    const uiVisible = sessionData.organiserUiVisible === true;
+    const isAdmin = sessionData.user && sessionData.user.role === 'admin';
+
+    if (isAdmin) {
+      if (linkedPanel) linkedPanel.hidden = false;
+      return;
+    }
+
+    if (profiles > 0 || pending > 0) {
+      if (linkedPanel) linkedPanel.hidden = false;
+      return;
+    }
+
+    if (!access) {
+      if (attendeeOnly) attendeeOnly.hidden = false;
+      return;
+    }
+
+    if (!uiVisible) {
+      if (hiddenPanel) hiddenPanel.hidden = false;
+      return;
+    }
+
+    if (hideForm) hideForm.hidden = false;
+  }
+
+  document.getElementById('as-organiser-show')?.addEventListener('click', async () => {
+    hideAlert();
+    const btn = document.getElementById('as-organiser-show');
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch('/api/auth/organiser-access', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'show-ui' }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.message || data.error || 'show_failed');
+      if (data.redirect) {
+        window.location.href = '..' + data.redirect;
+        return;
+      }
+      showAlert(data.message || 'Organiser workspace restored.', true);
+      const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
+      const sessionData = await sessionRes.json();
+      renderOrganiserWorkspace(sessionData);
+    } catch (err) {
+      showAlert(err.message || 'Could not restore organiser workspace.', false);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+
+  document.getElementById('as-organiser-hide-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert();
+    const confirmEl = document.getElementById('as-organiser-hide-confirm');
+    if (!confirmEl || !confirmEl.checked) {
+      showAlert('Tick the box to confirm you only want attendee access for now.', false);
+      return;
+    }
+    const btn = document.getElementById('as-organiser-hide-submit');
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch('/api/auth/organiser-access', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'hide-ui', confirm: true }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.message || data.error || 'hide_failed');
+      showAlert(data.message || 'Organiser workspace hidden.', true);
+      const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
+      const sessionData = await sessionRes.json();
+      renderOrganiserWorkspace(sessionData);
+      scrollAlertIntoView();
+    } catch (err) {
+      showAlert(err.message || 'Could not hide organiser workspace.', false);
+      scrollAlertIntoView();
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+
   document.getElementById('as-email-master')?.addEventListener('change', syncEmailPrefDisabled);
 
   document.getElementById('as-email-prefs-form')?.addEventListener('submit', async (e) => {
@@ -86,7 +186,7 @@
     const btn = document.getElementById('as-save-email-prefs');
     if (btn) btn.disabled = true;
     const master = document.getElementById('as-email-master');
-    const emailsEnabled = master ? master.checked : true;
+    const emailsEnabled = master ? master.checked : false;
     try {
       const res = await fetch('/api/auth/profile', {
         method: 'PATCH',
@@ -200,6 +300,11 @@
     }
     if (signin) signin.hidden = true;
     if (main) main.hidden = false;
+    renderOrganiserWorkspace(sessionData);
+    if (window.location.hash === '#organiser-workspace') {
+      const section = document.getElementById('organiser-workspace');
+      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     try {
       await loadProfile();
     } catch (err) {

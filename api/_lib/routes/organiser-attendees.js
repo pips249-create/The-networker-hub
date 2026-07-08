@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
 
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
@@ -25,6 +26,15 @@ module.exports = async function handler(req, res) {
       return json(res, ws.status || 500, {
         error: ws.error,
         message: ws.message,
+        attendees: [],
+      });
+    }
+
+    const verified = await assertOrganiserEmailVerified(ws.session);
+    if (!verified.ok) {
+      return json(res, verified.status, {
+        error: verified.error,
+        message: verified.message,
         attendees: [],
       });
     }

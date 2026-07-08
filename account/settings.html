@@ -18,7 +18,7 @@
   </head>
   <body class="account-settings-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260708" data-root="../" data-page="settings"></script>
+    <script src="../js/site-nav.js?v=20260713c" data-root="../" data-page="settings"></script>
 
     <div id="as-signin" class="as-signin" hidden>
       <p>Sign in to manage your account details.</p>
@@ -66,12 +66,13 @@
         <section class="as-card">
           <h2>Email preferences</h2>
           <p class="as-card-sub">
-            Choose which emails you receive from The Networker Hub. Booking confirmations and account security emails are always sent.
+            Choose which optional emails you receive. Booking confirmations, application updates, password resets and
+            other service messages are always sent.
           </p>
           <div class="as-checkgroup as-email-prefs">
             <label class="as-pref-master">
-              <input type="checkbox" id="as-email-master" checked />
-              Receive emails from The Networker Hub
+              <input type="checkbox" id="as-email-master" />
+              Tips, recommendations and Networker news (marketing)
             </label>
             <label>
               <input type="checkbox" id="as-email-reminders" checked />
@@ -87,6 +88,58 @@
           </div>
         </section>
       </form>
+
+      <section class="as-card" id="organiser-workspace">
+        <h2>Organiser workspace</h2>
+        <p class="as-card-sub" id="as-organiser-lede">
+          List events, manage your organiser page, and sell tickets. Ticket buyers can ignore this section.
+        </p>
+
+        <div id="as-organiser-attendee-only" hidden>
+          <p class="as-organiser-note">
+            You are using the Hub as an attendee. Enable organiser access when you are ready to list events or
+            manage a networking group.
+          </p>
+          <div class="as-actions">
+            <a class="as-btn as-btn-primary" href="../organiser/enable.html">Enable organiser access</a>
+          </div>
+        </div>
+
+        <div id="as-organiser-hidden" hidden>
+          <p class="as-organiser-note">
+            Organiser workspace is hidden from your navigation. Your account can still buy tickets and manage
+            bookings in My tickets.
+          </p>
+          <div class="as-actions">
+            <button type="button" class="as-btn as-btn-primary" id="as-organiser-show">
+              Show organiser workspace again
+            </button>
+          </div>
+        </div>
+
+        <form id="as-organiser-hide-form" hidden>
+          <label class="as-pref-master as-organiser-hide-label">
+            <input type="checkbox" id="as-organiser-hide-confirm" />
+            Hide organiser workspace — I only want to attend events for now
+          </label>
+          <p class="as-organiser-note as-organiser-note--soft">
+            You can turn organiser access back on anytime from this page or when you choose to list an event.
+          </p>
+          <div class="as-actions">
+            <button type="submit" class="as-btn as-btn-outline" id="as-organiser-hide-submit">
+              Hide organiser workspace
+            </button>
+          </div>
+        </form>
+
+        <div id="as-organiser-linked" hidden>
+          <p class="as-organiser-note">
+            You have an organiser page or pending claim on this account, so the organiser workspace stays
+            available. Open
+            <a href="../organiser/index.html">Organiser workspace</a> to manage it.
+          </p>
+        </div>
+      </section>
 
       <form id="as-password-form">
         <section class="as-card">
@@ -112,6 +165,6 @@
       </form>
     </main>
 
-    <script src="../js/account-settings.js?v=20260731"></script>
+    <script src="../js/account-settings.js?v=20260713"></script>
   </body>
 </html>

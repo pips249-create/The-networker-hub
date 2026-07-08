@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enable organiser access – The Networker Hub</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css?v=20260730" />
+    <link rel="stylesheet" href="../css/auth.css?v=20260708" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
+  </head>
+  <body class="auth-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260713c" data-root="../" data-page="organiser"></script>
+
+    <main class="auth-main">
+      <div class="auth-card auth-card--wizard">
+        <header class="auth-welcome-head">
+          <p class="auth-welcome-kicker">Organiser workspace</p>
+          <h1>List events &amp; manage your group</h1>
+          <p class="auth-lede auth-lede--welcome">
+            Organiser access is separate from buying tickets. Enable it only if you run a networking group
+            or want to list events and business opportunities.
+          </p>
+        </header>
+
+        <ul class="auth-enable-points">
+          <li>Create and publish event listings</li>
+          <li>Manage your organiser page and ticket sales</li>
+          <li>View attendee details and request payouts</li>
+        </ul>
+
+        <form id="organiser-enable-form" class="auth-form">
+          <label class="auth-checkbox-row">
+            <input type="checkbox" id="organiser-enable-confirm" name="confirm" required />
+            <span>
+              I want organiser access for <strong id="organiser-enable-email">my account</strong>. I understand
+              I will need to confirm my email before publishing events or viewing attendee information.
+            </span>
+          </label>
+
+          <p id="organiser-enable-error" class="auth-error" hidden role="alert"></p>
+
+          <button type="submit" class="auth-primary-btn" id="organiser-enable-submit">
+            Enable organiser access
+          </button>
+          <p class="auth-form-foot">
+            <a href="../account/index.html" class="auth-secondary-link">← Back to My tickets</a>
+          </p>
+        </form>
+      </div>
+    </main>
+
+    <script src="../js/organiser-enable.js?v=20260713"></script>
+  </body>
+</html>

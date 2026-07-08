@@ -32,6 +32,117 @@ function organiserTermsAcceptedFromHub(hub, version = CURRENT_ORGANISER_TERMS_VE
   return !acceptedVersion || acceptedVersion === version;
 }
 
+function isOrganiserEmailVerified(hub) {
+  return Boolean(hub?.organiser_email_verified_at);
+}
+
+function hasOrganiserAccessFromHub(hub) {
+  return Boolean(hub?.organiser_access_at);
+}
+
+async function hasOrganiserAccess(userId, email) {
+  const hub = await getHubAccount(userId);
+  if (hasOrganiserAccessFromHub(hub)) return true;
+  const profiles = await countOrganiserProfiles(userId, email);
+  return profiles > 0;
+}
+
+function isOrganiserUiHidden(hub) {
+  return Boolean(hub?.organiser_ui_hidden_at);
+}
+
+async function enableOrganiserAccess(userId) {
+  const sb = getSupabaseAdmin();
+  const uid = String(userId || '').trim();
+  if (!uid) throw new Error('missing_user');
+
+  const hub = await getHubAccount(uid);
+  const now = new Date().toISOString();
+  const patch = {
+    user_id: uid,
+    organiser_access_at: hub?.organiser_access_at || now,
+    organiser_ui_hidden_at: null,
+    hub_view: 'organiser',
+  };
+
+  const { data, error } = await sb
+    .from('hub_accounts')
+    .upsert(patch, { onConflict: 'user_id' })
+    .select(
+      'user_id, organiser_access_at, organiser_email_verified_at, organiser_ui_hidden_at, hub_view'
+    )
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+async function countPendingClaimsForUser(session) {
+  try {
+    const { listPendingClaimGroupsForSession } = require('./supabase-organiser-claims');
+    const rows = await listPendingClaimGroupsForSession(session);
+    return rows.length;
+  } catch {
+    return 0;
+  }
+}
+
+async function hideOrganiserWorkspace(userId, email) {
+  const sb = getSupabaseAdmin();
+  const uid = String(userId || '').trim();
+  const em = String(email || '').trim().toLowerCase();
+  if (!uid) throw new Error('missing_user');
+
+  const profiles = await countOrganiserProfiles(uid, em);
+  const pendingClaims = await countPendingClaimsForUser({ sub: uid, email: em });
+  if (profiles > 0 || pendingClaims > 0) {
+    const err = new Error('organiser_page_linked');
+    err.status = 400;
+    err.message =
+      'You have an organiser page or pending claim on this account. Manage it from the organiser workspace, or contact hello@the-networker.co.uk for help.';
+    throw err;
+  }
+
+  const hub = await getHubAccount(uid);
+  if (!hub?.organiser_access_at) {
+    const err = new Error('organiser_access_not_enabled');
+    err.status = 400;
+    throw err;
+  }
+
+  const now = new Date().toISOString();
+  const { data, error } = await sb
+    .from('hub_accounts')
+    .update({
+      organiser_ui_hidden_at: now,
+      hub_view: 'attendee',
+    })
+    .eq('user_id', uid)
+    .select('user_id, organiser_ui_hidden_at, hub_view')
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('hub_account_not_found');
+  return data;
+}
+
+async function showOrganiserWorkspace(userId) {
+  const sb = getSupabaseAdmin();
+  const uid = String(userId || '').trim();
+  if (!uid) throw new Error('missing_user');
+
+  const { data, error } = await sb
+    .from('hub_accounts')
+    .update({
+      organiser_ui_hidden_at: null,
+      hub_view: 'organiser',
+    })
+    .eq('user_id', uid)
+    .select('user_id, organiser_access_at, organiser_ui_hidden_at, hub_view')
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('hub_account_not_found');
+  return data;
+}
+
 async function hasOrganiserTermsAccepted(userId, version = CURRENT_ORGANISER_TERMS_VERSION) {
   const hub = await getHubAccount(userId);
   return organiserTermsAcceptedFromHub(hub, version);
@@ -86,6 +197,9 @@ async function canSendEmailCategory(email, category) {
   }
   if (category === 'organiser_alerts') {
     return hubPrefEnabled(hub, 'email_pref_organiser_alerts');
+  }
+  if (category === 'marketing') {
+    return hub.emails_enabled === true;
   }
   return hub.emails_enabled !== false;
 }
@@ -221,9 +335,10 @@ function cryptoRandomPassword() {
   return crypto.randomBytes(24).toString('base64url');
 }
 
-async function registerUser({ email, password, name }) {
+async function registerUser({ email, password, name, marketingOptIn }) {
   const sb = getSupabaseAdmin();
   const em = email.trim().toLowerCase();
+  const optedInToMarketing = Boolean(marketingOptIn);
 
   const { id: userId, existed } = await createUserSilent({
     email: em,
@@ -241,7 +356,9 @@ async function registerUser({ email, password, name }) {
       role: USER_ROLES.CLIENT,
       hub_view: 'attendee',
       display_name: name || null,
-      emails_enabled: true,
+      emails_enabled: optedInToMarketing,
+      email_pref_event_reminders: true,
+      email_pref_organiser_alerts: true,
     },
     { onConflict: 'user_id' }
   );
@@ -282,6 +399,8 @@ async function ensureAdminUser({ email, password, name }) {
       role: USER_ROLES.ADMIN,
       hub_view: 'organiser',
       display_name: name || 'Platform Admin',
+      organiser_access_at: new Date().toISOString(),
+      organiser_email_verified_at: new Date().toISOString(),
     },
     { onConflict: 'user_id' }
   );
@@ -411,11 +530,16 @@ async function provisionOrganiserLogin(organiserId) {
     hub_view: 'organiser',
     display_name: name || null,
   };
+  const now = new Date().toISOString();
   if (createdAuth) {
     hubPatch.emails_enabled = false;
+    hubPatch.organiser_access_at = now;
+    hubPatch.organiser_email_verified_at = now;
   } else {
     const existingHub = await getHubAccount(userId);
     if (!existingHub) hubPatch.emails_enabled = false;
+    if (!existingHub?.organiser_access_at) hubPatch.organiser_access_at = now;
+    if (!existingHub?.organiser_email_verified_at) hubPatch.organiser_email_verified_at = now;
   }
 
   await upsertHubAccount(hubPatch);
@@ -539,6 +663,13 @@ module.exports = {
   findUserByEmail,
   getHubAccount,
   hasOrganiserTermsAccepted,
+  isOrganiserEmailVerified,
+  hasOrganiserAccessFromHub,
+  isOrganiserUiHidden,
+  hasOrganiserAccess,
+  enableOrganiserAccess,
+  hideOrganiserWorkspace,
+  showOrganiserWorkspace,
   acceptOrganiserTerms,
   getEmailsEnabledForEmail,
   getHubAccountForEmail,

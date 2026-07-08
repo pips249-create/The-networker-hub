@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
 
 function parseBody(req) {
   let body = req.body;
@@ -52,6 +53,13 @@ module.exports = async function handler(req, res) {
 
   try {
     if (action === 'claim') {
+      const verified = await assertOrganiserEmailVerified(auth.session);
+      if (!verified.ok) {
+        return json(res, verified.status, {
+          error: verified.error,
+          message: verified.message,
+        });
+      }
       const group = await claimGroupForSession(auth.session, groupId);
       return json(res, 200, {
         ok: true,

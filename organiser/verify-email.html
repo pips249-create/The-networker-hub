@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Confirm your email – The Networker Hub</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css?v=20260730" />
+    <link rel="stylesheet" href="../css/auth.css?v=20260708" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
+  </head>
+  <body class="auth-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260713c" data-root="../" data-page="organiser"></script>
+
+    <main class="auth-main">
+      <div class="auth-card auth-card--wizard">
+        <header class="auth-welcome-head">
+          <p class="auth-welcome-kicker">Almost there</p>
+          <h1>Confirm your email</h1>
+          <p class="auth-lede auth-lede--welcome" id="verify-email-lede">
+            We sent a confirmation link to <strong id="verify-email-address">your email</strong>. Open it to
+            publish events, view attendees, and set up payouts.
+          </p>
+        </header>
+
+        <div id="verify-email-status" class="auth-verify-status" hidden></div>
+        <p id="verify-email-error" class="auth-error" hidden role="alert"></p>
+        <p id="verify-email-dev" class="auth-dev-link" hidden></p>
+
+        <div class="auth-verify-actions">
+          <button type="button" class="auth-primary-btn" id="verify-email-resend">Resend confirmation email</button>
+          <a href="index.html" class="auth-secondary-btn" id="verify-email-continue" hidden>
+            Continue to organiser workspace
+          </a>
+        </div>
+
+        <p class="auth-form-foot">
+          <a href="../account/index.html" class="auth-secondary-link">← Back to My tickets</a>
+        </p>
+      </div>
+    </main>
+
+    <script src="../js/organiser-verify-email.js?v=20260713"></script>
+  </body>
+</html>

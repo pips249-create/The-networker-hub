@@ -6,6 +6,7 @@ const {
   setHubViewCookie,
   isClientRole,
 } = require('../auth');
+const { getOrganiserAccessStatus } = require('../organiser-access-guard');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -39,6 +40,20 @@ module.exports = async function handler(req, res) {
     const mode = String(body.mode || body.hubView || '').toLowerCase();
     if (mode !== 'attendee' && mode !== 'organiser') {
       return json(res, 400, { error: 'invalid_mode' });
+    }
+    if (mode === 'organiser') {
+      const accessStatus = await getOrganiserAccessStatus(session);
+      if (!accessStatus.organiserUiVisible) {
+        return json(res, 403, {
+          error: 'organiser_access_required',
+          message: accessStatus.organiserAccess
+            ? 'Restore organiser workspace in Account settings, or enable organiser access first.'
+            : 'Enable organiser access before opening the organiser workspace.',
+          redirect: accessStatus.organiserAccess
+            ? '/account/settings.html#organiser-workspace'
+            : '/organiser/enable.html',
+        });
+      }
     }
     setHubViewCookie(res, mode);
     return json(res, 200, {

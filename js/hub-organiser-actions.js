@@ -31,6 +31,45 @@
     return sessionData.canOrganise === true && sessionData.user.role === 'admin';
   }
 
+  function organiserWorkspaceReady(sessionData) {
+    if (!sessionData || !sessionData.ok || !sessionData.user) return false;
+    if (sessionData.user.role === 'admin') return true;
+    if ((sessionData.pendingClaimCount || 0) > 0) return true;
+    return sessionData.organiserUiVisible === true;
+  }
+
+  async function restoreOrganiserUiIfHidden(sessionData) {
+    if (!sessionData.organiserAccess || sessionData.organiserUiVisible) return sessionData;
+    try {
+      var res = await fetch('/api/auth/organiser-access', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'show-ui' }),
+      });
+      var data = await res.json();
+      if (data.ok && data.needsEnable) return sessionData;
+      if (data.ok) return fetchSession();
+    } catch (e) {
+      /* fall through */
+    }
+    return sessionData;
+  }
+
+  async function ensureOrganiserAccess(nextPath) {
+    var data = await fetchSession();
+    if (!data.ok || !data.user) {
+      global.location.href = loginUrl(nextPath || '/organiser/enable.html');
+      return null;
+    }
+    data = await restoreOrganiserUiIfHidden(data);
+    if (!organiserWorkspaceReady(data)) {
+      global.location.href = path('organiser/enable.html');
+      return null;
+    }
+    return data;
+  }
+
   function isEventsBrowsePage() {
     var p = String(global.location.pathname || '');
     return /\/events\/?(index\.html)?$/i.test(p) || p.endsWith('/events/');
@@ -162,11 +201,8 @@
   async function goToGroupProfile(options) {
     options = options || {};
     saveBrowseReturn();
-    var data = await fetchSession();
-    if (!data.ok || !data.user) {
-      global.location.href = loginUrl('/organiser/group-edit.html');
-      return;
-    }
+    var data = await ensureOrganiserAccess('/organiser/group-edit.html');
+    if (!data) return;
     try {
       sessionStorage.removeItem(GROUP_STORAGE_KEY);
     } catch (e) {
@@ -195,7 +231,8 @@
   async function goToAddEvent(options) {
     options = options || {};
     saveBrowseReturn();
-    var data = await fetchSession();
+    var data = await ensureOrganiserAccess('/organiser/event-format.html');
+    if (!data) return;
     if (hasGroupProfile(data)) {
       continueGoToAddEvent(data);
       return;
@@ -211,11 +248,8 @@
 
   async function goToAddOpportunity(options) {
     options = options || {};
-    var data = await fetchSession();
-    if (!data.ok || !data.user) {
-      global.location.href = loginUrl('/organiser/index.html#business-list');
-      return;
-    }
+    var data = await ensureOrganiserAccess('/organiser/index.html#business-list');
+    if (!data) return;
     global.location.href = path('organiser/index.html#business-list');
   }
 

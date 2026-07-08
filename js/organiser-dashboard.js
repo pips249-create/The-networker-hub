@@ -58,6 +58,8 @@
     opportunities: [],
     opportunitiesLoaded: false,
     pendingClaimGroups: [],
+    organiserAccess: false,
+    organiserEmailVerified: false,
     dashboardScope: null,
   };
 
@@ -3690,6 +3692,16 @@
     return g ? g.name : '—';
   }
 
+  function showOrganiserEmailVerifyBanner() {
+    if (state.organiserEmailVerified || state.isAdmin) return;
+    if ((state.pendingClaimGroups || []).length > 0 && !state.organiserAccess) return;
+    showOrganiserAlert(
+      'Confirm your email before publishing events, viewing attendees, or setting up payouts. ' +
+        '<a href="verify-email.html">Confirm email</a>',
+      false
+    );
+  }
+
   function showOrganiserAlert(message, isError) {
     if (!alertEl) return;
     if (!message) {
@@ -4463,6 +4475,14 @@
           : '<p class="org-review-body org-review-body--rating-only">Rating only — no written feedback</p>') +
         reviewReplyMarkup(r);
       listEl.appendChild(card);
+      if (r.id && window.ReviewReport) {
+        window.ReviewReport.addReportButton(card, {
+          reviewId: r.id,
+          organiserId: r.organiserId || r.groupId || null,
+          eventId: r.eventId || null,
+          snippet: String(r.body || '').slice(0, 500),
+        });
+      }
     });
   }
 
@@ -5710,6 +5730,8 @@
     state.organiserRole = data.organiserRole || 'owner';
     state.useTeamWorkspace = Boolean(data.useTeamWorkspace);
     state.stripeConnectEnabled = Boolean(data.stripeConnectEnabled);
+    state.organiserAccess = data.organiserAccess === true;
+    state.organiserEmailVerified = data.organiserEmailVerified === true;
     loadTeamMembers().then(function () {
       renderTeam();
       updateGettingStartedPanel();
@@ -5730,6 +5752,7 @@
     }
 
     showOrganiserAlert(null);
+    showOrganiserEmailVerifyBanner();
 
     applyPendingGroupSave();
     renderAll();
@@ -6638,6 +6661,18 @@
         if (signin) signin.hidden = false;
         return;
       }
+      const hasAccess =
+        data.organiserUiVisible || data.user.role === 'admin';
+      if (!hasAccess) {
+        if (data.organiserAccess && !data.organiserUiVisible) {
+          window.location.href = '../account/settings.html#organiser-workspace';
+          return;
+        }
+        window.location.href = 'enable.html';
+        return;
+      }
+      state.organiserAccess = data.organiserAccess === true;
+      state.organiserEmailVerified = data.organiserEmailVerified === true;
       boot(data.user);
     })
     .catch(() => {

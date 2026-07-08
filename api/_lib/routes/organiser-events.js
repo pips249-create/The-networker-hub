@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { assertOrganiserEmailVerified, isPublishIntent } = require('../organiser-access-guard');
 const { assertDescriptionLimit } = require('../text-limits');
 
 function parseBody(req) {
@@ -99,6 +100,18 @@ module.exports = async function handler(req, res) {
   const auth = requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
+  async function requireVerifiedForPublish(body) {
+    if (!isPublishIntent(body)) return null;
+    const verified = await assertOrganiserEmailVerified(auth.session);
+    if (!verified.ok) {
+      return json(res, verified.status, {
+        error: verified.error,
+        message: verified.message,
+      });
+    }
+    return null;
+  }
+
   async function ownedEventIds() {
     const groups = await listGroupsForSession(auth.session);
     const events = await listEventsForSession(
@@ -154,6 +167,8 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'PATCH') {
     const body = parseBody(req);
+    const publishBlocked = await requireVerifiedForPublish(body);
+    if (publishBlocked) return publishBlocked;
     const eventId = String(body.id || body.eventId || req.query?.id || '').trim();
     if (!eventId) return json(res, 400, { error: 'missing_event_id' });
 
@@ -215,6 +230,8 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'POST') {
     const body = parseBody(req);
+    const publishBlocked = await requireVerifiedForPublish(body);
+    if (publishBlocked) return publishBlocked;
 
     if (String(body.action || '').trim() === 'duplicate') {
       const eventId = String(body.id || body.eventId || '').trim();
