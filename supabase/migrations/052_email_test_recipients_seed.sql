@@ -6,6 +6,8 @@ from (
   values
     ('rosie@the-networker.co.uk', 'Rosie'),
     ('catherine@the-networker.co.uk', 'Catherine'),
+    ('rosie@thenetworkerhub.com', 'Rosie (Hub domain)'),
+    ('catherine@thenetworkerhub.com', 'Catherine (Hub domain)'),
     ('andreagaiga8@gmail.com', 'Andrea'),
     ('pips249@gmail.com', 'Pips'),
     ('hancher249@gmail.com', 'Hancher'),

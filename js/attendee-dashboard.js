@@ -1763,11 +1763,35 @@
     updateSideCounts();
   }
 
+  const ACCOUNT_VISITED_KEY = 'hub_account_visited_v1';
+
+  function hasVisitedAccountBefore() {
+    try {
+      return localStorage.getItem(ACCOUNT_VISITED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  function markAccountVisited() {
+    try {
+      localStorage.setItem(ACCOUNT_VISITED_KEY, '1');
+    } catch {
+      /* ignore quota / private mode */
+    }
+  }
+
   function renderWelcome(user) {
     const name = (user && user.name && String(user.name).trim()) || '';
     const nameEl = document.getElementById('ad-welcome-name');
-    if (nameEl) {
+    if (!nameEl) return;
+
+    const isReturnVisit = hasVisitedAccountBefore();
+    if (isReturnVisit) {
       nameEl.textContent = name ? 'Welcome back, ' + name + ' 👋' : 'Welcome back 👋';
+    } else {
+      nameEl.textContent = name ? 'Welcome, ' + name + ' 👋' : 'Welcome 👋';
+      markAccountVisited();
     }
   }
 

@@ -1,4 +1,11 @@
-<!DOCTYPE html>
+-- Booking reminder email — booking reminder footer support
+
+update public.email_templates
+set
+  name = '24-hour event reminder',
+  description = 'Sent to attendees 24 hours before their event starts.',
+  subject = 'Your event is tomorrow – {{event_name}}',
+  body_html = '<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="UTF-8">
@@ -6,7 +13,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>Your event is tomorrow – The Networker Hub</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+    @import url(''https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap'');
     body, table, td, p, a { margin:0; padding:0; border:0; font-size:100%; font:inherit; vertical-align:top; }
     img { border:0; display:block; max-width:100%; }
     body { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; background-color:#faf7f2; }
@@ -22,7 +29,7 @@
     }
   </style>
 </head>
-<body style="margin:0;padding:0;background-color:#faf7f2;font-family:'DM Sans',system-ui,sans-serif;">
+<body style="margin:0;padding:0;background-color:#faf7f2;font-family:''DM Sans'',system-ui,sans-serif;">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#faf7f2;">
   <tr>
     <td align="center" style="padding:32px 16px;">
@@ -56,7 +63,7 @@
                   <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                     <tr>
                       <td style="padding:10px 20px;text-align:center;">
-                        <span style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;">&#9200; Happening tomorrow</span>
+                        <span style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;">&#9200; Happening tomorrow</span>
                       </td>
                     </tr>
                   </table>
@@ -64,9 +71,9 @@
               </tr>
             </table>
 
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#4a4446;letter-spacing:-0.03em;line-height:1.15;margin:0 0 12px;">Your event is in&nbsp;24&nbsp;hours</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:400;color:#635c5e;line-height:1.7;margin:0;">
-              Hi {{user_name}}, just a heads-up &mdash; <strong style="color:#4a4446;">{{event_name}}</strong> is tomorrow. Here's everything you need.
+            <h1 class="hero-title" style="font-family:''DM Sans'',system-ui,sans-serif;font-size:28px;font-weight:600;color:#4a4446;letter-spacing:-0.03em;line-height:1.15;margin:0 0 12px;">Your event is in&nbsp;24&nbsp;hours</h1>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:400;color:#635c5e;line-height:1.7;margin:0;">
+              Hi {{user_name}}, just a heads-up &mdash; <strong style="color:#4a4446;">{{event_name}}</strong> is tomorrow. Here''s everything you need.
             </p>
           </td>
         </tr>
@@ -76,24 +83,24 @@
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#4a4446;border-radius:16px;">
               <tr>
                 <td style="padding:24px;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Your event</p>
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:19px;font-weight:600;color:#ffffff;margin:0 0 18px;line-height:1.3;">{{event_name}}</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Your event</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:19px;font-weight:600;color:#ffffff;margin:0 0 18px;line-height:1.3;">{{event_name}}</p>
 
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                     <tr>
-                      <td style="padding:0 0 10px;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;">
+                      <td style="padding:0 0 10px;font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;line-height:1.5;">
                         <span style="color:rgba(255,255,255,0.55);">Date</span><br>
                         <span style="color:#ffffff;font-weight:600;">{{event_date}}</span>
                       </td>
                     </tr>
                     <tr>
-                      <td style="padding:0 0 10px;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;">
+                      <td style="padding:0 0 10px;font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;line-height:1.5;">
                         <span style="color:rgba(255,255,255,0.55);">Time</span><br>
                         <span style="color:#ffffff;font-weight:600;">{{event_time}}</span>
                       </td>
                     </tr>
                     <tr>
-                      <td style="padding:0 0 0;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;">
+                      <td style="padding:0 0 0;font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;line-height:1.5;">
                         <span style="color:rgba(255,255,255,0.55);">Location</span><br>
                         <span style="color:#ffffff;font-weight:600;">{{event_location}}</span>
                       </td>
@@ -103,12 +110,12 @@
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid rgba(255,255,255,0.14);margin:16px 0 20px;">
                     <tr>
                       <td class="detail-cell" style="padding:14px 12px 14px 0;width:50%;vertical-align:top;">
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Ticket</p>
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.4;">{{ticket_name}}</p>
+                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Ticket</p>
+                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.4;">{{ticket_name}}</p>
                       </td>
                       <td class="detail-cell" style="padding:14px 0;width:50%;vertical-align:top;">
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Organiser</p>
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.4;">{{organiser_name}}</p>
+                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Organiser</p>
+                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.4;">{{organiser_name}}</p>
                       </td>
                     </tr>
                   </table>
@@ -116,7 +123,7 @@
                   <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                     <tr>
                       <td style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:999px;">
-                        <a href="{{event_url}}" style="display:inline-block;padding:14px 28px;font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;">View event details &rarr;</a>
+                        <a href="{{event_url}}" style="display:inline-block;padding:14px 28px;font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;">View event details &rarr;</a>
                       </td>
                     </tr>
                   </table>
@@ -133,8 +140,8 @@
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">
               <tr>
                 <td style="padding:22px 24px 8px;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Before you go</p>
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#4a4446;margin:0 0 16px;line-height:1.35;">A quick checklist for tomorrow</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Before you go</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#4a4446;margin:0 0 16px;line-height:1.35;">A quick checklist for tomorrow</p>
                 </td>
               </tr>
               <tr>
@@ -147,7 +154,7 @@
                             <td style="width:28px;vertical-align:top;padding-top:1px;">
                               <div style="width:20px;height:20px;background:#ebe0f0;border-radius:50%;text-align:center;line-height:20px;font-size:15px;color:#9a7aa8;">&#10003;</div>
                             </td>
-                            <td style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;color:#4a4446;font-weight:500;line-height:1.5;">Your ticket is saved in My Hub &mdash; no need to print anything</td>
+                            <td style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;color:#4a4446;font-weight:500;line-height:1.5;">Your ticket is saved in My Hub &mdash; no need to print anything</td>
                           </tr>
                         </table>
                       </td>
@@ -159,7 +166,7 @@
                             <td style="width:28px;vertical-align:top;padding-top:1px;">
                               <div style="width:20px;height:20px;background:#ebe0f0;border-radius:50%;text-align:center;line-height:20px;font-size:15px;color:#9a7aa8;">&#10003;</div>
                             </td>
-                            <td style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;color:#4a4446;font-weight:500;line-height:1.5;">Bring business cards or have your LinkedIn ready to share</td>
+                            <td style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;color:#4a4446;font-weight:500;line-height:1.5;">Bring business cards or have your LinkedIn ready to share</td>
                           </tr>
                         </table>
                       </td>
@@ -171,7 +178,7 @@
                             <td style="width:28px;vertical-align:top;padding-top:1px;">
                               <div style="width:20px;height:20px;background:#ebe0f0;border-radius:50%;text-align:center;line-height:20px;font-size:15px;color:#9a7aa8;">&#10003;</div>
                             </td>
-                            <td style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;color:#4a4446;font-weight:500;line-height:1.5;">Check the venue or meeting link above for the latest details</td>
+                            <td style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;color:#4a4446;font-weight:500;line-height:1.5;">Check the venue or meeting link above for the latest details</td>
                           </tr>
                         </table>
                       </td>
@@ -188,13 +195,13 @@
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">
               <tr>
                 <td style="padding:22px 24px;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Keep building</p>
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#4a4446;margin:0 0 10px;line-height:1.35;">More events worth your time</p>
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.65;margin:0 0 16px;">While you're thinking about it, browse what else is coming up across the UK.</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Keep building</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#4a4446;margin:0 0 10px;line-height:1.35;">More events worth your time</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.65;margin:0 0 16px;">While you''re thinking about it, browse what else is coming up across the UK.</p>
                   <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                     <tr>
                       <td style="background:#4a4446;border-radius:999px;">
-                        <a href="{{site_url}}/events/" style="display:inline-block;padding:14px 32px;font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;">Browse upcoming events &rarr;</a>
+                        <a href="{{site_url}}/events/" style="display:inline-block;padding:14px 32px;font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;">Browse upcoming events &rarr;</a>
                       </td>
                     </tr>
                   </table>
@@ -209,13 +216,13 @@
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
               <tr>
                 <td style="text-align:center;width:33.33%;padding:0 10px;vertical-align:top;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Your ticket is saved in your Hub account</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Your ticket is saved in your Hub account</p>
                 </td>
                 <td style="text-align:center;width:33.33%;padding:0 10px;border-left:1px solid rgba(255,255,255,0.12);border-right:1px solid rgba(255,255,255,0.12);vertical-align:top;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Refund terms are set by the organiser</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Refund terms are set by the organiser</p>
                 </td>
                 <td style="text-align:center;width:33.33%;padding:0 10px;vertical-align:top;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Need help? <a href="mailto:{{support_email}}" style="color:#ebe0f0;text-decoration:none;">{{support_email}}</a></p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Need help? <a href="mailto:{{support_email}}" style="color:#ebe0f0;text-decoration:none;">{{support_email}}</a></p>
                 </td>
               </tr>
             </table>
@@ -228,15 +235,15 @@
             <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
               <img src="{{logo_footer_url}}" alt="The Networker Hub" width="200" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
             </a>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.8;margin:0 0 10px;">
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.8;margin:0 0 10px;">
               Operated by <strong style="font-weight:600;color:#4a4446;">The Networker Group Ltd</strong><br>
               Registered in England &amp; Wales &nbsp;&middot;&nbsp; Company No. 15252227 &nbsp;&middot;&nbsp; VAT No. 454 4092 94<br>
               Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF
             </p>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;margin:0 0 14px;">
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;margin:0 0 14px;">
               <a href="mailto:{{support_email}}" style="color:#9a7aa8;text-decoration:none;font-weight:600;">{{support_email}}</a>
             </p>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:#7a7274;margin:0;">
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;font-weight:400;color:#7a7274;margin:0;">
               <a href="{{site_url}}/legal-policies.html#privacy" style="color:#9a7aa8;text-decoration:none;">Privacy</a>
               &nbsp;&middot;&nbsp;
               <a href="{{site_url}}/legal-policies.html#terms" style="color:#9a7aa8;text-decoration:none;">Terms</a>
@@ -254,3 +261,12 @@
 </table>
 </body>
 </html>
+',
+  placeholders = array[
+    'user_name', 'user_email', 'event_name', 'event_date', 'event_time',
+    'event_location', 'event_url', 'ticket_name', 'organiser_name',
+    'meeting_link', 'meeting_type', 'meeting_link_row', 'sponsor_row', 'site_url', 'logo_url'
+  ],
+  category = 'events',
+  updated_at = now()
+where slug = 'booking_reminder';

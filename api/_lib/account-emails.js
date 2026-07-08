@@ -1,4 +1,5 @@
 const { sendTemplatedEmail } = require('./send-template-email');
+const { emailGreetingName } = require('./email-display-name');
 const {
   siteBase,
   browseEventsUrl,
@@ -9,11 +10,12 @@ const {
   contactUrl,
   logoNavUrl,
   logoFooterUrl,
+  supportEmail,
 } = require('./hub-email-urls');
 
 function buildAccountWelcomeVars({ email, name, siteUrl }) {
   const site = siteBase(siteUrl);
-  const displayName = String(name || '').trim() || 'there';
+  const displayName = emailGreetingName(name, 'there');
   const userEmail = String(email || '').trim().toLowerCase();
 
   return {
@@ -30,6 +32,7 @@ function buildAccountWelcomeVars({ email, name, siteUrl }) {
     site_url: site,
     logo_url: logoNavUrl(site),
     logo_footer_url: logoFooterUrl(site),
+    support_email: supportEmail(),
   };
 }
 

@@ -23,6 +23,7 @@ const {
   contactUrl,
   logoNavUrl,
   logoFooterUrl,
+  supportEmail,
 } = require('./hub-email-urls');
 const {
   enrichBookingConfirmationVars,
@@ -50,6 +51,7 @@ const {
   getEmailSponsorVars,
   stripUnresolvedSponsorPlaceholders,
 } = require('./email-sponsor-sections');
+const { emailGreetingName } = require('./email-display-name');
 
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
@@ -192,6 +194,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     terms_url: legalPolicyUrl(siteUrl, 'terms'),
     refunds_url: legalPolicyUrl(siteUrl, 'refunds'),
     contact_url: contactUrl(siteUrl),
+    support_email: supportEmail(),
     sponsor_row: sponsorSection,
     sponsor_section: sponsorSection,
     mini_sponsors_row: sponsorVars.mini_sponsors_row || '',
@@ -225,6 +228,11 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     merged = enrichEventCancelledVars(merged, sponsorSection);
   } else if (slug === 'refund_processed') {
     merged = enrichRefundProcessedVars(merged, sponsorSection);
+  }
+
+  if (merged.user_name) {
+    const greeting = emailGreetingName(merged.user_name);
+    if (greeting) merged.user_name = greeting;
   }
 
   let bodyHtml = template.body_html;
@@ -303,9 +311,20 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     html = replacePlaceholders(html, merged);
   }
 
+  const footerSupportEmail = String(merged.support_email || supportEmail()).trim();
+  if (footerSupportEmail) {
+    const supportRe = /\{\{\s*support_email\s*\}\}/g;
+    html = html.replace(supportRe, footerSupportEmail);
+  }
+
+  const subject = replacePlaceholders(template.subject, merged).replace(
+    /\{\{\s*support_email\s*\}\}/g,
+    footerSupportEmail || ''
+  );
+
   return {
     template,
-    subject: replacePlaceholders(template.subject, merged),
+    subject,
     html,
     templateSource,
   };

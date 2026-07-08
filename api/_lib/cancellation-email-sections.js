@@ -4,6 +4,7 @@ const {
   formatMultilineHtml,
 } = require('./event-refund-policy');
 const { wrapSponsorRow, resolveSponsorSection } = require('./booking-email-sections');
+const { supportEmail } = require('./hub-email-urls');
 
 function formatAmount(amountPaid) {
   const n = Number(amountPaid);
@@ -64,7 +65,9 @@ function buildRefundEligibleRow(amountPaid) {
 function buildNoRefundRow(eventRow) {
   const policyText =
     formatRefundPolicyText(eventRow) ||
-    'This cancellation falls outside the organiser refund window. Contact hello@the-networker.co.uk if you need help.';
+    'This cancellation falls outside the organiser refund window. Contact ' +
+    supportEmail() +
+    ' if you need help.';
   return (
     '<tr><td class="mobile-pad" style="padding:0 48px 20px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;">' +

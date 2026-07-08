@@ -14,10 +14,12 @@ const {
 const {
   siteBase,
   browseEventsUrl,
+  opportunitiesBrowseUrl,
   hubAccountUrl,
   hubPaymentUrl,
   legalPolicyUrl,
   contactUrl,
+  supportEmail,
 } = require('./hub-email-urls');
 
 const META_CELL =
@@ -205,19 +207,20 @@ const ACCOUNT_WELCOME_SECTION_PLACEHOLDERS = ['sponsor_row', 'sponsor_section', 
 function enrichAccountWelcomeVars(vars, sponsorSection) {
   const input = vars && typeof vars === 'object' ? vars : {};
   const site = siteBase(input.site_url);
-  const sponsorRow = wrapSponsorRow(resolveSponsorSection(input, sponsorSection));
 
   return {
     ...input,
     hub_account_url: String(input.hub_account_url || '').trim() || hubAccountUrl(site),
     browse_events_url: String(input.browse_events_url || '').trim() || browseEventsUrl(site),
+    opportunities_url: String(input.opportunities_url || '').trim() || opportunitiesBrowseUrl(site),
     contact_url: String(input.contact_url || '').trim() || contactUrl(site),
     privacy_url: String(input.privacy_url || '').trim() || legalPolicyUrl(site, 'privacy'),
     terms_url: String(input.terms_url || '').trim() || legalPolicyUrl(site, 'terms'),
     refunds_url: String(input.refunds_url || '').trim() || legalPolicyUrl(site, 'refunds'),
-    sponsor_row: sponsorRow,
-    sponsor_section: sponsorRow,
-    mini_sponsors_row: String(input.mini_sponsors_row || '').trim(),
+    support_email: String(input.support_email || '').trim() || supportEmail(),
+    sponsor_row: '',
+    sponsor_section: '',
+    mini_sponsors_row: '',
   };
 }
 

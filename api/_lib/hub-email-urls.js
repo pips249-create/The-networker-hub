@@ -98,6 +98,27 @@ function logoFooterUrl(siteUrl) {
   return siteBase(siteUrl) + '/assets/logo-email-footer.png';
 }
 
+function supportEmail() {
+  const configured = String(process.env.SUPPORT_EMAIL || '').trim();
+  if (configured) return configured.toLowerCase();
+
+  const from = String(process.env.RESEND_FROM || '').trim();
+  const angleMatch = from.match(/<([^>]+)>/);
+  const raw = angleMatch ? angleMatch[1] : from;
+  const parsed = String(raw || '')
+    .trim()
+    .toLowerCase();
+  if (parsed && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parsed)) {
+    // Prefer the human inbox when Resend sends from mail.thenetworkerhub.com.
+    if (parsed.endsWith('@mail.thenetworkerhub.com')) {
+      return 'hello@thenetworkerhub.com';
+    }
+    return parsed;
+  }
+
+  return 'hello@thenetworkerhub.com';
+}
+
 module.exports = {
   siteBase,
   homeUrl,
@@ -115,4 +136,5 @@ module.exports = {
   opportunityPublicUrl,
   logoNavUrl,
   logoFooterUrl,
+  supportEmail,
 };

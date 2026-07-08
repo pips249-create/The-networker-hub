@@ -13,6 +13,7 @@ const {
 } = require('../supabase-email-test-recipients');
 const { buildEmailFromTemplate, sendTemplatedEmail } = require('../send-template-email');
 const { mergeEmailPreviewVariables } = require('../email-preview-variables');
+const { getEmailSponsorVars } = require('../email-sponsor-sections');
 const { emailConfigStatus } = require('../email-config');
 
 function parseBody(req) {
@@ -203,10 +204,19 @@ module.exports = async function handler(req, res) {
               'This address is not on the safe test list. Add it under Safe test recipients first.',
           });
         }
+        const previewVars = mergeEmailPreviewVariables(slug, body.variables || {});
+        const sponsorVars = await getEmailSponsorVars(slug);
+        if (String(sponsorVars.sponsor_row || '').trim()) {
+          previewVars.sponsor_row = sponsorVars.sponsor_row;
+          previewVars.sponsor_section = sponsorVars.sponsor_row;
+        }
+        if (String(sponsorVars.mini_sponsors_row || '').trim()) {
+          previewVars.mini_sponsors_row = sponsorVars.mini_sponsors_row;
+        }
         const result = await sendTemplatedEmail({
           slug,
           to,
-          variables: mergeEmailPreviewVariables(slug, body.variables || {}),
+          variables: previewVars,
           skipEmailCheck: true,
         });
         return json(res, 200, { ok: true, sent: true, ...result });

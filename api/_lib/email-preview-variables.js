@@ -10,6 +10,7 @@ const {
   contactUrl,
   logoNavUrl,
   logoFooterUrl,
+  supportEmail,
   eventPublicUrl,
   organiserPublicUrl,
   organiserDashboardUrl,
@@ -97,6 +98,7 @@ function basePreviewVars(siteUrl) {
     site_url: site,
     logo_url: logoNavUrl(site),
     logo_footer_url: logoFooterUrl(site),
+    support_email: supportEmail(),
     owner_name: 'Jordan',
     opportunity_title: 'Marketing agency partnership',
     opportunity_url: opportunityPublicUrl({ id: opportunityId }, site),
@@ -266,7 +268,9 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
 
   const site = siteBase(siteUrl);
   if (slug && String(slug).startsWith('opportunity_')) {
-    vars.sponsor_row = sampleOpportunitySponsorRow(site);
+    if (!String(vars.sponsor_row || '').trim()) {
+      vars.sponsor_row = sampleOpportunitySponsorRow(site);
+    }
     vars.sponsor_section = vars.sponsor_row;
   } else if (
     slug === 'booking_confirmation' ||
@@ -281,9 +285,13 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     slug === 'application_denied' ||
     slug === 'post_event_review_request'
   ) {
-    vars.sponsor_row = sampleSponsorRow(site);
+    if (!String(vars.sponsor_row || '').trim()) {
+      vars.sponsor_row = sampleSponsorRow(site);
+    }
     vars.sponsor_section = vars.sponsor_row;
-    vars.mini_sponsors_row = sampleMiniSponsorsRow();
+    if (!String(vars.mini_sponsors_row || '').trim()) {
+      vars.mini_sponsors_row = sampleMiniSponsorsRow();
+    }
   }
 
   if (slug === 'password_reset') {

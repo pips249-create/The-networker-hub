@@ -42,9 +42,9 @@ values (
   'Welcome to The Networker Hub, {{user_name}}',
   '${escaped}',
   array[
-    'user_name', 'user_email', 'hub_account_url', 'browse_events_url', 'welcome_url',
+    'user_name', 'user_email', 'hub_account_url', 'browse_events_url', 'opportunities_url', 'welcome_url',
     'contact_url', 'privacy_url', 'terms_url', 'refunds_url',
-    'sponsor_row', 'site_url', 'logo_url'
+    'site_url', 'logo_url', 'logo_footer_url', 'support_email'
   ],
   'attendees'
 )

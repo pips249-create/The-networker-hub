@@ -14,6 +14,8 @@ function isStaleApplicationReceivedTemplate(bodyHtml) {
   const body = String(bodyHtml || '');
   if (!body.includes('Your application has been received')) return true;
   if (!body.includes('{{price_if_approved}}')) return true;
+  if (body.includes('hello@the-networker.co.uk')) return true;
+  if (body.includes('Need help?') && !body.includes('{{support_email}}')) return true;
   return false;
 }
 

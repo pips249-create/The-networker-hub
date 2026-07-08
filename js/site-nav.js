@@ -74,7 +74,7 @@
 
 /**
  * Shared site navigation — same bar on every page.
- * NAV_BUILD=20260713 — wider nav links, larger logo.
+ * NAV_BUILD=20260708 — wider nav links, larger logo; mobile label parity.
  */
 (function () {
   var NAV_BUILD = '20260713b';
@@ -218,7 +218,7 @@
     }
     if (user) {
       var hubView = user.hubView || 'attendee';
-      var showHubToggle = user.canToggleHubMode !== false && user.role === 'client';
+      var showHubToggle = user.canToggleHubMode === true && user.role === 'client';
       if (showHubToggle && window.HubModeSwitch) {
         html += window.HubModeSwitch.html(hubView);
       }
@@ -245,18 +245,18 @@
     }
     if (user) {
       var hubView = user.hubView || 'attendee';
-      var showHubToggle = user.canToggleHubMode !== false && user.role === 'client';
+      var showHubToggle = user.canToggleHubMode === true && user.role === 'client';
       if (showHubToggle && window.HubModeSwitch) {
         html +=
           '<div class="nav-mobile-hub-mode">' + window.HubModeSwitch.html(hubView) + '</div>';
       }
       html += link(
         'organiser/index.html',
-        'Organiser dashboard',
+        'Organiser workspace',
         'organiser',
         'nav-mobile-item'
       );
-      html += link('account/index.html', 'Attend events', 'account', 'nav-mobile-item');
+      html += link('account/index.html', 'My tickets &amp; reviews', 'account', 'nav-mobile-item');
       html += link('account/settings.html', 'Account settings', 'settings', 'nav-mobile-item');
       if (user.role === 'admin') {
         html += link('admin/index.html', 'Command Center', 'admin', 'nav-mobile-item');

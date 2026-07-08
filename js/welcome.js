@@ -9,6 +9,14 @@
     }
   }
 
+  function isWelcomeDone() {
+    try {
+      return localStorage.getItem(WELCOME_DONE_KEY) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
   function go(path) {
     markWelcomeDone();
     window.location.href = path;
@@ -18,7 +26,13 @@
     try {
       var res = await fetch('/api/auth/session', { credentials: 'include' });
       var data = await res.json();
-      if (data.ok && data.user) return data;
+      if (data.ok && data.user) {
+        if (isWelcomeDone()) {
+          window.location.href = 'events/index.html';
+          return null;
+        }
+        return data;
+      }
     } catch (e) {
       /* ignore */
     }
@@ -43,6 +57,10 @@
       else if (path === 'find-opportunity') go('opportunities/index.html');
       else if (path === 'list-opportunity') go('opportunities/list.html');
     });
+  });
+
+  document.querySelectorAll('.auth-welcome-skip a').forEach(function (link) {
+    link.addEventListener('click', markWelcomeDone);
   });
 
   ensureSignedIn();
