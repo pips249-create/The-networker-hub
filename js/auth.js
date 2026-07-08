@@ -37,11 +37,6 @@
     createAccountLink.setAttribute('href', withNextParam('register.html'));
   }
 
-  var createAccountHero = document.getElementById('login-create-account-hero');
-  if (createAccountHero) {
-    createAccountHero.setAttribute('href', withNextParam('register.html'));
-  }
-
   var registerSignInLink = document.getElementById('register-signin-link');
   if (registerSignInLink) {
     registerSignInLink.setAttribute('href', withNextParam('login.html'));

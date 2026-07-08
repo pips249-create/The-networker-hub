@@ -11,7 +11,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/hub.css?v=20260730" />
-    <link rel="stylesheet" href="css/auth.css?v=20260605" />
+    <link rel="stylesheet" href="css/auth.css?v=20260708" />
     <link rel="stylesheet" href="css/hub-mobile.css?v=20260730" />
   </head>
   <body class="auth-page">
@@ -22,55 +22,91 @@
       <div class="auth-wizard-shell auth-wizard-shell--wide">
         <ol class="auth-wizard-steps" aria-label="Account setup progress">
           <li class="auth-wizard-step is-done">
-            <span class="auth-wizard-num">1</span>
-            <span class="auth-wizard-label">Your account</span>
+            <span class="auth-wizard-num" aria-hidden="true">✓</span>
+            <span class="auth-wizard-label">Create account</span>
           </li>
           <li class="auth-wizard-step is-current" aria-current="step">
             <span class="auth-wizard-num">2</span>
-            <span class="auth-wizard-label">Get started</span>
+            <span class="auth-wizard-label">Choose your path</span>
           </li>
         </ol>
 
         <div class="auth-card auth-card--wizard auth-card--welcome">
-          <h1>What would you like to do?</h1>
-          <p class="auth-lede">
-            Pick the path that fits you best. You can always switch between browsing events and managing your organiser
-            dashboard later.
-          </p>
+          <header class="auth-welcome-head">
+            <p class="auth-welcome-kicker">Step 2 of 2 — you&apos;re almost set up</p>
+            <h1>Welcome, <span id="welcome-user-name">there</span></h1>
+            <p class="auth-lede auth-lede--welcome">
+              What would you like to do first? Pick a path below and we&apos;ll take you straight there.
+              You can always switch later using <strong>My tickets</strong> and <strong>Organiser hub</strong> in
+              the top navigation.
+            </p>
+          </header>
 
-          <div class="auth-path-grid" role="list">
-            <button type="button" class="auth-path-card" data-welcome-path="find-event">
-              <span class="auth-path-icon" aria-hidden="true">🔍</span>
-              <span class="auth-path-title">Find an event</span>
-              <span class="auth-path-desc">Browse networking meetings, exhibitions and conferences.</span>
-            </button>
-            <button type="button" class="auth-path-card" data-welcome-path="list-event">
-              <span class="auth-path-icon" aria-hidden="true">📅</span>
-              <span class="auth-path-title">List an event</span>
-              <span class="auth-path-desc">Create your organiser page and publish your first event listing.</span>
-            </button>
-            <button type="button" class="auth-path-card" data-welcome-path="find-opportunity">
-              <span class="auth-path-icon" aria-hidden="true">💼</span>
-              <span class="auth-path-title">Browse business opportunities</span>
-              <span class="auth-path-desc">Explore franchises, partnerships, and deals across the UK network.</span>
-            </button>
-            <button type="button" class="auth-path-card" data-welcome-path="list-opportunity">
-              <span class="auth-path-icon" aria-hidden="true">✨</span>
-              <span class="auth-path-title">List a business opportunity</span>
-              <span class="auth-path-desc">Promote a franchise, partnership, or side hustle to hub members.</span>
-            </button>
+          <aside class="auth-welcome-map" aria-label="How the Hub is organised">
+            <div class="auth-welcome-map-col">
+              <span class="auth-welcome-map-label">My tickets</span>
+              <span class="auth-welcome-map-desc">Attend events, save listings, track enquiries &amp; reviews</span>
+            </div>
+            <div class="auth-welcome-map-divider" aria-hidden="true">↔</div>
+            <div class="auth-welcome-map-col">
+              <span class="auth-welcome-map-label">Organiser hub</span>
+              <span class="auth-welcome-map-desc">List events, manage your organiser page &amp; opportunity listings</span>
+            </div>
+          </aside>
+
+          <div class="auth-path-sections">
+            <section class="auth-path-section" aria-labelledby="welcome-section-attend">
+              <h2 class="auth-path-section-title" id="welcome-section-attend">I want to discover &amp; attend</h2>
+              <p class="auth-path-section-desc">Browse the network, buy tickets, and engage with business listings.</p>
+              <div class="auth-path-grid" role="list">
+                <button type="button" class="auth-path-card" data-welcome-path="find-event">
+                  <span class="auth-path-icon" aria-hidden="true">🔍</span>
+                  <span class="auth-path-title">Find an event to attend</span>
+                  <span class="auth-path-desc">Search networking meetings, exhibitions, and conferences across the UK.</span>
+                  <span class="auth-path-cta">Go to Events browse →</span>
+                </button>
+                <button type="button" class="auth-path-card" data-welcome-path="find-opportunity">
+                  <span class="auth-path-icon" aria-hidden="true">💼</span>
+                  <span class="auth-path-title">Browse business opportunities</span>
+                  <span class="auth-path-desc">Explore franchises, partnerships, and deals from hub members.</span>
+                  <span class="auth-path-cta">Go to Opportunities →</span>
+                </button>
+              </div>
+            </section>
+
+            <section class="auth-path-section" aria-labelledby="welcome-section-list">
+              <h2 class="auth-path-section-title" id="welcome-section-list">I want to list &amp; promote</h2>
+              <p class="auth-path-section-desc">Run a networking group or business? Start from your organiser workspace.</p>
+              <div class="auth-path-grid" role="list">
+                <button type="button" class="auth-path-card auth-path-card--organiser" data-welcome-path="list-event">
+                  <span class="auth-path-icon" aria-hidden="true">📅</span>
+                  <span class="auth-path-title">List an event</span>
+                  <span class="auth-path-desc">Create your organiser page and publish your first event listing.</span>
+                  <span class="auth-path-cta">Open Organiser hub →</span>
+                </button>
+                <button type="button" class="auth-path-card auth-path-card--organiser" data-welcome-path="list-opportunity">
+                  <span class="auth-path-icon" aria-hidden="true">✨</span>
+                  <span class="auth-path-title">List a business opportunity</span>
+                  <span class="auth-path-desc">Promote a franchise, partnership, or side hustle to hub members.</span>
+                  <span class="auth-path-cta">Start opportunity listing →</span>
+                </button>
+              </div>
+            </section>
           </div>
 
-          <p class="auth-welcome-skip">
-            <a href="events/index.html">Skip for now — browse events</a>
-            ·
-            <a href="account/index.html">Go to my account</a>
-          </p>
+          <footer class="auth-welcome-footer">
+            <p class="auth-welcome-footer-label">Not sure yet?</p>
+            <p class="auth-welcome-footer-hint">You can explore without choosing — we&apos;ll remember you&apos;ve seen this screen.</p>
+            <div class="auth-welcome-skip-actions">
+              <a href="events/index.html" class="auth-secondary-btn">Browse events for now</a>
+              <a href="account/index.html" class="auth-welcome-skip-link">Go to My tickets &amp; reviews</a>
+            </div>
+          </footer>
         </div>
       </div>
     </main>
 
     <script src="js/hub-organiser-actions.js?v=20260605" data-root=""></script>
-    <script src="js/welcome.js?v=20260708"></script>
+    <script src="js/welcome.js?v=20260708b"></script>
   </body>
 </html>

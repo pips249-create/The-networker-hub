@@ -31,6 +31,7 @@
           window.location.href = 'events/index.html';
           return null;
         }
+        personalizeWelcome(data.user);
         return data;
       }
     } catch (e) {
@@ -38,6 +39,13 @@
     }
     window.location.href = 'register.html';
     return null;
+  }
+
+  function personalizeWelcome(user) {
+    var nameEl = document.getElementById('welcome-user-name');
+    if (!nameEl || !user) return;
+    var name = user.name && String(user.name).trim();
+    nameEl.textContent = name || 'there';
   }
 
   async function goListEvent() {
@@ -60,6 +68,10 @@
   });
 
   document.querySelectorAll('.auth-welcome-skip a').forEach(function (link) {
+    link.addEventListener('click', markWelcomeDone);
+  });
+
+  document.querySelectorAll('.auth-welcome-skip-actions a').forEach(function (link) {
     link.addEventListener('click', markWelcomeDone);
   });
 
