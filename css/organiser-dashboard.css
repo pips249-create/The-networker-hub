@@ -790,6 +790,13 @@
   margin-top: 8px;
 }
 
+.org-review-reply-form {
+  background: var(--od-purple-pale);
+  border-radius: var(--od-radius-sm);
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+
 .org-review-reply-label {
   font-size: 10px;
   font-weight: 700;
@@ -797,12 +804,56 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: 4px;
+  display: block;
 }
 
 .org-review-reply-text {
   font-size: 12px;
   color: var(--od-text-mid);
   line-height: 1.5;
+}
+
+.org-review-reply-input {
+  width: 100%;
+  min-height: 72px;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid rgba(45, 27, 78, 0.18);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--od-text);
+  background: #fff;
+  resize: vertical;
+}
+
+.org-review-reply-input:focus {
+  outline: 2px solid rgba(91, 47, 153, 0.25);
+  border-color: var(--od-purple);
+}
+
+.org-review-reply-hint {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--od-text-muted);
+}
+
+.org-review-reply-error {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #b91c1c;
+}
+
+.org-review-reply-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.org-review-reply-clear {
+  margin-left: auto;
 }
 
 .org-revenue-banner {

@@ -540,20 +540,9 @@
 
   function browseTotalCount() {
     if (window.hubServerBrowse && window.hubBrowseTotal != null) {
-      var total = Number(window.hubBrowseTotal) || 0;
-      var typeTabs = activeBrowseTypeTabs();
-      var counts = window.hubBrowseTypeCounts;
-      var typeTotal = browseCountFromTypeTabs(counts, typeTabs);
-      if (
-        typeTotal != null &&
-        typeTabs.length &&
-        counts &&
-        total === Number(counts.all || 0) &&
-        typeTotal !== total
-      ) {
-        return typeTotal;
-      }
-      return total;
+      // Trust the paginated API total — do not substitute chip counts when
+      // a type tab is selected but the request has not applied types yet.
+      return Number(window.hubBrowseTotal) || 0;
     }
     return getFilteredList().length;
   }

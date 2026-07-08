@@ -98,7 +98,7 @@ const KNOWLEDGE_SECTIONS = [
     body:
       'Team invites live under /organiser/ → Team & invites. Only the account owner can invite or remove editors (up to 10 editors per organiser account). ' +
       'INVITE FLOW: owner enters colleague email → invite email is sent → colleague signs in with that exact email → they become Active and see the same networking groups and events on that account. ' +
-      'EDITOR ACCESS: view all groups on the account; create and edit events, tickets, and attendees; view revenue and reviews; manage business opportunities. ' +
+      'EDITOR ACCESS: view all groups on the account; create and edit events, tickets, and attendees; view revenue and reviews; reply publicly to attendee reviews; manage business opportunities. ' +
       'EDITORS CANNOT: invite or remove team members; delete events (cancel instead if needed). Access is account-wide — not limited to one group. ' +
       'If someone already runs their own organiser account with claimed groups, their own workspace takes priority over an editor invite.',
   },
@@ -362,7 +362,7 @@ const FALLBACK_REPLIES = [
   {
     match: /review|rating/i,
     reply:
-      'Members can leave reviews after attending events. Sign in, visit the event page, and follow the review option there.',
+      'Members can leave reviews after attending events. Sign in, visit My Hub or the event page, and follow the review option there. Organisers can reply from their dashboard under Reviews — replies appear on the public group profile.',
   },
   {
     match: /organiser profile|networking group profile|\/organisers\//i,

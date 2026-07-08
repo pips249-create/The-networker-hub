@@ -4334,6 +4334,72 @@
     });
   }
 
+  function findReviewById(reviewId) {
+    const id = String(reviewId || '').trim();
+    if (!id) return null;
+    for (let i = 0; i < state.reviews.length; i++) {
+      if (String(state.reviews[i].id) === id) return state.reviews[i];
+    }
+    return null;
+  }
+
+  function reviewReplyMarkup(r) {
+    const hasReply = Boolean(r.reply && String(r.reply).trim());
+    const replyText = hasReply ? esc(r.reply) : '';
+    const composing = r._composing;
+    if (composing) {
+      return (
+        '<div class="org-review-reply-form" data-review-reply-form="' +
+        esc(r.id) +
+        '">' +
+        '<label class="org-review-reply-label" for="review-reply-' +
+        esc(r.id) +
+        '">' +
+        (hasReply ? 'Edit your reply' : 'Your reply') +
+        '</label>' +
+        '<textarea id="review-reply-' +
+        esc(r.id) +
+        '" class="org-review-reply-input" rows="3" maxlength="2000" placeholder="Thank the attendee or add useful context for future guests…">' +
+        (hasReply ? esc(r.reply) : '') +
+        '</textarea>' +
+        '<p class="org-review-reply-hint">Public on your group profile · max 2,000 characters</p>' +
+        '<p class="org-review-reply-error" data-review-reply-error="' +
+        esc(r.id) +
+        '" hidden></p>' +
+        '<div class="org-review-reply-actions">' +
+        '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-save-review-reply="' +
+        esc(r.id) +
+        '">Save reply</button>' +
+        '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-cancel-review-reply="' +
+        esc(r.id) +
+        '">Cancel</button>' +
+        (hasReply
+          ? '<button type="button" class="org-btn org-btn-outline org-btn-sm org-review-reply-clear" data-clear-review-reply="' +
+            esc(r.id) +
+            '">Remove reply</button>'
+          : '') +
+        '</div></div>'
+      );
+    }
+    if (hasReply) {
+      return (
+        '<div class="org-review-reply">' +
+        '<div class="org-review-reply-label">Your reply</div>' +
+        '<div class="org-review-reply-text">' +
+        replyText +
+        '</div>' +
+        '<button type="button" class="org-btn org-btn-outline org-btn-sm" style="margin-top:8px" data-edit-review-reply="' +
+        esc(r.id) +
+        '">Edit reply</button></div>'
+      );
+    }
+    return (
+      '<button type="button" class="org-btn org-btn-outline org-btn-sm" style="margin-top:8px" data-edit-review-reply="' +
+      esc(r.id) +
+      '">Reply to this review</button>'
+    );
+  }
+
   function renderReviews() {
     const listEl = document.getElementById('reviews-list');
     const empty = document.getElementById('reviews-empty');
@@ -4367,11 +4433,7 @@
     pageInfo.items.forEach((r) => {
       const card = document.createElement('article');
       card.className = 'org-review-card';
-      const replyBlock = r.reply
-        ? '<div class="org-review-reply"><div class="org-review-reply-label">Your reply</div><div class="org-review-reply-text">' +
-          esc(r.reply) +
-          '</div></div>'
-        : '<button type="button" class="org-btn org-btn-outline" style="font-size:11px;margin-top:8px" disabled>Reply to this review (coming soon)</button>';
+      card.setAttribute('data-review-id', r.id);
       card.innerHTML =
         '<div class="org-review-card-header"><div style="display:flex;align-items:center;gap:10px">' +
         '<div class="org-reviewer-avatar">' +
@@ -4390,9 +4452,52 @@
         (r.body
           ? '<div class="org-review-body">"' + esc(r.body) + '"</div>'
           : '<p class="org-review-body org-review-body--rating-only">Rating only — no written feedback</p>') +
-        replyBlock;
+        reviewReplyMarkup(r);
       listEl.appendChild(card);
     });
+  }
+
+  async function saveReviewReply(reviewId, replyText) {
+    const review = findReviewById(reviewId);
+    if (!review) return;
+    const errEl = document.querySelector('[data-review-reply-error="' + reviewId + '"]');
+    const saveBtn = document.querySelector('[data-save-review-reply="' + reviewId + '"]');
+    const clearBtn = document.querySelector('[data-clear-review-reply="' + reviewId + '"]');
+    if (errEl) {
+      errEl.hidden = true;
+      errEl.textContent = '';
+    }
+    if (saveBtn) saveBtn.disabled = true;
+    if (clearBtn) clearBtn.disabled = true;
+    try {
+      const { ok, data } = await api('/api/organiser/reviews', {
+        method: 'POST',
+        body: JSON.stringify({ reviewId, reply: replyText }),
+      });
+      if (!ok || !data.ok) {
+        if (errEl) {
+          errEl.textContent = (data && data.message) || 'Could not save reply.';
+          errEl.hidden = false;
+        } else {
+          showOrganiserAlert((data && data.message) || 'Could not save reply.', true);
+        }
+        return;
+      }
+      review.reply = data.review && data.review.reply ? data.review.reply : null;
+      review._composing = false;
+      renderReviews();
+      showOrganiserAlert(data.message || 'Reply saved.', false);
+    } catch (err) {
+      if (errEl) {
+        errEl.textContent = err.message || 'Could not save reply.';
+        errEl.hidden = false;
+      } else {
+        showOrganiserAlert(err.message || 'Could not save reply.', true);
+      }
+    } finally {
+      if (saveBtn) saveBtn.disabled = false;
+      if (clearBtn) clearBtn.disabled = false;
+    }
   }
 
   function renderPayoutHeldBanner() {
@@ -6058,6 +6163,50 @@
         filters.reviewsGroup = reviewGroupFilter.value;
         listPages.reviews = 1;
         renderReviews();
+      });
+    }
+
+    const reviewsList = document.getElementById('reviews-list');
+    if (reviewsList) {
+      reviewsList.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('[data-edit-review-reply]');
+        if (editBtn) {
+          const review = findReviewById(editBtn.getAttribute('data-edit-review-reply'));
+          if (!review) return;
+          state.reviews.forEach((row) => {
+            row._composing = false;
+          });
+          review._composing = true;
+          renderReviews();
+          const input = document.getElementById('review-reply-' + review.id);
+          if (input) input.focus();
+          return;
+        }
+
+        const cancelBtn = e.target.closest('[data-cancel-review-reply]');
+        if (cancelBtn) {
+          const review = findReviewById(cancelBtn.getAttribute('data-cancel-review-reply'));
+          if (!review) return;
+          review._composing = false;
+          renderReviews();
+          return;
+        }
+
+        const saveBtn = e.target.closest('[data-save-review-reply]');
+        if (saveBtn) {
+          const reviewId = saveBtn.getAttribute('data-save-review-reply');
+          const input = document.getElementById('review-reply-' + reviewId);
+          saveReviewReply(reviewId, input ? input.value : '');
+          return;
+        }
+
+        const clearBtn = e.target.closest('[data-clear-review-reply]');
+        if (clearBtn) {
+          const reviewId = clearBtn.getAttribute('data-clear-review-reply');
+          const ok = window.confirm('Remove your public reply from this review?');
+          if (!ok) return;
+          saveReviewReply(reviewId, '');
+        }
       });
     }
 

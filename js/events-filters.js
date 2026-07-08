@@ -284,7 +284,8 @@
     if (deliveryFmt === 'online') return true;
 
     if (isNearMeActive()) {
-      if (!window.hubUserCoords) return false;
+      // Wait for geolocation — do not hide in-person listings before coords exist.
+      if (!window.hubUserCoords) return true;
       center = window.hubUserCoords;
     }
 
@@ -757,7 +758,10 @@
     return activeTypeTabs.slice();
   };
   window.hubFilterServerBrowseEvents = function (list) {
-    return (list || []).filter(eventMatchesFilters);
+    // Server browse already applies type/location/price/date filters.
+    // Re-filtering here caused empty pages when Near me was on but coords
+    // were not ready yet (every in-person event was dropped).
+    return list || [];
   };
   window.hubIsNearMeActive = isNearMeActive;
   window.hubNearRadiusMiles = getNearRadiusMiles;

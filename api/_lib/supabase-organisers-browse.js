@@ -163,7 +163,7 @@ function eventsForOrganiser(organiserId, visibleEvents, orgById) {
 async function fetchOrganiserReviews(sb, organiserId) {
   const { data, error } = await sb
     .from('reviews')
-    .select('id, rating, review_text, created_at, attendees(name, email)')
+    .select('id, rating, review_text, organiser_response, created_at, attendees(name, email)')
     .eq('organiser_id', organiserId)
     .order('created_at', { ascending: false })
     .limit(12);
@@ -174,6 +174,7 @@ async function fetchOrganiserReviews(sb, organiserId) {
       id: row.id,
       rating: Number(row.rating) || 0,
       text: String(row.review_text || '').trim(),
+      reply: String(row.organiser_response || '').trim() || null,
       name: row.attendees?.name || row.attendees?.email || 'Attendee',
       date: row.created_at
         ? new Date(row.created_at).toLocaleDateString('en-GB', {

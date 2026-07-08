@@ -1,5 +1,9 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { resolveAttendeeId } = require('./supabase-favourites');
+const { resolveOrganiserAccess } = require('./supabase-organiser-access');
+const { isUuid } = require('./uuid');
+
+const MAX_ORGANISER_REPLY = 2000;
 
 const ELIGIBLE_PAYMENT = new Set(['Paid', 'Free']);
 
@@ -122,6 +126,70 @@ function reviewerInitials(name) {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
+async function replyToReviewAsOrganiser(session, reviewId, replyText) {
+  if (!isSupabaseConfigured()) throw new Error('supabase_not_configured');
+
+  const id = String(reviewId || '').trim();
+  if (!isUuid(id)) {
+    const err = new Error('invalid_review_id');
+    err.status = 400;
+    err.code = 'invalid_review_id';
+    throw err;
+  }
+
+  const reply = String(replyText == null ? '' : replyText).trim();
+  if (reply.length > MAX_ORGANISER_REPLY) {
+    const err = new Error('reply_too_long');
+    err.status = 400;
+    err.code = 'reply_too_long';
+    throw err;
+  }
+
+  const access = await resolveOrganiserAccess(session);
+  if (!access.role) {
+    const err = new Error('not_authenticated');
+    err.status = 401;
+    err.code = 'not_authenticated';
+    throw err;
+  }
+
+  const sb = getSupabaseAdmin();
+  const existing = await sb
+    .from('reviews')
+    .select('id, organiser_id, organiser_response')
+    .eq('id', id)
+    .maybeSingle();
+  if (existing.error) throw new Error(existing.error.message);
+  if (!existing.data?.id) {
+    const err = new Error('review_not_found');
+    err.status = 404;
+    err.code = 'review_not_found';
+    throw err;
+  }
+
+  const organiserId = String(existing.data.organiser_id || '').trim();
+  const allowed = new Set(access.groupIds || []);
+  if (!organiserId || !allowed.has(organiserId)) {
+    const err = new Error('not_allowed');
+    err.status = 403;
+    err.code = 'not_allowed';
+    throw err;
+  }
+
+  const updated = await sb
+    .from('reviews')
+    .update({ organiser_response: reply || null })
+    .eq('id', id)
+    .select('id, organiser_response')
+    .single();
+  if (updated.error) throw new Error(updated.error.message);
+
+  return {
+    id: updated.data.id,
+    reply: String(updated.data.organiser_response || '').trim() || null,
+  };
+}
+
 async function listReviewsForOrganiserGroups(groupIds, groupsById, adminView) {
   if (!isSupabaseConfigured()) return [];
   const ids = groupIds || [];
@@ -176,7 +244,9 @@ async function listReviewsForOrganiserGroups(groupIds, groupsById, adminView) {
 
 module.exports = {
   submitReview,
+  replyToReviewAsOrganiser,
   eventHasEnded,
   isEligibleRegistration,
   listReviewsForOrganiserGroups,
+  MAX_ORGANISER_REPLY,
 };

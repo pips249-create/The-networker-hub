@@ -369,6 +369,31 @@
   color: var(--charcoal);
 }
 
+.org-review-organiser-reply {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #f6f1fa;
+  border-radius: 10px;
+  border-left: 3px solid #9a7aa8;
+}
+
+.org-review-organiser-reply-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #5b2f99;
+  margin-bottom: 4px;
+}
+
+.org-review-organiser-reply-text {
+  margin: 0 !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  color: #4b4453 !important;
+  font-style: normal;
+}
+
 .org-reviews-empty {
   font-size: 14px;
   color: var(--text-muted);

@@ -136,6 +136,20 @@
     card.appendChild(header);
     card.appendChild(stars);
     card.appendChild(body);
+    var reply = review.reply ? String(review.reply).trim() : '';
+    if (reply) {
+      var replyBlock = document.createElement('div');
+      replyBlock.className = 'org-review-organiser-reply';
+      var replyLabel = document.createElement('div');
+      replyLabel.className = 'org-review-organiser-reply-label';
+      replyLabel.textContent = 'Organiser reply';
+      var replyText = document.createElement('p');
+      replyText.className = 'org-review-organiser-reply-text';
+      replyText.textContent = reply;
+      replyBlock.appendChild(replyLabel);
+      replyBlock.appendChild(replyText);
+      card.appendChild(replyBlock);
+    }
     if (review.id && window.ReviewReport) {
       window.ReviewReport.addReportButton(card, {
         reviewId: review.id,
