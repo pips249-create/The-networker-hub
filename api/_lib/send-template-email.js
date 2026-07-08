@@ -419,21 +419,46 @@ const PREFERENCE_EMAIL_SLUGS = {
   saved_organiser_new_listing: 'organiser_alerts',
 };
 
+/** Promotional / nurture mail — requires explicit marketing opt-in (PECR). */
+const MARKETING_EMAIL_SLUGS = new Set([
+  'attendee_reengagement',
+  'attendee_signup_events_nudge',
+  'attendee_signup_events_nudge_followup',
+  'saved_event_tickets_open',
+]);
+
 async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject, resendTags }) {
-  const bypassEmailCheck = skipEmailCheck || TRANSACTIONAL_EMAIL_SLUGS.has(slug);
-  if (!bypassEmailCheck) {
-    const allowed = await getEmailsEnabledForEmail(to);
-    if (!allowed) {
-      const err = new Error('emails_disabled');
-      err.code = 'emails_disabled';
-      throw err;
-    }
-  } else if (!skipEmailCheck && PREFERENCE_EMAIL_SLUGS[slug]) {
-    const allowed = await canSendEmailCategory(to, PREFERENCE_EMAIL_SLUGS[slug]);
-    if (!allowed) {
-      const err = new Error('emails_disabled');
-      err.code = 'emails_disabled';
-      throw err;
+  if (!skipEmailCheck) {
+    if (TRANSACTIONAL_EMAIL_SLUGS.has(slug)) {
+      if (PREFERENCE_EMAIL_SLUGS[slug]) {
+        const allowed = await canSendEmailCategory(to, PREFERENCE_EMAIL_SLUGS[slug]);
+        if (!allowed) {
+          const err = new Error('emails_disabled');
+          err.code = 'emails_disabled';
+          throw err;
+        }
+      }
+    } else if (MARKETING_EMAIL_SLUGS.has(slug)) {
+      const allowed = await canSendEmailCategory(to, 'marketing');
+      if (!allowed) {
+        const err = new Error('emails_disabled');
+        err.code = 'emails_disabled';
+        throw err;
+      }
+    } else if (PREFERENCE_EMAIL_SLUGS[slug]) {
+      const allowed = await canSendEmailCategory(to, PREFERENCE_EMAIL_SLUGS[slug]);
+      if (!allowed) {
+        const err = new Error('emails_disabled');
+        err.code = 'emails_disabled';
+        throw err;
+      }
+    } else {
+      const allowed = await getEmailsEnabledForEmail(to);
+      if (!allowed) {
+        const err = new Error('emails_disabled');
+        err.code = 'emails_disabled';
+        throw err;
+      }
     }
   }
 

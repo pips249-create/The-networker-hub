@@ -40,6 +40,7 @@ module.exports = async function handler(req, res) {
     .toLowerCase();
   const password = String(body.password || '');
   const name = String(body.name || '').trim();
+  const marketingOptIn = Boolean(body.marketingOptIn ?? body.marketing_opt_in);
 
   if (!email || !password) {
     return json(res, 400, {
@@ -67,7 +68,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const user = await sbAuth.registerUser({ email, password, name });
+    const user = await sbAuth.registerUser({ email, password, name, marketingOptIn });
 
     const sessionUser = {
       sub: user.id,

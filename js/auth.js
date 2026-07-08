@@ -168,6 +168,8 @@
       btn.disabled = true;
       showMessage(msg, 'Creating your account…', 'success');
 
+      var marketingEl = document.getElementById('register-marketing');
+
       fetch('/api/auth/register', {
         method: 'POST',
         credentials: 'include',
@@ -177,6 +179,7 @@
           password: password,
           name: name,
           next: next,
+          marketingOptIn: marketingEl ? marketingEl.checked : false,
         }),
       })
         .then(function (res) {

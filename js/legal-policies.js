@@ -10,6 +10,7 @@
     'organisers',
     'cookies',
     'acceptable-use',
+    'copyright',
     'advertising',
     'accessibility',
     'legal',
