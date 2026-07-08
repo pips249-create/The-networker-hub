@@ -142,7 +142,7 @@ module.exports = async function handler(req, res) {
         siteAccess.siteAccessRequired && !siteAccess.siteAccessReady
           ? 'SITE_ACCESS_PASSWORD is set but empty — the gate cannot issue access cookies until a password value is configured.'
           : siteAccess.siteAccessRequired
-            ? 'Site access gate is ON. Visitors need the preview password at /site-access.html. Signed-in admins bypass automatically. Remove SITE_ACCESS_PASSWORD when you launch.'
+            ? 'Site access gate is ON. Public visitors only see /site-access.html (waitlist). The full site needs the preview password cookie. Remove SITE_ACCESS_PASSWORD (and set EMAIL_ALLOWLIST_DISABLED=true if used) when you launch around 28 August 2026.'
             : null,
       nextStep: !supabase.ok
         ? 'Fix Supabase env vars in Vercel → Redeploy.'

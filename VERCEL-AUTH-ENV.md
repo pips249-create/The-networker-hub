@@ -193,15 +193,21 @@ While the live domain is up but the site is not yet public, lock it behind a sha
 
 | Key | Value | Notes |
 |-----|--------|--------|
-| `SITE_ACCESS_PASSWORD` | *your chosen preview password* | When set, all pages require this password (or an admin sign-in) |
+| `SITE_ACCESS_PASSWORD` | *your chosen preview password* | When set, the public only sees `/site-access.html` (waitlist + team unlock). Everyone else needs this shared password. |
 
-**Requires** `SESSION_SECRET` (same as login) — the gate stores a signed cookie after a correct password.
+**Cookie:** after a correct password, a signed `hub_site_preview` cookie unlocks the site for 7 days (signed with the preview password value).
 
-**Still works without the gate:** Stripe webhooks, Vercel crons (`CRON_SECRET`), and static assets for the gate page.
+**Still works without unlocking:** Stripe webhooks, Vercel crons (`CRON_SECRET`), and CSS/JS/assets for the gate page.
 
-**Bypass without the preview password:** anyone signed in with an **admin** account (`hub_session` cookie).
+**No admin bypass:** signed-in admins must also use the preview password while the gate is on.
 
-**To open the site:** remove `SITE_ACCESS_PASSWORD` from Vercel → **Redeploy**. No code change needed.
+**Keeping the site private until launch (~28 August 2026):**
+1. Keep `SITE_ACCESS_PASSWORD` set in Vercel Production.
+2. Do not set `DISABLE_SITE_ACCESS_GATE=true`.
+3. Share the password only with your team.
+4. Clear unlocks anytime via `/site-access.html?lock=1`.
+
+**To open the site publicly:** remove `SITE_ACCESS_PASSWORD` from Vercel → **Redeploy**. No code change needed.
 
 **Preview waitlist:** run migration `109_preview_waitlist.sql` in Supabase. Emails from the launch page are stored in `preview_waitlist` (view in Supabase Table Editor).
 

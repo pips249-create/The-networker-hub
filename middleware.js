@@ -20,14 +20,13 @@ function isSiteAccessGateActive() {
   return true;
 }
 
+// Keep discovery files (llms.txt / agents.txt / sitemap) gated until public launch.
 const GATE_BYPASS_PREFIXES = [
   '/api/stripe-webhook',
   '/api/cron/',
   '/api/site-access',
   '/api/auth/site-access',
   '/site-access.html',
-  '/llms.txt',
-  '/agents.txt',
   '/css/',
   '/js/',
   '/assets/',
@@ -207,7 +206,7 @@ async function maybeGateSiteAccess(request, url) {
     });
   }
 
-  if (pathname === '/sitemap.xml' || pathname.startsWith('/api/')) {
+  if (pathname === '/sitemap.xml' || pathname === '/llms.txt' || pathname === '/agents.txt' || pathname.startsWith('/api/')) {
     return new Response(JSON.stringify({ error: 'site_private', message: 'Site is in private preview.' }), {
       status: 403,
       headers: withNoIndexHeaders({
