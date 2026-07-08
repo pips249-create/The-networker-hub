@@ -44,15 +44,27 @@ function signSiteAccessToken(secret) {
   return `${data}.${sig}`;
 }
 
+function cookieSecureSuffix() {
+  return process.env.VERCEL_ENV === 'production' ? '; Secure' : '';
+}
+
 function buildSiteAccessCookie(token) {
-  const secure = process.env.VERCEL_ENV === 'production' ? '; Secure' : '';
-  return `${COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${COOKIE_MAX_AGE_SEC}${secure}`;
+  return `${COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${COOKIE_MAX_AGE_SEC}${cookieSecureSuffix()}`;
+}
+
+function buildClearedSiteAccessCookie() {
+  return `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${cookieSecureSuffix()}`;
 }
 
 function setSiteAccessCookie(res) {
   const token = signSiteAccessToken(getPreviewCookieSecret());
   if (!token) return false;
   res.setHeader('Set-Cookie', buildSiteAccessCookie(token));
+  return true;
+}
+
+function clearSiteAccessCookie(res) {
+  res.setHeader('Set-Cookie', buildClearedSiteAccessCookie());
   return true;
 }
 
@@ -76,6 +88,8 @@ module.exports = {
   getPreviewCookieSecret,
   signSiteAccessToken,
   buildSiteAccessCookie,
+  buildClearedSiteAccessCookie,
   setSiteAccessCookie,
+  clearSiteAccessCookie,
   siteAccessStatus,
 };

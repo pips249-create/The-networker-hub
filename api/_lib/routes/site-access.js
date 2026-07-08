@@ -3,6 +3,7 @@ const {
   getSiteAccessPassword,
   isSiteAccessRequired,
   setSiteAccessCookie,
+  clearSiteAccessCookie,
   siteAccessStatus,
 } = require('../site-access');
 const { addPreviewWaitlistEmail } = require('../preview-waitlist');
@@ -55,6 +56,15 @@ async function handleWaitlistSignup(req, res, body) {
       message: e.message || 'Could not save your email.',
     });
   }
+}
+
+async function handleLockPreview(req, res) {
+  clearSiteAccessCookie(res);
+  return json(res, 200, {
+    ok: true,
+    locked: true,
+    message: 'Preview access cleared. Enter the password to unlock again.',
+  });
 }
 
 async function handlePasswordUnlock(req, res, body) {
@@ -129,6 +139,10 @@ module.exports = async function handler(req, res) {
 
     const body = parseBody(req);
     const intent = String(body.intent || '').trim().toLowerCase();
+
+    if (intent === 'lock' || intent === 'logout' || intent === 'clear') {
+      return handleLockPreview(req, res);
+    }
 
     if (intent === 'waitlist' || (body.email && !body.password)) {
       return handleWaitlistSignup(req, res, body);

@@ -66,6 +66,26 @@
     });
   }
 
+  // Visit /site-access.html?lock=1 to clear preview cookie and show the password form again
+  var lockRequested = false;
+  try {
+    lockRequested = new URLSearchParams(window.location.search).get('lock') === '1';
+  } catch (e) {
+    lockRequested = false;
+  }
+  if (lockRequested) {
+    postSiteAccess({ intent: 'lock' }).then(function () {
+      var clean = window.location.pathname;
+      window.history.replaceState({}, '', clean);
+      var teamMsg = document.getElementById('site-access-message');
+      showAlert(
+        teamMsg,
+        'Preview access locked. Enter the team password to unlock the site.',
+        'success'
+      );
+    });
+  }
+
   var waitlistForm = document.getElementById('waitlist-form');
   if (waitlistForm) {
     var waitlistMsg = document.getElementById('waitlist-message');

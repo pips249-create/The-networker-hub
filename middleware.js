@@ -164,15 +164,10 @@ async function hasSiteAccess(request) {
   const cookies = parseCookies(request);
   const previewSecret = String(process.env.SITE_ACCESS_PASSWORD || '').trim();
 
+  // Preview cookie only — admin hub_session must not skip the shared password gate.
   if (previewSecret) {
     const preview = await verifySignedToken(cookies[SITE_ACCESS_COOKIE], previewSecret);
     if (preview && preview.type === SITE_PREVIEW_TOKEN_TYPE) return true;
-  }
-
-  const sessionSecret = process.env.SESSION_SECRET;
-  if (sessionSecret) {
-    const session = await verifySignedToken(cookies.hub_session, sessionSecret);
-    if (session && String(session.role || '').toLowerCase() === 'admin') return true;
   }
 
   return false;
