@@ -408,6 +408,55 @@ async function ensureAdminUser({ email, password, name }) {
   return { id: userId, email: em, role: USER_ROLES.ADMIN, name: name || '' };
 }
 
+/**
+ * Grant Command Centre admin to an existing auth user (no password reset).
+ * Creates hub_account if missing. Does not create auth user when absent.
+ */
+async function promoteUserToAdmin({ email, name }) {
+  const sb = getSupabaseAdmin();
+  const em = email.trim().toLowerCase();
+  if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+    throw new Error('invalid_email');
+  }
+
+  const existing = await findUserByEmail(em);
+  if (!existing) {
+    const err = new Error('user_not_found');
+    err.status = 404;
+    err.message = `No login found for ${em}. Ask them to register first, then run grant again.`;
+    throw err;
+  }
+
+  const now = new Date().toISOString();
+  const displayName = String(name || existing.name || '').trim() || null;
+
+  const { data, error } = await sb
+    .from('hub_accounts')
+    .upsert(
+      {
+        user_id: existing.id,
+        role: USER_ROLES.ADMIN,
+        hub_view: 'organiser',
+        display_name: displayName,
+        organiser_access_at: now,
+        organiser_email_verified_at: now,
+        organiser_ui_hidden_at: null,
+      },
+      { onConflict: 'user_id' }
+    )
+    .select('user_id, role, display_name')
+    .single();
+  if (error) throw new Error(error.message);
+
+  return {
+    id: existing.id,
+    email: em,
+    role: USER_ROLES.ADMIN,
+    name: data.display_name || displayName || existing.name || '',
+    promoted: true,
+  };
+}
+
 async function countOrganiserProfiles(userId, email) {
   const sb = getSupabaseAdmin();
   const em = String(email || '').toLowerCase();
@@ -680,6 +729,7 @@ module.exports = {
   createUserSilent,
   registerUser,
   ensureAdminUser,
+  promoteUserToAdmin,
   provisionOrganiserLogin,
   provisionOrganiserLoginByEmail,
   findOrganiserIdsByEmail,
