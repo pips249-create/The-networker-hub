@@ -198,6 +198,25 @@ function hostInitials(name) {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
+function listingPaymentActive(row, now) {
+  if (!row) return false;
+  if (row.listing_expires_at) {
+    return new Date(row.listing_expires_at).getTime() > now.getTime();
+  }
+  return String(row.status || '').toLowerCase() === 'published' && Boolean(row.published_at);
+}
+
+function applyPublishedListingPayment(patch, row, now) {
+  if (!row || String(row.status || '').toLowerCase() !== 'published') return;
+  if (!row.published_at) {
+    patch.published_at = now.toISOString();
+  }
+  if (!listingPaymentActive(row, now)) {
+    patch.listing_paid_at = row.listing_paid_at || now.toISOString();
+    patch.listing_expires_at = addMonths(now, 12).toISOString();
+  }
+}
+
 async function createAdminOpportunity(input) {
   const sb = getSupabaseAdmin();
   const title = String(input.title || '').trim();
@@ -358,18 +377,17 @@ module.exports = async function handler(req, res) {
     if (body.action === 'approve') {
       try {
         const sb = getSupabaseAdmin();
+        const now = new Date();
         const patch = {
           approval_status: 'Approved',
-          updated_at: new Date().toISOString(),
+          updated_at: now.toISOString(),
         };
         const { data: current } = await sb
           .from('business_opportunities')
-          .select('status, published_at')
+          .select('status, published_at, listing_expires_at, listing_paid_at')
           .eq('id', id)
           .maybeSingle();
-        if (current && current.status === 'published' && !current.published_at) {
-          patch.published_at = new Date().toISOString();
-        }
+        applyPublishedListingPayment(patch, current, now);
         const { data, error } = await sb
           .from('business_opportunities')
           .update(patch)
@@ -470,6 +488,15 @@ module.exports = async function handler(req, res) {
 
     try {
       const sb = getSupabaseAdmin();
+      const now = new Date();
+      if (patch.status === 'published') {
+        const { data: current } = await sb
+          .from('business_opportunities')
+          .select('status, published_at, listing_expires_at, listing_paid_at')
+          .eq('id', id)
+          .maybeSingle();
+        applyPublishedListingPayment(patch, { ...current, status: 'published' }, now);
+      }
       const { data, error } = await sb
         .from('business_opportunities')
         .update(patch)

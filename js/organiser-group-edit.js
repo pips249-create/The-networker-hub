@@ -526,6 +526,9 @@
           : 'Create your organiser group — linked to your account email.';
       }
       configureCreateActions();
+      if (isEmbedded() && !onboardReview && window.HubFlowTour) {
+        window.HubFlowTour.startGroupTour({ isEdit: false, delay: 350 });
+      }
     }
   }
 

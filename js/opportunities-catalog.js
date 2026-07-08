@@ -286,12 +286,22 @@
   }
 
   function loadCatalogAsync() {
-    return fetch('/api/opportunities', { credentials: 'omit' })
+    return fetch('/api/opportunities', { credentials: 'same-origin', cache: 'no-store' })
       .then(function (res) {
-        return res.json();
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
       })
-      .then(function (data) {
-        if (!data || !data.ok || !Array.isArray(data.opportunities)) {
+      .then(function (result) {
+        var data = result.data;
+        if (!result.ok || !data || !data.ok || !Array.isArray(data.opportunities)) {
+          if (data && data.error === 'site_private') {
+            console.warn(
+              '[opportunities] Browse API blocked by preview gate — reload after entering the site password.'
+            );
+          } else if (!result.ok || (data && data.error)) {
+            console.warn('[opportunities] Failed to load listings:', (data && data.error) || 'request_failed');
+          }
           return [];
         }
         return data.opportunities.map(function (row, i) {
@@ -335,7 +345,10 @@
     if (!lookup) return Promise.resolve(null);
     var cached = getBySlug(lookup) || getById(lookup);
     if (cached) return Promise.resolve(cached);
-    return fetch('/api/opportunities?slug=' + encodeURIComponent(lookup), { credentials: 'omit' })
+    return fetch('/api/opportunities?slug=' + encodeURIComponent(lookup), {
+      credentials: 'same-origin',
+      cache: 'no-store',
+    })
       .then(function (res) {
         return res.json();
       })

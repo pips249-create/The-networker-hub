@@ -1,4 +1,4 @@
-/* Hubert guided walkthrough — top help panel + optional spotlight tour */
+/* Hubert guided walkthrough — left guide panel + optional spotlight tour */
 
 :root {
   --hub-guide-width: 340px;
@@ -9,13 +9,13 @@ body.hub-flow-tour-active {
 }
 
 body.hub-hubert-help-open {
-  overflow: hidden;
+  overflow: auto;
 }
 
 .hub-flow-tour {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: 10050;
   pointer-events: none;
 }
 
@@ -61,16 +61,22 @@ body.hub-hubert-help-open {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  width: auto;
-  max-height: min(460px, 58vh);
+  bottom: 0;
+  width: var(--hub-guide-width);
+  max-height: none;
   z-index: 2;
   display: flex;
   flex-direction: column;
   background: #fff;
-  border-bottom: 1px solid #cfe4ea;
-  box-shadow: 0 10px 32px rgba(15, 35, 45, 0.14);
+  border-right: 1px solid #cfe4ea;
+  box-shadow: 4px 0 24px rgba(15, 35, 45, 0.12);
   pointer-events: auto;
+}
+
+body:not(.ee-embed-drawer).hub-hubert-help-open .ee-wrap,
+body:not(.ee-embed-drawer).hub-hubert-guide-active .ee-wrap,
+body:not(.ee-embed-drawer).hub-flow-tour-active .ee-wrap {
+  margin-left: var(--hub-guide-width);
 }
 
 body.ee-embed-drawer .hub-hubert-guide-panel {
@@ -324,8 +330,14 @@ body.ee-embed-drawer .hub-hubert-guide-panel {
 }
 
 @media (max-width: 768px) {
-  .hub-hubert-guide-panel {
-    max-height: min(520px, 72vh);
+  :root {
+    --hub-guide-width: min(300px, 88vw);
+  }
+
+  body:not(.ee-embed-drawer).hub-hubert-help-open .ee-wrap,
+  body:not(.ee-embed-drawer).hub-hubert-guide-active .ee-wrap,
+  body:not(.ee-embed-drawer).hub-flow-tour-active .ee-wrap {
+    margin-left: var(--hub-guide-width);
   }
 
   .hub-hubert-guide-form .hubert-form-compose {

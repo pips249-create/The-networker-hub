@@ -26,6 +26,7 @@ const GATE_BYPASS_PREFIXES = [
   '/api/cron/',
   '/api/site-access',
   '/api/auth/site-access',
+  '/api/opportunities',
   '/site-access.html',
   '/css/',
   '/js/',
