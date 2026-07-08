@@ -13,7 +13,7 @@ const CONTENT_SECURITY_POLICY = [
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
   "connect-src 'self' https://*.supabase.co https://api.stripe.com https://api.resend.com https://vitals.vercel-insights.com https://unpkg.com https://api.openai.com https://cdn.tailwindcss.com",
-  "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://connect.stripe.com https://maps.google.com",
+  "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://connect.stripe.com https://maps.google.com https://www.google.com https://maps.googleapis.com https://www.openstreetmap.org",
   "upgrade-insecure-requests",
 ].join('; ');
 

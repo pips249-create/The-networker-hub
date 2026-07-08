@@ -472,6 +472,24 @@
     } else if (metaWrap) metaWrap.hidden = true;
   }
 
+  function mapEmbedSrc(ev, q) {
+    const lat = ev && ev.lat != null ? Number(ev.lat) : null;
+    const lng = ev && ev.lng != null ? Number(ev.lng) : null;
+    if (lat != null && lng != null && !Number.isNaN(lat) && !Number.isNaN(lng)) {
+      const pad = 0.012;
+      return (
+        'https://www.openstreetmap.org/export/embed.html?bbox=' +
+        [lng - pad, lat - pad, lng + pad, lat + pad].join(',') +
+        '&layer=mapnik&marker=' +
+        lat +
+        ',' +
+        lng
+      );
+    }
+    if (!q) return '';
+    return 'https://www.google.com/maps?q=' + encodeURIComponent(q) + '&z=15&output=embed';
+  }
+
   function applyMapAndDirections(ev) {
     const q = venueQuery(ev);
     const dir = document.getElementById('ev-directions');
@@ -481,9 +499,9 @@
 
     const iframe = document.getElementById('ev-map-iframe');
     if (iframe) {
-      if (q) {
-        iframe.src =
-          'https://maps.google.com/maps?q=' + encodeURIComponent(q) + '&z=15&output=embed';
+      const src = mapEmbedSrc(ev, q);
+      if (src) {
+        iframe.src = src;
         iframe.hidden = false;
       } else {
         iframe.removeAttribute('src');
