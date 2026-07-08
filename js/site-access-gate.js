@@ -73,6 +73,12 @@
     var waitlistEmail = document.getElementById('waitlist-email');
     var honeypot = document.getElementById('waitlist-website');
 
+    function unlockWaitlist() {
+      if (waitlistBtn) waitlistBtn.disabled = false;
+    }
+    unlockWaitlist();
+    window.addEventListener('pageshow', unlockWaitlist);
+
     waitlistForm.addEventListener('submit', function (e) {
       e.preventDefault();
       var email = waitlistEmail.value.trim();
@@ -81,7 +87,7 @@
         return;
       }
 
-      waitlistBtn.disabled = true;
+      if (waitlistBtn) waitlistBtn.disabled = true;
       showAlert(waitlistMsg, 'Saving your place…', 'success');
 
       postSiteAccess({
@@ -92,7 +98,7 @@
         .then(function (result) {
           if (!result.ok) {
             showAlert(waitlistMsg, friendlyError(result), 'error');
-            waitlistBtn.disabled = false;
+            unlockWaitlist();
             return;
           }
           showAlert(
@@ -101,11 +107,11 @@
             'success'
           );
           waitlistForm.reset();
-          waitlistBtn.disabled = false;
+          unlockWaitlist();
         })
         .catch(function () {
           showAlert(waitlistMsg, 'Could not reach the server. Try again shortly.', 'error');
-          waitlistBtn.disabled = false;
+          unlockWaitlist();
         });
     });
   }
@@ -117,6 +123,14 @@
   var btn = document.getElementById('site-access-submit');
   var passwordInput = document.getElementById('site-access-password');
   var toggle = accessForm.querySelector('.site-access-password-toggle');
+
+  function unlockSubmit() {
+    if (btn) btn.disabled = false;
+  }
+
+  // Recover if a previous attempt left the button disabled (bfcache / interrupted request)
+  unlockSubmit();
+  window.addEventListener('pageshow', unlockSubmit);
 
   if (toggle && passwordInput) {
     toggle.addEventListener('click', function () {
@@ -135,17 +149,18 @@
 
     if (!password) {
       showAlert(msg, 'Please enter the preview password.', 'error');
+      unlockSubmit();
       return;
     }
 
-    btn.disabled = true;
+    if (btn) btn.disabled = true;
     showAlert(msg, 'Checking password…', 'success');
 
     postSiteAccess({ password: password, next: next })
       .then(function (result) {
         if (!result.ok) {
           showAlert(msg, friendlyError(result), 'error');
-          btn.disabled = false;
+          unlockSubmit();
           return;
         }
         showAlert(msg, 'Access granted — opening the site…', 'success');
@@ -155,7 +170,7 @@
       })
       .catch(function () {
         showAlert(msg, 'Could not reach the server. Try again shortly.', 'error');
-        btn.disabled = false;
+        unlockSubmit();
       });
   });
 })();

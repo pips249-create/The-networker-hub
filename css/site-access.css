@@ -20,10 +20,17 @@ html:has(.site-access-page) {
 }
 
 .site-access-hero.home-hero {
+  /* Grow with content — home-page sets overflow:hidden which clips the password form */
   min-height: 100vh;
+  height: auto;
+  overflow: visible;
   display: flex;
   align-items: center;
   padding: clamp(32px, 6vw, 56px) clamp(20px, 4vw, 40px);
+}
+
+.site-access-page.home-page .home-hero {
+  overflow: visible;
 }
 
 .site-access-shell {
