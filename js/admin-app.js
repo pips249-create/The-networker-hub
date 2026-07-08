@@ -4408,7 +4408,7 @@
       }
 
       if (status) {
-        status.textContent =
+        var statusLine =
           money(summary.totalTicketRevenue) +
           ' ticket revenue · ' +
           queue.length +
@@ -4418,6 +4418,16 @@
           stripe.length +
           ' organiser' +
           (stripe.length === 1 ? '' : 's');
+        if (data.payoutWarning) {
+          status.innerHTML =
+            '<span class="text-amber-800 font-medium">' +
+            esc(data.payoutWarning) +
+            '</span><br><span class="text-slate-500">' +
+            esc(statusLine) +
+            '</span>';
+        } else {
+          status.textContent = statusLine;
+        }
       }
 
       if (queueEl) {
@@ -4469,7 +4479,11 @@
                 );
               })
               .join('')
-          : '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No payout requests yet.</td></tr>';
+          : '<tr><td colspan="6" class="px-4 py-6 text-slate-500">' +
+            (data.payoutWarning
+              ? 'Payout queue unavailable until migration 120 is applied in Supabase.'
+              : 'No payout requests yet.') +
+            '</td></tr>';
       }
 
       if (stripeEl) {

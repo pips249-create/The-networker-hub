@@ -12,6 +12,11 @@ function round2(n) {
   return Math.round(Number(n) * 100) / 100;
 }
 
+function isMissingTableError(error) {
+  const msg = String((error && error.message) || error || '').toLowerCase();
+  return /could not find the table|schema cache|relation .* does not exist/.test(msg);
+}
+
 function listingStatusLabel(status) {
   const s = String(status || '').trim();
   if (s === 'Approved') return 'Live';
@@ -709,7 +714,19 @@ async function fetchFinancials(sb) {
   if (orgsRes.error) throw new Error(orgsRes.error.message);
   if (paidRegsRes.error) throw new Error(paidRegsRes.error.message);
   if (recentRegsRes.error) throw new Error(recentRegsRes.error.message);
-  if (payoutsRes.error) throw new Error(payoutsRes.error.message);
+
+  let payoutRows = [];
+  let payoutWarning = null;
+  if (payoutsRes.error) {
+    if (isMissingTableError(payoutsRes.error)) {
+      payoutWarning =
+        'Payout queue unavailable — run migration 120_organiser_payouts_backfill.sql in Supabase (organiser_payouts table missing).';
+    } else {
+      throw new Error(payoutsRes.error.message);
+    }
+  } else {
+    payoutRows = payoutsRes.data || [];
+  }
 
   const revenueByOrgId = new Map();
   let totalTicketRevenue = 0;
@@ -723,7 +740,7 @@ async function fetchFinancials(sb) {
   });
 
   const lastPayoutByOrgId = new Map();
-  (payoutsRes.data || []).forEach((p) => {
+  payoutRows.forEach((p) => {
     if (String(p.status || '') !== 'paid') return;
     const orgId = p.events?.organiser_id;
     if (!orgId) return;
@@ -787,7 +804,7 @@ async function fetchFinancials(sb) {
     held: 'Held',
   };
 
-  const payoutQueue = (payoutsRes.data || []).map((p) => {
+  const payoutQueue = payoutRows.map((p) => {
     const net = p.amount_net != null ? Number(p.amount_net) : Number(p.amount) || 0;
     return {
       id: p.id,
@@ -815,6 +832,7 @@ async function fetchFinancials(sb) {
     stripeAccounts,
     payoutQueue,
     automationLog,
+    payoutWarning,
   };
 }
 
