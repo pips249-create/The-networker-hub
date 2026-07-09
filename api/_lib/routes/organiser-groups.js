@@ -211,7 +211,7 @@ module.exports = async function handler(req, res) {
         return json(res, 201, {
           ok: true,
           group,
-          message: 'Group duplicated as a draft — review the copy and publish when ready.',
+          message: 'Group duplicated as a draft — review the copy and publish when ready. Bank details are not copied; set up Stripe separately if you sell paid tickets on this page.',
         });
       } catch (e) {
         return json(res, e.status || 500, {

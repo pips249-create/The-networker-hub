@@ -149,6 +149,14 @@ async function createApplicationFromSubmission(input) {
   }
 
   const organiserId = eventRow.organiser_id || input.organiserId || input.organiser_id || null;
+  const { buildBookingSnapshotForRegistration } = require('./booking-snapshot');
+  const bookedSnapshot = await buildBookingSnapshotForRegistration(sb, {
+    eventId,
+    ticketId,
+    quantity: 1,
+    amountPaid: 0,
+    paymentStatus: 'Pending',
+  });
   const row = {
     attendee_id: attendeeId,
     event_id: eventId,
@@ -160,6 +168,7 @@ async function createApplicationFromSubmission(input) {
     application_status: 'Pending',
     screening_answer_industry: industry,
     screening_answer_job_title: jobTitle,
+    booked_snapshot: bookedSnapshot,
   };
 
   const ins = await sb.from('registrations').insert(row).select('*').single();

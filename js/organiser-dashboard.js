@@ -1081,19 +1081,48 @@
     return String(ev.organiserGroupId || (ev.organiserGroupIds && ev.organiserGroupIds[0]) || '').trim();
   }
 
-  function eventSeriesBucketKey(ev) {
+  function titleSeriesBucketKey(ev) {
+    return 'title:' + eventOrganiserGroupId(ev) + '\0' + String(ev.title || '').trim().toLowerCase();
+  }
+
+  /** Match public event page series grouping (title fallback when recurrence is incomplete). */
+  function eventSeriesBucketKey(ev, context) {
+    const groupId = eventOrganiserGroupId(ev);
+    const title = String(ev.title || '').trim().toLowerCase();
+    const allEvents = (context && context.allEvents) || state.events || [];
+    const sameTitlePeers = allEvents.filter(function (peer) {
+      return (
+        eventOrganiserGroupId(peer) === groupId &&
+        String(peer.title || '').trim().toLowerCase() === title
+      );
+    });
+    const titleSeriesMode =
+      sameTitlePeers.length > 1 &&
+      sameTitlePeers.some(function (peer) {
+        return (
+          !String(peer.recurrencePattern || '').trim() ||
+          !String(peer.recurrenceEndDate || '').trim()
+        );
+      });
+    if (titleSeriesMode) {
+      return titleSeriesBucketKey(ev);
+    }
+
     const seriesGroupId = String(ev.seriesGroupId || '').trim();
     if (seriesGroupId) {
       return 'sg:' + seriesGroupId;
     }
-    const groupId = eventOrganiserGroupId(ev);
-    const title = String(ev.title || '').trim().toLowerCase();
     const pattern = String(ev.recurrencePattern || '').trim().toLowerCase();
     const endDate = String(ev.recurrenceEndDate || '').trim().slice(0, 10);
     if (pattern && endDate) {
       return 'rec:' + groupId + '\0' + title + '\0' + pattern + '\0' + endDate;
     }
     return 'solo:' + String(ev.id || '');
+  }
+
+  function eventSeriesKeyForRow(ev) {
+    const source = (ev && ev.seriesEvents && ev.seriesEvents[0]) || ev;
+    return eventSeriesBucketKey(source, { allEvents: state.events });
   }
 
   function sortEventsByDate(events) {
@@ -1244,9 +1273,10 @@
   }
 
   function groupEventsIntoSeries(events) {
+    const all = events || [];
     const buckets = new Map();
-    (events || []).forEach((ev) => {
-      const key = eventSeriesBucketKey(ev);
+    all.forEach((ev) => {
+      const key = eventSeriesBucketKey(ev, { allEvents: all });
       if (!buckets.has(key)) buckets.set(key, []);
       buckets.get(key).push(ev);
     });
@@ -1278,7 +1308,7 @@
 
   function eventTitleCellHtml(ev) {
     if (ev.isSeries && ev.seriesCount > 1) {
-      const key = eventSeriesBucketKey(ev);
+      const key = eventSeriesKeyForRow(ev);
       const expanded = expandedSeriesKeys.has(key);
       return (
         '<span class="org-series-toggle' +
@@ -3266,7 +3296,8 @@
       !window.confirm(
         'Create a draft copy of "' +
           label +
-          '"?\n\nYou can edit the name and details before publishing.'
+          '"?\n\nYou can edit the name and details before publishing.\n\n' +
+          'The copy will not share bank details with the original — complete Stripe setup separately for this page if you sell paid tickets.'
       )
     ) {
       return;
@@ -3766,7 +3797,14 @@
     const group = setupState.primaryGroup;
 
     const navBadge = document.getElementById('org-payment-setup-nav-badge');
-    if (navBadge) navBadge.hidden = !setupState.needsSetup;
+    if (navBadge) {
+      navBadge.hidden = !setupState.needsSetup;
+      if (setupState.needsSetup && setupState.pendingGroups.length > 1) {
+        navBadge.textContent = String(setupState.pendingGroups.length);
+      } else {
+        navBadge.textContent = 'Setup';
+      }
+    }
 
     const quickSetup = document.getElementById('org-quick-payment-setup');
     if (quickSetup) {
@@ -4260,7 +4298,7 @@
     const tr = document.createElement('tr');
     const isSeriesParent = ev.isSeries && ev.seriesCount > 1;
     if (isSeriesParent) {
-      const key = eventSeriesBucketKey(ev);
+      const key = eventSeriesKeyForRow(ev);
       const expanded = expandedSeriesKeys.has(key);
       tr.className = 'org-series-parent-row is-expandable';
       tr.setAttribute('data-series-key', key);
@@ -4320,7 +4358,7 @@
   }
 
   function appendSeriesDetailPanel(body, ev) {
-    const key = eventSeriesBucketKey(ev);
+    const key = eventSeriesKeyForRow(ev);
     const children = sortSeriesMembers(ev.seriesEvents || []);
     const tr = document.createElement('tr');
     tr.className = 'org-series-detail-row';
@@ -4427,7 +4465,7 @@
     pageInfo.items.forEach((ev) => {
       appendEventTableRow(body, ev);
       if (ev.isSeries && ev.seriesCount > 1 && ev.seriesEvents && ev.seriesEvents.length) {
-        const key = eventSeriesBucketKey(ev);
+        const key = eventSeriesKeyForRow(ev);
         if (expandedSeriesKeys.has(key)) {
           appendSeriesDetailPanel(body, ev);
         }

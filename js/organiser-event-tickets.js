@@ -780,6 +780,7 @@
       buttonClass: 'hub-payment-setup-btn ee-btn ee-btn-primary',
       title: 'Add bank details before you publish paid tickets',
       lead: 'Stripe will ask for your UK bank account (about 5 minutes). Then come back here and click Publish event.',
+      singleGroupOnly: true,
     });
     // Persist ticket form before leaving for Stripe, so return does not lose tiers.
     mount.querySelectorAll('[data-payment-setup]').forEach(function (btn) {

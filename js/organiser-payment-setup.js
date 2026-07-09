@@ -120,6 +120,17 @@
     }
   }
 
+  function multiProfileNoteHtml(state) {
+    const total = (state?.groups || []).length;
+    if (total < 2) return '';
+    return (
+      '<p class="hub-payment-setup-note hub-payment-setup-note--info">' +
+      '<strong>More than one organiser page?</strong> Each page needs its own Stripe setup so payouts go to the right place. ' +
+      'If every event should pay into the same bank account, you can list them under one organiser page instead of creating several.' +
+      '</p>'
+    );
+  }
+
   function cardHtml(group, options) {
     const opts = options || {};
     const compact = Boolean(opts.compact);
@@ -159,6 +170,62 @@
       (group?.name ? ' for ' + groupName : '') +
       '</a>' +
       '<p class="hub-payment-setup-note">Opens in a new tab — return here when finished. Free events do not need bank details.</p>' +
+      multiProfileNoteHtml(opts.state) +
+      '</div></div>'
+    );
+  }
+
+  function checklistHtml(state, options) {
+    const opts = options || {};
+    const pending = state?.pendingGroups || [];
+    const compact = Boolean(opts.compact);
+    const title = opts.title || 'Add bank details to sell paid tickets';
+    const lead =
+      opts.lead ||
+      pending.length +
+        ' organiser page' +
+        (pending.length === 1 ? '' : 's') +
+        ' still need payment setup before you can sell paid tickets.';
+    const buttonClass = opts.buttonClass || 'hub-payment-setup-btn org-btn org-btn-primary org-btn-sm';
+
+    const items = pending
+      .map(function (group) {
+        const name = group?.name ? esc(group.name) : 'Untitled page';
+        const href = launcherHref(group?.id, opts.returnPath);
+        return (
+          '<li class="hub-payment-setup-checklist-item">' +
+          '<span class="hub-payment-setup-checklist-name">' +
+          name +
+          '</span>' +
+          '<a class="' +
+          esc(buttonClass) +
+          '" href="' +
+          esc(href) +
+          '" target="_blank" rel="noopener noreferrer" data-payment-setup="' +
+          esc(group?.id || '') +
+          '">Add bank details</a>' +
+          '</li>'
+        );
+      })
+      .join('');
+
+    return (
+      '<div class="hub-payment-setup-card hub-payment-setup-card--checklist' +
+      (compact ? ' hub-payment-setup-card--compact' : '') +
+      '" role="status">' +
+      '<div class="hub-payment-setup-icon" aria-hidden="true">🏦</div>' +
+      '<div class="hub-payment-setup-body">' +
+      '<h2 class="hub-payment-setup-title">' +
+      esc(title) +
+      '</h2>' +
+      '<p class="hub-payment-setup-lead">' +
+      esc(lead) +
+      '</p>' +
+      '<ul class="hub-payment-setup-checklist">' +
+      items +
+      '</ul>' +
+      '<p class="hub-payment-setup-note">Opens Stripe in a new tab — return here when finished. Free events do not need bank details.</p>' +
+      multiProfileNoteHtml(state) +
       '</div></div>'
     );
   }
@@ -171,14 +238,33 @@
 
   function renderInto(container, state, group, options) {
     if (!container) return false;
-    if (!state?.enabled || !groupNeedsSetup(state, group)) {
+    const opts = options || {};
+    const pending = state?.pendingGroups || [];
+    const targetGroup = group || state?.primaryGroup || null;
+    const needsAnySetup = Boolean(state?.enabled && pending.length);
+    const needsTargetSetup = groupNeedsSetup(state, targetGroup);
+
+    if (!needsAnySetup) {
       container.hidden = true;
       container.innerHTML = '';
       return false;
     }
+
+    // Event tickets: show setup for the event's organiser page only.
+    if (opts.singleGroupOnly && !needsTargetSetup) {
+      container.hidden = true;
+      container.innerHTML = '';
+      return false;
+    }
+
     container.hidden = false;
-    container.innerHTML = cardHtml(group, options);
-    bindCard(container, options?.returnPath);
+    const renderOpts = { ...opts, state: state };
+    if (!opts.singleGroupOnly && pending.length > 1) {
+      container.innerHTML = checklistHtml(state, renderOpts);
+    } else {
+      container.innerHTML = cardHtml(targetGroup, renderOpts);
+    }
+    bindCard(container, opts.returnPath);
     return true;
   }
 
@@ -214,6 +300,7 @@
     openStripeOnboarding: openStripeOnboarding,
     launcherHref: launcherHref,
     cardHtml: cardHtml,
+    checklistHtml: checklistHtml,
     bindCard: bindCard,
     renderInto: renderInto,
   };

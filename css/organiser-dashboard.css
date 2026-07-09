@@ -2784,6 +2784,41 @@ a.hub-payment-setup-btn {
   color: var(--od-text-soft, #736b6e);
 }
 
+.hub-payment-setup-note--info {
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+.hub-payment-setup-checklist {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.hub-payment-setup-checklist-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 12px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(91, 47, 153, 0.12);
+}
+
+.hub-payment-setup-checklist-item:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.hub-payment-setup-checklist-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--purple-900, #3b1f6e);
+}
+
 .org-quick-card--highlight {
   border-color: rgba(189, 147, 46, 0.65);
   background: linear-gradient(135deg, #fff9ec 0%, #f3ecfa 100%);

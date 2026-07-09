@@ -3,6 +3,7 @@ const { ensureAttendeeId } = require('./supabase-favourites');
 const { sendRegistrationEmails } = require('./registration-emails');
 const { UUID_PATTERN } = require('./uuid');
 const { lockEventOnFirstSale } = require('./event-sale-lock');
+const { buildBookingSnapshotForRegistration } = require('./booking-snapshot');
 
 /**
  * Insert a registration after successful checkout.
@@ -131,6 +132,18 @@ async function createRegistrationFromPayment(input) {
     );
     if (dietaryRequirements) patch.dietary_requirements = dietaryRequirements;
     if (accessibilityRequirements) patch.accessibility_requirements = accessibilityRequirements;
+    const completingBooking =
+      paymentStatus === 'Paid' || paymentStatus === 'Free' || Number(patch.amount_paid) > 0;
+    if (completingBooking || !linked.booked_snapshot) {
+      const bookedSnapshot = await buildBookingSnapshotForRegistration(sb, {
+        eventId,
+        ticketId: linked.ticket_id,
+        quantity: linked.quantity,
+        amountPaid: patch.amount_paid,
+        paymentStatus: patch.payment_status,
+      });
+      if (bookedSnapshot) patch.booked_snapshot = bookedSnapshot;
+    }
     const upd = await sb.from('registrations').update(patch).eq('id', linked.id).select('*').single();
     if (upd.error) throw new Error(upd.error.message);
 
@@ -186,6 +199,14 @@ async function createRegistrationFromPayment(input) {
         : 0;
   const paymentStatus = input.paymentStatus || input.payment_status || (amountPaid > 0 ? 'Paid' : 'Free');
 
+  const bookedSnapshot = await buildBookingSnapshotForRegistration(sb, {
+    eventId,
+    ticketId,
+    quantity,
+    amountPaid,
+    paymentStatus,
+  });
+
   const row = {
     attendee_id: attendeeId,
     event_id: eventId,
@@ -200,6 +221,7 @@ async function createRegistrationFromPayment(input) {
     dietary_requirements: dietaryRequirements || null,
     accessibility_requirements: accessibilityRequirements || null,
     application_status: input.applicationStatus || input.application_status || 'Approved',
+    booked_snapshot: bookedSnapshot,
   };
 
   const ins = await sb.from('registrations').insert(row).select('*').single();

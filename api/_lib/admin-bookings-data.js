@@ -2,11 +2,17 @@
  * Admin booking lookup — search registrations for support.
  */
 const { formatBookingReference } = require('./booking-payment-summary');
+const { resolveBookedListing } = require('./booking-snapshot');
 
 const REGISTRATION_SELECT =
-  'id, created_at, payment_status, amount_paid, quantity, cancelled_at, refund_email_sent_at, application_status, stripe_payment_intent_id, stripe_checkout_session_id, attendee_id, event_id, ticket_id, organiser_id, attendees(name, email), events(title, slug, starts_at), tickets(name)';
+  'id, created_at, payment_status, amount_paid, quantity, cancelled_at, refund_email_sent_at, application_status, stripe_payment_intent_id, stripe_checkout_session_id, attendee_id, event_id, ticket_id, organiser_id, booked_snapshot, attendees(name, email), events(title, slug, starts_at), tickets(name, price)';
 
 function mapBookingRow(row) {
+  const booked = resolveBookedListing({
+    registration: row,
+    eventRow: row.events || {},
+    ticketRow: row.tickets || {},
+  });
   return {
     id: row.id,
     bookingReference: formatBookingReference(row.id),
@@ -21,11 +27,14 @@ function mapBookingRow(row) {
     stripeCheckoutSessionId: row.stripe_checkout_session_id || null,
     attendeeName: row.attendees?.name || '—',
     attendeeEmail: row.attendees?.email || '—',
-    eventTitle: row.events?.title || '—',
+    eventTitle: booked.title || row.events?.title || '—',
     eventSlug: row.events?.slug || '',
-    eventStartsAt: row.events?.starts_at || null,
-    ticketName: row.tickets?.name || '—',
+    eventStartsAt: booked.date || row.events?.starts_at || null,
+    ticketName: booked.ticketName || row.tickets?.name || '—',
     organiserId: row.organiser_id || null,
+    bookedSnapshotAt: booked.snapshotCapturedAt,
+    hasBookedSnapshot: booked.hasSnapshot,
+    refundPolicyAtBooking: booked.refundPolicy || null,
   };
 }
 

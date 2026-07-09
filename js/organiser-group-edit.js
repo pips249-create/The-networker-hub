@@ -204,6 +204,34 @@
     if (g) showStatusBadge(g);
   }
 
+  function showMultiProfileTip(existingGroups) {
+    const tip = el('ge-multi-profile-tip');
+    if (!tip || getEditId() || isEmbedded()) return;
+    const count = Array.isArray(existingGroups) ? existingGroups.length : 0;
+    if (count < 1) {
+      tip.hidden = true;
+      tip.textContent = '';
+      return;
+    }
+    const names = existingGroups
+      .slice(0, 3)
+      .map((g) => g.name || 'Untitled page')
+      .join(', ');
+    const more = count > 3 ? ' and ' + (count - 3) + ' more' : '';
+    tip.innerHTML =
+      '<strong>Already have an organiser page?</strong> Only create another if payouts should go to a different bank account or legal entity. ' +
+      'If all your events pay into the same account, list them under <strong>' +
+      escHtml(names + more) +
+      '</strong> instead — one Stripe setup covers every event on that page.';
+    tip.hidden = false;
+  }
+
+  function escHtml(value) {
+    const d = document.createElement('div');
+    d.textContent = value == null ? '' : String(value);
+    return d.innerHTML;
+  }
+
   function configureCreateActions() {
     const saveChanges = el('ge-save-changes');
     const continueBtn = el('ge-save-continue');
@@ -526,6 +554,8 @@
           : 'Create your organiser group — linked to your account email.';
       }
       configureCreateActions();
+      const boot = await api('/api/organiser/bootstrap');
+      if (boot.ok) showMultiProfileTip(boot.data.groups || []);
       if (isEmbedded() && !onboardReview && window.HubFlowTour) {
         window.HubFlowTour.startGroupTour({ isEdit: false, delay: 350 });
       }

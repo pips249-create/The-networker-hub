@@ -4,10 +4,7 @@ const { buildStats } = require('./attendee');
 const { eventHasEnded, isEligibleRegistration } = require('./supabase-reviews');
 const { eventImageUrl } = require('./event-image');
 const { formatBookingReference } = require('./booking-payment-summary');
-const {
-  formatRefundPolicyLabel,
-  formatRefundPolicyText,
-} = require('./event-refund-policy');
+const { resolveBookedListing } = require('./booking-snapshot');
 const {
   isRefundEligibleForCancellation,
   isSelfServiceCancellationAllowed,
@@ -27,27 +24,20 @@ function canCancelRegistration(row, ev) {
   return isSelfServiceCancellationAllowed(ev, row);
 }
 
-const { isOnlineEvent } = require('./event-refund-policy');
-
-function parsePriceNum(raw) {
-  if (raw == null || raw === '') return 0;
-  const n = Number(String(raw).replace(/[£,\s]/g, ''));
-  return Number.isFinite(n) ? n : 0;
-}
-
 function mapRegistrationRow(row, reviewByEventId) {
   const ev = row.events || {};
   const organiser = ev.organisers || {};
   const ticket = row.tickets || {};
   const eventId = row.event_id || ev.id || '';
   const review = reviewByEventId.get(eventId);
-  const date = ev.starts_at || null;
-  const ticketName = String(ticket.name || 'General Admission').trim();
-  const qty = Math.max(1, Number(row.quantity) || 1);
-  const ticketPriceNum = parsePriceNum(ticket.price);
+  const booked = resolveBookedListing({ registration: row, eventRow: ev, ticketRow: ticket });
+  const date = booked.date;
+  const ticketName = booked.ticketName;
+  const qty = booked.quantity;
+  const ticketPriceNum = booked.ticketPriceNum;
   const applicationStatus = String(row.application_status || 'Approved').trim();
   const paymentStatus = String(row.payment_status || 'Pending').trim();
-  const amountPaid = row.amount_paid != null ? Number(row.amount_paid) : 0;
+  const amountPaid = booked.amountPaid;
   const bookingComplete =
     paymentStatus === 'Paid' || paymentStatus === 'Free' || amountPaid > 0;
   const needsPayment =
@@ -60,17 +50,17 @@ function mapRegistrationRow(row, reviewByEventId) {
     applicationStatus === 'Approved' &&
     paymentStatus === 'Pending' &&
     ticketPriceNum <= 0;
-  const meetingLink = String(row.meeting_link || ev.meeting_link || '').trim();
-  const online = isOnlineEvent(ev, meetingLink);
+  const meetingLink = booked.meetingLink;
+  const online = booked.isOnline;
 
   return {
     id: row.id,
     eventId,
     ticketId: row.ticket_id || ticket.id || '',
     slug: ev.slug || '',
-    title: ev.title || 'Event',
+    title: booked.title,
     date,
-    endDate: ev.ends_at || null,
+    endDate: booked.endDate,
     imageUrl: eventImageUrl(ev) || null,
     ticketLabel: qty + ' × ' + ticketName,
     quantity: qty,
@@ -91,12 +81,12 @@ function mapRegistrationRow(row, reviewByEventId) {
     organiserResponse: review?.organiserResponse ?? null,
     canReview: deriveReviewStatus(Boolean(review), row) === 'pending',
     canCancel: canCancelRegistration(row, ev),
-    refundPolicy: ev.refund_policy || null,
-    refundPolicyDetails: ev.refund_policy_details || null,
-    refundCutoffDays: ev.refund_cutoff_days != null ? Number(ev.refund_cutoff_days) : null,
-    refundPolicyLabel: formatRefundPolicyLabel(ev) || 'Refund policy',
-    refundPolicyText: formatRefundPolicyText(ev),
-    refundEligible: isRefundEligibleForCancellation(ev, row),
+    refundPolicy: booked.refundPolicy,
+    refundPolicyDetails: booked.refundPolicyDetails,
+    refundCutoffDays: booked.refundCutoffDays,
+    refundPolicyLabel: booked.refundPolicyLabel,
+    refundPolicyText: booked.refundPolicyText,
+    refundEligible: isRefundEligibleForCancellation(booked.eventRow, row),
     isCancelled: false,
     cancelledAt: null,
     refundStatus: null,
@@ -105,7 +95,8 @@ function mapRegistrationRow(row, reviewByEventId) {
       Number(row.amount_paid) > 0,
     isOnline: online,
     meetingLink: online ? meetingLink : '',
-    meetingType: ev.meeting_type || (online ? 'Online' : 'In person'),
+    meetingType: booked.eventRow.meeting_type || (online ? 'Online' : 'In person'),
+    bookedSnapshotAt: booked.snapshotCapturedAt,
   };
 }
 
@@ -114,24 +105,22 @@ function mapCancelledRegistrationRow(row) {
   const organiser = ev.organisers || {};
   const ticket = row.tickets || {};
   const eventId = row.event_id || ev.id || '';
-  const date = ev.starts_at || null;
-  const ticketName = String(ticket.name || 'General Admission').trim();
-  const qty = Math.max(1, Number(row.quantity) || 1);
+  const booked = resolveBookedListing({ registration: row, eventRow: ev, ticketRow: ticket });
   const paymentStatus = String(row.payment_status || 'Pending').trim();
-  const amountPaid = row.amount_paid != null ? Number(row.amount_paid) : 0;
-  const refundStatus = deriveRefundStatusForCancelledRegistration(ev, row);
+  const amountPaid = booked.amountPaid;
+  const refundStatus = deriveRefundStatusForCancelledRegistration(booked.eventRow, row);
 
   return {
     id: row.id,
     eventId,
     ticketId: row.ticket_id || ticket.id || '',
     slug: ev.slug || '',
-    title: ev.title || 'Event',
-    date,
-    endDate: ev.ends_at || null,
+    title: booked.title,
+    date: booked.date,
+    endDate: booked.endDate,
     imageUrl: eventImageUrl(ev) || null,
-    ticketLabel: qty + ' × ' + ticketName,
-    quantity: qty,
+    ticketLabel: booked.quantity + ' × ' + booked.ticketName,
+    quantity: booked.quantity,
     paymentStatus,
     applicationStatus: row.application_status || 'Approved',
     amountPaid,
@@ -141,14 +130,15 @@ function mapCancelledRegistrationRow(row) {
     organiserName: organiser.name || '',
     organiserSlug: organiser.slug || '',
     canCancel: false,
-    refundPolicy: ev.refund_policy || null,
-    refundPolicyText: formatRefundPolicyText(ev),
+    refundPolicy: booked.refundPolicy,
+    refundPolicyText: booked.refundPolicyText,
     isPaid:
       String(row.payment_status || '').trim() === 'Paid' &&
       Number(row.amount_paid) > 0,
     isCancelled: true,
     cancelledAt: row.cancelled_at || null,
     refundStatus,
+    bookedSnapshotAt: booked.snapshotCapturedAt,
   };
 }
 
@@ -165,6 +155,7 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
       application_status,
       amount_paid,
       quantity,
+      booked_snapshot,
       events (
         id,
         title,
@@ -219,6 +210,7 @@ async function listCancelledRegistrationsForAttendee(sb, attendeeId) {
       application_status,
       amount_paid,
       quantity,
+      booked_snapshot,
       events (
         id,
         title,
