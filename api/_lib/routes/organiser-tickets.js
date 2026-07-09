@@ -103,6 +103,8 @@ module.exports = async function handler(req, res) {
             status: String(t.status || 'Available').trim(),
             quantityAvailable: t.quantityAvailable,
             saleEnd: t.saleEnd || null,
+            saleEndOption: t.saleEndOption || null,
+            saleEndCustom: t.saleEndCustom || null,
             saleStart: t.saleStart || null,
             oneSeatOnly: Boolean(t.oneSeatOnly),
             ticketType: t.ticketType || (t.oneSeatOnly ? 'Application-based' : 'Standard'),

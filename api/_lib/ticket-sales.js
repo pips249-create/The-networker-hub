@@ -92,6 +92,40 @@ function resolveTicketSalesEnabled(eventRow, tickets, at) {
   return false;
 }
 
+/** Compute ticket sale end from a window option relative to the event start. */
+function computeSaleEndIso(option, customDatetime, eventDateIso) {
+  const base = eventDateIso ? new Date(eventDateIso) : null;
+  if (!base || Number.isNaN(base.getTime())) return null;
+  const d = new Date(base.getTime());
+  const opt = String(option || '').trim();
+  if (opt === 'at_start') return d.toISOString();
+  if (opt === '12_hours') {
+    d.setHours(d.getHours() - 12);
+    return d.toISOString();
+  }
+  if (opt === '1_day') {
+    d.setDate(d.getDate() - 1);
+    return d.toISOString();
+  }
+  if (opt === '1_week') {
+    d.setDate(d.getDate() - 7);
+    return d.toISOString();
+  }
+  if (opt === 'custom' && customDatetime) {
+    const c = new Date(customDatetime);
+    if (!Number.isNaN(c.getTime())) return c.toISOString();
+  }
+  return null;
+}
+
+function resolveTierSaleEnd(tier, eventStartsAt) {
+  const option = String(tier.saleEndOption || '').trim();
+  if (option) {
+    return computeSaleEndIso(option, tier.saleEndCustom || tier.saleEnd, eventStartsAt);
+  }
+  return tier.saleEnd || null;
+}
+
 function groupTicketsByEventId(tickets) {
   const map = {};
   (tickets || []).forEach((ticket) => {
@@ -111,5 +145,7 @@ module.exports = {
   formatTicketSalesOpensShort,
   isEventPublishedForSale,
   resolveTicketSalesEnabled,
+  computeSaleEndIso,
+  resolveTierSaleEnd,
   groupTicketsByEventId,
 };

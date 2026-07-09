@@ -1096,15 +1096,7 @@
         String(peer.title || '').trim().toLowerCase() === title
       );
     });
-    const titleSeriesMode =
-      sameTitlePeers.length > 1 &&
-      sameTitlePeers.some(function (peer) {
-        return (
-          !String(peer.recurrencePattern || '').trim() ||
-          !String(peer.recurrenceEndDate || '').trim()
-        );
-      });
-    if (titleSeriesMode) {
+    if (sameTitlePeers.length > 1) {
       return titleSeriesBucketKey(ev);
     }
 
@@ -1457,14 +1449,10 @@
   function eventCanCancel(ev) {
     const resolved = resolveEventRecord(ev);
     if (!resolved || !resolved.id || isEventCancelled(resolved)) return false;
+    if (isEventDraftListing(resolved)) return false;
     if (eventEffectiveTicketsSold(resolved) > 0) return true;
     if (resolved.locked) return true;
-    const key = String(resolved.statusKey || '').toLowerCase();
-    const published = String(resolved.status || '').toLowerCase() === 'published';
-    if (key === 'upcoming' || key === 'live' || key === 'pending_approval') {
-      return published || Boolean(resolved.ticketSalesEnabled);
-    }
-    return published && Boolean(resolved.ticketSalesEnabled);
+    return false;
   }
 
   function eventDeleteActionHtml(ev) {

@@ -617,6 +617,8 @@
         quantityAvailable: qty === '' ? null : Number(qty),
         saleStart,
         saleEnd,
+        saleEndOption: saleOption,
+        saleEndCustom: customDt,
         oneSeatOnly: isApp,
         ticketType: ticketKind,
         displayOrder: idx,

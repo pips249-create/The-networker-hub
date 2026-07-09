@@ -12,7 +12,7 @@ const { hubViewFromRequest, organiserPersonalScopeFromRequest } = require('./aut
 const sbOrg = require('./supabase-organiser');
 const { geocodeUkPostcode } = require('./postcode-geocode');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
-const { eventHasTicketsOnSale } = require('./ticket-sales');
+const { eventHasTicketsOnSale, resolveTierSaleEnd } = require('./ticket-sales');
 const { assertTicketsEditableForEvents, loadLockedOrActiveSaleEvents, lockEventOnFirstSale } = require('./event-sale-lock');
 
 const WORKSPACE_EVENTS_LIMIT_DEFAULT = 100;
@@ -1118,8 +1118,16 @@ async function createTicketsForEvents({
   const { error: deleteErr } = await sb.from('tickets').delete().in('event_id', ids);
   if (deleteErr) throw new Error(deleteErr.message);
 
+  const { data: eventRows, error: eventRowsErr } = await sb
+    .from('events')
+    .select('id, starts_at')
+    .in('id', ids);
+  if (eventRowsErr) throw new Error(eventRowsErr.message);
+  const startsByEventId = new Map((eventRows || []).map((row) => [row.id, row.starts_at || null]));
+
   const out = [];
   for (const eventId of ids) {
+    const eventStartsAt = startsByEventId.get(eventId) || null;
     for (const tier of tiers) {
       out.push(
         await createTicket({
@@ -1129,7 +1137,7 @@ async function createTicketsForEvents({
           description: tier.description,
           status: tier.status,
           quantityAvailable: tier.quantityAvailable,
-          saleEnd: tier.saleEnd,
+          saleEnd: resolveTierSaleEnd(tier, eventStartsAt),
           saleStart: tier.saleStart,
           oneSeatOnly: tier.oneSeatOnly,
           displayOrder: tier.displayOrder,
