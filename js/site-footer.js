@@ -3,7 +3,7 @@
  * FOOTER_BUILD=20260610c
  */
 (function () {
-  var FOOTER_BUILD = '20260713';
+  var FOOTER_BUILD = '20260714';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -42,6 +42,9 @@
     '<a href="' +
     href('faq.html') +
     '">FAQ</a>' +
+    '<a href="' +
+    href('about.html#for-organisers') +
+    '">For organisers</a>' +
     '<a href="' +
     href('guides.html') +
     '">Organiser guides</a>' +

@@ -52,6 +52,13 @@
   margin-top: 0;
 }
 
+.content-body h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--charcoal);
+  margin: 1.75rem 0 10px;
+}
+
 .content-body p,
 .content-body li {
   font-size: 1rem;

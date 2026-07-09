@@ -62,8 +62,16 @@ window.HUB_SEO_DATA = {
       "answer": "Yes — many events on the hub are free to attend. Browse /events/ and check each event page for pricing. Some free events still require registration or a free account to complete sign-up."
     },
     {
+      "question": "Why should I list my networking group on The Networker Hub?",
+      "answer": "The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, attendee reviews, and One Seat Only Policy for application-based events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page."
+    },
+    {
+      "question": "Can I list on The Networker Hub if I already use another event platform?",
+      "answer": "Yes — many organisers use the hub alongside other tools. There is no exclusivity requirement. List here to reach members who browse specifically for UK networking events, build your organiser profile on the hub, and optionally publish business opportunities. You can list the same events you run elsewhere."
+    },
+    {
       "question": "How much does it cost to list an event as an organiser?",
-      "answer": "Organisers use the dashboard at /organiser/. Platform and payment processing fees apply as shown in your dashboard and Stripe onboarding. Email hello@the-networker.co.uk for onboarding and fee details for your group."
+      "answer": "There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@the-networker.co.uk for onboarding help."
     },
     {
       "question": "Why is my event not showing on the browse events page?",
@@ -379,10 +387,26 @@ window.HUB_SEO_DATA = {
             },
             {
               "@type": "Question",
+              "name": "Why should I list my networking group on The Networker Hub?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, attendee reviews, and One Seat Only Policy for application-based events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I list on The Networker Hub if I already use another event platform?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes — many organisers use the hub alongside other tools. There is no exclusivity requirement. List here to reach members who browse specifically for UK networking events, build your organiser profile on the hub, and optionally publish business opportunities. You can list the same events you run elsewhere."
+              }
+            },
+            {
+              "@type": "Question",
               "name": "How much does it cost to list an event as an organiser?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Organisers use the dashboard at /organiser/. Platform and payment processing fees apply as shown in your dashboard and Stripe onboarding. Email hello@the-networker.co.uk for onboarding and fee details for your group."
+                "text": "There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@the-networker.co.uk for onboarding help."
               }
             },
             {

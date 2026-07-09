@@ -91,7 +91,7 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ORGANISER GUIDES',
     body:
-      'Organiser step-by-step guides live at /guides.html — list an event (/guides/list-an-event.html), list a business opportunity (/guides/list-a-business-opportunity.html), invite team editors (/guides/invite-your-team.html). Attendees should use the FAQ or Hubert chat instead.',
+      'Organiser step-by-step guides live at /guides.html — list an event (/guides/list-an-event.html), list a conference or exhibition (/guides/list-a-conference-or-exhibition.html), list a business opportunity (/guides/list-a-business-opportunity.html), invite team editors (/guides/invite-your-team.html). Attendees should use the FAQ or Hubert chat instead.',
   },
   {
     title: 'ORGANISER TEAM & EDITORS',
@@ -240,6 +240,16 @@ const FALLBACK_REPLIES = [
       'To list a business opportunity, sign in and go to /opportunities/list.html or open the organiser dashboard at /organiser/. You can publish franchise, partnership, and other opportunity listings there and respond to enquiries from the dashboard.',
   },
   {
+    match: /why (list|use|choose).*(hub|networker)|why should i list|benefits of listing/i,
+    reply:
+      'The Networker Hub is built for UK business networking. You get a permanent organiser profile, events in a directory members use to find networking meetings, optional business opportunity listings, team editors, reviews, and One Seat Only Policy. You receive the full ticket price; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events need no Stripe. Guides: /guides.html · More: /about.html#for-organisers',
+  },
+  {
+    match: /already use|eventbrite|meetup|other platform|alongside|as well as|in addition to/i,
+    reply:
+      'Yes — you can list on The Networker Hub alongside other event platforms. There is no exclusivity requirement. Many organisers use the hub to reach members browsing specifically for UK networking events and to build their organiser profile here. List the same events you run elsewhere if you like.',
+  },
+  {
     match: /list.*(networking group|my group|our group)|become an organiser|onboard.*organiser/i,
     reply:
       'We onboard networking groups in phases. Email hello@the-networker.co.uk with your group name, typical event format, and location so we can set up your organiser profile. Once approved, you will use /organiser/ to create events and manage attendees.',
@@ -247,7 +257,7 @@ const FALLBACK_REPLIES = [
   {
     match: /cost to list|how much.*list|fee.*list|price.*list.*event|listing fee/i,
     reply:
-      'Browsing and listing opportunities for members is free at the point of browsing. Organisers listing events use the organiser dashboard at /organiser/ — platform and payment processing fees apply as shown in your dashboard and Stripe onboarding. Email hello@the-networker.co.uk for onboarding and current fee details for your group.',
+      'There is no monthly subscription to list events. Use /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket) — you receive the full ticket price. Free events do not require Stripe. Email hello@the-networker.co.uk for onboarding help.',
   },
   {
     match: /free (networking )?events?|events?.*free\b|no cost events?/i,
