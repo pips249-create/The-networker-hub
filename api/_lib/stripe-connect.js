@@ -230,6 +230,60 @@ async function createExpressDashboardLink(stripeAccountId) {
   };
 }
 
+async function linkOrganiserConnectFromPeer(targetOrganiserId, sourceOrganiserId) {
+  const sb = getSupabaseAdmin();
+  const { data: source, error: sourceError } = await sb
+    .from('organisers')
+    .select(
+      'id, stripe_account_id, stripe_charges_enabled, stripe_payouts_enabled, stripe_connect_details_submitted, stripe_connect_onboarded_at'
+    )
+    .eq('id', sourceOrganiserId)
+    .maybeSingle();
+  if (sourceError) throw new Error(sourceError.message);
+  if (!source?.stripe_account_id) {
+    const e = new Error('The selected organiser page does not have bank details yet.');
+    e.status = 400;
+    e.code = 'stripe_connect_required';
+    throw e;
+  }
+
+  const sourceStatus = await syncOrganiserConnectStatus(sourceOrganiserId);
+  if (!sourceStatus.ready) {
+    const e = new Error(
+      'Finish bank details on the source organiser page before reusing them elsewhere.'
+    );
+    e.status = 400;
+    e.code = 'stripe_connect_incomplete';
+    throw e;
+  }
+
+  const { data: target, error: targetError } = await sb
+    .from('organisers')
+    .select('id')
+    .eq('id', targetOrganiserId)
+    .maybeSingle();
+  if (targetError) throw new Error(targetError.message);
+  if (!target) {
+    const e = new Error('Organiser not found');
+    e.status = 404;
+    throw e;
+  }
+
+  const { error: updateError } = await sb
+    .from('organisers')
+    .update({
+      stripe_account_id: source.stripe_account_id,
+      stripe_charges_enabled: source.stripe_charges_enabled,
+      stripe_payouts_enabled: source.stripe_payouts_enabled,
+      stripe_connect_details_submitted: source.stripe_connect_details_submitted,
+      stripe_connect_onboarded_at: source.stripe_connect_onboarded_at,
+    })
+    .eq('id', targetOrganiserId);
+  if (updateError) throw new Error(updateError.message);
+
+  return syncOrganiserConnectStatus(targetOrganiserId);
+}
+
 async function createExpressDashboardLinkForOrganiser(organiserId) {
   const sb = getSupabaseAdmin();
   const { data: organiser, error } = await sb
@@ -358,6 +412,7 @@ module.exports = {
   retrieveConnectAccount,
   mapConnectStatus,
   syncOrganiserConnectStatus,
+  linkOrganiserConnectFromPeer,
   createConnectOnboardingLink,
   createExpressDashboardLink,
   createExpressDashboardLinkForOrganiser,

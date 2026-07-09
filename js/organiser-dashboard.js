@@ -8,6 +8,8 @@
   const listPages = { groups: 1, events: 1, tickets: 1, attendees: 1, cancellations: 1, reviews: 1, revenue: 1 };
   let eventsSubRoute = 'events-list';
   const expandedSeriesKeys = new Set();
+  let eventsGroupingPromise = null;
+  let bootstrapReady = false;
 
   const filters = {
     eventsStatus: 'all',
@@ -1553,7 +1555,20 @@
           '">Request payout</button>'
       );
     }
-    return parts.length ? parts.join(' ') : '—';
+    return parts.length ? parts.join(' ') : '';
+  }
+
+  function payoutCellHtml(ev) {
+    const badge = payoutStatusBadgeHtml(ev);
+    const actions = payoutActionsHtml(ev);
+    if (!actions) return badge;
+    return (
+      '<div class="org-payout-cell">' +
+      badge +
+      '<div class="org-payout-cell-actions">' +
+      actions +
+      '</div></div>'
+    );
   }
 
   function ratingHtml(rating) {
@@ -1768,11 +1783,53 @@
   function finishDeepLinkAfterBootstrap() {
     const deepLinkRoute = applyAttendeesDeepLinkFromUrl();
     if (deepLinkRoute && deepLinkRoute.startsWith('events-')) {
+      if (needsOrganiserPageFirst()) {
+        redirectEventsToOrganiserSetup(deepLinkRoute);
+        return;
+      }
       setRoute(deepLinkRoute);
       return;
     }
     if (filters.attendeesEvent !== 'all' || filters.attendeesPendingOnly) {
+      if (needsOrganiserPageFirst()) {
+        redirectEventsToOrganiserSetup('events-attendees');
+        return;
+      }
       setRoute('events-attendees');
+    }
+  }
+
+  function needsOrganiserPageFirst() {
+    return !state.groups.length && !(state.pendingClaimGroups || []).length;
+  }
+
+  function isEventsRoute(route) {
+    if (!route) return false;
+    const r = String(route).toLowerCase();
+    return r === 'events' || r === 'events-overview' || r === 'tickets' || r.startsWith('events-');
+  }
+
+  function openNeedsOrganiserPageModal() {
+    const modal = document.getElementById('modal-needs-organiser-page');
+    if (!modal) {
+      openGroupEditorDrawer();
+      return;
+    }
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+    modal.classList.add('is-open');
+  }
+
+  function redirectEventsToOrganiserSetup() {
+    setRoute('groups', { skipEventsGuard: true });
+    openNeedsOrganiserPageModal();
+  }
+
+  function enforceEventsOrganiserGate() {
+    if (!bootstrapReady || !needsOrganiserPageFirst()) return;
+    const onEventsPage = Boolean(document.querySelector('[data-org-page="events"].is-active'));
+    if (onEventsPage || isEventsRoute(eventsSubRoute)) {
+      redirectEventsToOrganiserSetup();
     }
   }
 
@@ -1809,7 +1866,10 @@
         'Bookings attendees cancelled themselves — use the booking reference for Stripe or support, and check whether a refund may be due.',
       ],
       'events-reviews': ['Reviews', 'Read and reply to attendee feedback.'],
-      'events-revenue': ['Revenue', 'Revenue and performance across your listings.'],
+      'events-revenue': [
+        'Revenue',
+        'Ticket sales and payout status per event. Request a payout after an event has finished and been archived.',
+      ],
     };
     const t = titles[eventsSubRoute] || titles['events-list'];
     const titleEl = document.getElementById('my-events-title');
@@ -2451,6 +2511,16 @@
     return list;
   }
 
+  function eventRowIsArchived(ev) {
+    if (!ev) return false;
+    if (ev.isSeries && ev.seriesEvents && ev.seriesEvents.length) {
+      return ev.seriesEvents.every(function (child) {
+        return String(child.statusKey || child.status || '').toLowerCase() === 'archived';
+      });
+    }
+    return String(ev.statusKey || ev.status || '').toLowerCase() === 'archived';
+  }
+
   function filteredEventsList() {
     let list = state.events.slice();
     const q = filters.eventsSearch.trim().toLowerCase();
@@ -2478,43 +2548,51 @@
       list = list.filter((ev) => String(ev.type || '') === filters.eventsType);
     }
     if (filters.eventsHideArchived) {
-      list = list.filter(
-        (ev) => String(ev.statusKey || ev.status || '').toLowerCase() !== 'archived'
-      );
+      list = list.filter((ev) => !eventRowIsArchived(ev));
     }
-    return groupEventsIntoSeries(list);
+    list = groupEventsIntoSeries(list);
+    if (filters.eventsHideArchived) {
+      list = list.filter((ev) => !eventRowIsArchived(ev));
+    }
+    return list;
   }
 
   async function ensureAllEventsForGrouping() {
-    if (eventsFiltersActive() || state.eventsFullyLoaded || state.eventsLoading) return;
+    if (eventsFiltersActive() || state.eventsFullyLoaded) return;
     if (!state.eventsHasMore) {
       state.eventsFullyLoaded = true;
       return;
     }
+    if (eventsGroupingPromise) return eventsGroupingPromise;
 
-    state.eventsLoading = true;
-    try {
-      let offset = state.events.length;
-      while (offset < (state.eventsTotal || 0)) {
-        const { ok, data } = await api(
-          '/api/organiser/bootstrap?eventsOnly=1&eventsLimit=' +
-            EVENTS_FETCH_SIZE +
-            '&eventsOffset=' +
-            offset
-        );
-        if (!ok) break;
-        const chunk = data.events || [];
-        if (!chunk.length) break;
-        state.events = state.events.concat(chunk);
-        offset += chunk.length;
-        state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
-        state.eventsHasMore = Boolean(data.eventsPagination?.hasMore);
-        if (!state.eventsHasMore) break;
+    eventsGroupingPromise = (async function () {
+      state.eventsLoading = true;
+      try {
+        let offset = state.events.length;
+        while (offset < (state.eventsTotal || 0)) {
+          const { ok, data } = await api(
+            '/api/organiser/bootstrap?eventsOnly=1&eventsLimit=' +
+              EVENTS_FETCH_SIZE +
+              '&eventsOffset=' +
+              offset
+          );
+          if (!ok) break;
+          const chunk = data.events || [];
+          if (!chunk.length) break;
+          state.events = state.events.concat(chunk);
+          offset += chunk.length;
+          state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
+          state.eventsHasMore = Boolean(data.eventsPagination?.hasMore);
+          if (!state.eventsHasMore) break;
+        }
+        state.eventsFullyLoaded = true;
+      } finally {
+        state.eventsLoading = false;
+        eventsGroupingPromise = null;
       }
-      state.eventsFullyLoaded = true;
-    } finally {
-      state.eventsLoading = false;
-    }
+    })();
+
+    return eventsGroupingPromise;
   }
 
   function filteredTicketsList() {
@@ -2633,8 +2711,7 @@
   function goToNewEventEditor(e) {
     if (e && e.preventDefault) e.preventDefault();
     if (!state.groups.length) {
-      alert('You must add an organiser page first.');
-      openGroupEditorDrawer();
+      redirectEventsToOrganiserSetup();
       return;
     }
     openNewEventEditorDrawer();
@@ -3797,28 +3874,225 @@
     return needsConnect[0] || (state.groups || [])[0] || null;
   }
 
+  function groupReadyForStripeDashboard(group) {
+    return Boolean(
+      group &&
+        group.stripeConnectReady &&
+        String(group.stripeAccountId || '').trim()
+    );
+  }
+
+  function focusBankDetailsSetup(message) {
+    renderPaymentSetupUi();
+
+    const bar = document.getElementById('org-stripe-dashboard-link');
+    const btn = document.getElementById('org-open-stripe-dashboard');
+    const setupEl = document.getElementById('org-payment-setup-revenue');
+    const setupState = paymentSetupStateFromDashboard();
+    const group = setupState.primaryGroup;
+
+    if (bar && !bar.hidden && btn) {
+      bar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      showOrganiserAlert(
+        message ||
+          (btn.dataset.stripeAction === 'setup'
+            ? 'Click Add bank details above to connect Stripe — it opens in a new tab and takes about 5 minutes.'
+            : btn.dataset.stripeAction === 'create-group'
+              ? 'Create an organiser page first, then return here to add bank details.'
+              : 'Use the button above to continue with bank details or the Stripe dashboard.'),
+        false
+      );
+      btn.classList.add('org-btn--attention');
+      window.setTimeout(function () {
+        btn.classList.remove('org-btn--attention');
+      }, 2400);
+      try {
+        btn.focus({ preventScroll: true });
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+
+    if (setupEl && !setupEl.hidden) {
+      setupEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      showOrganiserAlert(
+        message ||
+          'Add your bank details in the section above before opening the Stripe dashboard.',
+        false
+      );
+      const firstAction = setupEl.querySelector(
+        '[data-payment-setup], [data-payment-link], .hub-payment-setup-btn, a.hub-payment-setup-btn'
+      );
+      if (firstAction && typeof firstAction.focus === 'function') {
+        try {
+          firstAction.focus({ preventScroll: true });
+        } catch {
+          /* ignore */
+        }
+      }
+      return;
+    }
+
+    if (group) {
+      showOrganiserAlert(
+        (message ? message + ' ' : '') + 'Opening Stripe bank details setup…',
+        false
+      );
+      startStripeConnectOnboarding(group.id);
+      return;
+    }
+
+    showOrganiserAlert(
+      message ||
+        'Create an organiser page first, then add bank details from the Revenue tab.',
+      true
+    );
+    setRoute('groups');
+  }
+
+  function renderRevenueStripeBar() {
+    const bar = document.getElementById('org-stripe-dashboard-link');
+    const btn = document.getElementById('org-open-stripe-dashboard');
+    const hint = document.getElementById('org-stripe-dashboard-hint');
+    if (!bar || !btn) return;
+
+    if (!state.stripeConnectEnabled) {
+      bar.hidden = true;
+      return;
+    }
+
+    const readyGroup = (state.groups || []).find((g) => groupReadyForStripeDashboard(g));
+    const setupState = paymentSetupStateFromDashboard();
+    const setupGroup = setupState.primaryGroup;
+
+    bar.hidden = false;
+
+    if (readyGroup) {
+      btn.type = 'button';
+      btn.textContent = 'Open Stripe dashboard';
+      btn.className = 'org-btn org-btn-secondary';
+      btn.dataset.stripeAction = 'dashboard';
+      btn.setAttribute('data-stripe-dashboard', readyGroup.id);
+      btn.removeAttribute('data-stripe-setup');
+      if (hint) {
+        hint.textContent =
+          'Issue refunds, view payouts, and manage ticket payments in Stripe Express.';
+      }
+    } else if (setupGroup) {
+      const label =
+        setupState.pendingGroups.length > 1
+          ? 'Add bank details'
+          : 'Add bank details' + (setupGroup.name ? ' for ' + setupGroup.name : '');
+      btn.type = 'button';
+      btn.textContent = label;
+      btn.className = 'org-btn org-btn-primary';
+      btn.dataset.stripeAction = 'setup';
+      btn.setAttribute('data-stripe-setup', setupGroup.id);
+      btn.removeAttribute('data-stripe-dashboard');
+      if (hint) {
+        hint.textContent =
+          'Required before you can sell paid tickets or open the Stripe dashboard. Opens Stripe in a new tab — about 5 minutes.';
+      }
+    } else {
+      btn.type = 'button';
+      btn.textContent = 'Create organiser page';
+      btn.className = 'org-btn org-btn-primary';
+      btn.dataset.stripeAction = 'create-group';
+      btn.removeAttribute('data-stripe-dashboard');
+      btn.removeAttribute('data-stripe-setup');
+      if (hint) {
+        hint.textContent =
+          'You need an organiser page before bank details can be added. Create one under Organiser pages, then return here.';
+      }
+    }
+  }
+
   async function openStripeDashboard(groupId) {
-    const gid = groupId || (state.groups || []).find((g) => g.stripeConnectReady)?.id;
-    if (!gid) {
-      alert('Add bank details before opening the Stripe dashboard.');
-      return;
+    const gid =
+      String(groupId || '').trim() ||
+      (state.groups || []).find((g) => groupReadyForStripeDashboard(g))?.id ||
+      '';
+    const group = (state.groups || []).find((g) => String(g.id) === String(gid));
+    if (!gid || !groupReadyForStripeDashboard(group)) {
+      focusBankDetailsSetup(
+        gid
+          ? 'Bank details are not set up for this organiser page yet.'
+          : 'Add bank details before opening the Stripe dashboard.'
+      );
+      return false;
     }
-    if (window.HubOrganiserPaymentSetup && window.HubOrganiserPaymentSetup.openDashboard) {
-      await window.HubOrganiserPaymentSetup.openDashboard(gid);
-      return;
-    }
+
+    let tab = null;
     try {
+      tab = window.open('about:blank', '_blank', 'noopener,noreferrer');
+    } catch {
+      tab = null;
+    }
+
+    const btn = document.getElementById('org-open-stripe-dashboard');
+    if (btn) {
+      btn.disabled = true;
+      btn.setAttribute('aria-busy', 'true');
+    }
+
+    try {
+      if (window.HubOrganiserPaymentSetup && window.HubOrganiserPaymentSetup.openDashboard) {
+        const opened = await window.HubOrganiserPaymentSetup.openDashboard(gid, {
+          tab: tab,
+          onNeedsSetup: focusBankDetailsSetup,
+        });
+        return opened;
+      }
       const { ok, data } = await api(
         '/api/organiser/stripe-connect?groupId=' + encodeURIComponent(gid) + '&action=dashboard'
       );
       if (!ok || !data.url) {
-        alert(data.message || data.error || 'Could not open Stripe dashboard.');
-        return;
+        if (tab) {
+          try {
+            tab.close();
+          } catch {
+            /* ignore */
+          }
+        }
+        if (
+          data.error === 'stripe_connect_required' ||
+          /bank details/i.test(String(data.message || ''))
+        ) {
+          focusBankDetailsSetup(
+            data.message || 'Add bank details before opening the Stripe dashboard.'
+          );
+        } else {
+          alert(data.message || data.error || 'Could not open Stripe dashboard.');
+        }
+        return false;
       }
-      const tab = window.open(data.url, '_blank', 'noopener,noreferrer');
-      if (!tab) window.location.href = data.url;
+      if (tab) {
+        tab.location.href = data.url;
+        try {
+          tab.focus();
+        } catch {
+          /* ignore */
+        }
+      } else {
+        window.location.href = data.url;
+      }
+      return true;
     } catch {
+      if (tab) {
+        try {
+          tab.close();
+        } catch {
+          /* ignore */
+        }
+      }
       alert('Could not open Stripe dashboard. Please try again.');
+      return false;
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.removeAttribute('aria-busy');
+      }
     }
   }
 
@@ -3887,9 +4161,13 @@
     }
 
     if (payment) {
+      const readyGroup = (state.groups || []).find((g) => groupReadyForStripeDashboard(g));
       payment.renderInto(document.getElementById('org-payment-setup-revenue'), setupState, group, {
         returnPath: '/organiser/index.html#events-revenue',
         title: 'Add bank details to get paid for ticket sales',
+        showWhenNotReady: Boolean(
+          state.stripeConnectEnabled && !readyGroup && setupState.pendingGroups.length
+        ),
       });
       payment.renderInto(document.getElementById('org-payment-setup-overview'), setupState, group, {
         returnPath: '/organiser/index.html#events-overview',
@@ -3904,20 +4182,7 @@
       });
     }
 
-    const dashboardBar = document.getElementById('org-stripe-dashboard-link');
-    const readyGroup = (state.groups || []).find((g) => g.stripeConnectReady);
-    if (dashboardBar) {
-      const showDashboard = Boolean(state.stripeConnectEnabled && readyGroup);
-      dashboardBar.hidden = !showDashboard;
-      const btn = document.getElementById('org-open-stripe-dashboard');
-      if (btn) {
-        if (showDashboard && readyGroup) {
-          btn.setAttribute('data-stripe-dashboard', readyGroup.id);
-        } else {
-          btn.removeAttribute('data-stripe-dashboard');
-        }
-      }
-    }
+    renderRevenueStripeBar();
   }
 
   function renderStripeConnectBanner() {
@@ -3958,8 +4223,13 @@
     return page;
   }
 
-  function setRoute(route) {
+  function setRoute(route, options) {
+    options = options || {};
     closeNotificationsPanel();
+    if (bootstrapReady && !options.skipEventsGuard && needsOrganiserPageFirst() && isEventsRoute(route)) {
+      redirectEventsToOrganiserSetup();
+      return;
+    }
     let page = route || 'dashboard';
     let sub = null;
     if (route === 'opportunity-enquiries' || route === 'business-overview') {
@@ -4512,12 +4782,8 @@
       esc(ev.ticketsSoldLabel || '0') +
       '</td><td class="org-revenue">' +
       eventRevenueCellHtml(ev) +
-      '</td><td>' +
-      statusBadgeHtml(ev.statusKey || 'draft', ev.statusLabel || 'Draft') +
-      '</td><td>' +
-      payoutStatusBadgeHtml(ev) +
-      '</td><td class="org-td-actions">' +
-      payoutActionsHtml(ev) +
+      '</td><td class="org-payout-col">' +
+      payoutCellHtml(ev) +
       '</td>';
     body.appendChild(tr);
     return tr;
@@ -4546,19 +4812,15 @@
           esc(child.ticketsSoldLabel || '0') +
           '</td><td class="org-revenue">' +
           eventRevenueCellHtml(child) +
-          '</td><td>' +
-          statusBadgeHtml(child.statusKey || 'draft', child.statusLabel || 'Draft') +
-          '</td><td>' +
-          payoutStatusBadgeHtml(child) +
-          '</td><td class="org-series-date-actions">' +
-          payoutActionsHtml(child) +
+          '</td><td class="org-payout-col">' +
+          payoutCellHtml(child) +
           '</td></tr>'
         );
       })
       .join('');
 
     tr.innerHTML =
-      '<td colspan="7">' +
+      '<td colspan="6">' +
       '<div class="org-series-dates-panel">' +
       seriesOverviewStatsHtml(children) +
       '<div class="org-series-dates-head">' +
@@ -4574,7 +4836,7 @@
       '<div class="org-series-dates-scroll">' +
       '<table class="org-series-dates-table">' +
       '<thead><tr>' +
-      '<th>Date</th><th>Time</th><th>Tickets sold</th><th>Revenue</th><th>Status</th><th>Payout</th><th>Actions</th>' +
+      '<th>Date</th><th>Time</th><th>Tickets sold</th><th>Revenue</th><th>Payout</th>' +
       '</tr></thead><tbody>' +
       rowsHtml +
       '</tbody></table></div></div></td>';
@@ -4602,14 +4864,12 @@
     if (!body) return;
 
     if (!eventsFiltersActive() && !state.eventsFullyLoaded && state.eventsHasMore) {
-      if (!state.eventsLoading) {
-        ensureAllEventsForGrouping()
-          .then(() => renderEvents())
-          .catch((err) => showOrganiserAlert(err.message || 'Could not load events', true));
-      }
       body.innerHTML =
         '<tr><td colspan="8" class="org-table-loading">Loading events…</td></tr>';
       if (empty) empty.hidden = true;
+      ensureAllEventsForGrouping()
+        .then(() => renderEvents())
+        .catch((err) => showOrganiserAlert(err.message || 'Could not load events', true));
       return;
     }
 
@@ -4898,21 +5158,20 @@
     const body = document.getElementById('revenue-body');
     if (!body) return;
 
+    renderStripeConnectBanner();
+
     if (!eventsFiltersActive() && !state.eventsFullyLoaded && state.eventsHasMore) {
-      if (!state.eventsLoading) {
-        ensureAllEventsForGrouping()
-          .then(() => renderRevenue())
-          .catch((err) => showOrganiserAlert(err.message || 'Could not load events', true));
-      }
       body.innerHTML =
-        '<tr><td colspan="7" class="org-table-loading">Loading revenue…</td></tr>';
+        '<tr><td colspan="6" class="org-table-loading">Loading revenue…</td></tr>';
+      ensureAllEventsForGrouping()
+        .then(() => renderRevenue())
+        .catch((err) => showOrganiserAlert(err.message || 'Could not load events', true));
       return;
     }
 
     const list = filteredEventsList();
     body.innerHTML = '';
     renderPayoutHeldBanner();
-    renderStripeConnectBanner();
     syncSharedEventFiltersUi();
 
     const setRev = (id, val) => {
@@ -6085,6 +6344,11 @@
     applyPendingGroupSave();
     pruneStaleEventFilters();
     renderAll();
+    if (document.querySelector('[data-org-page="events"].is-active')) {
+      renderEventsPanel(eventsSubRoute);
+    } else {
+      renderStripeConnectBanner();
+    }
     renderGroupClaimModal();
     loadOpportunityEnquiries();
     loadOpportunitiesList();
@@ -6093,6 +6357,8 @@
       window.HubOrganiserOnboarding.initAfterDashboardReady();
     }
     prefetchEventsInBackground();
+    bootstrapReady = true;
+    enforceEventsOrganiserGate();
     } finally {
       if (!silent) setDashboardLoading(false);
     }
@@ -6317,6 +6583,23 @@
     bindNotificationsPanelOnce();
     bindScopeButtonOnce();
 
+    if (!window.__hubPaymentSetupLinkedBound) {
+      window.__hubPaymentSetupLinkedBound = true;
+      window.addEventListener('hub-payment-setup-linked', function () {
+        loadBootstrap({ silent: true }).then(function () {
+          renderPaymentSetupUi();
+          renderAll();
+          showOrganiserAlert('Bank details linked to this organiser page.', false);
+        });
+      });
+      window.addEventListener('hub-payment-setup-needed', function (e) {
+        focusBankDetailsSetup(
+          (e.detail && e.detail.message) ||
+            'Add bank details before opening the Stripe dashboard.'
+        );
+      });
+    }
+
     document.querySelectorAll('[data-hub-switch]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const mode = btn.getAttribute('data-hub-switch');
@@ -6330,6 +6613,11 @@
 
     document.querySelectorAll('[data-org-modal-close]').forEach((el) => {
       el.addEventListener('click', closeModals);
+    });
+
+    document.getElementById('btn-needs-organiser-page-create')?.addEventListener('click', () => {
+      closeModals();
+      openGroupEditorDrawer();
     });
 
     function goToNewGroupEditor(e) {
@@ -6771,14 +7059,28 @@
         const stripeDashboardBtn = e.target.closest('[data-stripe-dashboard]');
         if (stripeDashboardBtn) {
           e.preventDefault();
+          e.stopPropagation();
           openStripeDashboard(stripeDashboardBtn.getAttribute('data-stripe-dashboard'));
           return;
         }
         const stripeDashboardIdBtn = e.target.closest('#org-open-stripe-dashboard');
         if (stripeDashboardIdBtn) {
           e.preventDefault();
-          const readyGroup = (state.groups || []).find((g) => g.stripeConnectReady);
-          openStripeDashboard(readyGroup?.id);
+          e.stopPropagation();
+          const action = stripeDashboardIdBtn.dataset.stripeAction || 'dashboard';
+          if (action === 'setup') {
+            startStripeConnectOnboarding(stripeDashboardIdBtn.getAttribute('data-stripe-setup'));
+            return;
+          }
+          if (action === 'create-group') {
+            setRoute('groups');
+            showOrganiserAlert(
+              'Create an organiser page, then return to Revenue to add bank details.',
+              false
+            );
+            return;
+          }
+          openStripeDashboard(stripeDashboardIdBtn.getAttribute('data-stripe-dashboard'));
           return;
         }
 

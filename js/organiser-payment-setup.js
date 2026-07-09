@@ -123,11 +123,34 @@
   function multiProfileNoteHtml(state) {
     const total = (state?.groups || []).length;
     if (total < 2) return '';
+    const ready = (state?.groups || []).filter(function (g) {
+      return g.stripeConnectReady;
+    });
+    if (ready.length) {
+      const sourceName = ready[0]?.name ? esc(ready[0].name) : 'your connected page';
+      return (
+        '<p class="hub-payment-setup-note hub-payment-setup-note--info">' +
+        '<strong>More than one organiser page?</strong> Each page needs payment setup before paid tickets can go live. ' +
+        'If they all pay into the same bank account, use <strong>Use same bank details</strong> instead of repeating Stripe for every page. ' +
+        'Already connected on <strong>' +
+        sourceName +
+        '</strong>.' +
+        '</p>'
+      );
+    }
     return (
       '<p class="hub-payment-setup-note hub-payment-setup-note--info">' +
       '<strong>More than one organiser page?</strong> Each page needs its own Stripe setup so payouts go to the right place. ' +
       'If every event should pay into the same bank account, you can list them under one organiser page instead of creating several.' +
       '</p>'
+    );
+  }
+
+  function readySourceGroup(state) {
+    return (
+      (state?.groups || []).find(function (g) {
+        return g.stripeConnectReady;
+      }) || null
     );
   }
 
@@ -187,16 +210,27 @@
         (pending.length === 1 ? '' : 's') +
         ' still need payment setup before you can sell paid tickets.';
     const buttonClass = opts.buttonClass || 'hub-payment-setup-btn org-btn org-btn-primary org-btn-sm';
+    const sourceGroup = readySourceGroup(state);
 
     const items = pending
       .map(function (group) {
         const name = group?.name ? esc(group.name) : 'Untitled page';
         const href = launcherHref(group?.id, opts.returnPath);
+        const linkBtn =
+          sourceGroup && String(sourceGroup.id) !== String(group.id)
+            ? '<button type="button" class="hub-payment-setup-btn org-btn org-btn-secondary org-btn-sm" data-payment-link="' +
+              esc(group?.id || '') +
+              '" data-payment-link-source="' +
+              esc(sourceGroup.id) +
+              '">Use same bank details</button>'
+            : '';
         return (
           '<li class="hub-payment-setup-checklist-item">' +
           '<span class="hub-payment-setup-checklist-name">' +
           name +
           '</span>' +
+          '<div class="hub-payment-setup-checklist-actions">' +
+          linkBtn +
           '<a class="' +
           esc(buttonClass) +
           '" href="' +
@@ -204,6 +238,7 @@
           '" target="_blank" rel="noopener noreferrer" data-payment-setup="' +
           esc(group?.id || '') +
           '">Add bank details</a>' +
+          '</div>' +
           '</li>'
         );
       })
@@ -230,10 +265,70 @@
     );
   }
 
-  function bindCard(root) {
-    // Links already open the launcher in a new tab via target="_blank".
-    // No click handler required (avoids iframe / popup-blocker issues).
-    if (!root) return;
+  function bindCard(root, options) {
+    if (!root || root.dataset.paymentBound === '1') return;
+    root.dataset.paymentBound = '1';
+    const opts = options || {};
+    root.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-payment-link]');
+      if (!btn || !root.contains(btn)) return;
+      e.preventDefault();
+      const groupId = btn.getAttribute('data-payment-link');
+      const sourceGroupId = btn.getAttribute('data-payment-link-source');
+      linkSetup(groupId, sourceGroupId, opts);
+    });
+  }
+
+  async function linkSetup(groupId, sourceGroupId, options) {
+    const opts = options || {};
+    const gid = String(groupId || '').trim();
+    const sourceId = String(sourceGroupId || '').trim();
+    if (!gid || !sourceId) {
+      alert('Could not link bank details.');
+      return false;
+    }
+    const btn = document.querySelector('[data-payment-link="' + gid + '"]');
+    if (btn) {
+      btn.disabled = true;
+      btn.setAttribute('aria-busy', 'true');
+    }
+    try {
+      const res = await fetch('/api/organiser/stripe-connect', {
+        method: 'POST',
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'link',
+          groupId: gid,
+          sourceGroupId: sourceId,
+        }),
+      });
+      const data = await res.json().catch(function () {
+        return {};
+      });
+      if (!res.ok || !data.ok) {
+        alert(data.message || data.error || 'Could not reuse bank details.');
+        return false;
+      }
+      global.dispatchEvent(
+        new CustomEvent('hub-payment-setup-linked', {
+          detail: { groupId: gid, sourceGroupId: sourceId },
+        })
+      );
+      if (typeof opts.onLinked === 'function') {
+        await opts.onLinked(data);
+      }
+      return true;
+    } catch {
+      alert('Could not reuse bank details. Please try again.');
+      return false;
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.removeAttribute('aria-busy');
+      }
+    }
   }
 
   function renderInto(container, state, group, options) {
@@ -243,8 +338,11 @@
     const targetGroup = group || state?.primaryGroup || null;
     const needsAnySetup = Boolean(state?.enabled && pending.length);
     const needsTargetSetup = groupNeedsSetup(state, targetGroup);
+    const forceShow = Boolean(
+      opts.showWhenNotReady && state?.enabled && pending.length && !opts.singleGroupOnly
+    );
 
-    if (!needsAnySetup) {
+    if (!needsAnySetup && !forceShow) {
       container.hidden = true;
       container.innerHTML = '';
       return false;
@@ -264,28 +362,90 @@
     } else {
       container.innerHTML = cardHtml(targetGroup, renderOpts);
     }
-    bindCard(container, opts.returnPath);
+    bindCard(container, { ...opts, onLinked: opts.onLinked });
     return true;
   }
 
-  async function openDashboard(groupId) {
+  async function openDashboard(groupId, options) {
+    const opts = options || {};
     const gid = String(groupId || '').trim();
     if (!gid) {
-      alert('No organiser profile found.');
+      if (typeof opts.onNeedsSetup === 'function') {
+        opts.onNeedsSetup('Add bank details before opening the Stripe dashboard.');
+      } else {
+        global.dispatchEvent(
+          new CustomEvent('hub-payment-setup-needed', {
+            detail: { message: 'Add bank details before opening the Stripe dashboard.' },
+          })
+        );
+      }
       return false;
     }
+
+    let tab = opts.tab || null;
+    if (!tab) {
+      try {
+        tab = global.open('about:blank', '_blank', 'noopener,noreferrer');
+      } catch {
+        tab = null;
+      }
+    }
+
     try {
       const res = await fetch(
         '/api/organiser/stripe-connect?groupId=' + encodeURIComponent(gid) + '&action=dashboard',
         { credentials: 'include', cache: 'no-store' }
       );
-      const data = await res.json();
-      if (!data.ok || !data.url) {
-        alert(data.message || data.error || 'Could not open Stripe dashboard.');
+      const data = await res.json().catch(function () {
+        return {};
+      });
+      if (!res.ok || !data.ok || !data.url) {
+        if (tab) {
+          try {
+            tab.close();
+          } catch {
+            /* ignore */
+          }
+        }
+        const needsSetup =
+          data.error === 'stripe_connect_required' ||
+          /bank details/i.test(String(data.message || ''));
+        if (needsSetup) {
+          if (typeof opts.onNeedsSetup === 'function') {
+            opts.onNeedsSetup(data.message || 'Add bank details before opening the Stripe dashboard.');
+          } else {
+            global.dispatchEvent(
+              new CustomEvent('hub-payment-setup-needed', {
+                detail: {
+                  message: data.message || 'Add bank details before opening the Stripe dashboard.',
+                  groupId: gid,
+                },
+              })
+            );
+          }
+        } else {
+          alert(data.message || data.error || 'Could not open Stripe dashboard.');
+        }
         return false;
+      }
+      if (tab) {
+        tab.location.href = data.url;
+        try {
+          tab.focus();
+        } catch {
+          /* ignore */
+        }
+        return true;
       }
       return openStripeOnboarding(data.url);
     } catch {
+      if (tab) {
+        try {
+          tab.close();
+        } catch {
+          /* ignore */
+        }
+      }
       alert('Could not open Stripe dashboard. Please try again.');
       return false;
     }
@@ -296,6 +456,7 @@
     groupForEvent: groupForEvent,
     groupNeedsSetup: groupNeedsSetup,
     startSetup: startSetup,
+    linkSetup: linkSetup,
     openDashboard: openDashboard,
     openStripeOnboarding: openStripeOnboarding,
     launcherHref: launcherHref,

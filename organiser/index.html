@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260708b" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260709e" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260702b" />
   </head>
   <body class="organiser-dashboard-page">
@@ -957,13 +957,16 @@
           <div class="org-sub-page" id="sub-events-revenue" data-events-panel="events-revenue">
             <div class="org-payout-held-banner" id="payout-held-banner" hidden role="status"></div>
             <div id="org-payment-setup-revenue" hidden></div>
-            <div id="org-stripe-dashboard-link" class="org-filter-bar" hidden>
+            <div id="org-stripe-dashboard-link" class="org-filter-bar org-stripe-revenue-bar" hidden>
               <button type="button" class="org-btn org-btn-secondary" id="org-open-stripe-dashboard">Open Stripe dashboard</button>
-              <span class="org-muted" style="margin-left:12px;">Issue refunds, view payouts, and manage ticket payments in Stripe Express.</span>
+              <span class="org-muted org-stripe-revenue-hint" id="org-stripe-dashboard-hint" style="margin-left:12px;">Issue refunds, view payouts, and manage ticket payments in Stripe Express.</span>
             </div>
             <div class="org-stripe-connect-banner" id="stripe-connect-banner" hidden role="status"></div>
             <p class="org-section-sub org-sub-lead">
               Revenue shows your ticket sales (full ticket price). Attendees pay a separate booking fee at checkout (4.5% + 20p per ticket) which covers platform and payment processing.
+            </p>
+            <p class="org-section-sub org-sub-lead org-revenue-payout-note">
+              <strong>Payout column:</strong> shows whether a payout was requested or paid. After an event ends it is archived automatically — then you can use <strong>Request payout</strong> when the net amount is above £1. If refunds are still processing, use <strong>Retry automatic refunds</strong>.
             </p>
             <div class="org-revenue-banner">
               <div class="org-rev-item">
@@ -1009,9 +1012,7 @@
                     <th>Event</th>
                     <th>Tickets sold</th>
                     <th>Revenue</th>
-                    <th>Event status</th>
                     <th>Payout</th>
-                    <th class="org-th-actions">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="revenue-body"></tbody>
@@ -1240,6 +1241,29 @@
             <button type="submit" class="org-btn org-btn-primary">Create ticket</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <div
+      class="org-modal"
+      id="modal-needs-organiser-page"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-needs-organiser-page-title"
+      hidden
+    >
+      <div class="org-modal-backdrop" data-org-modal-close></div>
+      <div class="org-modal-panel">
+        <h2 id="modal-needs-organiser-page-title">Add your organiser page first</h2>
+        <p>
+          Before you can list events, create your organiser page — the public profile attendees see when they book.
+        </p>
+        <div class="org-modal-actions">
+          <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Not now</button>
+          <button type="button" class="org-btn org-btn-gold" id="btn-needs-organiser-page-create">
+            Create organiser page
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1547,8 +1571,8 @@
     <script src="../js/organiser-flow-tour.js?v=20260703"></script>
     <script src="../js/organiser-onboarding.js?v=20260703"></script>
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
-    <script src="../js/organiser-payment-setup.js?v=20260708h"></script>
+    <script src="../js/organiser-payment-setup.js?v=20260709e"></script>
     <script src="../js/review-report.js?v=20260708"></script>
-    <script src="../js/organiser-dashboard.js?v=20260708h"></script>
+    <script src="../js/organiser-dashboard.js?v=20260709f"></script>
   </body>
 </html>

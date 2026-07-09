@@ -6,6 +6,7 @@ const {
   syncOrganiserConnectStatus,
   createConnectOnboardingLink,
   createExpressDashboardLinkForOrganiser,
+  linkOrganiserConnectFromPeer,
 } = require('../stripe-connect');
 
 function parseBody(req) {
@@ -90,8 +91,27 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const action = String(body.action || 'onboard').toLowerCase();
-    if (action !== 'onboard') {
+    const postAction = String(body.action || 'onboard').toLowerCase();
+    if (postAction === 'link') {
+      const sourceGroupId = String(body.sourceGroupId || '').trim();
+      if (!sourceGroupId) return json(res, 400, { error: 'missing_source_group_id' });
+      if (sourceGroupId === groupId) {
+        return json(res, 400, { error: 'invalid_source_group_id' });
+      }
+      if (
+        !isAdminRole(auth.session.role) &&
+        !access.groupIds.includes(sourceGroupId)
+      ) {
+        return json(res, 403, {
+          error: 'forbidden',
+          message: 'You can only reuse bank details from your own organiser pages.',
+        });
+      }
+      const status = await linkOrganiserConnectFromPeer(groupId, sourceGroupId);
+      return json(res, 200, { ok: true, ...status });
+    }
+
+    if (postAction !== 'onboard') {
       return json(res, 400, { error: 'invalid_action' });
     }
 

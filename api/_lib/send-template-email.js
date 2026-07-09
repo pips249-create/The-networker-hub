@@ -88,6 +88,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'event_almost_full',
   'organiser_low_upcoming_events',
   'password_reset',
+  'organiser_email_verify',
   'post_event_review_request',
   'booking_confirmation',
   'booking_reminder',
@@ -187,6 +188,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   const sponsorVars = await getEmailSponsorVars(slug);
   const bookingDefaults = usesBookingEmailDefaults ? await getBookingEmailDefaultVars() : {};
   const sponsorSection = sponsorVars.sponsor_row || bookingDefaults.sponsor_section || '';
+  const dbMiniSponsorsRow = String(sponsorVars.mini_sponsors_row || '').trim();
   delete bookingDefaults.sponsor_section;
 
   let merged = {
@@ -200,7 +202,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     support_email: supportEmail(),
     sponsor_row: sponsorSection,
     sponsor_section: sponsorSection,
-    mini_sponsors_row: sponsorVars.mini_sponsors_row || '',
+    mini_sponsors_row: dbMiniSponsorsRow,
     ...variables,
     ...bookingDefaults,
   };
@@ -236,6 +238,16 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   if (merged.user_name) {
     const greeting = emailGreetingName(merged.user_name);
     if (greeting) merged.user_name = greeting;
+  }
+
+  merged.logo_url = logoNavUrl(siteUrl);
+  merged.logo_footer_url = logoFooterUrl(siteUrl);
+  if (sponsorSection) {
+    merged.sponsor_row = sponsorSection;
+    merged.sponsor_section = sponsorSection;
+  }
+  if (dbMiniSponsorsRow) {
+    merged.mini_sponsors_row = dbMiniSponsorsRow;
   }
 
   let bodyHtml = template.body_html;

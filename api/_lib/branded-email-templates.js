@@ -142,6 +142,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: 'Reset your Networker Hub password',
   },
+  organiser_email_verify: {
+    file: 'organiser-email-verify.html',
+    marker: 'organiser-email-layout-v2',
+    subject: 'Confirm your email for organiser access',
+  },
 };
 
 const cache = new Map();

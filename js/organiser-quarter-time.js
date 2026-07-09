@@ -71,6 +71,20 @@
         }
       });
     }
+    if (endEl && !endEl.dataset.quarterBound) {
+      endEl.dataset.quarterBound = '1';
+      endEl.addEventListener('change', function () {
+        if (!startEl) return;
+        const startM = timeToMinutes(startEl.value);
+        const endM = timeToMinutes(endEl.value);
+        if (endM <= startM) {
+          const prev = Math.max(endM - 60, 0);
+          const nh = Math.floor(prev / 60);
+          const nm = prev % 60;
+          startEl.value = pad2(nh) + ':' + pad2(nm);
+        }
+      });
+    }
   }
 
   function setValues(startId, endId, startTime, endTime) {

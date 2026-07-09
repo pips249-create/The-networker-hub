@@ -8,6 +8,7 @@ const {
   EVENTS_SPONSOR_SLOT,
 } = require('./email-booking-defaults');
 const { isEmailSponsorBlock } = require('./cms-sponsor-fields');
+const { toPublicAssetUrl } = require('./hub-email-urls');
 const {
   EVENT_PAGE_CAROUSEL_SLOT,
   parseCarouselBody,
@@ -100,7 +101,7 @@ function buildMiniSponsorsRow(ads) {
 
   const cells = list
     .map(function (ad) {
-      const logo = String(ad.logo_url || '').replace(/"/g, '&quot;');
+      const logo = toPublicAssetUrl(ad.logo_url || '', process.env.SITE_URL).replace(/"/g, '&quot;');
       const url = String(ad.cta_url || '').replace(/"/g, '&quot;');
       const name = String(ad.company_name || 'Sponsor').replace(/"/g, '&quot;');
       if (!logo || !url) return '';

@@ -1,8 +1,47 @@
 function siteBase(siteUrl) {
-  return String(siteUrl || process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(
+  return String(siteUrl || process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(
     /\/$/,
     ''
   );
+}
+
+const DEFAULT_PUBLIC_SITE = 'https://www.thenetworkerhub.com';
+
+function isNonPublicSiteUrl(url) {
+  const raw = String(url || '').trim().toLowerCase();
+  if (!raw) return true;
+  if (raw.includes('localhost') || raw.includes('127.0.0.1') || raw.startsWith('http://')) {
+    return true;
+  }
+  return false;
+}
+
+/** Public HTTPS origin for email images — inbox clients cannot load localhost assets. */
+function publicSiteBase(siteUrl) {
+  const fromEnv = String(process.env.PUBLIC_SITE_URL || '').trim().replace(/\/$/, '');
+  if (fromEnv && !isNonPublicSiteUrl(fromEnv)) return fromEnv;
+  const site = siteBase(siteUrl);
+  if (!isNonPublicSiteUrl(site)) return site;
+  return DEFAULT_PUBLIC_SITE;
+}
+
+function toPublicAssetUrl(url, siteUrl) {
+  const raw = String(url || '').trim();
+  if (!raw) return '';
+  if (/^data:image\//i.test(raw)) return raw;
+  const publicBase = publicSiteBase(siteUrl);
+  if (/^https:\/\//i.test(raw) && !isNonPublicSiteUrl(raw)) return raw;
+  if (raw.startsWith('//')) return 'https:' + raw;
+  if (raw.startsWith('/')) return publicBase + raw;
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      const parsed = new URL(raw);
+      return publicBase + parsed.pathname + parsed.search;
+    } catch {
+      return raw;
+    }
+  }
+  return publicBase + '/' + raw.replace(/^\/+/, '');
 }
 
 function homeUrl(siteUrl) {
@@ -91,11 +130,11 @@ function opportunityPublicUrl(opportunityRow, siteUrl) {
 }
 
 function logoNavUrl(siteUrl) {
-  return siteBase(siteUrl) + '/assets/logo-nav.png';
+  return toPublicAssetUrl('/assets/logo-nav.png', siteUrl);
 }
 
 function logoFooterUrl(siteUrl) {
-  return siteBase(siteUrl) + '/assets/logo-email-footer.png';
+  return toPublicAssetUrl('/assets/logo-email-footer.png', siteUrl);
 }
 
 function supportEmail() {
@@ -121,6 +160,9 @@ function supportEmail() {
 
 module.exports = {
   siteBase,
+  publicSiteBase,
+  toPublicAssetUrl,
+  isNonPublicSiteUrl,
   homeUrl,
   browseEventsUrl,
   opportunitiesBrowseUrl,

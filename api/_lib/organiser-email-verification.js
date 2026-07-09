@@ -3,7 +3,7 @@
  */
 const crypto = require('crypto');
 const { getSupabaseAdmin } = require('./supabase');
-const { sendViaResend } = require('./send-template-email');
+const { sendTemplatedEmail } = require('./send-template-email');
 const { getHubAccount } = require('./supabase-auth');
 
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
@@ -18,14 +18,6 @@ function hashToken(token) {
 
 function newVerifyToken() {
   return crypto.randomBytes(32).toString('base64url');
-}
-
-function escapeHtml(value) {
-  return String(value || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 async function storeVerifyToken(userId, token) {
@@ -98,22 +90,17 @@ async function sendOrganiserEmailVerification({ userId, email, name }) {
     encodeURIComponent(address);
   const displayName = String(name || '').trim() || address.split('@')[0];
 
-  const subject = 'Confirm your email for organiser access';
-  const html =
-    '<p>Hi ' +
-    escapeHtml(displayName) +
-    ',</p>' +
-    '<p>Please confirm you own <strong>' +
-    escapeHtml(address) +
-    '</strong> before publishing events or viewing attendee details on The Networker Hub.</p>' +
-    '<p><a href="' +
-    escapeHtml(verifyUrl) +
-    '">Confirm my email</a></p>' +
-    '<p>This link expires in 24 hours. If you did not request organiser access, you can ignore this email.</p>' +
-    '<p>— The Networker Hub</p>';
-
   try {
-    const result = await sendViaResend({ to: address, subject, html });
+    const result = await sendTemplatedEmail({
+      slug: 'organiser_email_verify',
+      to: address,
+      variables: {
+        user_name: displayName,
+        user_email: address,
+        verify_url: verifyUrl,
+      },
+      skipEmailCheck: true,
+    });
     return { ok: true, emailSent: true, verifyUrl: null, ...result };
   } catch (e) {
     const code = e.code || '';

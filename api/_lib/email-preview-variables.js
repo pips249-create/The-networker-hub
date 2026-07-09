@@ -298,6 +298,10 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.reset_url = site + '/reset-password.html?token=sample';
   }
 
+  if (slug === 'organiser_email_verify') {
+    vars.verify_url = site + '/organiser/verify-email.html?token=sample';
+  }
+
   return vars;
 }
 

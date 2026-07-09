@@ -1233,6 +1233,11 @@ a.ee-wizard-link:hover {
   margin: 16px 0 4px;
 }
 
+.ee-event-stats[hidden],
+body.ee-is-new-listing #ee-event-stats {
+  display: none !important;
+}
+
 .ee-stat {
   background: #fff;
   border: 1px solid #e8f4f6;
@@ -1901,6 +1906,14 @@ body.ee-embed-drawer .ee-actions {
   font-size: 14px;
   font-weight: 600;
   color: var(--ee-purple, #3b1f6e);
+}
+
+.hub-payment-setup-checklist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .hub-payment-setup-btn,

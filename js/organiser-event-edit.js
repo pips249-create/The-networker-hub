@@ -15,6 +15,8 @@
   if (isEmbedDrawer) {
     document.documentElement.classList.add('ee-embed-drawer-root');
     if (document.body) document.body.classList.add('ee-embed-drawer');
+  } else if (!editId && document.body) {
+    document.body.classList.add('ee-is-new-listing');
   }
   function normalizeEventFormat(raw) {
     const s = String(raw || '')
@@ -137,7 +139,7 @@
   }
 
   function shouldShowEventOverviewStats(ev) {
-    if (!ev || !ev.id) return false;
+    if (!editId || !ev || !ev.id) return false;
     const sold = eventTicketsSoldCount(ev);
     if (sold > 0) return true;
     const st = String(ev.status || '').toLowerCase();
@@ -428,12 +430,16 @@
   }
 
   function validateTimes() {
+    if (QuarterTime && QuarterTime.validatePair) {
+      return QuarterTime.validatePair('ee-start-time', 'ee-end-time');
+    }
     const startEl = document.getElementById('ee-start-time');
     const endEl = document.getElementById('ee-end-time');
     const start = startEl ? startEl.value : '';
     const end = endEl ? endEl.value : '';
-    if (!start) return { ok: false, message: 'Choose a start time.' };
-    if (!end) return { ok: true, start, end: null };
+    if (!start || !end) {
+      return { ok: false, message: 'Choose both a start time and an end time.' };
+    }
     if (QuarterTime && QuarterTime.timeToMinutes(end) <= QuarterTime.timeToMinutes(start)) {
       return { ok: false, message: 'End time must be after start time.' };
     }
@@ -1245,6 +1251,11 @@
     }
 
     const dateKeys = getSelectedDateKeys();
+    const timeCheck = validateTimes();
+    if (publish && !timeCheck.ok) {
+      showAlert(timeCheck.message);
+      return;
+    }
     if (publish && !dateKeys.length) {
       showAlert('Select at least one date on the calendar before continuing.');
       return;
@@ -1252,7 +1263,6 @@
 
     let occurrences = [];
     if (dateKeys.length) {
-      const timeCheck = validateTimes();
       if (!timeCheck.ok) {
         showAlert(timeCheck.message);
         return;

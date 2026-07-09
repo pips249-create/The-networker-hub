@@ -5,6 +5,7 @@ const {
   sponsorLogoUrl,
   sponsorCompanyName,
 } = require('./cms-sponsor-fields');
+const { toPublicAssetUrl } = require('./hub-email-urls');
 
 const BOOKING_EMAIL_SPONSOR_SLOT = 'booking_email_sponsor';
 const EVENTS_SPONSOR_SLOT = 'events_sponsor_hub';
@@ -19,7 +20,7 @@ function buildSponsorSection(block, options) {
   if (!block) return '';
   const label =
     String(options?.label || '').trim() || 'Our event directory is proudly powered by';
-  const logo = sponsorLogoUrl(block);
+  const logo = toPublicAssetUrl(sponsorLogoUrl(block), process.env.SITE_URL);
   const url = String(block.cta_url || '').trim();
   const name = sponsorCompanyName(block) || 'Our sponsor';
   if (!url) return '';

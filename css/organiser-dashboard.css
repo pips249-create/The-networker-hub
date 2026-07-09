@@ -2819,6 +2819,14 @@ a.hub-payment-setup-btn {
   color: var(--purple-900, #3b1f6e);
 }
 
+.hub-payment-setup-checklist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .org-quick-card--highlight {
   border-color: rgba(189, 147, 46, 0.65);
   background: linear-gradient(135deg, #fff9ec 0%, #f3ecfa 100%);
@@ -2834,13 +2842,43 @@ a.hub-payment-setup-btn {
   color: #fff;
 }
 
+.org-stripe-revenue-bar {
+  padding: 12px 14px;
+  border: 1px solid rgba(91, 47, 153, 0.14);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.org-stripe-revenue-hint {
+  flex: 1 1 220px;
+  line-height: 1.45;
+}
+
+.org-btn--attention {
+  animation: org-btn-attention 0.55s ease-in-out 3;
+  box-shadow: 0 0 0 3px rgba(189, 147, 46, 0.45);
+}
+
+@keyframes org-btn-attention {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
 #org-payment-setup-dashboard,
 #org-payment-setup-overview[hidden],
+#org-payment-setup-revenue[hidden],
+#org-stripe-dashboard-link[hidden],
 #ee-payment-setup-mount[hidden] {
   display: none !important;
 }
 
-#org-payment-setup-dashboard:not([hidden]) {
+#org-payment-setup-dashboard:not([hidden]),
+#org-payment-setup-revenue:not([hidden]) {
   display: block !important;
   margin-bottom: 16px;
 }
@@ -2855,6 +2893,28 @@ a.hub-payment-setup-btn {
 .org-payout-muted {
   color: var(--od-text-soft);
   font-size: 12px;
+}
+
+.org-payout-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 9rem;
+}
+
+.org-payout-cell-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.org-payout-col {
+  min-width: 10rem;
+}
+
+.org-revenue-payout-note {
+  margin-top: -4px;
 }
 
 .org-row-payout-held {

@@ -92,9 +92,9 @@ function wrapSponsorRow(sponsorInner) {
 
 function resolveSponsorSection(vars, dbSection) {
   const input = vars && typeof vars === 'object' ? vars : {};
-  const fromVars = String(input.sponsor_row || input.sponsor_section || '').trim();
-  if (fromVars) return fromVars;
-  return String(dbSection || '').trim();
+  const fromDb = String(dbSection || '').trim();
+  if (fromDb) return fromDb;
+  return String(input.sponsor_row || input.sponsor_section || '').trim();
 }
 
 /**

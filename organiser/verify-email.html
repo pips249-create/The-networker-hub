@@ -13,37 +13,116 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260730" />
     <link rel="stylesheet" href="../css/auth.css?v=20260708" />
+    <link rel="stylesheet" href="../css/organiser-enable.css?v=20260709b" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
   </head>
-  <body class="auth-page">
+  <body class="auth-page auth-page--organiser-access">
     <div id="hub-site-nav"></div>
     <script src="../js/site-nav.js?v=20260713c" data-root="../" data-page="organiser"></script>
 
-    <main class="auth-main">
-      <div class="auth-card auth-card--wizard">
-        <header class="auth-welcome-head">
-          <p class="auth-welcome-kicker">Almost there</p>
-          <h1>Confirm your email</h1>
-          <p class="auth-lede auth-lede--welcome" id="verify-email-lede">
-            We sent a confirmation link to <strong id="verify-email-address">your email</strong>. Open it to
-            publish events, view attendees, and set up payouts.
-          </p>
-        </header>
+    <main class="auth-main auth-main--organiser-access">
+      <div class="org-enable-shell">
+        <div class="org-enable-layout">
+          <section class="org-enable-panel">
+            <div class="auth-card auth-card--organiser-enable">
+              <header class="auth-welcome-head">
+                <p class="auth-welcome-kicker">Almost there</p>
+                <h1>Confirm your email</h1>
+                <p class="auth-lede auth-lede--welcome" id="verify-email-lede">
+                  We sent a confirmation link to <strong id="verify-email-address">your email</strong>. Open it to
+                  publish events, view attendees, and set up payouts.
+                </p>
+              </header>
 
-        <div id="verify-email-status" class="auth-verify-status" hidden></div>
-        <p id="verify-email-error" class="auth-error" hidden role="alert"></p>
-        <p id="verify-email-dev" class="auth-dev-link" hidden></p>
+              <div id="verify-email-status" class="auth-verify-status" hidden></div>
+              <p id="verify-email-error" class="auth-error" hidden role="alert"></p>
+              <p id="verify-email-dev" class="auth-dev-link" hidden></p>
 
-        <div class="auth-verify-actions">
-          <button type="button" class="auth-primary-btn" id="verify-email-resend">Resend confirmation email</button>
-          <a href="index.html" class="auth-secondary-btn" id="verify-email-continue" hidden>
-            Continue to organiser workspace
-          </a>
+              <div class="auth-verify-actions">
+                <button type="button" class="auth-primary-btn" id="verify-email-resend">Resend confirmation email</button>
+                <a href="index.html" class="auth-primary-btn" id="verify-email-continue" hidden>
+                  Continue to organiser workspace
+                </a>
+              </div>
+
+              <p class="auth-form-foot">
+                <a href="../account/index.html" class="auth-secondary-link">← Back to My tickets</a>
+              </p>
+            </div>
+          </section>
+
+          <aside class="org-enable-previews" aria-label="Preview of your organiser workspace">
+            <p class="org-enable-previews-label">Waiting for you in your workspace</p>
+            <div class="org-enable-preview-stack" aria-hidden="true">
+              <figure class="org-enable-preview">
+                <div class="org-enable-preview-chrome">
+                  <span class="org-enable-preview-dots"><i></i><i></i><i></i></span>
+                  <span class="org-enable-preview-title">Organiser workspace — Overview</span>
+                </div>
+                <div class="org-enable-preview-body org-enable-preview-body--dash">
+                  <p class="org-enable-dash-kicker">Organiser workspace</p>
+                  <h2 class="org-enable-dash-title">Overview</h2>
+                  <div class="org-enable-dash-portals">
+                    <div class="org-enable-dash-portal org-enable-dash-portal--events">
+                      <strong>Manage My events</strong>
+                      <span>3 upcoming · £420 revenue</span>
+                    </div>
+                    <div class="org-enable-dash-portal org-enable-dash-portal--business">
+                      <strong>My business opportunities</strong>
+                      <span>2 live listings · 5 enquiries</span>
+                    </div>
+                  </div>
+                  <div class="org-enable-dash-stats">
+                    <div class="org-enable-dash-stat">
+                      <span class="org-enable-dash-stat-label">Events</span>
+                      <span class="org-enable-dash-stat-value">3</span>
+                    </div>
+                    <div class="org-enable-dash-stat">
+                      <span class="org-enable-dash-stat-label">Tickets sold</span>
+                      <span class="org-enable-dash-stat-value">28</span>
+                    </div>
+                    <div class="org-enable-dash-stat">
+                      <span class="org-enable-dash-stat-label">Revenue</span>
+                      <span class="org-enable-dash-stat-value">£420</span>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="org-enable-preview-caption">Events, attendees, revenue &amp; payouts</figcaption>
+              </figure>
+
+              <figure class="org-enable-preview org-enable-preview--business">
+                <div class="org-enable-preview-chrome">
+                  <span class="org-enable-preview-dots"><i></i><i></i><i></i></span>
+                  <span class="org-enable-preview-title">Business opportunities — List a listing</span>
+                </div>
+                <div class="org-enable-preview-body org-enable-preview-body--biz">
+                  <p class="org-enable-biz-kicker">Business opportunities</p>
+                  <h2 class="org-enable-biz-title">My business opportunities</h2>
+                  <div class="org-enable-biz-stats">
+                    <div class="org-enable-biz-stat">
+                      <span class="org-enable-biz-stat-label">Live listings</span>
+                      <span class="org-enable-biz-stat-value">2</span>
+                    </div>
+                    <div class="org-enable-biz-stat">
+                      <span class="org-enable-biz-stat-label">Enquiries received</span>
+                      <span class="org-enable-biz-stat-value">5</span>
+                    </div>
+                    <div class="org-enable-biz-stat">
+                      <span class="org-enable-biz-stat-label">New enquiries</span>
+                      <span class="org-enable-biz-stat-value">1</span>
+                    </div>
+                  </div>
+                  <div class="org-enable-biz-pricing">
+                    <p class="org-enable-biz-pricing-label">Standard listing</p>
+                    <p class="org-enable-biz-pricing-amount">£25 <span>/ month + VAT</span></p>
+                    <p class="org-enable-biz-pricing-note">List franchises, partnerships &amp; side hustles — respond to enquiries from your workspace.</p>
+                  </div>
+                </div>
+                <figcaption class="org-enable-preview-caption">Listings, enquiries &amp; premium spotlight</figcaption>
+              </figure>
+            </div>
+          </aside>
         </div>
-
-        <p class="auth-form-foot">
-          <a href="../account/index.html" class="auth-secondary-link">← Back to My tickets</a>
-        </p>
       </div>
     </main>
 
