@@ -339,7 +339,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   };
 }
 
-async function sendViaResend({ to, subject, html, tags }) {
+async function sendViaResend({ to, subject, html, tags, replyTo }) {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
     const err = new Error(
@@ -384,6 +384,12 @@ async function sendViaResend({ to, subject, html, tags }) {
     subject,
     html,
   };
+  const replyToAddress = String(replyTo || supportEmail() || '')
+    .trim()
+    .toLowerCase();
+  if (replyToAddress && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyToAddress)) {
+    body.reply_to = replyToAddress;
+  }
   if (tagList.length) body.tags = tagList;
 
   const response = await fetch('https://api.resend.com/emails', {
@@ -436,7 +442,7 @@ const MARKETING_EMAIL_SLUGS = new Set([
   'saved_event_tickets_open',
 ]);
 
-async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject, resendTags }) {
+async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject, resendTags, replyTo }) {
   if (!skipEmailCheck) {
     if (TRANSACTIONAL_EMAIL_SLUGS.has(slug)) {
       if (PREFERENCE_EMAIL_SLUGS[slug]) {
@@ -477,6 +483,7 @@ async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject
     subject: subject || built.subject,
     html: built.html,
     tags: resendTags,
+    replyTo,
   });
   return {
     ...result,

@@ -107,6 +107,7 @@ async function sendOpportunityEnquiryEmails(opportunity, enquiry) {
       await sendTemplatedEmail({
         slug: 'opportunity_enquiry_received',
         to: ownerTo,
+        replyTo: enquirerTo || undefined,
         variables: {
           owner_name: ownerNameFromOpportunity(opportunity, ownerTo),
           opportunity_title: title,
