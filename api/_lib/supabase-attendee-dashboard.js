@@ -2,7 +2,7 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { resolveAttendeeId } = require('./supabase-favourites');
 const { buildStats } = require('./attendee');
 const { eventHasEnded, isEligibleRegistration } = require('./supabase-reviews');
-const { eventImageUrl } = require('./event-image');
+const { resolveEventDisplayImage } = require('./event-image');
 const { formatBookingReference } = require('./booking-payment-summary');
 const { resolveBookedListing } = require('./booking-snapshot');
 const {
@@ -25,7 +25,7 @@ function canCancelRegistration(row, ev) {
   return isSelfServiceCancellationAllowed(ev, row);
 }
 
-function mapRegistrationRow(row, reviewByEventId) {
+function mapRegistrationRow(row, reviewByEventId, seriesPeersByGroupId) {
   const ev = row.events || {};
   const organiser = ev.organisers || {};
   const ticket = row.tickets || {};
@@ -53,6 +53,10 @@ function mapRegistrationRow(row, reviewByEventId) {
     ticketPriceNum <= 0;
   const meetingLink = booked.meetingLink;
   const online = booked.isOnline;
+  const seriesPeers =
+    ev.series_group_id && seriesPeersByGroupId
+      ? (seriesPeersByGroupId.get(ev.series_group_id) || []).filter((peer) => peer.id !== ev.id)
+      : [];
 
   return {
     id: row.id,
@@ -62,7 +66,8 @@ function mapRegistrationRow(row, reviewByEventId) {
     title: booked.title,
     date,
     endDate: booked.endDate,
-    imageUrl: eventImageUrl(ev) || null,
+    imageUrl: resolveEventDisplayImage(ev, organiser, seriesPeers) || null,
+    organiserLogo: String(organiser.photo_url || '').trim() || null,
     ticketLabel: qty + ' × ' + ticketName,
     quantity: qty,
     paymentStatus: row.payment_status || 'Pending',
@@ -101,7 +106,7 @@ function mapRegistrationRow(row, reviewByEventId) {
   };
 }
 
-function mapCancelledRegistrationRow(row) {
+function mapCancelledRegistrationRow(row, seriesPeersByGroupId) {
   const ev = row.events || {};
   const organiser = ev.organisers || {};
   const ticket = row.tickets || {};
@@ -127,7 +132,15 @@ function mapCancelledRegistrationRow(row) {
     title: booked.title,
     date: booked.date,
     endDate: booked.endDate,
-    imageUrl: eventImageUrl(ev) || null,
+    imageUrl:
+      resolveEventDisplayImage(
+        ev,
+        organiser,
+        ev.series_group_id && seriesPeersByGroupId
+          ? (seriesPeersByGroupId.get(ev.series_group_id) || []).filter((peer) => peer.id !== ev.id)
+          : []
+      ) || null,
+    organiserLogo: String(organiser.photo_url || '').trim() || null,
     ticketLabel: booked.quantity + ' × ' + booked.ticketName,
     quantity: booked.quantity,
     paymentStatus,
@@ -176,6 +189,8 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
         status,
         image_url,
         photo_url,
+        series_group_id,
+        event_type,
         organiser_id,
         meeting_link,
         meeting_type,
@@ -185,7 +200,8 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
         organisers (
           id,
           name,
-          slug
+          slug,
+          photo_url
         )
       ),
       tickets (
@@ -231,6 +247,8 @@ async function listCancelledRegistrationsForAttendee(sb, attendeeId) {
         status,
         image_url,
         photo_url,
+        series_group_id,
+        event_type,
         organiser_id,
         refund_policy,
         refund_policy_details,
@@ -238,7 +256,8 @@ async function listCancelledRegistrationsForAttendee(sb, attendeeId) {
         organisers (
           id,
           name,
-          slug
+          slug,
+          photo_url
         )
       ),
       tickets (
@@ -275,6 +294,33 @@ async function listReviewsForAttendee(sb, attendeeId) {
   return map;
 }
 
+async function loadSeriesPeerImagesMap(sb, rows) {
+  const groupIds = [
+    ...new Set(
+      (rows || [])
+        .map((row) => row.events?.series_group_id)
+        .filter(Boolean)
+        .map((id) => String(id))
+    ),
+  ];
+  const map = new Map();
+  if (!groupIds.length) return map;
+
+  const { data, error } = await sb
+    .from('events')
+    .select('id, series_group_id, image_url, photo_url')
+    .in('series_group_id', groupIds);
+  if (error) throw new Error(error.message);
+
+  (data || []).forEach((row) => {
+    const gid = row.series_group_id;
+    if (!gid) return;
+    if (!map.has(gid)) map.set(gid, []);
+    map.get(gid).push(row);
+  });
+  return map;
+}
+
 async function getAttendeeDashboardFromSupabase(session) {
   if (!isSupabaseConfigured()) {
     return {
@@ -307,9 +353,12 @@ async function getAttendeeDashboardFromSupabase(session) {
   ]);
 
   const cancelledRows = await reconcileCancelledRegistrationRefunds(sb, cancelledRowsRaw);
+  const seriesPeersByGroupId = await loadSeriesPeerImagesMap(sb, [...rows, ...cancelledRows]);
 
-  const registrations = rows.map((row) => mapRegistrationRow(row, reviewByEventId));
-  const cancelledBookings = cancelledRows.map((row) => mapCancelledRegistrationRow(row));
+  const registrations = rows.map((row) => mapRegistrationRow(row, reviewByEventId, seriesPeersByGroupId));
+  const cancelledBookings = cancelledRows.map((row) =>
+    mapCancelledRegistrationRow(row, seriesPeersByGroupId)
+  );
   return {
     registrations,
     cancelledBookings,

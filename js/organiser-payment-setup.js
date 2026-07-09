@@ -97,6 +97,46 @@
     return true;
   }
 
+  function openUrlInNewTab(url, existingTab) {
+    if (!url) return false;
+    if (existingTab) {
+      try {
+        existingTab.location.href = url;
+        existingTab.focus();
+        return true;
+      } catch {
+        /* fall through */
+      }
+    }
+    let tab = null;
+    try {
+      tab = global.open(url, '_blank', 'noopener,noreferrer');
+    } catch {
+      tab = null;
+    }
+    if (tab) {
+      try {
+        tab.opener = null;
+      } catch {
+        /* ignore */
+      }
+      return true;
+    }
+    try {
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   function openStripeOnboarding(url) {
     // Legacy helper — if given a Stripe URL, bounce via launcher is preferred.
     // Keep a top-level open for callers that already have a URL.
@@ -429,15 +469,10 @@
         return false;
       }
       if (tab) {
-        tab.location.href = data.url;
-        try {
-          tab.focus();
-        } catch {
-          /* ignore */
-        }
+        openUrlInNewTab(data.url, tab);
         return true;
       }
-      return openStripeOnboarding(data.url);
+      return openUrlInNewTab(data.url);
     } catch {
       if (tab) {
         try {
@@ -458,6 +493,7 @@
     startSetup: startSetup,
     linkSetup: linkSetup,
     openDashboard: openDashboard,
+    openUrlInNewTab: openUrlInNewTab,
     openStripeOnboarding: openStripeOnboarding,
     launcherHref: launcherHref,
     cardHtml: cardHtml,

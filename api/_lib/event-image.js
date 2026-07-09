@@ -34,4 +34,43 @@ function eventImageDbValue(url) {
   return v || null;
 }
 
-module.exports = { eventImageUrl, eventImageDbValue, normalizeEventPhotoUrl };
+function isUsableEventImageUrl(url) {
+  const value = String(url || '').trim();
+  if (!value) return false;
+  if (/event-placeholder/i.test(value)) return false;
+  if (/\/assets\/placeholders\//i.test(value)) return false;
+  return true;
+}
+
+/**
+ * Match browse/event-detail image priority: event photo → series peer photo → organiser logo.
+ * Skips URLs that are only the organiser logo when a better series cover exists.
+ */
+function resolveEventDisplayImage(eventRow, organiserRow, seriesPeerRows) {
+  const logo = String(organiserRow?.photo_url || '').trim();
+  const candidates = [];
+
+  const own = eventImageUrl(eventRow);
+  if (isUsableEventImageUrl(own)) candidates.push(own);
+
+  for (const peer of seriesPeerRows || []) {
+    const peerUrl = eventImageUrl(peer);
+    if (isUsableEventImageUrl(peerUrl) && !candidates.includes(peerUrl)) {
+      candidates.push(peerUrl);
+    }
+  }
+
+  const nonLogo = candidates.find((url) => !logo || url !== logo);
+  if (nonLogo) return nonLogo;
+  if (isUsableEventImageUrl(own)) return own;
+  if (isUsableEventImageUrl(logo)) return logo;
+  return '';
+}
+
+module.exports = {
+  eventImageUrl,
+  eventImageDbValue,
+  normalizeEventPhotoUrl,
+  isUsableEventImageUrl,
+  resolveEventDisplayImage,
+};

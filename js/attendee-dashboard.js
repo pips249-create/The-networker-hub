@@ -231,10 +231,14 @@
 
   function thumbHtml(item) {
     const name = item.title || '?';
-    if (item.imageUrl) {
+    let imageUrl = item.imageUrl || '';
+    if (global.getFlexibleEventImage) {
+      imageUrl = global.getFlexibleEventImage(imageUrl, item.organiserLogo || '', item.eventId || item.id);
+    }
+    if (imageUrl) {
       return (
         '<img class="ad-thumb" src="' +
-        esc(item.imageUrl) +
+        esc(imageUrl) +
         '" alt="" width="44" height="44" loading="lazy" />'
       );
     }

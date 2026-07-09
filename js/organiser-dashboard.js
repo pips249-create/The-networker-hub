@@ -2013,26 +2013,38 @@
       errEl.hidden = true;
       errEl.textContent = '';
     }
-    const { ok, data } = await api('/api/organiser/attendees?eventId=all');
-    if (hint) hint.hidden = true;
-    if (ok) {
-      state.attendeesAll = data.attendees || [];
-      maybeClearAttendeesPendingFilter();
-      updateMyEventsTabCounts();
-      updatePendingApplicationsNavBadge();
-      renderAttendeesFilterNote();
-      if (eventsSubRoute === 'events-attendees') {
-        renderAttendees();
+    try {
+      const { ok, data } = await api('/api/organiser/attendees?eventId=all');
+      if (ok) {
+        state.attendeesAll = data.attendees || [];
+        maybeClearAttendeesPendingFilter();
+        updateMyEventsTabCounts();
+        updatePendingApplicationsNavBadge();
+        renderAttendeesFilterNote();
+        if (eventsSubRoute === 'events-attendees') {
+          renderAttendees();
+        }
+        if (eventsSubRoute === 'events-list') {
+          renderEvents();
+        }
+      } else if (errEl) {
+        errEl.hidden = false;
+        errEl.textContent =
+          data.message || data.error || 'Could not load attendees. Try refreshing the page.';
+        if (eventsSubRoute === 'events-attendees') {
+          renderAttendees();
+        }
       }
-      if (eventsSubRoute === 'events-list') {
-        renderEvents();
+      return ok;
+    } catch (err) {
+      if (errEl) {
+        errEl.hidden = false;
+        errEl.textContent = err.message || 'Could not load attendees. Try refreshing the page.';
       }
-    } else if (errEl) {
-      errEl.hidden = false;
-      errEl.textContent =
-        data.message || data.error || 'Could not load attendees. Try refreshing the page.';
+      return false;
+    } finally {
+      if (hint) hint.hidden = true;
     }
-    return ok;
   }
 
   function exportAttendeesCsv() {
@@ -4068,14 +4080,20 @@
         return false;
       }
       if (tab) {
-        tab.location.href = data.url;
-        try {
-          tab.focus();
-        } catch {
-          /* ignore */
+        if (window.HubOrganiserPaymentSetup && window.HubOrganiserPaymentSetup.openUrlInNewTab) {
+          window.HubOrganiserPaymentSetup.openUrlInNewTab(data.url, tab);
+        } else {
+          tab.location.href = data.url;
+          try {
+            tab.focus();
+          } catch {
+            /* ignore */
+          }
         }
+      } else if (window.HubOrganiserPaymentSetup && window.HubOrganiserPaymentSetup.openUrlInNewTab) {
+        window.HubOrganiserPaymentSetup.openUrlInNewTab(data.url);
       } else {
-        window.location.href = data.url;
+        window.open(data.url, '_blank', 'noopener,noreferrer');
       }
       return true;
     } catch {
