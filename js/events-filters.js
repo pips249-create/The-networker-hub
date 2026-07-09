@@ -44,7 +44,6 @@
       netwalking: 'meeting',
       'sport-social': 'meeting',
       'womens-networking': 'meeting',
-      conference: 'meeting',
       'awards-ceremony': 'meeting',
     };
     return legacy[key] || key;
@@ -976,6 +975,11 @@
 
   if (location.hash === '#exhibitions' || location.search.indexOf('type=exhibition') !== -1) {
     setActiveTypeTab('exhibition');
+  } else if (
+    location.hash === '#conferences' ||
+    location.search.indexOf('type=conference') !== -1
+  ) {
+    setActiveTypeTab('conference');
   } else if (location.hash === '#awards' || location.search.indexOf('type=awards') !== -1) {
     setActiveTypeTab('awards');
   } else if (location.hash === '#events' || location.search.indexOf('type=events') !== -1) {

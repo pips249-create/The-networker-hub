@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
     } else if (result.refundIssued) {
       message =
         'Your booking has been cancelled. Your refund is on its way to your original payment method — allow 5–10 business days.';
-    } else if (result.refundEligible) {
+    } else if (result.refundEligible || result.refundPending) {
       message =
         'Your booking has been cancelled. Your refund is being processed and should reach your original payment method within 5–10 business days.';
     } else {

@@ -10,7 +10,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   organiser_claim_invite: {
     file: 'organiser-claim-invite.html',
     marker: 'hub-email-layout-v2',
-    subject: 'Claim your profile on The Networker Hub',
+    subject: 'Your group is on The Networker Hub — claim your profile',
   },
   organiser_team_invite: {
     file: 'organiser-team-invite.html',

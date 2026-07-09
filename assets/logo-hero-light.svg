@@ -1,8 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 132" role="img" aria-label="The Networker Hub">
   <text x="170" y="28" text-anchor="middle" font-family="'DM Serif Display', Georgia, serif" font-size="26" fill="#f5f0e8">The</text>
-  <text x="170" y="88" text-anchor="middle" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#fff8ec">Netw</text>
-  <circle cx="208" cy="72" r="11" fill="#faf6ee" stroke="#fff8ec" stroke-width="2.5"/>
-  <circle cx="208" cy="72" r="17" fill="none" stroke="#fff8ec" stroke-width="2"/>
-  <text x="222" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#fff8ec">rker</text>
+  <text x="32" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#fff8ec">Net</text>
+  <text x="119" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#fff8ec">w</text>
+  <circle cx="176" cy="72" r="11" fill="#faf6ee" stroke="#fff8ec" stroke-width="2.5"/>
+  <circle cx="176" cy="72" r="17" fill="none" stroke="#fff8ec" stroke-width="2"/>
+  <text x="193" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#fff8ec">rker</text>
   <text x="170" y="124" text-anchor="middle" font-family="'DM Serif Display', Georgia, serif" font-size="26" fill="#f5f0e8">Hub</text>
 </svg>

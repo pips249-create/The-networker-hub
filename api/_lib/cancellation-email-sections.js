@@ -98,21 +98,33 @@ function cancellationBlockedMessage(eventRow) {
   return 'This booking cannot be cancelled from your account right now.';
 }
 
+function isOrganiserCancelledEvent(eventRow) {
+  return String(eventRow?.status || '').trim().toLowerCase() === 'cancelled';
+}
+
+function wasPaidRegistration(registration) {
+  const status = String(registration?.payment_status || '').trim();
+  const amount = Number(registration?.amount_paid);
+  return (
+    Number.isFinite(amount) &&
+    amount > 0 &&
+    (status === 'Paid' || status === 'Refunded')
+  );
+}
+
 function deriveRefundStatusForCancelledRegistration(eventRow, registration) {
   if (!registration?.cancelled_at) return null;
-  if (!isPaidRegistration(registration)) return 'none';
-  const eligibleAtCancel = isRefundEligibleForCancellation(
-    eventRow,
-    registration,
-    registration.cancelled_at
-  );
-  if (!eligibleAtCancel) return 'none';
-  if (
-    registration.refund_email_sent_at ||
-    String(registration.payment_status || '').trim() === 'Refunded'
-  ) {
+  if (!wasPaidRegistration(registration)) return 'none';
+
+  const paymentStatus = String(registration?.payment_status || '').trim();
+  if (registration.refund_email_sent_at || paymentStatus === 'Refunded') {
     return 'completed';
   }
+
+  const eligibleAtCancel =
+    isOrganiserCancelledEvent(eventRow) ||
+    isRefundEligibleForCancellation(eventRow, registration, registration.cancelled_at);
+  if (!eligibleAtCancel) return 'none';
   return 'pending';
 }
 
@@ -316,11 +328,13 @@ module.exports = {
   DEFAULT_FULL_REFUND_CUTOFF_DAYS,
   effectiveRefundCutoffDaysForPolicy,
   isPaidRegistration,
+  wasPaidRegistration,
   daysUntilEvent,
   effectiveRefundCutoffDays,
   isWithinFullRefundWindow,
   isRefundEligibleForCancellation,
   isSelfServiceCancellationAllowed,
+  isOrganiserCancelledEvent,
   cancellationBlockedMessage,
   deriveRefundStatusForCancelledRegistration,
   buildRefundStatusLabel,

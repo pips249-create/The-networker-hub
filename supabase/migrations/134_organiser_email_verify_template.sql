@@ -10,7 +10,7 @@ values (
   array[
     'user_name', 'user_email', 'verify_url',
     'site_url', 'logo_url', 'logo_footer_url',
-    'privacy_url', 'terms_url', 'contact_url', 'support_email'
+    'privacy_url', 'terms_url', 'refunds_url', 'contact_url', 'support_email'
   ],
   'organiser'
 )

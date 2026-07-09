@@ -11,6 +11,7 @@ const {
   deriveRefundStatusForCancelledRegistration,
 } = require('./cancellation-email-sections');
 const { listOpportunityEnquiriesSentBySession } = require('./supabase-opportunities');
+const { reconcileCancelledRegistrationRefunds } = require('./reconcile-cancelled-refunds');
 
 function deriveReviewStatus(hasReview, row) {
   const ev = row.events || {};
@@ -86,7 +87,7 @@ function mapRegistrationRow(row, reviewByEventId) {
     refundCutoffDays: booked.refundCutoffDays,
     refundPolicyLabel: booked.refundPolicyLabel,
     refundPolicyText: booked.refundPolicyText,
-    refundEligible: isRefundEligibleForCancellation(booked.eventRow, row),
+    refundEligible: isRefundEligibleForCancellation(ev, row),
     isCancelled: false,
     cancelledAt: null,
     refundStatus: null,
@@ -108,7 +109,7 @@ function mapCancelledRegistrationRow(row) {
   const booked = resolveBookedListing({ registration: row, eventRow: ev, ticketRow: ticket });
   const paymentStatus = String(row.payment_status || 'Pending').trim();
   const amountPaid = booked.amountPaid;
-  const refundStatus = deriveRefundStatusForCancelledRegistration(booked.eventRow, row);
+  const refundStatus = deriveRefundStatusForCancelledRegistration(ev, row);
   let refundLabel = 'Cancelled';
   if (refundStatus === 'pending') {
     refundLabel = 'Refund on its way';
@@ -219,6 +220,8 @@ async function listCancelledRegistrationsForAttendee(sb, attendeeId) {
       amount_paid,
       quantity,
       booked_snapshot,
+      organiser_id,
+      stripe_payment_intent_id,
       events (
         id,
         title,
@@ -297,11 +300,13 @@ async function getAttendeeDashboardFromSupabase(session) {
     };
   }
 
-  const [rows, cancelledRows, reviewByEventId] = await Promise.all([
+  const [rows, cancelledRowsRaw, reviewByEventId] = await Promise.all([
     listRegistrationsForAttendee(sb, attendeeId),
     listCancelledRegistrationsForAttendee(sb, attendeeId),
     listReviewsForAttendee(sb, attendeeId),
   ]);
+
+  const cancelledRows = await reconcileCancelledRegistrationRefunds(sb, cancelledRowsRaw);
 
   const registrations = rows.map((row) => mapRegistrationRow(row, reviewByEventId));
   const cancelledBookings = cancelledRows.map((row) => mapCancelledRegistrationRow(row));

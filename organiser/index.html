@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260709e" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260709f" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260702b" />
   </head>
   <body class="organiser-dashboard-page">
@@ -138,6 +138,8 @@
               <h1 class="org-page-title" id="org-page-title">Overview</h1>
               <p class="org-page-lead" id="org-page-lead">Open an area below to get started.</p>
             </div>
+            <div class="org-page-head-actions">
+              <button type="button" class="ee-hubert-help-btn" data-hubert-help>Hubert&apos;s help</button>
             <div class="org-overview-add" id="org-add-menu-wrap">
               <button
                 type="button"
@@ -164,7 +166,19 @@
                 </button>
               </div>
             </div>
+            </div>
           </header>
+
+          <div class="org-setup-resume" id="org-setup-resume" hidden>
+            <div class="org-setup-resume-text">
+              <strong id="org-setup-resume-title">Finish your setup</strong>
+              <span id="org-setup-resume-body">Confirm your organiser page, then list your first event.</span>
+            </div>
+            <div class="org-setup-resume-actions">
+              <button type="button" class="org-btn org-btn-outline org-btn-sm" id="org-setup-resume-dismiss">Dismiss</button>
+              <button type="button" class="org-btn org-btn-gold org-btn-sm" id="org-setup-resume-go">Continue setup →</button>
+            </div>
+          </div>
 
           <div class="org-hub-portals" aria-label="Workspace areas">
             <button type="button" class="org-hub-portal org-hub-portal--events" data-org-route="events-overview">
@@ -197,7 +211,9 @@
                 <h2 class="org-getting-started-title">Here&apos;s what to do first</h2>
                 <p class="org-section-sub org-getting-started-sub">
                   <span id="org-getting-started-progress">2 steps to get your workspace ready.</span>
-                  <a href="../guides.html" class="org-getting-started-guides">Organiser guides</a>
+                  <a href="../guides/list-a-conference-or-exhibition.html" class="org-getting-started-guides">Conferences guide</a>
+                  ·
+                  <a href="../guides.html" class="org-getting-started-guides">All guides</a>
                 </p>
               </div>
               <button type="button" class="org-btn org-btn-outline org-btn-sm" id="org-getting-started-dismiss">Dismiss</button>
@@ -1275,7 +1291,7 @@
         aria-modal="true"
         aria-labelledby="org-ready-event-title"
       >
-        <p class="org-group-claim-kicker">Step 4 — your first event</p>
+        <p class="org-group-claim-kicker">Step 2 of 2 — your first event</p>
         <h2 class="org-group-claim-title" id="org-ready-event-title">Ready to add an event?</h2>
         <p class="org-group-claim-intro">
           Your organiser page is set up. List your first meeting, exhibition, or conference — we will walk you through the format and details.
@@ -1536,7 +1552,7 @@
       <div class="org-onboard-backdrop" data-onboard-skip></div>
       <div class="org-onboard-spotlight" aria-hidden="true"></div>
       <div class="org-onboard-popover" role="dialog" aria-modal="true" aria-labelledby="org-onboard-title">
-        <p class="org-onboard-step">1 of 4</p>
+        <p class="org-onboard-step">1 of 2</p>
         <h2 class="org-onboard-title" id="org-onboard-title">Welcome</h2>
         <p class="org-onboard-body"></p>
         <div class="org-onboard-actions">
@@ -1569,10 +1585,10 @@
     <script src="../js/hubert-widget.js?v=20260618" data-root="../" data-hubert="organiser-dashboard"></script>
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
     <script src="../js/organiser-flow-tour.js?v=20260703"></script>
-    <script src="../js/organiser-onboarding.js?v=20260703"></script>
+    <script src="../js/organiser-onboarding.js?v=20260709"></script>
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
     <script src="../js/organiser-payment-setup.js?v=20260709e"></script>
     <script src="../js/review-report.js?v=20260708"></script>
-    <script src="../js/organiser-dashboard.js?v=20260709f"></script>
+    <script src="../js/organiser-dashboard.js?v=20260709g"></script>
   </body>
 </html>

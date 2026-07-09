@@ -10748,12 +10748,13 @@
   function renderCampaigns() {
     main.innerHTML =
       '<div class="space-y-6 max-w-3xl">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Legacy bulk send for <strong>organiser claim-profile invites</strong>.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Bulk send <strong>organiser claim-profile invites</strong> (max 50 per batch). Default link opens the claim flow on the organiser dashboard.</p>' +
       '<form id="campaign-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">' +
       '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-recipients">Recipient emails</label>' +
       '<textarea id="campaign-recipients" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[120px]" placeholder="organiser@example.com&#10;one per line"></textarea>' +
       '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-claim-url">Claim URL override <span class="font-normal normal-case">(optional)</span></label>' +
-      '<input type="url" id="campaign-claim-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="https://…">' +
+      '<input type="url" id="campaign-claim-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Leave blank for default claim deep-link">' +
+      '<p class="text-xs text-slate-500">Default: <code class="text-xs">/login.html?email=…&amp;next=/organiser/index.html?onboard=claim</code></p>' +
       '<div class="flex flex-wrap items-center gap-3 pt-2">' +
       '<button type="submit" class="rounded-lg bg-slate-800 text-white text-sm font-semibold px-4 py-2 hover:bg-slate-900" id="campaign-submit">Send batch (max 50)</button>' +
       '<span id="campaign-status" class="text-sm text-slate-500"></span></div>' +

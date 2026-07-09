@@ -5,6 +5,7 @@
 (function (global) {
   var TYPES = [
     { value: 'Meeting', label: 'Meeting' },
+    { value: 'Conference', label: 'Conference' },
     { value: 'Events', label: 'Events' },
     { value: 'Exhibition', label: 'Exhibition' },
     { value: 'Awards', label: 'Awards' },
@@ -22,7 +23,7 @@
     "women's networking": 'Meeting',
     'women only': 'Meeting',
     'women-only': 'Meeting',
-    conference: 'Meeting',
+    conference: 'Conference',
     webinar: 'Webinar',
     session: 'Session',
     'sport & social': 'Meeting',
@@ -54,7 +55,8 @@
     if (/webinar/i.test(t)) return 'Webinar';
     if (/workshop/i.test(t)) return 'Workshop';
     if (/\bsession\b/i.test(t)) return 'Session';
-    if (/conference|summit|festival|award|netwalk|golf|padel|tennis|sport|social sport/i.test(t)) {
+    if (/conference|summit/i.test(t)) return 'Conference';
+    if (/festival|award|netwalk|golf|padel|tennis|sport|social sport/i.test(t)) {
       return 'Meeting';
     }
     if (/women/i.test(t) && /network|only|business/i.test(t)) return 'Meeting';

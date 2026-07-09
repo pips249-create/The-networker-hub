@@ -285,6 +285,9 @@
     if (status === 'completed') {
       return '<span class="ad-badge ad-badge-green">Refunded</span>';
     }
+    if (Number(reg?.amountPaid) > 0) {
+      return '<span class="ad-badge ad-badge-grey">No refund due</span>';
+    }
     return '<span class="ad-badge ad-badge-grey">Cancelled</span>';
   }
 
@@ -1325,10 +1328,11 @@
       return 'Your refund of ' + amount + ' has been issued to your original payment method.';
     }
     if (Number(reg.amountPaid) > 0) {
-      return (
-        'No refund is due for this cancellation under the organiser\'s policy' +
-        (reg.refundPolicyLabel ? ' (' + reg.refundPolicyLabel + ').' : '.')
-      );
+      const policyText = String(reg.refundPolicyText || '').trim();
+      if (policyText) {
+        return 'No refund is due for this cancellation. ' + policyText;
+      }
+      return 'No refund is due for this cancellation under the organiser\'s refund policy.';
     }
     return 'This was a free registration — no payment was taken.';
   }

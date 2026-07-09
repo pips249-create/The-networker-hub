@@ -1,34 +1,20 @@
 (function () {
-  var TOUR_KEY = 'hub_organiser_tour_v1';
+  var TOUR_KEY = 'hub_organiser_tour_v2';
   var CHECKLIST_KEY = 'hub_getting_started_dismissed';
   var PROFILE_REVIEW_KEY = 'hub_organiser_profile_review_v1';
   var READY_EVENT_KEY = 'hub_ready_event_dismissed';
+  var RESUME_KEY = 'hub_setup_resume_dismissed';
 
   var steps = [
     {
-      title: 'Welcome to your organiser dashboard',
-      body: 'This is your home for organiser pages, events, and tickets. We\'ll show you the essentials in a quick tour.',
+      title: 'Welcome to your organiser workspace',
+      body: 'Two steps to go live: confirm your organiser page, then list your first event. We\'ll highlight your checklist — Hubert can answer questions anytime.',
       target: null,
     },
     {
-      title: 'Navigate from the sidebar',
-      body: 'Use the sidebar to jump between Overview, My events (organiser pages, listings, tickets), and more. On mobile, swipe the menu bar horizontally.',
-      target: '.org-sidebar',
-    },
-    {
-      title: 'Add something new',
-      body: 'Tap + Add new to create an organiser page, list an event, or publish a business opportunity.',
-      target: '#org-add-menu-wrap',
-    },
-    {
-      title: 'Invite your team',
-      body: 'Open Team & invites in the sidebar — or use the quick link on Overview — to add editors who can help manage events. When you finish the tour, we will confirm your organiser page next.',
-      target: '[data-org-route="team"]',
-      afterShow: function () {
-        if (typeof window.orgDashSetRoute === 'function') {
-          window.orgDashSetRoute('dashboard');
-        }
-      },
+      title: 'Your setup checklist',
+      body: 'Follow these steps on Overview. Claim your group if prompted, check your organiser page, then list a meeting, exhibition, or conference.',
+      target: '#org-getting-started',
     },
   ];
 
@@ -90,6 +76,22 @@
     }
   }
 
+  function isResumeDismissed() {
+    try {
+      return localStorage.getItem(RESUME_KEY) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function markResumeDismissed() {
+    try {
+      localStorage.setItem(RESUME_KEY, '1');
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function shouldDeferGroupClaim() {
     return shouldAutoStart() && !isTourDone();
   }
@@ -97,6 +99,7 @@
   function shouldAutoStart() {
     if (isTourDone()) return false;
     var params = new URLSearchParams(window.location.search);
+    if (params.get('onboard') === 'claim') return false;
     return params.get('onboard') === '1' || !isTourDone();
   }
 
@@ -224,13 +227,16 @@
         } catch (e) {
           /* ignore */
         }
+        if (window.orgDashUpdateSetupResume) window.orgDashUpdateSetupResume();
       });
     }
 
     var hubertBtn = document.getElementById('org-open-hubert');
     if (hubertBtn) {
       hubertBtn.addEventListener('click', function () {
-        if (window.HubertWidget && window.HubertWidget.open) {
+        if (window.HubFlowTour && window.HubFlowTour.openHelp) {
+          window.HubFlowTour.openHelp();
+        } else if (window.HubertWidget && window.HubertWidget.open) {
           window.HubertWidget.open();
         }
       });
@@ -256,6 +262,12 @@
 
   function initAfterDashboardReady() {
     bindGettingStarted();
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('onboard') === 'claim' && window.orgDashOpenClaimModal) {
+      markTourDone();
+      window.orgDashOpenClaimModal();
+      return;
+    }
     if (!tourAutoStarted && shouldAutoStart()) {
       tourAutoStarted = true;
       window.setTimeout(showTour, 400);
@@ -277,6 +289,8 @@
     markProfileReviewDone: markProfileReviewDone,
     isReadyEventDismissed: isReadyEventDismissed,
     markReadyEventDismissed: markReadyEventDismissed,
+    isResumeDismissed: isResumeDismissed,
+    markResumeDismissed: markResumeDismissed,
   };
 
   if (document.readyState === 'loading') {

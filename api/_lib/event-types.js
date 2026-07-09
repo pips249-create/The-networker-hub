@@ -1,6 +1,7 @@
 /** Canonical meeting types — keep in sync with js/meeting-types.js */
 const MEETING_TYPES = [
   'Meeting',
+  'Conference',
   'Events',
   'Exhibition',
   'Awards',
@@ -18,7 +19,7 @@ const LEGACY_TYPE_MAP = {
   "women's networking": 'Meeting',
   'women only': 'Meeting',
   'women-only': 'Meeting',
-  conference: 'Meeting',
+  conference: 'Conference',
   webinar: 'Webinar',
   session: 'Session',
   'sport & social': 'Meeting',
@@ -41,7 +42,8 @@ function normalizeEventType(raw) {
   if (/webinar/i.test(t)) return 'Webinar';
   if (/workshop/i.test(t)) return 'Workshop';
   if (/\bsession\b/i.test(t)) return 'Session';
-  if (/conference|summit|festival|award|netwalk|golf|padel|tennis|sport|social sport/i.test(t)) {
+  if (/conference|summit/i.test(t)) return 'Conference';
+  if (/festival|award|netwalk|golf|padel|tennis|sport|social sport/i.test(t)) {
     return 'Meeting';
   }
   if (/women/i.test(t) && /network|only|business/i.test(t)) return 'Meeting';
@@ -59,6 +61,7 @@ function slugForEventType(type) {
 function parseTypeCategory(raw) {
   const t = normalizeEventType(raw);
   if (t === 'Exhibition') return 'exhibition';
+  if (t === 'Conference') return 'conference';
   if (t === 'Events') return 'events';
   if (t === 'Awards') return 'awards';
   if (t === 'Webinar') return 'webinar';

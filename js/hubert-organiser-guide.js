@@ -12,7 +12,7 @@
     'group-edit':
       'Your organiser page is the home for your events. Ask if anything on this page is unclear.',
     'organiser-dashboard':
-      "I'm here on your organiser dashboard — ask about organiser pages, listing events, tickets, payouts, or inviting your team.",
+      "I'm here on your organiser dashboard — ask about claiming your page, listing events, tickets, payouts, or inviting your team.",
   };
 
   var SUGGESTIONS = {
@@ -44,12 +44,14 @@
     ],
     'group-edit': [
       { label: 'First event', prompt: 'What happens after I save my organiser page?' },
+      { label: 'Conference or exhibition', prompt: 'Should I list my event as a Conference or Exhibition?' },
       { label: 'Logo & name', prompt: 'What should I use for my group logo and name?' },
       { label: 'Contact email', prompt: 'Who sees the contact email on my organiser page?' },
     ],
     'organiser-dashboard': [
+      { label: 'Claim my group', prompt: 'How do I claim my organiser page on the hub?' },
+      { label: 'Conference or exhibition', prompt: 'How do I list a conference or exhibition?' },
       { label: 'List an event guide', prompt: 'Where is the step-by-step guide for listing an event?' },
-      { label: 'Create an organiser page', prompt: 'How do I create an organiser page on the organiser dashboard?' },
       { label: 'List an event', prompt: 'How do I list my first event?' },
       { label: 'Stripe payouts', prompt: 'How do Stripe Connect payouts work for organisers?' },
       { label: 'Invite my team', prompt: 'How do I invite team members to help manage events?' },

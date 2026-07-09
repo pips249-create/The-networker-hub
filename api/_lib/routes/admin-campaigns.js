@@ -96,7 +96,11 @@ module.exports = async function handler(req, res) {
         .replace(/\b\w/g, (c) => c.toUpperCase());
     const claimUrl =
       baseVars.claim_url ||
-      host + '/register.html?email=' + encodeURIComponent(email);
+      host +
+        '/login.html?email=' +
+        encodeURIComponent(email) +
+        '&next=' +
+        encodeURIComponent('/organiser/index.html?onboard=claim');
     try {
       await sendTemplatedEmail({
         slug,

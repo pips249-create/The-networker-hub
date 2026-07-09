@@ -74,7 +74,7 @@
 
 /**
  * Shared site navigation — same bar on every page.
- * NAV_BUILD=20260708 — wider nav links, larger logo; mobile label parity.
+ * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
   var NAV_BUILD = '20260713b';
@@ -463,8 +463,8 @@
       href('/') +
       '" aria-label="The Networker Hub home">' +
       '<img src="' +
-      href('assets/logo-nav.png') +
-      '" alt="The Networker Hub" width="300" height="120">' +
+      href('assets/logo-nav-transparent.png?v=20260709h') +
+      '" alt="The Networker Hub" width="714" height="193">' +
       '</a>' +
       '<nav class="nav-links" aria-label="Main">' +
       buildNavLinks(user, pending) +

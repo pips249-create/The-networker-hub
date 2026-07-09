@@ -102,6 +102,7 @@ function slugFormat(fmt) {
 function eventTypeTabCategory(raw) {
   const t = normalizeEventType(raw);
   if (t === 'Exhibition') return 'exhibition';
+  if (t === 'Conference') return 'conference';
   if (t === 'Events') return 'events';
   if (t === 'Awards') return 'awards';
   if (t === 'Webinar') return 'webinar';

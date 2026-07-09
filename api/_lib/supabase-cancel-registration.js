@@ -93,6 +93,7 @@ async function cancelRegistrationForAttendee(session, registrationId) {
   let organiserEmailResult = null;
   let refundEmailResult = null;
   const refundIssued = Boolean(refundResult?.issued && !refundResult?.skipped);
+  const refundPending = Boolean(refundEligible && !refundIssued);
   const emailOptions = {
     refundIssued,
     sessionEmail: String(session?.email || '').trim(),
@@ -121,6 +122,7 @@ async function cancelRegistrationForAttendee(session, registrationId) {
     amountPaid: registration.amount_paid,
     refundEligible,
     refundIssued,
+    refundPending,
     refundResult,
     emailResult,
     organiserEmailResult,

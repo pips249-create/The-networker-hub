@@ -5599,6 +5599,7 @@
     try {
       if (localStorage.getItem('hub_getting_started_dismissed') === '1') {
         panel.hidden = true;
+        updateSetupResumeBanner();
         return;
       }
     } catch (err) {
@@ -5607,6 +5608,7 @@
 
     if ((state.pendingClaimGroups || []).length > 0) {
       panel.hidden = true;
+      updateSetupResumeBanner();
       return;
     }
 
@@ -5616,6 +5618,7 @@
 
     if (coreDone) {
       panel.hidden = true;
+      updateSetupResumeBanner();
       return;
     }
 
@@ -5669,7 +5672,95 @@
         badge.remove();
       }
     });
+
+    updateSetupResumeBanner();
   }
+
+  function updateSetupResumeBanner() {
+    const banner = document.getElementById('org-setup-resume');
+    if (!banner || state.adminView) return;
+
+    const onboarding = window.HubOrganiserOnboarding;
+    if (onboarding && onboarding.isResumeDismissed && onboarding.isResumeDismissed()) {
+      banner.hidden = true;
+      return;
+    }
+
+    if ((state.pendingClaimGroups || []).length > 0) {
+      banner.hidden = true;
+      return;
+    }
+
+    const progress = gettingStartedProgress();
+    if (progress.hasGroup && progress.hasEvent) {
+      banner.hidden = true;
+      return;
+    }
+
+    const checklistDismissed = (function () {
+      try {
+        return localStorage.getItem('hub_getting_started_dismissed') === '1';
+      } catch (e) {
+        return false;
+      }
+    })();
+    const tourDone = onboarding && onboarding.isTourDone && onboarding.isTourDone();
+    const panel = document.getElementById('org-getting-started');
+    const checklistVisible = panel && !panel.hidden;
+
+    if (!checklistDismissed && !tourDone && !checklistVisible) {
+      banner.hidden = true;
+      return;
+    }
+
+    const titleEl = document.getElementById('org-setup-resume-title');
+    const bodyEl = document.getElementById('org-setup-resume-body');
+    if (!progress.hasGroup) {
+      if (titleEl) titleEl.textContent = 'Step 1 of 2 — organiser page';
+      if (bodyEl) {
+        bodyEl.textContent = 'Create or claim your organiser page to get started on the hub.';
+      }
+    } else {
+      if (titleEl) titleEl.textContent = 'Step 2 of 2 — list an event';
+      if (bodyEl) {
+        bodyEl.textContent = 'Your organiser page is ready — publish your first meeting, exhibition, or conference.';
+      }
+    }
+
+    banner.hidden = false;
+  }
+
+  function bindSetupResumeUi() {
+    const dismissBtn = document.getElementById('org-setup-resume-dismiss');
+    const goBtn = document.getElementById('org-setup-resume-go');
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', function () {
+        if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.markResumeDismissed) {
+          window.HubOrganiserOnboarding.markResumeDismissed();
+        }
+        updateSetupResumeBanner();
+      });
+    }
+    if (goBtn) {
+      goBtn.addEventListener('click', function () {
+        const progress = gettingStartedProgress();
+        if (!progress.hasGroup) {
+          window.location.href = 'group-edit.html';
+          return;
+        }
+        if (window.HubFlowTour) window.HubFlowTour.markEventTourPending();
+        const groupId = state.groups.length ? state.groups[0].id : '';
+        openNewEventEditorDrawer({ groupId: groupId });
+      });
+    }
+  }
+
+  window.orgDashUpdateSetupResume = updateSetupResumeBanner;
+  window.orgDashOpenClaimModal = function () {
+    if ((state.pendingClaimGroups || []).length > 0) {
+      renderGroupClaimModal();
+    }
+  };
 
   /** @deprecated use updateGettingStartedPanel */
   function updateGettingStartedVisibility() {
@@ -5780,8 +5871,8 @@
     if (kicker) {
       kicker.textContent =
         list.length > 1
-          ? 'Step 2 — profile 1 of ' + list.length
-          : 'Step 2 — confirm your group';
+          ? 'Step 1 of 2 — profile 1 of ' + list.length
+          : 'Step 1 of 2 — confirm your group';
     }
     if (nameEl) nameEl.textContent = group.name || 'Organiser page';
     if (emailEl) {
@@ -7326,6 +7417,7 @@
     bindTeamUi();
     bindOnboardingPipeline();
     bindGroupClaimUi();
+    bindSetupResumeUi();
     bindReadyEventUi();
     bindUi();
     const initial = resolveInitialRoute();

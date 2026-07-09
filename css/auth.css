@@ -860,22 +860,37 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: clamp(88px, 16vw, 140px);
+  min-height: clamp(68px, 12vw, 96px);
 }
 
+.payment-setup-hub-brand.nav-logo {
+  margin: 0;
+  padding: 0;
+  line-height: 0;
+  background: transparent;
+}
+
+.payment-setup-hub-brand.nav-logo img,
 .payment-setup-hub-logo {
   display: block;
+  height: clamp(68px, 12vw, 96px);
   width: auto;
-  height: clamp(88px, 16vw, 140px);
-  max-width: min(360px, 42vw);
+  max-width: min(300px, 46vw);
   object-fit: contain;
+  object-position: center center;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  vertical-align: middle;
 }
 
 .payment-setup-stripe-logo {
   display: block;
   width: auto;
-  height: clamp(72px, 13vw, 112px);
-  max-width: min(320px, 38vw);
+  height: clamp(56px, 10vw, 88px);
+  max-width: min(280px, 36vw);
   object-fit: contain;
 }
 
@@ -1082,16 +1097,17 @@
   }
 
   .payment-setup-brand {
-    min-height: clamp(72px, 22vw, 110px);
+    min-height: 68px;
   }
 
+  .payment-setup-hub-brand.nav-logo img,
   .payment-setup-hub-logo {
-    height: clamp(72px, 22vw, 110px);
-    max-width: min(78vw, 300px);
+    height: 68px;
+    max-width: min(46vw, 300px);
   }
 
   .payment-setup-stripe-logo {
-    height: clamp(56px, 17vw, 88px);
-    max-width: min(70vw, 260px);
+    height: clamp(48px, 14vw, 72px);
+    max-width: min(68vw, 240px);
   }
 }

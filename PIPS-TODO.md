@@ -10,7 +10,7 @@
 
 ## Project status (snapshot)
 
-**Overall launch readiness: ~78%** — money path and data path done; SEO domain setup, comms, and business ops remain.
+**Overall launch readiness: ~80%** — money path, claim onboarding, and conference type done; SEO domain setup, comms send, and business ops remain.
 
 | Area | Progress | Status |
 |------|----------|--------|
@@ -33,6 +33,10 @@
 
 ### Recently completed (July 2026)
 
+- **Conference** event type + browse filter (`135_event_type_conference.sql`)
+- **Conference/exhibition organiser guide** (`guides/list-a-conference-or-exhibition.html`)
+- **Onboarding polish** — 2-step dashboard tour, Hubert on Overview, resume banner, `?onboard=claim` deep-link
+- **Beta email playbook** — `docs/BETA-EMAIL-JULY.md`; claim invite template + default claim URL updated
 - Prod Stripe checkout tested end-to-end
 - Resend on prod — confirmation emails send correctly
 - `STRIPE_CONNECT_ENABLED=true` on production
@@ -105,7 +109,7 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 | [x] | 6 | Events + groups auto-approve; reviews/opportunities still moderated |
 | [x] | 6 | Stripe Connect enabled on prod (`STRIPE_CONNECT_ENABLED=true`) |
 | [ ] | 6–7 | Deploy SEO assets; confirm sitemap indexes all groups + published events |
-| [ ] | 7 | **Beta email** to 50–100 organisers from the 3,500 list — “Claim your profile, republish one event” |
+| [ ] | 7 | **Beta email** to 50–100 organisers — see `docs/BETA-EMAIL-JULY.md` |
 | [ ] | 7–8 | Fix beta feedback; target **20 groups** with at least 1 published event |
 | [ ] | 8 | Load test: browse + organiser pages with 1,000+ group profiles |
 | [ ] | 8 | Optional: city landing pages or server-side meta for top SEO win |

@@ -3408,6 +3408,45 @@ body.org-cancel-modal-open {
 }
 
 /* ─── Getting started checklist ─── */
+.org-page-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.org-setup-resume {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: var(--od-radius);
+  border: 1px solid #d9c4e0;
+  background: #faf6fc;
+}
+
+.org-setup-resume-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.92rem;
+  color: var(--od-text-muted, #635c5e);
+}
+
+.org-setup-resume-text strong {
+  color: var(--od-text, #4a4446);
+  font-size: 0.98rem;
+}
+
+.org-setup-resume-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .org-getting-started {
   margin-bottom: 16px;
   padding: 14px 16px;
