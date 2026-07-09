@@ -1,5 +1,6 @@
 const { sendTemplatedEmail } = require('./send-template-email');
 const { isOnlineEvent, escapeHtml } = require('./event-refund-policy');
+const { resolveBookedListing } = require('./booking-snapshot');
 const {
   formatBookingReference,
   formatBookedAt,
@@ -56,11 +57,18 @@ function buildAttendeeEmailVars({
   ticketName,
   organiserName,
   amountPaid,
+  ticketRow,
 }) {
   const registrationId = registration.id;
   const attendeeName = String(attendee?.name || '').trim() || 'there';
   const attendeeEmail = String(attendee?.email || '').trim().toLowerCase();
-  const startsAt = eventRow.starts_at ? new Date(eventRow.starts_at) : null;
+  const booked = resolveBookedListing({
+    registration,
+    eventRow,
+    ticketRow: ticketRow || { name: ticketName },
+  });
+  const ev = booked.eventRow || eventRow || {};
+  const startsAt = ev.starts_at ? new Date(ev.starts_at) : null;
   const eventDate = startsAt
     ? startsAt.toLocaleDateString('en-GB', {
         weekday: 'long',
@@ -73,25 +81,25 @@ function buildAttendeeEmailVars({
     ? startsAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
     : '';
   const eventLocation =
-    String(eventRow.location_label || eventRow.venue || eventRow.city || '').trim() ||
+    String(ev.location_label || ev.venue || ev.city || '').trim() ||
     'See event page';
   const siteUrl = siteBase();
-  const meetingLink = String(registration.meeting_link || eventRow.meeting_link || '').trim();
-  const online = isOnlineEvent(eventRow, meetingLink);
-  const ticketQuantity = Math.max(1, parseInt(registration.quantity, 10) || 1);
+  const meetingLink = String(registration.meeting_link || ev.meeting_link || '').trim();
+  const online = isOnlineEvent(ev, meetingLink);
+  const ticketQuantity = Math.max(1, parseInt(registration.quantity, 10) || booked.quantity || 1);
   const bookedAtIso = registration.created_at || new Date().toISOString();
-  const resolvedTicketName = String(ticketName || 'Ticket').trim();
+  const resolvedTicketName = String(ticketName || booked.ticketName || 'Ticket').trim();
   const resolvedAmountPaid =
     amountPaid != null ? amountPaid : formatAmount(registration.amount_paid);
 
   return {
     user_name: attendeeName,
     user_email: attendeeEmail,
-    event_name: String(eventRow.title || 'Event').trim(),
+    event_name: String(ev.title || eventRow?.title || 'Event').trim(),
     event_date: eventDate,
     event_time: eventTime,
     event_location: eventLocation,
-    event_url: eventPublicUrl(eventRow, siteUrl),
+    event_url: eventPublicUrl(eventRow || ev, siteUrl),
     ticket_name: resolvedTicketName,
     amount_paid: resolvedAmountPaid,
     registration_id: registrationId,
@@ -110,10 +118,18 @@ function buildAttendeeEmailVars({
     refunds_url: legalPolicyUrl(siteUrl, 'refunds'),
     organiser_name: organiserName || 'The organiser',
     meeting_link: online ? meetingLink : '',
-    meeting_type: eventRow.meeting_type || (online ? 'Online' : 'In person'),
-    refund_policy: eventRow.refund_policy,
-    refund_policy_details: eventRow.refund_policy_details,
-    refund_cutoff_days: eventRow.refund_cutoff_days,
+    meeting_type: ev.meeting_type || eventRow?.meeting_type || (online ? 'Online' : 'In person'),
+    refund_policy: booked.refundPolicy || ev.refund_policy || eventRow?.refund_policy || null,
+    refund_policy_details:
+      booked.refundPolicyDetails || ev.refund_policy_details || eventRow?.refund_policy_details || null,
+    refund_cutoff_days:
+      booked.refundCutoffDays != null
+        ? booked.refundCutoffDays
+        : ev.refund_cutoff_days != null
+          ? ev.refund_cutoff_days
+          : eventRow?.refund_cutoff_days != null
+            ? eventRow.refund_cutoff_days
+            : null,
     site_url: siteUrl,
     logo_url: siteUrl + '/assets/logo-nav.png',
     dashboard_url: organiserDashboardUrl(siteUrl),
@@ -205,6 +221,7 @@ async function sendRegistrationEmails(sb, registration) {
     ticketName,
     organiserName,
     amountPaid,
+    ticketRow: ticketRes.data,
   });
 
   const sent = { attendee: false, organiser: false, errors: [] };
@@ -325,6 +342,7 @@ async function sendApplicationEmails(sb, registration) {
     ticketName,
     organiserName,
     amountPaid: priceIfApproved,
+    ticketRow: ticketRes.data,
   });
 
   vars.screening_industry = String(registration.screening_answer_industry || '').trim();
@@ -421,6 +439,7 @@ async function sendOrganiserApplicationAlertEmail(sb, registration, options = {}
     ticketName,
     organiserName: organiserContact.name,
     amountPaid: priceIfApproved,
+    ticketRow: ticketRes.data,
   });
   vars.screening_industry = String(registration.screening_answer_industry || '').trim();
   vars.screening_job_title = String(registration.screening_answer_job_title || '').trim();
@@ -533,6 +552,7 @@ async function sendApplicationDecisionEmails(sb, registration, { decision, ticke
     ticketName,
     organiserName,
     amountPaid: priceIfApproved,
+    ticketRow: ticketRes.data,
   });
   vars.price_if_approved = priceIfApproved;
   if (outcome === 'denied') {
@@ -637,6 +657,7 @@ async function sendMeetingLinkAddedEmails(sb, eventId, { previousLink, newLink }
       ticketName,
       organiserName,
       amountPaid: formatAmount(registration.amount_paid),
+      ticketRow: ticketsById.get(registration.ticket_id) || null,
     });
     vars.meeting_link_section = buildMeetingLinkEmailSection(next);
 

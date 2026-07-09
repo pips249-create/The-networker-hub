@@ -1469,7 +1469,7 @@
     const parts = [
       '<button type="button" class="org-series-date-btn" data-edit-event="' +
         esc(ev.id) +
-        '">Edit</button>',
+        '" data-edit-series-date="1">Edit dates</button>',
     ];
     if (eventCanCancel(ev)) {
       parts.push(
@@ -2589,20 +2589,22 @@
     return 'event-edit.html?id=' + encodeURIComponent(ev.id);
   }
 
-  function goToEventEditor(ev) {
-    openEventEditorDrawer(ev);
+  function goToEventEditor(ev, editorOpts) {
+    openEventEditorDrawer(ev, editorOpts);
   }
 
   function eventEditorFrameUrl(opts) {
-    const params = new URLSearchParams();
-    params.set('embed', '1');
+    const frameParams = new URLSearchParams();
+    frameParams.set('embed', '1');
     if (opts && opts.editId) {
-      params.set('id', opts.editId);
+      frameParams.set('id', opts.editId);
+      if (opts.seriesEdit) frameParams.set('seriesEdit', '1');
+      if (opts.seriesDate) frameParams.set('seriesDate', '1');
     } else {
-      params.set('format', (opts && opts.format) || 'in-person');
-      if (opts && opts.groupId) params.set('groupId', opts.groupId);
+      frameParams.set('format', (opts && opts.format) || 'in-person');
+      if (opts && opts.groupId) frameParams.set('groupId', opts.groupId);
     }
-    return 'event-edit.html?' + params.toString();
+    return 'event-edit.html?' + frameParams.toString();
   }
 
   function openNewEventEditorDrawer(options) {
@@ -2761,9 +2763,12 @@
         if (drawerOpts.groupId) qs.set('groupId', drawerOpts.groupId);
         location.href = 'event-edit.html?' + qs.toString();
       } else {
-        location.href = editId
-          ? 'event-edit.html?id=' + encodeURIComponent(editId)
-          : 'event-edit.html?format=in-person';
+        const qs = new URLSearchParams();
+        if (editId) qs.set('id', editId);
+        else qs.set('format', 'in-person');
+        if (drawerOpts.seriesEdit) qs.set('seriesEdit', '1');
+        if (drawerOpts.seriesDate) qs.set('seriesDate', '1');
+        location.href = 'event-edit.html?' + qs.toString();
       }
       return;
     }
@@ -2788,8 +2793,18 @@
         );
         return;
       }
-      drawerTitle = ev.title ? 'Edit: ' + ev.title : 'Edit event';
-      frameUrl = eventEditorFrameUrl({ editId: editId });
+      if (drawerOpts.seriesDate) {
+        drawerTitle = 'Edit date in series';
+      } else {
+        drawerTitle = ev.title ? 'Edit: ' + ev.title : 'Edit event';
+      }
+      const frameOpts = { editId: editId };
+      if (drawerOpts.seriesEdit) frameOpts.seriesEdit = true;
+      if (drawerOpts.seriesDate) frameOpts.seriesDate = true;
+      if (!drawerOpts.seriesDate && ev.isSeries && ev.seriesCount > 1) {
+        frameOpts.seriesEdit = true;
+      }
+      frameUrl = eventEditorFrameUrl(frameOpts);
       openEventDrawerFrame(frameUrl, drawerTitle, ev);
       return;
     }
@@ -2889,21 +2904,71 @@
     openDeleteEventModal(eventId);
   }
 
+  function resolveSeriesPeersForEvent(ev) {
+    if (!ev || !ev.id) return { eventIds: [], events: [] };
+    const allEvents = state.events.slice();
+    (state.upcomingEvents || []).forEach(function (peer) {
+      if (peer && peer.id && !allEvents.some(function (e) {
+        return e.id === peer.id;
+      })) {
+        allEvents.push(peer);
+      }
+    });
+    const key = eventSeriesBucketKey(ev, { allEvents: allEvents });
+    if (key.indexOf('solo:') === 0) {
+      return {
+        eventIds: [ev.id],
+        events: [
+          {
+            id: ev.id,
+            title: ev.title,
+            date: ev.date,
+            imageUrl: ev.imageUrl || '',
+          },
+        ],
+      };
+    }
+    const peers = allEvents.filter(function (peer) {
+      return eventSeriesBucketKey(peer, { allEvents: allEvents }) === key;
+    });
+    const sorted = sortEventsByDate(peers);
+    return {
+      eventIds: sorted.map(function (item) {
+        return item.id;
+      }),
+      events: sorted.map(function (item) {
+        return {
+          id: item.id,
+          title: item.title,
+          date: item.date,
+          imageUrl: item.imageUrl || '',
+        };
+      }),
+    };
+  }
+
   function goToEventTickets(ev) {
     if (!ev || !ev.id) return;
-    const eventIds =
-      ev.isSeries && ev.seriesEventIds && ev.seriesEventIds.length ? ev.seriesEventIds : [ev.id];
-    const seriesEvents =
-      ev.isSeries && ev.seriesEvents && ev.seriesEvents.length
-        ? ev.seriesEvents
-        : [
-            {
-              id: ev.id,
-              title: ev.title,
-              date: ev.date,
-              imageUrl: ev.imageUrl || '',
-            },
-          ];
+    let eventIds;
+    let seriesEvents;
+    if (ev.isSeries && ev.seriesEventIds && ev.seriesEventIds.length) {
+      eventIds = ev.seriesEventIds;
+      seriesEvents = ev.seriesEvents || [];
+    } else {
+      const resolved = resolveSeriesPeersForEvent(ev);
+      eventIds = resolved.eventIds.length ? resolved.eventIds : [ev.id];
+      seriesEvents =
+        resolved.events.length > 0
+          ? resolved.events
+          : [
+              {
+                id: ev.id,
+                title: ev.title,
+                date: ev.date,
+                imageUrl: ev.imageUrl || '',
+              },
+            ];
+    }
     try {
       sessionStorage.setItem(
         'hub_event_series',
@@ -3489,8 +3554,12 @@
       closeAllActionMenus();
       const eid = editEventBtn.getAttribute('data-edit-event');
       const ev = findEventById(eid);
-      if (ev) goToEventEditor(ev);
-      else if (eid) openEventEditorDrawer(eid);
+      const editorOpts = {};
+      if (editEventBtn.getAttribute('data-edit-series-date') === '1') {
+        editorOpts.seriesDate = true;
+      }
+      if (ev) goToEventEditor(ev, editorOpts);
+      else if (eid) openEventEditorDrawer(eid, editorOpts);
       return true;
     }
 

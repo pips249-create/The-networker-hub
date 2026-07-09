@@ -42,6 +42,9 @@
   let photoFile = null;
   let groups = [];
   let currentEventLocked = false;
+  let currentSeriesPeerCount = 0;
+  let currentSeriesDateOnly = false;
+  let currentSeriesContext = null;
 
   function countWords(text) {
     return String(text || '')
@@ -226,12 +229,162 @@
     });
     const datesCard = document.getElementById('ee-card-dates');
     if (datesCard) datesCard.classList.toggle('is-locked', currentEventLocked);
+    refreshSeriesEditUi();
+  }
+
+  const SERIES_SHARED_FIELD_SELECTORS = [
+    '#ee-group',
+    '#ee-title',
+    '#ee-type',
+    '#ee-description',
+    '#ee-venue',
+    '#ee-address1',
+    '#ee-city',
+    '#ee-postcode',
+    '#ee-platform',
+    '#ee-join-link',
+    '#ee-photo-url',
+    '#ee-start-time',
+    '#ee-end-time',
+  ];
+
+  const SERIES_SHARED_CARD_IDS = ['ee-card-group', 'ee-card-details', 'ee-card-location'];
+
+  function pickPrimarySeriesEvent(peers) {
+    const sorted = sortEventsByDate(peers);
+    const now = Date.now();
+    const upcoming = sorted.find((ev) => {
+      if (!ev.date) return false;
+      const d = new Date(ev.date).getTime();
+      return !Number.isNaN(d) && d >= now - 86400000;
+    });
+    return upcoming || sorted[0];
+  }
+
+  function resolveSeriesEditScope(peers, ev) {
+    if (!peers || peers.length <= 1 || !ev || !ev.id) {
+      return { isSeries: false, dateOnly: false, peerCount: 0 };
+    }
+    if (params.get('seriesEdit') === '1') {
+      return { isSeries: true, dateOnly: false, peerCount: peers.length };
+    }
+    if (params.get('seriesDate') === '1') {
+      return { isSeries: true, dateOnly: true, peerCount: peers.length };
+    }
+    const primary = pickPrimarySeriesEvent(peers);
+    return {
+      isSeries: true,
+      dateOnly: ev.id !== primary.id,
+      peerCount: peers.length,
+    };
+  }
+
+  function setSeriesFieldLocked(el, locked) {
+    if (!el) return;
+    el.disabled = locked;
+    const field = el.closest('.ee-field');
+    if (field) field.classList.toggle('is-locked', locked);
+  }
+
+  function refreshSeriesEditUi() {
+    const ctx = currentSeriesContext;
+    if (!ctx || !ctx.peers || !ctx.ev) {
+      currentSeriesPeerCount = 0;
+      currentSeriesDateOnly = false;
+      const seriesBanner = document.getElementById('ee-series-banner');
+      if (seriesBanner) seriesBanner.hidden = true;
+      SERIES_SHARED_CARD_IDS.forEach((id) => {
+        const card = document.getElementById(id);
+        if (card) card.classList.remove('is-series-locked');
+      });
+      if (!currentEventLocked) {
+        SERIES_SHARED_FIELD_SELECTORS.forEach((sel) => {
+          setSeriesFieldLocked(document.querySelector(sel), false);
+        });
+      }
+      return;
+    }
+
+    const scope = resolveSeriesEditScope(ctx.peers, ctx.ev);
+    currentSeriesPeerCount = scope.peerCount;
+    currentSeriesDateOnly = scope.isSeries && scope.dateOnly;
+    const lockShared = currentSeriesDateOnly && !currentEventLocked;
+
+    const seriesBanner = document.getElementById('ee-series-banner');
+    if (seriesBanner) {
+      if (!scope.isSeries) {
+        seriesBanner.hidden = true;
+      } else {
+        seriesBanner.hidden = false;
+        if (currentSeriesDateOnly) {
+          seriesBanner.innerHTML =
+            'This date is part of a <strong>' +
+            scope.peerCount +
+            '-date series</strong>. You can add or remove dates on the calendar below. To change the title, location, times, or description, open <strong>Edit event</strong> on the main series row in My Events.';
+        } else {
+          seriesBanner.innerHTML =
+            'This listing has <strong>' +
+            scope.peerCount +
+            ' dates</strong>. Title, location, times, and description apply to <strong>every date</strong> in the series.';
+        }
+      }
+    }
+
+    const pageTitle = document.getElementById('ee-page-title');
+    const pageLead = document.getElementById('ee-page-lead');
+    if (scope.isSeries && currentSeriesDateOnly) {
+      if (pageTitle) pageTitle.textContent = 'Edit date in series';
+      if (pageLead) {
+        pageLead.textContent =
+          'Add or remove dates on the calendar. Shared details are managed from the main series row in My Events.';
+      }
+    }
+
+    SERIES_SHARED_CARD_IDS.forEach((id) => {
+      const card = document.getElementById(id);
+      if (card) card.classList.toggle('is-series-locked', lockShared);
+    });
+
+    SERIES_SHARED_FIELD_SELECTORS.forEach((sel) => {
+      const el = document.querySelector(sel);
+      if (!el) return;
+      if (currentEventLocked) return;
+      setSeriesFieldLocked(el, lockShared);
+    });
+
+    document.querySelectorAll('[data-ee-format]').forEach((btn) => {
+      btn.disabled = lockShared || currentEventLocked;
+    });
+
+    ['#ee-copy-title-from-group', '#ee-copy-desc-from-group'].forEach((sel) => {
+      const el = document.querySelector(sel);
+      if (el) el.disabled = lockShared || currentEventLocked;
+    });
+
+    const photoZone = document.getElementById('ee-photo-zone');
+    const photoFileInput = document.getElementById('ee-photo-file');
+    const photoClear = document.getElementById('ee-photo-clear');
+    if (photoZone) photoZone.classList.toggle('is-locked', lockShared || currentEventLocked);
+    if (photoFileInput) photoFileInput.disabled = lockShared || currentEventLocked;
+    if (photoClear) photoClear.disabled = lockShared || currentEventLocked;
+
+    if (lockShared) {
+      ['#ee-start-time', '#ee-end-time'].forEach((sel) => {
+        setSeriesFieldLocked(document.querySelector(sel), true);
+      });
+    }
+  }
+
+  function applySeriesEditUi(peers, ev) {
+    currentSeriesContext =
+      peers && peers.length > 1 && ev ? { peers: peers, ev: ev } : null;
+    refreshSeriesEditUi();
   }
 
   function bindFormatToggleButtons() {
     document.querySelectorAll('[data-ee-format]').forEach((btn) => {
       btn.addEventListener('click', () => {
-        if (currentEventLocked) return;
+        if (currentEventLocked || currentSeriesDateOnly) return;
         const fmt = btn.getAttribute('data-ee-format');
         eventFormat = normalizeEventFormat(fmt);
         document.querySelectorAll('[data-ee-format]').forEach((b) => {
@@ -502,6 +655,7 @@
         btn.disabled = true;
       } else {
         btn.addEventListener('click', () => {
+          if (currentEventLocked) return;
           if (selectedDates.has(key)) selectedDates.delete(key);
           else selectedDates.add(key);
           showAlert('');
@@ -832,6 +986,35 @@
     return 'in-person';
   }
 
+  function sortEventsByDate(events) {
+    return (events || []).slice().sort((a, b) => {
+      const da = a.date ? new Date(a.date).getTime() : 0;
+      const db = b.date ? new Date(b.date).getTime() : 0;
+      if (da !== db) return da - db;
+      return String(a.title || '').localeCompare(String(b.title || ''));
+    });
+  }
+
+  function findSeriesPeers(ev, allEvents) {
+    if (!ev || !ev.id) return [];
+    const all = allEvents || [];
+    const seriesGroupId = String(ev.seriesGroupId || '').trim();
+    if (seriesGroupId) {
+      const peers = all.filter((peer) => String(peer.seriesGroupId || '').trim() === seriesGroupId);
+      if (peers.length > 1) return sortEventsByDate(peers);
+    }
+    const groupId = ev.organiserGroupId || ev.groupId || '';
+    const titleKey = String(ev.title || '').trim().toLowerCase();
+    if (!groupId || !titleKey) return [ev];
+    const peers = all.filter((peer) => {
+      const peerGroup = peer.organiserGroupId || peer.groupId || '';
+      return (
+        peerGroup === groupId && String(peer.title || '').trim().toLowerCase() === titleKey
+      );
+    });
+    return peers.length > 1 ? sortEventsByDate(peers) : [ev];
+  }
+
   function prefillFromEvent(rawEv) {
     const ev = normalizeEventForForm(rawEv);
     document.getElementById('ee-title').value = ev.title || '';
@@ -874,29 +1057,39 @@
       document.getElementById('ee-photo-url').value = ev.imageUrl;
     }
     selectedDates.clear();
-    if (ev.date) {
-      const d = parseAirtableDate(ev.date);
-      if (d) {
+    const datePeers = Array.isArray(rawEv._seriesPeers) && rawEv._seriesPeers.length ? rawEv._seriesPeers : [ev];
+    let timeSet = false;
+    datePeers.forEach((peer) => {
+      if (!peer.date) return;
+      const d = parseAirtableDate(peer.date);
+      if (!d) return;
+      if (!timeSet) {
         calYear = d.getFullYear();
         calMonth = d.getMonth();
-        const key = dateKey(d.getFullYear(), d.getMonth(), d.getDate());
-        selectedDates.add(key);
         const t = pad2(d.getHours()) + ':' + pad2(d.getMinutes());
-        const endD = ev.endDate ? parseAirtableDate(ev.endDate) : null;
+        const endD = peer.endDate ? parseAirtableDate(peer.endDate) : null;
         const endT = endD
           ? pad2(endD.getHours()) + ':' + pad2(endD.getMinutes())
           : '12:00';
         if (QuarterTime) {
           QuarterTime.setValues('ee-start-time', 'ee-end-time', t, endT);
         }
+        timeSet = true;
       }
-    } else if (QuarterTime) {
+      selectedDates.add(dateKey(d.getFullYear(), d.getMonth(), d.getDate()));
+    });
+    if (!timeSet && QuarterTime) {
       QuarterTime.setValues('ee-start-time', 'ee-end-time', '10:00', '12:00');
     }
     renderCalendar();
     renderSelectedList();
     showEventStatusBadge(ev);
     renderEventOverviewStats(ev);
+    const seriesPeers =
+      Array.isArray(rawEv._seriesPeers) && rawEv._seriesPeers.length > 1
+        ? rawEv._seriesPeers
+        : findSeriesPeers(ev, []);
+    applySeriesEditUi(seriesPeers.length > 1 ? seriesPeers : [], ev);
     applyLockUi(ev.locked || eventTicketsSoldCount(ev) > 0);
   }
 
@@ -971,6 +1164,10 @@
         }
         fillGroupsSelect(ev ? ev.organiserGroupId || ev.groupId : '', false);
         if (ev) {
+          const peers = findSeriesPeers(ev, data.events || []);
+          if (peers.length > 1) {
+            ev._seriesPeers = peers;
+          }
           prefillFromEvent(ev);
         } else {
           showAlert(

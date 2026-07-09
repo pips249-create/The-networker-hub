@@ -377,6 +377,71 @@
       .trim();
   }
 
+  const SERIES_LOCATION_KEYS = [
+    'venue',
+    'venueName',
+    'venueAddress',
+    'address',
+    'city',
+    'postcode',
+    'location',
+    'locationShort',
+    'outcode',
+    'lat',
+    'lng',
+  ];
+
+  function locationScore(ev) {
+    if (!ev) return 0;
+    let score = 0;
+    const lat = ev.lat != null ? Number(ev.lat) : null;
+    const lng = ev.lng != null ? Number(ev.lng) : null;
+    if (lat != null && lng != null && !Number.isNaN(lat) && !Number.isNaN(lng)) score += 4;
+    if (String(ev.postcode || '').trim()) score += 2;
+    if (String(ev.address || '').trim()) score += 1;
+    if (String(ev.city || '').trim()) score += 1;
+    return score;
+  }
+
+  function pickBestLocationSource(sources) {
+    let best = null;
+    let bestScore = 0;
+    (sources || []).forEach(function (ev) {
+      const score = locationScore(ev);
+      if (score > bestScore) {
+        bestScore = score;
+        best = ev;
+      }
+    });
+    return best;
+  }
+
+  function copyLocationFields(from) {
+    const out = {};
+    if (!from) return out;
+    SERIES_LOCATION_KEYS.forEach(function (key) {
+      const val = from[key];
+      if (val != null && val !== '') out[key] = val;
+    });
+    return out;
+  }
+
+  function enrichEventWithSeriesLocation(ev) {
+    const locationSource = pickBestLocationSource([ev].concat(seriesDatesList || []));
+    if (!locationSource || locationScore(ev) >= locationScore(locationSource)) return ev;
+    return Object.assign({}, ev, copyLocationFields(locationSource));
+  }
+
+  function applyLocationBlock(ev) {
+    const cityLabel = ev.city || ev.outcode || ev.locationShort || 'Location TBC';
+    setText('ev-meta-city', cityLabel);
+    const vn = String(ev.venue || ev.venueName || '').trim();
+    const va = [ev.address, ev.city, ev.postcode].filter(Boolean).join(', ') || ev.venueAddress || '';
+    setText('ev-venue-name', vn || 'Venue TBC');
+    setText('ev-venue-addr', va);
+    applyMapAndDirections(ev);
+  }
+
   function organiserProfileHref(ev) {
     const slug = String(ev.organiserSlug || ev.organiser_slug || '').trim();
     if (slug) return '/organisers/' + encodeURIComponent(slug);
@@ -692,7 +757,8 @@
   }
 
   function mergeSeriesDateEntry(baseEv, entry) {
-    return Object.assign({}, baseEv, entry, {
+    const locationSource = pickBestLocationSource([entry, baseEv].concat(seriesDatesList || []));
+    return Object.assign({}, baseEv, entry, copyLocationFields(locationSource), {
       tickets: entry.tickets || baseEv.tickets,
     });
   }
@@ -820,6 +886,7 @@
     const merged = mergeSeriesDateEntry(seriesBaseEvent, entry);
     currentEvent = merged;
     updateEventDateMeta(merged);
+    applyLocationBlock(merged);
     const selectedEl = document.getElementById('ev-series-selected');
     if (selectedEl) selectedEl.textContent = 'Selected: ' + formatSeriesSelectedLine(entry);
     renderSeriesCalendar();
@@ -926,17 +993,10 @@
 
     updateEventDateMeta(ev);
 
-    const cityLabel = ev.city || ev.outcode || ev.locationShort || 'Location TBC';
-    setText('ev-meta-city', cityLabel);
+    applyLocationBlock(ev);
 
     renderRatingBlock(ev);
     applyHostBlock(ev);
-
-    const vn = String(ev.venue || ev.venueName || '').trim();
-    const va = [ev.address, ev.city, ev.postcode].filter(Boolean).join(', ') || ev.venueAddress || '';
-    setText('ev-venue-name', vn || 'Venue TBC');
-    setText('ev-venue-addr', va);
-    applyMapAndDirections(ev);
     renderAboutSection(ev);
 
     renderTicketPanel(ev);
@@ -3375,17 +3435,18 @@
         const apiUrl = id
           ? '/api/hub-listings?id=' + encodeURIComponent(id)
           : '/api/hub-listings?slug=' + encodeURIComponent(slug);
-        const res = await fetch(apiUrl);
+        const res = await fetch(apiUrl, { cache: 'no-store' });
         const data = await res.json();
         if (data.event) {
           const ev = normalizeEventFlags(data.event, params);
-          currentEvent = ev;
           seriesDatesList = data.seriesDates || [];
           seriesBaseEvent = ev;
-          populateFromEvent(ev);
-          initTicketPanel(ev);
-          initSeriesDatePicker(ev);
-          initActions(ev);
+          const displayEv = enrichEventWithSeriesLocation(ev);
+          currentEvent = displayEv;
+          populateFromEvent(displayEv);
+          initTicketPanel(displayEv);
+          initSeriesDatePicker(displayEv);
+          initActions(displayEv);
           setEventLoading(false);
 
           const relatedFromApi = data.related || [];

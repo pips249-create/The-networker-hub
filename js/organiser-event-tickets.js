@@ -241,6 +241,61 @@
       .join('');
   }
 
+  async function expandSeriesEventIds() {
+    if (eventIds.length > 1) return;
+    const anchorId = eventIds[0];
+    if (!anchorId) return;
+
+    let allEvents = [];
+    try {
+      const raw = sessionStorage.getItem(ORG_BOOTSTRAP_CACHE_KEY);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (cached && cached.ts && Date.now() - cached.ts < 120000) {
+          allEvents = cached.events || [];
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+
+    if (!allEvents.length) {
+      const res = await api('/api/organiser/events');
+      if (res.ok && Array.isArray(res.data.events)) allEvents = res.data.events;
+    }
+
+    const anchor = (seriesMeta.events && seriesMeta.events[0]) || { id: anchorId };
+    const seriesGroupId = String(anchor.seriesGroupId || '').trim();
+    let peers = [];
+    if (seriesGroupId) {
+      peers = allEvents.filter((ev) => String(ev.seriesGroupId || '').trim() === seriesGroupId);
+    } else {
+      const groupId = seriesMeta.organiserGroupId || anchor.organiserGroupId || anchor.groupId || '';
+      const titleKey = String(seriesMeta.title || anchor.title || '').trim().toLowerCase();
+      if (groupId && titleKey) {
+        peers = allEvents.filter((ev) => {
+          const peerGroup = ev.organiserGroupId || ev.groupId || '';
+          return peerGroup === groupId && String(ev.title || '').trim().toLowerCase() === titleKey;
+        });
+      }
+    }
+
+    if (peers.length <= 1) return;
+    const sorted = peers.slice().sort((a, b) => {
+      const da = a.date ? new Date(a.date).getTime() : 0;
+      const db = b.date ? new Date(b.date).getTime() : 0;
+      return da - db;
+    });
+    eventIds = sorted.map((ev) => ev.id).filter(Boolean);
+    seriesMeta.events = sorted.map((ev) => ({
+      id: ev.id,
+      title: ev.title,
+      date: ev.date,
+      imageUrl: ev.imageUrl || seriesMeta.imageUrl || '',
+    }));
+    seriesMeta.eventIds = eventIds.slice();
+  }
+
   async function hydrateSeriesEvents() {
     if (!eventIds.length) return;
     const existing = seriesMeta.events && seriesMeta.events.length ? seriesMeta.events : [];
@@ -1114,6 +1169,7 @@
     const loading = window.organiserPageLoading;
     const bootWork = async () => {
       await hydrateSeriesEvents();
+      await expandSeriesEventIds();
       return loadExistingData();
     };
     let loaded;

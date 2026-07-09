@@ -519,6 +519,21 @@ function isUpcomingBrowseEvent(ev) {
   return d >= new Date();
 }
 
+function bestSeriesPhotoFromRows(rows) {
+  for (const row of rows || []) {
+    const url = eventImageUrl(row);
+    if (url) return url;
+  }
+  return '';
+}
+
+function enrichEventPhotoFromSeries(event, siblingRows) {
+  if (!event || event.photo) return event;
+  const inherited = bestSeriesPhotoFromRows(siblingRows);
+  if (inherited) event.photo = inherited;
+  return event;
+}
+
 function seriesDatePayload(ev) {
   return {
     id: ev.id,
@@ -534,6 +549,17 @@ function seriesDatePayload(ev) {
     priceKey: ev.priceKey,
     priceNum: ev.priceNum,
     tickets: ev.tickets,
+    venue: ev.venue,
+    venueName: ev.venueName,
+    venueAddress: ev.venueAddress,
+    address: ev.address,
+    city: ev.city,
+    postcode: ev.postcode,
+    location: ev.location,
+    locationShort: ev.locationShort,
+    outcode: ev.outcode,
+    lat: ev.lat,
+    lng: ev.lng,
   };
 }
 
@@ -542,7 +568,9 @@ async function fetchEventSeriesDates(sb, row, organiser) {
     isPublicEvent(r, organiser)
   );
   const hasRecurrenceMeta = Boolean(row.series_group_id || row.recurrence_pattern);
-  if (siblings.length <= 1 || (!hasRecurrenceMeta && siblings.length < 2)) return [];
+  if (siblings.length <= 1 || (!hasRecurrenceMeta && siblings.length < 2)) {
+    return { seriesDates: [], siblingRows: siblings };
+  }
 
   siblings.sort((a, b) => new Date(a.starts_at || 0) - new Date(b.starts_at || 0));
 
@@ -557,7 +585,12 @@ async function fetchEventSeriesDates(sb, row, organiser) {
     ticketsByEvent.get(t.event_id).push(enriched);
   });
 
-  return siblings.map((r) => seriesDatePayload(rowToEvent(r, organiser, ticketsByEvent.get(r.id) || [])));
+  return {
+    seriesDates: siblings.map((r) =>
+      seriesDatePayload(rowToEvent(r, organiser, ticketsByEvent.get(r.id) || []))
+    ),
+    siblingRows: siblings,
+  };
 }
 
 async function fetchSeriesSiblingRows(sb, row) {
@@ -927,13 +960,15 @@ async function handle(req, res) {
       }
 
       const eventId = row.id;
-      const [{ data: ticketsRaw }, seriesDates, relatedRows] = await Promise.all([
+      const [{ data: ticketsRaw }, seriesResult, relatedRows] = await Promise.all([
         sb.from('tickets').select('*').eq('event_id', eventId),
         fetchEventSeriesDates(sb, row, organiser),
         row.organiser_id
           ? fetchRelatedPublishedRows(sb, row.organiser_id, [row.id], 6)
           : Promise.resolve([]),
       ]);
+      const seriesDates = seriesResult.seriesDates || [];
+      const seriesSiblingRows = seriesResult.siblingRows || [];
       const ticketsList = ticketsRaw || [];
       const regCounts = await fetchRegistrationCountsByTicket(sb, ticketsList);
       const tickets = ticketsList.map((t) => ({
@@ -950,7 +985,10 @@ async function handle(req, res) {
           organiserRanking = null;
         }
       }
-      const event = rowToEvent(row, organiser, tickets, organiserRanking);
+      const event = enrichEventPhotoFromSeries(
+        rowToEvent(row, organiser, tickets, organiserRanking),
+        seriesSiblingRows
+      );
       if (!event.hasTicketTiers) {
         return res.status(404).json({
           configured: true,
@@ -967,7 +1005,7 @@ async function handle(req, res) {
       const publicRelated = related.filter(
         (ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev)
       );
-      res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=120, stale-while-revalidate=300');
+      res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
       return res.status(200).json({
         configured: true,
         provider: 'supabase',

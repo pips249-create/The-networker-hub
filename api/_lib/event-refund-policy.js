@@ -6,6 +6,20 @@ function escapeHtml(text) {
     .replace(/"/g, '&quot;');
 }
 
+function normalizeEventRefundRow(row) {
+  const input = row && typeof row === 'object' ? row : {};
+  const policy = String(input.refund_policy || input.refundPolicy || '').trim();
+  const details = String(input.refund_policy_details || input.refundPolicyDetails || '').trim();
+  const cutoffRaw = input.refund_cutoff_days ?? input.refundCutoffDays;
+  const cutoff =
+    cutoffRaw != null && Number.isFinite(Number(cutoffRaw)) ? Math.max(0, Number(cutoffRaw)) : null;
+  return {
+    refund_policy: policy,
+    refund_policy_details: details,
+    refund_cutoff_days: cutoff,
+  };
+}
+
 function formatMultilineHtml(text) {
   return escapeHtml(text).replace(/\r?\n/g, '<br>');
 }
@@ -28,15 +42,15 @@ function isOnlineEvent(row, meetingLink) {
 }
 
 function effectiveRefundCutoffDays(eventRow) {
-  const policy = String(eventRow?.refund_policy || '').trim();
+  const normalized = normalizeEventRefundRow(eventRow);
+  const policy = normalized.refund_policy;
   if (policy !== 'full_refund') return null;
-  const raw = eventRow?.refund_cutoff_days;
-  if (raw != null && Number.isFinite(Number(raw))) return Math.max(0, Number(raw));
+  if (normalized.refund_cutoff_days != null) return normalized.refund_cutoff_days;
   return 7;
 }
 
 function formatRefundPolicyLabel(eventRow) {
-  const policy = String(eventRow?.refund_policy || '').trim();
+  const policy = normalizeEventRefundRow(eventRow).refund_policy;
   if (policy === 'full_refund') return 'Full refunds available';
   if (policy === 'partial_refund') return 'Partial refunds';
   if (policy === 'no_refunds') return 'No refunds';
@@ -45,12 +59,13 @@ function formatRefundPolicyLabel(eventRow) {
 }
 
 function formatRefundPolicyText(eventRow) {
-  const policy = String(eventRow?.refund_policy || '').trim();
+  const normalized = normalizeEventRefundRow(eventRow);
+  const policy = normalized.refund_policy;
   if (!policy) {
     return 'No refund policy has been set for this event. Contact the organiser before booking.';
   }
   if (policy === 'full_refund') {
-    const n = effectiveRefundCutoffDays(eventRow);
+    const n = effectiveRefundCutoffDays(normalized);
     return (
       'Full refunds are available up to ' +
       n +
@@ -60,25 +75,23 @@ function formatRefundPolicyText(eventRow) {
     );
   }
   if (policy === 'partial_refund') {
-    return (
-      String(eventRow.refund_policy_details || '').trim() ||
-      'Partial refunds apply — see organiser terms.'
-    );
+    return normalized.refund_policy_details || 'Partial refunds apply — see organiser terms.';
   }
   if (policy === 'no_refunds') {
     return 'Ticket sales are final for this event. The 14-day cooling-off right does not apply to leisure events on a specific date.';
   }
   if (policy === 'custom') {
-    return String(eventRow.refund_policy_details || '').trim() || 'See organiser refund policy.';
+    return normalized.refund_policy_details || 'See organiser refund policy.';
   }
   return 'See organiser refund policy.';
 }
 
 function buildRefundPolicySection(eventRow, siteUrl) {
-  const policy = String(eventRow?.refund_policy || '').trim();
+  const normalized = normalizeEventRefundRow(eventRow);
+  const policy = normalized.refund_policy;
   if (!policy) return '';
-  const label = formatRefundPolicyLabel(eventRow);
-  const text = formatRefundPolicyText(eventRow);
+  const label = formatRefundPolicyLabel(normalized);
+  const text = formatRefundPolicyText(normalized);
   const site = String(siteUrl || '').replace(/\/$/, '');
   const refundsHref = site
     ? site + '/legal-policies.html#refunds'
@@ -127,6 +140,7 @@ function buildEventOnlineRow(isOnline) {
 module.exports = {
   escapeHtml,
   formatMultilineHtml,
+  normalizeEventRefundRow,
   inferMeetingType,
   isOnlineEvent,
   effectiveRefundCutoffDays,

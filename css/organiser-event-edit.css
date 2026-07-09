@@ -1319,6 +1319,32 @@ a.ee-wizard-link:hover {
   font-weight: 600;
 }
 
+.ee-series-banner {
+  background: #eef6ff;
+  border: 1px solid #b8d4f0;
+  border-radius: var(--ee-radius);
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  color: var(--ee-text);
+}
+
+.ee-card.is-series-locked .ee-field input,
+.ee-card.is-series-locked .ee-field select,
+.ee-card.is-series-locked .ee-field textarea,
+.ee-card.is-series-locked .ee-mode-btn,
+.ee-card.is-series-locked .ee-upload-zone,
+.ee-card.is-series-locked .ee-btn-compact {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.ee-card.is-series-locked .ee-upload-zone.is-locked {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 .ee-field.is-locked input,
 .ee-field.is-locked select,
 .ee-field.is-locked textarea,

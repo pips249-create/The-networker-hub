@@ -779,6 +779,7 @@ async function updateEvent(eventId, payload) {
   }
   const { data, error } = await sb.from('events').update(row).eq('id', eventId).select('*').single();
   if (error) throw new Error(error.message);
+  await propagateSeriesEventDetails(sb, data);
 
   if (payload.photoBase64) {
     const updated = await applyEventPhotoAfterSave(eventId, payload);
@@ -1095,6 +1096,128 @@ async function saveAttendeeExtrasForEvents(eventIds, attendeeExtras) {
   }
 }
 
+const ACTIVE_SERIES_STATUSES = ['draft', 'published', 'unpublished'];
+
+function seriesTitleKey(row) {
+  return String(row?.title || '')
+    .trim()
+    .toLowerCase();
+}
+
+async function fetchSeriesPeerIds(sb, row) {
+  if (!row?.id) return [];
+  const exclude = new Set([row.id]);
+
+  if (row.series_group_id) {
+    const { data, error } = await sb
+      .from('events')
+      .select('id')
+      .eq('series_group_id', row.series_group_id)
+      .in('status', ACTIVE_SERIES_STATUSES);
+    if (error) throw new Error(error.message);
+    return (data || []).map((peer) => peer.id).filter((id) => id && !exclude.has(id));
+  }
+
+  const titleKey = seriesTitleKey(row);
+  const organiserId = row.organiser_id || '';
+  if (!titleKey || !organiserId) return [];
+
+  const { data, error } = await sb
+    .from('events')
+    .select('id, title')
+    .eq('organiser_id', organiserId)
+    .in('status', ACTIVE_SERIES_STATUSES);
+  if (error) throw new Error(error.message);
+
+  const peerIds = (data || [])
+    .filter((peer) => seriesTitleKey(peer) === titleKey)
+    .map((peer) => peer.id)
+    .filter((id) => id && !exclude.has(id));
+  return peerIds.length ? peerIds : [];
+}
+
+/** Include every date in the same listing when tickets are saved for one series event. */
+async function expandEventIdsToSeriesPeers(sb, eventIds) {
+  const seedIds = [...new Set((eventIds || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  if (!seedIds.length) return [];
+
+  const { data: anchors, error } = await sb
+    .from('events')
+    .select('id, series_group_id, organiser_id, title, status')
+    .in('id', seedIds);
+  if (error) throw new Error(error.message);
+
+  const expanded = new Set(seedIds);
+  const peerLists = await Promise.all((anchors || []).map((row) => fetchSeriesPeerIds(sb, row)));
+  peerLists.forEach((peerIds) => peerIds.forEach((id) => expanded.add(id)));
+  return [...expanded];
+}
+
+function seriesDetailsPatchFromRow(row) {
+  if (!row) return null;
+  return {
+    title: row.title,
+    description: row.description,
+    event_type: row.event_type,
+    meeting_type: row.meeting_type,
+    venue: row.venue,
+    address: row.address,
+    city: row.city,
+    postcode: row.postcode,
+    outcode: row.outcode,
+    location_label: row.location_label,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    meeting_link: row.meeting_link,
+    image_url: row.image_url,
+    industries: row.industries,
+    recurrence_pattern: row.recurrence_pattern,
+    recurrence_end_date: row.recurrence_end_date,
+    food_included: row.food_included,
+    collect_dietary: row.collect_dietary,
+    collect_accessibility: row.collect_accessibility,
+    series_group_id: row.series_group_id || null,
+  };
+}
+
+async function propagateSeriesEventDetails(sb, updatedRow) {
+  const peerIds = await fetchSeriesPeerIds(sb, updatedRow);
+  if (!peerIds.length) return;
+
+  const basePatch = seriesDetailsPatchFromRow(updatedRow);
+  if (!basePatch) return;
+
+  const { data: peers, error } = await sb.from('events').select('id, locked').in('id', peerIds);
+  if (error) throw new Error(error.message);
+
+  for (const peer of peers || []) {
+    const patch = { ...basePatch };
+    if (peer.locked) {
+      delete patch.event_type;
+      delete patch.meeting_type;
+      delete patch.venue;
+      delete patch.address;
+      delete patch.city;
+      delete patch.postcode;
+      delete patch.outcode;
+      delete patch.location_label;
+      delete patch.latitude;
+      delete patch.longitude;
+    }
+    const { error: updateErr } = await sb.from('events').update(patch).eq('id', peer.id);
+    if (updateErr) throw new Error(updateErr.message);
+  }
+
+  if (updatedRow.series_group_id) {
+    const { error: groupErr } = await sb
+      .from('events')
+      .update({ series_group_id: updatedRow.series_group_id })
+      .in('id', peerIds)
+      .is('series_group_id', null);
+    if (groupErr) throw new Error(groupErr.message);
+  }
+}
+
 /** Same shape as Airtable API: { eventIds, tickets, publish, refund } */
 async function createTicketsForEvents({
   eventIds,
@@ -1104,11 +1227,11 @@ async function createTicketsForEvents({
   vatTreatment,
   attendeeExtras,
 }) {
-  const ids = Array.isArray(eventIds) ? eventIds.filter(Boolean) : [];
+  const sb = getSupabaseAdmin();
+  const ids = await expandEventIdsToSeriesPeers(sb, eventIds);
   const tiers = Array.isArray(tickets) ? tickets : [];
   if (!ids.length || !tiers.length) return { created: 0, tickets: [] };
 
-  const sb = getSupabaseAdmin();
   await assertTicketsEditableForEvents(sb, ids);
 
   if (vatTreatment) {

@@ -379,7 +379,13 @@
     }
   }
 
-  async function loadEventSummary(eventId, qty) {
+  function bookingEventImage(pending, ev) {
+    const snapshot = pending && pending.eventImage ? String(pending.eventImage).trim() : '';
+    if (snapshot) return snapshot;
+    return similarEventImage(ev);
+  }
+
+  async function loadEventSummary(eventId, qty, pending) {
     if (!eventId || !eventBlock) {
       revealNextPanel();
       return;
@@ -395,7 +401,7 @@
 
       if (eventTitle) eventTitle.textContent = ev.title || 'Your event';
 
-      const imageSrc = similarEventImage(ev);
+      const imageSrc = bookingEventImage(pending, ev);
       if (eventPhotoImg && imageSrc) {
         eventPhotoImg.src = imageSrc;
         eventPhotoImg.alt = ev.title || 'Event';
@@ -512,7 +518,7 @@
     if (pending && pending.eventId) {
       showPendingEventPreview(pending);
       showNextPanelLoading();
-      await loadEventSummary(pending.eventId, qty);
+      await loadEventSummary(pending.eventId, qty, pending);
     }
 
     if (alreadyConfirmed) {
