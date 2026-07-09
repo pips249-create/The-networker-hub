@@ -53,6 +53,7 @@ const {
   stripUnresolvedSponsorPlaceholders,
 } = require('./email-sponsor-sections');
 const { emailGreetingName } = require('./email-display-name');
+const { patchEmailMobileStyles } = require('./email-mobile-styles');
 
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
@@ -327,6 +328,8 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     /\{\{\s*support_email\s*\}\}/g,
     footerSupportEmail || ''
   );
+
+  html = patchEmailMobileStyles(html);
 
   return {
     template,
