@@ -318,7 +318,7 @@ Without Connect, paid revenue stays on the Hub Stripe account (legacy **Request 
 
 **What it is:** A single paid ticket purchase that proves Stripe Connect is routing money correctly — not just that checkout “works.”
 
-With `STRIPE_CONNECT_ENABLED=true`, checkout uses a **direct charge on the organiser’s connected account**. The attendee pays ticket price + booking fee; the organiser receives the **full ticket price**; the Hub keeps only the **booking fee** as `application_fee_amount`.
+With `STRIPE_CONNECT_ENABLED=true`, checkout uses **destination charges** on the platform account. The attendee pays ticket price + booking fee; the organiser receives the **full ticket price** via transfer; the Hub keeps only the **booking fee** as `application_fee_amount` (Stripe processing comes out of that fee).
 
 ```
 Attendee pays £10 ticket + £0.65 booking fee = £10.65 total
@@ -347,7 +347,7 @@ This is different from the legacy flow where all money sat in the Hub Stripe acc
 - [ ] Payment appears on the **organiser’s** connected account (not only on platform)
 - [ ] Platform balance increased by **booking fee only**
 - [ ] `registrations` row has correct `amount_paid` / payment status
-- [ ] `hub_checkout` metadata = `connect_direct` on the PaymentIntent (Stripe Dashboard)
+- [ ] `hub_checkout` metadata = `connect_destination` on the PaymentIntent (Stripe Dashboard)
 
 **Guide:** `docs/STRIPE-CONNECT-ORGANISER-GUIDE.md` · **Refunds:** `docs/REFUNDS-AND-STRIPE-CONNECT.md`
 

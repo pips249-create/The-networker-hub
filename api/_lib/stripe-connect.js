@@ -1,5 +1,5 @@
 /**
- * Stripe Connect — organiser onboarding and checkout direct charges.
+ * Stripe Connect — organiser onboarding and checkout destination charges.
  */
 const { getSupabaseAdmin } = require('./supabase');
 const { getStripeClient, isStripeCheckoutConfigured, siteBaseUrl } = require('./stripe-checkout');
@@ -392,15 +392,17 @@ function buildConnectCheckoutParams({ connect, ticketSubtotalPence, bookingFeePe
   );
   if (applicationFeeAmount <= 0) return null;
 
-  // Direct charge on the connected account — platform dashboard shows only application fees,
-  // not the full ticket amount passing through the Hub Stripe balance.
+  // Destination charge on the platform account — organiser receives the full ticket subtotal;
+  // Hub keeps the booking fee; Stripe processing is absorbed from the booking fee.
   return {
-    stripeAccountId: connect.stripeAccountId,
     paymentIntentData: {
       application_fee_amount: applicationFeeAmount,
+      transfer_data: {
+        destination: connect.stripeAccountId,
+      },
       metadata: {
         organiser_id: connect.organiserId,
-        hub_checkout: 'connect_direct',
+        hub_checkout: 'connect_destination',
       },
     },
   };

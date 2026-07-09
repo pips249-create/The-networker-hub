@@ -138,15 +138,18 @@ async function verifyEventCheckoutPayment(input, sessionUser) {
   }
 
   let checkout = null;
-  if (stripeAccountId) {
+  try {
+    checkout = await retrieveCheckoutSession(sessionId);
+  } catch {
+    checkout = null;
+  }
+  // Legacy direct-charge sessions (Jul 2026) lived on the connected account.
+  if (!checkout && stripeAccountId) {
     try {
       checkout = await retrieveCheckoutSession(sessionId, { stripeAccountId });
     } catch {
       checkout = null;
     }
-  }
-  if (!checkout) {
-    checkout = await retrieveCheckoutSession(sessionId);
   }
   if (!checkoutSessionPaid(checkout)) {
     throw new Error('payment_not_completed');

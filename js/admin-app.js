@@ -9739,7 +9739,7 @@
           '<div class="text-sm">' +
           envRow('Paid checkout (STRIPE_SECRET_KEY)', env.hasStripeSecretKey) +
           envRow('Webhook signing secret', env.hasStripeWebhookSecret) +
-          envRow('Connect direct charges', env.stripeConnectEnabled) +
+          envRow('Connect destination charges', env.stripeConnectEnabled) +
           envRow('Checkout webhook gate', env.checkoutReady) +
           (env.stripeMode
             ? '<p class="text-xs text-slate-500 mt-2">Stripe mode: <strong>' +

@@ -80,7 +80,7 @@ When `STRIPE_CONNECT_ENABLED=true`:
 
 1. Organisers complete Express onboarding from **Revenue → Connect Stripe** (`POST /api/organiser/stripe-connect`).
 2. Paid ticket publish is blocked until Connect is ready (`charges_enabled` + details submitted).
-3. Checkout uses **direct charges** on the organiser's Connect account: the organiser receives the **full ticket subtotal**; `application_fee_amount` = the booking fee only (4.5% + 20p per ticket). The Hub platform dashboard shows only collected application fees, not the full ticket amount.
+3. Checkout uses **destination charges** on the platform account: the attendee pays ticket + booking fee; the organiser receives the **full ticket subtotal** via `transfer_data.destination`; `application_fee_amount` = the booking fee only (4.5% + 20p per ticket). Stripe processing is absorbed from the booking fee, not deducted from the organiser payout.
 
 Leave `STRIPE_CONNECT_ENABLED` unset (or `false`) to keep the legacy single-account checkout while you roll out Connect.
 
