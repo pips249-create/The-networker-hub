@@ -79,7 +79,10 @@ async function cancelRegistrationForAttendee(session, registrationId) {
     try {
       refundResult = await issueRefundForRegistration(registration);
       if (refundResult?.issued) {
-        await sb.from('registrations').update({ payment_status: 'Refunded' }).eq('id', registrationId);
+        await sb
+          .from('registrations')
+          .update({ payment_status: 'Refunded', cancelled_at: now })
+          .eq('id', registrationId);
       }
     } catch (e) {
       refundResult = { issued: false, error: e.message || String(e) };

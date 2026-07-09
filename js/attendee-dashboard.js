@@ -294,23 +294,24 @@
 
   function renderRefundAlerts() {
     const pending = pendingRefundBookings();
-    const overviewEl = document.getElementById('ad-refund-alert-overview');
-    const paymentsEl = document.getElementById('ad-refund-alert-payments');
     const message =
       pending.length === 1
         ? 'A refund for your cancelled booking is on its way to your original payment method. Allow 5–10 business days.'
         : pending.length + ' refunds for cancelled bookings are on their way to your original payment methods. Allow 5–10 business days.';
 
-    [overviewEl, paymentsEl].forEach((el) => {
-      if (!el) return;
-      if (!pending.length) {
-        el.hidden = true;
-        el.textContent = '';
-        return;
+    ['ad-refund-alert-overview', 'ad-refund-alert-payments', 'ad-refund-alert-cancellations'].forEach(
+      function (id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (!pending.length) {
+          el.hidden = true;
+          el.textContent = '';
+          return;
+        }
+        el.hidden = false;
+        el.textContent = message;
       }
-      el.hidden = false;
-      el.textContent = message;
-    });
+    );
   }
 
   function hasApplicationDecision(reg) {
@@ -1248,26 +1249,11 @@
     const empty = document.getElementById('ad-payments-empty');
     if (!body) return;
 
-    const list = registrations
-      .slice()
-      .concat((cancelledBookings || []).slice())
-      .sort((a, b) => {
-        const da = a.isCancelled
-          ? a.cancelledAt
-            ? new Date(a.cancelledAt).getTime()
-            : 0
-          : a.createdAt
-            ? new Date(a.createdAt).getTime()
-            : 0;
-        const db = b.isCancelled
-          ? b.cancelledAt
-            ? new Date(b.cancelledAt).getTime()
-            : 0
-          : b.createdAt
-            ? new Date(b.createdAt).getTime()
-            : 0;
-        return db - da;
-      });
+    const list = registrations.slice().sort((a, b) => {
+      const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return db - da;
+    });
 
     body.innerHTML = '';
     if (!list.length) {
@@ -1296,7 +1282,7 @@
         '</td><td class="ad-td-name">' +
         eventTitleCell(reg) +
         '</td><td>' +
-        esc(formatDateShort(reg.isCancelled ? reg.cancelledAt : reg.createdAt)) +
+        esc(formatDateShort(reg.createdAt)) +
         '</td><td>' +
         esc(reg.bookingReference || formatBookingReference(reg.id)) +
         '</td><td>' +
@@ -1327,6 +1313,74 @@
     renderRefundAlerts();
     bindPaymentButtons(body);
     bindCancelButtons(body);
+  }
+
+  function cancellationRefundDetail(reg) {
+    const status = String(reg?.refundStatus || '').trim();
+    const amount = formatAmountPaid(reg.amountPaid, reg.paymentStatus);
+    if (status === 'pending') {
+      return 'Your refund of ' + amount + ' is being processed to your original payment method. Allow 5–10 business days.';
+    }
+    if (status === 'completed') {
+      return 'Your refund of ' + amount + ' has been issued to your original payment method.';
+    }
+    if (Number(reg.amountPaid) > 0) {
+      return (
+        'No refund is due for this cancellation under the organiser\'s policy' +
+        (reg.refundPolicyLabel ? ' (' + reg.refundPolicyLabel + ').' : '.')
+      );
+    }
+    return 'This was a free registration — no payment was taken.';
+  }
+
+  function renderCancellationsTable() {
+    const body = document.getElementById('ad-cancellations-body');
+    const empty = document.getElementById('ad-cancellations-empty');
+    if (!body) return;
+
+    const list = (cancelledBookings || []).slice().sort((a, b) => {
+      const da = a.cancelledAt ? new Date(a.cancelledAt).getTime() : 0;
+      const db = b.cancelledAt ? new Date(b.cancelledAt).getTime() : 0;
+      return db - da;
+    });
+
+    body.innerHTML = '';
+    if (!list.length) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    list.forEach((reg) => {
+      const tr = document.createElement('tr');
+      tr.className = 'ad-row-cancelled';
+      tr.innerHTML =
+        '<td>' +
+        thumbHtml(reg) +
+        '</td><td class="ad-td-name">' +
+        eventTitleCell(reg) +
+        '<div class="ad-cancel-refund-detail">' +
+        esc(cancellationRefundDetail(reg)) +
+        '</div></td><td>' +
+        esc(formatDateShort(reg.cancelledAt)) +
+        '</td><td>' +
+        esc(reg.bookingReference || formatBookingReference(reg.id)) +
+        '</td><td>' +
+        esc(reg.ticketLabel || '—') +
+        '</td><td>' +
+        esc(formatAmountPaid(reg.amountPaid, reg.paymentStatus)) +
+        '</td><td>' +
+        refundStatusBadge(reg) +
+        '</td><td class="ad-td-actions"><div class="ad-action-group">' +
+        '<button type="button" class="ad-btn ad-btn-primary ad-view-payment" data-registration-id="' +
+        esc(reg.id || '') +
+        '">View details</button>' +
+        '</div></td>';
+      body.appendChild(tr);
+    });
+
+    renderRefundAlerts();
+    bindPaymentButtons(body);
   }
 
   function openReviewFromQuery() {
@@ -1477,6 +1531,7 @@
     set('ad-side-enquiries', (opportunityEnquiries || []).length);
     set('ad-side-pending', pendingReviewsList().length);
     set('ad-side-reviewed', doneReviewsList().length);
+    set('ad-side-cancellations', (cancelledBookings || []).length);
   }
 
   function renderPagination(navId, listKey, totalPages) {
@@ -1828,6 +1883,8 @@
       );
     } else if (key === 'payments') {
       renderPaymentsTable();
+    } else if (key === 'cancellations') {
+      renderCancellationsTable();
     } else if (key === 'saved') {
       renderSavedTable();
       renderSavedOrganisersTable();
@@ -1856,6 +1913,7 @@
     renderRouteTables('reviews-pending', { force: true });
     renderRouteTables('reviews-done', { force: true });
     renderRouteTables('payments', { force: true });
+    renderRouteTables('cancellations', { force: true });
     renderRouteTables('opportunity-enquiries', { force: true });
     if (savedEvents.length || savedOrganisers.length) renderRouteTables('saved', { force: true });
     updateSideCounts();

@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260628" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260715" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260709" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
 
   </head>
@@ -41,6 +41,10 @@
               <span class="ad-side-count" id="ad-side-upcoming" hidden></span>
             </a>
             <a href="#payments" class="hub-side-nav-link" data-ad-route="payments">Payments</a>
+            <a href="#cancellations" class="hub-side-nav-link" data-ad-route="cancellations">
+              Cancellations
+              <span class="ad-side-count" id="ad-side-cancellations" hidden></span>
+            </a>
             <a href="#saved" class="hub-side-nav-link" data-ad-route="saved">Saved</a>
             <a href="#past" class="hub-side-nav-link" data-ad-route="past">
               Past events
@@ -168,6 +172,35 @@
               <p class="ad-empty" id="ad-payments-empty" hidden>
                 No bookings yet — your payment history will appear here after you book an event.
                 <a href="../events/index.html">Browse events →</a>
+              </p>
+            </section>
+
+            <!-- Cancellations -->
+            <section class="ad-page" id="ad-page-cancellations" data-ad-page="cancellations">
+              <h2 class="ad-section-title">Cancellations &amp; refunds</h2>
+              <p class="ad-section-sub">Bookings you have cancelled, including refund status and amounts.</p>
+              <div class="ad-refund-alert" id="ad-refund-alert-cancellations" hidden role="status"></div>
+              <div class="ad-table-scroll">
+                <div class="ad-table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th class="ad-th-thumb"></th>
+                        <th>Event</th>
+                        <th>Cancelled</th>
+                        <th>Reference</th>
+                        <th>Tickets</th>
+                        <th>Paid</th>
+                        <th>Refund</th>
+                        <th class="ad-th-actions">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="ad-cancellations-body"></tbody>
+                  </table>
+                </div>
+              </div>
+              <p class="ad-empty" id="ad-cancellations-empty" hidden>
+                No cancelled bookings — if you cancel a ticket, it will appear here with refund details.
               </p>
             </section>
 
@@ -504,6 +537,6 @@
     <script src="../js/hub-favourites.js?v=20260629"></script>
     <script src="../js/hub-organiser-favourites.js?v=20260630"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260708"></script>
+    <script src="../js/attendee-dashboard.js?v=20260709"></script>
   </body>
 </html>

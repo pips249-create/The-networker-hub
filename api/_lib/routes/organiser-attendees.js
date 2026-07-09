@@ -58,7 +58,8 @@ module.exports = async function handler(req, res) {
         cancellations = await listBookingCancellationsForOrganiserEvents(
           groupIds,
           filterEventId,
-          ws.adminView
+          ws.adminView,
+          eventIds
         );
       } else {
         attendees = await listAttendeesForOrganiserEvents(eventIds, filterEventId);

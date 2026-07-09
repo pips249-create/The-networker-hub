@@ -50,6 +50,7 @@ function isSettlementComplete(ev) {
 function isCountableRegistration(row) {
   const payment = String(row.payment_status || '').trim();
   if (payment === 'Refunded') return false;
+  if (row?.cancelled_at) return false;
   if (String(row.application_status || '').trim() === 'Denied') return false;
   return payment === 'Paid' || payment === 'Free' || payment === 'Pending';
 }
@@ -89,13 +90,15 @@ function mapLatestCancellationsByEvent(cancellations) {
 function isRevenueCountableRegistration(registration, context) {
   const payment = String(registration?.payment_status || '').trim();
   if (payment !== 'Paid') return false;
+  if (registration?.refund_email_sent_at) return false;
 
   const eventRow = context?.eventRow || null;
   if (eventRow && String(eventRow.status || '').toLowerCase() === 'cancelled') {
     return false;
   }
 
-  if (registration?.cancelled_at && eventRow) {
+  if (registration?.cancelled_at) {
+    if (!eventRow) return false;
     const { deriveRefundStatusForCancelledRegistration } = require('./cancellation-email-sections');
     const refundStatus = deriveRefundStatusForCancelledRegistration(eventRow, registration);
     if (refundStatus === 'pending' || refundStatus === 'completed') return false;

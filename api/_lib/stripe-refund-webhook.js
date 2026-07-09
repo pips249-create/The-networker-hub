@@ -17,12 +17,26 @@ async function handleChargeRefunded(charge) {
   const sb = getSupabaseAdmin();
   const { data: registration, error } = await sb
     .from('registrations')
-    .select('id, refund_email_sent_at')
+    .select('id, refund_email_sent_at, cancelled_at, payment_status')
     .eq('stripe_payment_intent_id', paymentIntentId)
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!registration?.id) {
     return { skipped: true, reason: 'registration_not_found' };
+  }
+
+  const now = new Date().toISOString();
+  if (
+    !registration.cancelled_at ||
+    String(registration.payment_status || '').trim() !== 'Refunded'
+  ) {
+    await sb
+      .from('registrations')
+      .update({
+        cancelled_at: registration.cancelled_at || now,
+        payment_status: 'Refunded',
+      })
+      .eq('id', registration.id);
   }
 
   const refundAmount =

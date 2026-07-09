@@ -109,6 +109,14 @@ function mapCancelledRegistrationRow(row) {
   const paymentStatus = String(row.payment_status || 'Pending').trim();
   const amountPaid = booked.amountPaid;
   const refundStatus = deriveRefundStatusForCancelledRegistration(booked.eventRow, row);
+  let refundLabel = 'Cancelled';
+  if (refundStatus === 'pending') {
+    refundLabel = 'Refund on its way';
+  } else if (refundStatus === 'completed') {
+    refundLabel = 'Refunded';
+  } else if (amountPaid > 0) {
+    refundLabel = 'Cancelled — no refund due';
+  }
 
   return {
     id: row.id,
@@ -138,6 +146,8 @@ function mapCancelledRegistrationRow(row) {
     isCancelled: true,
     cancelledAt: row.cancelled_at || null,
     refundStatus,
+    refundLabel,
+    refundPolicyLabel: booked.refundPolicyLabel || '',
     bookedSnapshotAt: booked.snapshotCapturedAt,
   };
 }
@@ -194,8 +204,6 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
 }
 
 async function listCancelledRegistrationsForAttendee(sb, attendeeId) {
-  const since = new Date();
-  since.setDate(since.getDate() - 90);
   const res = await sb
     .from('registrations')
     .select(
@@ -239,7 +247,6 @@ async function listCancelledRegistrationsForAttendee(sb, attendeeId) {
     )
     .eq('attendee_id', attendeeId)
     .not('cancelled_at', 'is', null)
-    .gte('cancelled_at', since.toISOString())
     .order('cancelled_at', { ascending: false });
 
   if (res.error) throw new Error(res.error.message);

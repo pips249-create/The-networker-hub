@@ -133,18 +133,21 @@ function cancellationRefundLabel(paymentStatus, amountPaid, refundStatus) {
 
 /**
  * List attendee-cancelled bookings for an organiser's groups.
- * Uses registrations.organiser_id (not a large event_id IN list) so admin view
- * does not overflow Supabase request headers when many events exist.
+ * Prefer event_id scoping (reliable for all registrations); fall back to organiser_id.
  *
  * @param {string[]} groupIds — organiser group ids for the signed-in workspace
  * @param {string|null} filterEventId — optional single event id, or "all"
  * @param {boolean} [adminView] — when true, return cancellations across the platform
+ * @param {string[]} [eventIds] — event ids owned by the workspace (primary filter)
  */
-async function listBookingCancellationsForOrganiserEvents(groupIds, filterEventId, adminView) {
+async function listBookingCancellationsForOrganiserEvents(
+  groupIds,
+  filterEventId,
+  adminView,
+  eventIds
+) {
   if (!isSupabaseConfigured()) return [];
-  if (!adminView && !(groupIds && groupIds.length)) return [];
-
-  const allowedOrganisers = adminView ? null : new Set(groupIds);
+  if (!adminView && !(eventIds && eventIds.length) && !(groupIds && groupIds.length)) return [];
 
   const sb = getSupabaseAdmin();
   let query = sb
@@ -154,6 +157,7 @@ async function listBookingCancellationsForOrganiserEvents(groupIds, filterEventI
       id,
       created_at,
       cancelled_at,
+      refund_email_sent_at,
       event_id,
       organiser_id,
       payment_status,
@@ -167,7 +171,14 @@ async function listBookingCancellationsForOrganiserEvents(groupIds, filterEventI
     .not('cancelled_at', 'is', null);
 
   if (!adminView) {
-    query = query.in('organiser_id', [...groupIds]);
+    const ids = (eventIds || []).filter(Boolean);
+    if (ids.length) {
+      query = query.in('event_id', ids);
+    } else if (groupIds && groupIds.length) {
+      query = query.in('organiser_id', [...groupIds]);
+    } else {
+      return [];
+    }
   }
 
   if (filterEventId && filterEventId !== 'all') {
@@ -182,7 +193,6 @@ async function listBookingCancellationsForOrganiserEvents(groupIds, filterEventI
     require('./cancellation-email-sections');
 
   return (data || [])
-    .filter((row) => !allowedOrganisers || allowedOrganisers.has(row.organiser_id))
     .map((row) => {
       const attendee = row.attendees || {};
       const event = row.events || {};

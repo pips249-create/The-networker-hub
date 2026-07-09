@@ -980,11 +980,26 @@
                 <div class="org-rev-label">Total revenue</div>
                 <div class="org-rev-value org-rev-gold" id="rev-stat-revenue">£0</div>
               </div>
-              <div class="org-rev-sep" aria-hidden="true"></div>
-              <div class="org-rev-item">
-                <div class="org-rev-label">Avg rating</div>
-                <div class="org-rev-value" id="rev-stat-rating">—</div>
-              </div>
+            </div>
+            <div class="org-filter-bar">
+              <select id="filter-revenue-status" aria-label="Filter by status">
+                <option value="all">All events</option>
+                <option value="live">Live</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="draft">Draft</option>
+                <option value="unpublished">Unpublished</option>
+              </select>
+              <input
+                type="search"
+                class="org-table-search"
+                id="filter-revenue-search"
+                placeholder="Search by title, type or location…"
+                aria-label="Search revenue events"
+              />
+              <label class="org-filter-check">
+                <input type="checkbox" id="filter-revenue-hide-archived" checked />
+                Hide archived
+              </label>
             </div>
             <div class="org-table-wrap">
               <table>
@@ -994,7 +1009,6 @@
                     <th>Event</th>
                     <th>Tickets sold</th>
                     <th>Revenue</th>
-                    <th>Rating</th>
                     <th>Event status</th>
                     <th>Payout</th>
                     <th class="org-th-actions">Actions</th>

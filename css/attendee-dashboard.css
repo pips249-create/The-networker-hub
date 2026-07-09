@@ -443,6 +443,14 @@
   background: rgba(248, 250, 252, 0.9);
 }
 
+.ad-cancel-refund-detail {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-muted, #736b6e);
+  max-width: 36rem;
+}
+
 .ad-row-application-pending td {
   background: rgba(255, 244, 214, 0.45);
 }

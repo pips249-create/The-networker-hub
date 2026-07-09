@@ -261,11 +261,13 @@ async function sendRefundProcessedEmail(sb, registrationId, refundAmount) {
       to: attendeeEmail,
       variables: vars,
     });
+    const now = new Date().toISOString();
     await sb
       .from('registrations')
       .update({
-        refund_email_sent_at: new Date().toISOString(),
+        refund_email_sent_at: now,
         payment_status: 'Refunded',
+        cancelled_at: ctx.registration.cancelled_at || now,
       })
       .eq('id', registrationId);
     return { sent: true, to: attendeeEmail, amount };

@@ -1165,7 +1165,8 @@
     if (!key) return;
     if (expandedSeriesKeys.has(key)) expandedSeriesKeys.delete(key);
     else expandedSeriesKeys.add(key);
-    renderEvents();
+    if (eventsSubRoute === 'events-revenue') renderRevenue();
+    else renderEvents();
   }
 
   function eventsSortLabel() {
@@ -1821,7 +1822,12 @@
       loadAttendeesAll().then(() => renderAttendees());
     } else if (eventsSubRoute === 'events-cancellations') {
       fillCancellationsEventFilter();
-      loadCancellationsAll().then(() => renderCancellations());
+      loadBootstrap({ silent: true })
+        .then(() => loadCancellationsAll())
+        .then(() => {
+          renderCancellations();
+          updateMyEventsTabCounts();
+        });
     } else {
       renderEventsPanel(eventsSubRoute);
     }
@@ -3880,36 +3886,35 @@
       legacyBanner.innerHTML = '';
     }
 
-    if (!payment) return;
-
-    payment.renderInto(document.getElementById('org-payment-setup-revenue'), setupState, group, {
-      returnPath: '/organiser/index.html#events-revenue',
-      title: 'Add bank details to get paid for ticket sales',
-    });
-    payment.renderInto(document.getElementById('org-payment-setup-overview'), setupState, group, {
-      returnPath: '/organiser/index.html#events-overview',
-      compact: true,
-      title: 'Add bank details before you sell paid tickets',
-    });
-    payment.renderInto(document.getElementById('org-payment-setup-dashboard'), setupState, group, {
-      returnPath: '/organiser/index.html#dashboard',
-      compact: true,
-      title: 'Add bank details to receive payouts',
-      lead: 'Connect Stripe so ticket revenue can reach you after each event.',
-    });
+    if (payment) {
+      payment.renderInto(document.getElementById('org-payment-setup-revenue'), setupState, group, {
+        returnPath: '/organiser/index.html#events-revenue',
+        title: 'Add bank details to get paid for ticket sales',
+      });
+      payment.renderInto(document.getElementById('org-payment-setup-overview'), setupState, group, {
+        returnPath: '/organiser/index.html#events-overview',
+        compact: true,
+        title: 'Add bank details before you sell paid tickets',
+      });
+      payment.renderInto(document.getElementById('org-payment-setup-dashboard'), setupState, group, {
+        returnPath: '/organiser/index.html#dashboard',
+        compact: true,
+        title: 'Add bank details to receive payouts',
+        lead: 'Connect Stripe so ticket revenue can reach you after each event.',
+      });
+    }
 
     const dashboardBar = document.getElementById('org-stripe-dashboard-link');
     const readyGroup = (state.groups || []).find((g) => g.stripeConnectReady);
     if (dashboardBar) {
       const showDashboard = Boolean(state.stripeConnectEnabled && readyGroup);
       dashboardBar.hidden = !showDashboard;
-      if (showDashboard) {
-        const btn = document.getElementById('org-open-stripe-dashboard');
-        if (btn && !btn.dataset.bound) {
-          btn.dataset.bound = '1';
-          btn.addEventListener('click', function () {
-            openStripeDashboard(readyGroup.id);
-          });
+      const btn = document.getElementById('org-open-stripe-dashboard');
+      if (btn) {
+        if (showDashboard && readyGroup) {
+          btn.setAttribute('data-stripe-dashboard', readyGroup.id);
+        } else {
+          btn.removeAttribute('data-stripe-dashboard');
         }
       }
     }
@@ -4481,6 +4486,116 @@
     body.appendChild(tr);
   }
 
+  function appendRevenueTableRow(body, ev) {
+    const tr = document.createElement('tr');
+    const isSeriesParent = ev.isSeries && ev.seriesCount > 1;
+    if (isSeriesParent) {
+      const key = eventSeriesKeyForRow(ev);
+      const expanded = expandedSeriesKeys.has(key);
+      tr.className = 'org-series-parent-row is-expandable';
+      tr.setAttribute('data-series-key', key);
+      tr.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      tr.setAttribute('title', 'Click to show each date in this series');
+      tr.tabIndex = 0;
+    }
+    if (ev.needsRefundConfirmation) tr.classList.add('org-row-payout-held');
+
+    tr.innerHTML =
+      '<td>' +
+      thumbHtml(ev) +
+      '</td><td class="org-td-name">' +
+      eventTitleCellHtml(ev) +
+      (ev.needsRefundConfirmation
+        ? '<p class="org-payout-held-note">Payout on hold — refunds processing</p>'
+        : '') +
+      '</td><td>' +
+      esc(ev.ticketsSoldLabel || '0') +
+      '</td><td class="org-revenue">' +
+      eventRevenueCellHtml(ev) +
+      '</td><td>' +
+      statusBadgeHtml(ev.statusKey || 'draft', ev.statusLabel || 'Draft') +
+      '</td><td>' +
+      payoutStatusBadgeHtml(ev) +
+      '</td><td class="org-td-actions">' +
+      payoutActionsHtml(ev) +
+      '</td>';
+    body.appendChild(tr);
+    return tr;
+  }
+
+  function appendRevenueSeriesDetailPanel(body, ev) {
+    const key = eventSeriesKeyForRow(ev);
+    const children = sortSeriesMembers(ev.seriesEvents || []);
+    const tr = document.createElement('tr');
+    tr.className = 'org-series-detail-row';
+    tr.setAttribute('data-series-detail-for', key);
+
+    const totalRevenue = children.reduce(function (sum, child) {
+      return sum + (Number(child.revenueNum) || 0);
+    }, 0);
+
+    const rowsHtml = children
+      .map(function (child) {
+        return (
+          '<tr class="org-series-date-row">' +
+          '<td>' +
+          esc(formatDateShort(child.date) || 'Date TBC') +
+          '</td><td>' +
+          esc(formatTimeRange(child.date, child.endDate)) +
+          '</td><td>' +
+          esc(child.ticketsSoldLabel || '0') +
+          '</td><td class="org-revenue">' +
+          eventRevenueCellHtml(child) +
+          '</td><td>' +
+          statusBadgeHtml(child.statusKey || 'draft', child.statusLabel || 'Draft') +
+          '</td><td>' +
+          payoutStatusBadgeHtml(child) +
+          '</td><td class="org-series-date-actions">' +
+          payoutActionsHtml(child) +
+          '</td></tr>'
+        );
+      })
+      .join('');
+
+    tr.innerHTML =
+      '<td colspan="7">' +
+      '<div class="org-series-dates-panel">' +
+      seriesOverviewStatsHtml(children) +
+      '<div class="org-series-dates-head">' +
+      '<p class="org-series-dates-lede"><strong>' +
+      esc(String(children.length)) +
+      ' dates</strong> · Total ' +
+      esc(formatGbpAmount(totalRevenue)) +
+      ' · Sorted by ' +
+      esc(eventsSortLabel()) +
+      '</p>' +
+      '<p class="org-series-dates-hint">Expand each date to view payout status or request a payout for that occurrence.</p>' +
+      '</div>' +
+      '<div class="org-series-dates-scroll">' +
+      '<table class="org-series-dates-table">' +
+      '<thead><tr>' +
+      '<th>Date</th><th>Time</th><th>Tickets sold</th><th>Revenue</th><th>Status</th><th>Payout</th><th>Actions</th>' +
+      '</tr></thead><tbody>' +
+      rowsHtml +
+      '</tbody></table></div></div></td>';
+    body.appendChild(tr);
+  }
+
+  function syncSharedEventFiltersUi() {
+    const statusEl = document.getElementById('filter-events-status');
+    const searchEl = document.getElementById('filter-events-search');
+    const hideArchivedEl = document.getElementById('filter-events-hide-archived');
+    const revStatusEl = document.getElementById('filter-revenue-status');
+    const revSearchEl = document.getElementById('filter-revenue-search');
+    const revHideArchivedEl = document.getElementById('filter-revenue-hide-archived');
+    if (statusEl) statusEl.value = filters.eventsStatus;
+    if (searchEl) searchEl.value = filters.eventsSearch;
+    if (hideArchivedEl) hideArchivedEl.checked = filters.eventsHideArchived !== false;
+    if (revStatusEl) revStatusEl.value = filters.eventsStatus;
+    if (revSearchEl) revSearchEl.value = filters.eventsSearch;
+    if (revHideArchivedEl) revHideArchivedEl.checked = filters.eventsHideArchived !== false;
+  }
+
   function renderEvents() {
     const body = document.getElementById('events-body');
     const empty = document.getElementById('events-empty');
@@ -4529,6 +4644,7 @@
       }
     });
     updateEventsSortHeaders();
+    syncSharedEventFiltersUi();
   }
 
   function renderTickets() {
@@ -4789,16 +4905,15 @@
           .catch((err) => showOrganiserAlert(err.message || 'Could not load events', true));
       }
       body.innerHTML =
-        '<tr><td colspan="8" class="org-table-loading">Loading revenue…</td></tr>';
+        '<tr><td colspan="7" class="org-table-loading">Loading revenue…</td></tr>';
       return;
     }
 
-    const list = eventsFiltersActive()
-      ? filteredEventsList()
-      : groupEventsIntoSeries(state.events.slice());
+    const list = filteredEventsList();
     body.innerHTML = '';
     renderPayoutHeldBanner();
     renderStripeConnectBanner();
+    syncSharedEventFiltersUi();
 
     const setRev = (id, val) => {
       const el = document.getElementById(id);
@@ -4807,38 +4922,19 @@
     setRev('rev-stat-events', String(state.eventsTotal || state.events.length));
     setRev('rev-stat-tickets', String(totalTicketsSold()));
     setRev('rev-stat-revenue', totalRevenueDisplay());
-    const avg = averageRating();
-    setRev('rev-stat-rating', avg != null ? '★ ' + avg.toFixed(1) : '—');
 
     const pageInfo = paginateList(list, listPages.revenue);
     listPages.revenue = pageInfo.page;
     updatePaginationNav('revenue', pageInfo);
 
     pageInfo.items.forEach((ev) => {
-      const tr = document.createElement('tr');
-      if (ev.needsRefundConfirmation) tr.classList.add('org-row-payout-held');
-      tr.innerHTML =
-        '<td>' +
-        thumbHtml(ev) +
-        '</td><td class="org-td-name">' +
-        eventTitleCellHtml(ev) +
-        (ev.needsRefundConfirmation
-          ? '<p class="org-payout-held-note">Payout on hold — refunds processing</p>'
-          : '') +
-        '</td><td>' +
-        esc(ev.ticketsSoldLabel || '0') +
-        '</td><td class="org-revenue">' +
-        eventRevenueCellHtml(ev) +
-        '</td><td>' +
-        ratingHtml(ev.rating) +
-        '</td><td>' +
-        statusBadgeHtml(ev.statusKey || 'draft', ev.statusLabel || 'Draft') +
-        '</td><td>' +
-        payoutStatusBadgeHtml(ev) +
-        '</td><td class="org-td-actions">' +
-        payoutActionsHtml(ev) +
-        '</td>';
-      body.appendChild(tr);
+      appendRevenueTableRow(body, ev);
+      if (ev.isSeries && ev.seriesCount > 1 && ev.seriesEvents && ev.seriesEvents.length) {
+        const key = eventSeriesKeyForRow(ev);
+        if (expandedSeriesKeys.has(key)) {
+          appendRevenueSeriesDetailPanel(body, ev);
+        }
+      }
     });
   }
 
@@ -6370,7 +6466,23 @@
         if (id === 'filter-events-type') filters.eventsType = el.value;
         if (id === 'filter-events-search') filters.eventsSearch = el.value;
         listPages.events = 1;
+        listPages.revenue = 1;
         renderEvents();
+        if (eventsSubRoute === 'events-revenue') renderRevenue();
+      });
+    });
+
+    ['filter-revenue-status', 'filter-revenue-search'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const evt = id === 'filter-revenue-search' ? 'input' : 'change';
+      el.addEventListener(evt, () => {
+        if (id === 'filter-revenue-status') filters.eventsStatus = el.value;
+        if (id === 'filter-revenue-search') filters.eventsSearch = el.value;
+        listPages.events = 1;
+        listPages.revenue = 1;
+        renderRevenue();
+        if (eventsSubRoute === 'events-list') renderEvents();
       });
     });
 
@@ -6387,11 +6499,33 @@
       hideArchivedEl.addEventListener('change', () => {
         filters.eventsHideArchived = hideArchivedEl.checked;
         listPages.events = 1;
+        listPages.revenue = 1;
         renderEvents();
+        if (eventsSubRoute === 'events-revenue') renderRevenue();
+      });
+    }
+
+    const revHideArchivedEl = document.getElementById('filter-revenue-hide-archived');
+    if (revHideArchivedEl) {
+      revHideArchivedEl.checked = filters.eventsHideArchived !== false;
+      revHideArchivedEl.addEventListener('change', () => {
+        filters.eventsHideArchived = revHideArchivedEl.checked;
+        listPages.events = 1;
+        listPages.revenue = 1;
+        renderRevenue();
+        if (eventsSubRoute === 'events-list') renderEvents();
       });
     }
 
     document.getElementById('events-body')?.addEventListener('keydown', (e) => {
+      const row = e.target.closest('tr.org-series-parent-row');
+      if (!row) return;
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      toggleSeriesExpand(row.getAttribute('data-series-key'));
+    });
+
+    document.getElementById('revenue-body')?.addEventListener('keydown', (e) => {
       const row = e.target.closest('tr.org-series-parent-row');
       if (!row) return;
       if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -6638,6 +6772,13 @@
         if (stripeDashboardBtn) {
           e.preventDefault();
           openStripeDashboard(stripeDashboardBtn.getAttribute('data-stripe-dashboard'));
+          return;
+        }
+        const stripeDashboardIdBtn = e.target.closest('#org-open-stripe-dashboard');
+        if (stripeDashboardIdBtn) {
+          e.preventDefault();
+          const readyGroup = (state.groups || []).find((g) => g.stripeConnectReady);
+          openStripeDashboard(readyGroup?.id);
           return;
         }
 
