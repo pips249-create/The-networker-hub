@@ -428,6 +428,21 @@
   color: var(--ad-red);
 }
 
+.ad-refund-alert {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #fff8ef;
+  border: 1px solid #f0d2a6;
+  color: #6a4a24;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.ad-row-cancelled td {
+  background: rgba(248, 250, 252, 0.9);
+}
+
 .ad-row-application-pending td {
   background: rgba(255, 244, 214, 0.45);
 }

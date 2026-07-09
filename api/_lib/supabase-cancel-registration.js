@@ -1,7 +1,12 @@
 const { getSupabaseAdmin } = require('./supabase');
 const { resolveAttendeeId } = require('./supabase-favourites');
-const { sendBookingCancelledEmail, sendOrganiserBookingCancelledEmail } = require('./cancellation-emails');
-const { isRefundEligibleForCancellation } = require('./cancellation-email-sections');
+const { sendBookingCancelledEmail, sendOrganiserBookingCancelledEmail, sendRefundProcessedEmail } = require('./cancellation-emails');
+const {
+  isRefundEligibleForCancellation,
+  isSelfServiceCancellationAllowed,
+  cancellationBlockedMessage,
+} = require('./cancellation-email-sections');
+const { issueRefundForRegistration } = require('./stripe-refunds');
 
 async function cancelRegistrationForAttendee(session, registrationId) {
   const sb = getSupabaseAdmin();
@@ -15,7 +20,7 @@ async function cancelRegistrationForAttendee(session, registrationId) {
   const { data: registration, error } = await sb
     .from('registrations')
     .select(
-      'id, attendee_id, event_id, payment_status, amount_paid, cancelled_at, application_status'
+      'id, attendee_id, event_id, organiser_id, payment_status, amount_paid, cancelled_at, application_status, stripe_payment_intent_id'
     )
     .eq('id', registrationId)
     .maybeSingle();
@@ -47,19 +52,15 @@ async function cancelRegistrationForAttendee(session, registrationId) {
     e.status = 404;
     throw e;
   }
-  if (String(eventRow.status || '').toLowerCase() === 'cancelled') {
-    const e = new Error('This event has already been cancelled by the organiser');
+
+  if (!isSelfServiceCancellationAllowed(eventRow, registration)) {
+    const e = new Error(cancellationBlockedMessage(eventRow));
     e.status = 400;
+    e.code = 'cancellation_not_allowed';
     throw e;
   }
 
-  const startsAt = eventRow.starts_at ? new Date(eventRow.starts_at) : null;
-  if (startsAt && !Number.isNaN(startsAt.getTime()) && startsAt.getTime() < Date.now()) {
-    const e = new Error('Past events cannot be cancelled from your account');
-    e.status = 400;
-    throw e;
-  }
-
+  const refundEligible = isRefundEligibleForCancellation(eventRow, registration);
   const now = new Date().toISOString();
   const patch = { cancelled_at: now };
   const paymentStatus = String(registration.payment_status || '').trim();
@@ -73,26 +74,54 @@ async function cancelRegistrationForAttendee(session, registrationId) {
     .eq('id', registrationId);
   if (updateError) throw new Error(updateError.message);
 
+  let refundResult = null;
+  if (refundEligible) {
+    try {
+      refundResult = await issueRefundForRegistration(registration);
+      if (refundResult?.issued) {
+        await sb.from('registrations').update({ payment_status: 'Refunded' }).eq('id', registrationId);
+      }
+    } catch (e) {
+      refundResult = { issued: false, error: e.message || String(e) };
+    }
+  }
+
   let emailResult = null;
   let organiserEmailResult = null;
+  let refundEmailResult = null;
+  const refundIssued = Boolean(refundResult?.issued && !refundResult?.skipped);
+  const emailOptions = {
+    refundIssued,
+    sessionEmail: String(session?.email || '').trim(),
+  };
   try {
-    emailResult = await sendBookingCancelledEmail(sb, registrationId);
+    emailResult = await sendBookingCancelledEmail(sb, registrationId, emailOptions);
   } catch (e) {
-    emailResult = { error: e.message || String(e) };
+    emailResult = { sent: false, error: e.message || String(e), code: e.code || null };
   }
   try {
-    organiserEmailResult = await sendOrganiserBookingCancelledEmail(sb, registrationId);
+    organiserEmailResult = await sendOrganiserBookingCancelledEmail(sb, registrationId, emailOptions);
   } catch (e) {
-    organiserEmailResult = { error: e.message || String(e) };
+    organiserEmailResult = { sent: false, error: e.message || String(e), code: e.code || null };
+  }
+  if (refundIssued) {
+    try {
+      refundEmailResult = await sendRefundProcessedEmail(sb, registrationId, registration.amount_paid);
+    } catch (e) {
+      refundEmailResult = { sent: false, error: e.message || String(e), code: e.code || null };
+    }
   }
 
   return {
     registrationId,
     paymentStatus: registration.payment_status,
     amountPaid: registration.amount_paid,
-    refundEligible: isRefundEligibleForCancellation(eventRow, registration),
+    refundEligible,
+    refundIssued,
+    refundResult,
     emailResult,
     organiserEmailResult,
+    refundEmailResult,
   };
 }
 

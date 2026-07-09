@@ -87,6 +87,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: 'Join link for {{event_name}}',
   },
+  event_details_updated: {
+    file: 'event-details-updated.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Update for {{event_name}}',
+  },
   online_join_reminder: {
     file: 'online-join-reminder.html',
     marker: 'hub-email-layout-v2',

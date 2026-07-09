@@ -8,7 +8,11 @@ const {
   formatRefundPolicyLabel,
   formatRefundPolicyText,
 } = require('./event-refund-policy');
-const { isRefundEligibleForCancellation } = require('./cancellation-email-sections');
+const {
+  isRefundEligibleForCancellation,
+  isSelfServiceCancellationAllowed,
+  deriveRefundStatusForCancelledRegistration,
+} = require('./cancellation-email-sections');
 const { listOpportunityEnquiriesSentBySession } = require('./supabase-opportunities');
 
 function deriveReviewStatus(hasReview, row) {
@@ -20,12 +24,7 @@ function deriveReviewStatus(hasReview, row) {
 }
 
 function canCancelRegistration(row, ev) {
-  if (row.cancelled_at || String(row.payment_status || '').trim() === 'Refunded') return false;
-  if (String(row.application_status || '').trim() === 'Denied') return false;
-  if (String(ev.status || '').toLowerCase() === 'cancelled') return false;
-  const startsAt = ev.starts_at ? new Date(ev.starts_at) : null;
-  if (startsAt && !Number.isNaN(startsAt.getTime()) && startsAt.getTime() < Date.now()) return false;
-  return true;
+  return isSelfServiceCancellationAllowed(ev, row);
 }
 
 const { isOnlineEvent } = require('./event-refund-policy');
@@ -98,12 +97,58 @@ function mapRegistrationRow(row, reviewByEventId) {
     refundPolicyLabel: formatRefundPolicyLabel(ev) || 'Refund policy',
     refundPolicyText: formatRefundPolicyText(ev),
     refundEligible: isRefundEligibleForCancellation(ev, row),
+    isCancelled: false,
+    cancelledAt: null,
+    refundStatus: null,
     isPaid:
       String(row.payment_status || '').trim() === 'Paid' &&
       Number(row.amount_paid) > 0,
     isOnline: online,
     meetingLink: online ? meetingLink : '',
     meetingType: ev.meeting_type || (online ? 'Online' : 'In person'),
+  };
+}
+
+function mapCancelledRegistrationRow(row) {
+  const ev = row.events || {};
+  const organiser = ev.organisers || {};
+  const ticket = row.tickets || {};
+  const eventId = row.event_id || ev.id || '';
+  const date = ev.starts_at || null;
+  const ticketName = String(ticket.name || 'General Admission').trim();
+  const qty = Math.max(1, Number(row.quantity) || 1);
+  const paymentStatus = String(row.payment_status || 'Pending').trim();
+  const amountPaid = row.amount_paid != null ? Number(row.amount_paid) : 0;
+  const refundStatus = deriveRefundStatusForCancelledRegistration(ev, row);
+
+  return {
+    id: row.id,
+    eventId,
+    ticketId: row.ticket_id || ticket.id || '',
+    slug: ev.slug || '',
+    title: ev.title || 'Event',
+    date,
+    endDate: ev.ends_at || null,
+    imageUrl: eventImageUrl(ev) || null,
+    ticketLabel: qty + ' × ' + ticketName,
+    quantity: qty,
+    paymentStatus,
+    applicationStatus: row.application_status || 'Approved',
+    amountPaid,
+    createdAt: row.created_at || null,
+    bookingReference: formatBookingReference(row.id),
+    organiserId: ev.organiser_id || organiser.id || '',
+    organiserName: organiser.name || '',
+    organiserSlug: organiser.slug || '',
+    canCancel: false,
+    refundPolicy: ev.refund_policy || null,
+    refundPolicyText: formatRefundPolicyText(ev),
+    isPaid:
+      String(row.payment_status || '').trim() === 'Paid' &&
+      Number(row.amount_paid) > 0,
+    isCancelled: true,
+    cancelledAt: row.cancelled_at || null,
+    refundStatus,
   };
 }
 
@@ -157,6 +202,58 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
   return res.data || [];
 }
 
+async function listCancelledRegistrationsForAttendee(sb, attendeeId) {
+  const since = new Date();
+  since.setDate(since.getDate() - 90);
+  const res = await sb
+    .from('registrations')
+    .select(
+      `
+      id,
+      created_at,
+      cancelled_at,
+      refund_email_sent_at,
+      event_id,
+      ticket_id,
+      payment_status,
+      application_status,
+      amount_paid,
+      quantity,
+      events (
+        id,
+        title,
+        slug,
+        starts_at,
+        ends_at,
+        status,
+        image_url,
+        photo_url,
+        organiser_id,
+        refund_policy,
+        refund_policy_details,
+        refund_cutoff_days,
+        organisers (
+          id,
+          name,
+          slug
+        )
+      ),
+      tickets (
+        id,
+        name,
+        price
+      )
+    `
+    )
+    .eq('attendee_id', attendeeId)
+    .not('cancelled_at', 'is', null)
+    .gte('cancelled_at', since.toISOString())
+    .order('cancelled_at', { ascending: false });
+
+  if (res.error) throw new Error(res.error.message);
+  return res.data || [];
+}
+
 async function listReviewsForAttendee(sb, attendeeId) {
   const res = await sb
     .from('reviews')
@@ -178,7 +275,12 @@ async function listReviewsForAttendee(sb, attendeeId) {
 
 async function getAttendeeDashboardFromSupabase(session) {
   if (!isSupabaseConfigured()) {
-    return { registrations: [], stats: buildStats([]), opportunityEnquiries: [] };
+    return {
+      registrations: [],
+      cancelledBookings: [],
+      stats: buildStats([]),
+      opportunityEnquiries: [],
+    };
   }
 
   const sb = getSupabaseAdmin();
@@ -188,17 +290,25 @@ async function getAttendeeDashboardFromSupabase(session) {
   ]);
 
   if (!attendeeId) {
-    return { registrations: [], stats: buildStats([]), opportunityEnquiries };
+    return {
+      registrations: [],
+      cancelledBookings: [],
+      stats: buildStats([]),
+      opportunityEnquiries,
+    };
   }
 
-  const [rows, reviewByEventId] = await Promise.all([
+  const [rows, cancelledRows, reviewByEventId] = await Promise.all([
     listRegistrationsForAttendee(sb, attendeeId),
+    listCancelledRegistrationsForAttendee(sb, attendeeId),
     listReviewsForAttendee(sb, attendeeId),
   ]);
 
   const registrations = rows.map((row) => mapRegistrationRow(row, reviewByEventId));
+  const cancelledBookings = cancelledRows.map((row) => mapCancelledRegistrationRow(row));
   return {
     registrations,
+    cancelledBookings,
     stats: buildStats(registrations),
     opportunityEnquiries,
   };

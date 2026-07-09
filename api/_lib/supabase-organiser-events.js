@@ -1,6 +1,7 @@
 /**
  * Organiser events + tickets + dashboard workspace — Supabase.
  */
+const crypto = require('crypto');
 const { getSupabaseAdmin } = require('./supabase');
 const { formatTicketsSoldLabel } = require('./tickets-sold-label');
 const { resolveImageUrl } = require('./supabase-storage');
@@ -12,6 +13,7 @@ const sbOrg = require('./supabase-organiser');
 const { geocodeUkPostcode } = require('./postcode-geocode');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 const { eventHasTicketsOnSale } = require('./ticket-sales');
+const { assertTicketsEditableForEvents, loadLockedOrActiveSaleEvents, lockEventOnFirstSale } = require('./event-sale-lock');
 
 const WORKSPACE_EVENTS_LIMIT_DEFAULT = 100;
 const WORKSPACE_EVENTS_LIMIT_MAX = 250;
@@ -31,6 +33,18 @@ function parseWorkspaceEventsQuery(req) {
 function formatMoney(amount) {
   const n = Number(amount) || 0;
   return '£' + n.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function newSeriesGroupId() {
+  return crypto.randomUUID();
+}
+
+/** Assign a shared series id when saving multiple dates in one listing. */
+function resolveSeriesGroupId(existingSeriesGroupId, occurrenceCount) {
+  const existing = String(existingSeriesGroupId || '').trim();
+  if (existing) return existing;
+  if (Number(occurrenceCount) > 1) return newSeriesGroupId();
+  return null;
 }
 
 const { normalizeEventType } = require('./event-types');
@@ -113,6 +127,7 @@ function rowToEvent(row) {
     approvalStatus: row.approval_status || 'Pending Review',
     recurrencePattern: row.recurrence_pattern || null,
     recurrenceEndDate: row.recurrence_end_date || null,
+    seriesGroupId: row.series_group_id || null,
     maxAttendees: row.max_attendees != null ? Number(row.max_attendees) : null,
     locked: Boolean(row.locked),
     lockedReason: row.locked_reason || null,
@@ -555,6 +570,9 @@ async function buildEventRow(payload, eventId, mode) {
   if (payload.recurrenceEndDate) {
     row.recurrence_end_date = payload.recurrenceEndDate;
   }
+  if (payload.seriesGroupId) {
+    row.series_group_id = payload.seriesGroupId;
+  }
 
   if (!isLocked && touchDate) {
     const dates = parseDateIso(payload.date, payload.endDate);
@@ -723,7 +741,14 @@ async function updateEvent(eventId, payload) {
   const { data: existing } = await sb.from('events').select('*').eq('id', eventId).maybeSingle();
   const previousLink = String(existing?.meeting_link || '').trim();
   const patchPayload = { ...payload, groupId: payload.groupId };
-  if (existing && existing.locked) {
+  const saleLocked =
+    existing &&
+    (existing.locked ||
+      (await loadLockedOrActiveSaleEvents(sb, [eventId])).some((row) => row.id === eventId));
+  if (saleLocked) {
+    if (existing && !existing.locked) {
+      await lockEventOnFirstSale(sb, eventId);
+    }
     patchPayload._locked = true;
     patchPayload.type = existing.event_type;
     patchPayload.eventFormat = existing.meeting_type;
@@ -759,16 +784,59 @@ async function updateEvent(eventId, payload) {
     const updated = await applyEventPhotoAfterSave(eventId, payload);
     if (updated) {
       const event = rowToEvent(updated);
-      const linkStats = await maybeSendMeetingLinkEmails(sb, eventId, previousLink, updated.meeting_link);
-      if (linkStats && linkStats.sent > 0) event.linkUpdateEmails = linkStats;
+      const notifyStats = await finalizeEventUpdateNotifications(
+        sb,
+        eventId,
+        existing,
+        updated,
+        previousLink
+      );
+      if (notifyStats.linkUpdateEmails?.sent > 0) event.linkUpdateEmails = notifyStats.linkUpdateEmails;
+      if (notifyStats.detailsUpdateEmails?.sent > 0) {
+        event.detailsUpdateEmails = notifyStats.detailsUpdateEmails;
+      }
       return event;
     }
   }
 
   const event = rowToEvent(data);
-  const linkStats = await maybeSendMeetingLinkEmails(sb, eventId, previousLink, data.meeting_link);
-  if (linkStats && linkStats.sent > 0) event.linkUpdateEmails = linkStats;
+  const notifyStats = await finalizeEventUpdateNotifications(sb, eventId, existing, data, previousLink);
+  if (notifyStats.linkUpdateEmails?.sent > 0) event.linkUpdateEmails = notifyStats.linkUpdateEmails;
+  if (notifyStats.detailsUpdateEmails?.sent > 0) event.detailsUpdateEmails = notifyStats.detailsUpdateEmails;
   return event;
+}
+
+async function maybeNotifyAttendeesOfEventUpdate(sb, eventId, existingRow, updatedRow) {
+  if (!existingRow || !updatedRow) return null;
+  try {
+    const {
+      detectNotifyableEventChanges,
+      sendEventDetailsUpdatedEmails,
+    } = require('./event-update-notifications');
+    const changes = detectNotifyableEventChanges(existingRow, updatedRow);
+    if (!changes.length) return null;
+    return await sendEventDetailsUpdatedEmails(sb, eventId, changes, updatedRow);
+  } catch (e) {
+    console.error('[event-details-updated-email]', eventId, e.message || e);
+    return { sent: 0, errors: [{ message: e.message || String(e) }] };
+  }
+}
+
+async function finalizeEventUpdateNotifications(sb, eventId, existingRow, updatedRow, previousLink) {
+  const stats = { linkUpdateEmails: null, detailsUpdateEmails: null };
+  stats.linkUpdateEmails = await maybeSendMeetingLinkEmails(
+    sb,
+    eventId,
+    previousLink,
+    updatedRow.meeting_link
+  );
+  stats.detailsUpdateEmails = await maybeNotifyAttendeesOfEventUpdate(
+    sb,
+    eventId,
+    existingRow,
+    updatedRow
+  );
+  return stats;
 }
 
 async function maybeSendMeetingLinkEmails(sb, eventId, previousLink, newLink) {
@@ -851,6 +919,7 @@ async function createTicket({
   ticketType,
 }) {
   const sb = getSupabaseAdmin();
+  await assertTicketsEditableForEvents(sb, [eventId]);
   const priceNum = parseFloat(String(price || '0').replace(/[^0-9.]/g, '')) || 0;
   const qty =
     quantityAvailable != null && quantityAvailable !== ''
@@ -1039,11 +1108,13 @@ async function createTicketsForEvents({
   const tiers = Array.isArray(tickets) ? tickets : [];
   if (!ids.length || !tiers.length) return { created: 0, tickets: [] };
 
+  const sb = getSupabaseAdmin();
+  await assertTicketsEditableForEvents(sb, ids);
+
   if (vatTreatment) {
     await updateEventVatTreatment(ids, vatTreatment);
   }
 
-  const sb = getSupabaseAdmin();
   const { error: deleteErr } = await sb.from('tickets').delete().in('event_id', ids);
   if (deleteErr) throw new Error(deleteErr.message);
 
@@ -1208,13 +1279,27 @@ async function loadOrganiserEventsPage(session, groups, groupIds, adminView, pag
           ...upcomingOverview.events.map((e) => e.id),
         ]),
       ]);
+      const { listCancellationsForEvents, buildRevenueContext, mapLatestCancellationsByEvent } =
+        require('./supabase-organiser-payouts');
+      const cancellations = await listCancellationsForEvents([
+        ...new Set(regs.map((row) => row.event_id).filter(Boolean)),
+      ]);
+      const cancellationsByEvent = mapLatestCancellationsByEvent(cancellations);
+      const revenueContextByEventId = {};
+      [...enrichedEvents, ...upcomingOverview.events].forEach((ev) => {
+        if (!ev?.id || revenueContextByEventId[ev.id]) return;
+        revenueContextByEventId[ev.id] = buildRevenueContext(
+          ev,
+          cancellationsByEvent[ev.id] || null
+        );
+      });
       overview = {
         ...overview,
         events: enrichedEvents,
         groups: enrichOrganiserOverview(groups, enrichedEvents, tickets, groupEventCounts).groups,
       };
       upcomingOverview.events = await enrichEventsWithRegistrationSales(upcomingOverview.events);
-      tickets = enrichTicketsWithSales(tickets, regs);
+      tickets = enrichTicketsWithSales(tickets, regs, revenueContextByEventId);
     } catch {
       /* registration enrichment optional */
     }
@@ -1458,4 +1543,6 @@ module.exports = {
   getOrganiserWorkspace,
   airtableSetupHint,
   rowToEvent,
+  newSeriesGroupId,
+  resolveSeriesGroupId,
 };

@@ -27,6 +27,14 @@ function isOnlineEvent(row, meetingLink) {
   return false;
 }
 
+function effectiveRefundCutoffDays(eventRow) {
+  const policy = String(eventRow?.refund_policy || '').trim();
+  if (policy !== 'full_refund') return null;
+  const raw = eventRow?.refund_cutoff_days;
+  if (raw != null && Number.isFinite(Number(raw))) return Math.max(0, Number(raw));
+  return 7;
+}
+
 function formatRefundPolicyLabel(eventRow) {
   const policy = String(eventRow?.refund_policy || '').trim();
   if (policy === 'full_refund') return 'Full refunds available';
@@ -42,18 +50,14 @@ function formatRefundPolicyText(eventRow) {
     return 'No refund policy has been set for this event. Contact the organiser before booking.';
   }
   if (policy === 'full_refund') {
-    const days = eventRow.refund_cutoff_days;
-    if (days != null && Number.isFinite(Number(days))) {
-      const n = Number(days);
-      return (
-        'Full refunds are available up to ' +
-        n +
-        ' day' +
-        (n === 1 ? '' : 's') +
-        ' before the event.'
-      );
-    }
-    return 'Full refunds are available before the event.';
+    const n = effectiveRefundCutoffDays(eventRow);
+    return (
+      'Full refunds are available up to ' +
+      n +
+      ' day' +
+      (n === 1 ? '' : 's') +
+      ' before the event. After that, cancellations are not available from your account.'
+    );
   }
   if (policy === 'partial_refund') {
     return (
@@ -125,6 +129,7 @@ module.exports = {
   formatMultilineHtml,
   inferMeetingType,
   isOnlineEvent,
+  effectiveRefundCutoffDays,
   formatRefundPolicyLabel,
   formatRefundPolicyText,
   buildRefundPolicySection,

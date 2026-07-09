@@ -122,11 +122,12 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
     });
 }
 
-function cancellationRefundLabel(paymentStatus, amountPaid, refundEligible) {
+function cancellationRefundLabel(paymentStatus, amountPaid, refundStatus) {
   const status = String(paymentStatus || '').trim();
   const amount = Number(amountPaid) || 0;
+  if (refundStatus === 'completed') return 'Refund issued';
+  if (refundStatus === 'pending') return 'Refund required';
   if (status === 'Free' || amount <= 0) return 'Free ticket — no refund';
-  if (refundEligible) return 'Refund may be due';
   return 'No refund due';
 }
 
@@ -177,7 +178,8 @@ async function listBookingCancellationsForOrganiserEvents(groupIds, filterEventI
 
   if (error) throw error;
 
-  const { isRefundEligibleForCancellation } = require('./cancellation-email-sections');
+  const { isRefundEligibleForCancellation, deriveRefundStatusForCancelledRegistration } =
+    require('./cancellation-email-sections');
 
   return (data || [])
     .filter((row) => !allowedOrganisers || allowedOrganisers.has(row.organiser_id))
@@ -190,10 +192,12 @@ async function listBookingCancellationsForOrganiserEvents(groupIds, filterEventI
         String(attendee.name || '').trim() || (email ? email.split('@')[0] : 'Attendee');
       const paymentStatus = String(row.payment_status || 'Pending').trim();
       const amountPaid = row.amount_paid != null ? Number(row.amount_paid) : 0;
-      const refundEligible = isRefundEligibleForCancellation(event, row);
+      const refundEligible = isRefundEligibleForCancellation(event, row, row.cancelled_at);
+      const refundStatus = deriveRefundStatusForCancelledRegistration(event, row) || 'none';
 
       return {
         id: row.id,
+        organiserId: row.organiser_id,
         bookingReference: formatBookingReference(row.id),
         eventId: row.event_id,
         eventTitle: String(event.title || 'Event').trim(),
@@ -206,8 +210,9 @@ async function listBookingCancellationsForOrganiserEvents(groupIds, filterEventI
         amountDisplay: amountPaid > 0 ? '£' + amountPaid.toFixed(2) : 'Free',
         registeredAt: row.created_at || '',
         cancelledAt: row.cancelled_at || '',
-        refundLabel: cancellationRefundLabel(paymentStatus, amountPaid, refundEligible),
+        refundLabel: cancellationRefundLabel(paymentStatus, amountPaid, refundStatus),
         refundEligible,
+        refundStatus,
       };
     });
 }

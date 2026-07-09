@@ -2,6 +2,7 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { ensureAttendeeId } = require('./supabase-favourites');
 const { sendRegistrationEmails } = require('./registration-emails');
 const { UUID_PATTERN } = require('./uuid');
+const { lockEventOnFirstSale } = require('./event-sale-lock');
 
 /**
  * Insert a registration after successful checkout.
@@ -140,6 +141,8 @@ async function createRegistrationFromPayment(input) {
       emailResult = { error: e.message || String(e) };
     }
 
+    await lockEventOnFirstSale(sb, eventId);
+
     return {
       action: 'updated',
       id: linked.id,
@@ -201,6 +204,8 @@ async function createRegistrationFromPayment(input) {
 
   const ins = await sb.from('registrations').insert(row).select('*').single();
   if (ins.error) throw new Error(ins.error.message);
+
+  await lockEventOnFirstSale(sb, eventId);
 
   let emailResult = null;
   try {

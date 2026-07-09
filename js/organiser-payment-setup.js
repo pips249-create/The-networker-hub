@@ -182,11 +182,35 @@
     return true;
   }
 
+  async function openDashboard(groupId) {
+    const gid = String(groupId || '').trim();
+    if (!gid) {
+      alert('No organiser profile found.');
+      return false;
+    }
+    try {
+      const res = await fetch(
+        '/api/organiser/stripe-connect?groupId=' + encodeURIComponent(gid) + '&action=dashboard',
+        { credentials: 'include', cache: 'no-store' }
+      );
+      const data = await res.json();
+      if (!data.ok || !data.url) {
+        alert(data.message || data.error || 'Could not open Stripe dashboard.');
+        return false;
+      }
+      return openStripeOnboarding(data.url);
+    } catch {
+      alert('Could not open Stripe dashboard. Please try again.');
+      return false;
+    }
+  }
+
   global.HubOrganiserPaymentSetup = {
     fetchState: fetchState,
     groupForEvent: groupForEvent,
     groupNeedsSetup: groupNeedsSetup,
     startSetup: startSetup,
+    openDashboard: openDashboard,
     openStripeOnboarding: openStripeOnboarding,
     launcherHref: launcherHref,
     cardHtml: cardHtml,

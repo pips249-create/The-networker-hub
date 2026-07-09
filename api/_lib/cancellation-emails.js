@@ -4,6 +4,7 @@ const {
   buildOrganiserEmailVars,
   formatAmount,
 } = require('./registration-emails');
+const { isRefundEligibleForCancellation } = require('./cancellation-email-sections');
 
 function formatRefundDate(iso) {
   const d = iso ? new Date(iso) : new Date();
@@ -98,7 +99,7 @@ function formatCancellationTime(iso) {
   });
 }
 
-async function sendOrganiserBookingCancelledEmail(sb, registrationId) {
+async function sendOrganiserBookingCancelledEmail(sb, registrationId, options = {}) {
   const ctx = await loadRegistrationContext(sb, registrationId);
   if (!ctx || !ctx.eventRow) return { skipped: true, reason: 'registration_not_found' };
 
@@ -110,10 +111,11 @@ async function sendOrganiserBookingCancelledEmail(sb, registrationId) {
 
   let organiserEmail = '';
   let organiserName = ctx.organiserName;
+  let stripeExpressUrl = '';
   if (eventRowFull?.organiser_id) {
     const orgRes = await sb
       .from('organisers')
-      .select('id, name, email, contact_email')
+      .select('id, name, email, contact_email, stripe_account_id')
       .eq('id', eventRowFull.organiser_id)
       .maybeSingle();
     if (orgRes.error) throw new Error(orgRes.error.message);
@@ -121,6 +123,27 @@ async function sendOrganiserBookingCancelledEmail(sb, registrationId) {
     organiserEmail = String(orgRes.data?.email || orgRes.data?.contact_email || '')
       .trim()
       .toLowerCase();
+
+    const paid =
+      Number(ctx.registration?.amount_paid) > 0 &&
+      ['Paid', 'Refunded'].includes(String(ctx.registration?.payment_status || '').trim());
+    const refundEligible =
+      paid &&
+      eventRowFull &&
+      isRefundEligibleForCancellation(eventRowFull, ctx.registration, ctx.registration?.cancelled_at);
+    const refundAutoIssued =
+      Boolean(options.refundIssued) ||
+      (refundEligible && String(ctx.registration?.payment_status || '').trim() === 'Refunded');
+
+    if (refundEligible && !refundAutoIssued && orgRes.data?.stripe_account_id) {
+      try {
+        const { createExpressDashboardLink } = require('./stripe-connect');
+        const link = await createExpressDashboardLink(orgRes.data.stripe_account_id);
+        stripeExpressUrl = String(link?.url || '').trim();
+      } catch {
+        /* non-fatal — email still sends with dashboard instructions */
+      }
+    }
   }
   if (!organiserEmail) return { skipped: true, reason: 'missing_organiser_email' };
 
@@ -134,6 +157,8 @@ async function sendOrganiserBookingCancelledEmail(sb, registrationId) {
   });
   const vars = buildOrganiserEmailVars(attendeeVars, {});
   vars.cancellation_time = formatCancellationTime(ctx.registration.cancelled_at);
+  vars.stripe_express_url = stripeExpressUrl;
+  vars.refund_issued = Boolean(options.refundIssued);
   vars._registration = ctx.registration;
   vars._event_row = eventRowFull || ctx.eventRow;
 
@@ -145,21 +170,25 @@ async function sendOrganiserBookingCancelledEmail(sb, registrationId) {
     });
     return { sent: true, to: organiserEmail };
   } catch (e) {
-    return { sent: false, error: e.message || String(e) };
+    return { sent: false, error: e.message || String(e), code: e.code || null };
   }
 }
 
-async function sendBookingCancelledEmail(sb, registrationId) {
+async function sendBookingCancelledEmail(sb, registrationId, options = {}) {
   const ctx = await loadRegistrationContext(sb, registrationId);
   if (!ctx || !ctx.eventRow) return { skipped: true, reason: 'registration_not_found' };
   if (ctx.registration.cancellation_email_sent_at) {
     return { skipped: true, reason: 'already_sent' };
   }
 
-  const attendeeEmail = String(ctx.attendee.email || '').trim().toLowerCase();
+  let attendeeEmail = String(ctx.attendee.email || options.sessionEmail || '')
+    .trim()
+    .toLowerCase();
   if (!attendeeEmail) return { skipped: true, reason: 'missing_email' };
 
-  const vars = buildCancellationEmailVars(ctx, {});
+  const vars = buildCancellationEmailVars(ctx, {
+    refund_issued: Boolean(options.refundIssued),
+  });
   try {
     await sendTemplatedEmail({
       slug: 'booking_cancelled',
@@ -172,7 +201,7 @@ async function sendBookingCancelledEmail(sb, registrationId) {
       .eq('id', registrationId);
     return { sent: true, to: attendeeEmail };
   } catch (e) {
-    return { sent: false, error: e.message || String(e) };
+    return { sent: false, error: e.message || String(e), code: e.code || null };
   }
 }
 
@@ -250,8 +279,8 @@ async function sendEventCancelledEmailsForEvent(sb, eventId, cancellation) {
     .from('registrations')
     .select('id')
     .eq('event_id', eventId)
-    .in('payment_status', ['Paid', 'Free'])
-    .eq('application_status', 'Approved')
+    .in('payment_status', ['Paid', 'Free', 'Pending'])
+    .neq('application_status', 'Denied')
     .is('event_cancelled_email_sent_at', null);
 
   if (error) throw new Error(error.message);

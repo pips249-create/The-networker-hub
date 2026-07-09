@@ -87,6 +87,7 @@ module.exports = async function handler(req, res) {
     deleteEventForSession,
     duplicateEventForSession,
     getEventById,
+    resolveSeriesGroupId,
     isPlatformAdmin,
     airtableSetupHint,
   } = api;
@@ -193,9 +194,12 @@ module.exports = async function handler(req, res) {
       }
       const primary = occ[0] || {};
       const touchDate = Boolean(body.date || body.endDate || body.dateTime || occ.length);
+      const existing = await getEventById(eventId);
+      const seriesGroupId = resolveSeriesGroupId(existing.seriesGroupId, occ.length);
       const event = await updateEvent(eventId, {
         ...base,
         _touchDate: touchDate,
+        seriesGroupId,
         date: primary.date || body.date || body.dateTime || '',
         endDate: primary.endDate || body.endDate || '',
       });
@@ -205,6 +209,7 @@ module.exports = async function handler(req, res) {
         extra.push(
           await createEvent({
             ...base,
+            seriesGroupId,
             date: o.date,
             endDate: o.endDate,
           })
@@ -280,6 +285,8 @@ module.exports = async function handler(req, res) {
       }
       validateEventDescription(body);
 
+      const seriesGroupId = resolveSeriesGroupId(null, occ.length);
+
       let events;
       if (!occ.length && isDraft) {
         const one = await createEvent({ ...base, date: '', endDate: '' });
@@ -287,6 +294,7 @@ module.exports = async function handler(req, res) {
       } else if (occ.length === 1) {
         const one = await createEvent({
           ...base,
+          seriesGroupId,
           date: occ[0].date,
           endDate: occ[0].endDate,
         });
@@ -297,6 +305,7 @@ module.exports = async function handler(req, res) {
         for (const o of occ) {
           const slice = {
             ...base,
+            seriesGroupId,
             date: o.date,
             endDate: o.endDate,
           };

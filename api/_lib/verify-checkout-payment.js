@@ -152,7 +152,6 @@ async function verifyEventCheckoutPayment(input, sessionUser) {
     throw new Error('payment_not_completed');
   }
 
-  const eventId = String(input.eventId || input.event_id || '').trim();
   const metaEventId = String(checkout.metadata?.event_id || '').trim();
   if (metaEventId && eventId && metaEventId !== eventId) {
     throw new Error('event_mismatch');

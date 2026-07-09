@@ -24,6 +24,7 @@
   let existingTicketsLoaded = false;
   let paymentSetupState = null;
   let returnedFromStripe = false;
+  let ticketsLocked = false;
 
   const SALE_END_OPTIONS = [
     { value: 'at_start', label: 'When the event starts' },
@@ -46,6 +47,27 @@
     el.hidden = !msg;
     el.classList.toggle('ee-alert-ok', tone === 'ok');
     el.classList.toggle('ee-alert-warn', tone === 'warn');
+  }
+
+  function eventHasTicketSales(ev) {
+    if (!ev) return false;
+    if (ev.locked) return true;
+    const sold = Number(ev.ticketsSold);
+    if (Number.isFinite(sold) && sold > 0) return true;
+    const label = String(ev.ticketsSoldLabel || '').trim();
+    return /^\d+\s+sold/i.test(label) || /^\d+\/\d+/.test(label);
+  }
+
+  function applyTicketsLockUi(ev) {
+    ticketsLocked = eventHasTicketSales(ev);
+    const banner = document.getElementById('ee-tickets-lock-banner');
+    if (banner) banner.hidden = !ticketsLocked;
+    if (!ticketsLocked) return;
+    const form = document.getElementById('ee-tickets-form');
+    if (form) form.classList.add('is-locked');
+    form?.querySelectorAll('input, select, textarea, button').forEach((el) => {
+      el.disabled = true;
+    });
   }
 
   function isoToDateInput(iso) {
@@ -148,13 +170,14 @@
   }
 
   function loadSeriesMeta() {
+    const hadUrlIds = eventIds.length > 0;
     try {
       const raw = sessionStorage.getItem(SERIES_STORAGE_KEY);
       if (raw) seriesMeta = { ...seriesMeta, ...JSON.parse(raw) };
     } catch {
       /* ignore */
     }
-    if (seriesMeta.eventIds && seriesMeta.eventIds.length) {
+    if (!hadUrlIds && seriesMeta.eventIds && seriesMeta.eventIds.length) {
       eventIds = seriesMeta.eventIds;
     }
   }
@@ -812,6 +835,12 @@
     const btn = document.getElementById('ee-tickets-submit');
     const warn = document.getElementById('ee-publish-warn');
     if (!btn) return;
+    if (ticketsLocked) {
+      btn.disabled = true;
+      const saveBtn = document.getElementById('ee-tickets-save');
+      if (saveBtn) saveBtn.disabled = true;
+      return;
+    }
     try {
       const tiers = attendanceMode === 'osop' ? collectOsopTiers() : collectTiers();
       const refund = collectRefundPayload();
@@ -1094,12 +1123,27 @@
     }
     if (!loaded || loaded.authFailed) return;
 
+    if (!loaded.event && eventIds.length) {
+      try {
+        sessionStorage.removeItem(SERIES_STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
+      showAlert(
+        'This event was deleted or is no longer available. Go back to My Events and open a current listing.',
+        'warn'
+      );
+      notifyEmbedDrawerReady();
+      return;
+    }
+
     if (loaded.event) {
       if (loaded.event.title && !seriesMeta.title) seriesMeta.title = loaded.event.title;
       if (loaded.event.organiserGroupId && !seriesMeta.organiserGroupId) {
         seriesMeta.organiserGroupId = loaded.event.organiserGroupId;
       }
       prefillRefundFromEvent(loaded.event);
+      applyTicketsLockUi(loaded.event);
     }
 
     await loadPaymentSetupState();
@@ -1164,6 +1208,14 @@
 
   async function saveTickets(publish) {
     showAlert('');
+
+    if (ticketsLocked) {
+      showAlert(
+        'This event has ticket sales — ticket types and refund terms cannot be changed. Cancel the event from the event editor if you need to make changes.',
+        'warn'
+      );
+      return;
+    }
 
     if (publish && window.HubOrganiserTerms) {
       try {
@@ -1291,6 +1343,15 @@
     const data = result.data;
 
     if (!ok) {
+      if (data.error === 'event_has_ticket_sales') {
+        applyTicketsLockUi({ locked: true });
+        showAlert(
+          data.message ||
+            'This event has ticket sales — cancel the event instead of changing ticket types or refund terms.',
+          'warn'
+        );
+        return;
+      }
       if (data.error === 'stripe_connect_required' || /connect stripe|bank details/i.test(String(data.message || ''))) {
         refreshPaymentSetupCard(attendanceMode === 'osop' ? collectOsopTiers() : collectTiers());
         showAlert(

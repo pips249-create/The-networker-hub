@@ -145,7 +145,7 @@ async function verifyEventRefundsInStripe(registrations) {
   };
 }
 
-/** Hub keeps the booking fee only; organiser receives the full ticket subtotal via Connect transfer. */
+/** Hub keeps the booking fee only; organiser receives the full ticket subtotal on their Connect account. */
 function calculatePlatformApplicationFeePence(_ticketSubtotalPence, bookingFeePence) {
   return Math.max(0, Math.round(Number(bookingFeePence) || 0));
 }
@@ -275,12 +275,34 @@ async function issueEventRefundsInStripe(registrations, options = {}) {
   };
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Poll Stripe until refunds show as completed, or attempts are exhausted.
+ */
+async function waitForEventRefundsInStripe(registrations, options = {}) {
+  const attempts = Math.max(1, Number(options.attempts) || 5);
+  const delayMs = Math.max(0, Number(options.delayMs) || 1500);
+  let last = null;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    if (attempt > 0) await sleep(delayMs);
+    last = await verifyEventRefundsInStripe(registrations);
+    if (last.allRefunded) return last;
+  }
+
+  return last;
+}
+
 module.exports = {
   PLATFORM_FEE_RATE,
   isStripeRefundsConfigured,
   retrievePaymentIntentRefundState,
   verifyRegistrationRefunded,
   verifyEventRefundsInStripe,
+  waitForEventRefundsInStripe,
   issueRefundForRegistration,
   issueEventRefundsInStripe,
   calculatePlatformApplicationFeePence,

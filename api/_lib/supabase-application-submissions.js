@@ -165,6 +165,9 @@ async function createApplicationFromSubmission(input) {
   const ins = await sb.from('registrations').insert(row).select('*').single();
   if (ins.error) throw new Error(ins.error.message);
 
+  const { lockEventOnFirstSale } = require('./event-sale-lock');
+  await lockEventOnFirstSale(sb, eventId);
+
   let emailResult = null;
   try {
     emailResult = await sendApplicationEmails(sb, ins.data);

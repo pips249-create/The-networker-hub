@@ -215,6 +215,43 @@ async function createConnectOnboardingLink(organiserId, returnPath) {
   };
 }
 
+async function createExpressDashboardLink(stripeAccountId) {
+  const accountId = String(stripeAccountId || '').trim();
+  if (!accountId || !isStripeCheckoutConfigured()) {
+    const e = new Error('Stripe Connect is not configured for this group.');
+    e.status = 503;
+    throw e;
+  }
+  const stripe = getStripeClient();
+  const link = await stripe.accounts.createLoginLink(accountId);
+  return {
+    url: link.url,
+    accountId,
+  };
+}
+
+async function createExpressDashboardLinkForOrganiser(organiserId) {
+  const sb = getSupabaseAdmin();
+  const { data: organiser, error } = await sb
+    .from('organisers')
+    .select('id, stripe_account_id, stripe_charges_enabled, stripe_connect_details_submitted')
+    .eq('id', organiserId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!organiser) {
+    const e = new Error('Organiser not found');
+    e.status = 404;
+    throw e;
+  }
+  if (!organiser.stripe_account_id) {
+    const e = new Error('Add bank details before opening the Stripe dashboard.');
+    e.status = 400;
+    e.code = 'stripe_connect_required';
+    throw e;
+  }
+  return createExpressDashboardLink(organiser.stripe_account_id);
+}
+
 async function getOrganiserConnectForEvent(sb, eventId) {
   const { data: eventRow, error: eventError } = await sb
     .from('events')
@@ -322,6 +359,8 @@ module.exports = {
   mapConnectStatus,
   syncOrganiserConnectStatus,
   createConnectOnboardingLink,
+  createExpressDashboardLink,
+  createExpressDashboardLinkForOrganiser,
   getOrganiserConnectForEvent,
   assertOrganiserReadyForPaidPublish,
   buildConnectCheckoutParams,

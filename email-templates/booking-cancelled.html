@@ -106,10 +106,8 @@
         </tr>
 
         <!-- Refund outcome — conditional blocks via template -->
-        <!-- SCENARIO A: Refund eligible -->
+        {{refund_issued_row}}
         {{refund_eligible_row}}
-
-        <!-- SCENARIO B: Outside refund window / no refund -->
         {{no_refund_row}}
 
         <!-- Browse events CTA -->

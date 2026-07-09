@@ -104,6 +104,25 @@
     return formatGbpAmount(sum);
   }
 
+  function eventRevenueCellHtml(ev) {
+    const amount = ev.revenueDisplay || '£0';
+    const sold = Number(ev.ticketsSold) || 0;
+    const revenueNum = Number(ev.revenueNum) || 0;
+    const refundsPending =
+      sold > 0 &&
+      revenueNum === 0 &&
+      (ev.needsRefundConfirmation ||
+        ev.payoutHeld ||
+        String(ev.statusKey || ev.status || '').toLowerCase() === 'cancelled');
+    if (refundsPending) {
+      return (
+        esc(amount) +
+        '<span class="org-payout-held-note">Refunds on the way — not counted in revenue</span>'
+      );
+    }
+    return esc(amount);
+  }
+
   function allEventOptions() {
     if (state.eventSummaries && state.eventSummaries.length) {
       return state.eventSummaries.slice();
@@ -565,6 +584,7 @@
 
   const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
   const ORG_BOOTSTRAP_CACHE_MS = 120000;
+  const SERIES_STORAGE_KEY = 'hub_event_series';
 
   function cacheBootstrapForEmbed(data) {
     if (!data) return;
@@ -1062,14 +1082,18 @@
   }
 
   function eventSeriesBucketKey(ev) {
+    const seriesGroupId = String(ev.seriesGroupId || '').trim();
+    if (seriesGroupId) {
+      return 'sg:' + seriesGroupId;
+    }
     const groupId = eventOrganiserGroupId(ev);
     const title = String(ev.title || '').trim().toLowerCase();
-    const pattern = String(ev.recurrencePattern || '').trim();
+    const pattern = String(ev.recurrencePattern || '').trim().toLowerCase();
     const endDate = String(ev.recurrenceEndDate || '').trim().slice(0, 10);
     if (pattern && endDate) {
       return 'rec:' + groupId + '\0' + title + '\0' + pattern + '\0' + endDate;
     }
-    return 'title:' + groupId + '\0' + title;
+    return 'solo:' + String(ev.id || '');
   }
 
   function sortEventsByDate(events) {
@@ -1229,7 +1253,7 @@
 
     const grouped = [];
     buckets.forEach((members, key) => {
-      if (members.length > 1 || key.startsWith('rec:')) {
+      if (members.length > 1 || key.startsWith('rec:') || key.startsWith('sg:')) {
         grouped.push(buildSeriesDisplayRow(members));
       } else {
         grouped.push(members[0]);
@@ -1500,7 +1524,7 @@
       parts.push(
         '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-confirm-refunds="' +
           esc(ev.id) +
-          '">Confirm refunds issued</button>'
+          '">Retry automatic refunds</button>'
       );
     }
     if (ev.canRequestPayout) {
@@ -2343,8 +2367,22 @@
 
     pageInfo.items.forEach((row) => {
       const tr = document.createElement('tr');
-      const refundClass = row.refundEligible ? 'org-badge org-badge-green' : 'org-badge org-badge-purple';
+      const refundClass =
+        row.refundStatus === 'completed'
+          ? 'org-badge org-badge-green'
+          : row.refundStatus === 'pending'
+            ? 'org-badge org-badge-gold'
+            : 'org-badge org-badge-purple';
       const bookingRef = row.bookingReference || formatBookingReference(row.id);
+      let actionHtml = '—';
+      if (row.refundStatus === 'pending' && state.stripeConnectEnabled && row.organiserId) {
+        actionHtml =
+          '<button type="button" class="org-btn org-btn-sm org-btn-gold" data-stripe-dashboard="' +
+          esc(row.organiserId) +
+          '" title="Open Stripe Express to issue a refund">Refund in Stripe</button>';
+      } else if (row.refundStatus === 'completed') {
+        actionHtml = '<span class="org-muted">Refund issued</span>';
+      }
       tr.innerHTML =
         '<td class="org-td-name">' +
         esc(row.name) +
@@ -2364,7 +2402,9 @@
         refundClass +
         '">' +
         esc(row.refundLabel || '—') +
-        '</span></td>';
+        '</span></td><td>' +
+        actionHtml +
+        '</td>';
       body.appendChild(tr);
     });
   }
@@ -2720,9 +2760,16 @@
       });
     } else {
       const ev =
-        typeof eventOrId === 'object' && eventOrId
+        typeof eventOrId === 'object' && eventOrId && eventOrId.title
           ? eventOrId
-          : findEventById(editId) || { id: editId, title: 'Event' };
+          : findEventById(editId);
+      if (!ev || !ev.id) {
+        showOrganiserAlert(
+          'That event is no longer available — it may have been deleted. Check My Events for your current listings.',
+          true
+        );
+        return;
+      }
       drawerTitle = ev.title ? 'Edit: ' + ev.title : 'Edit event';
       frameUrl = eventEditorFrameUrl({ editId: editId });
       openEventDrawerFrame(frameUrl, drawerTitle, ev);
@@ -2812,10 +2859,12 @@
       return;
     }
     closeModals();
-    showOrganiserAlert(res.data.message || 'Event deleted.', false);
-    await loadBootstrap();
-    renderAll();
+    closeEventEditorDrawer();
+    clearEventScopedClientState(eventId);
+    await loadBootstrap({ silent: true });
+    pruneStaleEventFilters();
     setRoute('events-list');
+    showOrganiserAlert(res.data.message || 'Event deleted.', false);
   }
 
   function confirmDeleteEvent(eventId) {
@@ -3119,6 +3168,61 @@
       }
     }
     return grouped.find((row) => row.id === id) || null;
+  }
+
+  function eventExistsInState(eventId) {
+    const id = String(eventId || '').trim();
+    if (!id) return false;
+    if (state.events.some((e) => e.id === id)) return true;
+    if ((state.upcomingEvents || []).some((e) => e.id === id)) return true;
+    if ((state.eventSummaries || []).some((e) => e.id === id)) return true;
+    return false;
+  }
+
+  function pruneStaleEventFilters() {
+    let changed = false;
+    ['attendeesEvent', 'ticketsEvent', 'cancellationsEvent'].forEach((key) => {
+      if (filters[key] !== 'all' && !eventExistsInState(filters[key])) {
+        filters[key] = 'all';
+        changed = true;
+      }
+    });
+    if (changed) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('eventId');
+      url.searchParams.delete('event_id');
+      history.replaceState(null, '', url.pathname + url.search + url.hash);
+    }
+    return changed;
+  }
+
+  function clearEventScopedClientState(eventId) {
+    const id = String(eventId || '').trim();
+    if (!id) return;
+    if (filters.attendeesEvent === id) filters.attendeesEvent = 'all';
+    if (filters.ticketsEvent === id) filters.ticketsEvent = 'all';
+    if (filters.cancellationsEvent === id) filters.cancellationsEvent = 'all';
+    expandedSeriesKeys.clear();
+    try {
+      const raw = sessionStorage.getItem(SERIES_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      const eventIds = (parsed.eventIds || []).filter((eid) => String(eid) !== id);
+      const events = (parsed.events || []).filter((ev) => ev && String(ev.id) !== id);
+      if (!eventIds.length) {
+        sessionStorage.removeItem(SERIES_STORAGE_KEY);
+      } else if (
+        eventIds.length !== (parsed.eventIds || []).length ||
+        events.length !== (parsed.events || []).length
+      ) {
+        sessionStorage.setItem(
+          SERIES_STORAGE_KEY,
+          JSON.stringify({ ...parsed, eventIds: eventIds, events: events })
+        );
+      }
+    } catch {
+      /* ignore */
+    }
   }
 
   async function confirmDuplicateEvent(eventId) {
@@ -3574,7 +3678,7 @@
   async function confirmRefundsForEvent(eventId) {
     if (
       !window.confirm(
-        'We will issue any outstanding refunds and verify in Stripe before clearing your payout hold.\n\nContinue?'
+        'We will retry any outstanding automatic refunds and verify them in Stripe before clearing your payout hold.\n\nContinue?'
       )
     ) {
       return;
@@ -3597,6 +3701,31 @@
       (g) => state.stripeConnectEnabled && !g.stripeConnectReady
     );
     return needsConnect[0] || (state.groups || [])[0] || null;
+  }
+
+  async function openStripeDashboard(groupId) {
+    const gid = groupId || (state.groups || []).find((g) => g.stripeConnectReady)?.id;
+    if (!gid) {
+      alert('Add bank details before opening the Stripe dashboard.');
+      return;
+    }
+    if (window.HubOrganiserPaymentSetup && window.HubOrganiserPaymentSetup.openDashboard) {
+      await window.HubOrganiserPaymentSetup.openDashboard(gid);
+      return;
+    }
+    try {
+      const { ok, data } = await api(
+        '/api/organiser/stripe-connect?groupId=' + encodeURIComponent(gid) + '&action=dashboard'
+      );
+      if (!ok || !data.url) {
+        alert(data.message || data.error || 'Could not open Stripe dashboard.');
+        return;
+      }
+      const tab = window.open(data.url, '_blank', 'noopener,noreferrer');
+      if (!tab) window.location.href = data.url;
+    } catch {
+      alert('Could not open Stripe dashboard. Please try again.');
+    }
   }
 
   async function startStripeConnectOnboarding(groupId) {
@@ -3673,6 +3802,22 @@
       title: 'Add bank details to receive payouts',
       lead: 'Connect Stripe so ticket revenue can reach you after each event.',
     });
+
+    const dashboardBar = document.getElementById('org-stripe-dashboard-link');
+    const readyGroup = (state.groups || []).find((g) => g.stripeConnectReady);
+    if (dashboardBar) {
+      const showDashboard = Boolean(state.stripeConnectEnabled && readyGroup);
+      dashboardBar.hidden = !showDashboard;
+      if (showDashboard) {
+        const btn = document.getElementById('org-open-stripe-dashboard');
+        if (btn && !btn.dataset.bound) {
+          btn.dataset.bound = '1';
+          btn.addEventListener('click', function () {
+            openStripeDashboard(readyGroup.id);
+          });
+        }
+      }
+    }
   }
 
   function renderStripeConnectBanner() {
@@ -4588,7 +4733,7 @@
         '</td><td>' +
         esc(ev.ticketsSoldLabel || '0') +
         '</td><td class="org-revenue">' +
-        esc(ev.revenueDisplay || '£0') +
+        eventRevenueCellHtml(ev) +
         '</td><td>' +
         ratingHtml(ev.rating) +
         '</td><td>' +
@@ -5747,6 +5892,7 @@
     showOrganiserEmailVerifyBanner();
 
     applyPendingGroupSave();
+    pruneStaleEventFilters();
     renderAll();
     renderGroupClaimModal();
     loadOpportunityEnquiries();
@@ -6393,6 +6539,12 @@
           startStripeConnectOnboarding(connectBtn.getAttribute('data-stripe-connect'));
           return;
         }
+        const stripeDashboardBtn = e.target.closest('[data-stripe-dashboard]');
+        if (stripeDashboardBtn) {
+          e.preventDefault();
+          openStripeDashboard(stripeDashboardBtn.getAttribute('data-stripe-dashboard'));
+          return;
+        }
 
         const toggle = e.target.closest('[data-org-action-toggle]');
         if (toggle) {
@@ -6534,6 +6686,20 @@
       }
       if (e.data && e.data.type === 'hub-event-drawer-ready') {
         setEventDrawerLoading(false);
+        return;
+      }
+      if (e.data && e.data.type === 'hub-event-not-found') {
+        const missingId = e.data.eventId || '';
+        closeEventEditorDrawer();
+        if (missingId) clearEventScopedClientState(missingId);
+        pruneStaleEventFilters();
+        loadBootstrap({ silent: true }).then(function () {
+          setRoute('events-list');
+          showOrganiserAlert(
+            'That event is no longer available — it may have been deleted. Check My Events for your current listings.',
+            true
+          );
+        });
         return;
       }
       if (e.data && e.data.type === 'hub-event-goto-tickets') {

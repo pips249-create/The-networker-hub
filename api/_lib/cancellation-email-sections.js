@@ -18,32 +18,124 @@ function isPaidRegistration(registration) {
   return status === 'Paid' && Number.isFinite(amount) && amount > 0;
 }
 
-function daysUntilEvent(startsAt) {
+const { effectiveRefundCutoffDays } = require('./event-refund-policy');
+
+const DEFAULT_FULL_REFUND_CUTOFF_DAYS = 7;
+
+function resolveAsOfDate(asOf) {
+  if (!asOf) return new Date();
+  const d = asOf instanceof Date ? asOf : new Date(asOf);
+  return Number.isNaN(d.getTime()) ? new Date() : d;
+}
+
+function daysUntilEvent(startsAt, asOf) {
   if (!startsAt) return null;
   const start = new Date(startsAt);
   if (Number.isNaN(start.getTime())) return null;
-  return (start.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+  const now = resolveAsOfDate(asOf);
+  return (start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
 }
 
-function isRefundEligibleForCancellation(eventRow, registration) {
+function effectiveRefundCutoffDaysForPolicy(eventRow) {
+  return effectiveRefundCutoffDays(eventRow) ?? DEFAULT_FULL_REFUND_CUTOFF_DAYS;
+}
+
+function isWithinFullRefundWindow(eventRow, asOf) {
+  const policy = String(eventRow?.refund_policy || '').trim();
+  if (policy !== 'full_refund') return false;
+  const daysLeft = daysUntilEvent(eventRow?.starts_at, asOf);
+  if (daysLeft == null) return false;
+  const cutoffDays = effectiveRefundCutoffDaysForPolicy(eventRow);
+  return daysLeft >= cutoffDays;
+}
+
+function isRefundEligibleForCancellation(eventRow, registration, asOf) {
   if (!isPaidRegistration(registration)) return false;
   const policy = String(eventRow?.refund_policy || '').trim();
   if (!policy || policy === 'no_refunds') return false;
   if (policy === 'full_refund') {
-    const cutoffDays = eventRow?.refund_cutoff_days;
-    const daysLeft = daysUntilEvent(eventRow?.starts_at);
-    if (cutoffDays != null && Number.isFinite(Number(cutoffDays)) && daysLeft != null) {
-      return daysLeft >= Number(cutoffDays);
-    }
-    return true;
+    return isWithinFullRefundWindow(eventRow, asOf);
   }
-  return policy === 'partial_refund' || policy === 'custom';
+  return false;
+}
+
+function isSelfServiceCancellationAllowed(eventRow, registration, asOf) {
+  if (registration?.cancelled_at || String(registration?.payment_status || '').trim() === 'Refunded') {
+    return false;
+  }
+  if (String(registration?.application_status || '').trim() === 'Denied') return false;
+  if (String(eventRow?.status || '').toLowerCase() === 'cancelled') return false;
+
+  const startsAt = eventRow?.starts_at ? new Date(eventRow.starts_at) : null;
+  const now = resolveAsOfDate(asOf);
+  if (startsAt && !Number.isNaN(startsAt.getTime()) && startsAt.getTime() < now.getTime()) {
+    return false;
+  }
+
+  if (!isPaidRegistration(registration)) return true;
+
+  const policy = String(eventRow?.refund_policy || '').trim();
+  if (policy === 'no_refunds') return false;
+  if (policy === 'full_refund') return isWithinFullRefundWindow(eventRow, asOf);
+  return true;
+}
+
+function cancellationBlockedMessage(eventRow) {
+  const policy = String(eventRow?.refund_policy || '').trim();
+  if (policy === 'no_refunds') {
+    return 'This event\'s refund policy does not allow cancellations. Contact the organiser if you need help.';
+  }
+  if (policy === 'full_refund') {
+    const cutoffDays = effectiveRefundCutoffDaysForPolicy(eventRow);
+    return (
+      'The organiser\'s refund policy only allows cancellations with a refund up to ' +
+      cutoffDays +
+      ' day' +
+      (cutoffDays === 1 ? '' : 's') +
+      ' before the event. Contact the organiser if you need help.'
+    );
+  }
+  return 'This booking cannot be cancelled from your account right now.';
+}
+
+function deriveRefundStatusForCancelledRegistration(eventRow, registration) {
+  if (!registration?.cancelled_at) return null;
+  if (!isPaidRegistration(registration)) return 'none';
+  const eligibleAtCancel = isRefundEligibleForCancellation(
+    eventRow,
+    registration,
+    registration.cancelled_at
+  );
+  if (!eligibleAtCancel) return 'none';
+  if (
+    registration.refund_email_sent_at ||
+    String(registration.payment_status || '').trim() === 'Refunded'
+  ) {
+    return 'completed';
+  }
+  return 'pending';
 }
 
 function buildRefundStatusLabel(eventRow, registration) {
   if (!isPaidRegistration(registration)) return 'Not applicable';
   if (isRefundEligibleForCancellation(eventRow, registration)) return 'Refund processing';
   return 'No refund due';
+}
+
+function buildRefundIssuedRow(amountPaid) {
+  const amount = String(amountPaid || '').trim() || 'your ticket price';
+  return (
+    '<tr><td class="mobile-pad" style="padding:0 48px 20px;">' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f0fdf4;border-radius:14px;border:1px solid #86efac;">' +
+    '<tr><td style="padding:22px 24px;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">About your refund</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#4a4446;margin:0 0 10px;line-height:1.35;">Your refund has been issued</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.65;margin:0;">' +
+    'A refund of <strong style="color:#4a4446;">' +
+    escapeHtml(amount) +
+    '</strong> is on its way to your original payment method. Allow 5–10 business days. You will receive a separate email once Stripe confirms it.</p>' +
+    '</td></tr></table></td></tr>'
+  );
 }
 
 function buildRefundEligibleRow(amountPaid) {
@@ -123,15 +215,32 @@ function enrichBookingCancelledVars(vars, sponsorSection) {
   const registration = input._registration || {
     payment_status: input.payment_status || 'Paid',
     amount_paid: input.amount_paid,
+    cancelled_at: input.cancelled_at,
   };
-  const eligible = isRefundEligibleForCancellation(eventRow, registration);
+  const paid =
+    Number(registration?.amount_paid) > 0 &&
+    ['Paid', 'Refunded'].includes(String(registration?.payment_status || '').trim());
+  const eligible =
+    paid &&
+    isRefundEligibleForCancellation(eventRow, registration, registration?.cancelled_at);
+  const refundIssued =
+    Boolean(input.refund_issued) ||
+    (eligible && String(registration?.payment_status || '').trim() === 'Refunded');
   const sponsorRow = wrapSponsorRow(resolveSponsorSection(input, sponsorSection));
+
+  let refundStatus = 'Not applicable';
+  if (paid) {
+    if (refundIssued) refundStatus = 'Refund issued';
+    else if (eligible) refundStatus = 'Refund processing';
+    else refundStatus = 'No refund due';
+  }
 
   return {
     ...input,
-    refund_status: buildRefundStatusLabel(eventRow, registration),
-    refund_eligible_row: eligible ? buildRefundEligibleRow(input.amount_paid) : '',
-    no_refund_row: eligible ? '' : buildNoRefundRow(eventRow),
+    refund_status: refundStatus,
+    refund_eligible_row: eligible && !refundIssued ? buildRefundEligibleRow(input.amount_paid) : '',
+    refund_issued_row: refundIssued ? buildRefundIssuedRow(input.amount_paid) : '',
+    no_refund_row: paid && !eligible && !refundIssued ? buildNoRefundRow(eventRow) : '',
     sponsor_row: sponsorRow,
     sponsor_section: sponsorRow,
   };
@@ -178,6 +287,7 @@ function enrichRefundProcessedVars(vars, sponsorSection) {
 
 const BOOKING_CANCELLED_SECTION_PLACEHOLDERS = [
   'refund_eligible_row',
+  'refund_issued_row',
   'no_refund_row',
   'sponsor_row',
   'mini_sponsors_row',
@@ -203,8 +313,16 @@ function stripSectionPlaceholders(html, keys) {
 }
 
 module.exports = {
+  DEFAULT_FULL_REFUND_CUTOFF_DAYS,
+  effectiveRefundCutoffDaysForPolicy,
   isPaidRegistration,
+  daysUntilEvent,
+  effectiveRefundCutoffDays,
+  isWithinFullRefundWindow,
   isRefundEligibleForCancellation,
+  isSelfServiceCancellationAllowed,
+  cancellationBlockedMessage,
+  deriveRefundStatusForCancelledRegistration,
   buildRefundStatusLabel,
   buildRefundEligibleRow,
   buildNoRefundRow,

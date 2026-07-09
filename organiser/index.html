@@ -915,6 +915,7 @@
                     <th>Paid</th>
                     <th>Cancelled</th>
                     <th>Refund</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody id="cancellations-body"></tbody>
@@ -956,6 +957,10 @@
           <div class="org-sub-page" id="sub-events-revenue" data-events-panel="events-revenue">
             <div class="org-payout-held-banner" id="payout-held-banner" hidden role="status"></div>
             <div id="org-payment-setup-revenue" hidden></div>
+            <div id="org-stripe-dashboard-link" class="org-filter-bar" hidden>
+              <button type="button" class="org-btn org-btn-secondary" id="org-open-stripe-dashboard">Open Stripe dashboard</button>
+              <span class="org-muted" style="margin-left:12px;">Issue refunds, view payouts, and manage ticket payments in Stripe Express.</span>
+            </div>
             <div class="org-stripe-connect-banner" id="stripe-connect-banner" hidden role="status"></div>
             <p class="org-section-sub org-sub-lead">
               Revenue shows your ticket sales (full ticket price). Attendees pay a separate booking fee at checkout (4.5% + 20p per ticket) which covers platform and payment processing.

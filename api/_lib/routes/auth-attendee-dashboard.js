@@ -108,6 +108,7 @@ module.exports = async function handler(req, res) {
     }
 
     let registrations = [];
+    let cancelledBookings = [];
     let stats = buildStats([]);
     let opportunityEnquiries = [];
     let isDemo = false;
@@ -115,6 +116,7 @@ module.exports = async function handler(req, res) {
     if (isSupabaseConfigured()) {
       const dash = await getAttendeeDashboardFromSupabase(session);
       registrations = dash.registrations;
+      cancelledBookings = dash.cancelledBookings || [];
       stats = dash.stats;
       opportunityEnquiries = dash.opportunityEnquiries || [];
     } else {
@@ -136,6 +138,7 @@ module.exports = async function handler(req, res) {
         role: session.role,
       },
       registrations,
+      cancelledBookings,
       stats,
       opportunityEnquiries,
       isDemo,

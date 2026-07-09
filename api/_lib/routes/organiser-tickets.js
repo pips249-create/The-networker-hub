@@ -151,7 +151,7 @@ module.exports = async function handler(req, res) {
         return json(res, 201, { ok: true, published: publish, ...result });
       } catch (e) {
         return json(res, e.status || 500, {
-          error: 'tickets_bulk_failed',
+          error: e.code || 'tickets_bulk_failed',
           message: e.message,
           airtable: airtableSetupHint('tickets'),
         });
@@ -184,7 +184,7 @@ module.exports = async function handler(req, res) {
       return json(res, 201, { ok: true, ticket });
     } catch (e) {
       return json(res, e.status || 500, {
-        error: 'ticket_create_failed',
+        error: e.code || 'ticket_create_failed',
         message: e.message,
         airtable: airtableSetupHint('tickets'),
       });

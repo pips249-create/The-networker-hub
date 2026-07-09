@@ -897,7 +897,7 @@
     renderSelectedList();
     showEventStatusBadge(ev);
     renderEventOverviewStats(ev);
-    applyLockUi(ev.locked);
+    applyLockUi(ev.locked || eventTicketsSoldCount(ev) > 0);
   }
 
   function goToTicketSetup(series) {
@@ -976,6 +976,12 @@
           showAlert(
             'Could not load this event. Try again from My Events, or check you have access to this listing.'
           );
+          if (isEmbedDrawer && editId && window.parent && window.parent !== window) {
+            window.parent.postMessage(
+              { type: 'hub-event-not-found', eventId: editId },
+              window.location.origin
+            );
+          }
         }
         return;
       }

@@ -5,6 +5,7 @@
   const PAGE_SIZE = 5;
   const listPages = { upcoming: 1, past: 1 };
   let registrations = [];
+  let cancelledBookings = [];
   let savedEvents = [];
   let savedOrganisers = [];
   let opportunityEnquiries = [];
@@ -260,6 +261,9 @@
   }
 
   function paymentBadge(status, reg) {
+    if (reg && reg.isCancelled) {
+      return refundStatusBadge(reg);
+    }
     if (reg && String(reg.applicationStatus || '').trim() === 'Pending') {
       return '<span class="ad-badge ad-badge-grey">—</span>';
     }
@@ -271,6 +275,42 @@
       return '<span class="ad-badge ad-badge-grey">' + esc(s) + '</span>';
     }
     return '<span class="ad-badge ad-badge-red">' + esc(s) + '</span>';
+  }
+
+  function refundStatusBadge(reg) {
+    const status = String(reg?.refundStatus || '').trim();
+    if (status === 'pending') {
+      return '<span class="ad-badge ad-badge-gold">Refund on its way</span>';
+    }
+    if (status === 'completed') {
+      return '<span class="ad-badge ad-badge-green">Refunded</span>';
+    }
+    return '<span class="ad-badge ad-badge-grey">Cancelled</span>';
+  }
+
+  function pendingRefundBookings() {
+    return (cancelledBookings || []).filter((row) => row.refundStatus === 'pending');
+  }
+
+  function renderRefundAlerts() {
+    const pending = pendingRefundBookings();
+    const overviewEl = document.getElementById('ad-refund-alert-overview');
+    const paymentsEl = document.getElementById('ad-refund-alert-payments');
+    const message =
+      pending.length === 1
+        ? 'A refund for your cancelled booking is on its way to your original payment method. Allow 5–10 business days.'
+        : pending.length + ' refunds for cancelled bookings are on their way to your original payment methods. Allow 5–10 business days.';
+
+    [overviewEl, paymentsEl].forEach((el) => {
+      if (!el) return;
+      if (!pending.length) {
+        el.hidden = true;
+        el.textContent = '';
+        return;
+      }
+      el.hidden = false;
+      el.textContent = message;
+    });
   }
 
   function hasApplicationDecision(reg) {
@@ -832,6 +872,9 @@
     for (let i = 0; i < registrations.length; i++) {
       if (String(registrations[i].id) === key) return registrations[i];
     }
+    for (let j = 0; j < (cancelledBookings || []).length; j++) {
+      if (String(cancelledBookings[j].id) === key) return cancelledBookings[j];
+    }
     return null;
   }
 
@@ -991,9 +1034,9 @@
       return (
         'Based on ' +
         organiser +
-        '\'s policy, you may be eligible for a refund of ' +
+        '\'s policy, you are eligible for a full refund of ' +
         paid +
-        '. The organiser — not The Networker Hub — will process any refund due through their payment account.'
+        '. If you cancel now, your refund will be processed automatically to your original payment method within 5–10 business days.'
       );
     }
     return (
@@ -1087,7 +1130,7 @@
     if (confirmLabel) {
       confirmLabel.textContent = isFree
         ? 'I understand this will cancel my registration and release my place.'
-        : 'I understand the organiser\'s refund policy and that refunds are processed by the organiser.';
+        : 'I understand the organiser\'s refund policy and that eligible refunds are processed automatically when I cancel.';
     }
 
     if (confirmCheck) confirmCheck.checked = false;
@@ -1161,10 +1204,19 @@
           const wasFree = Boolean(data.isFree);
           closeCancelModal();
           await reloadDashboard();
-          showAdToast(
+          let toastMessage =
             data.message ||
-              (wasFree ? 'Your registration has been cancelled.' : 'Your booking has been cancelled.')
-          );
+            (wasFree ? 'Your registration has been cancelled.' : 'Your booking has been cancelled.');
+          const attendeeEmail = data.emailResult;
+          if (attendeeEmail && attendeeEmail.sent === false) {
+            if (attendeeEmail.code === 'recipient_not_allowlisted' || /allowlist/i.test(attendeeEmail.error || '')) {
+              toastMessage +=
+                ' We could not email your confirmation yet — your address may need adding to the pre-launch email list.';
+            } else if (attendeeEmail.error) {
+              toastMessage += ' We could not send a confirmation email — please check your account email is correct.';
+            }
+          }
+          showAdToast(toastMessage);
         } catch {
           if (err) {
             err.textContent = 'Something went wrong. Please try again.';
@@ -1196,11 +1248,26 @@
     const empty = document.getElementById('ad-payments-empty');
     if (!body) return;
 
-    const list = registrations.slice().sort((a, b) => {
-      const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return db - da;
-    });
+    const list = registrations
+      .slice()
+      .concat((cancelledBookings || []).slice())
+      .sort((a, b) => {
+        const da = a.isCancelled
+          ? a.cancelledAt
+            ? new Date(a.cancelledAt).getTime()
+            : 0
+          : a.createdAt
+            ? new Date(a.createdAt).getTime()
+            : 0;
+        const db = b.isCancelled
+          ? b.cancelledAt
+            ? new Date(b.cancelledAt).getTime()
+            : 0
+          : b.createdAt
+            ? new Date(b.createdAt).getTime()
+            : 0;
+        return db - da;
+      });
 
     body.innerHTML = '';
     if (!list.length) {
@@ -1214,6 +1281,8 @@
       const tr = document.createElement('tr');
       if (highlightRegistrationId && String(reg.id) === highlightRegistrationId) {
         tr.className = 'ad-row-highlight';
+      } else if (reg.isCancelled) {
+        tr.className = 'ad-row-cancelled';
       } else if (applicationStatus === 'Pending') {
         tr.className = 'ad-row-application-pending';
       } else if (applicationStatus === 'Denied') {
@@ -1227,7 +1296,7 @@
         '</td><td class="ad-td-name">' +
         eventTitleCell(reg) +
         '</td><td>' +
-        esc(formatDateShort(reg.createdAt)) +
+        esc(formatDateShort(reg.isCancelled ? reg.cancelledAt : reg.createdAt)) +
         '</td><td>' +
         esc(reg.bookingReference || formatBookingReference(reg.id)) +
         '</td><td>' +
@@ -1255,6 +1324,7 @@
       body.appendChild(tr);
     });
 
+    renderRefundAlerts();
     bindPaymentButtons(body);
     bindCancelButtons(body);
   }
@@ -1770,10 +1840,12 @@
 
   function applyDashboardData(data) {
     registrations = data.registrations || [];
+    cancelledBookings = data.cancelledBookings || [];
     opportunityEnquiries = data.opportunityEnquiries || [];
     dashboardReady = true;
     renderedRoutes.clear();
     renderStats(data.stats || {});
+    renderRefundAlerts();
     renderRouteTables(currentRoute, { force: true });
   }
 

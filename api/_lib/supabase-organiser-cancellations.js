@@ -7,7 +7,7 @@ const {
   sendEventCancelledEmailsForEvent,
   sendRefundProcessedEmailsForEvent,
 } = require('./cancellation-emails');
-const { verifyEventRefundsInStripe, issueEventRefundsInStripe } = require('./stripe-refunds');
+const { verifyEventRefundsInStripe, issueEventRefundsInStripe, waitForEventRefundsInStripe } = require('./stripe-refunds');
 const { isStripeConnectEnabled } = require('./stripe-connect');
 
 const CANCELLATION_REASONS = new Set([
@@ -155,6 +155,15 @@ async function cancelLockedEvent(session, eventId, payload) {
     .eq('id', eventId);
   if (updateErr) throw new Error(updateErr.message);
 
+  const cancelledAt = new Date().toISOString();
+  const { error: regCancelErr } = await sb
+    .from('registrations')
+    .update({ cancelled_at: cancelledAt })
+    .eq('event_id', eventId)
+    .is('cancelled_at', null)
+    .neq('application_status', 'Denied');
+  if (regCancelErr) throw new Error(regCancelErr.message);
+
   const { data: updated } = await sb.from('events').select('*').eq('id', eventId).single();
 
   let emailResult = null;
@@ -181,7 +190,10 @@ async function cancelLockedEvent(session, eventId, payload) {
     });
 
     if (refundResult.allIssued) {
-      const verification = await verifyEventRefundsInStripe(registrations || []);
+      const verification = await waitForEventRefundsInStripe(registrations || [], {
+        attempts: 5,
+        delayMs: 1500,
+      });
       if (verification.allRefunded) {
         refundsConfirmedResult = await finalizeEventRefundsConfirmed(sb, cancellation.id, eventId);
         refundsConfirmed = true;

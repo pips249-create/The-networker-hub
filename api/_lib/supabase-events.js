@@ -581,7 +581,7 @@ async function fetchSeriesSiblingRows(sb, row) {
   const organiserId = row.organiser_id || '';
   if (!titleKey || !organiserId) return [];
 
-  const pattern = String(row.recurrence_pattern || '').trim();
+  const pattern = String(row.recurrence_pattern || '').trim().toLowerCase();
   const endDate = String(row.recurrence_end_date || '')
     .trim()
     .slice(0, 10);
@@ -606,7 +606,7 @@ async function fetchSeriesSiblingRows(sb, row) {
       }
       if (pattern && endDate) {
         return (
-          String(r.recurrence_pattern || '').trim() === pattern &&
+          String(r.recurrence_pattern || '').trim().toLowerCase() === pattern &&
           String(r.recurrence_end_date || '')
             .trim()
             .slice(0, 10) === endDate

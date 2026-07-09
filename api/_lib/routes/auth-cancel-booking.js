@@ -41,9 +41,12 @@ module.exports = async function handler(req, res) {
     let message;
     if (isFree) {
       message = 'Your registration has been cancelled. Because this was a free ticket, no refund applies.';
+    } else if (result.refundIssued) {
+      message =
+        'Your booking has been cancelled. Your refund is on its way to your original payment method — allow 5–10 business days.';
     } else if (result.refundEligible) {
       message =
-        'Your booking has been cancelled. If you are due a refund, the organiser will process it through their payment account — not The Networker Hub.';
+        'Your booking has been cancelled. Your refund is being processed and should reach your original payment method within 5–10 business days.';
     } else {
       message =
         'Your booking has been cancelled. Based on the organiser\'s refund policy, no refund is due.';
@@ -53,8 +56,11 @@ module.exports = async function handler(req, res) {
       ok: true,
       registrationId: result.registrationId,
       refundEligible: result.refundEligible,
+      refundIssued: result.refundIssued,
       isFree,
       emailResult: result.emailResult,
+      organiserEmailResult: result.organiserEmailResult,
+      refundEmailResult: result.refundEmailResult,
       message,
     });
   } catch (e) {

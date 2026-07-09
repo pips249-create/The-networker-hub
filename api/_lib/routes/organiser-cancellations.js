@@ -104,8 +104,8 @@ module.exports = async function handler(req, res) {
         const failed = result.refundResult.failed.length;
         message =
           failed === 1
-            ? 'Event cancelled, but 1 refund could not be issued automatically. Open Revenue and click “Confirm refunds issued”, or contact support.'
-            : `Event cancelled, but ${failed} refunds could not be issued automatically. Open Revenue and click “Confirm refunds issued”, or contact support.`;
+            ? 'Event cancelled, but 1 refund could not be issued automatically. Open Revenue and click “Retry automatic refunds”, or contact support.'
+            : `Event cancelled, but ${failed} refunds could not be issued automatically. Open Revenue and click “Retry automatic refunds”, or contact support.`;
       } else {
         message =
           'Event cancelled. Refunds are being processed in Stripe — your payout hold will clear once each refund is confirmed.';

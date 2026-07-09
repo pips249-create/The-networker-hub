@@ -5,6 +5,7 @@ const {
   isStripeConnectEnabled,
   syncOrganiserConnectStatus,
   createConnectOnboardingLink,
+  createExpressDashboardLinkForOrganiser,
 } = require('../stripe-connect');
 
 function parseBody(req) {
@@ -52,6 +53,7 @@ module.exports = async function handler(req, res) {
 
   const body = parseBody(req);
   const groupId = String(body.groupId || body.id || req.query?.groupId || req.query?.id || '').trim();
+  const action = String(body.action || req.query?.action || 'status').toLowerCase();
   if (!groupId) return json(res, 400, { error: 'missing_group_id' });
 
   const { resolveOrganiserAccess } = require('../supabase-organiser-access');
@@ -67,6 +69,11 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    if (req.method === 'GET' && action === 'dashboard') {
+      const link = await createExpressDashboardLinkForOrganiser(groupId);
+      return json(res, 200, { ok: true, url: link.url, accountId: link.accountId });
+    }
+
     if (req.method === 'GET') {
       const status = await syncOrganiserConnectStatus(groupId);
       const due = [...new Set([...(status.currentlyDue || []), ...(status.pastDue || [])])];

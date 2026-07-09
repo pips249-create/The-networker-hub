@@ -54,6 +54,56 @@ function isCountableRegistration(row) {
   return payment === 'Paid' || payment === 'Free' || payment === 'Pending';
 }
 
+/** Normalise mapped or raw event rows for refund-policy helpers. */
+function eventRowForRefundChecks(ev) {
+  if (!ev) return null;
+  return {
+    status: ev.status || ev.listingStatus,
+    starts_at: ev.starts_at || ev.date || null,
+    refund_policy: ev.refund_policy || ev.refundPolicy || null,
+    refund_cutoff_days: ev.refund_cutoff_days ?? ev.refundCutoffDays ?? null,
+    refund_policy_details: ev.refund_policy_details || ev.refundPolicyDetails || null,
+    payout_held: ev.payout_held ?? ev.payoutHeld ?? false,
+  };
+}
+
+function buildRevenueContext(ev, eventCancellation) {
+  return {
+    eventRow: eventRowForRefundChecks(ev),
+    eventCancellation: eventCancellation || null,
+  };
+}
+
+function mapLatestCancellationsByEvent(cancellations) {
+  const byEvent = {};
+  (cancellations || []).forEach((row) => {
+    if (!row?.event_id || byEvent[row.event_id]) return;
+    byEvent[row.event_id] = row;
+  });
+  return byEvent;
+}
+
+/**
+ * Paid ticket revenue still owed back to attendees — exclude from organiser revenue totals.
+ */
+function isRevenueCountableRegistration(registration, context) {
+  const payment = String(registration?.payment_status || '').trim();
+  if (payment !== 'Paid') return false;
+
+  const eventRow = context?.eventRow || null;
+  if (eventRow && String(eventRow.status || '').toLowerCase() === 'cancelled') {
+    return false;
+  }
+
+  if (registration?.cancelled_at && eventRow) {
+    const { deriveRefundStatusForCancelledRegistration } = require('./cancellation-email-sections');
+    const refundStatus = deriveRefundStatusForCancelledRegistration(eventRow, registration);
+    if (refundStatus === 'pending' || refundStatus === 'completed') return false;
+  }
+
+  return true;
+}
+
 function registrationTicketQty(row) {
   return Math.max(1, Number(row.quantity) || 1);
 }
@@ -67,14 +117,15 @@ function summarizeRegistrationSales(registrations) {
   return { ticketsSold };
 }
 
-function enrichTicketsWithSales(tickets, registrations) {
+function enrichTicketsWithSales(tickets, registrations, revenueContextByEventId) {
   const soldByTicket = new Map();
   const revenueByTicket = new Map();
   (registrations || []).forEach((row) => {
     if (!row.ticket_id || !isCountableRegistration(row)) return;
     const q = registrationTicketQty(row);
     soldByTicket.set(row.ticket_id, (soldByTicket.get(row.ticket_id) || 0) + q);
-    if (String(row.payment_status || '').trim() === 'Paid') {
+    const revenueContext = (revenueContextByEventId && revenueContextByEventId[row.event_id]) || {};
+    if (isRevenueCountableRegistration(row, revenueContext)) {
       revenueByTicket.set(
         row.ticket_id,
         (revenueByTicket.get(row.ticket_id) || 0) + registrationTicketRevenue(row)
@@ -94,15 +145,16 @@ function enrichTicketsWithSales(tickets, registrations) {
   });
 }
 
-function calculatePayoutBreakdown(registrations) {
-  const paid = (registrations || []).filter((r) => r.payment_status === 'Paid');
+function calculatePayoutBreakdown(registrations, revenueContext) {
   let amount_gross = 0;
   let booking_fee_collected = 0;
-  paid.forEach((row) => {
+  const intentIds = [];
+  (registrations || []).forEach((row) => {
+    if (!isRevenueCountableRegistration(row, revenueContext || {})) return;
     amount_gross += registrationTicketRevenue(row);
     booking_fee_collected += registrationBookingFee(row);
+    if (row.stripe_payment_intent_id) intentIds.push(row.stripe_payment_intent_id);
   });
-  const intentIds = paid.map((r) => r.stripe_payment_intent_id).filter(Boolean);
   const total_transactions = new Set(intentIds).size;
 
   return {
@@ -341,7 +393,9 @@ async function enrichEventsWithPayoutData(events) {
 
   return events.map((ev) => {
     const regs = regsByEvent[ev.id] || [];
-    const breakdown = calculatePayoutBreakdown(regs);
+    const cancellation = cancellationsByEvent[ev.id] || null;
+    const revenueContext = buildRevenueContext(ev, cancellation);
+    const breakdown = calculatePayoutBreakdown(regs, revenueContext);
     const { ticketsSold } = summarizeRegistrationSales(regs);
     const capacity = Number(ev.ticketsCapacity) || 0;
     const withSales = {
@@ -354,7 +408,7 @@ async function enrichEventsWithPayoutData(events) {
     return enrichEventPayoutFields(
       withSales,
       payoutsByEvent[ev.id] || null,
-      cancellationsByEvent[ev.id] || null,
+      cancellation,
       breakdown
     );
   });
@@ -363,8 +417,16 @@ async function enrichEventsWithPayoutData(events) {
 async function enrichOrganiserWorkspaceSales(events, tickets) {
   const enrichedEvents = await enrichEventsWithPayoutData(events);
   const eventIds = enrichedEvents.map((e) => e.id).filter(Boolean);
-  const registrations = await listRegistrationsForEvents(eventIds);
-  const enrichedTickets = enrichTicketsWithSales(tickets, registrations);
+  const [registrations, cancellations] = await Promise.all([
+    listRegistrationsForEvents(eventIds),
+    listCancellationsForEvents(eventIds),
+  ]);
+  const cancellationsByEvent = mapLatestCancellationsByEvent(cancellations);
+  const revenueContextByEventId = {};
+  enrichedEvents.forEach((ev) => {
+    revenueContextByEventId[ev.id] = buildRevenueContext(ev, cancellationsByEvent[ev.id] || null);
+  });
+  const enrichedTickets = enrichTicketsWithSales(tickets, registrations, revenueContextByEventId);
   return { events: enrichedEvents, tickets: enrichedTickets };
 }
 
@@ -389,7 +451,11 @@ async function buildOrganiserWorkspaceSummary(groupIds, adminView) {
   } else {
     for (let i = 0; i < ids.length; i += REGISTRATION_QUERY_CHUNK) {
       const chunk = ids.slice(i, i + REGISTRATION_QUERY_CHUNK);
-      let query = sb.from('events').select('id, organiser_id');
+      let query = sb
+        .from('events')
+        .select(
+          'id, organiser_id, status, payout_held, refund_policy, starts_at, refund_cutoff_days, refund_policy_details'
+        );
       if (chunk.length === 1) query = query.eq('organiser_id', chunk[0]);
       else query = query.in('organiser_id', chunk);
       const { data, error } = await query;
@@ -400,7 +466,15 @@ async function buildOrganiserWorkspaceSummary(groupIds, adminView) {
 
   const eventOrganiser = new Map(events.map((row) => [row.id, row.organiser_id]));
   const eventIds = events.map((row) => row.id).filter(Boolean);
-  const registrations = await listRegistrationsForEvents(eventIds);
+  const [registrations, cancellations] = await Promise.all([
+    listRegistrationsForEvents(eventIds),
+    listCancellationsForEvents(eventIds),
+  ]);
+  const cancellationsByEvent = mapLatestCancellationsByEvent(cancellations);
+  const revenueContextByEventId = {};
+  events.forEach((row) => {
+    revenueContextByEventId[row.id] = buildRevenueContext(row, cancellationsByEvent[row.id] || null);
+  });
 
   let totalRevenue = 0;
   let totalTicketsSold = 0;
@@ -414,7 +488,7 @@ async function buildOrganiserWorkspaceSummary(groupIds, adminView) {
     const qty = registrationTicketQty(row);
     totalTicketsSold += qty;
     ticketsSoldByGroupId[groupId] = (ticketsSoldByGroupId[groupId] || 0) + qty;
-    if (String(row.payment_status || '').trim() === 'Paid') {
+    if (isRevenueCountableRegistration(row, revenueContextByEventId[row.event_id] || {})) {
       const amount = registrationTicketRevenue(row);
       totalRevenue += amount;
       revenueByGroupId[groupId] = (revenueByGroupId[groupId] || 0) + amount;
@@ -436,7 +510,11 @@ async function buildOrganiserWorkspaceSummary(groupIds, adminView) {
 async function enrichEventsWithRegistrationSales(events) {
   const ids = (events || []).map((e) => e.id).filter(Boolean);
   if (!ids.length) return events || [];
-  const registrations = await listRegistrationsForEvents(ids);
+  const [registrations, cancellations] = await Promise.all([
+    listRegistrationsForEvents(ids),
+    listCancellationsForEvents(ids),
+  ]);
+  const cancellationsByEvent = mapLatestCancellationsByEvent(cancellations);
   const regsByEvent = {};
   registrations.forEach((row) => {
     if (!regsByEvent[row.event_id]) regsByEvent[row.event_id] = [];
@@ -445,7 +523,8 @@ async function enrichEventsWithRegistrationSales(events) {
 
   return (events || []).map((ev) => {
     const regs = regsByEvent[ev.id] || [];
-    const breakdown = calculatePayoutBreakdown(regs);
+    const revenueContext = buildRevenueContext(ev, cancellationsByEvent[ev.id] || null);
+    const breakdown = calculatePayoutBreakdown(regs, revenueContext);
     const { ticketsSold } = summarizeRegistrationSales(regs);
     const capacity = Number(ev.ticketsCapacity) || 0;
     return {
@@ -476,7 +555,15 @@ async function getPayoutPreview(session, eventId) {
     .eq('event_id', eventId);
   if (regErr) throw new Error(regErr.message);
 
-  const breakdown = calculatePayoutBreakdown(regs || []);
+  const { data: cancelRows } = await sb
+    .from('event_cancellations')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: false })
+    .limit(1);
+  const cancellation = cancelRows && cancelRows[0] ? cancelRows[0] : null;
+  const revenueContext = buildRevenueContext(row, cancellation);
+  const breakdown = calculatePayoutBreakdown(regs || [], revenueContext);
   const ev = {
     status: row.status,
     payoutHeld: Boolean(row.payout_held),
@@ -491,14 +578,6 @@ async function getPayoutPreview(session, eventId) {
     .in('status', ['pending_review', 'approved'])
     .limit(1);
   const payout = payoutRows && payoutRows[0] ? rowToPayout(payoutRows[0]) : null;
-
-  const { data: cancelRows } = await sb
-    .from('event_cancellations')
-    .select('*')
-    .eq('event_id', eventId)
-    .order('created_at', { ascending: false })
-    .limit(1);
-  const cancellation = cancelRows && cancelRows[0] ? cancelRows[0] : null;
 
   const eligibility = evaluatePayoutEligibility(ev, payout, cancellation, breakdown);
 
@@ -582,6 +661,9 @@ module.exports = {
   getPayoutPreview,
   requestPayout,
   calculatePayoutBreakdown,
+  isRevenueCountableRegistration,
+  buildRevenueContext,
+  mapLatestCancellationsByEvent,
   rowToPayout,
   PAYOUT_STATUS_LABELS,
   isEventArchived,
