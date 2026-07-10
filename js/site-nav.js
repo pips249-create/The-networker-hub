@@ -212,6 +212,7 @@
     var html = '';
     html += link('/events/', 'Events', 'events');
     html += link('/opportunities/', 'Opportunities', 'opportunities');
+    html += link('for-organisers.html', 'For organisers', 'for-organisers');
     html += link('contact.html', 'Contact', 'contact');
     html += link('faq.html', 'Help', 'faq');
     if (pending && !user) {
@@ -242,6 +243,7 @@
     var html = '';
     html += link('/events/', 'Events', 'events', 'nav-mobile-item');
     html += link('/opportunities/', 'Opportunities', 'opportunities', 'nav-mobile-item');
+    html += link('for-organisers.html', 'For organisers', 'for-organisers', 'nav-mobile-item');
     html += link('contact.html', 'Contact', 'contact', 'nav-mobile-item');
     html += link('faq.html', 'Help', 'faq', 'nav-mobile-item');
     if (pending && !user) {

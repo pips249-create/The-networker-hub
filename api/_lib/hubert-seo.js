@@ -201,6 +201,16 @@ function buildSchemaGraph(page, origin) {
         'The Networker Hub connects UK business owners and professionals with networking events, exhibitions, and business opportunities.',
       mainEntity: buildOrganizationSchema(base),
     });
+  } else if (page === 'for-organisers') {
+    graph.push({
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      url: base + '/for-organisers.html',
+      name: 'For organisers – The Networker Hub',
+      description:
+        'Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Alumni Fast-Pass, and discovery in the UK events and opportunities directories.',
+      about: buildOrganizationSchema(base),
+    });
   } else if (page === 'advertising') {
     graph.push({
       '@context': 'https://schema.org',
@@ -275,6 +285,9 @@ function buildLlmsTxt(origin) {
     '- About: ' +
     base +
     '/about.html\n' +
+    '- For organisers: ' +
+    base +
+    '/for-organisers.html\n' +
     '- Advertising & sponsorship: ' +
     base +
     '/advertising\n' +

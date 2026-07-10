@@ -43,7 +43,7 @@
     href('faq.html') +
     '">FAQ</a>' +
     '<a href="' +
-    href('about.html#for-organisers') +
+    href('for-organisers.html') +
     '">For organisers</a>' +
     '<a href="' +
     href('guides.html') +

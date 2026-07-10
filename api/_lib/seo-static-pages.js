@@ -44,6 +44,14 @@ const STATIC_PAGES = {
     image: '/assets/logo.png',
     ogType: 'website',
   },
+  'for-organisers': {
+    path: '/for-organisers.html',
+    title: 'For organisers – The Networker Hub',
+    description:
+      'List UK networking events and business opportunities — organiser dashboard, guest visits, visit tracking, Category Exclusivity, Alumni Fast-Pass, and member discovery.',
+    image: '/assets/logo.png',
+    ogType: 'website',
+  },
   contact: {
     path: '/contact.html',
     title: 'Contact us – The Networker Hub',
