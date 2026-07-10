@@ -8,6 +8,7 @@
   let cancelledBookings = [];
   let savedEvents = [];
   let savedOrganisers = [];
+  let savedOpportunities = [];
   let opportunityEnquiries = [];
   let currentRoute = 'overview';
   const REVIEW_EVENT_STORAGE_KEY = 'hub_review_event_id';
@@ -1752,6 +1753,74 @@
     return '../events/organiser.html?id=' + encodeURIComponent(item.organiserId || item.organiser_id || item.id || '');
   }
 
+  function savedOpportunityHref(item) {
+    const slug = item.slug ? String(item.slug).trim() : '';
+    if (slug) return '../opportunities/' + encodeURIComponent(slug);
+    return '../opportunities/opportunity.html?id=' + encodeURIComponent(item.opportunityId || item.opportunity_id || item.id || '');
+  }
+
+  function renderSavedOpportunitiesTable() {
+    const body = document.getElementById('ad-saved-opportunities-body');
+    const empty = document.getElementById('ad-saved-opportunities-empty');
+    if (!body) return;
+
+    body.innerHTML = '';
+    if (!savedOpportunities.length) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    savedOpportunities.forEach((item) => {
+      const tr = document.createElement('tr');
+      const favItem = {
+        title: item.title,
+        imageUrl: item.logoUrl || item.imageUrl || item.logo_url || item.image_url || '',
+      };
+      tr.innerHTML =
+        '<td>' +
+        thumbHtml(favItem) +
+        '</td><td class="ad-td-name"><a href="' +
+        esc(savedOpportunityHref(item)) +
+        '">' +
+        esc(item.title || 'Opportunity') +
+        '</a></td><td>' +
+        esc(item.host || '—') +
+        '</td><td>' +
+        esc(formatDateShort(item.createdAt || item.created_at)) +
+        '</td><td><button type="button" class="ad-btn ad-btn-ghost ad-saved-opportunity-remove" data-opportunity-id="' +
+        esc(item.opportunityId || item.opportunity_id || '') +
+        '">Remove</button></td>';
+      body.appendChild(tr);
+    });
+
+    body.querySelectorAll('.ad-saved-opportunity-remove').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const opportunityId = btn.getAttribute('data-opportunity-id');
+        if (!opportunityId) return;
+        btn.disabled = true;
+        try {
+          if (window.HubOpportunitySaves) {
+            await window.HubOpportunitySaves.toggle(opportunityId);
+          } else {
+            await fetch('/api/auth/opportunity-favourites', {
+              method: 'DELETE',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ opportunityId }),
+            });
+          }
+          savedOpportunities = savedOpportunities.filter(
+            (x) => String(x.opportunityId || x.opportunity_id) !== String(opportunityId)
+          );
+          renderSavedOpportunitiesTable();
+        } catch {
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
   function renderSavedOrganisersTable() {
     const body = document.getElementById('ad-saved-organisers-body');
     const empty = document.getElementById('ad-saved-organisers-empty');
@@ -1813,6 +1882,30 @@
         }
       });
     });
+  }
+
+  async function loadSavedOpportunities() {
+    try {
+      const res = await fetch('/api/auth/opportunity-favourites', { credentials: 'include' });
+      const data = await res.json();
+      if (data && data.ok && Array.isArray(data.favourites)) {
+        savedOpportunities = data.favourites;
+      } else if (data && data.ok && Array.isArray(data.opportunityIds)) {
+        savedOpportunities = data.opportunityIds.map((id) => ({ opportunityId: id, title: 'Opportunity' }));
+      } else {
+        savedOpportunities = [];
+      }
+      if (window.HubOpportunitySaves && Array.isArray(data.opportunityIds)) {
+        window.HubOpportunitySaves.writeLocal(data.opportunityIds);
+      }
+    } catch {
+      savedOpportunities = window.HubOpportunitySaves
+        ? window.HubOpportunitySaves.ids().map((id) => ({ opportunityId: id }))
+        : [];
+    }
+    if (dashboardReady && currentRoute === 'saved') {
+      renderRouteTables('saved', { force: true });
+    }
   }
 
   function applySavedOrganiserData(data) {
@@ -1917,6 +2010,7 @@
     } else if (key === 'saved') {
       renderSavedTable();
       renderSavedOrganisersTable();
+      renderSavedOpportunitiesTable();
     } else if (key === 'opportunity-enquiries') {
       renderOpportunityEnquiries();
     }
@@ -1944,7 +2038,7 @@
     renderRouteTables('payments', { force: true });
     renderRouteTables('cancellations', { force: true });
     renderRouteTables('opportunity-enquiries', { force: true });
-    if (savedEvents.length || savedOrganisers.length) renderRouteTables('saved', { force: true });
+    if (savedEvents.length || savedOrganisers.length || savedOpportunities.length) renderRouteTables('saved', { force: true });
     updateSideCounts();
   }
 
@@ -2060,10 +2154,11 @@
     try {
       ensureAttendeeHubMode();
 
-      const [dashRes, favRes, orgFavRes] = await Promise.all([
+      const [dashRes, favRes, orgFavRes, oppFavRes] = await Promise.all([
         fetch('/api/auth/attendee-dashboard', { credentials: 'include' }),
         fetch('/api/auth/favourites', { credentials: 'include' }),
         fetch('/api/auth/organiser-favourites', { credentials: 'include' }),
+        fetch('/api/auth/opportunity-favourites', { credentials: 'include' }),
       ]);
       const data = await dashRes.json();
       if (!data.ok) {
@@ -2116,6 +2211,22 @@
       } catch {
         savedOrganisers = window.HubOrganiserFavourites
           ? window.HubOrganiserFavourites.ids().map((id) => ({ organiserId: id }))
+          : [];
+      }
+
+      try {
+        const oppFavData = await oppFavRes.json();
+        if (oppFavData && oppFavData.ok && Array.isArray(oppFavData.favourites)) {
+          savedOpportunities = oppFavData.favourites;
+        } else if (oppFavData && oppFavData.ok && Array.isArray(oppFavData.opportunityIds)) {
+          savedOpportunities = oppFavData.opportunityIds.map((id) => ({ opportunityId: id, title: 'Opportunity' }));
+        }
+        if (window.HubOpportunitySaves && oppFavData && Array.isArray(oppFavData.opportunityIds)) {
+          window.HubOpportunitySaves.writeLocal(oppFavData.opportunityIds);
+        }
+      } catch {
+        savedOpportunities = window.HubOpportunitySaves
+          ? window.HubOpportunitySaves.ids().map((id) => ({ opportunityId: id }))
           : [];
       }
 

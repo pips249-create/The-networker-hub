@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260730" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
     <link rel="stylesheet" href="../css/opportunities-page.css?v=20260609d" />
-    <link rel="stylesheet" href="../css/opportunity-detail.css?v=20260710b" />
+    <link rel="stylesheet" href="../css/opportunity-detail.css?v=20260710c" />
   </head>
   <body class="opportunities-page opportunity-detail-page">
     <div id="hub-site-nav"></div>
@@ -126,10 +126,16 @@
           <div class="opp-enquire-card">
             <h2>Enquire about this listing</h2>
             <p class="opp-enquire-lede">Send a message and the poster will get back to you directly.</p>
+            <p class="opp-enquire-signin" id="opp-enquire-signin" hidden>
+              <a href="../login.html" id="opp-enquire-login-link">Sign in</a>
+              or
+              <a href="../register.html" id="opp-enquire-register-link">create a free account</a>
+              to send an enquiry — it only takes 2 minutes.
+            </p>
             <p class="opp-legal-disclaimer">
               <strong>Important:</strong> Listings are informational only. The Networker Group Ltd is not FCA-regulated and does not provide investment, financial, or legal advice. Always conduct your own due diligence before entering any commercial arrangement.
             </p>
-            <form class="opp-enquire-form" id="opp-enquire-form">
+            <form class="opp-enquire-form" id="opp-enquire-form" hidden>
               <label>
                 <span>Your name</span>
                 <input type="text" name="name" id="opp-enquire-name" required autocomplete="name" />
@@ -165,8 +171,8 @@
     <script src="../js/cms-ad-blocks.js?v=20260611"></script>
     <script src="../js/hub-public-urls.js?v=20260703"></script>
     <script src="../js/opportunities-catalog.js?v=20260708"></script>
-    <script src="../js/opportunities-saves.js?v=20260609j"></script>
+    <script src="../js/opportunities-saves.js?v=20260710"></script>
     <script src="../js/listing-report.js?v=20260708"></script>
-    <script src="../js/opportunity-detail.js?v=20260710b"></script>
+    <script src="../js/opportunity-detail.js?v=20260710c"></script>
   </body>
 </html>

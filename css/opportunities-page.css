@@ -1943,6 +1943,71 @@
   color: var(--opp-gold-light);
 }
 
+/* Investment budget quick-pills — mobile/tablet shortcut to sidebar tiers */
+.opp-browse-page .opp-invest-pills {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  margin-top: 10px;
+  padding-bottom: 2px;
+}
+
+.opp-browse-page .opp-invest-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.opp-browse-page .opp-invest-pill {
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.opp-browse-page .opp-invest-pill:hover {
+  color: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.opp-browse-page .opp-invest-pill.active {
+  background: rgba(245, 224, 160, 0.14);
+  border-color: var(--opp-gold-light);
+  color: var(--opp-gold-light);
+  font-weight: 600;
+}
+
+.opp-browse-page .opp-invest-pill-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 4px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.opp-browse-page .opp-invest-pill.active .opp-invest-pill-count {
+  background: var(--opp-gold-dim);
+  color: var(--opp-gold-light);
+}
+
 /* Premium Spotlight — featured opportunities carousel */
 .opp-browse-page .opp-promo-section {
   max-width: 1200px;
@@ -3262,6 +3327,10 @@
   .opp-browse-page .opp-browse-layout {
     grid-template-columns: 1fr;
     padding: 20px;
+  }
+
+  .opp-browse-page .opp-invest-pills {
+    display: flex;
   }
 
   .opp-browse-page .opp-sidebar {

@@ -577,15 +577,22 @@ function enquiryRowToDto(row, opportunity) {
   };
 }
 
-async function createOpportunityEnquiry(input) {
+async function createOpportunityEnquiry(input, session) {
   const opportunityId = String(input.opportunityId || '').trim();
-  const name = String(input.name || input.enquirerName || '').trim();
-  const email = String(input.email || input.enquirerEmail || '').trim();
   const message = String(input.message || '').trim();
   if (!isUuid(opportunityId)) throw new Error('invalid_opportunity_id');
-  if (!name) throw new Error('missing_name');
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('invalid_email');
   if (!message) throw new Error('missing_message');
+
+  const sessionEmail = session?.email ? String(session.email).trim().toLowerCase() : '';
+  if (!sessionEmail) throw new Error('not_authenticated');
+
+  const email = sessionEmail;
+  const name =
+    String(input.name || input.enquirerName || session?.name || '').trim() ||
+    sessionEmail.split('@')[0] ||
+    'Enquirer';
+  if (!name) throw new Error('missing_name');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('invalid_email');
 
   const opportunity = await getPublishedOpportunityById(opportunityId);
   if (!opportunity) throw new Error('not_found');

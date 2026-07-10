@@ -454,6 +454,7 @@ const MARKETING_EMAIL_SLUGS = new Set([
   'attendee_signup_events_nudge',
   'attendee_signup_events_nudge_followup',
   'saved_event_tickets_open',
+  'saved_opportunity_closing_soon',
 ]);
 
 async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject, resendTags, replyTo }) {

@@ -232,11 +232,13 @@ async function expireOpportunityListings(sb) {
 }
 
 async function runOpportunityReminderMaintenance(sb) {
+  const { sendDueSavedOpportunityClosingEmails } = require('./favourite-opportunity-emails');
   const listing = await sendListingExpiryReminders(sb);
   const premium = await sendPremiumExpiryReminders(sb);
+  const savedClosingSoon = await sendDueSavedOpportunityClosingEmails(sb);
   const listingExpired = await expireOpportunityListings(sb);
   const premiumExpired = await expireOpportunityPremium(sb);
-  return { listing, premium, listingExpired, premiumExpired };
+  return { listing, premium, savedClosingSoon, listingExpired, premiumExpired };
 }
 
 module.exports = {

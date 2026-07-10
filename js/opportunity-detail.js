@@ -5,6 +5,7 @@
   var catalog = window.HubOpportunitiesCatalog;
   var saves = window.HubOpportunitySaves;
   var current = null;
+  var sessionUser = null;
 
   var els = {
     notFound: document.getElementById('opp-not-found'),
@@ -27,6 +28,7 @@
     mailto: document.getElementById('opp-enquire-mailto'),
     submit: document.getElementById('opp-enquire-submit'),
     enquireStatus: document.getElementById('opp-enquire-status'),
+    enquireSignin: document.getElementById('opp-enquire-signin'),
     claimSection: document.getElementById('opp-claim-section'),
     claimForm: document.getElementById('opp-claim-form'),
     claimSubmit: document.getElementById('opp-claim-submit'),
@@ -221,8 +223,76 @@
     if (!els.saveBtn) return;
     els.saveBtn.addEventListener('click', function () {
       if (!current || !saves) return;
-      saves.toggle(current.id);
-      refreshSaveButton();
+      saves.toggle(current.id).then(function () {
+        refreshSaveButton();
+      });
+    });
+  }
+
+  function loadSession() {
+    var fetcher = window.hubFetchSession
+      ? window.hubFetchSession
+      : function () {
+          return fetch('/api/auth/session', { credentials: 'include' }).then(function (r) {
+            return r.json();
+          });
+        };
+    return fetcher()
+      .then(function (data) {
+        if (data && data.ok && data.user) {
+          sessionUser = data.user;
+          return data.user;
+        }
+        sessionUser = null;
+        return null;
+      })
+      .catch(function () {
+        sessionUser = null;
+        return null;
+      });
+  }
+
+  function applyEnquireAuthUi() {
+    var signedIn = Boolean(sessionUser && sessionUser.email);
+    var nameEl = document.getElementById('opp-enquire-name');
+    var emailEl = document.getElementById('opp-enquire-email');
+    var messageEl = document.getElementById('opp-enquire-message');
+    var termsEl = document.getElementById('opp-enquire-terms');
+
+    if (els.enquireSignin) els.enquireSignin.hidden = signedIn;
+    if (els.form) els.form.hidden = !signedIn;
+    if (els.submit) els.submit.disabled = !signedIn;
+
+    var next = window.location.pathname + window.location.search + window.location.hash;
+    var loginLink = document.getElementById('opp-enquire-login-link');
+    var registerLink = document.getElementById('opp-enquire-register-link');
+    if (loginLink) loginLink.href = '../login.html?next=' + encodeURIComponent(next);
+    if (registerLink) registerLink.href = '../register.html?next=' + encodeURIComponent(next);
+
+    if (signedIn && nameEl && sessionUser.name && !nameEl.value) {
+      nameEl.value = sessionUser.name;
+    }
+    if (signedIn && emailEl && sessionUser.email) {
+      emailEl.value = sessionUser.email;
+      emailEl.readOnly = true;
+      emailEl.setAttribute('aria-readonly', 'true');
+    }
+
+    if (!signedIn) {
+      if (nameEl) nameEl.value = '';
+      if (emailEl) {
+        emailEl.value = '';
+        emailEl.readOnly = false;
+        emailEl.removeAttribute('aria-readonly');
+      }
+      if (messageEl) messageEl.value = '';
+      if (termsEl) termsEl.checked = false;
+    }
+  }
+
+  function prefillEnquireForm() {
+    return loadSession().then(function () {
+      applyEnquireAuthUi();
     });
   }
 
@@ -348,6 +418,7 @@
 
       fetch('/api/opportunities', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           opportunityId: current.id,
@@ -368,8 +439,14 @@
               true
             );
             if (els.submit) els.submit.textContent = 'Enquiry sent';
-            els.form.reset();
+            var messageEl = document.getElementById('opp-enquire-message');
+            if (messageEl) messageEl.value = '';
+            if (terms) terms.checked = false;
             return;
+          }
+          if (result.data && result.data.error === 'not_authenticated') {
+            sessionUser = null;
+            applyEnquireAuthUi();
           }
           if (els.submit) {
             els.submit.disabled = false;
@@ -423,6 +500,7 @@
     bindSave();
     bindForm();
     bindClaimForm();
+    prefillEnquireForm();
     wireListingReport(item);
     loadSidebarAd();
   }

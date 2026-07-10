@@ -59,6 +59,7 @@
     els.mount = document.getElementById('opp-listings-mount');
     els.resultsCount = document.getElementById('opp-results-count');
     els.stripFilters = document.getElementById('opp-strip-filters');
+    els.investPills = document.getElementById('opp-invest-pills');
     els.search = document.getElementById('opp-search');
     els.sort = document.getElementById('opp-sort');
     els.sidebar = document.querySelector('.opp-sidebar');
@@ -991,10 +992,35 @@
     });
   }
 
+  function syncInvestPillsUI() {
+    if (!els.investPills) return;
+    var tier = '';
+    var hasCustomRange = hasCustomInvestRange();
+    if (!hasCustomRange && els.filterInvest) tier = els.filterInvest.value || '';
+    els.investPills.querySelectorAll('.opp-invest-pill').forEach(function (btn) {
+      var key = btn.getAttribute('data-invest-tier') || '';
+      var pillTier = key === 'all' ? '' : key;
+      var on = !hasCustomRange && pillTier === tier;
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  function setInvestTier(tier) {
+    if (els.minInvest) els.minInvest.value = '';
+    if (els.maxInvest) els.maxInvest.value = '';
+    minInvest = null;
+    maxInvest = null;
+    if (els.filterInvest) els.filterInvest.value = tier || '';
+    syncInvestPillsUI();
+    applyFilters();
+  }
+
   function applyFilters() {
     readSidebarFilters();
     readInvestRange();
     syncSidebarSelectUI();
+    syncInvestPillsUI();
     resetListingPagination();
     renderListings();
   }
@@ -1033,6 +1059,7 @@
     syncTabUI();
     syncCatPills();
     syncSidebarSelectUI();
+    syncInvestPillsUI();
     renderListings();
   }
 
@@ -1049,6 +1076,21 @@
       var btn = e.target.closest('.opp-tab-btn');
       if (!btn) return;
       setType(btn.getAttribute('data-filter') || 'all');
+    });
+  }
+
+  function initInvestPills() {
+    if (!els.investPills || els.investPills.dataset.bound) return;
+    els.investPills.dataset.bound = '1';
+    els.investPills.addEventListener('click', function (e) {
+      var btn = e.target.closest('.opp-invest-pill');
+      if (!btn) return;
+      var tier = btn.getAttribute('data-invest-tier') || '';
+      if (tier === 'all') tier = '';
+      else if (els.filterInvest && els.filterInvest.value === tier && !hasCustomInvestRange()) {
+        tier = '';
+      }
+      setInvestTier(tier);
     });
   }
 
@@ -1181,8 +1223,11 @@
       if (fav) {
         e.preventDefault();
         e.stopPropagation();
-        if (saves) saves.toggle(fav.getAttribute('data-opp-id'));
-        if (saves) saves.refreshButtons(els.mount);
+        if (saves) {
+          saves.toggle(fav.getAttribute('data-opp-id')).then(function () {
+            saves.refreshButtons(els.mount);
+          });
+        }
         return;
       }
 
@@ -1222,6 +1267,7 @@
     allListings = catalog ? catalog.loadCatalog() : [];
     updateFilterCounts();
     initStripTabs();
+    initInvestPills();
     initSidebar();
     initSearch();
     initSort();

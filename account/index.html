@@ -207,7 +207,7 @@
             <!-- Saved -->
             <section class="ad-page" id="ad-page-saved" data-ad-page="saved">
               <h2 class="ad-section-title">Saved</h2>
-              <p class="ad-section-sub">Events and organisers you have favourited while browsing. We will email you when ticket sales open for saved events, and when a saved organiser lists something new.</p>
+              <p class="ad-section-sub">Events, organisers, and business opportunities you have saved while browsing. We will email you when ticket sales open for saved events, when a saved organiser lists something new, and when a saved opportunity is closing soon.</p>
 
               <div class="ad-saved-block">
                 <h3 class="ad-section-title">Saved events</h3>
@@ -254,6 +254,30 @@
                 <p class="ad-empty" id="ad-saved-organisers-empty" hidden>
                   No saved organisers yet. Saving an event also saves its organiser.
                   <a href="../events/index.html#organisers">Browse organisers →</a>
+                </p>
+              </div>
+
+              <div class="ad-saved-block">
+                <h3 class="ad-section-title ad-section-title--spaced">Saved opportunities</h3>
+                <div class="ad-table-scroll">
+                  <div class="ad-table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th class="ad-th-thumb"></th>
+                          <th>Opportunity</th>
+                          <th>Listed by</th>
+                          <th>Saved</th>
+                          <th class="ad-th-actions">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="ad-saved-opportunities-body"></tbody>
+                    </table>
+                  </div>
+                </div>
+                <p class="ad-empty" id="ad-saved-opportunities-empty" hidden>
+                  No saved opportunities yet.
+                  <a href="../opportunities/index.html">Browse opportunities →</a>
                 </p>
               </div>
             </section>
@@ -537,7 +561,8 @@
     <script src="../js/flexible-event-image.js?v=20260709"></script>
     <script src="../js/hub-favourites.js?v=20260629"></script>
     <script src="../js/hub-organiser-favourites.js?v=20260630"></script>
+    <script src="../js/opportunities-saves.js?v=20260710"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260709"></script>
+    <script src="../js/attendee-dashboard.js?v=20260710"></script>
   </body>
 </html>

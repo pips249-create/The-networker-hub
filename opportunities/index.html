@@ -15,7 +15,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260730" />
-    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260710" />
+    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260710b" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
     <script src="../js/hub-seo-static-config.js?v=20260612"></script>
     <script src="../js/hub-seo-static.js?v=20260612" data-page="opportunities"></script>
@@ -100,6 +100,20 @@
           </button>
           <button type="button" class="opp-tab-btn" role="tab" aria-selected="false" data-filter="business-opportunity">
             Business opportunity <span class="opp-tab-count" data-count-for="business-opportunity">0</span>
+          </button>
+        </div>
+        <div class="opp-invest-pills" id="opp-invest-pills" role="group" aria-label="Investment budget">
+          <button type="button" class="opp-invest-pill active" data-invest-tier="all" aria-pressed="true">
+            All budgets
+          </button>
+          <button type="button" class="opp-invest-pill" data-invest-tier="low-invest" aria-pressed="false">
+            Under £2.5k <span class="opp-invest-pill-count" data-count-for="low-invest">0</span>
+          </button>
+          <button type="button" class="opp-invest-pill" data-invest-tier="mid-invest" aria-pressed="false">
+            £2.5k–£10k <span class="opp-invest-pill-count" data-count-for="mid-invest">0</span>
+          </button>
+          <button type="button" class="opp-invest-pill" data-invest-tier="high-invest" aria-pressed="false">
+            £10k+ <span class="opp-invest-pill-count" data-count-for="high-invest">0</span>
           </button>
         </div>
         <p class="opp-browse-disclaimer" role="note">
@@ -314,9 +328,9 @@
     <script src="../js/sponsor-hub.js?v=20260611"></script>
     <script src="../js/hub-organiser-actions.js?v=20260710" data-root="../"></script>
     <script src="../js/opportunities-catalog.js?v=20260708"></script>
-    <script src="../js/opportunities-saves.js?v=20260610a"></script>
+    <script src="../js/opportunities-saves.js?v=20260710"></script>
     <script src="../js/postcode-geo.js?v=20260609b"></script>
-    <script src="../js/opportunities-page.js?v=20260710"></script>
+    <script src="../js/opportunities-page.js?v=20260710b"></script>
     <script src="../js/opportunities-map.js?v=20260611"></script>
   </body>
 </html>

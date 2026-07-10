@@ -1,7 +1,7 @@
 /**
  * Public business opportunities API — published listings only.
  */
-const { json, setCors } = require('./_lib/auth');
+const { json, setCors, sessionFromRequest } = require('./_lib/auth');
 const { enforceRateLimit } = require('./_lib/rate-limit');
 const { useSupabase } = require('./_lib/supabase');
 
@@ -83,17 +83,36 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    try {
-      const enquiry = await createOpportunityEnquiry({
-        opportunityId: body.opportunityId || body.opportunity_id || body.id,
-        name: body.name || body.enquirerName,
-        email: body.email || body.enquirerEmail,
-        message: body.message,
+    const session = sessionFromRequest(req);
+    if (!session || !session.email) {
+      return json(res, 401, {
+        ok: false,
+        error: 'not_authenticated',
+        message: 'Sign in or create a free account to send an enquiry.',
       });
+    }
+
+    try {
+      const enquiry = await createOpportunityEnquiry(
+        {
+          opportunityId: body.opportunityId || body.opportunity_id || body.id,
+          name: body.name || body.enquirerName,
+          email: body.email || body.enquirerEmail,
+          message: body.message,
+        },
+        session
+      );
       return json(res, 200, { ok: true, enquiry });
     } catch (e) {
       const msg = e.message || String(e);
       if (msg === 'not_found') return json(res, 404, { ok: false, error: 'not_found' });
+      if (msg === 'not_authenticated') {
+        return json(res, 401, {
+          ok: false,
+          error: 'not_authenticated',
+          message: 'Sign in or create a free account to send an enquiry.',
+        });
+      }
       if (msg === 'invalid_email' || msg === 'missing_name' || msg === 'missing_message') {
         return json(res, 400, { ok: false, error: msg });
       }

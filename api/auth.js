@@ -32,6 +32,7 @@ const routes = {
   'alumni-eligibility': require('./_lib/routes/auth-alumni-eligibility'),
   reviews: require('./_lib/routes/auth-reviews'),
   favourites: require('./_lib/routes/auth-favourites'),
+  'opportunity-favourites': require('./_lib/routes/auth-opportunity-favourites'),
   'organiser-favourites': require('./_lib/routes/auth-organiser-favourites'),
   profile: require('./_lib/routes/auth-profile'),
   'stop-impersonate': require('./_lib/routes/auth-stop-impersonate'),
