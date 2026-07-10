@@ -232,8 +232,29 @@
   function thumbHtml(item) {
     const name = item.title || '?';
     let imageUrl = item.imageUrl || '';
-    if (global.getFlexibleEventImage) {
-      imageUrl = global.getFlexibleEventImage(imageUrl, item.organiserLogo || '', item.eventId || item.id);
+    if (global.getEventImage) {
+      imageUrl = global.getEventImage({
+        photo: imageUrl,
+        organiserLogo: item.organiserLogo || '',
+        id: item.eventId || item.id,
+        eventType: item.eventType || '',
+        title: name,
+      });
+    } else if (global.getFlexibleEventImage) {
+      imageUrl = global.getFlexibleEventImage(
+        imageUrl,
+        item.organiserLogo || '',
+        item.eventId || item.id
+      );
+    }
+    const logo = String(item.organiserLogo || '').trim();
+    if (
+      logo &&
+      imageUrl === logo &&
+      global.getEventPlacementImage &&
+      global.hubIsLogoStyleCover
+    ) {
+      imageUrl = global.getEventPlacementImage(item.eventId || item.id, item.eventType || '', name);
     }
     if (imageUrl) {
       return (

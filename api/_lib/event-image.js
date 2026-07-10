@@ -42,26 +42,41 @@ function isUsableEventImageUrl(url) {
   return true;
 }
 
+function isOrganiserLogoImageUrl(url, organiserLogo) {
+  const photo = String(url || '').trim();
+  const logo = String(organiserLogo || '').trim();
+  if (!photo) return false;
+  if (logo && photo === logo) return true;
+  if (/\/logo[.\-_/]/i.test(photo) || /\/img\/logo\./i.test(photo)) return true;
+  if (/\/assets\/logo/i.test(photo)) return true;
+  return false;
+}
+
 /**
  * Match browse/event-detail image priority: event photo → series peer photo → organiser logo.
- * Skips URLs that are only the organiser logo when a better series cover exists.
+ * Skips organiser-logo URLs when a better series cover exists.
  */
 function resolveEventDisplayImage(eventRow, organiserRow, seriesPeerRows) {
   const logo = String(organiserRow?.photo_url || '').trim();
   const candidates = [];
 
   const own = eventImageUrl(eventRow);
-  if (isUsableEventImageUrl(own)) candidates.push(own);
+  if (isUsableEventImageUrl(own) && !isOrganiserLogoImageUrl(own, logo)) {
+    candidates.push(own);
+  }
 
   for (const peer of seriesPeerRows || []) {
     const peerUrl = eventImageUrl(peer);
-    if (isUsableEventImageUrl(peerUrl) && !candidates.includes(peerUrl)) {
+    if (
+      isUsableEventImageUrl(peerUrl) &&
+      !isOrganiserLogoImageUrl(peerUrl, logo) &&
+      !candidates.includes(peerUrl)
+    ) {
       candidates.push(peerUrl);
     }
   }
 
-  const nonLogo = candidates.find((url) => !logo || url !== logo);
-  if (nonLogo) return nonLogo;
+  if (candidates.length) return candidates[0];
   if (isUsableEventImageUrl(own)) return own;
   if (isUsableEventImageUrl(logo)) return logo;
   return '';
@@ -72,5 +87,6 @@ module.exports = {
   eventImageDbValue,
   normalizeEventPhotoUrl,
   isUsableEventImageUrl,
+  isOrganiserLogoImageUrl,
   resolveEventDisplayImage,
 };

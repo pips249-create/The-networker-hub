@@ -25,7 +25,7 @@ function canCancelRegistration(row, ev) {
   return isSelfServiceCancellationAllowed(ev, row);
 }
 
-function mapRegistrationRow(row, reviewByEventId, seriesPeersByGroupId) {
+function mapRegistrationRow(row, reviewByEventId, seriesPeersByEventId) {
   const ev = row.events || {};
   const organiser = ev.organisers || {};
   const ticket = row.tickets || {};
@@ -53,10 +53,7 @@ function mapRegistrationRow(row, reviewByEventId, seriesPeersByGroupId) {
     ticketPriceNum <= 0;
   const meetingLink = booked.meetingLink;
   const online = booked.isOnline;
-  const seriesPeers =
-    ev.series_group_id && seriesPeersByGroupId
-      ? (seriesPeersByGroupId.get(ev.series_group_id) || []).filter((peer) => peer.id !== ev.id)
-      : [];
+  const seriesPeers = seriesPeersByEventId ? seriesPeersByEventId.get(ev.id) || [] : [];
 
   return {
     id: row.id,
@@ -68,6 +65,7 @@ function mapRegistrationRow(row, reviewByEventId, seriesPeersByGroupId) {
     endDate: booked.endDate,
     imageUrl: resolveEventDisplayImage(ev, organiser, seriesPeers) || null,
     organiserLogo: String(organiser.photo_url || '').trim() || null,
+    eventType: String(ev.event_type || '').trim() || null,
     ticketLabel: qty + ' × ' + ticketName,
     quantity: qty,
     paymentStatus: row.payment_status || 'Pending',
@@ -106,7 +104,7 @@ function mapRegistrationRow(row, reviewByEventId, seriesPeersByGroupId) {
   };
 }
 
-function mapCancelledRegistrationRow(row, seriesPeersByGroupId) {
+function mapCancelledRegistrationRow(row, seriesPeersByEventId) {
   const ev = row.events || {};
   const organiser = ev.organisers || {};
   const ticket = row.tickets || {};
@@ -123,6 +121,7 @@ function mapCancelledRegistrationRow(row, seriesPeersByGroupId) {
   } else if (amountPaid > 0) {
     refundLabel = 'Cancelled — no refund due';
   }
+  const seriesPeers = seriesPeersByEventId ? seriesPeersByEventId.get(ev.id) || [] : [];
 
   return {
     id: row.id,
@@ -132,15 +131,9 @@ function mapCancelledRegistrationRow(row, seriesPeersByGroupId) {
     title: booked.title,
     date: booked.date,
     endDate: booked.endDate,
-    imageUrl:
-      resolveEventDisplayImage(
-        ev,
-        organiser,
-        ev.series_group_id && seriesPeersByGroupId
-          ? (seriesPeersByGroupId.get(ev.series_group_id) || []).filter((peer) => peer.id !== ev.id)
-          : []
-      ) || null,
+    imageUrl: resolveEventDisplayImage(ev, organiser, seriesPeers) || null,
     organiserLogo: String(organiser.photo_url || '').trim() || null,
+    eventType: String(ev.event_type || '').trim() || null,
     ticketLabel: booked.quantity + ' × ' + booked.ticketName,
     quantity: booked.quantity,
     paymentStatus,
@@ -191,6 +184,8 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
         photo_url,
         series_group_id,
         event_type,
+        recurrence_pattern,
+        recurrence_end_date,
         organiser_id,
         meeting_link,
         meeting_type,
@@ -249,6 +244,8 @@ async function listCancelledRegistrationsForAttendee(sb, attendeeId) {
         photo_url,
         series_group_id,
         event_type,
+        recurrence_pattern,
+        recurrence_end_date,
         organiser_id,
         refund_policy,
         refund_policy_details,
@@ -294,30 +291,75 @@ async function listReviewsForAttendee(sb, attendeeId) {
   return map;
 }
 
-async function loadSeriesPeerImagesMap(sb, rows) {
-  const groupIds = [
-    ...new Set(
-      (rows || [])
-        .map((row) => row.events?.series_group_id)
-        .filter(Boolean)
-        .map((id) => String(id))
-    ),
-  ];
-  const map = new Map();
-  if (!groupIds.length) return map;
+async function fetchSeriesPeerImageRows(sb, eventRow) {
+  if (!eventRow?.id) return [];
+  const cols =
+    'id, series_group_id, organiser_id, title, image_url, photo_url, recurrence_pattern, recurrence_end_date';
+
+  if (eventRow.series_group_id) {
+    const { data, error } = await sb
+      .from('events')
+      .select(cols)
+      .eq('series_group_id', eventRow.series_group_id)
+      .neq('id', eventRow.id);
+    if (!error && data?.length) return data;
+  }
+
+  const titleKey = String(eventRow.title || '')
+    .trim()
+    .toLowerCase();
+  const organiserId = eventRow.organiser_id || '';
+  if (!titleKey || !organiserId) return [];
+
+  const pattern = String(eventRow.recurrence_pattern || '').trim().toLowerCase();
+  const endDate = String(eventRow.recurrence_end_date || '')
+    .trim()
+    .slice(0, 10);
 
   const { data, error } = await sb
     .from('events')
-    .select('id, series_group_id, image_url, photo_url')
-    .in('series_group_id', groupIds);
+    .select(cols)
+    .eq('organiser_id', organiserId)
+    .neq('id', eventRow.id);
   if (error) throw new Error(error.message);
 
-  (data || []).forEach((row) => {
-    const gid = row.series_group_id;
-    if (!gid) return;
-    if (!map.has(gid)) map.set(gid, []);
-    map.get(gid).push(row);
+  return (data || []).filter((peer) => {
+    if (
+      String(peer.title || '')
+        .trim()
+        .toLowerCase() !== titleKey
+    ) {
+      return false;
+    }
+    if (pattern && endDate) {
+      return (
+        String(peer.recurrence_pattern || '').trim().toLowerCase() === pattern &&
+        String(peer.recurrence_end_date || '')
+          .trim()
+          .slice(0, 10) === endDate
+      );
+    }
+    return true;
   });
+}
+
+async function loadSeriesPeersByEventId(sb, rows) {
+  const map = new Map();
+  const seen = new Set();
+  const events = [];
+  for (const row of rows || []) {
+    const ev = row.events;
+    if (!ev?.id || seen.has(ev.id)) continue;
+    seen.add(ev.id);
+    events.push(ev);
+  }
+
+  await Promise.all(
+    events.map(async (ev) => {
+      const peers = await fetchSeriesPeerImageRows(sb, ev);
+      map.set(ev.id, peers);
+    })
+  );
   return map;
 }
 
@@ -353,11 +395,11 @@ async function getAttendeeDashboardFromSupabase(session) {
   ]);
 
   const cancelledRows = await reconcileCancelledRegistrationRefunds(sb, cancelledRowsRaw);
-  const seriesPeersByGroupId = await loadSeriesPeerImagesMap(sb, [...rows, ...cancelledRows]);
+  const seriesPeersByEventId = await loadSeriesPeersByEventId(sb, [...rows, ...cancelledRows]);
 
-  const registrations = rows.map((row) => mapRegistrationRow(row, reviewByEventId, seriesPeersByGroupId));
+  const registrations = rows.map((row) => mapRegistrationRow(row, reviewByEventId, seriesPeersByEventId));
   const cancelledBookings = cancelledRows.map((row) =>
-    mapCancelledRegistrationRow(row, seriesPeersByGroupId)
+    mapCancelledRegistrationRow(row, seriesPeersByEventId)
   );
   return {
     registrations,
