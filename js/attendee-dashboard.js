@@ -9,6 +9,7 @@
   let savedEvents = [];
   let savedOrganisers = [];
   let savedOpportunities = [];
+  let savedOpportunitySearches = [];
   let opportunityEnquiries = [];
   let currentRoute = 'overview';
   const REVIEW_EVENT_STORAGE_KEY = 'hub_review_event_id';
@@ -1942,6 +1943,61 @@
     });
   }
 
+  function renderSavedOpportunitySearchesTable() {
+    const body = document.getElementById('ad-saved-searches-body');
+    const empty = document.getElementById('ad-saved-searches-empty');
+    if (!body) return;
+
+    body.innerHTML = '';
+    if (!savedOpportunitySearches.length) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    const q = window.HubOpportunityQuality;
+    savedOpportunitySearches.forEach((item) => {
+      const tr = document.createElement('tr');
+      const criteria = item.criteria || {};
+      const label =
+        String(item.label || '').trim() ||
+        (q && q.criteriaLabel ? q.criteriaLabel(criteria) : 'Saved search');
+      const href =
+        q && q.criteriaToUrl ? q.criteriaToUrl(criteria, '../opportunities/index.html') : '../opportunities/index.html';
+      tr.innerHTML =
+        '<td class="ad-td-name"><a href="' +
+        esc(href) +
+        '">' +
+        esc(label) +
+        '</a></td><td>' +
+        esc(formatDateShort(item.createdAt || item.created_at)) +
+        '</td><td><button type="button" class="ad-btn ad-btn-ghost ad-saved-search-remove" data-search-id="' +
+        esc(item.id || '') +
+        '">Remove alert</button></td>';
+      body.appendChild(tr);
+    });
+
+    body.querySelectorAll('.ad-saved-search-remove').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const searchId = btn.getAttribute('data-search-id');
+        if (!searchId) return;
+        btn.disabled = true;
+        try {
+          await fetch('/api/auth/opportunity-saved-searches', {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ searchId }),
+          });
+          savedOpportunitySearches = savedOpportunitySearches.filter((x) => String(x.id) !== String(searchId));
+          renderSavedOpportunitySearchesTable();
+        } catch {
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
   async function loadSavedOpportunities() {
     try {
       const res = await fetch('/api/auth/opportunity-favourites', { credentials: 'include' });
@@ -2069,6 +2125,7 @@
       renderSavedTable();
       renderSavedOrganisersTable();
       renderSavedOpportunitiesTable();
+      renderSavedOpportunitySearchesTable();
     } else if (key === 'opportunity-enquiries') {
       renderOpportunityEnquiries();
     }
@@ -2096,7 +2153,9 @@
     renderRouteTables('payments', { force: true });
     renderRouteTables('cancellations', { force: true });
     renderRouteTables('opportunity-enquiries', { force: true });
-    if (savedEvents.length || savedOrganisers.length || savedOpportunities.length) renderRouteTables('saved', { force: true });
+    if (savedEvents.length || savedOrganisers.length || savedOpportunities.length || savedOpportunitySearches.length) {
+      renderRouteTables('saved', { force: true });
+    }
     updateSideCounts();
   }
 
@@ -2212,11 +2271,12 @@
     try {
       ensureAttendeeHubMode();
 
-      const [dashRes, favRes, orgFavRes, oppFavRes] = await Promise.all([
+      const [dashRes, favRes, orgFavRes, oppFavRes, oppSearchRes] = await Promise.all([
         fetch('/api/auth/attendee-dashboard', { credentials: 'include' }),
         fetch('/api/auth/favourites', { credentials: 'include' }),
         fetch('/api/auth/organiser-favourites', { credentials: 'include' }),
         fetch('/api/auth/opportunity-favourites', { credentials: 'include' }),
+        fetch('/api/auth/opportunity-saved-searches', { credentials: 'include' }),
       ]);
       const data = await dashRes.json();
       if (!data.ok) {
@@ -2290,6 +2350,17 @@
 
       if (window.HubOpportunitiesCatalog && window.HubOpportunitiesCatalog.loadCatalogAsync) {
         window.HubOpportunitiesCatalog.loadCatalogAsync().catch(() => {});
+      }
+
+      try {
+        const oppSearchData = await oppSearchRes.json();
+        if (oppSearchData && oppSearchData.ok && Array.isArray(oppSearchData.searches)) {
+          savedOpportunitySearches = oppSearchData.searches;
+        } else {
+          savedOpportunitySearches = [];
+        }
+      } catch {
+        savedOpportunitySearches = [];
       }
 
       applyDashboardData(data);

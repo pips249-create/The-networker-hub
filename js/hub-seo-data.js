@@ -679,7 +679,7 @@ window.HUB_SEO_DATA = {
           "@context": "https://schema.org",
           "@type": "WebPage",
           "url": "https://www.thenetworkerhub.com/for-organisers.html",
-          "name": "For organisers – The Networker Hub",
+          "name": "For Organisers – The Networker Hub",
           "description": "Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Alumni Fast-Pass, and discovery in the UK events and opportunities directories.",
           "about": {
             "@context": "https://schema.org",

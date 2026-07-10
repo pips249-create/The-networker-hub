@@ -104,9 +104,27 @@ async function toggleOpportunityFavourite(session, opportunityId) {
   return { action: 'added', opportunityId: oid, saved: true };
 }
 
+async function countSavesForOpportunityIds(opportunityIds) {
+  if (!isSupabaseConfigured()) return {};
+  const ids = [...new Set((opportunityIds || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  if (!ids.length) return {};
+
+  const sb = getSupabaseAdmin();
+  const res = await sb.from('opportunity_favourites').select('opportunity_id').in('opportunity_id', ids);
+  if (res.error) throw new Error(res.error.message);
+
+  const counts = Object.create(null);
+  for (const row of res.data || []) {
+    const id = String(row.opportunity_id);
+    counts[id] = (counts[id] || 0) + 1;
+  }
+  return counts;
+}
+
 module.exports = {
   listOpportunityFavourites,
   addOpportunityFavourite,
   removeOpportunityFavourite,
   toggleOpportunityFavourite,
+  countSavesForOpportunityIds,
 };

@@ -10,7 +10,7 @@ Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@thene
 - FAQ: https://www.thenetworkerhub.com/faq.html
 - Contact (Hubert assistant): https://www.thenetworkerhub.com/contact.html
 - About: https://www.thenetworkerhub.com/about.html
-- For organisers: https://www.thenetworkerhub.com/for-organisers.html
+- For Organisers: https://www.thenetworkerhub.com/for-organisers.html
 - Advertising & sponsorship: https://www.thenetworkerhub.com/advertising
 - Legal: https://www.thenetworkerhub.com/legal-policies.html
 - Sitemap: https://www.thenetworkerhub.com/sitemap.xml

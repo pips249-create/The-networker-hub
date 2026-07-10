@@ -206,7 +206,7 @@ function buildSchemaGraph(page, origin) {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
       url: base + '/for-organisers.html',
-      name: 'For organisers – The Networker Hub',
+      name: 'For Organisers – The Networker Hub',
       description:
         'Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Alumni Fast-Pass, and discovery in the UK events and opportunities directories.',
       about: buildOrganizationSchema(base),
@@ -285,7 +285,7 @@ function buildLlmsTxt(origin) {
     '- About: ' +
     base +
     '/about.html\n' +
-    '- For organisers: ' +
+    '- For Organisers: ' +
     base +
     '/for-organisers.html\n' +
     '- Advertising & sponsorship: ' +

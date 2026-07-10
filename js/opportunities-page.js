@@ -79,6 +79,7 @@
     els.spotlightSection = document.querySelector('.opp-premium-spotlight');
     els.saveSearchBtn = document.getElementById('opp-save-search-btn');
     els.saveSearchStatus = document.getElementById('opp-save-search-status');
+    els.copyLinkBtn = document.getElementById('opp-copy-link-btn');
   }
 
   function shuffleList(list) {
@@ -1200,6 +1201,44 @@
       });
   }
 
+  function initCopyLink() {
+    if (!els.copyLinkBtn || els.copyLinkBtn.dataset.bound) return;
+    els.copyLinkBtn.dataset.bound = '1';
+    els.copyLinkBtn.addEventListener('click', function () {
+      writeFiltersToUrl();
+      var url = window.location.href;
+      function done(ok) {
+        if (!els.copyLinkBtn) return;
+        var prev = els.copyLinkBtn.textContent;
+        els.copyLinkBtn.textContent = ok ? 'Link copied' : 'Copy failed';
+        setTimeout(function () {
+          if (els.copyLinkBtn) els.copyLinkBtn.textContent = prev;
+        }, 1800);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () {
+          done(true);
+        }).catch(function () {
+          done(false);
+        });
+        return;
+      }
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = url;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'absolute';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        done(document.execCommand('copy'));
+        ta.remove();
+      } catch {
+        done(false);
+      }
+    });
+  }
+
   function initSaveSearch() {
     if (!els.saveSearchBtn || els.saveSearchBtn.dataset.bound) return;
     els.saveSearchBtn.dataset.bound = '1';
@@ -1442,6 +1481,7 @@
     initViewToggle();
     initCatPills();
     initPagination();
+    initCopyLink();
     initSaveSearch();
     initHubertStrip();
     syncTabUI();

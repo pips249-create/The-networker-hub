@@ -208,6 +208,23 @@
     return parts.length ? parts.join(', ') : 'All opportunities';
   }
 
+  function criteriaToUrl(criteria, root) {
+    var base = String(root || '../opportunities/index.html');
+    if (!criteria) return base;
+    var params = new URLSearchParams();
+    if (criteria.type && criteria.type !== 'all') params.set('type', criteria.type);
+    if (criteria.category) params.set('category', criteria.category);
+    if (criteria.invest) params.set('invest', criteria.invest);
+    if (criteria.location) params.set('location', criteria.location);
+    if (criteria.commitment) params.set('commitment', criteria.commitment);
+    if (criteria.q) params.set('q', criteria.q);
+    if (criteria.sort && criteria.sort !== 'recommended') params.set('sort', criteria.sort);
+    if (criteria.minInvest != null && criteria.minInvest !== '') params.set('min', String(criteria.minInvest));
+    if (criteria.maxInvest != null && criteria.maxInvest !== '') params.set('max', String(criteria.maxInvest));
+    var qs = params.toString();
+    return base + (qs ? '?' + qs : '');
+  }
+
   function listingCompleteness(input) {
     var checks = [
       { key: 'title', label: 'Title', weight: 12, ok: Boolean(input.title) },
@@ -258,6 +275,7 @@
     similarOpportunities: similarOpportunities,
     matchesSearchCriteria: matchesSearchCriteria,
     criteriaLabel: criteriaLabel,
+    criteriaToUrl: criteriaToUrl,
     listingCompleteness: listingCompleteness,
     hasCostBreakdown: hasCostBreakdown,
     hasTerritoryListed: hasTerritoryListed,

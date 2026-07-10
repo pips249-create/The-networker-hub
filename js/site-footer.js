@@ -44,7 +44,7 @@
     '">FAQ</a>' +
     '<a href="' +
     href('for-organisers.html') +
-    '">For organisers</a>' +
+    '">For Organisers</a>' +
     '<a href="' +
     href('guides.html') +
     '">Organiser guides</a>' +

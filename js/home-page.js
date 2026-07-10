@@ -198,7 +198,25 @@
     });
   }
 
+  function initHubertStrip() {
+    var openBtn = document.getElementById('home-hubert-open');
+    if (openBtn) {
+      openBtn.addEventListener('click', function () {
+        if (window.HubertWidget && window.HubertWidget.open) window.HubertWidget.open();
+      });
+    }
+
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-hubert-prompt]');
+      if (!btn || !btn.closest('.home-hubert')) return;
+      var prompt = btn.getAttribute('data-hubert-prompt') || '';
+      if (window.HubertWidget && window.HubertWidget.ask) window.HubertWidget.ask(prompt);
+      else if (window.HubertWidget && window.HubertWidget.open) window.HubertWidget.open();
+    });
+  }
+
   initHeroEntrance();
   initReveal();
   loadPartners();
+  initHubertStrip();
 })();

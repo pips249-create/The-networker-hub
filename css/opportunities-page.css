@@ -4164,9 +4164,23 @@ body.opp-view-map.opp-browse-page .opp-listings-toolbar {
   white-space: nowrap;
 }
 
+.opportunities-page .opp-copy-link-btn {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #475569;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.opportunities-page .opp-copy-link-btn:hover:not(:disabled),
 .opportunities-page .opp-save-search-btn:hover:not(:disabled) {
   background: var(--opp-navy, #0d1f3c);
   color: #fff;
+  border-color: var(--opp-navy, #0d1f3c);
 }
 
 .opportunities-page .opp-save-search-status {

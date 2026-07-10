@@ -1372,6 +1372,11 @@ tr.ad-row-highlight td {
   }
 }
 
+.ad-section-sub--tight {
+  margin-top: -4px;
+  margin-bottom: 12px;
+}
+
 .ad-saved-opp-toolbar {
   display: flex;
   flex-wrap: wrap;

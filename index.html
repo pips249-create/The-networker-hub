@@ -9,7 +9,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260730">
-<link rel="stylesheet" href="css/home-page.css?v=20260714">
+<link rel="stylesheet" href="css/home-page.css?v=20260710">
+<link rel="stylesheet" href="css/hubert-widget.css?v=20260710">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260738" />
@@ -21,7 +22,7 @@
 <body class="home-page">
 
 <div id="hub-site-nav"></div>
-<script src="js/site-nav.js?v=20260710f" data-root="" data-page="home"></script>
+<script src="js/site-nav.js?v=20260710g" data-root="" data-page="home"></script>
 
 <main class="home-flow">
 
@@ -44,6 +45,34 @@
         <a class="btn btn-primary home-hero-cta" href="/events/">Browse events</a>
         <a class="btn btn-primary home-hero-cta" href="/opportunities/">Discover opportunities</a>
         <a class="btn btn-primary home-hero-cta" href="/events/?mode=organisers">Find organisers</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="home-hubert home-reveal" aria-labelledby="home-hubert-heading">
+    <div class="home-flow-inner">
+      <div class="home-hubert-panel">
+        <div class="home-hubert-brand">
+          <div class="home-hubert-avatar-wrap" aria-hidden="true">
+            <img class="home-hubert-avatar" src="assets/hubert-icon.png" alt="" width="72" height="72" />
+          </div>
+          <div class="home-hubert-copy">
+            <p class="home-hubert-kicker">Your business butler &amp; concierge</p>
+            <h2 class="home-hubert-title" id="home-hubert-heading">Ask Hubert anything</h2>
+            <p class="home-hubert-lede">
+              Not sure where to start? Hubert can find events near you, narrow down business opportunities, explain tickets and enquiries, or guide organisers step by step.
+            </p>
+          </div>
+        </div>
+        <div class="home-hubert-actions">
+          <button type="button" class="btn btn-primary home-hubert-open" id="home-hubert-open">Chat with Hubert</button>
+          <div class="home-hubert-chips" aria-label="Suggested questions for Hubert">
+            <button type="button" class="home-hubert-chip" data-hubert-prompt="Find networking events near me this month.">Find events near me</button>
+            <button type="button" class="home-hubert-chip" data-hubert-prompt="What business opportunities are on The Networker Hub?">Explore opportunities</button>
+            <button type="button" class="home-hubert-chip" data-hubert-prompt="How do I list an event as an organiser?">List an event</button>
+            <button type="button" class="home-hubert-chip" data-hubert-prompt="Do I need an account to browse The Networker Hub?">Do I need an account?</button>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -145,7 +174,7 @@
           </div>
         </div>
         <div class="home-split-col home-reveal-child">
-          <h3>For organisers</h3>
+          <h3>For Organisers</h3>
           <ul class="home-feature-list">
             <li>Create or claim your organiser page in the UK networking directory</li>
             <li>List meetings, webinars, workshops, conferences, and exhibitions — free or paid tickets</li>
@@ -210,7 +239,9 @@
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260610" data-root=""></script>
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
-<script src="js/home-page.js?v=20260738"></script>
+<script src="js/home-page.js?v=20260710"></script>
+<script src="js/hubert-chat.js?v=20260710"></script>
+<script src="js/hubert-widget.js?v=20260710" data-root=""></script>
 
 </body>
 </html>

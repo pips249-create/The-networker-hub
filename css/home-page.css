@@ -410,6 +410,151 @@ html:has(.home-page) {
   outline-offset: 3px;
 }
 
+/* ─── Hubert assistant strip ─── */
+.home-hubert {
+  position: relative;
+  padding: 0 0 36px;
+  margin-top: -8px;
+  z-index: 2;
+}
+
+.home-hubert-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 24px 28px;
+  align-items: center;
+  padding: 22px 24px;
+  border-radius: 20px;
+  border: 2px solid rgba(200, 180, 240, 0.55);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 238, 249, 0.96) 48%, rgba(245, 240, 232, 0.98) 100%);
+  box-shadow:
+    0 18px 44px rgba(45, 35, 64, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+}
+
+.home-hubert-brand {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  min-width: 0;
+}
+
+.home-hubert-avatar-wrap {
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(135deg, #c8b4f0 0%, #7ec8f0 55%, #e8d9a8 100%);
+  box-shadow: 0 10px 24px rgba(91, 47, 153, 0.22);
+  animation: home-hubert-pulse 3.2s ease-in-out infinite;
+}
+
+.home-hubert-avatar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #0d0d12;
+}
+
+@keyframes home-hubert-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 10px 24px rgba(91, 47, 153, 0.22);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 14px 30px rgba(91, 47, 153, 0.3);
+  }
+}
+
+.home-hubert-kicker {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lavender-deep, #5b2f99);
+}
+
+.home-hubert-title {
+  margin: 0 0 8px;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(1.45rem, 2.4vw, 1.85rem);
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--charcoal, #2d2340);
+}
+
+.home-hubert-lede {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-muted, #6b6478);
+  max-width: 42rem;
+}
+
+.home-hubert-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.home-hubert-open {
+  min-width: 180px;
+  box-shadow: 0 10px 24px rgba(91, 47, 153, 0.18);
+}
+
+.home-hubert-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.home-hubert-chip {
+  border: 1px solid rgba(200, 180, 240, 0.8);
+  background: #fff;
+  color: var(--charcoal, #2d2340);
+  border-radius: 999px;
+  padding: 8px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.home-hubert-chip:hover {
+  border-color: var(--gold, #b8956a);
+  background: var(--gold-light, #f5f0e8);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 860px) {
+  .home-hubert-panel {
+    grid-template-columns: 1fr;
+    padding: 18px 16px;
+  }
+
+  .home-hubert-actions {
+    width: 100%;
+  }
+
+  .home-hubert-open {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hubert-avatar-wrap {
+    animation: none;
+  }
+}
+
 /* ─── What is The Networker? ─── */
 .home-what {
   position: relative;

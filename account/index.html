@@ -15,13 +15,13 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260628" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260709" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260710e" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
 
   </head>
   <body class="attendee-dashboard-page hub-page-account hub-is-page-loading">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260710f" data-root="../" data-page="account"></script>
+    <script src="../js/site-nav.js?v=20260710g" data-root="../" data-page="account"></script>
 
     <div id="ad-signin" class="ad-signin" hidden>
       <p>Sign in to see event tickets you have bought, reviews to leave, and business opportunity enquiries you have sent.</p>
@@ -207,7 +207,7 @@
             <!-- Saved -->
             <section class="ad-page" id="ad-page-saved" data-ad-page="saved">
               <h2 class="ad-section-title">Saved</h2>
-              <p class="ad-section-sub">Events, organisers, and business opportunities you have saved while browsing. We will email you when ticket sales open for saved events, when a saved organiser lists something new, and when a saved opportunity is closing soon.</p>
+              <p class="ad-section-sub">Events, organisers, and business opportunities you have saved while browsing. We will email you when ticket sales open for saved events, when a saved organiser lists something new, when a saved opportunity is closing soon, and when a new listing matches a saved opportunity search.</p>
 
               <div class="ad-saved-block">
                 <h3 class="ad-section-title">Saved events</h3>
@@ -283,6 +283,29 @@
                 </div>
                 <p class="ad-empty" id="ad-saved-opportunities-empty" hidden>
                   No saved opportunities yet.
+                  <a href="../opportunities/index.html">Browse opportunities →</a>
+                </p>
+              </div>
+
+              <div class="ad-saved-block" id="saved-searches">
+                <h3 class="ad-section-title ad-section-title--spaced">Opportunity search alerts</h3>
+                <p class="ad-section-sub ad-section-sub--tight">Email alerts when newly published listings match filters you saved on the browse page.</p>
+                <div class="ad-table-scroll">
+                  <div class="ad-table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Search</th>
+                          <th>Saved</th>
+                          <th class="ad-th-actions">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="ad-saved-searches-body"></tbody>
+                    </table>
+                  </div>
+                </div>
+                <p class="ad-empty" id="ad-saved-searches-empty" hidden>
+                  No search alerts yet.
                   <a href="../opportunities/index.html">Browse opportunities →</a>
                 </p>
               </div>
@@ -569,9 +592,9 @@
     <script src="../js/hub-organiser-favourites.js?v=20260630"></script>
     <script src="../js/opportunities-saves.js?v=20260710"></script>
     <script src="../js/opportunities-catalog.js?v=20260710d"></script>
-    <script src="../js/opportunity-listing-quality.js?v=20260710d"></script>
+    <script src="../js/opportunity-listing-quality.js?v=20260710e"></script>
     <script src="../js/opportunity-compare.js?v=20260710d"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260710d"></script>
+    <script src="../js/attendee-dashboard.js?v=20260710e"></script>
   </body>
 </html>

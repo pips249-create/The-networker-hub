@@ -152,6 +152,14 @@
       return status === 'published' || status === 'live';
     }).length;
     set('stat-opp-listings', String(liveListings));
+    set(
+      'stat-opp-saves',
+      String(
+        (state.opportunities || []).reduce(function (sum, o) {
+          return sum + (Number(o.saveCount) || 0);
+        }, 0)
+      )
+    );
 
     renderHubPortalMeta();
     renderOrganiserRankingBanner();
@@ -6748,6 +6756,20 @@
     return '<span class="' + cls + '">' + esc(meta.label) + '</span>';
   }
 
+  function opportunitySaveCount(o) {
+    return Math.max(0, Number(o && o.saveCount) || 0);
+  }
+
+  function opportunitySaveCountHtml(o) {
+    const n = opportunitySaveCount(o);
+    if (!n) return '<span class="muted">0</span>';
+    return (
+      '<span class="org-opp-save-count" title="Members who saved this listing — anonymous">' +
+      esc(String(n)) +
+      '</span>'
+    );
+  }
+
   function renderOpportunityPerformance() {
     const wrap = document.getElementById('org-opp-performance-wrap');
     const mount = document.getElementById('org-opp-listing-cards');
@@ -6766,7 +6788,6 @@
       const enquiries = opportunityEnquiriesForListing(o.id);
       const newCount = enquiries.filter((e) => String(e.status || '').toLowerCase() === 'new').length;
       const expiry = opportunityExpiryMeta(o);
-      const premium = opportunityPremiumMeta(o);
       const editUrl = 'opportunity-edit.html?id=' + encodeURIComponent(o.id);
       const viewUrl = o.slug
         ? '/opportunities/' + encodeURIComponent(o.slug)
@@ -6789,15 +6810,13 @@
         '<div class="org-stat green"><div class="org-stat-label">New</div><div class="org-stat-value">' +
         esc(String(newCount)) +
         '</div></div>' +
-        '<div class="org-stat purple"><div class="org-stat-label">Listing expires</div><div class="org-stat-value org-stat-value--text' +
+        '<div class="org-stat purple"><div class="org-stat-label">Member saves</div><div class="org-stat-value">' +
+        esc(String(opportunitySaveCount(o))) +
+        '</div></div>' +
+        '<div class="org-stat gold"><div class="org-stat-label">Listing expires</div><div class="org-stat-value org-stat-value--text' +
         (expiry.tone === 'danger' ? ' is-danger' : expiry.tone === 'warn' ? ' is-warn' : '') +
         '">' +
         esc(expiry.label) +
-        '</div></div>' +
-        '<div class="org-stat gold"><div class="org-stat-label">Premium</div><div class="org-stat-value org-stat-value--text' +
-        (premium.tone === 'warn' ? ' is-warn' : '') +
-        '">' +
-        esc(premium.label) +
         '</div></div>' +
         '</div>' +
         '<div class="org-opp-listing-card-actions">' +
@@ -6859,6 +6878,8 @@
         (newCount
           ? '<span class="org-opp-new-count">' + esc(String(newCount)) + '</span>'
           : '<span class="muted">0</span>') +
+        '</td><td>' +
+        opportunitySaveCountHtml(o) +
         '</td><td>' +
         opportunityExpiryCellHtml(o) +
         '</td><td class="org-td-actions">' +

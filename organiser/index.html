@@ -29,7 +29,7 @@
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260710f" data-root="../" data-page="organiser"></script>
+    <script src="../js/site-nav.js?v=20260710g" data-root="../" data-page="organiser"></script>
 
     <div id="org-signin" class="org-signin" hidden>
       <p class="org-section-sub">
@@ -407,7 +407,7 @@
             <div class="org-overview-head">
               <div class="org-overview-head-text">
                 <h2 class="org-section-title">How your listings are doing</h2>
-                <p class="org-section-sub">Enquiries, expiry dates, and premium placement — at a glance before you add another listing.</p>
+                <p class="org-section-sub">Enquiries, member saves, expiry dates, and premium placement — at a glance before you add another listing.</p>
               </div>
               <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-shortcut="business-overview-enquiries">View all enquiries →</button>
             </div>
@@ -497,7 +497,7 @@
             <p class="org-page-lead">List services for other members and respond when someone enquires about your listings.</p>
           </header>
 
-          <div class="org-stats org-stats--three">
+          <div class="org-stats org-stats--four">
             <div class="org-stat gold">
               <div class="org-stat-label">Live listings</div>
               <div class="org-stat-value" id="stat-opp-listings">0</div>
@@ -509,6 +509,10 @@
             <div class="org-stat purple">
               <div class="org-stat-label">New enquiries</div>
               <div class="org-stat-value" id="stat-opp-enquiries-new">0</div>
+            </div>
+            <div class="org-stat gold">
+              <div class="org-stat-label">Member saves</div>
+              <div class="org-stat-value" id="stat-opp-saves">0</div>
             </div>
           </div>
 
@@ -536,7 +540,7 @@
           <div class="org-overview-head">
             <div class="org-overview-head-text">
               <h2 class="org-section-title">Your listings</h2>
-              <p class="org-section-sub">Business opportunities you&apos;ve published on the hub — edit a listing or check how many enquiries it has received.</p>
+              <p class="org-section-sub">Business opportunities you&apos;ve published on the hub — edit a listing, see anonymous member saves, or check enquiries received.</p>
             </div>
             <button type="button" class="org-btn org-btn-gold org-btn-sm" data-action="add-opportunity-listing">+ Add listing</button>
           </div>
@@ -548,6 +552,7 @@
                   <th>Status</th>
                   <th>Enquiries</th>
                   <th>New</th>
+                  <th title="Members who saved this listing — anonymous">Saved</th>
                   <th>Expires</th>
                   <th class="org-th-actions">Actions</th>
                 </tr>
@@ -1630,6 +1635,6 @@
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
     <script src="../js/organiser-payment-setup.js?v=20260709e"></script>
     <script src="../js/review-report.js?v=20260708"></script>
-    <script src="../js/organiser-dashboard.js?v=20260710c"></script>
+    <script src="../js/organiser-dashboard.js?v=20260710f"></script>
   </body>
 </html>

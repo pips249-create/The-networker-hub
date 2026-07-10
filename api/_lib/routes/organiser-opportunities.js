@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { countSavesForOpportunityIds } = require('../supabase-opportunity-favourites');
 
 function parseBody(req) {
   let body = req.body;
@@ -50,6 +51,17 @@ function opportunityPayloadFromBody(body, session) {
   };
 }
 
+async function attachSaveCounts(opportunities) {
+  const list = opportunities || [];
+  if (!list.length) return list;
+  try {
+    const counts = await countSavesForOpportunityIds(list.map((o) => o.id));
+    return list.map((o) => ({ ...o, saveCount: counts[o.id] || 0 }));
+  } catch {
+    return list.map((o) => ({ ...o, saveCount: 0 }));
+  }
+}
+
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
   const {
@@ -96,9 +108,10 @@ module.exports = async function handler(req, res) {
         }
         const opportunity = await getOpportunityById(opportunityId);
         if (!opportunity) return json(res, 404, { error: 'not_found' });
-        return json(res, 200, { ok: true, opportunity });
+        const [enriched] = await attachSaveCounts([opportunity]);
+        return json(res, 200, { ok: true, opportunity: enriched || opportunity });
       }
-      const opportunities = await listOpportunitiesForSession(auth.session);
+      const opportunities = await attachSaveCounts(await listOpportunitiesForSession(auth.session));
       return json(res, 200, { ok: true, opportunities });
     } catch (e) {
       return json(res, e.status || 500, {
