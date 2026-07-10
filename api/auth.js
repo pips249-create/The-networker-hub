@@ -33,6 +33,7 @@ const routes = {
   reviews: require('./_lib/routes/auth-reviews'),
   favourites: require('./_lib/routes/auth-favourites'),
   'opportunity-favourites': require('./_lib/routes/auth-opportunity-favourites'),
+  'opportunity-saved-searches': require('./_lib/routes/auth-opportunity-saved-searches'),
   'organiser-favourites': require('./_lib/routes/auth-organiser-favourites'),
   profile: require('./_lib/routes/auth-profile'),
   'stop-impersonate': require('./_lib/routes/auth-stop-impersonate'),

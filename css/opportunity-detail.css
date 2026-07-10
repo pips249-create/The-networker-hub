@@ -657,3 +657,78 @@
 .opportunity-detail-page .opp-claim-status.is-error {
   color: #b91c1c;
 }
+
+.opportunity-detail-page .opp-trust-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.opportunity-detail-page .opp-trust-badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #eef4ff;
+  color: #1e3a5f;
+  border: 1px solid #c9daf5;
+}
+
+.opportunity-detail-page .opp-detail-companies-house {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f8f9fb;
+  border: 1px solid #e2e8f0;
+}
+
+.opportunity-detail-page .opp-companies-house-link {
+  color: var(--opp-navy, #0d1f3c);
+  font-weight: 600;
+}
+
+.opportunity-detail-page .opp-similar-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.opportunity-detail-page .opp-similar-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+}
+
+.opportunity-detail-page .opp-similar-card:hover {
+  border-color: var(--opp-gold, #c9961f);
+}
+
+.opportunity-detail-page .opp-similar-type {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+}
+
+.opportunity-detail-page .opp-similar-title {
+  font-size: 15px;
+  color: var(--opp-navy, #0d1f3c);
+}
+
+.opportunity-detail-page .opp-similar-host,
+.opportunity-detail-page .opp-similar-invest {
+  font-size: 13px;
+  color: #6b7280;
+}

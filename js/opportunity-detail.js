@@ -32,6 +32,10 @@
     investBreakdownLede: document.getElementById('opp-investment-breakdown-lede'),
     investBreakdownList: document.getElementById('opp-investment-breakdown-list'),
     enquireSignin: document.getElementById('opp-enquire-signin'),
+    trustBadges: document.getElementById('opp-detail-trust-badges'),
+    companiesHouse: document.getElementById('opp-companies-house'),
+    similarSection: document.getElementById('opp-similar-section'),
+    similarGrid: document.getElementById('opp-similar-grid'),
     claimSection: document.getElementById('opp-claim-section'),
     claimForm: document.getElementById('opp-claim-form'),
     claimSubmit: document.getElementById('opp-claim-submit'),
@@ -138,7 +142,7 @@
     if (!els.metaGrid) return;
     els.metaGrid.innerHTML = (item.meta || [])
       .filter(function (m) {
-        return !/^investment includes$/i.test(m.key);
+        return !/^investment includes$/i.test(m.key) && !/^companies house$/i.test(m.key);
       })
       .map(function (m) {
         var val = catalog && catalog.formatMetaDisplayValue ? catalog.formatMetaDisplayValue(m.key, m.val) : m.val;
@@ -154,6 +158,85 @@
         );
       })
       .join('');
+  }
+
+  function renderTrustBadges(item) {
+    if (!els.trustBadges) return;
+    var q = window.HubOpportunityQuality;
+    if (!q || !q.trustBadgesHtml) {
+      els.trustBadges.innerHTML = '';
+      els.trustBadges.hidden = true;
+      return;
+    }
+    var html = q.trustBadgesHtml(item, 'opp-trust-badges opp-trust-badges--detail');
+    if (!html) {
+      els.trustBadges.innerHTML = '';
+      els.trustBadges.hidden = true;
+      return;
+    }
+    els.trustBadges.innerHTML = html;
+    els.trustBadges.hidden = false;
+  }
+
+  function renderCompaniesHouse(item) {
+    if (!els.companiesHouse) return;
+    var q = window.HubOpportunityQuality;
+    if (!q || !q.companiesHouseMetaHtml || !q.companiesHouseNumber(item)) {
+      els.companiesHouse.hidden = true;
+      els.companiesHouse.innerHTML = '';
+      return;
+    }
+    els.companiesHouse.innerHTML =
+      '<span class="opp-detail-meta-key">Company registration</span>' +
+      '<span class="opp-detail-meta-val">' +
+      q.companiesHouseMetaHtml(item) +
+      '</span>';
+    els.companiesHouse.hidden = false;
+  }
+
+  function similarCardHtml(item) {
+    var href = item.slug
+      ? '/opportunities/' + encodeURIComponent(item.slug)
+      : 'opportunity.html?id=' + encodeURIComponent(item.id);
+    var invest = '';
+    (item.meta || []).forEach(function (m) {
+      if (/^investment$/i.test(m.key)) invest = String(m.val || '').trim();
+    });
+    return (
+      '<a class="opp-similar-card" href="' +
+      escapeHtml(href) +
+      '">' +
+      '<span class="opp-similar-type">' +
+      escapeHtml((catalog && catalog.TYPE_LABELS[item.type]) || item.type || '') +
+      '</span>' +
+      '<strong class="opp-similar-title">' +
+      escapeHtml(item.title || '') +
+      '</strong>' +
+      '<span class="opp-similar-host">' +
+      escapeHtml(item.host || '') +
+      '</span>' +
+      (invest ? '<span class="opp-similar-invest">' + escapeHtml(invest) + '</span>' : '') +
+      '</a>'
+    );
+  }
+
+  function renderSimilar(item) {
+    if (!els.similarSection || !els.similarGrid) return;
+    var q = window.HubOpportunityQuality;
+    if (!catalog || !catalog.loadCatalogAsync || !q || !q.similarOpportunities) {
+      els.similarSection.hidden = true;
+      return;
+    }
+    catalog.loadCatalogAsync().then(function (list) {
+      var similar = q.similarOpportunities(list, item, 4);
+      if (!similar.length) {
+        els.similarSection.hidden = true;
+        els.similarGrid.innerHTML = '';
+        return;
+      }
+      els.similarGrid.innerHTML = similar.map(similarCardHtml).join('');
+      els.similarSection.hidden = false;
+    });
   }
 
   function renderInvestmentBreakdown(item) {
@@ -257,8 +340,11 @@
     if (els.featuredPip) els.featuredPip.hidden = !item.featured;
 
     renderMeta(item);
+    renderTrustBadges(item);
+    renderCompaniesHouse(item);
     renderInvestmentBreakdown(item);
     renderAbout(item);
+    renderSimilar(item);
     refreshSaveButton();
     applyClaimSection(item);
 

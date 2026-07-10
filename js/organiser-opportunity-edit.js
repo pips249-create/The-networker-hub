@@ -211,6 +211,7 @@
     document.getElementById('oe-desc').value = opp.desc || '';
     document.getElementById('oe-about').value = (opp.about || []).join('\n\n');
     document.getElementById('oe-host').value = opp.host || '';
+    document.getElementById('oe-companies-house').value = metaValue(opp.meta, /^companies house$/i);
     document.getElementById('oe-email').value = opp.contactEmail || '';
     document.getElementById('oe-investment').value = metaValue(opp.meta, /^investment$/i);
     document.getElementById('oe-investment-includes').value = metaValue(opp.meta, /^investment includes$/i);
@@ -226,7 +227,7 @@
     }
     updateEarningsAttestVisibility();
 
-    const usedKeys = new Set(['investment', 'investment includes', 'location', 'commitment']);
+    const usedKeys = new Set(['investment', 'investment includes', 'location', 'commitment', 'companies house']);
     if (financial) usedKeys.add(financial.key.toLowerCase());
     const extra = (opp.meta || []).find((m) => {
       const k = String(m.key || '').toLowerCase();
@@ -261,6 +262,7 @@
     document.getElementById('oe-page-title').textContent = 'Edit opportunity';
     listingPaymentPanelVisible();
     updateListingPriceBreakdown({ clamp: true });
+    refreshCompleteness();
     const submitBtn = document.getElementById('oe-submit');
     if (submitBtn) {
       submitBtn.textContent = opp.listingPaymentActive ? 'Update listing' : 'Continue to payment';
@@ -389,6 +391,8 @@
     if (investment) meta.push({ key: 'Investment', val: investment });
     const includes = document.getElementById('oe-investment-includes').value.trim();
     if (includes) meta.push({ key: 'Investment includes', val: includes });
+    const companiesHouse = document.getElementById('oe-companies-house')?.value.trim() || '';
+    if (companiesHouse) meta.push({ key: 'Companies House', val: companiesHouse });
     if (finKey && finVal) meta.push({ key: finKey, val: finVal });
     if (location) meta.push({ key: 'Location', val: location });
     if (extraKey && extraVal) meta.push({ key: extraKey, val: extraVal });
@@ -431,6 +435,73 @@
     const scan = window.HubOpportunityModerationScan;
     if (!scan || !scan.scanOpportunityRedFlags) return null;
     return scan.scanOpportunityRedFlags(payload, options);
+  }
+
+  function completenessInput() {
+    return {
+      title: document.getElementById('oe-title')?.value.trim(),
+      types: getSelectedTypes(),
+      desc: document.getElementById('oe-desc')?.value.trim(),
+      about: document.getElementById('oe-about')?.value.trim(),
+      host: document.getElementById('oe-host')?.value.trim(),
+      email: document.getElementById('oe-email')?.value.trim(),
+      investment: document.getElementById('oe-investment')?.value.trim(),
+      location: document.getElementById('oe-location')?.value.trim(),
+      commitment: document.getElementById('oe-commitment')?.value.trim(),
+      investmentIncludes: document.getElementById('oe-investment-includes')?.value.trim(),
+      companiesHouse: document.getElementById('oe-companies-house')?.value.trim(),
+      logoUrl: document.getElementById('oe-logo-url')?.value.trim(),
+      logoFile: logoFile,
+      imageUrl: document.getElementById('oe-photo-url')?.value.trim(),
+      imageFile: photoFile,
+    };
+  }
+
+  function refreshCompleteness() {
+    const q = window.HubOpportunityQuality;
+    const pctEl = document.getElementById('oe-completeness-pct');
+    const fillEl = document.getElementById('oe-completeness-fill');
+    const tipEl = document.getElementById('oe-completeness-tip');
+    if (!q || !q.listingCompleteness || !pctEl || !fillEl) return;
+
+    const result = q.listingCompleteness(completenessInput());
+    pctEl.textContent = result.percent + '%';
+    fillEl.style.width = result.percent + '%';
+
+    if (tipEl) {
+      if (result.missing && result.missing.length) {
+        const next = result.missing[0];
+        tipEl.textContent = 'Next: ' + next.label + (next.tip ? ' — ' + next.tip : '');
+      } else {
+        tipEl.textContent = 'Great — your listing has strong detail for browsers.';
+      }
+    }
+  }
+
+  function bindCompletenessScan() {
+    const fields = [
+      'oe-title',
+      'oe-desc',
+      'oe-about',
+      'oe-host',
+      'oe-email',
+      'oe-investment',
+      'oe-investment-includes',
+      'oe-location',
+      'oe-commitment',
+      'oe-companies-house',
+      'oe-logo-url',
+      'oe-photo-url',
+    ];
+    fields.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', refreshCompleteness);
+      el.addEventListener('change', refreshCompleteness);
+    });
+    document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach((input) => {
+      input.addEventListener('change', refreshCompleteness);
+    });
   }
 
   function renderModerationWarnings(scan, isDraft) {
@@ -483,6 +554,7 @@
       'oe-investment-includes',
       'oe-location',
       'oe-commitment',
+      'oe-companies-house',
       'oe-financial-key',
       'oe-financial-val',
       'oe-extra-key',
@@ -678,7 +750,9 @@
     bindLogoUpload();
     bindPhotoUpload();
     bindModerationScan();
+    bindCompletenessScan();
     refreshModerationWarnings(false);
+    refreshCompleteness();
 
     ['oe-financial-key', 'oe-financial-val'].forEach((id) => {
       const el = document.getElementById(id);

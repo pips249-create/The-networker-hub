@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260710b" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260710d" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
   </head>
   <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page">
@@ -41,6 +41,17 @@
       </header>
       <div id="oe-alert" class="ee-alert" hidden></div>
       <div id="oe-moderation-warnings" class="oe-moderation-warnings" hidden role="status" aria-live="polite"></div>
+
+      <div class="oe-listing-completeness" id="oe-listing-completeness" aria-live="polite">
+        <div class="oe-listing-completeness-head">
+          <span class="oe-listing-completeness-label">Listing completeness</span>
+          <strong class="oe-listing-completeness-pct" id="oe-completeness-pct">0%</strong>
+        </div>
+        <div class="oe-listing-completeness-bar" aria-hidden="true">
+          <span class="oe-listing-completeness-fill" id="oe-completeness-fill" style="width:0%"></span>
+        </div>
+        <p class="oe-listing-completeness-tip" id="oe-completeness-tip">Complete more fields to help browsers find and trust your listing.</p>
+      </div>
 
       <form id="oe-form">
         <div class="ee-card" id="oe-card-details">
@@ -94,6 +105,13 @@
           <div class="ee-field">
             <label for="oe-host">Business / company name</label>
             <input type="text" id="oe-host" required placeholder="e.g. Tropic Skincare" />
+          </div>
+          <div class="ee-field">
+            <label for="oe-companies-house">Companies House number <span class="ee-optional">(optional)</span></label>
+            <p class="ee-hint" style="margin: 0 0 8px">
+              If your business is registered, adding your company number helps browsers verify who they are enquiring with. The Hub does not verify company status.
+            </p>
+            <input type="text" id="oe-companies-house" maxlength="12" placeholder="e.g. 12345678" autocapitalize="characters" />
           </div>
           <div class="ee-field">
             <label for="oe-email">Contact email for enquiries</label>
@@ -255,6 +273,7 @@
     <script src="../js/hub-location-autocomplete.js?v=20260609"></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../"></script>
     <script src="../js/opportunity-moderation-scan.js?v=20260710"></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260710c"></script>
+    <script src="../js/opportunity-listing-quality.js?v=20260710d"></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260710d"></script>
   </body>
 </html>

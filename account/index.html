@@ -259,11 +259,17 @@
 
               <div class="ad-saved-block">
                 <h3 class="ad-section-title ad-section-title--spaced">Saved opportunities</h3>
+                <div class="ad-saved-opp-toolbar" id="ad-saved-opp-toolbar" hidden>
+                  <p class="ad-saved-opp-compare-hint"><span id="ad-compare-count">0</span> selected for compare (max 3)</p>
+                  <button type="button" class="ad-btn ad-btn-primary" id="ad-compare-open" disabled>Compare selected</button>
+                  <button type="button" class="ad-btn ad-btn-ghost" id="ad-compare-clear">Clear</button>
+                </div>
                 <div class="ad-table-scroll">
                   <div class="ad-table-wrap">
                     <table>
                       <thead>
                         <tr>
+                          <th class="ad-th-check" scope="col"><span class="visually-hidden">Compare</span></th>
                           <th class="ad-th-thumb"></th>
                           <th>Opportunity</th>
                           <th>Listed by</th>
@@ -562,7 +568,10 @@
     <script src="../js/hub-favourites.js?v=20260629"></script>
     <script src="../js/hub-organiser-favourites.js?v=20260630"></script>
     <script src="../js/opportunities-saves.js?v=20260710"></script>
+    <script src="../js/opportunities-catalog.js?v=20260710d"></script>
+    <script src="../js/opportunity-listing-quality.js?v=20260710d"></script>
+    <script src="../js/opportunity-compare.js?v=20260710d"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260710"></script>
+    <script src="../js/attendee-dashboard.js?v=20260710d"></script>
   </body>
 </html>

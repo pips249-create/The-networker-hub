@@ -29,6 +29,7 @@ const OPPORTUNITY_EMAIL_SLUGS = new Set([
   'opportunity_premium_expired',
   'opportunity_listing_rejected',
   'saved_opportunity_closing_soon',
+  'opportunity_saved_search_match',
 ]);
 
 const EVENT_MAIN_SPONSOR_SLUGS = new Set([

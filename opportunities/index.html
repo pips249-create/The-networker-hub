@@ -15,8 +15,9 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260730" />
-    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260710c" />
+    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260710d" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
+    <link rel="stylesheet" href="../css/hubert-widget.css?v=20260710" />
     <script src="../js/hub-seo-static-config.js?v=20260612"></script>
     <script src="../js/hub-seo-static.js?v=20260612" data-page="opportunities"></script>
     <script src="../js/hub-seo-data.js?v=20260612" defer></script>
@@ -119,6 +120,29 @@
         <p class="opp-browse-disclaimer" role="note">
           Listings are informational only — not FCA-regulated and not investment advice. Conduct your own due diligence before any commercial arrangement.
         </p>
+
+        <section class="opp-hubert-strip" id="opp-hubert-strip" aria-label="Need help choosing?">
+          <div class="opp-hubert-strip-inner">
+            <div class="opp-hubert-strip-copy">
+              <img src="../assets/hubert-icon.png" alt="" width="36" height="36" class="opp-hubert-strip-icon" />
+              <div>
+                <strong>Not sure where to start?</strong>
+                <span>Ask Hubert to narrow down franchises, side hustles, or partnerships for you.</span>
+              </div>
+            </div>
+            <div class="opp-hubert-strip-actions">
+              <button type="button" class="opp-hubert-chip" data-hubert-prompt="Help me find a low-investment side hustle opportunity on the hub.">
+                Low-investment side hustles
+              </button>
+              <button type="button" class="opp-hubert-chip" data-hubert-prompt="What franchise opportunities are available under £10k investment?">
+                Franchises under £10k
+              </button>
+              <button type="button" class="opp-hubert-chip" data-hubert-prompt="How do I enquire about a business opportunity on The Networker Hub?">
+                How enquiries work
+              </button>
+            </div>
+          </div>
+        </section>
       </div>
     </header>
 
@@ -218,6 +242,12 @@
       <div class="opp-listings-area">
         <div class="opp-listings-toolbar">
           <p class="opp-results-info" id="opp-results-count" aria-live="polite">Loading listings…</p>
+          <div class="opp-toolbar-actions">
+            <button type="button" class="opp-save-search-btn" id="opp-save-search-btn" title="Email me when new listings match these filters">
+              Alert me
+            </button>
+            <p class="opp-save-search-status" id="opp-save-search-status" hidden role="status"></p>
+          </div>
           <div class="opp-toolbar-right">
             <div class="opp-toolbar-search">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -327,10 +357,14 @@
     <script src="../js/cms-sponsor-fields.js?v=20260609c"></script>
     <script src="../js/sponsor-hub.js?v=20260611"></script>
     <script src="../js/hub-organiser-actions.js?v=20260710" data-root="../"></script>
-    <script src="../js/opportunities-catalog.js?v=20260708"></script>
+    <script src="../js/opportunities-catalog.js?v=20260710d"></script>
+    <script src="../js/opportunity-listing-quality.js?v=20260710d"></script>
+    <script src="../js/opportunity-investment-breakdown.js?v=20260710"></script>
     <script src="../js/opportunities-saves.js?v=20260710"></script>
     <script src="../js/postcode-geo.js?v=20260609b"></script>
-    <script src="../js/opportunities-page.js?v=20260710b"></script>
+    <script src="../js/opportunities-page.js?v=20260710d"></script>
     <script src="../js/opportunities-map.js?v=20260611"></script>
+    <script src="../js/hubert-chat.js?v=20260710"></script>
+    <script src="../js/hubert-widget.js?v=20260710" data-root="../"></script>
   </body>
 </html>

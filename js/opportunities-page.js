@@ -14,6 +14,7 @@
 
   var catalog = window.HubOpportunitiesCatalog;
   var saves = window.HubOpportunitySaves;
+  var quality = window.HubOpportunityQuality;
 
   var FAV_ICON =
     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
@@ -76,6 +77,8 @@
     els.sidebarClear = document.getElementById('opp-sidebar-clear');
     els.spotlightTrack = document.getElementById('opp-spotlight-track');
     els.spotlightSection = document.querySelector('.opp-premium-spotlight');
+    els.saveSearchBtn = document.getElementById('opp-save-search-btn');
+    els.saveSearchStatus = document.getElementById('opp-save-search-status');
   }
 
   function shuffleList(list) {
@@ -632,6 +635,7 @@
       '<p class="opp-card-desc">' +
       escapeHtml(item.desc) +
       '</p>' +
+      (quality && quality.trustBadgesHtml ? quality.trustBadgesHtml(item, 'opp-trust-badges opp-trust-badges--card') : '') +
       '<div class="opp-meta-row">' +
       displayMeta.map(function (m) {
         return metaCellHtml(m, item);
@@ -1025,12 +1029,77 @@
     applyFilters();
   }
 
+  function currentFilterCriteria() {
+    return {
+      type: activeType,
+      category: activeCategory || '',
+      invest: els.filterInvest ? els.filterInvest.value || '' : '',
+      location: els.filterLocation ? els.filterLocation.value || '' : '',
+      commitment: els.filterCommitment ? els.filterCommitment.value || '' : '',
+      q: searchQ || '',
+      sort: sortBy || 'recommended',
+      minInvest: minInvest != null ? minInvest : '',
+      maxInvest: maxInvest != null ? maxInvest : '',
+    };
+  }
+
+  function readFiltersFromUrl() {
+    var params = new URLSearchParams(window.location.search);
+    var type = params.get('type');
+    if (type && TAB_TYPES.indexOf(type) !== -1) activeType = type;
+
+    activeCategory = params.get('category') || '';
+    searchQ = String(params.get('q') || '').trim().toLowerCase();
+    sortBy = params.get('sort') || 'recommended';
+
+    if (els.search && searchQ) els.search.value = searchQ;
+    if (els.sort) els.sort.value = sortBy;
+    if (els.filterCategory && activeCategory) els.filterCategory.value = activeCategory;
+    if (els.filterInvest) els.filterInvest.value = params.get('invest') || '';
+    if (els.filterLocation) els.filterLocation.value = params.get('location') || '';
+    if (els.filterCommitment) els.filterCommitment.value = params.get('commitment') || '';
+
+    var min = params.get('min');
+    var max = params.get('max');
+    minInvest = min !== null && min !== '' ? parseInt(min, 10) : null;
+    maxInvest = max !== null && max !== '' ? parseInt(max, 10) : null;
+    if (isNaN(minInvest)) minInvest = null;
+    if (isNaN(maxInvest)) maxInvest = null;
+    if (els.minInvest && minInvest != null) els.minInvest.value = String(minInvest);
+    if (els.maxInvest && maxInvest != null) els.maxInvest.value = String(maxInvest);
+
+    readSidebarFilters();
+    updateSearchClearVisibility();
+  }
+
+  function writeFiltersToUrl() {
+    var params = new URLSearchParams();
+    var c = currentFilterCriteria();
+    if (c.type && c.type !== 'all') params.set('type', c.type);
+    if (c.category) params.set('category', c.category);
+    if (c.invest) params.set('invest', c.invest);
+    if (c.location) params.set('location', c.location);
+    if (c.commitment) params.set('commitment', c.commitment);
+    if (c.q) params.set('q', c.q);
+    if (c.sort && c.sort !== 'recommended') params.set('sort', c.sort);
+    if (c.minInvest !== '' && c.minInvest != null) params.set('min', String(c.minInvest));
+    if (c.maxInvest !== '' && c.maxInvest != null) params.set('max', String(c.maxInvest));
+
+    var qs = params.toString();
+    var next = window.location.pathname + (qs ? '?' + qs : '') + (window.location.hash || '');
+    var current = window.location.pathname + window.location.search + (window.location.hash || '');
+    if (next !== current) {
+      window.history.replaceState({}, '', next);
+    }
+  }
+
   function applyFilters() {
     readSidebarFilters();
     readInvestRange();
     syncSidebarSelectUI();
     syncInvestPillsUI();
     resetListingPagination();
+    writeFiltersToUrl();
     renderListings();
   }
 
@@ -1069,7 +1138,85 @@
     syncCatPills();
     syncSidebarSelectUI();
     syncInvestPillsUI();
+    writeFiltersToUrl();
     renderListings();
+  }
+
+  function setSaveSearchStatus(msg, isError) {
+    if (!els.saveSearchStatus) return;
+    els.saveSearchStatus.textContent = msg || '';
+    els.saveSearchStatus.hidden = !msg;
+    els.saveSearchStatus.classList.toggle('is-error', Boolean(isError));
+  }
+
+  function saveSearchAlert() {
+    var criteria = currentFilterCriteria();
+    var hasFilter =
+      (criteria.type && criteria.type !== 'all') ||
+      criteria.category ||
+      criteria.invest ||
+      criteria.location ||
+      criteria.commitment ||
+      criteria.q ||
+      criteria.minInvest !== '' ||
+      criteria.maxInvest !== '';
+
+    if (!hasFilter) {
+      setSaveSearchStatus('Set at least one filter before saving an alert.', true);
+      return;
+    }
+
+    if (els.saveSearchBtn) els.saveSearchBtn.disabled = true;
+    setSaveSearchStatus('Saving alert…');
+
+    fetch('/api/auth/opportunity-saved-searches', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        criteria: criteria,
+        label: quality && quality.criteriaLabel ? quality.criteriaLabel(criteria) : '',
+      }),
+    })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          return { status: r.status, data: data };
+        });
+      })
+      .then(function (res) {
+        if (res.status === 401) {
+          window.location.href =
+            '../register.html?return=' + encodeURIComponent(window.location.pathname + window.location.search);
+          return;
+        }
+        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.message) || 'Could not save alert');
+        setSaveSearchStatus('Alert saved — we will email you when new listings match.');
+      })
+      .catch(function (e) {
+        setSaveSearchStatus(e.message || 'Could not save alert. Try again.', true);
+      })
+      .finally(function () {
+        if (els.saveSearchBtn) els.saveSearchBtn.disabled = false;
+      });
+  }
+
+  function initSaveSearch() {
+    if (!els.saveSearchBtn || els.saveSearchBtn.dataset.bound) return;
+    els.saveSearchBtn.dataset.bound = '1';
+    els.saveSearchBtn.addEventListener('click', saveSearchAlert);
+  }
+
+  function initHubertStrip() {
+    var strip = document.getElementById('opp-hubert-strip');
+    if (!strip || strip.dataset.bound) return;
+    strip.dataset.bound = '1';
+    strip.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-hubert-prompt]');
+      if (!btn) return;
+      var prompt = btn.getAttribute('data-hubert-prompt') || '';
+      if (window.HubertWidget && window.HubertWidget.ask) window.HubertWidget.ask(prompt);
+      else if (window.HubertWidget && window.HubertWidget.open) window.HubertWidget.open();
+    });
   }
 
   function updateSearchClearVisibility() {
@@ -1151,6 +1298,7 @@
       searchTimer = setTimeout(function () {
         searchQ = val;
         resetListingPagination();
+        writeFiltersToUrl();
         renderListings();
       }, SEARCH_DEBOUNCE_MS);
     });
@@ -1163,6 +1311,7 @@
         searchQ = '';
         resetListingPagination();
         updateSearchClearVisibility();
+        writeFiltersToUrl();
         renderListings();
       });
     }
@@ -1174,6 +1323,7 @@
     els.sort.addEventListener('change', function () {
       sortBy = els.sort.value || 'recommended';
       resetListingPagination();
+      writeFiltersToUrl();
       renderListings();
     });
   }
@@ -1273,6 +1423,7 @@
 
   function init() {
     cacheEls();
+    readFiltersFromUrl();
     allListings = catalog ? catalog.loadCatalog() : [];
     if (window.HubOpportunityInvestment) {
       window.HubOpportunityInvestment.bindCardPopovers(function (id) {
@@ -1291,6 +1442,8 @@
     initViewToggle();
     initCatPills();
     initPagination();
+    initSaveSearch();
+    initHubertStrip();
     syncTabUI();
     resetSpotlightOrder();
     renderSpotlight();

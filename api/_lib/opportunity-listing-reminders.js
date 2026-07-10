@@ -233,12 +233,15 @@ async function expireOpportunityListings(sb) {
 
 async function runOpportunityReminderMaintenance(sb) {
   const { sendDueSavedOpportunityClosingEmails } = require('./favourite-opportunity-emails');
-  const listing = await sendListingExpiryReminders(sb);
-  const premium = await sendPremiumExpiryReminders(sb);
-  const savedClosingSoon = await sendDueSavedOpportunityClosingEmails(sb);
-  const listingExpired = await expireOpportunityListings(sb);
-  const premiumExpired = await expireOpportunityPremium(sb);
-  return { listing, premium, savedClosingSoon, listingExpired, premiumExpired };
+  const { sendDueSavedSearchMatchEmails } = require('./opportunity-saved-search-emails');
+  const client = sb || getSupabaseAdmin();
+  const listing = await sendListingExpiryReminders(client);
+  const premium = await sendPremiumExpiryReminders(client);
+  const savedClosingSoon = await sendDueSavedOpportunityClosingEmails(client);
+  const savedSearchMatches = await sendDueSavedSearchMatchEmails(client);
+  const listingExpired = await expireOpportunityListings(client);
+  const premiumExpired = await expireOpportunityPremium(client);
+  return { listing, premium, savedClosingSoon, savedSearchMatches, listingExpired, premiumExpired };
 }
 
 module.exports = {

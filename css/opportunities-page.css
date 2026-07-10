@@ -3062,6 +3062,8 @@
   background: #fff;
   color: var(--opp-gold);
   cursor: pointer;
+  position: relative;
+  z-index: 3;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
@@ -4043,5 +4045,142 @@ body.opp-view-map.opp-browse-page .opp-listings-toolbar {
   .opp-browse-page .opp-search-box--prominent input,
   .opp-browse-page .opp-toolbar-search input {
     font-size: 16px;
+  }
+}
+
+/* Trust badges (factual listing signals — not endorsement) */
+.opportunities-page .opp-trust-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+
+.opportunities-page .opp-trust-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  background: #eef4ff;
+  color: #1e3a5f;
+  border: 1px solid #c9daf5;
+}
+
+.opportunities-page .opp-trust-badge--companies-house {
+  background: #f3f0ff;
+  color: #4c3d7a;
+  border-color: #d9cff5;
+}
+
+.opportunities-page .opp-trust-badges--card {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+/* Hubert strip on browse */
+.opportunities-page .opp-hubert-strip {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f5f0e8 0%, #fff 100%);
+  border: 1px solid #e8d9a8;
+}
+
+.opportunities-page .opp-hubert-strip-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.opportunities-page .opp-hubert-strip-copy {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: min(100%, 280px);
+}
+
+.opportunities-page .opp-hubert-strip-copy strong {
+  display: block;
+  color: var(--opp-navy, #0d1f3c);
+  font-size: 14px;
+}
+
+.opportunities-page .opp-hubert-strip-copy span {
+  display: block;
+  font-size: 13px;
+  color: #5c6470;
+  margin-top: 2px;
+}
+
+.opportunities-page .opp-hubert-strip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.opportunities-page .opp-hubert-chip {
+  border: 1px solid #d4c4a0;
+  background: #fff;
+  color: var(--opp-navy, #0d1f3c);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.opportunities-page .opp-hubert-chip:hover {
+  border-color: var(--opp-gold, #c9961f);
+  color: #7a5c0a;
+}
+
+/* Saved search alert */
+.opportunities-page .opp-listings-toolbar {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.opportunities-page .opp-toolbar-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.opportunities-page .opp-save-search-btn {
+  border: 1px solid var(--opp-navy, #0d1f3c);
+  background: #fff;
+  color: var(--opp-navy, #0d1f3c);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.opportunities-page .opp-save-search-btn:hover:not(:disabled) {
+  background: var(--opp-navy, #0d1f3c);
+  color: #fff;
+}
+
+.opportunities-page .opp-save-search-status {
+  margin: 0;
+  font-size: 12px;
+  color: #166534;
+}
+
+.opportunities-page .opp-save-search-status.is-error {
+  color: #b91c1c;
+}
+
+@media (max-width: 860px) {
+  .opportunities-page .opp-hubert-strip-actions {
+    width: 100%;
   }
 }

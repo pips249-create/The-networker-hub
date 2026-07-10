@@ -1147,3 +1147,51 @@ body.oe-opportunity-drawer-open {
   font-size: 12px;
   color: #9a3412;
 }
+
+.oe-listing-completeness {
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.oe-listing-completeness-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.oe-listing-completeness-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.oe-listing-completeness-pct {
+  font-size: 14px;
+  color: var(--opp-navy, #0d1f3c);
+}
+
+.oe-listing-completeness-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.oe-listing-completeness-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #c9961f, #e8b84a);
+  transition: width 0.2s ease;
+}
+
+.oe-listing-completeness-tip {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}

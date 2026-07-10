@@ -1759,12 +1759,48 @@
     return '../opportunities/opportunity.html?id=' + encodeURIComponent(item.opportunityId || item.opportunity_id || item.id || '');
   }
 
+  function refreshCompareToolbar() {
+    const cmp = window.HubOpportunityCompare;
+    const toolbar = document.getElementById('ad-saved-opp-toolbar');
+    const countEl = document.getElementById('ad-compare-count');
+    const openBtn = document.getElementById('ad-compare-open');
+    const clearBtn = document.getElementById('ad-compare-clear');
+    if (!cmp || !toolbar) return;
+
+    const ids = cmp.ids();
+    toolbar.hidden = !savedOpportunities.length;
+    if (countEl) countEl.textContent = String(ids.length);
+    if (openBtn) openBtn.disabled = ids.length < 2;
+    if (clearBtn) clearBtn.disabled = !ids.length;
+
+    if (clearBtn && !clearBtn.dataset.bound) {
+      clearBtn.dataset.bound = '1';
+      clearBtn.addEventListener('click', () => {
+        cmp.clear();
+        refreshCompareToolbar();
+        renderSavedOpportunitiesTable();
+      });
+    }
+    if (openBtn && !openBtn.dataset.bound) {
+      openBtn.dataset.bound = '1';
+      openBtn.addEventListener('click', () => {
+        const catalog = window.HubOpportunitiesCatalog;
+        const html = cmp.renderModal(catalog, cmp.ids());
+        if (!html) return;
+        document.body.insertAdjacentHTML('beforeend', html);
+        cmp.bindModal(document.getElementById('opp-compare-modal'));
+      });
+    }
+  }
+
   function renderSavedOpportunitiesTable() {
     const body = document.getElementById('ad-saved-opportunities-body');
     const empty = document.getElementById('ad-saved-opportunities-empty');
+    const cmp = window.HubOpportunityCompare;
     if (!body) return;
 
     body.innerHTML = '';
+    refreshCompareToolbar();
     if (!savedOpportunities.length) {
       if (empty) empty.hidden = false;
       return;
@@ -1773,12 +1809,20 @@
 
     savedOpportunities.forEach((item) => {
       const tr = document.createElement('tr');
+      const oppId = String(item.opportunityId || item.opportunity_id || '');
+      const checked = cmp && cmp.isSelected(oppId);
       const favItem = {
         title: item.title,
         imageUrl: item.logoUrl || item.imageUrl || item.logo_url || item.image_url || '',
       };
       tr.innerHTML =
-        '<td>' +
+        '<td><input type="checkbox" class="ad-compare-check" data-opportunity-id="' +
+        esc(oppId) +
+        '" aria-label="Compare ' +
+        esc(item.title || 'opportunity') +
+        '"' +
+        (checked ? ' checked' : '') +
+        ' /></td><td>' +
         thumbHtml(favItem) +
         '</td><td class="ad-td-name"><a href="' +
         esc(savedOpportunityHref(item)) +
@@ -1789,9 +1833,23 @@
         '</td><td>' +
         esc(formatDateShort(item.createdAt || item.created_at)) +
         '</td><td><button type="button" class="ad-btn ad-btn-ghost ad-saved-opportunity-remove" data-opportunity-id="' +
-        esc(item.opportunityId || item.opportunity_id || '') +
+        esc(oppId) +
         '">Remove</button></td>';
       body.appendChild(tr);
+    });
+
+    body.querySelectorAll('.ad-compare-check').forEach((input) => {
+      input.addEventListener('change', () => {
+        if (!cmp) return;
+        const id = input.getAttribute('data-opportunity-id');
+        const before = cmp.ids();
+        if (input.checked && before.length >= cmp.MAX && !cmp.isSelected(id)) {
+          input.checked = false;
+          return;
+        }
+        cmp.toggle(id);
+        refreshCompareToolbar();
+      });
     });
 
     body.querySelectorAll('.ad-saved-opportunity-remove').forEach((btn) => {
@@ -2228,6 +2286,10 @@
         savedOpportunities = window.HubOpportunitySaves
           ? window.HubOpportunitySaves.ids().map((id) => ({ opportunityId: id }))
           : [];
+      }
+
+      if (window.HubOpportunitiesCatalog && window.HubOpportunitiesCatalog.loadCatalogAsync) {
+        window.HubOpportunitiesCatalog.loadCatalogAsync().catch(() => {});
       }
 
       applyDashboardData(data);

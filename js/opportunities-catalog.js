@@ -198,6 +198,7 @@
 
     meta.forEach(function (m) {
       if (/^investment includes$/i.test(m.key)) return;
+      if (/^companies house$/i.test(m.key)) return;
       if (/^investment$/i.test(m.key)) investment = m;
       else if (/^(return(\s+est\.?)?|earnings|commission|revenue|income|profit)$/i.test(m.key)) financial = financial || m;
       else if (isScarcityMeta(m.key, m.val)) scarcity = scarcity || m;

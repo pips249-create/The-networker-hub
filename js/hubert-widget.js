@@ -135,5 +135,11 @@
   window.HubertWidget = {
     open: openPanel,
     close: closePanel,
+    ask: function (prompt) {
+      var text = String(prompt || '').trim();
+      if (!text) return;
+      openPanel();
+      chat.sendMessage(text);
+    },
   };
 })();
