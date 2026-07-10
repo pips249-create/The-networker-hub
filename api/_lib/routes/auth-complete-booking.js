@@ -2,6 +2,7 @@ const { setCors, json, sessionFromRequest } = require('../auth');
 const { createRegistrationFromPayment } = require('../supabase-registrations');
 const { isSupabaseConfigured } = require('../supabase');
 const { verifyEventCheckoutPayment } = require('../verify-checkout-payment');
+const { bookingErrorResponse } = require('../booking-error-messages');
 
 function parseBody(req) {
   let body = req.body;
@@ -79,11 +80,12 @@ module.exports = async function handler(req, res) {
     return json(res, 200, { ok: true, ...result });
   } catch (e) {
     const msg = e.message || String(e);
+    const mapped = bookingErrorResponse(msg);
+    if (mapped) return json(res, mapped.status, mapped.body);
     if (
       msg === 'missing_checkout_session' ||
       msg === 'payment_not_completed' ||
       msg === 'event_mismatch' ||
-      msg === 'email_mismatch' ||
       msg === 'invalid_checkout_type' ||
       msg === 'ticket_requires_payment' ||
       msg === 'ticket_not_found' ||

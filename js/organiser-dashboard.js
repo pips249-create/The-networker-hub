@@ -4290,7 +4290,6 @@
     }
     sourceSel.innerHTML = '<option value="">Loading…</option>';
     if (sendBtn) sendBtn.disabled = true;
-    modal.hidden = false;
     openModal('modal-alumni-invites');
 
     const { ok, data } = await api(
@@ -4395,7 +4394,6 @@
       }
       return;
     }
-    closeAlumniInvitesModal();
     closeModals();
     showOrganiserAlert(data.message || 'Alumni invites sent.', false);
   }
@@ -4918,6 +4916,7 @@
   }
 
   function closeModals() {
+    closeAlumniInvitesModal();
     document.querySelectorAll('.org-modal').forEach((m) => {
       m.setAttribute('hidden', '');
       m.setAttribute('aria-hidden', 'true');

@@ -91,7 +91,15 @@ async function loadOrganiserGuestVisitAllowance(sb, organiserId) {
   return clampComplimentaryVisitsAllowed(data.complimentary_visits_allowed);
 }
 
-async function assertGuestVisitBookingAllowed(sb, { organiserId, attendeeId, email }) {
+async function assertGuestVisitBookingAllowed(
+  sb,
+  { organiserId, attendeeId, email, guestPassesDisabled }
+) {
+  if (guestPassesDisabled) {
+    const err = new Error('guest_passes_disabled');
+    err.status = 400;
+    throw err;
+  }
   const allowed = await loadOrganiserGuestVisitAllowance(sb, organiserId);
   if (allowed < 1) {
     const err = new Error('guest_visits_not_enabled');

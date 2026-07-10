@@ -242,6 +242,7 @@ async function createRegistrationFromPayment(input) {
       organiserId,
       attendeeId,
       email,
+      guestPassesDisabled,
     });
   } else if (registrationKind === 'alumni') {
     if (quantity !== 1) throw new Error('alumni_single_seat_only');

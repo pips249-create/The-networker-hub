@@ -247,6 +247,7 @@ module.exports = async function handler(req, res) {
               organiserId: evRes.data.organiser_id,
               attendeeId: session?.sub || null,
               email: checkoutEmail,
+              guestPassesDisabled: evRes.data.guest_passes_disabled,
             });
           } catch (guestErr) {
             const code = guestErr.message || 'guest_visit_not_allowed';

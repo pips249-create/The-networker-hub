@@ -1077,6 +1077,13 @@ a:hover {
   font-weight: 600;
 }
 
+.ticket-load-hint--warn {
+  color: #7c2d12;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+}
+
 .ticket-tiers {
   margin-bottom: 20px;
 }

@@ -292,6 +292,25 @@
     return eventIsGuestProgramme(ev) && !ev.guestPassesDisabled && Number(ev.complimentaryVisitsAllowed) > 0;
   }
 
+  function hasAlumniInviteLink(ev) {
+    return Boolean(String(alumniInviteToken || '').trim() && ev?.alumniFastPassEnabled);
+  }
+
+  function alumniInviteBlockedMessage(eligibility) {
+    const reason = String(eligibility?.reason || '').trim();
+    const messages = {
+      not_invited:
+        'This alumni invite link is invalid or has expired. Use the link from your invite email, or contact the organiser.',
+      email_mismatch: 'Sign in with the email address that received the alumni invite.',
+      not_enabled: 'Alumni Fast-Pass is not available for this event.',
+      no_alumni_tier: 'The alumni ticket is not set up for this event yet.',
+    };
+    return (
+      messages[reason] ||
+      'This alumni rate is invite-only. Use the link from your email or sign in with the invited address.'
+    );
+  }
+
   function tierIsGuestVisit(t) {
     if (!t) return false;
     if (t.isGuestVisit) return true;
@@ -1660,7 +1679,7 @@
       ev.alumniTier &&
       alumniEligibility &&
       (alumniEligibility.eligible || alumniEligibility.signedOut);
-    const alumniOnlyView = Boolean(alumniInviteToken && alumniEligibility?.eligible);
+    const alumniOnlyView = hasAlumniInviteLink(ev);
     const memberTiers = isGuestProg ? tiers : tiers;
     tiersEl.innerHTML = '';
 
@@ -1803,7 +1822,17 @@
     });
     }
 
-    if (!firstSelectable && tiersEl.children.length && !isCategoryExclusivity) {
+    if (
+      alumniOnlyView &&
+      !firstSelectable &&
+      !tiersEl.children.length &&
+      !isCategoryExclusivity
+    ) {
+      tiersEl.innerHTML =
+        '<p class="ticket-load-hint ticket-load-hint--warn">' +
+        escapeHtml(alumniInviteBlockedMessage(alumniEligibility)) +
+        '</p>';
+    } else if (!firstSelectable && tiersEl.children.length && !isCategoryExclusivity) {
       const hint = ev.isSoldOut
         ? 'All ticket tiers are currently sold out.'
         : 'Tickets are not currently available for this event.';
@@ -2651,6 +2680,16 @@
       if (qtyDown) qtyDown.disabled = true;
       if (qtyUp) qtyUp.disabled = true;
       if (appForm) appForm.hidden = true;
+      applyEventApplicationUi(ev);
+      return;
+    }
+
+    if (hasAlumniInviteLink(ev) && !getSelectedTierEl()) {
+      panel.classList.add('is-unavailable');
+      buy.disabled = true;
+      buy.classList.add('cta-btn-disabled');
+      buy.textContent = 'Alumni invite required';
+      if (purchaseView) purchaseView.removeAttribute('aria-hidden');
       applyEventApplicationUi(ev);
       return;
     }
@@ -3723,7 +3762,7 @@
           if (eventIsGuestProgramme(displayEv)) {
             await loadGuestVisitEligibility(displayEv);
             renderTicketPanel(displayEv);
-          } else if (displayEv.alumniFastPassEnabled) {
+          } else if (displayEv.alumniFastPassEnabled || alumniInviteToken) {
             await loadAlumniEligibility(displayEv);
             renderTicketPanel(displayEv);
           }

@@ -877,7 +877,7 @@
       const agree = document.getElementById('refund-terms-agreed');
       if (agree && draft.refund.refundTermsAgreed) agree.checked = true;
       const partial = document.getElementById('refund-partial-details');
-      if (partial && draft.refund.refundPolicyDetails && policyVal === 'partial') {
+      if (partial && draft.refund.refundPolicyDetails && policyVal === 'partial_refund') {
         partial.value = draft.refund.refundPolicyDetails;
       }
       const custom = document.getElementById('refund-custom-details');
