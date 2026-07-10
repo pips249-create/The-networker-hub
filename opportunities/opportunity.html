@@ -14,11 +14,11 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260730" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
     <link rel="stylesheet" href="../css/opportunities-page.css?v=20260609d" />
-    <link rel="stylesheet" href="../css/opportunity-detail.css?v=20260630" />
+    <link rel="stylesheet" href="../css/opportunity-detail.css?v=20260710b" />
   </head>
   <body class="opportunities-page opportunity-detail-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260708" data-root="../" data-page="opportunities"></script>
+    <script src="../js/site-nav.js?v=20260713b" data-root="../" data-page="opportunities"></script>
 
     <div class="opp-detail-breadcrumb">
       <a class="opp-detail-back" id="opp-back" href="index.html">
@@ -82,6 +82,40 @@
             </div>
           </section>
 
+          <section class="opp-detail-section" id="opp-claim-section" hidden>
+            <div class="opp-claim-card">
+              <h2>Is this your business?</h2>
+              <p class="opp-claim-lede">
+                This listing was added by The Networker Hub to help people discover your opportunity.
+                Request to manage it — we&rsquo;ll verify your details, then send you a link to take over the listing and start receiving enquiries directly.
+              </p>
+              <form class="opp-claim-form" id="opp-claim-form">
+                <label>
+                  <span>Your name</span>
+                  <input type="text" name="name" id="opp-claim-name" required autocomplete="name" />
+                </label>
+                <label>
+                  <span>Your email</span>
+                  <input type="email" name="email" id="opp-claim-email" required autocomplete="email" />
+                </label>
+                <label>
+                  <span>Company name</span>
+                  <input type="text" name="company" id="opp-claim-company" required autocomplete="organization" />
+                </label>
+                <label>
+                  <span>Your role (optional)</span>
+                  <input type="text" name="role" id="opp-claim-role" placeholder="e.g. Director, Franchise manager" autocomplete="organization-title" />
+                </label>
+                <label>
+                  <span>Message (optional)</span>
+                  <textarea name="message" id="opp-claim-message" rows="3" placeholder="Anything that helps us verify you represent this business"></textarea>
+                </label>
+                <button type="submit" class="opp-detail-btn opp-detail-btn--gold" id="opp-claim-submit">Request to claim listing</button>
+                <p class="opp-claim-status" id="opp-claim-status" hidden role="status"></p>
+              </form>
+            </div>
+          </section>
+
           <p class="listing-report-wrap opp-listing-report-footer">
             <button type="button" class="listing-report-trigger" id="opp-report-btn">Report this listing</button>
           </p>
@@ -133,6 +167,6 @@
     <script src="../js/opportunities-catalog.js?v=20260708"></script>
     <script src="../js/opportunities-saves.js?v=20260609j"></script>
     <script src="../js/listing-report.js?v=20260708"></script>
-    <script src="../js/opportunity-detail.js?v=20260708"></script>
+    <script src="../js/opportunity-detail.js?v=20260710b"></script>
   </body>
 </html>

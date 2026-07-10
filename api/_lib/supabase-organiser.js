@@ -8,6 +8,7 @@ const { logoResolutionWarning } = require('./logo-quality');
 const { isAdminRole } = require('./auth');
 const { resolveOrganiserAccess, getOrCreateOrganiserAccount } = require('./supabase-organiser-access');
 const { eventImageUrl } = require('./event-image');
+const { clampComplimentaryVisitsAllowed } = require('./guest-visits');
 
 function rowToGroup(row) {
   if (!row) return null;
@@ -46,6 +47,7 @@ function rowToGroup(row) {
     stripeConnectOnboardedAt: row.stripe_connect_onboarded_at || null,
     ownershipClaimStatus: row.ownership_claim_status || null,
     ownershipClaimedAt: row.ownership_claimed_at || null,
+    complimentaryVisitsAllowed: clampComplimentaryVisitsAllowed(row.complimentary_visits_allowed),
   };
 }
 
@@ -280,6 +282,14 @@ async function updateGroup(groupId, payload) {
   }
   if (payload.meetingFormats !== undefined) {
     patch.meeting_formats = Array.isArray(payload.meetingFormats) ? payload.meetingFormats : [];
+  }
+  if (
+    payload.complimentaryVisitsAllowed !== undefined ||
+    payload.complimentary_visits_allowed !== undefined
+  ) {
+    patch.complimentary_visits_allowed = clampComplimentaryVisitsAllowed(
+      payload.complimentaryVisitsAllowed ?? payload.complimentary_visits_allowed
+    );
   }
   if (payload.listingStatus != null) {
     patch.listing_status = normalizeListingStatus(payload.listingStatus);

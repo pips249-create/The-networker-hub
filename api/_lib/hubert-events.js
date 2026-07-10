@@ -6,7 +6,7 @@ const { fetchApprovedEvents } = require('./supabase-events');
 
 /** Help / organiser listing questions — must not trigger live event browse. */
 const HELP_NOT_EVENT_BROWSE =
-  /\b(difference between|what is the difference|how do i|how can i|can i change|should i|my event|event description|event listing|event photo|event image|cover photo|event type|listing guide|after choosing|what do i fill|fill in after|what happens next|one seat|application question|ticket type|remove a date|too small|too large|too big|what should i write|organiser dashboard|publish my event|save as draft|early bird|vat included|attendee list|who has registered|who has attended|see attendees|download attendees)\b/i;
+  /\b(difference between|what is the difference|how do i|how can i|can i change|should i|my event|event description|event listing|event photo|event image|cover photo|event type|listing guide|after choosing|what do i fill|fill in after|what happens next|category exclusivity|one seat|application question|ticket type|remove a date|too small|too large|too big|what should i write|organiser dashboard|publish my event|save as draft|early bird|vat included|attendee list|who has registered|who has attended|see attendees|download attendees)\b/i;
 
 /** Explicit browse / discovery intent only — not bare words like "event" or "meeting". */
 const EVENT_BROWSE_INTENT =

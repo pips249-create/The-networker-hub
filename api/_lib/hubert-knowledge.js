@@ -83,9 +83,9 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ORGANISER TICKETS & ATTENDEES',
     body:
-      'TICKET SETUP (event-tickets.html): choose Standard ticket types for open booking, or One Seat Only Policy for application-based attendance — these are mutually exclusive. ' +
-      'ONE SEAT ONLY POLICY (OSOP): prospective attendees apply to join instead of buying straight away. They answer two fixed questions — their industry and job title. You approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. Set an optional price (leave at £0 for free), places limit, and application closing date. ' +
-      'APPLICATION QUESTIONS: under OSOP, the two questions (industry and job title) are fixed and cannot be changed. For standard open tickets, you can optionally tick boxes under Attendee information at booking to note food is included or to collect dietary or accessibility requirements at checkout. ' +
+      'TICKET SETUP (event-tickets.html): choose Standard ticket types for open booking, or Category Exclusivity for application-based attendance — these are mutually exclusive. ' +
+      'CATEGORY EXCLUSIVITY: prospective attendees apply to join instead of buying straight away. They answer two fixed questions — their industry and job title. You approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. Set an optional price (leave at £0 for free), places limit, and application closing date. ' +
+      'APPLICATION QUESTIONS: under Category Exclusivity, the two questions (industry and job title) are fixed and cannot be changed. For standard open tickets, you can optionally tick boxes under Attendee information at booking to note food is included or to collect dietary or accessibility requirements at checkout. ' +
       'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event to see everyone who has booked (name, email, ticket type, quantity, payment status). Download attendees CSV to export. This shows ticket registrations — not on-the-day check-in.',
   },
   {
@@ -242,7 +242,7 @@ const FALLBACK_REPLIES = [
   {
     match: /why (list|use|choose).*(hub|networker)|why should i list|benefits of listing/i,
     reply:
-      'The Networker Hub is built for UK business networking. You get a permanent organiser profile, events in a directory members use to find networking meetings, optional business opportunity listings, team editors, reviews, and One Seat Only Policy. You receive the full ticket price; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events need no Stripe. Guides: /guides.html · More: /about.html#for-organisers',
+      'The Networker Hub is built for UK business networking. You get a permanent organiser profile, events in a directory members use to find networking meetings, optional business opportunity listings, team editors, reviews, and Category Exclusivity. You receive the full ticket price; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events need no Stripe. Guides: /guides.html · More: /about.html#for-organisers',
   },
   {
     match: /already use|eventbrite|meetup|other platform|alongside|as well as|in addition to/i,
@@ -335,14 +335,14 @@ const FALLBACK_REPLIES = [
       'A multi-date series on one listing shares the same start time, end time, and venue (or online link) for every date — use that for a recurring meeting on different weeks. If your sessions have different start times or locations, create separate listings from My Events (Create event). You can reuse the same title on each; set the dates, times, and venue for that session individually.',
   },
   {
-    match: /one seat only|osop\b|application.?based (ticket|attend|booking)|application to attend/i,
+    match: /category exclusivity|one seat only|osop\b|application.?based (ticket|attend|booking)|application to attend/i,
     reply:
-      'One Seat Only Policy is an alternative to open ticket sales on the tickets step. Instead of buying straight away, prospective attendees apply to join — they answer two fixed questions (their industry and job title). You review and approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. You can set an optional price (leave at £0 for free), a places limit, and an application closing date. It is mutually exclusive with standard ticket types.',
+      'Category Exclusivity is an alternative to open ticket sales on the tickets step. Instead of buying straight away, prospective attendees apply to join — they answer two fixed questions (their industry and job title). You review and approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. You can set an optional price (leave at £0 for free), a places limit, and an application closing date. It is mutually exclusive with standard ticket types.',
   },
   {
     match: /change.*application question|custom.*application question|edit.*application question|different application question|application question.*change|can i change.*question/i,
     reply:
-      'For One Seat Only Policy events, the application questions are fixed: (1) What industry are you in? and (2) What is your job title? These cannot be changed. For standard open ticket booking, you can optionally turn on extra fields under Attendee information at booking on the tickets step — tick the boxes to note food is included, or to collect dietary or accessibility requirements at checkout.',
+      'For Category Exclusivity events, the application questions are fixed: (1) What industry are you in? and (2) What is your job title? These cannot be changed. For standard open ticket booking, you can optionally turn on extra fields under Attendee information at booking on the tickets step — tick the boxes to note food is included, or to collect dietary or accessibility requirements at checkout.',
   },
   {
     match: /who (has |)(attended|registered|booked)|see (who|my) (attendee|registration|book)|view.*attendee|who is coming|attendee list|see registrations/i,
@@ -412,7 +412,7 @@ const ORGANISER_PAGE_CONTEXT = {
   'event-edit':
     'The user is on the event listing details step (title, type, description, photo, location, dates). Answer listing-setup questions from your organiser knowledge. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'event-tickets':
-    'The user is on the ticket setup step (ticket types, One Seat Only Policy, VAT, refund policy, publish). Answer organiser ticketing questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+    'The user is on the ticket setup step (ticket types, Category Exclusivity, VAT, refund policy, publish). Answer organiser ticketing questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'group-edit':
     'The user is editing their organiser page. Answer organiser-page questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'organiser-dashboard':

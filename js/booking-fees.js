@@ -47,6 +47,20 @@
   function listingPriceLabel(ev, options) {
     const opts = options || {};
     const withFrom = opts.withFrom !== false;
+    if (String(ev?.attendanceMode || '') === 'guest_programme') {
+      const visits = Number(ev.complimentaryVisitsAllowed) || 0;
+      const member =
+        ev.priceKey === 'free' || /^free$/i.test(String(ev.price || ''))
+          ? 'Free'
+          : withFrom
+            ? 'from ' + formatPounds(listingPriceNum(ev))
+            : formatPounds(listingPriceNum(ev));
+      if (visits > 0) {
+        const trial = visits === 1 ? '1 complimentary visit' : visits + ' complimentary visits';
+        return member + ' · ' + trial;
+      }
+      return member;
+    }
     if (!ev || ev.priceKey === 'free' || /^free$/i.test(String(ev.price || ''))) {
       return 'Free';
     }

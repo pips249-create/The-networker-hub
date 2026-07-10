@@ -23,6 +23,8 @@ function getOrganiserApi() {
     ...attendees,
     ...opportunities,
     reviewApplicationForOrganiser: require('./supabase-application-decisions').reviewApplicationForOrganiser,
+    reconsiderArchivedApplicationForOrganiser:
+      require('./supabase-application-decisions').reconsiderArchivedApplicationForOrganiser,
     resendApplicationOrganiserAlert: require('./supabase-application-decisions').resendApplicationOrganiserAlert,
     resendApprovalEmailForOrganiser: require('./supabase-application-decisions').resendApprovalEmailForOrganiser,
     replyToReviewAsOrganiser: require('./supabase-reviews').replyToReviewAsOrganiser,

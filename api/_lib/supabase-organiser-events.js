@@ -19,6 +19,12 @@ const WORKSPACE_EVENTS_LIMIT_DEFAULT = 100;
 const WORKSPACE_EVENTS_LIMIT_MAX = 250;
 const WORKSPACE_UPCOMING_LIMIT = 20;
 
+function normalizeAttendanceMode(mode) {
+  const m = String(mode || '').trim();
+  if (m === 'osop') return 'category_exclusivity';
+  return m || 'tickets';
+}
+
 function parseWorkspaceEventsQuery(req) {
   const limitRaw = parseInt(String(req?.query?.eventsLimit || ''), 10);
   const offsetRaw = parseInt(String(req?.query?.eventsOffset || ''), 10);
@@ -145,6 +151,7 @@ function rowToEvent(row) {
     revenueNum: 0,
     capacity: row.max_attendees != null ? Number(row.max_attendees) : null,
     ticketSalesEnabled: row.ticket_sales_enabled === true,
+    attendanceMode: normalizeAttendanceMode(row.attendance_mode),
   };
 }
 
@@ -728,7 +735,7 @@ async function duplicateEventForSession(session, sourceEventId, groupIds) {
       saleEnd: t.sale_ends_at,
       ticketType: t.ticket_type,
       displayOrder: t.display_order,
-      oneSeatOnly: t.ticket_type === 'Application-based',
+      categoryExclusivity: t.ticket_type === 'Application-based',
     });
     ticketCount += 1;
   }
@@ -915,7 +922,7 @@ async function createTicket({
   quantityAvailable,
   saleEnd,
   saleStart,
-  oneSeatOnly,
+  categoryExclusivity,
   displayOrder,
   ticketType,
 }) {
@@ -928,7 +935,7 @@ async function createTicket({
       : null;
   const type =
     ticketType ||
-    (oneSeatOnly || /application/i.test(String(name || '')) ? 'Application-based' : 'Standard');
+    (categoryExclusivity || /application/i.test(String(name || '')) ? 'Application-based' : 'Standard');
   const row = {
     event_id: eventId,
     name: name || 'Ticket',
@@ -1226,11 +1233,46 @@ async function createTicketsForEvents({
   refund,
   vatTreatment,
   attendeeExtras,
+  attendanceMode,
 }) {
   const sb = getSupabaseAdmin();
   const ids = await expandEventIdsToSeriesPeers(sb, eventIds);
-  const tiers = Array.isArray(tickets) ? tickets : [];
+  let tiers = Array.isArray(tickets) ? tickets : [];
   if (!ids.length || !tiers.length) return { created: 0, tickets: [] };
+
+  const mode = ['tickets', 'category_exclusivity', 'guest_programme', 'osop'].includes(String(attendanceMode || '').trim())
+    ? normalizeAttendanceMode(String(attendanceMode).trim())
+    : 'tickets';
+
+  if (mode === 'guest_programme') {
+    const { guestVisitTierPayload } = require('./guest-visits');
+    const { data: eventRows, error: eventRowsErr } = await sb
+      .from('events')
+      .select('organiser_id')
+      .in('id', ids);
+    if (eventRowsErr) throw new Error(eventRowsErr.message);
+    const organiserIds = [...new Set((eventRows || []).map((row) => row.organiser_id).filter(Boolean))];
+    if (!organiserIds.length) {
+      const e = new Error('guest_programme_requires_organiser');
+      e.status = 400;
+      throw e;
+    }
+    const { data: orgRows, error: orgErr } = await sb
+      .from('organisers')
+      .select('id, complimentary_visits_allowed')
+      .in('id', organiserIds);
+    if (orgErr) throw new Error(orgErr.message);
+    const blocked = (orgRows || []).find((org) => !Number(org.complimentary_visits_allowed));
+    if (blocked) {
+      const e = new Error(
+        'Enable complimentary guest visits on your organiser page (1 or 2) before using the guest visit programme.'
+      );
+      e.status = 400;
+      e.code = 'guest_programme_requires_complimentary_visits';
+      throw e;
+    }
+    tiers = [...tiers, guestVisitTierPayload()];
+  }
 
   await assertTicketsEditableForEvents(sb, ids);
 
@@ -1262,7 +1304,7 @@ async function createTicketsForEvents({
           quantityAvailable: tier.quantityAvailable,
           saleEnd: resolveTierSaleEnd(tier, eventStartsAt),
           saleStart: tier.saleStart,
-          oneSeatOnly: tier.oneSeatOnly,
+          categoryExclusivity: tier.categoryExclusivity,
           displayOrder: tier.displayOrder,
           ticketType: tier.ticketType,
         })
@@ -1270,12 +1312,14 @@ async function createTicketsForEvents({
     }
   }
 
-  const hasOsop = tiers.some(
-    (t) => t.oneSeatOnly || /application/i.test(String(t.ticketType || t.name || ''))
-  );
+  const hasCategoryExclusivity =
+    mode === 'category_exclusivity' ||
+    tiers.some(
+      (t) => t.categoryExclusivity || /application/i.test(String(t.ticketType || t.name || ''))
+    );
   const { error: approvalErr } = await sb
     .from('events')
-    .update({ auto_approve: !hasOsop })
+    .update({ auto_approve: !hasCategoryExclusivity, attendance_mode: mode })
     .in('id', ids);
   if (approvalErr) throw new Error(approvalErr.message);
 

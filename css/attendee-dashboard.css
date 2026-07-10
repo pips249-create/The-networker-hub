@@ -19,7 +19,7 @@
   --ad-red-light: #fbeaea;
   --ad-radius: 12px;
   --ad-radius-sm: 8px;
-  font-family: 'Poppins', system-ui, sans-serif;
+  font-family: 'DM Sans', system-ui, sans-serif;
   background: var(--ad-bg);
   color: var(--ad-text-dark);
   min-height: 100vh;

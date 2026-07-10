@@ -12,7 +12,7 @@
       rel="stylesheet"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e" />
@@ -24,12 +24,12 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260709f" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260710c" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260702b" />
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260708" data-root="../" data-page="organiser"></script>
+    <script src="../js/site-nav.js?v=20260713b" data-root="../" data-page="organiser"></script>
 
     <div id="org-signin" class="org-signin" hidden>
       <p class="org-section-sub">
@@ -301,7 +301,7 @@
               <button type="button" class="org-quick-card" data-org-shortcut="events-attendees" id="org-quick-review-applications" hidden>
                 <span class="org-quick-icon" aria-hidden="true">📝</span>
                 <span class="org-quick-label">Review applications <span class="org-quick-badge" id="org-quick-applications-badge" hidden></span></span>
-                <span class="org-quick-hint">Approve or deny One Seat Only applications</span>
+                <span class="org-quick-hint">Approve or deny Category Exclusivity applications</span>
               </button>
               <button type="button" class="org-quick-card" data-org-shortcut="events-reviews">
                 <span class="org-quick-icon" aria-hidden="true">★</span>
@@ -858,7 +858,7 @@
           <!-- Attendees -->
           <div class="org-sub-page" id="sub-events-attendees" data-events-panel="events-attendees">
             <p class="org-section-sub org-sub-lead">
-              Everyone registered or applied for your events — filter by event and export a CSV for your records.
+              Everyone registered or applied for your events — see who is new to your group vs returning, filter by event, and export a CSV.
             </p>
             <div class="org-attendee-data-notice org-notice org-notice--info" role="note">
               <p class="org-notice-title">Using attendee contact details</p>
@@ -872,13 +872,29 @@
               <select id="filter-attendees-event" aria-label="Filter by event">
                 <option value="all">All events</option>
               </select>
+              <select id="filter-attendees-relationship" aria-label="Filter by group relationship">
+                <option value="all">All attendees</option>
+                <option value="new">New to your group</option>
+                <option value="returning">Returning</option>
+              </select>
               <button type="button" class="org-btn org-btn-gold" id="btn-download-attendees-csv">
                 ⬇ Download attendees CSV
               </button>
             </div>
+            <div class="org-attendees-archive-nav" id="attendees-archive-nav">
+              <button type="button" class="org-inline-link org-attendees-archive-link" id="btn-attendees-view-archive" hidden>
+                Archived applications
+              </button>
+            </div>
+            <div class="org-applications-banner" id="attendees-seat-refill-banner" hidden role="status"></div>
+            <div class="org-attendees-relationship-summary" id="attendees-relationship-summary" hidden></div>
             <p class="org-attendees-filter-note" id="attendees-filter-note" hidden>
               Showing pending applications only.
               <button type="button" class="org-inline-link" id="btn-attendees-show-all">Show all attendees</button>
+            </p>
+            <p class="org-attendees-filter-note" id="attendees-archive-note" hidden>
+              Archived Category Exclusivity applications — declined applicants you can reconsider when a seat opens.
+              <button type="button" class="org-inline-link" id="btn-attendees-view-active">Back to attendees</button>
             </p>
             <p class="org-load-hint" id="attendees-load-hint" hidden>Loading attendees…</p>
             <p class="org-load-hint org-load-hint-error" id="attendees-load-error" hidden></p>
@@ -887,6 +903,7 @@
                 <thead>
                   <tr>
                     <th>Name</th>
+                    <th>Visits</th>
                     <th>Email</th>
                     <th>Event</th>
                     <th>Ticket</th>
@@ -1589,6 +1606,6 @@
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
     <script src="../js/organiser-payment-setup.js?v=20260709e"></script>
     <script src="../js/review-report.js?v=20260708"></script>
-    <script src="../js/organiser-dashboard.js?v=20260709g"></script>
+    <script src="../js/organiser-dashboard.js?v=20260710c"></script>
   </body>
 </html>

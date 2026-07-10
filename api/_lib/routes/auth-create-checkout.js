@@ -11,6 +11,11 @@ const { normalizeGuestNames, createRegistrationFromPayment } = require('../supab
 const { resolveTicketSalesEnabled } = require('../ticket-sales');
 const { assertRefundPolicyForPaidCheckout } = require('../event-refund-policy');
 const { isUuid } = require('../uuid');
+const {
+  isGuestVisitTicket,
+  assertGuestVisitBookingAllowed,
+  assertPaidMemberBookingAllowed,
+} = require('../guest-visits');
 
 function parseBody(req) {
   let body = req.body;
@@ -118,7 +123,7 @@ module.exports = async function handler(req, res) {
     const evRes = await sb
       .from('events')
       .select(
-        'id, title, slug, status, approval_status, ticket_sales_enabled, refund_policy, refund_policy_details, refund_terms_agreed, refund_terms_agreed_at, collect_dietary, collect_accessibility'
+        'id, title, slug, status, approval_status, ticket_sales_enabled, organiser_id, attendance_mode, refund_policy, refund_policy_details, refund_terms_agreed, refund_terms_agreed_at, collect_dietary, collect_accessibility'
       )
       .eq('id', eventId)
       .maybeSingle();
@@ -170,36 +175,77 @@ module.exports = async function handler(req, res) {
 
     let ticketName = 'Ticket';
     let unitPrice = 0;
+    let ticketRow = null;
 
     if (ticketId) {
       const tRes = await sb
         .from('tickets')
-        .select('id, name, price, event_id')
+        .select('id, name, price, event_id, ticket_type')
         .eq('id', ticketId)
         .maybeSingle();
       if (tRes.error) throw new Error(tRes.error.message);
       if (!tRes.data || tRes.data.event_id !== eventId) {
         return json(res, 404, { ok: false, error: 'ticket_not_found' });
       }
+      ticketRow = tRes.data;
       ticketName = String(tRes.data.name || ticketName).trim() || ticketName;
       unitPrice = parsePriceNum(tRes.data.price);
     } else {
       const tRes = await sb
         .from('tickets')
-        .select('id, name, price')
+        .select('id, name, price, ticket_type')
         .eq('event_id', eventId)
         .order('created_at', { ascending: true });
       if (tRes.error) throw new Error(tRes.error.message);
       const paid = (tRes.data || []).find((t) => parsePriceNum(t.price) > 0);
       if (paid) {
         ticketId = paid.id;
+        ticketRow = paid;
         ticketName = String(paid.name || ticketName).trim() || ticketName;
         unitPrice = parsePriceNum(paid.price);
       }
     }
 
+    const isGuestVisit = Boolean(ticketRow && isGuestVisitTicket(ticketRow));
+    if (isGuestVisit) {
+      unitPrice = 0;
+      requestedQty = 1;
+    }
+
+    const dietaryRequirements = String(body.dietaryRequirements || body.dietary_requirements || '')
+      .trim()
+      .slice(0, 500);
+    const accessibilityRequirements = String(
+      body.accessibilityRequirements || body.accessibility_requirements || ''
+    )
+      .trim()
+      .slice(0, 500);
+
     if (unitPrice <= 0) {
-      if (registrationId) {
+      if (isGuestVisit || registrationId) {
+        const qty = isGuestVisit ? 1 : requestedQty;
+        const guestNames = normalizeGuestNames(body.guestNames || body.guest_names, qty);
+        if (isGuestVisit) {
+          try {
+            await assertGuestVisitBookingAllowed(sb, {
+              organiserId: evRes.data.organiser_id,
+              attendeeId: session?.sub || null,
+              email: checkoutEmail,
+            });
+          } catch (guestErr) {
+            const code = guestErr.message || 'guest_visit_not_allowed';
+            const messages = {
+              guest_visits_not_enabled: 'Guest visits are not available for this organiser.',
+              guest_visits_exhausted:
+                'You have used all complimentary visits with this organiser. Book a member ticket instead.',
+            };
+            return json(res, guestErr.status || 400, {
+              ok: false,
+              error: code,
+              message: messages[code] || guestErr.message,
+            });
+          }
+        }
         const result = await createRegistrationFromPayment({
           email: checkoutEmail,
           name: checkoutName,
@@ -207,12 +253,13 @@ module.exports = async function handler(req, res) {
           eventId,
           ticketId,
           registrationId,
-          quantity: requestedQty,
+          quantity: qty,
           guestNames,
           dietaryRequirements,
           accessibilityRequirements,
           amountPaid: 0,
           paymentStatus: 'Free',
+          registrationKind: isGuestVisit ? 'guest_visit' : undefined,
         });
         return json(res, 200, {
           ok: true,
@@ -225,6 +272,24 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: 'free_ticket_use_complete_booking',
         message: 'This is a free ticket — no payment is required.',
+      });
+    }
+
+    try {
+      await assertPaidMemberBookingAllowed(sb, {
+        organiserId: evRes.data.organiser_id,
+        attendeeId: session?.sub || null,
+        email: checkoutEmail,
+        attendanceMode: evRes.data.attendance_mode,
+      });
+    } catch (guestErr) {
+      const code = guestErr.message || 'guest_visits_remaining';
+      return json(res, guestErr.status || 400, {
+        ok: false,
+        error: code,
+        message:
+          'Use your complimentary guest visit before booking a paid member ticket with this organiser.',
+        eligibility: guestErr.eligibility || null,
       });
     }
 
@@ -252,14 +317,6 @@ module.exports = async function handler(req, res) {
     if (qty > 1 && guestNames.length < qty - 1) {
       return json(res, 400, { ok: false, error: 'missing_guest_names' });
     }
-    const dietaryRequirements = String(body.dietaryRequirements || body.dietary_requirements || '')
-      .trim()
-      .slice(0, 500);
-    const accessibilityRequirements = String(
-      body.accessibilityRequirements || body.accessibility_requirements || ''
-    )
-      .trim()
-      .slice(0, 500);
     const siteUrl = String(process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(
       /\/$/,
       ''

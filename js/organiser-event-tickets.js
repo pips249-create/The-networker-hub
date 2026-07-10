@@ -1,5 +1,5 @@
 /**
- * Ticket setup for an event series — tiers, One Seat Only Policy, sale windows.
+ * Ticket setup for an event series — tiers, Category Exclusivity, sale windows.
  */
 (function () {
   const SERIES_STORAGE_KEY = 'hub_event_series';
@@ -25,6 +25,7 @@
   let paymentSetupState = null;
   let returnedFromStripe = false;
   let ticketsLocked = false;
+  let organiserComplimentaryVisits = 0;
 
   const SALE_END_OPTIONS = [
     { value: 'at_start', label: 'When the event starts' },
@@ -360,15 +361,39 @@
       btn.classList.toggle('is-active', btn.getAttribute('data-mode') === mode);
     });
     const ticketsPanel = document.getElementById('ee-panel-tickets');
-    const osopPanel = document.getElementById('ee-panel-osop');
+    const categoryExclusivityPanel = document.getElementById('ee-panel-category-exclusivity');
+    const guestNote = document.getElementById('ee-guest-programme-note');
+    const panelTitle = document.getElementById('ee-tickets-panel-title');
     const desc = document.getElementById('ee-mode-desc');
-    if (ticketsPanel) ticketsPanel.hidden = mode !== 'tickets';
-    if (osopPanel) osopPanel.hidden = mode !== 'osop';
+    const isGuest = mode === 'guest_programme';
+    if (ticketsPanel) ticketsPanel.hidden = mode === 'category_exclusivity';
+    if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = mode !== 'category_exclusivity';
+    if (guestNote) guestNote.hidden = !isGuest;
+    if (panelTitle) {
+      panelTitle.textContent = isGuest ? 'Member ticket types' : 'Ticket types';
+    }
+    const groupLink = document.getElementById('ee-guest-group-edit-link');
+    if (groupLink && seriesMeta.organiserGroupId) {
+      groupLink.href = 'group-edit.html?id=' + encodeURIComponent(seriesMeta.organiserGroupId);
+    }
     if (desc) {
-      desc.textContent =
-        mode === 'osop'
-          ? 'Application-based attendance — you review industry and job title, then approve or deny. Approved applicants pay via your payment link.'
-          : 'Standard open booking — set up one or more ticket types with prices and quantities. Attendees purchase directly.';
+      if (mode === 'category_exclusivity') {
+        desc.textContent =
+          'Application-based attendance — you review industry and job title, then approve or deny. Approved applicants pay via your payment link.';
+      } else if (isGuest) {
+        const visits = organiserComplimentaryVisits || 0;
+        desc.textContent =
+          visits > 0
+            ? 'Guest visit programme — new attendees get ' +
+              visits +
+              ' complimentary visit' +
+              (visits === 1 ? '' : 's') +
+              ' with your group before paid member tickets unlock. Add your member prices below.'
+            : 'Guest visit programme — enable complimentary visits on your organiser page first (1 or 2 visits).';
+      } else {
+        desc.textContent =
+          'Standard open booking — set up one or more ticket types with prices and quantities. Attendees purchase directly.';
+      }
     }
   }
 
@@ -640,6 +665,22 @@
     return { tickets, event, authFailed: false };
   }
 
+  function collectActiveTiers() {
+    if (attendanceMode === 'category_exclusivity') return collectCategoryExclusivityTiers();
+    return collectTiers();
+  }
+
+  async function loadOrganiserGuestVisitSetting(groupId) {
+    if (!groupId) {
+      organiserComplimentaryVisits = 0;
+      return;
+    }
+    const { ok, data } = await api('/api/organiser/groups?id=' + encodeURIComponent(groupId));
+    if (ok && data.group) {
+      organiserComplimentaryVisits = Number(data.group.complimentaryVisitsAllowed) || 0;
+    }
+  }
+
   function collectTiers() {
     const rows = document.querySelectorAll('.ee-tier-row');
     const tiers = [];
@@ -674,7 +715,7 @@
         saleEnd,
         saleEndOption: saleOption,
         saleEndCustom: customDt,
-        oneSeatOnly: isApp,
+        categoryExclusivity: isApp,
         ticketType: ticketKind,
         displayOrder: idx,
       });
@@ -730,7 +771,8 @@
         savedAt: Date.now(),
         eventIds: eventIds.slice(),
         attendanceMode: attendanceMode,
-        tiers: attendanceMode === 'osop' ? collectOsopTiers() : collectTiers(),
+        tiers:
+          attendanceMode === 'category_exclusivity' ? collectCategoryExclusivityTiers() : collectTiers(),
         vatTreatment: collectVatTreatment(),
         refund: collectRefundPayload(),
         foodOrDrinkIncluded: !!document.getElementById('ee-food-or-drink')?.checked,
@@ -763,9 +805,12 @@
 
   function restoreTicketDraft(draft) {
     if (!draft || typeof draft !== 'object') return false;
-    if (draft.attendanceMode === 'osop') {
-      setAttendanceMode('osop');
-      if (Array.isArray(draft.tiers) && draft.tiers[0]) prefillOsopFromTicket(draft.tiers[0]);
+    if (draft.attendanceMode === 'category_exclusivity') {
+      setAttendanceMode('category_exclusivity');
+      if (Array.isArray(draft.tiers) && draft.tiers[0]) prefillCategoryExclusivityFromTicket(draft.tiers[0]);
+    } else if (draft.attendanceMode === 'guest_programme') {
+      setAttendanceMode('guest_programme');
+      if (Array.isArray(draft.tiers) && draft.tiers.length) prefillTiers(draft.tiers);
     } else if (Array.isArray(draft.tiers) && draft.tiers.length) {
       setAttendanceMode('tickets');
       prefillTiers(draft.tiers);
@@ -900,7 +945,7 @@
       return;
     }
     try {
-      const tiers = attendanceMode === 'osop' ? collectOsopTiers() : collectTiers();
+      const tiers = collectActiveTiers();
       const refund = collectRefundPayload();
       const vat = collectVatTreatment();
       const hasPaid = tiersHavePaidPrice(tiers);
@@ -1012,47 +1057,52 @@
     return date + ' at ' + time;
   }
 
-  function bindOsopCloseFields() {
-    populateQuarterTimeSelect(document.getElementById('ee-osop-close-time'), '18:00');
+  function bindCategoryExclusivityCloseFields() {
+    populateQuarterTimeSelect(document.getElementById('ee-ce-close-time'), '18:00');
   }
 
-  function isOsopTicket(ticket) {
+  function isGuestVisitTicket(ticket) {
+    const kind = ticket.ticketType || '';
+    return /guest-visit/i.test(kind) || /^guest\s*visit$/i.test(ticket.name || '');
+  }
+
+  function isCategoryExclusivityTicket(ticket) {
     const kind = ticket.ticketType || '';
     return /application/i.test(kind) || /application to attend/i.test(ticket.name || '');
   }
 
-  function prefillOsopFromTicket(ticket) {
+  function prefillCategoryExclusivityFromTicket(ticket) {
     if (!ticket) return;
-    const priceEl = document.getElementById('ee-osop-price');
+    const priceEl = document.getElementById('ee-ce-price');
     if (priceEl) {
       priceEl.value = ticket.price === '' || ticket.price == null ? '0' : String(ticket.price);
     }
-    const placesEl = document.getElementById('ee-osop-places');
+    const placesEl = document.getElementById('ee-ce-places');
     if (placesEl) {
       placesEl.value =
         ticket.quantityAvailable == null || ticket.quantityAvailable === ''
           ? ''
           : String(ticket.quantityAvailable);
     }
-    const closeDateEl = document.getElementById('ee-osop-close-date');
-    const closeTimeEl = document.getElementById('ee-osop-close-time');
+    const closeDateEl = document.getElementById('ee-ce-close-date');
+    const closeTimeEl = document.getElementById('ee-ce-close-time');
     if (ticket.saleEnd) {
       if (closeDateEl) closeDateEl.value = isoToDateInput(ticket.saleEnd);
       if (closeTimeEl) populateQuarterTimeSelect(closeTimeEl, isoToTimeInput(ticket.saleEnd) || '18:00');
     }
-    setAttendanceMode('osop');
+    setAttendanceMode('category_exclusivity');
     existingTicketsLoaded = true;
   }
 
-  function collectOsopTiers() {
-    const price = document.getElementById('ee-osop-price').value;
-    const places = document.getElementById('ee-osop-places').value;
+  function collectCategoryExclusivityTiers() {
+    const price = document.getElementById('ee-ce-price').value;
+    const places = document.getElementById('ee-ce-places').value;
     const saleEnd = combineDateAndQuarterTime(
-      document.getElementById('ee-osop-close-date')?.value,
-      document.getElementById('ee-osop-close-time')?.value
+      document.getElementById('ee-ce-close-date')?.value,
+      document.getElementById('ee-ce-close-time')?.value
     );
     let description =
-      'One Seat Only Policy. Fixed application questions: (1) What industry are you in? (2) What is your job title?';
+      'Category Exclusivity. Fixed application questions: (1) What industry are you in? (2) What is your job title?';
     if (places) description += ' Max approved places: ' + places + '.';
     if (saleEnd) description += ' Applications close: ' + formatCloseLabel(saleEnd) + '.';
     return [
@@ -1063,7 +1113,7 @@
         status: 'Available',
         quantityAvailable: places === '' ? null : Number(places),
         saleEnd,
-        oneSeatOnly: true,
+        categoryExclusivity: true,
       },
     ];
   }
@@ -1140,7 +1190,7 @@
 
   async function init() {
     loadSeriesMeta();
-    bindOsopCloseFields();
+    bindCategoryExclusivityCloseFields();
     if (!eventIds.length) {
       showAlert('No events in this series. Go back and save your event dates first.', 'warn');
       return;
@@ -1201,9 +1251,17 @@
       if (loaded.event.organiserGroupId && !seriesMeta.organiserGroupId) {
         seriesMeta.organiserGroupId = loaded.event.organiserGroupId;
       }
+      if (loaded.event.attendanceMode === 'guest_programme') {
+        setAttendanceMode('guest_programme');
+      } else if (loaded.event.attendanceMode === 'category_exclusivity') {
+        setAttendanceMode('category_exclusivity');
+      }
       prefillRefundFromEvent(loaded.event);
       applyTicketsLockUi(loaded.event);
     }
+
+    await loadOrganiserGuestVisitSetting(seriesMeta.organiserGroupId);
+    setAttendanceMode(attendanceMode);
 
     await loadPaymentSetupState();
     await handleStripeConnectReturn();
@@ -1223,12 +1281,20 @@
     if (restoredDraft) {
       showAlert('Restored your ticket details from before bank setup. Review them, then publish when ready.', 'ok');
     } else if (loaded.tickets.length) {
-      const osopTicket = loaded.tickets.find(isOsopTicket);
-      if (osopTicket) {
-        prefillOsopFromTicket(osopTicket);
-        showAlert('Loaded your One Seat Only Policy settings. Saving will update all dates in this series.', 'ok');
+      const categoryExclusivityTicket = loaded.tickets.find(isCategoryExclusivityTicket);
+      const memberTickets = loaded.tickets.filter((t) => !isGuestVisitTicket(t));
+      if (loaded.event && loaded.event.attendanceMode === 'guest_programme') {
+        setAttendanceMode('guest_programme');
+        prefillTiers(memberTickets);
+        showAlert(
+          'Loaded your guest visit programme member tickets. Saving will update all dates in this series.',
+          'ok'
+        );
+      } else if (categoryExclusivityTicket) {
+        prefillCategoryExclusivityFromTicket(categoryExclusivityTicket);
+        showAlert('Loaded your Category Exclusivity settings. Saving will update all dates in this series.', 'ok');
       } else {
-        prefillTiers(loaded.tickets);
+        prefillTiers(memberTickets.length ? memberTickets : loaded.tickets);
         showAlert(
           'Loaded ' +
             loaded.tickets.length +
@@ -1248,14 +1314,19 @@
       updateTierSummary();
       updatePublishButton();
     });
-    document.getElementById('ee-mode-osop').addEventListener('click', () => {
-      setAttendanceMode('osop');
+    document.getElementById('ee-mode-guest')?.addEventListener('click', () => {
+      setAttendanceMode('guest_programme');
+      updateTierSummary();
+      updatePublishButton();
+    });
+    document.getElementById('ee-mode-category-exclusivity').addEventListener('click', () => {
+      setAttendanceMode('category_exclusivity');
       updatePublishButton();
     });
     bindRefundPolicy();
     bindVatOptions();
-    document.getElementById('ee-osop-price')?.addEventListener('input', updatePublishButton);
-    document.getElementById('ee-osop-price')?.addEventListener('change', updatePublishButton);
+    document.getElementById('ee-ce-price')?.addEventListener('input', updatePublishButton);
+    document.getElementById('ee-ce-price')?.addEventListener('change', updatePublishButton);
     updatePublishButton();
 
     if (!loaded.tickets.length && window.HubFlowTour && !isEmbedDrawer) {
@@ -1285,14 +1356,19 @@
     }
 
     const loading = window.organiserPageLoading;
-    const tiers = attendanceMode === 'osop' ? collectOsopTiers() : collectTiers();
+    const tiers = collectActiveTiers();
     if (!tiers.length) {
       const msg = publish
         ? 'Your event is not live until you publish a ticket type — please add at least one ticket tier above.'
         : 'Add at least one ticket type with a name.';
       showAlert(msg, publish ? 'warn' : '');
       if (publish) {
-        const panelId = attendanceMode === 'osop' ? 'ee-panel-osop' : 'ee-panel-tickets';
+        const panelId =
+          attendanceMode === 'category_exclusivity'
+            ? 'ee-panel-category-exclusivity'
+            : attendanceMode === 'guest_programme'
+              ? 'ee-guest-programme-note'
+              : 'ee-panel-tickets';
         document.getElementById(panelId)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         const warn = document.getElementById('ee-publish-warn');
         if (warn) warn.hidden = false;
@@ -1344,6 +1420,29 @@
         updatePublishButton();
         return;
       }
+      if (attendanceMode === 'guest_programme') {
+        if (!organiserComplimentaryVisits) {
+          showAlert(
+            'Enable complimentary guest visits on your organiser page (1 or 2) before publishing the guest visit programme.',
+            'warn'
+          );
+          document.getElementById('ee-guest-programme-note')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+          });
+          updatePublishButton();
+          return;
+        }
+        if (!tiersHavePaidPrice(tiers)) {
+          showAlert('Add at least one paid member ticket type for the guest visit programme.', 'warn');
+          document.getElementById('ee-panel-tickets')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+          });
+          updatePublishButton();
+          return;
+        }
+      }
     }
 
     const btn = document.getElementById('ee-tickets-submit');
@@ -1355,6 +1454,7 @@
       eventIds,
       tickets: tiers,
       publish,
+      attendanceMode,
       vatTreatment: collectVatTreatment(),
       attendeeExtras: attendeeExtras(),
       ...refund,
@@ -1412,7 +1512,7 @@
         return;
       }
       if (data.error === 'stripe_connect_required' || /connect stripe|bank details/i.test(String(data.message || ''))) {
-        refreshPaymentSetupCard(attendanceMode === 'osop' ? collectOsopTiers() : collectTiers());
+        refreshPaymentSetupCard(collectActiveTiers());
         showAlert(
           data.message ||
             'Add bank details before publishing paid tickets — use the button above, then try again.',

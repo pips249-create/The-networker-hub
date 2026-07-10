@@ -376,7 +376,7 @@ Non-code gates from `docs/COMPLIANCE-RUNBOOK.md`. Product compliance is largely 
 
 | Done | Item | Owner |
 |:----:|------|-------|
-| [ ] | **DPAs filed** — `docs/DPA-SUBPROCESSORS.md` + `docs/DPA-REGISTER.md` + `npm run check:dpas` | Catherine |
+| [x] | **DPAs filed** — `docs/DPA-SUBPROCESSORS.md` + `docs/DPA-REGISTER.md` + `npm run check:dpas` | Catherine |
 | [ ] | Solicitor review of `legal-policies.html` | Catherine |
 | [x] | GDPR SAR owner named (`docs/GDPR-SAR-PROCEDURE.md`) | Catherine |
 | [x] | Data breach incident lead named (`docs/DATA-BREACH-RESPONSE.md`) | Catherine |

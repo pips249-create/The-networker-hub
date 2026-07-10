@@ -10,6 +10,12 @@ const { publicOrganiserSlug } = require('./organiser-slug');
 
 const IN_CHUNK_SIZE = 80;
 
+function normalizeAttendanceMode(mode) {
+  const m = String(mode || '').trim();
+  if (m === 'osop') return 'category_exclusivity';
+  return m || 'tickets';
+}
+
 const BROWSE_ORGANISER_COLUMNS =
   'id,name,photo_url,description,listing_status,stripe_account_id,stripe_charges_enabled,stripe_connect_details_submitted,slug';
 
@@ -190,6 +196,12 @@ function ticketIsApplication(row, name) {
   return ticketType.includes('application') || /application to attend/.test(ticketName);
 }
 
+function ticketIsGuestVisit(row, ticketName) {
+  const ticketType = String(row.ticket_type || row.ticketType || '').trim();
+  if (ticketType === 'Guest-visit') return true;
+  return /^guest\s*visit$/i.test(String(ticketName || row.name || '').trim());
+}
+
 function ticketRowToTier(row, registrationCount) {
   const priceNum = parsePriceNum(row.price);
   const { display: price, priceKey } = normalizePrice(priceNum);
@@ -211,7 +223,8 @@ function ticketRowToTier(row, registrationCount) {
     label: name.slice(0, 48) || 'Ticket',
     stripePaymentLink: String(row.stripe_payment_link || '').trim(),
     ticketType,
-    oneSeatOnly: ticketIsApplication(row, name),
+    categoryExclusivity: ticketIsApplication(row, name),
+    isGuestVisit: ticketIsGuestVisit(row, name),
     saleEnd: row.sale_ends_at || null,
   };
 }
@@ -229,15 +242,15 @@ async function fetchRegistrationCountsByTicket(sb, ticketRows) {
       .from('registrations')
       .select('ticket_id, quantity')
       .in('ticket_id', chunk)
-      .neq('payment_status', 'Refunded')
-      .neq('application_status', 'Denied'));
+      .eq('application_status', 'Approved')
+      .neq('payment_status', 'Refunded'));
     if (error && /quantity/i.test(String(error.message || ''))) {
       ({ data, error } = await sb
         .from('registrations')
         .select('ticket_id')
         .in('ticket_id', chunk)
-        .neq('payment_status', 'Refunded')
-        .neq('application_status', 'Denied'));
+        .eq('application_status', 'Approved')
+        .neq('payment_status', 'Refunded'));
     }
     if (error) throw new Error(error.message);
     (data || []).forEach((row) => {
@@ -288,20 +301,24 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   const tiers = eventTickets.map((t) =>
     ticketRowToTier(t, t._registrationCount != null ? t._registrationCount : 0)
   );
-  tiers.sort((a, b) => {
+  const publicTiers = tiers.filter((t) => !t.isGuestVisit);
+  const pricedTiers = publicTiers.length ? publicTiers : tiers;
+  pricedTiers.sort((a, b) => {
     if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;
     return a.priceNum - b.priceNum;
   });
 
-  let priceNum = tiers.length ? Math.min(...tiers.map((t) => t.priceNum).filter((n) => n >= 0)) : 0;
-  if (!tiers.length) priceNum = 0;
+  let priceNum = pricedTiers.length
+    ? Math.min(...pricedTiers.map((t) => t.priceNum).filter((n) => n >= 0))
+    : 0;
+  if (!pricedTiers.length) priceNum = 0;
   const { display: price, priceKey } = normalizePrice(priceNum);
-  const hasFreeTickets = tiers.some((t) => t.priceNum === 0);
-  const hasPaidTickets = tiers.some((t) => t.priceNum > 0);
+  const hasFreeTickets = pricedTiers.some((t) => t.priceNum === 0);
+  const hasPaidTickets = pricedTiers.some((t) => t.priceNum > 0);
 
   const hasTicketTiers = eventTickets.length > 0;
   const spotsLeft = null;
-  const isSoldOut = hasTicketTiers && tiers.every((t) => t.soldOut);
+  const isSoldOut = hasTicketTiers && pricedTiers.length > 0 && pricedTiers.every((t) => t.soldOut);
   const ticketsOnSale = eventHasTicketsOnSale(eventTickets);
   const ticketSalesOpensAtDate = earliestTicketSaleStart(eventTickets);
   const ticketSalesOpensAt = ticketSalesOpensAtDate ? ticketSalesOpensAtDate.toISOString() : null;
@@ -394,7 +411,9 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     rating: Number(row.average_rating) || 0,
     reviews: Number(row.review_count) || 0,
     isApprovalRequired:
-      row.auto_approve === false || tiers.some((t) => t.oneSeatOnly || /application/i.test(t.ticketType || '')),
+      normalizeAttendanceMode(row.attendance_mode) === 'category_exclusivity' ||
+      row.auto_approve === false ||
+      tiers.some((t) => t.categoryExclusivity || /application/i.test(t.ticketType || '')),
     isSoldOut,
     isSalesClosed,
     isTicketSalesPending,
@@ -423,7 +442,12 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     locationSlug: slugLocation(location),
     industrySlug: slugIndustry(industry),
     formatSlug: slugFormat(format),
-    tickets: tiers.length ? tiers : [],
+    tickets: pricedTiers.length ? pricedTiers : [],
+    attendanceMode: normalizeAttendanceMode(row.attendance_mode),
+    complimentaryVisitsAllowed: organiser
+      ? Math.min(2, Math.max(0, Number(organiser.complimentary_visits_allowed) || 0))
+      : 0,
+    guestVisitTier: tiers.find((t) => t.isGuestVisit) || null,
     refundPolicy: row.refund_policy || null,
     refundPolicyDetails: row.refund_policy_details || null,
     refundCutoffDays: row.refund_cutoff_days != null ? Number(row.refund_cutoff_days) : null,

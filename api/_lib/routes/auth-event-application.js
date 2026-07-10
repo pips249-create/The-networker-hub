@@ -3,7 +3,7 @@ const { isSupabaseConfigured } = require('../supabase');
 const { getEventApplicationForSession } = require('../supabase-application-submissions');
 const { isUuid } = require('../uuid');
 
-/** GET — current attendee's OSOP application status for one event. */
+/** GET — current attendee's Category Exclusivity application status for one event. */
 module.exports = async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');

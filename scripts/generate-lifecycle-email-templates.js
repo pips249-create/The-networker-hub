@@ -133,7 +133,7 @@ const templates = [
   ['post-event-review-request.html', 'Leave a review', hero('&#9733;', '#fff4d6', '#b8860b', 'How was it?', '#b8860b', 'Share your experience',
     'Hi {{user_name}}, we hope you enjoyed <strong style="color:#1c2040;">{{event_name}}</strong>. A quick review helps other networkers discover great groups.') +
     ctaRow(btn('{{review_url}}', 'Leave a review &rarr;', '#1c2040'))],
-  ['osop-payment-reminder.html', 'Complete payment', hero('&#9203;', '#fff4d6', '#b8860b', 'Payment due', '#b8860b', 'Complete your booking',
+  ['category-exclusivity-payment-reminder.html', 'Complete payment', hero('&#9203;', '#fff4d6', '#b8860b', 'Payment due', '#b8860b', 'Complete your booking',
     'Hi {{user_name}}, you were approved for <strong style="color:#1c2040;">{{event_name}}</strong> but have not completed payment yet. Your seat is not secured until you pay.') +
     ctaRow(btn('{{hub_payment_url}}', 'Complete payment &rarr;', '#9a7aa8'))],
   ['event-almost-full.html', 'Almost full', hero('&#9888;', '#fff4d6', '#b8860b', 'Capacity alert', '#b8860b', 'Your event is almost full',

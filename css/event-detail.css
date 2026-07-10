@@ -27,7 +27,7 @@
   --shadow: var(--shadow-md);
   --radius: 16px;
   --radius-sm: 10px;
-  --font: "Poppins", system-ui, -apple-system, sans-serif;
+  --font: 'DM Sans', system-ui, -apple-system, sans-serif;
 }
 
 *,
@@ -1582,7 +1582,7 @@ a:hover {
   margin-bottom: 16px;
 }
 
-.tier.tier-osop {
+.tier.tier-category-exclusivity {
   display: block;
   cursor: default;
   padding: 0;
@@ -1591,18 +1591,18 @@ a:hover {
   box-shadow: none;
 }
 
-.tier.tier-osop:hover,
-.tier.tier-osop.selected {
+.tier.tier-category-exclusivity:hover,
+.tier.tier-category-exclusivity.selected {
   border: none;
   background: transparent;
   box-shadow: none;
 }
 
-.tier.tier-osop .tier-radio {
+.tier.tier-category-exclusivity .tier-radio {
   display: none;
 }
 
-.osop-tier-card {
+.category-exclusivity-tier-card {
   border: 1.5px solid var(--border-strong);
   border-radius: 12px;
   background: linear-gradient(160deg, var(--purple-50) 0%, var(--surface) 55%);
@@ -1610,7 +1610,7 @@ a:hover {
   overflow: hidden;
 }
 
-.osop-tier-badge {
+.category-exclusivity-tier-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1625,14 +1625,14 @@ a:hover {
   text-transform: uppercase;
 }
 
-.osop-tier-lead {
+.category-exclusivity-tier-lead {
   margin: 0 0 14px;
   font-size: 13.5px;
   line-height: 1.55;
   color: var(--ink-muted);
 }
 
-.osop-tier-steps {
+.category-exclusivity-tier-steps {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1640,7 +1640,7 @@ a:hover {
   gap: 10px;
 }
 
-.osop-tier-steps li {
+.category-exclusivity-tier-steps li {
   display: grid;
   grid-template-columns: 72px 1fr;
   gap: 4px 10px;
@@ -1651,21 +1651,21 @@ a:hover {
   border: 1px solid var(--border);
 }
 
-.osop-tier-steps strong {
+.category-exclusivity-tier-steps strong {
   font-size: 12px;
   font-weight: 700;
   color: var(--purple-dark);
   line-height: 1.4;
 }
 
-.osop-tier-steps span {
+.category-exclusivity-tier-steps span {
   grid-column: 2;
   font-size: 12px;
   line-height: 1.45;
   color: var(--ink-muted);
 }
 
-.osop-tier-meta {
+.category-exclusivity-tier-meta {
   margin: 12px 0 0;
   font-size: 12.5px;
   font-weight: 600;
@@ -1673,7 +1673,7 @@ a:hover {
   line-height: 1.45;
 }
 
-.osop-tier-price-row {
+.category-exclusivity-tier-price-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -1683,7 +1683,7 @@ a:hover {
   border-top: 1px solid var(--border);
 }
 
-.osop-tier-price-label {
+.category-exclusivity-tier-price-label {
   font-size: 12px;
   font-weight: 600;
   color: var(--ink-soft);
@@ -1691,7 +1691,7 @@ a:hover {
   letter-spacing: 0.04em;
 }
 
-.osop-tier-price {
+.category-exclusivity-tier-price {
   font-size: 22px;
   font-weight: 800;
   color: var(--purple-900);
@@ -1699,16 +1699,70 @@ a:hover {
   font-variant-numeric: tabular-nums;
 }
 
-.osop-tier-card.is-sold-out {
+.category-exclusivity-tier-card.is-sold-out {
   opacity: 0.72;
   background: #f3f4f6;
 }
 
-.ticket-panel.is-approval-mode .ticket-foot.osop-apply-foot[hidden] {
+.guest-visit-tier-card {
+  padding: 14px 16px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef6ff 100%);
+  border: 1.5px solid #c7d9f5;
+}
+
+.guest-visit-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #1d4ed8;
+  margin-bottom: 8px;
+}
+
+.guest-visit-tier-lead,
+.guest-visit-tier-meta {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.guest-visit-tier-price-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #dbeafe;
+}
+
+.guest-visit-tier-price-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.guest-visit-tier-price {
+  font-size: 22px;
+  font-weight: 700;
+  color: #166534;
+}
+
+.tier-guest-visit.selected {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 1px #93c5fd;
+}
+
+.ticket-panel.is-approval-mode .ticket-foot.category-exclusivity-apply-foot[hidden] {
   display: none !important;
 }
 
-.ticket-panel.is-approval-mode .ticket-foot.osop-apply-foot:not([hidden]) {
+.ticket-panel.is-approval-mode .ticket-foot.category-exclusivity-apply-foot:not([hidden]) {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1719,7 +1773,7 @@ a:hover {
   color: var(--ink-soft);
 }
 
-.osop-application-status {
+.category-exclusivity-application-status {
   display: none;
   margin-top: 4px;
   padding: 18px 16px;
@@ -1729,7 +1783,7 @@ a:hover {
   text-align: center;
 }
 
-.osop-application-status-icon {
+.category-exclusivity-application-status-icon {
   width: 44px;
   height: 44px;
   margin: 0 auto 12px;
@@ -1741,7 +1795,7 @@ a:hover {
   color: var(--purple-dark);
 }
 
-.osop-application-status-title {
+.category-exclusivity-application-status-title {
   margin: 0 0 8px;
   font-size: 17px;
   font-weight: 700;
@@ -1749,14 +1803,14 @@ a:hover {
   letter-spacing: -0.02em;
 }
 
-.osop-application-status-lead {
+.category-exclusivity-application-status-lead {
   margin: 0 0 14px;
   font-size: 13.5px;
   line-height: 1.6;
   color: var(--ink-muted);
 }
 
-.osop-application-status-link {
+.category-exclusivity-application-status-link {
   display: inline-block;
   font-size: 13px;
   font-weight: 700;
@@ -1764,7 +1818,7 @@ a:hover {
   text-decoration: none;
 }
 
-.osop-application-status-link:hover {
+.category-exclusivity-application-status-link:hover {
   text-decoration: underline;
 }
 
@@ -1774,11 +1828,11 @@ a:hover {
 .ticket-panel.is-application-submitted #ticket-secure-foot,
 .ticket-panel.is-application-submitted #ev-refund-badge,
 .ticket-panel.is-application-submitted .ticket-refund-details,
-.ticket-panel.is-application-submitted .osop-apply-foot {
+.ticket-panel.is-application-submitted .category-exclusivity-apply-foot {
   display: none !important;
 }
 
-.ticket-panel.is-application-submitted .osop-application-status:not([hidden]) {
+.ticket-panel.is-application-submitted .category-exclusivity-application-status:not([hidden]) {
   display: block;
 }
 

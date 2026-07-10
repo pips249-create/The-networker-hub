@@ -14,13 +14,13 @@
   <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e">
   <link rel="stylesheet" href="../css/fact-loader.css?v=20260613">
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260707">
-  <link rel="stylesheet" href="../css/organiser-profile.css?v=20260708a">
+  <link rel="stylesheet" href="../css/organiser-profile.css?v=20260710">
   <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260612f">
 </head>
 <body class="organiser-profile-page">
 
 <div id="hub-site-nav"></div>
-<script src="../js/site-nav.js?v=20260708" data-root="../" data-page="events"></script>
+<script src="../js/site-nav.js?v=20260713b" data-root="../" data-page="events"></script>
 
 <div
   class="hub-page-buffer hub-page-buffer--modal"
@@ -121,7 +121,8 @@
     <section class="org-profile-section org-profile-section--cta">
       <h2>Leave a review</h2>
       <p class="org-profile-desc">Review this organiser after attending one of their events. Reviews help others choose the right networking group.</p>
-      <button type="button" class="org-profile-btn" id="org-review-btn" disabled title="Coming soon">Leave a review</button>
+      <p class="org-review-action-status" id="org-review-status" hidden role="status"></p>
+      <button type="button" class="org-profile-btn org-profile-btn--primary" id="org-review-btn">Leave a review</button>
     </section>
       </div>
 
@@ -131,6 +132,53 @@
     </div>
   </div>
 </main>
+
+<div class="hub-rm-modal" id="hub-rm-modal" hidden>
+  <div class="hub-rm-modal-backdrop" id="hub-rm-backdrop"></div>
+  <div class="hub-rm-modal-panel" role="dialog" aria-modal="true" aria-labelledby="hub-rm-title">
+    <button type="button" class="hub-rm-modal-close" id="hub-rm-close" aria-label="Close">×</button>
+    <h2 class="hub-rm-modal-title" id="hub-rm-title">Leave a review</h2>
+    <p class="hub-rm-modal-sub" id="hub-rm-sub"></p>
+    <div class="hub-rm-pick-step" id="hub-rm-pick-step" hidden>
+      <div class="hub-rm-pick-list" id="hub-rm-pick-list" role="list"></div>
+    </div>
+    <form id="hub-rm-form" class="hub-rm-form" novalidate>
+      <div id="hub-rm-form-step">
+        <input type="hidden" id="hub-rm-event-id" name="eventId" value="" />
+        <fieldset class="hub-rm-stars-field">
+          <legend>Your rating</legend>
+          <div class="hub-rm-stars" id="hub-rm-stars" role="radiogroup" aria-label="Rating out of 5">
+            <button type="button" class="hub-rm-star" data-rating="1" aria-label="1 star">★</button>
+            <button type="button" class="hub-rm-star" data-rating="2" aria-label="2 stars">★</button>
+            <button type="button" class="hub-rm-star" data-rating="3" aria-label="3 stars">★</button>
+            <button type="button" class="hub-rm-star" data-rating="4" aria-label="4 stars">★</button>
+            <button type="button" class="hub-rm-star" data-rating="5" aria-label="5 stars">★</button>
+          </div>
+          <p class="hub-rm-rating-hint" id="hub-rm-rating-hint">Choose a star rating to continue</p>
+        </fieldset>
+        <div class="hub-rm-feedback-step" id="hub-rm-feedback-step" hidden>
+          <label class="hub-rm-label" for="hub-rm-text">
+            Your feedback
+            <span class="hub-rm-label-hint">Optional — shown on the organiser's public profile if you add it</span>
+          </label>
+          <textarea
+            id="hub-rm-text"
+            name="reviewText"
+            rows="4"
+            maxlength="2000"
+            placeholder="What was the host like? Would you attend again?"
+          ></textarea>
+          <button type="button" class="hub-rm-change-rating" id="hub-rm-change-rating">Change rating</button>
+        </div>
+      </div>
+      <p class="hub-rm-error" id="hub-rm-error" hidden role="alert"></p>
+      <div class="hub-rm-actions">
+        <button type="button" class="org-profile-btn" id="hub-rm-cancel">Cancel</button>
+        <button type="submit" class="org-profile-btn org-profile-btn--primary" id="hub-rm-submit" hidden>Submit review</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <div id="hub-site-footer"></div>
 <script src="../js/site-footer.js?v=20260610" data-root="../"></script>
@@ -142,6 +190,7 @@
 <script src="../js/listing-report.js?v=20260719"></script>
 <script src="../js/review-report.js?v=20260609"></script>
 <script src="../js/hub-organiser-favourites.js?v=20260630"></script>
-<script src="../js/organiser-detail.js?v=20260708a"></script>
+<script src="../js/hub-review-modal.js?v=20260710"></script>
+<script src="../js/organiser-detail.js?v=20260710"></script>
 </body>
 </html>

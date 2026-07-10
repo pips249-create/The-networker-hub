@@ -238,6 +238,7 @@
       contactEmail: row.contactEmail || '',
       imageUrl: row.imageUrl || '',
       logoUrl: row.logoUrl || '',
+      claimable: Boolean(row.claimable),
     };
   }
 

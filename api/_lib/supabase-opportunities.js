@@ -12,6 +12,7 @@ const {
 const { ensureOpportunitySlug, publicOpportunitySlug, slugMatchesPublicRow, isUuidSlug } =
   require('./opportunity-slug');
 const { scanOpportunityRedFlags, validateEarningsAttestation } = require('./opportunity-moderation');
+const { isHubSeedOwnerEmail } = require('./opportunity-hub-seed');
 
 const HOST_COLORS = [
   '#7a5c0a',
@@ -137,6 +138,7 @@ function rowToListing(row) {
     organiserId: row.organiser_id || '',
     ownerEmail: String(row.owner_email || '').toLowerCase(),
     ownerUserId: row.supabase_user_id || '',
+    claimable: isHubSeedOwnerEmail(row.owner_email),
     packageTier: row.package_tier || null,
     listingMonths: row.listing_months != null ? Number(row.listing_months) : null,
     listingPaidAt: row.listing_paid_at || null,

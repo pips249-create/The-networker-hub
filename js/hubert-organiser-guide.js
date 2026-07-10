@@ -35,7 +35,7 @@
       { label: 'Multiple dates (series)', prompt: 'How do I add more than one date to a recurring event series?' },
     ],
     'event-tickets': [
-      { label: 'One Seat Only Policy', prompt: 'What is One Seat Only Policy?' },
+      { label: 'Category Exclusivity', prompt: 'What is Category Exclusivity?' },
       { label: 'Application questions', prompt: 'Can I change the application questions asked?' },
       { label: 'See registrations', prompt: 'How can I see who has registered for my event?' },
       { label: 'Early bird pricing', prompt: 'How do I set up early bird ticket pricing?' },

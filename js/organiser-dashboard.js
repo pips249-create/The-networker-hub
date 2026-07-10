@@ -25,6 +25,8 @@
     reviewsGroup: 'all',
     attendeesEvent: 'all',
     attendeesPendingOnly: false,
+    attendeesRelationship: 'all',
+    attendeesView: 'active',
     cancellationsEvent: 'all',
   };
 
@@ -837,8 +839,8 @@
         type: 'action',
         title:
           pending.length === 1
-            ? 'One Seat Only application needs your decision'
-            : pending.length + ' One Seat Only applications need your decision',
+            ? 'Category Exclusivity application needs your decision'
+            : pending.length + ' Category Exclusivity applications need your decision',
         text:
           pending.length === 1
             ? '<strong>' +
@@ -846,12 +848,40 @@
               '</strong> applied for a seat at <strong>' +
               esc(first.eventTitle || 'your event') +
               '</strong>. Check their industry and job title match your event rules, then approve or decline their seat.'
-            : 'People have applied for seats at your One Seat Only events. Review each applicant\'s industry and job title, then approve or decline before the event.',
+            : 'People have applied for seats at your Category Exclusivity events. Review each applicant\'s industry and job title, then approve or decline before the event.',
         actions:
           '<div class="org-notice-chips">' +
           preview +
           more +
           '</div><button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="events-attendees">Open attendees &amp; applications</button>',
+      });
+    }
+
+    const refillOps = seatRefillOpportunities();
+    if (refillOps.length) {
+      const totalArchived = refillOps.reduce((sum, op) => sum + op.archivedCount, 0);
+      const totalOpen = refillOps.reduce((sum, op) => sum + op.openSeats, 0);
+      notices.push({
+        id: 'seat-refill',
+        type: 'action',
+        title:
+          refillOps.length === 1
+            ? 'Seat available — archived applications to review'
+            : totalOpen + ' seats available across your Category Exclusivity events',
+        text:
+          refillOps.length === 1
+            ? '<strong>' +
+              esc(refillOps[0].eventTitle) +
+              '</strong> has ' +
+              (refillOps[0].openSeats === 1 ? '1 seat' : refillOps[0].openSeats + ' seats') +
+              ' open and ' +
+              (refillOps[0].archivedCount === 1
+                ? '1 archived application'
+                : refillOps[0].archivedCount + ' archived applications') +
+              ' you can reconsider.'
+            : 'You have archived applicants who may fit open seats. Review archived applications in Attendees.',
+        actions:
+          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="events-attendees" data-attendees-archive="1">Review archived applications</button>',
       });
     }
 
@@ -1046,7 +1076,15 @@
       btn.addEventListener('click', () => {
         const route = btn.getAttribute('data-org-route');
         closeNotificationsPanel();
-        if (route === 'events-attendees') filters.attendeesPendingOnly = true;
+        if (route === 'events-attendees') {
+          if (btn.getAttribute('data-attendees-archive') === '1') {
+            filters.attendeesView = 'archive';
+            filters.attendeesPendingOnly = false;
+          } else {
+            filters.attendeesView = 'active';
+            filters.attendeesPendingOnly = true;
+          }
+        }
         setRoute(route);
         if (route === 'events-attendees') loadAttendeesAll().then(() => renderAttendees());
       });
@@ -1359,6 +1397,7 @@
       const payment = String(row.paymentStatus || row.status || '').trim();
       if (payment === 'Refunded') return;
       if (String(row.applicationStatus || '') === 'Denied') return;
+      if (String(row.applicationStatus || '') === 'Pending') return;
       count += Math.max(1, Number(row.quantity) || 1);
     });
     return count;
@@ -1433,6 +1472,7 @@
     state.attendeesAll.forEach(function (row) {
       if (row.eventId !== eventId) return;
       if (String(row.applicationStatus || '') === 'Denied') return;
+      if (String(row.applicationStatus || '') === 'Pending') return;
       if (String(row.paymentStatus || '').trim() !== 'Paid') return;
       count += Math.max(1, Number(row.quantity) || 1);
     });
@@ -1860,7 +1900,10 @@
     const titles = {
       'events-list': ['My Events', 'Manage all your event listings — click any event name to edit.'],
       'events-tickets': ['Tickets', 'All ticket types across your events.'],
-      'events-attendees': ['Attendees', 'Registrations and OSOP applications for your events — filter by event and download a CSV.'],
+      'events-attendees': [
+        'Attendees',
+        'Registrations and Category Exclusivity applications — see who is new to your group vs returning, filter by event, and export a CSV.',
+      ],
       'events-cancellations': [
         'Cancellations',
         'Bookings attendees cancelled themselves — use the booking reference for Stripe or support, and check whether a refund may be due.',
@@ -1916,6 +1959,136 @@
     set('tab-count-revenue', totalRevenueDisplay());
   }
 
+  function archivedApplicationsList() {
+    return state.attendeesAll.filter(
+      (a) =>
+        a.isCategoryExclusivityApplication && String(a.applicationStatus || '').trim() === 'Denied'
+    );
+  }
+
+  function eventApplicationTicket(eventId) {
+    return (
+      state.tickets.find((t) => {
+        if (t.eventId !== eventId) return false;
+        const name = String(t.name || '').toLowerCase();
+        const type = String(t.ticketType || t.ticket_type || '');
+        return /application/i.test(type) || /application to attend/i.test(name);
+      }) || null
+    );
+  }
+
+  function countApprovedApplicationSeats(eventId) {
+    let count = 0;
+    state.attendeesAll.forEach((row) => {
+      if (row.eventId !== eventId) return;
+      if (!row.isCategoryExclusivityApplication) return;
+      if (String(row.applicationStatus || '').trim() !== 'Approved') return;
+      count += Math.max(1, Number(row.quantity) || 1);
+    });
+    return count;
+  }
+
+  function seatRefillOpportunities() {
+    const ops = [];
+    const seen = new Set();
+    state.attendeesAll.forEach((row) => {
+      if (!row.isCategoryExclusivityApplication) return;
+      if (seen.has(row.eventId)) return;
+      seen.add(row.eventId);
+      const ticket = eventApplicationTicket(row.eventId);
+      if (!ticket || ticket.quantityAvailable == null || ticket.quantityAvailable === '') return;
+      const cap = Math.max(0, Number(ticket.quantityAvailable) || 0);
+      if (cap <= 0) return;
+      const filled = countApprovedApplicationSeats(row.eventId);
+      const openSeats = cap - filled;
+      if (openSeats <= 0) return;
+      const archived = archivedApplicationsList().filter((a) => a.eventId === row.eventId);
+      if (!archived.length) return;
+      const ev = state.events.find((e) => e.id === row.eventId);
+      ops.push({
+        eventId: row.eventId,
+        eventTitle: ev?.title || row.eventTitle || 'Event',
+        openSeats,
+        archivedCount: archived.length,
+      });
+    });
+    return ops;
+  }
+
+  function setAttendeesView(view) {
+    filters.attendeesView = view === 'archive' ? 'archive' : 'active';
+    filters.attendeesPendingOnly = false;
+    listPages.attendees = 1;
+    renderAttendees();
+  }
+
+  function renderAttendeesArchiveNav() {
+    const link = document.getElementById('btn-attendees-view-archive');
+    const archiveNote = document.getElementById('attendees-archive-note');
+    const filterNote = document.getElementById('attendees-filter-note');
+    const archivedCount = archivedApplicationsList().length;
+    if (link) {
+      if (filters.attendeesView === 'archive') {
+        link.hidden = true;
+      } else {
+        link.hidden = archivedCount < 1;
+        link.textContent =
+          archivedCount === 1
+            ? 'Archived applications (1)'
+            : 'Archived applications (' + String(archivedCount) + ')';
+      }
+    }
+    if (archiveNote) archiveNote.hidden = filters.attendeesView !== 'archive';
+    if (filterNote && filters.attendeesView === 'archive') filterNote.hidden = true;
+  }
+
+  function renderSeatRefillBanner() {
+    const banner = document.getElementById('attendees-seat-refill-banner');
+    if (!banner) return;
+    if (filters.attendeesView === 'archive') {
+      banner.hidden = true;
+      return;
+    }
+    const opportunities = seatRefillOpportunities();
+    const filtered =
+      filters.attendeesEvent !== 'all'
+        ? opportunities.filter((op) => op.eventId === filters.attendeesEvent)
+        : opportunities;
+    if (!filtered.length) {
+      banner.hidden = true;
+      return;
+    }
+    const lines = filtered
+      .slice(0, 3)
+      .map((op) => {
+        const seatLabel = op.openSeats === 1 ? '1 seat' : op.openSeats + ' seats';
+        const archiveLabel =
+          op.archivedCount === 1 ? '1 archived application' : op.archivedCount + ' archived applications';
+        return (
+          '<p><strong>' +
+          esc(op.eventTitle) +
+          '</strong> has ' +
+          seatLabel +
+          ' available and ' +
+          archiveLabel +
+          ' you can reconsider.</p>'
+        );
+      })
+      .join('');
+    const more =
+      filtered.length > 3
+        ? '<p>+' + String(filtered.length - 3) + ' more events with open seats.</p>'
+        : '';
+    banner.innerHTML =
+      lines +
+      more +
+      '<div class="org-applications-banner-actions">' +
+      '<button type="button" class="org-applications-banner-cta" id="btn-attendees-seat-refill-archive">Review archived applications</button>' +
+      '</div>';
+    banner.hidden = false;
+    banner.classList.add('org-applications-banner-seat-refill');
+  }
+
   function pendingApplicationsCount() {
     return pendingApplicationsList().length;
   }
@@ -1951,15 +2124,68 @@
     updatePendingApplicationsUi();
   }
 
+  function attendeeVisitCount(a) {
+    if (a.visitCount != null && Number.isFinite(Number(a.visitCount))) {
+      return Math.max(1, Number(a.visitCount));
+    }
+    const rel = String(a.groupRelationship || '').trim();
+    if (!rel || rel === 'unknown') return null;
+    return Math.max(1, (Number(a.priorVisitCount) || 0) + 1);
+  }
+
+  function attendeeVisitCountLabel(a) {
+    const n = attendeeVisitCount(a);
+    if (n == null) return '';
+    if (n === 1) return '1st visit';
+    return n + ' visits';
+  }
+
+  function attendeeGroupRelationshipLabel(a) {
+    const rel = String(a.groupRelationship || '').trim();
+    if (rel === 'returning') return 'Returning';
+    if (rel === 'new') return 'New to your group';
+    return '';
+  }
+
+  function attendeeGroupRelationshipBadgeHtml(a) {
+    const n = attendeeVisitCount(a);
+    if (n == null) {
+      return '<span class="org-attendee-rel-unknown">—</span>';
+    }
+    const rel = String(a.groupRelationship || '').trim();
+    const label = n === 1 ? '1st visit' : n + ' visits';
+    const cls = rel === 'new' ? 'org-badge-new' : 'org-badge-returning';
+    const hint =
+      rel === 'returning' && n > 1
+        ? ' title="Including this booking — ' + n + ' Hub bookings with your organiser page"'
+        : rel === 'new'
+          ? ' title="First Hub booking with your organiser page"'
+          : '';
+    return (
+      '<span class="org-badge org-badge-visit ' +
+      cls +
+      '"' +
+      hint +
+      '>' +
+      esc(label) +
+      '</span>'
+    );
+  }
+
   function attendeeStatusLabel(a) {
     const applicationStatus = String(a.applicationStatus || 'Approved').trim();
     if (applicationStatus === 'Pending') return 'Application pending';
-    if (applicationStatus === 'Denied') return 'Application denied';
+    if (applicationStatus === 'Denied') {
+      return filters.attendeesView === 'archive' ? 'Archived' : 'Application denied';
+    }
     return 'Confirmed';
   }
 
   function attendeeStatusBadgeHtml(a) {
     const applicationStatus = String(a.applicationStatus || 'Approved').trim();
+    if (filters.attendeesView === 'archive' && applicationStatus === 'Denied') {
+      return '<span class="org-badge org-badge-archived">Archived</span>';
+    }
     if (applicationStatus === 'Pending') {
       return '<span class="org-badge org-badge-gold">Pending review</span>';
     }
@@ -1983,13 +2209,78 @@
 
   function filteredAttendeesList() {
     let list = state.attendeesAll.slice();
+    if (filters.attendeesView === 'archive') {
+      list = list.filter(
+        (a) =>
+          a.isCategoryExclusivityApplication && String(a.applicationStatus || '').trim() === 'Denied'
+      );
+      list.sort((a, b) => {
+        const ta = a.applicationDecidedAt || a.registeredAt;
+        const tb = b.applicationDecidedAt || b.registeredAt;
+        return new Date(ta || 0).getTime() - new Date(tb || 0).getTime();
+      });
+    } else {
+      list = list.filter(
+        (a) =>
+          !(
+            a.isCategoryExclusivityApplication &&
+            String(a.applicationStatus || '').trim() === 'Denied'
+          )
+      );
+    }
     if (filters.attendeesEvent !== 'all') {
       list = list.filter((a) => a.eventId === filters.attendeesEvent);
     }
     if (filters.attendeesPendingOnly) {
       list = list.filter((a) => String(a.applicationStatus || '') === 'Pending');
     }
+    if (filters.attendeesRelationship === 'new') {
+      list = list.filter((a) => String(a.groupRelationship || '') === 'new');
+    } else if (filters.attendeesRelationship === 'returning') {
+      list = list.filter((a) => String(a.groupRelationship || '') === 'returning');
+    }
     return list;
+  }
+
+  function attendeesRelationshipSummary(list) {
+    let newCount = 0;
+    let returningCount = 0;
+    (list || []).forEach((a) => {
+      const rel = String(a.groupRelationship || '').trim();
+      if (rel === 'new') newCount += 1;
+      else if (rel === 'returning') returningCount += 1;
+    });
+    return { newCount, returningCount, total: (list || []).length };
+  }
+
+  function renderAttendeesSummary(list) {
+    const el = document.getElementById('attendees-relationship-summary');
+    if (!el) return;
+    const summary = attendeesRelationshipSummary(list);
+    if (!summary.total) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    el.hidden = false;
+    const parts = [];
+    if (summary.newCount) {
+      parts.push(
+        '<span class="org-attendees-summary-pill org-attendees-summary-pill--new"><strong>' +
+          summary.newCount +
+          '</strong> new to your group</span>'
+      );
+    }
+    if (summary.returningCount) {
+      parts.push(
+        '<span class="org-attendees-summary-pill org-attendees-summary-pill--returning"><strong>' +
+          summary.returningCount +
+          '</strong> returning</span>'
+      );
+    }
+    el.innerHTML =
+      parts.join('') +
+      '<span class="org-attendees-summary-note">Based on Hub bookings with your organiser page — not annual membership records.</span>';
   }
 
   function fillAttendeesEventFilter() {
@@ -2055,6 +2346,8 @@
     }
     const header = [
       'Name',
+      'Visits',
+      'Relationship',
       'Other attendees',
       'Email',
       'Phone',
@@ -2072,6 +2365,8 @@
     const lines = rows.map((a) =>
       [
         a.name,
+        attendeeVisitCountLabel(a),
+        attendeeGroupRelationshipLabel(a),
         (a.guestNames || []).join('; '),
         a.email,
         a.phone || '',
@@ -2183,7 +2478,7 @@
         '"><span class="org-application-btn-icon" aria-hidden="true">✓</span>Approve</button>' +
         '<button type="button" class="org-application-deny-btn" data-show-deny-form="' +
         esc(a.id) +
-        '"><span class="org-application-btn-icon" aria-hidden="true">✕</span>Deny</button>' +
+        '"><span class="org-application-btn-icon" aria-hidden="true">✕</span>Decline &amp; archive</button>' +
         '</div>' +
         '<button type="button" class="org-application-resend-link" data-resend-application-alert="' +
         esc(a.id) +
@@ -2196,11 +2491,11 @@
         '<textarea id="deny-note-' +
         esc(a.id) +
         '" class="org-application-deny-note" maxlength="400" rows="3" placeholder="e.g. This session is full for founders in your sector. Try our open networking events instead."></textarea>' +
-        '<p class="org-application-deny-hint">Keep this professional and event-related. Leave blank for a standard message.</p>' +
+        '<p class="org-application-deny-hint">Keep this professional and event-related. Leave blank for a standard message. They will move to archived applications and you can reconsider them later if a seat opens.</p>' +
         '<div class="org-application-deny-panel-actions">' +
         '<button type="button" class="org-application-deny-confirm-btn" data-confirm-deny-application="' +
         esc(a.id) +
-        '">Send denial</button>' +
+        '">Send decline &amp; archive</button>' +
         '<button type="button" class="org-application-deny-cancel-btn" data-cancel-deny-application="' +
         esc(a.id) +
         '">Cancel</button>' +
@@ -2217,6 +2512,28 @@
         '<button type="button" class="org-application-resend-approval-btn" data-resend-approval-email="' +
         esc(a.id) +
         '">Resend payment email</button>' +
+        '</div>'
+      );
+    }
+    if (
+      filters.attendeesView === 'archive' &&
+      a.isCategoryExclusivityApplication &&
+      String(a.applicationStatus || '') === 'Denied'
+    ) {
+      return (
+        '<div class="org-application-review org-application-review--archive" data-review-id="' +
+        esc(a.id) +
+        '">' +
+        '<p class="org-application-review-label">Archived application</p>' +
+        '<p class="org-application-review-hint">Approve now if a seat is open, or move back to pending for another review.</p>' +
+        '<div class="org-application-review-buttons">' +
+        '<button type="button" class="org-application-approve-btn" data-reconsider-application="' +
+        esc(a.id) +
+        '" data-reconsider-mode="approve"><span class="org-application-btn-icon" aria-hidden="true">✓</span>Approve now</button>' +
+        '<button type="button" class="org-application-reconsider-pending-btn" data-reconsider-application="' +
+        esc(a.id) +
+        '" data-reconsider-mode="pending">Review again</button>' +
+        '</div>' +
         '</div>'
       );
     }
@@ -2286,6 +2603,8 @@
       if (action === 'deny') {
         attendee.applicationDenialReason =
           String(data.registration?.application_denial_reason || denialReason || '').trim();
+        attendee.applicationDecidedAt =
+          data.registration?.application_decided_at || new Date().toISOString();
       }
       if (action === 'approve' && String(data.paymentStatus || '') === 'Free') {
         attendee.paymentStatus = 'Free';
@@ -2298,7 +2617,66 @@
     updatePendingApplicationsNavBadge();
     renderAttendees();
     showOrganiserAlert(
-      data.message || (action === 'approve' ? 'Application approved.' : 'Application denied.'),
+      data.message ||
+        (action === 'approve' ? 'Application approved.' : 'Application declined and archived.'),
+      false
+    );
+    alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  async function reconsiderApplication(registrationId, mode) {
+    const attendee = state.attendeesAll.find((row) => row.id === registrationId);
+    const name = attendee ? attendee.name : 'this applicant';
+    const reconsiderMode = mode === 'pending' ? 'pending' : 'approve';
+    if (reconsiderMode === 'approve') {
+      const ok = window.confirm('Approve ' + name + ' from archived applications? They will be notified by email.');
+      if (!ok) return;
+    }
+
+    const { ok, data } = await api('/api/organiser/application-decisions', {
+      method: 'POST',
+      body: JSON.stringify({
+        registrationId,
+        action: 'reconsider',
+        reconsiderMode,
+      }),
+    });
+
+    if (!ok || !data.ok) {
+      const message =
+        data.error === 'applications_full'
+          ? 'No seats available for this event. Approve another attendee first, or increase places on the ticket.'
+          : data.message || data.error || 'Could not update this archived application.';
+      showOrganiserAlert(message, true);
+      alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+
+    if (attendee) {
+      attendee.applicationStatus = data.applicationStatus || (reconsiderMode === 'approve' ? 'Approved' : 'Pending');
+      if (reconsiderMode === 'pending') {
+        attendee.applicationDenialReason = '';
+        attendee.applicationDecidedAt = '';
+      } else if (reconsiderMode === 'approve' && String(data.paymentStatus || '') === 'Free') {
+        attendee.paymentStatus = 'Free';
+        attendee.amountDisplay = 'Free';
+        attendee.applicationDenialReason = '';
+      } else if (reconsiderMode === 'approve') {
+        attendee.paymentStatus = data.paymentStatus || 'Pending';
+        attendee.amountDisplay = 'Awaiting payment';
+        attendee.applicationDenialReason = '';
+      }
+    }
+    updatePendingApplicationsNavBadge();
+    if (reconsiderMode === 'approve' && filters.attendeesView === 'archive') {
+      filters.attendeesView = 'active';
+    }
+    renderAttendees();
+    showOrganiserAlert(
+      data.message ||
+        (reconsiderMode === 'approve'
+          ? 'Application approved from archive.'
+          : 'Application moved back to pending review.'),
       false
     );
     alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2331,18 +2709,33 @@
     const empty = document.getElementById('attendees-empty');
     if (!body) return;
     renderAttendeesFilterNote();
+    renderAttendeesArchiveNav();
+    renderSeatRefillBanner();
     const list = filteredAttendeesList();
+    renderAttendeesSummary(list);
     body.innerHTML = '';
 
     if (!list.length) {
       const hasAttendees = state.attendeesAll.length > 0;
       let title = 'No registrations yet';
       let text = 'Attendees appear here when people book tickets for your events.';
-      if (hasAttendees) {
-        title = filters.attendeesPendingOnly ? 'No pending applications' : 'No matching attendees';
-        text = filters.attendeesPendingOnly
-          ? 'No pending applications match this filter.'
-          : 'No attendees match this event filter.';
+      if (filters.attendeesView === 'archive') {
+        title = 'No archived applications';
+        text = 'Declined Category Exclusivity applications appear here so you can reconsider them when a seat opens.';
+      } else if (hasAttendees) {
+        if (filters.attendeesPendingOnly) {
+          title = 'No pending applications';
+          text = 'No pending applications match this filter.';
+        } else if (filters.attendeesRelationship !== 'all') {
+          title =
+            filters.attendeesRelationship === 'new'
+              ? 'No new attendees in this view'
+              : 'No returning attendees in this view';
+          text = 'Try a different filter or show all attendees.';
+        } else {
+          title = 'No matching attendees';
+          text = 'No attendees match this event filter.';
+        }
       }
       setOrgEmpty(empty, { show: true, title, text });
       updatePaginationNav('attendees', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
@@ -2365,10 +2758,21 @@
         tr.className = 'org-attendee-row-pending';
       } else if (a.needsPayment) {
         tr.className = 'org-attendee-row-awaiting-payment';
+      } else if (
+        filters.attendeesView === 'archive' &&
+        String(a.applicationStatus || '') === 'Denied'
+      ) {
+        tr.className = 'org-attendee-row-archived';
       }
+      const registeredLabel =
+        filters.attendeesView === 'archive' && a.applicationDecidedAt
+          ? formatDateShort(a.applicationDecidedAt)
+          : formatDateShort(a.registeredAt);
       tr.innerHTML =
         '<td class="org-td-name">' +
         nameCell +
+        '</td><td class="org-td-relationship">' +
+        attendeeGroupRelationshipBadgeHtml(a) +
         '</td><td>' +
         esc(a.email || '—') +
         '</td><td>' +
@@ -2384,7 +2788,7 @@
         '</td><td>' +
         attendeePaidDisplay(a) +
         '</td><td>' +
-        esc(formatDateShort(a.registeredAt)) +
+        esc(registeredLabel) +
         '</td><td class="org-td-actions">' +
         attendeeActionsHtml(a) +
         '</td>';
@@ -7015,6 +7419,15 @@
       });
     }
 
+    const attendeesRelationshipFilter = document.getElementById('filter-attendees-relationship');
+    if (attendeesRelationshipFilter) {
+      attendeesRelationshipFilter.addEventListener('change', () => {
+        filters.attendeesRelationship = attendeesRelationshipFilter.value;
+        listPages.attendees = 1;
+        renderAttendees();
+      });
+    }
+
     const cancellationsEventFilter = document.getElementById('filter-cancellations-event');
     if (cancellationsEventFilter) {
       cancellationsEventFilter.addEventListener('change', () => {
@@ -7034,6 +7447,25 @@
       btnAttendeesShowAll.addEventListener('click', clearAttendeesPendingFilter);
     }
 
+    const btnAttendeesViewArchive = document.getElementById('btn-attendees-view-archive');
+    if (btnAttendeesViewArchive) {
+      btnAttendeesViewArchive.addEventListener('click', () => setAttendeesView('archive'));
+    }
+
+    const btnAttendeesViewActive = document.getElementById('btn-attendees-view-active');
+    if (btnAttendeesViewActive) {
+      btnAttendeesViewActive.addEventListener('click', () => setAttendeesView('active'));
+    }
+
+    const attendeesPanel = document.getElementById('sub-events-attendees');
+    if (attendeesPanel && !attendeesPanel.dataset.seatRefillBound) {
+      attendeesPanel.dataset.seatRefillBound = '1';
+      attendeesPanel.addEventListener('click', (e) => {
+        const refillBtn = e.target.closest('#btn-attendees-seat-refill-archive');
+        if (refillBtn) setAttendeesView('archive');
+      });
+    }
+
     const attendeesBody = document.getElementById('attendees-body');
     if (attendeesBody && !attendeesBody.dataset.reviewBound) {
       attendeesBody.dataset.reviewBound = '1';
@@ -7044,6 +7476,7 @@
         const cancelDenyBtn = e.target.closest('[data-cancel-deny-application]');
         const resendBtn = e.target.closest('[data-resend-application-alert]');
         const resendApprovalBtn = e.target.closest('[data-resend-approval-email]');
+        const reconsiderBtn = e.target.closest('[data-reconsider-application]');
         if (approveBtn) {
           reviewApplication(approveBtn.getAttribute('data-approve-application'), 'approve');
           return;
@@ -7069,6 +7502,13 @@
         }
         if (resendApprovalBtn) {
           resendApprovalEmail(resendApprovalBtn.getAttribute('data-resend-approval-email'));
+          return;
+        }
+        if (reconsiderBtn) {
+          reconsiderApplication(
+            reconsiderBtn.getAttribute('data-reconsider-application'),
+            reconsiderBtn.getAttribute('data-reconsider-mode')
+          );
         }
       });
     }

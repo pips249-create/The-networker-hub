@@ -30,7 +30,7 @@ const LOW_EVENTS_MAX_UPCOMING = 3;
 const LOW_EVENTS_NUDGE_COOLDOWN_DAYS = 30;
 const POST_EVENT_REVIEW_HOURS = 36;
 const POST_EVENT_REVIEW_WINDOW_HOURS = 12;
-const OSOP_PAYMENT_REMINDER_HOURS = 48;
+const CATEGORY_EXCLUSIVITY_PAYMENT_REMINDER_HOURS = 48;
 const STRIPE_NUDGE_COOLDOWN_DAYS = 14;
 const SIGNUP_NUDGE_DELAY_DAYS = 3;
 const SIGNUP_NUDGE_FOLLOWUP_DAYS = 10;
@@ -718,18 +718,18 @@ async function sendDuePostEventReviewEmails(sb, options) {
   return result;
 }
 
-async function sendDueOsopPaymentReminders(sb) {
-  const reminderBefore = hoursAgo(OSOP_PAYMENT_REMINDER_HOURS);
+async function sendDueCategoryExclusivityPaymentReminders(sb) {
+  const reminderBefore = hoursAgo(CATEGORY_EXCLUSIVITY_PAYMENT_REMINDER_HOURS);
   const result = { sent: 0, skipped: 0, errors: [] };
 
   const { data: registrations, error } = await sb
     .from('registrations')
     .select(
-      'id, attendee_id, event_id, ticket_id, amount_paid, payment_status, application_status, quantity, created_at, application_decided_at, osop_payment_reminder_sent_at'
+      'id, attendee_id, event_id, ticket_id, amount_paid, payment_status, application_status, quantity, created_at, application_decided_at, category_exclusivity_payment_reminder_sent_at'
     )
     .eq('application_status', 'Approved')
     .eq('payment_status', 'Pending')
-    .is('osop_payment_reminder_sent_at', null)
+    .is('category_exclusivity_payment_reminder_sent_at', null)
     .is('cancelled_at', null)
     .not('application_decided_at', 'is', null)
     .lte('application_decided_at', reminderBefore);
@@ -769,7 +769,7 @@ async function sendDueOsopPaymentReminders(sb) {
 
     try {
       await sendTemplatedEmail({
-        slug: 'osop_payment_reminder',
+        slug: 'category_exclusivity_payment_reminder',
         to: attendeeEmail,
         variables: {
           ...baseEmailVars(siteUrl),
@@ -781,7 +781,7 @@ async function sendDueOsopPaymentReminders(sb) {
 
       await sb
         .from('registrations')
-        .update({ osop_payment_reminder_sent_at: new Date().toISOString() })
+        .update({ category_exclusivity_payment_reminder_sent_at: new Date().toISOString() })
         .eq('id', registration.id);
       result.sent += 1;
     } catch (e) {
@@ -891,7 +891,7 @@ async function runEngagementEmailMaintenance(sb) {
   const signupEventsNudgeFollowup = await sendDueSignupEventsNudgeFollowupEmails(sb);
   const lowEvents = await sendOrganiserLowUpcomingEventsNudges(sb);
   const postReview = await sendDuePostEventReviewEmails(sb);
-  const osopPayment = await sendDueOsopPaymentReminders(sb);
+  const categoryExclusivityPayment = await sendDueCategoryExclusivityPaymentReminders(sb);
   const stripeConnect = await sendDueStripeConnectNudges(sb);
   return {
     reengagement,
@@ -899,7 +899,7 @@ async function runEngagementEmailMaintenance(sb) {
     signupEventsNudgeFollowup,
     lowEvents,
     postReview,
-    osopPayment,
+    categoryExclusivityPayment,
     stripeConnect,
   };
 }
@@ -910,7 +910,7 @@ module.exports = {
   sendDueSignupEventsNudgeFollowupEmails,
   sendOrganiserLowUpcomingEventsNudges,
   sendDuePostEventReviewEmails,
-  sendDueOsopPaymentReminders,
+  sendDueCategoryExclusivityPaymentReminders,
   sendDueStripeConnectNudges,
   runEngagementEmailMaintenance,
   buildRecommendationsHtml,

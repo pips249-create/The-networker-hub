@@ -2,6 +2,7 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { ensureAttendeeId, resolveAttendeeId } = require('./supabase-favourites');
 const { sendApplicationEmails } = require('./registration-emails');
 const { resolveTicketSalesEnabled, isTicketOnSale } = require('./ticket-sales');
+const { assertApplicationSeatAvailable, countApprovedApplicationSeats } = require('./application-capacity');
 const { isUuid } = require('./uuid');
 
 function ticketIsApplication(row) {
@@ -11,22 +12,11 @@ function ticketIsApplication(row) {
 }
 
 async function countTicketApplications(sb, ticketId) {
-  const regRes = await sb
-    .from('registrations')
-    .select('quantity')
-    .eq('ticket_id', ticketId)
-    .neq('payment_status', 'Refunded')
-    .neq('application_status', 'Denied')
-    .is('cancelled_at', null);
-  if (regRes.error) throw new Error(regRes.error.message);
-  return (regRes.data || []).reduce(
-    (sum, row) => sum + Math.max(1, Number(row.quantity) || 1),
-    0
-  );
+  return countApprovedApplicationSeats(sb, ticketId);
 }
 
 /**
- * Create a pending OSOP / application-based registration and notify organiser + attendee.
+ * Create a pending Category Exclusivity / application-based registration and notify organiser + attendee.
  */
 async function createApplicationFromSubmission(input) {
   if (!isSupabaseConfigured()) throw new Error('supabase_not_configured');

@@ -102,8 +102,8 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: 'How was {{event_name}}?',
   },
-  osop_payment_reminder: {
-    file: 'osop-payment-reminder.html',
+  category_exclusivity_payment_reminder: {
+    file: 'category-exclusivity-payment-reminder.html',
     marker: 'hub-email-layout-v2',
     subject: 'Complete your booking — {{event_name}}',
   },

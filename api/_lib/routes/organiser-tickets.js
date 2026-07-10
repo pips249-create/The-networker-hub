@@ -107,8 +107,8 @@ module.exports = async function handler(req, res) {
             saleEndOption: t.saleEndOption || null,
             saleEndCustom: t.saleEndCustom || null,
             saleStart: t.saleStart || null,
-            oneSeatOnly: Boolean(t.oneSeatOnly),
-            ticketType: t.ticketType || (t.oneSeatOnly ? 'Application-based' : 'Standard'),
+            categoryExclusivity: Boolean(t.categoryExclusivity),
+            ticketType: t.ticketType || (t.categoryExclusivity ? 'Application-based' : 'Standard'),
             displayOrder: t.displayOrder != null ? t.displayOrder : idx,
           }))
           .filter((t) => t.name);
@@ -139,6 +139,7 @@ module.exports = async function handler(req, res) {
           tickets: tiers,
           publish,
           vatTreatment: vatTreatment || null,
+          attendanceMode: String(body.attendanceMode || body.attendance_mode || 'tickets').trim(),
           attendeeExtras:
             body.attendeeExtras != null && typeof body.attendeeExtras === 'object'
               ? body.attendeeExtras

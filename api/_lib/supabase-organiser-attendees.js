@@ -1,5 +1,9 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { formatBookingReference } = require('./booking-payment-summary');
+const {
+  buildRegistrationRelationshipMap,
+  relationshipForRegistration,
+} = require('./organiser-attendee-relationship');
 
 /**
  * List registrations for the signed-in organiser's events (Supabase).
@@ -23,37 +27,49 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       id,
       created_at,
       event_id,
+      organiser_id,
+      attendee_id,
       payment_status,
       application_status,
       screening_answer_industry,
       screening_answer_job_title,
       application_denial_reason,
+      application_decided_at,
       amount_paid,
       quantity,
       guest_names,
       cancelled_at,
       attendees ( name, email ),
-      events ( title ),
-      tickets ( name, price )
+      events ( title, organiser_id ),
+      tickets ( name, price, ticket_type )
     `;
   const extrasSelect = `
       dietary_requirements,
       accessibility_requirements,
     `;
 
-  async function fetchRows(includeExtras) {
+  async function fetchRows(includeExtras, eventFilterIds) {
     const select = includeExtras
       ? baseSelect.replace('guest_names,', 'guest_names,\n' + extrasSelect)
       : baseSelect;
-    return sb.from('registrations').select(select).in('event_id', targetIds).is('cancelled_at', null);
+    return sb
+      .from('registrations')
+      .select(select)
+      .in('event_id', eventFilterIds)
+      .is('cancelled_at', null);
   }
 
-  let { data, error } = await fetchRows(true);
+  let { data: historyRows, error: historyError } = await fetchRows(false, [...allowed]);
+  if (historyError) throw historyError;
+
+  const relationshipMap = buildRegistrationRelationshipMap(historyRows || []);
+
+  let { data, error } = await fetchRows(true, targetIds);
   if (
     error &&
     /dietary_requirements|accessibility_requirements|column/.test(String(error.message || ''))
   ) {
-    ({ data, error } = await fetchRows(false));
+    ({ data, error } = await fetchRows(false, targetIds));
   }
 
   if (error) throw error;
@@ -76,6 +92,9 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
         : [];
 
       const ticketName = String(ticket.name || 'General admission').trim();
+      const ticketType = String(ticket.ticket_type || '').trim();
+      const isCategoryExclusivityApplication =
+        /application/i.test(ticketType) || /application to attend/i.test(ticketName.toLowerCase());
       const ticketPrice =
         ticket.price != null && ticket.price !== '' ? Number(String(ticket.price).replace(/[£,\s]/g, '')) : 0;
       const needsPayment =
@@ -83,6 +102,8 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
         paymentStatus === 'Pending' &&
         Number.isFinite(ticketPrice) &&
         ticketPrice > 0;
+
+      const relationship = relationshipForRegistration(row, relationshipMap);
 
       return {
         id: row.id,
@@ -96,6 +117,7 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
         accessibilityRequirements: String(row.accessibility_requirements || '').trim(),
         phone: '',
         ticketName,
+        isCategoryExclusivityApplication,
         quantity: Math.max(1, Number(row.quantity) || 1),
         paymentStatus,
         applicationStatus,
@@ -103,6 +125,7 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
         screeningIndustry: String(row.screening_answer_industry || '').trim(),
         screeningJobTitle: String(row.screening_answer_job_title || '').trim(),
         applicationDenialReason: String(row.application_denial_reason || '').trim(),
+        applicationDecidedAt: row.application_decided_at || '',
         amountPaid,
         amountDisplay:
           applicationStatus === 'Pending'
@@ -113,6 +136,12 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
                 ? '£' + amountPaid.toFixed(2)
                 : 'Free',
         registeredAt: row.created_at || '',
+        groupRelationship: relationship.groupRelationship,
+        priorVisitCount: relationship.priorVisitCount,
+        visitCount:
+          relationship.groupRelationship === 'unknown'
+            ? null
+            : Math.max(1, relationship.priorVisitCount + 1),
       };
     })
     .sort((a, b) => {

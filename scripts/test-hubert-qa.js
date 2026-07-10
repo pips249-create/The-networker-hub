@@ -47,7 +47,7 @@ const MEMBER_QUESTIONS = [
     q: 'I have 3 events with the same name but different start times',
     expect: /separate listing|different time|My Events/i,
   },
-  { q: 'What is One Seat Only Policy?', expect: /application|industry|job title|approve/i },
+  { q: 'What is Category Exclusivity?', expect: /application|industry|job title|approve/i },
   { q: 'Can I change the application questions asked?', expect: /fixed|cannot be changed|industry/i },
   { q: 'How can I see who has attended my event?', expect: /Attendees|registered|\/organiser\//i },
   { q: 'What do I fill in after choosing the event format?', expect: /listing details|title|tickets/i },

@@ -184,7 +184,7 @@ async function fetchOrganiserReviews(sb, organiserId) {
           })
         : '',
     }))
-    .filter((item) => item.rating > 0 && item.text);
+    .filter((item) => item.rating > 0);
 }
 
 async function listPublicOrganisers() {

@@ -6096,7 +6096,7 @@
         slug === 'attendee_signup_events_nudge_followup' ||
         slug === 'meeting_link_added' ||
         slug === 'online_join_reminder' ||
-        slug === 'osop_payment_reminder' ||
+        slug === 'category_exclusivity_payment_reminder' ||
         slug === 'saved_organiser_new_listing' ||
         slug === 'password_reset'
       ) {
@@ -6286,7 +6286,7 @@
       'post_event_review_request',
       'online_join_reminder',
       'meeting_link_added',
-      'osop_payment_reminder',
+      'category_exclusivity_payment_reminder',
       'application_received',
       'application_approved',
       'application_denied',

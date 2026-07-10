@@ -24,6 +24,55 @@ module.exports = async function handler(req, res) {
   } = require('./_lib/supabase-opportunities');
 
   if (req.method === 'POST') {
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        body = {};
+      }
+    }
+    body = body || {};
+
+    const action = String(body.action || '').trim().toLowerCase();
+
+    if (action === 'claim_request') {
+      const limited = enforceRateLimit(req, res, 'opportunity_claim', { max: 5, windowMs: 600_000 });
+      if (!limited.allowed) {
+        return json(res, 429, {
+          ok: false,
+          error: 'rate_limited',
+          message: 'Too many claim requests. Please wait a while and try again.',
+          retryAfterSec: limited.retryAfterSec,
+        });
+      }
+
+      try {
+        const { createOpportunityClaimRequest } = require('./_lib/opportunity-claim-request');
+        const result = await createOpportunityClaimRequest(body);
+        return json(res, 200, { ok: true, ...result });
+      } catch (e) {
+        const msg = e.message || String(e);
+        if (msg === 'not_found') return json(res, 404, { ok: false, error: 'not_found' });
+        if (msg === 'not_claimable') {
+          return json(res, 400, {
+            ok: false,
+            error: 'not_claimable',
+            message: 'This listing is not available to claim through the hub.',
+          });
+        }
+        if (
+          msg === 'invalid_email' ||
+          msg === 'missing_name' ||
+          msg === 'missing_company' ||
+          msg === 'missing_opportunity_id'
+        ) {
+          return json(res, 400, { ok: false, error: msg });
+        }
+        return json(res, 500, { ok: false, error: 'claim_request_failed', message: msg });
+      }
+    }
+
     const limited = enforceRateLimit(req, res, 'opportunity_enquiry', { max: 10, windowMs: 300_000 });
     if (!limited.allowed) {
       return json(res, 429, {
@@ -34,15 +83,6 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    let body = req.body;
-    if (typeof body === 'string') {
-      try {
-        body = JSON.parse(body);
-      } catch {
-        body = {};
-      }
-    }
-    body = body || {};
     try {
       const enquiry = await createOpportunityEnquiry({
         opportunityId: body.opportunityId || body.opportunity_id || body.id,

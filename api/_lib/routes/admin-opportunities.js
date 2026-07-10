@@ -5,7 +5,7 @@ const { sendOpportunityListingLiveEmail } = require('../opportunity-emails');
 const { ensureOpportunitySlug } = require('../opportunity-slug');
 const { addMonths } = require('../opportunity-listing-pricing');
 
-const ADMIN_TEST_OWNER_EMAIL = 'hello@the-networker.co.uk';
+const { HUB_SEED_OWNER_EMAIL } = require('../opportunity-hub-seed');
 
 const TEST_SAMPLE_LISTINGS = [
   {
@@ -230,7 +230,7 @@ async function createAdminOpportunity(input) {
 
   const row = {
     organiser_id: null,
-    owner_email: String(input.owner_email || ADMIN_TEST_OWNER_EMAIL).toLowerCase(),
+    owner_email: String(input.owner_email || HUB_SEED_OWNER_EMAIL).toLowerCase(),
     type: normalizeType(input.type || 'business-opportunity'),
     category: String(input.category || 'general').trim() || 'general',
     title,

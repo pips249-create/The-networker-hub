@@ -491,7 +491,7 @@ function buildDenialEmailVars(registration) {
 }
 
 /**
- * Email attendee when an organiser approves (paid) or denies an OSOP application.
+ * Email attendee when an organiser approves (paid) or denies a Category Exclusivity application.
  */
 async function sendApplicationDecisionEmails(sb, registration, { decision, ticketPrice } = {}) {
   const registrationId = registration.id;

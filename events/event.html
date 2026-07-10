@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Poppins:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260730" />
@@ -27,7 +27,7 @@
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260708" data-root="../" data-page="events"></script>
+    <script src="../js/site-nav.js?v=20260713b" data-root="../" data-page="events"></script>
     <div class="breadcrumb-wrap">
       <a class="back-link" id="ev-back" href="index.html">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -346,7 +346,7 @@
           </div>
 
           <form class="seat-application-form" id="seat-application-form" hidden novalidate>
-            <p class="seat-application-intro">One Seat Only Policy — tell the host a little about yourself. They will review your application and email you if approved. Your name, email, and answers below are shared with the organiser to review your application.</p>
+            <p class="seat-application-intro">Category Exclusivity — tell the host a little about yourself. They will review your application and email you if approved. Your name, email, and answers below are shared with the organiser to review your application.</p>
             <label class="form-field" for="apply-industry">
               <span>What industry are you in?</span>
               <input type="text" id="apply-industry" name="industry" autocomplete="organization-title" required />
@@ -435,17 +435,17 @@
 
           <button type="button" class="cta-btn" id="buy-btn">Buy ticket</button>
 
-          <div class="osop-application-status" id="osop-application-status" hidden>
-            <div class="osop-application-status-icon" aria-hidden="true">
+          <div class="category-exclusivity-application-status" id="category-exclusivity-application-status" hidden>
+            <div class="category-exclusivity-application-status-icon" aria-hidden="true">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20 6 9 17l-5-5" />
               </svg>
             </div>
-            <h3 class="osop-application-status-title" id="osop-application-status-title">Application submitted</h3>
-            <p class="osop-application-status-lead" id="osop-application-status-lead">
+            <h3 class="category-exclusivity-application-status-title" id="category-exclusivity-application-status-title">Application submitted</h3>
+            <p class="category-exclusivity-application-status-lead" id="category-exclusivity-application-status-lead">
               You've already applied for this event. We'll email you when the organiser makes a decision.
             </p>
-            <a class="osop-application-status-link" id="osop-application-status-link" href="/account/">View in My Hub</a>
+            <a class="category-exclusivity-application-status-link" id="category-exclusivity-application-status-link" href="/account/">View in My Hub</a>
           </div>
 
           <p class="refund-badge" id="ev-refund-badge" hidden></p>
@@ -455,7 +455,7 @@
             <div id="ev-refund-details-body"></div>
           </details>
 
-          <div class="ticket-foot osop-apply-foot" id="osop-apply-foot" hidden>
+          <div class="ticket-foot category-exclusivity-apply-foot" id="category-exclusivity-apply-foot" hidden>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>

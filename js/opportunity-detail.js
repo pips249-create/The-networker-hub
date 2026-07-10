@@ -27,6 +27,10 @@
     mailto: document.getElementById('opp-enquire-mailto'),
     submit: document.getElementById('opp-enquire-submit'),
     enquireStatus: document.getElementById('opp-enquire-status'),
+    claimSection: document.getElementById('opp-claim-section'),
+    claimForm: document.getElementById('opp-claim-form'),
+    claimSubmit: document.getElementById('opp-claim-submit'),
+    claimStatus: document.getElementById('opp-claim-status'),
   };
 
   function escapeHtml(s) {
@@ -180,6 +184,13 @@
     if (els.desc) els.desc.textContent = item.desc;
     if (els.posterName) els.posterName.textContent = item.host;
 
+    var posterNote = document.querySelector('.opp-detail-poster-note');
+    if (posterNote) {
+      posterNote.textContent = item.claimable
+        ? 'Listed on behalf of this business by The Networker Hub. Use the claim form below if you represent this company.'
+        : 'Enquiries go directly to the poster — no middlemen or per-lead fees.';
+    }
+
     applyCoverImage(item);
     applyHostLogo(els.hostLogo, item);
     applyHostLogo(els.posterLogo, item);
@@ -196,6 +207,7 @@
     renderMeta(item);
     renderAbout(item);
     refreshSaveButton();
+    applyClaimSection(item);
 
     if (els.mailto) {
       els.mailto.href = buildMailto(item, '', '', 'I would like to find out more about this opportunity.');
@@ -219,6 +231,96 @@
     els.enquireStatus.hidden = false;
     els.enquireStatus.textContent = msg;
     els.enquireStatus.className = 'opp-enquire-status' + (ok ? ' is-ok' : ' is-error');
+  }
+
+  function applyClaimSection(item) {
+    if (!els.claimSection) return;
+    var claimable = Boolean(item && item.claimable);
+    els.claimSection.hidden = !claimable;
+    if (!claimable) return;
+
+    var companyInput = document.getElementById('opp-claim-company');
+    if (companyInput && item.host && !companyInput.value) {
+      companyInput.value = item.host;
+    }
+  }
+
+  function showClaimStatus(msg, ok) {
+    if (!els.claimStatus) return;
+    els.claimStatus.hidden = false;
+    els.claimStatus.textContent = msg;
+    els.claimStatus.className = 'opp-claim-status' + (ok ? ' is-ok' : ' is-error');
+  }
+
+  function bindClaimForm() {
+    if (!els.claimForm) return;
+    els.claimForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!current || !current.claimable) return;
+
+      var name = (document.getElementById('opp-claim-name').value || '').trim();
+      var email = (document.getElementById('opp-claim-email').value || '').trim();
+      var company = (document.getElementById('opp-claim-company').value || '').trim();
+      var role = (document.getElementById('opp-claim-role').value || '').trim();
+      var message = (document.getElementById('opp-claim-message').value || '').trim();
+      if (!name || !email || !company) return;
+
+      if (els.claimSubmit) {
+        els.claimSubmit.disabled = true;
+        els.claimSubmit.textContent = 'Sending request…';
+      }
+      if (els.claimStatus) els.claimStatus.hidden = true;
+
+      fetch('/api/opportunities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'claim_request',
+          opportunityId: current.id,
+          name: name,
+          email: email,
+          company: company,
+          role: role,
+          message: message,
+        }),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data };
+          });
+        })
+        .then(function (result) {
+          if (result.ok && result.data && result.data.ok) {
+            showClaimStatus(
+              'Request sent — our team will email you to verify your details and arrange payment.',
+              true
+            );
+            if (els.claimSubmit) els.claimSubmit.textContent = 'Request sent';
+            els.claimForm.reset();
+            applyClaimSection(current);
+            return;
+          }
+          if (els.claimSubmit) {
+            els.claimSubmit.disabled = false;
+            els.claimSubmit.textContent = 'Request to claim listing';
+          }
+          showClaimStatus(
+            (result.data && (result.data.message || result.data.error)) ||
+              'Could not send your request. Please email hello@thenetworkerhub.com instead.',
+            false
+          );
+        })
+        .catch(function () {
+          if (els.claimSubmit) {
+            els.claimSubmit.disabled = false;
+            els.claimSubmit.textContent = 'Request to claim listing';
+          }
+          showClaimStatus(
+            'Could not send your request. Please email hello@thenetworkerhub.com instead.',
+            false
+          );
+        });
+    });
   }
 
   function bindForm() {
@@ -320,6 +422,7 @@
     render(item);
     bindSave();
     bindForm();
+    bindClaimForm();
     wireListingReport(item);
     loadSidebarAd();
   }

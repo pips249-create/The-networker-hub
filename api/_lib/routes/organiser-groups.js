@@ -90,7 +90,9 @@ module.exports = async function handler(req, res) {
       body.xUrl !== undefined ||
       body.location !== undefined ||
       body.logoUrl ||
-      body.logoBase64;
+      body.logoBase64 ||
+      body.complimentaryVisitsAllowed !== undefined ||
+      body.complimentary_visits_allowed !== undefined;
     if (!hasProfileFields) return json(res, 400, { error: 'missing_fields' });
 
     try {
@@ -118,6 +120,8 @@ module.exports = async function handler(req, res) {
         logoMime: body.logoMime,
         logoFilename: body.logoFilename,
         listingStatus,
+        complimentaryVisitsAllowed:
+          body.complimentaryVisitsAllowed ?? body.complimentary_visits_allowed,
       });
       const group = await api.enrichGroupForDashboard(
         updated,

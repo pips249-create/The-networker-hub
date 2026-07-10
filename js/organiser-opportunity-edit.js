@@ -399,13 +399,18 @@
     const tags = types.slice();
     if (category && category !== 'general') tags.push('cat-' + category);
 
+    const aboutText = document.getElementById('oe-about').value.trim();
+
     return {
       title: document.getElementById('oe-title').value.trim(),
       type: types[0] || '',
       types,
       category,
       description: document.getElementById('oe-desc').value.trim(),
-      aboutText: document.getElementById('oe-about').value.trim(),
+      about: aboutText
+        ? aboutText.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
+        : [],
+      aboutText,
       host: document.getElementById('oe-host').value.trim(),
       contactEmail: document.getElementById('oe-email').value.trim(),
       meta: buildMeta(),
@@ -417,6 +422,84 @@
         ? Boolean(document.getElementById('oe-earnings-attest')?.checked)
         : false,
     };
+  }
+
+  function moderationScanInput(payload, options) {
+    const scan = window.HubOpportunityModerationScan;
+    if (!scan || !scan.scanOpportunityRedFlags) return null;
+    return scan.scanOpportunityRedFlags(payload, options);
+  }
+
+  function renderModerationWarnings(scan, isDraft) {
+    const panel = document.getElementById('oe-moderation-warnings');
+    if (!panel) return;
+
+    if (!scan || !scan.flagged || !scan.reasons || !scan.reasons.length) {
+      panel.hidden = true;
+      panel.innerHTML = '';
+      return;
+    }
+
+    const intro = isDraft
+      ? 'Before you publish, fix the following so your listing can be approved:'
+      : 'Your listing may be rejected unless you fix the following:';
+
+    const items = scan.reasons
+      .map((reason) => '<li>' + String(reason.label || '').replace(/</g, '&lt;') + '</li>')
+      .join('');
+
+    panel.className = 'oe-moderation-warnings is-flagged';
+    panel.innerHTML =
+      '<strong>Content check</strong>' +
+      '<p>' +
+      intro +
+      '</p>' +
+      '<ul>' +
+      items +
+      '</ul>' +
+      '<p class="oe-moderation-warnings-note">The Hub blocks MLM-style recruitment, guaranteed income claims, and unregulated investment language. Investment, location, and opportunity type must be clearly stated.</p>';
+    panel.hidden = false;
+  }
+
+  let moderationScanTimer = null;
+
+  function refreshModerationWarnings(isDraft) {
+    const payload = buildPayload(isDraft ? 'draft' : 'published');
+    const scan = moderationScanInput(payload, { includeMissingFields: !isDraft });
+    renderModerationWarnings(scan, isDraft);
+    return scan;
+  }
+
+  function bindModerationScan() {
+    const fields = [
+      'oe-title',
+      'oe-desc',
+      'oe-about',
+      'oe-host',
+      'oe-investment',
+      'oe-location',
+      'oe-commitment',
+      'oe-financial-key',
+      'oe-financial-val',
+      'oe-extra-key',
+      'oe-extra-val',
+    ];
+
+    function scheduleScan() {
+      if (moderationScanTimer) clearTimeout(moderationScanTimer);
+      moderationScanTimer = setTimeout(() => refreshModerationWarnings(false), 280);
+    }
+
+    fields.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', scheduleScan);
+      el.addEventListener('change', scheduleScan);
+    });
+
+    document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach((input) => {
+      input.addEventListener('change', scheduleScan);
+    });
   }
 
   function validatePayload(payload, isDraft) {
@@ -434,6 +517,14 @@
     if (hasFinancialClaimsInForm() && !payload.earningsClaimsAttested) {
       return 'Confirm your earnings or return figures are truthful and substantiated.';
     }
+
+    const scan = moderationScanInput(payload, { includeMissingFields: true });
+    renderModerationWarnings(scan, false);
+    if (scan && scan.blocking) {
+      const first = scan.reasons && scan.reasons[0] ? scan.reasons[0].label : 'prohibited content';
+      return 'Please fix the content issues flagged above before continuing — ' + first + '.';
+    }
+
     return '';
   }
 
@@ -582,6 +673,8 @@
 
     bindLogoUpload();
     bindPhotoUpload();
+    bindModerationScan();
+    refreshModerationWarnings(false);
 
     ['oe-financial-key', 'oe-financial-val'].forEach((id) => {
       const el = document.getElementById(id);

@@ -19,6 +19,7 @@ module.exports = async function handler(req, res) {
     setCors,
     requireOrganiserSession,
     reviewApplicationForOrganiser,
+    reconsiderArchivedApplicationForOrganiser,
     resendApplicationOrganiserAlert,
     resendApprovalEmailForOrganiser,
   } = api;
@@ -51,6 +52,7 @@ module.exports = async function handler(req, res) {
   if (
     action !== 'approve' &&
     action !== 'deny' &&
+    action !== 'reconsider' &&
     action !== 'resend_alert' &&
     action !== 'resend_approval'
   ) {
@@ -91,6 +93,35 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (action === 'reconsider') {
+      if (!reconsiderArchivedApplicationForOrganiser) {
+        return json(res, 501, {
+          error: 'reconsider_not_supported',
+          message: 'Requires Supabase.',
+        });
+      }
+      const reconsiderMode = String(body.reconsiderMode || body.reconsider_mode || 'approve')
+        .trim()
+        .toLowerCase();
+      const result = await reconsiderArchivedApplicationForOrganiser(
+        auth.session,
+        registrationId,
+        reconsiderMode
+      );
+      let message =
+        reconsiderMode === 'approve'
+          ? 'Application approved from archive. The attendee has been notified by email.'
+          : 'Application moved back to pending review.';
+      const emailErr = result.emailResult?.error || result.emailResult?.errors?.[0]?.message;
+      if (emailErr && reconsiderMode === 'approve') {
+        message +=
+          ' However, the notification email could not be sent (' +
+          String(emailErr) +
+          '). Use “Resend payment email” on the Attendees table.';
+      }
+      return json(res, 200, { ok: true, ...result, message });
+    }
+
     const denialReason =
       action === 'deny' ? String(body.denialReason || body.denial_reason || '').trim() : '';
     const result = await reviewApplicationForOrganiser(auth.session, registrationId, action, {
@@ -99,7 +130,7 @@ module.exports = async function handler(req, res) {
     let message =
       action === 'approve'
         ? 'Application approved. The attendee has been notified by email.'
-        : 'Application denied. The attendee has been notified by email.';
+        : 'Application declined and moved to archived applications. The attendee has been notified by email.';
     const emailErr = result.emailResult?.error || result.emailResult?.errors?.[0]?.message;
     if (emailErr) {
       message +=

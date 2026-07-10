@@ -4,6 +4,11 @@ const { sendRegistrationEmails } = require('./registration-emails');
 const { UUID_PATTERN } = require('./uuid');
 const { lockEventOnFirstSale } = require('./event-sale-lock');
 const { buildBookingSnapshotForRegistration } = require('./booking-snapshot');
+const {
+  isGuestVisitTicket,
+  assertGuestVisitBookingAllowed,
+  assertPaidMemberBookingAllowed,
+} = require('./guest-visits');
 
 /**
  * Insert a registration after successful checkout.
@@ -181,6 +186,61 @@ async function createRegistrationFromPayment(input) {
 
   const ticketId = input.ticketId || input.ticket_id || null;
   const quantity = parseQuantity(input.quantity ?? input.qty, 1);
+
+  let eventAttendanceMode = 'tickets';
+  const evMetaRes = await sb
+    .from('events')
+    .select('attendance_mode, organiser_id')
+    .eq('id', eventId)
+    .maybeSingle();
+  if (evMetaRes.error) throw new Error(evMetaRes.error.message);
+  if (evMetaRes.data) {
+    eventAttendanceMode = evMetaRes.data.attendance_mode || 'tickets';
+    if (!organiserId) organiserId = evMetaRes.data.organiser_id || null;
+  }
+
+  let ticketRow = null;
+  if (ticketId) {
+    const ticketRes = await sb.from('tickets').select('*').eq('id', ticketId).maybeSingle();
+    if (ticketRes.error) throw new Error(ticketRes.error.message);
+    ticketRow = ticketRes.data || null;
+  }
+
+  let registrationKind = String(input.registrationKind || input.registration_kind || '').trim();
+  if (!registrationKind) {
+    if (ticketRow && isGuestVisitTicket(ticketRow)) registrationKind = 'guest_visit';
+    else if (ticketRow && String(ticketRow.ticket_type || '').includes('Application')) {
+      registrationKind = 'application';
+    } else {
+      registrationKind = 'standard';
+    }
+  }
+
+  const amountPaid =
+    input.amountPaid != null
+      ? Number(input.amountPaid)
+      : input.amount_paid != null
+        ? Number(input.amount_paid)
+        : 0;
+  const paymentStatus = input.paymentStatus || input.payment_status || (amountPaid > 0 ? 'Paid' : 'Free');
+
+  if (registrationKind === 'guest_visit') {
+    if (quantity !== 1) throw new Error('guest_visit_single_seat_only');
+    if (amountPaid > 0) throw new Error('guest_visit_must_be_free');
+    await assertGuestVisitBookingAllowed(sb, {
+      organiserId,
+      attendeeId,
+      email,
+    });
+  } else if (amountPaid > 0 || String(paymentStatus).trim() === 'Paid') {
+    await assertPaidMemberBookingAllowed(sb, {
+      organiserId,
+      attendeeId,
+      email,
+      attendanceMode: eventAttendanceMode,
+    });
+  }
+
   const guestNames = normalizeGuestNames(input.guestNames || input.guest_names, quantity);
   if (quantity > 1 && guestNames.length < quantity - 1) {
     throw new Error('missing_guest_names');
@@ -191,13 +251,6 @@ async function createRegistrationFromPayment(input) {
   const accessibilityRequirements = normalizeAttendeeExtraText(
     input.accessibilityRequirements ?? input.accessibility_requirements
   );
-  const amountPaid =
-    input.amountPaid != null
-      ? Number(input.amountPaid)
-      : input.amount_paid != null
-        ? Number(input.amount_paid)
-        : 0;
-  const paymentStatus = input.paymentStatus || input.payment_status || (amountPaid > 0 ? 'Paid' : 'Free');
 
   const bookedSnapshot = await buildBookingSnapshotForRegistration(sb, {
     eventId,
@@ -221,6 +274,7 @@ async function createRegistrationFromPayment(input) {
     dietary_requirements: dietaryRequirements || null,
     accessibility_requirements: accessibilityRequirements || null,
     application_status: input.applicationStatus || input.application_status || 'Approved',
+    registration_kind: registrationKind,
     booked_snapshot: bookedSnapshot,
   };
 

@@ -270,19 +270,95 @@
 
   function tierIsApplication(t) {
     if (!t) return false;
-    if (t.oneSeatOnly) return true;
+    if (t.categoryExclusivity) return true;
     const type = String(t.ticketType || t.ticket_type || '').toLowerCase();
     if (type.includes('application')) return true;
     return /application to attend/i.test(String(t.name || ''));
   }
 
-  function eventIsOsop(ev) {
+  function eventIsCategoryExclusivity(ev) {
     if (!ev) return false;
+    const mode = String(ev.attendanceMode || '').trim();
+    if (mode === 'category_exclusivity' || mode === 'osop') return true;
     if (parseBoolFlag(ev.isApprovalRequired)) return true;
     return ticketTiersForEvent(ev).some(tierIsApplication);
   }
 
-  function formatOsopCloseDate(iso) {
+  function eventIsGuestProgramme(ev) {
+    return String(ev?.attendanceMode || '').trim() === 'guest_programme';
+  }
+
+  function tierIsGuestVisit(t) {
+    if (!t) return false;
+    if (t.isGuestVisit) return true;
+    const type = String(t.ticketType || t.ticket_type || '').trim();
+    if (/guest-visit/i.test(type)) return true;
+    return /^guest\s*visit$/i.test(String(t.name || '').trim());
+  }
+
+  function complimentaryVisitsLabel(count) {
+    const n = Number(count) || 0;
+    if (n < 1) return '';
+    return n === 1 ? '1 complimentary visit' : n + ' complimentary visits';
+  }
+
+  async function loadGuestVisitEligibility(ev) {
+    if (!eventIsGuestProgramme(ev) || !ev.complimentaryVisitsAllowed) {
+      guestVisitEligibility = { allowed: 0, used: 0, remaining: 0, eligible: false };
+      return guestVisitEligibility;
+    }
+    try {
+      const res = await fetch(
+        '/api/auth/guest-visit-eligibility?eventId=' + encodeURIComponent(ev.id),
+        { credentials: 'include', cache: 'no-store' }
+      );
+      const data = await res.json().catch(function () {
+        return {};
+      });
+      if (data.ok && data.eligibility) {
+        guestVisitEligibility = data.eligibility;
+      } else if (res.status === 401) {
+        guestVisitEligibility = {
+          allowed: ev.complimentaryVisitsAllowed,
+          used: 0,
+          remaining: ev.complimentaryVisitsAllowed,
+          eligible: false,
+          signedOut: true,
+        };
+      } else {
+        guestVisitEligibility = { allowed: 0, used: 0, remaining: 0, eligible: false };
+      }
+    } catch {
+      guestVisitEligibility = null;
+    }
+    return guestVisitEligibility;
+  }
+
+  function guestVisitTierCardHtml(t, eligibility, soldOut) {
+    const remaining = eligibility?.remaining || 0;
+    let html =
+      '<div class="guest-visit-tier-card' +
+      (soldOut ? ' is-sold-out' : '') +
+      '">' +
+      '<div class="guest-visit-tier-badge"><span aria-hidden="true">🎫</span> Complimentary guest visit</div>';
+    if (eligibility?.signedOut) {
+      html +=
+        '<p class="guest-visit-tier-lead">Sign in to check how many trial visits you have left with this organiser.</p>';
+    } else if (remaining > 0) {
+      html +=
+        '<p class="guest-visit-tier-lead">Try this group before you commit — ' +
+        escapeHtml(remaining === 1 ? '1 free visit' : remaining + ' free visits') +
+        ' remaining with this organiser.</p>';
+    }
+    html +=
+      '<p class="guest-visit-tier-meta">Paid member tickets unlock after you use your complimentary visits.</p>' +
+      '<div class="guest-visit-tier-price-row">' +
+      '<span class="guest-visit-tier-price-label">Today</span>' +
+      '<span class="guest-visit-tier-price">Free</span></div></div>';
+    return html;
+  }
+
+  function formatCategoryExclusivityCloseDate(iso) {
     if (!iso) return '';
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return '';
@@ -291,38 +367,38 @@
     return date + ' at ' + time;
   }
 
-  function osopTierCardHtml(t, soldOut) {
+  function categoryExclusivityTierCardHtml(t, soldOut) {
     const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
     const priceDisplay = priceNum > 0 ? t.price || fmt(priceNum) : 'Free';
     const remainingLabel = soldOut ? '' : tierRemainingLabel(t);
-    const closeDate = t.saleEnd ? formatOsopCloseDate(t.saleEnd) : '';
+    const closeDate = t.saleEnd ? formatCategoryExclusivityCloseDate(t.saleEnd) : '';
     let html =
-      '<div class="osop-tier-card' +
+      '<div class="category-exclusivity-tier-card' +
       (soldOut ? ' is-sold-out' : '') +
       '">' +
-      '<div class="osop-tier-badge"><span aria-hidden="true">🪑</span> One Seat Only Policy</div>' +
+      '<div class="category-exclusivity-tier-badge"><span aria-hidden="true">🪑</span> Category Exclusivity</div>' +
       (soldOut
-        ? '<p class="osop-tier-lead">Applications are no longer being accepted for this event.</p>'
-        : '<p class="osop-tier-lead">Apply to attend — the host reviews your industry and job title before approving your seat.</p>');
+        ? '<p class="category-exclusivity-tier-lead">Applications are no longer being accepted for this event.</p>'
+        : '<p class="category-exclusivity-tier-lead">Apply to attend — the host reviews your industry and job title before approving your seat.</p>');
     if (!soldOut) {
       html +=
-        '<ol class="osop-tier-steps">' +
+        '<ol class="category-exclusivity-tier-steps">' +
         '<li><strong>1. Apply</strong><span>Answer two quick questions about you</span></li>' +
         '<li><strong>2. Review</strong><span>The organiser approves or declines</span></li>' +
         '<li><strong>3. Book</strong><span>Approved applicants receive a payment link</span></li>' +
         '</ol>';
     }
     if (remainingLabel) {
-      html += '<p class="osop-tier-meta">' + escapeHtml(remainingLabel) + '</p>';
+      html += '<p class="category-exclusivity-tier-meta">' + escapeHtml(remainingLabel) + '</p>';
     }
     if (closeDate && !soldOut) {
-      html += '<p class="osop-tier-meta">Applications close ' + escapeHtml(closeDate) + '</p>';
+      html += '<p class="category-exclusivity-tier-meta">Applications close ' + escapeHtml(closeDate) + '</p>';
     }
     if (!soldOut) {
       html +=
-        '<div class="osop-tier-price-row">' +
-        '<span class="osop-tier-price-label">If approved</span>' +
-        '<span class="osop-tier-price">' +
+        '<div class="category-exclusivity-tier-price-row">' +
+        '<span class="category-exclusivity-tier-price-label">If approved</span>' +
+        '<span class="category-exclusivity-tier-price">' +
         escapeHtml(priceDisplay) +
         '</span></div>';
     }
@@ -334,7 +410,19 @@
     const labelEl = document.getElementById('ev-ticket-from-label');
     const priceEl = document.getElementById('ev-ticket-from-price');
     if (!labelEl || !priceEl || !ev) return;
-    if (eventIsOsop(ev)) {
+    if (eventIsGuestProgramme(ev)) {
+      labelEl.textContent = 'Member tickets from';
+      priceEl.textContent =
+        ev.priceKey === 'free' ? 'Free' : publicListingPriceLabel(ev, { withFrom: false });
+      const trial = complimentaryVisitsLabel(ev.complimentaryVisitsAllowed);
+      if (trial && guestVisitEligibility?.eligible) {
+        priceEl.textContent += ' · ' + trial;
+      } else if (trial && guestVisitEligibility?.signedOut) {
+        priceEl.textContent += ' · ' + trial + ' for new attendees';
+      }
+      return;
+    }
+    if (eventIsCategoryExclusivity(ev)) {
       labelEl.textContent = 'Price if approved';
       const priceNum = ev.priceKey === 'free' ? 0 : Number(ev.priceNum) || 0;
       priceEl.textContent =
@@ -1095,6 +1183,7 @@
   let currentEventDetail = null;
   const BOOKING_PENDING_KEY = 'hub_booking_pending';
   let checkoutSessionUser = null;
+  let guestVisitEligibility = null;
   let eventApplicationState = null;
   let ticketPanelBound = false;
 
@@ -1298,7 +1387,11 @@
         'Card checkout is not set up on this server. If you are on localhost, add STRIPE_SECRET_KEY to local.env (copy sk_test_… from Vercel), run npm run dev, and restart npm start. On the live site, check Vercel env vars and redeploy.',
       stripe_connect_required:
         'The organiser has not finished payout setup. Ticket sales are temporarily unavailable.',
-      free_ticket_use_complete_booking: 'Use Confirm registration for free tickets.',
+      guest_visits_remaining:
+        'Use your complimentary guest visit before booking a paid member ticket with this organiser.',
+      guest_visits_exhausted:
+        'You have used all complimentary visits with this organiser. Choose a member ticket instead.',
+      guest_visits_not_enabled: 'Guest visits are not available for this organiser.',
       not_authenticated: 'Please sign in or create a free account to complete your booking.',
     };
     if (data && data.message) return String(data.message);
@@ -1340,29 +1433,38 @@
   }
 
   async function completeFreeBooking(ev, ticketId, qty, attendee) {
+    const isGuestVisit = Boolean(ev.guestVisitTier && ev.guestVisitTier.id === ticketId);
     saveBookingPending(ev, ticketId, qty, attendee);
-    const res = await fetch('/api/auth/complete-booking', {
+    const endpoint = isGuestVisit ? '/api/auth/create-checkout' : '/api/auth/complete-booking';
+    const body = {
+      eventId: ev.id,
+      ticketId: isUuid(ticketId) ? ticketId : null,
+      qty: qty || 1,
+      name: attendee?.name || '',
+      email: attendee?.email || '',
+      guestNames: attendee?.guestNames || [],
+      dietaryRequirements: attendee?.dietaryRequirements || '',
+      accessibilityRequirements: attendee?.accessibilityRequirements || '',
+    };
+    if (!isGuestVisit) {
+      body.amountPaid = 0;
+      body.paymentStatus = 'Free';
+    }
+    const res = await fetch(endpoint, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        eventId: ev.id,
-        ticketId: isUuid(ticketId) ? ticketId : null,
-        qty: qty || 1,
-        amountPaid: 0,
-        paymentStatus: 'Free',
-        name: attendee?.name || '',
-        email: attendee?.email || '',
-        guestNames: attendee?.guestNames || [],
-        dietaryRequirements: attendee?.dietaryRequirements || '',
-        accessibilityRequirements: attendee?.accessibilityRequirements || '',
-      }),
+      body: JSON.stringify(body),
     });
     const data = await res.json().catch(function () {
       return {};
     });
     if (!res.ok || !data.ok) {
-      throw new Error((data && data.message) || (data && data.error) || 'booking_failed');
+      throw new Error(checkoutErrorMessage(data));
+    }
+    if (data.completed) {
+      window.location.assign('/events/booking-success.html?free=1&confirmed=1&guest_visit=1');
+      return;
     }
     window.location.assign('/events/booking-success.html?free=1&confirmed=1');
   }
@@ -1443,19 +1545,46 @@
     const tiers = ticketTiersForEvent(ev);
     const salesPending = Boolean(ev.isTicketSalesPending || ev.isTicketSalesScheduled);
     const panelClosed = ev.isSoldOut || (ev.isSalesClosed && !salesPending);
-    const isOsop = eventIsOsop(ev);
+    const isCategoryExclusivity = eventIsCategoryExclusivity(ev);
+    const isGuestProg = eventIsGuestProgramme(ev);
+    const showGuestTier =
+      isGuestProg &&
+      ev.guestVisitTier &&
+      guestVisitEligibility &&
+      (guestVisitEligibility.eligible || guestVisitEligibility.signedOut);
+    const memberTiers = isGuestProg ? tiers : tiers;
     tiersEl.innerHTML = '';
 
     let firstSelectable = null;
 
-    if (isOsop && tiers.length) {
+    if (showGuestTier) {
+      const t = ev.guestVisitTier;
+      const soldOut = panelClosed;
+      const tier = document.createElement('div');
+      tier.className =
+        'tier tier-guest-visit' + (soldOut ? ' sold-out tier-disabled' : ' selected');
+      tier.id = 'ev-tier-guest-visit';
+      tier.setAttribute('data-ticket-id', t.id);
+      tier.setAttribute('data-price', '0');
+      tier.setAttribute('data-label', 'Guest visit');
+      tier.setAttribute('data-qty-max', '1');
+      tier.setAttribute('data-guest-visit', '1');
+      if (!soldOut) {
+        tier.setAttribute('aria-pressed', 'true');
+        firstSelectable = tier;
+      } else {
+        tier.setAttribute('aria-disabled', 'true');
+      }
+      tier.innerHTML = guestVisitTierCardHtml(t, guestVisitEligibility, soldOut);
+      tiersEl.appendChild(tier);
+    } else if (isCategoryExclusivity && tiers.length) {
       const t = tiers.find((tier) => tierIsApplication(tier)) || tiers[0];
       let soldOut = Boolean(t.soldOut) || panelClosed;
       const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
 
       const tier = document.createElement('div');
-      tier.className = 'tier tier-osop' + (soldOut ? ' sold-out tier-disabled' : ' selected');
-      tier.id = 'ev-tier-osop';
+      tier.className = 'tier tier-category-exclusivity' + (soldOut ? ' sold-out tier-disabled' : ' selected');
+      tier.id = 'ev-tier-category-exclusivity';
       tier.setAttribute('data-ticket-id', t.id);
       tier.setAttribute('data-price', String(priceNum));
       tier.setAttribute('data-label', t.label || t.name || 'Application');
@@ -1478,10 +1607,10 @@
         tier.setAttribute('aria-disabled', 'true');
       }
 
-      tier.innerHTML = osopTierCardHtml(t, soldOut);
+      tier.innerHTML = categoryExclusivityTierCardHtml(t, soldOut);
       tiersEl.appendChild(tier);
     } else {
-    tiers.forEach((t, index) => {
+    (showGuestTier ? [] : memberTiers).forEach((t, index) => {
       const soldOut = Boolean(t.soldOut) || panelClosed;
       const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
       const priceDisplay = t.priceKey === 'free' ? 'Free' : t.price || fmt(priceNum);
@@ -1538,7 +1667,7 @@
     });
     }
 
-    if (!firstSelectable && tiersEl.children.length && !isOsop) {
+    if (!firstSelectable && tiersEl.children.length && !isCategoryExclusivity) {
       const hint = ev.isSoldOut
         ? 'All ticket tiers are currently sold out.'
         : 'Tickets are not currently available for this event.';
@@ -1984,7 +2113,7 @@
 
     if (paidBlock) paidBlock.hidden = isFree;
     if (secureFoot) secureFoot.hidden = isFree;
-    if (buy && !eventIsOsop(ev)) {
+    if (buy && !eventIsCategoryExclusivity(ev)) {
       buy.textContent = isFree ? 'Get free ticket' : 'Buy ticket';
     }
     const organiserName = ev ? ev.organiser || ev.organiserName || 'Event organiser' : 'Event organiser';
@@ -2255,12 +2384,12 @@
 
   function applyEventApplicationUi(ev) {
     const panel = document.getElementById('tickets');
-    const statusPanel = document.getElementById('osop-application-status');
-    const titleEl = document.getElementById('osop-application-status-title');
-    const leadEl = document.getElementById('osop-application-status-lead');
+    const statusPanel = document.getElementById('category-exclusivity-application-status');
+    const titleEl = document.getElementById('category-exclusivity-application-status-title');
+    const leadEl = document.getElementById('category-exclusivity-application-status-lead');
     if (!panel) return;
 
-    const shouldShow = eventIsOsop(ev) && applicationBlocksReapply(eventApplicationState);
+    const shouldShow = eventIsCategoryExclusivity(ev) && applicationBlocksReapply(eventApplicationState);
     panel.classList.toggle('is-application-submitted', shouldShow);
     if (!statusPanel) return;
 
@@ -2276,7 +2405,7 @@
   }
 
   async function refreshEventApplicationUi(ev) {
-    if (!ev || !ev.id || !eventIsOsop(ev)) {
+    if (!ev || !ev.id || !eventIsCategoryExclusivity(ev)) {
       eventApplicationState = null;
       applyEventApplicationUi(ev);
       return;
@@ -2323,7 +2452,7 @@
     const scheduledPanel = document.getElementById('ticket-sales-scheduled');
     if (!panel || !buy) return;
 
-    panel.dataset.approvalRequired = eventIsOsop(ev) ? 'true' : 'false';
+    panel.dataset.approvalRequired = eventIsCategoryExclusivity(ev) ? 'true' : 'false';
     panel.dataset.soldOut = ev.isSoldOut ? 'true' : 'false';
     panel.dataset.salesClosed = ev.isSalesClosed ? 'true' : 'false';
 
@@ -2394,14 +2523,18 @@
     buy.classList.remove('cta-btn-disabled');
     if (purchaseView) purchaseView.removeAttribute('aria-hidden');
 
-    if (eventIsOsop(ev)) {
+    if (eventIsCategoryExclusivity(ev)) {
       panel.classList.add('is-approval-mode');
       buy.textContent = 'Apply for a Seat';
-      const osopFoot = document.getElementById('osop-apply-foot');
-      if (osopFoot) osopFoot.hidden = false;
+      const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
+      if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = false;
+    } else if (eventIsGuestProgramme(ev) && guestVisitEligibility?.eligible) {
+      const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
+      if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = true;
+      buy.textContent = 'Book complimentary visit';
     } else {
-      const osopFoot = document.getElementById('osop-apply-foot');
-      if (osopFoot) osopFoot.hidden = true;
+      const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
+      if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = true;
       buy.textContent = ev.priceKey === 'free' ? 'Get free ticket' : 'Buy ticket';
     }
     updateTicketJumpBar(ev);
@@ -2481,7 +2614,7 @@
     if (ev.isSoldOut) labelText = 'Sold out';
     else if (ev.isSalesClosed) labelText = 'Registration closed';
     else if (ev.isTicketSalesScheduled || ev.isTicketSalesPending) labelText = 'View tickets';
-    else if (eventIsOsop(ev)) labelText = 'Apply for a seat';
+    else if (eventIsCategoryExclusivity(ev)) labelText = 'Apply for a seat';
     else if (ev.priceKey === 'free') labelText = 'Get free ticket';
     else labelText = 'Buy ticket';
 
@@ -2873,7 +3006,7 @@
 
     function update() {
       const evNow = activeEvent();
-      if (eventIsOsop(evNow)) {
+      if (eventIsCategoryExclusivity(evNow) || eventIsGuestProgramme(evNow)) {
         qty = 1;
         maxQty = 1;
       }
@@ -2946,7 +3079,7 @@
     loadCheckoutSessionUser().then(function () {
       update();
       const evNow = activeEvent();
-      if (evNow && eventIsOsop(evNow)) refreshEventApplicationUi(evNow);
+      if (evNow && eventIsCategoryExclusivity(evNow)) refreshEventApplicationUi(evNow);
     });
 
     if (appBack) {
@@ -3109,7 +3242,7 @@
         buy.disabled = true;
 
         try {
-        if (evNow?.isApprovalRequired || eventIsOsop(evNow)) {
+        if (evNow?.isApprovalRequired || eventIsCategoryExclusivity(evNow)) {
           if (applicationBlocksReapply(eventApplicationState)) {
             return;
           }
@@ -3444,6 +3577,10 @@
           const displayEv = enrichEventWithSeriesLocation(ev);
           currentEvent = displayEv;
           populateFromEvent(displayEv);
+          if (eventIsGuestProgramme(displayEv)) {
+            await loadGuestVisitEligibility(displayEv);
+            renderTicketPanel(displayEv);
+          }
           initTicketPanel(displayEv);
           initSeriesDatePicker(displayEv);
           initActions(displayEv);

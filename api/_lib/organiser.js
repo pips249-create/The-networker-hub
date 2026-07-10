@@ -150,7 +150,7 @@ const TICKET_WRITE_FIELDS = {
   quantity: ['Quantity Available', 'Quantity', 'Capacity'],
   saleEnd: ['Sale End', 'Sales End', 'Sales Close', 'Ticket Sales End', 'Sales End Date'],
   saleStart: ['Sale Start', 'Sales Open', 'Sales Start', 'Ticket Sales Start'],
-  oneSeatOnly: ['One Seat Only', 'One Seat Policy', 'One Seat Only Policy', 'Application Only'],
+  categoryExclusivity: ['Category Exclusivity', 'One Seat Only', 'One Seat Policy', 'One Seat Only Policy', 'Application Only'],
 };
 
 let writeFieldCache = null;
@@ -1148,7 +1148,7 @@ async function createTicketsForEvents({ eventIds, tickets }) {
         quantityAvailable: tier.quantityAvailable,
         saleEnd: tier.saleEnd,
         saleStart: tier.saleStart,
-        oneSeatOnly: tier.oneSeatOnly,
+        categoryExclusivity: tier.categoryExclusivity,
       });
       out.push(ticket);
     }
@@ -1165,7 +1165,7 @@ async function createTicket({
   quantityAvailable,
   saleEnd,
   saleStart,
-  oneSeatOnly,
+  categoryExclusivity,
 }) {
   const { tickets: table } = tables();
   const sample = await sampleRecordFields(table);
@@ -1199,8 +1199,8 @@ async function createTicket({
   if (saleEnd && saleEndField) fields[saleEndField] = saleEnd;
   const saleStartField = resolveFieldName(sample, TICKET_WRITE_FIELDS.saleStart, null, schemaFields);
   if (saleStart && saleStartField) fields[saleStartField] = saleStart;
-  const osopField = resolveFieldName(sample, TICKET_WRITE_FIELDS.oneSeatOnly, null, schemaFields);
-  if (oneSeatOnly && osopField) fields[osopField] = true;
+  const ceField = resolveFieldName(sample, TICKET_WRITE_FIELDS.categoryExclusivity, null, schemaFields);
+  if (categoryExclusivity && ceField) fields[ceField] = true;
 
   const resp = await airtableFetch(encodeURIComponent(table), {
     method: 'POST',

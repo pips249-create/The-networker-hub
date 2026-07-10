@@ -84,7 +84,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'stripe_connect_nudge',
   'meeting_link_added',
   'event_details_updated',
-  'osop_payment_reminder',
+  'category_exclusivity_payment_reminder',
   'event_almost_full',
   'organiser_low_upcoming_events',
   'password_reset',

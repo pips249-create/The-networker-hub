@@ -14,7 +14,7 @@
   --as-border-soft: #e8dbea;
   --as-radius: 10px;
   --as-radius-sm: 6px;
-  font-family: 'Poppins', system-ui, sans-serif;
+  font-family: 'DM Sans', system-ui, sans-serif;
   background: var(--as-bg);
   color: var(--as-text-dark);
   min-height: 100vh;

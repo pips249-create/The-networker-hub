@@ -263,6 +263,11 @@
     if (el('ge-linkedin')) el('ge-linkedin').value = g.linkedinUrl || '';
     if (el('ge-x')) el('ge-x').value = g.xUrl || '';
     if (el('ge-contact-email')) el('ge-contact-email').value = g.contactEmail || '';
+    const visitsEl = el('ge-complimentary-visits');
+    if (visitsEl) {
+      const allowed = g.complimentaryVisitsAllowed != null ? Number(g.complimentaryVisitsAllowed) : 0;
+      visitsEl.value = String(Math.min(2, Math.max(0, allowed)));
+    }
     const counter = el('ge-word-count');
     if (counter) counter.textContent = String(countWords(g.description || ''));
     if (g.imageUrl) {
@@ -361,6 +366,9 @@
       xUrl: el('ge-x') ? el('ge-x').value.trim() : '',
       logoUrl: el('ge-logo-url').value.trim(),
       contactEmail,
+      complimentaryVisitsAllowed: el('ge-complimentary-visits')
+        ? Number(el('ge-complimentary-visits').value)
+        : 0,
     };
 
     if (logoFile) {

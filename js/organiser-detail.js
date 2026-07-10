@@ -302,6 +302,98 @@
     };
   }
 
+  function showReviewStatus(message, type) {
+    var el = document.getElementById('org-review-status');
+    if (!el) return;
+    el.textContent = message || '';
+    el.hidden = !message;
+    el.classList.toggle('is-error', type === 'error');
+    el.classList.toggle('is-success', type === 'success');
+  }
+
+  function bindReviewButton(org) {
+    var btn = document.getElementById('org-review-btn');
+    if (!btn || !org || !org.id) return;
+
+    if (window.HubReviewModal) {
+      window.HubReviewModal.init({
+        onSubmitted: function () {
+          showReviewStatus('Thank you — your review has been submitted.', 'success');
+          load();
+        },
+      });
+    }
+
+    btn.onclick = async function () {
+      showReviewStatus('', null);
+      btn.disabled = true;
+      try {
+        var sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
+        var session = await sessionRes.json();
+        if (!session.ok || !session.user) {
+          var next = location.pathname + location.search;
+          window.location.href = '../login.html?next=' + encodeURIComponent(next);
+          return;
+        }
+
+        var dashRes = await fetch('/api/auth/attendee-dashboard', { credentials: 'include' });
+        var dash = await dashRes.json();
+        if (!dashRes.ok || !dash.ok) {
+          showReviewStatus('Could not load your bookings. Please try again.', 'error');
+          return;
+        }
+
+        var organiserId = String(org.id);
+        var pending = (dash.registrations || []).filter(function (reg) {
+          return String(reg.organiserId) === organiserId && reg.reviewStatus === 'pending';
+        });
+
+        if (!pending.length) {
+          var attended = (dash.registrations || []).filter(function (reg) {
+            return String(reg.organiserId) === organiserId;
+          });
+          if (attended.some(function (reg) { return reg.reviewStatus === 'reviewed'; })) {
+            showReviewStatus(
+              'You have already reviewed the events you attended with this organiser.',
+              null
+            );
+          } else if (attended.length) {
+            showReviewStatus(
+              'You can leave a review after the event has finished.',
+              null
+            );
+          } else {
+            showReviewStatus(
+              'Attend one of this organiser\'s events first — then you can leave a review here.',
+              null
+            );
+          }
+          return;
+        }
+
+        if (!window.HubReviewModal) {
+          showReviewStatus('Review form could not load. Refresh the page and try again.', 'error');
+          return;
+        }
+
+        if (pending.length === 1) {
+          window.HubReviewModal.open({
+            eventId: pending[0].eventId,
+            title: pending[0].title,
+            organiserName: org.name,
+          });
+          return;
+        }
+
+        window.HubReviewModal.openPicker(pending, org.name);
+      } catch (e) {
+        showReviewStatus('Something went wrong. Please try again.', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    };
+  }
+
   function renderOrganiser(org) {
     document.getElementById('org-profile-content').hidden = false;
     document.title = (org.name || 'Organiser') + ' – The Networker Hub';
@@ -482,6 +574,8 @@
         });
       };
     }
+
+    bindReviewButton(org);
   }
 
   async function loadOrganiserPageAd() {

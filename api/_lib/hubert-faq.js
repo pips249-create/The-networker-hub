@@ -81,7 +81,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'Why should I list my networking group on The Networker Hub?',
     answer:
-      'The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, attendee reviews, and One Seat Only Policy for application-based events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page.',
+      'The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, attendee reviews, and Category Exclusivity for application-based events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page.',
   },
   {
     question: 'Can I list on The Networker Hub if I already use another event platform?',
