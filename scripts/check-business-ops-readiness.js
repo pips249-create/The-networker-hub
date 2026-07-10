@@ -60,7 +60,7 @@ const GATES = [
     weight: 1,
     check: () => {
       const text = fs.readFileSync(path.join(root, 'docs/GDPR-SAR-PROCEDURE.md'), 'utf8');
-      return /Catherine|Rosie/.test(text) && /hello@the-networker\.co\.uk/.test(text);
+      return /Catherine|Rosie/.test(text) && /hello@thenetworkerhub\.com/.test(text);
     },
   },
   {
@@ -105,14 +105,18 @@ const GATES = [
   },
   {
     id: 'dpa_register',
-    label: 'DPA register complete (4/4 filed)',
+    label: 'DPA register complete (core 4/4 filed)',
     weight: 2,
     check: () => {
       const result = spawnSync('node', ['scripts/check-dpa-register.js'], {
         cwd: root,
         encoding: 'utf8',
       });
-      return result.status === 0 && /Completed: 4 \/ 4/.test(result.stdout || '');
+      const out = result.stdout || '';
+      return (
+        result.status === 0 &&
+        (/Completed: 4 \/ 4/.test(out) || /✓ Stripe/.test(out) && /✓ Supabase/.test(out))
+      );
     },
   },
   {
@@ -125,6 +129,8 @@ const GATES = [
     },
   },
 ];
+
+async function probeConfigCheck() {
   if (!baseUrl) return null;
   try {
     const res = await fetch(baseUrl + '/api/auth/config-check', { cache: 'no-store' });

@@ -40,9 +40,9 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 
 | Item | Action | Owner | Status |
 |------|--------|-------|--------|
-| ICO registration | Follow `docs/ICO-REGISTRATION.md` — confirm Hub legal entity is covered | Catherine | ☐ Verify on register |
+| ICO registration | Follow `docs/ICO-REGISTRATION.md` — The Networker Group Ltd | Catherine | ☑ Verified Jul 2026 |
 | Solicitor review | UK lawyer review `legal-policies.html` before scaling paid ticketing | Catherine | ☐ |
-| DPAs | Follow `docs/DPA-SUBPROCESSORS.md`; track in `docs/DPA-REGISTER.md`; run `npm run check:dpas` | Catherine | ☐ In progress |
+| DPAs | Follow `docs/DPA-SUBPROCESSORS.md`; track in `docs/DPA-REGISTER.md`; run `npm run check:dpas` | Catherine | ☑ Filed 10 Jul 2026 |
 | RoPA | Maintain `docs/RoPA.md` when features or subprocessors change | Catherine | ☑ Created |
 | Breach runbook | Named leads in `docs/DATA-BREACH-RESPONSE.md` | Catherine | ☑ |
 | GDPR requests | `docs/GDPR-SAR-PROCEDURE.md` — hello@ monitored | Catherine / Rosie | ☑ Procedure + owners |
@@ -74,16 +74,19 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 
 | Provider | Purpose | DPA |
 |----------|---------|-----|
-| Supabase | Database, auth, storage | ☐ PandaDoc signed — `docs/DPA-SUBPROCESSORS.md` |
-| Stripe | Payments | ☐ DPA PDF filed (incorporated in SSA) |
-| Resend | Email | ☐ DPA from Settings → Documents |
-| Vercel | Hosting, analytics | ☐ DPA PDF filed (incorporated in Terms) |
+| Supabase | Database, auth, storage | ☑ Filed 10 Jul 2026 — PandaDoc |
+| Stripe | Payments | ☑ DPA PDF filed (incorporated in SSA) |
+| Resend | Email | ☑ DPA from Settings → Documents |
+| Vercel | Hosting, analytics | ☑ DPA PDF filed (incorporated in Terms) |
+
+**Hubert:** FAQ + live Supabase lookups only — no OpenAI subprocessor.
 
 ## Related documents
 
 | Document | Purpose |
 |----------|---------|
 | `docs/RoPA.md` | Record of Processing Activities (UK GDPR Art. 30) |
+| `docs/ORGANISER-DATA-SHARING-TEMPLATE.md` | Optional enterprise organiser data-sharing schedule |
 | `docs/GDPR-SAR-PROCEDURE.md` | Subject access and rights requests |
 | `docs/COMPLAINTS-PROCEDURE.md` | Customer complaints — register in Command Centre |
 | `docs/DATA-BREACH-RESPONSE.md` | 72-hour ICO breach procedure |

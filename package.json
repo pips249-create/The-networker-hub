@@ -4,11 +4,12 @@
   "description": "The Networker Hub — static site + Vercel serverless API",
   "scripts": {
     "dev": "node scripts/sync-local-env.js",
+    "sync-env": "node scripts/sync-local-env.js",
     "start": "npx vercel dev",
     "sync-stripe": "node scripts/sync-stripe-pricing.js",
     "deploy": "npx vercel --prod",
     "check:local": "node scripts/smoke-test-api.js http://localhost:3000",
-    "check:live": "node scripts/smoke-test-api.js https://the-networker-hub.vercel.app",
+    "check:live": "node scripts/smoke-test-api.js https://www.thenetworkerhub.com",
     "seed-admin": "node scripts/seed-admin.js",
     "seed-sample-event": "node scripts/seed-sample-event.js",
     "seed-browse-events": "node scripts/seed-browse-events.js",

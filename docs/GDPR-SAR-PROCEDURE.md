@@ -76,6 +76,7 @@ Export from Supabase (admin / SQL):
 - `reviews` — reviews submitted
 - `favourites` / saved events
 - `opportunity_enquiries` — enquiries sent
+- `complaints` — any complaint logged against their email (Command Centre register)
 
 Provide a **readable summary** (PDF or email) plus **CSV/JSON** where portability applies. Redact third-party personal data (e.g. other guests) where not the requester’s own data.
 

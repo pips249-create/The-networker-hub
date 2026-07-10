@@ -43,10 +43,10 @@ The fee may already be registered to The Networker Group Ltd from the legacy sit
 
 | Item | Owner | Status |
 |------|-------|--------|
-| ICO register searched for company name | Catherine | ☐ Verify |
-| Registration current (not lapsed) | Catherine | ☐ |
-| Processing description covers Hub activities | Catherine | ☐ |
-| Registration reference filed (internal records) | Catherine | ☐ |
+| ICO register searched for company name | Catherine | ☑ Verified Jul 2026 |
+| Registration current (not lapsed) | Catherine | ☑ Current for The Networker Group Ltd |
+| Processing description covers Hub activities | Catherine | ☑ |
+| Registration reference filed (internal records) | Catherine | ☑ |
 | Privacy policy links to controller identity | Product | ☑ `legal-policies.html` |
 
 ---

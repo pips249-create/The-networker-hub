@@ -2,7 +2,7 @@
 
 **Controller:** The Networker Group Ltd (Company No. 15252227)  
 **ICO registration:** Transferred from the-networker.co.uk  
-**Last updated:** 8 July 2026  
+**Last updated:** 10 July 2026  
 **Review cycle:** Quarterly (or when a new feature/subprocessor is added)
 
 *Operational document supporting UK GDPR Article 30. Not legal advice.*
@@ -16,7 +16,7 @@
 | Organisation | The Networker Group Ltd |
 | Address | Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF |
 | Contact | hello@thenetworkerhub.com |
-| DPO / privacy lead | Director (assign named contact internally) |
+| DPO / privacy lead | Catherine Hancher (Director); Rosie McGilvray (cover) |
 
 ---
 
@@ -101,16 +101,28 @@
 | **Recipients** | Vercel (hosting/analytics) |
 | **Retention** | Per Vercel defaults; security logs ~90 days internally |
 
-### H. Admin & support
+### H. Admin, support & complaints
 
 | Item | Detail |
 |------|--------|
-| **Purpose** | Support requests; moderation; impersonation for debugging (admin only) |
-| **Data subjects** | Members contacting support; subjects of admin actions |
-| **Categories of data** | Email correspondence, account IDs, moderation notes |
-| **Lawful basis** | Legitimate interests; Contract |
-| **Recipients** | Internal staff; Supabase admin tools |
-| **Retention** | Support 1 year after resolution; admin audit per internal policy |
+| **Purpose** | Support requests; complaints handling; moderation; impersonation for debugging (admin only) |
+| **Data subjects** | Members contacting support; complainants; subjects of admin actions |
+| **Categories of data** | Email correspondence, complaint details, account/booking references, moderation notes, complaints register fields (Supabase `complaints`) |
+| **Lawful basis** | Legitimate interests; Contract; Legal obligation where consumer complaints apply |
+| **Recipients** | Internal staff (Catherine Hancher, Rosie McGilvray); Supabase admin tools |
+| **Retention** | Complaints register: 2 years after closure; support email 1 year after resolution; admin audit per internal policy |
+
+### I. Hubert help assistant (contact chat)
+
+| Item | Detail |
+|------|--------|
+| **Purpose** | Answer visitor questions about events, opportunities, and platform use via `/contact.html` and the floating assistant |
+| **Data subjects** | Website visitors using Hubert chat |
+| **Categories of data** | Chat message content (only in the visitor’s browser session unless they email hello@ separately) |
+| **Lawful basis** | Legitimate interests — user-initiated help (Art. 6(1)(f)) |
+| **Recipients** | **None third-party** — replies from Hub FAQ knowledge (`api/_lib/hubert-knowledge.js`) and live event/opportunity lookups on Supabase; **no OpenAI API** in production |
+| **Retention** | Chat history in browser session only — **not stored** in Hub database |
+| **Notes** | Do not enter unnecessary personal data in chat. Optional OpenAI integration exists in code but is **disabled** (no `OPENAI_API_KEY`). |
 
 ---
 
@@ -118,10 +130,10 @@
 
 | Processor | Processing | Location | DPA status |
 |-----------|------------|----------|------------|
-| Supabase | Database, auth, storage | US/EU | ☐ File signed PandaDoc copy — see `docs/DPA-SUBPROCESSORS.md` |
-| Stripe | Payments, Connect payouts | US/EU | ☐ File downloaded DPA — incorporated in SSA |
-| Resend | Email delivery | US | ☐ File from Settings → Documents |
-| Vercel | Hosting, Web Analytics | US/EU | ☐ File from vercel.com/legal/dpa |
+| Supabase | Database, auth, storage | US/EU | ☑ Filed 10 Jul 2026 |
+| Stripe | Payments, Connect payouts | US/EU | ☑ Filed 10 Jul 2026 |
+| Resend | Email delivery | US | ☑ Filed 10 Jul 2026 |
+| Vercel | Hosting, Web Analytics | US/EU | ☑ Filed 10 Jul 2026 |
 
 ---
 
@@ -133,9 +145,9 @@
 | Stripe | Payment and identity data for Connect | Process payments and payouts |
 | HMRC | Seller identity and income (if platform operator thresholds met) | Statutory reporting — see `HMRC-PLATFORM-OPERATORS.md` |
 
-Organisers are **separate controllers** for attendee data they receive. Organiser terms require GDPR-compliant use and prohibit unrelated marketing.
+Organisers are **separate controllers** for attendee data they receive. Organiser terms (section 6) and `docs/ORGANISER-DATA-SHARING-TEMPLATE.md` describe roles. Organiser terms require GDPR-compliant use and prohibit unrelated marketing.
 
----
+**Optional:** Enterprise organisers may request a signed data-sharing schedule — use the template in `docs/ORGANISER-DATA-SHARING-TEMPLATE.md` (not required for standard self-serve listing).
 
 ## 5. Security measures (summary)
 
@@ -158,4 +170,5 @@ Handled via procedure in `GDPR-SAR-PROCEDURE.md`. Contact: hello@thenetworkerhub
 
 | Date | Change | Author |
 |------|--------|--------|
+| 2026-07-10 | Hubert confirmed fallback-only (no OpenAI); complaints register; DPA filed dates | Catherine Hancher |
 | 2026-07-08 | Initial RoPA created | — |
