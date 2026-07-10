@@ -28,6 +28,9 @@
     mailto: document.getElementById('opp-enquire-mailto'),
     submit: document.getElementById('opp-enquire-submit'),
     enquireStatus: document.getElementById('opp-enquire-status'),
+    investBreakdownSection: document.getElementById('opp-investment-breakdown-section'),
+    investBreakdownLede: document.getElementById('opp-investment-breakdown-lede'),
+    investBreakdownList: document.getElementById('opp-investment-breakdown-list'),
     enquireSignin: document.getElementById('opp-enquire-signin'),
     claimSection: document.getElementById('opp-claim-section'),
     claimForm: document.getElementById('opp-claim-form'),
@@ -134,6 +137,9 @@
   function renderMeta(item) {
     if (!els.metaGrid) return;
     els.metaGrid.innerHTML = (item.meta || [])
+      .filter(function (m) {
+        return !/^investment includes$/i.test(m.key);
+      })
       .map(function (m) {
         var val = catalog && catalog.formatMetaDisplayValue ? catalog.formatMetaDisplayValue(m.key, m.val) : m.val;
         return (
@@ -148,6 +154,50 @@
         );
       })
       .join('');
+  }
+
+  function renderInvestmentBreakdown(item) {
+    if (!els.investBreakdownSection) return;
+    var investUi = window.HubOpportunityInvestment;
+    var items =
+      item.investmentIncludes ||
+      (investUi && investUi.fromMeta ? investUi.fromMeta(item.meta) : []) ||
+      (catalog && catalog.parseInvestmentIncludes
+        ? catalog.parseInvestmentIncludes(
+            (item.meta || [])
+              .filter(function (m) {
+                return /^investment includes$/i.test(m.key);
+              })
+              .map(function (m) {
+                return m.val;
+              })
+              .join('\n')
+          )
+        : []);
+    if (!items.length) {
+      els.investBreakdownSection.hidden = true;
+      if (els.investBreakdownList) els.investBreakdownList.innerHTML = '';
+      return;
+    }
+    var total = '';
+    (item.meta || []).forEach(function (m) {
+      if (/^investment$/i.test(m.key)) total = String(m.val || '').trim();
+    });
+    var heading =
+      investUi && investUi.breakdownHeading
+        ? investUi.breakdownHeading(total, items.length)
+        : total
+          ? total + ' total — typically includes:'
+          : 'Typically includes:';
+    if (els.investBreakdownLede) els.investBreakdownLede.textContent = heading;
+    if (els.investBreakdownList) {
+      els.investBreakdownList.innerHTML = items
+        .map(function (line) {
+          return '<li>' + escapeHtml(line) + '</li>';
+        })
+        .join('');
+    }
+    els.investBreakdownSection.hidden = false;
   }
 
   function enquiryEmail(item) {
@@ -207,6 +257,7 @@
     if (els.featuredPip) els.featuredPip.hidden = !item.featured;
 
     renderMeta(item);
+    renderInvestmentBreakdown(item);
     renderAbout(item);
     refreshSaveButton();
     applyClaimSection(item);

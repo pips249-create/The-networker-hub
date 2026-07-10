@@ -107,6 +107,16 @@
     return isNaN(num) ? null : num;
   }
 
+  function parseInvestmentIncludes(raw) {
+    return String(raw || '')
+      .split(/\r?\n|;|•|·/)
+      .map(function (s) {
+        return s.replace(/^[\s\-*]+/, '').trim();
+      })
+      .filter(Boolean)
+      .slice(0, 8);
+  }
+
   function isScarcityMeta(key, val) {
     var k = String(key || '').toLowerCase();
     var v = String(val || '').toLowerCase();
@@ -187,6 +197,7 @@
     var extra = [];
 
     meta.forEach(function (m) {
+      if (/^investment includes$/i.test(m.key)) return;
       if (/^investment$/i.test(m.key)) investment = m;
       else if (/^(return(\s+est\.?)?|earnings|commission|revenue|income|profit)$/i.test(m.key)) financial = financial || m;
       else if (isScarcityMeta(m.key, m.val)) scarcity = scarcity || m;
@@ -254,6 +265,7 @@
     item.logoUrl = String(seed.logoUrl || seedLogoUrl(assetSlug) || '').trim();
     item.imageUrl = String(seed.imageUrl || seedCoverUrl(assetSlug) || '').trim();
     item.investAmount = parseInvestmentAmount(item.meta);
+    item.investmentIncludes = parseInvestmentIncludes(metaVal(item.meta, /^investment includes$/i));
     item.category = seed.category || inferCategory(item);
     item.thumb = thumbFor(item);
     item.locationLabel = locationLabel(item);
@@ -453,6 +465,7 @@
     formatMetaDisplayValue: formatMetaDisplayValue,
     isScarcityMeta: isScarcityMeta,
     parseInvestmentAmount: parseInvestmentAmount,
+    parseInvestmentIncludes: parseInvestmentIncludes,
     CATEGORY_KEYWORDS: CATEGORY_KEYWORDS,
   };
 

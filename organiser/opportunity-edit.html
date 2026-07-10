@@ -25,7 +25,7 @@
       </div>
     </div>
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260713b" data-root="../" data-page="opportunities"></script>
+    <script src="../js/site-nav.js?v=20260710f" data-root="../" data-page="opportunities"></script>
 
     <div class="ee-wrap">
       <header class="ee-page-head">
@@ -124,6 +124,19 @@
           <div class="ee-field">
             <label for="oe-investment">Investment required</label>
             <input type="text" id="oe-investment" required placeholder="e.g. £0 or £9,500" />
+          </div>
+          <div class="ee-field">
+            <label for="oe-investment-includes">What&apos;s included in this investment? <span class="ee-optional">(optional)</span></label>
+            <p class="ee-hint" style="margin: 0 0 8px">
+              Help browsers trust your listing — one item per line (e.g. training, starter kit, insurance registration).
+              The Hub does not verify this breakdown.
+            </p>
+            <textarea
+              id="oe-investment-includes"
+              rows="4"
+              maxlength="600"
+              placeholder="Training&#10;Starter kit&#10;Insurance registration&#10;Marketing materials"
+            ></textarea>
           </div>
           <div class="ee-field">
             <label for="oe-location">Territory / location</label>
@@ -242,6 +255,6 @@
     <script src="../js/hub-location-autocomplete.js?v=20260609"></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../"></script>
     <script src="../js/opportunity-moderation-scan.js?v=20260710"></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260710b"></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260710c"></script>
   </body>
 </html>

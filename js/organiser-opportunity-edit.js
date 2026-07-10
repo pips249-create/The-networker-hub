@@ -213,6 +213,7 @@
     document.getElementById('oe-host').value = opp.host || '';
     document.getElementById('oe-email').value = opp.contactEmail || '';
     document.getElementById('oe-investment').value = metaValue(opp.meta, /^investment$/i);
+    document.getElementById('oe-investment-includes').value = metaValue(opp.meta, /^investment includes$/i);
     document.getElementById('oe-location').value = metaValue(opp.meta, /^location$/i);
     document.getElementById('oe-commitment').value = metaValue(opp.meta, /^commitment$/i);
 
@@ -225,7 +226,7 @@
     }
     updateEarningsAttestVisibility();
 
-    const usedKeys = new Set(['investment', 'location', 'commitment']);
+    const usedKeys = new Set(['investment', 'investment includes', 'location', 'commitment']);
     if (financial) usedKeys.add(financial.key.toLowerCase());
     const extra = (opp.meta || []).find((m) => {
       const k = String(m.key || '').toLowerCase();
@@ -386,6 +387,8 @@
     const extraVal = document.getElementById('oe-extra-val').value.trim();
 
     if (investment) meta.push({ key: 'Investment', val: investment });
+    const includes = document.getElementById('oe-investment-includes').value.trim();
+    if (includes) meta.push({ key: 'Investment includes', val: includes });
     if (finKey && finVal) meta.push({ key: finKey, val: finVal });
     if (location) meta.push({ key: 'Location', val: location });
     if (extraKey && extraVal) meta.push({ key: extraKey, val: extraVal });
@@ -477,6 +480,7 @@
       'oe-about',
       'oe-host',
       'oe-investment',
+      'oe-investment-includes',
       'oe-location',
       'oe-commitment',
       'oe-financial-key',

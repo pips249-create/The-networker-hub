@@ -232,6 +232,50 @@
   margin-bottom: 4px;
 }
 
+.opportunity-detail-page .opp-investment-breakdown-lede {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--opp-navy, #0d1f3c);
+}
+
+.opportunity-detail-page .opp-investment-breakdown-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.opportunity-detail-page .opp-investment-breakdown-list li {
+  position: relative;
+  padding: 10px 12px 10px 34px;
+  background: var(--opp-off-white, #f8fafc);
+  border: 1px solid var(--opp-light-gray, #e2e8f0);
+  border-radius: 10px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--opp-navy, #0d1f3c);
+}
+
+.opportunity-detail-page .opp-investment-breakdown-list li::before {
+  content: '✓';
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--opp-gold, #c9961f);
+}
+
+.opportunity-detail-page .opp-investment-breakdown-note {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--opp-mid-gray, #64748b);
+}
+
 .opportunity-detail-page .opp-detail-meta-val {
   display: block;
   font-weight: 600;

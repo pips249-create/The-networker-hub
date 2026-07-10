@@ -3038,6 +3038,88 @@
   color: var(--opp-navy);
 }
 
+.opp-browse-page .opp-meta-v-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.opp-browse-page .opp-meta-cell--has-invest-info .opp-meta-v-wrap {
+  flex-wrap: wrap;
+}
+
+.opp-browse-page .opp-invest-info-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--opp-light-gray);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--opp-gold);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.opp-browse-page .opp-invest-info-btn:hover,
+.opp-browse-page .opp-invest-info-btn:focus-visible {
+  background: var(--opp-gold-pale);
+  border-color: var(--opp-gold-border);
+  color: var(--opp-navy);
+  outline: none;
+}
+
+.opp-invest-breakdown-popover {
+  position: fixed;
+  z-index: 1200;
+  width: min(280px, calc(100vw - 24px));
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--opp-border, #e2e8f0);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(13, 31, 60, 0.16);
+  pointer-events: auto;
+}
+
+.opp-invest-breakdown-popover[hidden] {
+  display: none !important;
+}
+
+.opp-invest-popover-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--opp-navy, #0d1f3c);
+}
+
+.opp-invest-popover-list {
+  margin: 0;
+  padding: 0 0 0 18px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--opp-mid-gray, #64748b);
+}
+
+.opp-invest-popover-list li {
+  margin: 0 0 4px;
+}
+
+.opp-invest-popover-list li:last-child {
+  margin-bottom: 0;
+}
+
+.opp-invest-popover-note {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--opp-mid-gray, #64748b);
+}
+
 .opp-browse-page .opp-meta-cell--scarcity {
   background: #fffbeb;
   border: 1px solid #fcd34d;

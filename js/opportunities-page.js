@@ -513,15 +513,22 @@
     return val;
   }
 
-  function metaCellHtml(m) {
+  function metaCellHtml(m, item) {
     var scarcity = catalog && catalog.isScarcityMeta(m.key, m.val);
+    var isInvestment = /^investment$/i.test(m.key);
+    var investUi = window.HubOpportunityInvestment;
+    var infoBtn =
+      isInvestment && investUi && item ? investUi.infoButtonHtml(item) : '';
     return (
       '<div class="opp-meta-cell' +
       (scarcity ? ' opp-meta-cell--scarcity' : '') +
+      (isInvestment && infoBtn ? ' opp-meta-cell--has-invest-info' : '') +
       '"><span class="opp-meta-k">' +
       escapeHtml(m.key) +
-      '</span><span class="opp-meta-v">' +
+      '</span><span class="opp-meta-v-wrap"><span class="opp-meta-v">' +
       escapeHtml(formatMetaVal(m.key, m.val)) +
+      '</span>' +
+      infoBtn +
       '</span></div>'
     );
   }
@@ -626,7 +633,9 @@
       escapeHtml(item.desc) +
       '</p>' +
       '<div class="opp-meta-row">' +
-      displayMeta.map(metaCellHtml).join('') +
+      displayMeta.map(function (m) {
+        return metaCellHtml(m, item);
+      }).join('') +
       '</div>' +
       '</div>' +
       '<div class="opp-card-footer">' +
@@ -1265,6 +1274,14 @@
   function init() {
     cacheEls();
     allListings = catalog ? catalog.loadCatalog() : [];
+    if (window.HubOpportunityInvestment) {
+      window.HubOpportunityInvestment.bindCardPopovers(function (id) {
+        for (var i = 0; i < allListings.length; i++) {
+          if (String(allListings[i].id) === String(id)) return allListings[i];
+        }
+        return null;
+      });
+    }
     updateFilterCounts();
     initStripTabs();
     initInvestPills();
