@@ -253,6 +253,150 @@
     global.location.href = path('organiser/index.html#business-list');
   }
 
+  function isLiveListingStatus(status) {
+    var st = String(status || '').toLowerCase();
+    return st === 'published' || st === 'live' || st === 'approved';
+  }
+
+  function isCurrentlyFeaturedListing(item) {
+    if (!item || !item.featured) return false;
+    var until = item.featuredUntil || item.featured_until;
+    if (!until) return true;
+    return new Date(until).getTime() > Date.now();
+  }
+
+  function isBoostableEvent(ev) {
+    if (!ev || !ev.id) return false;
+    if (!isLiveListingStatus(ev.listingStatus || ev.status)) return false;
+    var approval = String(ev.approvalStatus || ev.statusRaw || '').toLowerCase();
+    if (approval && approval !== 'approved' && !/publish|live/.test(approval)) return false;
+    return !isCurrentlyFeaturedListing(ev);
+  }
+
+  function isBoostableOpportunity(opp) {
+    if (!opp || !opp.id) return false;
+    if (!isLiveListingStatus(opp.listingStatus || opp.status)) return false;
+    return !isCurrentlyFeaturedListing(opp);
+  }
+
+  async function goToBoostEvent() {
+    saveBrowseReturn();
+    var data = await ensureOrganiserAccess('/organiser/event-published.html');
+    if (!data) return;
+
+    try {
+      var res = await fetch('/api/organiser/events', { credentials: 'include' });
+      var payload = await res.json();
+      if (res.ok && payload.ok) {
+        var boostable = (payload.events || []).filter(isBoostableEvent);
+        if (boostable.length === 1) {
+          global.location.href =
+            path('organiser/event-published.html?ids=' + encodeURIComponent(boostable[0].id));
+          return;
+        }
+        if (boostable.length > 1) {
+          global.location.href = path('organiser/index.html#events-list');
+          return;
+        }
+      }
+    } catch (e) {
+      /* fall through to list flow */
+    }
+
+    await goToAddEvent();
+  }
+
+  async function goToBoostOpportunity() {
+    var data = await ensureOrganiserAccess('/organiser/opportunity-submitted.html');
+    if (!data) return;
+
+    try {
+      var res = await fetch('/api/organiser/opportunities', { credentials: 'include' });
+      var payload = await res.json();
+      if (res.ok && payload.ok) {
+        var boostable = (payload.opportunities || []).filter(isBoostableOpportunity);
+        if (boostable.length === 1) {
+          var opp = boostable[0];
+          var qs =
+            'id=' +
+            encodeURIComponent(opp.id) +
+            (opp.title ? '&title=' + encodeURIComponent(opp.title) : '');
+          global.location.href = path('organiser/opportunity-submitted.html?' + qs);
+          return;
+        }
+        if (boostable.length > 1) {
+          global.location.href = path('organiser/index.html#business-list');
+          return;
+        }
+      }
+    } catch (e) {
+      /* fall through to list flow */
+    }
+
+    global.location.href = path('opportunities/list.html');
+  }
+
+  function spotlightBoostCardHtml(kind) {
+    var isEvent = kind === 'event';
+    var title = isEvent ? 'Boost your event here' : 'Boost your listing here';
+    var line1 = isEvent
+      ? 'Premium Spotlight carousel on the events directory'
+      : 'Premium Spotlight on business opportunities';
+    var line2 = isEvent ? 'List or feature your event' : 'List or upgrade to premium';
+    var action = isEvent ? 'boost-event' : 'boost-opportunity';
+
+    return (
+      '<article class="premium-card premium-card--boost-cta" data-hub-spotlight-boost="' +
+      action +
+      '">' +
+      '<a class="premium-card-link" href="' +
+      path(isEvent ? 'organiser/' : 'opportunities/list.html') +
+      '" data-hub-action="' +
+      action +
+      '">' +
+      '<div class="premium-card-media" aria-hidden="true">' +
+      '<div class="premium-card-bg premium-card-bg--boost">' +
+      '<span class="premium-card-boost-icon" aria-hidden="true">★</span>' +
+      '</div>' +
+      '<div class="premium-card-overlay"></div></div>' +
+      '<div class="premium-card-top">' +
+      '<span class="premium-badge">Premium</span>' +
+      '<span class="premium-price">£55/mo</span></div>' +
+      '<div class="premium-card-body">' +
+      '<h3 class="premium-card-title">' +
+      title +
+      '</h3>' +
+      '<div class="premium-card-meta">' +
+      '<p class="premium-meta-row"><span>' +
+      line1 +
+      '</span></p>' +
+      '<p class="premium-meta-row premium-meta-row--cta"><span>' +
+      line2 +
+      ' →</span></p>' +
+      '</div></div></a></article>'
+    );
+  }
+
+  function bindSpotlightBoost(scope) {
+    var rootEl = scope && scope.querySelectorAll ? scope : document;
+    rootEl.querySelectorAll('[data-hub-action="boost-event"]').forEach(function (el) {
+      if (el.dataset.boostBound) return;
+      el.dataset.boostBound = '1';
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        goToBoostEvent();
+      });
+    });
+    rootEl.querySelectorAll('[data-hub-action="boost-opportunity"]').forEach(function (el) {
+      if (el.dataset.boostBound) return;
+      el.dataset.boostBound = '1';
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        goToBoostOpportunity();
+      });
+    });
+  }
+
   function bindActions(scope) {
     var rootEl = scope && scope.querySelectorAll ? scope : document;
     rootEl.querySelectorAll('[data-hub-action="add-group"]').forEach(function (btn) {
@@ -303,6 +447,10 @@
     goToGroupProfile: goToGroupProfile,
     goToAddEvent: goToAddEvent,
     goToAddOpportunity: goToAddOpportunity,
+    goToBoostEvent: goToBoostEvent,
+    goToBoostOpportunity: goToBoostOpportunity,
+    spotlightBoostCardHtml: spotlightBoostCardHtml,
+    bindSpotlightBoost: bindSpotlightBoost,
     bindActions: bindActions,
     requireGroupProfileForEventFlow: requireGroupProfileForEventFlow,
     requireLogin: requireLogin,
@@ -317,6 +465,7 @@
   function init() {
     bindListEventPrimer();
     bindActions(document);
+    bindSpotlightBoost(document);
   }
 
   if (document.readyState === 'loading') {

@@ -666,6 +666,33 @@
     });
   }
 
+  function spotlightBoostPromoCard() {
+    if (window.HubOrganiserActions && window.HubOrganiserActions.spotlightBoostCardHtml) {
+      return window.HubOrganiserActions.spotlightBoostCardHtml('event');
+    }
+    return (
+      '<article class="premium-card premium-card--boost-cta">' +
+      '<a class="premium-card-link" href="../organiser/">' +
+      '<div class="premium-card-media" aria-hidden="true">' +
+      '<div class="premium-card-bg premium-card-bg--boost">' +
+      '<span class="premium-card-boost-icon" aria-hidden="true">★</span></div>' +
+      '<div class="premium-card-overlay"></div></div>' +
+      '<div class="premium-card-top"><span class="premium-badge">Premium</span>' +
+      '<span class="premium-price">£55/mo</span></div>' +
+      '<div class="premium-card-body"><h3 class="premium-card-title">Boost your event here</h3>' +
+      '<div class="premium-card-meta">' +
+      '<p class="premium-meta-row"><span>Premium Spotlight carousel on the events directory</span></p>' +
+      '<p class="premium-meta-row premium-meta-row--cta"><span>List or feature your event →</span></p>' +
+      '</div></div></a></article>'
+    );
+  }
+
+  function bindSpotlightBoostPromo() {
+    if (window.HubOrganiserActions && window.HubOrganiserActions.bindSpotlightBoost) {
+      window.HubOrganiserActions.bindSpotlightBoost(els.spotlightTrack);
+    }
+  }
+
   function renderSpotlight() {
     if (document.body.classList.contains('browse-mode-organisers')) return;
 
@@ -673,10 +700,14 @@
 
     if (els.spotlightTrack) {
       if (!premium.length) {
-        const emptyMsg = hasAnyFeaturedEvents()
-          ? 'No premium events match your current filters. Try clearing filters or widening your search area.'
-          : 'No premium events yet — set <strong>featured</strong> on approved events in Supabase.';
-        els.spotlightTrack.innerHTML = '<p class="spotlight-empty">' + emptyMsg + '</p>';
+        if (hasAnyFeaturedEvents()) {
+          const emptyMsg =
+            'No premium events match your current filters. Try clearing filters or widening your search area.';
+          els.spotlightTrack.innerHTML = '<p class="spotlight-empty">' + emptyMsg + '</p>';
+        } else {
+          els.spotlightTrack.innerHTML = spotlightBoostPromoCard();
+          bindSpotlightBoostPromo();
+        }
         els.spotlightTrack.classList.remove('spotlight-track--carousel');
         els.spotlightTrack.removeAttribute('data-loop-width');
         els.spotlightTrack.scrollLeft = 0;

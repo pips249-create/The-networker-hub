@@ -22,7 +22,7 @@ function linkifyAnswer(text) {
     '<a href="$1">$1</a>'
   );
   html = html.replace(/hello@the-networker\.co\.uk/g, '<a href="mailto:hello@the-networker.co.uk">hello@the-networker.co.uk</a>');
-  html = html.replace(/sales@the-networker\.co\.uk/g, '<a href="mailto:sales@the-networker.co.uk">sales@the-networker.co.uk</a>');
+  html = html.replace(/rosie@thenetworkerhub\.com/g, '<a href="mailto:rosie@thenetworkerhub.com">rosie@thenetworkerhub.com</a>');
   return '<p>' + html + '</p>';
 }
 

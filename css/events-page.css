@@ -1105,6 +1105,60 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   opacity: 0.9;
 }
 
+.premium-card--boost-cta .premium-card-link {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  height: 100%;
+  min-height: 200px;
+  padding: 12px;
+  box-sizing: border-box;
+  text-decoration: none;
+  color: inherit;
+}
+
+.premium-card--boost-cta .premium-card-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.premium-card-bg--boost {
+  background: linear-gradient(135deg, #3a2f52 0%, #6b4f9b 42%, #b8922e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.premium-card-boost-icon {
+  font-size: 3.25rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.22);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
+}
+
+.premium-card--boost-cta .premium-card-top,
+.premium-card--boost-cta .premium-card-body {
+  position: relative;
+  z-index: 2;
+}
+
+.premium-meta-row--cta {
+  font-weight: 700;
+  opacity: 1;
+}
+
+.premium-card--boost-cta:hover .premium-meta-row--cta span {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.premium-card--boost-cta:focus-within {
+  outline: 2px solid var(--purple, #7a3d8a);
+  outline-offset: 2px;
+}
+
 .sponsor-hub {
   position: relative;
   background: linear-gradient(165deg, #fff 0%, #faf6fe 55%, #f5f0fb 100%);

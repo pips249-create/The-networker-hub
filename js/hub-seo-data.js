@@ -79,7 +79,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "How can I advertise my business on The Networker Hub?",
-      "answer": "Paid Sponsor Hub placements are available on the events directory, organisers browse, and business opportunities — see /advertising.html for guide pricing. Email sales@the-networker.co.uk. You can also list events or business opportunities to reach the network organically."
+      "answer": "Paid Sponsor Hub placements are available on the events directory, organisers browse, and business opportunities — see /advertising.html for guide pricing. Email rosie@thenetworkerhub.com. You can also list events or business opportunities to reach the network organically."
     },
     {
       "question": "How do organisers download attendee lists?",
@@ -422,7 +422,7 @@ window.HUB_SEO_DATA = {
               "name": "How can I advertise my business on The Networker Hub?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Paid Sponsor Hub placements are available on the events directory, organisers browse, and business opportunities — see /advertising.html for guide pricing. Email sales@the-networker.co.uk. You can also list events or business opportunities to reach the network organically."
+                "text": "Paid Sponsor Hub placements are available on the events directory, organisers browse, and business opportunities — see /advertising.html for guide pricing. Email rosie@thenetworkerhub.com. You can also list events or business opportunities to reach the network organically."
               }
             },
             {

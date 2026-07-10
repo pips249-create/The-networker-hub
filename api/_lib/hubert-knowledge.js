@@ -112,8 +112,8 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ADVERTISING & SPONSORSHIP',
     body:
-      'Paid Sponsor Hub placements appear on event and opportunity pages — clearly labelled Sponsored. Rate card at /advertising.html (events main sponsor £2,000/mo, mini sponsors £600/slot ×3, featured events £55/mo; organisers main sponsor £1,000/mo, mini £300/slot ×3, featured profiles £27.50/mo; opportunities main sponsor £2,000/mo, mini £600/slot ×3, listings £25/mo + VAT, premium £55/mo). Enquiries: sales@the-networker.co.uk. Policy: /legal-policies.html#advertising. ' +
-      'Organisers can also reach audiences by listing events (/organiser/) or business opportunities (/opportunities/list.html). Featured placement may be available — ask sales@the-networker.co.uk.',
+      'Paid Sponsor Hub placements appear on event and opportunity pages — clearly labelled Sponsored. Rate card at /advertising.html (events main sponsor £2,000/mo, mini sponsors £600/slot ×3, featured events £55/mo; organisers main sponsor £1,000/mo, mini £300/slot ×3, featured profiles £27.50/mo; opportunities main sponsor £2,000/mo, mini £600/slot ×3, listings £25/mo + VAT, premium £55/mo). Enquiries: rosie@thenetworkerhub.com. Policy: /legal-policies.html#advertising. ' +
+      'Organisers can also reach audiences by listing events (/organiser/) or business opportunities (/opportunities/list.html). Featured placement may be available — ask rosie@thenetworkerhub.com.',
   },
   {
     title: 'REVIEWS & ORGANISER PROFILES',
@@ -162,7 +162,7 @@ const FALLBACK_REPLIES = [
   {
     match: /advertis|sponsor|promote my business|marketing on (the )?site|get exposure/i,
     reply:
-      'For paid advertising, see /advertising.html — events main sponsor £2,000/mo, mini sponsors £600/slot (max 3), featured events £55/mo; organisers directory main sponsor £1,000/mo, mini £300/slot (max 3), featured profiles £27.50/mo; opportunities main sponsor £2,000/mo, mini £600/slot (max 3), listings £25/mo + VAT, premium £55/mo. Email sales@the-networker.co.uk. You can also list events from /organiser/ or a business opportunity at /opportunities/list.html. Policy: /legal-policies.html#advertising.',
+      'For paid advertising, see /advertising.html — events main sponsor £2,000/mo, mini sponsors £600/slot (max 3), featured events £55/mo; organisers directory main sponsor £1,000/mo, mini £300/slot (max 3), featured profiles £27.50/mo; opportunities main sponsor £2,000/mo, mini £600/slot (max 3), listings £25/mo + VAT, premium £55/mo. Email rosie@thenetworkerhub.com. You can also list events from /organiser/ or a business opportunity at /opportunities/list.html. Policy: /legal-policies.html#advertising.',
   },
   {
     match: /what does rosie do|who is rosie|rosie('s)? role/i,

@@ -3,7 +3,7 @@
  */
 (function () {
   var SPONSOR_ENQUIRE_MAILTO =
-    'mailto:sales@the-networker.co.uk?subject=' + encodeURIComponent('Sponsor Hub enquiry');
+    'mailto:rosie@thenetworkerhub.com?subject=' + encodeURIComponent('Sponsor Hub enquiry');
 
   var SPONSOR_FALLBACK = {
     headline: 'Your brand here',

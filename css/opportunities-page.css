@@ -2081,6 +2081,54 @@
   margin: 0;
 }
 
+.opp-browse-page .premium-card--boost-cta .premium-card-link {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  height: 100%;
+  min-height: 200px;
+  padding: 12px;
+  box-sizing: border-box;
+  text-decoration: none;
+  color: inherit;
+}
+
+.opp-browse-page .premium-card--boost-cta .premium-card-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.opp-browse-page .premium-card-bg--boost {
+  background: linear-gradient(135deg, #1c2f4f 0%, #3d5f8f 45%, #c9a227 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.opp-browse-page .premium-card-boost-icon {
+  font-size: 3.25rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.22);
+}
+
+.opp-browse-page .premium-card--boost-cta .premium-card-top,
+.opp-browse-page .premium-card--boost-cta .premium-card-body {
+  position: relative;
+  z-index: 2;
+}
+
+.opp-browse-page .premium-meta-row--cta {
+  font-weight: 700;
+  opacity: 1;
+}
+
+.opp-browse-page .premium-card--boost-cta:hover .premium-meta-row--cta span {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .opp-browse-page .opp-premium-card {
   flex: 0 0 min(260px, 78vw);
   min-height: 200px;

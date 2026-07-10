@@ -297,6 +297,39 @@
     );
   }
 
+  function hasAnyFeaturedOpportunities() {
+    return allListings.some(function (item) {
+      return item.featured;
+    });
+  }
+
+  function spotlightBoostPromoCard() {
+    if (window.HubOrganiserActions && window.HubOrganiserActions.spotlightBoostCardHtml) {
+      return window.HubOrganiserActions.spotlightBoostCardHtml('opportunity');
+    }
+    return (
+      '<article class="premium-card premium-card--boost-cta opp-premium-card">' +
+      '<a class="premium-card-link" href="../opportunities/list.html">' +
+      '<div class="premium-card-media" aria-hidden="true">' +
+      '<div class="premium-card-bg premium-card-bg--boost">' +
+      '<span class="premium-card-boost-icon" aria-hidden="true">★</span></div>' +
+      '<div class="premium-card-overlay"></div></div>' +
+      '<div class="premium-card-top"><span class="premium-badge">Premium</span>' +
+      '<span class="premium-price">£55/mo</span></div>' +
+      '<div class="premium-card-body"><h3 class="premium-card-title">Boost your listing here</h3>' +
+      '<div class="premium-card-meta">' +
+      '<p class="premium-meta-row"><span>Premium Spotlight on business opportunities</span></p>' +
+      '<p class="premium-meta-row premium-meta-row--cta"><span>List or upgrade to premium →</span></p>' +
+      '</div></div></a></article>'
+    );
+  }
+
+  function bindSpotlightBoostPromo() {
+    if (window.HubOrganiserActions && window.HubOrganiserActions.bindSpotlightBoost) {
+      window.HubOrganiserActions.bindSpotlightBoost(els.spotlightTrack);
+    }
+  }
+
   function renderSpotlight() {
     if (!els.spotlightTrack) return;
 
@@ -304,10 +337,13 @@
     var promo = document.querySelector('.opp-promo-section');
 
     if (!featured.length) {
-      els.spotlightTrack.innerHTML =
-        '<p class="spotlight-empty">No featured opportunities yet — mark listings as <strong>featured</strong> in Command Centre (up to ' +
-        SPOTLIGHT_MAX +
-        ').</p>';
+      if (hasAnyFeaturedOpportunities()) {
+        els.spotlightTrack.innerHTML =
+          '<p class="spotlight-empty">No premium listings match your current filters. Try clearing filters or widening your search.</p>';
+      } else {
+        els.spotlightTrack.innerHTML = spotlightBoostPromoCard();
+        bindSpotlightBoostPromo();
+      }
       els.spotlightTrack.classList.remove('spotlight-track--carousel');
       els.spotlightTrack.removeAttribute('data-loop-width');
       els.spotlightTrack.scrollLeft = 0;

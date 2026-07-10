@@ -32,7 +32,7 @@ const MEMBER_QUESTIONS = [
   { q: 'Cookie policy', expect: /legal-policies|cookie/i },
   { q: 'I want to list a franchise opportunity', expect: /list.*opportunit|\/opportunities\/list/i },
   { q: "I tried to add my event but it doesn't show on the browse events page", expect: /Published|Draft|Approved|\/organiser\//i },
-  { q: 'How can I advertise my business on the site?', expect: /sales@|Sponsor|sponsor/i },
+  { q: 'How can I advertise my business on the site?', expect: /rosie@|Sponsor|sponsor/i },
   { q: 'What does Rosie do?', expect: /co-founder|Rosie/i },
   { q: 'What does Catherine do?', expect: /co-founder|Catherine/i },
   { q: 'Why did the networker hub start?', expect: /right room|careers|companies|mission/i },
