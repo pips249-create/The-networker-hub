@@ -83,10 +83,10 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ORGANISER TICKETS & ATTENDEES',
     body:
-      'TICKET SETUP (event-tickets.html): choose Standard ticket types for open booking, or Category Exclusivity for application-based attendance — these are mutually exclusive. ' +
+      'TICKET SETUP (event-tickets.html): choose Standard ticket types for open booking, the guest visit programme (complimentary trial visits before paid member tickets), or Category Exclusivity for application-based attendance — these modes are mutually exclusive. Alumni Fast-Pass can be enabled on events to invite past attendees to an exclusive alumni ticket rate. ' +
       'CATEGORY EXCLUSIVITY: prospective attendees apply to join instead of buying straight away. They answer two fixed questions — their industry and job title. You approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. Set an optional price (leave at £0 for free), places limit, and application closing date. ' +
       'APPLICATION QUESTIONS: under Category Exclusivity, the two questions (industry and job title) are fixed and cannot be changed. For standard open tickets, you can optionally tick boxes under Attendee information at booking to note food is included or to collect dietary or accessibility requirements at checkout. ' +
-      'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event to see everyone who has booked (name, email, ticket type, quantity, payment status). Download attendees CSV to export. This shows ticket registrations — not on-the-day check-in.',
+      'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event or by new vs returning. Each row shows visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page. Download attendees CSV to export. This shows ticket registrations — not on-the-day check-in.',
   },
   {
     title: 'ORGANISER GUIDES',
@@ -242,7 +242,7 @@ const FALLBACK_REPLIES = [
   {
     match: /why (list|use|choose).*(hub|networker)|why should i list|benefits of listing/i,
     reply:
-      'The Networker Hub is built for UK business networking. You get a permanent organiser profile, events in a directory members use to find networking meetings, optional business opportunity listings, team editors, reviews, and Category Exclusivity. You receive the full ticket price; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events need no Stripe. Guides: /guides.html · More: /about.html#for-organisers',
+      'The Networker Hub is built for UK business networking. You get a permanent organiser profile, events in a directory members use to find networking meetings, optional business opportunity listings, team editors, and reviews. Networking-specific tools include the guest visit programme (1–2 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Alumni Fast-Pass to invite past attendees to exclusive alumni rates on repeat events. You receive the full ticket price; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events need no Stripe. Guides: /guides.html · More: /about.html#for-organisers',
   },
   {
     match: /already use|eventbrite|meetup|other platform|alongside|as well as|in addition to/i,
@@ -345,9 +345,24 @@ const FALLBACK_REPLIES = [
       'For Category Exclusivity events, the application questions are fixed: (1) What industry are you in? and (2) What is your job title? These cannot be changed. For standard open ticket booking, you can optionally turn on extra fields under Attendee information at booking on the tickets step — tick the boxes to note food is included, or to collect dietary or accessibility requirements at checkout.',
   },
   {
+    match: /guest visit|complimentary visit|trial visit|visitor ticket|member ticket/i,
+    reply:
+      'The guest visit programme lets networking groups offer 1–2 complimentary trial visits per newcomer before they can buy a paid member ticket. Enable it on your organiser page (complimentary visits: 1 or 2), then choose Guest visit programme on the event tickets step. New attendees must use their free visit(s) with your group first; returning visitors who have used them see member ticket pricing. Set this up in /organiser/ → your organiser page and event tickets.',
+  },
+  {
+    match: /visit count|1st visit|first visit|returning attendee|new to your group|repeat attendee/i,
+    reply:
+      'Open /organiser/ → Events → Attendees. Each registration shows a visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page — not annual membership records. Filter by new or returning, filter by event, and export a CSV with visit counts. Use this to welcome newcomers and spot regulars.',
+  },
+  {
+    match: /alumni fast.?pass|alumni ticket|alumni rate|past attendee invite/i,
+    reply:
+      'Alumni Fast-Pass lets you invite past confirmed attendees to an exclusive alumni ticket rate on a new event — ideal for annual conferences or repeat summits. Enable it on the event tickets step, set your alumni price, and send invites from the organiser dashboard. Only invited past attendees can book the alumni tier.',
+  },
+  {
     match: /who (has |)(attended|registered|booked)|see (who|my) (attendee|registration|book)|view.*attendee|who is coming|attendee list|see registrations/i,
     reply:
-      'Sign in and open /organiser/ → Events → Attendees. You will see everyone who has registered for your events — name, email, ticket type, quantity, and booking date. Use the event filter dropdown to narrow to one event, or click Download attendees CSV to export. The Hub tracks ticket registrations; there is no separate on-the-day check-in list.',
+      'Sign in and open /organiser/ → Events → Attendees. You will see everyone registered for your events — name, email, ticket type, visit count (1st visit vs returning), quantity, and booking date. Filter by event or by new vs returning, or click Download attendees CSV to export. The Hub tracks ticket registrations; there is no separate on-the-day check-in list.',
   },
   {
     match: /organiser|organizer|dashboard|sell ticket|stripe onboard|payout/i,

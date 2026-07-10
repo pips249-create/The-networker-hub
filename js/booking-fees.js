@@ -48,7 +48,10 @@
     const opts = options || {};
     const withFrom = opts.withFrom !== false;
     if (String(ev?.attendanceMode || '') === 'guest_programme') {
-      const visits = Number(ev.complimentaryVisitsAllowed) || 0;
+      const visits =
+        !ev.guestPassesDisabled && Number(ev.complimentaryVisitsAllowed) > 0
+          ? Number(ev.complimentaryVisitsAllowed)
+          : 0;
       const member =
         ev.priceKey === 'free' || /^free$/i.test(String(ev.price || ''))
           ? 'Free'

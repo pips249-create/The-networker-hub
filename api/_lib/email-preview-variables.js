@@ -261,6 +261,36 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.event_time = ' · 8:00 AM';
   }
 
+  if (slug === 'guest_visit_followup') {
+    vars.next_event_name = 'London Founders Breakfast';
+    vars.next_event_date = 'Tuesday 19 August 2026';
+    vars.next_event_time = '8:00 AM';
+    vars.next_event_location = 'The Shard, London SE1';
+    vars.next_event_url = vars.event_url;
+    vars.next_event_section =
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#1c2040;border-radius:16px;">' +
+      '<tr><td style="padding:24px;text-align:center;">' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 10px;">Next meeting</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:17px;font-weight:600;color:#ffffff;margin:0 0 8px;line-height:1.35;">' +
+      vars.next_event_name +
+      '</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);margin:0;">' +
+      vars.next_event_date +
+      ' · ' +
+      vars.next_event_time +
+      ' · ' +
+      vars.next_event_location +
+      '</p></td></tr></table>';
+    vars.cta_url = vars.next_event_url;
+    vars.cta_label = 'Book the next event';
+  }
+
+  if (slug === 'alumni_fast_pass_invite') {
+    vars.source_event_name = 'Annual Conference 2025';
+    vars.alumni_price = '£49.00';
+    vars.invite_url = vars.event_url + '&alumni_token=preview-token';
+  }
+
   if (slug === 'opportunity_listing_rejected') {
     vars.rejection_note =
       'Please add more detail about the opportunity type and expected commitment before resubmitting.';
@@ -283,7 +313,8 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     slug === 'application_received' ||
     slug === 'application_approved' ||
     slug === 'application_denied' ||
-    slug === 'post_event_review_request'
+    slug === 'post_event_review_request' ||
+    slug === 'guest_visit_followup'
   ) {
     if (!String(vars.sponsor_row || '').trim()) {
       vars.sponsor_row = sampleSponsorRow(site);

@@ -16,6 +16,10 @@ const {
   assertGuestVisitBookingAllowed,
   assertPaidMemberBookingAllowed,
 } = require('../guest-visits');
+const {
+  isAlumniTicket,
+  assertAlumniBookingAllowed,
+} = require('../alumni-invites');
 
 function parseBody(req) {
   let body = req.body;
@@ -123,7 +127,7 @@ module.exports = async function handler(req, res) {
     const evRes = await sb
       .from('events')
       .select(
-        'id, title, slug, status, approval_status, ticket_sales_enabled, organiser_id, attendance_mode, refund_policy, refund_policy_details, refund_terms_agreed, refund_terms_agreed_at, collect_dietary, collect_accessibility'
+        'id, title, slug, status, approval_status, ticket_sales_enabled, organiser_id, attendance_mode, guest_passes_disabled, refund_policy, refund_policy_details, refund_terms_agreed, refund_terms_agreed_at, collect_dietary, collect_accessibility'
       )
       .eq('id', eventId)
       .maybeSingle();
@@ -207,6 +211,11 @@ module.exports = async function handler(req, res) {
     }
 
     const isGuestVisit = Boolean(ticketRow && isGuestVisitTicket(ticketRow));
+    const isAlumni = Boolean(ticketRow && isAlumniTicket(ticketRow));
+    const alumniInviteToken = String(body.alumniInviteToken || body.alumni_invite_token || '').trim();
+    if (isAlumni) {
+      requestedQty = 1;
+    }
     if (isGuestVisit) {
       unitPrice = 0;
       requestedQty = 1;
@@ -222,10 +231,17 @@ module.exports = async function handler(req, res) {
       .slice(0, 500);
 
     if (unitPrice <= 0) {
-      if (isGuestVisit || registrationId) {
-        const qty = isGuestVisit ? 1 : requestedQty;
+      if (isGuestVisit || isAlumni || registrationId) {
+        const qty = isGuestVisit || isAlumni ? 1 : requestedQty;
         const guestNames = normalizeGuestNames(body.guestNames || body.guest_names, qty);
         if (isGuestVisit) {
+          if (evRes.data.guest_passes_disabled) {
+            return json(res, 400, {
+              ok: false,
+              error: 'guest_passes_disabled',
+              message: 'Guest passes are not available for this event.',
+            });
+          }
           try {
             await assertGuestVisitBookingAllowed(sb, {
               organiserId: evRes.data.organiser_id,
@@ -238,11 +254,34 @@ module.exports = async function handler(req, res) {
               guest_visits_not_enabled: 'Guest visits are not available for this organiser.',
               guest_visits_exhausted:
                 'You have used all complimentary visits with this organiser. Book a member ticket instead.',
+              guest_passes_disabled: 'Guest passes are not available for this event.',
             };
             return json(res, guestErr.status || 400, {
               ok: false,
               error: code,
               message: messages[code] || guestErr.message,
+            });
+          }
+        }
+        if (isAlumni) {
+          try {
+            await assertAlumniBookingAllowed(sb, {
+              eventId,
+              attendeeId: session?.sub || null,
+              email: checkoutEmail,
+              inviteToken: alumniInviteToken,
+            });
+          } catch (alumniErr) {
+            const code = alumniErr.message || 'alumni_not_eligible';
+            const messages = {
+              alumni_not_eligible: 'This alumni ticket is invite-only. Use the link from your email.',
+              not_invited: 'This alumni ticket is invite-only. Use the link from your email.',
+              email_mismatch: 'Sign in with the email address that received the alumni invite.',
+            };
+            return json(res, alumniErr.status || 403, {
+              ok: false,
+              error: code,
+              message: messages[code] || alumniErr.message,
             });
           }
         }
@@ -259,7 +298,8 @@ module.exports = async function handler(req, res) {
           accessibilityRequirements,
           amountPaid: 0,
           paymentStatus: 'Free',
-          registrationKind: isGuestVisit ? 'guest_visit' : undefined,
+          registrationKind: isGuestVisit ? 'guest_visit' : isAlumni ? 'alumni' : undefined,
+          alumniInviteToken: isAlumni ? alumniInviteToken : undefined,
         });
         return json(res, 200, {
           ok: true,
@@ -275,22 +315,25 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    try {
-      await assertPaidMemberBookingAllowed(sb, {
-        organiserId: evRes.data.organiser_id,
-        attendeeId: session?.sub || null,
-        email: checkoutEmail,
-        attendanceMode: evRes.data.attendance_mode,
-      });
-    } catch (guestErr) {
-      const code = guestErr.message || 'guest_visits_remaining';
-      return json(res, guestErr.status || 400, {
-        ok: false,
-        error: code,
-        message:
-          'Use your complimentary guest visit before booking a paid member ticket with this organiser.',
-        eligibility: guestErr.eligibility || null,
-      });
+    if (!isAlumni) {
+      try {
+        await assertPaidMemberBookingAllowed(sb, {
+          organiserId: evRes.data.organiser_id,
+          attendeeId: session?.sub || null,
+          email: checkoutEmail,
+          attendanceMode: evRes.data.attendance_mode,
+          guestPassesDisabled: evRes.data.guest_passes_disabled,
+        });
+      } catch (guestErr) {
+        const code = guestErr.message || 'guest_visits_remaining';
+        return json(res, guestErr.status || 400, {
+          ok: false,
+          error: code,
+          message:
+            'Use your complimentary guest visit before booking a paid member ticket with this organiser.',
+          eligibility: guestErr.eligibility || null,
+        });
+      }
     }
 
     try {
@@ -301,6 +344,28 @@ module.exports = async function handler(req, res) {
         error: refundErr.code || 'refund_policy_required',
         message: refundErr.message,
       });
+    }
+
+    if (isAlumni) {
+      try {
+        await assertAlumniBookingAllowed(sb, {
+          eventId,
+          attendeeId: session?.sub || null,
+          email: checkoutEmail,
+          inviteToken: alumniInviteToken,
+        });
+      } catch (alumniErr) {
+        const code = alumniErr.message || 'alumni_not_eligible';
+        return json(res, alumniErr.status || 403, {
+          ok: false,
+          error: code,
+          message:
+            code === 'email_mismatch'
+              ? 'Sign in with the email address that received the alumni invite.'
+              : 'This alumni ticket is invite-only. Use the link from your email.',
+        });
+      }
+      requestedQty = 1;
     }
 
     let maxQty = 99;
@@ -351,6 +416,7 @@ module.exports = async function handler(req, res) {
       guestNames,
       dietaryRequirements,
       accessibilityRequirements,
+      alumniInviteToken: isAlumni ? alumniInviteToken : '',
       eventId,
       ticketId,
       registrationId,

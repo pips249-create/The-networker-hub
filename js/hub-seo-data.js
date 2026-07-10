@@ -63,7 +63,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "Why should I list my networking group on The Networker Hub?",
-      "answer": "The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, attendee reviews, and Category Exclusivity for application-based events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page."
+      "answer": "The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. Networking-specific tools include the guest visit programme (1–2 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Alumni Fast-Pass to invite past attendees to exclusive alumni rates on repeat events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page."
     },
     {
       "question": "Can I list on The Networker Hub if I already use another event platform?",
@@ -83,7 +83,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "How do organisers download attendee lists?",
-      "answer": "Sign in to /organiser/, open Events → Attendees, filter by event, and click Download attendees CSV."
+      "answer": "Sign in to /organiser/, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV."
     },
     {
       "question": "When do organisers receive payouts for ticket sales?",
@@ -390,7 +390,7 @@ window.HUB_SEO_DATA = {
               "name": "Why should I list my networking group on The Networker Hub?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, attendee reviews, and Category Exclusivity for application-based events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page."
+                "text": "The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. Networking-specific tools include the guest visit programme (1–2 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Alumni Fast-Pass to invite past attendees to exclusive alumni rates on repeat events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page."
               }
             },
             {
@@ -430,7 +430,7 @@ window.HUB_SEO_DATA = {
               "name": "How do organisers download attendee lists?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Sign in to /organiser/, open Events → Attendees, filter by event, and click Download attendees CSV."
+                "text": "Sign in to /organiser/, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV."
               }
             },
             {

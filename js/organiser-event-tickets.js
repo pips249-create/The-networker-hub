@@ -363,12 +363,24 @@
     const ticketsPanel = document.getElementById('ee-panel-tickets');
     const categoryExclusivityPanel = document.getElementById('ee-panel-category-exclusivity');
     const guestNote = document.getElementById('ee-guest-programme-note');
+    const guestPassesOptOut = document.getElementById('ee-guest-passes-opt-out');
+    const alumniPanel = document.getElementById('ee-panel-alumni-fast-pass');
     const panelTitle = document.getElementById('ee-tickets-panel-title');
     const desc = document.getElementById('ee-mode-desc');
     const isGuest = mode === 'guest_programme';
     if (ticketsPanel) ticketsPanel.hidden = mode === 'category_exclusivity';
     if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = mode !== 'category_exclusivity';
     if (guestNote) guestNote.hidden = !isGuest;
+    if (guestPassesOptOut) {
+      guestPassesOptOut.hidden = !isGuest || !(organiserComplimentaryVisits > 0);
+    }
+    if (alumniPanel) alumniPanel.hidden = mode !== 'tickets';
+    if (mode !== 'tickets') {
+      const alumniEnabled = document.getElementById('ee-alumni-enabled');
+      const alumniFields = document.getElementById('ee-alumni-fields');
+      if (alumniEnabled) alumniEnabled.checked = false;
+      if (alumniFields) alumniFields.hidden = true;
+    }
     if (panelTitle) {
       panelTitle.textContent = isGuest ? 'Member ticket types' : 'Ticket types';
     }
@@ -771,13 +783,15 @@
         savedAt: Date.now(),
         eventIds: eventIds.slice(),
         attendanceMode: attendanceMode,
+        alumniFastPass: collectAlumniFastPass(),
+        guestPassesDisabled: collectGuestPassesDisabled(),
         tiers:
           attendanceMode === 'category_exclusivity' ? collectCategoryExclusivityTiers() : collectTiers(),
         vatTreatment: collectVatTreatment(),
         refund: collectRefundPayload(),
-        foodOrDrinkIncluded: !!document.getElementById('ee-food-or-drink')?.checked,
-        askDietary: !!document.getElementById('ee-ask-dietary')?.checked,
-        askAccessibility: !!document.getElementById('ee-ask-accessibility')?.checked,
+        foodOrDrinkIncluded: !!document.getElementById('ee-food-included')?.checked,
+        askDietary: !!document.getElementById('ee-collect-dietary')?.checked,
+        askAccessibility: !!document.getElementById('ee-collect-access')?.checked,
       };
       sessionStorage.setItem(draftStorageKey(), JSON.stringify(payload));
     } catch {
@@ -817,6 +831,35 @@
     } else {
       return false;
     }
+    if (draft.alumniFastPass) {
+      const enabledEl = document.getElementById('ee-alumni-enabled');
+      const fields = document.getElementById('ee-alumni-fields');
+      if (enabledEl) enabledEl.checked = Boolean(draft.alumniFastPass.enabled);
+      if (fields) fields.hidden = !draft.alumniFastPass.enabled;
+      if (draft.alumniFastPass.enabled) {
+        const priceEl = document.getElementById('ee-alumni-price');
+        if (priceEl && draft.alumniFastPass.price != null) priceEl.value = String(draft.alumniFastPass.price);
+        const qtyEl = document.getElementById('ee-alumni-qty');
+        if (qtyEl && draft.alumniFastPass.quantityAvailable != null) {
+          qtyEl.value = String(draft.alumniFastPass.quantityAvailable);
+        }
+        if (draft.alumniFastPass.saleEnd) {
+          const endDateEl = document.getElementById('ee-alumni-sale-end-date');
+          const endTimeEl = document.getElementById('ee-alumni-sale-end-time');
+          if (endDateEl) endDateEl.value = isoToDateInput(draft.alumniFastPass.saleEnd);
+          if (endTimeEl) {
+            populateQuarterTimeSelect(
+              endTimeEl,
+              isoToTimeInput(draft.alumniFastPass.saleEnd) || '18:00'
+            );
+          }
+        }
+      }
+    }
+    if (draft.guestPassesDisabled != null) {
+      const guestEl = document.getElementById('ee-guest-passes-disabled');
+      if (guestEl) guestEl.checked = Boolean(draft.guestPassesDisabled);
+    }
     if (draft.vatTreatment) {
       const vatVal = String(draft.vatTreatment);
       const radio = Array.from(document.querySelectorAll('input[name="vat-treatment"]')).find(
@@ -842,11 +885,11 @@
         custom.value = draft.refund.refundPolicyDetails;
       }
     }
-    const food = document.getElementById('ee-food-or-drink');
+    const food = document.getElementById('ee-food-included');
     if (food) food.checked = !!draft.foodOrDrinkIncluded;
-    const dietary = document.getElementById('ee-ask-dietary');
+    const dietary = document.getElementById('ee-collect-dietary');
     if (dietary) dietary.checked = !!draft.askDietary;
-    const access = document.getElementById('ee-ask-accessibility');
+    const access = document.getElementById('ee-collect-access');
     if (access) access.checked = !!draft.askAccessibility;
     return true;
   }
@@ -1061,9 +1104,88 @@
     populateQuarterTimeSelect(document.getElementById('ee-ce-close-time'), '18:00');
   }
 
+  function isAlumniTicket(ticket) {
+    const kind = ticket.ticketType || '';
+    return kind === 'Alumni' || /^alumni/i.test(ticket.name || '');
+  }
+
   function isGuestVisitTicket(ticket) {
     const kind = ticket.ticketType || '';
     return /guest-visit/i.test(kind) || /^guest\s*visit$/i.test(ticket.name || '');
+  }
+
+  function collectGuestPassesDisabled() {
+    return Boolean(document.getElementById('ee-guest-passes-disabled')?.checked);
+  }
+
+  function prefillGuestPassesDisabled(eventRow) {
+    const el = document.getElementById('ee-guest-passes-disabled');
+    if (el) el.checked = Boolean(eventRow?.guestPassesDisabled);
+  }
+
+  function bindGuestPassesFields() {
+    const disabledEl = document.getElementById('ee-guest-passes-disabled');
+    if (disabledEl) disabledEl.addEventListener('change', updatePublishButton);
+  }
+
+  function bindAlumniFastPassFields() {
+    const enabled = document.getElementById('ee-alumni-enabled');
+    const fields = document.getElementById('ee-alumni-fields');
+    const toggle = () => {
+      if (fields) fields.hidden = !enabled?.checked;
+      updatePublishButton();
+    };
+    if (enabled) {
+      enabled.addEventListener('change', toggle);
+      toggle();
+    }
+    populateQuarterTimeSelect(document.getElementById('ee-alumni-sale-end-time'), '18:00');
+  }
+
+  function collectAlumniFastPass() {
+    const enabled = Boolean(document.getElementById('ee-alumni-enabled')?.checked);
+    if (!enabled) return { enabled: false };
+    const price = document.getElementById('ee-alumni-price')?.value;
+    const qty = document.getElementById('ee-alumni-qty')?.value;
+    const saleEnd = combineDateAndQuarterTime(
+      document.getElementById('ee-alumni-sale-end-date')?.value,
+      document.getElementById('ee-alumni-sale-end-time')?.value
+    );
+    return {
+      enabled: true,
+      price: price === '' ? 0 : price,
+      quantityAvailable: qty === '' ? null : Number(qty),
+      saleEnd,
+    };
+  }
+
+  function prefillAlumniFastPass(eventRow, alumniTicket) {
+    const enabledEl = document.getElementById('ee-alumni-enabled');
+    const fields = document.getElementById('ee-alumni-fields');
+    const enabled = Boolean(eventRow?.alumniFastPassEnabled);
+    if (enabledEl) enabledEl.checked = enabled;
+    if (fields) fields.hidden = !enabled;
+    if (!enabled) return;
+    const priceEl = document.getElementById('ee-alumni-price');
+    if (priceEl && alumniTicket) {
+      priceEl.value =
+        alumniTicket.price === '' || alumniTicket.price == null ? '0' : String(alumniTicket.price);
+    }
+    const qtyEl = document.getElementById('ee-alumni-qty');
+    if (qtyEl && alumniTicket) {
+      qtyEl.value =
+        alumniTicket.quantityAvailable == null || alumniTicket.quantityAvailable === ''
+          ? ''
+          : String(alumniTicket.quantityAvailable);
+    }
+    const endDateEl = document.getElementById('ee-alumni-sale-end-date');
+    const endTimeEl = document.getElementById('ee-alumni-sale-end-time');
+    if (alumniTicket?.saleEnd) {
+      if (endDateEl) endDateEl.value = isoToDateInput(alumniTicket.saleEnd);
+      if (endTimeEl) {
+        populateQuarterTimeSelect(endTimeEl, isoToTimeInput(alumniTicket.saleEnd) || '18:00');
+      }
+    }
   }
 
   function isCategoryExclusivityTicket(ticket) {
@@ -1191,6 +1313,8 @@
   async function init() {
     loadSeriesMeta();
     bindCategoryExclusivityCloseFields();
+    bindAlumniFastPassFields();
+    bindGuestPassesFields();
     if (!eventIds.length) {
       showAlert('No events in this series. Go back and save your event dates first.', 'warn');
       return;
@@ -1256,6 +1380,7 @@
       } else if (loaded.event.attendanceMode === 'category_exclusivity') {
         setAttendanceMode('category_exclusivity');
       }
+      prefillGuestPassesDisabled(loaded.event);
       prefillRefundFromEvent(loaded.event);
       applyTicketsLockUi(loaded.event);
     }
@@ -1282,10 +1407,12 @@
       showAlert('Restored your ticket details from before bank setup. Review them, then publish when ready.', 'ok');
     } else if (loaded.tickets.length) {
       const categoryExclusivityTicket = loaded.tickets.find(isCategoryExclusivityTicket);
-      const memberTickets = loaded.tickets.filter((t) => !isGuestVisitTicket(t));
+      const alumniTicket = loaded.tickets.find(isAlumniTicket);
+      const memberTickets = loaded.tickets.filter((t) => !isGuestVisitTicket(t) && !isAlumniTicket(t));
       if (loaded.event && loaded.event.attendanceMode === 'guest_programme') {
         setAttendanceMode('guest_programme');
         prefillTiers(memberTickets);
+        prefillGuestPassesDisabled(loaded.event);
         showAlert(
           'Loaded your guest visit programme member tickets. Saving will update all dates in this series.',
           'ok'
@@ -1295,6 +1422,7 @@
         showAlert('Loaded your Category Exclusivity settings. Saving will update all dates in this series.', 'ok');
       } else {
         prefillTiers(memberTickets.length ? memberTickets : loaded.tickets);
+        prefillAlumniFastPass(loaded.event, alumniTicket);
         showAlert(
           'Loaded ' +
             loaded.tickets.length +
@@ -1455,6 +1583,8 @@
       tickets: tiers,
       publish,
       attendanceMode,
+      alumniFastPass: attendanceMode === 'tickets' ? collectAlumniFastPass() : { enabled: false },
+      guestPassesDisabled: collectGuestPassesDisabled(),
       vatTreatment: collectVatTreatment(),
       attendeeExtras: attendeeExtras(),
       ...refund,

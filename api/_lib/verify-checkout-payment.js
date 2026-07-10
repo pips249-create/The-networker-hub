@@ -61,6 +61,9 @@ function checkoutBookingFields(checkout, input) {
     accessibilityRequirements:
       metadataText(input.accessibilityRequirements || input.accessibility_requirements) ||
       metadataText(metadata.accessibility_requirements || metadata.accessibilityRequirements),
+    alumniInviteToken:
+      metadataText(input.alumniInviteToken || input.alumni_invite_token) ||
+      metadataText(metadata.alumni_invite_token || metadata.alumniInviteToken),
   };
 }
 

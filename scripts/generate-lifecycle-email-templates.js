@@ -133,6 +133,10 @@ const templates = [
   ['post-event-review-request.html', 'Leave a review', hero('&#9733;', '#fff4d6', '#b8860b', 'How was it?', '#b8860b', 'Share your experience',
     'Hi {{user_name}}, we hope you enjoyed <strong style="color:#1c2040;">{{event_name}}</strong>. A quick review helps other networkers discover great groups.') +
     ctaRow(btn('{{review_url}}', 'Leave a review &rarr;', '#1c2040'))],
+  ['guest-visit-followup.html', 'Guest visit follow-up', hero('&#127915;', '#ebe0f0', '#9a7aa8', 'Guest visit', '#9a7aa8', 'Hope to see you again',
+    'Hi {{user_name}}, we hope you enjoyed your guest visit to <strong style="color:#1c2040;">{{event_name}}</strong> with <strong style="color:#1c2040;">{{organiser_name}}</strong>. If plans changed, we know things come up — you are always welcome back.') +
+    cardBlock('{{next_event_section}}') +
+    ctaRow(btn('{{cta_url}}', '{{cta_label}} &rarr;', '#1c2040'))],
   ['category-exclusivity-payment-reminder.html', 'Complete payment', hero('&#9203;', '#fff4d6', '#b8860b', 'Payment due', '#b8860b', 'Complete your booking',
     'Hi {{user_name}}, you were approved for <strong style="color:#1c2040;">{{event_name}}</strong> but have not completed payment yet. Your seat is not secured until you pay.') +
     ctaRow(btn('{{hub_payment_url}}', 'Complete payment &rarr;', '#9a7aa8'))],

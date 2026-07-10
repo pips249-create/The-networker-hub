@@ -1707,6 +1707,12 @@
       ? '<p class="org-action-menu-note">Expand the row to cancel or delete individual dates.</p>'
       : '';
     const deleteItem = isSeriesParent ? '' : eventDeleteActionHtml(ev);
+    const alumniItem =
+      ev.alumniFastPassEnabled && !isSeriesParent
+        ? '<button type="button" class="org-action-item" data-send-alumni-invites="' +
+          esc(id) +
+          '"><span class="org-action-icon">🎓</span><span class="org-action-text"><strong>Send alumni invites</strong><span>Invite past attendees to the alumni ticket</span></span></button>'
+        : '';
     return (
       '<div class="org-action-wrap">' +
       '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
@@ -1731,6 +1737,7 @@
       '<button type="button" class="org-action-item" data-org-goto-sub="events-revenue" data-filter-event="' +
       esc(id) +
       '"><span class="org-action-icon">£</span><span class="org-action-text"><strong>Revenue &amp; payout</strong><span>Request payout when eligible</span></span></button>' +
+      alumniItem +
       cancelItem +
       deleteItem +
       '</div></div>'
@@ -4074,6 +4081,16 @@
       return true;
     }
 
+    const alumniInvitesBtn = e.target.closest('[data-send-alumni-invites]');
+    if (alumniInvitesBtn && !alumniInvitesBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      const eid = alumniInvitesBtn.getAttribute('data-send-alumni-invites');
+      if (eid) openAlumniInvitesModal(eid);
+      return true;
+    }
+
     const subBtn = e.target.closest('[data-org-goto-sub]');
     if (subBtn && !subBtn.disabled) {
       e.preventDefault();
@@ -4106,6 +4123,7 @@
   }
 
   let pendingPayoutEventId = null;
+  let pendingAlumniInviteEventId = null;
   let pendingCancelEventId = null;
   let pendingCancelRefundRequired = false;
 
@@ -4235,6 +4253,151 @@
         preview.ineligibleReason || 'This event is not eligible for a payout request yet.';
     }
     if (submitBtn) submitBtn.disabled = !preview.canRequestPayout;
+  }
+
+  function closeAlumniInvitesModal() {
+    pendingAlumniInviteEventId = null;
+    const modal = document.getElementById('modal-alumni-invites');
+    if (modal) modal.hidden = true;
+    const errEl = document.getElementById('modal-alumni-invites-error');
+    if (errEl) {
+      errEl.hidden = true;
+      errEl.textContent = '';
+    }
+    const sendBtn = document.getElementById('modal-alumni-invites-send');
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send invites';
+    }
+  }
+
+  async function openAlumniInvitesModal(eventId) {
+    pendingAlumniInviteEventId = eventId;
+    const modal = document.getElementById('modal-alumni-invites');
+    const titleEl = document.getElementById('modal-alumni-invites-event');
+    const sourceSel = document.getElementById('modal-alumni-source-event');
+    const statsEl = document.getElementById('modal-alumni-invites-stats');
+    const errEl = document.getElementById('modal-alumni-invites-error');
+    const sendBtn = document.getElementById('modal-alumni-invites-send');
+    if (!modal || !sourceSel) return;
+
+    const ev = findEventById(eventId);
+    if (titleEl) titleEl.textContent = ev ? ev.title : 'Event';
+    if (statsEl) statsEl.hidden = true;
+    if (errEl) {
+      errEl.hidden = true;
+      errEl.textContent = '';
+    }
+    sourceSel.innerHTML = '<option value="">Loading…</option>';
+    if (sendBtn) sendBtn.disabled = true;
+    modal.hidden = false;
+    openModal('modal-alumni-invites');
+
+    const { ok, data } = await api(
+      '/api/organiser/alumni-invites?eventId=' +
+        encodeURIComponent(eventId) +
+        '&action=sources'
+    );
+    if (!ok) {
+      if (errEl) {
+        errEl.hidden = false;
+        errEl.textContent = data.message || data.error || 'Could not load source events';
+      }
+      sourceSel.innerHTML = '<option value="">No source events available</option>';
+      return;
+    }
+
+    const sources = Array.isArray(data.sourceEvents) ? data.sourceEvents : [];
+    if (!sources.length) {
+      sourceSel.innerHTML = '<option value="">No past events with confirmed attendees</option>';
+      if (errEl) {
+        errEl.hidden = false;
+        errEl.textContent =
+          'Publish a previous event with confirmed attendees first, then return here to send alumni invites.';
+      }
+      return;
+    }
+
+    const defaultId = data.targetEvent?.alumniSourceEventId || '';
+    sourceSel.innerHTML = sources
+      .map(function (row) {
+        const label =
+          (row.title || 'Event') +
+          ' (' +
+          (row.confirmedAttendeeCount || 0) +
+          ' attendee' +
+          (row.confirmedAttendeeCount === 1 ? '' : 's') +
+          ')';
+        return (
+          '<option value="' +
+          esc(row.id) +
+          '"' +
+          (row.id === defaultId ? ' selected' : '') +
+          '>' +
+          esc(label) +
+          '</option>'
+        );
+      })
+      .join('');
+    if (sendBtn) sendBtn.disabled = false;
+
+    const statsRes = await api(
+      '/api/organiser/alumni-invites?eventId=' + encodeURIComponent(eventId)
+    );
+    if (statsRes.ok && statsRes.data.stats && statsEl) {
+      const s = statsRes.data.stats;
+      if (s.total > 0) {
+        statsEl.textContent =
+          'Invites on this event: ' +
+          s.sent +
+          ' sent · ' +
+          s.redeemed +
+          ' redeemed · ' +
+          s.pending +
+          ' pending';
+        statsEl.hidden = false;
+      }
+    }
+  }
+
+  async function submitAlumniInvites() {
+    if (!pendingAlumniInviteEventId) return;
+    const sourceSel = document.getElementById('modal-alumni-source-event');
+    const sourceEventId = sourceSel ? String(sourceSel.value || '').trim() : '';
+    const errEl = document.getElementById('modal-alumni-invites-error');
+    const sendBtn = document.getElementById('modal-alumni-invites-send');
+    if (!sourceEventId) {
+      if (errEl) {
+        errEl.hidden = false;
+        errEl.textContent = 'Choose the source event whose attendees you want to invite.';
+      }
+      return;
+    }
+    if (sendBtn) {
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending…';
+    }
+    const { ok, data } = await api('/api/organiser/alumni-invites', {
+      method: 'POST',
+      body: JSON.stringify({
+        targetEventId: pendingAlumniInviteEventId,
+        sourceEventId,
+      }),
+    });
+    if (!ok) {
+      if (errEl) {
+        errEl.hidden = false;
+        errEl.textContent = data.message || data.error || 'Could not send alumni invites';
+      }
+      if (sendBtn) {
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Send invites';
+      }
+      return;
+    }
+    closeAlumniInvitesModal();
+    closeModals();
+    showOrganiserAlert(data.message || 'Alumni invites sent.', false);
   }
 
   async function submitPayoutRequest() {
@@ -4762,6 +4925,7 @@
     });
     document.body.classList.remove('org-cancel-modal-open');
     pendingPayoutEventId = null;
+    pendingAlumniInviteEventId = null;
     pendingCancelEventId = null;
     pendingCancelRefundRequired = false;
     pendingDeleteEventId = null;
@@ -7869,6 +8033,10 @@
     const payoutSubmit = document.getElementById('btn-payout-submit');
     if (payoutSubmit) {
       payoutSubmit.addEventListener('click', submitPayoutRequest);
+    }
+    const alumniSendBtn = document.getElementById('modal-alumni-invites-send');
+    if (alumniSendBtn) {
+      alumniSendBtn.addEventListener('click', submitAlumniInvites);
     }
 
     bindForms();

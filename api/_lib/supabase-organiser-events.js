@@ -152,6 +152,9 @@ function rowToEvent(row) {
     capacity: row.max_attendees != null ? Number(row.max_attendees) : null,
     ticketSalesEnabled: row.ticket_sales_enabled === true,
     attendanceMode: normalizeAttendanceMode(row.attendance_mode),
+    alumniFastPassEnabled: Boolean(row.alumni_fast_pass_enabled),
+    alumniSourceEventId: row.alumni_source_event_id || null,
+    guestPassesDisabled: Boolean(row.guest_passes_disabled),
   };
 }
 
@@ -1234,6 +1237,8 @@ async function createTicketsForEvents({
   vatTreatment,
   attendeeExtras,
   attendanceMode,
+  alumniFastPass,
+  guestPassesDisabled,
 }) {
   const sb = getSupabaseAdmin();
   const ids = await expandEventIdsToSeriesPeers(sb, eventIds);
@@ -1243,6 +1248,8 @@ async function createTicketsForEvents({
   const mode = ['tickets', 'category_exclusivity', 'guest_programme', 'osop'].includes(String(attendanceMode || '').trim())
     ? normalizeAttendanceMode(String(attendanceMode).trim())
     : 'tickets';
+
+  const guestPassesDisabledFlag = Boolean(guestPassesDisabled);
 
   if (mode === 'guest_programme') {
     const { guestVisitTierPayload } = require('./guest-visits');
@@ -1271,7 +1278,32 @@ async function createTicketsForEvents({
       e.code = 'guest_programme_requires_complimentary_visits';
       throw e;
     }
-    tiers = [...tiers, guestVisitTierPayload()];
+    if (!guestPassesDisabledFlag) {
+      tiers = [...tiers, guestVisitTierPayload()];
+    }
+  }
+
+  const alumniConfig =
+    alumniFastPass && typeof alumniFastPass === 'object' ? alumniFastPass : null;
+  if (alumniConfig?.enabled) {
+    const { alumniTierPayload } = require('./alumni-invites');
+    tiers = [
+      ...tiers,
+      alumniTierPayload({
+        price: alumniConfig.price,
+        quantityAvailable: alumniConfig.quantityAvailable,
+        saleEnd: alumniConfig.saleEnd || null,
+        description: alumniConfig.description,
+      }),
+    ];
+  }
+
+  const alumniEventUpdate = {
+    alumni_fast_pass_enabled: Boolean(alumniConfig?.enabled),
+    guest_passes_disabled: mode === 'guest_programme' ? guestPassesDisabledFlag : false,
+  };
+  if (alumniConfig?.sourceEventId) {
+    alumniEventUpdate.alumni_source_event_id = String(alumniConfig.sourceEventId).trim();
   }
 
   await assertTicketsEditableForEvents(sb, ids);
@@ -1282,6 +1314,9 @@ async function createTicketsForEvents({
 
   const { error: deleteErr } = await sb.from('tickets').delete().in('event_id', ids);
   if (deleteErr) throw new Error(deleteErr.message);
+
+  const { error: alumniFlagErr } = await sb.from('events').update(alumniEventUpdate).in('id', ids);
+  if (alumniFlagErr) throw new Error(alumniFlagErr.message);
 
   const { data: eventRows, error: eventRowsErr } = await sb
     .from('events')

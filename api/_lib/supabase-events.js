@@ -196,6 +196,12 @@ function ticketIsApplication(row, name) {
   return ticketType.includes('application') || /application to attend/.test(ticketName);
 }
 
+function ticketIsAlumni(row, ticketName) {
+  const ticketType = String(row.ticket_type || row.ticketType || '').trim();
+  if (ticketType === 'Alumni') return true;
+  return /^alumni/i.test(String(ticketName || row.name || '').trim());
+}
+
 function ticketIsGuestVisit(row, ticketName) {
   const ticketType = String(row.ticket_type || row.ticketType || '').trim();
   if (ticketType === 'Guest-visit') return true;
@@ -225,6 +231,7 @@ function ticketRowToTier(row, registrationCount) {
     ticketType,
     categoryExclusivity: ticketIsApplication(row, name),
     isGuestVisit: ticketIsGuestVisit(row, name),
+    isAlumni: ticketIsAlumni(row, name),
     saleEnd: row.sale_ends_at || null,
   };
 }
@@ -301,7 +308,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   const tiers = eventTickets.map((t) =>
     ticketRowToTier(t, t._registrationCount != null ? t._registrationCount : 0)
   );
-  const publicTiers = tiers.filter((t) => !t.isGuestVisit);
+  const publicTiers = tiers.filter((t) => !t.isGuestVisit && !t.isAlumni);
   const pricedTiers = publicTiers.length ? publicTiers : tiers;
   pricedTiers.sort((a, b) => {
     if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;
@@ -448,6 +455,9 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
       ? Math.min(2, Math.max(0, Number(organiser.complimentary_visits_allowed) || 0))
       : 0,
     guestVisitTier: tiers.find((t) => t.isGuestVisit) || null,
+    alumniFastPassEnabled: Boolean(row.alumni_fast_pass_enabled),
+    alumniTier: tiers.find((t) => t.isAlumni) || null,
+    guestPassesDisabled: Boolean(row.guest_passes_disabled),
     refundPolicy: row.refund_policy || null,
     refundPolicyDetails: row.refund_policy_details || null,
     refundCutoffDays: row.refund_cutoff_days != null ? Number(row.refund_cutoff_days) : null,

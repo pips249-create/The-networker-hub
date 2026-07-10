@@ -1758,6 +1758,59 @@ a:hover {
   box-shadow: 0 0 0 1px #93c5fd;
 }
 
+.alumni-tier-card {
+  padding: 14px 16px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #faf8ff 0%, #f3eeff 100%);
+  border: 1.5px solid #d8c9f0;
+}
+
+.alumni-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b4c9a;
+  margin-bottom: 8px;
+}
+
+.alumni-tier-lead {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.alumni-tier-price-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e9dff5;
+}
+
+.alumni-tier-price-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.alumni-tier-price {
+  font-size: 22px;
+  font-weight: 700;
+  color: #5b3f87;
+}
+
+.tier-alumni.selected {
+  border-color: #c4b5fd;
+  box-shadow: 0 0 0 1px #c4b5fd;
+}
+
 .ticket-panel.is-approval-mode .ticket-foot.category-exclusivity-apply-foot[hidden] {
   display: none !important;
 }

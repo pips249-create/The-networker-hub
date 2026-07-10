@@ -20,6 +20,7 @@ const OPPORTUNITY_FILES = [
 const EVENT_MINI_FILES = [
   'meeting-link-added.html',
   'post-event-review-request.html',
+  'guest-visit-followup.html',
   'category-exclusivity-payment-reminder.html',
   'online-join-reminder.html',
   'attendee-reengagement.html',

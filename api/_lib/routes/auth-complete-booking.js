@@ -70,6 +70,11 @@ module.exports = async function handler(req, res) {
       paymentStatus: payment.paymentStatus,
       stripePaymentIntentId: payment.stripePaymentIntentId,
       stripeCheckoutSessionId: payment.stripeCheckoutSessionId,
+      alumniInviteToken:
+        body.alumniInviteToken ||
+        body.alumni_invite_token ||
+        payment.alumniInviteToken ||
+        undefined,
     });
     return json(res, 200, { ok: true, ...result });
   } catch (e) {

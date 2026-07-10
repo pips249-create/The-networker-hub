@@ -113,8 +113,12 @@ async function assertGuestVisitBookingAllowed(sb, { organiserId, attendeeId, ema
   return eligibility;
 }
 
-async function assertPaidMemberBookingAllowed(sb, { organiserId, attendeeId, email, attendanceMode }) {
+async function assertPaidMemberBookingAllowed(
+  sb,
+  { organiserId, attendeeId, email, attendanceMode, guestPassesDisabled }
+) {
   if (String(attendanceMode || '').trim() !== 'guest_programme') return null;
+  if (guestPassesDisabled) return null;
   const allowed = await loadOrganiserGuestVisitAllowance(sb, organiserId);
   if (allowed < 1) return null;
   const eligibility = await getGuestVisitEligibility(sb, {

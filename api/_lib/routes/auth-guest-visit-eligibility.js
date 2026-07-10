@@ -34,11 +34,20 @@ module.exports = async function handler(req, res) {
     const sb = getSupabaseAdmin();
     const evRes = await sb
       .from('events')
-      .select('id, organiser_id, attendance_mode, status')
+      .select('id, organiser_id, attendance_mode, status, guest_passes_disabled')
       .eq('id', eventId)
       .maybeSingle();
     if (evRes.error) throw new Error(evRes.error.message);
     if (!evRes.data) return json(res, 404, { ok: false, error: 'event_not_found' });
+
+    if (evRes.data.guest_passes_disabled) {
+      return json(res, 200, {
+        ok: true,
+        attendanceMode: evRes.data.attendance_mode || 'tickets',
+        eligibility: { allowed: 0, used: 0, remaining: 0, eligible: false, platformMax: 2 },
+        guestPassesDisabled: true,
+      });
+    }
 
     const organiserId = evRes.data.organiser_id;
     if (!organiserId) {

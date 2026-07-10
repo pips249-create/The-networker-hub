@@ -288,6 +288,10 @@
     return String(ev?.attendanceMode || '').trim() === 'guest_programme';
   }
 
+  function eventAllowsGuestPasses(ev) {
+    return eventIsGuestProgramme(ev) && !ev.guestPassesDisabled && Number(ev.complimentaryVisitsAllowed) > 0;
+  }
+
   function tierIsGuestVisit(t) {
     if (!t) return false;
     if (t.isGuestVisit) return true;
@@ -303,7 +307,7 @@
   }
 
   async function loadGuestVisitEligibility(ev) {
-    if (!eventIsGuestProgramme(ev) || !ev.complimentaryVisitsAllowed) {
+    if (!eventAllowsGuestPasses(ev)) {
       guestVisitEligibility = { allowed: 0, used: 0, remaining: 0, eligible: false };
       return guestVisitEligibility;
     }
@@ -332,6 +336,79 @@
       guestVisitEligibility = null;
     }
     return guestVisitEligibility;
+  }
+
+  function tierIsAlumni(t) {
+    if (!t) return false;
+    if (t.isAlumni) return true;
+    const type = String(t.ticketType || t.ticket_type || '').trim();
+    if (type === 'Alumni') return true;
+    return /^alumni/i.test(String(t.name || '').trim());
+  }
+
+  async function loadAlumniEligibility(ev) {
+    if (!ev?.alumniFastPassEnabled) {
+      alumniEligibility = { eligible: false };
+      return alumniEligibility;
+    }
+    const token = String(alumniInviteToken || '').trim();
+    try {
+      const qs =
+        'eventId=' +
+        encodeURIComponent(ev.id) +
+        (token ? '&token=' + encodeURIComponent(token) : '');
+      const res = await fetch('/api/auth/alumni-eligibility?' + qs, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      const data = await res.json().catch(function () {
+        return {};
+      });
+      if (data.ok) {
+        alumniEligibility = {
+          eligible: Boolean(data.eligible),
+          reason: data.reason || '',
+          inviteToken: data.inviteToken || token || '',
+          alumniTierId: data.alumniTierId || null,
+          signedOut: !token && res.status === 200 && data.reason === 'not_authenticated',
+        };
+      } else if (res.status === 401) {
+        alumniEligibility = {
+          eligible: false,
+          signedOut: true,
+          inviteToken: token || '',
+        };
+      } else {
+        alumniEligibility = { eligible: false, reason: data.reason || '' };
+      }
+    } catch {
+      alumniEligibility = null;
+    }
+    return alumniEligibility;
+  }
+
+  function alumniTierCardHtml(t, eligibility, soldOut) {
+    const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
+    const priceDisplay = priceNum > 0 ? t.price || fmt(priceNum) : 'Free';
+    let html =
+      '<div class="alumni-tier-card' +
+      (soldOut ? ' is-sold-out' : '') +
+      '">' +
+      '<div class="alumni-tier-badge"><span aria-hidden="true">🎓</span> Alumni Fast-Pass</div>';
+    if (eligibility?.signedOut) {
+      html +=
+        '<p class="alumni-tier-lead">Sign in with the email that received your invite to claim your alumni rate.</p>';
+    } else {
+      html +=
+        '<p class="alumni-tier-lead">Exclusive rate for past attendees — invite only.</p>';
+    }
+    html +=
+      '<div class="alumni-tier-price-row">' +
+      '<span class="alumni-tier-price-label">Your rate</span>' +
+      '<span class="alumni-tier-price">' +
+      escapeHtml(priceDisplay) +
+      '</span></div></div>';
+    return html;
   }
 
   function guestVisitTierCardHtml(t, eligibility, soldOut) {
@@ -414,7 +491,7 @@
       labelEl.textContent = 'Member tickets from';
       priceEl.textContent =
         ev.priceKey === 'free' ? 'Free' : publicListingPriceLabel(ev, { withFrom: false });
-      const trial = complimentaryVisitsLabel(ev.complimentaryVisitsAllowed);
+      const trial = eventAllowsGuestPasses(ev) ? complimentaryVisitsLabel(ev.complimentaryVisitsAllowed) : '';
       if (trial && guestVisitEligibility?.eligible) {
         priceEl.textContent += ' · ' + trial;
       } else if (trial && guestVisitEligibility?.signedOut) {
@@ -1184,6 +1261,8 @@
   const BOOKING_PENDING_KEY = 'hub_booking_pending';
   let checkoutSessionUser = null;
   let guestVisitEligibility = null;
+  let alumniEligibility = null;
+  let alumniInviteToken = '';
   let eventApplicationState = null;
   let ticketPanelBound = false;
 
@@ -1392,6 +1471,10 @@
       guest_visits_exhausted:
         'You have used all complimentary visits with this organiser. Choose a member ticket instead.',
       guest_visits_not_enabled: 'Guest visits are not available for this organiser.',
+      guest_passes_disabled: 'Guest passes are not available for this event.',
+      alumni_not_eligible: 'This alumni ticket is invite-only. Use the link from your email.',
+      not_invited: 'This alumni ticket is invite-only. Use the link from your email.',
+      email_mismatch: 'Sign in with the email address that received the alumni invite.',
       not_authenticated: 'Please sign in or create a free account to complete your booking.',
     };
     if (data && data.message) return String(data.message);
@@ -1406,6 +1489,7 @@
       throw new Error('This event could not be loaded for checkout. Refresh the page and try again.');
     }
     saveBookingPending(event, ticketId, qty, attendee);
+    const isAlumniBooking = Boolean(event.alumniTier && event.alumniTier.id === ticketId);
     const res = await fetch('/api/auth/create-checkout', {
       method: 'POST',
       credentials: 'include',
@@ -1419,6 +1503,10 @@
         guestNames: attendee?.guestNames || [],
         dietaryRequirements: attendee?.dietaryRequirements || '',
         accessibilityRequirements: attendee?.accessibilityRequirements || '',
+        alumniInviteToken:
+          isAlumniBooking
+            ? alumniEligibility?.inviteToken || alumniInviteToken || ''
+            : undefined,
       }),
     });
     const data = await res.json().catch(function () {
@@ -1434,8 +1522,10 @@
 
   async function completeFreeBooking(ev, ticketId, qty, attendee) {
     const isGuestVisit = Boolean(ev.guestVisitTier && ev.guestVisitTier.id === ticketId);
+    const isAlumni = Boolean(ev.alumniTier && ev.alumniTier.id === ticketId);
     saveBookingPending(ev, ticketId, qty, attendee);
-    const endpoint = isGuestVisit ? '/api/auth/create-checkout' : '/api/auth/complete-booking';
+    const endpoint =
+      isGuestVisit || isAlumni ? '/api/auth/create-checkout' : '/api/auth/complete-booking';
     const body = {
       eventId: ev.id,
       ticketId: isUuid(ticketId) ? ticketId : null,
@@ -1446,7 +1536,10 @@
       dietaryRequirements: attendee?.dietaryRequirements || '',
       accessibilityRequirements: attendee?.accessibilityRequirements || '',
     };
-    if (!isGuestVisit) {
+    if (isAlumni) {
+      body.alumniInviteToken = alumniEligibility?.inviteToken || alumniInviteToken || '';
+    }
+    if (!isGuestVisit && !isAlumni) {
       body.amountPaid = 0;
       body.paymentStatus = 'Free';
     }
@@ -1463,7 +1556,8 @@
       throw new Error(checkoutErrorMessage(data));
     }
     if (data.completed) {
-      window.location.assign('/events/booking-success.html?free=1&confirmed=1&guest_visit=1');
+      const suffix = isGuestVisit ? '&guest_visit=1' : isAlumni ? '&alumni=1' : '';
+      window.location.assign('/events/booking-success.html?free=1&confirmed=1' + suffix);
       return;
     }
     window.location.assign('/events/booking-success.html?free=1&confirmed=1');
@@ -1518,6 +1612,15 @@
     el.hidden = false;
   }
 
+  function showAlumniTierSelected(ev) {
+    const tierEl = getSelectedTierEl();
+    if (!tierEl || !ev?.alumniTier) return false;
+    return (
+      tierEl.getAttribute('data-alumni') === '1' ||
+      tierEl.getAttribute('data-ticket-id') === String(ev.alumniTier.id)
+    );
+  }
+
   function tierRemainingCount(t) {
     const cap = t.quantityAvailable;
     if (cap == null || !Number.isFinite(Number(cap))) return null;
@@ -1548,10 +1651,16 @@
     const isCategoryExclusivity = eventIsCategoryExclusivity(ev);
     const isGuestProg = eventIsGuestProgramme(ev);
     const showGuestTier =
-      isGuestProg &&
+      eventAllowsGuestPasses(ev) &&
       ev.guestVisitTier &&
       guestVisitEligibility &&
       (guestVisitEligibility.eligible || guestVisitEligibility.signedOut);
+    const showAlumniTier =
+      ev.alumniFastPassEnabled &&
+      ev.alumniTier &&
+      alumniEligibility &&
+      (alumniEligibility.eligible || alumniEligibility.signedOut);
+    const alumniOnlyView = Boolean(alumniInviteToken && alumniEligibility?.eligible);
     const memberTiers = isGuestProg ? tiers : tiers;
     tiersEl.innerHTML = '';
 
@@ -1576,6 +1685,33 @@
         tier.setAttribute('aria-disabled', 'true');
       }
       tier.innerHTML = guestVisitTierCardHtml(t, guestVisitEligibility, soldOut);
+      tiersEl.appendChild(tier);
+    } else if (showAlumniTier) {
+      const t = ev.alumniTier;
+      let soldOut = panelClosed;
+      const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
+      const cap = t.quantityAvailable;
+      const sold = Math.max(0, Number(t.registrationsCount) || 0);
+      if (cap != null && Number.isFinite(Number(cap))) {
+        const left = Math.max(0, Number(cap) - sold);
+        if (left <= 0) soldOut = true;
+      }
+      const tier = document.createElement('div');
+      tier.className =
+        'tier tier-alumni' + (soldOut ? ' sold-out tier-disabled' : ' selected');
+      tier.id = 'ev-tier-alumni';
+      tier.setAttribute('data-ticket-id', t.id);
+      tier.setAttribute('data-price', String(priceNum));
+      tier.setAttribute('data-label', 'Alumni ticket');
+      tier.setAttribute('data-qty-max', '1');
+      tier.setAttribute('data-alumni', '1');
+      if (!soldOut) {
+        tier.setAttribute('aria-pressed', 'true');
+        firstSelectable = tier;
+      } else {
+        tier.setAttribute('aria-disabled', 'true');
+      }
+      tier.innerHTML = alumniTierCardHtml(t, alumniEligibility, soldOut);
       tiersEl.appendChild(tier);
     } else if (isCategoryExclusivity && tiers.length) {
       const t = tiers.find((tier) => tierIsApplication(tier)) || tiers[0];
@@ -1609,7 +1745,7 @@
 
       tier.innerHTML = categoryExclusivityTierCardHtml(t, soldOut);
       tiersEl.appendChild(tier);
-    } else {
+    } else if (!alumniOnlyView) {
     (showGuestTier ? [] : memberTiers).forEach((t, index) => {
       const soldOut = Boolean(t.soldOut) || panelClosed;
       const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
@@ -2528,10 +2664,16 @@
       buy.textContent = 'Apply for a Seat';
       const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
       if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = false;
-    } else if (eventIsGuestProgramme(ev) && guestVisitEligibility?.eligible) {
+    } else if (eventAllowsGuestPasses(ev) && guestVisitEligibility?.eligible) {
       const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
       if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = true;
       buy.textContent = 'Book complimentary visit';
+    } else if (showAlumniTierSelected(ev)) {
+      const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
+      if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = true;
+      const tierEl = getSelectedTierEl();
+      const priceNum = tierEl ? parseFloat(tierEl.getAttribute('data-price')) || 0 : 0;
+      buy.textContent = priceNum > 0 ? 'Book alumni ticket' : 'Claim alumni ticket';
     } else {
       const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
       if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = true;
@@ -3577,8 +3719,12 @@
           const displayEv = enrichEventWithSeriesLocation(ev);
           currentEvent = displayEv;
           populateFromEvent(displayEv);
+          alumniInviteToken = String(params.get('alumni_token') || '').trim();
           if (eventIsGuestProgramme(displayEv)) {
             await loadGuestVisitEligibility(displayEv);
+            renderTicketPanel(displayEv);
+          } else if (displayEv.alumniFastPassEnabled) {
+            await loadAlumniEligibility(displayEv);
             renderTicketPanel(displayEv);
           }
           initTicketPanel(displayEv);

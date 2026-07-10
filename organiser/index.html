@@ -1216,6 +1216,30 @@
       </div>
     </div>
 
+    <!-- Modal: alumni invites -->
+    <div class="org-modal" id="modal-alumni-invites" role="dialog" aria-modal="true" aria-labelledby="modal-alumni-invites-title" hidden>
+      <div class="org-modal-backdrop" data-org-modal-close></div>
+      <div class="org-modal-panel">
+        <h2 id="modal-alumni-invites-title">Send alumni invites</h2>
+        <p id="modal-alumni-invites-event" class="org-modal-sub"></p>
+        <p class="org-modal-note">
+          Invite confirmed attendees from a previous event. Each person receives a locked link to the hidden alumni ticket on this listing.
+        </p>
+        <div class="org-field">
+          <label for="modal-alumni-source-event">Source event (past attendees)</label>
+          <select id="modal-alumni-source-event" required>
+            <option value="">Loading…</option>
+          </select>
+        </div>
+        <p class="org-modal-note" id="modal-alumni-invites-stats" hidden></p>
+        <p class="org-modal-note org-modal-note--error" id="modal-alumni-invites-error" hidden></p>
+        <div class="org-modal-actions">
+          <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
+          <button type="button" class="org-btn org-btn-gold" id="modal-alumni-invites-send">Send invites</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal: ticket -->
     <div class="org-modal" id="modal-ticket" role="dialog" aria-modal="true" aria-labelledby="modal-ticket-title" hidden>
       <div class="org-modal-backdrop" data-org-modal-close></div>

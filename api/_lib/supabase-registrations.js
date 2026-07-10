@@ -9,6 +9,11 @@ const {
   assertGuestVisitBookingAllowed,
   assertPaidMemberBookingAllowed,
 } = require('./guest-visits');
+const {
+  isAlumniTicket,
+  assertAlumniBookingAllowed,
+  markInviteRedeemed,
+} = require('./alumni-invites');
 
 /**
  * Insert a registration after successful checkout.
@@ -190,7 +195,7 @@ async function createRegistrationFromPayment(input) {
   let eventAttendanceMode = 'tickets';
   const evMetaRes = await sb
     .from('events')
-    .select('attendance_mode, organiser_id')
+    .select('attendance_mode, organiser_id, guest_passes_disabled')
     .eq('id', eventId)
     .maybeSingle();
   if (evMetaRes.error) throw new Error(evMetaRes.error.message);
@@ -198,6 +203,7 @@ async function createRegistrationFromPayment(input) {
     eventAttendanceMode = evMetaRes.data.attendance_mode || 'tickets';
     if (!organiserId) organiserId = evMetaRes.data.organiser_id || null;
   }
+  const guestPassesDisabled = Boolean(evMetaRes.data?.guest_passes_disabled);
 
   let ticketRow = null;
   if (ticketId) {
@@ -209,12 +215,16 @@ async function createRegistrationFromPayment(input) {
   let registrationKind = String(input.registrationKind || input.registration_kind || '').trim();
   if (!registrationKind) {
     if (ticketRow && isGuestVisitTicket(ticketRow)) registrationKind = 'guest_visit';
+    else if (ticketRow && isAlumniTicket(ticketRow)) registrationKind = 'alumni';
     else if (ticketRow && String(ticketRow.ticket_type || '').includes('Application')) {
       registrationKind = 'application';
     } else {
       registrationKind = 'standard';
     }
   }
+
+  const alumniInviteToken = String(input.alumniInviteToken || input.alumni_invite_token || '').trim();
+  let alumniEligibility = null;
 
   const amountPaid =
     input.amountPaid != null
@@ -225,6 +235,7 @@ async function createRegistrationFromPayment(input) {
   const paymentStatus = input.paymentStatus || input.payment_status || (amountPaid > 0 ? 'Paid' : 'Free');
 
   if (registrationKind === 'guest_visit') {
+    if (guestPassesDisabled) throw new Error('guest_passes_disabled');
     if (quantity !== 1) throw new Error('guest_visit_single_seat_only');
     if (amountPaid > 0) throw new Error('guest_visit_must_be_free');
     await assertGuestVisitBookingAllowed(sb, {
@@ -232,12 +243,21 @@ async function createRegistrationFromPayment(input) {
       attendeeId,
       email,
     });
+  } else if (registrationKind === 'alumni') {
+    if (quantity !== 1) throw new Error('alumni_single_seat_only');
+    alumniEligibility = await assertAlumniBookingAllowed(sb, {
+      eventId,
+      email,
+      attendeeId,
+      inviteToken: alumniInviteToken,
+    });
   } else if (amountPaid > 0 || String(paymentStatus).trim() === 'Paid') {
     await assertPaidMemberBookingAllowed(sb, {
       organiserId,
       attendeeId,
       email,
       attendanceMode: eventAttendanceMode,
+      guestPassesDisabled,
     });
   }
 
@@ -280,6 +300,13 @@ async function createRegistrationFromPayment(input) {
 
   const ins = await sb.from('registrations').insert(row).select('*').single();
   if (ins.error) throw new Error(ins.error.message);
+
+  if (registrationKind === 'alumni' && alumniEligibility?.invite?.id) {
+    await markInviteRedeemed(sb, {
+      inviteId: alumniEligibility.invite.id,
+      registrationId: ins.data.id,
+    });
+  }
 
   await lockEventOnFirstSale(sb, eventId);
 
@@ -407,6 +434,7 @@ async function handleCheckoutSessionCompleted(session) {
     stripePaymentIntentId: paymentIntentId,
     stripeCheckoutSessionId: session.id,
     registrationId: metadata.registration_id || metadata.registrationId || null,
+    alumniInviteToken: metadata.alumni_invite_token || metadata.alumniInviteToken || null,
   });
 }
 

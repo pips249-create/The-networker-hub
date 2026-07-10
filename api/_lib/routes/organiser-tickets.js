@@ -134,12 +134,29 @@ module.exports = async function handler(req, res) {
           return json(res, 400, { error: 'vat_treatment_required' });
         }
 
+        const alumniRaw = body.alumniFastPass || body.alumni_fast_pass;
+        const alumniFastPass =
+          alumniRaw && typeof alumniRaw === 'object'
+            ? {
+                enabled: Boolean(alumniRaw.enabled),
+                price: alumniRaw.price,
+                quantityAvailable: alumniRaw.quantityAvailable ?? alumniRaw.quantity_available,
+                saleEnd: alumniRaw.saleEnd || alumniRaw.sale_end || null,
+                description: alumniRaw.description || '',
+                sourceEventId: alumniRaw.sourceEventId || alumniRaw.source_event_id || null,
+              }
+            : null;
+
         const result = await createTicketsForEvents({
           eventIds: ids,
           tickets: tiers,
           publish,
           vatTreatment: vatTreatment || null,
           attendanceMode: String(body.attendanceMode || body.attendance_mode || 'tickets').trim(),
+          alumniFastPass,
+          guestPassesDisabled: Boolean(
+            body.guestPassesDisabled ?? body.guest_passes_disabled ?? false
+          ),
           attendeeExtras:
             body.attendeeExtras != null && typeof body.attendeeExtras === 'object'
               ? body.attendeeExtras

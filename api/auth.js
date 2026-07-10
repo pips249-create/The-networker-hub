@@ -29,6 +29,7 @@ const routes = {
   'event-application': require('./_lib/routes/auth-event-application'),
   'create-checkout': require('./_lib/routes/auth-create-checkout'),
   'guest-visit-eligibility': require('./_lib/routes/auth-guest-visit-eligibility'),
+  'alumni-eligibility': require('./_lib/routes/auth-alumni-eligibility'),
   reviews: require('./_lib/routes/auth-reviews'),
   favourites: require('./_lib/routes/auth-favourites'),
   'organiser-favourites': require('./_lib/routes/auth-organiser-favourites'),

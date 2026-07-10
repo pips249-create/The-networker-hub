@@ -102,6 +102,16 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: 'How was {{event_name}}?',
   },
+  guest_visit_followup: {
+    file: 'guest-visit-followup.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Your guest visit with {{organiser_name}}',
+  },
+  alumni_fast_pass_invite: {
+    file: 'alumni-fast-pass-invite.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Your alumni rate for {{event_name}}',
+  },
   category_exclusivity_payment_reminder: {
     file: 'category-exclusivity-payment-reminder.html',
     marker: 'hub-email-layout-v2',

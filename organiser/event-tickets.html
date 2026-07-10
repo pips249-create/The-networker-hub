@@ -72,6 +72,15 @@
             <strong>Guest visit programme:</strong> New attendees must use their complimentary visit(s) with your group before they can buy a paid member ticket. Set your visit allowance on your
             <a href="group-edit.html" id="ee-guest-group-edit-link">organiser page</a> (maximum 2 visits per attendee, platform-wide).
           </div>
+          <div id="ee-guest-passes-opt-out" hidden style="margin-bottom:12px">
+            <label class="ee-check">
+              <input type="checkbox" id="ee-guest-passes-disabled" />
+              <span>Disallow guest passes for this event</span>
+            </label>
+            <p class="ee-hint" style="margin:6px 0 0">
+              Leave unticked to offer complimentary guest passes. Tick for member-only dates (e.g. conferences) — paid member tickets stay available and visitors can book them directly.
+            </p>
+          </div>
           <h2 id="ee-tickets-panel-title">Ticket types</h2>
           <p class="ee-hint" style="margin-top:0">
             Add one row per tier (e.g. Standard, Early bird). Each tier is copied to all dates above. Set when sales end — especially for early bird pricing. Leave sale start blank and sales begin today.
@@ -79,6 +88,37 @@
           <p class="ee-tier-summary" id="ee-tier-summary" aria-live="polite">0 ticket types · unlimited available · from £0</p>
           <div id="ee-tier-rows"></div>
           <button type="button" class="ee-btn ee-btn-outline" id="ee-add-tier" style="margin-top:12px">+ Add another ticket type</button>
+        </div>
+
+        <div class="ee-card" id="ee-panel-alumni-fast-pass">
+          <h2>Alumni Fast-Pass <span class="ee-optional">(optional)</span></h2>
+          <p class="ee-hint" style="margin-top:0">
+            Offer a hidden alumni ticket for confirmed attendees from a previous event (e.g. last year's conference). Invites are sent from your dashboard with locked booking links.
+          </p>
+          <label class="ee-check">
+            <input type="checkbox" id="ee-alumni-enabled" />
+            <span>Enable Alumni Fast-Pass for this event</span>
+          </label>
+          <div id="ee-alumni-fields" hidden>
+            <div class="ee-row-2" style="margin-top:12px">
+              <div class="ee-field">
+                <label for="ee-alumni-price">Alumni price (£)</label>
+                <p class="ee-hint">Discounted rate for invited past attendees. Enter 0 for free.</p>
+                <input type="number" id="ee-alumni-price" min="0" step="0.01" value="0" />
+              </div>
+              <div class="ee-field">
+                <label for="ee-alumni-qty">Alumni seats <span class="ee-optional">(optional)</span></label>
+                <input type="number" id="ee-alumni-qty" min="1" step="1" placeholder="Unlimited" />
+              </div>
+            </div>
+            <div class="ee-field">
+              <label for="ee-alumni-sale-end-date">Alumni sales end <span class="ee-optional">(optional)</span></label>
+              <div class="ee-datetime-split">
+                <input type="date" id="ee-alumni-sale-end-date" aria-label="Alumni sale end date" />
+                <select id="ee-alumni-sale-end-time" aria-label="Alumni sale end time"></select>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="ee-card" id="ee-panel-category-exclusivity" hidden>

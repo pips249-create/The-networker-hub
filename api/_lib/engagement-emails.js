@@ -30,6 +30,8 @@ const LOW_EVENTS_MAX_UPCOMING = 3;
 const LOW_EVENTS_NUDGE_COOLDOWN_DAYS = 30;
 const POST_EVENT_REVIEW_HOURS = 36;
 const POST_EVENT_REVIEW_WINDOW_HOURS = 12;
+const GUEST_VISIT_FOLLOWUP_HOURS = 24;
+const GUEST_VISIT_FOLLOWUP_WINDOW_HOURS = 12;
 const CATEGORY_EXCLUSIVITY_PAYMENT_REMINDER_HOURS = 48;
 const STRIPE_NUDGE_COOLDOWN_DAYS = 14;
 const SIGNUP_NUDGE_DELAY_DAYS = 3;
@@ -604,6 +606,198 @@ async function sendOrganiserLowUpcomingEventsNudges(sb) {
   return result;
 }
 
+function eventLocationLabel(eventRow) {
+  return (
+    String(eventRow?.location_label || eventRow?.venue || eventRow?.city || '').trim() ||
+    'See event page'
+  );
+}
+
+function buildGuestVisitNextEventSection(nextEvent) {
+  if (!nextEvent) {
+    return (
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.65;color:#635c5e;margin:0;text-align:center;">' +
+      'Keep an eye on this group for their next meeting — new dates are added regularly.</p>'
+    );
+  }
+
+  const { event_date, event_time } = formatEventDateTime(nextEvent.starts_at);
+  const timeSuffix = event_time ? ' · ' + event_time : '';
+  return (
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#1c2040;border-radius:16px;">' +
+    '<tr><td style="padding:24px;text-align:center;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 10px;">Next meeting</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:17px;font-weight:600;color:#ffffff;margin:0 0 8px;line-height:1.35;">' +
+    String(nextEvent.title || 'Upcoming event').trim() +
+    '</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);margin:0;">' +
+    event_date +
+    timeSuffix +
+    ' &middot; ' +
+    eventLocationLabel(nextEvent) +
+    '</p></td></tr></table>'
+  );
+}
+
+async function fetchNextOrganiserEvents(sb, organiserIds) {
+  const ids = [...new Set((organiserIds || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  const map = new Map(ids.map((id) => [id, null]));
+  if (!ids.length) return map;
+
+  const now = new Date().toISOString();
+  const { data, error } = await sb
+    .from('events')
+    .select('id, title, slug, starts_at, location_label, venue, city, status, approval_status, organiser_id')
+    .in('organiser_id', ids)
+    .gte('starts_at', now)
+    .neq('status', 'cancelled')
+    .order('starts_at', { ascending: true });
+  if (error) throw new Error(error.message);
+
+  for (const row of data || []) {
+    if (!isEventPublishedForSale(row)) continue;
+    const organiserId = String(row.organiser_id || '').trim();
+    if (!organiserId || map.get(organiserId)) continue;
+    map.set(organiserId, row);
+  }
+
+  return map;
+}
+
+async function sendDueGuestVisitFollowupEmails(sb, options) {
+  const opts = options && typeof options === 'object' ? options : {};
+  const dryRun = opts.dryRun === true;
+  const windowStart = hoursAgo(
+    GUEST_VISIT_FOLLOWUP_HOURS + GUEST_VISIT_FOLLOWUP_WINDOW_HOURS / 2
+  );
+  const windowEnd = hoursAgo(
+    GUEST_VISIT_FOLLOWUP_HOURS - GUEST_VISIT_FOLLOWUP_WINDOW_HOURS / 2
+  );
+  const result = { sent: 0, skipped: 0, errors: [], candidates: [] };
+
+  const { data: events, error: evErr } = await sb
+    .from('events')
+    .select('id, title, slug, ends_at, starts_at, organiser_id')
+    .gte('ends_at', windowStart)
+    .lte('ends_at', windowEnd)
+    .neq('status', 'cancelled');
+  if (evErr) throw new Error(evErr.message);
+  if (!events?.length) return result;
+
+  const eventById = Object.fromEntries(events.map((e) => [e.id, e]));
+  const eventIds = events.map((e) => e.id);
+  const organiserIds = [...new Set(events.map((e) => e.organiser_id).filter(Boolean))];
+
+  const { data: registrations, error: regErr } = await sb
+    .from('registrations')
+    .select(
+      'id, attendee_id, event_id, guest_visit_followup_sent_at, registration_kind, cancelled_at, application_status'
+    )
+    .in('event_id', eventIds)
+    .eq('registration_kind', 'guest_visit')
+    .is('guest_visit_followup_sent_at', null)
+    .neq('application_status', 'Denied')
+    .is('cancelled_at', null);
+  if (regErr) throw new Error(regErr.message);
+  if (!registrations?.length) return result;
+
+  const nextEventByOrganiser = await fetchNextOrganiserEvents(sb, organiserIds);
+
+  const { data: organisers, error: orgErr } = await sb
+    .from('organisers')
+    .select('id, name, slug')
+    .in('id', organiserIds);
+  if (orgErr) throw new Error(orgErr.message);
+  const organiserById = Object.fromEntries((organisers || []).map((o) => [o.id, o]));
+
+  const siteUrl = siteBase();
+
+  for (const registration of registrations) {
+    const eventRow = eventById[registration.event_id];
+    if (!eventRow) {
+      result.skipped += 1;
+      continue;
+    }
+
+    let attendee = null;
+    if (registration.attendee_id) {
+      const attendeeRes = await sb
+        .from('attendees')
+        .select('id, email, name')
+        .eq('id', registration.attendee_id)
+        .maybeSingle();
+      if (attendeeRes.error) throw new Error(attendeeRes.error.message);
+      attendee = attendeeRes.data;
+    }
+
+    const attendeeEmail = String(attendee?.email || '').trim().toLowerCase();
+    if (!attendeeEmail) {
+      result.skipped += 1;
+      continue;
+    }
+
+    const organiser = organiserById[eventRow.organiser_id] || null;
+    const organiserName = String(organiser?.name || 'the organiser').trim();
+    const organiserUrl = organiserPublicUrl(organiser, siteUrl);
+    const nextEvent =
+      nextEventByOrganiser.get(String(eventRow.organiser_id || '').trim()) || null;
+    const nextEventUrl = nextEvent ? eventPublicUrl(nextEvent, siteUrl) : organiserUrl;
+    const ctaLabel = nextEvent ? 'Book the next event' : 'View ' + organiserName;
+
+    try {
+      if (dryRun) {
+        result.candidates.push({
+          registration_id: registration.id,
+          attendee_email: attendeeEmail,
+          event_id: eventRow.id,
+          event_title: eventRow.title,
+          next_event_url: nextEventUrl,
+        });
+        result.sent += 1;
+        continue;
+      }
+
+      const nextEventDateTime = nextEvent ? formatEventDateTime(nextEvent.starts_at) : null;
+
+      await sendTemplatedEmail({
+        slug: 'guest_visit_followup',
+        to: attendeeEmail,
+        variables: {
+          ...baseEmailVars(siteUrl),
+          user_name: String(attendee?.name || '').trim() || 'there',
+          event_name: String(eventRow.title || 'your event').trim(),
+          organiser_name: organiserName,
+          organiser_url: organiserUrl,
+          next_event_name: nextEvent ? String(nextEvent.title || '').trim() : '',
+          next_event_date: nextEventDateTime?.event_date || '',
+          next_event_time: nextEventDateTime?.event_time || '',
+          next_event_location: nextEvent ? eventLocationLabel(nextEvent) : '',
+          next_event_url: nextEventUrl,
+          next_event_section: buildGuestVisitNextEventSection(nextEvent),
+          cta_url: nextEventUrl,
+          cta_label: ctaLabel,
+        },
+        skipEmailCheck: true,
+      });
+
+      await sb
+        .from('registrations')
+        .update({ guest_visit_followup_sent_at: new Date().toISOString() })
+        .eq('id', registration.id);
+      result.sent += 1;
+    } catch (e) {
+      if (e.code === 'emails_disabled') result.skipped += 1;
+      else
+        result.errors.push({
+          registration_id: registration.id,
+          error: e.message || String(e),
+        });
+    }
+  }
+
+  return result;
+}
+
 async function sendDuePostEventReviewEmails(sb, options) {
   const opts = options && typeof options === 'object' ? options : {};
   const dryRun = opts.dryRun === true;
@@ -890,6 +1084,7 @@ async function runEngagementEmailMaintenance(sb) {
   const signupEventsNudge = await sendDueSignupEventsNudgeEmails(sb);
   const signupEventsNudgeFollowup = await sendDueSignupEventsNudgeFollowupEmails(sb);
   const lowEvents = await sendOrganiserLowUpcomingEventsNudges(sb);
+  const guestVisitFollowup = await sendDueGuestVisitFollowupEmails(sb);
   const postReview = await sendDuePostEventReviewEmails(sb);
   const categoryExclusivityPayment = await sendDueCategoryExclusivityPaymentReminders(sb);
   const stripeConnect = await sendDueStripeConnectNudges(sb);
@@ -898,6 +1093,7 @@ async function runEngagementEmailMaintenance(sb) {
     signupEventsNudge,
     signupEventsNudgeFollowup,
     lowEvents,
+    guestVisitFollowup,
     postReview,
     categoryExclusivityPayment,
     stripeConnect,
@@ -909,6 +1105,7 @@ module.exports = {
   sendDueSignupEventsNudgeEmails,
   sendDueSignupEventsNudgeFollowupEmails,
   sendOrganiserLowUpcomingEventsNudges,
+  sendDueGuestVisitFollowupEmails,
   sendDuePostEventReviewEmails,
   sendDueCategoryExclusivityPaymentReminders,
   sendDueStripeConnectNudges,
