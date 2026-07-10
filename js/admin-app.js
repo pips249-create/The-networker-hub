@@ -96,7 +96,7 @@
     },
     support: {
       title: 'Support',
-      subtitle: 'Look up bookings and help members with tickets and payments',
+      subtitle: 'Look up bookings, log complaints from hello@thenetworkerhub.com, and track the 14-day response deadline',
     },
     campaigns: {
       title: 'Email campaigns',
@@ -217,6 +217,7 @@
   var spotlightOrganiserSearchTimer = null;
   var spotlightOpportunitySearchTimer = null;
   var bookingsSearchState = { q: '' };
+  var complaintsState = { filter: 'open', expanded: {}, items: [] };
   var adminLogoPending = {};
   var groupSearchTimer = null;
   var eventSearchTimer = null;
@@ -475,6 +476,9 @@
       return PAGE_META.spotlight.subtitle;
     }
     if (route === 'support') {
+      if (hash.indexOf('complaints') !== -1) {
+        return 'Log complaints from hello@thenetworkerhub.com and track acknowledgement and 14-day response deadlines.';
+      }
       return PAGE_META.support.subtitle;
     }
     return null;
@@ -10699,11 +10703,352 @@
     });
   }
 
+  function complaintCategoryLabel(key) {
+    var labels = {
+      platform: 'Platform / service',
+      refund: 'Refund',
+      listing: 'Listing / content',
+      advertising: 'Advertising',
+      data_protection: 'Data protection',
+      payments: 'Payments',
+      accessibility: 'Accessibility',
+      other: 'Other',
+    };
+    return labels[key] || key || 'Other';
+  }
+
+  function complaintStatusLabel(key) {
+    var labels = {
+      open: 'Open',
+      investigating: 'Investigating',
+      awaiting_third_party: 'Awaiting third party',
+      resolved: 'Resolved',
+      escalated: 'Escalated',
+      closed: 'Closed',
+    };
+    return labels[key] || key || 'Open';
+  }
+
+  function complaintOutcomeLabel(key) {
+    var labels = {
+      upheld: 'Upheld',
+      partly_upheld: 'Partly upheld',
+      not_upheld: 'Not upheld',
+      referred: 'Referred externally',
+    };
+    return labels[key] || '—';
+  }
+
+  function complaintDueClass(dueDate, status) {
+    if (status === 'resolved' || status === 'closed') return 'text-slate-500';
+    if (!dueDate) return 'text-slate-600';
+    var due = new Date(dueDate + 'T23:59:59');
+    var now = new Date();
+    if (due < now) return 'text-red-700 font-semibold';
+    var soon = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    if (due <= soon) return 'text-amber-800 font-semibold';
+    return 'text-slate-600';
+  }
+
+  function renderSupportComplaints() {
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">When a complaint arrives at <strong>hello@thenetworkerhub.com</strong>, log it here after sending the acknowledgement (target: 2 working days). Substantive response target: <strong>14 days</strong>. Ops lead: <strong>Catherine Hancher</strong>. Commercial / ASA: <strong>Rosie McGilvray</strong>.</p>' +
+      '<form id="complaint-create-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">' +
+      '<h3 class="font-bold text-brand-900">Log complaint</h3>' +
+      '<div class="grid gap-4 sm:grid-cols-2">' +
+      '<label class="block text-xs font-semibold text-slate-500 uppercase">Complainant name<input type="text" id="complaint-name" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Jane Smith"></label>' +
+      '<label class="block text-xs font-semibold text-slate-500 uppercase">Complainant email<span class="text-red-600">*</span><input type="email" id="complaint-email" required class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="jane@example.com"></label>' +
+      '<label class="block text-xs font-semibold text-slate-500 uppercase">Category<select id="complaint-category" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white">' +
+      '<option value="platform">Platform / service</option><option value="refund">Refund</option><option value="listing">Listing / content</option><option value="advertising">Advertising</option><option value="data_protection">Data protection</option><option value="payments">Payments</option><option value="accessibility">Accessibility</option><option value="other">Other</option>' +
+      '</select></label>' +
+      '<label class="block text-xs font-semibold text-slate-500 uppercase">Assigned to<select id="complaint-assigned" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white">' +
+      '<option value="">Unassigned</option><option value="Catherine Hancher">Catherine Hancher (Operations)</option><option value="Rosie McGilvray">Rosie McGilvray (Commercial)</option>' +
+      '</select></label>' +
+      '</div>' +
+      '<label class="block text-xs font-semibold text-slate-500 uppercase">Subject<input type="text" id="complaint-subject" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Complaint about refund"></label>' +
+      '<label class="block text-xs font-semibold text-slate-500 uppercase">Complaint details<textarea id="complaint-body" rows="4" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Paste the email or summary"></textarea></label>' +
+      '<label class="block text-xs font-semibold text-slate-500 uppercase">Related reference <span class="font-normal normal-case">(HUB-…, event, optional)</span><input type="text" id="complaint-related-ref" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="HUB-…"></label>' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="complaint-ack-sent" class="rounded border-slate-300"> Acknowledgement already sent</label>' +
+      '<div class="flex flex-wrap items-center gap-3"><button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-800">Save complaint</button><span id="complaint-create-status" class="text-sm text-slate-500"></span></div>' +
+      '</form>' +
+      '<div class="flex flex-wrap items-center justify-between gap-3">' +
+      '<h3 class="font-bold text-brand-900">Complaints register</h3>' +
+      '<div class="flex gap-2 text-sm">' +
+      '<button type="button" class="complaints-filter-btn rounded-lg border px-3 py-1.5 font-semibold ' +
+      (complaintsState.filter === 'open' ? 'border-brand-700 bg-brand-50 text-brand-900' : 'border-slate-200 text-slate-600') +
+      '" data-filter="open">Open</button>' +
+      '<button type="button" class="complaints-filter-btn rounded-lg border px-3 py-1.5 font-semibold ' +
+      (complaintsState.filter === 'all' ? 'border-brand-700 bg-brand-50 text-brand-900' : 'border-slate-200 text-slate-600') +
+      '" data-filter="all">All</button></div></div>' +
+      '<p id="complaints-status" class="text-sm text-slate-500">Loading complaints…</p>' +
+      '<div id="complaints-list" class="space-y-3"></div></div>';
+
+    bindComplaintsActions();
+    loadComplaints();
+  }
+
+  function complaintsListHtml(items) {
+    if (!items.length) {
+      return '<p class="text-sm text-slate-500 rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center">No complaints in this view.</p>';
+    }
+    return items
+      .map(function (c) {
+        var expanded = !!complaintsState.expanded[c.id];
+        var dueCls = complaintDueClass(c.dueDate, c.status);
+        return (
+          '<article class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden" data-complaint-id="' +
+          attrEsc(c.id) +
+          '">' +
+          '<button type="button" class="complaint-toggle w-full text-left px-4 py-3 hover:bg-slate-50" data-complaint-id="' +
+          attrEsc(c.id) +
+          '">' +
+          '<div class="flex flex-wrap items-start justify-between gap-2">' +
+          '<div><p class="font-semibold text-brand-900">' +
+          esc(c.reference) +
+          ' · ' +
+          esc(c.subject || complaintCategoryLabel(c.category)) +
+          '</p><p class="text-xs text-slate-500 mt-0.5">' +
+          esc(c.complainantName || '—') +
+          ' · ' +
+          esc(c.complainantEmail) +
+          (c.assignedTo ? ' · ' + esc(c.assignedTo) : '') +
+          '</p></div>' +
+          '<div class="text-right text-xs"><span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-700">' +
+          esc(complaintStatusLabel(c.status)) +
+          '</span><p class="' +
+          dueCls +
+          ' mt-1">Due ' +
+          esc(c.dueDate || '—') +
+          '</p></div></div></button>' +
+          (expanded
+            ? '<div class="border-t border-slate-100 px-4 py-4 space-y-3 bg-slate-50/60">' +
+              '<p class="text-sm text-slate-700 whitespace-pre-wrap">' +
+              esc(c.body || '—') +
+              '</p>' +
+              (c.relatedReference
+                ? '<p class="text-xs text-slate-500">Related: <span class="font-mono">' + esc(c.relatedReference) + '</span></p>'
+                : '') +
+              (c.acknowledgementSentAt
+                ? '<p class="text-xs text-emerald-700">Ack sent ' + esc(formatAccountDate(c.acknowledgementSentAt)) + '</p>'
+                : '<p class="text-xs text-amber-800">Acknowledgement not logged yet</p>') +
+              '<div class="grid gap-3 sm:grid-cols-3">' +
+              '<label class="block text-xs font-semibold text-slate-500 uppercase">Status<select class="complaint-edit-status mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm bg-white" data-complaint-id="' +
+              attrEsc(c.id) +
+              '">' +
+              ['open', 'investigating', 'awaiting_third_party', 'resolved', 'escalated', 'closed']
+                .map(function (s) {
+                  return (
+                    '<option value="' +
+                    s +
+                    '"' +
+                    (c.status === s ? ' selected' : '') +
+                    '>' +
+                    esc(complaintStatusLabel(s)) +
+                    '</option>'
+                  );
+                })
+                .join('') +
+              '</select></label>' +
+              '<label class="block text-xs font-semibold text-slate-500 uppercase">Outcome<select class="complaint-edit-outcome mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm bg-white" data-complaint-id="' +
+              attrEsc(c.id) +
+              '"><option value="">—</option>' +
+              ['upheld', 'partly_upheld', 'not_upheld', 'referred']
+                .map(function (o) {
+                  return (
+                    '<option value="' +
+                    o +
+                    '"' +
+                    (c.outcome === o ? ' selected' : '') +
+                    '>' +
+                    esc(complaintOutcomeLabel(o)) +
+                    '</option>'
+                  );
+                })
+                .join('') +
+              '</select></label>' +
+              '<label class="block text-xs font-semibold text-slate-500 uppercase">Assigned<select class="complaint-edit-assigned mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm bg-white" data-complaint-id="' +
+              attrEsc(c.id) +
+              '"><option value="">Unassigned</option><option value="Catherine Hancher"' +
+              (c.assignedTo === 'Catherine Hancher' ? ' selected' : '') +
+              '>Catherine Hancher</option><option value="Rosie McGilvray"' +
+              (c.assignedTo === 'Rosie McGilvray' ? ' selected' : '') +
+              '>Rosie McGilvray</option></select></label></div>' +
+              '<label class="block text-xs font-semibold text-slate-500 uppercase">Internal notes<textarea class="complaint-edit-notes mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" rows="3" data-complaint-id="' +
+              attrEsc(c.id) +
+              '">' +
+              esc(c.notes || '') +
+              '</textarea></label>' +
+              '<label class="block text-xs font-semibold text-slate-500 uppercase">Resolution summary<textarea class="complaint-edit-resolution mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" rows="2" data-complaint-id="' +
+              attrEsc(c.id) +
+              '">' +
+              esc(c.resolutionSummary || '') +
+              '</textarea></label>' +
+              '<div class="flex flex-wrap gap-2">' +
+              '<button type="button" class="complaint-save-btn rounded-lg bg-brand-700 text-white text-xs font-semibold px-3 py-1.5 hover:bg-brand-800" data-complaint-id="' +
+              attrEsc(c.id) +
+              '">Save changes</button>' +
+              '<button type="button" class="complaint-ack-btn rounded-lg border border-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-white" data-complaint-id="' +
+              attrEsc(c.id) +
+              '">Mark ack sent</button></div></div>'
+            : '') +
+          '</article>'
+        );
+      })
+      .join('');
+  }
+
+  function renderComplaintsList(items) {
+    var listEl = document.getElementById('complaints-list');
+    if (listEl) listEl.innerHTML = complaintsListHtml(items || []);
+  }
+
+  function loadComplaints() {
+    var statusEl = document.getElementById('complaints-status');
+    var listEl = document.getElementById('complaints-list');
+    if (statusEl) statusEl.textContent = 'Loading complaints…';
+    var url =
+      '/api/admin/complaints' + (complaintsState.filter === 'open' ? '?status=open' : '');
+    adminGet(url).then(function (data) {
+      if (!data || !data.ok) {
+        complaintsState.items = [];
+        if (statusEl) statusEl.textContent = (data && data.message) || 'Could not load complaints.';
+        if (listEl) listEl.innerHTML = '';
+        return;
+      }
+      if (data.configured === false) {
+        complaintsState.items = [];
+        if (statusEl) statusEl.textContent = data.message || 'Run migration 138 in Supabase.';
+        if (listEl) listEl.innerHTML = '';
+        return;
+      }
+      complaintsState.items = data.complaints || [];
+      if (statusEl) {
+        statusEl.textContent =
+          complaintsState.items.length +
+          ' complaint' +
+          (complaintsState.items.length === 1 ? '' : 's') +
+          ' · register in Supabase';
+      }
+      renderComplaintsList(complaintsState.items);
+    });
+  }
+
+  function bindComplaintsActions() {
+    if (!main || main.dataset.complaintsBound) return;
+    main.dataset.complaintsBound = '1';
+
+    main.addEventListener('submit', function (e) {
+      var form = e.target.closest('#complaint-create-form');
+      if (!form) return;
+      e.preventDefault();
+      var statusEl = document.getElementById('complaint-create-status');
+      var email = (document.getElementById('complaint-email') || {}).value || '';
+      if (!String(email).trim()) {
+        if (statusEl) statusEl.textContent = 'Email is required.';
+        return;
+      }
+      if (statusEl) statusEl.textContent = 'Saving…';
+      adminPost('/api/admin/complaints', {
+        complainantName: (document.getElementById('complaint-name') || {}).value || '',
+        complainantEmail: email.trim(),
+        category: (document.getElementById('complaint-category') || {}).value || 'other',
+        subject: (document.getElementById('complaint-subject') || {}).value || '',
+        body: (document.getElementById('complaint-body') || {}).value || '',
+        relatedReference: (document.getElementById('complaint-related-ref') || {}).value || '',
+        assignedTo: (document.getElementById('complaint-assigned') || {}).value || '',
+        acknowledgementSent: !!(document.getElementById('complaint-ack-sent') || {}).checked,
+      })
+        .then(function (data) {
+          if (!data || !data.ok) throw new Error((data && data.message) || 'Save failed');
+          form.reset();
+          if (statusEl) {
+            statusEl.textContent = 'Saved as ' + (data.complaint && data.complaint.reference) + '.';
+          }
+          loadComplaints();
+          refreshAdminNotifications();
+        })
+        .catch(function (err) {
+          if (statusEl) statusEl.textContent = err.message || 'Could not save complaint.';
+        });
+    });
+
+    main.addEventListener('click', function (e) {
+      var filterBtn = e.target.closest('.complaints-filter-btn');
+      if (filterBtn) {
+        complaintsState.filter = filterBtn.getAttribute('data-filter') || 'open';
+        renderSupportComplaints();
+        return;
+      }
+
+      var toggleBtn = e.target.closest('.complaint-toggle');
+      if (toggleBtn) {
+        var toggleId = toggleBtn.getAttribute('data-complaint-id');
+        if (toggleId) complaintsState.expanded[toggleId] = !complaintsState.expanded[toggleId];
+        renderComplaintsList(complaintsState.items);
+        return;
+      }
+
+      var ackBtn = e.target.closest('.complaint-ack-btn');
+      if (ackBtn) {
+        var ackId = ackBtn.getAttribute('data-complaint-id');
+        if (!ackId) return;
+        ackBtn.disabled = true;
+        adminPatch('/api/admin/complaints', { id: ackId, acknowledgementSent: true })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
+            loadComplaints();
+          })
+          .catch(function (err) {
+            ackBtn.disabled = false;
+            window.alert(err.message || 'Could not update acknowledgement.');
+          });
+        return;
+      }
+
+      var saveBtn = e.target.closest('.complaint-save-btn');
+      if (saveBtn) {
+        var saveId = saveBtn.getAttribute('data-complaint-id');
+        if (!saveId) return;
+        saveBtn.disabled = true;
+        adminPatch('/api/admin/complaints', {
+          id: saveId,
+          status: (document.querySelector('.complaint-edit-status[data-complaint-id="' + saveId + '"]') || {})
+            .value,
+          outcome: (document.querySelector('.complaint-edit-outcome[data-complaint-id="' + saveId + '"]') || {})
+            .value,
+          assignedTo: (document.querySelector('.complaint-edit-assigned[data-complaint-id="' + saveId + '"]') || {})
+            .value,
+          notes: (document.querySelector('.complaint-edit-notes[data-complaint-id="' + saveId + '"]') || {}).value,
+          resolutionSummary: (
+            document.querySelector('.complaint-edit-resolution[data-complaint-id="' + saveId + '"]') || {}
+          ).value,
+        })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
+            loadComplaints();
+            refreshAdminNotifications();
+          })
+          .catch(function (err) {
+            saveBtn.disabled = false;
+            window.alert(err.message || 'Could not save changes.');
+          });
+      }
+    });
+  }
+
   function renderSupportHub(fullHash) {
     var hash = String(fullHash || 'support/bookings');
-    var tab = hash.indexOf('bookings') !== -1 || hash === 'support' ? 'bookings' : 'bookings';
-    var tabsHtml = adminHubTabsHtml([{ key: 'bookings', label: 'Bookings', href: '#support/bookings' }], tab);
-    withHubTabs(tabsHtml, renderSupportBookings);
+    var tab = hash.indexOf('complaints') !== -1 ? 'complaints' : 'bookings';
+    var tabsHtml = adminHubTabsHtml(
+      [
+        { key: 'bookings', label: 'Bookings', href: '#support/bookings' },
+        { key: 'complaints', label: 'Complaints', href: '#support/complaints' },
+      ],
+      tab
+    );
+    if (tab === 'complaints') withHubTabs(tabsHtml, renderSupportComplaints);
+    else withHubTabs(tabsHtml, renderSupportBookings);
   }
 
   function bindFinancialsActions() {

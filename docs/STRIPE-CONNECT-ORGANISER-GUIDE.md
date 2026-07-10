@@ -162,7 +162,7 @@ Attendees are told refunds are processed by the organiser through Stripe, not by
 | **“Connect Stripe” banner won’t go away** | Open Revenue → click Connect again; finish any missing steps in Stripe |
 | **Onboarding interrupted** | Return to Revenue → **Connect Stripe** — Stripe resumes where you left off |
 | **Can’t publish paid tickets** | Connect must be complete for that group; free tickets still work without Connect |
-| **Checkout says organiser hasn’t finished setup** | Group owner needs to complete Connect; contact hello@the-networker.co.uk if it persists after connecting |
+| **Checkout says organiser hasn’t finished setup** | Group owner needs to complete Connect; contact hello@thenetworkerhub.com if it persists after connecting |
 | **Where is my money?** | Stripe Express dashboard / Stripe emails — not the Hub bank account. Hub Revenue shows sales totals only |
 | **How do I refund?** | Stripe dashboard → Payments → Refund. Use booking ref from Hub **Cancellations** |
 
@@ -216,7 +216,7 @@ To sell **paid** tickets on The Networker Hub, you need to connect a Stripe acco
 
 Free events do not require Stripe.
 
-Questions? Reply to this email or contact hello@the-networker.co.uk.
+Questions? Reply to this email or contact hello@thenetworkerhub.com.
 
 ---
 

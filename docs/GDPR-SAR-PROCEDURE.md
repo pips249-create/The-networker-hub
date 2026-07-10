@@ -1,7 +1,7 @@
 # GDPR subject access & rights requests — procedure
 
 **Controller:** The Networker Group Ltd  
-**Contact:** hello@the-networker.co.uk  
+**Contact:** hello@thenetworkerhub.com  
 **Response deadline:** One calendar month (extendable by two months if complex — inform the requester)  
 **Last updated:** 8 July 2026
 
@@ -25,17 +25,17 @@ This procedure covers requests to exercise rights under UK GDPR:
 
 ## 2. Roles
 
-| Role | Responsibility |
-|------|----------------|
-| **Privacy lead** | Director or assigned DPO contact — owns the register and final sign-off |
-| **Support owner** | Monitors hello@the-networker.co.uk; acknowledges within 2 working days |
-| **Technical owner** | Runs Supabase exports/deletions; documents actions taken |
+| Role | Name | Responsibility |
+|------|------|----------------|
+| **Privacy lead** | Catherine Hancher | Owns the register and final sign-off |
+| **Support owner** | hello@thenetworkerhub.com (Catherine primary, Rosie cover) | Acknowledges within 2 working days |
+| **Technical owner** | Catherine Hancher | Runs Supabase exports/deletions; documents actions taken |
 
 ---
 
 ## 3. Intake
 
-1. Request received at **hello@the-networker.co.uk** (subject line “Data request” or similar).
+1. Request received at **hello@thenetworkerhub.com** (subject line “Data request” or similar).
 2. Log in the **GDPR request register** (spreadsheet or Notion):
 
    | Field | Example |

@@ -1,9 +1,11 @@
 # Business opportunity listings — moderation guide
 
 **Purpose:** Reduce legal and reputational risk from franchise, investment, and MLM-style listings  
-**Last updated:** 8 July 2026
+**Last updated:** 10 July 2026
 
 *Operational guide. Not legal advice.*
+
+**Moderation owner:** Catherine Hancher (primary) · Rosie (cover) · Queue: Command Centre → Opportunities
 
 ---
 
@@ -90,5 +92,6 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 
 | Date | Change |
 |------|--------|
+| 2026-07-10 | Earnings attestation required when listers enter financial figures; moderation owner assigned |
 | 2026-07-08 | Pre-publish review enforced; automated red flags; report listing; admin rejection reasons |
 | 2026-07-08 | Initial moderation guide |

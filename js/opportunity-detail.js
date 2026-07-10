@@ -146,7 +146,7 @@
 
   function enquiryEmail(item) {
     var email = String((item && item.contactEmail) || '').trim();
-    return email || 'hello@the-networker.co.uk';
+    return email || 'hello@thenetworkerhub.com';
   }
 
   function buildMailto(item, name, email, message) {

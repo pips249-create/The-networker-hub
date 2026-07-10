@@ -54,7 +54,7 @@ Focus moderation and reporting on content that is **illegal**:
 
 - Acceptable use prohibits harassment, fraud, hate, spam
 - Organiser terms require lawful listings
-- Complaints procedure in legal information
+- Complaints procedure in legal information + `docs/COMPLAINTS-PROCEDURE.md`
 
 ### B. Reporting mechanisms
 
@@ -62,7 +62,7 @@ Focus moderation and reporting on content that is **illegal**:
 |--------------|-------------|--------|
 | Reviews | “Report review” on event/organiser pages + organiser dashboard | ✓ / extending to organiser dashboard |
 | Opportunity listings | “Report listing” on detail page | ☑ Wired |
-| General / illegal content | hello@the-networker.co.uk — subject “Content report” | Document in footer/help |
+| General / illegal content | hello@thenetworkerhub.com — subject “Content report” | Document in footer/help |
 
 ### C. Moderation capability
 

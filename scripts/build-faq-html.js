@@ -21,7 +21,7 @@ function linkifyAnswer(text) {
     /(\/[a-z0-9][a-z0-9/_-]*)/gi,
     '<a href="$1">$1</a>'
   );
-  html = html.replace(/hello@the-networker\.co\.uk/g, '<a href="mailto:hello@the-networker.co.uk">hello@the-networker.co.uk</a>');
+  html = html.replace(/hello@thenetworkerhub\.com/g, '<a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a>');
   html = html.replace(/rosie@thenetworkerhub\.com/g, '<a href="mailto:rosie@thenetworkerhub.com">rosie@thenetworkerhub.com</a>');
   return '<p>' + html + '</p>';
 }

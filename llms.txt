@@ -1,7 +1,7 @@
 # The Networker Hub
 > UK business networking platform — events and business opportunities.
 
-Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@the-networker.co.uk
+Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@thenetworkerhub.com
 
 ## Canonical URLs
 - Home: https://www.thenetworkerhub.com/
@@ -57,13 +57,13 @@ Hubert is the business butler and concierge on The Networker Hub. He helps visit
 Yes — browsing events and business opportunities is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser.
 
 ## I forgot my password — how do I sign in?
-Go to /login.html and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@the-networker.co.uk from the address on your account.
+Go to /login.html and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkerhub.com from the address on your account.
 
 ## I did not receive my booking confirmation email
-Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My tickets at /account/. If you still cannot find your booking, email hello@the-networker.co.uk with the event name and email address used at checkout.
+Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My tickets at /account/. If you still cannot find your booking, email hello@thenetworkerhub.com with the event name and email address used at checkout.
 
 ## Can I transfer my ticket to someone else?
-Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hello@the-networker.co.uk with your order reference.
+Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkerhub.com with your order reference.
 
 ## What happens if an organiser cancels an event?
 If an organiser cancels, you should receive a full refund of the ticket price paid, including mandatory booking fees shown at checkout, typically within 14 days via Stripe to your original payment method.
@@ -78,10 +78,10 @@ The Networker Hub is built for UK business networking — not generic ticketing.
 Yes — many organisers use the hub alongside other tools. There is no exclusivity requirement. List here to reach members who browse specifically for UK networking events, build your organiser profile on the hub, and optionally publish business opportunities. You can list the same events you run elsewhere.
 
 ## How much does it cost to list an event as an organiser?
-There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@the-networker.co.uk for onboarding help.
+There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkerhub.com for onboarding help.
 
 ## Why is my event not showing on the browse events page?
-Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@the-networker.co.uk with the event title if it is still missing.
+Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkerhub.com with the event title if it is still missing.
 
 ## How can I advertise my business on The Networker Hub?
 Paid Sponsor Hub placements are available on the events directory, organisers browse, and business opportunities — see /advertising.html for guide pricing. Email rosie@thenetworkerhub.com. You can also list events or business opportunities to reach the network organically.

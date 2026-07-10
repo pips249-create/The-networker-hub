@@ -56,17 +56,17 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'I forgot my password — how do I sign in?',
     answer:
-      'Go to /login.html and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@the-networker.co.uk from the address on your account.',
+      'Go to /login.html and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkerhub.com from the address on your account.',
   },
   {
     question: 'I did not receive my booking confirmation email',
     answer:
-      'Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My tickets at /account/. If you still cannot find your booking, email hello@the-networker.co.uk with the event name and email address used at checkout.',
+      'Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My tickets at /account/. If you still cannot find your booking, email hello@thenetworkerhub.com with the event name and email address used at checkout.',
   },
   {
     question: 'Can I transfer my ticket to someone else?',
     answer:
-      'Tickets are generally non-transferable without the organiser\'s consent. Contact the organiser via the event listing page to ask. For help, email hello@the-networker.co.uk with your order reference.',
+      'Tickets are generally non-transferable without the organiser\'s consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkerhub.com with your order reference.',
   },
   {
     question: 'What happens if an organiser cancels an event?',
@@ -91,12 +91,12 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'How much does it cost to list an event as an organiser?',
     answer:
-      'There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@the-networker.co.uk for onboarding help.',
+      'There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkerhub.com for onboarding help.',
   },
   {
     question: 'Why is my event not showing on the browse events page?',
     answer:
-      'Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@the-networker.co.uk with the event title if it is still missing.',
+      'Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkerhub.com with the event title if it is still missing.',
   },
   {
     question: 'How can I advertise my business on The Networker Hub?',

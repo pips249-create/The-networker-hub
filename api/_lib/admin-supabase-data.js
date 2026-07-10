@@ -40,6 +40,7 @@ async function fetchAdminActionCounts(sb) {
     openReviewReportsRes,
     pendingOpportunitiesRes,
     claimDisputesRes,
+    openComplaintsRes,
     recentReviewsRes,
     incompleteOrgsRes,
     pendingPayoutsRes,
@@ -55,6 +56,10 @@ async function fetchAdminActionCounts(sb) {
       .from('organiser_claim_disputes')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'open'),
+    sb
+      .from('complaints')
+      .select('id', { count: 'exact', head: true })
+      .not('status', 'in', '("resolved","closed")'),
     sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
     sb.from('organisers').select('id', { count: 'exact', head: true }).or(INCOMPLETE_ORGANISER_FILTER),
     sb
@@ -75,6 +80,7 @@ async function fetchAdminActionCounts(sb) {
     openReviewReports: openReviewReportsRes.error ? 0 : openReviewReportsRes.count || 0,
     pendingOpportunities: pendingOpportunitiesRes.error ? 0 : pendingOpportunitiesRes.count || 0,
     openClaimDisputes: claimDisputesRes.error ? 0 : claimDisputesRes.count || 0,
+    openComplaints: openComplaintsRes.error ? 0 : openComplaintsRes.count || 0,
     spamReviews,
     incompleteOrganisers: incompleteOrgsRes.error ? 0 : incompleteOrgsRes.count || 0,
     pendingPayouts: pendingPayoutsRes.error ? 0 : pendingPayoutsRes.count || 0,
@@ -90,6 +96,7 @@ function sumAdminNotificationCounts(counts) {
     (counts.spamReviews || 0) +
     (counts.pendingOpportunities || 0) +
     (counts.openClaimDisputes || 0) +
+    (counts.openComplaints || 0) +
     (counts.pendingPayouts || 0)
   );
 }
@@ -149,6 +156,17 @@ function buildAlertsFromCounts(counts) {
       title: `${counts.openReviewReports} review report${counts.openReviewReports === 1 ? '' : 's'} from users`,
       detail: 'Review reports on Content Moderation.',
       href: '#moderation',
+      time: new Date().toISOString(),
+    });
+  }
+
+  if (counts.openComplaints > 0) {
+    alerts.push({
+      id: 'open-complaints',
+      severity: 'high',
+      title: `${counts.openComplaints} open complaint${counts.openComplaints === 1 ? '' : 's'}`,
+      detail: 'Log and track complaints from hello@thenetworkerhub.com in Support → Complaints.',
+      href: '#support/complaints',
       time: new Date().toISOString(),
     });
   }

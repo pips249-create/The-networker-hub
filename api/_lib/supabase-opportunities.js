@@ -11,7 +11,7 @@ const {
 } = require('./opportunity-listing-pricing');
 const { ensureOpportunitySlug, publicOpportunitySlug, slugMatchesPublicRow, isUuidSlug } =
   require('./opportunity-slug');
-const { scanOpportunityRedFlags } = require('./opportunity-moderation');
+const { scanOpportunityRedFlags, validateEarningsAttestation } = require('./opportunity-moderation');
 
 const HOST_COLORS = [
   '#7a5c0a',
@@ -455,8 +455,20 @@ async function listOpportunitiesForSession(session) {
     .map(rowToListing);
 }
 
+function assertOpportunityListingCompliance(payload) {
+  const earningsCheck = validateEarningsAttestation(payload);
+  if (earningsCheck) {
+    const err = new Error(earningsCheck.message);
+    err.status = 400;
+    err.code = earningsCheck.code;
+    throw err;
+  }
+}
+
 async function createOpportunity(payload) {
   const sb = getSupabaseAdmin();
+  const status = normalizeStatus(payload.listingStatus || payload.status);
+  if (status === 'published') assertOpportunityListingCompliance(payload);
   const row = await buildOpportunityRow(payload, 'new', 'create');
   if (!row.owner_email && !row.supabase_user_id) throw new Error('missing_owner');
   if (!row.title) throw new Error('missing_title');
@@ -475,6 +487,8 @@ async function createOpportunity(payload) {
 async function updateOpportunity(id, payload) {
   const sb = getSupabaseAdmin();
   const existing = await getOpportunityById(id);
+  const nextStatus = normalizeStatus(payload.listingStatus || payload.status || existing?.status);
+  if (nextStatus === 'published') assertOpportunityListingCompliance(payload);
   const row = await buildOpportunityRow(payload, id, 'update');
   row.slug = await ensureOpportunitySlug(sb, {
     title: row.title || existing?.title,

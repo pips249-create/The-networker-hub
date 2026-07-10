@@ -1304,7 +1304,9 @@ async function enableTicketSalesForEvent(session, eventId, groupIds) {
   const id = String(eventId || '').trim();
   const { data: event, error } = await sb
     .from('events')
-    .select('id, organiser_id, status, approval_status, ticket_sales_enabled')
+    .select(
+      'id, organiser_id, status, approval_status, ticket_sales_enabled, refund_policy, refund_policy_details, refund_terms_agreed, refund_terms_agreed_at'
+    )
     .eq('id', id)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -1335,7 +1337,16 @@ async function enableTicketSalesForEvent(session, eventId, groupIds) {
   const hasPaid = (tickets || []).some((t) => Number(t.price) > 0);
   if (hasPaid) {
     const { assertOrganiserReadyForPaidPublish } = require('./stripe-connect');
+    const { assertRefundPolicyForPaidCheckout } = require('./event-refund-policy');
     await assertOrganiserReadyForPaidPublish(sb, [event.organiser_id], tickets);
+    try {
+      assertRefundPolicyForPaidCheckout(event);
+    } catch (refundErr) {
+      const e = new Error(refundErr.message);
+      e.status = refundErr.status || 400;
+      e.code = refundErr.code || 'refund_policy_required';
+      throw e;
+    }
   }
 
   const { data: updated, error: updateErr } = await sb

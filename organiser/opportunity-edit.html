@@ -151,6 +151,9 @@
           </div>
           <div class="ee-field">
             <label for="oe-financial-key">Earnings / return (optional)</label>
+            <p class="auth-lede" style="margin: 0 0 8px; font-size: 13px">
+              Only include figures you can substantiate. The Hub does not verify earnings claims and prohibits guaranteed-income language.
+            </p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
               <select id="oe-financial-key">
                 <option value="">None</option>
@@ -163,6 +166,10 @@
               </select>
               <input type="text" id="oe-financial-val" placeholder="e.g. £400–£900/mo" />
             </div>
+            <label class="auth-terms-check auth-terms-check--optional" id="oe-earnings-attest-wrap" hidden style="margin-top: 12px">
+              <input type="checkbox" id="oe-earnings-attest" />
+              <span>I confirm any earnings or return figures are truthful, typical for this opportunity, and not guaranteed.</span>
+            </label>
           </div>
           <div class="ee-field">
             <label for="oe-extra-key">Extra highlight (optional)</label>
@@ -233,6 +240,6 @@
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
     <script src="../js/hub-location-autocomplete.js?v=20260609"></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../"></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260630d"></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260710"></script>
   </body>
 </html>

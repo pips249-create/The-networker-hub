@@ -5,6 +5,7 @@ const {
   siteBaseUrl,
 } = require('../stripe-checkout');
 const { normalizeListingMonths, calculateOpportunityListingTotals } = require('../opportunity-listing-pricing');
+const { opportunityHasFinancialMeta, validateEarningsAttestation } = require('../opportunity-moderation');
 
 function parseBody(req) {
   let body = req.body;
@@ -64,6 +65,20 @@ module.exports = async function handler(req, res) {
       !opportunityOwnedBySession(auth.session, opportunity)
     ) {
       return json(res, 403, { ok: false, error: 'opportunity_not_owned' });
+    }
+
+    if (opportunityHasFinancialMeta(opportunity.meta)) {
+      const attestation = validateEarningsAttestation({
+        meta: opportunity.meta,
+        earningsClaimsAttested: Boolean(body.earningsClaimsAttested),
+      });
+      if (attestation) {
+        return json(res, 400, {
+          ok: false,
+          error: attestation.code,
+          message: attestation.message,
+        });
+      }
     }
 
     const siteUrl = siteBaseUrl();

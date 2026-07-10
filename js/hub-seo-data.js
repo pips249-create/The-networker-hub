@@ -43,15 +43,15 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "I forgot my password — how do I sign in?",
-      "answer": "Go to /login.html and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@the-networker.co.uk from the address on your account."
+      "answer": "Go to /login.html and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkerhub.com from the address on your account."
     },
     {
       "question": "I did not receive my booking confirmation email",
-      "answer": "Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My tickets at /account/. If you still cannot find your booking, email hello@the-networker.co.uk with the event name and email address used at checkout."
+      "answer": "Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My tickets at /account/. If you still cannot find your booking, email hello@thenetworkerhub.com with the event name and email address used at checkout."
     },
     {
       "question": "Can I transfer my ticket to someone else?",
-      "answer": "Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hello@the-networker.co.uk with your order reference."
+      "answer": "Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkerhub.com with your order reference."
     },
     {
       "question": "What happens if an organiser cancels an event?",
@@ -71,11 +71,11 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "How much does it cost to list an event as an organiser?",
-      "answer": "There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@the-networker.co.uk for onboarding help."
+      "answer": "There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkerhub.com for onboarding help."
     },
     {
       "question": "Why is my event not showing on the browse events page?",
-      "answer": "Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@the-networker.co.uk with the event title if it is still missing."
+      "answer": "Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkerhub.com with the event title if it is still missing."
     },
     {
       "question": "How can I advertise my business on The Networker Hub?",
@@ -110,7 +110,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkerhub.com",
           "logo": "https://www.thenetworkerhub.com/assets/logo.png",
           "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@the-networker.co.uk",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -123,7 +123,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@the-networker.co.uk",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -229,7 +229,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkerhub.com",
           "logo": "https://www.thenetworkerhub.com/assets/logo.png",
           "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@the-networker.co.uk",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -242,7 +242,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@the-networker.co.uk",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -350,7 +350,7 @@ window.HUB_SEO_DATA = {
               "name": "I forgot my password — how do I sign in?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Go to /login.html and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@the-networker.co.uk from the address on your account."
+                "text": "Go to /login.html and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkerhub.com from the address on your account."
               }
             },
             {
@@ -358,7 +358,7 @@ window.HUB_SEO_DATA = {
               "name": "I did not receive my booking confirmation email",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My tickets at /account/. If you still cannot find your booking, email hello@the-networker.co.uk with the event name and email address used at checkout."
+                "text": "Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My tickets at /account/. If you still cannot find your booking, email hello@thenetworkerhub.com with the event name and email address used at checkout."
               }
             },
             {
@@ -366,7 +366,7 @@ window.HUB_SEO_DATA = {
               "name": "Can I transfer my ticket to someone else?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hello@the-networker.co.uk with your order reference."
+                "text": "Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkerhub.com with your order reference."
               }
             },
             {
@@ -406,7 +406,7 @@ window.HUB_SEO_DATA = {
               "name": "How much does it cost to list an event as an organiser?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@the-networker.co.uk for onboarding help."
+                "text": "There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkerhub.com for onboarding help."
               }
             },
             {
@@ -414,7 +414,7 @@ window.HUB_SEO_DATA = {
               "name": "Why is my event not showing on the browse events page?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@the-networker.co.uk with the event title if it is still missing."
+                "text": "Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkerhub.com with the event title if it is still missing."
               }
             },
             {
@@ -472,7 +472,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkerhub.com",
           "logo": "https://www.thenetworkerhub.com/assets/logo.png",
           "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@the-networker.co.uk",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -485,7 +485,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@the-networker.co.uk",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -560,7 +560,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkerhub.com",
           "logo": "https://www.thenetworkerhub.com/assets/logo.png",
           "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@the-networker.co.uk",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -573,7 +573,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@the-networker.co.uk",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -603,7 +603,7 @@ window.HUB_SEO_DATA = {
             "url": "https://www.thenetworkerhub.com",
             "logo": "https://www.thenetworkerhub.com/assets/logo.png",
             "image": "https://www.thenetworkerhub.com/assets/logo.png",
-            "email": "hello@the-networker.co.uk",
+            "email": "hello@thenetworkerhub.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities.",
             "address": {
               "@type": "PostalAddress",
@@ -616,7 +616,7 @@ window.HUB_SEO_DATA = {
             "contactPoint": {
               "@type": "ContactPoint",
               "contactType": "customer support",
-              "email": "hello@the-networker.co.uk",
+              "email": "hello@thenetworkerhub.com",
               "availableLanguage": [
                 "English"
               ]
@@ -646,7 +646,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkerhub.com",
           "logo": "https://www.thenetworkerhub.com/assets/logo.png",
           "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@the-networker.co.uk",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -659,7 +659,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@the-networker.co.uk",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -689,7 +689,7 @@ window.HUB_SEO_DATA = {
             "url": "https://www.thenetworkerhub.com",
             "logo": "https://www.thenetworkerhub.com/assets/logo.png",
             "image": "https://www.thenetworkerhub.com/assets/logo.png",
-            "email": "hello@the-networker.co.uk",
+            "email": "hello@thenetworkerhub.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities.",
             "address": {
               "@type": "PostalAddress",
@@ -702,7 +702,7 @@ window.HUB_SEO_DATA = {
             "contactPoint": {
               "@type": "ContactPoint",
               "contactType": "customer support",
-              "email": "hello@the-networker.co.uk",
+              "email": "hello@thenetworkerhub.com",
               "availableLanguage": [
                 "English"
               ]
@@ -732,7 +732,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkerhub.com",
           "logo": "https://www.thenetworkerhub.com/assets/logo.png",
           "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@the-networker.co.uk",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -745,7 +745,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@the-networker.co.uk",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -787,7 +787,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkerhub.com",
           "logo": "https://www.thenetworkerhub.com/assets/logo.png",
           "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@the-networker.co.uk",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -800,7 +800,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@the-networker.co.uk",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -842,7 +842,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkerhub.com",
           "logo": "https://www.thenetworkerhub.com/assets/logo.png",
           "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@the-networker.co.uk",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -855,7 +855,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@the-networker.co.uk",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]

@@ -98,7 +98,7 @@ async function hideOrganiserWorkspace(userId, email) {
     const err = new Error('organiser_page_linked');
     err.status = 400;
     err.message =
-      'You have an organiser page or pending claim on this account. Manage it from the organiser workspace, or contact hello@the-networker.co.uk for help.';
+      'You have an organiser page or pending claim on this account. Manage it from the organiser workspace, or contact hello@thenetworkerhub.com for help.';
     throw err;
   }
 

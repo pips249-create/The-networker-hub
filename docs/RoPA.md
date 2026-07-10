@@ -15,7 +15,7 @@
 |-------|--------|
 | Organisation | The Networker Group Ltd |
 | Address | Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF |
-| Contact | hello@the-networker.co.uk |
+| Contact | hello@thenetworkerhub.com |
 | DPO / privacy lead | Director (assign named contact internally) |
 
 ---
@@ -118,10 +118,10 @@
 
 | Processor | Processing | Location | DPA status |
 |-----------|------------|----------|------------|
-| Supabase | Database, auth, storage | US/EU | ☐ File signed copy |
-| Stripe | Payments, Connect payouts | US/EU | ☐ File signed copy |
-| Resend | Email delivery | US | ☐ File signed copy |
-| Vercel | Hosting, Web Analytics | US/EU | ☐ File signed copy |
+| Supabase | Database, auth, storage | US/EU | ☐ File signed PandaDoc copy — see `docs/DPA-SUBPROCESSORS.md` |
+| Stripe | Payments, Connect payouts | US/EU | ☐ File downloaded DPA — incorporated in SSA |
+| Resend | Email delivery | US | ☐ File from Settings → Documents |
+| Vercel | Hosting, Web Analytics | US/EU | ☐ File from vercel.com/legal/dpa |
 
 ---
 
@@ -150,7 +150,7 @@ Organisers are **separate controllers** for attendee data they receive. Organise
 
 ## 6. Data subject rights
 
-Handled via procedure in `GDPR-SAR-PROCEDURE.md`. Contact: hello@the-networker.co.uk.
+Handled via procedure in `GDPR-SAR-PROCEDURE.md`. Contact: hello@thenetworkerhub.com.
 
 ---
 

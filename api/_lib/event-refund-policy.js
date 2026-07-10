@@ -49,6 +49,61 @@ function effectiveRefundCutoffDays(eventRow) {
   return 7;
 }
 
+const VALID_REFUND_POLICIES = new Set(['full_refund', 'partial_refund', 'no_refunds', 'custom']);
+
+function hasValidRefundPolicy(eventRow) {
+  const normalized = normalizeEventRefundRow(eventRow);
+  const policy = normalized.refund_policy;
+  if (!VALID_REFUND_POLICIES.has(policy)) return false;
+  if ((policy === 'partial_refund' || policy === 'custom') && !normalized.refund_policy_details) {
+    return false;
+  }
+  return true;
+}
+
+function assertRefundPolicyForPaidCheckout(eventRow) {
+  if (!hasValidRefundPolicy(eventRow)) {
+    const err = new Error(
+      'Paid bookings are not available until the organiser sets a refund policy on this event.'
+    );
+    err.status = 400;
+    err.code = 'refund_policy_required';
+    throw err;
+  }
+  const ev = eventRow && typeof eventRow === 'object' ? eventRow : {};
+  if (!ev.refund_terms_agreed && !ev.refund_terms_agreed_at) {
+    const err = new Error(
+      'Paid bookings are not available until the organiser confirms refund responsibilities.'
+    );
+    err.status = 400;
+    err.code = 'refund_terms_required';
+    throw err;
+  }
+}
+
+function validateRefundPublishPayload(refundPayload) {
+  const policy = String(refundPayload?.refundPolicy || '').trim();
+  if (!VALID_REFUND_POLICIES.has(policy)) {
+    return { ok: false, code: 'refund_policy_required', message: 'Select a refund policy before publishing.' };
+  }
+  const details = String(refundPayload?.refundPolicyDetails || '').trim();
+  if ((policy === 'partial_refund' || policy === 'custom') && !details) {
+    return {
+      ok: false,
+      code: 'refund_policy_details_required',
+      message: 'Describe your partial or custom refund policy before publishing.',
+    };
+  }
+  if (!refundPayload?.refundTermsAgreed) {
+    return {
+      ok: false,
+      code: 'refund_terms_required',
+      message: 'Confirm you understand refunds are your responsibility under Stripe Connect.',
+    };
+  }
+  return { ok: true };
+}
+
 function formatRefundPolicyLabel(eventRow) {
   const policy = normalizeEventRefundRow(eventRow).refund_policy;
   if (policy === 'full_refund') return 'Full refunds available';
@@ -138,9 +193,13 @@ function buildEventOnlineRow(isOnline) {
 }
 
 module.exports = {
+  VALID_REFUND_POLICIES,
   escapeHtml,
   formatMultilineHtml,
   normalizeEventRefundRow,
+  hasValidRefundPolicy,
+  assertRefundPolicyForPaidCheckout,
+  validateRefundPublishPayload,
   inferMeetingType,
   isOnlineEvent,
   effectiveRefundCutoffDays,

@@ -106,7 +106,7 @@
         typing.remove();
         var reply =
           (data && data.reply) ||
-          'Sorry — I could not get a reply just now. Please email hello@the-networker.co.uk.';
+          'Sorry — I could not get a reply just now. Please email hello@thenetworkerhub.com.';
         self.appendBubble('assistant', reply);
         self.history.push({ role: 'assistant', content: reply });
       })
@@ -114,7 +114,7 @@
         typing.remove();
         self.appendBubble(
           'assistant',
-          'Something went wrong. Please try again or email hello@the-networker.co.uk.'
+          'Something went wrong. Please try again or email hello@thenetworkerhub.com.'
         );
       })
       .finally(function () {

@@ -20,7 +20,7 @@
 | Email system | ~85% | Resend on prod; confirmation sends — **SPF/DKIM, cron reminders, allowlist off at launch** remain |
 | SEO | ~70% | Foundations built — **domain, GSC, sitemap verify, redirect** remain |
 | AEO (AI / answer engines) | ~70% | `llms.txt`, FAQs, JSON-LD — **gate-off discovery + canonical alignment** remain |
-| Business ops | ~40% | Compliance docs exist — **DPAs, ICO, support inbox, HMRC prep** remain |
+| Business ops | ~75% | Product + runbooks — **`npm run check:business-ops`** — ICO verify, DNS, DPAs, solicitor remain |
 | Redirect & launch comms | ~5% | the-networker.co.uk redirect + email waves not started |
 
 ### Critical path (do these next)
@@ -135,7 +135,7 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 | [ ] | Stripe Connect destination charge test passed (Tab 9) |
 | [x] | 1,000+ organiser group profiles browsable |
 | [ ] | 200+ claimed groups (stretch goal) |
-| [ ] | Support email monitored (hello@the-networker.co.uk) |
+| [ ] | Support email monitored (hello@thenetworkerhub.com) |
 | [ ] | Command Centre admin login tested |
 | [ ] | **Business ops** — Tab 10 gates complete (or consciously deferred with owner) |
 | [ ] | SEO/AEO — Tab 6 + `docs/SEO-AEO-LAUNCH-PLAN.md` launch-week steps |
@@ -169,7 +169,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | Create an API key |
 | [x] | Add **`RESEND_API_KEY`** in Vercel → Project → Settings → Environment Variables |
 | [x] | Verify sending domain (the-networker.co.uk or hub domain) |
-| [x] | Add **`RESEND_FROM`**, e.g. `The Networker <hello@the-networker.co.uk>` |
+| [x] | Add **`RESEND_FROM`**, e.g. `The Networker <hello@thenetworkerhub.com>` |
 | [x] | Redeploy so env vars apply |
 | [x] | Command Centre → **Email templates** → Send test to yourself |
 | [x] | **Test checkout:** buy a ticket → confirmation email received |
@@ -365,29 +365,29 @@ Non-code gates from `docs/COMPLIANCE-RUNBOOK.md`. Product compliance is largely 
 
 | Done | Item | Owner |
 |:----:|------|-------|
-| [ ] | **Support inbox** live — hello@the-networker.co.uk monitored; FAQ for login, publish, bookings, payouts | Support |
-| [ ] | **SPF + DKIM + DMARC** on email sending domain | Tech |
-| [ ] | **ICO registration** — confirm Hub legal entity covered (transferred from the-networker.co.uk) | Director |
+| [x] | **Support inbox** runbook — `docs/SUPPORT-INBOX-RUNBOOK.md` | Catherine |
+| [ ] | **SPF + DKIM + DMARC** — follow `docs/EMAIL-DNS-SETUP.md` | Tech |
+| [ ] | **ICO registration** — verify on register (`docs/ICO-REGISTRATION.md`) | Catherine |
 | [ ] | Command Centre admin login tested on prod | Ops |
-| [ ] | Refund policy QA — paid events blocked without refund policy selected | QA |
-| [ ] | Opportunity moderation owner assigned (`docs/OPPORTUNITY-MODERATION.md`) | Ops |
+| [x] | Refund policy enforcement — server guards + `npm run test:refund-policy` | Product |
+| [x] | Opportunity moderation owner assigned (`docs/OPPORTUNITY-MODERATION.md`) | Catherine |
 
 ### Should-have before scaling paid ticketing
 
 | Done | Item | Owner |
 |:----:|------|-------|
-| [ ] | **DPAs signed** — Supabase, Stripe, Resend, Vercel (file copies) | Ops |
-| [ ] | Solicitor review of `legal-policies.html` | Director |
-| [ ] | GDPR SAR owner named (`docs/GDPR-SAR-PROCEDURE.md`) | Support |
-| [ ] | Data breach incident lead named (`docs/DATA-BREACH-RESPONSE.md`) | DPO contact |
-| [ ] | VAT guidance for organisers confirmed; Stripe receipts meet requirements | Finance |
+| [ ] | **DPAs filed** — `docs/DPA-SUBPROCESSORS.md` + `docs/DPA-REGISTER.md` + `npm run check:dpas` | Catherine |
+| [ ] | Solicitor review of `legal-policies.html` | Catherine |
+| [x] | GDPR SAR owner named (`docs/GDPR-SAR-PROCEDURE.md`) | Catherine |
+| [x] | Data breach incident lead named (`docs/DATA-BREACH-RESPONSE.md`) | Catherine |
+| [ ] | VAT guidance for organisers — Finance sign-off (`docs/VAT-ORGANISER-GUIDANCE.md`) | Finance |
 | [ ] | HMRC platform reporting mapped with accountant (`docs/HMRC-PLATFORM-OPERATORS.md`) | Finance |
-| [ ] | Platform liability / cyber insurance | Director |
-| [ ] | Legacy marketing opt-in re-permission (accounts before July 2026) | Marketing |
+| [ ] | Platform liability / cyber insurance | Catherine |
+| [ ] | Legacy marketing opt-in re-permission — run `scripts/audit-legacy-marketing-opt-in.js` | Marketing |
 
 ### Already in the product
 
-Legal policies, cookie consent, terms at registration, pre-checkout acknowledgement, organiser terms, opportunity disclaimers, review reporting, RoPA, SAR procedure, breach runbook, OSA risk doc.
+Legal policies, cookie consent, terms at registration, pre-checkout acknowledgement, organiser terms, opportunity disclaimers, earnings attestation, paid-checkout refund guard, review reporting, RoPA, SAR procedure, breach runbook, OSA risk doc, compliance readiness script (`npm run check:business-ops`).
 
 ---
 
@@ -407,6 +407,7 @@ Legal policies, cookie consent, terms at registration, pre-checkout acknowledgem
 | Rebuild FAQ + schema | `npm run build-seo` |
 | Stripe Connect test | `PIPS-TODO.md` Tab 9 |
 | Business ops / compliance | `docs/COMPLIANCE-RUNBOOK.md` · Tab 10 |
+| Subprocessor DPAs | `docs/DPA-SUBPROCESSORS.md` · `npm run check:dpas` |
 | SEO launch week | `docs/SEO-AEO-LAUNCH-PLAN.md` |
 | Stripe Connect + refunds | `docs/REFUNDS-AND-STRIPE-CONNECT.md` |
 | Auth & email notes | `AUTH-SETUP.md`, `SUPABASE-NO-EMAIL.md` |

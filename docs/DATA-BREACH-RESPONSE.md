@@ -11,11 +11,12 @@
 
 ## 1. Incident lead
 
-| Role | Name (assign internally) | Contact |
-|------|------------------------|---------|
-| **Incident lead** | | |
-| **Technical lead** | | |
-| **Privacy lead / Director** | | |
+| Role | Name | Contact |
+|------|------|---------|
+| **Incident lead** | Catherine Hancher | hello@thenetworkerhub.com |
+| **Technical lead** | Catherine Hancher | hello@thenetworkerhub.com |
+| **Privacy lead / Director** | Catherine Hancher | hello@thenetworkerhub.com |
+| **Cover** | Rosie | rosie@thenetworkerhub.com |
 
 The incident lead coordinates containment, assessment, notification, and documentation.
 
@@ -123,7 +124,7 @@ If Supabase, Stripe, Resend, or Vercel notifies you of a breach:
 > We are writing to tell you about a security incident affecting The Networker Hub on [date].  
 > [What happened.] Data that may have been affected: [categories].  
 > We have [actions taken]. We recommend you [specific steps].  
-> Contact: hello@the-networker.co.uk with subject “Security incident”.  
+> Contact: hello@thenetworkerhub.com with subject “Security incident”.  
 > You may also contact the ICO: ico.org.uk
 
 ---

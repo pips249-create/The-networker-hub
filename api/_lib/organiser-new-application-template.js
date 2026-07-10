@@ -15,7 +15,7 @@ function isStaleOrganiserNewApplicationTemplate(bodyHtml) {
   if (!body.includes('Someone applied to attend')) return true;
   if (!body.includes('{{screening_industry}}')) return true;
   if (!body.includes('organiser-email-layout-v2')) return true;
-  if (body.includes('hello@the-networker.co.uk')) return true;
+  if (body.includes('hello@thenetworkerhub.com')) return true;
   if (body.includes('Need help?') && !body.includes('{{support_email}}')) return true;
   return false;
 }

@@ -24,6 +24,7 @@ const routes = {
   rankings: require('./_lib/routes/admin-rankings'),
   spotlight: require('./_lib/routes/admin-spotlight'),
   bookings: require('./_lib/routes/admin-bookings'),
+  complaints: require('./_lib/routes/admin-complaints'),
   'revenue-deals': require('./_lib/routes/admin-revenue-deals'),
   'revenue-targets': require('./_lib/routes/admin-revenue-targets'),
 };

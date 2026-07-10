@@ -55,7 +55,7 @@ function isStaleBookingTemplate(bodyHtml) {
   if (body.includes('{{site_url}}/events/')) {
     return true;
   }
-  if (body.includes('hello@the-networker.co.uk')) return true;
+  if (body.includes('hello@thenetworkerhub.com')) return true;
   if (body.includes('{{logo_url}}" alt="The Networker Hub" width="200"')) return true;
   if (body.includes('The Networker Hub</p>') && body.includes('background:#f5f0e8;padding:28px')) return true;
   return false;

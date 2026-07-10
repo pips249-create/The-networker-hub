@@ -1,5 +1,6 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { assertOrganiserEmailVerified, isPublishIntent } = require('../organiser-access-guard');
+const { validateRefundPublishPayload } = require('../event-refund-policy');
 
 function parseBody(req) {
   let body = req.body;
@@ -115,11 +116,13 @@ module.exports = async function handler(req, res) {
 
         const publish = Boolean(body.publish);
         if (publish) {
-          if (!body.refundTermsAgreed) {
-            return json(res, 400, { error: 'refund_terms_required' });
-          }
-          if (!body.refundPolicy) {
-            return json(res, 400, { error: 'refund_policy_required' });
+          const refundCheck = validateRefundPublishPayload({
+            refundPolicy: body.refundPolicy,
+            refundPolicyDetails: body.refundPolicyDetails || '',
+            refundTermsAgreed: body.refundTermsAgreed,
+          });
+          if (!refundCheck.ok) {
+            return json(res, 400, { error: refundCheck.code, message: refundCheck.message });
           }
         }
 

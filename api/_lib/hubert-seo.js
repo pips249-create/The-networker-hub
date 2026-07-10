@@ -22,7 +22,7 @@ function buildOrganizationSchema(origin) {
     url: base,
     logo: base + '/assets/logo.png',
     image: base + '/assets/logo.png',
-    email: 'hello@the-networker.co.uk',
+    email: 'hello@thenetworkerhub.com',
     description:
       'UK platform for networking events, exhibitions, and business opportunities.',
     address: {
@@ -36,7 +36,7 @@ function buildOrganizationSchema(origin) {
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer support',
-      email: 'hello@the-networker.co.uk',
+      email: 'hello@thenetworkerhub.com',
       availableLanguage: ['English'],
     },
     founder: [
@@ -255,7 +255,7 @@ function buildLlmsTxt(origin) {
   return (
     '# The Networker Hub\n' +
     '> UK business networking platform — events and business opportunities.\n\n' +
-    'Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@the-networker.co.uk\n\n' +
+    'Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@thenetworkerhub.com\n\n' +
     '## Canonical URLs\n' +
     '- Home: ' +
     base +

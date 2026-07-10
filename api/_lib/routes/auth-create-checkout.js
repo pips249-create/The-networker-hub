@@ -9,6 +9,7 @@ const {
 } = require('../stripe-connect');
 const { normalizeGuestNames, createRegistrationFromPayment } = require('../supabase-registrations');
 const { resolveTicketSalesEnabled } = require('../ticket-sales');
+const { assertRefundPolicyForPaidCheckout } = require('../event-refund-policy');
 const { isUuid } = require('../uuid');
 
 function parseBody(req) {
@@ -117,7 +118,7 @@ module.exports = async function handler(req, res) {
     const evRes = await sb
       .from('events')
       .select(
-        'id, title, slug, status, approval_status, ticket_sales_enabled, refund_terms_agreed, refund_terms_agreed_at, collect_dietary, collect_accessibility'
+        'id, title, slug, status, approval_status, ticket_sales_enabled, refund_policy, refund_policy_details, refund_terms_agreed, refund_terms_agreed_at, collect_dietary, collect_accessibility'
       )
       .eq('id', eventId)
       .maybeSingle();
@@ -224,6 +225,16 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: 'free_ticket_use_complete_booking',
         message: 'This is a free ticket — no payment is required.',
+      });
+    }
+
+    try {
+      assertRefundPolicyForPaidCheckout(evRes.data);
+    } catch (refundErr) {
+      return json(res, refundErr.status || 400, {
+        ok: false,
+        error: refundErr.code || 'refund_policy_required',
+        message: refundErr.message,
       });
     }
 

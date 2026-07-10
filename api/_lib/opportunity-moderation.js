@@ -84,6 +84,26 @@ function validateStructuredFields(opportunity) {
   };
 }
 
+function opportunityHasFinancialMeta(meta) {
+  return normalizeMeta(meta).some(
+    (m) =>
+      m.val &&
+      /^(return(\s+est\.?)?|earnings|commission|revenue|income|profit)$/i.test(m.key)
+  );
+}
+
+function validateEarningsAttestation(payload) {
+  if (!opportunityHasFinancialMeta(payload?.meta)) return null;
+  if (!payload?.earningsClaimsAttested) {
+    return {
+      code: 'earnings_attestation_required',
+      message:
+        'Confirm your earnings or return figures are truthful, typical, and substantiated before listing.',
+    };
+  }
+  return null;
+}
+
 function scanOpportunityRedFlags(opportunity) {
   const structured = validateStructuredFields(opportunity);
   if (structured) return structured;
@@ -119,5 +139,7 @@ module.exports = {
   RED_FLAG_PATTERNS,
   collectOpportunityText,
   validateStructuredFields,
+  opportunityHasFinancialMeta,
+  validateEarningsAttestation,
   scanOpportunityRedFlags,
 };

@@ -96,15 +96,38 @@
     return true;
   }
 
+  function hasFinancialClaimsInForm() {
+    const finKey = document.getElementById('oe-financial-key')?.value.trim() || '';
+    const finVal = document.getElementById('oe-financial-val')?.value.trim() || '';
+    return Boolean(finKey && finVal);
+  }
+
+  function updateEarningsAttestVisibility() {
+    const wrap = document.getElementById('oe-earnings-attest-wrap');
+    if (!wrap) return;
+    const show = hasFinancialClaimsInForm();
+    wrap.hidden = !show;
+    if (!show) {
+      const box = document.getElementById('oe-earnings-attest');
+      if (box) box.checked = false;
+    }
+  }
+
   async function startListingCheckout(opportunityId, months) {
     const submitBtn = document.getElementById('oe-submit');
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.textContent = 'Opening secure checkout…';
     }
+    const checkoutBody = { opportunityId: opportunityId, months: months };
+    if (hasFinancialClaimsInForm()) {
+      checkoutBody.earningsClaimsAttested = Boolean(
+        document.getElementById('oe-earnings-attest')?.checked
+      );
+    }
     const res = await api('/api/organiser/opportunity-listing-checkout', {
       method: 'POST',
-      body: JSON.stringify({ opportunityId: opportunityId, months: months }),
+      body: JSON.stringify(checkoutBody),
     });
     if (res.ok && res.data.url) {
       location.href = res.data.url;
@@ -200,6 +223,7 @@
       document.getElementById('oe-financial-key').value = financial.key;
       document.getElementById('oe-financial-val').value = financial.val;
     }
+    updateEarningsAttestVisibility();
 
     const usedKeys = new Set(['investment', 'location', 'commitment']);
     if (financial) usedKeys.add(financial.key.toLowerCase());
@@ -389,6 +413,9 @@
       listingStatus,
       photoUrl: document.getElementById('oe-photo-url').value.trim(),
       logoUrl: document.getElementById('oe-logo-url').value.trim(),
+      earningsClaimsAttested: hasFinancialClaimsInForm()
+        ? Boolean(document.getElementById('oe-earnings-attest')?.checked)
+        : false,
     };
   }
 
@@ -404,6 +431,9 @@
       return 'Enter the territory or location for this opportunity.';
     }
     if (!payload.meta.some((m) => /^commitment$/i.test(m.key))) return 'Select a commitment level.';
+    if (hasFinancialClaimsInForm() && !payload.earningsClaimsAttested) {
+      return 'Confirm your earnings or return figures are truthful and substantiated.';
+    }
     return '';
   }
 
@@ -552,6 +582,14 @@
 
     bindLogoUpload();
     bindPhotoUpload();
+
+    ['oe-financial-key', 'oe-financial-val'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', updateEarningsAttestVisibility);
+      el.addEventListener('change', updateEarningsAttestVisibility);
+    });
+    updateEarningsAttestVisibility();
 
     const backLink = document.getElementById('oe-back-link');
     if (backLink && editId) {
