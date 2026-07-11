@@ -967,7 +967,7 @@
     notificationsPanelOpen = true;
     if (navBtn) {
       navBtn.setAttribute('aria-expanded', 'true');
-      navBtn.classList.add('is-active');
+      navBtn.classList.add('is-panel-open');
     }
     const closeBtn = document.getElementById('org-notifications-close');
     if (closeBtn) closeBtn.focus();
@@ -983,7 +983,7 @@
     notificationsPanelOpen = false;
     if (navBtn) {
       navBtn.setAttribute('aria-expanded', 'false');
-      navBtn.classList.remove('is-active');
+      navBtn.classList.remove('is-panel-open');
     }
   }
 
@@ -1909,9 +1909,8 @@
     document.querySelectorAll('[data-events-panel]').forEach((panel) => {
       panel.classList.toggle('is-active', panel.getAttribute('data-events-panel') === eventsSubRoute);
     });
-    document.querySelectorAll('[data-events-tab]').forEach((tab) => {
-      tab.classList.toggle('is-active', tab.getAttribute('data-events-tab') === eventsSubRoute);
-    });
+    syncEventsTabHighlights(eventsSubRoute, true);
+    syncSidebarNavHighlight('events', eventsSubRoute);
     const titles = {
       'events-list': ['My Events', 'Manage all your event listings — click any event name to edit.'],
       'events-tickets': ['Tickets', 'All ticket types across your events.'],
@@ -4810,8 +4809,32 @@
     if (page === 'events-overview') return 'events-list';
     if (page === 'business-overview') return 'business-overview';
     if (page === 'business-list') return 'business-list';
-    if (page === 'events') return sub || 'events-list';
+    if (page === 'events') {
+      const route = sub || 'events-list';
+      if (route === 'events-tickets') return 'events-list';
+      return route;
+    }
     return page;
+  }
+
+  function syncSidebarNavHighlight(page, sub) {
+    const activeRoute = sidebarRouteForPage(page, sub);
+    document.querySelectorAll('.hub-side-nav-link[data-org-route]').forEach((a) => {
+      const isActive = a.getAttribute('data-org-route') === activeRoute;
+      a.classList.toggle('is-active', isActive);
+      if (isActive) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+  }
+
+  function syncEventsTabHighlights(sub, enabled) {
+    const activeSub = sub || 'events-list';
+    document.querySelectorAll('[data-events-tab]').forEach((tab) => {
+      tab.classList.toggle(
+        'is-active',
+        Boolean(enabled) && tab.getAttribute('data-events-tab') === activeSub
+      );
+    });
   }
 
   function setRoute(route, options) {
@@ -4840,16 +4863,15 @@
       page = 'team';
     }
 
-    const activeRoute = sidebarRouteForPage(page, sub);
-    document.querySelectorAll('.hub-side-nav-link[data-org-route]').forEach((a) => {
-      a.classList.toggle('is-active', a.getAttribute('data-org-route') === activeRoute);
-    });
     document.querySelectorAll('[data-org-page]').forEach((p) => {
       p.classList.toggle('is-active', p.getAttribute('data-org-page') === page);
     });
 
     if (page === 'events') {
       setEventsSub(sub || eventsSubRoute || 'events-list');
+    } else {
+      syncSidebarNavHighlight(page, sub);
+      syncEventsTabHighlights(null, false);
     }
     if (page === 'team') {
       loadTeamMembers().then(function () {
@@ -5328,6 +5350,7 @@
     tr.innerHTML =
       '<td colspan="8">' +
       '<div class="org-series-dates-panel">' +
+      '<div class="org-series-dates-block">' +
       seriesOverviewStatsHtml(children) +
       '<div class="org-series-dates-head">' +
       '<p class="org-series-dates-lede"><strong>' +
@@ -5345,7 +5368,7 @@
       '<th>Date</th><th>Time</th><th>Tickets sold</th><th>Revenue</th><th>Status</th><th>Actions</th>' +
       '</tr></thead><tbody>' +
       rowsHtml +
-      '</tbody></table></div></div></td>';
+      '</tbody></table></div></div></div></td>';
     body.appendChild(tr);
   }
 
@@ -5415,6 +5438,7 @@
     tr.innerHTML =
       '<td colspan="6">' +
       '<div class="org-series-dates-panel">' +
+      '<div class="org-series-dates-block">' +
       seriesOverviewStatsHtml(children) +
       '<div class="org-series-dates-head">' +
       '<p class="org-series-dates-lede"><strong>' +
@@ -5432,7 +5456,7 @@
       '<th>Date</th><th>Time</th><th>Tickets sold</th><th>Revenue</th><th>Payout</th>' +
       '</tr></thead><tbody>' +
       rowsHtml +
-      '</tbody></table></div></div></td>';
+      '</tbody></table></div></div></div></td>';
     body.appendChild(tr);
   }
 

@@ -2224,7 +2224,7 @@
   color: var(--od-purple);
 }
 
-.organiser-dashboard-page .hub-side-nav--minimal .org-notifications-nav.is-active {
+.organiser-dashboard-page .hub-side-nav--minimal .org-notifications-nav.is-panel-open {
   border-left-color: var(--od-purple);
   background: var(--od-white);
   color: var(--od-purple);
@@ -2250,6 +2250,8 @@ body.org-notifications-open {
   border: none;
   padding: 0;
   background: rgba(26, 16, 37, 0.38);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   cursor: pointer;
 }
 
@@ -2263,7 +2265,10 @@ body.org-notifications-open {
   flex-direction: column;
   background: var(--od-white);
   border-right: 1px solid var(--od-border-soft);
-  box-shadow: 8px 0 32px rgba(45, 38, 54, 0.14);
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    8px 0 32px rgba(45, 38, 54, 0.14);
+  z-index: 1;
 }
 
 .org-notifications-panel-head {
@@ -4605,8 +4610,19 @@ body.org-event-drawer-open {
   padding: 12px 16px 14px 72px;
 }
 
+.org-series-dates-block {
+  border: 1px solid #dbeef1;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
 .org-series-stats {
-  margin-bottom: 12px;
+  margin: 0;
+  padding: 12px 12px 0;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .org-series-stats .org-stat {
@@ -4615,6 +4631,10 @@ body.org-event-drawer-open {
 
 .org-series-stats .org-stat-value {
   font-size: 22px;
+}
+
+.org-series-dates-head {
+  padding: 8px 12px 0;
 }
 
 .org-series-dates-lede {
@@ -4630,12 +4650,15 @@ body.org-event-drawer-open {
 }
 
 .org-series-dates-scroll {
-  margin-top: 10px;
+  margin-top: 8px;
   max-height: min(360px, 50vh);
   overflow: auto;
-  border: 1px solid #dbeef1;
-  border-radius: 8px;
+  border: none;
+  border-top: 1px solid #dbeef1;
+  border-radius: 0;
   background: #fff;
+  scrollbar-gutter: stable;
+  box-sizing: border-box;
 }
 
 .org-series-dates-table {

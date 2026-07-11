@@ -19,133 +19,135 @@
 <script src="js/hub-seo-schema.js?v=20260612" defer></script>
   <script type="application/ld+json" data-hubert-seo="static">{"@context":"https://schema.org","@graph":[{"@type":"CollectionPage","@id":"https://www.thenetworkerhub.com/guides.html","url":"https://www.thenetworkerhub.com/guides.html","name":"Organiser guides – The Networker Hub","description":"Step-by-step guides for organisers — list events, publish business opportunities, and invite team editors on The Networker Hub.","isPartOf":{"@type":"WebSite","name":"The Networker Hub","url":"https://www.thenetworkerhub.com"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.thenetworkerhub.com/"},{"@type":"ListItem","position":2,"name":"Organiser guides","item":"https://www.thenetworkerhub.com/guides.html"}]}]}</script>
 </head>
-<body class="guides-hub-page">
+<body>
 
 <div id="hub-site-nav"></div>
 <script src="js/site-nav.js?v=20260710g" data-root="" data-page="guides"></script>
 
-<main class="content-page-main guides-hub-main">
-  <header class="content-hero content-hero--compact">
+<main class="content-page-main">
+  <header class="content-hero">
     <div class="content-hero-inner">
       <p class="section-kicker">Organiser guides</p>
       <h1>How to list on the hub</h1>
       <p class="content-hero-lede">
-        Step-by-step walkthroughs you can share with your team. Browsing and booking? See the <a href="faq.html">FAQ</a>.
+        Step-by-step walkthroughs you can share with your team. Browsing and booking? See the <a href="faq.html">FAQ</a> or <a href="contact.html">ask Hubert</a>.
       </p>
     </div>
   </header>
 
-  <div class="content-body content-body--guides-hub">
-    <div class="guides-hubert-compact" id="guides-hubert-card">
-      <p class="guides-hubert-compact-label">Got a specific question?</p>
-      <form class="guides-hubert-compact-form" id="guides-hubert-form">
+  <div class="content-body">
+    <div class="content-callout guides-hubert-callout" id="guides-hubert-card">
+      <p><strong>Got a specific question?</strong> Ask Hubert for a short answer with a direct link.</p>
+      <form class="guides-hubert-form" id="guides-hubert-form">
         <label class="visually-hidden" for="guides-hubert-input">Ask Hubert</label>
-        <input
-          type="text"
-          id="guides-hubert-input"
-          placeholder="e.g. How do I export my attendee list?"
-          maxlength="2000"
-          required
-        >
-        <button type="submit" class="btn btn-primary guides-hubert-send" id="guides-hubert-send">Ask Hubert</button>
+        <div class="guides-hubert-form-bar">
+          <input
+            type="text"
+            id="guides-hubert-input"
+            placeholder="e.g. How do I export my attendee list?"
+            maxlength="2000"
+            required
+          >
+          <button type="submit" class="btn btn-primary guides-hubert-send" id="guides-hubert-send">Ask Hubert</button>
+        </div>
       </form>
       <div class="guides-hubert-messages" id="guides-hubert-messages" role="log" aria-live="polite" hidden></div>
       <button type="button" class="guides-hubert-reset" id="guides-hubert-reset" hidden>New question</button>
     </div>
 
-    <ol class="guides-checklist" role="list">
-      <li class="guide-checklist-item" data-guide-id="list-an-event">
-        <div class="guide-checklist-main">
+    <h2>Guides</h2>
+    <ul class="guides-grid" role="list">
+      <li>
+        <article class="guide-card">
+          <span class="guide-card-kicker">Most popular</span>
           <h2><a href="guides/list-an-event.html">List an event</a></h2>
-          <p class="guide-checklist-desc">Organiser page, event details, tickets, Stripe, and publish.</p>
-          <p class="guide-checklist-meta">7 steps · ~8 min</p>
-        </div>
-        <div class="guide-checklist-actions">
-          <button type="button" class="guide-steps-toggle" aria-expanded="false" aria-controls="guide-steps-list-an-event">View steps</button>
-          <a class="guide-checklist-cta" href="guides/list-an-event.html">Open guide</a>
-        </div>
-        <ol class="guide-checklist-steps" id="guide-steps-list-an-event" hidden>
-          <li><a href="guides/list-an-event.html#sign-in">Sign in &amp; open dashboard</a></li>
-          <li><a href="guides/list-an-event.html#organiser-page">Set up your organiser page</a></li>
-          <li><a href="guides/list-an-event.html#new-event">Add event details &amp; dates</a></li>
-          <li><a href="guides/list-an-event.html#tickets">Add ticket tiers &amp; seat limits</a></li>
-          <li><a href="guides/list-an-event.html#stripe">Connect your Stripe account</a></li>
-          <li><a href="guides/list-an-event.html#publish">Publish to the live directory</a></li>
-          <li><a href="guides/list-an-event.html#manage-bookings">Manage bookings &amp; attendees</a></li>
-        </ol>
+          <p>Organiser page, event details, tickets, Stripe, and publish.</p>
+          <p class="guide-card-meta">7 steps · ~8 min</p>
+          <details class="guide-card-steps">
+            <summary>View steps</summary>
+            <ol>
+              <li><a href="guides/list-an-event.html#sign-in">Sign in &amp; open dashboard</a></li>
+              <li><a href="guides/list-an-event.html#organiser-page">Set up your organiser page</a></li>
+              <li><a href="guides/list-an-event.html#new-event">Add event details &amp; dates</a></li>
+              <li><a href="guides/list-an-event.html#tickets">Add ticket tiers &amp; seat limits</a></li>
+              <li><a href="guides/list-an-event.html#stripe">Connect your Stripe account</a></li>
+              <li><a href="guides/list-an-event.html#publish">Publish to the live directory</a></li>
+              <li><a href="guides/list-an-event.html#manage-bookings">Manage bookings &amp; attendees</a></li>
+            </ol>
+          </details>
+          <a class="guide-card-cta" href="guides/list-an-event.html">Open guide →</a>
+        </article>
       </li>
-
-      <li class="guide-checklist-item" data-guide-id="list-conference">
-        <div class="guide-checklist-main">
+      <li>
+        <article class="guide-card">
+          <span class="guide-card-kicker">Conferences &amp; exhibitions</span>
           <h2><a href="guides/list-a-conference-or-exhibition.html">List a conference or exhibition</a></h2>
-          <p class="guide-checklist-desc">Free listings, delegate ticket tiers, and multi-day series.</p>
-          <p class="guide-checklist-meta">5 steps · ~5 min</p>
-        </div>
-        <div class="guide-checklist-actions">
-          <button type="button" class="guide-steps-toggle" aria-expanded="false" aria-controls="guide-steps-list-conference">View steps</button>
-          <a class="guide-checklist-cta" href="guides/list-a-conference-or-exhibition.html">Open guide</a>
-        </div>
-        <ol class="guide-checklist-steps" id="guide-steps-list-conference" hidden>
-          <li><a href="guides/list-a-conference-or-exhibition.html#organiser-page">Claim or create organiser page</a></li>
-          <li><a href="guides/list-a-conference-or-exhibition.html#new-listing">Start your conference listing</a></li>
-          <li><a href="guides/list-a-conference-or-exhibition.html#event-type">Choose Conference or Exhibition</a></li>
-          <li><a href="guides/list-a-conference-or-exhibition.html#tickets">Set delegate ticket tiers</a></li>
-          <li><a href="guides/list-a-conference-or-exhibition.html#publish">Publish &amp; promote</a></li>
-        </ol>
+          <p>Free listings, delegate ticket tiers, and multi-day series.</p>
+          <p class="guide-card-meta">5 steps · ~5 min</p>
+          <details class="guide-card-steps">
+            <summary>View steps</summary>
+            <ol>
+              <li><a href="guides/list-a-conference-or-exhibition.html#organiser-page">Claim or create organiser page</a></li>
+              <li><a href="guides/list-a-conference-or-exhibition.html#new-listing">Start your conference listing</a></li>
+              <li><a href="guides/list-a-conference-or-exhibition.html#event-type">Choose Conference or Exhibition</a></li>
+              <li><a href="guides/list-a-conference-or-exhibition.html#tickets">Set delegate ticket tiers</a></li>
+              <li><a href="guides/list-a-conference-or-exhibition.html#publish">Publish &amp; promote</a></li>
+            </ol>
+          </details>
+          <a class="guide-card-cta" href="guides/list-a-conference-or-exhibition.html">Open guide →</a>
+        </article>
       </li>
-
-      <li class="guide-checklist-item" data-guide-id="list-opportunity">
-        <div class="guide-checklist-main">
+      <li>
+        <article class="guide-card">
+          <span class="guide-card-kicker">Opportunities</span>
           <h2><a href="guides/list-a-business-opportunity.html">List a business opportunity</a></h2>
-          <p class="guide-checklist-desc">Create a listing, submit for review, and manage enquiries.</p>
-          <p class="guide-checklist-meta">7 steps · ~6 min</p>
-        </div>
-        <div class="guide-checklist-actions">
-          <button type="button" class="guide-steps-toggle" aria-expanded="false" aria-controls="guide-steps-list-opportunity">View steps</button>
-          <a class="guide-checklist-cta" href="guides/list-a-business-opportunity.html">Open guide</a>
-        </div>
-        <ol class="guide-checklist-steps" id="guide-steps-list-opportunity" hidden>
-          <li><a href="guides/list-a-business-opportunity.html#dashboard">Open Business opportunities</a></li>
-          <li><a href="guides/list-a-business-opportunity.html#new-listing">Start a new listing</a></li>
-          <li><a href="guides/list-a-business-opportunity.html#listing-form">Complete the listing form</a></li>
-          <li><a href="guides/list-a-business-opportunity.html#submit">Submit for review</a></li>
-          <li><a href="guides/list-a-business-opportunity.html#premium">Optional premium placement</a></li>
-          <li><a href="guides/list-a-business-opportunity.html#enquiries">Manage enquiries</a></li>
-          <li><a href="guides/list-a-business-opportunity.html#renew">Renew or update</a></li>
-        </ol>
+          <p>Create a listing, submit for review, and manage enquiries.</p>
+          <p class="guide-card-meta">7 steps · ~6 min</p>
+          <details class="guide-card-steps">
+            <summary>View steps</summary>
+            <ol>
+              <li><a href="guides/list-a-business-opportunity.html#dashboard">Open Business opportunities</a></li>
+              <li><a href="guides/list-a-business-opportunity.html#new-listing">Start a new listing</a></li>
+              <li><a href="guides/list-a-business-opportunity.html#listing-form">Complete the listing form</a></li>
+              <li><a href="guides/list-a-business-opportunity.html#submit">Submit for review</a></li>
+              <li><a href="guides/list-a-business-opportunity.html#premium">Optional premium placement</a></li>
+              <li><a href="guides/list-a-business-opportunity.html#enquiries">Manage enquiries</a></li>
+              <li><a href="guides/list-a-business-opportunity.html#renew">Renew or update</a></li>
+            </ol>
+          </details>
+          <a class="guide-card-cta" href="guides/list-a-business-opportunity.html">Open guide →</a>
+        </article>
       </li>
-
-      <li class="guide-checklist-item" data-guide-id="invite-team">
-        <div class="guide-checklist-main">
+      <li>
+        <article class="guide-card">
+          <span class="guide-card-kicker">Team</span>
           <h2><a href="guides/invite-your-team.html">Invite editors</a></h2>
-          <p class="guide-checklist-desc">Share your workspace with colleagues — permissions and invite flow.</p>
-          <p class="guide-checklist-meta">6 steps · ~4 min</p>
-        </div>
-        <div class="guide-checklist-actions">
-          <button type="button" class="guide-steps-toggle" aria-expanded="false" aria-controls="guide-steps-invite-team">View steps</button>
-          <a class="guide-checklist-cta" href="guides/invite-your-team.html">Open guide</a>
-        </div>
-        <ol class="guide-checklist-steps" id="guide-steps-invite-team" hidden>
-          <li><a href="guides/invite-your-team.html#who-can-invite">Who can invite</a></li>
-          <li><a href="guides/invite-your-team.html#send-invite">Send an invite</a></li>
-          <li><a href="guides/invite-your-team.html#accept">They accept by signing in</a></li>
-          <li><a href="guides/invite-your-team.html#permissions">What editors can do</a></li>
-          <li><a href="guides/invite-your-team.html#restrictions">What editors cannot do</a></li>
-          <li><a href="guides/invite-your-team.html#remove">Remove someone</a></li>
-        </ol>
+          <p>Share your workspace with colleagues — permissions and invite flow.</p>
+          <p class="guide-card-meta">6 steps · ~4 min</p>
+          <details class="guide-card-steps">
+            <summary>View steps</summary>
+            <ol>
+              <li><a href="guides/invite-your-team.html#who-can-invite">Who can invite</a></li>
+              <li><a href="guides/invite-your-team.html#send-invite">Send an invite</a></li>
+              <li><a href="guides/invite-your-team.html#accept">They accept by signing in</a></li>
+              <li><a href="guides/invite-your-team.html#permissions">What editors can do</a></li>
+              <li><a href="guides/invite-your-team.html#restrictions">What editors cannot do</a></li>
+              <li><a href="guides/invite-your-team.html#remove">Remove someone</a></li>
+            </ol>
+          </details>
+          <a class="guide-card-cta" href="guides/invite-your-team.html">Open guide →</a>
+        </article>
       </li>
-    </ol>
+    </ul>
 
-    <section class="guides-help-section" aria-labelledby="guides-help-heading">
-      <h2 id="guides-help-heading">Help &amp; terms</h2>
-      <p>Detailed articles for fees, payouts, and organiser revenue.</p>
-      <ul class="guides-help-links" role="list">
-        <li><a href="help/organiser-payouts.html"><strong>Organiser payouts</strong> — 7-day settlement, Stripe Connect, and requesting payouts</a></li>
-        <li><a href="help/pricing-fees.html"><strong>Ticket pricing &amp; fees</strong> — 4.5% + 20p booking fee with worked examples</a></li>
-      </ul>
-    </section>
+    <h2>Help &amp; terms</h2>
+    <p>Detailed articles for fees, payouts, and organiser revenue.</p>
+    <ul>
+      <li><a href="help/organiser-payouts.html">Organiser payouts</a> — 7-day settlement, Stripe Connect, and requesting payouts</li>
+      <li><a href="help/pricing-fees.html">Ticket pricing &amp; fees</a> — 4.5% + 20p booking fee with worked examples</li>
+    </ul>
 
-    <div class="content-callout guides-hub-callout">
+    <div class="content-callout">
       <p><strong>Already in the dashboard?</strong> Open <a href="login.html?next=/organiser/index.html">Organiser dashboard</a> — the getting-started checklist and in-page tips walk you through the same steps.</p>
       <p>Need help? Email <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a>.</p>
     </div>
@@ -155,6 +157,6 @@
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260610" data-root=""></script>
 <script src="js/hubert-chat.js?v=20260612"></script>
-<script src="js/guides-page.js?v=20260711b"></script>
+<script src="js/guides-page.js?v=20260711c"></script>
 </body>
 </html>

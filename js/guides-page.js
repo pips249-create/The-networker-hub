@@ -1,23 +1,8 @@
 /**
- * Guides page — compact Hubert + collapsible step lists.
+ * Guides page — inline Hubert for organiser questions.
  */
 (function () {
   var hubertCard = document.getElementById('guides-hubert-card');
-
-  function initStepToggles() {
-    document.querySelectorAll('.guide-steps-toggle').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var panelId = btn.getAttribute('aria-controls');
-        var panel = panelId ? document.getElementById(panelId) : null;
-        if (!panel) return;
-        var open = btn.getAttribute('aria-expanded') === 'true';
-        btn.setAttribute('aria-expanded', open ? 'false' : 'true');
-        btn.textContent = open ? 'View steps' : 'Hide steps';
-        panel.hidden = open;
-        btn.closest('.guide-checklist-item').classList.toggle('is-steps-open', !open);
-      });
-    });
-  }
 
   function initHubert() {
     if (!window.HubertChat) return;
@@ -61,14 +46,9 @@
     return chat;
   }
 
-  function init() {
-    initStepToggles();
-    initHubert();
-  }
-
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', initHubert);
   } else {
-    init();
+    initHubert();
   }
 })();

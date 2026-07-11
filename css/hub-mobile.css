@@ -838,7 +838,7 @@ body.nav-menu-open {
     font-size: 12px;
   }
 
-  .organiser-dashboard-page .hub-side-nav--minimal .org-notifications-nav.is-active {
+  .organiser-dashboard-page .hub-side-nav--minimal .org-notifications-nav.is-panel-open {
     border-bottom-color: var(--od-purple) !important;
     background: var(--od-white);
   }
