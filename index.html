@@ -9,8 +9,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260730">
-<link rel="stylesheet" href="css/home-page.css?v=20260710">
-<link rel="stylesheet" href="css/hubert-widget.css?v=20260710">
+<link rel="stylesheet" href="css/home-page.css?v=20260711">
+<link rel="stylesheet" href="css/hubert-widget.css?v=20260711">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260738" />
@@ -41,38 +41,17 @@
           Discover events, organiser communities, and opportunities — browse free, sign up only when you&rsquo;re ready to book or enquire.
         </p>
       </header>
-      <div class="hero-actions home-hero-cta-block" role="group" aria-label="Explore the hub">
-        <a class="btn btn-primary home-hero-cta" href="/events/">Browse events</a>
-        <a class="btn btn-primary home-hero-cta" href="/opportunities/">Discover opportunities</a>
-        <a class="btn btn-primary home-hero-cta" href="/events/?mode=organisers">Find organisers</a>
-      </div>
-    </div>
-  </section>
-
-  <section class="home-hubert home-reveal" aria-labelledby="home-hubert-heading">
-    <div class="home-flow-inner">
-      <div class="home-hubert-panel">
-        <div class="home-hubert-brand">
-          <div class="home-hubert-avatar-wrap" aria-hidden="true">
-            <img class="home-hubert-avatar" src="assets/hubert-icon.png" alt="" width="72" height="72" />
-          </div>
-          <div class="home-hubert-copy">
-            <p class="home-hubert-kicker">Your business butler &amp; concierge</p>
-            <h2 class="home-hubert-title" id="home-hubert-heading">Ask Hubert anything</h2>
-            <p class="home-hubert-lede">
-              Not sure where to start? Hubert can find events near you, narrow down business opportunities, explain tickets and enquiries, or guide organisers step by step.
-            </p>
-          </div>
-        </div>
-        <div class="home-hubert-actions">
-          <button type="button" class="btn btn-primary home-hubert-open" id="home-hubert-open">Chat with Hubert</button>
-          <div class="home-hubert-chips" aria-label="Suggested questions for Hubert">
-            <button type="button" class="home-hubert-chip" data-hubert-prompt="Find networking events near me this month.">Find events near me</button>
-            <button type="button" class="home-hubert-chip" data-hubert-prompt="What business opportunities are on The Networker Hub?">Explore opportunities</button>
-            <button type="button" class="home-hubert-chip" data-hubert-prompt="How do I list an event as an organiser?">List an event</button>
-            <button type="button" class="home-hubert-chip" data-hubert-prompt="Do I need an account to browse The Networker Hub?">Do I need an account?</button>
-          </div>
-        </div>
+      <div class="home-hero-search-block">
+        <form class="home-hero-search" id="home-hero-search" action="/events/" method="get" role="search" aria-label="Search the hub">
+          <label class="visually-hidden" for="home-hero-search-input">Search events, industries or locations</label>
+          <input type="search" id="home-hero-search-input" name="q" placeholder="Search events, industries or locations…" autocomplete="off" enterkeyhint="search">
+          <button type="submit" class="home-hero-search-btn btn btn-primary">Search</button>
+        </form>
+        <p class="home-hero-alt-links">
+          or <a href="/opportunities/">discover opportunities</a>
+          <span aria-hidden="true">·</span>
+          <a href="/events/?mode=organisers">find organisers</a>
+        </p>
       </div>
     </div>
   </section>
@@ -117,7 +96,7 @@
             </div>
             <div class="home-what-pillar-body">
               <strong>Events &amp; exhibitions</strong>
-              <span>Meetings, webinars, workshops, and awards across the UK</span>
+              <span>Discover seat-protected business meetings, conferences, and exhibitions with built-in industry exclusivity.</span>
             </div>
             <span class="home-what-pillar-go" aria-hidden="true">Explore →</span>
           </a>
@@ -129,7 +108,7 @@
             </div>
             <div class="home-what-pillar-body">
               <strong>Organiser pages</strong>
-              <span>Discover who runs your local networking community</span>
+              <span>Find UK networking groups with guest visit programmes, visit tracking, and permanent organiser profiles.</span>
             </div>
             <span class="home-what-pillar-go" aria-hidden="true">Explore →</span>
           </a>
@@ -141,7 +120,7 @@
             </div>
             <div class="home-what-pillar-body">
               <strong>Business opportunities</strong>
-              <span>Franchises, partnerships, and deals from across the network</span>
+              <span>Browse franchises, partnerships, and deals — save searches, track favourites, and enquire directly.</span>
             </div>
             <span class="home-what-pillar-go" aria-hidden="true">Explore →</span>
           </a>
@@ -239,9 +218,9 @@
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260610" data-root=""></script>
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
-<script src="js/home-page.js?v=20260710"></script>
+<script src="js/home-page.js?v=20260711"></script>
 <script src="js/hubert-chat.js?v=20260710"></script>
-<script src="js/hubert-widget.js?v=20260710" data-root=""></script>
+<script src="js/hubert-widget.js?v=20260711" data-root=""></script>
 
 </body>
 </html>

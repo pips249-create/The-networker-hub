@@ -11,13 +11,13 @@
 .hubert-launcher {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   border: 0;
   border-radius: 999px;
-  padding: 8px 16px 8px 8px;
+  padding: 10px 18px 10px 10px;
   background: linear-gradient(135deg, #c8b4f0 0%, #7ec8f0 100%);
   color: #2d2340;
-  box-shadow: 0 10px 28px rgba(91, 47, 153, 0.28);
+  box-shadow: 0 12px 32px rgba(91, 47, 153, 0.3);
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
@@ -35,8 +35,8 @@
 
 .hubert-launcher-icon {
   display: block;
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   background: #0d0d12;
   object-fit: cover;
@@ -270,8 +270,8 @@
 
 /* Organiser dashboard — slightly smaller launcher & panel */
 .hubert-widget--organiser .hubert-launcher-icon {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
 }
 
 .hubert-widget--organiser .hubert-panel {
@@ -285,8 +285,13 @@
   }
 
   .hubert-launcher {
-    padding: 6px;
+    padding: 8px;
     border-radius: 50%;
+  }
+
+  .hubert-launcher-icon {
+    width: 64px;
+    height: 64px;
   }
 
   .hubert-panel {

@@ -198,25 +198,24 @@
     });
   }
 
-  function initHubertStrip() {
-    var openBtn = document.getElementById('home-hubert-open');
-    if (openBtn) {
-      openBtn.addEventListener('click', function () {
-        if (window.HubertWidget && window.HubertWidget.open) window.HubertWidget.open();
-      });
-    }
+  function initHeroSearch() {
+    var form = document.getElementById('home-hero-search');
+    var input = document.getElementById('home-hero-search-input');
+    if (!form || !input) return;
 
-    document.addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-hubert-prompt]');
-      if (!btn || !btn.closest('.home-hubert')) return;
-      var prompt = btn.getAttribute('data-hubert-prompt') || '';
-      if (window.HubertWidget && window.HubertWidget.ask) window.HubertWidget.ask(prompt);
-      else if (window.HubertWidget && window.HubertWidget.open) window.HubertWidget.open();
+    form.addEventListener('submit', function (e) {
+      var q = String(input.value || '').trim();
+      if (!q) {
+        e.preventDefault();
+        window.location.href = '/events/';
+        return;
+      }
+      input.value = q;
     });
   }
 
   initHeroEntrance();
   initReveal();
   loadPartners();
-  initHubertStrip();
+  initHeroSearch();
 })();

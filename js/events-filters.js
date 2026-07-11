@@ -592,10 +592,20 @@
 
   function restoreFilterPrefs() {
     try {
+      var urlQ = '';
+      try {
+        urlQ = String(new URLSearchParams(location.search).get('q') || '').trim();
+      } catch (e) {
+        /* ignore */
+      }
+
       var raw = sessionStorage.getItem(FILTER_STORAGE_KEY);
-      if (!raw) return Promise.resolve();
+      if (!raw) {
+        if (urlQ && searchInput) searchInput.value = urlQ;
+        return Promise.resolve();
+      }
       var prefs = JSON.parse(raw);
-      if (searchInput && prefs.search) searchInput.value = prefs.search;
+      if (searchInput) searchInput.value = urlQ || prefs.search || '';
       if (postcodeInput && prefs.postcode) postcodeInput.value = prefs.postcode;
       if (checkFreeOnly) checkFreeOnly.checked = !!prefs.freeOnly;
       if (checkInPerson && prefs.inPerson === false) checkInPerson.checked = false;

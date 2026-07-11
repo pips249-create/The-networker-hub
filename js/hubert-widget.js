@@ -53,7 +53,7 @@
     '<button type="button" class="hubert-launcher" id="hubert-launcher" aria-label="Chat with Hubert" aria-expanded="false" aria-controls="hubert-panel">' +
     '<img class="hubert-launcher-icon" src="' +
     href('assets/hubert-icon.png') +
-    '" alt="" width="56" height="56">' +
+    '" alt="" width="72" height="72">' +
     '<span class="hubert-launcher-label">Hubert</span>' +
     '</button>' +
     '<div class="hubert-panel" id="hubert-panel" role="dialog" aria-labelledby="hubert-panel-title" hidden>' +
