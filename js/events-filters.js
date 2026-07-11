@@ -590,22 +590,30 @@
     }
   }
 
+  function getUrlSearchQuery() {
+    try {
+      return String(new URLSearchParams(location.search).get('q') || '').trim();
+    } catch (e) {
+      return '';
+    }
+  }
+
   function restoreFilterPrefs() {
     try {
-      var urlQ = '';
-      try {
-        urlQ = String(new URLSearchParams(location.search).get('q') || '').trim();
-      } catch (e) {
-        /* ignore */
+      var urlQ = getUrlSearchQuery();
+
+      if (urlQ) {
+        if (searchInput) searchInput.value = urlQ;
+        // Homepage / shared search links should not inherit stale session filters.
+        return Promise.resolve();
       }
 
       var raw = sessionStorage.getItem(FILTER_STORAGE_KEY);
       if (!raw) {
-        if (urlQ && searchInput) searchInput.value = urlQ;
         return Promise.resolve();
       }
       var prefs = JSON.parse(raw);
-      if (searchInput) searchInput.value = urlQ || prefs.search || '';
+      if (searchInput && prefs.search) searchInput.value = prefs.search;
       if (postcodeInput && prefs.postcode) postcodeInput.value = prefs.postcode;
       if (checkFreeOnly) checkFreeOnly.checked = !!prefs.freeOnly;
       if (checkInPerson && prefs.inPerson === false) checkInPerson.checked = false;

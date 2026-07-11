@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260730">
-<link rel="stylesheet" href="css/for-organisers-page.css?v=20260710">
+<link rel="stylesheet" href="css/for-organisers-page.css?v=20260711">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260730">
 <script src="js/hub-seo-static-config.js?v=20260612"></script>
@@ -28,24 +28,18 @@
     <div class="fo-flow-inner fo-hero-inner">
       <div class="fo-hero-copy fo-reveal-child">
         <p class="fo-hero-kicker">For Organisers</p>
-        <h1 id="fo-hero-heading">The UK home for networking groups — not generic ticketing</h1>
+        <h1 id="fo-hero-heading">Tools that generic ticketing platforms don&rsquo;t offer</h1>
         <p class="fo-hero-lede">
-          Run your organiser page, publish events, list business opportunities, and manage attendees from one workspace. Members discover you through our events directory, organiser browse, and opportunities hub.
+          The UK home for networking groups — run your organiser page, publish events, list business opportunities, and manage attendees from one workspace. Members discover you through our events directory, organiser browse, and opportunities hub.
         </p>
         <div class="fo-hero-actions">
-          <a class="btn btn-primary" href="login.html?next=/organiser/index.html">Open organiser dashboard</a>
-          <a class="btn btn-secondary" href="guides.html">Step-by-step guides</a>
+          <a class="btn btn-primary" href="guides/list-an-event.html">List your first event</a>
+          <a class="btn btn-secondary" href="login.html?next=/organiser/index.html">Open organiser dashboard</a>
         </div>
         <p class="fo-hero-note">
           Free to list events. Paid tickets use Stripe Connect — you receive the full ticket price.
           <a href="faq.html">See organiser FAQs →</a>
         </p>
-        <div class="fo-hero-badges" aria-label="Key features">
-          <span class="fo-hero-badge">🎫 Guest visit programme</span>
-          <span class="fo-hero-badge">📊 Visit tracking</span>
-          <span class="fo-hero-badge">🪑 Category Exclusivity</span>
-          <span class="fo-hero-badge">🎓 Alumni Fast-Pass</span>
-        </div>
       </div>
       <div class="fo-hero-visual fo-reveal-child" aria-hidden="true">
         <div class="fo-dash-mock">
@@ -111,30 +105,9 @@
         </li>
         <li class="fo-reveal-child">
           <article class="fo-feature-card">
-            <div class="fo-feature-icon" aria-hidden="true">👥</div>
-            <h3>Attendee list &amp; visit tracking</h3>
-            <p>See who booked, filter by 1st visit vs returning, track guest visit usage, export CSV, and manage check-in — built for membership-style networking groups.</p>
-          </article>
-        </li>
-        <li class="fo-reveal-child">
-          <article class="fo-feature-card">
             <div class="fo-feature-icon" aria-hidden="true">💳</div>
             <h3>Stripe Connect payouts</h3>
             <p>Paid tickets go to your connected account at checkout. Request payouts per event, view revenue breakdowns, and honour refunds through your dashboard.</p>
-          </article>
-        </li>
-        <li class="fo-reveal-child">
-          <article class="fo-feature-card">
-            <div class="fo-feature-icon" aria-hidden="true">📋</div>
-            <h3>Category Exclusivity</h3>
-            <p>Run application-based events. Review industry and job title, approve or deny applicants, then send approved guests a payment link to complete booking.</p>
-          </article>
-        </li>
-        <li class="fo-reveal-child">
-          <article class="fo-feature-card">
-            <div class="fo-feature-icon" aria-hidden="true">🎓</div>
-            <h3>Alumni Fast-Pass</h3>
-            <p>Invite confirmed attendees from a past event to an exclusive alumni ticket rate. Send locked invite links from your dashboard — perfect for repeat conferences.</p>
           </article>
         </li>
         <li class="fo-reveal-child">
@@ -305,40 +278,64 @@
     <div class="fo-flow-inner">
       <header class="fo-section-head fo-reveal-child">
         <p class="section-kicker">Built for networking groups</p>
-        <h2 id="fo-tools-heading">Tools generic ticketing platforms don&rsquo;t offer</h2>
+        <h2 id="fo-tools-heading">Four tools built for membership-style networking</h2>
         <p class="fo-section-lede">
-          These features are designed for membership-style business networking — trial visits before paid tickets, visit counts on your attendee list, and invite-only alumni rates on repeat events.
+          Generic ticketing handles dates and payments. These four features handle how UK networking groups actually grow — trial visits, conversion tracking, curated rooms, and repeat-event loyalty.
         </p>
       </header>
-      <div class="fo-tools-band fo-reveal-child">
-        <div class="fo-tool-pill">
-          <span class="fo-tool-pill-icon" aria-hidden="true">🎫</span>
-          <div>
-            <h4>Guest visit programme</h4>
-            <p>Offer 1–2 complimentary trial visits per newcomer (set on your organiser page). New attendees use free visits before member tickets unlock — or opt out on specific events like conferences.</p>
+      <div class="fo-usp-grid fo-reveal-child">
+        <article class="fo-usp-card">
+          <div class="fo-usp-card-head">
+            <span class="fo-usp-icon" aria-hidden="true">🎫</span>
+            <h3>Guest visit programme</h3>
           </div>
-        </div>
-        <div class="fo-tool-pill">
-          <span class="fo-tool-pill-icon" aria-hidden="true">📊</span>
-          <div>
-            <h4>Visit tracking</h4>
-            <p>Your attendee list shows 1st visit vs returning, visit counts per person, filters, and CSV export — so you know who is still trialling vs ready to convert to membership.</p>
+          <p class="fo-usp-lede">Let newcomers try your room before they commit to paid membership tickets.</p>
+          <ul class="fo-usp-points">
+            <li>Set 1–2 complimentary visits on your organiser page — applied across eligible events</li>
+            <li>New attendees book a free guest pass first; paid member tickets unlock after visits are used</li>
+            <li>Opt out on specific dates (conferences, member-only evenings) while keeping paid tickets live</li>
+            <li>Platform cap and organiser allowance work together so trial visits stay controlled</li>
+          </ul>
+        </article>
+        <article class="fo-usp-card">
+          <div class="fo-usp-card-head">
+            <span class="fo-usp-icon" aria-hidden="true">📊</span>
+            <h3>Visit tracking</h3>
           </div>
-        </div>
-        <div class="fo-tool-pill">
-          <span class="fo-tool-pill-icon" aria-hidden="true">🪑</span>
-          <div>
-            <h4>Category Exclusivity</h4>
-            <p>Application-based attendance for curated rooms. Applicants share industry and job title; you approve before they pay — ideal when seat mix matters.</p>
+          <p class="fo-usp-lede">See who is still trialling vs ready to convert — on every attendee list.</p>
+          <ul class="fo-usp-points">
+            <li>1st visit vs returning labels on bookings, with visit counts per person</li>
+            <li>Filter the attendee list by visit status before export or check-in</li>
+            <li>CSV export includes visit metadata for your CRM or membership follow-up</li>
+            <li>Dashboard stats surface new vs returning attendance at a glance</li>
+          </ul>
+        </article>
+        <article class="fo-usp-card">
+          <div class="fo-usp-card-head">
+            <span class="fo-usp-icon" aria-hidden="true">🪑</span>
+            <h3>Category Exclusivity</h3>
           </div>
-        </div>
-        <div class="fo-tool-pill">
-          <span class="fo-tool-pill-icon" aria-hidden="true">🎓</span>
-          <div>
-            <h4>Alumni Fast-Pass</h4>
-            <p>Invite past confirmed attendees to a hidden alumni ticket tier. Each invitee gets a locked booking link — no full-price fallback for non-invited guests.</p>
+          <p class="fo-usp-lede">Curate who is in the room before anyone pays — ideal when seat mix matters.</p>
+          <ul class="fo-usp-points">
+            <li>Switch an event to application-based attendance instead of open checkout</li>
+            <li>Applicants share industry, job title, and a short pitch; you approve or deny from the dashboard</li>
+            <li>Approved guests receive a payment link — declined applicants never see a buy button</li>
+            <li>Archived applications stay on record for repeat events and audit</li>
+          </ul>
+        </article>
+        <article class="fo-usp-card">
+          <div class="fo-usp-card-head">
+            <span class="fo-usp-icon" aria-hidden="true">🎓</span>
+            <h3>Alumni Fast-Pass</h3>
           </div>
-        </div>
+          <p class="fo-usp-lede">Reward past attendees with invite-only rates on repeat conferences and annual events.</p>
+          <ul class="fo-usp-points">
+            <li>Pull confirmed attendees from a previous event and send locked alumni invite links</li>
+            <li>Each invitee books at the hidden alumni tier — non-invited guests cannot access the rate</li>
+            <li>Re-send safely: already invited addresses are not duplicated in your send queue</li>
+            <li>Works alongside standard tickets for first-time visitors who are not on the alumni list</li>
+          </ul>
+        </article>
       </div>
       <div class="fo-pricing-callout fo-reveal-child">
         <p>
@@ -356,9 +353,11 @@
           Claim or create your organiser page, publish your first event, and reach members browsing events and opportunities across the UK network.
         </p>
         <div class="fo-cta-actions">
-          <a class="btn btn-primary" href="login.html?next=/organiser/index.html">Open organiser dashboard</a>
-          <a class="btn btn-secondary" href="guides/list-an-event.html">List your first event</a>
-          <a class="btn btn-secondary" href="/events/?mode=organisers">Find your organiser page</a>
+          <a class="btn btn-primary fo-cta-primary" href="guides/list-an-event.html">List your first event</a>
+          <div class="fo-cta-secondary">
+            <a class="btn btn-secondary fo-cta-secondary-btn" href="login.html?next=/organiser/index.html">Open dashboard</a>
+            <a class="fo-cta-link" href="/events/?mode=organisers">Claim your page</a>
+          </div>
         </div>
       </div>
     </div>

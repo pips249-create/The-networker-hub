@@ -376,6 +376,8 @@ html:has(.home-page) {
 }
 
 .home-page .home-hero-search-block {
+  position: relative;
+  z-index: 2;
   margin-top: 8px;
   width: min(100%, 40rem);
   margin-left: auto;

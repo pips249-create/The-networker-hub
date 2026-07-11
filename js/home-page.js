@@ -204,13 +204,9 @@
     if (!form || !input) return;
 
     form.addEventListener('submit', function (e) {
+      e.preventDefault();
       var q = String(input.value || '').trim();
-      if (!q) {
-        e.preventDefault();
-        window.location.href = '/events/';
-        return;
-      }
-      input.value = q;
+      window.location.href = q ? '/events/?q=' + encodeURIComponent(q) : '/events/';
     });
   }
 
