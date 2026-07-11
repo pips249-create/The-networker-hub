@@ -151,10 +151,13 @@
     track.setAttribute('aria-busy', 'false');
 
     var items = partners.map(partnerItemHtml).join('');
+    var isMobile = window.matchMedia('(max-width: 640px)').matches;
+    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var useMarquee =
-      partners.length > 3 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      !isMobile && partners.length > 3 && !prefersReducedMotion;
     track.classList.toggle('home-partners-track--marquee', useMarquee);
-    track.classList.toggle('home-partners-track--static', !useMarquee);
+    track.classList.toggle('home-partners-track--scroll', isMobile || (!useMarquee && partners.length > 1));
+    track.classList.toggle('home-partners-track--static', !useMarquee && !isMobile && partners.length <= 3);
     track.innerHTML = useMarquee ? items + items : items;
   }
 

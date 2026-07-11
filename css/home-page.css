@@ -1445,8 +1445,8 @@ html:has(.home-page) {
   position: relative;
   padding: 20px var(--home-partners-panel-x) 22px;
   border-radius: 20px;
-  background: #fff;
-  border: 1px solid var(--home-border);
+  background: linear-gradient(165deg, rgba(237, 225, 245, 0.42) 0%, var(--cream) 100%);
+  border: 1px solid rgba(194, 153, 209, 0.24);
   box-shadow: 0 22px 54px rgba(74, 68, 70, 0.14);
   overflow: hidden;
 }
@@ -1479,9 +1479,10 @@ html:has(.home-page) {
   padding: 4px 0;
 }
 
-.home-partners-marquee:has(.home-partners-track--marquee) {
-  mask-image: linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
+.home-partners-marquee:has(.home-partners-track--marquee),
+.home-partners-marquee:has(.home-partners-track--scroll) {
+  mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
 }
 
 .home-partners-track {
@@ -1499,6 +1500,12 @@ html:has(.home-page) {
   flex-wrap: wrap;
   justify-content: center;
   padding: 12px clamp(12px, 3vw, 24px);
+}
+
+.home-partners-track--scroll {
+  width: max-content;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
 }
 
 .home-partners-track--marquee {
@@ -1542,12 +1549,13 @@ html:has(.home-page) {
   height: 84px;
   padding: 14px 20px;
   border-radius: 16px;
-  background: #fff;
-  border: 1px solid var(--home-border);
-  box-shadow: var(--shadow-soft);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(194, 153, 209, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 8px 20px rgba(74, 68, 70, 0.06);
   transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   flex-shrink: 0;
   box-sizing: border-box;
+  scroll-snap-align: start;
 }
 
 .home-partner-item:hover {
@@ -2416,6 +2424,36 @@ html:has(.home-page) {
   .home-partners {
     margin-top: 0;
     padding-bottom: 20px;
+  }
+
+  .home-partners-marquee {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+
+  .home-partners-marquee::-webkit-scrollbar {
+    display: none;
+  }
+
+  .home-partners-track--marquee {
+    animation: none;
+  }
+
+  .home-partners-track--static,
+  .home-partners-track--scroll {
+    flex-wrap: nowrap;
+    width: max-content;
+    justify-content: flex-start;
+  }
+
+  .home-partner-item {
+    width: 160px;
+    height: 76px;
+    padding: 12px 16px;
   }
 
   .home-split .home-reveal-child:nth-child(1),
