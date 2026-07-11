@@ -765,6 +765,16 @@
     setReviewsScope(reviewsScope);
   }
 
+  function maybeDefaultSavedScope() {
+    if (currentRoute !== 'saved' || savedScope !== 'events') return;
+    const hasEvents = savedEvents.length > 0;
+    const hasOrganisers = savedOrganisers.length > 0;
+    const hasOpportunities = savedOpportunities.length > 0;
+    if (!hasEvents && !hasOrganisers && hasOpportunities) {
+      setSavedScope('opportunities');
+    }
+  }
+
   function setSavedScope(scope) {
     savedScope = scope || 'events';
     document.querySelectorAll('[data-saved-scope]').forEach((btn) => {
@@ -2030,6 +2040,67 @@
     return '../opportunities/opportunity.html?id=' + encodeURIComponent(item.opportunityId || item.opportunity_id || item.id || '');
   }
 
+  async function ensureOpportunitiesCatalog() {
+    if (!window.HubOpportunitiesCatalog || !window.HubOpportunitiesCatalog.loadCatalogAsync) return;
+    try {
+      await window.HubOpportunitiesCatalog.loadCatalogAsync();
+    } catch {
+      /* non-fatal */
+    }
+  }
+
+  function enrichSavedOpportunity(item) {
+    const next = Object.assign({}, item || {});
+    const id = String(next.opportunityId || next.opportunity_id || '').trim();
+    const catalog = window.HubOpportunitiesCatalog;
+    if (!id || !catalog || typeof catalog.getById !== 'function') return next;
+
+    const hit = catalog.getById(id);
+    if (!hit) return next;
+
+    const fallbackTitle = !next.title || next.title === 'Opportunity' || next.title === 'Listing no longer available';
+    if (fallbackTitle && hit.title) next.title = hit.title;
+    if (!next.host && hit.host) next.host = hit.host;
+    if (!next.slug && hit.slug) next.slug = hit.slug;
+    if (!next.logoUrl && hit.logoUrl) next.logoUrl = hit.logoUrl;
+    if (!next.imageUrl && hit.imageUrl) next.imageUrl = hit.imageUrl;
+    if (!next.type && hit.type) next.type = hit.type;
+    return next;
+  }
+
+  function applySavedOpportunityData(data) {
+    let list = [];
+    if (data && data.ok && Array.isArray(data.favourites) && data.favourites.length) {
+      list = data.favourites.slice();
+    } else if (data && data.ok && Array.isArray(data.opportunityIds) && data.opportunityIds.length) {
+      list = data.opportunityIds.map((id) => ({ opportunityId: id, title: 'Opportunity' }));
+    }
+
+    const serverIds = new Set(
+      list.map((item) => String(item.opportunityId || item.opportunity_id || '').trim()).filter(Boolean)
+    );
+    const localIds = window.HubOpportunitySaves ? window.HubOpportunitySaves.ids() : [];
+    localIds.forEach((id) => {
+      const key = String(id || '').trim();
+      if (key && !serverIds.has(key)) {
+        list.push({ opportunityId: key, title: 'Opportunity' });
+        serverIds.add(key);
+      }
+    });
+
+    savedOpportunities = list.map(enrichSavedOpportunity);
+
+    if (window.HubOpportunitySaves) {
+      const ids = savedOpportunities
+        .map((item) => String(item.opportunityId || item.opportunity_id || '').trim())
+        .filter(Boolean);
+      if (ids.length) window.HubOpportunitySaves.writeLocal(ids);
+      else if (data && data.ok && Array.isArray(data.opportunityIds)) {
+        window.HubOpportunitySaves.writeLocal(data.opportunityIds);
+      }
+    }
+  }
+
   function refreshCompareToolbar() {
     const cmp = window.HubOpportunityCompare;
     const toolbar = document.getElementById('ad-saved-opp-toolbar');
@@ -2270,22 +2341,16 @@
 
   async function loadSavedOpportunities() {
     try {
+      if (window.HubOpportunitySaves && window.HubOpportunitySaves.mergeOnLogin) {
+        await window.HubOpportunitySaves.mergeOnLogin();
+      }
       const res = await fetch('/api/auth/opportunity-favourites', { credentials: 'include' });
       const data = await res.json();
-      if (data && data.ok && Array.isArray(data.favourites)) {
-        savedOpportunities = data.favourites;
-      } else if (data && data.ok && Array.isArray(data.opportunityIds)) {
-        savedOpportunities = data.opportunityIds.map((id) => ({ opportunityId: id, title: 'Opportunity' }));
-      } else {
-        savedOpportunities = [];
-      }
-      if (window.HubOpportunitySaves && Array.isArray(data.opportunityIds)) {
-        window.HubOpportunitySaves.writeLocal(data.opportunityIds);
-      }
+      await ensureOpportunitiesCatalog();
+      applySavedOpportunityData(data);
     } catch {
-      savedOpportunities = window.HubOpportunitySaves
-        ? window.HubOpportunitySaves.ids().map((id) => ({ opportunityId: id }))
-        : [];
+      await ensureOpportunitiesCatalog();
+      applySavedOpportunityData(null);
     }
     if (dashboardReady && currentRoute === 'saved') {
       renderRouteTables('saved', { force: true });
@@ -2399,6 +2464,7 @@
     } else if (key === 'cancellations') {
       renderCancellationsTable();
     } else if (key === 'saved') {
+      maybeDefaultSavedScope();
       renderSavedTable();
       renderSavedOrganisersTable();
       renderSavedOpportunitiesTable();
@@ -2559,6 +2625,14 @@
     try {
       ensureAttendeeHubMode();
 
+      if (window.HubOpportunitySaves && window.HubOpportunitySaves.mergeOnLogin) {
+        try {
+          await window.HubOpportunitySaves.mergeOnLogin();
+        } catch {
+          /* non-fatal — dashboard still falls back to local saves */
+        }
+      }
+
       const [dashRes, favRes, orgFavRes, oppFavRes, oppSearchRes] = await Promise.all([
         fetch('/api/auth/attendee-dashboard', { credentials: 'include' }),
         fetch('/api/auth/favourites', { credentials: 'include' }),
@@ -2586,6 +2660,14 @@
           applySavedOrganiserData(orgFavData);
         } catch {
           savedOrganisers = [];
+        }
+        try {
+          const oppFavData = await oppFavRes.json();
+          await ensureOpportunitiesCatalog();
+          applySavedOpportunityData(oppFavData);
+        } catch {
+          await ensureOpportunitiesCatalog();
+          applySavedOpportunityData(null);
         }
         const sub = document.getElementById('ad-welcome-sub');
         if (sub) {
@@ -2622,22 +2704,11 @@
 
       try {
         const oppFavData = await oppFavRes.json();
-        if (oppFavData && oppFavData.ok && Array.isArray(oppFavData.favourites)) {
-          savedOpportunities = oppFavData.favourites;
-        } else if (oppFavData && oppFavData.ok && Array.isArray(oppFavData.opportunityIds)) {
-          savedOpportunities = oppFavData.opportunityIds.map((id) => ({ opportunityId: id, title: 'Opportunity' }));
-        }
-        if (window.HubOpportunitySaves && oppFavData && Array.isArray(oppFavData.opportunityIds)) {
-          window.HubOpportunitySaves.writeLocal(oppFavData.opportunityIds);
-        }
+        await ensureOpportunitiesCatalog();
+        applySavedOpportunityData(oppFavData);
       } catch {
-        savedOpportunities = window.HubOpportunitySaves
-          ? window.HubOpportunitySaves.ids().map((id) => ({ opportunityId: id }))
-          : [];
-      }
-
-      if (window.HubOpportunitiesCatalog && window.HubOpportunitiesCatalog.loadCatalogAsync) {
-        window.HubOpportunitiesCatalog.loadCatalogAsync().catch(() => {});
+        await ensureOpportunitiesCatalog();
+        applySavedOpportunityData(null);
       }
 
       try {
@@ -2652,6 +2723,7 @@
       }
 
       applyDashboardData(data);
+      maybeDefaultSavedScope();
 
       const demoNote = document.getElementById('ad-demo-note');
       if (demoNote) demoNote.hidden = !data.isDemo;

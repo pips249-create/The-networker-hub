@@ -2,7 +2,23 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { ensureAttendeeId, resolveAttendeeId } = require('./supabase-favourites');
 
 function mapFavouriteRow(row) {
-  const opp = row.business_opportunities || {};
+  const opp = row.business_opportunities;
+  if (!opp || !opp.id) {
+    return {
+      id: row.id,
+      opportunityId: row.opportunity_id,
+      createdAt: row.created_at,
+      notifyEmail: row.notify_email !== false,
+      title: 'Listing no longer available',
+      slug: '',
+      host: '',
+      logoUrl: '',
+      imageUrl: '',
+      listingExpiresAt: null,
+      type: '',
+      listingStatus: 'unavailable',
+    };
+  }
   return {
     id: row.id,
     opportunityId: row.opportunity_id,
@@ -15,6 +31,7 @@ function mapFavouriteRow(row) {
     imageUrl: String(opp.image_url || '').trim(),
     listingExpiresAt: opp.listing_expires_at || null,
     type: opp.type || '',
+    listingStatus: String(opp.status || '').trim().toLowerCase() || 'unknown',
   };
 }
 
@@ -33,12 +50,7 @@ async function listOpportunityFavourites(session) {
     .order('created_at', { ascending: false });
   if (res.error) throw new Error(res.error.message);
 
-  return (res.data || [])
-    .filter((row) => {
-      const status = String(row.business_opportunities?.status || '').toLowerCase();
-      return status === 'published';
-    })
-    .map(mapFavouriteRow);
+  return (res.data || []).map(mapFavouriteRow);
 }
 
 async function addOpportunityFavourite(session, opportunityId) {
