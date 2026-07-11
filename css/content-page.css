@@ -288,52 +288,6 @@
   color: var(--text-muted);
 }
 
-/* About — charitable mission */
-.content-charitable {
-  margin: 2.5rem 0;
-  padding-top: 2rem;
-  border-top: 1px solid var(--border-soft);
-}
-
-.content-charitable h2 {
-  margin-top: 0;
-}
-
-.content-charitable-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-  margin-top: 1.5rem;
-}
-
-@media (min-width: 768px) {
-  .content-charitable-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.content-charitable-card {
-  padding: 24px 26px;
-  border-radius: var(--radius);
-  background: #fff;
-  border: 1px solid var(--border-soft);
-  box-shadow: 0 8px 24px rgba(194, 153, 209, 0.08);
-}
-
-.content-charitable-card h3 {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--charcoal);
-  margin: 0 0 10px;
-}
-
-.content-charitable-card p {
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.65;
-  color: var(--text-body);
-}
-
 /* About — team (legacy grid kept for compatibility) */
 .content-team {
   display: grid;

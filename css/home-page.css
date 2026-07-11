@@ -391,7 +391,7 @@ html:has(.home-page) {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 7px 7px 10px;
+  padding: 8px 8px 8px 12px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.98);
   border: 2px solid rgba(255, 255, 255, 0.95);
@@ -428,9 +428,10 @@ html:has(.home-page) {
   min-width: 0;
   border: none;
   background: transparent;
-  padding: 13px 8px 13px 0;
+  padding: 10px 8px 10px 0;
   font-size: 16px;
   font-weight: 500;
+  line-height: 1.25;
   color: var(--charcoal);
   border-radius: 0;
   outline: none;
@@ -450,12 +451,15 @@ html:has(.home-page) {
 
 .home-page .home-hero-search-btn {
   flex-shrink: 0;
-  min-height: 48px;
-  padding: 12px 22px;
+  align-self: center;
+  min-height: 0;
+  height: 44px;
+  padding: 0 22px;
   border-radius: 999px;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.01em;
+  line-height: 1;
   background: var(--charcoal);
   color: #fff;
   border: 2px solid var(--charcoal);
@@ -2122,7 +2126,26 @@ html:has(.home-page) {
 .home-split-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  align-items: center;
+  gap: 10px 16px;
+}
+
+.home-split-action-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--lavender-deep);
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.home-split-action-link:hover {
+  color: var(--charcoal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .home-split-link {
@@ -2363,13 +2386,13 @@ html:has(.home-page) {
   }
 
   .home-page .home-hero-search input[type='search'] {
-    padding: 12px 4px 12px 0;
+    padding: 10px 4px 10px 0;
     text-align: left;
   }
 
   .home-page .home-hero-search-btn {
     width: 100%;
-    min-height: 48px;
+    height: 48px;
   }
 
   .home-page .home-hero-search-note {
