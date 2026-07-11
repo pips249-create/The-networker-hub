@@ -1564,6 +1564,10 @@
 }
 
 /* ── BROWSE PAGE (events-style layout, opportunities gold/navy palette) ── */
+.opportunities-page.opp-browse-page .site-nav .nav-links a[aria-current='page'] {
+  color: var(--opp-gold);
+}
+
 .opp-browse-page {
   background: var(--opp-off-white);
 }
@@ -1620,6 +1624,7 @@
   margin: 0 auto;
 }
 
+.opportunities-page.opp-browse-page .opp-browse-hero .opp-hero-badge,
 .opp-browse-page .opp-hero-badge {
   display: inline-flex;
   align-items: center;
@@ -1636,6 +1641,7 @@
   margin: 0 0 14px;
 }
 
+.opportunities-page.opp-browse-page .opp-browse-hero .opp-hero-badge::before,
 .opp-browse-page .opp-hero-badge::before {
   content: '';
   width: 6px;
@@ -1660,6 +1666,7 @@
   color: #fff;
 }
 
+.opportunities-page.opp-browse-page .opp-browse-hero h1 .accent,
 .opp-browse-page .opp-browse-hero h1 .accent {
   color: var(--opp-gold-light);
   font-style: normal;
@@ -1681,6 +1688,8 @@
   color: rgba(255, 255, 255, 0.62);
 }
 
+.opportunities-page.opp-browse-page .opp-browse-hero .opp-hero-provider-link,
+.opportunities-page.opp-browse-page .opp-browse-hero .opp-hero-enquiry-cta a,
 .opp-browse-page .opp-hero-provider-link,
 .opp-browse-page .opp-hero-enquiry-cta a {
   font-weight: 600;
@@ -1690,6 +1699,8 @@
   text-decoration-color: rgba(232, 184, 75, 0.55);
 }
 
+.opportunities-page.opp-browse-page .opp-browse-hero .opp-hero-provider-link:hover,
+.opportunities-page.opp-browse-page .opp-browse-hero .opp-hero-enquiry-cta a:hover,
 .opp-browse-page .opp-hero-provider-link:hover,
 .opp-browse-page .opp-hero-enquiry-cta a:hover {
   color: #f5d88a;
@@ -1706,16 +1717,16 @@
   width: 100%;
 }
 
-/* Sponsor Hub — matches events browse hero placement */
+/* Sponsor Hub — opportunities gold/navy palette */
 .opp-browse-page .sponsor-hub {
   position: relative;
-  background: linear-gradient(165deg, #fff 0%, #faf6fe 55%, #f5f0fb 100%);
-  border: 1px solid rgba(122, 61, 138, 0.28);
+  background: linear-gradient(165deg, #fff 0%, #fdf8ef 55%, #faf3e3 100%);
+  border: 1px solid var(--opp-gold-border);
   border-radius: 12px;
   padding: 16px 18px 18px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 18px rgba(91, 47, 153, 0.1);
+  box-shadow: 0 4px 18px rgba(13, 31, 60, 0.08);
   min-width: 0;
 }
 
@@ -1771,13 +1782,13 @@
   gap: 8px;
   font-size: 15px;
   font-weight: 700;
-  color: #2d2636;
+  color: var(--opp-navy);
   margin-bottom: 16px;
   padding-right: 72px;
 }
 
 .opp-browse-page .sponsor-hub-head .icon {
-  color: #7a3d8a;
+  color: var(--opp-gold);
   font-size: 16px;
 }
 
@@ -1822,10 +1833,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px dashed #c9bdd4;
+  border: 1px dashed var(--opp-gold-border);
   font-size: 10px;
   font-weight: 600;
-  color: #8a8290;
+  color: var(--opp-mid-gray);
   text-align: center;
   padding: 12px 16px;
   box-sizing: border-box;
@@ -1836,7 +1847,7 @@
   font-size: 15px;
   font-weight: 800;
   line-height: 1.3;
-  color: #2d2636;
+  color: var(--opp-navy);
 }
 
 .opp-browse-page .sponsor-tagline {
@@ -1844,12 +1855,12 @@
   font-size: 13px;
   font-weight: 600;
   line-height: 1.4;
-  color: #2d2636;
+  color: var(--opp-navy);
 }
 
 .opp-browse-page .sponsor-hub--active .sponsor-tagline em {
   font-style: normal;
-  color: #7a3d8a;
+  color: var(--opp-gold);
 }
 
 .opp-browse-page .sponsor-hub--fallback .sponsor-tagline {
@@ -1877,7 +1888,7 @@
   content: '•';
   position: absolute;
   left: 0;
-  color: #7a3d8a;
+  color: var(--opp-gold);
   font-weight: 700;
 }
 
@@ -1888,7 +1899,7 @@
   text-align: center;
   padding: 12px 16px;
   border-radius: 8px;
-  background: #2d2636;
+  background: var(--opp-navy);
   color: #faf8f5 !important;
   font-weight: 700;
   font-size: 13px;
@@ -1896,19 +1907,19 @@
 }
 
 .opp-browse-page .sponsor-cta:hover {
-  background: #7a3d8a;
-  color: #fff !important;
+  background: var(--opp-gold);
+  color: var(--opp-navy) !important;
 }
 
 .opp-browse-page .sponsor-hub--fallback .sponsor-cta {
   background: transparent;
-  color: #7a3d8a !important;
-  border: 1px solid rgba(122, 61, 138, 0.35);
+  color: var(--opp-gold) !important;
+  border: 1px solid var(--opp-gold-border);
 }
 
 .opp-browse-page .sponsor-hub--fallback .sponsor-cta:hover {
-  background: #f3e8f8;
-  color: #7a3d8a !important;
+  background: var(--opp-gold-pale);
+  color: var(--opp-navy) !important;
 }
 
 .opp-browse-page .opp-shell {
