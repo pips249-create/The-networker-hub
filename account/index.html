@@ -55,8 +55,8 @@
               My enquiries
               <span class="ad-side-count" id="ad-side-enquiries" hidden></span>
             </a>
-            <a href="#reviews-pending" class="hub-side-nav-link" data-ad-route="reviews-pending">
-              Reviews to write
+            <a href="#reviews" class="hub-side-nav-link" data-ad-route="reviews">
+              Reviews
               <span class="ad-side-count" id="ad-side-pending" hidden></span>
             </a>
             <div class="hub-side-nav-util">
@@ -369,46 +369,54 @@
               </p>
             </section>
 
-            <!-- Reviews pending -->
-            <section class="ad-page" id="ad-page-reviews-pending" data-ad-page="reviews-pending">
-              <div class="ad-table-scroll">
-                <div class="ad-table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th class="ad-th-thumb"></th>
-                        <th>Event</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th class="ad-th-actions">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="ad-reviews-pending-body"></tbody>
-                  </table>
+            <!-- Reviews -->
+            <section class="ad-page" id="ad-page-reviews" data-ad-page="reviews">
+              <div class="ad-saved-panel">
+                <div class="ad-saved-scope" role="tablist" aria-label="Review lists">
+                  <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-reviews-scope="pending">To write</button>
+                  <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-reviews-scope="done">Submitted</button>
                 </div>
-              </div>
-              <p class="ad-empty" id="ad-reviews-pending-empty" hidden>No pending reviews — you're all caught up.</p>
-            </section>
 
-            <!-- Reviews done -->
-            <section class="ad-page" id="ad-page-reviews-done" data-ad-page="reviews-done">
-              <div class="ad-table-scroll">
-                <div class="ad-table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th class="ad-th-thumb"></th>
-                        <th>Event</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th class="ad-th-actions">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="ad-reviews-done-body"></tbody>
-                  </table>
+                <div class="ad-saved-pane is-active" data-reviews-pane="pending" role="tabpanel">
+                  <div class="ad-table-scroll">
+                    <div class="ad-table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th class="ad-th-thumb"></th>
+                            <th>Event</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th class="ad-th-actions">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody id="ad-reviews-pending-body"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <p class="ad-empty" id="ad-reviews-pending-empty" hidden>No pending reviews — you're all caught up.</p>
+                </div>
+
+                <div class="ad-saved-pane" data-reviews-pane="done" role="tabpanel" hidden>
+                  <div class="ad-table-scroll">
+                    <div class="ad-table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th class="ad-th-thumb"></th>
+                            <th>Event</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th class="ad-th-actions">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody id="ad-reviews-done-body"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <p class="ad-empty" id="ad-reviews-done-empty" hidden>You haven't submitted any reviews yet.</p>
                 </div>
               </div>
-              <p class="ad-empty" id="ad-reviews-done-empty" hidden>You haven't submitted any reviews yet.</p>
             </section>
           </div>
         </div>
@@ -596,6 +604,6 @@
     <script src="../js/opportunity-compare.js?v=20260710d"></script>
     <script src="../js/hub-calendar-share.js?v=20260609a"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260711a"></script>
+    <script src="../js/attendee-dashboard.js?v=20260711b"></script>
   </body>
 </html>

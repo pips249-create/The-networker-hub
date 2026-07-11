@@ -13,6 +13,7 @@
   let opportunityEnquiries = [];
   let currentRoute = 'overview';
   let savedScope = 'events';
+  let reviewsScope = 'pending';
   let openUtilityMenu = null;
   const REVIEW_EVENT_STORAGE_KEY = 'hub_review_event_id';
 
@@ -42,12 +43,16 @@
       sub: 'Messages you sent to business opportunity listings on the Hub. Organisers reply by email.',
     },
     'reviews-pending': {
-      title: 'Reviews to complete',
-      sub: 'Events you attended with a confirmed ticket — your review appears on the organiser\'s profile.',
+      title: 'Reviews',
+      sub: 'Leave feedback after events you attended, or read reviews you have already submitted.',
     },
     'reviews-done': {
-      title: 'Submitted reviews',
-      sub: 'Feedback you have left — open a review to see any reply from the organiser.',
+      title: 'Reviews',
+      sub: 'Leave feedback after events you attended, or read reviews you have already submitted.',
+    },
+    reviews: {
+      title: 'Reviews',
+      sub: 'Leave feedback after events you attended, or read reviews you have already submitted.',
     },
   };
 
@@ -691,6 +696,29 @@
     });
   }
 
+  function isReviewsRoute(route) {
+    return route === 'reviews' || route === 'reviews-pending' || route === 'reviews-done';
+  }
+
+  function reviewsScopeFromRoute(route) {
+    if (route === 'reviews-done') return 'done';
+    return 'pending';
+  }
+
+  function reviewsRouteFromScope(scope) {
+    return scope === 'done' ? 'reviews-done' : 'reviews-pending';
+  }
+
+  function layoutRouteKey(route) {
+    if (isReviewsRoute(route)) return 'reviews';
+    return route;
+  }
+
+  function pageRouteKey(route) {
+    if (isReviewsRoute(route)) return 'reviews';
+    return route;
+  }
+
   function invoiceDownloadHref(reg) {
     return '/api/auth/registration-invoice?registrationId=' + encodeURIComponent(reg.id || '');
   }
@@ -701,7 +729,7 @@
     const titleEl = document.getElementById('ad-subpage-title');
     const subEl = document.getElementById('ad-subpage-sub');
     const isOverview = route === 'overview';
-    const meta = SUBPAGE_HEAD[route] || null;
+    const meta = SUBPAGE_HEAD[layoutRouteKey(route)] || SUBPAGE_HEAD[route] || null;
 
     if (overviewHeader) overviewHeader.classList.toggle('is-hidden', !isOverview);
     if (subpageHead) subpageHead.hidden = isOverview;
@@ -709,6 +737,32 @@
       if (titleEl) titleEl.textContent = meta.title;
       if (subEl) subEl.textContent = meta.sub;
     }
+  }
+
+  function setReviewsScope(scope) {
+    reviewsScope = scope || 'pending';
+    document.querySelectorAll('[data-reviews-scope]').forEach((btn) => {
+      const active = btn.getAttribute('data-reviews-scope') === reviewsScope;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    document.querySelectorAll('[data-reviews-pane]').forEach((pane) => {
+      const active = pane.getAttribute('data-reviews-pane') === reviewsScope;
+      pane.classList.toggle('is-active', active);
+      pane.hidden = !active;
+    });
+  }
+
+  function bindReviewsScope() {
+    document.querySelectorAll('[data-reviews-scope]').forEach((btn) => {
+      if (btn.dataset.boundReviewsScope) return;
+      btn.dataset.boundReviewsScope = '1';
+      btn.addEventListener('click', () => {
+        const scope = btn.getAttribute('data-reviews-scope') || 'pending';
+        setRoute(reviewsRouteFromScope(scope));
+      });
+    });
+    setReviewsScope(reviewsScope);
   }
 
   function setSavedScope(scope) {
@@ -1650,19 +1704,28 @@
   }
 
   function setRoute(route) {
-    currentRoute = route || 'overview';
+    let nextRoute = route || 'overview';
+    if (nextRoute === 'reviews') nextRoute = 'reviews-pending';
+    if (isReviewsRoute(nextRoute)) {
+      setReviewsScope(reviewsScopeFromRoute(nextRoute));
+      nextRoute = reviewsRouteFromScope(reviewsScope);
+    }
+    currentRoute = nextRoute;
     closeUtilityMenus();
     updateLayoutHeader(currentRoute);
+    const activePage = pageRouteKey(currentRoute);
     document.querySelectorAll('[data-ad-page]').forEach((p) => {
-      p.classList.toggle('is-active', p.getAttribute('data-ad-page') === currentRoute);
+      p.classList.toggle('is-active', p.getAttribute('data-ad-page') === activePage);
     });
     document.querySelectorAll('.hub-side-nav-link[data-ad-route]').forEach((a) => {
-      a.classList.toggle('is-active', a.getAttribute('data-ad-route') === currentRoute);
+      const navRoute = a.getAttribute('data-ad-route');
+      const active = isReviewsRoute(currentRoute) ? navRoute === 'reviews' : navRoute === currentRoute;
+      a.classList.toggle('is-active', active);
     });
     if (location.hash.replace('#', '') !== currentRoute) {
       history.replaceState(null, '', (location.search || '') + '#' + currentRoute);
     }
-    if (dashboardReady) renderRouteTables(currentRoute);
+    if (dashboardReady) renderRouteTables(routeTablesKey(currentRoute));
   }
 
   function enquiryStatusLabel(status) {
@@ -2279,6 +2342,10 @@
     }
   }
 
+  function routeTablesKey(route) {
+    return isReviewsRoute(route) ? 'reviews' : route;
+  }
+
   function renderRouteTables(route, options) {
     if (!dashboardReady) return;
     const force = Boolean(options && options.force);
@@ -2306,7 +2373,7 @@
         return db - da;
       });
       renderEventRows('ad-past-body', 'ad-past-empty', 'ad-pagination-past', 'past', past, true);
-    } else if (key === 'reviews-pending') {
+    } else if (key === 'reviews' || key === 'reviews-pending' || key === 'reviews-done') {
       renderEventRows(
         'ad-reviews-pending-body',
         'ad-reviews-pending-empty',
@@ -2315,7 +2382,6 @@
         pendingReviewsList(),
         false
       );
-    } else if (key === 'reviews-done') {
       renderEventRows(
         'ad-reviews-done-body',
         'ad-reviews-done-empty',
@@ -2324,6 +2390,10 @@
         doneReviewsList(),
         false
       );
+      renderedRoutes.add('reviews');
+      renderedRoutes.add('reviews-pending');
+      renderedRoutes.add('reviews-done');
+      return;
     } else if (key === 'payments') {
       renderPaymentsTable();
     } else if (key === 'cancellations') {
@@ -2348,15 +2418,14 @@
     renderedRoutes.clear();
     renderStats(data.stats || {});
     renderRefundAlerts();
-    renderRouteTables(currentRoute, { force: true });
+    renderRouteTables(routeTablesKey(currentRoute), { force: true });
   }
 
   function renderAllTables() {
     renderedRoutes.clear();
     renderRouteTables('upcoming', { force: true });
     renderRouteTables('past', { force: true });
-    renderRouteTables('reviews-pending', { force: true });
-    renderRouteTables('reviews-done', { force: true });
+    renderRouteTables('reviews', { force: true });
     renderRouteTables('payments', { force: true });
     renderRouteTables('cancellations', { force: true });
     renderRouteTables('opportunity-enquiries', { force: true });
@@ -2450,6 +2519,7 @@
     bindNav();
     bindHubContextSwitch();
     bindSavedScope();
+    bindReviewsScope();
     bindReviewModal();
     bindViewReviewModal();
     bindPaymentModal();
@@ -2502,7 +2572,7 @@
         registrations = [];
         opportunityEnquiries = [];
         renderStats({});
-        renderRouteTables(currentRoute, { force: true });
+        renderRouteTables(routeTablesKey(currentRoute), { force: true });
         try {
           const favData = await favRes.json();
           if (favData && favData.ok && Array.isArray(favData.favourites)) {
