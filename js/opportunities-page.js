@@ -1427,6 +1427,14 @@
     syncCategorySelect();
   }
 
+  function findListingById(id) {
+    var key = String(id || '');
+    for (var i = 0; i < allListings.length; i++) {
+      if (String(allListings[i].id) === key) return allListings[i];
+    }
+    return null;
+  }
+
   function initPagination() {
     if (!els.mount || els.mount.dataset.paginationBound) return;
     els.mount.dataset.paginationBound = '1';
@@ -1437,7 +1445,8 @@
         e.preventDefault();
         e.stopPropagation();
         if (saves) {
-          saves.toggle(fav.getAttribute('data-opp-id')).then(function () {
+          var oppId = fav.getAttribute('data-opp-id');
+          saves.toggle(oppId, findListingById(oppId)).then(function () {
             saves.refreshButtons(els.mount);
           });
         }

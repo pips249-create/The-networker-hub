@@ -3,6 +3,7 @@
  */
 (function () {
   var SAVE_KEY = 'hubSavedOpportunityIds';
+  var SAVE_ITEMS_KEY = 'hubSavedOpportunityItems';
   var cache = null;
   var syncPromise = null;
 
@@ -11,6 +12,16 @@
       var raw = localStorage.getItem(SAVE_KEY);
       var parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function readLocalItems() {
+    try {
+      var raw = localStorage.getItem(SAVE_ITEMS_KEY);
+      var parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
       return [];
     }
@@ -38,6 +49,50 @@
     cache = next.slice();
   }
 
+  function writeLocalItems(items) {
+    var list = Array.isArray(items) ? items : [];
+    try {
+      localStorage.setItem(SAVE_ITEMS_KEY, JSON.stringify(list));
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function snapshotFromMeta(id, meta) {
+    var key = String((meta && meta.id) || id || '').trim();
+    if (!key) return null;
+    return {
+      opportunityId: key,
+      title: String((meta && meta.title) || 'Opportunity').trim() || 'Opportunity',
+      host: String((meta && meta.host) || '').trim(),
+      slug: String((meta && meta.slug) || '').trim(),
+      logoUrl: String((meta && meta.logoUrl) || '').trim(),
+      imageUrl: String((meta && meta.imageUrl) || '').trim(),
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  function upsertLocalItem(snapshot) {
+    if (!snapshot || !snapshot.opportunityId) return;
+    var items = readLocalItems();
+    var key = String(snapshot.opportunityId);
+    var next = items.filter(function (item) {
+      return String(item.opportunityId || item.opportunity_id || '') !== key;
+    });
+    next.unshift(snapshot);
+    writeLocalItems(next);
+  }
+
+  function removeLocalItem(id) {
+    var key = String(id || '').trim();
+    if (!key) return;
+    writeLocalItems(
+      readLocalItems().filter(function (item) {
+        return String(item.opportunityId || item.opportunity_id || '') !== key;
+      })
+    );
+  }
+
   function ids() {
     if (cache) return cache.slice();
     cache = readLocal();
@@ -61,17 +116,20 @@
   function fetchFromServer() {
     return fetch('/api/auth/opportunity-favourites', { credentials: 'include' })
       .then(function (res) {
-        return res.json();
+        return res.json().then(function (data) {
+          return { status: res.status, data: data };
+        });
       })
       .catch(function () {
-        return null;
+        return { status: 0, data: null };
       });
   }
 
   function syncFromServer() {
     if (syncPromise) return syncPromise;
     syncPromise = fetchFromServer()
-      .then(function (data) {
+      .then(function (result) {
+        var data = result.data;
         if (data && data.ok && Array.isArray(data.opportunityIds)) {
           setCacheFromServer(data.opportunityIds);
         }
@@ -85,17 +143,31 @@
 
   function mergeLocalToServer() {
     var localSnapshot = readLocal();
+    var localItems = readLocalItems();
     if (!localSnapshot.length) return syncFromServer();
 
-    return fetchFromServer().then(function (data) {
+    return fetchFromServer().then(function (result) {
+      var data = result.data;
       if (!data || !data.ok) {
-        cache = localSnapshot.slice();
+        cache = uniqueIds(
+          localSnapshot.concat(
+            localItems.map(function (item) {
+              return item.opportunityId || item.opportunity_id;
+            })
+          )
+        );
         writeLocal(cache);
         return data;
       }
 
       var server = new Set((data.opportunityIds || []).map(String));
-      var pending = localSnapshot.filter(function (id) {
+      var pending = uniqueIds(
+        localSnapshot.concat(
+          localItems.map(function (item) {
+            return item.opportunityId || item.opportunity_id;
+          })
+        )
+      ).filter(function (id) {
         return !server.has(String(id));
       });
 
@@ -120,28 +192,42 @@
         .then(function () {
           return fetchFromServer();
         })
-        .then(function (finalData) {
+        .then(function (finalResult) {
+          var finalData = finalResult.data;
           var serverIds =
             finalData && finalData.ok && Array.isArray(finalData.opportunityIds)
               ? finalData.opportunityIds
               : data.opportunityIds || [];
-          setCacheFromServer(serverIds, localSnapshot);
+          setCacheFromServer(
+            serverIds,
+            uniqueIds(
+              localSnapshot.concat(
+                localItems.map(function (item) {
+                  return item.opportunityId || item.opportunity_id;
+                })
+              )
+            )
+          );
           return finalData || data;
         });
     });
   }
 
-  function toggle(id) {
+  function toggle(id, meta) {
     var key = String(id || '');
     if (!key) return Promise.resolve(false);
 
     var local = ids();
     var nowSaved = !local.includes(key);
-    if (nowSaved) local.push(key);
-    else {
+    if (nowSaved) {
+      local.push(key);
+      var snapshot = snapshotFromMeta(key, meta);
+      if (snapshot) upsertLocalItem(snapshot);
+    } else {
       local = local.filter(function (x) {
         return x !== key;
       });
+      removeLocalItem(key);
     }
     writeLocal(local);
 
@@ -152,9 +238,12 @@
       body: JSON.stringify({ opportunityId: key }),
     })
       .then(function (res) {
-        return res.json();
+        return res.json().then(function (data) {
+          return { status: res.status, data: data };
+        });
       })
-      .then(function (data) {
+      .then(function (result) {
+        var data = result.data;
         if (data && data.ok && Array.isArray(data.opportunityIds)) {
           setCacheFromServer(data.opportunityIds, nowSaved ? [key] : []);
           return data.saved !== false;
@@ -179,12 +268,14 @@
   window.HubOpportunitySaves = {
     ids: ids,
     readLocal: readLocal,
+    readLocalItems: readLocalItems,
     isSaved: isSaved,
     toggle: toggle,
     sync: syncFromServer,
     mergeOnLogin: mergeLocalToServer,
     refreshButtons: refreshButtons,
     writeLocal: writeLocal,
+    writeLocalItems: writeLocalItems,
   };
 
   var loadSession = window.hubFetchSession

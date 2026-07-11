@@ -1581,6 +1581,21 @@ tr.ad-row-highlight td {
   margin-bottom: 12px;
 }
 
+.ad-saved-sync-note {
+  margin: 14px 14px 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ad-text-mid);
+  background: #fff8e8;
+  border: 1px solid #f0dca0;
+  border-radius: var(--ad-radius-sm);
+}
+
+.ad-saved-pane .ad-saved-sync-note + .ad-saved-opp-toolbar {
+  margin-top: 10px;
+}
+
 .ad-saved-opp-toolbar[hidden] {
   display: none !important;
 }

@@ -360,7 +360,7 @@
     if (!els.saveBtn) return;
     els.saveBtn.addEventListener('click', function () {
       if (!current || !saves) return;
-      saves.toggle(current.id).then(function () {
+      saves.toggle(current.id, current).then(function () {
         refreshSaveButton();
       });
     });

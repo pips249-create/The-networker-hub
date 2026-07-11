@@ -66,7 +66,7 @@ async function testSupabaseConnection() {
   }
   try {
     const sb = getSupabaseAdmin();
-    const probeTables = ['hub_accounts', 'organisers', 'attendees', 'events'];
+    const probeTables = ['hub_accounts', 'organisers', 'attendees', 'events', 'opportunity_favourites'];
     let lastError = null;
     for (const table of probeTables) {
       const { error } = await sb.from(table).select('id').limit(1);

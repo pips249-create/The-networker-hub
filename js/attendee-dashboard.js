@@ -798,7 +798,11 @@
       if (btn.dataset.boundSavedScope) return;
       btn.dataset.boundSavedScope = '1';
       btn.addEventListener('click', () => {
-        setSavedScope(btn.getAttribute('data-saved-scope') || 'events');
+        const scope = btn.getAttribute('data-saved-scope') || 'events';
+        setSavedScope(scope);
+        if (scope === 'opportunities') {
+          loadSavedOpportunities();
+        }
       });
     });
     setSavedScope(savedScope);
@@ -2068,6 +2072,19 @@
     return next;
   }
 
+  function readStoredOpportunityItems() {
+    if (window.HubOpportunitySaves && typeof window.HubOpportunitySaves.readLocalItems === 'function') {
+      return window.HubOpportunitySaves.readLocalItems();
+    }
+    try {
+      const raw = localStorage.getItem('hubSavedOpportunityItems');
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
   function readStoredOpportunityIds() {
     if (window.HubOpportunitySaves && typeof window.HubOpportunitySaves.readLocal === 'function') {
       return window.HubOpportunitySaves.readLocal();
@@ -2083,17 +2100,48 @@
 
   function applySavedOpportunityData(data) {
     let list = [];
+    const localItems = readStoredOpportunityItems();
+    if (localItems.length) {
+      list = localItems.map((item) => ({
+        opportunityId: item.opportunityId || item.opportunity_id,
+        title: item.title || 'Opportunity',
+        host: item.host || '',
+        slug: item.slug || '',
+        logoUrl: item.logoUrl || item.imageUrl || '',
+        imageUrl: item.imageUrl || item.logoUrl || '',
+        createdAt: item.createdAt || item.created_at || item.savedAt || null,
+      }));
+    }
+
     if (data && data.ok && Array.isArray(data.favourites) && data.favourites.length) {
-      list = data.favourites.slice();
+      const serverItems = data.favourites.slice();
+      const seen = new Set(
+        list.map((item) => String(item.opportunityId || item.opportunity_id || '').trim()).filter(Boolean)
+      );
+      serverItems.forEach((item) => {
+        const key = String(item.opportunityId || item.opportunity_id || '').trim();
+        if (key && !seen.has(key)) {
+          list.push(item);
+          seen.add(key);
+        }
+      });
     } else if (data && data.ok && Array.isArray(data.opportunityIds) && data.opportunityIds.length) {
-      list = data.opportunityIds.map((id) => ({ opportunityId: id, title: 'Opportunity' }));
+      const seen = new Set(
+        list.map((item) => String(item.opportunityId || item.opportunity_id || '').trim()).filter(Boolean)
+      );
+      data.opportunityIds.forEach((id) => {
+        const key = String(id || '').trim();
+        if (key && !seen.has(key)) {
+          list.push({ opportunityId: key, title: 'Opportunity' });
+          seen.add(key);
+        }
+      });
     }
 
     const serverIds = new Set(
       list.map((item) => String(item.opportunityId || item.opportunity_id || '').trim()).filter(Boolean)
     );
-    const localIds = readStoredOpportunityIds();
-    localIds.forEach((id) => {
+    readStoredOpportunityIds().forEach((id) => {
       const key = String(id || '').trim();
       if (key && !serverIds.has(key)) {
         list.push({ opportunityId: key, title: 'Opportunity' });
@@ -2109,8 +2157,32 @@
         .filter(Boolean);
       if (mergedIds.length) {
         window.HubOpportunitySaves.writeLocal(mergedIds);
+        window.HubOpportunitySaves.writeLocalItems(
+          savedOpportunities.map((item) => ({
+            opportunityId: item.opportunityId || item.opportunity_id,
+            title: item.title || 'Opportunity',
+            host: item.host || '',
+            slug: item.slug || '',
+            logoUrl: item.logoUrl || item.imageUrl || '',
+            imageUrl: item.imageUrl || item.logoUrl || '',
+            createdAt: item.createdAt || item.created_at || new Date().toISOString(),
+          }))
+        );
       } else if (data && data.ok && Array.isArray(data.opportunityIds) && data.opportunityIds.length) {
         window.HubOpportunitySaves.writeLocal(data.opportunityIds);
+      }
+    }
+
+    const syncNote = document.getElementById('ad-saved-opportunities-sync');
+    if (syncNote) {
+      const apiFailed = data && data.ok === false;
+      const hasLocalOnly = savedOpportunities.length > 0 && apiFailed;
+      syncNote.hidden = !hasLocalOnly;
+      if (hasLocalOnly) {
+        syncNote.textContent =
+          data.message ||
+          data.error ||
+          'Showing saves from this browser. Cloud sync is unavailable until the database migration is applied.';
       }
     }
 
