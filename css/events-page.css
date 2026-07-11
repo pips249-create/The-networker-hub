@@ -1404,6 +1404,15 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   line-height: 1.55;
   color: var(--text-muted);
 }
+.empty-state-text a {
+  color: var(--lavender-deep);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.empty-state-text a:hover {
+  color: var(--charcoal);
+}
 .empty-state-btn {
   display: inline-flex;
   align-items: center;

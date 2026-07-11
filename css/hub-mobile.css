@@ -828,6 +828,10 @@ body.nav-menu-open {
     font-size: 12px;
   }
 
+  .hub-side-nav.hub-side-nav--minimal .hub-side-nav-link--events-sub {
+    display: none !important;
+  }
+
   .hub-side-nav.hub-side-nav--minimal .org-notifications-nav {
     flex: 0 0 auto;
     scroll-snap-align: start;

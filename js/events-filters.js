@@ -598,6 +598,38 @@
     }
   }
 
+  var pendingResultsScroll = false;
+
+  function shouldScrollToBrowseResults() {
+    try {
+      if (location.hash === '#results' || location.hash === '#listings') return true;
+      return !!getUrlSearchQuery();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function scrollToBrowseResults() {
+    var target = document.getElementById('events-results');
+    if (!target) return;
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    target.scrollIntoView({
+      behavior: reduceMotion ? 'auto' : 'smooth',
+      block: 'start',
+    });
+  }
+
+  pendingResultsScroll = shouldScrollToBrowseResults();
+
+  window.hubGetUrlSearchQuery = getUrlSearchQuery;
+  window.hubScrollToBrowseResults = scrollToBrowseResults;
+  window.hubConsumePendingResultsScroll = function () {
+    if (!pendingResultsScroll) return false;
+    pendingResultsScroll = false;
+    scrollToBrowseResults();
+    return true;
+  };
+
   function restoreFilterPrefs() {
     try {
       var urlQ = getUrlSearchQuery();

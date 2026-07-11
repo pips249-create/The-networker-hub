@@ -226,7 +226,7 @@
   color: #8a6508;
 }
 
-/* My Events hub — horizontal tabs removed; use left sidebar */
+/* My Events hub — sidebar + in-page tabs (sub-links hidden on mobile) */
 .org-events-subnav {
   display: flex;
   gap: 0;
@@ -302,6 +302,10 @@
 
 .org-sub-page.is-active {
   display: block;
+}
+
+.org-sub-page[hidden] {
+  display: none !important;
 }
 
 .org-filter-bar {
@@ -398,6 +402,23 @@
 .org-sub-lead {
   margin-top: -8px;
   margin-bottom: 14px;
+}
+
+.org-sub-lead--flush {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.org-filter-linked-note {
+  margin: -6px 0 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--od-text-soft);
+}
+
+.org-filter-linked-note.is-active {
+  color: var(--od-purple-dark);
+  font-weight: 600;
 }
 
 .org-td-name-click {
@@ -794,10 +815,41 @@
 }
 
 .org-review-body--rating-only {
-  margin: 0;
+  margin: 0 0 12px;
   font-size: 13px;
   font-style: italic;
   color: var(--od-text-soft);
+}
+
+.org-review-report-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--od-text-soft);
+  background: var(--od-bg);
+  border: 1px solid var(--od-border-soft);
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+  line-height: 1.2;
+}
+
+.org-review-report-btn:hover {
+  color: var(--od-text-mid);
+  background: var(--od-purple-pale);
+  border-color: var(--od-border);
+}
+
+.org-review-report-btn svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  opacity: 0.8;
 }
 
 .org-reviews-list {
@@ -928,45 +980,70 @@
   margin-left: auto;
 }
 
-.org-revenue-banner {
-  background: var(--od-purple-deep);
-  border-radius: var(--od-radius);
-  padding: 20px 24px;
+.org-revenue-stats {
   margin-bottom: 20px;
+}
+
+.org-revenue-info-panel {
+  margin-bottom: 16px;
+  border: 1px solid var(--od-border-soft);
+  border-radius: var(--od-radius-sm);
+  background: var(--od-purple-pale);
+}
+
+.org-revenue-info-summary {
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  flex-wrap: wrap;
-  gap: 16px;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--od-purple-dark);
+  cursor: pointer;
+  list-style: none;
 }
 
-.org-rev-item {
-  text-align: center;
+.org-revenue-info-summary::-webkit-details-marker {
+  display: none;
 }
 
-.org-rev-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.55);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 4px;
-}
-
-.org-rev-value {
-  font-size: 22px;
-  font-weight: 700;
+.org-revenue-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--od-purple);
   color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  font-style: italic;
+  flex-shrink: 0;
 }
 
-.org-rev-value.org-rev-gold {
-  color: var(--od-gold);
+.org-revenue-info-body {
+  padding: 0 14px 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--od-text-mid);
 }
 
-.org-rev-sep {
-  width: 1px;
-  height: 36px;
-  background: rgba(255, 255, 255, 0.12);
+.org-revenue-info-body p {
+  margin: 0 0 8px;
+}
+
+.org-revenue-info-body p:last-child {
+  margin-bottom: 0;
+}
+
+.org-revenue--setup-active .org-stripe-revenue-bar {
+  padding: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.org-revenue--setup-active .org-stripe-revenue-hint {
+  font-size: 12px;
 }
 
 .org-modal-actions {
@@ -3018,8 +3095,21 @@ a.hub-payment-setup-btn {
   min-width: 10rem;
 }
 
-.org-revenue-payout-note {
-  margin-top: -4px;
+.org-revenue-th-tip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: var(--od-purple-pale);
+  color: var(--od-purple);
+  font-size: 10px;
+  font-weight: 700;
+  font-style: italic;
+  cursor: help;
+  vertical-align: middle;
 }
 
 .org-row-payout-held {

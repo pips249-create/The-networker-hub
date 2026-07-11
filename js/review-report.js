@@ -85,10 +85,16 @@
     var style = document.createElement('style');
     style.id = 'review-report-extra-styles';
     style.textContent =
-      '.review-report-trigger{font:inherit;font-size:12px;color:#94a3b8;background:transparent;border:0;cursor:pointer;text-decoration:underline;text-underline-offset:2px;padding:0;margin-top:8px}' +
-      '.review-report-trigger:hover{color:#5b2f99}';
+      '.review-report-btn,.org-review-report-btn{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:4px 10px;font:inherit;font-size:11px;font-weight:600;color:#7a94a3;background:#f4f8fa;border:1px solid #cfe4ea;border-radius:999px;cursor:pointer;text-decoration:none;line-height:1.2}' +
+      '.review-report-btn:hover,.org-review-report-btn:hover{color:#4a6272;background:#e8f6f8;border-color:#9dd9cc}' +
+      '.review-report-btn svg,.org-review-report-btn svg{width:12px;height:12px;flex-shrink:0;opacity:.8}';
     document.head.appendChild(style);
   }
+
+  var REPORT_FLAG_SVG =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+    '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>' +
+    '<line x1="4" y1="22" x2="4" y2="15"/></svg>';
 
   var pending = null;
 
@@ -197,8 +203,9 @@
     if (!card || !opts || !opts.reviewId) return;
     var btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'review-report-trigger';
-    btn.textContent = 'Report review';
+    btn.className = 'review-report-btn org-review-report-btn';
+    btn.setAttribute('aria-label', 'Report review');
+    btn.innerHTML = REPORT_FLAG_SVG + '<span>Report</span>';
     attachTrigger(btn, opts);
     card.appendChild(btn);
   }

@@ -201,12 +201,19 @@
   function initHeroSearch() {
     var form = document.getElementById('home-hero-search');
     var input = document.getElementById('home-hero-search-input');
+    var hero = document.querySelector('.home-hero');
     if (!form || !input) return;
+
+    input.addEventListener('focus', function () {
+      if (hero) hero.classList.add('is-entered');
+    });
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var q = String(input.value || '').trim();
-      window.location.href = q ? '/events/?q=' + encodeURIComponent(q) : '/events/';
+      window.location.href = q
+        ? '/events/?q=' + encodeURIComponent(q) + '#results'
+        : '/events/#results';
     });
   }
 

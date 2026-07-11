@@ -567,6 +567,18 @@
     if (!els.listings) return;
 
     if (!totalItems && !rows.length) {
+      const searchInput = document.getElementById('search');
+      const searchQ = searchInput ? String(searchInput.value || '').trim() : '';
+      const emptyTitle = searchQ
+        ? 'No events found for “' + escapeHtml(searchQ) + '”'
+        : 'No events match your filters';
+      const emptyText = searchQ
+        ? 'Try different keywords or spellings, or browse <a href="/opportunities/?q=' +
+          encodeURIComponent(searchQ) +
+          '">opportunities matching “' +
+          escapeHtml(searchQ) +
+          '”</a>.'
+        : 'Try clearing filters, choosing a different date range, or browsing all event types.';
       els.listings.innerHTML =
         '<div class="empty-state is-visible" role="status">' +
         '<div class="empty-state-inner">' +
@@ -575,11 +587,15 @@
         '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/>' +
         '<path d="M8 11h6M11 8v6" stroke-linecap="round"/>' +
         '</svg></div>' +
-        '<h3 class="empty-state-title">No events match your filters</h3>' +
-        '<p class="empty-state-text">Try clearing filters, choosing a different date range, or browsing all event types.</p>' +
+        '<h3 class="empty-state-title">' +
+        emptyTitle +
+        '</h3>' +
+        '<p class="empty-state-text">' +
+        emptyText +
+        '</p>' +
         '<button type="button" class="empty-state-btn" id="empty-reset">Clear all filters</button>' +
         '</div></div>';
-      if (els.resultsCount) els.resultsCount.textContent = '0';
+      updateResultsSummary(0);
       return;
     }
 
@@ -603,9 +619,33 @@
       '</div>' +
       paginationHtml(currentPage, totalPages);
 
-    if (els.resultsCount) els.resultsCount.textContent = String(totalItems);
+    updateResultsSummary(totalItems);
 
     if (window.HubFavourites) window.HubFavourites.refreshButtons(els.listings);
+  }
+
+  function updateResultsSummary(totalItems) {
+    const searchInput = document.getElementById('search');
+    const searchQ = searchInput ? String(searchInput.value || '').trim() : '';
+    const queryEl = document.getElementById('events-search-query');
+    if (els.resultsCount) els.resultsCount.textContent = String(totalItems);
+    if (!queryEl) return;
+    if (searchQ) {
+      queryEl.hidden = false;
+      queryEl.textContent = ' for “' + searchQ + '”';
+    } else {
+      queryEl.hidden = true;
+      queryEl.textContent = '';
+    }
+  }
+
+  function scrollToResultsAfterLanding() {
+    if (!window.hubConsumePendingResultsScroll) return;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        window.hubConsumePendingResultsScroll();
+      });
+    });
   }
 
   function initListingsPagination() {
@@ -847,6 +887,7 @@
             false
           );
           applyLoadedEvents({ skipRestore: true });
+          scrollToResultsAfterLanding();
         } catch (e) {
           var detail = e && e.message ? String(e.message) : 'network error';
           var hint =
@@ -858,6 +899,7 @@
           setStatus(hint, true);
           events = [];
           applyLoadedEvents();
+          scrollToResultsAfterLanding();
         }
         return;
       }
@@ -876,6 +918,7 @@
         setStatus(hint, true);
         events = [];
         applyLoadedEvents();
+        scrollToResultsAfterLanding();
         return;
       }
 
@@ -903,6 +946,7 @@
           );
         }
         applyLoadedEvents();
+        scrollToResultsAfterLanding();
       } catch (e) {
         console.error('Events render error', e);
       }

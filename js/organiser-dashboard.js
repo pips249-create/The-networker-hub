@@ -22,6 +22,7 @@
     groupsSearch: '',
     ticketsEvent: 'all',
     ticketsType: 'all',
+    ticketsScope: 'current',
     reviewsGroup: 'all',
     attendeesEvent: 'all',
     attendeesPendingOnly: false,
@@ -1907,7 +1908,11 @@
   function setEventsSub(sub) {
     eventsSubRoute = sub || 'events-list';
     document.querySelectorAll('[data-events-panel]').forEach((panel) => {
-      panel.classList.toggle('is-active', panel.getAttribute('data-events-panel') === eventsSubRoute);
+      const isActive = panel.getAttribute('data-events-panel') === eventsSubRoute;
+      panel.classList.toggle('is-active', isActive);
+      if (isActive) panel.removeAttribute('hidden');
+      else panel.setAttribute('hidden', '');
+      panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
     });
     syncEventsTabHighlights(eventsSubRoute, true);
     syncSidebarNavHighlight('events', eventsSubRoute);
@@ -1970,7 +1975,6 @@
     set('tab-count-events', String(state.eventsTotal || state.events.length));
     set('tab-count-tickets', String(state.tickets.length));
     set('tab-count-reviews', String(state.reviews.length));
-    set('tab-count-revenue', totalRevenueDisplay());
   }
 
   function archivedApplicationsList() {
@@ -3033,7 +3037,35 @@
     if (filters.ticketsType !== 'all') {
       list = list.filter((t) => String(t.name || '') === filters.ticketsType);
     }
+    if (filters.ticketsScope === 'current') {
+      list = list.filter((t) => ticketBelongsToCurrentEvent(t));
+    } else if (filters.ticketsScope === 'active') {
+      list = list.filter((t) => ticketBelongsToCurrentEvent(t) && ticketTierIsActive(t));
+    }
     return list;
+  }
+
+  function ticketEventForRow(t) {
+    if (!t || !t.eventId) return null;
+    return state.events.find((e) => e.id === t.eventId) || null;
+  }
+
+  function ticketBelongsToCurrentEvent(t) {
+    const ev = ticketEventForRow(t);
+    if (!ev) return true;
+    if (eventRowIsArchived(ev)) return false;
+    const key = String(ev.statusKey || '').toLowerCase();
+    return (
+      key === 'live' ||
+      key === 'upcoming' ||
+      key === 'pending_approval' ||
+      key === 'pending'
+    );
+  }
+
+  function ticketTierIsActive(t) {
+    const statusLower = String(t?.status || 'Active').trim().toLowerCase();
+    return statusLower === 'active';
   }
 
   function filteredReviewsList() {
@@ -3083,9 +3115,12 @@
       ticketTypeSel.value = filters.ticketsType;
     }
 
+    const ticketScopeSel = document.getElementById('filter-tickets-scope');
+    if (ticketScopeSel) ticketScopeSel.value = filters.ticketsScope || 'current';
+
     const reviewGroupSel = document.getElementById('filter-reviews-group');
     if (reviewGroupSel) {
-      reviewGroupSel.innerHTML = '<option value="all">All your groups</option>';
+      reviewGroupSel.innerHTML = '<option value="all">All organiser pages</option>';
       state.groups.forEach((g) => {
         const opt = document.createElement('option');
         opt.value = g.id;
@@ -4773,6 +4808,15 @@
     }
 
     renderRevenueStripeBar();
+    syncRevenueSetupLayout();
+  }
+
+  function syncRevenueSetupLayout() {
+    const revenuePage = document.getElementById('sub-events-revenue');
+    const setupEl = document.getElementById('org-payment-setup-revenue');
+    if (!revenuePage) return;
+    const setupVisible = Boolean(setupEl && !setupEl.hidden && setupEl.children.length);
+    revenuePage.classList.toggle('org-revenue--setup-active', setupVisible);
   }
 
   function renderStripeConnectBanner() {
@@ -4830,10 +4874,17 @@
   function syncEventsTabHighlights(sub, enabled) {
     const activeSub = sub || 'events-list';
     document.querySelectorAll('[data-events-tab]').forEach((tab) => {
-      tab.classList.toggle(
-        'is-active',
-        Boolean(enabled) && tab.getAttribute('data-events-tab') === activeSub
-      );
+      const isActive = Boolean(enabled) && tab.getAttribute('data-events-tab') === activeSub;
+      tab.classList.toggle('is-active', isActive);
+      tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      tab.tabIndex = isActive ? 0 : -1;
+    });
+  }
+
+  function updateSharedEventFilterNotes() {
+    const active = eventsFiltersActive();
+    document.querySelectorAll('.org-filter-linked-note').forEach((el) => {
+      el.classList.toggle('is-active', active);
     });
   }
 
@@ -5473,6 +5524,7 @@
     if (revStatusEl) revStatusEl.value = filters.eventsStatus;
     if (revSearchEl) revSearchEl.value = filters.eventsSearch;
     if (revHideArchivedEl) revHideArchivedEl.checked = filters.eventsHideArchived !== false;
+    updateSharedEventFilterNotes();
   }
 
   function renderEvents() {
@@ -5533,11 +5585,14 @@
 
     if (!list.length) {
       const hasTickets = state.tickets.length > 0;
+      const scopeFiltered = filters.ticketsScope !== 'all';
       setOrgEmpty(empty, {
         show: true,
         title: hasTickets ? 'No matching tickets' : 'No ticket types yet',
         text: hasTickets
-          ? 'Try choosing a different event or ticket type filter.'
+          ? scopeFiltered
+            ? 'Nothing matches this filter — try All ticket types or pick a specific event.'
+            : 'Try choosing a different event or ticket type filter.'
           : 'Add ticket tiers when you create or edit an event.',
         hideActions: hasTickets,
       });
@@ -5773,13 +5828,15 @@
 
   function renderRevenue() {
     const body = document.getElementById('revenue-body');
+    const empty = document.getElementById('revenue-empty');
     if (!body) return;
 
     renderStripeConnectBanner();
 
     if (!eventsFiltersActive() && !state.eventsFullyLoaded && state.eventsHasMore) {
       body.innerHTML =
-        '<tr><td colspan="6" class="org-table-loading">Loading revenue…</td></tr>';
+        '<tr><td colspan="5" class="org-table-loading">Loading revenue…</td></tr>';
+      if (empty) empty.hidden = true;
       ensureAllEventsForGrouping()
         .then(() => renderRevenue())
         .catch((err) => showOrganiserAlert(err.message || 'Could not load events', true));
@@ -5798,6 +5855,21 @@
     setRev('rev-stat-events', String(state.eventsTotal || state.events.length));
     setRev('rev-stat-tickets', String(totalTicketsSold()));
     setRev('rev-stat-revenue', totalRevenueDisplay());
+
+    if (!list.length) {
+      const hasEvents = state.events.length > 0;
+      setOrgEmpty(empty, {
+        show: true,
+        title: hasEvents ? 'No matching events' : 'No revenue data yet',
+        text: hasEvents
+          ? 'Try adjusting your filters or search — the same filters apply on the Events tab.'
+          : 'Ticket sales and payout status appear here once you list events and sell tickets.',
+        hideActions: true,
+      });
+      updatePaginationNav('revenue', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
+      return;
+    }
+    setOrgEmpty(empty, { show: false });
 
     const pageInfo = paginateList(list, listPages.revenue);
     listPages.revenue = pageInfo.page;
@@ -7554,10 +7626,11 @@
       });
     });
 
-    ['filter-tickets-event', 'filter-tickets-type'].forEach((id) => {
+    ['filter-tickets-scope', 'filter-tickets-event', 'filter-tickets-type'].forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       el.addEventListener('change', () => {
+        if (id === 'filter-tickets-scope') filters.ticketsScope = el.value;
         if (id === 'filter-tickets-event') filters.ticketsEvent = el.value;
         if (id === 'filter-tickets-type') filters.ticketsType = el.value;
         listPages.tickets = 1;

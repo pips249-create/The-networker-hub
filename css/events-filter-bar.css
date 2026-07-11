@@ -28,6 +28,12 @@
   padding: 0 4px;
   font-size: var(--text-size-body);
   color: var(--text-muted);
+  scroll-margin-top: 96px;
+}
+
+#events-search-query {
+  font-weight: 500;
+  color: var(--charcoal);
 }
 
 .events-filter-bar {
@@ -1830,6 +1836,10 @@ body.browse-mode-organisers .events-toolbar {
 @media (max-width: 768px) {
   .filter-price-range-row {
     grid-template-columns: 1fr 4.75rem;
+  }
+
+  .events-results-meta {
+    scroll-margin-top: 76px;
   }
 
   .events-sort-wrap select {
