@@ -180,7 +180,7 @@
 
 /* About — story section */
 .content-story {
-  margin-bottom: 2.5rem;
+  margin-bottom: 0;
 }
 
 .content-story > h2 {
@@ -208,6 +208,10 @@
   gap: clamp(24px, 4vw, 44px);
   align-items: center;
   margin-bottom: 3rem;
+}
+
+.content-story .content-infrastructure-panel {
+  margin-bottom: 0;
 }
 
 @media (min-width: 900px) {
@@ -421,8 +425,18 @@
 
 /* About — team row (flex flex-col md:flex-row) */
 .content-founders {
-  margin: 0 auto 2.75rem;
+  margin: 0 auto 4rem;
   max-width: 980px;
+  padding-top: 3rem;
+}
+
+.content-founders-heading {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--charcoal);
+  text-align: center;
+  margin: 0 0 2rem;
 }
 
 .content-team-row {
