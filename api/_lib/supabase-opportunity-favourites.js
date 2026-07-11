@@ -35,6 +35,21 @@ function mapFavouriteRow(row) {
   };
 }
 
+async function listOpportunityFavouriteIds(session) {
+  if (!isSupabaseConfigured()) return [];
+  const sb = getSupabaseAdmin();
+  const attendeeId = await resolveAttendeeId(sb, session);
+  if (!attendeeId) return [];
+
+  const res = await sb
+    .from('opportunity_favourites')
+    .select('opportunity_id')
+    .eq('attendee_id', attendeeId)
+    .order('created_at', { ascending: false });
+  if (res.error) throw new Error(res.error.message);
+  return (res.data || []).map((row) => row.opportunity_id);
+}
+
 async function listOpportunityFavourites(session) {
   if (!isSupabaseConfigured()) return [];
   const sb = getSupabaseAdmin();
@@ -135,6 +150,7 @@ async function countSavesForOpportunityIds(opportunityIds) {
 
 module.exports = {
   listOpportunityFavourites,
+  listOpportunityFavouriteIds,
   addOpportunityFavourite,
   removeOpportunityFavourite,
   toggleOpportunityFavourite,

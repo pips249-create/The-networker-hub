@@ -40,7 +40,7 @@
   }
 
   var SEED_LISTINGS = [];
-
+  var loadedCatalog = [];
 
   var REGIONS = [
     'Yorkshire',
@@ -298,7 +298,7 @@
   }
 
   function loadCatalog() {
-    return [];
+    return loadedCatalog.slice();
   }
 
   function loadCatalogAsync() {
@@ -318,14 +318,15 @@
           } else if (!result.ok || (data && data.error)) {
             console.warn('[opportunities] Failed to load listings:', (data && data.error) || 'request_failed');
           }
-          return [];
+          return loadedCatalog.slice();
         }
-        return data.opportunities.map(function (row, i) {
+        loadedCatalog = data.opportunities.map(function (row, i) {
           return normalizeListing(apiRowToSeed(row), i);
         });
+        return loadedCatalog.slice();
       })
       .catch(function () {
-        return [];
+        return loadedCatalog.slice();
       });
   }
 

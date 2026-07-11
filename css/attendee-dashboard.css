@@ -1581,6 +1581,10 @@ tr.ad-row-highlight td {
   margin-bottom: 12px;
 }
 
+.ad-saved-opp-toolbar[hidden] {
+  display: none !important;
+}
+
 .ad-saved-opp-toolbar {
   display: flex;
   flex-wrap: wrap;

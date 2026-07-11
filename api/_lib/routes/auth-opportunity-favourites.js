@@ -1,6 +1,7 @@
 const { setCors, json, sessionFromRequest } = require('../auth');
 const {
   listOpportunityFavourites,
+  listOpportunityFavouriteIds,
   toggleOpportunityFavourite,
   removeOpportunityFavourite,
 } = require('../supabase-opportunity-favourites');
@@ -35,8 +36,19 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const favourites = await listOpportunityFavourites(session);
-      const ids = favourites.map((f) => f.opportunityId);
+      const [favourites, rawIds] = await Promise.all([
+        listOpportunityFavourites(session),
+        listOpportunityFavouriteIds(session),
+      ]);
+      const ids = [
+        ...new Set(
+          favourites
+            .map((f) => f.opportunityId)
+            .concat(rawIds || [])
+            .map((id) => String(id || '').trim())
+            .filter(Boolean)
+        ),
+      ];
       return json(res, 200, { ok: true, favourites, opportunityIds: ids });
     }
 

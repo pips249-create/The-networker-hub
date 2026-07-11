@@ -2068,6 +2068,19 @@
     return next;
   }
 
+  function readStoredOpportunityIds() {
+    if (window.HubOpportunitySaves && typeof window.HubOpportunitySaves.readLocal === 'function') {
+      return window.HubOpportunitySaves.readLocal();
+    }
+    try {
+      const raw = localStorage.getItem('hubSavedOpportunityIds');
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch {
+      return [];
+    }
+  }
+
   function applySavedOpportunityData(data) {
     let list = [];
     if (data && data.ok && Array.isArray(data.favourites) && data.favourites.length) {
@@ -2079,7 +2092,7 @@
     const serverIds = new Set(
       list.map((item) => String(item.opportunityId || item.opportunity_id || '').trim()).filter(Boolean)
     );
-    const localIds = window.HubOpportunitySaves ? window.HubOpportunitySaves.ids() : [];
+    const localIds = readStoredOpportunityIds();
     localIds.forEach((id) => {
       const key = String(id || '').trim();
       if (key && !serverIds.has(key)) {
@@ -2091,13 +2104,19 @@
     savedOpportunities = list.map(enrichSavedOpportunity);
 
     if (window.HubOpportunitySaves) {
-      const ids = savedOpportunities
+      const mergedIds = savedOpportunities
         .map((item) => String(item.opportunityId || item.opportunity_id || '').trim())
         .filter(Boolean);
-      if (ids.length) window.HubOpportunitySaves.writeLocal(ids);
-      else if (data && data.ok && Array.isArray(data.opportunityIds)) {
+      if (mergedIds.length) {
+        window.HubOpportunitySaves.writeLocal(mergedIds);
+      } else if (data && data.ok && Array.isArray(data.opportunityIds) && data.opportunityIds.length) {
         window.HubOpportunitySaves.writeLocal(data.opportunityIds);
       }
+    }
+
+    maybeDefaultSavedScope();
+    if (dashboardReady && currentRoute === 'saved') {
+      renderRouteTables('saved', { force: true });
     }
   }
 

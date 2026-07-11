@@ -16,13 +16,26 @@
     }
   }
 
+  function uniqueIds(ids) {
+    var seen = new Set();
+    var out = [];
+    (ids || []).forEach(function (id) {
+      var key = String(id || '').trim();
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      out.push(key);
+    });
+    return out;
+  }
+
   function writeLocal(ids) {
+    var next = uniqueIds(ids);
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(ids));
+      localStorage.setItem(SAVE_KEY, JSON.stringify(next));
     } catch (e) {
       /* ignore */
     }
-    cache = ids.slice();
+    cache = next.slice();
   }
 
   function ids() {
@@ -35,26 +48,34 @@
     return ids().includes(String(id));
   }
 
-  function setCacheFromServer(serverIds) {
+  function setCacheFromServer(serverIds, keepLocalIds) {
     if (!Array.isArray(serverIds)) return;
-    cache = serverIds.map(String);
+    var merged = uniqueIds(serverIds);
+    if (keepLocalIds && keepLocalIds.length) {
+      merged = uniqueIds(merged.concat(keepLocalIds));
+    }
+    cache = merged;
     writeLocal(cache);
+  }
+
+  function fetchFromServer() {
+    return fetch('/api/auth/opportunity-favourites', { credentials: 'include' })
+      .then(function (res) {
+        return res.json();
+      })
+      .catch(function () {
+        return null;
+      });
   }
 
   function syncFromServer() {
     if (syncPromise) return syncPromise;
-    syncPromise = fetch('/api/auth/opportunity-favourites', { credentials: 'include' })
-      .then(function (res) {
-        return res.json();
-      })
+    syncPromise = fetchFromServer()
       .then(function (data) {
         if (data && data.ok && Array.isArray(data.opportunityIds)) {
           setCacheFromServer(data.opportunityIds);
         }
         return data;
-      })
-      .catch(function () {
-        return null;
       })
       .finally(function () {
         syncPromise = null;
@@ -63,15 +84,26 @@
   }
 
   function mergeLocalToServer() {
-    var local = readLocal();
-    if (!local.length) return syncFromServer();
-    return syncFromServer().then(function (data) {
-      if (!data || !data.ok) return data;
+    var localSnapshot = readLocal();
+    if (!localSnapshot.length) return syncFromServer();
+
+    return fetchFromServer().then(function (data) {
+      if (!data || !data.ok) {
+        cache = localSnapshot.slice();
+        writeLocal(cache);
+        return data;
+      }
+
       var server = new Set((data.opportunityIds || []).map(String));
-      var pending = local.filter(function (id) {
-        return !server.has(id);
+      var pending = localSnapshot.filter(function (id) {
+        return !server.has(String(id));
       });
-      if (!pending.length) return data;
+
+      if (!pending.length) {
+        setCacheFromServer(data.opportunityIds);
+        return data;
+      }
+
       return pending
         .reduce(function (chain, id) {
           return chain.then(function () {
@@ -86,7 +118,15 @@
           });
         }, Promise.resolve())
         .then(function () {
-          return syncFromServer();
+          return fetchFromServer();
+        })
+        .then(function (finalData) {
+          var serverIds =
+            finalData && finalData.ok && Array.isArray(finalData.opportunityIds)
+              ? finalData.opportunityIds
+              : data.opportunityIds || [];
+          setCacheFromServer(serverIds, localSnapshot);
+          return finalData || data;
         });
     });
   }
@@ -116,7 +156,7 @@
       })
       .then(function (data) {
         if (data && data.ok && Array.isArray(data.opportunityIds)) {
-          setCacheFromServer(data.opportunityIds);
+          setCacheFromServer(data.opportunityIds, nowSaved ? [key] : []);
           return data.saved !== false;
         }
         return nowSaved;
@@ -138,6 +178,7 @@
 
   window.HubOpportunitySaves = {
     ids: ids,
+    readLocal: readLocal,
     isSaved: isSaved,
     toggle: toggle,
     sync: syncFromServer,
