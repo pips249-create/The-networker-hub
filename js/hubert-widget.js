@@ -19,6 +19,7 @@
     if (script && script.getAttribute('data-hubert') === 'off') return true;
     var path = (window.location.pathname || '').toLowerCase();
     if (/\/contact\.html$/.test(path) || /\/contact\/?$/.test(path)) return true;
+    if (/\/faq\.html$/.test(path) || /\/faq\/?$/.test(path)) return true;
     if (/\/admin\//.test(path)) return true;
     if (/\/organiser\//.test(path)) return true;
     return false;

@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260730">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/contact-page.css?v=20260610b">
+<link rel="stylesheet" href="css/contact-page.css?v=20260711">
 <link rel="stylesheet" href="css/hubert-widget.css?v=20260610b">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260730" />
@@ -45,10 +45,25 @@
         <li>
           <span class="contact-details-label">Email</span>
           <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a>
+          <span class="contact-details-note">Our team replies to urgent account queries within 24 business hours.</span>
+        </li>
+        <li>
+          <span class="contact-details-label">Office hours</span>
+          <span>Mon&ndash;Fri, 9am&ndash;5pm (UK). Human support reviews tickets during these hours.</span>
         </li>
         <li>
           <span class="contact-details-label">Address</span>
           <span>Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF</span>
+        </li>
+      </ul>
+      <ul class="contact-trust" aria-label="How we support you">
+        <li class="contact-trust-item">
+          <strong>Platform help</strong>
+          <span>Hubert can answer most questions about events, tickets, and opportunities instantly.</span>
+        </li>
+        <li class="contact-trust-item">
+          <strong>Account &amp; billing</strong>
+          <span>Rosie and Catherine handle refunds, organiser onboarding, and anything account-specific.</span>
         </li>
       </ul>
       <p class="contact-sidebar-note">
@@ -81,18 +96,46 @@
       </div>
 
       <form class="contact-chat-form" id="contact-chat-form">
-        <div class="contact-chat-form-compose">
+        <div class="contact-chat-form-bar">
           <label class="visually-hidden" for="contact-chat-input">Your message</label>
           <textarea
             id="contact-chat-input"
-            rows="2"
+            rows="1"
             placeholder="Ask Hubert to find events, opportunities, or guide you…"
             maxlength="2000"
             required
           ></textarea>
-          <button type="submit" class="btn btn-primary" id="contact-chat-send">Send</button>
+          <button type="submit" class="btn btn-primary contact-chat-send" id="contact-chat-send">Send</button>
         </div>
+        <p class="contact-chat-escape">
+          <button type="button" class="contact-chat-escape-link" id="contact-show-team-form" aria-expanded="false" aria-controls="contact-team-form">
+            <span aria-hidden="true">✉️</span> Prefer a standard contact form? Click here to drop a message straight to our team.
+          </button>
+        </p>
       </form>
+
+      <div class="contact-team-form" id="contact-team-form" hidden>
+        <h3 class="contact-team-form-title">Message Rosie &amp; Catherine</h3>
+        <p class="contact-team-form-lede">Leave a note for the team — we&rsquo;ll pick it up by email during office hours.</p>
+        <form id="contact-team-form-fields">
+          <div class="contact-team-field">
+            <label for="contact-team-name">Your name</label>
+            <input type="text" id="contact-team-name" name="name" autocomplete="name" required maxlength="120" />
+          </div>
+          <div class="contact-team-field">
+            <label for="contact-team-email">Email address</label>
+            <input type="email" id="contact-team-email" name="email" autocomplete="email" required maxlength="254" />
+          </div>
+          <div class="contact-team-field">
+            <label for="contact-team-message">Your message</label>
+            <textarea id="contact-team-message" name="message" rows="5" required maxlength="4000" placeholder="Tell us about your booking, organiser account, or enquiry…"></textarea>
+          </div>
+          <div class="contact-team-form-actions">
+            <button type="submit" class="btn btn-primary">Send to the team</button>
+            <button type="button" class="btn btn-secondary" id="contact-hide-team-form">Back to Hubert</button>
+          </div>
+        </form>
+      </div>
     </section>
   </div>
 </main>
@@ -100,7 +143,7 @@
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260610" data-root=""></script>
 <script src="js/hubert-chat.js?v=20260610"></script>
-<script src="js/contact-chat.js?v=20260610"></script>
+<script src="js/contact-chat.js?v=20260711"></script>
 
 </body>
 </html>

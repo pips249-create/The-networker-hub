@@ -3,243 +3,332 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FAQ – The Networker Hub</title>
-<meta name="description" content="Frequently asked questions about The Networker Hub — finding events, accounts, organisers, and bookings.">
+<title>FAQ &amp; Help – The Networker Hub</title>
+<meta name="description" content="Frequently asked questions about The Networker Hub — finding events, accounts, organisers, and bookings. Search FAQs or ask Hubert instantly.">
 <link rel="canonical" href="https://the-networker.co.uk/faq.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260730">
 <link rel="stylesheet" href="css/content-page.css">
+<link rel="stylesheet" href="css/faq-page.css?v=20260711">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
-    <link rel="stylesheet" href="css/hub-mobile.css?v=20260730" />
+<link rel="stylesheet" href="css/hub-mobile.css?v=20260730" />
 <script src="js/hub-seo-static-config.js?v=20260612"></script>
 <script src="js/hub-seo-static.js?v=20260612" data-page="faq"></script>
 <script src="js/hub-seo-data.js?v=20260612" defer></script>
 <script src="js/hub-seo-schema.js?v=20260612" defer></script>
 </head>
-<body>
+<body class="faq-page">
 
 <div id="hub-site-nav"></div>
 <script src="js/site-nav.js?v=20260710g" data-root="" data-page="faq"></script>
 
 <main class="content-page-main">
-  <header class="content-hero">
-    <div class="content-hero-inner">
-      <p class="section-kicker">FAQ</p>
+  <header class="content-hero faq-hero">
+    <div class="content-hero-inner faq-hero-inner">
+      <p class="section-kicker">FAQ &amp; Help</p>
       <h1>Frequently asked questions</h1>
       <p class="content-hero-lede">
-        Quick answers about browsing events, your account, and listing as an organiser. Organisers: see our <a href="for-organisers.html">For Organisers page</a> and <a href="guides.html">step-by-step guides</a>. Can&rsquo;t find what you need? <a href="contact.html">Contact us</a>.
+        Quick answers about browsing events, your account, and listing as an organiser. Search below or browse by category — or ask Hubert for an instant answer.
+      </p>
+      <div class="faq-search-wrap">
+        <label class="visually-hidden" for="faq-search">Search FAQs</label>
+        <span class="faq-search-icon" aria-hidden="true">🔍</span>
+        <input
+          type="search"
+          id="faq-search"
+          class="faq-search-input"
+          placeholder="Search — e.g. payout, password, transfer…"
+          autocomplete="off"
+          enterkeyhint="search"
+        >
+      </div>
+      <p class="faq-search-meta" id="faq-search-meta" hidden>
+        Showing <strong id="faq-search-count">0</strong> matching questions
       </p>
     </div>
   </header>
 
-  <div class="content-body">
-    <ul class="faq-list" role="list">
-      <li>
-        <details class="faq-item">
-          <summary>What is The Networker Hub?</summary>
-          <div class="faq-answer">
-            <p>The Networker Hub is a UK platform for discovering networking meetings, exhibitions, conferences, and business opportunities. Members can search and book; organisers can list events and reach new audiences.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>How do I find events on The Networker Hub?</summary>
-          <div class="faq-answer">
-            <p>Use Browse events in the top navigation or visit the events listing at <a href="/events/.">/events/.</a> You can filter by type, date, industry, and location, and use map view on supported pages.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>Do I need an account to browse The Networker Hub?</summary>
-          <div class="faq-answer">
-            <p>No — browsing is completely free. You can explore events and business opportunities without signing in. You only need a free account when you want to buy a ticket or enquire about a business opportunity. Sign-up takes about 2 minutes.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>How do I book a ticket on The Networker Hub?</summary>
-          <div class="faq-answer">
-            <p>Create a free account first, then open an event from the listing page, choose your ticket type, and complete secure Stripe checkout. You can add guest names at checkout and view bookings in My tickets.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>How do I enquire about a business opportunity?</summary>
-          <div class="faq-answer">
-            <p>Browse opportunities for free at <a href="/opportunities/.">/opportunities/.</a> When you find one you are interested in, sign in or create a free account to send a direct enquiry to the lister from the opportunity page.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>How do organisers list an event on The Networker Hub?</summary>
-          <div class="faq-answer">
-            <p>Sign in, claim your organiser page if prompted, then open the organiser dashboard at <a href="/organiser/">/organiser/</a> to create events and manage attendees. Your networking group may already be listed — search the organiser directory on <a href="/events/">/events/</a> and claim the page linked to your email.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>Where does event information on The Networker Hub come from?</summary>
-          <div class="faq-answer">
-            <p>Listings are managed in the events database and updated by organisers and the Networker Hub team. Dates, venues, and prices on each event page are the source of truth for that event.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>Who operates The Networker Hub?</summary>
-          <div class="faq-answer">
-            <p>The Networker Hub is operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94), co-founded by Rosie and Catherine.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>Who is Hubert on The Networker Hub?</summary>
-          <div class="faq-answer">
-            <p>Hubert is the business butler and concierge on The Networker Hub. He helps visitors find events and business opportunities, explains how tickets and enquiries work, and guides organisers to the right tools. Chat with Hubert on the contact page or via the floating assistant on public pages.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>Is The Networker Hub free to use?</summary>
-          <div class="faq-answer">
-            <p>Yes — browsing events and business opportunities is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>I forgot my password — how do I sign in?</summary>
-          <div class="faq-answer">
-            <p>Go to <a href="/login.html">/login.html</a> and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a> from the address on your account.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>I did not receive my booking confirmation email</summary>
-          <div class="faq-answer">
-            <p>Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My tickets at <a href="/account/.">/account/.</a> If you still cannot find your booking, email <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a> with the event name and email address used at checkout.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>Can I transfer my ticket to someone else?</summary>
-          <div class="faq-answer">
-            <p>Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a> with your order reference.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>What happens if an organiser cancels an event?</summary>
-          <div class="faq-answer">
-            <p>If an organiser cancels, you should receive a full refund of the ticket price paid, including mandatory booking fees shown at checkout, typically within 14 days via Stripe to your original payment method.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>Are there free networking events?</summary>
-          <div class="faq-answer">
-            <p>Yes — many events on the hub are free to attend. Browse <a href="/events/">/events/</a> and check each event page for pricing. Some free events still require registration or a free account to complete sign-up.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>Why should I list my networking group on The Networker Hub?</summary>
-          <div class="faq-answer">
-            <p>The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. Networking-specific tools include the guest visit programme (1–2 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Alumni Fast-Pass to invite past attendees to exclusive alumni rates on repeat events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>Can I list on The Networker Hub if I already use another event platform?</summary>
-          <div class="faq-answer">
-            <p>Yes — many organisers use the hub alongside other tools. There is no exclusivity requirement. List here to reach members who browse specifically for UK networking events, build your organiser profile on the hub, and optionally publish business opportunities. You can list the same events you run elsewhere.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>How much does it cost to list an event as an organiser?</summary>
-          <div class="faq-answer">
-            <p>There is no monthly subscription to list events. Use the organiser dashboard at <a href="/organiser/">/organiser/</a> to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a> for onboarding help.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>Why is my event not showing on the browse events page?</summary>
-          <div class="faq-answer">
-            <p>Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in <a href="/organiser/.">/organiser/.</a> Email <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a> with the event title if it is still missing.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>How can I advertise my business on The Networker Hub?</summary>
-          <div class="faq-answer">
-            <p>Paid Sponsor Hub placements are available on the events directory, organisers browse, and business opportunities — see <a href="/advertising.html">/advertising.html</a> for guide pricing. Email <a href="mailto:rosie@thenetworkerhub.com">rosie@thenetworkerhub.com</a>. You can also list events or business opportunities to reach the network organically.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>How do organisers download attendee lists?</summary>
-          <div class="faq-answer">
-            <p>Sign in to <a href="/organiser/">/organiser/</a>, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>When do organisers receive payouts for ticket sales?</summary>
-          <div class="faq-answer">
-            <p>Payouts are not instant. A 7-day settlement period applies after the event ends. Archive the event, then request a payout from the organiser dashboard when eligible. Stripe onboarding is required.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>What fees does The Networker Hub charge on tickets?</summary>
-          <div class="faq-answer">
-            <p>Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing. Organisers receive the full ticket price.</p>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="faq-item">
-          <summary>Why did The Networker Hub start?</summary>
-          <div class="faq-answer">
-            <p>Co-founders Rosie and Catherine believe the right room at the right time changes careers and companies. They built one trusted UK platform for events, organiser profiles, and business opportunities.</p>
-          </div>
-        </details>
-      </li>
-    </ul>
+  <div class="faq-layout">
+    <div class="faq-main">
+      <nav class="faq-categories" id="faq-categories" role="tablist" aria-label="FAQ categories">
+        <button type="button" class="faq-category-tab is-active" role="tab" id="faq-tab-all" aria-selected="true" aria-controls="faq-panels" data-category="all">All topics</button>
+        <button type="button" class="faq-category-tab" role="tab" id="faq-tab-general" aria-selected="false" aria-controls="faq-panels" data-category="general">General &amp; Accounts</button>
+        <button type="button" class="faq-category-tab" role="tab" id="faq-tab-buyers" aria-selected="false" aria-controls="faq-panels" data-category="buyers">For Ticket Buyers</button>
+        <button type="button" class="faq-category-tab" role="tab" id="faq-tab-organisers" aria-selected="false" aria-controls="faq-panels" data-category="organisers">For Organisers</button>
+      </nav>
 
-    <div class="faq-cta">
-      <p>Listing as an organiser? See our <a href="guides.html">organiser guides</a> for events and business opportunities.</p>
-      <p>Still have a question? Ask <strong>Hubert</strong> — on <a href="contact.html">Contact us</a> or via the chat button on any page.</p>
-      <a class="btn btn-primary" href="contact.html">Chat with Hubert</a>
+      <div class="faq-panels" id="faq-panels">
+        <section class="faq-category-block" data-category-block="general" aria-labelledby="faq-cat-general">
+          <header class="faq-category-head">
+            <h2 class="faq-category-title" id="faq-cat-general">General &amp; Accounts</h2>
+            <p class="faq-category-lede">Hubert, passwords, browsing, and what the hub is.</p>
+          </header>
+          <ul class="faq-list" role="list">
+              <li class="faq-list-item" data-category="general" data-search="what is the networker hub? the networker hub is a uk platform for discovering networking meetings, exhibitions, conferences, and business opportunities. members can search and book; organisers can list events and reach new audiences. general general &amp; accounts">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">🌐</span><span class="faq-item-text">What is The Networker Hub?</span></summary>
+                  <div class="faq-answer">
+                    <p>The Networker Hub is a UK platform for discovering networking meetings, exhibitions, conferences, and business opportunities. Members can search and book; organisers can list events and reach new audiences.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="general" data-search="how do i find events on the networker hub? use browse events in the top navigation or visit the events listing at /events/. you can filter by type, date, industry, and location, and use map view on supported pages. general general &amp; accounts">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">🔍</span><span class="faq-item-text">How do I find events on The Networker Hub?</span></summary>
+                  <div class="faq-answer">
+                    <p>Use Browse events in the top navigation or visit the events listing at <a href="/events/.">/events/.</a> You can filter by type, date, industry, and location, and use map view on supported pages.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="general" data-search="do i need an account to browse the networker hub? no — browsing is completely free. you can explore events and business opportunities without signing in. you only need a free account when you want to buy a ticket or enquire about a business opportunity. sign-up takes about 2 minutes. general general &amp; accounts">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">👤</span><span class="faq-item-text">Do I need an account to browse The Networker Hub?</span></summary>
+                  <div class="faq-answer">
+                    <p>No — browsing is completely free. You can explore events and business opportunities without signing in. You only need a free account when you want to buy a ticket or enquire about a business opportunity. Sign-up takes about 2 minutes.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="general" data-search="how do i enquire about a business opportunity? browse opportunities for free at /opportunities/. when you find one you are interested in, sign in or create a free account to send a direct enquiry to the lister from the opportunity page. general general &amp; accounts">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">💼</span><span class="faq-item-text">How do I enquire about a business opportunity?</span></summary>
+                  <div class="faq-answer">
+                    <p>Browse opportunities for free at <a href="/opportunities/.">/opportunities/.</a> When you find one you are interested in, sign in or create a free account to send a direct enquiry to the lister from the opportunity page.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="general" data-search="where does event information on the networker hub come from? listings are managed in the events database and updated by organisers and the networker hub team. dates, venues, and prices on each event page are the source of truth for that event. general general &amp; accounts">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">📋</span><span class="faq-item-text">Where does event information on The Networker Hub come from?</span></summary>
+                  <div class="faq-answer">
+                    <p>Listings are managed in the events database and updated by organisers and the Networker Hub team. Dates, venues, and prices on each event page are the source of truth for that event.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="general" data-search="who operates the networker hub? the networker hub is operated by the networker group ltd (company no. 15252227, vat no. 454 4092 94), co-founded by rosie and catherine. general general &amp; accounts">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">🏢</span><span class="faq-item-text">Who operates The Networker Hub?</span></summary>
+                  <div class="faq-answer">
+                    <p>The Networker Hub is operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94), co-founded by Rosie and Catherine.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="general" data-search="who is hubert on the networker hub? hubert is the business butler and concierge on the networker hub. he helps visitors find events and business opportunities, explains how tickets and enquiries work, and guides organisers to the right tools. chat with hubert on the contact page or via the floating assistant on public pages. general general &amp; accounts">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">✨</span><span class="faq-item-text">Who is Hubert on The Networker Hub?</span></summary>
+                  <div class="faq-answer">
+                    <p>Hubert is the business butler and concierge on The Networker Hub. He helps visitors find events and business opportunities, explains how tickets and enquiries work, and guides organisers to the right tools. Chat with Hubert on the contact page or via the floating assistant on public pages.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="general" data-search="is the networker hub free to use? yes — browsing events and business opportunities is completely free with no sign-in required. you only pay when you purchase an event ticket at the price shown by the organiser. general general &amp; accounts">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">✅</span><span class="faq-item-text">Is The Networker Hub free to use?</span></summary>
+                  <div class="faq-answer">
+                    <p>Yes — browsing events and business opportunities is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="general" data-search="i forgot my password — how do i sign in? go to /login.html and use the password reset link. enter your email and follow the instructions. if you are still stuck, email hello@thenetworkerhub.com from the address on your account. general general &amp; accounts">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">🔑</span><span class="faq-item-text">I forgot my password — how do I sign in?</span></summary>
+                  <div class="faq-answer">
+                    <p>Go to <a href="/login.html">/login.html</a> and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a> from the address on your account.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="general" data-search="why did the networker hub start? co-founders rosie and catherine believe the right room at the right time changes careers and companies. they built one trusted uk platform for events, organiser profiles, and business opportunities. general general &amp; accounts">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">💡</span><span class="faq-item-text">Why did The Networker Hub start?</span></summary>
+                  <div class="faq-answer">
+                    <p>Co-founders Rosie and Catherine believe the right room at the right time changes careers and companies. They built one trusted UK platform for events, organiser profiles, and business opportunities.</p>
+                  </div>
+                </details>
+              </li>
+          </ul>
+        </section>
+        <section class="faq-category-block" data-category-block="buyers" aria-labelledby="faq-cat-buyers">
+          <header class="faq-category-head">
+            <h2 class="faq-category-title" id="faq-cat-buyers">For Ticket Buyers</h2>
+            <p class="faq-category-lede">Refunds, transfers, booking issues, and confirmations.</p>
+          </header>
+          <ul class="faq-list" role="list">
+              <li class="faq-list-item" data-category="buyers" data-search="how do i book a ticket on the networker hub? create a free account first, then open an event from the listing page, choose your ticket type, and complete secure stripe checkout. you can add guest names at checkout and view bookings in my tickets. buyers for ticket buyers">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">🎫</span><span class="faq-item-text">How do I book a ticket on The Networker Hub?</span></summary>
+                  <div class="faq-answer">
+                    <p>Create a free account first, then open an event from the listing page, choose your ticket type, and complete secure Stripe checkout. You can add guest names at checkout and view bookings in My tickets.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="buyers" data-search="i did not receive my booking confirmation email check your spam or junk folder and confirm your account email is correct. your tickets also appear in my tickets at /account/. if you still cannot find your booking, email hello@thenetworkerhub.com with the event name and email address used at checkout. buyers for ticket buyers">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">📧</span><span class="faq-item-text">I did not receive my booking confirmation email</span></summary>
+                  <div class="faq-answer">
+                    <p>Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My tickets at <a href="/account/.">/account/.</a> If you still cannot find your booking, email <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a> with the event name and email address used at checkout.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="buyers" data-search="can i transfer my ticket to someone else? tickets are generally non-transferable without the organiser's consent. contact the organiser via the event listing page to ask. for help, email hello@thenetworkerhub.com with your order reference. buyers for ticket buyers">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">🎟️</span><span class="faq-item-text">Can I transfer my ticket to someone else?</span></summary>
+                  <div class="faq-answer">
+                    <p>Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a> with your order reference.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="buyers" data-search="what happens if an organiser cancels an event? if an organiser cancels, you should receive a full refund of the ticket price paid, including mandatory booking fees shown at checkout, typically within 14 days via stripe to your original payment method. buyers for ticket buyers">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">💸</span><span class="faq-item-text">What happens if an organiser cancels an event?</span></summary>
+                  <div class="faq-answer">
+                    <p>If an organiser cancels, you should receive a full refund of the ticket price paid, including mandatory booking fees shown at checkout, typically within 14 days via Stripe to your original payment method.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="buyers" data-search="are there free networking events? yes — many events on the hub are free to attend. browse /events/ and check each event page for pricing. some free events still require registration or a free account to complete sign-up. buyers for ticket buyers">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">🎉</span><span class="faq-item-text">Are there free networking events?</span></summary>
+                  <div class="faq-answer">
+                    <p>Yes — many events on the hub are free to attend. Browse <a href="/events/">/events/</a> and check each event page for pricing. Some free events still require registration or a free account to complete sign-up.</p>
+                  </div>
+                </details>
+              </li>
+          </ul>
+        </section>
+        <section class="faq-category-block" data-category-block="organisers" aria-labelledby="faq-cat-organisers">
+          <header class="faq-category-head">
+            <h2 class="faq-category-title" id="faq-cat-organisers">For Organisers</h2>
+            <p class="faq-category-lede">Payouts, attendee lists, advertising, and fees.</p>
+          </header>
+          <ul class="faq-list" role="list">
+              <li class="faq-list-item" data-category="organisers" data-search="how do organisers list an event on the networker hub? sign in, claim your organiser page if prompted, then open the organiser dashboard at /organiser/ to create events and manage attendees. your networking group may already be listed — search the organiser directory on /events/ and claim the page linked to your email. organisers for organisers">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">📅</span><span class="faq-item-text">How do organisers list an event on The Networker Hub?</span></summary>
+                  <div class="faq-answer">
+                    <p>Sign in, claim your organiser page if prompted, then open the organiser dashboard at <a href="/organiser/">/organiser/</a> to create events and manage attendees. Your networking group may already be listed — search the organiser directory on <a href="/events/">/events/</a> and claim the page linked to your email.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="organisers" data-search="why should i list my networking group on the networker hub? the networker hub is built for uk business networking — not generic ticketing. you get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. networking-specific tools include the guest visit programme (1–2 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and csv export), category exclusivity for application-based events, and alumni fast-pass to invite past attendees to exclusive alumni rates on repeat events. you receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. free events are supported without stripe. step-by-step organiser guides are on the guides page. organisers for organisers">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">⭐</span><span class="faq-item-text">Why should I list my networking group on The Networker Hub?</span></summary>
+                  <div class="faq-answer">
+                    <p>The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. Networking-specific tools include the guest visit programme (1–2 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Alumni Fast-Pass to invite past attendees to exclusive alumni rates on repeat events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="organisers" data-search="can i list on the networker hub if i already use another event platform? yes — many organisers use the hub alongside other tools. there is no exclusivity requirement. list here to reach members who browse specifically for uk networking events, build your organiser profile on the hub, and optionally publish business opportunities. you can list the same events you run elsewhere. organisers for organisers">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">🔄</span><span class="faq-item-text">Can I list on The Networker Hub if I already use another event platform?</span></summary>
+                  <div class="faq-answer">
+                    <p>Yes — many organisers use the hub alongside other tools. There is no exclusivity requirement. List here to reach members who browse specifically for UK networking events, build your organiser profile on the hub, and optionally publish business opportunities. You can list the same events you run elsewhere.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="organisers" data-search="how much does it cost to list an event as an organiser? there is no monthly subscription to list events. use the organiser dashboard at /organiser/ to publish free or paid events. for paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. free events do not require stripe. email hello@thenetworkerhub.com for onboarding help. organisers for organisers">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">💷</span><span class="faq-item-text">How much does it cost to list an event as an organiser?</span></summary>
+                  <div class="faq-answer">
+                    <p>There is no monthly subscription to list events. Use the organiser dashboard at <a href="/organiser/">/organiser/</a> to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a> for onboarding help.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="organisers" data-search="why is my event not showing on the browse events page? public browse only shows events that are published (not draft), approved, and linked to a published organiser profile. complete tickets, refund policy, and publish in /organiser/. email hello@thenetworkerhub.com with the event title if it is still missing. organisers for organisers">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">👁️</span><span class="faq-item-text">Why is my event not showing on the browse events page?</span></summary>
+                  <div class="faq-answer">
+                    <p>Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in <a href="/organiser/.">/organiser/.</a> Email <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a> with the event title if it is still missing.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="organisers" data-search="how can i advertise my business on the networker hub? paid sponsor hub placements are available on the events directory, organisers browse, and business opportunities — see /advertising.html for guide pricing. email rosie@thenetworkerhub.com. you can also list events or business opportunities to reach the network organically. organisers for organisers">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">📣</span><span class="faq-item-text">How can I advertise my business on The Networker Hub?</span></summary>
+                  <div class="faq-answer">
+                    <p>Paid Sponsor Hub placements are available on the events directory, organisers browse, and business opportunities — see <a href="/advertising.html">/advertising.html</a> for guide pricing. Email <a href="mailto:rosie@thenetworkerhub.com">rosie@thenetworkerhub.com</a>. You can also list events or business opportunities to reach the network organically.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="organisers" data-search="how do organisers download attendee lists? sign in to /organiser/, open events → attendees. see each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click download attendees csv. organisers for organisers">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">📊</span><span class="faq-item-text">How do organisers download attendee lists?</span></summary>
+                  <div class="faq-answer">
+                    <p>Sign in to <a href="/organiser/">/organiser/</a>, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="organisers" data-search="when do organisers receive payouts for ticket sales? payouts are not instant. a 7-day settlement period applies after the event ends. archive the event, then request a payout from the organiser dashboard when eligible. stripe onboarding is required. organisers for organisers">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">💰</span><span class="faq-item-text">When do organisers receive payouts for ticket sales?</span></summary>
+                  <div class="faq-answer">
+                    <p>Payouts are not instant. A 7-day settlement period applies after the event ends. Archive the event, then request a payout from the organiser dashboard when eligible. Stripe onboarding is required.</p>
+                  </div>
+                </details>
+              </li>
+              <li class="faq-list-item" data-category="organisers" data-search="what fees does the networker hub charge on tickets? attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing. organisers receive the full ticket price. organisers for organisers">
+                <details class="faq-item">
+                  <summary><span class="faq-item-icon" aria-hidden="true">💳</span><span class="faq-item-text">What fees does The Networker Hub charge on tickets?</span></summary>
+                  <div class="faq-answer">
+                    <p>Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing. Organisers receive the full ticket price.</p>
+                  </div>
+                </details>
+              </li>
+          </ul>
+        </section>
+      </div>
+
+      <p class="faq-empty" id="faq-empty" hidden>
+        No matching questions. Try a different search term, switch category, or ask Hubert on the right.
+      </p>
+
+      <div class="faq-cta">
+        <p>Listing as an organiser? See our <a href="guides.html">organiser guides</a> for events and business opportunities.</p>
+        <p>Need human help? Email <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a> or visit <a href="contact.html">Contact us</a>.</p>
+      </div>
     </div>
+
+    <aside class="faq-hubert" aria-labelledby="faq-hubert-heading">
+      <div class="faq-hubert-card">
+        <div class="faq-hubert-card-head">
+          <img class="faq-hubert-avatar" src="assets/hubert-icon.png" alt="" width="56" height="56">
+          <div>
+            <h2 id="faq-hubert-heading">Don&rsquo;t feel like scrolling?</h2>
+            <p class="faq-hubert-lede">Just ask Hubert. Our concierge can find the answer to your account or ticketing question instantly.</p>
+          </div>
+        </div>
+
+        <div class="faq-hubert-messages" id="faq-hubert-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+
+        <div class="faq-hubert-suggestions" id="faq-hubert-suggestions" aria-label="Suggested questions">
+          <button type="button" class="faq-hubert-chip" data-prompt="When do organisers receive payouts?">Organiser payouts</button>
+          <button type="button" class="faq-hubert-chip" data-prompt="I forgot my password — how do I sign in?">Reset password</button>
+          <button type="button" class="faq-hubert-chip" data-prompt="Can I transfer my ticket to someone else?">Transfer a ticket</button>
+        </div>
+
+        <form class="faq-hubert-form" id="faq-hubert-form">
+          <label class="visually-hidden" for="faq-hubert-input">Ask Hubert a question</label>
+          <div class="faq-hubert-form-bar">
+            <input
+              type="text"
+              id="faq-hubert-input"
+              placeholder="Type your question here…"
+              maxlength="2000"
+              required
+            >
+            <button type="submit" class="btn btn-primary faq-hubert-send" id="faq-hubert-send">Ask Hubert</button>
+          </div>
+        </form>
+        <button type="button" class="faq-hubert-reset" id="faq-hubert-reset" hidden>New chat</button>
+      </div>
+    </aside>
   </div>
 </main>
 
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260610" data-root=""></script>
+<script src="js/hubert-chat.js?v=20260610"></script>
+<script src="js/faq-page.js?v=20260711"></script>
 
 </body>
 </html>
