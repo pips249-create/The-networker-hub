@@ -63,8 +63,55 @@
   border-bottom: 1px solid var(--ad-border-soft);
 }
 
+#ad-overview-header.is-hidden {
+  display: none;
+}
+
 .attendee-dashboard-page .hub-dash-context--attendee {
   margin-bottom: 20px;
+}
+
+.ad-subpage-head {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ad-border-soft);
+}
+
+.ad-subpage-head[hidden] {
+  display: none !important;
+}
+
+.ad-subpage-head-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  align-items: start;
+}
+
+.ad-subpage-kicker {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ad-teal);
+  margin: 0 0 4px;
+}
+
+.ad-subpage-title {
+  font-size: clamp(1.05rem, 2.8vw, 1.35rem);
+  font-weight: 700;
+  color: var(--ad-slate);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.ad-subpage-sub {
+  font-size: 13px;
+  color: var(--ad-text-mid);
+  margin: 6px 0 0;
+  max-width: 42em;
+  line-height: 1.45;
 }
 
 .ad-page-head .ad-hero-kicker {
@@ -572,10 +619,100 @@
   color: #a82828;
 }
 
+.ad-action-group--with-utilities {
+  gap: 8px;
+}
+
+.ad-utility-wrap {
+  position: relative;
+}
+
+.ad-utility-btn {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ad-teal-dark);
+  background: var(--ad-white);
+  border: 1px solid var(--ad-border-soft);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.ad-utility-btn:hover {
+  background: var(--ad-teal-pale);
+}
+
+.ad-utility-chev {
+  font-size: 9px;
+  margin-left: 2px;
+}
+
+.ad-utility-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 196px;
+  background: var(--ad-white);
+  border: 1px solid var(--ad-border-soft);
+  border-radius: var(--ad-radius-sm);
+  box-shadow: 0 8px 24px rgba(13, 110, 122, 0.12);
+  z-index: 120;
+  overflow: hidden;
+}
+
+.ad-utility-menu[hidden] {
+  display: none !important;
+}
+
+.ad-utility-menu.is-open {
+  display: block;
+}
+
+.ad-utility-menu.is-floating {
+  position: fixed;
+  z-index: 10060;
+}
+
+.ad-utility-item {
+  display: block;
+  width: 100%;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ad-text-mid);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--ad-border-soft);
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  line-height: 1.35;
+}
+
+.ad-utility-item:last-child {
+  border-bottom: none;
+}
+
+.ad-utility-item:hover:not(:disabled) {
+  background: var(--ad-teal-pale);
+  color: var(--ad-teal-dark);
+}
+
+.ad-utility-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .ad-td-actions {
   width: 1%;
   white-space: nowrap;
   vertical-align: top;
+  overflow: visible;
+  position: relative;
 }
 
 .ad-th-actions {
@@ -599,6 +736,73 @@
 
 .ad-saved-block {
   margin-bottom: 28px;
+}
+
+.ad-saved-panel {
+  background: var(--ad-white);
+  border: 1px solid var(--ad-border-soft);
+  border-radius: var(--ad-radius);
+  box-shadow: 0 2px 12px rgba(13, 110, 122, 0.06);
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.ad-saved-scope {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-bottom: 1px solid var(--ad-border-soft);
+  background: var(--ad-teal-pale);
+}
+
+.ad-saved-scope-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ad-teal-dark);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 12px 10px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ad-saved-scope-btn:hover {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.ad-saved-scope-btn.is-active {
+  color: var(--ad-slate);
+  background: var(--ad-white);
+  border-bottom-color: var(--ad-teal);
+}
+
+.ad-saved-pane {
+  padding: 0;
+}
+
+.ad-saved-pane[hidden] {
+  display: none !important;
+}
+
+.ad-saved-pane .ad-table-wrap {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.ad-saved-pane .ad-empty {
+  padding: 20px 16px 24px;
+  margin: 0;
+}
+
+.ad-saved-pane .ad-saved-opp-toolbar {
+  margin: 14px 14px 0;
 }
 
 .ad-saved-block .ad-section-title {

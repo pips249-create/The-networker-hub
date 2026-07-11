@@ -43,6 +43,8 @@ const routes = {
   'organiser-access': require('./_lib/routes/auth-organiser-access'),
   'verify-organiser-email': require('./_lib/routes/auth-verify-organiser-email'),
   'cancel-booking': require('./_lib/routes/auth-cancel-booking'),
+  'registration-ticket-pdf': require('./_lib/routes/auth-registration-ticket-pdf'),
+  'registration-invoice': require('./_lib/routes/auth-registration-invoice'),
   'nudge-ticket-sales': require('./_lib/routes/auth-nudge-ticket-sales'),
   'site-access': require('./_lib/routes/site-access'),
 };

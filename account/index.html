@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260628" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260710e" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260711a" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
 
   </head>
@@ -68,21 +68,33 @@
 
         <div class="ad-main">
           <div class="ad-wrap">
-            <header class="ad-page-head">
-              <p class="ad-hero-kicker">My tickets &amp; reviews</p>
-              <h1 class="ad-welcome-name" id="ad-welcome-name">Welcome</h1>
-              <p class="ad-welcome-sub" id="ad-welcome-sub">
-                Everything you have bought or taken part in as an attendee — tickets, saved events and organisers, reviews, and enquiries you sent to business listings.
-              </p>
-            </header>
+            <div id="ad-overview-header">
+              <header class="ad-page-head">
+                <p class="ad-hero-kicker">My tickets &amp; reviews</p>
+                <h1 class="ad-welcome-name" id="ad-welcome-name">Welcome</h1>
+                <p class="ad-welcome-sub" id="ad-welcome-sub">
+                  Everything you have bought or taken part in as an attendee — tickets, saved events and organisers, reviews, and enquiries you sent to business listings.
+                </p>
+              </header>
 
-            <aside class="hub-dash-context hub-dash-context--attendee">
-              <p>
-                Running a networking group?
-                <button type="button" class="hub-dash-context-btn" data-hub-switch="organiser">Switch to Organiser workspace</button>
-                to manage your organiser page, events, revenue, and opportunity listings.
-              </p>
-            </aside>
+              <aside class="hub-dash-context hub-dash-context--attendee">
+                <p>
+                  Running a networking group?
+                  <button type="button" class="hub-dash-context-btn" data-hub-switch="organiser">Switch to Organiser workspace</button>
+                  to manage your organiser page, events, revenue, and opportunity listings.
+                </p>
+              </aside>
+            </div>
+
+            <header class="ad-subpage-head" id="ad-subpage-head" hidden>
+              <div class="ad-subpage-head-grid">
+                <div class="ad-subpage-head-text">
+                  <p class="ad-subpage-kicker">My tickets &amp; reviews</p>
+                  <h1 class="ad-subpage-title" id="ad-subpage-title">Upcoming events</h1>
+                  <p class="ad-subpage-sub" id="ad-subpage-sub"></p>
+                </div>
+              </div>
+            </header>
 
             <p class="ad-demo-note" id="ad-demo-note" hidden>
               Showing sample layout — your bookings will appear here once you register for events.
@@ -115,8 +127,6 @@
 
             <!-- Upcoming -->
             <section class="ad-page" id="ad-page-upcoming" data-ad-page="upcoming">
-              <h2 class="ad-section-title">Upcoming events</h2>
-              <p class="ad-section-sub">Events you are registered for or have applied to attend.</p>
               <div class="ad-table-scroll">
                 <div class="ad-table-wrap">
                   <table>
@@ -146,8 +156,6 @@
 
             <!-- Payments -->
             <section class="ad-page" id="ad-page-payments" data-ad-page="payments">
-              <h2 class="ad-section-title">Payments &amp; receipts</h2>
-              <p class="ad-section-sub">Booking references, amounts paid, and ticket details for your registrations.</p>
               <div class="ad-refund-alert" id="ad-refund-alert-payments" hidden role="status"></div>
               <div class="ad-table-scroll">
                 <div class="ad-table-wrap">
@@ -177,8 +185,6 @@
 
             <!-- Cancellations -->
             <section class="ad-page" id="ad-page-cancellations" data-ad-page="cancellations">
-              <h2 class="ad-section-title">Cancellations &amp; refunds</h2>
-              <p class="ad-section-sub">Bookings you have cancelled, including refund status and amounts.</p>
               <div class="ad-refund-alert" id="ad-refund-alert-cancellations" hidden role="status"></div>
               <div class="ad-table-scroll">
                 <div class="ad-table-wrap">
@@ -206,85 +212,87 @@
 
             <!-- Saved -->
             <section class="ad-page" id="ad-page-saved" data-ad-page="saved">
-              <h2 class="ad-section-title">Saved</h2>
-              <p class="ad-section-sub">Events, organisers, and business opportunities you have saved while browsing. We will email you when ticket sales open for saved events, when a saved organiser lists something new, when a saved opportunity is closing soon, and when a new listing matches a saved opportunity search.</p>
+              <div class="ad-saved-panel">
+                <div class="ad-saved-scope" role="tablist" aria-label="Saved items">
+                  <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-saved-scope="events">Saved Events</button>
+                  <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="organisers">Saved Organisers</button>
+                  <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="opportunities">Saved Opportunities</button>
+                </div>
 
-              <div class="ad-saved-block">
-                <h3 class="ad-section-title">Saved events</h3>
-                <div class="ad-table-scroll">
-                  <div class="ad-table-wrap">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th class="ad-th-thumb"></th>
-                          <th>Event</th>
-                          <th>Date</th>
-                          <th>Location</th>
-                          <th class="ad-th-actions">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody id="ad-saved-body"></tbody>
-                    </table>
+                <div class="ad-saved-pane is-active" data-saved-pane="events" role="tabpanel">
+                  <div class="ad-table-scroll">
+                    <div class="ad-table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th class="ad-th-thumb"></th>
+                            <th>Event</th>
+                            <th>Date</th>
+                            <th>Location</th>
+                            <th class="ad-th-actions">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody id="ad-saved-body"></tbody>
+                      </table>
+                    </div>
                   </div>
+                  <p class="ad-empty" id="ad-saved-empty" hidden>
+                    No saved events yet.
+                    <a href="../events/index.html">Browse events →</a>
+                  </p>
                 </div>
-                <p class="ad-empty" id="ad-saved-empty" hidden>
-                  No saved events yet.
-                  <a href="../events/index.html">Browse events →</a>
-                </p>
-              </div>
 
-              <div class="ad-saved-block">
-                <h3 class="ad-section-title ad-section-title--spaced">Saved organisers</h3>
-                <div class="ad-table-scroll">
-                  <div class="ad-table-wrap">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th class="ad-th-thumb"></th>
-                          <th>Organiser</th>
-                          <th>Industry</th>
-                          <th>Rating</th>
-                          <th class="ad-th-actions">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody id="ad-saved-organisers-body"></tbody>
-                    </table>
+                <div class="ad-saved-pane" data-saved-pane="organisers" role="tabpanel" hidden>
+                  <div class="ad-table-scroll">
+                    <div class="ad-table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th class="ad-th-thumb"></th>
+                            <th>Organiser</th>
+                            <th>Industry</th>
+                            <th>Rating</th>
+                            <th class="ad-th-actions">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody id="ad-saved-organisers-body"></tbody>
+                      </table>
+                    </div>
                   </div>
+                  <p class="ad-empty" id="ad-saved-organisers-empty" hidden>
+                    No saved organisers yet. Saving an event also saves its organiser.
+                    <a href="../events/index.html#organisers">Browse organisers →</a>
+                  </p>
                 </div>
-                <p class="ad-empty" id="ad-saved-organisers-empty" hidden>
-                  No saved organisers yet. Saving an event also saves its organiser.
-                  <a href="../events/index.html#organisers">Browse organisers →</a>
-                </p>
-              </div>
 
-              <div class="ad-saved-block">
-                <h3 class="ad-section-title ad-section-title--spaced">Saved opportunities</h3>
-                <div class="ad-saved-opp-toolbar" id="ad-saved-opp-toolbar" hidden>
-                  <p class="ad-saved-opp-compare-hint"><span id="ad-compare-count">0</span> selected for compare (max 3)</p>
-                  <button type="button" class="ad-btn ad-btn-primary" id="ad-compare-open" disabled>Compare selected</button>
-                  <button type="button" class="ad-btn ad-btn-ghost" id="ad-compare-clear">Clear</button>
-                </div>
-                <div class="ad-table-scroll">
-                  <div class="ad-table-wrap">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th class="ad-th-check" scope="col"><span class="visually-hidden">Compare</span></th>
-                          <th class="ad-th-thumb"></th>
-                          <th>Opportunity</th>
-                          <th>Listed by</th>
-                          <th>Saved</th>
-                          <th class="ad-th-actions">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody id="ad-saved-opportunities-body"></tbody>
-                    </table>
+                <div class="ad-saved-pane" data-saved-pane="opportunities" role="tabpanel" hidden>
+                  <div class="ad-saved-opp-toolbar" id="ad-saved-opp-toolbar" hidden>
+                    <p class="ad-saved-opp-compare-hint"><span id="ad-compare-count">0</span> selected for compare (max 3)</p>
+                    <button type="button" class="ad-btn ad-btn-primary" id="ad-compare-open" disabled>Compare selected</button>
+                    <button type="button" class="ad-btn ad-btn-ghost" id="ad-compare-clear">Clear</button>
                   </div>
+                  <div class="ad-table-scroll">
+                    <div class="ad-table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th class="ad-th-check" scope="col"><span class="visually-hidden">Compare</span></th>
+                            <th class="ad-th-thumb"></th>
+                            <th>Opportunity</th>
+                            <th>Listed by</th>
+                            <th>Saved</th>
+                            <th class="ad-th-actions">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody id="ad-saved-opportunities-body"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <p class="ad-empty" id="ad-saved-opportunities-empty" hidden>
+                    No saved opportunities yet.
+                    <a href="../opportunities/index.html">Browse opportunities →</a>
+                  </p>
                 </div>
-                <p class="ad-empty" id="ad-saved-opportunities-empty" hidden>
-                  No saved opportunities yet.
-                  <a href="../opportunities/index.html">Browse opportunities →</a>
-                </p>
               </div>
 
               <div class="ad-saved-block" id="saved-searches">
@@ -313,8 +321,6 @@
 
             <!-- Past -->
             <section class="ad-page" id="ad-page-past" data-ad-page="past">
-              <h2 class="ad-section-title">Past events</h2>
-              <p class="ad-section-sub">Events you have already attended.</p>
               <div class="ad-table-scroll">
                 <div class="ad-table-wrap">
                   <table>
@@ -341,8 +347,6 @@
 
             <!-- Opportunity enquiries sent -->
             <section class="ad-page" id="ad-page-opportunity-enquiries" data-ad-page="opportunity-enquiries">
-              <h2 class="ad-section-title">My opportunity enquiries</h2>
-              <p class="ad-section-sub">Messages you sent to business opportunity listings on the Hub. Organisers reply by email.</p>
               <div class="ad-table-scroll">
                 <div class="ad-table-wrap">
                   <table>
@@ -367,8 +371,6 @@
 
             <!-- Reviews pending -->
             <section class="ad-page" id="ad-page-reviews-pending" data-ad-page="reviews-pending">
-              <h2 class="ad-section-title">Reviews to complete</h2>
-              <p class="ad-section-sub">Events you attended with a confirmed ticket — your review appears on the organiser's profile.</p>
               <div class="ad-table-scroll">
                 <div class="ad-table-wrap">
                   <table>
@@ -390,8 +392,6 @@
 
             <!-- Reviews done -->
             <section class="ad-page" id="ad-page-reviews-done" data-ad-page="reviews-done">
-              <h2 class="ad-section-title">Submitted reviews</h2>
-              <p class="ad-section-sub">Feedback you have left — open a review to see any reply from the organiser.</p>
               <div class="ad-table-scroll">
                 <div class="ad-table-wrap">
                   <table>
@@ -594,7 +594,8 @@
     <script src="../js/opportunities-catalog.js?v=20260710d"></script>
     <script src="../js/opportunity-listing-quality.js?v=20260710e"></script>
     <script src="../js/opportunity-compare.js?v=20260710d"></script>
+    <script src="../js/hub-calendar-share.js?v=20260609a"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260710e"></script>
+    <script src="../js/attendee-dashboard.js?v=20260711a"></script>
   </body>
 </html>

@@ -12,7 +12,44 @@
   let savedOpportunitySearches = [];
   let opportunityEnquiries = [];
   let currentRoute = 'overview';
+  let savedScope = 'events';
+  let openUtilityMenu = null;
   const REVIEW_EVENT_STORAGE_KEY = 'hub_review_event_id';
+
+  const SUBPAGE_HEAD = {
+    upcoming: {
+      title: 'Upcoming events',
+      sub: 'Events you are registered for or have applied to attend.',
+    },
+    payments: {
+      title: 'Payments & receipts',
+      sub: 'Booking references, amounts paid, and ticket details for your registrations.',
+    },
+    cancellations: {
+      title: 'Cancellations & refunds',
+      sub: 'Bookings you have cancelled, including refund status and amounts.',
+    },
+    saved: {
+      title: 'Saved',
+      sub: 'Events, organisers, and business opportunities you have saved while browsing. We will email you when ticket sales open for saved events, when a saved organiser lists something new, when a saved opportunity is closing soon, and when a new listing matches a saved opportunity search.',
+    },
+    past: {
+      title: 'Past events',
+      sub: 'Events you have already attended.',
+    },
+    'opportunity-enquiries': {
+      title: 'My opportunity enquiries',
+      sub: 'Messages you sent to business opportunity listings on the Hub. Organisers reply by email.',
+    },
+    'reviews-pending': {
+      title: 'Reviews to complete',
+      sub: 'Events you attended with a confirmed ticket — your review appears on the organiser\'s profile.',
+    },
+    'reviews-done': {
+      title: 'Submitted reviews',
+      sub: 'Feedback you have left — open a review to see any reply from the organiser.',
+    },
+  };
 
   const signin = document.getElementById('ad-signin');
   const shell = document.getElementById('ad-shell');
@@ -543,6 +580,166 @@
     );
   }
 
+  function registrationHasTicketPdf(reg) {
+    const applicationStatus = String(reg?.applicationStatus || 'Approved').trim();
+    if (applicationStatus === 'Denied' || applicationStatus === 'Pending') return false;
+    if (needsBookingAction(reg)) return false;
+    return true;
+  }
+
+  function registrationCalendarEvent(reg) {
+    return {
+      id: reg.eventId || reg.id,
+      slug: reg.slug || '',
+      title: reg.title || 'Event',
+      starts_at: reg.date || '',
+      ends_at: reg.endDate || '',
+      location: reg.isOnline ? 'Online' : '',
+    };
+  }
+
+  function utilityDropdownHtml(reg, options) {
+    if (!options || !options.showUtilities) return '';
+    const canPdf = registrationHasTicketPdf(reg);
+    return (
+      '<div class="ad-utility-wrap">' +
+      '<button type="button" class="ad-utility-btn" data-ad-utility-toggle aria-expanded="false" aria-haspopup="true">' +
+      'Utilities <span class="ad-utility-chev" aria-hidden="true">▾</span></button>' +
+      '<div class="ad-utility-menu" role="menu" hidden>' +
+      '<button type="button" class="ad-utility-item ad-download-ticket-pdf" role="menuitem" data-registration-id="' +
+      esc(reg.id || '') +
+      '"' +
+      (canPdf ? '' : ' disabled') +
+      '>Download Ticket (PDF)</button>' +
+      '<button type="button" class="ad-utility-item ad-download-calendar-ics" role="menuitem" data-registration-id="' +
+      esc(reg.id || '') +
+      '">Add to Calendar (.ics)</button>' +
+      '</div></div>'
+    );
+  }
+
+  function closeUtilityMenus() {
+    document.querySelectorAll('.ad-utility-menu.is-open').forEach((menu) => {
+      menu.hidden = true;
+      menu.classList.remove('is-open', 'is-floating');
+      menu.style.top = '';
+      menu.style.left = '';
+      menu.style.right = '';
+    });
+    document.querySelectorAll('[data-ad-utility-toggle][aria-expanded="true"]').forEach((btn) => {
+      btn.setAttribute('aria-expanded', 'false');
+    });
+    openUtilityMenu = null;
+  }
+
+  function positionUtilityMenu(btn, menu) {
+    const rect = btn.getBoundingClientRect();
+    menu.classList.add('is-floating');
+    menu.hidden = false;
+    menu.classList.add('is-open');
+    menu.style.top = Math.round(rect.bottom + 4) + 'px';
+    menu.style.left = 'auto';
+    menu.style.right = Math.max(8, window.innerWidth - rect.right) + 'px';
+  }
+
+  function bindUtilityMenus(root) {
+    (root || document).querySelectorAll('[data-ad-utility-toggle]').forEach((btn) => {
+      if (btn.dataset.boundUtility) return;
+      btn.dataset.boundUtility = '1';
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const wrap = btn.closest('.ad-utility-wrap');
+        const menu = wrap && wrap.querySelector('.ad-utility-menu');
+        if (!menu) return;
+        const isOpen = menu.classList.contains('is-open');
+        closeUtilityMenus();
+        if (!isOpen) {
+          positionUtilityMenu(btn, menu);
+          btn.setAttribute('aria-expanded', 'true');
+          openUtilityMenu = menu;
+        }
+      });
+    });
+
+    (root || document).querySelectorAll('.ad-download-ticket-pdf').forEach((btn) => {
+      if (btn.dataset.boundTicketPdf) return;
+      btn.dataset.boundTicketPdf = '1';
+      btn.addEventListener('click', () => {
+        const regId = btn.getAttribute('data-registration-id');
+        if (!regId || btn.disabled) return;
+        closeUtilityMenus();
+        window.open(
+          '/api/auth/registration-ticket-pdf?registrationId=' + encodeURIComponent(regId),
+          '_blank',
+          'noopener,noreferrer'
+        );
+      });
+    });
+
+    (root || document).querySelectorAll('.ad-download-calendar-ics').forEach((btn) => {
+      if (btn.dataset.boundCalendarIcs) return;
+      btn.dataset.boundCalendarIcs = '1';
+      btn.addEventListener('click', () => {
+        const regId = btn.getAttribute('data-registration-id');
+        const reg = findRegistrationById(regId);
+        if (!reg) return;
+        closeUtilityMenus();
+        if (!window.HubCalendarShare) return;
+        const links = HubCalendarShare.buildCalendarLinks(registrationCalendarEvent(reg));
+        HubCalendarShare.downloadIcs(links.icsContent, links.icsFilename);
+      });
+    });
+  }
+
+  function invoiceDownloadHref(reg) {
+    return '/api/auth/registration-invoice?registrationId=' + encodeURIComponent(reg.id || '');
+  }
+
+  function updateLayoutHeader(route) {
+    const overviewHeader = document.getElementById('ad-overview-header');
+    const subpageHead = document.getElementById('ad-subpage-head');
+    const titleEl = document.getElementById('ad-subpage-title');
+    const subEl = document.getElementById('ad-subpage-sub');
+    const isOverview = route === 'overview';
+    const meta = SUBPAGE_HEAD[route] || null;
+
+    if (overviewHeader) overviewHeader.classList.toggle('is-hidden', !isOverview);
+    if (subpageHead) subpageHead.hidden = isOverview;
+    if (!isOverview && meta) {
+      if (titleEl) titleEl.textContent = meta.title;
+      if (subEl) subEl.textContent = meta.sub;
+    }
+  }
+
+  function setSavedScope(scope) {
+    savedScope = scope || 'events';
+    document.querySelectorAll('[data-saved-scope]').forEach((btn) => {
+      const active = btn.getAttribute('data-saved-scope') === savedScope;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    document.querySelectorAll('[data-saved-pane]').forEach((pane) => {
+      const active = pane.getAttribute('data-saved-pane') === savedScope;
+      pane.classList.toggle('is-active', active);
+      pane.hidden = !active;
+    });
+    const toolbar = document.getElementById('ad-saved-opp-toolbar');
+    if (toolbar) {
+      toolbar.hidden = savedScope !== 'opportunities' || !savedOpportunities.length;
+    }
+  }
+
+  function bindSavedScope() {
+    document.querySelectorAll('[data-saved-scope]').forEach((btn) => {
+      if (btn.dataset.boundSavedScope) return;
+      btn.dataset.boundSavedScope = '1';
+      btn.addEventListener('click', () => {
+        setSavedScope(btn.getAttribute('data-saved-scope') || 'events');
+      });
+    });
+    setSavedScope(savedScope);
+  }
+
   let reviewRating = 0;
   let reviewModalOpen = false;
   let viewReviewModalOpen = false;
@@ -886,6 +1083,7 @@
       'overview',
       'upcoming',
       'payments',
+      'cancellations',
       'saved',
       'past',
       'opportunity-enquiries',
@@ -1331,6 +1529,11 @@
         '<button type="button" class="ad-btn ad-btn-primary ad-view-payment" data-registration-id="' +
         esc(reg.id || '') +
         '">Payment details</button>' +
+        (isRegistrationPaid(reg) && String(reg.applicationStatus || 'Approved').trim() !== 'Denied'
+          ? '<a class="ad-action-link ad-download-invoice" href="' +
+            esc(invoiceDownloadHref(reg)) +
+            '" target="_blank" rel="noopener noreferrer">Download Invoice</a>'
+          : '') +
         (reg.canCancel
           ? '<button type="button" class="ad-action-link ad-action-link--danger ad-cancel-booking" data-registration-id="' +
             esc(reg.id || '') +
@@ -1448,6 +1651,8 @@
 
   function setRoute(route) {
     currentRoute = route || 'overview';
+    closeUtilityMenus();
+    updateLayoutHeader(currentRoute);
     document.querySelectorAll('[data-ad-page]').forEach((p) => {
       p.classList.toggle('is-active', p.getAttribute('data-ad-page') === currentRoute);
     });
@@ -1654,9 +1859,10 @@
           paymentBadge(reg.paymentStatus, reg) +
           '</td><td>' +
           reviewBadge(reg.reviewStatus, reg) +
-          '</td><td class="ad-td-actions">' +
+          '</td><td class="ad-td-actions"><div class="ad-action-group ad-action-group--with-utilities">' +
           actionCell(reg, { showCancel: listKey === 'upcoming', showTicket: true }) +
-          '</td>';
+          utilityDropdownHtml(reg, { showUtilities: listKey === 'upcoming' }) +
+          '</div></td>';
       } else {
         tr.innerHTML =
           '<td>' +
@@ -1678,6 +1884,7 @@
     bindViewReviewButtons(body);
     bindCancelButtons(body);
     bindPaymentButtons(body);
+    bindUtilityMenus(body);
 
     renderPagination(navId, listKey, totalPages);
   }
@@ -1769,7 +1976,7 @@
     if (!cmp || !toolbar) return;
 
     const ids = cmp.ids();
-    toolbar.hidden = !savedOpportunities.length;
+    toolbar.hidden = savedScope !== 'opportunities' || !savedOpportunities.length;
     if (countEl) countEl.textContent = String(ids.length);
     if (openBtn) openBtn.disabled = ids.length < 2;
     if (clearBtn) clearBtn.disabled = !ids.length;
@@ -2242,10 +2449,21 @@
   async function init() {
     bindNav();
     bindHubContextSwitch();
+    bindSavedScope();
     bindReviewModal();
     bindViewReviewModal();
     bindPaymentModal();
     bindCancelModal();
+    document.addEventListener('click', (e) => {
+      if (
+        openUtilityMenu &&
+        !e.target.closest('.ad-utility-wrap') &&
+        !e.target.closest('.ad-utility-menu.is-floating')
+      ) {
+        closeUtilityMenus();
+      }
+    });
+    window.addEventListener('resize', closeUtilityMenus);
     setRoute(parseRoute());
     setDashboardLoading(true);
 
