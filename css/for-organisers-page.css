@@ -4,12 +4,27 @@ html:has(.for-organisers-page) {
 }
 
 .for-organisers-page {
-  --fo-navy: var(--charcoal);
-  --fo-purple: var(--lavender-deep);
-  --fo-gold: var(--gold);
-  --fo-gold-light: var(--gold-light);
-  --fo-border: var(--border-soft);
-  --fo-muted: var(--text-muted);
+  /* Organiser dashboard palette */
+  --od-purple: #0d6e7a;
+  --od-purple-dark: #084a52;
+  --od-purple-deep: #1e3a4f;
+  --od-purple-light: #d4f0f3;
+  --od-purple-pale: #e8f6f8;
+  --od-gold: #bd932e;
+  --od-gold-light: #fdf3df;
+  --od-text-dark: #1a2e3b;
+  --od-text-mid: #4a6272;
+  --od-text-soft: #7a94a3;
+  --od-bg: #f4f8fa;
+  --od-border: #9dd9cc;
+  --od-border-soft: #cfe4ea;
+
+  --fo-navy: var(--od-text-dark);
+  --fo-purple: var(--od-purple);
+  --fo-gold: var(--od-gold);
+  --fo-gold-light: var(--od-gold-light);
+  --fo-border: var(--od-border-soft);
+  --fo-muted: var(--od-text-mid);
   overflow-x: hidden;
 }
 
@@ -18,7 +33,7 @@ html:has(.for-organisers-page) {
 }
 
 .fo-flow {
-  background: var(--surface-card);
+  background: var(--od-bg);
 }
 
 .fo-flow-inner {
@@ -69,8 +84,8 @@ html:has(.for-organisers-page) {
 .fo-hero {
   position: relative;
   padding: clamp(48px, 8vw, 88px) 0 clamp(56px, 9vw, 96px);
-  background: linear-gradient(165deg, #fffdf9 0%, var(--cream) 42%, var(--lavender-light) 100%);
-  border-bottom: 1px solid var(--fo-border);
+  background: linear-gradient(165deg, #fff 0%, var(--od-purple-pale) 48%, var(--od-bg) 100%);
+  border-bottom: 1px solid var(--od-border-soft);
   overflow: hidden;
 }
 
@@ -80,7 +95,7 @@ html:has(.for-organisers-page) {
   width: 420px;
   height: 420px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(201, 162, 39, 0.14) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(13, 110, 122, 0.14) 0%, transparent 70%);
   top: -120px;
   right: -80px;
   pointer-events: none;
@@ -155,8 +170,8 @@ html:has(.for-organisers-page) {
   gap: 6px;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid var(--fo-border);
+  background: var(--od-purple-pale);
+  border: 1px solid var(--od-border-soft);
   font-size: 0.82rem;
   font-weight: 500;
   color: var(--fo-navy);
@@ -165,9 +180,9 @@ html:has(.for-organisers-page) {
 /* Dashboard mock */
 .fo-dash-mock {
   border-radius: 16px;
-  border: 1px solid var(--fo-border);
+  border: 1px solid var(--od-border-soft);
   background: #fff;
-  box-shadow: 0 24px 60px rgba(28, 32, 64, 0.12);
+  box-shadow: 0 24px 60px rgba(26, 46, 59, 0.12);
   overflow: hidden;
 }
 
@@ -177,7 +192,7 @@ html:has(.for-organisers-page) {
   justify-content: space-between;
   gap: 12px;
   padding: 10px 14px;
-  background: var(--fo-navy);
+  background: linear-gradient(90deg, var(--od-purple-deep) 0%, var(--od-purple-dark) 100%);
   color: #fff;
   font-size: 0.78rem;
 }
@@ -215,8 +230,8 @@ html:has(.for-organisers-page) {
 
 .fo-dash-mock-nav {
   padding: 16px 12px;
-  background: #faf8f5;
-  border-right: 1px solid var(--fo-border);
+  background: var(--od-purple-pale);
+  border-right: 1px solid var(--od-border-soft);
 }
 
 .fo-dash-mock-nav-item {
@@ -224,18 +239,20 @@ html:has(.for-organisers-page) {
   padding: 8px 10px;
   border-radius: 8px;
   font-size: 0.78rem;
-  color: var(--fo-muted);
+  color: var(--od-text-soft);
   margin-bottom: 4px;
 }
 
 .fo-dash-mock-nav-item.is-active {
-  background: var(--fo-gold-light);
-  color: var(--fo-navy);
+  background: var(--od-white, #fff);
+  color: var(--od-purple);
   font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--od-purple);
 }
 
 .fo-dash-mock-main {
   padding: 18px 16px 20px;
+  background: var(--od-bg);
 }
 
 .fo-dash-mock-title {
@@ -261,7 +278,7 @@ html:has(.for-organisers-page) {
 .fo-dash-mock-portal {
   padding: 12px;
   border-radius: 10px;
-  border: 1px solid var(--fo-border);
+  border: 1px solid var(--od-border-soft);
   background: #fff;
 }
 
@@ -285,14 +302,15 @@ html:has(.for-organisers-page) {
 .fo-dash-mock-stat {
   padding: 10px 8px;
   border-radius: 8px;
-  background: var(--lavender-light);
+  background: var(--od-purple-pale);
+  border: 1px solid var(--od-border-soft);
   text-align: center;
 }
 
 .fo-dash-mock-stat b {
   display: block;
   font-size: 0.95rem;
-  color: var(--fo-navy);
+  color: var(--od-purple-dark);
 }
 
 .fo-dash-mock-stat small {
@@ -312,10 +330,10 @@ html:has(.for-organisers-page) {
   gap: 8px;
   padding: 8px 10px;
   border-radius: 8px;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
+  background: var(--od-gold-light);
+  border: 1px solid rgba(189, 147, 46, 0.35);
   font-size: 0.74rem;
-  color: #7c2d12;
+  color: var(--od-text-dark);
 }
 
 /* Section heads */
@@ -324,9 +342,9 @@ html:has(.for-organisers-page) {
 }
 
 .fo-section--alt {
-  background: var(--cream);
-  border-top: 1px solid var(--fo-border);
-  border-bottom: 1px solid var(--fo-border);
+  background: var(--od-purple-pale);
+  border-top: 1px solid var(--od-border-soft);
+  border-bottom: 1px solid var(--od-border-soft);
 }
 
 .fo-section-head {
@@ -378,9 +396,16 @@ html:has(.for-organisers-page) {
 .fo-feature-card {
   padding: 22px 20px;
   border-radius: 14px;
-  border: 1px solid var(--fo-border);
+  border: 1px solid var(--od-border-soft);
   background: #fff;
   height: 100%;
+  border-left: 3px solid var(--od-purple-light);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fo-feature-card:hover {
+  border-left-color: var(--od-purple);
+  box-shadow: 0 8px 24px rgba(13, 110, 122, 0.08);
 }
 
 .fo-section--alt .fo-feature-card {
@@ -485,8 +510,8 @@ html:has(.for-organisers-page) {
 
 .fo-browse-mock-head {
   padding: 14px 16px;
-  border-bottom: 1px solid var(--fo-border);
-  background: linear-gradient(180deg, #fffdf9, #fff);
+  border-bottom: 1px solid var(--od-border-soft);
+  background: linear-gradient(180deg, var(--od-purple-pale), #fff);
 }
 
 .fo-browse-mock-tabs {
@@ -505,16 +530,16 @@ html:has(.for-organisers-page) {
 }
 
 .fo-browse-mock-tab.is-active {
-  background: var(--fo-navy);
-  border-color: var(--fo-navy);
+  background: var(--od-purple);
+  border-color: var(--od-purple);
   color: #fff;
 }
 
 .fo-browse-mock-search {
   height: 36px;
   border-radius: 10px;
-  background: var(--lavender-light);
-  border: 1px solid var(--fo-border);
+  background: var(--od-purple-pale);
+  border: 1px solid var(--od-border-soft);
   margin-bottom: 10px;
   display: flex;
   align-items: center;
@@ -577,7 +602,7 @@ html:has(.for-organisers-page) {
   width: 56px;
   height: 56px;
   border-radius: 8px;
-  background: linear-gradient(145deg, var(--lavender-light), var(--gold-light));
+  background: linear-gradient(145deg, var(--od-purple-light), var(--od-gold-light));
 }
 
 .fo-browse-mock-card strong {
@@ -632,7 +657,8 @@ html:has(.for-organisers-page) {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: var(--fo-gold-light);
+  background: var(--od-purple-pale);
+  border: 1px solid var(--od-border-soft);
   font-size: 1.35rem;
   line-height: 1;
   flex-shrink: 0;
@@ -688,9 +714,11 @@ html:has(.for-organisers-page) {
 .fo-cta-panel {
   padding: clamp(32px, 5vw, 48px);
   border-radius: 18px;
-  background: linear-gradient(145deg, var(--fo-navy) 0%, #2d3260 100%);
+  background: linear-gradient(145deg, var(--od-purple-deep) 0%, var(--od-purple-dark) 55%, var(--od-purple) 100%);
   color: #fff;
   text-align: center;
+  border: 1px solid rgba(157, 217, 204, 0.25);
+  box-shadow: 0 24px 48px rgba(26, 46, 59, 0.18);
 }
 
 .fo-cta-panel h2 {
@@ -776,8 +804,8 @@ html:has(.for-organisers-page) {
   margin-top: 28px;
   padding: 20px 22px;
   border-radius: 12px;
-  background: var(--fo-gold-light);
-  border: 1px solid rgba(201, 162, 39, 0.35);
+  background: var(--od-gold-light);
+  border: 1px solid rgba(189, 147, 46, 0.35);
   text-align: left;
 }
 
