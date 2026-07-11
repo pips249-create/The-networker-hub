@@ -17,6 +17,8 @@
       var page = navScript.getAttribute('data-page');
       if (page === 'home') return 'home';
       if (page === 'faq') return 'faq';
+      if (page === 'guides') return 'guides';
+      if (page && page.indexOf('guide-') === 0) return page;
       if (page === 'help-organiser-payouts') return 'help-organiser-payouts';
       if (page === 'help-pricing-fees') return 'help-pricing-fees';
       if (page === 'contact') return 'contact';
@@ -29,6 +31,11 @@
     var path = (window.location.pathname || '').toLowerCase();
     if (/\/events\/(?:index\.html)?$/.test(path) || /\/events\/?$/.test(path)) return 'events';
     if (/\/opportunities\//.test(path)) return 'opportunities';
+    if (/\/guides\.html$/.test(path)) return 'guides';
+    if (/\/guides\/list-an-event\.html$/.test(path)) return 'guide-list-an-event';
+    if (/\/guides\/list-a-conference-or-exhibition\.html$/.test(path)) return 'guide-list-a-conference-or-exhibition';
+    if (/\/guides\/list-a-business-opportunity\.html$/.test(path)) return 'guide-list-a-business-opportunity';
+    if (/\/guides\/invite-your-team\.html$/.test(path)) return 'guide-invite-your-team';
     if (/\/faq\.html$/.test(path)) return 'faq';
     if (/\/help\/organiser-payouts(?:\.html)?\/?$/.test(path)) return 'help-organiser-payouts';
     if (/\/help\/pricing-fees(?:\.html)?\/?$/.test(path)) return 'help-pricing-fees';
@@ -41,7 +48,7 @@
 
   function injectSchema(data) {
     if (!data) return;
-    if (page === 'faq' && document.querySelector('script[data-hubert-seo="static"]')) return;
+    if (document.querySelector('script[data-hubert-seo="static"]')) return;
     var el = document.createElement('script');
     el.type = 'application/ld+json';
     el.setAttribute('data-hubert-seo', 'true');

@@ -180,12 +180,117 @@ function buildContactPageSchema(origin) {
   };
 }
 
+function buildHowToSchema(guide, origin) {
+  const base = siteOrigin(origin);
+  const url = base + guide.path;
+  return {
+    '@type': 'HowTo',
+    '@id': url + '#howto',
+    url: url,
+    name: guide.howToName || guide.name,
+    description: guide.description,
+    step: guide.steps.map(function (step, index) {
+      return {
+        '@type': 'HowToStep',
+        position: index + 1,
+        name: step.name,
+        text: step.text,
+        url: url + (step.id ? '#' + step.id : ''),
+      };
+    }),
+  };
+}
+
+function buildGuideBreadcrumbs(guideName, guidePath, origin) {
+  return buildBreadcrumbListSchema(
+    [
+      { name: 'Home', path: '/' },
+      { name: 'Organiser guides', path: '/guides.html' },
+      { name: guideName, path: guidePath },
+    ],
+    origin
+  );
+}
+
+function buildHelpBreadcrumbs(helpName, helpPath, origin) {
+  return buildBreadcrumbListSchema(
+    [
+      { name: 'Home', path: '/' },
+      { name: 'FAQ & Help', path: '/faq.html' },
+      { name: helpName, path: helpPath },
+    ],
+    origin
+  );
+}
+
+function buildGuidePageSchema(guideKey, origin) {
+  const { GUIDE_PAGES } = require('./guide-pages');
+  const guide = GUIDE_PAGES[guideKey];
+  if (!guide) return null;
+
+  const base = siteOrigin(origin);
+  const url = base + guide.path;
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        '@id': url + '#webpage',
+        url: url,
+        name: guide.title,
+        description: guide.description,
+        isPartOf: {
+          '@type': 'WebSite',
+          name: SITE_NAME,
+          url: base,
+        },
+      },
+      buildHowToSchema(guide, base),
+      buildGuideBreadcrumbs(guide.name, guide.path, base),
+    ],
+  };
+}
+
+function buildGuidesHubSchema(origin) {
+  const base = siteOrigin(origin);
+  const url = base + '/guides.html';
+  const { GUIDES_HUB } = require('./guide-pages');
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        '@id': url,
+        url: url,
+        name: GUIDES_HUB.title,
+        description: GUIDES_HUB.description,
+        isPartOf: {
+          '@type': 'WebSite',
+          name: SITE_NAME,
+          url: base,
+        },
+      },
+      buildBreadcrumbListSchema(
+        [
+          { name: 'Home', path: '/' },
+          { name: GUIDES_HUB.name, path: '/guides.html' },
+        ],
+        base
+      ),
+    ],
+  };
+}
+
 function buildHelpArticleSchema(pageKey, origin) {
   const base = siteOrigin(origin);
   const page = HELP_PAGES[pageKey];
   if (!page) return null;
 
   const url = base + page.path;
+  const headline = page.title.replace(' – The Networker Hub', '');
+
   return {
     '@context': 'https://schema.org',
     '@graph': [
@@ -193,7 +298,7 @@ function buildHelpArticleSchema(pageKey, origin) {
         '@type': 'Article',
         '@id': url + '#article',
         url: url,
-        headline: page.title.replace(' – The Networker Hub', ''),
+        headline: headline,
         description: page.description,
         author: {
           '@type': 'Organization',
@@ -226,6 +331,7 @@ function buildHelpArticleSchema(pageKey, origin) {
           },
         ],
       },
+      buildHelpBreadcrumbs(headline, page.path, base),
     ],
   };
 }
@@ -303,6 +409,10 @@ function buildSchemaGraph(page, origin) {
     return buildHelpArticleSchema('organiser-payouts', base);
   } else if (page === 'help-pricing-fees') {
     return buildHelpArticleSchema('pricing-fees', base);
+  } else if (page === 'guides') {
+    return buildGuidesHubSchema(base);
+  } else if (page && page.indexOf('guide-') === 0) {
+    return buildGuidePageSchema(page.slice('guide-'.length), base);
   }
 
   return {
@@ -343,6 +453,9 @@ function buildLlmsTxt(origin) {
     '- For Organisers: ' +
     base +
     '/for-organisers.html\n' +
+    '- Organiser guides: ' +
+    base +
+    '/guides.html\n' +
     '- Advertising & sponsorship: ' +
     base +
     '/advertising\n' +
@@ -404,6 +517,10 @@ module.exports = {
   buildContactPageSchema,
   buildCollectionPageSchema,
   buildBreadcrumbListSchema,
+  buildHowToSchema,
+  buildGuidePageSchema,
+  buildGuidesHubSchema,
+  buildHelpArticleSchema,
   buildSchemaGraphFromParts,
   buildSchemaGraph,
   buildLlmsTxt,

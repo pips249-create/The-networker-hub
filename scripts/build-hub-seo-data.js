@@ -7,6 +7,8 @@ const path = require('path');
 const { FAQ_AEO_ENTRIES, buildSchemaGraph } = require('../api/_lib/hubert-seo');
 const { STATIC_PAGES } = require('../api/_lib/seo-static-pages');
 
+const { GUIDE_PAGES, getGuidePageKeys, guideSchemaKey } = require('../api/_lib/guide-pages');
+
 const pages = [
   'home',
   'faq',
@@ -17,9 +19,13 @@ const pages = [
   'events',
   'opportunities',
   'legal',
+  'guides',
   'help-organiser-payouts',
   'help-pricing-fees',
 ];
+getGuidePageKeys().forEach(function (guideKey) {
+  pages.push(guideSchemaKey(guideKey));
+});
 const schemas = {};
 pages.forEach(function (page) {
   schemas[page] = buildSchemaGraph(page);

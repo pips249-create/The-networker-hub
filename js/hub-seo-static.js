@@ -15,6 +15,11 @@
     var path = (window.location.pathname || '').toLowerCase();
     if (/\/events\/(?:index\.html)?$/.test(path) || /\/events\/?$/.test(path)) return 'events';
     if (/\/opportunities\//.test(path)) return 'opportunities';
+    if (/\/guides\.html$/.test(path)) return 'guides';
+    if (/\/guides\/list-an-event\.html$/.test(path)) return 'guide-list-an-event';
+    if (/\/guides\/list-a-conference-or-exhibition\.html$/.test(path)) return 'guide-list-a-conference-or-exhibition';
+    if (/\/guides\/list-a-business-opportunity\.html$/.test(path)) return 'guide-list-a-business-opportunity';
+    if (/\/guides\/invite-your-team\.html$/.test(path)) return 'guide-invite-your-team';
     if (/\/faq\.html$/.test(path)) return 'faq';
     if (/\/help\/organiser-payouts(?:\.html)?\/?$/.test(path)) return 'help-organiser-payouts';
     if (/\/help\/pricing-fees(?:\.html)?\/?$/.test(path)) return 'help-pricing-fees';

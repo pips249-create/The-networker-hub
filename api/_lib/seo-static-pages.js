@@ -2,6 +2,7 @@
  * Canonical meta for public static pages (home, browse, content).
  */
 const { siteOrigin } = require('./hubert-seo');
+const { GUIDE_PAGES, GUIDES_HUB, getGuidePageKeys, guideSchemaKey } = require('./guide-pages');
 
 const STATIC_PAGES = {
   home: {
@@ -92,7 +93,27 @@ const STATIC_PAGES = {
     image: '/assets/logo.png',
     ogType: 'website',
   },
+  guides: {
+    path: GUIDES_HUB.path,
+    title: GUIDES_HUB.title,
+    description: GUIDES_HUB.description,
+    image: '/assets/logo.png',
+    ogType: 'website',
+  },
 };
+
+getGuidePageKeys().forEach(function (guideKey) {
+  const guide = GUIDE_PAGES[guideKey];
+  STATIC_PAGES[guideSchemaKey(guideKey)] = {
+    path: guide.path,
+    title: guide.title,
+    description: guide.description,
+    image: '/assets/logo.png',
+    ogType: 'article',
+  };
+});
+
+const STATIC_PAGES_EXPORT = STATIC_PAGES;
 
 function absoluteUrl(origin, path) {
   const base = siteOrigin(origin);
@@ -101,15 +122,15 @@ function absoluteUrl(origin, path) {
 }
 
 function getStaticPageKeys() {
-  return Object.keys(STATIC_PAGES);
+  return Object.keys(STATIC_PAGES_EXPORT);
 }
 
 function getStaticPageConfig(pageKey) {
-  return STATIC_PAGES[String(pageKey || '').toLowerCase()] || null;
+  return STATIC_PAGES_EXPORT[String(pageKey || '').toLowerCase()] || null;
 }
 
 module.exports = {
-  STATIC_PAGES,
+  STATIC_PAGES: STATIC_PAGES_EXPORT,
   getStaticPageKeys,
   getStaticPageConfig,
   absoluteUrl,

@@ -1016,6 +1016,40 @@ window.HUB_SEO_DATA = {
         }
       ]
     },
+    "guides": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "CollectionPage",
+          "@id": "https://www.thenetworkerhub.com/guides.html",
+          "url": "https://www.thenetworkerhub.com/guides.html",
+          "name": "Organiser guides – The Networker Hub",
+          "description": "Step-by-step onboarding checklists for organisers — list events, publish business opportunities, and invite team editors on The Networker Hub.",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "The Networker Hub",
+            "url": "https://www.thenetworkerhub.com"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://www.thenetworkerhub.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Organiser guides",
+              "item": "https://www.thenetworkerhub.com/guides.html"
+            }
+          ]
+        }
+      ]
+    },
     "help-organiser-payouts": {
       "@context": "https://schema.org",
       "@graph": [
@@ -1053,6 +1087,29 @@ window.HUB_SEO_DATA = {
                 "@type": "Answer",
                 "text": "Payouts are not instant. A 7-day settlement period applies after the event ends. Archive the event, then request a payout from the organiser dashboard when eligible. Stripe Connect onboarding is required."
               }
+            }
+          ]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://www.thenetworkerhub.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "FAQ & Help",
+              "item": "https://www.thenetworkerhub.com/faq.html"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Organiser payouts",
+              "item": "https://www.thenetworkerhub.com/help/organiser-payouts"
             }
           ]
         }
@@ -1095,6 +1152,400 @@ window.HUB_SEO_DATA = {
                 "@type": "Answer",
                 "text": "Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing. Organisers receive the full ticket price."
               }
+            }
+          ]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://www.thenetworkerhub.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "FAQ & Help",
+              "item": "https://www.thenetworkerhub.com/faq.html"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Ticket pricing & fees",
+              "item": "https://www.thenetworkerhub.com/help/pricing-fees"
+            }
+          ]
+        }
+      ]
+    },
+    "guide-list-an-event": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "@id": "https://www.thenetworkerhub.com/guides/list-an-event.html#webpage",
+          "url": "https://www.thenetworkerhub.com/guides/list-an-event.html",
+          "name": "List an event – How-to guides – The Networker Hub",
+          "description": "Step-by-step guide for organisers: create your organiser page, add event details, set up tickets, connect Stripe, and publish on The Networker Hub.",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "The Networker Hub",
+            "url": "https://www.thenetworkerhub.com"
+          }
+        },
+        {
+          "@type": "HowTo",
+          "@id": "https://www.thenetworkerhub.com/guides/list-an-event.html#howto",
+          "url": "https://www.thenetworkerhub.com/guides/list-an-event.html",
+          "name": "How to list an event on The Networker Hub",
+          "description": "Step-by-step guide for organisers: create your organiser page, add event details, set up tickets, connect Stripe, and publish on The Networker Hub.",
+          "step": [
+            {
+              "@type": "HowToStep",
+              "position": 1,
+              "name": "Sign in to the organiser dashboard",
+              "text": "Sign in and open the organiser dashboard at /organiser/. If your networking group is already listed, search the organiser directory and claim your page when prompted.",
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event.html#sign-in"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 2,
+              "name": "Create or update your organiser page",
+              "text": "Under Organiser pages, add your public group profile: name, logo, description, contact email, and social links.",
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event.html#organiser-page"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 3,
+              "name": "Start a new event listing",
+              "text": "From My events, choose List event. Add title, event type, description, cover photo, format (in person, online, or hybrid), venue, and dates.",
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event.html#new-event"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 4,
+              "name": "Set up tickets",
+              "text": "Choose standard tickets, guest visit programme, Category Exclusivity, or Alumni Fast-Pass. Set prices, quantities, VAT if applicable, and your refund policy.",
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event.html#tickets"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 5,
+              "name": "Connect Stripe for paid tickets",
+              "text": "For paid events, complete Connect Stripe under Revenue so ticket money reaches your bank account. Free events do not require Stripe.",
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event.html#stripe"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 6,
+              "name": "Publish",
+              "text": "When details and tickets are complete, publish the event. Once Published, Approved, linked to a published organiser page, and has ticket types, it appears on Browse events.",
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event.html#publish"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 7,
+              "name": "Manage bookings after publish",
+              "text": "Use the dashboard to view attendees, revenue and payout status, reviews, and handle cancellations or refunds.",
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event.html#manage-bookings"
+            }
+          ]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://www.thenetworkerhub.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Organiser guides",
+              "item": "https://www.thenetworkerhub.com/guides.html"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "List an event",
+              "item": "https://www.thenetworkerhub.com/guides/list-an-event.html"
+            }
+          ]
+        }
+      ]
+    },
+    "guide-list-a-conference-or-exhibition": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "@id": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition.html#webpage",
+          "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition.html",
+          "name": "List a conference or exhibition – How-to guides – The Networker Hub",
+          "description": "Guide for organisers listing conferences, exhibitions, awards dinners and summits on The Networker Hub — free listings, optional paid tickets, and visibility.",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "The Networker Hub",
+            "url": "https://www.thenetworkerhub.com"
+          }
+        },
+        {
+          "@type": "HowTo",
+          "@id": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition.html#howto",
+          "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition.html",
+          "name": "How to list a conference or exhibition on The Networker Hub",
+          "description": "Guide for organisers listing conferences, exhibitions, awards dinners and summits on The Networker Hub — free listings, optional paid tickets, and visibility.",
+          "step": [
+            {
+              "@type": "HowToStep",
+              "position": 1,
+              "name": "Claim or create your organiser page",
+              "text": "Sign in to the organiser dashboard. If your group or exhibition brand is already listed, confirm the claim prompt. Otherwise create an organiser page with logo, description, and contact email.",
+              "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition.html#organiser-page"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 2,
+              "name": "Start a new listing",
+              "text": "From the dashboard choose Add new → Event. Pick your organiser page, set format, venue, and dates. For multi-day conferences, select multiple dates on the calendar.",
+              "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition.html#new-listing"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 3,
+              "name": "Choose Conference or Exhibition",
+              "text": "On the event details step, set Event type to Conference or Exhibition so attendees can filter you on Browse events.",
+              "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition.html#event-type"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 4,
+              "name": "Set up tickets (free or paid)",
+              "text": "Add delegate ticket tiers (early bird, standard, VIP, exhibitor, visitor, or free registration). Paid tickets require Connect Stripe under Revenue.",
+              "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition.html#tickets"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 5,
+              "name": "Publish and promote",
+              "text": "Publish when details, tickets, VAT if applicable, and refund policy are complete. Optional Premium Spotlight adds extra visibility on the browse page.",
+              "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition.html#publish"
+            }
+          ]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://www.thenetworkerhub.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Organiser guides",
+              "item": "https://www.thenetworkerhub.com/guides.html"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "List a conference or exhibition",
+              "item": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition.html"
+            }
+          ]
+        }
+      ]
+    },
+    "guide-list-a-business-opportunity": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "@id": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity.html#webpage",
+          "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity.html",
+          "name": "List a business opportunity – How-to guides – The Networker Hub",
+          "description": "How organisers list a business opportunity on The Networker Hub — create a listing, submit for review, and manage enquiries.",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "The Networker Hub",
+            "url": "https://www.thenetworkerhub.com"
+          }
+        },
+        {
+          "@type": "HowTo",
+          "@id": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity.html#howto",
+          "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity.html",
+          "name": "How to list a business opportunity on The Networker Hub",
+          "description": "How organisers list a business opportunity on The Networker Hub — create a listing, submit for review, and manage enquiries.",
+          "step": [
+            {
+              "@type": "HowToStep",
+              "position": 1,
+              "name": "Open the organiser dashboard",
+              "text": "Sign in and go to Business opportunities in the sidebar. You need an organiser account — the same workspace you use for events.",
+              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity.html#dashboard"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 2,
+              "name": "Start a new listing",
+              "text": "Choose List a listing. Review how listings work, pricing, and what happens after submission, then open the listing form.",
+              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity.html#new-listing"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 3,
+              "name": "Complete the listing form",
+              "text": "Add title, opportunity type, summary, description, investment notes, location, industry, images, and contact details. Listings are reviewed before going live.",
+              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity.html#listing-form"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 4,
+              "name": "Submit for review",
+              "text": "Submit the listing. You receive email updates when it is approved, live, or if changes are needed.",
+              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity.html#submit"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 5,
+              "name": "Optional: premium placement",
+              "text": "Featured carousel slots may be available for extra visibility on the opportunities browse page after submission.",
+              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity.html#premium"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 6,
+              "name": "Manage enquiries",
+              "text": "When someone enquires, you receive an email notification. Reply directly to the prospect and track enquiries from Business opportunities in the dashboard.",
+              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity.html#enquiries"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 7,
+              "name": "Renew or update",
+              "text": "Listings run for a set period. Renew or edit from your dashboard before expiry to stay visible on Browse opportunities.",
+              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity.html#renew"
+            }
+          ]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://www.thenetworkerhub.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Organiser guides",
+              "item": "https://www.thenetworkerhub.com/guides.html"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "List a business opportunity",
+              "item": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity.html"
+            }
+          ]
+        }
+      ]
+    },
+    "guide-invite-your-team": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "@id": "https://www.thenetworkerhub.com/guides/invite-your-team.html#webpage",
+          "url": "https://www.thenetworkerhub.com/guides/invite-your-team.html",
+          "name": "Invite your team – How-to guides – The Networker Hub",
+          "description": "How to invite editor team members to your organiser workspace on The Networker Hub — permissions, limits, and accept flow.",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "The Networker Hub",
+            "url": "https://www.thenetworkerhub.com"
+          }
+        },
+        {
+          "@type": "HowTo",
+          "@id": "https://www.thenetworkerhub.com/guides/invite-your-team.html#howto",
+          "url": "https://www.thenetworkerhub.com/guides/invite-your-team.html",
+          "name": "How to invite editors to your organiser workspace on The Networker Hub",
+          "description": "How to invite editor team members to your organiser workspace on The Networker Hub — permissions, limits, and accept flow.",
+          "step": [
+            {
+              "@type": "HowToStep",
+              "position": 1,
+              "name": "Who can invite",
+              "text": "Only the account owner can send or remove team invites. Editors can see the team list but cannot invite others.",
+              "url": "https://www.thenetworkerhub.com/guides/invite-your-team.html#who-can-invite"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 2,
+              "name": "Send an invite",
+              "text": "In the organiser dashboard, open Team & invites. Click Invite team member, enter their email, and send. You can invite up to 10 editors per organiser account.",
+              "url": "https://www.thenetworkerhub.com/guides/invite-your-team.html#send-invite"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 3,
+              "name": "They accept by signing in",
+              "text": "Your colleague opens the email and signs in with that exact email address. Once signed in, their status changes to Active on your team list.",
+              "url": "https://www.thenetworkerhub.com/guides/invite-your-team.html#accept"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 4,
+              "name": "What editors can do",
+              "text": "Editors can view all networking groups, create and edit events and tickets, view revenue and registrations, and manage business opportunity listings.",
+              "url": "https://www.thenetworkerhub.com/guides/invite-your-team.html#permissions"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 5,
+              "name": "What editors cannot do",
+              "text": "Editors cannot invite or remove team members or delete events. Access is account-wide across every group on your organiser account.",
+              "url": "https://www.thenetworkerhub.com/guides/invite-your-team.html#restrictions"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 6,
+              "name": "Remove someone",
+              "text": "From the team table, choose Remove next to an editor or resend a pending invite if they did not receive the email.",
+              "url": "https://www.thenetworkerhub.com/guides/invite-your-team.html#remove"
+            }
+          ]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://www.thenetworkerhub.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Organiser guides",
+              "item": "https://www.thenetworkerhub.com/guides.html"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Invite editors",
+              "item": "https://www.thenetworkerhub.com/guides/invite-your-team.html"
             }
           ]
         }

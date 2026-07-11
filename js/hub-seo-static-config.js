@@ -76,5 +76,40 @@ window.HUB_SEO_STATIC = {
     "description": "Privacy policy, terms and conditions, refunds, cookie policy and legal information for The Networker Hub — operated by The Networker Group Ltd.",
     "image": "/assets/logo.png",
     "ogType": "website"
+  },
+  "guides": {
+    "path": "/guides.html",
+    "title": "Organiser guides – The Networker Hub",
+    "description": "Step-by-step onboarding checklists for organisers — list events, publish business opportunities, and invite team editors on The Networker Hub.",
+    "image": "/assets/logo.png",
+    "ogType": "website"
+  },
+  "guide-list-an-event": {
+    "path": "/guides/list-an-event.html",
+    "title": "List an event – How-to guides – The Networker Hub",
+    "description": "Step-by-step guide for organisers: create your organiser page, add event details, set up tickets, connect Stripe, and publish on The Networker Hub.",
+    "image": "/assets/logo.png",
+    "ogType": "article"
+  },
+  "guide-list-a-conference-or-exhibition": {
+    "path": "/guides/list-a-conference-or-exhibition.html",
+    "title": "List a conference or exhibition – How-to guides – The Networker Hub",
+    "description": "Guide for organisers listing conferences, exhibitions, awards dinners and summits on The Networker Hub — free listings, optional paid tickets, and visibility.",
+    "image": "/assets/logo.png",
+    "ogType": "article"
+  },
+  "guide-list-a-business-opportunity": {
+    "path": "/guides/list-a-business-opportunity.html",
+    "title": "List a business opportunity – How-to guides – The Networker Hub",
+    "description": "How organisers list a business opportunity on The Networker Hub — create a listing, submit for review, and manage enquiries.",
+    "image": "/assets/logo.png",
+    "ogType": "article"
+  },
+  "guide-invite-your-team": {
+    "path": "/guides/invite-your-team.html",
+    "title": "Invite your team – How-to guides – The Networker Hub",
+    "description": "How to invite editor team members to your organiser workspace on The Networker Hub — permissions, limits, and accept flow.",
+    "image": "/assets/logo.png",
+    "ogType": "article"
   }
 };

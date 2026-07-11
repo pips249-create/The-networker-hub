@@ -20,7 +20,7 @@
     "audit:marketing-opt-in": "node scripts/audit-legacy-marketing-opt-in.js",
     "seed-ranking-demo": "node scripts/seed-ranking-demo-reviews.js",
     "import-attendees": "node scripts/import-attendees-csv.js",
-    "build-seo": "node scripts/build-hub-seo-data.js && node scripts/build-faq-html.js && node scripts/build-llms-txt.js",
+    "build-seo": "node scripts/build-hub-seo-data.js && node scripts/build-faq-html.js && node scripts/build-page-seo-html.js && node scripts/build-llms-txt.js",
     "build": "npm run build-seo",
     "vercel-build": "npm run build-seo"
   },
