@@ -980,8 +980,16 @@
   margin-left: auto;
 }
 
-.org-revenue-stats {
+.org-events-hub-summary {
   margin-bottom: 20px;
+}
+
+.org-events-hub-summary .org-stats {
+  margin-bottom: 16px;
+}
+
+.org-events-hub-summary .org-quick-actions {
+  margin-bottom: 0;
 }
 
 .org-revenue-info-panel {

@@ -53,6 +53,7 @@
   var spotlightTimer = null;
   var spotlightAnimating = false;
   var spotlightCarouselBound = false;
+  var pendingResultsScroll = false;
 
   var els = {};
 
@@ -1071,6 +1072,20 @@
 
     readSidebarFilters();
     updateSearchClearVisibility();
+    pendingResultsScroll = Boolean(searchQ || window.location.hash === '#results');
+  }
+
+  function scrollToResultsAfterLanding() {
+    if (!pendingResultsScroll) return;
+    pendingResultsScroll = false;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        var target = document.getElementById('results') || document.querySelector('.opp-listings-area');
+        if (!target || !target.scrollIntoView) return;
+        var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+      });
+    });
   }
 
   function writeFiltersToUrl() {
@@ -1488,6 +1503,7 @@
     resetSpotlightOrder();
     renderSpotlight();
     renderListings();
+    scrollToResultsAfterLanding();
 
     if (catalog && catalog.loadCatalogAsync) {
       catalog.loadCatalogAsync().then(function (merged) {

@@ -1563,8 +1563,11 @@
   }
 }
 
-/* ── BROWSE PAGE (reference layout) ── */
+/* ── BROWSE PAGE (matches events browse hero layout) ── */
 .opp-browse-page {
+  --opp-hero-navy: #1a1a2e;
+  --opp-hero-lavender: #d4b8e8;
+  --opp-hero-lavender-dim: rgba(194, 153, 209, 0.14);
   background: var(--opp-off-white);
 }
 
@@ -1572,71 +1575,113 @@
   padding-top: 72px;
 }
 
-.opp-browse-page .opp-page-strip {
-  background: linear-gradient(135deg, var(--opp-navy) 0%, var(--opp-navy-mid) 70%, #1c3050 100%);
-  padding: 32px 40px 0;
+.opp-browse-page .opp-browse-hero {
+  background: var(--opp-hero-navy);
+  color: #fff;
+  padding: 32px 24px 36px;
   position: relative;
   overflow: hidden;
 }
 
-.opp-browse-page .opp-page-strip::before {
+.opp-browse-page .opp-browse-hero::before {
   content: '';
   position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(201, 150, 31, 0.1) 0%, transparent 70%);
-  border-radius: 50%;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 85% 40%, var(--opp-hero-lavender-dim), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 10% 80%, rgba(195, 151, 195, 0.08), transparent 50%);
   pointer-events: none;
 }
 
-.opp-browse-page .opp-page-strip-inner {
+.opp-browse-page .opp-hero-inner {
   max-width: 1200px;
   margin: 0 auto;
   position: relative;
   z-index: 1;
 }
 
-.opp-browse-page .opp-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.45);
-  margin-bottom: 16px;
-}
-
-.opp-browse-page .opp-breadcrumb a {
-  color: rgba(255, 255, 255, 0.45);
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.opp-browse-page .opp-breadcrumb a:hover {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.opp-browse-page .opp-breadcrumb span:last-child {
-  color: var(--opp-gold-light);
-}
-
-.opp-browse-page .opp-browse-hero {
-  background: transparent;
-  padding: 0 0 28px;
-  overflow: visible;
-}
-
-.opp-browse-page .opp-browse-hero::before,
-.opp-browse-page .opp-browse-hero::after {
-  display: none;
-}
-
-.opp-browse-page .opp-browse-hero .opp-hero-inner {
-  max-width: none;
-  grid-template-columns: minmax(0, 1fr) 400px;
-  gap: clamp(20px, 3vw, 32px);
+.opp-browse-page .opp-hero-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 16px;
   align-items: start;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.opp-browse-page .opp-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--opp-hero-lavender);
+  border: 1px solid rgba(212, 184, 232, 0.45);
+  border-radius: var(--radius-pill);
+  padding: 5px 12px;
+  margin: 0 0 14px;
+}
+
+.opp-browse-page .opp-hero-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--opp-hero-lavender);
+  box-shadow: 0 0 8px var(--opp-hero-lavender);
+}
+
+.opp-browse-page .opp-hero-copy {
+  min-width: 0;
+  max-width: none;
+}
+
+.opp-browse-page .opp-browse-hero h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.5rem, 3.8vw, 2rem);
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0 0 14px;
+  max-width: 18em;
+  color: #fff;
+}
+
+.opp-browse-page .opp-browse-hero h1 .accent {
+  color: var(--opp-hero-lavender);
+  font-style: normal;
+}
+
+.opp-browse-page .opp-browse-hero .opp-hero-lede {
+  font-size: var(--text-size-body);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 34em;
+  margin: 0;
+}
+
+.opp-browse-page .opp-hero-provider-cta,
+.opp-browse-page .opp-hero-enquiry-cta {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.opp-browse-page .opp-hero-provider-link,
+.opp-browse-page .opp-hero-enquiry-cta a {
+  font-weight: 600;
+  color: var(--opp-hero-lavender);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(212, 184, 232, 0.55);
+}
+
+.opp-browse-page .opp-hero-provider-link:hover,
+.opp-browse-page .opp-hero-enquiry-cta a:hover {
+  color: #e8d4f4;
+  text-decoration-color: rgba(232, 212, 244, 0.9);
 }
 
 .opp-browse-page .opp-hero-sponsor-slot {
@@ -1854,27 +1899,27 @@
   color: #7a3d8a !important;
 }
 
+.opp-browse-page .opp-shell {
+  max-width: 1200px;
+  margin: -12px auto 48px;
+  padding: 28px 24px 48px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(45, 38, 54, 0.06);
+  border: 1px solid rgba(194, 153, 209, 0.18);
+  position: relative;
+  z-index: 2;
+}
+
 .opp-browse-page .opp-browse-hero .opp-hero-copy {
   min-width: 0;
-}
-
-.opp-browse-page .opp-browse-hero h1 {
-  font-size: clamp(1.75rem, 3.8vw, 2.5rem);
-  margin-bottom: 16px;
-}
-
-.opp-browse-page .opp-browse-hero .opp-hero-lede {
-  font-size: 16px;
-  line-height: 1.65;
-  margin-bottom: 12px;
-  max-width: 36em;
 }
 
 .opp-browse-page .opp-browse-disclaimer {
   margin: 12px 0 0;
   font-size: 12px;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
 }
 
 .opp-browse-page .opp-browse-hero .opp-hero-stats {
@@ -1893,6 +1938,9 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  margin: 4px 0;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--opp-border);
 }
 
 .opp-browse-page .opp-strip-filters::-webkit-scrollbar {
@@ -1903,7 +1951,7 @@
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-muted);
   font-size: 14px;
   font-weight: 500;
   padding: 10px 16px;
@@ -1914,12 +1962,12 @@
 }
 
 .opp-browse-page .opp-tab-btn:hover {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--charcoal);
 }
 
 .opp-browse-page .opp-tab-btn.active {
-  color: var(--opp-gold-light);
-  border-bottom-color: var(--opp-gold-light);
+  color: var(--charcoal);
+  border-bottom-color: var(--lavender-deep);
   font-weight: 600;
 }
 
@@ -1927,8 +1975,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.6);
+  background: var(--opp-light-gray);
+  color: var(--text-muted);
   font-size: 11px;
   font-weight: 600;
   min-width: 20px;
@@ -1939,8 +1987,8 @@
 }
 
 .opp-browse-page .opp-tab-btn.active .opp-tab-count {
-  background: var(--opp-gold-dim);
-  color: var(--opp-gold-light);
+  background: var(--lavender-light);
+  color: var(--lavender-deep);
 }
 
 /* Investment budget quick-pills — mobile/tablet shortcut to sidebar tiers */
@@ -1962,10 +2010,10 @@
 
 .opp-browse-page .opp-invest-pill {
   flex: 0 0 auto;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #fff;
+  border: 1px solid var(--opp-border);
   border-radius: 999px;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--text-muted);
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
@@ -1977,14 +2025,14 @@
 }
 
 .opp-browse-page .opp-invest-pill:hover {
-  color: rgba(255, 255, 255, 0.92);
-  border-color: rgba(255, 255, 255, 0.28);
+  color: var(--charcoal);
+  border-color: var(--lavender-soft);
 }
 
 .opp-browse-page .opp-invest-pill.active {
-  background: rgba(245, 224, 160, 0.14);
-  border-color: var(--opp-gold-light);
-  color: var(--opp-gold-light);
+  background: var(--lavender-light);
+  border-color: var(--lavender-soft);
+  color: var(--charcoal);
   font-weight: 600;
 }
 
@@ -1997,22 +2045,21 @@
   padding: 0 5px;
   margin-left: 4px;
   border-radius: 9px;
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.55);
+  background: var(--opp-light-gray);
+  color: var(--text-muted);
   font-size: 10px;
   font-weight: 600;
 }
 
 .opp-browse-page .opp-invest-pill.active .opp-invest-pill-count {
-  background: var(--opp-gold-dim);
-  color: var(--opp-gold-light);
+  background: #fff;
+  color: var(--lavender-deep);
 }
 
 /* Premium Spotlight — featured opportunities carousel */
 .opp-browse-page .opp-promo-section {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 40px 4px;
+  margin-bottom: 20px;
+  padding-bottom: 4px;
 }
 
 .opp-browse-page .opp-premium-spotlight {
@@ -2350,9 +2397,8 @@
 }
 
 .opp-browse-page .opp-browse-layout {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 28px 40px 60px;
+  margin: 24px 0 0;
+  padding: 0;
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
   gap: 24px;
@@ -2361,6 +2407,7 @@
 
 .opp-browse-page .opp-listings-area {
   min-width: 0;
+  scroll-margin-top: 96px;
 }
 
 .opp-browse-page .opp-sidebar {
@@ -3410,7 +3457,6 @@
 @media (max-width: 860px) {
   .opp-browse-page .opp-browse-layout {
     grid-template-columns: 1fr;
-    padding: 20px;
   }
 
   .opp-browse-page .opp-invest-pills {
@@ -3429,32 +3475,30 @@
 }
 
 @media (max-width: 900px) {
-  .opp-browse-page .opp-browse-hero .opp-hero-inner {
+  .opp-browse-page .opp-hero-layout {
     grid-template-columns: 1fr;
   }
 
   .opp-browse-page .opp-hero-sponsor-slot {
-    max-width: 400px;
+    max-width: 360px;
     margin: 0 auto;
     width: 100%;
   }
 }
 
 @media (max-width: 600px) {
-  .opp-browse-page .opp-page-strip {
-    padding: 24px 20px 0;
+  .opp-browse-page .opp-browse-hero {
+    padding: 24px 20px 28px;
   }
 
   .opp-browse-page .opp-browse-hero h1 {
-    font-size: 1.65rem;
+    font-size: 1.5rem;
   }
 
-  .opp-browse-page .opp-promo-section {
-    padding: 0 16px 4px;
-  }
-
-  .opp-browse-page .opp-browse-layout {
-    padding: 16px 16px 40px;
+  .opp-browse-page .opp-shell {
+    margin: -8px 12px 40px;
+    padding: 20px 16px 36px;
+    border-radius: 16px;
   }
 
   .opp-browse-page .opp-opps-grid {
@@ -3504,6 +3548,10 @@
 
 /* Mobile browse: compact horizontal rows (grid + list modes) */
 @media (max-width: 768px) {
+  .opp-browse-page .opp-listings-area {
+    scroll-margin-top: 76px;
+  }
+
   .opp-browse-page .opp-opps-grid,
   .opp-browse-page .opp-opps-grid.list-view {
     grid-template-columns: 1fr;
@@ -4082,7 +4130,7 @@ body.opp-view-map.opp-browse-page .opp-listings-toolbar {
 
 /* Hubert strip on browse */
 .opportunities-page .opp-hubert-strip {
-  margin-top: 16px;
+  margin: 16px 0 24px;
   padding: 14px 16px;
   border-radius: 14px;
   background: linear-gradient(135deg, #f5f0e8 0%, #fff 100%);

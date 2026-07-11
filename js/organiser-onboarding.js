@@ -250,7 +250,7 @@
           return;
         }
         if (action === 'event' && typeof window.orgDashSetRoute === 'function') {
-          window.orgDashSetRoute('events-overview');
+          window.orgDashSetRoute('events-list');
           return;
         }
         if (action === 'team' && typeof window.orgDashSetRoute === 'function') {

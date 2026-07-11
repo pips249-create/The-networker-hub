@@ -389,8 +389,9 @@ html:has(.home-page) {
 
 .home-page .home-hero-search {
   display: flex;
+  flex-direction: column;
   align-items: stretch;
-  gap: 10px;
+  gap: 8px;
   padding: 6px;
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.96);
@@ -398,6 +399,60 @@ html:has(.home-page) {
   box-shadow:
     0 12px 32px rgba(45, 35, 50, 0.28),
     0 2px 0 rgba(255, 255, 255, 0.65) inset;
+}
+
+.home-page .home-hero-search-choice {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 4px;
+  margin: 0;
+  padding: 3px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: rgba(166, 127, 173, 0.13);
+}
+
+.home-page .home-hero-search-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.home-page .home-hero-search-option input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.home-page .home-hero-search-option span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 7px 13px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(74, 68, 70, 0.72);
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.home-page .home-hero-search-option input:checked + span {
+  background: #fff;
+  color: var(--charcoal);
+  box-shadow: 0 4px 14px rgba(45, 35, 50, 0.13);
+}
+
+.home-page .home-hero-search-option input:focus-visible + span {
+  outline: 2px solid var(--lavender-deep);
+  outline-offset: 2px;
+}
+
+.home-page .home-hero-search-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
 }
 
 .home-page .home-hero-search input[type='search'] {
@@ -2319,10 +2374,30 @@ html:has(.home-page) {
   }
 
   .home-page .home-hero-search {
-    flex-direction: column;
     gap: 8px;
     padding: 8px;
     border-radius: 18px;
+  }
+
+  .home-page .home-hero-search-choice {
+    align-self: stretch;
+  }
+
+  .home-page .home-hero-search-option {
+    flex: 1 1 0;
+  }
+
+  .home-page .home-hero-search-option span {
+    justify-content: center;
+    width: 100%;
+    padding-left: 10px;
+    padding-right: 10px;
+    text-align: center;
+  }
+
+  .home-page .home-hero-search-row {
+    flex-direction: column;
+    gap: 8px;
   }
 
   .home-page .home-hero-search input[type='search'] {

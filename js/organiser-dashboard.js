@@ -416,7 +416,7 @@
         groupsMount.innerHTML =
           '<section class="org-ranking-share org-ranking-share--compact">' +
           '<h3 class="org-section-title">Your ranking badges</h3>' +
-          '<p class="org-section-sub">Share on social media — open <a href="#events-overview">My events</a> for the full preview.</p>' +
+          '<p class="org-section-sub">Share on social media — open <a href="#events-list">My events</a> for the full preview.</p>' +
           '<div class="org-ranking-share-cards">' +
           cardsHtml +
           '</div></section>';
@@ -1893,7 +1893,7 @@
     const hash = (location.hash.replace('#', '') || 'dashboard').toLowerCase();
     if (hash === 'business-list') return { page: 'business-list', sub: null };
     if (hash === 'opportunity-enquiries') return { page: 'business-overview', sub: null };
-    if (hash === 'events-overview') return { page: 'events-overview', sub: null };
+    if (hash === 'events-overview') return { page: 'events', sub: 'events-list' };
     if (hash === 'business-overview') return { page: 'business-overview', sub: null };
     if (hash === 'tickets') return { page: 'events', sub: 'events-tickets' };
     if (hash.startsWith('events-')) return { page: 'events', sub: hash };
@@ -2787,27 +2787,27 @@
           ? formatDateShort(a.applicationDecidedAt)
           : formatDateShort(a.registeredAt);
       tr.innerHTML =
-        '<td class="org-td-name">' +
+        '<td class="org-td-name" data-label="Name">' +
         nameCell +
-        '</td><td class="org-td-relationship">' +
+        '</td><td class="org-td-relationship" data-label="Visits">' +
         attendeeGroupRelationshipBadgeHtml(a) +
-        '</td><td>' +
+        '</td><td data-label="Email">' +
         esc(a.email || '—') +
-        '</td><td>' +
+        '</td><td data-label="Event">' +
         esc(a.eventTitle) +
-        '</td><td>' +
+        '</td><td data-label="Ticket">' +
         esc(a.ticketName) +
-        '</td><td>' +
+        '</td><td data-label="Qty">' +
         esc(String(a.quantity)) +
-        '</td><td>' +
+        '</td><td data-label="Status">' +
         attendeeStatusBadgeHtml(a) +
-        '</td><td class="org-td-application-answers">' +
+        '</td><td class="org-td-application-answers" data-label="Application answers">' +
         attendeeApplicationAnswersHtml(a) +
-        '</td><td>' +
+        '</td><td data-label="Paid">' +
         attendeePaidDisplay(a) +
-        '</td><td>' +
+        '</td><td data-label="Registered">' +
         esc(registeredLabel) +
-        '</td><td class="org-td-actions">' +
+        '</td><td class="org-td-actions" data-label="Actions">' +
         attendeeActionsHtml(a) +
         '</td>';
       body.appendChild(tr);
@@ -4795,7 +4795,7 @@
         ),
       });
       payment.renderInto(document.getElementById('org-payment-setup-overview'), setupState, group, {
-        returnPath: '/organiser/index.html#events-overview',
+        returnPath: '/organiser/index.html#events-list',
         compact: true,
         title: 'Add bank details before you sell paid tickets',
       });
@@ -4900,7 +4900,8 @@
     if (route === 'opportunity-enquiries' || route === 'business-overview') {
       page = 'business-overview';
     } else if (route === 'events-overview') {
-      page = 'events-overview';
+      page = 'events';
+      sub = 'events-list';
     } else if (route && route.startsWith('events-')) {
       page = 'events';
       sub = route;
@@ -5143,103 +5144,24 @@
     setRoute('events-list');
   }
 
-  function renderOverviewGroups() {
-    const body = document.getElementById('dash-groups-body');
-    const empty = document.getElementById('dash-groups-empty');
-    if (!body) return;
-    body.innerHTML = '';
-    const slice = state.groups.slice(0, 6);
-    if (!slice.length) {
-      setOrgEmpty(empty, { show: true });
-      return;
-    }
-    setOrgEmpty(empty, { show: false });
-    slice.forEach((g) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td>' +
-        thumbHtml(g) +
-        '</td><td class="org-td-name"><button type="button" class="org-td-name-click" data-edit-group="' +
-        esc(g.id) +
-        '">' +
-        esc(g.name) +
-        '</button>' +
-        groupRankingBadgeHtml(g.id) +
-        '</td><td>' +
-        esc(String(g.eventsListed != null ? g.eventsListed : 0)) +
-        '</td><td class="org-revenue">' +
-        esc(g.revenueDisplay || '£0') +
-        '</td><td>' +
-        ratingHtml(g.rating) +
-        '</td><td>' +
-        statusBadgeHtml(g.statusKey || 'draft', g.statusLabel || 'Draft') +
-        '</td><td class="org-td-actions">' +
-        actionMenuHtml('group', g.id, g.name, g) +
-        '</td>';
-      body.appendChild(tr);
+  function revenuePayoutMetrics() {
+    let readyToRequest = 0;
+    let paidOut = 0;
+    let onHold = 0;
+    (state.events || []).forEach(function (ev) {
+      if (ev.canRequestPayout) readyToRequest++;
+      if (ev.payoutStatusKey === 'paid') paidOut++;
+      if (ev.needsRefundConfirmation || ev.payoutHeld || ev.payoutStatusKey === 'held') onHold++;
     });
+    return { readyToRequest, paidOut, onHold };
   }
 
-  function overviewEventsForDashboard() {
-    const grouped = groupEventsIntoSeries(state.events.slice());
-    const now = Date.now() - 86400000;
-    const upcoming = grouped.filter((ev) => {
-      if (ev.isSeries && ev.seriesEvents && ev.seriesEvents.length) {
-        return ev.seriesEvents.some((item) => {
-          const t = item.date ? new Date(item.date).getTime() : 0;
-          return !Number.isNaN(t) && t >= now;
-        });
-      }
-      if (!ev.date) return true;
-      const d = new Date(ev.date);
-      return !Number.isNaN(d.getTime()) && d.getTime() >= now;
-    });
-    return upcoming.slice(0, 6);
+  function renderOverviewGroups() {
+    /* merged into main organiser pages list */
   }
 
   function renderOverviewEvents() {
-    const body = document.getElementById('dash-events-body');
-    const empty = document.getElementById('dash-events-empty');
-    if (!body) return;
-
-    if (!state.eventsFullyLoaded && state.eventsHasMore) {
-      if (!state.eventsLoading) {
-        ensureAllEventsForGrouping()
-          .then(() => renderOverviewEvents())
-          .catch(() => renderOverviewEvents());
-      }
-      return;
-    }
-
-    body.innerHTML = '';
-    const slice = overviewEventsForDashboard();
-    if (!slice.length) {
-      setOrgEmpty(empty, { show: true });
-      return;
-    }
-    setOrgEmpty(empty, { show: false });
-    slice.forEach((ev) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td>' +
-        thumbHtml(ev) +
-        '</td><td class="org-td-name">' +
-        eventTitleCellHtml(ev) +
-        '</td><td>' +
-        esc(formatEventDateCell(ev)) +
-        '</td><td>' +
-        esc(formatTimeRange(ev.date, ev.endDate)) +
-        '</td><td>' +
-        esc(ev.ticketsSoldLabel || '0') +
-        '</td><td class="org-revenue">' +
-        esc(ev.revenueDisplay || '£0') +
-        '</td><td>' +
-        statusBadgeHtml(ev.statusKey || 'upcoming', ev.statusLabel || 'Upcoming') +
-        '</td><td class="org-td-actions">' +
-        eventActionMenuHtmlWithItem(ev) +
-        '</td>';
-      body.appendChild(tr);
-    });
+    /* merged into main events list */
   }
 
   function renderGroups() {
@@ -5852,9 +5774,10 @@
       const el = document.getElementById(id);
       if (el) el.textContent = val;
     };
-    setRev('rev-stat-events', String(state.eventsTotal || state.events.length));
-    setRev('rev-stat-tickets', String(totalTicketsSold()));
-    setRev('rev-stat-revenue', totalRevenueDisplay());
+    const metrics = revenuePayoutMetrics();
+    setRev('rev-stat-ready', String(metrics.readyToRequest));
+    setRev('rev-stat-paid', String(metrics.paidOut));
+    setRev('rev-stat-held', String(metrics.onHold));
 
     if (!list.length) {
       const hasEvents = state.events.length > 0;
@@ -7045,8 +6968,6 @@
     renderStats();
     renderOrganiserNotices();
     renderOrganiserRankingShare();
-    renderOverviewGroups();
-    renderOverviewEvents();
     renderGroups();
     renderTeam();
     renderMyEventsHub();

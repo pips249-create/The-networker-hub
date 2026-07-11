@@ -15,7 +15,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260730" />
-    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260710d" />
+    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260711b" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260710" />
     <script src="../js/hub-seo-static-config.js?v=20260612"></script>
@@ -28,59 +28,77 @@
     <div id="hub-site-nav"></div>
     <script src="../js/site-nav.js?v=20260710g" data-root="../" data-page="opportunities"></script>
 
-    <header class="opp-page-strip" id="browse">
-      <div class="opp-page-strip-inner">
-        <nav class="opp-breadcrumb" aria-label="Breadcrumb">
-          <a href="../index.html">Home</a>
-          <span aria-hidden="true">›</span>
-          <span>Browse opportunities</span>
-        </nav>
-
-        <section class="opp-hero opp-browse-hero" aria-labelledby="opp-hero-heading">
-          <div class="opp-hero-inner">
-            <div class="opp-hero-copy">
-              <h1 id="opp-hero-heading">
-                Discover <span class="accent">franchises, side hustles &amp; business opportunities</span> across the UK
-                network
-              </h1>
-              <p class="opp-hero-lede">
-                Franchises, side hustles, partnerships and more — free to browse.
-              </p>
-              <p class="hub-access-note">
-                Browse opportunities for free. To enquire about a listing,
-                <a href="../register.html">create a free account</a> — it only takes 2 minutes.
-              </p>
+    <section class="opp-browse-hero" aria-labelledby="opp-hero-heading">
+      <div class="opp-hero-inner opp-hero-layout">
+        <div class="opp-hero-copy">
+          <p class="opp-hero-badge">Opportunity discovery</p>
+          <h1 id="opp-hero-heading">
+            Find your next <span class="accent">business opportunity</span> across the UK
+          </h1>
+          <p class="opp-hero-lede">
+            Franchises, side hustles, partnerships and more — filter by type, investment, and location.
+          </p>
+          <p class="opp-hero-provider-cta">
+            Provider?
+            <a href="../organiser/opportunity-edit.html" class="opp-hero-provider-link" data-hub-action="add-opportunity"
+              >List an opportunity</a
+            >
+          </p>
+          <p class="opp-hero-enquiry-cta">
+            Browse for free. To enquire,
+            <a href="../register.html">create a free account</a> — it only takes 2 minutes.
+          </p>
+        </div>
+        <div class="opp-hero-sponsor-slot" id="hero-sponsor-slot">
+          <aside
+            class="sponsor-hub sponsor-hub--fallback sponsor-hub--in-hero"
+            id="sponsor-hub"
+            data-slot="opportunities_sponsor_hub"
+            aria-labelledby="sponsor-heading"
+          >
+            <span class="sponsor-hub-badge" id="sponsor-badge" hidden>Sponsored</span>
+            <div class="sponsor-hub-head" id="sponsor-heading">
+              <span class="icon" aria-hidden="true">★</span>
+              <span>Sponsor Hub</span>
             </div>
-            <div class="opp-hero-sponsor-slot" id="hero-sponsor-slot">
-              <aside
-                class="sponsor-hub sponsor-hub--fallback sponsor-hub--in-hero"
-                id="sponsor-hub"
-                data-slot="opportunities_sponsor_hub"
-                aria-labelledby="sponsor-heading"
-              >
-                <span class="sponsor-hub-badge" id="sponsor-badge" hidden>Sponsored</span>
-                <div class="sponsor-hub-head" id="sponsor-heading">
-                  <span class="icon" aria-hidden="true">★</span>
-                  <span>Sponsor Hub</span>
-                </div>
-                <div class="sponsor-logo-wrap sponsor-logo-band" id="sponsor-logo-wrap" hidden>
-                  <img id="sponsor-logo" class="sponsor-logo" alt="" hidden />
-                  <div id="sponsor-logo-placeholder" class="sponsor-logo-placeholder" hidden>Your logo</div>
-                </div>
-                <p class="sponsor-company" id="sponsor-company" hidden></p>
-                <p class="sponsor-tagline" id="sponsor-tagline"></p>
-                <div id="sponsor-body" class="sponsor-body"></div>
-                <a
-                  class="sponsor-cta"
-                  id="sponsor-cta"
-                  href="mailto:rosie@thenetworkerhub.com?subject=Sponsor%20Hub%20enquiry"
-                  >Find out more →</a>
-              </aside>
+            <div class="sponsor-logo-wrap sponsor-logo-band" id="sponsor-logo-wrap" hidden>
+              <img id="sponsor-logo" class="sponsor-logo" alt="" hidden />
+              <div id="sponsor-logo-placeholder" class="sponsor-logo-placeholder" hidden>Your logo</div>
+            </div>
+            <p class="sponsor-company" id="sponsor-company" hidden></p>
+            <p class="sponsor-tagline" id="sponsor-tagline"></p>
+            <div id="sponsor-body" class="sponsor-body"></div>
+            <a
+              class="sponsor-cta"
+              id="sponsor-cta"
+              href="mailto:rosie@thenetworkerhub.com?subject=Sponsor%20Hub%20enquiry"
+              >Find out more →</a>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <main class="opp-shell" id="browse">
+      <div class="opp-promo-section">
+        <section class="premium-spotlight opp-premium-spotlight" aria-labelledby="opp-spotlight-heading">
+          <div class="spotlight-header">
+            <div class="spotlight-title" id="opp-spotlight-heading">
+              <span class="icon" aria-hidden="true">★</span>
+              Premium Spotlight
+            </div>
+            <div class="spotlight-nav">
+              <a href="#opp-listings-mount" class="spotlight-view-all">View all</a>
+              <button type="button" id="opp-spotlight-prev" aria-label="Previous">‹</button>
+              <button type="button" id="opp-spotlight-next" aria-label="Next">›</button>
             </div>
           </div>
+          <div class="spotlight-wrap">
+            <div class="spotlight-track" id="opp-spotlight-track"></div>
+          </div>
         </section>
+      </div>
 
-        <div class="opp-strip-filters" id="opp-strip-filters" role="tablist" aria-label="Opportunity type">
+      <div class="opp-strip-filters" id="opp-strip-filters" role="tablist" aria-label="Opportunity type">
           <button type="button" class="opp-tab-btn active" role="tab" aria-selected="true" data-filter="all">
             All <span class="opp-tab-count" data-count-for="all">0</span>
           </button>
@@ -143,29 +161,8 @@
             </div>
           </div>
         </section>
-      </div>
-    </header>
 
-    <div class="opp-promo-section">
-      <section class="premium-spotlight opp-premium-spotlight" aria-labelledby="opp-spotlight-heading">
-        <div class="spotlight-header">
-          <div class="spotlight-title" id="opp-spotlight-heading">
-            <span class="icon" aria-hidden="true">★</span>
-            Premium Spotlight
-          </div>
-          <div class="spotlight-nav">
-            <a href="#opp-listings-mount" class="spotlight-view-all">View all</a>
-            <button type="button" id="opp-spotlight-prev" aria-label="Previous">‹</button>
-            <button type="button" id="opp-spotlight-next" aria-label="Next">›</button>
-          </div>
-        </div>
-        <div class="spotlight-wrap">
-          <div class="spotlight-track" id="opp-spotlight-track"></div>
-        </div>
-      </section>
-    </div>
-
-    <div class="opp-browse-layout">
+      <div class="opp-browse-layout">
       <aside class="opp-sidebar" aria-label="Filters">
         <div class="opp-sidebar-panel">
           <div class="opp-sidebar-filters">
@@ -239,7 +236,7 @@
         </div>
       </aside>
 
-      <div class="opp-listings-area">
+      <div class="opp-listings-area" id="results">
         <div class="opp-listings-toolbar">
           <p class="opp-results-info" id="opp-results-count" aria-live="polite">Loading listings…</p>
           <div class="opp-toolbar-actions">
@@ -346,7 +343,8 @@
 
         <div class="opp-listings-mount" id="opp-listings-mount"></div>
       </div>
-    </div>
+      </div>
+    </main>
 
     <section class="opp-cta-strip" aria-labelledby="opp-cta-heading">
       <h2 id="opp-cta-heading">Got an opportunity worth sharing?</h2>
@@ -365,7 +363,7 @@
     <script src="../js/opportunity-investment-breakdown.js?v=20260710"></script>
     <script src="../js/opportunities-saves.js?v=20260710"></script>
     <script src="../js/postcode-geo.js?v=20260609b"></script>
-    <script src="../js/opportunities-page.js?v=20260710e"></script>
+    <script src="../js/opportunities-page.js?v=20260710f"></script>
     <script src="../js/opportunities-map.js?v=20260611"></script>
     <script src="../js/hubert-chat.js?v=20260710"></script>
     <script src="../js/hubert-widget.js?v=20260710" data-root="../"></script>
