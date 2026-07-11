@@ -1563,11 +1563,8 @@
   }
 }
 
-/* ── BROWSE PAGE (matches events browse hero layout) ── */
+/* ── BROWSE PAGE (events-style layout, opportunities gold/navy palette) ── */
 .opp-browse-page {
-  --opp-hero-navy: #1a1a2e;
-  --opp-hero-lavender: #d4b8e8;
-  --opp-hero-lavender-dim: rgba(194, 153, 209, 0.14);
   background: var(--opp-off-white);
 }
 
@@ -1576,7 +1573,7 @@
 }
 
 .opp-browse-page .opp-browse-hero {
-  background: var(--opp-hero-navy);
+  background: linear-gradient(135deg, var(--opp-navy) 0%, var(--opp-navy-mid) 70%, #1c3050 100%);
   color: #fff;
   padding: 32px 24px 36px;
   position: relative;
@@ -1586,10 +1583,24 @@
 .opp-browse-page .opp-browse-hero::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 80% 60% at 85% 40%, var(--opp-hero-lavender-dim), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 10% 80%, rgba(195, 151, 195, 0.08), transparent 50%);
+  top: -40px;
+  right: -40px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(201, 150, 31, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.opp-browse-page .opp-browse-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -60px;
+  left: 12%;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(201, 150, 31, 0.07) 0%, transparent 70%);
+  border-radius: 50%;
   pointer-events: none;
 }
 
@@ -1612,13 +1623,14 @@
 .opp-browse-page .opp-hero-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  background: var(--opp-gold-dim);
+  border: 1px solid var(--opp-gold-border);
+  color: var(--opp-gold-light);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--opp-hero-lavender);
-  border: 1px solid rgba(212, 184, 232, 0.45);
   border-radius: var(--radius-pill);
   padding: 5px 12px;
   margin: 0 0 14px;
@@ -1629,8 +1641,8 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--opp-hero-lavender);
-  box-shadow: 0 0 8px var(--opp-hero-lavender);
+  background: var(--opp-gold-light);
+  box-shadow: 0 0 8px var(--opp-gold-light);
 }
 
 .opp-browse-page .opp-hero-copy {
@@ -1649,7 +1661,7 @@
 }
 
 .opp-browse-page .opp-browse-hero h1 .accent {
-  color: var(--opp-hero-lavender);
+  color: var(--opp-gold-light);
   font-style: normal;
 }
 
@@ -1672,16 +1684,16 @@
 .opp-browse-page .opp-hero-provider-link,
 .opp-browse-page .opp-hero-enquiry-cta a {
   font-weight: 600;
-  color: var(--opp-hero-lavender);
+  color: var(--opp-gold-light);
   text-decoration: underline;
   text-underline-offset: 2px;
-  text-decoration-color: rgba(212, 184, 232, 0.55);
+  text-decoration-color: rgba(232, 184, 75, 0.55);
 }
 
 .opp-browse-page .opp-hero-provider-link:hover,
 .opp-browse-page .opp-hero-enquiry-cta a:hover {
-  color: #e8d4f4;
-  text-decoration-color: rgba(232, 212, 244, 0.9);
+  color: #f5d88a;
+  text-decoration-color: rgba(245, 216, 138, 0.9);
 }
 
 .opp-browse-page .opp-hero-sponsor-slot {
@@ -1905,8 +1917,8 @@
   padding: 28px 24px 48px;
   background: #fff;
   border-radius: 20px;
-  box-shadow: 0 12px 40px rgba(45, 38, 54, 0.06);
-  border: 1px solid rgba(194, 153, 209, 0.18);
+  box-shadow: 0 12px 40px rgba(13, 31, 60, 0.08);
+  border: 1px solid var(--opp-border);
   position: relative;
   z-index: 2;
 }
@@ -1966,8 +1978,8 @@
 }
 
 .opp-browse-page .opp-tab-btn.active {
-  color: var(--charcoal);
-  border-bottom-color: var(--lavender-deep);
+  color: var(--opp-navy);
+  border-bottom-color: var(--opp-gold);
   font-weight: 600;
 }
 
@@ -1987,8 +1999,8 @@
 }
 
 .opp-browse-page .opp-tab-btn.active .opp-tab-count {
-  background: var(--lavender-light);
-  color: var(--lavender-deep);
+  background: var(--opp-gold-dim);
+  color: var(--opp-gold);
 }
 
 /* Investment budget quick-pills — mobile/tablet shortcut to sidebar tiers */
@@ -2025,14 +2037,14 @@
 }
 
 .opp-browse-page .opp-invest-pill:hover {
-  color: var(--charcoal);
-  border-color: var(--lavender-soft);
+  color: var(--opp-navy);
+  border-color: var(--opp-gold-border);
 }
 
 .opp-browse-page .opp-invest-pill.active {
-  background: var(--lavender-light);
-  border-color: var(--lavender-soft);
-  color: var(--charcoal);
+  background: var(--opp-gold-pale);
+  border-color: var(--opp-gold-border);
+  color: var(--opp-navy);
   font-weight: 600;
 }
 
@@ -2053,7 +2065,7 @@
 
 .opp-browse-page .opp-invest-pill.active .opp-invest-pill-count {
   background: #fff;
-  color: var(--lavender-deep);
+  color: var(--opp-gold);
 }
 
 /* Premium Spotlight — featured opportunities carousel */
