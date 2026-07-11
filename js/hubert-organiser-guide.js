@@ -152,6 +152,25 @@
     return instance;
   }
 
+  function askHubert(prompt) {
+    var text = String(prompt || '').trim();
+    if (!text) return null;
+    if (global.HubFlowTour && global.HubFlowTour.openHelp) {
+      global.HubFlowTour.openHelp();
+    }
+    var root = document.getElementById('hub-flow-tour');
+    if (!root) return null;
+    if (!chatInstance) {
+      initChat(root);
+    }
+    if (chatInstance) {
+      global.setTimeout(function () {
+        chatInstance.sendMessage(text);
+      }, 60);
+    }
+    return chatInstance;
+  }
+
   function mountQuestionsOnlyIfNeeded() {
     /* Hubert help opens on demand via Hubert's help — not automatically. */
   }
@@ -159,6 +178,7 @@
   global.HubertOrganiserGuide = {
     assetRoot: assetRoot,
     initChat: initChat,
+    ask: askHubert,
     pageKey: pageKey,
     mountQuestionsOnlyIfNeeded: mountQuestionsOnlyIfNeeded,
     DASHBOARD_GREETING: GREETINGS['organiser-dashboard'],

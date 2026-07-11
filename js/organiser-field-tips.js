@@ -1,0 +1,44 @@
+/**
+ * Inline field tips — shared copy for organiser forms and Hubert.
+ * Keep in sync with api/_lib/hubert-knowledge.js organiser sections.
+ */
+(function (global) {
+  global.OrganiserFieldTips = {
+    'attendance-modes': {
+      title: 'Attendance modes',
+      body:
+        'Choose one mode per event — they cannot be combined. Ticket types for open booking, guest visit programme for complimentary trial visits, or Category Exclusivity for application-based attendance.',
+      hubertPrompt: 'What is the difference between ticket types, guest visit programme, and Category Exclusivity?',
+    },
+    'guest-visit-programme': {
+      title: 'Guest visit programme',
+      body:
+        'Newcomers get 1–2 complimentary visits with your group before they can buy a paid member ticket. Set your allowance on your organiser page (max 2 visits per attendee, platform-wide).',
+      hubertPrompt: 'What is the guest visit programme for networking groups?',
+    },
+    'category-exclusivity': {
+      title: 'Category Exclusivity',
+      body:
+        'Attendees apply instead of buying straight away. They answer two fixed questions — industry and job title. You approve or deny from your dashboard; approved applicants receive a payment link.',
+      hubertPrompt: 'What is Category Exclusivity?',
+    },
+    'alumni-fast-pass': {
+      title: 'Alumni Fast-Pass',
+      body:
+        'Optional hidden alumni ticket for past attendees of a previous event. Send locked booking links from your dashboard after publish — great for repeat conferences.',
+      hubertPrompt: 'What is Alumni Fast-Pass for repeat events?',
+    },
+    'vat-treatment': {
+      title: 'VAT on ticket prices',
+      body:
+        'Required before publishing. Choose whether your listed price includes VAT or whether VAT is added at checkout. Shown on your public listing so attendees know what to expect.',
+      hubertPrompt: 'Should VAT be included in my ticket price or added at checkout?',
+    },
+    'stripe-refunds': {
+      title: 'Refunds & Stripe Connect',
+      body:
+        'Ticket revenue goes to your connected Stripe account at checkout. Refunds are debited from that balance. Paid tickets require Stripe Connect under Revenue before publish.',
+      hubertPrompt: 'How do Stripe Connect payouts and refunds work for organisers?',
+    },
+  };
+})(typeof window !== 'undefined' ? window : globalThis);

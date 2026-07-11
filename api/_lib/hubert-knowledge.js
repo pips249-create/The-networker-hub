@@ -432,6 +432,8 @@ const ORGANISER_PAGE_CONTEXT = {
     'The user is editing their organiser page. Answer organiser-page questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'organiser-dashboard':
     'The user is on the organiser dashboard. Answer questions about groups, events, attendees, revenue, and team invites. Team editors can manage events and view revenue but cannot invite others or delete events; up to 10 editors per account. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+  guides:
+    'The user is on the organiser guides / onboarding checklist page. Give concise answers (about 2 sentences) with direct links to /organiser/ routes, guide pages under /guides/, or specific dashboard sections. Focus on organiser setup tasks like listing events, Stripe, CSV export, and team invites.',
 };
 
 const ORGANISER_PAGE_KEYS = Object.keys(ORGANISER_PAGE_CONTEXT);
