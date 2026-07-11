@@ -2,6 +2,7 @@
  * JSON-LD schema builders — sourced from Hubert knowledge for SEO & AEO.
  */
 const { FAQ_AEO_ENTRIES } = require('./hubert-faq');
+const { HELP_PAGES } = require('./help-pages');
 
 const SITE_NAME = 'The Networker Hub';
 const LEGAL_NAME = 'The Networker Group Ltd';
@@ -179,6 +180,56 @@ function buildContactPageSchema(origin) {
   };
 }
 
+function buildHelpArticleSchema(pageKey, origin) {
+  const base = siteOrigin(origin);
+  const page = HELP_PAGES[pageKey];
+  if (!page) return null;
+
+  const url = base + page.path;
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Article',
+        '@id': url + '#article',
+        url: url,
+        headline: page.title.replace(' – The Networker Hub', ''),
+        description: page.description,
+        author: {
+          '@type': 'Organization',
+          name: LEGAL_NAME,
+          url: base,
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: LEGAL_NAME,
+          url: base,
+          logo: {
+            '@type': 'ImageObject',
+            url: base + '/assets/logo.png',
+          },
+        },
+        mainEntityOfPage: url,
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': url + '#faq',
+        url: url,
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: page.faqQuestion,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: page.faqAnswer,
+            },
+          },
+        ],
+      },
+    ],
+  };
+}
+
 function buildSchemaGraph(page, origin) {
   const base = siteOrigin(origin);
   const graph = [buildOrganizationSchema(base)];
@@ -248,6 +299,10 @@ function buildSchemaGraph(page, origin) {
       description:
         'Privacy policy, terms, refunds, and cookie information for The Networker Hub.',
     });
+  } else if (page === 'help-organiser-payouts') {
+    return buildHelpArticleSchema('organiser-payouts', base);
+  } else if (page === 'help-pricing-fees') {
+    return buildHelpArticleSchema('pricing-fees', base);
   }
 
   return {
@@ -294,9 +349,26 @@ function buildLlmsTxt(origin) {
     '- Legal: ' +
     base +
     '/legal-policies.html\n' +
+    '- Organiser payouts: ' +
+    base +
+    '/help/organiser-payouts\n' +
+    '- Ticket pricing & fees: ' +
+    base +
+    '/help/pricing-fees\n' +
     '- Sitemap: ' +
     base +
     '/sitemap.xml\n\n' +
+    '## Organiser help articles\n\n' +
+    '### When do organisers receive payouts?\n' +
+    HELP_PAGES['organiser-payouts'].llmsSummary +
+    '\n\nFull page: ' +
+    base +
+    '/help/organiser-payouts\n\n' +
+    '### What fees does The Networker Hub charge on tickets?\n' +
+    HELP_PAGES['pricing-fees'].llmsSummary +
+    '\n\nFull page: ' +
+    base +
+    '/help/pricing-fees\n\n' +
     '## Machine discovery\n' +
     '- Sitemap: ' +
     base +

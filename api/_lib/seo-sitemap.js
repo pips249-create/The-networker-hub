@@ -13,6 +13,8 @@ const STATIC_PATHS = [
   '/events/',
   '/opportunities/',
   '/faq.html',
+  '/help/organiser-payouts',
+  '/help/pricing-fees',
   '/contact.html',
   '/about.html',
   '/for-organisers.html',

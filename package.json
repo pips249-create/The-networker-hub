@@ -3,7 +3,7 @@
   "private": true,
   "description": "The Networker Hub — static site + Vercel serverless API",
   "scripts": {
-    "dev": "node scripts/sync-local-env.js",
+    "prestart": "node scripts/sync-local-env.js",
     "sync-env": "node scripts/sync-local-env.js",
     "start": "npx vercel dev",
     "sync-stripe": "node scripts/sync-stripe-pricing.js",

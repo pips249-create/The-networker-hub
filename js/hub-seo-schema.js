@@ -17,6 +17,8 @@
       var page = navScript.getAttribute('data-page');
       if (page === 'home') return 'home';
       if (page === 'faq') return 'faq';
+      if (page === 'help-organiser-payouts') return 'help-organiser-payouts';
+      if (page === 'help-pricing-fees') return 'help-pricing-fees';
       if (page === 'contact') return 'contact';
       if (page === 'about') return 'about';
       if (page === 'events') return 'events';
@@ -28,6 +30,8 @@
     if (/\/events\/(?:index\.html)?$/.test(path) || /\/events\/?$/.test(path)) return 'events';
     if (/\/opportunities\//.test(path)) return 'opportunities';
     if (/\/faq\.html$/.test(path)) return 'faq';
+    if (/\/help\/organiser-payouts(?:\.html)?\/?$/.test(path)) return 'help-organiser-payouts';
+    if (/\/help\/pricing-fees(?:\.html)?\/?$/.test(path)) return 'help-pricing-fees';
     if (/\/contact\.html$/.test(path)) return 'contact';
     if (/\/about\.html$/.test(path)) return 'about';
     if (/\/legal-policies\.html$/.test(path)) return 'legal';
@@ -37,6 +41,7 @@
 
   function injectSchema(data) {
     if (!data) return;
+    if (page === 'faq' && document.querySelector('script[data-hubert-seo="static"]')) return;
     var el = document.createElement('script');
     el.type = 'application/ld+json';
     el.setAttribute('data-hubert-seo', 'true');

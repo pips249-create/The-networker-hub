@@ -158,6 +158,7 @@ const FAQ_AEO_ENTRIES = [
       'Payouts are not instant. A 7-day settlement period applies after the event ends. Archive the event, then request a payout from the organiser dashboard when eligible. Stripe onboarding is required.',
     category: 'organisers',
     icon: '💰',
+    helpLink: '/help/organiser-payouts',
   },
   {
     question: 'What fees does The Networker Hub charge on tickets?',
@@ -165,6 +166,7 @@ const FAQ_AEO_ENTRIES = [
       'Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing. Organisers receive the full ticket price.',
     category: 'organisers',
     icon: '💳',
+    helpLink: '/help/pricing-fees',
   },
   {
     question: 'Why did The Networker Hub start?',

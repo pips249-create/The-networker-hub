@@ -16,6 +16,8 @@
     if (/\/events\/(?:index\.html)?$/.test(path) || /\/events\/?$/.test(path)) return 'events';
     if (/\/opportunities\//.test(path)) return 'opportunities';
     if (/\/faq\.html$/.test(path)) return 'faq';
+    if (/\/help\/organiser-payouts(?:\.html)?\/?$/.test(path)) return 'help-organiser-payouts';
+    if (/\/help\/pricing-fees(?:\.html)?\/?$/.test(path)) return 'help-pricing-fees';
     if (/\/contact\.html$/.test(path)) return 'contact';
     if (/\/about\.html$/.test(path)) return 'about';
     if (/\/for-organisers\.html$/.test(path)) return 'for-organisers';

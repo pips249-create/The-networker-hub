@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Copy secrets from local.env into .env and .env.local for `vercel dev`.
- * Vercel CLI does not read local.env; edit local.env, then run this (or npm run dev).
+ * Vercel CLI does not read local.env; edit local.env, then run this (or npm run sync-env).
  */
 const fs = require('fs');
 const path = require('path');
@@ -49,7 +49,7 @@ function writeEnvFile(filePath, vars, headerLines) {
 
 const envHeader = [
   '# Local only — do not commit. Synced from local.env for vercel dev.',
-  '# Edit local.env, then run: npm run dev',
+  '# Edit local.env, then run: npm run sync-env',
 ];
 writeEnvFile(envPath, mergeVars(parseExisting(envPath), localVars), envHeader);
 

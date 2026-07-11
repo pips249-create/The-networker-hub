@@ -13,7 +13,21 @@ Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@thene
 - For Organisers: https://www.thenetworkerhub.com/for-organisers.html
 - Advertising & sponsorship: https://www.thenetworkerhub.com/advertising
 - Legal: https://www.thenetworkerhub.com/legal-policies.html
+- Organiser payouts: https://www.thenetworkerhub.com/help/organiser-payouts
+- Ticket pricing & fees: https://www.thenetworkerhub.com/help/pricing-fees
 - Sitemap: https://www.thenetworkerhub.com/sitemap.xml
+
+## Organiser help articles
+
+### When do organisers receive payouts?
+Organisers receive the full ticket price they set. After an event ends, a 7-day settlement period applies before a payout can be requested. Archive the event in /organiser/, complete Stripe Connect onboarding, then request payout from Revenue when eligible. Payouts are reviewed before transfer to the organiser bank account.
+
+Full page: https://www.thenetworkerhub.com/help/organiser-payouts
+
+### What fees does The Networker Hub charge on tickets?
+There is no monthly subscription to list events. For paid tickets, attendees pay one booking fee at checkout: 4.5% + 20p per ticket, shown before payment. Organisers receive the full ticket price they set. Free events do not require Stripe.
+
+Full page: https://www.thenetworkerhub.com/help/pricing-fees
 
 ## Machine discovery
 - Sitemap: https://www.thenetworkerhub.com/sitemap.xml

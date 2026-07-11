@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
   "outputDirectory": ".",
   "redirects": [
     { "source": "/index.html", "destination": "/", "permanent": true },
@@ -128,6 +130,14 @@
     {
       "source": "/advertising",
       "destination": "/advertising.html"
+    },
+    {
+      "source": "/help/organiser-payouts",
+      "destination": "/help/organiser-payouts.html"
+    },
+    {
+      "source": "/help/pricing-fees",
+      "destination": "/help/pricing-fees.html"
     },
     {
       "source": "/organisers/:slug",

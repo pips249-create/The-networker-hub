@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 /**
- * Sync faq.html FAQ blocks from api/_lib/hubert-faq.js (single AEO source).
+ * Sync faq.html from api/_lib/hubert-faq.js (single AEO source):
+ * - FAQ panels + deep links
+ * - Static FAQPage JSON-LD in <head>
+ * - Canonical URL aligned to SITE_URL
  */
 const fs = require('fs');
 const path = require('path');
 const { FAQ_AEO_ENTRIES, FAQ_CATEGORIES } = require('../api/_lib/hubert-faq');
+const { buildFaqPageSchema, siteOrigin, DEFAULT_ORIGIN } = require('../api/_lib/hubert-seo');
 
 const CATEGORY_ORDER = ['general', 'buyers', 'organisers'];
+const CANONICAL_ORIGIN = siteOrigin(process.env.SITE_URL || DEFAULT_ORIGIN);
 
 function escapeHtml(text) {
   return String(text || '')
@@ -22,7 +27,18 @@ function linkifyAnswer(text) {
   html = html.replace(/(\/[a-z0-9][a-z0-9/_.-]*)/gi, '<a href="$1">$1</a>');
   html = html.replace(/hello@thenetworkerhub\.com/g, '<a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a>');
   html = html.replace(/rosie@thenetworkerhub\.com/g, '<a href="mailto:rosie@thenetworkerhub.com">rosie@thenetworkerhub.com</a>');
-  return '<p>' + html + '</p>';
+  return html;
+}
+
+function buildAnswerHtml(item) {
+  let html = linkifyAnswer(item.answer);
+  if (item.helpLink) {
+    html +=
+      '\n                    <p class="faq-help-link"><a href="' +
+      escapeHtml(item.helpLink) +
+      '">View full detailed terms page →</a></p>';
+  }
+  return html;
 }
 
 function buildFaqItemHtml(item) {
@@ -45,7 +61,7 @@ function buildFaqItemHtml(item) {
     '</span></summary>\n' +
     '                  <div class="faq-answer">\n' +
     '                    ' +
-    linkifyAnswer(item.answer) +
+    buildAnswerHtml(item) +
     '\n' +
     '                  </div>\n' +
     '                </details>\n' +
@@ -89,27 +105,67 @@ function buildFaqPanelsHtml() {
   return CATEGORY_ORDER.map(buildCategoryBlockHtml).join('\n');
 }
 
-const faqPath = path.join(__dirname, '..', 'faq.html');
-let html = fs.readFileSync(faqPath, 'utf8');
-const panelsHtml = buildFaqPanelsHtml();
-const blockRe = /<div class="faq-panels" id="faq-panels">[\s\S]*?<\/div>\s*\n\s*<p class="faq-empty"/;
-
-if (!blockRe.test(html)) {
-  console.error('Could not find faq-panels block in faq.html');
-  process.exit(1);
+function buildFaqJsonLdTag() {
+  const schema = buildFaqPageSchema(FAQ_AEO_ENTRIES, CANONICAL_ORIGIN);
+  return (
+    '<script type="application/ld+json" data-hubert-seo="static">' +
+    JSON.stringify(schema) +
+    '</script>'
+  );
 }
 
-const nextBlock =
-  '<div class="faq-panels" id="faq-panels">\n' +
-  panelsHtml +
-  '\n      </div>\n\n      <p class="faq-empty"';
+function syncFaqHtml(html) {
+  let changed = false;
+  const panelsHtml = buildFaqPanelsHtml();
+  const panelsBlock =
+    '<div class="faq-panels" id="faq-panels">\n' + panelsHtml + '\n      </div>\n\n      <p class="faq-empty"';
+  const panelsRe = /<div class="faq-panels" id="faq-panels">[\s\S]*?<\/div>\s*\n\s*<p class="faq-empty"/;
 
-const match = html.match(blockRe);
-if (match[0] === nextBlock) {
+  if (!panelsRe.test(html)) {
+    console.error('Could not find faq-panels block in faq.html');
+    process.exit(1);
+  }
+
+  if (html.match(panelsRe)[0] !== panelsBlock) {
+    html = html.replace(panelsRe, panelsBlock);
+    changed = true;
+  }
+
+  const jsonLdTag = buildFaqJsonLdTag();
+  const jsonLdRe = /<script type="application\/ld\+json" data-hubert-seo="static">[\s\S]*?<\/script>/;
+  if (jsonLdRe.test(html)) {
+    if (html.match(jsonLdRe)[0] !== jsonLdTag) {
+      html = html.replace(jsonLdRe, jsonLdTag);
+      changed = true;
+    }
+  } else {
+    html = html.replace('</head>', '  ' + jsonLdTag + '\n</head>');
+    changed = true;
+  }
+
+  const canonical = CANONICAL_ORIGIN + '/faq.html';
+  const canonicalTag = '<link rel="canonical" href="' + canonical + '">';
+  const canonicalRe = /<link rel="canonical" href="[^"]*">/;
+  if (canonicalRe.test(html)) {
+    if (html.match(canonicalRe)[0] !== canonicalTag) {
+      html = html.replace(canonicalRe, canonicalTag);
+      changed = true;
+    }
+  } else {
+    html = html.replace('</head>', '  ' + canonicalTag + '\n</head>');
+    changed = true;
+  }
+
+  return { html: html, changed: changed };
+}
+
+const faqPath = path.join(__dirname, '..', 'faq.html');
+const result = syncFaqHtml(fs.readFileSync(faqPath, 'utf8'));
+
+if (!result.changed) {
   console.log('faq.html already up to date (' + FAQ_AEO_ENTRIES.length + ' entries)');
   process.exit(0);
 }
 
-html = html.replace(blockRe, nextBlock);
-fs.writeFileSync(faqPath, html, 'utf8');
-console.log('Updated faq.html with', FAQ_AEO_ENTRIES.length, 'FAQ entries in', CATEGORY_ORDER.length, 'categories');
+fs.writeFileSync(faqPath, result.html, 'utf8');
+console.log('Updated faq.html with', FAQ_AEO_ENTRIES.length, 'FAQ entries, static JSON-LD, and canonical');

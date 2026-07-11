@@ -23,10 +23,24 @@ window.HUB_SEO_STATIC = {
   },
   "faq": {
     "path": "/faq.html",
-    "title": "FAQ – The Networker Hub",
-    "description": "Frequently asked questions about The Networker Hub — finding events, accounts, organisers, and bookings.",
+    "title": "FAQ & Help – The Networker Hub",
+    "description": "Frequently asked questions about The Networker Hub — finding events, accounts, organisers, and bookings. Search FAQs or ask Hubert instantly.",
     "image": "/assets/logo.png",
     "ogType": "website"
+  },
+  "help-organiser-payouts": {
+    "path": "/help/organiser-payouts",
+    "title": "Organiser payouts – The Networker Hub",
+    "description": "When organisers receive ticket payouts on The Networker Hub — 7-day settlement, Stripe Connect, archiving events, and requesting payouts from your dashboard.",
+    "image": "/assets/logo.png",
+    "ogType": "article"
+  },
+  "help-pricing-fees": {
+    "path": "/help/pricing-fees",
+    "title": "Ticket pricing & fees – The Networker Hub",
+    "description": "How The Networker Hub ticket fees work — 4.5% + 20p booking fee paid by attendees, organisers receive the full ticket price, with worked examples.",
+    "image": "/assets/logo.png",
+    "ogType": "article"
   },
   "about": {
     "path": "/about.html",

@@ -1,0 +1,161 @@
+/* Help articles — organiser payouts, pricing & fees */
+
+.help-back {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--lavender-deep);
+  text-decoration: none;
+}
+
+.help-back:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.help-summary {
+  padding: 22px 24px;
+  margin: 0 0 2rem;
+  border-radius: calc(var(--radius) + 2px);
+  border: 1px solid rgba(91, 47, 153, 0.18);
+  background: linear-gradient(180deg, var(--lavender-light) 0%, #fff 100%);
+}
+
+.help-summary strong {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lavender-deep);
+  margin-bottom: 8px;
+}
+
+.help-summary p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--text-body);
+}
+
+.help-timeline {
+  list-style: none;
+  margin: 1.25rem 0 2rem;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.help-timeline li {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-soft);
+  background: var(--surface-card);
+  margin: 0;
+}
+
+.help-timeline-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--lavender-deep);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.help-timeline strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--charcoal);
+  margin-bottom: 4px;
+}
+
+.help-timeline span {
+  display: block;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.help-fee-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0 1.75rem;
+  font-size: 0.95rem;
+}
+
+.help-fee-table th,
+.help-fee-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.help-fee-table th {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: #fffdf9;
+}
+
+.help-fee-table tr:last-child td {
+  border-bottom: none;
+}
+
+.help-related {
+  margin-top: 2.5rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--border-soft);
+}
+
+.help-related h2 {
+  margin-top: 0;
+}
+
+.help-related-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+
+.help-related-links a {
+  font-weight: 600;
+}
+
+.faq-help-link {
+  margin-top: 12px !important;
+  margin-bottom: 0 !important;
+  font-size: 0.9rem;
+}
+
+.faq-help-link a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.faq-help-link a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .help-fee-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
