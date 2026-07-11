@@ -981,15 +981,30 @@
 }
 
 .org-events-hub-summary {
-  margin-bottom: 20px;
-}
-
-.org-events-hub-summary .org-stats {
   margin-bottom: 16px;
 }
 
-.org-events-hub-summary .org-quick-actions {
-  margin-bottom: 0;
+.org-events-hub-summary .org-stats {
+  margin-bottom: 12px;
+}
+
+.org-stats--compact .org-stat {
+  padding: 12px 16px;
+  box-shadow: none;
+}
+
+.org-stats--compact .org-stat:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.org-stats--compact .org-stat-value {
+  font-size: 22px;
+  margin-top: 4px;
+}
+
+.org-stats--compact .org-stat-label {
+  font-size: 10px;
 }
 
 .org-revenue-info-panel {

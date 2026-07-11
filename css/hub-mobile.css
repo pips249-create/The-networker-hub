@@ -994,8 +994,8 @@ body.nav-menu-open {
     margin-bottom: 4px;
   }
 
-  .org-events-hub-summary .org-quick-actions-grid {
-    grid-template-columns: 1fr;
+  .org-stats--compact .org-stat-value {
+    font-size: 20px;
   }
 
   .org-filter-bar {

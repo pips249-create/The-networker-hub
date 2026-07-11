@@ -211,12 +211,9 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var q = String(input.value || '').trim();
-      var targetInput = form.querySelector('input[name="searchTarget"]:checked');
-      var target = targetInput ? targetInput.value : 'events';
-      var basePath = target === 'opportunities' ? '/opportunities/' : '/events/';
       window.location.href = q
-        ? basePath + '?q=' + encodeURIComponent(q) + '#results'
-        : basePath + '#results';
+        ? '/events/?q=' + encodeURIComponent(q) + '#results'
+        : '/events/#results';
     });
   }
 

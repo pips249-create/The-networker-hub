@@ -1916,6 +1916,8 @@
     });
     syncEventsTabHighlights(eventsSubRoute, true);
     syncSidebarNavHighlight('events', eventsSubRoute);
+    const hubSummary = document.getElementById('org-events-hub-summary');
+    if (hubSummary) hubSummary.hidden = eventsSubRoute !== 'events-list';
     const titles = {
       'events-list': ['My Events', 'Manage all your event listings — click any event name to edit.'],
       'events-tickets': ['Tickets', 'All ticket types across your events.'],
@@ -2129,13 +2131,6 @@
     }
     renderOrganiserNotices();
     renderHubPortalMeta();
-    const quickCard = document.getElementById('org-quick-review-applications');
-    const quickBadge = document.getElementById('org-quick-applications-badge');
-    if (quickCard) quickCard.hidden = count < 1;
-    if (quickBadge) {
-      quickBadge.hidden = count < 1;
-      quickBadge.textContent = String(count);
-    }
   }
 
   function updatePendingApplicationsNavBadge() {
@@ -4765,17 +4760,6 @@
         navBadge.textContent = String(setupState.pendingGroups.length);
       } else {
         navBadge.textContent = 'Setup';
-      }
-    }
-
-    const quickSetup = document.getElementById('org-quick-payment-setup');
-    if (quickSetup) {
-      quickSetup.hidden = !setupState.needsSetup;
-      if (!quickSetup.dataset.paymentQuickBound) {
-        quickSetup.dataset.paymentQuickBound = '1';
-        quickSetup.addEventListener('click', function () {
-          startStripeConnectOnboarding(group?.id);
-        });
       }
     }
 
