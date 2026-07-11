@@ -1,5 +1,7 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { ensureAttendeeId, resolveAttendeeId } = require('./supabase-favourites');
+const { isUuid } = require('./uuid');
+const { publicOpportunitySlug } = require('./opportunity-slug');
 
 function mapFavouriteRow(row) {
   const opp = row.business_opportunities;
@@ -33,6 +35,26 @@ function mapFavouriteRow(row) {
     type: opp.type || '',
     listingStatus: String(opp.status || '').trim().toLowerCase() || 'unknown',
   };
+}
+
+async function resolveOpportunityId(sb, rawId) {
+  const key = String(rawId || '').trim();
+  if (!key) throw new Error('missing_opportunity_id');
+  if (isUuid(key)) return key;
+
+  const bySlug = await sb
+    .from('business_opportunities')
+    .select('id, title, slug')
+    .eq('slug', key)
+    .maybeSingle();
+  if (!bySlug.error && bySlug.data?.id) return String(bySlug.data.id);
+
+  const { data, error } = await sb.from('business_opportunities').select('id, title, slug');
+  if (error) throw new Error(error.message);
+  const hit = (data || []).find((row) => publicOpportunitySlug(row) === key);
+  if (hit?.id) return String(hit.id);
+
+  throw new Error('invalid_opportunity_id');
 }
 
 async function listOpportunityFavouriteIds(session) {
@@ -72,8 +94,7 @@ async function addOpportunityFavourite(session, opportunityId) {
   if (!isSupabaseConfigured()) throw new Error('supabase_not_configured');
   const sb = getSupabaseAdmin();
   const attendeeId = await ensureAttendeeId(sb, session);
-  const oid = String(opportunityId || '').trim();
-  if (!oid) throw new Error('missing_opportunity_id');
+  const oid = await resolveOpportunityId(sb, opportunityId);
 
   const existing = await sb
     .from('opportunity_favourites')
@@ -99,7 +120,7 @@ async function removeOpportunityFavourite(session, opportunityId) {
   const attendeeId = await resolveAttendeeId(sb, session);
   if (!attendeeId) return { action: 'removed', opportunityId: String(opportunityId) };
 
-  const oid = String(opportunityId || '').trim();
+  const oid = await resolveOpportunityId(sb, opportunityId);
   const del = await sb
     .from('opportunity_favourites')
     .delete()
@@ -113,8 +134,7 @@ async function toggleOpportunityFavourite(session, opportunityId) {
   if (!isSupabaseConfigured()) throw new Error('supabase_not_configured');
   const sb = getSupabaseAdmin();
   const attendeeId = await ensureAttendeeId(sb, session);
-  const oid = String(opportunityId || '').trim();
-  if (!oid) throw new Error('missing_opportunity_id');
+  const oid = await resolveOpportunityId(sb, opportunityId);
 
   const existing = await sb
     .from('opportunity_favourites')

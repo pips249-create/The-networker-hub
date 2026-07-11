@@ -56,11 +56,24 @@ module.exports = async function handler(req, res) {
       const body = parseBody(req);
       const opportunityId = body.opportunityId || body.opportunity_id;
       const result = await toggleOpportunityFavourite(session, opportunityId);
-      const favourites = await listOpportunityFavourites(session);
+      const [favourites, rawIds] = await Promise.all([
+        listOpportunityFavourites(session),
+        listOpportunityFavouriteIds(session),
+      ]);
+      const ids = [
+        ...new Set(
+          favourites
+            .map((f) => f.opportunityId)
+            .concat(rawIds || [])
+            .map((id) => String(id || '').trim())
+            .filter(Boolean)
+        ),
+      ];
       return json(res, 200, {
         ok: true,
         ...result,
-        opportunityIds: favourites.map((f) => f.opportunityId),
+        favourites,
+        opportunityIds: ids,
       });
     }
 
@@ -68,10 +81,23 @@ module.exports = async function handler(req, res) {
       const body = parseBody(req);
       const opportunityId = body.opportunityId || body.opportunity_id || req.query?.opportunityId;
       await removeOpportunityFavourite(session, opportunityId);
-      const favourites = await listOpportunityFavourites(session);
+      const [favourites, rawIds] = await Promise.all([
+        listOpportunityFavourites(session),
+        listOpportunityFavouriteIds(session),
+      ]);
+      const ids = [
+        ...new Set(
+          favourites
+            .map((f) => f.opportunityId)
+            .concat(rawIds || [])
+            .map((id) => String(id || '').trim())
+            .filter(Boolean)
+        ),
+      ];
       return json(res, 200, {
         ok: true,
-        opportunityIds: favourites.map((f) => f.opportunityId),
+        favourites,
+        opportunityIds: ids,
       });
     }
 

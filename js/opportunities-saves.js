@@ -131,7 +131,7 @@
       .then(function (result) {
         var data = result.data;
         if (data && data.ok && Array.isArray(data.opportunityIds)) {
-          setCacheFromServer(data.opportunityIds);
+          setCacheFromServer(data.opportunityIds, readLocal());
         }
         return data;
       })
@@ -172,7 +172,7 @@
       });
 
       if (!pending.length) {
-        setCacheFromServer(data.opportunityIds);
+        setCacheFromServer(data.opportunityIds, localSnapshot);
         return data;
       }
 
