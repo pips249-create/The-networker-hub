@@ -153,12 +153,15 @@
     }
   };
 
-  function renderSuggestions(container, suggestions) {
+  function renderSuggestions(container, suggestions, chipClass) {
     if (!container) return;
+    var cls = chipClass || 'hubert-chip';
     container.innerHTML = (suggestions || DEFAULT_SUGGESTIONS)
       .map(function (item) {
         return (
-          '<button type="button" class="hubert-chip" data-prompt="' +
+          '<button type="button" class="' +
+          cls +
+          '" data-prompt="' +
           esc(item.prompt) +
           '">' +
           esc(item.label) +

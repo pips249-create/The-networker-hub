@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260730">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/contact-page.css?v=20260711">
+<link rel="stylesheet" href="css/contact-page.css?v=20260711b">
 <link rel="stylesheet" href="css/hubert-widget.css?v=20260610b">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260730" />
@@ -41,18 +41,33 @@
       <p>
         The Networker Hub is run by Rosie and Catherine at <strong>The Networker Group Ltd</strong>.
       </p>
-      <ul class="contact-details">
-        <li>
-          <span class="contact-details-label">Email</span>
+      <ul class="contact-details-grid">
+        <li class="contact-detail-card">
+          <div class="contact-detail-card-head">
+            <span class="contact-detail-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            </span>
+            <span class="contact-details-label">Email</span>
+          </div>
           <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a>
           <span class="contact-details-note">Our team replies to urgent account queries within 24 business hours.</span>
         </li>
-        <li>
-          <span class="contact-details-label">Office hours</span>
+        <li class="contact-detail-card">
+          <div class="contact-detail-card-head">
+            <span class="contact-detail-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </span>
+            <span class="contact-details-label">Office hours</span>
+          </div>
           <span>Mon&ndash;Fri, 9am&ndash;5pm (UK). Human support reviews tickets during these hours.</span>
         </li>
-        <li>
-          <span class="contact-details-label">Address</span>
+        <li class="contact-detail-card">
+          <div class="contact-detail-card-head">
+            <span class="contact-detail-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            </span>
+            <span class="contact-details-label">Address</span>
+          </div>
           <span>Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF</span>
         </li>
       </ul>
@@ -80,32 +95,31 @@
           <img class="contact-chat-avatar" src="assets/hubert-icon.png" alt="" width="44" height="44">
           <div>
             <h2 id="contact-chat-heading">Hubert</h2>
-            <p>Your business butler &amp; concierge for the platform. For urgent or account-specific issues, email us.</p>
+            <p>Chat with Hubert for instant platform support. For urgent account issues, use our direct email link.</p>
           </div>
         </div>
         <button type="button" class="contact-chat-reset" id="contact-chat-reset" hidden>New chat</button>
       </div>
 
-      <div class="contact-chat-messages" id="contact-chat-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+      <div class="contact-chat-body">
+        <div class="contact-chat-messages" id="contact-chat-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
 
-      <div class="contact-chat-suggestions" id="contact-chat-suggestions" aria-label="Suggested questions">
-        <button type="button" class="contact-chat-chip" data-prompt="How do I book a ticket?">How do I book a ticket?</button>
-        <button type="button" class="contact-chat-chip" data-prompt="How do I list an event as an organiser?">List an event</button>
-        <button type="button" class="contact-chat-chip" data-prompt="What are business opportunities?">Business opportunities</button>
-        <button type="button" class="contact-chat-chip" data-prompt="Do I need an account to browse?">Do I need an account?</button>
+        <div class="contact-chat-suggestions" id="contact-chat-suggestions" aria-label="Suggested questions"></div>
       </div>
 
-      <form class="contact-chat-form" id="contact-chat-form">
+      <form class="contact-chat-form contact-chat-form--sticky" id="contact-chat-form">
         <div class="contact-chat-form-bar">
           <label class="visually-hidden" for="contact-chat-input">Your message</label>
           <textarea
             id="contact-chat-input"
             rows="1"
-            placeholder="Ask Hubert to find events, opportunities, or guide you…"
+            placeholder="Ask Hubert anything…"
             maxlength="2000"
             required
           ></textarea>
-          <button type="submit" class="btn btn-primary contact-chat-send" id="contact-chat-send">Send</button>
+          <button type="submit" class="contact-chat-send" id="contact-chat-send" aria-label="Send message">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
         </div>
         <p class="contact-chat-escape">
           <button type="button" class="contact-chat-escape-link" id="contact-show-team-form" aria-expanded="false" aria-controls="contact-team-form">
@@ -142,8 +156,8 @@
 
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260610" data-root=""></script>
-<script src="js/hubert-chat.js?v=20260610"></script>
-<script src="js/contact-chat.js?v=20260711"></script>
+<script src="js/hubert-chat.js?v=20260711"></script>
+<script src="js/contact-chat.js?v=20260711b"></script>
 
 </body>
 </html>

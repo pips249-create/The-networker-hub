@@ -58,14 +58,19 @@
     return;
   }
 
+  var CONTACT_GREETING =
+    'Good day! How can I help you today? I can instantly guide you through your tickets, help update your organiser tools, or find new opportunities.';
+
   var suggestionsEl = document.getElementById('contact-chat-suggestions');
-  window.HubertChatRenderSuggestions(suggestionsEl, [
-    { label: 'Events in Manchester', prompt: 'What events are in Manchester?' },
-    { label: 'Franchise opportunities', prompt: 'What franchise opportunities are available?' },
-    { label: 'Do I need an account?', prompt: 'Do I need an account to browse?' },
-    { label: 'How do I book a ticket?', prompt: 'How do I book a ticket?' },
-    { label: 'List as organiser', prompt: 'How do I list an event as an organiser?' },
-  ]);
+  window.HubertChatRenderSuggestions(
+    suggestionsEl,
+    [
+      { label: 'How do I set up payouts?', prompt: 'How do I set up payouts?' },
+      { label: 'Where are my tickets?', prompt: 'Where are my tickets?' },
+      { label: 'How do I edit an event?', prompt: 'How do I edit an event?' },
+    ],
+    'contact-chat-chip'
+  );
 
   new window.HubertChat({
     messagesEl: document.getElementById('contact-chat-messages'),
@@ -75,5 +80,6 @@
     resetBtn: document.getElementById('contact-chat-reset'),
     suggestionsEl: suggestionsEl,
     bubblePrefix: 'contact-chat-bubble',
+    greeting: CONTACT_GREETING,
   });
 })();

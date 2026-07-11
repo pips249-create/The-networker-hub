@@ -24,6 +24,60 @@
   margin-bottom: 1rem;
 }
 
+.contact-details-grid {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.contact-detail-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.contact-detail-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.contact-detail-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--lavender-light);
+  color: var(--lavender-deep);
+}
+
+.contact-detail-icon svg {
+  display: block;
+}
+
+.contact-detail-card a {
+  color: var(--lavender-deep);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 600;
+}
+
+.contact-detail-card > span:not(.contact-details-label):not(.contact-details-note) {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--text-body);
+}
+
 .contact-details {
   list-style: none;
   margin: 0 0 1.25rem;
@@ -102,6 +156,15 @@
   display: flex;
   flex-direction: column;
   min-height: 520px;
+  overflow: hidden;
+  position: relative;
+}
+
+.contact-chat-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -188,30 +251,43 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 0 22px 14px;
+  padding: 0 22px 16px;
+  flex-shrink: 0;
 }
 
-.contact-chat-chip {
-  border: 1px solid var(--border-soft);
-  background: #fff;
-  color: var(--charcoal);
+.contact-chat-suggestions .contact-chat-chip,
+.contact-chat-suggestions .hubert-chip {
+  border: 1px solid rgba(91, 47, 153, 0.12);
+  background: #f3ecfa;
+  color: var(--lavender-deep);
   font-size: 12px;
   font-weight: 600;
   border-radius: var(--radius-pill);
-  padding: 7px 12px;
+  padding: 8px 14px;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
 }
 
-.contact-chat-chip:hover {
-  background: var(--lavender-light);
-  border-color: rgba(91, 47, 153, 0.18);
+.contact-chat-suggestions .contact-chat-chip:hover,
+.contact-chat-suggestions .hubert-chip:hover {
+  background: #e8d9f4;
+  border-color: rgba(91, 47, 153, 0.28);
+  color: var(--charcoal);
+  transform: translateY(-1px);
 }
 
 .contact-chat-form {
   padding: 14px 22px 16px;
   border-top: 1px solid var(--border-soft);
   background: #fff;
+  flex-shrink: 0;
+}
+
+.contact-chat-form--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  box-shadow: 0 -8px 24px rgba(45, 35, 64, 0.06);
 }
 
 .contact-chat-form-bar {
@@ -257,13 +333,34 @@
 .contact-chat-send {
   flex-shrink: 0;
   align-self: center;
-  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
   height: 44px;
+  min-height: 44px;
   margin: 0;
-  padding: 0 22px;
-  border-radius: 999px;
-  white-space: nowrap;
-  font-size: 0.92rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--lavender-deep);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.contact-chat-send:hover:not(:disabled) {
+  background: #4a2680;
+  transform: scale(1.04);
+}
+
+.contact-chat-send:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.contact-chat-send svg {
+  display: block;
 }
 
 .contact-chat-escape {
@@ -394,6 +491,7 @@
   .contact-chat-send {
     width: 100%;
     height: 44px;
+    border-radius: 999px;
   }
 
   .contact-team-form-actions .btn {
