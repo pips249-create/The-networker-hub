@@ -1436,7 +1436,7 @@
   }
 
   function handleFavClick(fav) {
-    if (!fav || !saves) return;
+    if (!fav || !saves || fav.disabled) return;
     var oppId = fav.getAttribute('data-opp-id');
     if (!oppId) return;
     fav.disabled = true;
@@ -1467,13 +1467,7 @@
     els.mount.dataset.paginationBound = '1';
 
     els.mount.addEventListener('click', function (e) {
-      var fav = e.target.closest('.opp-fav-btn');
-      if (fav) {
-        e.preventDefault();
-        e.stopPropagation();
-        handleFavClick(fav);
-        return;
-      }
+      if (e.target.closest('.opp-fav-btn')) return;
 
       var loadBtn = e.target.closest('.opp-load-more-btn');
       if (loadBtn) {

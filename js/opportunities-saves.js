@@ -1,11 +1,14 @@
 /**
  * Saved opportunities — localStorage for guests, Supabase sync when signed in.
+ * POST = add (idempotent). DELETE = remove. Never toggle via POST — parallel
+ * merges were adding then immediately removing the same favourite.
  */
 (function () {
   var SAVE_KEY = 'hubSavedOpportunityIds';
   var SAVE_ITEMS_KEY = 'hubSavedOpportunityItems';
   var cache = null;
   var syncPromise = null;
+  var mergePromise = null;
 
   function readLocal() {
     try {
@@ -113,16 +116,41 @@
     writeLocal(cache);
   }
 
+  function parseFetchJson(res) {
+    return res.json().then(
+      function (data) {
+        return { status: res.status, data: data };
+      },
+      function () {
+        return { status: res.status, data: null };
+      }
+    );
+  }
+
   function fetchFromServer() {
     return fetch('/api/auth/opportunity-favourites', { credentials: 'include' })
-      .then(function (res) {
-        return res.json().then(function (data) {
-          return { status: res.status, data: data };
-        });
-      })
+      .then(parseFetchJson)
       .catch(function () {
         return { status: 0, data: null };
       });
+  }
+
+  function postFavourite(id) {
+    return fetch('/api/auth/opportunity-favourites', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ opportunityId: id }),
+    }).then(parseFetchJson);
+  }
+
+  function deleteFavourite(id) {
+    return fetch('/api/auth/opportunity-favourites', {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ opportunityId: id }),
+    }).then(parseFetchJson);
   }
 
   function syncFromServer() {
@@ -142,75 +170,76 @@
   }
 
   function mergeLocalToServer() {
-    var localSnapshot = readLocal();
-    var localItems = readLocalItems();
-    if (!localSnapshot.length) return syncFromServer();
+    if (mergePromise) return mergePromise;
 
-    return fetchFromServer().then(function (result) {
-      var data = result.data;
-      if (!data || !data.ok) {
-        cache = uniqueIds(
+    mergePromise = (function () {
+      var localSnapshot = readLocal();
+      var localItems = readLocalItems();
+      if (!localSnapshot.length && !localItems.length) return syncFromServer();
+
+      return fetchFromServer().then(function (result) {
+        var data = result.data;
+        if (!data || !data.ok) {
+          cache = uniqueIds(
+            localSnapshot.concat(
+              localItems.map(function (item) {
+                return item.opportunityId || item.opportunity_id;
+              })
+            )
+          );
+          writeLocal(cache);
+          return data;
+        }
+
+        var server = new Set((data.opportunityIds || []).map(String));
+        var pending = uniqueIds(
           localSnapshot.concat(
             localItems.map(function (item) {
               return item.opportunityId || item.opportunity_id;
             })
           )
-        );
-        writeLocal(cache);
-        return data;
-      }
-
-      var server = new Set((data.opportunityIds || []).map(String));
-      var pending = uniqueIds(
-        localSnapshot.concat(
-          localItems.map(function (item) {
-            return item.opportunityId || item.opportunity_id;
-          })
-        )
-      ).filter(function (id) {
-        return !server.has(String(id));
-      });
-
-      if (!pending.length) {
-        setCacheFromServer(data.opportunityIds, localSnapshot);
-        return data;
-      }
-
-      return pending
-        .reduce(function (chain, id) {
-          return chain.then(function () {
-            return fetch('/api/auth/opportunity-favourites', {
-              method: 'POST',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ opportunityId: id }),
-            }).then(function (r) {
-              return r.json();
-            });
-          });
-        }, Promise.resolve())
-        .then(function () {
-          return fetchFromServer();
-        })
-        .then(function (finalResult) {
-          var finalData = finalResult.data;
-          var serverIds =
-            finalData && finalData.ok && Array.isArray(finalData.opportunityIds)
-              ? finalData.opportunityIds
-              : data.opportunityIds || [];
-          setCacheFromServer(
-            serverIds,
-            uniqueIds(
-              localSnapshot.concat(
-                localItems.map(function (item) {
-                  return item.opportunityId || item.opportunity_id;
-                })
-              )
-            )
-          );
-          return finalData || data;
+        ).filter(function (id) {
+          return !server.has(String(id));
         });
+
+        if (!pending.length) {
+          setCacheFromServer(data.opportunityIds, localSnapshot);
+          return data;
+        }
+
+        return pending
+          .reduce(function (chain, id) {
+            return chain.then(function () {
+              return postFavourite(id);
+            });
+          }, Promise.resolve())
+          .then(function () {
+            return fetchFromServer();
+          })
+          .then(function (finalResult) {
+            var finalData = finalResult.data;
+            var serverIds =
+              finalData && finalData.ok && Array.isArray(finalData.opportunityIds)
+                ? finalData.opportunityIds
+                : data.opportunityIds || [];
+            setCacheFromServer(
+              serverIds,
+              uniqueIds(
+                localSnapshot.concat(
+                  localItems.map(function (item) {
+                    return item.opportunityId || item.opportunity_id;
+                  })
+                )
+              )
+            );
+            return finalData || data;
+          });
+      });
+    })().finally(function () {
+      mergePromise = null;
     });
+
+    return mergePromise;
   }
 
   function toggle(id, meta) {
@@ -231,22 +260,14 @@
     }
     writeLocal(local);
 
-    return fetch('/api/auth/opportunity-favourites', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ opportunityId: key }),
-    })
-      .then(function (res) {
-        return res.json().then(function (data) {
-          return { status: res.status, data: data };
-        });
-      })
+    var request = nowSaved ? postFavourite(key) : deleteFavourite(key);
+
+    return request
       .then(function (result) {
         var data = result.data;
         if (data && data.ok && Array.isArray(data.opportunityIds)) {
           setCacheFromServer(data.opportunityIds, nowSaved ? [key] : []);
-          return data.saved !== false;
+          return nowSaved;
         }
         return nowSaved;
       })

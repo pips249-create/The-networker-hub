@@ -2,7 +2,7 @@ const { setCors, json, sessionFromRequest } = require('../auth');
 const {
   listOpportunityFavourites,
   listOpportunityFavouriteIds,
-  toggleOpportunityFavourite,
+  addOpportunityFavourite,
   removeOpportunityFavourite,
 } = require('../supabase-opportunity-favourites');
 const { isSupabaseConfigured } = require('../supabase');
@@ -55,7 +55,8 @@ module.exports = async function handler(req, res) {
     if (req.method === 'POST') {
       const body = parseBody(req);
       const opportunityId = body.opportunityId || body.opportunity_id;
-      const result = await toggleOpportunityFavourite(session, opportunityId);
+      // Idempotent add — never toggle. Parallel merges must not unsave.
+      const result = await addOpportunityFavourite(session, opportunityId);
       const [favourites, rawIds] = await Promise.all([
         listOpportunityFavourites(session),
         listOpportunityFavouriteIds(session),
@@ -71,6 +72,7 @@ module.exports = async function handler(req, res) {
       ];
       return json(res, 200, {
         ok: true,
+        saved: true,
         ...result,
         favourites,
         opportunityIds: ids,

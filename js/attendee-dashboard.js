@@ -2431,6 +2431,8 @@
   }
 
   async function loadSavedOpportunities() {
+    // Paint browser saves immediately so the compare table is never blank while syncing.
+    applySavedOpportunityData(null);
     try {
       if (window.HubOpportunitySaves && window.HubOpportunitySaves.mergeOnLogin) {
         await window.HubOpportunitySaves.mergeOnLogin();
@@ -2723,6 +2725,8 @@
           /* non-fatal — dashboard still falls back to local saves */
         }
       }
+      // Show local saves before the network round-trip finishes.
+      applySavedOpportunityData(null);
 
       const [dashRes, favRes, orgFavRes, oppFavRes, oppSearchRes] = await Promise.all([
         fetch('/api/auth/attendee-dashboard', { credentials: 'include' }),
