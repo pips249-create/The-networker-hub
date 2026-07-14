@@ -1,7 +1,10 @@
 .networking-region-intro,
 .networking-location-directory {
-  border-radius: 22px;
   box-shadow: 0 16px 40px rgba(31, 28, 70, 0.07);
+}
+
+.networking-location-directory {
+  border-radius: 22px;
 }
 
 .networking-region-intro {
@@ -10,10 +13,12 @@
   --region-accent-border: rgba(50, 43, 120, 0.2);
   position: relative;
   overflow: hidden;
-  margin: 28px 0 6px;
+  margin: 16px 0 4px;
   border: 1px solid var(--region-accent-border);
+  border-radius: 16px;
   background:
     linear-gradient(135deg, #fff 0%, var(--region-accent-soft) 100%);
+  box-shadow: 0 8px 22px rgba(31, 28, 70, 0.05);
 }
 
 .networking-region-intro[hidden] {
@@ -25,31 +30,34 @@
   top: 0;
   right: 0;
   left: 0;
-  height: 6px;
+  height: 4px;
   background: var(--region-accent);
 }
 
 .networking-region-intro-inner {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 20px 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
   align-items: center;
-  padding: 26px 30px 24px;
+  justify-content: space-between;
+  padding: 14px 18px 14px;
 }
 
 .networking-region-intro-copy {
   position: relative;
   z-index: 1;
+  flex: 1 1 280px;
   min-width: 0;
+  max-width: 720px;
 }
 
 .networking-region-kicker {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 8px;
+  gap: 7px;
+  margin: 0 0 4px;
   color: var(--region-accent);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -57,15 +65,23 @@
 
 .networking-region-kicker::before {
   content: "";
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
   background: var(--region-accent);
-  box-shadow: 0 0 0 4px var(--region-accent-soft);
+  box-shadow: 0 0 0 3px var(--region-accent-soft);
   flex: 0 0 auto;
 }
 
-.networking-region-intro h2,
+.networking-region-intro h2 {
+  margin: 0;
+  color: #1c2040;
+  font-family: "DM Serif Display", Georgia, serif;
+  font-size: clamp(20px, 2.4vw, 26px);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
 .networking-location-directory h2 {
   margin: 0;
   color: #1c2040;
@@ -80,10 +96,11 @@
 }
 
 .networking-region-intro-copy > p {
-  max-width: 640px;
-  margin: 10px 0 0;
+  max-width: 58ch;
+  margin: 5px 0 0;
   color: #625f73;
-  line-height: 1.65;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .networking-region-organiser-cta,
@@ -92,15 +109,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 18px;
+  flex: 0 0 auto;
+  margin-top: 0;
   border-radius: 999px;
   background: var(--region-accent);
   color: #ffffff;
-  padding: 12px 18px;
-  font-size: 14px;
+  padding: 9px 14px;
+  font-size: 13px;
   font-weight: 700;
   text-decoration: none;
-  box-shadow: 0 10px 24px var(--region-accent-soft);
+  white-space: nowrap;
+  box-shadow: 0 6px 16px var(--region-accent-soft);
 }
 
 .networking-region-organiser-cta:hover,
@@ -314,34 +333,15 @@ body.networking-region-page[data-region="chester"] .events-hero-copy h1 .accent 
 
 @media (max-width: 720px) {
   .networking-region-intro-inner {
-    grid-template-columns: 1fr;
-    padding: 22px 20px 20px;
-  }
-
-  .networking-region-skyline {
-    justify-content: flex-start;
-    min-height: 80px;
-    opacity: 0.55;
-  }
-
-  .networking-region-skyline.is-image {
-    margin-left: 0;
-    max-width: 240px;
-    min-height: 80px;
-    justify-content: flex-start;
-  }
-
-  .networking-region-skyline-img {
-    max-width: 240px;
-  }
-
-  .networking-region-skyline-svg {
-    max-width: 200px;
+    padding: 12px 14px 13px;
+    gap: 10px;
   }
 
   .networking-region-organiser-cta {
     width: 100%;
     box-sizing: border-box;
+    white-space: normal;
+    text-align: center;
   }
 
   .networking-location-directory {

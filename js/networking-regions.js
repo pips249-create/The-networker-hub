@@ -79,11 +79,10 @@
   }
 
   var introCopy = theme.tagline
-    ? theme.tagline +
-      ' Browse live events and organiser communities without signing in, then create a free account when you are ready to book.'
-    : 'Explore live business networking events and the organiser communities behind them in ' +
+    ? theme.tagline + ' Browse live events and local organiser communities.'
+    : 'Browse live business networking events and organiser communities across ' +
       region.name +
-      '. Browse without signing in, then create a free account when you are ready to book.';
+      '.';
   setText('networking-region-intro-copy', introCopy);
 
   var skyline = document.getElementById('networking-region-skyline');

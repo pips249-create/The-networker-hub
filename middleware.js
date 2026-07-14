@@ -173,11 +173,10 @@ function injectNetworkingRegionContent(html, meta) {
   const name = escapeHtml(region.name);
   const year = escapeHtml(region.year || new Date().getFullYear());
   const introCopy = theme.tagline
-    ? escapeHtml(theme.tagline) +
-      ' Browse live events and organiser communities without signing in, then create a free account when you are ready to book.'
-    : 'Explore live business networking events and the organiser communities behind them in ' +
+    ? escapeHtml(theme.tagline) + ' Browse live events and local organiser communities.'
+    : 'Browse live business networking events and organiser communities across ' +
       name +
-      '. Browse without signing in, then create a free account when you are ready to book.';
+      '.';
 
   let out = String(html || '');
   out = out.replace(
