@@ -2,6 +2,7 @@
 
 html:has(.site-access-page) {
   overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 .site-access-page {
@@ -148,6 +149,47 @@ html:has(.site-access-page) {
 
 .site-access-contact a:hover {
   color: #ffe9a8;
+}
+
+.site-access-jump {
+  margin: 14px 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.site-access-jump a {
+  color: #fff;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.site-access-jump a:hover {
+  color: #ffe9a8;
+  border-bottom-color: #ffe9a8;
+}
+
+.site-access-jump a::after {
+  content: ' ↓';
+  font-size: 0.9em;
+}
+
+.site-access-organiser-link {
+  margin: 14px 0 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.site-access-organiser-link a {
+  color: var(--lavender-deep);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.site-access-organiser-link a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .site-access-panel {
@@ -422,6 +464,14 @@ html:has(.site-access-page) {
 .site-access-preview-head {
   max-width: 40rem;
   margin-bottom: clamp(28px, 4vw, 40px);
+}
+
+.site-access-preview-lede {
+  margin: 10px 0 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  max-width: 32rem;
 }
 
 .site-access-preview-pillars {
@@ -1193,6 +1243,10 @@ html:has(.site-access-page) {
   }
 
   .site-access-contact {
+    text-align: center;
+  }
+
+  .site-access-jump {
     text-align: center;
   }
 
