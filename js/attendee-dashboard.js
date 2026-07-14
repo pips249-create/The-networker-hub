@@ -32,7 +32,7 @@
     },
     saved: {
       title: 'Saved',
-      sub: 'Events, organisers, and business opportunities you have saved while browsing. We will email you when ticket sales open for saved events, when a saved organiser lists something new, when a saved opportunity is closing soon, and when a new listing matches a saved opportunity search.',
+      sub: 'Events, organisers, and business opportunities you have saved while browsing. Opportunity search alerts live under Saved Opportunities.',
     },
     past: {
       title: 'Past events',
