@@ -452,6 +452,22 @@
     return { ...row, id: key, groupName: group?.name || 'Your group' };
   }
 
+  let linkedInCoverBuilder = null;
+
+  function ensureLinkedInCoverBuilder() {
+    const root = document.getElementById('org-cover-builder-root');
+    if (!root || !window.HubLinkedInCoverBuilder) return;
+    if (!linkedInCoverBuilder) {
+      linkedInCoverBuilder = window.HubLinkedInCoverBuilder.init(root, {
+        getGroups: function () {
+          return state.groups || [];
+        },
+      });
+    } else if (linkedInCoverBuilder.refreshGroups) {
+      linkedInCoverBuilder.refreshGroups();
+    }
+  }
+
   function formatTicketsSoldLabel(sold, capacity) {
     const n = Math.max(0, Number(sold) || 0);
     const cap = Number(capacity);
@@ -2360,6 +2376,8 @@
     }
     const header = [
       'Name',
+      'Company',
+      'Job title',
       'Visits',
       'Relationship',
       'Other attendees',
@@ -2370,7 +2388,6 @@
       'Quantity',
       'Status',
       'Industry',
-      'Job title',
       'Dietary requirements',
       'Accessibility requirements',
       'Paid',
@@ -2379,6 +2396,8 @@
     const lines = rows.map((a) =>
       [
         a.name,
+        a.company || '',
+        a.jobTitle || a.screeningJobTitle || '',
         attendeeVisitCountLabel(a),
         attendeeGroupRelationshipLabel(a),
         (a.guestNames || []).join('; '),
@@ -2388,8 +2407,7 @@
         a.ticketName,
         a.quantity,
         attendeeStatusLabel(a),
-        a.screeningIndustry || '',
-        a.screeningJobTitle || '',
+        a.screeningIndustry || a.businessSector || '',
         a.dietaryRequirements || '',
         a.accessibilityRequirements || '',
         a.amountDisplay || a.paymentStatus || '',
@@ -4988,6 +5006,7 @@
     }
     if (page === 'social') {
       renderOrganiserRankingShare();
+      ensureLinkedInCoverBuilder();
     }
     if (page === 'team') {
       loadTeamMembers().then(function () {
@@ -7047,6 +7066,7 @@
     renderStats();
     renderOrganiserNotices();
     renderOrganiserRankingShare();
+    ensureLinkedInCoverBuilder();
     renderGroups();
     renderTeam();
     renderMyEventsHub();
