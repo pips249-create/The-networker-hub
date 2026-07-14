@@ -3,7 +3,6 @@
  */
 const { getSubRoute } = require('./_lib/route-path');
 const { json, setCors, sessionFromRequest, requireAdmin } = require('./_lib/auth');
-const adminMfa = require('./_lib/admin-mfa');
 
 const routes = {
   metrics: require('./_lib/routes/admin-metrics'),
@@ -37,16 +36,6 @@ module.exports = async function handler(req, res) {
   const gate = requireAdmin(session);
   if (!gate.ok) {
     return json(res, gate.status, { error: gate.error, message: gate.message });
-  }
-
-  if (adminMfa.isAdminMfaEnabled()) {
-    const mfaEnrolled = await adminMfa.isMfaEnrolled(session.sub);
-    if (mfaEnrolled && !session.mfaVerified) {
-      return json(res, 403, {
-        error: 'mfa_required',
-        message: 'Enter your authenticator code to access the Command Centre.',
-      });
-    }
   }
 
   const route = getSubRoute(req, '/api/admin');

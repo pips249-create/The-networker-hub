@@ -10,7 +10,6 @@ const {
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
 const { enforceRateLimit } = require('../rate-limit');
-const adminMfa = require('../admin-mfa');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -53,7 +52,6 @@ module.exports = async function handler(req, res) {
     .toLowerCase();
   const password = String(body.password || '');
   const rememberMe = Boolean(body.rememberMe);
-  const totpCode = String(body.totpCode || body.code || '').trim();
 
   if (!email || !password) {
     return json(res, 400, { error: 'missing_credentials' });
@@ -83,36 +81,12 @@ module.exports = async function handler(req, res) {
     }
 
     const role = normalizeRole(user.role);
-    const mfaEnrolled =
-      adminMfa.isAdminMfaEnabled() && isAdminRole(role)
-        ? await adminMfa.isMfaEnrolled(user.id)
-        : false;
-
-    if (mfaEnrolled) {
-      if (!totpCode) {
-        return json(res, 401, {
-          error: 'mfa_required',
-          mfaRequired: true,
-          message: 'Enter the 6-digit code from your authenticator app.',
-        });
-      }
-      const mfaOk = await adminMfa.verifyUserCode(user.id, totpCode);
-      if (!mfaOk) {
-        return json(res, 401, {
-          error: 'invalid_mfa_code',
-          mfaRequired: true,
-          message: 'Authenticator code is incorrect.',
-        });
-      }
-    }
 
     const sessionUser = {
       sub: user.id,
       email: user.email,
       role,
       name: user.name,
-      mfaEnrolled,
-      mfaVerified: true,
     };
 
     if (!setSessionCookie(res, sessionUser, { rememberMe })) {

@@ -10027,160 +10027,6 @@
     });
   }
 
-  function loadSystemMfaPanel(mfaEnabled) {
-    var statusEl = document.getElementById('system-mfa-status');
-    var actionsEl = document.getElementById('system-mfa-actions');
-    if (!statusEl || !actionsEl) return;
-
-    if (!mfaEnabled) {
-      statusEl.textContent = 'Paused — not required until you enable it.';
-      actionsEl.innerHTML =
-        '<p class="text-xs text-slate-500">When you are ready: run Supabase migration <code class="text-[11px]">159_admin_mfa_restore.sql</code>, set <code class="text-[11px]">ADMIN_MFA_ENABLED=true</code> in Vercel, redeploy, then return here to pair Microsoft Authenticator (or any TOTP app).</p>';
-      return;
-    }
-
-    var pendingSecret = '';
-
-    function paintMfa(data) {
-      if (!data || !data.ok) {
-        statusEl.textContent = 'Could not load MFA status.';
-        return;
-      }
-      statusEl.textContent = data.enrolled
-        ? 'Enabled — Command Centre sign-in requires an authenticator code.'
-        : 'Not enabled — recommended for production admin access.';
-
-      if (data.enrolled) {
-        actionsEl.innerHTML =
-          '<p class="text-xs text-slate-500">To disable MFA, enter a current code from your authenticator app.</p>' +
-          '<div class="flex flex-wrap gap-2 items-center">' +
-          '<input type="text" id="system-mfa-disable-code" class="rounded-lg border border-slate-200 px-3 py-2 text-sm w-36" inputmode="numeric" maxlength="8" placeholder="6-digit code" />' +
-          '<button type="button" id="system-mfa-disable-btn" class="rounded-lg border border-red-200 text-red-700 text-sm font-semibold px-3 py-2 hover:bg-red-50">Disable MFA</button>' +
-          '</div>' +
-          '<p id="system-mfa-msg" class="text-xs text-slate-500"></p>';
-        var disableBtn = document.getElementById('system-mfa-disable-btn');
-        if (disableBtn) {
-          disableBtn.addEventListener('click', function () {
-            var code = (document.getElementById('system-mfa-disable-code')?.value || '').trim();
-            var msg = document.getElementById('system-mfa-msg');
-            if (!code) {
-              if (msg) msg.textContent = 'Enter your authenticator code.';
-              return;
-            }
-            disableBtn.disabled = true;
-            fetch('/api/auth/mfa', {
-              method: 'POST',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'disable', code: code }),
-            })
-              .then(function (r) {
-                return r.json();
-              })
-              .then(function (res) {
-                if (msg) msg.textContent = res.message || res.error || (res.ok ? 'Disabled.' : 'Could not disable MFA.');
-                if (res.ok) loadSystemMfaPanel();
-                else disableBtn.disabled = false;
-              })
-              .catch(function () {
-                if (msg) msg.textContent = 'Request failed.';
-                disableBtn.disabled = false;
-              });
-          });
-        }
-        return;
-      }
-
-      actionsEl.innerHTML =
-        '<p class="text-xs text-slate-500">Use Google Authenticator, 1Password, or similar. Scan the setup key after clicking begin.</p>' +
-        '<button type="button" id="system-mfa-begin-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3.5 py-2 hover:bg-brand-900">Set up authenticator</button>' +
-        '<div id="system-mfa-setup" class="hidden space-y-3 mt-2">' +
-        '<p class="text-xs text-slate-600 break-all"><strong>Setup key:</strong> <span id="system-mfa-secret"></span></p>' +
-        '<p class="text-xs text-slate-600 break-all"><strong>URI:</strong> <span id="system-mfa-uri"></span></p>' +
-        '<div class="flex flex-wrap gap-2 items-center">' +
-        '<input type="text" id="system-mfa-confirm-code" class="rounded-lg border border-slate-200 px-3 py-2 text-sm w-36" inputmode="numeric" maxlength="8" placeholder="6-digit code" />' +
-        '<button type="button" id="system-mfa-confirm-btn" class="rounded-lg bg-emerald-700 text-white text-sm font-semibold px-3.5 py-2 hover:bg-emerald-900">Confirm &amp; enable</button>' +
-        '</div></div>' +
-        '<p id="system-mfa-msg" class="text-xs text-slate-500"></p>';
-
-      var beginBtn = document.getElementById('system-mfa-begin-btn');
-      if (beginBtn) {
-        beginBtn.addEventListener('click', function () {
-          var msg = document.getElementById('system-mfa-msg');
-          beginBtn.disabled = true;
-          fetch('/api/auth/mfa', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'begin' }),
-          })
-            .then(function (r) {
-              return r.json();
-            })
-            .then(function (res) {
-              if (!res.ok) {
-                if (msg) msg.textContent = res.message || res.error || 'Could not start MFA setup.';
-                beginBtn.disabled = false;
-                return;
-              }
-              pendingSecret = res.secret || '';
-              var setup = document.getElementById('system-mfa-setup');
-              if (setup) setup.classList.remove('hidden');
-              var secretEl = document.getElementById('system-mfa-secret');
-              var uriEl = document.getElementById('system-mfa-uri');
-              if (secretEl) secretEl.textContent = pendingSecret;
-              if (uriEl) uriEl.textContent = res.otpauthUrl || '';
-              if (msg) msg.textContent = 'Add the account in your app, then confirm with a code.';
-            })
-            .catch(function () {
-              if (msg) msg.textContent = 'Request failed.';
-              beginBtn.disabled = false;
-            });
-        });
-      }
-
-      var confirmBtn = document.getElementById('system-mfa-confirm-btn');
-      if (confirmBtn) {
-        confirmBtn.addEventListener('click', function () {
-          var code = (document.getElementById('system-mfa-confirm-code')?.value || '').trim();
-          var msg = document.getElementById('system-mfa-msg');
-          if (!pendingSecret || !code) {
-            if (msg) msg.textContent = 'Begin setup and enter a code from your app.';
-            return;
-          }
-          confirmBtn.disabled = true;
-          fetch('/api/auth/mfa', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'confirm', secret: pendingSecret, code: code }),
-          })
-            .then(function (r) {
-              return r.json();
-            })
-            .then(function (res) {
-              if (msg) msg.textContent = res.message || res.error || (res.ok ? 'Enabled.' : 'Could not enable MFA.');
-              if (res.ok) loadSystemMfaPanel();
-              else confirmBtn.disabled = false;
-            })
-            .catch(function () {
-              if (msg) msg.textContent = 'Request failed.';
-              confirmBtn.disabled = false;
-            });
-        });
-      }
-    }
-
-    fetch('/api/auth/mfa', { credentials: 'include', cache: 'no-store' })
-      .then(function (r) {
-        return r.json();
-      })
-      .then(paintMfa)
-      .catch(function () {
-        statusEl.textContent = 'Could not load MFA status.';
-      });
-  }
-
   function renderSystem() {
     main.innerHTML =
       '<div class="space-y-6">' +
@@ -10308,11 +10154,6 @@
             ? '<p class="text-xs text-amber-800 mt-2">Run <code class="text-[11px]">npm run seed-admin</code> or POST <code class="text-[11px]">/api/auth/setup-admin</code></p>'
             : '') +
           '</section>' +
-          '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm" id="system-mfa-panel">' +
-          '<h3 class="font-bold text-brand-900 mb-2">Admin two-factor authentication</h3>' +
-          '<p id="system-mfa-status" class="text-sm text-slate-500">Checking MFA status…</p>' +
-          '<div id="system-mfa-actions" class="mt-3 space-y-3"></div>' +
-          '</section>' +
           '<section class="bg-slate-900 rounded-xl p-5 text-slate-100 shadow-sm">' +
           '<h3 class="font-bold text-sm uppercase tracking-wide text-brand-100 mb-3">Quick links</h3>' +
           '<ul class="text-sm space-y-2">' +
@@ -10324,8 +10165,6 @@
           '<li><a class="text-brand-100 hover:text-white font-semibold" href="/api/auth/config-check" target="_blank" rel="noopener">Config check JSON</a> (admin session required in production)</li>' +
           '<li><a class="text-brand-100 hover:text-white font-semibold" href="/api/hub-listings" target="_blank" rel="noopener">Events API smoke test</a></li>' +
           '</ul></section>';
-
-        loadSystemMfaPanel(env.adminMfaEnabled);
       })
       .catch(function () {
         var status = document.getElementById('system-status');

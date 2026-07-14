@@ -236,16 +236,6 @@ function requireAdmin(session) {
     };
   }
   if (!isAdminRole(session.role)) return { ok: false, status: 403, error: 'admin_only' };
-  const adminMfaEnabled =
-    String(process.env.ADMIN_MFA_ENABLED || '').trim().toLowerCase() === 'true';
-  if (adminMfaEnabled && session.mfaEnrolled && !session.mfaVerified) {
-    return {
-      ok: false,
-      status: 403,
-      error: 'mfa_required',
-      message: 'Enter your authenticator code to access the Command Centre.',
-    };
-  }
   return { ok: true, session };
 }
 

@@ -171,7 +171,7 @@ Monitor Resend dashboard during July beta — if daily sends approach **80–90*
 |-----------|--------|-------|
 | 001–124 | Run through prod | Full schema through opportunity moderation, platform admin emails |
 | 125–146 | Confirm on prod | Guest visits, alumni pass, opportunity favourites / saved searches, complaints register |
-| 071–072 | Optional | Admin MFA added then removed — **do not run unless you want MFA back** |
+| 071–072 | Historical | Admin MFA was added then dropped — **do not re-run**; 159 restore was never applied |
 
 **Verify reviews setup:** `npm run test-review-e2e`
 
