@@ -36,7 +36,7 @@
 
 .networking-region-intro-inner {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 12px 20px;
   align-items: center;
   justify-content: space-between;
@@ -129,38 +129,14 @@
   text-decoration: none;
 }
 
-.networking-region-skyline {
-  display: none;
-}
-
+.networking-region-skyline,
 .networking-region-skyline.is-image {
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  width: 100%;
-  max-width: 320px;
-  min-height: 120px;
-  margin-left: auto;
-  opacity: 1;
+  display: none !important;
 }
 
-.networking-region-skyline-img {
-  display: block;
-  width: 100%;
-  max-width: 320px;
-  height: auto;
-  object-fit: contain;
-  object-position: right bottom;
-  mix-blend-mode: multiply;
-  opacity: 0.92;
-  pointer-events: none;
-  user-select: none;
-}
-
+.networking-region-skyline-img,
 .networking-region-skyline-svg {
-  width: 100%;
-  max-width: 280px;
-  height: auto;
+  display: none !important;
 }
 
 body.networking-region-page[data-region="central-london"] .events-hero-copy h1 .accent { color: #c5cee8; }
@@ -333,6 +309,7 @@ body.networking-region-page[data-region="chester"] .events-hero-copy h1 .accent 
 
 @media (max-width: 720px) {
   .networking-region-intro-inner {
+    flex-wrap: wrap;
     padding: 12px 14px 13px;
     gap: 10px;
   }

@@ -229,23 +229,10 @@ function injectNetworkingRegionContent(html, meta) {
     /<p id="networking-region-intro-copy">[\s\S]*?<\/p>/i,
     '<p id="networking-region-intro-copy">' + introCopy + '</p>'
   );
-  if (theme.skylineImage) {
-    out = out.replace(
-      /<div class="networking-region-skyline[^"]*" id="networking-region-skyline"[^>]*>[\s\S]*?<\/div>/i,
-      '<div class="networking-region-skyline is-image" id="networking-region-skyline" aria-hidden="true">' +
-        '<img class="networking-region-skyline-img" src="' +
-        theme.skylineImage +
-        '" alt="" width="320" height="180" decoding="async">' +
-        '</div>'
-    );
-  } else if (theme.skyline) {
-    out = out.replace(
-      /<div class="networking-region-skyline[^"]*" id="networking-region-skyline"[^>]*>[\s\S]*?<\/div>/i,
-      '<div class="networking-region-skyline" id="networking-region-skyline" aria-hidden="true">' +
-        theme.skyline +
-        '</div>'
-    );
-  }
+  out = out.replace(
+    /<div class="networking-region-skyline[^"]*" id="networking-region-skyline"[^>]*>[\s\S]*?<\/div>/i,
+    '<div class="networking-region-skyline" id="networking-region-skyline" hidden aria-hidden="true"></div>'
+  );
   return out;
 }
 
