@@ -3688,6 +3688,10 @@ body.org-cancel-modal-open {
   background: #faf6fc;
 }
 
+.org-setup-resume[hidden] {
+  display: none !important;
+}
+
 .org-setup-resume-text {
   display: flex;
   flex-direction: column;
