@@ -276,16 +276,16 @@
   function thumbHtml(item) {
     const name = item.title || '?';
     let imageUrl = item.imageUrl || '';
-    if (global.getEventImage) {
-      imageUrl = global.getEventImage({
+    if (window.getEventImage) {
+      imageUrl = window.getEventImage({
         photo: imageUrl,
         organiserLogo: item.organiserLogo || '',
         id: item.eventId || item.id,
         eventType: item.eventType || '',
         title: name,
       });
-    } else if (global.getFlexibleEventImage) {
-      imageUrl = global.getFlexibleEventImage(
+    } else if (window.getFlexibleEventImage) {
+      imageUrl = window.getFlexibleEventImage(
         imageUrl,
         item.organiserLogo || '',
         item.eventId || item.id
@@ -295,10 +295,10 @@
     if (
       logo &&
       imageUrl === logo &&
-      global.getEventPlacementImage &&
-      global.hubIsLogoStyleCover
+      window.getEventPlacementImage &&
+      window.hubIsLogoStyleCover
     ) {
-      imageUrl = global.getEventPlacementImage(item.eventId || item.id, item.eventType || '', name);
+      imageUrl = window.getEventPlacementImage(item.eventId || item.id, item.eventType || '', name);
     }
     if (imageUrl) {
       return (
@@ -2624,10 +2624,26 @@
       renderCancellationsTable();
     } else if (key === 'saved') {
       maybeDefaultSavedScope();
-      renderSavedTable();
-      renderSavedOrganisersTable();
-      renderSavedOpportunitiesTable();
-      renderSavedOpportunitySearchesTable();
+      try {
+        renderSavedTable();
+      } catch (err) {
+        console.warn('[attendee-dashboard] saved events render failed', err);
+      }
+      try {
+        renderSavedOrganisersTable();
+      } catch (err) {
+        console.warn('[attendee-dashboard] saved organisers render failed', err);
+      }
+      try {
+        renderSavedOpportunitiesTable();
+      } catch (err) {
+        console.warn('[attendee-dashboard] saved opportunities render failed', err);
+      }
+      try {
+        renderSavedOpportunitySearchesTable();
+      } catch (err) {
+        console.warn('[attendee-dashboard] saved searches render failed', err);
+      }
     } else if (key === 'opportunity-enquiries') {
       renderOpportunityEnquiries();
     }
