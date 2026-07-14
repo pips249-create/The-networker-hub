@@ -10,7 +10,7 @@
  *   5. One live event + opportunity detail page when listings exist
  *
  * If the site gate is on and no password is available, runs a smaller
- * “gated” smoke: waitlist page + bypass APIs + discovery behaviour.
+ * “gated” smoke: waitlist page + gated-API checks + discovery behaviour.
  *
  * Usage:
  *   node scripts/smoke-test-site.js
@@ -288,6 +288,24 @@ async function probeOpportunitiesApi() {
   return { ok: true, message: list.length + ' opportunities', opportunities: list };
 }
 
+async function probeOpportunitiesGated() {
+  const res = await fetchUrl('/api/opportunities', { redirect: 'manual' });
+  const text = await res.text();
+  let data = {};
+  try {
+    data = JSON.parse(text);
+  } catch {
+    /* non-JSON body is fine as long as it is not a 200 listing */
+  }
+  if (res.status === 403 && data.error === 'site_private') {
+    return { ok: true, message: 'correctly blocked (403 site_private) for anonymous callers' };
+  }
+  if (res.ok && Array.isArray(data.opportunities)) {
+    return { ok: false, message: 'LEAK — returned ' + data.opportunities.length + ' opportunities without preview cookie or session' };
+  }
+  return { ok: false, message: 'HTTP ' + res.status + ' — expected 403 site_private' };
+}
+
 async function probeUnlockEndpointAlive() {
   const res = await fetchUrl('/api/auth/site-access', {
     method: 'POST',
@@ -345,9 +363,9 @@ async function runGatedSmoke() {
     printResult(r.ok, p, r.message, r.warn);
   }
 
-  console.log('\nBypass APIs (allowed through gate)');
-  const oppsApi = await probeOpportunitiesApi();
-  printResult(oppsApi.ok, '/api/opportunities', oppsApi.message);
+  console.log('\nGated APIs (blocked for anonymous callers)');
+  const oppsGated = await probeOpportunitiesGated();
+  printResult(oppsGated.ok, '/api/opportunities', oppsGated.message);
 
   console.log('\nOrganiser early access (no preview password)');
   const organiserPaths = [

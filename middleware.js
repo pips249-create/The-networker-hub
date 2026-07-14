@@ -57,7 +57,6 @@ const GATE_BYPASS_PREFIXES = [
   '/api/cron/',
   '/api/site-access',
   '/api/auth/site-access',
-  '/api/opportunities',
   '/site-access',
   '/site-access.html',
   '/css/',
@@ -396,6 +395,28 @@ async function hasSiteAccess(request) {
   return false;
 }
 
+/** Signed-in user (organiser/member) with a valid hub_session — used for early-access APIs. */
+async function hasValidSession(request) {
+  const secret = String(process.env.SESSION_SECRET || '').trim();
+  if (!secret) return false;
+  const cookies = parseCookies(request);
+  const session = await verifySignedToken(cookies.hub_session, secret);
+  return Boolean(session && (session.email || session.sub));
+}
+
+function sitePrivateResponse() {
+  return new Response(
+    JSON.stringify({ error: 'site_private', message: 'Site is in private preview.' }),
+    {
+      status: 403,
+      headers: withNoIndexHeaders({
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-store',
+      }),
+    }
+  );
+}
+
 async function maybeGateSiteAccess(request, url) {
   if (!isSiteAccessGateActive()) return null;
 
@@ -406,6 +427,16 @@ async function maybeGateSiteAccess(request, url) {
   const search = url.search || '';
 
   if (isGateBypassPath(pathname)) return null;
+
+  // Public opportunities API: reachable by preview-cookie holders and signed-in
+  // organisers/members only — never anonymously while the gate is on. This keeps the
+  // organiser premium-slots flow working without exposing the catalogue to the public.
+  if (pathname === '/api/opportunities' || pathname.startsWith('/api/opportunities/')) {
+    if ((await hasSiteAccess(request)) || (await hasValidSession(request))) {
+      return { authorized: true };
+    }
+    return sitePrivateResponse();
+  }
 
   // Let social crawlers fetch listing HTML + OG tags (still noindexed via authorized path).
   if (isSocialCrawler(request) && isPublicListingPath(pathname)) {
@@ -446,13 +477,7 @@ async function maybeGateSiteAccess(request, url) {
   }
 
   if (pathname === '/sitemap.xml' || pathname === '/llms.txt' || pathname === '/agents.txt' || pathname.startsWith('/api/')) {
-    return new Response(JSON.stringify({ error: 'site_private', message: 'Site is in private preview.' }), {
-      status: 403,
-      headers: withNoIndexHeaders({
-        'Content-Type': 'application/json; charset=utf-8',
-        'Cache-Control': 'no-store',
-      }),
-    });
+    return sitePrivateResponse();
   }
 
   return gateRedirect(url, pathname, search);
