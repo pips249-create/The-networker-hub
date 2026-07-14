@@ -2588,3 +2588,34 @@ html:has(.home-page) {
     transform: translateY(20px);
   }
 }
+
+/* Regional directory strip on homepage */
+.home-locations {
+  padding: 12px 0 8px;
+}
+
+.home-locations-panel {
+  margin: 0;
+}
+
+.home-locations-lede {
+  max-width: 40rem;
+  margin: 10px 0 0;
+  color: var(--home-muted, #625f73);
+  line-height: 1.6;
+}
+
+.home-locations-more {
+  margin: 22px 0 0;
+}
+
+.home-locations-more a {
+  color: var(--home-purple, #493f95);
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.home-locations-more a:hover {
+  text-decoration: underline;
+}

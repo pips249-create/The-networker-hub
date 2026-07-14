@@ -1429,6 +1429,14 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(91, 47, 153, 0.22);
   transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  text-decoration: none;
+}
+a.empty-state-btn:link,
+a.empty-state-btn:visited,
+a.empty-state-btn:hover,
+a.empty-state-btn:focus-visible {
+  color: #fff;
+  text-decoration: none;
 }
 .empty-state-btn:hover {
   transform: translateY(-1px);

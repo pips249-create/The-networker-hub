@@ -578,16 +578,24 @@
     if (!totalItems && !rows.length) {
       const searchInput = document.getElementById('search');
       const searchQ = searchInput ? String(searchInput.value || '').trim() : '';
+      const regional = window.hubRegionalLanding;
       const emptyTitle = searchQ
         ? 'No events found for “' + escapeHtml(searchQ) + '”'
-        : 'No events match your filters';
+        : regional && regional.name
+          ? 'No upcoming events in ' + escapeHtml(regional.name) + ' yet'
+          : 'No events match your filters';
       const emptyText = searchQ
         ? 'Try different keywords or spellings, or browse <a href="/opportunities/?q=' +
           encodeURIComponent(searchQ) +
           '">opportunities matching “' +
           escapeHtml(searchQ) +
           '”</a>.'
-        : 'Try clearing filters, choosing a different date range, or browsing all event types.';
+        : regional && regional.name
+          ? 'Check back soon, or <a href="/events/">browse all UK events</a>. Organisers can list a group from the button above.'
+          : 'Try clearing filters, choosing a different date range, or browsing all event types.';
+      const emptyAction = regional
+        ? '<a class="empty-state-btn" href="/events/">Browse all events</a>'
+        : '<button type="button" class="empty-state-btn" id="empty-reset">Clear all filters</button>';
       els.listings.innerHTML =
         '<div class="empty-state is-visible" role="status">' +
         '<div class="empty-state-inner">' +
@@ -602,7 +610,7 @@
         '<p class="empty-state-text">' +
         emptyText +
         '</p>' +
-        '<button type="button" class="empty-state-btn" id="empty-reset">Clear all filters</button>' +
+        emptyAction +
         '</div></div>';
       updateResultsSummary(0);
       return;
@@ -889,12 +897,7 @@
           }
           await window.hubBrowseFetchNow(1);
           events = window.hubBrowseEvents || [];
-          setStatus(
-            browseTotalCount()
-              ? ''
-              : 'No published events yet. Approve events in Supabase so they appear in published_events.',
-            false
-          );
+          setStatus('', false);
           applyLoadedEvents({ skipRestore: true });
           scrollToResultsAfterLanding();
         } catch (e) {
@@ -947,12 +950,7 @@
           events = (data.events || []).filter(function (ev) {
             return String(ev.listingStatusRaw || '').trim() === 'Approved';
           });
-          setStatus(
-            events.length
-              ? ''
-              : 'No published events yet. Approve events in Supabase so they appear in published_events.',
-            false
-          );
+          setStatus('', false);
         }
         applyLoadedEvents();
         scrollToResultsAfterLanding();

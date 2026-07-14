@@ -13,10 +13,10 @@
 <link rel="stylesheet" href="../css/fact-loader.css?v=20260613">
 <script src="../js/fact-loader.js?v=20260613"></script>
 <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
-<link rel="stylesheet" href="../css/events-page.css?v=20260711">
+<link rel="stylesheet" href="../css/events-page.css?v=20260714empty">
 <link rel="stylesheet" href="../css/events-filter-bar.css?v=20260718e">
 <link rel="stylesheet" href="../css/organisers-browse.css?v=20260714a">
-<link rel="stylesheet" href="../css/networking-regions.css?v=20260714">
+<link rel="stylesheet" href="../css/networking-regions.css?v=20260714d">
 <script src="../js/hub-lazy-vendor.js?v=20260611"></script>
 <script src="../js/hub-seo-static-config.js?v=20260612"></script>
 <script src="../js/hub-seo-static.js?v=20260612" data-page="events"></script>
@@ -101,12 +101,16 @@
   <p class="load-status" id="load-status" hidden>Loading…</p>
 
   <section class="networking-region-intro" id="networking-region-intro" hidden aria-labelledby="networking-region-intro-heading">
-    <div>
-      <p class="networking-region-kicker">Your local business community</p>
-      <h2 id="networking-region-intro-heading">Business networking near you</h2>
-      <p id="networking-region-intro-copy">Browse upcoming business networking events and organiser communities in your area.</p>
+    <div class="networking-region-intro-accent" aria-hidden="true"></div>
+    <div class="networking-region-intro-inner">
+      <div class="networking-region-intro-copy">
+        <p class="networking-region-kicker">Your local business community</p>
+        <h2 id="networking-region-intro-heading">Business networking near you</h2>
+        <p id="networking-region-intro-copy">Browse upcoming business networking events and organiser communities in your area.</p>
+        <a class="networking-region-organiser-cta" href="/for-organisers">Run events here? List your group</a>
+      </div>
+      <div class="networking-region-skyline" id="networking-region-skyline" aria-hidden="true"></div>
     </div>
-    <a class="networking-region-organiser-cta" href="/for-organisers">Run events here? List your group</a>
   </section>
 
   <div class="events-promo-section">
@@ -440,23 +444,23 @@
       <div>
         <h3>London</h3>
         <div class="networking-location-links">
-          <a href="/networking/central-london">Central London</a>
-          <a href="/networking/north-london">North London</a>
-          <a href="/networking/south-london">South London</a>
-          <a href="/networking/east-london">East London</a>
-          <a href="/networking/west-london">West London</a>
+          <a href="/networking/central-london" data-region="central-london">Central London</a>
+          <a href="/networking/north-london" data-region="north-london">North London</a>
+          <a href="/networking/south-london" data-region="south-london">South London</a>
+          <a href="/networking/east-london" data-region="east-london">East London</a>
+          <a href="/networking/west-london" data-region="west-london">West London</a>
         </div>
       </div>
       <div>
         <h3>UK cities</h3>
         <div class="networking-location-links">
-          <a href="/networking/manchester">Manchester</a>
-          <a href="/networking/birmingham">Birmingham</a>
-          <a href="/networking/glasgow">Glasgow</a>
-          <a href="/networking/edinburgh">Edinburgh</a>
-          <a href="/networking/leeds">Leeds</a>
-          <a href="/networking/bristol">Bristol</a>
-          <a href="/networking/chester">Chester</a>
+          <a href="/networking/manchester" data-region="manchester">Manchester</a>
+          <a href="/networking/birmingham" data-region="birmingham">Birmingham</a>
+          <a href="/networking/glasgow" data-region="glasgow">Glasgow</a>
+          <a href="/networking/edinburgh" data-region="edinburgh">Edinburgh</a>
+          <a href="/networking/leeds" data-region="leeds">Leeds</a>
+          <a href="/networking/bristol" data-region="bristol">Bristol</a>
+          <a href="/networking/chester" data-region="chester">Chester</a>
         </div>
       </div>
     </div>
@@ -531,7 +535,8 @@
 <script src="../js/meeting-types.js?v=20260609n"></script>
 <script src="../js/postcode-outcode.js?v=20260708r"></script>
 <script src="../js/postcode-geo.js?v=20260609b"></script>
-<script src="../js/networking-regions.js?v=20260714"></script>
+<script src="../js/networking-region-themes.js?v=20260714c"></script>
+<script src="../js/networking-regions.js?v=20260714c"></script>
 <script src="../js/booking-fees.js?v=20260630"></script>
 <script src="../js/events-filters.js?v=20260714near"></script>
 <script src="../js/events-browse-api.js?v=20260703"></script>
@@ -540,7 +545,7 @@
 <script src="../js/sponsor-hub.js?v=20260611"></script>
 <script src="../js/flexible-event-image.js?v=20260612"></script>
 <script src="../js/hub-event-preview.js?v=20260623"></script>
-<script src="../js/events.js?v=20260714pos"></script>
+<script src="../js/events.js?v=20260714empty"></script>
 <script src="../js/organisers-filters.js?v=20260714b"></script>
 <script src="../js/organisers.js?v=20260714a"></script>
 <script src="../js/hub-organiser-actions.js?v=20260710" data-root="../"></script>

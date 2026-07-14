@@ -1,31 +1,68 @@
 .networking-region-intro,
 .networking-location-directory {
-  border: 1px solid rgba(50, 43, 120, 0.12);
   border-radius: 22px;
-  background: #fff;
   box-shadow: 0 16px 40px rgba(31, 28, 70, 0.07);
 }
 
 .networking-region-intro {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 28px;
+  --region-accent: #322b78;
+  --region-accent-soft: rgba(50, 43, 120, 0.1);
+  --region-accent-border: rgba(50, 43, 120, 0.2);
+  position: relative;
+  overflow: hidden;
   margin: 28px 0 6px;
-  padding: 28px 32px;
+  border: 1px solid var(--region-accent-border);
+  background:
+    linear-gradient(135deg, #fff 0%, var(--region-accent-soft) 100%);
 }
 
 .networking-region-intro[hidden] {
   display: none;
 }
 
+.networking-region-intro-accent {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 6px;
+  background: var(--region-accent);
+}
+
+.networking-region-intro-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 220px);
+  gap: 20px 28px;
+  align-items: center;
+  padding: 26px 30px 24px;
+}
+
+.networking-region-intro-copy {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
 .networking-region-kicker {
-  margin: 0 0 7px;
-  color: #6758c8;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  color: var(--region-accent);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.networking-region-kicker::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--region-accent);
+  box-shadow: 0 0 0 4px var(--region-accent-soft);
+  flex: 0 0 auto;
 }
 
 .networking-region-intro h2,
@@ -38,29 +75,144 @@
   line-height: 1.15;
 }
 
-.networking-region-intro p:last-child {
-  max-width: 720px;
+.networking-region-intro h2 .networking-region-name-accent {
+  color: var(--region-accent);
+}
+
+.networking-region-intro-copy > p {
+  max-width: 640px;
   margin: 10px 0 0;
   color: #625f73;
   line-height: 1.65;
 }
 
-.networking-region-organiser-cta {
-  flex: 0 0 auto;
+.networking-region-organiser-cta,
+.networking-region-organiser-cta:link,
+.networking-region-organiser-cta:visited {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 18px;
   border-radius: 999px;
-  background: #322b78;
-  color: #fff;
+  background: var(--region-accent);
+  color: #ffffff;
   padding: 12px 18px;
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
+  box-shadow: 0 10px 24px var(--region-accent-soft);
 }
 
-.networking-region-organiser-cta:hover {
-  background: #5045a6;
+.networking-region-organiser-cta:hover,
+.networking-region-organiser-cta:focus-visible {
+  color: #ffffff;
+  filter: brightness(1.1);
+  text-decoration: none;
+}
+
+.networking-region-skyline {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  min-height: 96px;
+  color: var(--region-accent);
+  opacity: 0.55;
+}
+
+.networking-region-skyline-svg {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+}
+
+body.networking-region-page[data-region="central-london"] .events-hero-copy h1 .accent { color: #c5cee8; }
+body.networking-region-page[data-region="north-london"] .events-hero-copy h1 .accent { color: #93c5fd; }
+body.networking-region-page[data-region="south-london"] .events-hero-copy h1 .accent { color: #5eead4; }
+body.networking-region-page[data-region="east-london"] .events-hero-copy h1 .accent { color: #fca5a5; }
+body.networking-region-page[data-region="west-london"] .events-hero-copy h1 .accent { color: #c4b5fd; }
+body.networking-region-page[data-region="manchester"] .events-hero-copy h1 .accent { color: #86efac; }
+body.networking-region-page[data-region="birmingham"] .events-hero-copy h1 .accent { color: #fcd34d; }
+body.networking-region-page[data-region="glasgow"] .events-hero-copy h1 .accent { color: #67e8f9; }
+body.networking-region-page[data-region="edinburgh"] .events-hero-copy h1 .accent { color: #f9a8d4; }
+body.networking-region-page[data-region="leeds"] .events-hero-copy h1 .accent { color: #fca5a5; }
+body.networking-region-page[data-region="bristol"] .events-hero-copy h1 .accent { color: #5eead4; }
+body.networking-region-page[data-region="chester"] .events-hero-copy h1 .accent { color: #fdba74; }
+
+.networking-region-intro[data-region="central-london"] {
+  --region-accent: #1c2040;
+  --region-accent-soft: rgba(28, 32, 64, 0.1);
+  --region-accent-border: rgba(28, 32, 64, 0.18);
+}
+
+.networking-region-intro[data-region="north-london"] {
+  --region-accent: #2563eb;
+  --region-accent-soft: rgba(37, 99, 235, 0.1);
+  --region-accent-border: rgba(37, 99, 235, 0.2);
+}
+
+.networking-region-intro[data-region="south-london"] {
+  --region-accent: #0d9488;
+  --region-accent-soft: rgba(13, 148, 136, 0.1);
+  --region-accent-border: rgba(13, 148, 136, 0.2);
+}
+
+.networking-region-intro[data-region="east-london"] {
+  --region-accent: #dc2626;
+  --region-accent-soft: rgba(220, 38, 38, 0.1);
+  --region-accent-border: rgba(220, 38, 38, 0.2);
+}
+
+.networking-region-intro[data-region="west-london"] {
+  --region-accent: #7c3aed;
+  --region-accent-soft: rgba(124, 58, 237, 0.1);
+  --region-accent-border: rgba(124, 58, 237, 0.2);
+}
+
+.networking-region-intro[data-region="manchester"] {
+  --region-accent: #2d6a4f;
+  --region-accent-soft: rgba(45, 106, 79, 0.12);
+  --region-accent-border: rgba(45, 106, 79, 0.22);
+}
+
+.networking-region-intro[data-region="birmingham"] {
+  --region-accent: #b8860b;
+  --region-accent-soft: rgba(184, 134, 11, 0.12);
+  --region-accent-border: rgba(184, 134, 11, 0.24);
+}
+
+.networking-region-intro[data-region="glasgow"] {
+  --region-accent: #0e7490;
+  --region-accent-soft: rgba(14, 116, 144, 0.12);
+  --region-accent-border: rgba(14, 116, 144, 0.22);
+}
+
+.networking-region-intro[data-region="edinburgh"] {
+  --region-accent: #9d174d;
+  --region-accent-soft: rgba(157, 23, 77, 0.12);
+  --region-accent-border: rgba(157, 23, 77, 0.22);
+}
+
+.networking-region-intro[data-region="leeds"] {
+  --region-accent: #b91c1c;
+  --region-accent-soft: rgba(185, 28, 28, 0.12);
+  --region-accent-border: rgba(185, 28, 28, 0.22);
+}
+
+.networking-region-intro[data-region="bristol"] {
+  --region-accent: #115e59;
+  --region-accent-soft: rgba(17, 94, 89, 0.12);
+  --region-accent-border: rgba(17, 94, 89, 0.22);
+}
+
+.networking-region-intro[data-region="chester"] {
+  --region-accent: #c2410c;
+  --region-accent-soft: rgba(194, 65, 12, 0.12);
+  --region-accent-border: rgba(194, 65, 12, 0.22);
 }
 
 .networking-location-directory {
+  border: 1px solid rgba(50, 43, 120, 0.12);
+  background: #fff;
   margin: 40px 0 52px;
   padding: 30px 32px;
 }
@@ -85,34 +237,81 @@
 }
 
 .networking-location-links a {
-  border: 1px solid #ded9f4;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid color-mix(in srgb, var(--link-accent, #7668ce) 28%, #ded9f4);
   border-radius: 999px;
-  background: #f8f6ff;
-  color: #493f95;
-  padding: 8px 13px;
+  background: color-mix(in srgb, var(--link-accent, #7668ce) 8%, white);
+  color: #36324f;
+  padding: 9px 14px;
   font-size: 13px;
   font-weight: 650;
   text-decoration: none;
 }
 
+.networking-location-links a::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--link-accent, #7668ce);
+  flex: 0 0 auto;
+}
+
+.networking-location-links a[data-region="central-london"] { --link-accent: #1c2040; }
+.networking-location-links a[data-region="north-london"] { --link-accent: #2563eb; }
+.networking-location-links a[data-region="south-london"] { --link-accent: #0d9488; }
+.networking-location-links a[data-region="east-london"] { --link-accent: #dc2626; }
+.networking-location-links a[data-region="west-london"] { --link-accent: #7c3aed; }
+.networking-location-links a[data-region="manchester"] { --link-accent: #2d6a4f; }
+.networking-location-links a[data-region="birmingham"] { --link-accent: #b8860b; }
+.networking-location-links a[data-region="glasgow"] { --link-accent: #0e7490; }
+.networking-location-links a[data-region="edinburgh"] { --link-accent: #9d174d; }
+.networking-location-links a[data-region="leeds"] { --link-accent: #b91c1c; }
+.networking-location-links a[data-region="bristol"] { --link-accent: #115e59; }
+.networking-location-links a[data-region="chester"] { --link-accent: #c2410c; }
+
 .networking-location-links a:hover,
 .networking-location-links a[aria-current="page"] {
-  border-color: #7668ce;
-  background: #ede9ff;
-  color: #2f286c;
+  border-color: var(--link-accent, #7668ce);
+  background: color-mix(in srgb, var(--link-accent, #7668ce) 16%, white);
+  color: #1c2040;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--link-accent, #7668ce) 30%, transparent);
+}
+
+/* Fallback when color-mix is unavailable */
+@supports not (background: color-mix(in srgb, red 10%, white)) {
+  .networking-location-links a {
+    border-color: #ded9f4;
+    background: #f8f6ff;
+  }
+  .networking-location-links a:hover,
+  .networking-location-links a[aria-current="page"] {
+    border-color: var(--link-accent, #7668ce);
+    background: #ede9ff;
+  }
 }
 
 @media (max-width: 720px) {
-  .networking-region-intro {
-    align-items: flex-start;
-    flex-direction: column;
-    padding: 23px 20px;
+  .networking-region-intro-inner {
+    grid-template-columns: 1fr;
+    padding: 22px 20px 20px;
+  }
+
+  .networking-region-skyline {
+    justify-content: flex-start;
+    min-height: 64px;
+    opacity: 0.28;
+  }
+
+  .networking-region-skyline-svg {
+    max-width: 180px;
   }
 
   .networking-region-organiser-cta {
     width: 100%;
     box-sizing: border-box;
-    text-align: center;
   }
 
   .networking-location-directory {

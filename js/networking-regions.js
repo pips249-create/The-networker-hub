@@ -30,13 +30,18 @@
   var region = REGIONS[slug];
   if (!region) return;
 
+  var themes = window.HUB_NETWORKING_REGION_THEMES || {};
+  var theme = themes[slug] || {};
   var year = new Date().getFullYear();
+
   window.hubRegionalLanding = {
     slug: slug,
     name: region.name,
     location: region.location,
+    accent: theme.accent || '',
   };
   document.body.classList.add('networking-region-page');
+  document.body.setAttribute('data-region', slug);
 
   function setText(id, text) {
     var el = document.getElementById(id);
@@ -58,18 +63,37 @@
       '.'
   );
   setText('all-heading', 'Upcoming networking events in ' + region.name);
-  setText('networking-region-intro-heading', 'Business networking in ' + region.name);
-  setText(
-    'networking-region-intro-copy',
-    'Explore live business networking events and the organiser communities behind them in ' +
-      region.name +
-      '. Browse without signing in, then create a free account when you are ready to book.'
-  );
 
   var intro = document.getElementById('networking-region-intro');
-  if (intro) intro.hidden = false;
+  if (intro) {
+    intro.hidden = false;
+    intro.setAttribute('data-region', slug);
+  }
+
+  var introHeading = document.getElementById('networking-region-intro-heading');
+  if (introHeading) {
+    introHeading.innerHTML =
+      'Business networking in <span class="networking-region-name-accent"></span>';
+    var nameAccent = introHeading.querySelector('.networking-region-name-accent');
+    if (nameAccent) nameAccent.textContent = region.name;
+  }
+
+  var introCopy = theme.tagline
+    ? theme.tagline +
+      ' Browse live events and organiser communities without signing in, then create a free account when you are ready to book.'
+    : 'Explore live business networking events and the organiser communities behind them in ' +
+      region.name +
+      '. Browse without signing in, then create a free account when you are ready to book.';
+  setText('networking-region-intro-copy', introCopy);
+
+  var skyline = document.getElementById('networking-region-skyline');
+  if (skyline && theme.skyline) {
+    skyline.innerHTML = theme.skyline;
+  }
+
   var postcode = document.getElementById('postcode');
   if (postcode) postcode.value = region.location;
+
   var currentLink = document.querySelector(
     '.networking-location-links a[href="/networking/' + slug + '"]'
   );
