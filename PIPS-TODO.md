@@ -4,7 +4,7 @@
 
 **Find this file:** search the repo for `PIPS-TODO` or open [`PIPS-TODO.md`](./PIPS-TODO.md) at the project root.
 
-*Last updated: 14 July 2026*
+*Last updated: 14 July 2026 (evening — infrastructure upgrade reminders added)*
 
 ---
 
@@ -122,15 +122,26 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 
 ### August — Scale, redirect, comms
 
+**Infrastructure upgrades (budget before wider emails / public launch):**
+
+| Service | When | Cost | Why |
+|---------|------|------|-----|
+| **Resend Pro** | **Before week 10 wider email** (mandatory before 3,500 launch send) | ~$20/mo | Free tier = **100 emails/day** + 3,000/mo — campaigns + crons + bookings exceed that in August/September |
+| **Supabase Pro** | **Before soft launch** (remove site gate) | ~$25/mo | No 7-day pause, daily backups, headroom (~1,000 groups already in DB; RAM ~48% on nano) |
+| **Vercel Pro** | **Only if needed** (Q4 or after launch) | ~$20/mo | Daily crons are OK on Hobby; upgrade if cron timeouts, need Firewall, or more-than-daily jobs |
+
+Monitor Resend dashboard during July beta — if daily sends approach **80–90**, upgrade early.
+
 | Done | Week | Task |
 |:----:|------|------|
+| [ ] | 9 | **Resend Pro** + **Supabase Pro** upgraded (see table above) |
 | [ ] | 9 | Redirect plan: the-networker.co.uk → hub (home, browse, organiser slugs, event URLs) |
 | [ ] | 9 | “We've upgraded” banner on old site for 2–4 weeks before hard redirect |
-| [ ] | 10 | **Wider email** (500–1,000) — claim profile + help link; track claim rate |
+| [ ] | 10 | **Wider email** (500–1,000) — claim profile + help link; track claim rate (**requires Resend Pro**) |
 | [ ] | 10–11 | FAQ / support inbox ready (login, publish event, bookings, payouts) |
 | [ ] | 11 | Performance pass — pagination, images, API caching under load |
 | [ ] | 11 | **Soft launch** — redirect + limited traffic |
-| [ ] | 12 | **Full launch email** to remainder of 3,500 list |
+| [ ] | 12 | **Full launch email** to remainder of 3,500 list (**requires Resend Pro**) |
 
 ### 1 September — Launch day checklist
 
@@ -148,6 +159,7 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 | [ ] | SEO/AEO — Tab 6 + `docs/SEO-AEO-LAUNCH-PLAN.md` launch-week steps |
 | [ ] | `EMAIL_ALLOWLIST_DISABLED=true` on launch (if allowlist was on) |
 | [ ] | `SITE_ACCESS_PASSWORD` removed — public gate off (1st September) |
+| [ ] | **Supabase Pro** active before gate-off (backups + no auto-pause on live ticketing) |
 
 ---
 
@@ -169,6 +181,8 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 
 The **Email Template Manager** works without Resend (edit & save in Command Centre). Resend is live on prod.
 
+**Plan tiers:** July beta (50–100 organisers) is fine on **Resend Free**. Upgrade to **Resend Pro ($20/mo)** before August wider campaigns — free tier caps at **100 emails/day** and **3,000/month**; the September launch list alone is ~3,500. Watch daily usage in the Resend dashboard during beta.
+
 ### 100% email system gate
 
 | Done | Step |
@@ -187,6 +201,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [ ] | Review/edit templates at [`/admin/emails`](https://the-networker-hub.vercel.app/admin/emails) |
 | [ ] | Launch invite template (organiser “claim your profile”) — add in admin or campaign tool |
 | [ ] | At launch: **`EMAIL_ALLOWLIST_DISABLED=true`** if pre-launch allowlist was on |
+| [ ] | **Resend Pro** — before August wider email / September 3,500 send (see Tab 0 August infrastructure table) |
 | [ ] | Optional: `AUTH_SEND_EMAILS=true` for password-reset emails |
 
 **Safe test recipients** are in `email_test_recipients` (migration 051 + 052). Add your address in Command Centre if test sends are blocked.

@@ -1,4 +1,5 @@
 -- Restore admin Command Centre TOTP MFA (separate from Supabase Auth MFA).
+-- Optional until ADMIN_MFA_ENABLED=true in Vercel (works with Microsoft Authenticator).
 
 create table if not exists public.admin_mfa_secrets (
   user_id uuid primary key references auth.users (id) on delete cascade,

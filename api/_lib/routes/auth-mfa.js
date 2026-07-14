@@ -31,6 +31,14 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  if (!adminMfa.isAdminMfaEnabled()) {
+    return json(res, 503, {
+      error: 'mfa_disabled',
+      message:
+        'Admin MFA is paused. Set ADMIN_MFA_ENABLED=true in Vercel when you are ready to use Microsoft Authenticator or another TOTP app.',
+    });
+  }
+
   const session = sessionFromRequest(req);
   const gate = requireAdmin(session);
   if (!gate.ok) return json(res, gate.status, { error: gate.error, message: gate.message });

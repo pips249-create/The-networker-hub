@@ -39,12 +39,14 @@ module.exports = async function handler(req, res) {
     return json(res, gate.status, { error: gate.error, message: gate.message });
   }
 
-  const mfaEnrolled = await adminMfa.isMfaEnrolled(session.sub);
-  if (mfaEnrolled && !session.mfaVerified) {
-    return json(res, 403, {
-      error: 'mfa_required',
-      message: 'Enter your authenticator code to access the Command Centre.',
-    });
+  if (adminMfa.isAdminMfaEnabled()) {
+    const mfaEnrolled = await adminMfa.isMfaEnrolled(session.sub);
+    if (mfaEnrolled && !session.mfaVerified) {
+      return json(res, 403, {
+        error: 'mfa_required',
+        message: 'Enter your authenticator code to access the Command Centre.',
+      });
+    }
   }
 
   const route = getSubRoute(req, '/api/admin');

@@ -83,7 +83,10 @@ module.exports = async function handler(req, res) {
     }
 
     const role = normalizeRole(user.role);
-    const mfaEnrolled = isAdminRole(role) ? await adminMfa.isMfaEnrolled(user.id) : false;
+    const mfaEnrolled =
+      adminMfa.isAdminMfaEnabled() && isAdminRole(role)
+        ? await adminMfa.isMfaEnrolled(user.id)
+        : false;
 
     if (mfaEnrolled) {
       if (!totpCode) {

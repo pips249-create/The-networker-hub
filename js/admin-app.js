@@ -10027,10 +10027,17 @@
     });
   }
 
-  function loadSystemMfaPanel() {
+  function loadSystemMfaPanel(mfaEnabled) {
     var statusEl = document.getElementById('system-mfa-status');
     var actionsEl = document.getElementById('system-mfa-actions');
     if (!statusEl || !actionsEl) return;
+
+    if (!mfaEnabled) {
+      statusEl.textContent = 'Paused — not required until you enable it.';
+      actionsEl.innerHTML =
+        '<p class="text-xs text-slate-500">When you are ready: run Supabase migration <code class="text-[11px]">159_admin_mfa_restore.sql</code>, set <code class="text-[11px]">ADMIN_MFA_ENABLED=true</code> in Vercel, redeploy, then return here to pair Microsoft Authenticator (or any TOTP app).</p>';
+      return;
+    }
 
     var pendingSecret = '';
 
@@ -10318,7 +10325,7 @@
           '<li><a class="text-brand-100 hover:text-white font-semibold" href="/api/hub-listings" target="_blank" rel="noopener">Events API smoke test</a></li>' +
           '</ul></section>';
 
-        loadSystemMfaPanel();
+        loadSystemMfaPanel(env.adminMfaEnabled);
       })
       .catch(function () {
         var status = document.getElementById('system-status');

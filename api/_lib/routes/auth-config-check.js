@@ -52,7 +52,8 @@ module.exports = async function handler(req, res) {
     hasAdminEmail: Boolean(process.env.ADMIN_EMAIL),
     hasAdminInitialPassword: Boolean(process.env.ADMIN_INITIAL_PASSWORD),
     hasAdminSetupSecret: Boolean(process.env.ADMIN_SETUP_SECRET),
-    hasConfigCheckSecret: Boolean(String(process.env.CONFIG_CHECK_SECRET || '').trim()),
+      hasConfigCheckSecret: Boolean(String(process.env.CONFIG_CHECK_SECRET || '').trim()),
+      adminMfaEnabled: String(process.env.ADMIN_MFA_ENABLED || '').trim().toLowerCase() === 'true',
     hasSiteUrl: Boolean(process.env.SITE_URL),
     hasSiteAccessPassword: Boolean(String(process.env.SITE_ACCESS_PASSWORD || '').trim()),
     dataProvider: provider,
@@ -137,6 +138,9 @@ module.exports = async function handler(req, res) {
         cron.isProduction && !env.hasConfigCheckSecret
           ? 'Config check is admin-only in production. Optionally set CONFIG_CHECK_SECRET for scripted health probes (Authorization: Bearer …).'
           : null,
+      adminMfaPaused: !env.adminMfaEnabled
+        ? 'Admin MFA is paused. When ready, run migration 159, set ADMIN_MFA_ENABLED=true in Vercel, redeploy, then set up Microsoft Authenticator under System.'
+        : null,
       missingResend:
         !email.emailSendingConfigured
           ? 'Add RESEND_API_KEY and RESEND_FROM in Vercel (and local.env for localhost test sends), then redeploy.'

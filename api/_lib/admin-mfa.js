@@ -6,6 +6,11 @@ authenticator.options = { window: 1 };
 
 const ISSUER = 'The Networker Hub';
 
+/** Opt-in: set ADMIN_MFA_ENABLED=true in Vercel when ready (works with Microsoft Authenticator). */
+function isAdminMfaEnabled() {
+  return String(process.env.ADMIN_MFA_ENABLED || '').trim().toLowerCase() === 'true';
+}
+
 function encryptionKey() {
   const secret = String(process.env.SESSION_SECRET || '').trim();
   if (!secret) return null;
@@ -119,6 +124,7 @@ async function disableEnrollment(userId, code) {
 
 function requireMfaVerified(session) {
   if (!session) return { ok: false, status: 401, error: 'not_authenticated' };
+  if (!isAdminMfaEnabled()) return { ok: true };
   if (session.mfaEnrolled && !session.mfaVerified) {
     return {
       ok: false,
@@ -135,6 +141,7 @@ module.exports = {
   confirmEnrollment,
   disableEnrollment,
   getEnrollment,
+  isAdminMfaEnabled,
   isMfaEnrolled,
   requireMfaVerified,
   verifyPendingEnrollment,
