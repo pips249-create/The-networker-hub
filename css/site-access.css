@@ -550,7 +550,7 @@ html:has(.site-access-page) {
   color: #0d6e7a;
 }
 
-.site-access-workspace-hint {
+.site-access-workspace-copy .site-access-workspace-hint {
   margin: 16px 0 0;
   font-size: 0.82rem;
   font-weight: 600;
@@ -859,6 +859,64 @@ html:has(.site-access-page) {
   color: #4a6272;
 }
 
+/* Attendee workspace — same interaction, distinct lavender identity */
+.site-access-workspace--attendee {
+  margin-top: clamp(24px, 4vw, 36px);
+  border-color: rgba(177, 137, 184, 0.35);
+  background:
+    radial-gradient(ellipse 60% 80% at 100% 0%, rgba(177, 137, 184, 0.13), transparent 55%),
+    linear-gradient(165deg, #fff 0%, #faf7fb 100%);
+  box-shadow: 0 16px 40px rgba(79, 55, 91, 0.09);
+}
+
+.site-access-workspace--attendee .site-access-workspace-kicker,
+.site-access-workspace--attendee .site-access-workspace-hint {
+  color: #7d4f9a;
+}
+
+.site-access-workspace--attendee .site-access-workspace-points li::before {
+  color: #7d4f9a;
+}
+
+.sa-dash-mock--attendee {
+  border-color: rgba(177, 137, 184, 0.38);
+  box-shadow: 0 18px 44px rgba(79, 55, 91, 0.14);
+}
+
+.sa-dash-mock--attendee .sa-dash-mock-bar {
+  background: linear-gradient(90deg, #2d2332 0%, #60406f 55%, #7d4f9a 100%);
+}
+
+.sa-dash-mock--attendee .sa-dash-mock-nav {
+  background: #f4ebf7;
+  border-color: rgba(177, 137, 184, 0.32);
+}
+
+.sa-dash-mock--attendee .sa-dash-mock-nav-item:hover,
+.sa-dash-mock--attendee .sa-dash-mock-nav-item.is-active,
+.sa-dash-mock--attendee .sa-dash-mock-eyebrow,
+.sa-dash-mock--attendee .sa-dash-mock-cta {
+  color: #7d4f9a;
+}
+
+.sa-dash-mock--attendee .sa-dash-mock-nav-item.is-active {
+  box-shadow: inset 3px 0 0 #7d4f9a;
+}
+
+.sa-dash-mock--attendee .sa-dash-mock-main {
+  background: #faf7fb;
+}
+
+.sa-dash-mock--attendee .sa-dash-mock-row,
+.sa-dash-mock--attendee .sa-dash-mock-stat {
+  border-color: rgba(177, 137, 184, 0.3);
+}
+
+.sa-dash-mock--attendee .sa-dash-mock-cta {
+  border-color: rgba(125, 79, 154, 0.45);
+  background: rgba(177, 137, 184, 0.09);
+}
+
 @media (max-width: 960px) {
   .site-access-shell {
     grid-template-columns: 1fr;
@@ -932,6 +990,10 @@ html:has(.site-access-page) {
 
   .sa-dash-mock-nav-item.is-active {
     box-shadow: inset 0 -3px 0 #0d6e7a;
+  }
+
+  .sa-dash-mock--attendee .sa-dash-mock-nav-item.is-active {
+    box-shadow: inset 0 -3px 0 #7d4f9a;
   }
 }
 

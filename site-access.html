@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/home-page.css?v=20260714pillars">
-<link rel="stylesheet" href="css/site-access.css?v=20260714dash">
+<link rel="stylesheet" href="css/site-access.css?v=20260714attendee">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 </head>
@@ -292,7 +292,7 @@
               <div class="sa-dash-mock-nav" role="tablist" aria-label="Organiser workspace preview">
                 <button type="button" class="sa-dash-mock-nav-item is-active" role="tab" aria-selected="true" data-dash-tab="overview">Overview</button>
                 <button type="button" class="sa-dash-mock-nav-item" role="tab" aria-selected="false" data-dash-tab="events">Events</button>
-                <button type="button" class="sa-dash-mock-nav-item" role="tab" aria-selected="false" data-dash-tab="opportunities">Opportunities</button>
+                <button type="button" class="sa-dash-mock-nav-item" role="tab" aria-selected="false" data-dash-tab="opportunities">Business opps</button>
                 <button type="button" class="sa-dash-mock-nav-item" role="tab" aria-selected="false" data-dash-tab="payouts">Payouts</button>
               </div>
               <div class="sa-dash-mock-main">
@@ -308,6 +308,10 @@
                     <li class="is-current">
                       <strong>List your first event</strong>
                       <span>Meetings, exhibitions and conferences.</span>
+                    </li>
+                    <li>
+                      <strong>Publish a business opportunity</strong>
+                      <span>Franchises, partnerships, deals and more.</span>
                     </li>
                   </ol>
                   <div class="sa-dash-mock-stats">
@@ -408,6 +412,144 @@
           </div>
         </div>
       </div>
+
+      <div class="site-access-workspace site-access-workspace--attendee" aria-labelledby="site-access-attendee-heading">
+        <div class="site-access-workspace-copy">
+          <p class="site-access-workspace-kicker">For attendees</p>
+          <h3 id="site-access-attendee-heading">Find your next connection</h3>
+          <p>
+            Discover events and networking groups, keep track of bookings, save favourites, and enquire about business opportunities from one free account.
+          </p>
+          <ul class="site-access-workspace-points">
+            <li>Search meetings, conferences, and exhibitions</li>
+            <li>Book tickets and manage upcoming events</li>
+            <li>Save events, organisers, and opportunities</li>
+            <li>Enquire directly about business opportunities</li>
+          </ul>
+          <p class="site-access-workspace-hint">Click through the attendee tabs to explore.</p>
+        </div>
+        <div class="site-access-workspace-visual">
+          <div class="sa-dash-mock sa-dash-mock--attendee">
+            <div class="sa-dash-mock-bar">
+              <div class="sa-dash-mock-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+              <span>My Hub · The Networker Hub</span>
+            </div>
+            <div class="sa-dash-mock-body">
+              <div class="sa-dash-mock-nav" role="tablist" aria-label="Attendee workspace preview">
+                <button type="button" class="sa-dash-mock-nav-item is-active" role="tab" aria-selected="true" data-dash-tab="discover">Discover</button>
+                <button type="button" class="sa-dash-mock-nav-item" role="tab" aria-selected="false" data-dash-tab="bookings">My bookings</button>
+                <button type="button" class="sa-dash-mock-nav-item" role="tab" aria-selected="false" data-dash-tab="saved">Saved</button>
+                <button type="button" class="sa-dash-mock-nav-item" role="tab" aria-selected="false" data-dash-tab="attendee-opps">Business opps</button>
+              </div>
+              <div class="sa-dash-mock-main">
+                <div class="sa-dash-mock-panel is-active" data-dash-panel="discover" role="tabpanel">
+                  <p class="sa-dash-mock-eyebrow">Recommended for you</p>
+                  <p class="sa-dash-mock-title">Your next event could be here</p>
+                  <ul class="sa-dash-mock-rows">
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>Founders breakfast, Leeds</strong>
+                        <span>Tue 9 Sep · Free guest visit</span>
+                      </div>
+                      <span class="sa-dash-mock-pill sa-dash-mock-pill--featured">92% match</span>
+                    </li>
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>UK Business Leaders Summit</strong>
+                        <span>Thu 18 Sep · Manchester · £45</span>
+                      </div>
+                      <span class="sa-dash-mock-pill">Conference</span>
+                    </li>
+                  </ul>
+                  <div class="sa-dash-mock-stats">
+                    <div class="sa-dash-mock-stat"><b>48</b><small>Nearby events</small></div>
+                    <div class="sa-dash-mock-stat"><b>16</b><small>Free to attend</small></div>
+                    <div class="sa-dash-mock-stat"><b>9</b><small>New this week</small></div>
+                  </div>
+                </div>
+
+                <div class="sa-dash-mock-panel" data-dash-panel="bookings" role="tabpanel" hidden>
+                  <p class="sa-dash-mock-eyebrow">My bookings</p>
+                  <p class="sa-dash-mock-title">Coming up</p>
+                  <ul class="sa-dash-mock-rows">
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>Founders breakfast</strong>
+                        <span>Tue 9 Sep · 08:00 · Leeds</span>
+                      </div>
+                      <span class="sa-dash-mock-pill sa-dash-mock-pill--live">Confirmed</span>
+                    </li>
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>Cambridge Connect</strong>
+                        <span>Wed 17 Sep · 18:30 · Cambridge</span>
+                      </div>
+                      <span class="sa-dash-mock-pill sa-dash-mock-pill--live">Guest visit</span>
+                    </li>
+                  </ul>
+                  <div class="sa-dash-mock-cta">View tickets and booking details</div>
+                  <p class="sa-dash-mock-note">Everything you need for the day, kept in one place.</p>
+                </div>
+
+                <div class="sa-dash-mock-panel" data-dash-panel="saved" role="tabpanel" hidden>
+                  <p class="sa-dash-mock-eyebrow">Saved for later</p>
+                  <p class="sa-dash-mock-title">Your shortlist</p>
+                  <ul class="sa-dash-mock-rows">
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>Women in Business Expo</strong>
+                        <span>Event · London · 8 Oct</span>
+                      </div>
+                      <span class="sa-dash-mock-pill">Event</span>
+                    </li>
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>Business Network Manchester</strong>
+                        <span>Organiser · 12 upcoming events</span>
+                      </div>
+                      <span class="sa-dash-mock-pill">Organiser</span>
+                    </li>
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>Co-working referral deal</strong>
+                        <span>Opportunity · UK-wide</span>
+                      </div>
+                      <span class="sa-dash-mock-pill sa-dash-mock-pill--featured">Opportunity</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="sa-dash-mock-panel" data-dash-panel="attendee-opps" role="tabpanel" hidden>
+                  <p class="sa-dash-mock-eyebrow">Business opportunities</p>
+                  <p class="sa-dash-mock-title">Opportunities matching your interests</p>
+                  <ul class="sa-dash-mock-rows">
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>Regional café franchise</strong>
+                        <span>North West · Investment £25k to £40k</span>
+                      </div>
+                      <span class="sa-dash-mock-pill sa-dash-mock-pill--featured">Featured</span>
+                    </li>
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>Marketing partner wanted</strong>
+                        <span>Partnership · Birmingham · Flexible</span>
+                      </div>
+                      <span class="sa-dash-mock-pill sa-dash-mock-pill--live">New</span>
+                    </li>
+                  </ul>
+                  <div class="sa-dash-mock-cta">Enquire about an opportunity</div>
+                  <div class="sa-dash-mock-stats">
+                    <div class="sa-dash-mock-stat"><b>24</b><small>Matches</small></div>
+                    <div class="sa-dash-mock-stat"><b>3</b><small>Saved</small></div>
+                    <div class="sa-dash-mock-stat"><b>1</b><small>Enquiry sent</small></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </main>
@@ -423,6 +565,6 @@
   </p>
 </footer>
 
-<script src="js/site-access-gate.js?v=20260714dash"></script>
+<script src="js/site-access-gate.js?v=20260714attendee"></script>
 </body>
 </html>
