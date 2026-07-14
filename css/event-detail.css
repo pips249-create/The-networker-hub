@@ -1918,6 +1918,11 @@ a:hover {
   display: none !important;
 }
 
+.ticket-panel.is-already-going #ticket-purchase-view,
+.ticket-panel.is-application-submitted:not(.is-approval-mode) #ticket-purchase-view {
+  display: none !important;
+}
+
 .ticket-panel.is-application-submitted .category-exclusivity-application-status:not([hidden]) {
   display: block;
 }

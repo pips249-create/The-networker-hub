@@ -20,6 +20,7 @@ const {
   isAlumniTicket,
   assertAlumniBookingAllowed,
 } = require('../alumni-invites');
+const { bookingErrorResponse } = require('../booking-error-messages');
 
 function parseBody(req) {
   let body = req.body;
@@ -439,10 +440,13 @@ module.exports = async function handler(req, res) {
       totals,
     });
   } catch (e) {
+    const msg = e.message || String(e);
+    const mapped = bookingErrorResponse(msg);
+    if (mapped) return json(res, mapped.status, mapped.body);
     return json(res, 500, {
       ok: false,
       error: 'checkout_failed',
-      message: e.message || String(e),
+      message: msg,
     });
   }
 };

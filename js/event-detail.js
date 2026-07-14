@@ -1529,6 +1529,7 @@
       alumni_not_eligible: 'This alumni ticket is invite-only. Use the link from your email.',
       not_invited: 'This alumni ticket is invite-only. Use the link from your email.',
       email_mismatch: 'Sign in with the email address that received the alumni invite.',
+      already_going: "You're already going to this event. View your ticket in My Hub.",
       not_authenticated: 'Please sign in or create a free account to complete your booking.',
     };
     if (data && data.message) return String(data.message);
@@ -2554,9 +2555,22 @@
     return String(state.applicationStatus || '').trim() !== 'Denied';
   }
 
-  function applicationStatusCopy(state) {
+  function registrationIsConfirmedGoing(state) {
+    if (!applicationBlocksReapply(state)) return false;
+    const status = String(state.applicationStatus || '').trim();
+    const payment = String(state.paymentStatus || '').trim();
+    return status === 'Approved' && (payment === 'Paid' || payment === 'Free');
+  }
+
+  function applicationStatusCopy(state, ev) {
     const status = String(state?.applicationStatus || '').trim();
     const payment = String(state?.paymentStatus || '').trim();
+    if (status === 'Approved' && (payment === 'Paid' || payment === 'Free')) {
+      return {
+        title: "You're already going",
+        lead: "You're registered for this event. View your ticket in My Hub.",
+      };
+    }
     if (status === 'Pending') {
       return {
         title: 'Application submitted',
@@ -2565,20 +2579,16 @@
       };
     }
     if (status === 'Approved') {
-      if (payment === 'Paid' || payment === 'Free') {
-        return {
-          title: "You're registered",
-          lead: 'Your application was approved and your place is confirmed. View your ticket in My Hub.',
-        };
-      }
       return {
         title: 'Application approved',
         lead: 'Good news — the organiser approved your application. Complete your booking in My Hub to secure your seat.',
       };
     }
     return {
-      title: 'Application submitted',
-      lead: "You've already applied for this event.",
+      title: eventIsCategoryExclusivity(ev) ? 'Application submitted' : "You're already going",
+      lead: eventIsCategoryExclusivity(ev)
+        ? "You've already applied for this event."
+        : "You're registered for this event. View your ticket in My Hub.",
     };
   }
 
@@ -2589,23 +2599,29 @@
     const leadEl = document.getElementById('category-exclusivity-application-status-lead');
     if (!panel) return;
 
-    const shouldShow = eventIsCategoryExclusivity(ev) && applicationBlocksReapply(eventApplicationState);
+    const shouldShow = eventIsCategoryExclusivity(ev)
+      ? applicationBlocksReapply(eventApplicationState)
+      : registrationIsConfirmedGoing(eventApplicationState);
+    const alreadyGoing = registrationIsConfirmedGoing(eventApplicationState);
     panel.classList.toggle('is-application-submitted', shouldShow);
+    panel.classList.toggle('is-already-going', alreadyGoing);
     if (!statusPanel) return;
 
     if (!shouldShow) {
       statusPanel.hidden = true;
+      updateTicketJumpBar(ev);
       return;
     }
 
-    const copy = applicationStatusCopy(eventApplicationState);
+    const copy = applicationStatusCopy(eventApplicationState, ev);
     if (titleEl) titleEl.textContent = copy.title;
     if (leadEl) leadEl.textContent = copy.lead;
     statusPanel.hidden = false;
+    updateTicketJumpBar(ev);
   }
 
   async function refreshEventApplicationUi(ev) {
-    if (!ev || !ev.id || !eventIsCategoryExclusivity(ev)) {
+    if (!ev || !ev.id) {
       eventApplicationState = null;
       applyEventApplicationUi(ev);
       return;
@@ -2641,6 +2657,23 @@
       eventApplicationState = null;
     }
     applyEventApplicationUi(ev);
+  }
+
+  async function showAlreadyGoingInsteadOfAlert(ev, err) {
+    const code = err && err.message ? String(err.message) : '';
+    const isAlreadyGoing =
+      /already going/i.test(code) || /already_going/i.test(code);
+    if (!isAlreadyGoing) return false;
+    const event = ev || activeEvent();
+    await refreshEventApplicationUi(event);
+    if (event) applyTicketPanelState(event);
+    showCheckoutDetails(false);
+    showPaidGuestCheckout(false);
+    const panel = document.getElementById('tickets');
+    if (panel) {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    return true;
   }
 
   function applyTicketPanelState(ev) {
@@ -2726,6 +2759,16 @@
       buy.textContent = 'Alumni invite required';
       if (purchaseView) purchaseView.removeAttribute('aria-hidden');
       applyEventApplicationUi(ev);
+      return;
+    }
+
+    if (registrationIsConfirmedGoing(eventApplicationState)) {
+      buy.disabled = true;
+      buy.classList.add('cta-btn-disabled');
+      buy.textContent = "You're already going";
+      if (purchaseView) purchaseView.setAttribute('aria-hidden', 'true');
+      applyEventApplicationUi(ev);
+      updateTicketJumpBar(ev);
       return;
     }
 
@@ -2827,7 +2870,8 @@
     const priceText = priceNode ? priceNode.textContent.trim() : '';
 
     let labelText = 'Get tickets';
-    if (ev.isSoldOut) labelText = 'Sold out';
+    if (registrationIsConfirmedGoing(eventApplicationState)) labelText = "You're already going";
+    else if (ev.isSoldOut) labelText = 'Sold out';
     else if (ev.isSalesClosed) labelText = 'Registration closed';
     else if (ev.isTicketSalesScheduled || ev.isTicketSalesPending) labelText = 'View tickets';
     else if (eventIsCategoryExclusivity(ev)) labelText = 'Apply for a seat';
@@ -3295,7 +3339,7 @@
     loadCheckoutSessionUser().then(function () {
       update();
       const evNow = activeEvent();
-      if (evNow && eventIsCategoryExclusivity(evNow)) refreshEventApplicationUi(evNow);
+      if (evNow) refreshEventApplicationUi(evNow);
     });
 
     if (appBack) {
@@ -3438,6 +3482,7 @@
           try {
             await processCheckoutBooking(isPaid);
           } catch (err) {
+            if (await showAlreadyGoingInsteadOfAlert(activeEvent(), err)) return;
             window.alert(err && err.message ? err.message : 'Could not complete your booking.');
           }
           return;
@@ -3458,8 +3503,13 @@
         buy.disabled = true;
 
         try {
+        if (registrationIsConfirmedGoing(eventApplicationState)) {
+          await refreshEventApplicationUi(evNow);
+          return;
+        }
         if (evNow?.isApprovalRequired || eventIsCategoryExclusivity(evNow)) {
           if (applicationBlocksReapply(eventApplicationState)) {
+            await refreshEventApplicationUi(evNow);
             return;
           }
           if (
@@ -3522,6 +3572,7 @@
           try {
             await processCheckoutBooking(false);
           } catch (err) {
+            if (await showAlreadyGoingInsteadOfAlert(evNow, err)) return;
             window.alert(
               err && err.message ? err.message : 'Could not complete your registration. Please try again.'
             );
@@ -3568,6 +3619,7 @@
         try {
           await processCheckoutBooking(true);
         } catch (err) {
+          if (await showAlreadyGoingInsteadOfAlert(evNow, err)) return;
           showCheckoutInlineError(
             err && err.message ? err.message : 'Could not start checkout. Please try again.'
           );

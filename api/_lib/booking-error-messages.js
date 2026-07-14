@@ -24,6 +24,8 @@ const BOOKING_ERROR_MESSAGES = {
   no_alumni_tier: 'The alumni ticket is not set up for this event yet.',
   alumni_single_seat_only: 'Alumni tickets are limited to one seat per booking.',
   missing_guest_names: 'Please enter a name for each guest.',
+  already_going:
+    "You're already going to this event. View your ticket in My Hub.",
 };
 
 const ALUMNI_ERROR_CODES = new Set([

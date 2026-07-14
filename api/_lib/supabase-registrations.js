@@ -182,6 +182,22 @@ async function createRegistrationFromPayment(input) {
   };
   const attendeeId = await ensureAttendeeId(sb, session);
 
+  const existingReg = await sb
+    .from('registrations')
+    .select('id')
+    .eq('event_id', eventId)
+    .eq('attendee_id', attendeeId)
+    .is('cancelled_at', null)
+    .neq('application_status', 'Denied')
+    .limit(1)
+    .maybeSingle();
+  if (existingReg.error) throw new Error(existingReg.error.message);
+  if (existingReg.data?.id) {
+    const err = new Error('already_going');
+    err.status = 400;
+    throw err;
+  }
+
   let organiserId = input.organiserId || input.organiser_id || null;
   if (!organiserId) {
     const ev = await sb.from('events').select('organiser_id').eq('id', eventId).maybeSingle();

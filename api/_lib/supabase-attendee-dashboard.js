@@ -2,7 +2,11 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { resolveAttendeeId } = require('./supabase-favourites');
 const { buildStats } = require('./attendee');
 const { eventHasEnded, isEligibleRegistration } = require('./supabase-reviews');
-const { resolveEventDisplayImage } = require('./event-image');
+const {
+  resolveEventDisplayImage,
+  eventImageUrl,
+  normalizeEventImagePosition,
+} = require('./event-image');
 const { formatBookingReference } = require('./booking-payment-summary');
 const { resolveBookedListing } = require('./booking-snapshot');
 const {
@@ -36,6 +40,12 @@ function canCancelRegistration(row, ev) {
   return isSelfServiceCancellationAllowed(ev, row);
 }
 
+/** Focal point only applies when the display image is the event's own cover photo. */
+function displayImagePosition(ev, displayImage) {
+  if (!displayImage || displayImage !== eventImageUrl(ev)) return null;
+  return normalizeEventImagePosition(ev.image_position) || null;
+}
+
 function mapRegistrationRow(row, reviewByEventId, seriesPeersByEventId) {
   const ev = row.events || {};
   const organiser = ev.organisers || {};
@@ -65,6 +75,7 @@ function mapRegistrationRow(row, reviewByEventId, seriesPeersByEventId) {
   const meetingLink = booked.meetingLink;
   const online = booked.isOnline;
   const seriesPeers = seriesPeersByEventId ? seriesPeersByEventId.get(ev.id) || [] : [];
+  const displayImage = resolveEventDisplayImage(ev, organiser, seriesPeers) || null;
 
   return {
     id: row.id,
@@ -74,7 +85,8 @@ function mapRegistrationRow(row, reviewByEventId, seriesPeersByEventId) {
     title: booked.title,
     date,
     endDate: booked.endDate,
-    imageUrl: resolveEventDisplayImage(ev, organiser, seriesPeers) || null,
+    imageUrl: displayImage,
+    imagePosition: displayImagePosition(ev, displayImage),
     organiserLogo: String(organiser.photo_url || '').trim() || null,
     eventType: String(ev.event_type || '').trim() || null,
     ticketLabel: qty + ' × ' + ticketName,
@@ -135,6 +147,7 @@ function mapCancelledRegistrationRow(row, seriesPeersByEventId) {
     refundLabel = 'Cancelled — no refund due';
   }
   const seriesPeers = seriesPeersByEventId ? seriesPeersByEventId.get(ev.id) || [] : [];
+  const displayImage = resolveEventDisplayImage(ev, organiser, seriesPeers) || null;
 
   return {
     id: row.id,
@@ -144,7 +157,8 @@ function mapCancelledRegistrationRow(row, seriesPeersByEventId) {
     title: booked.title,
     date: booked.date,
     endDate: booked.endDate,
-    imageUrl: resolveEventDisplayImage(ev, organiser, seriesPeers) || null,
+    imageUrl: displayImage,
+    imagePosition: displayImagePosition(ev, displayImage),
     organiserLogo: String(organiser.photo_url || '').trim() || null,
     eventType: String(ev.event_type || '').trim() || null,
     ticketLabel: booked.quantity + ' × ' + booked.ticketName,
@@ -194,6 +208,7 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
         ends_at,
         status,
         image_url,
+        image_position,
         photo_url,
         series_group_id,
         event_type,
@@ -257,6 +272,7 @@ async function listCancelledRegistrationsForAttendee(sb, attendeeId) {
         ends_at,
         status,
         image_url,
+        image_position,
         photo_url,
         series_group_id,
         event_type,

@@ -656,6 +656,7 @@
       title: reg.title || 'Event',
       starts_at: reg.date || '',
       imageUrl: reg.imageUrl || '',
+      imagePosition: reg.imagePosition || '',
       organiserLogo: reg.organiserLogo || '',
       organiserName: reg.organiserName || '',
       eventType: reg.eventType || '',
@@ -668,7 +669,7 @@
     return (
       '<button type="button" class="ad-utility-item ad-share-going" role="menuitem" data-registration-id="' +
       esc(reg.id || '') +
-      '">Share on LinkedIn</button>'
+      '">Share to social media</button>'
     );
   }
 

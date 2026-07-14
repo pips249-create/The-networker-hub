@@ -37,7 +37,21 @@ function alumniTierPayload({ price, quantityAvailable, saleEnd, description } = 
 }
 
 async function resolveAttendeeId(sb, { attendeeId, email }) {
-  if (attendeeId) return attendeeId;
+  const id = String(attendeeId || '').trim();
+  if (id) {
+    // Callers may pass attendees.id or session.sub (supabase auth user id).
+    const byId = await sb.from('attendees').select('id').eq('id', id).maybeSingle();
+    if (byId.error) throw new Error(byId.error.message);
+    if (byId.data?.id) return byId.data.id;
+
+    const byUser = await sb
+      .from('attendees')
+      .select('id')
+      .eq('supabase_user_id', id)
+      .maybeSingle();
+    if (byUser.error) throw new Error(byUser.error.message);
+    if (byUser.data?.id) return byUser.data.id;
+  }
   const normalized = String(email || '')
     .trim()
     .toLowerCase();

@@ -132,7 +132,18 @@
     ctx.drawImage(img, dx, dy, dw, dh);
   }
 
-  function drawCoverImage(ctx, img, x, y, w, h) {
+  function parseImagePosition(raw) {
+    const m = String(raw || '')
+      .trim()
+      .match(/^(\d{1,3})%\s+(\d{1,3})%$/);
+    if (!m) return null;
+    return {
+      x: Math.min(100, Math.max(0, Number(m[1]))) / 100,
+      y: Math.min(100, Math.max(0, Number(m[2]))) / 100,
+    };
+  }
+
+  function drawCoverImage(ctx, img, x, y, w, h, position) {
     if (!img) return;
     ctx.save();
     roundRect(ctx, x, y, w, h, 20);
@@ -140,8 +151,10 @@
     const scale = Math.max(w / img.width, h / img.height);
     const dw = img.width * scale;
     const dh = img.height * scale;
-    const dx = x + (w - dw) / 2;
-    const dy = y + (h - dh) / 2;
+    // Match CSS object-position: align the chosen focal point of the image with the frame.
+    const pos = parseImagePosition(position) || { x: 0.5, y: 0.5 };
+    const dx = x + (w - dw) * pos.x;
+    const dy = y + (h - dh) * pos.y;
     ctx.drawImage(img, dx, dy, dw, dh);
     ctx.restore();
   }
@@ -191,7 +204,7 @@
     let textMaxW = CARD_W - 200;
 
     if (photoImg) {
-      drawCoverImage(ctx, photoImg, 88, 88, 420, 380);
+      drawCoverImage(ctx, photoImg, 88, 88, 420, 380, ev && ev.imagePosition);
       textX = 560;
       textMaxW = CARD_W - textX - 96;
     } else if (logoImg) {
