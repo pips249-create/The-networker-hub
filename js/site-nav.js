@@ -445,11 +445,36 @@
     renderImpersonationBanner(null);
   }
 
+  function findMainSkipTarget() {
+    return (
+      document.querySelector('main[id]') ||
+      document.querySelector('main') ||
+      document.getElementById('org-main') ||
+      document.querySelector('.ad-main') ||
+      document.querySelector('[role="main"]')
+    );
+  }
+
   function ensureMainSkipTarget() {
-    var mainEl = document.querySelector('main');
-    if (mainEl && !mainEl.id) mainEl.id = 'hub-main-content';
+    var mainEl = findMainSkipTarget();
+    if (mainEl) {
+      if (!mainEl.id) mainEl.id = 'hub-main-content';
+      if (!mainEl.hasAttribute('tabindex')) mainEl.setAttribute('tabindex', '-1');
+    }
     var skip = document.querySelector('.skip-to-content');
-    if (skip && mainEl && mainEl.id) skip.setAttribute('href', '#' + mainEl.id);
+    if (!skip || !mainEl || !mainEl.id) return;
+    skip.setAttribute('href', '#' + mainEl.id);
+    if (skip.dataset.skipBound === '1') return;
+    skip.dataset.skipBound = '1';
+    skip.addEventListener('click', function () {
+      window.setTimeout(function () {
+        try {
+          mainEl.focus({ preventScroll: false });
+        } catch (err) {
+          /* ignore */
+        }
+      }, 0);
+    });
   }
 
   function renderNav(user, pending) {
@@ -511,6 +536,8 @@
         });
       });
     }
+
+    ensureMainSkipTarget();
   }
 
   if (page === 'home') {

@@ -79,7 +79,12 @@ body {
 .skip-to-content {
   position: absolute;
   left: -9999px;
-  top: 12px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
   z-index: 10000;
   padding: 12px 20px;
   border-radius: var(--radius-sm);
@@ -91,8 +96,15 @@ body {
   box-shadow: var(--shadow-lift);
 }
 
-.skip-to-content:focus {
+.skip-to-content:focus-visible {
+  position: fixed;
   left: 12px;
+  top: 12px;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
   outline: 2px solid var(--lavender);
   outline-offset: 2px;
 }
