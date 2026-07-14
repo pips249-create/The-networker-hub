@@ -24,10 +24,25 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260714li2" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260714li3" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260714cls" />
   </head>
-  <body class="organiser-dashboard-page">
+  <body class="organiser-dashboard-page hub-is-page-loading">
+    <div
+      id="org-dash-loading"
+      class="hub-page-buffer hub-page-buffer--modal hub-page-buffer--dashboard is-active"
+      aria-hidden="false"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div class="hub-page-buffer-card">
+        <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
+        <h2 class="hub-page-buffer-title">Loading dashboard</h2>
+        <p class="hub-page-buffer-message">Bear with us — almost there.</p>
+      </div>
+    </div>
+
     <div id="hub-site-nav"></div>
     <script src="../js/site-nav.js?v=20260714u" data-root="../" data-page="organiser"></script>
 
@@ -627,12 +642,13 @@
             <section class="org-linkedin-covers" id="org-linkedin-covers" aria-labelledby="org-linkedin-covers-title">
               <h2 class="org-section-title" id="org-linkedin-covers-title">LinkedIn cover templates</h2>
               <p class="org-section-sub">
-                Evergreen covers (1584×396) matched to Hub branding. Text sits clear of your profile photo on the left — download, then upload as your LinkedIn banner.
+                Evergreen covers (1584×396) with the official Hub logo. Text sits clear of your profile photo — download the PNG and upload it as your LinkedIn banner.
               </p>
               <div class="org-linkedin-covers-grid">
-                <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-listed.png" download="linkedin-cover-listed-networker-hub.png">Listed on the Hub</a>
+                <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-verified.png" download="linkedin-cover-verified-networker-hub.png">Verified organiser</a>
                 <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-events.png" download="linkedin-cover-events-networker-hub.png">Find our next event</a>
                 <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-book.png" download="linkedin-cover-book-networker-hub.png">Book tickets via the Hub</a>
+                <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-members.png" download="linkedin-cover-members-networker-hub.png">Members find us</a>
               </div>
             </section>
           </div>
@@ -1556,22 +1572,6 @@
       </div>
     </div>
 
-    <div
-      id="org-dash-loading"
-      class="hub-page-buffer hub-page-buffer--modal hub-page-buffer--dashboard"
-      hidden
-      aria-hidden="true"
-      role="status"
-      aria-live="polite"
-      aria-busy="false"
-    >
-      <div class="hub-page-buffer-card">
-        <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
-        <h2 class="hub-page-buffer-title">Loading dashboard</h2>
-        <p class="hub-page-buffer-message">Bear with us — almost there.</p>
-      </div>
-    </div>
-
     <div id="org-action-menu-portal" aria-hidden="true"></div>
 
     <script src="../js/hubert-chat.js?v=20260617"></script>
@@ -1583,6 +1583,6 @@
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
     <script src="../js/organiser-payment-setup.js?v=20260714a"></script>
     <script src="../js/review-report.js?v=20260708"></script>
-    <script src="../js/organiser-dashboard.js?v=20260714li2"></script>
+    <script src="../js/organiser-dashboard.js?v=20260714li3"></script>
   </body>
 </html>

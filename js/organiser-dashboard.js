@@ -276,7 +276,7 @@
       '<a class="org-btn org-btn-outline org-btn-sm" href="' +
       esc(groupPublicProfileUrl(g.id)) +
       '" target="_blank" rel="noopener noreferrer">View public profile</a>' +
-      '<a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-listed.png" download>Download LinkedIn cover</a>' +
+      '<a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-verified.png" download>Download LinkedIn cover</a>' +
       '</div></article>'
     );
   }
@@ -8141,6 +8141,7 @@
 
   async function boot(user) {
     state.user = user;
+    setDashboardLoading(true);
     try {
       const hubMode = await api('/api/auth/hub-mode', {
         method: 'POST',
@@ -8156,7 +8157,6 @@
     state.user = user;
     if (signin) signin.hidden = true;
     shell.hidden = false;
-    setDashboardLoading(true);
     const payoutSubmit = document.getElementById('btn-payout-submit');
     if (payoutSubmit) {
       payoutSubmit.addEventListener('click', submitPayoutRequest);
@@ -8215,6 +8215,7 @@
     .then((res) => res.json())
     .then((data) => {
       if (!data.ok || !data.user) {
+        setDashboardLoading(false);
         if (signin) signin.hidden = false;
         return;
       }
@@ -8233,6 +8234,7 @@
       boot(data.user);
     })
     .catch(() => {
+      setDashboardLoading(false);
       if (signin) {
         signin.hidden = false;
         signin.querySelector('.org-section-sub').textContent =
