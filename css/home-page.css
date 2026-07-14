@@ -356,6 +356,27 @@ html:has(.home-page) {
   text-shadow: 0 1px 3px rgba(45, 35, 50, 0.38);
 }
 
+.home-what-pillar-hook {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--home-purple);
+}
+
+.home-what-pillar--events .home-what-pillar-hook {
+  color: var(--home-purple);
+}
+
+.home-what-pillar--organisers .home-what-pillar-hook {
+  color: var(--home-gold);
+}
+
+.home-what-pillar--opportunities .home-what-pillar-hook {
+  color: #8a6a1a;
+}
+
 
 .home-page .hub-access-note {
   margin: 0 auto 20px;

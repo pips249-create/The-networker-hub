@@ -54,6 +54,7 @@ const ORGANISER_MINI_FILES = [
 const ORGANISER_MAIN_ONLY_FILES = [
   'event-almost-full.html',
   'organiser-claim-invite.html',
+  'organiser-launch-invite.html',
   'organiser-email-verify.html',
   'organiser-ticket-sales-nudge.html',
   'stripe-connect-nudge.html',

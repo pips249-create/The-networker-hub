@@ -5,6 +5,24 @@
   "outputDirectory": ".",
   "cleanUrls": true,
   "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "thenetworkerhub.co.uk" }],
+      "destination": "https://www.thenetworkerhub.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.thenetworkerhub.co.uk" }],
+      "destination": "https://www.thenetworkerhub.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "thenetworkerhub.com" }],
+      "destination": "https://www.thenetworkerhub.com/:path*",
+      "permanent": true
+    },
     { "source": "/index.html", "destination": "/", "permanent": true },
     { "source": "/events/index.html", "destination": "/events/", "permanent": true },
     { "source": "/opportunities/index.html", "destination": "/opportunities/", "permanent": true },

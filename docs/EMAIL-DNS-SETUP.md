@@ -1,6 +1,7 @@
 # Email authentication — SPF, DKIM, DMARC
 
 **Domain:** `thenetworkerhub.com` (and any subdomain used in `RESEND_FROM`)  
+For organiser **Email 1** rebrand campaigns, also verify **`the-networker.co.uk`** and set `RESEND_FROM_LEGACY` (e.g. `Rosie @ The Networker <hello@the-networker.co.uk>`).  
 **Owner:** Tech (Catherine)  
 **Last updated:** 10 July 2026
 

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<title>List a Business Opportunity · The Networker Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+
+  :root {
+    --navy: #0d1f3c;
+    --gold: #c9961f;
+    --gold-pale: #fdf6e3;
+    --bg: #f8f9fb;
+    --text: #1a2336;
+    --muted: #3d4557;
+    --soft: #8d99ae;
+    --border: #dde3ed;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: var(--text);
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 14mm 16mm 16mm;
+    page-break-after: always;
+    position: relative;
+    background: #fff;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  .bar {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 6mm;
+    background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 100%);
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 10mm;
+    padding-top: 4mm;
+  }
+  .logo { width: 52mm; height: auto; }
+
+  .header-meta { text-align: right; }
+  .badge {
+    display: inline-block;
+    padding: 3mm 5mm;
+    border-radius: 6px;
+    background: var(--gold-pale);
+    color: #8a6a1a;
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid rgba(201, 150, 31, 0.35);
+    margin-bottom: 3mm;
+  }
+  .header-url {
+    font-size: 10pt;
+    font-weight: 600;
+    color: var(--gold);
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 28pt;
+    font-weight: 400;
+    line-height: 1.12;
+    color: var(--navy);
+    margin-bottom: 4mm;
+  }
+  h1 .accent { color: var(--gold); font-style: normal; }
+
+  .lede {
+    font-size: 12pt;
+    line-height: 1.5;
+    color: var(--muted);
+    max-width: 165mm;
+    margin-bottom: 9mm;
+  }
+
+  h2 {
+    font-size: 13pt;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--navy);
+    margin-bottom: 5mm;
+    padding-bottom: 2mm;
+    border-bottom: 2px solid var(--gold-pale);
+  }
+
+  .kicker {
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 2mm;
+  }
+
+  /* Benefits */
+  .benefits {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4mm;
+    margin-bottom: 9mm;
+  }
+  .benefit {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5mm;
+  }
+  .benefit-icon {
+    font-size: 16pt;
+    margin-bottom: 2mm;
+  }
+  .benefit h3 {
+    font-size: 11pt;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 1.5mm;
+    line-height: 1.2;
+  }
+  .benefit p {
+    font-size: 9.5pt;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  .highlight {
+    background: linear-gradient(135deg, var(--navy) 0%, #162847 100%);
+    color: #fff;
+    border-radius: 10px;
+    padding: 6mm 7mm;
+    margin-bottom: 9mm;
+  }
+  .highlight h2 {
+    color: #fff;
+    border-bottom-color: rgba(255,255,255,0.15);
+    margin-bottom: 4mm;
+  }
+  .highlight-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4mm;
+  }
+  .highlight-stat b {
+    display: block;
+    font-size: 18pt;
+    font-weight: 800;
+    color: var(--gold);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 1mm;
+  }
+  .highlight-stat span {
+    font-size: 9pt;
+    line-height: 1.35;
+    color: rgba(255,255,255,0.85);
+  }
+
+  /* Steps */
+  .steps { list-style: none; counter-reset: step; }
+  .step {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 12mm 1fr;
+    gap: 4mm;
+    padding: 4mm 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    width: 12mm; height: 12mm;
+    border-radius: 50%;
+    background: var(--navy);
+    color: #fff;
+    font-size: 11pt;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step-num::before { content: counter(step); }
+  .step h3 {
+    font-size: 11pt;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 1.5mm;
+  }
+  .step p {
+    font-size: 9.5pt;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  .pricing {
+    background: var(--gold-pale);
+    border: 1.5px solid rgba(201, 150, 31, 0.35);
+    border-radius: 10px;
+    padding: 6mm 7mm;
+    margin: 8mm 0;
+  }
+  .pricing-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 6mm;
+    margin-bottom: 4mm;
+  }
+  .pricing h3 {
+    font-size: 13pt;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 1mm;
+  }
+  .pricing-tagline {
+    font-size: 9.5pt;
+    color: var(--muted);
+  }
+  .price {
+    text-align: right;
+    white-space: nowrap;
+  }
+  .price b {
+    display: block;
+    font-size: 22pt;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .price span {
+    font-size: 9pt;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .pricing ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2mm 4mm;
+  }
+  .pricing li {
+    font-size: 9pt;
+    color: var(--muted);
+    padding-left: 5mm;
+    position: relative;
+  }
+  .pricing li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--gold);
+    font-weight: 800;
+  }
+
+  .footer {
+    margin-top: auto;
+    padding-top: 6mm;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6mm;
+  }
+  .cta-box {
+    background: var(--navy);
+    color: #fff;
+    border-radius: 10px;
+    padding: 5mm 7mm;
+    flex: 1;
+  }
+  .cta-box strong {
+    display: block;
+    font-size: 12pt;
+    margin-bottom: 1mm;
+  }
+  .cta-box span {
+    font-size: 10pt;
+    color: var(--gold);
+    font-weight: 600;
+  }
+  .footer-note {
+    font-size: 8pt;
+    color: var(--soft);
+    max-width: 70mm;
+    line-height: 1.4;
+  }
+
+  .page-num {
+    position: absolute;
+    bottom: 8mm;
+    right: 16mm;
+    font-size: 8pt;
+    color: var(--soft);
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: Benefits -->
+<section class="page">
+  <div class="bar"></div>
+  <header class="header">
+    <img class="logo" src="../assets/logo-nav-transparent.png" alt="The Networker Hub" width="420" height="168">
+    <div class="header-meta">
+      <div class="badge">Coming 1st September</div>
+      <p class="header-url">thenetworkerhub.com/opportunities</p>
+    </div>
+  </header>
+
+  <p class="kicker">For providers &amp; franchisors</p>
+  <h1>List your <span class="accent">business opportunity</span> on The Networker Hub</h1>
+  <p class="lede">
+    Reach UK business professionals who already browse networking events and opportunities in one place.
+    Franchises, side hustles, partnerships, distributorships and more, with direct enquiries to your inbox.
+  </p>
+
+  <p class="kicker">Why list here</p>
+  <h2>Benefits of listing on Business Opps</h2>
+  <div class="benefits">
+    <div class="benefit">
+      <div class="benefit-icon">✉️</div>
+      <h3>Direct enquiries</h3>
+      <p>Interested members contact you directly. No middlemen, no auctions, no per-lead fees.</p>
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon">👥</div>
+      <h3>Built-in UK audience</h3>
+      <p>Your listing appears where networkers already browse, alongside events and organiser communities.</p>
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon">🔍</div>
+      <h3>Filter-friendly listings</h3>
+      <p>Prospects search by type, investment level, and location, so your offer reaches the right people.</p>
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon">⚡</div>
+      <h3>Live within 24 hours</h3>
+      <p>Submit your listing for review. Most go live within one working day after approval.</p>
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon">📊</div>
+      <h3>Organiser dashboard</h3>
+      <p>Manage listings, track enquiries, and edit details from the same workspace you use for events.</p>
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon">⭐</div>
+      <h3>Optional premium spotlight</h3>
+      <p>Upgrade for featured carousel placement on the opportunities browse page when slots are available.</p>
+    </div>
+  </div>
+
+  <div class="highlight">
+    <h2>At a glance</h2>
+    <div class="highlight-grid">
+      <div class="highlight-stat">
+        <b>Direct</b>
+        <span>Enquiries go to your inbox. You reply on your terms.</span>
+      </div>
+      <div class="highlight-stat">
+        <b>24hrs</b>
+        <span>Typical review and publish time after submission</span>
+      </div>
+      <div class="highlight-stat">
+        <b>£25/mo</b>
+        <span>+ VAT · min 3 months · paid upfront via Stripe</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="page-num">1 of 2</p>
+</section>
+
+<!-- PAGE 2: How to list -->
+<section class="page">
+  <div class="bar"></div>
+  <header class="header">
+    <img class="logo" src="../assets/logo-nav-transparent.png" alt="The Networker Hub" width="420" height="168">
+    <div class="header-meta">
+      <div class="badge">How to list</div>
+      <p class="header-url">thenetworkerhub.com/opportunities/list</p>
+    </div>
+  </header>
+
+  <p class="kicker">Step by step</p>
+  <h1 style="font-size:24pt;margin-bottom:6mm;">From listing to enquiry in <span class="accent">four steps</span></h1>
+
+  <ol class="steps">
+    <li class="step">
+      <div class="step-num"></div>
+      <div>
+        <h3>Open the organiser dashboard</h3>
+        <p>Sign in at thenetworkerhub.com and go to <strong>Business opportunities</strong> in the sidebar. You need an organiser account, the same workspace used for events.</p>
+      </div>
+    </li>
+    <li class="step">
+      <div class="step-num"></div>
+      <div>
+        <h3>Create your listing</h3>
+        <p>Choose <strong>List a listing</strong> and complete the form: title, opportunity type (franchise, partnership, side hustle, etc.), summary, description, investment notes, location, industry, images, and contact details.</p>
+      </div>
+    </li>
+    <li class="step">
+      <div class="step-num"></div>
+      <div>
+        <h3>Submit &amp; go live</h3>
+        <p>Submit for review. You'll receive email updates when approved or if changes are needed. Once live, your listing appears on the Business Opps browse page.</p>
+      </div>
+    </li>
+    <li class="step">
+      <div class="step-num"></div>
+      <div>
+        <h3>Receive &amp; manage enquiries</h3>
+        <p>When someone enquires, you get an email notification. Reply directly to the prospect and track enquiries from <strong>Business opportunities → Overview</strong> in your dashboard.</p>
+      </div>
+    </li>
+    <li class="step">
+      <div class="step-num"></div>
+      <div>
+        <h3>Renew or update</h3>
+        <p>Listings run for your chosen term. You&rsquo;ll get reminder emails before expiry. Renew or edit from your dashboard to stay visible.</p>
+      </div>
+    </li>
+  </ol>
+
+  <div class="pricing">
+    <div class="pricing-top">
+      <div>
+        <h3>Simple, transparent listing fees</h3>
+        <p class="pricing-tagline">Paid upfront for your chosen term · secure payment via Stripe</p>
+      </div>
+      <div class="price">
+        <b>£25</b>
+        <span>per month + VAT</span>
+      </div>
+    </div>
+    <ul>
+      <li>Minimum 3 months (e.g. £75 + £15 VAT = £90 total)</li>
+      <li>Enquiries direct to your inbox</li>
+      <li>Edit your listing any time during your term</li>
+      <li>Browsing &amp; enquiring is free for members</li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    <div class="cta-box">
+      <strong>Ready to list?</strong>
+      <span>thenetworkerhub.com/opportunities/list</span>
+    </div>
+    <p class="footer-note">Listings are informational only, not FCA-regulated investment advice. We review submissions for completeness and accuracy; always conduct your own due diligence.</p>
+  </div>
+
+  <p class="page-num">2 of 2</p>
+</section>
+
+</body>
+</html>

@@ -330,5 +330,33 @@
     }
   }
 
+  function applyOrganiserClaimContext() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('intent') !== 'organiser-claim') return;
+
+    var loginLede = document.querySelector('#login-form') && document.querySelector('.auth-lede');
+    if (loginLede) {
+      loginLede.textContent =
+        'Use the same email address this invitation was sent to. After signing in you can confirm your organiser page and add events.';
+    }
+
+    var registerTitle = document.querySelector('#register-form') && document.querySelector('.auth-card--wizard h1');
+    if (registerTitle) {
+      registerTitle.textContent = 'Create your organiser password';
+    }
+
+    var registerLede = document.querySelector('#register-form') && document.querySelector('.auth-lede');
+    if (registerLede) {
+      registerLede.textContent =
+        'Step 1 — create a password for the email this invite was sent to. You will confirm your organiser page and add events next (about 2 minutes).';
+    }
+
+    var registerWizard = document.querySelector('.auth-wizard-step.is-current .auth-wizard-label');
+    if (registerWizard) {
+      registerWizard.textContent = 'Create password';
+    }
+  }
+
   applyCheckoutContext();
+  applyOrganiserClaimContext();
 })();

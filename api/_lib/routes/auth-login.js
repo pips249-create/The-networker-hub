@@ -94,6 +94,13 @@ module.exports = async function handler(req, res) {
 
     await sbAuth.backfillAttendeeUserId(sessionUser.sub, sessionUser.email);
 
+    try {
+      const { bootstrapOrganiserFromPendingClaims } = require('../supabase-organiser-claims');
+      await bootstrapOrganiserFromPendingClaims(sessionUser);
+    } catch {
+      /* login succeeds even if bootstrap fails */
+    }
+
     let redirect = body.next || '/events/';
     if (isAdminRole(role) && !body.next) {
       redirect = '/admin/';

@@ -92,6 +92,13 @@ module.exports = async function handler(req, res) {
       /* Registration succeeds even if welcome email fails */
     }
 
+    try {
+      const { bootstrapOrganiserFromPendingClaims } = require('../supabase-organiser-claims');
+      await bootstrapOrganiserFromPendingClaims(sessionUser);
+    } catch {
+      /* registration succeeds even if bootstrap fails */
+    }
+
     return json(res, 201, {
       ok: true,
       message: 'Your account has been created.',

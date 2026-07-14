@@ -1,6 +1,6 @@
 # Legacy redirect map — the-networker.co.uk → hub
 
-**Status:** draft (July 2026) · **Flip date:** soft launch ~28 Aug / full launch 1 Sep 2026  
+**Status:** draft (July 2026) · **Flip date:** public launch 1st September 2026  
 **Target host:** `https://www.thenetworkerhub.com`  
 **Keep on co.uk:** mailbox / MX for `@the-networker.co.uk` (do not point email at Vercel)
 
@@ -15,7 +15,7 @@ Related: `docs/SEO-AEO-LAUNCH-PLAN.md` · `PIPS-TODO.md` Tab 7
 | Phase | Behaviour |
 |-------|-----------|
 | **2–4 weeks before** | Optional “We’ve upgraded” banner on old site → hub; keep old URLs working |
-| **Soft launch (~28 Aug)** | Remove hub `SITE_ACCESS_PASSWORD`; start 301s for high-traffic paths |
+| **Launch (1st Sep)** | Remove hub `SITE_ACCESS_PASSWORD`; start 301s for high-traffic paths |
 | **Full launch (1 Sep)** | Apex + www hard 301 to hub; watch Search Console 404s for a week |
 
 Prefer **301** once the hub path is confirmed. Use **302** only while still testing redirects.
@@ -30,6 +30,10 @@ Prefer **301** once the hub path is confirmed. Use **302** only while still test
 | `https://the-networker.co.uk/*` | `https://www.thenetworkerhub.com/…` | |
 | `http://www.the-networker.co.uk/*` | `https://www.thenetworkerhub.com/…` | |
 | `https://www.the-networker.co.uk/*` | `https://www.thenetworkerhub.com/…` | |
+| `http://thenetworkerhub.co.uk/*` | `https://www.thenetworkerhub.com/…` | UK variant — add domain in Vercel + DNS; `vercel.json` 301 ready |
+| `https://thenetworkerhub.co.uk/*` | `https://www.thenetworkerhub.com/…` | |
+| `http://www.thenetworkerhub.co.uk/*` | `https://www.thenetworkerhub.com/…` | |
+| `https://www.thenetworkerhub.co.uk/*` | `https://www.thenetworkerhub.com/…` | |
 | `www.thenetworkerhub.com` apex | `https://www.thenetworkerhub.com` | Hub apex → www (already planned) |
 
 Never submit `the-networker-hub.vercel.app` as the primary Search Console property.
@@ -122,6 +126,7 @@ Organiser/event slug rules go **above** the catch-all once confirmed.
 ## Owner actions still needed
 
 1. Paste top landing pages from old Analytics / GSC into the path table  
-2. Confirm hosting where co.uk DNS is managed  
-3. Soft banner period dates  
-4. Flip 301s on launch day checklist in `PIPS-TODO.md`
+2. Confirm hosting where **the-networker.co.uk** DNS is managed  
+3. **thenetworkerhub.co.uk** — add apex + `www` in Vercel → Domains; point registrar DNS at Vercel (website only; MX optional)  
+4. Soft banner period dates  
+5. Flip 301s on launch day checklist in `PIPS-TODO.md`

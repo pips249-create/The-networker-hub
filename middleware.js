@@ -65,6 +65,26 @@ const GATE_BYPASS_PREFIXES = [
   '/assets/',
 ];
 
+/** Organiser early-access paths — reachable while the public site gate is on. */
+const ORGANISER_EARLY_ACCESS_PREFIXES = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/welcome',
+  '/organiser',
+  '/for-organisers',
+  '/guides/list-an-event',
+  '/guides/list-a-conference-or-exhibition',
+  '/guides/list-a-business-opportunity',
+  '/guides/invite-your-team',
+  '/help/organiser-payouts',
+  '/help/pricing-fees',
+  '/api/auth',
+  '/api/organiser',
+  '/api/contact-chat',
+];
+
 function escapeHtml(text) {
   return String(text || '')
     .replace(/&/g, '&amp;')
@@ -295,10 +315,21 @@ async function verifySignedToken(token, secret) {
   }
 }
 
-function isGateBypassPath(pathname) {
-  return GATE_BYPASS_PREFIXES.some(function (prefix) {
-    return pathname === prefix || pathname.startsWith(prefix);
+function isOrganiserEarlyAccessPath(pathname) {
+  return ORGANISER_EARLY_ACCESS_PREFIXES.some(function (prefix) {
+    return pathname === prefix || pathname.startsWith(prefix + '/');
   });
+}
+
+function isGateBypassPath(pathname) {
+  if (
+    GATE_BYPASS_PREFIXES.some(function (prefix) {
+      return pathname === prefix || pathname.startsWith(prefix);
+    })
+  ) {
+    return true;
+  }
+  return isOrganiserEarlyAccessPath(pathname);
 }
 
 function withNoIndexHeaders(headers) {

@@ -2,8 +2,8 @@
 window.HUB_SEO_STATIC = {
   "home": {
     "path": "/",
-    "title": "The Networker Hub — Events & business opportunities",
-    "description": "Browse UK networking events and business opportunities for free. Create a free account to buy tickets or send enquiries — it only takes 2 minutes.",
+    "title": "Find your next event, connection, or opportunity – The Networker Hub",
+    "description": "Find your next event, connection, or business opportunity across the UK. Browse free on The Networker Hub; sign up only when you are ready to book or enquire.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },
@@ -16,8 +16,8 @@ window.HUB_SEO_STATIC = {
   },
   "opportunities": {
     "path": "/opportunities/",
-    "title": "Browse business opportunities – The Networker Hub",
-    "description": "Browse franchises, side hustles, partnerships and business opportunities across the UK network — free to search on The Networker Hub.",
+    "title": "Find your next business opportunity – The Networker Hub",
+    "description": "Find your next franchise, side hustle, or partnership across the UK. Browse free on The Networker Hub and enquire directly with providers.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },
@@ -51,8 +51,8 @@ window.HUB_SEO_STATIC = {
   },
   "for-organisers": {
     "path": "/for-organisers",
-    "title": "For Organisers – The Networker Hub",
-    "description": "List UK networking events and business opportunities: organiser dashboard, guest visits, visit tracking, Category Exclusivity, Alumni Fast-Pass, and member discovery.",
+    "title": "Find your next attendees – For organisers – The Networker Hub",
+    "description": "Find your next attendees, bookings, and discovery on The Networker Hub. Ticketing built for UK networking groups with tools generic platforms do not offer.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },

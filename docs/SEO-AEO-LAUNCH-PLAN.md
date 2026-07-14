@@ -1,6 +1,6 @@
 # SEO & AEO launch plan
 
-**Private until ~28 August 2026** · Public hub: `www.thenetworkerhub.com`  
+**Private until 1st September 2026** · Public hub: `www.thenetworkerhub.com`  
 Code foundations ~65% ready — gate, domain, and Search Console still decide launch discoverability.
 
 > Cursor canvas side panel: `seo-aeo-launch-plan.canvas.tsx` (open from the Canvas / right sidebar in Cursor).
@@ -56,7 +56,7 @@ It is **not** a substitute for Search Console, sitemap, or the `the-networker.co
 
 ---
 
-## Launch week (~28 August)
+## Launch week (1st September)
 
 1. Remove `SITE_ACCESS_PASSWORD` → Redeploy.
 2. Confirm `/robots.txt` Allow, `/sitemap.xml` 200, `/llms.txt` + `/agents.txt` 200, no public `noindex`.
@@ -82,6 +82,7 @@ It is **not** a substitute for Search Console, sitemap, or the `the-networker.co
 | Domain | Role now | Launch action |
 |--------|----------|---------------|
 | `www.thenetworkerhub.com` | Live hub + default SEO/AEO origin | Single canonical; apex 301 → www |
+| `thenetworkerhub.co.uk` (+ www) | UK brand variant / typo catch | 301 → `www.thenetworkerhub.com` (Vercel domain + `vercel.json`) |
 | `the-networker.co.uk` | Legacy brand / email / leftover canonicals | 301 → hub; keep email |
 | `the-networker-hub.vercel.app` | Deploy / preview host | Never submit to GSC as primary |
 

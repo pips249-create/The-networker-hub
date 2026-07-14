@@ -96,6 +96,8 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_ranking_badge',
   'organiser_featured_expiry_reminder',
   'organiser_claim_invite',
+  'organiser_launch_invite',
+  'organiser_rebrand_announcement',
   'organiser_team_invite',
   'opportunity_listing_live',
   'opportunity_listing_expiry_reminder',
@@ -392,7 +394,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   };
 }
 
-async function sendViaResend({ to, subject, html, tags, replyTo }) {
+async function sendViaResend({ to, subject, html, tags, replyTo, from }) {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
     const err = new Error(
@@ -432,7 +434,7 @@ async function sendViaResend({ to, subject, html, tags, replyTo }) {
     : [];
 
   const body = {
-    from: formatResendFrom(process.env.RESEND_FROM),
+    from: formatResendFrom(from || process.env.RESEND_FROM),
     to: [recipient],
     subject,
     html,
@@ -498,7 +500,7 @@ const MARKETING_EMAIL_SLUGS = new Set([
   'opportunity_saved_search_match',
 ]);
 
-async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject, resendTags, replyTo }) {
+async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject, resendTags, replyTo, from }) {
   if (!skipEmailCheck) {
     if (TRANSACTIONAL_EMAIL_SLUGS.has(slug)) {
       if (PREFERENCE_EMAIL_SLUGS[slug]) {
@@ -540,6 +542,7 @@ async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject
     html: built.html,
     tags: resendTags,
     replyTo,
+    from,
   });
   return {
     ...result,

@@ -12,6 +12,16 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: 'Your group is on The Networker Hub — claim your profile',
   },
+  organiser_launch_invite: {
+    file: 'organiser-launch-invite.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Confirm your organiser page — The Networker Hub',
+  },
+  organiser_rebrand_announcement: {
+    file: 'organiser-rebrand-announcement.html',
+    marker: 'hub-email-layout-v2-legacy',
+    subject: "We're upgrading The Networker — your group listing is ready",
+  },
   organiser_team_invite: {
     file: 'organiser-team-invite.html',
     marker: 'hub-email-layout-v2',

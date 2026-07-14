@@ -2,6 +2,13 @@ const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
 const { isSupabaseConfigured } = require('../supabase');
 const { sendTemplatedEmail } = require('../send-template-email');
 const { parseCsv } = require('../admin-csv-import');
+const { resolveOrganiserClaimUrl } = require('../organiser-claim-url');
+const {
+  campaignSiteVars,
+  legacyCampaignFrom,
+  isRebrandCampaignSlug,
+  LEGACY_REPLY_EMAIL,
+} = require('../organiser-campaign-defaults');
 
 const MAX_BULK = 50;
 
@@ -34,6 +41,14 @@ function normalizeEmails(raw) {
   return [...new Set(list)];
 }
 
+function organiserDisplayName(email, baseVars) {
+  if (baseVars.organiser_name) return baseVars.organiser_name;
+  return String(email)
+    .split('@')[0]
+    .replace(/[._]/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 module.exports = async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Cache-Control', 'no-store');
@@ -57,7 +72,7 @@ module.exports = async function handler(req, res) {
     return json(res, 400, { ok: false, error: 'unknown_action' });
   }
 
-  const slug = String(body.slug || 'organiser_claim_invite').trim();
+  const slug = String(body.slug || 'organiser_rebrand_announcement').trim();
   let emails = normalizeEmails(body.emails);
 
   if (body.csv) {
@@ -84,34 +99,51 @@ module.exports = async function handler(req, res) {
   const host = siteUrl();
   const baseVars =
     body.variables && typeof body.variables === 'object' ? { ...body.variables } : {};
+  const siteVars = campaignSiteVars(host);
+  const rebrand = isRebrandCampaignSlug(slug);
   const sent = [];
   const failed = [];
 
   for (const email of emails) {
-    const organiserName =
-      baseVars.organiser_name ||
-      String(email)
-        .split('@')[0]
-        .replace(/[._]/g, ' ')
-        .replace(/\b\w/g, (c) => c.toUpperCase());
-    const claimUrl =
-      baseVars.claim_url ||
-      host +
-        '/login?email=' +
-        encodeURIComponent(email) +
-        '&next=' +
-        encodeURIComponent('/organiser/?onboard=claim');
+    const organiserName = organiserDisplayName(email, baseVars);
+    const variables = {
+      ...siteVars,
+      organiser_name: organiserName,
+      ...baseVars,
+    };
+
+    if (!rebrand) {
+      let claimUrl = baseVars.claim_url;
+      if (!claimUrl) {
+        try {
+          claimUrl = await resolveOrganiserClaimUrl(email, host);
+        } catch {
+          claimUrl =
+            host +
+            '/register?email=' +
+            encodeURIComponent(email) +
+            '&next=' +
+            encodeURIComponent('/organiser/?onboard=claim') +
+            '&intent=organiser-claim';
+        }
+      }
+      variables.claim_url = claimUrl;
+    }
+
+    const sendOpts = {
+      slug,
+      to: email,
+      variables,
+      skipEmailCheck: true,
+    };
+
+    if (rebrand) {
+      sendOpts.from = baseVars.resend_from || legacyCampaignFrom();
+      sendOpts.replyTo = baseVars.reply_to || LEGACY_REPLY_EMAIL;
+    }
+
     try {
-      await sendTemplatedEmail({
-        slug,
-        to: email,
-        variables: {
-          site_url: host,
-          organiser_name: organiserName,
-          claim_url: claimUrl,
-          ...baseVars,
-        },
-      });
+      await sendTemplatedEmail(sendOpts);
       sent.push(email);
     } catch (e) {
       failed.push({ email, message: e.message || String(e.code || 'send_failed') });

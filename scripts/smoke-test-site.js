@@ -349,6 +349,18 @@ async function runGatedSmoke() {
   const oppsApi = await probeOpportunitiesApi();
   printResult(oppsApi.ok, '/api/opportunities', oppsApi.message);
 
+  console.log('\nOrganiser early access (no preview password)');
+  const organiserPaths = [
+    { path: '/login', expect: /log\s*in|sign\s*in|password/i },
+    { path: '/register', expect: /register|sign\s*up|create/i },
+    { path: '/organiser/', expect: /organis|dashboard|sign\s*in|log\s*in/i },
+    { path: '/guides/list-an-event', expect: /list|event|organis/i },
+  ];
+  for (const page of organiserPaths) {
+    const r = await probeHtml(page);
+    printResult(r.ok, page.path, r.message);
+  }
+
   console.log('\nTip: export SITE_ACCESS_PASSWORD=… then re-run for the full unlocked smoke.');
 }
 

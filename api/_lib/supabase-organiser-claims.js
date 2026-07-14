@@ -235,9 +235,44 @@ async function rejectGroupForSession(session, groupId, notes) {
   };
 }
 
+/**
+ * When someone authenticates with the same email as a pending group profile,
+ * skip separate organiser enable + email-verify steps — they proved ownership
+ * by using the address the invite was sent to.
+ */
+async function bootstrapOrganiserFromPendingClaims(session) {
+  const pending = await listPendingClaimGroupsForSession(session);
+  const pendingCount = pending.length;
+  if (!pendingCount || !session?.sub) {
+    return { bootstrapped: false, pendingCount };
+  }
+
+  const sb = getSupabaseAdmin();
+  const now = new Date().toISOString();
+  const { data: hub } = await sb
+    .from('hub_accounts')
+    .select('organiser_access_at, organiser_email_verified_at, hub_view')
+    .eq('user_id', session.sub)
+    .maybeSingle();
+
+  const patch = {
+    user_id: session.sub,
+    role: 'client',
+    hub_view: 'organiser',
+    organiser_access_at: hub?.organiser_access_at || now,
+    organiser_email_verified_at: hub?.organiser_email_verified_at || now,
+  };
+
+  const { error } = await sb.from('hub_accounts').upsert(patch, { onConflict: 'user_id' });
+  if (error) throw new Error(error.message);
+
+  return { bootstrapped: true, pendingCount: pending.length };
+}
+
 module.exports = {
   listPendingClaimGroupsForSession,
   claimGroupForSession,
   rejectGroupForSession,
   notifyAdminOfClaimDispute,
+  bootstrapOrganiserFromPendingClaims,
 };

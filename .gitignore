@@ -22,3 +22,11 @@ npm-debug.log*
 # Vercel
 .vercel
 .env*
+
+# Local scratch
+.tmp/
+
+# LinkedIn ad export tooling
+marketing/node_modules/
+marketing/package-lock.json
+marketing/exports/*.webm

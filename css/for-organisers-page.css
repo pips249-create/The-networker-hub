@@ -131,6 +131,19 @@ html:has(.for-organisers-page) {
   margin: 0 0 16px;
 }
 
+.fo-hero-accent {
+  color: var(--fo-purple);
+  font-style: normal;
+  display: inline-block;
+  min-width: 6ch;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.fo-hero-accent.is-fading {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
 .fo-hero-lede {
   font-size: clamp(1rem, 2vw, 1.12rem);
   line-height: 1.65;

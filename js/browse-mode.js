@@ -16,7 +16,7 @@
     events: {
       badge: 'Event discovery',
       title: 'Find your next <span class="accent">business event</span> across the UK',
-      sub: 'Meetings, exhibitions, workshops, and more — filter by type, date, and location.',
+      sub: 'Meetings, exhibitions, workshops, and more. Filter by type, date, and location.',
       heading: 'All listings',
       searchPlaceholder: 'Search anything — breakfast, women only, organiser, city…',
       searchLabel: 'Search events',
@@ -25,8 +25,8 @@
     organisers: {
       badge: 'Organiser directory',
       title:
-        'Find <span class="accent">networking groups &amp; organisers</span> across the UK',
-      sub: 'Browse groups, exhibition hosts, and conference organisers — then see their events.',
+        'Find your next <span class="accent">networking group</span> across the UK',
+      sub: 'Browse groups, exhibition hosts, and conference organisers, then see their events.',
       heading: 'All organisers',
       searchPlaceholder: 'Search organisers, descriptions, formats…',
       searchLabel: 'Search organisers',

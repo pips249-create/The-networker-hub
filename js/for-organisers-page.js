@@ -99,9 +99,21 @@
     activate('overview', false);
   }
 
+  function initHeroSlogan() {
+    var wordEl = document.getElementById('fo-hero-word');
+    if (!wordEl || !window.HubFindYourNextRotate) return;
+
+    window.HubFindYourNextRotate(
+      wordEl,
+      ['attendees', 'bookings', 'discovery', 'community', 'ticketing platform'],
+      3000
+    );
+  }
+
   function init() {
     initReveal();
     initDashPreview();
+    initHeroSlogan();
   }
 
   if (document.readyState === 'loading') {

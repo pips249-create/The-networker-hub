@@ -6617,7 +6617,7 @@
       'attendee_hubert_event_concierge',
       'password_reset',
     ];
-    var ORGANISER_EMAIL_SLUGS = ['organiser_new_registration', 'organiser_claim_invite'];
+    var ORGANISER_EMAIL_SLUGS = ['organiser_new_registration', 'organiser_claim_invite', 'organiser_launch_invite', 'organiser_rebrand_announcement'];
 
     function emailTemplateCategory(t) {
       var slug = String((t && t.slug) || '');
@@ -11457,19 +11457,48 @@
   function renderCampaigns() {
     main.innerHTML =
       '<div class="space-y-6 max-w-3xl">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Bulk send <strong>organiser claim-profile invites</strong> (max 50 per batch). Default link opens the claim flow on the organiser dashboard.</p>' +
-      '<p class="text-xs text-slate-500 rounded-lg border border-violet-100 bg-violet-50 px-4 py-3">Looking for Hubert\u2019s monthly digest and other emails the Hub sends on its own? They run automatically \u2014 edit their copy under <a href="#email/templates" class="font-semibold text-violet-800 underline">Templates &rarr; Automated</a>.</p>' +
+      '<div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 space-y-2">' +
+      '<p class="text-sm font-semibold text-amber-950">Two-step organiser outreach (recommended)</p>' +
+      '<ol class="text-sm text-amber-900 list-decimal list-inside space-y-1">' +
+      '<li><strong>Email 1 — Rebrand</strong> (this week): familiar the-networker.co.uk tone. No password. Link to /for-organisers only.</li>' +
+      '<li><strong>Email 2 — Confirm page</strong> (3–5 days later): create password → confirm listing → add event.</li>' +
+      '</ol>' +
+      '<p class="text-xs text-amber-800">For Email 1 via Resend, verify <code class="text-xs">the-networker.co.uk</code> and set <code class="text-xs">RESEND_FROM_LEGACY</code> in Vercel, or send manually from your co.uk inbox.</p>' +
+      '</div>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Bulk send organiser campaigns (max <strong>50 per batch</strong>). Use the <strong>same email as the group profile</strong> on each line.</p>' +
+      '<p class="text-xs text-slate-500 rounded-lg border border-violet-100 bg-violet-50 px-4 py-3">Automated lifecycle emails are under <a href="#email/templates" class="font-semibold text-violet-800 underline">Templates &rarr; Automated</a>.</p>' +
       '<form id="campaign-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">' +
+      '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-template">Email template</label>' +
+      '<select id="campaign-template" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
+      '<option value="organiser_rebrand_announcement">Email 1 — Rebrand announcement (send first)</option>' +
+      '<option value="organiser_launch_invite">Email 2 — Confirm organiser page (3–5 days later)</option>' +
+      '<option value="organiser_claim_invite">Short claim nudge (existing listing only)</option>' +
+      '</select>' +
       '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-recipients">Recipient emails</label>' +
       '<textarea id="campaign-recipients" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[120px]" placeholder="organiser@example.com&#10;one per line"></textarea>' +
-      '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-claim-url">Claim URL override <span class="font-normal normal-case">(optional)</span></label>' +
-      '<input type="url" id="campaign-claim-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Leave blank for default claim deep-link">' +
-      '<p class="text-xs text-slate-500">Default: <code class="text-xs">/login?email=…&amp;next=/organiser/?onboard=claim</code></p>' +
+      '<div id="campaign-claim-wrap">' +
+      '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-claim-url">Claim URL override <span class="font-normal normal-case">(optional, Email 2 only)</span></label>' +
+      '<input type="url" id="campaign-claim-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Leave blank for default confirm deep-link">' +
+      '<p class="text-xs text-slate-500 mt-1">Default: <code class="text-xs">/register?email=…</code> or <code class="text-xs">/login?email=…</code> with <code class="text-xs">next=/organiser/?onboard=claim</code></p>' +
+      '</div>' +
       '<div class="flex flex-wrap items-center gap-3 pt-2">' +
       '<button type="submit" class="rounded-lg bg-slate-800 text-white text-sm font-semibold px-4 py-2 hover:bg-slate-900" id="campaign-submit">Send batch (max 50)</button>' +
       '<span id="campaign-status" class="text-sm text-slate-500"></span></div>' +
       '<pre id="campaign-result" class="hidden text-xs bg-slate-900 text-slate-100 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap"></pre>' +
       '</form></div>';
+
+    var templateSelect = document.getElementById('campaign-template');
+    var claimWrap = document.getElementById('campaign-claim-wrap');
+    function syncCampaignClaimField() {
+      if (!templateSelect || !claimWrap) return;
+      var rebrand = templateSelect.value === 'organiser_rebrand_announcement';
+      claimWrap.hidden = rebrand;
+      claimWrap.style.display = rebrand ? 'none' : '';
+    }
+    if (templateSelect) {
+      templateSelect.addEventListener('change', syncCampaignClaimField);
+      syncCampaignClaimField();
+    }
 
     var legacyForm = document.getElementById('campaign-form');
     if (legacyForm) {
@@ -11484,9 +11513,12 @@
           return;
         }
         var lines = raw.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
-        var payload = { action: 'bulk_send', slug: 'organiser_claim_invite', emails: lines };
-        var claimUrl = (document.getElementById('campaign-claim-url').value || '').trim();
-        if (claimUrl) payload.variables = { claim_url: claimUrl };
+        var slug = (document.getElementById('campaign-template').value || 'organiser_rebrand_announcement').trim();
+        var payload = { action: 'bulk_send', slug: slug, emails: lines };
+        if (slug !== 'organiser_rebrand_announcement') {
+          var claimUrl = (document.getElementById('campaign-claim-url').value || '').trim();
+          if (claimUrl) payload.variables = { claim_url: claimUrl };
+        }
         btn.disabled = true;
         if (statusEl) statusEl.textContent = 'Sending…';
         adminPost('/api/admin/campaigns', payload)

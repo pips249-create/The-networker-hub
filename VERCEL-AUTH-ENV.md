@@ -201,7 +201,7 @@ While the live domain is up but the site is not yet public, lock it behind a sha
 
 **No admin bypass:** signed-in admins must also use the preview password while the gate is on.
 
-**Keeping the site private until launch (~28 August 2026):**
+**Keeping the site private until launch (1st September 2026):**
 1. Keep `SITE_ACCESS_PASSWORD` set in Vercel Production.
 2. Do not set `DISABLE_SITE_ACCESS_GATE=true`.
 3. Share the password only with your team.

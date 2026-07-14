@@ -1322,6 +1322,89 @@
   color: var(--charcoal);
 }
 
+.guide-card-downloads {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.guide-card-downloads a {
+  font-weight: 600;
+  color: var(--lavender-deep);
+  text-decoration: none;
+}
+
+.guide-card-downloads a:hover {
+  color: var(--charcoal);
+  text-decoration: underline;
+}
+
+.guide-pdf-callout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin-bottom: 28px;
+}
+
+.guide-pdf-callout p {
+  margin: 0;
+  flex: 1 1 220px;
+}
+
+.guide-pdf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.guide-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-soft);
+  background: var(--surface-card);
+  color: var(--charcoal);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-soft);
+}
+
+.guide-pdf-btn:hover {
+  border-color: var(--lavender-soft);
+  color: var(--lavender-deep);
+}
+
+.guide-pdf-btn--primary {
+  background: var(--lavender-deep);
+  border-color: var(--lavender-deep);
+  color: #fff;
+}
+
+.guide-pdf-btn--primary:hover {
+  background: var(--charcoal-soft);
+  border-color: var(--charcoal-soft);
+  color: #fff;
+}
+
+.guides-pdf-grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+  margin: 0 0 40px;
+  padding: 0;
+}
+
+.guide-card--pdf h2 {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
 @media (max-width: 640px) {
   .guides-hubert-form-bar {
     flex-direction: column;

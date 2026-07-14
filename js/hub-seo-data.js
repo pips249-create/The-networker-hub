@@ -175,9 +175,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "http://localhost:3000",
-          "logo": "http://localhost:3000/assets/logo.png",
-          "image": "http://localhost:3000/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -211,18 +211,18 @@ window.HUB_SEO_DATA = {
           "@context": "https://schema.org",
           "@type": "WebSite",
           "name": "The Networker Hub",
-          "url": "http://localhost:3000",
+          "url": "https://www.thenetworkerhub.com",
           "description": "Browse UK networking events and business opportunities. Free to explore; create a free account to buy tickets or send enquiries.",
           "publisher": {
             "@type": "Organization",
             "name": "The Networker Group Ltd",
-            "url": "http://localhost:3000"
+            "url": "https://www.thenetworkerhub.com"
           },
           "potentialAction": {
             "@type": "SearchAction",
             "target": {
               "@type": "EntryPoint",
-              "urlTemplate": "http://localhost:3000/events/?q={search_term_string}"
+              "urlTemplate": "https://www.thenetworkerhub.com/events/?q={search_term_string}"
             },
             "query-input": "required name=search_term_string"
           }
@@ -230,8 +230,8 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          "@id": "http://localhost:3000/faq#faq",
-          "url": "http://localhost:3000/faq",
+          "@id": "https://www.thenetworkerhub.com/faq#faq",
+          "url": "https://www.thenetworkerhub.com/faq",
           "name": "The Networker Hub — Frequently asked questions",
           "mainEntity": [
             {
@@ -294,9 +294,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "http://localhost:3000",
-          "logo": "http://localhost:3000/assets/logo.png",
-          "image": "http://localhost:3000/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -329,8 +329,8 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          "@id": "http://localhost:3000/faq#faq",
-          "url": "http://localhost:3000/faq",
+          "@id": "https://www.thenetworkerhub.com/faq#faq",
+          "url": "https://www.thenetworkerhub.com/faq",
           "name": "The Networker Hub — Frequently asked questions",
           "mainEntity": [
             {
@@ -561,9 +561,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "http://localhost:3000",
-          "logo": "http://localhost:3000/assets/logo.png",
-          "image": "http://localhost:3000/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -596,8 +596,8 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "ContactPage",
-          "@id": "http://localhost:3000/contact",
-          "url": "http://localhost:3000/contact",
+          "@id": "https://www.thenetworkerhub.com/contact",
+          "url": "https://www.thenetworkerhub.com/contact",
           "name": "Contact The Networker Hub",
           "description": "Contact The Networker Hub or chat with Hubert, your business butler and concierge, for help with events, tickets, and business opportunities.",
           "mainEntity": {
@@ -606,7 +606,7 @@ window.HUB_SEO_DATA = {
             "name": "Hubert",
             "applicationCategory": "BusinessApplication",
             "operatingSystem": "Web",
-            "url": "http://localhost:3000/contact",
+            "url": "https://www.thenetworkerhub.com/contact",
             "description": "Hubert is the business butler and concierge for The Networker Hub — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, and navigate organiser tools.",
             "offers": {
               "@type": "Offer",
@@ -616,7 +616,7 @@ window.HUB_SEO_DATA = {
             "provider": {
               "@type": "Organization",
               "name": "The Networker Group Ltd",
-              "url": "http://localhost:3000"
+              "url": "https://www.thenetworkerhub.com"
             }
           }
         },
@@ -626,7 +626,7 @@ window.HUB_SEO_DATA = {
           "name": "Hubert",
           "applicationCategory": "BusinessApplication",
           "operatingSystem": "Web",
-          "url": "http://localhost:3000/contact",
+          "url": "https://www.thenetworkerhub.com/contact",
           "description": "Hubert is the business butler and concierge for The Networker Hub — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, and navigate organiser tools.",
           "offers": {
             "@type": "Offer",
@@ -636,7 +636,7 @@ window.HUB_SEO_DATA = {
           "provider": {
             "@type": "Organization",
             "name": "The Networker Group Ltd",
-            "url": "http://localhost:3000"
+            "url": "https://www.thenetworkerhub.com"
           }
         }
       ]
@@ -649,9 +649,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "http://localhost:3000",
-          "logo": "http://localhost:3000/assets/logo.png",
-          "image": "http://localhost:3000/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -684,7 +684,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "AboutPage",
-          "url": "http://localhost:3000/about",
+          "url": "https://www.thenetworkerhub.com/about",
           "name": "About The Networker Hub",
           "description": "The Networker Hub connects UK business owners and professionals with networking events, exhibitions, and business opportunities.",
           "mainEntity": {
@@ -692,9 +692,9 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker Hub",
             "legalName": "The Networker Group Ltd",
-            "url": "http://localhost:3000",
-            "logo": "http://localhost:3000/assets/logo.png",
-            "image": "http://localhost:3000/assets/logo.png",
+            "url": "https://www.thenetworkerhub.com",
+            "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+            "image": "https://www.thenetworkerhub.com/assets/logo.png",
             "email": "hello@thenetworkerhub.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities.",
             "address": {
@@ -735,9 +735,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "http://localhost:3000",
-          "logo": "http://localhost:3000/assets/logo.png",
-          "image": "http://localhost:3000/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -770,7 +770,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "WebPage",
-          "url": "http://localhost:3000/for-organisers",
+          "url": "https://www.thenetworkerhub.com/for-organisers",
           "name": "For Organisers – The Networker Hub",
           "description": "Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Alumni Fast-Pass, and discovery in the UK events and opportunities directories.",
           "about": {
@@ -778,9 +778,9 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker Hub",
             "legalName": "The Networker Group Ltd",
-            "url": "http://localhost:3000",
-            "logo": "http://localhost:3000/assets/logo.png",
-            "image": "http://localhost:3000/assets/logo.png",
+            "url": "https://www.thenetworkerhub.com",
+            "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+            "image": "https://www.thenetworkerhub.com/assets/logo.png",
             "email": "hello@thenetworkerhub.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities.",
             "address": {
@@ -821,9 +821,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "http://localhost:3000",
-          "logo": "http://localhost:3000/assets/logo.png",
-          "image": "http://localhost:3000/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -856,7 +856,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "WebPage",
-          "url": "http://localhost:3000/advertising",
+          "url": "https://www.thenetworkerhub.com/advertising",
           "name": "Advertising & sponsorship – The Networker Hub",
           "description": "Sponsor placements and advertising rates for the events directory and business opportunities on The Networker Hub.",
           "about": {
@@ -864,9 +864,9 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker Hub",
             "legalName": "The Networker Group Ltd",
-            "url": "http://localhost:3000",
-            "logo": "http://localhost:3000/assets/logo.png",
-            "image": "http://localhost:3000/assets/logo.png",
+            "url": "https://www.thenetworkerhub.com",
+            "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+            "image": "https://www.thenetworkerhub.com/assets/logo.png",
             "email": "hello@thenetworkerhub.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities.",
             "address": {
@@ -907,9 +907,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "http://localhost:3000",
-          "logo": "http://localhost:3000/assets/logo.png",
-          "image": "http://localhost:3000/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -942,14 +942,14 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          "@id": "http://localhost:3000/events/",
-          "url": "http://localhost:3000/events/",
+          "@id": "https://www.thenetworkerhub.com/events/",
+          "url": "https://www.thenetworkerhub.com/events/",
           "name": "Networking events — The Networker Hub",
           "description": "Browse UK networking events, meetings, webinars, workshops, exhibitions, and awards.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker Hub",
-            "url": "http://localhost:3000"
+            "url": "https://www.thenetworkerhub.com"
           }
         }
       ]
@@ -962,9 +962,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "http://localhost:3000",
-          "logo": "http://localhost:3000/assets/logo.png",
-          "image": "http://localhost:3000/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -997,14 +997,14 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          "@id": "http://localhost:3000/opportunities/",
-          "url": "http://localhost:3000/opportunities/",
+          "@id": "https://www.thenetworkerhub.com/opportunities/",
+          "url": "https://www.thenetworkerhub.com/opportunities/",
           "name": "Business opportunities — The Networker Hub",
           "description": "Browse franchises, partnerships, and business opportunities across the UK.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker Hub",
-            "url": "http://localhost:3000"
+            "url": "https://www.thenetworkerhub.com"
           }
         }
       ]
@@ -1017,9 +1017,9 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker Hub",
           "legalName": "The Networker Group Ltd",
-          "url": "http://localhost:3000",
-          "logo": "http://localhost:3000/assets/logo.png",
-          "image": "http://localhost:3000/assets/logo.png",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
@@ -1052,7 +1052,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "WebPage",
-          "url": "http://localhost:3000/legal-policies",
+          "url": "https://www.thenetworkerhub.com/legal-policies",
           "name": "Legal & policies — The Networker Hub",
           "description": "Privacy policy, terms, refunds, and cookie information for The Networker Hub."
         }
@@ -1063,14 +1063,14 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "CollectionPage",
-          "@id": "http://localhost:3000/guides",
-          "url": "http://localhost:3000/guides",
+          "@id": "https://www.thenetworkerhub.com/guides",
+          "url": "https://www.thenetworkerhub.com/guides",
           "name": "Organiser guides – The Networker Hub",
           "description": "Step-by-step onboarding checklists for organisers — list events, publish business opportunities, and invite team editors on The Networker Hub.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker Hub",
-            "url": "http://localhost:3000"
+            "url": "https://www.thenetworkerhub.com"
           }
         },
         {
@@ -1080,13 +1080,13 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "http://localhost:3000/"
+              "item": "https://www.thenetworkerhub.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Organiser guides",
-              "item": "http://localhost:3000/guides"
+              "item": "https://www.thenetworkerhub.com/guides"
             }
           ]
         }
@@ -1097,30 +1097,30 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "Article",
-          "@id": "http://localhost:3000/help/organiser-payouts#article",
-          "url": "http://localhost:3000/help/organiser-payouts",
+          "@id": "https://www.thenetworkerhub.com/help/organiser-payouts#article",
+          "url": "https://www.thenetworkerhub.com/help/organiser-payouts",
           "headline": "Organiser payouts",
           "description": "When organisers receive ticket payouts on The Networker Hub — 7-day settlement, Stripe Connect, archiving events, and requesting payouts from your dashboard.",
           "author": {
             "@type": "Organization",
             "name": "The Networker Group Ltd",
-            "url": "http://localhost:3000"
+            "url": "https://www.thenetworkerhub.com"
           },
           "publisher": {
             "@type": "Organization",
             "name": "The Networker Group Ltd",
-            "url": "http://localhost:3000",
+            "url": "https://www.thenetworkerhub.com",
             "logo": {
               "@type": "ImageObject",
-              "url": "http://localhost:3000/assets/logo.png"
+              "url": "https://www.thenetworkerhub.com/assets/logo.png"
             }
           },
-          "mainEntityOfPage": "http://localhost:3000/help/organiser-payouts"
+          "mainEntityOfPage": "https://www.thenetworkerhub.com/help/organiser-payouts"
         },
         {
           "@type": "FAQPage",
-          "@id": "http://localhost:3000/help/organiser-payouts#faq",
-          "url": "http://localhost:3000/help/organiser-payouts",
+          "@id": "https://www.thenetworkerhub.com/help/organiser-payouts#faq",
+          "url": "https://www.thenetworkerhub.com/help/organiser-payouts",
           "mainEntity": [
             {
               "@type": "Question",
@@ -1139,19 +1139,19 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "http://localhost:3000/"
+              "item": "https://www.thenetworkerhub.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "FAQ & Help",
-              "item": "http://localhost:3000/faq"
+              "item": "https://www.thenetworkerhub.com/faq"
             },
             {
               "@type": "ListItem",
               "position": 3,
               "name": "Organiser payouts",
-              "item": "http://localhost:3000/help/organiser-payouts"
+              "item": "https://www.thenetworkerhub.com/help/organiser-payouts"
             }
           ]
         }
@@ -1162,30 +1162,30 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "Article",
-          "@id": "http://localhost:3000/help/pricing-fees#article",
-          "url": "http://localhost:3000/help/pricing-fees",
+          "@id": "https://www.thenetworkerhub.com/help/pricing-fees#article",
+          "url": "https://www.thenetworkerhub.com/help/pricing-fees",
           "headline": "Ticket pricing & fees",
           "description": "How The Networker Hub ticket fees work — 4.5% + 20p booking fee paid by attendees, organisers receive the full ticket price, with worked examples.",
           "author": {
             "@type": "Organization",
             "name": "The Networker Group Ltd",
-            "url": "http://localhost:3000"
+            "url": "https://www.thenetworkerhub.com"
           },
           "publisher": {
             "@type": "Organization",
             "name": "The Networker Group Ltd",
-            "url": "http://localhost:3000",
+            "url": "https://www.thenetworkerhub.com",
             "logo": {
               "@type": "ImageObject",
-              "url": "http://localhost:3000/assets/logo.png"
+              "url": "https://www.thenetworkerhub.com/assets/logo.png"
             }
           },
-          "mainEntityOfPage": "http://localhost:3000/help/pricing-fees"
+          "mainEntityOfPage": "https://www.thenetworkerhub.com/help/pricing-fees"
         },
         {
           "@type": "FAQPage",
-          "@id": "http://localhost:3000/help/pricing-fees#faq",
-          "url": "http://localhost:3000/help/pricing-fees",
+          "@id": "https://www.thenetworkerhub.com/help/pricing-fees#faq",
+          "url": "https://www.thenetworkerhub.com/help/pricing-fees",
           "mainEntity": [
             {
               "@type": "Question",
@@ -1204,19 +1204,19 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "http://localhost:3000/"
+              "item": "https://www.thenetworkerhub.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "FAQ & Help",
-              "item": "http://localhost:3000/faq"
+              "item": "https://www.thenetworkerhub.com/faq"
             },
             {
               "@type": "ListItem",
               "position": 3,
               "name": "Ticket pricing & fees",
-              "item": "http://localhost:3000/help/pricing-fees"
+              "item": "https://www.thenetworkerhub.com/help/pricing-fees"
             }
           ]
         }
@@ -1227,20 +1227,20 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "WebPage",
-          "@id": "http://localhost:3000/guides/list-an-event#webpage",
-          "url": "http://localhost:3000/guides/list-an-event",
+          "@id": "https://www.thenetworkerhub.com/guides/list-an-event#webpage",
+          "url": "https://www.thenetworkerhub.com/guides/list-an-event",
           "name": "List an event – How-to guides – The Networker Hub",
           "description": "Step-by-step guide for organisers: create your organiser page, add event details, set up tickets, connect Stripe, and publish on The Networker Hub.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker Hub",
-            "url": "http://localhost:3000"
+            "url": "https://www.thenetworkerhub.com"
           }
         },
         {
           "@type": "HowTo",
-          "@id": "http://localhost:3000/guides/list-an-event#howto",
-          "url": "http://localhost:3000/guides/list-an-event",
+          "@id": "https://www.thenetworkerhub.com/guides/list-an-event#howto",
+          "url": "https://www.thenetworkerhub.com/guides/list-an-event",
           "name": "How to list an event on The Networker Hub",
           "description": "Step-by-step guide for organisers: create your organiser page, add event details, set up tickets, connect Stripe, and publish on The Networker Hub.",
           "step": [
@@ -1249,49 +1249,49 @@ window.HUB_SEO_DATA = {
               "position": 1,
               "name": "Sign in to the organiser dashboard",
               "text": "Sign in and open the organiser dashboard at /organiser/. If your networking group is already listed, search the organiser directory and claim your page when prompted.",
-              "url": "http://localhost:3000/guides/list-an-event#sign-in"
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event#sign-in"
             },
             {
               "@type": "HowToStep",
               "position": 2,
               "name": "Create or update your organiser page",
               "text": "Under Organiser pages, add your public group profile: name, logo, description, contact email, and social links.",
-              "url": "http://localhost:3000/guides/list-an-event#organiser-page"
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event#organiser-page"
             },
             {
               "@type": "HowToStep",
               "position": 3,
               "name": "Start a new event listing",
               "text": "From My events, choose List event. Add title, event type, description, cover photo, format (in person, online, or hybrid), venue, and dates.",
-              "url": "http://localhost:3000/guides/list-an-event#new-event"
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event#new-event"
             },
             {
               "@type": "HowToStep",
               "position": 4,
               "name": "Set up tickets",
               "text": "Choose standard tickets, guest visit programme, Category Exclusivity, or Alumni Fast-Pass. Set prices, quantities, VAT if applicable, and your refund policy.",
-              "url": "http://localhost:3000/guides/list-an-event#tickets"
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event#tickets"
             },
             {
               "@type": "HowToStep",
               "position": 5,
               "name": "Connect Stripe for paid tickets",
               "text": "For paid events, complete Connect Stripe under Revenue so ticket money reaches your bank account. Free events do not require Stripe.",
-              "url": "http://localhost:3000/guides/list-an-event#stripe"
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event#stripe"
             },
             {
               "@type": "HowToStep",
               "position": 6,
               "name": "Publish",
               "text": "When details and tickets are complete, publish the event. Once Published, Approved, linked to a published organiser page, and has ticket types, it appears on Browse events.",
-              "url": "http://localhost:3000/guides/list-an-event#publish"
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event#publish"
             },
             {
               "@type": "HowToStep",
               "position": 7,
               "name": "Manage bookings after publish",
               "text": "Use the dashboard to view attendees, revenue and payout status, reviews, and handle cancellations or refunds.",
-              "url": "http://localhost:3000/guides/list-an-event#manage-bookings"
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event#manage-bookings"
             }
           ]
         },
@@ -1302,19 +1302,19 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "http://localhost:3000/"
+              "item": "https://www.thenetworkerhub.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Organiser guides",
-              "item": "http://localhost:3000/guides"
+              "item": "https://www.thenetworkerhub.com/guides"
             },
             {
               "@type": "ListItem",
               "position": 3,
               "name": "List an event",
-              "item": "http://localhost:3000/guides/list-an-event"
+              "item": "https://www.thenetworkerhub.com/guides/list-an-event"
             }
           ]
         }
@@ -1325,20 +1325,20 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "WebPage",
-          "@id": "http://localhost:3000/guides/list-a-conference-or-exhibition#webpage",
-          "url": "http://localhost:3000/guides/list-a-conference-or-exhibition",
+          "@id": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition#webpage",
+          "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition",
           "name": "List a conference or exhibition – How-to guides – The Networker Hub",
           "description": "Guide for organisers listing conferences, exhibitions, awards dinners and summits on The Networker Hub — free listings, optional paid tickets, and visibility.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker Hub",
-            "url": "http://localhost:3000"
+            "url": "https://www.thenetworkerhub.com"
           }
         },
         {
           "@type": "HowTo",
-          "@id": "http://localhost:3000/guides/list-a-conference-or-exhibition#howto",
-          "url": "http://localhost:3000/guides/list-a-conference-or-exhibition",
+          "@id": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition#howto",
+          "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition",
           "name": "How to list a conference or exhibition on The Networker Hub",
           "description": "Guide for organisers listing conferences, exhibitions, awards dinners and summits on The Networker Hub — free listings, optional paid tickets, and visibility.",
           "step": [
@@ -1347,35 +1347,35 @@ window.HUB_SEO_DATA = {
               "position": 1,
               "name": "Claim or create your organiser page",
               "text": "Sign in to the organiser dashboard. If your group or exhibition brand is already listed, confirm the claim prompt. Otherwise create an organiser page with logo, description, and contact email.",
-              "url": "http://localhost:3000/guides/list-a-conference-or-exhibition#organiser-page"
+              "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition#organiser-page"
             },
             {
               "@type": "HowToStep",
               "position": 2,
               "name": "Start a new listing",
               "text": "From the dashboard choose Add new → Event. Pick your organiser page, set format, venue, and dates. For multi-day conferences, select multiple dates on the calendar.",
-              "url": "http://localhost:3000/guides/list-a-conference-or-exhibition#new-listing"
+              "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition#new-listing"
             },
             {
               "@type": "HowToStep",
               "position": 3,
               "name": "Choose Conference or Exhibition",
               "text": "On the event details step, set Event type to Conference or Exhibition so attendees can filter you on Browse events.",
-              "url": "http://localhost:3000/guides/list-a-conference-or-exhibition#event-type"
+              "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition#event-type"
             },
             {
               "@type": "HowToStep",
               "position": 4,
               "name": "Set up tickets (free or paid)",
               "text": "Add delegate ticket tiers (early bird, standard, VIP, exhibitor, visitor, or free registration). Paid tickets require Connect Stripe under Revenue.",
-              "url": "http://localhost:3000/guides/list-a-conference-or-exhibition#tickets"
+              "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition#tickets"
             },
             {
               "@type": "HowToStep",
               "position": 5,
               "name": "Publish and promote",
               "text": "Publish when details, tickets, VAT if applicable, and refund policy are complete. Optional Premium Spotlight adds extra visibility on the browse page.",
-              "url": "http://localhost:3000/guides/list-a-conference-or-exhibition#publish"
+              "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition#publish"
             }
           ]
         },
@@ -1386,19 +1386,19 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "http://localhost:3000/"
+              "item": "https://www.thenetworkerhub.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Organiser guides",
-              "item": "http://localhost:3000/guides"
+              "item": "https://www.thenetworkerhub.com/guides"
             },
             {
               "@type": "ListItem",
               "position": 3,
               "name": "List a conference or exhibition",
-              "item": "http://localhost:3000/guides/list-a-conference-or-exhibition"
+              "item": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition"
             }
           ]
         }
@@ -1409,20 +1409,20 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "WebPage",
-          "@id": "http://localhost:3000/guides/list-a-business-opportunity#webpage",
-          "url": "http://localhost:3000/guides/list-a-business-opportunity",
+          "@id": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#webpage",
+          "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity",
           "name": "List a business opportunity – How-to guides – The Networker Hub",
           "description": "How organisers list a business opportunity on The Networker Hub — create a listing, submit for review, and manage enquiries.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker Hub",
-            "url": "http://localhost:3000"
+            "url": "https://www.thenetworkerhub.com"
           }
         },
         {
           "@type": "HowTo",
-          "@id": "http://localhost:3000/guides/list-a-business-opportunity#howto",
-          "url": "http://localhost:3000/guides/list-a-business-opportunity",
+          "@id": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#howto",
+          "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity",
           "name": "How to list a business opportunity on The Networker Hub",
           "description": "How organisers list a business opportunity on The Networker Hub — create a listing, submit for review, and manage enquiries.",
           "step": [
@@ -1431,49 +1431,49 @@ window.HUB_SEO_DATA = {
               "position": 1,
               "name": "Open the organiser dashboard",
               "text": "Sign in and go to Business opportunities in the sidebar. You need an organiser account — the same workspace you use for events.",
-              "url": "http://localhost:3000/guides/list-a-business-opportunity#dashboard"
+              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#dashboard"
             },
             {
               "@type": "HowToStep",
               "position": 2,
               "name": "Start a new listing",
               "text": "Choose List a listing. Review how listings work, pricing, and what happens after submission, then open the listing form.",
-              "url": "http://localhost:3000/guides/list-a-business-opportunity#new-listing"
+              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#new-listing"
             },
             {
               "@type": "HowToStep",
               "position": 3,
               "name": "Complete the listing form",
               "text": "Add title, opportunity type, summary, description, investment notes, location, industry, images, and contact details. Listings are reviewed before going live.",
-              "url": "http://localhost:3000/guides/list-a-business-opportunity#listing-form"
+              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#listing-form"
             },
             {
               "@type": "HowToStep",
               "position": 4,
               "name": "Submit for review",
               "text": "Submit the listing. You receive email updates when it is approved, live, or if changes are needed.",
-              "url": "http://localhost:3000/guides/list-a-business-opportunity#submit"
+              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#submit"
             },
             {
               "@type": "HowToStep",
               "position": 5,
               "name": "Optional: premium placement",
               "text": "Featured carousel slots may be available for extra visibility on the opportunities browse page after submission.",
-              "url": "http://localhost:3000/guides/list-a-business-opportunity#premium"
+              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#premium"
             },
             {
               "@type": "HowToStep",
               "position": 6,
               "name": "Manage enquiries",
               "text": "When someone enquires, you receive an email notification. Reply directly to the prospect and track enquiries from Business opportunities in the dashboard.",
-              "url": "http://localhost:3000/guides/list-a-business-opportunity#enquiries"
+              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#enquiries"
             },
             {
               "@type": "HowToStep",
               "position": 7,
               "name": "Renew or update",
               "text": "Listings run for a set period. Renew or edit from your dashboard before expiry to stay visible on Browse opportunities.",
-              "url": "http://localhost:3000/guides/list-a-business-opportunity#renew"
+              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#renew"
             }
           ]
         },
@@ -1484,19 +1484,19 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "http://localhost:3000/"
+              "item": "https://www.thenetworkerhub.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Organiser guides",
-              "item": "http://localhost:3000/guides"
+              "item": "https://www.thenetworkerhub.com/guides"
             },
             {
               "@type": "ListItem",
               "position": 3,
               "name": "List a business opportunity",
-              "item": "http://localhost:3000/guides/list-a-business-opportunity"
+              "item": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity"
             }
           ]
         }
@@ -1507,20 +1507,20 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "WebPage",
-          "@id": "http://localhost:3000/guides/invite-your-team#webpage",
-          "url": "http://localhost:3000/guides/invite-your-team",
+          "@id": "https://www.thenetworkerhub.com/guides/invite-your-team#webpage",
+          "url": "https://www.thenetworkerhub.com/guides/invite-your-team",
           "name": "Invite your team – How-to guides – The Networker Hub",
           "description": "How to invite editor team members to your organiser workspace on The Networker Hub — permissions, limits, and accept flow.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker Hub",
-            "url": "http://localhost:3000"
+            "url": "https://www.thenetworkerhub.com"
           }
         },
         {
           "@type": "HowTo",
-          "@id": "http://localhost:3000/guides/invite-your-team#howto",
-          "url": "http://localhost:3000/guides/invite-your-team",
+          "@id": "https://www.thenetworkerhub.com/guides/invite-your-team#howto",
+          "url": "https://www.thenetworkerhub.com/guides/invite-your-team",
           "name": "How to invite editors to your organiser workspace on The Networker Hub",
           "description": "How to invite editor team members to your organiser workspace on The Networker Hub — permissions, limits, and accept flow.",
           "step": [
@@ -1529,42 +1529,42 @@ window.HUB_SEO_DATA = {
               "position": 1,
               "name": "Who can invite",
               "text": "Only the account owner can send or remove team invites. Editors can see the team list but cannot invite others.",
-              "url": "http://localhost:3000/guides/invite-your-team#who-can-invite"
+              "url": "https://www.thenetworkerhub.com/guides/invite-your-team#who-can-invite"
             },
             {
               "@type": "HowToStep",
               "position": 2,
               "name": "Send an invite",
               "text": "In the organiser dashboard, open Team & invites. Click Invite team member, enter their email, and send. You can invite up to 10 editors per organiser account.",
-              "url": "http://localhost:3000/guides/invite-your-team#send-invite"
+              "url": "https://www.thenetworkerhub.com/guides/invite-your-team#send-invite"
             },
             {
               "@type": "HowToStep",
               "position": 3,
               "name": "They accept by signing in",
               "text": "Your colleague opens the email and signs in with that exact email address. Once signed in, their status changes to Active on your team list.",
-              "url": "http://localhost:3000/guides/invite-your-team#accept"
+              "url": "https://www.thenetworkerhub.com/guides/invite-your-team#accept"
             },
             {
               "@type": "HowToStep",
               "position": 4,
               "name": "What editors can do",
               "text": "Editors can view all networking groups, create and edit events and tickets, view revenue and registrations, and manage business opportunity listings.",
-              "url": "http://localhost:3000/guides/invite-your-team#permissions"
+              "url": "https://www.thenetworkerhub.com/guides/invite-your-team#permissions"
             },
             {
               "@type": "HowToStep",
               "position": 5,
               "name": "What editors cannot do",
               "text": "Editors cannot invite or remove team members or delete events. Access is account-wide across every group on your organiser account.",
-              "url": "http://localhost:3000/guides/invite-your-team#restrictions"
+              "url": "https://www.thenetworkerhub.com/guides/invite-your-team#restrictions"
             },
             {
               "@type": "HowToStep",
               "position": 6,
               "name": "Remove someone",
               "text": "From the team table, choose Remove next to an editor or resend a pending invite if they did not receive the email.",
-              "url": "http://localhost:3000/guides/invite-your-team#remove"
+              "url": "https://www.thenetworkerhub.com/guides/invite-your-team#remove"
             }
           ]
         },
@@ -1575,19 +1575,19 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "http://localhost:3000/"
+              "item": "https://www.thenetworkerhub.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Organiser guides",
-              "item": "http://localhost:3000/guides"
+              "item": "https://www.thenetworkerhub.com/guides"
             },
             {
               "@type": "ListItem",
               "position": 3,
               "name": "Invite editors",
-              "item": "http://localhost:3000/guides/invite-your-team"
+              "item": "https://www.thenetworkerhub.com/guides/invite-your-team"
             }
           ]
         }

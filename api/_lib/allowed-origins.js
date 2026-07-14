@@ -24,6 +24,8 @@ function configuredSiteOrigins() {
   if (siteUrl) out.add(siteUrl);
   out.add('https://www.thenetworkerhub.com');
   out.add('https://thenetworkerhub.com');
+  out.add('https://www.thenetworkerhub.co.uk');
+  out.add('https://thenetworkerhub.co.uk');
   out.add('https://the-networker-hub.vercel.app');
   return out;
 }

@@ -137,6 +137,7 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 | Done | Task |
 |:----:|------|
 | [ ] | the-networker.co.uk redirect live |
+| [ ] | thenetworkerhub.co.uk (+ www) → www.thenetworkerhub.com (Vercel domain + DNS) |
 | [x] | Checkout + confirmation email verified on prod |
 | [ ] | Stripe Connect destination charge test passed (Tab 9) |
 | [x] | 1,000+ organiser group profiles browsable |
@@ -146,7 +147,7 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 | [ ] | **Business ops** — Tab 10 gates complete (or consciously deferred with owner) |
 | [ ] | SEO/AEO — Tab 6 + `docs/SEO-AEO-LAUNCH-PLAN.md` launch-week steps |
 | [ ] | `EMAIL_ALLOWLIST_DISABLED=true` on launch (if allowlist was on) |
-| [ ] | `SITE_ACCESS_PASSWORD` removed — public gate off (~28 August) |
+| [ ] | `SITE_ACCESS_PASSWORD` removed — public gate off (1st September) |
 
 ---
 
