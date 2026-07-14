@@ -276,7 +276,7 @@
       '<a class="org-btn org-btn-outline org-btn-sm" href="' +
       esc(groupPublicProfileUrl(g.id)) +
       '" target="_blank" rel="noopener noreferrer">View public profile</a>' +
-      '<a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-listed.png" download>Download LinkedIn cover</a>' +
+      '<a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-events.png" download>Download LinkedIn cover</a>' +
       '</div></article>'
     );
   }
