@@ -35,6 +35,14 @@ module.exports = async function handler(req, res) {
   const gate = requireAdmin(session);
   if (!gate.ok) return json(res, gate.status, { error: gate.error, message: gate.message });
 
+  const mfaEnrolled = await adminMfa.isMfaEnrolled(session.sub);
+  if (mfaEnrolled && !session.mfaVerified && String(parseBody(req).action || '').toLowerCase() !== 'disable') {
+    return json(res, 403, {
+      error: 'mfa_required',
+      message: 'Sign in again with your authenticator code before changing MFA settings.',
+    });
+  }
+
   if (req.method === 'GET') {
     const enrolled = await adminMfa.isMfaEnrolled(session.sub);
     return json(res, 200, {

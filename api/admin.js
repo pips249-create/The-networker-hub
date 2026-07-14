@@ -32,6 +32,21 @@ const routes = {
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
+
+  const session = sessionFromRequest(req);
+  const gate = requireAdmin(session);
+  if (!gate.ok) {
+    return json(res, gate.status, { error: gate.error, message: gate.message });
+  }
+
+  const mfaEnrolled = await adminMfa.isMfaEnrolled(session.sub);
+  if (mfaEnrolled && !session.mfaVerified) {
+    return json(res, 403, {
+      error: 'mfa_required',
+      message: 'Enter your authenticator code to access the Command Centre.',
+    });
+  }
+
   const route = getSubRoute(req, '/api/admin');
   const fn = routes[route];
   if (!fn) {

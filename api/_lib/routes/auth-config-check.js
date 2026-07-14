@@ -52,8 +52,9 @@ module.exports = async function handler(req, res) {
     hasAdminEmail: Boolean(process.env.ADMIN_EMAIL),
     hasAdminInitialPassword: Boolean(process.env.ADMIN_INITIAL_PASSWORD),
     hasAdminSetupSecret: Boolean(process.env.ADMIN_SETUP_SECRET),
-      hasSiteUrl: Boolean(process.env.SITE_URL),
-      hasSiteAccessPassword: Boolean(String(process.env.SITE_ACCESS_PASSWORD || '').trim()),
+    hasConfigCheckSecret: Boolean(String(process.env.CONFIG_CHECK_SECRET || '').trim()),
+    hasSiteUrl: Boolean(process.env.SITE_URL),
+    hasSiteAccessPassword: Boolean(String(process.env.SITE_ACCESS_PASSWORD || '').trim()),
     dataProvider: provider,
     hasSupabaseUrl: Boolean(sbCfg.url),
     hasSupabaseServiceKey: Boolean(sbCfg.serviceKey),
@@ -128,6 +129,14 @@ module.exports = async function handler(req, res) {
         : null,
       supabaseConnection: !supabase.ok && supabase.configured !== false ? supabase.message : null,
       setupAdminRequired: supabase.ok && !adminAccount.exists,
+      removeSetupSecret:
+        env.hasAdminSetupSecret && adminAccount.exists
+          ? 'Admin exists — remove ADMIN_SETUP_SECRET from Vercel Production env vars.'
+          : null,
+      configCheckProduction:
+        cron.isProduction && !env.hasConfigCheckSecret
+          ? 'Config check is admin-only in production. Optionally set CONFIG_CHECK_SECRET for scripted health probes (Authorization: Bearer …).'
+          : null,
       missingResend:
         !email.emailSendingConfigured
           ? 'Add RESEND_API_KEY and RESEND_FROM in Vercel (and local.env for localhost test sends), then redeploy.'
