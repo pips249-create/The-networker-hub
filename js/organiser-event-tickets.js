@@ -1606,12 +1606,14 @@
     }
 
     if (existingTicketsLoaded) {
+      const scopeText =
+        eventIds.length === 1
+          ? 'this event only'
+          : 'the ' + eventIds.length + ' dates in this listing only';
       const proceed = window.confirm(
-        'This will replace existing ticket types for ' +
-          eventIds.length +
-          ' event' +
-          (eventIds.length === 1 ? '' : 's') +
-          ' with what you have here. Continue?'
+        'This will update the ticket types for ' +
+          scopeText +
+          ' with what you have here. Your other events are not affected. Continue?'
       );
       if (!proceed) {
         showAlert('Publish cancelled — your ticket types were not changed.', 'warn');
