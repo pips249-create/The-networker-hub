@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260714badges" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260714li2" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260714cls" />
   </head>
   <body class="organiser-dashboard-page">
@@ -205,7 +205,7 @@
 
           <div id="org-payment-setup-dashboard" hidden></div>
 
-          <div class="org-getting-started" id="org-getting-started">
+          <div class="org-getting-started" id="org-getting-started" hidden>
             <div class="org-getting-started-head">
               <div>
                 <h2 class="org-getting-started-title">Here&apos;s what to do first</h2>
@@ -627,13 +627,12 @@
             <section class="org-linkedin-covers" id="org-linkedin-covers" aria-labelledby="org-linkedin-covers-title">
               <h2 class="org-section-title" id="org-linkedin-covers-title">LinkedIn cover templates</h2>
               <p class="org-section-sub">
-                Free static covers (1584×396) — download, upload as your LinkedIn banner, and share that you&rsquo;re on The Networker Hub.
+                Evergreen covers (1584×396) matched to Hub branding. Text sits clear of your profile photo on the left — download, then upload as your LinkedIn banner.
               </p>
               <div class="org-linkedin-covers-grid">
-                <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-listed.svg" download="linkedin-cover-listed-networker-hub.svg">We&rsquo;re listed on the Hub</a>
-                <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-top10.svg" download="linkedin-cover-top10-networker-hub.svg">Top 10 cover</a>
-                <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-top25.svg" download="linkedin-cover-top25-networker-hub.svg">Top 25 cover</a>
-                <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-top50.svg" download="linkedin-cover-top50-networker-hub.svg">Top 50 cover</a>
+                <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-listed.png" download="linkedin-cover-listed-networker-hub.png">Listed on the Hub</a>
+                <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-events.png" download="linkedin-cover-events-networker-hub.png">Find our next event</a>
+                <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-book.png" download="linkedin-cover-book-networker-hub.png">Book tickets via the Hub</a>
               </div>
             </section>
           </div>
@@ -1076,9 +1075,8 @@
           </div>
           <div class="org-field">
             <label for="team-invite-role">Role</label>
-            <select id="team-invite-role" disabled>
-              <option value="editor" selected>Editor</option>
-            </select>
+            <input type="text" id="team-invite-role" value="Editor" readonly aria-readonly="true" />
+            <p class="org-field-hint">Team invites are editors only. Owners cannot be invited — there is one account owner.</p>
           </div>
           <div class="org-modal-actions">
             <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
@@ -1585,6 +1583,6 @@
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
     <script src="../js/organiser-payment-setup.js?v=20260714a"></script>
     <script src="../js/review-report.js?v=20260708"></script>
-    <script src="../js/organiser-dashboard.js?v=20260714badges"></script>
+    <script src="../js/organiser-dashboard.js?v=20260714li2"></script>
   </body>
 </html>

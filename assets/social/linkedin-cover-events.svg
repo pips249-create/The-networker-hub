@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1584" height="396" viewBox="0 0 1584 396" role="img" aria-label="Find our next event on The Networker Hub">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0.9">
+      <stop offset="0%" stop-color="#faf6ee"/>
+      <stop offset="55%" stop-color="#f5f0e8"/>
+      <stop offset="100%" stop-color="#d9c4e0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1584" height="396" fill="url(#bg)"/>
+  <rect x="0" y="0" width="14" height="396" fill="#9a7aa8"/>
+  <circle cx="1540" cy="30" r="200" fill="#c299d1" opacity="0.15"/>
+  <circle cx="1460" cy="370" r="160" fill="#b8956a" opacity="0.1"/>
+
+  <g transform="translate(760, 108)">
+    <text x="0" y="0" fill="#9a7aa8" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" letter-spacing="2.5">NEXT EVENT</text>
+    <text x="0" y="54" fill="#4a4446" font-family="Georgia, serif" font-size="38">Find our next event on</text>
+    <text x="0" y="108" fill="#4a4446" font-family="Georgia, serif" font-size="46">The Networker Hub</text>
+    <text x="0" y="158" fill="#5c5557" font-family="Arial, Helvetica, sans-serif" font-size="20">Browse dates, book tickets, and join us</text>
+  </g>
+
+  <g transform="translate(1235, 28) scale(0.8)">
+    <text x="170" y="28" text-anchor="middle" font-family="Georgia, serif" font-size="26" fill="#5c5557">The</text>
+    <text x="32" y="88" font-family="Georgia, serif" font-size="58" fill="#c299d1">Net</text>
+    <text x="119" y="88" font-family="Georgia, serif" font-size="58" fill="#c299d1">w</text>
+    <circle cx="176" cy="72" r="11" fill="#faf6ee" stroke="#c299d1" stroke-width="2.5"/>
+    <circle cx="176" cy="72" r="17" fill="none" stroke="#c299d1" stroke-width="2"/>
+    <text x="193" y="88" font-family="Georgia, serif" font-size="58" fill="#c299d1">rker</text>
+    <text x="170" y="124" text-anchor="middle" font-family="Georgia, serif" font-size="26" fill="#5c5557">Hub</text>
+  </g>
+</svg>

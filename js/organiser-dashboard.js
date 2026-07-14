@@ -276,19 +276,9 @@
       '<a class="org-btn org-btn-outline org-btn-sm" href="' +
       esc(groupPublicProfileUrl(g.id)) +
       '" target="_blank" rel="noopener noreferrer">View public profile</a>' +
-      '<a class="org-btn org-btn-outline org-btn-sm" href="' +
-      esc(linkedinCoverHrefForTier(row.tier)) +
-      '" download>Download LinkedIn cover</a>' +
+      '<a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-listed.png" download>Download LinkedIn cover</a>' +
       '</div></article>'
     );
-  }
-
-  function linkedinCoverHrefForTier(tier) {
-    const t = String(tier || '').toLowerCase();
-    if (t === 'top10') return '../assets/social/linkedin-cover-top10.svg';
-    if (t === 'top25') return '../assets/social/linkedin-cover-top25.svg';
-    if (t === 'top50') return '../assets/social/linkedin-cover-top50.svg';
-    return '../assets/social/linkedin-cover-listed.svg';
   }
 
   function bindRankingShareActions(root) {
@@ -6299,6 +6289,14 @@
 
     if (coreDone) {
       panel.hidden = true;
+      try {
+        localStorage.setItem('hub_getting_started_dismissed', '1');
+      } catch (e) {
+        /* ignore */
+      }
+      if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.markResumeDismissed) {
+        window.HubOrganiserOnboarding.markResumeDismissed();
+      }
       updateSetupResumeBanner();
       return;
     }
@@ -6476,7 +6474,12 @@
   }
 
   function hasListedEvents() {
-    return Boolean(state.events.length || state.eventsTotal);
+    if (state.events.length || state.eventsTotal) return true;
+    if ((state.upcomingEvents || []).length) return true;
+    if ((state.eventSummaries || []).length) return true;
+    if ((state.tickets || []).length) return true;
+    if (totalTicketsSold() > 0) return true;
+    return false;
   }
 
   function continueOnboardingAfterClaim() {
