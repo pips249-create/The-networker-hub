@@ -12,6 +12,17 @@ const {
 } = require('./cancellation-email-sections');
 const { listOpportunityEnquiriesSentBySession } = require('./supabase-opportunities');
 const { reconcileCancelledRegistrationRefunds } = require('./reconcile-cancelled-refunds');
+const { ticketIsApplication } = require('./supabase-application-submissions');
+
+function deriveIsCategoryExclusivity(row) {
+  const ev = row.events || {};
+  const ticket = row.tickets || {};
+  if (ticketIsApplication(ticket)) return true;
+  const mode = String(ev.attendance_mode || '')
+    .trim()
+    .toLowerCase();
+  return mode === 'category_exclusivity' || mode === 'osop';
+}
 
 function deriveReviewStatus(hasReview, row) {
   const ev = row.events || {};
@@ -101,6 +112,8 @@ function mapRegistrationRow(row, reviewByEventId, seriesPeersByEventId) {
     meetingLink: online ? meetingLink : '',
     meetingType: booked.eventRow.meeting_type || (online ? 'Online' : 'In person'),
     bookedSnapshotAt: booked.snapshotCapturedAt,
+    city: String(ev.city || booked.eventRow?.city || '').trim() || null,
+    isCategoryExclusivity: deriveIsCategoryExclusivity(row),
   };
 }
 
@@ -184,6 +197,8 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
         photo_url,
         series_group_id,
         event_type,
+        attendance_mode,
+        city,
         recurrence_pattern,
         recurrence_end_date,
         organiser_id,
@@ -202,7 +217,8 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
       tickets (
         id,
         name,
-        price
+        price,
+        ticket_type
       )
     `
     )

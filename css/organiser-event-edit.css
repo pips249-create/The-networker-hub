@@ -331,6 +331,42 @@ a.ee-wizard-link:hover {
   box-sizing: border-box;
 }
 
+.ee-quarter-time {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ee-quarter-time-hour,
+.ee-quarter-time-min {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  cursor: pointer;
+}
+
+.ee-quarter-time-sep {
+  flex: 0 0 auto;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ee-text-mid);
+  line-height: 1;
+}
+
+.ee-quarter-time-value {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+  pointer-events: none;
+}
+
 .ee-field textarea {
   resize: vertical;
   min-height: 88px;

@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260628" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260619" />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260714b" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260714d" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
 
   </head>
@@ -120,6 +120,11 @@
                 </div>
               </div>
               <div class="ad-refund-alert" id="ad-refund-alert-overview" hidden role="status"></div>
+              <div class="ad-overview-review-nudge" id="ad-overview-review-nudge" hidden></div>
+              <div class="ad-overview-feed" id="ad-overview-feed" hidden>
+                <h2 class="ad-section-title ad-section-title--spaced">Saved events happening soon</h2>
+                <div class="ad-feed-scroll" id="ad-overview-feed-scroll" role="list"></div>
+              </div>
               <p class="ad-section-hint">
                 This area is for attending events and engaging with listings — not for managing a group. Use Organiser workspace in the nav for that.
               </p>
@@ -379,22 +384,7 @@
                 </div>
 
                 <div class="ad-saved-pane is-active" data-reviews-pane="pending" role="tabpanel">
-                  <div class="ad-table-scroll">
-                    <div class="ad-table-wrap">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th class="ad-th-thumb"></th>
-                            <th>Event</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th class="ad-th-actions">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody id="ad-reviews-pending-body"></tbody>
-                      </table>
-                    </div>
-                  </div>
+                  <div class="ad-review-cards" id="ad-reviews-pending-cards" hidden role="list"></div>
                   <p class="ad-empty" id="ad-reviews-pending-empty" hidden>No pending reviews — you're all caught up.</p>
                 </div>
 
@@ -497,6 +487,41 @@
           <button type="button" class="ad-btn ad-btn-danger" id="ad-cancel-confirm" disabled>
             Confirm cancellation
           </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ad-share-modal" id="ad-share-modal" hidden>
+      <div class="ad-share-modal-backdrop" id="ad-share-modal-backdrop"></div>
+      <div
+        class="ad-share-modal-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ad-share-modal-title"
+      >
+        <button type="button" class="ad-share-modal-close" id="ad-share-modal-close" aria-label="Close">
+          ×
+        </button>
+        <h2 class="ad-share-modal-title" id="ad-share-modal-title">Share on LinkedIn</h2>
+        <p class="ad-share-modal-sub" id="ad-share-modal-sub">
+          Download the image, copy the caption, then paste both into a new LinkedIn post.
+        </p>
+        <div class="ad-share-preview-wrap">
+          <div class="ad-share-preview-loading" id="ad-share-preview-loading" role="status">Creating your image…</div>
+          <img class="ad-share-preview" id="ad-share-preview" alt="I'm attending social card preview" hidden />
+        </div>
+        <label class="ad-share-caption-label" for="ad-share-caption">Post caption</label>
+        <textarea class="ad-share-caption" id="ad-share-caption" rows="4" readonly></textarea>
+        <div class="ad-share-actions">
+          <button type="button" class="ad-btn ad-btn-primary" id="ad-share-copy-caption">Copy caption</button>
+          <button type="button" class="ad-btn" id="ad-share-download-image" disabled>Download image</button>
+          <a
+            class="ad-btn ad-btn-ghost"
+            id="ad-share-linkedin"
+            href="https://www.linkedin.com/feed/?shareActive=true"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Open LinkedIn</a>
         </div>
       </div>
     </div>
@@ -604,7 +629,8 @@
     <script src="../js/opportunity-listing-quality.js?v=20260710e"></script>
     <script src="../js/opportunity-compare.js?v=20260714b"></script>
     <script src="../js/hub-calendar-share.js?v=20260609a"></script>
+    <script src="../js/hub-going-share.js?v=20260714a"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260714inv"></script>
+    <script src="../js/attendee-dashboard.js?v=20260714share"></script>
   </body>
 </html>

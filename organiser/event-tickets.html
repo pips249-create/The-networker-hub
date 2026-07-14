@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260708g" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260714time" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -56,11 +56,10 @@
         <div class="ee-card">
           <h2 data-hub-tip="attendance-modes">How would you like to manage attendance?</h2>
           <p class="ee-hint" style="margin-top:0">
-            Choose open ticket booking, the guest visit programme, or Category Exclusivity. These options are mutually exclusive.
+            Choose open ticket booking or Category Exclusivity. With open booking you can also enable the guest visit programme alongside your ticket types.
           </p>
           <div class="ee-mode-toggle" role="group" aria-label="Attendance mode">
             <button type="button" class="ee-mode-btn is-active" data-mode="tickets" id="ee-mode-tickets">🎟 Ticket types</button>
-            <button type="button" class="ee-mode-btn" data-mode="guest_programme" id="ee-mode-guest" data-hub-tip="guest-visit-programme">🎫 Guest visit programme</button>
             <button type="button" class="ee-mode-btn" data-mode="category_exclusivity" id="ee-mode-category-exclusivity" data-hub-tip="category-exclusivity">🪑 Category Exclusivity</button>
           </div>
           <p class="ee-mode-desc" id="ee-mode-desc">
@@ -69,26 +68,37 @@
         </div>
 
         <div class="ee-card" id="ee-panel-tickets">
-          <div class="ee-info-box" id="ee-guest-programme-note" hidden>
-            <strong>Guest visit programme:</strong> New attendees must use their complimentary visit(s) with your group before they can buy a paid member ticket. Set your visit allowance on your
-            <a href="/organiser/group-edit" id="ee-guest-group-edit-link">organiser page</a> (maximum 2 visits per attendee, platform-wide).
-          </div>
-          <div id="ee-guest-passes-opt-out" hidden style="margin-bottom:12px">
-            <label class="ee-check">
-              <input type="checkbox" id="ee-guest-passes-disabled" />
-              <span>Disallow guest passes for this event</span>
-            </label>
-            <p class="ee-hint" style="margin:6px 0 0">
-              Leave unticked to offer complimentary guest passes. Tick for member-only dates (e.g. conferences) — paid member tickets stay available and visitors can book them directly.
-            </p>
-          </div>
           <h2 id="ee-tickets-panel-title">Ticket types</h2>
           <p class="ee-hint" style="margin-top:0">
             Add one row per tier (e.g. Standard, Early bird). Each tier is copied to all dates above. Set when sales end — especially for early bird pricing. Leave sale start blank and sales begin today.
           </p>
           <p class="ee-tier-summary" id="ee-tier-summary" aria-live="polite">0 ticket types · unlimited available · from £0</p>
           <div id="ee-tier-rows"></div>
-          <button type="button" class="ee-btn ee-btn-outline" id="ee-add-tier" style="margin-top:12px">+ Add another ticket type</button>
+          <button type="button" class="ee-btn ee-btn-outline" id="ee-add-tier">+ Add another ticket type</button>
+
+          <div class="ee-guest-addon" id="ee-guest-addon" data-hub-tip="guest-visit-programme">
+            <h3 class="ee-guest-addon-title">Guest visit programme <span class="ee-optional">(optional)</span></h3>
+            <p class="ee-hint" style="margin-top:0">
+              Offer complimentary guest visits alongside your paid ticket types. New attendees use their visit(s) first; paid member tickets unlock afterwards.
+            </p>
+            <label class="ee-check">
+              <input type="checkbox" id="ee-guest-programme-enabled" />
+              <span>Enable guest visit programme for this event</span>
+            </label>
+            <div class="ee-info-box" id="ee-guest-programme-note" hidden>
+              <strong>Guest visit programme:</strong> New attendees must use their complimentary visit(s) with your group before they can buy a paid member ticket. Set your visit allowance on your
+              <a href="/organiser/group-edit" id="ee-guest-group-edit-link">organiser page</a> (maximum 2 visits per attendee, platform-wide).
+            </div>
+            <div id="ee-guest-passes-opt-out" hidden>
+              <label class="ee-check">
+                <input type="checkbox" id="ee-guest-passes-disabled" />
+                <span>Disallow guest passes for this event</span>
+              </label>
+              <p class="ee-hint" style="margin:6px 0 0">
+                Leave unticked to offer complimentary guest passes. Tick for member-only dates (e.g. conferences) — paid member tickets stay available and visitors can book them directly.
+              </p>
+            </div>
+          </div>
         </div>
 
         <div class="ee-card" id="ee-panel-alumni-fast-pass">
@@ -271,7 +281,7 @@
     <script src="../js/organiser-flow-tour.js?v=20260701" data-root="../"></script>
     <script src="../js/fact-loader.js?v=20260613"></script>
     <script src="../js/organiser-page-loading.js?v=20260608d"></script>
-    <script src="../js/organiser-quarter-time.js?v=20260614c"></script>
+    <script src="../js/organiser-quarter-time.js?v=20260714time"></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../"></script>
     <script src="../js/organiser-payment-setup.js?v=20260714a"></script>
     <script src="../js/organiser-field-tips.js?v=20260711"></script>

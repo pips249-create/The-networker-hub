@@ -83,7 +83,7 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ORGANISER TICKETS & ATTENDEES',
     body:
-      'TICKET SETUP (event-tickets.html): choose Standard ticket types for open booking, the guest visit programme (complimentary trial visits before paid member tickets), or Category Exclusivity for application-based attendance — these modes are mutually exclusive. Alumni Fast-Pass can be enabled on events to invite past attendees to an exclusive alumni ticket rate. ' +
+      'TICKET SETUP (event-tickets.html): choose Standard ticket types for open booking, the guest visit programme, or Category Exclusivity for application-based attendance — these attendance modes are mutually exclusive. The guest visit programme still includes paid member ticket tiers: newcomers use their 1–2 complimentary visits first, then paid member tickets unlock. Alumni Fast-Pass can be enabled on events to invite past attendees to an exclusive alumni ticket rate. ' +
       'CATEGORY EXCLUSIVITY: prospective attendees apply to join instead of buying straight away. They answer two fixed questions — their industry and job title. You approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. Set an optional price (leave at £0 for free), places limit, and application closing date. ' +
       'APPLICATION QUESTIONS: under Category Exclusivity, the two questions (industry and job title) are fixed and cannot be changed. For standard open tickets, you can optionally tick boxes under Attendee information at booking to note food is included or to collect dietary or accessibility requirements at checkout. ' +
       'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event or by new vs returning. Each row shows visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page. Download attendees CSV to export. This shows ticket registrations — not on-the-day check-in.',
@@ -146,6 +146,7 @@ const SYSTEM_PROMPT =
   KNOWLEDGE_BASE +
   ' ' +
   'STYLE: Answer in warm, professional British English — concise but personable. Use short paragraphs or bullet points for multi-step answers. ' +
+  'Lead with a direct answer to the exact question (for example, Yes or No when appropriate), then explain what to do. ' +
   'Include relevant page paths when they help the user take action. Keep answers focused — usually 2–4 sentences unless steps are needed. ' +
   'LIMITS: Never invent event dates, prices, venues, opportunity details, refund outcomes, or policies. If you lack specifics, say so honestly. ' +
   'When a LIVE EVENT LOOKUP block is provided, answer event-finding questions using only those listings and include their /events/ links. ' +
@@ -345,9 +346,34 @@ const FALLBACK_REPLIES = [
       'For Category Exclusivity events, the application questions are fixed: (1) What industry are you in? and (2) What is your job title? These cannot be changed. For standard open ticket booking, you can optionally turn on extra fields under Attendee information at booking on the tickets step — tick the boxes to note food is included, or to collect dietary or accessibility requirements at checkout.',
   },
   {
+    match: /(paid|member).*(ticket|tier).*(guest visit|complimentary visit|guest programme)|(guest visit|complimentary visit|guest programme).*(paid|member).*(ticket|tier)/i,
+    reply:
+      'Yes — choose Guest visit programme on the tickets step, then add your paid member ticket type(s) underneath. New attendees use the complimentary visit allowance set on your organiser page first; once they have used it, the paid member tickets unlock. Guest visit programme and standard open booking are separate modes, but paid member tiers belong inside the guest programme.',
+  },
+  {
     match: /guest visit|complimentary visit|trial visit|visitor ticket|member ticket/i,
     reply:
-      'The guest visit programme lets networking groups offer 1–2 complimentary trial visits per newcomer before they can buy a paid member ticket. Enable it on your organiser page (complimentary visits: 1 or 2), then choose Guest visit programme on the event tickets step. New attendees must use their free visit(s) with your group first; returning visitors who have used them see member ticket pricing. Set this up in /organiser/ → your organiser page and event tickets.',
+      'The guest visit programme lets networking groups offer 1–2 complimentary trial visits per newcomer before paid member tickets unlock. Enable the allowance on your organiser page, choose Guest visit programme on the event tickets step, then add your paid member ticket type(s) below. New attendees use their free visit(s) first; returning visitors who have used them see the member pricing.',
+  },
+  {
+    match: /add.*(more than one|multiple).*(date|day)|multiple dates|recurring (event|meeting|series)|event series|repeat.*date/i,
+    reply:
+      'Use the calendar on the listing details step and click every date you want to include. All selected dates form one series and share the same start time, end time, venue or online link, and ticket tiers. If any session has a different time or location, create it as a separate listing instead.',
+  },
+  {
+    match: /early bird|early-bird/i,
+    reply:
+      'Add Early bird as its own ticket tier, set its lower price and quantity, then give it an earlier sales end date. Add your Standard tier as a separate row with its normal price; each tier is copied to every date in the series.',
+  },
+  {
+    match: /\bvat\b|value added tax/i,
+    reply:
+      'Choose the VAT option that matches how you advertise the ticket price: VAT included means the displayed price is the attendee’s ticket price; VAT added at checkout means it is added on top. You must select one before publishing, and the organiser remains responsible for its own VAT position—check with your accountant if you are unsure.',
+  },
+  {
+    match: /save.*(draft|before publish)|draft.*(ticket|publish)|publish.*later/i,
+    reply:
+      'Yes — use Save as draft at any point and return from My Events in /organiser/ to finish the listing later. It will not appear on the public events browse page until you complete the ticket setup and publish it.',
   },
   {
     match: /visit count|1st visit|first visit|returning attendee|new to your group|repeat attendee/i,

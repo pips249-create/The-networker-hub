@@ -3254,6 +3254,14 @@
   }
 
   let eventDrawerLoadTimeout = null;
+  let eventDrawerCreateFlow = false;
+
+  const EVENT_DRAWER_PROGRESS_STEPS = [
+    { id: 'format', label: 'Group & format' },
+    { id: 'details', label: 'Event details' },
+    { id: 'tickets', label: 'Tickets' },
+    { id: 'publish', label: 'Publish' },
+  ];
 
   function setEventDrawerLoading(on) {
     const wrap = document.getElementById('org-event-drawer-frame-wrap');
@@ -3277,6 +3285,7 @@
     drawer.classList.remove('is-open');
     document.body.classList.remove('org-event-drawer-open');
     setEventDrawerLoading(false);
+    eventDrawerCreateFlow = false;
     renderEventDrawerOverview(null);
     if (frame) frame.removeAttribute('src');
     setTimeout(function () {
@@ -3293,7 +3302,7 @@
     );
   }
 
-  function openEventDrawerFrame(frameUrl, titleText, eventForOverview) {
+  function openEventDrawerFrame(frameUrl, titleText, eventForOverview, drawerUi) {
     const drawer = document.getElementById('org-event-drawer');
     const frame = document.getElementById('org-event-drawer-frame');
     const titleEl = document.getElementById('org-event-drawer-title');
@@ -3303,7 +3312,7 @@
     }
 
     closeAllActionMenus();
-    renderEventDrawerOverview(eventForOverview || null);
+    renderEventDrawerOverview(eventForOverview || null, drawerUi || null);
     if (titleEl && titleText) titleEl.textContent = titleText;
     setEventDrawerLoading(true);
     if (eventDrawerLoadTimeout) clearTimeout(eventDrawerLoadTimeout);
@@ -3321,11 +3330,89 @@
     return true;
   }
 
-  function renderEventDrawerOverview(ev) {
+  function renderEventDrawerProgress(stepId) {
+    const mount = document.getElementById('org-event-drawer-progress');
+    if (!mount) return;
+    if (!stepId) {
+      mount.hidden = true;
+      mount.innerHTML = '';
+      return;
+    }
+
+    const currentIndex = EVENT_DRAWER_PROGRESS_STEPS.findIndex(function (s) {
+      return s.id === stepId;
+    });
+    if (currentIndex < 0) {
+      mount.hidden = true;
+      mount.innerHTML = '';
+      return;
+    }
+
+    const stepNum = currentIndex + 1;
+    const total = EVENT_DRAWER_PROGRESS_STEPS.length;
+    const remaining = Math.max(0, total - stepNum);
+    const currentLabel = EVENT_DRAWER_PROGRESS_STEPS[currentIndex].label;
+    const remainingText =
+      stepId === 'publish'
+        ? 'Listing complete'
+        : remaining === 1
+          ? '1 step left'
+          : remaining + ' steps left';
+
+    const parts = [
+      '<nav class="ee-wizard" aria-label="Create event progress">',
+      '<p class="ee-wizard-summary">',
+      '<span class="ee-wizard-step-count">Step ',
+      String(stepNum),
+      ' of ',
+      String(total),
+      '</span>',
+      '<span class="ee-wizard-sep" aria-hidden="true">·</span>',
+      '<span class="ee-wizard-current">',
+      esc(currentLabel),
+      '</span>',
+      '<span class="ee-wizard-sep" aria-hidden="true">·</span>',
+      '<span class="ee-wizard-remaining">',
+      esc(remainingText),
+      '</span>',
+      '</p>',
+      '<ol class="ee-wizard-steps">',
+    ];
+
+    EVENT_DRAWER_PROGRESS_STEPS.forEach(function (step, i) {
+      const isCurrent = step.id === stepId;
+      const isDone = i < currentIndex;
+      let cls = 'ee-wizard-step';
+      if (isCurrent) cls += ' is-current';
+      else if (isDone) cls += ' is-done';
+
+      const numContent = isDone ? '✓' : String(i + 1);
+      parts.push('<li class="' + cls + '"');
+      if (isCurrent) parts.push(' aria-current="step"');
+      parts.push('>');
+      parts.push(
+        '<span class="ee-wizard-link"><span class="ee-wizard-num" aria-hidden="true">' +
+          numContent +
+          '</span><span class="ee-wizard-label">' +
+          esc(step.label) +
+          '</span></span>'
+      );
+      parts.push('</li>');
+    });
+
+    parts.push('</ol></nav>');
+    mount.innerHTML = parts.join('');
+    mount.hidden = false;
+  }
+
+  function renderEventDrawerOverview(ev, drawerUi) {
     const wrap = document.getElementById('org-event-drawer-stats');
     const cancelRow = document.getElementById('org-event-drawer-cancel');
+    const progressStep = drawerUi && drawerUi.progressStep ? drawerUi.progressStep : null;
+    renderEventDrawerProgress(progressStep);
+
     if (!wrap) return;
-    if (!ev || !ev.id) {
+    if (progressStep || !ev || !ev.id) {
       wrap.hidden = true;
       if (cancelRow) cancelRow.hidden = true;
       return;
@@ -3359,7 +3446,8 @@
 
   function openEventTicketsDrawer(eventIds, title) {
     const label = title ? 'Tickets: ' + title : 'Set up tickets';
-    openEventDrawerFrame(eventTicketsFrameUrl(eventIds), label);
+    const drawerUi = eventDrawerCreateFlow ? { progressStep: 'tickets' } : null;
+    openEventDrawerFrame(eventTicketsFrameUrl(eventIds), label, null, drawerUi);
   }
 
   function openEventEditorDrawer(eventOrId, drawerOpts) {
@@ -3395,12 +3483,16 @@
     let frameUrl;
     let drawerTitle = 'Edit event';
     if (isNew) {
+      eventDrawerCreateFlow = true;
       drawerTitle = 'New event';
       frameUrl = eventEditorFrameUrl({
         groupId: drawerOpts.groupId || '',
         format: drawerOpts.format || 'in-person',
       });
+      openEventDrawerFrame(frameUrl, drawerTitle, null, { progressStep: 'details' });
+      return;
     } else {
+      eventDrawerCreateFlow = false;
       const ev =
         typeof eventOrId === 'object' && eventOrId && eventOrId.title
           ? eventOrId
@@ -3427,8 +3519,6 @@
       openEventDrawerFrame(frameUrl, drawerTitle, ev);
       return;
     }
-
-    openEventDrawerFrame(frameUrl, drawerTitle, null);
   }
 
   let pendingDeleteEventId = null;

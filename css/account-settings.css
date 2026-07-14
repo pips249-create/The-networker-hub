@@ -107,6 +107,13 @@
   color: var(--as-text-soft);
 }
 
+.as-field-help {
+  margin: 7px 0 0;
+  color: var(--as-text-soft);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .as-checkgroup {
   display: flex;
   flex-wrap: wrap;

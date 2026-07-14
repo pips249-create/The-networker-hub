@@ -48,6 +48,61 @@ function pctChange(current, prior) {
   return round2(((current - prior) / prior) * 100);
 }
 
+function locationAreaLabel(value) {
+  const raw = String(value || '').trim().replace(/\s+/g, ' ');
+  if (!raw) return '';
+
+  let area = raw.split(',')[0].trim();
+  const postcode = area.match(/\b([A-Z]{1,2}\d[A-Z\d]?)\s*\d[A-Z]{2}\b/i);
+  if (postcode) {
+    const withoutPostcode = area.replace(postcode[0], '').trim();
+    area = withoutPostcode || postcode[1].toUpperCase();
+  }
+  return area.replace(/\s+(?:UK|United Kingdom)$/i, '').trim() || area;
+}
+
+async function fetchAttendeeLocations(sb) {
+  const rows = [];
+  const pageSize = 1000;
+
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await sb
+      .from('attendees')
+      .select('id, name, email, location')
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
+    rows.push(...(data || []));
+    if (!data || data.length < pageSize) break;
+  }
+
+  return rows.filter((row) => !isTestActivityText(row.name || row.email || ''));
+}
+
+function aggregateUserLocations(attendees) {
+  const areas = new Map();
+  let provided = 0;
+
+  (attendees || []).forEach((attendee) => {
+    const label = locationAreaLabel(attendee.location);
+    if (!label) return;
+    provided += 1;
+    const key = label.toLocaleLowerCase('en-GB');
+    const current = areas.get(key) || { area: label, users: 0 };
+    current.users += 1;
+    areas.set(key, current);
+  });
+
+  return {
+    total: (attendees || []).length,
+    provided,
+    missing: Math.max(0, (attendees || []).length - provided),
+    areas: Array.from(areas.values())
+      .sort((a, b) => b.users - a.users || a.area.localeCompare(b.area, 'en-GB'))
+      .slice(0, 10),
+  };
+}
+
 async function fetchRegistrations(sb, since) {
   let query = sb
     .from('registrations')
@@ -370,6 +425,7 @@ async function getAdminInsights(periodRaw) {
     orgs7dRes,
     accounts7dRes,
     revenueRegsRes,
+    attendeeLocations,
   ] = await Promise.all([
     fetchRegistrations(sb, since),
     fetchAllRegistrationsFiltered(sb),
@@ -393,6 +449,7 @@ async function getAdminInsights(periodRaw) {
       .from('registrations')
       .select('created_at, payment_status, amount_paid, attendees(name, email), events(title)')
       .gte('created_at', sixtyDaysAgo),
+    fetchAttendeeLocations(sb),
   ]);
 
   if (reviewsRes.error) throw new Error(reviewsRes.error.message);
@@ -456,6 +513,7 @@ async function getAdminInsights(periodRaw) {
     updatedAt: new Date().toISOString(),
     revenueComparison,
     repeatAttendees: computeRepeatAttendees(allRegsFiltered),
+    userLocations: aggregateUserLocations(attendeeLocations),
     growthPulse: {
       registrations7d: regs7dRes.count || 0,
       newOrganisers7d: orgs7dRes.count || 0,

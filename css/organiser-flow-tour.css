@@ -228,6 +228,10 @@ body.ee-embed-drawer .hub-hubert-guide-panel {
   flex-shrink: 0;
 }
 
+.hub-hubert-guide-suggestions[hidden] {
+  display: none !important;
+}
+
 .hub-hubert-guide-suggestions .hubert-chip {
   font-size: 11px;
   padding: 6px 10px;

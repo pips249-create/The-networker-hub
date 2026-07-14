@@ -1,5 +1,6 @@
 /**
  * 15-minute time selects for organiser event forms.
+ * Uses a compact hour + quarter-minute picker instead of one long native list.
  */
 (function (global) {
   function pad2(n) {
@@ -17,6 +18,9 @@
   }
 
   const SLOTS = quarterHourValues();
+  const HOURS = [];
+  for (let h = 0; h < 24; h++) HOURS.push(pad2(h));
+  const MINUTES = ['00', '15', '30', '45'];
 
   function roundToQuarterHour(timeStr) {
     if (!timeStr) return '10:00';
@@ -38,6 +42,88 @@
     return h * 60 + m;
   }
 
+  function labelForSelect(selectEl, part) {
+    const id = selectEl.id || '';
+    if (id.indexOf('start') !== -1) return part === 'hour' ? 'Start hour' : 'Start minutes';
+    if (id.indexOf('end') !== -1) return part === 'hour' ? 'End hour' : 'End minutes';
+    if (id.indexOf('close') !== -1) return part === 'hour' ? 'Closing hour' : 'Closing minutes';
+    return part === 'hour' ? 'Hour' : 'Minutes';
+  }
+
+  function syncDisabledState(selectEl, hourSel, minSel) {
+    const dis = Boolean(selectEl.disabled);
+    hourSel.disabled = dis;
+    minSel.disabled = dis;
+  }
+
+  function enhanceSelect(selectEl) {
+    if (!selectEl || selectEl.dataset.quarterEnhanced === '1') return;
+    selectEl.dataset.quarterEnhanced = '1';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'ee-quarter-time';
+
+    const hourSel = document.createElement('select');
+    hourSel.className = 'ee-quarter-time-hour';
+    hourSel.setAttribute('aria-label', labelForSelect(selectEl, 'hour'));
+    if (selectEl.id) hourSel.id = selectEl.id + '-hour';
+    hourSel.innerHTML = HOURS.map(function (h) {
+      return '<option value="' + h + '">' + h + '</option>';
+    }).join('');
+
+    const sep = document.createElement('span');
+    sep.className = 'ee-quarter-time-sep';
+    sep.setAttribute('aria-hidden', 'true');
+    sep.textContent = ':';
+
+    const minSel = document.createElement('select');
+    minSel.className = 'ee-quarter-time-min';
+    minSel.setAttribute('aria-label', labelForSelect(selectEl, 'min'));
+    if (selectEl.id) minSel.id = selectEl.id + '-min';
+    minSel.innerHTML = MINUTES.map(function (m) {
+      return '<option value="' + m + '">' + m + '</option>';
+    }).join('');
+
+    const parent = selectEl.parentNode;
+    if (!parent) return;
+    parent.insertBefore(wrap, selectEl);
+    wrap.appendChild(hourSel);
+    wrap.appendChild(sep);
+    wrap.appendChild(minSel);
+    wrap.appendChild(selectEl);
+    selectEl.classList.add('ee-quarter-time-value');
+    selectEl.setAttribute('tabindex', '-1');
+    selectEl.setAttribute('aria-hidden', 'true');
+
+    function syncFromParts() {
+      const next = hourSel.value + ':' + minSel.value;
+      if (selectEl.value === next) return;
+      selectEl.value = next;
+      selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function syncFromValue() {
+      const rounded = roundToQuarterHour(selectEl.value || '10:00');
+      const parts = rounded.split(':');
+      hourSel.value = parts[0];
+      minSel.value = parts[1];
+      syncDisabledState(selectEl, hourSel, minSel);
+    }
+
+    hourSel.addEventListener('change', syncFromParts);
+    minSel.addEventListener('change', syncFromParts);
+    selectEl._quarterSyncUi = syncFromValue;
+
+    if (typeof MutationObserver !== 'undefined') {
+      const mo = new MutationObserver(function () {
+        syncDisabledState(selectEl, hourSel, minSel);
+      });
+      mo.observe(selectEl, { attributes: true, attributeFilter: ['disabled'] });
+    }
+
+    syncFromValue();
+  }
+
   function populateSelect(selectEl, selected) {
     if (!selectEl) return;
     const value = roundToQuarterHour(selected);
@@ -48,6 +134,10 @@
       selectEl.value = value;
     } else {
       selectEl.value = SLOTS[0];
+    }
+    enhanceSelect(selectEl);
+    if (typeof selectEl._quarterSyncUi === 'function') {
+      selectEl._quarterSyncUi();
     }
   }
 
@@ -68,6 +158,7 @@
           const nh = Math.floor(next / 60);
           const nm = next % 60;
           endEl.value = pad2(nh) + ':' + pad2(nm);
+          if (typeof endEl._quarterSyncUi === 'function') endEl._quarterSyncUi();
         }
       });
     }
@@ -82,6 +173,7 @@
           const nh = Math.floor(prev / 60);
           const nm = prev % 60;
           startEl.value = pad2(nh) + ':' + pad2(nm);
+          if (typeof startEl._quarterSyncUi === 'function') startEl._quarterSyncUi();
         }
       });
     }

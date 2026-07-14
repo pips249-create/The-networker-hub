@@ -2717,6 +2717,38 @@
     );
   }
 
+  function renderInsightsUserLocations(locationData) {
+    var data = locationData || {};
+    var rows = data.areas || [];
+    if (!rows.length) {
+      return '<p class="text-sm text-slate-500">No members have added a location yet.</p>';
+    }
+    return (
+      '<p class="text-xs text-slate-500 mb-3">' +
+      esc(String(data.provided || 0)) +
+      ' of ' +
+      esc(String(data.total || 0)) +
+      ' profiles provided a location · ' +
+      esc(String(data.missing || 0)) +
+      ' not provided</p>' +
+      '<ul class="space-y-2">' +
+      rows
+        .map(function (row) {
+          return (
+            '<li class="flex items-center justify-between text-sm gap-3">' +
+            '<span class="font-medium text-brand-900 min-w-0 truncate">' +
+            esc(row.area) +
+            '</span><span class="text-slate-500 shrink-0">' +
+            esc(String(row.users || 0)) +
+            (Number(row.users || 0) === 1 ? ' member' : ' members') +
+            '</span></li>'
+          );
+        })
+        .join('') +
+      '</ul>'
+    );
+  }
+
   function renderInsightsTypeMix(rows) {
     if (!rows.length) {
       return '<p class="text-sm text-slate-500">No registrations in this period yet.</p>';
@@ -2854,8 +2886,12 @@
         'brand'
       ) +
       '</div>' +
-      '<div class="grid gap-5 md:grid-cols-2 xl:grid-cols-4">' +
-      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-3">Top cities</h4><div id="insights-top-cities">' +
+      '<div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900">Member locations</h4>' +
+      '<p class="text-xs text-slate-500 mt-0.5 mb-3">All account profiles, grouped from the location members entered.</p><div id="insights-user-locations">' +
+      renderInsightsUserLocations(data.userLocations || {}) +
+      '</div></div>' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-3">Event cities</h4><div id="insights-top-cities">' +
       renderInsightsCities(data.topCities || []) +
       '</div></div>' +
       '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-3">Event type mix</h4><div id="insights-type-mix">' +

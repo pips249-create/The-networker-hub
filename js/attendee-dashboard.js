@@ -15,6 +15,9 @@
   let savedScope = 'events';
   let reviewsScope = 'pending';
   let openUtilityMenu = null;
+  let shareModalOpen = false;
+  let shareCardDataUrl = '';
+  let currentShareReg = null;
   const REVIEW_EVENT_STORAGE_KEY = 'hub_review_event_id';
 
   const SUBPAGE_HEAD = {
@@ -424,10 +427,31 @@
   }
 
   function applicationBadge(reg) {
+    const isCE = Boolean(reg && reg.isCategoryExclusivity);
+    const status = String(reg?.applicationStatus || 'Approved').trim();
+
+    if (isCE) {
+      if (status === 'Pending') {
+        return '<span class="ad-badge ad-badge-gold">⏳ Pending approval</span>';
+      }
+      if (status === 'Denied') {
+        return '<span class="ad-badge ad-badge-red">Not approved</span>';
+      }
+      if (needsBookingAction(reg)) {
+        return (
+          '<span class="ad-badge ad-badge-gold">' +
+          esc(reg.needsFreeConfirmation ? 'Approved — confirm place' : 'Approved — pay now') +
+          '</span>'
+        );
+      }
+      if (status === 'Approved') {
+        return '<span class="ad-badge ad-badge-green">✅ Seat approved</span>';
+      }
+    }
+
     if (!hasApplicationDecision(reg)) {
       return '<span class="ad-badge ad-badge-grey">—</span>';
     }
-    const status = String(reg.applicationStatus || 'Approved').trim();
     if (status === 'Pending') {
       return '<span class="ad-badge ad-badge-gold">Pending review</span>';
     }
@@ -558,6 +582,8 @@
       return (
         '<div class="ad-action-group">' +
         ticketButtonHtml(reg) +
+        calendarLinksHtml(reg) +
+        shareTriggerHtml(reg) +
         '<div class="ad-action-links">' +
         '<a class="ad-action-link" href="' +
         esc(eventHref(reg)) +
@@ -572,6 +598,8 @@
       return (
         '<div class="ad-action-group">' +
         ticketButtonHtml(reg) +
+        calendarLinksHtml(reg) +
+        shareTriggerHtml(reg) +
         '<a class="ad-action-link" href="' +
         esc(eventHref(reg)) +
         '">View event</a>' +
@@ -593,14 +621,209 @@
   }
 
   function registrationCalendarEvent(reg) {
+    const location = reg.isOnline
+      ? 'Online'
+      : String(reg.city || '').trim() || '';
     return {
       id: reg.eventId || reg.id,
       slug: reg.slug || '',
       title: reg.title || 'Event',
       starts_at: reg.date || '',
       ends_at: reg.endDate || '',
-      location: reg.isOnline ? 'Online' : '',
+      location: location,
     };
+  }
+
+  function canShowCalendarLinks(reg) {
+    const applicationStatus = String(reg?.applicationStatus || 'Approved').trim();
+    if (applicationStatus === 'Denied' || applicationStatus === 'Pending') return false;
+    if (needsBookingAction(reg)) return false;
+    if (!reg?.date) return false;
+    return true;
+  }
+
+  function calendarLinksHtml(reg) {
+    if (!canShowCalendarLinks(reg) || !window.HubCalendarShare) return '';
+    const links = HubCalendarShare.buildCalendarLinks(registrationCalendarEvent(reg));
+    return (
+      '<div class="ad-cal-links" role="group" aria-label="Add to calendar">' +
+      '<a class="ad-cal-link" href="' +
+      esc(links.google) +
+      '" target="_blank" rel="noopener noreferrer">Google</a>' +
+      '<span class="ad-cal-sep" aria-hidden="true">·</span>' +
+      '<a class="ad-cal-link" href="' +
+      esc(links.outlook) +
+      '" target="_blank" rel="noopener noreferrer">Outlook</a>' +
+      '<span class="ad-cal-sep" aria-hidden="true">·</span>' +
+      '<button type="button" class="ad-cal-link ad-cal-ics" data-registration-id="' +
+      esc(reg.id || '') +
+      '">iCal</button>' +
+      '</div>'
+    );
+  }
+
+  function bindCalendarLinks(root) {
+    (root || document).querySelectorAll('.ad-cal-ics').forEach((btn) => {
+      if (btn.dataset.boundCalendarIcs) return;
+      btn.dataset.boundCalendarIcs = '1';
+      btn.addEventListener('click', () => {
+        const regId = btn.getAttribute('data-registration-id');
+        const reg = findRegistrationById(regId);
+        if (!reg || !window.HubCalendarShare) return;
+        const links = HubCalendarShare.buildCalendarLinks(registrationCalendarEvent(reg));
+        HubCalendarShare.downloadIcs(links.icsContent, links.icsFilename);
+      });
+    });
+  }
+
+  function registrationShareEvent(reg) {
+    return {
+      id: reg.eventId || reg.id,
+      slug: reg.slug || '',
+      title: reg.title || 'Event',
+      starts_at: reg.date || '',
+      imageUrl: reg.imageUrl || '',
+      organiserLogo: reg.organiserLogo || '',
+      eventType: reg.eventType || '',
+      location: reg.isOnline ? 'Online' : String(reg.city || '').trim(),
+    };
+  }
+
+  function shareTriggerHtml(reg) {
+    if (!canShowCalendarLinks(reg) || !window.HubGoingShare) return '';
+    return (
+      '<button type="button" class="ad-share-trigger ad-share-going" data-registration-id="' +
+      esc(reg.id || '') +
+      '">Share on LinkedIn</button>'
+    );
+  }
+
+  async function openShareModal(reg) {
+    const modal = document.getElementById('ad-share-modal');
+    const preview = document.getElementById('ad-share-preview');
+    const loading = document.getElementById('ad-share-preview-loading');
+    const captionEl = document.getElementById('ad-share-caption');
+    const downloadBtn = document.getElementById('ad-share-download-image');
+    if (!modal || !reg || !window.HubGoingShare) return;
+
+    closeUtilityMenus();
+    currentShareReg = reg;
+    const ev = registrationShareEvent(reg);
+    const captionText = HubGoingShare.buildAttendeeCaption(ev);
+
+    if (captionEl) captionEl.value = captionText;
+    if (preview) {
+      preview.hidden = true;
+      preview.removeAttribute('src');
+    }
+    if (loading) {
+      loading.hidden = false;
+      loading.textContent = 'Creating your image…';
+    }
+    if (downloadBtn) downloadBtn.disabled = true;
+    shareCardDataUrl = '';
+
+    modal.hidden = false;
+    shareModalOpen = true;
+    document.body.classList.add('ad-share-modal-open');
+
+    try {
+      shareCardDataUrl = await HubGoingShare.generateGoingCardDataUrl(ev);
+      if (preview) {
+        preview.src = shareCardDataUrl;
+        preview.hidden = false;
+      }
+      if (loading) loading.hidden = true;
+      if (downloadBtn) downloadBtn.disabled = !shareCardDataUrl;
+    } catch (err) {
+      console.warn('[attendee-dashboard] share card failed', err);
+      if (loading) {
+        loading.hidden = false;
+        loading.textContent = 'Could not create image. You can still copy the caption.';
+      }
+    }
+  }
+
+  function closeShareModal() {
+    const modal = document.getElementById('ad-share-modal');
+    if (modal) modal.hidden = true;
+    shareModalOpen = false;
+    currentShareReg = null;
+    shareCardDataUrl = '';
+    document.body.classList.remove('ad-share-modal-open');
+  }
+
+  function bindShareButtons(root) {
+    (root || document).querySelectorAll('.ad-share-going').forEach((btn) => {
+      if (btn.dataset.boundShareGoing) return;
+      btn.dataset.boundShareGoing = '1';
+      btn.addEventListener('click', () => {
+        const reg = findRegistrationById(btn.getAttribute('data-registration-id'));
+        if (reg) openShareModal(reg);
+      });
+    });
+  }
+
+  function bindShareModal() {
+    const backdrop = document.getElementById('ad-share-modal-backdrop');
+    const closeBtn = document.getElementById('ad-share-modal-close');
+    const copyBtn = document.getElementById('ad-share-copy-caption');
+    const downloadBtn = document.getElementById('ad-share-download-image');
+    const linkedIn = document.getElementById('ad-share-linkedin');
+    const captionEl = document.getElementById('ad-share-caption');
+
+    [backdrop, closeBtn].forEach((el) => {
+      if (!el) return;
+      el.addEventListener('click', closeShareModal);
+    });
+
+    if (copyBtn && captionEl) {
+      copyBtn.addEventListener('click', async () => {
+        const text = captionEl.value || '';
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+          } else {
+            captionEl.select();
+            document.execCommand('copy');
+          }
+          showAdToast('Caption copied');
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => {
+            copyBtn.textContent = 'Copy caption';
+          }, 2000);
+        } catch {
+          showAdToast('Select the caption and copy manually');
+        }
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        if (!shareCardDataUrl || !window.HubGoingShare) return;
+        const name = HubGoingShare.safeFilename(currentShareReg && currentShareReg.title) + '-attending.png';
+        HubGoingShare.downloadPngDataUrl(shareCardDataUrl, name);
+        showAdToast('Image downloaded');
+      });
+    }
+
+    if (linkedIn && captionEl) {
+      linkedIn.addEventListener('click', async () => {
+        const text = captionEl.value || '';
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+            showAdToast('Caption copied — paste it into your LinkedIn post');
+          }
+        } catch {
+          /* still open LinkedIn */
+        }
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && shareModalOpen) closeShareModal();
+    });
   }
 
   function utilityDropdownHtml(reg, options) {
@@ -616,9 +839,6 @@
       '"' +
       (canPdf ? '' : ' disabled') +
       '>Download Ticket (PDF)</button>' +
-      '<button type="button" class="ad-utility-item ad-download-calendar-ics" role="menuitem" data-registration-id="' +
-      esc(reg.id || '') +
-      '">Add to Calendar (.ics)</button>' +
       '</div></div>'
     );
   }
@@ -678,20 +898,6 @@
           '_blank',
           'noopener,noreferrer'
         );
-      });
-    });
-
-    (root || document).querySelectorAll('.ad-download-calendar-ics').forEach((btn) => {
-      if (btn.dataset.boundCalendarIcs) return;
-      btn.dataset.boundCalendarIcs = '1';
-      btn.addEventListener('click', () => {
-        const regId = btn.getAttribute('data-registration-id');
-        const reg = findRegistrationById(regId);
-        if (!reg) return;
-        closeUtilityMenus();
-        if (!window.HubCalendarShare) return;
-        const links = HubCalendarShare.buildCalendarLinks(registrationCalendarEvent(reg));
-        HubCalendarShare.downloadIcs(links.icsContent, links.icsFilename);
       });
     });
   }
@@ -1964,8 +2170,200 @@
     bindCancelButtons(body);
     bindPaymentButtons(body);
     bindUtilityMenus(body);
+    bindCalendarLinks(body);
+    bindShareButtons(body);
 
     renderPagination(navId, listKey, totalPages);
+  }
+
+  function organiserLogoHtml(reg, className) {
+    const logo = String(reg?.organiserLogo || '').trim();
+    const cls = className || 'ad-org-logo';
+    if (logo) {
+      return (
+        '<img class="' +
+        cls +
+        '" src="' +
+        esc(logo) +
+        '" alt="" width="48" height="48" loading="lazy" />'
+      );
+    }
+    const letter =
+      String(reg?.organiserName || reg?.title || '?')
+        .trim()
+        .charAt(0)
+        .toUpperCase() || '?';
+    return (
+      '<div class="' + cls + ' ad-org-logo-placeholder" aria-hidden="true">' + esc(letter) + '</div>'
+    );
+  }
+
+  function reviewNudgeCardHtml(reg) {
+    const orgName = reg.organiserName || 'this organiser';
+    return (
+      '<article class="ad-review-nudge" role="listitem">' +
+      organiserLogoHtml(reg, 'ad-review-nudge-logo') +
+      '<button type="button" class="ad-review-nudge-cta ad-leave-review" data-event-id="' +
+      esc(reg.eventId || '') +
+      '" data-event-title="' +
+      esc(reg.title || 'Event') +
+      '" data-organiser-name="' +
+      esc(reg.organiserName || '') +
+      '">' +
+      'Help <strong>' +
+      esc(orgName) +
+      '</strong> earn recognition on the Hub — share your feedback about <em>' +
+      esc(reg.title || 'your event') +
+      '</em>.' +
+      '</button></article>'
+    );
+  }
+
+  function renderPendingReviewCards() {
+    const container = document.getElementById('ad-reviews-pending-cards');
+    const empty = document.getElementById('ad-reviews-pending-empty');
+    if (!container) return;
+
+    const list = pendingReviewsList().sort((a, b) => {
+      const da = a.date ? new Date(a.date).getTime() : 0;
+      const db = b.date ? new Date(b.date).getTime() : 0;
+      return db - da;
+    });
+
+    container.innerHTML = '';
+    if (!list.length) {
+      container.hidden = true;
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+    container.hidden = false;
+
+    list.forEach((reg) => {
+      const article = document.createElement('article');
+      article.className = 'ad-review-card';
+      article.setAttribute('role', 'listitem');
+      const orgName = reg.organiserName || 'this organiser';
+      article.innerHTML =
+        organiserLogoHtml(reg, 'ad-review-card-logo-img') +
+        '<div class="ad-review-card-body">' +
+        '<button type="button" class="ad-review-card-cta ad-leave-review" data-event-id="' +
+        esc(reg.eventId || '') +
+        '" data-event-title="' +
+        esc(reg.title || 'Event') +
+        '" data-organiser-name="' +
+        esc(reg.organiserName || '') +
+        '">' +
+        'Help <strong>' +
+        esc(orgName) +
+        '</strong> earn recognition on the Hub — share your feedback!' +
+        '</button>' +
+        '<p class="ad-review-card-meta">' +
+        esc(reg.title || 'Event') +
+        ' · ' +
+        esc(formatDateShort(reg.date)) +
+        '</p>' +
+        '</div>';
+      container.appendChild(article);
+    });
+    bindLeaveReviewButtons(container);
+  }
+
+  function savedEventsHappeningSoon() {
+    const now = Date.now();
+    return savedEvents
+      .filter((item) => {
+        const d = item.startsAt || item.starts_at;
+        if (!d) return true;
+        const t = new Date(d).getTime();
+        return !Number.isNaN(t) && t >= now;
+      })
+      .sort((a, b) => {
+        const ta = new Date(a.startsAt || a.starts_at || 0).getTime();
+        const tb = new Date(b.startsAt || b.starts_at || 0).getTime();
+        return ta - tb;
+      })
+      .slice(0, 12);
+  }
+
+  function feedCardImageHtml(item) {
+    const title = item.title || 'Event';
+    const imageUrl = item.photoUrl || item.photo_url || '';
+    if (imageUrl) {
+      return (
+        '<img class="ad-feed-thumb" src="' +
+        esc(imageUrl) +
+        '" alt="" width="120" height="72" loading="lazy" />'
+      );
+    }
+    const letter = String(title).trim().charAt(0).toUpperCase() || '?';
+    return '<div class="ad-feed-thumb ad-feed-thumb-placeholder" aria-hidden="true">' + esc(letter) + '</div>';
+  }
+
+  function feedEventCardHtml(item) {
+    const href = savedEventHref(item);
+    const title = item.title || 'Event';
+    const dateStr = formatDateShort(item.startsAt || item.starts_at);
+    const city = String(item.city || '').trim();
+    const meta = [dateStr, city].filter((part) => part && part !== '—').join(' · ');
+    return (
+      '<a class="ad-feed-card" href="' +
+      esc(href) +
+      '" role="listitem">' +
+      '<div class="ad-feed-card-media">' +
+      feedCardImageHtml(item) +
+      '</div>' +
+      '<div class="ad-feed-card-body">' +
+      '<span class="ad-feed-card-title">' +
+      esc(title) +
+      '</span>' +
+      (meta ? '<span class="ad-feed-card-meta">' + esc(meta) + '</span>' : '') +
+      '</div></a>'
+    );
+  }
+
+  function renderOverviewReviewNudge() {
+    const el = document.getElementById('ad-overview-review-nudge');
+    if (!el) return;
+    const pending = pendingReviewsList();
+    if (!pending.length) {
+      el.hidden = true;
+      el.innerHTML = '';
+      return;
+    }
+    el.hidden = false;
+    el.innerHTML =
+      '<h2 class="ad-section-title ad-section-title--spaced">Reviews to write</h2>' +
+      '<div class="ad-review-nudges" role="list">' +
+      pending
+        .slice(0, 3)
+        .map((reg) => reviewNudgeCardHtml(reg))
+        .join('') +
+      '</div>' +
+      (pending.length > 3
+        ? '<p class="ad-overview-more"><a href="#reviews-pending">View all ' +
+          pending.length +
+          ' pending reviews →</a></p>'
+        : '');
+    bindLeaveReviewButtons(el);
+  }
+
+  function renderOverviewFeed() {
+    renderOverviewReviewNudge();
+
+    const feed = document.getElementById('ad-overview-feed');
+    const scroll = document.getElementById('ad-overview-feed-scroll');
+    if (!feed || !scroll) return;
+
+    const items = savedEventsHappeningSoon();
+    if (!items.length) {
+      feed.hidden = true;
+      scroll.innerHTML = '';
+      return;
+    }
+
+    feed.hidden = false;
+    scroll.innerHTML = items.map((item) => feedEventCardHtml(item)).join('');
   }
 
   function savedEventHref(item) {
@@ -2027,6 +2425,7 @@
           }
           savedEvents = savedEvents.filter((x) => String(x.eventId || x.event_id) !== String(eventId));
           renderSavedTable();
+          if (currentRoute === 'overview') renderOverviewFeed();
         } catch {
           btn.disabled = false;
         }
@@ -2566,6 +2965,9 @@
     if (dashboardReady && currentRoute === 'saved') {
       renderRouteTables('saved', { force: true });
     }
+    if (dashboardReady && currentRoute === 'overview') {
+      renderOverviewFeed();
+    }
   }
 
   function routeTablesKey(route) {
@@ -2581,6 +2983,7 @@
     updateSideCounts();
 
     if (key === 'overview') {
+      renderOverviewFeed();
       renderedRoutes.add(key);
       return;
     }
@@ -2600,14 +3003,7 @@
       });
       renderEventRows('ad-past-body', 'ad-past-empty', 'ad-pagination-past', 'past', past, true);
     } else if (key === 'reviews' || key === 'reviews-pending' || key === 'reviews-done') {
-      renderEventRows(
-        'ad-reviews-pending-body',
-        'ad-reviews-pending-empty',
-        null,
-        'reviews-pending',
-        pendingReviewsList(),
-        false
-      );
+      renderPendingReviewCards();
       renderEventRows(
         'ad-reviews-done-body',
         'ad-reviews-done-empty',
@@ -2767,6 +3163,7 @@
     bindViewReviewModal();
     bindPaymentModal();
     bindCancelModal();
+    bindShareModal();
     document.addEventListener('click', (e) => {
       if (
         openUtilityMenu &&

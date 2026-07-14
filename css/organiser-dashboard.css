@@ -4785,6 +4785,11 @@ body.org-event-drawer-open {
   flex-shrink: 0;
 }
 
+.org-event-drawer-stats[hidden],
+.org-event-drawer-progress[hidden] {
+  display: none !important;
+}
+
 .org-event-drawer-stats {
   margin: 12px 0 0;
 }
@@ -4796,6 +4801,33 @@ body.org-event-drawer-open {
 .org-event-drawer-stats .org-stat-value {
   font-size: 22px;
   margin-top: 6px;
+}
+
+.org-event-drawer-progress {
+  margin: 14px 0 0;
+}
+
+.org-event-drawer-progress .ee-wizard {
+  margin: 0;
+}
+
+.org-event-drawer-progress .ee-wizard-summary {
+  margin-bottom: 8px;
+}
+
+.org-event-drawer-progress .ee-wizard-link {
+  padding: 8px 10px;
+}
+
+@media (max-width: 640px) {
+  .org-event-drawer-progress .ee-wizard-step .ee-wizard-label {
+    display: none;
+  }
+
+  .org-event-drawer-progress .ee-wizard-link {
+    justify-content: center;
+    padding: 8px;
+  }
 }
 
 .org-event-drawer-cancel {
