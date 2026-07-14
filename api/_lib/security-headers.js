@@ -1,6 +1,9 @@
 /**
  * Shared security header values for Vercel config and documentation.
  * Keep in sync with vercel.json headers.
+ *
+ * No 'unsafe-eval' — admin Tailwind is built locally (css/admin-tailwind.css),
+ * not loaded from the Tailwind Play CDN (which requires eval).
  */
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
@@ -8,11 +11,11 @@ const CONTENT_SECURITY_POLICY = [
   "object-src 'none'",
   "frame-ancestors 'self'",
   "form-action 'self' https://checkout.stripe.com",
-  "script-src 'self' 'unsafe-inline' https://js.stripe.com https://unpkg.com https://cdn.tailwindcss.com",
+  "script-src 'self' 'unsafe-inline' https://js.stripe.com https://unpkg.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' https://*.supabase.co https://api.stripe.com https://api.resend.com https://vitals.vercel-insights.com https://unpkg.com https://api.openai.com https://cdn.tailwindcss.com",
+  "connect-src 'self' https://*.supabase.co https://api.stripe.com https://api.resend.com https://vitals.vercel-insights.com https://unpkg.com https://api.openai.com",
   "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://connect.stripe.com https://maps.google.com https://www.google.com https://maps.googleapis.com https://www.openstreetmap.org",
   "upgrade-insecure-requests",
 ].join('; ');

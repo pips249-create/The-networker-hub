@@ -6,7 +6,7 @@
   --admin-sidebar-width: 12.5rem;
 }
 
-/* Tailwind utility fallback — keep gate/shell toggles working if CDN is blocked */
+/* Keep gate/shell toggles working even if utility CSS fails to load */
 .hidden {
   display: none;
 }

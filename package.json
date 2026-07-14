@@ -20,14 +20,18 @@
     "audit:marketing-opt-in": "node scripts/audit-legacy-marketing-opt-in.js",
     "seed-ranking-demo": "node scripts/seed-ranking-demo-reviews.js",
     "import-attendees": "node scripts/import-attendees-csv.js",
+    "build-admin-css": "tailwindcss -c tailwind.admin.config.js -i ./css/admin-tailwind.src.css -o ./css/admin-tailwind.css --minify",
     "build-seo": "node scripts/build-hub-seo-data.js && node scripts/build-faq-html.js && node scripts/build-page-seo-html.js && node scripts/build-llms-txt.js",
-    "build": "npm run build-seo",
-    "vercel-build": "npm run build-seo"
+    "build": "npm run build-admin-css && npm run build-seo",
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",
     "@vercel/analytics": "^2.0.1",
     "dotenv": "^16.6.1",
     "stripe": "^17.7.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
   }
 }
