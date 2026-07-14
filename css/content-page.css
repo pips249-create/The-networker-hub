@@ -20,7 +20,7 @@
 }
 
 .content-hero h1 {
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: clamp(2rem, 5vw, 2.75rem);
   font-weight: 400;
   color: var(--charcoal);
@@ -280,7 +280,7 @@
 }
 
 .content-body h2 {
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1.5rem;
   font-weight: 400;
   color: var(--charcoal);
@@ -521,7 +521,7 @@
 }
 
 .content-story h3 {
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: clamp(1.45rem, 3vw, 1.85rem);
   font-weight: 400;
   color: var(--charcoal);
@@ -659,7 +659,7 @@
 
 .content-story-calendar-season {
   display: block;
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1.45rem;
   font-weight: 400;
   line-height: 1.1;
@@ -682,7 +682,7 @@
 
 .content-story-calendar-month-label {
   margin: 0 0 10px;
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1.15rem;
   font-weight: 400;
   color: var(--charcoal);
@@ -735,7 +735,7 @@
   margin: 14px 0 10px;
   padding-top: 12px;
   border-top: 1px dashed rgba(194, 153, 209, 0.35);
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1rem;
   font-weight: 400;
   color: var(--charcoal);
@@ -883,7 +883,7 @@
 }
 
 .content-founders-heading {
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1.5rem;
   font-weight: 400;
   color: var(--charcoal);
@@ -953,7 +953,7 @@
 }
 
 .content-family-callout h3 {
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1.35rem;
   font-weight: 400;
   color: var(--charcoal);
@@ -1005,7 +1005,7 @@
 }
 
 .content-flow-tail h2 {
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1.5rem;
   font-weight: 400;
   color: var(--charcoal);
@@ -1232,7 +1232,7 @@
 }
 
 .guide-card h2 {
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1.25rem;
   font-weight: 400;
   color: var(--charcoal);
@@ -1487,7 +1487,7 @@
 }
 
 .content-team-card h3 {
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1.2rem;
   font-weight: 400;
   color: var(--charcoal);

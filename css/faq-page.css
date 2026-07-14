@@ -146,7 +146,7 @@
 }
 
 .faq-category-title {
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1.35rem;
   font-weight: 400;
   color: var(--charcoal);
@@ -242,7 +242,7 @@
 }
 
 .faq-hubert-card-head h2 {
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1.2rem;
   font-weight: 400;
   color: var(--charcoal);

@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>For Organisers – The Networker Hub</title>
-<meta name="description" content="List UK networking events and business opportunities on The Networker Hub — organiser dashboard, guest visits, visit tracking, Category Exclusivity, Alumni Fast-Pass, and member discovery.">
+<meta name="description" content="List UK networking events and business opportunities on The Networker Hub: organiser dashboard, guest visits, visit tracking, Category Exclusivity, Alumni Fast-Pass, and member discovery.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/hub.css?v=20260730">
-<link rel="stylesheet" href="css/for-organisers-page.css?v=20260711f">
+<link rel="stylesheet" href="css/hub.css?v=20260714cls">
+<link rel="stylesheet" href="css/for-organisers-page.css?v=20260714a">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
-<link rel="stylesheet" href="css/hub-mobile.css?v=20260730">
-<script src="js/hub-seo-static-config.js?v=20260612"></script>
+<link rel="stylesheet" href="css/hub-mobile.css?v=20260714cls">
+<script src="js/hub-seo-static-config.js?v=20260714a"></script>
 <script src="js/hub-seo-static.js?v=20260612" data-page="for-organisers"></script>
 <script src="js/hub-seo-data.js?v=20260612" defer></script>
 <script src="js/hub-seo-schema.js?v=20260612" defer></script>
@@ -30,58 +30,190 @@
         <p class="fo-hero-kicker">For Organisers</p>
         <h1 id="fo-hero-heading">Tools that generic ticketing platforms don&rsquo;t offer</h1>
         <p class="fo-hero-lede">
-          The UK home for networking groups — run your organiser page, publish events, list business opportunities, and manage attendees from one workspace. Members discover you through our events directory, organiser browse, and opportunities hub.
+          The UK home for networking groups. Run your organiser page, publish events, list business opportunities, and manage attendees from one workspace. Members discover you through our events directory, organiser browse, and opportunities hub.
         </p>
         <div class="fo-hero-actions">
           <a class="btn btn-primary" href="guides/list-an-event.html">List your first event</a>
           <a class="btn btn-secondary" href="login.html?next=/organiser/index.html">Open organiser dashboard</a>
         </div>
         <p class="fo-hero-note">
-          Free to list events. Paid tickets use Stripe Connect — you receive the full ticket price.
+          Free to list events. Paid tickets use Stripe Connect, so you receive the full ticket price.
           <a href="faq.html">See organiser FAQs →</a>
         </p>
       </div>
-      <div class="fo-hero-visual fo-reveal-child" aria-hidden="true">
-        <div class="fo-dash-mock">
+      <div class="fo-hero-visual fo-reveal-child">
+        <div class="fo-dash-mock" id="fo-dash-mock" aria-label="Interactive preview of the organiser workspace">
           <div class="fo-dash-mock-bar">
-            <div class="fo-dash-mock-dots"><span></span><span></span><span></span></div>
+            <div class="fo-dash-mock-dots" aria-hidden="true"><span></span><span></span><span></span></div>
             <span>Organiser workspace · The Networker Hub</span>
           </div>
           <div class="fo-dash-mock-body">
-            <nav class="fo-dash-mock-nav" aria-hidden="true">
-              <span class="fo-dash-mock-nav-item is-active">Overview</span>
-              <span class="fo-dash-mock-nav-item">My events</span>
-              <span class="fo-dash-mock-nav-item">Attendees</span>
-              <span class="fo-dash-mock-nav-item">Applications</span>
-              <span class="fo-dash-mock-nav-item">Opportunities</span>
-              <span class="fo-dash-mock-nav-item">Payouts</span>
-              <span class="fo-dash-mock-nav-item">Team</span>
+            <nav class="fo-dash-mock-nav" role="tablist" aria-label="Preview organiser workspace sections">
+              <button type="button" class="fo-dash-mock-nav-item is-active" role="tab" aria-selected="true" aria-controls="fo-panel-overview" id="fo-tab-overview" data-fo-panel="overview" tabindex="0">Overview</button>
+              <button type="button" class="fo-dash-mock-nav-item" role="tab" aria-selected="false" aria-controls="fo-panel-events" id="fo-tab-events" data-fo-panel="events" tabindex="-1">My events</button>
+              <button type="button" class="fo-dash-mock-nav-item" role="tab" aria-selected="false" aria-controls="fo-panel-attendees" id="fo-tab-attendees" data-fo-panel="attendees" tabindex="-1">Attendees</button>
+              <button type="button" class="fo-dash-mock-nav-item" role="tab" aria-selected="false" aria-controls="fo-panel-applications" id="fo-tab-applications" data-fo-panel="applications" tabindex="-1">Applications</button>
+              <button type="button" class="fo-dash-mock-nav-item" role="tab" aria-selected="false" aria-controls="fo-panel-opportunities" id="fo-tab-opportunities" data-fo-panel="opportunities" tabindex="-1">Opportunities</button>
+              <button type="button" class="fo-dash-mock-nav-item" role="tab" aria-selected="false" aria-controls="fo-panel-payouts" id="fo-tab-payouts" data-fo-panel="payouts" tabindex="-1">Payouts</button>
+              <button type="button" class="fo-dash-mock-nav-item" role="tab" aria-selected="false" aria-controls="fo-panel-team" id="fo-tab-team" data-fo-panel="team" tabindex="-1">Team</button>
             </nav>
             <div class="fo-dash-mock-main">
-              <p class="fo-dash-mock-title">Overview</p>
-              <p class="fo-dash-mock-sub">Events, opportunities, and bookings at a glance</p>
-              <div class="fo-dash-mock-portals">
-                <div class="fo-dash-mock-portal">
-                  <strong>My events</strong>
-                  <span>12 live · 3 drafts</span>
+              <div class="fo-dash-mock-panel is-active" role="tabpanel" id="fo-panel-overview" aria-labelledby="fo-tab-overview" data-fo-panel-view="overview">
+                <p class="fo-dash-mock-title">Overview</p>
+                <p class="fo-dash-mock-sub">Events, opportunities, and bookings at a glance</p>
+                <div class="fo-dash-mock-portals">
+                  <div class="fo-dash-mock-portal">
+                    <strong>My events</strong>
+                    <span>12 live · 3 drafts</span>
+                  </div>
+                  <div class="fo-dash-mock-portal">
+                    <strong>Business opportunities</strong>
+                    <span>2 listings · 4 enquiries</span>
+                  </div>
                 </div>
-                <div class="fo-dash-mock-portal">
-                  <strong>Business opportunities</strong>
-                  <span>2 listings · 4 enquiries</span>
+                <div class="fo-dash-mock-stats">
+                  <div class="fo-dash-mock-stat"><b>148</b><small>Tickets sold</small></div>
+                  <div class="fo-dash-mock-stat"><b>£2.4k</b><small>Revenue</small></div>
+                  <div class="fo-dash-mock-stat"><b>23</b><small>1st visits</small></div>
+                </div>
+                <div class="fo-dash-callouts">
+                  <div class="fo-dash-callout">🎓 Alumni invites ready: 18 past attendees</div>
+                  <div class="fo-dash-callout">🔔 2 Category Exclusivity applications pending</div>
                 </div>
               </div>
-              <div class="fo-dash-mock-stats">
-                <div class="fo-dash-mock-stat"><b>148</b><small>Tickets sold</small></div>
-                <div class="fo-dash-mock-stat"><b>£2.4k</b><small>Revenue</small></div>
-                <div class="fo-dash-mock-stat"><b>23</b><small>1st visits</small></div>
+
+              <div class="fo-dash-mock-panel" role="tabpanel" id="fo-panel-events" aria-labelledby="fo-tab-events" data-fo-panel-view="events" hidden>
+                <p class="fo-dash-mock-title">My events</p>
+                <p class="fo-dash-mock-sub">Live listings, drafts, and upcoming dates</p>
+                <div class="fo-dash-mock-toolbar">
+                  <span class="fo-dash-mock-chip is-on">All</span>
+                  <span class="fo-dash-mock-chip">Live</span>
+                  <span class="fo-dash-mock-chip">Drafts</span>
+                </div>
+                <ul class="fo-dash-mock-list">
+                  <li>
+                    <strong>Friday breakfast networking</strong>
+                    <span>Manchester · Live · 24 booked</span>
+                  </li>
+                  <li>
+                    <strong>Annual conference 2026</strong>
+                    <span>Birmingham · Draft · Series</span>
+                  </li>
+                  <li>
+                    <strong>Women in business lunch</strong>
+                    <span>Leeds · Live · 11 booked</span>
+                  </li>
+                </ul>
               </div>
-              <div class="fo-dash-callouts">
-                <div class="fo-dash-callout">🎓 Alumni invites ready — 18 past attendees</div>
-                <div class="fo-dash-callout">🔔 2 Category Exclusivity applications pending</div>
+
+              <div class="fo-dash-mock-panel" role="tabpanel" id="fo-panel-attendees" aria-labelledby="fo-tab-attendees" data-fo-panel-view="attendees" hidden>
+                <p class="fo-dash-mock-title">Attendees</p>
+                <p class="fo-dash-mock-sub">Visit tracking across your events</p>
+                <div class="fo-dash-mock-toolbar">
+                  <span class="fo-dash-mock-chip is-on">All</span>
+                  <span class="fo-dash-mock-chip">1st visit</span>
+                  <span class="fo-dash-mock-chip">Returning</span>
+                </div>
+                <ul class="fo-dash-mock-list">
+                  <li>
+                    <strong>Sam K.</strong>
+                    <span>1st visit · Friday breakfast</span>
+                  </li>
+                  <li>
+                    <strong>Priya M.</strong>
+                    <span>3 visits · Returning</span>
+                  </li>
+                  <li>
+                    <strong>Alex R.</strong>
+                    <span>2 visits · Returning</span>
+                  </li>
+                </ul>
+                <div class="fo-dash-mock-action">Download attendees CSV</div>
+              </div>
+
+              <div class="fo-dash-mock-panel" role="tabpanel" id="fo-panel-applications" aria-labelledby="fo-tab-applications" data-fo-panel-view="applications" hidden>
+                <p class="fo-dash-mock-title">Applications</p>
+                <p class="fo-dash-mock-sub">Category Exclusivity queue</p>
+                <div class="fo-dash-mock-stats">
+                  <div class="fo-dash-mock-stat"><b>2</b><small>Pending</small></div>
+                  <div class="fo-dash-mock-stat"><b>7</b><small>Approved</small></div>
+                  <div class="fo-dash-mock-stat"><b>1</b><small>Declined</small></div>
+                </div>
+                <ul class="fo-dash-mock-list">
+                  <li>
+                    <strong>Finance · Director</strong>
+                    <span>Pending · Friday breakfast</span>
+                  </li>
+                  <li>
+                    <strong>Marketing · Freelancer</strong>
+                    <span>Pending · Women in business lunch</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="fo-dash-mock-panel" role="tabpanel" id="fo-panel-opportunities" aria-labelledby="fo-tab-opportunities" data-fo-panel-view="opportunities" hidden>
+                <p class="fo-dash-mock-title">Business opportunities</p>
+                <p class="fo-dash-mock-sub">Listings and member enquiries</p>
+                <div class="fo-dash-mock-stats">
+                  <div class="fo-dash-mock-stat"><b>2</b><small>Listings</small></div>
+                  <div class="fo-dash-mock-stat"><b>4</b><small>Enquiries</small></div>
+                  <div class="fo-dash-mock-stat"><b>1</b><small>New</small></div>
+                </div>
+                <ul class="fo-dash-mock-list">
+                  <li>
+                    <strong>Regional franchise (health &amp; wellness)</strong>
+                    <span>3 enquiries · Live</span>
+                  </li>
+                  <li>
+                    <strong>Referral partnership programme</strong>
+                    <span>1 enquiry · Live</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="fo-dash-mock-panel" role="tabpanel" id="fo-panel-payouts" aria-labelledby="fo-tab-payouts" data-fo-panel-view="payouts" hidden>
+                <p class="fo-dash-mock-title">Payouts</p>
+                <p class="fo-dash-mock-sub">Revenue and settlement after events</p>
+                <div class="fo-dash-mock-stats">
+                  <div class="fo-dash-mock-stat"><b>£1.8k</b><small>Available</small></div>
+                  <div class="fo-dash-mock-stat"><b>£560</b><small>Settling</small></div>
+                  <div class="fo-dash-mock-stat"><b>£2.4k</b><small>Lifetime</small></div>
+                </div>
+                <ul class="fo-dash-mock-list">
+                  <li>
+                    <strong>Friday breakfast networking</strong>
+                    <span>£840 ready · Request payout</span>
+                  </li>
+                  <li>
+                    <strong>Women in business lunch</strong>
+                    <span>£560 in 7-day settlement</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="fo-dash-mock-panel" role="tabpanel" id="fo-panel-team" aria-labelledby="fo-tab-team" data-fo-panel-view="team" hidden>
+                <p class="fo-dash-mock-title">Team &amp; invites</p>
+                <p class="fo-dash-mock-sub">Editors who help manage your workspace</p>
+                <ul class="fo-dash-mock-list">
+                  <li>
+                    <strong>You</strong>
+                    <span>Owner · Full access</span>
+                  </li>
+                  <li>
+                    <strong>Jamie T.</strong>
+                    <span>Editor · Events &amp; attendees</span>
+                  </li>
+                  <li>
+                    <strong>morgan@example.com</strong>
+                    <span>Invite pending</span>
+                  </li>
+                </ul>
+                <div class="fo-dash-mock-action">Invite editor</div>
               </div>
             </div>
           </div>
         </div>
+        <p class="fo-dash-mock-hint">Click a section to preview each workspace area</p>
       </div>
     </div>
   </section>
@@ -100,14 +232,14 @@
           <article class="fo-feature-card">
             <div class="fo-feature-icon" aria-hidden="true">📅</div>
             <h3>Event listings &amp; series</h3>
-            <p>Create single dates or recurring series. Draft, publish, duplicate, and manage ticket types from one flow — with Hubert on hand for step-by-step help.</p>
+            <p>Create single dates or recurring series. Draft, publish, duplicate, and manage ticket types from one flow, with Hubert on hand for step-by-step help.</p>
           </article>
         </li>
         <li class="fo-reveal-child">
           <article class="fo-feature-card">
             <div class="fo-feature-icon" aria-hidden="true">💳</div>
             <h3>Stripe Connect payouts</h3>
-            <p>Paid tickets go to your connected account at checkout. Request payouts per event after a 7-day settlement period — <a href="help/organiser-payouts.html">full payout guide</a>. View revenue breakdowns and honour refunds through your dashboard.</p>
+            <p>Paid tickets go to your connected account at checkout. Request payouts per event after a 7-day settlement period (<a href="help/organiser-payouts.html">full payout guide</a>). View revenue breakdowns and honour refunds through your dashboard.</p>
           </article>
         </li>
         <li class="fo-reveal-child">
@@ -148,19 +280,19 @@
         <p class="section-kicker">Member discovery</p>
         <h2 id="fo-events-heading">How members find your events</h2>
         <p class="fo-section-lede">
-          Your listings appear in the UK events directory — alongside Premium Spotlight placements, powerful filters, and a dedicated organiser browse mode so members can follow your group.
+          Your listings appear in the UK events directory, alongside Premium Spotlight placements, powerful filters, and a dedicated organiser browse mode so members can follow your group.
         </p>
       </header>
       <div class="fo-showcase fo-reveal-child">
         <div class="fo-showcase-copy">
           <h3>Events &amp; organiser directory</h3>
           <p>
-            Members search free before they sign in. When they are ready to book, a free account takes about two minutes — then secure Stripe checkout with optional guest names and dietary questions.
+            Members search free before they sign in. When they are ready to book, a free account takes about two minutes, then secure Stripe checkout with optional guest names and dietary questions.
           </p>
           <ul class="fo-showcase-list">
-            <li>Events and Organisers tabs — switch between date listings and networking groups</li>
+            <li>Events and Organisers tabs: switch between date listings and networking groups</li>
             <li>Premium Spotlight carousel for featured events and organiser pages</li>
-            <li>Keyword search — breakfast, women only, city, organiser name, and more</li>
+            <li>Keyword search: breakfast, women only, city, organiser name, and more</li>
             <li>Postcode, radius, and near-me location filters</li>
             <li>Date range, in-person vs online, event type chips, and price filters</li>
             <li>List and map views with search-this-area on the map</li>
@@ -188,7 +320,7 @@
             <div class="fo-browse-mock-body">
               <div class="fo-browse-mock-spotlight">
                 <strong>★ Premium Spotlight</strong>
-                Featured event or organiser — boosted visibility at the top of browse
+                Featured event or organiser: boosted visibility at the top of browse
               </div>
               <div class="fo-browse-mock-card">
                 <div class="fo-browse-mock-thumb"></div>
@@ -219,10 +351,10 @@
         <div class="fo-showcase-copy">
           <h3 id="fo-opp-heading">Business opportunities browse</h3>
           <p>
-            List franchises, side hustles, partnerships, and more for members exploring their next move. The opportunities hub is free to browse — enquiries require a free member account.
+            List franchises, side hustles, partnerships, and more for members exploring their next move. The opportunities hub is free to browse; enquiries require a free member account.
           </p>
           <ul class="fo-showcase-list">
-            <li>Type tabs — franchise, side hustle, partnership, networking, distributorship</li>
+            <li>Type tabs: franchise, side hustle, partnership, networking, distributorship</li>
             <li>Investment budget filters from under £2.5k to £10k+</li>
             <li>Premium Spotlight for promoted listings</li>
             <li>Rich listing pages with enquiry forms routed to your dashboard</li>
@@ -254,7 +386,7 @@
               <div class="fo-browse-mock-card">
                 <div class="fo-browse-mock-thumb"></div>
                 <div>
-                  <strong>Regional franchise — health &amp; wellness</strong>
+                  <strong>Regional franchise: health &amp; wellness</strong>
                   <span>Investment from £8,500 · UK-wide</span>
                 </div>
                 <span class="fo-browse-mock-price">Enquire</span>
@@ -280,7 +412,7 @@
         <p class="section-kicker">Built for networking groups</p>
         <h2 id="fo-tools-heading">Four tools built for membership-style networking</h2>
         <p class="fo-section-lede">
-          Generic ticketing handles dates and payments. These four features handle how UK networking groups actually grow — trial visits, conversion tracking, curated rooms, and repeat-event loyalty.
+          Generic ticketing handles dates and payments. These four features handle how UK networking groups actually grow: trial visits, conversion tracking, curated rooms, and repeat-event loyalty.
         </p>
       </header>
       <div class="fo-usp-grid fo-reveal-child">
@@ -291,7 +423,7 @@
           </div>
           <p class="fo-usp-lede">Let newcomers try your room before they commit to paid membership tickets.</p>
           <ul class="fo-usp-points">
-            <li>Set 1–2 complimentary visits on your organiser page — applied across eligible events</li>
+            <li>Set 1–2 complimentary visits on your organiser page, applied across eligible events</li>
             <li>New attendees book a free guest pass first; paid member tickets unlock after visits are used</li>
             <li>Opt out on specific dates (conferences, member-only evenings) while keeping paid tickets live</li>
             <li>Platform cap and organiser allowance work together so trial visits stay controlled</li>
@@ -302,7 +434,7 @@
             <span class="fo-usp-icon" aria-hidden="true">📊</span>
             <h3>Visit tracking</h3>
           </div>
-          <p class="fo-usp-lede">See who is still trialling vs ready to convert — on every attendee list.</p>
+          <p class="fo-usp-lede">See who is still trialling vs ready to convert, on every attendee list.</p>
           <ul class="fo-usp-points">
             <li>1st visit vs returning labels on bookings, with visit counts per person</li>
             <li>Filter the attendee list by visit status before export or check-in</li>
@@ -315,11 +447,11 @@
             <span class="fo-usp-icon" aria-hidden="true">🪑</span>
             <h3>Category Exclusivity</h3>
           </div>
-          <p class="fo-usp-lede">Curate who is in the room before anyone pays — ideal when seat mix matters.</p>
+          <p class="fo-usp-lede">Curate who is in the room before anyone pays: ideal when seat mix matters.</p>
           <ul class="fo-usp-points">
             <li>Switch an event to application-based attendance instead of open checkout</li>
             <li>Applicants share industry, job title, and a short pitch; you approve or deny from the dashboard</li>
-            <li>Approved guests receive a payment link — declined applicants never see a buy button</li>
+            <li>Approved guests receive a payment link; declined applicants never see a buy button</li>
             <li>Archived applications stay on record for repeat events and audit</li>
           </ul>
         </article>
@@ -331,7 +463,7 @@
           <p class="fo-usp-lede">Reward past attendees with invite-only rates on repeat conferences and annual events.</p>
           <ul class="fo-usp-points">
             <li>Pull confirmed attendees from a previous event and send locked alumni invite links</li>
-            <li>Each invitee books at the hidden alumni tier — non-invited guests cannot access the rate</li>
+            <li>Each invitee books at the hidden alumni tier; non-invited guests cannot access the rate</li>
             <li>Re-send safely: already invited addresses are not duplicated in your send queue</li>
             <li>Works alongside standard tickets for first-time visitors who are not on the alumni list</li>
           </ul>
@@ -339,7 +471,7 @@
       </div>
       <div class="fo-pricing-callout fo-reveal-child">
         <p>
-          <strong>Free to list.</strong> No monthly subscription for events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout — see our <a href="help/pricing-fees.html">pricing &amp; fees guide</a>. Free events need no Stripe setup. Works alongside other platforms — many organisers list here as well as elsewhere.
+          <strong>Free to list.</strong> No monthly subscription for events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. See our <a href="help/pricing-fees.html">pricing &amp; fees guide</a>. Free events need no Stripe setup. Works alongside other platforms; many organisers list here as well as elsewhere.
         </p>
       </div>
     </div>
@@ -367,7 +499,7 @@
 
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260610" data-root=""></script>
-<script src="js/for-organisers-page.js?v=20260710"></script>
+<script src="js/for-organisers-page.js?v=20260714a"></script>
 
 </body>
 </html>

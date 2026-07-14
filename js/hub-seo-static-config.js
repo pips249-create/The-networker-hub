@@ -52,7 +52,7 @@ window.HUB_SEO_STATIC = {
   "for-organisers": {
     "path": "/for-organisers.html",
     "title": "For Organisers – The Networker Hub",
-    "description": "List UK networking events and business opportunities — organiser dashboard, guest visits, visit tracking, Category Exclusivity, Alumni Fast-Pass, and member discovery.",
+    "description": "List UK networking events and business opportunities: organiser dashboard, guest visits, visit tracking, Category Exclusivity, Alumni Fast-Pass, and member discovery.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },

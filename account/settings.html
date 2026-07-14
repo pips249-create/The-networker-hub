@@ -10,15 +10,14 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../css/hub.css?v=20260730" />
+    <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
     <link rel="stylesheet" href="../css/account-settings.css?v=20260730" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
 
   </head>
   <body class="account-settings-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260710g" data-root="../" data-page="settings"></script>
 
     <div id="as-signin" class="as-signin" hidden>
       <p>Sign in to manage your account details.</p>
@@ -27,7 +26,8 @@
       </p>
     </div>
 
-    <main id="as-main" class="as-wrap" hidden>
+    <!-- Visible by default so LCP (card subtitles) paints before auth; JS hides if signed out -->
+    <main id="as-main" class="as-wrap">
       <h1 class="as-title">Account settings</h1>
       <p class="as-lead">Update your profile, location and password.</p>
 
@@ -165,6 +165,7 @@
       </form>
     </main>
 
-    <script src="../js/account-settings.js?v=20260713"></script>
+    <script src="../js/site-nav.js?v=20260710g" data-root="../" data-page="settings"></script>
+    <script src="../js/account-settings.js?v=20260714lcp"></script>
   </body>
 </html>

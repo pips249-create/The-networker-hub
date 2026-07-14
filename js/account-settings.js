@@ -290,9 +290,21 @@
     }
   });
 
-  async function init() {
+  async function fetchSession() {
+    if (typeof window.hubFetchSession === 'function') {
+      return window.hubFetchSession();
+    }
     const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
-    const sessionData = await sessionRes.json();
+    return sessionRes.json();
+  }
+
+  async function init() {
+    let sessionData;
+    try {
+      sessionData = await fetchSession();
+    } catch (_) {
+      sessionData = { ok: false };
+    }
     if (!sessionData.ok || !sessionData.user) {
       if (signin) signin.hidden = false;
       if (main) main.hidden = true;

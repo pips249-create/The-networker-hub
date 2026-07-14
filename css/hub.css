@@ -44,8 +44,30 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
+
+/*
+ * Metric-adjusted fallbacks — keep layout stable while DM Sans / DM Serif Display swap in.
+ * Values approximate webfont metrics vs Arial / Georgia.
+ */
+@font-face {
+  font-family: 'DM Sans Fallback';
+  src: local('Arial');
+  size-adjust: 100.6%;
+  ascent-override: 92%;
+  descent-override: 23%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'DM Serif Display Fallback';
+  src: local('Georgia');
+  size-adjust: 106.4%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
 body {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: 'DM Sans', 'DM Sans Fallback', system-ui, sans-serif;
   font-size: var(--text-size-body);
   background: var(--surface);
   color: var(--text-body);
@@ -433,9 +455,21 @@ a:hover { color: var(--charcoal); }
   color: var(--charcoal);
 }
 
-/* Fixed nav offset (home hero handles its own spacing) */
+/*
+ * Fixed nav offset from first paint — mirrors site-nav.js (has-site-nav branch).
+ * Reserve space before JS runs so public pages (FAQ, events, etc.) don't CLS.
+ * Excludes home/admin/organiser/account/settings where padding is 0 or sticky.
+ * Uses [id=…] (not #id) so ID specificity doesn't defeat page-level 72px overrides.
+ */
+body:has([id='hub-site-nav']):not(:has(script[data-page='home'])):not(:has(script[data-page='admin'])):not(:has(script[data-page='organiser'])):not(:has(script[data-page='account'])):not(:has(script[data-page='settings'])),
 body.has-site-nav {
   padding-top: 84px;
+}
+
+/* Opportunities family uses a slightly shorter offset */
+body.opportunities-page:has([id='hub-site-nav']):not(:has(script[data-page='home'])):not(:has(script[data-page='admin'])):not(:has(script[data-page='organiser'])):not(:has(script[data-page='account'])):not(:has(script[data-page='settings'])),
+body.opportunities-page.has-site-nav {
+  padding-top: 72px;
 }
 
 body.hub-page-admin {
@@ -584,7 +618,7 @@ body.hub-page-account .site-nav {
   background: #2a2628;
 }
 .hero-title {
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: clamp(2.25rem, 6vw, 3.5rem);
   font-weight: 400;
   line-height: 1.1;
@@ -697,7 +731,7 @@ body.hub-page-account .site-nav {
   margin-bottom: 10px;
 }
 .section-title {
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: clamp(1.75rem, 4vw, 2.35rem);
   font-weight: 400;
   color: var(--charcoal);
@@ -769,7 +803,7 @@ body.hub-page-account .site-nav {
   color: var(--charcoal);
 }
 .pillar h3 {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1.25rem;
   color: var(--charcoal);
   margin-bottom: 8px;
@@ -835,7 +869,7 @@ body.hub-page-account .site-nav {
   color: var(--text-muted);
 }
 .explore-card h3 {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1.2rem;
   color: var(--charcoal);
   margin-bottom: 8px;
@@ -876,7 +910,7 @@ body.hub-page-account .site-nav {
   box-shadow: var(--shadow-soft);
 }
 .split-panel h3 {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1.35rem;
   color: var(--charcoal);
   margin-bottom: 10px;
@@ -1021,7 +1055,7 @@ body.hub-organiser-terms-open {
 }
 
 .hub-organiser-terms-panel h2 {
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1.4rem;
   font-weight: 400;
   margin-bottom: 10px;
@@ -1125,7 +1159,7 @@ body.hub-organiser-terms-open {
   margin-bottom: 12px;
 }
 .hero h1 {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: clamp(1.75rem, 4vw, 2.5rem);
   font-weight: 400;
   color: var(--charcoal);
@@ -1152,7 +1186,7 @@ body.hub-organiser-terms-open {
   color: var(--charcoal);
 }
 .hub-card h2 {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
   font-size: 1.05rem;
   color: var(--charcoal);
   font-weight: 400;
