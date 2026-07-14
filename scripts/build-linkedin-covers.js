@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Build evergreen LinkedIn cover PNGs (1584×396) with the official Hub logo.
+ * Build organiser-first LinkedIn cover PNGs (1584×396).
+ * Large copy is about the organiser; Hub logo is a small corner trust mark.
  * Usage: node scripts/build-linkedin-covers.js
  */
 const fs = require('fs');
@@ -20,155 +21,176 @@ const logoPath = path.join(root, 'assets/logo-nav-transparent.png');
 const logoHref =
   'data:image/png;base64,' + fs.readFileSync(logoPath).toString('base64');
 
-const COVERS = [
-  {
-    file: 'linkedin-cover-verified',
-    aria: 'We are a verified organiser listing on The Networker Hub',
-    kicker: 'VERIFIED ORGANISER',
-    line1: 'We are a verified organiser',
-    line2: 'listing on The Networker Hub',
-    line3: 'Find our events in the UK networking directory',
-    accent: '#c299d1',
-  },
+/**
+ * Organiser-first: THEIR message is the hero.
+ * Hub appears only as a small bottom-right credit.
+ */
+const ORGANISER_FIRST = [
   {
     file: 'linkedin-cover-events',
-    aria: 'Find our next event on The Networker Hub',
-    kicker: 'NEXT EVENT',
-    line1: 'Find our next event on',
-    line2: 'The Networker Hub',
-    line3: 'Browse dates, book tickets, and join us',
+    aria: 'Join our next networking event',
+    kicker: 'NETWORKING EVENT',
+    line1: 'Join our next',
+    line2: 'networking event',
+    line3: 'Meet founders, operators, and local connectors',
     accent: '#9a7aa8',
   },
   {
-    file: 'linkedin-cover-book',
-    aria: 'Book tickets via The Networker Hub',
-    kicker: 'SECURE BOOKING',
-    line1: 'Book tickets with us via',
-    line2: 'The Networker Hub',
-    line3: 'Simple checkout - confirmation in your inbox',
-    accent: '#b8956a',
-  },
-  {
-    file: 'linkedin-cover-members',
-    aria: 'Members find us on The Networker Hub',
-    kicker: 'UK DIRECTORY',
-    line1: 'Members find our group on',
-    line2: 'The Networker Hub',
-    line3: 'Networking meetings, exhibitions, and opportunities',
+    file: 'linkedin-cover-meet',
+    aria: 'Let us connect in person',
+    kicker: 'LET US MEET',
+    line1: 'Let us connect',
+    line2: 'in the room',
+    line3: 'Business networking that leads to real introductions',
     accent: '#4a4446',
   },
   {
     file: 'linkedin-cover-guest',
-    aria: 'Guest visits welcome on The Networker Hub',
+    aria: 'Guest visits welcome',
     kicker: 'GUEST VISITS',
-    line1: 'Guest visits welcome -',
-    line2: 'try our room on The Networker Hub',
-    line3: 'Book a complimentary trial visit before you join',
+    line1: 'Guest visits welcome',
+    line2: 'try before you join',
+    line3: 'A complimentary first visit - then come back as a member',
     accent: '#c299d1',
   },
   {
-    file: 'linkedin-cover-meet',
-    aria: 'Meet us at our next networking event on The Networker Hub',
-    kicker: 'NETWORK WITH US',
-    line1: 'Meet us at our next',
-    line2: 'networking event on the Hub',
-    line3: 'UK business networking - find dates and tickets online',
-    accent: '#9a7aa8',
-  },
-  {
-    file: 'linkedin-cover-opportunity',
-    aria: 'Business opportunity listed on The Networker Hub',
-    kicker: 'BUSINESS OPPORTUNITY',
-    line1: 'Our business opportunity is',
-    line2: 'listed on The Networker Hub',
-    line3: 'Franchise, partnership, and side-hustle enquiries welcome',
+    file: 'linkedin-cover-book',
+    aria: 'Tickets open for our next event',
+    kicker: 'TICKETS OPEN',
+    line1: 'Tickets are open',
+    line2: 'for our next event',
+    line3: 'Secure your seat and bring a guest if you like',
     accent: '#b8956a',
   },
   {
-    file: 'linkedin-cover-enquire',
-    aria: 'Enquire about our listing on The Networker Hub',
-    kicker: 'ENQUIRE ON THE HUB',
-    line1: 'Enquire about our listing',
-    line2: 'on The Networker Hub',
-    line3: 'Send a direct enquiry - free account, no obligation',
-    accent: '#4a4446',
+    file: 'linkedin-cover-opportunity',
+    aria: 'Business opportunity available',
+    kicker: 'BUSINESS OPPORTUNITY',
+    line1: 'A business opportunity',
+    line2: 'worth a conversation',
+    line3: 'Franchise, partnership, or side-hustle - enquire to learn more',
+    accent: '#b8956a',
   },
   {
     file: 'linkedin-cover-partnership',
-    aria: 'Partnership opportunity on The Networker Hub',
+    aria: 'Looking for the right partners',
     kicker: 'PARTNERSHIP',
-    line1: 'Looking for partners?',
-    line2: 'Find our opportunity on the Hub',
-    line3: 'Business opportunities for UK networkers and founders',
+    line1: 'Looking for the',
+    line2: 'right partners',
+    line3: 'Serious enquiries welcome from aligned founders and operators',
     accent: '#c299d1',
   },
   {
     file: 'linkedin-cover-franchise',
-    aria: 'Franchise opportunity on The Networker Hub',
+    aria: 'Franchise opportunity',
     kicker: 'FRANCHISE',
-    line1: 'Franchise opportunity listed',
-    line2: 'on The Networker Hub',
-    line3: 'Explore investment details and send an enquiry online',
+    line1: 'Franchise opportunity',
+    line2: 'now open to enquire',
+    line3: 'Explore territory, investment, and next steps',
     accent: '#9a7aa8',
+  },
+  {
+    file: 'linkedin-cover-enquire',
+    aria: 'Enquire to learn more',
+    kicker: 'ENQUIRE',
+    line1: 'Curious?',
+    line2: 'Enquire to learn more',
+    line3: 'Send a short note - we will share the details that matter',
+    accent: '#4a4446',
   },
 ];
 
-function bannerSvg(c) {
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1584" height="396" viewBox="0 0 1584 396" role="img" aria-label="${c.aria}">
-  <defs>
+/** Soft Hub badges — Hub is intentional here, still kept modest. */
+const HUB_BADGES = [
+  {
+    file: 'linkedin-cover-verified',
+    aria: 'Verified organiser on The Networker Hub',
+    kicker: 'TRUST MARK',
+    line1: 'Verified organiser',
+    line2: 'on The Networker Hub',
+    line3: 'A small credibility badge for your LinkedIn profile',
+    accent: '#c299d1',
+    hubEmphasis: true,
+  },
+  {
+    file: 'linkedin-cover-members',
+    aria: 'Listed on The Networker Hub',
+    kicker: 'DIRECTORY',
+    line1: 'Listed on',
+    line2: 'The Networker Hub',
+    line3: 'UK networking events and business opportunities',
+    accent: '#9a7aa8',
+    hubEmphasis: true,
+  },
+];
+
+const COVERS = ORGANISER_FIRST.concat(HUB_BADGES);
+
+function commonBg(accent) {
+  return `  <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#faf6ee"/>
-      <stop offset="48%" stop-color="#f5f0e8"/>
+      <stop offset="55%" stop-color="#f5f0e8"/>
       <stop offset="100%" stop-color="#ebe0f0"/>
     </linearGradient>
   </defs>
   <rect width="1584" height="396" fill="url(#bg)"/>
-  <rect x="0" y="0" width="14" height="396" fill="${c.accent}"/>
-  <circle cx="1540" cy="30" r="210" fill="#c299d1" opacity="0.14"/>
-  <circle cx="1470" cy="380" r="170" fill="#9a7aa8" opacity="0.1"/>
-  <g transform="translate(740, 118)">
-    <text x="0" y="0" fill="#9a7aa8" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" letter-spacing="2.2">${c.kicker}</text>
-    <text x="0" y="52" fill="#4a4446" font-family="Georgia, 'Times New Roman', serif" font-size="34">${c.line1}</text>
-    <text x="0" y="98" fill="#4a4446" font-family="Georgia, 'Times New Roman', serif" font-size="34">${c.line2}</text>
-    <text x="0" y="148" fill="#5c5557" font-family="Arial, Helvetica, sans-serif" font-size="19">${c.line3}</text>
-  </g>
-  <image href="${logoHref}" xlink:href="${logoHref}" x="1160" y="28" width="360" height="97" preserveAspectRatio="xMidYMid meet"/>
-</svg>`;
+  <rect x="0" y="0" width="12" height="396" fill="${accent}"/>
+  <circle cx="1520" cy="40" r="180" fill="#c299d1" opacity="0.1"/>
+  <circle cx="1460" cy="380" r="140" fill="#9a7aa8" opacity="0.08"/>`;
 }
 
-function leanSvg(c) {
+/** Small Hub mark + credit — corner trust signal, not the hero. */
+function hubCredit(logoSrc, opts) {
+  const emphasis = opts && opts.hubEmphasis;
+  const logoW = emphasis ? 168 : 132;
+  const logoH = emphasis ? 45 : 36;
+  const x = 1584 - logoW - 36;
+  const y = 396 - logoH - 28;
+  const label = emphasis ? 'The Networker Hub' : 'on The Networker Hub';
+  return `
+  <image href="${logoSrc}" xlink:href="${logoSrc}" x="${x}" y="${y - 18}" width="${logoW}" height="${logoH}" preserveAspectRatio="xMidYMid meet" opacity="0.92"/>
+  <text x="${x + logoW / 2}" y="${y + logoH + 6}" text-anchor="middle" fill="#5c5557" font-family="Arial, Helvetica, sans-serif" font-size="11">${label}</text>`;
+}
+
+function organiserBody(c) {
+  // Copy starts mid-banner so LinkedIn avatar (left) never covers it
+  return `  <g transform="translate(520, 108)">
+    <text x="0" y="0" fill="#9a7aa8" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" letter-spacing="2.4">${c.kicker}</text>
+    <text x="0" y="58" fill="#4a4446" font-family="Georgia, 'Times New Roman', serif" font-size="46">${c.line1}</text>
+    <text x="0" y="116" fill="#4a4446" font-family="Georgia, 'Times New Roman', serif" font-size="46">${c.line2}</text>
+    <text x="0" y="168" fill="#5c5557" font-family="Arial, Helvetica, sans-serif" font-size="20">${c.line3}</text>
+  </g>`;
+}
+
+function bannerSvg(c, logoSrc) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1584" height="396" viewBox="0 0 1584 396" role="img" aria-label="${c.aria}">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#faf6ee"/>
-      <stop offset="48%" stop-color="#f5f0e8"/>
-      <stop offset="100%" stop-color="#ebe0f0"/>
-    </linearGradient>
-  </defs>
-  <rect width="1584" height="396" fill="url(#bg)"/>
-  <rect x="0" y="0" width="14" height="396" fill="${c.accent}"/>
-  <circle cx="1540" cy="30" r="210" fill="#c299d1" opacity="0.14"/>
-  <circle cx="1470" cy="380" r="170" fill="#9a7aa8" opacity="0.1"/>
-  <g transform="translate(740, 118)">
-    <text x="0" y="0" fill="#9a7aa8" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" letter-spacing="2.2">${c.kicker}</text>
-    <text x="0" y="52" fill="#4a4446" font-family="Georgia, 'Times New Roman', serif" font-size="34">${c.line1}</text>
-    <text x="0" y="98" fill="#4a4446" font-family="Georgia, 'Times New Roman', serif" font-size="34">${c.line2}</text>
-    <text x="0" y="148" fill="#5c5557" font-family="Arial, Helvetica, sans-serif" font-size="19">${c.line3}</text>
-  </g>
-  <image href="../logo-nav-transparent.png" xlink:href="../logo-nav-transparent.png" x="1160" y="28" width="360" height="97" preserveAspectRatio="xMidYMid meet"/>
+${commonBg(c.accent)}
+${organiserBody(c)}
+${hubCredit(logoSrc, { hubEmphasis: Boolean(c.hubEmphasis) })}
 </svg>`;
 }
 
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
-for (const c of COVERS) {
-  const pngSvg = bannerSvg(c);
-  const resvg = new Resvg(pngSvg, { fitTo: { mode: 'width', value: 1584 } });
-  fs.writeFileSync(path.join(outDir, c.file + '.png'), resvg.render().asPng());
-  fs.writeFileSync(path.join(outDir, c.file + '.svg'), leanSvg(c));
-  console.log('built', c.file);
+const keep = new Set(COVERS.map((c) => c.file));
+for (const name of fs.readdirSync(outDir)) {
+  if (!name.startsWith('linkedin-cover-')) continue;
+  const base = name.replace(/\.(png|svg)$/, '');
+  if (!keep.has(base)) {
+    fs.unlinkSync(path.join(outDir, name));
+    console.log('removed', name);
+  }
 }
 
-console.log('Done:', COVERS.length, 'covers in', outDir);
+for (const c of COVERS) {
+  const pngSvg = bannerSvg(c, logoHref);
+  const leanSvg = bannerSvg(c, '../logo-nav-transparent.png');
+  const resvg = new Resvg(pngSvg, { fitTo: { mode: 'width', value: 1584 } });
+  fs.writeFileSync(path.join(outDir, c.file + '.png'), resvg.render().asPng());
+  fs.writeFileSync(path.join(outDir, c.file + '.svg'), leanSvg);
+  console.log('built', c.file, c.hubEmphasis ? '(hub badge)' : '(organiser-first)');
+}
+
+console.log('Done:', COVERS.length, 'covers →', outDir);
