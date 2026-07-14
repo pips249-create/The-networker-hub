@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/home-page.css?v=20260714pillars">
-<link rel="stylesheet" href="css/site-access.css?v=20260714contact">
+<link rel="stylesheet" href="css/site-access.css?v=20260714dash">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 </head>
@@ -272,45 +272,137 @@
           <p class="site-access-workspace-kicker">For organisers</p>
           <h3 id="site-access-workspace-heading">Find your next attendees</h3>
           <p>
-            Run events, track guest visits, list opportunities, and request payouts from one teal organiser workspace. Free to list; you keep 100% of the ticket price.
+            Run events, track guest visits, list business opportunities, and request payouts from one organiser workspace. Free to list; you keep 100% of the ticket price.
           </p>
           <ul class="site-access-workspace-points">
             <li>Claim your organiser page and list events</li>
             <li>Guest visits, visit tracking, and Category Exclusivity</li>
+            <li>List business opportunities alongside your events</li>
             <li>Stripe Connect payouts in the same dashboard</li>
           </ul>
+          <p class="site-access-workspace-hint">Click through the workspace tabs to see it in action.</p>
         </div>
-        <div class="site-access-workspace-visual" aria-hidden="true">
+        <div class="site-access-workspace-visual">
           <div class="sa-dash-mock">
             <div class="sa-dash-mock-bar">
-              <div class="sa-dash-mock-dots"><span></span><span></span><span></span></div>
+              <div class="sa-dash-mock-dots" aria-hidden="true"><span></span><span></span><span></span></div>
               <span>Organiser workspace · The Networker Hub</span>
             </div>
             <div class="sa-dash-mock-body">
-              <div class="sa-dash-mock-nav">
-                <span class="sa-dash-mock-nav-item is-active">Overview</span>
-                <span class="sa-dash-mock-nav-item">Events</span>
-                <span class="sa-dash-mock-nav-item">Attendees</span>
-                <span class="sa-dash-mock-nav-item">Payouts</span>
+              <div class="sa-dash-mock-nav" role="tablist" aria-label="Organiser workspace preview">
+                <button type="button" class="sa-dash-mock-nav-item is-active" role="tab" aria-selected="true" data-dash-tab="overview">Overview</button>
+                <button type="button" class="sa-dash-mock-nav-item" role="tab" aria-selected="false" data-dash-tab="events">Events</button>
+                <button type="button" class="sa-dash-mock-nav-item" role="tab" aria-selected="false" data-dash-tab="opportunities">Opportunities</button>
+                <button type="button" class="sa-dash-mock-nav-item" role="tab" aria-selected="false" data-dash-tab="payouts">Payouts</button>
               </div>
               <div class="sa-dash-mock-main">
-                <p class="sa-dash-mock-eyebrow">Getting started</p>
-                <p class="sa-dash-mock-title">Here&rsquo;s what to do first</p>
-                <ol class="sa-dash-mock-checklist">
-                  <li class="is-done">
-                    <strong>Create your organiser page</strong>
-                    <span>Your public page on the hub.</span>
-                  </li>
-                  <li class="is-current">
-                    <strong>List your first event</strong>
-                    <span>Meetings, exhibitions and conferences.</span>
-                  </li>
-                </ol>
-                <div class="sa-dash-mock-stats">
-                  <div class="sa-dash-mock-stat"><b>12</b><small>Events live</small></div>
-                  <div class="sa-dash-mock-stat"><b>£2.4k</b><small>Revenue</small></div>
-                  <div class="sa-dash-mock-stat"><b>23</b><small>1st visits</small></div>
+
+                <div class="sa-dash-mock-panel is-active" data-dash-panel="overview" role="tabpanel">
+                  <p class="sa-dash-mock-eyebrow">Getting started</p>
+                  <p class="sa-dash-mock-title">Here&rsquo;s what to do first</p>
+                  <ol class="sa-dash-mock-checklist">
+                    <li class="is-done">
+                      <strong>Create your organiser page</strong>
+                      <span>Your public page on the hub.</span>
+                    </li>
+                    <li class="is-current">
+                      <strong>List your first event</strong>
+                      <span>Meetings, exhibitions and conferences.</span>
+                    </li>
+                  </ol>
+                  <div class="sa-dash-mock-stats">
+                    <div class="sa-dash-mock-stat"><b>12</b><small>Events live</small></div>
+                    <div class="sa-dash-mock-stat"><b>£2.4k</b><small>Revenue</small></div>
+                    <div class="sa-dash-mock-stat"><b>23</b><small>1st visits</small></div>
+                  </div>
                 </div>
+
+                <div class="sa-dash-mock-panel" data-dash-panel="events" role="tabpanel" hidden>
+                  <p class="sa-dash-mock-eyebrow">Your events</p>
+                  <p class="sa-dash-mock-title">Upcoming events</p>
+                  <ul class="sa-dash-mock-rows">
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>Founders breakfast</strong>
+                        <span>Tue 9 Sep · Leeds · 18 booked</span>
+                      </div>
+                      <span class="sa-dash-mock-pill sa-dash-mock-pill--live">Published</span>
+                    </li>
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>Autumn expo</strong>
+                        <span>Thu 2 Oct · Manchester · 64 booked</span>
+                      </div>
+                      <span class="sa-dash-mock-pill sa-dash-mock-pill--live">Published</span>
+                    </li>
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>Winter conference</strong>
+                        <span>Nov · venue TBC</span>
+                      </div>
+                      <span class="sa-dash-mock-pill">Draft</span>
+                    </li>
+                  </ul>
+                  <div class="sa-dash-mock-stats">
+                    <div class="sa-dash-mock-stat"><b>86</b><small>Bookings this month</small></div>
+                    <div class="sa-dash-mock-stat"><b>9</b><small>Guest visits</small></div>
+                    <div class="sa-dash-mock-stat"><b>4.8★</b><small>Avg rating</small></div>
+                  </div>
+                </div>
+
+                <div class="sa-dash-mock-panel" data-dash-panel="opportunities" role="tabpanel" hidden>
+                  <p class="sa-dash-mock-eyebrow">Business opportunities</p>
+                  <p class="sa-dash-mock-title">Your live listings</p>
+                  <ul class="sa-dash-mock-rows">
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>Regional café franchise</strong>
+                        <span>Franchise · North West · 12 enquiries</span>
+                      </div>
+                      <span class="sa-dash-mock-pill sa-dash-mock-pill--featured">Featured</span>
+                    </li>
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>Co-working referral deal</strong>
+                        <span>Partnership · UK-wide · 5 enquiries</span>
+                      </div>
+                      <span class="sa-dash-mock-pill sa-dash-mock-pill--live">Live</span>
+                    </li>
+                  </ul>
+                  <div class="sa-dash-mock-cta">+ List an opportunity</div>
+                  <div class="sa-dash-mock-stats">
+                    <div class="sa-dash-mock-stat"><b>17</b><small>Enquiries</small></div>
+                    <div class="sa-dash-mock-stat"><b>412</b><small>Listing views</small></div>
+                    <div class="sa-dash-mock-stat"><b>2</b><small>Live listings</small></div>
+                  </div>
+                </div>
+
+                <div class="sa-dash-mock-panel" data-dash-panel="payouts" role="tabpanel" hidden>
+                  <p class="sa-dash-mock-eyebrow">Payouts</p>
+                  <p class="sa-dash-mock-title">Stripe Connect balance</p>
+                  <div class="sa-dash-mock-balance">
+                    <b>£1,180.00</b>
+                    <small>Available · next payout Friday</small>
+                  </div>
+                  <ul class="sa-dash-mock-rows">
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>Payout · 5 Sep</strong>
+                        <span>Founders breakfast ticket sales</span>
+                      </div>
+                      <span class="sa-dash-mock-pill sa-dash-mock-pill--live">£640 paid</span>
+                    </li>
+                    <li class="sa-dash-mock-row">
+                      <div class="sa-dash-mock-row-main">
+                        <strong>Payout · 29 Aug</strong>
+                        <span>Autumn expo early-bird tickets</span>
+                      </div>
+                      <span class="sa-dash-mock-pill sa-dash-mock-pill--live">£880 paid</span>
+                    </li>
+                  </ul>
+                  <p class="sa-dash-mock-note">You keep 100% of the ticket price. Payouts go straight to your bank.</p>
+                </div>
+
               </div>
             </div>
           </div>
@@ -331,6 +423,6 @@
   </p>
 </footer>
 
-<script src="js/site-access-gate.js?v=20260714contact"></script>
+<script src="js/site-access-gate.js?v=20260714dash"></script>
 </body>
 </html>

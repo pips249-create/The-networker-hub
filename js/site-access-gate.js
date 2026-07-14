@@ -86,6 +86,73 @@
     });
   }
 
+  // Interactive organiser workspace mock — clickable tabs with a gentle auto-tour
+  (function initDashMock() {
+    var mock = document.querySelector('.sa-dash-mock');
+    if (!mock) return;
+
+    var tabs = Array.prototype.slice.call(mock.querySelectorAll('[data-dash-tab]'));
+    var panels = Array.prototype.slice.call(mock.querySelectorAll('[data-dash-panel]'));
+    if (!tabs.length || !panels.length) return;
+
+    var order = tabs.map(function (t) { return t.getAttribute('data-dash-tab'); });
+    var current = 0;
+    var autoTimer = null;
+    var userTookOver = false;
+    var reducedMotion =
+      window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function activate(name) {
+      current = Math.max(0, order.indexOf(name));
+      tabs.forEach(function (tab) {
+        var active = tab.getAttribute('data-dash-tab') === name;
+        tab.classList.toggle('is-active', active);
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      panels.forEach(function (panel) {
+        var active = panel.getAttribute('data-dash-panel') === name;
+        panel.hidden = !active;
+        panel.classList.toggle('is-active', active);
+      });
+    }
+
+    function stopAuto() {
+      userTookOver = true;
+      if (autoTimer) {
+        window.clearInterval(autoTimer);
+        autoTimer = null;
+      }
+    }
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        stopAuto();
+        activate(tab.getAttribute('data-dash-tab'));
+      });
+    });
+
+    // Auto-tour the tabs once the mock scrolls into view; hand over on first click
+    if (!reducedMotion && 'IntersectionObserver' in window) {
+      var observer = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            if (userTookOver) return;
+            if (entry.isIntersecting && !autoTimer) {
+              autoTimer = window.setInterval(function () {
+                activate(order[(current + 1) % order.length]);
+              }, 3500);
+            } else if (!entry.isIntersecting && autoTimer) {
+              window.clearInterval(autoTimer);
+              autoTimer = null;
+            }
+          });
+        },
+        { threshold: 0.4 }
+      );
+      observer.observe(mock);
+    }
+  })();
+
   var waitlistForm = document.getElementById('waitlist-form');
   if (waitlistForm) {
     var waitlistMsg = document.getElementById('waitlist-message');
