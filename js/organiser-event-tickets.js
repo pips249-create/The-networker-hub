@@ -415,8 +415,9 @@
     if (guestFields) guestFields.hidden = !guestOn;
     if (guestNote) guestNote.hidden = !guestOn;
     if (guestPassesOptOut) guestPassesOptOut.hidden = !guestOn;
-    if (alumniPanel) alumniPanel.hidden = !openBooking;
-    if (!openBooking) {
+    // Alumni Fast-Pass is not shipping yet — keep the panel hidden in all modes.
+    if (alumniPanel) alumniPanel.hidden = true;
+    {
       const alumniEnabled = document.getElementById('ee-alumni-enabled');
       const alumniFields = document.getElementById('ee-alumni-fields');
       if (alumniEnabled) alumniEnabled.checked = false;
@@ -519,8 +520,8 @@
       '<input type="date" class="ee-tier-sale-start-date" />' +
       '<select class="ee-tier-sale-start-time" aria-label="Sale start time"></select>' +
       '</div></div>' +
-      '<div class="ee-field"><label>Sale end <span class="ee-optional">(optional)</span></label>' +
-      saleEndSelectHtml('1_week') +
+      '<div class="ee-field"><label>Sale end</label>' +
+      saleEndSelectHtml('at_start') +
       '<div class="ee-sale-custom-wrap" hidden>' +
       '<p class="ee-hint" style="margin:0 0 6px">Custom end date and time</p>' +
       '<div class="ee-datetime-split">' +
@@ -528,10 +529,6 @@
       '<select class="ee-tier-sale-custom-time" aria-label="Custom sale end time"></select>' +
       '</div></div></div>' +
       '</div>' +
-      '<div class="ee-field ee-tier-kind-field"><label>Ticket type</label><select class="ee-tier-kind">' +
-      '<option value="Standard">Standard (auto-approve)</option>' +
-      '<option value="Application-based">Application-based (you review applicants)</option>' +
-      '</select></div>' +
       '</div></div>'
     );
   }
@@ -650,11 +647,6 @@
           ? ''
           : String(ticket.quantityAvailable);
     }
-    const kindEl = row.querySelector('.ee-tier-kind');
-    if (kindEl) {
-      const kind = ticket.ticketType || (/application/i.test(ticket.name || '') ? 'Application-based' : 'Standard');
-      kindEl.value = /application/i.test(kind) ? 'Application-based' : 'Standard';
-    }
     if (ticket.saleStart) {
       const dateEl = row.querySelector('.ee-tier-sale-start-date');
       const timeEl = row.querySelector('.ee-tier-sale-start-time');
@@ -666,10 +658,14 @@
       const customWrap = row.querySelector('.ee-sale-custom-wrap');
       const customDate = row.querySelector('.ee-tier-sale-custom-date');
       const customTime = row.querySelector('.ee-tier-sale-custom-time');
-      if (saleSelect) saleSelect.value = 'custom';
-      if (customWrap) customWrap.hidden = false;
-      if (customDate) customDate.value = isoToDateInput(ticket.saleEnd);
-      if (customTime) populateQuarterTimeSelect(customTime, isoToTimeInput(ticket.saleEnd) || '18:00');
+      const eventDate = seriesMeta.events && seriesMeta.events[0] ? seriesMeta.events[0].date : null;
+      const option = ticket.saleEndOption || inferSaleEndOptionFromIso(ticket.saleEnd, eventDate);
+      if (saleSelect) saleSelect.value = option;
+      if (customWrap) customWrap.hidden = option !== 'custom';
+      if (option === 'custom') {
+        if (customDate) customDate.value = isoToDateInput(ticket.saleEnd);
+        if (customTime) populateQuarterTimeSelect(customTime, isoToTimeInput(ticket.saleEnd) || '18:00');
+      }
     }
   }
 
@@ -698,8 +694,9 @@
       if (vatRadio) selectVatCard(vatRadio);
     }
     if (ev.refundPolicy) {
+      const editablePolicy = ev.refundPolicy === 'partial_refund' ? 'custom' : ev.refundPolicy;
       const refundRadio = document.querySelector(
-        'input[name="refund-policy"][value="' + ev.refundPolicy + '"]'
+        'input[name="refund-policy"][value="' + editablePolicy + '"]'
       );
       if (refundRadio) selectRefundCard(refundRadio);
     }
@@ -708,10 +705,7 @@
       if (cutoff) cutoff.value = String(ev.refundCutoffDays);
     }
     if (ev.refundPolicyDetails) {
-      if (ev.refundPolicy === 'partial_refund') {
-        const el = document.getElementById('refund-partial-details');
-        if (el) el.value = ev.refundPolicyDetails;
-      } else if (ev.refundPolicy === 'custom') {
+      if (ev.refundPolicy === 'partial_refund' || ev.refundPolicy === 'custom') {
         const el = document.getElementById('refund-custom-details');
         if (el) el.value = ev.refundPolicyDetails;
       }
@@ -802,8 +796,6 @@
         row.querySelector('.ee-tier-sale-start-time')?.value
       );
       const saleEnd = computeSaleEndIso(saleOption, customDt, eventDate);
-      const ticketKind = row.querySelector('.ee-tier-kind')?.value || 'Standard';
-      const isApp = ticketKind === 'Application-based';
       tiers.push({
         name,
         price,
@@ -814,8 +806,8 @@
         saleEnd,
         saleEndOption: saleOption,
         saleEndCustom: customDt,
-        categoryExclusivity: isApp,
-        ticketType: ticketKind,
+        categoryExclusivity: false,
+        ticketType: 'Standard',
         displayOrder: idx,
       });
     });
@@ -838,8 +830,6 @@
     };
     if (policy === 'full_refund') {
       payload.refundCutoffDays = Number(document.getElementById('refund-cutoff-days')?.value) || 0;
-    } else if (policy === 'partial_refund') {
-      payload.refundPolicyDetails = document.getElementById('refund-partial-details')?.value.trim() || '';
     } else if (policy === 'custom') {
       payload.refundPolicyDetails = document.getElementById('refund-custom-details')?.value.trim() || '';
     }
@@ -919,29 +909,7 @@
       return false;
     }
     if (draft.alumniFastPass) {
-      const enabledEl = document.getElementById('ee-alumni-enabled');
-      const fields = document.getElementById('ee-alumni-fields');
-      if (enabledEl) enabledEl.checked = Boolean(draft.alumniFastPass.enabled);
-      if (fields) fields.hidden = !draft.alumniFastPass.enabled;
-      if (draft.alumniFastPass.enabled) {
-        const priceEl = document.getElementById('ee-alumni-price');
-        if (priceEl && draft.alumniFastPass.price != null) priceEl.value = String(draft.alumniFastPass.price);
-        const qtyEl = document.getElementById('ee-alumni-qty');
-        if (qtyEl && draft.alumniFastPass.quantityAvailable != null) {
-          qtyEl.value = String(draft.alumniFastPass.quantityAvailable);
-        }
-        if (draft.alumniFastPass.saleEnd) {
-          const endDateEl = document.getElementById('ee-alumni-sale-end-date');
-          const endTimeEl = document.getElementById('ee-alumni-sale-end-time');
-          if (endDateEl) endDateEl.value = isoToDateInput(draft.alumniFastPass.saleEnd);
-          if (endTimeEl) {
-            populateQuarterTimeSelect(
-              endTimeEl,
-              isoToTimeInput(draft.alumniFastPass.saleEnd) || '18:00'
-            );
-          }
-        }
-      }
+      // Alumni Fast-Pass UI is hidden until the feature ships — ignore draft alumni state.
     }
     if (draft.guestPassesDisabled != null) {
       const guestEl = document.getElementById('ee-guest-passes-disabled');
@@ -955,20 +923,21 @@
       if (radio) selectVatCard(radio);
     }
     if (draft.refund && draft.refund.refundPolicy) {
-      selectedRefundPolicy = draft.refund.refundPolicy;
-      const policyVal = String(draft.refund.refundPolicy);
+      const draftPolicyVal = String(draft.refund.refundPolicy);
+      const policyVal = draftPolicyVal === 'partial_refund' ? 'custom' : draftPolicyVal;
+      selectedRefundPolicy = policyVal;
       const policyRadio = Array.from(document.querySelectorAll('input[name="refund-policy"]')).find(
         (el) => el.value === policyVal
       );
       if (policyRadio) selectRefundCard(policyRadio);
       const agree = document.getElementById('refund-terms-agreed');
       if (agree && draft.refund.refundTermsAgreed) agree.checked = true;
-      const partial = document.getElementById('refund-partial-details');
-      if (partial && draft.refund.refundPolicyDetails && policyVal === 'partial_refund') {
-        partial.value = draft.refund.refundPolicyDetails;
-      }
       const custom = document.getElementById('refund-custom-details');
-      if (custom && draft.refund.refundPolicyDetails && policyVal === 'custom') {
+      if (
+        custom &&
+        draft.refund.refundPolicyDetails &&
+        (draftPolicyVal === 'partial_refund' || policyVal === 'custom')
+      ) {
         custom.value = draft.refund.refundPolicyDetails;
       }
     }
@@ -1172,7 +1141,7 @@
     });
     const agree = document.getElementById('refund-terms-agreed');
     if (agree) agree.addEventListener('change', updatePublishButton);
-    ['refund-cutoff-days', 'refund-partial-details', 'refund-custom-details'].forEach((id) => {
+    ['refund-cutoff-days', 'refund-custom-details'].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('input', updatePublishButton);
     });
@@ -1230,49 +1199,12 @@
   }
 
   function collectAlumniFastPass() {
-    const enabled = Boolean(document.getElementById('ee-alumni-enabled')?.checked);
-    if (!enabled) return { enabled: false };
-    const price = document.getElementById('ee-alumni-price')?.value;
-    const qty = document.getElementById('ee-alumni-qty')?.value;
-    const saleEnd = combineDateAndQuarterTime(
-      document.getElementById('ee-alumni-sale-end-date')?.value,
-      document.getElementById('ee-alumni-sale-end-time')?.value
-    );
-    return {
-      enabled: true,
-      price: price === '' ? 0 : price,
-      quantityAvailable: qty === '' ? null : Number(qty),
-      saleEnd,
-    };
+    // Not available to organisers yet — never persist an enabled alumni tier from this UI.
+    return { enabled: false };
   }
 
-  function prefillAlumniFastPass(eventRow, alumniTicket) {
-    const enabledEl = document.getElementById('ee-alumni-enabled');
-    const fields = document.getElementById('ee-alumni-fields');
-    const enabled = Boolean(eventRow?.alumniFastPassEnabled);
-    if (enabledEl) enabledEl.checked = enabled;
-    if (fields) fields.hidden = !enabled;
-    if (!enabled) return;
-    const priceEl = document.getElementById('ee-alumni-price');
-    if (priceEl && alumniTicket) {
-      priceEl.value =
-        alumniTicket.price === '' || alumniTicket.price == null ? '0' : String(alumniTicket.price);
-    }
-    const qtyEl = document.getElementById('ee-alumni-qty');
-    if (qtyEl && alumniTicket) {
-      qtyEl.value =
-        alumniTicket.quantityAvailable == null || alumniTicket.quantityAvailable === ''
-          ? ''
-          : String(alumniTicket.quantityAvailable);
-    }
-    const endDateEl = document.getElementById('ee-alumni-sale-end-date');
-    const endTimeEl = document.getElementById('ee-alumni-sale-end-time');
-    if (alumniTicket?.saleEnd) {
-      if (endDateEl) endDateEl.value = isoToDateInput(alumniTicket.saleEnd);
-      if (endTimeEl) {
-        populateQuarterTimeSelect(endTimeEl, isoToTimeInput(alumniTicket.saleEnd) || '18:00');
-      }
-    }
+  function prefillAlumniFastPass(_eventRow, _alumniTicket) {
+    // Alumni Fast-Pass UI is hidden until the feature ships.
   }
 
   function isCategoryExclusivityTicket(ticket) {

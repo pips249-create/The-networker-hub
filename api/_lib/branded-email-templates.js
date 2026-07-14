@@ -17,6 +17,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: '{{inviter_name}} invited you to help manage {{account_name}}',
   },
+  organiser_ticket_sales_nudge: {
+    file: 'organiser-ticket-sales-nudge.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Someone wants tickets for {{event_name}}',
+  },
   opportunity_listing_live: {
     file: 'opportunity-listing-live.html',
     marker: 'hub-email-layout-v2',

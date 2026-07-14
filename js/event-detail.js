@@ -1219,7 +1219,7 @@
       return ev.refundPolicyDetails || ev.refund_policy_details || 'Partial refunds apply — see organiser terms.';
     }
     if (policy === 'no_refunds') {
-      return 'Ticket sales are final for this event. The 14-day cooling-off right does not apply to leisure events on a specific date.';
+      return 'No refund is offered if you change your mind or cannot attend. Your statutory rights still apply if the event is cancelled, materially changed, or not provided as described.';
     }
     if (policy === 'custom') {
       return ev.refundPolicyDetails || ev.refund_policy_details || 'See organiser refund policy.';
@@ -1257,9 +1257,10 @@
       cls = 'is-partial';
       detailText = ev.refundPolicyDetails || ev.refund_policy_details || 'Partial refunds apply — see organiser terms.';
     } else if (policy === 'no_refunds') {
-      label = 'All sales final — no refunds';
+      label = 'No refunds if you cannot attend';
       cls = 'is-none';
-      detailText = 'Ticket sales are final for this event.';
+      detailText =
+        'No refund is offered if you change your mind or cannot attend. Your statutory rights still apply if the event is cancelled, materially changed, or not provided as described.';
     } else if (policy === 'custom') {
       label = 'ℹ Custom refund policy';
       cls = 'is-custom';

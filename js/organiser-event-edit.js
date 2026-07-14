@@ -6,6 +6,8 @@
   const SERIES_STORAGE_KEY = 'hub_event_series';
   const FORMAT_STORAGE_KEY = 'hub_event_format';
   const GROUP_STORAGE_KEY = 'hub_event_group_id';
+  const AUTODRAFT_PREFIX = 'hub_event_autodraft_v1:';
+  const AUTODRAFT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
   const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
   const ORG_BOOTSTRAP_CACHE_MS = 120000;
   const params = new URLSearchParams(location.search);
@@ -48,12 +50,204 @@
   let currentSeriesPeerCount = 0;
   let currentSeriesDateOnly = false;
   let currentSeriesContext = null;
+  let autodraftTimer = null;
+  let restoringAutodraft = false;
+  let autodraftDisabled = false;
 
   function countWords(text) {
     return String(text || '')
       .trim()
       .split(/\s+/)
       .filter(Boolean).length;
+  }
+
+  function autodraftKey(groupId) {
+    const id = String(groupId || '').trim();
+    return id ? AUTODRAFT_PREFIX + id : '';
+  }
+
+  function setAutodraftStatus(text, tone) {
+    const el = document.getElementById('ee-autodraft-status');
+    if (!el) return;
+    el.textContent = text || '';
+    el.className =
+      'ee-hint ee-autodraft-status' +
+      (tone === 'restored' ? ' is-restored' : tone === 'error' ? ' is-error' : '');
+  }
+
+  function fieldValue(id) {
+    const el = document.getElementById(id);
+    return el ? el.value : '';
+  }
+
+  function collectAutodraft() {
+    if (editId) return null;
+    const groupId = fieldValue('ee-group').trim();
+    if (!groupId) return null;
+    return {
+      version: 1,
+      savedAt: new Date().toISOString(),
+      groupId,
+      eventFormat,
+      title: fieldValue('ee-title'),
+      type: fieldValue('ee-type'),
+      description: fieldValue('ee-description'),
+      venue: fieldValue('ee-venue'),
+      address1: fieldValue('ee-address1'),
+      city: fieldValue('ee-city'),
+      postcode: fieldValue('ee-postcode'),
+      platform: fieldValue('ee-platform'),
+      joinLink: fieldValue('ee-join-link'),
+      photoUrl: fieldValue('ee-photo-url'),
+      photoPosition,
+      hadUploadedPhoto: Boolean(photoFile),
+      dates: getSelectedDateKeys(),
+      startTime: fieldValue('ee-start-time'),
+      endTime: fieldValue('ee-end-time'),
+    };
+  }
+
+  function autodraftHasWork(draft) {
+    if (!draft) return false;
+    return Boolean(
+      String(draft.title || '').trim() ||
+        String(draft.description || '').trim() ||
+        String(draft.venue || '').trim() ||
+        String(draft.address1 || '').trim() ||
+        String(draft.city || '').trim() ||
+        String(draft.postcode || '').trim() ||
+        String(draft.platform || '').trim() ||
+        String(draft.joinLink || '').trim() ||
+        String(draft.photoUrl || '').trim() ||
+        draft.hadUploadedPhoto ||
+        (Array.isArray(draft.dates) && draft.dates.length)
+    );
+  }
+
+  function saveAutodraftNow() {
+    if (editId || restoringAutodraft || autodraftDisabled) return;
+    const draft = collectAutodraft();
+    if (!draft) return;
+    const key = autodraftKey(draft.groupId);
+    try {
+      if (!autodraftHasWork(draft)) {
+        localStorage.removeItem(key);
+        setAutodraftStatus('');
+        return;
+      }
+      localStorage.setItem(key, JSON.stringify(draft));
+      setAutodraftStatus(
+        draft.hadUploadedPhoto
+          ? 'Draft autosaved in this browser. Re-select the uploaded image if you close this page.'
+          : 'Draft autosaved in this browser.'
+      );
+    } catch {
+      setAutodraftStatus('Could not autosave in this browser.', 'error');
+    }
+  }
+
+  function scheduleAutodraft() {
+    if (editId || restoringAutodraft || autodraftDisabled) return;
+    window.clearTimeout(autodraftTimer);
+    autodraftTimer = window.setTimeout(saveAutodraftNow, 700);
+  }
+
+  function clearAutodraft(groupId) {
+    window.clearTimeout(autodraftTimer);
+    const key = autodraftKey(groupId);
+    if (!key) return;
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function setDraftField(id, value) {
+    const el = document.getElementById(id);
+    if (el && value != null) el.value = String(value);
+  }
+
+  function restoreAutodraft(groupId) {
+    if (editId) return false;
+    const key = autodraftKey(groupId);
+    if (!key) return false;
+    let draft;
+    try {
+      draft = JSON.parse(localStorage.getItem(key) || 'null');
+      const age = Date.now() - new Date(draft?.savedAt || 0).getTime();
+      if (!draft || !Number.isFinite(age) || age > AUTODRAFT_MAX_AGE_MS) {
+        localStorage.removeItem(key);
+        return false;
+      }
+    } catch {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        /* ignore */
+      }
+      return false;
+    }
+
+    restoringAutodraft = true;
+    eventFormat = normalizeEventFormat(draft.eventFormat) || eventFormat;
+    applyFormatUi(eventFormat);
+    setDraftField('ee-title', draft.title);
+    setDraftField('ee-type', draft.type);
+    setDraftField('ee-description', draft.description);
+    setDraftField('ee-venue', draft.venue);
+    setDraftField('ee-address1', draft.address1);
+    setDraftField('ee-city', draft.city);
+    setDraftField('ee-postcode', draft.postcode);
+    setDraftField('ee-platform', draft.platform);
+    setDraftField('ee-join-link', draft.joinLink);
+    setDraftField('ee-photo-url', draft.photoUrl);
+    setPhotoPosition(draft.photoPosition || '');
+
+    if (draft.photoUrl) {
+      const photoUrl = document.getElementById('ee-photo-url');
+      if (photoUrl) photoUrl.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    selectedDates.clear();
+    (Array.isArray(draft.dates) ? draft.dates : []).forEach((keyName) => {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(keyName))) selectedDates.add(String(keyName));
+    });
+    const firstDate = [...selectedDates].sort()[0];
+    if (firstDate) {
+      const parts = firstDate.split('-').map(Number);
+      calYear = parts[0];
+      calMonth = parts[1] - 1;
+    }
+    if (QuarterTime && draft.startTime && draft.endTime) {
+      QuarterTime.setValues('ee-start-time', 'ee-end-time', draft.startTime, draft.endTime);
+    }
+    const description = document.getElementById('ee-description');
+    if (description) description.dispatchEvent(new Event('input', { bubbles: true }));
+    renderCalendar();
+    renderSelectedList();
+    restoringAutodraft = false;
+    setAutodraftStatus(
+      draft.hadUploadedPhoto
+        ? 'Restored your autosaved draft. Please re-select its uploaded image.'
+        : 'Restored your autosaved draft.',
+      'restored'
+    );
+    return true;
+  }
+
+  function bindAutodraft() {
+    if (editId) return;
+    const form = document.getElementById('ee-form');
+    if (!form) return;
+    form.addEventListener('input', scheduleAutodraft);
+    form.addEventListener('change', scheduleAutodraft);
+    form.addEventListener('click', (event) => {
+      if (event.target.closest('[data-date-key], [data-ee-format], #ee-photo-clear, #ee-photo-recentre')) {
+        scheduleAutodraft();
+      }
+    });
+    window.addEventListener('pagehide', saveAutodraftNow);
   }
 
   function bindWordCounter() {
@@ -367,9 +561,20 @@
     const photoZone = document.getElementById('ee-photo-zone');
     const photoFileInput = document.getElementById('ee-photo-file');
     const photoClear = document.getElementById('ee-photo-clear');
-    if (photoZone) photoZone.classList.toggle('is-locked', lockShared || currentEventLocked);
-    if (photoFileInput) photoFileInput.disabled = lockShared || currentEventLocked;
-    if (photoClear) photoClear.disabled = lockShared || currentEventLocked;
+    const photoChange = document.getElementById('ee-photo-change');
+    const photoRecentre = document.getElementById('ee-photo-recentre');
+    const photoFrame = document.getElementById('ee-photo-frame');
+    const photoLocked = lockShared || currentEventLocked;
+    if (photoZone) photoZone.classList.toggle('is-locked', photoLocked);
+    if (photoFrame) {
+      photoFrame.classList.toggle('is-locked', photoLocked);
+      photoFrame.style.cursor = photoLocked ? 'default' : '';
+      photoFrame.tabIndex = photoLocked ? -1 : 0;
+    }
+    if (photoFileInput) photoFileInput.disabled = photoLocked;
+    if (photoClear) photoClear.disabled = photoLocked;
+    if (photoChange) photoChange.disabled = photoLocked;
+    if (photoRecentre) photoRecentre.disabled = photoLocked;
 
     if (lockShared) {
       ['#ee-start-time', '#ee-end-time'].forEach((sel) => {
@@ -693,6 +898,7 @@
   function setPhotoPosition(value) {
     photoPosition = value === '50% 50%' ? '' : value || '';
     applyPhotoPosition();
+    scheduleAutodraft();
   }
 
   function parsePhotoPosition() {
@@ -703,37 +909,61 @@
 
   function bindPhotoReposition() {
     const frame = document.getElementById('ee-photo-frame');
-    if (!frame) return;
+    if (!frame || frame.dataset.repositionBound === '1') return;
+    frame.dataset.repositionBound = '1';
     const clamp = (n) => Math.min(100, Math.max(0, Math.round(n)));
     let dragging = false;
+    let moved = false;
     let start = null;
 
-    // The upload zone opens the file picker on click — repositioning must not.
-    frame.addEventListener('click', (e) => e.stopPropagation());
-
     frame.addEventListener('pointerdown', (e) => {
-      if (currentEventLocked) return;
+      if (currentEventLocked || frame.classList.contains('is-locked')) return;
+      if (e.button != null && e.button !== 0) return;
       dragging = true;
+      moved = false;
       start = { x: e.clientX, y: e.clientY, pos: parsePhotoPosition() };
       frame.classList.add('is-dragging');
-      frame.setPointerCapture(e.pointerId);
+      try {
+        frame.setPointerCapture(e.pointerId);
+      } catch (_) {
+        /* older browsers */
+      }
       e.preventDefault();
     });
     frame.addEventListener('pointermove', (e) => {
       if (!dragging || !start) return;
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      if (!moved && dx * dx + dy * dy < 9) return;
+      moved = true;
       const w = frame.clientWidth || 1;
       const h = frame.clientHeight || 1;
-      const nx = clamp(start.pos.x - ((e.clientX - start.x) / w) * 100);
-      const ny = clamp(start.pos.y - ((e.clientY - start.y) / h) * 100);
+      // Dragging the image should move the visible crop with the pointer
+      // (object-position increases toward the opposite edge).
+      const nx = clamp(start.pos.x - (dx / w) * 100);
+      const ny = clamp(start.pos.y - (dy / h) * 100);
       setPhotoPosition(nx + '% ' + ny + '%');
     });
-    const endDrag = () => {
+    const endDrag = (e) => {
+      if (!dragging) return;
       dragging = false;
       start = null;
       frame.classList.remove('is-dragging');
+      if (e && e.pointerId != null) {
+        try {
+          if (frame.hasPointerCapture(e.pointerId)) frame.releasePointerCapture(e.pointerId);
+        } catch (_) {
+          /* ignore */
+        }
+      }
     };
     frame.addEventListener('pointerup', endDrag);
     frame.addEventListener('pointercancel', endDrag);
+    frame.addEventListener('lostpointercapture', () => {
+      dragging = false;
+      start = null;
+      frame.classList.remove('is-dragging');
+    });
   }
 
   function bindPhotoUpload() {
@@ -744,10 +974,13 @@
     const placeholder = document.getElementById('ee-photo-placeholder');
     const clearBtn = document.getElementById('ee-photo-clear');
     const recentreBtn = document.getElementById('ee-photo-recentre');
+    const changeBtn = document.getElementById('ee-photo-change');
+    const urlInput = document.getElementById('ee-photo-url');
 
     function showPreview(src) {
       if (previewImg) previewImg.src = src;
       if (preview) preview.hidden = false;
+      if (zone) zone.hidden = true;
       if (placeholder) placeholder.hidden = true;
       applyPhotoPosition();
     }
@@ -756,17 +989,19 @@
       photoFile = null;
       setPhotoPosition('');
       if (fileInput) fileInput.value = '';
-      const urlInput = document.getElementById('ee-photo-url');
       if (urlInput) urlInput.value = '';
       if (preview) preview.hidden = true;
+      if (zone) zone.hidden = false;
       if (placeholder) placeholder.hidden = false;
-      if (previewImg) previewImg.removeAttribute('src');
+      if (previewImg) {
+        previewImg.removeAttribute('src');
+        previewImg.style.objectPosition = '50% 50%';
+      }
     }
 
     function setPhotoFile(file) {
       photoFile = file;
       setPhotoPosition('');
-      const urlInput = document.getElementById('ee-photo-url');
       if (urlInput) urlInput.value = '';
       const reader = new FileReader();
       reader.onload = () => showPreview(reader.result);
@@ -779,20 +1014,47 @@
     if (zone && window.hubBindImageUpload) {
       window.hubBindImageUpload({ zone, fileInput, onFile: setPhotoFile });
     }
-    zone.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
+    if (zone) {
+      zone.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (fileInput) fileInput.click();
+        }
+      });
+    }
+    if (changeBtn) {
+      changeBtn.addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
+        if (currentEventLocked) return;
         if (fileInput) fileInput.click();
-      }
-    });
-    if (clearBtn) clearBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      resetPreview();
-    });
-    if (recentreBtn) recentreBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      setPhotoPosition('');
-    });
+      });
+    }
+    if (clearBtn) {
+      clearBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (currentEventLocked) return;
+        resetPreview();
+      });
+    }
+    if (recentreBtn) {
+      recentreBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (currentEventLocked) return;
+        setPhotoPosition('');
+      });
+    }
+    if (urlInput) {
+      urlInput.addEventListener('change', () => {
+        const url = urlInput.value.trim();
+        if (!url) return;
+        photoFile = null;
+        if (fileInput) fileInput.value = '';
+        showPreview(url);
+      });
+    }
     bindPhotoReposition();
   }
 
@@ -1118,8 +1380,10 @@
       const preview = document.getElementById('ee-photo-preview');
       const previewImg = document.getElementById('ee-photo-preview-img');
       const placeholder = document.getElementById('ee-photo-placeholder');
+      const zone = document.getElementById('ee-photo-zone');
       if (previewImg) previewImg.src = ev.imageUrl;
       if (preview) preview.hidden = false;
+      if (zone) zone.hidden = true;
       if (placeholder) placeholder.hidden = true;
       document.getElementById('ee-photo-url').value = ev.imageUrl;
       setPhotoPosition(ev.imagePosition || '');
@@ -1409,6 +1673,8 @@
       return;
     }
 
+    autodraftDisabled = true;
+    clearAutodraft(organiserGroupId);
     const savedEvent = res.data.event || {};
     const linkEmails = savedEvent.linkUpdateEmails;
     if (linkEmails && linkEmails.sent > 0) {
@@ -1534,6 +1800,8 @@
     }
     if (!initPage()) return;
     await load();
+    restoreAutodraft(fieldValue('ee-group'));
+    bindAutodraft();
     renderCalendar();
     renderSelectedList();
   }

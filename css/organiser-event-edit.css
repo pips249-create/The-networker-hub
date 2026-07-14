@@ -397,45 +397,85 @@ a.ee-wizard-link:hover {
   text-align: left;
 }
 
+.ee-photo-preview {
+  display: block;
+  margin-top: 0;
+  text-align: left;
+}
+
+.ee-photo-preview[hidden] {
+  display: none !important;
+}
+
+.ee-upload-zone[hidden] {
+  display: none !important;
+}
+
 .ee-photo-frame {
   position: relative;
   width: 100%;
+  max-width: 520px;
   aspect-ratio: 16 / 10;
-  max-height: 260px;
   border-radius: 8px;
   overflow: hidden;
   background: #e8eef0;
+  border: 1px solid var(--ee-border);
   cursor: grab;
   touch-action: none;
   user-select: none;
+  -webkit-user-select: none;
+}
+
+.ee-photo-frame:focus-visible {
+  outline: 2px solid var(--ee-purple);
+  outline-offset: 2px;
 }
 
 .ee-photo-frame.is-dragging {
   cursor: grabbing;
 }
 
+.ee-photo-frame.is-locked {
+  cursor: default;
+}
+
+.ee-photo-frame.is-locked .ee-photo-frame-hint {
+  display: none;
+}
+
+/* Explicit height required for object-fit / object-position (beats hub-mobile img { height: auto }). */
+.organiser-event-edit-page .ee-photo-frame img,
 .ee-photo-frame img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
+  max-width: none;
+  max-height: none;
   object-fit: cover;
   object-position: 50% 50%;
   display: block;
   pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .ee-photo-frame-hint {
   position: absolute;
-  bottom: 8px;
+  z-index: 1;
+  bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
+  letter-spacing: 0.01em;
   color: #fff;
-  background: rgba(26, 46, 59, 0.65);
-  padding: 4px 10px;
-  border-radius: 20px;
+  background: rgba(26, 46, 59, 0.72);
+  padding: 6px 12px;
+  border-radius: 999px;
   pointer-events: none;
   white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .ee-photo-frame.is-dragging .ee-photo-frame-hint {
@@ -444,8 +484,20 @@ a.ee-wizard-link:hover {
 
 .ee-photo-preview-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
+  max-width: 520px;
+}
+
+.ee-photo-preview-actions .ee-btn {
+  font-size: 12px;
+  padding: 7px 12px;
+}
+
+.ee-photo-preview-hint {
+  margin: 8px 0 0;
+  max-width: 520px;
 }
 
 .ee-upload-placeholder strong {
@@ -608,6 +660,21 @@ a.ee-wizard-link:hover {
   margin-bottom: 0;
 }
 
+.ee-autodraft-status {
+  min-height: 18px;
+  margin: 10px 0 0;
+  color: #55705c;
+  font-weight: 600;
+}
+
+.ee-autodraft-status.is-restored {
+  color: #5b2f99;
+}
+
+.ee-autodraft-status.is-error {
+  color: #a43f3f;
+}
+
 .ee-dates-times {
   margin-top: 16px;
 }
@@ -762,7 +829,6 @@ a.ee-wizard-link:hover {
   margin-bottom: 12px;
 }
 
-.ee-tier-row-expanded .ee-tier-kind-field,
 .ee-tier-row-expanded .ee-tier-price-row,
 .ee-tier-row-expanded .ee-tier-sale-row {
   margin-bottom: 0;
@@ -775,10 +841,6 @@ a.ee-wizard-link:hover {
 
 .ee-tier-row-expanded .ee-sale-custom-wrap {
   margin-top: 8px;
-}
-
-.ee-tier-row-expanded .ee-tier-kind-field {
-  margin-top: 12px;
 }
 
 #ee-add-tier {
@@ -1568,11 +1630,6 @@ body.ee-is-new-listing #ee-event-stats {
   background: #eef9f3;
 }
 
-.ee-refund-card.is-partial.is-selected {
-  border-color: #d4a017;
-  background: #fff8e6;
-}
-
 .ee-refund-card.is-none.is-selected {
   border-color: #c0392b;
   background: #fdf0ef;
@@ -1596,6 +1653,31 @@ body.ee-is-new-listing #ee-event-stats {
   font-size: 12px;
   font-weight: 600;
   margin-bottom: 6px;
+}
+
+.ee-refund-extra textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--ee-border);
+  border-radius: 6px;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 72px;
+  background: var(--ee-white);
+  color: var(--ee-text);
+  line-height: 1.45;
+}
+
+.ee-refund-extra textarea:focus {
+  outline: none;
+  border-color: var(--ee-purple);
+  box-shadow: 0 0 0 2px rgba(154, 122, 168, 0.15);
+}
+
+.ee-refund-card.is-selected .ee-refund-extra textarea {
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 .ee-inline-num {

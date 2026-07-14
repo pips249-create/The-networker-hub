@@ -28,12 +28,19 @@ assert(
   !hasValidRefundPolicy({ refund_policy: 'partial_refund', refund_policy_details: '' })
 );
 assert(
-  'accepts partial with details',
+  'accepts legacy partial policy at checkout',
   hasValidRefundPolicy({
     refund_policy: 'partial_refund',
     refund_policy_details: '50% refund if cancelled 14+ days before.',
   })
 );
+
+const publishPartial = validateRefundPublishPayload({
+  refundPolicy: 'partial_refund',
+  refundPolicyDetails: '50% refund if cancelled 14+ days before.',
+  refundTermsAgreed: true,
+});
+assert('publish validation blocks new partial policies', !publishPartial.ok);
 
 const publishOk = validateRefundPublishPayload({
   refundPolicy: 'no_refunds',

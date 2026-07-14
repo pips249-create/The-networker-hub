@@ -117,7 +117,8 @@
           </div>
         </div>
 
-        <div class="ee-card" id="ee-panel-alumni-fast-pass">
+        <!-- Alumni Fast-Pass UI is not shipping yet — keep hidden until product-ready. -->
+        <div class="ee-card" id="ee-panel-alumni-fast-pass" hidden>
           <h2 data-hub-tip="alumni-fast-pass" id="ee-panel-alumni-fast-pass-title">Alumni Fast-Pass <span class="ee-optional">(optional)</span></h2>
           <p class="ee-hint" style="margin-top:0">
             Offer a hidden alumni ticket for confirmed attendees from a previous event (e.g. last year's conference). Invites are sent from your dashboard with locked booking links.
@@ -253,27 +254,18 @@
                 </div>
               </div>
             </div>
-            <div class="ee-refund-card is-partial" data-policy="partial_refund" role="radio" tabindex="0" aria-checked="false">
-              <input type="radio" name="refund-policy" value="partial_refund" id="refund-policy-partial" />
-              <strong>Partial refund</strong>
-              <span>Attendees receive a partial refund</span>
-              <div class="ee-refund-extra" hidden>
-                <span class="ee-field-label">Describe your partial refund terms</span>
-                <textarea id="refund-partial-details" rows="3" placeholder="e.g. 50% refund if cancelled 7+ days before" aria-label="Partial refund terms"></textarea>
-              </div>
-            </div>
             <div class="ee-refund-card is-none" data-policy="no_refunds" role="radio" tabindex="0" aria-checked="false">
               <input type="radio" name="refund-policy" value="no_refunds" id="refund-policy-none" />
-              <strong>No refunds</strong>
-              <span>All ticket sales are final</span>
+              <strong>No refunds if an attendee cancels</strong>
+              <span>For change-of-mind cancellations only. Statutory refund rights still apply if the event is cancelled or materially changed.</span>
             </div>
             <div class="ee-refund-card is-custom" data-policy="custom" role="radio" tabindex="0" aria-checked="false">
               <input type="radio" name="refund-policy" value="custom" id="refund-policy-custom" />
               <strong>Custom policy</strong>
-              <span>I have my own refund policy</span>
+              <span>Set your own terms for attendee cancellations. Statutory rights still apply.</span>
               <div class="ee-refund-extra" hidden>
                 <span class="ee-field-label">Your refund policy</span>
-                <textarea id="refund-custom-details" rows="4" placeholder="Full policy text shown to attendees" aria-label="Custom refund policy"></textarea>
+                <textarea id="refund-custom-details" rows="4" placeholder="Terms shown to attendees, e.g. transfers permitted up to 48 hours before the event" aria-label="Custom refund policy"></textarea>
               </div>
             </div>
           </div>
@@ -282,8 +274,8 @@
             <ul>
               <li>When attendees buy tickets, the <strong>ticket price</strong> is paid to your connected Stripe account at checkout</li>
               <li>The attendee <strong>booking fee</strong> (4.5% + 20p per ticket) is retained by The Networker Hub — it is separate from your ticket revenue</li>
-              <li>Refunds are processed through Stripe and debited from your connected account balance according to your refund policy</li>
-              <li>You must honour your refund policy and UK consumer law — including refunding all attendees within 14 days if you cancel the event</li>
+              <li>Eligible refunds are processed through Stripe and debited from your connected account balance</li>
+              <li>“No refunds” only applies when an attendee cancels. You must still honour statutory rights, including refunds if you cancel or materially change the event</li>
             </ul>
           </div>
           <label class="ee-check ee-refund-check">

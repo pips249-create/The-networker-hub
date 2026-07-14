@@ -946,9 +946,19 @@ async function createTicket({
     quantityAvailable != null && quantityAvailable !== ''
       ? Number(quantityAvailable)
       : null;
-  const type =
+  // DB check constraint currently allows Standard | Application-based | Guest-visit
+  // (Alumni is not live yet — migration 142 not applied on prod).
+  const ALLOWED_TICKET_TYPES = new Set(['Standard', 'Application-based', 'Guest-visit']);
+  let type =
     ticketType ||
     (categoryExclusivity || /application/i.test(String(name || '')) ? 'Application-based' : 'Standard');
+  type = String(type || '').trim();
+  if (!ALLOWED_TICKET_TYPES.has(type)) {
+    type =
+      categoryExclusivity || /application/i.test(String(name || ''))
+        ? 'Application-based'
+        : 'Standard';
+  }
   const row = {
     event_id: eventId,
     name: name || 'Ticket',
@@ -1292,28 +1302,20 @@ async function createTicketsForEvents({
     }
   }
 
-  const alumniConfig =
-    alumniFastPass && typeof alumniFastPass === 'object' ? alumniFastPass : null;
-  if (alumniConfig?.enabled) {
-    const { alumniTierPayload } = require('./alumni-invites');
-    tiers = [
-      ...tiers,
-      alumniTierPayload({
-        price: alumniConfig.price,
-        quantityAvailable: alumniConfig.quantityAvailable,
-        saleEnd: alumniConfig.saleEnd || null,
-        description: alumniConfig.description,
-      }),
-    ];
-  }
+  // Alumni Fast-Pass is not shipping yet (DB constraint + organiser UI hidden).
+  // Ignore any client alumniFastPass payload so we never insert ticket_type = 'Alumni'.
+  const alumniConfig = null;
+
+  // Drop any Alumni tiers that arrived from a stale client / draft.
+  tiers = tiers.filter((t) => {
+    const type = String(t?.ticketType || t?.ticket_type || '').trim();
+    return type !== 'Alumni' && !/^alumni/i.test(String(t?.name || '').trim());
+  });
 
   const alumniEventUpdate = {
-    alumni_fast_pass_enabled: Boolean(alumniConfig?.enabled),
+    alumni_fast_pass_enabled: false,
     guest_passes_disabled: mode === 'guest_programme' ? guestPassesDisabledFlag : false,
   };
-  if (alumniConfig?.sourceEventId) {
-    alumniEventUpdate.alumni_source_event_id = String(alumniConfig.sourceEventId).trim();
-  }
 
   await assertTicketsEditableForEvents(sb, ids);
 

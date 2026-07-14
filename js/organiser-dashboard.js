@@ -1741,12 +1741,8 @@
       ? '<p class="org-action-menu-note">Expand the row to cancel or delete individual dates.</p>'
       : '';
     const deleteItem = isSeriesParent ? '' : eventDeleteActionHtml(ev);
-    const alumniItem =
-      ev.alumniFastPassEnabled && !isSeriesParent
-        ? '<button type="button" class="org-action-item" data-send-alumni-invites="' +
-          esc(id) +
-          '"><span class="org-action-icon">🎓</span><span class="org-action-text"><strong>Send alumni invites</strong><span>Invite past attendees to the alumni ticket</span></span></button>'
-        : '';
+    // Alumni Fast-Pass is not shipping yet — hide invite actions until product-ready.
+    const alumniItem = '';
     return (
       '<div class="org-action-wrap">' +
       '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +

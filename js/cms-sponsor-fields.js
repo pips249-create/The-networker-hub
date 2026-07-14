@@ -67,6 +67,64 @@
     }
   }
 
+  function rgbToHex(r, g, b) {
+    function part(v) {
+      var h = Math.max(0, Math.min(255, Math.round(v))).toString(16);
+      return h.length === 1 ? '0' + h : h;
+    }
+    return '#' + part(r) + part(g) + part(b);
+  }
+
+  /**
+   * Sample a brand colour from a logo image, for auto-filling the CTA button colour.
+   * Prefers saturated pixels (skips transparent, near-white, and grey ones) so a logo
+   * on a white background still yields its brand colour; falls back to the overall
+   * average. Returns '#rrggbb' or '' when sampling fails (e.g. cross-origin taint).
+   */
+  function sampleLogoColorHex(img) {
+    try {
+      var canvas = document.createElement('canvas');
+      var size = 48;
+      canvas.width = size;
+      canvas.height = size;
+      var ctx = canvas.getContext('2d');
+      if (!ctx) return '';
+      ctx.drawImage(img, 0, 0, size, size);
+      var data = ctx.getImageData(0, 0, size, size).data;
+      var r = 0;
+      var g = 0;
+      var b = 0;
+      var n = 0;
+      var allR = 0;
+      var allG = 0;
+      var allB = 0;
+      var allN = 0;
+      for (var i = 0; i < data.length; i += 4) {
+        if (data[i + 3] < 40) continue;
+        var pr = data[i];
+        var pg = data[i + 1];
+        var pb = data[i + 2];
+        allR += pr;
+        allG += pg;
+        allB += pb;
+        allN++;
+        var mx = Math.max(pr, pg, pb);
+        var mn = Math.min(pr, pg, pb);
+        if (mx > 245 && mn > 235) continue;
+        if (mx - mn < 28) continue;
+        r += pr;
+        g += pg;
+        b += pb;
+        n++;
+      }
+      if (n > 0 && n >= allN * 0.02) return rgbToHex(r / n, g / n, b / n);
+      if (allN > 0) return rgbToHex(allR / allN, allG / allN, allB / allN);
+      return '';
+    } catch (e) {
+      return '';
+    }
+  }
+
   function sanitizeCtaColor(color) {
     var c = String(color || '').trim();
     if (/^#[0-9a-f]{6}$/i.test(c)) return c.toLowerCase();
@@ -155,6 +213,7 @@
     companyName: companyName,
     isLogoUrl: isLogoUrl,
     sanitizeCtaColor: sanitizeCtaColor,
+    sampleLogoColorHex: sampleLogoColorHex,
     ctaColor: ctaColor,
     ctaTextOnBg: ctaTextOnBg,
     applyCtaColor: applyCtaColor,

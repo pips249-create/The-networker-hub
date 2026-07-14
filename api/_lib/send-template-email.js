@@ -58,11 +58,36 @@ const { patchEmailMobileStyles } = require('./email-mobile-styles');
 
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
+const DEFAULT_RESEND_FROM_NAME = 'The Networker Hub';
+const DEFAULT_RESEND_FROM_EMAIL = 'hello@mail.thenetworkerhub.com';
+
+/**
+ * Always send with a friendly from-name so inboxes show "The Networker Hub"
+ * instead of only the mail.thenetworkerhub.com address.
+ */
+function formatResendFrom(raw) {
+  const configured = String(raw || '').trim();
+  const angleMatch = configured.match(/^(.*)<([^>]+)>\s*$/);
+  let email = '';
+  if (angleMatch) {
+    email = String(angleMatch[2] || '')
+      .trim()
+      .toLowerCase();
+  } else if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(configured)) {
+    email = configured.toLowerCase();
+  }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    email = DEFAULT_RESEND_FROM_EMAIL;
+  }
+  return '"' + DEFAULT_RESEND_FROM_NAME + '" <' + email + '>';
+}
+
 /** Business-critical emails — not blocked by hub marketing opt-out. */
 const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_new_registration',
   'organiser_new_application',
   'organiser_booking_cancelled',
+  'organiser_ticket_sales_nudge',
   'application_received',
   'application_approved',
   'application_denied',
@@ -176,7 +201,6 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   const usesBookingEmailDefaults =
     slug === 'booking_confirmation' ||
     slug === 'booking_reminder' ||
-    slug === 'account_welcome' ||
     slug === 'saved_event_tickets_open' ||
     slug === 'organiser_new_registration' ||
     slug === 'organiser_new_application' ||
@@ -190,9 +214,12 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
 
   const sponsorVars = await getEmailSponsorVars(slug);
   const bookingDefaults = usesBookingEmailDefaults ? await getBookingEmailDefaultVars() : {};
-  const sponsorSection = sponsorVars.sponsor_row || bookingDefaults.sponsor_section || '';
+  // Never let booking-layout defaults reintroduce sponsors onto emails that opted out.
+  const sponsorSection = String(sponsorVars.sponsor_row || '').trim();
   const dbMiniSponsorsRow = String(sponsorVars.mini_sponsors_row || '').trim();
   delete bookingDefaults.sponsor_section;
+  delete bookingDefaults.sponsor_row;
+  delete bookingDefaults.mini_sponsors_row;
 
   let merged = {
     site_url: siteUrl,
@@ -245,21 +272,12 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
 
   merged.logo_url = logoNavUrl(siteUrl);
   merged.logo_footer_url = logoFooterUrl(siteUrl);
-  if (sponsorSection) {
-    merged.sponsor_row = sponsorSection;
-    merged.sponsor_section = sponsorSection;
-  }
-  if (dbMiniSponsorsRow) {
-    merged.mini_sponsors_row = dbMiniSponsorsRow;
-  }
+  // Live CMS sponsor resolution always wins over preview/sample variables.
+  merged.sponsor_row = sponsorSection;
+  merged.sponsor_section = sponsorSection;
+  merged.mini_sponsors_row = dbMiniSponsorsRow;
 
   let bodyHtml = template.body_html;
-  if (sponsorSection && !/\{\{\s*(?:sponsor_row|sponsor_section)\s*\}\}/.test(bodyHtml)) {
-    bodyHtml = insertSponsorPlaceholderBeforeFooter(bodyHtml, '{{sponsor_row}}');
-  }
-  if (dbMiniSponsorsRow && !/\{\{\s*mini_sponsors_row\s*\}\}/.test(bodyHtml)) {
-    bodyHtml = insertSponsorPlaceholderBeforeFooter(bodyHtml, '{{mini_sponsors_row}}');
-  }
   if (templateSource === 'database') {
   if (slug === 'booking_confirmation') {
     const resolved = resolveBookingConfirmationBody(template.body_html);
@@ -306,6 +324,13 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     bodyHtml = resolved.bodyHtml;
     templateSource = resolved.source;
   }
+  }
+
+  if (sponsorSection && !/\{\{\s*(?:sponsor_row|sponsor_section)\s*\}\}/.test(bodyHtml)) {
+    bodyHtml = insertSponsorPlaceholderBeforeFooter(bodyHtml, '{{sponsor_row}}');
+  }
+  if (dbMiniSponsorsRow && !/\{\{\s*mini_sponsors_row\s*\}\}/.test(bodyHtml)) {
+    bodyHtml = insertSponsorPlaceholderBeforeFooter(bodyHtml, '{{mini_sponsors_row}}');
   }
 
   let html = replacePlaceholders(bodyHtml, merged);
@@ -400,7 +425,7 @@ async function sendViaResend({ to, subject, html, tags, replyTo }) {
     : [];
 
   const body = {
-    from: process.env.RESEND_FROM || 'The Networker Hub <onboarding@resend.dev>',
+    from: formatResendFrom(process.env.RESEND_FROM),
     to: [recipient],
     subject,
     html,
@@ -522,4 +547,5 @@ module.exports = {
   buildEmailFromTemplate,
   sendTemplatedEmail,
   sendViaResend,
+  formatResendFrom,
 };

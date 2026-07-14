@@ -26,9 +26,13 @@ function isStaleBookingTemplate(bodyHtml) {
   })) {
     return true;
   }
-  // Sponsor should sit directly under the header logo (before "You're booked!").
+  // Sponsor should sit on the white body after the cream header wave.
   var sponsorAt = body.indexOf('{{sponsor_row}}');
+  var waveAt = body.indexOf('viewBox="0 0 600 40"');
   var bookedAt = body.indexOf('You&rsquo;re booked!');
+  if (sponsorAt !== -1 && waveAt !== -1 && sponsorAt < waveAt) {
+    return true;
+  }
   if (sponsorAt !== -1 && bookedAt !== -1 && sponsorAt > bookedAt) {
     return true;
   }

@@ -22,6 +22,14 @@
     height: auto;
   }
 
+  /* Cover crops need a definite height for object-fit / object-position to work. */
+  .ee-photo-frame img,
+  .event-grid-img,
+  .premium-card-img,
+  .hero img {
+    height: 100%;
+  }
+
   /* iOS Safari zooms focused inputs when font-size is below 16px */
   .auth-field > input[type='email'],
   .auth-field > input[type='text'],

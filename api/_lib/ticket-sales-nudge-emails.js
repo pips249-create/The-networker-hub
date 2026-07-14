@@ -2,7 +2,7 @@
  * Email organisers when a visitor wants to buy tickets but sales are not enabled yet.
  */
 const { getSupabaseAdmin } = require('./supabase');
-const { sendViaResend } = require('./send-template-email');
+const { sendTemplatedEmail } = require('./send-template-email');
 const { siteBase } = require('./hub-email-urls');
 const {
   resolveTicketSalesEnabled,
@@ -132,32 +132,29 @@ async function sendOrganiserTicketSalesNudgeEmail({ event, organiser, to, nudger
     encodeURIComponent(event.id);
   const dashboardUrl = siteBase(siteUrl) + '/organiser/';
 
-  const subject = 'Someone wants tickets for ' + eventTitle;
-  const html =
-    '<p>Hi ' +
-    escapeHtml(organiserName) +
-    ',</p>' +
-    '<p><strong>' +
-    escapeHtml(nudgerName || nudgerEmail || 'A visitor') +
-    '</strong> tried to get tickets for <strong>' +
-    escapeHtml(eventTitle) +
-    '</strong> on The Networker Hub.</p>' +
-    '<p>Your event is listed publicly, but <strong>ticket sales are not enabled yet</strong>. Turn sales on so you do not miss bookings.</p>' +
-    (message
-      ? '<p><strong>Message from them:</strong><br>' + escapeHtml(message).replace(/\n/g, '<br>') + '</p>'
-      : '') +
-    '<p style="margin:24px 0;">' +
-    '<a href="' +
-    escapeHtml(ticketsUrl) +
-    '" style="display:inline-block;padding:12px 20px;background:#bd932e;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">Enable ticket sales</a>' +
-    '</p>' +
-    '<p>Or open your <a href="' +
-    escapeHtml(dashboardUrl) +
-    '">organiser dashboard</a>, review tickets for this event, and switch on sales when you are ready.</p>' +
-    '<p style="color:#635c5e;font-size:15px;">If you are not the organiser for this group, sign in and use the organiser page claim flow, or contact hello@thenetworkerhub.com.</p>' +
-    '<p>— The Networker Hub</p>';
+  const visitorMessageRow = message
+    ? '<tr><td class="mobile-pad" style="padding:0 40px 20px;">' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
+      '<tr><td style="padding:20px 22px;">' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;margin:0 0 6px;">Message from the visitor</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;">' +
+      escapeHtml(message).replace(/\n/g, '<br>') +
+      '</p></td></tr></table></td></tr>'
+    : '';
 
-  return sendViaResend({ to, subject, html });
+  return sendTemplatedEmail({
+    slug: 'organiser_ticket_sales_nudge',
+    to,
+    variables: {
+      organiser_name: organiserName,
+      event_name: eventTitle,
+      nudger_name: String(nudgerName || nudgerEmail || 'A visitor').trim(),
+      tickets_url: ticketsUrl,
+      dashboard_url: dashboardUrl,
+      visitor_message_row: visitorMessageRow,
+    },
+    skipEmailCheck: true,
+  });
 }
 
 async function recordTicketSalesNudge({ event, nudgerEmail, nudgerName, message }) {

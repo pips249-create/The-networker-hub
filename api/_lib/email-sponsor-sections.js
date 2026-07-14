@@ -10,7 +10,7 @@ const {
 const { isEmailSponsorBlock } = require('./cms-sponsor-fields');
 const { toPublicAssetUrl } = require('./hub-email-urls');
 const {
-  EVENT_PAGE_CAROUSEL_SLOT,
+  EVENT_EMAIL_MINI_SPONSORS_SLOT,
   ORGANISER_EMAIL_MINI_SPONSORS_SLOT,
   OPPORTUNITY_EMAIL_MINI_SPONSORS_SLOT,
   parseCarouselBody,
@@ -20,6 +20,7 @@ const {
 const OPPORTUNITIES_SPONSOR_SLOT = 'opportunities_sponsor_hub';
 const OPPORTUNITY_SIDEBAR_SLOT = 'opportunity_page_sidebar_ad';
 
+/** Every business-opportunity email uses the Business Ops sponsor. */
 const OPPORTUNITY_EMAIL_SLUGS = new Set([
   'opportunity_listing_live',
   'opportunity_listing_expiry_reminder',
@@ -34,21 +35,26 @@ const OPPORTUNITY_EMAIL_SLUGS = new Set([
   'opportunity_saved_search_match',
 ]);
 
+/** Every organiser-facing email uses the organiser-directory sponsor. */
 const ORGANISER_EMAIL_SLUGS = new Set([
   'organiser_new_registration',
   'organiser_new_application',
   'organiser_booking_cancelled',
+  'organiser_ranking_badge',
+  'organiser_low_upcoming_events',
+  'organiser_ticket_sales_nudge',
   'organiser_featured_expiry_reminder',
   'organiser_claim_invite',
   'organiser_team_invite',
-  'organiser_ranking_badge',
-  'organiser_low_upcoming_events',
+  'organiser_email_verify',
   'stripe_connect_nudge',
   'payout_requested',
   'payout_approved',
   'payout_paid',
+  'event_almost_full',
 ]);
 
+/** Attendee-facing event and ticket emails use the event-directory sponsor. */
 const EVENT_MAIN_SPONSOR_SLUGS = new Set([
   'booking_confirmation',
   'booking_reminder',
@@ -57,18 +63,23 @@ const EVENT_MAIN_SPONSOR_SLUGS = new Set([
   'saved_organiser_new_listing',
   'application_received',
   'application_approved',
+  'application_denied',
   'meeting_link_added',
   'event_details_updated',
   'post_event_review_request',
   'guest_visit_followup',
   'category_exclusivity_payment_reminder',
+  'alumni_fast_pass_invite',
   'attendee_reengagement',
   'attendee_signup_events_nudge',
   'attendee_signup_events_nudge_followup',
   'attendee_hubert_event_concierge',
-  'event_almost_full',
+  'booking_cancelled',
+  'event_cancelled',
+  'refund_processed',
 ]);
 
+/** Selected organiser growth emails also show the organiser mini-sponsor trio. */
 const ORGANISER_MINI_SPONSOR_SLUGS = new Set([
   'organiser_new_registration',
   'organiser_new_application',
@@ -86,7 +97,7 @@ const OPPORTUNITY_MINI_SPONSOR_SLUGS = new Set([
   'opportunity_saved_search_match',
 ]);
 
-/** Attendee-facing event emails also show three mini sponsors above the footer. */
+/** Attendee event emails also show the event mini-sponsor trio above the footer. */
 const EVENT_MINI_SPONSOR_SLUGS = new Set([
   'booking_confirmation',
   'booking_reminder',
@@ -101,6 +112,7 @@ const EVENT_MINI_SPONSOR_SLUGS = new Set([
   'post_event_review_request',
   'guest_visit_followup',
   'category_exclusivity_payment_reminder',
+  'alumni_fast_pass_invite',
   'attendee_reengagement',
   'attendee_signup_events_nudge',
   'attendee_signup_events_nudge_followup',
@@ -109,6 +121,9 @@ const EVENT_MINI_SPONSOR_SLUGS = new Set([
   'event_cancelled',
   'refund_processed',
 ]);
+
+/** General Hub account emails show all three directory partners in one compact row. */
+const HUB_PARTNER_SPONSOR_SLUGS = new Set(['account_welcome', 'password_reset']);
 
 const SPONSOR_PLACEHOLDER_KEYS = ['sponsor_row', 'sponsor_section', 'mini_sponsors_row'];
 
@@ -119,9 +134,10 @@ function wrapSponsorRow(inner) {
   return '<tr><td>' + html + '</td></tr>';
 }
 
-function buildMiniSponsorsRow(ads) {
+function buildMiniSponsorsRow(ads, options = {}) {
   const list = (ads || []).filter(Boolean).slice(0, 3);
   if (!list.length) return '';
+  const label = String(options.label || 'Our mini sponsors');
 
   const cells = list
     .map(function (ad) {
@@ -148,10 +164,12 @@ function buildMiniSponsorsRow(ads) {
   if (!cells) return '';
 
   return (
-    '<tr><td class="mobile-pad" style="padding:0 40px 20px;text-align:center;">' +
-    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
+    '<tr><td class="mobile-pad" style="padding:8px 40px 24px;text-align:center;background:#ffffff;">' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #e6e0e2;">' +
     '<tr><td style="padding:14px 16px 10px;text-align:center;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0;">Our mini sponsors</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0;">' +
+    label +
+    '</p>' +
     '</td></tr>' +
     '<tr><td style="padding:0 12px 16px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>' +
@@ -165,6 +183,7 @@ async function resolveEventsMainSponsorBlock(sb) {
   if (eventsBlock && eventsBlock.include_in_emails !== false && isEmailSponsorBlock(eventsBlock)) {
     return eventsBlock;
   }
+  if (eventsBlock) return null;
 
   const bookingBlock = await fetchSponsorBlockForSlot(sb, 'booking_email_sponsor');
   if (bookingBlock && isEmailSponsorBlock(bookingBlock)) return bookingBlock;
@@ -176,11 +195,13 @@ async function resolveEventsMainSponsorBlock(sb) {
 }
 
 async function resolveOpportunitySponsorBlock(sb) {
-  const slots = [OPPORTUNITIES_SPONSOR_SLOT, OPPORTUNITY_SIDEBAR_SLOT];
-  for (const slot of slots) {
-    const block = await fetchSponsorBlockForSlot(sb, slot);
-    if (block && block.include_in_emails !== false && isEmailSponsorBlock(block)) return block;
+  const primary = await fetchSponsorBlockForSlot(sb, OPPORTUNITIES_SPONSOR_SLOT);
+  if (primary) {
+    if (primary.include_in_emails !== false && isEmailSponsorBlock(primary)) return primary;
+    return null;
   }
+  const legacy = await fetchSponsorBlockForSlot(sb, OPPORTUNITY_SIDEBAR_SLOT);
+  if (legacy && legacy.include_in_emails !== false && isEmailSponsorBlock(legacy)) return legacy;
   return null;
 }
 
@@ -188,6 +209,15 @@ async function resolveOrganiserSponsorBlock(sb) {
   const block = await fetchSponsorBlockForSlot(sb, 'organisers_sponsor_hub');
   if (block && block.include_in_emails !== false && isEmailSponsorBlock(block)) return block;
   return null;
+}
+
+async function resolveHubPartnerBlocks(sb) {
+  const blocks = await Promise.all([
+    resolveEventsMainSponsorBlock(sb),
+    resolveOrganiserSponsorBlock(sb),
+    resolveOpportunitySponsorBlock(sb),
+  ]);
+  return blocks.filter(Boolean);
 }
 
 async function fetchMiniSponsorAds(sb, slot, limit) {
@@ -198,6 +228,11 @@ async function fetchMiniSponsorAds(sb, slot, limit) {
   return ads.slice(0, max);
 }
 
+async function fetchEventMiniSponsorAds(sb, limit) {
+  // Only the dedicated email mini slot — do not reuse page-carousel placeholders.
+  return fetchMiniSponsorAds(sb, EVENT_EMAIL_MINI_SPONSORS_SLOT, limit);
+}
+
 async function getEmailSponsorVars(slug) {
   const empty = { sponsor_row: '', sponsor_section: '', mini_sponsors_row: '' };
   if (
@@ -205,7 +240,8 @@ async function getEmailSponsorVars(slug) {
     (!EVENT_MAIN_SPONSOR_SLUGS.has(slug) &&
       !EVENT_MINI_SPONSOR_SLUGS.has(slug) &&
       !OPPORTUNITY_EMAIL_SLUGS.has(slug) &&
-      !ORGANISER_EMAIL_SLUGS.has(slug))
+      !ORGANISER_EMAIL_SLUGS.has(slug) &&
+      !HUB_PARTNER_SPONSOR_SLUGS.has(slug))
   ) {
     return empty;
   }
@@ -231,15 +267,17 @@ async function getEmailSponsorVars(slug) {
       : '';
 
     let miniRow = '';
-    let miniSlot = '';
-    if (EVENT_MINI_SPONSOR_SLUGS.has(slug)) miniSlot = EVENT_PAGE_CAROUSEL_SLOT;
-    else if (ORGANISER_MINI_SPONSOR_SLUGS.has(slug)) {
-      miniSlot = ORGANISER_EMAIL_MINI_SPONSORS_SLOT;
+    if (HUB_PARTNER_SPONSOR_SLUGS.has(slug)) {
+      const partnerBlocks = await resolveHubPartnerBlocks(sb);
+      miniRow = buildMiniSponsorsRow(partnerBlocks, { label: 'Our Hub partners' });
+    } else if (EVENT_MINI_SPONSOR_SLUGS.has(slug)) {
+      const ads = await fetchEventMiniSponsorAds(sb, 3);
+      miniRow = buildMiniSponsorsRow(ads);
+    } else if (ORGANISER_MINI_SPONSOR_SLUGS.has(slug)) {
+      const ads = await fetchMiniSponsorAds(sb, ORGANISER_EMAIL_MINI_SPONSORS_SLOT, 3);
+      miniRow = buildMiniSponsorsRow(ads);
     } else if (OPPORTUNITY_MINI_SPONSOR_SLUGS.has(slug)) {
-      miniSlot = OPPORTUNITY_EMAIL_MINI_SPONSORS_SLOT;
-    }
-    if (miniSlot) {
-      const ads = await fetchMiniSponsorAds(sb, miniSlot, 3);
+      const ads = await fetchMiniSponsorAds(sb, OPPORTUNITY_EMAIL_MINI_SPONSORS_SLOT, 3);
       miniRow = buildMiniSponsorsRow(ads);
     }
 
@@ -279,6 +317,7 @@ module.exports = {
   EVENT_MINI_SPONSOR_SLUGS,
   ORGANISER_MINI_SPONSOR_SLUGS,
   OPPORTUNITY_MINI_SPONSOR_SLUGS,
+  HUB_PARTNER_SPONSOR_SLUGS,
   SPONSOR_PLACEHOLDER_KEYS,
   buildMiniSponsorsRow,
   getEmailSponsorVars,

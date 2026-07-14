@@ -86,12 +86,19 @@ function validateRefundPublishPayload(refundPayload) {
   if (!VALID_REFUND_POLICIES.has(policy)) {
     return { ok: false, code: 'refund_policy_required', message: 'Select a refund policy before publishing.' };
   }
+  if (policy === 'partial_refund') {
+    return {
+      ok: false,
+      code: 'partial_refund_not_supported',
+      message: 'Partial refunds are no longer available. Choose a full refund, no-refund, or custom policy.',
+    };
+  }
   const details = String(refundPayload?.refundPolicyDetails || '').trim();
-  if ((policy === 'partial_refund' || policy === 'custom') && !details) {
+  if (policy === 'custom' && !details) {
     return {
       ok: false,
       code: 'refund_policy_details_required',
-      message: 'Describe your partial or custom refund policy before publishing.',
+      message: 'Describe your custom refund policy before publishing.',
     };
   }
   if (!refundPayload?.refundTermsAgreed) {
@@ -133,7 +140,7 @@ function formatRefundPolicyText(eventRow) {
     return normalized.refund_policy_details || 'Partial refunds apply — see organiser terms.';
   }
   if (policy === 'no_refunds') {
-    return 'Ticket sales are final for this event. The 14-day cooling-off right does not apply to leisure events on a specific date.';
+    return 'No refund is offered if you change your mind or cannot attend. This does not affect your statutory rights if the event is cancelled, materially changed, or not provided as described. The 14-day cooling-off right generally does not apply to leisure events on a specific date.';
   }
   if (policy === 'custom') {
     return normalized.refund_policy_details || 'See organiser refund policy.';

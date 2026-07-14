@@ -261,24 +261,24 @@
       ctaColor: '#2d2636',
     },
     {
-      key: 'booking_email_sponsor',
-      group: 'Email',
-      label: 'Booking confirmation email — Sponsor',
-      preview: 'compact',
-      help: 'Logo and website link in booking confirmation emails. Pull from Events browse sponsor or set your own.',
+      key: 'event_page_carousel_ads',
+      group: 'Detail pages',
+      label: 'Event & organiser pages — Mini Sponsors (3 slots)',
+      preview: 'carousel',
+      help: 'Up to three rotating Mini Sponsor logos in the sidebar on individual event and organiser profile pages.',
       tagline: '',
-      ctaLabel: 'Visit website',
+      ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
       ctaColor: '#2d2636',
     },
     {
-      key: 'event_page_carousel_ads',
-      group: 'Detail pages',
-      label: 'Events — Mini Sponsors (3 slots)',
+      key: 'event_email_mini_sponsors',
+      group: 'Email',
+      label: 'Event emails — Mini Sponsors (3 slots)',
       preview: 'carousel',
-      help: 'Up to three Mini Sponsor logos for event pages and selected event emails. Each logo links to the sponsor website.',
+      help: 'Mini Sponsor logos shown on selected event and attendee emails.',
       tagline: '',
-      ctaLabel: 'Enquire now',
+      ctaLabel: 'Visit website',
       ctaUrl: 'https://',
       ctaColor: '#2d2636',
     },
@@ -4808,7 +4808,14 @@
     if (ctaUrl && block.cta_url) ctaUrl.value = block.cta_url;
     if (active) active.checked = block.active !== false;
     if (includeInEmails) includeInEmails.checked = block.include_in_emails !== false;
+    sponsorCtaColorManual = false;
     setSponsorCtaColorFields(savedColor);
+    if (!sanitizeSponsorCtaColor(savedColor)) {
+      var savedLogo = String(block.logo_url || block.image_url || '').trim();
+      if (/^(https?:|\/|data:image\/)/i.test(savedLogo)) {
+        autoFillSponsorCtaColorFromLogo(savedLogo);
+      }
+    }
   }
 
   function defaultSponsorCtaColor() {
@@ -4818,26 +4825,51 @@
     return '#2d2636';
   }
 
+  // True once the admin has typed their own Hex (or a saved colour was loaded),
+  // so a logo change no longer overwrites the CTA colour automatically.
+  var sponsorCtaColorManual = false;
+  var sponsorPreviewRerender = null;
+
+  function sanitizeSponsorCtaColor(color) {
+    if (window.CmsSponsorFields && window.CmsSponsorFields.sanitizeCtaColor) {
+      return window.CmsSponsorFields.sanitizeCtaColor(color);
+    }
+    return '';
+  }
+
+  function updateSponsorCtaColorSwatch(color) {
+    var swatch = document.getElementById('sponsor-cta-color-swatch');
+    if (swatch) swatch.style.background = color || defaultSponsorCtaColor();
+  }
+
   function setSponsorCtaColorFields(color) {
-    var picker = document.getElementById('sponsor-cta-color');
     var hex = document.getElementById('sponsor-cta-color-hex');
-    var safe =
-      window.CmsSponsorFields && window.CmsSponsorFields.sanitizeCtaColor
-        ? window.CmsSponsorFields.sanitizeCtaColor(color)
-        : '';
+    var safe = sanitizeSponsorCtaColor(color);
     if (!safe) safe = defaultSponsorCtaColor();
-    if (picker) picker.value = safe;
     if (hex) hex.value = safe;
+    updateSponsorCtaColorSwatch(safe);
   }
 
   function readSponsorCtaColor() {
     var hex = document.getElementById('sponsor-cta-color-hex');
-    var picker = document.getElementById('sponsor-cta-color');
-    var raw = hex ? hex.value.trim() : picker ? picker.value : '';
-    if (window.CmsSponsorFields && window.CmsSponsorFields.sanitizeCtaColor) {
-      return window.CmsSponsorFields.sanitizeCtaColor(raw) || defaultSponsorCtaColor();
-    }
-    return defaultSponsorCtaColor();
+    var raw = hex ? hex.value.trim() : '';
+    return sanitizeSponsorCtaColor(raw) || defaultSponsorCtaColor();
+  }
+
+  function autoFillSponsorCtaColorFromLogo(src) {
+    var logoSrc = String(src || '').trim();
+    if (!logoSrc || sponsorCtaColorManual) return;
+    if (!window.CmsSponsorFields || !window.CmsSponsorFields.sampleLogoColorHex) return;
+    var img = new Image();
+    if (!/^data:/i.test(logoSrc)) img.crossOrigin = 'anonymous';
+    img.onload = function () {
+      if (sponsorCtaColorManual) return;
+      var hex = window.CmsSponsorFields.sampleLogoColorHex(img);
+      if (!hex) return;
+      setSponsorCtaColorFields(hex);
+      if (typeof sponsorPreviewRerender === 'function') sponsorPreviewRerender();
+    };
+    img.src = logoSrc;
   }
 
   function renderSponsorship(fullHash) {
@@ -5126,6 +5158,7 @@
       if (tagline) tagline.value = d.tagline;
       if (ctaLabel) ctaLabel.value = d.ctaLabel;
       if (ctaUrl) ctaUrl.value = d.ctaUrl;
+      sponsorCtaColorManual = false;
       setSponsorCtaColorFields(d.ctaColor || defaultSponsorCtaColor());
       if (active) active.checked = true;
       if (includeInEmails) includeInEmails.checked = true;
@@ -5173,22 +5206,23 @@
       '<input type="text" id="sponsor-cta-label" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
       esc(slotDefaults().ctaLabel) +
       '"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-color">CTA button colour</label>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-color-hex">CTA button colour (Hex)</label>' +
       '<div class="flex items-center gap-2">' +
-      '<input type="color" id="sponsor-cta-color" class="h-10 w-14 rounded border border-slate-200 cursor-pointer bg-white p-1" value="' +
+      '<span id="sponsor-cta-color-swatch" class="h-10 w-14 shrink-0 rounded border border-slate-200" style="background:' +
       esc(slotDefaults().ctaColor || defaultSponsorCtaColor()) +
-      '" title="Pick CTA button colour">' +
+      '" title="Current CTA button colour"></span>' +
       '<input type="text" id="sponsor-cta-color-hex" class="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono" value="' +
       esc(slotDefaults().ctaColor || defaultSponsorCtaColor()) +
-      '" placeholder="#2d2636" maxlength="7" spellcheck="false">' +
-      '</div></div></div>' +
+      '" placeholder="#2d2636" maxlength="7" spellcheck="false" inputmode="text" autocomplete="off">' +
+      '</div>' +
+      '<p class="text-xs text-slate-500 mt-1">Picked automatically from the logo — type a Hex code (e.g. #2d2636) to override.</p></div></div>' +
       '<div><label id="sponsor-cta-url-label" class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-url">CTA link (https:// opens in a new tab, or mailto:)</label>' +
       '<input type="text" id="sponsor-cta-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
       esc(slotDefaults().ctaUrl) +
       '"></div>' +
       '<div class="flex flex-wrap gap-3 pt-2">' +
       '<button type="button" id="sponsor-preview-btn" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Update preview</button>' +
-      '<button type="button" id="sponsor-publish-btn" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Publish to site</button>' +
+      '<button type="button" id="sponsor-publish-btn" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Save sponsor</button>' +
       '</div></form>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 min-w-0">' +
       '<h3 class="font-bold text-brand-900 mb-1">Preview</h3>' +
@@ -5364,11 +5398,26 @@
       if (input && input.type === 'checkbox') input.addEventListener('change', renderPreview);
     });
 
-    var sponsorCtaColorPicker = document.getElementById('sponsor-cta-color');
-    if (sponsorCtaColorPicker) {
-      sponsorCtaColorPicker.addEventListener('input', function () {
-        setSponsorCtaColorFields(sponsorCtaColorPicker.value);
+    sponsorPreviewRerender = renderPreview;
+
+    var sponsorCtaHexInput = document.getElementById('sponsor-cta-color-hex');
+    if (sponsorCtaHexInput) {
+      sponsorCtaHexInput.addEventListener('input', function () {
+        sponsorCtaColorManual = true;
+        var safe = sanitizeSponsorCtaColor(sponsorCtaHexInput.value);
+        updateSponsorCtaColorSwatch(safe || defaultSponsorCtaColor());
+      });
+      sponsorCtaHexInput.addEventListener('blur', function () {
+        setSponsorCtaColorFields(sponsorCtaHexInput.value);
         renderPreview();
+      });
+    }
+
+    var sponsorLogoUrlInput = document.getElementById('sponsor-logo-url');
+    if (sponsorLogoUrlInput) {
+      sponsorLogoUrlInput.addEventListener('change', function () {
+        var url = sponsorLogoUrlInput.value.trim();
+        if (/^(https?:|\/|data:image\/)/i.test(url)) autoFillSponsorCtaColorFromLogo(url);
       });
     }
 
@@ -5386,6 +5435,7 @@
       reader.onload = function () {
         sponsorLogoBase64 = String(reader.result || '');
         document.getElementById('sponsor-logo-url').value = '';
+        autoFillSponsorCtaColorFromLogo(sponsorLogoBase64);
         renderPreview();
       };
       reader.readAsDataURL(file);
@@ -5744,9 +5794,13 @@
     var slot = cmsSlotByKey(slotKey || 'event_page_carousel_ads');
     var isEventInventory = slot.key === 'event_page_carousel_ads';
     var detailText = isEventInventory
-      ? 'Three Mini Sponsor slots used on event pages and selected event emails.'
+      ? 'Three Mini Sponsor slots used on event and organiser detail pages.'
       : 'Three Mini Sponsor slots used on selected ' +
-        (slot.key === 'organiser_email_mini_sponsors' ? 'organiser' : 'business opportunity') +
+        (slot.key === 'event_email_mini_sponsors'
+          ? 'event and attendee'
+          : slot.key === 'organiser_email_mini_sponsors'
+            ? 'organiser'
+            : 'business opportunity') +
         ' emails.';
     main.innerHTML =
       '<div class="space-y-6 max-w-3xl">' +
@@ -6786,12 +6840,7 @@
     function toggleEmailSponsorPanel() {
       var panel = document.getElementById('email-sponsor-panel');
       if (!panel) return;
-      if (isBookingEmailSlug(selectedSlug)) {
-        panel.classList.remove('hidden');
-        loadBookingEmailSponsor();
-      } else {
-        panel.classList.add('hidden');
-      }
+      panel.classList.add('hidden');
     }
 
     function loadBookingEmailSponsor() {

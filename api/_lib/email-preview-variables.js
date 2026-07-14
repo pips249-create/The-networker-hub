@@ -310,6 +310,18 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.invite_url = vars.event_url + '&alumni_token=preview-token';
   }
 
+  if (slug === 'organiser_ticket_sales_nudge') {
+    vars.nudger_name = 'Alex Morgan';
+    vars.tickets_url = site + '/organiser/event-tickets?eventId=preview-event';
+    vars.visitor_message_row =
+      '<tr><td class="mobile-pad" style="padding:0 40px 20px;">' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
+      '<tr><td style="padding:20px 22px;">' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;margin:0 0 6px;">Message from the visitor</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;">Please let me know when tickets are available.</p>' +
+      '</td></tr></table></td></tr>';
+  }
+
   if (slug === 'opportunity_listing_rejected') {
     vars.rejection_note =
       'Please add more detail about the opportunity type and expected commitment before resubmitting.';

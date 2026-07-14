@@ -15,7 +15,18 @@ const OPPORTUNITY_FILES = [
   'opportunity-listing-expired.html',
   'opportunity-premium-expired.html',
   'opportunity-listing-rejected.html',
+  'saved-opportunity-closing-soon.html',
+  'opportunity-saved-search-match.html',
 ];
+
+const OPPORTUNITY_MINI_FILES = new Set([
+  'opportunity-listing-live.html',
+  'opportunity-listing-expiry-reminder.html',
+  'opportunity-premium-expiry-reminder.html',
+  'opportunity-premium-live.html',
+  'saved-opportunity-closing-soon.html',
+  'opportunity-saved-search-match.html',
+]);
 
 const EVENT_MINI_FILES = [
   'meeting-link-added.html',
@@ -29,14 +40,22 @@ const EVENT_MINI_FILES = [
   'saved-organiser-new-listing.html',
   'application-approved.html',
   'application-denied.html',
+  'alumni-fast-pass-invite.html',
 ];
 
-const EVENT_MAIN_ONLY_FILES = [
-  'event-almost-full.html',
-  'organiser-low-upcoming-events.html',
+const ORGANISER_MINI_FILES = [
+  'organiser-new-booking.html',
+  'organiser-new-application.html',
   'organiser-featured-expiry-reminder.html',
-  'organiser-claim-invite.html',
   'organiser-ranking-badge.html',
+  'organiser-low-upcoming-events.html',
+];
+
+const ORGANISER_MAIN_ONLY_FILES = [
+  'event-almost-full.html',
+  'organiser-claim-invite.html',
+  'organiser-email-verify.html',
+  'organiser-ticket-sales-nudge.html',
   'stripe-connect-nudge.html',
   'payout-requested.html',
   'payout-approved.html',
@@ -56,6 +75,8 @@ const LEGACY_MINI_FILES = [
   'event-cancelled.html',
   'refund-processed.html',
 ];
+
+const HUB_PARTNER_FILES = ['account-welcome.html', 'password-reset.html'];
 
 const WAVE_END =
   /<\/tr>\s*<tr>\s*<td class="mobile-pad" style="padding:28px 40px 16px;text-align:center;">/;
@@ -88,7 +109,9 @@ function inject(file, { main, mini }) {
   console.log('patched', file, main ? '+main' : '', mini ? '+mini' : '');
 }
 
-OPPORTUNITY_FILES.forEach((f) => inject(f, { main: true, mini: false }));
+OPPORTUNITY_FILES.forEach((f) => inject(f, { main: true, mini: OPPORTUNITY_MINI_FILES.has(f) }));
 EVENT_MINI_FILES.forEach((f) => inject(f, { main: true, mini: true }));
-EVENT_MAIN_ONLY_FILES.forEach((f) => inject(f, { main: true, mini: false }));
+ORGANISER_MINI_FILES.forEach((f) => inject(f, { main: true, mini: true }));
+ORGANISER_MAIN_ONLY_FILES.forEach((f) => inject(f, { main: true, mini: false }));
 LEGACY_MINI_FILES.forEach((f) => inject(f, { main: false, mini: true }));
+HUB_PARTNER_FILES.forEach((f) => inject(f, { main: false, mini: true }));

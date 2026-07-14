@@ -3,35 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add more events</title>
+  <title>Someone wants tickets for your event</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
     body, table, td, p, a { margin:0; padding:0; border:0; font-size:100%; font:inherit; vertical-align:top; }
     img { border:0; display:block; max-width:100%; height:auto; }
     body { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; background-color:#e8ecf5; }
     table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
-        @media only screen and (max-width:600px) {
+    @media only screen and (max-width:600px) {
       .email-outer-pad { padding:8px 0 !important; }
-      .email-wrapper {
-        width:100% !important;
-        max-width:100% !important;
-        border-radius:0 !important;
-        box-shadow:none !important;
-        overflow:visible !important;
-      }
+      .email-wrapper { width:100% !important; max-width:100% !important; border-radius:0 !important; box-shadow:none !important; overflow:visible !important; }
       .hero-title { font-size:24px !important; line-height:1.2 !important; }
       .mobile-pad { padding-left:16px !important; padding-right:16px !important; }
       .mobile-header-pad { padding:24px 16px 0 !important; }
-      .mobile-footer-pad { padding:24px 16px 30px !important; }
-      .info-band-pad { padding:20px 16px !important; }
-      .email-logo-header { max-width:200px !important; width:200px !important; height:auto !important; }
       .email-logo-footer { max-width:168px !important; width:168px !important; height:auto !important; }
-      .detail-cell { display:block !important; width:100% !important; padding:12px 0 !important; border-top:1px solid rgba(255,255,255,0.12) !important; }
-      .detail-cell:first-child { border-top:none !important; padding-top:0 !important; }
-      .info-cell { display:block !important; width:100% !important; padding-bottom:14px !important; border-left:none !important; border-right:none !important; border-top:1px solid rgba(255,255,255,0.12) !important; }
-      .info-cell:first-child { border-top:none !important; }
-      .feature-cell { display:block !important; width:100% !important; padding:14px 0 !important; border-top:1px solid rgba(194,153,209,0.35) !important; }
-      .feature-cell:first-child { border-top:none !important; padding-top:0 !important; }
       .email-cta a { display:block !important; width:100% !important; box-sizing:border-box !important; text-align:center !important; }
     }
   </style>
@@ -62,20 +47,30 @@
         <tr>
           <td class="mobile-pad" style="padding:28px 40px 16px;text-align:center;">
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 16px;">
-              <tr><td style="width:52px;height:52px;background:#daeeff;border-radius:50%;text-align:center;vertical-align:middle;font-size:24px;color:#4aa8f0;line-height:52px;">&#128197;</td></tr>
+              <tr><td style="width:52px;height:52px;background:#daeeff;border-radius:50%;text-align:center;vertical-align:middle;font-size:24px;color:#4aa8f0;line-height:52px;">&#127915;</td></tr>
             </table>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#4aa8f0;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Your calendar</p>
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Only {{upcoming_count}} events left on your calendar</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{organiser_name}}, you have <strong>{{upcoming_count}}</strong> upcoming events listed. Keeping a fuller calendar helps members discover your group.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#4aa8f0;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Ticket interest</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Someone wants tickets for {{event_name}}</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{organiser_name}}, <strong style="color:#1c2040;">{{nudger_name}}</strong> tried to get tickets for your event, but ticket sales are not enabled yet.</p>
           </td>
-        </tr><tr><td class="mobile-pad email-cta" style="padding:0 40px 28px;text-align:center;"><a href="{{create_event_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#1c2040;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">Add another event &rarr;</a><a href="{{dashboard_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#4aa8f0;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">Open dashboard</a></td></tr>
-        {{mini_sponsors_row}}
+        </tr>
+        {{visitor_message_row}}
+        <tr>
+          <td class="mobile-pad email-cta" style="padding:0 40px 12px;text-align:center;">
+            <a href="{{tickets_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#1c2040;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">Enable ticket sales &rarr;</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="mobile-pad" style="padding:0 40px 28px;text-align:center;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;">You can also <a href="{{dashboard_url}}" style="color:#4aa8f0;text-decoration:none;">open your organiser dashboard</a> and review the event before switching sales on.</p>
+          </td>
+        </tr>
         <tr>
           <td class="mobile-pad" style="background:#1c2040;padding:28px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">
             <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
               <img src="{{logo_footer_url}}" alt="The Networker Hub" width="200" class="email-logo-footer" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
             </a>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);margin:0;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.55);margin:0;">
               <a href="{{privacy_url}}" style="color:#4aa8f0;text-decoration:none;">Privacy</a>
               &nbsp;&middot;&nbsp;
               <a href="{{terms_url}}" style="color:#4aa8f0;text-decoration:none;">Terms</a>
