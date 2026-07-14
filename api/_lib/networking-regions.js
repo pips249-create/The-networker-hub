@@ -53,7 +53,15 @@ const NETWORKING_REGIONS = {
   glasgow: { name: 'Glasgow', location: 'Glasgow', areaType: 'city' },
   edinburgh: { name: 'Edinburgh', location: 'Edinburgh', areaType: 'city' },
   leeds: { name: 'Leeds', location: 'Leeds', areaType: 'city' },
+  liverpool: { name: 'Liverpool', location: 'Liverpool', areaType: 'city' },
+  newcastle: { name: 'Newcastle', location: 'Newcastle', areaType: 'city' },
   bristol: { name: 'Bristol', location: 'Bristol', areaType: 'city' },
+  sheffield: { name: 'Sheffield', location: 'Sheffield', areaType: 'city' },
+  nottingham: { name: 'Nottingham', location: 'Nottingham', areaType: 'city' },
+  cardiff: { name: 'Cardiff', location: 'Cardiff', areaType: 'city' },
+  brighton: { name: 'Brighton', location: 'Brighton', areaType: 'city' },
+  cambridge: { name: 'Cambridge', location: 'Cambridge', areaType: 'city' },
+  oxford: { name: 'Oxford', location: 'Oxford', areaType: 'city' },
   chester: { name: 'Chester', location: 'Chester', areaType: 'city' },
 };
 

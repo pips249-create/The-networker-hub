@@ -2718,18 +2718,13 @@ html:has(.home-page) {
   line-height: 1;
 }
 
-.home-location-chip-icon img,
-.home-location-chip-icon svg {
+.home-location-chip-icon svg,
+.home-location-chip-icon .region-landmark-chip {
   display: block;
   width: 48px;
   height: 22px;
   object-fit: contain;
   object-position: center bottom;
-}
-
-.home-location-chip-icon img {
-  filter: grayscale(0.15) contrast(1.05);
-  mix-blend-mode: multiply;
 }
 
 .home-location-chip-name {

@@ -14,7 +14,15 @@
     glasgow: { name: 'Glasgow', location: 'Glasgow' },
     edinburgh: { name: 'Edinburgh', location: 'Edinburgh' },
     leeds: { name: 'Leeds', location: 'Leeds' },
+    liverpool: { name: 'Liverpool', location: 'Liverpool' },
+    newcastle: { name: 'Newcastle', location: 'Newcastle' },
     bristol: { name: 'Bristol', location: 'Bristol' },
+    sheffield: { name: 'Sheffield', location: 'Sheffield' },
+    nottingham: { name: 'Nottingham', location: 'Nottingham' },
+    cardiff: { name: 'Cardiff', location: 'Cardiff' },
+    brighton: { name: 'Brighton', location: 'Brighton' },
+    cambridge: { name: 'Cambridge', location: 'Cambridge' },
+    oxford: { name: 'Oxford', location: 'Oxford' },
     chester: { name: 'Chester', location: 'Chester' },
   };
 
@@ -85,12 +93,12 @@
       '.';
   setText('networking-region-intro-copy', introCopy);
 
-  var skyline = document.getElementById('networking-region-skyline');
-  if (skyline) {
-    skyline.className = 'networking-region-skyline';
-    skyline.style.removeProperty('--skyline-image');
-    skyline.innerHTML = '';
-    skyline.hidden = true;
+  var landmark = document.getElementById('networking-region-skyline');
+  if (landmark) {
+    landmark.className = 'networking-region-landmark';
+    landmark.style.removeProperty('--skyline-image');
+    landmark.innerHTML = theme.landmark || '';
+    landmark.hidden = !theme.landmark;
   }
 
   var postcode = document.getElementById('postcode');

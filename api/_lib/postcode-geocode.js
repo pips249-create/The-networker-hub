@@ -14,6 +14,12 @@ const REGION_OUTCODE = {
   glasgow: 'G1',
   cambridge: 'CB1',
   oxford: 'OX1',
+  newcastle: 'NE1',
+  sheffield: 'S1',
+  nottingham: 'NG1',
+  cardiff: 'CF10',
+  brighton: 'BN1',
+  chester: 'CH1',
 };
 
 async function geocodeUkOutcode(outcode) {

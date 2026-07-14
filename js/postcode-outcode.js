@@ -56,6 +56,11 @@
     cambridge: ['CB1', 'CB2', 'CB3', 'CB4', 'CB5', 'CB6', 'CB7', 'CB8', 'CB9', 'CB10', 'CB11', 'CB21', 'CB22', 'CB23', 'CB24', 'CB25'],
     oxford: ['OX1', 'OX2', 'OX3', 'OX4', 'OX5', 'OX7', 'OX9', 'OX10', 'OX11', 'OX12', 'OX13', 'OX14', 'OX15', 'OX16', 'OX17', 'OX18', 'OX20', 'OX25', 'OX26', 'OX27', 'OX28', 'OX29', 'OX33', 'OX39', 'OX44', 'OX49'],
     chester: ['CH1', 'CH2', 'CH3', 'CH4'],
+    newcastle: ['NE1', 'NE2', 'NE3', 'NE4', 'NE5', 'NE6', 'NE7', 'NE8', 'NE9', 'NE10', 'NE11', 'NE12', 'NE13', 'NE15', 'NE16', 'NE17', 'NE18', 'NE19', 'NE20', 'NE21', 'NE22', 'NE23', 'NE24', 'NE25', 'NE26', 'NE27', 'NE28', 'NE29', 'NE30', 'NE31', 'NE32', 'NE33', 'NE34', 'NE35', 'NE36', 'NE37', 'NE38', 'NE39', 'NE40', 'NE41', 'NE42', 'NE43', 'NE44', 'NE45', 'NE46', 'NE47', 'NE48', 'NE49', 'NE61', 'NE62', 'NE63', 'NE64', 'NE65', 'NE66', 'NE67', 'NE68', 'NE69', 'NE70', 'NE71'],
+    sheffield: ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11', 'S12', 'S13', 'S14', 'S17', 'S20', 'S21', 'S25', 'S26', 'S30', 'S35', 'S36', 'S40', 'S41', 'S60', 'S61', 'S62', 'S63', 'S64', 'S65', 'S66', 'S70', 'S71', 'S72', 'S73', 'S74', 'S75', 'S80', 'S81'],
+    nottingham: ['NG1', 'NG2', 'NG3', 'NG4', 'NG5', 'NG6', 'NG7', 'NG8', 'NG9', 'NG10', 'NG11', 'NG12', 'NG13', 'NG14', 'NG15', 'NG16', 'NG17', 'NG18', 'NG19', 'NG20', 'NG21', 'NG22', 'NG23', 'NG24', 'NG25', 'NG31', 'NG32', 'NG33', 'NG34'],
+    cardiff: ['CF3', 'CF5', 'CF10', 'CF11', 'CF14', 'CF15', 'CF23', 'CF24', 'CF30', 'CF31', 'CF33', 'CF35', 'CF37', 'CF38', 'CF39', 'CF40', 'CF41', 'CF42', 'CF43', 'CF44', 'CF45', 'CF46', 'CF47', 'CF48', 'CF61', 'CF62', 'CF63', 'CF64', 'CF71', 'CF72', 'CF81', 'CF82', 'CF83'],
+    brighton: ['BN1', 'BN2', 'BN3', 'BN41', 'BN42', 'BN43', 'BN45'],
   };
 
   var sectorSetCache = {};
@@ -119,6 +124,11 @@
     cambridge: 'cambridge',
     oxford: 'oxford',
     chester: 'chester',
+    newcastle: 'newcastle',
+    sheffield: 'sheffield',
+    nottingham: 'nottingham',
+    cardiff: 'cardiff',
+    brighton: 'brighton',
   };
 
   function normalizeLocationText(raw) {
