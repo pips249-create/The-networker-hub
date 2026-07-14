@@ -1,8 +1,8 @@
 /**
  * Guest visit programme — complimentary trial visits per attendee per organiser.
- * Platform cap: 2 visits (organisers choose 0, 1, or 2).
+ * Platform cap: 3 visits (organisers choose 0–3).
  */
-const PLATFORM_MAX_COMPLIMENTARY_VISITS = 2;
+const PLATFORM_MAX_COMPLIMENTARY_VISITS = 3;
 const GUEST_VISIT_TICKET_TYPE = 'Guest-visit';
 const GUEST_VISIT_TIER_NAME = 'Guest visit';
 

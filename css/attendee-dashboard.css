@@ -707,6 +707,15 @@
   cursor: not-allowed;
 }
 
+.ad-utility-item--danger {
+  color: var(--ad-red);
+}
+
+.ad-utility-item--danger:hover:not(:disabled) {
+  background: var(--ad-red-light);
+  color: var(--ad-red);
+}
+
 .ad-td-actions {
   width: 1%;
   white-space: nowrap;

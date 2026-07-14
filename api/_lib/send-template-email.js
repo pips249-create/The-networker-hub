@@ -50,6 +50,7 @@ const {
 } = require('./cancellation-email-sections');
 const {
   getEmailSponsorVars,
+  insertSponsorPlaceholderBeforeFooter,
   stripUnresolvedSponsorPlaceholders,
 } = require('./email-sponsor-sections');
 const { emailGreetingName } = require('./email-display-name');
@@ -253,6 +254,12 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   }
 
   let bodyHtml = template.body_html;
+  if (sponsorSection && !/\{\{\s*(?:sponsor_row|sponsor_section)\s*\}\}/.test(bodyHtml)) {
+    bodyHtml = insertSponsorPlaceholderBeforeFooter(bodyHtml, '{{sponsor_row}}');
+  }
+  if (dbMiniSponsorsRow && !/\{\{\s*mini_sponsors_row\s*\}\}/.test(bodyHtml)) {
+    bodyHtml = insertSponsorPlaceholderBeforeFooter(bodyHtml, '{{mini_sponsors_row}}');
+  }
   if (templateSource === 'database') {
   if (slug === 'booking_confirmation') {
     const resolved = resolveBookingConfirmationBody(template.body_html);

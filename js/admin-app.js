@@ -274,11 +274,33 @@
     {
       key: 'event_page_carousel_ads',
       group: 'Detail pages',
-      label: 'Event & organiser pages — Mini Sponsors (3 slots)',
+      label: 'Events — Mini Sponsors (3 slots)',
       preview: 'carousel',
-      help: 'Up to three rotating Mini Sponsor logos in the sidebar on individual event and organiser profile pages — same inventory on both page types. Each logo links to the sponsor website.',
+      help: 'Up to three Mini Sponsor logos for event pages and selected event emails. Each logo links to the sponsor website.',
       tagline: '',
       ctaLabel: 'Enquire now',
+      ctaUrl: 'https://',
+      ctaColor: '#2d2636',
+    },
+    {
+      key: 'organiser_email_mini_sponsors',
+      group: 'Email',
+      label: 'Organiser emails — Mini Sponsors (3 slots)',
+      preview: 'carousel',
+      help: 'Mini Sponsor logos shown on selected emails sent to networking group organisers.',
+      tagline: '',
+      ctaLabel: 'Visit website',
+      ctaUrl: 'https://',
+      ctaColor: '#2d2636',
+    },
+    {
+      key: 'opportunity_email_mini_sponsors',
+      group: 'Email',
+      label: 'Business opportunity emails — Mini Sponsors (3 slots)',
+      preview: 'carousel',
+      help: 'Mini Sponsor logos shown on selected business opportunity emails.',
+      tagline: '',
+      ctaLabel: 'Visit website',
       ctaUrl: 'https://',
       ctaColor: '#2d2636',
     },
@@ -4771,6 +4793,7 @@
     var ctaLabel = document.getElementById('sponsor-cta-label');
     var ctaUrl = document.getElementById('sponsor-cta-url');
     var active = document.getElementById('sponsor-active');
+    var includeInEmails = document.getElementById('sponsor-include-emails');
     var savedColor =
       window.CmsSponsorFields && window.CmsSponsorFields.ctaColor
         ? window.CmsSponsorFields.ctaColor(block)
@@ -4784,6 +4807,7 @@
     if (ctaLabel && block.cta_label) ctaLabel.value = block.cta_label;
     if (ctaUrl && block.cta_url) ctaUrl.value = block.cta_url;
     if (active) active.checked = block.active !== false;
+    if (includeInEmails) includeInEmails.checked = block.include_in_emails !== false;
     setSponsorCtaColorFields(savedColor);
   }
 
@@ -4823,13 +4847,18 @@
       return;
     }
     if (hash === 'sponsorship/event-page-carousel') {
-      renderEventCarouselPage();
+      renderEventCarouselPage('event_page_carousel_ads');
       return;
     }
     if (hash.indexOf('sponsorship/') === 0) {
       var slotKey = hash.slice('sponsorship/'.length);
       if (slotKey === 'event_page_carousel_ads') {
-        renderEventCarouselPage();
+        renderEventCarouselPage(slotKey);
+        return;
+      }
+      var requestedSlot = cmsSlotByKey(slotKey);
+      if (requestedSlot && requestedSlot.key === slotKey && requestedSlot.preview === 'carousel') {
+        renderEventCarouselPage(slotKey);
         return;
       }
       if (cmsSlotExists(slotKey)) {
@@ -4874,10 +4903,14 @@
             .map(function (slot) {
               if (slot.preview === 'carousel') {
                 return (
-                  '<a href="#sponsorship/event-page-carousel" class="admin-ad-picker-card admin-ad-picker-card--carousel">' +
+                  '<a href="#sponsorship/' +
+                  attrEsc(slot.key) +
+                  '" class="admin-ad-picker-card admin-ad-picker-card--carousel">' +
                   '<div class="admin-ad-picker-card-head">' +
                   '<span class="admin-ad-picker-type">Carousel</span>' +
-                  '<span class="admin-ad-picker-status" id="event-carousel-picker-status">…</span>' +
+                  '<span class="admin-ad-picker-status" data-carousel-status="' +
+                  attrEsc(slot.key) +
+                  '">…</span>' +
                   '</div>' +
                   '<p class="admin-ad-picker-label">' +
                   esc(slot.label) +
@@ -5012,37 +5045,41 @@
         }
       });
 
-    adminGet('/api/admin/event-carousel')
-      .then(function (data) {
-        var el = document.getElementById('event-carousel-picker-status');
-        if (!el) return;
-        if (!data || data.error || data.configured === false) {
-          el.innerHTML =
-            '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
-          return;
-        }
-        var ads = Array.isArray(data.ads) ? data.ads : [];
-        var activeCount = ads.filter(function (ad) {
-          return ad.active !== false && ad.logo_url && ad.cta_url;
-        }).length;
-        if (data.active === false) {
-          el.innerHTML = '<span class="admin-ad-picker-badge admin-ad-picker-badge--hidden">Hidden</span>';
-        } else if (activeCount) {
-          el.innerHTML =
-            '<span class="admin-ad-picker-badge admin-ad-picker-badge--live">' +
-            activeCount +
-            ' live</span>';
-        } else {
-          el.innerHTML = '<span class="admin-ad-picker-badge admin-ad-picker-badge--empty">Not set yet</span>';
-        }
-      })
-      .catch(function () {
-        var el = document.getElementById('event-carousel-picker-status');
-        if (el) {
-          el.innerHTML =
-            '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
-        }
-      });
+    CMS_AD_SLOTS.filter(function (slot) {
+      return slot.preview === 'carousel';
+    }).forEach(function (slot) {
+      adminGet('/api/admin/event-carousel?slot=' + encodeURIComponent(slot.key))
+        .then(function (data) {
+          var el = document.querySelector('[data-carousel-status="' + slot.key + '"]');
+          if (!el) return;
+          if (!data || data.error || data.configured === false) {
+            el.innerHTML =
+              '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
+            return;
+          }
+          var ads = Array.isArray(data.ads) ? data.ads : [];
+          var activeCount = ads.filter(function (ad) {
+            return ad.active !== false && ad.logo_url && ad.cta_url;
+          }).length;
+          if (data.active === false) {
+            el.innerHTML = '<span class="admin-ad-picker-badge admin-ad-picker-badge--hidden">Hidden</span>';
+          } else if (activeCount) {
+            el.innerHTML =
+              '<span class="admin-ad-picker-badge admin-ad-picker-badge--live">' +
+              activeCount +
+              ' live</span>';
+          } else {
+            el.innerHTML = '<span class="admin-ad-picker-badge admin-ad-picker-badge--empty">Not set yet</span>';
+          }
+        })
+        .catch(function () {
+          var el = document.querySelector('[data-carousel-status="' + slot.key + '"]');
+          if (el) {
+            el.innerHTML =
+              '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
+          }
+        });
+    });
   }
 
   function renderHomePartnersPage() {
@@ -5082,6 +5119,7 @@
       var ctaLabel = document.getElementById('sponsor-cta-label');
       var ctaUrl = document.getElementById('sponsor-cta-url');
       var active = document.getElementById('sponsor-active');
+      var includeInEmails = document.getElementById('sponsor-include-emails');
       var previewHint = document.getElementById('sponsor-preview-hint');
       if (company) company.value = '';
       if (logoUrl) logoUrl.value = '';
@@ -5090,6 +5128,7 @@
       if (ctaUrl) ctaUrl.value = d.ctaUrl;
       setSponsorCtaColorFields(d.ctaColor || defaultSponsorCtaColor());
       if (active) active.checked = true;
+      if (includeInEmails) includeInEmails.checked = true;
       if (previewHint) {
         previewHint.textContent =
           d.preview === 'compact'
@@ -5115,6 +5154,9 @@
       '<label class="flex items-center gap-2 text-sm text-slate-700">' +
       '<input type="checkbox" id="sponsor-active" class="rounded border-slate-300" checked> ' +
       'Ad active (uncheck to hide this placement on site)</label>' +
+      '<label id="sponsor-include-emails-wrap" class="hidden items-start gap-2 text-sm text-slate-700 rounded-lg border border-violet-100 bg-violet-50 px-3 py-3">' +
+      '<input type="checkbox" id="sponsor-include-emails" class="rounded border-slate-300 mt-0.5" checked> ' +
+      '<span><strong>Include this sponsor in matching emails</strong><span id="sponsor-email-scope" class="block text-xs text-slate-500 mt-0.5"></span></span></label>' +
       '<div id="sponsor-hero-fields" class="space-y-5">' +
       '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-company">Company name</label>' +
       '<input type="text" id="sponsor-company" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Acme Ltd"></div>' +
@@ -5170,10 +5212,12 @@
     function readForm() {
       var d = slotDefaults();
       var activeEl = document.getElementById('sponsor-active');
+      var includeEmailsEl = document.getElementById('sponsor-include-emails');
       var logoUrl = document.getElementById('sponsor-logo-url').value.trim();
       if (sponsorLogoBase64) logoUrl = sponsorLogoBase64;
       return {
         active: activeEl ? activeEl.checked : true,
+        includeInEmails: includeEmailsEl ? includeEmailsEl.checked : false,
         companyName: document.getElementById('sponsor-company').value.trim(),
         logoUrl: logoUrl,
         tagline: document.getElementById('sponsor-tagline').value.trim(),
@@ -5194,6 +5238,18 @@
       var heroFields = document.getElementById('sponsor-hero-fields');
       var ctaUrlLabel = document.getElementById('sponsor-cta-url-label');
       var previewHint = document.getElementById('sponsor-preview-hint');
+      var includeWrap = document.getElementById('sponsor-include-emails-wrap');
+      var emailScope = document.getElementById('sponsor-email-scope');
+      var emailScopes = {
+        events_sponsor_hub: 'Shown in event and attendee emails selected for sponsorship.',
+        organisers_sponsor_hub: 'Shown in emails sent to networking group organisers.',
+        opportunities_sponsor_hub: 'Shown in business opportunity emails.',
+      };
+      if (includeWrap) {
+        includeWrap.classList.toggle('hidden', !emailScopes[currentSlotKey]);
+        includeWrap.classList.toggle('flex', Boolean(emailScopes[currentSlotKey]));
+      }
+      if (emailScope) emailScope.textContent = emailScopes[currentSlotKey] || '';
       if (heroFields) heroFields.hidden = slot.preview === 'compact';
       if (ctaUrlLabel) {
         ctaUrlLabel.textContent =
@@ -5301,6 +5357,7 @@
       'sponsor-cta-color-hex',
       'sponsor-cta-url',
       'sponsor-active',
+      'sponsor-include-emails',
     ].forEach(function (id) {
       var input = document.getElementById(id);
       if (input) input.addEventListener('input', renderPreview);
@@ -5386,6 +5443,7 @@
         company_name: slot.preview === 'compact' ? '' : creative.companyName,
         logo_url: sponsorLogoBase64 ? '' : document.getElementById('sponsor-logo-url').value.trim(),
         active: creative.active,
+        include_in_emails: creative.includeInEmails,
       };
       if (sponsorLogoBase64) {
         payload.logoBase64 = sponsorLogoBase64;
@@ -5682,26 +5740,37 @@
     loadPartners();
   }
 
-  function renderEventCarouselPage() {
+  function renderEventCarouselPage(slotKey) {
+    var slot = cmsSlotByKey(slotKey || 'event_page_carousel_ads');
+    var isEventInventory = slot.key === 'event_page_carousel_ads';
+    var detailText = isEventInventory
+      ? 'Three Mini Sponsor slots used on event pages and selected event emails.'
+      : 'Three Mini Sponsor slots used on selected ' +
+        (slot.key === 'organiser_email_mini_sponsors' ? 'organiser' : 'business opportunity') +
+        ' emails.';
     main.innerHTML =
       '<div class="space-y-6 max-w-3xl">' +
       sponsorshipBackLinkHtml() +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5" id="event-carousel-admin">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
-      '<div><h3 class="font-bold text-brand-900">Event & organiser pages — Sponsor carousel</h3>' +
-      '<p class="text-sm text-slate-600 mt-1">Three sidebar slots on individual event and organiser profile pages. Each active slot shows a clickable logo that rotates automatically.</p></div></div>' +
+      '<div><h3 class="font-bold text-brand-900">' +
+      esc(slot.label) +
+      '</h3>' +
+      '<p class="text-sm text-slate-600 mt-1">' +
+      esc(detailText) +
+      ' Each active logo links to the sponsor website.</p></div></div>' +
       '<label class="flex items-center gap-2 text-sm text-slate-700">' +
       '<input type="checkbox" id="event-carousel-active" class="rounded border-slate-300" checked> ' +
-      'Carousel active (uncheck to hide all event page sidebar ads)</label>' +
+      'Mini sponsors active (uncheck to hide all three)</label>' +
       '<div id="event-carousel-list" class="space-y-4 min-w-0"></div>' +
       '<div class="flex flex-wrap gap-3 pt-1">' +
-      '<button type="button" id="event-carousel-save" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Save carousel</button>' +
+      '<button type="button" id="event-carousel-save" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Save mini sponsors</button>' +
       '</div>' +
       '<p id="event-carousel-status" class="text-sm text-slate-500"></p></section></div>';
-    initEventCarouselAdmin();
+    initEventCarouselAdmin(slot.key);
   }
 
-  function initEventCarouselAdmin() {
+  function initEventCarouselAdmin(slotKey) {
     var listEl = document.getElementById('event-carousel-list');
     var statusEl = document.getElementById('event-carousel-status');
     var activeEl = document.getElementById('event-carousel-active');
@@ -5801,8 +5870,8 @@
     }
 
     function loadCarousel() {
-      setCarouselStatus('Loading event page carousel…');
-      adminGet('/api/admin/event-carousel')
+      setCarouselStatus('Loading mini sponsors…');
+      adminGet('/api/admin/event-carousel?slot=' + encodeURIComponent(slotKey))
         .then(function (data) {
           if (!data || data.error || data.configured === false) {
             adsState = defaultAds();
@@ -5821,7 +5890,7 @@
             liveCount
               ? liveCount + ' active ad' + (liveCount === 1 ? '' : 's') + ' in carousel.'
               : data.active === false
-                ? 'Carousel is hidden on site — tick “Carousel active” above, add logo + link per slot, then save.'
+                ? 'Mini sponsors are hidden — tick “Mini sponsors active” above, add logo + link per slot, then save.'
                 : 'No active ads yet — add a logo and click-through link for each slot you want live, then save.'
           );
         })
@@ -5889,7 +5958,7 @@
         }),
       };
 
-      fetch('/api/admin/event-carousel', {
+      fetch('/api/admin/event-carousel?slot=' + encodeURIComponent(slotKey), {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -5916,7 +5985,7 @@
           adsState = Array.isArray(data.ads) ? data.ads : defaultAds();
           if (activeEl) activeEl.checked = data.active !== false;
           renderAdList();
-          setCarouselStatus('Saved — event page carousel updated.', 'ok');
+          setCarouselStatus('Saved — mini sponsors updated.', 'ok');
         })
         .catch(function (err) {
           setCarouselStatus(err.message || 'Could not save carousel.', 'error');
@@ -6332,12 +6401,14 @@
       '<div class="grid lg:grid-cols-[minmax(200px,240px)_minmax(0,1fr)] gap-6 min-w-0">' +
       '<aside class="admin-panel-sticky bg-white rounded-xl border border-slate-200 shadow-sm p-4 min-w-0">' +
       '<h3 class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">Templates</h3>' +
+      '<input type="search" id="email-template-search" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mb-3" placeholder="Search templates…" autocomplete="off">' +
       '<ul id="email-template-list" class="space-y-1 text-sm"></ul>' +
       '</aside>' +
       '<div class="space-y-6 min-w-0">' +
       '<form id="email-editor" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5 hidden min-w-0">' +
       '<div><p id="email-template-name" class="font-bold text-brand-900 text-lg"></p>' +
-      '<p id="email-template-desc" class="text-sm text-slate-500 mt-1"></p></div>' +
+      '<p id="email-template-desc" class="text-sm text-slate-500 mt-1"></p>' +
+      '<p id="email-template-automated" class="hidden text-xs rounded-lg bg-violet-50 text-violet-800 border border-violet-100 px-3 py-2 mt-2"></p></div>' +
       '<div><label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1" for="email-subject">Subject line</label>' +
       '<input type="text" id="email-subject" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Your ticket for {{event_name}}"></div>' +
       '<div><label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1" for="email-body">HTML body</label>' +
@@ -6446,10 +6517,29 @@
     }
 
     var EMAIL_TEMPLATE_GROUPS = [
+      { key: 'automated', label: 'Automated — sent by the Hub' },
       { key: 'attendees', label: 'Attendees' },
       { key: 'organisers', label: 'Organisers' },
       { key: 'opportunities', label: 'Business opportunities' },
     ];
+
+    // Cron/marketing emails the Hub sends on its own schedule (no admin action needed).
+    var AUTOMATED_EMAIL_INFO = {
+      attendee_hubert_event_concierge:
+        'Monthly digest to members with marketing emails on — nearby and popular event picks.',
+      attendee_reengagement:
+        'Sends after 30 days without a booking (60-day cooldown), marketing opt-in only.',
+      attendee_signup_events_nudge:
+        'Sends 3 days after signup if no booking yet, marketing opt-in only.',
+      attendee_signup_events_nudge_followup:
+        'Sends 10 days after signup if still no booking, marketing opt-in only.',
+      saved_event_tickets_open:
+        'Sends when a saved event opens ticket sales, marketing opt-in only.',
+      saved_opportunity_closing_soon:
+        'Sends when a saved business opportunity is about 7 days from expiry.',
+      opportunity_saved_search_match:
+        'Sends when a new listing matches a member\u2019s saved opportunity search.',
+    };
 
     var ATTENDEE_EMAIL_SLUGS = [
       'booking_confirmation',
@@ -6477,6 +6567,7 @@
 
     function emailTemplateCategory(t) {
       var slug = String((t && t.slug) || '');
+      if (Object.prototype.hasOwnProperty.call(AUTOMATED_EMAIL_INFO, slug)) return 'automated';
       if (ATTENDEE_EMAIL_SLUGS.indexOf(slug) !== -1) return 'attendees';
       if (ORGANISER_EMAIL_SLUGS.indexOf(slug) !== -1 || slug.indexOf('organiser_') === 0) {
         return 'organisers';
@@ -6492,6 +6583,24 @@
       return 'organisers';
     }
 
+    var templateSearchQuery = '';
+
+    function templateMatchesSearch(t, query) {
+      if (!query) return true;
+      var hay = (
+        String(t.name || '') +
+        ' ' +
+        String(t.slug || '') +
+        ' ' +
+        String(t.subject || '') +
+        ' ' +
+        String(t.description || '')
+      ).toLowerCase();
+      return query.split(/\s+/).every(function (word) {
+        return hay.indexOf(word) !== -1;
+      });
+    }
+
     function renderTemplateList() {
       var list = document.getElementById('email-template-list');
       if (!list) return;
@@ -6499,10 +6608,14 @@
         list.innerHTML = '<li class="text-slate-400">No templates yet — run migration 027 in Supabase.</li>';
         return;
       }
+      var query = templateSearchQuery.trim().toLowerCase();
+      var anyMatch = false;
       list.innerHTML = EMAIL_TEMPLATE_GROUPS.map(function (group) {
         var items = templates.filter(function (t) {
-          return emailTemplateCategory(t) === group.key;
+          return emailTemplateCategory(t) === group.key && templateMatchesSearch(t, query);
         });
+        if (query && !items.length) return '';
+        if (items.length) anyMatch = true;
         var buttons = items
           .map(function (t) {
             var active = t.slug === selectedSlug;
@@ -6532,11 +6645,25 @@
           '</li>'
         );
       }).join('');
+      if (query && !anyMatch) {
+        list.innerHTML =
+          '<li class="text-xs text-slate-400 px-1">No templates match &ldquo;' +
+          esc(templateSearchQuery.trim()) +
+          '&rdquo;.</li>';
+      }
       list.querySelectorAll('[data-email-slug]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           if (dirty && !window.confirm('Discard unsaved changes?')) return;
           selectTemplate(btn.getAttribute('data-email-slug'));
         });
+      });
+    }
+
+    var templateSearchInput = document.getElementById('email-template-search');
+    if (templateSearchInput) {
+      templateSearchInput.addEventListener('input', function () {
+        templateSearchQuery = templateSearchInput.value || '';
+        renderTemplateList();
       });
     }
 
@@ -6711,6 +6838,17 @@
       document.getElementById('email-template-name').textContent = template.name;
       document.getElementById('email-template-desc').textContent =
         template.description || 'Transactional email template.';
+      var automatedNote = document.getElementById('email-template-automated');
+      if (automatedNote) {
+        var autoInfo = AUTOMATED_EMAIL_INFO[template.slug];
+        if (autoInfo) {
+          automatedNote.textContent = 'Automated: ' + autoInfo + ' Edits here change what the Hub sends.';
+          automatedNote.classList.remove('hidden');
+        } else {
+          automatedNote.textContent = '';
+          automatedNote.classList.add('hidden');
+        }
+      }
       document.getElementById('email-subject').value = template.subject || '';
       document.getElementById('email-body').value = template.body_html || '';
       renderPlaceholderChips(template.placeholders);
@@ -11269,6 +11407,7 @@
     main.innerHTML =
       '<div class="space-y-6 max-w-3xl">' +
       '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Bulk send <strong>organiser claim-profile invites</strong> (max 50 per batch). Default link opens the claim flow on the organiser dashboard.</p>' +
+      '<p class="text-xs text-slate-500 rounded-lg border border-violet-100 bg-violet-50 px-4 py-3">Looking for Hubert\u2019s monthly digest and other emails the Hub sends on its own? They run automatically \u2014 edit their copy under <a href="#email/templates" class="font-semibold text-violet-800 underline">Templates &rarr; Automated</a>.</p>' +
       '<form id="campaign-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">' +
       '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-recipients">Recipient emails</label>' +
       '<textarea id="campaign-recipients" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[120px]" placeholder="organiser@example.com&#10;one per line"></textarea>' +

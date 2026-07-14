@@ -23,6 +23,7 @@
     ],
     'event-edit': [
       { label: 'Meeting vs Events type', prompt: 'What is the difference between an event and a meeting?' },
+      { label: 'Photo cropped wrong', prompt: 'My event photo is cropped badly on the listing — how do I fix it?' },
       { label: 'Image too small', prompt: 'My event image is too small — what can I do?' },
       { label: 'Image too large', prompt: 'My event image is too big — what do I do?' },
       { label: 'Remove a date', prompt: "I've accidentally added an extra date — how do I remove it?" },
@@ -35,6 +36,8 @@
       { label: 'Multiple dates (series)', prompt: 'How do I add more than one date to a recurring event series?' },
     ],
     'event-tickets': [
+      { label: 'Attendance modes', prompt: 'What is the difference between ticket types, guest visit programme, and Category Exclusivity?' },
+      { label: 'Paid + guest visits', prompt: 'Can I create a paid ticket as well as offering guest visit tickets?' },
       { label: 'Guest visit programme', prompt: 'What is the guest visit programme for networking groups?' },
       { label: 'Category Exclusivity', prompt: 'What is Category Exclusivity?' },
       { label: 'Alumni Fast-Pass', prompt: 'What is Alumni Fast-Pass for repeat events?' },
@@ -58,7 +61,7 @@
       { label: 'Conference or exhibition', prompt: 'How do I list a conference or exhibition?' },
       { label: 'List an event guide', prompt: 'Where is the step-by-step guide for listing an event?' },
       { label: 'List an event', prompt: 'How do I list my first event?' },
-      { label: 'Stripe payouts', prompt: 'How do Stripe Connect payouts work for organisers?' },
+      { label: 'Stripe payouts', prompt: 'How do Stripe Connect payouts and refunds work for organisers?' },
       { label: 'Invite my team', prompt: 'How do I invite team members to help manage events?' },
     ],
   };

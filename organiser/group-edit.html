@@ -89,13 +89,19 @@
           <div class="ee-field">
             <label for="ge-complimentary-visits">Complimentary guest visits</label>
             <p class="ee-hint" style="margin-top:0">
-              How many free trial visits a new attendee gets with your group before they need a paid member ticket. Platform maximum is 2.
+              How many free trial visits a new attendee gets with your group before they need a paid member ticket. Type a number from 0 to 3 (Hub maximum).
             </p>
-            <select id="ge-complimentary-visits">
-              <option value="0">None — guest visit programme off</option>
-              <option value="1">1 complimentary visit</option>
-              <option value="2">2 complimentary visits</option>
-            </select>
+            <input
+              type="number"
+              id="ge-complimentary-visits"
+              min="0"
+              max="3"
+              step="1"
+              value="0"
+              inputmode="numeric"
+              aria-describedby="ge-complimentary-visits-hint"
+            />
+            <p class="ee-hint" id="ge-complimentary-visits-hint">Enter 0 to turn the guest visit programme off.</p>
           </div>
         </div>
 
@@ -118,6 +124,6 @@
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../"></script>
     <script src="../js/organiser-flow-tour.js?v=20260701" data-root="../"></script>
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
-    <script src="../js/organiser-group-edit.js?v=20260703"></script>
+    <script src="../js/organiser-group-edit.js?v=20260714ce"></script>
   </body>
 </html>

@@ -82,6 +82,21 @@ function resolveEventDisplayImage(eventRow, organiserRow, seriesPeerRows) {
   return '';
 }
 
+/**
+ * Validate a CSS object-position value like "50% 30%". Returns '' when invalid,
+ * so callers can fall back to the default (centred) crop.
+ */
+function normalizeEventImagePosition(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return '';
+  const m = s.match(/^(\d{1,3})%\s+(\d{1,3})%$/);
+  if (!m) return '';
+  const x = Math.min(100, Math.max(0, Number(m[1])));
+  const y = Math.min(100, Math.max(0, Number(m[2])));
+  if (x === 50 && y === 50) return '';
+  return x + '% ' + y + '%';
+}
+
 module.exports = {
   eventImageUrl,
   eventImageDbValue,
@@ -89,4 +104,5 @@ module.exports = {
   isUsableEventImageUrl,
   isOrganiserLogoImageUrl,
   resolveEventDisplayImage,
+  normalizeEventImagePosition,
 };

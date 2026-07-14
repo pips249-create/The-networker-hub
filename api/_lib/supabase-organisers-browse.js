@@ -92,7 +92,7 @@ function rowToPublicOrganiser(row, eventCount, options) {
     rating: Number.isFinite(rating) ? rating : 0,
     reviews,
     eventCount: Number(eventCount) || 0,
-    guestVisitsAllowed: Math.min(2, Math.max(0, Number(row.complimentary_visits_allowed) || 0)),
+    guestVisitsAllowed: Math.min(3, Math.max(0, Number(row.complimentary_visits_allowed) || 0)),
     featured: Boolean(row.featured),
     website: String(row.website || '').trim(),
     instagramUrl: String(row.instagram_url || '').trim(),

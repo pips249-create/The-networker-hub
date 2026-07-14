@@ -977,6 +977,7 @@ async function copySponsorBlock(sb, fromSlot, toSlot) {
     logo_url: source.logo_url || source.image_url || '',
     company_name: source.company_name || '',
     active: source.active !== false,
+    include_in_emails: source.include_in_emails !== false,
   });
 }
 

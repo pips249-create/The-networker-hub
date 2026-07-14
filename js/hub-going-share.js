@@ -14,7 +14,7 @@
   }
 
   function hubLogoUrl() {
-    return siteOrigin() + '/assets/logo-nav-transparent.png';
+    return siteOrigin() + '/assets/logo-nav.png';
   }
 
   function eventPageUrl(ev) {
@@ -43,7 +43,7 @@
       'Looking forward to connecting with local businesses at ' +
       title +
       datePart +
-      ' via @The Networker Hub! Anyone else from my network going?'
+      '! Joining via @The Networker Hub — anyone else from my network going?'
     );
   }
 
@@ -108,37 +108,34 @@
   }
 
   function resolveEventImageUrl(ev) {
-    let imageUrl = String((ev && ev.imageUrl) || '').trim();
-    if (global.getEventImage) {
-      imageUrl = global.getEventImage({
-        photo: imageUrl,
-        organiserLogo: (ev && ev.organiserLogo) || '',
-        id: (ev && ev.id) || '',
-        eventType: (ev && ev.eventType) || '',
-        title: (ev && ev.title) || '',
-      });
-    } else if (global.getFlexibleEventImage) {
-      imageUrl = global.getFlexibleEventImage(
-        imageUrl,
-        (ev && ev.organiserLogo) || '',
-        (ev && ev.id) || ''
-      );
-    }
-    return String(imageUrl || '').trim();
+    const direct = String((ev && ev.imageUrl) || '').trim();
+    const logo = String((ev && ev.organiserLogo) || '').trim();
+    if (direct && logo && direct === logo) return logo;
+    if (direct) return direct;
+    return logo;
+  }
+
+  function isLikelyLogo(img, url, ev) {
+    if (global.hubIsLogoStyleCover && global.hubIsLogoStyleCover(ev || {}, url)) return true;
+    if (!img) return false;
+    const ratio = img.width / Math.max(1, img.height);
+    return ratio > 0.75 && ratio < 1.35 && img.width < 900;
+  }
+
+  function drawContainedImage(ctx, img, x, y, w, h) {
+    if (!img) return;
+    const scale = Math.min(w / img.width, h / img.height);
+    const dw = img.width * scale;
+    const dh = img.height * scale;
+    const dx = x + (w - dw) / 2;
+    const dy = y + (h - dh) / 2;
+    ctx.drawImage(img, dx, dy, dw, dh);
   }
 
   function drawCoverImage(ctx, img, x, y, w, h) {
-    if (!img) {
-      const grad = ctx.createLinearGradient(x, y, x + w, y + h);
-      grad.addColorStop(0, '#9d60a7');
-      grad.addColorStop(1, '#7a3d8a');
-      ctx.fillStyle = grad;
-      roundRect(ctx, x, y, w, h, 24);
-      ctx.fill();
-      return;
-    }
+    if (!img) return;
     ctx.save();
-    roundRect(ctx, x, y, w, h, 24);
+    roundRect(ctx, x, y, w, h, 20);
     ctx.clip();
     const scale = Math.max(w / img.width, h / img.height);
     const dw = img.width * scale;
@@ -146,12 +143,6 @@
     const dx = x + (w - dw) / 2;
     const dy = y + (h - dh) / 2;
     ctx.drawImage(img, dx, dy, dw, dh);
-    ctx.restore();
-    ctx.save();
-    roundRect(ctx, x, y, w, h, 24);
-    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
     ctx.restore();
   }
 
@@ -162,71 +153,117 @@
     const ctx = canvas.getContext('2d');
 
     const bg = ctx.createLinearGradient(0, 0, CARD_W, CARD_H);
-    bg.addColorStop(0, '#2d1b5e');
-    bg.addColorStop(0.55, '#4a2d6e');
-    bg.addColorStop(1, '#7a3d8a');
+    bg.addColorStop(0, '#faf6ee');
+    bg.addColorStop(0.55, '#f5f0e8');
+    bg.addColorStop(1, '#ebe0f0');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, CARD_W, CARD_H);
 
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    roundRect(ctx, 56, 56, CARD_W - 112, CARD_H - 112, 28);
+    ctx.fillStyle = '#bd932e';
+    ctx.fillRect(0, 0, CARD_W, 14);
+
+    ctx.fillStyle = 'rgba(157, 96, 167, 0.12)';
+    ctx.beginPath();
+    ctx.arc(1080, 120, 200, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(45, 27, 94, 0.06)';
+    ctx.beginPath();
+    ctx.arc(120, 560, 240, 0, Math.PI * 2);
     ctx.fill();
 
     const imageUrl = resolveEventImageUrl(ev);
-    const [eventImg, hubLogo] = await Promise.all([loadImage(imageUrl), loadImage(hubLogoUrl())]);
+    const logoUrl = String((ev && ev.organiserLogo) || '').trim();
+    const [eventImg, orgLogoImg, hubLogo] = await Promise.all([
+      loadImage(imageUrl),
+      loadImage(logoUrl && logoUrl !== imageUrl ? logoUrl : ''),
+      loadImage(hubLogoUrl()),
+    ]);
 
-    const imgX = 88;
-    const imgY = 88;
-    const imgW = 460;
-    const imgH = CARD_H - 176;
-    drawCoverImage(ctx, eventImg, imgX, imgY, imgW, imgH);
+    const logoImg = orgLogoImg || (isLikelyLogo(eventImg, imageUrl, ev) ? eventImg : null);
+    const photoImg = logoImg && eventImg === logoImg ? null : eventImg;
 
-    const textX = 600;
-    const textMaxW = CARD_W - textX - 72;
+    // Soft white content panel
+    ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    roundRect(ctx, 64, 56, CARD_W - 128, CARD_H - 148, 24);
+    ctx.fill();
 
+    let textX = 100;
+    let textMaxW = CARD_W - 200;
+
+    if (photoImg) {
+      drawCoverImage(ctx, photoImg, 88, 88, 420, 380);
+      textX = 560;
+      textMaxW = CARD_W - textX - 96;
+    } else if (logoImg) {
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, 100, 100, 200, 200, 28);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(45, 27, 94, 0.08)';
+      ctx.lineWidth = 2;
+      roundRect(ctx, 100, 100, 200, 200, 28);
+      ctx.stroke();
+      drawContainedImage(ctx, logoImg, 124, 124, 152, 152);
+      textX = 360;
+      textMaxW = CARD_W - textX - 100;
+    }
+
+    // Badge
+    const badgeLabel = "I'm attending";
+    ctx.font = '700 22px "DM Sans", system-ui, sans-serif';
+    const badgeW = Math.ceil(ctx.measureText(badgeLabel).width) + 40;
     ctx.fillStyle = '#bd932e';
-    roundRect(ctx, textX, 108, 248, 52, 26);
+    roundRect(ctx, textX, 108, badgeW, 44, 22);
     ctx.fill();
     ctx.fillStyle = '#2d1b3d';
-    ctx.font = '700 22px "DM Sans", system-ui, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText("I'm attending", textX + 24, 134);
+    ctx.fillText(badgeLabel, textX + 20, 130);
 
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '700 46px "DM Sans", system-ui, sans-serif';
+    // Title
+    ctx.fillStyle = '#2d1b5e';
+    ctx.font = '700 48px "DM Sans", system-ui, sans-serif';
     const titleLines = wrapLines(ctx, (ev && ev.title) || 'Event', textMaxW, 3);
     let titleY = 210;
     titleLines.forEach(function (line) {
       ctx.fillText(line, textX, titleY);
-      titleY += 54;
+      titleY += 56;
     });
 
+    const organiser = String((ev && ev.organiserName) || '').trim();
+    const title = String((ev && ev.title) || '').trim();
+    if (organiser && organiser.toLowerCase() !== title.toLowerCase()) {
+      ctx.fillStyle = '#5a4a62';
+      ctx.font = '600 24px "DM Sans", system-ui, sans-serif';
+      ctx.fillText(truncateText(ctx, 'Hosted by ' + organiser, textMaxW), textX, titleY + 8);
+      titleY += 40;
+    }
+
     const dateLabel = formatShareDate(ev && ev.starts_at);
-    if (dateLabel) {
-      ctx.fillStyle = 'rgba(255,255,255,0.88)';
-      ctx.font = '500 28px "DM Sans", system-ui, sans-serif';
-      ctx.fillText(truncateText(ctx, dateLabel, textMaxW), textX, titleY + 20);
-    }
-
     const location = String((ev && ev.location) || '').trim();
-    if (location) {
-      ctx.fillStyle = 'rgba(255,255,255,0.72)';
-      ctx.font = '500 24px "DM Sans", system-ui, sans-serif';
-      ctx.fillText(truncateText(ctx, location, textMaxW), textX, titleY + 58);
+    const meta = [dateLabel, location].filter(Boolean).join('  ·  ');
+    if (meta) {
+      ctx.fillStyle = '#5a4a62';
+      ctx.font = '500 26px "DM Sans", system-ui, sans-serif';
+      ctx.fillText(truncateText(ctx, meta, textMaxW), textX, titleY + 28);
     }
 
-    const footerY = CARD_H - 96;
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
-    ctx.fillRect(88, footerY - 28, CARD_W - 176, 1);
+    // Footer brand strip
+    ctx.fillStyle = 'rgba(45, 27, 94, 0.08)';
+    ctx.fillRect(64, CARD_H - 78, CARD_W - 128, 1);
 
     if (hubLogo) {
-      ctx.drawImage(hubLogo, 88, footerY, 120, 48);
+      drawContainedImage(ctx, hubLogo, 96, CARD_H - 64, 140, 40);
     }
+    ctx.fillStyle = '#5a4a62';
+    ctx.font = '600 22px "DM Sans", system-ui, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('The Networker Hub', hubLogo ? 250 : 96, CARD_H - 44);
 
-    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.font = '600 24px "DM Sans", system-ui, sans-serif';
-    ctx.fillText('The Networker Hub', hubLogo ? 224 : 88, footerY + 30);
+    ctx.fillStyle = '#9d87aa';
+    ctx.font = '500 20px "DM Sans", system-ui, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('thenetworkerhub.com', CARD_W - 96, CARD_H - 44);
+    ctx.textAlign = 'left';
 
     return canvas.toDataURL('image/png');
   }

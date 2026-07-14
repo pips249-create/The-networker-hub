@@ -1,5 +1,12 @@
 const EVENT_PAGE_CAROUSEL_SLOT = 'event_page_carousel_ads';
 const EVENT_PAGE_CAROUSEL_SIZE = 3;
+const ORGANISER_EMAIL_MINI_SPONSORS_SLOT = 'organiser_email_mini_sponsors';
+const OPPORTUNITY_EMAIL_MINI_SPONSORS_SLOT = 'opportunity_email_mini_sponsors';
+const EMAIL_MINI_SPONSOR_SLOTS = new Set([
+  EVENT_PAGE_CAROUSEL_SLOT,
+  ORGANISER_EMAIL_MINI_SPONSORS_SLOT,
+  OPPORTUNITY_EMAIL_MINI_SPONSORS_SLOT,
+]);
 
 function parseCarouselBody(body) {
   if (!body) return [];
@@ -102,6 +109,9 @@ function publishableCarouselAds(ads) {
 module.exports = {
   EVENT_PAGE_CAROUSEL_SLOT,
   EVENT_PAGE_CAROUSEL_SIZE,
+  ORGANISER_EMAIL_MINI_SPONSORS_SLOT,
+  OPPORTUNITY_EMAIL_MINI_SPONSORS_SLOT,
+  EMAIL_MINI_SPONSOR_SLOTS,
   parseCarouselBody,
   serializeCarouselBody,
   normalizeCarouselAd,

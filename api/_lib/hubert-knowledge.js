@@ -34,7 +34,7 @@ const KNOWLEDGE_SECTIONS = [
       'Browsing is completely free — no sign-in needed to explore events and business opportunities. ' +
       'A free account is required only when you want to: buy a ticket or send a business opportunity enquiry. Sign-up takes about 2 minutes at /register. ' +
       'Sign in at /login. Forgot password? Use the password reset link on the sign-in page. You must be 18+ to create an account. ' +
-      'With an account you can save favourites, manage tickets in /account/, add guest names at checkout, and leave reviews after events you attended.',
+      'With an account you can save event and opportunity favourites, set up saved opportunity search alerts in My Hub (/account/), manage tickets, add guest names at checkout, and leave reviews after events you attended. Add your company and job title in account settings — they appear on printable name badges when organisers export them.',
   },
   {
     title: 'EVENTS & TICKETING',
@@ -59,6 +59,7 @@ const KNOWLEDGE_SECTIONS = [
     body:
       'Browse free at /opportunities/. Types: franchise, side hustle, partnership, distributorship, networking/referral. Not FCA-regulated; not investment advice; due diligence is your responsibility. ' +
       'To enquire: free account → open listing → send enquiry from the page. ' +
+      'SAVE & ALERTS: signed-in members can heart-save listings in My Hub → Saved Opportunities, get email when a saved listing is closing soon, and save search criteria for email alerts when new matching listings publish. Compare up to 3 saved opportunities side by side. ' +
       'To list an opportunity as an organiser: /opportunities/list or /organiser/.',
   },
   {
@@ -67,7 +68,7 @@ const KNOWLEDGE_SECTIONS = [
       'Approved organisers use /organiser/ to create events, sell tickets via Stripe, manage attendees, export registrations, list opportunities, and invite team members. Stripe onboarding required for payouts. ' +
       'Listing events on the hub is part of organiser onboarding — email hello@thenetworkerhub.com with your group name, format, and location for setup help. Organiser terms: /legal-policies#organisers. ' +
       'EVENT NOT ON BROWSE PAGE? Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Finish the publish flow in /organiser/ (tickets, refund policy, publish). If it still does not appear, email hello@thenetworkerhub.com with the event title. ' +
-      'DOWNLOAD ATTENDEES: Sign in → /organiser/ → Events → Attendees. Filter by event, then use Download attendees CSV. ' +
+      'DOWNLOAD ATTENDEES: Sign in → /organiser/ → Events → Attendees. Filter by event, then use Download attendees CSV. Export printable name badges (PDF, Avery 7160) from the same screen — badges use each guest’s name, company, and job title from their Hub account when set. ' +
       'PAYOUTS: With Stripe Connect, you receive the full ticket price in your connected account when attendees pay. Legacy manual payouts (if Connect is off) pay out your gross ticket sales after the event is archived and a 7-day settlement period. Minimum payout £1. ' +
       'FEES: Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before they pay). This covers platform and payment processing — organisers receive the full ticket price, with no separate platform or Stripe deductions.',
   },
@@ -78,15 +79,16 @@ const KNOWLEDGE_SECTIONS = [
       'EVENT TYPE (Meeting, Events, Exhibition, Awards, Webinar, Workshop, Session): this is a browse filter, not whether something counts as an event. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs (seminars, lunch & learns). Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop and Session help people find online talks, hands-on training, and shorter focused sessions. ' +
       'MULTI-DATE SERIES: click multiple days on the calendar — the same start time, end time, and venue (or online link) apply to every date. Ideal for a recurring meeting on different weeks. To remove a date, click the highlighted day again on the calendar. ' +
       'SAME TITLE, DIFFERENT TIME OR LOCATION: create separate listings — one per session — from My Events. You can reuse the same title; each listing gets its own dates, times, and venue. ' +
-      'COVER PHOTO: upload, drag-and-drop, paste (Ctrl+V), or paste a URL. Files over 2MB are compressed automatically; if that fails, resize the file or use a hosted URL. For a sharp listing card, aim for at least 800px on the longest side (400px on the shortest). Use Remove to clear a photo and upload again.',
+      'COVER PHOTO: upload, drag-and-drop, paste (Ctrl+V), or paste a URL. Files over 2MB are compressed automatically; if that fails, resize the file or use a hosted URL. For a sharp browse listing, use a landscape photo at least 1200×750px. After upload, drag the preview to recentre how the image is cropped on listing cards (Reset position clears the crop). Use Remove to clear a photo and upload again.',
   },
   {
     title: 'ORGANISER TICKETS & ATTENDEES',
     body:
-      'TICKET SETUP (event-tickets.html): choose Standard ticket types for open booking, or Category Exclusivity for application-based attendance. With open booking you can optionally enable the guest visit programme alongside your paid ticket types — newcomers use their 1–2 complimentary visits first, then paid member tickets unlock. Alumni Fast-Pass can also be enabled on open-booking events to invite past attendees to an exclusive alumni ticket rate. ' +
-      'CATEGORY EXCLUSIVITY: prospective attendees apply to join instead of buying straight away. They answer two fixed questions — their industry and job title. You approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. Set an optional price (leave at £0 for free), places limit, and application closing date. ' +
-      'APPLICATION QUESTIONS: under Category Exclusivity, the two questions (industry and job title) are fixed and cannot be changed. For standard open tickets, you can optionally tick boxes under Attendee information at booking to note food is included or to collect dietary or accessibility requirements at checkout. ' +
-      'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event or by new vs returning. Each row shows visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page. Download attendees CSV to export. This shows ticket registrations — not on-the-day check-in.',
+      'TICKET SETUP (event-tickets.html): choose Ticket types (open booking) or Category Exclusivity — these two attendance modes are mutually exclusive. ' +
+      'OPEN BOOKING: add one row per ticket tier (Standard, Early bird, etc.) with price, quantity, and sale dates. Optionally tick Enable guest visit programme and type how many complimentary visits (1–3, Hub maximum) a newcomer gets before paid member tickets unlock. Tick Disallow guest passes for member-only dates (e.g. conferences) while keeping paid tickets available. Alumni Fast-Pass is an optional add-on: a hidden alumni tier for past attendees, with invites sent from your dashboard after publish. ' +
+      'CATEGORY EXCLUSIVITY: prospective attendees apply instead of buying straight away. They answer two fixed questions — their industry and job title. You approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. Set an optional price (leave at £0 for free), places limit, and application closing date. Cannot be combined with open ticket types on the same event. ' +
+      'APPLICATION QUESTIONS: under Category Exclusivity, industry and job title are fixed and cannot be changed. For open ticket booking, you can optionally tick boxes under Attendee information at booking to note food is included or to collect dietary or accessibility requirements at checkout. ' +
+      'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event or by new vs returning. Each row shows visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page. Download attendees CSV or export printable name badges (PDF). This shows ticket registrations — not on-the-day check-in.',
   },
   {
     title: 'ORGANISER GUIDES',
@@ -188,7 +190,7 @@ const FALLBACK_REPLIES = [
   {
     match: /download.*attendee|export.*attendee|attendee.*csv|attendees csv|get.*attendee list/i,
     reply:
-      'Sign in and open /organiser/, go to Events → Attendees, filter by your event, then click Download attendees CSV. The file includes name, email, ticket type, and booking date for each registration.',
+      'Sign in and open /organiser/, go to Events → Attendees, filter by your event, then click Download attendees CSV. The file includes name, email, ticket type, visit count, and booking date. Export printable name badges (PDF, Avery 7160) from the same screen.',
   },
   {
     match: /payout|when do i get paid|settlement|instant payout|how long.*paid/i,
@@ -243,12 +245,17 @@ const FALLBACK_REPLIES = [
   {
     match: /why (list|use|choose).*(hub|networker)|why should i list|benefits of listing/i,
     reply:
-      'The Networker Hub is built for UK business networking. You get a permanent organiser profile, events in a directory members use to find networking meetings, optional business opportunity listings, team editors, and reviews. Networking-specific tools include the guest visit programme (1–2 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Alumni Fast-Pass to invite past attendees to exclusive alumni rates on repeat events. You receive the full ticket price; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events need no Stripe. Guides: /guides · Organisers: /for-organisers',
+      'The Networker Hub is built for UK business networking. You get a permanent organiser profile, events in a directory members use to find networking meetings, optional business opportunity listings, team editors, and reviews. Networking-specific tools include the guest visit programme (1–3 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Alumni Fast-Pass to invite past attendees to exclusive alumni rates on repeat events. You receive the full ticket price; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events need no Stripe. Guides: /guides · Organisers: /for-organisers',
   },
   {
     match: /(paid|member).*(ticket|tier).*(guest visit|complimentary visit|guest programme)|(guest visit|complimentary visit|guest programme).*(paid|member).*(ticket|tier)/i,
     reply:
-      'Yes — choose Guest visit programme on the tickets step, then add your paid member ticket type(s) underneath. New attendees use the complimentary visit allowance set on your organiser page first; once they have used it, the paid member tickets unlock. Guest visit programme and standard open booking are separate modes, but paid member tiers belong inside the guest programme.',
+      'Yes — on the tickets step, add your paid ticket type(s) first, then tick Enable guest visit programme. New attendees use the complimentary visit allowance set on your organiser page first; once they have used it, the paid member tickets unlock. For member-only dates (e.g. a conference evening), tick Disallow guest passes — paid tickets stay available without complimentary visits.',
+  },
+  {
+    match: /difference.*(ticket type|guest visit|category exclusiv)|ticket type.*guest visit.*category|guest visit.*category exclusiv|attendance mode/i,
+    reply:
+      'There are two attendance modes: Ticket types (open booking) or Category Exclusivity (application-based). Guest visit programme is an optional add-on within Ticket types — tick Enable guest visit programme to offer complimentary trial visits alongside your paid tiers. Category Exclusivity replaces open booking: applicants share industry and job title, you approve or deny, then they pay via a link. Alumni Fast-Pass is a separate optional add-on for inviting past attendees to a hidden alumni rate.',
   },
   {
     match: /\bvat\b|value added tax/i,
@@ -293,7 +300,7 @@ const FALLBACK_REPLIES = [
   {
     match: /favourit|favorit/i,
     reply:
-      'Create a free account at /register, then save events to your favourites while browsing. Manage saved events and tickets from /account/.',
+      'Create a free account at /register, then save events and business opportunities to your favourites while browsing. Manage saved items in My Hub (/account/) — events under Saved events, opportunities under Saved Opportunities with optional closing-soon email alerts.',
   },
   {
     match: /guest|add a name|book for someone/i,
@@ -304,6 +311,21 @@ const FALLBACK_REPLIES = [
     match: /\bbook\b.*\bticket|\bticket\b.*\bbook|how do i book|buy a ticket|checkout|my tickets/i,
     reply:
       'Browse events free at /events/. To buy a ticket: create a free account at /register (about 2 minutes), open an event, choose your ticket type, and complete secure Stripe checkout. Add guest names at checkout. View bookings in My tickets (/account/). Issues? Email hello@thenetworkerhub.com with your event name and order reference.',
+  },
+  {
+    match: /save.*opportunit|opportunit.*favourit|heart.*opportunit|saved opportunit/i,
+    reply:
+      'Sign in and tap the heart on any opportunity listing, or open My Hub (/account/) → Saved → Saved Opportunities. You can get an email when a saved listing is closing soon. Compare up to 3 saved opportunities side by side from My Hub.',
+  },
+  {
+    match: /saved search.*opportunit|opportunit.*saved search|alert.*new opportunit|notify.*new listing/i,
+    reply:
+      'On /opportunities/, set your filters, then save the search while signed in. Matching new listings trigger email alerts in My Hub. Manage saved searches from /account/ under Saved.',
+  },
+  {
+    match: /compare.*opportunit|opportunit.*compare|side by side/i,
+    reply:
+      'Save two or more opportunities to My Hub, then use Compare to view up to 3 listings side by side — useful for weighing franchise or partnership options.',
   },
   {
     match: /opportunit|franchise|partnership|side[\s-]?hustle|distributorship|white.?label/i,
@@ -326,9 +348,14 @@ const FALLBACK_REPLIES = [
       'Every listing is an event — the Event type dropdown is a browse filter. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs such as seminars or lunch & learns. Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop and Session help people find online talks, hands-on training, and shorter focused sessions. Pick the type that best matches how people will search for it on /events/.',
   },
   {
+    match: /image.*(crop|cut off|cut.?off|position|reposition|recentre|reframe|framing|heads? cut)|photo.*(crop|cut off|position|reposition)|cover.*(crop|cut off|position)/i,
+    reply:
+      'After you upload your event photo, drag the preview to recentre how it is cropped on listing cards — the preview matches the browse-page crop. Use Reset position to centre it again. For the sharpest result, start with a landscape image at least 1200×750px.',
+  },
+  {
     match: /image.*(too small|blurry|low.?res|pixelat)|photo.*(too small|blurry|low.?res)|cover.*(too small|blurry)|logo.*too small/i,
     reply:
-      'Use a higher-resolution photo so it stays sharp on the listing card — aim for at least 800px on the longest side and 400px on the shortest. Re-export from your original file, or paste a URL to a larger hosted image in the URL field below the upload zone. Click Remove on the preview, then upload the new file.',
+      'Use a higher-resolution landscape photo — aim for at least 1200×750px so your listing stays sharp on the browse page. Re-export from your original file, or paste a URL to a larger hosted image. After upload, drag the preview to recentre the crop if faces or logos are clipped.',
   },
   {
     match: /image.*(too (big|large)|won.?t upload)|photo.*(too (big|large)|won.?t upload)|cover.*too (big|large)|file.*too large|could not compress/i,
@@ -358,7 +385,22 @@ const FALLBACK_REPLIES = [
   {
     match: /guest visit|complimentary visit|trial visit|visitor ticket|member ticket/i,
     reply:
-      'The guest visit programme lets networking groups offer 1–2 complimentary trial visits per newcomer before paid member tickets unlock. Enable the allowance on your organiser page, choose Guest visit programme on the event tickets step, then add your paid member ticket type(s) below. New attendees use their free visit(s) first; returning visitors who have used them see the member pricing.',
+      'The guest visit programme is an optional add-on on the tickets step (within Ticket types mode). Tick Enable guest visit programme and type how many complimentary visits (1–3, Hub maximum) a newcomer gets before paid member tickets unlock. Add your paid member ticket type(s) in the tier rows below. For member-only dates, tick Disallow guest passes while keeping paid tickets live.',
+  },
+  {
+    match: /disallow guest|guest pass.*(off|disable|opt)|member.?only (date|event|evening)|no guest (pass|visit).*conference/i,
+    reply:
+      'On the tickets step, enable the guest visit programme, then tick Disallow guest passes for this event. Paid member tickets stay available and visitors can book them directly — complimentary guest passes are hidden for that date. Useful for conferences or member-only evenings.',
+  },
+  {
+    match: /name badge|printable badge|avery 7160|badge pdf/i,
+    reply:
+      'Sign in → /organiser/ → Events → Attendees, then click Export printable name badges (PDF). The file is formatted for Avery 7160 sticker sheets. Each badge shows the guest’s name, company, and job title from their Hub account when set — ask attendees to update these in account settings before the event.',
+  },
+  {
+    match: /job title.*(badge|profile|account)|update.*job title|company.*badge/i,
+    reply:
+      'Add your company and job title in account settings (/account/settings). They appear on printable name badges when organisers export them, and on organiser attendee lists. Category Exclusivity applicants also share industry and job title at application time.',
   },
   {
     match: /add.*(more than one|multiple).*(date|day)|multiple dates|recurring (event|meeting|series)|event series|repeat.*date/i,
@@ -451,9 +493,9 @@ const ORGANISER_PAGE_CONTEXT = {
   'event-format':
     'The user is creating an event and is on the format step (choose organiser page + in person or online). Answer listing-setup questions from your organiser knowledge. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'event-edit':
-    'The user is on the event listing details step (title, type, description, photo, location, dates). Answer listing-setup questions from your organiser knowledge. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+    'The user is on the event listing details step (title, type, description, photo with drag-to-reposition crop, location, dates). Answer listing-setup questions from your organiser knowledge. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'event-tickets':
-    'The user is on the ticket setup step (ticket types, Category Exclusivity, VAT, refund policy, publish). Answer organiser ticketing questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+    'The user is on the ticket setup step. Two attendance modes: Ticket types (open booking) or Category Exclusivity. Guest visit programme is an optional checkbox within Ticket types — not a separate mode. Alumni Fast-Pass is optional. Answer organiser ticketing questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'group-edit':
     'The user is editing their organiser page. Answer organiser-page questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'organiser-dashboard':

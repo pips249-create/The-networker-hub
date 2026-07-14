@@ -40,7 +40,7 @@ const MEMBER_QUESTIONS = [
   { q: 'How can I download the attendees for my next event', expect: /Attendees|CSV|\/organiser\//i },
   { q: 'How long between payouts for my event? Can I get it instantly?', expect: /7.day|not instant|settlement|Stripe/i },
   { q: 'What is the difference between an event and a meeting?', expect: /browse filter|Meeting covers|regular networking/i },
-  { q: 'My event image is too small', expect: /800px|higher.resolution|URL/i },
+  { q: 'My event image is too small', expect: /1200|landscape|recentre/i },
   { q: 'My event image is too big', expect: /2MB|compress|URL/i },
   { q: "I've accidentally added an extra date — how do I remove it?", expect: /click.*highlighted|deselect|calendar/i },
   {
@@ -51,8 +51,16 @@ const MEMBER_QUESTIONS = [
   { q: 'Can I change the application questions asked?', expect: /fixed|cannot be changed|industry/i },
   {
     q: 'Can I create a paid ticket as well as offering guest visit tickets?',
-    expect: /Yes.*Guest visit programme.*paid member ticket/is,
+    expect: /Yes.*Enable guest visit programme.*paid/is,
   },
+  {
+    q: 'What is the difference between ticket types, guest visit programme, and Category Exclusivity?',
+    expect: /Ticket types.*Category Exclusivity.*optional add-on/is,
+  },
+  { q: 'My event photo is cropped badly on the listing — how do I fix it?', expect: /drag.*preview|recentre|1200/i },
+  { q: 'How do I print name badges for my event?', expect: /Attendees.*badge|Avery 7160/i },
+  { q: 'Can I save business opportunities to review later?', expect: /My Hub|Saved Opportunities/i },
+  { q: 'How do I get alerts when new opportunities match my search?', expect: /saved search|email alert/i },
   { q: 'How do I add more than one date to a recurring event series?', expect: /calendar|selected dates|series/i },
   { q: 'How do I set up early bird ticket pricing?', expect: /ticket tier|lower price|sales end date/i },
   { q: 'Should VAT be included in my ticket price or added at checkout?', expect: /VAT included|added at checkout/i },

@@ -245,6 +245,14 @@
     return Boolean(photo && logo && photo === logo);
   }
 
+  function photoPositionStyle(ev, resolvedUrl) {
+    const pos = ev && String(ev.photoPosition || '').trim();
+    if (!pos || !/^\d{1,3}% \d{1,3}%$/.test(pos)) return '';
+    const ownPhoto = String((ev && ev.photo) || '').trim();
+    if (!ownPhoto || resolvedUrl !== ownPhoto) return '';
+    return ` style="object-position:${pos}"`;
+  }
+
   function photoImg(url, className, eventId, eventType, eventTitle, ev) {
     const placementFn = window.getEventPlacementImage;
     const fallbackRaw =
@@ -258,10 +266,11 @@
     const errorFallback = jsPhotoUrl(defaultPlaceholder());
     const placeholderClass = isPlaceholderSrc(resolved) ? ' is-placeholder' : '';
     const logoCoverClass = isLogoStyleCover(ev, resolved) ? ' is-logo-cover' : '';
+    const positionStyle = photoPositionStyle(ev, resolved);
     return (
-      `<img class="${className}${placeholderClass}${logoCoverClass}" src="${src}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" ` +
+      `<img class="${className}${placeholderClass}${logoCoverClass}"${positionStyle} src="${src}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" ` +
       `onload="window.hubMarkSmallEventCover&&window.hubMarkSmallEventCover(this)" ` +
-      `onerror="this.onerror=null;this.src='${errorFallback}';this.classList.add('is-placeholder')">`
+      `onerror="this.onerror=null;this.src='${errorFallback}';this.classList.add('is-placeholder');this.style.objectPosition=''">`
     );
   }
 

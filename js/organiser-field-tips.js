@@ -7,19 +7,19 @@
     'attendance-modes': {
       title: 'Attendance modes',
       body:
-        'Choose one mode per event — they cannot be combined. Ticket types for open booking, guest visit programme for complimentary trial visits, or Category Exclusivity for application-based attendance.',
+        'Choose open ticket booking or Category Exclusivity. With open booking you can also enable the guest visit programme so complimentary visits sit alongside your paid ticket types.',
       hubertPrompt: 'What is the difference between ticket types, guest visit programme, and Category Exclusivity?',
     },
     'guest-visit-programme': {
       title: 'Guest visit programme',
       body:
-        'Newcomers get 1–2 complimentary visits with your group before they can buy a paid member ticket. Set your allowance on your organiser page (max 2 visits per attendee, platform-wide).',
+        'Optional add-on for open ticket booking. Enter how many complimentary visits (1–3) a newcomer gets with your group before they can buy a paid member ticket. Hub maximum is 3.',
       hubertPrompt: 'What is the guest visit programme for networking groups?',
     },
     'category-exclusivity': {
       title: 'Category Exclusivity',
       body:
-        'Attendees apply instead of buying straight away. They answer two fixed questions — industry and job title. You approve or deny from your dashboard; approved applicants receive a payment link.',
+        'Alternative to open ticket sales. Attendees apply instead of buying straight away. They answer two fixed questions — industry and job title. You approve or deny from your dashboard; approved applicants receive a payment link.',
       hubertPrompt: 'What is Category Exclusivity?',
     },
     'alumni-fast-pass': {

@@ -266,7 +266,7 @@
     const visitsEl = el('ge-complimentary-visits');
     if (visitsEl) {
       const allowed = g.complimentaryVisitsAllowed != null ? Number(g.complimentaryVisitsAllowed) : 0;
-      visitsEl.value = String(Math.min(2, Math.max(0, allowed)));
+      visitsEl.value = String(Math.min(3, Math.max(0, allowed)));
     }
     const counter = el('ge-word-count');
     if (counter) counter.textContent = String(countWords(g.description || ''));
@@ -367,7 +367,7 @@
       logoUrl: el('ge-logo-url').value.trim(),
       contactEmail,
       complimentaryVisitsAllowed: el('ge-complimentary-visits')
-        ? Number(el('ge-complimentary-visits').value)
+        ? Math.min(3, Math.max(0, Math.floor(Number(el('ge-complimentary-visits').value) || 0)))
         : 0,
     };
 

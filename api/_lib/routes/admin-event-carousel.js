@@ -4,6 +4,7 @@ const { resolveImageUrl } = require('../supabase-storage');
 const {
   EVENT_PAGE_CAROUSEL_SLOT,
   EVENT_PAGE_CAROUSEL_SIZE,
+  EMAIL_MINI_SPONSOR_SLOTS,
   parseCarouselBody,
   serializeCarouselBody,
   normalizeCarouselAdsList,
@@ -23,19 +24,24 @@ function parseBody(req) {
   return body || {};
 }
 
-async function fetchCarouselRow(sb) {
-  const res = await sb.from('cms_blocks').select('*').eq('slot', EVENT_PAGE_CAROUSEL_SLOT).maybeSingle();
+function slotFromRequest(req) {
+  const requested = String(req.query?.slot || '').trim();
+  return EMAIL_MINI_SPONSOR_SLOTS.has(requested) ? requested : EVENT_PAGE_CAROUSEL_SLOT;
+}
+
+async function fetchCarouselRow(sb, slot) {
+  const res = await sb.from('cms_blocks').select('*').eq('slot', slot).maybeSingle();
   if (res.error) throw new Error(res.error.message);
   return res.data || null;
 }
 
-async function resolveCarouselLogos(ads) {
+async function resolveCarouselLogos(ads, slot) {
   const out = [];
   for (let i = 0; i < ads.length; i++) {
     const ad = { ...ads[i] };
       if (ad.logoBase64) {
         const uploaded = await resolveImageUrl({
-          folder: `sponsor-logos/event-carousel/${ad.id || 'ad'}`,
+          folder: `sponsor-logos/${slot}/${ad.id || 'ad'}`,
           logoUrl: ad.logo_url,
           logoBase64: ad.logoBase64,
           logoMime: ad.logoMime,
@@ -67,15 +73,16 @@ module.exports = async function handler(req, res) {
   }
 
   const sb = getSupabaseAdmin();
+  const slot = slotFromRequest(req);
 
   if (req.method === 'GET') {
     try {
-      const row = await fetchCarouselRow(sb);
+      const row = await fetchCarouselRow(sb, slot);
       const ads = normalizeCarouselAdsList(parseCarouselBody(row?.body));
       return json(res, 200, {
         ok: true,
         configured: true,
-        slot: EVENT_PAGE_CAROUSEL_SLOT,
+        slot,
         active: row ? row.active !== false : true,
         ads,
         updatedAt: row?.updated_at || null,
@@ -90,7 +97,7 @@ module.exports = async function handler(req, res) {
     let incoming = Array.isArray(body.ads) ? body.ads : [];
 
     try {
-      const existingRow = await fetchCarouselRow(sb);
+      const existingRow = await fetchCarouselRow(sb, slot);
       const existingAds = normalizeCarouselAdsList(parseCarouselBody(existingRow?.body));
       const existingById = new Map(existingAds.map((ad) => [ad.id, ad]));
 
@@ -104,7 +111,8 @@ module.exports = async function handler(req, res) {
             normalized.logo_url = prev.logo_url;
           }
           return normalized;
-        })
+        }),
+        slot
       );
 
       const ads = normalizeCarouselAdsList(incoming).map((ad) => {
@@ -140,9 +148,9 @@ module.exports = async function handler(req, res) {
       const sectionActive = hasLiveAds ? true : body.active !== false;
 
       const row = {
-        slot: EVENT_PAGE_CAROUSEL_SLOT,
-        title: 'Event page carousel ads',
-        subtitle: 'Event page carousel ads',
+        slot,
+        title: slot === EVENT_PAGE_CAROUSEL_SLOT ? 'Event page carousel ads' : 'Email mini sponsors',
+        subtitle: slot === EVENT_PAGE_CAROUSEL_SLOT ? 'Event page carousel ads' : 'Email mini sponsors',
         body: serializeCarouselBody(ads),
         cta_label: 'Enquire now',
         cta_url: 'https://',
@@ -158,7 +166,7 @@ module.exports = async function handler(req, res) {
 
       return json(res, 200, {
         ok: true,
-        slot: EVENT_PAGE_CAROUSEL_SLOT,
+        slot,
         active: sectionActive,
         ads: normalizeCarouselAdsList(parseCarouselBody(saveRes.data.body)),
         updatedAt: saveRes.data.updated_at,

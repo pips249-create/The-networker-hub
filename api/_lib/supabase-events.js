@@ -3,7 +3,7 @@
  */
 const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./supabase');
 const { isEventCurrentlyFeatured } = require('./event-featured-plans');
-const { eventImageUrl } = require('./event-image');
+const { eventImageUrl, normalizeEventImagePosition } = require('./event-image');
 const { eventHasTicketsOnSale, resolveTicketSalesEnabled, earliestTicketSaleStart, formatTicketSalesOpensLabel, formatTicketSalesOpensShort, isEventPublishedForSale } = require('./ticket-sales');
 const { connectRequiredForPaidCheckout } = require('./stripe-connect');
 const { publicOrganiserSlug } = require('./organiser-slug');
@@ -11,9 +11,14 @@ const { publicOrganiserSlug } = require('./organiser-slug');
 const IN_CHUNK_SIZE = 80;
 
 function normalizeAttendanceMode(mode) {
-  const m = String(mode || '').trim();
-  if (m === 'osop') return 'category_exclusivity';
-  return m || 'tickets';
+  const m = String(mode || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+  if (m === 'osop' || m === 'category_exclusivity') return 'category_exclusivity';
+  if (m === 'guest_programme' || m === 'guest_program') return 'guest_programme';
+  if (m === 'tickets' || m === 'ticket' || m === 'open' || m === 'standard') return 'tickets';
+  return 'tickets';
 }
 
 const BROWSE_ORGANISER_COLUMNS =
@@ -414,6 +419,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     priceKey,
     priceNum,
     photo: eventImageUrl(row),
+    photoPosition: normalizeEventImagePosition(row.image_position),
     organiser: orgName,
     rating: Number(row.average_rating) || 0,
     reviews: Number(row.review_count) || 0,
@@ -452,7 +458,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     tickets: pricedTiers.length ? pricedTiers : [],
     attendanceMode: normalizeAttendanceMode(row.attendance_mode),
     complimentaryVisitsAllowed: organiser
-      ? Math.min(2, Math.max(0, Number(organiser.complimentary_visits_allowed) || 0))
+      ? Math.min(3, Math.max(0, Number(organiser.complimentary_visits_allowed) || 0))
       : 0,
     guestVisitTier: tiers.find((t) => t.isGuestVisit) || null,
     alumniFastPassEnabled: Boolean(row.alumni_fast_pass_enabled),

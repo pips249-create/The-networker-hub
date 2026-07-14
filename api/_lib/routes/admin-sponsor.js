@@ -106,6 +106,7 @@ module.exports = async function handler(req, res) {
         logo_url,
         company_name,
         active: body.active !== false,
+        include_in_emails: body.include_in_emails !== false,
       });
       return json(res, 200, { ok: true, block, slot, updatedAt: new Date().toISOString() });
     } catch (e) {

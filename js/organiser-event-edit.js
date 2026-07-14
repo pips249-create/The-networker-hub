@@ -42,6 +42,7 @@
   let calMonth = new Date().getMonth();
   const selectedDates = new Set();
   let photoFile = null;
+  let photoPosition = '';
   let groups = [];
   let currentEventLocked = false;
   let currentSeriesPeerCount = 0;
@@ -684,6 +685,57 @@
     }
   }
 
+  function applyPhotoPosition() {
+    const previewImg = document.getElementById('ee-photo-preview-img');
+    if (previewImg) previewImg.style.objectPosition = photoPosition || '50% 50%';
+  }
+
+  function setPhotoPosition(value) {
+    photoPosition = value === '50% 50%' ? '' : value || '';
+    applyPhotoPosition();
+  }
+
+  function parsePhotoPosition() {
+    const m = String(photoPosition || '').match(/^(\d{1,3})%\s+(\d{1,3})%$/);
+    if (!m) return { x: 50, y: 50 };
+    return { x: Number(m[1]), y: Number(m[2]) };
+  }
+
+  function bindPhotoReposition() {
+    const frame = document.getElementById('ee-photo-frame');
+    if (!frame) return;
+    const clamp = (n) => Math.min(100, Math.max(0, Math.round(n)));
+    let dragging = false;
+    let start = null;
+
+    // The upload zone opens the file picker on click — repositioning must not.
+    frame.addEventListener('click', (e) => e.stopPropagation());
+
+    frame.addEventListener('pointerdown', (e) => {
+      if (currentEventLocked) return;
+      dragging = true;
+      start = { x: e.clientX, y: e.clientY, pos: parsePhotoPosition() };
+      frame.classList.add('is-dragging');
+      frame.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    frame.addEventListener('pointermove', (e) => {
+      if (!dragging || !start) return;
+      const w = frame.clientWidth || 1;
+      const h = frame.clientHeight || 1;
+      const nx = clamp(start.pos.x - ((e.clientX - start.x) / w) * 100);
+      const ny = clamp(start.pos.y - ((e.clientY - start.y) / h) * 100);
+      setPhotoPosition(nx + '% ' + ny + '%');
+    });
+    const endDrag = () => {
+      dragging = false;
+      start = null;
+      frame.classList.remove('is-dragging');
+    };
+    frame.addEventListener('pointerup', endDrag);
+    frame.addEventListener('pointercancel', endDrag);
+  }
+
   function bindPhotoUpload() {
     const zone = document.getElementById('ee-photo-zone');
     const fileInput = document.getElementById('ee-photo-file');
@@ -691,15 +743,18 @@
     const previewImg = document.getElementById('ee-photo-preview-img');
     const placeholder = document.getElementById('ee-photo-placeholder');
     const clearBtn = document.getElementById('ee-photo-clear');
+    const recentreBtn = document.getElementById('ee-photo-recentre');
 
     function showPreview(src) {
       if (previewImg) previewImg.src = src;
       if (preview) preview.hidden = false;
       if (placeholder) placeholder.hidden = true;
+      applyPhotoPosition();
     }
 
     function resetPreview() {
       photoFile = null;
+      setPhotoPosition('');
       if (fileInput) fileInput.value = '';
       const urlInput = document.getElementById('ee-photo-url');
       if (urlInput) urlInput.value = '';
@@ -710,6 +765,7 @@
 
     function setPhotoFile(file) {
       photoFile = file;
+      setPhotoPosition('');
       const urlInput = document.getElementById('ee-photo-url');
       if (urlInput) urlInput.value = '';
       const reader = new FileReader();
@@ -733,6 +789,11 @@
       e.stopPropagation();
       resetPreview();
     });
+    if (recentreBtn) recentreBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setPhotoPosition('');
+    });
+    bindPhotoReposition();
   }
 
   function readFileAsBase64(file) {
@@ -1061,6 +1122,7 @@
       if (preview) preview.hidden = false;
       if (placeholder) placeholder.hidden = true;
       document.getElementById('ee-photo-url').value = ev.imageUrl;
+      setPhotoPosition(ev.imagePosition || '');
     }
     selectedDates.clear();
     const datePeers = Array.isArray(rawEv._seriesPeers) && rawEv._seriesPeers.length ? rawEv._seriesPeers : [ev];
@@ -1300,6 +1362,7 @@
       payload.photoMime = photoFile.type;
       payload.photoFilename = photoFile.name;
     }
+    payload.imagePosition = photoPosition || '';
 
     const submitBtn = document.getElementById('ee-submit');
     const draftBtn = document.getElementById('ee-save-draft');

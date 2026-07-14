@@ -59,6 +59,9 @@ function eventPayloadFromBody(body, email) {
   if (Object.prototype.hasOwnProperty.call(body, 'photoUrl') || Object.prototype.hasOwnProperty.call(body, 'imageUrl')) {
     payload.photoUrl = String(body.photoUrl || body.imageUrl || '').trim();
   }
+  if (Object.prototype.hasOwnProperty.call(body, 'imagePosition')) {
+    payload.imagePosition = String(body.imagePosition || '').trim();
+  }
   if (body.listingStatus != null) {
     payload.listingStatus = body.listingStatus;
   } else if (body.publish === true || body.publish === 'true') {

@@ -355,57 +355,115 @@
     }
   }
 
+  function isOpenBookingMode(mode) {
+    return mode === 'tickets' || mode === 'guest_programme';
+  }
+
+  function guestProgrammeEnabled() {
+    const el = document.getElementById('ee-guest-programme-enabled');
+    return Boolean(el && el.checked);
+  }
+
+  function setGuestProgrammeEnabled(on) {
+    const el = document.getElementById('ee-guest-programme-enabled');
+    if (el) el.checked = Boolean(on);
+  }
+
+  function resolveOpenBookingMode() {
+    return guestProgrammeEnabled() ? 'guest_programme' : 'tickets';
+  }
+
   function setAttendanceMode(mode) {
-    attendanceMode = mode;
+    const requested = mode === 'guest_programme' || mode === 'tickets' || mode === 'category_exclusivity'
+      ? mode
+      : 'tickets';
+    const isCategory = requested === 'category_exclusivity';
+    const isGuest = requested === 'guest_programme';
+
+    if (!isCategory) {
+      setGuestProgrammeEnabled(isGuest);
+      attendanceMode = resolveOpenBookingMode();
+    } else {
+      attendanceMode = 'category_exclusivity';
+    }
+
     document.querySelectorAll('.ee-mode-btn').forEach((btn) => {
-      btn.classList.toggle('is-active', btn.getAttribute('data-mode') === mode);
+      const btnMode = btn.getAttribute('data-mode');
+      const active =
+        btnMode === 'category_exclusivity'
+          ? isCategory
+          : btnMode === 'tickets' && !isCategory;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
+
     const ticketsPanel = document.getElementById('ee-panel-tickets');
     const categoryExclusivityPanel = document.getElementById('ee-panel-category-exclusivity');
+    const guestAddon = document.getElementById('ee-guest-addon');
+    const guestFields = document.getElementById('ee-guest-programme-fields');
     const guestNote = document.getElementById('ee-guest-programme-note');
     const guestPassesOptOut = document.getElementById('ee-guest-passes-opt-out');
     const alumniPanel = document.getElementById('ee-panel-alumni-fast-pass');
     const panelTitle = document.getElementById('ee-tickets-panel-title');
     const desc = document.getElementById('ee-mode-desc');
-    const isGuest = mode === 'guest_programme';
-    if (ticketsPanel) ticketsPanel.hidden = mode === 'category_exclusivity';
-    if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = mode !== 'category_exclusivity';
-    if (guestNote) guestNote.hidden = !isGuest;
-    if (guestPassesOptOut) {
-      guestPassesOptOut.hidden = !isGuest || !(organiserComplimentaryVisits > 0);
-    }
-    if (alumniPanel) alumniPanel.hidden = mode !== 'tickets';
-    if (mode !== 'tickets') {
+    const openBooking = isOpenBookingMode(attendanceMode);
+    const guestOn = attendanceMode === 'guest_programme';
+
+    if (ticketsPanel) ticketsPanel.hidden = !openBooking;
+    if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = !isCategory;
+    if (guestAddon) guestAddon.hidden = !openBooking;
+    if (guestFields) guestFields.hidden = !guestOn;
+    if (guestNote) guestNote.hidden = !guestOn;
+    if (guestPassesOptOut) guestPassesOptOut.hidden = !guestOn;
+    if (alumniPanel) alumniPanel.hidden = !openBooking;
+    if (!openBooking) {
       const alumniEnabled = document.getElementById('ee-alumni-enabled');
       const alumniFields = document.getElementById('ee-alumni-fields');
       if (alumniEnabled) alumniEnabled.checked = false;
       if (alumniFields) alumniFields.hidden = true;
     }
     if (panelTitle) {
-      panelTitle.textContent = isGuest ? 'Member ticket types' : 'Ticket types';
+      panelTitle.textContent = guestOn ? 'Member ticket types' : 'Ticket types';
     }
-    const groupLink = document.getElementById('ee-guest-group-edit-link');
-    if (groupLink && seriesMeta.organiserGroupId) {
-      groupLink.href = '/organiser/group-edit?id=' + encodeURIComponent(seriesMeta.organiserGroupId);
-    }
+    syncGuestVisitsInput();
     if (desc) {
-      if (mode === 'category_exclusivity') {
+      if (isCategory) {
         desc.textContent =
           'Application-based attendance — you review industry and job title, then approve or deny. Approved applicants pay via your payment link.';
-      } else if (isGuest) {
-        const visits = organiserComplimentaryVisits || 0;
+      } else if (guestOn) {
+        const visits = readGuestVisitsAllowed() || organiserComplimentaryVisits || 0;
         desc.textContent =
           visits > 0
-            ? 'Guest visit programme — new attendees get ' +
+            ? 'Open booking with guest visits — new attendees get ' +
               visits +
               ' complimentary visit' +
               (visits === 1 ? '' : 's') +
-              ' with your group before paid member tickets unlock. Add your member prices below.'
-            : 'Guest visit programme — enable complimentary visits on your organiser page first (1 or 2 visits).';
+              ' before paid member tickets unlock. Add your ticket types below.'
+            : 'Open booking with guest visits — enter how many complimentary visits (1–3) below.';
       } else {
         desc.textContent =
-          'Standard open booking — set up one or more ticket types with prices and quantities. Attendees purchase directly.';
+          'Standard open booking — set up one or more ticket types with prices and quantities. Optionally enable the guest visit programme below.';
       }
+    }
+    updateTierSummary();
+  }
+
+  function readGuestVisitsAllowed() {
+    const el = document.getElementById('ee-guest-visits-allowed');
+    if (!el) return organiserComplimentaryVisits || 0;
+    const n = Math.floor(Number(el.value));
+    if (!Number.isFinite(n)) return 0;
+    return Math.min(3, Math.max(0, n));
+  }
+
+  function syncGuestVisitsInput() {
+    const el = document.getElementById('ee-guest-visits-allowed');
+    if (!el) return;
+    const current = Number(el.value);
+    if (!Number.isFinite(current) || current < 1) {
+      el.value = String(Math.min(3, Math.max(1, organiserComplimentaryVisits || 1)));
+    } else if (organiserComplimentaryVisits > 0 && (!el.dataset.touched || current < 1)) {
+      el.value = String(Math.min(3, Math.max(1, organiserComplimentaryVisits)));
     }
   }
 
@@ -433,51 +491,62 @@
       '<div class="ee-tier-row ee-tier-row-expanded" data-tier-index="' +
       index +
       '">' +
+      '<div class="ee-tier-toolbar">' +
       '<div class="ee-tier-order">' +
       '<button type="button" class="ee-btn ee-btn-outline ee-tier-up" aria-label="Move up">↑</button>' +
       '<button type="button" class="ee-btn ee-btn-outline ee-tier-down" aria-label="Move down">↓</button>' +
+      '<span class="ee-tier-order-label">Tier ' +
+      String(index + 1) +
+      '</span>' +
       '</div>' +
-      '<div class="ee-field"><label>Ticket name</label><input type="text" class="ee-tier-name" required placeholder="e.g. General Admission, Early Bird" /></div>' +
-      '<div class="ee-field"><label>Description <span class="ee-optional">(optional)</span></label>' +
+      '<button type="button" class="ee-btn ee-btn-outline ee-tier-remove">Remove</button>' +
+      '</div>' +
+      '<div class="ee-tier-body">' +
+      '<div class="ee-field ee-tier-name-field"><label>Ticket name</label>' +
+      '<input type="text" class="ee-tier-name" required placeholder="e.g. General Admission, Early Bird" /></div>' +
+      '<div class="ee-field ee-tier-desc-field"><label>Description <span class="ee-optional">(optional)</span></label>' +
       '<textarea class="ee-tier-desc" rows="2" placeholder="What is included with this ticket"></textarea></div>' +
-      '<div class="ee-row-2">' +
-      '<div class="ee-field"><label>Price (£)</label><p class="ee-hint">Enter 0 for free</p><input type="number" class="ee-tier-price" min="0" step="0.01" value="0" /></div>' +
-      '<div class="ee-field"><label>Quantity available <span class="ee-optional">(optional)</span></label><input type="number" class="ee-tier-qty" min="0" step="1" placeholder="Unlimited" /></div>' +
+      '<div class="ee-row-2 ee-tier-price-row">' +
+      '<div class="ee-field"><label>Price (£)</label><p class="ee-hint">Enter 0 for free</p>' +
+      '<input type="number" class="ee-tier-price" min="0" step="0.01" value="0" /></div>' +
+      '<div class="ee-field"><label>Quantity available <span class="ee-optional">(optional)</span></label>' +
+      '<input type="number" class="ee-tier-qty" min="0" step="1" placeholder="Unlimited" /></div>' +
       '</div>' +
-      '<div class="ee-row-2">' +
+      '<div class="ee-row-2 ee-tier-sale-row">' +
       '<div class="ee-field"><label>Sale start <span class="ee-optional">(optional)</span></label>' +
-      '<p class="ee-hint" style="margin-top:0">Leave blank and sales start today. Or pick a date and time in 15-minute steps.</p>' +
+      '<p class="ee-hint" style="margin-top:0">Leave blank and sales start today.</p>' +
       '<div class="ee-datetime-split">' +
       '<input type="date" class="ee-tier-sale-start-date" />' +
       '<select class="ee-tier-sale-start-time" aria-label="Sale start time"></select>' +
       '</div></div>' +
       '<div class="ee-field"><label>Sale end <span class="ee-optional">(optional)</span></label>' +
       saleEndSelectHtml('1_week') +
-      '<div class="ee-sale-custom-wrap" hidden style="margin-top:8px">' +
+      '<div class="ee-sale-custom-wrap" hidden>' +
       '<p class="ee-hint" style="margin:0 0 6px">Custom end date and time</p>' +
       '<div class="ee-datetime-split">' +
       '<input type="date" class="ee-tier-sale-custom-date" />' +
       '<select class="ee-tier-sale-custom-time" aria-label="Custom sale end time"></select>' +
       '</div></div></div>' +
       '</div>' +
-      '<div class="ee-field"><label>Ticket type</label><select class="ee-tier-kind">' +
+      '<div class="ee-field ee-tier-kind-field"><label>Ticket type</label><select class="ee-tier-kind">' +
       '<option value="Standard">Standard (auto-approve)</option>' +
       '<option value="Application-based">Application-based (you review applicants)</option>' +
       '</select></div>' +
-      '<button type="button" class="ee-btn ee-btn-outline ee-tier-remove" style="font-size:11px;padding:8px 10px">Remove</button>' +
-      '</div>'
+      '</div></div>'
     );
   }
 
   function updateTierSummary() {
     const summary = document.getElementById('ee-tier-summary');
-    if (!summary || attendanceMode !== 'tickets') return;
+    if (!summary || !isOpenBookingMode(attendanceMode)) return;
     const rows = document.querySelectorAll('.ee-tier-row');
     let count = 0;
     let totalQty = 0;
     let hasUnlimited = false;
     let minPrice = null;
-    rows.forEach((row) => {
+    rows.forEach((row, i) => {
+      const orderLabel = row.querySelector('.ee-tier-order-label');
+      if (orderLabel) orderLabel.textContent = 'Tier ' + String(i + 1);
       const name = row.querySelector('.ee-tier-name')?.value.trim();
       if (!name) return;
       count += 1;
@@ -489,9 +558,11 @@
     });
     const qtyLabel = hasUnlimited && count ? 'unlimited' : String(totalQty);
     const fromPrice = minPrice == null ? '0' : minPrice.toFixed(2);
+    const noun = attendanceMode === 'guest_programme' ? 'member ticket type' : 'ticket type';
     summary.textContent =
       count +
-      ' ticket type' +
+      ' ' +
+      noun +
       (count === 1 ? '' : 's') +
       ' · ' +
       qtyLabel +
@@ -691,6 +762,22 @@
     if (ok && data.group) {
       organiserComplimentaryVisits = Number(data.group.complimentaryVisitsAllowed) || 0;
     }
+    const visitsEl = document.getElementById('ee-guest-visits-allowed');
+    if (visitsEl && organiserComplimentaryVisits > 0) {
+      visitsEl.value = String(Math.min(3, Math.max(1, organiserComplimentaryVisits)));
+    }
+  }
+
+  async function saveOrganiserGuestVisitsAllowed(groupId, allowed) {
+    const id = String(groupId || '').trim();
+    const n = Math.min(3, Math.max(1, Math.floor(Number(allowed) || 0)));
+    if (!id || n < 1) return { ok: false, message: 'Enter how many complimentary visits (1–3).' };
+    const { ok, data } = await api('/api/organiser/groups', {
+      method: 'PATCH',
+      body: JSON.stringify({ id, complimentaryVisitsAllowed: n }),
+    });
+    if (ok) organiserComplimentaryVisits = n;
+    return { ok, message: data?.message || data?.error || '' };
   }
 
   function collectTiers() {
@@ -1101,7 +1188,7 @@
   }
 
   function bindCategoryExclusivityCloseFields() {
-    populateQuarterTimeSelect(document.getElementById('ee-ce-close-time'), '18:00');
+    bindCategoryExclusivityCloseUi();
   }
 
   function isAlumniTicket(ticket) {
@@ -1193,6 +1280,33 @@
     return /application/i.test(kind) || /application to attend/i.test(ticket.name || '');
   }
 
+  function inferSaleEndOptionFromIso(saleEndIso, eventDateIso) {
+    if (!saleEndIso) return '1_week';
+    for (const opt of SALE_END_OPTIONS) {
+      if (opt.value === 'custom') continue;
+      const computed = computeSaleEndIso(opt.value, null, eventDateIso);
+      if (!computed) continue;
+      const a = new Date(computed).getTime();
+      const b = new Date(saleEndIso).getTime();
+      if (Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) < 60 * 1000) {
+        return opt.value;
+      }
+    }
+    return 'custom';
+  }
+
+  function bindCategoryExclusivityCloseUi() {
+    const closeSel = document.getElementById('ee-ce-close');
+    const customWrap = document.getElementById('ee-ce-close-custom');
+    populateQuarterTimeSelect(document.getElementById('ee-ce-close-time'), '18:00');
+    if (!closeSel || !customWrap) return;
+    const sync = () => {
+      customWrap.hidden = closeSel.value !== 'custom';
+    };
+    closeSel.addEventListener('change', sync);
+    sync();
+  }
+
   function prefillCategoryExclusivityFromTicket(ticket) {
     if (!ticket) return;
     const priceEl = document.getElementById('ee-ce-price');
@@ -1206,11 +1320,19 @@
           ? ''
           : String(ticket.quantityAvailable);
     }
+    const eventDate = seriesMeta.events && seriesMeta.events[0] ? seriesMeta.events[0].date : null;
+    const closeSel = document.getElementById('ee-ce-close');
+    const customWrap = document.getElementById('ee-ce-close-custom');
     const closeDateEl = document.getElementById('ee-ce-close-date');
     const closeTimeEl = document.getElementById('ee-ce-close-time');
     if (ticket.saleEnd) {
-      if (closeDateEl) closeDateEl.value = isoToDateInput(ticket.saleEnd);
-      if (closeTimeEl) populateQuarterTimeSelect(closeTimeEl, isoToTimeInput(ticket.saleEnd) || '18:00');
+      const option = ticket.saleEndOption || inferSaleEndOptionFromIso(ticket.saleEnd, eventDate);
+      if (closeSel) closeSel.value = option;
+      if (customWrap) customWrap.hidden = option !== 'custom';
+      if (option === 'custom') {
+        if (closeDateEl) closeDateEl.value = isoToDateInput(ticket.saleEnd);
+        if (closeTimeEl) populateQuarterTimeSelect(closeTimeEl, isoToTimeInput(ticket.saleEnd) || '18:00');
+      }
     }
     setAttendanceMode('category_exclusivity');
     existingTicketsLoaded = true;
@@ -1219,14 +1341,21 @@
   function collectCategoryExclusivityTiers() {
     const price = document.getElementById('ee-ce-price').value;
     const places = document.getElementById('ee-ce-places').value;
-    const saleEnd = combineDateAndQuarterTime(
+    const saleOption = document.getElementById('ee-ce-close')?.value || '1_week';
+    const customDt = combineDateAndQuarterTime(
       document.getElementById('ee-ce-close-date')?.value,
       document.getElementById('ee-ce-close-time')?.value
     );
+    const eventDate = seriesMeta.events && seriesMeta.events[0] ? seriesMeta.events[0].date : null;
+    const saleEnd = computeSaleEndIso(saleOption, customDt, eventDate);
     let description =
       'Category Exclusivity. Fixed application questions: (1) What industry are you in? (2) What is your job title?';
     if (places) description += ' Max approved places: ' + places + '.';
-    if (saleEnd) description += ' Applications close: ' + formatCloseLabel(saleEnd) + '.';
+    if (saleOption && saleOption !== 'custom') {
+      description += ' Applications close: ' + saleEndLabel(saleOption) + '.';
+    } else if (saleEnd) {
+      description += ' Applications close: ' + formatCloseLabel(saleEnd) + '.';
+    }
     return [
       {
         name: 'Application to attend',
@@ -1235,7 +1364,10 @@
         status: 'Available',
         quantityAvailable: places === '' ? null : Number(places),
         saleEnd,
+        saleEndOption: saleOption,
+        saleEndCustom: customDt,
         categoryExclusivity: true,
+        ticketType: 'Application-based',
       },
     ];
   }
@@ -1438,15 +1570,27 @@
 
     document.getElementById('ee-add-tier').addEventListener('click', () => addTierRow({ useDefaultName: false }));
     document.getElementById('ee-mode-tickets').addEventListener('click', () => {
-      setAttendanceMode('tickets');
-      updateTierSummary();
+      setAttendanceMode(resolveOpenBookingMode());
       updatePublishButton();
     });
-    document.getElementById('ee-mode-guest')?.addEventListener('click', () => {
-      setAttendanceMode('guest_programme');
-      updateTierSummary();
+    document.getElementById('ee-guest-programme-enabled')?.addEventListener('change', () => {
+      if (attendanceMode === 'category_exclusivity') return;
+      setAttendanceMode(resolveOpenBookingMode());
       updatePublishButton();
     });
+    const guestVisitsEl = document.getElementById('ee-guest-visits-allowed');
+    if (guestVisitsEl) {
+      guestVisitsEl.addEventListener('input', () => {
+        guestVisitsEl.dataset.touched = '1';
+        const n = Math.floor(Number(guestVisitsEl.value));
+        if (Number.isFinite(n)) {
+          if (n > 3) guestVisitsEl.value = '3';
+          if (n < 1 && guestVisitsEl.value !== '') guestVisitsEl.value = '1';
+        }
+        if (attendanceMode === 'guest_programme') setAttendanceMode('guest_programme');
+        updatePublishButton();
+      });
+    }
     document.getElementById('ee-mode-category-exclusivity').addEventListener('click', () => {
       setAttendanceMode('category_exclusivity');
       updatePublishButton();
@@ -1549,15 +1693,10 @@
         return;
       }
       if (attendanceMode === 'guest_programme') {
-        if (!organiserComplimentaryVisits) {
-          showAlert(
-            'Enable complimentary guest visits on your organiser page (1 or 2) before publishing the guest visit programme.',
-            'warn'
-          );
-          document.getElementById('ee-guest-programme-note')?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-          });
+        const visits = readGuestVisitsAllowed();
+        if (visits < 1) {
+          showAlert('Enter how many complimentary visits a guest can take (1–3).', 'warn');
+          document.getElementById('ee-guest-visits-allowed')?.focus();
           updatePublishButton();
           return;
         }
@@ -1578,12 +1717,41 @@
     if (btn) btn.disabled = true;
     if (saveBtn) saveBtn.disabled = true;
 
+    if (attendanceMode === 'guest_programme') {
+      const visits = readGuestVisitsAllowed();
+      if (visits < 1) {
+        showAlert('Enter how many complimentary visits a guest can take (1–3).', 'warn');
+        if (btn) btn.disabled = false;
+        if (saveBtn) saveBtn.disabled = false;
+        updatePublishButton();
+        return;
+      }
+      const groupId = seriesMeta.organiserGroupId;
+      if (!groupId) {
+        showAlert('Choose an organiser page before enabling the guest visit programme.', 'warn');
+        if (btn) btn.disabled = false;
+        if (saveBtn) saveBtn.disabled = false;
+        updatePublishButton();
+        return;
+      }
+      if (visits !== organiserComplimentaryVisits) {
+        const saved = await saveOrganiserGuestVisitsAllowed(groupId, visits);
+        if (!saved.ok) {
+          showAlert(saved.message || 'Could not save complimentary visit allowance.', 'warn');
+          if (btn) btn.disabled = false;
+          if (saveBtn) saveBtn.disabled = false;
+          updatePublishButton();
+          return;
+        }
+      }
+    }
+
     const body = {
       eventIds,
       tickets: tiers,
       publish,
       attendanceMode,
-      alumniFastPass: attendanceMode === 'tickets' ? collectAlumniFastPass() : { enabled: false },
+      alumniFastPass: isOpenBookingMode(attendanceMode) ? collectAlumniFastPass() : { enabled: false },
       guestPassesDisabled: collectGuestPassesDisabled(),
       vatTreatment: collectVatTreatment(),
       attendeeExtras: attendeeExtras(),

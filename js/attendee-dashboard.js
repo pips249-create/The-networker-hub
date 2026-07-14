@@ -582,24 +582,16 @@
       return (
         '<div class="ad-action-group">' +
         ticketButtonHtml(reg) +
-        calendarLinksHtml(reg) +
-        shareTriggerHtml(reg) +
-        '<div class="ad-action-links">' +
         '<a class="ad-action-link" href="' +
         esc(eventHref(reg)) +
         '">View event</a>' +
-        '<button type="button" class="ad-action-link ad-action-link--danger ad-cancel-booking" data-registration-id="' +
-        esc(reg.id || '') +
-        '">Cancel booking</button>' +
-        '</div></div>'
+        '</div>'
       );
     }
     if (opts.showTicket) {
       return (
         '<div class="ad-action-group">' +
         ticketButtonHtml(reg) +
-        calendarLinksHtml(reg) +
-        shareTriggerHtml(reg) +
         '<a class="ad-action-link" href="' +
         esc(eventHref(reg)) +
         '">View event</a>' +
@@ -642,26 +634,6 @@
     return true;
   }
 
-  function calendarLinksHtml(reg) {
-    if (!canShowCalendarLinks(reg) || !window.HubCalendarShare) return '';
-    const links = HubCalendarShare.buildCalendarLinks(registrationCalendarEvent(reg));
-    return (
-      '<div class="ad-cal-links" role="group" aria-label="Add to calendar">' +
-      '<a class="ad-cal-link" href="' +
-      esc(links.google) +
-      '" target="_blank" rel="noopener noreferrer">Google</a>' +
-      '<span class="ad-cal-sep" aria-hidden="true">·</span>' +
-      '<a class="ad-cal-link" href="' +
-      esc(links.outlook) +
-      '" target="_blank" rel="noopener noreferrer">Outlook</a>' +
-      '<span class="ad-cal-sep" aria-hidden="true">·</span>' +
-      '<button type="button" class="ad-cal-link ad-cal-ics" data-registration-id="' +
-      esc(reg.id || '') +
-      '">iCal</button>' +
-      '</div>'
-    );
-  }
-
   function bindCalendarLinks(root) {
     (root || document).querySelectorAll('.ad-cal-ics').forEach((btn) => {
       if (btn.dataset.boundCalendarIcs) return;
@@ -670,6 +642,7 @@
         const regId = btn.getAttribute('data-registration-id');
         const reg = findRegistrationById(regId);
         if (!reg || !window.HubCalendarShare) return;
+        closeUtilityMenus();
         const links = HubCalendarShare.buildCalendarLinks(registrationCalendarEvent(reg));
         HubCalendarShare.downloadIcs(links.icsContent, links.icsFilename);
       });
@@ -684,17 +657,43 @@
       starts_at: reg.date || '',
       imageUrl: reg.imageUrl || '',
       organiserLogo: reg.organiserLogo || '',
+      organiserName: reg.organiserName || '',
       eventType: reg.eventType || '',
       location: reg.isOnline ? 'Online' : String(reg.city || '').trim(),
     };
   }
 
-  function shareTriggerHtml(reg) {
+  function shareMenuItemHtml(reg) {
     if (!canShowCalendarLinks(reg) || !window.HubGoingShare) return '';
     return (
-      '<button type="button" class="ad-share-trigger ad-share-going" data-registration-id="' +
+      '<button type="button" class="ad-utility-item ad-share-going" role="menuitem" data-registration-id="' +
       esc(reg.id || '') +
       '">Share on LinkedIn</button>'
+    );
+  }
+
+  function calendarMenuItemsHtml(reg) {
+    if (!canShowCalendarLinks(reg) || !window.HubCalendarShare) return '';
+    const links = HubCalendarShare.buildCalendarLinks(registrationCalendarEvent(reg));
+    return (
+      '<a class="ad-utility-item" role="menuitem" href="' +
+      esc(links.google) +
+      '" target="_blank" rel="noopener noreferrer">Add to Google Calendar</a>' +
+      '<a class="ad-utility-item" role="menuitem" href="' +
+      esc(links.outlook) +
+      '" target="_blank" rel="noopener noreferrer">Add to Outlook</a>' +
+      '<button type="button" class="ad-utility-item ad-cal-ics" role="menuitem" data-registration-id="' +
+      esc(reg.id || '') +
+      '">Download iCal (.ics)</button>'
+    );
+  }
+
+  function cancelMenuItemHtml(reg, options) {
+    if (!options || !options.showCancel || !reg.canCancel) return '';
+    return (
+      '<button type="button" class="ad-utility-item ad-utility-item--danger ad-cancel-booking" role="menuitem" data-registration-id="' +
+      esc(reg.id || '') +
+      '">Cancel booking</button>'
     );
   }
 
@@ -759,6 +758,7 @@
       btn.dataset.boundShareGoing = '1';
       btn.addEventListener('click', () => {
         const reg = findRegistrationById(btn.getAttribute('data-registration-id'));
+        closeUtilityMenus();
         if (reg) openShareModal(reg);
       });
     });
@@ -829,16 +829,22 @@
   function utilityDropdownHtml(reg, options) {
     if (!options || !options.showUtilities) return '';
     const canPdf = registrationHasTicketPdf(reg);
+    const calendarItems = calendarMenuItemsHtml(reg);
+    const shareItem = shareMenuItemHtml(reg);
+    const cancelItem = cancelMenuItemHtml(reg, options);
     return (
       '<div class="ad-utility-wrap">' +
       '<button type="button" class="ad-utility-btn" data-ad-utility-toggle aria-expanded="false" aria-haspopup="true">' +
-      'Utilities <span class="ad-utility-chev" aria-hidden="true">▾</span></button>' +
+      'More <span class="ad-utility-chev" aria-hidden="true">▾</span></button>' +
       '<div class="ad-utility-menu" role="menu" hidden>' +
+      calendarItems +
+      shareItem +
       '<button type="button" class="ad-utility-item ad-download-ticket-pdf" role="menuitem" data-registration-id="' +
       esc(reg.id || '') +
       '"' +
       (canPdf ? '' : ' disabled') +
-      '>Download Ticket (PDF)</button>' +
+      '>Download ticket (PDF)</button>' +
+      cancelItem +
       '</div></div>'
     );
   }
@@ -899,6 +905,12 @@
           'noopener,noreferrer'
         );
       });
+    });
+
+    (root || document).querySelectorAll('.ad-utility-menu a.ad-utility-item').forEach((link) => {
+      if (link.dataset.boundUtilityLink) return;
+      link.dataset.boundUtilityLink = '1';
+      link.addEventListener('click', () => closeUtilityMenus());
     });
   }
 
@@ -1743,6 +1755,7 @@
     (root || document).querySelectorAll('.ad-cancel-booking').forEach((btn) => {
       btn.addEventListener('click', () => {
         const reg = findRegistrationById(btn.getAttribute('data-registration-id'));
+        closeUtilityMenus();
         if (reg) openCancelModal(reg);
       });
     });
@@ -2146,7 +2159,10 @@
           reviewBadge(reg.reviewStatus, reg) +
           '</td><td class="ad-td-actions"><div class="ad-action-group ad-action-group--with-utilities">' +
           actionCell(reg, { showCancel: listKey === 'upcoming', showTicket: true }) +
-          utilityDropdownHtml(reg, { showUtilities: listKey === 'upcoming' }) +
+          utilityDropdownHtml(reg, {
+            showUtilities: listKey === 'upcoming',
+            showCancel: listKey === 'upcoming',
+          }) +
           '</div></td>';
       } else {
         tr.innerHTML =

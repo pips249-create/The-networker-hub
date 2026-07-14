@@ -1169,9 +1169,13 @@
       hero.decoding = 'async';
       hero.src = resolvedSrc;
       hero.alt = ev.title;
+      if (ev.photoPosition && resolvedSrc === String(ev.photo || '').trim()) {
+        hero.style.objectPosition = ev.photoPosition;
+      }
       hero.onerror = function () {
         hero.onerror = null;
         hero.src = fallbackSrc;
+        hero.style.objectPosition = '';
       };
     }
 

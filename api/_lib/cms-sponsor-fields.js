@@ -99,6 +99,7 @@ function normalizeSponsorBlock(block) {
     image_url: sponsorLogoUrl(block) || null,
     company_name: sponsorCompanyName(block) || null,
     cta_color: sponsorCtaColor(block) || null,
+    include_in_emails: block.include_in_emails !== false,
   };
 }
 
@@ -111,6 +112,7 @@ function buildSponsorRow(payload) {
   const company_name = String(payload.company_name || '').trim() || null;
   const cta_color = sanitizeCtaColor(payload.cta_color) || null;
   const active = payload.active !== false;
+  const include_in_emails = payload.include_in_emails !== false;
   const slot = String(payload.slot || 'sponsor_hub').trim() || 'sponsor_hub';
 
   return {
@@ -125,6 +127,7 @@ function buildSponsorRow(payload) {
     image_url: logo,
     company_name,
     active,
+    include_in_emails,
     updated_at: new Date().toISOString(),
   };
 }

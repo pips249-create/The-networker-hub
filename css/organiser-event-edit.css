@@ -393,17 +393,59 @@ a.ee-wizard-link:hover {
 }
 
 .ee-upload-preview {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  justify-content: center;
+  display: block;
+  text-align: left;
 }
 
-.ee-upload-preview img {
-  width: 96px;
-  height: 72px;
+.ee-photo-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: 260px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e8eef0;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.ee-photo-frame.is-dragging {
+  cursor: grabbing;
+}
+
+.ee-photo-frame img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 6px;
+  object-position: 50% 50%;
+  display: block;
+  pointer-events: none;
+}
+
+.ee-photo-frame-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(26, 46, 59, 0.65);
+  padding: 4px 10px;
+  border-radius: 20px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.ee-photo-frame.is-dragging .ee-photo-frame-hint {
+  opacity: 0;
+}
+
+.ee-photo-preview-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .ee-upload-placeholder strong {
@@ -669,19 +711,105 @@ a.ee-wizard-link:hover {
 
 /* Ticket setup page */
 .ee-tier-row {
-  display: grid;
-  grid-template-columns: 1.4fr 0.7fr 0.7fr 0.6fr auto;
+  margin-bottom: 14px;
+}
+
+.ee-tier-row-expanded {
+  display: block;
+  padding: 0;
+  background: var(--ee-white);
+  border: 1px solid var(--ee-border);
+  border-radius: var(--ee-radius);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(45, 27, 94, 0.05);
+}
+
+.ee-tier-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
-  align-items: end;
-  margin-bottom: 10px;
+  padding: 10px 14px;
+  background: var(--ee-purple-pale);
+  border-bottom: 1px solid var(--ee-border);
+}
+
+.ee-tier-order {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0;
+}
+
+.ee-tier-order-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ee-purple-dark);
+  margin-left: 4px;
+}
+
+.ee-tier-order button,
+.ee-tier-toolbar .ee-tier-remove {
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+.ee-tier-body {
+  padding: 14px 16px 16px;
+}
+
+.ee-tier-row-expanded .ee-field {
+  margin-bottom: 12px;
+}
+
+.ee-tier-row-expanded .ee-tier-kind-field,
+.ee-tier-row-expanded .ee-tier-price-row,
+.ee-tier-row-expanded .ee-tier-sale-row {
+  margin-bottom: 0;
+}
+
+.ee-tier-row-expanded .ee-tier-price-row,
+.ee-tier-row-expanded .ee-tier-sale-row {
+  margin-top: 4px;
+}
+
+.ee-tier-row-expanded .ee-sale-custom-wrap {
+  margin-top: 8px;
+}
+
+.ee-tier-row-expanded .ee-tier-kind-field {
+  margin-top: 12px;
+}
+
+#ee-add-tier {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.ee-guest-addon {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--ee-border);
+}
+
+.ee-guest-addon-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ee-text);
+  margin: 0 0 6px;
+}
+
+.ee-guest-addon .ee-check {
+  margin: 10px 0 12px;
+}
+
+.ee-guest-addon #ee-guest-passes-opt-out {
+  margin-top: 10px;
 }
 
 @media (max-width: 720px) {
-  .ee-tier-row {
-    grid-template-columns: 1fr 1fr;
-  }
-  .ee-tier-row .ee-tier-remove {
-    grid-column: 1 / -1;
+  .ee-tier-row-expanded .ee-row-2 {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -945,18 +1073,6 @@ a.ee-wizard-link:hover {
 
 .ee-vat-options .ee-check {
   margin-bottom: 0;
-}
-
-.ee-tier-row-expanded {
-  display: block;
-  padding: 16px;
-  background: var(--ee-purple-pale);
-  border-radius: var(--ee-radius);
-  margin-bottom: 14px;
-}
-
-.ee-tier-row-expanded .ee-field {
-  margin-bottom: 12px;
 }
 
 /* Published confirmation */
@@ -1398,17 +1514,6 @@ body.ee-is-new-listing #ee-event-stats {
   font-weight: 600;
   color: var(--ee-purple-dark);
   margin: 0 0 12px;
-}
-
-.ee-tier-order {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.ee-tier-order button {
-  font-size: 11px;
-  padding: 4px 8px;
 }
 
 .ee-refund-options {

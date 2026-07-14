@@ -20,9 +20,14 @@ const WORKSPACE_EVENTS_LIMIT_MAX = 250;
 const WORKSPACE_UPCOMING_LIMIT = 20;
 
 function normalizeAttendanceMode(mode) {
-  const m = String(mode || '').trim();
-  if (m === 'osop') return 'category_exclusivity';
-  return m || 'tickets';
+  const m = String(mode || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+  if (m === 'osop' || m === 'category_exclusivity') return 'category_exclusivity';
+  if (m === 'guest_programme' || m === 'guest_program') return 'guest_programme';
+  if (m === 'tickets' || m === 'ticket' || m === 'open' || m === 'standard') return 'tickets';
+  return 'tickets';
 }
 
 function parseWorkspaceEventsQuery(req) {
@@ -97,7 +102,7 @@ const {
   mapAttendeeExtrasToRow,
   composeEventDescription,
 } = require('./event-description');
-const { eventImageUrl, eventImageDbValue } = require('./event-image');
+const { eventImageUrl, eventImageDbValue, normalizeEventImagePosition } = require('./event-image');
 
 function rowToEvent(row) {
   if (!row) return null;
@@ -127,6 +132,7 @@ function rowToEvent(row) {
     onlinePlatform: '',
     onlineLink: String(row.meeting_link || '').trim(),
     imageUrl: eventImageUrl(row),
+    imagePosition: normalizeEventImagePosition(row.image_position),
     status: eventStatus,
     statusRaw: row.approval_status || 'Pending Review',
     listingStatus: eventStatus,
@@ -618,6 +624,10 @@ async function buildEventRow(payload, eventId, mode) {
 
   if (image_url !== undefined) row.image_url = eventImageDbValue(image_url);
   else if (mode === 'create') row.image_url = null;
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'imagePosition')) {
+    row.image_position = normalizeEventImagePosition(payload.imagePosition) || null;
+  }
 
   if (!row.starts_at) demoteToDraftWithoutDate(row);
 
@@ -1180,6 +1190,7 @@ function seriesDetailsPatchFromRow(row) {
     longitude: row.longitude,
     meeting_link: row.meeting_link,
     image_url: row.image_url,
+    image_position: row.image_position ?? null,
     industries: row.industries,
     recurrence_pattern: row.recurrence_pattern,
     recurrence_end_date: row.recurrence_end_date,
@@ -1245,9 +1256,7 @@ async function createTicketsForEvents({
   let tiers = Array.isArray(tickets) ? tickets : [];
   if (!ids.length || !tiers.length) return { created: 0, tickets: [] };
 
-  const mode = ['tickets', 'category_exclusivity', 'guest_programme', 'osop'].includes(String(attendanceMode || '').trim())
-    ? normalizeAttendanceMode(String(attendanceMode).trim())
-    : 'tickets';
+  const mode = normalizeAttendanceMode(attendanceMode);
 
   const guestPassesDisabledFlag = Boolean(guestPassesDisabled);
 
@@ -1272,7 +1281,7 @@ async function createTicketsForEvents({
     const blocked = (orgRows || []).find((org) => !Number(org.complimentary_visits_allowed));
     if (blocked) {
       const e = new Error(
-        'Enable complimentary guest visits on your organiser page (1 or 2) before using the guest visit programme.'
+        'Enable complimentary guest visits on your organiser page (1–3) before using the guest visit programme.'
       );
       e.status = 400;
       e.code = 'guest_programme_requires_complimentary_visits';

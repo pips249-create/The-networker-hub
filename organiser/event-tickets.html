@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260714time" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260714ce" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -85,18 +85,34 @@
               <input type="checkbox" id="ee-guest-programme-enabled" />
               <span>Enable guest visit programme for this event</span>
             </label>
-            <div class="ee-info-box" id="ee-guest-programme-note" hidden>
-              <strong>Guest visit programme:</strong> New attendees must use their complimentary visit(s) with your group before they can buy a paid member ticket. Set your visit allowance on your
-              <a href="/organiser/group-edit" id="ee-guest-group-edit-link">organiser page</a> (maximum 2 visits per attendee, platform-wide).
-            </div>
-            <div id="ee-guest-passes-opt-out" hidden>
-              <label class="ee-check">
-                <input type="checkbox" id="ee-guest-passes-disabled" />
-                <span>Disallow guest passes for this event</span>
-              </label>
-              <p class="ee-hint" style="margin:6px 0 0">
-                Leave unticked to offer complimentary guest passes. Tick for member-only dates (e.g. conferences) — paid member tickets stay available and visitors can book them directly.
-              </p>
+            <div id="ee-guest-programme-fields" hidden>
+              <div class="ee-field" style="margin-top:12px;max-width:280px">
+                <label for="ee-guest-visits-allowed">How many complimentary visits?</label>
+                <p class="ee-hint" style="margin-top:0">
+                  Type how many free trial visits a new attendee can take with your group. Hub maximum is 3.
+                </p>
+                <input
+                  type="number"
+                  id="ee-guest-visits-allowed"
+                  min="1"
+                  max="3"
+                  step="1"
+                  value="1"
+                  inputmode="numeric"
+                />
+              </div>
+              <div class="ee-info-box" id="ee-guest-programme-note">
+                <strong>Guest visit programme:</strong> New attendees must use their complimentary visit(s) with your group before they can buy a paid member ticket. This allowance applies across your organiser page.
+              </div>
+              <div id="ee-guest-passes-opt-out">
+                <label class="ee-check">
+                  <input type="checkbox" id="ee-guest-passes-disabled" />
+                  <span>Disallow guest passes for this event</span>
+                </label>
+                <p class="ee-hint" style="margin:6px 0 0">
+                  Leave unticked to offer complimentary guest passes. Tick for member-only dates (e.g. conferences) — paid member tickets stay available and visitors can book them directly.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -156,11 +172,21 @@
             </div>
           </div>
           <div class="ee-field">
-            <label for="ee-ce-close-date">Applications close <span class="ee-optional">(optional)</span></label>
-            <p class="ee-hint" style="margin-top:0">After this date and time the apply button will no longer appear on the listing. Pick a date and time in 15-minute steps.</p>
-            <div class="ee-datetime-split">
-              <input type="date" id="ee-ce-close-date" aria-label="Application closing date" />
-              <select id="ee-ce-close-time" aria-label="Application closing time"></select>
+            <label for="ee-ce-close">Applications close <span class="ee-optional">(optional)</span></label>
+            <p class="ee-hint" style="margin-top:0">After this point the apply button will no longer appear on the listing.</p>
+            <select id="ee-ce-close" aria-describedby="ee-ce-close-hint">
+              <option value="at_start">When the event starts</option>
+              <option value="12_hours">12 hours before the event</option>
+              <option value="1_day">1 day before the event</option>
+              <option value="1_week" selected>1 week before the event</option>
+              <option value="custom">Custom date &amp; time</option>
+            </select>
+            <div class="ee-sale-custom-wrap" id="ee-ce-close-custom" hidden style="margin-top:8px">
+              <p class="ee-hint" style="margin:0 0 6px">Custom closing date and time</p>
+              <div class="ee-datetime-split">
+                <input type="date" id="ee-ce-close-date" aria-label="Application closing date" />
+                <select id="ee-ce-close-time" aria-label="Application closing time"></select>
+              </div>
             </div>
           </div>
           <p class="ee-label-block">Application questions</p>
@@ -284,8 +310,8 @@
     <script src="../js/organiser-quarter-time.js?v=20260714time"></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../"></script>
     <script src="../js/organiser-payment-setup.js?v=20260714a"></script>
-    <script src="../js/organiser-field-tips.js?v=20260711"></script>
+    <script src="../js/organiser-field-tips.js?v=20260714ce"></script>
     <script src="../js/hub-field-tip.js?v=20260711"></script>
-    <script src="../js/organiser-event-tickets.js?v=20260708h"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260714ce"></script>
   </body>
 </html>
