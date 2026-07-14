@@ -6258,6 +6258,7 @@
         slug === 'attendee_reengagement' ||
         slug === 'attendee_signup_events_nudge' ||
         slug === 'attendee_signup_events_nudge_followup' ||
+        slug === 'attendee_hubert_event_concierge' ||
         slug === 'meeting_link_added' ||
         slug === 'online_join_reminder' ||
         slug === 'category_exclusivity_payment_reminder' ||
@@ -6295,6 +6296,15 @@
           previewRecommendationsHtml();
         SAMPLE_VARS.nearby_events_html =
           '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Events within 25 miles of London</p>' +
+          previewRecommendationsHtml();
+      } else if (slug === 'attendee_hubert_event_concierge') {
+        SAMPLE_VARS.month_label = 'July 2026';
+        SAMPLE_VARS.account_settings_url = previewOrigin + '/account/settings';
+        SAMPLE_VARS.nearby_events_html =
+          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Events within 25 miles of York</p>' +
+          previewRecommendationsHtml();
+        SAMPLE_VARS.popular_events_html =
+          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Popular right now</p>' +
           previewRecommendationsHtml();
       } else if (slug === 'saved_organiser_new_listing') {
         SAMPLE_VARS.event_time = ' · ' + SAMPLE_VARS.event_time;
@@ -6460,6 +6470,7 @@
       'attendee_reengagement',
       'attendee_signup_events_nudge',
       'attendee_signup_events_nudge_followup',
+      'attendee_hubert_event_concierge',
       'password_reset',
     ];
     var ORGANISER_EMAIL_SLUGS = ['organiser_new_registration', 'organiser_claim_invite'];

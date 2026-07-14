@@ -246,6 +246,34 @@
     if (locationRadiusWrap) locationRadiusWrap.hidden = false;
   }
 
+  function loadProfileLocation() {
+    if (!window.hubFetchSession) return Promise.resolve('');
+    return window
+      .hubFetchSession()
+      .then(function (session) {
+        if (!session || !session.ok) return '';
+        return fetch('/api/auth/profile', { credentials: 'include' })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            if (data.ok && data.profile) {
+              window.hubProfileLocation = String(data.profile.location || '').trim();
+            }
+            return window.hubProfileLocation || '';
+          })
+          .catch(function () {
+            return '';
+          });
+      })
+      .catch(function () {
+        return '';
+      });
+  }
+
+  window.hubLoadProfileLocation = loadProfileLocation;
+  loadProfileLocation();
+
   function locationFilterCenter() {
     if (isNearMeActive() && window.hubUserCoords) return window.hubUserCoords;
     if (window.hubLocationFilterCoords) return window.hubLocationFilterCoords;
@@ -335,6 +363,20 @@
     if (pc && window.hubGeocodeUserPostcode) {
       return window.hubGeocodeUserPostcode(pc);
     }
+    var profileLoc = String(window.hubProfileLocation || '').trim();
+    if (profileLoc && window.hubGeocodeLocationQuery) {
+      return window.hubGeocodeLocationQuery(profileLoc).then(function (coords) {
+        if (coords) {
+          window.hubUserCoords = coords;
+          return coords;
+        }
+        return resolveDeviceGeolocation();
+      });
+    }
+    return resolveDeviceGeolocation();
+  }
+
+  function resolveDeviceGeolocation() {
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       return new Promise(function (resolve) {
         navigator.geolocation.getCurrentPosition(
