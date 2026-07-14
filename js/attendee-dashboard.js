@@ -2160,11 +2160,17 @@
         window.HubOpportunitySaves.writeLocalItems(
           savedOpportunities.map((item) => ({
             opportunityId: item.opportunityId || item.opportunity_id,
+            id: item.opportunityId || item.opportunity_id,
             title: item.title || 'Opportunity',
             host: item.host || '',
             slug: item.slug || '',
+            type: item.type || '',
             logoUrl: item.logoUrl || item.imageUrl || '',
             imageUrl: item.imageUrl || item.logoUrl || '',
+            locationLabel: item.locationLabel || '',
+            investment: item.investment || '',
+            commitment: item.commitment || '',
+            meta: Array.isArray(item.meta) ? item.meta : [],
             createdAt: item.createdAt || item.created_at || new Date().toISOString(),
           }))
         );
@@ -2217,13 +2223,73 @@
     if (openBtn && !openBtn.dataset.bound) {
       openBtn.dataset.bound = '1';
       openBtn.addEventListener('click', () => {
-        const catalog = window.HubOpportunitiesCatalog;
-        const html = cmp.renderModal(catalog, cmp.ids());
-        if (!html) return;
-        document.body.insertAdjacentHTML('beforeend', html);
-        cmp.bindModal(document.getElementById('opp-compare-modal'));
+        openSavedOpportunityCompare();
       });
     }
+  }
+
+  async function openSavedOpportunityCompare(forceIds) {
+    const cmp = window.HubOpportunityCompare;
+    if (!cmp) return false;
+
+    await ensureOpportunitiesCatalog();
+
+    let ids = Array.isArray(forceIds) && forceIds.length ? forceIds.map(String) : cmp.ids();
+    if (ids.length < 2) {
+      ids = savedOpportunities
+        .map((item) => String(item.opportunityId || item.opportunity_id || '').trim())
+        .filter(Boolean)
+        .slice(0, cmp.MAX);
+      if (ids.length >= 2 && typeof cmp.setIds === 'function') {
+        cmp.setIds(ids);
+      }
+    }
+    if (ids.length < 2) return false;
+
+    const existing = document.getElementById('opp-compare-modal');
+    if (existing) existing.remove();
+
+    const html = cmp.renderModal(window.HubOpportunitiesCatalog, ids, savedOpportunities);
+    if (!html) return false;
+    document.body.insertAdjacentHTML('beforeend', html);
+    cmp.bindModal(document.getElementById('opp-compare-modal'));
+    refreshCompareToolbar();
+    return true;
+  }
+
+  function openCompareFromQuery() {
+    const params = new URLSearchParams(location.search);
+    const wantCompare = params.get('compare') === '1';
+    const scope = String(params.get('scope') || '').trim().toLowerCase();
+    if (!wantCompare && scope !== 'opportunities') return;
+
+    setRoute('saved');
+    setSavedScope('opportunities');
+
+    if (!wantCompare) return;
+
+    const cmp = window.HubOpportunityCompare;
+    if (cmp && typeof cmp.setIds === 'function') {
+      const seed = (
+        window.HubOpportunitySaves
+          ? window.HubOpportunitySaves.ids()
+          : savedOpportunities.map((item) => item.opportunityId || item.opportunity_id)
+      )
+        .map(String)
+        .filter(Boolean)
+        .slice(0, cmp.MAX);
+      if (seed.length) cmp.setIds(seed);
+    }
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        openSavedOpportunityCompare();
+        const clean = new URL(location.href);
+        clean.searchParams.delete('compare');
+        clean.searchParams.delete('scope');
+        history.replaceState(null, '', clean.pathname + clean.search + '#saved');
+      });
+    });
   }
 
   function renderSavedOpportunitiesTable() {
@@ -2764,6 +2830,7 @@
           await ensureOpportunitiesCatalog();
           applySavedOpportunityData(null);
         }
+        openCompareFromQuery();
         const sub = document.getElementById('ad-welcome-sub');
         if (sub) {
           sub.textContent =
@@ -2819,6 +2886,7 @@
 
       applyDashboardData(data);
       maybeDefaultSavedScope();
+      openCompareFromQuery();
 
       const demoNote = document.getElementById('ad-demo-note');
       if (demoNote) demoNote.hidden = !data.isDemo;

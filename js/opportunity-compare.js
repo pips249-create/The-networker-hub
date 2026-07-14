@@ -19,6 +19,19 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify((ids || []).slice(0, MAX)));
   }
 
+  function setIds(ids) {
+    var next = [];
+    var seen = {};
+    (ids || []).forEach(function (id) {
+      var key = String(id || '').trim();
+      if (!key || seen[key] || next.length >= MAX) return;
+      seen[key] = true;
+      next.push(key);
+    });
+    writeIds(next);
+    return next.slice();
+  }
+
   function toggle(id) {
     var sid = String(id || '').trim();
     if (!sid) return readIds();
@@ -56,13 +69,69 @@
       .replace(/"/g, '&quot;');
   }
 
+  function itemId(item) {
+    if (!item) return '';
+    return String(item.id || item.opportunityId || item.opportunity_id || '').trim();
+  }
+
   function listingFromCatalog(catalog, id) {
-    if (!catalog) return null;
+    if (!catalog || !id) return null;
+    if (typeof catalog.getById === 'function') {
+      var hit = catalog.getById(id);
+      if (hit) return hit;
+    }
     var list = catalog.loadCatalog ? catalog.loadCatalog() : [];
     for (var i = 0; i < list.length; i++) {
       if (String(list[i].id) === String(id)) return list[i];
     }
     return null;
+  }
+
+  function normalizeFallback(raw) {
+    if (!raw) return null;
+    var id = itemId(raw);
+    if (!id) return null;
+    return {
+      id: id,
+      opportunityId: id,
+      title: raw.title || 'Opportunity',
+      host: raw.host || '',
+      slug: raw.slug || '',
+      type: raw.type || '',
+      meta: Array.isArray(raw.meta) ? raw.meta : [],
+      locationLabel: raw.locationLabel || raw.location || '',
+      investment: raw.investment || '',
+      commitment: raw.commitment || '',
+      logoUrl: raw.logoUrl || raw.imageUrl || '',
+      imageUrl: raw.imageUrl || raw.logoUrl || '',
+    };
+  }
+
+  function resolveItems(catalog, ids, fallbacks) {
+    var fallbackById = {};
+    (fallbacks || []).forEach(function (raw) {
+      var item = normalizeFallback(raw);
+      if (item) fallbackById[item.id] = item;
+    });
+
+    return (ids || [])
+      .map(function (id) {
+        var key = String(id || '').trim();
+        if (!key) return null;
+        var fromCatalog = listingFromCatalog(catalog, key);
+        if (fromCatalog) return fromCatalog;
+        return fallbackById[key] || {
+          id: key,
+          opportunityId: key,
+          title: 'Opportunity',
+          host: '',
+          slug: '',
+          type: '',
+          meta: [],
+          locationLabel: '',
+        };
+      })
+      .filter(Boolean);
   }
 
   function compareRow(label, values) {
@@ -79,12 +148,8 @@
     );
   }
 
-  function renderModal(catalog, ids) {
-    var items = ids
-      .map(function (id) {
-        return listingFromCatalog(catalog, id);
-      })
-      .filter(Boolean);
+  function renderModal(catalog, ids, fallbacks) {
+    var items = resolveItems(catalog, ids, fallbacks);
     if (items.length < 2) return '';
 
     var q = window.HubOpportunityQuality;
@@ -117,7 +182,9 @@
       compareRow(
         'Investment',
         items.map(function (item) {
-          return escapeHtml(metaVal(item.meta, /^investment$/i) || '—');
+          return escapeHtml(
+            metaVal(item.meta, /^investment$/i) || item.investment || '—'
+          );
         })
       ),
       compareRow(
@@ -129,7 +196,9 @@
       compareRow(
         'Commitment',
         items.map(function (item) {
-          return escapeHtml(metaVal(item.meta, /^commitment$/i) || '—');
+          return escapeHtml(
+            metaVal(item.meta, /^commitment$/i) || item.commitment || '—'
+          );
         })
       ),
       compareRow(
@@ -187,10 +256,12 @@
   window.HubOpportunityCompare = {
     MAX: MAX,
     ids: readIds,
+    setIds: setIds,
     toggle: toggle,
     isSelected: isSelected,
     clear: clear,
     renderModal: renderModal,
     bindModal: bindModal,
+    resolveItems: resolveItems,
   };
 })();

@@ -61,16 +61,32 @@
     }
   }
 
+  function metaVal(meta, keyRe) {
+    for (var i = 0; i < (meta || []).length; i++) {
+      if (keyRe.test(meta[i].key)) return String(meta[i].val || '').trim();
+    }
+    return '';
+  }
+
   function snapshotFromMeta(id, meta) {
     var key = String((meta && meta.id) || id || '').trim();
     if (!key) return null;
+    var listingMeta = Array.isArray(meta && meta.meta) ? meta.meta : [];
     return {
       opportunityId: key,
+      id: key,
       title: String((meta && meta.title) || 'Opportunity').trim() || 'Opportunity',
       host: String((meta && meta.host) || '').trim(),
       slug: String((meta && meta.slug) || '').trim(),
+      type: String((meta && meta.type) || '').trim(),
       logoUrl: String((meta && meta.logoUrl) || '').trim(),
       imageUrl: String((meta && meta.imageUrl) || '').trim(),
+      locationLabel: String((meta && meta.locationLabel) || metaVal(listingMeta, /^location$/i) || '').trim(),
+      investment: String(metaVal(listingMeta, /^investment$/i) || '').trim(),
+      commitment: String(metaVal(listingMeta, /^commitment$/i) || '').trim(),
+      meta: listingMeta.map(function (m) {
+        return { key: m.key, val: m.val };
+      }),
       createdAt: new Date().toISOString(),
     };
   }
@@ -242,6 +258,65 @@
     return mergePromise;
   }
 
+  function compareHref() {
+    return '../account/?scope=opportunities&compare=1#saved';
+  }
+
+  function dismissCompareNudge() {
+    var el = document.getElementById('opp-compare-nudge');
+    if (el) el.remove();
+  }
+
+  function showCompareNudge() {
+    try {
+      if (sessionStorage.getItem('hubOppCompareNudgeShown') === '1') return;
+      sessionStorage.setItem('hubOppCompareNudgeShown', '1');
+    } catch (e) {
+      /* ignore */
+    }
+
+    dismissCompareNudge();
+    var el = document.createElement('div');
+    el.id = 'opp-compare-nudge';
+    el.className = 'opp-compare-nudge';
+    el.setAttribute('role', 'status');
+    el.innerHTML =
+      '<div class="opp-compare-nudge-inner">' +
+      '<p class="opp-compare-nudge-text">You have saved 2 opportunities. You can compare them side by side.</p>' +
+      '<div class="opp-compare-nudge-actions">' +
+      '<a class="opp-compare-nudge-btn" href="' +
+      compareHref() +
+      '">Compare now</a>' +
+      '<button type="button" class="opp-compare-nudge-dismiss" aria-label="Dismiss">Not now</button>' +
+      '</div></div>';
+    document.body.appendChild(el);
+
+    var dismissBtn = el.querySelector('.opp-compare-nudge-dismiss');
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', dismissCompareNudge);
+    }
+    var link = el.querySelector('.opp-compare-nudge-btn');
+    if (link) {
+      link.addEventListener('click', function () {
+        var savedIds = ids().slice(0, 3);
+        try {
+          localStorage.setItem('hub_opp_compare', JSON.stringify(savedIds));
+        } catch (err) {
+          /* ignore */
+        }
+      });
+    }
+
+    window.setTimeout(function () {
+      el.classList.add('is-visible');
+    }, 20);
+  }
+
+  function maybeNudgeCompare(nowSaved) {
+    if (!nowSaved) return;
+    if (ids().length === 2) showCompareNudge();
+  }
+
   function toggle(id, meta) {
     var key = String(id || '');
     if (!key) return Promise.resolve(false);
@@ -259,6 +334,7 @@
       removeLocalItem(key);
     }
     writeLocal(local);
+    maybeNudgeCompare(nowSaved);
 
     var request = nowSaved ? postFavourite(key) : deleteFavourite(key);
 
