@@ -137,6 +137,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2-followup',
     subject: 'Still looking for your first event?',
   },
+  attendee_hubert_event_concierge: {
+    file: 'attendee-hubert-event-concierge.html',
+    marker: 'hub-email-layout-v2',
+    subject: "Hubert's event picks for {{month_label}}",
+  },
   organiser_low_upcoming_events: {
     file: 'organiser-low-upcoming-events.html',
     marker: 'hub-email-layout-v2',

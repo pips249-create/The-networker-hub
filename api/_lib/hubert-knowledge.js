@@ -83,7 +83,7 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ORGANISER TICKETS & ATTENDEES',
     body:
-      'TICKET SETUP (event-tickets.html): choose Standard ticket types for open booking, the guest visit programme, or Category Exclusivity for application-based attendance — these attendance modes are mutually exclusive. The guest visit programme still includes paid member ticket tiers: newcomers use their 1–2 complimentary visits first, then paid member tickets unlock. Alumni Fast-Pass can be enabled on events to invite past attendees to an exclusive alumni ticket rate. ' +
+      'TICKET SETUP (event-tickets.html): choose Standard ticket types for open booking, or Category Exclusivity for application-based attendance. With open booking you can optionally enable the guest visit programme alongside your paid ticket types — newcomers use their 1–2 complimentary visits first, then paid member tickets unlock. Alumni Fast-Pass can also be enabled on open-booking events to invite past attendees to an exclusive alumni ticket rate. ' +
       'CATEGORY EXCLUSIVITY: prospective attendees apply to join instead of buying straight away. They answer two fixed questions — their industry and job title. You approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. Set an optional price (leave at £0 for free), places limit, and application closing date. ' +
       'APPLICATION QUESTIONS: under Category Exclusivity, the two questions (industry and job title) are fixed and cannot be changed. For standard open tickets, you can optionally tick boxes under Attendee information at booking to note food is included or to collect dietary or accessibility requirements at checkout. ' +
       'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event or by new vs returning. Each row shows visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page. Download attendees CSV to export. This shows ticket registrations — not on-the-day check-in.',
@@ -246,6 +246,16 @@ const FALLBACK_REPLIES = [
       'The Networker Hub is built for UK business networking. You get a permanent organiser profile, events in a directory members use to find networking meetings, optional business opportunity listings, team editors, and reviews. Networking-specific tools include the guest visit programme (1–2 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Alumni Fast-Pass to invite past attendees to exclusive alumni rates on repeat events. You receive the full ticket price; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events need no Stripe. Guides: /guides · Organisers: /for-organisers',
   },
   {
+    match: /(paid|member).*(ticket|tier).*(guest visit|complimentary visit|guest programme)|(guest visit|complimentary visit|guest programme).*(paid|member).*(ticket|tier)/i,
+    reply:
+      'Yes — choose Guest visit programme on the tickets step, then add your paid member ticket type(s) underneath. New attendees use the complimentary visit allowance set on your organiser page first; once they have used it, the paid member tickets unlock. Guest visit programme and standard open booking are separate modes, but paid member tiers belong inside the guest programme.',
+  },
+  {
+    match: /\bvat\b|value added tax/i,
+    reply:
+      'Choose the VAT option that matches how you advertise the ticket price: VAT included means the displayed price is the attendee’s ticket price; VAT added at checkout means it is added on top. You must select one before publishing, and the organiser remains responsible for its own VAT position—check with your accountant if you are unsure.',
+  },
+  {
     match: /already use|eventbrite|meetup|other platform|alongside|as well as|in addition to/i,
     reply:
       'Yes — you can list on The Networker Hub alongside other event platforms. There is no exclusivity requirement. Many organisers use the hub to reach members browsing specifically for UK networking events and to build their organiser profile here. List the same events you run elsewhere if you like.',
@@ -338,17 +348,12 @@ const FALLBACK_REPLIES = [
   {
     match: /category exclusivity|one seat only|osop\b|application.?based (ticket|attend|booking)|application to attend/i,
     reply:
-      'Category Exclusivity is an alternative to open ticket sales on the tickets step. Instead of buying straight away, prospective attendees apply to join — they answer two fixed questions (their industry and job title). You review and approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. You can set an optional price (leave at £0 for free), a places limit, and an application closing date. It is mutually exclusive with standard ticket types.',
+      'Category Exclusivity is an alternative to open ticket sales on the tickets step. Instead of buying straight away, prospective attendees apply to join — they answer two fixed questions (their industry and job title). You review and approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. You can set an optional price (leave at £0 for free), a places limit, and an application closing date. It cannot be combined with open ticket types on the same event.',
   },
   {
     match: /change.*application question|custom.*application question|edit.*application question|different application question|application question.*change|can i change.*question/i,
     reply:
       'For Category Exclusivity events, the application questions are fixed: (1) What industry are you in? and (2) What is your job title? These cannot be changed. For standard open ticket booking, you can optionally turn on extra fields under Attendee information at booking on the tickets step — tick the boxes to note food is included, or to collect dietary or accessibility requirements at checkout.',
-  },
-  {
-    match: /(paid|member).*(ticket|tier).*(guest visit|complimentary visit|guest programme)|(guest visit|complimentary visit|guest programme).*(paid|member).*(ticket|tier)/i,
-    reply:
-      'Yes — choose Guest visit programme on the tickets step, then add your paid member ticket type(s) underneath. New attendees use the complimentary visit allowance set on your organiser page first; once they have used it, the paid member tickets unlock. Guest visit programme and standard open booking are separate modes, but paid member tiers belong inside the guest programme.',
   },
   {
     match: /guest visit|complimentary visit|trial visit|visitor ticket|member ticket/i,
@@ -364,11 +369,6 @@ const FALLBACK_REPLIES = [
     match: /early bird|early-bird/i,
     reply:
       'Add Early bird as its own ticket tier, set its lower price and quantity, then give it an earlier sales end date. Add your Standard tier as a separate row with its normal price; each tier is copied to every date in the series.',
-  },
-  {
-    match: /\bvat\b|value added tax/i,
-    reply:
-      'Choose the VAT option that matches how you advertise the ticket price: VAT included means the displayed price is the attendee’s ticket price; VAT added at checkout means it is added on top. You must select one before publishing, and the organiser remains responsible for its own VAT position—check with your accountant if you are unsure.',
   },
   {
     match: /save.*(draft|before publish)|draft.*(ticket|publish)|publish.*later/i,

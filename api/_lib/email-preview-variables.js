@@ -257,6 +257,25 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       );
   }
 
+  if (slug === 'attendee_hubert_event_concierge') {
+    vars.month_label = 'July 2026';
+    vars.account_settings_url = site + '/account/settings';
+    vars.nearby_events_html =
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Events within 25 miles of York</p>' +
+      sampleRecommendationCard(
+        'York Business Breakfast',
+        'York Connectors · Tuesday 19 August 2026 · 8:00 AM · York city centre',
+        vars.event_url
+      );
+    vars.popular_events_html =
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Popular right now</p>' +
+      sampleRecommendationCard(
+        'Tech Leaders Roundtable',
+        'Northbridge Network · Thursday 14 August 2026 · 6:00 PM · Manchester',
+        vars.browse_events_url
+      );
+  }
+
   if (slug === 'saved_organiser_new_listing') {
     vars.event_time = ' · 8:00 AM';
   }
@@ -310,6 +329,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     slug === 'attendee_reengagement' ||
     slug === 'attendee_signup_events_nudge' ||
     slug === 'attendee_signup_events_nudge_followup' ||
+    slug === 'attendee_hubert_event_concierge' ||
     slug === 'application_received' ||
     slug === 'application_approved' ||
     slug === 'application_denied' ||

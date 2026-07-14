@@ -37,6 +37,7 @@ const STRIPE_NUDGE_COOLDOWN_DAYS = 14;
 const SIGNUP_NUDGE_DELAY_DAYS = 3;
 const SIGNUP_NUDGE_FOLLOWUP_DAYS = 10;
 const SIGNUP_NUDGE_MAX_AGE_DAYS = 60;
+const HUBERT_CONCIERGE_BATCH_LIMIT = 50;
 
 function daysAgo(days) {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
@@ -1079,10 +1080,98 @@ async function sendDueStripeConnectNudges(sb) {
   return result;
 }
 
+function isDueForHubertConcierge(sentAt) {
+  if (!sentAt) return true;
+  const sent = new Date(sentAt);
+  if (Number.isNaN(sent.getTime())) return true;
+  const now = new Date();
+  return (
+    sent.getUTCFullYear() < now.getUTCFullYear() || sent.getUTCMonth() < now.getUTCMonth()
+  );
+}
+
+function hubertConciergeMonthLabel(date) {
+  return date.toLocaleDateString('en-GB', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+async function sendDueHubertEventConciergeEmails(sb) {
+  const result = { sent: 0, skipped: 0, errors: [] };
+  const now = new Date();
+  const monthLabel = hubertConciergeMonthLabel(now);
+  const siteUrl = siteBase();
+
+  const { data: attendees, error } = await sb
+    .from('attendees')
+    .select('id, email, name, location, hubert_event_concierge_sent_at')
+    .not('email', 'is', null)
+    .order('hubert_event_concierge_sent_at', { ascending: true, nullsFirst: true })
+    .limit(250);
+  if (error) {
+    if (/hubert_event_concierge_sent_at|column/.test(String(error.message || ''))) {
+      return { sent: 0, skipped: 0, errors: [], unavailable: true };
+    }
+    throw new Error(error.message);
+  }
+
+  for (const attendee of attendees || []) {
+    if (result.sent >= HUBERT_CONCIERGE_BATCH_LIMIT) break;
+
+    if (!isDueForHubertConcierge(attendee.hubert_event_concierge_sent_at)) {
+      result.skipped += 1;
+      continue;
+    }
+
+    const email = String(attendee.email || '').trim().toLowerCase();
+    if (!email) {
+      result.skipped += 1;
+      continue;
+    }
+
+    try {
+      const eventSections = await buildSignupNudgeEventsHtml(sb, attendee.location);
+      if (!eventSections.nearby_events_html && !eventSections.popular_events_html) {
+        result.skipped += 1;
+        continue;
+      }
+
+      await sendTemplatedEmail({
+        slug: 'attendee_hubert_event_concierge',
+        to: email,
+        variables: {
+          ...baseEmailVars(siteUrl),
+          user_name: String(attendee.name || '').trim() || 'there',
+          month_label: monthLabel,
+          nearby_events_html: eventSections.nearby_events_html,
+          popular_events_html: eventSections.popular_events_html,
+          browse_events_url: browseEventsUrl(siteUrl),
+          account_settings_url: siteUrl + '/account/settings',
+        },
+        subject: "Hubert's event picks for " + monthLabel,
+      });
+
+      await sb
+        .from('attendees')
+        .update({ hubert_event_concierge_sent_at: now.toISOString() })
+        .eq('id', attendee.id);
+      result.sent += 1;
+    } catch (e) {
+      if (e.code === 'emails_disabled') result.skipped += 1;
+      else result.errors.push({ attendee_id: attendee.id, error: e.message || String(e) });
+    }
+  }
+
+  return result;
+}
+
 async function runEngagementEmailMaintenance(sb) {
   const reengagement = await sendDueAttendeeReengagementEmails(sb);
   const signupEventsNudge = await sendDueSignupEventsNudgeEmails(sb);
   const signupEventsNudgeFollowup = await sendDueSignupEventsNudgeFollowupEmails(sb);
+  const hubertConcierge = await sendDueHubertEventConciergeEmails(sb);
   const lowEvents = await sendOrganiserLowUpcomingEventsNudges(sb);
   const guestVisitFollowup = await sendDueGuestVisitFollowupEmails(sb);
   const postReview = await sendDuePostEventReviewEmails(sb);
@@ -1092,6 +1181,7 @@ async function runEngagementEmailMaintenance(sb) {
     reengagement,
     signupEventsNudge,
     signupEventsNudgeFollowup,
+    hubertConcierge,
     lowEvents,
     guestVisitFollowup,
     postReview,
@@ -1104,6 +1194,7 @@ module.exports = {
   sendDueAttendeeReengagementEmails,
   sendDueSignupEventsNudgeEmails,
   sendDueSignupEventsNudgeFollowupEmails,
+  sendDueHubertEventConciergeEmails,
   sendOrganiserLowUpcomingEventsNudges,
   sendDueGuestVisitFollowupEmails,
   sendDuePostEventReviewEmails,
