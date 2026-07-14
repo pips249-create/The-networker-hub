@@ -111,21 +111,42 @@ function validateRefundPublishPayload(refundPayload) {
   return { ok: true };
 }
 
+function fullRefundPresetLabel(cutoffDays) {
+  const n = Number(cutoffDays);
+  if (n === 2 || n === 1) return 'Flexible refunds';
+  if (n === 7) return 'Standard refunds';
+  if (n === 14 || n === 3) return 'Strict refunds (B2B)';
+  return 'Full refunds available';
+}
+
+function fullRefundPresetText(cutoffDays) {
+  const n = effectiveRefundCutoffDays({ refund_policy: 'full_refund', refund_cutoff_days: cutoffDays });
+  if (n === 2) {
+    return 'Full refunds are available up to 48 hours before the event. After that, cancellations are not available from your account.';
+  }
+  if (n === 1) {
+    return 'Full refunds are available up to 24 hours before the event. After that, cancellations are not available from your account.';
+  }
+  return (
+    'Full refunds are available up to ' +
+    n +
+    ' day' +
+    (n === 1 ? '' : 's') +
+    ' before the event. After that, cancellations are not available from your account.'
+  );
+}
+
 function formatRefundPolicyLabel(eventRow) {
   const normalized = normalizeEventRefundRow(eventRow);
   const policy = normalized.refund_policy;
-  if (policy === 'full_refund' && normalized.refund_cutoff_days === 1) return 'Flexible refunds';
-  if (policy === 'full_refund' && normalized.refund_cutoff_days === 3) return 'Strict refunds';
-  if (policy === 'full_refund') return 'Full refunds available';
+  if (policy === 'full_refund') return fullRefundPresetLabel(normalized.refund_cutoff_days);
   if (policy === 'partial_refund') return 'Partial refunds';
-  if (policy === 'no_refunds') return 'No refunds';
+  if (policy === 'no_refunds') return 'Non-refundable';
   if (
     policy === 'custom' &&
-    /^100% refund up to 7 days before the event; 50% refund up to 48 hours before/i.test(
-      normalized.refund_policy_details
-    )
+    /^100% refund up to 7 days/i.test(normalized.refund_policy_details)
   ) {
-    return 'Moderate refunds';
+    return 'Standard refunds';
   }
   if (policy === 'custom') return 'Refund policy';
   return '';
@@ -138,14 +159,7 @@ function formatRefundPolicyText(eventRow) {
     return 'No refund policy has been set for this event. Contact the organiser before booking.';
   }
   if (policy === 'full_refund') {
-    const n = effectiveRefundCutoffDays(normalized);
-    return (
-      'Full refunds are available up to ' +
-      n +
-      ' day' +
-      (n === 1 ? '' : 's') +
-      ' before the event. After that, cancellations are not available from your account.'
-    );
+    return fullRefundPresetText(normalized.refund_cutoff_days);
   }
   if (policy === 'partial_refund') {
     return normalized.refund_policy_details || 'Partial refunds apply — see organiser terms.';

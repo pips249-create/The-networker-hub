@@ -1211,9 +1211,19 @@
     if (!policy) return 'No refund policy has been set for this event. Contact the organiser before booking.';
     if (policy === 'full_refund') {
       const days = ev.refundCutoffDays != null ? ev.refundCutoffDays : ev.refund_cutoff_days;
-      return days != null
-        ? 'Full refunds are available up to ' + days + ' day' + (days === 1 ? '' : 's') + ' before the event.'
-        : 'Full refunds are available before the event.';
+      if (Number(days) === 2) {
+        return 'Full refunds are available up to 48 hours before the event. After that, cancellations are not available from your account.';
+      }
+      if (days != null) {
+        return (
+          'Full refunds are available up to ' +
+          days +
+          ' day' +
+          (days === 1 ? '' : 's') +
+          ' before the event. After that, cancellations are not available from your account.'
+        );
+      }
+      return 'Full refunds are available before the event.';
     }
     if (policy === 'partial_refund') {
       return ev.refundPolicyDetails || ev.refund_policy_details || 'Partial refunds apply — see organiser terms.';
@@ -1245,30 +1255,26 @@
     let detailText = '';
 
     if (policy === 'full_refund') {
-      label = '✓ Full refunds available';
       cls = 'is-full';
       const days = ev.refundCutoffDays != null ? ev.refundCutoffDays : ev.refund_cutoff_days;
-      if (Number(days) === 1) label = '✓ Flexible refunds';
-      if (Number(days) === 3) label = 'Strict refunds';
-      detailText =
-        days != null
-          ? 'Full refunds are available up to ' + days + ' day' + (days === 1 ? '' : 's') + ' before the event.'
-          : 'Full refunds are available before the event.';
+      if (Number(days) === 2 || Number(days) === 1) label = '✓ Flexible refunds';
+      else if (Number(days) === 7) label = '✓ Standard refunds';
+      else if (Number(days) === 14 || Number(days) === 3) label = 'Strict refunds (B2B)';
+      else label = '✓ Full refunds available';
+      detailText = refundPolicyDetailText(ev);
     } else if (policy === 'partial_refund') {
       label = '~ Partial refunds — see policy';
       cls = 'is-partial';
       detailText = ev.refundPolicyDetails || ev.refund_policy_details || 'Partial refunds apply — see organiser terms.';
     } else if (policy === 'no_refunds') {
-      label = 'No refunds if you cannot attend';
+      label = 'Non-refundable';
       cls = 'is-none';
       detailText =
         'No refund is offered if you change your mind or cannot attend. Your statutory rights still apply if the event is cancelled, materially changed, or not provided as described.';
     } else if (policy === 'custom') {
       const policyDetails = ev.refundPolicyDetails || ev.refund_policy_details || '';
-      label = /^100% refund up to 7 days before the event; 50% refund up to 48 hours before/i.test(
-        policyDetails
-      )
-        ? 'Moderate refunds'
+      label = /^100% refund up to 7 days before/i.test(policyDetails)
+        ? 'Standard refunds'
         : 'ℹ Refund policy';
       cls = 'is-custom';
       detailText = policyDetails || 'See organiser refund policy below.';
