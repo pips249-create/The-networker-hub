@@ -817,6 +817,32 @@
   height: 100%;
 }
 
+.org-post-gallery-gate {
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid rgba(201, 150, 31, 0.35);
+  border-radius: 10px;
+  background: #fdf6e3;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #3d4557;
+}
+
+.org-post-gallery-gate a {
+  color: #0d1f3c;
+  font-weight: 700;
+}
+
+.org-post-thumb.is-locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.35);
+}
+
+.org-post-thumb.is-locked:hover {
+  border-color: var(--od-border, #e8dfd0);
+}
+
 .org-post-thumb-label {
   font-size: 12px;
   font-weight: 600;

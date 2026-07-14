@@ -466,9 +466,13 @@
         getGroups: function () {
           return state.groups || [];
         },
+        getOpportunities: function () {
+          return state.opportunities || [];
+        },
       });
-    } else if (linkedInPostBuilder.refreshGroups) {
-      linkedInPostBuilder.refreshGroups();
+    } else {
+      if (linkedInPostBuilder.refreshGroups) linkedInPostBuilder.refreshGroups();
+      if (linkedInPostBuilder.refreshOpportunities) linkedInPostBuilder.refreshOpportunities();
     }
   }
 
@@ -5011,6 +5015,11 @@
     if (page === 'social') {
       renderOrganiserRankingShare();
       ensureLinkedInPostBuilder();
+      loadOpportunitiesList().then(function () {
+        if (linkedInPostBuilder && linkedInPostBuilder.refreshOpportunities) {
+          linkedInPostBuilder.refreshOpportunities();
+        }
+      });
     }
     if (page === 'team') {
       loadTeamMembers().then(function () {
@@ -7029,6 +7038,9 @@
       state.opportunitiesLoaded = true;
       renderStats();
       renderOpportunitiesList();
+      if (linkedInPostBuilder && linkedInPostBuilder.refreshOpportunities) {
+        linkedInPostBuilder.refreshOpportunities();
+      }
     } catch {
       /* ignore */
     }
@@ -7071,6 +7083,9 @@
     renderOrganiserNotices();
     renderOrganiserRankingShare();
     ensureLinkedInPostBuilder();
+    if (linkedInPostBuilder && linkedInPostBuilder.refreshOpportunities) {
+      linkedInPostBuilder.refreshOpportunities();
+    }
     renderGroups();
     renderTeam();
     renderMyEventsHub();

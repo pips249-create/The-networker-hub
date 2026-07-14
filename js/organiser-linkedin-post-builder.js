@@ -71,7 +71,7 @@
       line2: 'worth a conversation',
       line3: 'Franchise, partnership, or side-hustle — enquire to learn more',
       caption:
-        "There's a business opportunity open that may be worth a conversation — franchise, partnership, or side-hustle.\n\n{name}\nEnquire on The Networker Hub → {url}",
+        "There's a business opportunity open that may be worth a conversation — franchise, partnership, or side-hustle.\n\n{listing}\nEnquire on The Networker Hub → {url}",
     },
     {
       id: 'partnership',
@@ -85,7 +85,7 @@
       line2: 'right partners',
       line3: 'Serious enquiries welcome from aligned founders',
       caption:
-        "We're looking for the right partners. Serious enquiries welcome from aligned founders and operators.\n\n{name}\nOn The Networker Hub → {url}",
+        "We're looking for the right partners. Serious enquiries welcome from aligned founders and operators.\n\n{listing}\nOn The Networker Hub → {url}",
     },
     {
       id: 'franchise',
@@ -99,7 +99,7 @@
       line2: 'now open to enquire',
       line3: 'Explore territory, investment, and next steps',
       caption:
-        'Franchise opportunity now open to enquire — explore territory, investment, and next steps.\n\n{name}\nOn The Networker Hub → {url}',
+        'Franchise opportunity now open to enquire — explore territory, investment, and next steps.\n\n{listing}\nOn The Networker Hub → {url}',
     },
     {
       id: 'enquire',
@@ -113,7 +113,7 @@
       line2: 'Enquire to learn more',
       line3: 'Send a short note — we will share what matters',
       caption:
-        'Curious? Enquire to learn more — send a short note and we will share the details that matter.\n\n{name}\nOn The Networker Hub → {url}',
+        'Curious? Enquire to learn more — send a short note and we will share the details that matter.\n\n{listing}\nOn The Networker Hub → {url}',
     },
     {
       id: 'verified',
@@ -326,10 +326,10 @@
     }
 
     var isDarkHub = Boolean(isOpp && hubLogo);
-    var creditW = tpl.hubEmphasis ? 210 : isDarkHub ? 132 : 170;
-    var creditH = tpl.hubEmphasis ? 56 : isDarkHub ? 132 : 46;
-    var cx = W - creditW - 56;
-    var cy = H - creditH - (isDarkHub ? 48 : 64);
+    var creditW = tpl.hubEmphasis ? 210 : isDarkHub ? 200 : 170;
+    var creditH = tpl.hubEmphasis ? 56 : isDarkHub ? 200 : 46;
+    var cx = W - creditW - 48;
+    var cy = H - creditH - (isDarkHub ? 40 : 64);
     if (hubLogo) {
       drawContainedImage(ctx, hubLogo, cx, cy, creditW, creditH);
     }
@@ -351,6 +351,21 @@
     return 'https://www.thenetworkerhub.com';
   }
 
+  function isPublishedOpportunity(o) {
+    if (!o) return false;
+    var status = String(o.status || '').toLowerCase();
+    return status === 'published' || status === 'live';
+  }
+
+  function opportunityPublicUrl(o) {
+    var origin = siteOrigin();
+    if (!o) return origin + '/opportunities/';
+    var slug = String(o.slug || '').trim();
+    if (slug) return origin + '/opportunities/' + encodeURIComponent(slug);
+    if (o.id) return origin + '/opportunities/' + encodeURIComponent(o.id);
+    return origin + '/opportunities/';
+  }
+
   function profileUrlForGroup(groupOrId, maybeSlug) {
     var origin = siteOrigin();
     var id = '';
@@ -367,11 +382,16 @@
     return origin + '/events';
   }
 
-  function buildCaption(tpl, name, group) {
+  function buildCaption(tpl, opts) {
+    var o = opts || {};
+    var name = o.name || 'Our group';
+    var listing = o.listingTitle || name;
+    var url = o.url || siteOrigin() + '/events';
     var raw = tpl.caption || '';
     return raw
-      .replace(/\{name\}/g, name || 'Our group')
-      .replace(/\{url\}/g, profileUrlForGroup(group));
+      .replace(/\{listing\}/g, listing)
+      .replace(/\{name\}/g, name)
+      .replace(/\{url\}/g, url);
   }
 
   function initLinkedInPostBuilder(root, options) {
@@ -383,10 +403,17 @@
         : function () {
             return [];
           };
+    var getOpportunities =
+      typeof opts.getOpportunities === 'function'
+        ? opts.getOpportunities
+        : function () {
+            return [];
+          };
 
     var state = {
       templateId: TEMPLATES[0].id,
       groupId: '',
+      opportunityId: '',
       displayName: '',
       line1: TEMPLATES[0].line1,
       line2: TEMPLATES[0].line2,
@@ -407,17 +434,26 @@
         });
         if (!items.length) return '';
         var label = items[0].groupLabel || gid;
+        var gateNote =
+          gid === 'opportunities'
+            ? '<p class="org-post-gallery-gate" id="post-opp-gate" hidden>Publish a live business opportunity listing to unlock these templates. <a href="#business-list">List a listing →</a></p>'
+            : '';
         return (
-          '<div class="org-post-gallery-group">' +
+          '<div class="org-post-gallery-group" data-gallery-group="' +
+          esc(gid) +
+          '">' +
           '<p class="org-post-gallery-group-title">' +
           esc(label) +
           '</p>' +
+          gateNote +
           '<div class="org-post-gallery-grid" role="list">' +
           items
             .map(function (t) {
               return (
                 '<button type="button" class="org-post-thumb" role="listitem" data-template-id="' +
                 esc(t.id) +
+                '" data-template-group="' +
+                esc(t.group) +
                 '" aria-pressed="false">' +
                 '<span class="org-post-thumb-canvas-wrap">' +
                 '<canvas width="' +
@@ -452,6 +488,11 @@
       '<span class="org-post-label">Organiser page</span>' +
       '<select id="post-group" aria-label="Organiser page"></select>' +
       '</label>' +
+      '<label class="org-post-field" id="post-listing-field" hidden>' +
+      '<span class="org-post-label">Live listing</span>' +
+      '<select id="post-listing" aria-label="Business opportunity listing"></select>' +
+      '<span class="org-post-hint">Caption links to this listing on The Networker Hub.</span>' +
+      '</label>' +
       '<label class="org-post-field">' +
       '<span class="org-post-label">Display name</span>' +
       '<input type="text" id="post-name" maxlength="60" placeholder="Your group or brand name" />' +
@@ -459,7 +500,7 @@
       '<label class="org-post-field">' +
       '<span class="org-post-label">Logo</span>' +
       '<input type="file" id="post-logo-file" accept="image/*" />' +
-      '<span class="org-post-hint">Uses your organiser page logo when available. Upload to override.</span>' +
+      '<span class="org-post-hint" id="post-logo-hint">Uses your organiser page logo when available. Upload to override.</span>' +
       '</label>' +
       '<label class="org-post-field">' +
       '<span class="org-post-label">Headline line 1</span>' +
@@ -499,13 +540,17 @@
       '</div>';
 
     var elGroup = root.querySelector('#post-group');
+    var elListingField = root.querySelector('#post-listing-field');
+    var elListing = root.querySelector('#post-listing');
     var elName = root.querySelector('#post-name');
     var elFile = root.querySelector('#post-logo-file');
+    var elLogoHint = root.querySelector('#post-logo-hint');
     var elLine1 = root.querySelector('#post-line1');
     var elLine2 = root.querySelector('#post-line2');
     var elLine3 = root.querySelector('#post-line3');
     var elStatus = root.querySelector('#post-status');
     var elCaption = root.querySelector('#post-caption-preview');
+    var elOppGate = root.querySelector('#post-opp-gate');
     var canvas = root.querySelector('#post-preview-canvas');
     var ctx = canvas.getContext('2d');
 
@@ -517,9 +562,116 @@
       );
     }
 
+    function isOppTemplate(tpl) {
+      tpl = tpl || currentTemplate();
+      return tpl.theme === 'opportunity' || tpl.group === 'opportunities';
+    }
+
+    function publishedListings() {
+      return (getOpportunities() || []).filter(isPublishedOpportunity);
+    }
+
+    function hasLiveListings() {
+      return publishedListings().length > 0;
+    }
+
+    function currentGroup() {
+      var groups = getGroups() || [];
+      return (
+        groups.find(function (x) {
+          return String(x.id) === String(state.groupId);
+        }) || null
+      );
+    }
+
+    function currentListing() {
+      return (
+        publishedListings().find(function (o) {
+          return String(o.id) === String(state.opportunityId);
+        }) || null
+      );
+    }
+
     function setStatus(msg, isError) {
       elStatus.textContent = msg || '';
       elStatus.classList.toggle('is-error', Boolean(isError));
+    }
+
+    function captionPayload() {
+      var tpl = currentTemplate();
+      var group = currentGroup() || { id: state.groupId };
+      var listing = currentListing();
+      var name = state.displayName || elName.value || 'Our group';
+      if (isOppTemplate(tpl) && listing) {
+        return {
+          name: name,
+          listingTitle: listing.title || name,
+          url: opportunityPublicUrl(listing),
+        };
+      }
+      return {
+        name: name,
+        listingTitle: name,
+        url: profileUrlForGroup(group),
+      };
+    }
+
+    function syncOpportunityGate() {
+      var unlocked = hasLiveListings();
+      if (elOppGate) elOppGate.hidden = unlocked;
+      root.querySelectorAll('.org-post-thumb[data-template-group="opportunities"]').forEach(function (btn) {
+        btn.disabled = !unlocked;
+        btn.classList.toggle('is-locked', !unlocked);
+        btn.setAttribute('aria-disabled', unlocked ? 'false' : 'true');
+        btn.title = unlocked ? '' : 'Publish a live listing to use this template';
+      });
+      if (!unlocked && isOppTemplate()) {
+        var fallback = TEMPLATES[0];
+        state.templateId = fallback.id;
+        state.line1 = fallback.line1;
+        state.line2 = fallback.line2;
+        state.line3 = fallback.line3;
+        elLine1.value = state.line1;
+        elLine2.value = state.line2;
+        elLine3.value = state.line3;
+      }
+    }
+
+    function syncListingField() {
+      var show = isOppTemplate() && hasLiveListings();
+      elListingField.hidden = !show;
+      if (!show) return;
+      var list = publishedListings();
+      var prev = state.opportunityId;
+      elListing.innerHTML = '';
+      list.forEach(function (o, idx) {
+        var opt = document.createElement('option');
+        opt.value = o.id;
+        opt.textContent = o.title || 'Untitled listing';
+        elListing.appendChild(opt);
+        if (!prev && idx === 0) state.opportunityId = o.id;
+      });
+      if (
+        prev &&
+        list.some(function (o) {
+          return String(o.id) === String(prev);
+        })
+      ) {
+        elListing.value = prev;
+        state.opportunityId = prev;
+      } else {
+        elListing.value = state.opportunityId || (list[0] && list[0].id) || '';
+        state.opportunityId = elListing.value;
+      }
+    }
+
+    function resolveLogoUrl() {
+      var listing = isOppTemplate() ? currentListing() : null;
+      if (listing && (listing.logoUrl || listing.imageUrl)) {
+        return listing.logoUrl || listing.imageUrl;
+      }
+      var g = currentGroup();
+      return (g && g.imageUrl) || state.orgLogoUrl || '';
     }
 
     function syncThumbSelection() {
@@ -563,13 +715,9 @@
     }
 
     function applyGroupToFields(resetCopy) {
-      var groups = getGroups() || [];
-      var g = groups.find(function (x) {
-        return String(x.id) === String(state.groupId);
-      });
+      var g = currentGroup();
       if (g) {
         state.displayName = g.name || '';
-        state.orgLogoUrl = g.imageUrl || '';
         elName.value = state.displayName;
         elFile.value = '';
         if (state.orgLogoObjectUrl) {
@@ -580,6 +728,12 @@
           }
           state.orgLogoObjectUrl = '';
         }
+      }
+      state.orgLogoUrl = resolveLogoUrl();
+      if (elLogoHint) {
+        elLogoHint.textContent = isOppTemplate()
+          ? 'Uses your listing logo when available, otherwise your organiser page logo. Upload to override.'
+          : 'Uses your organiser page logo when available. Upload to override.';
       }
       if (resetCopy) {
         var tpl = currentTemplate();
@@ -592,21 +746,8 @@
       }
     }
 
-    function currentGroup() {
-      var groups = getGroups() || [];
-      return (
-        groups.find(function (x) {
-          return String(x.id) === String(state.groupId);
-        }) || null
-      );
-    }
-
     function updateCaptionPreview() {
-      elCaption.textContent = buildCaption(
-        currentTemplate(),
-        state.displayName || elName.value,
-        currentGroup() || { id: state.groupId }
-      );
+      elCaption.textContent = buildCaption(currentTemplate(), captionPayload());
     }
 
     async function loadAsset(paths) {
@@ -664,21 +805,26 @@
         return state.orgLogoImg;
       }
 
-      if (!state.orgLogoUrl || !state.groupId) {
+      state.orgLogoUrl = resolveLogoUrl();
+      if (!state.orgLogoUrl) {
         state.orgLogoImg = null;
         return null;
       }
 
-      // Same-origin proxy avoids CORS tainting when painting remote storage logos onto canvas
-      try {
-        state.orgLogoImg = await loadImage(
-          '/api/organiser/logo-proxy?groupId=' + encodeURIComponent(state.groupId),
-          false
-        );
-        setStatus('');
-        return state.orgLogoImg;
-      } catch (e) {
-        /* fall through */
+      // Prefer same-origin group proxy when using organiser page logo
+      var listing = isOppTemplate() ? currentListing() : null;
+      var usingListingLogo = Boolean(listing && (listing.logoUrl || listing.imageUrl));
+      if (!usingListingLogo && state.groupId) {
+        try {
+          state.orgLogoImg = await loadImage(
+            '/api/organiser/logo-proxy?groupId=' + encodeURIComponent(state.groupId),
+            false
+          );
+          setStatus('');
+          return state.orgLogoImg;
+        } catch (e) {
+          /* fall through */
+        }
       }
 
       try {
@@ -687,7 +833,7 @@
       } catch (e2) {
         state.orgLogoImg = null;
         setStatus(
-          'Could not load your page logo into the preview. Upload the logo file below to include it in the download.',
+          'Could not load the logo into the preview. Upload the logo file below to include it in the download.',
           true
         );
       }
@@ -722,6 +868,8 @@
       if (state.rendering) return;
       state.rendering = true;
       try {
+        syncOpportunityGate();
+        syncListingField();
         var tpl = currentTemplate();
         var hubImg = await ensureHubLogo(tpl);
         await ensureOrgLogo();
@@ -738,6 +886,10 @@
     }
 
     function downloadPng() {
+      if (isOppTemplate() && !hasLiveListings()) {
+        setStatus('Publish a live business opportunity listing before downloading this template.', true);
+        return;
+      }
       renderPreview().then(function () {
         var tpl = currentTemplate();
         var link = document.createElement('a');
@@ -762,11 +914,11 @@
     }
 
     function copyCaption() {
-      var text = buildCaption(
-        currentTemplate(),
-        state.displayName || elName.value,
-        currentGroup() || { id: state.groupId }
-      );
+      if (isOppTemplate() && !hasLiveListings()) {
+        setStatus('Publish a live business opportunity listing before copying this caption.', true);
+        return;
+      }
+      var text = buildCaption(currentTemplate(), captionPayload());
       var btn = root.querySelector('#post-copy-caption');
       var done = function () {
         if (!btn) return;
@@ -787,26 +939,43 @@
       setStatus('Caption copied — paste it with your downloaded image on LinkedIn.');
     }
 
-    function selectTemplate(id) {
+    function selectTemplate(id, flags) {
+      var tpl = TEMPLATES.find(function (t) {
+        return t.id === id;
+      });
+      if (!tpl) return;
+      if (tpl.group === 'opportunities' && !hasLiveListings()) {
+        setStatus('Publish a live business opportunity listing to unlock these templates.', true);
+        return;
+      }
+      if (flags && flags.skipResetIfSame && state.templateId === id) {
+        refresh();
+        return;
+      }
       state.templateId = id;
-      var tpl = currentTemplate();
       state.line1 = tpl.line1;
       state.line2 = tpl.line2;
       state.line3 = tpl.line3;
       elLine1.value = state.line1;
       elLine2.value = state.line2;
       elLine3.value = state.line3;
+      applyGroupToFields(false);
       refresh();
     }
 
     root.querySelector('#post-gallery').addEventListener('click', function (e) {
       var btn = e.target.closest('[data-template-id]');
-      if (!btn || !root.contains(btn)) return;
+      if (!btn || !root.contains(btn) || btn.disabled) return;
       selectTemplate(btn.getAttribute('data-template-id'));
     });
 
     elGroup.addEventListener('change', function () {
       state.groupId = elGroup.value;
+      applyGroupToFields(false);
+      refresh();
+    });
+    elListing.addEventListener('change', function () {
+      state.opportunityId = elListing.value;
       applyGroupToFields(false);
       refresh();
     });
@@ -853,6 +1022,8 @@
 
     function hydrate() {
       syncGroupOptions();
+      syncOpportunityGate();
+      syncListingField();
       applyGroupToFields(true);
       elLine1.value = state.line1;
       elLine2.value = state.line2;
@@ -868,6 +1039,14 @@
     return {
       refreshGroups: function () {
         syncGroupOptions();
+        syncOpportunityGate();
+        syncListingField();
+        applyGroupToFields(false);
+        refresh();
+      },
+      refreshOpportunities: function () {
+        syncOpportunityGate();
+        syncListingField();
         applyGroupToFields(false);
         refresh();
       },
