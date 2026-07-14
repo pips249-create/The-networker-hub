@@ -1356,24 +1356,24 @@
   }
 
   function buildLocationFields() {
-    const venue = document.getElementById('ee-venue').value.trim();
-    const address1 = document.getElementById('ee-address1').value.trim();
-    const city = document.getElementById('ee-city').value.trim();
-    const postcode = document.getElementById('ee-postcode').value.trim();
+    const showOnline = eventFormat === 'online';
+    const venue = showOnline ? '' : document.getElementById('ee-venue').value.trim();
+    const address1 = showOnline ? '' : document.getElementById('ee-address1').value.trim();
+    const city = showOnline ? '' : document.getElementById('ee-city').value.trim();
+    const postcode = showOnline ? '' : document.getElementById('ee-postcode').value.trim();
     const parts = [venue, address1, city, postcode].filter(Boolean);
     const fullAddress = parts.join(', ');
-    let location = fullAddress;
-    if (eventFormat === 'online' && !location) location = 'Online';
+    const location = showOnline ? 'Online' : fullAddress;
     return {
       venue,
       addressLine1: address1,
       city,
       postcode,
       location,
-      fullAddress,
+      fullAddress: showOnline ? 'Online' : fullAddress,
       eventFormat,
-      onlinePlatform: document.getElementById('ee-platform').value.trim(),
-      onlineLink: document.getElementById('ee-join-link').value.trim(),
+      onlinePlatform: showOnline ? document.getElementById('ee-platform').value.trim() : '',
+      onlineLink: showOnline ? document.getElementById('ee-join-link').value.trim() : '',
     };
   }
 

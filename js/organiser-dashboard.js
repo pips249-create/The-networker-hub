@@ -164,7 +164,13 @@
 
     renderHubPortalMeta();
     renderOrganiserRankingBanner();
-    renderOrganiserRankingShare();
+    renderOrganiserRankingShareIfNeeded();
+  }
+
+  function renderOrganiserRankingShareIfNeeded() {
+    const socialActive = document.querySelector('[data-org-page="social"].is-active');
+    const eventsActive = document.querySelector('[data-org-page="events"].is-active');
+    if (socialActive || eventsActive) renderOrganiserRankingShare();
   }
 
   function rankingTierClass(tier) {
@@ -458,9 +464,15 @@
 
   let linkedInPostBuilder = null;
 
-  function ensureLinkedInPostBuilder() {
+  function isSocialPageActive() {
+    return Boolean(document.querySelector('[data-org-page="social"].is-active'));
+  }
+
+  function ensureLinkedInPostBuilder(options) {
+    options = options || {};
     const root = document.getElementById('org-post-builder-root');
     if (!root || !window.HubLinkedInPostBuilder) return;
+    if (!options.force && !isSocialPageActive()) return;
     if (!linkedInPostBuilder) {
       linkedInPostBuilder = window.HubLinkedInPostBuilder.init(root, {
         getGroups: function () {
@@ -473,7 +485,7 @@
           return state.events || [];
         },
       });
-    } else {
+    } else if (options.force || isSocialPageActive()) {
       if (linkedInPostBuilder.refreshGroups) linkedInPostBuilder.refreshGroups();
       if (linkedInPostBuilder.refreshOpportunities) linkedInPostBuilder.refreshOpportunities();
       if (linkedInPostBuilder.refreshEvents) linkedInPostBuilder.refreshEvents();
@@ -5110,11 +5122,13 @@
     }
     if (page === 'social') {
       renderOrganiserRankingShare();
-      ensureLinkedInPostBuilder();
-      loadOpportunitiesList().then(function () {
-        if (linkedInPostBuilder && linkedInPostBuilder.refreshOpportunities) {
-          linkedInPostBuilder.refreshOpportunities();
-        }
+      requestAnimationFrame(function () {
+        ensureLinkedInPostBuilder({ force: true });
+        loadOpportunitiesList().then(function () {
+          if (linkedInPostBuilder && linkedInPostBuilder.refreshOpportunities) {
+            linkedInPostBuilder.refreshOpportunities();
+          }
+        });
       });
     }
     if (page === 'team') {
@@ -5124,14 +5138,18 @@
     });
     }
     if (page === 'business-overview') {
-      loadOpportunityEnquiries();
-      loadOpportunitiesList();
+      requestAnimationFrame(function () {
+        loadOpportunityEnquiries();
+        loadOpportunitiesList();
+      });
     }
     if (page === 'business-list') {
-      loadOpportunityEnquiries();
-      loadOpportunitiesList().then(function () {
-        renderOpportunityPerformance();
-        updateBusinessListPageHead();
+      requestAnimationFrame(function () {
+        loadOpportunityEnquiries();
+        loadOpportunitiesList().then(function () {
+          renderOpportunityPerformance();
+          updateBusinessListPageHead();
+        });
       });
     }
 
@@ -7177,11 +7195,6 @@
   function renderAll() {
     renderStats();
     renderOrganiserNotices();
-    renderOrganiserRankingShare();
-    ensureLinkedInPostBuilder();
-    if (linkedInPostBuilder && linkedInPostBuilder.refreshOpportunities) {
-      linkedInPostBuilder.refreshOpportunities();
-    }
     renderGroups();
     renderTeam();
     renderMyEventsHub();
@@ -8250,7 +8263,7 @@
         loadBootstrap({ silent: true }).then(function () {
           renderAll();
           setRoute('social');
-          ensureLinkedInPostBuilder();
+          ensureLinkedInPostBuilder({ force: true });
           if (publishedEventId && linkedInPostBuilder?.prefillEvent) {
             linkedInPostBuilder.prefillEvent(publishedEventId);
           }
@@ -8373,7 +8386,7 @@
       }
       if (pendingPromoteEventId) {
         setRoute('social');
-        ensureLinkedInPostBuilder();
+        ensureLinkedInPostBuilder({ force: true });
         if (linkedInPostBuilder?.prefillEvent) {
           linkedInPostBuilder.prefillEvent(pendingPromoteEventId);
         }

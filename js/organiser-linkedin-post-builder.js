@@ -1,10 +1,61 @@
 /**
  * Organiser LinkedIn post image builder — square post graphic + caption.
- * Gallery of all templates; personalise logo/name; preview; download PNG + copy caption.
+ * Gallery of post types + 3 backgrounds; personalise logo/name; preview; download PNG + copy caption.
  */
 (function (global) {
   var W = 1200;
   var H = 1200;
+
+  var BACKGROUNDS = [
+    {
+      id: 'cream',
+      label: 'Soft cream',
+      dark: false,
+      accent: '#9a7aa8',
+      stops: ['#faf6ee', '#f5f0e8', '#ebe0f0'],
+      blob1: 'rgba(194,153,209,0.14)',
+      blob2: 'rgba(154,122,168,0.1)',
+      kicker: '#9a7aa8',
+      title: '#4a4446',
+      sub: '#5c5557',
+      brandText: '#4a4446',
+      brandHint: '#9a7aa8',
+      brandBox: 'rgba(255,255,255,0.78)',
+      credit: '#5c5557',
+    },
+    {
+      id: 'charcoal',
+      label: 'Charcoal',
+      dark: true,
+      accent: '#c4a574',
+      stops: ['#2c2826', '#3a3532', '#1e1b1a'],
+      blob1: 'rgba(196,165,116,0.18)',
+      blob2: 'rgba(255,255,255,0.05)',
+      kicker: '#c4a574',
+      title: '#f7f1e8',
+      sub: '#b7aea4',
+      brandText: '#2c2826',
+      brandHint: '#8a7355',
+      brandBox: 'rgba(247,241,232,0.95)',
+      credit: '#b7aea4',
+    },
+    {
+      id: 'navy',
+      label: 'Navy & gold',
+      dark: true,
+      accent: '#c9961f',
+      stops: ['#0d1f3c', '#162847', '#1a3a5c'],
+      blob1: 'rgba(201,150,31,0.2)',
+      blob2: 'rgba(232,184,75,0.12)',
+      kicker: '#e8b84b',
+      title: '#ffffff',
+      sub: '#8d99ae',
+      brandText: '#0d1f3c',
+      brandHint: '#c9961f',
+      brandBox: 'rgba(253,246,227,0.94)',
+      credit: '#8d99ae',
+    },
+  ];
 
   var TEMPLATES = [
     {
@@ -193,15 +244,30 @@
     ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
   }
 
-  function drawCoverImage(ctx, img, x, y, w, h) {
+  function parseImagePosition(raw) {
+    var m = String(raw || '')
+      .trim()
+      .match(/^(\d{1,3})%\s+(\d{1,3})%$/);
+    if (!m) return null;
+    return {
+      x: Math.min(100, Math.max(0, Number(m[1]))) / 100,
+      y: Math.min(100, Math.max(0, Number(m[2]))) / 100,
+    };
+  }
+
+  function drawCoverImage(ctx, img, x, y, w, h, position) {
     if (!img) return;
     var scale = Math.max(w / img.width, h / img.height);
     var dw = img.width * scale;
     var dh = img.height * scale;
+    // Match CSS object-position / organiser photo recenter.
+    var pos = parseImagePosition(position) || { x: 0.5, y: 0.5 };
+    var dx = x + (w - dw) * pos.x;
+    var dy = y + (h - dh) * pos.y;
     ctx.save();
     roundRect(ctx, x, y, w, h, 22);
     ctx.clip();
-    ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+    ctx.drawImage(img, dx, dy, dw, dh);
     ctx.restore();
   }
 
@@ -232,8 +298,22 @@
     ctx.closePath();
   }
 
+  function backgroundById(id) {
+    return (
+      BACKGROUNDS.find(function (b) {
+        return b.id === id;
+      }) || BACKGROUNDS[0]
+    );
+  }
+
+  function defaultBackgroundIdForTemplate(tpl) {
+    if (tpl && (tpl.theme === 'opportunity' || tpl.group === 'opportunities')) return 'navy';
+    return 'cream';
+  }
+
   function paintPost(ctx, opts) {
     var tpl = opts.template;
+    var bg = opts.background || BACKGROUNDS[0];
     var name = String(opts.displayName || '').trim();
     var line1 = String(opts.line1 != null ? opts.line1 : tpl.line1).trim();
     var line2 = String(opts.line2 != null ? opts.line2 : tpl.line2).trim();
@@ -241,59 +321,42 @@
     var orgLogo = opts.orgLogoImg || null;
     var hubLogo = opts.hubLogoImg || null;
     var eventImage = opts.eventImageImg || null;
-    var isOpp = tpl.theme === 'opportunity' || tpl.group === 'opportunities';
     var isEventSpotlight = tpl.theme === 'event_spotlight';
     var quietBrand = Boolean(opts.quietBrand);
+    var isDark = Boolean(bg.dark);
 
     var g = ctx.createLinearGradient(0, 0, W, H);
-    if (isOpp) {
-      g.addColorStop(0, '#0d1f3c');
-      g.addColorStop(0.5, '#162847');
-      g.addColorStop(1, '#1a3a5c');
-    } else {
-      g.addColorStop(0, '#faf6ee');
-      g.addColorStop(0.55, '#f5f0e8');
-      g.addColorStop(1, '#ebe0f0');
-    }
+    g.addColorStop(0, bg.stops[0]);
+    g.addColorStop(0.55, bg.stops[1] || bg.stops[0]);
+    g.addColorStop(1, bg.stops[2] || bg.stops[1] || bg.stops[0]);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
-    ctx.fillStyle = tpl.accent || (isOpp ? '#c9961f' : '#c299d1');
+    ctx.fillStyle = bg.accent || tpl.accent || '#9a7aa8';
     ctx.fillRect(0, 0, W, 16);
 
-    if (isOpp) {
-      ctx.fillStyle = 'rgba(201,150,31,0.2)';
-      ctx.beginPath();
-      ctx.arc(1040, 160, 220, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(232,184,75,0.12)';
-      ctx.beginPath();
-      ctx.arc(180, 1040, 260, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      ctx.fillStyle = 'rgba(194,153,209,0.14)';
-      ctx.beginPath();
-      ctx.arc(1040, 160, 220, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(154,122,168,0.1)';
-      ctx.beginPath();
-      ctx.arc(180, 1040, 260, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    ctx.fillStyle = bg.blob1;
+    ctx.beginPath();
+    ctx.arc(1040, 160, 220, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = bg.blob2;
+    ctx.beginPath();
+    ctx.arc(180, 1040, 260, 0, Math.PI * 2);
+    ctx.fill();
 
-    var kickerColor = isOpp ? '#e8b84b' : '#9a7aa8';
-    var titleColor = isOpp ? '#ffffff' : '#4a4446';
-    var subColor = isOpp ? '#8d99ae' : '#5c5557';
-    var brandText = isOpp ? '#0d1f3c' : '#4a4446';
-    var brandHint = isOpp ? '#c9961f' : '#9a7aa8';
-    var creditColor = isOpp ? '#8d99ae' : '#5c5557';
+    var kickerColor = bg.kicker;
+    var titleColor = bg.title;
+    var subColor = bg.sub;
+    var brandText = bg.brandText;
+    var brandHint = bg.brandHint;
+    var creditColor = bg.credit;
 
     if (!quietBrand) {
       var brandBoxX = 72;
       var brandBoxY = 56;
       var brandBoxW = 1056;
       var brandBoxH = 220;
-      ctx.fillStyle = isOpp ? 'rgba(253,246,227,0.94)' : 'rgba(255,255,255,0.72)';
+      ctx.fillStyle = bg.brandBox;
       roundRect(ctx, brandBoxX, brandBoxY, brandBoxW, brandBoxH, 18);
       ctx.fill();
 
@@ -326,10 +389,14 @@
     }
 
     if (isEventSpotlight && !quietBrand) {
-      var coverY = 310;
+      // Match the organiser listing crop frame (16:10) so object-position lines up.
+      var coverY = 300;
+      var coverAreaW = 1056;
       var coverH = eventImage ? 410 : 0;
+      var coverW = eventImage ? Math.round(coverH * (16 / 10)) : 0;
+      var coverX = eventImage ? 72 + Math.round((coverAreaW - coverW) / 2) : 72;
       if (eventImage) {
-        drawCoverImage(ctx, eventImage, 72, coverY, 1056, coverH);
+        drawCoverImage(ctx, eventImage, coverX, coverY, coverW, coverH, opts.eventImagePosition);
       }
       var spotlightTextY = eventImage ? 780 : 390;
       ctx.fillStyle = kickerColor;
@@ -388,11 +455,11 @@
       y += 38;
     }
 
-    var isDarkHub = Boolean(isOpp && hubLogo);
+    var isDarkHub = Boolean(isDark && hubLogo);
     var creditW = tpl.hubEmphasis ? 210 : isDarkHub ? 200 : 170;
-    var creditH = tpl.hubEmphasis ? 56 : isDarkHub ? 200 : 46;
+    var creditH = tpl.hubEmphasis ? 56 : isDarkHub ? 54 : 46;
     var cx = W - creditW - 48;
-    var cy = H - creditH - (isDarkHub ? 40 : 64);
+    var cy = H - creditH - (isDarkHub ? 48 : 64);
     if (hubLogo) {
       drawContainedImage(ctx, hubLogo, cx, cy, creditW, creditH);
     }
@@ -435,6 +502,31 @@
     }
     if (ev.id) return origin + '/events/event?id=' + encodeURIComponent(ev.id);
     return origin + '/events';
+  }
+
+  function eventIsOnline(ev) {
+    if (!ev) return false;
+    var format = String(ev.eventFormat || ev.meeting_type || '').toLowerCase();
+    if (format.includes('online') || format.includes('virtual')) return true;
+    var loc = String(ev.location || '').trim().toLowerCase();
+    if (loc === 'online') return true;
+    return Boolean(ev.onlineLink || ev.meeting_link) && !ev.venue && !ev.addressLine1 && !ev.postcode;
+  }
+
+  function eventPlaceLine(ev) {
+    if (!ev) return '';
+    if (eventIsOnline(ev)) {
+      var platform = String(ev.onlinePlatform || '').trim();
+      return platform ? 'Online · ' + platform : 'Online';
+    }
+    return String(ev.location || ev.venue || '').trim();
+  }
+
+  function eventOptionLabel(ev) {
+    var title = String((ev && ev.title) || 'Untitled event').trim();
+    var date = eventDateLine(ev);
+    if (date) return title + ' · ' + date;
+    return title + ' · Date TBC';
   }
 
   function eventDateLine(ev) {
@@ -514,6 +606,8 @@
 
     var state = {
       templateId: TEMPLATES[0].id,
+      backgroundId: 'cream',
+      backgroundTouched: false,
       groupId: '',
       opportunityId: '',
       eventId: '',
@@ -528,9 +622,28 @@
       orgLogoImg: null,
       eventImageImg: null,
       eventImageUrl: '',
+      eventImagePosition: '',
       rendering: false,
       renderPending: false,
     };
+
+    var backgroundPickerHtml =
+      '<div class="org-post-bg-picker" id="post-bg-picker" role="listbox" aria-label="Post background">' +
+      BACKGROUNDS.map(function (bg) {
+        return (
+          '<button type="button" class="org-post-bg-option" role="option" data-background-id="' +
+          esc(bg.id) +
+          '" aria-selected="false">' +
+          '<span class="org-post-bg-swatch org-post-bg-swatch--' +
+          esc(bg.id) +
+          '" aria-hidden="true"></span>' +
+          '<span class="org-post-bg-label">' +
+          esc(bg.label) +
+          '</span>' +
+          '</button>'
+        );
+      }).join('') +
+      '</div>';
 
     var groupOrder = ['events', 'opportunities', 'badges'];
     var galleryHtml = groupOrder
@@ -585,7 +698,10 @@
     root.innerHTML =
       '<div class="org-post-builder">' +
       '<div class="org-post-gallery" id="post-gallery">' +
-      '<p class="org-post-label">Choose a post type</p>' +
+      '<p class="org-post-label">Background</p>' +
+      backgroundPickerHtml +
+      '<p class="org-post-hint org-post-bg-hint">Pick a colour first — then choose the wording below.</p>' +
+      '<p class="org-post-label">Post type</p>' +
       galleryHtml +
       '</div>' +
       '<div class="org-post-workspace">' +
@@ -599,7 +715,7 @@
       '<select id="post-event" aria-label="Published event"></select>' +
       '<span class="org-post-hint">Uses the event photo, listing link and event details.</span>' +
       '</label>' +
-      '<label class="org-post-field" id="post-listing-field" hidden>' +
+      '<label class="org-post-field" id="post-listing-field" hidden style="display:none">' +
       '<span class="org-post-label">Live listing</span>' +
       '<select id="post-listing" aria-label="Business opportunity listing"></select>' +
       '<span class="org-post-hint">Caption links to this listing on The Networker Hub.</span>' +
@@ -675,6 +791,28 @@
       );
     }
 
+    function currentBackground() {
+      return backgroundById(state.backgroundId);
+    }
+
+    function syncBackgroundSelection() {
+      root.querySelectorAll('.org-post-bg-option').forEach(function (btn) {
+        var on = btn.getAttribute('data-background-id') === state.backgroundId;
+        btn.classList.toggle('is-selected', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+    }
+
+    function selectBackground(id, flags) {
+      var bg = backgroundById(id);
+      if (!bg) return;
+      state.backgroundId = bg.id;
+      if (!flags || !flags.silent) state.backgroundTouched = true;
+      syncBackgroundSelection();
+      scheduleGalleryThumbs();
+      refresh();
+    }
+
     function isOppTemplate(tpl) {
       tpl = tpl || currentTemplate();
       return tpl.theme === 'opportunity' || tpl.group === 'opportunities';
@@ -739,7 +877,7 @@
           listingTitle: event.title || name,
           eventTitle: event.title || 'Our event',
           dateLine: eventDateLine(event),
-          location: event.location || event.venue || '',
+          location: eventPlaceLine(event),
           url: eventPublicUrl(event),
         };
       }
@@ -778,9 +916,17 @@
       }
     }
 
+    function setFieldVisible(el, show) {
+      if (!el) return;
+      el.hidden = !show;
+      el.setAttribute('aria-hidden', show ? 'false' : 'true');
+      el.style.display = show ? '' : 'none';
+    }
+
     function syncListingField() {
-      var show = isOppTemplate() && hasLiveListings();
-      elListingField.hidden = !show;
+      // Opportunity-only control — never show on event announcement templates.
+      var show = isOppTemplate() && !isEventTemplate() && hasLiveListings();
+      setFieldVisible(elListingField, show);
       if (!show) return;
       var list = publishedListings();
       var prev = state.opportunityId;
@@ -808,36 +954,50 @@
 
     function syncEventField() {
       var show = isEventTemplate();
-      elEventField.hidden = !show;
+      setFieldVisible(elEventField, show);
       if (!show) return;
-      var list = publishedEvents();
-      var prev = state.eventId;
+      var list = publishedEvents()
+        .slice()
+        .sort(function (a, b) {
+          var da = a.date ? new Date(a.date).getTime() : 0;
+          var db = b.date ? new Date(b.date).getTime() : 0;
+          if (da !== db) return da - db;
+          return String(a.title || '').localeCompare(String(b.title || ''));
+        });
+      var preferred = String(state.eventId || '');
       elEvent.innerHTML = '';
       if (!list.length) {
         var empty = document.createElement('option');
-        empty.value = '';
-        empty.textContent = 'No published events yet';
+        empty.value = preferred || '';
+        empty.textContent = preferred ? 'Published event (loading…)' : 'No published events yet';
         elEvent.appendChild(empty);
-        state.eventId = '';
+        if (!preferred) state.eventImagePosition = '';
         return;
       }
-      list.forEach(function (ev, idx) {
+      list.forEach(function (ev) {
         var option = document.createElement('option');
         option.value = ev.id;
-        option.textContent = ev.title || 'Untitled event';
+        option.textContent = eventOptionLabel(ev);
         elEvent.appendChild(option);
-        if (!prev && idx === 0) state.eventId = ev.id;
       });
-      if (
-        prev &&
-        list.some(function (ev) {
-          return String(ev.id) === String(prev);
-        })
-      ) {
-        state.eventId = prev;
+      var inList = list.some(function (ev) {
+        return String(ev.id) === preferred;
+      });
+      if (inList) {
+        elEvent.value = preferred;
+        state.eventId = preferred;
+      } else if (preferred) {
+        // Prefill can race ahead of bootstrap — keep the id and show a temporary row.
+        var pending = document.createElement('option');
+        pending.value = preferred;
+        pending.textContent = 'Selected event (loading…)';
+        elEvent.insertBefore(pending, elEvent.firstChild);
+        elEvent.value = preferred;
+        state.eventId = preferred;
+      } else {
+        elEvent.value = list[0].id;
+        state.eventId = list[0].id;
       }
-      elEvent.value = state.eventId || list[0].id;
-      state.eventId = elEvent.value;
     }
 
     function resolveLogoUrl() {
@@ -859,12 +1019,12 @@
       }
       state.line1 = event.title || 'New event';
       state.line2 = eventDateLine(event);
-      state.line3 =
-        [event.location || event.venue || '', 'Buy tickets now'].filter(Boolean).join(' · ');
+      state.line3 = [eventPlaceLine(event), 'Buy tickets now'].filter(Boolean).join(' · ');
       elLine1.value = state.line1;
       elLine2.value = state.line2;
       elLine3.value = state.line3;
       state.eventImageUrl = event.imageUrl || event.photoUrl || event.photo_url || '';
+      state.eventImagePosition = String(event.imagePosition || event.photoPosition || '').trim();
       state.eventImageImg = null;
       applyGroupToFields(false);
     }
@@ -963,8 +1123,9 @@
     }
 
     async function ensureHubLogo(tpl) {
-      var isOpp = tpl && (tpl.theme === 'opportunity' || tpl.group === 'opportunities');
-      if (isOpp) {
+      var bg = currentBackground();
+      var useDark = Boolean(bg.dark);
+      if (useDark) {
         if (state.hubLogoDarkImg) return state.hubLogoDarkImg;
         try {
           state.hubLogoDarkImg = await loadAsset([
@@ -1042,9 +1203,13 @@
     async function ensureEventImage() {
       if (!isEventTemplate()) {
         state.eventImageImg = null;
+        state.eventImagePosition = '';
         return null;
       }
       var event = currentEvent();
+      if (event) {
+        state.eventImagePosition = String(event.imagePosition || event.photoPosition || '').trim();
+      }
       var url =
         (event && (event.imageUrl || event.photoUrl || event.photo_url)) || state.eventImageUrl || '';
       if (!url) {
@@ -1063,14 +1228,22 @@
     }
 
     function paintOpts(tpl, quietBrand, hubImg) {
+      var event = !quietBrand && isEventTemplate(tpl) ? currentEvent() : null;
+      var position = '';
+      if (event) {
+        position = String(event.imagePosition || event.photoPosition || '').trim();
+      }
+      if (!position) position = String(state.eventImagePosition || '').trim();
       return {
         template: tpl,
+        background: currentBackground(),
         displayName: quietBrand ? tpl.label : state.displayName || elName.value,
         line1: quietBrand ? tpl.line1 : state.line1,
         line2: quietBrand ? tpl.line2 : state.line2,
         line3: quietBrand ? tpl.line3 : state.line3,
         orgLogoImg: quietBrand ? null : state.orgLogoImg,
         eventImageImg: quietBrand ? null : state.eventImageImg,
+        eventImagePosition: position,
         hubLogoImg: hubImg || null,
         quietBrand: quietBrand,
       };
@@ -1084,6 +1257,23 @@
         var hubImg = await ensureHubLogo(tpl);
         var tctx = el.getContext('2d');
         paintPost(tctx, paintOpts(tpl, true, hubImg));
+        // Yield so route clicks and typing stay responsive while thumbs paint.
+        if (i < TEMPLATES.length - 1) {
+          await new Promise(function (resolve) {
+            requestAnimationFrame(resolve);
+          });
+        }
+      }
+    }
+
+    function scheduleGalleryThumbs() {
+      var run = function () {
+        renderGalleryThumbs();
+      };
+      if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(run, { timeout: 1500 });
+      } else {
+        setTimeout(run, 0);
       }
     }
 
@@ -1095,12 +1285,17 @@
       state.rendering = true;
       try {
         syncOpportunityGate();
-        syncListingField();
-        syncEventField();
+        // Keep listing/event selects out of the paint path — rebuilding them here
+        // raced with prefill and left the form, preview and caption out of sync.
         var tpl = currentTemplate();
         var hubImg = await ensureHubLogo(tpl);
         await ensureOrgLogo();
         await ensureEventImage();
+        // Prefer live field values so preview always matches what the organiser sees.
+        state.line1 = elLine1.value;
+        state.line2 = elLine2.value;
+        state.line3 = elLine3.value;
+        state.displayName = elName.value;
         paintPost(ctx, paintOpts(tpl, false, hubImg));
         updateCaptionPreview();
         syncThumbSelection();
@@ -1191,13 +1386,24 @@
       elLine1.value = state.line1;
       elLine2.value = state.line2;
       elLine3.value = state.line3;
+      if (!state.backgroundTouched) {
+        state.backgroundId = defaultBackgroundIdForTemplate(tpl);
+        syncBackgroundSelection();
+      }
+      syncListingField();
       syncEventField();
       if (isEventTemplate(tpl) && currentEvent()) applyEventToFields();
       else applyGroupToFields(false);
+      scheduleGalleryThumbs();
       refresh();
     }
 
     root.querySelector('#post-gallery').addEventListener('click', function (e) {
+      var bgBtn = e.target.closest('[data-background-id]');
+      if (bgBtn && root.contains(bgBtn)) {
+        selectBackground(bgBtn.getAttribute('data-background-id'));
+        return;
+      }
       var btn = e.target.closest('[data-template-id]');
       if (!btn || !root.contains(btn) || btn.disabled) return;
       selectTemplate(btn.getAttribute('data-template-id'));
@@ -1264,14 +1470,15 @@
       syncOpportunityGate();
       syncListingField();
       syncEventField();
-      applyGroupToFields(true);
+      syncBackgroundSelection();
+      if (isEventTemplate() && currentEvent()) applyEventToFields();
+      else applyGroupToFields(true);
       elLine1.value = state.line1;
       elLine2.value = state.line2;
       elLine3.value = state.line3;
       elName.value = state.displayName;
-      renderGalleryThumbs().then(function () {
-        return refresh();
-      });
+      refresh();
+      scheduleGalleryThumbs();
     }
 
     hydrate();
@@ -1282,7 +1489,8 @@
         syncOpportunityGate();
         syncListingField();
         syncEventField();
-        applyGroupToFields(false);
+        if (isEventTemplate() && currentEvent()) applyEventToFields();
+        else applyGroupToFields(false);
         refresh();
       },
       refreshOpportunities: function () {
@@ -1293,19 +1501,26 @@
       },
       refreshEvents: function () {
         syncEventField();
+        if (isEventTemplate() && currentEvent()) applyEventToFields();
         refresh();
       },
       prefillEvent: function (eventId) {
         state.eventId = String(eventId || '');
         selectTemplate('new_event');
+        // Events may load after publish — re-apply once the dropdown has the row.
+        syncEventField();
+        if (currentEvent()) applyEventToFields();
+        refresh();
       },
       refresh: refresh,
       templates: TEMPLATES,
+      backgrounds: BACKGROUNDS,
     };
   }
 
   global.HubLinkedInPostBuilder = {
     init: initLinkedInPostBuilder,
     templates: TEMPLATES,
+    backgrounds: BACKGROUNDS,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
