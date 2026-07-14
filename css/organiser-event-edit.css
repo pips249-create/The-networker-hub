@@ -1915,6 +1915,13 @@ body.ee-embed-drawer .ee-actions {
   gap: 8px;
 }
 
+.hub-payment-setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .hub-payment-setup-btn,
 a.hub-payment-setup-btn {
   margin-top: 2px;

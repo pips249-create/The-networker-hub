@@ -147,7 +147,8 @@
     return openUrlInNewTab(url);
   }
 
-  function multiProfileNoteHtml(state) {
+  function multiProfileNoteHtml(state, options) {
+    const opts = options || {};
     const total = (state?.groups || []).length;
     if (total < 2) return '';
     const ready = (state?.groups || []).filter(function (g) {
@@ -155,10 +156,13 @@
     });
     if (ready.length) {
       const sourceName = ready[0]?.name ? esc(ready[0].name) : 'your connected page';
+      const reuseHint = opts.showReuseButton
+        ? 'If they all pay into the same bank account, click <strong>Use same bank details</strong> above instead of repeating Stripe for every page. '
+        : 'If they all pay into the same bank account, use <strong>Use same bank details</strong> instead of repeating Stripe for every page. ';
       return (
         '<p class="hub-payment-setup-note hub-payment-setup-note--info">' +
         '<strong>More than one organiser page?</strong> Each page needs payment setup before paid tickets can go live. ' +
-        'If they all pay into the same bank account, use <strong>Use same bank details</strong> instead of repeating Stripe for every page. ' +
+        reuseHint +
         'Already connected on <strong>' +
         sourceName +
         '</strong>.' +
@@ -181,6 +185,19 @@
     );
   }
 
+  function reuseBankDetailsButtonHtml(group, sourceGroup, buttonClass) {
+    if (!sourceGroup || !group || String(sourceGroup.id) === String(group.id)) return '';
+    return (
+      '<button type="button" class="' +
+      esc(buttonClass || 'hub-payment-setup-btn org-btn org-btn-secondary') +
+      '" data-payment-link="' +
+      esc(group.id || '') +
+      '" data-payment-link-source="' +
+      esc(sourceGroup.id) +
+      '">Use same bank details</button>'
+    );
+  }
+
   function cardHtml(group, options) {
     const opts = options || {};
     const compact = Boolean(opts.compact);
@@ -196,6 +213,14 @@
         '<li><strong>Return here</strong> and publish your paid tickets</li>' +
         '</ol>';
     const href = launcherHref(group?.id, opts.returnPath);
+    const sourceGroup = readySourceGroup(opts.state);
+    const primaryBtnClass = opts.buttonClass || 'hub-payment-setup-btn org-btn org-btn-primary';
+    const reuseBtn = reuseBankDetailsButtonHtml(
+      group,
+      sourceGroup,
+      'hub-payment-setup-btn org-btn org-btn-secondary' + (compact ? ' org-btn-sm' : '')
+    );
+    const showReuseButton = Boolean(reuseBtn);
 
     return (
       '<div class="hub-payment-setup-card' +
@@ -210,8 +235,10 @@
       esc(lead) +
       '</p>' +
       steps +
+      '<div class="hub-payment-setup-actions">' +
+      reuseBtn +
       '<a class="' +
-      esc(opts.buttonClass || 'hub-payment-setup-btn org-btn org-btn-primary') +
+      esc(primaryBtnClass) +
       '" href="' +
       esc(href) +
       '" target="_blank" rel="noopener noreferrer" data-payment-setup="' +
@@ -219,8 +246,9 @@
       '">Add bank details' +
       (group?.name ? ' for ' + groupName : '') +
       '</a>' +
+      '</div>' +
       '<p class="hub-payment-setup-note">Opens in a new tab — return here when finished. Free events do not need bank details.</p>' +
-      multiProfileNoteHtml(opts.state) +
+      multiProfileNoteHtml(opts.state, { showReuseButton: showReuseButton }) +
       '</div></div>'
     );
   }
@@ -243,14 +271,11 @@
       .map(function (group) {
         const name = group?.name ? esc(group.name) : 'Untitled page';
         const href = launcherHref(group?.id, opts.returnPath);
-        const linkBtn =
-          sourceGroup && String(sourceGroup.id) !== String(group.id)
-            ? '<button type="button" class="hub-payment-setup-btn org-btn org-btn-secondary org-btn-sm" data-payment-link="' +
-              esc(group?.id || '') +
-              '" data-payment-link-source="' +
-              esc(sourceGroup.id) +
-              '">Use same bank details</button>'
-            : '';
+        const linkBtn = reuseBankDetailsButtonHtml(
+          group,
+          sourceGroup,
+          'hub-payment-setup-btn org-btn org-btn-secondary org-btn-sm'
+        );
         return (
           '<li class="hub-payment-setup-checklist-item">' +
           '<span class="hub-payment-setup-checklist-name">' +
@@ -271,6 +296,8 @@
       })
       .join('');
 
+    const showReuseButton = Boolean(sourceGroup);
+
     return (
       '<div class="hub-payment-setup-card hub-payment-setup-card--checklist' +
       (compact ? ' hub-payment-setup-card--compact' : '') +
@@ -287,7 +314,7 @@
       items +
       '</ul>' +
       '<p class="hub-payment-setup-note">Opens Stripe in a new tab — return here when finished. Free events do not need bank details.</p>' +
-      multiProfileNoteHtml(state) +
+      multiProfileNoteHtml(state, { showReuseButton: showReuseButton }) +
       '</div></div>'
     );
   }
