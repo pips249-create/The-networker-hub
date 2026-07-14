@@ -8354,6 +8354,24 @@
     setRoute(initial.sub || initial.page);
     try {
       await loadBootstrap();
+      let pendingPromoteEventId = '';
+      try {
+        pendingPromoteEventId = sessionStorage.getItem('hub_promote_event_id') || '';
+        if (pendingPromoteEventId) sessionStorage.removeItem('hub_promote_event_id');
+      } catch {
+        /* ignore private mode */
+      }
+      if (pendingPromoteEventId) {
+        setRoute('social');
+        ensureLinkedInPostBuilder();
+        if (linkedInPostBuilder?.prefillEvent) {
+          linkedInPostBuilder.prefillEvent(pendingPromoteEventId);
+        }
+        showOrganiserAlert(
+          'Your event is live. We created a social post draft in Promote & social.',
+          false
+        );
+      }
       finishDeepLinkAfterBootstrap();
       const connectParam = new URLSearchParams(window.location.search).get('stripe_connect');
       if (connectParam && state.stripeConnectEnabled && state.groups.length) {

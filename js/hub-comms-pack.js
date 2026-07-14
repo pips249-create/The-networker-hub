@@ -17,10 +17,10 @@
     var location = String((ev && ev.location) || '').trim();
     var meta = [date, location].filter(Boolean).join(' · ');
     var caption =
-      '📅 ' +
+      "We've just added a new event:\n\n📅 " +
       title +
       (meta ? '\n\n' + meta : '') +
-      '\n\nBook your place on The Networker Hub:\n' +
+      '\n\nBuy tickets now on The Networker Hub:\n' +
       url;
     return { title: title, url: url, caption: caption };
   }

@@ -150,17 +150,22 @@
             <div class="ee-refund-card" data-policy="flexible" role="radio" tabindex="0" aria-checked="false">
               <input type="radio" name="refund-policy" value="flexible" id="refund-policy-flexible" />
               <strong>Flexible</strong>
-              <span>100% refund up to 24 hours before the event.</span>
+              <span>100% refund up to 48 hours before the event. Best for casual meetups with low catering costs.</span>
             </div>
-            <div class="ee-refund-card" data-policy="moderate" role="radio" tabindex="0" aria-checked="false">
-              <input type="radio" name="refund-policy" value="moderate" id="refund-policy-moderate" />
-              <strong>Moderate</strong>
-              <span>100% refund up to 7 days before the event; 50% refund up to 48 hours before.</span>
+            <div class="ee-refund-card" data-policy="standard" role="radio" tabindex="0" aria-checked="false">
+              <input type="radio" name="refund-policy" value="standard" id="refund-policy-standard" checked />
+              <strong>Standard <span class="ee-optional">(recommended)</span></strong>
+              <span>100% refund up to 7 days before the event. No refund after that.</span>
             </div>
-            <div class="ee-refund-card is-none" data-policy="strict" role="radio" tabindex="0" aria-checked="false">
+            <div class="ee-refund-card" data-policy="strict" role="radio" tabindex="0" aria-checked="false">
               <input type="radio" name="refund-policy" value="strict" id="refund-policy-strict" />
-              <strong>Strict <span class="ee-optional">(standard for B2B)</span></strong>
-              <span>No refunds within 72 hours of the event, helping cover catering booking deadlines.</span>
+              <strong>Strict (B2B)</strong>
+              <span>100% refund up to 14 days before the event. No refund after that — suited to conferences and catered events.</span>
+            </div>
+            <div class="ee-refund-card is-none" data-policy="non_refundable" role="radio" tabindex="0" aria-checked="false">
+              <input type="radio" name="refund-policy" value="non_refundable" id="refund-policy-non-refundable" />
+              <strong>Non-refundable</strong>
+              <span>No change-of-mind refunds. Statutory rights still apply if you cancel or materially change the event.</span>
             </div>
           </div>
           <div class="ee-refund-agreement">
@@ -176,12 +181,12 @@
             <input type="checkbox" id="refund-terms-agreed" />
             <span>I understand I am responsible for honouring refunds via my connected Stripe account</span>
           </label>
-          <p class="ee-alert ee-alert-warn" id="ee-publish-warn" hidden>Your event is not live until you publish a ticket type — please add at least one ticket tier, choose how VAT applies, and complete the refund policy.</p>
+          <p class="ee-alert ee-alert-warn" id="ee-publish-warn" hidden>Before this event can go live: add a ticket type, choose VAT, and complete the refund policy.</p>
         </div>
 
         <div class="ee-actions">
           <button type="button" class="ee-btn ee-btn-outline" id="ee-tickets-save">Save tickets (draft)</button>
-          <button type="submit" class="ee-btn ee-btn-primary" id="ee-tickets-submit" disabled>Publish event</button>
+          <button type="submit" class="ee-btn ee-btn-primary" id="ee-tickets-submit">Publish event</button>
           <a class="ee-btn ee-btn-outline" href="/organiser/#events-tickets">Back to dashboard</a>
         </div>
       </form>
@@ -198,6 +203,6 @@
     <script src="../js/organiser-payment-setup.js?v=20260714a"></script>
     <script src="../js/organiser-field-tips.js?v=20260714ce"></script>
     <script src="../js/hub-field-tip.js?v=20260711"></script>
-    <script src="../js/organiser-event-tickets.js?v=20260714refunds"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260714publishfb"></script>
   </body>
 </html>

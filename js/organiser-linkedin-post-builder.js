@@ -529,6 +529,7 @@
       eventImageImg: null,
       eventImageUrl: '',
       rendering: false,
+      renderPending: false,
     };
 
     var groupOrder = ['events', 'opportunities', 'badges'];
@@ -1087,7 +1088,10 @@
     }
 
     async function renderPreview() {
-      if (state.rendering) return;
+      if (state.rendering) {
+        state.renderPending = true;
+        return;
+      }
       state.rendering = true;
       try {
         syncOpportunityGate();
@@ -1102,6 +1106,10 @@
         syncThumbSelection();
       } finally {
         state.rendering = false;
+        if (state.renderPending) {
+          state.renderPending = false;
+          renderPreview();
+        }
       }
     }
 

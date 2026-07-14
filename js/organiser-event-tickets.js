@@ -34,13 +34,38 @@
     { value: '1_week', label: '1 week before the event' },
     { value: 'custom', label: 'Custom date & time' },
   ];
-  const MODERATE_REFUND_DETAILS =
+  const LEGACY_MODERATE_REFUND_DETAILS =
     '100% refund up to 7 days before the event; 50% refund up to 48 hours before the event.';
   const REFUND_PRESETS = {
-    flexible: { refundPolicy: 'full_refund', refundCutoffDays: 1 },
-    moderate: { refundPolicy: 'custom', refundPolicyDetails: MODERATE_REFUND_DETAILS },
-    strict: { refundPolicy: 'full_refund', refundCutoffDays: 3 },
+    flexible: { refundPolicy: 'full_refund', refundCutoffDays: 2 },
+    standard: { refundPolicy: 'full_refund', refundCutoffDays: 7 },
+    strict: { refundPolicy: 'full_refund', refundCutoffDays: 14 },
+    non_refundable: { refundPolicy: 'no_refunds' },
   };
+
+  function inferRefundPresetFromStored(refundPolicy, refundCutoffDays, refundPolicyDetails) {
+    const policy = String(refundPolicy || '').trim();
+    const cutoff = Number(refundCutoffDays);
+    const details = String(refundPolicyDetails || '').trim();
+    if (policy === 'no_refunds') return 'non_refundable';
+    if (policy === 'full_refund') {
+      if (cutoff === 2 || cutoff === 1) return 'flexible';
+      if (cutoff === 7) return 'standard';
+      if (cutoff === 14 || cutoff === 3) return 'strict';
+      if (!Number.isFinite(cutoff) || cutoff <= 0) return 'standard';
+      if (cutoff <= 2) return 'flexible';
+      if (cutoff <= 7) return 'standard';
+      return 'strict';
+    }
+    if (
+      (policy === 'custom' || policy === 'partial_refund') &&
+      (details === LEGACY_MODERATE_REFUND_DETAILS ||
+        /^100% refund up to 7 days before/i.test(details))
+    ) {
+      return 'standard';
+    }
+    return '';
+  }
 
   function esc(s) {
     const d = document.createElement('div');
@@ -55,6 +80,42 @@
     el.hidden = !msg;
     el.classList.toggle('ee-alert-ok', tone === 'ok');
     el.classList.toggle('ee-alert-warn', tone === 'warn');
+    if (msg) {
+      try {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  function getPublishBlockers(tiers) {
+    const list = tiers || collectActiveTiers();
+    const refund = collectRefundPayload();
+    const blockers = [];
+    if (!list.length) {
+      blockers.push('Add at least one ticket type with a name');
+    } else if (!tiersHaveRequiredSaleEnds(list)) {
+      blockers.push('Choose a valid sale end for every ticket tier');
+    }
+    if (!collectVatTreatment()) {
+      blockers.push('Choose how VAT applies to ticket prices');
+    }
+    if (!refund.refundPolicy) {
+      blockers.push('Select a refund policy');
+    }
+    if (!refund.refundTermsAgreed) {
+      blockers.push('Tick the refund responsibility checkbox');
+    }
+    const paymentNeeded =
+      tiersHavePaidPrice(list) &&
+      paymentSetupState &&
+      window.HubOrganiserPaymentSetup &&
+      window.HubOrganiserPaymentSetup.groupNeedsSetup(paymentSetupState, paymentGroupForSeries());
+    if (paymentNeeded) {
+      blockers.push('Add bank details for paid tickets');
+    }
+    return blockers;
   }
 
   function eventHasTicketSales(ev) {
@@ -688,20 +749,18 @@
       if (vatRadio) selectVatCard(vatRadio);
     }
     if (ev.refundPolicy) {
-      let editablePolicy = '';
-      const cutoff = Number(ev.refundCutoffDays);
-      if (ev.refundPolicy === 'full_refund' && cutoff === 1) editablePolicy = 'flexible';
-      else if (ev.refundPolicy === 'full_refund' && cutoff === 3) editablePolicy = 'strict';
-      else if (
-        (ev.refundPolicy === 'custom' || ev.refundPolicy === 'partial_refund') &&
-        String(ev.refundPolicyDetails || '').trim() === MODERATE_REFUND_DETAILS
-      ) {
-        editablePolicy = 'moderate';
-      }
+      const editablePolicy = inferRefundPresetFromStored(
+        ev.refundPolicy,
+        ev.refundCutoffDays,
+        ev.refundPolicyDetails
+      );
       const refundRadio = document.querySelector(
         'input[name="refund-policy"][value="' + editablePolicy + '"]'
       );
       if (refundRadio) selectRefundCard(refundRadio);
+    } else {
+      const defaultRadio = document.getElementById('refund-policy-standard');
+      if (defaultRadio) selectRefundCard(defaultRadio);
     }
     if (ev.refundTermsAgreed) {
       const agree = document.getElementById('refund-terms-agreed');
@@ -908,18 +967,13 @@
     }
     if (draft.refund && draft.refund.refundPolicy) {
       const draftPolicyVal = String(draft.refund.refundPolicy);
-      const cutoff = Number(draft.refund.refundCutoffDays);
       let policyVal = String(draft.refund.refundPreset || '');
-      if (!REFUND_PRESETS[policyVal] && draftPolicyVal === 'full_refund' && cutoff === 1) {
-        policyVal = 'flexible';
-      } else if (!REFUND_PRESETS[policyVal] && draftPolicyVal === 'full_refund' && cutoff === 3) {
-        policyVal = 'strict';
-      } else if (
-        !REFUND_PRESETS[policyVal] &&
-        (draftPolicyVal === 'custom' || draftPolicyVal === 'partial_refund') &&
-        String(draft.refund.refundPolicyDetails || '').trim() === MODERATE_REFUND_DETAILS
-      ) {
-        policyVal = 'moderate';
+      if (!REFUND_PRESETS[policyVal]) {
+        policyVal = inferRefundPresetFromStored(
+          draftPolicyVal,
+          draft.refund.refundCutoffDays,
+          draft.refund.refundPolicyDetails
+        );
       }
       selectedRefundPolicy = policyVal;
       const policyRadio = Array.from(document.querySelectorAll('input[name="refund-policy"]')).find(
@@ -1029,42 +1083,32 @@
       btn.disabled = true;
       const saveBtn = document.getElementById('ee-tickets-save');
       if (saveBtn) saveBtn.disabled = true;
+      if (warn) warn.hidden = true;
       return;
     }
     try {
       const tiers = collectActiveTiers();
-      const refund = collectRefundPayload();
-      const vat = collectVatTreatment();
-      const hasPaid = tiersHavePaidPrice(tiers);
-      const paymentNeeded =
-        hasPaid &&
-        paymentSetupState &&
-        window.HubOrganiserPaymentSetup &&
-        window.HubOrganiserPaymentSetup.groupNeedsSetup(paymentSetupState, paymentGroupForSeries());
-      const ready =
-        tiersHaveRequiredSaleEnds(tiers) &&
-        vat &&
-        refund.refundPolicy &&
-        refund.refundTermsAgreed &&
-        !paymentNeeded;
-      btn.disabled = !ready;
+      const blockers = getPublishBlockers(tiers);
+      // Keep Publish clickable so incomplete setup shows a clear message instead of a dead click.
+      btn.disabled = false;
       refreshPaymentSetupCard(tiers);
       if (warn) {
-        if (paymentNeeded) {
+        if (!blockers.length) {
+          warn.hidden = true;
+          warn.textContent = '';
+        } else {
           warn.hidden = false;
           warn.textContent =
-            'Add bank details above before publishing paid tickets. Free tickets (£0) can be published without this step.';
-        } else {
-          warn.hidden = ready;
-          if (!ready) {
-            warn.textContent =
-              'Your event is not live until you publish a ticket type — please add at least one ticket tier, choose how VAT applies, and complete the refund policy.';
-          }
+            'Before this event can go live: ' + blockers.join('; ') + '.';
         }
       }
     } catch {
-      btn.disabled = true;
-      if (warn) warn.hidden = false;
+      btn.disabled = false;
+      if (warn) {
+        warn.hidden = false;
+        warn.textContent =
+          'Finish ticket types, VAT, and refund policy below, then click Publish event again.';
+      }
     }
   }
 
@@ -1459,20 +1503,8 @@
         setAttendanceMode('guest_programme');
         prefillTiers(memberTickets);
         prefillGuestPassesDisabled(loaded.event);
-        showAlert(
-          'Loaded your guest visit programme member tickets. Saving will update all dates in this series.',
-          'ok'
-        );
       } else {
         prefillTiers(memberTickets.length ? memberTickets : loaded.tickets);
-        showAlert(
-          'Loaded ' +
-            loaded.tickets.length +
-            ' existing ticket type' +
-            (loaded.tickets.length === 1 ? '' : 's') +
-            '. Saving will update all dates in this series.',
-          'ok'
-        );
       }
     } else {
       addTierRow();
@@ -1523,6 +1555,8 @@
       try {
         await window.HubOrganiserTerms.requireAcceptance();
       } catch (e) {
+        showAlert('Accept the organiser terms to publish, or cancel and come back when you are ready.', 'warn');
+        updatePublishButton();
         return;
       }
     }
@@ -1556,7 +1590,7 @@
       showAlert('Choose a valid sale end for every ticket tier before publishing.', 'warn');
       const missing = Array.from(document.querySelectorAll('.ee-tier-row')).find((row) => {
         const option = row.querySelector('.ee-tier-sale-end')?.value;
-        if (option !== 'custom') return false;
+        if (option !== 'custom') return !computeSaleEndIso(option, null, seriesMeta.events?.[0]?.date);
         return !row.querySelector('.ee-tier-sale-custom-date')?.value;
       });
       (missing || document.getElementById('ee-panel-tickets'))?.scrollIntoView({
@@ -1575,34 +1609,33 @@
           (eventIds.length === 1 ? '' : 's') +
           ' with what you have here. Continue?'
       );
-      if (!proceed) return;
+      if (!proceed) {
+        showAlert('Publish cancelled — your ticket types were not changed.', 'warn');
+        return;
+      }
     }
 
     const refund = collectRefundPayload();
     if (publish) {
-      if (!collectVatTreatment()) {
-        showAlert('Choose whether VAT is included in the ticket price or added at checkout.');
-        updatePublishButton();
-        return;
-      }
-      if (!refund.refundPolicy) {
-        showAlert('Select a refund policy before publishing.');
-        updatePublishButton();
-        return;
-      }
-      if (!refund.refundTermsAgreed) {
-        showAlert('Confirm you understand refunds are your responsibility under Stripe Connect.');
-        updatePublishButton();
-        return;
-      }
-      if (
-        tiersHavePaidPrice(tiers) &&
-        paymentSetupState &&
-        window.HubOrganiserPaymentSetup &&
-        window.HubOrganiserPaymentSetup.groupNeedsSetup(paymentSetupState, paymentGroupForSeries())
-      ) {
-        refreshPaymentSetupCard(tiers);
-        showAlert('Add bank details above before publishing paid tickets.', 'warn');
+      const blockers = getPublishBlockers(tiers);
+      if (blockers.length) {
+        showAlert('Before this event can go live: ' + blockers.join('; ') + '.', 'warn');
+        const warn = document.getElementById('ee-publish-warn');
+        if (warn) {
+          warn.hidden = false;
+          warn.textContent = 'Before this event can go live: ' + blockers.join('; ') + '.';
+          warn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        if (!collectVatTreatment()) {
+          document.getElementById('ee-refund-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else if (!refund.refundPolicy || !refund.refundTermsAgreed) {
+          document.getElementById('ee-refund-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else if (blockers.some((b) => /bank details/i.test(b))) {
+          document.getElementById('ee-payment-setup-mount')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+          });
+        }
         updatePublishButton();
         return;
       }
@@ -1799,14 +1832,12 @@
       return;
     }
 
-    const qs = new URLSearchParams();
-    qs.set('ids', eventIds.join(','));
-    if (seriesMeta.title) qs.set('title', seriesMeta.title);
-    if (seriesMeta.imageUrl) qs.set('image', seriesMeta.imageUrl);
-    const firstImg =
-      seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].imageUrl;
-    if (firstImg) qs.set('image', firstImg);
-    location.href = '/organiser/event-published?' + qs.toString();
+    try {
+      sessionStorage.setItem('hub_promote_event_id', eventIds[0] || '');
+    } catch {
+      /* ignore private mode */
+    }
+    location.href = '/organiser/#social';
   }
 
   document.getElementById('ee-tickets-form').addEventListener('submit', async (e) => {

@@ -1760,7 +1760,31 @@ a:hover {
   color: #166534;
 }
 
-.tier-guest-visit.selected {
+.tier.tier-guest-visit,
+.tier.tier-alumni {
+  display: block;
+  cursor: default;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.tier.tier-guest-visit:hover,
+.tier.tier-guest-visit.selected,
+.tier.tier-alumni:hover,
+.tier.tier-alumni.selected {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.tier.tier-guest-visit .tier-radio,
+.tier.tier-alumni .tier-radio {
+  display: none;
+}
+
+.tier-guest-visit.selected .guest-visit-tier-card {
   border-color: #93c5fd;
   box-shadow: 0 0 0 1px #93c5fd;
 }
@@ -1813,7 +1837,7 @@ a:hover {
   color: #5b3f87;
 }
 
-.tier-alumni.selected {
+.tier-alumni.selected .alumni-tier-card {
   border-color: #c4b5fd;
   box-shadow: 0 0 0 1px #c4b5fd;
 }

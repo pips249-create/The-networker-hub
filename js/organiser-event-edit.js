@@ -671,6 +671,13 @@
     if (!el) return;
     el.textContent = msg;
     el.hidden = !msg;
+    if (msg) {
+      try {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   function fieldToString(val) {
