@@ -116,7 +116,7 @@
 
 | Item | Detail |
 |------|--------|
-| **Purpose** | Answer visitor questions about events, opportunities, and platform use via `/contact.html` and the floating assistant |
+| **Purpose** | Answer visitor questions about events, opportunities, and platform use via `/contact` and the floating assistant |
 | **Data subjects** | Website visitors using Hubert chat |
 | **Categories of data** | Chat message content (only in the visitor’s browser session unless they email hello@ separately) |
 | **Lawful basis** | Legitimate interests — user-initiated help (Art. 6(1)(f)) |

@@ -697,10 +697,10 @@
             { type: 'hub-opportunity-saved', draft: true, id: opportunity.id, title: opportunity.title || '' },
             window.location.origin
           );
-          location.replace('opportunity-edit.html?id=' + encodeURIComponent(opportunity.id) + '&embed=1');
+          location.replace('/organiser/opportunity-edit?id=' + encodeURIComponent(opportunity.id) + '&embed=1');
           return;
         }
-        location.href = 'opportunity-edit.html?id=' + encodeURIComponent(opportunity.id);
+        location.href = '/organiser/opportunity-edit?id=' + encodeURIComponent(opportunity.id);
         return;
       }
       if (isEmbedDrawer && window.parent && window.parent !== window) {
@@ -743,7 +743,7 @@
   async function init() {
     const actions = window.HubOrganiserActions;
     if (actions) {
-      const loggedIn = await actions.requireLogin('/organiser/opportunity-edit.html' + location.search);
+      const loggedIn = await actions.requireLogin('/organiser/opportunity-edit' + location.search);
       if (!loggedIn) return;
     }
 
@@ -764,7 +764,7 @@
 
     const backLink = document.getElementById('oe-back-link');
     if (backLink && editId) {
-      backLink.href = 'index.html#business-overview';
+      backLink.href = '/organiser/#business-overview';
       backLink.textContent = '← Back to My business opportunities';
     }
 

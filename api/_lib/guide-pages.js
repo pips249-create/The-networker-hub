@@ -3,7 +3,7 @@
  */
 const GUIDE_PAGES = {
   'list-an-event': {
-    path: '/guides/list-an-event.html',
+    path: '/guides/list-an-event',
     title: 'List an event – How-to guides – The Networker Hub',
     description:
       'Step-by-step guide for organisers: create your organiser page, add event details, set up tickets, connect Stripe, and publish on The Networker Hub.',
@@ -20,7 +20,7 @@ const GUIDE_PAGES = {
     ],
   },
   'list-a-conference-or-exhibition': {
-    path: '/guides/list-a-conference-or-exhibition.html',
+    path: '/guides/list-a-conference-or-exhibition',
     title: 'List a conference or exhibition – How-to guides – The Networker Hub',
     description:
       'Guide for organisers listing conferences, exhibitions, awards dinners and summits on The Networker Hub — free listings, optional paid tickets, and visibility.',
@@ -35,7 +35,7 @@ const GUIDE_PAGES = {
     ],
   },
   'list-a-business-opportunity': {
-    path: '/guides/list-a-business-opportunity.html',
+    path: '/guides/list-a-business-opportunity',
     title: 'List a business opportunity – How-to guides – The Networker Hub',
     description:
       'How organisers list a business opportunity on The Networker Hub — create a listing, submit for review, and manage enquiries.',
@@ -52,7 +52,7 @@ const GUIDE_PAGES = {
     ],
   },
   'invite-your-team': {
-    path: '/guides/invite-your-team.html',
+    path: '/guides/invite-your-team',
     title: 'Invite your team – How-to guides – The Networker Hub',
     description:
       'How to invite editor team members to your organiser workspace on The Networker Hub — permissions, limits, and accept flow.',
@@ -70,7 +70,7 @@ const GUIDE_PAGES = {
 };
 
 const GUIDES_HUB = {
-  path: '/guides.html',
+  path: '/guides',
   title: 'Organiser guides – The Networker Hub',
   description:
     'Step-by-step onboarding checklists for organisers — list events, publish business opportunities, and invite team editors on The Networker Hub.',

@@ -28,7 +28,7 @@ async function main() {
 
   const admin = await ensureAdminUser({ email, password, name: 'Platform Admin' });
   console.log('Admin ready:', admin.email);
-  console.log('Sign in at /login.html with that email and password.');
+  console.log('Sign in at /login with that email and password.');
 }
 
 main().catch((e) => {

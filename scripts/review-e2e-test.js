@@ -284,7 +284,7 @@ async function main() {
   console.log('\n✅ End-to-end review flow passed');
   console.log('   Organiser rating:', orgAfter?.average_rating, '·', orgAfter?.review_count, 'reviews');
   console.log('   Public profile: /organisers/' + (org.slug || org.id));
-  console.log('   Attendee dashboard: /account/index.html#reviews-pending');
+  console.log('   Attendee dashboard: /account/#reviews-pending');
   console.log('\nManual browser check:');
   console.log('  1. Sign in as', TEST_EMAIL);
   console.log('  2. Open /account/#reviews-pending — “E2E review test evening” should show as reviewed');

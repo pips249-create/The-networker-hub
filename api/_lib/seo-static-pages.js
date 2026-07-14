@@ -30,7 +30,7 @@ const STATIC_PAGES = {
     ogType: 'website',
   },
   faq: {
-    path: '/faq.html',
+    path: '/faq',
     title: 'FAQ & Help – The Networker Hub',
     description:
       'Frequently asked questions about The Networker Hub — finding events, accounts, organisers, and bookings. Search FAQs or ask Hubert instantly.',
@@ -54,7 +54,7 @@ const STATIC_PAGES = {
     ogType: 'article',
   },
   about: {
-    path: '/about.html',
+    path: '/about',
     title: 'About us – The Networker Hub',
     description:
       'Learn about The Networker Hub — the UK platform for networking events, exhibitions, and business opportunities.',
@@ -62,7 +62,7 @@ const STATIC_PAGES = {
     ogType: 'website',
   },
   'for-organisers': {
-    path: '/for-organisers.html',
+    path: '/for-organisers',
     title: 'For Organisers – The Networker Hub',
     description:
       'List UK networking events and business opportunities: organiser dashboard, guest visits, visit tracking, Category Exclusivity, Alumni Fast-Pass, and member discovery.',
@@ -70,7 +70,7 @@ const STATIC_PAGES = {
     ogType: 'website',
   },
   contact: {
-    path: '/contact.html',
+    path: '/contact',
     title: 'Contact us – The Networker Hub',
     description:
       'Get in touch with The Networker Hub — chat with Hubert, your business butler and concierge, or email the team.',
@@ -86,7 +86,7 @@ const STATIC_PAGES = {
     ogType: 'website',
   },
   legal: {
-    path: '/legal-policies.html',
+    path: '/legal-policies',
     title: 'Legal & policies – The Networker Hub',
     description:
       'Privacy policy, terms and conditions, refunds, cookie policy and legal information for The Networker Hub — operated by The Networker Group Ltd.',

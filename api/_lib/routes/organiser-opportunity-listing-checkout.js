@@ -91,14 +91,14 @@ module.exports = async function handler(req, res) {
       opportunityTitle: opportunity.title,
       successUrl:
         siteUrl +
-        '/organiser/opportunity-listing-success.html?session_id={CHECKOUT_SESSION_ID}&id=' +
+        '/organiser/opportunity-listing-success?session_id={CHECKOUT_SESSION_ID}&id=' +
         encodeURIComponent(opportunityId) +
         (title ? '&title=' + title : '') +
         '&months=' +
         encodeURIComponent(String(months)),
       cancelUrl:
         siteUrl +
-        '/organiser/opportunity-edit.html?id=' +
+        '/organiser/opportunity-edit?id=' +
         encodeURIComponent(opportunityId) +
         '&checkout=cancelled',
     });

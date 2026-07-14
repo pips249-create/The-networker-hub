@@ -371,7 +371,7 @@ async function main() {
 
   console.log(`\nDone. Inserted ${inserted} browse events with photos.`);
   console.log('By type:', typeCounts);
-  console.log('Refresh /events/index.html — Sport & social and Women\'s networking filters should now show counts.');
+  console.log('Refresh /events/ — Sport & social and Women\'s networking filters should now show counts.');
 }
 
 main().catch((e) => {

@@ -50,7 +50,7 @@
   }
 
   if (viewEvents && id) {
-    viewEvents.href = '../events/event.html?id=' + encodeURIComponent(id);
+    viewEvents.href = '../events/event?id=' + encodeURIComponent(id);
     viewEvents.textContent = 'View your listing';
   }
 

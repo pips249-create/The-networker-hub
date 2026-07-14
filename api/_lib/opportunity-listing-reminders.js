@@ -57,7 +57,7 @@ async function sendListingExpiryReminders(sb) {
     }
 
     const renewUrl =
-      siteUrl + '/organiser/opportunity-edit.html?id=' + encodeURIComponent(row.id);
+      siteUrl + '/organiser/opportunity-edit?id=' + encodeURIComponent(row.id);
 
     try {
       await sendTemplatedEmail({
@@ -115,7 +115,7 @@ async function sendPremiumExpiryReminders(sb) {
 
     const renewUrl =
       siteUrl +
-      '/organiser/opportunity-submitted.html?id=' +
+      '/organiser/opportunity-submitted?id=' +
       encodeURIComponent(row.id);
 
     try {

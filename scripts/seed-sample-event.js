@@ -32,7 +32,7 @@ async function main() {
 
   if (existing && existing.length) {
     console.log('Approved events already exist:', existing[0].title);
-    console.log('Open /events/index.html to see them.');
+    console.log('Open /events/ to see them.');
     return;
   }
 
@@ -90,7 +90,7 @@ async function main() {
 
   console.log('Sample event created:', ev.title);
   console.log('Organiser:', 'The Networker Hub');
-  console.log('View: https://the-networker-hub.vercel.app/events/index.html');
+  console.log('View: https://the-networker-hub.vercel.app/events/');
 }
 
 main().catch((e) => {

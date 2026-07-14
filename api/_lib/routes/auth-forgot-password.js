@@ -171,7 +171,7 @@ module.exports = async function handler(req, res) {
     });
 
     const host = process.env.SITE_URL || 'https://the-networker-hub.vercel.app';
-    const resetUrl = `${host}/reset-password.html?token=${token}`;
+    const resetUrl = `${host}/reset-password?token=${token}`;
 
     await appendSystemLog(`Password reset requested for ${email}`, 'auth');
 

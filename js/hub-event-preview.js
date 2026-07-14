@@ -26,7 +26,7 @@
       return { slug: segment, id: url.searchParams.get('id') || '' };
     }
 
-    if (path.endsWith('/events/event.html') || path.endsWith('/event.html')) {
+    if (path.endsWith('/events/event') || path.endsWith('/event.html')) {
       return {
         slug: url.searchParams.get('slug') || '',
         id: url.searchParams.get('id') || '',

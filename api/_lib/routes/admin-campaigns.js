@@ -97,10 +97,10 @@ module.exports = async function handler(req, res) {
     const claimUrl =
       baseVars.claim_url ||
       host +
-        '/login.html?email=' +
+        '/login?email=' +
         encodeURIComponent(email) +
         '&next=' +
-        encodeURIComponent('/organiser/index.html?onboard=claim');
+        encodeURIComponent('/organiser/?onboard=claim');
     try {
       await sendTemplatedEmail({
         slug,

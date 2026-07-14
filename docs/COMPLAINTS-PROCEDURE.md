@@ -44,7 +44,7 @@ This procedure covers complaints about The Networker Hub as a platform — not d
 ## 3. Intake
 
 1. Complaint received at **hello@thenetworkerhub.com** with **“Complaint”** in the subject line (or clearly framed as a complaint in the body).
-2. Log in the **complaints register** in Command Centre: **Support → Complaints** (`/admin/index.html#support/complaints`). Supabase table: `public.complaints`.
+2. Log in the **complaints register** in Command Centre: **Support → Complaints** (`/admin/#support/complaints`). Supabase table: `public.complaints`.
 
    | Field | Example |
    |-------|---------|

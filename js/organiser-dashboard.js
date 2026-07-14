@@ -179,7 +179,7 @@
   }
 
   function groupPublicProfileUrl(groupId) {
-    return '../events/organiser.html?id=' + encodeURIComponent(groupId);
+    return '../events/organiser?id=' + encodeURIComponent(groupId);
   }
 
   function rankingShareText(groupName, row) {
@@ -187,7 +187,7 @@
     const url = groupPublicProfileUrl(row.id);
     const absUrl =
       (location.origin || '') +
-      '/events/organiser.html?id=' +
+      '/events/organiser?id=' +
       encodeURIComponent(row.id);
     return (
       'Proud to share that ' +
@@ -242,7 +242,7 @@
   function buildRankingShareCardHtml(g, row) {
     const shareText = rankingShareText(g.name, row);
     const profileUrl =
-      (location.origin || '') + '/events/organiser.html?id=' + encodeURIComponent(g.id);
+      (location.origin || '') + '/events/organiser?id=' + encodeURIComponent(g.id);
     return (
       '<article class="org-ranking-share-card">' +
       '<div class="org-ranking-share-card-head">' +
@@ -776,7 +776,7 @@
           text:
             'Start with your <strong>organiser page</strong> — your public page on the hub for your group, business, or brand. Then you can list events, add ticket types, and manage bookings.',
           actions:
-            '<a class="org-btn org-btn-gold org-btn-sm" href="group-edit.html">Create organiser page</a>',
+            '<a class="org-btn org-btn-gold org-btn-sm" href="/organiser/group-edit">Create organiser page</a>',
         });
       }
     }
@@ -1649,7 +1649,7 @@
         '<button type="button" class="org-action-item" data-edit-group="' +
         esc(id) +
         '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit profile</strong><span>Update organiser page details</span></span></button>' +
-        '<a class="org-action-item" href="../events/organiser.html?id=' +
+        '<a class="org-action-item" href="../events/organiser?id=' +
         esc(id) +
         '" target="_blank" rel="noopener noreferrer"><span class="org-action-icon">↗</span><span class="org-action-text"><strong>View public profile</strong><span>See your group page and ranking badge</span></span></a>' +
         '<button type="button" class="org-action-item" data-add-event-for-group="' +
@@ -3129,8 +3129,8 @@
   }
 
   function eventEditorUrl(ev) {
-    if (!ev || !ev.id) return 'event-edit.html';
-    return 'event-edit.html?id=' + encodeURIComponent(ev.id);
+    if (!ev || !ev.id) return '/organiser/event-edit';
+    return '/organiser/event-edit?id=' + encodeURIComponent(ev.id);
   }
 
   function goToEventEditor(ev, editorOpts) {
@@ -3148,7 +3148,7 @@
       frameParams.set('format', (opts && opts.format) || 'in-person');
       if (opts && opts.groupId) frameParams.set('groupId', opts.groupId);
     }
-    return 'event-edit.html?' + frameParams.toString();
+    return '/organiser/event-edit?' + frameParams.toString();
   }
 
   function openNewEventEditorDrawer(options) {
@@ -3213,7 +3213,7 @@
 
   function eventTicketsFrameUrl(eventIds) {
     return (
-      'event-tickets.html?ids=' + encodeURIComponent((eventIds || []).join(',')) + '&embed=1'
+      '/organiser/event-tickets?ids=' + encodeURIComponent((eventIds || []).join(',')) + '&embed=1'
     );
   }
 
@@ -3304,14 +3304,14 @@
         const qs = new URLSearchParams();
         qs.set('format', drawerOpts.format || 'in-person');
         if (drawerOpts.groupId) qs.set('groupId', drawerOpts.groupId);
-        location.href = 'event-edit.html?' + qs.toString();
+        location.href = '/organiser/event-edit?' + qs.toString();
       } else {
         const qs = new URLSearchParams();
         if (editId) qs.set('id', editId);
         else qs.set('format', 'in-person');
         if (drawerOpts.seriesEdit) qs.set('seriesEdit', '1');
         if (drawerOpts.seriesDate) qs.set('seriesDate', '1');
-        location.href = 'event-edit.html?' + qs.toString();
+        location.href = '/organiser/event-edit?' + qs.toString();
       }
       return;
     }
@@ -3534,12 +3534,12 @@
     } catch {
       /* ignore */
     }
-    location.href = 'event-tickets.html?ids=' + encodeURIComponent(eventIds.join(','));
+    location.href = '/organiser/event-tickets?ids=' + encodeURIComponent(eventIds.join(','));
   }
 
   function groupEditorUrl(g) {
-    if (!g || !g.id) return 'group-edit.html';
-    return 'group-edit.html?id=' + encodeURIComponent(g.id);
+    if (!g || !g.id) return '/organiser/group-edit';
+    return '/organiser/group-edit?id=' + encodeURIComponent(g.id);
   }
 
   let groupEditReady = false;
@@ -3564,7 +3564,7 @@
         typeof groupOrId === 'object' && groupOrId && groupOrId.id
           ? groupOrId.id
           : groupOrId || '';
-      location.href = id ? 'group-edit.html?id=' + encodeURIComponent(id) : 'group-edit.html';
+      location.href = id ? '/organiser/group-edit?id=' + encodeURIComponent(id) : '/organiser/group-edit';
       return;
     }
 
@@ -4114,7 +4114,7 @@
       const eid = manageTicketsBtn.getAttribute('data-manage-tickets');
       const ev = findEventById(eid);
       if (ev) goToEventTickets(ev);
-      else if (eid) location.href = 'event-tickets.html?ids=' + encodeURIComponent(eid);
+      else if (eid) location.href = '/organiser/event-tickets?ids=' + encodeURIComponent(eid);
       return true;
     }
 
@@ -4730,14 +4730,14 @@
       return;
     }
     if (window.HubOrganiserPaymentSetup && window.HubOrganiserPaymentSetup.startSetup) {
-      window.HubOrganiserPaymentSetup.startSetup(gid, '/organiser/index.html#events-revenue');
+      window.HubOrganiserPaymentSetup.startSetup(gid, '/organiser/#events-revenue');
       return;
     }
     const href =
-      '/organiser/payment-setup.html?groupId=' +
+      '/organiser/payment-setup?groupId=' +
       encodeURIComponent(gid) +
       '&returnPath=' +
-      encodeURIComponent('/organiser/index.html#events-revenue');
+      encodeURIComponent('/organiser/#events-revenue');
     if (window.HubOrganiserPaymentSetup && window.HubOrganiserPaymentSetup.openUrlInNewTab) {
       if (!window.HubOrganiserPaymentSetup.openUrlInNewTab(href)) {
         alert(
@@ -4797,19 +4797,19 @@
     if (payment) {
       const readyGroup = (state.groups || []).find((g) => groupReadyForStripeDashboard(g));
       payment.renderInto(document.getElementById('org-payment-setup-revenue'), setupState, group, {
-        returnPath: '/organiser/index.html#events-revenue',
+        returnPath: '/organiser/#events-revenue',
         title: 'Add bank details to get paid for ticket sales',
         showWhenNotReady: Boolean(
           state.stripeConnectEnabled && !readyGroup && setupState.pendingGroups.length
         ),
       });
       payment.renderInto(document.getElementById('org-payment-setup-overview'), setupState, group, {
-        returnPath: '/organiser/index.html#events-list',
+        returnPath: '/organiser/#events-list',
         compact: true,
         title: 'Add bank details before you sell paid tickets',
       });
       payment.renderInto(document.getElementById('org-payment-setup-dashboard'), setupState, group, {
-        returnPath: '/organiser/index.html#dashboard',
+        returnPath: '/organiser/#dashboard',
         compact: true,
         title: 'Add bank details to receive payouts',
         lead: 'Connect Stripe so ticket revenue can reach you after each event.',
@@ -4842,7 +4842,7 @@
     if ((state.pendingClaimGroups || []).length > 0 && !state.organiserAccess) return;
     showOrganiserAlert(
       'Confirm your email before publishing events, viewing attendees, or setting up payouts. ' +
-        '<a href="verify-email.html">Confirm email</a>',
+        '<a href="/organiser/verify-email">Confirm email</a>',
       false
     );
   }
@@ -6366,7 +6366,7 @@
       goBtn.addEventListener('click', function () {
         const progress = gettingStartedProgress();
         if (!progress.hasGroup) {
-          window.location.href = 'group-edit.html';
+          window.location.href = '/organiser/group-edit';
           return;
         }
         if (window.HubFlowTour) window.HubFlowTour.markEventTourPending();
@@ -6433,7 +6433,7 @@
       const group = state.groups[0];
       if (group && group.id) {
         window.location.href =
-          'group-edit.html?id=' + encodeURIComponent(group.id) + '&onboard=review';
+          '/organiser/group-edit?id=' + encodeURIComponent(group.id) + '&onboard=review';
         return;
       }
     }
@@ -6570,7 +6570,7 @@
 
       if (action === 'claim' && data.group && data.group.id) {
         window.location.href =
-          'group-edit.html?id=' + encodeURIComponent(data.group.id) + '&onboard=review';
+          '/organiser/group-edit?id=' + encodeURIComponent(data.group.id) + '&onboard=review';
         return;
       }
 
@@ -6712,7 +6712,7 @@
     if (addMenu) addMenu.hidden = true;
     if (addToggle) addToggle.setAttribute('aria-expanded', 'false');
     if (hasOpportunityListings()) {
-      location.href = 'opportunity-edit.html';
+      location.href = '/organiser/opportunity-edit';
       return;
     }
     setRoute('business-list');
@@ -6816,7 +6816,7 @@
       const enquiries = opportunityEnquiriesForListing(o.id);
       const newCount = enquiries.filter((e) => String(e.status || '').toLowerCase() === 'new').length;
       const expiry = opportunityExpiryMeta(o);
-      const editUrl = 'opportunity-edit.html?id=' + encodeURIComponent(o.id);
+      const editUrl = '/organiser/opportunity-edit?id=' + encodeURIComponent(o.id);
       const viewUrl = o.slug
         ? '/opportunities/' + encodeURIComponent(o.slug)
         : '/opportunities/' + encodeURIComponent(o.id);
@@ -6891,7 +6891,7 @@
       const viewUrl = o.slug
         ? '/opportunities/' + encodeURIComponent(o.slug)
         : '/opportunities/' + encodeURIComponent(o.id);
-      const editUrl = 'opportunity-edit.html?id=' + encodeURIComponent(o.id);
+      const editUrl = '/organiser/opportunity-edit?id=' + encodeURIComponent(o.id);
       const tr = document.createElement('tr');
       tr.innerHTML =
         '<td class="org-td-name"><a class="org-td-name-click" href="' +
@@ -7378,7 +7378,7 @@
       el.addEventListener('click', goToNewEventEditor);
     });
 
-    document.querySelectorAll('.org-add-menu-item[href="event-format.html"]').forEach((el) => {
+    document.querySelectorAll('.org-add-menu-item[href="/organiser/event-format"]').forEach((el) => {
       el.addEventListener('click', goToNewEventEditor);
     });
 
@@ -7948,7 +7948,7 @@
       nav.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 
-    document.querySelectorAll('a[href="group-edit.html"]').forEach((link) => {
+    document.querySelectorAll('a[href="/organiser/group-edit"]').forEach((link) => {
       link.addEventListener('click', goToNewGroupEditor);
     });
 
@@ -8155,10 +8155,10 @@
         data.organiserUiVisible || data.user.role === 'admin';
       if (!hasAccess) {
         if (data.organiserAccess && !data.organiserUiVisible) {
-          window.location.href = '../account/settings.html#organiser-workspace';
+          window.location.href = '../account/settings#organiser-workspace';
           return;
         }
-        window.location.href = 'enable.html';
+        window.location.href = '/organiser/enable';
         return;
       }
       state.organiserAccess = data.organiserAccess === true;

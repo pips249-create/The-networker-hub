@@ -81,9 +81,9 @@ module.exports = async function handler(req, res) {
       return json(res, 503, { error: 'session_failed' });
     }
 
-    let redirect = body.next || '/welcome.html';
+    let redirect = body.next || '/welcome';
     if (hubViewFromRequest(req) === 'organiser' && !body.next) {
-      redirect = '/welcome.html';
+      redirect = '/welcome';
     }
 
     try {

@@ -85,9 +85,9 @@ function basePreviewVars(siteUrl) {
     tickets_remaining: '3',
     total_revenue: '£600.00',
     pending_applications: '2',
-    welcome_url: site + '/welcome.html',
+    welcome_url: site + '/welcome',
     dashboard_url: organiserDashboardUrl(site),
-    create_event_url: site + '/organiser/event-format.html',
+    create_event_url: site + '/organiser/event-format',
     connect_url: organiserDashboardUrl(site, { panel: 'revenue' }),
     review_url:
       hubAccountUrl(site) +
@@ -102,8 +102,8 @@ function basePreviewVars(siteUrl) {
     owner_name: 'Jordan',
     opportunity_title: 'Marketing agency partnership',
     opportunity_url: opportunityPublicUrl({ id: opportunityId }, site),
-    renew_url: site + '/organiser/opportunity-edit.html?id=' + encodeURIComponent(opportunityId),
-    edit_url: site + '/organiser/opportunity-edit.html?id=' + encodeURIComponent(opportunityId),
+    renew_url: site + '/organiser/opportunity-edit?id=' + encodeURIComponent(opportunityId),
+    edit_url: site + '/organiser/opportunity-edit?id=' + encodeURIComponent(opportunityId),
     expiry_date: 'Tuesday 12 August 2026',
     expiry_note: 'Your listing is paid until Tuesday 12 August 2026.',
     rejection_note:
@@ -146,7 +146,7 @@ function sampleSponsorRow(site) {
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Our event directory is proudly powered by</p>' +
     '<a href="' +
     site +
-    '/advertising.html" style="display:inline-block;text-decoration:none;">' +
+    '/advertising" style="display:inline-block;text-decoration:none;">' +
     '<span style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#9a7aa8;">Sample sponsor</span>' +
     '</a></td></tr>'
   );
@@ -326,11 +326,11 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug === 'password_reset') {
-    vars.reset_url = site + '/reset-password.html?token=sample';
+    vars.reset_url = site + '/reset-password?token=sample';
   }
 
   if (slug === 'organiser_email_verify') {
-    vars.verify_url = site + '/organiser/verify-email.html?token=sample';
+    vars.verify_url = site + '/organiser/verify-email?token=sample';
   }
 
   return vars;

@@ -145,6 +145,8 @@
   var healthCache = null;
   var healthCacheFetchedAt = 0;
   var adminMetricsCache = null;
+  var adminMetricsInflight = null;
+  var ADMIN_METRICS_CACHE_KEY = 'tnh_admin_metrics_v2';
   var HEALTH_STALE_MS = 5 * 60 * 1000;
   var METRICS_POLL_MS = 90000;
   var adminNotificationsTimer = null;
@@ -629,9 +631,61 @@
     return Date.now() - healthCacheFetchedAt > HEALTH_STALE_MS;
   }
 
+  function readCachedAdminMetrics() {
+    try {
+      var raw = localStorage.getItem(ADMIN_METRICS_CACHE_KEY);
+      if (!raw) return null;
+      var data = JSON.parse(raw);
+      if (!data || data.error || data.configured === false || data.light) return null;
+      return data;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeCachedAdminMetrics(data) {
+    if (!data || data.error || data.configured === false || data.light) return;
+    try {
+      localStorage.setItem(ADMIN_METRICS_CACHE_KEY, JSON.stringify(data));
+    } catch (e) {
+      /* quota / private mode */
+    }
+  }
+
+  function fetchAdminMetrics(force, light) {
+    var useLight = !!light;
+    if (!force && !useLight && adminMetricsInflight) return adminMetricsInflight;
+    var url = '/api/admin/metrics' + (useLight ? '?light=1' : '');
+    var req = adminGet(url).then(function (data) {
+      if (!useLight && adminMetricsInflight === req) adminMetricsInflight = null;
+      if (data && !data.error && data.configured !== false) {
+        if (!data.light) {
+          adminMetricsCache = data;
+          writeCachedAdminMetrics(data);
+        } else if (!adminMetricsCache) {
+          adminMetricsCache = data;
+        } else {
+          adminMetricsCache = Object.assign({}, adminMetricsCache, {
+            alerts: data.alerts,
+            attention: data.attention,
+            actionCounts: data.actionCounts,
+            notificationCount: data.notificationCount,
+            updatedAt: data.updatedAt,
+          });
+        }
+      }
+      return data;
+    });
+    if (!useLight) adminMetricsInflight = req;
+    return req;
+  }
+
   function applyDashboardNotifications(data) {
     if (!data || data.error || data.configured === false) return;
-    adminMetricsCache = data;
+    if (!data.light) {
+      adminMetricsCache = data;
+      writeCachedAdminMetrics(data);
+    }
     updateAdminDataBadge(data.updatedAt);
 
     var alertsEl = document.getElementById('dashboard-alerts');
@@ -645,7 +699,7 @@
     }
 
     var activityEl = document.getElementById('dashboard-activity');
-    if (activityEl) {
+    if (activityEl && !data.light) {
       activityEl.innerHTML = renderActivityList(data.activity, 12);
     }
 
@@ -664,29 +718,38 @@
     updateHealthBadge(sidebarNotificationTotal(data));
   }
 
+  function refreshEventHealthQuietly(force) {
+    if (!force && !shouldRefreshHealth()) {
+      if (adminMetricsCache) updateHealthBadge(sidebarNotificationTotal(adminMetricsCache));
+      return Promise.resolve(healthCache);
+    }
+    return fetchEventHealth().then(function (data) {
+      if (data && !data.error && data.configured !== false) {
+        healthCache = data;
+        healthCacheFetchedAt = Date.now();
+      }
+      if (adminMetricsCache) {
+        applyDashboardNotifications(adminMetricsCache);
+      } else {
+        updateHealthBadge(sidebarNotificationTotal({ notificationCount: 0 }));
+      }
+      return data;
+    });
+  }
+
   function refreshAdminNotifications(options) {
     var opts = options || {};
-    var tasks = [adminGet('/api/admin/metrics')];
-    if (opts.forceHealth || shouldRefreshHealth()) {
-      tasks.push(
-        fetchEventHealth().then(function (data) {
-          if (data && !data.error && data.configured !== false) {
-            healthCacheFetchedAt = Date.now();
-          }
-          return data;
-        })
-      );
-    } else {
-      tasks.push(Promise.resolve(healthCache));
-    }
-    return Promise.all(tasks).then(function (results) {
-      var health = results[1];
-      if (health && !health.error && health.configured !== false) {
-        healthCache = health;
-      }
-      applyDashboardNotifications(results[0]);
-      return results[0];
+    var force = !!opts.forceHealth;
+    var lightPromise = fetchAdminMetrics(force, true).then(function (data) {
+      applyDashboardNotifications(data);
+      return data;
     });
+    fetchAdminMetrics(force, false).then(function (data) {
+      applyDashboardNotifications(data);
+      applyDashboardMetrics(data);
+    });
+    refreshEventHealthQuietly(force);
+    return lightPromise;
   }
 
   function startAdminNotificationsPolling() {
@@ -2227,7 +2290,7 @@
           }).join('');
           var vatVal = ev.vat_treatment || '';
           var orgEditHref =
-            '../organiser/group-edit.html?id=' + encodeURIComponent(ev.organiser_id || '');
+            '../organiser/group-edit?id=' + encodeURIComponent(ev.organiser_id || '');
           var orgPublicHref = ev.organiser_slug
             ? '../organisers/' + encodeURIComponent(ev.organiser_slug)
             : '';
@@ -2830,7 +2893,7 @@
     bindAnalyticsControls();
     loadAnalyticsInsights();
 
-    adminGet('/api/admin/metrics').then(function (data) {
+    fetchAdminMetrics(false).then(function (data) {
       var metricsEl = document.getElementById('analytics-platform-metrics');
       var activityEl = document.getElementById('analytics-activity');
       if (!data || data.error || data.configured === false) {
@@ -2884,6 +2947,8 @@
       }
       return;
     }
+
+    if (data.light || !data.metrics) return;
 
     var m = data.metrics || {};
     var listings = m.listings || {};
@@ -3476,46 +3541,54 @@
   }
 
   function renderDashboard() {
-    main.innerHTML =
-      '<div class="space-y-6">' +
-      '<section class="space-y-3">' +
-      '<h3 class="text-sm font-bold uppercase tracking-wide text-slate-500">Critical alerts</h3>' +
-      '<div class="grid gap-3" id="dashboard-alerts"><p class="text-sm text-slate-500">Loading from Supabase…</p></div>' +
-      '</section>' +
-      '<section class="bg-white rounded-xl border border-red-200 p-5 shadow-sm space-y-3" id="dashboard-disputes-section" hidden>' +
-      '<div><h3 class="font-bold text-brand-900">Group profile disputes</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">An organiser signed in and said a pre-imported profile is not theirs — use the actions below to fix or dismiss.</p></div>' +
-      '<div id="dashboard-disputes"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
-      '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">' +
-      '<div><h3 class="font-bold text-brand-900">Needs your attention</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">Queues and quick links — counts also appear in Critical alerts above.</p></div>' +
-      '<div id="dashboard-attention"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
-      '<a href="#analytics" class="block rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-5 shadow-sm hover:border-brand-300 transition group">' +
-      '<div class="flex flex-wrap items-center justify-between gap-3">' +
-      '<div><p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Traffic</p>' +
-      '<p class="font-bold text-brand-900 mt-1">Web Analytics on Vercel</p>' +
-      '<p class="text-sm text-slate-600 mt-1">View visitors, top pages, referrers, and device breakdown.</p></div>' +
-      '<span class="text-sm font-semibold text-brand-700 group-hover:text-brand-900">Open →</span></div></a>' +
-      '<section class="admin-metric-grid admin-metric-grid--4" id="dashboard-metrics">' +
-      card('Paid ticket revenue', '…', 'Loading…', 'emerald') +
-      card('Approved events', '…', 'Loading…', 'brand') +
-      card('Organisers', '…', 'Loading…', 'violet') +
-      card('Hub accounts', '…', 'Loading…', 'blue') +
-      '</section>' +
-      '<section class="grid lg:grid-cols-2 gap-6">' +
-      '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm min-w-0">' +
-      '<h3 class="font-bold text-brand-900 mb-1">Recent genuine activity</h3>' +
-      '<p class="text-xs text-slate-500 mb-3">Registrations, events, and reviews — test/E2E data excluded.</p>' +
-      '<ul id="dashboard-activity" class="admin-activity-feed"><li class="text-sm text-slate-500">Loading…</li></ul></div>' +
-      '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm min-w-0">' +
-      '<h3 class="font-bold text-brand-900 mb-2">Platform snapshot</h3>' +
-      '<p class="text-sm text-slate-500 mb-4">Key counts from Supabase (not visitor traffic — see Web Analytics).</p>' +
-      '<div id="live-metrics" class="text-sm text-slate-600">Loading…</div>' +
-      '</div></section></div>';
+    if (!document.getElementById('dashboard-alerts')) {
+      main.innerHTML =
+        '<div class="space-y-6">' +
+        '<section class="space-y-3">' +
+        '<h3 class="text-sm font-bold uppercase tracking-wide text-slate-500">Critical alerts</h3>' +
+        '<div class="grid gap-3 min-h-[11rem]" id="dashboard-alerts"><p class="text-sm text-slate-500">Loading from Supabase…</p></div>' +
+        '</section>' +
+        '<section class="bg-white rounded-xl border border-red-200 p-5 shadow-sm space-y-3" id="dashboard-disputes-section" hidden>' +
+        '<div><h3 class="font-bold text-brand-900">Group profile disputes</h3>' +
+        '<p class="text-xs text-slate-500 mt-0.5">An organiser signed in and said a pre-imported profile is not theirs — use the actions below to fix or dismiss.</p></div>' +
+        '<div id="dashboard-disputes"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
+        '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">' +
+        '<div><h3 class="font-bold text-brand-900">Needs your attention</h3>' +
+        '<p class="text-xs text-slate-500 mt-0.5">Queues and quick links — counts also appear in Critical alerts above.</p></div>' +
+        '<div id="dashboard-attention" class="min-h-[6.5rem] space-y-3">' +
+        '<div class="rounded-lg border border-brand-200 bg-brand-50 p-4">' +
+        '<p class="font-semibold text-sm text-brand-900">Group profiles awaiting organiser claim on first login</p>' +
+        '<p class="text-xs text-brand-800/90 mt-1">Organisers will confirm ownership when they sign in — disputes appear here if they reject a match.</p>' +
+        '</div></div></section>' +
+        '<a href="#analytics" class="block rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-5 shadow-sm hover:border-brand-300 transition group">' +
+        '<div class="flex flex-wrap items-center justify-between gap-3">' +
+        '<div><p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Traffic</p>' +
+        '<p class="font-bold text-brand-900 mt-1">Web Analytics on Vercel</p>' +
+        '<p class="text-sm text-slate-600 mt-1">View visitors, top pages, referrers, and device breakdown.</p></div>' +
+        '<span class="text-sm font-semibold text-brand-700 group-hover:text-brand-900">Open →</span></div></a>' +
+        '<section class="admin-metric-grid admin-metric-grid--4" id="dashboard-metrics">' +
+        card('Paid ticket revenue', '…', 'Loading…', 'emerald') +
+        card('Approved events', '…', 'Loading…', 'brand') +
+        card('Organisers', '…', 'Loading…', 'violet') +
+        card('Hub accounts', '…', 'Loading…', 'blue') +
+        '</section>' +
+        '<section class="grid lg:grid-cols-2 gap-6">' +
+        '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm min-w-0">' +
+        '<h3 class="font-bold text-brand-900 mb-1">Recent genuine activity</h3>' +
+        '<p class="text-xs text-slate-500 mb-3">Registrations, events, and reviews — test/E2E data excluded.</p>' +
+        '<ul id="dashboard-activity" class="admin-activity-feed min-h-[12rem]"><li class="text-sm text-slate-500">Loading…</li></ul></div>' +
+        '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm min-w-0">' +
+        '<h3 class="font-bold text-brand-900 mb-2">Platform snapshot</h3>' +
+        '<p class="text-sm text-slate-500 mb-4">Key counts from Supabase (not visitor traffic — see Web Analytics).</p>' +
+        '<div id="live-metrics" class="text-sm text-slate-600 min-h-[10rem]">Loading…</div>' +
+        '</div></section></div>';
+    }
 
-    if (adminMetricsCache && !adminMetricsCache.error && adminMetricsCache.configured !== false) {
-      applyDashboardMetrics(adminMetricsCache);
-      applyDashboardNotifications(adminMetricsCache);
+    var cached = adminMetricsCache || readCachedAdminMetrics();
+    if (cached && !cached.error && cached.configured !== false) {
+      adminMetricsCache = cached;
+      applyDashboardMetrics(cached);
+      applyDashboardNotifications(cached);
     }
 
     refreshAdminNotifications({ forceHealth: !healthCacheFetchedAt }).then(function (data) {
@@ -3643,7 +3716,7 @@
         } catch (e) {
           /* ignore */
         }
-        window.location.href = '../' + String(data.redirect || 'account/index.html').replace(/^\//, '');
+        window.location.href = (String(data.redirect || '/account/').charAt(0) === '/' ? String(data.redirect || '/account/') : ('../' + String(data.redirect || '/account/')));
       })
       .catch(function () {
         window.alert('Request failed. Try again.');
@@ -3728,7 +3801,7 @@
           } catch (e) {
             /* ignore */
           }
-          window.location.href = '../' + String(data.redirect || 'account/index.html').replace(/^\//, '');
+          window.location.href = (String(data.redirect || '/account/').charAt(0) === '/' ? String(data.redirect || '/account/') : ('../' + String(data.redirect || '/account/')));
         })
         .catch(function () {
           showImpersonateMessage('Request failed. Try again.', true);
@@ -3873,7 +3946,7 @@
           '</dd></div>'
         : '') +
       '</dl>' +
-      '<a href="../account/settings.html" target="_blank" rel="noopener" class="inline-block mt-3 text-xs font-semibold text-brand-700 hover:underline">Open account settings page ↗</a>' +
+      '<a href="../account/settings" target="_blank" rel="noopener" class="inline-block mt-3 text-xs font-semibold text-brand-700 hover:underline">Open account settings page ↗</a>' +
       '</div>' +
       (u.organiserId
         ? '<label class="flex items-center gap-2 text-sm mt-4 pt-4 border-t border-slate-100">' +
@@ -4018,7 +4091,7 @@
           } catch (e) {
             /* ignore */
           }
-          window.location.href = '../' + String(data.redirect || 'account/index.html').replace(/^\//, '');
+          window.location.href = (String(data.redirect || '/account/').charAt(0) === '/' ? String(data.redirect || '/account/') : ('../' + String(data.redirect || '/account/')));
         });
       });
     }
@@ -5803,15 +5876,15 @@
       booked_at: 'Tuesday 10 June 2026 at 2:30 pm',
       ticket_quantity: 1,
       ticket_quantity_label: '1 × General admission',
-      hub_account_url: previewOrigin + '/account/index.html',
+      hub_account_url: previewOrigin + '/account/',
       hub_payment_url:
         previewOrigin +
-        '/account/index.html?booking=00000000-0000-4000-8000-000000000001#payments',
+        '/account/?booking=00000000-0000-4000-8000-000000000001#payments',
       browse_events_url: previewOrigin + '/events/',
-      contact_url: previewOrigin + '/contact.html',
-      privacy_url: previewOrigin + '/legal-policies.html#privacy',
-      terms_url: previewOrigin + '/legal-policies.html#terms',
-      refunds_url: previewOrigin + '/legal-policies.html#refunds',
+      contact_url: previewOrigin + '/contact',
+      privacy_url: previewOrigin + '/legal-policies#privacy',
+      terms_url: previewOrigin + '/legal-policies#terms',
+      refunds_url: previewOrigin + '/legal-policies#refunds',
       payment_summary_row: '',
       organiser_name: 'City Connectors',
       meeting_link: '',
@@ -5830,8 +5903,8 @@
       tickets_sold: '24',
       tickets_remaining: '16',
       total_revenue: '£600.00',
-      welcome_url: previewOrigin + '/welcome.html',
-      dashboard_url: previewOrigin + '/organiser/index.html',
+      welcome_url: previewOrigin + '/welcome',
+      dashboard_url: previewOrigin + '/organiser/',
       site_url: previewOrigin,
       logo_url: previewOrigin + '/assets/logo-nav.png',
       logo_footer_url: previewOrigin + '/assets/logo-email-footer.png',
@@ -5843,17 +5916,17 @@
       recommendations_html: '',
       review_url:
         previewOrigin +
-        '/account/index.html?review=sample-event-id#review/sample-event-id',
+        '/account/?review=sample-event-id#review/sample-event-id',
       owner_name: 'Jordan',
       opportunity_title: 'Marketing agency partnership',
       opportunity_url: previewOrigin + '/opportunities/sample',
-      renew_url: previewOrigin + '/organiser/opportunity-edit.html?id=sample',
-      edit_url: previewOrigin + '/organiser/opportunity-edit.html?id=sample',
+      renew_url: previewOrigin + '/organiser/opportunity-edit?id=sample',
+      edit_url: previewOrigin + '/organiser/opportunity-edit?id=sample',
       rejection_note: 'Please add more detail before resubmitting.',
       amount_net: '£240.00',
       upcoming_count: '3',
-      create_event_url: previewOrigin + '/organiser/event-format.html',
-      connect_url: previewOrigin + '/organiser/index.html?panel=revenue',
+      create_event_url: previewOrigin + '/organiser/event-format',
+      connect_url: previewOrigin + '/organiser/?panel=revenue',
       group_name: 'City Connectors',
       badge_label: 'Top 10 networking group on the Hub',
       period_label: 'June 2026',
@@ -5861,10 +5934,10 @@
       total_ranked: '42',
       average_rating: '4.8',
       review_count: '27',
-      profile_url: previewOrigin + '/events/organiser.html?slug=city-connectors',
+      profile_url: previewOrigin + '/events/organiser?slug=city-connectors',
       social_share_text:
         'City Connectors is a Top 10 networking group on The Networker Hub for June 2026.',
-      organiser_url: previewOrigin + '/events/organiser.html?slug=city-connectors',
+      organiser_url: previewOrigin + '/events/organiser?slug=city-connectors',
       pending_applications: '2',
     };
 
@@ -6065,7 +6138,7 @@
       if (!SAMPLE_VARS.sponsor_row) {
         SAMPLE_VARS.sponsor_row = buildEmailSponsorSectionHtml(
           '',
-          SAMPLE_VARS.browse_events_url || previewOrigin + '/advertising.html',
+          SAMPLE_VARS.browse_events_url || previewOrigin + '/advertising',
           'Sample sponsor'
         );
       }
@@ -7478,7 +7551,7 @@
       '</textarea></div></div>' +
       '<div class="group-cleanup-quick-actions flex flex-col items-stretch gap-2 shrink-0">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900 whitespace-nowrap">Save</button>' +
-      '<a href="../organiser/group-edit.html?id=' +
+      '<a href="../organiser/group-edit?id=' +
       encodeURIComponent(o.id) +
       '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline text-center">Full editor</a>' +
       '<span class="group-cleanup-msg text-xs text-center"></span></div></form>'
@@ -7790,7 +7863,7 @@
         } catch (e) {
           /* ignore */
         }
-        window.location.href = '../' + String(data.redirect || 'organiser/index.html').replace(/^\//, '');
+        window.location.href = '../' + String(data.redirect || '/organiser/').replace(/^\//, '');
       })
       .catch(function () {
         window.alert('Request failed. Try again.');
@@ -9793,8 +9866,8 @@
           '<section class="bg-slate-900 rounded-xl p-5 text-slate-100 shadow-sm">' +
           '<h3 class="font-bold text-sm uppercase tracking-wide text-brand-100 mb-3">Quick links</h3>' +
           '<ul class="text-sm space-y-2">' +
-          '<li><a class="text-brand-100 hover:text-white font-semibold" href="../events/index.html" target="_blank" rel="noopener">Public events browse</a></li>' +
-          '<li><a class="text-brand-100 hover:text-white font-semibold" href="../organiser/index.html" target="_blank" rel="noopener">Organiser dashboard</a></li>' +
+          '<li><a class="text-brand-100 hover:text-white font-semibold" href="../events/" target="_blank" rel="noopener">Public events browse</a></li>' +
+          '<li><a class="text-brand-100 hover:text-white font-semibold" href="../organiser/" target="_blank" rel="noopener">Organiser dashboard</a></li>' +
           '<li><a class="text-brand-100 hover:text-white font-semibold" href="' +
           esc(VERCEL_ANALYTICS_URL) +
           '" target="_blank" rel="noopener">Vercel Analytics</a></li>' +
@@ -10065,8 +10138,8 @@
         var dateLabel = ev.starts_at ? fmtTime(ev.starts_at).split(',')[0] : '—';
         var expiryLabel = formatSpotlightExpiry(ev.featured, ev.featured_until || ev.featuredUntil);
         var viewUrl = ev.slug
-          ? '../events/event.html?slug=' + encodeURIComponent(ev.slug)
-          : '../events/event.html?id=' + encodeURIComponent(ev.id);
+          ? '../events/event?slug=' + encodeURIComponent(ev.slug)
+          : '../events/event?id=' + encodeURIComponent(ev.id);
         return (
           '<tr class="border-t border-slate-100' +
           (ev.featured ? ' bg-amber-50/40' : '') +
@@ -10133,8 +10206,8 @@
     tbody.innerHTML = rows
       .map(function (o) {
         var viewUrl = o.slug
-          ? '../events/organiser.html?slug=' + encodeURIComponent(o.slug)
-          : '../events/organiser.html?id=' + encodeURIComponent(o.id);
+          ? '../events/organiser?slug=' + encodeURIComponent(o.slug)
+          : '../events/organiser?id=' + encodeURIComponent(o.id);
         return (
           '<tr class="border-t border-slate-100' +
           (o.featured ? ' bg-amber-50/40' : '') +
@@ -10660,7 +10733,7 @@
                     ? 'text-slate-500'
                     : 'text-amber-800';
               var accountUrl =
-                '../account/index.html?booking=' + encodeURIComponent(b.id) + '#payments';
+                '../account/?booking=' + encodeURIComponent(b.id) + '#payments';
               return (
                 '<tr class="border-t border-slate-100">' +
                 '<td class="px-4 py-3 font-mono text-xs">' +
@@ -11099,7 +11172,7 @@
       '<textarea id="campaign-recipients" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[120px]" placeholder="organiser@example.com&#10;one per line"></textarea>' +
       '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-claim-url">Claim URL override <span class="font-normal normal-case">(optional)</span></label>' +
       '<input type="url" id="campaign-claim-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Leave blank for default claim deep-link">' +
-      '<p class="text-xs text-slate-500">Default: <code class="text-xs">/login.html?email=…&amp;next=/organiser/index.html?onboard=claim</code></p>' +
+      '<p class="text-xs text-slate-500">Default: <code class="text-xs">/login?email=…&amp;next=/organiser/?onboard=claim</code></p>' +
       '<div class="flex flex-wrap items-center gap-3 pt-2">' +
       '<button type="submit" class="rounded-lg bg-slate-800 text-white text-sm font-semibold px-4 py-2 hover:bg-slate-900" id="campaign-submit">Send batch (max 50)</button>' +
       '<span id="campaign-status" class="text-sm text-slate-500"></span></div>' +
@@ -12403,11 +12476,23 @@
     });
   }
 
+  function showAdminGate(html) {
+    shell.classList.add('hidden');
+    gate.hidden = false;
+    gate.classList.remove('hidden');
+    if (html) gate.innerHTML = html;
+  }
+
+  function hideAdminGate() {
+    gate.hidden = true;
+    gate.classList.add('hidden');
+    shell.classList.remove('hidden');
+  }
+
   function boot(user) {
     currentUser = user;
     document.getElementById('sidebar-user').textContent = user.email;
-    gate.classList.add('hidden');
-    shell.classList.remove('hidden');
+    hideAdminGate();
     document.body.classList.add('hub-admin-active');
     bindAdminLayoutSync();
     setTimeout(syncAdminLayoutOffset, 0);
@@ -12446,9 +12531,18 @@
 
   document.getElementById('admin-signout').addEventListener('click', function () {
     fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
-      window.location.href = '../login.html';
+      window.location.href = '../login';
     });
   });
+
+  adminMetricsCache = readCachedAdminMetrics();
+  if (adminMetricsCache && document.getElementById('dashboard-alerts')) {
+    applyDashboardMetrics(adminMetricsCache);
+    applyDashboardNotifications(adminMetricsCache);
+  }
+  document.body.classList.add('hub-admin-active');
+  fetchAdminMetrics(false, true);
+  fetchAdminMetrics(false, false);
 
   fetch('/api/auth/session', { credentials: 'include' })
     .then(function (res) {
@@ -12456,13 +12550,14 @@
     })
     .then(function (data) {
       if (data.impersonating) {
-        gate.innerHTML =
+        showAdminGate(
           '<div class="text-center max-w-md space-y-4">' +
-          '<p class="text-slate-600">You are impersonating <strong>' +
-          esc(data.user && data.user.email ? data.user.email : 'a user') +
-          '</strong>. Stop impersonating to open the Command Center.</p>' +
-          '<button type="button" id="admin-gate-stop-impersonate" class="inline-block rounded-lg bg-brand-700 text-white px-5 py-2.5 font-semibold">Stop impersonating</button>' +
-          '<p><a href="../account/index.html" class="text-sm font-semibold text-brand-700">Continue as this user</a></p></div>';
+            '<p class="text-slate-600">You are impersonating <strong>' +
+            esc(data.user && data.user.email ? data.user.email : 'a user') +
+            '</strong>. Stop impersonating to open the Command Center.</p>' +
+            '<button type="button" id="admin-gate-stop-impersonate" class="inline-block rounded-lg bg-brand-700 text-white px-5 py-2.5 font-semibold">Stop impersonating</button>' +
+            '<p><a href="../account/" class="text-sm font-semibold text-brand-700">Continue as this user</a></p></div>'
+        );
         var stopBtn = document.getElementById('admin-gate-stop-impersonate');
         if (stopBtn) {
           stopBtn.addEventListener('click', function () {
@@ -12475,22 +12570,23 @@
                 return res.json();
               })
               .then(function (result) {
-                window.location.href = '../' + String(result.redirect || 'admin/index.html').replace(/^\//, '');
+                window.location.href = '../' + String(result.redirect || '/admin/').replace(/^\//, '');
               });
           });
         }
         return;
       }
       if (!data.ok || !data.user || data.user.role !== 'admin') {
-        gate.innerHTML =
+        showAdminGate(
           '<div class="text-center max-w-md space-y-3"><p class="text-slate-600">Admin access required. Sign in with an admin account.</p>' +
-          '<a href="../login.html?next=/admin/index.html" class="inline-block rounded-lg bg-brand-700 text-white px-5 py-2.5 font-semibold">Sign in</a>' +
-          '<p class="text-sm text-slate-500">Forgot your password? <a href="../forgot-password.html" class="font-semibold text-brand-700 hover:underline">Email a reset link</a></p></div>';
+            '<a href="../login?next=/admin/" class="inline-block rounded-lg bg-brand-700 text-white px-5 py-2.5 font-semibold">Sign in</a>' +
+            '<p class="text-sm text-slate-500">Forgot your password? <a href="../forgot-password" class="font-semibold text-brand-700 hover:underline">Email a reset link</a></p></div>'
+        );
         return;
       }
       boot(data.user);
     })
     .catch(function () {
-      document.getElementById('admin-gate-msg').textContent = 'Could not verify session.';
+      showAdminGate('<p class="text-slate-500" id="admin-gate-msg">Could not verify session.</p>');
     });
 })();

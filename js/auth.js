@@ -34,12 +34,12 @@
 
   var createAccountLink = document.getElementById('login-create-account');
   if (createAccountLink) {
-    createAccountLink.setAttribute('href', withNextParam('register.html'));
+    createAccountLink.setAttribute('href', withNextParam('/register'));
   }
 
   var registerSignInLink = document.getElementById('register-signin-link');
   if (registerSignInLink) {
-    registerSignInLink.setAttribute('href', withNextParam('login.html'));
+    registerSignInLink.setAttribute('href', withNextParam('/login'));
   }
 
   var REMEMBER_KEY = 'hub_remember_me';
@@ -129,7 +129,7 @@
             return;
           }
           persistLoginPrefs(email, rememberMe);
-          window.location.href = result.data.redirect || next || '/events/index.html';
+          window.location.href = result.data.redirect || next || '/events/';
         })
         .catch(function () {
           showMessage(msg, 'Could not reach the server. Try again shortly.', 'error');
@@ -195,7 +195,7 @@
           }
           showMessage(msg, result.data.message || 'Account created — taking you in…', 'success');
           setTimeout(function () {
-            window.location.href = result.data.redirect || next || '/welcome.html';
+            window.location.href = result.data.redirect || next || '/welcome';
           }, 600);
         })
         .catch(function () {
@@ -290,7 +290,7 @@
           }
           showMessage(msg, result.data.message || 'Password updated.', 'success');
           setTimeout(function () {
-            window.location.href = 'login.html';
+            window.location.href = '/login';
           }, 1500);
         })
         .catch(function () {

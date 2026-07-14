@@ -212,7 +212,7 @@
       );
       return;
     }
-    location.href = 'index.html#events-list';
+    location.href = '/organiser/#events-list';
   }
 
   function applyLockUi(locked) {
@@ -846,7 +846,7 @@
       sel.disabled = true;
       if (hint) {
         hint.innerHTML =
-          'You need an organiser page first. <a href="group-edit.html" class="ee-inline-action">Create your organiser page</a> then return here.';
+          'You need an organiser page first. <a href="/organiser/group-edit" class="ee-inline-action">Create your organiser page</a> then return here.';
       }
       if (addRow) addRow.hidden = true;
       return;
@@ -1107,7 +1107,7 @@
     }
     if (isEmbedDrawer) return;
     const ids = (series.eventIds || []).join(',');
-    location.href = 'event-tickets.html?ids=' + encodeURIComponent(ids);
+    location.href = '/organiser/event-tickets?ids=' + encodeURIComponent(ids);
   }
 
   async function load() {
@@ -1115,7 +1115,7 @@
     if (backLink && window.HubOrganiserActions) {
       window.HubOrganiserActions.applyBrowseReturnBack(
         backLink,
-        'index.html#events-list',
+        '/organiser/#events-list',
         '← Back to My Events'
       );
     }
@@ -1124,7 +1124,7 @@
       const { ok, data } = await loadOrganiserBootstrapData();
       if (!ok) {
         const next = encodeURIComponent(location.pathname + location.search);
-        location.href = '../login.html?next=' + next;
+        location.href = '../login?next=' + next;
         return;
       }
       groups = data.groups || [];
@@ -1139,7 +1139,7 @@
           initEventTypeSelect('Meeting');
           return;
         }
-        location.href = 'event-format.html';
+        location.href = '/organiser/event-format';
         return;
       }
 
@@ -1151,7 +1151,7 @@
           initEventTypeSelect('Meeting');
           return;
         }
-        location.href = 'event-format.html';
+        location.href = '/organiser/event-format';
         return;
       }
 
@@ -1364,7 +1364,7 @@
         window.parent.postMessage({ type: 'hub-event-saved', draft: true }, window.location.origin);
         return;
       }
-      location.href = 'index.html#events-list';
+      location.href = '/organiser/#events-list';
       return;
     }
 
@@ -1443,7 +1443,7 @@
       if (isEmbedDrawer || params.get('groupId') || params.get('format')) {
         eventFormat = 'in-person';
       } else {
-        location.replace('event-format.html');
+        location.replace('/organiser/event-format');
         return false;
       }
     }

@@ -51,7 +51,7 @@ module.exports = async function handler(req, res) {
       verified: true,
       organiserEmailVerifiedAt: result.organiser_email_verified_at,
       ...status,
-      redirect: '/organiser/index.html',
+      redirect: '/organiser/',
       message: 'Email confirmed. You can now publish events and manage attendees.',
     });
   } catch (e) {

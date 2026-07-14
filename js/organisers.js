@@ -53,8 +53,8 @@
     }
     var slug = org && org.slug ? String(org.slug).trim() : '';
     if (slug) return '/organisers/' + encodeURIComponent(slug);
-    if (org && org.id) return 'organiser.html?id=' + encodeURIComponent(org.id);
-    return 'organiser.html';
+    if (org && org.id) return '/events/organiser?id=' + encodeURIComponent(org.id);
+    return '/events/#organisers';
   }
 
   function logoHtml(org) {

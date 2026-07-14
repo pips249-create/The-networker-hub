@@ -102,7 +102,7 @@ module.exports = async function handler(req, res) {
       return json(res, 200, {
         ok: true,
         ...status,
-        redirect: '/account/index.html',
+        redirect: '/account/',
         message: 'Organiser workspace hidden. You can still buy tickets and manage bookings in My tickets.',
       });
     } catch (e) {
@@ -123,7 +123,7 @@ module.exports = async function handler(req, res) {
         return json(res, 200, {
           ok: true,
           needsEnable: true,
-          redirect: '/organiser/enable.html',
+          redirect: '/organiser/enable',
           message: 'Enable organiser access to list events and manage groups.',
         });
       }
@@ -132,8 +132,8 @@ module.exports = async function handler(req, res) {
       const status = await getOrganiserAccessStatus(session);
       const redirect =
         status.organiserEmailVerified || status.pendingClaimCount > 0
-          ? '/organiser/index.html'
-          : '/organiser/verify-email.html';
+          ? '/organiser/'
+          : '/organiser/verify-email';
       return json(res, 200, {
         ok: true,
         ...status,
@@ -196,7 +196,7 @@ module.exports = async function handler(req, res) {
     }
 
     const status = await getOrganiserAccessStatus(session);
-    const redirect = emailSent || devVerifyUrl ? '/organiser/verify-email.html' : '/organiser/index.html';
+    const redirect = emailSent || devVerifyUrl ? '/organiser/verify-email' : '/organiser/';
 
     return json(res, 200, {
       ok: true,

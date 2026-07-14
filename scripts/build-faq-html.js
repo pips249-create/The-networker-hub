@@ -143,7 +143,7 @@ function syncFaqHtml(html) {
     changed = true;
   }
 
-  const canonical = CANONICAL_ORIGIN + '/faq.html';
+  const canonical = CANONICAL_ORIGIN + '/faq';
   const canonicalTag = '<link rel="canonical" href="' + canonical + '">';
   const canonicalRe = /<link rel="canonical" href="[^"]*">/;
   if (canonicalRe.test(html)) {

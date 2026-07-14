@@ -21,7 +21,7 @@
           })
           .then(function (data) {
             if (data.ok && data.redirect) {
-              window.location.href = root + data.redirect.replace(/^\//, '');
+              window.location.href = data.redirect.charAt(0) === '/' ? data.redirect : (root || '') + data.redirect;
             } else {
               btn.disabled = false;
             }
@@ -45,7 +45,8 @@
       })
       .then(function (data) {
         if (data.ok && data.redirect) {
-          window.location.href = (root || '') + data.redirect.replace(/^\//, '');
+          window.location.href =
+            data.redirect.charAt(0) === '/' ? data.redirect : (root || '') + data.redirect;
         }
         return data;
       });
@@ -77,7 +78,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260713b';
+  var NAV_BUILD = '20260714u';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -106,7 +107,7 @@
     window.__hubComplianceAssets = true;
     loadComplianceAsset('css/cookie-consent.css?v=20260609');
     loadComplianceAsset('js/hub-analytics.js?v=20260609');
-    loadComplianceAsset('js/cookie-consent.js?v=20260609');
+    loadComplianceAsset('js/cookie-consent.js?v=20260714');
   }
 
   var mount = document.getElementById('hub-site-nav');
@@ -123,6 +124,8 @@
   var scrollBound = false;
 
   function href(path) {
+    if (!path) return root || '/';
+    if (path.charAt(0) === '/' || /^(https?:|mailto:|tel:)/i.test(path)) return path;
     return root + path;
   }
 
@@ -145,7 +148,7 @@
     if (showOrganiserLink) {
       organiserItem =
         '<a role="menuitem" class="nav-dropdown-item nav-organiser-in-menu" href="' +
-        href('organiser/index.html') +
+        href('/organiser/') +
         '"' +
         organiserActive +
         '>Organiser workspace</a>';
@@ -154,7 +157,7 @@
     if (user && user.role === 'admin') {
       adminItem =
         '<a role="menuitem" class="nav-dropdown-item" href="' +
-        href('admin/index.html') +
+        href('/admin/') +
         '"' +
         adminActive +
         '>Command Center</a>';
@@ -168,12 +171,12 @@
       '<div class="nav-dropdown-menu" id="nav-my-hub-menu" role="menu" hidden>' +
       organiserItem +
       '<a role="menuitem" class="nav-dropdown-item" href="' +
-      href('account/index.html') +
+      href('/account/') +
       '"' +
       accountActive +
       '>My tickets &amp; reviews</a>' +
       '<a role="menuitem" class="nav-dropdown-item" href="' +
-      href('account/settings.html') +
+      href('/account/settings') +
       '"' +
       settingsActive +
       '>Account settings</a>' +
@@ -212,9 +215,9 @@
     var html = '';
     html += link('/events/', 'Events', 'events');
     html += link('/opportunities/', 'Opportunities', 'opportunities');
-    html += link('for-organisers.html', 'For Organisers', 'for-organisers');
-    html += link('contact.html', 'Contact', 'contact');
-    html += link('faq.html', 'Help', 'faq');
+    html += link('/for-organisers', 'For Organisers', 'for-organisers');
+    html += link('/contact', 'Contact', 'contact');
+    html += link('/faq', 'Help', 'faq');
     if (pending && !user) {
       html +=
         '<span class="nav-auth-pending" aria-hidden="true">' +
@@ -234,7 +237,7 @@
       }
       html += myHubDropdownHtml(user);
     } else {
-      html += link('login.html', 'Sign in', 'auth');
+      html += link('/login', 'Sign in', 'auth');
     }
     return html;
   }
@@ -243,9 +246,9 @@
     var html = '';
     html += link('/events/', 'Events', 'events', 'nav-mobile-item');
     html += link('/opportunities/', 'Opportunities', 'opportunities', 'nav-mobile-item');
-    html += link('for-organisers.html', 'For Organisers', 'for-organisers', 'nav-mobile-item');
-    html += link('contact.html', 'Contact', 'contact', 'nav-mobile-item');
-    html += link('faq.html', 'Help', 'faq', 'nav-mobile-item');
+    html += link('/for-organisers', 'For Organisers', 'for-organisers', 'nav-mobile-item');
+    html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
+    html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
     if (pending && !user) {
       html +=
         '<span class="nav-mobile-auth-pending" aria-hidden="true">' +
@@ -264,23 +267,18 @@
         html +=
           '<div class="nav-mobile-hub-mode">' + window.HubModeSwitch.html(hubView) + '</div>';
       }
-      html += link('account/index.html', 'My tickets &amp; reviews', 'account', 'nav-mobile-item');
+      html += link('/account/', 'My tickets &amp; reviews', 'account', 'nav-mobile-item');
       if (user.organiserUiVisible) {
-        html += link(
-          'organiser/index.html',
-          'Organiser workspace',
-          'organiser',
-          'nav-mobile-item'
-        );
+        html += link('/organiser/', 'Organiser workspace', 'organiser', 'nav-mobile-item');
       }
-      html += link('account/settings.html', 'Account settings', 'settings', 'nav-mobile-item');
+      html += link('/account/settings', 'Account settings', 'settings', 'nav-mobile-item');
       if (user.role === 'admin') {
-        html += link('admin/index.html', 'Command Center', 'admin', 'nav-mobile-item');
+        html += link('/admin/', 'Command Center', 'admin', 'nav-mobile-item');
       }
       html +=
         '<button type="button" class="nav-mobile-item nav-mobile-signout" id="nav-mobile-signout">Sign out</button>';
     } else {
-      html += link('login.html', 'Sign in', 'auth', 'nav-mobile-item');
+      html += link('/login', 'Sign in', 'auth', 'nav-mobile-item');
     }
     return html;
   }
@@ -337,7 +335,7 @@
         closeMenu();
         cacheUser(null);
         fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
-          window.location.href = href('index.html');
+          window.location.href = href('/');
         });
       });
     }
@@ -419,7 +417,7 @@
           })
           .then(function (data) {
             cacheUser(null);
-            window.location.href = root + String(data.redirect || 'admin/index.html').replace(/^\//, '');
+            window.location.href = href(String(data.redirect || '/admin/'));
           })
           .catch(function () {
             stopBtn.disabled = false;
@@ -509,7 +507,7 @@
       signOut.addEventListener('click', function () {
         cacheUser(null);
         fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
-          window.location.href = href('index.html');
+          window.location.href = href('/');
         });
       });
     }

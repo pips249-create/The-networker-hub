@@ -29,14 +29,14 @@
   </head>
   <body class="organiser-dashboard-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260710g" data-root="../" data-page="organiser"></script>
+    <script src="../js/site-nav.js?v=20260714u" data-root="../" data-page="organiser"></script>
 
     <div id="org-signin" class="org-signin" hidden>
       <p class="org-section-sub">
         Sign in to your organiser workspace — organiser pages, events, business opportunities, reviews, revenue, and attendees. Use <strong>My tickets</strong> in the nav for bookings and reviews you leave as an attendee.
       </p>
       <p style="margin-top: 12px">
-        <a class="org-btn org-btn-primary" href="../login.html?next=/organiser/index.html">Sign in</a>
+        <a class="org-btn org-btn-primary" href="../login?next=/organiser/">Sign in</a>
       </p>
     </div>
 
@@ -80,8 +80,8 @@
             </a>
             <a href="#business-list" class="hub-side-nav-link" data-org-route="business-list">List a listing</a>
             <div class="hub-side-nav-util">
-              <a href="../guides.html">Organiser guides</a>
-              <a href="../events/index.html">Browse events</a>
+              <a href="../guides">Organiser guides</a>
+              <a href="../events/">Browse events</a>
             </div>
           </nav>
           <div
@@ -152,11 +152,11 @@
                 + Add new <span class="org-add-chev" aria-hidden="true">▾</span>
               </button>
               <div class="org-add-menu" id="org-add-menu" role="menu" hidden>
-                <a role="menuitem" class="org-add-menu-item" href="group-edit.html">
+                <a role="menuitem" class="org-add-menu-item" href="/organiser/group-edit">
                   <strong>Organiser page</strong>
                   <span>Your public page on the hub</span>
                 </a>
-                <a role="menuitem" class="org-add-menu-item" href="event-format.html">
+                <a role="menuitem" class="org-add-menu-item" href="/organiser/event-format">
                   <strong>Event</strong>
                   <span>Meeting, exhibition or conference</span>
                 </a>
@@ -211,9 +211,9 @@
                 <h2 class="org-getting-started-title">Here&apos;s what to do first</h2>
                 <p class="org-section-sub org-getting-started-sub">
                   <span id="org-getting-started-progress">2 steps to get your workspace ready.</span>
-                  <a href="../guides/list-a-conference-or-exhibition.html" class="org-getting-started-guides">Conferences guide</a>
+                  <a href="../guides/list-a-conference-or-exhibition" class="org-getting-started-guides">Conferences guide</a>
                   ·
-                  <a href="../guides.html" class="org-getting-started-guides">All guides</a>
+                  <a href="../guides" class="org-getting-started-guides">All guides</a>
                 </p>
               </div>
               <button type="button" class="org-btn org-btn-outline org-btn-sm" id="org-getting-started-dismiss">Dismiss</button>
@@ -330,8 +330,8 @@
             </div>
 
             <div class="org-business-intro-actions">
-              <a class="org-btn org-btn-gold" href="opportunity-edit.html" id="org-opp-start-listing">Start your listing →</a>
-              <a class="org-btn org-btn-outline" href="../opportunities/index.html" target="_blank" rel="noopener">Preview the directory</a>
+              <a class="org-btn org-btn-gold" href="/organiser/opportunity-edit" id="org-opp-start-listing">Start your listing →</a>
+              <a class="org-btn org-btn-outline" href="../opportunities/" target="_blank" rel="noopener">Preview the directory</a>
             </div>
           </div>
         </section>
@@ -377,7 +377,7 @@
                 <span class="org-quick-label">View enquiries</span>
                 <span class="org-quick-hint">Messages from members who got in touch</span>
               </button>
-              <a class="org-quick-card" href="../opportunities/index.html" target="_blank" rel="noopener">
+              <a class="org-quick-card" href="../opportunities/" target="_blank" rel="noopener">
                 <span class="org-quick-icon" aria-hidden="true">↗</span>
                 <span class="org-quick-label">Browse opportunities</span>
                 <span class="org-quick-hint">See how listings appear on the hub</span>
@@ -458,7 +458,7 @@
               <h1 class="org-page-title">Organiser pages</h1>
               <p class="org-page-lead">Your public pages on the hub — for your networking group, business, or brand. Events belong to an organiser page.</p>
             </div>
-            <a href="group-edit.html" class="org-btn org-btn-gold">+ New organiser page</a>
+            <a href="/organiser/group-edit" class="org-btn org-btn-gold">+ New organiser page</a>
           </header>
           <div id="org-ranking-share-groups-mount"></div>
           <div class="org-filter-bar">
@@ -499,7 +499,7 @@
               <h3 class="org-empty-state-title">No organiser pages yet</h3>
               <p class="org-empty-state-text">Create your organiser page on the hub before listing events.</p>
               <div class="org-empty-state-actions">
-                <a href="group-edit.html" class="org-btn org-btn-gold org-btn-sm">+ Add organiser page</a>
+                <a href="/organiser/group-edit" class="org-btn org-btn-gold org-btn-sm">+ Add organiser page</a>
               </div>
             </div>
           </div>
@@ -574,7 +574,7 @@
               <h1 class="org-page-title" id="my-events-title">My Events</h1>
               <p class="org-page-lead" id="my-events-sub">Manage all your event listings — click any event name to edit.</p>
             </div>
-            <a href="event-format.html" class="org-btn org-btn-gold" id="btn-new-event">+ New event</a>
+            <a href="/organiser/event-format" class="org-btn org-btn-gold" id="btn-new-event">+ New event</a>
           </header>
 
           <div class="org-events-hub-summary" id="org-events-hub-summary">

@@ -388,7 +388,7 @@ module.exports = async function handler(req, res) {
       ''
     );
     const slug = String(evRes.data.slug || '').trim();
-    const cancelPath = slug ? `/events/${encodeURIComponent(slug)}` : `/events/event.html?id=${eventId}`;
+    const cancelPath = slug ? `/events/${encodeURIComponent(slug)}` : `/events/event?id=${eventId}`;
 
     let paymentIntentData = null;
     if (connectRequiredForPaidCheckout()) {

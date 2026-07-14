@@ -353,7 +353,7 @@
   function detailHref(ev) {
     const slug = publicEventSlug(ev);
     if (slug) return '/events/' + encodeURIComponent(slug);
-    return 'event.html?id=' + encodeURIComponent(ev.id);
+    return '/events/event?id=' + encodeURIComponent(ev.id);
   }
 
   const META_PIN_SVG =

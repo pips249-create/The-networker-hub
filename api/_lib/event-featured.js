@@ -148,7 +148,7 @@ async function sendFeaturedExpiryReminders(sb) {
 
     const extendUrl =
       siteUrl +
-      '/organiser/event-published.html?ids=' +
+      '/organiser/event-published?ids=' +
       encodeURIComponent(event.id) +
       '&extend=featured';
 

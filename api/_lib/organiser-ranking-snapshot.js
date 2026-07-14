@@ -229,7 +229,7 @@ function organiserRecipientEmail(row) {
 function profileUrlForOrganiser(row, siteUrl) {
   const slug = publicOrganiserSlug(row);
   if (slug) return `${siteUrl}/organisers/${encodeURIComponent(slug)}`;
-  return `${siteUrl}/events/organiser.html?id=${encodeURIComponent(row.id)}`;
+  return `${siteUrl}/events/organiser?id=${encodeURIComponent(row.id)}`;
 }
 
 function shouldSendRankingEmail(prevTier, newTier) {

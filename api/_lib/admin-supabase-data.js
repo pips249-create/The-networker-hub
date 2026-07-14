@@ -2,7 +2,6 @@
  * Admin Command Center — read platform data from Supabase.
  */
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
-const { parseTypeCategory } = require('./event-types');
 const {
   registrationTicketRevenue,
   registrationBookingFee,
@@ -34,18 +33,9 @@ const INCOMPLETE_ORGANISER_FILTER =
   'description.is.null,description.eq.,photo_url.is.null,photo_url.eq.,website.is.null,website.eq.';
 
 /** Actionable admin queue totals — used for alerts, attention, and sidebar badge (excludes event-health scan). */
-async function fetchAdminActionCounts(sb) {
-  const [
-    openListingReportsRes,
-    openReviewReportsRes,
-    pendingOpportunitiesRes,
-    claimDisputesRes,
-    openComplaintsRes,
-    recentReviewsRes,
-    incompleteOrgsRes,
-    pendingPayoutsRes,
-    stripeOnboardingRes,
-  ] = await Promise.all([
+async function fetchAdminActionCounts(sb, options) {
+  const light = !!(options && options.light);
+  const baseQueries = [
     sb.from('listing_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
     sb.from('review_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
     sb
@@ -60,7 +50,6 @@ async function fetchAdminActionCounts(sb) {
       .from('complaints')
       .select('id', { count: 'exact', head: true })
       .not('status', 'in', '("resolved","closed")'),
-    sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
     sb.from('organisers').select('id', { count: 'exact', head: true }).or(INCOMPLETE_ORGANISER_FILTER),
     sb
       .from('organiser_payouts')
@@ -71,6 +60,46 @@ async function fetchAdminActionCounts(sb) {
       .select('id', { count: 'exact', head: true })
       .not('stripe_account_id', 'is', null)
       .eq('stripe_charges_enabled', false),
+  ];
+
+  if (light) {
+    const [
+      openListingReportsRes,
+      openReviewReportsRes,
+      pendingOpportunitiesRes,
+      claimDisputesRes,
+      openComplaintsRes,
+      incompleteOrgsRes,
+      pendingPayoutsRes,
+      stripeOnboardingRes,
+    ] = await Promise.all(baseQueries);
+
+    return {
+      openListingReports: openListingReportsRes.error ? 0 : openListingReportsRes.count || 0,
+      openReviewReports: openReviewReportsRes.error ? 0 : openReviewReportsRes.count || 0,
+      pendingOpportunities: pendingOpportunitiesRes.error ? 0 : pendingOpportunitiesRes.count || 0,
+      openClaimDisputes: claimDisputesRes.error ? 0 : claimDisputesRes.count || 0,
+      openComplaints: openComplaintsRes.error ? 0 : openComplaintsRes.count || 0,
+      spamReviews: 0,
+      incompleteOrganisers: incompleteOrgsRes.error ? 0 : incompleteOrgsRes.count || 0,
+      pendingPayouts: pendingPayoutsRes.error ? 0 : pendingPayoutsRes.count || 0,
+      stripeOnboarding: stripeOnboardingRes.error ? 0 : stripeOnboardingRes.count || 0,
+    };
+  }
+
+  const [
+    openListingReportsRes,
+    openReviewReportsRes,
+    pendingOpportunitiesRes,
+    claimDisputesRes,
+    openComplaintsRes,
+    incompleteOrgsRes,
+    pendingPayoutsRes,
+    stripeOnboardingRes,
+    recentReviewsRes,
+  ] = await Promise.all([
+    ...baseQueries,
+    sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
   ]);
 
   const spamReviews = (recentReviewsRes.data || []).filter((r) => isSpamReview(r.review_text)).length;
@@ -217,24 +246,58 @@ function isTestActivityText(text) {
   );
 }
 
+async function fetchPaidRegistrationTotals(sb) {
+  const pageSize = 1000;
+  let from = 0;
+  let totalRevenue = 0;
+  let hubBookingFees = 0;
+
+  while (true) {
+    const res = await sb
+      .from('registrations')
+      .select('amount_paid, quantity')
+      .eq('payment_status', 'Paid')
+      .range(from, from + pageSize - 1);
+    if (res.error) throw new Error(res.error.message);
+    const rows = res.data || [];
+    rows.forEach((r) => {
+      totalRevenue += registrationTicketRevenue(r);
+      hubBookingFees += registrationBookingFee(r);
+    });
+    if (rows.length < pageSize) break;
+    from += pageSize;
+  }
+
+  return {
+    revenue: round2(totalRevenue),
+    fees: round2(hubBookingFees),
+  };
+}
+
 async function fetchDashboardMetrics(sb) {
   const cutoff = new Date(Date.now() - 86400000).toISOString();
   const [
-    approvedEventsRes,
+    approvedTotalRes,
+    exhibitionsRes,
     workshopsRes,
     orgRes,
     attendeesRes,
     accountsRes,
-    regsRes,
+    paidTotals,
     liveDatedRes,
     liveUndatedRes,
   ] = await Promise.all([
-    sb.from('events').select('event_type').eq('approval_status', 'Approved'),
+    sb.from('events').select('id', { count: 'exact', head: true }).eq('approval_status', 'Approved'),
+    sb
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .eq('approval_status', 'Approved')
+      .or('event_type.eq.Exhibition,event_type.ilike.%exhibit%'),
     sb.from('workshops').select('id', { count: 'exact', head: true }),
     sb.from('organisers').select('id', { count: 'exact', head: true }),
     sb.from('attendees').select('id', { count: 'exact', head: true }),
     sb.from('hub_accounts').select('user_id', { count: 'exact', head: true }),
-    sb.from('registrations').select('amount_paid, payment_status').eq('payment_status', 'Paid'),
+    fetchPaidRegistrationTotals(sb),
     sb
       .from('events')
       .select('id', { count: 'exact', head: true })
@@ -247,34 +310,22 @@ async function fetchDashboardMetrics(sb) {
       .is('starts_at', null),
   ]);
 
-  if (approvedEventsRes.error) throw new Error(approvedEventsRes.error.message);
-  if (regsRes.error) throw new Error(regsRes.error.message);
+  if (approvedTotalRes.error) throw new Error(approvedTotalRes.error.message);
+  if (exhibitionsRes.error) throw new Error(exhibitionsRes.error.message);
 
-  const approved = approvedEventsRes.data || [];
-  let meetings = 0;
-  let exhibitions = 0;
-  approved.forEach((e) => {
-    const cat = parseTypeCategory(e.event_type);
-    if (cat === 'exhibition') exhibitions += 1;
-    else meetings += 1;
-  });
-
+  const total = approvedTotalRes.count || 0;
+  const exhibitions = exhibitionsRes.count || 0;
+  const meetings = Math.max(0, total - exhibitions);
   const training = workshopsRes.count || 0;
-  let totalRevenue = 0;
-  let hubBookingFees = 0;
-  (regsRes.data || []).forEach((r) => {
-    totalRevenue += registrationTicketRevenue(r);
-    hubBookingFees += registrationBookingFee(r);
-  });
 
   return {
-    revenue: round2(totalRevenue),
-    fees: round2(hubBookingFees),
+    revenue: paidTotals.revenue,
+    fees: paidTotals.fees,
     listings: {
       meetings,
       exhibitions,
       training,
-      total: approved.length,
+      total,
     },
     organisers: orgRes.count || 0,
     providers: training,
@@ -286,6 +337,29 @@ async function fetchDashboardMetrics(sb) {
 
 async function fetchAlerts(counts) {
   return buildAlertsFromCounts(counts);
+}
+
+async function fetchAttentionQueueLight(sb, counts) {
+  const pendingClaimsRes = await sb
+    .from('organisers')
+    .select('id', { count: 'exact', head: true })
+    .eq('ownership_claim_status', 'pending');
+  const action = counts || {};
+  return {
+    pendingOpportunities: [],
+    pendingOpportunitiesTotal: action.pendingOpportunities || 0,
+    incompleteOrganisers: action.incompleteOrganisers || 0,
+    spamReviews: action.spamReviews || 0,
+    openClaimDisputes: [],
+    openListingReports: action.openListingReports || 0,
+    openListingReportItems: [],
+    openReviewReports: action.openReviewReports || 0,
+    openReviewReportItems: [],
+    pendingOwnershipClaims: pendingClaimsRes.error ? 0 : pendingClaimsRes.count || 0,
+    pendingPayouts: action.pendingPayouts || 0,
+    stripeOnboarding: action.stripeOnboarding || 0,
+    totalCount: sumAdminNotificationCounts(action),
+  };
 }
 
 async function fetchAttentionQueue(sb, counts) {
@@ -658,18 +732,18 @@ async function fetchModeration(sb) {
     let adminUrl = null;
     if (r.listing_type === 'event' && eventId) {
       viewUrl = eventSlug
-        ? `../events/event.html?slug=${encodeURIComponent(eventSlug)}`
-        : `../events/event.html?id=${encodeURIComponent(eventId)}`;
+        ? `../events/event?slug=${encodeURIComponent(eventSlug)}`
+        : `../events/event?id=${encodeURIComponent(eventId)}`;
       adminUrl = `#cleanup/events?q=${encodeURIComponent(title)}`;
     } else if (r.listing_type === 'organiser' && organiserId) {
       viewUrl = organiserSlug
-        ? `../events/organiser.html?slug=${encodeURIComponent(organiserSlug)}`
-        : `../events/organiser.html?id=${encodeURIComponent(organiserId)}`;
+        ? `../events/organiser?slug=${encodeURIComponent(organiserSlug)}`
+        : `../events/organiser?id=${encodeURIComponent(organiserId)}`;
       adminUrl = `#cleanup/groups?organiser=${encodeURIComponent(organiserId)}`;
     } else if (r.listing_type === 'opportunity' && opportunityId) {
       viewUrl = opportunitySlug
         ? `../opportunities/${encodeURIComponent(opportunitySlug)}`
-        : `../opportunities/opportunity.html?id=${encodeURIComponent(opportunityId)}`;
+        : `../opportunities/opportunity?id=${encodeURIComponent(opportunityId)}`;
       adminUrl = `#cleanup/opportunities?q=${encodeURIComponent(title)}`;
     }
     return {
@@ -981,12 +1055,30 @@ async function clearDisputedProfileEmail(disputeId) {
   return resolveClaimDispute(id);
 }
 
-async function getAdminDashboard() {
+async function getAdminDashboard(options) {
   if (!isSupabaseConfigured()) {
     return { configured: false, provider: 'supabase' };
   }
+  const light = !!(options && options.light);
   const sb = getSupabaseAdmin();
-  const actionCounts = await fetchAdminActionCounts(sb);
+  const actionCounts = await fetchAdminActionCounts(sb, { light });
+
+  if (light) {
+    const attention = await fetchAttentionQueueLight(sb, actionCounts);
+    return {
+      configured: true,
+      provider: 'supabase',
+      light: true,
+      metrics: null,
+      alerts: buildAlertsFromCounts(actionCounts),
+      activity: [],
+      attention,
+      actionCounts,
+      notificationCount: sumAdminNotificationCounts(actionCounts),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
   const [metrics, activity, attention] = await Promise.all([
     fetchDashboardMetrics(sb),
     fetchActivity(sb),

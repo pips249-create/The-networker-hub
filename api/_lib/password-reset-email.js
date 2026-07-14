@@ -7,7 +7,7 @@ function siteHost() {
 
 async function createPasswordResetLink(email, redirectPath) {
   const sb = getSupabaseAdmin();
-  const redirectTo = siteHost() + String(redirectPath || '/reset-password.html');
+  const redirectTo = siteHost() + String(redirectPath || '/reset-password');
   const { data, error } = await sb.auth.admin.generateLink({
     type: 'recovery',
     email: String(email || '').trim().toLowerCase(),

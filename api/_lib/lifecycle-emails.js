@@ -98,7 +98,7 @@ async function sendOpportunityRejectedEmail(opportunity, rejectionNote) {
       rejection_note: note
         ? note
         : 'We could not approve this listing at this time. You can edit your listing and resubmit when you are ready.',
-      edit_url: siteUrl + '/organiser/opportunity-edit.html?id=' + encodeURIComponent(opportunity.id),
+      edit_url: siteUrl + '/organiser/opportunity-edit?id=' + encodeURIComponent(opportunity.id),
     },
   });
   return { sent: true, to };
@@ -116,7 +116,7 @@ async function sendOpportunityListingExpiredEmail(row) {
       ...baseEmailVars(siteUrl),
       owner_name: ownerNameFromOpportunity(row, to),
       opportunity_title: String(row.title || 'Your opportunity').trim(),
-      renew_url: siteUrl + '/organiser/opportunity-edit.html?id=' + encodeURIComponent(row.id),
+      renew_url: siteUrl + '/organiser/opportunity-edit?id=' + encodeURIComponent(row.id),
     },
   });
   return { sent: true, to };
@@ -135,7 +135,7 @@ async function sendOpportunityPremiumExpiredEmail(row) {
       owner_name: ownerNameFromOpportunity(row, to),
       opportunity_title: String(row.title || 'Your opportunity').trim(),
       renew_url:
-        siteUrl + '/organiser/opportunity-submitted.html?id=' + encodeURIComponent(row.id),
+        siteUrl + '/organiser/opportunity-submitted?id=' + encodeURIComponent(row.id),
     },
   });
   return { sent: true, to };

@@ -450,7 +450,7 @@
   function eventHref(reg) {
     const slug = reg.slug ? String(reg.slug).trim() : '';
     if (slug) return '../events/' + encodeURIComponent(slug);
-    return '../events/event.html?id=' + encodeURIComponent(reg.eventId || reg.id || '');
+    return '../events/event?id=' + encodeURIComponent(reg.eventId || reg.id || '');
   }
 
   function joinLinkHtml(reg) {
@@ -1758,7 +1758,7 @@
 
   function opportunityListingHref(opportunityId) {
     const id = String(opportunityId || '').trim();
-    if (!id) return '../opportunities/index.html';
+    if (!id) return '../opportunities/';
     return '/opportunities/' + encodeURIComponent(id);
   }
 
@@ -1969,7 +1969,7 @@
   function savedEventHref(item) {
     const slug = item.slug ? String(item.slug).trim() : '';
     if (slug) return '../events/' + encodeURIComponent(slug);
-    return '../events/event.html?id=' + encodeURIComponent(item.eventId || item.id || '');
+    return '../events/event?id=' + encodeURIComponent(item.eventId || item.id || '');
   }
 
   function renderSavedTable() {
@@ -2035,13 +2035,13 @@
   function savedOrganiserHref(item) {
     const slug = item.slug ? String(item.slug).trim() : '';
     if (slug) return '../organisers/' + encodeURIComponent(slug);
-    return '../events/organiser.html?id=' + encodeURIComponent(item.organiserId || item.organiser_id || item.id || '');
+    return '../events/organiser?id=' + encodeURIComponent(item.organiserId || item.organiser_id || item.id || '');
   }
 
   function savedOpportunityHref(item) {
     const slug = item.slug ? String(item.slug).trim() : '';
     if (slug) return '../opportunities/' + encodeURIComponent(slug);
-    return '../opportunities/opportunity.html?id=' + encodeURIComponent(item.opportunityId || item.opportunity_id || item.id || '');
+    return '/opportunities/opportunity?id=' + encodeURIComponent(item.opportunityId || item.opportunity_id || item.id || '');
   }
 
   async function ensureOpportunitiesCatalog() {
@@ -2461,7 +2461,7 @@
         String(item.label || '').trim() ||
         (q && q.criteriaLabel ? q.criteriaLabel(criteria) : 'Saved search');
       const href =
-        q && q.criteriaToUrl ? q.criteriaToUrl(criteria, '../opportunities/index.html') : '../opportunities/index.html';
+        q && q.criteriaToUrl ? q.criteriaToUrl(criteria, '../opportunities/') : '../opportunities/';
       tr.innerHTML =
         '<td class="ad-td-name"><a href="' +
         esc(href) +
@@ -2787,7 +2787,7 @@
       const signInLink = signin && signin.querySelector('a.ad-btn-primary');
       if (signInLink) {
         const returnTo = location.pathname + location.search + location.hash;
-        signInLink.href = '../login.html?next=' + encodeURIComponent(returnTo);
+        signInLink.href = '../login?next=' + encodeURIComponent(returnTo);
       }
       return;
     }

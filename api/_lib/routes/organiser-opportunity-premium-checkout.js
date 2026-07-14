@@ -94,12 +94,12 @@ module.exports = async function handler(req, res) {
       opportunityId,
       successUrl:
         siteUrl +
-        '/organiser/opportunity-premium-success.html?session_id={CHECKOUT_SESSION_ID}&id=' +
+        '/organiser/opportunity-premium-success?session_id={CHECKOUT_SESSION_ID}&id=' +
         encodeURIComponent(opportunityId) +
         (title ? '&title=' + title : ''),
       cancelUrl:
         siteUrl +
-        '/organiser/opportunity-submitted.html?id=' +
+        '/organiser/opportunity-submitted?id=' +
         encodeURIComponent(opportunityId) +
         (title ? '&title=' + title : '') +
         '&premium=cancelled',

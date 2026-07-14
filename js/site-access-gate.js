@@ -66,7 +66,7 @@
     });
   }
 
-  // Visit /site-access.html?lock=1 to clear preview cookie and show the password form again
+  // Visit /site-access?lock=1 to clear preview cookie and show the password form again
   var lockRequested = false;
   try {
     lockRequested = new URLSearchParams(window.location.search).get('lock') === '1';

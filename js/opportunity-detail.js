@@ -197,7 +197,7 @@
   function similarCardHtml(item) {
     var href = item.slug
       ? '/opportunities/' + encodeURIComponent(item.slug)
-      : 'opportunity.html?id=' + encodeURIComponent(item.id);
+      : '/opportunities/opportunity?id=' + encodeURIComponent(item.id);
     var invest = '';
     (item.meta || []).forEach(function (m) {
       if (/^investment$/i.test(m.key)) invest = String(m.val || '').trim();
@@ -403,8 +403,8 @@
     var next = window.location.pathname + window.location.search + window.location.hash;
     var loginLink = document.getElementById('opp-enquire-login-link');
     var registerLink = document.getElementById('opp-enquire-register-link');
-    if (loginLink) loginLink.href = '../login.html?next=' + encodeURIComponent(next);
-    if (registerLink) registerLink.href = '../register.html?next=' + encodeURIComponent(next);
+    if (loginLink) loginLink.href = '../login?next=' + encodeURIComponent(next);
+    if (registerLink) registerLink.href = '../register?next=' + encodeURIComponent(next);
 
     if (signedIn && nameEl && sessionUser.name && !nameEl.value) {
       nameEl.value = sessionUser.name;

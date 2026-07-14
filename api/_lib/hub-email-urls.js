@@ -57,11 +57,11 @@ function opportunitiesBrowseUrl(siteUrl) {
 }
 
 function hubAccountUrl(siteUrl) {
-  return siteBase(siteUrl) + '/account/index.html';
+  return siteBase(siteUrl) + '/account/';
 }
 
 function welcomeUrl(siteUrl) {
-  return siteBase(siteUrl) + '/welcome.html';
+  return siteBase(siteUrl) + '/welcome';
 }
 
 function hubPaymentUrl(siteUrl, registrationId) {
@@ -74,11 +74,11 @@ function hubPaymentUrl(siteUrl, registrationId) {
 function legalPolicyUrl(siteUrl, section) {
   const key = String(section || 'overview').trim().replace(/^#/, '');
   const hash = key && key !== 'overview' ? '#' + key : '';
-  return siteBase(siteUrl) + '/legal-policies.html' + hash;
+  return siteBase(siteUrl) + '/legal-policies' + hash;
 }
 
 function contactUrl(siteUrl) {
-  return siteBase(siteUrl) + '/contact.html';
+  return siteBase(siteUrl) + '/contact';
 }
 
 function eventPublicUrl(eventRow, siteUrl) {
@@ -86,7 +86,7 @@ function eventPublicUrl(eventRow, siteUrl) {
   const slug = String(eventRow?.slug || '').trim();
   if (slug) return site + '/events/' + encodeURIComponent(slug);
   const id = String(eventRow?.id || '').trim();
-  if (id) return site + '/events/event.html?id=' + encodeURIComponent(id);
+  if (id) return site + '/events/event?id=' + encodeURIComponent(id);
   return browseEventsUrl(site);
 }
 
@@ -95,12 +95,12 @@ function organiserPublicUrl(organiserRow, siteUrl) {
   const slug = String(organiserRow?.slug || '').trim();
   if (slug) return site + '/organisers/' + encodeURIComponent(slug);
   const id = String(organiserRow?.id || '').trim();
-  if (id) return site + '/events/organiser.html?id=' + encodeURIComponent(id);
+  if (id) return site + '/events/organiser?id=' + encodeURIComponent(id);
   return browseEventsUrl(site) + '#organisers';
 }
 
 function organiserDashboardUrl(siteUrl, options = {}) {
-  const base = siteBase(siteUrl) + '/organiser/index.html';
+  const base = siteBase(siteUrl) + '/organiser/';
   const panel = String(options.panel || '').trim();
   const eventId = String(options.eventId || '').trim();
   const applications = String(options.applications || '').trim();
@@ -115,7 +115,7 @@ function organiserDashboardUrl(siteUrl, options = {}) {
 }
 
 function organiserBusinessDashboardUrl(siteUrl) {
-  const base = siteBase(siteUrl) + '/organiser/index.html';
+  const base = siteBase(siteUrl) + '/organiser/';
   return base + '?panel=business-overview#business-overview';
 }
 

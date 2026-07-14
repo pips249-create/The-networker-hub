@@ -149,8 +149,8 @@ function buildRefundPolicySection(eventRow, siteUrl) {
   const text = formatRefundPolicyText(normalized);
   const site = String(siteUrl || '').replace(/\/$/, '');
   const refundsHref = site
-    ? site + '/legal-policies.html#refunds'
-    : 'https://the-networker-hub.vercel.app/legal-policies.html#refunds';
+    ? site + '/legal-policies#refunds'
+    : 'https://the-networker-hub.vercel.app/legal-policies#refunds';
   return (
     '<tr><td class="mobile-pad" style="padding:0 48px 20px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#faf7f2;border-radius:14px;border:1px solid #d9c4e0;">' +

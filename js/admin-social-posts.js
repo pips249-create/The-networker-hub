@@ -322,7 +322,7 @@
 
   function organiserPublicUrl(org) {
     if (org && org.slug) return siteOrigin() + '/organiser/' + encodeURIComponent(org.slug);
-    if (org && org.id) return siteOrigin() + '/events/organiser.html?id=' + encodeURIComponent(org.id);
+    if (org && org.id) return siteOrigin() + '/events/organiser?id=' + encodeURIComponent(org.id);
     return siteOrigin() + '/events/';
   }
 

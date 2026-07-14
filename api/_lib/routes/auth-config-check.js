@@ -142,14 +142,14 @@ module.exports = async function handler(req, res) {
         siteAccess.siteAccessRequired && !siteAccess.siteAccessReady
           ? 'SITE_ACCESS_PASSWORD is set but empty — the gate cannot issue access cookies until a password value is configured.'
           : siteAccess.siteAccessRequired
-            ? 'Site access gate is ON. Public visitors only see /site-access.html (waitlist). The full site needs the preview password cookie. Remove SITE_ACCESS_PASSWORD (and set EMAIL_ALLOWLIST_DISABLED=true if used) when you launch around 28 August 2026.'
+            ? 'Site access gate is ON. Public visitors only see /site-access (waitlist). The full site needs the preview password cookie. Remove SITE_ACCESS_PASSWORD (and set EMAIL_ALLOWLIST_DISABLED=true if used) when you launch around 28 August 2026.'
             : null,
       nextStep: !supabase.ok
         ? 'Fix Supabase env vars in Vercel → Redeploy.'
         : !adminAccount.exists
           ? 'Run: node scripts/seed-admin.js (local) or POST /api/auth/setup-admin with ADMIN_SETUP_SECRET'
           : authReady
-            ? 'Sign in at /login.html'
+            ? 'Sign in at /login'
             : 'Complete env vars, then Redeploy',
     },
     checkUrl: '/api/auth/config-check',

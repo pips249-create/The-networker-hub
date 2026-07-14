@@ -63,16 +63,16 @@
   }
 
   function stepHref(stepId, ctx) {
-    if (stepId === 'format') return 'event-format.html';
+    if (stepId === 'format') return '/organiser/event-format';
     if (stepId === 'details') {
-      if (ctx.editId) return 'event-edit.html?id=' + encodeURIComponent(ctx.editId);
-      if (ctx.format) return 'event-edit.html?format=' + encodeURIComponent(ctx.format);
-      if (ctx.firstEventId) return 'event-edit.html?id=' + encodeURIComponent(ctx.firstEventId);
-      return 'event-edit.html';
+      if (ctx.editId) return '/organiser/event-edit?id=' + encodeURIComponent(ctx.editId);
+      if (ctx.format) return '/organiser/event-edit?format=' + encodeURIComponent(ctx.format);
+      if (ctx.firstEventId) return '/organiser/event-edit?id=' + encodeURIComponent(ctx.firstEventId);
+      return '/organiser/event-edit';
     }
     if (stepId === 'tickets') {
       if (!ctx.eventIds.length) return null;
-      return 'event-tickets.html?ids=' + encodeURIComponent(ctx.eventIds.join(','));
+      return '/organiser/event-tickets?ids=' + encodeURIComponent(ctx.eventIds.join(','));
     }
     return null;
   }

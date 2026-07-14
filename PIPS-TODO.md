@@ -207,7 +207,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | `STRIPE_WEBHOOK_SECRET` + webhook endpoint `checkout.session.completed` |
 | [x] | `STRIPE_CONNECT_ENABLED=true` |
 | [x] | Paid checkout → `registrations` row in Supabase |
-| [x] | Ticket appears on `/account/index.html` |
+| [x] | Ticket appears on `/account/` |
 | [x] | `booking_confirmation` + `organiser_new_registration` emails |
 | [ ] | **Connect destination charge test** (Tab 9) — verify money split in Stripe |
 | [ ] | Free ticket path: `POST /api/auth/complete-booking` without Stripe |
@@ -395,9 +395,9 @@ Legal policies, cookie consent, terms at registration, pre-checkout acknowledgem
 
 | What | Where |
 |------|--------|
-| Command Centre | `/admin/index.html` |
+| Command Centre | `/admin/` |
 | Email templates | `/admin/emails` |
-| Attendee dashboard | `/account/index.html` |
+| Attendee dashboard | `/account/` |
 | Review E2E test | `npm run test-review-e2e` |
 | Env var reference | `.env.example` |
 | Config check | `GET /api/auth/config-check` |

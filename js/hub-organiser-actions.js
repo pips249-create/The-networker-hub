@@ -17,7 +17,7 @@
   }
 
   function loginUrl(nextPath) {
-    return path('login.html?next=' + encodeURIComponent(nextPath));
+    return path('/login?next=' + encodeURIComponent(nextPath));
   }
 
   async function fetchSession() {
@@ -59,12 +59,12 @@
   async function ensureOrganiserAccess(nextPath) {
     var data = await fetchSession();
     if (!data.ok || !data.user) {
-      global.location.href = loginUrl(nextPath || '/organiser/enable.html');
+      global.location.href = loginUrl(nextPath || '/organiser/enable');
       return null;
     }
     data = await restoreOrganiserUiIfHidden(data);
     if (!organiserWorkspaceReady(data)) {
-      global.location.href = path('organiser/enable.html');
+      global.location.href = path('/organiser/enable');
       return null;
     }
     return data;
@@ -79,7 +79,7 @@
     if (!isEventsBrowsePage()) return;
     var hash = global.location.hash || '#events';
     try {
-      global.sessionStorage.setItem(BROWSE_RETURN_KEY, 'events/index.html' + hash);
+      global.sessionStorage.setItem(BROWSE_RETURN_KEY, '/events/' + hash);
     } catch (e) {
       /* ignore */
     }
@@ -109,7 +109,7 @@
       linkEl.textContent = '← Back to browse events';
       return;
     }
-    linkEl.href = fallbackHref || 'index.html#events-list';
+    linkEl.href = fallbackHref || '/organiser/#events-list';
     linkEl.textContent = fallbackLabel || '← Back to My Events';
   }
 
@@ -201,23 +201,23 @@
   async function goToGroupProfile(options) {
     options = options || {};
     saveBrowseReturn();
-    var data = await ensureOrganiserAccess('/organiser/group-edit.html');
+    var data = await ensureOrganiserAccess('/organiser/group-edit');
     if (!data) return;
     try {
       sessionStorage.removeItem(GROUP_STORAGE_KEY);
     } catch (e) {
       /* ignore */
     }
-    global.location.href = path('organiser/group-edit.html');
+    global.location.href = path('/organiser/group-edit');
   }
 
   function continueGoToAddEvent(data) {
     if (!data.ok || !data.user) {
-      global.location.href = loginUrl('/organiser/event-format.html');
+      global.location.href = loginUrl('/organiser/event-format');
       return;
     }
     if (!hasGroupProfile(data)) {
-      global.location.href = path('organiser/group-edit.html');
+      global.location.href = path('/organiser/group-edit');
       return;
     }
     try {
@@ -225,13 +225,13 @@
     } catch (e) {
       /* ignore */
     }
-    global.location.href = path('organiser/event-format.html');
+    global.location.href = path('/organiser/event-format');
   }
 
   async function goToAddEvent(options) {
     options = options || {};
     saveBrowseReturn();
-    var data = await ensureOrganiserAccess('/organiser/event-format.html');
+    var data = await ensureOrganiserAccess('/organiser/event-format');
     if (!data) return;
     if (hasGroupProfile(data)) {
       continueGoToAddEvent(data);
@@ -248,9 +248,9 @@
 
   async function goToAddOpportunity(options) {
     options = options || {};
-    var data = await ensureOrganiserAccess('/organiser/index.html#business-list');
+    var data = await ensureOrganiserAccess('/organiser/#business-list');
     if (!data) return;
-    global.location.href = path('organiser/index.html#business-list');
+    global.location.href = path('/organiser/#business-list');
   }
 
   function isLiveListingStatus(status) {
@@ -281,7 +281,7 @@
 
   async function goToBoostEvent() {
     saveBrowseReturn();
-    var data = await ensureOrganiserAccess('/organiser/event-published.html');
+    var data = await ensureOrganiserAccess('/organiser/event-published');
     if (!data) return;
 
     try {
@@ -291,11 +291,11 @@
         var boostable = (payload.events || []).filter(isBoostableEvent);
         if (boostable.length === 1) {
           global.location.href =
-            path('organiser/event-published.html?ids=' + encodeURIComponent(boostable[0].id));
+            path('/organiser/event-published?ids=' + encodeURIComponent(boostable[0].id));
           return;
         }
         if (boostable.length > 1) {
-          global.location.href = path('organiser/index.html#events-list');
+          global.location.href = path('/organiser/#events-list');
           return;
         }
       }
@@ -307,7 +307,7 @@
   }
 
   async function goToBoostOpportunity() {
-    var data = await ensureOrganiserAccess('/organiser/opportunity-submitted.html');
+    var data = await ensureOrganiserAccess('/organiser/opportunity-submitted');
     if (!data) return;
 
     try {
@@ -321,11 +321,11 @@
             'id=' +
             encodeURIComponent(opp.id) +
             (opp.title ? '&title=' + encodeURIComponent(opp.title) : '');
-          global.location.href = path('organiser/opportunity-submitted.html?' + qs);
+          global.location.href = path('/organiser/opportunity-submitted?' + qs);
           return;
         }
         if (boostable.length > 1) {
-          global.location.href = path('organiser/index.html#business-list');
+          global.location.href = path('/organiser/#business-list');
           return;
         }
       }
@@ -333,7 +333,7 @@
       /* fall through to list flow */
     }
 
-    global.location.href = path('opportunities/list.html');
+    global.location.href = path('/opportunities/list');
   }
 
   function spotlightBoostCardHtml(kind) {
@@ -350,7 +350,7 @@
       action +
       '">' +
       '<a class="premium-card-link" href="' +
-      path(isEvent ? 'organiser/' : 'opportunities/list.html') +
+      path(isEvent ? '/organiser/' : '/opportunities/list') +
       '" data-hub-action="' +
       action +
       '">' +
@@ -431,11 +431,11 @@
   async function requireGroupProfileForEventFlow() {
     var data = await fetchSession();
     if (!data.ok || !data.user) {
-      global.location.href = loginUrl('/organiser/event-format.html');
+      global.location.href = loginUrl('/organiser/event-format');
       return false;
     }
     if (!hasGroupProfile(data)) {
-      global.location.href = path('organiser/group-edit.html');
+      global.location.href = path('/organiser/group-edit');
       return false;
     }
     return true;

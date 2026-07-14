@@ -84,7 +84,7 @@ async function sendOrganiserEmailVerification({ userId, email, name }) {
 
   const verifyUrl =
     siteHost() +
-    '/organiser/verify-email.html?token=' +
+    '/organiser/verify-email?token=' +
     encodeURIComponent(token) +
     '&email=' +
     encodeURIComponent(address);

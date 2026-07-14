@@ -19,11 +19,11 @@
   </head>
   <body class="organiser-event-edit-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260710g" data-root="../" data-page="organiser"></script>
+    <script src="../js/site-nav.js?v=20260714u" data-root="../" data-page="organiser"></script>
 
     <div class="ee-wrap ee-format-wrap">
       <div class="ee-top-bar">
-        <a class="ee-back" href="index.html#events-list">← Back to My Events</a>
+        <a class="ee-back" href="/organiser/#events-list">← Back to My Events</a>
         <button type="button" class="ee-hubert-help-btn" data-hubert-help>Hubert's help</button>
       </div>
       <div id="ee-wizard-mount"></div>
@@ -39,19 +39,19 @@
           <select id="ee-event-group" required></select>
           <p class="ee-hint" id="ee-group-pick-hint">Choose an organiser page to continue.</p>
           <p class="ee-hint ee-group-add-row">
-            <a class="ee-inline-action" href="group-edit.html">+ Add a new organiser page</a>
+            <a class="ee-inline-action" href="/organiser/group-edit">+ Add a new organiser page</a>
           </p>
         </div>
       </div>
 
       <h2 class="ee-format-step-title">Step 2 — Event format</h2>
       <div class="ee-format-grid is-disabled" id="ee-format-grid" role="list">
-        <a class="ee-format-card" href="event-edit.html?format=in-person" role="listitem" aria-disabled="true" tabindex="-1">
+        <a class="ee-format-card" href="/organiser/event-edit?format=in-person" role="listitem" aria-disabled="true" tabindex="-1">
           <span class="ee-format-icon" aria-hidden="true">📍</span>
           <strong>In person</strong>
           <span>Venue name, full address and postcode for your listing and map.</span>
         </a>
-        <a class="ee-format-card" href="event-edit.html?format=online" role="listitem" aria-disabled="true" tabindex="-1">
+        <a class="ee-format-card" href="/organiser/event-edit?format=online" role="listitem" aria-disabled="true" tabindex="-1">
           <span class="ee-format-icon" aria-hidden="true">💻</span>
           <strong>Online</strong>
           <span>Platform and join link (sent to ticket holders, not shown publicly).</span>

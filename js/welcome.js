@@ -28,7 +28,7 @@
       var data = await res.json();
       if (data.ok && data.user) {
         if (isWelcomeDone()) {
-          window.location.href = 'events/index.html';
+          window.location.href = '/events/';
           return null;
         }
         personalizeWelcome(data.user);
@@ -37,7 +37,7 @@
     } catch (e) {
       /* ignore */
     }
-    window.location.href = 'register.html';
+    window.location.href = '/register';
     return null;
   }
 
@@ -55,21 +55,21 @@
       return;
     }
     markWelcomeDone();
-    window.location.href = 'organiser/enable.html';
+    window.location.href = '/organiser/enable';
   }
 
   document.querySelectorAll('[data-welcome-path]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var path = btn.getAttribute('data-welcome-path');
-      if (path === 'find-event') go('events/index.html');
+      if (path === 'find-event') go('/events/');
       else if (path === 'list-event') goListEvent();
-      else if (path === 'find-opportunity') go('opportunities/index.html');
+      else if (path === 'find-opportunity') go('/opportunities/');
       else if (path === 'list-opportunity') {
         markWelcomeDone();
         if (window.HubOrganiserActions && window.HubOrganiserActions.goToAddOpportunity) {
           window.HubOrganiserActions.goToAddOpportunity();
         } else {
-          go('organiser/enable.html');
+          go('/organiser/enable');
         }
       }
     });

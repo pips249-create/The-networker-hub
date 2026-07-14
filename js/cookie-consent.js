@@ -3,16 +3,6 @@
  */
 (function () {
   var STORAGE_KEY = 'hub_cookie_consent_v1';
-  var script = document.currentScript;
-  var navScript = document.querySelector('script[src*="site-nav.js"]');
-  var root =
-    (script && script.getAttribute('data-root')) ||
-    (navScript && navScript.getAttribute('data-root')) ||
-    '';
-
-  function href(path) {
-    return root + path;
-  }
 
   function readConsent() {
     try {
@@ -83,9 +73,7 @@
     bannerEl.innerHTML =
       '<div class="hub-cookie-banner-inner">' +
       '<p class="hub-cookie-banner-copy">We use essential cookies to run the Hub and optional analytics to improve the site. ' +
-      '<a href="' +
-      href('legal-policies.html#cookies') +
-      '">Cookie policy</a></p>' +
+      '<a href="/legal-policies#cookies">Cookie policy</a></p>' +
       '<div class="hub-cookie-banner-actions">' +
       '<button type="button" class="hub-cookie-btn" id="hub-cookie-settings-btn">Manage</button>' +
       '<button type="button" class="hub-cookie-btn" id="hub-cookie-reject-btn">Essential only</button>' +

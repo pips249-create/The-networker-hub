@@ -75,7 +75,7 @@ Or run `./scripts/create-hub-user.sh` after exporting `ADMIN_SETUP_SECRET`.
 
 ## 4. Sign in
 
-- **Login:** https://the-networker-hub.vercel.app/login.html  
+- **Login:** https://the-networker-hub.vercel.app/login  
 - **Command Center (admin only):** https://the-networker-hub.vercel.app/admin/dashboard.html  
 
 The dashboard is not linked on the public site — only admins reach it after sign-in.
@@ -87,7 +87,7 @@ The dashboard is not linked on the public site — only admins reach it after si
 3. If `RESEND_API_KEY` is set, an email is sent.  
 4. Otherwise set `AUTH_DEV_RESET_LINK=true` on Preview to show the reset URL in the API response (development only).
 
-Reset page: `/reset-password.html?token=...`
+Reset page: `/reset-password?token=...`
 
 ## Revenue metrics
 

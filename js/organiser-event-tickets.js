@@ -386,7 +386,7 @@
     }
     const groupLink = document.getElementById('ee-guest-group-edit-link');
     if (groupLink && seriesMeta.organiserGroupId) {
-      groupLink.href = 'group-edit.html?id=' + encodeURIComponent(seriesMeta.organiserGroupId);
+      groupLink.href = '/organiser/group-edit?id=' + encodeURIComponent(seriesMeta.organiserGroupId);
     }
     if (desc) {
       if (mode === 'category_exclusivity') {
@@ -667,7 +667,7 @@
 
     if (ticketsRes.status === 401 || eventRes.status === 401) {
       const next = encodeURIComponent(location.pathname + location.search);
-      location.href = '../login.html?next=' + next;
+      location.href = '../login?next=' + next;
       return { tickets: [], event: null, authFailed: true };
     }
 
@@ -770,7 +770,7 @@
     const qs = new URLSearchParams();
     if (eventIds.length) qs.set('ids', eventIds.join(','));
     // Keep drawer context out of Stripe return — open tickets full-page with draft restored.
-    return '/organiser/event-tickets.html?' + qs.toString();
+    return '/organiser/event-tickets?' + qs.toString();
   }
 
   function draftStorageKey() {
@@ -1335,7 +1335,7 @@
           }
         });
       } else {
-        editLink.href = 'event-edit.html?id=' + encodeURIComponent(eventIds[0]);
+        editLink.href = '/organiser/event-edit?id=' + encodeURIComponent(eventIds[0]);
         editLink.hidden = false;
       }
     }
@@ -1713,7 +1713,7 @@
     const firstImg =
       seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].imageUrl;
     if (firstImg) qs.set('image', firstImg);
-    location.href = 'event-published.html?' + qs.toString();
+    location.href = '/organiser/event-published?' + qs.toString();
   }
 
   document.getElementById('ee-tickets-form').addEventListener('submit', async (e) => {

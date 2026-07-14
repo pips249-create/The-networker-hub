@@ -77,7 +77,7 @@
   function eventHref(ev) {
     var slug = ev.slug ? String(ev.slug).trim() : '';
     if (slug) return '/events/' + encodeURIComponent(slug);
-    return 'event.html?id=' + encodeURIComponent(ev.id);
+    return '/events/event?id=' + encodeURIComponent(ev.id);
   }
 
   function setLoading(on) {
@@ -332,7 +332,7 @@
         var session = await sessionRes.json();
         if (!session.ok || !session.user) {
           var next = location.pathname + location.search;
-          window.location.href = '../login.html?next=' + encodeURIComponent(next);
+          window.location.href = '../login?next=' + encodeURIComponent(next);
           return;
         }
 

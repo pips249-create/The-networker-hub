@@ -43,7 +43,7 @@ module.exports = async function handler(req, res) {
         return json(res, 200, {
           ok: true,
           hubView: mode,
-          redirect: mode === 'organiser' ? '/organiser/index.html' : '/account/index.html',
+          redirect: mode === 'organiser' ? '/organiser/' : '/account/',
         });
       }
       return json(res, 403, {
@@ -60,8 +60,8 @@ module.exports = async function handler(req, res) {
             ? 'Restore organiser workspace in Account settings, or enable organiser access first.'
             : 'Enable organiser access before opening the organiser workspace.',
           redirect: accessStatus.organiserAccess
-            ? '/account/settings.html#organiser-workspace'
-            : '/organiser/enable.html',
+            ? '/account/settings#organiser-workspace'
+            : '/organiser/enable',
         });
       }
     }
@@ -69,7 +69,7 @@ module.exports = async function handler(req, res) {
     return json(res, 200, {
       ok: true,
       hubView: mode,
-      redirect: mode === 'organiser' ? '/organiser/index.html' : '/account/index.html',
+      redirect: mode === 'organiser' ? '/organiser/' : '/account/',
     });
   }
 

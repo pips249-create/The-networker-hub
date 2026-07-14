@@ -587,7 +587,7 @@ async function sendOrganiserLowUpcomingEventsNudges(sb) {
           ...baseEmailVars(siteUrl),
           organiser_name: contact.name || 'there',
           upcoming_count: String(upcomingCount),
-          create_event_url: siteUrl + '/organiser/event-format.html',
+          create_event_url: siteUrl + '/organiser/event-format',
           dashboard_url: organiserDashboardUrl(siteUrl),
         },
       });

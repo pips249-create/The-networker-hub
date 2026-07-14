@@ -120,14 +120,14 @@ module.exports = async function handler(req, res) {
       eventTitle: event.title,
       successUrl:
         siteUrl +
-        '/organiser/event-featured-success.html?session_id={CHECKOUT_SESSION_ID}&id=' +
+        '/organiser/event-featured-success?session_id={CHECKOUT_SESSION_ID}&id=' +
         encodeURIComponent(eventId) +
         '&plan=' +
         encodeURIComponent(planId) +
         (title ? '&title=' + title : ''),
       cancelUrl:
         siteUrl +
-        '/organiser/event-published.html?ids=' +
+        '/organiser/event-published?ids=' +
         encodeURIComponent(eventId) +
         (title ? '&title=' + title : '') +
         '&featured=cancelled',

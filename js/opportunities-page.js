@@ -315,7 +315,7 @@
     }
     return (
       '<article class="premium-card premium-card--boost-cta opp-premium-card">' +
-      '<a class="premium-card-link" href="../opportunities/list.html">' +
+      '<a class="premium-card-link" href="/opportunities/list">' +
       '<div class="premium-card-media" aria-hidden="true">' +
       '<div class="premium-card-bg premium-card-bg--boost">' +
       '<span class="premium-card-boost-icon" aria-hidden="true">★</span></div>' +
@@ -1202,7 +1202,7 @@
       .then(function (res) {
         if (res.status === 401) {
           window.location.href =
-            '../register.html?return=' + encodeURIComponent(window.location.pathname + window.location.search);
+            '../register?return=' + encodeURIComponent(window.location.pathname + window.location.search);
           return;
         }
         if (!res.data || !res.data.ok) throw new Error((res.data && res.data.message) || 'Could not save alert');

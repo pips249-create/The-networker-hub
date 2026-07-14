@@ -66,7 +66,7 @@
   function eventPageUrl(ev) {
     const origin = global.location ? global.location.origin : 'https://the-networker-hub.vercel.app';
     if (ev && ev.slug) return origin + '/events/' + encodeURIComponent(ev.slug);
-    if (ev && ev.id) return origin + '/events/event.html?id=' + encodeURIComponent(ev.id);
+    if (ev && ev.id) return origin + '/events/event?id=' + encodeURIComponent(ev.id);
     return origin + '/events/';
   }
 

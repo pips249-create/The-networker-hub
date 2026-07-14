@@ -52,7 +52,7 @@ It is **not** a substitute for Search Console, sitemap, or the `the-networker.co
 5. **Google Business Profile** — Software company / online platform; Magpas HQ; website field ready for hub URL.
 6. **Analytics** — keep Vercel Analytics only, or add GA4/GTM after cookie consent.
 7. **Content freeze** — FAQs, About, Contact NAP; spot-check View Source on sample event + organiser pages after a staging gate-off test.
-8. **Optional polish** — canonical/OG for `/guides.html` subpages; include key guides in sitemap.
+8. **Optional polish** — canonical/OG for `/guides` subpages; include key guides in sitemap.
 
 ---
 

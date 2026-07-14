@@ -150,7 +150,7 @@ Check Airtable **Users** — you should see one row for `pips249@gmail.com` with
 
 ## Step 8 — Sign in
 
-- https://the-networker-hub.vercel.app/login.html  
+- https://the-networker-hub.vercel.app/login  
 - Email: `pips249@gmail.com`  
 - Password: the one you used in setup-admin  
 
@@ -193,7 +193,7 @@ While the live domain is up but the site is not yet public, lock it behind a sha
 
 | Key | Value | Notes |
 |-----|--------|--------|
-| `SITE_ACCESS_PASSWORD` | *your chosen preview password* | When set, the public only sees `/site-access.html` (waitlist + team unlock). Everyone else needs this shared password. |
+| `SITE_ACCESS_PASSWORD` | *your chosen preview password* | When set, the public only sees `/site-access` (waitlist + team unlock). Everyone else needs this shared password. |
 
 **Cookie:** after a correct password, a signed `hub_site_preview` cookie unlocks the site for 7 days (signed with the preview password value).
 
@@ -205,7 +205,7 @@ While the live domain is up but the site is not yet public, lock it behind a sha
 1. Keep `SITE_ACCESS_PASSWORD` set in Vercel Production.
 2. Do not set `DISABLE_SITE_ACCESS_GATE=true`.
 3. Share the password only with your team.
-4. Clear unlocks anytime via `/site-access.html?lock=1`.
+4. Clear unlocks anytime via `/site-access?lock=1`.
 
 **To open the site publicly:** remove `SITE_ACCESS_PASSWORD` from Vercel → **Redeploy**. No code change needed.
 

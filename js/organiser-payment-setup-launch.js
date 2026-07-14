@@ -8,7 +8,7 @@
   var errorEl = document.getElementById('payment-setup-error');
   var params = new URLSearchParams(window.location.search);
   var groupId = String(params.get('groupId') || '').trim();
-  var returnPath = String(params.get('returnPath') || '/organiser/index.html#events-revenue').trim();
+  var returnPath = String(params.get('returnPath') || '/organiser/#events-revenue').trim();
 
   function showError(message) {
     if (statusEl) statusEl.textContent = 'We could not open Stripe yet.';
@@ -22,7 +22,7 @@
   }
 
   function appendStripeReturnFlag(path) {
-    var base = String(path || '/organiser/index.html#events-revenue');
+    var base = String(path || '/organiser/#events-revenue');
     if (base.indexOf('stripe_connect=') >= 0) return base;
     var hash = '';
     var hashIdx = base.indexOf('#');

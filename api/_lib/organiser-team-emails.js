@@ -11,9 +11,9 @@ const {
 
 function teamInviteAcceptUrl(siteUrl, inviteeEmail) {
   const site = siteBase(siteUrl);
-  const next = encodeURIComponent('/organiser/index.html');
+  const next = encodeURIComponent('/organiser/');
   const email = encodeURIComponent(String(inviteeEmail || '').trim().toLowerCase());
-  return site + '/login.html?next=' + next + '&email=' + email;
+  return site + '/login?next=' + next + '&email=' + email;
 }
 
 async function sendOrganiserTeamInviteEmail({

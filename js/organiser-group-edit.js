@@ -458,7 +458,7 @@
         if (config.onSaved) config.onSaved(saved, mode);
         if (mode === 'continue' || onboardReview) {
           setTimeout(function () {
-            location.href = 'event-format.html';
+            location.href = '/organiser/event-format';
           }, delay);
         } else {
           setTimeout(function () {
@@ -469,7 +469,7 @@
       }
 
       const redirect =
-        onboardReview || (!editId && mode === 'continue') ? 'event-format.html' : 'index.html#groups';
+        onboardReview || (!editId && mode === 'continue') ? '/organiser/event-format' : '/organiser/#groups';
       setTimeout(function () {
         location.href = redirect;
       }, delay);
@@ -489,7 +489,7 @@
       if (backLink && window.HubOrganiserActions) {
         window.HubOrganiserActions.applyBrowseReturnBack(
           backLink,
-          'index.html#groups',
+          '/organiser/#groups',
           '← Back to organiser pages'
         );
       }
@@ -502,8 +502,8 @@
         return;
       }
       const nextPath =
-        '/organiser/group-edit.html' + (editId ? '?id=' + encodeURIComponent(editId) : '');
-      location.href = '../login.html?next=' + encodeURIComponent(nextPath);
+        '/organiser/group-edit' + (editId ? '?id=' + encodeURIComponent(editId) : '');
+      location.href = '../login?next=' + encodeURIComponent(nextPath);
       return;
     }
 

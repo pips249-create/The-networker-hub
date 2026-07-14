@@ -78,7 +78,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'I forgot my password — how do I sign in?',
     answer:
-      'Go to /login.html and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkerhub.com from the address on your account.',
+      'Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkerhub.com from the address on your account.',
     category: 'general',
     icon: '🔑',
   },
@@ -141,7 +141,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'How can I advertise my business on The Networker Hub?',
     answer:
-      'Paid Sponsor Hub placements are available on the events directory, organisers browse, and business opportunities — see /advertising.html for guide pricing. Email rosie@thenetworkerhub.com. You can also list events or business opportunities to reach the network organically.',
+      'Paid Sponsor Hub placements are available on the events directory, organisers browse, and business opportunities — see /advertising for guide pricing. Email rosie@thenetworkerhub.com. You can also list events or business opportunities to reach the network organically.',
     category: 'organisers',
     icon: '📣',
   },

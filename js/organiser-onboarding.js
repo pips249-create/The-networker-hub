@@ -246,7 +246,7 @@
       btn.addEventListener('click', function () {
         var action = btn.getAttribute('data-org-getting-action');
         if (action === 'group') {
-          window.location.href = 'group-edit.html';
+          window.location.href = '/organiser/group-edit';
           return;
         }
         if (action === 'event' && typeof window.orgDashSetRoute === 'function') {

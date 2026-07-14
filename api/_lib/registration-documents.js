@@ -104,7 +104,7 @@ function buildDocumentContext(registration) {
   const siteUrl = String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
   const eventUrl = booked.eventRow.slug
     ? siteUrl + '/events/' + encodeURIComponent(booked.eventRow.slug)
-    : siteUrl + '/events/event.html?id=' + encodeURIComponent(registration.event_id || '');
+    : siteUrl + '/events/event?id=' + encodeURIComponent(registration.event_id || '');
 
   let location = '—';
   if (booked.isOnline) {

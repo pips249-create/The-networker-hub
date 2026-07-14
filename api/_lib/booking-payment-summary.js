@@ -60,9 +60,9 @@ function buildPaymentSummaryRow(vars) {
   const paymentUrl =
     String(vars.hub_payment_url || '').trim() ||
     (site && vars.registration_id
-      ? site + '/account/index.html?booking=' + encodeURIComponent(String(vars.registration_id)) + '#payments'
+      ? site + '/account/?booking=' + encodeURIComponent(String(vars.registration_id)) + '#payments'
       : site
-        ? site + '/account/index.html#payments'
+        ? site + '/account/#payments'
         : '');
   const safePaymentUrl = paymentUrl.replace(/"/g, '&quot;');
   const paid = isPaidBooking(vars);

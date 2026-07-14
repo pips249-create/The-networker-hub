@@ -23,8 +23,8 @@
 
   const origin = location.origin;
   let listingUrl = primaryId
-    ? origin + '/events/event.html?id=' + encodeURIComponent(primaryId)
-    : origin + '/events/index.html';
+    ? origin + '/events/event?id=' + encodeURIComponent(primaryId)
+    : origin + '/events/';
 
   function esc(s) {
     const d = document.createElement('div');
@@ -64,9 +64,9 @@
     }
     const id = (ev && ev.id) || primaryId;
     if (id) {
-      return origin + '/events/event.html?id=' + encodeURIComponent(id);
+      return origin + '/events/event?id=' + encodeURIComponent(id);
     }
-    return origin + '/events/index.html';
+    return origin + '/events/';
   }
 
   function setShareUrls(title) {

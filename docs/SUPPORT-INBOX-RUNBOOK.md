@@ -36,7 +36,7 @@
 
 | Topic | Action |
 |-------|--------|
-| **Cannot log in** | Point to password reset on `/login.html`. Check account exists in Supabase `hub_accounts`. |
+| **Cannot log in** | Point to password reset on `/login`. Check account exists in Supabase `hub_accounts`. |
 | **Event not on browse** | Event must be Published, Approved, organiser profile published. See FAQ — organiser completes tickets + refund policy. |
 | **Refund request** | Direct attendee to organiser first (contract is with organiser). Facilitate via Command Centre if unresolved. |
 | **Payout / Stripe Connect** | Organiser completes Connect in organiser dashboard → Financials. See `docs/STRIPE-CONNECT-ORGANISER-GUIDE.md`. |
@@ -46,7 +46,7 @@
 | **Formal complaint** | Follow `docs/COMPLAINTS-PROCEDURE.md` — log in Command Centre; ack within 2 working days. |
 | **Cookie / marketing** | Account settings → email preferences; cookie banner → Cookie settings. |
 
-Public FAQ: `/faq.html` · Legal: `/legal-policies.html`
+Public FAQ: `/faq` · Legal: `/legal-policies`
 
 ---
 

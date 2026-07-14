@@ -21,7 +21,7 @@ Implemented in `js/postcode-outcode.js` + `outcode` on API events.
 
 ## Admin — Backend: Sponsorship & Advertisement Management
 
-**Admin page:** `/admin/index.html#sponsorship` (shell in `js/admin-app.js`; save API not wired yet).
+**Admin page:** `/admin/#sponsorship` (shell in `js/admin-app.js`; save API not wired yet).
 
 **Goal:** swap **Sponsor Hub** image, copy, and tracking link monthly — **no new code or deploy**.
 

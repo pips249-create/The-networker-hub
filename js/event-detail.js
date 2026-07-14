@@ -77,7 +77,7 @@
 
   function authPageUrl(page, withCheckoutFlag) {
     const next = encodeURIComponent(location.pathname + location.search);
-    let url = '/' + page + '.html?next=' + next;
+    let url = '/' + page + '?next=' + next;
     if (withCheckoutFlag) url += '&checkout=1';
     return url;
   }
@@ -213,7 +213,7 @@
   function canonicalEventPath(ev) {
     const slug = publicSlug(ev);
     if (slug) return '/events/' + encodeURIComponent(slug);
-    if (ev && ev.id) return '/events/event.html?id=' + encodeURIComponent(ev.id);
+    if (ev && ev.id) return '/events/event?id=' + encodeURIComponent(ev.id);
     return window.location.pathname;
   }
 
@@ -630,7 +630,7 @@
     const slug = String(ev.organiserSlug || ev.organiser_slug || '').trim();
     if (slug) return '/organisers/' + encodeURIComponent(slug);
     const id = String(ev.organiserId || ev.organiser_id || '').trim();
-    if (id) return 'organiser.html?id=' + encodeURIComponent(id);
+    if (id) return '/events/organiser?id=' + encodeURIComponent(id);
     return '';
   }
 
@@ -762,7 +762,7 @@
   function eventDetailHref(ev) {
     const slug = publicSlug(ev);
     if (slug) return '/events/' + encodeURIComponent(slug);
-    return 'event.html?id=' + encodeURIComponent(ev.id);
+    return '/events/event?id=' + encodeURIComponent(ev.id);
   }
 
   function renderRelated(related) {
@@ -850,7 +850,7 @@
     const sepAfter = document.getElementById('ev-trail-sep-after') || catEl.nextElementSibling;
     if (mid) {
       catEl.textContent = mid;
-      catEl.href = 'index.html';
+      catEl.href = '/events/';
       catEl.hidden = false;
       if (sepBefore && sepBefore.classList.contains('sep')) sepBefore.hidden = false;
       if (sepAfter) sepAfter.hidden = false;
@@ -1576,10 +1576,10 @@
     }
     if (data.completed) {
       const suffix = isGuestVisit ? '&guest_visit=1' : isAlumni ? '&alumni=1' : '';
-      window.location.assign('/events/booking-success.html?free=1&confirmed=1' + suffix);
+      window.location.assign('/events/booking-success?free=1&confirmed=1' + suffix);
       return;
     }
-    window.location.assign('/events/booking-success.html?free=1&confirmed=1');
+    window.location.assign('/events/booking-success?free=1&confirmed=1');
   }
 
   function clearBookingPending() {
@@ -3724,7 +3724,7 @@
       tiersEl.innerHTML =
         '<p class="ticket-load-hint">' +
         escapeHtml(message) +
-        ' <a href="index.html">Browse events</a></p>';
+        ' <a href="/events/">Browse events</a></p>';
     }
     setText('ev-title', 'Event unavailable');
     setText('ev-trail-current', 'Event unavailable');

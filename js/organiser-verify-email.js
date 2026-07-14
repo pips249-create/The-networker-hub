@@ -74,12 +74,12 @@
     var session = await loadSession();
     if (!session.ok || !session.user) {
       window.location.href =
-        '../login.html?next=' + encodeURIComponent('/organiser/verify-email.html');
+        '../login?next=' + encodeURIComponent('/organiser/verify-email');
       return;
     }
 
     if (!session.organiserAccess && (session.pendingClaimCount || 0) === 0) {
-      window.location.href = 'enable.html';
+      window.location.href = '/organiser/enable';
       return;
     }
 

@@ -150,10 +150,10 @@ module.exports = async function handler(req, res) {
     const redirect =
       body.redirect ||
       (body.view === 'organiser'
-        ? '/organiser/index.html'
+        ? '/organiser/'
         : body.view === 'events'
-          ? '/events/index.html'
-          : '/account/index.html');
+          ? '/events/'
+          : '/account/');
 
     return json(res, 200, {
       ok: true,

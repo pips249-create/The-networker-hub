@@ -9,7 +9,7 @@ One login can **browse and buy tickets** (attendee) and **manage organiser profi
 | Login | **Users** table (`Email`, `Password Hash`, `Role`) |
 | Organiser brand/profile | **Organisers** table (`Organiser Name`, `Email`, **Users** link, `Events` links) |
 | Attendee behaviour | Browse `/events/`, book tickets (same session) |
-| Organiser behaviour | `/organiser/index.html` dashboard |
+| Organiser behaviour | `/organiser/` dashboard |
 
 **Users.Role** is `client` (browse/book + organiser toggle) or `admin` (Command Center). Access to the organiser dashboard is tied to your **Users** record and **Organisers** rows linked to you — not a separate organiser role.
 
@@ -67,8 +67,8 @@ AIRTABLE_TICKETS_TABLE=Tickets
 
 - Cookie: `hub_view=attendee` | `organiser`
 - API: `POST /api/auth/hub-mode` with `{ "mode": "attendee" | "organiser" }`
-- **Attendee** → `/events/index.html`
-- **Organiser** → `/organiser/index.html`
+- **Attendee** → `/events/`
+- **Organiser** → `/organiser/`
 
 Session API (`GET /api/auth/session`) returns `hubView` and `organiserProfiles` (count of linked Organisers rows).
 

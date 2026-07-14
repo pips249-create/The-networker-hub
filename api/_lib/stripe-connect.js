@@ -187,12 +187,12 @@ async function createConnectOnboardingLink(organiserId, returnPath) {
   }
 
   const site = connectCallbackBaseUrl();
-  const safeReturn = String(returnPath || '/organiser/index.html#events-revenue');
+  const safeReturn = String(returnPath || '/organiser/#events-revenue');
   const returnUrl = site + safeReturn;
   // Account Links are single-use; refreshing Stripe should reopen our launcher for a new link.
   const refreshUrl =
     site +
-    '/organiser/payment-setup.html?groupId=' +
+    '/organiser/payment-setup?groupId=' +
     encodeURIComponent(organiserId) +
     '&returnPath=' +
     encodeURIComponent(safeReturn);

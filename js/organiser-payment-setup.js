@@ -67,11 +67,11 @@
     qs.set('groupId', String(groupId || '').trim());
     qs.set(
       'returnPath',
-      String(returnPath || '/organiser/index.html#events-revenue').trim() ||
-        '/organiser/index.html#events-revenue'
+      String(returnPath || '/organiser/#events-revenue').trim() ||
+        '/organiser/#events-revenue'
     );
     // Absolute path so this works from both organiser/index.html and event-tickets.html (incl. iframe).
-    return '/organiser/payment-setup.html?' + qs.toString();
+    return '/organiser/payment-setup?' + qs.toString();
   }
 
   function startSetup(groupId, returnPath) {

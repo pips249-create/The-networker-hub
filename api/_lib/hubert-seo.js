@@ -78,8 +78,8 @@ function buildFaqPageSchema(entries, origin) {
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    '@id': base + '/faq.html#faq',
-    url: base + '/faq.html',
+    '@id': base + '/faq#faq',
+    url: base + '/faq',
     name: 'The Networker Hub — Frequently asked questions',
     mainEntity: list.map(function (item) {
       return {
@@ -102,7 +102,7 @@ function buildHubertSchema(origin) {
     name: 'Hubert',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
-    url: base + '/contact.html',
+    url: base + '/contact',
     description:
       'Hubert is the business butler and concierge for The Networker Hub — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, and navigate organiser tools.',
     offers: {
@@ -171,8 +171,8 @@ function buildContactPageSchema(origin) {
   return {
     '@context': 'https://schema.org',
     '@type': 'ContactPage',
-    '@id': base + '/contact.html',
-    url: base + '/contact.html',
+    '@id': base + '/contact',
+    url: base + '/contact',
     name: 'Contact The Networker Hub',
     description:
       'Contact The Networker Hub or chat with Hubert, your business butler and concierge, for help with events, tickets, and business opportunities.',
@@ -205,7 +205,7 @@ function buildGuideBreadcrumbs(guideName, guidePath, origin) {
   return buildBreadcrumbListSchema(
     [
       { name: 'Home', path: '/' },
-      { name: 'Organiser guides', path: '/guides.html' },
+      { name: 'Organiser guides', path: '/guides' },
       { name: guideName, path: guidePath },
     ],
     origin
@@ -216,7 +216,7 @@ function buildHelpBreadcrumbs(helpName, helpPath, origin) {
   return buildBreadcrumbListSchema(
     [
       { name: 'Home', path: '/' },
-      { name: 'FAQ & Help', path: '/faq.html' },
+      { name: 'FAQ & Help', path: '/faq' },
       { name: helpName, path: helpPath },
     ],
     origin
@@ -254,7 +254,7 @@ function buildGuidePageSchema(guideKey, origin) {
 
 function buildGuidesHubSchema(origin) {
   const base = siteOrigin(origin);
-  const url = base + '/guides.html';
+  const url = base + '/guides';
   const { GUIDES_HUB } = require('./guide-pages');
 
   return {
@@ -275,7 +275,7 @@ function buildGuidesHubSchema(origin) {
       buildBreadcrumbListSchema(
         [
           { name: 'Home', path: '/' },
-          { name: GUIDES_HUB.name, path: '/guides.html' },
+          { name: GUIDES_HUB.name, path: '/guides' },
         ],
         base
       ),
@@ -352,7 +352,7 @@ function buildSchemaGraph(page, origin) {
     graph.push({
       '@context': 'https://schema.org',
       '@type': 'AboutPage',
-      url: base + '/about.html',
+      url: base + '/about',
       name: 'About The Networker Hub',
       description:
         'The Networker Hub connects UK business owners and professionals with networking events, exhibitions, and business opportunities.',
@@ -362,7 +362,7 @@ function buildSchemaGraph(page, origin) {
     graph.push({
       '@context': 'https://schema.org',
       '@type': 'WebPage',
-      url: base + '/for-organisers.html',
+      url: base + '/for-organisers',
       name: 'For Organisers – The Networker Hub',
       description:
         'Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Alumni Fast-Pass, and discovery in the UK events and opportunities directories.',
@@ -400,7 +400,7 @@ function buildSchemaGraph(page, origin) {
     graph.push({
       '@context': 'https://schema.org',
       '@type': 'WebPage',
-      url: base + '/legal-policies.html',
+      url: base + '/legal-policies',
       name: 'Legal & policies — The Networker Hub',
       description:
         'Privacy policy, terms, refunds, and cookie information for The Networker Hub.',
@@ -443,25 +443,25 @@ function buildLlmsTxt(origin) {
     '/opportunities/\n' +
     '- FAQ: ' +
     base +
-    '/faq.html\n' +
+    '/faq\n' +
     '- Contact (Hubert assistant): ' +
     base +
-    '/contact.html\n' +
+    '/contact\n' +
     '- About: ' +
     base +
-    '/about.html\n' +
+    '/about\n' +
     '- For Organisers: ' +
     base +
-    '/for-organisers.html\n' +
+    '/for-organisers\n' +
     '- Organiser guides: ' +
     base +
-    '/guides.html\n' +
+    '/guides\n' +
     '- Advertising & sponsorship: ' +
     base +
     '/advertising\n' +
     '- Legal: ' +
     base +
-    '/legal-policies.html\n' +
+    '/legal-policies\n' +
     '- Organiser payouts: ' +
     base +
     '/help/organiser-payouts\n' +

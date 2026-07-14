@@ -209,7 +209,7 @@
   }
 
   function criteriaToUrl(criteria, root) {
-    var base = String(root || '../opportunities/index.html');
+    var base = String(root || '../opportunities/');
     if (!criteria) return base;
     var params = new URLSearchParams();
     if (criteria.type && criteria.type !== 'all') params.set('type', criteria.type);

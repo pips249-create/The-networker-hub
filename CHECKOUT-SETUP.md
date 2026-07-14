@@ -121,7 +121,7 @@ If a tier is **£0** and has no Payment Link, the hub calls `POST /api/auth/comp
 4. Land on `/events/booking-success`
 5. Verify:
    - Row in Supabase `registrations`
-   - Ticket on `/account/index.html`
+   - Ticket on `/account/`
    - `booking_confirmation` email received (if Resend configured)
    - Organiser receives `organiser_new_registration` (if organiser email set)
 

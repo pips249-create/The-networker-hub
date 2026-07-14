@@ -117,7 +117,7 @@ module.exports = async function handler(req, res) {
 
     const link = await createConnectOnboardingLink(
       groupId,
-      body.returnPath || '/organiser/index.html#events-revenue'
+      body.returnPath || '/organiser/#events-revenue'
     );
     return json(res, 200, {
       ok: true,

@@ -1,13 +1,15 @@
 /**
  * Shared site footer — same block on every public page.
- * FOOTER_BUILD=20260610c
+ * FOOTER_BUILD=20260714u
  */
 (function () {
-  var FOOTER_BUILD = '20260714';
+  var FOOTER_BUILD = '20260714u';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
   function href(path) {
+    if (!path) return root || '/';
+    if (path.charAt(0) === '/' || /^(https?:|mailto:|tel:)/i.test(path)) return path;
     return root + path;
   }
 
@@ -18,10 +20,10 @@
     '<footer class="site-footer">' +
     '<div class="footer-inner">' +
     '<a href="' +
-    href('index.html') +
+    href('/') +
     '" class="footer-brand" aria-label="Home">' +
     '<img class="footer-logo" src="' +
-    href('assets/logo.png') +
+    href('/assets/logo.png') +
     '" alt="" width="160" height="60">' +
     '</a>' +
     '<div class="footer-columns">' +
@@ -29,10 +31,10 @@
     '<p class="footer-col-title">Explore</p>' +
     '<nav class="footer-col-links" aria-label="Explore">' +
     '<a href="' +
-    href('events/index.html') +
+    href('/events/') +
     '">Events</a>' +
     '<a href="' +
-    href('opportunities/index.html') +
+    href('/opportunities/') +
     '">Opportunities</a>' +
     '</nav>' +
     '</div>' +
@@ -40,16 +42,16 @@
     '<p class="footer-col-title">Help</p>' +
     '<nav class="footer-col-links" aria-label="Help">' +
     '<a href="' +
-    href('faq.html') +
+    href('/faq') +
     '">FAQ</a>' +
     '<a href="' +
-    href('for-organisers.html') +
+    href('/for-organisers') +
     '">For Organisers</a>' +
     '<a href="' +
-    href('guides.html') +
+    href('/guides') +
     '">Organiser guides</a>' +
     '<a href="' +
-    href('contact.html') +
+    href('/contact') +
     '">Contact us</a>' +
     '</nav>' +
     '</div>' +
@@ -57,10 +59,10 @@
     '<p class="footer-col-title">Company</p>' +
     '<nav class="footer-col-links" aria-label="Company">' +
     '<a href="' +
-    href('about.html') +
+    href('/about') +
     '">About us</a>' +
     '<a href="' +
-    href('advertising.html') +
+    href('/advertising') +
     '">Advertising</a>' +
     '</nav>' +
     '</div>' +
@@ -68,19 +70,19 @@
     '<p class="footer-col-title">Legal</p>' +
     '<nav class="footer-col-links" aria-label="Legal">' +
     '<a href="' +
-    href('legal-policies.html') +
+    href('/legal-policies') +
     '">Legal &amp; policies</a>' +
     '<a href="' +
-    href('legal-policies.html#privacy') +
+    href('/legal-policies#privacy') +
     '">Privacy</a>' +
     '<a href="' +
-    href('legal-policies.html#terms') +
+    href('/legal-policies#terms') +
     '">Terms</a>' +
     '<a href="' +
-    href('legal-policies.html#refunds') +
+    href('/legal-policies#refunds') +
     '">Refunds</a>' +
     '<a href="' +
-    href('legal-policies.html#cookies') +
+    href('/legal-policies#cookies') +
     '">Cookies</a>' +
     '<button type="button" class="footer-cookie-settings" id="footer-cookie-settings">Cookie settings</button>' +
     '</nav>' +
@@ -118,7 +120,7 @@
 
   if (script && script.getAttribute('data-hubert') === 'off') return;
   var pagePath = (window.location.pathname || '').toLowerCase();
-  if (/\/contact\.html$/.test(pagePath) || /\/contact\/?$/.test(pagePath)) return;
+  if (/\/contact(?:\.html)?\/?$/.test(pagePath)) return;
 
   var hubertCss = document.createElement('link');
   hubertCss.rel = 'stylesheet';

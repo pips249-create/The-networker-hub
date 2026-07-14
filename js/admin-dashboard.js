@@ -131,7 +131,7 @@
     logoutBtn.addEventListener('click', function () {
       fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
         clearInterval(refreshTimer);
-        window.location.href = '../login.html';
+        window.location.href = '../login';
       });
     });
   }

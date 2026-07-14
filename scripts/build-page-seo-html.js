@@ -51,10 +51,18 @@ function injectSeo(html, canonicalUrl, schema) {
   return { html: html, changed: changed };
 }
 
+function fileFromPublicPath(publicPath) {
+  const p = String(publicPath || '').replace(/^\//, '').replace(/\/$/, '');
+  if (!p || p === 'guides') return 'guides.html';
+  if (p.startsWith('help/')) return p + '.html';
+  if (p.startsWith('guides/')) return p + '.html';
+  return p.endsWith('.html') ? p : p + '.html';
+}
+
 function syncFile(relativePath, canonicalPath, schema) {
-  const filePath = path.join(ROOT, relativePath.replace(/^\//, ''));
+  const filePath = path.join(ROOT, fileFromPublicPath(relativePath));
   if (!fs.existsSync(filePath)) {
-    console.error('Missing file:', relativePath);
+    console.error('Missing file:', relativePath, '→', fileFromPublicPath(relativePath));
     process.exit(1);
   }
 
@@ -80,11 +88,7 @@ getGuidePageKeys().forEach(function (guideKey) {
 
 getHelpPageKeys().forEach(function (helpKey) {
   const page = HELP_PAGES[helpKey];
-  updates += syncFile(
-    page.path.replace(/^\//, '') + '.html',
-    page.path,
-    buildHelpArticleSchema(helpKey, ORIGIN)
-  );
+  updates += syncFile(page.path, page.path, buildHelpArticleSchema(helpKey, ORIGIN));
 });
 
 if (!updates) {

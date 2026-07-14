@@ -13,15 +13,15 @@ Send to **50–100 organisers** first (not the full 3,500 list). Goal: **20 grou
 **Default claim URL (per recipient):**
 
 ```
-{SITE_URL}/login.html?email={EMAIL}&next=/organiser/index.html?onboard=claim
+{SITE_URL}/login?email={EMAIL}&next=/organiser/?onboard=claim
 ```
 
 ## Segment your list
 
 | Segment | Who | Email angle | Guide link |
 |---------|-----|-------------|------------|
-| **A — Networking** | Breakfast clubs, BNI-style groups, chambers | Claim + republish next meeting | `/guides/list-an-event.html` |
-| **B — Exhibition / conference** | Trade shows, summits, awards dinners | Claim + refresh listing; paid tickets optional | `/guides/list-a-conference-or-exhibition.html` |
+| **A — Networking** | Breakfast clubs, BNI-style groups, chambers | Claim + republish next meeting | `/guides/list-an-event` |
+| **B — Exhibition / conference** | Trade shows, summits, awards dinners | Claim + refresh listing; paid tickets optional | `/guides/list-a-conference-or-exhibition` |
 | **C — Dormant** | On old list but inactive | Soft “your profile is ready” — free listing only | Either guide |
 
 Send **Segment A first** (20–40 emails). Fix friction. Then B (10–20). Hold C for August.
@@ -49,11 +49,11 @@ Your group is already listed on The Networker Hub. Three quick steps:
 2. Check your logo and description
 3. Republish your next event (free is fine)
 
-Claim here: {SITE_URL}/login.html?email={EMAIL}&next=/organiser/index.html?onboard=claim
+Claim here: {SITE_URL}/login?email={EMAIL}&next=/organiser/?onboard=claim
 
 Guides:
-- Networking meetings: {SITE_URL}/guides/list-an-event.html
-- Conferences & exhibitions: {SITE_URL}/guides/list-a-conference-or-exhibition.html
+- Networking meetings: {SITE_URL}/guides/list-an-event
+- Conferences & exhibitions: {SITE_URL}/guides/list-a-conference-or-exhibition
 
 Stuck? Reply to this email — we can do a 15-minute screen-share.
 

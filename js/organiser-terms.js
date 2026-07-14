@@ -5,8 +5,6 @@
 (function () {
   var STORAGE_KEY = 'hub_organiser_terms_v1';
   var TERMS_VERSION = 'v1';
-  var script = document.currentScript;
-  var root = (script && script.getAttribute('data-root')) || '../';
   var serverChecked = false;
   var serverAccepted = false;
 
@@ -86,11 +84,7 @@
       '</ul>' +
       '<label class="hub-organiser-terms-check">' +
       '<input type="checkbox" id="hub-organiser-terms-checkbox" />' +
-      '<span>I agree to the <a href="' +
-      root +
-      'legal-policies.html#organisers" target="_blank" rel="noopener noreferrer">Organiser terms</a> and <a href="' +
-      root +
-      'legal-policies.html#terms" target="_blank" rel="noopener noreferrer">Terms &amp; conditions</a></span>' +
+      '<span>I agree to the <a href="/legal-policies#organisers" target="_blank" rel="noopener noreferrer">Organiser terms</a> and <a href="/legal-policies#terms" target="_blank" rel="noopener noreferrer">Terms &amp; conditions</a></span>' +
       '</label>' +
       '<p class="hub-organiser-terms-error" id="hub-organiser-terms-error" hidden></p>' +
       '<div class="hub-organiser-terms-actions">' +

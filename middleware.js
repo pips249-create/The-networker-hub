@@ -8,8 +8,18 @@ const SKIP_EVENT_SLUGS = new Set([
   'index.html',
   'event.html',
   'organiser.html',
+  'index',
+  'event',
+  'organiser',
 ]);
-const SKIP_OPPORTUNITY_SLUGS = new Set(['index.html', 'opportunity.html']);
+const SKIP_OPPORTUNITY_SLUGS = new Set([
+  'index.html',
+  'opportunity.html',
+  'index',
+  'opportunity',
+  'browse',
+  'list',
+]);
 const SITE_ACCESS_COOKIE = 'hub_site_preview';
 const SITE_PREVIEW_TOKEN_TYPE = 'site_preview';
 const NOINDEX_HEADER = 'noindex, nofollow';
@@ -27,6 +37,7 @@ const GATE_BYPASS_PREFIXES = [
   '/api/site-access',
   '/api/auth/site-access',
   '/api/opportunities',
+  '/site-access',
   '/site-access.html',
   '/css/',
   '/js/',
@@ -152,9 +163,9 @@ function withNoIndexHeaders(headers) {
 }
 
 function gateRedirect(url, pathname, search) {
-  const gateUrl = new URL('/site-access.html', url.origin);
+  const gateUrl = new URL('/site-access', url.origin);
   const next = pathname + (search || '');
-  if (next && next !== '/site-access.html') {
+  if (next && next !== '/site-access') {
     gateUrl.searchParams.set('next', next);
   }
   return Response.redirect(gateUrl.toString(), 302);
@@ -250,17 +261,17 @@ export default async function middleware(request) {
     slug = decodeURIComponent(eventMatch[1]);
     if (SKIP_EVENT_SLUGS.has(slug)) return passThroughIfGated(siteGated);
     type = 'event';
-    templatePath = '/events/event.html';
+    templatePath = '/events/event';
   } else if (orgMatch) {
     slug = decodeURIComponent(orgMatch[1]);
     if (slug === 'organiser.html') return passThroughIfGated(siteGated);
     type = 'organiser';
-    templatePath = '/events/organiser.html';
+    templatePath = '/events/organiser';
   } else if (oppMatch) {
     slug = decodeURIComponent(oppMatch[1]);
     if (SKIP_OPPORTUNITY_SLUGS.has(slug)) return passThroughIfGated(siteGated);
     type = 'opportunity';
-    templatePath = '/opportunities/opportunity.html';
+    templatePath = '/opportunities/opportunity';
   } else {
     return passThroughIfGated(siteGated);
   }

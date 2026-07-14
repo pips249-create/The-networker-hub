@@ -176,7 +176,7 @@
       .map(function (item) {
         var href = item.slug
           ? '../opportunities/' + encodeURIComponent(item.slug)
-          : '../opportunities/opportunity.html?id=' + encodeURIComponent(item.id);
+          : '/opportunities/opportunity?id=' + encodeURIComponent(item.id);
         return (
           '<th scope="col">' +
           '<a class="opp-compare-card" href="' +

@@ -94,11 +94,11 @@ module.exports = async function handler(req, res) {
 
     await sbAuth.backfillAttendeeUserId(sessionUser.sub, sessionUser.email);
 
-    let redirect = body.next || '/events/index.html';
+    let redirect = body.next || '/events/';
     if (isAdminRole(role) && !body.next) {
-      redirect = '/admin/index.html';
+      redirect = '/admin/';
     } else if (hubViewFromRequest(req) === 'organiser') {
-      redirect = body.next || '/organiser/index.html';
+      redirect = body.next || '/organiser/';
     }
 
     return json(res, 200, {

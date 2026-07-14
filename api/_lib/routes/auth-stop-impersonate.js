@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
   return json(res, 200, {
     ok: true,
     message: 'Returned to your admin account.',
-    redirect: '/admin/index.html#accounts/impersonate',
+    redirect: '/admin/#accounts/impersonate',
     user: adminSession,
   });
 };

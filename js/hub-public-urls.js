@@ -17,7 +17,7 @@
     var slug = ev && ev.slug ? String(ev.slug).trim() : '';
     if (slug) return '/events/' + encodeURIComponent(slug);
     var id = ev && ev.id ? String(ev.id).trim() : '';
-    if (id) return 'event.html?id=' + encodeURIComponent(id);
+    if (id) return '/events/event?id=' + encodeURIComponent(id);
     return '/events/';
   }
 
@@ -25,7 +25,7 @@
     var slug = org && org.slug ? String(org.slug).trim() : '';
     if (slug) return '/organisers/' + encodeURIComponent(slug);
     var id = org && org.id ? String(org.id).trim() : '';
-    if (id) return 'organiser.html?id=' + encodeURIComponent(id);
+    if (id) return '/events/organiser?id=' + encodeURIComponent(id);
     return '/events/#organisers';
   }
 

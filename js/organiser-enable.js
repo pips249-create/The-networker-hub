@@ -19,22 +19,22 @@
   async function init() {
     var data = await loadSession();
     if (!data.ok || !data.user) {
-      window.location.href = '../login.html?next=' + encodeURIComponent('/organiser/enable.html');
+      window.location.href = '../login?next=' + encodeURIComponent('/organiser/enable');
       return;
     }
 
     if (emailEl) emailEl.textContent = data.user.email || 'my account';
 
     if (data.organiserAccess && data.organiserEmailVerified) {
-      window.location.href = 'index.html';
+      window.location.href = '/organiser/';
       return;
     }
     if (data.organiserAccess && !data.organiserEmailVerified) {
-      window.location.href = 'verify-email.html';
+      window.location.href = '/organiser/verify-email';
       return;
     }
     if ((data.pendingClaimCount || 0) > 0) {
-      window.location.href = 'index.html';
+      window.location.href = '/organiser/';
       return;
     }
   }
@@ -62,7 +62,7 @@
           if (submitBtn) submitBtn.disabled = false;
           return;
         }
-        window.location.href = data.redirect || 'verify-email.html';
+        window.location.href = data.redirect || '/organiser/verify-email';
       } catch (err) {
         showError('Something went wrong. Please try again.');
         if (submitBtn) submitBtn.disabled = false;

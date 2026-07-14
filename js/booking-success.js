@@ -83,7 +83,7 @@
   }
 
   function seriesEventPath(entry) {
-    if (entry.id) return '/events/event.html?id=' + encodeURIComponent(entry.id);
+    if (entry.id) return '/events/event?id=' + encodeURIComponent(entry.id);
     if (entry.slug) return '/events/' + encodeURIComponent(entry.slug);
     return '/events/';
   }
@@ -94,7 +94,7 @@
 
   function similarEventPath(ev) {
     if (ev.slug) return '/events/' + encodeURIComponent(ev.slug);
-    if (ev.id) return '/events/event.html?id=' + encodeURIComponent(ev.id);
+    if (ev.id) return '/events/event?id=' + encodeURIComponent(ev.id);
     return '/events/';
   }
 
@@ -478,7 +478,7 @@
       }
       if (accountBtn) {
         accountBtn.textContent = 'View my tickets';
-        accountBtn.href = '/account/index.html';
+        accountBtn.href = '/account/';
       }
       return;
     }
@@ -491,10 +491,10 @@
       const pending = readPending();
       const returnPath =
         pending && pending.eventId
-          ? '/events/event.html?id=' + encodeURIComponent(pending.eventId)
-          : '/account/index.html';
+          ? '/events/event?id=' + encodeURIComponent(pending.eventId)
+          : '/account/';
       accountBtn.href =
-        '/register.html?next=' + encodeURIComponent(returnPath) + '&checkout=1';
+        '/register?next=' + encodeURIComponent(returnPath) + '&checkout=1';
     }
   }
 

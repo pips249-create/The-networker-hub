@@ -71,7 +71,7 @@
     var frame = document.getElementById('oe-opportunity-drawer-frame');
     var titleEl = document.getElementById('oe-opportunity-drawer-title');
     if (!drawer || !frame || !opportunityId) {
-      location.href = 'opportunity-edit.html?id=' + encodeURIComponent(opportunityId || id);
+      location.href = '/organiser/opportunity-edit?id=' + encodeURIComponent(opportunityId || id);
       return;
     }
 
@@ -85,7 +85,7 @@
       setOpportunityDrawerLoading(false);
     }, 12000);
 
-    frame.src = 'opportunity-edit.html?id=' + encodeURIComponent(opportunityId) + '&embed=1';
+    frame.src = '/organiser/opportunity-edit?id=' + encodeURIComponent(opportunityId) + '&embed=1';
     drawer.hidden = false;
     drawer.setAttribute('aria-hidden', 'false');
     window.requestAnimationFrame(function () {

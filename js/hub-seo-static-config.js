@@ -22,7 +22,7 @@ window.HUB_SEO_STATIC = {
     "ogType": "website"
   },
   "faq": {
-    "path": "/faq.html",
+    "path": "/faq",
     "title": "FAQ & Help – The Networker Hub",
     "description": "Frequently asked questions about The Networker Hub — finding events, accounts, organisers, and bookings. Search FAQs or ask Hubert instantly.",
     "image": "/assets/logo.png",
@@ -43,21 +43,21 @@ window.HUB_SEO_STATIC = {
     "ogType": "article"
   },
   "about": {
-    "path": "/about.html",
+    "path": "/about",
     "title": "About us – The Networker Hub",
     "description": "Learn about The Networker Hub — the UK platform for networking events, exhibitions, and business opportunities.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },
   "for-organisers": {
-    "path": "/for-organisers.html",
+    "path": "/for-organisers",
     "title": "For Organisers – The Networker Hub",
     "description": "List UK networking events and business opportunities: organiser dashboard, guest visits, visit tracking, Category Exclusivity, Alumni Fast-Pass, and member discovery.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },
   "contact": {
-    "path": "/contact.html",
+    "path": "/contact",
     "title": "Contact us – The Networker Hub",
     "description": "Get in touch with The Networker Hub — chat with Hubert, your business butler and concierge, or email the team.",
     "image": "/assets/logo.png",
@@ -71,42 +71,42 @@ window.HUB_SEO_STATIC = {
     "ogType": "website"
   },
   "legal": {
-    "path": "/legal-policies.html",
+    "path": "/legal-policies",
     "title": "Legal & policies – The Networker Hub",
     "description": "Privacy policy, terms and conditions, refunds, cookie policy and legal information for The Networker Hub — operated by The Networker Group Ltd.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },
   "guides": {
-    "path": "/guides.html",
+    "path": "/guides",
     "title": "Organiser guides – The Networker Hub",
     "description": "Step-by-step onboarding checklists for organisers — list events, publish business opportunities, and invite team editors on The Networker Hub.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },
   "guide-list-an-event": {
-    "path": "/guides/list-an-event.html",
+    "path": "/guides/list-an-event",
     "title": "List an event – How-to guides – The Networker Hub",
     "description": "Step-by-step guide for organisers: create your organiser page, add event details, set up tickets, connect Stripe, and publish on The Networker Hub.",
     "image": "/assets/logo.png",
     "ogType": "article"
   },
   "guide-list-a-conference-or-exhibition": {
-    "path": "/guides/list-a-conference-or-exhibition.html",
+    "path": "/guides/list-a-conference-or-exhibition",
     "title": "List a conference or exhibition – How-to guides – The Networker Hub",
     "description": "Guide for organisers listing conferences, exhibitions, awards dinners and summits on The Networker Hub — free listings, optional paid tickets, and visibility.",
     "image": "/assets/logo.png",
     "ogType": "article"
   },
   "guide-list-a-business-opportunity": {
-    "path": "/guides/list-a-business-opportunity.html",
+    "path": "/guides/list-a-business-opportunity",
     "title": "List a business opportunity – How-to guides – The Networker Hub",
     "description": "How organisers list a business opportunity on The Networker Hub — create a listing, submit for review, and manage enquiries.",
     "image": "/assets/logo.png",
     "ogType": "article"
   },
   "guide-invite-your-team": {
-    "path": "/guides/invite-your-team.html",
+    "path": "/guides/invite-your-team",
     "title": "Invite your team – How-to guides – The Networker Hub",
     "description": "How to invite editor team members to your organiser workspace on The Networker Hub — permissions, limits, and accept flow.",
     "image": "/assets/logo.png",

@@ -21,8 +21,8 @@
   }
 
   function loginRedirect() {
-    var next = '/organiser/event-format.html';
-    window.location.href = '../login.html?next=' + encodeURIComponent(next);
+    var next = '/organiser/event-format';
+    window.location.href = '../login?next=' + encodeURIComponent(next);
   }
 
   function setFormatEnabled(on) {
@@ -43,7 +43,7 @@
   function syncGroupSelection() {
     var id = selectedGroupId();
     if (id === '__new_group__') {
-      window.location.href = 'group-edit.html';
+      window.location.href = '/organiser/group-edit';
       return;
     }
     setFormatEnabled(Boolean(id));
@@ -126,7 +126,7 @@
     var isAdmin = session.data.user.role === 'admin';
     if (profiles === 0 && !(isAdmin && session.data.canOrganise)) {
       window.alert('You must add an organiser page first.');
-      window.location.href = 'group-edit.html';
+      window.location.href = '/organiser/group-edit';
       return;
     }
 
@@ -139,7 +139,7 @@
     groups = boot.data.groups || [];
     if (!groups.length) {
       window.alert('You must add an organiser page first.');
-      window.location.href = 'group-edit.html';
+      window.location.href = '/organiser/group-edit';
       return;
     }
 
@@ -158,7 +158,7 @@
   if (backLink && window.HubOrganiserActions) {
     window.HubOrganiserActions.applyBrowseReturnBack(
       backLink,
-      'index.html#events-list',
+      '/organiser/#events-list',
       '← Back to My Events'
     );
   }

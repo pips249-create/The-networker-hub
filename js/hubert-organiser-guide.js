@@ -88,10 +88,10 @@
   function pageKey() {
     if (isOrganiserDashboard()) return 'organiser-dashboard';
     var path = (global.location.pathname || '').toLowerCase();
-    if (/\/event-format\.html$/.test(path)) return 'event-format';
-    if (/\/event-edit\.html$/.test(path)) return 'event-edit';
-    if (/\/event-tickets\.html$/.test(path)) return 'event-tickets';
-    if (/\/group-edit\.html$/.test(path)) return 'group-edit';
+    if (/\/event-format(?:\.html)?\/?$/.test(path)) return 'event-format';
+    if (/\/event-edit(?:\.html)?\/?$/.test(path)) return 'event-edit';
+    if (/\/event-tickets(?:\.html)?\/?$/.test(path)) return 'event-tickets';
+    if (/\/group-edit(?:\.html)?\/?$/.test(path)) return 'group-edit';
     return '';
   }
 

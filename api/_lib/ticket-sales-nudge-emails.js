@@ -128,9 +128,9 @@ async function sendOrganiserTicketSalesNudgeEmail({ event, organiser, to, nudger
   const organiserName = String(organiser?.name || 'there').trim();
   const ticketsUrl =
     siteUrl +
-    '/organiser/event-tickets.html?eventId=' +
+    '/organiser/event-tickets?eventId=' +
     encodeURIComponent(event.id);
-  const dashboardUrl = siteBase(siteUrl) + '/organiser/index.html';
+  const dashboardUrl = siteBase(siteUrl) + '/organiser/';
 
   const subject = 'Someone wants tickets for ' + eventTitle;
   const html =

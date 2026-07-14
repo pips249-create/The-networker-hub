@@ -201,14 +201,10 @@ async function markInviteRedeemed(sb, { inviteId, registrationId }) {
 
 function buildInviteUrl(siteUrl, eventSlug, token) {
   const base = String(siteUrl || siteBase()).replace(/\/$/, '');
-  const slug = encodeURIComponent(String(eventSlug || '').trim());
-  return (
-    base +
-    '/events/event.html?slug=' +
-    slug +
-    '&alumni_token=' +
-    encodeURIComponent(String(token || '').trim())
-  );
+  const slug = String(eventSlug || '').trim();
+  const tokenQs = 'alumni_token=' + encodeURIComponent(String(token || '').trim());
+  if (slug) return base + '/events/' + encodeURIComponent(slug) + '?' + tokenQs;
+  return base + '/events/event?' + tokenQs;
 }
 
 function inviteEmailVariables({
@@ -228,16 +224,22 @@ function inviteEmailVariables({
     site_url: site,
     logo_url: site + '/images/logo-email.png',
     logo_footer_url: site + '/images/logo-email-footer.png',
-    privacy_url: site + '/privacy.html',
-    terms_url: site + '/terms.html',
-    contact_url: site + '/contact.html',
+    privacy_url: site + '/legal-policies#privacy',
+    terms_url: site + '/legal-policies#terms',
+    contact_url: site + '/contact',
     user_name: String(attendee?.name || '').trim() || 'there',
     organiser_name: String(organiserRow?.name || 'the organiser').trim(),
     event_name: String(eventRow?.title || 'your event').trim(),
     event_date: event_date || '',
     event_time: event_time || '',
     event_location: String(eventRow?.location_label || eventRow?.city || '').trim(),
-    event_url: site + '/events/event.html?slug=' + encodeURIComponent(eventRow?.slug || ''),
+    event_url: (() => {
+      const slug = String(eventRow?.slug || '').trim();
+      if (slug) return site + '/events/' + encodeURIComponent(slug);
+      const id = String(eventRow?.id || '').trim();
+      if (id) return site + '/events/event?id=' + encodeURIComponent(id);
+      return site + '/events/';
+    })(),
     source_event_name: String(sourceEventRow?.title || 'your previous event').trim(),
     alumni_price: alumniPrice,
     invite_url: buildInviteUrl(site, eventRow?.slug, invite?.invite_token),

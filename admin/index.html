@@ -8,22 +8,24 @@
   <link rel="icon" href="../assets/hubert-icon.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/admin-tailwind.css?v=20260714a">
   <link rel="stylesheet" href="../css/hub.css?v=20260714cls">
   <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls">
-  <link rel="stylesheet" href="../css/admin-console.css?v=20260708a">
+  <link rel="stylesheet" href="../css/admin-console.css?v=20260714c">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet"></noscript>
 </head>
-<body class="bg-slate-50 font-sans text-slate-900 antialiased">
+<body class="bg-slate-50 font-sans text-slate-900 antialiased hub-page-admin">
 
   <div id="hub-site-nav"></div>
-  <script src="../js/site-nav.js?v=20260710g" data-root="../" data-page="admin"></script>
+  <script src="../js/site-nav.js?v=20260714u" data-root="../" data-page="admin"></script>
 
-  <div id="admin-gate" class="min-h-[50vh] flex items-center justify-center p-6">
+  <!-- Overlay only — shell paints immediately so Overview LCP/CLS aren't blocked by auth -->
+  <div id="admin-gate" class="admin-gate hidden" hidden>
     <p class="text-slate-500" id="admin-gate-msg">Verifying admin access…</p>
   </div>
 
-  <div id="admin-shell" class="admin-shell hidden">
+  <div id="admin-shell" class="admin-shell">
     <div id="admin-sidebar-backdrop" class="hidden fixed inset-0 z-40 bg-slate-900/40 lg:hidden" aria-hidden="true"></div>
     <aside id="admin-sidebar" class="bg-brand-900 text-white shadow-xl" aria-label="Command Center navigation">
       <div class="admin-sidebar-head">
@@ -77,7 +79,82 @@
           Supabase
         </button>
       </header>
-      <div id="admin-main" class="p-3 lg:p-5 max-w-7xl mx-auto min-w-0 w-full"></div>
+      <!-- Static Overview shell: paints LCP copy before JS/API; JS updates sections in place -->
+      <div id="admin-main" class="p-3 lg:p-5 max-w-7xl mx-auto min-w-0 w-full">
+        <div class="space-y-6" id="dashboard-boot">
+          <section class="space-y-3">
+            <h3 class="text-sm font-bold uppercase tracking-wide text-slate-500">Critical alerts</h3>
+            <div class="grid gap-3 min-h-[11rem]" id="dashboard-alerts">
+              <p class="text-sm text-slate-500">Loading from Supabase…</p>
+            </div>
+          </section>
+          <section class="bg-white rounded-xl border border-red-200 p-5 shadow-sm space-y-3" id="dashboard-disputes-section" hidden>
+            <div>
+              <h3 class="font-bold text-brand-900">Group profile disputes</h3>
+              <p class="text-xs text-slate-500 mt-0.5">An organiser signed in and said a pre-imported profile is not theirs — use the actions below to fix or dismiss.</p>
+            </div>
+            <div id="dashboard-disputes"><p class="text-sm text-slate-500">Loading…</p></div>
+          </section>
+          <section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+            <div>
+              <h3 class="font-bold text-brand-900">Needs your attention</h3>
+              <p class="text-xs text-slate-500 mt-0.5">Queues and quick links — counts also appear in Critical alerts above.</p>
+            </div>
+              <div id="dashboard-attention" class="min-h-[6.5rem] space-y-3">
+              <div class="rounded-lg border border-brand-200 bg-brand-50 p-4">
+                <p class="font-semibold text-sm text-brand-900">Group profiles awaiting organiser claim on first login</p>
+                <p class="text-xs text-brand-800/90 mt-1">Organisers will confirm ownership when they sign in — disputes appear here if they reject a match.</p>
+              </div>
+            </div>
+          </section>
+          <a href="#analytics" class="block rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-5 shadow-sm hover:border-brand-300 transition group">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Traffic</p>
+                <p class="font-bold text-brand-900 mt-1">Web Analytics on Vercel</p>
+                <p class="text-sm text-slate-600 mt-1">View visitors, top pages, referrers, and device breakdown.</p>
+              </div>
+              <span class="text-sm font-semibold text-brand-700 group-hover:text-brand-900">Open →</span>
+            </div>
+          </a>
+          <section class="admin-metric-grid admin-metric-grid--4" id="dashboard-metrics">
+            <article class="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-200 rounded-xl p-4 shadow-sm min-w-0">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Paid ticket revenue</p>
+              <p class="text-2xl font-bold text-brand-900 mt-2">…</p>
+              <p class="text-xs text-slate-500 mt-2">Loading…</p>
+            </article>
+            <article class="bg-gradient-to-br from-brand-500/10 to-brand-500/5 border border-brand-200 rounded-xl p-4 shadow-sm min-w-0">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Approved events</p>
+              <p class="text-2xl font-bold text-brand-900 mt-2">…</p>
+              <p class="text-xs text-slate-500 mt-2">Loading…</p>
+            </article>
+            <article class="bg-gradient-to-br from-violet-500/10 to-violet-500/5 border border-violet-200 rounded-xl p-4 shadow-sm min-w-0">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Organisers</p>
+              <p class="text-2xl font-bold text-brand-900 mt-2">…</p>
+              <p class="text-xs text-slate-500 mt-2">Loading…</p>
+            </article>
+            <article class="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-200 rounded-xl p-4 shadow-sm min-w-0">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Hub accounts</p>
+              <p class="text-2xl font-bold text-brand-900 mt-2">…</p>
+              <p class="text-xs text-slate-500 mt-2">Loading…</p>
+            </article>
+          </section>
+          <section class="grid lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm min-w-0">
+              <h3 class="font-bold text-brand-900 mb-1">Recent genuine activity</h3>
+              <p class="text-xs text-slate-500 mb-3">Registrations, events, and reviews — test/E2E data excluded.</p>
+              <ul id="dashboard-activity" class="admin-activity-feed min-h-[12rem]">
+                <li class="text-sm text-slate-500">Loading…</li>
+              </ul>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm min-w-0">
+              <h3 class="font-bold text-brand-900 mb-2">Platform snapshot</h3>
+              <p class="text-sm text-slate-500 mb-4">Key counts from Supabase (not visitor traffic — see Web Analytics).</p>
+              <div id="live-metrics" class="text-sm text-slate-600 min-h-[10rem]">Loading…</div>
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -98,6 +175,6 @@
     <script src="../js/organiser-image-upload.js?v=20260614"></script>
     <script src="../js/cms-sponsor-fields.js?v=20260609c"></script>
     <script src="../js/admin-social-posts.js?v=20260730"></script>
-    <script src="../js/admin-app.js?v=20260710"></script>
+    <script src="../js/admin-app.js?v=20260714lcp2"></script>
 </body>
 </html>
