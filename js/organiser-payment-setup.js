@@ -327,9 +327,31 @@
       const btn = e.target.closest('[data-payment-link]');
       if (!btn || !root.contains(btn)) return;
       e.preventDefault();
+      e.stopPropagation();
       const groupId = btn.getAttribute('data-payment-link');
       const sourceGroupId = btn.getAttribute('data-payment-link-source');
-      linkSetup(groupId, sourceGroupId, opts);
+      linkSetup(groupId, sourceGroupId, { ...opts, button: btn });
+    });
+  }
+
+  function setLinkBusyState(groupId, busy, options) {
+    const opts = options || {};
+    const buttons = document.querySelectorAll(
+      '[data-payment-link="' + String(groupId || '').replace(/"/g, '') + '"]'
+    );
+    buttons.forEach(function (btn) {
+      if (!btn.dataset.paymentLinkLabel) {
+        btn.dataset.paymentLinkLabel = btn.textContent || 'Use same bank details';
+      }
+      btn.disabled = Boolean(busy);
+      btn.classList.toggle('is-busy', Boolean(busy));
+      if (busy) {
+        btn.setAttribute('aria-busy', 'true');
+        btn.textContent = opts.busyLabel || 'Linking bank details…';
+      } else {
+        btn.removeAttribute('aria-busy');
+        btn.textContent = btn.dataset.paymentLinkLabel;
+      }
     });
   }
 
@@ -341,11 +363,17 @@
       alert('Could not link bank details.');
       return false;
     }
-    const btn = document.querySelector('[data-payment-link="' + gid + '"]');
-    if (btn) {
-      btn.disabled = true;
-      btn.setAttribute('aria-busy', 'true');
+    if (opts.button && opts.button.getAttribute('aria-busy') === 'true') {
+      return false;
     }
+
+    setLinkBusyState(gid, true);
+    global.dispatchEvent(
+      new CustomEvent('hub-payment-setup-linking', {
+        detail: { groupId: gid, sourceGroupId: sourceId },
+      })
+    );
+
     try {
       const res = await fetch('/api/organiser/stripe-connect', {
         method: 'POST',
@@ -362,12 +390,20 @@
         return {};
       });
       if (!res.ok || !data.ok) {
-        alert(data.message || data.error || 'Could not reuse bank details.');
+        const message = data.message || data.error || 'Could not reuse bank details.';
+        setLinkBusyState(gid, false);
+        global.dispatchEvent(
+          new CustomEvent('hub-payment-setup-link-failed', {
+            detail: { groupId: gid, sourceGroupId: sourceId, message: message },
+          })
+        );
+        alert(message);
         return false;
       }
+      setLinkBusyState(gid, true, { busyLabel: 'Linked — refreshing…' });
       global.dispatchEvent(
         new CustomEvent('hub-payment-setup-linked', {
-          detail: { groupId: gid, sourceGroupId: sourceId },
+          detail: { groupId: gid, sourceGroupId: sourceId, status: data },
         })
       );
       if (typeof opts.onLinked === 'function') {
@@ -375,13 +411,18 @@
       }
       return true;
     } catch {
+      setLinkBusyState(gid, false);
+      global.dispatchEvent(
+        new CustomEvent('hub-payment-setup-link-failed', {
+          detail: {
+            groupId: gid,
+            sourceGroupId: sourceId,
+            message: 'Could not reuse bank details. Please try again.',
+          },
+        })
+      );
       alert('Could not reuse bank details. Please try again.');
       return false;
-    } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.removeAttribute('aria-busy');
-      }
     }
   }
 

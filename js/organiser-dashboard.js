@@ -7131,7 +7131,7 @@
       state.dashboardScope = null;
     }
 
-    showOrganiserAlert(null);
+    if (!silent) showOrganiserAlert(null);
     showOrganiserEmailVerifyBanner();
 
     applyPendingGroupSave();
@@ -7378,12 +7378,37 @@
 
     if (!window.__hubPaymentSetupLinkedBound) {
       window.__hubPaymentSetupLinkedBound = true;
+      window.addEventListener('hub-payment-setup-linking', function () {
+        showOrganiserAlert('Linking bank details from your connected organiser page…', false);
+        alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+      window.addEventListener('hub-payment-setup-link-failed', function (e) {
+        showOrganiserAlert(
+          (e.detail && e.detail.message) || 'Could not reuse bank details.',
+          true
+        );
+        alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
       window.addEventListener('hub-payment-setup-linked', function () {
-        loadBootstrap({ silent: true }).then(function () {
-          renderPaymentSetupUi();
-          renderAll();
-          showOrganiserAlert('Bank details linked to this organiser page.', false);
-        });
+        showOrganiserAlert('Bank details linked — refreshing your workspace…', false);
+        loadBootstrap({ silent: true })
+          .then(function () {
+            renderPaymentSetupUi();
+            renderAll();
+            showOrganiserAlert(
+              'Bank details linked to this organiser page. Paid tickets can go live here.',
+              false
+            );
+            alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          })
+          .catch(function (err) {
+            showOrganiserAlert(
+              'Bank details were linked, but the dashboard could not refresh. Reload the page. ' +
+                (err && err.message ? '(' + err.message + ')' : ''),
+              true
+            );
+            alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          });
       });
       window.addEventListener('hub-payment-setup-needed', function (e) {
         focusBankDetailsSetup(

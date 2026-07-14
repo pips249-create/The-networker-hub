@@ -3000,6 +3000,12 @@ body.org-notifications-open {
   gap: 8px;
 }
 
+.hub-payment-setup-btn.is-busy,
+button.hub-payment-setup-btn:disabled {
+  opacity: 0.85;
+  cursor: wait;
+}
+
 .hub-payment-setup-btn {
   margin-top: 2px;
   display: inline-flex;
