@@ -88,6 +88,26 @@
   color: var(--charcoal);
 }
 
+.fact-loader__source {
+  margin: 16px 0 0;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-soft);
+}
+
+.fact-loader__source a {
+  color: var(--lavender-deep);
+  text-decoration: underline;
+  text-decoration-color: rgba(124, 58, 237, 0.35);
+  text-underline-offset: 2px;
+}
+
+.fact-loader__source a:hover {
+  color: var(--charcoal);
+}
+
 body.fact-loader-active {
   overflow: hidden;
 }

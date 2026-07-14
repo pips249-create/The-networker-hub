@@ -786,13 +786,32 @@
     }, 280);
   }
 
+  function hasExtraFiltersBeyondRegional() {
+    if (searchInput && String(searchInput.value || '').trim()) return true;
+    if (dateFromTs || dateToTs) return true;
+    if (checkFreeOnly && checkFreeOnly.checked) return true;
+    if (priceMinInput && String(priceMinInput.value || '').trim()) return true;
+    if (priceMaxInput && String(priceMaxInput.value || '').trim()) return true;
+    if (activeTypeTabs && activeTypeTabs.length) return true;
+    if (isNearMeActive()) return true;
+    if (checkInPerson && !checkInPerson.checked) return true;
+    if (checkOnline && !checkOnline.checked) return true;
+    if (sortSelect && sortSelect.value && sortSelect.value !== 'recommended') return true;
+    return false;
+  }
+
   function resetFilters() {
+    var regional = window.hubRegionalLanding;
+    // Regional pages lock location to the city. If that is the only constraint,
+    // "clear filters" must leave the landing — otherwise the UI looks broken.
+    if (regional && regional.location && !hasExtraFiltersBeyondRegional()) {
+      window.location.href = '/events/';
+      return;
+    }
+
     if (searchInput) searchInput.value = '';
     if (postcodeInput) {
-      postcodeInput.value =
-        window.hubRegionalLanding && window.hubRegionalLanding.location
-          ? window.hubRegionalLanding.location
-          : '';
+      postcodeInput.value = regional && regional.location ? regional.location : '';
     }
     if (sortSelect) sortSelect.value = 'recommended';
     if (flatpickrInstance) flatpickrInstance.clear();
@@ -815,19 +834,19 @@
     window.hubLocationFilterCoords = null;
     syncNearRadiusUi();
     setActiveTypeTab('all');
-    if (
-      window.hubRegionalLanding &&
-      window.hubRegionalLanding.location &&
-      window.hubResolveLocationFilter
-    ) {
-      window.hubResolveLocationFilter(window.hubRegionalLanding.location);
-    }
     try {
       sessionStorage.removeItem(FILTER_STORAGE_KEY);
     } catch (e) {
       /* ignore */
     }
-    applyFilters();
+
+    if (regional && regional.location && window.hubResolveLocationFilter) {
+      window.hubResolveLocationFilter(regional.location).then(function () {
+        applyFilters({ immediate: true });
+      });
+      return;
+    }
+    applyFilters({ immediate: true });
   }
 
   function setActiveTypeTab(type) {
@@ -964,12 +983,15 @@
   bindClearFilters(document.getElementById('events-map-clear-filters'));
 
   document.addEventListener('click', function (e) {
-    if (e.target.id === 'empty-reset') {
+    var emptyReset = e.target.closest && e.target.closest('#empty-reset');
+    if (emptyReset) {
+      e.preventDefault();
       if (document.body.classList.contains('browse-mode-organisers')) {
         if (window.hubResetOrganiserFilters) window.hubResetOrganiserFilters();
       } else {
         resetFilters();
       }
+      return;
     }
     var fav = e.target.closest('.fav-btn[data-event-id]');
     if (fav) {

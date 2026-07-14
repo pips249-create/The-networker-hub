@@ -579,21 +579,26 @@
       const searchInput = document.getElementById('search');
       const searchQ = searchInput ? String(searchInput.value || '').trim() : '';
       const regional = window.hubRegionalLanding;
+      const regionalName = regional && regional.name ? String(regional.name).trim() : '';
+      const isRegionalPage =
+        Boolean(regionalName) || document.body.classList.contains('networking-region-page');
       const emptyTitle = searchQ
         ? 'No events found for “' + escapeHtml(searchQ) + '”'
-        : regional && regional.name
-          ? 'No upcoming events in ' + escapeHtml(regional.name) + ' yet'
-          : 'No events match your filters';
+        : regionalName
+          ? 'No upcoming events in ' + escapeHtml(regionalName) + ' yet'
+          : isRegionalPage
+            ? 'No upcoming events in this area yet'
+            : 'No events match your filters';
       const emptyText = searchQ
         ? 'Try different keywords or spellings, or browse <a href="/opportunities/?q=' +
           encodeURIComponent(searchQ) +
           '">opportunities matching “' +
           escapeHtml(searchQ) +
           '”</a>.'
-        : regional && regional.name
+        : isRegionalPage
           ? 'Check back soon, or <a href="/events/">browse all UK events</a>. Organisers can list a group from the button above.'
           : 'Try clearing filters, choosing a different date range, or browsing all event types.';
-      const emptyAction = regional
+      const emptyAction = isRegionalPage
         ? '<a class="empty-state-btn" href="/events/">Browse all events</a>'
         : '<button type="button" class="empty-state-btn" id="empty-reset">Clear all filters</button>';
       els.listings.innerHTML =

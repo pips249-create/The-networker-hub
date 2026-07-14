@@ -1605,22 +1605,6 @@
       return;
     }
 
-    if (existingTicketsLoaded) {
-      const scopeText =
-        eventIds.length === 1
-          ? 'this event only'
-          : 'the ' + eventIds.length + ' dates in this listing only';
-      const proceed = window.confirm(
-        'This will update the ticket types for ' +
-          scopeText +
-          ' with what you have here. Your other events are not affected. Continue?'
-      );
-      if (!proceed) {
-        showAlert('Publish cancelled — your ticket types were not changed.', 'warn');
-        return;
-      }
-    }
-
     const refund = collectRefundPayload();
     if (publish) {
       const blockers = getPublishBlockers(tiers);
@@ -1662,6 +1646,28 @@
           updatePublishButton();
           return;
         }
+      }
+    }
+
+    // Confirm overwrite only after publish requirements are met, so "OK" means it will go live.
+    if (existingTicketsLoaded) {
+      const scopeText =
+        eventIds.length === 1
+          ? 'this event only'
+          : 'the ' + eventIds.length + ' dates in this listing only';
+      const proceed = window.confirm(
+        'This will update the ticket types for ' +
+          scopeText +
+          ' with what you have here. Your other events are not affected. Continue?'
+      );
+      if (!proceed) {
+        showAlert(
+          publish
+            ? 'Publish cancelled — your event is still a draft.'
+            : 'Save cancelled — your ticket types were not changed.',
+          'warn'
+        );
+        return;
       }
     }
 
@@ -1735,10 +1741,8 @@
     };
 
     const busyMessage = publish
-      ? eventIds.length > 1
-        ? 'Creating and publishing your events…'
-        : 'Creating and publishing your event…'
-      : 'Saving your tickets…';
+      ? 'Creating and publishing your event'
+      : 'Saving your tickets';
 
     let result;
     try {
@@ -1789,7 +1793,7 @@
         });
       if (!allLive) {
         showAlert(
-          'Tickets were saved but the event did not go live. Open My Events, check refund policy and VAT, then publish again.',
+          'Tickets were saved, but this event is still a draft and not live yet. Check VAT, refund policy, bank details (for paid tickets), and dates — then click Publish event again.',
           'warn'
         );
         return;

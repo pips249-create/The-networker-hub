@@ -1800,29 +1800,13 @@ body.ee-is-new-listing #ee-event-stats {
   color: var(--ee-text);
 }
 
-.ee-page-loading-dots::after {
-  content: '';
-  animation: ee-loading-dots 1.2s steps(4, end) infinite;
+.ee-page-loading-dots {
+  display: none;
 }
 
 @keyframes ee-page-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes ee-loading-dots {
-  0% {
-    content: '';
-  }
-  25% {
-    content: '.';
-  }
-  50% {
-    content: '..';
-  }
-  75% {
-    content: '...';
   }
 }
 
