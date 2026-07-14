@@ -12,7 +12,10 @@ module.exports = async function handler(req, res) {
   if (!gate.ok) return json(res, gate.status, { error: gate.error });
 
   try {
-    const report = await getAdminDashboard();
+    const url = new URL(req.url || '/', 'http://localhost');
+    const light =
+      url.searchParams.get('light') === '1' || String((req.query && req.query.light) || '') === '1';
+    const report = await getAdminDashboard({ light });
     return json(res, 200, { ok: true, ...report });
   } catch (e) {
     return json(res, 500, { ok: false, error: 'metrics_failed', message: e.message });

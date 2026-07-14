@@ -11,6 +11,23 @@
   display: none;
 }
 
+/* Auth overlay — does not replace the shell (avoids CLS on boot) */
+.admin-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(248, 250, 252, 0.96);
+}
+
+.admin-gate.hidden,
+.admin-gate[hidden] {
+  display: none;
+}
+
 body.hub-page-admin.hub-admin-active {
   overflow: hidden;
 }
