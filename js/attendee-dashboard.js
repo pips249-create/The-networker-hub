@@ -1926,7 +1926,7 @@
       });
     }
     clearPendingReviewEventId();
-    history.replaceState(null, '', location.pathname + '#reviews-pending');
+    history.replaceState(null, '', location.pathname + (location.search || '') + '#reviews-pending');
   }
 
   function openPaymentFromQuery() {
@@ -1958,8 +1958,12 @@
       const active = isReviewsRoute(currentRoute) ? navRoute === 'reviews' : navRoute === currentRoute;
       a.classList.toggle('is-active', active);
     });
-    if (location.hash.replace('#', '') !== currentRoute) {
-      history.replaceState(null, '', (location.search || '') + '#' + currentRoute);
+    const url = new URL(window.location.href);
+    // Overview is the default for /account/ — keep the address bar clean.
+    const wantHash = currentRoute === 'overview' ? '' : '#' + currentRoute;
+    if ((url.hash || '') !== wantHash) {
+      url.hash = wantHash;
+      history.replaceState(null, '', url.pathname + url.search + url.hash);
     }
     if (dashboardReady) renderRouteTables(routeTablesKey(currentRoute));
   }

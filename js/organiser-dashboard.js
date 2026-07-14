@@ -5153,6 +5153,9 @@
       });
     }
 
+    // Route lives in the hash only (/organiser/#events-list). Do not also write ?panel=
+    // — that produced clunky URLs like /organiser/?panel=events-list#events-list.
+    // Still accept ?panel= when reading (parseDeepLinkFromUrl) for old bookmarks.
     const hash =
       page === 'events'
         ? sub || 'events-list'
@@ -5162,17 +5165,16 @@
             ? 'business-list'
             : page === 'social'
               ? 'social'
-              : page;
+              : page === 'dashboard'
+                ? ''
+                : page;
     const url = new URL(window.location.href);
-    if (page === 'events' && sub) {
-      url.searchParams.set('panel', sub);
-    } else {
-      url.searchParams.delete('panel');
-    }
+    url.searchParams.delete('panel');
     if (filters.attendeesEvent && filters.attendeesEvent !== 'all') {
       url.searchParams.set('eventId', filters.attendeesEvent);
     } else if (!parseDeepLinkFromUrl().eventId) {
       url.searchParams.delete('eventId');
+      url.searchParams.delete('event_id');
     }
     if (filters.attendeesPendingOnly && sub === 'events-attendees') {
       url.searchParams.set('applications', 'pending');
@@ -8420,7 +8422,8 @@
         if (window.history.replaceState) {
           const url = new URL(window.location.href);
           url.searchParams.delete('stripe_connect');
-          window.history.replaceState({}, '', url.pathname + url.hash);
+          url.searchParams.delete('panel');
+          window.history.replaceState({}, '', url.pathname + url.search + url.hash);
         }
       }
     } catch (e) {
