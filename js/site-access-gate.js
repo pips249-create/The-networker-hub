@@ -110,6 +110,10 @@
           var active = tab.getAttribute('data-dash-tab') === name;
           tab.classList.toggle('is-active', active);
           tab.setAttribute('aria-selected', active ? 'true' : 'false');
+          if (active && tab.getAttribute('data-dash-bar')) {
+            var barLabel = mock.querySelector('[data-dash-bar-label]');
+            if (barLabel) barLabel.textContent = tab.getAttribute('data-dash-bar');
+          }
         });
         panels.forEach(function (panel) {
           var active = panel.getAttribute('data-dash-panel') === name;

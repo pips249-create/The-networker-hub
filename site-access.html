@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/home-page.css?v=20260714pillars">
-<link rel="stylesheet" href="css/site-access.css?v=20260714attendee">
+<link rel="stylesheet" href="css/site-access.css?v=20260714browse">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 </head>
@@ -109,7 +109,7 @@
                   <span class="home-pillar-snippet-dot"></span>
                   <span class="home-pillar-snippet-dot"></span>
                   <span class="home-pillar-snippet-dot"></span>
-                  <span class="home-pillar-snippet-url">thenetworkerhub.com/events</span>
+                  <span class="home-pillar-snippet-url">Events</span>
                 </div>
                 <div class="home-pillar-snippet-ui">
                   <span class="home-pillar-snippet-glow" aria-hidden="true"></span>
@@ -165,7 +165,7 @@
                   <span class="home-pillar-snippet-dot"></span>
                   <span class="home-pillar-snippet-dot"></span>
                   <span class="home-pillar-snippet-dot"></span>
-                  <span class="home-pillar-snippet-url">thenetworkerhub.com/events · Organisers</span>
+                  <span class="home-pillar-snippet-url">Organisers</span>
                 </div>
                 <div class="home-pillar-snippet-ui">
                   <span class="home-pillar-snippet-glow" aria-hidden="true"></span>
@@ -218,7 +218,7 @@
                   <span class="home-pillar-snippet-dot"></span>
                   <span class="home-pillar-snippet-dot"></span>
                   <span class="home-pillar-snippet-dot"></span>
-                  <span class="home-pillar-snippet-url">thenetworkerhub.com/opportunities</span>
+                  <span class="home-pillar-snippet-url">Opportunities</span>
                 </div>
                 <div class="home-pillar-snippet-ui">
                   <span class="home-pillar-snippet-glow" aria-hidden="true"></span>
@@ -416,135 +416,112 @@
       <div class="site-access-workspace site-access-workspace--attendee" aria-labelledby="site-access-attendee-heading">
         <div class="site-access-workspace-copy">
           <p class="site-access-workspace-kicker">For attendees</p>
-          <h3 id="site-access-attendee-heading">Find your next connection</h3>
+          <h3 id="site-access-attendee-heading">Find your next event</h3>
           <p>
-            Discover events and networking groups, keep track of bookings, save favourites, and enquire about business opportunities from one free account.
+            Browse UK networking events, then open an organiser page to see their upcoming meetings, guest visits, and ratings — before you book.
           </p>
           <ul class="site-access-workspace-points">
-            <li>Search meetings, conferences, and exhibitions</li>
-            <li>Book tickets and manage upcoming events</li>
-            <li>Save events, organisers, and opportunities</li>
-            <li>Enquire directly about business opportunities</li>
+            <li>Search and filter meetings, conferences, and exhibitions</li>
+            <li>Open organiser pages with upcoming events and ratings</li>
+            <li>See guest visits and Category Exclusivity at a glance</li>
+            <li>Sign up only when you&rsquo;re ready to book</li>
           </ul>
-          <p class="site-access-workspace-hint">Click through the attendee tabs to explore.</p>
+          <p class="site-access-workspace-hint">Switch between Browse events and Organiser page.</p>
         </div>
         <div class="site-access-workspace-visual">
-          <div class="sa-dash-mock sa-dash-mock--attendee">
+          <div class="sa-dash-mock sa-dash-mock--attendee sa-dash-mock--browse">
             <div class="sa-dash-mock-bar">
               <div class="sa-dash-mock-dots" aria-hidden="true"><span></span><span></span><span></span></div>
-              <span>My Hub · The Networker Hub</span>
+              <span class="sa-dash-mock-bar-label" data-dash-bar-label>Browse events</span>
             </div>
-            <div class="sa-dash-mock-body">
-              <div class="sa-dash-mock-nav" role="tablist" aria-label="Attendee workspace preview">
-                <button type="button" class="sa-dash-mock-nav-item is-active" role="tab" aria-selected="true" data-dash-tab="discover">Discover</button>
-                <button type="button" class="sa-dash-mock-nav-item" role="tab" aria-selected="false" data-dash-tab="bookings">My bookings</button>
-                <button type="button" class="sa-dash-mock-nav-item" role="tab" aria-selected="false" data-dash-tab="saved">Saved</button>
-                <button type="button" class="sa-dash-mock-nav-item" role="tab" aria-selected="false" data-dash-tab="attendee-opps">Business opps</button>
+            <div class="sa-dash-mock-body sa-dash-mock-body--browse">
+              <div class="sa-dash-mock-nav sa-dash-mock-nav--top" role="tablist" aria-label="Attendee browse preview">
+                <button type="button" class="sa-dash-mock-nav-item is-active" role="tab" aria-selected="true" data-dash-tab="browse" data-dash-bar="Browse events">Browse events</button>
+                <button type="button" class="sa-dash-mock-nav-item" role="tab" aria-selected="false" data-dash-tab="organiser" data-dash-bar="Organiser page">Organiser page</button>
               </div>
               <div class="sa-dash-mock-main">
-                <div class="sa-dash-mock-panel is-active" data-dash-panel="discover" role="tabpanel">
-                  <p class="sa-dash-mock-eyebrow">Recommended for you</p>
-                  <p class="sa-dash-mock-title">Your next event could be here</p>
-                  <ul class="sa-dash-mock-rows">
-                    <li class="sa-dash-mock-row">
-                      <div class="sa-dash-mock-row-main">
-                        <strong>Founders breakfast, Leeds</strong>
-                        <span>Tue 9 Sep · Free guest visit</span>
+
+                <div class="sa-dash-mock-panel is-active" data-dash-panel="browse" role="tabpanel">
+                  <div class="sa-browse-filters" aria-hidden="true">
+                    <span class="sa-browse-search">Search events, locations…</span>
+                    <span class="sa-browse-chip is-active">Meetings</span>
+                    <span class="sa-browse-chip">Conferences</span>
+                    <span class="sa-browse-chip">Exhibitions</span>
+                  </div>
+                  <ul class="sa-browse-list">
+                    <li class="sa-browse-card">
+                      <div class="sa-browse-card-media sa-browse-card-media--summit">
+                        <span>Conference</span>
+                        <b>£45</b>
                       </div>
-                      <span class="sa-dash-mock-pill sa-dash-mock-pill--featured">92% match</span>
-                    </li>
-                    <li class="sa-dash-mock-row">
-                      <div class="sa-dash-mock-row-main">
+                      <div class="sa-browse-card-body">
                         <strong>UK Business Leaders Summit</strong>
-                        <span>Thu 18 Sep · Manchester · £45</span>
+                        <span>Thu 18 Sep · Manchester · In person</span>
+                        <em>★★★★★ (24)</em>
                       </div>
-                      <span class="sa-dash-mock-pill">Conference</span>
                     </li>
-                  </ul>
-                  <div class="sa-dash-mock-stats">
-                    <div class="sa-dash-mock-stat"><b>48</b><small>Nearby events</small></div>
-                    <div class="sa-dash-mock-stat"><b>16</b><small>Free to attend</small></div>
-                    <div class="sa-dash-mock-stat"><b>9</b><small>New this week</small></div>
-                  </div>
-                </div>
-
-                <div class="sa-dash-mock-panel" data-dash-panel="bookings" role="tabpanel" hidden>
-                  <p class="sa-dash-mock-eyebrow">My bookings</p>
-                  <p class="sa-dash-mock-title">Coming up</p>
-                  <ul class="sa-dash-mock-rows">
-                    <li class="sa-dash-mock-row">
-                      <div class="sa-dash-mock-row-main">
-                        <strong>Founders breakfast</strong>
-                        <span>Tue 9 Sep · 08:00 · Leeds</span>
+                    <li class="sa-browse-card">
+                      <div class="sa-browse-card-media sa-browse-card-media--meeting">
+                        <span>Meeting</span>
+                        <b>Free</b>
                       </div>
-                      <span class="sa-dash-mock-pill sa-dash-mock-pill--live">Confirmed</span>
-                    </li>
-                    <li class="sa-dash-mock-row">
-                      <div class="sa-dash-mock-row-main">
-                        <strong>Cambridge Connect</strong>
-                        <span>Wed 17 Sep · 18:30 · Cambridge</span>
+                      <div class="sa-browse-card-body">
+                        <strong>Founders breakfast, Leeds</strong>
+                        <span>Tue 9 Sep · Guest visit available</span>
+                        <em>Category Exclusivity</em>
                       </div>
-                      <span class="sa-dash-mock-pill sa-dash-mock-pill--live">Guest visit</span>
                     </li>
-                  </ul>
-                  <div class="sa-dash-mock-cta">View tickets and booking details</div>
-                  <p class="sa-dash-mock-note">Everything you need for the day, kept in one place.</p>
-                </div>
-
-                <div class="sa-dash-mock-panel" data-dash-panel="saved" role="tabpanel" hidden>
-                  <p class="sa-dash-mock-eyebrow">Saved for later</p>
-                  <p class="sa-dash-mock-title">Your shortlist</p>
-                  <ul class="sa-dash-mock-rows">
-                    <li class="sa-dash-mock-row">
-                      <div class="sa-dash-mock-row-main">
+                    <li class="sa-browse-card sa-browse-card--dim">
+                      <div class="sa-browse-card-media sa-browse-card-media--expo">
+                        <span>Exhibition</span>
+                        <b>£12</b>
+                      </div>
+                      <div class="sa-browse-card-body">
                         <strong>Women in Business Expo</strong>
-                        <span>Event · London · 8 Oct</span>
+                        <span>Wed 8 Oct · London</span>
+                        <em>★★★★☆ (31)</em>
                       </div>
-                      <span class="sa-dash-mock-pill">Event</span>
-                    </li>
-                    <li class="sa-dash-mock-row">
-                      <div class="sa-dash-mock-row-main">
-                        <strong>Business Network Manchester</strong>
-                        <span>Organiser · 12 upcoming events</span>
-                      </div>
-                      <span class="sa-dash-mock-pill">Organiser</span>
-                    </li>
-                    <li class="sa-dash-mock-row">
-                      <div class="sa-dash-mock-row-main">
-                        <strong>Co-working referral deal</strong>
-                        <span>Opportunity · UK-wide</span>
-                      </div>
-                      <span class="sa-dash-mock-pill sa-dash-mock-pill--featured">Opportunity</span>
                     </li>
                   </ul>
                 </div>
 
-                <div class="sa-dash-mock-panel" data-dash-panel="attendee-opps" role="tabpanel" hidden>
-                  <p class="sa-dash-mock-eyebrow">Business opportunities</p>
-                  <p class="sa-dash-mock-title">Opportunities matching your interests</p>
-                  <ul class="sa-dash-mock-rows">
-                    <li class="sa-dash-mock-row">
-                      <div class="sa-dash-mock-row-main">
-                        <strong>Regional café franchise</strong>
-                        <span>North West · Investment £25k to £40k</span>
+                <div class="sa-dash-mock-panel" data-dash-panel="organiser" role="tabpanel" hidden>
+                  <div class="sa-org-page">
+                    <div class="sa-org-page-hero">
+                      <span class="sa-org-page-logo">BN</span>
+                      <div class="sa-org-page-intro">
+                        <span class="sa-org-page-label">Organiser</span>
+                        <strong>Business Network Manchester</strong>
+                        <span>Professional services · Greater Manchester</span>
                       </div>
-                      <span class="sa-dash-mock-pill sa-dash-mock-pill--featured">Featured</span>
-                    </li>
-                    <li class="sa-dash-mock-row">
-                      <div class="sa-dash-mock-row-main">
-                        <strong>Marketing partner wanted</strong>
-                        <span>Partnership · Birmingham · Flexible</span>
-                      </div>
-                      <span class="sa-dash-mock-pill sa-dash-mock-pill--live">New</span>
-                    </li>
-                  </ul>
-                  <div class="sa-dash-mock-cta">Enquire about an opportunity</div>
-                  <div class="sa-dash-mock-stats">
-                    <div class="sa-dash-mock-stat"><b>24</b><small>Matches</small></div>
-                    <div class="sa-dash-mock-stat"><b>3</b><small>Saved</small></div>
-                    <div class="sa-dash-mock-stat"><b>1</b><small>Enquiry sent</small></div>
+                      <span class="sa-dash-mock-pill sa-dash-mock-pill--live">Guest visits</span>
+                    </div>
+                    <p class="sa-org-page-blurb">Monthly breakfast meetings for founders and senior leaders across Greater Manchester.</p>
+                    <div class="sa-org-page-meta">
+                      <span>★★★★☆ (18)</span>
+                      <span>12 upcoming events</span>
+                      <span>Category Exclusivity</span>
+                    </div>
+                    <p class="sa-dash-mock-eyebrow">Upcoming</p>
+                    <ul class="sa-browse-list sa-browse-list--compact">
+                      <li class="sa-browse-card">
+                        <div class="sa-browse-card-body">
+                          <strong>September breakfast</strong>
+                          <span>Tue 9 Sep · 08:00 · Leeds · Free guest visit</span>
+                        </div>
+                        <span class="sa-dash-mock-pill sa-dash-mock-pill--featured">Book</span>
+                      </li>
+                      <li class="sa-browse-card">
+                        <div class="sa-browse-card-body">
+                          <strong>October breakfast</strong>
+                          <span>Tue 14 Oct · 08:00 · Manchester</span>
+                        </div>
+                        <span class="sa-dash-mock-pill">Book</span>
+                      </li>
+                    </ul>
                   </div>
                 </div>
+
               </div>
             </div>
           </div>
@@ -565,6 +542,6 @@
   </p>
 </footer>
 
-<script src="js/site-access-gate.js?v=20260714attendee"></script>
+<script src="js/site-access-gate.js?v=20260714browse"></script>
 </body>
 </html>
