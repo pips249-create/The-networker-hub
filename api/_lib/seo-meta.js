@@ -33,18 +33,24 @@ function absoluteUrl(origin, path) {
 }
 
 function buildOpenGraphTags(meta) {
-  return {
+  const image = meta.image || '';
+  const tags = {
     'og:type': meta.ogType || 'website',
     'og:site_name': 'The Networker Hub',
     'og:title': meta.title,
     'og:description': meta.description,
     'og:url': meta.canonical,
-    'og:image': meta.image || '',
-    'twitter:card': meta.image ? 'summary_large_image' : 'summary',
+    'og:image': image,
+    'twitter:card': image ? 'summary_large_image' : 'summary',
     'twitter:title': meta.title,
     'twitter:description': meta.description,
-    'twitter:image': meta.image || '',
+    'twitter:image': image || '',
   };
+  if (image) {
+    tags['og:image:secure_url'] = image;
+    tags['og:image:alt'] = meta.title || 'The Networker Hub';
+  }
+  return tags;
 }
 
 function isOnlineAttendance(ev) {

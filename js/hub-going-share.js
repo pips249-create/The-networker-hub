@@ -19,7 +19,7 @@
 
   function eventPageUrl(ev) {
     if (ev && ev.slug) return siteOrigin() + '/events/' + encodeURIComponent(ev.slug);
-    if (ev && ev.id) return siteOrigin() + '/events/event?id=' + encodeURIComponent(ev.id);
+    if (ev && ev.id) return siteOrigin() + '/events/' + encodeURIComponent(ev.id);
     return siteOrigin() + '/events/';
   }
 

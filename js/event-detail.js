@@ -319,12 +319,6 @@
     return /^guest\s*visit$/i.test(String(t.name || '').trim());
   }
 
-  function complimentaryVisitsLabel(count) {
-    const n = Number(count) || 0;
-    if (n < 1) return '';
-    return n === 1 ? '1 complimentary visit' : n + ' complimentary visits';
-  }
-
   async function loadGuestVisitEligibility(ev) {
     if (!eventAllowsGuestPasses(ev)) {
       guestVisitEligibility = { allowed: 0, used: 0, remaining: 0, eligible: false };
@@ -502,20 +496,43 @@
     return html;
   }
 
+  function memberTicketPriceLabel(ev) {
+    if (!ev || ev.priceKey === 'free' || /^free$/i.test(String(ev.price || ''))) return 'Free';
+    if (window.HubBookingFees && typeof window.HubBookingFees.listingPriceNum === 'function') {
+      const total = window.HubBookingFees.listingPriceNum(ev);
+      if (total <= 0) return 'Free';
+      return window.HubBookingFees.formatPounds
+        ? window.HubBookingFees.formatPounds(total)
+        : fmt(total);
+    }
+    // Avoid listingPriceLabel here — for guest programmes it already appends trial-visit copy.
+    const display = String(ev.price || '').trim();
+    return display || '—';
+  }
+
   function syncTicketHeader(ev) {
     const labelEl = document.getElementById('ev-ticket-from-label');
     const priceEl = document.getElementById('ev-ticket-from-price');
     if (!labelEl || !priceEl || !ev) return;
     if (eventIsGuestProgramme(ev)) {
-      labelEl.textContent = 'Member tickets from';
-      priceEl.textContent =
-        ev.priceKey === 'free' ? 'Free' : publicListingPriceLabel(ev, { withFrom: false });
-      const trial = eventAllowsGuestPasses(ev) ? complimentaryVisitsLabel(ev.complimentaryVisitsAllowed) : '';
-      if (trial && guestVisitEligibility?.eligible) {
-        priceEl.textContent += ' · ' + trial;
-      } else if (trial && guestVisitEligibility?.signedOut) {
-        priceEl.textContent += ' · ' + trial + ' for new attendees';
+      const showGuestHeader =
+        eventAllowsGuestPasses(ev) &&
+        guestVisitEligibility &&
+        (guestVisitEligibility.eligible || guestVisitEligibility.signedOut);
+      if (showGuestHeader) {
+        const remaining = Number(guestVisitEligibility.remaining) || 0;
+        labelEl.textContent = 'Complimentary visit';
+        priceEl.textContent = 'Free';
+        if (guestVisitEligibility.signedOut) {
+          labelEl.textContent = 'Guest visit available';
+        } else if (remaining > 1) {
+          labelEl.textContent =
+            remaining + ' complimentary visits left';
+        }
+        return;
       }
+      labelEl.textContent = 'Member tickets from';
+      priceEl.textContent = memberTicketPriceLabel(ev);
       return;
     }
     if (eventIsCategoryExclusivity(ev)) {

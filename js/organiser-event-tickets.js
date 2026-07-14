@@ -1530,6 +1530,10 @@
       });
     }
     bindRefundPolicy();
+    if (!selectedRefundPolicy && !document.querySelector('input[name="refund-policy"]:checked')) {
+      const defaultRadio = document.getElementById('refund-policy-standard');
+      if (defaultRadio) selectRefundCard(defaultRadio);
+    }
     bindVatOptions();
     updatePublishButton();
 

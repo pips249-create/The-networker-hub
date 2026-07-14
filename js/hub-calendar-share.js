@@ -64,9 +64,16 @@
   }
 
   function eventPageUrl(ev) {
-    const origin = global.location ? global.location.origin : 'https://the-networker-hub.vercel.app';
-    if (ev && ev.slug) return origin + '/events/' + encodeURIComponent(ev.slug);
-    if (ev && ev.id) return origin + '/events/event?id=' + encodeURIComponent(ev.id);
+    const origin = (global.location && global.location.origin
+      ? global.location.origin
+      : 'https://www.thenetworkerhub.com'
+    ).replace(/\/$/, '');
+    const slug = ev && ev.slug ? String(ev.slug).trim() : '';
+    if (slug && slug !== 'event' && slug !== 'event.html') {
+      return origin + '/events/' + encodeURIComponent(slug);
+    }
+    // Prefer pretty /events/:id URLs so middleware can inject OG tags for crawlers.
+    if (ev && ev.id) return origin + '/events/' + encodeURIComponent(ev.id);
     return origin + '/events/';
   }
 

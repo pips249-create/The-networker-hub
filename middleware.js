@@ -24,10 +24,30 @@ const SITE_ACCESS_COOKIE = 'hub_site_preview';
 const SITE_PREVIEW_TOKEN_TYPE = 'site_preview';
 const NOINDEX_HEADER = 'noindex, nofollow';
 
+/** Social scrapers that need OG tags on listing pages while the site gate is on. */
+const SOCIAL_CRAWLER_UA =
+  /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|TelegramBot|Pinterest|vkShare|Applebot|redditbot|embedly|Quora Link Preview|Showyoubot|outbrain|opengraph|Googlebot-Image|bingbot/i;
+
 function isSiteAccessGateActive() {
   const flag = String(process.env.DISABLE_SITE_ACCESS_GATE || '').trim().toLowerCase();
   if (flag === 'true' || flag === '1' || flag === 'yes') return false;
   return true;
+}
+
+function isSocialCrawler(request) {
+  const ua = String(request.headers.get('user-agent') || '');
+  return SOCIAL_CRAWLER_UA.test(ua);
+}
+
+function isPublicListingPath(pathname) {
+  const path = String(pathname || '').replace(/\/$/, '') || '/';
+  const eventMatch = path.match(/^\/events\/([^/]+)$/);
+  if (eventMatch && !SKIP_EVENT_SLUGS.has(decodeURIComponent(eventMatch[1]))) return true;
+  const orgMatch = path.match(/^\/organisers\/([^/]+)$/);
+  if (orgMatch && orgMatch[1] !== 'organiser.html') return true;
+  const oppMatch = path.match(/^\/opportunities\/([^/]+)$/);
+  if (oppMatch && !SKIP_OPPORTUNITY_SLUGS.has(decodeURIComponent(oppMatch[1]))) return true;
+  return false;
 }
 
 // Keep discovery files (llms.txt / agents.txt / sitemap) gated until public launch.
@@ -194,6 +214,11 @@ async function maybeGateSiteAccess(request, url) {
   const search = url.search || '';
 
   if (isGateBypassPath(pathname)) return null;
+
+  // Let social crawlers fetch listing HTML + OG tags (still noindexed via authorized path).
+  if (isSocialCrawler(request) && isPublicListingPath(pathname)) {
+    return { authorized: true, socialCrawler: true };
+  }
 
   const previewInternalSeo =
     String(request.headers.get('x-hub-internal-seo') || '').trim() === password;

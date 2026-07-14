@@ -870,6 +870,13 @@ async function fetchPublishedEventBySlug(sb, slug) {
   const s = String(slug || '').trim();
   if (!s) return null;
 
+  // Share/fallback links may use /events/:uuid — resolve by id before slug scan.
+  const { isUuid } = require('./uuid');
+  if (isUuid(s)) {
+    const byId = await fetchPublishedEventById(sb, s);
+    if (byId) return byId;
+  }
+
   const tableRes = await sb.from('events').select('*').eq('slug', s).maybeSingle();
   if (tableRes.error) throw new Error(tableRes.error.message);
   if (tableRes.data && isPublishedApprovedEventRow(tableRes.data)) {
