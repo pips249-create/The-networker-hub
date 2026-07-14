@@ -25,11 +25,15 @@
 
 ### Critical path (do these next)
 
-1. **Connect destination charge test** — one paid ticket; verify money split in Stripe (see Tab 9)
-2. **100% gates** — finish remaining items in Tabs 4–6, 9–10 below
-3. **July beta email** — 50–100 groups: “Claim your profile, republish one event”
-4. **SEO pre-launch** — `SITE_URL`, GSC, sitemap verify (`docs/SEO-AEO-LAUNCH-PLAN.md`)
-5. **August redirect** — the-networker.co.uk → hub
+1. **Guest visit programme end-to-end test** — complimentary visits on organiser page → guest pass booking → member tickets unlock after visits used
+2. **Category Exclusivity (seat approval) end-to-end test** — apply → approve/deny in Attendees → payment link
+3. **Connect destination charge test** — one paid ticket; verify money split in Stripe (see Tab 9)
+4. **100% gates** — finish remaining items in Tabs 4–6, 9–10 below
+5. **July beta email** — 50–100 groups: “Claim your profile, publish one event”
+6. **SEO pre-launch** — `SITE_URL`, GSC, sitemap verify (`docs/SEO-AEO-LAUNCH-PLAN.md`)
+7. **August redirect** — the-networker.co.uk → hub
+
+*Note: events are listed fresh on the hub — we are not migrating or copying events from the old WordPress site.*
 
 ### Recently completed (July 2026)
 
@@ -56,7 +60,9 @@
 
 ### Post-launch (not September blockers)
 
-Training and workshops, seat-approval workflow, organiser messaging, review replies, PDF tickets, calendar export polish.
+Training and workshops, organiser messaging, review replies, PDF tickets, calendar export polish.
+
+**Pre-September (moved up):** seat-approval / Category Exclusivity workflows must work for launch. Guest visit programme must be tested before beta email.
 
 ---
 
@@ -254,9 +260,10 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | Events + groups **auto-approve** when publish criteria met |
 | [x] | Stripe Connect Express onboarding + `STRIPE_CONNECT_ENABLED=true` on prod |
 | [ ] | **Connect destination charge test** (Tab 9) |
+| [ ] | **Guest visit programme — end-to-end test** (complimentary visits → guest pass booking → exhausted → paid member ticket) |
+| [ ] | **Category Exclusivity (seat approval) — end-to-end test** (apply → organiser approve/deny → payment link → booking) |
 | [ ] | July beta: **200+ groups claimed** and **20+ with a published event** |
 | [ ] | Load test: browse + organiser pages with 1,000+ profiles (week 8) |
-| [ ] | Republish path documented for organisers copying events from old site |
 
 **Fee model (current):**
 

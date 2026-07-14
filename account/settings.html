@@ -28,14 +28,16 @@
 
     <main id="as-main" class="as-wrap">
       <h1 class="as-title">Account settings</h1>
-      <p class="as-lead">Update your profile, location and password.</p>
+      <p class="as-lead">Update your profile, company details and password.</p>
 
       <div id="as-alert" class="as-alert" hidden role="status"></div>
 
       <form id="as-profile-form">
         <section class="as-card">
           <h2>Your details</h2>
-          <p class="as-card-sub">Shown on bookings and organiser communications where relevant.</p>
+          <p class="as-card-sub">
+            Name, company and job title appear on printable name badges and organiser attendee lists.
+          </p>
 
           <div class="as-field">
             <label for="as-email">Email</label>
@@ -44,6 +46,26 @@
           <div class="as-field">
             <label for="as-name">Full name</label>
             <input type="text" id="as-name" name="name" autocomplete="name" required />
+          </div>
+          <div class="as-field">
+            <label for="as-company">Company</label>
+            <input
+              type="text"
+              id="as-company"
+              name="company"
+              placeholder="e.g. Acme Ltd"
+              autocomplete="organization"
+            />
+          </div>
+          <div class="as-field">
+            <label for="as-job-title">Job title</label>
+            <input
+              type="text"
+              id="as-job-title"
+              name="jobTitle"
+              placeholder="e.g. Business development manager"
+              autocomplete="organization-title"
+            />
           </div>
           <div class="as-field">
             <label for="as-location">Location</label>
@@ -165,6 +187,6 @@
     </main>
 
     <script src="../js/site-nav.js?v=20260714u" data-root="../" data-page="settings"></script>
-    <script src="../js/account-settings.js?v=20260714lcp"></script>
+    <script src="../js/account-settings.js?v=20260714badge"></script>
   </body>
 </html>

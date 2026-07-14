@@ -7,6 +7,8 @@ const sbAuth = require('./supabase-auth');
 const WRITABLE = {
   name: true,
   location: true,
+  company: true,
+  jobTitle: true,
   marketPreferences: true,
   businessSector: true,
 };
@@ -73,6 +75,8 @@ function rowToProfile(session, hub, attendee) {
     email: String(session.email || attendee?.email || '').toLowerCase(),
     name: String(hub?.display_name || attendee?.name || '').trim(),
     location: String(attendee?.location || '').trim(),
+    company: String(attendee?.company || '').trim(),
+    jobTitle: String(attendee?.job_title || '').trim(),
     marketPreferences: marketFromRow,
     businessSector: String(attendee?.business_sector || '').trim(),
     emailsEnabled: hub?.emails_enabled !== false,
@@ -124,6 +128,12 @@ async function updateProfile(session, body) {
   const attendeePatch = {};
   if (body.name !== undefined) attendeePatch.name = String(body.name || '').trim();
   if (body.location !== undefined) attendeePatch.location = String(body.location || '').trim();
+  if (body.company !== undefined) {
+    attendeePatch.company = String(body.company || '').trim() || null;
+  }
+  if (body.jobTitle !== undefined) {
+    attendeePatch.job_title = String(body.jobTitle || '').trim() || null;
+  }
   if (body.businessSector !== undefined) {
     attendeePatch.business_sector = String(body.businessSector || '').trim() || null;
   }
@@ -147,10 +157,15 @@ async function updateProfile(session, body) {
     } else {
       updateErr = primary.error;
       const msg = String(primary.error.message || '').toLowerCase();
-      if (msg.includes('business_sector') || msg.includes('market_preferences')) {
+      if (
+        msg.includes('business_sector') ||
+        msg.includes('market_preferences') ||
+        msg.includes('job_title')
+      ) {
         const fallback = { ...attendeePatch };
         delete fallback.business_sector;
         delete fallback.market_preferences;
+        if (msg.includes('job_title')) delete fallback.job_title;
         if (Object.keys(fallback).length) {
           const retry = await sb
             .from('attendees')

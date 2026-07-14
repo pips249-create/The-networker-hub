@@ -34,7 +34,10 @@
   function applyWritable(writable) {
     const w = writable || {};
     setFieldWritable('as-name', w.name !== false);
-    setFieldWritable('as-location', !!w.location);
+    // Default on so fields stay visible even if an older API omits these flags.
+    setFieldWritable('as-company', w.company !== false);
+    setFieldWritable('as-job-title', w.jobTitle !== false);
+    setFieldWritable('as-location', w.location !== false);
   }
 
   function setFieldValue(id, value) {
@@ -45,6 +48,8 @@
   function fillForm(profile) {
     setFieldValue('as-email', profile.email || '');
     setFieldValue('as-name', profile.name || '');
+    setFieldValue('as-company', profile.company || '');
+    setFieldValue('as-job-title', profile.jobTitle || '');
     setFieldValue('as-location', profile.location || '');
     fillEmailPrefs(profile);
   }
@@ -224,6 +229,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: document.getElementById('as-name').value.trim(),
+          company: document.getElementById('as-company').value.trim(),
+          jobTitle: document.getElementById('as-job-title').value.trim(),
           location: document.getElementById('as-location').value.trim(),
         }),
       });

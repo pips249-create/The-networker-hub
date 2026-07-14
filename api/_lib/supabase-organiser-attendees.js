@@ -39,7 +39,7 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       quantity,
       guest_names,
       cancelled_at,
-      attendees ( name, email, company, business_sector ),
+      attendees ( name, email, company, business_sector, job_title ),
       events ( title, organiser_id ),
       tickets ( name, price, ticket_type )
     `;
@@ -48,12 +48,17 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       accessibility_requirements,
     `;
 
-  async function fetchRows(includeExtras, eventFilterIds, includeProfileFields) {
+  async function fetchRows(includeExtras, eventFilterIds, profileMode) {
     let selectBase = baseSelect;
-    if (!includeProfileFields) {
+    if (profileMode === 'basic') {
       selectBase = selectBase.replace(
-        'attendees ( name, email, company, business_sector )',
+        'attendees ( name, email, company, business_sector, job_title )',
         'attendees ( name, email )'
+      );
+    } else if (profileMode === 'legacy') {
+      selectBase = selectBase.replace(
+        'attendees ( name, email, company, business_sector, job_title )',
+        'attendees ( name, email, company, business_sector )'
       );
     }
     const select = includeExtras
@@ -66,29 +71,31 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       .is('cancelled_at', null);
   }
 
-  let { data: historyRows, error: historyError } = await fetchRows(false, [...allowed], true);
-  if (
-    historyError &&
-    /company|business_sector|column/.test(String(historyError.message || ''))
-  ) {
-    ({ data: historyRows, error: historyError } = await fetchRows(false, [...allowed], false));
+  async function fetchWithProfileFallback(includeExtras, eventFilterIds) {
+    let result = await fetchRows(includeExtras, eventFilterIds, 'full');
+    if (result.error && /job_title|column/.test(String(result.error.message || ''))) {
+      result = await fetchRows(includeExtras, eventFilterIds, 'legacy');
+    }
+    if (
+      result.error &&
+      /company|business_sector|job_title|column/.test(String(result.error.message || ''))
+    ) {
+      result = await fetchRows(includeExtras, eventFilterIds, 'basic');
+    }
+    return result;
   }
+
+  let { data: historyRows, error: historyError } = await fetchWithProfileFallback(false, [...allowed]);
   if (historyError) throw historyError;
 
   const relationshipMap = buildRegistrationRelationshipMap(historyRows || []);
 
-  let { data, error } = await fetchRows(true, targetIds, true);
-  if (error && /company|business_sector|column/.test(String(error.message || ''))) {
-    ({ data, error } = await fetchRows(true, targetIds, false));
-  }
+  let { data, error } = await fetchWithProfileFallback(true, targetIds);
   if (
     error &&
     /dietary_requirements|accessibility_requirements|column/.test(String(error.message || ''))
   ) {
-    ({ data, error } = await fetchRows(false, targetIds, true));
-    if (error && /company|business_sector|column/.test(String(error.message || ''))) {
-      ({ data, error } = await fetchRows(false, targetIds, false));
-    }
+    ({ data, error } = await fetchWithProfileFallback(false, targetIds));
   }
 
   if (error) throw error;
@@ -132,6 +139,7 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
         name,
         email,
         company: String(attendee.company || '').trim(),
+        jobTitle: String(attendee.job_title || '').trim(),
         businessSector: String(attendee.business_sector || '').trim(),
         guestNames,
         dietaryRequirements: String(row.dietary_requirements || '').trim(),

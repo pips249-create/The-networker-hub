@@ -1,6 +1,6 @@
 /**
  * Avery 7160-compatible name badge PDF (A4, 3×7 sticky labels).
- * Populates name, company/job, and industry when available.
+ * Populates name, company, and job title / industry when available.
  */
 const { buildPositionedPdf } = require('./simple-pdf');
 
@@ -42,19 +42,21 @@ function badgeEntriesFromAttendees(attendees) {
     const applicationStatus = String(a.applicationStatus || 'Approved').trim();
     if (applicationStatus === 'Pending' || applicationStatus === 'Denied') return;
 
-    const company =
-      String(a.company || '').trim() ||
+    const company = String(a.company || '').trim();
+    const jobTitle =
+      String(a.jobTitle || '').trim() ||
       String(a.screeningJobTitle || '').trim() ||
       '';
     const industry =
       String(a.screeningIndustry || '').trim() ||
       String(a.businessSector || '').trim() ||
       '';
+    const detail = jobTitle || industry;
 
     entries.push({
       name: String(a.name || '').trim() || 'Attendee',
       company,
-      industry,
+      detail,
     });
 
     (a.guestNames || []).forEach((guest) => {
@@ -62,8 +64,8 @@ function badgeEntriesFromAttendees(attendees) {
       if (!g) return;
       entries.push({
         name: g,
-        company: company ? 'Guest of ' + clampLine(a.name || 'attendee', 28) : 'Guest',
-        industry,
+        company: 'Guest of ' + clampLine(a.name || 'attendee', 28),
+        detail: company || '',
       });
     });
   });
@@ -93,7 +95,7 @@ function buildNameBadgesPdf(attendees, options) {
       const { first, last } = splitName(entry.name);
       const nameLine = clampLine([first, last].filter(Boolean).join(' '), 26);
       const company = clampLine(entry.company, 30);
-      const industry = clampLine(entry.industry, 32);
+      const detail = clampLine(entry.detail, 32);
 
       items.push({
         x: left + padX,
@@ -111,13 +113,13 @@ function buildNameBadgesPdf(attendees, options) {
           text: company,
         });
       }
-      if (industry) {
+      if (detail) {
         items.push({
           x: left + padX,
-          y: topFromBottom + LABEL.height - 42,
-          size: 8,
+          y: topFromBottom + LABEL.height - (company ? 42 : 30),
+          size: company ? 8 : 9,
           font: 'F1',
-          text: industry,
+          text: detail,
         });
       }
       items.push({

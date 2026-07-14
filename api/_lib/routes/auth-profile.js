@@ -34,6 +34,8 @@ function publicProfile(user) {
     email: user.email,
     name: user.name || '',
     location: user.location || '',
+    company: user.company || '',
+    jobTitle: user.jobTitle || '',
     marketPreferences: user.marketPreferences || '',
     businessSector: user.businessSector || '',
   };
@@ -54,6 +56,16 @@ async function buildProfilePatch(user, body) {
     const key = resolveProfileFieldName(f, USER_PROFILE_FIELDS.location, tableFields);
     if (key) patch[key] = String(body.location || '').trim();
     else skipped.push('location');
+  }
+  if (body.company !== undefined) {
+    const key = resolveProfileFieldName(f, USER_PROFILE_FIELDS.company, tableFields);
+    if (key) patch[key] = String(body.company || '').trim();
+    else skipped.push('company');
+  }
+  if (body.jobTitle !== undefined) {
+    const key = resolveProfileFieldName(f, USER_PROFILE_FIELDS.jobTitle, tableFields);
+    if (key) patch[key] = String(body.jobTitle || '').trim();
+    else skipped.push('jobTitle');
   }
   if (body.marketPreferences !== undefined) {
     const key = resolveProfileFieldName(f, USER_PROFILE_FIELDS.marketPreferences, tableFields);
@@ -165,6 +177,8 @@ module.exports = async function handler(req, res) {
         const labels = {
           name: 'Name',
           location: 'Location (or City)',
+          company: 'Company',
+          jobTitle: 'Job Title',
           marketPreferences: 'Market Preferences',
           businessSector: 'Business Sector',
         };

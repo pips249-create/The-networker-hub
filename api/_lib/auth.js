@@ -18,6 +18,8 @@ const USER_FIELDS = {
 
 const USER_PROFILE_FIELDS = {
   location: ['Location', 'City', 'Region', 'Area', 'Town', 'Postcode'],
+  company: ['Company', 'Company Name', 'Organisation', 'Organization', 'Business'],
+  jobTitle: ['Job Title', 'Role', 'Position'],
   marketPreferences: [
     'Market Preferences',
     'Marketing Preferences',
@@ -503,6 +505,8 @@ function profileWritableFlags(user, tableFieldNames) {
   return {
     name: !!resolveProfileFieldName(f, USER_FIELDS.name, tableFieldNames),
     location: !!resolveProfileFieldName(f, USER_PROFILE_FIELDS.location, tableFieldNames),
+    company: !!resolveProfileFieldName(f, USER_PROFILE_FIELDS.company, tableFieldNames),
+    jobTitle: !!resolveProfileFieldName(f, USER_PROFILE_FIELDS.jobTitle, tableFieldNames),
     marketPreferences: !!resolveProfileFieldName(
       f,
       USER_PROFILE_FIELDS.marketPreferences,
@@ -516,6 +520,8 @@ function profileFromFields(f) {
   const prefs = pick(f, USER_PROFILE_FIELDS.marketPreferences);
   return {
     location: String(pick(f, USER_PROFILE_FIELDS.location) || '').trim(),
+    company: String(pick(f, USER_PROFILE_FIELDS.company) || '').trim(),
+    jobTitle: String(pick(f, USER_PROFILE_FIELDS.jobTitle) || '').trim(),
     marketPreferences: String(prefs || '').trim(),
     businessSector: String(pick(f, USER_PROFILE_FIELDS.businessSector) || '').trim(),
   };
@@ -533,6 +539,8 @@ function normalizeUser(record) {
     resetToken: pick(f, USER_FIELDS.resetToken),
     resetExpires: pick(f, USER_FIELDS.resetExpires),
     location: profile.location,
+    company: profile.company,
+    jobTitle: profile.jobTitle,
     marketPreferences: profile.marketPreferences,
     businessSector: profile.businessSector,
     fields: f,
