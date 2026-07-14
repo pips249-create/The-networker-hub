@@ -106,7 +106,7 @@
       wrap.innerHTML =
         '<img class="org-profile-logo" src="' +
         escapeHtml(org.photoUrl) +
-        '" alt="" loading="eager" decoding="async" onerror="this.parentElement.innerHTML=\'<span class=org-profile-logo-placeholder>' +
+        '" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML=\'<span class=org-profile-logo-placeholder>' +
         escapeHtml(letter) +
         '</span>\'">';
     } else {

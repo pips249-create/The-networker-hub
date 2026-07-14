@@ -64,7 +64,7 @@
       return (
         '<img class="organiser-card-logo" src="' +
         escapeHtml(url) +
-        '" alt="" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML=\'<span class=organiser-card-logo-placeholder>' +
+        '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML=\'<span class=organiser-card-logo-placeholder>' +
         escapeHtml(letter) +
         '</span>\'">'
       );
@@ -244,7 +244,7 @@
       return (
         '<img class="org-premium-logo" src="' +
         escapeHtml(url) +
-        '" alt="" loading="lazy" decoding="async" onerror="this.outerHTML=\'<span class=org-premium-logo-placeholder aria-hidden=true>' +
+        '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.outerHTML=\'<span class=org-premium-logo-placeholder aria-hidden=true>' +
         escapeHtml(letter) +
         '</span>\'">'
       );

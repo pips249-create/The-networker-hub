@@ -34,7 +34,30 @@ function isPublicOrganiser(row) {
 function resolvePhotoUrl(raw) {
   const url = String(raw || '').trim();
   if (!url) return '';
-  if (/^https?:\/\//i.test(url)) return url;
+
+  if (/^https?:\/\//i.test(url)) {
+    try {
+      const parsed = new URL(url);
+      const host = parsed.hostname.toLowerCase();
+      const path = parsed.pathname.toLowerCase();
+      // Profile / share pages mistaken for logo files — browsers CORB-block the HTML response.
+      if (
+        /(^|\.)(linkedin|facebook|instagram|twitter|x)\.com$/i.test(host) &&
+        !/\.(jpe?g|png|gif|webp|svg)(\?|$)/i.test(path)
+      ) {
+        return '';
+      }
+      if (/(^|\.)(drive|docs)\.google\.com$/i.test(host)) {
+        return '';
+      }
+    } catch {
+      return '';
+    }
+    return url;
+  }
+
+  if (url.startsWith('/')) return url;
+
   const { url: base } = supabaseConfig();
   if (!base) return url;
   const clean = url.replace(/^\/+/, '');
