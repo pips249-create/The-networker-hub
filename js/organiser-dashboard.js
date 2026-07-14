@@ -276,7 +276,7 @@
       '<a class="org-btn org-btn-outline org-btn-sm" href="' +
       esc(groupPublicProfileUrl(g.id)) +
       '" target="_blank" rel="noopener noreferrer">View public profile</a>' +
-      '<a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-events.png" download>Download LinkedIn cover</a>' +
+      '<a class="org-btn org-btn-outline org-btn-sm" href="#org-linkedin-posts">Build a LinkedIn post image</a>' +
       '</div></article>'
     );
   }
@@ -452,19 +452,19 @@
     return { ...row, id: key, groupName: group?.name || 'Your group' };
   }
 
-  let linkedInCoverBuilder = null;
+  let linkedInPostBuilder = null;
 
-  function ensureLinkedInCoverBuilder() {
-    const root = document.getElementById('org-cover-builder-root');
-    if (!root || !window.HubLinkedInCoverBuilder) return;
-    if (!linkedInCoverBuilder) {
-      linkedInCoverBuilder = window.HubLinkedInCoverBuilder.init(root, {
+  function ensureLinkedInPostBuilder() {
+    const root = document.getElementById('org-post-builder-root');
+    if (!root || !window.HubLinkedInPostBuilder) return;
+    if (!linkedInPostBuilder) {
+      linkedInPostBuilder = window.HubLinkedInPostBuilder.init(root, {
         getGroups: function () {
           return state.groups || [];
         },
       });
-    } else if (linkedInCoverBuilder.refreshGroups) {
-      linkedInCoverBuilder.refreshGroups();
+    } else if (linkedInPostBuilder.refreshGroups) {
+      linkedInPostBuilder.refreshGroups();
     }
   }
 
@@ -5006,7 +5006,7 @@
     }
     if (page === 'social') {
       renderOrganiserRankingShare();
-      ensureLinkedInCoverBuilder();
+      ensureLinkedInPostBuilder();
     }
     if (page === 'team') {
       loadTeamMembers().then(function () {
@@ -7066,7 +7066,7 @@
     renderStats();
     renderOrganiserNotices();
     renderOrganiserRankingShare();
-    ensureLinkedInCoverBuilder();
+    ensureLinkedInPostBuilder();
     renderGroups();
     renderTeam();
     renderMyEventsHub();
