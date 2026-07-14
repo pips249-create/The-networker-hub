@@ -244,6 +244,24 @@
     ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
   }
 
+  function drawLogoPlaceholder(ctx, x, y, w, h, hintColor) {
+    ctx.save();
+    ctx.setLineDash([14, 10]);
+    ctx.strokeStyle = hintColor || 'rgba(154, 122, 168, 0.5)';
+    ctx.lineWidth = 3;
+    roundRect(ctx, x, y, w, h, 14);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = hintColor || 'rgba(154, 122, 168, 0.85)';
+    ctx.font = '600 26px "DM Sans", Arial, Helvetica, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Your logo here', x + w / 2, y + h / 2);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.restore();
+  }
+
   function parseImagePosition(raw) {
     var m = String(raw || '')
       .trim()
@@ -322,6 +340,7 @@
     var hubLogo = opts.hubLogoImg || null;
     var eventImage = opts.eventImageImg || null;
     var isEventSpotlight = tpl.theme === 'event_spotlight';
+    var isEventGroup = tpl.group === 'events';
     var quietBrand = Boolean(opts.quietBrand);
     var isDark = Boolean(bg.dark);
 
@@ -372,6 +391,19 @@
         var nameY = brandBoxY + (brandBoxH - Math.min(2, nameLines.length) * 46) / 2 + 36;
         for (var n = 0; n < Math.min(2, nameLines.length); n++) {
           ctx.fillText(nameLines[n], logoX + logoW + 32, nameY + n * 46);
+        }
+      } else if (isEventGroup) {
+        var phLogoW = 360;
+        var phLogoH = 180;
+        var phLogoX = brandBoxX + 28;
+        var phLogoY = brandBoxY + (brandBoxH - phLogoH) / 2;
+        drawLogoPlaceholder(ctx, phLogoX, phLogoY, phLogoW, phLogoH, brandHint);
+        ctx.fillStyle = brandText;
+        ctx.font = '700 40px "DM Serif Display", Georgia, serif';
+        var eventNameLines = wrapText(ctx, name || 'Your group name', brandBoxW - phLogoW - 80);
+        var eventNameY = brandBoxY + (brandBoxH - Math.min(2, eventNameLines.length) * 46) / 2 + 36;
+        for (var en = 0; en < Math.min(2, eventNameLines.length); en++) {
+          ctx.fillText(eventNameLines[en], phLogoX + phLogoW + 32, eventNameY + en * 46);
         }
       } else {
         ctx.fillStyle = brandText;
