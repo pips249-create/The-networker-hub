@@ -148,6 +148,23 @@
     );
   }
 
+  function mediaHtml(item) {
+    var src = String((item && (item.imageUrl || item.logoUrl)) || '').trim();
+    var letter = String((item && item.title) || '?').trim().charAt(0).toUpperCase() || '?';
+    if (src) {
+      return (
+        '<div class="opp-compare-media"><img src="' +
+        escapeHtml(src) +
+        '" alt="" width="160" height="96" loading="lazy" /></div>'
+      );
+    }
+    return (
+      '<div class="opp-compare-media opp-compare-media--placeholder" aria-hidden="true">' +
+      escapeHtml(letter) +
+      '</div>'
+    );
+  }
+
   function renderModal(catalog, ids, fallbacks) {
     var items = resolveItems(catalog, ids, fallbacks);
     if (items.length < 2) return '';
@@ -161,13 +178,17 @@
           ? '../opportunities/' + encodeURIComponent(item.slug)
           : '../opportunities/opportunity.html?id=' + encodeURIComponent(item.id);
         return (
-          '<th scope="col"><a href="' +
+          '<th scope="col">' +
+          '<a class="opp-compare-card" href="' +
           escapeHtml(href) +
           '">' +
+          mediaHtml(item) +
+          '<span class="opp-compare-title">' +
           escapeHtml(item.title || 'Opportunity') +
-          '</a><br><span class="opp-compare-host">' +
+          '</span>' +
+          '<span class="opp-compare-host">' +
           escapeHtml(item.host || '') +
-          '</span></th>'
+          '</span></a></th>'
         );
       })
       .join('');

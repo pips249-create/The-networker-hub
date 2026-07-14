@@ -1,7 +1,6 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { eventImageUrl } = require('./event-image');
 const { skipFavouriteSalesAlertIfAlreadyOnSale } = require('./favourite-sales-emails');
-const { addOrganiserFavourite } = require('./supabase-organiser-favourites');
 
 async function resolveAttendeeId(sb, session) {
   if (!session?.email) return null;
@@ -88,6 +87,8 @@ async function cascadeOrganiserFavouriteFromEvent(sb, session, eventId) {
   const organiserId = eventRes.data?.organiser_id ? String(eventRes.data.organiser_id) : '';
   if (!organiserId) return null;
   try {
+    // Lazy require avoids circular dependency with supabase-organiser-favourites.
+    const { addOrganiserFavourite } = require('./supabase-organiser-favourites');
     await addOrganiserFavourite(session, organiserId);
   } catch {
     /* Non-blocking — event favourite still saved */

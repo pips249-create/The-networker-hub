@@ -31,15 +31,24 @@ module.exports = async function handler(req, res) {
         body = {};
       }
     }
+    const mode = String(body.mode || body.hubView || '').toLowerCase();
+    if (mode !== 'attendee' && mode !== 'organiser') {
+      return json(res, 400, { error: 'invalid_mode' });
+    }
     if (!isClientRole(session.role)) {
+      // Attendee dashboard may force mode=attendee for any signed-in account (e.g. admin preview).
+      if (mode === 'attendee') {
+        setHubViewCookie(res, 'attendee');
+        return json(res, 200, {
+          ok: true,
+          hubView: 'attendee',
+          redirect: '/account/index.html',
+        });
+      }
       return json(res, 403, {
         error: 'clients_only',
         message: 'Only client accounts can switch between attendee and organiser mode.',
       });
-    }
-    const mode = String(body.mode || body.hubView || '').toLowerCase();
-    if (mode !== 'attendee' && mode !== 'organiser') {
-      return json(res, 400, { error: 'invalid_mode' });
     }
     if (mode === 'organiser') {
       const accessStatus = await getOrganiserAccessStatus(session);

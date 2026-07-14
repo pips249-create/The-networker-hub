@@ -1698,6 +1698,55 @@ tr.ad-row-highlight td {
 .opp-compare-table thead th {
   font-size: 12px;
   color: #64748b;
+  min-width: 160px;
+}
+
+.opp-compare-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.opp-compare-media {
+  width: 100%;
+  max-width: 180px;
+  aspect-ratio: 5 / 3;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #eef2f7;
+  border: 1px solid #e2e8f0;
+}
+
+.opp-compare-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.opp-compare-media--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 28px;
+  color: #64748b;
+  background: linear-gradient(145deg, #f8fafc, #e8eef6);
+}
+
+.opp-compare-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #0d1f3c;
+}
+
+.opp-compare-card:hover .opp-compare-title {
+  color: #c9961f;
 }
 
 .opp-compare-table tbody th {
