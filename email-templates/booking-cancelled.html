@@ -45,19 +45,24 @@
 
         <!-- Header -->
         <tr>
-          <td style="background:#f5f0e8;padding:32px 48px 0;text-align:center;border-bottom:1px solid rgba(194,153,209,0.35);">
+          <td class="mobile-header-pad" style="background:#f5f0e8;padding:32px 48px 0;text-align:center;">
             <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
               <img src="{{logo_url}}" alt="The Networker Hub" width="240" class="email-logo-header" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:240px;">
             </a>
-            <div style="line-height:0;font-size:0;margin-top:24px;">
+          </td>
+        </tr>
+
+        {{sponsor_row}}
+
+        <tr>
+          <td style="background:#f5f0e8;padding:0;text-align:center;border-bottom:1px solid rgba(194,153,209,0.35);">
+            <div style="line-height:0;font-size:0;margin-top:8px;">
               <svg viewBox="0 0 600 40" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:40px;">
                 <path d="M0,24 C150,46 450,4 600,24 L600,40 L0,40 Z" fill="#ffffff"/>
               </svg>
             </div>
           </td>
         </tr>
-
-        {{sponsor_row}}
 
         <!-- Hero -->
         <tr>

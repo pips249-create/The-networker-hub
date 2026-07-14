@@ -17,7 +17,9 @@ function isStaleBookingCancelledTemplate(bodyHtml) {
   if (!body.includes('{{no_refund_row}}')) return true;
   const sponsorAt = body.indexOf('{{sponsor_row}}');
   const heroAt = body.indexOf('Your booking has been cancelled');
+  const waveAt = body.indexOf('viewBox="0 0 600 40"');
   if (sponsorAt === -1) return true;
+  if (waveAt !== -1 && sponsorAt > waveAt) return true;
   if (heroAt !== -1 && sponsorAt > heroAt) return true;
   return false;
 }

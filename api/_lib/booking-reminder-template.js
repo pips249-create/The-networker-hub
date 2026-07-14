@@ -19,6 +19,9 @@ function isStaleBookingReminderTemplate(bodyHtml) {
   if (sponsorMatches && sponsorMatches.length > 1) return true;
   const sponsorAt = body.indexOf('{{sponsor_row}}');
   const keepBuildingAt = body.indexOf('Keep building');
+  const waveAt = body.indexOf('viewBox="0 0 600 40"');
+  if (sponsorAt === -1) return true;
+  if (waveAt !== -1 && sponsorAt > waveAt) return true;
   if (sponsorAt !== -1 && keepBuildingAt !== -1 && sponsorAt > keepBuildingAt) return true;
   const headerLogoAt = body.indexOf('alt="The Networker Hub" width="180"');
   if (

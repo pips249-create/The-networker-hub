@@ -142,13 +142,15 @@ function basePreviewVars(siteUrl) {
 
 function sampleSponsorRow(site) {
   return (
-    '<tr><td style="padding:0 48px 18px;text-align:center;background:#f5f0e8;">' +
+    '<tr><td class="mobile-pad" style="padding:12px 40px 10px;text-align:center;background:#f5f0e8;">' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #d9c4e0;">' +
+    '<tr><td style="padding:16px 20px;text-align:center;">' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Our event directory is proudly powered by</p>' +
     '<a href="' +
     site +
     '/advertising" style="display:inline-block;text-decoration:none;">' +
     '<span style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#9a7aa8;">Sample sponsor</span>' +
-    '</a></td></tr>'
+    '</a></td></tr></table></td></tr>'
   );
 }
 

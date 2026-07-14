@@ -78,8 +78,6 @@ const LEGACY_MINI_FILES = [
 
 const HUB_PARTNER_FILES = ['account-welcome.html', 'password-reset.html'];
 
-const WAVE_END =
-  /<\/tr>\s*<tr>\s*<td class="mobile-pad" style="padding:28px 40px 16px;text-align:center;">/;
 const FOOTER_START =
   /<tr>\s*<td class="mobile-pad" style="background:#1c2040;padding:28px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">/;
 const LEGACY_FOOTER_START =
@@ -90,11 +88,12 @@ function inject(file, { main, mini }) {
   if (!fs.existsSync(filePath)) return;
   let html = fs.readFileSync(filePath, 'utf8');
 
-  if (main && !html.includes('{{sponsor_row}}') && WAVE_END.test(html)) {
-    html = html.replace(
-      WAVE_END,
-      '</tr>\n        {{sponsor_row}}\n        <tr>\n          <td class="mobile-pad" style="padding:28px 40px 16px;text-align:center;">'
-    );
+  if (main && !html.includes('{{sponsor_row}}')) {
+    // Place in the cream logo-hero band, just below the Hub logo (before the wave).
+    const logoRow = /(alt="The Networker Hub"[^>]*>[\s\S]*?<\/td>\s*<\/tr>)/i;
+    if (logoRow.test(html)) {
+      html = html.replace(logoRow, '$1\n\n        {{sponsor_row}}\n');
+    }
   }
 
   if (mini && !html.includes('{{mini_sponsors_row}}')) {

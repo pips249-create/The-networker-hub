@@ -15,6 +15,10 @@ function isStaleOrganiserBookingCancelledTemplate(bodyHtml) {
   if (!body.includes('An attendee cancelled their booking')) return true;
   if (!body.includes('{{refund_action_row}}')) return true;
   if (!body.includes('organiser-email-layout-v2')) return true;
+  const sponsorAt = body.indexOf('{{sponsor_row}}');
+  const waveAt = body.indexOf('viewBox="0 0 600 40"');
+  if (sponsorAt === -1) return true;
+  if (waveAt !== -1 && sponsorAt > waveAt) return true;
   return false;
 }
 

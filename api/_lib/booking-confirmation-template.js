@@ -26,12 +26,14 @@ function isStaleBookingTemplate(bodyHtml) {
   })) {
     return true;
   }
-  // Event Directory sponsor belongs just below the logo/hero wave, before the main copy.
+  // Event Directory sponsor belongs in the cream container just below the Hub logo.
   var sponsorAt = body.indexOf('{{sponsor_row}}');
   var bookedAt = body.indexOf('You&rsquo;re booked!');
+  var waveAt = body.indexOf('viewBox="0 0 600 40"');
   var infoBandAt = body.indexOf('Your ticket is saved in your Hub account');
   var footerAt = body.indexOf('Operated by');
   if (sponsorAt === -1) return true;
+  if (waveAt !== -1 && sponsorAt > waveAt) return true;
   if (bookedAt !== -1 && sponsorAt > bookedAt) return true;
   if (infoBandAt !== -1 && sponsorAt > infoBandAt) return true;
   if (footerAt !== -1 && sponsorAt > footerAt) return true;

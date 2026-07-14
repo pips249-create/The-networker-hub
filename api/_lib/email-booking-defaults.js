@@ -34,10 +34,11 @@ function buildSponsorSection(block, options) {
     : '<span style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#9a7aa8;">' +
       name +
       '</span>';
+  // Sits in the cream logo-hero band, in a bordered container just below the Hub logo.
   return (
-    '<tr><td class="mobile-pad" style="padding:24px 48px;text-align:center;background:#ffffff;">' +
-    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
-    '<tr><td style="padding:20px 24px;text-align:center;">' +
+    '<tr><td class="mobile-pad" style="padding:12px 40px 10px;text-align:center;background:#f5f0e8;">' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #d9c4e0;">' +
+    '<tr><td style="padding:16px 20px;text-align:center;">' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">' +
     label +
     '</p>' +

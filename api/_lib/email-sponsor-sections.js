@@ -299,31 +299,71 @@ function stripUnresolvedSponsorPlaceholders(html) {
   return out;
 }
 
-function insertSponsorPlaceholderAfterHeader(html, placeholder) {
-  const body = String(html || '');
-  const token = String(placeholder || '').trim();
-  if (!token || body.includes(token)) return body;
+function escapeRegExp(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
-  // Prefer just after the cream header / wave block (logo + hero container).
-  const waveClose = body.search(
-    /<\/svg>\s*<\/div>\s*<\/td>\s*<\/tr>/i
+function stripSponsorPlaceholder(html, placeholder) {
+  const token = String(placeholder || '').trim();
+  if (!token) return String(html || '');
+  return String(html || '').replace(new RegExp('\\s*' + escapeRegExp(token) + '\\s*', 'g'), '\n');
+}
+
+function insertSponsorPlaceholderAfterHeader(html, placeholder) {
+  const token = String(placeholder || '').trim();
+  if (!token) return String(html || '');
+
+  // Always re-place so misplaced footer/mid-body slots move under the logo hero.
+  let body = stripSponsorPlaceholder(html, token);
+
+  // Combined logo+wave cell (legacy cancellation layouts): insert between </a> and wave div.
+  const combinedHeader = body.search(
+    /alt="The Networker Hub"[^>]*>[\s\S]*?<\/a>\s*<div[^>]*>\s*<svg[\s\S]*?viewBox="0 0 600 40"/i
   );
-  if (waveClose !== -1) {
-    const insertAt = body.indexOf('</tr>', waveClose);
-    if (insertAt !== -1) {
-      return body.slice(0, insertAt + 5) + '\n\n        ' + token + '\n' + body.slice(insertAt + 5);
+  if (combinedHeader !== -1) {
+    const anchorEnd = body.indexOf('</a>', combinedHeader);
+    if (anchorEnd !== -1) {
+      return (
+        body.slice(0, anchorEnd + 4) +
+        '\n            <!-- sponsor injected -->\n            </td></tr>\n        ' +
+        token +
+        '\n        <tr><td style="background:#f5f0e8;padding:0;text-align:center;">' +
+        body.slice(anchorEnd + 4)
+      );
     }
   }
 
-  const headerLogo = body.search(/email-logo-header|alt="The Networker Hub" width="240"/i);
-  if (headerLogo !== -1) {
-    const rowEnd = body.indexOf('</tr>', headerLogo);
+  // Prefer: cream logo-hero band, immediately after the Hub logo row and before the wave.
+  const logoMatch = body.search(
+    /alt="The Networker Hub"[^>]*class="email-logo-header"|alt="The Networker Hub" width="2[0-9]{2}"|class="email-logo-header"/i
+  );
+  if (logoMatch !== -1) {
+    const logoRowEnd = body.indexOf('</tr>', logoMatch);
+    if (logoRowEnd !== -1) {
+      const afterLogo = body.slice(logoRowEnd + 5);
+      const waveRelative = afterLogo.search(/<tr[\s>][\s\S]*?<svg[\s\S]*?viewBox="0 0 600 40"/i);
+      if (waveRelative !== -1) {
+        const insertAt = logoRowEnd + 5;
+        return body.slice(0, insertAt) + '\n\n        ' + token + '\n' + body.slice(insertAt);
+      }
+      return body.slice(0, logoRowEnd + 5) + '\n\n        ' + token + '\n' + body.slice(logoRowEnd + 5);
+    }
+  }
+
+  // Follow-up / non-wave headers: first Hub logo row.
+  const anyLogo = body.search(/alt="The Networker Hub"/i);
+  if (anyLogo !== -1) {
+    const rowEnd = body.indexOf('</tr>', anyLogo);
     if (rowEnd !== -1) {
       return body.slice(0, rowEnd + 5) + '\n\n        ' + token + '\n' + body.slice(rowEnd + 5);
     }
   }
 
   return insertSponsorPlaceholderBeforeFooter(body, token);
+}
+
+function ensureSponsorPlaceholderAfterHeader(html, placeholder) {
+  return insertSponsorPlaceholderAfterHeader(html, placeholder);
 }
 
 function insertSponsorPlaceholderBeforeFooter(html, placeholder) {
@@ -351,6 +391,7 @@ module.exports = {
   buildMiniSponsorsRow,
   getEmailSponsorVars,
   insertSponsorPlaceholderAfterHeader,
+  ensureSponsorPlaceholderAfterHeader,
   insertSponsorPlaceholderBeforeFooter,
   stripUnresolvedSponsorPlaceholders,
 };
