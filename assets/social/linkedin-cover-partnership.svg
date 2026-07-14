@@ -2,22 +2,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1584" height="396" viewBox="0 0 1584 396" role="img" aria-label="Looking for the right partners">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#faf6ee"/>
-      <stop offset="55%" stop-color="#f5f0e8"/>
-      <stop offset="100%" stop-color="#ebe0f0"/>
+      <stop offset="0%" stop-color="#0d1f3c"/>
+      <stop offset="55%" stop-color="#162847"/>
+      <stop offset="100%" stop-color="#1a3a5c"/>
     </linearGradient>
   </defs>
   <rect width="1584" height="396" fill="url(#bg)"/>
-  <rect x="0" y="0" width="12" height="396" fill="#c299d1"/>
-  <circle cx="1520" cy="40" r="180" fill="#c299d1" opacity="0.1"/>
-  <circle cx="1460" cy="380" r="140" fill="#9a7aa8" opacity="0.08"/>
+  <rect x="0" y="0" width="12" height="396" fill="#e8b84b"/>
+  <circle cx="1520" cy="40" r="180" fill="#c9961f" opacity="0.18"/>
+  <circle cx="1460" cy="380" r="140" fill="#e8b84b" opacity="0.12"/>
   <g transform="translate(520, 108)">
-    <text x="0" y="0" fill="#9a7aa8" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" letter-spacing="2.4">PARTNERSHIP</text>
-    <text x="0" y="58" fill="#4a4446" font-family="Georgia, 'Times New Roman', serif" font-size="46">Looking for the</text>
-    <text x="0" y="116" fill="#4a4446" font-family="Georgia, 'Times New Roman', serif" font-size="46">right partners</text>
-    <text x="0" y="168" fill="#5c5557" font-family="Arial, Helvetica, sans-serif" font-size="20">Serious enquiries welcome from aligned founders and operators</text>
+    <text x="0" y="0" fill="#e8b84b" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" letter-spacing="2.4">PARTNERSHIP</text>
+    <text x="0" y="58" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif" font-size="46">Looking for the</text>
+    <text x="0" y="116" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif" font-size="46">right partners</text>
+    <text x="0" y="168" fill="#8d99ae" font-family="Arial, Helvetica, sans-serif" font-size="20">Serious enquiries welcome from aligned founders and operators</text>
   </g>
 
   <image href="../logo-nav-transparent.png" xlink:href="../logo-nav-transparent.png" x="1416" y="314" width="132" height="36" preserveAspectRatio="xMidYMid meet" opacity="0.92"/>
-  <text x="1482" y="374" text-anchor="middle" fill="#5c5557" font-family="Arial, Helvetica, sans-serif" font-size="11">on The Networker Hub</text>
+  <text x="1482" y="374" text-anchor="middle" fill="#8d99ae" font-family="Arial, Helvetica, sans-serif" font-size="11">on The Networker Hub</text>
 </svg>

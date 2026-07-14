@@ -51,7 +51,8 @@
       id: 'opportunity',
       label: 'Business opportunity',
       group: 'opportunities',
-      accent: '#b8956a',
+      theme: 'opportunity',
+      accent: '#c9961f',
       kicker: 'BUSINESS OPPORTUNITY',
       line1: 'A business opportunity',
       line2: 'worth a conversation',
@@ -61,7 +62,8 @@
       id: 'partnership',
       label: 'Looking for partners',
       group: 'opportunities',
-      accent: '#c299d1',
+      theme: 'opportunity',
+      accent: '#e8b84b',
       kicker: 'PARTNERSHIP',
       line1: 'Looking for the',
       line2: 'right partners',
@@ -71,7 +73,8 @@
       id: 'franchise',
       label: 'Franchise opportunity',
       group: 'opportunities',
-      accent: '#9a7aa8',
+      theme: 'opportunity',
+      accent: '#c9961f',
       kicker: 'FRANCHISE',
       line1: 'Franchise opportunity',
       line2: 'now open to enquire',
@@ -81,7 +84,8 @@
       id: 'enquire',
       label: 'Enquire to learn more',
       group: 'opportunities',
-      accent: '#4a4446',
+      theme: 'opportunity',
+      accent: '#e8b84b',
       kicker: 'ENQUIRE',
       line1: 'Curious?',
       line2: 'Enquire to learn more',
@@ -188,38 +192,64 @@
     var line3 = String(opts.line3 != null ? opts.line3 : tpl.line3).trim();
     var orgLogo = opts.orgLogoImg || null;
     var hubLogo = opts.hubLogoImg || null;
+    var isOpp = tpl.theme === 'opportunity' || tpl.group === 'opportunities';
 
+    // Match opportunities page palette (navy + gold) vs Hub cream/lavender for events
     var g = ctx.createLinearGradient(0, 0, W, H);
-    g.addColorStop(0, '#faf6ee');
-    g.addColorStop(0.55, '#f5f0e8');
-    g.addColorStop(1, '#ebe0f0');
+    if (isOpp) {
+      g.addColorStop(0, '#0d1f3c');
+      g.addColorStop(0.55, '#162847');
+      g.addColorStop(1, '#1a3a5c');
+    } else {
+      g.addColorStop(0, '#faf6ee');
+      g.addColorStop(0.55, '#f5f0e8');
+      g.addColorStop(1, '#ebe0f0');
+    }
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
-    ctx.fillStyle = tpl.accent || '#c299d1';
+    ctx.fillStyle = tpl.accent || (isOpp ? '#c9961f' : '#c299d1');
     ctx.fillRect(0, 0, 12, H);
 
-    ctx.fillStyle = 'rgba(194,153,209,0.12)';
-    ctx.beginPath();
-    ctx.arc(1520, 40, 180, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(154,122,168,0.1)';
-    ctx.beginPath();
-    ctx.arc(1460, 380, 140, 0, Math.PI * 2);
-    ctx.fill();
+    if (isOpp) {
+      ctx.fillStyle = 'rgba(201,150,31,0.18)';
+      ctx.beginPath();
+      ctx.arc(1520, 40, 180, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(232,184,75,0.12)';
+      ctx.beginPath();
+      ctx.arc(1460, 380, 140, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = 'rgba(194,153,209,0.12)';
+      ctx.beginPath();
+      ctx.arc(1520, 40, 180, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(154,122,168,0.1)';
+      ctx.beginPath();
+      ctx.arc(1460, 380, 140, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    var kickerColor = isOpp ? '#e8b84b' : '#9a7aa8';
+    var titleColor = isOpp ? '#ffffff' : '#4a4446';
+    var subColor = isOpp ? '#8d99ae' : '#5c5557';
+    var brandText = isOpp ? '#0d1f3c' : '#4a4446';
+    var brandHint = isOpp ? '#c9961f' : '#9a7aa8';
+    var creditColor = isOpp ? '#8d99ae' : '#5c5557';
 
     // Copy block — clear of LinkedIn avatar on the left
     var textX = 520;
-    ctx.fillStyle = '#9a7aa8';
+    ctx.fillStyle = kickerColor;
     ctx.font = '700 16px "DM Sans", Arial, Helvetica, sans-serif';
     ctx.fillText(String(tpl.kicker || '').toUpperCase(), textX, 118);
 
-    ctx.fillStyle = '#4a4446';
+    ctx.fillStyle = titleColor;
     ctx.font = '400 46px "DM Serif Display", Georgia, "Times New Roman", serif';
     ctx.fillText(line1.slice(0, 42), textX, 176);
     ctx.fillText(line2.slice(0, 42), textX, 234);
 
-    ctx.fillStyle = '#5c5557';
+    ctx.fillStyle = subColor;
     ctx.font = '400 20px "DM Sans", Arial, Helvetica, sans-serif';
     var subLines = wrapText(ctx, line3, 620);
     for (var i = 0; i < Math.min(2, subLines.length); i++) {
@@ -231,26 +261,26 @@
     var brandBoxY = 36;
     var brandBoxW = 340;
     var brandBoxH = 120;
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fillStyle = isOpp ? 'rgba(253,246,227,0.92)' : 'rgba(255,255,255,0.55)';
     roundRect(ctx, brandBoxX, brandBoxY, brandBoxW, brandBoxH, 14);
     ctx.fill();
 
     if (orgLogo) {
       drawContainedImage(ctx, orgLogo, brandBoxX + 18, brandBoxY + 12, 120, 72);
-      ctx.fillStyle = '#4a4446';
+      ctx.fillStyle = brandText;
       ctx.font = '700 18px "DM Sans", Arial, Helvetica, sans-serif';
       var nameLines = wrapText(ctx, name || 'Your group', 170);
       for (var n = 0; n < Math.min(3, nameLines.length); n++) {
         ctx.fillText(nameLines[n], brandBoxX + 150, brandBoxY + 42 + n * 22);
       }
     } else {
-      ctx.fillStyle = '#4a4446';
+      ctx.fillStyle = brandText;
       ctx.font = '700 22px "DM Serif Display", Georgia, serif';
       var solo = wrapText(ctx, name || 'Your group name', 300);
       for (var s = 0; s < Math.min(3, solo.length); s++) {
         ctx.fillText(solo[s], brandBoxX + 20, brandBoxY + 48 + s * 28);
       }
-      ctx.fillStyle = '#9a7aa8';
+      ctx.fillStyle = brandHint;
       ctx.font = '400 13px "DM Sans", Arial, Helvetica, sans-serif';
       ctx.fillText('Add your logo for a stronger banner', brandBoxX + 20, brandBoxY + 100);
     }
@@ -263,7 +293,7 @@
     if (hubLogo) {
       drawContainedImage(ctx, hubLogo, cx, cy, creditW, creditH);
     }
-    ctx.fillStyle = '#5c5557';
+    ctx.fillStyle = creditColor;
     ctx.font = '400 11px "DM Sans", Arial, Helvetica, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(tpl.hubEmphasis ? 'The Networker Hub' : 'on The Networker Hub', cx + creditW / 2, cy + creditH + 14);
