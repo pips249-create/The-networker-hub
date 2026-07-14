@@ -1,5 +1,5 @@
 /**
- * Public organiser browse API — directory of all organiser profiles (any listing status).
+ * Public organiser browse API — directory of published / verified organiser profiles.
  */
 const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./supabase');
 const { publicOrganiserSlug } = require('./organiser-slug');
@@ -22,9 +22,13 @@ function slugFormat(fmt) {
   return raw.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
+/** Match public RLS: Verified OR listing_status published — exclude draft shells. */
 function isPublicOrganiser(row) {
   if (!row || !row.id) return false;
-  return Boolean(String(row.name || '').trim());
+  if (!String(row.name || '').trim()) return false;
+  const verified = row.verification_status === 'Verified';
+  const published = String(row.listing_status || '').toLowerCase() === 'published';
+  return verified || published;
 }
 
 function resolvePhotoUrl(raw) {
@@ -65,6 +69,7 @@ function rowToPublicOrganiser(row, eventCount, options) {
     rating: Number.isFinite(rating) ? rating : 0,
     reviews,
     eventCount: Number(eventCount) || 0,
+    guestVisitsAllowed: Math.min(2, Math.max(0, Number(row.complimentary_visits_allowed) || 0)),
     featured: Boolean(row.featured),
     website: String(row.website || '').trim(),
     instagramUrl: String(row.instagram_url || '').trim(),

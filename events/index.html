@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
 <link rel="stylesheet" href="../css/events-page.css?v=20260711">
 <link rel="stylesheet" href="../css/events-filter-bar.css?v=20260718e">
-<link rel="stylesheet" href="../css/organisers-browse.css?v=20260702">
+<link rel="stylesheet" href="../css/organisers-browse.css?v=20260714a">
 <script src="../js/hub-lazy-vendor.js?v=20260611"></script>
 <script src="../js/hub-seo-static-config.js?v=20260612"></script>
 <script src="../js/hub-seo-static.js?v=20260612" data-page="events"></script>
@@ -247,11 +247,33 @@
           </div>
         </div>
         <div class="filter-organiser-only">
-          <label class="filter-organiser-industry">
-            <span class="filter-bar-chip-label">Industry</span>
-            <select id="org-industry" aria-label="Filter by industry">
-              <option value="">All industries</option>
-            </select>
+          <fieldset class="filter-format-group filter-org-format-group">
+            <legend class="filter-bar-chip-label">Format</legend>
+            <label class="filter-checkbox">
+              <input type="checkbox" id="org-format-inperson" checked>
+              <span class="filter-checkbox-box" aria-hidden="true"></span>
+              In person
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" id="org-format-online" checked>
+              <span class="filter-checkbox-box" aria-hidden="true"></span>
+              Online
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" id="org-format-hybrid" checked>
+              <span class="filter-checkbox-box" aria-hidden="true"></span>
+              Hybrid
+            </label>
+          </fieldset>
+          <label class="filter-checkbox filter-org-toggle">
+            <input type="checkbox" id="org-has-listings">
+            <span class="filter-checkbox-box" aria-hidden="true"></span>
+            Has listings
+          </label>
+          <label class="filter-checkbox filter-org-toggle">
+            <input type="checkbox" id="org-guest-visits">
+            <span class="filter-checkbox-box" aria-hidden="true"></span>
+            Guest visit programme
           </label>
           <fieldset class="filter-org-rating-group">
             <legend class="filter-bar-chip-label">Rating</legend>
@@ -479,9 +501,9 @@
 <script src="../js/flexible-event-image.js?v=20260612"></script>
 <script src="../js/hub-event-preview.js?v=20260623"></script>
 <script src="../js/events.js?v=20260711"></script>
-<script src="../js/organisers-filters.js?v=20260608"></script>
+<script src="../js/organisers-filters.js?v=20260714b"></script>
 <script src="../js/organisers.js?v=20260703"></script>
 <script src="../js/hub-organiser-actions.js?v=20260710" data-root="../"></script>
-<script src="../js/browse-mode.js?v=20260702c"></script>
+<script src="../js/browse-mode.js?v=20260714a"></script>
 </body>
 </html>

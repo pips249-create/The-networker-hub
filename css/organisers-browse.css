@@ -363,14 +363,24 @@ body:not(.browse-mode-organisers) .organiser-type-tabs {
   gap: 10px 14px;
 }
 
-.filter-organiser-industry select {
-  font-family: inherit;
-  font-size: 13px;
-  padding: 8px 12px;
-  border: 1px solid var(--border-soft);
-  border-radius: 8px;
-  background: #fff;
-  min-width: 180px;
+.filter-org-format-group {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.filter-org-format-group legend {
+  width: 100%;
+  padding: 0;
+  margin-bottom: 2px;
+}
+
+.filter-org-toggle {
+  align-self: center;
 }
 
 .filter-org-rating-group {
@@ -430,22 +440,9 @@ body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-cta:hover {
   }
 
   .filter-org-rating-group,
+  .filter-org-format-group,
   .filter-organiser-only {
     width: 100%;
-  }
-
-  .filter-organiser-industry {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-    width: 100%;
-  }
-
-  .filter-organiser-industry select {
-    width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
   }
 }
 

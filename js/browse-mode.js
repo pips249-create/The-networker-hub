@@ -28,7 +28,7 @@
         'Find <span class="accent">networking groups &amp; organisers</span> across the UK',
       sub: 'Browse groups, exhibition hosts, and conference organisers — then see their events.',
       heading: 'All organisers',
-      searchPlaceholder: 'Search organisers, industries, descriptions…',
+      searchPlaceholder: 'Search organisers, descriptions, formats…',
       searchLabel: 'Search organisers',
       filterLabel: 'Filter organisers',
     },
