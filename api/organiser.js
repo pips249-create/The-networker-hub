@@ -27,6 +27,7 @@ const routes = {
   'event-featured-checkout': require('./_lib/routes/organiser-event-featured-checkout'),
   'event-featured-complete': require('./_lib/routes/organiser-event-featured-complete'),
   'opportunity-enquiries': require('./_lib/routes/organiser-opportunity-enquiries'),
+  'logo-proxy': require('./_lib/routes/organiser-logo-proxy'),
 };
 
 module.exports = async function handler(req, res) {

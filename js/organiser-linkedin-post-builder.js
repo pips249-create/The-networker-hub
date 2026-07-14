@@ -320,38 +320,53 @@
       y += 38;
     }
 
-    var creditW = tpl.hubEmphasis ? 210 : 170;
-    var creditH = tpl.hubEmphasis ? 56 : 46;
+    var isDarkHub = Boolean(isOpp && hubLogo);
+    var creditW = tpl.hubEmphasis ? 210 : isDarkHub ? 132 : 170;
+    var creditH = tpl.hubEmphasis ? 56 : isDarkHub ? 132 : 46;
     var cx = W - creditW - 56;
-    var cy = H - creditH - 64;
+    var cy = H - creditH - (isDarkHub ? 48 : 64);
     if (hubLogo) {
       drawContainedImage(ctx, hubLogo, cx, cy, creditW, creditH);
     }
-    ctx.fillStyle = creditColor;
-    ctx.font = '400 18px "DM Sans", Arial, Helvetica, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(
-      tpl.hubEmphasis ? 'The Networker Hub' : 'on The Networker Hub',
-      cx + creditW / 2,
-      cy + creditH + 26
-    );
+    if (!isDarkHub) {
+      ctx.fillStyle = creditColor;
+      ctx.font = '400 18px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(
+        tpl.hubEmphasis ? 'The Networker Hub' : 'on The Networker Hub',
+        cx + creditW / 2,
+        cy + creditH + 26
+      );
+    }
     ctx.textAlign = 'left';
   }
 
-  function profileUrlForGroup(groupId) {
-    if (!groupId) return (global.location && global.location.origin ? global.location.origin : '') + '/events';
-    return (
-      (global.location && global.location.origin ? global.location.origin : '') +
-      '/events/organiser?id=' +
-      encodeURIComponent(groupId)
-    );
+  function siteOrigin() {
+    if (global.location && global.location.origin) return global.location.origin;
+    return 'https://www.thenetworkerhub.com';
   }
 
-  function buildCaption(tpl, name, groupId) {
+  function profileUrlForGroup(groupOrId, maybeSlug) {
+    var origin = siteOrigin();
+    var id = '';
+    var slug = '';
+    if (groupOrId && typeof groupOrId === 'object') {
+      id = String(groupOrId.id || '').trim();
+      slug = String(groupOrId.slug || '').trim();
+    } else {
+      id = String(groupOrId || '').trim();
+      slug = String(maybeSlug || '').trim();
+    }
+    if (slug) return origin + '/organisers/' + encodeURIComponent(slug);
+    if (id) return origin + '/events/organiser?id=' + encodeURIComponent(id);
+    return origin + '/events';
+  }
+
+  function buildCaption(tpl, name, group) {
     var raw = tpl.caption || '';
     return raw
       .replace(/\{name\}/g, name || 'Our group')
-      .replace(/\{url\}/g, profileUrlForGroup(groupId));
+      .replace(/\{url\}/g, profileUrlForGroup(group));
   }
 
   function initLinkedInPostBuilder(root, options) {
@@ -374,6 +389,7 @@
       orgLogoUrl: '',
       orgLogoObjectUrl: '',
       hubLogoImg: null,
+      hubLogoDarkImg: null,
       orgLogoImg: null,
       rendering: false,
     };
@@ -571,50 +587,109 @@
       }
     }
 
+    function currentGroup() {
+      var groups = getGroups() || [];
+      return (
+        groups.find(function (x) {
+          return String(x.id) === String(state.groupId);
+        }) || null
+      );
+    }
+
     function updateCaptionPreview() {
       elCaption.textContent = buildCaption(
         currentTemplate(),
         state.displayName || elName.value,
-        state.groupId
+        currentGroup() || { id: state.groupId }
       );
     }
 
-    async function ensureHubLogo() {
+    async function loadAsset(paths) {
+      var lastErr = null;
+      for (var i = 0; i < paths.length; i++) {
+        try {
+          return await loadImage(paths[i], true);
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      if (lastErr) throw lastErr;
+      return null;
+    }
+
+    async function ensureHubLogo(tpl) {
+      var isOpp = tpl && (tpl.theme === 'opportunity' || tpl.group === 'opportunities');
+      if (isOpp) {
+        if (state.hubLogoDarkImg) return state.hubLogoDarkImg;
+        try {
+          state.hubLogoDarkImg = await loadAsset([
+            '../assets/logo-hub-dark.png',
+            '/assets/logo-hub-dark.png',
+          ]);
+        } catch (e) {
+          state.hubLogoDarkImg = null;
+        }
+        return state.hubLogoDarkImg || ensureHubLogoLight();
+      }
+      return ensureHubLogoLight();
+    }
+
+    async function ensureHubLogoLight() {
       if (state.hubLogoImg) return state.hubLogoImg;
       try {
-        state.hubLogoImg = await loadImage('../assets/logo-nav-transparent.png', true);
+        state.hubLogoImg = await loadAsset([
+          '../assets/logo-nav-transparent.png',
+          '/assets/logo-nav-transparent.png',
+        ]);
       } catch (e) {
-        try {
-          state.hubLogoImg = await loadImage('/assets/logo-nav-transparent.png', true);
-        } catch (e2) {
-          state.hubLogoImg = null;
-        }
+        state.hubLogoImg = null;
       }
       return state.hubLogoImg;
     }
 
     async function ensureOrgLogo() {
-      var src = state.orgLogoObjectUrl || state.orgLogoUrl;
-      if (!src) {
+      if (state.orgLogoObjectUrl) {
+        try {
+          state.orgLogoImg = await loadImage(state.orgLogoObjectUrl, false);
+          setStatus('');
+        } catch (e) {
+          state.orgLogoImg = null;
+          setStatus('Could not read the uploaded logo file. Try a PNG or JPG under 2MB.', true);
+        }
+        return state.orgLogoImg;
+      }
+
+      if (!state.orgLogoUrl || !state.groupId) {
         state.orgLogoImg = null;
         return null;
       }
+
+      // Same-origin proxy avoids CORS tainting when painting remote storage logos onto canvas
       try {
-        state.orgLogoImg = await loadImage(src, !state.orgLogoObjectUrl);
+        state.orgLogoImg = await loadImage(
+          '/api/organiser/logo-proxy?groupId=' + encodeURIComponent(state.groupId),
+          false
+        );
         setStatus('');
+        return state.orgLogoImg;
       } catch (e) {
+        /* fall through */
+      }
+
+      try {
+        state.orgLogoImg = await loadImage(state.orgLogoUrl, true);
+        setStatus('');
+      } catch (e2) {
         state.orgLogoImg = null;
-        if (state.orgLogoUrl && !state.orgLogoObjectUrl) {
-          setStatus(
-            'Could not load your page logo into the preview (image host blocked it). Upload the logo file below to include it in the download.',
-            true
-          );
-        }
+        setStatus(
+          'Could not load your page logo into the preview. Upload the logo file below to include it in the download.',
+          true
+        );
       }
       return state.orgLogoImg;
     }
 
-    function paintOpts(tpl, quietBrand) {
+    function paintOpts(tpl, quietBrand, hubImg) {
       return {
         template: tpl,
         displayName: quietBrand ? tpl.label : state.displayName || elName.value,
@@ -622,28 +697,30 @@
         line2: quietBrand ? tpl.line2 : state.line2,
         line3: quietBrand ? tpl.line3 : state.line3,
         orgLogoImg: quietBrand ? null : state.orgLogoImg,
-        hubLogoImg: state.hubLogoImg,
+        hubLogoImg: hubImg || null,
         quietBrand: quietBrand,
       };
     }
 
     async function renderGalleryThumbs() {
-      await ensureHubLogo();
-      TEMPLATES.forEach(function (tpl) {
+      for (var i = 0; i < TEMPLATES.length; i++) {
+        var tpl = TEMPLATES[i];
         var el = root.querySelector('canvas[data-thumb-for="' + tpl.id + '"]');
-        if (!el) return;
+        if (!el) continue;
+        var hubImg = await ensureHubLogo(tpl);
         var tctx = el.getContext('2d');
-        paintPost(tctx, paintOpts(tpl, true));
-      });
+        paintPost(tctx, paintOpts(tpl, true, hubImg));
+      }
     }
 
     async function renderPreview() {
       if (state.rendering) return;
       state.rendering = true;
       try {
-        await ensureHubLogo();
+        var tpl = currentTemplate();
+        var hubImg = await ensureHubLogo(tpl);
         await ensureOrgLogo();
-        paintPost(ctx, paintOpts(currentTemplate(), false));
+        paintPost(ctx, paintOpts(tpl, false, hubImg));
         updateCaptionPreview();
         syncThumbSelection();
       } finally {
@@ -680,7 +757,11 @@
     }
 
     function copyCaption() {
-      var text = buildCaption(currentTemplate(), state.displayName || elName.value, state.groupId);
+      var text = buildCaption(
+        currentTemplate(),
+        state.displayName || elName.value,
+        currentGroup() || { id: state.groupId }
+      );
       var btn = root.querySelector('#post-copy-caption');
       var done = function () {
         if (!btn) return;

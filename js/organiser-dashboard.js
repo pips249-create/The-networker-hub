@@ -178,17 +178,22 @@
     return row.displayLabel || String(row.label || '').replace(' on the Hub', '') + (row.periodLabel ? ' · ' + row.periodLabel : '');
   }
 
-  function groupPublicProfileUrl(groupId) {
+  function groupPublicProfileUrl(groupId, slug) {
+    const s = String(slug || '').trim();
+    if (s) return '../organisers/' + encodeURIComponent(s);
     return '../events/organiser?id=' + encodeURIComponent(groupId);
+  }
+
+  function groupPublicProfileAbsUrl(groupId, slug) {
+    const origin = location.origin || 'https://www.thenetworkerhub.com';
+    const s = String(slug || '').trim();
+    if (s) return origin + '/organisers/' + encodeURIComponent(s);
+    return origin + '/events/organiser?id=' + encodeURIComponent(groupId);
   }
 
   function rankingShareText(groupName, row) {
     const badge = rankingBadgeText(row);
-    const url = groupPublicProfileUrl(row.id);
-    const absUrl =
-      (location.origin || '') +
-      '/events/organiser?id=' +
-      encodeURIComponent(row.id);
+    const absUrl = groupPublicProfileAbsUrl(row.id, row.slug);
     return (
       'Proud to share that ' +
       (groupName || 'our group') +
@@ -240,9 +245,8 @@
   }
 
   function buildRankingShareCardHtml(g, row) {
-    const shareText = rankingShareText(g.name, row);
-    const profileUrl =
-      (location.origin || '') + '/events/organiser?id=' + encodeURIComponent(g.id);
+    const shareText = rankingShareText(g.name, { ...row, id: g.id, slug: g.slug || row.slug });
+    const profileUrl = groupPublicProfileAbsUrl(g.id, g.slug);
     return (
       '<article class="org-ranking-share-card">' +
       '<div class="org-ranking-share-card-head">' +
@@ -274,7 +278,7 @@
       esc(profileUrl) +
       '">Copy profile link</button>' +
       '<a class="org-btn org-btn-outline org-btn-sm" href="' +
-      esc(groupPublicProfileUrl(g.id)) +
+      esc(groupPublicProfileUrl(g.id, g.slug)) +
       '" target="_blank" rel="noopener noreferrer">View public profile</a>' +
       '<a class="org-btn org-btn-outline org-btn-sm" href="#org-linkedin-posts">Build a LinkedIn post image</a>' +
       '</div></article>'

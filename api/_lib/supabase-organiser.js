@@ -9,6 +9,7 @@ const { isAdminRole } = require('./auth');
 const { resolveOrganiserAccess, getOrCreateOrganiserAccount } = require('./supabase-organiser-access');
 const { eventImageUrl } = require('./event-image');
 const { clampComplimentaryVisitsAllowed } = require('./guest-visits');
+const { publicOrganiserSlug } = require('./organiser-slug');
 
 function rowToGroup(row) {
   if (!row) return null;
@@ -17,6 +18,7 @@ function rowToGroup(row) {
   return {
     id: row.id,
     name: String(row.name || 'Untitled organiser').trim(),
+    slug: publicOrganiserSlug(row) || '',
     ownerEmail: String(row.email || row.contact_email || '').toLowerCase(),
     contactEmail: String(row.contact_email || row.email || '').toLowerCase(),
     description: String(row.description || '').trim(),
