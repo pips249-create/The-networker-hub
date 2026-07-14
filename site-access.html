@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Launching 1st September 2026 — The Networker Hub</title>
-<meta name="description" content="The Networker Hub launches 1st September 2026 — the UK home for networking events, organiser communities, and business opportunities.">
+<title>Launching 1st September 2026 · The Networker Hub</title>
+<meta name="description" content="The Networker Hub launches 1st September 2026. The UK home for networking events, organiser communities, and business opportunities.">
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
-<link rel="stylesheet" href="css/home-page.css?v=20260738">
-<link rel="stylesheet" href="css/site-access.css?v=20260714preview">
+<link rel="stylesheet" href="css/home-page.css?v=20260714pillars">
+<link rel="stylesheet" href="css/site-access.css?v=20260714hero2">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 </head>
@@ -35,32 +35,38 @@
           </p>
         </div>
 
-        <p class="home-hero-kicker">Find your next&hellip;</p>
+        <p class="site-access-kicker">UK business networking</p>
         <h1 class="hero-title" id="site-access-heading">
-          <span class="hero-title-line">Connect and grow across</span>
-          <span class="hero-title-accent">the UK&rsquo;s business network</span>
+          <span class="hero-title-line">Find your next</span>
+          <span class="hero-title-accent">event, connection, or opportunity</span>
         </h1>
         <p class="hero-tagline">
-          Events, organiser communities, and business opportunities in one place. Browse free; sign up only when you&rsquo;re ready to book or enquire.
+          Connect and grow across the UK&rsquo;s business network. Browse free; sign up only when you&rsquo;re ready to book or enquire.
         </p>
 
         <ul class="site-access-features" aria-label="What we are building">
           <li class="site-access-feature">
-            <img src="assets/home-pillar-events.svg" alt="" width="64" height="64" decoding="async">
+            <span class="site-access-feature-icon site-access-feature-icon--events" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="8.5" cy="14.5" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="14.5" r="1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="14.5" r="1" fill="currentColor" stroke="none"/></svg>
+            </span>
             <div>
               <strong>Events &amp; exhibitions</strong>
               <span>Meetings, webinars, workshops, and awards with secure ticket booking.</span>
             </div>
           </li>
           <li class="site-access-feature">
-            <img src="assets/home-pillar-organisers.svg" alt="" width="64" height="64" decoding="async">
+            <span class="site-access-feature-icon site-access-feature-icon--organisers" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-6h6v6"/><path d="M9 10h.01M15 10h.01M12 10h.01"/></svg>
+            </span>
             <div>
               <strong>Organiser pages</strong>
               <span>Discover who runs your local networking community.</span>
             </div>
           </li>
           <li class="site-access-feature">
-            <img src="assets/home-pillar-opportunities.svg" alt="" width="64" height="64" decoding="async">
+            <span class="site-access-feature-icon site-access-feature-icon--opportunities" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M16 7H9.5a2.5 2.5 0 0 0 0 5h5a2.5 2.5 0 0 1 0 5H7"/></svg>
+            </span>
             <div>
               <strong>Business opportunities</strong>
               <span>Franchises, partnerships, and deals from across the network.</span>
@@ -91,266 +97,248 @@
         </div>
 
         <div class="site-access-panel-card site-access-panel-card--team">
-          <h3 class="site-access-team-title">Team preview access</h3>
-          <p class="site-access-team-lede">Already invited? Enter your preview password to explore the site now.</p>
+          <div class="site-access-team-row">
+            <div class="site-access-team-copy">
+              <h3 class="site-access-team-title">Team preview</h3>
+              <p class="site-access-team-lede">Already invited? Enter the preview password.</p>
+            </div>
+          </div>
 
           <div id="site-access-message" class="site-access-alert" role="alert" hidden></div>
 
-          <form id="site-access-form" class="site-access-form" novalidate>
-            <label class="site-access-label" for="site-access-password">Preview password</label>
+          <form id="site-access-form" class="site-access-form site-access-form--team" novalidate>
+            <label class="visually-hidden" for="site-access-password">Preview password</label>
             <div class="site-access-password-wrap">
-              <input class="site-access-input" type="password" id="site-access-password" name="password" autocomplete="current-password" required placeholder="Enter preview password">
+              <input class="site-access-input" type="password" id="site-access-password" name="password" autocomplete="current-password" required placeholder="Preview password">
               <button type="button" class="site-access-password-toggle" aria-label="Show password" aria-pressed="false">Show</button>
             </div>
-            <button type="submit" class="site-access-btn site-access-btn--secondary" id="site-access-submit">Enter the site</button>
+            <button type="submit" class="site-access-btn site-access-btn--secondary" id="site-access-submit">Enter</button>
           </form>
         </div>
       </aside>
     </div>
   </section>
 
-  <section class="site-access-preview" id="preview-tour" aria-labelledby="site-access-preview-heading">
-    <div class="site-access-preview-inner">
-      <header class="site-access-preview-head">
-        <p class="site-access-preview-kicker">Inside the preview</p>
-        <h2 class="site-access-preview-title" id="site-access-preview-heading">What you&rsquo;ll explore</h2>
-        <p class="site-access-preview-lede">
-          A first look at the browse experience and organiser tools — the same areas you&rsquo;ll see after we invite you in.
+  <section class="site-access-preview home-what" id="preview-tour" aria-labelledby="site-access-preview-heading">
+    <div class="home-flow-inner site-access-preview-inner">
+      <header class="home-flow-head site-access-preview-head">
+        <p class="section-kicker">Inside the preview</p>
+        <h2 class="section-title" id="site-access-preview-heading">What you&rsquo;ll explore</h2>
+        <p class="home-flow-lede">
+          The same browse experience and organiser tools you&rsquo;ll see once we invite you in.
         </p>
       </header>
 
-      <div class="site-access-preview-tour" id="site-access-preview-tour">
-        <div class="site-access-preview-tabs" role="tablist" aria-label="Preview site areas">
-          <button type="button" class="site-access-preview-tab is-active" role="tab" id="sa-tab-events" aria-selected="true" aria-controls="sa-panel-events" data-sa-panel="events" tabindex="0">Events</button>
-          <button type="button" class="site-access-preview-tab" role="tab" id="sa-tab-organisers" aria-selected="false" aria-controls="sa-panel-organisers" data-sa-panel="organisers" tabindex="-1">Organisers</button>
-          <button type="button" class="site-access-preview-tab" role="tab" id="sa-tab-opportunities" aria-selected="false" aria-controls="sa-panel-opportunities" data-sa-panel="opportunities" tabindex="-1">Opportunities</button>
-          <button type="button" class="site-access-preview-tab" role="tab" id="sa-tab-workspace" aria-selected="false" aria-controls="sa-panel-workspace" data-sa-panel="workspace" tabindex="-1">Organiser workspace</button>
+      <ul class="home-what-pillars site-access-preview-pillars">
+        <li>
+          <div class="home-what-pillar home-what-pillar--events">
+            <div class="home-what-pillar-visual">
+              <div class="home-pillar-snippet home-pillar-snippet--events" aria-hidden="true">
+                <div class="home-pillar-snippet-bar">
+                  <span class="home-pillar-snippet-dot"></span>
+                  <span class="home-pillar-snippet-dot"></span>
+                  <span class="home-pillar-snippet-dot"></span>
+                  <span class="home-pillar-snippet-url">thenetworkerhub.com/events</span>
+                </div>
+                <div class="home-pillar-snippet-ui">
+                  <span class="home-pillar-snippet-glow" aria-hidden="true"></span>
+                  <div class="home-pillar-snippet-stage">
+                    <div class="home-pillar-filter">
+                      <span class="home-pillar-filter-search">Search events, locations…</span>
+                      <span class="home-pillar-filter-chip is-active">Meetings</span>
+                      <span class="home-pillar-filter-chip">Exhibitions</span>
+                    </div>
+                    <div class="home-pillar-card-stack home-pillar-card-stack--events">
+                      <article class="home-pillar-event-card is-back">
+                        <div class="home-pillar-event-media home-pillar-event-media--meeting">
+                          <span class="home-pillar-event-type">Meeting</span>
+                        </div>
+                        <div class="home-pillar-event-body">
+                          <h4>Founders breakfast, Leeds</h4>
+                          <p>Tue 9 Sep · Free guest visit</p>
+                        </div>
+                      </article>
+                      <article class="home-pillar-event-card is-front">
+                        <span class="home-pillar-event-premium">Premium</span>
+                        <div class="home-pillar-event-media">
+                          <span class="home-pillar-event-type">Conference</span>
+                          <span class="home-pillar-event-price">£45</span>
+                        </div>
+                        <div class="home-pillar-event-body">
+                          <h4>UK Business Leaders Summit</h4>
+                          <p>Thu 18 Sep · Manchester · In person</p>
+                          <div class="home-pillar-event-rating" aria-hidden="true">
+                            <span>★★★★★</span>
+                            <span>(24)</span>
+                          </div>
+                        </div>
+                      </article>
+                    </div>
+                    <span class="home-pillar-snippet-pill">Category Exclusivity</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="home-what-pillar-body">
+              <p class="home-what-pillar-hook">Find your next event</p>
+              <strong>Events &amp; exhibitions</strong>
+              <span>Search and filter meetings, conferences, and exhibitions. Browse free; book when you&rsquo;re ready.</span>
+            </div>
+          </div>
+        </li>
+        <li>
+          <div class="home-what-pillar home-what-pillar--organisers">
+            <div class="home-what-pillar-visual">
+              <div class="home-pillar-snippet home-pillar-snippet--organisers" aria-hidden="true">
+                <div class="home-pillar-snippet-bar">
+                  <span class="home-pillar-snippet-dot"></span>
+                  <span class="home-pillar-snippet-dot"></span>
+                  <span class="home-pillar-snippet-dot"></span>
+                  <span class="home-pillar-snippet-url">thenetworkerhub.com/events · Organisers</span>
+                </div>
+                <div class="home-pillar-snippet-ui">
+                  <span class="home-pillar-snippet-glow" aria-hidden="true"></span>
+                  <div class="home-pillar-snippet-stage">
+                    <div class="home-pillar-card-stack home-pillar-card-stack--organisers">
+                      <article class="home-pillar-org-card is-back">
+                        <div class="home-pillar-org-header home-pillar-org-header--compact">
+                          <span class="home-pillar-org-industry">Tech</span>
+                          <span class="home-pillar-org-logo">LN</span>
+                        </div>
+                        <div class="home-pillar-org-body">
+                          <h4>London Netwalkers</h4>
+                          <p>Outdoor networking across the capital.</p>
+                        </div>
+                      </article>
+                      <article class="home-pillar-org-card is-front">
+                        <div class="home-pillar-org-header">
+                          <span class="home-pillar-org-industry">Professional services</span>
+                          <span class="home-pillar-org-count">12 events</span>
+                          <span class="home-pillar-org-logo">BN</span>
+                        </div>
+                        <div class="home-pillar-org-body">
+                          <span class="home-pillar-org-label">Organiser</span>
+                          <h4>Business Network Manchester</h4>
+                          <p>Monthly breakfast meetings for founders and senior leaders across Greater Manchester.</p>
+                          <div class="home-pillar-org-rating" aria-hidden="true">
+                            <span>★★★★☆</span>
+                            <span>(18)</span>
+                          </div>
+                        </div>
+                      </article>
+                    </div>
+                    <span class="home-pillar-snippet-pill">Guest visits</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="home-what-pillar-body">
+              <p class="home-what-pillar-hook">Find your next networking group</p>
+              <strong>Organiser pages</strong>
+              <span>Discover UK networking groups with guest visit programmes, ratings, and upcoming events.</span>
+            </div>
+          </div>
+        </li>
+        <li>
+          <div class="home-what-pillar home-what-pillar--opportunities">
+            <div class="home-what-pillar-visual">
+              <div class="home-pillar-snippet home-pillar-snippet--opportunities" aria-hidden="true">
+                <div class="home-pillar-snippet-bar">
+                  <span class="home-pillar-snippet-dot"></span>
+                  <span class="home-pillar-snippet-dot"></span>
+                  <span class="home-pillar-snippet-dot"></span>
+                  <span class="home-pillar-snippet-url">thenetworkerhub.com/opportunities</span>
+                </div>
+                <div class="home-pillar-snippet-ui">
+                  <span class="home-pillar-snippet-glow" aria-hidden="true"></span>
+                  <div class="home-pillar-snippet-stage">
+                    <div class="home-pillar-card-stack home-pillar-card-stack--opportunities">
+                      <article class="home-pillar-opp-card is-back">
+                        <div class="home-pillar-opp-head">
+                          <span class="home-pillar-opp-type">Partnership</span>
+                        </div>
+                        <div class="home-pillar-opp-media home-pillar-opp-media--deal">🤝</div>
+                        <div class="home-pillar-opp-body">
+                          <h4>Co-working space referral deal</h4>
+                          <p>Revenue share for introducers.</p>
+                        </div>
+                      </article>
+                      <article class="home-pillar-opp-card is-front featured">
+                        <div class="home-pillar-opp-head">
+                          <span class="home-pillar-opp-type">Franchise</span>
+                          <span class="home-pillar-opp-featured">Featured</span>
+                        </div>
+                        <div class="home-pillar-opp-media">☕</div>
+                        <div class="home-pillar-opp-body">
+                          <h4>Regional café franchise, North West</h4>
+                          <p>Established brand seeking owner-operators across Lancashire and Cheshire.</p>
+                          <div class="home-pillar-opp-facts">
+                            <span>£25k to £40k</span>
+                            <span>UK-wide</span>
+                          </div>
+                        </div>
+                        <div class="home-pillar-opp-footer">
+                          <span class="home-pillar-opp-enquire">Enquire →</span>
+                        </div>
+                      </article>
+                    </div>
+                    <span class="home-pillar-snippet-pill">Save search</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="home-what-pillar-body">
+              <p class="home-what-pillar-hook">Find your next business opportunity</p>
+              <strong>Business opportunities</strong>
+              <span>Browse franchises, partnerships, and deals. Filter by type and enquire when something fits.</span>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+      <div class="site-access-workspace" aria-labelledby="site-access-workspace-heading">
+        <div class="site-access-workspace-copy">
+          <p class="site-access-workspace-kicker">For organisers</p>
+          <h3 id="site-access-workspace-heading">Find your next attendees</h3>
+          <p>
+            Run events, track guest visits, list opportunities, and request payouts from one teal organiser workspace. Free to list; you keep 100% of the ticket price.
+          </p>
+          <ul class="site-access-workspace-points">
+            <li>Claim your organiser page and list events</li>
+            <li>Guest visits, visit tracking, and Category Exclusivity</li>
+            <li>Stripe Connect payouts in the same dashboard</li>
+          </ul>
         </div>
-
-        <div class="site-access-preview-stage">
-          <div class="site-access-preview-panel is-active" role="tabpanel" id="sa-panel-events" aria-labelledby="sa-tab-events" data-sa-panel="events">
-            <div class="site-access-preview-panel-inner">
-              <div class="site-access-preview-copy">
-                <h3 class="site-access-preview-panel-title">Browse events across the UK</h3>
-                <p class="site-access-preview-panel-lede">Search by keyword, filter by format and location, and spot premium listings in the spotlight carousel — no account needed to explore.</p>
-                <ul class="site-access-preview-points">
-                  <li>Meetings, exhibitions, conferences, and webinars</li>
-                  <li>Guest visit programmes and category exclusivity</li>
-                  <li>Book tickets when you&rsquo;re ready — browse stays free</li>
-                </ul>
-              </div>
-              <div class="site-access-preview-visual">
-                <div class="home-pillar-snippet home-pillar-snippet--events" aria-hidden="true">
-                  <div class="home-pillar-snippet-bar">
-                    <span class="home-pillar-snippet-dot"></span>
-                    <span class="home-pillar-snippet-dot"></span>
-                    <span class="home-pillar-snippet-dot"></span>
-                    <span class="home-pillar-snippet-url">thenetworkerhub.com/events</span>
-                  </div>
-                  <div class="home-pillar-snippet-ui">
-                    <span class="home-pillar-snippet-glow" aria-hidden="true"></span>
-                    <div class="home-pillar-snippet-stage">
-                      <div class="home-pillar-filter">
-                        <span class="home-pillar-filter-search">Search events, locations…</span>
-                        <span class="home-pillar-filter-chip is-active">Meetings</span>
-                        <span class="home-pillar-filter-chip">Exhibitions</span>
-                      </div>
-                      <div class="home-pillar-card-stack home-pillar-card-stack--events">
-                        <article class="home-pillar-event-card is-back">
-                          <div class="home-pillar-event-media home-pillar-event-media--meeting">
-                            <span class="home-pillar-event-type">Meeting</span>
-                          </div>
-                          <div class="home-pillar-event-body">
-                            <h4>Founders breakfast — Leeds</h4>
-                            <p>Tue 9 Sep · Free guest visit</p>
-                          </div>
-                        </article>
-                        <article class="home-pillar-event-card is-front">
-                          <span class="home-pillar-event-premium">Premium</span>
-                          <div class="home-pillar-event-media">
-                            <span class="home-pillar-event-type">Conference</span>
-                            <span class="home-pillar-event-price">£45</span>
-                          </div>
-                          <div class="home-pillar-event-body">
-                            <h4>UK Business Leaders Summit</h4>
-                            <p>Thu 18 Sep · Manchester · In person</p>
-                            <div class="home-pillar-event-rating" aria-hidden="true">
-                              <span>★★★★★</span>
-                              <span>(24)</span>
-                            </div>
-                          </div>
-                        </article>
-                      </div>
-                      <span class="home-pillar-snippet-pill">Category Exclusivity</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+        <div class="site-access-workspace-visual" aria-hidden="true">
+          <div class="sa-dash-mock">
+            <div class="sa-dash-mock-bar">
+              <div class="sa-dash-mock-dots"><span></span><span></span><span></span></div>
+              <span>Organiser workspace · The Networker Hub</span>
             </div>
-          </div>
-
-          <div class="site-access-preview-panel" role="tabpanel" id="sa-panel-organisers" aria-labelledby="sa-tab-organisers" data-sa-panel="organisers" hidden>
-            <div class="site-access-preview-panel-inner">
-              <div class="site-access-preview-copy">
-                <h3 class="site-access-preview-panel-title">Discover who runs each community</h3>
-                <p class="site-access-preview-panel-lede">Switch to the organisers directory on the events page to find networking groups, guest visit programmes, and permanent organiser profiles.</p>
-                <ul class="site-access-preview-points">
-                  <li>See upcoming events and ratings at a glance</li>
-                  <li>Guest visits tracked across the network</li>
-                  <li>Follow organisers you want to revisit</li>
-                </ul>
+            <div class="sa-dash-mock-body">
+              <div class="sa-dash-mock-nav">
+                <span class="sa-dash-mock-nav-item is-active">Overview</span>
+                <span class="sa-dash-mock-nav-item">Events</span>
+                <span class="sa-dash-mock-nav-item">Attendees</span>
+                <span class="sa-dash-mock-nav-item">Payouts</span>
               </div>
-              <div class="site-access-preview-visual">
-                <div class="home-pillar-snippet home-pillar-snippet--organisers" aria-hidden="true">
-                  <div class="home-pillar-snippet-bar">
-                    <span class="home-pillar-snippet-dot"></span>
-                    <span class="home-pillar-snippet-dot"></span>
-                    <span class="home-pillar-snippet-dot"></span>
-                    <span class="home-pillar-snippet-url">thenetworkerhub.com/events · Organisers</span>
-                  </div>
-                  <div class="home-pillar-snippet-ui">
-                    <span class="home-pillar-snippet-glow" aria-hidden="true"></span>
-                    <div class="home-pillar-snippet-stage">
-                      <div class="home-pillar-card-stack home-pillar-card-stack--organisers">
-                        <article class="home-pillar-org-card is-back">
-                          <div class="home-pillar-org-header home-pillar-org-header--compact">
-                            <span class="home-pillar-org-industry">Tech</span>
-                            <span class="home-pillar-org-logo">LN</span>
-                          </div>
-                          <div class="home-pillar-org-body">
-                            <h4>London Netwalkers</h4>
-                            <p>Outdoor networking across the capital.</p>
-                          </div>
-                        </article>
-                        <article class="home-pillar-org-card is-front">
-                          <div class="home-pillar-org-header">
-                            <span class="home-pillar-org-industry">Professional services</span>
-                            <span class="home-pillar-org-count">12 events</span>
-                            <span class="home-pillar-org-logo">BN</span>
-                          </div>
-                          <div class="home-pillar-org-body">
-                            <span class="home-pillar-org-label">Organiser</span>
-                            <h4>Business Network Manchester</h4>
-                            <p>Monthly breakfast meetings for founders and senior leaders across Greater Manchester.</p>
-                            <div class="home-pillar-org-rating" aria-hidden="true">
-                              <span>★★★★☆</span>
-                              <span>(18)</span>
-                            </div>
-                          </div>
-                        </article>
-                      </div>
-                      <span class="home-pillar-snippet-pill">Guest visits</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="site-access-preview-panel" role="tabpanel" id="sa-panel-opportunities" aria-labelledby="sa-tab-opportunities" data-sa-panel="opportunities" hidden>
-            <div class="site-access-preview-panel-inner">
-              <div class="site-access-preview-copy">
-                <h3 class="site-access-preview-panel-title">Find your next business opportunity</h3>
-                <p class="site-access-preview-panel-lede">Franchises, partnerships, and deals from across the network — filter by type, save searches, and enquire when something fits.</p>
-                <ul class="site-access-preview-points">
-                  <li>Browse without signing up</li>
-                  <li>Featured listings in the spotlight carousel</li>
-                  <li>Direct enquiries to listing owners</li>
-                </ul>
-              </div>
-              <div class="site-access-preview-visual">
-                <div class="home-pillar-snippet home-pillar-snippet--opportunities" aria-hidden="true">
-                  <div class="home-pillar-snippet-bar">
-                    <span class="home-pillar-snippet-dot"></span>
-                    <span class="home-pillar-snippet-dot"></span>
-                    <span class="home-pillar-snippet-dot"></span>
-                    <span class="home-pillar-snippet-url">thenetworkerhub.com/opportunities</span>
-                  </div>
-                  <div class="home-pillar-snippet-ui">
-                    <span class="home-pillar-snippet-glow" aria-hidden="true"></span>
-                    <div class="home-pillar-snippet-stage">
-                      <div class="home-pillar-card-stack home-pillar-card-stack--opportunities">
-                        <article class="home-pillar-opp-card is-back">
-                          <div class="home-pillar-opp-head">
-                            <span class="home-pillar-opp-type">Partnership</span>
-                          </div>
-                          <div class="home-pillar-opp-media home-pillar-opp-media--deal">🤝</div>
-                          <div class="home-pillar-opp-body">
-                            <h4>Co-working space referral deal</h4>
-                            <p>Revenue share for introducers.</p>
-                          </div>
-                        </article>
-                        <article class="home-pillar-opp-card is-front featured">
-                          <div class="home-pillar-opp-head">
-                            <span class="home-pillar-opp-type">Franchise</span>
-                            <span class="home-pillar-opp-featured">Featured</span>
-                          </div>
-                          <div class="home-pillar-opp-media">☕</div>
-                          <div class="home-pillar-opp-body">
-                            <h4>Regional café franchise — North West</h4>
-                            <p>Established brand seeking owner-operators across Lancashire and Cheshire.</p>
-                            <div class="home-pillar-opp-facts">
-                              <span>£25k–£40k</span>
-                              <span>UK-wide</span>
-                            </div>
-                          </div>
-                          <div class="home-pillar-opp-footer">
-                            <span class="home-pillar-opp-enquire">Enquire →</span>
-                          </div>
-                        </article>
-                      </div>
-                      <span class="home-pillar-snippet-pill">Save search</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="site-access-preview-panel" role="tabpanel" id="sa-panel-workspace" aria-labelledby="sa-tab-workspace" data-sa-panel="workspace" hidden>
-            <div class="site-access-preview-panel-inner">
-              <div class="site-access-preview-copy">
-                <h3 class="site-access-preview-panel-title">Run everything from one workspace</h3>
-                <p class="site-access-preview-panel-lede">Organisers get a guided setup checklist, then manage events, attendees, opportunities, and payouts from a single dashboard.</p>
-                <ul class="site-access-preview-points">
-                  <li>Claim your organiser page and list events</li>
-                  <li>Track guest visits and category exclusivity applications</li>
-                  <li>Stripe Connect payouts — you keep the full ticket price</li>
-                </ul>
-              </div>
-              <div class="site-access-preview-visual site-access-preview-visual--dash">
-                <div class="sa-dash-mock" aria-hidden="true">
-                  <div class="sa-dash-mock-bar">
-                    <div class="sa-dash-mock-dots"><span></span><span></span><span></span></div>
-                    <span>Organiser workspace · The Networker Hub</span>
-                  </div>
-                  <div class="sa-dash-mock-body">
-                    <div class="sa-dash-mock-nav" aria-hidden="true">
-                      <span class="sa-dash-mock-nav-item is-active">Overview</span>
-                      <span class="sa-dash-mock-nav-item">Events</span>
-                      <span class="sa-dash-mock-nav-item">Organiser pages</span>
-                      <span class="sa-dash-mock-nav-item">Revenue</span>
-                    </div>
-                    <div class="sa-dash-mock-main">
-                      <p class="sa-dash-mock-eyebrow">Getting started</p>
-                      <p class="sa-dash-mock-title">Here&rsquo;s what to do first</p>
-                      <ol class="sa-dash-mock-checklist">
-                        <li class="is-done">
-                          <strong>Create your organiser page</strong>
-                          <span>Your public page on the hub.</span>
-                        </li>
-                        <li class="is-current">
-                          <strong>List your first event</strong>
-                          <span>Meetings, exhibitions and conferences.</span>
-                        </li>
-                      </ol>
-                      <div class="sa-dash-mock-stats">
-                        <div class="sa-dash-mock-stat"><b>0</b><small>Events live</small></div>
-                        <div class="sa-dash-mock-stat"><b>—</b><small>Tickets sold</small></div>
-                        <div class="sa-dash-mock-stat"><b>Hubert</b><small>On-hand help</small></div>
-                      </div>
-                    </div>
-                  </div>
+              <div class="sa-dash-mock-main">
+                <p class="sa-dash-mock-eyebrow">Getting started</p>
+                <p class="sa-dash-mock-title">Here&rsquo;s what to do first</p>
+                <ol class="sa-dash-mock-checklist">
+                  <li class="is-done">
+                    <strong>Create your organiser page</strong>
+                    <span>Your public page on the hub.</span>
+                  </li>
+                  <li class="is-current">
+                    <strong>List your first event</strong>
+                    <span>Meetings, exhibitions and conferences.</span>
+                  </li>
+                </ol>
+                <div class="sa-dash-mock-stats">
+                  <div class="sa-dash-mock-stat"><b>12</b><small>Events live</small></div>
+                  <div class="sa-dash-mock-stat"><b>£2.4k</b><small>Revenue</small></div>
+                  <div class="sa-dash-mock-stat"><b>23</b><small>1st visits</small></div>
                 </div>
               </div>
             </div>
@@ -368,6 +356,6 @@
   </p>
 </footer>
 
-<script src="js/site-access-gate.js?v=20260714preview"></script>
+<script src="js/site-access-gate.js?v=20260714pillars"></script>
 </body>
 </html>

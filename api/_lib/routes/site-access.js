@@ -8,6 +8,7 @@ const {
 } = require('../site-access');
 const { addPreviewWaitlistEmail } = require('../preview-waitlist');
 const { enforceRateLimit } = require('../rate-limit');
+const { timingSafeEqualString } = require('../crypto-utils');
 
 function parseBody(req) {
   let body = req.body;
@@ -92,7 +93,7 @@ async function handlePasswordUnlock(req, res, body) {
 
     const password = String(body.password || '').trim();
 
-    if (!password || password !== expected) {
+    if (!password || !timingSafeEqualString(password, expected)) {
       return json(res, 401, {
         error: 'invalid_password',
         message: 'Incorrect preview password. Check SITE_ACCESS_PASSWORD in Vercel matches exactly.',

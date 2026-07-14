@@ -133,7 +133,10 @@ const GATES = [
 async function probeConfigCheck() {
   if (!baseUrl) return null;
   try {
-    const res = await fetch(baseUrl + '/api/auth/config-check', { cache: 'no-store' });
+    const headers = {};
+    const secret = String(process.env.CONFIG_CHECK_SECRET || '').trim();
+    if (secret) headers.Authorization = 'Bearer ' + secret;
+    const res = await fetch(baseUrl + '/api/auth/config-check', { cache: 'no-store', headers });
     const data = await res.json();
     return data;
   } catch (e) {

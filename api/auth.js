@@ -21,6 +21,7 @@ const routes = {
   'hub-mode': require('./_lib/routes/auth-hub-mode'),
   'config-check': require('./_lib/routes/auth-config-check'),
   'setup-admin': require('./_lib/routes/auth-setup-admin'),
+  mfa: require('./_lib/routes/auth-mfa'),
   'forgot-password': require('./_lib/routes/auth-forgot-password'),
   'reset-password': require('./_lib/routes/auth-reset-password'),
   'attendee-dashboard': require('./_lib/routes/auth-attendee-dashboard'),

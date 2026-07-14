@@ -88,29 +88,25 @@
 
   var loginForm = document.getElementById('login-form');
   if (loginForm) {
-    loginForm.addEventListener('submit', function (e) {
-      e.preventDefault();
+    function submitLogin(email, password, rememberMe, next, totpCode) {
       var msg = document.getElementById('auth-message');
       var btn = document.getElementById('login-submit');
-      var email = document.getElementById('email').value.trim();
-      var password = document.getElementById('password').value;
-      var rememberEl = document.getElementById('remember-me');
-      var rememberMe = rememberEl ? rememberEl.checked : false;
-      var next = getNextParam();
-
       btn.disabled = true;
-      showMessage(msg, 'Signing in…', 'success');
+      showMessage(msg, totpCode ? 'Verifying code…' : 'Signing in…', 'success');
+
+      var payload = {
+        email: email,
+        password: password,
+        next: next,
+        rememberMe: rememberMe,
+      };
+      if (totpCode) payload.totpCode = totpCode;
 
       fetch('/api/auth/login', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-          next: next,
-          rememberMe: rememberMe,
-        }),
+        body: JSON.stringify(payload),
       })
         .then(function (res) {
           return res.json().then(function (data) {
@@ -118,6 +114,16 @@
           });
         })
         .then(function (result) {
+          if (result.data && result.data.mfaRequired) {
+            showMfaStep();
+            showMessage(
+              msg,
+              result.data.message || 'Enter the 6-digit code from your authenticator app.',
+              'error'
+            );
+            btn.disabled = false;
+            return;
+          }
           if (!result.ok) {
             var errText = result.data.message || result.data.error || 'Sign in failed.';
             if (/UNAUTHORIZED|authentication token|airtable/i.test(String(errText))) {
@@ -135,6 +141,47 @@
           showMessage(msg, 'Could not reach the server. Try again shortly.', 'error');
           btn.disabled = false;
         });
+    }
+
+    function showMfaStep() {
+      var wrap = document.getElementById('login-mfa-wrap');
+      if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.id = 'login-mfa-wrap';
+        wrap.className = 'auth-field';
+        wrap.innerHTML =
+          '<label for="login-totp">Authenticator code</label>' +
+          '<input type="text" id="login-totp" name="totp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6-digit code" />' +
+          '<p class="auth-hint">Open your authenticator app and enter the current 6-digit code.</p>';
+        var anchor = loginForm.querySelector('.auth-actions') || loginForm.querySelector('button[type="submit"]');
+        if (anchor && anchor.parentNode) {
+          anchor.parentNode.insertBefore(wrap, anchor);
+        } else {
+          loginForm.appendChild(wrap);
+        }
+      }
+      wrap.hidden = false;
+      var totpEl = document.getElementById('login-totp');
+      if (totpEl) totpEl.focus();
+    }
+
+    loginForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var msg = document.getElementById('auth-message');
+      var email = document.getElementById('email').value.trim();
+      var password = document.getElementById('password').value;
+      var rememberEl = document.getElementById('remember-me');
+      var rememberMe = rememberEl ? rememberEl.checked : false;
+      var next = getNextParam();
+      var totpEl = document.getElementById('login-totp');
+      var totpCode = totpEl && totpEl.closest('#login-mfa-wrap') && !totpEl.closest('#login-mfa-wrap').hidden
+        ? totpEl.value.trim()
+        : '';
+      if (totpEl && totpEl.closest('#login-mfa-wrap') && !totpEl.closest('#login-mfa-wrap').hidden && !totpCode) {
+        showMessage(msg, 'Enter your authenticator code.', 'error');
+        return;
+      }
+      submitLogin(email, password, rememberMe, next, totpCode || undefined);
     });
   }
 

@@ -322,6 +322,53 @@ body.networking-region-page[data-region="chester"] .events-hero-copy h1 .accent 
   font-size: 15px;
 }
 
+.networking-location-more {
+  margin-top: 14px;
+}
+
+.networking-location-more summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 650;
+  color: #493f95;
+  list-style: none;
+  user-select: none;
+}
+
+.networking-location-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.networking-location-more summary::after {
+  content: "›";
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.networking-location-more[open] summary::after {
+  transform: rotate(90deg);
+}
+
+.networking-location-more .networking-location-links {
+  margin-top: 12px;
+}
+
+.networking-location-directory.is-regional-landing .networking-region-kicker {
+  color: #625f73;
+}
+
+.networking-location-directory.is-regional-landing .networking-region-kicker::before {
+  background: #625f73;
+  box-shadow: 0 0 0 3px rgba(98, 95, 115, 0.12);
+}
+
+.networking-location-links a[hidden] {
+  display: none;
+}
+
 .networking-location-links {
   display: flex;
   flex-wrap: wrap;

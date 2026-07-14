@@ -104,8 +104,31 @@
   var postcode = document.getElementById('postcode');
   if (postcode) postcode.value = region.location;
 
+  var POPULAR_CITY_SLUGS = {
+    manchester: true,
+    birmingham: true,
+    liverpool: true,
+    leeds: true,
+    glasgow: true,
+    edinburgh: true,
+  };
+
+  var directory = document.getElementById('networking-location-directory');
+  if (directory) {
+    directory.classList.add('is-regional-landing');
+    setText('networking-location-directory-heading', 'Other UK locations');
+    var citiesHeading = directory.querySelector('.networking-location-cities-heading');
+    if (citiesHeading) citiesHeading.textContent = 'Other popular cities';
+  }
+
   var currentLink = document.querySelector(
-    '.networking-location-links a[href="/networking/' + slug + '"]'
+    '.networking-location-links a[data-region="' + slug + '"]'
   );
-  if (currentLink) currentLink.setAttribute('aria-current', 'page');
+  if (currentLink) {
+    currentLink.hidden = true;
+    if (!POPULAR_CITY_SLUGS[slug]) {
+      var more = document.getElementById('networking-location-more');
+      if (more) more.open = true;
+    }
+  }
 })();

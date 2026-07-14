@@ -236,6 +236,14 @@ function requireAdmin(session) {
     };
   }
   if (!isAdminRole(session.role)) return { ok: false, status: 403, error: 'admin_only' };
+  if (session.mfaEnrolled && !session.mfaVerified) {
+    return {
+      ok: false,
+      status: 403,
+      error: 'mfa_required',
+      message: 'Enter your authenticator code to access the Command Centre.',
+    };
+  }
   return { ok: true, session };
 }
 

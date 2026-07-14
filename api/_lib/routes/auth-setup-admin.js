@@ -1,10 +1,13 @@
-const { json } = require('../auth');
+const { json, cleanEnvVal, isAdminRole } = require('../auth');
 const { isSupabaseConfigured } = require('../supabase');
 const sbAuth = require('../supabase-auth');
+const { timingSafeEqualString } = require('../crypto-utils');
 
 /**
  * One-time admin setup. POST with:
  * { "secret": "<ADMIN_SETUP_SECRET>", "email": "...", "password": "..." }
+ *
+ * In production, disabled once an admin account already exists — remove ADMIN_SETUP_SECRET from Vercel.
  */
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -14,7 +17,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
 
-  const setupSecret = process.env.ADMIN_SETUP_SECRET;
+  const setupSecret = String(process.env.ADMIN_SETUP_SECRET || '').trim();
   if (!setupSecret) {
     return json(res, 503, {
       error: 'not_configured',
@@ -35,8 +38,25 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  if (body.secret !== setupSecret) {
+  if (!timingSafeEqualString(String(body.secret || ''), setupSecret)) {
     return json(res, 403, { error: 'forbidden' });
+  }
+
+  const isProduction = process.env.VERCEL_ENV === 'production';
+  if (isProduction) {
+    const adminEmail = cleanEnvVal(process.env.ADMIN_EMAIL) || 'pips249@gmail.com';
+    try {
+      const existing = await sbAuth.findUserByEmail(adminEmail);
+      if (existing && isAdminRole(existing.role)) {
+        return json(res, 403, {
+          error: 'bootstrap_complete',
+          message:
+            'Admin account already exists in production. Remove ADMIN_SETUP_SECRET from Vercel env vars.',
+        });
+      }
+    } catch {
+      /* allow setup if lookup fails */
+    }
   }
 
   const email = String(body.email || process.env.ADMIN_EMAIL || 'pips249@gmail.com')

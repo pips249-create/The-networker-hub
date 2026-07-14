@@ -14,7 +14,9 @@ const { handleEventFeaturedCheckout } = require('./_lib/event-featured');
 const { handleChargeRefunded } = require('./_lib/stripe-refund-webhook');
 const { handleInvoicePaid, handleSponsorshipCheckoutCompleted } = require('./_lib/stripe-revenue');
 
-function verifyStripeSignature(rawBody, signatureHeader, secret) {
+const STRIPE_WEBHOOK_TOLERANCE_SEC = 300;
+
+function verifyStripeSignature(rawBody, signatureHeader, secret, toleranceSec = STRIPE_WEBHOOK_TOLERANCE_SEC) {
   if (!signatureHeader || !secret) return false;
   const parts = String(signatureHeader)
     .split(',')
@@ -26,6 +28,11 @@ function verifyStripeSignature(rawBody, signatureHeader, secret) {
   const timestamp = parts.t;
   const signature = parts.v1;
   if (!timestamp || !signature) return false;
+
+  const ts = parseInt(timestamp, 10);
+  if (!Number.isFinite(ts)) return false;
+  const ageSec = Math.abs(Math.floor(Date.now() / 1000) - ts);
+  if (ageSec > toleranceSec) return false;
 
   const payload = `${timestamp}.${rawBody}`;
   const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');

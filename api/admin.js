@@ -2,7 +2,8 @@
  * Single serverless function for all /api/admin/* routes (Hobby plan function limit).
  */
 const { getSubRoute } = require('./_lib/route-path');
-const { json, setCors } = require('./_lib/auth');
+const { json, setCors, sessionFromRequest, requireAdmin } = require('./_lib/auth');
+const adminMfa = require('./_lib/admin-mfa');
 
 const routes = {
   metrics: require('./_lib/routes/admin-metrics'),

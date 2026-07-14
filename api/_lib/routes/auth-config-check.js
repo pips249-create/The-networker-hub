@@ -1,4 +1,5 @@
-const { cleanEnvVal } = require('../auth');
+const { cleanEnvVal, sessionFromRequest, requireAdmin, json } = require('../auth');
+const { timingSafeEqualString } = require('../crypto-utils');
 const {
   supabaseConfig,
   testSupabaseConnection,
@@ -14,14 +15,34 @@ const { siteAccessStatus } = require('../site-access');
 /**
  * Safe diagnostic: which env vars are set (never returns secret values).
  * Supabase-only — Airtable is optional legacy.
+ *
+ * Production: admin session or Authorization: Bearer <CONFIG_CHECK_SECRET> required.
  */
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('Access-Control-Allow-Origin', '*');
 
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'method_not_allowed' });
   }
+
+  const isProduction = process.env.VERCEL_ENV === 'production';
+  if (isProduction) {
+    const session = sessionFromRequest(req);
+    const adminGate = requireAdmin(session);
+    const checkSecret = String(process.env.CONFIG_CHECK_SECRET || '').trim();
+    const authHeader = String(req.headers.authorization || '').trim();
+    const bearerOk =
+      checkSecret && timingSafeEqualString(authHeader, 'Bearer ' + checkSecret);
+
+    if (!adminGate.ok && !bearerOk) {
+      return res.status(403).json({
+        error: 'forbidden',
+        message: 'Config check requires an admin session or CONFIG_CHECK_SECRET bearer token in production.',
+      });
+    }
+  }
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
 
   const sbCfg = supabaseConfig();
   const provider = dataProvider();
