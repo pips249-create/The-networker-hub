@@ -2698,10 +2698,10 @@ html:has(.home-page) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 22px;
+  width: 44px;
+  height: 44px;
   color: var(--chip-accent);
-  opacity: 0.88;
+  opacity: 0.92;
 }
 
 .home-location-chip-letter {
@@ -2722,10 +2722,10 @@ html:has(.home-page) {
 .home-location-chip-icon svg,
 .home-location-chip-icon .region-landmark-chip {
   display: block;
-  width: 48px;
-  height: 22px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
-  object-position: center bottom;
+  object-position: center center;
 }
 
 .home-location-chip-name {
