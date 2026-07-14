@@ -1,11 +1,12 @@
 /**
- * Single-landmark SVG marks for UK networking regions (chip + hero sizes).
+ * Architectural line-drawing landmark marks for UK networking regions.
+ * Fine structural lines, windows, trusses, and light hand-sketch shading.
  * Keep browser copy in sync: js/region-landmark-icons.js
  */
 
 function chipSvg(paths) {
   return (
-    '<svg class="region-landmark-chip" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">' +
+    '<svg class="region-landmark-chip" viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
     paths +
     '</svg>'
   );
@@ -13,153 +14,467 @@ function chipSvg(paths) {
 
 function heroSvg(paths) {
   return (
-    '<svg class="networking-region-landmark-svg" viewBox="0 0 200 72" fill="currentColor" aria-hidden="true">' +
+    '<svg class="networking-region-landmark-svg" viewBox="0 0 240 90" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
     paths +
     '</svg>'
   );
 }
+
+/** Fine hatch / window helpers as path snippets (chip scale). */
+const HATCH = {
+  ground: '<path d="M8 72h64" opacity=".35" stroke-width="1.1"/>',
+  winRow: (x, y, n, gap, w, h) => {
+    let s = '';
+    for (let i = 0; i < n; i++) {
+      s += `<rect x="${x + i * gap}" y="${y}" width="${w}" height="${h}" opacity=".55" stroke-width="1"/>`;
+    }
+    return s;
+  },
+};
 
 /** @type {Record<string, { chip: string, hero: string, label: string }>} */
 const LANDMARKS = {
   'big-ben': {
     label: 'Big Ben',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M19 42V15h10v27H19z"/><path d="M21 15V9h6v6"/><path d="M22 19h4v9h-4z" opacity=".45"/><path d="M24 5.5v3.5"/><path d="M22.5 7.5h3"/>',
+      HATCH.ground +
+      // shaft
+      '<rect x="28" y="22" width="24" height="50"/>' +
+      // stone courses
+      '<path d="M28 34h24M28 46h24M28 58h24" opacity=".35" stroke-width="1"/>' +
+      // belfry / clock section
+      '<rect x="30" y="10" width="20" height="14"/>' +
+      // clock face
+      '<circle cx="40" cy="17" r="5.5" stroke-width="1.2"/>' +
+      '<path d="M40 17v-3.5M40 17l3 2" stroke-width="1.1"/>' +
+      // spire
+      '<path d="M36 10V6h8v4"/>' +
+      '<path d="M40 3v3M37 5h6" stroke-width="1.2"/>' +
+      // windows
+      '<rect x="33" y="38" width="5" height="7" opacity=".5" stroke-width="1"/>' +
+      '<rect x="42" y="38" width="5" height="7" opacity=".5" stroke-width="1"/>' +
+      '<rect x="33" y="50" width="5" height="7" opacity=".5" stroke-width="1"/>' +
+      '<rect x="42" y="50" width="5" height="7" opacity=".5" stroke-width="1"/>' +
+      // corner buttresses
+      '<path d="M28 72V28M52 72V28" opacity=".4" stroke-width="1"/>' +
+      // shading hatch on right face
+      '<path d="M48 28l4 4M48 36l4 4M48 44l4 4M48 52l4 4M48 60l4 4" opacity=".28" stroke-width=".9"/>',
     hero:
-      '<path d="M24 66h152" opacity=".35"/><path d="M78 68V14h44v54H78z"/><path d="M86 14V4h28v10"/><path d="M92 24h20v22H92z" opacity=".45"/><path d="M100 2v8M94 10h12"/>',
+      '<path d="M20 82h200" opacity=".35"/><rect x="96" y="18" width="48" height="64"/><path d="M96 34h48M96 50h48M96 66h48" opacity=".35"/><rect x="102" y="4" width="36" height="18"/><circle cx="120" cy="13" r="8"/><path d="M120 13v-5M120 13l4 3"/><path d="M110 4V0h20v4"/><path d="M120-2v2"/><rect x="106" y="42" width="8" height="10" opacity=".5"/><rect x="126" y="42" width="8" height="10" opacity=".5"/><path d="M140 24l6 6M140 36l6 6M140 48l6 6M140 60l6 6" opacity=".3"/>',
   },
   'alexandra-palace': {
     label: 'Alexandra Palace',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M8 42V29h7v13M15 42V24h3v18M18 42V20h12v22M30 42V24h3v18M33 42V29h7v13"/><path d="M18 20c0-5 2.5-9 6-9s6 4 6 9"/><ellipse cx="24" cy="15" rx="5.5" ry="3.5"/>',
+      HATCH.ground +
+      // wings
+      '<path d="M6 72V48h14v24M60 72V48h14v24"/>' +
+      // mid wings
+      '<path d="M18 72V40h10v32M52 72V40h10v32"/>' +
+      // central hall
+      '<path d="M26 72V36h28v36"/>' +
+      // central dome
+      '<path d="M30 36c0-12 4-18 10-18s10 6 10 18"/>' +
+      '<ellipse cx="40" cy="24" rx="11" ry="6"/>' +
+      '<path d="M40 12v6" stroke-width="1.2"/>' +
+      // arcade windows
+      '<path d="M10 56h6M10 62h6M64 56h6M64 62h6" opacity=".45" stroke-width="1"/>' +
+      '<path d="M30 48h4v8M36 48h4v8M42 48h4v8M48 48h4v8" opacity=".5" stroke-width="1"/>' +
+      // roof ridge detail
+      '<path d="M26 36h28" opacity=".45"/>' +
+      // shading
+      '<path d="M50 40l4 3M50 48l4 3M50 56l4 3M50 64l4 3" opacity=".25" stroke-width=".9"/>',
     hero:
-      '<path d="M24 66h152" opacity=".35"/><path d="M36 66V38h28v28M72 66V24h18v42M90 66V18h44v48M134 66V24h18v42M152 66V38h28v28"/><path d="M90 18c0-14 8-22 22-22s22 8 22 22"/><ellipse cx="112" cy="22" rx="22" ry="12"/>',
+      '<path d="M16 82h208" opacity=".35"/><path d="M24 82V52h36v30M180 82V52h36v30"/><path d="M52 82V40h28v42M160 82V40h28v42"/><path d="M72 82V32h96v50"/><path d="M84 32c0-20 10-28 28-28s28 8 28 28"/><ellipse cx="112" cy="18" rx="30" ry="12"/><path d="M112 2v8"/><path d="M88 52h8v14M104 52h8v14M120 52h8v14M136 52h8v14" opacity=".5"/>',
   },
   'o2-arena': {
     label: 'The O2 Arena',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M10 42c0-12 5.5-20 14-20s14 8 14 20" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M24 6v5"/><path d="M13 30l-2.5-4.5M35 30l2.5-4.5M17 23l-3.5-3M31 23l3.5-3M20 17l-1.5-4.5M28 17l1.5-4.5" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>',
+      HATCH.ground +
+      // dome shell
+      '<path d="M12 72c0-28 10-44 28-44s28 16 28 44" stroke-width="1.6"/>' +
+      // rib lines
+      '<path d="M20 70c2-22 8-34 20-34M40 36c12 0 18 12 20 34M28 70c1-18 5-28 12-30M52 70c-1-18-5-28-12-30" opacity=".4" stroke-width="1"/>' +
+      // yellow masts / spikes
+      '<path d="M40 10v14" stroke-width="1.5"/>' +
+      '<path d="M18 52l-8-14M62 52l8-14M24 40l-8-10M56 40l8-10M30 28l-4-12M50 28l4-12" stroke-width="1.25"/>' +
+      // base ring
+      '<path d="M14 68h52" opacity=".4" stroke-width="1"/>' +
+      // hatch shading under dome
+      '<path d="M22 58h8M30 62h10M42 58h8" opacity=".22" stroke-width=".9"/>',
     hero:
-      '<path d="M24 66h152" opacity=".35"/><path d="M48 66c0-34 20-54 52-54s52 20 52 54" fill="none" stroke="currentColor" stroke-width="5"/><path d="M100 8v14"/><path d="M58 48l-8-14M142 48l8-14M68 34l-10-10M132 34l10-10M78 22l-5-12M122 22l5-12" stroke="currentColor" stroke-width="2.8" fill="none" stroke-linecap="round"/>',
+      '<path d="M20 82h200" opacity=".35"/><path d="M40 82c0-42 26-64 80-64s80 22 80 64" stroke-width="2.2"/><path d="M60 78c4-34 16-50 40-50M120 28c24 0 36 16 40 50M80 78c2-26 10-40 20-42M160 78c-2-26-10-40-20-42" opacity=".4"/><path d="M120 8v18M52 58l-14-22M188 58l14-22M68 42l-12-16M172 42l12-16M88 26l-6-16M152 26l6-16" stroke-width="1.8"/>',
   },
   'tower-bridge': {
     label: 'Tower Bridge',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M10 42V20h6v22M32 42V20h6v22"/><path d="M8 20h10v4H8zm22 0h10v4H30z"/><path d="M16 24h16v3H16z"/><path d="M18 20V14h3v6M27 20V14h3v6"/>',
+      HATCH.ground +
+      // towers
+      '<path d="M12 72V28h14v44M54 72V28h14v44"/>' +
+      // tower tops / turrets
+      '<path d="M10 28h18v8H10zM52 28h18v8H52z"/>' +
+      '<path d="M14 28V18h4v10M22 28V18h4v10M56 28V18h4v10M64 28V18h4v10"/>' +
+      '<path d="M16 18l2-5 2 5M24 18l2-5 2 5M58 18l2-5 2 5M66 18l2-5 2 5"/>' +
+      // high walkways
+      '<path d="M26 32h28M26 36h28" stroke-width="1.3"/>' +
+      // walkway truss diagonals
+      '<path d="M28 32l4 4M36 32l4 4M44 32l4 4M32 36l-4-4M40 36l-4-4M48 36l-4-4" opacity=".45" stroke-width="1"/>' +
+      // bascule bridge deck
+      '<path d="M26 48h28" stroke-width="1.5"/>' +
+      '<path d="M26 48l14-4 14 4" opacity=".55" stroke-width="1.1"/>' +
+      // tower windows
+      '<rect x="16" y="40" width="5" height="7" opacity=".5" stroke-width="1"/>' +
+      '<rect x="16" y="54" width="5" height="7" opacity=".5" stroke-width="1"/>' +
+      '<rect x="59" y="40" width="5" height="7" opacity=".5" stroke-width="1"/>' +
+      '<rect x="59" y="54" width="5" height="7" opacity=".5" stroke-width="1"/>' +
+      // stone hatch
+      '<path d="M22 40l4 3M22 50l4 3M22 60l4 3" opacity=".25" stroke-width=".85"/>',
     hero:
-      '<path d="M20 66h160" opacity=".35"/><path d="M36 66V28h24v38M140 66V28h24v38"/><path d="M28 28h40v12H28zm104 0h40v12H132z"/><path d="M56 40h88v8H56z"/><path d="M64 28V12h12v16M124 28V12h12v16"/>',
+      '<path d="M16 82h208" opacity=".35"/><path d="M36 82V28h36v54M168 82V28h36v54"/><path d="M30 28h48v12H30zM162 28h48v12H162z"/><path d="M42 28V12h8v16M58 28V12h8v16M174 28V12h8v16M190 28V12h8v16"/><path d="M72 36h96M72 42h96"/><path d="M78 36l8 6M96 36l8 6M114 36l8 6M132 36l8 6M86 42l-8-6M104 42l-8-6M122 42l-8-6M140 42l-8-6" opacity=".45"/><path d="M72 56h96" stroke-width="2"/><rect x="46" y="48" width="10" height="12" opacity=".5"/><rect x="184" y="48" width="10" height="12" opacity=".5"/>',
   },
-  'west-london-w': {
-    label: 'West London',
+  battersea: {
+    label: 'Battersea Power Station',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M6 22h3.5M6 27h3.5M6 32h3.5M38.5 22H42M38.5 27H42M38.5 32H42" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M15 42l4.5-16 3.5 10 3.5-10L31 42" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>',
+      HATCH.ground +
+      // main blocks
+      '<path d="M10 72V40h16v32M26 72V34h14v38M40 72V40h16v32M56 72V44h14v28"/>' +
+      // chimneys
+      '<path d="M14 40V18h5v22M32 34V14h5v20M46 40V18h5v22M62 44V22h5v22"/>' +
+      // chimney tops / caps
+      '<path d="M13 18h7M31 14h7M45 18h7M61 22h7" stroke-width="1.3"/>' +
+      // windows rows
+      HATCH.winRow(13, 48, 2, 6, 4, 6) +
+      HATCH.winRow(29, 44, 2, 6, 4, 6) +
+      HATCH.winRow(43, 48, 2, 6, 4, 6) +
+      HATCH.winRow(59, 52, 2, 6, 4, 6) +
+      // brick courses
+      '<path d="M10 56h60M10 64h60" opacity=".3" stroke-width="1"/>' +
+      // shading
+      '<path d="M66 48l4 3M66 56l4 3M66 64l4 3" opacity=".25" stroke-width=".9"/>',
     hero:
-      '<path d="M24 66h152" opacity=".35"/><path d="M28 30h10M28 40h10M28 50h10M162 30h10M162 40h10M162 50h10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M62 66l18-48 14 30 14-30 18 48" fill="none" stroke="currentColor" stroke-width="5.5" stroke-linejoin="round" stroke-linecap="round"/>',
+      '<path d="M20 82h200" opacity=".35"/><path d="M32 82V40h40v42M80 82V28h40v54M128 82V40h40v42M176 82V48h32v34"/><path d="M44 40V12h12v28M96 28V6h12v22M144 40V12h12v28M188 48V20h12v28"/><path d="M42 12h16M94 6h16M142 12h16M186 20h16"/><path d="M40 56h16v10H40zM92 48h16v10H92zM136 56h16v10h-16z" opacity=".5"/>',
   },
   manchester: {
     label: 'Beetham Tower',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M21 42V7h6v35"/><path d="M19.5 42h9"/><path d="M22.5 12h3v5h-3z" opacity=".4"/>',
+      HATCH.ground +
+      // tower body (slim skyscraper)
+      '<path d="M30 72V12h20v60"/>' +
+      // glass grid floors
+      '<path d="M30 20h20M30 28h20M30 36h20M30 44h20M30 52h20M30 60h20" opacity=".4" stroke-width="1"/>' +
+      '<path d="M37 12v60M43 12v60" opacity=".35" stroke-width="1"/>' +
+      // beacon / top
+      '<path d="M34 12V6h12v6"/>' +
+      '<path d="M40 3v3" stroke-width="1.2"/>' +
+      // podium base
+      '<path d="M24 72h32" stroke-width="1.5"/>' +
+      // facade shading
+      '<path d="M46 16l4 4M46 28l4 4M46 40l4 4M46 52l4 4M46 64l4 4" opacity=".28" stroke-width=".9"/>',
     hero:
-      '<path d="M24 66h152" opacity=".35"/><path d="M88 66V8h44v58"/><path d="M82 66h56"/><path d="M94 22h32v14H94z" opacity=".4"/>',
+      '<path d="M20 82h200" opacity=".35"/><path d="M100 82V10h40v72"/><path d="M100 22h40M100 34h40M100 46h40M100 58h40M100 70h40" opacity=".4"/><path d="M113 10v72M127 10v72" opacity=".35"/><path d="M106 10V2h28v8"/><path d="M90 82h60" stroke-width="2"/>',
   },
   birmingham: {
     label: 'Birmingham Bull',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M14 17c-3.5-5.5-1.5-9 2-7s2 5.5-2 7M34 17c3.5-5.5 1.5-9-2-7s-2 5.5 2 7"/><path d="M12 21c0 11 5.5 19 12 19s12-8 12-19c0-5.5-3.5-9.5-8-9.5h-8c-4.5 0-8 4-8 9.5z"/><path d="M21 30h6v5h-6z" opacity=".45"/>',
+      HATCH.ground +
+      // horns
+      '<path d="M18 28c-8-14-4-22 6-16 6 4 4 12-2 16" stroke-width="1.5"/>' +
+      '<path d="M62 28c8-14 4-22-6-16-6 4-4 12 2 16" stroke-width="1.5"/>' +
+      // head
+      '<path d="M20 32c0 22 8 36 20 36s20-14 20-36c0-10-6-16-14-16H34c-8 0-14 6-14 16z" stroke-width="1.5"/>' +
+      // brow / eyes
+      '<path d="M28 36h8M44 36h8" opacity=".5"/>' +
+      '<circle cx="32" cy="42" r="2.2" stroke-width="1.2"/>' +
+      '<circle cx="48" cy="42" r="2.2" stroke-width="1.2"/>' +
+      // snout
+      '<path d="M34 52h12v8H34z"/>' +
+      '<path d="M37 56h2M41 56h2" opacity=".5" stroke-width="1"/>' +
+      // muscle / shading hatch
+      '<path d="M24 40l3 4M24 50l3 4M53 40l-3 4M53 50l-3 4" opacity=".3" stroke-width=".9"/>' +
+      '<path d="M36 48h8" opacity=".35"/>',
     hero:
-      '<path d="M16 66h168" opacity=".35"/><path d="M58 28c-14-22-6-36 8-28s8 28-8 28M142 28c14-22 6-36-8-28s-8 28 8 28"/><path d="M48 38c0 28 14 48 52 48s52-20 52-48c0-14-10-24-22-24H70c-12 0-22 10-22 24z"/><path d="M88 58h24v14H88z" opacity=".45"/>',
+      '<path d="M20 82h200" opacity=".35"/><path d="M56 32c-16-26-8-40 12-28 10 6 6 22-4 28M184 32c16-26 8-40-12-28-10 6-6 22 4 28"/><path d="M60 38c0 34 14 48 60 48s60-14 60-48c0-16-12-24-28-24H88c-16 0-28 8-28 24z"/><circle cx="96" cy="52" r="5"/><circle cx="144" cy="52" r="5"/><path d="M108 66h24v12h-24z"/>',
   },
   glasgow: {
     label: 'Finnieston Crane',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M14 42V12h2.5v30"/><path d="M8 12h28v3H8z"/><path d="M30 15v18"/><path d="M28 42h5"/>',
+      HATCH.ground +
+      // mast
+      '<path d="M22 72V18h6v54" stroke-width="1.6"/>' +
+      // lattice on mast
+      '<path d="M22 28l6 6M22 40l6 6M22 52l6 6M28 28l-6 6M28 40l-6 6M28 52l-6 6" opacity=".45" stroke-width="1"/>' +
+      // jib boom
+      '<path d="M12 18h52v6H12z" stroke-width="1.5"/>' +
+      // jib truss
+      '<path d="M16 18l8 6M28 18l8 6M40 18l8 6M52 18l6 6M20 24l-4-6M32 24l-4-6M44 24l-4-6M56 24l-4-6" opacity=".5" stroke-width="1"/>' +
+      // hook / cable
+      '<path d="M54 24v28" stroke-width="1.2"/>' +
+      '<path d="M50 52h8M52 56h4" stroke-width="1.2"/>' +
+      // counterweight
+      '<path d="M12 18v10h8" opacity=".55"/>' +
+      // base
+      '<path d="M16 72h20" stroke-width="1.5"/>',
     hero:
-      '<path d="M16 66h168" opacity=".35"/><path d="M52 66V22h10v44"/><path d="M28 22h96v8H28z"/><path d="M112 30v36"/><path d="M104 66h16"/>',
+      '<path d="M20 82h200" opacity=".35"/><path d="M56 82V20h14v62"/><path d="M56 34l14 10M56 50l14 10M56 66l14 10M70 34l-14 10M70 50l-14 10M70 66l-14 10" opacity=".45"/><path d="M36 20h140v12H36z"/><path d="M48 20l16 12M80 20l16 12M112 20l16 12M144 20l16 12M64 32l-16-12M96 32l-16-12M128 32l-16-12M160 32l-16-12" opacity=".5"/><path d="M156 32v36"/><path d="M148 68h16"/>',
   },
   edinburgh: {
     label: 'Edinburgh Castle',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M8 42c5-10 10-15 16-15s11 5 16 15"/><path d="M12 42V30h4v12M18 42V26h4v16M24 42V22h4v20M28 42V26h4v16M34 42V30h4v12"/><path d="M22 18l-2.5 3h5l-2.5-3z"/>',
+      HATCH.ground +
+      // rock / escarpment
+      '<path d="M8 72c8-22 16-32 32-32s24 10 32 32" stroke-width="1.5"/>' +
+      // rock texture
+      '<path d="M16 60c4-6 8-8 12-6M40 52c6-4 12-4 16 2M52 62c3-4 6-5 10-3" opacity=".35" stroke-width="1"/>' +
+      // curtain walls / towers
+      '<path d="M18 72V48h8v24M30 72V42h8v30M42 72V42h8v30M54 72V48h8v24"/>' +
+      // battlements
+      '<path d="M18 48h2v-3h2v3h2v-3h2v3M30 42h2v-3h2v3h2v-3h2v3M42 42h2v-3h2v3h2v-3h2v3M54 48h2v-3h2v3h2v-3h2v3" stroke-width="1.1"/>' +
+      // keep / flag
+      '<path d="M36 34l4-8 4 8H36z"/>' +
+      '<path d="M40 26v-4" stroke-width="1.2"/>' +
+      // windows
+      '<path d="M33 52h3v5M45 52h3v5" opacity=".5" stroke-width="1"/>' +
+      // shading on rock
+      '<path d="M20 66l4 2M28 58l4 2M48 58l4 2M56 66l4 2" opacity=".25" stroke-width=".85"/>',
     hero:
-      '<path d="M16 66h168" opacity=".35"/><path d="M32 66c16-28 40-42 68-42s52 14 68 42"/><path d="M52 52h16v14H52zm32-18h16v32H84zm32 6h16v26h-16z"/><path d="M84 18l-8 10h16l-8-10z"/>',
+      '<path d="M16 82h208" opacity=".35"/><path d="M28 82c20-36 40-48 92-48s72 12 92 48"/><path d="M48 82V52h20v30M84 82V40h28v42M128 82V40h28v42M172 82V52h20v30"/><path d="M112 28l8-14 8 14H112z"/><path d="M92 56h8v10M140 56h8v10" opacity=".5"/>',
   },
   leeds: {
     label: 'Leeds Corn Exchange',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M8 42V26l4-9 4 9v16M18 42V22l4-11 4 11v20M28 42V24l4-9 4 9v18M38 42V28l4-9 4 9v14"/>',
+      HATCH.ground +
+      // gothic gables / bays
+      '<path d="M8 72V44l8-18 8 18v28"/>' +
+      '<path d="M24 72V36l10-22 10 22v36"/>' +
+      '<path d="M44 72V42l8-16 8 16v30"/>' +
+      // ridge ornaments
+      '<path d="M16 26v-4M34 14v-5M52 26v-4" stroke-width="1.2"/>' +
+      // arched windows
+      '<path d="M12 52c0-4 2-6 4-6s4 2 4 6v10H12V52z" opacity=".55" stroke-width="1"/>' +
+      '<path d="M30 46c0-5 3-8 5-8s5 3 5 8v14H30V46z" opacity=".55" stroke-width="1"/>' +
+      '<path d="M48 50c0-4 2-6 4-6s4 2 4 6v12H48V50z" opacity=".55" stroke-width="1"/>' +
+      // tracery / mullions
+      '<path d="M16 52v10M35 46v14M52 50v12" opacity=".4" stroke-width=".9"/>' +
+      // stone courses
+      '<path d="M8 58h16M24 58h20M44 58h16" opacity=".3" stroke-width="1"/>' +
+      // hatch
+      '<path d="M38 36l4 3M38 48l4 3M38 60l4 3" opacity=".25" stroke-width=".85"/>',
     hero:
-      '<path d="M24 66h152" opacity=".35"/><path d="M32 66V38l16-36 16 36v28M80 66V28l16-40 16 40v38M128 66V42l16-32 16 32v24"/>',
+      '<path d="M20 82h200" opacity=".35"/><path d="M28 82V44l20-32 20 32v38"/><path d="M80 82V32l28-40 28 40v50"/><path d="M148 82V48l20-28 20 28v34"/><path d="M40 56c0-8 4-12 8-12s8 4 8 12v16H40V56z" opacity=".55"/><path d="M100 44c0-10 6-16 12-16s12 6 12 16v24h-24V44z" opacity=".55"/>',
   },
   liverpool: {
     label: 'Royal Liver Building',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M11 42V18h7v24M30 42V12h7v30"/><path d="M13 18h3v4h-3zm16 0h3v4h-3z"/><path d="M14.5 13l1.5-4 1.5 4M32.5 9l1.5-4 1.5 4"/>',
+      HATCH.ground +
+      // twin clock towers
+      '<path d="M14 72V32h16v40M50 72V24h16v48"/>' +
+      // clock faces
+      '<circle cx="22" cy="40" r="5" stroke-width="1.2"/>' +
+      '<circle cx="58" cy="34" r="5" stroke-width="1.2"/>' +
+      '<path d="M22 40v-3M58 34v-3" stroke-width="1"/>' +
+      // liver birds
+      '<path d="M18 28l4-8 2 3 2-3 4 8" stroke-width="1.2"/>' +
+      '<path d="M54 20l4-8 2 3 2-3 4 8" stroke-width="1.2"/>' +
+      // mid block
+      '<path d="M30 56h20v16H30z"/>' +
+      // window grid
+      '<path d="M17 50h10M17 58h10M17 66h10M53 46h10M53 54h10M53 62h10" opacity=".4" stroke-width="1"/>' +
+      '<path d="M20 48v24M24 48v24M56 44v28M60 44v28" opacity=".3" stroke-width=".9"/>' +
+      // cornice
+      '<path d="M14 32h16M50 24h16" opacity=".5"/>',
     hero:
-      '<path d="M16 66h168" opacity=".35"/><path d="M36 66V24h36v42M128 66V10h36v56"/><path d="M44 24h20v14H44zm84 0h20v14h-20z"/><path d="M48 14l6-12 6 12M140 6l6-12 6 12"/>',
+      '<path d="M16 82h208" opacity=".35"/><path d="M40 82V28h40v54M160 82V16h40v66"/><circle cx="60" cy="42" r="10"/><circle cx="180" cy="32" r="10"/><path d="M52 20l8-14 4 5 4-5 8 14"/><path d="M172 10l8-14 4 5 4-5 8 14"/><path d="M80 62h80v20H80z"/><path d="M48 56h24M48 68h24M168 48h24M168 60h24" opacity=".4"/>',
   },
   newcastle: {
     label: 'Tyne Bridge',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M10 42V24h5v18M33 42V24h5v18"/><path d="M8 24c8-10 16-10 24 0s16 10 24 0" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 30h18v2.5H15z"/>',
+      HATCH.ground +
+      // piers
+      '<path d="M10 72V40h10v32M60 72V40h10v32"/>' +
+      // main arch
+      '<path d="M8 40c16-24 32-24 48 0 16 24 32 24 48 0" stroke-width="1.8"/>' +
+      // arch thickness (inner)
+      '<path d="M14 42c12-16 24-16 36 0" opacity=".45" stroke-width="1.1"/>' +
+      // deck
+      '<path d="M20 50h40" stroke-width="1.6"/>' +
+      // hangers / suspenders
+      '<path d="M24 42v8M32 36v14M40 36v14M48 42v8" opacity=".55" stroke-width="1"/>' +
+      // deck truss
+      '<path d="M22 50l4 4h28l4-4M26 54l4-4 4 4 4-4 4 4 4-4 4 4" opacity=".4" stroke-width="1"/>' +
+      // pier detail
+      '<path d="M12 52h6M12 60h6M62 52h6M62 60h6" opacity=".4" stroke-width="1"/>',
     hero:
-      '<path d="M16 66h168" opacity=".35"/><path d="M28 66V34h32v32M140 66V34h32v32"/><path d="M20 34c60-40 120-40 180 0" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><path d="M52 48h96v8H52z"/>',
+      '<path d="M16 82h208" opacity=".35"/><path d="M28 82V40h32v42M180 82V40h32v42"/><path d="M20 40c56-40 112-40 168 0" stroke-width="2.4"/><path d="M40 44c40-28 80-28 120 0" opacity=".45"/><path d="M48 54h144" stroke-width="2"/><path d="M60 42v12M90 32v22M120 32v22M150 32v22M180 42v12" opacity=".55"/>',
   },
   bristol: {
     label: 'Clifton Suspension Bridge',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M6 28c9-10 19-10 28 0s19 10 28 0" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 42V26h4v16M36 42V26h4v16"/>',
+      HATCH.ground +
+      // towers
+      '<path d="M12 72V34h10v38M58 72V34h10v38"/>' +
+      // tower arches / openings
+      '<path d="M14 48h6v10H14zM60 48h6v10H60z" opacity=".5" stroke-width="1"/>' +
+      // main cables
+      '<path d="M8 38c16-18 32-18 48 0s32 18 48 0" stroke-width="1.6"/>' +
+      // secondary cable
+      '<path d="M12 42c12-12 24-12 36 0s24 12 36 0" opacity=".45" stroke-width="1.1"/>' +
+      // deck
+      '<path d="M22 48h36" stroke-width="1.5"/>' +
+      // suspenders
+      '<path d="M26 36v12M32 32v16M40 32v16M48 36v12" opacity=".5" stroke-width="1"/>' +
+      // tower tops
+      '<path d="M12 34h10M58 34h10" stroke-width="1.3"/>' +
+      '<path d="M17 34v-4M63 34v-4" stroke-width="1.2"/>',
     hero:
-      '<path d="M16 38c56-36 112-36 168 0" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><path d="M24 66V22h20v44M156 66V22h20v44"/><path d="M16 66h168" opacity=".35"/>',
+      '<path d="M16 82h208" opacity=".35"/><path d="M32 82V28h28v54M180 82V28h28v54"/><path d="M24 36c48-32 96-32 144 0" stroke-width="2.2"/><path d="M36 44c36-20 72-20 108 0" opacity=".45"/><path d="M60 52h120" stroke-width="2"/><path d="M72 36v16M96 28v24M120 28v24M144 28v24M168 36v16" opacity=".5"/>',
   },
   sheffield: {
     label: 'Sheffield Steelworks',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M10 42V30h7v12M21 42V22h5v20M30 42V32h7v10"/><path d="M12 24v7h2v-7M14 20v11h2v-11M23 16v8h2v-8M32 26v7h2v-7"/>',
+      HATCH.ground +
+      // factory blocks
+      '<path d="M8 72V44h18v28M28 72V32h18v40M48 72V48h18v24"/>' +
+      // sawtooth / pitched roofs
+      '<path d="M8 44l6-8 6 8 6-8"/><path d="M28 32l6-10 6 10 6-10"/><path d="M48 48l5-6 5 6 5-6"/>' +
+      // chimneys / stacks
+      '<path d="M14 36V16h4v20M36 22V8h4v14M54 42V24h4v18"/>' +
+      // smoke wisps (hand-sketch)
+      '<path d="M16 14c2-4 0-6-1-8M38 6c2-3 1-5 0-7M56 22c2-3 0-5-1-7" opacity=".4" stroke-width="1"/>' +
+      // windows
+      HATCH.winRow(11, 52, 2, 6, 4, 6) +
+      HATCH.winRow(31, 44, 2, 6, 4, 6) +
+      HATCH.winRow(51, 56, 2, 6, 4, 5) +
+      // brick / panel lines
+      '<path d="M8 58h18M28 52h18M48 60h18" opacity=".3" stroke-width="1"/>',
     hero:
-      '<path d="M16 66h168" opacity=".35"/><path d="M32 66V38h28v28M76 66V22h20v44M112 66V48h28v18"/><path d="M38 28v14h4v-14M44 20v22h4v-22M82 14v18h4v-18M118 34v14h4v-14"/>',
+      '<path d="M16 82h208" opacity=".35"/><path d="M28 82V44h48v38M88 82V24h52v58M152 82V52h48v30"/><path d="M28 44l12-14 12 14 12-14"/><path d="M88 24l14-16 14 16 14-16"/><path d="M40 30V8h8v22M108 14V0h8v14M168 40V18h8v22"/><path d="M36 56h12v12H36zM100 44h12v12h-12z" opacity=".5"/>',
   },
   nottingham: {
     label: 'Nottingham Castle',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M8 42c4-9 9-14 16-14s12 5 16 14"/><path d="M12 42V31h4v11M20 42V27h4v15M28 42V27h4v15M36 42V31h4v11"/><path d="M22 17l-2.5 3h5l-2.5-3z"/>',
+      HATCH.ground +
+      // sandstone cliff
+      '<path d="M8 72c6-18 14-28 32-28s26 10 32 28" stroke-width="1.5"/>' +
+      '<path d="M18 58c5-8 10-10 14-6M42 52c6-5 12-4 16 4" opacity=".35" stroke-width="1"/>' +
+      // castle blocks
+      '<path d="M18 72V46h10v26M32 72V40h16v32M52 72V46h10v26"/>' +
+      // battlements
+      '<path d="M18 46h2v-3h3v3h2v-3h3v3M32 40h3v-3h3v3h4v-3h3v3M52 46h2v-3h3v3h2v-3h3v3" stroke-width="1.1"/>' +
+      // gatehouse arch
+      '<path d="M36 72v-14c0-5 2-8 4-8s4 3 4 8v14" opacity=".55" stroke-width="1.2"/>' +
+      // flag
+      '<path d="M38 32l4-7 4 7H38z"/><path d="M42 25v-3" stroke-width="1.2"/>' +
+      // windows
+      '<path d="M22 54h4v5M54 54h4v5" opacity=".5" stroke-width="1"/>',
     hero:
-      '<path d="M16 66h168" opacity=".35"/><path d="M32 66c16-26 40-38 68-38s52 12 68 38"/><path d="M52 52h16v14H52zm32-16h16v30H84zm32 4h16v26h-16z"/><path d="M84 16l-8 10h16l-8-10z"/>',
+      '<path d="M16 82h208" opacity=".35"/><path d="M28 82c18-32 40-42 92-42s74 10 92 42"/><path d="M52 82V48h28v34M96 82V36h48v46M160 82V48h28v34"/><path d="M112 24l10-14 10 14H112z"/><path d="M108 82v-20c0-8 4-12 8-12s8 4 8 12v20" opacity=".55"/>',
   },
   cardiff: {
     label: 'Principality Stadium',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><ellipse cx="24" cy="26" rx="15" ry="9"/><path d="M9 26h30"/><path d="M11 42V26M37 42V26"/>',
+      HATCH.ground +
+      // oval bowl
+      '<ellipse cx="40" cy="42" rx="28" ry="16" stroke-width="1.6"/>' +
+      '<ellipse cx="40" cy="42" rx="18" ry="9" opacity=".45" stroke-width="1.1"/>' +
+      // roof masts / cables
+      '<path d="M12 42h56" opacity=".4"/>' +
+      '<path d="M16 34l8 8M64 34l-8 8M20 50l6-8M60 50l-6-8" opacity=".4" stroke-width="1"/>' +
+      // stands / tiers
+      '<path d="M18 52c6 8 14 12 22 12s16-4 22-12" opacity=".5" stroke-width="1.2"/>' +
+      // supports
+      '<path d="M14 58V42M66 58V42" stroke-width="1.3"/>' +
+      '<path d="M14 58h12M54 58h12" opacity=".45"/>' +
+      // hatch
+      '<path d="M28 38l3 2M36 34l3 2M44 34l3 2M52 38l3 2" opacity=".25" stroke-width=".85"/>',
     hero:
-      '<path d="M16 66h168" opacity=".35"/><ellipse cx="100" cy="32" rx="58" ry="24"/><path d="M42 32h116"/><path d="M48 66V32M152 66V32"/>',
+      '<path d="M16 82h208" opacity=".35"/><ellipse cx="120" cy="42" rx="88" ry="28"/><ellipse cx="120" cy="42" rx="52" ry="14" opacity=".45"/><path d="M40 42h160" opacity=".4"/><path d="M48 62c18 14 44 20 72 20s54-6 72-20" opacity=".5"/><path d="M40 62V42M200 62V42"/>',
   },
   brighton: {
     label: 'Royal Pavilion',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M12 42V28c2-7 5-11 12-11s10 4 12 11v14"/><path d="M15 28h18" opacity=".5"/><path d="M20 22c0-3 2-5 4-5s4 2 4 5"/>',
+      HATCH.ground +
+      // main onion dome
+      '<path d="M24 72V44c4-18 10-26 16-26s12 8 16 26v28" stroke-width="1.5"/>' +
+      // dome bulb
+      '<path d="M32 28c0-10 3-16 8-16s8 6 8 16" stroke-width="1.4"/>' +
+      '<path d="M40 8v6" stroke-width="1.2"/>' +
+      // side minarets / domes
+      '<path d="M12 72V52c2-8 5-12 8-12s6 4 8 12v20"/>' +
+      '<path d="M52 72V52c2-8 5-12 8-12s6 4 8 12v20"/>' +
+      '<path d="M16 42c0-5 2-8 4-8s4 3 4 8M56 42c0-5 2-8 4-8s4 3 4 8"/>' +
+      // arcade
+      '<path d="M28 56c0-3 2-5 4-5s4 2 4 5v8H28V56zM40 56c0-3 2-5 4-5s4 2 4 5v8H40V56z" opacity=".5" stroke-width="1"/>' +
+      // decorative band
+      '<path d="M24 48h32" opacity=".4"/>' +
+      // hatch
+      '<path d="M48 36l3 3M48 48l3 3M48 60l3 3" opacity=".25" stroke-width=".85"/>',
     hero:
-      '<path d="M24 66h152" opacity=".35"/><path d="M48 66V28c8-24 24-36 52-36s44 12 52 36v38"/><path d="M56 28h88" opacity=".5"/><path d="M68 14c0-10 12-18 32-18s32 8 32 18"/>',
+      '<path d="M20 82h200" opacity=".35"/><path d="M60 82V44c10-32 24-44 60-44s50 12 60 44v38"/><path d="M100 22c0-16 8-24 20-24s20 8 20 24"/><path d="M40 82V56c4-14 10-20 18-20s14 6 18 20v26"/><path d="M164 82V56c4-14 10-20 18-20s14 6 18 20v26"/><path d="M100 58c0-6 4-10 8-10s8 4 8 10v14h-16V58z" opacity=".5"/>',
   },
   cambridge: {
     label: "King's College Chapel",
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M12 42V22h24v20"/><path d="M14 22V14h6v8M28 22V14h6v8"/><path d="M22 8v6"/><path d="M17 30h14v3H17z" opacity=".45"/>',
+      HATCH.ground +
+      // nave
+      '<path d="M16 72V28h48v44"/>' +
+      // twin turrets
+      '<path d="M18 28V14h10v14M52 28V14h10v14"/>' +
+      '<path d="M20 14l3-6 3 6M54 14l3-6 3 6"/>' +
+      // pinnacles
+      '<path d="M23 8v3M57 8v3" stroke-width="1.2"/>' +
+      // great windows / fan vault suggestion
+      '<path d="M28 36c0-6 4-10 8-10s8 4 8 10v20H28V36z" opacity=".55" stroke-width="1.2"/>' +
+      '<path d="M36 36v20M32 42h8M32 50h8" opacity=".4" stroke-width="1"/>' +
+      // buttresses
+      '<path d="M16 48h4M60 48h4M16 60h4M60 60h4" opacity=".45"/>' +
+      // stone courses
+      '<path d="M16 44h48M16 56h48" opacity=".28" stroke-width="1"/>' +
+      // roof ridge
+      '<path d="M16 28h48" stroke-width="1.3"/>',
     hero:
-      '<path d="M32 66h136" opacity=".35"/><path d="M48 66V18h104v48"/><path d="M56 18V8h24v10M120 18V8h24v10"/><path d="M100 2v12"/><path d="M68 36h64v10H68z" opacity=".45"/>',
+      '<path d="M24 82h192" opacity=".35"/><path d="M48 82V24h144v58"/><path d="M52 24V6h28v18M160 24V6h28v18"/><path d="M60 6l6-8 6 8M168 6l6-8 6 8"/><path d="M96 36c0-12 8-18 16-18s16 6 16 18v28H96V36z" opacity=".55"/><path d="M48 48h144M48 64h144" opacity=".3"/>',
   },
   oxford: {
     label: 'Radcliffe Camera',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><circle cx="24" cy="24" r="11" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 42V30h18v12"/><path d="M24 10v4"/>',
+      HATCH.ground +
+      // circular drum
+      '<circle cx="40" cy="40" r="22" stroke-width="1.6"/>' +
+      // dome
+      '<path d="M22 34c4-16 12-24 18-24s14 8 18 24" stroke-width="1.4"/>' +
+      '<path d="M40 8v6" stroke-width="1.2"/>' +
+      // colonnade / pilasters
+      '<path d="M22 40v18M30 36v22M40 34v24M50 36v22M58 40v18" opacity=".45" stroke-width="1.1"/>' +
+      // base podium
+      '<path d="M20 58h40v14H20z"/>' +
+      // windows between columns
+      '<path d="M25 44h3v6M35 42h3v6M45 42h3v6M55 44h3v6" opacity=".5" stroke-width="1"/>' +
+      // dome ribs
+      '<path d="M28 22c4 6 8 10 12 12M52 22c-4 6-8 10-12 12" opacity=".35" stroke-width="1"/>' +
+      // steps
+      '<path d="M24 66h32M26 70h28" opacity=".4" stroke-width="1"/>',
     hero:
-      '<path d="M32 66h136" opacity=".35"/><circle cx="100" cy="30" r="34" fill="none" stroke="currentColor" stroke-width="5"/><path d="M66 66V38h68v28"/><path d="M100 4v10"/>',
+      '<path d="M24 82h192" opacity=".35"/><circle cx="120" cy="42" r="36"/><path d="M90 34c8-28 20-40 30-40s22 12 30 40"/><path d="M120 2v8"/><path d="M88 42v28M100 36v34M120 32v38M140 36v34M152 42v28" opacity=".45"/><path d="M84 70h72v12H84z"/>',
   },
   chester: {
     label: 'Eastgate Clock',
     chip:
-      '<path d="M4 42h40" opacity=".28"/><path d="M14 42V20h20v22"/><path d="M16 20h16v5H16z"/><circle cx="24" cy="26" r="3.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M22 42V36h4v6"/>',
+      HATCH.ground +
+      // arch gateway
+      '<path d="M18 72V36h44v36"/>' +
+      '<path d="M26 72V48c0-8 4-12 14-12s14 4 14 12v24" opacity=".55" stroke-width="1.3"/>' +
+      // clock pavilion
+      '<path d="M24 36h32v14H24z"/>' +
+      '<circle cx="40" cy="43" r="6" stroke-width="1.3"/>' +
+      '<path d="M40 43v-4M40 43l3 2" stroke-width="1.1"/>' +
+      // roof / cupola
+      '<path d="M28 36l4-8h16l4 8"/>' +
+      '<path d="M40 28v-4M36 26h8" stroke-width="1.2"/>' +
+      // wrought iron suggestion
+      '<path d="M30 52h4M46 52h4M32 58h3M45 58h3" opacity=".4" stroke-width="1"/>' +
+      // stone hatch
+      '<path d="M20 44l3 3M20 54l3 3M20 64l3 3M57 44l3 3M57 54l3 3M57 64l3 3" opacity=".25" stroke-width=".85"/>',
     hero:
-      '<path d="M16 66h168" opacity=".35"/><path d="M64 66V24h72v42"/><path d="M72 24h56v14H72z"/><circle cx="100" cy="40" r="10" fill="none" stroke="currentColor" stroke-width="3"/><path d="M88 66V52h24v14"/>',
+      '<path d="M20 82h200" opacity=".35"/><path d="M60 82V32h120v50"/><path d="M80 82V50c0-14 10-22 40-22s40 8 40 22v32" opacity=".55"/><path d="M72 32h96v28H72z"/><circle cx="120" cy="46" r="12"/><path d="M120 46v-8M120 46l6 4"/><path d="M84 32l10-16h52l10 16"/>',
   },
 };
 
@@ -169,7 +484,7 @@ const LANDMARK_BY_REGION = {
   'north-london': 'alexandra-palace',
   'south-london': 'o2-arena',
   'east-london': 'tower-bridge',
-  'west-london': 'west-london-w',
+  'west-london': 'battersea',
   manchester: 'manchester',
   birmingham: 'birmingham',
   glasgow: 'glasgow',
