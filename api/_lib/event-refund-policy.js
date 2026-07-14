@@ -112,10 +112,21 @@ function validateRefundPublishPayload(refundPayload) {
 }
 
 function formatRefundPolicyLabel(eventRow) {
-  const policy = normalizeEventRefundRow(eventRow).refund_policy;
+  const normalized = normalizeEventRefundRow(eventRow);
+  const policy = normalized.refund_policy;
+  if (policy === 'full_refund' && normalized.refund_cutoff_days === 1) return 'Flexible refunds';
+  if (policy === 'full_refund' && normalized.refund_cutoff_days === 3) return 'Strict refunds';
   if (policy === 'full_refund') return 'Full refunds available';
   if (policy === 'partial_refund') return 'Partial refunds';
   if (policy === 'no_refunds') return 'No refunds';
+  if (
+    policy === 'custom' &&
+    /^100% refund up to 7 days before the event; 50% refund up to 48 hours before/i.test(
+      normalized.refund_policy_details
+    )
+  ) {
+    return 'Moderate refunds';
+  }
   if (policy === 'custom') return 'Refund policy';
   return '';
 }

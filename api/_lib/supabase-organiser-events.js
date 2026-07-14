@@ -1319,6 +1319,30 @@ async function createTicketsForEvents({
 
   await assertTicketsEditableForEvents(sb, ids);
 
+  const { data: eventRows, error: eventRowsErr } = await sb
+    .from('events')
+    .select('id, starts_at')
+    .in('id', ids);
+  if (eventRowsErr) throw new Error(eventRowsErr.message);
+  const startsByEventId = new Map((eventRows || []).map((row) => [row.id, row.starts_at || null]));
+
+  if (publish) {
+    const missingSaleEnd = ids.some((eventId) => {
+      const eventStartsAt = startsByEventId.get(eventId) || null;
+      return tiers.some((tier) => {
+        const ticketType = String(tier?.ticketType || tier?.ticket_type || '').trim();
+        if (/guest-visit/i.test(ticketType)) return false;
+        return !resolveTierSaleEnd(tier, eventStartsAt);
+      });
+    });
+    if (missingSaleEnd) {
+      const e = new Error('Choose a valid sale end for every ticket tier before publishing.');
+      e.status = 400;
+      e.code = 'ticket_sale_end_required';
+      throw e;
+    }
+  }
+
   if (vatTreatment) {
     await updateEventVatTreatment(ids, vatTreatment);
   }
@@ -1328,13 +1352,6 @@ async function createTicketsForEvents({
 
   const { error: alumniFlagErr } = await sb.from('events').update(alumniEventUpdate).in('id', ids);
   if (alumniFlagErr) throw new Error(alumniFlagErr.message);
-
-  const { data: eventRows, error: eventRowsErr } = await sb
-    .from('events')
-    .select('id, starts_at')
-    .in('id', ids);
-  if (eventRowsErr) throw new Error(eventRowsErr.message);
-  const startsByEventId = new Map((eventRows || []).map((row) => [row.id, row.starts_at || null]));
 
   const out = [];
   for (const eventId of ids) {

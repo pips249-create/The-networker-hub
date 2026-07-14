@@ -401,6 +401,7 @@ a.ee-wizard-link:hover {
   display: block;
   margin-top: 0;
   text-align: left;
+  max-width: 520px;
 }
 
 .ee-photo-preview[hidden] {
@@ -411,15 +412,24 @@ a.ee-wizard-link:hover {
   display: none !important;
 }
 
+.ee-photo-crop-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ee-text-mid);
+}
+
 .ee-photo-frame {
   position: relative;
   width: 100%;
-  max-width: 520px;
   aspect-ratio: 16 / 10;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
   background: #e8eef0;
   border: 1px solid var(--ee-border);
+  box-shadow: 0 1px 2px rgba(28, 32, 64, 0.04);
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -463,41 +473,49 @@ a.ee-wizard-link:hover {
 .ee-photo-frame-hint {
   position: absolute;
   z-index: 1;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 12px;
+  bottom: 12px;
+  right: auto;
+  transform: none;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: #fff;
-  background: rgba(26, 46, 59, 0.72);
-  padding: 6px 12px;
-  border-radius: 999px;
+  background: rgba(26, 46, 59, 0.78);
+  padding: 7px 12px;
+  border-radius: 8px;
   pointer-events: none;
   white-space: nowrap;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.ee-photo-frame:hover .ee-photo-frame-hint,
+.ee-photo-frame:focus-visible .ee-photo-frame-hint,
+.ee-photo-frame.is-dragging .ee-photo-frame-hint {
+  opacity: 1;
 }
 
 .ee-photo-frame.is-dragging .ee-photo-frame-hint {
-  opacity: 0;
+  background: rgba(26, 46, 59, 0.9);
 }
 
 .ee-photo-preview-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 10px;
-  max-width: 520px;
+  margin-top: 12px;
 }
 
 .ee-photo-preview-actions .ee-btn {
   font-size: 12px;
-  padding: 7px 12px;
+  padding: 8px 12px;
 }
 
 .ee-photo-preview-hint {
   margin: 8px 0 0;
-  max-width: 520px;
+  line-height: 1.45;
 }
 
 .ee-upload-placeholder strong {

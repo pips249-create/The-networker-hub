@@ -34,6 +34,13 @@
     { value: '1_week', label: '1 week before the event' },
     { value: 'custom', label: 'Custom date & time' },
   ];
+  const MODERATE_REFUND_DETAILS =
+    '100% refund up to 7 days before the event; 50% refund up to 48 hours before the event.';
+  const REFUND_PRESETS = {
+    flexible: { refundPolicy: 'full_refund', refundCutoffDays: 1 },
+    moderate: { refundPolicy: 'custom', refundPolicyDetails: MODERATE_REFUND_DETAILS },
+    strict: { refundPolicy: 'full_refund', refundCutoffDays: 3 },
+  };
 
   function esc(s) {
     const d = document.createElement('div');
@@ -374,10 +381,8 @@
   }
 
   function setAttendanceMode(mode) {
-    const requested = mode === 'guest_programme' || mode === 'tickets' || mode === 'category_exclusivity'
-      ? mode
-      : 'tickets';
-    const isCategory = requested === 'category_exclusivity';
+    const requested = mode === 'guest_programme' ? mode : 'tickets';
+    const isCategory = false;
     const isGuest = requested === 'guest_programme';
 
     if (!isCategory) {
@@ -398,31 +403,20 @@
     });
 
     const ticketsPanel = document.getElementById('ee-panel-tickets');
-    const categoryExclusivityPanel = document.getElementById('ee-panel-category-exclusivity');
     const guestAddon = document.getElementById('ee-guest-addon');
     const guestFields = document.getElementById('ee-guest-programme-fields');
     const guestNote = document.getElementById('ee-guest-programme-note');
     const guestPassesOptOut = document.getElementById('ee-guest-passes-opt-out');
-    const alumniPanel = document.getElementById('ee-panel-alumni-fast-pass');
     const panelTitle = document.getElementById('ee-tickets-panel-title');
     const desc = document.getElementById('ee-mode-desc');
     const openBooking = isOpenBookingMode(attendanceMode);
     const guestOn = attendanceMode === 'guest_programme';
 
     if (ticketsPanel) ticketsPanel.hidden = !openBooking;
-    if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = !isCategory;
     if (guestAddon) guestAddon.hidden = !openBooking;
     if (guestFields) guestFields.hidden = !guestOn;
     if (guestNote) guestNote.hidden = !guestOn;
     if (guestPassesOptOut) guestPassesOptOut.hidden = !guestOn;
-    // Alumni Fast-Pass is not shipping yet — keep the panel hidden in all modes.
-    if (alumniPanel) alumniPanel.hidden = true;
-    {
-      const alumniEnabled = document.getElementById('ee-alumni-enabled');
-      const alumniFields = document.getElementById('ee-alumni-fields');
-      if (alumniEnabled) alumniEnabled.checked = false;
-      if (alumniFields) alumniFields.hidden = true;
-    }
     if (panelTitle) {
       panelTitle.textContent = guestOn ? 'Member ticket types' : 'Ticket types';
     }
@@ -694,21 +688,20 @@
       if (vatRadio) selectVatCard(vatRadio);
     }
     if (ev.refundPolicy) {
-      const editablePolicy = ev.refundPolicy === 'partial_refund' ? 'custom' : ev.refundPolicy;
+      let editablePolicy = '';
+      const cutoff = Number(ev.refundCutoffDays);
+      if (ev.refundPolicy === 'full_refund' && cutoff === 1) editablePolicy = 'flexible';
+      else if (ev.refundPolicy === 'full_refund' && cutoff === 3) editablePolicy = 'strict';
+      else if (
+        (ev.refundPolicy === 'custom' || ev.refundPolicy === 'partial_refund') &&
+        String(ev.refundPolicyDetails || '').trim() === MODERATE_REFUND_DETAILS
+      ) {
+        editablePolicy = 'moderate';
+      }
       const refundRadio = document.querySelector(
         'input[name="refund-policy"][value="' + editablePolicy + '"]'
       );
       if (refundRadio) selectRefundCard(refundRadio);
-    }
-    if (ev.refundCutoffDays != null) {
-      const cutoff = document.getElementById('refund-cutoff-days');
-      if (cutoff) cutoff.value = String(ev.refundCutoffDays);
-    }
-    if (ev.refundPolicyDetails) {
-      if (ev.refundPolicy === 'partial_refund' || ev.refundPolicy === 'custom') {
-        const el = document.getElementById('refund-custom-details');
-        if (el) el.value = ev.refundPolicyDetails;
-      }
     }
     if (ev.refundTermsAgreed) {
       const agree = document.getElementById('refund-terms-agreed');
@@ -743,7 +736,6 @@
   }
 
   function collectActiveTiers() {
-    if (attendanceMode === 'category_exclusivity') return collectCategoryExclusivityTiers();
     return collectTiers();
   }
 
@@ -819,21 +811,21 @@
   }
 
   function collectRefundPayload() {
-    const policy =
+    const presetKey =
       selectedRefundPolicy ||
       document.querySelector('input[name="refund-policy"]:checked')?.value ||
       '';
     const agreed = document.getElementById('refund-terms-agreed')?.checked;
-    const payload = {
-      refundPolicy: policy,
+    const preset = REFUND_PRESETS[presetKey];
+    return {
+      ...(preset || {}),
+      refundPreset: presetKey,
       refundTermsAgreed: agreed,
     };
-    if (policy === 'full_refund') {
-      payload.refundCutoffDays = Number(document.getElementById('refund-cutoff-days')?.value) || 0;
-    } else if (policy === 'custom') {
-      payload.refundPolicyDetails = document.getElementById('refund-custom-details')?.value.trim() || '';
-    }
-    return payload;
+  }
+
+  function tiersHaveRequiredSaleEnds(tiers) {
+    return (tiers || []).length > 0 && tiers.every((tier) => Boolean(tier.saleEnd));
   }
 
   function tiersHavePaidPrice(tiers) {
@@ -860,10 +852,8 @@
         savedAt: Date.now(),
         eventIds: eventIds.slice(),
         attendanceMode: attendanceMode,
-        alumniFastPass: collectAlumniFastPass(),
         guestPassesDisabled: collectGuestPassesDisabled(),
-        tiers:
-          attendanceMode === 'category_exclusivity' ? collectCategoryExclusivityTiers() : collectTiers(),
+        tiers: collectTiers(),
         vatTreatment: collectVatTreatment(),
         refund: collectRefundPayload(),
         foodOrDrinkIncluded: !!document.getElementById('ee-food-included')?.checked,
@@ -896,10 +886,7 @@
 
   function restoreTicketDraft(draft) {
     if (!draft || typeof draft !== 'object') return false;
-    if (draft.attendanceMode === 'category_exclusivity') {
-      setAttendanceMode('category_exclusivity');
-      if (Array.isArray(draft.tiers) && draft.tiers[0]) prefillCategoryExclusivityFromTicket(draft.tiers[0]);
-    } else if (draft.attendanceMode === 'guest_programme') {
+    if (draft.attendanceMode === 'guest_programme') {
       setAttendanceMode('guest_programme');
       if (Array.isArray(draft.tiers) && draft.tiers.length) prefillTiers(draft.tiers);
     } else if (Array.isArray(draft.tiers) && draft.tiers.length) {
@@ -907,9 +894,6 @@
       prefillTiers(draft.tiers);
     } else {
       return false;
-    }
-    if (draft.alumniFastPass) {
-      // Alumni Fast-Pass UI is hidden until the feature ships — ignore draft alumni state.
     }
     if (draft.guestPassesDisabled != null) {
       const guestEl = document.getElementById('ee-guest-passes-disabled');
@@ -924,7 +908,19 @@
     }
     if (draft.refund && draft.refund.refundPolicy) {
       const draftPolicyVal = String(draft.refund.refundPolicy);
-      const policyVal = draftPolicyVal === 'partial_refund' ? 'custom' : draftPolicyVal;
+      const cutoff = Number(draft.refund.refundCutoffDays);
+      let policyVal = String(draft.refund.refundPreset || '');
+      if (!REFUND_PRESETS[policyVal] && draftPolicyVal === 'full_refund' && cutoff === 1) {
+        policyVal = 'flexible';
+      } else if (!REFUND_PRESETS[policyVal] && draftPolicyVal === 'full_refund' && cutoff === 3) {
+        policyVal = 'strict';
+      } else if (
+        !REFUND_PRESETS[policyVal] &&
+        (draftPolicyVal === 'custom' || draftPolicyVal === 'partial_refund') &&
+        String(draft.refund.refundPolicyDetails || '').trim() === MODERATE_REFUND_DETAILS
+      ) {
+        policyVal = 'moderate';
+      }
       selectedRefundPolicy = policyVal;
       const policyRadio = Array.from(document.querySelectorAll('input[name="refund-policy"]')).find(
         (el) => el.value === policyVal
@@ -932,14 +928,6 @@
       if (policyRadio) selectRefundCard(policyRadio);
       const agree = document.getElementById('refund-terms-agreed');
       if (agree && draft.refund.refundTermsAgreed) agree.checked = true;
-      const custom = document.getElementById('refund-custom-details');
-      if (
-        custom &&
-        draft.refund.refundPolicyDetails &&
-        (draftPolicyVal === 'partial_refund' || policyVal === 'custom')
-      ) {
-        custom.value = draft.refund.refundPolicyDetails;
-      }
     }
     const food = document.getElementById('ee-food-included');
     if (food) food.checked = !!draft.foodOrDrinkIncluded;
@@ -1054,7 +1042,11 @@
         window.HubOrganiserPaymentSetup &&
         window.HubOrganiserPaymentSetup.groupNeedsSetup(paymentSetupState, paymentGroupForSeries());
       const ready =
-        tiers.length > 0 && vat && refund.refundPolicy && refund.refundTermsAgreed && !paymentNeeded;
+        tiersHaveRequiredSaleEnds(tiers) &&
+        vat &&
+        refund.refundPolicy &&
+        refund.refundTermsAgreed &&
+        !paymentNeeded;
       btn.disabled = !ready;
       refreshPaymentSetupCard(tiers);
       if (warn) {
@@ -1141,10 +1133,6 @@
     });
     const agree = document.getElementById('refund-terms-agreed');
     if (agree) agree.addEventListener('change', updatePublishButton);
-    ['refund-cutoff-days', 'refund-custom-details'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener('input', updatePublishButton);
-    });
   }
 
   function formatCloseLabel(iso) {
@@ -1376,8 +1364,6 @@
 
   async function init() {
     loadSeriesMeta();
-    bindCategoryExclusivityCloseFields();
-    bindAlumniFastPassFields();
     bindGuestPassesFields();
     if (!eventIds.length) {
       showAlert('No events in this series. Go back and save your event dates first.', 'warn');
@@ -1441,8 +1427,6 @@
       }
       if (loaded.event.attendanceMode === 'guest_programme') {
         setAttendanceMode('guest_programme');
-      } else if (loaded.event.attendanceMode === 'category_exclusivity') {
-        setAttendanceMode('category_exclusivity');
       }
       prefillGuestPassesDisabled(loaded.event);
       prefillRefundFromEvent(loaded.event);
@@ -1470,8 +1454,6 @@
     if (restoredDraft) {
       showAlert('Restored your ticket details from before bank setup. Review them, then publish when ready.', 'ok');
     } else if (loaded.tickets.length) {
-      const categoryExclusivityTicket = loaded.tickets.find(isCategoryExclusivityTicket);
-      const alumniTicket = loaded.tickets.find(isAlumniTicket);
       const memberTickets = loaded.tickets.filter((t) => !isGuestVisitTicket(t) && !isAlumniTicket(t));
       if (loaded.event && loaded.event.attendanceMode === 'guest_programme') {
         setAttendanceMode('guest_programme');
@@ -1481,12 +1463,8 @@
           'Loaded your guest visit programme member tickets. Saving will update all dates in this series.',
           'ok'
         );
-      } else if (categoryExclusivityTicket) {
-        prefillCategoryExclusivityFromTicket(categoryExclusivityTicket);
-        showAlert('Loaded your Category Exclusivity settings. Saving will update all dates in this series.', 'ok');
       } else {
         prefillTiers(memberTickets.length ? memberTickets : loaded.tickets);
-        prefillAlumniFastPass(loaded.event, alumniTicket);
         showAlert(
           'Loaded ' +
             loaded.tickets.length +
@@ -1501,10 +1479,6 @@
     }
 
     document.getElementById('ee-add-tier').addEventListener('click', () => addTierRow({ useDefaultName: false }));
-    document.getElementById('ee-mode-tickets').addEventListener('click', () => {
-      setAttendanceMode(resolveOpenBookingMode());
-      updatePublishButton();
-    });
     document.getElementById('ee-guest-programme-enabled')?.addEventListener('change', () => {
       if (attendanceMode === 'category_exclusivity') return;
       setAttendanceMode(resolveOpenBookingMode());
@@ -1523,14 +1497,8 @@
         updatePublishButton();
       });
     }
-    document.getElementById('ee-mode-category-exclusivity').addEventListener('click', () => {
-      setAttendanceMode('category_exclusivity');
-      updatePublishButton();
-    });
     bindRefundPolicy();
     bindVatOptions();
-    document.getElementById('ee-ce-price')?.addEventListener('input', updatePublishButton);
-    document.getElementById('ee-ce-price')?.addEventListener('change', updatePublishButton);
     updatePublishButton();
 
     if (!loaded.tickets.length && window.HubFlowTour && !isEmbedDrawer) {
@@ -1582,6 +1550,20 @@
     }
     if (!eventIds.length) {
       showAlert('No events to attach tickets to.');
+      return;
+    }
+    if (publish && !tiersHaveRequiredSaleEnds(tiers)) {
+      showAlert('Choose a valid sale end for every ticket tier before publishing.', 'warn');
+      const missing = Array.from(document.querySelectorAll('.ee-tier-row')).find((row) => {
+        const option = row.querySelector('.ee-tier-sale-end')?.value;
+        if (option !== 'custom') return false;
+        return !row.querySelector('.ee-tier-sale-custom-date')?.value;
+      });
+      (missing || document.getElementById('ee-panel-tickets'))?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+      updatePublishButton();
       return;
     }
 
@@ -1683,7 +1665,6 @@
       tickets: tiers,
       publish,
       attendanceMode,
-      alumniFastPass: isOpenBookingMode(attendanceMode) ? collectAlumniFastPass() : { enabled: false },
       guestPassesDisabled: collectGuestPassesDisabled(),
       vatTreatment: collectVatTreatment(),
       attendeeExtras: attendeeExtras(),
@@ -1802,7 +1783,19 @@
     clearTicketDraft();
 
     if (isEmbedDrawer && window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'hub-event-tickets-done' }, window.location.origin);
+      window.parent.postMessage(
+        {
+          type: 'hub-event-tickets-done',
+          eventIds: eventIds.slice(),
+          eventId: eventIds[0] || '',
+          title: seriesMeta.title || '',
+          imageUrl:
+            seriesMeta.imageUrl ||
+            (seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].imageUrl) ||
+            '',
+        },
+        window.location.origin
+      );
       return;
     }
 

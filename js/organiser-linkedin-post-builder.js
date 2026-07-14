@@ -8,6 +8,20 @@
 
   var TEMPLATES = [
     {
+      id: 'new_event',
+      label: 'New event announcement',
+      group: 'events',
+      groupLabel: 'Events & group',
+      theme: 'event_spotlight',
+      accent: '#9a7aa8',
+      kicker: 'NEW EVENT',
+      line1: 'We have just added',
+      line2: 'a new event',
+      line3: 'Book your place on The Networker Hub',
+      caption:
+        "We've just added a new event: {eventTitle}\n\n{dateLine}{locationLine}Buy tickets now on The Networker Hub:\n{url}",
+    },
+    {
       id: 'events',
       label: 'Room full of referrals',
       group: 'events',
@@ -179,6 +193,18 @@
     ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
   }
 
+  function drawCoverImage(ctx, img, x, y, w, h) {
+    if (!img) return;
+    var scale = Math.max(w / img.width, h / img.height);
+    var dw = img.width * scale;
+    var dh = img.height * scale;
+    ctx.save();
+    roundRect(ctx, x, y, w, h, 22);
+    ctx.clip();
+    ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+    ctx.restore();
+  }
+
   function wrapText(ctx, text, maxWidth) {
     var words = String(text || '').split(/\s+/).filter(Boolean);
     if (!words.length) return [''];
@@ -214,7 +240,9 @@
     var line3 = String(opts.line3 != null ? opts.line3 : tpl.line3).trim();
     var orgLogo = opts.orgLogoImg || null;
     var hubLogo = opts.hubLogoImg || null;
+    var eventImage = opts.eventImageImg || null;
     var isOpp = tpl.theme === 'opportunity' || tpl.group === 'opportunities';
+    var isEventSpotlight = tpl.theme === 'event_spotlight';
     var quietBrand = Boolean(opts.quietBrand);
 
     var g = ctx.createLinearGradient(0, 0, W, H);
@@ -297,6 +325,41 @@
       }
     }
 
+    if (isEventSpotlight && !quietBrand) {
+      var coverY = 310;
+      var coverH = eventImage ? 410 : 0;
+      if (eventImage) {
+        drawCoverImage(ctx, eventImage, 72, coverY, 1056, coverH);
+      }
+      var spotlightTextY = eventImage ? 780 : 390;
+      ctx.fillStyle = kickerColor;
+      ctx.font = '700 22px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.fillText(String(tpl.kicker || '').toUpperCase(), 72, spotlightTextY);
+      ctx.fillStyle = titleColor;
+      ctx.font = '400 62px "DM Serif Display", Georgia, "Times New Roman", serif';
+      var eventTitleLines = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), 1000);
+      var eventY = spotlightTextY + 70;
+      for (var et = 0; et < Math.min(3, eventTitleLines.length); et++) {
+        ctx.fillText(eventTitleLines[et], 72, eventY);
+        eventY += 68;
+      }
+      ctx.fillStyle = subColor;
+      ctx.font = '400 27px "DM Sans", Arial, Helvetica, sans-serif';
+      var eventSubLines = wrapText(ctx, line3, 820);
+      eventY += 12;
+      for (var es = 0; es < Math.min(2, eventSubLines.length); es++) {
+        ctx.fillText(eventSubLines[es], 72, eventY);
+        eventY += 36;
+      }
+      if (hubLogo) drawContainedImage(ctx, hubLogo, W - 230, H - 116, 170, 46);
+      ctx.fillStyle = creditColor;
+      ctx.font = '400 18px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('on The Networker Hub', W - 145, H - 42);
+      ctx.textAlign = 'left';
+      return;
+    }
+
     var textY = quietBrand ? 340 : 500;
     ctx.fillStyle = kickerColor;
     ctx.font = '700 22px "DM Sans", Arial, Helvetica, sans-serif';
@@ -357,6 +420,36 @@
     return status === 'published' || status === 'live';
   }
 
+  function isPublishedEvent(ev) {
+    if (!ev) return false;
+    var status = String(ev.status || ev.listingStatus || '').toLowerCase();
+    return status === 'published' || status === 'live';
+  }
+
+  function eventPublicUrl(ev) {
+    var origin = siteOrigin();
+    if (!ev) return origin + '/events';
+    var slug = String(ev.slug || '').trim();
+    if (slug && !/^[0-9a-f-]{36}$/i.test(slug)) {
+      return origin + '/events/' + encodeURIComponent(slug);
+    }
+    if (ev.id) return origin + '/events/event?id=' + encodeURIComponent(ev.id);
+    return origin + '/events';
+  }
+
+  function eventDateLine(ev) {
+    var raw = ev && (ev.date || ev.startsAt || ev.starts_at);
+    if (!raw) return '';
+    var d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return String(raw);
+    return d.toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  }
+
   function opportunityPublicUrl(o) {
     var origin = siteOrigin();
     if (!o) return origin + '/opportunities/';
@@ -391,6 +484,9 @@
     return raw
       .replace(/\{listing\}/g, listing)
       .replace(/\{name\}/g, name)
+      .replace(/\{eventTitle\}/g, o.eventTitle || listing)
+      .replace(/\{dateLine\}/g, o.dateLine ? o.dateLine + '\n' : '')
+      .replace(/\{locationLine\}/g, o.location ? o.location + '\n\n' : '\n')
       .replace(/\{url\}/g, url);
   }
 
@@ -409,11 +505,18 @@
         : function () {
             return [];
           };
+    var getEvents =
+      typeof opts.getEvents === 'function'
+        ? opts.getEvents
+        : function () {
+            return [];
+          };
 
     var state = {
       templateId: TEMPLATES[0].id,
       groupId: '',
       opportunityId: '',
+      eventId: '',
       displayName: '',
       line1: TEMPLATES[0].line1,
       line2: TEMPLATES[0].line2,
@@ -423,6 +526,8 @@
       hubLogoImg: null,
       hubLogoDarkImg: null,
       orgLogoImg: null,
+      eventImageImg: null,
+      eventImageUrl: '',
       rendering: false,
     };
 
@@ -488,6 +593,11 @@
       '<span class="org-post-label">Organiser page</span>' +
       '<select id="post-group" aria-label="Organiser page"></select>' +
       '</label>' +
+      '<label class="org-post-field" id="post-event-field" hidden>' +
+      '<span class="org-post-label">Published event</span>' +
+      '<select id="post-event" aria-label="Published event"></select>' +
+      '<span class="org-post-hint">Uses the event photo, listing link and event details.</span>' +
+      '</label>' +
       '<label class="org-post-field" id="post-listing-field" hidden>' +
       '<span class="org-post-label">Live listing</span>' +
       '<select id="post-listing" aria-label="Business opportunity listing"></select>' +
@@ -540,6 +650,8 @@
       '</div>';
 
     var elGroup = root.querySelector('#post-group');
+    var elEventField = root.querySelector('#post-event-field');
+    var elEvent = root.querySelector('#post-event');
     var elListingField = root.querySelector('#post-listing-field');
     var elListing = root.querySelector('#post-listing');
     var elName = root.querySelector('#post-name');
@@ -567,8 +679,17 @@
       return tpl.theme === 'opportunity' || tpl.group === 'opportunities';
     }
 
+    function isEventTemplate(tpl) {
+      tpl = tpl || currentTemplate();
+      return tpl.theme === 'event_spotlight';
+    }
+
     function publishedListings() {
       return (getOpportunities() || []).filter(isPublishedOpportunity);
+    }
+
+    function publishedEvents() {
+      return (getEvents() || []).filter(isPublishedEvent);
     }
 
     function hasLiveListings() {
@@ -592,6 +713,14 @@
       );
     }
 
+    function currentEvent() {
+      return (
+        publishedEvents().find(function (ev) {
+          return String(ev.id) === String(state.eventId);
+        }) || null
+      );
+    }
+
     function setStatus(msg, isError) {
       elStatus.textContent = msg || '';
       elStatus.classList.toggle('is-error', Boolean(isError));
@@ -601,7 +730,18 @@
       var tpl = currentTemplate();
       var group = currentGroup() || { id: state.groupId };
       var listing = currentListing();
+      var event = currentEvent();
       var name = state.displayName || elName.value || 'Our group';
+      if (isEventTemplate(tpl) && event) {
+        return {
+          name: name,
+          listingTitle: event.title || name,
+          eventTitle: event.title || 'Our event',
+          dateLine: eventDateLine(event),
+          location: event.location || event.venue || '',
+          url: eventPublicUrl(event),
+        };
+      }
       if (isOppTemplate(tpl) && listing) {
         return {
           name: name,
@@ -665,6 +805,40 @@
       }
     }
 
+    function syncEventField() {
+      var show = isEventTemplate();
+      elEventField.hidden = !show;
+      if (!show) return;
+      var list = publishedEvents();
+      var prev = state.eventId;
+      elEvent.innerHTML = '';
+      if (!list.length) {
+        var empty = document.createElement('option');
+        empty.value = '';
+        empty.textContent = 'No published events yet';
+        elEvent.appendChild(empty);
+        state.eventId = '';
+        return;
+      }
+      list.forEach(function (ev, idx) {
+        var option = document.createElement('option');
+        option.value = ev.id;
+        option.textContent = ev.title || 'Untitled event';
+        elEvent.appendChild(option);
+        if (!prev && idx === 0) state.eventId = ev.id;
+      });
+      if (
+        prev &&
+        list.some(function (ev) {
+          return String(ev.id) === String(prev);
+        })
+      ) {
+        state.eventId = prev;
+      }
+      elEvent.value = state.eventId || list[0].id;
+      state.eventId = elEvent.value;
+    }
+
     function resolveLogoUrl() {
       var listing = isOppTemplate() ? currentListing() : null;
       if (listing && (listing.logoUrl || listing.imageUrl)) {
@@ -672,6 +846,26 @@
       }
       var g = currentGroup();
       return (g && g.imageUrl) || state.orgLogoUrl || '';
+    }
+
+    function applyEventToFields() {
+      var event = currentEvent();
+      if (!event) return;
+      var eventGroupId = event.organiserGroupId || event.organiser_id || event.groupId || '';
+      if (eventGroupId) {
+        state.groupId = String(eventGroupId);
+        elGroup.value = state.groupId;
+      }
+      state.line1 = event.title || 'New event';
+      state.line2 = eventDateLine(event);
+      state.line3 =
+        [event.location || event.venue || '', 'Buy tickets now'].filter(Boolean).join(' · ');
+      elLine1.value = state.line1;
+      elLine2.value = state.line2;
+      elLine3.value = state.line3;
+      state.eventImageUrl = event.imageUrl || event.photoUrl || event.photo_url || '';
+      state.eventImageImg = null;
+      applyGroupToFields(false);
     }
 
     function syncThumbSelection() {
@@ -737,6 +931,10 @@
       }
       if (resetCopy) {
         var tpl = currentTemplate();
+        if (isEventTemplate(tpl) && currentEvent()) {
+          applyEventToFields();
+          return;
+        }
         state.line1 = tpl.line1;
         state.line2 = tpl.line2;
         state.line3 = tpl.line3;
@@ -840,6 +1038,29 @@
       return state.orgLogoImg;
     }
 
+    async function ensureEventImage() {
+      if (!isEventTemplate()) {
+        state.eventImageImg = null;
+        return null;
+      }
+      var event = currentEvent();
+      var url =
+        (event && (event.imageUrl || event.photoUrl || event.photo_url)) || state.eventImageUrl || '';
+      if (!url) {
+        state.eventImageImg = null;
+        return null;
+      }
+      if (state.eventImageImg && state.eventImageUrl === url) return state.eventImageImg;
+      state.eventImageUrl = url;
+      try {
+        state.eventImageImg = await loadImage(url, true);
+      } catch (e) {
+        state.eventImageImg = null;
+        setStatus('The event photo could not be loaded into the post preview.', true);
+      }
+      return state.eventImageImg;
+    }
+
     function paintOpts(tpl, quietBrand, hubImg) {
       return {
         template: tpl,
@@ -848,6 +1069,7 @@
         line2: quietBrand ? tpl.line2 : state.line2,
         line3: quietBrand ? tpl.line3 : state.line3,
         orgLogoImg: quietBrand ? null : state.orgLogoImg,
+        eventImageImg: quietBrand ? null : state.eventImageImg,
         hubLogoImg: hubImg || null,
         quietBrand: quietBrand,
       };
@@ -870,9 +1092,11 @@
       try {
         syncOpportunityGate();
         syncListingField();
+        syncEventField();
         var tpl = currentTemplate();
         var hubImg = await ensureHubLogo(tpl);
         await ensureOrgLogo();
+        await ensureEventImage();
         paintPost(ctx, paintOpts(tpl, false, hubImg));
         updateCaptionPreview();
         syncThumbSelection();
@@ -959,7 +1183,9 @@
       elLine1.value = state.line1;
       elLine2.value = state.line2;
       elLine3.value = state.line3;
-      applyGroupToFields(false);
+      syncEventField();
+      if (isEventTemplate(tpl) && currentEvent()) applyEventToFields();
+      else applyGroupToFields(false);
       refresh();
     }
 
@@ -977,6 +1203,11 @@
     elListing.addEventListener('change', function () {
       state.opportunityId = elListing.value;
       applyGroupToFields(false);
+      refresh();
+    });
+    elEvent.addEventListener('change', function () {
+      state.eventId = elEvent.value;
+      applyEventToFields();
       refresh();
     });
     elName.addEventListener('input', function () {
@@ -1024,6 +1255,7 @@
       syncGroupOptions();
       syncOpportunityGate();
       syncListingField();
+      syncEventField();
       applyGroupToFields(true);
       elLine1.value = state.line1;
       elLine2.value = state.line2;
@@ -1041,6 +1273,7 @@
         syncGroupOptions();
         syncOpportunityGate();
         syncListingField();
+        syncEventField();
         applyGroupToFields(false);
         refresh();
       },
@@ -1049,6 +1282,14 @@
         syncListingField();
         applyGroupToFields(false);
         refresh();
+      },
+      refreshEvents: function () {
+        syncEventField();
+        refresh();
+      },
+      prefillEvent: function (eventId) {
+        state.eventId = String(eventId || '');
+        selectTemplate('new_event');
       },
       refresh: refresh,
       templates: TEMPLATES,

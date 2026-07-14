@@ -13,10 +13,10 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260714autodraft" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260714photo" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260702" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714pos2" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714photo" />
   </head>
   <body class="organiser-event-edit-page">
     <div id="ee-page-loading" class="ee-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
@@ -135,6 +135,7 @@
               </div>
             </div>
             <div class="ee-photo-preview" id="ee-photo-preview" hidden>
+              <p class="ee-photo-crop-label">Listing card crop</p>
               <div
                 class="ee-photo-frame"
                 id="ee-photo-frame"
@@ -143,14 +144,16 @@
                 tabindex="0"
               >
                 <img id="ee-photo-preview-img" alt="" draggable="false" />
-                <span class="ee-photo-frame-hint" aria-hidden="true">Drag to reposition</span>
+                <span class="ee-photo-frame-hint" id="ee-photo-frame-hint" aria-hidden="true">Drag to reposition</span>
               </div>
               <div class="ee-photo-preview-actions">
                 <button type="button" class="ee-btn ee-btn-outline" id="ee-photo-change">Change photo</button>
-                <button type="button" class="ee-btn ee-btn-outline" id="ee-photo-recentre">Reset position</button>
+                <button type="button" class="ee-btn ee-btn-outline" id="ee-photo-recentre">Centre photo</button>
                 <button type="button" class="ee-btn ee-btn-outline" id="ee-photo-clear">Remove</button>
               </div>
-              <p class="ee-hint ee-photo-preview-hint">Matches listing cards — drag the photo to recentre the crop.</p>
+              <p class="ee-hint ee-photo-preview-hint" id="ee-photo-preview-hint">
+                This is the same crop used on browse cards. Drag the photo to choose what stays in frame.
+              </p>
             </div>
             <input type="url" id="ee-photo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top:10px" />
             <p class="ee-field-hint ee-photo-quality-hint" id="ee-photo-quality-hint" hidden>
@@ -274,6 +277,6 @@
     <script src="../js/meeting-types.js?v=20260609n"></script>
     <script src="../js/organiser-quarter-time.js?v=20260714time"></script>
     <script src="../js/organiser-image-upload.js?v=20260611"></script>
-    <script src="../js/organiser-event-edit.js?v=20260714autodraft"></script>
+    <script src="../js/organiser-event-edit.js?v=20260714photo"></script>
   </body>
 </html>

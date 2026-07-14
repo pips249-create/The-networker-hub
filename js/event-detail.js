@@ -1248,6 +1248,8 @@
       label = '✓ Full refunds available';
       cls = 'is-full';
       const days = ev.refundCutoffDays != null ? ev.refundCutoffDays : ev.refund_cutoff_days;
+      if (Number(days) === 1) label = '✓ Flexible refunds';
+      if (Number(days) === 3) label = 'Strict refunds';
       detailText =
         days != null
           ? 'Full refunds are available up to ' + days + ' day' + (days === 1 ? '' : 's') + ' before the event.'
@@ -1262,9 +1264,14 @@
       detailText =
         'No refund is offered if you change your mind or cannot attend. Your statutory rights still apply if the event is cancelled, materially changed, or not provided as described.';
     } else if (policy === 'custom') {
-      label = 'ℹ Custom refund policy';
+      const policyDetails = ev.refundPolicyDetails || ev.refund_policy_details || '';
+      label = /^100% refund up to 7 days before the event; 50% refund up to 48 hours before/i.test(
+        policyDetails
+      )
+        ? 'Moderate refunds'
+        : 'ℹ Refund policy';
       cls = 'is-custom';
-      detailText = ev.refundPolicyDetails || ev.refund_policy_details || 'See organiser refund policy below.';
+      detailText = policyDetails || 'See organiser refund policy below.';
     } else {
       badge.hidden = true;
       if (details) details.hidden = true;

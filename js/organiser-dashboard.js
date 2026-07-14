@@ -469,10 +469,14 @@
         getOpportunities: function () {
           return state.opportunities || [];
         },
+        getEvents: function () {
+          return state.events || [];
+        },
       });
     } else {
       if (linkedInPostBuilder.refreshGroups) linkedInPostBuilder.refreshGroups();
       if (linkedInPostBuilder.refreshOpportunities) linkedInPostBuilder.refreshOpportunities();
+      if (linkedInPostBuilder.refreshEvents) linkedInPostBuilder.refreshEvents();
     }
   }
 
@@ -8230,9 +8234,25 @@
         return;
       }
       if (e.data && e.data.type === 'hub-event-tickets-done') {
+        const publishedEventId =
+          e.data.eventId || (Array.isArray(e.data.eventIds) ? e.data.eventIds[0] : '') || '';
         closeEventEditorDrawer();
-        loadBootstrap({ silent: true }).then(renderAll);
-        setRoute('events-list');
+        loadBootstrap({ silent: true }).then(function () {
+          renderAll();
+          setRoute('social');
+          ensureLinkedInPostBuilder();
+          if (publishedEventId && linkedInPostBuilder?.prefillEvent) {
+            linkedInPostBuilder.prefillEvent(publishedEventId);
+          }
+          document.getElementById('org-linkedin-posts')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+          showOrganiserAlert(
+            'Your event is live. We created a social post draft in Promote & social.',
+            false
+          );
+        });
         return;
       }
       if (e.data && e.data.type === 'hub-open-stripe-connect' && e.data.url) {

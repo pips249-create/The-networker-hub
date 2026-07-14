@@ -23,11 +23,13 @@
   }
 
   /* Cover crops need a definite height for object-fit / object-position to work. */
+  .organiser-event-edit-page .ee-photo-frame img,
   .ee-photo-frame img,
   .event-grid-img,
   .premium-card-img,
   .hero img {
     height: 100%;
+    max-width: none;
   }
 
   /* iOS Safari zooms focused inputs when font-size is below 16px */

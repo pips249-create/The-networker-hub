@@ -907,8 +907,57 @@
     return { x: Number(m[1]), y: Number(m[2]) };
   }
 
+  function getPhotoCoverOverflow(frame, img) {
+    const fw = frame?.clientWidth || 0;
+    const fh = frame?.clientHeight || 0;
+    const iw = img?.naturalWidth || 0;
+    const ih = img?.naturalHeight || 0;
+    if (!fw || !fh || !iw || !ih) return { ox: 0, oy: 0 };
+    const scale = Math.max(fw / iw, fh / ih);
+    return {
+      ox: Math.max(0, iw * scale - fw),
+      oy: Math.max(0, ih * scale - fh),
+    };
+  }
+
+  function updatePhotoCropHint() {
+    const frame = document.getElementById('ee-photo-frame');
+    const img = document.getElementById('ee-photo-preview-img');
+    const chip = document.getElementById('ee-photo-frame-hint');
+    const help = document.getElementById('ee-photo-preview-hint');
+    if (!frame || !img) return;
+    const { ox, oy } = getPhotoCoverOverflow(frame, img);
+    const canPan = ox > 1 || oy > 1;
+    frame.classList.toggle('is-locked', !canPan);
+    frame.tabIndex = canPan ? 0 : -1;
+    let chipText = 'Drag to reposition';
+    let helpText =
+      'This is the same crop used on browse cards. Drag the photo to choose what stays in frame.';
+    if (!img.naturalWidth) {
+      chipText = 'Loading photo…';
+      helpText = 'Loading your photo for the listing card crop.';
+    } else if (!canPan) {
+      chipText = '';
+      helpText = 'This photo already fills the listing card crop, so there is nothing to drag.';
+    } else if (ox > 1 && oy <= 1) {
+      chipText = 'Drag sideways';
+      helpText =
+        'This wide photo is cropped at the sides. Drag left or right to choose what stays centred on browse cards.';
+    } else if (oy > 1 && ox <= 1) {
+      chipText = 'Drag up or down';
+      helpText =
+        'This tall photo is cropped top and bottom. Drag up or down to choose what stays on browse cards.';
+    }
+    if (chip) {
+      chip.textContent = chipText;
+      chip.hidden = !chipText;
+    }
+    if (help) help.textContent = helpText;
+  }
+
   function bindPhotoReposition() {
     const frame = document.getElementById('ee-photo-frame');
+    const img = document.getElementById('ee-photo-preview-img');
     if (!frame || frame.dataset.repositionBound === '1') return;
     frame.dataset.repositionBound = '1';
     const clamp = (n) => Math.min(100, Math.max(0, Math.round(n)));
@@ -916,12 +965,21 @@
     let moved = false;
     let start = null;
 
+    if (img) {
+      img.addEventListener('load', () => {
+        applyPhotoPosition();
+        updatePhotoCropHint();
+      });
+    }
+
     frame.addEventListener('pointerdown', (e) => {
       if (currentEventLocked || frame.classList.contains('is-locked')) return;
       if (e.button != null && e.button !== 0) return;
+      const overflow = getPhotoCoverOverflow(frame, img);
+      if (overflow.ox <= 1 && overflow.oy <= 1) return;
       dragging = true;
       moved = false;
-      start = { x: e.clientX, y: e.clientY, pos: parsePhotoPosition() };
+      start = { x: e.clientX, y: e.clientY, pos: parsePhotoPosition(), overflow };
       frame.classList.add('is-dragging');
       try {
         frame.setPointerCapture(e.pointerId);
@@ -936,12 +994,12 @@
       const dy = e.clientY - start.y;
       if (!moved && dx * dx + dy * dy < 9) return;
       moved = true;
-      const w = frame.clientWidth || 1;
-      const h = frame.clientHeight || 1;
-      // Dragging the image should move the visible crop with the pointer
-      // (object-position increases toward the opposite edge).
-      const nx = clamp(start.pos.x - (dx / w) * 100);
-      const ny = clamp(start.pos.y - (dy / h) * 100);
+      // Convert pointer movement into object-position using the real cover overflow,
+      // so the photo tracks the finger/cursor 1:1 instead of jumping.
+      const ox = Math.max(start.overflow.ox, 1);
+      const oy = Math.max(start.overflow.oy, 1);
+      const nx = start.overflow.ox > 1 ? clamp(start.pos.x - (dx / ox) * 100) : 50;
+      const ny = start.overflow.oy > 1 ? clamp(start.pos.y - (dy / oy) * 100) : 50;
       setPhotoPosition(nx + '% ' + ny + '%');
     });
     const endDrag = (e) => {
@@ -964,6 +1022,7 @@
       start = null;
       frame.classList.remove('is-dragging');
     });
+    window.addEventListener('resize', () => updatePhotoCropHint());
   }
 
   function bindPhotoUpload() {
@@ -983,6 +1042,8 @@
       if (zone) zone.hidden = true;
       if (placeholder) placeholder.hidden = true;
       applyPhotoPosition();
+      // naturalWidth may still be 0 until load fires; hint updates on img load too.
+      updatePhotoCropHint();
     }
 
     function resetPreview() {
@@ -1044,6 +1105,7 @@
         e.stopPropagation();
         if (currentEventLocked) return;
         setPhotoPosition('');
+        updatePhotoCropHint();
       });
     }
     if (urlInput) {
@@ -1387,6 +1449,7 @@
       if (placeholder) placeholder.hidden = true;
       document.getElementById('ee-photo-url').value = ev.imageUrl;
       setPhotoPosition(ev.imagePosition || '');
+      updatePhotoCropHint();
     }
     selectedDates.clear();
     const datePeers = Array.isArray(rawEv._seriesPeers) && rawEv._seriesPeers.length ? rawEv._seriesPeers : [ev];

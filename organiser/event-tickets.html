@@ -53,24 +53,10 @@
       </div>
 
       <form id="ee-tickets-form">
-        <div class="ee-card">
-          <h2 data-hub-tip="attendance-modes">How would you like to manage attendance?</h2>
-          <p class="ee-hint" style="margin-top:0">
-            Choose open ticket booking or Category Exclusivity. With open booking you can also enable the guest visit programme alongside your ticket types.
-          </p>
-          <div class="ee-mode-toggle" role="group" aria-label="Attendance mode">
-            <button type="button" class="ee-mode-btn is-active" data-mode="tickets" id="ee-mode-tickets">🎟 Ticket types</button>
-            <button type="button" class="ee-mode-btn" data-mode="category_exclusivity" id="ee-mode-category-exclusivity" data-hub-tip="category-exclusivity">🪑 Category Exclusivity</button>
-          </div>
-          <p class="ee-mode-desc" id="ee-mode-desc">
-            Standard open booking — set up one or more ticket types with prices and quantities. Attendees purchase directly.
-          </p>
-        </div>
-
         <div class="ee-card" id="ee-panel-tickets">
           <h2 id="ee-tickets-panel-title">Ticket types</h2>
           <p class="ee-hint" style="margin-top:0">
-            Add one row per tier (e.g. Standard, Early bird). Each tier is copied to all dates above. Set when sales end — especially for early bird pricing. Leave sale start blank and sales begin today.
+            Add one row per tier (e.g. Standard, Early bird). Each tier is copied to all dates above. A sale end is required for every tier. Leave sale start blank and sales begin today.
           </p>
           <p class="ee-tier-summary" id="ee-tier-summary" aria-live="polite">0 ticket types · unlimited available · from £0</p>
           <div id="ee-tier-rows"></div>
@@ -117,87 +103,6 @@
           </div>
         </div>
 
-        <!-- Alumni Fast-Pass UI is not shipping yet — keep hidden until product-ready. -->
-        <div class="ee-card" id="ee-panel-alumni-fast-pass" hidden>
-          <h2 data-hub-tip="alumni-fast-pass" id="ee-panel-alumni-fast-pass-title">Alumni Fast-Pass <span class="ee-optional">(optional)</span></h2>
-          <p class="ee-hint" style="margin-top:0">
-            Offer a hidden alumni ticket for confirmed attendees from a previous event (e.g. last year's conference). Invites are sent from your dashboard with locked booking links.
-          </p>
-          <label class="ee-check">
-            <input type="checkbox" id="ee-alumni-enabled" />
-            <span>Enable Alumni Fast-Pass for this event</span>
-          </label>
-          <div id="ee-alumni-fields" hidden>
-            <div class="ee-row-2" style="margin-top:12px">
-              <div class="ee-field">
-                <label for="ee-alumni-price">Alumni price (£)</label>
-                <p class="ee-hint">Discounted rate for invited past attendees. Enter 0 for free.</p>
-                <input type="number" id="ee-alumni-price" min="0" step="0.01" value="0" />
-              </div>
-              <div class="ee-field">
-                <label for="ee-alumni-qty">Alumni seats <span class="ee-optional">(optional)</span></label>
-                <input type="number" id="ee-alumni-qty" min="1" step="1" placeholder="Unlimited" />
-              </div>
-            </div>
-            <div class="ee-field">
-              <label for="ee-alumni-sale-end-date">Alumni sales end <span class="ee-optional">(optional)</span></label>
-              <div class="ee-datetime-split">
-                <input type="date" id="ee-alumni-sale-end-date" aria-label="Alumni sale end date" />
-                <select id="ee-alumni-sale-end-time" aria-label="Alumni sale end time"></select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="ee-card" id="ee-panel-category-exclusivity" hidden>
-          <h2 data-hub-tip="category-exclusivity">Category Exclusivity</h2>
-          <p class="ee-hint" style="margin-top:0">
-            Prospective attendees submit a request to join your event. They are asked what industry they are in and their job title only. You approve or deny each application.
-          </p>
-          <div class="ee-info-box">
-            <strong>How it works:</strong> Applicants answer two fixed questions — their industry and job title. This information is emailed to you for review. You approve or deny from your dashboard. Approved applicants receive a payment link via Brevo to complete their booking.
-          </div>
-          <div class="ee-row-2">
-            <div class="ee-field">
-              <label for="ee-ce-price">Price <span class="ee-optional">(optional)</span></label>
-              <p class="ee-hint">Charged to approved applicants on booking. Leave at 0.00 for free.</p>
-              <div class="ee-price-input">
-                <span>£</span>
-                <input type="number" id="ee-ce-price" min="0" step="0.01" value="0" />
-              </div>
-            </div>
-            <div class="ee-field">
-              <label for="ee-ce-places">Places available <span class="ee-optional">(optional)</span></label>
-              <p class="ee-hint">Maximum approved applicants. Leave blank for unlimited.</p>
-              <input type="number" id="ee-ce-places" min="1" placeholder="e.g. 20" />
-            </div>
-          </div>
-          <div class="ee-field">
-            <label for="ee-ce-close">Applications close <span class="ee-optional">(optional)</span></label>
-            <p class="ee-hint" style="margin-top:0">After this point the apply button will no longer appear on the listing.</p>
-            <select id="ee-ce-close" aria-describedby="ee-ce-close-hint">
-              <option value="at_start">When the event starts</option>
-              <option value="12_hours">12 hours before the event</option>
-              <option value="1_day">1 day before the event</option>
-              <option value="1_week" selected>1 week before the event</option>
-              <option value="custom">Custom date &amp; time</option>
-            </select>
-            <div class="ee-sale-custom-wrap" id="ee-ce-close-custom" hidden style="margin-top:8px">
-              <p class="ee-hint" style="margin:0 0 6px">Custom closing date and time</p>
-              <div class="ee-datetime-split">
-                <input type="date" id="ee-ce-close-date" aria-label="Application closing date" />
-                <select id="ee-ce-close-time" aria-label="Application closing time"></select>
-              </div>
-            </div>
-          </div>
-          <p class="ee-label-block">Application questions</p>
-          <ul class="ee-fixed-questions">
-            <li>What industry are you in?</li>
-            <li>What is your job title?</li>
-          </ul>
-          <p class="ee-hint ee-hint-italic">These questions are fixed and cannot be changed.</p>
-        </div>
-
         <div class="ee-card" id="ee-vat-card">
           <h2 data-hub-tip="vat-treatment">VAT on ticket prices</h2>
           <p class="ee-hint" style="margin-top:0">
@@ -240,33 +145,22 @@
 
         <div class="ee-card" id="ee-refund-card">
           <h2>Refund policy</h2>
-          <p class="ee-hint" style="margin-top:0">Choose how refunds work for this event. Required before publishing.</p>
+          <p class="ee-hint" style="margin-top:0">Choose one of our fixed refund policies. Required before publishing.</p>
           <div class="ee-refund-options" role="radiogroup" aria-label="Refund policy">
-            <div class="ee-refund-card" data-policy="full_refund" role="radio" tabindex="0" aria-checked="false">
-              <input type="radio" name="refund-policy" value="full_refund" id="refund-policy-full" />
-              <strong>Full refund</strong>
-              <span>Attendees can request a full refund</span>
-              <div class="ee-refund-extra" hidden>
-                <span class="ee-field-label">Refunds allowed up to</span>
-                <div class="ee-inline-num">
-                  <input type="number" id="refund-cutoff-days" min="0" step="1" value="7" aria-label="Refund cutoff days" />
-                  <span>days before the event</span>
-                </div>
-              </div>
+            <div class="ee-refund-card" data-policy="flexible" role="radio" tabindex="0" aria-checked="false">
+              <input type="radio" name="refund-policy" value="flexible" id="refund-policy-flexible" />
+              <strong>Flexible</strong>
+              <span>100% refund up to 24 hours before the event.</span>
             </div>
-            <div class="ee-refund-card is-none" data-policy="no_refunds" role="radio" tabindex="0" aria-checked="false">
-              <input type="radio" name="refund-policy" value="no_refunds" id="refund-policy-none" />
-              <strong>No refunds if an attendee cancels</strong>
-              <span>For change-of-mind cancellations only. Statutory refund rights still apply if the event is cancelled or materially changed.</span>
+            <div class="ee-refund-card" data-policy="moderate" role="radio" tabindex="0" aria-checked="false">
+              <input type="radio" name="refund-policy" value="moderate" id="refund-policy-moderate" />
+              <strong>Moderate</strong>
+              <span>100% refund up to 7 days before the event; 50% refund up to 48 hours before.</span>
             </div>
-            <div class="ee-refund-card is-custom" data-policy="custom" role="radio" tabindex="0" aria-checked="false">
-              <input type="radio" name="refund-policy" value="custom" id="refund-policy-custom" />
-              <strong>Custom policy</strong>
-              <span>Set your own terms for attendee cancellations. Statutory rights still apply.</span>
-              <div class="ee-refund-extra" hidden>
-                <span class="ee-field-label">Your refund policy</span>
-                <textarea id="refund-custom-details" rows="4" placeholder="Terms shown to attendees, e.g. transfers permitted up to 48 hours before the event" aria-label="Custom refund policy"></textarea>
-              </div>
+            <div class="ee-refund-card is-none" data-policy="strict" role="radio" tabindex="0" aria-checked="false">
+              <input type="radio" name="refund-policy" value="strict" id="refund-policy-strict" />
+              <strong>Strict <span class="ee-optional">(standard for B2B)</span></strong>
+              <span>No refunds within 72 hours of the event, helping cover catering booking deadlines.</span>
             </div>
           </div>
           <div class="ee-refund-agreement">
@@ -304,6 +198,6 @@
     <script src="../js/organiser-payment-setup.js?v=20260714a"></script>
     <script src="../js/organiser-field-tips.js?v=20260714ce"></script>
     <script src="../js/hub-field-tip.js?v=20260711"></script>
-    <script src="../js/organiser-event-tickets.js?v=20260714ce"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260714refunds"></script>
   </body>
 </html>
