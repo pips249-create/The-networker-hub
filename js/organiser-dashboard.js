@@ -8041,12 +8041,16 @@
   async function boot(user) {
     state.user = user;
     try {
-      await api('/api/auth/hub-mode', {
+      const hubMode = await api('/api/auth/hub-mode', {
         method: 'POST',
         body: JSON.stringify({ mode: 'organiser' }),
       });
+      if (!hubMode.ok && hubMode.data && hubMode.data.redirect) {
+        window.location.href = hubMode.data.redirect;
+        return;
+      }
     } catch {
-      /* non-fatal */
+      /* non-fatal for cookie set; continue if session already allows organiser UI */
     }
     state.user = user;
     if (signin) signin.hidden = true;

@@ -5,6 +5,7 @@ const {
   hubViewFromRequest,
   setHubViewCookie,
   isClientRole,
+  isAdminRole,
 } = require('../auth');
 const { getOrganiserAccessStatus } = require('../organiser-access-guard');
 
@@ -36,13 +37,13 @@ module.exports = async function handler(req, res) {
       return json(res, 400, { error: 'invalid_mode' });
     }
     if (!isClientRole(session.role)) {
-      // Attendee dashboard may force mode=attendee for any signed-in account (e.g. admin preview).
-      if (mode === 'attendee') {
-        setHubViewCookie(res, 'attendee');
+      // Non-client accounts (admin): allow preview of either workspace.
+      if (mode === 'attendee' || (mode === 'organiser' && isAdminRole(session.role))) {
+        setHubViewCookie(res, mode);
         return json(res, 200, {
           ok: true,
-          hubView: 'attendee',
-          redirect: '/account/index.html',
+          hubView: mode,
+          redirect: mode === 'organiser' ? '/organiser/index.html' : '/account/index.html',
         });
       }
       return json(res, 403, {
