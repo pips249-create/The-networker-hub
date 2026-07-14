@@ -276,7 +276,7 @@
       '<a class="org-btn org-btn-outline org-btn-sm" href="' +
       esc(groupPublicProfileUrl(g.id)) +
       '" target="_blank" rel="noopener noreferrer">View public profile</a>' +
-      '<a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-verified.png" download>Download LinkedIn cover</a>' +
+      '<a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-listed.png" download>Download LinkedIn cover</a>' +
       '</div></article>'
     );
   }
@@ -4972,6 +4972,8 @@
       sub = 'events-tickets';
     } else if (route === 'team') {
       page = 'team';
+    } else if (route === 'social' || route === 'promote') {
+      page = 'social';
     }
 
     document.querySelectorAll('[data-org-page]').forEach((p) => {
@@ -4983,6 +4985,9 @@
     } else {
       syncSidebarNavHighlight(page, sub);
       syncEventsTabHighlights(null, false);
+    }
+    if (page === 'social') {
+      renderOrganiserRankingShare();
     }
     if (page === 'team') {
       loadTeamMembers().then(function () {
@@ -5009,7 +5014,9 @@
           ? 'business-overview'
           : page === 'business-list'
             ? 'business-list'
-            : page;
+            : page === 'social'
+              ? 'social'
+              : page;
     const url = new URL(window.location.href);
     if (page === 'events' && sub) {
       url.searchParams.set('panel', sub);

@@ -746,11 +746,15 @@
   margin-bottom: 0.25rem;
 }
 
-.org-linkedin-covers-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
+.org-linkedin-covers-group-title {
+  margin: 1.15rem 0 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--od-text-dark, #4a4446);
+}
+
+.org-ranking-panel--social {
+  margin-bottom: 1.25rem;
 }
 
 .org-ranking-share-preview {
