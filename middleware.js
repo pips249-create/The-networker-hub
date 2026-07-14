@@ -155,11 +155,11 @@ const NETWORKING_REGION_THEMES = {
   },
   "manchester": {
     "tagline": "From the Northern Quarter to Salford Quays and beyond.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M100 82V10h40v72\"/><path d=\"M100 22h40M100 34h40M100 46h40M100 58h40M100 70h40\" opacity=\".4\"/><path d=\"M113 10v72M127 10v72\" opacity=\".35\"/><path d=\"M106 10V2h28v8\"/><path d=\"M90 82h60\" stroke-width=\"2\"/></svg>"
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M104 82V24h32v58\"/><path d=\"M108 24V4h24v20\"/><path d=\"M98 24h44\" stroke-width=\"2\"/><path d=\"M104 36h32M104 48h32M104 60h32M104 72h32\" opacity=\".4\"/><path d=\"M114 24v58M126 24v58\" opacity=\".35\"/><path d=\"M90 82h60\" stroke-width=\"2\"/></svg>"
   },
   "birmingham": {
     "tagline": "From Digbeth and the Jewellery Quarter to the wider Midlands.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M78 36c-28-4-40-28-32-48 4 16 16 28 32 32M162 36c28-4 40-28 32-48-4 16-16 28-32 32\" stroke-width=\"2.2\"/><path d=\"M72 40c-10 2-14 10-10 18 6-2 12-6 14-14M168 40c10 2 14 10 10 18-6-2-12-6-14-14\"/><path d=\"M80 34c4-12 14-20 40-20s36 8 40 20\"/><path d=\"M76 40h88\"/><path d=\"M76 40c-4 14-2 32 8 46h72c10-14 12-32 8-46\"/><circle cx=\"100\" cy=\"52\" r=\"4\"/><circle cx=\"140\" cy=\"52\" r=\"4\"/><path d=\"M96 64h48v18H96z\"/><ellipse cx=\"112\" cy=\"74\" rx=\"5\" ry=\"3.5\"/><ellipse cx=\"128\" cy=\"74\" rx=\"5\" ry=\"3.5\"/><circle cx=\"120\" cy=\"88\" r=\"8\"/><path d=\"M120 80v-3\"/></svg>"
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M90 38C54 34 42 10 56-4c0 20 14 36 34 46M150 38c36-4 48-28 34-42 0 20-14 36-34 46\" stroke-width=\"3\"/><path d=\"M84 44l-14 4 4 14 14-8M156 44l14 4-4 14-14-8\"/><path d=\"M88 36h64l4 14H84z\"/><path d=\"M84 50c-2 18 4 34 16 44h40c12-10 18-26 16-44\"/><circle cx=\"104\" cy=\"58\" r=\"4\"/><circle cx=\"136\" cy=\"58\" r=\"4\"/><path d=\"M100 70h40v16H100z\"/><path d=\"M110 76v5M130 76v5\" stroke-width=\"2\"/><circle cx=\"120\" cy=\"92\" r=\"9\"/><path d=\"M120 83v-4\"/></svg>"
   },
   "glasgow": {
     "tagline": "Connect with entrepreneurs across the Clyde and the city centre.",
@@ -167,15 +167,15 @@ const NETWORKING_REGION_THEMES = {
   },
   "edinburgh": {
     "tagline": "From the Old Town and New Town to Leith and the wider Lothians.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M28 82c20-36 40-48 92-48s72 12 92 48\"/><path d=\"M48 82V52h20v30M84 82V40h28v42M128 82V40h28v42M172 82V52h20v30\"/><path d=\"M112 28l8-14 8 14H112z\"/><path d=\"M92 56h8v10M140 56h8v10\" opacity=\".5\"/></svg>"
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M24 82L40 56l16 10 20-36 16 8 24-32 16 14 20-18 16 20 20 40v20H24z\" stroke-width=\"2\"/><path d=\"M72 48h96\" stroke-width=\"2.2\"/><path d=\"M72 48V28h24v20M96 48V16h40v32M136 48V30h28v18\"/><path d=\"M72 28h3v-5h4v5h4v-5h4v5h5\"/><path d=\"M96 16h4v-5h5v5h5v-5h5v5h5v-5h5v5h6\"/><path d=\"M136 30h3v-5h4v5h4v-5h4v5h5\"/><path d=\"M116 16V2M116 2h14l-4 4 4 4h-14\"/><path d=\"M84 36h6v8M112 28h8v10M148 36h6v8\" opacity=\".5\"/></svg>"
   },
   "leeds": {
     "tagline": "From the city centre to the wider West Yorkshire business community.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M28 82V44l20-32 20 32v38\"/><path d=\"M80 82V32l28-40 28 40v50\"/><path d=\"M148 82V48l20-28 20 28v34\"/><path d=\"M40 56c0-8 4-12 8-12s8 4 8 12v16H40V56z\" opacity=\".55\"/><path d=\"M100 44c0-10 6-16 12-16s12 6 12 16v24h-24V44z\" opacity=\".55\"/></svg>"
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M36 82V52h168v30\"/><path d=\"M48 52v28M72 52v28M96 52v28M144 52v28M168 52v28M192 52v28\" opacity=\".45\"/><path d=\"M36 52l84-22 84 22\"/><path d=\"M100 40V10h40v30\"/><circle cx=\"120\" cy=\"24\" r=\"10\"/><path d=\"M120 24v-6M120 24l5 3\"/><path d=\"M104 10h32l-4-8h-24z\"/><path d=\"M120 2v-4\"/></svg>"
   },
   "liverpool": {
     "tagline": "From the Albert Dock and Baltic Triangle to the wider Merseyside business community.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M40 82V28h40v54M160 82V16h40v66\"/><circle cx=\"60\" cy=\"42\" r=\"10\"/><circle cx=\"180\" cy=\"32\" r=\"10\"/><path d=\"M52 20l8-14 4 5 4-5 8 14\"/><path d=\"M172 10l8-14 4 5 4-5 8 14\"/><path d=\"M80 62h80v20H80z\"/><path d=\"M48 56h24M48 68h24M168 48h24M168 60h24\" opacity=\".4\"/></svg>"
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M40 82V28h40v54M160 82V16h40v66\"/><circle cx=\"60\" cy=\"42\" r=\"10\"/><circle cx=\"180\" cy=\"32\" r=\"10\"/><path d=\"M48 20c0-12 6-18 10-18 2 0 4 4 6 8l4-12c4 8 6 16 4 22\"/><path d=\"M168 8c0-12 6-18 10-18 2 0 4 4 6 8l4-12c4 8 6 16 4 22\"/><path d=\"M80 62h80v20H80z\"/><path d=\"M48 56h24M48 68h24M168 48h24M168 60h24\" opacity=\".4\"/></svg>"
   },
   "newcastle": {
     "tagline": "From the Quayside and city centre to the wider North East.",
@@ -191,7 +191,7 @@ const NETWORKING_REGION_THEMES = {
   },
   "nottingham": {
     "tagline": "From the Lace Market and city centre to the wider East Midlands.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M28 82c18-32 40-42 92-42s74 10 92 42\"/><path d=\"M52 82V48h28v34M96 82V36h48v46M160 82V48h28v34\"/><path d=\"M112 24l10-14 10 14H112z\"/><path d=\"M108 82v-20c0-8 4-12 8-12s8 4 8 12v20\" opacity=\".55\"/></svg>"
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M28 82c14-18 36-26 92-26s78 8 92 26\"/><path d=\"M48 62V34h144v28\"/><path d=\"M88 34l32-22 32 22\"/><path d=\"M108 62v-20c0-8 5-12 12-12s12 4 12 12v20\" opacity=\".55\"/><path d=\"M48 34V20h22v14M170 34V20h22v14\"/><path d=\"M120 12V0M120 0h16l-4 4 4 4h-16\"/></svg>"
   },
   "cardiff": {
     "tagline": "From the bay and city centre to business networks across South Wales.",
