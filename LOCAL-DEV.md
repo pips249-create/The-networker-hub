@@ -12,34 +12,41 @@ Use this so local and live stay in sync and events keep loading.
    ```
 3. Wait for `Ready! Available at http://localhost:3000`.
 4. Open **http://localhost:3000/events/** in the browser (not a file from Finder).
-5. Hard refresh if something looks stale: **Cmd+Shift+R**.
+5. If the preview gate is on, unlock via `/site-access` (password = `SITE_ACCESS_PASSWORD` in `local.env`).
+6. Hard refresh if something looks stale: **Cmd+Shift+R**.
 
 ### Quick health check (optional)
 
 With `npm start` running, in a **second** Terminal tab:
 
 ```bash
-npm run check:local
+node scripts/smoke-test-site.js http://localhost:3000
 ```
 
-You should see `OK — 20 events` (or similar).
+Or `npm run check:local` (same script). You should see `Smoke passed` (warnings OK for gated discovery files).
+
+**If npm prints `EAGAIN` / `spawn sh`:** your Mac is out of process slots — skip npm and run the `node scripts/…` line above. Quit spare Terminal tabs / old `vercel` processes, or restart the Mac.
+
+**Do not paste comments** like `# vercel…` after commands — zsh can throw `unknown file attribute`.
 
 ---
 
 ## Before updating the live site
 
-1. Confirm local works (`npm run check:local` or eyeball the events page).
+1. Confirm local works (`node scripts/smoke-test-site.js http://localhost:3000` or eyeball the events page).
 2. Deploy:
    ```bash
    npm run deploy
    ```
-3. After deploy finishes:
+3. After deploy finishes (needs `SITE_ACCESS_PASSWORD` in the shell or `local.env` to unlock):
    ```bash
-   npm run check:live
+   node scripts/smoke-test-site.js https://www.thenetworkerhub.com
    ```
-4. Open https://the-networker-hub.vercel.app/events/ and hard refresh.
+4. Or open https://the-networker-hub.vercel.app/events/ and hard refresh (unlock if gated).
 
 **Rule:** If it works on localhost but not live, you probably forgot to deploy.
+
+**Note:** `npm run check:live` will fail with HTTP 403 while the preview gate is on **unless** `SITE_ACCESS_PASSWORD` is available to the smoke script (it reads `local.env`).
 
 ---
 
@@ -51,6 +58,7 @@ You should see `OK — 20 events` (or similar).
 | Opening HTML from Finder | API calls fail (`file://`) |
 | `vercel env pull` without re-syncing | Can wipe Supabase keys from `.env.local` — run `npm run sync-env` after |
 | Placeholder keys in `.env` | "Invalid API key" errors |
+| Running `check:local` before `Ready!` | `fetch failed` — nothing is listening on :3000 |
 
 ---
 
@@ -58,9 +66,22 @@ You should see `OK — 20 events` (or similar).
 
 1. Is `npm start` running? Terminal must show `Ready!`.
 2. Browser URL must be `http://localhost:3000/...` (not `file://`).
-3. Try **http://localhost:3000/api/hub-listings** — should show JSON.
+3. Try **http://localhost:3000/api/hub-listings** — should show JSON (after unlock if gated).
 4. Disable ad blockers / Brave Shields for localhost.
 5. Only one dev server — Ctrl+C extras, start fresh with `npm start`.
+
+### Sitemap locally
+
+`/sitemap.xml` rewrites to `/api/sitemap` (XML). **`vercel.json` rewrites only load when `npm start` boots** — after sitemap fixes, Ctrl+C and run `npm start` again.
+
+Direct checks (after unlock if gated):
+
+```bash
+curl -s "http://localhost:3000/api/sitemap" | head
+curl -s "http://localhost:3000/sitemap.xml" | head
+```
+
+`agents.txt` / `llms.txt` / `robots.txt` are static files (always work). Sitemap is generated — a 404 almost always means the rewrite was not loaded (stale `vercel dev`).
 
 ---
 
@@ -79,28 +100,8 @@ Secrets for live: Vercel → Settings → Environment Variables (already set).
 
 ---
 
-## Email test sends on localhost
+## Related
 
-The live site can send email because **Resend keys exist on Vercel**. Local `vercel dev` does **not** read Vercel env automatically — you must copy them into `local.env`:
-
-1. Vercel → your project → **Settings** → **Environment Variables**
-2. Copy **`RESEND_API_KEY`** and **`RESEND_FROM`** (same values as Production)
-3. Add to **`local.env`** (in the project root):
-
-   ```
-   RESEND_API_KEY=re_xxxxxxxx
-   RESEND_FROM=The Networker Hub <onboarding@resend.dev>
-   ```
-
-4. Sync and restart:
-
-   ```bash
-   npm run sync-env
-   npm start
-   ```
-
-5. Hard refresh the admin page, then send a test email again.
-
-**Preview still works** without Resend — only **Send test** needs these keys.
-
-With `onboarding@resend.dev`, Resend usually only delivers to the email on your Resend account until your domain is verified.
+- Launch checklist: `PIPS-TODO.md`
+- SEO / gate-off: `docs/SEO-AEO-LAUNCH-PLAN.md`
+- Legacy domain flip: `docs/LEGACY-REDIRECT-MAP.md`

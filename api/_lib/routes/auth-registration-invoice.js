@@ -4,12 +4,18 @@ const {
   loadRegistrationForAttendee,
   invoiceAvailable,
   buildHubInvoiceHtml,
+  buildTaxInvoicePdf,
   retrieveStripeReceiptUrl,
 } = require('../registration-documents');
 
 function registrationIdFromRequest(req) {
   const q = req.query || {};
   return String(q.registrationId || q.registration_id || q.id || '').trim();
+}
+
+function formatFromRequest(req) {
+  const q = req.query || {};
+  return String(q.format || q.f || '').trim().toLowerCase();
 }
 
 module.exports = async function handler(req, res) {
@@ -36,20 +42,31 @@ module.exports = async function handler(req, res) {
     if (!invoiceAvailable(registration, context.booked)) {
       return json(res, 400, {
         error: 'invoice_not_available',
-        message: 'An invoice is available once payment has been completed.',
+        message: 'A tax invoice is available once payment has been completed.',
       });
     }
 
-    const stripeReceiptUrl = await retrieveStripeReceiptUrl(sb, registration);
-    if (stripeReceiptUrl) {
-      res.statusCode = 302;
-      res.setHeader('Location', stripeReceiptUrl);
-      return res.end();
+    const wantPdf = formatFromRequest(req) === 'pdf';
+    if (wantPdf) {
+      const pdf = buildTaxInvoicePdf(context);
+      const filename =
+        'tax-invoice-' + context.bookingReference.replace(/[^a-z0-9-]+/gi, '-').toLowerCase() + '.pdf';
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
+      return res.end(pdf);
     }
 
-    const html = buildHubInvoiceHtml(context);
+    let stripeReceiptUrl = null;
+    try {
+      stripeReceiptUrl = await retrieveStripeReceiptUrl(sb, registration);
+    } catch {
+      /* Hub receipt still available */
+    }
+
+    const html = buildHubInvoiceHtml(context, { stripeReceiptUrl });
     const filename =
-      'invoice-' + context.bookingReference.replace(/[^a-z0-9-]+/gi, '-').toLowerCase() + '.html';
+      'tax-invoice-' + context.bookingReference.replace(/[^a-z0-9-]+/gi, '-').toLowerCase() + '.html';
     res.statusCode = 200;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Content-Disposition', 'inline; filename="' + filename + '"');

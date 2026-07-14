@@ -1,7 +1,8 @@
 /**
- * GET /api/seo/sitemap — public URL sitemap (static pages + events + organiser groups).
+ * GET /api/sitemap — XML sitemap (also rewritten from /sitemap.xml).
+ * Dedicated function so rewrite does not depend on /api/seo sub-route parsing.
  */
-const { buildSitemapXml } = require('../seo-sitemap');
+const { buildSitemapXml } = require('./_lib/seo-sitemap');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {

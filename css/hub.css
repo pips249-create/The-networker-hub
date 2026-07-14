@@ -473,12 +473,14 @@ body.opportunities-page.has-site-nav {
 }
 
 body.hub-page-admin {
-  padding-top: 0;
+  padding-top: var(--admin-nav-offset, 76px);
 }
 
 body.hub-page-admin .site-nav {
-  position: sticky;
+  position: fixed !important;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 60;
 }
 

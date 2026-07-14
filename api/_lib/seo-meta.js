@@ -47,72 +47,184 @@ function buildOpenGraphTags(meta) {
   };
 }
 
+function isOnlineAttendance(ev) {
+  const fmt = String(ev.meetingType || ev.format || '').toLowerCase();
+  return fmt.includes('online') || fmt.includes('virtual');
+}
+
+function isHybridAttendance(ev) {
+  const fmt = String(ev.meetingType || ev.format || '').toLowerCase();
+  return fmt.includes('hybrid');
+}
+
+function isoDateValue(value) {
+  if (!value) return '';
+  const raw = String(value).trim();
+  if (!raw) return '';
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw;
+  return d.toISOString();
+}
+
+function buildEventPlaceLocation(ev) {
+  const venueName = String(ev.venue || ev.venueName || '').trim();
+  const city = String(ev.city || '').trim();
+  const postcode = String(ev.postcode || '').trim();
+  const street = String(ev.address || '').trim();
+  const fallbackName = String(ev.location || '').trim();
+  if (!venueName && !city && !postcode && !street && !fallbackName) return null;
+
+  const address = {
+    '@type': 'PostalAddress',
+    addressCountry: 'GB',
+  };
+  if (street) address.streetAddress = street;
+  if (city) address.addressLocality = city;
+  if (postcode) address.postalCode = postcode;
+
+  const place = {
+    '@type': 'Place',
+    name: venueName || fallbackName || [city, postcode].filter(Boolean).join(', ') || 'United Kingdom',
+    address,
+  };
+
+  const lat = Number(ev.lat);
+  const lng = Number(ev.lng);
+  if (Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0)) {
+    place.geo = {
+      '@type': 'GeoCoordinates',
+      latitude: lat,
+      longitude: lng,
+    };
+  }
+
+  return place;
+}
+
+function buildEventAvailability(ev, ticketSoldOut) {
+  if (ticketSoldOut || ev.isSoldOut || ev.salesClosedReason === 'sold_out') {
+    return 'https://schema.org/SoldOut';
+  }
+  if (ev.isTicketSalesScheduled || ev.salesClosedReason === 'scheduled') {
+    return 'https://schema.org/PreOrder';
+  }
+  return 'https://schema.org/InStock';
+}
+
+function buildEventOffers(ev, url) {
+  const validFrom = isoDateValue(ev.ticketSalesOpensAt);
+  const publicTickets = Array.isArray(ev.tickets)
+    ? ev.tickets.filter((t) => t && !t.isGuestVisit && !t.isAlumni)
+    : [];
+
+  if (publicTickets.length > 1) {
+    return publicTickets.map((t) => {
+      const offer = {
+        '@type': 'Offer',
+        name: t.name || t.label || 'Ticket',
+        price: Number(t.priceNum) >= 0 ? Number(t.priceNum) : 0,
+        priceCurrency: 'GBP',
+        availability: buildEventAvailability(ev, Boolean(t.soldOut)),
+        url,
+      };
+      if (validFrom) offer.validFrom = validFrom;
+      return offer;
+    });
+  }
+
+  if (publicTickets.length === 1) {
+    const t = publicTickets[0];
+    const offer = {
+      '@type': 'Offer',
+      name: t.name || t.label || 'Ticket',
+      price: Number(t.priceNum) >= 0 ? Number(t.priceNum) : 0,
+      priceCurrency: 'GBP',
+      availability: buildEventAvailability(ev, Boolean(t.soldOut)),
+      url,
+    };
+    if (validFrom) offer.validFrom = validFrom;
+    return offer;
+  }
+
+  const isFree = ev.priceKey === 'free' || ev.hasFreeTickets;
+  const isPaid = Number(ev.priceNum) > 0 || ev.hasPaidTickets;
+  if (!isFree && !isPaid) return null;
+
+  const offer = {
+    '@type': 'Offer',
+    price: isFree && !isPaid ? 0 : Number(ev.priceNum) || 0,
+    priceCurrency: 'GBP',
+    availability: buildEventAvailability(ev, false),
+    url,
+  };
+  if (validFrom) offer.validFrom = validFrom;
+  return offer;
+}
+
 function buildEventSchema(ev, origin) {
   const base = siteOrigin(origin);
   const slug = ev.slug || publicEventSlug({ slug: ev.slug, title: ev.title });
   const url = absoluteUrl(origin, '/events/' + encodeURIComponent(slug));
+  const online = isOnlineAttendance(ev);
+  const hybrid = isHybridAttendance(ev);
+  const place = buildEventPlaceLocation(ev);
+
+  let eventAttendanceMode = 'https://schema.org/OfflineEventAttendanceMode';
+  if (hybrid) eventAttendanceMode = 'https://schema.org/MixedEventAttendanceMode';
+  else if (online) eventAttendanceMode = 'https://schema.org/OnlineEventAttendanceMode';
+
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'Event',
+    '@id': url + '#event',
     name: ev.title,
     description: trimText(ev.description, 500),
     url,
-    eventAttendanceMode:
-      String(ev.meetingType || ev.format || '')
-        .toLowerCase()
-        .includes('online')
-        ? 'https://schema.org/OnlineEventAttendanceMode'
-        : 'https://schema.org/OfflineEventAttendanceMode',
+    eventAttendanceMode,
     eventStatus: 'https://schema.org/EventScheduled',
   };
 
-  if (ev.dateRaw) schema.startDate = ev.dateRaw;
-  if (ev.endDateRaw) schema.endDate = ev.endDateRaw;
+  const startDate = isoDateValue(ev.dateRaw || ev.nextDate || ev.dateFieldRaw);
+  const endDate = isoDateValue(ev.endDateRaw);
+  if (startDate) schema.startDate = startDate;
+  if (endDate) schema.endDate = endDate;
 
-  const locationLabel = [ev.venue || ev.venueName, ev.city, ev.postcode].filter(Boolean).join(', ');
-  if (locationLabel) {
-    schema.location = {
-      '@type': 'Place',
-      name: locationLabel,
-      address: {
-        '@type': 'PostalAddress',
-        addressLocality: ev.city || undefined,
-        postalCode: ev.postcode || undefined,
-        addressCountry: 'GB',
-      },
-    };
+  if (hybrid && place) {
+    schema.location = [
+      place,
+      { '@type': 'VirtualLocation', url },
+    ];
+  } else if (online && !place) {
+    schema.location = { '@type': 'VirtualLocation', url };
+  } else if (place) {
+    schema.location = place;
+  } else if (online) {
+    schema.location = { '@type': 'VirtualLocation', url };
   }
 
   if (ev.photo) {
-    schema.image = ev.photo.startsWith('http') ? ev.photo : base + ev.photo;
+    const imageUrl = ev.photo.startsWith('http') ? ev.photo : base + ev.photo;
+    schema.image = [imageUrl];
   }
 
   if (ev.organiser) {
-    schema.organizer = {
+    const organizer = {
       '@type': 'Organization',
       name: ev.organiser,
     };
+    if (ev.organiserSlug) {
+      organizer.url = absoluteUrl(origin, '/organisers/' + encodeURIComponent(ev.organiserSlug));
+    }
+    if (ev.organiserLogo) {
+      organizer.logo = ev.organiserLogo.startsWith('http')
+        ? ev.organiserLogo
+        : base + (ev.organiserLogo.startsWith('/') ? ev.organiserLogo : '/' + ev.organiserLogo);
+    }
+    schema.organizer = organizer;
   }
 
-  if (ev.priceKey === 'free') {
-    schema.offers = {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'GBP',
-      availability: 'https://schema.org/InStock',
-      url,
-    };
-  } else if (ev.priceNum > 0) {
-    schema.offers = {
-      '@type': 'Offer',
-      price: String(ev.priceNum),
-      priceCurrency: 'GBP',
-      availability: ev.isSoldOut
-        ? 'https://schema.org/SoldOut'
-        : 'https://schema.org/InStock',
-      url,
-    };
-  }
+  const offers = buildEventOffers(ev, url);
+  if (offers) schema.offers = offers;
 
   return schema;
 }
@@ -377,6 +489,7 @@ async function buildSeoMeta(type, slug, origin) {
 module.exports = {
   buildSeoMeta,
   buildEventMeta,
+  buildEventSchema,
   buildOrganiserMeta,
   buildOpportunityMeta,
   buildStaticPageMeta,

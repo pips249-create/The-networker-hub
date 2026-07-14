@@ -5,6 +5,12 @@ const { formatBookingReference, formatBookedAt, formatTicketQuantity } = require
 const { escapeHtml } = require('./event-refund-policy');
 const { getOrganiserConnectForEvent } = require('./stripe-connect');
 const { getStripeClient, isStripeCheckoutConfigured, retrieveCheckoutSession } = require('./stripe-checkout');
+const {
+  BOOKING_FEE_LABEL,
+  registrationTicketRevenue,
+  registrationBookingFee,
+} = require('./booking-fees');
+const { buildSimpleTextPdf } = require('./simple-pdf');
 
 const REGISTRATION_SELECT = `
   id,
@@ -117,6 +123,10 @@ function buildDocumentContext(registration) {
       '—';
   }
 
+  const ticketRevenue = registrationTicketRevenue(registration);
+  const bookingFee = registrationBookingFee(registration);
+  const amountPaidNum = Number(booked.amountPaid) || 0;
+
   return {
     registration,
     booked,
@@ -133,6 +143,12 @@ function buildDocumentContext(registration) {
     ticketLabel: formatTicketQuantity(booked.quantity, booked.ticketName),
     bookedAt: formatBookedAt(registration.created_at),
     amountPaid: formatAmount(booked.amountPaid, registration.payment_status),
+    amountPaidNum,
+    ticketRevenue,
+    ticketRevenueDisplay: formatAmount(ticketRevenue, registration.payment_status),
+    bookingFee,
+    bookingFeeDisplay: formatAmount(bookingFee, registration.payment_status),
+    bookingFeeLabel: BOOKING_FEE_LABEL,
     paymentStatus: String(registration.payment_status || 'Pending').trim(),
     applicationStatus: String(registration.application_status || 'Approved').trim(),
     isOnline: booked.isOnline,
@@ -162,50 +178,6 @@ async function loadRegistrationForAttendee(session, registrationId) {
   }
 
   return { sb, registration, context: buildDocumentContext(registration) };
-}
-
-function escapePdfText(text) {
-  return String(text || '')
-    .replace(/\\/g, '\\\\')
-    .replace(/\(/g, '\\(')
-    .replace(/\)/g, '\\)');
-}
-
-function buildSimpleTextPdf(lines) {
-  const sanitized = (lines || []).map((line) => String(line || '').slice(0, 120));
-  const contentParts = ['BT', '/F1 11 Tf', '14 14 Td'];
-  sanitized.forEach((line, index) => {
-    if (index > 0) contentParts.push('0 -14 Td');
-    contentParts.push('(' + escapePdfText(line) + ') Tj');
-  });
-  contentParts.push('ET');
-  const stream = contentParts.join('\n');
-  const streamLength = Buffer.byteLength(stream, 'utf8');
-
-  const objects = [
-    '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n',
-    '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n',
-    '3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n',
-    '4 0 obj\n<< /Length ' + streamLength + ' >>\nstream\n' + stream + '\nendstream\nendobj\n',
-    '5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n',
-  ];
-
-  let body = '%PDF-1.4\n';
-  const offsets = [0];
-  objects.forEach((obj) => {
-    offsets.push(Buffer.byteLength(body, 'utf8'));
-    body += obj;
-  });
-
-  const xrefOffset = Buffer.byteLength(body, 'utf8');
-  body += 'xref\n0 ' + (objects.length + 1) + '\n';
-  body += '0000000000 65535 f \n';
-  for (let i = 1; i <= objects.length; i += 1) {
-    body += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
-  }
-  body += 'trailer\n<< /Size ' + (objects.length + 1) + ' /Root 1 0 R >>\n';
-  body += 'startxref\n' + xrefOffset + '\n%%EOF';
-  return Buffer.from(body, 'utf8');
 }
 
 function buildTicketPdf(context) {
@@ -238,32 +210,94 @@ function buildTicketPdf(context) {
   return buildSimpleTextPdf(lines);
 }
 
-function buildHubInvoiceHtml(context) {
+function buildTaxInvoicePdf(context) {
+  const lines = [
+    'THE NETWORKER HUB — BOOKING TAX INVOICE / RECEIPT',
+    '',
+    'Booking reference: ' + context.bookingReference,
+    'Issued: ' + formatBookedAt(new Date().toISOString()),
+    'Bill to: ' + context.attendeeName,
+    context.attendeeEmail ? 'Email: ' + context.attendeeEmail : '',
+    '',
+    'Event: ' + context.eventTitle,
+    'Organiser (ticket seller): ' + context.organiserName,
+    'When: ' + context.eventDate,
+    'Tickets: ' + context.ticketLabel,
+    'Booked: ' + context.bookedAt,
+    'Payment status: ' + context.paymentStatus,
+    '',
+    'LINE ITEMS',
+    'Ticket(s) payable to organiser: ' + context.ticketRevenueDisplay,
+    context.bookingFee > 0
+      ? context.bookingFeeLabel + ': ' + context.bookingFeeDisplay
+      : '',
+    'Total paid: ' + context.amountPaid,
+    '',
+    'NOTES',
+    'Ticket supply: event organiser. Platform booking fee: The Networker Group Ltd',
+    '(Company No. 15252227, VAT No. 454 4092 94).',
+    'Ticket VAT treatment is the organiser\'s responsibility.',
+    'This Hub document is for expense / accounts; keep with your bank statement.',
+    '',
+    'Event page: ' + context.eventUrl,
+  ].filter((line) => line !== '');
+  return buildSimpleTextPdf(lines, { fontSize: 10, lineHeight: 13, marginTop: 36 });
+}
+
+function buildHubInvoiceHtml(context, options) {
+  const opts = options || {};
   const issuedAt = formatBookedAt(new Date().toISOString());
+  const pdfHref =
+    '/api/auth/registration-invoice?registrationId=' +
+    encodeURIComponent(context.registration.id || '') +
+    '&format=pdf';
+  const stripeLink = opts.stripeReceiptUrl
+    ? '<a class="btn btn-secondary" href="' +
+      escapeHtml(opts.stripeReceiptUrl) +
+      '" target="_blank" rel="noopener noreferrer">Card receipt (Stripe)</a>'
+    : '';
+  const feeRows =
+    context.amountPaidNum > 0
+      ? '<tr><td>Ticket(s) — payable to organiser</td><td>' +
+        escapeHtml(context.ticketRevenueDisplay) +
+        '</td></tr>' +
+        (context.bookingFee > 0
+          ? '<tr><td>' +
+            escapeHtml(context.bookingFeeLabel) +
+            ' — The Networker Hub</td><td>' +
+            escapeHtml(context.bookingFeeDisplay) +
+            '</td></tr>'
+          : '')
+      : '';
+
   return (
     '<!DOCTYPE html><html lang="en-GB"><head><meta charset="UTF-8" />' +
     '<meta name="viewport" content="width=device-width, initial-scale=1" />' +
-    '<title>Invoice ' +
+    '<title>Tax invoice ' +
     escapeHtml(context.bookingReference) +
     '</title>' +
-    '<style>body{font-family:"DM Sans",system-ui,sans-serif;background:#f4f8f9;color:#4a4446;margin:0;padding:24px}' +
-    '.card{max-width:640px;margin:0 auto;background:#fff;border:1px solid #d7e7ea;border-radius:14px;padding:28px}' +
-    'h1{font-size:22px;color:#1c2040;margin:0 0 6px}.kicker{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#0d6e7a;margin:0 0 10px}' +
-    'table{width:100%;border-collapse:collapse;margin-top:18px}td{padding:8px 0;border-bottom:1px solid #edf3f4;vertical-align:top;font-size:14px}' +
-    'td:first-child{color:#635c5e;width:38%}td:last-child{font-weight:600;color:#1c2040}.total td:last-child{font-size:18px}' +
-    '.note{margin-top:18px;font-size:13px;line-height:1.5;color:#635c5e}.actions{margin-top:22px}' +
-    'a.btn{display:inline-block;padding:10px 18px;border-radius:999px;background:#0d6e7a;color:#fff;text-decoration:none;font-weight:600;font-size:14px}' +
+    '<style>body{font-family:"DM Sans",system-ui,sans-serif;background:#faf6ee;color:#4a4446;margin:0;padding:24px}' +
+    '.card{max-width:640px;margin:0 auto;background:#fff;border:1px solid #e8dfd0;border-radius:14px;padding:28px}' +
+    'h1{font-size:22px;color:#1c2040;margin:0 0 6px}.kicker{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9a7aa8;margin:0 0 10px}' +
+    'table{width:100%;border-collapse:collapse;margin-top:18px}td{padding:8px 0;border-bottom:1px solid #f0ebe3;vertical-align:top;font-size:14px}' +
+    'td:first-child{color:#635c5e;width:55%}td:last-child{font-weight:600;color:#1c2040;text-align:right}.total td:last-child{font-size:18px}' +
+    '.note{margin-top:18px;font-size:13px;line-height:1.5;color:#635c5e}.actions{margin-top:22px;display:flex;flex-wrap:wrap;gap:10px}' +
+    'a.btn{display:inline-block;padding:10px 18px;border-radius:999px;background:#4a4446;color:#fff;text-decoration:none;font-weight:600;font-size:14px}' +
+    'a.btn-secondary{background:#fff;color:#4a4446;border:1px solid #d9c4e0}' +
     '@media print{body{background:#fff;padding:0}.actions{display:none}.card{border:none;box-shadow:none;padding:0}}</style></head><body>' +
-    '<div class="card"><p class="kicker">Payment receipt</p><h1>' +
+    '<div class="card"><p class="kicker">Tax invoice / booking receipt</p><h1>' +
     escapeHtml(context.bookingReference) +
     '</h1><p class="note">Issued ' +
     escapeHtml(issuedAt) +
-    ' · The Networker Hub</p>' +
+    ' · The Networker Hub<br>Bill to: ' +
+    escapeHtml(context.attendeeName) +
+    (context.attendeeEmail ? ' · ' + escapeHtml(context.attendeeEmail) : '') +
+    '</p>' +
     '<table><tbody>' +
     '<tr><td>Event</td><td>' +
     escapeHtml(context.eventTitle) +
     '</td></tr>' +
-    '<tr><td>Organiser</td><td>' +
+    '<tr><td>Organiser (ticket seller)</td><td>' +
     escapeHtml(context.organiserName) +
     '</td></tr>' +
     '<tr><td>Booked on</td><td>' +
@@ -278,12 +312,17 @@ function buildHubInvoiceHtml(context) {
     '<tr><td>Payment status</td><td>' +
     escapeHtml(context.paymentStatus) +
     '</td></tr>' +
+    feeRows +
     '<tr class="total"><td>Total paid</td><td>' +
     escapeHtml(context.amountPaid) +
     '</td></tr>' +
     '</tbody></table>' +
-    '<p class="note">This receipt confirms your registration on The Networker Hub. Card payments may also include a separate receipt from our payment provider.</p>' +
+    '<p class="note">Ticket supply is from the event organiser. The Hub booking fee is charged by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94). Ticket VAT treatment is the organiser&rsquo;s responsibility. Use this document for expense claims; print or save the PDF for your accounts team.</p>' +
     '<div class="actions"><a class="btn" href="' +
+    escapeHtml(pdfHref) +
+    '">Download PDF</a><a class="btn btn-secondary" href="#" onclick="window.print();return false;">Print</a>' +
+    stripeLink +
+    '<a class="btn btn-secondary" href="' +
     escapeHtml(context.eventUrl) +
     '">View event</a></div></div></body></html>'
   );
@@ -332,6 +371,7 @@ module.exports = {
   bookingIsComplete,
   invoiceAvailable,
   buildTicketPdf,
+  buildTaxInvoicePdf,
   buildHubInvoiceHtml,
   retrieveStripeReceiptUrl,
 };

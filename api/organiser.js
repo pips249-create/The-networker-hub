@@ -11,6 +11,7 @@ const routes = {
   events: require('./_lib/routes/organiser-events'),
   tickets: require('./_lib/routes/organiser-tickets'),
   attendees: require('./_lib/routes/organiser-attendees'),
+  'attendee-badges-pdf': require('./_lib/routes/organiser-attendee-badges-pdf'),
   'application-decisions': require('./_lib/routes/organiser-application-decisions'),
   'alumni-invites': require('./_lib/routes/organiser-alumni-invites'),
   reviews: require('./_lib/routes/organiser-reviews'),

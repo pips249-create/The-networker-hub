@@ -9,18 +9,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="../css/admin-tailwind.css?v=20260714a">
-  <link rel="stylesheet" href="../css/hub.css?v=20260714cls">
+  <link rel="stylesheet" href="../css/hub.css?v=20260714clsb">
   <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls">
-  <link rel="stylesheet" href="../css/admin-console.css?v=20260714c">
+  <link rel="stylesheet" href="../css/admin-console.css?v=20260714d">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet"></noscript>
 </head>
-<body class="bg-slate-50 font-sans text-slate-900 antialiased hub-page-admin">
+<body class="bg-slate-50 font-sans text-slate-900 antialiased hub-page-admin hub-admin-active">
 
+  <!-- Empty mount only — scripts load after Overview so LCP text can paint first -->
   <div id="hub-site-nav"></div>
-  <script src="../js/site-nav.js?v=20260714u" data-root="../" data-page="admin"></script>
 
-  <!-- Overlay only — shell paints immediately so Overview LCP/CLS aren't blocked by auth -->
   <div id="admin-gate" class="admin-gate hidden" hidden>
     <p class="text-slate-500" id="admin-gate-msg">Verifying admin access…</p>
   </div>
@@ -79,13 +78,13 @@
           Supabase
         </button>
       </header>
-      <!-- Static Overview shell: paints LCP copy before JS/API; JS updates sections in place -->
       <div id="admin-main" class="p-3 lg:p-5 max-w-7xl mx-auto min-w-0 w-full">
         <div class="space-y-6" id="dashboard-boot">
           <section class="space-y-3">
             <h3 class="text-sm font-bold uppercase tracking-wide text-slate-500">Critical alerts</h3>
-            <div class="grid gap-3 min-h-[11rem]" id="dashboard-alerts">
-              <p class="text-sm text-slate-500">Loading from Supabase…</p>
+            <div class="grid gap-3 min-h-[12rem]" id="dashboard-alerts">
+              <div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 min-h-[4.5rem]" aria-hidden="true"></div>
+              <div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 min-h-[4.5rem]" aria-hidden="true"></div>
             </div>
           </section>
           <section class="bg-white rounded-xl border border-red-200 p-5 shadow-sm space-y-3" id="dashboard-disputes-section" hidden>
@@ -100,11 +99,13 @@
               <h3 class="font-bold text-brand-900">Needs your attention</h3>
               <p class="text-xs text-slate-500 mt-0.5">Queues and quick links — counts also appear in Critical alerts above.</p>
             </div>
-              <div id="dashboard-attention" class="min-h-[6.5rem] space-y-3">
-              <div class="rounded-lg border border-brand-200 bg-brand-50 p-4">
-                <p class="font-semibold text-sm text-brand-900">Group profiles awaiting organiser claim on first login</p>
-                <p class="text-xs text-brand-800/90 mt-1">Organisers will confirm ownership when they sign in — disputes appear here if they reject a match.</p>
+            <!-- Stable LCP node: never destroy #attention-ownership-lcp when refreshing data -->
+            <div id="dashboard-attention" class="min-h-[14rem] space-y-3">
+              <div id="attention-ownership" class="rounded-lg border border-brand-200 bg-brand-50 p-4">
+                <p id="attention-ownership-title" class="font-semibold text-sm text-brand-900">Group profiles awaiting organiser claim on first login</p>
+                <p id="attention-ownership-lcp" class="text-xs text-brand-800/90 mt-1">Organisers will confirm ownership when they sign in — disputes appear here if they reject a match.</p>
               </div>
+              <div id="attention-extra" class="space-y-3"></div>
             </div>
           </section>
           <a href="#analytics" class="block rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-5 shadow-sm hover:border-brand-300 transition group">
@@ -172,9 +173,10 @@
     </div>
   </div>
 
-    <script src="../js/organiser-image-upload.js?v=20260614"></script>
-    <script src="../js/cms-sponsor-fields.js?v=20260609c"></script>
-    <script src="../js/admin-social-posts.js?v=20260730"></script>
-    <script src="../js/admin-app.js?v=20260714lcp2"></script>
+  <script src="../js/site-nav.js?v=20260714v" data-root="../" data-page="admin" defer></script>
+  <script src="../js/organiser-image-upload.js?v=20260614" defer></script>
+  <script src="../js/cms-sponsor-fields.js?v=20260609c" defer></script>
+  <script src="../js/admin-social-posts.js?v=20260730" defer></script>
+  <script src="../js/admin-app.js?v=20260714lcp3" defer></script>
 </body>
 </html>

@@ -52,7 +52,8 @@ async function fetchAllOrganiserRows(sb) {
   while (true) {
     const { data, error } = await sb
       .from('organisers')
-      .select('id, name, slug, updated_at, created_at')
+      // organisers has created_at only (no updated_at column)
+      .select('id, name, slug, created_at')
       .order('name')
       .range(from, from + pageSize - 1);
     if (error) throw new Error(error.message);
@@ -138,7 +139,7 @@ async function buildSitemapXml(originOverride) {
     body += urlEntry(
       origin,
       '/organisers/' + encodeURIComponent(slug),
-      isoDate(row.updated_at || row.created_at)
+      isoDate(row.created_at)
     );
   });
 

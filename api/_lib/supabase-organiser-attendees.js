@@ -39,7 +39,7 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       quantity,
       guest_names,
       cancelled_at,
-      attendees ( name, email ),
+      attendees ( name, email, company, business_sector ),
       events ( title, organiser_id ),
       tickets ( name, price, ticket_type )
     `;
@@ -48,10 +48,17 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       accessibility_requirements,
     `;
 
-  async function fetchRows(includeExtras, eventFilterIds) {
+  async function fetchRows(includeExtras, eventFilterIds, includeProfileFields) {
+    let selectBase = baseSelect;
+    if (!includeProfileFields) {
+      selectBase = selectBase.replace(
+        'attendees ( name, email, company, business_sector )',
+        'attendees ( name, email )'
+      );
+    }
     const select = includeExtras
-      ? baseSelect.replace('guest_names,', 'guest_names,\n' + extrasSelect)
-      : baseSelect;
+      ? selectBase.replace('guest_names,', 'guest_names,\n' + extrasSelect)
+      : selectBase;
     return sb
       .from('registrations')
       .select(select)
@@ -59,17 +66,29 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       .is('cancelled_at', null);
   }
 
-  let { data: historyRows, error: historyError } = await fetchRows(false, [...allowed]);
+  let { data: historyRows, error: historyError } = await fetchRows(false, [...allowed], true);
+  if (
+    historyError &&
+    /company|business_sector|column/.test(String(historyError.message || ''))
+  ) {
+    ({ data: historyRows, error: historyError } = await fetchRows(false, [...allowed], false));
+  }
   if (historyError) throw historyError;
 
   const relationshipMap = buildRegistrationRelationshipMap(historyRows || []);
 
-  let { data, error } = await fetchRows(true, targetIds);
+  let { data, error } = await fetchRows(true, targetIds, true);
+  if (error && /company|business_sector|column/.test(String(error.message || ''))) {
+    ({ data, error } = await fetchRows(true, targetIds, false));
+  }
   if (
     error &&
     /dietary_requirements|accessibility_requirements|column/.test(String(error.message || ''))
   ) {
-    ({ data, error } = await fetchRows(false, targetIds));
+    ({ data, error } = await fetchRows(false, targetIds, true));
+    if (error && /company|business_sector|column/.test(String(error.message || ''))) {
+      ({ data, error } = await fetchRows(false, targetIds, false));
+    }
   }
 
   if (error) throw error;
@@ -112,6 +131,8 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
         eventTitle: String(event.title || 'Event').trim(),
         name,
         email,
+        company: String(attendee.company || '').trim(),
+        businessSector: String(attendee.business_sector || '').trim(),
         guestNames,
         dietaryRequirements: String(row.dietary_requirements || '').trim(),
         accessibilityRequirements: String(row.accessibility_requirements || '').trim(),

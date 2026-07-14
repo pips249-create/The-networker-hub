@@ -434,7 +434,7 @@
     }
   }
 
-  function showReady(message) {
+  function showReady(message, registrationId) {
     if (lead) lead.textContent = message || 'Your ticket is confirmed. Check your email for the details.';
     if (status) {
       status.textContent = '';
@@ -442,7 +442,7 @@
     }
     if (note) note.hidden = false;
     if (actions) actions.hidden = false;
-    customizeSuccessActions();
+    customizeSuccessActions(registrationId);
   }
 
   function showError(message) {
@@ -458,9 +458,10 @@
     customizeSuccessActions();
   }
 
-  async function customizeSuccessActions() {
+  async function customizeSuccessActions(registrationId) {
     const noteSpan = document.querySelector('#booking-success-note span');
     const accountBtn = document.getElementById('booking-success-account');
+    const invoiceBtn = document.getElementById('booking-success-invoice');
     let signedIn = false;
     try {
       const res = await fetch('/api/auth/session', { credentials: 'include' });
@@ -472,9 +473,29 @@
       /* non-fatal */
     }
 
+    const regId = String(registrationId || '').trim();
+    if (invoiceBtn) {
+      if (signedIn && regId) {
+        invoiceBtn.hidden = false;
+        invoiceBtn.href =
+          '/api/auth/registration-invoice?registrationId=' +
+          encodeURIComponent(regId) +
+          '&format=pdf';
+        invoiceBtn.setAttribute('target', '_blank');
+        invoiceBtn.setAttribute('rel', 'noopener noreferrer');
+      } else if (signedIn) {
+        invoiceBtn.hidden = false;
+        invoiceBtn.href = '/account/?tab=payments#payments';
+        invoiceBtn.removeAttribute('target');
+      } else {
+        invoiceBtn.hidden = true;
+      }
+    }
+
     if (signedIn) {
       if (noteSpan) {
-        noteSpan.innerHTML = 'Confirmation email sent · Ticket saved in <strong>My Hub</strong>';
+        noteSpan.innerHTML =
+          'Confirmation email sent · Ticket saved in <strong>My Hub</strong> · Tax invoice available';
       }
       if (accountBtn) {
         accountBtn.textContent = 'View my tickets';
@@ -498,12 +519,15 @@
     }
   }
 
-  async function finishConfirmedBooking(pending, message) {
+  async function finishConfirmedBooking(pending, message, registrationId) {
+    const regId =
+      String(registrationId || '').trim() ||
+      String((pending && pending.registrationId) || '').trim();
     if (pending && pending.eventId) {
       await showSeriesBookAnother(pending, loadedEvent);
     }
     clearPending();
-    showReady(message);
+    showReady(message, regId);
     revealNextPanel();
   }
 
@@ -578,7 +602,11 @@
 
       if (!res.ok || !data.ok) {
         if (data.action === 'exists' || data.error === 'booking_failed') {
-          await finishConfirmedBooking(pending, 'Your ticket is already confirmed.');
+          await finishConfirmedBooking(
+            pending,
+            'Your ticket is already confirmed.',
+            data.id || data.registrationId || (pending && pending.registrationId)
+          );
           return;
         }
         clearPending();
@@ -587,7 +615,11 @@
       }
 
       if (data.action === 'exists') {
-        await finishConfirmedBooking(pending, 'Your ticket is already confirmed.');
+        await finishConfirmedBooking(
+          pending,
+          'Your ticket is already confirmed.',
+          data.id || data.registrationId || (data.registration && data.registration.id)
+        );
         return;
       }
 
@@ -604,7 +636,11 @@
       } else {
         tail = ' We have emailed you the details.';
       }
-      await finishConfirmedBooking(pending, qtyMsg + tail);
+      await finishConfirmedBooking(
+        pending,
+        qtyMsg + tail,
+        data.id || data.registrationId || (data.registration && data.registration.id)
+      );
     } catch (e) {
       clearPending();
       showError('Could not reach the server. Your webhook may still complete the booking shortly.');

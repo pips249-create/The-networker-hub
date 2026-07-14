@@ -49,6 +49,9 @@ function isStaleBookingTemplate(bodyHtml) {
   if (!body.includes('{{hub_payment_url}}')) {
     return true;
   }
+  if (body.includes('View your payment details')) {
+    return true;
+  }
   if (!body.includes('{{privacy_url}}')) {
     return true;
   }

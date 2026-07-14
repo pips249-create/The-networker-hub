@@ -719,8 +719,10 @@
     return route;
   }
 
-  function invoiceDownloadHref(reg) {
-    return '/api/auth/registration-invoice?registrationId=' + encodeURIComponent(reg.id || '');
+  function invoiceDownloadHref(reg, format) {
+    const base =
+      '/api/auth/registration-invoice?registrationId=' + encodeURIComponent(reg.id || '');
+    return format === 'pdf' ? base + '&format=pdf' : base;
   }
 
   function updateLayoutHeader(route) {
@@ -1599,8 +1601,8 @@
         '">Payment details</button>' +
         (isRegistrationPaid(reg) && String(reg.applicationStatus || 'Approved').trim() !== 'Denied'
           ? '<a class="ad-action-link ad-download-invoice" href="' +
-            esc(invoiceDownloadHref(reg)) +
-            '" target="_blank" rel="noopener noreferrer">Download Invoice</a>'
+            esc(invoiceDownloadHref(reg, 'pdf')) +
+            '" target="_blank" rel="noopener noreferrer">Download tax invoice</a>'
           : '') +
         (reg.canCancel
           ? '<button type="button" class="ad-action-link ad-action-link--danger ad-cancel-booking" data-registration-id="' +

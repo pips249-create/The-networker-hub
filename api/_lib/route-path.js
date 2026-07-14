@@ -13,7 +13,10 @@ function getSubRoute(req, basePath) {
   }
   if (!pathname.startsWith(base)) {
     const idx = pathname.indexOf(base);
-    if (idx >= 0) pathname = pathname.slice(idx);
+    // Only strip a real mount of this API — never pathname.slice(base.length) on
+    // unrelated paths (e.g. /sitemap.xml + base /api/seo → bogus ".xml").
+    if (idx < 0) return '';
+    pathname = pathname.slice(idx);
   }
   const rest = pathname.slice(base.length).replace(/^\//, '');
   return rest.split('/').filter(Boolean)[0] || '';

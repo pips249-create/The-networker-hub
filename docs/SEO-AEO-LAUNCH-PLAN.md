@@ -46,8 +46,8 @@ It is **not** a substitute for Search Console, sitemap, or the `the-networker.co
 ## Do beforehand (while still private)
 
 1. **Lock the public origin** — `www.thenetworkerhub.com` (apex → www). Set `SITE_URL` in Vercel Production to that exact URL.
-2. **Align SEO surfaces** — `robots.txt` Sitemap line, rebuild `llms.txt` (`npm run build-seo`), fix hard-coded `the-networker.co.uk` canonical leftovers (guides/faq).
-3. **Redirect map** — old `the-networker.co.uk` URLs → hub equivalents; plan 301s (or temporary “we’ve upgraded” page) for apex + www.
+2. **Align SEO surfaces** — `robots.txt` Sitemap line, rebuild `llms.txt` (`SITE_URL=https://www.thenetworkerhub.com npm run build-seo`), fix hard-coded `the-networker.co.uk` canonical leftovers (guides/faq).
+3. **Redirect map** — draft in [`docs/LEGACY-REDIRECT-MAP.md`](./LEGACY-REDIRECT-MAP.md); confirm old analytics URLs → hub 301s for apex + www.
 4. **Google Search Console** — property for `www.thenetworkerhub.com` (domain property if possible). Prepare DNS TXT / HTML verification.
 5. **Google Business Profile** — Software company / online platform; Magpas HQ; website field ready for hub URL.
 6. **Analytics** — keep Vercel Analytics only, or add GA4/GTM after cookie consent.
@@ -96,4 +96,4 @@ It is **not** a substitute for Search Console, sitemap, or the `the-networker.co
 
 ---
 
-*Related: `PIPS-TODO.md` Tabs 6–7 · preview gate in `middleware.js`*
+*Related: `PIPS-TODO.md` Tabs 6–7 · preview gate in `middleware.js` · redirect draft `docs/LEGACY-REDIRECT-MAP.md`*

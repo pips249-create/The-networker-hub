@@ -1,4 +1,4 @@
-# The Networker Hub — https://the-networker.co.uk
+# The Networker Hub — https://www.thenetworkerhub.com
 User-agent: *
 Allow: /
 Disallow: /admin/
@@ -7,7 +7,7 @@ Disallow: /organiser/
 Disallow: /api/
 Disallow: /events/booking-success
 
-Sitemap: https://the-networker.co.uk/sitemap.xml
+Sitemap: https://www.thenetworkerhub.com/sitemap.xml
 
 # AI / answer-engine crawlers
 Allow: /llms.txt

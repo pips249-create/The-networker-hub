@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260710c" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260714badges" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260714cls" />
   </head>
   <body class="organiser-dashboard-page">
@@ -623,6 +623,19 @@
                 </div>
               </div>
             </section>
+
+            <section class="org-linkedin-covers" id="org-linkedin-covers" aria-labelledby="org-linkedin-covers-title">
+              <h2 class="org-section-title" id="org-linkedin-covers-title">LinkedIn cover templates</h2>
+              <p class="org-section-sub">
+                Free static covers (1584×396) — download, upload as your LinkedIn banner, and share that you&rsquo;re on The Networker Hub.
+              </p>
+              <div class="org-linkedin-covers-grid">
+                <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-listed.svg" download="linkedin-cover-listed-networker-hub.svg">We&rsquo;re listed on the Hub</a>
+                <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-top10.svg" download="linkedin-cover-top10-networker-hub.svg">Top 10 cover</a>
+                <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-top25.svg" download="linkedin-cover-top25-networker-hub.svg">Top 25 cover</a>
+                <a class="org-btn org-btn-outline org-btn-sm" href="../assets/social/linkedin-cover-top50.svg" download="linkedin-cover-top50-networker-hub.svg">Top 50 cover</a>
+              </div>
+            </section>
           </div>
 
           <nav class="org-events-subnav" id="org-events-subnav" role="tablist" aria-label="Events sections">
@@ -766,7 +779,7 @@
           <div class="org-sub-page" id="sub-events-attendees" role="tabpanel" data-events-panel="events-attendees" aria-labelledby="events-tab-attendees" hidden>
             <div class="org-toolbar org-toolbar--section">
               <p class="org-section-sub org-sub-lead org-sub-lead--flush">
-                Everyone registered or applied for your events — see who is new to your organiser page vs returning, filter by event, and export a CSV.
+                Everyone registered or applied for your events — see who is new to your organiser page vs returning, filter by event, export a CSV, or print Avery name badges for check-in.
               </p>
             </div>
             <div class="org-attendee-data-notice org-notice org-notice--info" role="note">
@@ -774,7 +787,7 @@
               <p class="org-notice-text">
                 You receive name and email so you can run the event — for example join links, venue updates, or questions about this booking.
                 Please do not add attendees to marketing lists or contact them about unrelated services without their consent.
-                Export a CSV when you need your own records; the Hub still sends booking confirmations and reminders on your behalf.
+                Export a CSV when you need your own records; print name badges the night before for sticker sheets (Avery 7160). The Hub still sends booking confirmations and reminders on your behalf.
               </p>
             </div>
             <div class="org-filter-bar">
@@ -788,6 +801,9 @@
               </select>
               <button type="button" class="org-btn org-btn-gold" id="btn-download-attendees-csv">
                 ⬇ Download attendees CSV
+              </button>
+              <button type="button" class="org-btn org-btn-outline" id="btn-download-name-badges">
+                ⬇ Export printable name badges (PDF)
               </button>
             </div>
             <div class="org-attendees-archive-nav" id="attendees-archive-nav">
@@ -1569,6 +1585,6 @@
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
     <script src="../js/organiser-payment-setup.js?v=20260714a"></script>
     <script src="../js/review-report.js?v=20260708"></script>
-    <script src="../js/organiser-dashboard.js?v=20260714b"></script>
+    <script src="../js/organiser-dashboard.js?v=20260714badges"></script>
   </body>
 </html>

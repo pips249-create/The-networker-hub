@@ -305,7 +305,7 @@
       /\/$/,
       ''
     );
-    return origin || 'https://the-networker.co.uk';
+    return origin || 'https://www.thenetworkerhub.com';
   }
 
   function hubLogoUrl() {
@@ -321,7 +321,7 @@
   }
 
   function organiserPublicUrl(org) {
-    if (org && org.slug) return siteOrigin() + '/organiser/' + encodeURIComponent(org.slug);
+    if (org && org.slug) return siteOrigin() + '/organisers/' + encodeURIComponent(org.slug);
     if (org && org.id) return siteOrigin() + '/events/organiser?id=' + encodeURIComponent(org.id);
     return siteOrigin() + '/events/';
   }
@@ -652,7 +652,7 @@
     ctx.fillStyle = 'rgba(255,255,255,0.55)';
     ctx.font = '500 20px system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('The Networker Hub · the-networker.co.uk', width / 2, height - 42);
+    ctx.fillText('The Networker Hub · thenetworkerhub.com', width / 2, height - 42);
 
     return canvas.toDataURL('image/png');
   }

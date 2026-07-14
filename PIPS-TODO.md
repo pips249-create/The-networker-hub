@@ -4,7 +4,7 @@
 
 **Find this file:** search the repo for `PIPS-TODO` or open [`PIPS-TODO.md`](./PIPS-TODO.md) at the project root.
 
-*Last updated: 9 July 2026*
+*Last updated: 14 July 2026*
 
 ---
 
@@ -21,7 +21,7 @@
 | SEO | ~70% | Foundations built — **domain, GSC, sitemap verify, redirect** remain |
 | AEO (AI / answer engines) | ~70% | `llms.txt`, FAQs, JSON-LD — **gate-off discovery + canonical alignment** remain |
 | Business ops | ~75% | Product + runbooks — **`npm run check:business-ops`** — ICO verify, DNS, DPAs, solicitor remain |
-| Redirect & launch comms | ~5% | the-networker.co.uk redirect + email waves not started |
+| Redirect & launch comms | ~10% | Redirect map drafted (`docs/LEGACY-REDIRECT-MAP.md`); email waves not started |
 
 ### Critical path (do these next)
 
@@ -146,11 +146,12 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 
 ## Tab 1 — Supabase migrations
 
-**Status: migrations 001–124** — run any new files in `supabase/migrations/` in order on production.
+**Status: migrations 001–146 on disk** — run any new files in `supabase/migrations/` in order on production (confirm 125–146 applied).
 
 | Migration | Status | Notes |
 |-----------|--------|-------|
 | 001–124 | Run through prod | Full schema through opportunity moderation, platform admin emails |
+| 125–146 | Confirm on prod | Guest visits, alumni pass, opportunity favourites / saved searches, complaints register |
 | 071–072 | Optional | Admin MFA added then removed — **do not run unless you want MFA back** |
 
 **Verify reviews setup:** `npm run test-review-e2e`
@@ -292,11 +293,11 @@ Without Connect, paid revenue stays on the Hub Stripe account (legacy **Request 
 | [x] | JSON-LD in `<head>` on static pages; BreadcrumbList on event/organiser pages |
 | [ ] | **`SITE_URL`** in Vercel Production = `https://www.thenetworkerhub.com` (exact canonical) |
 | [ ] | Verify `/sitemap.xml` after deploy — counts match published events + organisers |
-| [ ] | Align hard-coded `the-networker.co.uk` canonical leftovers; run `npm run build-seo` |
+| [x] | Align hard-coded `the-networker.co.uk` canonical leftovers; run `npm run build-seo` |
 | [ ] | **Google Search Console** — verify `www.thenetworkerhub.com`; submit sitemap |
 | [ ] | **Google Business Profile** — Software company; Magpas HQ; hub URL |
 | [ ] | Launch week: remove `SITE_ACCESS_PASSWORD` → confirm `/robots.txt` Allow, `/llms.txt` 200 |
-| [ ] | `the-networker.co.uk` 301 redirect map ready (Tab 7) |
+| [x] | `the-networker.co.uk` 301 redirect map ready (Tab 7) — draft `docs/LEGACY-REDIRECT-MAP.md` |
 | [ ] | City/region landing pages (post-launch — not a 100% blocker) |
 
 **Full plan:** `docs/SEO-AEO-LAUNCH-PLAN.md`
@@ -309,7 +310,7 @@ Without Connect, paid revenue stays on the Hub Stripe account (legacy **Request 
 
 | Done | Step |
 |:----:|------|
-| [ ] | Map old the-networker.co.uk URLs → new hub URLs |
+| [x] | Map old the-networker.co.uk URLs → new hub URLs (`docs/LEGACY-REDIRECT-MAP.md`) |
 | [ ] | DNS / hosting redirect for apex + www |
 | [ ] | Segment 3,500 list: organisers vs attendees vs both |
 | [ ] | July beta email (50–100 organisers) |
@@ -404,7 +405,8 @@ Legal policies, cookie consent, terms at registration, pre-checkout acknowledgem
 | Supabase setup | `SUPABASE-SETUP.md` |
 | Checkout + email | `CHECKOUT-SETUP.md` |
 | SEO / AEO | `robots.txt`, `agents.txt`, `llms.txt`, `/sitemap.xml`, `/api/seo-meta` |
-| Rebuild FAQ + schema | `npm run build-seo` |
+| Legacy redirects | `docs/LEGACY-REDIRECT-MAP.md` |
+| Rebuild FAQ + schema | `SITE_URL=https://www.thenetworkerhub.com npm run build-seo` |
 | Stripe Connect test | `PIPS-TODO.md` Tab 9 |
 | Business ops / compliance | `docs/COMPLIANCE-RUNBOOK.md` · Tab 10 |
 | Subprocessor DPAs | `docs/DPA-SUBPROCESSORS.md` · `npm run check:dpas` |
@@ -416,8 +418,8 @@ Legal policies, cookie consent, terms at registration, pre-checkout acknowledgem
 
 ## Notes
 
-- Migrations **001–124** — run any new files in `supabase/migrations/` in order on production.
+- Migrations **001–146** on disk — run any new files in `supabase/migrations/` in order on production.
 - **June/July money + data gates** are done — focus is Connect proof test, SEO domain, beta email, business ops.
 - Organiser **groups are in Supabase** — July/August focus is **claims, republishing events**, and email waves.
-- After editing FAQs run `npm run build-seo` before deploy.
+- After editing FAQs run `SITE_URL=https://www.thenetworkerhub.com npm run build-seo` before deploy.
 - Add new items here so launch tasks stay in one place.

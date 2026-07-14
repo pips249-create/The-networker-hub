@@ -10,7 +10,7 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'WHO WE ARE',
     body:
-      'The Networker Hub (the-networker.co.uk) is a UK platform connecting business owners and professionals with networking events, exhibitions, conferences, and business opportunities. ' +
+      'The Networker Hub (www.thenetworkerhub.com; formerly the-networker.co.uk) is a UK platform connecting business owners and professionals with networking events, exhibitions, conferences, and business opportunities. ' +
       'Operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94). ' +
       'Co-founded and run by Rosie and Catherine. Mission: help people find the right room at the right time to grow their network and business. ' +
       'Contact: hello@thenetworkerhub.com · Address: Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF.',

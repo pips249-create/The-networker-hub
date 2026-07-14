@@ -734,6 +734,25 @@
   gap: 8px;
 }
 
+.org-linkedin-covers {
+  margin: 1.25rem 0 0.5rem;
+  padding: 1.1rem 1.15rem;
+  border: 1px solid var(--od-border, #e8dfd0);
+  border-radius: 12px;
+  background: var(--od-surface-warm, #f5f0e8);
+}
+
+.org-linkedin-covers .org-section-title {
+  margin-bottom: 0.25rem;
+}
+
+.org-linkedin-covers-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 .org-ranking-share-preview {
   margin: 0 0 12px;
 }

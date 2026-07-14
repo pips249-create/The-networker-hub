@@ -276,8 +276,19 @@
       '<a class="org-btn org-btn-outline org-btn-sm" href="' +
       esc(groupPublicProfileUrl(g.id)) +
       '" target="_blank" rel="noopener noreferrer">View public profile</a>' +
+      '<a class="org-btn org-btn-outline org-btn-sm" href="' +
+      esc(linkedinCoverHrefForTier(row.tier)) +
+      '" download>Download LinkedIn cover</a>' +
       '</div></article>'
     );
+  }
+
+  function linkedinCoverHrefForTier(tier) {
+    const t = String(tier || '').toLowerCase();
+    if (t === 'top10') return '../assets/social/linkedin-cover-top10.svg';
+    if (t === 'top25') return '../assets/social/linkedin-cover-top25.svg';
+    if (t === 'top50') return '../assets/social/linkedin-cover-top50.svg';
+    return '../assets/social/linkedin-cover-listed.svg';
   }
 
   function bindRankingShareActions(root) {
@@ -2408,6 +2419,55 @@
     link.download = 'attendees' + suffix + '.csv';
     link.click();
     URL.revokeObjectURL(link.href);
+  }
+
+  async function exportNameBadgesPdf() {
+    if (filters.attendeesView === 'archive') {
+      alert('Switch back to attendees to export name badges for confirmed guests.');
+      return;
+    }
+    const confirmed = filteredAttendeesList().filter(function (a) {
+      const status = String(a.applicationStatus || 'Approved').trim();
+      return status !== 'Pending' && status !== 'Denied';
+    });
+    if (!confirmed.length) {
+      alert('No confirmed attendees to print for this filter.');
+      return;
+    }
+    const eventId = filters.attendeesEvent || 'all';
+    const btn = document.getElementById('btn-download-name-badges');
+    const prev = btn ? btn.textContent : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Building PDF…';
+    }
+    try {
+      const res = await fetch(
+        '/api/organiser/attendee-badges-pdf?eventId=' + encodeURIComponent(eventId),
+        { credentials: 'include' }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(function () {
+          return {};
+        });
+        throw new Error(data.message || data.error || 'Could not build name badges');
+      }
+      const blob = await res.blob();
+      const link = document.createElement('a');
+      const suffix =
+        eventId !== 'all' ? '-' + String(eventId).replace(/^rec/, '').slice(0, 8) : '-all-events';
+      link.href = URL.createObjectURL(blob);
+      link.download = 'name-badges' + suffix + '.pdf';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    } catch (e) {
+      alert(e.message || 'Could not build name badges');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = prev || '⬇ Export printable name badges (PDF)';
+      }
+    }
   }
 
   function attendeeApplicationAnswersHtml(a) {
@@ -7651,6 +7711,10 @@
     const btnDownloadAttendees = document.getElementById('btn-download-attendees-csv');
     if (btnDownloadAttendees) {
       btnDownloadAttendees.addEventListener('click', exportAttendeesCsv);
+    }
+    const btnDownloadBadges = document.getElementById('btn-download-name-badges');
+    if (btnDownloadBadges) {
+      btnDownloadBadges.addEventListener('click', exportNameBadgesPdf);
     }
 
     const btnAttendeesShowAll = document.getElementById('btn-attendees-show-all');

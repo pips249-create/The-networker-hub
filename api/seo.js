@@ -10,9 +10,27 @@ const routes = {
   'hubert-schema': require('./_lib/routes/hubert-schema'),
 };
 
+function requestPathname(req) {
+  if (!req || !req.url) return '';
+  try {
+    return new URL(req.url, 'https://internal.local').pathname || '';
+  } catch {
+    return String(req.url).split('?')[0] || '';
+  }
+}
+
 module.exports = async function handler(req, res) {
   setCors(req, res);
   let route = getSubRoute(req, '/api/seo');
+  // Rewrites: /sitemap.xml → /api/seo/sitemap or /api/seo?route=sitemap
+  if (!route && req.query?.route) {
+    route = String(req.query.route).trim();
+  }
+  // vercel.dev sometimes keeps the public path on req.url after rewrite.
+  const pathname = requestPathname(req);
+  if ((!route || route === '.xml') && /\/sitemap\.xml$/i.test(pathname)) {
+    route = 'sitemap';
+  }
   if (route === '-meta') route = 'meta';
   if (!route && (req.query?.type || req.query?.slug || req.query?.page)) {
     route = 'meta';

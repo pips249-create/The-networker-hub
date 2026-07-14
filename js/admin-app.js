@@ -695,7 +695,7 @@
 
     var attentionEl = document.getElementById('dashboard-attention');
     if (attentionEl) {
-      attentionEl.innerHTML = renderAttentionQueue(data.attention);
+      applyAttentionQueue(data.attention);
     }
 
     var activityEl = document.getElementById('dashboard-activity');
@@ -924,23 +924,9 @@
     );
   }
 
-  function renderAttentionQueue(attention) {
-    if (!attention) {
-      return '<p class="text-sm text-slate-500">Loading…</p>';
-    }
+  function renderAttentionExtras(attention) {
+    if (!attention) return '';
     var parts = [];
-
-    if (attention.pendingOwnershipClaims > 0) {
-      parts.push(
-        '<div class="rounded-lg border border-brand-200 bg-brand-50 p-4">' +
-          '<p class="font-semibold text-sm text-brand-900">' +
-          attention.pendingOwnershipClaims +
-          ' group profile' +
-          (attention.pendingOwnershipClaims === 1 ? '' : 's') +
-          ' awaiting organiser claim on first login</p>' +
-          '<p class="text-xs text-brand-800/90 mt-1">Organisers will confirm ownership when they sign in — disputes appear here if they reject a match.</p></div>'
-      );
-    }
 
     if (attention.pendingPayouts > 0) {
       parts.push(
@@ -1086,8 +1072,75 @@
       parts.push('<div class="flex flex-wrap gap-x-4 gap-y-2 mt-3">' + links.join('') + '</div>');
     }
 
-    if (!parts.length) {
+    return parts.join('');
+  }
+
+  function applyAttentionQueue(attention) {
+    var ownership = document.getElementById('attention-ownership');
+    var title = document.getElementById('attention-ownership-title');
+    var extra = document.getElementById('attention-extra');
+    var container = document.getElementById('dashboard-attention');
+
+    if (!attention) {
+      if (container && !ownership) {
+        container.innerHTML = '<p class="text-sm text-slate-500">Loading…</p>';
+      }
+      return;
+    }
+
+    var claims = Number(attention.pendingOwnershipClaims) || 0;
+    var extrasHtml = renderAttentionExtras(attention);
+    var hasAnything = claims > 0 || !!extrasHtml;
+
+    if (ownership && title) {
+      if (claims > 0) {
+        ownership.hidden = false;
+        title.textContent =
+          claims +
+          ' group profile' +
+          (claims === 1 ? '' : 's') +
+          ' awaiting organiser claim on first login';
+      } else {
+        ownership.hidden = true;
+      }
+      if (extra) extra.innerHTML = extrasHtml;
+      if (!hasAnything && extra) {
+        extra.innerHTML = '<p class="text-sm text-emerald-700">Nothing needs immediate action right now.</p>';
+      }
+      return;
+    }
+
+    if (container) {
+      container.innerHTML = renderAttentionQueue(attention);
+    }
+  }
+
+  function renderAttentionQueue(attention) {
+    if (!attention) {
+      return '<p class="text-sm text-slate-500">Loading…</p>';
+    }
+    var parts = [];
+    var claims = Number(attention.pendingOwnershipClaims) || 0;
+
+    if (claims > 0) {
+      parts.push(
+        '<div id="attention-ownership" class="rounded-lg border border-brand-200 bg-brand-50 p-4">' +
+          '<p id="attention-ownership-title" class="font-semibold text-sm text-brand-900">' +
+          claims +
+          ' group profile' +
+          (claims === 1 ? '' : 's') +
+          ' awaiting organiser claim on first login</p>' +
+          '<p id="attention-ownership-lcp" class="text-xs text-brand-800/90 mt-1">Organisers will confirm ownership when they sign in — disputes appear here if they reject a match.</p></div>'
+      );
+    }
+
+    var extras = renderAttentionExtras(attention);
+    if (extras) {
+      parts.push('<div id="attention-extra" class="space-y-3">' + extras + '</div>');
+    } else if (!parts.length) {
       return '<p class="text-sm text-emerald-700">Nothing needs immediate action right now.</p>';
+    } else {
+      parts.push('<div id="attention-extra" class="space-y-3"></div>');
     }
     return parts.join('');
   }
@@ -3546,8 +3599,10 @@
         '<div class="space-y-6">' +
         '<section class="space-y-3">' +
         '<h3 class="text-sm font-bold uppercase tracking-wide text-slate-500">Critical alerts</h3>' +
-        '<div class="grid gap-3 min-h-[11rem]" id="dashboard-alerts"><p class="text-sm text-slate-500">Loading from Supabase…</p></div>' +
-        '</section>' +
+        '<div class="grid gap-3 min-h-[12rem]" id="dashboard-alerts">' +
+        '<div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 min-h-[4.5rem]" aria-hidden="true"></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 min-h-[4.5rem]" aria-hidden="true"></div>' +
+        '</div></section>' +
         '<section class="bg-white rounded-xl border border-red-200 p-5 shadow-sm space-y-3" id="dashboard-disputes-section" hidden>' +
         '<div><h3 class="font-bold text-brand-900">Group profile disputes</h3>' +
         '<p class="text-xs text-slate-500 mt-0.5">An organiser signed in and said a pre-imported profile is not theirs — use the actions below to fix or dismiss.</p></div>' +
@@ -3555,11 +3610,11 @@
         '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">' +
         '<div><h3 class="font-bold text-brand-900">Needs your attention</h3>' +
         '<p class="text-xs text-slate-500 mt-0.5">Queues and quick links — counts also appear in Critical alerts above.</p></div>' +
-        '<div id="dashboard-attention" class="min-h-[6.5rem] space-y-3">' +
-        '<div class="rounded-lg border border-brand-200 bg-brand-50 p-4">' +
-        '<p class="font-semibold text-sm text-brand-900">Group profiles awaiting organiser claim on first login</p>' +
-        '<p class="text-xs text-brand-800/90 mt-1">Organisers will confirm ownership when they sign in — disputes appear here if they reject a match.</p>' +
-        '</div></div></section>' +
+        '<div id="dashboard-attention" class="min-h-[14rem] space-y-3">' +
+        '<div id="attention-ownership" class="rounded-lg border border-brand-200 bg-brand-50 p-4">' +
+        '<p id="attention-ownership-title" class="font-semibold text-sm text-brand-900">Group profiles awaiting organiser claim on first login</p>' +
+        '<p id="attention-ownership-lcp" class="text-xs text-brand-800/90 mt-1">Organisers will confirm ownership when they sign in — disputes appear here if they reject a match.</p>' +
+        '</div><div id="attention-extra" class="space-y-3"></div></div></section>' +
         '<a href="#analytics" class="block rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-5 shadow-sm hover:border-brand-300 transition group">' +
         '<div class="flex flex-wrap items-center justify-between gap-3">' +
         '<div><p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Traffic</p>' +
@@ -12536,11 +12591,10 @@
   });
 
   adminMetricsCache = readCachedAdminMetrics();
-  if (adminMetricsCache && document.getElementById('dashboard-alerts')) {
+  if (adminMetricsCache && document.getElementById('attention-ownership-lcp')) {
     applyDashboardMetrics(adminMetricsCache);
     applyDashboardNotifications(adminMetricsCache);
   }
-  document.body.classList.add('hub-admin-active');
   fetchAdminMetrics(false, true);
   fetchAdminMetrics(false, false);
 
