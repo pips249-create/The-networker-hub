@@ -147,6 +147,17 @@
       }
     }
 
+    var regional = window.hubRegionalLanding;
+    if (regional && regional.location) {
+      var locations = Array.isArray(org.locations) ? org.locations : [];
+      var matchesRegion = locations.some(function (location) {
+        return window.hubMatchOutcode
+          ? window.hubMatchOutcode(regional.location, location || {})
+          : false;
+      });
+      if (!matchesRegion) return false;
+    }
+
     if (hasListings && hasListings.checked && !(Number(org.eventCount) > 0)) return false;
     if (guestVisits && guestVisits.checked && !(Number(org.guestVisitsAllowed) > 0)) return false;
     if (!matchesFormatFilter(org)) return false;

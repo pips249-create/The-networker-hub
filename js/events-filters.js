@@ -675,6 +675,20 @@
   function restoreFilterPrefs() {
     try {
       var urlQ = getUrlSearchQuery();
+      var regional = window.hubRegionalLanding;
+
+      if (regional && regional.location) {
+        if (searchInput && urlQ) searchInput.value = urlQ;
+        if (postcodeInput) postcodeInput.value = regional.location;
+        if (checkInPerson) checkInPerson.checked = true;
+        if (checkOnline) checkOnline.checked = true;
+        if (toggleNearMe) toggleNearMe.checked = false;
+        if (toggleNearMeMobile) toggleNearMeMobile.checked = false;
+        syncNearRadiusUi();
+        return window.hubResolveLocationFilter
+          ? window.hubResolveLocationFilter(regional.location)
+          : Promise.resolve();
+      }
 
       if (urlQ) {
         if (searchInput) searchInput.value = urlQ;
@@ -774,7 +788,12 @@
 
   function resetFilters() {
     if (searchInput) searchInput.value = '';
-    if (postcodeInput) postcodeInput.value = '';
+    if (postcodeInput) {
+      postcodeInput.value =
+        window.hubRegionalLanding && window.hubRegionalLanding.location
+          ? window.hubRegionalLanding.location
+          : '';
+    }
     if (sortSelect) sortSelect.value = 'recommended';
     if (flatpickrInstance) flatpickrInstance.clear();
     syncDateWrapState([]);
@@ -796,6 +815,13 @@
     window.hubLocationFilterCoords = null;
     syncNearRadiusUi();
     setActiveTypeTab('all');
+    if (
+      window.hubRegionalLanding &&
+      window.hubRegionalLanding.location &&
+      window.hubResolveLocationFilter
+    ) {
+      window.hubResolveLocationFilter(window.hubRegionalLanding.location);
+    }
     try {
       sessionStorage.removeItem(FILTER_STORAGE_KEY);
     } catch (e) {

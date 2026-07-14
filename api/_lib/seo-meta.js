@@ -15,6 +15,7 @@ const { publicEventSlug } = require('./event-slug');
 const { publicOrganiserSlug } = require('./organiser-slug');
 const { publicOpportunitySlug } = require('./opportunity-slug');
 const { eventImageUrl } = require('./event-image');
+const { getNetworkingRegion } = require('./networking-regions');
 
 function trimText(text, max) {
   const raw = String(text || '')
@@ -481,6 +482,68 @@ function buildStaticPageMeta(pageKey, origin) {
   };
 }
 
+function buildNetworkingRegionMeta(slug, origin) {
+  const region = getNetworkingRegion(slug);
+  if (!region) return null;
+
+  const year = new Date().getFullYear();
+  const canonical = absoluteUrl(origin, region.path);
+  const image = absoluteUrl(origin, '/assets/logo.png');
+  const title = `Business Networking Events in ${region.name} ${year} – The Networker Hub`;
+  const description = trimText(
+    `Find business networking events, meetings and organiser groups in ${region.name}. Browse upcoming local listings and book your next event on The Networker Hub.`,
+    160
+  );
+  const meta = { title, description, canonical, image, ogType: 'website' };
+  const pageName = `The best business networking events and groups in ${region.name} ${year}`;
+  const collectionPage = {
+    '@type': 'CollectionPage',
+    '@id': canonical + '#directory',
+    url: canonical,
+    name: pageName,
+    description,
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'The Networker Hub',
+      url: absoluteUrl(origin, '/'),
+    },
+    about: {
+      '@type': 'Place',
+      name: region.name,
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: region.name,
+        addressCountry: 'GB',
+      },
+    },
+  };
+  const breadcrumbs = buildBreadcrumbListSchema(
+    [
+      { name: 'Home', path: '/' },
+      { name: 'Networking', path: '/events/' },
+      { name: region.name, path: region.path },
+    ],
+    origin
+  );
+
+  return {
+    ok: true,
+    type: 'networking-region',
+    slug: region.slug,
+    region: {
+      slug: region.slug,
+      name: region.name,
+      location: region.location,
+      path: region.path,
+      year,
+    },
+    ...meta,
+    openGraph: buildOpenGraphTags(meta),
+    schema: buildSchemaGraphFromParts([collectionPage, breadcrumbs], origin),
+    breadcrumbs: breadcrumbs.itemListElement,
+  };
+}
+
 async function buildSeoMeta(type, slug, origin) {
   const t = String(type || '').toLowerCase();
   const s = String(slug || '').trim();
@@ -489,6 +552,7 @@ async function buildSeoMeta(type, slug, origin) {
   if (t === 'event') return buildEventMeta(s, origin);
   if (t === 'organiser') return buildOrganiserMeta(s, origin);
   if (t === 'opportunity') return buildOpportunityMeta(s, origin);
+  if (t === 'networking-region') return buildNetworkingRegionMeta(s, origin);
   return null;
 }
 
@@ -499,6 +563,7 @@ module.exports = {
   buildOrganiserMeta,
   buildOpportunityMeta,
   buildStaticPageMeta,
+  buildNetworkingRegionMeta,
   absoluteUrl,
   trimText,
 };

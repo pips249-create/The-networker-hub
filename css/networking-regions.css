@@ -1,0 +1,125 @@
+.networking-region-intro,
+.networking-location-directory {
+  border: 1px solid rgba(50, 43, 120, 0.12);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(31, 28, 70, 0.07);
+}
+
+.networking-region-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  margin: 28px 0 6px;
+  padding: 28px 32px;
+}
+
+.networking-region-intro[hidden] {
+  display: none;
+}
+
+.networking-region-kicker {
+  margin: 0 0 7px;
+  color: #6758c8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.networking-region-intro h2,
+.networking-location-directory h2 {
+  margin: 0;
+  color: #1c2040;
+  font-family: "DM Serif Display", Georgia, serif;
+  font-size: clamp(25px, 3vw, 34px);
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.networking-region-intro p:last-child {
+  max-width: 720px;
+  margin: 10px 0 0;
+  color: #625f73;
+  line-height: 1.65;
+}
+
+.networking-region-organiser-cta {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #322b78;
+  color: #fff;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.networking-region-organiser-cta:hover {
+  background: #5045a6;
+}
+
+.networking-location-directory {
+  margin: 40px 0 52px;
+  padding: 30px 32px;
+}
+
+.networking-location-groups {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 28px;
+  margin-top: 24px;
+}
+
+.networking-location-groups h3 {
+  margin: 0 0 12px;
+  color: #3d3952;
+  font-size: 15px;
+}
+
+.networking-location-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.networking-location-links a {
+  border: 1px solid #ded9f4;
+  border-radius: 999px;
+  background: #f8f6ff;
+  color: #493f95;
+  padding: 8px 13px;
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.networking-location-links a:hover,
+.networking-location-links a[aria-current="page"] {
+  border-color: #7668ce;
+  background: #ede9ff;
+  color: #2f286c;
+}
+
+@media (max-width: 720px) {
+  .networking-region-intro {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 23px 20px;
+  }
+
+  .networking-region-organiser-cta {
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+  }
+
+  .networking-location-directory {
+    padding: 25px 20px;
+  }
+
+  .networking-location-groups {
+    grid-template-columns: 1fr;
+  }
+}

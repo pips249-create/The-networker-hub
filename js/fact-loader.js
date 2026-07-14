@@ -49,6 +49,39 @@
     {
       text: 'LinkedIn\u2019s global talent research shows that most hiring still starts with referrals and warm introductions.',
     },
+    {
+      text: 'The UK\u2019s best cities for networking can help you build long-lasting business partnerships and take your career to the next level.',
+    },
+    {
+      text: 'London ranks as the UK\u2019s top city for networkers, with an index score of 7.35 out of 10 and over \u00a378 million passed through networking groups in the past year.',
+    },
+    {
+      text: 'Glasgow is the UK\u2019s second-best city for networking \u2014 over \u00a3205 million passed through local groups last year.',
+    },
+    {
+      text: 'Birmingham ranks third for UK networking, with 16+ groups and members passing over \u00a319 million in business last year.',
+    },
+    {
+      text: 'Chester ranks fourth among UK networking cities, with around 285 active networking members.',
+    },
+    {
+      text: 'Manchester rounds out the UK\u2019s top five networking cities \u2014 over \u00a331 million passed through local groups in the past year.',
+    },
+    {
+      text: 'The South East is the UK\u2019s top region for networking, with an index score of 6.20 out of 10.',
+    },
+    {
+      text: 'The North West ranks second among UK networking regions, scoring 5.43 out of 10.',
+    },
+    {
+      text: 'London ranks third among UK networking regions, with an index score of 5.25 out of 10.',
+    },
+    {
+      text: 'The West Midlands is the UK\u2019s fourth-best region for networking, with an index score of 4.95 out of 10.',
+    },
+    {
+      text: 'Scotland rounds out the UK\u2019s top five networking regions, scoring 3.67 out of 10.',
+    },
   ];
 
   let overlayEl = null;

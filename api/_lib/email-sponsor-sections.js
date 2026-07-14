@@ -299,12 +299,41 @@ function stripUnresolvedSponsorPlaceholders(html) {
   return out;
 }
 
+function insertSponsorPlaceholderAfterHeader(html, placeholder) {
+  const body = String(html || '');
+  const token = String(placeholder || '').trim();
+  if (!token || body.includes(token)) return body;
+
+  // Prefer just after the cream header / wave block (logo + hero container).
+  const waveClose = body.search(
+    /<\/svg>\s*<\/div>\s*<\/td>\s*<\/tr>/i
+  );
+  if (waveClose !== -1) {
+    const insertAt = body.indexOf('</tr>', waveClose);
+    if (insertAt !== -1) {
+      return body.slice(0, insertAt + 5) + '\n\n        ' + token + '\n' + body.slice(insertAt + 5);
+    }
+  }
+
+  const headerLogo = body.search(/email-logo-header|alt="The Networker Hub" width="240"/i);
+  if (headerLogo !== -1) {
+    const rowEnd = body.indexOf('</tr>', headerLogo);
+    if (rowEnd !== -1) {
+      return body.slice(0, rowEnd + 5) + '\n\n        ' + token + '\n' + body.slice(rowEnd + 5);
+    }
+  }
+
+  return insertSponsorPlaceholderBeforeFooter(body, token);
+}
+
 function insertSponsorPlaceholderBeforeFooter(html, placeholder) {
   const body = String(html || '');
   const token = String(placeholder || '').trim();
   if (!token || body.includes(token)) return body;
   const footerRow = /(<tr[^>]*>\s*<td[^>]*background\s*:\s*#1c2040)/i;
   if (footerRow.test(body)) return body.replace(footerRow, token + '\n$1');
+  const creamFooter = /(<tr[^>]*>\s*<td[^>]*class="mobile-footer-pad")/i;
+  if (creamFooter.test(body)) return body.replace(creamFooter, token + '\n$1');
   const closingTable = body.lastIndexOf('</table>');
   if (closingTable === -1) return body + token;
   return body.slice(0, closingTable) + token + '\n' + body.slice(closingTable);
@@ -321,6 +350,7 @@ module.exports = {
   SPONSOR_PLACEHOLDER_KEYS,
   buildMiniSponsorsRow,
   getEmailSponsorVars,
+  insertSponsorPlaceholderAfterHeader,
   insertSponsorPlaceholderBeforeFooter,
   stripUnresolvedSponsorPlaceholders,
 };

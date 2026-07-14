@@ -7,6 +7,7 @@ const { fetchPublishedEventRows, isPublicEvent } = require('./supabase-events');
 const { publicEventSlug } = require('./event-slug');
 const { publicOrganiserSlug } = require('./organiser-slug');
 const { publicOpportunitySlug } = require('./opportunity-slug');
+const { NETWORKING_REGION_SLUGS } = require('./networking-regions');
 
 const STATIC_PATHS = [
   '/',
@@ -25,6 +26,7 @@ const STATIC_PATHS = [
   '/for-organisers',
   '/advertising',
   '/legal-policies',
+  ...NETWORKING_REGION_SLUGS.map((slug) => '/networking/' + slug),
 ];
 
 function xmlEscape(value) {

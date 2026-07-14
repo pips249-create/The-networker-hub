@@ -77,6 +77,7 @@ function rowToPublicOrganiser(row, eventCount, options) {
   const name = String(row.name || 'Untitled organiser').trim();
   const description = String(row.description || '').trim();
   const slug = publicOrganiserSlug(row) || '';
+  const locations = Array.isArray(options.locations) ? options.locations : [];
 
   const base = {
     id: row.id,
@@ -92,6 +93,7 @@ function rowToPublicOrganiser(row, eventCount, options) {
     rating: Number.isFinite(rating) ? rating : 0,
     reviews,
     eventCount: Number(eventCount) || 0,
+    locations,
     guestVisitsAllowed: Math.min(3, Math.max(0, Number(row.complimentary_visits_allowed) || 0)),
     featured: Boolean(row.featured),
     website: String(row.website || '').trim(),
@@ -99,7 +101,14 @@ function rowToPublicOrganiser(row, eventCount, options) {
     facebookUrl: String(row.facebook_url || '').trim(),
     linkedinUrl: String(row.linkedin_url || '').trim(),
     xUrl: String(row.x_url || '').trim(),
-    search: [name, description, industry, industries.join(' '), meetingFormats.join(' ')]
+    search: [
+      name,
+      description,
+      industry,
+      industries.join(' '),
+      meetingFormats.join(' '),
+      locations.map((location) => [location.city, location.postcode, location.outcode].filter(Boolean).join(' ')).join(' '),
+    ]
       .filter(Boolean)
       .join(' ')
       .toLowerCase(),
@@ -218,7 +227,7 @@ async function fetchOrganiserReviews(sb, organiserId) {
 async function listPublicOrganisers() {
   if (!isSupabaseConfigured()) return [];
   const sb = getSupabaseAdmin();
-  const [organisers, { counts }] = await Promise.all([
+  const [organisers, { counts, visibleEvents }] = await Promise.all([
     fetchPublicOrganiserRows(sb),
     loadPublishedEventIndex(sb),
   ]);
@@ -231,9 +240,21 @@ async function listPublicOrganisers() {
   }
 
   return organisers
-    .map((org) =>
-      rowToPublicOrganiser(org, counts.get(org.id) || 0, { ranking: rankings[org.id] || null })
-    )
+    .map((org) => {
+      const locations = (visibleEvents || [])
+        .filter((event) => event.organiser_id === org.id)
+        .map((event) => ({
+          city: String(event.city || '').trim(),
+          postcode: String(event.postcode || '').trim(),
+          outcode: String(event.outcode || '').trim(),
+          location: String(event.location_label || '').trim(),
+          venue: String(event.venue || '').trim(),
+        }));
+      return rowToPublicOrganiser(org, counts.get(org.id) || 0, {
+        ranking: rankings[org.id] || null,
+        locations,
+      });
+    })
     .sort((a, b) => {
       if (a.featured !== b.featured) return a.featured ? -1 : 1;
       if (b.rating !== a.rating) return b.rating - a.rating;

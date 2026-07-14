@@ -116,6 +116,45 @@
 
   function applyCopy(mode) {
     var c = copy[mode] || copy.events;
+    var regional = window.hubRegionalLanding;
+    if (regional && regional.name) {
+      var year = new Date().getFullYear();
+      if (heroBadge) heroBadge.textContent = 'Local networking directory';
+      if (heroTitle) {
+        heroTitle.innerHTML =
+          'The best business networking events &amp; groups in <span class="accent"></span>';
+        var accent = heroTitle.querySelector('.accent');
+        if (accent) accent.textContent = regional.name + ' ' + year;
+      }
+      if (heroSub) {
+        heroSub.textContent =
+          mode === 'organisers'
+            ? 'Discover the organiser communities running business networking across ' +
+              regional.name +
+              '.'
+            : 'Discover upcoming meetings, workshops, conferences and local networking communities across ' +
+              regional.name +
+              '.';
+      }
+      if (listingsHeader) {
+        listingsHeader.textContent =
+          mode === 'organisers'
+            ? 'Networking groups in ' + regional.name
+            : 'Upcoming networking events in ' + regional.name;
+      }
+      if (searchInput) searchInput.placeholder = c.searchPlaceholder;
+      if (searchLabel) searchLabel.textContent = c.searchLabel;
+      if (filterBar) filterBar.setAttribute('aria-label', c.filterLabel);
+      document.title =
+        'Business Networking Events in ' +
+        regional.name +
+        ' ' +
+        year +
+        ' – The Networker Hub';
+      initSponsorHub(mode);
+      syncBrowseToggles(mode);
+      return;
+    }
     if (heroBadge) heroBadge.textContent = c.badge;
     if (heroTitle) heroTitle.innerHTML = c.title;
     if (heroSub) heroSub.innerHTML = c.sub;

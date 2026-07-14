@@ -50,6 +50,7 @@ const {
 } = require('./cancellation-email-sections');
 const {
   getEmailSponsorVars,
+  insertSponsorPlaceholderAfterHeader,
   insertSponsorPlaceholderBeforeFooter,
   stripUnresolvedSponsorPlaceholders,
 } = require('./email-sponsor-sections');
@@ -327,7 +328,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   }
 
   if (sponsorSection && !/\{\{\s*(?:sponsor_row|sponsor_section)\s*\}\}/.test(bodyHtml)) {
-    bodyHtml = insertSponsorPlaceholderBeforeFooter(bodyHtml, '{{sponsor_row}}');
+    bodyHtml = insertSponsorPlaceholderAfterHeader(bodyHtml, '{{sponsor_row}}');
   }
   if (dbMiniSponsorsRow && !/\{\{\s*mini_sponsors_row\s*\}\}/.test(bodyHtml)) {
     bodyHtml = insertSponsorPlaceholderBeforeFooter(bodyHtml, '{{mini_sponsors_row}}');

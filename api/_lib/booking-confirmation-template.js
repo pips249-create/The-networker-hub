@@ -26,14 +26,14 @@ function isStaleBookingTemplate(bodyHtml) {
   })) {
     return true;
   }
-  // Event Directory sponsor belongs just above the footer, after the info band.
+  // Event Directory sponsor belongs just below the logo/hero wave, before the main copy.
   var sponsorAt = body.indexOf('{{sponsor_row}}');
   var bookedAt = body.indexOf('You&rsquo;re booked!');
   var infoBandAt = body.indexOf('info-cell');
   var footerAt = body.indexOf('mobile-footer-pad');
   if (sponsorAt === -1) return true;
-  if (bookedAt !== -1 && sponsorAt < bookedAt) return true;
-  if (infoBandAt !== -1 && sponsorAt < infoBandAt) return true;
+  if (bookedAt !== -1 && sponsorAt > bookedAt) return true;
+  if (infoBandAt !== -1 && sponsorAt > infoBandAt) return true;
   if (footerAt !== -1 && sponsorAt > footerAt) return true;
   if (!body.includes('{{payment_summary_row}}')) {
     return true;

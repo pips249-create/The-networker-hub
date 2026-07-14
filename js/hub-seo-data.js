@@ -123,9 +123,27 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "How do organisers download attendee lists?",
-      "answer": "Sign in to /organiser/, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV.",
+      "answer": "Sign in to /organiser/, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV. Export printable name badges (PDF, Avery 7160) from the same screen — badges use each guest's name, company, and job title from their Hub account when set.",
       "category": "organisers",
       "icon": "📊"
+    },
+    {
+      "question": "What is the guest visit programme?",
+      "answer": "An optional add-on on the event tickets step for networking groups. Tick Enable guest visit programme to offer 1–2 complimentary trial visits per newcomer (set on your organiser page) alongside your paid ticket types. New attendees use their free visit(s) first; paid member tickets unlock afterwards. For member-only dates, tick Disallow guest passes while keeping paid tickets available.",
+      "category": "organisers",
+      "icon": "🎫"
+    },
+    {
+      "question": "What is Category Exclusivity?",
+      "answer": "An alternative to open ticket sales. Prospective attendees apply instead of buying straight away — they answer two fixed questions (industry and job title). You approve or deny from your organiser dashboard; approved applicants receive a payment link to complete booking.",
+      "category": "organisers",
+      "icon": "🪑"
+    },
+    {
+      "question": "Can I save business opportunities on The Networker Hub?",
+      "answer": "Yes — sign in and tap the heart on any opportunity listing. Saved opportunities appear in My Hub (/account/). You can get an email when a saved listing is closing soon, save search alerts for new matching listings, and compare up to 3 saved opportunities side by side.",
+      "category": "buyers",
+      "icon": "💼"
     },
     {
       "question": "When do organisers receive payouts for ticket sales?",
@@ -480,7 +498,31 @@ window.HUB_SEO_DATA = {
               "name": "How do organisers download attendee lists?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Sign in to /organiser/, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV."
+                "text": "Sign in to /organiser/, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV. Export printable name badges (PDF, Avery 7160) from the same screen — badges use each guest's name, company, and job title from their Hub account when set."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the guest visit programme?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "An optional add-on on the event tickets step for networking groups. Tick Enable guest visit programme to offer 1–2 complimentary trial visits per newcomer (set on your organiser page) alongside your paid ticket types. New attendees use their free visit(s) first; paid member tickets unlock afterwards. For member-only dates, tick Disallow guest passes while keeping paid tickets available."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is Category Exclusivity?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "An alternative to open ticket sales. Prospective attendees apply instead of buying straight away — they answer two fixed questions (industry and job title). You approve or deny from your organiser dashboard; approved applicants receive a payment link to complete booking."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I save business opportunities on The Networker Hub?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes — sign in and tap the heart on any opportunity listing. Saved opportunities appear in My Hub (/account/). You can get an email when a saved listing is closing soon, save search alerts for new matching listings, and compare up to 3 saved opportunities side by side."
               }
             },
             {

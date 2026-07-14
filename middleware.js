@@ -47,6 +47,7 @@ function isPublicListingPath(pathname) {
   if (orgMatch && orgMatch[1] !== 'organiser.html') return true;
   const oppMatch = path.match(/^\/opportunities\/([^/]+)$/);
   if (oppMatch && !SKIP_OPPORTUNITY_SLUGS.has(decodeURIComponent(oppMatch[1]))) return true;
+  if (/^\/networking\/[^/]+$/.test(path)) return true;
   return false;
 }
 
@@ -109,6 +110,64 @@ function injectSeoIntoHtml(html, meta) {
   return out.replace(/<head[^>]*>/i, function (match) {
     return match + '\n' + headTags;
   });
+}
+
+function injectNetworkingRegionContent(html, meta) {
+  const region = meta && meta.region;
+  if (!region || !region.name) return html;
+
+  const name = escapeHtml(region.name);
+  const year = escapeHtml(region.year || new Date().getFullYear());
+  let out = String(html || '');
+  out = out.replace(
+    /<script[^>]+src=["'][^"']*hub-seo-static\.js[^"']*["'][^>]*><\/script>\s*/gi,
+    ''
+  );
+  out = out.replace(
+    /<script[^>]+src=["'][^"']*hub-seo-schema\.js[^"']*["'][^>]*><\/script>\s*/gi,
+    ''
+  );
+  out = out.replace(
+    /<body([^>]*)class=["']([^"']*)["']([^>]*)>/i,
+    '<body$1class="$2 networking-region-page"$3>'
+  );
+  out = out.replace(
+    /<p class="events-hero-badge" id="events-hero-badge">[\s\S]*?<\/p>/i,
+    '<p class="events-hero-badge" id="events-hero-badge">Local networking directory</p>'
+  );
+  out = out.replace(
+    /<h1 id="events-hero-heading">[\s\S]*?<\/h1>/i,
+    '<h1 id="events-hero-heading">The best business networking events &amp; groups in <span class="accent">' +
+      name +
+      ' ' +
+      year +
+      '</span></h1>'
+  );
+  out = out.replace(
+    /<p class="events-hero-lede" id="events-hero-lede">[\s\S]*?<\/p>/i,
+    '<p class="events-hero-lede" id="events-hero-lede">Discover upcoming meetings, workshops, conferences and local networking communities across ' +
+      name +
+      '.</p>'
+  );
+  out = out.replace(
+    /<h2 class="listings-header" id="all-heading">[\s\S]*?<\/h2>/i,
+    '<h2 class="listings-header" id="all-heading">Upcoming networking events in ' + name + '</h2>'
+  );
+  out = out.replace(
+    /<section class="networking-region-intro" id="networking-region-intro" hidden>/i,
+    '<section class="networking-region-intro" id="networking-region-intro">'
+  );
+  out = out.replace(
+    /<h2 id="networking-region-intro-heading">[\s\S]*?<\/h2>/i,
+    '<h2 id="networking-region-intro-heading">Business networking in ' + name + '</h2>'
+  );
+  out = out.replace(
+    /<p id="networking-region-intro-copy">[\s\S]*?<\/p>/i,
+    '<p id="networking-region-intro-copy">Explore live business networking events and the organiser communities behind them in ' +
+      name +
+      '. Browse without signing in, then create a free account when you are ready to book.</p>'
+  );
+  return out;
 }
 
 function parseCookies(request) {
@@ -222,9 +281,18 @@ async function maybeGateSiteAccess(request, url) {
 
   const previewInternalSeo =
     String(request.headers.get('x-hub-internal-seo') || '').trim() === password;
+  const internalSeoTemplate =
+    pathname === '/events/index' ||
+    pathname === '/events/event' ||
+    pathname === '/events/organiser' ||
+    pathname === '/opportunities/opportunity';
   if (
     previewInternalSeo &&
-    (pathname === '/api/seo-meta' || pathname.startsWith('/api/seo/meta'))
+    (
+      pathname === '/api/seo-meta' ||
+      pathname.startsWith('/api/seo/meta') ||
+      internalSeoTemplate
+    )
   ) {
     return null;
   }
@@ -281,6 +349,7 @@ export default async function middleware(request) {
   const eventMatch = pathname.match(/^\/events\/([^/]+)$/);
   const orgMatch = pathname.match(/^\/organisers\/([^/]+)$/);
   const oppMatch = pathname.match(/^\/opportunities\/([^/]+)$/);
+  const networkingMatch = pathname.match(/^\/networking\/([^/]+)$/);
 
   if (eventMatch) {
     slug = decodeURIComponent(eventMatch[1]);
@@ -297,6 +366,10 @@ export default async function middleware(request) {
     if (SKIP_OPPORTUNITY_SLUGS.has(slug)) return passThroughIfGated(siteGated);
     type = 'opportunity';
     templatePath = '/opportunities/opportunity';
+  } else if (networkingMatch) {
+    slug = decodeURIComponent(networkingMatch[1]);
+    type = 'networking-region';
+    templatePath = '/events/index';
   } else {
     return passThroughIfGated(siteGated);
   }
@@ -331,10 +404,19 @@ export default async function middleware(request) {
       }
     }
 
-    const htmlRes = await fetch(new URL(templatePath, url.origin).toString());
+    const htmlRes = await fetch(new URL(templatePath, url.origin).toString(), {
+      headers: {
+        ...(isSiteAccessGateActive() && String(process.env.SITE_ACCESS_PASSWORD || '').trim()
+          ? { 'x-hub-internal-seo': String(process.env.SITE_ACCESS_PASSWORD).trim() }
+          : {}),
+      },
+    });
     if (!htmlRes.ok) return passThroughIfGated(siteGated);
 
-    const html = injectSeoIntoHtml(await htmlRes.text(), meta);
+    let html = injectSeoIntoHtml(await htmlRes.text(), meta);
+    if (type === 'networking-region') {
+      html = injectNetworkingRegionContent(html, meta);
+    }
 
     const seoHeaders = {
       'Content-Type': 'text/html; charset=utf-8',
