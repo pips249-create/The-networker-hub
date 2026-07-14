@@ -114,14 +114,38 @@
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
-  min-height: 96px;
+  min-height: 120px;
   color: var(--region-accent);
-  opacity: 0.55;
+  opacity: 0.7;
+}
+
+.networking-region-skyline.is-image {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 320px;
+  min-height: 120px;
+  margin-left: auto;
+  opacity: 1;
+}
+
+.networking-region-skyline-img {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  object-fit: contain;
+  object-position: right bottom;
+  mix-blend-mode: multiply;
+  opacity: 0.92;
+  pointer-events: none;
+  user-select: none;
 }
 
 .networking-region-skyline-svg {
   width: 100%;
-  max-width: 220px;
+  max-width: 280px;
   height: auto;
 }
 
@@ -301,12 +325,23 @@ body.networking-region-page[data-region="chester"] .events-hero-copy h1 .accent 
 
   .networking-region-skyline {
     justify-content: flex-start;
-    min-height: 64px;
-    opacity: 0.28;
+    min-height: 80px;
+    opacity: 0.55;
+  }
+
+  .networking-region-skyline.is-image {
+    margin-left: 0;
+    max-width: 240px;
+    min-height: 80px;
+    justify-content: flex-start;
+  }
+
+  .networking-region-skyline-img {
+    max-width: 240px;
   }
 
   .networking-region-skyline-svg {
-    max-width: 180px;
+    max-width: 200px;
   }
 
   .networking-region-organiser-cta {

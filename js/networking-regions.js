@@ -87,8 +87,19 @@
   setText('networking-region-intro-copy', introCopy);
 
   var skyline = document.getElementById('networking-region-skyline');
-  if (skyline && theme.skyline) {
-    skyline.innerHTML = theme.skyline;
+  if (skyline) {
+    if (theme.skylineImage) {
+      skyline.className = 'networking-region-skyline is-image';
+      skyline.style.removeProperty('--skyline-image');
+      skyline.innerHTML =
+        '<img class="networking-region-skyline-img" src="' +
+        theme.skylineImage +
+        '" alt="" width="320" height="180" decoding="async">';
+    } else if (theme.skyline) {
+      skyline.className = 'networking-region-skyline';
+      skyline.style.removeProperty('--skyline-image');
+      skyline.innerHTML = theme.skyline;
+    }
   }
 
   var postcode = document.getElementById('postcode');
