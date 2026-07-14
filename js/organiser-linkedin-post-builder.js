@@ -264,35 +264,40 @@
       var brandBoxX = 72;
       var brandBoxY = 56;
       var brandBoxW = 1056;
-      var brandBoxH = 132;
+      var brandBoxH = 220;
       ctx.fillStyle = isOpp ? 'rgba(253,246,227,0.94)' : 'rgba(255,255,255,0.72)';
       roundRect(ctx, brandBoxX, brandBoxY, brandBoxW, brandBoxH, 18);
       ctx.fill();
 
       if (orgLogo) {
-        drawContainedImage(ctx, orgLogo, brandBoxX + 24, brandBoxY + 20, 140, 92);
+        var logoW = 360;
+        var logoH = 180;
+        var logoX = brandBoxX + 28;
+        var logoY = brandBoxY + (brandBoxH - logoH) / 2;
+        drawContainedImage(ctx, orgLogo, logoX, logoY, logoW, logoH);
         ctx.fillStyle = brandText;
-        ctx.font = '700 36px "DM Serif Display", Georgia, serif';
-        var nameLines = wrapText(ctx, name || 'Your group', 820);
+        ctx.font = '700 40px "DM Serif Display", Georgia, serif';
+        var nameLines = wrapText(ctx, name || 'Your group', brandBoxW - logoW - 80);
+        var nameY = brandBoxY + (brandBoxH - Math.min(2, nameLines.length) * 46) / 2 + 36;
         for (var n = 0; n < Math.min(2, nameLines.length); n++) {
-          ctx.fillText(nameLines[n], brandBoxX + 190, brandBoxY + 62 + n * 40);
+          ctx.fillText(nameLines[n], logoX + logoW + 32, nameY + n * 46);
         }
       } else {
         ctx.fillStyle = brandText;
-        ctx.font = '700 40px "DM Serif Display", Georgia, serif';
+        ctx.font = '700 44px "DM Serif Display", Georgia, serif';
         var solo = wrapText(ctx, name || 'Your group name', 980);
         for (var s = 0; s < Math.min(2, solo.length); s++) {
-          ctx.fillText(solo[s], brandBoxX + 36, brandBoxY + 58 + s * 44);
+          ctx.fillText(solo[s], brandBoxX + 36, brandBoxY + 72 + s * 50);
         }
         if (!name) {
           ctx.fillStyle = brandHint;
-          ctx.font = '400 20px "DM Sans", Arial, Helvetica, sans-serif';
-          ctx.fillText('Add your logo for a stronger post', brandBoxX + 36, brandBoxY + 108);
+          ctx.font = '400 22px "DM Sans", Arial, Helvetica, sans-serif';
+          ctx.fillText('Add your logo for a stronger post', brandBoxX + 36, brandBoxY + 168);
         }
       }
     }
 
-    var textY = quietBrand ? 340 : 420;
+    var textY = quietBrand ? 340 : 500;
     ctx.fillStyle = kickerColor;
     ctx.font = '700 22px "DM Sans", Arial, Helvetica, sans-serif';
     ctx.fillText(String(tpl.kicker || '').toUpperCase(), 72, textY);
