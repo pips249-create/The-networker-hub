@@ -81,20 +81,14 @@
       return false;
     }
     const href = launcherHref(gid, returnPath);
-    const tab = global.open(href, '_blank', 'noopener,noreferrer');
-    if (!tab) {
-      // Last resort: leave the drawer and open launcher top-level.
-      try {
-        if (global.top && global.top !== global.self) {
-          global.top.location.href = href;
-          return true;
-        }
-      } catch {
-        /* ignore */
-      }
-      global.location.href = href;
-    }
-    return true;
+    // Always keep the dashboard/tickets page — never navigate this tab to Stripe.
+    // Do not use windowFeatures "noopener" here: Chrome returns null even when the
+    // tab opens, which used to trigger a same-tab fallback and leave the workspace.
+    if (openUrlInNewTab(href)) return true;
+    alert(
+      'Your browser blocked the new tab. Allow pop-ups for this site, then click Add bank details again.'
+    );
+    return false;
   }
 
   function openUrlInNewTab(url, existingTab) {
@@ -108,20 +102,9 @@
         /* fall through */
       }
     }
-    let tab = null;
-    try {
-      tab = global.open(url, '_blank', 'noopener,noreferrer');
-    } catch {
-      tab = null;
-    }
-    if (tab) {
-      try {
-        tab.opener = null;
-      } catch {
-        /* ignore */
-      }
-      return true;
-    }
+    // Prefer a real <a target="_blank"> click: reliable with user gestures, and
+    // avoids Chrome returning null from window.open(..., "noopener") even when
+    // a tab did open (which led to double opens or same-tab fallbacks).
     try {
       const link = document.createElement('a');
       link.href = url;
@@ -133,31 +116,35 @@
       link.remove();
       return true;
     } catch {
-      return false;
+      /* fall through */
     }
-  }
-
-  function openStripeOnboarding(url) {
-    // Legacy helper — if given a Stripe URL, bounce via launcher is preferred.
-    // Keep a top-level open for callers that already have a URL.
-    if (!url) return false;
     try {
-      if (global.top && global.top !== global.self) {
-        global.top.open(url, '_blank', 'noopener,noreferrer');
+      const tab = global.open(url, '_blank');
+      if (tab) {
+        try {
+          tab.opener = null;
+        } catch {
+          /* ignore */
+        }
         return true;
       }
     } catch {
       /* ignore */
     }
-    const tab = global.open(url, '_blank', 'noopener,noreferrer');
-    if (tab) return true;
+    return false;
+  }
+
+  function openStripeOnboarding(url) {
+    // Legacy helper — prefer launcherHref/startSetup for new flows.
+    if (!url) return false;
     try {
-      global.top.location.href = url;
-      return true;
+      if (global.top && global.top !== global.self && global.top.HubOrganiserPaymentSetup) {
+        return global.top.HubOrganiserPaymentSetup.openUrlInNewTab(url);
+      }
     } catch {
-      global.location.href = url;
-      return true;
+      /* ignore */
     }
+    return openUrlInNewTab(url);
   }
 
   function multiProfileNoteHtml(state) {
@@ -425,7 +412,15 @@
     let tab = opts.tab || null;
     if (!tab) {
       try {
-        tab = global.open('about:blank', '_blank', 'noopener,noreferrer');
+        // Do not pass "noopener" in windowFeatures — Chrome may return null.
+        tab = global.open('about:blank', '_blank');
+        if (tab) {
+          try {
+            tab.opener = null;
+          } catch {
+            /* ignore */
+          }
+        }
       } catch {
         tab = null;
       }

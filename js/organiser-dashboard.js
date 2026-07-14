@@ -4639,7 +4639,14 @@
 
     let tab = null;
     try {
-      tab = window.open('about:blank', '_blank', 'noopener,noreferrer');
+      tab = window.open('about:blank', '_blank');
+      if (tab) {
+        try {
+          tab.opener = null;
+        } catch {
+          /* ignore */
+        }
+      }
     } catch {
       tab = null;
     }
@@ -4731,8 +4738,26 @@
       encodeURIComponent(gid) +
       '&returnPath=' +
       encodeURIComponent('/organiser/index.html#events-revenue');
-    const tab = window.open(href, '_blank', 'noopener,noreferrer');
-    if (!tab) window.location.href = href;
+    if (window.HubOrganiserPaymentSetup && window.HubOrganiserPaymentSetup.openUrlInNewTab) {
+      if (!window.HubOrganiserPaymentSetup.openUrlInNewTab(href)) {
+        alert(
+          'Your browser blocked the new tab. Allow pop-ups for this site, then click Add bank details again.'
+        );
+      }
+      return;
+    }
+    const tab = window.open(href, '_blank');
+    if (tab) {
+      try {
+        tab.opener = null;
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+    alert(
+      'Your browser blocked the new tab. Allow pop-ups for this site, then click Add bank details again.'
+    );
   }
 
   function paymentSetupStateFromDashboard() {
@@ -7987,10 +8012,19 @@
         return;
       }
       if (e.data && e.data.type === 'hub-open-stripe-connect' && e.data.url) {
-        // Legacy: older drawer scripts post Stripe URLs. Open top-level only.
-        const stripeTab = window.open(String(e.data.url), '_blank', 'noopener,noreferrer');
-        if (!stripeTab) {
-          window.location.href = String(e.data.url);
+        // Legacy: older drawer scripts post Stripe URLs. Keep dashboard open.
+        const url = String(e.data.url);
+        if (window.HubOrganiserPaymentSetup && window.HubOrganiserPaymentSetup.openUrlInNewTab) {
+          window.HubOrganiserPaymentSetup.openUrlInNewTab(url);
+        } else {
+          const stripeTab = window.open(url, '_blank');
+          if (stripeTab) {
+            try {
+              stripeTab.opener = null;
+            } catch {
+              /* ignore */
+            }
+          }
         }
         return;
       }
