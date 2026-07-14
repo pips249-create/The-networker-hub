@@ -1,4 +1,64 @@
 (function () {
+  function initPreviewTour() {
+    var tour = document.getElementById('site-access-preview-tour');
+    if (!tour) return;
+
+    var tabs = tour.querySelectorAll('[role="tab"][data-sa-panel]');
+    var panels = tour.querySelectorAll('[data-sa-panel][role="tabpanel"]');
+    if (!tabs.length || !panels.length) return;
+
+    function activate(panelId, focusTab) {
+      tabs.forEach(function (tab) {
+        var selected = tab.getAttribute('data-sa-panel') === panelId;
+        tab.classList.toggle('is-active', selected);
+        tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+        tab.tabIndex = selected ? 0 : -1;
+        if (selected && focusTab) tab.focus();
+      });
+
+      panels.forEach(function (panel) {
+        var match = panel.getAttribute('data-sa-panel') === panelId;
+        panel.classList.toggle('is-active', match);
+        if (match) {
+          panel.removeAttribute('hidden');
+          panel.style.animation = 'none';
+          void panel.offsetWidth;
+          panel.style.animation = '';
+        } else {
+          panel.setAttribute('hidden', '');
+        }
+      });
+    }
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        activate(tab.getAttribute('data-sa-panel'), false);
+      });
+
+      tab.addEventListener('keydown', function (event) {
+        var keys = ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Home', 'End'];
+        if (keys.indexOf(event.key) === -1) return;
+
+        event.preventDefault();
+        var list = Array.prototype.slice.call(tabs);
+        var index = list.indexOf(tab);
+        var next = index;
+
+        if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+          next = (index + 1) % list.length;
+        } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+          next = (index - 1 + list.length) % list.length;
+        } else if (event.key === 'Home') {
+          next = 0;
+        } else if (event.key === 'End') {
+          next = list.length - 1;
+        }
+
+        activate(list[next].getAttribute('data-sa-panel'), true);
+      });
+    });
+  }
+
   function getNextParam() {
     var params = new URLSearchParams(window.location.search);
     var next = params.get('next') || '/';
@@ -135,6 +195,8 @@
         });
     });
   }
+
+  initPreviewTour();
 
   var accessForm = document.getElementById('site-access-form');
   if (!accessForm) return;
