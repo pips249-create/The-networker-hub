@@ -12,6 +12,7 @@ const {
 } = require('./application-decision-template');
 const { resolveOrganiserBookingCancelledBody } = require('./organiser-booking-cancelled-template');
 const { resolveBookingCancelledBody } = require('./booking-cancelled-template');
+const { resolveEventCancelledBody } = require('./event-cancelled-template');
 const { resolveOrganiserRankingBadgeBody } = require('./organiser-ranking-badge-template');
 const {
   resolveBrandedEmailBody,
@@ -322,6 +323,10 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     templateSource = resolved.source;
   } else if (slug === 'booking_cancelled') {
     const resolved = resolveBookingCancelledBody(template.body_html);
+    bodyHtml = resolved.bodyHtml;
+    templateSource = resolved.source;
+  } else if (slug === 'event_cancelled') {
+    const resolved = resolveEventCancelledBody(template.body_html);
     bodyHtml = resolved.bodyHtml;
     templateSource = resolved.source;
   }

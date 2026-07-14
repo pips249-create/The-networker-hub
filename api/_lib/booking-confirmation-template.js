@@ -29,8 +29,8 @@ function isStaleBookingTemplate(bodyHtml) {
   // Event Directory sponsor belongs just below the logo/hero wave, before the main copy.
   var sponsorAt = body.indexOf('{{sponsor_row}}');
   var bookedAt = body.indexOf('You&rsquo;re booked!');
-  var infoBandAt = body.indexOf('info-cell');
-  var footerAt = body.indexOf('mobile-footer-pad');
+  var infoBandAt = body.indexOf('Your ticket is saved in your Hub account');
+  var footerAt = body.indexOf('Operated by');
   if (sponsorAt === -1) return true;
   if (bookedAt !== -1 && sponsorAt > bookedAt) return true;
   if (infoBandAt !== -1 && sponsorAt > infoBandAt) return true;

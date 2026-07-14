@@ -2026,9 +2026,17 @@ body.ee-embed-drawer #hub-site-nav,
 body.ee-embed-drawer .ee-top-bar,
 body.ee-embed-drawer .ee-back-row,
 body.ee-embed-drawer .ee-hubert-help-btn,
-body.ee-embed-drawer #ee-page-loading,
 body.ee-embed-drawer #ee-wizard-mount {
   display: none !important;
+}
+
+/* Keep loading overlay available in the drawer iframe while publishing/saving. */
+body.ee-embed-drawer #ee-page-loading {
+  display: none !important;
+}
+
+body.ee-embed-drawer.ee-is-loading #ee-page-loading {
+  display: flex !important;
 }
 
 body.ee-embed-drawer #ee-event-stats,

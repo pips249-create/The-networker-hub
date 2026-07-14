@@ -3263,11 +3263,17 @@
     { id: 'publish', label: 'Publish' },
   ];
 
-  function setEventDrawerLoading(on) {
+  function setEventDrawerLoading(on, message) {
     const wrap = document.getElementById('org-event-drawer-frame-wrap');
     const loading = document.getElementById('org-event-drawer-loading');
     if (wrap) wrap.classList.toggle('is-loading', on);
     if (loading) {
+      const textEl = loading.querySelector('.org-event-drawer-loading-text');
+      if (textEl) {
+        textEl.textContent = on
+          ? String(message || '').trim() || 'Loading event…'
+          : 'Loading event…';
+      }
       loading.hidden = !on;
       loading.setAttribute('aria-hidden', on ? 'false' : 'true');
       loading.setAttribute('aria-busy', on ? 'true' : 'false');
@@ -8212,6 +8218,10 @@
       }
       if (e.data && e.data.type === 'hub-event-drawer-ready') {
         setEventDrawerLoading(false);
+        return;
+      }
+      if (e.data && e.data.type === 'hub-event-drawer-busy') {
+        setEventDrawerLoading(Boolean(e.data.busy), e.data.message || '');
         return;
       }
       if (e.data && e.data.type === 'hub-event-not-found') {

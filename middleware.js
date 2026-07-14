@@ -282,6 +282,7 @@ async function maybeGateSiteAccess(request, url) {
   const previewInternalSeo =
     String(request.headers.get('x-hub-internal-seo') || '').trim() === password;
   const internalSeoTemplate =
+    pathname === '/events' ||
     pathname === '/events/index' ||
     pathname === '/events/event' ||
     pathname === '/events/organiser' ||
@@ -369,7 +370,7 @@ export default async function middleware(request) {
   } else if (networkingMatch) {
     slug = decodeURIComponent(networkingMatch[1]);
     type = 'networking-region';
-    templatePath = '/events/index';
+    templatePath = '/events/';
   } else {
     return passThroughIfGated(siteGated);
   }

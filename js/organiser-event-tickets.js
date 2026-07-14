@@ -1732,12 +1732,18 @@
       return { ok, data };
     };
 
+    const busyMessage = publish
+      ? eventIds.length > 1
+        ? 'Creating and publishing your events…'
+        : 'Creating and publishing your event…'
+      : 'Saving your tickets…';
+
     let result;
     try {
       if (loading && loading.run) {
-        result = await loading.run(publish ? 'Publishing event' : 'Saving tickets', saveWork);
+        result = await loading.run(busyMessage, saveWork);
       } else {
-        if (loading) loading.show(publish ? 'Publishing event' : 'Saving tickets');
+        if (loading) loading.show(busyMessage);
         result = await saveWork();
         if (loading) loading.hide();
       }
