@@ -207,8 +207,15 @@
     }
 
     if (options.updateHash !== false) {
-      var hash = isOrganisers ? '#organisers' : '#events';
-      if (location.hash !== hash) history.replaceState(null, '', hash);
+      // Events is the default for /events/ — keep the URL clean (no #events).
+      // Only organisers mode needs a hash so share links can open that tab.
+      var next =
+        (location.pathname || '/events/') +
+        (location.search || '') +
+        (isOrganisers ? '#organisers' : '');
+      var current =
+        (location.pathname || '') + (location.search || '') + (location.hash || '');
+      if (current !== next) history.replaceState(null, '', next);
     }
   }
 
@@ -226,14 +233,16 @@
   var initial = 'events';
   if (location.hash === '#organisers' || location.search.indexOf('mode=organisers') !== -1) {
     initial = 'organisers';
-  } else if (location.hash === '#events') {
-    initial = 'events';
   }
 
   if (initial === 'organisers') {
     setMode('organisers', { skipEventsRefresh: true, updateHash: true });
   } else {
-    setMode('events', { skipEventsRefresh: true, updateHash: true });
+    // Clear a leftover #events so the address bar stays /events/
+    setMode('events', {
+      skipEventsRefresh: true,
+      updateHash: location.hash === '#events',
+    });
   }
 
   window.addEventListener('hashchange', function () {

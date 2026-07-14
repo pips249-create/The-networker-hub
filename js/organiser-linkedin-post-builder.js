@@ -1,6 +1,6 @@
 /**
  * Organiser LinkedIn post image builder — square post graphic + caption.
- * Gallery of post types + 3 backgrounds; personalise logo/name; preview; download PNG + copy caption.
+ * Pick a category + caption (or write your own), choose a background, preview, download PNG.
  */
 (function (global) {
   var W = 1200;
@@ -604,8 +604,23 @@
             return [];
           };
 
+    var CATEGORIES = [
+      { id: 'events', label: 'Events & group' },
+      { id: 'opportunities', label: 'Business opportunities' },
+      { id: 'badges', label: 'Hub trust badges' },
+    ];
+
+    var DEFAULT_TEMPLATE_BY_CATEGORY = {
+      events: 'new_event',
+      opportunities: 'opportunity',
+      badges: 'verified',
+    };
+
     var state = {
+      categoryId: TEMPLATES[0].group,
       templateId: TEMPLATES[0].id,
+      customCaption: false,
+      captionText: '',
       backgroundId: 'cream',
       backgroundTouched: false,
       groupId: '',
@@ -645,67 +660,43 @@
       }).join('') +
       '</div>';
 
-    var groupOrder = ['events', 'opportunities', 'badges'];
-    var galleryHtml = groupOrder
-      .map(function (gid) {
-        var items = TEMPLATES.filter(function (t) {
-          return t.group === gid;
-        });
-        if (!items.length) return '';
-        var label = items[0].groupLabel || gid;
-        var gateNote =
-          gid === 'opportunities'
-            ? '<p class="org-post-gallery-gate" id="post-opp-gate" hidden>Publish a live business opportunity listing to unlock these templates. <a href="#business-list">List a listing →</a></p>'
-            : '';
+    var categoryTabsHtml =
+      '<div class="org-post-category-tabs" id="post-category-tabs" role="tablist" aria-label="Caption category">' +
+      CATEGORIES.map(function (cat, idx) {
         return (
-          '<div class="org-post-gallery-group" data-gallery-group="' +
-          esc(gid) +
+          '<button type="button" class="org-post-category-tab" role="tab" data-category-id="' +
+          esc(cat.id) +
+          '" aria-selected="' +
+          (idx === 0 ? 'true' : 'false') +
           '">' +
-          '<p class="org-post-gallery-group-title">' +
-          esc(label) +
-          '</p>' +
-          gateNote +
-          '<div class="org-post-gallery-grid" role="list">' +
-          items
-            .map(function (t) {
-              return (
-                '<button type="button" class="org-post-thumb" role="listitem" data-template-id="' +
-                esc(t.id) +
-                '" data-template-group="' +
-                esc(t.group) +
-                '" aria-pressed="false">' +
-                '<span class="org-post-thumb-canvas-wrap">' +
-                '<canvas width="' +
-                W +
-                '" height="' +
-                H +
-                '" data-thumb-for="' +
-                esc(t.id) +
-                '" aria-hidden="true"></canvas>' +
-                '</span>' +
-                '<span class="org-post-thumb-label">' +
-                esc(t.label) +
-                '</span>' +
-                '</button>'
-              );
-            })
-            .join('') +
-          '</div></div>'
+          esc(cat.label) +
+          '</button>'
         );
-      })
-      .join('');
+      }).join('') +
+      '</div>';
 
     root.innerHTML =
       '<div class="org-post-builder">' +
-      '<div class="org-post-gallery" id="post-gallery">' +
-      '<p class="org-post-label">Background</p>' +
-      backgroundPickerHtml +
-      '<p class="org-post-hint org-post-bg-hint">Pick a colour first — then choose the wording below.</p>' +
-      '<p class="org-post-label">Post type</p>' +
-      galleryHtml +
-      '</div>' +
       '<div class="org-post-workspace">' +
       '<div class="org-post-builder-controls">' +
+      '<div class="org-post-field">' +
+      '<span class="org-post-label">Category</span>' +
+      categoryTabsHtml +
+      '<p class="org-post-gallery-gate" id="post-opp-gate" hidden>Publish a live business opportunity listing to unlock opportunity captions. <a href="#business-list">List a listing →</a></p>' +
+      '</div>' +
+      '<div class="org-post-field">' +
+      '<span class="org-post-label">Caption</span>' +
+      '<div class="org-post-caption-options" id="post-caption-options" role="listbox" aria-label="Caption options"></div>' +
+      '<p class="org-post-hint">Pick a ready-made caption for this category, or write your own below.</p>' +
+      '</div>' +
+      '<label class="org-post-field">' +
+      '<span class="org-post-label">Your caption</span>' +
+      '<textarea id="post-caption-edit" class="org-post-caption-edit" rows="7" maxlength="1200" aria-label="Post caption"></textarea>' +
+      '</label>' +
+      '<div class="org-post-field">' +
+      '<span class="org-post-label">Background</span>' +
+      backgroundPickerHtml +
+      '</div>' +
       '<label class="org-post-field">' +
       '<span class="org-post-label">Organiser page</span>' +
       '<select id="post-group" aria-label="Organiser page"></select>' +
@@ -729,6 +720,8 @@
       '<input type="file" id="post-logo-file" accept="image/*" />' +
       '<span class="org-post-hint" id="post-logo-hint">Uses your organiser page logo when available. Upload to override.</span>' +
       '</label>' +
+      '<details class="org-post-advanced">' +
+      '<summary>Edit image headlines</summary>' +
       '<label class="org-post-field">' +
       '<span class="org-post-label">Headline line 1</span>' +
       '<input type="text" id="post-line1" maxlength="48" />' +
@@ -741,10 +734,11 @@
       '<span class="org-post-label">Supporting line</span>' +
       '<input type="text" id="post-line3" maxlength="90" />' +
       '</label>' +
+      '</details>' +
       '<div class="org-post-actions">' +
       '<button type="button" class="org-btn org-btn-gold" id="post-download">Download image</button>' +
       '<button type="button" class="org-btn org-btn-outline" id="post-copy-caption">Copy caption</button>' +
-      '<button type="button" class="org-btn org-btn-outline" id="post-reset">Reset copy</button>' +
+      '<button type="button" class="org-btn org-btn-outline" id="post-reset">Reset caption</button>' +
       '</div>' +
       '<p class="org-post-status" id="post-status" role="status"></p>' +
       '</div>' +
@@ -757,11 +751,7 @@
       H +
       '" aria-label="LinkedIn post image preview"></canvas>' +
       '</div>' +
-      '<p class="org-post-hint">1200×1200 — upload the PNG with your caption on LinkedIn.</p>' +
-      '<div class="org-post-caption-box">' +
-      '<p class="org-post-label">Suggested caption</p>' +
-      '<pre class="org-post-caption-text" id="post-caption-preview"></pre>' +
-      '</div>' +
+      '<p class="org-post-hint">1200×1200 — download the PNG, then paste your caption on LinkedIn.</p>' +
       '</div>' +
       '</div>' +
       '</div>';
@@ -778,7 +768,8 @@
     var elLine2 = root.querySelector('#post-line2');
     var elLine3 = root.querySelector('#post-line3');
     var elStatus = root.querySelector('#post-status');
-    var elCaption = root.querySelector('#post-caption-preview');
+    var elCaptionEdit = root.querySelector('#post-caption-edit');
+    var elCaptionOptions = root.querySelector('#post-caption-options');
     var elOppGate = root.querySelector('#post-opp-gate');
     var canvas = root.querySelector('#post-preview-canvas');
     var ctx = canvas.getContext('2d');
@@ -809,8 +800,78 @@
       state.backgroundId = bg.id;
       if (!flags || !flags.silent) state.backgroundTouched = true;
       syncBackgroundSelection();
-      scheduleGalleryThumbs();
       refresh();
+    }
+
+    function templatesForCategory(categoryId) {
+      return TEMPLATES.filter(function (t) {
+        return t.group === (categoryId || state.categoryId);
+      });
+    }
+
+    function defaultTemplateForCategory(categoryId) {
+      var preferred = DEFAULT_TEMPLATE_BY_CATEGORY[categoryId || state.categoryId];
+      return (
+        TEMPLATES.find(function (t) {
+          return t.id === preferred;
+        }) ||
+        templatesForCategory(categoryId)[0] ||
+        TEMPLATES[0]
+      );
+    }
+
+    function captionBlurb(tpl) {
+      return String(tpl.line1 || '')
+        .trim()
+        .concat(tpl.line2 ? ' ' + String(tpl.line2).trim() : '');
+    }
+
+    function syncCategoryTabs() {
+      root.querySelectorAll('.org-post-category-tab').forEach(function (btn) {
+        var on = btn.getAttribute('data-category-id') === state.categoryId;
+        btn.classList.toggle('is-selected', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+    }
+
+    function syncCaptionOptions() {
+      if (!elCaptionOptions) return;
+      var list = templatesForCategory(state.categoryId);
+      var locked = state.categoryId === 'opportunities' && !hasLiveListings();
+      var html = list
+        .map(function (t) {
+          var selected = !state.customCaption && t.id === state.templateId;
+          return (
+            '<button type="button" class="org-post-caption-option' +
+            (selected ? ' is-selected' : '') +
+            (locked ? ' is-locked' : '') +
+            '" role="option" data-template-id="' +
+            esc(t.id) +
+            '" aria-selected="' +
+            (selected ? 'true' : 'false') +
+            '"' +
+            (locked ? ' disabled aria-disabled="true"' : '') +
+            '>' +
+            '<span class="org-post-caption-option-title">' +
+            esc(t.label) +
+            '</span>' +
+            '<span class="org-post-caption-option-blurb">' +
+            esc(captionBlurb(t)) +
+            '</span>' +
+            '</button>'
+          );
+        })
+        .join('');
+      html +=
+        '<button type="button" class="org-post-caption-option' +
+        (state.customCaption ? ' is-selected' : '') +
+        '" role="option" data-caption-custom="1" aria-selected="' +
+        (state.customCaption ? 'true' : 'false') +
+        '">' +
+        '<span class="org-post-caption-option-title">Write your own</span>' +
+        '<span class="org-post-caption-option-blurb">Keep the image layout and type a custom LinkedIn caption</span>' +
+        '</button>';
+      elCaptionOptions.innerHTML = html;
     }
 
     function isOppTemplate(tpl) {
@@ -897,22 +958,23 @@
 
     function syncOpportunityGate() {
       var unlocked = hasLiveListings();
-      if (elOppGate) elOppGate.hidden = unlocked;
-      root.querySelectorAll('.org-post-thumb[data-template-group="opportunities"]').forEach(function (btn) {
-        btn.disabled = !unlocked;
-        btn.classList.toggle('is-locked', !unlocked);
-        btn.setAttribute('aria-disabled', unlocked ? 'false' : 'true');
-        btn.title = unlocked ? '' : 'Publish a live listing to use this template';
-      });
-      if (!unlocked && isOppTemplate()) {
-        var fallback = TEMPLATES[0];
+      if (elOppGate) elOppGate.hidden = unlocked || state.categoryId !== 'opportunities';
+      if (!unlocked && state.categoryId === 'opportunities') {
+        state.categoryId = 'events';
+        state.customCaption = false;
+        var fallback = defaultTemplateForCategory('events');
         state.templateId = fallback.id;
         state.line1 = fallback.line1;
         state.line2 = fallback.line2;
         state.line3 = fallback.line3;
-        elLine1.value = state.line1;
-        elLine2.value = state.line2;
-        elLine3.value = state.line3;
+        if (elLine1) elLine1.value = state.line1;
+        if (elLine2) elLine2.value = state.line2;
+        if (elLine3) elLine3.value = state.line3;
+        syncCategoryTabs();
+        syncCaptionOptions();
+        fillCaptionFromTemplate();
+      } else {
+        syncCaptionOptions();
       }
     }
 
@@ -1030,11 +1092,18 @@
     }
 
     function syncThumbSelection() {
-      root.querySelectorAll('.org-post-thumb').forEach(function (btn) {
-        var on = btn.getAttribute('data-template-id') === state.templateId;
-        btn.classList.toggle('is-selected', on);
-        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      });
+      syncCaptionOptions();
+    }
+
+    function currentCaptionText() {
+      if (state.customCaption) return String(state.captionText || elCaptionEdit.value || '').trim();
+      return buildCaption(currentTemplate(), captionPayload());
+    }
+
+    function fillCaptionFromTemplate() {
+      if (state.customCaption) return;
+      state.captionText = buildCaption(currentTemplate(), captionPayload());
+      if (elCaptionEdit) elCaptionEdit.value = state.captionText;
     }
 
     function syncGroupOptions() {
@@ -1106,7 +1175,13 @@
     }
 
     function updateCaptionPreview() {
-      elCaption.textContent = buildCaption(currentTemplate(), captionPayload());
+      if (state.customCaption) {
+        if (elCaptionEdit && document.activeElement !== elCaptionEdit) {
+          elCaptionEdit.value = state.captionText || '';
+        }
+        return;
+      }
+      fillCaptionFromTemplate();
     }
 
     async function loadAsset(paths) {
@@ -1249,34 +1324,6 @@
       };
     }
 
-    async function renderGalleryThumbs() {
-      for (var i = 0; i < TEMPLATES.length; i++) {
-        var tpl = TEMPLATES[i];
-        var el = root.querySelector('canvas[data-thumb-for="' + tpl.id + '"]');
-        if (!el) continue;
-        var hubImg = await ensureHubLogo(tpl);
-        var tctx = el.getContext('2d');
-        paintPost(tctx, paintOpts(tpl, true, hubImg));
-        // Yield so route clicks and typing stay responsive while thumbs paint.
-        if (i < TEMPLATES.length - 1) {
-          await new Promise(function (resolve) {
-            requestAnimationFrame(resolve);
-          });
-        }
-      }
-    }
-
-    function scheduleGalleryThumbs() {
-      var run = function () {
-        renderGalleryThumbs();
-      };
-      if (typeof requestIdleCallback === 'function') {
-        requestIdleCallback(run, { timeout: 1500 });
-      } else {
-        setTimeout(run, 0);
-      }
-    }
-
     async function renderPreview() {
       if (state.rendering) {
         state.renderPending = true;
@@ -1284,21 +1331,16 @@
       }
       state.rendering = true;
       try {
-        syncOpportunityGate();
-        // Keep listing/event selects out of the paint path — rebuilding them here
-        // raced with prefill and left the form, preview and caption out of sync.
         var tpl = currentTemplate();
         var hubImg = await ensureHubLogo(tpl);
         await ensureOrgLogo();
         await ensureEventImage();
-        // Prefer live field values so preview always matches what the organiser sees.
         state.line1 = elLine1.value;
         state.line2 = elLine2.value;
         state.line3 = elLine3.value;
         state.displayName = elName.value;
         paintPost(ctx, paintOpts(tpl, false, hubImg));
         updateCaptionPreview();
-        syncThumbSelection();
       } finally {
         state.rendering = false;
         if (state.renderPending) {
@@ -1336,7 +1378,7 @@
           return;
         }
         link.click();
-        setStatus('Downloaded — attach this image to your LinkedIn post with the caption below.');
+        setStatus('Downloaded — attach this image to your LinkedIn post with the caption.');
       });
     }
 
@@ -1345,7 +1387,11 @@
         setStatus('Publish a live business opportunity listing before copying this caption.', true);
         return;
       }
-      var text = buildCaption(currentTemplate(), captionPayload());
+      var text = currentCaptionText();
+      if (!text) {
+        setStatus('Add a caption before copying.', true);
+        return;
+      }
       var btn = root.querySelector('#post-copy-caption');
       var done = function () {
         if (!btn) return;
@@ -1366,20 +1412,51 @@
       setStatus('Caption copied — paste it with your downloaded image on LinkedIn.');
     }
 
+    function selectCategory(categoryId) {
+      var cat = CATEGORIES.find(function (c) {
+        return c.id === categoryId;
+      });
+      if (!cat) return;
+      if (categoryId === 'opportunities' && !hasLiveListings()) {
+        setStatus('Publish a live business opportunity listing to unlock these captions.', true);
+        syncOpportunityGate();
+        return;
+      }
+      state.categoryId = categoryId;
+      state.customCaption = false;
+      var tpl = defaultTemplateForCategory(categoryId);
+      selectTemplate(tpl.id, { fromCategory: true });
+    }
+
+    function selectCustomCaption() {
+      state.customCaption = true;
+      if (!String(state.captionText || '').trim()) {
+        state.captionText = buildCaption(currentTemplate(), captionPayload());
+      }
+      if (elCaptionEdit) {
+        elCaptionEdit.value = state.captionText;
+        elCaptionEdit.focus();
+      }
+      syncCaptionOptions();
+      refresh();
+    }
+
     function selectTemplate(id, flags) {
       var tpl = TEMPLATES.find(function (t) {
         return t.id === id;
       });
       if (!tpl) return;
       if (tpl.group === 'opportunities' && !hasLiveListings()) {
-        setStatus('Publish a live business opportunity listing to unlock these templates.', true);
+        setStatus('Publish a live business opportunity listing to unlock these captions.', true);
         return;
       }
-      if (flags && flags.skipResetIfSame && state.templateId === id) {
+      if (flags && flags.skipResetIfSame && state.templateId === id && !state.customCaption) {
         refresh();
         return;
       }
+      state.categoryId = tpl.group;
       state.templateId = id;
+      state.customCaption = false;
       state.line1 = tpl.line1;
       state.line2 = tpl.line2;
       state.line3 = tpl.line3;
@@ -1390,23 +1467,36 @@
         state.backgroundId = defaultBackgroundIdForTemplate(tpl);
         syncBackgroundSelection();
       }
+      syncCategoryTabs();
       syncListingField();
       syncEventField();
       if (isEventTemplate(tpl) && currentEvent()) applyEventToFields();
       else applyGroupToFields(false);
-      scheduleGalleryThumbs();
+      fillCaptionFromTemplate();
+      syncCaptionOptions();
       refresh();
     }
 
-    root.querySelector('#post-gallery').addEventListener('click', function (e) {
+    root.addEventListener('click', function (e) {
+      var catBtn = e.target.closest('[data-category-id]');
+      if (catBtn && root.contains(catBtn)) {
+        selectCategory(catBtn.getAttribute('data-category-id'));
+        return;
+      }
       var bgBtn = e.target.closest('[data-background-id]');
       if (bgBtn && root.contains(bgBtn)) {
         selectBackground(bgBtn.getAttribute('data-background-id'));
         return;
       }
-      var btn = e.target.closest('[data-template-id]');
-      if (!btn || !root.contains(btn) || btn.disabled) return;
-      selectTemplate(btn.getAttribute('data-template-id'));
+      var customBtn = e.target.closest('[data-caption-custom]');
+      if (customBtn && root.contains(customBtn)) {
+        selectCustomCaption();
+        return;
+      }
+      var captionBtn = e.target.closest('[data-template-id]');
+      if (captionBtn && root.contains(captionBtn) && !captionBtn.disabled) {
+        selectTemplate(captionBtn.getAttribute('data-template-id'));
+      }
     });
 
     elGroup.addEventListener('change', function () {
@@ -1440,6 +1530,11 @@
       state.line3 = elLine3.value;
       refresh();
     });
+    elCaptionEdit.addEventListener('input', function () {
+      state.customCaption = true;
+      state.captionText = elCaptionEdit.value;
+      syncCaptionOptions();
+    });
     elFile.addEventListener('change', function () {
       var file = elFile.files && elFile.files[0];
       if (state.orgLogoObjectUrl) {
@@ -1461,12 +1556,16 @@
     root.querySelector('#post-download').addEventListener('click', downloadPng);
     root.querySelector('#post-copy-caption').addEventListener('click', copyCaption);
     root.querySelector('#post-reset').addEventListener('click', function () {
+      state.customCaption = false;
       applyGroupToFields(true);
+      fillCaptionFromTemplate();
+      syncCaptionOptions();
       refresh();
     });
 
     function hydrate() {
       syncGroupOptions();
+      syncCategoryTabs();
       syncOpportunityGate();
       syncListingField();
       syncEventField();
@@ -1477,8 +1576,9 @@
       elLine2.value = state.line2;
       elLine3.value = state.line3;
       elName.value = state.displayName;
+      fillCaptionFromTemplate();
+      syncCaptionOptions();
       refresh();
-      scheduleGalleryThumbs();
     }
 
     hydrate();
@@ -1507,9 +1607,9 @@
       prefillEvent: function (eventId) {
         state.eventId = String(eventId || '');
         selectTemplate('new_event');
-        // Events may load after publish — re-apply once the dropdown has the row.
         syncEventField();
         if (currentEvent()) applyEventToFields();
+        fillCaptionFromTemplate();
         refresh();
       },
       refresh: refresh,

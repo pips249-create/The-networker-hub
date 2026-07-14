@@ -348,8 +348,34 @@ async function fetchBrowseTypeCounts(sb, params) {
   return counts;
 }
 
+/**
+ * browse_events_index may lag behind new event columns (e.g. image_position).
+ * When the view omits the column, pull it from events so cover crops match detail.
+ */
+async function attachImagePositions(sb, rows) {
+  const list = rows || [];
+  if (!list.length) return list;
+  if (Object.prototype.hasOwnProperty.call(list[0], 'image_position')) return list;
+
+  const ids = list.map((row) => row.id).filter(Boolean);
+  const positions = new Map();
+  for (let i = 0; i < ids.length; i += IN_CHUNK) {
+    const chunk = ids.slice(i, i + IN_CHUNK);
+    const { data, error } = await sb.from('events').select('id, image_position').in('id', chunk);
+    if (error) throw new Error(error.message);
+    (data || []).forEach((row) => {
+      positions.set(row.id, row.image_position ?? null);
+    });
+  }
+  return list.map((row) => ({
+    ...row,
+    image_position: positions.has(row.id) ? positions.get(row.id) : null,
+  }));
+}
+
 async function hydrateBrowseEvents(sb, rows) {
-  const published = rows.map((row) => ({ ...row, next_date: row.starts_at }));
+  const withPositions = await attachImagePositions(sb, rows);
+  const published = withPositions.map((row) => ({ ...row, next_date: row.starts_at }));
   const mapped = await eventsFromPublishedRows(sb, published, null, { browseList: true });
   return mapped.filter((ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev));
 }
