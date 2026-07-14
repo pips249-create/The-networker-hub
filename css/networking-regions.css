@@ -383,19 +383,35 @@ body.networking-region-page[data-region="chester"] .events-hero-copy h1 .accent 
   border-radius: 999px;
   background: color-mix(in srgb, var(--link-accent, #7668ce) 8%, white);
   color: #36324f;
-  padding: 9px 14px;
+  padding: 7px 14px 7px 7px;
   font-size: 13px;
   font-weight: 650;
   text-decoration: none;
 }
 
 .networking-location-links a::before {
-  content: "";
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  background: var(--link-accent, #7668ce);
+  content: none;
+}
+
+.networking-location-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--link-accent, #7668ce) 12%, white);
+  border: 1px solid color-mix(in srgb, var(--link-accent, #7668ce) 22%, transparent);
+  color: var(--link-accent, #7668ce);
+  overflow: hidden;
+}
+
+.networking-location-icon svg,
+.networking-location-icon .region-landmark-chip {
+  display: block;
+  width: 24px;
+  height: 24px;
 }
 
 .networking-location-links a[data-region="central-london"] { --link-accent: #1c2040; }

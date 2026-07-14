@@ -176,23 +176,39 @@ const LANDMARKS = {
     label: 'Birmingham Bull',
     chip:
       HATCH.ground +
-      // horns
-      '<path d="M18 28c-8-14-4-22 6-16 6 4 4 12-2 16" stroke-width="1.5"/>' +
-      '<path d="M62 28c8-14 4-22-6-16-6 4-4 12 2 16" stroke-width="1.5"/>' +
-      // head
-      '<path d="M20 32c0 22 8 36 20 36s20-14 20-36c0-10-6-16-14-16H34c-8 0-14 6-14 16z" stroke-width="1.5"/>' +
-      // brow / eyes
-      '<path d="M28 36h8M44 36h8" opacity=".5"/>' +
-      '<circle cx="32" cy="42" r="2.2" stroke-width="1.2"/>' +
-      '<circle cx="48" cy="42" r="2.2" stroke-width="1.2"/>' +
-      // snout
-      '<path d="M34 52h12v8H34z"/>' +
-      '<path d="M37 56h2M41 56h2" opacity=".5" stroke-width="1"/>' +
-      // muscle / shading hatch
-      '<path d="M24 40l3 4M24 50l3 4M53 40l-3 4M53 50l-3 4" opacity=".3" stroke-width=".9"/>' +
-      '<path d="M36 48h8" opacity=".35"/>',
+      // sweeping Bullring horns (out then up)
+      '<path d="M26 30c-14-2-20-14-16-24 2 8 8 14 16 16" stroke-width="1.7"/>' +
+      '<path d="M54 30c14-2 20-14 16-24-2 8-8 14-16 16" stroke-width="1.7"/>' +
+      // horn tips
+      '<path d="M10 8c-1 3 1 5 3 6M70 8c1 3-1 5-3 6" stroke-width="1.3"/>' +
+      // ears under horns
+      '<path d="M22 34c-5 1-7 5-5 9 3-1 6-3 7-7M58 34c5 1 7 5 5 9-3-1-6-3-7-7" stroke-width="1.25"/>' +
+      // heavy brow + forehead
+      '<path d="M26 28c2-6 6-10 14-10s12 4 14 10" stroke-width="1.5"/>' +
+      '<path d="M24 32h32" opacity=".45" stroke-width="1.2"/>' +
+      // broad bovine head (wider jaw)
+      '<path d="M24 32c-2 8-1 18 4 26h24c5-8 6-18 4-26" stroke-width="1.55"/>' +
+      // eyes under brow
+      '<circle cx="32" cy="38" r="1.8" stroke-width="1.15"/>' +
+      '<circle cx="48" cy="38" r="1.8" stroke-width="1.15"/>' +
+      // wide muzzle + nostrils
+      '<path d="M30 50h20v12H30z" stroke-width="1.4"/>' +
+      '<ellipse cx="36" cy="56" rx="2.2" ry="1.6" stroke-width="1.1"/>' +
+      '<ellipse cx="44" cy="56" rx="2.2" ry="1.6" stroke-width="1.1"/>' +
+      // Bullring nose ring
+      '<circle cx="40" cy="64" r="4.5" stroke-width="1.45"/>' +
+      '<path d="M40 59.5v-1.5" stroke-width="1.2"/>' +
+      // hatch on cheek
+      '<path d="M26 40l3 3M26 48l3 3M51 40l-3 3M51 48l-3 3" opacity=".28" stroke-width=".85"/>',
     hero:
-      '<path d="M20 82h200" opacity=".35"/><path d="M56 32c-16-26-8-40 12-28 10 6 6 22-4 28M184 32c16-26 8-40-12-28-10 6-6 22 4 28"/><path d="M60 38c0 34 14 48 60 48s60-14 60-48c0-16-12-24-28-24H88c-16 0-28 8-28 24z"/><circle cx="96" cy="52" r="5"/><circle cx="144" cy="52" r="5"/><path d="M108 66h24v12h-24z"/>',
+      '<path d="M20 82h200" opacity=".35"/>' +
+      '<path d="M78 36c-28-4-40-28-32-48 4 16 16 28 32 32M162 36c28-4 40-28 32-48-4 16-16 28-32 32" stroke-width="2.2"/>' +
+      '<path d="M72 40c-10 2-14 10-10 18 6-2 12-6 14-14M168 40c10 2 14 10 10 18-6-2-12-6-14-14"/>' +
+      '<path d="M80 34c4-12 14-20 40-20s36 8 40 20"/><path d="M76 40h88"/>' +
+      '<path d="M76 40c-4 14-2 32 8 46h72c10-14 12-32 8-46"/>' +
+      '<circle cx="100" cy="52" r="4"/><circle cx="140" cy="52" r="4"/>' +
+      '<path d="M96 64h48v18H96z"/><ellipse cx="112" cy="74" rx="5" ry="3.5"/><ellipse cx="128" cy="74" rx="5" ry="3.5"/>' +
+      '<circle cx="120" cy="88" r="8"/><path d="M120 80v-3"/>',
   },
   glasgow: {
     label: 'Finnieston Crane',

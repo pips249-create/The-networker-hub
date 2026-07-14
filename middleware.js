@@ -159,7 +159,7 @@ const NETWORKING_REGION_THEMES = {
   },
   "birmingham": {
     "tagline": "From Digbeth and the Jewellery Quarter to the wider Midlands.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M56 32c-16-26-8-40 12-28 10 6 6 22-4 28M184 32c16-26 8-40-12-28-10 6-6 22 4 28\"/><path d=\"M60 38c0 34 14 48 60 48s60-14 60-48c0-16-12-24-28-24H88c-16 0-28 8-28 24z\"/><circle cx=\"96\" cy=\"52\" r=\"5\"/><circle cx=\"144\" cy=\"52\" r=\"5\"/><path d=\"M108 66h24v12h-24z\"/></svg>"
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M78 36c-28-4-40-28-32-48 4 16 16 28 32 32M162 36c28-4 40-28 32-48-4 16-16 28-32 32\" stroke-width=\"2.2\"/><path d=\"M72 40c-10 2-14 10-10 18 6-2 12-6 14-14M168 40c10 2 14 10 10 18-6-2-12-6-14-14\"/><path d=\"M80 34c4-12 14-20 40-20s36 8 40 20\"/><path d=\"M76 40h88\"/><path d=\"M76 40c-4 14-2 32 8 46h72c10-14 12-32 8-46\"/><circle cx=\"100\" cy=\"52\" r=\"4\"/><circle cx=\"140\" cy=\"52\" r=\"4\"/><path d=\"M96 64h48v18H96z\"/><ellipse cx=\"112\" cy=\"74\" rx=\"5\" ry=\"3.5\"/><ellipse cx=\"128\" cy=\"74\" rx=\"5\" ry=\"3.5\"/><circle cx=\"120\" cy=\"88\" r=\"8\"/><path d=\"M120 80v-3\"/></svg>"
   },
   "glasgow": {
     "tagline": "Connect with entrepreneurs across the Clyde and the city centre.",
