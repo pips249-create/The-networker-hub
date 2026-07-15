@@ -2,6 +2,7 @@
  * Organiser events + tickets + dashboard workspace — Supabase.
  */
 const crypto = require('crypto');
+const { getSupabaseAdmin } = require('./supabase');
 const { syncAccessCodesForEvent, validateTierAccessCodes, loadAccessCodesByTicketIds } = require('./ticket-access-codes');
 const { formatTicketsSoldLabel } = require('./tickets-sold-label');
 const { resolveImageUrl } = require('./supabase-storage');
