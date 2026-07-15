@@ -179,6 +179,34 @@
         },
       ],
     },
+    {
+      id: 'h',
+      label: 'H · Motion',
+      layout: 'video-rotate',
+      strategy: 'Find your next + moving words',
+      note: 'Uses the Find your next video with rotating words (Event, Connection, Opportunity, Community), then Event / Business Op choices and Ask Hubert.',
+      titleLine: 'Find your next',
+      rotateWords: ['Event', 'Connection', 'Opportunity', 'Community'],
+      videoSrc: 'assets/find-your-next-hero.mp4',
+      videoPoster: 'assets/hero-networking.jpg',
+      hubertLabel: 'Ask Hubert',
+      hubertPlaceholder: 'Ask Hubert to find an event, opportunity, or group\u2026',
+      hubertBtn: 'Ask Hubert',
+      cards: [
+        {
+          href: '/events/',
+          label: 'Event',
+          detail: 'Meetings, conferences & training near you',
+          tone: 'gold',
+        },
+        {
+          href: '/opportunities/',
+          label: 'Business Op',
+          detail: 'Franchises, partnerships & side hustles',
+          tone: 'purple',
+        },
+      ],
+    },
   ];
 
   var STAT_ICONS = {
@@ -353,6 +381,58 @@
     );
   }
 
+  function renderVideoRotateHero(variant) {
+    var cards = variant.cards || [];
+    var firstWord = (variant.rotateWords && variant.rotateWords[0]) || 'Event';
+    var cardsHtml = cards
+      .map(function (card) {
+        return (
+          '<a class="home-hero-rich-card home-hero-rich-card--' +
+          esc(card.tone || 'gold') +
+          '" href="' +
+          esc(card.href) +
+          '">' +
+          '<span class="home-hero-rich-card-label">' +
+          esc(card.label) +
+          '</span>' +
+          '<span class="home-hero-rich-card-detail">' +
+          esc(card.detail) +
+          '</span>' +
+          '<span class="home-hero-rich-card-go">Explore →</span>' +
+          '</a>'
+        );
+      })
+      .join('');
+
+    return (
+      '<div class="home-hero-motion">' +
+      '<header class="home-hero-copy home-hero-copy--motion">' +
+      '<h1 class="hero-title hero-title--motion">' +
+      '<span class="hero-title-line">Find your next</span>' +
+      '<span class="home-hero-rotate-word" id="home-hero-rotate-word">' +
+      esc(firstWord) +
+      '</span>' +
+      '</h1>' +
+      '</header>' +
+      '<div class="home-hero-rich-cards home-hero-rich-cards--motion" role="group" aria-label="Choose where to start">' +
+      cardsHtml +
+      '</div>' +
+      '<form class="home-hero-rich-search home-hero-rich-search--hubert" id="home-hero-hubert-form" role="search" aria-label="Ask Hubert">' +
+      '<img class="home-hero-rich-hubert-icon" src="assets/hubert-icon.png" alt="" width="28" height="28">' +
+      '<label class="visually-hidden" for="home-hero-hubert-input">' +
+      esc(variant.hubertLabel || 'Ask Hubert') +
+      '</label>' +
+      '<input type="search" id="home-hero-hubert-input" name="q" placeholder="' +
+      esc(variant.hubertPlaceholder || 'Ask Hubert…') +
+      '" autocomplete="off" enterkeyhint="send">' +
+      '<button type="submit" class="home-hero-rich-search-btn">' +
+      esc(variant.hubertBtn || 'Ask Hubert') +
+      '</button>' +
+      '</form>' +
+      '</div>'
+    );
+  }
+
   function renderDualCtaHero(variant) {
     return (
       '<header class="home-hero-copy home-hero-copy--dual-cta">' +
@@ -384,6 +464,9 @@
   }
 
   function renderHero(variant) {
+    if (variant.layout === 'video-rotate') {
+      return renderVideoRotateHero(variant);
+    }
     if (variant.layout === 'rich-choice') {
       return renderRichChoiceHero(variant);
     }
@@ -484,6 +567,63 @@
     });
   }
 
+  var rotateTimer = null;
+
+  function clearRotate() {
+    if (rotateTimer) {
+      window.clearInterval(rotateTimer);
+      rotateTimer = null;
+    }
+  }
+
+  function initRotateWords(variant) {
+    clearRotate();
+    var el = document.getElementById('home-hero-rotate-word');
+    var words = variant.rotateWords || [];
+    if (!el || !words.length) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.textContent = words.join(' · ');
+      return;
+    }
+
+    var index = 0;
+    el.textContent = words[0];
+    rotateTimer = window.setInterval(function () {
+      index = (index + 1) % words.length;
+      el.classList.add('is-fading');
+      window.setTimeout(function () {
+        el.textContent = words[index];
+        el.classList.remove('is-fading');
+      }, 180);
+    }, 2600);
+  }
+
+  function syncHeroMedia(variant) {
+    var hero = document.querySelector('.home-hero-preview-stage .home-hero');
+    if (!hero) return;
+
+    var existing = hero.querySelector('.home-hero-video-bg');
+    if (existing) existing.remove();
+    hero.classList.toggle('home-hero--motion', variant.layout === 'video-rotate');
+
+    if (variant.layout !== 'video-rotate') return;
+
+    var wrap = document.createElement('div');
+    wrap.className = 'home-hero-video-bg';
+    wrap.setAttribute('aria-hidden', 'true');
+    wrap.innerHTML =
+      '<video class="home-hero-video" autoplay muted loop playsinline preload="metadata" poster="' +
+      esc(variant.videoPoster || '') +
+      '">' +
+      '<source src="' +
+      esc(variant.videoSrc || '') +
+      '" type="video/mp4">' +
+      '</video>' +
+      '<span class="home-hero-video-shade"></span>';
+    hero.insertBefore(wrap, hero.firstChild);
+  }
+
   function setVariant(id) {
     var variant = VARIANTS.find(function (v) {
       return v.id === id;
@@ -493,6 +633,8 @@
     var note = document.getElementById('home-hero-preview-note');
     if (!heroInner) return;
 
+    clearRotate();
+    syncHeroMedia(variant);
     heroInner.innerHTML = renderHero(variant);
     if (note) note.innerHTML = renderNote(variant);
 
@@ -506,6 +648,7 @@
     }
 
     initSearchForm();
+    if (variant.layout === 'video-rotate') initRotateWords(variant);
   }
 
   function init() {
