@@ -153,6 +153,38 @@
         { href: '/opportunities/', label: 'Business Op', tone: 'purple' },
       ],
     },
+    {
+      id: 'g',
+      label: 'G · Recommended',
+      layout: 'rich-choice',
+      strategy: 'Best UX balance',
+      note: 'Find your next\u2026 with one short context line, two rich choice cards, soft search, and peek previews for visual life \u2014 between D and F.',
+      titleLine: 'Find your next\u2026',
+      lede: 'Networking events and business opportunities, in one place.',
+      searchLabel: 'Or search',
+      searchPlaceholder: 'City, breakfast meeting, industry\u2026',
+      searchBtn: 'Search',
+      cards: [
+        {
+          href: '/events/',
+          label: 'Event',
+          detail: 'Meetings, conferences & training near you',
+          tone: 'gold',
+          previewType: 'Meeting',
+          previewTitle: 'Founders breakfast',
+          previewMeta: 'Leeds · Free guest visit',
+        },
+        {
+          href: '/opportunities/',
+          label: 'Business Op',
+          detail: 'Franchises, partnerships & side hustles',
+          tone: 'purple',
+          previewType: 'Franchise',
+          previewTitle: 'Coastal coffee brand',
+          previewMeta: 'South West · Enquire free',
+        },
+      ],
+    },
   ];
 
   var STAT_ICONS = {
@@ -273,6 +305,74 @@
     );
   }
 
+  function renderRichChoiceHero(variant) {
+    var cards = variant.cards || [];
+    var cardsHtml = cards
+      .map(function (card) {
+        return (
+          '<a class="home-hero-rich-card home-hero-rich-card--' +
+          esc(card.tone || 'gold') +
+          '" href="' +
+          esc(card.href) +
+          '">' +
+          '<span class="home-hero-rich-peek" aria-hidden="true">' +
+          '<span class="home-hero-rich-peek-type">' +
+          esc(card.previewType) +
+          '</span>' +
+          '<strong class="home-hero-rich-peek-title">' +
+          esc(card.previewTitle) +
+          '</strong>' +
+          '<span class="home-hero-rich-peek-meta">' +
+          esc(card.previewMeta) +
+          '</span>' +
+          '</span>' +
+          '<span class="home-hero-rich-card-body">' +
+          '<span class="home-hero-rich-card-label">' +
+          esc(card.label) +
+          '</span>' +
+          '<span class="home-hero-rich-card-detail">' +
+          esc(card.detail) +
+          '</span>' +
+          '<span class="home-hero-rich-card-go">Explore →</span>' +
+          '</span>' +
+          '</a>'
+        );
+      })
+      .join('');
+
+    return (
+      '<div class="home-hero-rich">' +
+      '<header class="home-hero-copy home-hero-copy--rich">' +
+      '<h1 class="hero-title hero-title--rich">' +
+      '<span class="hero-title-line">' +
+      esc(variant.titleLine) +
+      '</span>' +
+      '</h1>' +
+      (variant.lede ? '<p class="home-hero-lede home-hero-lede--rich">' + esc(variant.lede) + '</p>' : '') +
+      '</header>' +
+      '<div class="home-hero-rich-panel">' +
+      '<div class="home-hero-rich-cards" role="group" aria-label="Choose where to start">' +
+      cardsHtml +
+      '</div>' +
+      '<form class="home-hero-rich-search" action="/events/" method="get" role="search" aria-label="Search events">' +
+      '<label class="visually-hidden" for="home-hero-search-input">' +
+      esc(variant.searchLabel || 'Search') +
+      '</label>' +
+      '<input type="search" id="home-hero-search-input" name="q" placeholder="' +
+      esc(variant.searchPlaceholder || '') +
+      '" autocomplete="off" enterkeyhint="search">' +
+      '<button type="submit" class="home-hero-rich-search-btn">' +
+      esc(variant.searchBtn || 'Search') +
+      '</button>' +
+      '</form>' +
+      '<p class="home-hero-rich-secondary">' +
+      '<a href="/events/?mode=organisers">Find organisers</a>' +
+      '</p>' +
+      '</div>' +
+      '</div>'
+    );
+  }
+
   function renderDualCtaHero(variant) {
     return (
       '<header class="home-hero-copy home-hero-copy--dual-cta">' +
@@ -304,6 +404,9 @@
   }
 
   function renderHero(variant) {
+    if (variant.layout === 'rich-choice') {
+      return renderRichChoiceHero(variant);
+    }
     if (variant.layout === 'minimal-choice') {
       return renderMinimalChoiceHero(variant);
     }

@@ -398,6 +398,240 @@
   outline-offset: 3px;
 }
 
+/* Option G — recommended rich choice */
+.home-page .home-hero-rich {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 8px 0 12px;
+}
+
+.home-page .home-hero-copy--rich {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.home-page .hero-title--rich {
+  margin: 0 0 10px;
+  font-size: clamp(2.2rem, 6vw, 3.5rem);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+}
+
+.home-page .hero-title--rich .hero-title-line {
+  color: #fff;
+  text-shadow:
+    0 1px 2px rgba(45, 35, 50, 0.4),
+    0 8px 32px rgba(45, 35, 50, 0.28);
+}
+
+.home-page .home-hero-lede--rich {
+  margin: 0 auto;
+  max-width: 26rem;
+  font-size: clamp(0.98rem, 2vw, 1.08rem);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.home-page .home-hero-rich-panel {
+  width: 100%;
+  padding: 18px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.98);
+  box-shadow: 0 22px 50px rgba(45, 35, 50, 0.22);
+}
+
+.home-page .home-hero-rich-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.home-page .home-hero-rich-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 178px;
+  padding: 14px;
+  border-radius: 22px;
+  text-decoration: none;
+  overflow: hidden;
+  border: 1px solid transparent;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-page .home-hero-rich-card--gold {
+  background: linear-gradient(165deg, #fff8ec 0%, #f5e6c4 42%, #ecd29a 100%);
+  border-color: rgba(184, 149, 106, 0.35);
+  color: var(--charcoal);
+}
+
+.home-page .home-hero-rich-card--purple {
+  background: linear-gradient(165deg, #9a7aa8 0%, #7d6585 55%, #64506f 100%);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.home-page .home-hero-rich-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 32px rgba(45, 35, 50, 0.18);
+}
+
+.home-page .home-hero-rich-card:focus-visible {
+  outline: 2px solid var(--charcoal);
+  outline-offset: 3px;
+}
+
+.home-page .home-hero-rich-peek {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 6px 16px rgba(45, 35, 50, 0.08);
+}
+
+.home-page .home-hero-rich-card--purple .home-hero-rich-peek {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.home-page .home-hero-rich-peek-type {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.home-page .home-hero-rich-peek-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: inherit;
+}
+
+.home-page .home-hero-rich-peek-meta {
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.78;
+  line-height: 1.35;
+}
+
+.home-page .home-hero-rich-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: auto;
+  padding: 2px 2px 0;
+}
+
+.home-page .home-hero-rich-card-label {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(1.35rem, 3vw, 1.6rem);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.home-page .home-hero-rich-card-detail {
+  font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.4;
+  opacity: 0.82;
+}
+
+.home-page .home-hero-rich-card-go {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.home-page .home-hero-rich-card--gold .home-hero-rich-card-go {
+  color: #6e5530;
+}
+
+.home-page .home-hero-rich-card--purple .home-hero-rich-card-go {
+  color: #fff8ec;
+}
+
+.home-page .home-hero-rich-search {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-top: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #f6f2f8;
+  border: 1px solid rgba(154, 122, 168, 0.28);
+}
+
+.home-page .home-hero-rich-search input[type='search'] {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 13px 16px;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--charcoal);
+}
+
+.home-page .home-hero-rich-search input[type='search']::placeholder {
+  color: rgba(74, 68, 70, 0.5);
+}
+
+.home-page .home-hero-rich-search input[type='search']:focus {
+  outline: none;
+}
+
+.home-page .home-hero-rich-search:focus-within {
+  border-color: rgba(125, 101, 133, 0.55);
+  box-shadow: 0 0 0 3px rgba(154, 122, 168, 0.18);
+}
+
+.home-page .home-hero-rich-search-btn {
+  flex-shrink: 0;
+  border: 0;
+  background: var(--charcoal);
+  color: #fff;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.home-page .home-hero-rich-search-btn:hover {
+  background: #3d3548;
+}
+
+.home-page .home-hero-rich-secondary {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.home-page .home-hero-rich-secondary a {
+  color: var(--charcoal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(74, 68, 70, 0.35);
+}
+
+.home-page .home-hero-rich-secondary a:hover {
+  text-decoration-color: var(--charcoal);
+}
+
 @media (max-width: 720px) {
   .home-hero-preview-bar {
     flex-direction: column;
@@ -449,5 +683,27 @@
   .home-page .home-hero-choice-btn {
     width: 100%;
     flex: none;
+  }
+
+  .home-page .home-hero-rich-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .home-page .home-hero-rich-panel {
+    padding: 14px;
+    border-radius: 22px;
+  }
+
+  .home-page .hero-title--rich {
+    font-size: clamp(2rem, 9vw, 2.6rem);
+  }
+
+  .home-page .home-hero-rich-search {
+    flex-direction: column;
+    border-radius: 18px;
+  }
+
+  .home-page .home-hero-rich-search-btn {
+    min-height: 46px;
   }
 }
