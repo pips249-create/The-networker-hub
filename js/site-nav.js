@@ -138,11 +138,16 @@
 
   function myHubDropdownHtml(user) {
     var hubActive =
-      page === 'organiser' || page === 'account' || page === 'settings' || page === 'admin';
+      page === 'organiser' ||
+      page === 'account' ||
+      page === 'settings' ||
+      page === 'admin' ||
+      page === 'contact';
     var organiserActive = page === 'organiser' ? ' aria-current="page"' : '';
     var accountActive = page === 'account' ? ' aria-current="page"' : '';
     var settingsActive = page === 'settings' ? ' aria-current="page"' : '';
     var adminActive = page === 'admin' ? ' aria-current="page"' : '';
+    var contactActive = page === 'contact' ? ' aria-current="page"' : '';
     var showOrganiserLink = user && user.organiserUiVisible;
     var organiserItem = '';
     if (showOrganiserLink) {
@@ -180,6 +185,11 @@
       '"' +
       settingsActive +
       '>Account settings</a>' +
+      '<a role="menuitem" class="nav-dropdown-item" href="' +
+      href('/contact') +
+      '"' +
+      contactActive +
+      '>Contact us</a>' +
       adminItem +
       '<button type="button" role="menuitem" class="nav-dropdown-item nav-dropdown-signout" id="nav-signout">Sign out</button>' +
       '</div></div>'
@@ -213,10 +223,10 @@
 
   function buildNavLinks(user, pending) {
     var html = '';
+    html += link('/', 'Home', 'home');
     html += link('/events/', 'Events', 'events');
     html += link('/opportunities/', 'Opportunities', 'opportunities');
     html += link('/for-organisers', 'For Organisers', 'for-organisers');
-    html += link('/contact', 'Contact', 'contact');
     html += link('/faq', 'Help', 'faq');
     if (pending && !user) {
       html +=
@@ -237,6 +247,7 @@
       }
       html += myHubDropdownHtml(user);
     } else {
+      html += link('/contact', 'Contact', 'contact');
       html += link('/login', 'Sign in', 'auth');
     }
     return html;
@@ -244,10 +255,10 @@
 
   function buildMobileDrawerLinks(user, pending) {
     var html = '';
+    html += link('/', 'Home', 'home', 'nav-mobile-item');
     html += link('/events/', 'Events', 'events', 'nav-mobile-item');
     html += link('/opportunities/', 'Opportunities', 'opportunities', 'nav-mobile-item');
     html += link('/for-organisers', 'For Organisers', 'for-organisers', 'nav-mobile-item');
-    html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
     html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
     if (pending && !user) {
       html +=
@@ -272,12 +283,14 @@
         html += link('/organiser/', 'Organiser workspace', 'organiser', 'nav-mobile-item');
       }
       html += link('/account/settings', 'Account settings', 'settings', 'nav-mobile-item');
+      html += link('/contact', 'Contact us', 'contact', 'nav-mobile-item');
       if (user.role === 'admin') {
         html += link('/admin/', 'Command Center', 'admin', 'nav-mobile-item');
       }
       html +=
         '<button type="button" class="nav-mobile-item nav-mobile-signout" id="nav-mobile-signout">Sign out</button>';
     } else {
+      html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
       html += link('/login', 'Sign in', 'auth', 'nav-mobile-item');
     }
     return html;
