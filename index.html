@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
-<link rel="stylesheet" href="css/home-page.css?v=20260715pillars5">
+<link rel="stylesheet" href="css/home-page.css?v=20260715listings">
 <link rel="stylesheet" href="css/hubert-widget.css?v=20260711">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -96,16 +96,30 @@
             <div class="home-what-pillar-visual">
               <div class="home-pillar-preview home-pillar-preview--events" aria-hidden="true">
                 <p class="home-pillar-preview-label">Coming up near you</p>
-                <div class="home-pillar-sample-stack">
-                  <article class="home-pillar-sample is-back">
-                    <span class="home-pillar-sample-tag">Meeting</span>
-                    <strong>Founders breakfast — Leeds</strong>
-                    <span>Tue 9 Sep · Free guest visit</span>
+                <div class="home-pillar-card-stack home-pillar-card-stack--events">
+                  <article class="home-pillar-event-card is-back">
+                    <div class="home-pillar-event-media home-pillar-event-media--meeting">
+                      <span class="home-pillar-event-type">Meeting</span>
+                    </div>
+                    <div class="home-pillar-event-body">
+                      <h4>Founders breakfast — Leeds</h4>
+                      <p>Leeds · Tue 9 Sep · Free guest visit</p>
+                    </div>
                   </article>
-                  <article class="home-pillar-sample is-front">
-                    <span class="home-pillar-sample-tag">Conference</span>
-                    <strong>UK Business Leaders Summit</strong>
-                    <span>Thu 18 Sep · Manchester · From £45</span>
+                  <article class="home-pillar-event-card is-front">
+                    <span class="home-pillar-event-premium">Premium</span>
+                    <div class="home-pillar-event-media">
+                      <span class="home-pillar-event-type">Conference</span>
+                      <span class="home-pillar-event-price">£45</span>
+                    </div>
+                    <div class="home-pillar-event-body">
+                      <h4>UK Business Leaders Summit</h4>
+                      <p>Manchester · Thu 18 Sep · In person</p>
+                      <div class="home-pillar-event-rating">
+                        <span>★★★★★</span>
+                        <span>(24)</span>
+                      </div>
+                    </div>
                   </article>
                 </div>
               </div>
@@ -123,16 +137,32 @@
             <div class="home-what-pillar-visual">
               <div class="home-pillar-preview home-pillar-preview--organisers" aria-hidden="true">
                 <p class="home-pillar-preview-label">Networking groups</p>
-                <div class="home-pillar-sample-stack">
-                  <article class="home-pillar-sample is-back">
-                    <span class="home-pillar-sample-tag">Organiser</span>
-                    <strong>London Netwalkers</strong>
-                    <span>Outdoor networking · Capital</span>
+                <div class="home-pillar-card-stack home-pillar-card-stack--organisers">
+                  <article class="home-pillar-org-card is-back">
+                    <div class="home-pillar-org-header home-pillar-org-header--compact">
+                      <span class="home-pillar-org-industry">Tech</span>
+                      <span class="home-pillar-org-logo">LN</span>
+                    </div>
+                    <div class="home-pillar-org-body">
+                      <h4>London Netwalkers</h4>
+                      <p>Outdoor networking across the capital.</p>
+                    </div>
                   </article>
-                  <article class="home-pillar-sample is-front">
-                    <span class="home-pillar-sample-tag">Organiser</span>
-                    <strong>Business Network Manchester</strong>
-                    <span>Monthly breakfasts · Guest visits</span>
+                  <article class="home-pillar-org-card is-front">
+                    <div class="home-pillar-org-header">
+                      <span class="home-pillar-org-industry">Services</span>
+                      <span class="home-pillar-org-count">12 events</span>
+                      <span class="home-pillar-org-logo">BN</span>
+                    </div>
+                    <div class="home-pillar-org-body">
+                      <span class="home-pillar-org-label">Organiser</span>
+                      <h4>Business Network Manchester</h4>
+                      <p>Monthly breakfast meetings for founders and leaders.</p>
+                      <div class="home-pillar-org-rating">
+                        <span>★★★★☆</span>
+                        <span>(18)</span>
+                      </div>
+                    </div>
                   </article>
                 </div>
               </div>
@@ -150,16 +180,34 @@
             <div class="home-what-pillar-visual">
               <div class="home-pillar-preview home-pillar-preview--opportunities" aria-hidden="true">
                 <p class="home-pillar-preview-label">Business opportunities</p>
-                <div class="home-pillar-sample-stack">
-                  <article class="home-pillar-sample is-back">
-                    <span class="home-pillar-sample-tag">Partnership</span>
-                    <strong>Agency growth partnership</strong>
-                    <span>Revenue share · Remote-friendly</span>
+                <div class="home-pillar-card-stack home-pillar-card-stack--opportunities">
+                  <article class="home-pillar-opp-card is-back">
+                    <div class="home-pillar-opp-head">
+                      <span class="home-pillar-opp-type">Partnership</span>
+                    </div>
+                    <div class="home-pillar-opp-media home-pillar-opp-media--deal">🤝</div>
+                    <div class="home-pillar-opp-body">
+                      <h4>Agency growth partnership</h4>
+                      <p>Revenue share for introducers.</p>
+                    </div>
                   </article>
-                  <article class="home-pillar-sample is-front">
-                    <span class="home-pillar-sample-tag">Franchise</span>
-                    <strong>Regional café franchise — North West</strong>
-                    <span>£25k–£40k · Seeking owner-operators</span>
+                  <article class="home-pillar-opp-card is-front featured">
+                    <div class="home-pillar-opp-head">
+                      <span class="home-pillar-opp-type">Franchise</span>
+                      <span class="home-pillar-opp-featured">Featured</span>
+                    </div>
+                    <div class="home-pillar-opp-media">☕</div>
+                    <div class="home-pillar-opp-body">
+                      <h4>Regional café franchise — North West</h4>
+                      <p>Established brand seeking owner-operators.</p>
+                      <div class="home-pillar-opp-facts">
+                        <span>£25k–£40k</span>
+                        <span>North West</span>
+                      </div>
+                    </div>
+                    <div class="home-pillar-opp-footer">
+                      <span class="home-pillar-opp-enquire">Enquire →</span>
+                    </div>
                   </article>
                 </div>
               </div>
