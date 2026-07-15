@@ -116,9 +116,17 @@ html:has(.site-access-page) {
   text-align: left;
 }
 
+.site-access-kickers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
 .site-access-kicker {
   display: inline-block;
-  margin: 0 0 14px;
+  margin: 0;
   padding: 8px 16px;
   border-radius: var(--radius-pill);
   font-size: 0.78rem;
@@ -1282,9 +1290,8 @@ html:has(.site-access-page) {
     text-align: center;
   }
 
-  .site-access-page .site-access-kicker {
-    margin-left: auto;
-    margin-right: auto;
+  .site-access-page .site-access-kickers {
+    justify-content: center;
   }
 
   .site-access-contact {
