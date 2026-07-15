@@ -158,12 +158,12 @@
       label: 'G · Recommended',
       layout: 'rich-choice',
       strategy: 'Best UX balance',
-      note: 'Find your next\u2026 with one short context line, two clean choice cards, and soft search \u2014 between D and F.',
+      note: 'Find your next\u2026 with one short context line, two clean choice cards, and Ask Hubert underneath instead of event search.',
       titleLine: 'Find your next\u2026',
       lede: 'Networking events and business opportunities, in one place.',
-      searchLabel: 'Or search',
-      searchPlaceholder: 'City, breakfast meeting, industry\u2026',
-      searchBtn: 'Search',
+      hubertLabel: 'Ask Hubert',
+      hubertPlaceholder: 'Ask Hubert to find an event, opportunity, or group\u2026',
+      hubertBtn: 'Ask Hubert',
       cards: [
         {
           href: '/events/',
@@ -334,15 +334,16 @@
       '<div class="home-hero-rich-cards" role="group" aria-label="Choose where to start">' +
       cardsHtml +
       '</div>' +
-      '<form class="home-hero-rich-search" action="/events/" method="get" role="search" aria-label="Search events">' +
-      '<label class="visually-hidden" for="home-hero-search-input">' +
-      esc(variant.searchLabel || 'Search') +
+      '<form class="home-hero-rich-search home-hero-rich-search--hubert" id="home-hero-hubert-form" role="search" aria-label="Ask Hubert">' +
+      '<img class="home-hero-rich-hubert-icon" src="assets/hubert-icon.png" alt="" width="28" height="28">' +
+      '<label class="visually-hidden" for="home-hero-hubert-input">' +
+      esc(variant.hubertLabel || 'Ask Hubert') +
       '</label>' +
-      '<input type="search" id="home-hero-search-input" name="q" placeholder="' +
-      esc(variant.searchPlaceholder || '') +
-      '" autocomplete="off" enterkeyhint="search">' +
+      '<input type="search" id="home-hero-hubert-input" name="q" placeholder="' +
+      esc(variant.hubertPlaceholder || 'Ask Hubert…') +
+      '" autocomplete="off" enterkeyhint="send">' +
       '<button type="submit" class="home-hero-rich-search-btn">' +
-      esc(variant.searchBtn || 'Search') +
+      esc(variant.hubertBtn || 'Ask Hubert') +
       '</button>' +
       '</form>' +
       '<p class="home-hero-rich-secondary">' +
@@ -451,14 +452,35 @@
   function initSearchForm() {
     var form = document.querySelector('.home-hero-preview-stage .home-hero-search');
     var input = document.getElementById('home-hero-search-input');
-    if (!form || !input) return;
+    if (form && input) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var q = String(input.value || '').trim();
+        window.location.href = q
+          ? '/events/?q=' + encodeURIComponent(q) + '#results'
+          : '/events/#results';
+      });
+    }
 
-    form.addEventListener('submit', function (e) {
+    var hubertForm = document.getElementById('home-hero-hubert-form');
+    var hubertInput = document.getElementById('home-hero-hubert-input');
+    if (!hubertForm || !hubertInput) return;
+
+    hubertForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      var q = String(input.value || '').trim();
-      window.location.href = q
-        ? '/events/?q=' + encodeURIComponent(q) + '#results'
-        : '/events/#results';
+      var q = String(hubertInput.value || '').trim();
+      if (!q) {
+        if (window.HubertWidget && typeof window.HubertWidget.open === 'function') {
+          window.HubertWidget.open();
+        }
+        return;
+      }
+      if (window.HubertWidget && typeof window.HubertWidget.ask === 'function') {
+        window.HubertWidget.ask(q);
+        hubertInput.value = '';
+        return;
+      }
+      window.location.href = '/contact?q=' + encodeURIComponent(q);
     });
   }
 
