@@ -145,7 +145,7 @@ body.hub-page-organiser.organiser-event-edit-page {
 .organiser-dashboard-page .org-sidebar,
 .attendee-dashboard-page .ad-sidebar {
   flex-shrink: 0;
-  width: 200px;
+  width: 228px;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;

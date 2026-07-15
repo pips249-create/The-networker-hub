@@ -825,11 +825,27 @@ body.nav-menu-open {
   .hub-side-nav.hub-side-nav--minimal .hub-side-nav-divider {
     flex: 0 0 auto;
     align-self: center;
-    padding: 8px 6px;
-    margin: 0;
+    padding: 8px 8px;
+    margin: 0 2px 0 4px;
+    border-top: none;
+    border-left: 1px solid rgba(0, 0, 0, 0.12);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    opacity: 0.75;
     white-space: nowrap;
-    font-size: 9px;
     scroll-snap-align: start;
+  }
+
+  .hub-side-nav.hub-side-nav--minimal .hub-side-nav-divider--first {
+    border-left: none;
+    margin-left: 0;
+    padding-left: 2px;
+  }
+
+  .hub-side-nav.hub-side-nav--minimal .hub-side-nav-link--events-sub {
+    margin-left: 0;
+    border-left: none;
+    border-radius: 999px;
   }
 
   .hub-side-nav.hub-side-nav--minimal .hub-side-nav-util {

@@ -17,12 +17,12 @@
     />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e" />
     <link rel="stylesheet" href="../css/hub.css?v=20260714skip" />
-    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260628" />
-    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260702d" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260715nav" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260714dots" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260708" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
     <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260714cap" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260714cls" />
@@ -59,6 +59,7 @@
       <div class="org-dashboard-layout">
         <aside class="org-sidebar">
           <nav class="hub-side-nav hub-side-nav--minimal org-dash-bar" aria-label="Organiser workspace">
+            <span class="hub-side-nav-divider hub-side-nav-divider--first">Workspace</span>
             <a href="#dashboard" class="hub-side-nav-link is-active" data-org-route="dashboard">Overview</a>
             <button
               type="button"
@@ -71,13 +72,13 @@
               <span class="org-notifications-count" id="org-notifications-count" hidden aria-hidden="true">0</span>
             </button>
             <a href="#social" class="hub-side-nav-link" data-org-route="social">Promote &amp; social</a>
-            <span class="hub-side-nav-divider">Team</span>
             <a href="#team" class="hub-side-nav-link" data-org-route="team" id="org-nav-team">
               Team &amp; invites
               <span class="org-nav-badge" id="org-team-nav-badge" hidden>New</span>
             </a>
-            <span class="hub-side-nav-divider">My events</span>
-            <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">Events</a>
+
+            <span class="hub-side-nav-divider">Events</span>
+            <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">My events</a>
             <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Organiser pages</a>
             <a href="#events-attendees" class="hub-side-nav-link hub-side-nav-link--events-sub" data-org-route="events-attendees">
               Attendees
@@ -89,12 +90,14 @@
               Revenue &amp; payouts
               <span class="org-nav-badge org-nav-badge--action" id="org-payment-setup-nav-badge" hidden>Setup</span>
             </a>
-            <span class="hub-side-nav-divider">Business opportunities</span>
+
+            <span class="hub-side-nav-divider">Opportunities</span>
             <a href="#business-overview" class="hub-side-nav-link" data-org-route="business-overview">
-              Overview
+              My opportunities
               <span class="org-nav-badge" id="org-opp-enquiry-nav-badge" hidden>New</span>
             </a>
-            <a href="#business-list" class="hub-side-nav-link" data-org-route="business-list">List a listing</a>
+            <a href="#business-list" class="hub-side-nav-link" data-org-route="business-list">Add a listing</a>
+
             <div class="hub-side-nav-util">
               <a href="../guides">Organiser guides</a>
               <a href="../events/">Browse events</a>
