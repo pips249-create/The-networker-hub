@@ -185,9 +185,7 @@
       layout: 'video-rotate',
       strategy: 'Find your next + moving words',
       note: 'Find your next with rotating words (Event, Connection, Opportunity, Community), then Event / Business Opportunity choices and Ask Hubert.',
-      titleLine: 'Find your next',
-      rotateWords: ['Event', 'Connection', 'Opportunity', 'Community'],
-      hubertLabel: 'Ask Hubert',
+      titleLine: 'Find your next\u2026',
       hubertPlaceholder: 'Ask Hubert to find an event, opportunity, or group\u2026',
       hubertBtn: 'Ask Hubert',
       cards: [
@@ -406,7 +404,7 @@
       '<div class="home-hero-motion">' +
       '<header class="home-hero-copy home-hero-copy--motion">' +
       '<h1 class="hero-title hero-title--motion">' +
-      '<span class="hero-title-line">Find your next</span>' +
+      '<span class="hero-title-line">Find your next\u2026</span>' +
       '<span class="home-hero-rotate-word" id="home-hero-rotate-word">' +
       esc(firstWord) +
       '</span>' +
