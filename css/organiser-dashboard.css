@@ -2278,9 +2278,14 @@
 }
 
 .org-td-actions {
-  min-width: 168px;
+  min-width: 248px;
   vertical-align: top;
   white-space: nowrap;
+}
+
+.org-member-list-link {
+  margin-right: 6px;
+  vertical-align: middle;
 }
 
 .org-application-review {

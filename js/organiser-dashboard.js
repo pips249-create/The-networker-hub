@@ -5152,6 +5152,27 @@
     alertEl.innerHTML = message;
   }
 
+  function navigateToMemberLists() {
+    const groups = (state.groups || []).filter((g) => g && g.id);
+    if (groups.length === 1) {
+      window.location.href =
+        '/organiser/member-roster?id=' + encodeURIComponent(groups[0].id);
+      return;
+    }
+    setRoute('groups');
+    if (groups.length > 1) {
+      showOrganiserAlert(
+        'Each organiser page has its own member list. Click <strong>Member list</strong> on the row for the group you want.',
+        false
+      );
+    } else {
+      showOrganiserAlert(
+        'Create an organiser page first, then open <strong>Member list</strong> from that row.',
+        false
+      );
+    }
+  }
+
   function sidebarRouteForPage(page, sub) {
     if (page === 'events-overview') return 'events-list';
     if (page === 'business-overview') return 'business-overview';
@@ -5531,6 +5552,9 @@
         '</td><td>' +
         statusBadgeHtml(g.statusKey || 'draft', g.statusLabel || 'Draft') +
         '</td><td class="org-td-actions">' +
+        '<a href="/organiser/member-roster?id=' +
+        esc(g.id) +
+        '" class="org-btn org-btn-sm org-btn-outline org-member-list-link">Member list</a> ' +
         actionMenuHtml('group', g.id, g.name, g) +
         '</td>';
       body.appendChild(tr);
@@ -8450,6 +8474,11 @@
       },
       true
     );
+
+    document.getElementById('org-nav-member-lists')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigateToMemberLists();
+    });
 
     document.querySelectorAll('[data-org-route]').forEach((el) => {
       if (el.tagName === 'A') {
