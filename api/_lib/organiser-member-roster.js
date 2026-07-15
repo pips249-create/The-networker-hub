@@ -14,6 +14,7 @@ const {
   contactUrl,
   logoNavUrl,
   logoFooterUrl,
+  browseEventsUrl,
 } = require('./hub-email-urls');
 const { formatEventDateTime } = require('./favourite-sales-emails');
 const { emailGreetingName } = require('./email-display-name');
@@ -698,6 +699,141 @@ async function listRosterGroupsForAttendee(email) {
   });
 }
 
+/**
+ * Email active member-list people when their organiser publishes an Approved event.
+ * Deduped per (roster_member_id, event_id). Also marks favourite listing alerts so
+ * the daily saved-organiser cron does not double-send to the same inbox.
+ */
+async function notifyRosterMembersOfPublishedEvent(eventRow) {
+  const result = { sent: 0, skipped: 0, errors: [] };
+  const eventId = String(eventRow?.id || '').trim();
+  const organiserId = String(eventRow?.organiser_id || eventRow?.organiserId || '').trim();
+  if (!eventId || !organiserId) return result;
+  if (String(eventRow.status || '').trim() !== 'published') return result;
+  if (String(eventRow.approval_status || eventRow.approvalStatus || '').trim() !== 'Approved') {
+    return result;
+  }
+
+  const sb = getSupabaseAdmin();
+  const { data: organiser, error: orgErr } = await sb
+    .from('organisers')
+    .select('id, name, slug')
+    .eq('id', organiserId)
+    .maybeSingle();
+  if (orgErr) throw new Error(orgErr.message);
+  if (!organiser) return result;
+
+  const members = await listRosterForOrganiser(organiserId, { status: 'active' });
+  const activeMembers = (members || []).filter((m) => m.membershipActive && m.email);
+  if (!activeMembers.length) return result;
+
+  const memberIds = activeMembers.map((m) => m.id);
+  const alertedRes = await sb
+    .from('organiser_roster_listing_alerts')
+    .select('roster_member_id')
+    .eq('event_id', eventId)
+    .in('roster_member_id', memberIds);
+  if (alertedRes.error) throw new Error(alertedRes.error.message);
+  const already = new Set((alertedRes.data || []).map((r) => String(r.roster_member_id)));
+
+  const site = siteBase();
+  const { event_date, event_time } = formatEventDateTime(eventRow.starts_at || eventRow.startsAt);
+  const eventLocation =
+    String(eventRow.location_label || eventRow.locationLabel || eventRow.venue || eventRow.city || '').trim() ||
+    'See event page';
+  const eventTimeSuffix = event_time ? ' · ' + event_time : '';
+  const eventUrl = eventPublicUrl(eventRow, site);
+  const organiserUrl = organiserPublicUrl(organiser, site);
+  const organiserName = String(organiser.name || 'your networking group').trim();
+
+  for (const member of activeMembers) {
+    if (already.has(String(member.id))) {
+      result.skipped += 1;
+      continue;
+    }
+    const email = normalizeRosterEmail(member.email);
+    if (!email) {
+      result.skipped += 1;
+      continue;
+    }
+
+    const hasAccount = Boolean(member.attendeeId || member.claimedAt);
+    const ctaUrl = hasAccount
+      ? loginUrlWithNext(site, email, eventUrl)
+      : site +
+        '/register?email=' +
+        encodeURIComponent(email) +
+        '&next=' +
+        encodeURIComponent(eventUrl);
+    const ctaLabel = hasAccount ? 'View member tickets' : 'Create account & view event';
+
+    try {
+      await sendTemplatedEmail({
+        slug: 'member_roster_new_event',
+        to: email,
+        variables: {
+          user_name: emailGreetingName(member.name, email),
+          user_email: email,
+          organiser_name: organiserName,
+          organiser_url: organiserUrl,
+          event_name: String(eventRow.title || 'Event').trim(),
+          event_date: event_date || '',
+          event_time: eventTimeSuffix,
+          event_location: eventLocation,
+          event_url: eventUrl,
+          cta_url: ctaUrl,
+          cta_label: ctaLabel,
+          hub_account_url: hubAccountUrl(site),
+          browse_events_url: browseEventsUrl(site),
+          contact_url: contactUrl(site),
+          privacy_url: legalPolicyUrl(site, 'privacy'),
+          terms_url: legalPolicyUrl(site, 'terms'),
+          site_url: site,
+          logo_url: logoNavUrl(site),
+          logo_footer_url: logoFooterUrl(site),
+        },
+      });
+      await sb.from('organiser_roster_listing_alerts').insert({
+        roster_member_id: member.id,
+        event_id: eventId,
+      });
+      already.add(String(member.id));
+      result.sent += 1;
+
+      // Prevent the daily favourite-listing cron from double-emailing the same inbox
+      if (member.attendeeId) {
+        try {
+          const fav = await sb
+            .from('organiser_favourites')
+            .select('id')
+            .eq('attendee_id', member.attendeeId)
+            .eq('organiser_id', organiserId)
+            .maybeSingle();
+          if (fav.data?.id) {
+            await sb.from('organiser_favourite_listing_alerts').upsert(
+              {
+                organiser_favourite_id: fav.data.id,
+                event_id: eventId,
+              },
+              { onConflict: 'organiser_favourite_id,event_id', ignoreDuplicates: true }
+            );
+          }
+        } catch {
+          /* non-fatal */
+        }
+      }
+    } catch (e) {
+      if (e.code === 'emails_disabled' || /emails_disabled/i.test(String(e.message || ''))) {
+        result.skipped += 1;
+        continue;
+      }
+      result.errors.push({ email, message: e.message || String(e) });
+    }
+  }
+
+  return result;
+}
+
 module.exports = {
   ROSTER_STATUS_ACTIVE,
   ROSTER_STATUS_REMOVED,
@@ -716,4 +852,5 @@ module.exports = {
   listRosterGroupsForAttendee,
   sendMemberRosterInviteEmail,
   ensureOrganiserFavouritesForRoster,
+  notifyRosterMembersOfPublishedEvent,
 };

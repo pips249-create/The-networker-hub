@@ -1144,6 +1144,20 @@ async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales)
   }
 
   await publishOrganiserListingsForEventIds(sb, updated);
+
+  // Notify member-list people for newly Approved published events (non-blocking).
+  try {
+    const { notifyRosterMembersOfPublishedEvent } = require('./organiser-member-roster');
+    for (const row of updated || []) {
+      if (String(row.approval_status || '').trim() !== 'Approved') continue;
+      notifyRosterMembersOfPublishedEvent(row).catch((err) => {
+        console.error('[publish] member list new-event email failed', row.id, err?.message || err);
+      });
+    }
+  } catch (err) {
+    console.error('[publish] member list notify wiring failed', err?.message || err);
+  }
+
   return updated.map(rowToEvent);
 }
 

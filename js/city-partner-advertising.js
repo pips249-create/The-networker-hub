@@ -16,6 +16,7 @@
 
   var cityListEl = document.getElementById('city-partner-city-list');
   var quoteEl = document.getElementById('city-partner-quote');
+  var durationEl = document.getElementById('city-partner-duration');
   var submitBtn = document.getElementById('city-partner-submit');
   var statusEl = document.getElementById('city-partner-status');
   var launchNoteEl = document.getElementById('city-partner-launch-note');
@@ -63,8 +64,14 @@
       .filter(Boolean);
   }
 
+  function selectedMonths() {
+    var months = durationEl ? Number(durationEl.value) : 0;
+    return [1, 3, 6, 12].indexOf(months) !== -1 ? months : 0;
+  }
+
   function updateQuote() {
     var slugs = selectedSlugs();
+    var months = selectedMonths();
     if (!quoteEl) return;
 
     if (!slugs.length) {
@@ -76,7 +83,7 @@
     var count = slugs.length;
     var bundles = Math.floor(count / 3);
     var singles = count % 3;
-    var pricing = state.pricing || { singleMonthlyGbp: 49, bundle3MonthlyGbp: 129 };
+    var pricing = state.pricing || { singleMonthlyGbp: 29, bundle3MonthlyGbp: 75 };
     var monthly = bundles * pricing.bundle3MonthlyGbp + singles * pricing.singleMonthlyGbp;
     var parts = [];
     if (bundles) parts.push(bundles + ' × 3-city pack (' + formatGbp(pricing.bundle3MonthlyGbp) + ')');
@@ -93,9 +100,18 @@
       count +
       ' ' +
       (count === 1 ? 'city' : 'cities') +
-      ' selected</p>';
+      ' selected</p>' +
+      (months
+        ? '<p class="city-partner-quote-campaign"><strong>' +
+          formatGbp(monthly * months) +
+          '</strong> estimated total for ' +
+          months +
+          ' ' +
+          (months === 1 ? 'month' : 'months') +
+          '</p>'
+        : '<p class="city-partner-quote-campaign">Choose a duration to see the campaign total.</p>');
 
-    if (submitBtn) submitBtn.disabled = false;
+    if (submitBtn) submitBtn.disabled = !months;
   }
 
   function renderCities(cities) {
@@ -195,11 +211,19 @@
       });
   }
 
+  if (durationEl) durationEl.addEventListener('change', updateQuote);
+
   if (submitBtn) {
     submitBtn.addEventListener('click', function () {
       var slugs = selectedSlugs();
+      var months = selectedMonths();
       if (!slugs.length) {
         setStatus('Select at least one city.', 'error');
+        return;
+      }
+      if (!months) {
+        setStatus('Choose how many months you would like.', 'error');
+        if (durationEl) durationEl.focus();
         return;
       }
 
@@ -209,7 +233,7 @@
       var count = slugs.length;
       var bundles = Math.floor(count / 3);
       var singles = count % 3;
-      var pricing = state.pricing || { singleMonthlyGbp: 49, bundle3MonthlyGbp: 129 };
+      var pricing = state.pricing || { singleMonthlyGbp: 29, bundle3MonthlyGbp: 75 };
       var monthly = bundles * pricing.bundle3MonthlyGbp + singles * pricing.singleMonthlyGbp;
       var names = selected.map(function (city) {
         return city.name;
@@ -221,7 +245,9 @@
         'I would like to apply for City Partner placement.',
         '',
         'Selected cities: ' + names.join(', '),
+        'Requested duration: ' + months + ' ' + (months === 1 ? 'month' : 'months'),
         'Estimated monthly price: ' + formatGbp(monthly),
+        'Estimated campaign total: ' + formatGbp(monthly * months),
         '',
         'Organisation:',
         'Website:',

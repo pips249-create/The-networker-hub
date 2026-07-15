@@ -1,5 +1,5 @@
 /**
- * Avery 7160-compatible name badge PDF (A4, 3×7 sticky labels).
+ * Avery-compatible name badge PDFs (UK A4 sticker sheets).
  * Populates name, company, and job title / industry when available.
  */
 const { buildPositionedPdf } = require('./simple-pdf');
@@ -8,8 +8,11 @@ const MM = 2.834645669;
 const PAGE_W = 210 * MM;
 const PAGE_H = 297 * MM;
 
-/** Avery L7160 / 7160 approximate layout (UK A4). */
-const LABEL = {
+/** Avery L7160 — standard address labels (63.5 × 38.1 mm, 21 per sheet). */
+const LABEL_L7160 = {
+  id: 'l7160',
+  code: 'L7160',
+  name: 'Standard Address Label',
   cols: 3,
   rows: 7,
   width: 63.5 * MM,
@@ -19,7 +22,42 @@ const LABEL = {
   hPitch: 66.0 * MM,
   vPitch: 38.1 * MM,
   perPage: 21,
+  textLimits: { name: 26, company: 30, detail: 32, event: 36, guestOf: 28 },
 };
+
+/** Avery L7163 — large address labels (99.1 × 38.1 mm, 14 per sheet, UK). */
+const LABEL_L7163 = {
+  id: 'l7163',
+  code: 'L7163',
+  name: 'Large Address Label',
+  cols: 2,
+  rows: 7,
+  width: 99.1 * MM,
+  height: 38.1 * MM,
+  left: 4.65 * MM,
+  top: 15.15 * MM,
+  hPitch: 101.6 * MM,
+  vPitch: 38.1 * MM,
+  perPage: 14,
+  textLimits: { name: 40, company: 48, detail: 50, event: 52, guestOf: 40 },
+};
+
+const LABEL_FORMATS = {
+  l7160: LABEL_L7160,
+  l7163: LABEL_L7163,
+  /** @deprecated UK large labels are L7163; kept for early API callers. */
+  l7161: LABEL_L7163,
+};
+
+/** @deprecated Use LABEL_FORMATS.l7160 */
+const LABEL = LABEL_L7160;
+
+function resolveLabelFormat(value) {
+  const key = String(value || 'l7160')
+    .trim()
+    .toLowerCase();
+  return LABEL_FORMATS[key] || LABEL_L7160;
+}
 
 function splitName(fullName) {
   const raw = String(fullName || '').trim().replace(/\s+/g, ' ');
@@ -45,7 +83,8 @@ function attendeeConfirmedForRegister(a) {
   return true;
 }
 
-function badgeEntriesFromAttendees(attendees) {
+function badgeEntriesFromAttendees(attendees, labelFormat) {
+  const limits = labelFormat.textLimits;
   const entries = [];
   (attendees || []).forEach((a) => {
     if (!attendeeConfirmedForRegister(a)) return;
@@ -72,7 +111,7 @@ function badgeEntriesFromAttendees(attendees) {
       if (!g) return;
       entries.push({
         name: g,
-        company: 'Guest of ' + clampLine(a.name || 'attendee', 28),
+        company: 'Guest of ' + clampLine(a.name || 'attendee', limits.guestOf),
         detail: company || '',
       });
     });
@@ -82,8 +121,10 @@ function badgeEntriesFromAttendees(attendees) {
 
 function buildNameBadgesPdf(attendees, options) {
   const opts = options || {};
-  const eventTitle = clampLine(opts.eventTitle || 'Event attendees', 42);
-  const entries = badgeEntriesFromAttendees(attendees);
+  const labelFormat = resolveLabelFormat(opts.labelFormat);
+  const limits = labelFormat.textLimits;
+  const eventTitle = clampLine(opts.eventTitle || 'Event attendees', limits.event);
+  const entries = badgeEntriesFromAttendees(attendees, labelFormat);
   if (!entries.length) {
     const err = new Error('No confirmed attendees to print');
     err.status = 400;
@@ -91,23 +132,24 @@ function buildNameBadgesPdf(attendees, options) {
   }
 
   const pages = [];
-  for (let i = 0; i < entries.length; i += LABEL.perPage) {
-    const chunk = entries.slice(i, i + LABEL.perPage);
+  for (let i = 0; i < entries.length; i += labelFormat.perPage) {
+    const chunk = entries.slice(i, i + labelFormat.perPage);
     const items = [];
     chunk.forEach((entry, idx) => {
-      const col = idx % LABEL.cols;
-      const row = Math.floor(idx / LABEL.cols);
-      const left = LABEL.left + col * LABEL.hPitch;
-      const topFromBottom = PAGE_H - LABEL.top - row * LABEL.vPitch - LABEL.height;
+      const col = idx % labelFormat.cols;
+      const row = Math.floor(idx / labelFormat.cols);
+      const left = labelFormat.left + col * labelFormat.hPitch;
+      const topFromBottom =
+        PAGE_H - labelFormat.top - row * labelFormat.vPitch - labelFormat.height;
       const padX = 6;
       const { first, last } = splitName(entry.name);
-      const nameLine = clampLine([first, last].filter(Boolean).join(' '), 26);
-      const company = clampLine(entry.company, 30);
-      const detail = clampLine(entry.detail, 32);
+      const nameLine = clampLine([first, last].filter(Boolean).join(' '), limits.name);
+      const company = clampLine(entry.company, limits.company);
+      const detail = clampLine(entry.detail, limits.detail);
 
       items.push({
         x: left + padX,
-        y: topFromBottom + LABEL.height - 16,
+        y: topFromBottom + labelFormat.height - 16,
         size: 12,
         font: 'F2',
         text: nameLine,
@@ -115,7 +157,7 @@ function buildNameBadgesPdf(attendees, options) {
       if (company) {
         items.push({
           x: left + padX,
-          y: topFromBottom + LABEL.height - 30,
+          y: topFromBottom + labelFormat.height - 30,
           size: 9,
           font: 'F1',
           text: company,
@@ -124,7 +166,7 @@ function buildNameBadgesPdf(attendees, options) {
       if (detail) {
         items.push({
           x: left + padX,
-          y: topFromBottom + LABEL.height - (company ? 42 : 30),
+          y: topFromBottom + labelFormat.height - (company ? 42 : 30),
           size: company ? 8 : 9,
           font: 'F1',
           text: detail,
@@ -135,7 +177,7 @@ function buildNameBadgesPdf(attendees, options) {
         y: topFromBottom + 8,
         size: 6,
         font: 'F1',
-        text: clampLine(eventTitle, 36),
+        text: eventTitle,
       });
     });
     pages.push({ width: PAGE_W, height: PAGE_H, items });
@@ -146,6 +188,10 @@ function buildNameBadgesPdf(attendees, options) {
 
 module.exports = {
   LABEL,
+  LABEL_FORMATS,
+  LABEL_L7160,
+  LABEL_L7163,
+  resolveLabelFormat,
   splitName,
   attendeeConfirmedForRegister,
   badgeEntriesFromAttendees,

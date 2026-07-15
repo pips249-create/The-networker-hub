@@ -9,10 +9,10 @@ const CITY_PARTNER_SLOT_PREFIX = 'networking_city_partner_';
 const LAUNCH_END_ISO = '2026-12-01T00:00:00.000Z';
 
 const LAUNCH_PRICING = {
-  singleMonthlyPence: 4900,
-  bundle3MonthlyPence: 12900,
-  singleLabel: '£49',
-  bundle3Label: '£129',
+  singleMonthlyPence: 2900,
+  bundle3MonthlyPence: 7500,
+  singleLabel: '£29',
+  bundle3Label: '£75',
 };
 
 const REGULAR_PRICING = {

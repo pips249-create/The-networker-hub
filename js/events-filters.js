@@ -45,6 +45,7 @@
       'sport-social': 'meeting',
       'womens-networking': 'meeting',
       'awards-ceremony': 'meeting',
+      session: 'masterclass',
     };
     return legacy[key] || key;
   }

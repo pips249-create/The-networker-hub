@@ -1,7 +1,7 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
 const { resolveOrganiserApiScope } = require('../organiser-api-scope');
-const { buildNameBadgesPdf } = require('../organiser-name-badges-pdf');
+const { buildNameBadgesPdf, resolveLabelFormat } = require('../organiser-name-badges-pdf');
 
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
@@ -41,6 +41,7 @@ module.exports = async function handler(req, res) {
 
     const url = new URL(req.url, 'http://localhost');
     const filterEventId = url.searchParams.get('eventId') || 'all';
+    const labelFormat = resolveLabelFormat(url.searchParams.get('labelFormat'));
     const eventIds = scope.eventIds || [];
     const attendees = await listAttendeesForOrganiserEvents(eventIds, filterEventId);
     const eventTitle =
@@ -52,7 +53,7 @@ module.exports = async function handler(req, res) {
 
     let pdf;
     try {
-      pdf = buildNameBadgesPdf(attendees, { eventTitle });
+      pdf = buildNameBadgesPdf(attendees, { eventTitle, labelFormat: labelFormat.id });
     } catch (e) {
       return json(res, e.status || 400, {
         error: 'badges_unavailable',
@@ -64,7 +65,7 @@ module.exports = async function handler(req, res) {
       filterEventId && filterEventId !== 'all'
         ? String(filterEventId).replace(/^rec/, '').slice(0, 8)
         : 'all-events';
-    const filename = 'name-badges-' + suffix + '.pdf';
+    const filename = 'name-badges-' + labelFormat.code.toLowerCase() + '-' + suffix + '.pdf';
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');

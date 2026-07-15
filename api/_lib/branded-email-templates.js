@@ -177,6 +177,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: '{{organiser_name}} has a new event',
   },
+  member_roster_new_event: {
+    file: 'member-roster-new-event.html',
+    marker: 'hub-email-layout-v2',
+    subject: '{{organiser_name}} has a new event for members',
+  },
   password_reset: {
     file: 'password-reset.html',
     marker: 'hub-email-layout-v2',

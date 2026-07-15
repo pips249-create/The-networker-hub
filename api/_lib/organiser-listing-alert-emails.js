@@ -165,7 +165,45 @@ async function sendDueOrganiserListingAlertEmails(sb) {
   return result;
 }
 
+/**
+ * Safety net for member-list new-event emails (covers publish races and
+ * roster members who never got an organiser_favourites row).
+ */
+async function sendDueMemberRosterListingAlertEmails(sb) {
+  const result = { sent: 0, skipped: 0, errors: [], checked: 0 };
+  const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+  const eventsRes = await sb
+    .from('events')
+    .select(
+      'id, title, slug, starts_at, status, approval_status, venue, city, location_label, organiser_id, published_at, created_at'
+    )
+    .eq('status', 'published')
+    .eq('approval_status', 'Approved')
+    .gte('published_at', since)
+    .order('published_at', { ascending: false })
+    .limit(80);
+
+  if (eventsRes.error) throw new Error(eventsRes.error.message);
+  const events = (eventsRes.data || []).filter((row) => isEventPublishedForSale(row));
+  result.checked = events.length;
+  if (!events.length) return result;
+
+  const { notifyRosterMembersOfPublishedEvent } = require('./organiser-member-roster');
+  for (const eventRow of events) {
+    try {
+      const r = await notifyRosterMembersOfPublishedEvent(eventRow);
+      result.sent += r.sent || 0;
+      result.skipped += r.skipped || 0;
+      if (r.errors && r.errors.length) result.errors.push(...r.errors);
+    } catch (e) {
+      result.errors.push({ event_id: eventRow.id, message: e.message || String(e) });
+    }
+  }
+  return result;
+}
+
 module.exports = {
   buildSavedOrganiserNewListingVars,
   sendDueOrganiserListingAlertEmails,
+  sendDueMemberRosterListingAlertEmails,
 };

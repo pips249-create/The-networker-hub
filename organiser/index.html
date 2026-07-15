@@ -834,7 +834,7 @@
               <p class="org-notice-text">
                 You receive name and email so you can run the event — for example join links, venue updates, or questions about this booking.
                 Please do not add attendees to marketing lists or contact them about unrelated services without their consent.
-                Export a CSV when you need your own records; print name badges the night before for sticker sheets (Avery 7160). Badges use each guest’s name, company and job title from their Hub account when set. The Hub still sends booking confirmations and reminders on your behalf.
+                Export a CSV when you need your own records; print name badges the night before for Avery sticker sheets (L7160 standard or L7163 large). Badges use each guest’s name, company and job title from their Hub account when set. The Hub still sends booking confirmations and reminders on your behalf.
               </p>
             </div>
             <div class="org-filter-bar">
@@ -894,8 +894,12 @@
               <button type="button" class="org-btn org-btn-gold" id="btn-download-attendees-csv">
                 ⬇ Download attendees CSV
               </button>
+              <select id="filter-attendees-label-format" aria-label="Avery label sheet format">
+                <option value="l7160">Standard — Avery L7160 (63.5 × 38.1 mm, 21/sheet)</option>
+                <option value="l7163">Large — Avery L7163 (99.1 × 38.1 mm, 14/sheet)</option>
+              </select>
               <button type="button" class="org-btn org-btn-outline" id="btn-download-name-badges">
-                ⬇ Export printable name badges (PDF)
+                ⬇ Export name badges (PDF)
               </button>
             </div>
             <div class="org-attendees-archive-nav" id="attendees-archive-nav">

@@ -154,7 +154,7 @@ const TYPE_WEIGHTS = {
   Awards: 25,
   Webinar: 20,
   Workshop: 20,
-  Session: 20,
+  Masterclass: 20,
 };
 
 UNSPLASH.Meeting = UNSPLASH['Networking meeting'];

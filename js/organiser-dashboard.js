@@ -2841,6 +2841,9 @@
       return;
     }
     const eventId = filters.attendeesEvent || 'all';
+    const labelFormatEl = document.getElementById('filter-attendees-label-format');
+    const labelFormat =
+      labelFormatEl && labelFormatEl.value === 'l7163' ? 'l7163' : 'l7160';
     const btn = document.getElementById('btn-download-name-badges');
     const prev = btn ? btn.textContent : '';
     if (btn) {
@@ -2849,7 +2852,10 @@
     }
     try {
       const res = await fetch(
-        '/api/organiser/attendee-badges-pdf?eventId=' + encodeURIComponent(eventId),
+        '/api/organiser/attendee-badges-pdf?eventId=' +
+          encodeURIComponent(eventId) +
+          '&labelFormat=' +
+          encodeURIComponent(labelFormat),
         { credentials: 'include' }
       );
       if (!res.ok) {
@@ -2863,7 +2869,7 @@
       const suffix =
         eventId !== 'all' ? '-' + String(eventId).replace(/^rec/, '').slice(0, 8) : '-all-events';
       link.href = URL.createObjectURL(blob);
-      link.download = 'name-badges' + suffix + '.pdf';
+      link.download = 'name-badges-' + labelFormat + suffix + '.pdf';
       link.click();
       URL.revokeObjectURL(link.href);
     } catch (e) {
@@ -2871,7 +2877,7 @@
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = prev || '⬇ Export printable name badges (PDF)';
+        btn.textContent = prev || '⬇ Export name badges (PDF)';
       }
     }
   }

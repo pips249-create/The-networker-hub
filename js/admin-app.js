@@ -134,12 +134,13 @@
 
   var EVENT_TYPES = [
     'Meeting',
+    'Conference',
     'Events',
     'Exhibition',
     'Awards',
     'Webinar',
     'Workshop',
-    'Session',
+    'Masterclass',
   ];
   var MEETING_FORMATS = ['In person', 'Online', 'Hybrid'];
   var healthCache = null;

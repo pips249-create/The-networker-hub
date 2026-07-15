@@ -215,7 +215,7 @@ const HUB_STRIPE_CATALOG = [
     productName: 'City Partner — single city (launch rate)',
     description:
       'Logo + CTA on one /networking/:city page. Launch rate until 1 Dec 2026. Website only — not in hub emails.',
-    amountPence: 4900,
+    amountPence: 2900,
     billing: 'recurring',
     interval: 'month',
     createPaymentLink: false,
@@ -237,7 +237,7 @@ const HUB_STRIPE_CATALOG = [
     productName: 'City Partner — 3-city pack (launch rate)',
     description:
       'Logo + CTA on three /networking/:city pages. Launch rate until 1 Dec 2026. Website only — not in hub emails.',
-    amountPence: 12900,
+    amountPence: 7500,
     billing: 'recurring',
     interval: 'month',
     createPaymentLink: false,

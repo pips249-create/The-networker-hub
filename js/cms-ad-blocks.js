@@ -225,44 +225,55 @@
     container.removeAttribute('hidden');
     container.removeAttribute('data-company');
     container.innerHTML =
-      '<aside class="networking-city-partner-ad networking-city-partner-ad--available" aria-label="City partner available">' +
-      '<span class="networking-city-partner-badge">City partner</span>' +
+      '<aside class="networking-city-partner-ad networking-city-partner-ad--available" aria-label="Sponsored city partner available">' +
+      '<span class="networking-city-partner-badge">Sponsored</span>' +
+      '<a class="networking-city-partner-logo-link" href="/advertising#city-partner-package">' +
       '<div class="networking-city-partner-logo-placeholder">Your logo here</div>' +
-      '<a class="networking-city-partner-cta" href="/advertising#city-partner-package">Become a city partner</a>' +
+      '</a>' +
+      '<a class="networking-city-partner-cta networking-city-partner-cta--text" href="/advertising#city-partner-package">Become a city partner</a>' +
       '</aside>';
     return true;
   }
 
+  function isCityPartnerRenderable(block) {
+    if (!block || block.active === false) return false;
+    var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
+    var hasLogo = window.CmsSponsorFields
+      ? window.CmsSponsorFields.isLogoUrl(logo)
+      : /^https?:\/\//i.test(String(logo || '').trim());
+    var ctaUrl = String(block.cta_url || '').trim();
+    var hasCtaUrl = /^https?:\/\//i.test(ctaUrl) && ctaUrl.replace(/^https?:\/\//i, '').trim().length > 0;
+    return hasLogo && hasCtaUrl;
+  }
+
   function renderCityPartnerAd(container, block) {
     if (!container || !block) return false;
-    if (!isCompactRenderable(block)) {
+    if (!isCityPartnerRenderable(block)) {
       return renderCityPartnerPlaceholder(container);
     }
     var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
-    var ctaLabel = String(block.cta_label || '').trim() || 'Find out more';
     var ctaUrl = normalizeCta(block.cta_url);
     var company = window.CmsSponsorFields ? window.CmsSponsorFields.companyName(block) : block.company_name;
+    var logoHtml = cityPartnerLogoMarkup(logo);
 
     container.hidden = false;
     container.removeAttribute('hidden');
     container.innerHTML =
-      '<aside class="networking-city-partner-ad" aria-label="City partner">' +
-      '<span class="networking-city-partner-badge">City partner</span>' +
-      cityPartnerLogoMarkup(logo) +
-      '<a class="networking-city-partner-cta" href="' +
+      '<aside class="networking-city-partner-ad" aria-label="Sponsored">' +
+      '<span class="networking-city-partner-badge">Sponsored</span>' +
+      '<a class="networking-city-partner-logo-link" href="' +
       esc(ctaUrl) +
       '">' +
-      esc(ctaLabel) +
+      logoHtml +
       '</a>' +
       '</aside>';
 
     if (company) container.setAttribute('data-company', company);
     else container.removeAttribute('data-company');
 
-    var partnerCta = container.querySelector('.networking-city-partner-cta');
-    if (partnerCta && window.CmsSponsorFields) {
-      window.CmsSponsorFields.applyCtaColor(partnerCta, window.CmsSponsorFields.ctaColor(block));
-      window.CmsSponsorFields.applyCtaLink(partnerCta, ctaUrl);
+    var logoLink = container.querySelector('.networking-city-partner-logo-link');
+    if (logoLink && window.CmsSponsorFields) {
+      window.CmsSponsorFields.applyCtaLink(logoLink, ctaUrl);
     }
     return true;
   }

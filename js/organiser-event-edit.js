@@ -1174,12 +1174,13 @@
     if (!sel) return;
     const types = window.HUB_MEETING_TYPES || [
       { value: 'Meeting', label: 'Meeting' },
+      { value: 'Conference', label: 'Conference' },
       { value: 'Events', label: 'Events' },
       { value: 'Exhibition', label: 'Exhibition' },
       { value: 'Awards', label: 'Awards' },
       { value: 'Webinar', label: 'Webinar' },
       { value: 'Workshop', label: 'Workshop' },
-      { value: 'Session', label: 'Session' },
+      { value: 'Masterclass', label: 'Masterclass' },
     ];
     const current = canonicalEventType(selected || sel.value || 'Meeting');
     sel.innerHTML = '';

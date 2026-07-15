@@ -1,7 +1,10 @@
 const { json } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { authorizeCron } = require('../cron-auth');
-const { sendDueOrganiserListingAlertEmails } = require('../organiser-listing-alert-emails');
+const {
+  sendDueOrganiserListingAlertEmails,
+  sendDueMemberRosterListingAlertEmails,
+} = require('../organiser-listing-alert-emails');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
@@ -16,8 +19,16 @@ module.exports = async function handler(req, res) {
 
   try {
     const sb = getSupabaseAdmin();
-    const result = await sendDueOrganiserListingAlertEmails(sb);
-    return json(res, 200, { ok: true, ...result });
+    const favourites = await sendDueOrganiserListingAlertEmails(sb);
+    const roster = await sendDueMemberRosterListingAlertEmails(sb);
+    return json(res, 200, {
+      ok: true,
+      favourites,
+      roster,
+      sent: (favourites.sent || 0) + (roster.sent || 0),
+      skipped: (favourites.skipped || 0) + (roster.skipped || 0),
+      errors: [...(favourites.errors || []), ...(roster.errors || [])],
+    });
   } catch (e) {
     return json(res, 500, {
       ok: false,

@@ -68,7 +68,7 @@ const KNOWLEDGE_SECTIONS = [
       'Approved organisers use /organiser/ to create events, sell tickets via Stripe, manage attendees, export registrations, list opportunities, and invite team members. Stripe onboarding required for payouts. ' +
       'Listing events on the hub is part of organiser onboarding — email hello@thenetworkerhub.com with your group name, format, and location for setup help. Organiser terms: /legal-policies#organisers. ' +
       'EVENT NOT ON BROWSE PAGE? Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Finish the publish flow in /organiser/ (tickets, refund policy, publish). If it still does not appear, email hello@thenetworkerhub.com with the event title. ' +
-      'DOWNLOAD ATTENDEES: Sign in → /organiser/ → Events → Attendees. Filter by event, then use Download attendees CSV. Export printable name badges (PDF, Avery 7160) from the same screen — badges use each guest’s name, company, and job title from their Hub account when set. ' +
+      'DOWNLOAD ATTENDEES: Sign in → /organiser/ → Events → Attendees. Filter by event, then use Download attendees CSV. Export printable name badges (PDF, Avery L7160 or L7163) from the same screen — badges use each guest’s name, company, and job title from their Hub account when set. ' +
       'PAYOUTS: With Stripe Connect, you receive the full ticket price in your connected account when attendees pay. Legacy manual payouts (if Connect is off) pay out your gross ticket sales after the event is archived and a 7-day settlement period. Minimum payout £1. ' +
       'FEES: Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before they pay). This covers platform and payment processing — organisers receive the full ticket price, with no separate platform or Stripe deductions.',
   },
@@ -76,7 +76,7 @@ const KNOWLEDGE_SECTIONS = [
     title: 'ORGANISER EVENT LISTING',
     body:
       'Creating a listing: /organiser/ → create event → choose group and format (in person or online) → event-edit.html for title, type, description, photo, venue or join link, and dates → event-tickets.html for tiers, VAT, refund policy, publish. ' +
-      'EVENT TYPE (Meeting, Events, Exhibition, Awards, Webinar, Workshop, Session): this is a browse filter, not whether something counts as an event. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs (seminars, lunch & learns). Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop and Session help people find online talks, hands-on training, and shorter focused sessions. ' +
+      'EVENT TYPE (Meeting, Events, Exhibition, Awards, Webinar, Workshop, Masterclass): this is a browse filter, not whether something counts as an event. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs (seminars, lunch & learns). Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop and Masterclass help people find online talks, hands-on training, and expert-led masterclasses. ' +
       'MULTI-DATE SERIES: click multiple days on the calendar — the same start time, end time, and venue (or online link) apply to every date. Ideal for a recurring meeting on different weeks. To remove a date, click the highlighted day again on the calendar. ' +
       'SAME TITLE, DIFFERENT TIME OR LOCATION: create separate listings — one per session — from My Events. You can reuse the same title; each listing gets its own dates, times, and venue. ' +
       'COVER PHOTO: upload, drag-and-drop, paste (Ctrl+V), or paste a URL. Files over 2MB are compressed automatically; if that fails, resize the file or use a hosted URL. For a sharp browse listing, use a landscape photo at least 1200×750px. After upload, drag the preview to recentre how the image is cropped on listing cards (Reset position clears the crop). Use Remove to clear a photo and upload again.',
@@ -96,7 +96,8 @@ const KNOWLEDGE_SECTIONS = [
       'Per networking group (organiser page), organisers maintain a Member list at /organiser/member-roster — name, email, and optional membership expiry. ' +
       'PURPOSE: unlock Members only ticket tiers. The public never sees those tickets; people on the list see them automatically when signed in with the same email — no access codes. ' +
       'SETUP: open your organiser page → Member list (or group-edit → Manage member list). Add members one by one or import CSV (columns: email required, name, expires or membership expiry). Optionally send invite emails — new Hub users get a sign-up invite; existing Hub members get a welcome email with the group’s next meeting. ' +
-      'REPORTS on the member list page: membership health (active, signed up vs not yet, expiring soon), booked vs not booked for a selected upcoming event, new vs returning at an event, members who missed recent meetings, memberships expiring within 14 days. ' +
+      'When you publish a new Approved event, people on the member list are emailed automatically (Members only rates apply when they sign in with that email). ' +
+      'REPORTS on the member list page: membership health (active, signed up vs not yet, expiring soon), booked vs not booked for a selected upcoming event, new vs returning at an event, members who missed recent meetings, memberships expiring within 14 days. Download members CSV or an event report CSV after choosing an event. ' +
       'MEMBERS: when added, they see the group under My Hub → My groups (/account/). Sign in with the membership email to book member-only tickets. ' +
       'RENEWALS: Stripe membership billing is not on the Hub yet — renew off-platform and update expiry dates on the member list. ' +
       'TICKETS: on event-tickets.html, add a Members only ticket tier — access is enforced via the member list.',
@@ -201,7 +202,7 @@ const FALLBACK_REPLIES = [
   {
     match: /download.*attendee|export.*attendee|attendee.*csv|attendees csv|get.*attendee list/i,
     reply:
-      'Sign in and open /organiser/, go to Events → Attendees, filter by your event, then click Download attendees CSV. The file includes name, email, ticket type, visit count, and booking date. Export printable name badges (PDF, Avery 7160) from the same screen.',
+      'Sign in and open /organiser/, go to Events → Attendees, filter by your event, then click Download attendees CSV. The file includes name, email, ticket type, visit count, and booking date. Export printable name badges (PDF, Avery L7160 or L7163) from the same screen.',
   },
   {
     match: /payout|when do i get paid|settlement|instant payout|how long.*paid/i,
@@ -356,7 +357,7 @@ const FALLBACK_REPLIES = [
   {
     match: /difference.*(event|meeting)|meeting vs|event vs|what.*(event type|type of event)|meeting or event/i,
     reply:
-      'Every listing is an event — the Event type dropdown is a browse filter. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs such as seminars or lunch & learns. Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop and Session help people find online talks, hands-on training, and shorter focused sessions. Pick the type that best matches how people will search for it on /events/.',
+      'Every listing is an event — the Event type dropdown is a browse filter. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs such as seminars or lunch & learns. Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop and Masterclass help people find online talks, hands-on training, and expert-led masterclasses. Pick the type that best matches how people will search for it on /events/.',
   },
   {
     match: /image.*(crop|cut off|cut.?off|position|reposition|recentre|reframe|framing|heads? cut)|photo.*(crop|cut off|position|reposition)|cover.*(crop|cut off|position)/i,
@@ -424,6 +425,11 @@ const FALLBACK_REPLIES = [
       'Open /organiser/member-roster?id=YOUR_GROUP_ID (or your organiser page → Manage member list). Add name and email, optionally set membership expiry, then Add to list. Use this list before or after adding a Members only ticket on your events.',
   },
   {
+    match: /member.*(email|notif|alert).*event|email.*member.*(new )?event|notify.*member.*list|when.*(publish|add).*event.*member/i,
+    reply:
+      'When you publish an Approved event, people on that organiser page’s member list are emailed automatically — they can sign in with their membership email to see Members only tickets. The email goes out on publish (and a daily safety check covers any that were missed). This is separate from the invite email sent when you first add someone to the list.',
+  },
+  {
     match: /membership expir|expiring membership|renew.*membership.*(list|roster)|(list|roster).*expir/i,
     reply:
       'Optional expiry dates on /organiser/member-roster flag memberships expiring soon in your reports. Full subscription billing is not on the Hub yet — renew members off-platform, then update the expiry date on their member list row.',
@@ -439,9 +445,9 @@ const FALLBACK_REPLIES = [
       'On the tickets step, enable the guest visit programme, then tick “Member-only for this event”. Paid member tickets stay available and visitors can book them directly — complimentary guest passes are hidden for that date. Useful for conferences or member-only evenings.',
   },
   {
-    match: /name badge|printable badge|avery 7160|badge pdf/i,
+    match: /name badge|printable badge|avery l?7160|avery l?7163|badge pdf/i,
     reply:
-      'Sign in → /organiser/ → Events → Attendees, then click Export printable name badges (PDF). The file is formatted for Avery 7160 sticker sheets. Each badge shows the guest’s name, company, and job title from their Hub account when set — ask attendees to update these in account settings before the event.',
+      'Sign in → /organiser/ → Events → Attendees, then choose your Avery sheet (L7160 standard 21-per-sheet, or L7163 large 14-per-sheet) and click Export name badges (PDF). Each badge shows the guest’s name, company, and job title from their Hub account when set — ask attendees to update these in account settings before the event.',
   },
   {
     match: /job title.*(badge|profile|account)|update.*job title|company.*badge/i,

@@ -268,7 +268,7 @@ function buildEventPatchFromBody(body) {
 async function applyEventPatch(sb, id, patch) {
   const { data: current, error: currentErr } = await sb
     .from('events')
-    .select('starts_at, title')
+    .select('starts_at, title, status, approval_status, published_at')
     .eq('id', id)
     .maybeSingle();
   if (currentErr) throw new Error(currentErr.message);
@@ -308,8 +308,34 @@ async function applyEventPatch(sb, id, patch) {
     patch.ticket_sales_enabled = eventHasTicketsOnSale(ticketRows);
   }
 
+  const wasLive =
+    String(current.status || '').trim() === 'published' &&
+    String(current.approval_status || '').trim() === 'Approved';
+
   const { data, error } = await sb.from('events').update(patch).eq('id', id).select('*').single();
   if (error) throw new Error(error.message);
+
+  const isLive =
+    String(data.status || '').trim() === 'published' &&
+    String(data.approval_status || '').trim() === 'Approved';
+  const becameLive = isLive && !wasLive;
+
+  if (becameLive) {
+    if (!data.published_at) {
+      const publishedAt = new Date().toISOString();
+      await sb.from('events').update({ published_at: publishedAt }).eq('id', id);
+      data.published_at = publishedAt;
+    }
+    try {
+      const { notifyRosterMembersOfPublishedEvent } = require('../organiser-member-roster');
+      notifyRosterMembersOfPublishedEvent(data).catch((err) => {
+        console.error('[admin-events] member list new-event email failed', id, err?.message || err);
+      });
+    } catch (err) {
+      console.error('[admin-events] member list notify wiring failed', err?.message || err);
+    }
+  }
+
   const organisers = await fetchOrganisersByIds(sb, [data.organiser_id]);
   const orgById = new Map(organisers.map((o) => [o.id, o]));
   return mapEventRow(data, orgById);
