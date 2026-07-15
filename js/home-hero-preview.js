@@ -158,7 +158,7 @@
       label: 'G · Recommended',
       layout: 'rich-choice',
       strategy: 'Best UX balance',
-      note: 'Find your next\u2026 with one short context line, two rich choice cards, soft search, and peek previews for visual life \u2014 between D and F.',
+      note: 'Find your next\u2026 with one short context line, two clean choice cards, and soft search \u2014 between D and F.',
       titleLine: 'Find your next\u2026',
       lede: 'Networking events and business opportunities, in one place.',
       searchLabel: 'Or search',
@@ -170,18 +170,12 @@
           label: 'Event',
           detail: 'Meetings, conferences & training near you',
           tone: 'gold',
-          previewType: 'Meeting',
-          previewTitle: 'Founders breakfast',
-          previewMeta: 'Leeds · Free guest visit',
         },
         {
           href: '/opportunities/',
           label: 'Business Op',
           detail: 'Franchises, partnerships & side hustles',
           tone: 'purple',
-          previewType: 'Franchise',
-          previewTitle: 'Coastal coffee brand',
-          previewMeta: 'South West · Enquire free',
         },
       ],
     },
@@ -315,18 +309,6 @@
           '" href="' +
           esc(card.href) +
           '">' +
-          '<span class="home-hero-rich-peek" aria-hidden="true">' +
-          '<span class="home-hero-rich-peek-type">' +
-          esc(card.previewType) +
-          '</span>' +
-          '<strong class="home-hero-rich-peek-title">' +
-          esc(card.previewTitle) +
-          '</strong>' +
-          '<span class="home-hero-rich-peek-meta">' +
-          esc(card.previewMeta) +
-          '</span>' +
-          '</span>' +
-          '<span class="home-hero-rich-card-body">' +
           '<span class="home-hero-rich-card-label">' +
           esc(card.label) +
           '</span>' +
@@ -334,7 +316,6 @@
           esc(card.detail) +
           '</span>' +
           '<span class="home-hero-rich-card-go">Explore →</span>' +
-          '</span>' +
           '</a>'
         );
       })
