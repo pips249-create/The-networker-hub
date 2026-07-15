@@ -2,6 +2,7 @@ const { getOrganiserApi } = require('../organiser-provider');
 const { getOrganiserAccessStatus } = require('../organiser-access-guard');
 
 module.exports = async function handler(req, res) {
+  const startedAt = Date.now();
   const api = getOrganiserApi();
   const {
     json,
@@ -37,13 +38,17 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const accessStatus = ws.session
+    const accessStatus = ws.accessStatus || (ws.session
       ? await getOrganiserAccessStatus(ws.session)
       : {
           organiserAccess: false,
           organiserEmailVerified: false,
           pendingClaimCount: 0,
-        };
+        });
+    res.setHeader(
+      'Server-Timing',
+      'organiser-bootstrap;dur=' + String(Date.now() - startedAt)
+    );
 
     if (eventsOnly) {
       return json(res, 200, {

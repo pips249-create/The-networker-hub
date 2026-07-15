@@ -124,6 +124,14 @@
     if (isNearMeActive() && window.hubUserCoords) return Promise.resolve(window.hubUserCoords);
     if (window.hubLocationFilterCoords) return Promise.resolve(window.hubLocationFilterCoords);
     var pc = postcodeQuery();
+    // City / outcode filters use sectors — don't geocode into a mile-radius centre.
+    if (
+      pc &&
+      window.hubAllowedOutcodesForQuery &&
+      window.hubAllowedOutcodesForQuery(pc).length
+    ) {
+      return Promise.resolve(null);
+    }
     if (pc && window.hubGeocodeLocationQuery) {
       return window.hubGeocodeLocationQuery(pc).then(function (coords) {
         window.hubLocationFilterCoords = coords;

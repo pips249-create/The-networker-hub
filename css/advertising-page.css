@@ -1785,9 +1785,6 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  max-height: 220px;
-  overflow: auto;
-  padding-right: 4px;
 }
 
 .city-partner-city {
@@ -1834,19 +1831,11 @@
   color: #625f73;
 }
 
-.city-partner-email-label {
+.city-partner-review-note {
+  margin: 0;
   font-size: 12px;
-  font-weight: 700;
-  color: #4a4560;
-}
-
-.city-partner-email {
-  width: 100%;
-  box-sizing: border-box;
-  border-radius: 10px;
-  border: 1px solid rgba(50, 43, 120, 0.18);
-  padding: 10px 12px;
-  font-size: 14px;
+  line-height: 1.5;
+  color: #625f73;
 }
 
 .city-partner-submit {
@@ -1887,5 +1876,11 @@
 @media (max-width: 520px) {
   .city-partner-city-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 900px) {
+  .city-partner-city-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

@@ -204,11 +204,27 @@
     }
   }
 
+  function cityPartnerLogoMarkup(logoUrl) {
+    var url = String(logoUrl || '').trim();
+    var hasLogo = window.CmsSponsorFields
+      ? window.CmsSponsorFields.isLogoUrl(url)
+      : /^(https?:|\/|data:image\/)/i.test(url);
+    if (hasLogo) {
+      return (
+        '<img class="networking-city-partner-logo" src="' +
+        esc(url) +
+        '" alt="" loading="lazy" decoding="async">'
+      );
+    }
+    return '<div class="networking-city-partner-logo-placeholder">Your logo here</div>';
+  }
+
   function renderCityPartnerAd(container, block) {
     if (!container || !block) return false;
     if (!isCompactRenderable(block)) {
       container.hidden = true;
       container.innerHTML = '';
+      container.removeAttribute('data-company');
       return false;
     }
     var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
@@ -217,10 +233,11 @@
     var company = window.CmsSponsorFields ? window.CmsSponsorFields.companyName(block) : block.company_name;
 
     container.hidden = false;
+    container.removeAttribute('hidden');
     container.innerHTML =
       '<aside class="networking-city-partner-ad" aria-label="City partner">' +
       '<span class="networking-city-partner-badge">City partner</span>' +
-      logoMarkup(logo, 'networking-city-partner-logo', 'networking-city-partner-logo-placeholder') +
+      cityPartnerLogoMarkup(logo) +
       '<a class="networking-city-partner-cta" href="' +
       esc(ctaUrl) +
       '">' +
@@ -229,6 +246,7 @@
       '</aside>';
 
     if (company) container.setAttribute('data-company', company);
+    else container.removeAttribute('data-company');
 
     var partnerCta = container.querySelector('.networking-city-partner-cta');
     if (partnerCta && window.CmsSponsorFields) {

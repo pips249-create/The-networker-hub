@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/advertising-page.css?v=20260715cp2">
+<link rel="stylesheet" href="css/advertising-page.css?v=20260715cp4">
 <link rel="stylesheet" href="css/cms-carousel-ad.css?v=20260612f">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260714cls" />
@@ -173,18 +173,18 @@
             <ul>
               <li><strong>Logo and CTA button only</strong> — compact placement beside the local intro copy on regional landing pages.</li>
               <li><strong>Website only</strong> — City Partners do <em>not</em> appear in hub emails (hence the lower rate vs Mini Sponsors).</li>
-              <li><strong>3-city pack auto-applied</strong> — select any three available cities and checkout applies the bundle price automatically; larger orders combine packs + singles (e.g. 5 cities = 1 pack + 2 singles).</li>
+              <li><strong>3-city pack pricing</strong> — select any three available cities and the bundle price is applied; larger orders combine packs + singles (e.g. 5 cities = 1 pack + 2 singles).</li>
               <li>One exclusive partner per city per month. The main Events Directory Sponsor above the listings is unchanged.</li>
             </ul>
             <p class="ad-package-note">
-              <strong>Eligibility:</strong> B2B service brands (accountants, coworking, recruitment, venues, etc.). Networking groups and event organisers <em>cannot</em> sponsor the city page where competing groups list below — list your own group via <a href="/for-organisers">For organisers</a> instead.
+              <strong>Eligibility:</strong> Applications are reviewed for relevance and fairness before payment. Complementary B2B brands are welcome. Networking brands recruiting a new branch or chapter leader may also apply; promotion of an existing local group may not be accepted where it would disadvantage competing listings.
             </p>
             <p class="ad-package-note">
               <strong>Available now:</strong> <span id="city-partner-available-list">Loading cities…</span>
             </p>
           </div>
           <div class="ad-package-preview ad-package-preview--city-partner">
-            <p class="ad-preview-label">Example — city landing page</p>
+            <p class="ad-preview-label">Examples — Manchester, Leeds, Central London &amp; more</p>
             <div class="ad-mock-page ad-mock-page--city-partner" aria-hidden="true">
               <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/networking/manchester</em></div>
               <div class="ad-mock-city-partner-intro">
@@ -205,15 +205,14 @@
                 </div>
               </div>
             </div>
-            <p class="ad-preview-label ad-preview-label--checkout">Self-serve checkout</p>
+            <p class="ad-preview-label ad-preview-label--checkout">Check availability &amp; apply</p>
             <div class="city-partner-checkout" id="city-partner-checkout">
               <div class="city-partner-city-grid" id="city-partner-city-list"></div>
               <div class="city-partner-quote" id="city-partner-quote">
-                <p class="city-partner-quote-empty">Select one or more available cities to see your monthly total.</p>
+                <p class="city-partner-quote-empty">Select one or more available cities to see the estimated monthly price.</p>
               </div>
-              <label class="city-partner-email-label" for="city-partner-email">Work email</label>
-              <input type="email" id="city-partner-email" class="city-partner-email" placeholder="you@company.com" autocomplete="email">
-              <button type="button" class="ad-package-cta city-partner-submit" id="city-partner-submit" disabled>Checkout securely →</button>
+              <p class="city-partner-review-note">Every application is reviewed before a payment link is issued. Selecting a city does not reserve it.</p>
+              <button type="button" class="ad-package-cta city-partner-submit" id="city-partner-submit" disabled>Apply for selected cities →</button>
               <p class="city-partner-status" id="city-partner-status" role="status"></p>
             </div>
           </div>
@@ -506,7 +505,7 @@
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/cms-ad-blocks.js?v=20260612g"></script>
 <script src="js/advertising-page.js?v=20260734"></script>
-<script src="js/city-partner-advertising.js?v=20260715cp2"></script>
+<script src="js/city-partner-advertising.js?v=20260715cp4"></script>
 
 </body>
 </html>

@@ -202,6 +202,29 @@ function deriveListingStatus(statusRaw, dateIso, eventStatus, endDateIso) {
   if (st === 'archived') return { key: 'archived', label: 'Archived' };
   if (st === 'draft') return { key: 'draft', label: 'Draft' };
   if (st === 'unpublished') return { key: 'unpublished', label: 'Unpublished' };
+
+  // Past published listings are archived for filters/UI even when approval is still
+  // Pending Review — matches archivePastPublishedEvents and the Events list.
+  // Prefer a normal ends_at; if ends_at is far after starts_at (series/bad data),
+  // use the start date so past occurrences don't stay "upcoming".
+  const startMs = dateIso ? new Date(dateIso).getTime() : NaN;
+  const endMs = endDateIso ? new Date(endDateIso).getTime() : NaN;
+  const startOk = !Number.isNaN(startMs);
+  const endOk = !Number.isNaN(endMs);
+  let anchorMs = null;
+  if (endOk && startOk && endMs - startMs >= 0 && endMs - startMs <= 36 * 60 * 60 * 1000) {
+    anchorMs = endMs;
+  } else if (startOk) {
+    anchorMs = startMs;
+  } else if (endOk) {
+    anchorMs = endMs;
+  }
+  const hasDate = anchorMs != null;
+  const isPast = hasDate && anchorMs <= Date.now();
+  if (st === 'published' && isPast) {
+    return { key: 'archived', label: 'Archived' };
+  }
+
   if (st === 'published' && approval === 'Pending Review') {
     return { key: 'pending_approval', label: 'Incomplete listing' };
   }
@@ -211,14 +234,12 @@ function deriveListingStatus(statusRaw, dateIso, eventStatus, endDateIso) {
   const raw = String(statusRaw || '').toLowerCase();
   if (/unpublish|reject/.test(raw)) return { key: 'unpublished', label: 'Unpublished' };
   if (/pending|draft/.test(raw)) return { key: 'draft', label: 'Draft' };
-  const endRef = endDateIso || dateIso;
-  const d = endRef ? new Date(endRef) : dateIso ? new Date(dateIso) : null;
-  if (!d || Number.isNaN(d.getTime())) {
+  if (!hasDate) {
     return /approved|published/.test(raw) || st === 'published'
       ? { key: 'live', label: 'Live' }
       : { key: 'draft', label: 'Draft' };
   }
-  if (d > new Date()) return { key: 'upcoming', label: 'Upcoming' };
+  if (!isPast) return { key: 'upcoming', label: 'Upcoming' };
   if (st === 'published' || /approved|published/.test(raw)) {
     return { key: 'archived', label: 'Archived' };
   }
@@ -1623,34 +1644,29 @@ async function getLeanOrganiserWorkspace(req) {
   const personalScope = isAdmin && organiserPersonalScopeFromRequest(req);
   const adminView = isAdmin && !personalScope;
 
+  const { getOrganiserAccessStatus } = require('./organiser-access-guard');
+  const { listPendingClaimGroupsForSession } = require('./supabase-organiser-claims');
+  const accessPromise = resolveOrganiserAccess(session).catch(() => null);
+  const accessStatusPromise = getOrganiserAccessStatus(session).catch(() => null);
+  const pendingClaimsPromise = adminView
+    ? Promise.resolve([])
+    : listPendingClaimGroupsForSession(session).catch(() => []);
+
   let groups = [];
-  let pendingClaimGroups = [];
   let groupsError = null;
+  const access = await accessPromise;
   try {
-    groups = await sbOrg.listGroupsForSession(session, adminView);
-    if (!adminView) {
-      const { listPendingClaimGroupsForSession } = require('./supabase-organiser-claims');
-      pendingClaimGroups = await listPendingClaimGroupsForSession(session);
-    }
+    groups = await sbOrg.listGroupsForSession(session, adminView, access);
   } catch (e) {
     groupsError = e.message;
   }
 
   const groupIds = groups.map((g) => g.id);
-  const [access, eventSummaries] = await Promise.all([
-    resolveOrganiserAccess(session).catch(() => null),
+  const [pendingClaimGroups, eventSummaries, accessStatus] = await Promise.all([
+    pendingClaimsPromise,
     listEventSummariesForOrganiserGroups(groupIds, adminView).catch(() => []),
+    accessStatusPromise,
   ]);
-
-  let pendingApplications = { count: 0, preview: [] };
-  try {
-    const { summarizePendingApplicationsForEventIds } = require('./supabase-organiser-attendees');
-    pendingApplications = await summarizePendingApplicationsForEventIds(
-      eventSummaries.map((event) => event.id)
-    );
-  } catch {
-    pendingApplications = { count: 0, preview: [] };
-  }
 
   let stripeConnectEnabled = false;
   try {
@@ -1678,7 +1694,7 @@ async function getLeanOrganiserWorkspace(req) {
     eventSummaries,
     reviews: [],
     groupRankings: {},
-    pendingApplications,
+    pendingApplications: { count: 0, preview: [] },
     groupsError,
     hubView: hubViewFromRequest(req),
     adminView,
@@ -1691,6 +1707,7 @@ async function getLeanOrganiserWorkspace(req) {
     canManagePayments: access ? access.canManagePayments : true,
     canCreateGroups: access ? access.canCreateGroups : true,
     useTeamWorkspace: access ? Boolean(access.useTeamWorkspace) : false,
+    accessStatus,
     stripeConnectEnabled,
     user: {
       email: session.email,

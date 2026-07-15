@@ -191,8 +191,15 @@
 
   function getLocationRadiusMiles() {
     var el = locationRadius;
-    var n = el ? Number(el.value) : 25;
-    return n === 5 || n === 50 ? n : 25;
+    var n = el ? Number(el.value) : 15;
+    return n === 5 || n === 15 || n === 25 || n === 50 ? n : 15;
+  }
+
+  /** True when the location query has an outcode/city sector list (prefer that over miles). */
+  function locationHasOutcodeFilter(pc) {
+    if (!pc || !window.hubAllowedOutcodesForQuery) return false;
+    var outcodes = window.hubAllowedOutcodesForQuery(pc);
+    return !!(outcodes && outcodes.length);
   }
 
   function getNearRadiusMiles() {
@@ -314,6 +321,19 @@
       // Wait for geolocation — do not hide in-person listings before coords exist.
       if (!window.hubUserCoords) return true;
       center = window.hubUserCoords;
+      var nearCoords = eventCoords(ev);
+      if (center && nearCoords && window.hubDistanceMiles) {
+        return (
+          window.hubDistanceMiles(center[0], center[1], nearCoords[0], nearCoords[1]) <=
+          getLocationRadiusMiles()
+        );
+      }
+      return !center;
+    }
+
+    // City names / outcodes (e.g. Birmingham, B1) match by sector — not a mile radius.
+    if (pc && locationHasOutcodeFilter(pc) && window.hubMatchOutcode) {
+      return window.hubMatchOutcode(pc, ev);
     }
 
     var evCoords = eventCoords(ev);
@@ -333,11 +353,16 @@
       return !(userOc && eventOc && userOc !== eventOc);
     }
 
-    return !isNearMeActive();
+    return true;
   }
 
   function resolveLocationFilterCoords(value) {
     if (!value) {
+      window.hubLocationFilterCoords = null;
+      return Promise.resolve(null);
+    }
+    // Skip geocoding when we already have city/outcode sectors — avoids a 15–25mi override.
+    if (locationHasOutcodeFilter(value)) {
       window.hubLocationFilterCoords = null;
       return Promise.resolve(null);
     }
@@ -730,7 +755,9 @@
         var resolveFilter = window.hubResolveLocationFilter
           ? window.hubResolveLocationFilter(restorePc)
           : Promise.resolve();
-        return Promise.all([resolveFilter, resolveLocationFilterCoords(restorePc)]).then(function () {
+        return resolveFilter.then(function () {
+          return resolveLocationFilterCoords(restorePc);
+        }).then(function () {
           syncNearRadiusUi();
         });
       }
@@ -773,8 +800,10 @@
       var resolveFilter = window.hubResolveLocationFilter
         ? window.hubResolveLocationFilter(value)
         : Promise.resolve();
-      var resolveCoords = resolveLocationFilterCoords(value);
-      Promise.all([resolveFilter, resolveCoords])
+      resolveFilter
+        .then(function () {
+          return resolveLocationFilterCoords(value);
+        })
         .then(function () {
           syncNearRadiusUi();
           var all = window.hubAllEvents || [];
@@ -826,9 +855,9 @@
     if (priceMaxInput) priceMaxInput.value = '';
     if (toggleNearMe) toggleNearMe.checked = false;
     if (toggleNearMeMobile) toggleNearMeMobile.checked = false;
-    if (locationRadius) locationRadius.value = '25';
-    if (nearRadius) nearRadius.value = '25';
-    if (nearRadiusMobile) nearRadiusMobile.value = '25';
+    if (locationRadius) locationRadius.value = '15';
+    if (nearRadius) nearRadius.value = '15';
+    if (nearRadiusMobile) nearRadiusMobile.value = '15';
     window.hubUserCoords = null;
     window.hubLocationFilterState = null;
     window.hubLocationFilterCoords = null;

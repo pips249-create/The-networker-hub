@@ -9,6 +9,7 @@ module.exports = async function handler(req, res) {
     setCors,
     listAttendeesForOrganiserEvents,
     listBookingCancellationsForOrganiserEvents,
+    summarizePendingApplicationsForEventIds,
     airtableSetupHint,
   } = api;
 
@@ -49,6 +50,15 @@ module.exports = async function handler(req, res) {
     const filterEventId = url.searchParams.get('eventId') || 'all';
     const view = String(url.searchParams.get('view') || 'active').toLowerCase();
     const eventIds = scope.eventIds || [];
+    if (view === 'pending-summary' && summarizePendingApplicationsForEventIds) {
+      const pendingApplications = await summarizePendingApplicationsForEventIds(eventIds);
+      return json(res, 200, {
+        ok: true,
+        pendingApplications,
+        view,
+        eventCount: eventIds.length,
+      });
+    }
     let attendees = [];
     let cancellations = [];
     try {

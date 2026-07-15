@@ -305,6 +305,78 @@
     return sessionRes.json();
   }
 
+  function initFieldTips() {
+    let activeBtn = null;
+    let activePopover = null;
+
+    function closeFieldTip() {
+      if (activePopover) activePopover.hidden = true;
+      if (activeBtn) {
+        activeBtn.setAttribute('aria-expanded', 'false');
+        activeBtn = null;
+      }
+      activePopover = null;
+    }
+
+    function positionFieldTip(btn, pop) {
+      const rect = btn.getBoundingClientRect();
+      pop.hidden = false;
+      pop.style.visibility = 'hidden';
+      pop.style.left = '0';
+      pop.style.top = '0';
+      const width = pop.offsetWidth;
+      const height = pop.offsetHeight;
+      let left = rect.left + rect.width / 2 - width / 2;
+      let top = rect.bottom + 8;
+      if (left < 12) left = 12;
+      if (left + width > window.innerWidth - 12) {
+        left = Math.max(12, window.innerWidth - width - 12);
+      }
+      if (top + height > window.innerHeight - 12) {
+        top = Math.max(12, rect.top - height - 8);
+      }
+      pop.style.left = left + 'px';
+      pop.style.top = top + 'px';
+      pop.style.visibility = '';
+    }
+
+    document.querySelectorAll('[data-as-field-tip]').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const popId = btn.getAttribute('data-as-field-tip');
+        const pop = popId ? document.getElementById(popId) : null;
+        if (!pop) return;
+        if (activeBtn === btn && !pop.hidden) {
+          closeFieldTip();
+          return;
+        }
+        closeFieldTip();
+        activeBtn = btn;
+        activePopover = pop;
+        btn.setAttribute('aria-expanded', 'true');
+        positionFieldTip(btn, pop);
+      });
+    });
+
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('.as-field-tip-btn') || e.target.closest('.as-field-tip-popover')) return;
+      closeFieldTip();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeFieldTip();
+    });
+
+    window.addEventListener(
+      'scroll',
+      function () {
+        closeFieldTip();
+      },
+      true
+    );
+  }
+
   async function init() {
     let sessionData;
     try {
@@ -337,5 +409,6 @@
     }
   }
 
+  initFieldTips();
   init();
 })();

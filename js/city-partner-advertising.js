@@ -16,7 +16,6 @@
 
   var cityListEl = document.getElementById('city-partner-city-list');
   var quoteEl = document.getElementById('city-partner-quote');
-  var emailEl = document.getElementById('city-partner-email');
   var submitBtn = document.getElementById('city-partner-submit');
   var statusEl = document.getElementById('city-partner-status');
   var launchNoteEl = document.getElementById('city-partner-launch-note');
@@ -37,6 +36,24 @@
       (tone === 'error' ? ' city-partner-status--error' : tone === 'ok' ? ' city-partner-status--ok' : '');
   }
 
+  function readJsonResponse(res) {
+    return res.text().then(function (text) {
+      var data;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch (e) {
+        if (res.status === 403) {
+          throw new Error('Enter the site preview password, then try again.');
+        }
+        if (res.status === 404) {
+          throw new Error('Checkout service is temporarily unavailable — refresh the page in a minute.');
+        }
+        throw new Error('Checkout service returned an unexpected response (HTTP ' + res.status + ').');
+      }
+      return { ok: res.ok, data: data };
+    });
+  }
+
   function selectedSlugs() {
     if (!cityListEl) return [];
     return Array.prototype.map
@@ -51,7 +68,7 @@
     if (!quoteEl) return;
 
     if (!slugs.length) {
-      quoteEl.innerHTML = '<p class="city-partner-quote-empty">Select one or more available cities to see your monthly total.</p>';
+      quoteEl.innerHTML = '<p class="city-partner-quote-empty">Select one or more available cities to see the estimated monthly price.</p>';
       if (submitBtn) submitBtn.disabled = true;
       return;
     }
@@ -131,11 +148,14 @@
   function loadAvailability() {
     setStatus('Loading available cities…');
     return fetch('/api/city-partner')
-      .then(function (res) {
-        return res.json();
-      })
-      .then(function (data) {
-        if (!data || !data.ok) throw new Error((data && data.message) || 'Could not load cities');
+      .then(readJsonResponse)
+      .then(function (result) {
+        var data = result.data;
+        if (!result.ok || !data || !data.ok) {
+          throw new Error(
+            (data && (data.message || data.error)) || 'Could not load cities'
+          );
+        }
         state.cities = data.cities || [];
         state.pricing = data.pricing || null;
         state.isLaunch = data.isLaunch !== false;
@@ -156,7 +176,7 @@
             esc(state.pricing.singleLabel) +
             '/month per city or ' +
             esc(state.pricing.bundle3Label) +
-            '/month for any 3 cities (auto-applied at checkout). Thereafter ' +
+            '/month for any 3 cities. Thereafter ' +
             esc(state.pricing.regularSingleLabel) +
             '/city and ' +
             esc(state.pricing.regularBundle3Label) +
@@ -178,43 +198,44 @@
   if (submitBtn) {
     submitBtn.addEventListener('click', function () {
       var slugs = selectedSlugs();
-      var email = emailEl ? String(emailEl.value || '').trim() : '';
       if (!slugs.length) {
         setStatus('Select at least one city.', 'error');
         return;
       }
-      if (!email) {
-        setStatus('Enter your work email to continue.', 'error');
-        if (emailEl) emailEl.focus();
-        return;
-      }
 
-      submitBtn.disabled = true;
-      setStatus('Redirecting to secure checkout…');
+      var selected = state.cities.filter(function (city) {
+        return slugs.indexOf(city.slug) !== -1;
+      });
+      var count = slugs.length;
+      var bundles = Math.floor(count / 3);
+      var singles = count % 3;
+      var pricing = state.pricing || { singleMonthlyGbp: 49, bundle3MonthlyGbp: 129 };
+      var monthly = bundles * pricing.bundle3MonthlyGbp + singles * pricing.singleMonthlyGbp;
+      var names = selected.map(function (city) {
+        return city.name;
+      });
+      var subject = 'City Partner application — ' + names.join(', ');
+      var body = [
+        'Hello Rosie,',
+        '',
+        'I would like to apply for City Partner placement.',
+        '',
+        'Selected cities: ' + names.join(', '),
+        'Estimated monthly price: ' + formatGbp(monthly),
+        '',
+        'Organisation:',
+        'Website:',
+        'What we would like to promote:',
+        '',
+        'I understand that applications are reviewed before payment and that the cities are not reserved until approved.',
+      ].join('\n');
 
-      fetch('/api/city-partner', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, cities: slugs }),
-      })
-        .then(function (res) {
-          return res.json().then(function (data) {
-            return { ok: res.ok, data: data };
-          });
-        })
-        .then(function (result) {
-          if (!result.ok || !result.data || !result.data.checkoutUrl) {
-            throw new Error(
-              (result.data && (result.data.message || result.data.error)) ||
-                'Checkout could not be started'
-            );
-          }
-          window.location.href = result.data.checkoutUrl;
-        })
-        .catch(function (err) {
-          submitBtn.disabled = false;
-          setStatus(err.message || 'Checkout failed — try again or email rosie@thenetworkerhub.com', 'error');
-        });
+      setStatus('Opening your email app…');
+      window.location.href =
+        'mailto:rosie@thenetworkerhub.com?subject=' +
+        encodeURIComponent(subject) +
+        '&body=' +
+        encodeURIComponent(body);
     });
   }
 

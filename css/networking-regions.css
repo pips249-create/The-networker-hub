@@ -120,6 +120,8 @@
 }
 
 .networking-region-intro-actions {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex: 0 0 auto;
   align-items: center;
@@ -128,6 +130,11 @@
 
 .networking-region-city-partner {
   flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.networking-region-city-partner[hidden] {
+  display: none !important;
 }
 
 .networking-city-partner-ad {
@@ -135,8 +142,28 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  box-sizing: border-box;
   min-width: min(168px, 34vw);
   max-width: 200px;
+  padding: 12px 14px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--region-accent-border);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 14px rgba(31, 28, 70, 0.06);
+}
+
+/* Override Sponsor Hub logo band — that layout breaks this compact slot. */
+.networking-city-partner-ad .sponsor-logo-wrap,
+.networking-city-partner-ad .sponsor-logo-wrap.sponsor-logo-band {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  box-sizing: border-box;
 }
 
 .networking-city-partner-badge {
@@ -148,11 +175,13 @@
 }
 
 .networking-city-partner-logo,
-.networking-city-partner-logo-placeholder {
+.networking-city-partner-logo-placeholder,
+.networking-city-partner-ad .sponsor-logo--full {
   display: block;
   width: auto;
   max-width: 148px;
   max-height: 44px;
+  height: auto;
   object-fit: contain;
 }
 
@@ -160,6 +189,7 @@
   width: 120px;
   height: 36px;
   border-radius: 8px;
+  border: 1px dashed rgba(122, 119, 144, 0.35);
   background: rgba(255, 255, 255, 0.7);
 }
 
@@ -561,6 +591,7 @@ body.networking-region-page[data-region="chester"] .events-hero-copy h1 .accent 
   .networking-city-partner-ad {
     width: 100%;
     max-width: none;
+    min-width: 0;
   }
 
   .networking-city-partner-cta {

@@ -64,7 +64,7 @@
         params.lat = String(window.hubUserCoords[0]);
         params.lng = String(window.hubUserCoords[1]);
         params.radius = String(
-          window.hubLocationRadiusMiles ? window.hubLocationRadiusMiles() : 25
+          window.hubLocationRadiusMiles ? window.hubLocationRadiusMiles() : 15
         );
       }
     } else if (params.location && window.hubAllowedOutcodesForQuery) {

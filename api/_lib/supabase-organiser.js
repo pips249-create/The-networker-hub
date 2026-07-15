@@ -116,8 +116,8 @@ async function listGroupsForAdminOverview(session) {
   return [...byId.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
 }
 
-async function listGroupsForAccount(session) {
-  const access = await resolveOrganiserAccess(session);
+async function listGroupsForAccount(session, resolvedAccess) {
+  const access = resolvedAccess || (await resolveOrganiserAccess(session));
   if (!access.groupIds.length) return [];
   const sb = getSupabaseAdmin();
   const { data, error } = await sb
@@ -131,9 +131,9 @@ async function listGroupsForAccount(session) {
     .map(rowToGroup);
 }
 
-async function listGroupsForSession(session, adminView) {
+async function listGroupsForSession(session, adminView, resolvedAccess) {
   if (adminView) return listGroupsForAdminOverview(session);
-  const accountGroups = await listGroupsForAccount(session);
+  const accountGroups = await listGroupsForAccount(session, resolvedAccess);
   if (accountGroups.length) return accountGroups;
   return listGroupsForUser(session.sub || '', session.email);
 }

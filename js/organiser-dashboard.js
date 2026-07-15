@@ -145,25 +145,82 @@
     return esc(amount);
   }
 
+  function eventOccurrenceRaw(ev) {
+    if (!ev) return null;
+    return ev.date || ev.startsAt || ev.starts_at || ev.eventDate || null;
+  }
+
+  function eventEndRaw(ev) {
+    if (!ev) return null;
+    return ev.endDate || ev.endsAt || ev.ends_at || null;
+  }
+
+  function groupNameForEvent(ev) {
+    const groupId = ev && (ev.organiserId || ev.organiserGroupId || ev.groupId);
+    if (!groupId || !state.groups || !state.groups.length) return '';
+    const group = state.groups.find(function (g) {
+      return g.id === groupId;
+    });
+    return group && group.name ? String(group.name).trim() : '';
+  }
+
   function allEventOptions() {
-    if (state.eventSummaries && state.eventSummaries.length) {
-      return state.eventSummaries.slice();
-    }
-    return state.events.map((ev) => ({
-      id: ev.id,
-      title: ev.title,
-      date: ev.date || null,
-      statusKey: ev.statusKey || ev.status || null,
-    }));
+    const eventsById = new Map(
+      (state.events || []).map(function (ev) {
+        return [ev.id, ev];
+      })
+    );
+    const base =
+      state.eventSummaries && state.eventSummaries.length
+        ? state.eventSummaries.slice()
+        : (state.events || []).map(function (ev) {
+            return {
+              id: ev.id,
+              title: ev.title,
+              date: ev.date || null,
+              endDate: ev.endDate || null,
+              organiserId: ev.organiserId || ev.organiserGroupId || null,
+              statusKey: ev.statusKey || ev.status || null,
+            };
+          });
+    const seen = new Set();
+    const options = [];
+    base.forEach(function (ev) {
+      const id = ev && ev.id;
+      if (!id || seen.has(id)) return;
+      seen.add(id);
+      const full = eventsById.get(id);
+      options.push({
+        id: id,
+        title: (full && full.title) || ev.title,
+        date: (full && full.date) || ev.date || null,
+        endDate: (full && full.endDate) || ev.endDate || null,
+        organiserId:
+          (full && (full.organiserId || full.organiserGroupId)) ||
+          ev.organiserId ||
+          null,
+        statusKey: (full && (full.statusKey || full.status)) || ev.statusKey || null,
+        statusLabel: (full && full.statusLabel) || ev.statusLabel || null,
+      });
+    });
+    return options;
   }
 
   /** Distinct label for filters/tables when many listings share the same title. */
-  function eventFilterOptionLabel(ev) {
+  function eventFilterOptionLabel(ev, options) {
+    const opts = options || {};
     const title = String((ev && ev.title) || 'Untitled event').trim() || 'Untitled event';
-    const raw = ev && (ev.date || ev.startsAt || ev.starts_at || ev.eventDate);
+    const raw = eventOccurrenceRaw(ev);
     const dateLabel = raw ? formatDateShort(raw) : '';
-    if (dateLabel && dateLabel !== '—') return title + ' · ' + dateLabel;
-    return title;
+    const timeLabel = raw ? formatTimeShort(raw) : '';
+    const parts = [title];
+    if (dateLabel && dateLabel !== '—') {
+      parts.push(opts.includeTime && timeLabel ? dateLabel + ', ' + timeLabel : dateLabel);
+    } else {
+      parts.push('No date');
+    }
+    if (opts.groupName) parts.push(opts.groupName);
+    return parts.join(' · ');
   }
 
   function eventLabelForRow(row) {
@@ -777,6 +834,16 @@
       day: 'numeric',
       month: 'short',
       year: 'numeric',
+    });
+  }
+
+  function formatTimeShort(raw) {
+    if (!raw) return '';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 
@@ -1922,7 +1989,10 @@
       filters.attendeesPendingOnly = false;
     }
     const attSel = document.getElementById('filter-attendees-event');
-    if (attSel && eventId) attSel.value = eventId;
+    if (attSel && eventId) {
+      attSel.value = eventId;
+      setAttendeesEventFilterValue(eventId, { skipRender: true });
+    }
     const ticketSel = document.getElementById('filter-tickets-event');
     if (ticketSel && eventId) ticketSel.value = eventId;
     const cancelSel = document.getElementById('filter-cancellations-event');
@@ -2430,7 +2500,7 @@
     if (filters.attendeesHideArchived && filters.attendeesEvent === 'all') {
       const archivedEventIds = new Set(
         allEventOptions()
-          .filter((ev) => String(ev.statusKey || '').toLowerCase() === 'archived')
+          .filter((ev) => eventRowIsArchived(ev))
           .map((ev) => ev.id)
       );
       list = list.filter((a) => !archivedEventIds.has(a.eventId));
@@ -2518,26 +2588,127 @@
       '<span class="org-attendees-summary-note">Based on Hub bookings with your organiser page — not annual membership records.</span>';
   }
 
+  function setAttendeesEventFilterValue(eventId, options) {
+    const next = eventId || 'all';
+    filters.attendeesEvent = next;
+    const sel = document.getElementById('filter-attendees-event');
+    if (sel) sel.value = next;
+    const labelEl = document.getElementById('filter-attendees-event-label');
+    if (labelEl) {
+      if (next === 'all') {
+        labelEl.textContent = 'All events';
+      } else {
+        const match = attendeesEventPickerOptions().find(function (row) {
+          return row.id === next;
+        });
+        labelEl.textContent = match
+          ? match.label + (match.archived ? ' · Archived' : '')
+          : 'Selected event';
+      }
+    }
+    if (!(options && options.skipRender)) {
+      listPages.attendees = 1;
+      renderAttendees();
+    }
+  }
+
+  function closeAttendeesEventPicker() {
+    const panel = document.getElementById('filter-attendees-event-panel');
+    const trigger = document.getElementById('filter-attendees-event-trigger');
+    const search = document.getElementById('filter-attendees-event-search');
+    if (panel) panel.hidden = true;
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    if (search) search.value = '';
+  }
+
+  function renderAttendeesEventPickerList(query) {
+    const listEl = document.getElementById('filter-attendees-event-list');
+    if (!listEl) return;
+    const q = String(query || '')
+      .trim()
+      .toLowerCase();
+    const rows = attendeesEventPickerOptions().filter(function (row) {
+      return !q || row.searchText.indexOf(q) !== -1;
+    });
+    const items = [
+      {
+        id: 'all',
+        label: 'All events',
+        selected: filters.attendeesEvent === 'all',
+      },
+    ].concat(
+      rows.map(function (row) {
+        return {
+          id: row.id,
+          label: row.label + (row.archived ? ' · Archived' : ''),
+          selected: row.id === filters.attendeesEvent,
+        };
+      })
+    );
+    if (items.length === 1 && q) {
+      listEl.innerHTML =
+        '<li class="org-event-picker-empty" role="presentation">No events match “' +
+        esc(query) +
+        '”</li>';
+      return;
+    }
+    listEl.innerHTML = items
+      .map(function (item) {
+        return (
+          '<li role="option" class="org-event-picker-option' +
+          (item.selected ? ' is-selected' : '') +
+          '" data-event-id="' +
+          esc(item.id) +
+          '" aria-selected="' +
+          (item.selected ? 'true' : 'false') +
+          '">' +
+          esc(item.label) +
+          '</li>'
+        );
+      })
+      .join('');
+  }
+
+  function openAttendeesEventPicker() {
+    const panel = document.getElementById('filter-attendees-event-panel');
+    const trigger = document.getElementById('filter-attendees-event-trigger');
+    const search = document.getElementById('filter-attendees-event-search');
+    if (!panel || !trigger) return;
+    panel.hidden = false;
+    trigger.setAttribute('aria-expanded', 'true');
+    renderAttendeesEventPickerList(search ? search.value : '');
+    if (search) {
+      search.focus();
+      search.select();
+    }
+  }
+
   function fillAttendeesEventFilter() {
     const sel = document.getElementById('filter-attendees-event');
     if (!sel) return;
+    const rows = attendeesEventPickerOptions();
     sel.innerHTML = '<option value="all">All events</option>';
-    allEventOptions()
-      .filter(
-        (ev) =>
-          !filters.attendeesHideArchived ||
-          String(ev.statusKey || '').toLowerCase() !== 'archived' ||
-          ev.id === filters.attendeesEvent
-      )
-      .forEach((ev) => {
-        const opt = document.createElement('option');
-        opt.value = ev.id;
-        opt.textContent =
-          eventFilterOptionLabel(ev) +
-          (String(ev.statusKey || '').toLowerCase() === 'archived' ? ' · Archived' : '');
-        sel.appendChild(opt);
-      });
+    rows.forEach(function (row) {
+      const opt = document.createElement('option');
+      opt.value = row.id;
+      opt.textContent = row.label + (row.archived ? ' · Archived' : '');
+      sel.appendChild(opt);
+    });
+    if (
+      filters.attendeesEvent !== 'all' &&
+      !rows.some(function (row) {
+        return row.id === filters.attendeesEvent;
+      })
+    ) {
+      filters.attendeesEvent = 'all';
+    }
     sel.value = filters.attendeesEvent;
+    setAttendeesEventFilterValue(filters.attendeesEvent, { skipRender: true });
+    const panel = document.getElementById('filter-attendees-event-panel');
+    if (panel && !panel.hidden) {
+      const search = document.getElementById('filter-attendees-event-search');
+      renderAttendeesEventPickerList(search ? search.value : '');
+    }
   }
 
   function ensureAttendeesLoaded(options) {
@@ -3239,10 +3410,87 @@
     if (!ev) return false;
     if (ev.isSeries && ev.seriesEvents && ev.seriesEvents.length) {
       return ev.seriesEvents.every(function (child) {
-        return String(child.statusKey || child.status || '').toLowerCase() === 'archived';
+        return eventRowIsArchived(child);
       });
     }
-    return String(ev.statusKey || ev.status || '').toLowerCase() === 'archived';
+    const key = String(ev.statusKey || ev.status || '').toLowerCase();
+    if (key === 'archived') return true;
+    if (key === 'cancelled') return false;
+
+    const startRaw = eventOccurrenceRaw(ev);
+    if (!startRaw) return false;
+    const start = new Date(startRaw);
+    if (Number.isNaN(start.getTime())) return false;
+
+    const endRaw = eventEndRaw(ev);
+    if (endRaw) {
+      const end = new Date(endRaw);
+      if (!Number.isNaN(end.getTime())) {
+        const spanMs = end.getTime() - start.getTime();
+        // Trust a normal event end (same day / overnight). Long ends_at often means
+        // recurrence or bad data — fall through to the start-day check instead.
+        if (spanMs >= 0 && spanMs <= 36 * 60 * 60 * 1000) {
+          return end.getTime() <= Date.now();
+        }
+      }
+    }
+
+    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return startDay < today;
+  }
+
+  function attendeesEventPickerOptions() {
+    const list = allEventOptions().filter(function (ev) {
+      return (
+        !filters.attendeesHideArchived ||
+        !eventRowIsArchived(ev) ||
+        ev.id === filters.attendeesEvent
+      );
+    });
+    const titleDateCount = new Map();
+    list.forEach(function (ev) {
+      const key =
+        String(ev.title || '')
+          .trim()
+          .toLowerCase() +
+        '|' +
+        formatDateShort(eventOccurrenceRaw(ev) || '');
+      titleDateCount.set(key, (titleDateCount.get(key) || 0) + 1);
+    });
+    return list.map(function (ev) {
+      const key =
+        String(ev.title || '')
+          .trim()
+          .toLowerCase() +
+        '|' +
+        formatDateShort(eventOccurrenceRaw(ev) || '');
+      const duplicate = (titleDateCount.get(key) || 0) > 1;
+      const groupName = duplicate ? groupNameForEvent(ev) : '';
+      let label = eventFilterOptionLabel(ev, {
+        includeTime: duplicate,
+        groupName: groupName,
+      });
+      if (duplicate && !groupName) {
+        label += ' · #' + String(ev.id).replace(/^rec/, '').slice(-4);
+      }
+      return {
+        id: ev.id,
+        ev: ev,
+        label: label,
+        archived: eventRowIsArchived(ev),
+        searchText: (
+          String(ev.title || '') +
+          ' ' +
+          formatDateShort(eventOccurrenceRaw(ev) || '') +
+          ' ' +
+          groupName +
+          ' ' +
+          String(ev.id || '')
+        ).toLowerCase(),
+      };
+    });
   }
 
   function filteredEventsList() {
@@ -4533,8 +4781,7 @@
         filters.reviewsGroup = 'all';
         const ticketSel = document.getElementById('filter-tickets-event');
         if (ticketSel) ticketSel.value = eventId;
-        const attSel = document.getElementById('filter-attendees-event');
-        if (attSel) attSel.value = eventId;
+        setAttendeesEventFilterValue(eventId, { skipRender: true });
         const cancelSel = document.getElementById('filter-cancellations-event');
         if (cancelSel) cancelSel.value = eventId;
       }
@@ -5294,10 +5541,13 @@
             '<a class="org-member-list-chooser-item" href="/organiser/member-roster?id=' +
             encodeURIComponent(g.id) +
             '">' +
-            '<strong>' +
+            '<span class="org-member-list-chooser-text">' +
+            '<strong class="org-member-list-chooser-name">' +
             esc(g.name || 'Organiser page') +
             '</strong>' +
-            '<span>Open member list →</span>' +
+            '<span class="org-member-list-chooser-meta">Members only tickets &amp; invite emails</span>' +
+            '</span>' +
+            '<span class="org-member-list-chooser-cta">Open list →</span>' +
             '</a>'
           );
         })
@@ -8340,11 +8590,46 @@
     const attendeesEventFilter = document.getElementById('filter-attendees-event');
     if (attendeesEventFilter) {
       attendeesEventFilter.addEventListener('change', () => {
-        filters.attendeesEvent = attendeesEventFilter.value;
-        listPages.attendees = 1;
-        renderAttendees();
+        setAttendeesEventFilterValue(attendeesEventFilter.value);
       });
     }
+
+    const attendeesEventTrigger = document.getElementById('filter-attendees-event-trigger');
+    const attendeesEventPanel = document.getElementById('filter-attendees-event-panel');
+    const attendeesEventSearch = document.getElementById('filter-attendees-event-search');
+    const attendeesEventList = document.getElementById('filter-attendees-event-list');
+    if (attendeesEventTrigger && attendeesEventPanel) {
+      attendeesEventTrigger.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (attendeesEventPanel.hidden) openAttendeesEventPicker();
+        else closeAttendeesEventPicker();
+      });
+    }
+    if (attendeesEventSearch) {
+      attendeesEventSearch.addEventListener('input', function () {
+        renderAttendeesEventPickerList(attendeesEventSearch.value);
+      });
+      attendeesEventSearch.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeAttendeesEventPicker();
+          if (attendeesEventTrigger) attendeesEventTrigger.focus();
+        }
+      });
+    }
+    if (attendeesEventList) {
+      attendeesEventList.addEventListener('click', function (e) {
+        const option = e.target && e.target.closest('[data-event-id]');
+        if (!option) return;
+        setAttendeesEventFilterValue(option.getAttribute('data-event-id'));
+        closeAttendeesEventPicker();
+      });
+    }
+    document.addEventListener('click', function (e) {
+      const picker = document.getElementById('attendees-event-picker');
+      if (!picker || !attendeesEventPanel || attendeesEventPanel.hidden) return;
+      if (!picker.contains(e.target)) closeAttendeesEventPicker();
+    });
 
     const attendeesSearchFilter = document.getElementById('filter-attendees-search');
     if (attendeesSearchFilter) {
@@ -8381,10 +8666,7 @@
       attendeesHideArchivedFilter.addEventListener('change', () => {
         filters.attendeesHideArchived = attendeesHideArchivedFilter.checked;
         const selectedEvent = allEventOptions().find((ev) => ev.id === filters.attendeesEvent);
-        if (
-          filters.attendeesHideArchived &&
-          String(selectedEvent?.statusKey || '').toLowerCase() === 'archived'
-        ) {
+        if (filters.attendeesHideArchived && eventRowIsArchived(selectedEvent)) {
           filters.attendeesEvent = 'all';
         }
         listPages.attendees = 1;

@@ -153,12 +153,18 @@
 
   var partnerShell = document.getElementById('networking-region-city-partner');
   if (partnerShell && window.CmsAdBlocks) {
-    window.CmsAdBlocks.loadCmsAd('networking_city_partner_' + slug).then(function (block) {
-      if (block && window.CmsAdBlocks.renderCityPartnerAd(partnerShell, block)) {
-        showCityPartner();
-      } else {
+    window.CmsAdBlocks.loadCmsAd('networking_city_partner_' + slug)
+      .then(function (block) {
+        if (block && window.CmsAdBlocks.renderCityPartnerAd(partnerShell, block)) {
+          showCityPartner();
+        } else {
+          showOrganiserCta();
+        }
+      })
+      .catch(function () {
         showOrganiserCta();
-      }
-    });
+      });
+  } else {
+    showOrganiserCta();
   }
 })();
