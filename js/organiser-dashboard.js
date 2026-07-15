@@ -8617,9 +8617,11 @@
       true
     );
 
-    document.getElementById('org-nav-member-lists')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      navigateToMemberLists();
+    document.querySelectorAll('[data-org-member-lists-nav]').forEach((el) => {
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        navigateToMemberLists();
+      });
     });
 
     document.querySelectorAll('[data-org-route]').forEach((el) => {

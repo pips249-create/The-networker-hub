@@ -1485,7 +1485,7 @@
 
 .org-hub-portals {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   margin-top: 0;
   margin-bottom: 20px;
@@ -1525,6 +1525,10 @@
   border-color: #5a8f7b;
 }
 
+.org-hub-portal--members:hover {
+  border-color: var(--od-purple);
+}
+
 .org-hub-portal-icon {
   flex-shrink: 0;
   width: 44px;
@@ -1551,6 +1555,10 @@
 
 .org-hub-portal--business .org-hub-portal-icon {
   background: #eef6f2;
+}
+
+.org-hub-portal--members .org-hub-portal-icon {
+  background: var(--od-purple-pale);
 }
 
 .org-hub-portal-body {

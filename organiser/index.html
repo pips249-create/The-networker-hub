@@ -80,7 +80,10 @@
             <span class="hub-side-nav-divider">Events</span>
             <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">My events</a>
             <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Organiser pages</a>
-            <a href="#groups" class="hub-side-nav-link hub-side-nav-link--events-sub" id="org-nav-member-lists" data-org-member-lists-nav>Member lists</a>
+            <a href="#groups" class="hub-side-nav-link" id="org-nav-member-lists" data-org-member-lists-nav>
+              Member lists
+              <span class="org-nav-badge">New</span>
+            </a>
             <a href="#events-attendees" class="hub-side-nav-link hub-side-nav-link--events-sub" data-org-route="events-attendees">
               Attendees
               <span class="org-nav-badge" id="org-pending-applications-nav-badge" hidden>New</span>
@@ -218,6 +221,16 @@
               <span class="org-hub-portal-body">
                 <strong>My business opportunities</strong>
                 <span class="org-hub-portal-meta" id="hub-portal-meta-business">—</span>
+              </span>
+              <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
+            </button>
+            <button type="button" class="org-hub-portal org-hub-portal--members" data-org-member-lists-nav>
+              <span class="org-hub-portal-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </span>
+              <span class="org-hub-portal-body">
+                <strong>Member lists</strong>
+                <span class="org-hub-portal-meta">Upload members for members-only tickets</span>
               </span>
               <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
             </button>
@@ -1653,6 +1666,6 @@
     <script src="../js/organiser-payment-setup.js?v=20260714link"></script>
     <script src="../js/review-report.js?v=20260708"></script>
     <script src="../js/organiser-linkedin-post-builder.js?v=20260714logo"></script>
-    <script src="../js/organiser-dashboard.js?v=20260715memberlists"></script>
+    <script src="../js/organiser-dashboard.js?v=20260715memberlists3"></script>
   </body>
 </html>
