@@ -141,6 +141,18 @@
         },
       ],
     },
+    {
+      id: 'f',
+      label: 'F · Sole focus',
+      layout: 'minimal-choice',
+      strategy: 'Headline + two choices only',
+      note: 'Inspired by BT / CapEQ / luxury refs: one big "Find your next\u2026", then Event and Business Op in a white rounded panel. No UK, no long copy, no extra links.',
+      titleLine: 'Find your next\u2026',
+      choices: [
+        { href: '/events/', label: 'Event', tone: 'gold' },
+        { href: '/opportunities/', label: 'Business Op', tone: 'purple' },
+      ],
+    },
   ];
 
   var STAT_ICONS = {
@@ -233,6 +245,34 @@
     );
   }
 
+  function renderMinimalChoiceHero(variant) {
+    var choices = variant.choices || [];
+    return (
+      '<header class="home-hero-copy home-hero-copy--minimal">' +
+      '<h1 class="hero-title hero-title--minimal">' +
+      '<span class="hero-title-line">' +
+      esc(variant.titleLine) +
+      '</span>' +
+      '</h1>' +
+      '<div class="home-hero-choice-panel" role="group" aria-label="Choose where to start">' +
+      choices
+        .map(function (choice) {
+          return (
+            '<a class="home-hero-choice-btn home-hero-choice-btn--' +
+            esc(choice.tone || 'gold') +
+            '" href="' +
+            esc(choice.href) +
+            '">' +
+            esc(choice.label) +
+            '</a>'
+          );
+        })
+        .join('') +
+      '</div>' +
+      '</header>'
+    );
+  }
+
   function renderDualCtaHero(variant) {
     return (
       '<header class="home-hero-copy home-hero-copy--dual-cta">' +
@@ -264,6 +304,9 @@
   }
 
   function renderHero(variant) {
+    if (variant.layout === 'minimal-choice') {
+      return renderMinimalChoiceHero(variant);
+    }
     if (variant.layout === 'dual-cta') {
       return renderDualCtaHero(variant);
     }

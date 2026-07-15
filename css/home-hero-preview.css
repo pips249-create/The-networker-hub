@@ -306,6 +306,98 @@
   margin-top: 16px;
 }
 
+/* Option F — sole focus: Find your next… + Event / Business Op */
+.home-page .home-hero-copy--minimal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: min(52vh, 420px);
+  padding: 24px 0 8px;
+}
+
+.home-page .hero-title--minimal {
+  margin: 0 0 28px;
+  font-size: clamp(2.4rem, 7vw, 4.1rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  text-align: center;
+}
+
+.home-page .hero-title--minimal .hero-title-line {
+  display: block;
+  color: #fff;
+  text-shadow:
+    0 1px 2px rgba(45, 35, 50, 0.4),
+    0 8px 32px rgba(45, 35, 50, 0.28);
+}
+
+.home-page .home-hero-choice-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 28rem;
+  padding: 18px 20px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.98);
+  box-shadow: 0 18px 48px rgba(45, 35, 50, 0.2);
+}
+
+.home-page .home-hero-choice-btn {
+  flex: 1 1 8.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  text-align: center;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.home-page .home-hero-choice-btn--gold {
+  background: linear-gradient(155deg, #fff8ec 0%, #f0d08a 55%, #d4a85c 100%);
+  border-color: rgba(184, 149, 106, 0.45);
+  color: var(--charcoal);
+  box-shadow: 0 6px 18px rgba(184, 149, 106, 0.28);
+}
+
+.home-page .home-hero-choice-btn--gold:hover {
+  background: linear-gradient(155deg, #fffaf0 0%, #f5d998 55%, #e0b56a 100%);
+  color: var(--charcoal);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(184, 149, 106, 0.35);
+}
+
+.home-page .home-hero-choice-btn--purple {
+  background: linear-gradient(155deg, #8f7199 0%, #6f5878 100%);
+  border-color: rgba(111, 88, 120, 0.4);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(74, 58, 82, 0.28);
+}
+
+.home-page .home-hero-choice-btn--purple:hover {
+  background: linear-gradient(155deg, #9a7aa8 0%, #7d6585 100%);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(74, 58, 82, 0.35);
+}
+
+.home-page .home-hero-choice-btn:focus-visible {
+  outline: 2px solid var(--charcoal);
+  outline-offset: 3px;
+}
+
 @media (max-width: 720px) {
   .home-hero-preview-bar {
     flex-direction: column;
@@ -335,5 +427,27 @@
   .home-page .home-hero-lede {
     margin-bottom: 14px;
     font-size: 0.98rem;
+  }
+
+  .home-page .home-hero-copy--minimal {
+    min-height: auto;
+    padding: 12px 0 4px;
+  }
+
+  .home-page .hero-title--minimal {
+    margin-bottom: 20px;
+    font-size: clamp(2.1rem, 10vw, 2.8rem);
+  }
+
+  .home-page .home-hero-choice-panel {
+    flex-direction: column;
+    max-width: 18rem;
+    padding: 16px;
+    border-radius: 24px;
+  }
+
+  .home-page .home-hero-choice-btn {
+    width: 100%;
+    flex: none;
   }
 }
