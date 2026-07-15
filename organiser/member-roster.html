@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
     <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260715" />
+    <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
+    <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
   </head>
   <body class="organiser-event-edit-page">
@@ -17,6 +19,7 @@
     <div class="ee-wrap omr-wrap">
       <div class="ee-top-bar">
         <a class="ee-back" href="/organiser/#groups" id="omr-back">← Back to organiser pages</a>
+        <button type="button" class="ee-hubert-help-btn" data-hubert-help>Hubert's help</button>
       </div>
       <h1 class="ee-title" id="omr-title">Member roster</h1>
       <p class="ee-lead" id="omr-lead">
@@ -46,7 +49,7 @@
           </div>
           <label class="omr-check">
             <input type="checkbox" id="omr-send-invite" checked />
-            Send invite email to join The Networker Hub
+            Email this member about the group and its next meeting
           </label>
           <button type="submit" class="ee-btn ee-btn-gold">Add to roster</button>
         </form>
@@ -58,7 +61,7 @@
         <textarea id="omr-csv" rows="6" placeholder="email,name,expires&#10;jane@example.com,Jane Smith,2026-12-31"></textarea>
         <label class="omr-check">
           <input type="checkbox" id="omr-csv-send-invites" />
-          Send invite emails after import (new members without Hub accounts only)
+          Email imported members after import (existing Hub accounts receive a sign-in link)
         </label>
         <button type="button" class="ee-btn ee-btn-outline" id="omr-import-btn">Import CSV</button>
       </div>
@@ -93,6 +96,9 @@
       </div>
     </div>
 
+    <script src="../js/hubert-chat.js?v=20260612"></script>
+    <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../"></script>
+    <script src="../js/organiser-flow-tour.js?v=20260701" data-root="../"></script>
     <script src="../js/organiser-member-roster.js?v=20260715"></script>
   </body>
 </html>

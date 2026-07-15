@@ -9,11 +9,13 @@ const {
   siteBase,
   hubAccountUrl,
   organiserPublicUrl,
+  eventPublicUrl,
   legalPolicyUrl,
   contactUrl,
   logoNavUrl,
   logoFooterUrl,
 } = require('./hub-email-urls');
+const { formatEventDateTime } = require('./favourite-sales-emails');
 const { emailGreetingName } = require('./email-display-name');
 
 const ROSTER_STATUS_ACTIVE = 'active';
@@ -66,7 +68,7 @@ async function getActiveRosterMembership(sb, { organiserId, email }) {
     .select('*')
     .eq('organiser_id', orgId)
     .eq('status', ROSTER_STATUS_ACTIVE)
-    .ilike('email', em)
+    .eq('email', em)
     .maybeSingle();
   if (error) throw new Error(error.message);
   const active = rosterRowIsActive(data);
@@ -86,7 +88,7 @@ async function assertMembersOnlyBookingAllowed(sb, { organiserId, email }) {
     .select('*')
     .eq('organiser_id', orgId)
     .eq('status', ROSTER_STATUS_ACTIVE)
-    .ilike('email', em)
+    .eq('email', em)
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) {
@@ -123,36 +125,127 @@ async function ensureOrganiserFavouritesForRoster(sb, attendeeId, organiserIds) 
   }
 }
 
-async function sendMemberRosterInviteEmail({ organiserRow, memberEmail, memberName, rosterRowId }) {
+async function fetchNextUpcomingEventForOrganiser(sb, organiserId) {
+  const orgId = String(organiserId || '').trim();
+  if (!orgId) return null;
+  const now = new Date().toISOString();
+  const { data, error } = await sb
+    .from('events')
+    .select('id, title, slug, starts_at, city, venue, location_label')
+    .eq('organiser_id', orgId)
+    .eq('status', 'published')
+    .eq('approval_status', 'Approved')
+    .gte('starts_at', now)
+    .order('starts_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data || null;
+}
+
+function buildRosterUpcomingEventSection(eventRow) {
+  if (!eventRow) return '';
+  const { event_date, event_time } = formatEventDateTime(eventRow.starts_at);
+  const location =
+    String(eventRow.location_label || eventRow.venue || eventRow.city || '').trim() ||
+    'See event page';
+  const timeLine = event_time ? event_date + ' · ' + event_time : event_date;
+  return (
+    '<tr><td style="padding:0 40px 20px;text-align:center;">' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#1c2040;border-radius:16px;">' +
+    '<tr><td style="padding:22px 24px;text-align:center;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Next meeting</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:18px;font-weight:600;color:#ffffff;margin:0 0 6px;line-height:1.35;">' +
+    String(eventRow.title || 'Upcoming event').replace(/</g, '&lt;') +
+    '</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);margin:0;">' +
+    timeLine.replace(/</g, '&lt;') +
+    (location ? ' · ' + location.replace(/</g, '&lt;') : '') +
+    '</p></td></tr></table></td></tr>'
+  );
+}
+
+function loginUrlWithNext(site, email, nextUrl) {
+  return (
+    site +
+    '/login?email=' +
+    encodeURIComponent(email) +
+    '&next=' +
+    encodeURIComponent(nextUrl)
+  );
+}
+
+async function sendMemberRosterInviteEmail({
+  organiserRow,
+  memberEmail,
+  memberName,
+  rosterRowId,
+  attendeeId,
+}) {
   const email = normalizeRosterEmail(memberEmail);
   if (!email || !organiserRow?.id) return { sent: false };
 
+  const sb = getSupabaseAdmin();
+  const attId = attendeeId || (await resolveAttendeeIdByEmail(sb, email));
+  const isExistingUser = Boolean(attId);
+  const nextEvent = await fetchNextUpcomingEventForOrganiser(sb, organiserRow.id);
+
   const site = siteBase();
-  const registerUrl =
-    site +
-    '/register?email=' +
-    encodeURIComponent(email) +
-    '&next=' +
-    encodeURIComponent(organiserPublicUrl(organiserRow, site));
+  const organiserUrl = organiserPublicUrl(organiserRow, site);
+  const organiserName = String(organiserRow.name || 'your networking group').trim();
+  const destinationUrl = nextEvent ? eventPublicUrl(nextEvent, site) : organiserUrl;
+  const sharedVars = {
+    user_name: emailGreetingName(memberName, email),
+    user_email: email,
+    organiser_name: organiserName,
+    organiser_url: organiserUrl,
+    hub_account_url: hubAccountUrl(site),
+    site_url: site,
+    logo_url: logoNavUrl(site),
+    logo_footer_url: logoFooterUrl(site),
+    privacy_url: legalPolicyUrl(site, 'privacy'),
+    terms_url: legalPolicyUrl(site, 'terms'),
+    contact_url: contactUrl(site),
+  };
+
+  let slug;
+  let variables;
+  if (isExistingUser) {
+    const { event_date, event_time } = formatEventDateTime(nextEvent?.starts_at);
+    slug = 'member_roster_existing';
+    variables = {
+      ...sharedVars,
+      hub_groups_url: hubAccountUrl(site) + '#saved',
+      cta_url: loginUrlWithNext(site, email, destinationUrl),
+      cta_label: nextEvent ? 'Book member tickets' : 'View upcoming meetings',
+      upcoming_event_section: buildRosterUpcomingEventSection(nextEvent),
+      event_name: String(nextEvent?.title || '').trim(),
+      event_date: event_date || '',
+      event_time: event_time || '',
+      event_location: String(
+        nextEvent?.location_label || nextEvent?.venue || nextEvent?.city || ''
+      ).trim(),
+      event_url: nextEvent ? eventPublicUrl(nextEvent, site) : organiserUrl,
+    };
+  } else {
+    slug = 'member_roster_invite';
+    variables = {
+      ...sharedVars,
+      register_url:
+        site +
+        '/register?email=' +
+        encodeURIComponent(email) +
+        '&next=' +
+        encodeURIComponent(destinationUrl),
+      upcoming_event_section: buildRosterUpcomingEventSection(nextEvent),
+    };
+  }
 
   try {
     await sendTemplatedEmail({
-      slug: 'member_roster_invite',
+      slug,
       to: email,
-      variables: {
-        user_name: emailGreetingName(memberName, email),
-        user_email: email,
-        organiser_name: String(organiserRow.name || 'your networking group').trim(),
-        organiser_url: organiserPublicUrl(organiserRow, site),
-        register_url: registerUrl,
-        hub_account_url: hubAccountUrl(site),
-        site_url: site,
-        logo_url: logoNavUrl(site),
-        logo_footer_url: logoFooterUrl(site),
-        privacy_url: legalPolicyUrl(site, 'privacy'),
-        terms_url: legalPolicyUrl(site, 'terms'),
-        contact_url: contactUrl(site),
-      },
+      variables,
     });
   } catch (e) {
     if (e.code === 'emails_disabled' || /emails_disabled/i.test(String(e.message || ''))) {
@@ -162,26 +255,27 @@ async function sendMemberRosterInviteEmail({ organiserRow, memberEmail, memberNa
   }
 
   if (rosterRowId) {
-    const sb = getSupabaseAdmin();
     await sb
       .from('organiser_member_roster')
       .update({ invite_sent_at: new Date().toISOString() })
       .eq('id', rosterRowId);
   }
 
-  return { sent: true };
+  return { sent: true, template: slug, existingUser: isExistingUser };
 }
 
 async function claimRosterEntriesForAttendee(sb, { email, attendeeId }) {
   const em = normalizeRosterEmail(email);
   const attId = String(attendeeId || '').trim();
   if (!em || !attId) return { claimed: 0 };
+  const today = new Date().toISOString().slice(0, 10);
 
   const pendingRes = await sb
     .from('organiser_member_roster')
     .select('id, organiser_id')
     .eq('status', ROSTER_STATUS_ACTIVE)
-    .ilike('email', em)
+    .eq('email', em)
+    .or(`expires_at.is.null,expires_at.gte.${today}`)
     .is('claimed_at', null);
   if (pendingRes.error) throw new Error(pendingRes.error.message);
 
@@ -194,7 +288,8 @@ async function claimRosterEntriesForAttendee(sb, { email, attendeeId }) {
       updated_at: now,
     })
     .eq('status', ROSTER_STATUS_ACTIVE)
-    .ilike('email', em)
+    .eq('email', em)
+    .or(`expires_at.is.null,expires_at.gte.${today}`)
     .is('claimed_at', null)
     .select('id, organiser_id');
   if (error) throw new Error(error.message);
@@ -206,7 +301,8 @@ async function claimRosterEntriesForAttendee(sb, { email, attendeeId }) {
     .from('organiser_member_roster')
     .select('organiser_id')
     .eq('status', ROSTER_STATUS_ACTIVE)
-    .ilike('email', em);
+    .eq('email', em)
+    .or(`expires_at.is.null,expires_at.gte.${today}`);
   if (allActiveRes.error) throw new Error(allActiveRes.error.message);
   const allOrganiserIds = [
     ...new Set((allActiveRes.data || []).map((row) => row.organiser_id).filter(Boolean)),
@@ -296,7 +392,7 @@ async function upsertRosterMember(organiserId, payload, options) {
     .from('organiser_member_roster')
     .select('id, claimed_at, invite_sent_at')
     .eq('organiser_id', orgId)
-    .ilike('email', email)
+    .eq('email', email)
     .maybeSingle();
 
   let saved;
@@ -331,7 +427,6 @@ async function upsertRosterMember(organiserId, payload, options) {
   const shouldInvite =
     sendInvite &&
     row.status === ROSTER_STATUS_ACTIVE &&
-    !attendeeId &&
     (isNew || resendInvite || !existing?.invite_sent_at);
   if (shouldInvite) {
     const orgRes = await sb
@@ -346,6 +441,7 @@ async function upsertRosterMember(organiserId, payload, options) {
         memberEmail: email,
         memberName: name,
         rosterRowId: saved.id,
+        attendeeId,
       });
     }
   }
@@ -582,7 +678,7 @@ async function listRosterGroupsForAttendee(email) {
       'id, expires_at, claimed_at, invite_sent_at, status, organisers(id, name, slug, photo_url, industries, average_rating)'
     )
     .eq('status', ROSTER_STATUS_ACTIVE)
-    .ilike('email', em)
+    .eq('email', em)
     .order('updated_at', { ascending: false });
   if (error) throw new Error(error.message);
 

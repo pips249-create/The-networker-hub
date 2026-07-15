@@ -350,7 +350,7 @@ async function registerUser({ email, password, name, marketingOptIn }) {
     throw new Error('An account with this email already exists. Sign in instead.');
   }
 
-  await sb.from('hub_accounts').upsert(
+  const accountResult = await sb.from('hub_accounts').upsert(
     {
       user_id: userId,
       role: USER_ROLES.CLIENT,
@@ -362,8 +362,9 @@ async function registerUser({ email, password, name, marketingOptIn }) {
     },
     { onConflict: 'user_id' }
   );
+  if (accountResult.error) throw new Error(accountResult.error.message);
 
-  await sb.from('attendees').upsert(
+  const attendeeUpsert = await sb.from('attendees').upsert(
     {
       email: em,
       name: name || null,
@@ -371,14 +372,20 @@ async function registerUser({ email, password, name, marketingOptIn }) {
     },
     { onConflict: 'email' }
   );
+  if (attendeeUpsert.error) throw new Error(attendeeUpsert.error.message);
 
   const attendeeRes = await sb.from('attendees').select('id').eq('email', em).maybeSingle();
+  if (attendeeRes.error) throw new Error(attendeeRes.error.message);
   if (attendeeRes.data?.id) {
     const { claimRosterEntriesForAttendee } = require('./organiser-member-roster');
-    await claimRosterEntriesForAttendee(sb, {
-      email: em,
-      attendeeId: attendeeRes.data.id,
-    });
+    try {
+      await claimRosterEntriesForAttendee(sb, {
+        email: em,
+        attendeeId: attendeeRes.data.id,
+      });
+    } catch (claimError) {
+      console.error('[auth] roster claim after registration failed', claimError);
+    }
   }
 
   return {

@@ -93,9 +93,13 @@ module.exports = async function handler(req, res) {
 
   const session = sessionFromRequest(req);
   const bodyEarly = parseBody(req);
-  const checkoutEmail = String(bodyEarly.email || session?.email || '')
+  const sessionEmail = String(session?.email || '')
     .trim()
     .toLowerCase();
+  const submittedEmail = String(bodyEarly.email || '')
+    .trim()
+    .toLowerCase();
+  const checkoutEmail = sessionEmail || submittedEmail;
   const checkoutName = String(bodyEarly.name || session?.name || '').trim();
 
   if (!checkoutEmail) {
@@ -107,10 +111,6 @@ module.exports = async function handler(req, res) {
 
   if (!isSupabaseConfigured()) {
     return json(res, 503, { ok: false, error: 'supabase_not_configured' });
-  }
-
-  if (!isStripeCheckoutConfigured()) {
-    return json(res, 503, { ok: false, error: 'stripe_not_configured' });
   }
 
   try {
@@ -202,11 +202,13 @@ module.exports = async function handler(req, res) {
     } else {
       const tRes = await sb
         .from('tickets')
-        .select('id, name, price, ticket_type')
+        .select('id, name, price, ticket_type, visibility')
         .eq('event_id', eventId)
         .order('created_at', { ascending: true });
       if (tRes.error) throw new Error(tRes.error.message);
-      const paid = (tRes.data || []).find((t) => parsePriceNum(t.price) > 0);
+      const paid = (tRes.data || []).find(
+        (t) => !isMembersOnlyTicket(t) && parsePriceNum(t.price) > 0
+      );
       if (paid) {
         ticketId = paid.id;
         ticketRow = paid;
@@ -227,10 +229,24 @@ module.exports = async function handler(req, res) {
       requestedQty = 1;
     }
     if (isMembersOnly) {
+      if (!session || !sessionEmail) {
+        return json(res, 401, {
+          ok: false,
+          error: 'not_authenticated',
+          message: 'Sign in with the email on this group’s member roster to book this ticket.',
+        });
+      }
+      if (submittedEmail && submittedEmail !== sessionEmail) {
+        return json(res, 403, {
+          ok: false,
+          error: 'checkout_email_mismatch',
+          message: 'Member tickets must be booked using your signed-in email address.',
+        });
+      }
       try {
         await assertMembersOnlyBookingAllowed(sb, {
           organiserId: evRes.data.organiser_id,
-          email: checkoutEmail,
+          email: sessionEmail,
         });
       } catch (memberErr) {
         const code = memberErr.message || 'members_only_not_eligible';
@@ -341,6 +357,10 @@ module.exports = async function handler(req, res) {
         error: 'free_ticket_use_complete_booking',
         message: 'This is a free ticket — no payment is required.',
       });
+    }
+
+    if (!isStripeCheckoutConfigured()) {
+      return json(res, 503, { ok: false, error: 'stripe_not_configured' });
     }
 
     if (!isAlumni && !isMembersOnly) {

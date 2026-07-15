@@ -68,6 +68,16 @@ const MEMBER_QUESTIONS = [
   { q: 'How can I see who has attended my event?', expect: /Attendees|registered|\/organiser\//i },
   { q: 'What do I fill in after choosing the event format?', expect: /listing details|title|tickets/i },
   { q: 'What should I write in my event description?', expect: /who the event is for|keywords|filter/i },
+  { q: 'What is a member roster?', expect: /Member roster|members only|\/organiser\/member-roster/i },
+  {
+    q: 'How do I set up a members only ticket with the member roster?',
+    expect: /Members only ticket|member roster|no access codes/i,
+  },
+  { q: 'How do I import my member list as CSV?', expect: /Import CSV|email.*required|expires/i },
+  {
+    q: 'A networking group added me to their member roster — what does that mean?',
+    expect: /member-only|\/account\/|sign in/i,
+  },
 ];
 
 let failed = 0;

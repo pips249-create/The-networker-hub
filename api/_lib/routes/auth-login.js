@@ -99,10 +99,25 @@ module.exports = async function handler(req, res) {
       const { getSupabaseAdmin } = require('../supabase');
       const { claimRosterEntriesForAttendee } = require('../organiser-member-roster');
       const sb = getSupabaseAdmin();
-      const att = await sb.from('attendees').select('id').eq('email', sessionUser.email).maybeSingle();
+      const normalizedEmail = String(sessionUser.email || '').trim().toLowerCase();
+      const attendeeUpsert = await sb.from('attendees').upsert(
+        {
+          email: normalizedEmail,
+          name: sessionUser.name || null,
+          supabase_user_id: sessionUser.sub,
+        },
+        { onConflict: 'email' }
+      );
+      if (attendeeUpsert.error) throw new Error(attendeeUpsert.error.message);
+      const att = await sb
+        .from('attendees')
+        .select('id')
+        .eq('email', normalizedEmail)
+        .maybeSingle();
+      if (att.error) throw new Error(att.error.message);
       if (att.data?.id) {
         await claimRosterEntriesForAttendee(sb, {
-          email: sessionUser.email,
+          email: normalizedEmail,
           attendeeId: att.data.id,
         });
       }

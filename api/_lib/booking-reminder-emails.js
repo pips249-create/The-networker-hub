@@ -39,6 +39,7 @@ async function sendDueBookingReminders(sb) {
     .select('id, attendee_id, event_id, ticket_id, meeting_link, quantity, amount_paid, payment_status, application_status, reminder_email_sent_at, created_at')
     .in('event_id', eventIds)
     .is('reminder_email_sent_at', null)
+    .is('cancelled_at', null)
     .in('payment_status', ['Paid', 'Free'])
     .eq('application_status', 'Approved');
 
