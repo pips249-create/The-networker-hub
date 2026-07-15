@@ -173,6 +173,11 @@ html:has(.home-page) {
   .home-what-pillar:hover {
     transform: none;
   }
+
+  .home-what-pillar:hover .home-pillar-sample-stack > .is-back,
+  .home-what-pillar:hover .home-pillar-sample-stack > .is-front {
+    transform: none;
+  }
 }
 
 /* ─── Hero ─── */
@@ -686,9 +691,9 @@ html:has(.home-page) {
 
 .home-what-pillar-visual {
   position: relative;
-  flex: 0 0 188px;
-  height: 188px;
-  min-height: 188px;
+  flex: 0 0 200px;
+  height: 200px;
+  min-height: 200px;
   overflow: hidden;
 }
 
@@ -699,7 +704,7 @@ html:has(.home-page) {
   gap: 12px;
   height: 100%;
   min-height: 0;
-  padding: 20px 18px;
+  padding: 22px 18px 20px;
   box-sizing: border-box;
   pointer-events: none;
   user-select: none;
@@ -731,6 +736,15 @@ html:has(.home-page) {
   background: linear-gradient(165deg, #dff3ee 0%, #bfe3db 100%);
 }
 
+.home-pillar-sample-stack {
+  position: relative;
+  min-height: 118px;
+}
+
+.home-pillar-sample-stack > article {
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s ease, opacity 0.45s ease;
+}
+
 .home-pillar-sample {
   display: flex;
   flex-direction: column;
@@ -746,15 +760,44 @@ html:has(.home-page) {
   border: 1px solid rgba(45, 35, 50, 0.1);
   border-radius: 12px;
   box-shadow: 0 8px 22px rgba(45, 35, 50, 0.12);
+}
+
+.home-pillar-sample-stack > .is-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: scale(0.92) translate(-12px, -8px) rotate(-3.5deg);
+  opacity: 0.72;
+  filter: saturate(0.88);
+  z-index: 1;
+  box-shadow: 0 4px 14px rgba(45, 35, 50, 0.1);
+}
+
+.home-pillar-sample-stack > .is-front {
+  position: relative;
+  z-index: 2;
+  transform: translate(6px, 8px);
   animation: home-pillar-float 5.5s ease-in-out infinite;
 }
 
-.home-what-pillars > li:nth-child(2) .home-pillar-sample {
+.home-what-pillars > li:nth-child(2) .home-pillar-sample-stack > .is-front {
   animation-delay: 0.45s;
 }
 
-.home-what-pillars > li:nth-child(3) .home-pillar-sample {
+.home-what-pillars > li:nth-child(3) .home-pillar-sample-stack > .is-front {
   animation-delay: 0.9s;
+}
+
+.home-what-pillar:hover .home-pillar-sample-stack > .is-back {
+  transform: scale(0.94) translate(-20px, -12px) rotate(-6deg);
+  opacity: 0.86;
+}
+
+.home-what-pillar:hover .home-pillar-sample-stack > .is-front {
+  transform: translate(8px, 4px) scale(1.02);
+  animation: none;
+  box-shadow: 0 12px 28px rgba(45, 35, 50, 0.16);
 }
 
 .home-pillar-sample-tag {
