@@ -91,6 +91,28 @@
       ],
       footerLinks: false,
     },
+    {
+      id: 'd',
+      label: 'D · Dual CTA',
+      layout: 'dual-cta',
+      strategy: 'Split the journey in the headline',
+      note: '"Find your next\u2026" stays open, then two equal CTA pills let visitors self-select events vs opportunities, each with a short explainer underneath.',
+      kicker: 'UK business networking',
+      titleLine: 'Find your next\u2026',
+      tagline: 'Browse free across the UK\u2019s business network. Sign up only when you\u2019re ready to book or enquire.',
+      ctaPills: [
+        {
+          href: '/events/',
+          label: 'UK networking event',
+          detail: 'Breakfast meetings, conferences, training, and exhibitions near you.',
+        },
+        {
+          href: '/opportunities/',
+          label: 'UK business opportunity',
+          detail: 'Franchises, partnerships, side hustles, and deals to explore.',
+        },
+      ],
+    },
   ];
 
   var STAT_ICONS = {
@@ -156,7 +178,59 @@
     );
   }
 
+  function renderDualCtaPills(pills) {
+    if (!pills || !pills.length) return '';
+    return (
+      '<div class="home-hero-cta-pills" role="group" aria-label="Choose where to start">' +
+      pills
+        .map(function (pill) {
+          return (
+            '<a class="home-hero-cta-pill" href="' +
+            esc(pill.href) +
+            '">' +
+            '<span class="home-hero-cta-pill-label">' +
+            esc(pill.label) +
+            '</span>' +
+            '<span class="home-hero-cta-pill-detail">' +
+            esc(pill.detail) +
+            '</span>' +
+            '</a>'
+          );
+        })
+        .join('') +
+      '</div>'
+    );
+  }
+
+  function renderDualCtaHero(variant) {
+    return (
+      '<header class="home-hero-copy home-hero-copy--dual-cta">' +
+      '<p class="home-hero-kicker">' +
+      esc(variant.kicker) +
+      '</p>' +
+      '<h1 class="hero-title hero-title--dual-cta">' +
+      '<span class="hero-title-line">' +
+      esc(variant.titleLine) +
+      '</span>' +
+      '</h1>' +
+      renderDualCtaPills(variant.ctaPills) +
+      '<p class="hero-tagline hero-tagline--dual-cta">' +
+      esc(variant.tagline) +
+      '</p>' +
+      '</header>' +
+      '<p class="home-hero-search-note home-hero-search-note--dual-cta">' +
+      '<a href="/events/?mode=organisers">Find organisers</a>' +
+      '<span aria-hidden="true">\u00b7</span>' +
+      '<a href="/events/">Browse all events</a>' +
+      '</p>'
+    );
+  }
+
   function renderHero(variant) {
+    if (variant.layout === 'dual-cta') {
+      return renderDualCtaHero(variant);
+    }
+
     var footerLinks = variant.footerLinks
       ? '<p class="home-hero-search-note">' +
         '<a href="/events/?mode=organisers">Find organisers</a>' +

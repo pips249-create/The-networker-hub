@@ -175,6 +175,78 @@
   font-size: 14px;
 }
 
+/* Option D — dual headline CTAs */
+.home-page .hero-title--dual-cta {
+  margin-bottom: 6px;
+}
+
+.home-page .home-hero-cta-pills {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-width: 40rem;
+  margin: 18px auto 0;
+}
+
+.home-page .home-hero-cta-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 112px;
+  padding: 18px 16px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.98);
+  box-shadow: 0 14px 34px rgba(45, 35, 50, 0.16);
+  color: var(--charcoal);
+  text-align: center;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.home-page .home-hero-cta-pill:hover {
+  transform: translateY(-2px);
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(45, 35, 50, 0.2);
+  color: var(--charcoal);
+}
+
+.home-page .home-hero-cta-pill:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.home-page .home-hero-cta-pill-label {
+  display: block;
+  font-family: var(--font-serif, 'DM Serif Display', Georgia, serif);
+  font-size: clamp(1.05rem, 2.4vw, 1.28rem);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--charcoal);
+}
+
+.home-page .home-hero-cta-pill-detail {
+  display: block;
+  max-width: 16rem;
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.home-page .hero-tagline--dual-cta {
+  margin-top: 18px;
+  margin-bottom: 0;
+}
+
+.home-page .home-hero-search-note--dual-cta {
+  margin-top: 14px;
+}
+
 @media (max-width: 720px) {
   .home-hero-preview-bar {
     flex-direction: column;
@@ -188,5 +260,15 @@
   .home-hero-preview-back {
     order: 3;
     text-align: center;
+  }
+
+  .home-page .home-hero-cta-pills {
+    grid-template-columns: 1fr;
+    max-width: 22rem;
+  }
+
+  .home-page .home-hero-cta-pill {
+    min-height: 96px;
+    padding: 16px 18px 14px;
   }
 }
