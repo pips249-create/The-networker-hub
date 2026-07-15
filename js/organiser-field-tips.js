@@ -37,7 +37,7 @@
     'alumni-fast-pass': {
       title: 'Previous Attendees',
       body:
-        'Optional hidden ticket for previous attendees of a past event. Send locked booking links from your dashboard after publish — great for repeat conferences.',
+        'Optional returning ticket for previous attendees of a past event. Send locked booking links from your dashboard after publish — great for repeat conferences.',
       hubertPrompt: 'What is Previous Attendees for repeat events?',
     },
     'vat-treatment': {

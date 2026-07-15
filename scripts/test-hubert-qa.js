@@ -51,7 +51,7 @@ const MEMBER_QUESTIONS = [
   { q: 'Can I change the application questions asked?', expect: /fixed|cannot be changed|industry/i },
   {
     q: 'Can I create a paid ticket as well as offering guest visit tickets?',
-    expect: /Yes.*Enable guest visit programme.*paid/is,
+    expect: /Yes.*enable(?: the)? guest visit programme.*paid/is,
   },
   {
     q: 'What is the difference between ticket types, guest visit programme, and Category Exclusivity?',

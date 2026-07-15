@@ -85,7 +85,7 @@ const KNOWLEDGE_SECTIONS = [
     title: 'ORGANISER TICKETS & ATTENDEES',
     body:
       'TICKET SETUP (event-tickets.html): choose Ticket types (open booking) or Category Exclusivity — these two attendance modes are mutually exclusive. ' +
-      'OPEN BOOKING: add one row per ticket tier (Standard, Early bird, etc.) with price, quantity, and sale dates. Optionally enable the guest visit programme: newcomers get 1–3 complimentary visits (Hub maximum) across your organiser page before paid member tickets unlock. Use “Member-only for this event” to skip guest passes on a specific date (e.g. conferences) while keeping paid tickets available. Optionally add a private ticket with an access code: the public never sees it; members enter the code on the event page to unlock member pricing. Previous Attendees is an optional add-on: a hidden ticket for past attendees, with invites sent from your dashboard after publish. ' +
+      'OPEN BOOKING: add one row per ticket tier (Standard, Early bird, etc.) with price, quantity, and sale dates. Optionally enable the guest visit programme: newcomers get 1–3 complimentary visits (Hub maximum) across your organiser page before paid member tickets unlock. Use “Member-only for this event” to skip guest passes on a specific date (e.g. conferences) while keeping paid tickets available. Optionally add a Members only ticket: the public never sees it; people on your Member roster see it automatically when signed in with their roster email. Previous Attendees is an optional add-on: a returning ticket for past attendees, with invites sent from your dashboard after publish. ' +
       'CATEGORY EXCLUSIVITY: prospective attendees apply instead of buying straight away. They answer two fixed questions — their industry and job title. You approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. Set an optional price (leave at £0 for free), places limit, and application closing date. Cannot be combined with open ticket types on the same event. ' +
       'APPLICATION QUESTIONS: under Category Exclusivity, industry and job title are fixed and cannot be changed. For open ticket booking, you can optionally tick boxes under Attendee information at booking to note food is included or to collect dietary or accessibility requirements at checkout. ' +
       'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event or by new vs returning. Each row shows visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page. Download attendees CSV or export printable name badges (PDF). This shows ticket registrations — not on-the-day check-in.',
@@ -255,7 +255,7 @@ const FALLBACK_REPLIES = [
   {
     match: /difference.*(ticket type|guest visit|category exclusiv)|ticket type.*guest visit.*category|guest visit.*category exclusiv|attendance mode/i,
     reply:
-      'There are two attendance modes: Ticket types (open booking) or Category Exclusivity (application-based). Guest visit programme is an optional add-on within Ticket types — tick Enable guest visit programme to offer complimentary trial visits alongside your paid tiers. Category Exclusivity replaces open booking: applicants share industry and job title, you approve or deny, then they pay via a link. Previous Attendees is a separate optional add-on for inviting past attendees to a hidden returning rate.',
+      'There are two attendance modes: Ticket types (open booking) or Category Exclusivity (application-based). Guest visit programme is an optional add-on within Ticket types — tick Enable guest visit programme to offer complimentary trial visits alongside your paid tiers. Category Exclusivity replaces open booking: applicants share industry and job title, you approve or deny, then they pay via a link. Previous Attendees is a separate optional add-on for inviting past attendees to a returning rate.',
   },
   {
     match: /\bvat\b|value added tax/i,
@@ -388,6 +388,11 @@ const FALLBACK_REPLIES = [
       'The guest visit programme is an optional add-on on the tickets step. Enable it to offer 1–3 complimentary visits so newcomers can try your group before buying a paid member ticket. The allowance applies across your organiser page. For member-only dates, tick “Member-only for this event” while keeping paid tickets live.',
   },
   {
+    match: /access code|private ticket|members? only ticket|member roster ticket|hidden ticket/i,
+    reply:
+      'Use a Members only ticket on the tickets step. It stays off the public event page; people on your Member roster see it automatically when they sign in with their roster email. Manage the list under Member roster on your organiser page — there are no access codes.',
+  },
+  {
     match: /disallow guest|guest pass.*(off|disable|opt)|member.?only (date|event|evening)|no guest (pass|visit).*conference/i,
     reply:
       'On the tickets step, enable the guest visit programme, then tick “Member-only for this event”. Paid member tickets stay available and visitors can book them directly — complimentary guest passes are hidden for that date. Useful for conferences or member-only evenings.',
@@ -425,7 +430,7 @@ const FALLBACK_REPLIES = [
   {
     match: /previous attendees?|alumni ticket|alumni rate|past attendee invite/i,
     reply:
-      'Previous Attendees lets you invite past confirmed attendees to an exclusive returning ticket rate on a new event — ideal for annual conferences or repeat summits. Enable it on the event tickets step, set your previous attendee price, and send invites from the organiser dashboard. Only invited past attendees can book the hidden ticket.',
+      'Previous Attendees lets you invite past confirmed attendees to an exclusive returning ticket rate on a new event — ideal for annual conferences or repeat summits. Enable it on the event tickets step, set your previous attendee price, and send invites from the organiser dashboard. Only invited past attendees can book the returning ticket.',
   },
   {
     match: /who (has |)(attended|registered|booked)|see (who|my) (attendee|registration|book)|view.*attendee|who is coming|attendee list|see registrations/i,

@@ -1767,11 +1767,6 @@
       alumni_not_eligible: 'This previous attendee ticket is invite-only. Use the link from your email.',
       not_invited: 'This previous attendee ticket is invite-only. Use the link from your email.',
       email_mismatch: 'Sign in with the email address that received the previous attendee invite.',
-      access_code_required: 'Enter your access code to book this ticket.',
-      access_code_not_found: 'That access code is not valid for this event.',
-      access_code_expired: 'That access code has expired or reached its usage limit.',
-      access_code_ticket_mismatch: 'That access code does not unlock this ticket type.',
-      access_code_invalid: 'That access code is not valid for this ticket.',
       already_going: "You're already going to this event. View your ticket in My Hub.",
       not_authenticated: 'Please sign in or create a free account to complete your booking.',
     };
@@ -1821,9 +1816,12 @@
   async function completeFreeBooking(ev, ticketId, qty, attendee) {
     const isGuestVisit = Boolean(ev.guestVisitTier && ev.guestVisitTier.id === ticketId);
     const isAlumni = Boolean(ev.alumniTier && ev.alumniTier.id === ticketId);
+    const isMembersOnly = Boolean(
+      (rosterMemberTickets || []).some((tier) => tier.id === ticketId)
+    );
     saveBookingPending(ev, ticketId, qty, attendee);
     const endpoint =
-      isGuestVisit || isAlumni
+      isGuestVisit || isAlumni || isMembersOnly
         ? '/api/auth/create-checkout'
         : '/api/auth/complete-booking';
     const body = {
