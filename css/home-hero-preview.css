@@ -176,6 +176,36 @@
 }
 
 /* Option D — dual headline CTAs */
+.home-page .home-hero-kicker--lede {
+  display: block;
+  max-width: 36rem;
+  margin: 0 auto 14px;
+  padding: 12px 18px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.45;
+  text-transform: none;
+  white-space: normal;
+  text-wrap: pretty;
+  animation: none;
+}
+
+.home-page .home-hero-kicker-cta {
+  display: inline;
+  margin-left: 0.15em;
+  font-weight: 700;
+  color: #fff8ec;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(255, 248, 236, 0.55);
+}
+
+.home-page .home-hero-kicker-cta:hover {
+  color: #fff;
+  text-decoration-color: #fff;
+}
+
 .home-page .hero-title--dual-cta {
   margin-bottom: 6px;
 }

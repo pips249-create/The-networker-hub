@@ -97,9 +97,10 @@
       layout: 'dual-cta',
       strategy: 'Split the journey in the headline',
       note: '"Find your next\u2026" stays open, then two equal CTA pills let visitors self-select events vs opportunities, each with a short explainer underneath.',
-      kicker: 'UK business networking',
+      kicker: 'This hub lets you find networking meetings, conferences, business opportunities, side hustles, training and so much more.',
+      kickerCta: 'Get started',
       titleLine: 'Find your next\u2026',
-      tagline: 'Browse free across the UK\u2019s business network. Sign up only when you\u2019re ready to book or enquire.',
+      tagline: '',
       ctaPills: [
         {
           href: '/events/',
@@ -208,20 +209,26 @@
   }
 
   function renderDualCtaHero(variant) {
+    var kickerHtml = variant.kickerCta
+      ? '<p class="home-hero-kicker home-hero-kicker--lede">' +
+        esc(variant.kicker) +
+        ' <a class="home-hero-kicker-cta" href="/events/">' +
+        esc(variant.kickerCta) +
+        '</a></p>'
+      : '<p class="home-hero-kicker">' + esc(variant.kicker) + '</p>';
+
     return (
       '<header class="home-hero-copy home-hero-copy--dual-cta">' +
-      '<p class="home-hero-kicker">' +
-      esc(variant.kicker) +
-      '</p>' +
+      kickerHtml +
       '<h1 class="hero-title hero-title--dual-cta">' +
       '<span class="hero-title-line">' +
       esc(variant.titleLine) +
       '</span>' +
       '</h1>' +
       renderDualCtaPills(variant.ctaPills) +
-      '<p class="hero-tagline hero-tagline--dual-cta">' +
-      esc(variant.tagline) +
-      '</p>' +
+      (variant.tagline
+        ? '<p class="hero-tagline hero-tagline--dual-cta">' + esc(variant.tagline) + '</p>'
+        : '') +
       '</header>' +
       '<p class="home-hero-search-note home-hero-search-note--dual-cta">' +
       '<a href="/events/?mode=organisers">Find organisers</a>' +
