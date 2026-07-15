@@ -88,6 +88,7 @@ module.exports = async function handler(req, res) {
     const cta_url = String(body.cta_url || '').trim();
     const company_name = String(body.company_name || '').trim();
     const cta_color = String(body.cta_color || '').trim();
+    const isCityPartner = /^networking_city_partner_/i.test(slot);
 
     if (!cta_label || !cta_url) {
       return json(res, 400, { ok: false, error: 'missing_cta' });
@@ -106,7 +107,7 @@ module.exports = async function handler(req, res) {
         logo_url,
         company_name,
         active: body.active !== false,
-        include_in_emails: body.include_in_emails !== false,
+        include_in_emails: isCityPartner ? false : body.include_in_emails !== false,
       });
       return json(res, 200, { ok: true, block, slot, updatedAt: new Date().toISOString() });
     } catch (e) {

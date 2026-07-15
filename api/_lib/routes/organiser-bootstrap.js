@@ -3,7 +3,13 @@ const { getOrganiserAccessStatus } = require('../organiser-access-guard');
 
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
-  const { json, setCors, getOrganiserWorkspace, airtableSetupHint } = api;
+  const {
+    json,
+    setCors,
+    getLeanOrganiserWorkspace,
+    getOrganiserWorkspace,
+    airtableSetupHint,
+  } = api;
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -12,7 +18,10 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return json(res, 405, { error: 'method_not_allowed' });
 
   try {
-    const ws = await getOrganiserWorkspace(req);
+    const eventsOnly = String(req.query?.eventsOnly || '') === '1';
+    const ws = eventsOnly
+      ? await getOrganiserWorkspace(req)
+      : await getLeanOrganiserWorkspace(req);
     if (!ws.ok && ws.error === 'not_authenticated') {
       return json(res, ws.status || 401, { error: ws.error });
     }
@@ -36,7 +45,7 @@ module.exports = async function handler(req, res) {
           pendingClaimCount: 0,
         };
 
-    if (String(req.query?.eventsOnly || '') === '1') {
+    if (eventsOnly) {
       return json(res, 200, {
         ok: true,
         events: ws.events,
@@ -88,6 +97,7 @@ module.exports = async function handler(req, res) {
       eventSummaries: ws.eventSummaries || [],
       reviews: ws.reviews || [],
       groupRankings: ws.groupRankings || {},
+      pendingApplications: ws.pendingApplications || { count: 0, preview: [] },
       eventsPagination: ws.eventsPagination || {
         total: ws.events.length,
         limit: ws.events.length,

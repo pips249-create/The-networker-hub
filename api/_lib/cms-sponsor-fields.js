@@ -64,9 +64,13 @@ function hasValidCtaUrl(url) {
   return false;
 }
 
+function isCityPartnerSlot(slot) {
+  return String(slot || '').trim().startsWith('networking_city_partner_');
+}
+
 function isCompactSponsorSlot(slot) {
   const key = String(slot || '').trim();
-  return key.endsWith('_sidebar_ad') || key === 'event_page_banner_ad';
+  return key.endsWith('_sidebar_ad') || key === 'event_page_banner_ad' || isCityPartnerSlot(key);
 }
 
 /** Whether a cms_blocks row is ready for booking emails (logo/name + website link). */
@@ -142,6 +146,7 @@ module.exports = {
   hasSponsorLogo,
   hasValidCtaUrl,
   isCompactSponsorSlot,
+  isCityPartnerSlot,
   isEmailSponsorBlock,
   isPublishableSponsorBlock,
   normalizeSponsorBlock,

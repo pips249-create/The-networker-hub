@@ -394,7 +394,7 @@ async function enrichEventsWithPayoutData(events) {
     regsByEvent[r.event_id].push(r);
   });
 
-  return events.map((ev) => {
+  const enrichedEvents = events.map((ev) => {
     const regs = regsByEvent[ev.id] || [];
     const cancellation = cancellationsByEvent[ev.id] || null;
     const revenueContext = buildRevenueContext(ev, cancellation);
@@ -415,15 +415,15 @@ async function enrichEventsWithPayoutData(events) {
       breakdown
     );
   });
+
+  return { events: enrichedEvents, registrations, cancellations };
 }
 
 async function enrichOrganiserWorkspaceSales(events, tickets) {
-  const enrichedEvents = await enrichEventsWithPayoutData(events);
-  const eventIds = enrichedEvents.map((e) => e.id).filter(Boolean);
-  const [registrations, cancellations] = await Promise.all([
-    listRegistrationsForEvents(eventIds),
-    listCancellationsForEvents(eventIds),
-  ]);
+  const payoutData = await enrichEventsWithPayoutData(events);
+  const enrichedEvents = payoutData.events;
+  const registrations = payoutData.registrations;
+  const cancellations = payoutData.cancellations;
   const cancellationsByEvent = mapLatestCancellationsByEvent(cancellations);
   const revenueContextByEventId = {};
   enrichedEvents.forEach((ev) => {
@@ -443,6 +443,9 @@ async function buildOrganiserWorkspaceSummary(groupIds, adminView) {
       totalTicketsSold: 0,
       revenueByGroupId: {},
       ticketsSoldByGroupId: {},
+      registrations: [],
+      cancellations: [],
+      revenueContextByEventId: {},
     };
   }
 
@@ -506,6 +509,9 @@ async function buildOrganiserWorkspaceSummary(groupIds, adminView) {
     totalTicketsSold,
     revenueByGroupId,
     ticketsSoldByGroupId,
+    registrations,
+    cancellations,
+    revenueContextByEventId,
   };
 }
 

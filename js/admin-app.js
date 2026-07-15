@@ -225,6 +225,41 @@
   var eventSearchTimer = null;
   var opportunitySearchTimer = null;
 
+  var NETWORKING_CITY_PARTNER_SLUGS = [
+    { slug: 'central-london', name: 'Central London' },
+    { slug: 'north-london', name: 'North London' },
+    { slug: 'south-london', name: 'South London' },
+    { slug: 'east-london', name: 'East London' },
+    { slug: 'west-london', name: 'West London' },
+    { slug: 'manchester', name: 'Manchester' },
+    { slug: 'birmingham', name: 'Birmingham' },
+    { slug: 'glasgow', name: 'Glasgow' },
+    { slug: 'edinburgh', name: 'Edinburgh' },
+    { slug: 'leeds', name: 'Leeds' },
+    { slug: 'liverpool', name: 'Liverpool' },
+    { slug: 'newcastle', name: 'Newcastle' },
+    { slug: 'bristol', name: 'Bristol' },
+    { slug: 'sheffield', name: 'Sheffield' },
+    { slug: 'nottingham', name: 'Nottingham' },
+    { slug: 'cardiff', name: 'Cardiff' },
+    { slug: 'brighton', name: 'Brighton' },
+    { slug: 'cambridge', name: 'Cambridge' },
+    { slug: 'oxford', name: 'Oxford' },
+    { slug: 'chester', name: 'Chester' },
+  ];
+
+  function isCityPartnerSlotKey(key) {
+    return String(key || '').indexOf('networking_city_partner_') === 0;
+  }
+
+  function cityPartnerSlugFromSlot(slotKey) {
+    return String(slotKey || '').replace(/^networking_city_partner_/, '');
+  }
+
+  function cityPartnerSlotFromSlug(slug) {
+    return 'networking_city_partner_' + String(slug || '').trim();
+  }
+
   /** CMS ad placements — each maps to a cms_blocks.slot row. */
   var CMS_AD_SLOTS = [
     {
@@ -329,13 +364,35 @@
   ];
 
   function cmsSlotByKey(key) {
-    for (var i = 0; i < CMS_AD_SLOTS.length; i++) {
-      if (CMS_AD_SLOTS[i].key === key) return CMS_AD_SLOTS[i];
+    if (isCityPartnerSlotKey(key)) {
+      var slug = cityPartnerSlugFromSlot(key);
+      var region = null;
+      for (var i = 0; i < NETWORKING_CITY_PARTNER_SLUGS.length; i++) {
+        if (NETWORKING_CITY_PARTNER_SLUGS[i].slug === slug) {
+          region = NETWORKING_CITY_PARTNER_SLUGS[i];
+          break;
+        }
+      }
+      return {
+        key: key,
+        group: 'City pages',
+        label: 'City Partner — ' + (region ? region.name : slug),
+        preview: 'city_partner',
+        help: 'Logo + CTA on /networking/' + slug + ' — website only, not in emails.',
+        tagline: '',
+        ctaLabel: 'Find out more',
+        ctaUrl: 'https://',
+        ctaColor: '#2d2636',
+      };
+    }
+    for (var j = 0; j < CMS_AD_SLOTS.length; j++) {
+      if (CMS_AD_SLOTS[j].key === key) return CMS_AD_SLOTS[j];
     }
     return CMS_AD_SLOTS[0];
   }
 
   function cmsSlotExists(key) {
+    if (isCityPartnerSlotKey(key)) return true;
     for (var i = 0; i < CMS_AD_SLOTS.length; i++) {
       if (CMS_AD_SLOTS[i].key === key && CMS_AD_SLOTS[i].preview !== 'carousel') return true;
     }
@@ -562,6 +619,10 @@
         title = 'Home page — Partners & sponsors';
         subtitle =
           'Logo strip on the home page. Add companies with logo, name, and CTA — shown when the section is active.';
+      } else if (fullHash === 'sponsorship/city-partners') {
+        title = 'City Partner placements';
+        subtitle =
+          'Logo + CTA on /networking/:city pages — website only, not included in hub emails.';
       } else if (fullHash === 'sponsorship/event-page-carousel') {
         title = 'Event & organiser pages — Sponsor carousel (3 ads)';
         subtitle =
@@ -4878,6 +4939,10 @@
       renderHomePartnersPage();
       return;
     }
+    if (hash === 'sponsorship/city-partners') {
+      renderCityPartnersPage();
+      return;
+    }
     if (hash === 'sponsorship/event-page-carousel') {
       renderEventCarouselPage('event_page_carousel_ads');
       return;
@@ -4990,6 +5055,18 @@
       '<p id="sponsor-picker-status" class="text-sm text-slate-500">Loading ad statuses…</p>' +
       groupsHtml +
       '<section class="admin-ad-picker-group">' +
+      '<h3 class="admin-ad-picker-group-title">City pages</h3>' +
+      '<div class="admin-ad-picker-grid admin-ad-picker-grid--single">' +
+      '<a href="#sponsorship/city-partners" class="admin-ad-picker-card admin-ad-picker-card--city-partners">' +
+      '<div class="admin-ad-picker-card-head">' +
+      '<span class="admin-ad-picker-type">Regional</span>' +
+      '<span class="admin-ad-picker-status" id="city-partners-picker-status">…</span>' +
+      '</div>' +
+      '<p class="admin-ad-picker-label">City Partner placements</p>' +
+      '<p class="admin-ad-picker-help">Logo + CTA on /networking/:city intro blocks — website only, not in emails.</p>' +
+      '<span class="admin-ad-picker-action">Manage cities →</span>' +
+      '</a></div></section>' +
+      '<section class="admin-ad-picker-group">' +
       '<h3 class="admin-ad-picker-group-title">Home page</h3>' +
       '<div class="admin-ad-picker-grid admin-ad-picker-grid--single">' +
       '<a href="#sponsorship/home-partners" class="admin-ad-picker-card admin-ad-picker-card--partners">' +
@@ -5077,6 +5154,34 @@
         }
       });
 
+    Promise.all(
+      NETWORKING_CITY_PARTNER_SLUGS.map(function (region) {
+        var slotKey = cityPartnerSlotFromSlug(region.slug);
+        return adminGet('/api/admin/sponsor?slot=' + encodeURIComponent(slotKey))
+          .then(function (data) {
+            return { slotKey: slotKey, data: data };
+          })
+          .catch(function () {
+            return { slotKey: slotKey, data: null };
+          });
+      })
+    ).then(function (rows) {
+      var live = 0;
+      rows.forEach(function (row) {
+        if (row.data && row.data.block && row.data.block.active !== false) live += 1;
+      });
+      var el = document.getElementById('city-partners-picker-status');
+      if (!el) return;
+      if (!rows.length) {
+        el.innerHTML = '<span class="admin-ad-picker-badge admin-ad-picker-badge--empty">Not set yet</span>';
+        return;
+      }
+      el.innerHTML =
+        live > 0
+          ? '<span class="admin-ad-picker-badge admin-ad-picker-badge--live">' + live + ' live</span>'
+          : '<span class="admin-ad-picker-badge admin-ad-picker-badge--empty">Not set yet</span>';
+    });
+
     CMS_AD_SLOTS.filter(function (slot) {
       return slot.preview === 'carousel';
     }).forEach(function (slot) {
@@ -5106,6 +5211,66 @@
         })
         .catch(function () {
           var el = document.querySelector('[data-carousel-status="' + slot.key + '"]');
+          if (el) {
+            el.innerHTML =
+              '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
+          }
+        });
+    });
+  }
+
+  function renderCityPartnersPage() {
+    var cards = NETWORKING_CITY_PARTNER_SLUGS.map(function (region) {
+      var slotKey = cityPartnerSlotFromSlug(region.slug);
+      return (
+        '<a href="#sponsorship/' +
+        esc(slotKey) +
+        '" class="admin-ad-picker-card" data-city-partner-slot="' +
+        attrEsc(slotKey) +
+        '">' +
+        '<div class="admin-ad-picker-card-head">' +
+        '<span class="admin-ad-picker-type">City</span>' +
+        '<span class="admin-ad-picker-status" data-city-partner-status="' +
+        attrEsc(slotKey) +
+        '">…</span>' +
+        '</div>' +
+        '<p class="admin-ad-picker-label">' +
+        esc(region.name) +
+        '</p>' +
+        '<p class="admin-ad-picker-help">/networking/' +
+        esc(region.slug) +
+        '</p>' +
+        '<span class="admin-ad-picker-action">Edit placement →</span>' +
+        '</a>'
+      );
+    }).join('');
+
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      sponsorshipBackLinkHtml() +
+      '<section class="space-y-3">' +
+      '<h3 class="font-bold text-brand-900">City Partner placements</h3>' +
+      '<p class="text-sm text-slate-600">Logo + CTA on regional landing pages. Website only — never included in hub emails. When a city is live, the organiser CTA moves to a text link under the intro copy.</p>' +
+      '</section>' +
+      '<div class="admin-ad-picker-grid">' +
+      cards +
+      '</div></div>';
+
+    NETWORKING_CITY_PARTNER_SLUGS.forEach(function (region) {
+      var slotKey = cityPartnerSlotFromSlug(region.slug);
+      adminGet('/api/admin/sponsor?slot=' + encodeURIComponent(slotKey))
+        .then(function (data) {
+          var el = document.querySelector('[data-city-partner-status="' + slotKey + '"]');
+          if (!el) return;
+          if (!data || data.error) {
+            el.innerHTML =
+              '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
+            return;
+          }
+          el.innerHTML = sponsorSlotStatusBadge(data.block);
+        })
+        .catch(function () {
+          var el = document.querySelector('[data-city-partner-status="' + slotKey + '"]');
           if (el) {
             el.innerHTML =
               '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
@@ -5284,18 +5449,25 @@
         includeWrap.classList.toggle('flex', Boolean(emailScopes[currentSlotKey]));
       }
       if (emailScope) emailScope.textContent = emailScopes[currentSlotKey] || '';
-      if (heroFields) heroFields.hidden = slot.preview === 'compact';
+      if (heroFields) heroFields.hidden = slot.preview === 'compact' || slot.preview === 'city_partner';
       if (ctaUrlLabel) {
         ctaUrlLabel.textContent =
-          slot.preview === 'compact'
+          slot.preview === 'compact' || slot.preview === 'city_partner'
             ? 'Sponsor website URL (https:// — opens in a new tab)'
             : 'CTA link (https:// opens in a new tab, or mailto:)';
       }
       if (previewHint) {
-        previewHint.textContent =
-          slot.preview === 'compact'
-            ? 'Logo centred above the button — matches ' + slot.label.toLowerCase() + '.'
-            : 'Logo, tagline, and CTA — matches ' + slot.label.toLowerCase() + '.';
+        if (slot.preview === 'city_partner') {
+          previewHint.textContent =
+            'Logo + CTA only — matches the City Partner block on /networking/' +
+            cityPartnerSlugFromSlot(currentSlotKey) +
+            ' (not included in emails).';
+        } else {
+          previewHint.textContent =
+            slot.preview === 'compact'
+              ? 'Logo centred above the button — matches ' + slot.label.toLowerCase() + '.'
+              : 'Logo, tagline, and CTA — matches ' + slot.label.toLowerCase() + '.';
+        }
       }
     }
 
@@ -5319,10 +5491,16 @@
       var taglineHtml = sponsorHeadlineHtml(creative.tagline);
       var hasLogo = /^(https?:|\/|data:image\/)/i.test(String(creative.logoUrl || '').trim());
 
-      if (slot.preview === 'compact') {
+      if (slot.preview === 'compact' || slot.preview === 'city_partner') {
+        var badge =
+          slot.preview === 'city_partner'
+            ? 'City partner'
+            : 'Sponsored';
         el.innerHTML =
           '<aside class="relative rounded-xl border border-slate-200 bg-white p-4 pt-8 shadow-sm max-w-xs flex flex-col gap-3">' +
-          '<span class="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider text-slate-500">Sponsored</span>' +
+          '<span class="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider text-slate-500">' +
+          esc(badge) +
+          '</span>' +
           sponsorPreviewLogoHtml(creative.logoUrl, true) +
           '<span data-sponsor-preview-cta class="inline-block w-full text-center rounded-lg bg-[#2d2636] text-white text-xs font-bold px-3 py-2.5">' +
           esc(creative.ctaLabel) +
@@ -5458,7 +5636,7 @@
       }
       if (
         creative.active &&
-        slot.preview === 'compact' &&
+        (slot.preview === 'compact' || slot.preview === 'city_partner') &&
         !creative.logoUrl
       ) {
         setSponsorStatus('Upload or paste a logo before publishing an active sidebar ad.', 'error');
@@ -5470,7 +5648,7 @@
       }
       if (
         creative.active &&
-        slot.preview === 'compact' &&
+        (slot.preview === 'compact' || slot.preview === 'city_partner') &&
         (!/^https?:\/\//i.test(creative.ctaUrl) ||
           !String(creative.ctaUrl || '')
             .replace(/^https?:\/\//i, '')
@@ -5485,15 +5663,16 @@
 
       var payload = {
         slot: currentSlotKey,
-        title: slot.preview === 'compact' ? '' : creative.tagline,
+        title: slot.preview === 'compact' || slot.preview === 'city_partner' ? '' : creative.tagline,
         body: '',
         cta_label: creative.ctaLabel,
         cta_url: creative.ctaUrl,
         cta_color: creative.ctaColor,
-        company_name: slot.preview === 'compact' ? '' : creative.companyName,
+        company_name:
+          slot.preview === 'compact' || slot.preview === 'city_partner' ? '' : creative.companyName,
         logo_url: sponsorLogoBase64 ? '' : document.getElementById('sponsor-logo-url').value.trim(),
         active: creative.active,
-        include_in_emails: creative.includeInEmails,
+        include_in_emails: slot.preview === 'city_partner' ? false : creative.includeInEmails,
       };
       if (sponsorLogoBase64) {
         payload.logoBase64 = sponsorLogoBase64;

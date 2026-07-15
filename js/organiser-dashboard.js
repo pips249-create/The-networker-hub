@@ -10,6 +10,10 @@
   const expandedSeriesKeys = new Set();
   let eventsGroupingPromise = null;
   let bootstrapReady = false;
+  let attendeesLoadingPromise = null;
+  let teamLoadingPromise = null;
+  let eventsLoadingPromise = null;
+  let reviewsLoadingPromise = null;
 
   const filters = {
     eventsStatus: 'all',
@@ -43,13 +47,19 @@
     eventsChunkOffset: 0,
     eventsHasMore: false,
     eventsLoading: false,
+    eventsLoaded: false,
     eventsFullyLoaded: false,
     tickets: [],
     attendeesAll: [],
+    attendeesLoaded: false,
+    pendingApplicationsCount: 0,
+    pendingApplicationsPreview: [],
     cancellationsAll: [],
     reviews: [],
+    reviewsLoaded: false,
     groupRankings: {},
     teamMembers: [],
+    teamLoaded: false,
     teamMax: 10,
     teamCount: 0,
     teamSlotsRemaining: 10,
@@ -65,6 +75,7 @@
     organiserRole: 'owner',
     opportunityEnquiries: [],
     opportunityEnquiriesNewCount: 0,
+    opportunityEnquiriesLoaded: false,
     opportunities: [],
     opportunitiesLoaded: false,
     pendingClaimGroups: [],
@@ -110,6 +121,7 @@
     if (hasComputedWorkspaceSummary()) {
       return formatGbpAmount(state.workspaceSummary.totalRevenue);
     }
+    if (!state.eventsLoaded) return '—';
     const sum = state.events.reduce((s, ev) => s + (ev.revenueNum || 0), 0);
     return formatGbpAmount(sum);
   }
@@ -176,7 +188,7 @@
       if (el) el.textContent = val;
     };
     set('stat-events', String(state.eventsTotal || state.events.length));
-    set('stat-tickets', String(totalTicketsSold()));
+    set('stat-tickets', state.eventsLoaded || hasComputedWorkspaceSummary() ? String(totalTicketsSold()) : '—');
     set('stat-revenue', rev);
 
     const enquiries = state.opportunityEnquiries || [];
@@ -613,6 +625,10 @@
       eventsEl.textContent = text;
     }
     if (businessEl) {
+      if (!state.opportunityEnquiriesLoaded) {
+        businessEl.textContent = 'Open to view enquiries';
+        return;
+      }
       const newCount = Number(state.opportunityEnquiriesNewCount) || 0;
       const total = (state.opportunityEnquiries || []).length;
       if (newCount > 0) {
@@ -692,6 +708,7 @@
 
   function prefetchEventsInBackground() {
     if (state.eventsFullyLoaded || state.eventsLoading || !state.eventsHasMore) return;
+    if (!document.querySelector('[data-org-page="events"].is-active')) return;
     ensureAllEventsForGrouping()
       .then(function () {
         renderOverviewEvents();
@@ -700,6 +717,11 @@
       .catch(function () {
         /* non-fatal */
       });
+  }
+
+  function maybePrefetchEvents() {
+    if (!document.querySelector('[data-org-page="events"].is-active')) return;
+    prefetchEventsInBackground();
   }
 
   function api(path, options) {
@@ -898,7 +920,8 @@
     }
 
     const pending = pendingApplicationsList();
-    if (pending.length) {
+    const pendingCount = pendingApplicationsCount();
+    if (pendingCount) {
       const preview = pending
         .slice(0, 3)
         .map((a) => {
@@ -914,19 +937,19 @@
         })
         .join('');
       const more =
-        pending.length > 3
-          ? '<span class="org-notice-chip-more">+' + String(pending.length - 3) + ' more</span>'
+        pendingCount > 3
+          ? '<span class="org-notice-chip-more">+' + String(pendingCount - 3) + ' more</span>'
           : '';
       const first = pending[0];
       notices.push({
         id: 'applications',
         type: 'action',
         title:
-          pending.length === 1
+          pendingCount === 1
             ? 'Category Exclusivity application needs your decision'
-            : pending.length + ' Category Exclusivity applications need your decision',
+            : pendingCount + ' Category Exclusivity applications need your decision',
         text:
-          pending.length === 1
+          pendingCount === 1
             ? '<strong>' +
               esc(first.name || 'Someone') +
               '</strong> applied for a seat at <strong>' +
@@ -1145,14 +1168,16 @@
     root.querySelectorAll('[data-review-application]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const registrationId = btn.getAttribute('data-review-application');
-        const row = state.attendeesAll.find((a) => a.id === registrationId);
+        const row =
+          state.attendeesAll.find((a) => a.id === registrationId) ||
+          state.pendingApplicationsPreview.find((a) => a.id === registrationId);
         if (row && row.eventId) {
           filters.attendeesEvent = row.eventId;
           filters.attendeesPendingOnly = true;
         }
         closeNotificationsPanel();
         setRoute('events-attendees');
-        loadAttendeesAll().then(() => renderAttendees());
+        ensureAttendeesLoaded().then(() => renderAttendees());
       });
     });
 
@@ -1170,7 +1195,7 @@
           }
         }
         setRoute(route);
-        if (route === 'events-attendees') loadAttendeesAll().then(() => renderAttendees());
+        if (route === 'events-attendees') ensureAttendeesLoaded().then(() => renderAttendees());
       });
     });
   }
@@ -2021,20 +2046,89 @@
     if (titleEl) titleEl.textContent = t[0];
     if (subEl) subEl.textContent = t[1];
 
+    if (!bootstrapReady) return;
+
     if (eventsSubRoute === 'events-attendees') {
       fillAttendeesEventFilter();
-      loadAttendeesAll().then(() => renderAttendees());
+      ensureAttendeesLoaded().then(() => renderAttendees());
     } else if (eventsSubRoute === 'events-cancellations') {
       fillCancellationsEventFilter();
-      loadBootstrap({ silent: true })
-        .then(() => loadCancellationsAll())
+      loadCancellationsAll()
         .then(() => {
           renderCancellations();
           updateMyEventsTabCounts();
         });
+    } else if (eventsSubRoute === 'events-reviews') {
+      ensureReviewsLoaded().then(() => renderReviews());
     } else {
-      renderEventsPanel(eventsSubRoute);
+      ensureEventsLoaded().then(() => {
+        renderEventsPanel(eventsSubRoute);
+        maybePrefetchEvents();
+      });
     }
+  }
+
+  function ensureEventsLoaded(options) {
+    const force = Boolean(options && options.force);
+    if (state.eventsLoaded && !force) return Promise.resolve(true);
+    if (eventsLoadingPromise && !force) return eventsLoadingPromise;
+
+    state.eventsLoading = true;
+    eventsLoadingPromise = api(
+      '/api/organiser/bootstrap?eventsOnly=1&eventsLimit=' + EVENTS_FETCH_SIZE + '&eventsOffset=0'
+    )
+      .then(({ ok, data }) => {
+        if (!ok) throw new Error(data.message || data.error || 'Could not load events');
+        state.events = data.events || [];
+        state.upcomingEvents = data.upcomingEvents || [];
+        state.tickets = data.tickets || [];
+        state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
+        state.eventsChunkOffset = data.eventsPagination?.offset ?? 0;
+        state.eventsHasMore = Boolean(data.eventsPagination?.hasMore);
+        state.eventsFullyLoaded = !state.eventsHasMore;
+        state.eventsLoaded = true;
+        listPages.events = 1;
+        listPages.tickets = 1;
+        listPages.revenue = 1;
+        renderStats();
+        fillMyEventsFilters();
+        fillEventSelect(document.getElementById('ticket-event'));
+        return true;
+      })
+      .catch((err) => {
+        showOrganiserAlert(err.message || 'Could not load events', true);
+        return false;
+      })
+      .finally(() => {
+        state.eventsLoading = false;
+        eventsLoadingPromise = null;
+      });
+    return eventsLoadingPromise;
+  }
+
+  function ensureReviewsLoaded(options) {
+    const force = Boolean(options && options.force);
+    if (state.reviewsLoaded && !force) return Promise.resolve(true);
+    if (reviewsLoadingPromise && !force) return reviewsLoadingPromise;
+
+    reviewsLoadingPromise = api('/api/organiser/reviews')
+      .then(({ ok, data }) => {
+        if (!ok) throw new Error(data.message || data.error || 'Could not load reviews');
+        state.reviews = data.reviews || [];
+        state.groupRankings = data.groupRankings || {};
+        state.reviewsLoaded = true;
+        listPages.reviews = 1;
+        updateMyEventsTabCounts();
+        return true;
+      })
+      .catch((err) => {
+        showOrganiserAlert(err.message || 'Could not load reviews', true);
+        return false;
+      })
+      .finally(() => {
+        reviewsLoadingPromise = null;
+      });
+    return reviewsLoadingPromise;
   }
 
   function renderEventsPanel(sub) {
@@ -2190,11 +2284,23 @@
   }
 
   function pendingApplicationsCount() {
-    return pendingApplicationsList().length;
+    if (state.attendeesLoaded) {
+      return pendingApplicationsList().length;
+    }
+    return Number(state.pendingApplicationsCount) || 0;
   }
 
   function pendingApplicationsList() {
-    return state.attendeesAll.filter((a) => String(a.applicationStatus || '') === 'Pending');
+    if (state.attendeesLoaded) {
+      return state.attendeesAll.filter((a) => String(a.applicationStatus || '') === 'Pending');
+    }
+    return (state.pendingApplicationsPreview || []).map((row) => ({
+      id: row.id,
+      name: row.name,
+      eventTitle: row.eventTitle,
+      eventId: row.eventId,
+      applicationStatus: 'Pending',
+    }));
   }
 
   function updatePendingApplicationsUi() {
@@ -2434,7 +2540,19 @@
     sel.value = filters.attendeesEvent;
   }
 
-  async function loadAttendeesAll() {
+  function ensureAttendeesLoaded(options) {
+    const force = Boolean(options && options.force);
+    if (state.attendeesLoaded && !force) return Promise.resolve(true);
+    if (attendeesLoadingPromise && !force) return attendeesLoadingPromise;
+    attendeesLoadingPromise = loadAttendeesAll({ force }).finally(function () {
+      attendeesLoadingPromise = null;
+    });
+    return attendeesLoadingPromise;
+  }
+
+  async function loadAttendeesAll(options) {
+    const force = Boolean(options && options.force);
+    if (state.attendeesLoaded && !force) return true;
     const hint = document.getElementById('attendees-load-hint');
     const errEl = document.getElementById('attendees-load-error');
     if (hint) hint.hidden = false;
@@ -2446,6 +2564,7 @@
       const { ok, data } = await api('/api/organiser/attendees?eventId=all');
       if (ok) {
         state.attendeesAll = data.attendees || [];
+        state.attendeesLoaded = true;
         maybeClearAttendeesPendingFilter();
         updateMyEventsTabCounts();
         updatePendingApplicationsNavBadge();
@@ -5263,10 +5382,11 @@
       });
     }
     if (page === 'team') {
-      loadTeamMembers().then(function () {
-      renderTeam();
-      updateGettingStartedPanel();
-    });
+      ensureTeamLoaded().then(function () {
+        renderTeam();
+        updateGettingStartedPanel();
+        updateTeamNavBadge();
+      });
     }
     if (page === 'business-overview') {
       requestAnimationFrame(function () {
@@ -6275,7 +6395,19 @@
     openModal('modal-team-groups');
   }
 
-  async function loadTeamMembers() {
+  function ensureTeamLoaded(options) {
+    const force = Boolean(options && options.force);
+    if (state.teamLoaded && !force) return Promise.resolve(true);
+    if (teamLoadingPromise && !force) return teamLoadingPromise;
+    teamLoadingPromise = loadTeamMembers({ force }).finally(function () {
+      teamLoadingPromise = null;
+    });
+    return teamLoadingPromise;
+  }
+
+  async function loadTeamMembers(options) {
+    const force = Boolean(options && options.force);
+    if (state.teamLoaded && !force) return true;
     const { ok, data } = await api('/api/organiser/team');
     if (!ok) {
       state.teamMembers = [];
@@ -6283,10 +6415,12 @@
         data.message ||
         data.error ||
         (data.error === 'team_not_supported' ? 'Team management is not available on this server.' : 'Could not load team members.');
-      return;
+      state.teamLoaded = false;
+      return false;
     }
     state.teamError = null;
     state.teamMembers = data.members || [];
+    state.teamLoaded = true;
     state.canManageTeam = data.canManageTeam !== false;
     state.canDeleteEvents = data.canDeleteEvents !== false;
     state.canManagePayments = data.canManagePayments !== false;
@@ -6299,6 +6433,7 @@
     if (!Number.isFinite(state.teamSlotsRemaining)) {
       state.teamSlotsRemaining = Math.max(0, state.teamMax - state.teamCount);
     }
+    return true;
   }
 
   function updateTeamLimitUi() {
@@ -6476,7 +6611,7 @@
         }
         closeModals();
         form.reset();
-        await loadTeamMembers();
+        await loadTeamMembers({ force: true });
         renderTeam();
         updateGettingStartedPanel();
         showOrganiserAlert(data.message || (data.emailSent === false ? 'Invite saved but email not sent.' : 'Invite sent.'), data.emailSent === false);
@@ -6503,7 +6638,7 @@
           });
           if (!ok) alert(data.message || data.error || 'Could not resend invite');
           else {
-            await loadTeamMembers();
+            await loadTeamMembers({ force: true });
             renderTeam();
             updateGettingStartedPanel();
             showOrganiserAlert(data.message || (data.emailSent === false ? 'Could not resend email.' : 'Invite resent.'), data.emailSent === false);
@@ -6520,7 +6655,7 @@
           });
           if (!ok) alert(data.message || data.error || 'Could not remove member');
           else {
-            await loadTeamMembers();
+            await loadTeamMembers({ force: true });
             renderTeam();
             updateGettingStartedPanel();
           }
@@ -6557,7 +6692,7 @@
           return;
         }
         closeModals();
-        await loadTeamMembers();
+        await loadTeamMembers({ force: true });
         renderTeam();
         showOrganiserAlert(data.message || 'Group access updated.');
       });
@@ -7485,11 +7620,14 @@
       if (!ok) throw new Error(data.message || data.error || 'load_failed');
       state.opportunityEnquiries = data.enquiries || [];
       state.opportunityEnquiriesNewCount = opportunityEnquiryNewCount(state.opportunityEnquiries);
+      state.opportunityEnquiriesLoaded = true;
     } catch (e) {
       state.opportunityEnquiries = [];
       state.opportunityEnquiriesNewCount = 0;
     } finally {
       if (hint) hint.hidden = true;
+      renderHubPortalMeta();
+      renderOrganiserNotices();
       renderOpportunityEnquiries();
       renderOpportunitiesList();
     }
@@ -7513,9 +7651,11 @@
     renderStats();
     renderOrganiserNotices();
     renderGroups();
-    renderTeam();
-    renderMyEventsHub();
-    fillEventSelect(document.getElementById('ticket-event'));
+    if (document.querySelector('[data-org-page="team"].is-active')) renderTeam();
+    if (document.querySelector('[data-org-page="events"].is-active') && state.eventsLoaded) {
+      renderMyEventsHub();
+      fillEventSelect(document.getElementById('ticket-event'));
+    }
     updateOpportunityEnquiryUi();
     updateGettingStartedPanel();
     if (state.opportunitiesLoaded) renderOpportunitiesList();
@@ -7546,6 +7686,7 @@
     state.eventsChunkOffset = data.eventsPagination?.offset ?? 0;
     state.eventsHasMore = Boolean(data.eventsPagination?.hasMore);
     state.eventsFullyLoaded = !state.eventsHasMore;
+    state.eventsLoaded = false;
     state.tickets = data.tickets || [];
     listPages.groups = 1;
     listPages.events = 1;
@@ -7554,11 +7695,17 @@
     listPages.revenue = 1;
     listPages.attendees = 1;
     state.reviews = data.reviews || [];
+    state.reviewsLoaded = false;
     state.groupRankings = data.groupRankings || {};
     state.workspaceSummary =
       data.workspaceSummary && data.workspaceSummary.computed ? data.workspaceSummary : null;
     state.eventSummaries = data.eventSummaries || [];
-    loadAttendeesAll();
+    state.pendingApplicationsCount = Number(data.pendingApplications?.count) || 0;
+    state.pendingApplicationsPreview = data.pendingApplications?.preview || [];
+    if (!silent) {
+      state.attendeesLoaded = false;
+      state.attendeesAll = [];
+    }
     if (eventsSubRoute === 'events-cancellations') {
       loadCancellationsAll().then(() => renderCancellations());
     }
@@ -7579,10 +7726,7 @@
     state.stripeConnectEnabled = Boolean(data.stripeConnectEnabled);
     state.organiserAccess = data.organiserAccess === true;
     state.organiserEmailVerified = data.organiserEmailVerified === true;
-    loadTeamMembers().then(function () {
-      renderTeam();
-      updateGettingStartedPanel();
-    });
+    updatePendingApplicationsNavBadge();
 
     if (data.adminView) {
       state.dashboardScope = { kind: 'admin' };
@@ -7604,21 +7748,19 @@
     applyPendingGroupSave();
     pruneStaleEventFilters();
     renderAll();
-    if (document.querySelector('[data-org-page="events"].is-active')) {
-      renderEventsPanel(eventsSubRoute);
-    } else {
+    if (!document.querySelector('[data-org-page="events"].is-active')) {
       renderStripeConnectBanner();
     }
     renderGroupClaimModal();
-    loadOpportunityEnquiries();
-    loadOpportunitiesList();
     updateTeamNavBadge();
     if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
       window.HubOrganiserOnboarding.initAfterDashboardReady();
     }
-    prefetchEventsInBackground();
     bootstrapReady = true;
     enforceEventsOrganiserGate();
+    if (document.querySelector('[data-org-page="events"].is-active')) {
+      setEventsSub(eventsSubRoute);
+    }
     } finally {
       if (!silent) setDashboardLoading(false);
     }
@@ -8013,10 +8155,10 @@
         ) {
           renderMyEventsHub(route);
         } else if (route === 'team') {
-          loadTeamMembers().then(function () {
-      renderTeam();
-      updateGettingStartedPanel();
-    });
+          ensureTeamLoaded().then(function () {
+            renderTeam();
+            updateGettingStartedPanel();
+          });
         } else if (route === 'business-overview-enquiries') {
           scrollToBusinessEnquiries();
         }
@@ -8393,7 +8535,7 @@
             ) {
               renderMyEventsHub(route);
             } else if (route === 'team') {
-              loadTeamMembers().then(function () {
+              ensureTeamLoaded().then(function () {
                 renderTeam();
                 updateGettingStartedPanel();
               });
@@ -8514,7 +8656,7 @@
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState !== 'visible' || !shell || shell.hidden) return;
       if (eventsSubRoute === 'events-attendees') {
-        loadAttendeesAll();
+        ensureAttendeesLoaded({ force: true });
       } else if (eventsSubRoute === 'events-cancellations') {
         loadCancellationsAll().then(() => renderCancellations());
       }

@@ -131,4 +131,34 @@
       if (more) more.open = true;
     }
   }
+
+  function showOrganiserCta() {
+    var partner = document.getElementById('networking-region-city-partner');
+    var organiserCta = document.getElementById('networking-region-organiser-cta');
+    var organiserLink = document.getElementById('networking-region-organiser-link');
+    if (partner) {
+      partner.hidden = true;
+      partner.innerHTML = '';
+    }
+    if (organiserCta) organiserCta.hidden = false;
+    if (organiserLink) organiserLink.hidden = true;
+  }
+
+  function showCityPartner() {
+    var organiserCta = document.getElementById('networking-region-organiser-cta');
+    var organiserLink = document.getElementById('networking-region-organiser-link');
+    if (organiserCta) organiserCta.hidden = true;
+    if (organiserLink) organiserLink.hidden = false;
+  }
+
+  var partnerShell = document.getElementById('networking-region-city-partner');
+  if (partnerShell && window.CmsAdBlocks) {
+    window.CmsAdBlocks.loadCmsAd('networking_city_partner_' + slug).then(function (block) {
+      if (block && window.CmsAdBlocks.renderCityPartnerAd(partnerShell, block)) {
+        showCityPartner();
+      } else {
+        showOrganiserCta();
+      }
+    });
+  }
 })();

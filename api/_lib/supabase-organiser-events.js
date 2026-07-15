@@ -1559,7 +1559,8 @@ async function loadOrganiserEventsPage(session, groups, groupIds, adminView, pag
       groups: enrichOrganiserOverview(groups, sales.events, sales.tickets, groupEventCounts).groups,
     };
     const { enrichEventsWithPayoutData } = require('./supabase-organiser-payouts');
-    upcomingOverview.events = await enrichEventsWithPayoutData(upcomingOverview.events);
+    const upcomingPayout = await enrichEventsWithPayoutData(upcomingOverview.events);
+    upcomingOverview.events = upcomingPayout.events;
     tickets = sales.tickets;
   } catch {
     try {
@@ -1612,6 +1613,94 @@ async function loadOrganiserEventsPage(session, groups, groupIds, adminView, pag
   };
 }
 
+async function getLeanOrganiserWorkspace(req) {
+  const { requireOrganiserSession } = require('./organiser');
+  const wsAuth = requireOrganiserSession(req);
+  if (!wsAuth.ok) return wsAuth;
+
+  const { session } = wsAuth;
+  const isAdmin = sbOrg.isPlatformAdmin(session);
+  const personalScope = isAdmin && organiserPersonalScopeFromRequest(req);
+  const adminView = isAdmin && !personalScope;
+
+  let groups = [];
+  let pendingClaimGroups = [];
+  let groupsError = null;
+  try {
+    groups = await sbOrg.listGroupsForSession(session, adminView);
+    if (!adminView) {
+      const { listPendingClaimGroupsForSession } = require('./supabase-organiser-claims');
+      pendingClaimGroups = await listPendingClaimGroupsForSession(session);
+    }
+  } catch (e) {
+    groupsError = e.message;
+  }
+
+  const groupIds = groups.map((g) => g.id);
+  const [access, eventSummaries] = await Promise.all([
+    resolveOrganiserAccess(session).catch(() => null),
+    listEventSummariesForOrganiserGroups(groupIds, adminView).catch(() => []),
+  ]);
+
+  let pendingApplications = { count: 0, preview: [] };
+  try {
+    const { summarizePendingApplicationsForEventIds } = require('./supabase-organiser-attendees');
+    pendingApplications = await summarizePendingApplicationsForEventIds(
+      eventSummaries.map((event) => event.id)
+    );
+  } catch {
+    pendingApplications = { count: 0, preview: [] };
+  }
+
+  let stripeConnectEnabled = false;
+  try {
+    const { isStripeConnectEnabled } = require('./stripe-connect');
+    stripeConnectEnabled = isStripeConnectEnabled();
+  } catch {
+    stripeConnectEnabled = false;
+  }
+
+  return {
+    ok: true,
+    session,
+    groups,
+    pendingClaimGroups,
+    events: [],
+    upcomingEvents: [],
+    tickets: [],
+    eventsPagination: {
+      total: eventSummaries.length,
+      limit: 0,
+      offset: 0,
+      hasMore: eventSummaries.length > 0,
+    },
+    workspaceSummary: null,
+    eventSummaries,
+    reviews: [],
+    groupRankings: {},
+    pendingApplications,
+    groupsError,
+    hubView: hubViewFromRequest(req),
+    adminView,
+    personalScope,
+    isAdmin,
+    canOrganise: groups.length > 0 || adminView,
+    organiserRole: access ? access.role : null,
+    canManageTeam: access ? access.canManageTeam : true,
+    canDeleteEvents: access ? access.canDeleteEvents : true,
+    canManagePayments: access ? access.canManagePayments : true,
+    canCreateGroups: access ? access.canCreateGroups : true,
+    useTeamWorkspace: access ? Boolean(access.useTeamWorkspace) : false,
+    stripeConnectEnabled,
+    user: {
+      email: session.email,
+      name: session.name || '',
+      role: session.role,
+      sub: session.sub,
+    },
+  };
+}
+
 async function getOrganiserWorkspace(req) {
   const { requireOrganiserSession } = require('./organiser');
   const wsAuth = requireOrganiserSession(req);
@@ -1649,6 +1738,12 @@ async function getOrganiserWorkspace(req) {
 
   if (eventsOnly) {
     try {
+      try {
+        const { archivePastPublishedEvents } = require('./supabase-organiser-payouts');
+        await archivePastPublishedEvents(groupIds);
+      } catch {
+        /* archive helper optional */
+      }
       const page = await loadOrganiserEventsPage(
         session,
         groups,
@@ -1712,53 +1807,72 @@ async function getOrganiserWorkspace(req) {
     access = null;
   }
 
-  let workspaceSummary = null;
+  let workspaceSalesCache = null;
   let eventSummaries = [];
   let reviews = [];
-
-  try {
-    const { buildOrganiserWorkspaceSummary } = require('./supabase-organiser-payouts');
-    workspaceSummary = await buildOrganiserWorkspaceSummary(groupIds, adminView);
-  } catch {
-    workspaceSummary = null;
-  }
-
-  try {
-    eventSummaries = await listEventSummariesForOrganiserGroups(groupIds, adminView);
-  } catch {
-    eventSummaries = [];
-  }
-
-  try {
-    const { listReviewsForOrganiserGroups } = require('./supabase-reviews');
-    reviews = await listReviewsForOrganiserGroups(
-      groupIds,
-      new Map(overviewGroups.map((g) => [g.id, g])),
-      adminView
-    );
-  } catch {
-    reviews = [];
-  }
-
   let groupRankings = {};
+  let allEventIds = [];
+  let pendingApplications = { count: 0, preview: [] };
+
+  const { listReviewsForOrganiserGroups } = require('./supabase-reviews');
+  const { getGroupRankingsForOrganiser } = require('./organiser-group-ranking');
+  const { summarizePendingApplicationsForEventIds } = require('./supabase-organiser-attendees');
+
+  const [salesResult, summariesResult, reviewsResult, rankingsResult, eventIdsResult] =
+    await Promise.all([
+      (async () => {
+        try {
+          const { buildOrganiserWorkspaceSummary } = require('./supabase-organiser-payouts');
+          return await buildOrganiserWorkspaceSummary(groupIds, adminView);
+        } catch {
+          return null;
+        }
+      })(),
+      listEventSummariesForOrganiserGroups(groupIds, adminView).catch(() => []),
+      listReviewsForOrganiserGroups(
+        groupIds,
+        new Map(overviewGroups.map((g) => [g.id, g])),
+        adminView
+      ).catch(() => []),
+      getGroupRankingsForOrganiser(groupIds).catch(() => ({})),
+      listEventIdsForOrganiserGroups(groupIds, adminView).catch(() => []),
+    ]);
+
+  workspaceSalesCache = salesResult;
+  eventSummaries = summariesResult || [];
+  reviews = reviewsResult || [];
+  groupRankings = rankingsResult || {};
+  allEventIds = eventIdsResult || [];
+
   try {
-    const { getGroupRankingsForOrganiser } = require('./organiser-group-ranking');
-    groupRankings = await getGroupRankingsForOrganiser(groupIds);
+    pendingApplications = await summarizePendingApplicationsForEventIds(allEventIds);
   } catch {
-    groupRankings = {};
+    pendingApplications = { count: 0, preview: [] };
   }
+
+  const workspaceSummary = workspaceSalesCache
+    ? {
+        computed: workspaceSalesCache.computed,
+        totalRevenue: workspaceSalesCache.totalRevenue,
+        totalTicketsSold: workspaceSalesCache.totalTicketsSold,
+        revenueByGroupId: workspaceSalesCache.revenueByGroupId,
+        ticketsSoldByGroupId: workspaceSalesCache.ticketsSoldByGroupId,
+      }
+    : null;
 
   if (workspaceSummary?.computed) {
     overviewGroups = applyGroupSalesSummary(overviewGroups, workspaceSummary);
   }
 
   try {
-    const allEventIds = await listEventIdsForOrganiserGroups(groupIds, adminView);
     if (allEventIds.length) {
       const { enrichTicketsWithSales, listRegistrationsForEvents } = require('./supabase-organiser-payouts');
       const allTickets = await listTicketsForEventIds(allEventIds);
-      const regs = await listRegistrationsForEvents(allEventIds);
-      tickets = enrichTicketsWithSales(allTickets, regs);
+      const regs = workspaceSalesCache?.registrations?.length
+        ? workspaceSalesCache.registrations
+        : await listRegistrationsForEvents(allEventIds);
+      const revenueContextByEventId = workspaceSalesCache?.revenueContextByEventId || {};
+      tickets = enrichTicketsWithSales(allTickets, regs, revenueContextByEventId);
     }
   } catch {
     /* keep page-scoped tickets */
@@ -1785,6 +1899,7 @@ async function getOrganiserWorkspace(req) {
     eventSummaries,
     reviews,
     groupRankings,
+    pendingApplications,
     groupsError,
     hubView: hubViewFromRequest(req),
     adminView,
@@ -1835,6 +1950,7 @@ module.exports = {
   publishEventsWithRefund,
   enrichGroupForDashboard,
   enrichOrganiserOverview,
+  getLeanOrganiserWorkspace,
   getOrganiserWorkspace,
   airtableSetupHint,
   rowToEvent,

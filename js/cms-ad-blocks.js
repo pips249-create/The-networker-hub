@@ -204,6 +204,40 @@
     }
   }
 
+  function renderCityPartnerAd(container, block) {
+    if (!container || !block) return false;
+    if (!isCompactRenderable(block)) {
+      container.hidden = true;
+      container.innerHTML = '';
+      return false;
+    }
+    var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
+    var ctaLabel = String(block.cta_label || '').trim() || 'Find out more';
+    var ctaUrl = normalizeCta(block.cta_url);
+    var company = window.CmsSponsorFields ? window.CmsSponsorFields.companyName(block) : block.company_name;
+
+    container.hidden = false;
+    container.innerHTML =
+      '<aside class="networking-city-partner-ad" aria-label="City partner">' +
+      '<span class="networking-city-partner-badge">City partner</span>' +
+      logoMarkup(logo, 'networking-city-partner-logo', 'networking-city-partner-logo-placeholder') +
+      '<a class="networking-city-partner-cta" href="' +
+      esc(ctaUrl) +
+      '">' +
+      esc(ctaLabel) +
+      '</a>' +
+      '</aside>';
+
+    if (company) container.setAttribute('data-company', company);
+
+    var partnerCta = container.querySelector('.networking-city-partner-cta');
+    if (partnerCta && window.CmsSponsorFields) {
+      window.CmsSponsorFields.applyCtaColor(partnerCta, window.CmsSponsorFields.ctaColor(block));
+      window.CmsSponsorFields.applyCtaLink(partnerCta, ctaUrl);
+    }
+    return true;
+  }
+
   function loadCmsAd(slot) {
     return fetch('/api/cms-block?slot=' + encodeURIComponent(slot))
       .then(function (res) {
@@ -474,6 +508,7 @@
     renderHeroSponsorAd: renderHeroSponsorAd,
     renderBannerAd: renderBannerAd,
     renderCompactAd: renderCompactAd,
+    renderCityPartnerAd: renderCityPartnerAd,
     renderCarouselAd: renderCarouselAd,
     renderLogoOnlyAd: renderLogoOnlyAd,
     isCompactRenderable: isCompactRenderable,

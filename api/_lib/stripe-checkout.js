@@ -213,6 +213,10 @@ async function retrieveCheckoutSession(sessionId, options = {}) {
 }
 
 const { FEATURED_PLANS, normalizePlanId } = require('./event-featured-plans');
+const {
+  calculateCityPartnerQuote,
+  listCityPartnerRegions,
+} = require('./networking-city-partners');
 
 /**
  * One-off featured event listing (£55/month).
@@ -264,6 +268,82 @@ async function createEventFeaturedCheckoutSession(opts) {
   });
 }
 
+/**
+ * City Partner subscription — auto-bundles every 3 cities at the pack rate.
+ */
+async function createCityPartnerCheckoutSession(opts) {
+  const stripe = getStripeClient();
+  const cities = Array.isArray(opts.cities) ? opts.cities : [];
+  if (!cities.length) throw new Error('missing_cities');
+
+  const quote = calculateCityPartnerQuote(cities.length);
+  const cityNames = cities
+    .map((slug) => {
+      const match = listCityPartnerRegions().find((r) => r.slug === slug);
+      return match ? match.name : slug;
+    })
+    .join(', ');
+
+  const lineItems = [];
+  const pricing = quote.pricing;
+  const launchNote = quote.isLaunch ? ' Launch rate until 1 Dec 2026.' : '';
+
+  if (quote.bundles > 0) {
+    lineItems.push({
+      price_data: {
+        currency: 'gbp',
+        product_data: {
+          name: 'City Partner — 3-city pack',
+          description:
+            'Logo + CTA on three regional networking pages. Website only — not in hub emails.' +
+            launchNote,
+        },
+        unit_amount: pricing.bundle3MonthlyPence,
+        recurring: { interval: 'month' },
+      },
+      quantity: quote.bundles,
+    });
+  }
+
+  if (quote.singles > 0) {
+    lineItems.push({
+      price_data: {
+        currency: 'gbp',
+        product_data: {
+          name: 'City Partner — single city',
+          description:
+            'Logo + CTA on one regional networking page. Website only — not in hub emails.' +
+            launchNote,
+        },
+        unit_amount: pricing.singleMonthlyPence,
+        recurring: { interval: 'month' },
+      },
+      quantity: quote.singles,
+    });
+  }
+
+  const metadata = {
+    checkout_type: 'hub_sponsorship',
+    revenue_category: 'events',
+    placement: 'city_partner',
+    networking_cities: cities.join(','),
+    package_name: 'City Partner — ' + cityNames,
+    city_partner_bundles: String(quote.bundles),
+    city_partner_singles: String(quote.singles),
+  };
+
+  return stripe.checkout.sessions.create({
+    mode: 'subscription',
+    customer_email: opts.email,
+    client_reference_id: 'city-partner-' + cities.join('-').slice(0, 120),
+    metadata,
+    subscription_data: { metadata },
+    success_url: opts.successUrl,
+    cancel_url: opts.cancelUrl,
+    line_items: lineItems,
+  });
+}
+
 module.exports = {
   getStripeSecretKey,
   isStripeCheckoutConfigured,
@@ -272,6 +352,7 @@ module.exports = {
   createOpportunityListingCheckoutSession,
   createOpportunityPremiumCheckoutSession,
   createEventFeaturedCheckoutSession,
+  createCityPartnerCheckoutSession,
   retrieveCheckoutSession,
   siteBaseUrl,
 };

@@ -1,0 +1,251 @@
+(function () {
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  function formatGbp(amount) {
+    var n = Number(amount);
+    if (!Number.isFinite(n)) return '£0';
+    return '£' + (n % 1 === 0 ? n.toFixed(0) : n.toFixed(2));
+  }
+
+  var root = document.getElementById('city-partner-checkout');
+  if (!root) return;
+
+  var cityListEl = document.getElementById('city-partner-city-list');
+  var quoteEl = document.getElementById('city-partner-quote');
+  var emailEl = document.getElementById('city-partner-email');
+  var submitBtn = document.getElementById('city-partner-submit');
+  var statusEl = document.getElementById('city-partner-status');
+  var launchNoteEl = document.getElementById('city-partner-launch-note');
+  var availableListEl = document.getElementById('city-partner-available-list');
+
+  var state = {
+    cities: [],
+    pricing: null,
+    isLaunch: true,
+    launchEnds: '2026-12-01T00:00:00.000Z',
+  };
+
+  function setStatus(text, tone) {
+    if (!statusEl) return;
+    statusEl.textContent = text || '';
+    statusEl.className =
+      'city-partner-status' +
+      (tone === 'error' ? ' city-partner-status--error' : tone === 'ok' ? ' city-partner-status--ok' : '');
+  }
+
+  function selectedSlugs() {
+    if (!cityListEl) return [];
+    return Array.prototype.map
+      .call(cityListEl.querySelectorAll('input[type="checkbox"]:checked'), function (input) {
+        return input.value;
+      })
+      .filter(Boolean);
+  }
+
+  function updateQuote() {
+    var slugs = selectedSlugs();
+    if (!quoteEl) return;
+
+    if (!slugs.length) {
+      quoteEl.innerHTML = '<p class="city-partner-quote-empty">Select one or more available cities to see your monthly total.</p>';
+      if (submitBtn) submitBtn.disabled = true;
+      return;
+    }
+
+    var count = slugs.length;
+    var bundles = Math.floor(count / 3);
+    var singles = count % 3;
+    var pricing = state.pricing || { singleMonthlyGbp: 49, bundle3MonthlyGbp: 129 };
+    var monthly = bundles * pricing.bundle3MonthlyGbp + singles * pricing.singleMonthlyGbp;
+    var parts = [];
+    if (bundles) parts.push(bundles + ' × 3-city pack (' + formatGbp(pricing.bundle3MonthlyGbp) + ')');
+    if (singles) parts.push(singles + ' × single city (' + formatGbp(pricing.singleMonthlyGbp) + ')');
+
+    quoteEl.innerHTML =
+      '<p class="city-partner-quote-total"><strong>' +
+      formatGbp(monthly) +
+      '</strong> <span>per month</span></p>' +
+      '<p class="city-partner-quote-breakdown">' +
+      esc(parts.join(' + ')) +
+      '</p>' +
+      '<p class="city-partner-quote-cities">' +
+      count +
+      ' ' +
+      (count === 1 ? 'city' : 'cities') +
+      ' selected</p>';
+
+    if (submitBtn) submitBtn.disabled = false;
+  }
+
+  function renderCities(cities) {
+    if (!cityListEl) return;
+    var available = (cities || []).filter(function (city) {
+      return city.available;
+    });
+    if (!available.length) {
+      cityListEl.innerHTML =
+        '<p class="city-partner-empty">All city slots are currently live. Email <a href="mailto:rosie@thenetworkerhub.com?subject=City%20Partner%20waitlist">rosie@thenetworkerhub.com</a> to join the waitlist.</p>';
+      if (submitBtn) submitBtn.disabled = true;
+      return;
+    }
+
+    cityListEl.innerHTML = available
+      .map(function (city) {
+        return (
+          '<label class="city-partner-city">' +
+          '<input type="checkbox" name="city-partner-city" value="' +
+          esc(city.slug) +
+          '">' +
+          '<span>' +
+          esc(city.name) +
+          '</span>' +
+          '</label>'
+        );
+      })
+      .join('');
+
+    cityListEl.querySelectorAll('input[type="checkbox"]').forEach(function (input) {
+      input.addEventListener('change', updateQuote);
+    });
+    updateQuote();
+  }
+
+  function renderAvailableList(cities) {
+    if (!availableListEl) return;
+    var available = (cities || []).filter(function (city) {
+      return city.available;
+    });
+    if (!available.length) {
+      availableListEl.textContent = 'No cities available right now — join the waitlist.';
+      return;
+    }
+    availableListEl.textContent = available.map(function (city) {
+      return city.name;
+    }).join(', ');
+  }
+
+  function loadAvailability() {
+    setStatus('Loading available cities…');
+    return fetch('/api/city-partner')
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data || !data.ok) throw new Error((data && data.message) || 'Could not load cities');
+        state.cities = data.cities || [];
+        state.pricing = data.pricing || null;
+        state.isLaunch = data.isLaunch !== false;
+        state.launchEnds = data.launchEnds || state.launchEnds;
+
+        if (launchNoteEl && state.isLaunch) {
+          var end = new Date(state.launchEnds);
+          var label = end.toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            timeZone: 'UTC',
+          });
+          launchNoteEl.innerHTML =
+            '<strong>Launch offer until ' +
+            esc(label) +
+            ':</strong> ' +
+            esc(state.pricing.singleLabel) +
+            '/month per city or ' +
+            esc(state.pricing.bundle3Label) +
+            '/month for any 3 cities (auto-applied at checkout). Thereafter ' +
+            esc(state.pricing.regularSingleLabel) +
+            '/city and ' +
+            esc(state.pricing.regularBundle3Label) +
+            '/3-city pack.';
+          launchNoteEl.hidden = false;
+        } else if (launchNoteEl) {
+          launchNoteEl.hidden = true;
+        }
+
+        renderCities(state.cities);
+        renderAvailableList(state.cities);
+        setStatus('');
+      })
+      .catch(function (err) {
+        setStatus(err.message || 'Could not load available cities', 'error');
+      });
+  }
+
+  if (submitBtn) {
+    submitBtn.addEventListener('click', function () {
+      var slugs = selectedSlugs();
+      var email = emailEl ? String(emailEl.value || '').trim() : '';
+      if (!slugs.length) {
+        setStatus('Select at least one city.', 'error');
+        return;
+      }
+      if (!email) {
+        setStatus('Enter your work email to continue.', 'error');
+        if (emailEl) emailEl.focus();
+        return;
+      }
+
+      submitBtn.disabled = true;
+      setStatus('Redirecting to secure checkout…');
+
+      fetch('/api/city-partner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, cities: slugs }),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data };
+          });
+        })
+        .then(function (result) {
+          if (!result.ok || !result.data || !result.data.checkoutUrl) {
+            throw new Error(
+              (result.data && (result.data.message || result.data.error)) ||
+                'Checkout could not be started'
+            );
+          }
+          window.location.href = result.data.checkoutUrl;
+        })
+        .catch(function (err) {
+          submitBtn.disabled = false;
+          setStatus(err.message || 'Checkout failed — try again or email rosie@thenetworkerhub.com', 'error');
+        });
+    });
+  }
+
+  function scrollToCityPartnerPackage() {
+    var pkg = document.getElementById('city-partner-package');
+    if (!pkg || !pkg.scrollIntoView) return;
+    pkg.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function focusCityPartnerPackage() {
+    var eventsTab = document.getElementById('ad-tab-events');
+    if (eventsTab && !eventsTab.classList.contains('is-active')) {
+      eventsTab.click();
+      window.setTimeout(scrollToCityPartnerPackage, 180);
+      return;
+    }
+    scrollToCityPartnerPackage();
+  }
+
+  var params = new URLSearchParams(window.location.search);
+  var returnState = params.get('city-partner');
+  if (returnState === 'success') {
+    setStatus(
+      'Thanks — your City Partner subscription is processing. We will publish your logo and CTA once creative is confirmed.',
+      'ok'
+    );
+    focusCityPartnerPackage();
+  } else if (returnState === 'cancelled') {
+    setStatus('Checkout cancelled — your cities are still available.', '');
+    focusCityPartnerPackage();
+  }
+
+  loadAvailability();
+})();

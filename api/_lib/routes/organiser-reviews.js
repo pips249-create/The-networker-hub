@@ -1,5 +1,11 @@
 const { getOrganiserApi } = require('../organiser-provider');
-const { replyToReviewAsOrganiser, MAX_ORGANISER_REPLY } = require('../supabase-reviews');
+const {
+  replyToReviewAsOrganiser,
+  listReviewsForOrganiserGroups,
+  MAX_ORGANISER_REPLY,
+} = require('../supabase-reviews');
+const { getGroupRankingsForOrganiser } = require('../organiser-group-ranking');
+const { resolveOrganiserApiScope } = require('../organiser-api-scope');
 
 function parseBody(req) {
   let body = req.body;
@@ -18,11 +24,33 @@ module.exports = async function handler(req, res) {
   const { json, setCors, requireOrganiserSession } = api;
 
   setCors(req, res);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method === 'GET') {
+    const scope = await resolveOrganiserApiScope(req);
+    if (!scope.ok) {
+      return json(res, scope.status || 500, {
+        error: scope.error,
+        message: scope.message,
+      });
+    }
+    try {
+      const groupMap = new Map((scope.groups || []).map((group) => [group.id, group]));
+      const [reviews, groupRankings] = await Promise.all([
+        listReviewsForOrganiserGroups(scope.groupIds, groupMap, scope.adminView),
+        getGroupRankingsForOrganiser(scope.groupIds).catch(() => ({})),
+      ]);
+      return json(res, 200, { ok: true, reviews, groupRankings });
+    } catch (err) {
+      return json(res, 500, {
+        error: 'reviews_fetch_failed',
+        message: err.message || 'Could not load reviews.',
+      });
+    }
+  }
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
 
   const auth = requireOrganiserSession(req);

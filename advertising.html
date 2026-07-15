@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/advertising-page.css?v=20260734">
+<link rel="stylesheet" href="css/advertising-page.css?v=20260715cp2">
 <link rel="stylesheet" href="css/cms-carousel-ad.css?v=20260612f">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260714cls" />
@@ -159,6 +159,62 @@
                 <p class="ad-mini-page-label">Organiser page</p>
                 <div class="ad-live-preview ad-live-preview--mini page-sidebar-ad" id="ad-live-mini-organiser"></div>
               </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="ad-package ad-package-split" id="city-partner-package">
+          <div class="ad-package-main">
+            <span class="ad-package-badge">Regional placement</span>
+            <h3 class="ad-package-title">City Partner</h3>
+            <p class="ad-package-placement">Logo + CTA in the <strong>Business networking in…</strong> block on city pages such as <strong>/networking/manchester</strong></p>
+            <p class="ad-package-price">£49 <span>per city / month</span> · £129 <span>for any 3 cities</span></p>
+            <p class="ad-package-note ad-package-note--launch" id="city-partner-launch-note" hidden></p>
+            <ul>
+              <li><strong>Logo and CTA button only</strong> — compact placement beside the local intro copy on regional landing pages.</li>
+              <li><strong>Website only</strong> — City Partners do <em>not</em> appear in hub emails (hence the lower rate vs Mini Sponsors).</li>
+              <li><strong>3-city pack auto-applied</strong> — select any three available cities and checkout applies the bundle price automatically; larger orders combine packs + singles (e.g. 5 cities = 1 pack + 2 singles).</li>
+              <li>One exclusive partner per city per month. The main Events Directory Sponsor above the listings is unchanged.</li>
+            </ul>
+            <p class="ad-package-note">
+              <strong>Eligibility:</strong> B2B service brands (accountants, coworking, recruitment, venues, etc.). Networking groups and event organisers <em>cannot</em> sponsor the city page where competing groups list below — list your own group via <a href="/for-organisers">For organisers</a> instead.
+            </p>
+            <p class="ad-package-note">
+              <strong>Available now:</strong> <span id="city-partner-available-list">Loading cities…</span>
+            </p>
+          </div>
+          <div class="ad-package-preview ad-package-preview--city-partner">
+            <p class="ad-preview-label">Example — city landing page</p>
+            <div class="ad-mock-page ad-mock-page--city-partner" aria-hidden="true">
+              <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/networking/manchester</em></div>
+              <div class="ad-mock-city-partner-intro">
+                <div class="ad-mock-city-partner-accent"></div>
+                <div class="ad-mock-city-partner-inner">
+                  <div class="ad-mock-city-partner-copy">
+                    <span class="ad-mock-city-partner-kicker">Your local business community</span>
+                    <p class="ad-mock-city-partner-title">Business networking in <em>Manchester</em></p>
+                    <span class="ad-mock-city-partner-line"></span>
+                    <span class="ad-mock-city-partner-line ad-mock-city-partner-line--short"></span>
+                    <p class="ad-mock-city-partner-organiser-link">Organisers — list your group →</p>
+                  </div>
+                  <aside class="ad-mock-city-partner-ad">
+                    <span class="ad-mock-city-partner-badge">City partner</span>
+                    <span class="ad-mock-city-partner-logo">Your logo</span>
+                    <span class="ad-mock-city-partner-cta">Find out more</span>
+                  </aside>
+                </div>
+              </div>
+            </div>
+            <p class="ad-preview-label ad-preview-label--checkout">Self-serve checkout</p>
+            <div class="city-partner-checkout" id="city-partner-checkout">
+              <div class="city-partner-city-grid" id="city-partner-city-list"></div>
+              <div class="city-partner-quote" id="city-partner-quote">
+                <p class="city-partner-quote-empty">Select one or more available cities to see your monthly total.</p>
+              </div>
+              <label class="city-partner-email-label" for="city-partner-email">Work email</label>
+              <input type="email" id="city-partner-email" class="city-partner-email" placeholder="you@company.com" autocomplete="email">
+              <button type="button" class="ad-package-cta city-partner-submit" id="city-partner-submit" disabled>Checkout securely →</button>
+              <p class="city-partner-status" id="city-partner-status" role="status"></p>
             </div>
           </div>
         </article>
@@ -431,6 +487,7 @@
         <ul>
           <li>All advertising partners are reviewed before publication — we only accept brands relevant to a professional business audience.</li>
           <li>The <strong>Main Events Directory Sponsor</strong> is reserved for vetted third-party brands. Networking groups and event organisers cannot hold this slot.</li>
+          <li><strong>City Partners</strong> are website-only (not in emails). Networking groups cannot sponsor the city page where other groups&rsquo; events appear below.</li>
           <li>Paid placements are labelled <strong>Sponsored</strong> or <strong>Sponsor Hub</strong>. See our <a href="/legal-policies#advertising">advertising policy</a>.</li>
         </ul>
       </div>
@@ -449,6 +506,7 @@
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/cms-ad-blocks.js?v=20260612g"></script>
 <script src="js/advertising-page.js?v=20260734"></script>
+<script src="js/city-partner-advertising.js?v=20260715cp2"></script>
 
 </body>
 </html>

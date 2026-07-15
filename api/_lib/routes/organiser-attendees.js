@@ -1,10 +1,16 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
+const { resolveOrganiserApiScope } = require('../organiser-api-scope');
 
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
-  const { json, setCors, getOrganiserWorkspace, listAttendeesForOrganiserEvents, listBookingCancellationsForOrganiserEvents, airtableSetupHint } =
-    api;
+  const {
+    json,
+    setCors,
+    listAttendeesForOrganiserEvents,
+    listBookingCancellationsForOrganiserEvents,
+    airtableSetupHint,
+  } = api;
 
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -18,19 +24,19 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const ws = await getOrganiserWorkspace(req);
-    if (!ws.ok && ws.error === 'not_authenticated') {
-      return json(res, ws.status || 401, { error: ws.error });
+    const scope = await resolveOrganiserApiScope(req);
+    if (!scope.ok && scope.error === 'not_authenticated') {
+      return json(res, scope.status || 401, { error: scope.error });
     }
-    if (!ws.ok) {
-      return json(res, ws.status || 500, {
-        error: ws.error,
-        message: ws.message,
+    if (!scope.ok) {
+      return json(res, scope.status || 500, {
+        error: scope.error,
+        message: scope.message,
         attendees: [],
       });
     }
 
-    const verified = await assertOrganiserEmailVerified(ws.session);
+    const verified = await assertOrganiserEmailVerified(scope.session);
     if (!verified.ok) {
       return json(res, verified.status, {
         error: verified.error,
@@ -42,23 +48,15 @@ module.exports = async function handler(req, res) {
     const url = new URL(req.url, 'http://localhost');
     const filterEventId = url.searchParams.get('eventId') || 'all';
     const view = String(url.searchParams.get('view') || 'active').toLowerCase();
-    const groupIds = (ws.groups || []).map((g) => g.id);
-    let eventIds = (ws.events || []).map((e) => e.id);
-    if (api.listEventIdsForOrganiserGroups) {
-      try {
-        eventIds = await api.listEventIdsForOrganiserGroups(groupIds, ws.adminView);
-      } catch {
-        /* fall back to loaded events page */
-      }
-    }
+    const eventIds = scope.eventIds || [];
     let attendees = [];
     let cancellations = [];
     try {
       if (view === 'cancellations' && listBookingCancellationsForOrganiserEvents) {
         cancellations = await listBookingCancellationsForOrganiserEvents(
-          groupIds,
+          scope.groupIds,
           filterEventId,
-          ws.adminView,
+          scope.adminView,
           eventIds
         );
       } else {

@@ -8,6 +8,7 @@ const {
   normalizeSponsorBlock,
   isPublishableSponsorBlock,
 } = require('./_lib/cms-sponsor-fields');
+const { cityPartnerSlotKey } = require('./_lib/networking-city-partners');
 
 const LEGACY_SPONSOR_HUB_SLOT = 'sponsor_hub';
 const { HOME_PARTNERS_SLOT, parsePartnersBody, publishablePartners } = require('./_lib/home-partners');
@@ -64,7 +65,14 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=600');
 
-  const slot = String(req.query?.slot || '').trim();
+  let slot = String(req.query?.slot || '').trim();
+  const region = String(req.query?.region || '').trim().toLowerCase();
+  if (!slot && region) {
+    slot = cityPartnerSlotKey(region);
+  }
+  if (slot === 'networking_city_partner' && region) {
+    slot = cityPartnerSlotKey(region);
+  }
   if (!slot) {
     return res.status(400).json({ ok: false, error: 'missing_slot' });
   }

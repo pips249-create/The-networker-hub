@@ -44,6 +44,9 @@ const PLACEMENT_CATEGORIES = {
   organisers_mini_sponsor: 'browse_organisers',
   organisers_featured: 'browse_organisers',
   browse_organisers_main_sponsor: 'browse_organisers',
+  city_partner: 'events',
+  city_partner_single: 'events',
+  city_partner_bundle_3: 'events',
   awards_sponsor: 'awards',
   awards: 'awards',
 };
@@ -57,6 +60,13 @@ const CMS_SLOT_CATEGORIES = {
   organisers_sponsor_hub: 'browse_organisers',
   organiser_page_sidebar_ad: 'browse_organisers',
 };
+
+function cmsSlotCategory(slot) {
+  const key = String(slot || '').trim();
+  if (CMS_SLOT_CATEGORIES[key]) return CMS_SLOT_CATEGORIES[key];
+  if (/^networking_city_partner_/i.test(key)) return 'events';
+  return null;
+}
 
 function round2(n) {
   return Math.round(Number(n) * 100) / 100;
@@ -78,7 +88,8 @@ function parseRevenueCategory(metadata) {
   if (placement && PLACEMENT_CATEGORIES[placement]) return PLACEMENT_CATEGORIES[placement];
 
   const slot = String(meta.cms_slot || meta.cmsSlot || '').trim();
-  if (slot && CMS_SLOT_CATEGORIES[slot]) return CMS_SLOT_CATEGORIES[slot];
+  const slotCategory = cmsSlotCategory(slot);
+  if (slotCategory) return slotCategory;
 
   const checkoutType = String(meta.checkout_type || meta.checkoutType || '').trim().toLowerCase();
   if (checkoutType === 'hub_sponsorship' || checkoutType === 'sponsorship') {

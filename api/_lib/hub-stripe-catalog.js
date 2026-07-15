@@ -208,6 +208,50 @@ const HUB_STRIPE_CATALOG = [
       package_name: 'Featured organiser profile',
     },
   },
+  {
+    key: 'city_partner_single',
+    priceEnvVar: 'STRIPE_CITY_PARTNER_SINGLE_PRICE_ID',
+    paymentLinkEnvVar: 'STRIPE_CITY_PARTNER_SINGLE_PAYMENT_LINK',
+    productName: 'City Partner — single city (launch rate)',
+    description:
+      'Logo + CTA on one /networking/:city page. Launch rate until 1 Dec 2026. Website only — not in hub emails.',
+    amountPence: 4900,
+    billing: 'recurring',
+    interval: 'month',
+    createPaymentLink: false,
+    productMetadata: {
+      revenue_category: 'events',
+      placement: 'city_partner_single',
+    },
+    paymentLinkMetadata: {
+      checkout_type: 'hub_sponsorship',
+      revenue_category: 'events',
+      placement: 'city_partner_single',
+      package_name: 'City Partner — single city',
+    },
+  },
+  {
+    key: 'city_partner_bundle_3',
+    priceEnvVar: 'STRIPE_CITY_PARTNER_BUNDLE_3_PRICE_ID',
+    paymentLinkEnvVar: 'STRIPE_CITY_PARTNER_BUNDLE_3_PAYMENT_LINK',
+    productName: 'City Partner — 3-city pack (launch rate)',
+    description:
+      'Logo + CTA on three /networking/:city pages. Launch rate until 1 Dec 2026. Website only — not in hub emails.',
+    amountPence: 12900,
+    billing: 'recurring',
+    interval: 'month',
+    createPaymentLink: false,
+    productMetadata: {
+      revenue_category: 'events',
+      placement: 'city_partner_bundle_3',
+    },
+    paymentLinkMetadata: {
+      checkout_type: 'hub_sponsorship',
+      revenue_category: 'events',
+      placement: 'city_partner_bundle_3',
+      package_name: 'City Partner — 3-city pack',
+    },
+  },
 ];
 
 function getCatalogItem(key) {

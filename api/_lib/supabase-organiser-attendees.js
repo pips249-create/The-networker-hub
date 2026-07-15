@@ -85,20 +85,36 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
     return result;
   }
 
-  let { data: historyRows, error: historyError } = await fetchWithProfileFallback(false, [...allowed]);
-  if (historyError) throw historyError;
+  const viewingAll = targetIds.length === allowed.size;
+  let historyRows;
+  let data;
+  let error;
 
-  const relationshipMap = buildRegistrationRelationshipMap(historyRows || []);
+  if (viewingAll) {
+    ({ data, error } = await fetchWithProfileFallback(true, [...allowed]));
+    if (
+      error &&
+      /dietary_requirements|accessibility_requirements|column/.test(String(error.message || ''))
+    ) {
+      ({ data, error } = await fetchWithProfileFallback(false, [...allowed]));
+    }
+    if (error) throw error;
+    historyRows = data || [];
+  } else {
+    ({ data: historyRows, error } = await fetchWithProfileFallback(false, [...allowed]));
+    if (error) throw error;
 
-  let { data, error } = await fetchWithProfileFallback(true, targetIds);
-  if (
-    error &&
-    /dietary_requirements|accessibility_requirements|column/.test(String(error.message || ''))
-  ) {
-    ({ data, error } = await fetchWithProfileFallback(false, targetIds));
+    ({ data, error } = await fetchWithProfileFallback(true, targetIds));
+    if (
+      error &&
+      /dietary_requirements|accessibility_requirements|column/.test(String(error.message || ''))
+    ) {
+      ({ data, error } = await fetchWithProfileFallback(false, targetIds));
+    }
+    if (error) throw error;
   }
 
-  if (error) throw error;
+  const relationshipMap = buildRegistrationRelationshipMap(historyRows || []);
 
   return (data || [])
     .filter((row) => allowed.has(row.event_id))
@@ -287,7 +303,56 @@ async function listBookingCancellationsForOrganiserEvents(
     });
 }
 
+/**
+ * Lightweight pending-application summary for dashboard badges and notices.
+ */
+async function summarizePendingApplicationsForEventIds(eventIds) {
+  if (!isSupabaseConfigured() || !eventIds.length) {
+    return { count: 0, preview: [] };
+  }
+
+  const sb = getSupabaseAdmin();
+  const { count, data, error } = await sb
+    .from('registrations')
+    .select(
+      `
+      id,
+      event_id,
+      attendees ( name, email ),
+      events ( title )
+    `,
+      { count: 'exact' }
+    )
+    .in('event_id', eventIds)
+    .eq('application_status', 'Pending')
+    .is('cancelled_at', null)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  if (error) throw new Error(error.message);
+
+  const preview = (data || []).map((row) => {
+    const attendee = row.attendees || {};
+    const event = row.events || {};
+    const email = String(attendee.email || '').trim();
+    const name =
+      String(attendee.name || '').trim() || (email ? email.split('@')[0] : 'Applicant');
+    return {
+      id: row.id,
+      eventId: row.event_id,
+      eventTitle: String(event.title || 'Event').trim(),
+      name,
+    };
+  });
+
+  return {
+    count: count || 0,
+    preview,
+  };
+}
+
 module.exports = {
   listAttendeesForOrganiserEvents,
   listBookingCancellationsForOrganiserEvents,
+  summarizePendingApplicationsForEventIds,
 };

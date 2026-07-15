@@ -1,15 +1,11 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
+const { resolveOrganiserApiScope } = require('../organiser-api-scope');
 const { buildNameBadgesPdf } = require('../organiser-name-badges-pdf');
 
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
-  const {
-    json,
-    setCors,
-    getOrganiserWorkspace,
-    listAttendeesForOrganiserEvents,
-  } = api;
+  const { json, setCors, listAttendeesForOrganiserEvents } = api;
 
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -24,18 +20,18 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const ws = await getOrganiserWorkspace(req);
-    if (!ws.ok && ws.error === 'not_authenticated') {
-      return json(res, ws.status || 401, { error: ws.error });
+    const scope = await resolveOrganiserApiScope(req);
+    if (!scope.ok && scope.error === 'not_authenticated') {
+      return json(res, scope.status || 401, { error: scope.error });
     }
-    if (!ws.ok) {
-      return json(res, ws.status || 500, {
-        error: ws.error,
-        message: ws.message,
+    if (!scope.ok) {
+      return json(res, scope.status || 500, {
+        error: scope.error,
+        message: scope.message,
       });
     }
 
-    const verified = await assertOrganiserEmailVerified(ws.session);
+    const verified = await assertOrganiserEmailVerified(scope.session);
     if (!verified.ok) {
       return json(res, verified.status, {
         error: verified.error,
@@ -45,20 +41,13 @@ module.exports = async function handler(req, res) {
 
     const url = new URL(req.url, 'http://localhost');
     const filterEventId = url.searchParams.get('eventId') || 'all';
-    const groupIds = (ws.groups || []).map((g) => g.id);
-    let eventIds = (ws.events || []).map((e) => e.id);
-    if (api.listEventIdsForOrganiserGroups) {
-      try {
-        eventIds = await api.listEventIdsForOrganiserGroups(groupIds, ws.adminView);
-      } catch {
-        /* fall back */
-      }
-    }
-
+    const eventIds = scope.eventIds || [];
     const attendees = await listAttendeesForOrganiserEvents(eventIds, filterEventId);
     const eventTitle =
       filterEventId && filterEventId !== 'all'
-        ? String((ws.events || []).find((e) => e.id === filterEventId)?.title || 'Event').trim()
+        ? String(
+            attendees.find((a) => a.eventId === filterEventId)?.eventTitle || 'Event'
+          ).trim()
         : 'All events';
 
     let pdf;
