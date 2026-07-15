@@ -331,7 +331,6 @@
       '</h1>' +
       (variant.lede ? '<p class="home-hero-lede home-hero-lede--rich">' + esc(variant.lede) + '</p>' : '') +
       '</header>' +
-      '<div class="home-hero-rich-panel">' +
       '<div class="home-hero-rich-cards" role="group" aria-label="Choose where to start">' +
       cardsHtml +
       '</div>' +
@@ -349,7 +348,6 @@
       '<p class="home-hero-rich-secondary">' +
       '<a href="/events/?mode=organisers">Find organisers</a>' +
       '</p>' +
-      '</div>' +
       '</div>'
     );
   }
