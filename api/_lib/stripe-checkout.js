@@ -74,7 +74,6 @@ async function createPaidCheckoutSession(opts) {
       dietary_requirements: String(opts.dietaryRequirements || '').trim().slice(0, 500),
       accessibility_requirements: String(opts.accessibilityRequirements || '').trim().slice(0, 500),
       alumni_invite_token: String(opts.alumniInviteToken || '').trim().slice(0, 120),
-      access_code_id: String(opts.accessCodeId || '').trim().slice(0, 80),
       quantity: String(opts.qty || 1),
     },
     success_url: opts.successUrl,

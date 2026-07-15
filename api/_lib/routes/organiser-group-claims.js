@@ -34,6 +34,15 @@ module.exports = async function handler(req, res) {
   const auth = requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
+  const { resolveOrganiserAccess } = require('../supabase-organiser-access');
+  const access = await resolveOrganiserAccess(auth.session);
+  if (!access.canCreateGroups && !isAdminRole(auth.session.role)) {
+    return json(res, 403, {
+      error: 'forbidden',
+      message: 'Only the account owner can claim or reject organiser pages.',
+    });
+  }
+
   if (!claimGroupForSession || !rejectGroupForSession) {
     return json(res, 503, {
       error: 'claims_unavailable',

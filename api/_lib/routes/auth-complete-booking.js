@@ -76,11 +76,6 @@ module.exports = async function handler(req, res) {
         body.alumni_invite_token ||
         payment.alumniInviteToken ||
         undefined,
-      accessCodeId:
-        body.accessCodeId ||
-        body.access_code_id ||
-        payment.accessCodeId ||
-        undefined,
     });
     return json(res, 200, { ok: true, ...result });
   } catch (e) {

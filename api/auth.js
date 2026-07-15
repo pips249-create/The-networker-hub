@@ -27,7 +27,6 @@ const routes = {
   'complete-booking': require('./_lib/routes/auth-complete-booking'),
   'submit-application': require('./_lib/routes/auth-submit-application'),
   'event-application': require('./_lib/routes/auth-event-application'),
-  'validate-access-code': require('./_lib/routes/auth-validate-access-code'),
   'create-checkout': require('./_lib/routes/auth-create-checkout'),
   'roster-eligibility': require('./_lib/routes/auth-roster-eligibility'),
   'guest-visit-eligibility': require('./_lib/routes/auth-guest-visit-eligibility'),

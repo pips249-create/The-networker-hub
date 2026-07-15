@@ -65,6 +65,26 @@
   gap: 12px;
 }
 
+.omr-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  color: #4a3d52;
+}
+
+.omr-check input {
+  margin-top: 3px;
+}
+
+.omr-actions {
+  white-space: nowrap;
+}
+
+.omr-actions .ee-btn {
+  margin-bottom: 4px;
+}
+
 .omr-badge-claimed {
   color: #1a7a4c;
   font-weight: 600;

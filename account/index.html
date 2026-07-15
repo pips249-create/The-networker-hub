@@ -220,9 +220,33 @@
             <section class="ad-page" id="ad-page-saved" data-ad-page="saved">
               <div class="ad-saved-panel">
                 <div class="ad-saved-scope" role="tablist" aria-label="Saved items">
+                  <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="groups">My groups</button>
                   <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-saved-scope="events">Saved Events</button>
                   <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="organisers">Saved Organisers</button>
                   <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="opportunities">Saved Opportunities</button>
+                </div>
+
+                <div class="ad-saved-pane" data-saved-pane="groups" role="tabpanel" hidden>
+                  <p class="ad-section-sub ad-section-sub--tight">Networking groups that added you to their member roster. Sign in with the same email to book member-only tickets.</p>
+                  <div class="ad-table-scroll">
+                    <div class="ad-table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th class="ad-th-thumb"></th>
+                            <th>Group</th>
+                            <th>Membership</th>
+                            <th>Hub account</th>
+                            <th class="ad-th-actions">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody id="ad-my-groups-body"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <p class="ad-empty" id="ad-my-groups-empty" hidden>
+                    No member rosters yet. When a networking group adds your email, it will appear here.
+                  </p>
                 </div>
 
                 <div class="ad-saved-pane is-active" data-saved-pane="events" role="tabpanel">

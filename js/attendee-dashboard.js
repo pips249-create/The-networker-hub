@@ -8,6 +8,7 @@
   let cancelledBookings = [];
   let savedEvents = [];
   let savedOrganisers = [];
+  let myGroups = [];
   let savedOpportunities = [];
   let savedOpportunitySearches = [];
   let opportunityEnquiries = [];
@@ -988,10 +989,13 @@
 
   function maybeDefaultSavedScope() {
     if (currentRoute !== 'saved' || savedScope !== 'events') return;
+    const hasGroups = myGroups.length > 0;
     const hasEvents = savedEvents.length > 0;
     const hasOrganisers = savedOrganisers.length > 0;
     const hasOpportunities = savedOpportunities.length > 0;
-    if (!hasEvents && !hasOrganisers && hasOpportunities) {
+    if (hasGroups) {
+      setSavedScope('groups');
+    } else if (!hasEvents && !hasOrganisers && hasOpportunities) {
       setSavedScope('opportunities');
     }
   }
@@ -2800,6 +2804,52 @@
     });
   }
 
+  function renderMyGroupsTable() {
+    const body = document.getElementById('ad-my-groups-body');
+    const empty = document.getElementById('ad-my-groups-empty');
+    if (!body) return;
+
+    body.innerHTML = '';
+    if (!myGroups.length) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    myGroups.forEach((item) => {
+      const tr = document.createElement('tr');
+      const favItem = {
+        title: item.organiserName || item.name,
+        imageUrl: item.organiserPhotoUrl || '',
+      };
+      const membership = !item.membershipActive
+        ? 'Expired'
+        : item.expiringSoon
+          ? 'Expiring soon'
+          : item.expiresAt
+            ? 'Until ' + formatDateShort(item.expiresAt)
+            : 'Active';
+      const account = item.claimedAt || item.attendeeId ? 'Signed up' : 'Invite sent';
+      const href =
+        '/events/organiser.html?slug=' + encodeURIComponent(item.organiserSlug || item.organiserId || '');
+      tr.innerHTML =
+        '<td>' +
+        thumbHtml(favItem) +
+        '</td><td class="ad-td-name"><a href="' +
+        esc(href) +
+        '">' +
+        esc(item.organiserName || 'Group') +
+        '</a></td><td>' +
+        esc(membership) +
+        '</td><td>' +
+        esc(account) +
+        '</td><td><a class="ad-btn ad-btn-ghost" href="' +
+        esc(href) +
+        '">View meetings</a></td>';
+      body.appendChild(tr);
+    });
+  }
+
   function renderSavedOrganisersTable() {
     const body = document.getElementById('ad-saved-organisers-body');
     const empty = document.getElementById('ad-saved-organisers-empty');
@@ -3044,6 +3094,11 @@
     } else if (key === 'saved') {
       maybeDefaultSavedScope();
       try {
+        renderMyGroupsTable();
+      } catch (err) {
+        console.warn('[attendee-dashboard] my groups render failed', err);
+      }
+      try {
         renderSavedTable();
       } catch (err) {
         console.warn('[attendee-dashboard] saved events render failed', err);
@@ -3074,6 +3129,7 @@
     registrations = data.registrations || [];
     cancelledBookings = data.cancelledBookings || [];
     opportunityEnquiries = data.opportunityEnquiries || [];
+    myGroups = data.myGroups || [];
     dashboardReady = true;
     renderedRoutes.clear();
     renderStats(data.stats || {});
@@ -3089,7 +3145,7 @@
     renderRouteTables('payments', { force: true });
     renderRouteTables('cancellations', { force: true });
     renderRouteTables('opportunity-enquiries', { force: true });
-    if (savedEvents.length || savedOrganisers.length || savedOpportunities.length || savedOpportunitySearches.length) {
+    if (savedEvents.length || myGroups.length || savedOrganisers.length || savedOpportunities.length || savedOpportunitySearches.length) {
       renderRouteTables('saved', { force: true });
     }
     updateSideCounts();

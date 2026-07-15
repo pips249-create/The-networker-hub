@@ -16,7 +16,7 @@ module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
   const { json, setCors, requireOrganiserSession } = api;
   setCors(req, res);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -38,6 +38,8 @@ module.exports = async function handler(req, res) {
         role: access.role,
         canManageTeam: access.canManageTeam,
         canDeleteEvents: access.canDeleteEvents,
+        canManagePayments: access.canManagePayments,
+        canCreateGroups: access.canCreateGroups,
         useTeamWorkspace: access.useTeamWorkspace,
         teamMax,
         teamCount,
@@ -64,9 +66,12 @@ module.exports = async function handler(req, res) {
       }
 
       const email = String(body.email || '').trim();
+      const allGroups = body.allGroups !== false && !(Array.isArray(body.groupIds) && body.groupIds.length);
       const { member, emailSent } = await api.inviteTeamMember(auth.session, {
         email,
         role: body.role || 'editor',
+        allGroups,
+        groupIds: allGroups ? [] : body.groupIds,
       });
       return json(res, 201, {
         ok: true,
@@ -77,6 +82,27 @@ module.exports = async function handler(req, res) {
           : 'Invite saved for ' +
             member.email +
             ', but the email could not be sent. Try resend or check email settings.',
+      });
+    }
+
+    if (req.method === 'PATCH') {
+      if (!api.updateTeamMemberGroups) {
+        return json(res, 501, { error: 'team_not_supported', message: 'Team management requires Supabase.' });
+      }
+      const body = parseBody(req);
+      const memberId = String(body.id || body.memberId || '').trim();
+      if (!memberId) return json(res, 400, { error: 'missing_member_id' });
+      const allGroups =
+        body.allGroups === true ||
+        (body.allGroups !== false && !(Array.isArray(body.groupIds) && body.groupIds.length));
+      const { member } = await api.updateTeamMemberGroups(auth.session, memberId, {
+        allGroups,
+        groupIds: allGroups ? [] : body.groupIds,
+      });
+      return json(res, 200, {
+        ok: true,
+        member,
+        message: 'Group access updated for ' + member.email,
       });
     }
 

@@ -541,6 +541,13 @@ async function enrichEventsWithRegistrationSales(events) {
 }
 
 async function getPayoutPreview(session, eventId) {
+  const access = await resolveOrganiserAccess(session);
+  if (!access.canManagePayments) {
+    const e = new Error('Only the account owner can request payouts');
+    e.status = 403;
+    throw e;
+  }
+
   const sb = getSupabaseAdmin();
   const { row } = await assertOwnedEvent(sb, session, eventId);
 

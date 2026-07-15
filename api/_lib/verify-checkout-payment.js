@@ -64,9 +64,6 @@ function checkoutBookingFields(checkout, input) {
     alumniInviteToken:
       metadataText(input.alumniInviteToken || input.alumni_invite_token) ||
       metadataText(metadata.alumni_invite_token || metadata.alumniInviteToken),
-    accessCodeId:
-      metadataText(input.accessCodeId || input.access_code_id) ||
-      metadataText(metadata.access_code_id || metadata.accessCodeId),
   };
 }
 

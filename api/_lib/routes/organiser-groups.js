@@ -156,6 +156,21 @@ module.exports = async function handler(req, res) {
     let body = parseBody(req);
     const action = String(body.action || '').toLowerCase().trim();
     const actionGroupId = String(body.id || body.groupId || '').trim();
+
+    const { resolveOrganiserAccess } = require('../supabase-organiser-access');
+    const access = await resolveOrganiserAccess(auth.session);
+    const isCreateAction = action === 'duplicate' || (!action && String(body.name || '').trim());
+    if (
+      isCreateAction &&
+      !access.canCreateGroups &&
+      !api.isPlatformAdmin(auth.session)
+    ) {
+      return json(res, 403, {
+        error: 'forbidden',
+        message: 'Only the account owner can create or duplicate networking groups.',
+      });
+    }
+
     if (action === 'unpublish' && actionGroupId) {
       try {
         const groups = await api.listGroupsForSession(auth.session);

@@ -180,6 +180,11 @@
         m.claimedAt || m.attendeeId
           ? '<span class="omr-badge-claimed">Signed up</span>'
           : '<span class="omr-badge-pending">Not yet</span>';
+      const invite = m.claimedAt || m.attendeeId
+        ? '—'
+        : m.inviteSentAt
+          ? '<span class="omr-badge-claimed">Sent</span>'
+          : '<span class="omr-badge-pending">Not sent</span>';
       const exp = m.expiresAt
         ? m.expiringSoon
           ? '<span class="omr-badge-expiring">' + esc(m.expiresAt) + '</span>'
@@ -194,7 +199,17 @@
         exp +
         '</td><td>' +
         hub +
-        '</td><td><button type="button" class="ee-btn ee-btn-outline omr-remove" data-id="' +
+        '</td><td>' +
+        invite +
+        '</td><td class="omr-actions">' +
+        (!m.claimedAt && !m.attendeeId
+          ? '<button type="button" class="ee-btn ee-btn-outline omr-resend" data-id="' +
+            esc(m.id) +
+            '" data-email="' +
+            esc(m.email) +
+            '">Resend invite</button> '
+          : '') +
+        '<button type="button" class="ee-btn ee-btn-outline omr-remove" data-id="' +
         esc(m.id) +
         '">Remove</button></td>';
       body.appendChild(tr);
@@ -207,6 +222,29 @@
           await refresh();
         } catch (e) {
           showAlert(e.message, 'error');
+        }
+      });
+    });
+    body.querySelectorAll('.omr-resend').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        btn.disabled = true;
+        try {
+          await api(rosterUrl(), {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              organiserId: organiserId,
+              id: btn.dataset.id,
+              email: btn.dataset.email,
+              resendInvite: true,
+            }),
+          });
+          showAlert('Invite resent.', 'success');
+          await refresh();
+        } catch (e) {
+          showAlert(e.message, 'error');
+        } finally {
+          btn.disabled = false;
         }
       });
     });
@@ -242,6 +280,7 @@
             name: document.getElementById('omr-name')?.value.trim(),
             email: document.getElementById('omr-email')?.value.trim(),
             expiresAt: document.getElementById('omr-expires')?.value || null,
+            sendInvite: document.getElementById('omr-send-invite')?.checked !== false,
           }),
         });
         document.getElementById('omr-add-form')?.reset();
@@ -262,9 +301,15 @@
         const data = await api(rosterUrl(), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ organiserId: organiserId, csv: csv }),
+          body: JSON.stringify({
+            organiserId: organiserId,
+            csv: csv,
+            sendInvites: document.getElementById('omr-csv-send-invites')?.checked === true,
+          }),
         });
-        showAlert('Imported ' + data.ok + ' of ' + data.total + ' rows.', 'success');
+        const inviteNote =
+          data.invitesSent > 0 ? ' · ' + data.invitesSent + ' invites sent' : '';
+        showAlert('Imported ' + data.ok + ' of ' + data.total + ' rows' + inviteNote + '.', 'success');
         await refresh();
       } catch (err) {
         showAlert(err.message, 'error');

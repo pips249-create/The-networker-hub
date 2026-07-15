@@ -10,4 +10,5 @@ module.exports = {
   inviteTeamMember: access.inviteTeamMember,
   removeTeamMember: access.removeTeamMember,
   resendTeamInvite: access.resendTeamInvite,
+  updateTeamMemberGroups: access.updateTeamMemberGroups,
 };

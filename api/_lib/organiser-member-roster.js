@@ -2,8 +2,19 @@
  * Member roster — per organiser page access for members_only tickets.
  */
 const { getSupabaseAdmin } = require('./supabase');
-const { isMembersOnlyTicket } = require('./ticket-access-codes');
+const { isMembersOnlyTicket } = require('./ticket-visibility');
 const { ticketRowToTier, fetchRegistrationCountsByTicket } = require('./supabase-events');
+const { sendTemplatedEmail } = require('./send-template-email');
+const {
+  siteBase,
+  hubAccountUrl,
+  organiserPublicUrl,
+  legalPolicyUrl,
+  contactUrl,
+  logoNavUrl,
+  logoFooterUrl,
+} = require('./hub-email-urls');
+const { emailGreetingName } = require('./email-display-name');
 
 const ROSTER_STATUS_ACTIVE = 'active';
 const ROSTER_STATUS_REMOVED = 'removed';
@@ -91,10 +102,88 @@ async function assertMembersOnlyBookingAllowed(sb, { organiserId, email }) {
   return { active: true, row: data };
 }
 
+async function ensureOrganiserFavouritesForRoster(sb, attendeeId, organiserIds) {
+  const attId = String(attendeeId || '').trim();
+  const ids = [...new Set((organiserIds || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  if (!attId || !ids.length) return;
+
+  for (const organiserId of ids) {
+    const existing = await sb
+      .from('organiser_favourites')
+      .select('id')
+      .eq('attendee_id', attId)
+      .eq('organiser_id', organiserId)
+      .maybeSingle();
+    if (existing.error) throw new Error(existing.error.message);
+    if (existing.data?.id) continue;
+    const ins = await sb
+      .from('organiser_favourites')
+      .insert({ attendee_id: attId, organiser_id: organiserId, notify_email: true });
+    if (ins.error) throw new Error(ins.error.message);
+  }
+}
+
+async function sendMemberRosterInviteEmail({ organiserRow, memberEmail, memberName, rosterRowId }) {
+  const email = normalizeRosterEmail(memberEmail);
+  if (!email || !organiserRow?.id) return { sent: false };
+
+  const site = siteBase();
+  const registerUrl =
+    site +
+    '/register?email=' +
+    encodeURIComponent(email) +
+    '&next=' +
+    encodeURIComponent(organiserPublicUrl(organiserRow, site));
+
+  try {
+    await sendTemplatedEmail({
+      slug: 'member_roster_invite',
+      to: email,
+      variables: {
+        user_name: emailGreetingName(memberName, email),
+        user_email: email,
+        organiser_name: String(organiserRow.name || 'your networking group').trim(),
+        organiser_url: organiserPublicUrl(organiserRow, site),
+        register_url: registerUrl,
+        hub_account_url: hubAccountUrl(site),
+        site_url: site,
+        logo_url: logoNavUrl(site),
+        logo_footer_url: logoFooterUrl(site),
+        privacy_url: legalPolicyUrl(site, 'privacy'),
+        terms_url: legalPolicyUrl(site, 'terms'),
+        contact_url: contactUrl(site),
+      },
+    });
+  } catch (e) {
+    if (e.code === 'emails_disabled' || /emails_disabled/i.test(String(e.message || ''))) {
+      return { sent: false, skipped: 'emails_disabled' };
+    }
+    throw e;
+  }
+
+  if (rosterRowId) {
+    const sb = getSupabaseAdmin();
+    await sb
+      .from('organiser_member_roster')
+      .update({ invite_sent_at: new Date().toISOString() })
+      .eq('id', rosterRowId);
+  }
+
+  return { sent: true };
+}
+
 async function claimRosterEntriesForAttendee(sb, { email, attendeeId }) {
   const em = normalizeRosterEmail(email);
   const attId = String(attendeeId || '').trim();
   if (!em || !attId) return { claimed: 0 };
+
+  const pendingRes = await sb
+    .from('organiser_member_roster')
+    .select('id, organiser_id')
+    .eq('status', ROSTER_STATUS_ACTIVE)
+    .ilike('email', em)
+    .is('claimed_at', null);
+  if (pendingRes.error) throw new Error(pendingRes.error.message);
 
   const now = new Date().toISOString();
   const { data, error } = await sb
@@ -107,9 +196,24 @@ async function claimRosterEntriesForAttendee(sb, { email, attendeeId }) {
     .eq('status', ROSTER_STATUS_ACTIVE)
     .ilike('email', em)
     .is('claimed_at', null)
-    .select('id');
+    .select('id, organiser_id');
   if (error) throw new Error(error.message);
-  return { claimed: (data || []).length };
+
+  const organiserIds = [
+    ...new Set((data || []).map((row) => row.organiser_id).filter(Boolean)),
+  ];
+  const allActiveRes = await sb
+    .from('organiser_member_roster')
+    .select('organiser_id')
+    .eq('status', ROSTER_STATUS_ACTIVE)
+    .ilike('email', em);
+  if (allActiveRes.error) throw new Error(allActiveRes.error.message);
+  const allOrganiserIds = [
+    ...new Set((allActiveRes.data || []).map((row) => row.organiser_id).filter(Boolean)),
+  ];
+  await ensureOrganiserFavouritesForRoster(sb, attId, allOrganiserIds);
+
+  return { claimed: (data || []).length, organiserIds };
 }
 
 async function listRosterForOrganiser(organiserId, { status } = {}) {
@@ -149,6 +253,7 @@ function rosterRowToClient(row) {
     attendeeId: row.attendee_id || null,
     claimedAt: row.claimed_at || null,
     invitedAt: row.invited_at || null,
+    inviteSentAt: row.invite_sent_at || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     membershipActive: rosterRowIsActive(row),
@@ -157,13 +262,16 @@ function rosterRowToClient(row) {
   };
 }
 
-async function upsertRosterMember(organiserId, payload) {
+async function upsertRosterMember(organiserId, payload, options) {
+  const opts = options || {};
   const sb = getSupabaseAdmin();
   const orgId = String(organiserId || '').trim();
   const email = normalizeRosterEmail(payload.email);
   const name = String(payload.name || '').trim() || null;
   const expiresAt = parseExpiresAt(payload.expiresAt ?? payload.expires_at);
   const status = String(payload.status || ROSTER_STATUS_ACTIVE).trim();
+  const sendInvite = opts.sendInvite !== false && payload.sendInvite !== false;
+  const resendInvite = Boolean(opts.resendInvite || payload.resendInvite);
 
   if (!orgId || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     const err = new Error('invalid_roster_member');
@@ -186,10 +294,13 @@ async function upsertRosterMember(organiserId, payload) {
 
   const { data: existing } = await sb
     .from('organiser_member_roster')
-    .select('id, claimed_at')
+    .select('id, claimed_at, invite_sent_at')
     .eq('organiser_id', orgId)
     .ilike('email', email)
     .maybeSingle();
+
+  let saved;
+  const isNew = !existing?.id;
 
   if (existing?.id) {
     if (existing.claimed_at) row.claimed_at = existing.claimed_at;
@@ -200,17 +311,46 @@ async function upsertRosterMember(organiserId, payload) {
       .select('*')
       .single();
     if (error) throw new Error(error.message);
-    return rosterRowToClient(data);
+    saved = data;
+  } else {
+    row.invited_at = now;
+    const { data, error } = await sb
+      .from('organiser_member_roster')
+      .insert(row)
+      .select('*')
+      .single();
+    if (error) throw new Error(error.message);
+    saved = data;
   }
 
-  row.invited_at = now;
-  const { data, error } = await sb
-    .from('organiser_member_roster')
-    .insert(row)
-    .select('*')
-    .single();
-  if (error) throw new Error(error.message);
-  return rosterRowToClient(data);
+  if (attendeeId && row.status === ROSTER_STATUS_ACTIVE) {
+    await ensureOrganiserFavouritesForRoster(sb, attendeeId, [orgId]);
+  }
+
+  let inviteResult = { sent: false };
+  const shouldInvite =
+    sendInvite &&
+    row.status === ROSTER_STATUS_ACTIVE &&
+    !attendeeId &&
+    (isNew || resendInvite || !existing?.invite_sent_at);
+  if (shouldInvite) {
+    const orgRes = await sb
+      .from('organisers')
+      .select('id, name, slug, photo_url')
+      .eq('id', orgId)
+      .maybeSingle();
+    if (orgRes.error) throw new Error(orgRes.error.message);
+    if (orgRes.data) {
+      inviteResult = await sendMemberRosterInviteEmail({
+        organiserRow: orgRes.data,
+        memberEmail: email,
+        memberName: name,
+        rosterRowId: saved.id,
+      });
+    }
+  }
+
+  return { member: rosterRowToClient(saved), invite: inviteResult };
 }
 
 async function removeRosterMember(organiserId, memberId) {
@@ -234,14 +374,17 @@ async function removeRosterMember(organiserId, memberId) {
   return { ok: true };
 }
 
-async function importRosterCsv(organiserId, rows) {
+async function importRosterCsv(organiserId, rows, options) {
   let ok = 0;
   let fail = 0;
+  let invitesSent = 0;
   const errors = [];
+  const sendInvite = options?.sendInvite === true;
   for (const row of rows || []) {
     try {
-      await upsertRosterMember(organiserId, row);
+      const result = await upsertRosterMember(organiserId, row, { sendInvite });
       ok++;
+      if (result.invite?.sent) invitesSent += 1;
     } catch (e) {
       fail++;
       if (errors.length < 20) {
@@ -249,7 +392,7 @@ async function importRosterCsv(organiserId, rows) {
       }
     }
   }
-  return { total: (rows || []).length, ok, fail, errors };
+  return { total: (rows || []).length, ok, fail, invitesSent, errors };
 }
 
 function parseRosterCsv(text) {
@@ -428,6 +571,37 @@ async function buildRosterReports(organiserId, { eventId, recentEventIds } = {})
   return reports;
 }
 
+async function listRosterGroupsForAttendee(email) {
+  const sb = getSupabaseAdmin();
+  const em = normalizeRosterEmail(email);
+  if (!em) return [];
+
+  const { data, error } = await sb
+    .from('organiser_member_roster')
+    .select(
+      'id, expires_at, claimed_at, invite_sent_at, status, organisers(id, name, slug, photo_url, industries, average_rating)'
+    )
+    .eq('status', ROSTER_STATUS_ACTIVE)
+    .ilike('email', em)
+    .order('updated_at', { ascending: false });
+  if (error) throw new Error(error.message);
+
+  return (data || []).map((row) => {
+    const org = row.organisers || {};
+    const industries = Array.isArray(org.industries) ? org.industries : [];
+    const client = rosterRowToClient(row);
+    return {
+      ...client,
+      name: client.name || String(org.name || '').trim() || em.split('@')[0],
+      organiserName: String(org.name || 'Organiser').trim(),
+      organiserSlug: String(org.slug || '').trim(),
+      organiserPhotoUrl: String(org.photo_url || '').trim(),
+      industry: industries[0] || '',
+      rating: org.average_rating != null ? Number(org.average_rating) : null,
+    };
+  });
+}
+
 module.exports = {
   ROSTER_STATUS_ACTIVE,
   ROSTER_STATUS_REMOVED,
@@ -443,4 +617,7 @@ module.exports = {
   parseRosterCsv,
   loadMemberTicketsForEvent,
   buildRosterReports,
+  listRosterGroupsForAttendee,
+  sendMemberRosterInviteEmail,
+  ensureOrganiserFavouritesForRoster,
 };

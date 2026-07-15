@@ -57,6 +57,8 @@
     airtable: null,
     canManageTeam: true,
     canDeleteEvents: true,
+    canManagePayments: true,
+    canCreateGroups: true,
     organiserRole: 'owner',
     opportunityEnquiries: [],
     opportunityEnquiriesNewCount: 0,
@@ -1666,7 +1668,7 @@
           '">Retry automatic refunds</button>'
       );
     }
-    if (ev.canRequestPayout) {
+    if (ev.canRequestPayout && state.canManagePayments !== false) {
       parts.push(
         '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-request-payout="' +
           esc(ev.id) +
@@ -1724,9 +1726,11 @@
         '<button type="button" class="org-action-item" data-add-event-for-group="' +
         esc(id) +
         '"><span class="org-action-icon">📅</span><span class="org-action-text"><strong>Add an event</strong><span>List a new event for this group</span></span></button>' +
-        '<button type="button" class="org-action-item" data-duplicate-group="' +
-        esc(id) +
-        '"><span class="org-action-icon">⧉</span><span class="org-action-text"><strong>Duplicate group</strong><span>Create a draft copy of this profile</span></span></button>' +
+        (state.canCreateGroups !== false
+          ? '<button type="button" class="org-action-item" data-duplicate-group="' +
+            esc(id) +
+            '"><span class="org-action-icon">⧉</span><span class="org-action-text"><strong>Duplicate group</strong><span>Create a draft copy of this profile</span></span></button>'
+          : '') +
         '<button type="button" class="org-action-item" data-org-goto-sub="events-reviews"><span class="org-action-icon">★</span><span class="org-action-text"><strong>Reviews</strong><span>View feedback for this group</span></span></button>' +
         unpublishBtn +
         '</div></div>'
@@ -4998,6 +5002,25 @@
     const group = setupState.primaryGroup;
 
     const navBadge = document.getElementById('org-payment-setup-nav-badge');
+    if (!state.canManagePayments) {
+      ['org-payment-setup-revenue', 'org-payment-setup-overview', 'org-payment-setup-dashboard'].forEach(
+        function (id) {
+          const el = document.getElementById(id);
+          if (el) {
+            el.hidden = true;
+            el.innerHTML = '';
+          }
+        }
+      );
+      if (navBadge) navBadge.hidden = true;
+      const legacyBanner = document.getElementById('stripe-connect-banner');
+      if (legacyBanner) {
+        legacyBanner.hidden = true;
+        legacyBanner.innerHTML = '';
+      }
+      return;
+    }
+
     if (navBadge) {
       navBadge.hidden = !setupState.needsSetup;
       if (setupState.needsSetup && setupState.pendingGroups.length > 1) {
@@ -6068,6 +6091,104 @@
 
   function teamStatusLabel(status) {
     return status === 'active' ? 'Active' : 'Pending';
+  }
+
+  function teamGroupAccessLabel(member) {
+    if (!member || member.role === 'owner' || member.isAccountOwner || member.allGroups) {
+      return 'All groups';
+    }
+    const ids = member.groupIds || [];
+    if (!ids.length) return 'No groups assigned';
+    const names = ids.map(function (id) {
+      const g = state.groups.find(function (x) {
+        return x.id === id;
+      });
+      return g && g.name ? g.name : 'Group';
+    });
+    return names.join(', ');
+  }
+
+  function renderTeamGroupCheckboxes(listEl, selectedIds, options) {
+    if (!listEl) return;
+    const opts = options || {};
+    const selected = new Set((selectedIds || []).map(String));
+    listEl.innerHTML = '';
+    const groups = state.groups || [];
+    if (!groups.length) {
+      const empty = document.createElement('p');
+      empty.className = 'org-field-hint';
+      empty.textContent = 'Create a networking group first, then assign access.';
+      listEl.appendChild(empty);
+      return;
+    }
+    groups.forEach(function (g) {
+      const label = document.createElement('label');
+      label.className = 'org-team-group-option';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.name = opts.inputName || 'team-group';
+      input.value = g.id;
+      if (selected.has(String(g.id))) input.checked = true;
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(g.name || 'Group'));
+      listEl.appendChild(label);
+    });
+  }
+
+  function bindTeamGroupPicker(allCheckbox, listEl, options) {
+    if (!allCheckbox || !listEl) return;
+    const sync = function () {
+      const all = allCheckbox.checked;
+      listEl.hidden = all;
+      if (!all) {
+        const boxes = listEl.querySelectorAll('input[type="checkbox"]');
+        if (![...boxes].some(function (box) {
+          return box.checked;
+        })) {
+          boxes.forEach(function (box) {
+            box.checked = true;
+          });
+        }
+      }
+    };
+    allCheckbox.addEventListener('change', sync);
+    sync();
+  }
+
+  function readTeamGroupSelection(allCheckbox, listEl) {
+    if (!allCheckbox) return { allGroups: true, groupIds: [] };
+    if (allCheckbox.checked) return { allGroups: true, groupIds: [] };
+    const groupIds = [];
+    if (listEl) {
+      listEl.querySelectorAll('input[type="checkbox"]:checked').forEach(function (box) {
+        if (box.value) groupIds.push(box.value);
+      });
+    }
+    return { allGroups: false, groupIds: groupIds };
+  }
+
+  function resetTeamInviteGroupPicker() {
+    const allBox = document.getElementById('team-invite-all-groups');
+    const listEl = document.getElementById('team-invite-group-list');
+    if (allBox) allBox.checked = true;
+    renderTeamGroupCheckboxes(listEl, (state.groups || []).map(function (g) {
+      return g.id;
+    }));
+    bindTeamGroupPicker(allBox, listEl);
+  }
+
+  function openTeamGroupsModal(member) {
+    if (!member || member.isAccountOwner || member.role === 'owner') return;
+    const idInput = document.getElementById('team-groups-member-id');
+    const emailEl = document.getElementById('modal-team-groups-email');
+    const allBox = document.getElementById('team-groups-all-groups');
+    const listEl = document.getElementById('team-groups-group-list');
+    if (idInput) idInput.value = member.id || '';
+    if (emailEl) emailEl.textContent = member.email || '';
+    if (allBox) allBox.checked = member.allGroups !== false;
+    renderTeamGroupCheckboxes(listEl, member.allGroups ? [] : member.groupIds || []);
+    bindTeamGroupPicker(allBox, listEl);
+    openModal('modal-team-groups');
   }
 
   async function loadTeamMembers() {

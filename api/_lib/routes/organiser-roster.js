@@ -87,12 +87,14 @@ module.exports = async function handler(req, res) {
 
       if (body.csv || body.csvText || body.csv_text) {
         const rows = parseRosterCsv(body.csv || body.csvText || body.csv_text);
-        const result = await importRosterCsv(groupId, rows);
+        const sendInvite = body.sendInvites === true || body.send_invites === true;
+        const result = await importRosterCsv(groupId, rows, { sendInvite });
         return json(res, 200, { ok: true, ...result });
       }
 
-      const member = await upsertRosterMember(groupId, body);
-      return json(res, 200, { ok: true, member });
+      const sendInvite = body.sendInvite !== false && body.send_invite !== false;
+      const result = await upsertRosterMember(groupId, body, { sendInvite });
+      return json(res, 200, { ok: true, ...result });
     }
 
     if (req.method === 'PATCH') {
@@ -115,13 +117,22 @@ module.exports = async function handler(req, res) {
         .maybeSingle();
       if (existing.error) throw new Error(existing.error.message);
       if (!existing.data) return json(res, 404, { ok: false, error: 'roster_member_not_found' });
-      const member = await upsertRosterMember(groupId, {
+      const result = await upsertRosterMember(groupId, {
         email: body.email || existing.data.email,
         name: body.name != null ? body.name : existing.data.name,
-        expiresAt: body.expiresAt != null ? body.expiresAt : body.expires_at != null ? body.expires_at : existing.data.expires_at,
+        expiresAt:
+          body.expiresAt != null
+            ? body.expiresAt
+            : body.expires_at != null
+              ? body.expires_at
+              : existing.data.expires_at,
         status: body.status || existing.data.status,
+        resendInvite: body.resendInvite || body.resend_invite,
+      }, {
+        sendInvite: body.resendInvite || body.resend_invite ? true : false,
+        resendInvite: Boolean(body.resendInvite || body.resend_invite),
       });
-      return json(res, 200, { ok: true, member });
+      return json(res, 200, { ok: true, ...result });
     }
 
     if (req.method === 'DELETE') {

@@ -14,12 +14,7 @@ const {
   assertAlumniBookingAllowed,
   markInviteRedeemed,
 } = require('./alumni-invites');
-const {
-  isHiddenTicket,
-  isMembersOnlyTicket,
-  assertAccessCodeBookingAllowed,
-  incrementAccessCodeUse,
-} = require('./ticket-access-codes');
+const { isMembersOnlyTicket } = require('./ticket-visibility');
 const {
   assertMembersOnlyBookingAllowed,
   getActiveRosterMembership,
@@ -251,9 +246,6 @@ async function createRegistrationFromPayment(input) {
 
   const alumniInviteToken = String(input.alumniInviteToken || input.alumni_invite_token || '').trim();
   let alumniEligibility = null;
-  const accessCodeRaw = String(input.accessCode || input.access_code || '').trim();
-  const accessCodeIdInput = String(input.accessCodeId || input.access_code_id || '').trim();
-  let accessCodeEligibility = null;
 
   const amountPaid =
     input.amountPaid != null
@@ -281,20 +273,6 @@ async function createRegistrationFromPayment(input) {
       attendeeId,
       inviteToken: alumniInviteToken,
     });
-  } else if (ticketRow && isHiddenTicket(ticketRow)) {
-    accessCodeEligibility = await assertAccessCodeBookingAllowed(sb, {
-      eventId,
-      ticketId,
-      code: accessCodeRaw,
-      accessCodeId: accessCodeIdInput || null,
-    });
-    if (
-      accessCodeIdInput &&
-      accessCodeEligibility?.codeRow?.id &&
-      accessCodeIdInput !== accessCodeEligibility.codeRow.id
-    ) {
-      throw new Error('access_code_invalid');
-    }
   } else if (ticketRow && isMembersOnlyTicket(ticketRow)) {
     await assertMembersOnlyBookingAllowed(sb, { organiserId, email });
   } else if (amountPaid > 0 || String(paymentStatus).trim() === 'Paid') {
@@ -345,7 +323,6 @@ async function createRegistrationFromPayment(input) {
     application_status: input.applicationStatus || input.application_status || 'Approved',
     registration_kind: registrationKind,
     booked_snapshot: bookedSnapshot,
-    access_code_id: accessCodeEligibility?.codeRow?.id || accessCodeIdInput || null,
   };
 
   const ins = await sb.from('registrations').insert(row).select('*').single();
@@ -356,12 +333,6 @@ async function createRegistrationFromPayment(input) {
       inviteId: alumniEligibility.invite.id,
       registrationId: ins.data.id,
     });
-  }
-
-  const redeemedAccessCodeId =
-    accessCodeEligibility?.codeRow?.id || accessCodeIdInput || ins.data.access_code_id;
-  if (redeemedAccessCodeId) {
-    await incrementAccessCodeUse(sb, redeemedAccessCodeId);
   }
 
   await lockEventOnFirstSale(sb, eventId);
@@ -491,7 +462,6 @@ async function handleCheckoutSessionCompleted(session) {
     stripeCheckoutSessionId: session.id,
     registrationId: metadata.registration_id || metadata.registrationId || null,
     alumniInviteToken: metadata.alumni_invite_token || metadata.alumniInviteToken || null,
-    accessCodeId: metadata.access_code_id || metadata.accessCodeId || null,
   });
 }
 

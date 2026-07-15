@@ -4235,6 +4235,55 @@ body.org-cancel-modal-open {
   }
 }
 
+.org-team-group-fieldset {
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+}
+
+.org-team-group-legend {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--od-text);
+}
+
+.org-team-group-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.org-team-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 10px 12px;
+  border: 1px solid var(--od-border);
+  border-radius: 8px;
+  background: var(--od-surface-muted, #faf9f7);
+}
+
+.org-team-group-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.org-team-group-access {
+  font-size: 13px;
+  color: var(--od-text-muted);
+  max-width: 220px;
+}
+
 .org-nav-badge {
   display: inline-block;
   margin-left: 6px;

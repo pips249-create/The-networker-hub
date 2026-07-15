@@ -44,6 +44,10 @@
             <input type="date" id="omr-expires" />
             <p class="ee-hint">We flag expiring memberships in your reports. Renew off-platform and update the date here.</p>
           </div>
+          <label class="omr-check">
+            <input type="checkbox" id="omr-send-invite" checked />
+            Send invite email to join The Networker Hub
+          </label>
           <button type="submit" class="ee-btn ee-btn-gold">Add to roster</button>
         </form>
       </div>
@@ -52,6 +56,10 @@
         <h2>Import CSV</h2>
         <p class="ee-hint">Columns: <code>email</code> (required), <code>name</code>, <code>expires</code> or <code>membership expiry</code>.</p>
         <textarea id="omr-csv" rows="6" placeholder="email,name,expires&#10;jane@example.com,Jane Smith,2026-12-31"></textarea>
+        <label class="omr-check">
+          <input type="checkbox" id="omr-csv-send-invites" />
+          Send invite emails after import (new members without Hub accounts only)
+        </label>
         <button type="button" class="ee-btn ee-btn-outline" id="omr-import-btn">Import CSV</button>
       </div>
 
@@ -74,6 +82,7 @@
                 <th>Email</th>
                 <th>Expires</th>
                 <th>Hub account</th>
+                <th>Invite</th>
                 <th></th>
               </tr>
             </thead>

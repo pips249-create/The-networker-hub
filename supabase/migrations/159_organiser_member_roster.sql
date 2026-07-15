@@ -5,10 +5,10 @@ alter table public.tickets
 
 alter table public.tickets
   add constraint tickets_visibility_check
-  check (visibility in ('public', 'hidden', 'members_only'));
+  check (visibility in ('public', 'members_only'));
 
 comment on column public.tickets.visibility is
-  'public = event page; hidden = access code; members_only = roster members when signed in.';
+  'public = event page; members_only = roster members when signed in.';
 
 create table if not exists public.organiser_member_roster (
   id uuid primary key default uuid_generate_v4(),

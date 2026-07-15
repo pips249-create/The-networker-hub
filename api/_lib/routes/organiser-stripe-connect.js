@@ -60,12 +60,18 @@ module.exports = async function handler(req, res) {
   const { resolveOrganiserAccess } = require('../supabase-organiser-access');
   const access = await resolveOrganiserAccess(auth.session);
   // Platform admins can open Connect for any group (dashboard admin overview).
-  // Non-admins must own / have team access to the group.
+  // Non-admins must own / have team access to the group; only owners manage bank details.
   if (!isAdminRole(auth.session.role) && !access.groupIds.includes(groupId)) {
     return json(res, 403, {
       error: 'forbidden',
       message:
         'You can only add bank details for organiser pages linked to your account. Switch to your own workspace or ask the group owner.',
+    });
+  }
+  if (!isAdminRole(auth.session.role) && !access.canManagePayments) {
+    return json(res, 403, {
+      error: 'forbidden',
+      message: 'Only the account owner can add bank details or open the Stripe dashboard.',
     });
   }
 

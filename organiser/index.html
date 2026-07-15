@@ -579,7 +579,7 @@
             <div class="org-page-head-text">
               <p class="org-page-kicker">Team</p>
               <h1 class="org-page-title">Team &amp; invites</h1>
-              <p class="org-page-lead">Invite editors to help manage events. Only the account owner can invite or remove team members.</p>
+              <p class="org-page-lead">Invite editors to help manage events. Choose which networking groups each editor can access. Only the account owner can invite or remove team members.</p>
               <p class="org-section-sub org-team-limit-note" id="team-limit-note" hidden></p>
               <p class="org-section-sub org-team-editor-note" id="team-editor-note" hidden>
                 You&apos;re signed in as an <strong>editor</strong>. You can manage events, but only the account owner can send invites.
@@ -593,9 +593,9 @@
               <div class="org-team-permissions-col">
                 <p class="org-team-permissions-label">Editors can</p>
                 <ul class="org-team-permissions-list org-team-permissions-list--can">
-                  <li>View all networking groups on this account</li>
-                  <li>Create and edit events, tickets, and attendee lists</li>
-                  <li>View revenue, registrations, and reviews</li>
+                  <li>View and manage assigned networking groups (or all groups if you choose)</li>
+                  <li>Create and edit events, tickets, and attendee lists for those groups</li>
+                  <li>View revenue, registrations, and reviews for those groups</li>
                   <li>Manage business opportunity listings</li>
                 </ul>
               </div>
@@ -603,7 +603,8 @@
                 <p class="org-team-permissions-label">Editors cannot</p>
                 <ul class="org-team-permissions-list org-team-permissions-list--cannot">
                   <li>Invite or remove team members</li>
-                  <li>Delete events (cancel instead if needed)</li>
+                  <li>Create new networking groups or duplicate existing ones</li>
+                  <li>Add bank details, request payouts, or delete events</li>
                 </ul>
               </div>
             </div>
@@ -614,6 +615,7 @@
                 <tr>
                   <th>Name / email</th>
                   <th>Role</th>
+                  <th>Groups</th>
                   <th>Status</th>
                   <th class="org-th-actions">Actions</th>
                 </tr>
@@ -1097,7 +1099,7 @@
       <div class="org-modal-backdrop" data-org-modal-close></div>
       <div class="org-modal-panel">
         <h2 id="modal-team-title">Invite team member</h2>
-        <p>Editors can create and edit events, manage attendees, and view revenue for all groups on your account. They cannot invite others or delete events.</p>
+        <p>Editors can create and edit events, manage attendees, and view revenue for the groups you assign. They cannot invite others, add bank details, or delete events.</p>
         <p class="org-modal-note" id="modal-team-limit-note"></p>
         <form id="form-team-invite">
           <div class="org-field">
@@ -1109,9 +1111,42 @@
             <input type="text" id="team-invite-role" value="Editor" readonly aria-readonly="true" />
             <p class="org-field-hint">Team invites are editors only. Owners cannot be invited — there is one account owner.</p>
           </div>
+          <fieldset class="org-team-group-fieldset" id="team-invite-groups-fieldset">
+            <legend class="org-team-group-legend">Group access</legend>
+            <label class="org-team-group-all">
+              <input type="checkbox" id="team-invite-all-groups" checked />
+              All groups on this account
+            </label>
+            <div class="org-team-group-list" id="team-invite-group-list" hidden></div>
+            <p class="org-field-hint">Uncheck &ldquo;All groups&rdquo; to limit this editor to specific networking groups.</p>
+          </fieldset>
           <div class="org-modal-actions">
             <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
             <button type="submit" class="org-btn org-btn-primary">Send invite</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: edit team member group access -->
+    <div class="org-modal" id="modal-team-groups" role="dialog" aria-modal="true" aria-labelledby="modal-team-groups-title" hidden>
+      <div class="org-modal-backdrop" data-org-modal-close></div>
+      <div class="org-modal-panel">
+        <h2 id="modal-team-groups-title">Edit group access</h2>
+        <p id="modal-team-groups-email" class="org-modal-sub"></p>
+        <form id="form-team-groups">
+          <input type="hidden" id="team-groups-member-id" value="" />
+          <fieldset class="org-team-group-fieldset">
+            <legend class="org-team-group-legend">Group access</legend>
+            <label class="org-team-group-all">
+              <input type="checkbox" id="team-groups-all-groups" />
+              All groups on this account
+            </label>
+            <div class="org-team-group-list" id="team-groups-group-list" hidden></div>
+          </fieldset>
+          <div class="org-modal-actions">
+            <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
+            <button type="submit" class="org-btn org-btn-primary">Save access</button>
           </div>
         </form>
       </div>

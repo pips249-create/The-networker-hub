@@ -127,6 +127,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: 'Your previous attendee rate for {{event_name}}',
   },
+  member_roster_invite: {
+    file: 'member-roster-invite.html',
+    marker: 'hub-email-layout-v2',
+    subject: '{{organiser_name}} added you to their member roster on The Networker Hub',
+  },
   category_exclusivity_payment_reminder: {
     file: 'category-exclusivity-payment-reminder.html',
     marker: 'hub-email-layout-v2',

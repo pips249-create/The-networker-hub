@@ -15,8 +15,9 @@ function isUuid(v) {
   );
 }
 
-function rowToTeamMember(row) {
+function rowToTeamMember(row, groupScope) {
   if (!row) return null;
+  const scopedIds = groupScope === undefined ? null : groupScope;
   return {
     id: row.id,
     organiserAccountId: row.organiser_account_id,
@@ -26,7 +27,80 @@ function rowToTeamMember(row) {
     status: row.status || 'pending',
     invitedAt: row.invited_at || row.created_at || null,
     createdAt: row.created_at || null,
+    allGroups: scopedIds === null,
+    groupIds: scopedIds === null ? [] : scopedIds,
   };
+}
+
+async function loadTeamMemberGroupScopes(sb, memberIds) {
+  const ids = [...new Set((memberIds || []).filter(Boolean))];
+  const scopes = new Map();
+  if (!ids.length) return scopes;
+
+  const { data, error } = await sb
+    .from('organiser_team_member_groups')
+    .select('team_member_id, organiser_id')
+    .in('team_member_id', ids);
+  if (error) throw new Error(error.message);
+
+  (data || []).forEach((row) => {
+    const memberId = row.team_member_id;
+    if (!scopes.has(memberId)) scopes.set(memberId, []);
+    scopes.get(memberId).push(row.organiser_id);
+  });
+  ids.forEach((memberId) => {
+    if (!scopes.has(memberId)) scopes.set(memberId, null);
+  });
+  return scopes;
+}
+
+async function loadScopedGroupIdsForMember(sb, memberId) {
+  if (!memberId) return null;
+  const scopes = await loadTeamMemberGroupScopes(sb, [memberId]);
+  return scopes.get(memberId) ?? null;
+}
+
+async function validateAccountGroupIds(sb, accountId, groupIds) {
+  const ids = [...new Set((groupIds || []).filter(Boolean))];
+  if (!ids.length) return [];
+  const { data, error } = await sb
+    .from('organisers')
+    .select('id')
+    .eq('organiser_account_id', accountId)
+    .in('id', ids);
+  if (error) throw new Error(error.message);
+  const valid = new Set((data || []).map((row) => row.id));
+  if (ids.some((id) => !valid.has(id))) {
+    const e = new Error('One or more groups are not on this account');
+    e.status = 400;
+    throw e;
+  }
+  return ids;
+}
+
+async function setTeamMemberGroupAccess(sb, memberId, accountId, { allGroups, groupIds }) {
+  const { error: delErr } = await sb
+    .from('organiser_team_member_groups')
+    .delete()
+    .eq('team_member_id', memberId);
+  if (delErr) throw new Error(delErr.message);
+
+  if (allGroups) return;
+
+  const ids = await validateAccountGroupIds(sb, accountId, groupIds);
+  if (!ids.length) {
+    const e = new Error('Select at least one group, or choose All groups');
+    e.status = 400;
+    throw e;
+  }
+
+  const { error: insErr } = await sb.from('organiser_team_member_groups').insert(
+    ids.map((organiserId) => ({
+      team_member_id: memberId,
+      organiser_id: organiserId,
+    }))
+  );
+  if (insErr) throw new Error(insErr.message);
 }
 
 async function findTeamMembership(sb, userId, email) {
@@ -227,6 +301,16 @@ async function resolveOrganiserAccess(session) {
     (byAccount || []).forEach((r) => groupIds.add(r.id));
   }
 
+  if (isEditor && useTeamWorkspace && activeMembership) {
+    const scopedGroupIds = await loadScopedGroupIdsForMember(sb, activeMembership.id);
+    if (scopedGroupIds !== null) {
+      const allowed = new Set(scopedGroupIds);
+      [...groupIds].forEach((id) => {
+        if (!allowed.has(id)) groupIds.delete(id);
+      });
+    }
+  }
+
   return {
     accountId: effectiveAccountId,
     personalAccountId: accountId,
@@ -236,6 +320,8 @@ async function resolveOrganiserAccess(session) {
     useTeamWorkspace: Boolean(useTeamWorkspace),
     canManageTeam: isOwner && !isEditor,
     canDeleteEvents: isOwner && !isEditor,
+    canManagePayments: isOwner && !isEditor,
+    canCreateGroups: isOwner && !isEditor,
     membership: membership ? rowToTeamMember(membership) : null,
     groupIds: [...groupIds],
     teamMax: ORGANISER_TEAM_MAX,
@@ -259,7 +345,12 @@ async function listTeamMembers(session) {
     .order('created_at', { ascending: true });
   if (error) throw new Error(error.message);
 
-  const members = (data || []).map(rowToTeamMember);
+  const memberRows = data || [];
+  const scopes = await loadTeamMemberGroupScopes(
+    sb,
+    memberRows.map((row) => row.id)
+  );
+  const members = memberRows.map((row) => rowToTeamMember(row, scopes.get(row.id) ?? null));
   const hasOwnerRow = members.some((m) => m.role === 'owner' || m.isAccountOwner);
   if (!hasOwnerRow) {
     const ownerEmail = await getAccountOwnerEmail(sb, access.accountId);
@@ -274,6 +365,8 @@ async function listTeamMembers(session) {
         invitedAt: null,
         createdAt: null,
         isAccountOwner: true,
+        allGroups: true,
+        groupIds: [],
       });
     }
   }
@@ -301,7 +394,7 @@ async function sendTeamInviteEmail(session, member, access) {
   });
 }
 
-async function inviteTeamMember(session, { email, role }) {
+async function inviteTeamMember(session, { email, role, allGroups, groupIds }) {
   const access = await resolveOrganiserAccess(session);
   if (!access.canManageTeam) {
     const e = new Error('Only owners can invite team members');
@@ -367,7 +460,17 @@ async function inviteTeamMember(session, { email, role }) {
     .single();
   if (error) throw new Error(error.message);
 
-  const member = rowToTeamMember(data);
+  const memberRow = data;
+  const grantAllGroups = allGroups !== false && !(Array.isArray(groupIds) && groupIds.length);
+  await setTeamMemberGroupAccess(sb, memberRow.id, access.accountId, {
+    allGroups: grantAllGroups,
+    groupIds: grantAllGroups ? [] : groupIds,
+  });
+
+  const member = rowToTeamMember(
+    memberRow,
+    grantAllGroups ? null : await loadScopedGroupIdsForMember(sb, memberRow.id)
+  );
   let emailSent = false;
   try {
     await sendTeamInviteEmail(session, member, access);
@@ -447,7 +550,10 @@ async function resendTeamInvite(session, memberId) {
     .single();
   if (error) throw new Error(error.message);
 
-  const member = rowToTeamMember(data);
+  const member = rowToTeamMember(
+    data,
+    await loadScopedGroupIdsForMember(sb, data.id)
+  );
   let emailSent = false;
   try {
     await sendTeamInviteEmail(session, member, access);
@@ -459,6 +565,49 @@ async function resendTeamInvite(session, memberId) {
   return { member, emailSent };
 }
 
+async function updateTeamMemberGroups(session, memberId, { allGroups, groupIds }) {
+  const access = await resolveOrganiserAccess(session);
+  if (!access.canManageTeam) {
+    const e = new Error('Only owners can change team member group access');
+    e.status = 403;
+    throw e;
+  }
+  if (!memberId || memberId === 'account-owner') {
+    const e = new Error('Cannot change group access for the account owner');
+    e.status = 400;
+    throw e;
+  }
+
+  const sb = getSupabaseAdmin();
+  const { data: row } = await sb
+    .from('organiser_team_members')
+    .select('*')
+    .eq('id', memberId)
+    .maybeSingle();
+  if (!row || row.organiser_account_id !== access.accountId) {
+    const e = new Error('Team member not found');
+    e.status = 404;
+    throw e;
+  }
+  if (row.role === 'owner') {
+    const e = new Error('Cannot change group access for the owner');
+    e.status = 400;
+    throw e;
+  }
+
+  const grantAllGroups = allGroups === true || (allGroups !== false && !(Array.isArray(groupIds) && groupIds.length));
+  await setTeamMemberGroupAccess(sb, memberId, access.accountId, {
+    allGroups: grantAllGroups,
+    groupIds: grantAllGroups ? [] : groupIds,
+  });
+
+  const member = rowToTeamMember(
+    row,
+    grantAllGroups ? null : await loadScopedGroupIdsForMember(sb, memberId)
+  );
+  return { member };
+}
+
 module.exports = {
   resolveOrganiserAccess,
   getOrCreateOrganiserAccount,
@@ -466,6 +615,7 @@ module.exports = {
   inviteTeamMember,
   removeTeamMember,
   resendTeamInvite,
+  updateTeamMemberGroups,
   rowToTeamMember,
   ORGANISER_TEAM_MAX,
 };

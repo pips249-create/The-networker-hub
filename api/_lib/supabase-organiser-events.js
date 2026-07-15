@@ -3,7 +3,7 @@
  */
 const crypto = require('crypto');
 const { getSupabaseAdmin } = require('./supabase');
-const { syncAccessCodesForEvent, validateTierAccessCodes, loadAccessCodesByTicketIds, normalizeTicketVisibility } = require('./ticket-access-codes');
+const { normalizeTicketVisibility } = require('./ticket-visibility');
 const { formatTicketsSoldLabel } = require('./tickets-sold-label');
 const { resolveImageUrl } = require('./supabase-storage');
 const { isAdminRole } = require('./auth');
@@ -165,7 +165,7 @@ function rowToEvent(row) {
   };
 }
 
-function rowToTicket(row, accessCodeRow) {
+function rowToTicket(row) {
   return {
     id: row.id,
     name: String(row.name || 'Ticket').trim(),
@@ -178,9 +178,7 @@ function rowToTicket(row, accessCodeRow) {
     displayOrder: row.display_order != null ? Number(row.display_order) : 0,
     saleStart: row.sale_starts_at || null,
     saleEnd: row.sale_ends_at || null,
-    visibility: String(row.visibility || 'public').toLowerCase(),
-    accessCode: accessCodeRow ? String(accessCodeRow.code || '') : '',
-    accessMaxUses: accessCodeRow?.max_uses != null ? Number(accessCodeRow.max_uses) : null,
+    visibility: normalizeTicketVisibility(row.visibility),
   };
 }
 
@@ -445,22 +443,14 @@ async function listTicketsForEventIds(eventIds) {
     if (error) throw new Error(error.message);
     if (data?.length) rows.push(...data);
   }
-  const codesByTicketId = await loadAccessCodesByTicketIds(
-    sb,
-    rows.map((row) => row.id).filter(Boolean)
-  );
-  return rows.map((row) => rowToTicket(row, codesByTicketId.get(row.id)));
+  return rows.map((row) => rowToTicket(row));
 }
 
 async function listAllOrganiserTickets() {
   const sb = getSupabaseAdmin();
   const { data, error } = await sb.from('tickets').select('*');
   if (error) throw new Error(error.message);
-  const codesByTicketId = await loadAccessCodesByTicketIds(
-    sb,
-    (data || []).map((row) => row.id).filter(Boolean)
-  );
-  return (data || []).map((row) => rowToTicket(row, codesByTicketId.get(row.id)));
+  return (data || []).map((row) => rowToTicket(row));
 }
 
 async function listTicketsForSession(session, eventIds, adminView) {
@@ -1284,8 +1274,6 @@ async function createTicketsForEvents({
   let tiers = Array.isArray(tickets) ? tickets : [];
   if (!ids.length || !tiers.length) return { created: 0, tickets: [] };
 
-  validateTierAccessCodes(tiers);
-
   const mode = normalizeAttendanceMode(attendanceMode);
 
   const guestPassesDisabledFlag = Boolean(guestPassesDisabled);
@@ -1398,7 +1386,6 @@ async function createTicketsForEvents({
   const out = [];
   for (const eventId of ids) {
     const eventStartsAt = startsByEventId.get(eventId) || null;
-    const tierPairs = [];
     for (const tier of tiers) {
       const created = await createTicket({
         eventId,
@@ -1414,10 +1401,8 @@ async function createTicketsForEvents({
         ticketType: tier.ticketType,
         visibility: tier.visibility,
       });
-      tierPairs.push({ tier, ticket: created });
       out.push(created);
     }
-    await syncAccessCodesForEvent(sb, eventId, tierPairs);
   }
 
   const hasCategoryExclusivity =
@@ -1795,6 +1780,8 @@ async function getOrganiserWorkspace(req) {
     organiserRole: access ? access.role : null,
     canManageTeam: access ? access.canManageTeam : true,
     canDeleteEvents: access ? access.canDeleteEvents : true,
+    canManagePayments: access ? access.canManagePayments : true,
+    canCreateGroups: access ? access.canCreateGroups : true,
     useTeamWorkspace: access ? Boolean(access.useTeamWorkspace) : false,
     stripeConnectEnabled,
     user: {

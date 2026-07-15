@@ -15,6 +15,7 @@ const {
   deriveRefundStatusForCancelledRegistration,
 } = require('./cancellation-email-sections');
 const { listOpportunityEnquiriesSentBySession } = require('./supabase-opportunities');
+const { listRosterGroupsForAttendee } = require('./organiser-member-roster');
 const { reconcileCancelledRegistrationRefunds } = require('./reconcile-cancelled-refunds');
 const { ticketIsApplication } = require('./supabase-application-submissions');
 
@@ -402,13 +403,18 @@ async function getAttendeeDashboardFromSupabase(session) {
       cancelledBookings: [],
       stats: buildStats([]),
       opportunityEnquiries: [],
+      myGroups: [],
     };
   }
 
   const sb = getSupabaseAdmin();
-  const [attendeeId, opportunityEnquiries] = await Promise.all([
+  const email = String(session.email || '')
+    .trim()
+    .toLowerCase();
+  const [attendeeId, opportunityEnquiries, myGroups] = await Promise.all([
     resolveAttendeeId(sb, session),
     listOpportunityEnquiriesSentBySession(session).catch(() => []),
+    listRosterGroupsForAttendee(email).catch(() => []),
   ]);
 
   if (!attendeeId) {
@@ -417,6 +423,7 @@ async function getAttendeeDashboardFromSupabase(session) {
       cancelledBookings: [],
       stats: buildStats([]),
       opportunityEnquiries,
+      myGroups,
     };
   }
 
@@ -438,6 +445,7 @@ async function getAttendeeDashboardFromSupabase(session) {
     cancelledBookings,
     stats: buildStats(registrations),
     opportunityEnquiries,
+    myGroups,
   };
 }
 
