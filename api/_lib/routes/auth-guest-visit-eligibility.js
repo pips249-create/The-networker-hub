@@ -4,9 +4,47 @@ const { isUuid } = require('../uuid');
 const {
   getGuestVisitEligibility,
   loadOrganiserGuestVisitAllowance,
+  PLATFORM_MAX_COMPLIMENTARY_VISITS,
 } = require('../guest-visits');
 
-/** GET ?eventId= — guest visit eligibility for the signed-in attendee on this organiser. */
+function emptyEligibility() {
+  return {
+    allowed: 0,
+    used: 0,
+    remaining: 0,
+    eligible: false,
+    platformMax: PLATFORM_MAX_COMPLIMENTARY_VISITS,
+  };
+}
+
+function parseOrganiserIds(query) {
+  const raw = String(query?.organiserIds || query?.organiser_ids || '').trim();
+  if (!raw) return [];
+  const seen = new Set();
+  const out = [];
+  raw.split(',').forEach((part) => {
+    const id = String(part || '').trim();
+    if (!isUuid(id) || seen.has(id)) return;
+    seen.add(id);
+    out.push(id);
+  });
+  return out.slice(0, 40);
+}
+
+async function eligibilityForOrganiser(sb, organiserId, session) {
+  const allowed = await loadOrganiserGuestVisitAllowance(sb, organiserId);
+  const email = String(session.email || '')
+    .trim()
+    .toLowerCase();
+  return getGuestVisitEligibility(sb, {
+    organiserId,
+    attendeeId: session.sub || null,
+    email,
+    allowed,
+  });
+}
+
+/** GET ?eventId= or ?organiserIds=id1,id2 — guest visit eligibility for the signed-in attendee. */
 module.exports = async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -25,13 +63,34 @@ module.exports = async function handler(req, res) {
     return json(res, 503, { ok: false, error: 'supabase_not_configured' });
   }
 
+  const organiserIds = parseOrganiserIds(req.query);
   const eventId = String(req.query?.eventId || req.query?.event_id || '').trim();
-  if (!isUuid(eventId)) {
-    return json(res, 400, { ok: false, error: 'invalid_event_id' });
-  }
 
   try {
     const sb = getSupabaseAdmin();
+
+    if (organiserIds.length) {
+      const entries = await Promise.all(
+        organiserIds.map(async (organiserId) => {
+          try {
+            const eligibility = await eligibilityForOrganiser(sb, organiserId, session);
+            return [organiserId, eligibility];
+          } catch {
+            return [organiserId, emptyEligibility()];
+          }
+        })
+      );
+      const byOrganiserId = {};
+      entries.forEach(([id, eligibility]) => {
+        byOrganiserId[id] = eligibility;
+      });
+      return json(res, 200, { ok: true, byOrganiserId });
+    }
+
+    if (!isUuid(eventId)) {
+      return json(res, 400, { ok: false, error: 'invalid_event_id' });
+    }
+
     const evRes = await sb
       .from('events')
       .select('id, organiser_id, attendance_mode, status, guest_passes_disabled')
@@ -44,7 +103,7 @@ module.exports = async function handler(req, res) {
       return json(res, 200, {
         ok: true,
         attendanceMode: evRes.data.attendance_mode || 'tickets',
-        eligibility: { allowed: 0, used: 0, remaining: 0, eligible: false, platformMax: 2 },
+        eligibility: emptyEligibility(),
         guestPassesDisabled: true,
       });
     }
@@ -54,20 +113,11 @@ module.exports = async function handler(req, res) {
       return json(res, 200, {
         ok: true,
         attendanceMode: evRes.data.attendance_mode || 'tickets',
-        eligibility: { allowed: 0, used: 0, remaining: 0, eligible: false, platformMax: 2 },
+        eligibility: emptyEligibility(),
       });
     }
 
-    const allowed = await loadOrganiserGuestVisitAllowance(sb, organiserId);
-    const email = String(session.email || '')
-      .trim()
-      .toLowerCase();
-    const eligibility = await getGuestVisitEligibility(sb, {
-      organiserId,
-      attendeeId: session.sub || null,
-      email,
-      allowed,
-    });
+    const eligibility = await eligibilityForOrganiser(sb, organiserId, session);
 
     return json(res, 200, {
       ok: true,

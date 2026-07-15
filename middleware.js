@@ -122,6 +122,10 @@ function injectSeoIntoHtml(html, meta) {
   out = out.replace(/<title>[^<]*<\/title>\s*/i, '');
   out = out.replace(/<meta\s+name=["']description["'][^>]*>\s*/i, '');
   out = out.replace(/<!--\s*hub-seo-injected\s*-->\s*/gi, '');
+  out = out.replace(/<html(\s[^>]*)?>/i, function (match) {
+    if (/\sdata-hub-seo-injected(?:\s|=|>)/i.test(match)) return match;
+    return match.replace(/>$/, ' data-hub-seo-injected="true">');
+  });
 
   if (/<\/head>/i.test(out)) {
     return out.replace(/<\/head>/i, headTags + '</head>');
@@ -538,14 +542,21 @@ export default async function middleware(request) {
     metaUrl.searchParams.set('type', type);
     metaUrl.searchParams.set('slug', slug);
 
-    const metaRes = await fetch(metaUrl.toString(), {
-      headers: {
-        'x-forwarded-host': url.host,
-        ...(isSiteAccessGateActive() && String(process.env.SITE_ACCESS_PASSWORD || '').trim()
-          ? { 'x-hub-internal-seo': String(process.env.SITE_ACCESS_PASSWORD).trim() }
-          : {}),
-      },
-    });
+    const internalHeaders =
+      isSiteAccessGateActive() && String(process.env.SITE_ACCESS_PASSWORD || '').trim()
+        ? { 'x-hub-internal-seo': String(process.env.SITE_ACCESS_PASSWORD).trim() }
+        : {};
+    const [metaRes, htmlRes] = await Promise.all([
+      fetch(metaUrl.toString(), {
+        headers: {
+          'x-forwarded-host': url.host,
+          ...internalHeaders,
+        },
+      }),
+      fetch(new URL(templatePath, url.origin).toString(), {
+        headers: internalHeaders,
+      }),
+    ]);
     if (!metaRes.ok) return passThroughIfGated(siteGated);
 
     const meta = await metaRes.json();
@@ -563,13 +574,6 @@ export default async function middleware(request) {
       }
     }
 
-    const htmlRes = await fetch(new URL(templatePath, url.origin).toString(), {
-      headers: {
-        ...(isSiteAccessGateActive() && String(process.env.SITE_ACCESS_PASSWORD || '').trim()
-          ? { 'x-hub-internal-seo': String(process.env.SITE_ACCESS_PASSWORD).trim() }
-          : {}),
-      },
-    });
     if (!htmlRes.ok) return passThroughIfGated(siteGated);
 
     let html = injectSeoIntoHtml(await htmlRes.text(), meta);

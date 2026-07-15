@@ -85,7 +85,7 @@ const KNOWLEDGE_SECTIONS = [
     title: 'ORGANISER TICKETS & ATTENDEES',
     body:
       'TICKET SETUP (event-tickets.html): choose Ticket types (open booking) or Category Exclusivity — these two attendance modes are mutually exclusive. ' +
-      'OPEN BOOKING: add one row per ticket tier (Standard, Early bird, etc.) with price, quantity, and sale dates. Optionally tick Enable guest visit programme and type how many complimentary visits (1–3, Hub maximum) a newcomer gets before paid member tickets unlock. Tick Disallow guest passes for member-only dates (e.g. conferences) while keeping paid tickets available. Alumni Fast-Pass is an optional add-on: a hidden alumni tier for past attendees, with invites sent from your dashboard after publish. ' +
+      'OPEN BOOKING: add one row per ticket tier (Standard, Early bird, etc.) with price, quantity, and sale dates. Optionally enable the guest visit programme: newcomers get 1–3 complimentary visits (Hub maximum) across your organiser page before paid member tickets unlock. Use “Member-only for this event” to skip guest passes on a specific date (e.g. conferences) while keeping paid tickets available. Alumni Fast-Pass is an optional add-on: a hidden alumni tier for past attendees, with invites sent from your dashboard after publish. ' +
       'CATEGORY EXCLUSIVITY: prospective attendees apply instead of buying straight away. They answer two fixed questions — their industry and job title. You approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. Set an optional price (leave at £0 for free), places limit, and application closing date. Cannot be combined with open ticket types on the same event. ' +
       'APPLICATION QUESTIONS: under Category Exclusivity, industry and job title are fixed and cannot be changed. For open ticket booking, you can optionally tick boxes under Attendee information at booking to note food is included or to collect dietary or accessibility requirements at checkout. ' +
       'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event or by new vs returning. Each row shows visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page. Download attendees CSV or export printable name badges (PDF). This shows ticket registrations — not on-the-day check-in.',
@@ -250,7 +250,7 @@ const FALLBACK_REPLIES = [
   {
     match: /(paid|member).*(ticket|tier).*(guest visit|complimentary visit|guest programme)|(guest visit|complimentary visit|guest programme).*(paid|member).*(ticket|tier)/i,
     reply:
-      'Yes — on the tickets step, add your paid ticket type(s) first, then tick Enable guest visit programme. New attendees use the complimentary visit allowance set on your organiser page first; once they have used it, the paid member tickets unlock. For member-only dates (e.g. a conference evening), tick Disallow guest passes — paid tickets stay available without complimentary visits.',
+      'Yes — on the tickets step, add your paid ticket type(s) first, then enable the guest visit programme. Newcomers use their complimentary visits first; once used, paid member tickets unlock. For member-only dates (e.g. a conference), tick “Member-only for this event” — paid tickets stay available without complimentary visits.',
   },
   {
     match: /difference.*(ticket type|guest visit|category exclusiv)|ticket type.*guest visit.*category|guest visit.*category exclusiv|attendance mode/i,
@@ -385,12 +385,12 @@ const FALLBACK_REPLIES = [
   {
     match: /guest visit|complimentary visit|trial visit|visitor ticket|member ticket/i,
     reply:
-      'The guest visit programme is an optional add-on on the tickets step (within Ticket types mode). Tick Enable guest visit programme and type how many complimentary visits (1–3, Hub maximum) a newcomer gets before paid member tickets unlock. Add your paid member ticket type(s) in the tier rows below. For member-only dates, tick Disallow guest passes while keeping paid tickets live.',
+      'The guest visit programme is an optional add-on on the tickets step. Enable it to offer 1–3 complimentary visits so newcomers can try your group before buying a paid member ticket. The allowance applies across your organiser page. For member-only dates, tick “Member-only for this event” while keeping paid tickets live.',
   },
   {
     match: /disallow guest|guest pass.*(off|disable|opt)|member.?only (date|event|evening)|no guest (pass|visit).*conference/i,
     reply:
-      'On the tickets step, enable the guest visit programme, then tick Disallow guest passes for this event. Paid member tickets stay available and visitors can book them directly — complimentary guest passes are hidden for that date. Useful for conferences or member-only evenings.',
+      'On the tickets step, enable the guest visit programme, then tick “Member-only for this event”. Paid member tickets stay available and visitors can book them directly — complimentary guest passes are hidden for that date. Useful for conferences or member-only evenings.',
   },
   {
     match: /name badge|printable badge|avery 7160|badge pdf/i,

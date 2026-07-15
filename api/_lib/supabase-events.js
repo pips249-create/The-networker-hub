@@ -1008,12 +1008,24 @@ async function handle(req, res) {
       }
 
       const eventId = row.id;
-      const [{ data: ticketsRaw }, seriesResult, relatedRows] = await Promise.all([
+      const organiserRankingPromise = organiser?.id
+        ? (async () => {
+            try {
+              const { loadCurrentRankingsByOrganiserId } = require('./organiser-ranking-snapshot');
+              const map = await loadCurrentRankingsByOrganiserId([organiser.id]);
+              return map[organiser.id] || null;
+            } catch {
+              return null;
+            }
+          })()
+        : Promise.resolve(null);
+      const [{ data: ticketsRaw }, seriesResult, relatedRows, organiserRanking] = await Promise.all([
         sb.from('tickets').select('*').eq('event_id', eventId),
         fetchEventSeriesDates(sb, row, organiser),
         row.organiser_id
           ? fetchRelatedPublishedRows(sb, row.organiser_id, [row.id], 6)
           : Promise.resolve([]),
+        organiserRankingPromise,
       ]);
       const seriesDates = seriesResult.seriesDates || [];
       const seriesSiblingRows = seriesResult.siblingRows || [];
@@ -1023,16 +1035,6 @@ async function handle(req, res) {
         ...t,
         _registrationCount: regCounts.get(t.id) || 0,
       }));
-      let organiserRanking = null;
-      if (organiser?.id) {
-        try {
-          const { loadCurrentRankingsByOrganiserId } = require('./organiser-ranking-snapshot');
-          const map = await loadCurrentRankingsByOrganiserId([organiser.id]);
-          organiserRanking = map[organiser.id] || null;
-        } catch {
-          organiserRanking = null;
-        }
-      }
       const event = enrichEventPhotoFromSeries(
         rowToEvent(row, organiser, tickets, organiserRanking),
         seriesSiblingRows
@@ -1053,6 +1055,8 @@ async function handle(req, res) {
       const publicRelated = related.filter(
         (ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev)
       );
+      // Ticket rows are replaced when an organiser edits an event, which changes their IDs.
+      // Never cache detail payloads or checkout can receive a stale ticket ID.
       res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
       return res.status(200).json({
         configured: true,

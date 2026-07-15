@@ -319,9 +319,17 @@
     return label;
   }
 
+  var guestVisitEligibilityByOrganiser = window.hubGuestVisitEligibilityByOrganiser || {};
+  window.hubGuestVisitEligibilityByOrganiser = guestVisitEligibilityByOrganiser;
+  var guestVisitLabelRefreshPromise = null;
+
   function priceBadgeLabel(ev) {
     if (window.HubBookingFees) {
-      return window.HubBookingFees.listingPriceLabel(ev);
+      const organiserId = String(ev.organiserId || '').trim();
+      const eligibility = organiserId ? guestVisitEligibilityByOrganiser[organiserId] : null;
+      return window.HubBookingFees.listingPriceLabel(ev, {
+        guestVisitEligibility: eligibility || null,
+      });
     }
     if (ev.priceKey === 'free' || !ev.price || /^free$/i.test(ev.price)) return 'Free';
     const n = Number(ev.priceNum);
@@ -330,6 +338,84 @@
       return 'from ' + amt;
     }
     return ev.price;
+  }
+
+  function eventLookupById(id) {
+    const needle = String(id || '').trim();
+    if (!needle) return null;
+    const pools = [];
+    if (Array.isArray(events)) pools.push(events);
+    if (Array.isArray(window.hubAllEvents)) pools.push(window.hubAllEvents);
+    if (Array.isArray(window.hubBrowseEvents)) pools.push(window.hubBrowseEvents);
+    for (let i = 0; i < pools.length; i++) {
+      const found = pools[i].find(function (ev) {
+        return String(ev && ev.id) === needle;
+      });
+      if (found) return found;
+    }
+    return null;
+  }
+
+  function applyGuestVisitPriceLabels() {
+    document
+      .querySelectorAll('.event-grid-card[data-id], .premium-card[data-id]')
+      .forEach(function (card) {
+        const ev = eventLookupById(card.getAttribute('data-id'));
+        if (!ev || String(ev.attendanceMode || '') !== 'guest_programme') return;
+        const priceEl = card.querySelector('.event-grid-price, .premium-price');
+        if (priceEl) priceEl.textContent = priceBadgeLabel(ev);
+      });
+  }
+
+  function refreshGuestVisitPriceLabels() {
+    const source = Array.isArray(events) && events.length ? events : window.hubAllEvents || [];
+    const organiserIds = [];
+    const seen = {};
+    source.forEach(function (ev) {
+      if (!ev || String(ev.attendanceMode || '') !== 'guest_programme') return;
+      if (ev.guestPassesDisabled) return;
+      if (!(Number(ev.complimentaryVisitsAllowed) > 0)) return;
+      const organiserId = String(ev.organiserId || '').trim();
+      if (!organiserId || seen[organiserId]) return;
+      seen[organiserId] = true;
+      organiserIds.push(organiserId);
+    });
+    if (!organiserIds.length) return Promise.resolve();
+
+    if (guestVisitLabelRefreshPromise) return guestVisitLabelRefreshPromise;
+
+    guestVisitLabelRefreshPromise = Promise.resolve()
+      .then(function () {
+        if (typeof window.hubFetchSession === 'function') return window.hubFetchSession();
+        return fetch('/api/auth/session', { credentials: 'include' }).then(function (res) {
+          return res.json();
+        });
+      })
+      .then(function (sessionData) {
+        if (!sessionData || !sessionData.ok || !sessionData.user) return null;
+        return fetch(
+          '/api/auth/guest-visit-eligibility?organiserIds=' +
+            encodeURIComponent(organiserIds.join(',')),
+          { credentials: 'include', cache: 'no-store' }
+        ).then(function (res) {
+          return res.json();
+        });
+      })
+      .then(function (data) {
+        if (!data || !data.ok || !data.byOrganiserId) return;
+        Object.keys(data.byOrganiserId).forEach(function (organiserId) {
+          guestVisitEligibilityByOrganiser[organiserId] = data.byOrganiserId[organiserId];
+        });
+        applyGuestVisitPriceLabels();
+      })
+      .catch(function () {
+        /* non-fatal */
+      })
+      .finally(function () {
+        guestVisitLabelRefreshPromise = null;
+      });
+
+    return guestVisitLabelRefreshPromise;
   }
 
   function starsHtml(rating) {
@@ -806,6 +892,7 @@
     renderSpotlight();
     renderGridPage(filtered);
     updateCounts();
+    refreshGuestVisitPriceLabels();
   }
 
   function setLoading(on) {

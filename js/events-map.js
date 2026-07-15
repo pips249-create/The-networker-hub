@@ -492,7 +492,16 @@
   }
 
   function mapPriceLabel(ev) {
-    if (window.HubBookingFees) return window.HubBookingFees.listingPriceLabel(ev);
+    if (window.HubBookingFees) {
+      var organiserId = String(ev.organiserId || '').trim();
+      var eligibility =
+        organiserId && window.hubGuestVisitEligibilityByOrganiser
+          ? window.hubGuestVisitEligibilityByOrganiser[organiserId]
+          : null;
+      return window.HubBookingFees.listingPriceLabel(ev, {
+        guestVisitEligibility: eligibility || null,
+      });
+    }
     return ev.price || 'Free';
   }
 

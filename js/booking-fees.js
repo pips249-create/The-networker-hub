@@ -44,25 +44,41 @@
     return n % 1 === 0 ? '£' + n.toFixed(0) : '£' + n.toFixed(2);
   }
 
+  function guestVisitTrialSuffix(ev, options) {
+    const opts = options || {};
+    if (ev.guestPassesDisabled) return '';
+    const allowed = Number(ev.complimentaryVisitsAllowed) || 0;
+    if (allowed < 1) return '';
+
+    const eligibility = opts.guestVisitEligibility || null;
+    if (eligibility && Number.isFinite(Number(eligibility.remaining))) {
+      const remaining = Math.max(0, Number(eligibility.remaining) || 0);
+      if (remaining < 1) return '';
+      return remaining === 1 ? '1 complimentary visit left' : remaining + ' complimentary visits left';
+    }
+
+    if (opts.guestVisitRemaining != null && Number.isFinite(Number(opts.guestVisitRemaining))) {
+      const remaining = Math.max(0, Number(opts.guestVisitRemaining) || 0);
+      if (remaining < 1) return '';
+      return remaining === 1 ? '1 complimentary visit left' : remaining + ' complimentary visits left';
+    }
+
+    // Public browse copy: organiser allowance, not the viewer's remaining balance.
+    return allowed === 1 ? 'up to 1 complimentary visit' : 'up to ' + allowed + ' complimentary visits';
+  }
+
   function listingPriceLabel(ev, options) {
     const opts = options || {};
     const withFrom = opts.withFrom !== false;
     if (String(ev?.attendanceMode || '') === 'guest_programme') {
-      const visits =
-        !ev.guestPassesDisabled && Number(ev.complimentaryVisitsAllowed) > 0
-          ? Number(ev.complimentaryVisitsAllowed)
-          : 0;
       const member =
         ev.priceKey === 'free' || /^free$/i.test(String(ev.price || ''))
           ? 'Free'
           : withFrom
             ? 'from ' + formatPounds(listingPriceNum(ev))
             : formatPounds(listingPriceNum(ev));
-      if (visits > 0) {
-        const trial = visits === 1 ? '1 complimentary visit' : visits + ' complimentary visits';
-        return member + ' · ' + trial;
-      }
-      return member;
+      const trial = guestVisitTrialSuffix(ev, opts);
+      return trial ? member + ' · ' + trial : member;
     }
     if (!ev || ev.priceKey === 'free' || /^free$/i.test(String(ev.price || ''))) {
       return 'Free';

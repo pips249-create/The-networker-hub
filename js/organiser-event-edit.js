@@ -31,6 +31,15 @@
     return s || '';
   }
 
+  /** Domains/URLs stored in location fields (e.g. Trivago.com) should not become street addresses. */
+  function looksLikeUrl(value) {
+    const s = String(value || '').trim();
+    if (!s) return false;
+    if (/^https?:\/\//i.test(s) || /^mailto:/i.test(s)) return true;
+    if (/\s/.test(s)) return false;
+    return /^[\w.-]+\.[a-z]{2,}([/:?#].*)?$/i.test(s);
+  }
+
   let eventFormat = normalizeEventFormat(
     params.get('format') || sessionStorage.getItem(FORMAT_STORAGE_KEY) || ''
   );
@@ -1218,7 +1227,26 @@
     copy.location = fieldToString(ev.location);
     copy.onlinePlatform = fieldToString(ev.onlinePlatform);
     copy.onlineLink = fieldToString(ev.onlineLink);
-    if (!copy.addressLine1 && !copy.venue && copy.location && copy.location.toLowerCase() !== 'online') {
+
+    // URL/domain in venue or location is a join link, not a street address.
+    if (!copy.onlineLink && looksLikeUrl(copy.location)) {
+      copy.onlineLink = copy.location;
+    } else if (!copy.onlineLink && looksLikeUrl(copy.venue)) {
+      copy.onlineLink = copy.venue;
+    } else if (!copy.onlineLink && looksLikeUrl(copy.addressLine1)) {
+      copy.onlineLink = copy.addressLine1;
+    }
+    if (looksLikeUrl(copy.venue)) copy.venue = '';
+    if (looksLikeUrl(copy.addressLine1)) copy.addressLine1 = '';
+
+    const locLower = copy.location.toLowerCase();
+    if (
+      !copy.addressLine1 &&
+      !copy.venue &&
+      copy.location &&
+      locLower !== 'online' &&
+      !looksLikeUrl(copy.location)
+    ) {
       copy.addressLine1 = copy.location;
     }
     return copy;
@@ -1378,9 +1406,19 @@
   }
 
   function inferFormatFromEvent(ev) {
-    const loc = String(ev.location || '').toLowerCase();
-    if (loc === 'online') return 'online';
-    if (ev.onlineLink && !ev.venue && !ev.addressLine1 && !ev.postcode) return 'online';
+    const loc = String(ev.location || '').trim().toLowerCase();
+    if (loc === 'online' || loc.includes('online')) return 'online';
+    if (ev.onlineLink) return 'online';
+    if (looksLikeUrl(ev.location) || looksLikeUrl(ev.venue)) return 'online';
+    return 'in-person';
+  }
+
+  /** Prefer stored format, but recover when meeting link / URL location says online. */
+  function resolveEventFormat(ev) {
+    const stored = normalizeEventFormat(ev.eventFormat);
+    if (stored === 'online') return 'online';
+    if (inferFormatFromEvent(ev) === 'online') return 'online';
+    if (stored === 'in-person') return 'in-person';
     return 'in-person';
   }
 
@@ -1442,7 +1480,7 @@
     if (document.getElementById('ee-join-link')) {
       document.getElementById('ee-join-link').value = ev.onlineLink || '';
     }
-    eventFormat = normalizeEventFormat(ev.eventFormat || inferFormatFromEvent(ev));
+    eventFormat = resolveEventFormat(ev);
     applyFormatUi(eventFormat);
     ensureGroupOptionForEvent(ev);
     if (ev.imageUrl) {
@@ -1556,6 +1594,8 @@
         document.getElementById('ee-page-lead').textContent =
           'Update your listing, add more dates on the calendar, then continue to tickets.';
         document.getElementById('ee-submit').textContent = 'Continue to tickets →';
+        const draftBtn = document.getElementById('ee-save-draft');
+        if (draftBtn) draftBtn.textContent = 'Save changes';
 
         let ev = (data.events || []).find((e) => e.id === editId) || null;
         if (!ev) {
@@ -1718,12 +1758,18 @@
       });
     };
 
+    const saveLabel = publish
+      ? 'Continuing to tickets'
+      : editId
+        ? 'Saving changes'
+        : 'Saving draft';
+
     let res;
     try {
       if (loading && loading.run) {
-        res = await loading.run(publish ? 'Continuing to tickets' : 'Saving draft', saveWork);
+        res = await loading.run(saveLabel, saveWork);
       } else {
-        if (loading) loading.show(publish ? 'Continuing to tickets' : 'Saving draft');
+        if (loading) loading.show(saveLabel);
         res = await saveWork();
         if (loading) loading.hide();
       }
@@ -1779,6 +1825,8 @@
       document.getElementById('ee-photo-preview-img')?.src ||
       document.getElementById('ee-photo-url')?.value.trim() ||
       '';
+    const leadImagePosition =
+      (events[0] && events[0].imagePosition) || photoPosition || '';
     if (isEmbedDrawer && window.parent && window.parent !== window) {
       goToTicketSetup({
         title,
@@ -1786,11 +1834,13 @@
         eventFormat: locFields.eventFormat,
         eventIds,
         imageUrl: leadImage,
+        imagePosition: leadImagePosition,
         events: events.map((ev) => ({
           id: ev.id,
           title: ev.title,
           date: ev.date,
           imageUrl: ev.imageUrl || leadImage,
+          imagePosition: ev.imagePosition || leadImagePosition,
         })),
       });
       window.parent.postMessage(
@@ -1809,11 +1859,13 @@
       eventFormat: locFields.eventFormat,
       eventIds,
       imageUrl: leadImage,
+      imagePosition: leadImagePosition,
       events: events.map((ev) => ({
         id: ev.id,
         title: ev.title,
         date: ev.date,
         imageUrl: ev.imageUrl || leadImage,
+        imagePosition: ev.imagePosition || leadImagePosition,
       })),
     });
   }

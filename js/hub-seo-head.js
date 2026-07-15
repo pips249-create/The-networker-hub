@@ -2,6 +2,8 @@
  * Injects dynamic title, meta, canonical, Open Graph, and JSON-LD for event/organiser pages.
  */
 (function () {
+  if (document.documentElement.hasAttribute('data-hub-seo-injected')) return;
+
   function detectTarget() {
     var params = new URLSearchParams(window.location.search);
     var slug = String(params.get('slug') || params.get('id') || '').trim();

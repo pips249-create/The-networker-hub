@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260714dots" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260715guest" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -64,19 +64,19 @@
 
           <div class="ee-guest-addon" id="ee-guest-addon" data-hub-tip="guest-visit-programme">
             <h3 class="ee-guest-addon-title">Guest visit programme <span class="ee-optional">(optional)</span></h3>
-            <p class="ee-hint" style="margin-top:0">
-              Offer complimentary guest visits alongside your paid ticket types. New attendees use their visit(s) first; paid member tickets unlock afterwards.
-            </p>
+            <div class="ee-info-box ee-guest-how" id="ee-guest-programme-note">
+              <strong>How it works</strong>
+              <p>
+                Let newcomers try your group free before buying a paid member ticket. Choose how many complimentary visits they get (1&ndash;3) &mdash; that allowance applies across your organiser page. After they&rsquo;ve used their visits, paid member tickets unlock.
+              </p>
+            </div>
             <label class="ee-check">
               <input type="checkbox" id="ee-guest-programme-enabled" />
               <span>Enable guest visit programme for this event</span>
             </label>
             <div id="ee-guest-programme-fields" hidden>
-              <div class="ee-field" style="margin-top:12px;max-width:280px">
-                <label for="ee-guest-visits-allowed">How many complimentary visits?</label>
-                <p class="ee-hint" style="margin-top:0">
-                  Type how many free trial visits a new attendee can take with your group. Hub maximum is 3.
-                </p>
+              <div class="ee-field ee-guest-visits-field">
+                <label for="ee-guest-visits-allowed">Complimentary visits per newcomer</label>
                 <input
                   type="number"
                   id="ee-guest-visits-allowed"
@@ -85,18 +85,17 @@
                   step="1"
                   value="1"
                   inputmode="numeric"
+                  aria-describedby="ee-guest-visits-max"
                 />
-              </div>
-              <div class="ee-info-box" id="ee-guest-programme-note">
-                <strong>Guest visit programme:</strong> New attendees must use their complimentary visit(s) with your group before they can buy a paid member ticket. This allowance applies across your organiser page.
+                <p class="ee-hint" id="ee-guest-visits-max">Hub maximum: 3</p>
               </div>
               <div id="ee-guest-passes-opt-out">
                 <label class="ee-check">
                   <input type="checkbox" id="ee-guest-passes-disabled" />
-                  <span>Disallow guest passes for this event</span>
+                  <span>Member-only for this event</span>
                 </label>
-                <p class="ee-hint" style="margin:6px 0 0">
-                  Leave unticked to offer complimentary guest passes. Tick for member-only dates (e.g. conferences) — paid member tickets stay available and visitors can book them directly.
+                <p class="ee-hint ee-guest-opt-out-hint">
+                  Turn off guest passes for this date only (e.g. conferences). Paid member tickets stay available.
                 </p>
               </div>
             </div>
@@ -201,8 +200,8 @@
     <script src="../js/organiser-quarter-time.js?v=20260714time"></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../"></script>
     <script src="../js/organiser-payment-setup.js?v=20260714a"></script>
-    <script src="../js/organiser-field-tips.js?v=20260714ce"></script>
+    <script src="../js/organiser-field-tips.js?v=20260715guest"></script>
     <script src="../js/hub-field-tip.js?v=20260711"></script>
-    <script src="../js/organiser-event-tickets.js?v=20260714dots"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260715pos"></script>
   </body>
 </html>

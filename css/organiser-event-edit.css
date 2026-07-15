@@ -876,15 +876,36 @@ a.ee-wizard-link:hover {
   font-size: 15px;
   font-weight: 700;
   color: var(--ee-text);
-  margin: 0 0 6px;
+  margin: 0 0 10px;
+}
+
+.ee-guest-addon .ee-guest-how {
+  margin-bottom: 14px;
+}
+
+.ee-guest-addon .ee-guest-how p {
+  margin: 6px 0 0;
 }
 
 .ee-guest-addon .ee-check {
   margin: 10px 0 12px;
 }
 
+.ee-guest-visits-field {
+  margin-top: 4px;
+  max-width: 280px;
+}
+
+.ee-guest-visits-field .ee-hint {
+  margin: 6px 0 0;
+}
+
 .ee-guest-addon #ee-guest-passes-opt-out {
-  margin-top: 10px;
+  margin-top: 14px;
+}
+
+.ee-guest-opt-out-hint {
+  margin: 6px 0 0;
 }
 
 @media (max-width: 720px) {

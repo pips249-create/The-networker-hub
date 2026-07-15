@@ -5,7 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Event – The Networker Hub</title>
     <meta name="description" content="Networking event on The Networker Hub — book tickets securely online." />
-    <script src="../js/hub-seo-head.js?v=20260612"></script>
+    <script src="../js/hub-seo-head.js?v=20260715dedupe"></script>
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var path = (window.location.pathname || '').replace(/\/+$/, '');
+        var match = path.match(/\/events\/([^/]+)$/i);
+        var slug =
+          match && match[1] && match[1] !== 'event.html' && match[1] !== 'index.html'
+            ? decodeURIComponent(match[1])
+            : String(params.get('slug') || '').trim();
+        var id = String(params.get('id') || '').trim();
+        if (!id && !slug) return;
+        var apiUrl = id
+          ? '/api/hub-listings?id=' + encodeURIComponent(id)
+          : '/api/hub-listings?slug=' + encodeURIComponent(slug);
+        window.hubEventDetailPromise = fetch(apiUrl)
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            return { data: data };
+          })
+          .catch(function (error) {
+            return { error: error };
+          });
+      })();
+    </script>
     <!-- Stripe: set your Payment Link URL here and/or pass ?stripe=https://buy.stripe.com/... -->
     <meta name="stripe-payment-link" content="" />
     <!-- Optional theme (6-digit hex, # optional). URL query overrides: ?brand=5b2f99&bg=f5f0fb&accent=f5a623 -->
@@ -79,6 +105,8 @@
             width="1600"
             height="900"
             alt=""
+            loading="eager"
+            fetchpriority="high"
           />
           <div class="hero-badges">
             <span class="category-pill" id="ev-category"></span>
@@ -198,7 +226,7 @@
           </div>
         </section>
 
-        <section class="content-section">
+        <section class="content-section" id="ev-location-section">
           <h2>Location</h2>
           <div class="location-card">
             <div class="map-embed">
@@ -491,8 +519,8 @@
     <script src="../js/listing-report.js?v=20260609"></script>
     <script src="../js/review-report.js?v=20260609"></script>
     <script src="../js/hub-favourites.js?v=20260629"></script>
-    <script src="../js/booking-fees.js?v=20260630"></script>
-    <script src="../js/event-detail.js?v=20260714gvhdr"></script>
+    <script src="../js/booking-fees.js?v=20260715gvleft"></script>
+    <script src="../js/event-detail.js?v=20260715pos"></script>
     <div id="hub-site-footer"></div>
 
     <div class="hub-modal application-success-modal" id="application-success-modal" role="dialog" aria-modal="true" aria-labelledby="application-success-title" hidden>

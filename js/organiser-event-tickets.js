@@ -261,6 +261,11 @@
       seriesMeta.imageUrl ||
       (seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].imageUrl) ||
       '';
+    const heroPos = String(
+      seriesMeta.imagePosition ||
+        (seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].imagePosition) ||
+        ''
+    ).trim();
     if (heroImg && seriesCard && !seriesCard.querySelector('.ee-series-hero')) {
       const wrap = document.createElement('div');
       wrap.className = 'ee-series-hero';
@@ -271,6 +276,9 @@
       img.height = 360;
       img.decoding = 'async';
       img.referrerPolicy = 'no-referrer';
+      if (/^\d{1,3}%\s+\d{1,3}%$/.test(heroPos)) {
+        img.style.objectPosition = heroPos;
+      }
       img.onerror = function () {
         wrap.remove();
       };
@@ -280,6 +288,11 @@
         seriesCard.insertBefore(wrap, heading.nextSibling);
       } else {
         seriesCard.appendChild(wrap);
+      }
+    } else if (heroImg && seriesCard) {
+      const existing = seriesCard.querySelector('.ee-series-hero img');
+      if (existing && /^\d{1,3}%\s+\d{1,3}%$/.test(heroPos)) {
+        existing.style.objectPosition = heroPos;
       }
     }
     if (countEl) {
@@ -361,7 +374,11 @@
       title: ev.title,
       date: ev.date,
       imageUrl: ev.imageUrl || seriesMeta.imageUrl || '',
+      imagePosition: ev.imagePosition || seriesMeta.imagePosition || '',
     }));
+    if (!seriesMeta.imagePosition && seriesMeta.events[0] && seriesMeta.events[0].imagePosition) {
+      seriesMeta.imagePosition = seriesMeta.events[0].imagePosition;
+    }
     seriesMeta.eventIds = eventIds.slice();
   }
 
@@ -385,6 +402,7 @@
             title: cur.title || ev.title,
             date: cur.date || ev.date,
             imageUrl: cur.imageUrl || ev.imageUrl,
+            imagePosition: cur.imagePosition || ev.imagePosition || '',
           });
         });
       }
@@ -410,11 +428,18 @@
           title: ev.title,
           date: ev.date,
           imageUrl: ev.imageUrl,
+          imagePosition: ev.imagePosition || '',
         });
       });
     }
 
     seriesMeta.events = eventIds.map((id) => byId.get(id) || { id });
+    if (!seriesMeta.imageUrl && seriesMeta.events[0] && seriesMeta.events[0].imageUrl) {
+      seriesMeta.imageUrl = seriesMeta.events[0].imageUrl;
+    }
+    if (!seriesMeta.imagePosition && seriesMeta.events[0] && seriesMeta.events[0].imagePosition) {
+      seriesMeta.imagePosition = seriesMeta.events[0].imagePosition;
+    }
   }
 
   function notifyEmbedDrawerReady() {
@@ -466,7 +491,6 @@
     const ticketsPanel = document.getElementById('ee-panel-tickets');
     const guestAddon = document.getElementById('ee-guest-addon');
     const guestFields = document.getElementById('ee-guest-programme-fields');
-    const guestNote = document.getElementById('ee-guest-programme-note');
     const guestPassesOptOut = document.getElementById('ee-guest-passes-opt-out');
     const panelTitle = document.getElementById('ee-tickets-panel-title');
     const desc = document.getElementById('ee-mode-desc');
@@ -476,8 +500,8 @@
     if (ticketsPanel) ticketsPanel.hidden = !openBooking;
     if (guestAddon) guestAddon.hidden = !openBooking;
     if (guestFields) guestFields.hidden = !guestOn;
-    if (guestNote) guestNote.hidden = !guestOn;
     if (guestPassesOptOut) guestPassesOptOut.hidden = !guestOn;
+    // Keep the how-it-works note visible so organisers can read it before enabling.
     if (panelTitle) {
       panelTitle.textContent = guestOn ? 'Member ticket types' : 'Ticket types';
     }
@@ -1468,6 +1492,12 @@
       if (loaded.event.title && !seriesMeta.title) seriesMeta.title = loaded.event.title;
       if (loaded.event.organiserGroupId && !seriesMeta.organiserGroupId) {
         seriesMeta.organiserGroupId = loaded.event.organiserGroupId;
+      }
+      if (loaded.event.imageUrl && !seriesMeta.imageUrl) {
+        seriesMeta.imageUrl = loaded.event.imageUrl;
+      }
+      if (loaded.event.imagePosition && !seriesMeta.imagePosition) {
+        seriesMeta.imagePosition = loaded.event.imagePosition;
       }
       if (loaded.event.attendanceMode === 'guest_programme') {
         setAttendanceMode('guest_programme');

@@ -42,7 +42,18 @@
 
   function publicListingPriceLabel(ev, options) {
     if (window.HubBookingFees) {
-      return window.HubBookingFees.listingPriceLabel(ev, options || {});
+      const opts = Object.assign({}, options || {});
+      if (!opts.guestVisitEligibility && !opts.guestVisitRemaining) {
+        const sameOrganiser =
+          ev &&
+          currentEvent &&
+          String(ev.organiserId || '') &&
+          String(ev.organiserId) === String(currentEvent.organiserId || '');
+        if (sameOrganiser && guestVisitEligibility) {
+          opts.guestVisitEligibility = guestVisitEligibility;
+        }
+      }
+      return window.HubBookingFees.listingPriceLabel(ev, opts);
     }
     if (!ev || ev.priceKey === 'free') return 'Free';
     const withFrom = !options || options.withFrom !== false;
@@ -65,10 +76,21 @@
     return s.indexOf('https:') === 0 || s.indexOf('http:') === 0 || s.indexOf('data:image/') === 0;
   }
 
+  let localSessionPromise = null;
+
+  function fetchSessionData() {
+    if (typeof window.hubFetchSession === 'function') return window.hubFetchSession();
+    if (!localSessionPromise) {
+      localSessionPromise = fetch('/api/auth/session', { credentials: 'include' }).then(function (res) {
+        return res.json();
+      });
+    }
+    return localSessionPromise;
+  }
+
   async function isSignedInAttendee() {
     try {
-      const res = await fetch('/api/auth/session', { credentials: 'include' });
-      const data = await res.json();
+      const data = await fetchSessionData();
       return !!(data.ok && data.user);
     } catch (e) {
       return false;
@@ -633,13 +655,24 @@
     return Object.assign({}, ev, copyLocationFields(locationSource));
   }
 
+  function isOnlineOnlyEvent(ev) {
+    const m = String((ev && ev.format) || '').toLowerCase();
+    return m.includes('online') && !m.includes('person') && !m.includes('hybrid');
+  }
+
   function applyLocationBlock(ev) {
-    const cityLabel = ev.city || ev.outcode || ev.locationShort || 'Location TBC';
+    const online = isOnlineOnlyEvent(ev);
+    const cityLabel = online
+      ? 'Online'
+      : ev.city || ev.outcode || ev.locationShort || 'Location TBC';
     setText('ev-meta-city', cityLabel);
     const vn = String(ev.venue || ev.venueName || '').trim();
     const va = [ev.address, ev.city, ev.postcode].filter(Boolean).join(', ') || ev.venueAddress || '';
-    setText('ev-venue-name', vn || 'Venue TBC');
-    setText('ev-venue-addr', va);
+    setText('ev-venue-name', online ? vn || 'Online event' : vn || 'Venue TBC');
+    setText(
+      'ev-venue-addr',
+      online ? 'Join from anywhere — the joining link is shared with your booking confirmation.' : va
+    );
     applyMapAndDirections(ev);
   }
 
@@ -757,21 +790,30 @@
   }
 
   function applyMapAndDirections(ev) {
-    const q = venueQuery(ev);
+    const online = isOnlineOnlyEvent(ev);
+    const q = online ? '' : venueQuery(ev);
     const dir = document.getElementById('ev-directions');
-    if (dir && q) {
-      dir.href = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(q);
+    if (dir) {
+      if (q) {
+        dir.href = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(q);
+      } else if (online) {
+        dir.removeAttribute('href');
+        dir.hidden = true;
+      }
     }
 
     const iframe = document.getElementById('ev-map-iframe');
+    const mapWrap = iframe ? iframe.closest('.map-embed') : null;
     if (iframe) {
-      const src = mapEmbedSrc(ev, q);
+      const src = online ? '' : mapEmbedSrc(ev, q);
       if (src) {
         iframe.src = src;
         iframe.hidden = false;
+        if (mapWrap) mapWrap.hidden = false;
       } else {
         iframe.removeAttribute('src');
         iframe.hidden = true;
+        if (mapWrap) mapWrap.hidden = online;
       }
     }
   }
@@ -1182,12 +1224,17 @@
       const fallbackSrc = window.getEventPlacementImage
         ? window.getEventPlacementImage(ev.id, ev.eventType || ev.typeRaw)
         : resolvedSrc;
-      hero.loading = 'lazy';
+      hero.loading = 'eager';
+      hero.fetchPriority = 'high';
       hero.decoding = 'async';
       hero.src = resolvedSrc;
       hero.alt = ev.title;
-      if (ev.photoPosition && resolvedSrc === String(ev.photo || '').trim()) {
-        hero.style.objectPosition = ev.photoPosition;
+      const ownPhoto = String(ev.photo || '').trim();
+      const pos = String(ev.photoPosition || '').trim();
+      if (pos && /^\d{1,3}%\s+\d{1,3}%$/.test(pos) && ownPhoto && resolvedSrc === ownPhoto) {
+        hero.style.objectPosition = pos;
+      } else {
+        hero.style.objectPosition = '';
       }
       hero.onerror = function () {
         hero.onerror = null;
@@ -1420,6 +1467,7 @@
           name: attendee && attendee.name ? String(attendee.name).trim() : '',
           eventTitle: ev.title || '',
           eventImage: eventImage || '',
+          eventImagePosition: String(ev.photoPosition || '').trim(),
           ts: Date.now(),
           seriesKey: seriesKey || null,
           seriesTitle: seriesBaseEvent && seriesBaseEvent.title ? seriesBaseEvent.title : ev.title || '',
@@ -2147,8 +2195,7 @@
   async function loadCheckoutSessionUser() {
     checkoutSessionUser = null;
     try {
-      const res = await fetch('/api/auth/session', { credentials: 'include' });
-      const data = await res.json();
+      const data = await fetchSessionData();
       if (data.ok && data.user) checkoutSessionUser = data.user;
     } catch (e) {
       /* ignore */
@@ -3338,8 +3385,6 @@
 
     loadCheckoutSessionUser().then(function () {
       update();
-      const evNow = activeEvent();
-      if (evNow) refreshEventApplicationUi(evNow);
     });
 
     if (appBack) {
@@ -3744,7 +3789,7 @@
 
   var loadOverlayTimer = null;
   var loadOverlayVisible = false;
-  var LOAD_OVERLAY_DELAY_MS = 0;
+  var LOAD_OVERLAY_DELAY_MS = 120;
 
   function showEventLoadOverlayNow() {
     const overlay = document.getElementById('event-detail-load-overlay');
@@ -3769,10 +3814,28 @@
   }
 
   function primeEventLoadOverlay(route) {
-    const preview =
+    let preview =
       window.hubEventPreview && window.hubEventPreview.readForRoute(route);
+    if (!preview || !preview.image) {
+      const seoImage = document.querySelector('meta[property="og:image"]')?.getAttribute('content');
+      if (seoImage) {
+        preview = {
+          id: route && route.id,
+          slug: route && route.slug,
+          image: seoImage,
+          title: document.title.replace(/\s+[–-]\s+The Networker Hub\s*$/i, ''),
+        };
+      }
+    }
     if (preview && preview.image) {
       window.hubEventPreview.applyToOverlay('event-detail-load-overlay', preview);
+      const hero = document.getElementById('ev-hero-img');
+      if (hero && !hero.getAttribute('src')) {
+        hero.loading = 'eager';
+        hero.fetchPriority = 'high';
+        hero.src = preview.image;
+        hero.alt = preview.title || 'Event';
+      }
       return true;
     }
     if (window.hubEventPreview) {
@@ -3836,8 +3899,15 @@
         const apiUrl = id
           ? '/api/hub-listings?id=' + encodeURIComponent(id)
           : '/api/hub-listings?slug=' + encodeURIComponent(slug);
-        const res = await fetch(apiUrl, { cache: 'no-store' });
-        const data = await res.json();
+        const prefetched = window.hubEventDetailPromise
+          ? await window.hubEventDetailPromise
+          : null;
+        if (prefetched && prefetched.error) throw prefetched.error;
+        const data = prefetched
+          ? prefetched.data
+          : await fetch(apiUrl).then(function (res) {
+              return res.json();
+            });
         if (data.event) {
           const ev = normalizeEventFlags(data.event, params);
           seriesDatesList = data.seriesDates || [];
@@ -3845,10 +3915,22 @@
           const displayEv = enrichEventWithSeriesLocation(ev);
           currentEvent = displayEv;
           populateFromEvent(displayEv);
+          const resolvedImage = window.getEventImage
+            ? window.getEventImage(displayEv)
+            : displayEv.photo || '';
+          if (window.hubEventPreview && resolvedImage) {
+            window.hubEventPreview.applyToOverlay('event-detail-load-overlay', {
+              image: resolvedImage,
+              title: displayEv.title,
+            });
+          }
+          setEventLoading(false);
           alumniInviteToken = String(params.get('alumni_token') || '').trim();
           if (eventIsGuestProgramme(displayEv)) {
             await loadGuestVisitEligibility(displayEv);
             renderTicketPanel(displayEv);
+            setText('ev-price', publicListingPriceLabel(displayEv));
+            syncTicketHeader(displayEv);
           } else if (displayEv.alumniFastPassEnabled || alumniInviteToken) {
             await loadAlumniEligibility(displayEv);
             renderTicketPanel(displayEv);
@@ -3861,10 +3943,12 @@
           const relatedFromApi = data.related || [];
           if (relatedFromApi.length) {
             renderRelated(relatedFromApi);
-          } else {
+          } else if (!Object.prototype.hasOwnProperty.call(data, 'related')) {
             loadRelatedFallback(ev).then(function (related) {
               renderRelated(related);
             });
+          } else {
+            renderRelated([]);
           }
           loadEventPageAds();
           return;

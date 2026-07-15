@@ -629,7 +629,11 @@ async function buildEventRow(payload, eventId, mode) {
     row.image_position = normalizeEventImagePosition(payload.imagePosition) || null;
   }
 
-  if (!row.starts_at) demoteToDraftWithoutDate(row);
+  // Only demote when this write explicitly sets a missing date.
+  // On update, omitting starts_at means "keep the existing date" — do not treat that as draft.
+  if (Object.prototype.hasOwnProperty.call(row, 'starts_at') && !row.starts_at) {
+    demoteToDraftWithoutDate(row);
+  }
 
   return row;
 }

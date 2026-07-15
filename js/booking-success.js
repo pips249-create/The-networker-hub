@@ -283,6 +283,29 @@
     );
   }
 
+  function isOnlineOnlyEvent(ev) {
+    const m = String((ev && (ev.format || ev.meetingType)) || '').toLowerCase();
+    return m.includes('online') && !m.includes('person') && !m.includes('hybrid');
+  }
+
+  function normalizePhotoPosition(value) {
+    const pos = String(value || '').trim();
+    return /^\d{1,3}%\s+\d{1,3}%$/.test(pos) ? pos : '';
+  }
+
+  function applyEventPhotoPosition(img, ev, imageSrc) {
+    if (!img) return;
+    const pos = normalizePhotoPosition(ev && (ev.photoPosition || ev.imagePosition || ev.eventImagePosition));
+    const ownPhoto = String((ev && (ev.photo || ev.imageUrl)) || '').trim();
+    const src = String(imageSrc || '').trim();
+    // Apply the organiser crop when showing the event's own photo (not a logo/placeholder).
+    if (pos && src && (!ownPhoto || src === ownPhoto)) {
+      img.style.objectPosition = pos;
+    } else {
+      img.style.objectPosition = '';
+    }
+  }
+
   function escapeHtml(value) {
     return String(value || '')
       .replace(/&/g, '&amp;')
@@ -374,6 +397,10 @@
     if (imageSrc && eventPhotoImg) {
       eventPhotoImg.src = imageSrc;
       eventPhotoImg.alt = pending.eventTitle || 'Event';
+      applyEventPhotoPosition(eventPhotoImg, {
+        photo: imageSrc,
+        photoPosition: pending.eventImagePosition || pending.photoPosition || '',
+      }, imageSrc);
       if (eventPhoto) eventPhoto.hidden = false;
       eventBlock.hidden = false;
     }
@@ -401,20 +428,28 @@
 
       if (eventTitle) eventTitle.textContent = ev.title || 'Your event';
 
-      const imageSrc = bookingEventImage(pending, ev);
+      const imageSrc =
+        String(ev.photo || '').trim() || bookingEventImage(pending, ev);
       if (eventPhotoImg && imageSrc) {
         eventPhotoImg.src = imageSrc;
         eventPhotoImg.alt = ev.title || 'Event';
+        applyEventPhotoPosition(eventPhotoImg, ev, imageSrc);
         if (eventPhoto) eventPhoto.hidden = false;
       } else if (eventPhoto) {
         eventPhoto.hidden = true;
       }
 
       const dateLine = [ev.date, ev.time].filter(Boolean).join(' · ');
-      const location = ev.location || ev.city || '';
+      const online = isOnlineOnlyEvent(ev);
+      const location = online
+        ? 'Online'
+        : ev.location || ev.city || '';
+      const locationIcon = online
+        ? '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>'
+        : '<path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>';
       const rows = [
         metaRow('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>', dateLine),
-        metaRow('<path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>', location),
+        metaRow(locationIcon, location),
       ].join('');
 
       if (eventMeta && (dateLine || location)) {
