@@ -98,7 +98,6 @@
       strategy: 'Split the journey in the headline',
       note: '"Find your next\u2026" with a short hub explainer, then two coloured CTA pills for events vs opportunities.',
       lede: 'This hub lets you find networking meetings, conferences, business opportunities, side hustles, training and so much more.',
-      ledeCta: 'Get started',
       titleLine: 'Find your next\u2026',
       tagline: '',
       ctaPills: [
@@ -219,9 +218,6 @@
       '<p class="home-hero-lede">' +
       esc(variant.lede) +
       '</p>' +
-      (variant.ledeCta
-        ? '<a class="home-hero-lede-cta" href="/events/">' + esc(variant.ledeCta) + '</a>'
-        : '') +
       renderDualCtaPills(variant.ctaPills) +
       (variant.tagline
         ? '<p class="hero-tagline hero-tagline--dual-cta">' + esc(variant.tagline) + '</p>'
