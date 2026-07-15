@@ -25,8 +25,8 @@
     'members-only-ticket': {
       title: 'Members only ticket',
       body:
-        'Adds a ticket that the public cannot see. People on your Member roster see it automatically when they sign in with their roster email. Use for member rates or invite-only pricing — without putting the price on the public listing.',
-      hubertPrompt: 'How do I set up a members only ticket with the member roster?',
+        'Adds a ticket that the public cannot see. People on your member list see it automatically when they sign in with their membership email. Use for member rates or invite-only pricing — without putting the price on the public listing.',
+      hubertPrompt: 'How do I set up a members only ticket with the member list?',
     },
     'category-exclusivity': {
       title: 'Category Exclusivity',

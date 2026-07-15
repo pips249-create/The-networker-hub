@@ -8,9 +8,9 @@
     'event-edit':
       "Let's get your listing details in shape. I'll highlight each section, or you can ask me here.",
     'event-tickets':
-      'Almost there — ticket types and publishing next. Ask if VAT, refunds, tier setup, or member roster tickets are unclear.',
+      'Almost there — ticket types and publishing next. Ask if VAT, refunds, tier setup, or member list tickets are unclear.',
     'member-roster':
-      'This is your member roster — the list that unlocks Members only tickets. Ask how to add members, import CSV, expiry dates, or reports.',
+      'This is your member list — it unlocks Members only tickets. Ask how to add members, import CSV, expiry dates, or reports.',
     'group-edit':
       'Your organiser page is the home for your events. Ask if anything on this page is unclear.',
     'organiser-dashboard':
@@ -49,15 +49,15 @@
       { label: 'Early bird pricing', prompt: 'How do I set up early bird ticket pricing?' },
       { label: 'VAT choice', prompt: 'Should VAT be included in my ticket price or added at checkout?' },
       { label: 'Save before publish', prompt: 'Can I save tickets as draft before publishing my event?' },
-      { label: 'Members only ticket', prompt: 'How do I set up a members only ticket with the member roster?' },
-      { label: 'Member roster', prompt: 'What is a member roster?' },
+      { label: 'Members only ticket', prompt: 'How do I set up a members only ticket with the member list?' },
+      { label: 'Member list', prompt: 'What is a member list?' },
     ],
     'member-roster': [
-      { label: 'What is it?', prompt: 'What is a member roster?' },
-      { label: 'Members only tickets', prompt: 'How do I set up a members only ticket with the member roster?' },
+      { label: 'What is it?', prompt: 'What is a member list?' },
+      { label: 'Members only tickets', prompt: 'How do I set up a members only ticket with the member list?' },
       { label: 'Import CSV', prompt: 'How do I import my member list as CSV?' },
-      { label: 'Expiry dates', prompt: 'How do membership expiry dates on the roster work?' },
-      { label: 'Invite emails', prompt: 'What happens when I add someone to the member roster?' },
+      { label: 'Expiry dates', prompt: 'How do membership expiry dates on the member list work?' },
+      { label: 'Invite emails', prompt: 'What happens when I add someone to the member list?' },
     ],
     'group-edit': [
       { label: 'Complimentary visits', prompt: 'How do complimentary guest visits work on my organiser page?' },
@@ -74,7 +74,7 @@
       { label: 'List an event', prompt: 'How do I list my first event?' },
       { label: 'Stripe payouts', prompt: 'How do Stripe Connect payouts and refunds work for organisers?' },
       { label: 'Invite my team', prompt: 'How do I invite team members to help manage events?' },
-      { label: 'Member roster', prompt: 'What is a member roster and how do I use it?' },
+      { label: 'Member list', prompt: 'What is a member list and how do I use it?' },
     ],
   };
 

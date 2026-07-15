@@ -769,7 +769,7 @@
     const el = document.getElementById('ee-private-ticket-roster-hint');
     if (!el) return;
     el.textContent =
-      msg || 'Manage who can see this ticket under Member roster on your organiser page.';
+      msg || 'Manage who can see this ticket under Member list on your organiser page.';
     el.classList.toggle('ee-hint-ok', tone === 'ok');
   }
 
@@ -779,7 +779,7 @@
     if (fields) fields.hidden = !enabled;
     if (enabled) {
       setMembersOnlyTicketHint(
-        'Roster members see this ticket when signed in with their roster email.',
+        'Members on your list see this ticket when signed in with their membership email.',
         'ok'
       );
     } else {
@@ -803,7 +803,7 @@
     return {
       name,
       price: price === '' || price == null ? 0 : price,
-      description: 'For members on your roster when signed in',
+      description: 'For members on your list when signed in',
       status: 'Available',
       quantityAvailable: qty === '' || qty == null ? null : Number(qty),
       saleStart: template?.saleStart || null,
@@ -842,10 +842,10 @@
           ? ''
           : String(tier.quantityAvailable);
     }
-    setMembersOnlyTicketHint(
-      'Roster members see this ticket when signed in with their roster email.',
-      'ok'
-    );
+      setMembersOnlyTicketHint(
+        'Members on your list see this ticket when signed in with their membership email.',
+        'ok'
+      );
     syncPrivateTicketFields();
   }
 

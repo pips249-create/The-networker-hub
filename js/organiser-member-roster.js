@@ -72,7 +72,7 @@
     const expiry = reports.membershipExpiry || {};
 
     let html =
-      '<div class="omr-report-card"><h3>Roster health</h3>' +
+      '<div class="omr-report-card"><h3>Membership health</h3>' +
       '<p class="omr-report-stat">' +
       esc(h.totalActive || 0) +
       ' active</p>' +
@@ -216,7 +216,7 @@
     });
     body.querySelectorAll('.omr-remove').forEach(function (btn) {
       btn.addEventListener('click', async function () {
-        if (!confirm('Remove this member from the roster?')) return;
+        if (!confirm('Remove this member from the list?')) return;
         try {
           await api(rosterUrl('&id=' + encodeURIComponent(btn.dataset.id)), { method: 'DELETE' });
           await refresh();
@@ -320,7 +320,7 @@
       const group = await api('/api/organiser/groups?id=' + encodeURIComponent(organiserId));
       const title = document.getElementById('omr-title');
       if (title && group.group?.name) {
-        title.textContent = 'Member roster — ' + group.group.name;
+        title.textContent = 'Member list — ' + group.group.name;
       }
     } catch {
       /* ignore */
@@ -331,6 +331,6 @@
   }
 
   init().catch(function (e) {
-    showAlert(e.message || 'Could not load roster', 'error');
+    showAlert(e.message || 'Could not load member list', 'error');
   });
 })();

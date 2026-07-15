@@ -233,7 +233,7 @@ module.exports = async function handler(req, res) {
         return json(res, 401, {
           ok: false,
           error: 'not_authenticated',
-          message: 'Sign in with the email on this group’s member roster to book this ticket.',
+          message: 'Sign in with the email on this group’s member list to book this ticket.',
         });
       }
       if (submittedEmail && submittedEmail !== sessionEmail) {
@@ -252,7 +252,7 @@ module.exports = async function handler(req, res) {
         const code = memberErr.message || 'members_only_not_eligible';
         const messages = {
           members_only_not_eligible:
-            'This ticket is for members of this group. Sign in with the email on their member roster.',
+            'This ticket is for members of this group. Sign in with the email on their member list.',
           membership_expired:
             'Your membership has expired. Contact the organiser to renew before booking member tickets.',
         };

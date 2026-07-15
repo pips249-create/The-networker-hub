@@ -25,7 +25,7 @@ const BOOKING_ERROR_MESSAGES = {
   alumni_single_seat_only: 'Previous attendee tickets are limited to one seat per booking.',
   missing_guest_names: 'Please enter a name for each guest.',
   members_only_not_eligible:
-    'This ticket is for members of this group. Sign in with the email on their member roster.',
+    'This ticket is for members of this group. Sign in with the email on their member list.',
   membership_expired:
     'Your membership has expired. Contact the organiser to renew before booking member tickets.',
   already_going:

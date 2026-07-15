@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Smoke-test member roster APIs against a running local/live server.
+ * Smoke-test member list APIs against a running local/live server.
  *
  * Usage:
  *   node scripts/smoke-test-member-roster.js
@@ -513,7 +513,7 @@ async function cleanup() {
 }
 
 async function main() {
-  console.log('Member roster smoke → ' + base);
+  console.log('Member list smoke → ' + base);
   if (!organiserEmail || !organiserPassword) {
     console.error(
       '\nMissing organiser credentials. Set SMOKE_ORGANISER_EMAIL + SMOKE_ORGANISER_PASSWORD\n' +

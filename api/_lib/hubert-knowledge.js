@@ -85,21 +85,21 @@ const KNOWLEDGE_SECTIONS = [
     title: 'ORGANISER TICKETS & ATTENDEES',
     body:
       'TICKET SETUP (event-tickets.html): choose Ticket types (open booking) or Category Exclusivity — these two attendance modes are mutually exclusive. ' +
-      'OPEN BOOKING: add one row per ticket tier (Standard, Early bird, etc.) with price, quantity, and sale dates. Optionally enable the guest visit programme: newcomers get 1–3 complimentary visits (Hub maximum) across your organiser page before paid member tickets unlock. Use “Member-only for this event” to skip guest passes on a specific date (e.g. conferences) while keeping paid tickets available. Optionally add a Members only ticket: the public never sees it; people on your Member roster see it automatically when signed in with their roster email. Previous Attendees is an optional add-on: a returning ticket for past attendees, with invites sent from your dashboard after publish. ' +
+      'OPEN BOOKING: add one row per ticket tier (Standard, Early bird, etc.) with price, quantity, and sale dates. Optionally enable the guest visit programme: newcomers get 1–3 complimentary visits (Hub maximum) across your organiser page before paid member tickets unlock. Use “Member-only for this event” to skip guest passes on a specific date (e.g. conferences) while keeping paid tickets available. Optionally add a Members only ticket: the public never sees it; people on your member list see it automatically when signed in with their membership email. Previous Attendees is an optional add-on: a returning ticket for past attendees, with invites sent from your dashboard after publish. ' +
       'CATEGORY EXCLUSIVITY: prospective attendees apply instead of buying straight away. They answer two fixed questions — their industry and job title. You approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. Set an optional price (leave at £0 for free), places limit, and application closing date. Cannot be combined with open ticket types on the same event. ' +
       'APPLICATION QUESTIONS: under Category Exclusivity, industry and job title are fixed and cannot be changed. For open ticket booking, you can optionally tick boxes under Attendee information at booking to note food is included or to collect dietary or accessibility requirements at checkout. ' +
       'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event or by new vs returning. Each row shows visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page. Download attendees CSV or export printable name badges (PDF). This shows ticket registrations — not on-the-day check-in.',
   },
   {
-    title: 'MEMBER ROSTER',
+    title: 'MEMBER LIST',
     body:
-      'Per networking group (organiser page), organisers maintain a Member roster at /organiser/member-roster — name, email, and optional membership expiry. ' +
-      'PURPOSE: unlock Members only ticket tiers. The public never sees those tickets; roster members see them automatically when signed in with the same email — no access codes. ' +
-      'SETUP: open your organiser page → Member roster (or group-edit → Manage member roster). Add members one by one or import CSV (columns: email required, name, expires or membership expiry). Optionally send invite emails — new Hub users get a sign-up invite; existing Hub members get a welcome email with the group’s next meeting. ' +
-      'REPORTS on the roster page: roster health (active, signed up vs not yet, expiring soon), booked vs not booked for a selected upcoming event, new vs returning at an event, members who missed recent meetings, memberships expiring within 14 days. ' +
-      'MEMBERS: when added, they see the group under My Hub → Member rosters (/account/). Sign in with the roster email to book member-only tickets. ' +
-      'RENEWALS: Stripe membership billing is not on the Hub yet — renew off-platform and update expiry dates on the roster. ' +
-      'TICKETS: on event-tickets.html, add a Members only ticket tier — access is enforced via the roster.',
+      'Per networking group (organiser page), organisers maintain a Member list at /organiser/member-roster — name, email, and optional membership expiry. ' +
+      'PURPOSE: unlock Members only ticket tiers. The public never sees those tickets; people on the list see them automatically when signed in with the same email — no access codes. ' +
+      'SETUP: open your organiser page → Member list (or group-edit → Manage member list). Add members one by one or import CSV (columns: email required, name, expires or membership expiry). Optionally send invite emails — new Hub users get a sign-up invite; existing Hub members get a welcome email with the group’s next meeting. ' +
+      'REPORTS on the member list page: membership health (active, signed up vs not yet, expiring soon), booked vs not booked for a selected upcoming event, new vs returning at an event, members who missed recent meetings, memberships expiring within 14 days. ' +
+      'MEMBERS: when added, they see the group under My Hub → My groups (/account/). Sign in with the membership email to book member-only tickets. ' +
+      'RENEWALS: Stripe membership billing is not on the Hub yet — renew off-platform and update expiry dates on the member list. ' +
+      'TICKETS: on event-tickets.html, add a Members only ticket tier — access is enforced via the member list.',
   },
   {
     title: 'ORGANISER GUIDES',
@@ -399,39 +399,39 @@ const FALLBACK_REPLIES = [
       'The guest visit programme is an optional add-on on the tickets step. Enable it to offer 1–3 complimentary visits so newcomers can try your group before buying a paid member ticket. The allowance applies across your organiser page. For member-only dates, tick “Member-only for this event” while keeping paid tickets live.',
   },
   {
-    match: /how do i set up a members only ticket with the member roster/i,
+    match: /how do i set up a members only ticket with the member (list|roster)/i,
     reply:
-      'On the event tickets step, add a Members only ticket tier. It stays off the public event page. Upload your member list first at /organiser/member-roster (or group-edit → Manage member roster) — name and email per member. When someone on that roster signs in with their roster email, they see the member ticket automatically. No access codes.',
+      'On the event tickets step, add a Members only ticket tier. It stays off the public event page. Upload your member list first at /organiser/member-roster (or group-edit → Manage member list) — name and email per member. When someone on that list signs in with their membership email, they see the member ticket automatically. No access codes.',
   },
   {
-    match: /what is (a |the )?member roster|how does (the )?member roster work|explain.*member roster|member roster do/i,
+    match: /what is (a |the )?member (list|roster)|how does (the )?member (list|roster) work|explain.*member (list|roster)|member (list|roster) do/i,
     reply:
-      'A Member roster is your per-group list of members (name, email, optional expiry) at /organiser/member-roster. It unlocks Members only tickets — roster members see those rates when signed in with their roster email; the public does not. Add members individually or import CSV, track who has signed up, and use reports for bookings and expiring memberships. Renew memberships off-platform and update expiry dates here.',
+      'A Member list is your per-group list of members (name, email, optional expiry) at /organiser/member-roster. It unlocks Members only tickets — people on the list see those rates when signed in with their membership email; the public does not. Add members individually or import CSV, track who has signed up, and use reports for bookings and expiring memberships. Renew memberships off-platform and update expiry dates here.',
   },
   {
-    match: /added (me|to my).*member roster|on (a|the) member roster|member rosters in my hub|why.*member roster email|group added me/i,
+    match: /added (me|to my).*member (list|roster)|on (a|the) member (list|roster)|member (lists|rosters) in my hub|why.*member (list|roster) email|group added me/i,
     reply:
-      'A networking group added your email to their member roster so you can book member-only ticket rates. Sign in at /login with that exact email — the group appears under My Hub → Member rosters (/account/). Open their event and you will see member tickets the public cannot.',
+      'A networking group added your email to their member list so you can book member-only ticket rates. Sign in at /login with that exact email — the group appears under My Hub → My groups (/account/). Open their event and you will see member tickets the public cannot.',
   },
   {
-    match: /import.*(member|roster).*csv|csv.*member roster|upload.*member list|bulk.*member roster/i,
+    match: /import.*(member|list|roster).*csv|csv.*member (list|roster)|upload.*member list|bulk.*member (list|roster)/i,
     reply:
-      'On /organiser/member-roster, use Import CSV. Required column: email. Optional: name, expires (or membership expiry). Example row: jane@example.com,Jane Smith,2026-12-31. You can tick to send invite emails after import — only for people who do not yet have a Hub account.',
+      'On /organiser/member-roster, use Import CSV. Required column: email. Optional: name, expires (or membership expiry). Example row: jane@example.com,Jane Smith,2026-12-31. You can tick to send invite emails after import — new accounts get a sign-up link; existing Hub accounts get a sign-in link.',
   },
   {
-    match: /add.*(to|someone).*(member roster|roster)|manage member roster|set up member roster|open member roster|where.*member roster/i,
+    match: /add.*(to|someone).*(member list|member roster|roster)|manage member (list|roster)|set up member (list|roster)|open member (list|roster)|where.*member (list|roster)/i,
     reply:
-      'Open /organiser/member-roster?id=YOUR_GROUP_ID (or your organiser page → Manage member roster). Add name and email, optionally set membership expiry, then Add to roster. Use this list before or after adding a Members only ticket on your events.',
+      'Open /organiser/member-roster?id=YOUR_GROUP_ID (or your organiser page → Manage member list). Add name and email, optionally set membership expiry, then Add to list. Use this list before or after adding a Members only ticket on your events.',
   },
   {
-    match: /membership expir|expiring membership|renew.*membership.*roster|roster.*expir/i,
+    match: /membership expir|expiring membership|renew.*membership.*(list|roster)|(list|roster).*expir/i,
     reply:
-      'Optional expiry dates on /organiser/member-roster flag memberships expiring soon in your reports. Full subscription billing is not on the Hub yet — renew members off-platform, then update the expiry date on their roster row.',
+      'Optional expiry dates on /organiser/member-roster flag memberships expiring soon in your reports. Full subscription billing is not on the Hub yet — renew members off-platform, then update the expiry date on their member list row.',
   },
   {
-    match: /access code|private ticket|members? only ticket|member roster ticket|hidden ticket/i,
+    match: /access code|private ticket|members? only ticket|member (list|roster) ticket|hidden ticket/i,
     reply:
-      'Use a Members only ticket on the tickets step. It stays off the public event page; people on your Member roster see it automatically when they sign in with their roster email. Manage the list under Member roster on your organiser page — there are no access codes.',
+      'Use a Members only ticket on the tickets step. It stays off the public event page; people on your member list see it automatically when they sign in with their membership email. Manage the list under Member list on your organiser page — there are no access codes.',
   },
   {
     match: /disallow guest|guest pass.*(off|disable|opt)|member.?only (date|event|evening)|no guest (pass|visit).*conference/i,
@@ -541,9 +541,9 @@ const ORGANISER_PAGE_CONTEXT = {
   'event-edit':
     'The user is on the event listing details step (title, type, description, photo with drag-to-reposition crop, location, dates). Answer listing-setup questions from your organiser knowledge. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'event-tickets':
-    'The user is on the ticket setup step. Two attendance modes: Ticket types (open booking) or Category Exclusivity. Guest visit programme is an optional checkbox within Ticket types — not a separate mode. Previous Attendees is optional. Members only tickets use the Member roster. Answer organiser ticketing questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+    'The user is on the ticket setup step. Two attendance modes: Ticket types (open booking) or Category Exclusivity. Guest visit programme is an optional checkbox within Ticket types — not a separate mode. Previous Attendees is optional. Members only tickets use the Member list. Answer organiser ticketing questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'member-roster':
-    'The user is managing a Member roster for their networking group. Explain what the roster is, how to add or import members, optional expiry dates, invite emails, Members only tickets, and the reports on this page. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+    'The user is managing a Member list for their networking group. Explain what the list is, how to add or import members, optional expiry dates, invite emails, Members only tickets, and the reports on this page. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'group-edit':
     'The user is editing their organiser page. Answer organiser-page questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'organiser-dashboard':

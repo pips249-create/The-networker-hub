@@ -1,5 +1,5 @@
 /**
- * Ticket visibility helpers — public listing vs members_only (roster).
+ * Ticket visibility helpers — public listing vs members_only (member list).
  */
 
 const VISIBILITY_PUBLIC = 'public';

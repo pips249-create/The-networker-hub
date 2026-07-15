@@ -1,5 +1,5 @@
 /**
- * Member roster — per organiser page access for members_only tickets.
+ * Member list — per organiser page access for members_only tickets.
  */
 const { getSupabaseAdmin } = require('./supabase');
 const { isMembersOnlyTicket } = require('./ticket-visibility');

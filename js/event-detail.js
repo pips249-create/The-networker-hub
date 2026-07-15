@@ -2059,7 +2059,7 @@
       const subtitle = soldOut
         ? 'Sold out'
         : isMemberTier
-          ? 'Member rate — your roster account'
+          ? 'Member rate — your membership'
           : remainingLabel || t.description || '';
 
       const tier = document.createElement('div');
@@ -2136,8 +2136,8 @@
       tiersEl.innerHTML =
         '<p class="ticket-load-hint">' +
         (rosterMembership?.signedOut
-          ? 'Sign in with the email on this group\u2019s member roster to see member tickets.'
-          : 'Member tickets are for people on this group\u2019s roster.') +
+          ? 'Sign in with the email on this group\u2019s member list to see member tickets.'
+          : 'Member tickets are for people on this group\u2019s member list.') +
         '</p>';
     }
 

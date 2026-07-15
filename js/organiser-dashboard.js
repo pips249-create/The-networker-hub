@@ -1729,7 +1729,7 @@
         '" target="_blank" rel="noopener noreferrer"><span class="org-action-icon">↗</span><span class="org-action-text"><strong>View public profile</strong><span>See your group page and ranking badge</span></span></a>' +
         '<a class="org-action-item" href="/organiser/member-roster?id=' +
         esc(id) +
-        '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>Member roster</strong><span>Upload members for members-only tickets</span></span></a>' +
+        '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>Member list</strong><span>Upload members for members-only tickets</span></span></a>' +
         '<button type="button" class="org-action-item" data-add-event-for-group="' +
         esc(id) +
         '"><span class="org-action-icon">📅</span><span class="org-action-text"><strong>Add an event</strong><span>List a new event for this group</span></span></button>' +

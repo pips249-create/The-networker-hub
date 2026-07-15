@@ -37,7 +37,7 @@
 
 ### Recently completed (July 2026)
 
-- **Member roster (pre-launch)** — per organiser page roster, `members_only` tickets, five reports, Avery labels for confirmed bookings only (`docs/MEMBER-ROSTER.md`, migration `159_organiser_member_roster.sql`)
+- **Member list (pre-launch)** — per organiser page member list, `members_only` tickets, five reports, Avery labels for confirmed bookings only (`docs/MEMBER-ROSTER.md`, migration `159_organiser_member_roster.sql`)
 - **Conference** event type + browse filter (`135_event_type_conference.sql`)
 - **Conference/exhibition organiser guide** (`guides/list-a-conference-or-exhibition.html`)
 - **Onboarding polish** — 2-step dashboard tour, Hubert on Overview, resume banner, `?onboard=claim` deep-link
