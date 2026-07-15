@@ -183,7 +183,7 @@ html:has(.home-page) {
   isolation: isolate;
   overflow: hidden;
   min-height: auto;
-  padding: calc(var(--home-nav-height) + 28px) clamp(24px, 4vw, 40px) 72px;
+  padding: calc(var(--home-nav-height) + 12px) clamp(24px, 4vw, 40px) 32px;
   background-color: #a67fad;
   background-image:
     radial-gradient(ellipse 90% 55% at 12% 92%, rgba(74, 58, 82, 0.42) 0%, transparent 58%),
@@ -290,7 +290,7 @@ html:has(.home-page) {
 
 .home-page .home-hero-kicker {
   display: inline-block;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   font-size: var(--text-size-label);
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -299,7 +299,7 @@ html:has(.home-page) {
   background: rgba(45, 35, 50, 0.32);
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: var(--radius-pill);
-  padding: 9px 18px;
+  padding: 7px 16px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 4px 18px rgba(45, 35, 50, 0.2);
@@ -312,13 +312,13 @@ html:has(.home-page) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.08em;
+  gap: 0.06em;
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: clamp(2.1rem, 5.2vw, 3.2rem);
+  font-size: clamp(1.95rem, 4.6vw, 2.85rem);
   font-weight: 400;
-  line-height: 1.06;
+  line-height: 1.05;
   color: #fff;
-  margin: 0 0 14px;
+  margin: 0 0 10px;
   max-width: none;
   letter-spacing: -0.02em;
   text-wrap: balance;
@@ -347,12 +347,12 @@ html:has(.home-page) {
 }
 
 .home-page .hero-tagline {
-  font-size: clamp(1rem, 2.1vw, 1.125rem);
-  line-height: 1.55;
+  font-size: clamp(0.98rem, 2vw, 1.08rem);
+  line-height: 1.5;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.94);
   max-width: 30em;
-  margin: 0 auto 22px;
+  margin: 0 auto 14px;
   text-wrap: pretty;
   text-shadow: 0 1px 3px rgba(45, 35, 50, 0.38);
 }
