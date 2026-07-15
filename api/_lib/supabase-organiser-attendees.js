@@ -40,7 +40,7 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       guest_names,
       cancelled_at,
       attendees ( name, email, company, business_sector, job_title ),
-      events ( title, organiser_id ),
+      events ( title, organiser_id, starts_at ),
       tickets ( name, price, ticket_type )
     `;
   const extrasSelect = `
@@ -136,6 +136,7 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
         bookingReference: formatBookingReference(row.id),
         eventId: row.event_id,
         eventTitle: String(event.title || 'Event').trim(),
+        eventDate: event.starts_at || '',
         name,
         email,
         company: String(attendee.company || '').trim(),
@@ -269,6 +270,7 @@ async function listBookingCancellationsForOrganiserEvents(
         bookingReference: formatBookingReference(row.id),
         eventId: row.event_id,
         eventTitle: String(event.title || 'Event').trim(),
+        eventDate: event.starts_at || '',
         name,
         email,
         ticketName: String(ticket.name || 'General admission').trim(),

@@ -113,7 +113,7 @@ async function sendAlumniFastPassInvites(session, { targetEventId, sourceEventId
   if (!targetEvent.alumni_fast_pass_enabled) {
     const err = new Error('alumni_fast_pass_not_enabled');
     err.status = 400;
-    err.message = 'Enable Alumni Fast-Pass on the ticket setup page before sending invites.';
+    err.message = 'Enable Previous Attendees on the ticket setup page before sending invites.';
     throw err;
   }
 
@@ -127,7 +127,7 @@ async function sendAlumniFastPassInvites(session, { targetEventId, sourceEventId
   if (!alumniTicket) {
     const err = new Error('alumni_tier_missing');
     err.status = 400;
-    err.message = 'Add an Alumni ticket tier before sending invites.';
+    err.message = 'Add a previous attendee ticket tier before sending invites.';
     throw err;
   }
 

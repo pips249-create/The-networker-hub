@@ -115,6 +115,23 @@
     if (paymentNeeded) {
       blockers.push('Add bank details for paid tickets');
     }
+    const seenCodes = new Set();
+    list.forEach((tier) => {
+      if (String(tier.visibility || 'public').toLowerCase() !== 'hidden') return;
+      const code = String(tier.accessCode || '')
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '');
+      if (code.length < 4) {
+        blockers.push('Each hidden ticket needs an access code (at least 4 characters)');
+        return;
+      }
+      if (seenCodes.has(code)) {
+        blockers.push('Access codes must be unique within this event');
+        return;
+      }
+      seenCodes.add(code);
+    });
     return blockers;
   }
 
@@ -592,6 +609,21 @@
       '<div class="ee-field"><label>Quantity available <span class="ee-optional">(optional)</span></label>' +
       '<input type="number" class="ee-tier-qty" min="0" step="1" placeholder="Unlimited" /></div>' +
       '</div>' +
+      '<div class="ee-row-2 ee-tier-visibility-row">' +
+      '<div class="ee-field ee-tier-visibility-field" data-hub-tip="ticket-visibility">' +
+      '<label>Visibility</label>' +
+      '<select class="ee-tier-visibility" aria-label="Ticket visibility">' +
+      '<option value="public">Public — everyone sees this tier</option>' +
+      '<option value="hidden">Hidden — requires access code</option>' +
+      '</select></div>' +
+      '<div class="ee-field ee-tier-access-code-wrap" hidden>' +
+      '<label>Access code</label>' +
+      '<p class="ee-hint" style="margin-top:0">Attendees enter this at checkout to unlock the tier.</p>' +
+      '<input type="text" class="ee-tier-access-code" maxlength="32" placeholder="e.g. MEMBERVIP" autocapitalize="characters" autocomplete="off" /></div>' +
+      '</div>' +
+      '<div class="ee-field ee-tier-access-max-wrap" hidden>' +
+      '<label>Max uses <span class="ee-optional">(optional)</span></label>' +
+      '<input type="number" class="ee-tier-access-max-uses" min="1" step="1" placeholder="Unlimited" /></div>' +
       '<div class="ee-row-2 ee-tier-sale-row">' +
       '<div class="ee-field"><label>Sale start <span class="ee-optional">(optional)</span></label>' +
       '<p class="ee-hint" style="margin-top:0">Leave blank and sales start today.</p>' +
@@ -657,6 +689,16 @@
     updateTierSummary();
   }
 
+  function updateTierAccessCodeUi(row) {
+    if (!row) return;
+    const visibility = row.querySelector('.ee-tier-visibility')?.value || 'public';
+    const hidden = visibility === 'hidden';
+    const codeWrap = row.querySelector('.ee-tier-access-code-wrap');
+    const maxWrap = row.querySelector('.ee-tier-access-max-wrap');
+    if (codeWrap) codeWrap.hidden = !hidden;
+    if (maxWrap) maxWrap.hidden = !hidden;
+  }
+
   function bindTierRow(row) {
     const saleSelect = row.querySelector('.ee-tier-sale-end');
     const customWrap = row.querySelector('.ee-sale-custom-wrap');
@@ -664,6 +706,11 @@
       saleSelect.addEventListener('change', () => {
         customWrap.hidden = saleSelect.value !== 'custom';
       });
+    }
+    const visibilitySelect = row.querySelector('.ee-tier-visibility');
+    if (visibilitySelect) {
+      visibilitySelect.addEventListener('change', () => updateTierAccessCodeUi(row));
+      updateTierAccessCodeUi(row);
     }
     populateQuarterTimeSelect(row.querySelector('.ee-tier-sale-start-time'), '09:00');
     populateQuarterTimeSelect(row.querySelector('.ee-tier-sale-custom-time'), '18:00');
@@ -746,6 +793,18 @@
         if (customTime) populateQuarterTimeSelect(customTime, isoToTimeInput(ticket.saleEnd) || '18:00');
       }
     }
+    const visibilityEl = row.querySelector('.ee-tier-visibility');
+    if (visibilityEl) {
+      visibilityEl.value = String(ticket.visibility || 'public').toLowerCase() === 'hidden' ? 'hidden' : 'public';
+    }
+    const accessCodeEl = row.querySelector('.ee-tier-access-code');
+    if (accessCodeEl) accessCodeEl.value = ticket.accessCode || '';
+    const accessMaxEl = row.querySelector('.ee-tier-access-max-uses');
+    if (accessMaxEl) {
+      accessMaxEl.value =
+        ticket.accessMaxUses == null || ticket.accessMaxUses === '' ? '' : String(ticket.accessMaxUses);
+    }
+    updateTierAccessCodeUi(row);
   }
 
   function prefillTiers(tickets) {
@@ -871,6 +930,9 @@
         row.querySelector('.ee-tier-sale-start-time')?.value
       );
       const saleEnd = computeSaleEndIso(saleOption, customDt, eventDate);
+      const visibility = row.querySelector('.ee-tier-visibility')?.value || 'public';
+      const accessCode = row.querySelector('.ee-tier-access-code')?.value.trim() || '';
+      const accessMaxRaw = row.querySelector('.ee-tier-access-max-uses')?.value;
       tiers.push({
         name,
         price,
@@ -884,6 +946,12 @@
         categoryExclusivity: false,
         ticketType: 'Standard',
         displayOrder: idx,
+        visibility,
+        accessCode: visibility === 'hidden' ? accessCode : '',
+        accessMaxUses:
+          visibility === 'hidden' && accessMaxRaw !== '' && accessMaxRaw != null
+            ? Number(accessMaxRaw)
+            : null,
       });
     });
     return tiers;

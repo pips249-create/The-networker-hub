@@ -20,6 +20,10 @@ const {
   isAlumniTicket,
   assertAlumniBookingAllowed,
 } = require('../alumni-invites');
+const {
+  isHiddenTicket,
+  assertAccessCodeBookingAllowed,
+} = require('../ticket-access-codes');
 const { bookingErrorResponse } = require('../booking-error-messages');
 
 function parseBody(req) {
@@ -185,7 +189,7 @@ module.exports = async function handler(req, res) {
     if (ticketId) {
       const tRes = await sb
         .from('tickets')
-        .select('id, name, price, event_id, ticket_type')
+        .select('id, name, price, event_id, ticket_type, visibility')
         .eq('id', ticketId)
         .maybeSingle();
       if (tRes.error) throw new Error(tRes.error.message);
@@ -213,13 +217,38 @@ module.exports = async function handler(req, res) {
 
     const isGuestVisit = Boolean(ticketRow && isGuestVisitTicket(ticketRow));
     const isAlumni = Boolean(ticketRow && isAlumniTicket(ticketRow));
+    const isHidden = Boolean(ticketRow && isHiddenTicket(ticketRow));
     const alumniInviteToken = String(body.alumniInviteToken || body.alumni_invite_token || '').trim();
+    const accessCode = String(body.accessCode || body.access_code || '').trim();
+    let accessCodeEligibility = null;
     if (isAlumni) {
       requestedQty = 1;
     }
     if (isGuestVisit) {
       unitPrice = 0;
       requestedQty = 1;
+    }
+    if (isHidden) {
+      try {
+        accessCodeEligibility = await assertAccessCodeBookingAllowed(sb, {
+          eventId,
+          ticketId,
+          code: accessCode,
+        });
+      } catch (accessErr) {
+        const code = accessErr.message || 'access_code_invalid';
+        const messages = {
+          access_code_required: 'Enter your access code to book this ticket.',
+          access_code_not_found: 'That access code is not valid for this event.',
+          access_code_expired: 'That access code has expired or reached its usage limit.',
+          access_code_ticket_mismatch: 'That access code does not unlock this ticket type.',
+        };
+        return json(res, accessErr.status || 403, {
+          ok: false,
+          error: code,
+          message: messages[code] || 'That access code is not valid for this ticket.',
+        });
+      }
     }
 
     const dietaryRequirements = String(body.dietaryRequirements || body.dietary_requirements || '')
@@ -232,7 +261,7 @@ module.exports = async function handler(req, res) {
       .slice(0, 500);
 
     if (unitPrice <= 0) {
-      if (isGuestVisit || isAlumni || registrationId) {
+      if (isGuestVisit || isAlumni || isHidden || registrationId) {
         const qty = isGuestVisit || isAlumni ? 1 : requestedQty;
         const guestNames = normalizeGuestNames(body.guestNames || body.guest_names, qty);
         if (isGuestVisit) {
@@ -302,6 +331,7 @@ module.exports = async function handler(req, res) {
           paymentStatus: 'Free',
           registrationKind: isGuestVisit ? 'guest_visit' : isAlumni ? 'alumni' : undefined,
           alumniInviteToken: isAlumni ? alumniInviteToken : undefined,
+          accessCodeId: accessCodeEligibility?.codeRow?.id || undefined,
         });
         return json(res, 200, {
           ok: true,
@@ -317,7 +347,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    if (!isAlumni) {
+    if (!isAlumni && !isHidden) {
       try {
         await assertPaidMemberBookingAllowed(sb, {
           organiserId: evRes.data.organiser_id,
@@ -419,6 +449,7 @@ module.exports = async function handler(req, res) {
       dietaryRequirements,
       accessibilityRequirements,
       alumniInviteToken: isAlumni ? alumniInviteToken : '',
+      accessCodeId: accessCodeEligibility?.codeRow?.id || '',
       eventId,
       ticketId,
       registrationId,

@@ -861,6 +861,15 @@ a.ee-wizard-link:hover {
   margin-top: 8px;
 }
 
+.ee-tier-visibility-row {
+  margin-top: 4px;
+}
+
+.ee-tier-access-code-wrap .ee-hint,
+.ee-tier-access-max-wrap .ee-hint {
+  margin-top: 0;
+}
+
 #ee-add-tier {
   margin-top: 4px;
   margin-bottom: 4px;

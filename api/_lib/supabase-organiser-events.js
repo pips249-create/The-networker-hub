@@ -2,7 +2,7 @@
  * Organiser events + tickets + dashboard workspace — Supabase.
  */
 const crypto = require('crypto');
-const { getSupabaseAdmin } = require('./supabase');
+const { syncAccessCodesForEvent, validateTierAccessCodes, loadAccessCodesByTicketIds } = require('./ticket-access-codes');
 const { formatTicketsSoldLabel } = require('./tickets-sold-label');
 const { resolveImageUrl } = require('./supabase-storage');
 const { isAdminRole } = require('./auth');
@@ -164,7 +164,7 @@ function rowToEvent(row) {
   };
 }
 
-function rowToTicket(row) {
+function rowToTicket(row, accessCodeRow) {
   return {
     id: row.id,
     name: String(row.name || 'Ticket').trim(),
@@ -177,6 +177,9 @@ function rowToTicket(row) {
     displayOrder: row.display_order != null ? Number(row.display_order) : 0,
     saleStart: row.sale_starts_at || null,
     saleEnd: row.sale_ends_at || null,
+    visibility: String(row.visibility || 'public').toLowerCase(),
+    accessCode: accessCodeRow ? String(accessCodeRow.code || '') : '',
+    accessMaxUses: accessCodeRow?.max_uses != null ? Number(accessCodeRow.max_uses) : null,
   };
 }
 
@@ -322,6 +325,7 @@ async function listEventSummariesForOrganiserGroups(groupIds, allEvents) {
     id: row.id,
     title: String(row.title || 'Untitled event').trim(),
     organiserId: row.organiser_id || null,
+    date: row.starts_at || null,
   }));
 }
 
@@ -440,14 +444,22 @@ async function listTicketsForEventIds(eventIds) {
     if (error) throw new Error(error.message);
     if (data?.length) rows.push(...data);
   }
-  return rows.map(rowToTicket);
+  const codesByTicketId = await loadAccessCodesByTicketIds(
+    sb,
+    rows.map((row) => row.id).filter(Boolean)
+  );
+  return rows.map((row) => rowToTicket(row, codesByTicketId.get(row.id)));
 }
 
 async function listAllOrganiserTickets() {
   const sb = getSupabaseAdmin();
   const { data, error } = await sb.from('tickets').select('*');
   if (error) throw new Error(error.message);
-  return (data || []).map(rowToTicket);
+  const codesByTicketId = await loadAccessCodesByTicketIds(
+    sb,
+    (data || []).map((row) => row.id).filter(Boolean)
+  );
+  return (data || []).map((row) => rowToTicket(row, codesByTicketId.get(row.id)));
 }
 
 async function listTicketsForSession(session, eventIds, adminView) {
@@ -942,6 +954,7 @@ async function createTicket({
   categoryExclusivity,
   displayOrder,
   ticketType,
+  visibility,
 }) {
   const sb = getSupabaseAdmin();
   await assertTicketsEditableForEvents(sb, [eventId]);
@@ -974,6 +987,8 @@ async function createTicket({
     sale_ends_at: saleEnd || null,
     ticket_type: type,
     display_order: displayOrder != null ? Number(displayOrder) : 0,
+    visibility:
+      String(visibility || 'public').toLowerCase() === 'hidden' ? 'hidden' : 'public',
   };
   const { data, error } = await sb.from('tickets').insert(row).select('*').single();
   if (error) throw new Error(error.message);
@@ -1270,6 +1285,8 @@ async function createTicketsForEvents({
   let tiers = Array.isArray(tickets) ? tickets : [];
   if (!ids.length || !tiers.length) return { created: 0, tickets: [] };
 
+  validateTierAccessCodes(tiers);
+
   const mode = normalizeAttendanceMode(attendanceMode);
 
   const guestPassesDisabledFlag = Boolean(guestPassesDisabled);
@@ -1360,23 +1377,26 @@ async function createTicketsForEvents({
   const out = [];
   for (const eventId of ids) {
     const eventStartsAt = startsByEventId.get(eventId) || null;
+    const tierPairs = [];
     for (const tier of tiers) {
-      out.push(
-        await createTicket({
-          eventId,
-          name: tier.name,
-          price: tier.price,
-          description: tier.description,
-          status: tier.status,
-          quantityAvailable: tier.quantityAvailable,
-          saleEnd: resolveTierSaleEnd(tier, eventStartsAt),
-          saleStart: tier.saleStart,
-          categoryExclusivity: tier.categoryExclusivity,
-          displayOrder: tier.displayOrder,
-          ticketType: tier.ticketType,
-        })
-      );
+      const created = await createTicket({
+        eventId,
+        name: tier.name,
+        price: tier.price,
+        description: tier.description,
+        status: tier.status,
+        quantityAvailable: tier.quantityAvailable,
+        saleEnd: resolveTierSaleEnd(tier, eventStartsAt),
+        saleStart: tier.saleStart,
+        categoryExclusivity: tier.categoryExclusivity,
+        displayOrder: tier.displayOrder,
+        ticketType: tier.ticketType,
+        visibility: tier.visibility,
+      });
+      tierPairs.push({ tier, ticket: created });
+      out.push(created);
     }
+    await syncAccessCodesForEvent(sb, eventId, tierPairs);
   }
 
   const hasCategoryExclusivity =

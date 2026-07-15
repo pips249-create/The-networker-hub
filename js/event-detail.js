@@ -329,14 +329,14 @@
     const reason = String(eligibility?.reason || '').trim();
     const messages = {
       not_invited:
-        'This alumni invite link is invalid or has expired. Use the link from your invite email, or contact the organiser.',
-      email_mismatch: 'Sign in with the email address that received the alumni invite.',
-      not_enabled: 'Alumni Fast-Pass is not available for this event.',
-      no_alumni_tier: 'The alumni ticket is not set up for this event yet.',
+        'This previous attendee invite link is invalid or has expired. Use the link from your invite email, or contact the organiser.',
+      email_mismatch: 'Sign in with the email address that received the previous attendee invite.',
+      not_enabled: 'Previous Attendees is not available for this event.',
+      no_alumni_tier: 'The previous attendee ticket is not set up for this event yet.',
     };
     return (
       messages[reason] ||
-      'This alumni rate is invite-only. Use the link from your email or sign in with the invited address.'
+      'This previous attendee rate is invite-only. Use the link from your email or sign in with the invited address.'
     );
   }
 
@@ -501,10 +501,10 @@
       '<div class="alumni-tier-card' +
       (soldOut ? ' is-sold-out' : '') +
       '">' +
-      '<div class="alumni-tier-badge"><span aria-hidden="true">🎓</span> Alumni Fast-Pass</div>';
+      '<div class="alumni-tier-badge"><span aria-hidden="true">🎓</span> Previous Attendees</div>';
     if (eligibility?.signedOut) {
       html +=
-        '<p class="alumni-tier-lead">Sign in with the email that received your invite to claim your alumni rate.</p>';
+        '<p class="alumni-tier-lead">Sign in with the email that received your invite to claim your previous attendee rate.</p>';
     } else {
       html +=
         '<p class="alumni-tier-lead">Exclusive rate for past attendees — invite only.</p>';
@@ -1521,6 +1521,8 @@
   let guestVisitEligibility = null;
   let alumniEligibility = null;
   let alumniInviteToken = '';
+  let unlockedHiddenTiers = [];
+  let appliedAccessCode = '';
   let eventApplicationState = null;
   let ticketPanelBound = false;
 
@@ -1731,9 +1733,14 @@
         'You have used all complimentary visits with this organiser. Choose a member ticket instead.',
       guest_visits_not_enabled: 'Guest visits are not available for this organiser.',
       guest_passes_disabled: 'Guest passes are not available for this event.',
-      alumni_not_eligible: 'This alumni ticket is invite-only. Use the link from your email.',
-      not_invited: 'This alumni ticket is invite-only. Use the link from your email.',
-      email_mismatch: 'Sign in with the email address that received the alumni invite.',
+      alumni_not_eligible: 'This previous attendee ticket is invite-only. Use the link from your email.',
+      not_invited: 'This previous attendee ticket is invite-only. Use the link from your email.',
+      email_mismatch: 'Sign in with the email address that received the previous attendee invite.',
+      access_code_required: 'Enter your access code to book this ticket.',
+      access_code_not_found: 'That access code is not valid for this event.',
+      access_code_expired: 'That access code has expired or reached its usage limit.',
+      access_code_ticket_mismatch: 'That access code does not unlock this ticket type.',
+      access_code_invalid: 'That access code is not valid for this ticket.',
       already_going: "You're already going to this event. View your ticket in My Hub.",
       not_authenticated: 'Please sign in or create a free account to complete your booking.',
     };
@@ -1750,6 +1757,7 @@
     }
     saveBookingPending(event, ticketId, qty, attendee);
     const isAlumniBooking = Boolean(event.alumniTier && event.alumniTier.id === ticketId);
+    const needsAccessCode = unlockedHiddenTiers.some((tier) => tier.id === ticketId);
     const res = await fetch('/api/auth/create-checkout', {
       method: 'POST',
       credentials: 'include',
@@ -1767,6 +1775,7 @@
           isAlumniBooking
             ? alumniEligibility?.inviteToken || alumniInviteToken || ''
             : undefined,
+        accessCode: needsAccessCode ? appliedAccessCode : undefined,
       }),
     });
     const data = await res.json().catch(function () {
@@ -1783,9 +1792,12 @@
   async function completeFreeBooking(ev, ticketId, qty, attendee) {
     const isGuestVisit = Boolean(ev.guestVisitTier && ev.guestVisitTier.id === ticketId);
     const isAlumni = Boolean(ev.alumniTier && ev.alumniTier.id === ticketId);
+    const needsAccessCode = unlockedHiddenTiers.some((tier) => tier.id === ticketId);
     saveBookingPending(ev, ticketId, qty, attendee);
     const endpoint =
-      isGuestVisit || isAlumni ? '/api/auth/create-checkout' : '/api/auth/complete-booking';
+      isGuestVisit || isAlumni || needsAccessCode
+        ? '/api/auth/create-checkout'
+        : '/api/auth/complete-booking';
     const body = {
       eventId: ev.id,
       ticketId: isUuid(ticketId) ? ticketId : null,
@@ -1796,6 +1808,7 @@
       dietaryRequirements: attendee?.dietaryRequirements || '',
       accessibilityRequirements: attendee?.accessibilityRequirements || '',
     };
+    if (needsAccessCode) body.accessCode = appliedAccessCode;
     if (isAlumni) {
       body.alumniInviteToken = alumniEligibility?.inviteToken || alumniInviteToken || '';
     }
@@ -1832,21 +1845,116 @@
   }
 
   function ticketTiersForEvent(ev) {
-    if (ev.tickets && ev.tickets.length) return ev.tickets;
-    return [
-      {
-        id: (ev.id || 'event') + '-standard',
-        name: 'Standard ticket',
-        description:
-          ev.priceKey === 'free' ? 'Free admission' : 'Ticket includes full event access',
-        price: ev.price,
-        priceKey: ev.priceKey,
-        priceNum: ev.priceKey === 'free' ? 0 : Number(ev.priceNum) || 0,
-        soldOut: Boolean(ev.isSoldOut),
-        quantityAvailable: ev.spotsLeft,
-        label: 'Standard',
-      },
-    ];
+    const base =
+      ev.tickets && ev.tickets.length
+        ? ev.tickets.slice()
+        : [
+            {
+              id: (ev.id || 'event') + '-standard',
+              name: 'Standard ticket',
+              description:
+                ev.priceKey === 'free' ? 'Free admission' : 'Ticket includes full event access',
+              price: ev.price,
+              priceKey: ev.priceKey,
+              priceNum: ev.priceKey === 'free' ? 0 : Number(ev.priceNum) || 0,
+              soldOut: Boolean(ev.isSoldOut),
+              quantityAvailable: ev.spotsLeft,
+              label: 'Standard',
+            },
+          ];
+    const extras = (unlockedHiddenTiers || []).filter(
+      (tier) => !base.some((existing) => existing.id === tier.id)
+    );
+    return base.concat(extras);
+  }
+
+  function resetAccessCodeUnlock() {
+    unlockedHiddenTiers = [];
+    appliedAccessCode = '';
+    const input = document.getElementById('access-code-input');
+    const message = document.getElementById('access-code-message');
+    if (input) input.value = '';
+    if (message) {
+      message.hidden = true;
+      message.textContent = '';
+      message.classList.remove('is-error', 'is-success');
+    }
+  }
+
+  function renderAccessCodePanel(ev) {
+    const panel = document.getElementById('access-code-panel');
+    const form = document.getElementById('access-code-form');
+    const toggle = document.getElementById('access-code-toggle');
+    if (!panel) return;
+    const show = Boolean(ev && ev.hasHiddenTiers && !eventIsCategoryExclusivity(ev));
+    panel.hidden = !show;
+    if (!show) {
+      if (form) form.hidden = true;
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      return;
+    }
+    if (toggle) {
+      toggle.textContent = appliedAccessCode
+        ? 'Access code applied'
+        : 'Have an access code?';
+    }
+  }
+
+  async function applyAccessCode(ev) {
+    const input = document.getElementById('access-code-input');
+    const message = document.getElementById('access-code-message');
+    const code = String(input?.value || '').trim();
+    if (!code) {
+      if (message) {
+        message.textContent = 'Enter an access code.';
+        message.hidden = false;
+        message.classList.add('is-error');
+        message.classList.remove('is-success');
+      }
+      return;
+    }
+    const res = await fetch('/api/auth/validate-access-code', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventId: ev.id, code: code }),
+    });
+    const data = await res.json().catch(function () {
+      return {};
+    });
+    if (!res.ok || !data.ok || !Array.isArray(data.tiers) || !data.tiers.length) {
+      if (message) {
+        message.textContent =
+          data.message || checkoutErrorMessage(data) || 'That access code is not valid.';
+        message.hidden = false;
+        message.classList.add('is-error');
+        message.classList.remove('is-success');
+      }
+      return;
+    }
+    appliedAccessCode = code;
+    const merged = unlockedHiddenTiers.slice();
+    data.tiers.forEach(function (tier) {
+      if (!merged.some((existing) => existing.id === tier.id)) merged.push(tier);
+    });
+    unlockedHiddenTiers = merged;
+    if (message) {
+      message.textContent =
+        data.tiers.length === 1
+          ? 'Access code accepted — ' + (data.tiers[0].name || 'ticket') + ' is now available.'
+          : 'Access code accepted — hidden tickets are now available.';
+      message.hidden = false;
+      message.classList.remove('is-error');
+      message.classList.add('is-success');
+    }
+    renderAccessCodePanel(ev);
+    renderTicketPanel(ev);
+    const unlockedId = data.tiers[0] && data.tiers[0].id;
+    if (unlockedId) {
+      const escaped = String(unlockedId).replace(/"/g, '\\"');
+      const tier = document.querySelector('#ticket-tiers .tier[data-ticket-id="' + escaped + '"]');
+      if (tier) tier.click();
+    }
   }
 
   function renderVatNote(ev, tiers) {
@@ -1905,6 +2013,8 @@
     const urgencyEl = document.getElementById('ev-urgency');
     if (!tiersEl) return;
 
+    renderAccessCodePanel(ev);
+
     const tiers = ticketTiersForEvent(ev);
     const salesPending = Boolean(ev.isTicketSalesPending || ev.isTicketSalesScheduled);
     const panelClosed = ev.isSoldOut || (ev.isSalesClosed && !salesPending);
@@ -1962,7 +2072,7 @@
       tier.id = 'ev-tier-alumni';
       tier.setAttribute('data-ticket-id', t.id);
       tier.setAttribute('data-price', String(priceNum));
-      tier.setAttribute('data-label', 'Alumni ticket');
+      tier.setAttribute('data-label', 'Previous attendee ticket');
       tier.setAttribute('data-qty-max', '1');
       tier.setAttribute('data-alumni', '1');
       if (!soldOut) {
@@ -2011,16 +2121,23 @@
       const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
       const priceDisplay = t.priceKey === 'free' ? 'Free' : t.price || fmt(priceNum);
       const remainingLabel = soldOut ? '' : tierRemainingLabel(t);
+      const isUnlockedHidden = Boolean(t.unlockedByAccessCode);
       const subtitle = soldOut
         ? 'Sold out'
-        : remainingLabel || t.description || '';
+        : isUnlockedHidden
+          ? 'Unlocked with your access code'
+          : remainingLabel || t.description || '';
 
       const tier = document.createElement('div');
-      tier.className = 'tier' + (soldOut ? ' sold-out tier-disabled' : '');
+      tier.className =
+        'tier' +
+        (soldOut ? ' sold-out tier-disabled' : '') +
+        (isUnlockedHidden ? ' tier-hidden-unlocked' : '');
       tier.id = index === 0 ? 'ev-tier-standard' : 'ev-tier-' + t.id;
       tier.setAttribute('data-ticket-id', t.id);
       tier.setAttribute('data-price', String(priceNum));
       tier.setAttribute('data-label', t.label || t.name || 'Ticket');
+      if (isUnlockedHidden) tier.setAttribute('data-hidden-unlocked', '1');
       if (t.stripePaymentLink) tier.setAttribute('data-stripe-link', t.stripePaymentLink);
       const cap = t.quantityAvailable;
       const sold = Math.max(0, Number(t.registrationsCount) || 0);
@@ -2051,7 +2168,10 @@
         '</strong><span class="tier-subtitle">' +
         escapeHtml(subtitle) +
         '</span>' +
-        (remainingLabel
+        (isUnlockedHidden
+          ? '<span class="tier-hidden-badge">Access code</span>'
+          : '') +
+        (remainingLabel && !isUnlockedHidden
           ? '<span class="tier-remaining-badge">' + escapeHtml(remainingLabel) + '</span>'
           : '') +
         '</div>' +
@@ -2078,6 +2198,14 @@
         ? 'All ticket tiers are currently sold out.'
         : 'Tickets are not currently available for this event.';
       tiersEl.innerHTML = '<p class="ticket-load-hint">' + hint + '</p>';
+    } else if (
+      !firstSelectable &&
+      !tiersEl.children.length &&
+      !isCategoryExclusivity &&
+      ev.hasHiddenTiers
+    ) {
+      tiersEl.innerHTML =
+        '<p class="ticket-load-hint">Enter your access code above to unlock member tickets.</p>';
     }
 
     renderVatNote(ev, tiers);
@@ -2986,7 +3114,7 @@
       panel.classList.add('is-unavailable');
       buy.disabled = true;
       buy.classList.add('cta-btn-disabled');
-      buy.textContent = 'Alumni invite required';
+      buy.textContent = 'Previous attendee invite required';
       if (purchaseView) purchaseView.removeAttribute('aria-hidden');
       applyEventApplicationUi(ev);
       return;
@@ -3020,7 +3148,7 @@
       if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = true;
       const tierEl = getSelectedTierEl();
       const priceNum = tierEl ? parseFloat(tierEl.getAttribute('data-price')) || 0 : 0;
-      buy.textContent = priceNum > 0 ? 'Book alumni ticket' : 'Claim alumni ticket';
+      buy.textContent = priceNum > 0 ? 'Book previous attendee ticket' : 'Claim previous attendee ticket';
     } else {
       const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
       if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = true;
@@ -3459,6 +3587,32 @@
     ticketPanelBound = true;
     initApplicationSuccessModal();
 
+    const accessToggle = document.getElementById('access-code-toggle');
+    const accessForm = document.getElementById('access-code-form');
+    const accessApply = document.getElementById('access-code-apply');
+    const accessInput = document.getElementById('access-code-input');
+    if (accessToggle && accessForm) {
+      accessToggle.addEventListener('click', function () {
+        const open = accessForm.hidden;
+        accessForm.hidden = !open;
+        accessToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open && accessInput) accessInput.focus();
+      });
+    }
+    if (accessApply) {
+      accessApply.addEventListener('click', function () {
+        applyAccessCode(activeEvent());
+      });
+    }
+    if (accessInput) {
+      accessInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          applyAccessCode(activeEvent());
+        }
+      });
+    }
+
     currentEventDetail = ev;
     const qtyUp = document.getElementById('qty-up');
     const qtyValue = document.getElementById('qty-value');
@@ -3867,6 +4021,7 @@
     ticketPanelSetEvent = function (newEv) {
       currentEvent = newEv;
       currentEventDetail = newEv;
+      resetAccessCodeUnlock();
       qty = 1;
       price = newEv.priceKey === 'free' ? 0 : Number(newEv.priceNum) || 0;
       label = 'Standard';

@@ -40,7 +40,7 @@
       { label: 'Paid + guest visits', prompt: 'Can I create a paid ticket as well as offering guest visit tickets?' },
       { label: 'Guest visit programme', prompt: 'What is the guest visit programme for networking groups?' },
       { label: 'Category Exclusivity', prompt: 'What is Category Exclusivity?' },
-      { label: 'Alumni Fast-Pass', prompt: 'What is Alumni Fast-Pass for repeat events?' },
+      { label: 'Previous Attendees', prompt: 'What is Previous Attendees for repeat events?' },
       { label: 'Application questions', prompt: 'Can I change the application questions asked?' },
       { label: 'See registrations', prompt: 'How can I see who has registered for my event?' },
       { label: 'Visit counts', prompt: 'How do visit counts and new vs returning attendees work?' },

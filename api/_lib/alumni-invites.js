@@ -1,5 +1,5 @@
 /**
- * Alumni Fast-Pass — invite-only discounted tickets for past confirmed attendees.
+ * Previous Attendees — invite-only discounted tickets for past confirmed attendees.
  */
 const { siteBase } = require('./hub-email-urls');
 const { formatEventDateTime } = require('./favourite-sales-emails');
@@ -26,7 +26,7 @@ function alumniTierPayload({ price, quantityAvailable, saleEnd, description } = 
     price: priceNum,
     description:
       String(description || '').trim() ||
-      'Exclusive alumni rate for past attendees — invite only.',
+      'Exclusive rate for previous attendees — invite only.',
     status: 'Available',
     quantityAvailable: Number.isFinite(qty) ? qty : null,
     saleEnd: saleEnd || null,

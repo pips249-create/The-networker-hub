@@ -7,6 +7,7 @@ const { eventImageUrl, normalizeEventImagePosition } = require('./event-image');
 const { eventHasTicketsOnSale, resolveTicketSalesEnabled, earliestTicketSaleStart, formatTicketSalesOpensLabel, formatTicketSalesOpensShort, isEventPublishedForSale } = require('./ticket-sales');
 const { connectRequiredForPaidCheckout } = require('./stripe-connect');
 const { publicOrganiserSlug } = require('./organiser-slug');
+const { isHiddenTicket } = require('./ticket-access-codes');
 
 const IN_CHUNK_SIZE = 80;
 
@@ -25,7 +26,7 @@ const BROWSE_ORGANISER_COLUMNS =
   'id,name,photo_url,description,listing_status,stripe_account_id,stripe_charges_enabled,stripe_connect_details_submitted,slug';
 
 const BROWSE_TICKET_COLUMNS =
-  'id,event_id,price,quantity,name,ticket_type,description,sale_ends_at,sale_starts_at,status';
+  'id,event_id,price,quantity,name,ticket_type,description,sale_ends_at,sale_starts_at,status,visibility';
 
 function upcomingBrowseOrFilter(nowIso) {
   const now = nowIso || new Date().toISOString();
@@ -237,6 +238,8 @@ function ticketRowToTier(row, registrationCount) {
     categoryExclusivity: ticketIsApplication(row, name),
     isGuestVisit: ticketIsGuestVisit(row, name),
     isAlumni: ticketIsAlumni(row, name),
+    isHidden: isHiddenTicket(row),
+    visibility: String(row.visibility || 'public').toLowerCase(),
     saleEnd: row.sale_ends_at || null,
   };
 }
@@ -313,8 +316,9 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   const tiers = eventTickets.map((t) =>
     ticketRowToTier(t, t._registrationCount != null ? t._registrationCount : 0)
   );
-  const publicTiers = tiers.filter((t) => !t.isGuestVisit && !t.isAlumni);
-  const pricedTiers = publicTiers.length ? publicTiers : tiers;
+  const publicTiers = tiers.filter((t) => !t.isGuestVisit && !t.isAlumni && !t.isHidden);
+  const hiddenTierCount = tiers.filter((t) => t.isHidden).length;
+  const pricedTiers = publicTiers.length ? publicTiers : tiers.filter((t) => !t.isHidden);
   pricedTiers.sort((a, b) => {
     if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;
     return a.priceNum - b.priceNum;
@@ -456,6 +460,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     industrySlug: slugIndustry(industry),
     formatSlug: slugFormat(format),
     tickets: pricedTiers.length ? pricedTiers : [],
+    hasHiddenTiers: hiddenTierCount > 0,
     attendanceMode: normalizeAttendanceMode(row.attendance_mode),
     complimentaryVisitsAllowed: organiser
       ? Math.min(3, Math.max(0, Number(organiser.complimentary_visits_allowed) || 0))
@@ -474,7 +479,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     seriesGroupId: row.series_group_id || null,
   };
 
-  if (!ev.tickets.length && hasTicketTiers) ev.tickets = [fallbackTicketTier(ev)];
+  if (!ev.tickets.length && hasTicketTiers && !hiddenTierCount) ev.tickets = [fallbackTicketTier(ev)];
   return ev;
 }
 
@@ -1110,6 +1115,8 @@ async function handle(req, res) {
 module.exports = {
   handle,
   rowToEvent,
+  ticketRowToTier,
+  fetchRegistrationCountsByTicket,
   fetchApprovedEvents,
   fetchPublishedEventRows,
   fetchPublishedEventBySlug,

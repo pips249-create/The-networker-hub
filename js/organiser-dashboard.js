@@ -132,7 +132,35 @@
     if (state.eventSummaries && state.eventSummaries.length) {
       return state.eventSummaries.slice();
     }
-    return state.events.map((ev) => ({ id: ev.id, title: ev.title }));
+    return state.events.map((ev) => ({
+      id: ev.id,
+      title: ev.title,
+      date: ev.date || null,
+    }));
+  }
+
+  /** Distinct label for filters/tables when many listings share the same title. */
+  function eventFilterOptionLabel(ev) {
+    const title = String((ev && ev.title) || 'Untitled event').trim() || 'Untitled event';
+    const raw = ev && (ev.date || ev.startsAt || ev.starts_at || ev.eventDate);
+    const dateLabel = raw ? formatDateShort(raw) : '';
+    if (dateLabel && dateLabel !== '—') return title + ' · ' + dateLabel;
+    return title;
+  }
+
+  function eventLabelForRow(row) {
+    if (!row) return 'Event';
+    if (row.eventDate) {
+      return eventFilterOptionLabel({ title: row.eventTitle, date: row.eventDate });
+    }
+    const match = allEventOptions().find((e) => e.id === row.eventId);
+    if (match) {
+      return eventFilterOptionLabel({
+        title: row.eventTitle || match.title,
+        date: match.date,
+      });
+    }
+    return String(row.eventTitle || 'Event').trim();
   }
 
   function renderStats() {
@@ -2340,7 +2368,7 @@
     allEventOptions().forEach((ev) => {
       const opt = document.createElement('option');
       opt.value = ev.id;
-      opt.textContent = ev.title;
+      opt.textContent = eventFilterOptionLabel(ev);
       sel.appendChild(opt);
     });
     sel.value = filters.attendeesEvent;
@@ -2423,7 +2451,7 @@
         (a.guestNames || []).join('; '),
         a.email,
         a.phone || '',
-        a.eventTitle,
+        eventLabelForRow(a),
         a.ticketName,
         a.quantity,
         attendeeStatusLabel(a),
@@ -2877,7 +2905,7 @@
         '</td><td data-label="Email">' +
         esc(a.email || '—') +
         '</td><td data-label="Event">' +
-        esc(a.eventTitle) +
+        esc(eventLabelForRow(a)) +
         '</td><td data-label="Ticket">' +
         esc(a.ticketName) +
         '</td><td data-label="Qty">' +
@@ -2912,7 +2940,7 @@
     allEventOptions().forEach((ev) => {
       const opt = document.createElement('option');
       opt.value = ev.id;
-      opt.textContent = ev.title;
+      opt.textContent = eventFilterOptionLabel(ev);
       sel.appendChild(opt);
     });
     sel.value = filters.cancellationsEvent;
@@ -2992,7 +3020,7 @@
         '</td><td class="org-booking-ref">' +
         esc(bookingRef) +
         '</td><td>' +
-        esc(row.eventTitle) +
+        esc(eventLabelForRow(row)) +
         '</td><td>' +
         esc(row.ticketName) +
         '</td><td>' +
@@ -3179,7 +3207,7 @@
       allEventOptions().forEach((ev) => {
         const opt = document.createElement('option');
         opt.value = ev.id;
-        opt.textContent = ev.title;
+        opt.textContent = eventFilterOptionLabel(ev);
         ticketEventSel.appendChild(opt);
       });
       ticketEventSel.value = filters.ticketsEvent;
@@ -4533,7 +4561,7 @@
       if (errEl) {
         errEl.hidden = false;
         errEl.textContent =
-          'Publish a previous event with confirmed attendees first, then return here to send alumni invites.';
+          'Publish a previous event with confirmed attendees first, then return here to invite previous attendees.';
       }
       return;
     }
@@ -4607,7 +4635,7 @@
     if (!ok) {
       if (errEl) {
         errEl.hidden = false;
-        errEl.textContent = data.message || data.error || 'Could not send alumni invites';
+        errEl.textContent = data.message || data.error || 'Could not send previous attendee invites';
       }
       if (sendBtn) {
         sendBtn.disabled = false;
@@ -4616,7 +4644,7 @@
       return;
     }
     closeModals();
-    showOrganiserAlert(data.message || 'Alumni invites sent.', false);
+    showOrganiserAlert(data.message || 'Previous attendee invites sent.', false);
   }
 
   async function submitPayoutRequest() {
@@ -6284,7 +6312,7 @@
     state.events.forEach((ev) => {
       const opt = document.createElement('option');
       opt.value = ev.id;
-      opt.textContent = ev.title;
+      opt.textContent = eventFilterOptionLabel(ev);
       select.appendChild(opt);
     });
   }

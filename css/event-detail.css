@@ -1240,6 +1240,106 @@ a:hover {
   font-variant-numeric: tabular-nums;
 }
 
+.access-code-panel {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.access-code-toggle {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--purple-700);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.access-code-toggle:hover {
+  color: var(--purple-800);
+}
+
+.access-code-form {
+  margin-top: 10px;
+}
+
+.access-code-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.access-code-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.access-code-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.access-code-apply {
+  flex: 0 0 auto;
+  border: 1px solid var(--purple-700);
+  background: var(--purple-700);
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.access-code-apply:hover {
+  background: var(--purple-800);
+  border-color: var(--purple-800);
+}
+
+.access-code-message {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-muted);
+}
+
+.access-code-message.is-error {
+  color: #b42318;
+}
+
+.access-code-message.is-success {
+  color: #027a48;
+}
+
+.tier.tier-hidden-unlocked {
+  border-color: rgba(91, 33, 182, 0.35);
+}
+
+.tier-hidden-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(91, 33, 182, 0.1);
+  color: var(--purple-800);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
 .ticket-panel .qty-row {
   display: flex;
   justify-content: space-between;

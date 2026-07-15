@@ -22,6 +22,12 @@
         'Turns off complimentary guest passes on this date only. Paid member tickets stay on sale and anyone can book them directly — even if they still have free visits left on your organiser page. Your guest visit programme continues on your other events. Use for conferences, member evenings, or any date where you want paying attendees only.',
       hubertPrompt: 'What does Member-only for this event do on the tickets step?',
     },
+    'ticket-visibility': {
+      title: 'Hidden tickets & access codes',
+      body:
+        'Set a tier to Hidden to keep it off the public event page. Give members an access code (e.g. MEMBERVIP) to type at checkout — the hidden tier then appears for them to book. Ideal for member pricing without advertising the rate to everyone.',
+      hubertPrompt: 'How do hidden tickets and access codes work?',
+    },
     'category-exclusivity': {
       title: 'Category Exclusivity',
       body:
@@ -29,10 +35,10 @@
       hubertPrompt: 'What is Category Exclusivity?',
     },
     'alumni-fast-pass': {
-      title: 'Alumni Fast-Pass',
+      title: 'Previous Attendees',
       body:
-        'Optional hidden alumni ticket for past attendees of a previous event. Send locked booking links from your dashboard after publish — great for repeat conferences.',
-      hubertPrompt: 'What is Alumni Fast-Pass for repeat events?',
+        'Optional hidden ticket for previous attendees of a past event. Send locked booking links from your dashboard after publish — great for repeat conferences.',
+      hubertPrompt: 'What is Previous Attendees for repeat events?',
     },
     'vat-treatment': {
       title: 'VAT on ticket prices',
