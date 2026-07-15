@@ -62,6 +62,10 @@ async function fetchPublishableBlock(sb, slotKey) {
 }
 
 module.exports = async function handler(req, res) {
+  if (String(req.query?.route || '').trim() === 'city-partner') {
+    return require('./_lib/routes/city-partner')(req, res);
+  }
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=600');
 

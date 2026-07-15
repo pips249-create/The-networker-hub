@@ -163,6 +163,7 @@
     { "source": "/api/admin/:path*", "destination": "/api/admin" },
     { "source": "/api/cron/:path*", "destination": "/api/cron" },
     { "source": "/api/organiser/:path*", "destination": "/api/organiser" },
+    { "source": "/api/city-partner", "destination": "/api/cms-block?route=city-partner" },
     {
       "source": "/events/booking-success",
       "destination": "/events/booking-success.html"

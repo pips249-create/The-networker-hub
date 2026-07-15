@@ -1,21 +1,21 @@
 /**
  * City Partner — availability and self-serve checkout.
  *
- * GET  /api/city-partner
- * POST /api/city-partner  { email, cities: ['manchester', 'leeds'] }
+ * Mounted at GET/POST /api/city-partner via cms-block rewrite
+ * (keeps serverless function count within Vercel Hobby limits).
  */
-const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./_lib/supabase');
+const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('../supabase');
 const {
   getCityPartnerAvailability,
   validateCheckoutCities,
   calculateCityPartnerQuote,
   normalizeCitySlugs,
-} = require('./_lib/networking-city-partners');
+} = require('../networking-city-partners');
 const {
   createCityPartnerCheckoutSession,
   isStripeCheckoutConfigured,
   siteBaseUrl,
-} = require('./_lib/stripe-checkout');
+} = require('../stripe-checkout');
 
 function parseBody(req) {
   let body = req.body;
