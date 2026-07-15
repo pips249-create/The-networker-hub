@@ -42,6 +42,7 @@
     { "source": "/forgot-password.html", "destination": "/forgot-password", "permanent": true },
     { "source": "/reset-password.html", "destination": "/reset-password", "permanent": true },
     { "source": "/site-access.html", "destination": "/site-access", "permanent": true },
+    { "source": "/home2.5.html", "destination": "/home2.5", "permanent": true },
     { "source": "/opportunities/list.html", "destination": "/opportunities/list", "permanent": true },
     { "source": "/opportunities/browse.html", "destination": "/opportunities/", "permanent": true },
     { "source": "/account/settings.html", "destination": "/account/settings", "permanent": true },

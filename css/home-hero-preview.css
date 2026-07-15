@@ -1,0 +1,192 @@
+/* Hero copy preview — home2.5 */
+.home-hero-preview-page {
+  --preview-bar-height: 56px;
+}
+
+.home-hero-preview-bar {
+  position: sticky;
+  top: 0;
+  z-index: 120;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 10px clamp(16px, 4vw, 28px);
+  background: rgba(28, 32, 64, 0.96);
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+}
+
+.home-hero-preview-bar-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.home-hero-preview-bar-label strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+.home-hero-preview-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.home-hero-preview-tab {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.88);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.home-hero-preview-tab:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.home-hero-preview-tab.is-active {
+  background: #fff;
+  border-color: #fff;
+  color: var(--charcoal);
+}
+
+.home-hero-preview-back {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.82);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.home-hero-preview-back:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.home-hero-preview-note {
+  padding: 18px clamp(16px, 4vw, 28px) 0;
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+.home-hero-preview-note-inner {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--surface-warm);
+  border: 1px solid var(--border-soft);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.home-hero-preview-note-inner strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--charcoal);
+  font-size: 15px;
+}
+
+.home-hero-preview-stage {
+  min-height: calc(100vh - var(--preview-bar-height));
+}
+
+.home-hero-preview-page .home-hero {
+  min-height: calc(100vh - var(--preview-bar-height) - 80px);
+  padding-bottom: 48px;
+}
+
+.home-hero-preview-page .home-hero.is-entered .home-hero-inner > * {
+  opacity: 1;
+  animation: none;
+}
+
+/* Equal-weight pillar chips */
+.home-page .home-hero-pillars {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-page .home-hero-pillar-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.home-page .home-hero-pillar-chip:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: translateY(-1px);
+  color: #fff;
+}
+
+.home-page .home-hero-pillar-chip.is-primary {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.92);
+  color: var(--charcoal);
+}
+
+.home-page .home-hero-pillar-chip.is-primary:hover {
+  background: #fff;
+  color: var(--charcoal);
+}
+
+.home-page .home-hero-proof {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 1px 2px rgba(45, 35, 50, 0.28);
+}
+
+.home-page .home-hero-stats--hero {
+  margin-top: 16px;
+}
+
+.home-page .home-hero-stats--hero .home-hero-stat-text strong {
+  font-size: 14px;
+}
+
+@media (max-width: 720px) {
+  .home-hero-preview-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .home-hero-preview-tabs {
+    order: 2;
+  }
+
+  .home-hero-preview-back {
+    order: 3;
+    text-align: center;
+  }
+}
