@@ -692,9 +692,9 @@ html:has(.home-page) {
 }
 
 .home-pillar-preview {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-rows: 15px 1fr;
+  align-content: start;
   gap: 10px;
   height: 100%;
   min-height: 0;
@@ -706,7 +706,6 @@ html:has(.home-page) {
 
 .home-pillar-preview-label {
   margin: 0;
-  flex: 0 0 1.25em;
   height: 1.25em;
   font-size: 12px;
   font-weight: 700;
@@ -739,8 +738,8 @@ html:has(.home-page) {
   gap: 6px;
   margin: 0;
   padding: 12px 14px;
-  flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
   width: 100%;
   box-sizing: border-box;
   background: #fff;
