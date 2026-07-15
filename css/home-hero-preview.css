@@ -302,6 +302,10 @@
   margin-top: 16px;
 }
 
+.home-page .home-hero-proof--dual-cta {
+  margin-top: 16px;
+}
+
 @media (max-width: 720px) {
   .home-hero-preview-bar {
     flex-direction: column;

@@ -115,6 +115,32 @@
         },
       ],
     },
+    {
+      id: 'e',
+      label: 'E · Mix',
+      layout: 'dual-cta',
+      strategy: 'Best of all variants',
+      note: 'Keeps "Find your next\u2026" centre stage (B/D), names the hub (A), explains breadth + guest visits (C/D), and uses the dual coloured CTAs without UK framing.',
+      kicker: 'The Networker Hub',
+      titleLine: 'Find your next\u2026',
+      lede: 'Networking meetings, conferences, business opportunities, side hustles, training and so much more \u2014 all in one place. Compare groups, claim guest visits, and browse free.',
+      proof: 'Try before you join \u00b7 Sign up only when you book or enquire',
+      tagline: '',
+      ctaPills: [
+        {
+          href: '/events/',
+          label: 'Networking event',
+          detail: 'Breakfast meetings, conferences, training, and exhibitions near you.',
+          tone: 'gold',
+        },
+        {
+          href: '/opportunities/',
+          label: 'Business opportunity',
+          detail: 'Franchises, partnerships, side hustles, and deals to explore.',
+          tone: 'purple',
+        },
+      ],
+    },
   ];
 
   var STAT_ICONS = {
@@ -210,15 +236,21 @@
   function renderDualCtaHero(variant) {
     return (
       '<header class="home-hero-copy home-hero-copy--dual-cta">' +
+      (variant.kicker
+        ? '<p class="home-hero-kicker">' + esc(variant.kicker) + '</p>'
+        : '') +
       '<h1 class="hero-title hero-title--dual-cta">' +
       '<span class="hero-title-line">' +
       esc(variant.titleLine) +
       '</span>' +
       '</h1>' +
-      '<p class="home-hero-lede">' +
-      esc(variant.lede) +
-      '</p>' +
+      (variant.lede
+        ? '<p class="home-hero-lede">' + esc(variant.lede) + '</p>'
+        : '') +
       renderDualCtaPills(variant.ctaPills) +
+      (variant.proof
+        ? '<p class="home-hero-proof home-hero-proof--dual-cta">' + esc(variant.proof) + '</p>'
+        : '') +
       (variant.tagline
         ? '<p class="hero-tagline hero-tagline--dual-cta">' + esc(variant.tagline) + '</p>'
         : '') +
