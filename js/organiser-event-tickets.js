@@ -123,7 +123,7 @@
         .toUpperCase()
         .replace(/[^A-Z0-9]/g, '');
       if (code.length < 4) {
-        blockers.push('Each hidden ticket needs an access code (at least 4 characters)');
+        blockers.push('Add an access code for your private ticket (at least 4 characters)');
         return;
       }
       if (seenCodes.has(code)) {
@@ -132,6 +132,13 @@
       }
       seenCodes.add(code);
     });
+    if (privateTicketEnabled() && !collectPrivateAccessTicket()) {
+      blockers.push(
+        privateTicketMode() === 'roster'
+          ? 'Add a name for your member roster ticket'
+          : 'Add a name and access code for your private ticket'
+      );
+    }
     const alumni = collectAlumniFastPass();
     if (alumni.enabled && !alumni.saleEnd) {
       blockers.push('Choose a sale end for the previous attendee ticket');
@@ -520,6 +527,8 @@
 
     if (ticketsPanel) ticketsPanel.hidden = !openBooking;
     if (guestAddon) guestAddon.hidden = !openBooking;
+    const privateAddon = document.getElementById('ee-private-ticket-addon');
+    if (privateAddon) privateAddon.hidden = !openBooking;
     if (guestFields) guestFields.hidden = !guestOn;
     if (guestPassesOptOut) guestPassesOptOut.hidden = !guestOn;
     // Keep the how-it-works note visible so organisers can read it before enabling.
@@ -613,21 +622,6 @@
       '<div class="ee-field"><label>Quantity available <span class="ee-optional">(optional)</span></label>' +
       '<input type="number" class="ee-tier-qty" min="0" step="1" placeholder="Unlimited" /></div>' +
       '</div>' +
-      '<div class="ee-row-2 ee-tier-visibility-row">' +
-      '<div class="ee-field ee-tier-visibility-field" data-hub-tip="ticket-visibility">' +
-      '<label>Visibility</label>' +
-      '<select class="ee-tier-visibility" aria-label="Ticket visibility">' +
-      '<option value="public">Public — everyone sees this tier</option>' +
-      '<option value="hidden">Hidden — requires access code</option>' +
-      '</select></div>' +
-      '<div class="ee-field ee-tier-access-code-wrap" hidden>' +
-      '<label>Access code</label>' +
-      '<p class="ee-hint" style="margin-top:0">Attendees enter this at checkout to unlock the tier.</p>' +
-      '<input type="text" class="ee-tier-access-code" maxlength="32" placeholder="e.g. MEMBERVIP" autocapitalize="characters" autocomplete="off" /></div>' +
-      '</div>' +
-      '<div class="ee-field ee-tier-access-max-wrap" hidden>' +
-      '<label>Max uses <span class="ee-optional">(optional)</span></label>' +
-      '<input type="number" class="ee-tier-access-max-uses" min="1" step="1" placeholder="Unlimited" /></div>' +
       '<div class="ee-row-2 ee-tier-sale-row">' +
       '<div class="ee-field"><label>Sale start <span class="ee-optional">(optional)</span></label>' +
       '<p class="ee-hint" style="margin-top:0">Leave blank and sales start today.</p>' +
@@ -693,16 +687,6 @@
     updateTierSummary();
   }
 
-  function updateTierAccessCodeUi(row) {
-    if (!row) return;
-    const visibility = row.querySelector('.ee-tier-visibility')?.value || 'public';
-    const hidden = visibility === 'hidden';
-    const codeWrap = row.querySelector('.ee-tier-access-code-wrap');
-    const maxWrap = row.querySelector('.ee-tier-access-max-wrap');
-    if (codeWrap) codeWrap.hidden = !hidden;
-    if (maxWrap) maxWrap.hidden = !hidden;
-  }
-
   function bindTierRow(row) {
     const saleSelect = row.querySelector('.ee-tier-sale-end');
     const customWrap = row.querySelector('.ee-sale-custom-wrap');
@@ -710,11 +694,6 @@
       saleSelect.addEventListener('change', () => {
         customWrap.hidden = saleSelect.value !== 'custom';
       });
-    }
-    const visibilitySelect = row.querySelector('.ee-tier-visibility');
-    if (visibilitySelect) {
-      visibilitySelect.addEventListener('change', () => updateTierAccessCodeUi(row));
-      updateTierAccessCodeUi(row);
     }
     populateQuarterTimeSelect(row.querySelector('.ee-tier-sale-start-time'), '09:00');
     populateQuarterTimeSelect(row.querySelector('.ee-tier-sale-custom-time'), '18:00');
@@ -797,18 +776,205 @@
         if (customTime) populateQuarterTimeSelect(customTime, isoToTimeInput(ticket.saleEnd) || '18:00');
       }
     }
-    const visibilityEl = row.querySelector('.ee-tier-visibility');
-    if (visibilityEl) {
-      visibilityEl.value = String(ticket.visibility || 'public').toLowerCase() === 'hidden' ? 'hidden' : 'public';
+  }
+
+  function isHiddenAccessTicket(ticket) {
+    return String(ticket?.visibility || '').toLowerCase() === 'hidden';
+  }
+
+  function privateTicketEnabled() {
+    return Boolean(document.getElementById('ee-private-ticket-enabled')?.checked);
+  }
+
+  function normalizeOrganiserAccessCode(raw) {
+    return String(raw || '')
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '');
+  }
+
+  function generateOrganiserAccessCode() {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let suffix = '';
+    for (let i = 0; i < 4; i++) {
+      suffix += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
     }
-    const accessCodeEl = row.querySelector('.ee-tier-access-code');
-    if (accessCodeEl) accessCodeEl.value = ticket.accessCode || '';
-    const accessMaxEl = row.querySelector('.ee-tier-access-max-uses');
-    if (accessMaxEl) {
-      accessMaxEl.value =
-        ticket.accessMaxUses == null || ticket.accessMaxUses === '' ? '' : String(ticket.accessMaxUses);
+    return 'MEMBER' + suffix;
+  }
+
+  function setPrivateTicketCodeHint(msg, tone) {
+    const el = document.getElementById('ee-private-ticket-code-hint');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.classList.toggle('ee-hint-ok', tone === 'ok');
+  }
+
+  function isMembersOnlyAccessTicket(ticket) {
+    return String(ticket?.visibility || '').toLowerCase() === 'members_only';
+  }
+
+  function privateTicketMode() {
+    const roster = document.getElementById('ee-private-ticket-mode-roster');
+    if (roster && roster.checked) return 'roster';
+    return 'code';
+  }
+
+  function syncPrivateTicketFields() {
+    const fields = document.getElementById('ee-private-ticket-fields');
+    const modeWrap = document.getElementById('ee-private-ticket-mode-wrap');
+    const enabled = privateTicketEnabled();
+    if (fields) fields.hidden = !enabled;
+    if (modeWrap) modeWrap.hidden = !enabled;
+    const codeField = document.querySelector('.ee-private-code-field');
+    if (codeField) codeField.hidden = enabled && privateTicketMode() === 'roster';
+    if (enabled) {
+      if (privateTicketMode() === 'code') {
+        const codeEl = document.getElementById('ee-private-ticket-code');
+        if (codeEl && !normalizeOrganiserAccessCode(codeEl.value)) {
+          codeEl.value = generateOrganiserAccessCode();
+          setPrivateTicketCodeHint('We generated a code for you — copy it to share with members.', 'ok');
+        }
+      } else {
+        setPrivateTicketCodeHint('Add members on your organiser page under Member roster.', 'ok');
+      }
+    } else {
+      setPrivateTicketCodeHint('');
     }
-    updateTierAccessCodeUi(row);
+    updatePublishButton();
+  }
+
+  function collectPrivateAccessTicket(publicTiers) {
+    if (!privateTicketEnabled()) return null;
+    const name =
+      document.getElementById('ee-private-ticket-name')?.value.trim() || 'Member ticket';
+    const price = document.getElementById('ee-private-ticket-price')?.value;
+    const qty = document.getElementById('ee-private-ticket-qty')?.value;
+    const mode = privateTicketMode();
+    const code =
+      mode === 'code'
+        ? normalizeOrganiserAccessCode(document.getElementById('ee-private-ticket-code')?.value)
+        : '';
+    if (mode === 'code' && code.length < 4) return null;
+
+    const template = Array.isArray(publicTiers) && publicTiers.length ? publicTiers[0] : null;
+    const eventDate = seriesMeta.events && seriesMeta.events[0] ? seriesMeta.events[0].date : null;
+    const saleEnd =
+      template?.saleEnd || computeSaleEndIso('at_start', null, eventDate);
+    return {
+      name,
+      price: price === '' || price == null ? 0 : price,
+      description:
+        mode === 'roster'
+          ? 'For members on your roster when signed in'
+          : 'Unlock with your access code',
+      status: 'Available',
+      quantityAvailable: qty === '' || qty == null ? null : Number(qty),
+      saleStart: template?.saleStart || null,
+      saleEnd,
+      saleEndOption: template?.saleEndOption || 'at_start',
+      saleEndCustom: template?.saleEndCustom || null,
+      categoryExclusivity: false,
+      ticketType: 'Standard',
+      displayOrder: (publicTiers || []).length,
+      visibility: mode === 'roster' ? 'members_only' : 'hidden',
+      accessCode: mode === 'code' ? code : '',
+      accessMaxUses: null,
+    };
+  }
+
+  function prefillPrivateAccessTicket(tickets) {
+    const hidden = (tickets || []).find(isHiddenAccessTicket);
+    const rosterTier = (tickets || []).find(isMembersOnlyAccessTicket);
+    const tier = rosterTier || hidden;
+    const enabledEl = document.getElementById('ee-private-ticket-enabled');
+    const fields = document.getElementById('ee-private-ticket-fields');
+    if (!tier) {
+      if (enabledEl) enabledEl.checked = false;
+      if (fields) fields.hidden = true;
+      setPrivateTicketCodeHint('');
+      return;
+    }
+    if (enabledEl) enabledEl.checked = true;
+    if (fields) fields.hidden = false;
+    const rosterRadio = document.getElementById('ee-private-ticket-mode-roster');
+    const codeRadio = document.getElementById('ee-private-ticket-mode-code');
+    if (rosterTier && rosterRadio) rosterRadio.checked = true;
+    else if (hidden && codeRadio) codeRadio.checked = true;
+    const nameEl = document.getElementById('ee-private-ticket-name');
+    if (nameEl) nameEl.value = tier.name || 'Member ticket';
+    const priceEl = document.getElementById('ee-private-ticket-price');
+    if (priceEl) {
+      priceEl.value = tier.price === '' || tier.price == null ? '0' : String(tier.price);
+    }
+    const qtyEl = document.getElementById('ee-private-ticket-qty');
+    if (qtyEl) {
+      qtyEl.value =
+        tier.quantityAvailable == null || tier.quantityAvailable === ''
+          ? ''
+          : String(tier.quantityAvailable);
+    }
+    const codeEl = document.getElementById('ee-private-ticket-code');
+    if (codeEl) codeEl.value = tier.accessCode || '';
+    setPrivateTicketCodeHint(
+      rosterTier
+        ? 'Roster members see this ticket when signed in.'
+        : tier.accessCode
+          ? 'Share this code with members so they can unlock the ticket.'
+          : '',
+      'ok'
+    );
+    syncPrivateTicketFields();
+  }
+
+  function bindPrivateTicketFields() {
+    const enabled = document.getElementById('ee-private-ticket-enabled');
+    if (enabled) enabled.addEventListener('change', syncPrivateTicketFields);
+    document.querySelectorAll('input[name="ee-private-ticket-mode"]').forEach(function (radio) {
+      radio.addEventListener('change', syncPrivateTicketFields);
+    });
+    ['ee-private-ticket-name', 'ee-private-ticket-price', 'ee-private-ticket-qty', 'ee-private-ticket-code'].forEach(
+      (id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', updatePublishButton);
+        el.addEventListener('change', updatePublishButton);
+      }
+    );
+    const codeEl = document.getElementById('ee-private-ticket-code');
+    if (codeEl) {
+      codeEl.addEventListener('input', function () {
+        codeEl.value = normalizeOrganiserAccessCode(codeEl.value);
+        updatePublishButton();
+      });
+    }
+    const generateBtn = document.getElementById('ee-private-ticket-generate');
+    if (generateBtn) {
+      generateBtn.addEventListener('click', function () {
+        const el = document.getElementById('ee-private-ticket-code');
+        if (el) el.value = generateOrganiserAccessCode();
+        setPrivateTicketCodeHint('New code generated — copy it to share with members.', 'ok');
+        updatePublishButton();
+      });
+    }
+    const copyBtn = document.getElementById('ee-private-ticket-copy');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async function () {
+        const code = normalizeOrganiserAccessCode(
+          document.getElementById('ee-private-ticket-code')?.value
+        );
+        if (!code) {
+          setPrivateTicketCodeHint('Generate or type a code first.');
+          return;
+        }
+        try {
+          await navigator.clipboard.writeText(code);
+          setPrivateTicketCodeHint('Copied — paste it into your member email or WhatsApp.', 'ok');
+        } catch {
+          setPrivateTicketCodeHint('Could not copy automatically — select the code and copy it.');
+        }
+      });
+    }
+    syncPrivateTicketFields();
   }
 
   function prefillTiers(tickets) {
@@ -817,12 +983,13 @@
     wrap.innerHTML = '';
     const sorted = tickets
       .slice()
+      .filter((t) => !isHiddenAccessTicket(t))
       .sort((a, b) => (Number(a.displayOrder) || 0) - (Number(b.displayOrder) || 0));
     sorted.forEach((ticket) => {
       const row = addTierRow({ useDefaultName: false });
       fillTierFromTicket(row, ticket);
     });
-    existingTicketsLoaded = sorted.length > 0;
+    existingTicketsLoaded = sorted.length > 0 || (tickets || []).some(isHiddenAccessTicket);
     updateTierSummary();
     updatePublishButton();
   }
@@ -934,9 +1101,6 @@
         row.querySelector('.ee-tier-sale-start-time')?.value
       );
       const saleEnd = computeSaleEndIso(saleOption, customDt, eventDate);
-      const visibility = row.querySelector('.ee-tier-visibility')?.value || 'public';
-      const accessCode = row.querySelector('.ee-tier-access-code')?.value.trim() || '';
-      const accessMaxRaw = row.querySelector('.ee-tier-access-max-uses')?.value;
       tiers.push({
         name,
         price,
@@ -950,14 +1114,13 @@
         categoryExclusivity: false,
         ticketType: 'Standard',
         displayOrder: idx,
-        visibility,
-        accessCode: visibility === 'hidden' ? accessCode : '',
-        accessMaxUses:
-          visibility === 'hidden' && accessMaxRaw !== '' && accessMaxRaw != null
-            ? Number(accessMaxRaw)
-            : null,
+        visibility: 'public',
+        accessCode: '',
+        accessMaxUses: null,
       });
     });
+    const privateTier = collectPrivateAccessTicket(tiers);
+    if (privateTier) tiers.push(privateTier);
     return tiers;
   }
 
@@ -1052,6 +1215,7 @@
     } else {
       return false;
     }
+    if (Array.isArray(draft.tiers)) prefillPrivateAccessTicket(draft.tiers);
     if (draft.guestPassesDisabled != null) {
       const guestEl = document.getElementById('ee-guest-passes-disabled');
       if (guestEl) guestEl.checked = Boolean(draft.guestPassesDisabled);
@@ -1647,6 +1811,7 @@
       applyTicketsLockUi(loaded.event);
       const alumniTicket = loaded.tickets.find(isAlumniTicket);
       prefillAlumniFastPass(loaded.event, alumniTicket);
+      prefillPrivateAccessTicket(loaded.tickets);
     }
 
     await loadOrganiserGuestVisitSetting(seriesMeta.organiserGroupId);
@@ -1670,19 +1835,25 @@
     if (restoredDraft) {
       showAlert('Restored your ticket details from before bank setup. Review them, then publish when ready.', 'ok');
     } else if (loaded.tickets.length) {
-      const memberTickets = loaded.tickets.filter((t) => !isGuestVisitTicket(t) && !isAlumniTicket(t));
+      const memberTickets = loaded.tickets.filter(
+        (t) => !isGuestVisitTicket(t) && !isAlumniTicket(t) && !isHiddenAccessTicket(t)
+      );
       if (loaded.event && loaded.event.attendanceMode === 'guest_programme') {
         setAttendanceMode('guest_programme');
-        prefillTiers(memberTickets);
         prefillGuestPassesDisabled(loaded.event);
-      } else {
-        prefillTiers(memberTickets.length ? memberTickets : loaded.tickets);
       }
+      if (memberTickets.length) {
+        prefillTiers(memberTickets);
+      } else {
+        addTierRow();
+      }
+      prefillPrivateAccessTicket(loaded.tickets);
     } else {
       addTierRow();
     }
 
     document.getElementById('ee-add-tier').addEventListener('click', () => addTierRow({ useDefaultName: false }));
+    bindPrivateTicketFields();
     document.getElementById('ee-guest-programme-enabled')?.addEventListener('change', () => {
       if (attendanceMode === 'category_exclusivity') return;
       setAttendanceMode(resolveOpenBookingMode());

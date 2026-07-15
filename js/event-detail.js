@@ -384,6 +384,37 @@
     return guestVisitEligibility;
   }
 
+  async function loadRosterEligibility(ev) {
+    rosterMemberTickets = [];
+    rosterMembership = null;
+    if (!ev?.hasMembersOnlyTiers) return rosterMembership;
+    try {
+      const res = await fetch(
+        '/api/auth/roster-eligibility?eventId=' + encodeURIComponent(ev.id),
+        { credentials: 'include', cache: 'no-store' }
+      );
+      const data = await res.json().catch(function () {
+        return {};
+      });
+      if (data.ok) {
+        rosterMembership = {
+          isMember: Boolean(data.isMember),
+          signedOut: res.status === 401,
+        };
+        if (data.isMember && Array.isArray(data.memberTickets)) {
+          rosterMemberTickets = data.memberTickets.map(function (t) {
+            return Object.assign({}, t, { isMembersOnly: true });
+          });
+        }
+      } else if (res.status === 401) {
+        rosterMembership = { isMember: false, signedOut: true };
+      }
+    } catch {
+      rosterMembership = null;
+    }
+    return rosterMembership;
+  }
+
   async function refreshGuestVisitLabelsForEvents(list) {
     const organiserIds = [];
     const seen = {};
@@ -1523,6 +1554,8 @@
   let alumniInviteToken = '';
   let unlockedHiddenTiers = [];
   let appliedAccessCode = '';
+  let rosterMemberTickets = [];
+  let rosterMembership = null;
   let eventApplicationState = null;
   let ticketPanelBound = false;
 
@@ -1862,7 +1895,9 @@
               label: 'Standard',
             },
           ];
-    const extras = (unlockedHiddenTiers || []).filter(
+    const extras = (unlockedHiddenTiers || [])
+      .concat(rosterMemberTickets || [])
+      .filter(
       (tier) => !base.some((existing) => existing.id === tier.id)
     );
     return base.concat(extras);
@@ -2122,9 +2157,12 @@
       const priceDisplay = t.priceKey === 'free' ? 'Free' : t.price || fmt(priceNum);
       const remainingLabel = soldOut ? '' : tierRemainingLabel(t);
       const isUnlockedHidden = Boolean(t.unlockedByAccessCode);
+      const isMemberTier = Boolean(t.isMembersOnly);
       const subtitle = soldOut
         ? 'Sold out'
-        : isUnlockedHidden
+        : isMemberTier
+          ? 'Member rate — your roster account'
+          : isUnlockedHidden
           ? 'Unlocked with your access code'
           : remainingLabel || t.description || '';
 
@@ -2206,6 +2244,18 @@
     ) {
       tiersEl.innerHTML =
         '<p class="ticket-load-hint">Enter your access code above to unlock member tickets.</p>';
+    } else if (
+      !firstSelectable &&
+      !tiersEl.children.length &&
+      !isCategoryExclusivity &&
+      ev.hasMembersOnlyTiers
+    ) {
+      tiersEl.innerHTML =
+        '<p class="ticket-load-hint">' +
+        (rosterMembership?.signedOut
+          ? 'Sign in with the email on this group\u2019s member roster to see member tickets.'
+          : 'Member tickets are for people on this group\u2019s roster.') +
+        '</p>';
     }
 
     renderVatNote(ev, tiers);
@@ -4271,6 +4321,9 @@
             syncTicketHeader(displayEv);
           } else if (displayEv.alumniFastPassEnabled || alumniInviteToken) {
             await loadAlumniEligibility(displayEv);
+            renderTicketPanel(displayEv);
+          } else if (displayEv.hasMembersOnlyTiers) {
+            await loadRosterEligibility(displayEv);
             renderTicketPanel(displayEv);
           }
           initTicketPanel(displayEv);

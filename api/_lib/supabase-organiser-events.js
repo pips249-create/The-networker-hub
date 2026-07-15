@@ -3,7 +3,7 @@
  */
 const crypto = require('crypto');
 const { getSupabaseAdmin } = require('./supabase');
-const { syncAccessCodesForEvent, validateTierAccessCodes, loadAccessCodesByTicketIds } = require('./ticket-access-codes');
+const { syncAccessCodesForEvent, validateTierAccessCodes, loadAccessCodesByTicketIds, normalizeTicketVisibility } = require('./ticket-access-codes');
 const { formatTicketsSoldLabel } = require('./tickets-sold-label');
 const { resolveImageUrl } = require('./supabase-storage');
 const { isAdminRole } = require('./auth');
@@ -987,8 +987,7 @@ async function createTicket({
     sale_ends_at: saleEnd || null,
     ticket_type: type,
     display_order: displayOrder != null ? Number(displayOrder) : 0,
-    visibility:
-      String(visibility || 'public').toLowerCase() === 'hidden' ? 'hidden' : 'public',
+    visibility: normalizeTicketVisibility(visibility),
   };
   const { data, error } = await sb.from('tickets').insert(row).select('*').single();
   if (error) throw new Error(error.message);

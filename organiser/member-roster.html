@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Member roster – The Networker Hub</title>
+    <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
+    <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260715" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
+  </head>
+  <body class="organiser-event-edit-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260715a" data-root="../" data-page="organiser"></script>
+
+    <div class="ee-wrap omr-wrap">
+      <div class="ee-top-bar">
+        <a class="ee-back" href="/organiser/#groups" id="omr-back">← Back to organiser pages</a>
+      </div>
+      <h1 class="ee-title" id="omr-title">Member roster</h1>
+      <p class="ee-lead" id="omr-lead">
+        Upload your member list so signed-in members see <strong>Members only</strong> tickets without access codes.
+      </p>
+      <div id="omr-alert" class="ee-alert" hidden></div>
+
+      <div class="omr-reports" id="omr-reports" hidden></div>
+
+      <div class="ee-card">
+        <h2>Add a member</h2>
+        <form id="omr-add-form" class="omr-add-form">
+          <div class="ee-row-2">
+            <div class="ee-field">
+              <label for="omr-name">Name</label>
+              <input type="text" id="omr-name" placeholder="Jane Smith" />
+            </div>
+            <div class="ee-field">
+              <label for="omr-email">Email</label>
+              <input type="email" id="omr-email" required placeholder="member@example.com" />
+            </div>
+          </div>
+          <div class="ee-field">
+            <label for="omr-expires">Membership expires <span class="ee-optional">(optional)</span></label>
+            <input type="date" id="omr-expires" />
+            <p class="ee-hint">We flag expiring memberships in your reports. Renew off-platform and update the date here.</p>
+          </div>
+          <button type="submit" class="ee-btn ee-btn-gold">Add to roster</button>
+        </form>
+      </div>
+
+      <div class="ee-card">
+        <h2>Import CSV</h2>
+        <p class="ee-hint">Columns: <code>email</code> (required), <code>name</code>, <code>expires</code> or <code>membership expiry</code>.</p>
+        <textarea id="omr-csv" rows="6" placeholder="email,name,expires&#10;jane@example.com,Jane Smith,2026-12-31"></textarea>
+        <button type="button" class="ee-btn ee-btn-outline" id="omr-import-btn">Import CSV</button>
+      </div>
+
+      <div class="ee-card">
+        <div class="omr-roster-head">
+          <h2>Members</h2>
+          <label class="omr-event-filter">
+            <span>Report for event</span>
+            <select id="omr-event-select" aria-label="Select event for booking report">
+              <option value="">— choose an upcoming event —</option>
+            </select>
+          </label>
+        </div>
+        <p class="ee-hint" id="omr-load-hint" hidden>Loading roster…</p>
+        <div class="org-table-wrap">
+          <table class="org-attendees-table omr-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Expires</th>
+                <th>Hub account</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="omr-body"></tbody>
+          </table>
+        </div>
+        <p class="org-empty-state-text" id="omr-empty" hidden>No members on this roster yet.</p>
+      </div>
+    </div>
+
+    <script src="../js/organiser-member-roster.js?v=20260715"></script>
+  </body>
+</html>

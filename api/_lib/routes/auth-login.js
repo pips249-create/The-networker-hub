@@ -96,6 +96,21 @@ module.exports = async function handler(req, res) {
     await sbAuth.backfillAttendeeUserId(sessionUser.sub, sessionUser.email);
 
     try {
+      const { getSupabaseAdmin } = require('../supabase');
+      const { claimRosterEntriesForAttendee } = require('../organiser-member-roster');
+      const sb = getSupabaseAdmin();
+      const att = await sb.from('attendees').select('id').eq('email', sessionUser.email).maybeSingle();
+      if (att.data?.id) {
+        await claimRosterEntriesForAttendee(sb, {
+          email: sessionUser.email,
+          attendeeId: att.data.id,
+        });
+      }
+    } catch {
+      /* non-fatal */
+    }
+
+    try {
       const { bootstrapOrganiserFromPendingClaims } = require('../supabase-organiser-claims');
       await bootstrapOrganiserFromPendingClaims(sessionUser);
     } catch {

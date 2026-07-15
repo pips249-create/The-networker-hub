@@ -16,9 +16,14 @@ const {
 } = require('./alumni-invites');
 const {
   isHiddenTicket,
+  isMembersOnlyTicket,
   assertAccessCodeBookingAllowed,
   incrementAccessCodeUse,
 } = require('./ticket-access-codes');
+const {
+  assertMembersOnlyBookingAllowed,
+  getActiveRosterMembership,
+} = require('./organiser-member-roster');
 
 /**
  * Insert a registration after successful checkout.
@@ -290,14 +295,19 @@ async function createRegistrationFromPayment(input) {
     ) {
       throw new Error('access_code_invalid');
     }
+  } else if (ticketRow && isMembersOnlyTicket(ticketRow)) {
+    await assertMembersOnlyBookingAllowed(sb, { organiserId, email });
   } else if (amountPaid > 0 || String(paymentStatus).trim() === 'Paid') {
-    await assertPaidMemberBookingAllowed(sb, {
-      organiserId,
-      attendeeId,
-      email,
-      attendanceMode: eventAttendanceMode,
-      guestPassesDisabled,
-    });
+    const rosterMembership = await getActiveRosterMembership(sb, { organiserId, email });
+    if (!rosterMembership.active) {
+      await assertPaidMemberBookingAllowed(sb, {
+        organiserId,
+        attendeeId,
+        email,
+        attendanceMode: eventAttendanceMode,
+        guestPassesDisabled,
+      });
+    }
   }
 
   const guestNames = normalizeGuestNames(input.guestNames || input.guest_names, quantity);

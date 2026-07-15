@@ -861,13 +861,27 @@ a.ee-wizard-link:hover {
   margin-top: 8px;
 }
 
-.ee-tier-visibility-row {
-  margin-top: 4px;
+.ee-private-ticket-addon .ee-private-code-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 
-.ee-tier-access-code-wrap .ee-hint,
-.ee-tier-access-max-wrap .ee-hint {
-  margin-top: 0;
+.ee-private-ticket-addon .ee-private-code-row input {
+  flex: 1 1 160px;
+  min-width: 0;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.ee-private-ticket-addon .ee-private-code-row .ee-btn {
+  flex: 0 0 auto;
+}
+
+.ee-private-ticket-addon #ee-private-ticket-code-hint.ee-hint-ok {
+  color: #027a48;
 }
 
 #ee-add-tier {

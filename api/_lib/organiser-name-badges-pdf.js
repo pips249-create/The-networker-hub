@@ -36,11 +36,19 @@ function clampLine(text, max) {
   return s.slice(0, Math.max(1, max - 1)).trim() + '…';
 }
 
+function attendeeConfirmedForRegister(a) {
+  const applicationStatus = String(a.applicationStatus || 'Approved').trim();
+  if (applicationStatus === 'Pending' || applicationStatus === 'Denied') return false;
+  if (a.needsPayment) return false;
+  const paymentStatus = String(a.paymentStatus || '').trim();
+  if (paymentStatus === 'Refunded' || paymentStatus === 'Pending') return false;
+  return true;
+}
+
 function badgeEntriesFromAttendees(attendees) {
   const entries = [];
   (attendees || []).forEach((a) => {
-    const applicationStatus = String(a.applicationStatus || 'Approved').trim();
-    if (applicationStatus === 'Pending' || applicationStatus === 'Denied') return;
+    if (!attendeeConfirmedForRegister(a)) return;
 
     const company = String(a.company || '').trim();
     const jobTitle =
@@ -139,6 +147,7 @@ function buildNameBadgesPdf(attendees, options) {
 module.exports = {
   LABEL,
   splitName,
+  attendeeConfirmedForRegister,
   badgeEntriesFromAttendees,
   buildNameBadgesPdf,
 };

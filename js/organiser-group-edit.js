@@ -270,6 +270,14 @@
     }
     const counter = el('ge-word-count');
     if (counter) counter.textContent = String(countWords(g.description || ''));
+    const rosterWrap = el('ge-roster-link-wrap');
+    const rosterLink = el('ge-roster-link');
+    if (rosterWrap && rosterLink && g.id) {
+      rosterWrap.hidden = false;
+      rosterLink.href = '/organiser/member-roster?id=' + encodeURIComponent(g.id);
+    } else if (rosterWrap) {
+      rosterWrap.hidden = true;
+    }
     if (g.imageUrl) {
       const preview = el('ge-logo-preview');
       const previewImg = el('ge-logo-preview-img');

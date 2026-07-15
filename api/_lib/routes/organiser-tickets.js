@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { normalizeTicketVisibility } = require('../ticket-access-codes');
 const { assertOrganiserEmailVerified, isPublishIntent } = require('../organiser-access-guard');
 const { validateRefundPublishPayload } = require('../event-refund-policy');
 
@@ -110,7 +111,7 @@ module.exports = async function handler(req, res) {
             categoryExclusivity: Boolean(t.categoryExclusivity),
             ticketType: t.ticketType || (t.categoryExclusivity ? 'Application-based' : 'Standard'),
             displayOrder: t.displayOrder != null ? t.displayOrder : idx,
-            visibility: String(t.visibility || 'public').toLowerCase() === 'hidden' ? 'hidden' : 'public',
+            visibility: normalizeTicketVisibility(t.visibility),
             accessCode: String(t.accessCode || t.access_code || '').trim(),
             accessMaxUses:
               t.accessMaxUses != null && t.accessMaxUses !== ''

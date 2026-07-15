@@ -24,6 +24,10 @@ const BOOKING_ERROR_MESSAGES = {
   no_alumni_tier: 'The previous attendee ticket is not set up for this event yet.',
   alumni_single_seat_only: 'Previous attendee tickets are limited to one seat per booking.',
   missing_guest_names: 'Please enter a name for each guest.',
+  members_only_not_eligible:
+    'This ticket is for members of this group. Sign in with the email on their member roster.',
+  membership_expired:
+    'Your membership has expired. Contact the organiser to renew before booking member tickets.',
   already_going:
     "You're already going to this event. View your ticket in My Hub.",
 };
@@ -35,6 +39,8 @@ const ALUMNI_ERROR_CODES = new Set([
   'not_enabled',
   'no_alumni_tier',
   'alumni_single_seat_only',
+  'members_only_not_eligible',
+  'membership_expired',
 ]);
 
 function bookingErrorResponse(msg) {

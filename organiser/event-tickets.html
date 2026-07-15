@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260715guest" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260715private" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -56,7 +56,7 @@
         <div class="ee-card" id="ee-panel-tickets">
           <h2 id="ee-tickets-panel-title">Ticket types</h2>
           <p class="ee-hint" style="margin-top:0">
-            Add one row per tier (e.g. Standard, Early bird). Each tier is copied to all dates above. A sale end is required for every tier. Leave sale start blank and sales begin today.
+            Add the tickets everyone should see (e.g. Standard, Early bird). Optional extras for members sit below — guest visits, a private ticket with a code, or previous attendees.
           </p>
           <p class="ee-tier-summary" id="ee-tier-summary" aria-live="polite">0 ticket types · unlimited available · from £0</p>
           <div id="ee-tier-rows"></div>
@@ -103,6 +103,66 @@
                     Your guest visit programme stays active for your other events. Tick this for conferences, member evenings, or any date where you want paying attendees only.
                   </p>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ee-guest-addon ee-private-ticket-addon" id="ee-private-ticket-addon" data-hub-tip="private-ticket-code">
+            <h3 class="ee-guest-addon-title">Private ticket with a code <span class="ee-optional">(optional)</span></h3>
+            <div class="ee-info-box ee-guest-how">
+              <strong>How it works</strong>
+              <p>
+                Add a ticket that stays off your public event page. Share the access code with members (email, WhatsApp, newsletter). They enter it on the event page and the private ticket appears for them to book.
+              </p>
+            </div>
+            <label class="ee-check">
+              <input type="checkbox" id="ee-private-ticket-enabled" />
+              <span>Offer a private member ticket</span>
+            </label>
+            <fieldset class="ee-field omr-ticket-mode" id="ee-private-ticket-mode-wrap" hidden>
+              <legend class="ee-label-block">How members unlock it</legend>
+              <label class="ee-check">
+                <input type="radio" name="ee-private-ticket-mode" id="ee-private-ticket-mode-roster" value="roster" checked />
+                <span><strong>Member roster</strong> — signed-in roster members see this ticket automatically (recommended)</span>
+              </label>
+              <label class="ee-check">
+                <input type="radio" name="ee-private-ticket-mode" id="ee-private-ticket-mode-code" value="code" />
+                <span><strong>Access code</strong> — share a code (legacy / guests not on roster yet)</span>
+              </label>
+            </fieldset>
+            <div id="ee-private-ticket-fields" hidden>
+              <div class="ee-row-2">
+                <div class="ee-field">
+                  <label for="ee-private-ticket-name">Ticket name</label>
+                  <input type="text" id="ee-private-ticket-name" value="Member ticket" placeholder="e.g. Member ticket" />
+                </div>
+                <div class="ee-field">
+                  <label for="ee-private-ticket-price">Price (&pound;)</label>
+                  <input type="number" id="ee-private-ticket-price" min="0" step="0.01" value="0" inputmode="decimal" />
+                  <p class="ee-hint">Enter 0 for free</p>
+                </div>
+              </div>
+              <div class="ee-field ee-private-code-field">
+                <label for="ee-private-ticket-code">Access code</label>
+                <p class="ee-hint" style="margin-top:0">Share this with the people who should unlock the ticket. Letters and numbers only.</p>
+                <div class="ee-private-code-row">
+                  <input
+                    type="text"
+                    id="ee-private-ticket-code"
+                    maxlength="32"
+                    placeholder="e.g. MEMBER10"
+                    autocapitalize="characters"
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                  <button type="button" class="ee-btn ee-btn-outline" id="ee-private-ticket-generate">Generate</button>
+                  <button type="button" class="ee-btn ee-btn-outline" id="ee-private-ticket-copy">Copy</button>
+                </div>
+                <p class="ee-hint" id="ee-private-ticket-code-hint" aria-live="polite"></p>
+              </div>
+              <div class="ee-field ee-guest-visits-field">
+                <label for="ee-private-ticket-qty">Quantity available <span class="ee-optional">(optional)</span></label>
+                <input type="number" id="ee-private-ticket-qty" min="1" step="1" inputmode="numeric" placeholder="Unlimited" />
               </div>
             </div>
           </div>

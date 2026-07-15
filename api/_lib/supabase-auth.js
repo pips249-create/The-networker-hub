@@ -372,6 +372,15 @@ async function registerUser({ email, password, name, marketingOptIn }) {
     { onConflict: 'email' }
   );
 
+  const attendeeRes = await sb.from('attendees').select('id').eq('email', em).maybeSingle();
+  if (attendeeRes.data?.id) {
+    const { claimRosterEntriesForAttendee } = require('./organiser-member-roster');
+    await claimRosterEntriesForAttendee(sb, {
+      email: em,
+      attendeeId: attendeeRes.data.id,
+    });
+  }
+
   return {
     id: userId,
     email: em,

@@ -7,7 +7,7 @@ const { eventImageUrl, normalizeEventImagePosition } = require('./event-image');
 const { eventHasTicketsOnSale, resolveTicketSalesEnabled, earliestTicketSaleStart, formatTicketSalesOpensLabel, formatTicketSalesOpensShort, isEventPublishedForSale } = require('./ticket-sales');
 const { connectRequiredForPaidCheckout } = require('./stripe-connect');
 const { publicOrganiserSlug } = require('./organiser-slug');
-const { isHiddenTicket } = require('./ticket-access-codes');
+const { isHiddenTicket, isMembersOnlyTicket } = require('./ticket-access-codes');
 
 const IN_CHUNK_SIZE = 80;
 
@@ -239,6 +239,7 @@ function ticketRowToTier(row, registrationCount) {
     isGuestVisit: ticketIsGuestVisit(row, name),
     isAlumni: ticketIsAlumni(row, name),
     isHidden: isHiddenTicket(row),
+    isMembersOnly: isMembersOnlyTicket(row),
     visibility: String(row.visibility || 'public').toLowerCase(),
     saleEnd: row.sale_ends_at || null,
   };
@@ -316,9 +317,12 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   const tiers = eventTickets.map((t) =>
     ticketRowToTier(t, t._registrationCount != null ? t._registrationCount : 0)
   );
-  const publicTiers = tiers.filter((t) => !t.isGuestVisit && !t.isAlumni && !t.isHidden);
+  const publicTiers = tiers.filter(
+    (t) => !t.isGuestVisit && !t.isAlumni && !t.isHidden && !t.isMembersOnly
+  );
   const hiddenTierCount = tiers.filter((t) => t.isHidden).length;
-  const pricedTiers = publicTiers.length ? publicTiers : tiers.filter((t) => !t.isHidden);
+  const membersOnlyTierCount = tiers.filter((t) => t.isMembersOnly).length;
+  const pricedTiers = publicTiers.length ? publicTiers : tiers.filter((t) => !t.isHidden && !t.isMembersOnly);
   pricedTiers.sort((a, b) => {
     if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;
     return a.priceNum - b.priceNum;
@@ -461,6 +465,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     formatSlug: slugFormat(format),
     tickets: pricedTiers.length ? pricedTiers : [],
     hasHiddenTiers: hiddenTierCount > 0,
+    hasMembersOnlyTiers: membersOnlyTierCount > 0,
     attendanceMode: normalizeAttendanceMode(row.attendance_mode),
     complimentaryVisitsAllowed: organiser
       ? Math.min(3, Math.max(0, Number(organiser.complimentary_visits_allowed) || 0))
@@ -479,7 +484,9 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     seriesGroupId: row.series_group_id || null,
   };
 
-  if (!ev.tickets.length && hasTicketTiers && !hiddenTierCount) ev.tickets = [fallbackTicketTier(ev)];
+  if (!ev.tickets.length && hasTicketTiers && !hiddenTierCount && !membersOnlyTierCount) {
+    ev.tickets = [fallbackTicketTier(ev)];
+  }
   return ev;
 }
 

@@ -22,8 +22,10 @@ const {
 } = require('../alumni-invites');
 const {
   isHiddenTicket,
+  isMembersOnlyTicket,
   assertAccessCodeBookingAllowed,
 } = require('../ticket-access-codes');
+const { assertMembersOnlyBookingAllowed, getActiveRosterMembership } = require('../organiser-member-roster');
 const { bookingErrorResponse } = require('../booking-error-messages');
 
 function parseBody(req) {
@@ -218,6 +220,7 @@ module.exports = async function handler(req, res) {
     const isGuestVisit = Boolean(ticketRow && isGuestVisitTicket(ticketRow));
     const isAlumni = Boolean(ticketRow && isAlumniTicket(ticketRow));
     const isHidden = Boolean(ticketRow && isHiddenTicket(ticketRow));
+    const isMembersOnly = Boolean(ticketRow && isMembersOnlyTicket(ticketRow));
     const alumniInviteToken = String(body.alumniInviteToken || body.alumni_invite_token || '').trim();
     const accessCode = String(body.accessCode || body.access_code || '').trim();
     let accessCodeEligibility = null;
@@ -250,6 +253,27 @@ module.exports = async function handler(req, res) {
         });
       }
     }
+    if (isMembersOnly) {
+      try {
+        await assertMembersOnlyBookingAllowed(sb, {
+          organiserId: evRes.data.organiser_id,
+          email: checkoutEmail,
+        });
+      } catch (memberErr) {
+        const code = memberErr.message || 'members_only_not_eligible';
+        const messages = {
+          members_only_not_eligible:
+            'This ticket is for members of this group. Sign in with the email on their member roster.',
+          membership_expired:
+            'Your membership has expired. Contact the organiser to renew before booking member tickets.',
+        };
+        return json(res, memberErr.status || 403, {
+          ok: false,
+          error: code,
+          message: messages[code] || memberErr.message,
+        });
+      }
+    }
 
     const dietaryRequirements = String(body.dietaryRequirements || body.dietary_requirements || '')
       .trim()
@@ -261,7 +285,7 @@ module.exports = async function handler(req, res) {
       .slice(0, 500);
 
     if (unitPrice <= 0) {
-      if (isGuestVisit || isAlumni || isHidden || registrationId) {
+      if (isGuestVisit || isAlumni || isHidden || isMembersOnly || registrationId) {
         const qty = isGuestVisit || isAlumni ? 1 : requestedQty;
         const guestNames = normalizeGuestNames(body.guestNames || body.guest_names, qty);
         if (isGuestVisit) {
@@ -347,24 +371,30 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    if (!isAlumni && !isHidden) {
-      try {
-        await assertPaidMemberBookingAllowed(sb, {
-          organiserId: evRes.data.organiser_id,
-          attendeeId: session?.sub || null,
-          email: checkoutEmail,
-          attendanceMode: evRes.data.attendance_mode,
-          guestPassesDisabled: evRes.data.guest_passes_disabled,
-        });
-      } catch (guestErr) {
-        const code = guestErr.message || 'guest_visits_remaining';
-        return json(res, guestErr.status || 400, {
-          ok: false,
-          error: code,
-          message:
-            'Use your complimentary guest visit before booking a paid member ticket with this organiser.',
-          eligibility: guestErr.eligibility || null,
-        });
+    if (!isAlumni && !isHidden && !isMembersOnly) {
+      const rosterMembership = await getActiveRosterMembership(sb, {
+        organiserId: evRes.data.organiser_id,
+        email: checkoutEmail,
+      });
+      if (!rosterMembership.active) {
+        try {
+          await assertPaidMemberBookingAllowed(sb, {
+            organiserId: evRes.data.organiser_id,
+            attendeeId: session?.sub || null,
+            email: checkoutEmail,
+            attendanceMode: evRes.data.attendance_mode,
+            guestPassesDisabled: evRes.data.guest_passes_disabled,
+          });
+        } catch (guestErr) {
+          const code = guestErr.message || 'guest_visits_remaining';
+          return json(res, guestErr.status || 400, {
+            ok: false,
+            error: code,
+            message:
+              'Use your complimentary guest visit before booking a paid member ticket with this organiser.',
+            eligibility: guestErr.eligibility || null,
+          });
+        }
       }
     }
 

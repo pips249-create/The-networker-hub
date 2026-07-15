@@ -4,6 +4,7 @@
 
 const VISIBILITY_PUBLIC = 'public';
 const VISIBILITY_HIDDEN = 'hidden';
+const VISIBILITY_MEMBERS_ONLY = 'members_only';
 const MIN_CODE_LENGTH = 4;
 const MAX_CODE_LENGTH = 32;
 
@@ -21,9 +22,23 @@ function isValidAccessCodeFormat(code) {
   );
 }
 
+function normalizeTicketVisibility(raw) {
+  const v = String(raw || VISIBILITY_PUBLIC).toLowerCase();
+  if (v === VISIBILITY_HIDDEN) return VISIBILITY_HIDDEN;
+  if (v === VISIBILITY_MEMBERS_ONLY) return VISIBILITY_MEMBERS_ONLY;
+  return VISIBILITY_PUBLIC;
+}
+
 function isHiddenTicket(ticket) {
   if (!ticket) return false;
-  return String(ticket.visibility || ticket.ticketVisibility || '').toLowerCase() === VISIBILITY_HIDDEN;
+  return normalizeTicketVisibility(ticket.visibility || ticket.ticketVisibility) === VISIBILITY_HIDDEN;
+}
+
+function isMembersOnlyTicket(ticket) {
+  if (!ticket) return false;
+  return (
+    normalizeTicketVisibility(ticket.visibility || ticket.ticketVisibility) === VISIBILITY_MEMBERS_ONLY
+  );
 }
 
 function accessCodeRowIsActive(row, now = new Date()) {
@@ -262,11 +277,14 @@ function validateTierAccessCodes(tiers) {
 module.exports = {
   VISIBILITY_PUBLIC,
   VISIBILITY_HIDDEN,
+  VISIBILITY_MEMBERS_ONLY,
   MIN_CODE_LENGTH,
   MAX_CODE_LENGTH,
   normalizeAccessCode,
+  normalizeTicketVisibility,
   isValidAccessCodeFormat,
   isHiddenTicket,
+  isMembersOnlyTicket,
   loadAccessCodesByTicketIds,
   lookupAccessCode,
   assertAccessCodeBookingAllowed,

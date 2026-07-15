@@ -1,0 +1,83 @@
+.omr-wrap .omr-reports {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 720px) {
+  .omr-wrap .omr-reports {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.omr-report-card {
+  background: #fff;
+  border: 1px solid rgba(28, 32, 64, 0.1);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.omr-report-card h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.omr-report-card p,
+.omr-report-card li {
+  margin: 0;
+  font-size: 13px;
+  color: #635c5e;
+}
+
+.omr-report-card ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.omr-report-stat {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1c2040;
+}
+
+.omr-roster-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.omr-event-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.omr-event-filter select {
+  min-width: 220px;
+}
+
+.omr-add-form {
+  display: grid;
+  gap: 12px;
+}
+
+.omr-badge-claimed {
+  color: #1a7a4c;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.omr-badge-pending {
+  color: #9a7aa8;
+  font-size: 12px;
+}
+
+.omr-badge-expiring {
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 600;
+}
