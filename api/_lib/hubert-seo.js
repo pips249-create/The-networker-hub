@@ -365,7 +365,7 @@ function buildSchemaGraph(page, origin) {
       url: base + '/for-organisers',
       name: 'For Organisers – The Networker Hub',
       description:
-        'Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Alumni Fast-Pass, and discovery in the UK events and opportunities directories.',
+        'Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Previous Attendees, and discovery in the UK events and opportunities directories.',
       about: buildOrganizationSchema(base),
     });
   } else if (page === 'advertising') {

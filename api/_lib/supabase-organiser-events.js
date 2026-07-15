@@ -964,9 +964,8 @@ async function createTicket({
     quantityAvailable != null && quantityAvailable !== ''
       ? Number(quantityAvailable)
       : null;
-  // DB check constraint currently allows Standard | Application-based | Guest-visit
-  // (Alumni is not live yet — migration 142 not applied on prod).
-  const ALLOWED_TICKET_TYPES = new Set(['Standard', 'Application-based', 'Guest-visit']);
+  // DB check constraint allows Alumni when migration 142 is applied.
+  const ALLOWED_TICKET_TYPES = new Set(['Standard', 'Application-based', 'Guest-visit', 'Alumni']);
   let type =
     ticketType ||
     (categoryExclusivity || /application/i.test(String(name || '')) ? 'Application-based' : 'Standard');
@@ -1291,9 +1290,10 @@ async function createTicketsForEvents({
   const mode = normalizeAttendanceMode(attendanceMode);
 
   const guestPassesDisabledFlag = Boolean(guestPassesDisabled);
+  const { guestVisitTierPayload } = require('./guest-visits');
+  const { alumniTierPayload } = require('./alumni-invites');
 
   if (mode === 'guest_programme') {
-    const { guestVisitTierPayload } = require('./guest-visits');
     const { data: eventRows, error: eventRowsErr } = await sb
       .from('events')
       .select('organiser_id')
@@ -1324,20 +1324,41 @@ async function createTicketsForEvents({
     }
   }
 
-  // Alumni Fast-Pass is not shipping yet (DB constraint + organiser UI hidden).
-  // Ignore any client alumniFastPass payload so we never insert ticket_type = 'Alumni'.
-  const alumniConfig = null;
+  let alumniConfig =
+    alumniFastPass && alumniFastPass.enabled
+      ? {
+          price: alumniFastPass.price,
+          quantityAvailable: alumniFastPass.quantityAvailable,
+          saleEnd: alumniFastPass.saleEnd || null,
+          description: alumniFastPass.description || '',
+          sourceEventId: alumniFastPass.sourceEventId || null,
+        }
+      : null;
 
   // Drop any Alumni tiers that arrived from a stale client / draft.
   tiers = tiers.filter((t) => {
     const type = String(t?.ticketType || t?.ticket_type || '').trim();
-    return type !== 'Alumni' && !/^alumni/i.test(String(t?.name || '').trim());
+    return type !== 'Alumni' && !/^alumni/i.test(String(t?.name || '').trim()) && !t?.isAlumni;
   });
 
+  if (alumniConfig) {
+    tiers.push(
+      alumniTierPayload({
+        price: alumniConfig.price,
+        quantityAvailable: alumniConfig.quantityAvailable,
+        saleEnd: alumniConfig.saleEnd,
+        description: alumniConfig.description,
+      })
+    );
+  }
+
   const alumniEventUpdate = {
-    alumni_fast_pass_enabled: false,
+    alumni_fast_pass_enabled: Boolean(alumniConfig),
     guest_passes_disabled: mode === 'guest_programme' ? guestPassesDisabledFlag : false,
   };
+  if (alumniConfig?.sourceEventId) {
+    alumniEventUpdate.alumni_source_event_id = alumniConfig.sourceEventId;
+  }
 
   await assertTicketsEditableForEvents(sb, ids);
 

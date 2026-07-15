@@ -1785,8 +1785,12 @@
       ? '<p class="org-action-menu-note">Expand the row to cancel or delete individual dates.</p>'
       : '';
     const deleteItem = isSeriesParent ? '' : eventDeleteActionHtml(ev);
-    // Alumni Fast-Pass is not shipping yet — hide invite actions until product-ready.
-    const alumniItem = '';
+    const alumniItem =
+      ev.alumniFastPassEnabled && String(ev.status || '').toLowerCase() === 'published'
+        ? '<button type="button" class="org-action-item" data-send-alumni-invites="' +
+          esc(id) +
+          '"><span class="org-action-icon">🎓</span><span class="org-action-text"><strong>Invite previous attendees</strong><span>Email past attendees a locked ticket link</span></span></button>'
+        : '';
     return (
       '<div class="org-action-wrap">' +
       '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
@@ -4566,7 +4570,10 @@
       return;
     }
 
-    const defaultId = data.targetEvent?.alumniSourceEventId || '';
+    const defaultId =
+      data.targetEvent?.alumniSourceEventId ||
+      data.targetEvent?.alumni_source_event_id ||
+      '';
     sourceSel.innerHTML = sources
       .map(function (row) {
         const label =

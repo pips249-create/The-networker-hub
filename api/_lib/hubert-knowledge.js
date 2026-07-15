@@ -85,7 +85,7 @@ const KNOWLEDGE_SECTIONS = [
     title: 'ORGANISER TICKETS & ATTENDEES',
     body:
       'TICKET SETUP (event-tickets.html): choose Ticket types (open booking) or Category Exclusivity — these two attendance modes are mutually exclusive. ' +
-      'OPEN BOOKING: add one row per ticket tier (Standard, Early bird, etc.) with price, quantity, and sale dates. Optionally enable the guest visit programme: newcomers get 1–3 complimentary visits (Hub maximum) across your organiser page before paid member tickets unlock. Use “Member-only for this event” to skip guest passes on a specific date (e.g. conferences) while keeping paid tickets available. Alumni Fast-Pass is an optional add-on: a hidden alumni tier for past attendees, with invites sent from your dashboard after publish. ' +
+      'OPEN BOOKING: add one row per ticket tier (Standard, Early bird, etc.) with price, quantity, and sale dates. Optionally enable the guest visit programme: newcomers get 1–3 complimentary visits (Hub maximum) across your organiser page before paid member tickets unlock. Use “Member-only for this event” to skip guest passes on a specific date (e.g. conferences) while keeping paid tickets available. Previous Attendees is an optional add-on: a hidden ticket for past attendees, with invites sent from your dashboard after publish. ' +
       'CATEGORY EXCLUSIVITY: prospective attendees apply instead of buying straight away. They answer two fixed questions — their industry and job title. You approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. Set an optional price (leave at £0 for free), places limit, and application closing date. Cannot be combined with open ticket types on the same event. ' +
       'APPLICATION QUESTIONS: under Category Exclusivity, industry and job title are fixed and cannot be changed. For open ticket booking, you can optionally tick boxes under Attendee information at booking to note food is included or to collect dietary or accessibility requirements at checkout. ' +
       'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event or by new vs returning. Each row shows visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page. Download attendees CSV or export printable name badges (PDF). This shows ticket registrations — not on-the-day check-in.',
@@ -245,7 +245,7 @@ const FALLBACK_REPLIES = [
   {
     match: /why (list|use|choose).*(hub|networker)|why should i list|benefits of listing/i,
     reply:
-      'The Networker Hub is built for UK business networking. You get a permanent organiser profile, events in a directory members use to find networking meetings, optional business opportunity listings, team editors, and reviews. Networking-specific tools include the guest visit programme (1–3 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Alumni Fast-Pass to invite past attendees to exclusive alumni rates on repeat events. You receive the full ticket price; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events need no Stripe. Guides: /guides · Organisers: /for-organisers',
+      'The Networker Hub is built for UK business networking. You get a permanent organiser profile, events in a directory members use to find networking meetings, optional business opportunity listings, team editors, and reviews. Networking-specific tools include the guest visit programme (1–3 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Previous Attendees to invite past attendees to exclusive returning rates on repeat events. You receive the full ticket price; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events need no Stripe. Guides: /guides · Organisers: /for-organisers',
   },
   {
     match: /(paid|member).*(ticket|tier).*(guest visit|complimentary visit|guest programme)|(guest visit|complimentary visit|guest programme).*(paid|member).*(ticket|tier)/i,
@@ -255,7 +255,7 @@ const FALLBACK_REPLIES = [
   {
     match: /difference.*(ticket type|guest visit|category exclusiv)|ticket type.*guest visit.*category|guest visit.*category exclusiv|attendance mode/i,
     reply:
-      'There are two attendance modes: Ticket types (open booking) or Category Exclusivity (application-based). Guest visit programme is an optional add-on within Ticket types — tick Enable guest visit programme to offer complimentary trial visits alongside your paid tiers. Category Exclusivity replaces open booking: applicants share industry and job title, you approve or deny, then they pay via a link. Alumni Fast-Pass is a separate optional add-on for inviting past attendees to a hidden alumni rate.',
+      'There are two attendance modes: Ticket types (open booking) or Category Exclusivity (application-based). Guest visit programme is an optional add-on within Ticket types — tick Enable guest visit programme to offer complimentary trial visits alongside your paid tiers. Category Exclusivity replaces open booking: applicants share industry and job title, you approve or deny, then they pay via a link. Previous Attendees is a separate optional add-on for inviting past attendees to a hidden returning rate.',
   },
   {
     match: /\bvat\b|value added tax/i,
@@ -423,9 +423,9 @@ const FALLBACK_REPLIES = [
       'Open /organiser/ → Events → Attendees. Each registration shows a visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page — not annual membership records. Filter by new or returning, filter by event, and export a CSV with visit counts. Use this to welcome newcomers and spot regulars.',
   },
   {
-    match: /alumni fast.?pass|alumni ticket|alumni rate|past attendee invite/i,
+    match: /previous attendees?|alumni ticket|alumni rate|past attendee invite/i,
     reply:
-      'Alumni Fast-Pass lets you invite past confirmed attendees to an exclusive alumni ticket rate on a new event — ideal for annual conferences or repeat summits. Enable it on the event tickets step, set your alumni price, and send invites from the organiser dashboard. Only invited past attendees can book the alumni tier.',
+      'Previous Attendees lets you invite past confirmed attendees to an exclusive returning ticket rate on a new event — ideal for annual conferences or repeat summits. Enable it on the event tickets step, set your previous attendee price, and send invites from the organiser dashboard. Only invited past attendees can book the hidden ticket.',
   },
   {
     match: /who (has |)(attended|registered|booked)|see (who|my) (attendee|registration|book)|view.*attendee|who is coming|attendee list|see registrations/i,
@@ -495,7 +495,7 @@ const ORGANISER_PAGE_CONTEXT = {
   'event-edit':
     'The user is on the event listing details step (title, type, description, photo with drag-to-reposition crop, location, dates). Answer listing-setup questions from your organiser knowledge. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'event-tickets':
-    'The user is on the ticket setup step. Two attendance modes: Ticket types (open booking) or Category Exclusivity. Guest visit programme is an optional checkbox within Ticket types — not a separate mode. Alumni Fast-Pass is optional. Answer organiser ticketing questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+    'The user is on the ticket setup step. Two attendance modes: Ticket types (open booking) or Category Exclusivity. Guest visit programme is an optional checkbox within Ticket types — not a separate mode. Previous Attendees is optional. Answer organiser ticketing questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'group-edit':
     'The user is editing their organiser page. Answer organiser-page questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'organiser-dashboard':

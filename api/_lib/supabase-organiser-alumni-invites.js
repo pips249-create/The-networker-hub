@@ -82,7 +82,16 @@ async function listEligibleSourceEvents(session, targetEventId) {
       confirmedAttendeeCount: attendees.length,
     });
   }
-  return { targetEvent: event, sourceEvents: results };
+  return {
+    targetEvent: {
+      id: event.id,
+      title: event.title,
+      slug: event.slug,
+      alumniFastPassEnabled: Boolean(event.alumni_fast_pass_enabled),
+      alumniSourceEventId: event.alumni_source_event_id || null,
+    },
+    sourceEvents: results,
+  };
 }
 
 async function sendAlumniFastPassInvites(session, { targetEventId, sourceEventId, sendEmails = true }) {

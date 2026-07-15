@@ -305,9 +305,9 @@ module.exports = async function handler(req, res) {
           } catch (alumniErr) {
             const code = alumniErr.message || 'alumni_not_eligible';
             const messages = {
-              alumni_not_eligible: 'This alumni ticket is invite-only. Use the link from your email.',
-              not_invited: 'This alumni ticket is invite-only. Use the link from your email.',
-              email_mismatch: 'Sign in with the email address that received the alumni invite.',
+              alumni_not_eligible: 'This previous attendee ticket is invite-only. Use the link from your email.',
+              not_invited: 'This previous attendee ticket is invite-only. Use the link from your email.',
+              email_mismatch: 'Sign in with the email address that received the previous attendee invite.',
             };
             return json(res, alumniErr.status || 403, {
               ok: false,
@@ -393,8 +393,8 @@ module.exports = async function handler(req, res) {
           error: code,
           message:
             code === 'email_mismatch'
-              ? 'Sign in with the email address that received the alumni invite.'
-              : 'This alumni ticket is invite-only. Use the link from your email.',
+              ? 'Sign in with the email address that received the previous attendee invite.'
+              : 'This previous attendee ticket is invite-only. Use the link from your email.',
         });
       }
       requestedQty = 1;

@@ -67,10 +67,10 @@ module.exports = async function handler(req, res) {
         result.sent > 0
           ? 'Sent ' +
             result.sent +
-            ' alumni invite' +
+            ' previous attendee invite' +
             (result.sent === 1 ? '' : 's') +
-            ' with locked alumni ticket links.'
-          : 'Created ' + result.created + ' alumni invite' + (result.created === 1 ? '' : 's') + '.';
+            ' with locked previous attendee ticket links.'
+          : 'Created ' + result.created + ' previous attendee invite' + (result.created === 1 ? '' : 's') + '.';
 
       return json(res, 200, { ok: true, ...result, message });
     }

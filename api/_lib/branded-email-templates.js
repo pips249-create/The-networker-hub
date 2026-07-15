@@ -125,7 +125,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   alumni_fast_pass_invite: {
     file: 'alumni-fast-pass-invite.html',
     marker: 'hub-email-layout-v2',
-    subject: 'Your alumni rate for {{event_name}}',
+    subject: 'Your previous attendee rate for {{event_name}}',
   },
   category_exclusivity_payment_reminder: {
     file: 'category-exclusivity-payment-reminder.html',

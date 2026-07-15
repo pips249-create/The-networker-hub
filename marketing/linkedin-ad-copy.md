@@ -46,7 +46,7 @@ node export-listing-pdf.mjs   # also regenerates A4 how-to-list
 **Intro text**
 > Still running your networking group on a generic ticketing platform?
 >
-> The Networker Hub is built for UK networking organisers: **free to list**, you **keep 100% of the ticket price**, members discover you in our events and organiser directory, and you get tools other platforms don't offer: guest visits, visit tracking, Category Exclusivity, and Alumni Fast-Pass. Plus list business opportunities in the same dashboard.
+> The Networker Hub is built for UK networking organisers: **free to list**, you **keep 100% of the ticket price**, members discover you in our events and organiser directory, and you get tools other platforms don't offer: guest visits, visit tracking, Category Exclusivity, and Previous Attendees. Plus list business opportunities in the same dashboard.
 
 **Headline:** Ticketing built for networking groups  
 **CTA:** Learn more  

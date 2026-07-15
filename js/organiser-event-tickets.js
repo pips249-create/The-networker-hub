@@ -132,6 +132,10 @@
       }
       seenCodes.add(code);
     });
+    const alumni = collectAlumniFastPass();
+    if (alumni.enabled && !alumni.saleEnd) {
+      blockers.push('Choose a sale end for the previous attendee ticket');
+    }
     return blockers;
   }
 
@@ -980,6 +984,8 @@
   }
 
   function tiersHavePaidPrice(tiers) {
+    const alumni = collectAlumniFastPass();
+    if (alumni.enabled && Number(alumni.price) > 0) return true;
     return (tiers || []).some(function (tier) {
       const price = Number(tier.price);
       return Number.isFinite(price) && price > 0;
@@ -1311,6 +1317,8 @@
   function bindAlumniFastPassFields() {
     const enabled = document.getElementById('ee-alumni-enabled');
     const fields = document.getElementById('ee-alumni-fields');
+    const closeSel = document.getElementById('ee-alumni-sale-end');
+    const customWrap = document.getElementById('ee-alumni-sale-end-custom');
     const toggle = () => {
       if (fields) fields.hidden = !enabled?.checked;
       updatePublishButton();
@@ -1319,16 +1327,80 @@
       enabled.addEventListener('change', toggle);
       toggle();
     }
+    if (closeSel && customWrap) {
+      const syncClose = () => {
+        customWrap.hidden = closeSel.value !== 'custom';
+        updatePublishButton();
+      };
+      closeSel.addEventListener('change', syncClose);
+      syncClose();
+    }
+    ['ee-alumni-price', 'ee-alumni-qty', 'ee-alumni-sale-end-date'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', updatePublishButton);
+      if (el) el.addEventListener('change', updatePublishButton);
+    });
     populateQuarterTimeSelect(document.getElementById('ee-alumni-sale-end-time'), '18:00');
   }
 
   function collectAlumniFastPass() {
-    // Not available to organisers yet — never persist an enabled alumni tier from this UI.
-    return { enabled: false };
+    const enabled = Boolean(document.getElementById('ee-alumni-enabled')?.checked);
+    if (!enabled) return { enabled: false };
+    const price = document.getElementById('ee-alumni-price')?.value;
+    const qty = document.getElementById('ee-alumni-qty')?.value;
+    const saleOption = document.getElementById('ee-alumni-sale-end')?.value || '1_week';
+    const customDt = combineDateAndQuarterTime(
+      document.getElementById('ee-alumni-sale-end-date')?.value,
+      document.getElementById('ee-alumni-sale-end-time')?.value
+    );
+    const eventDate = seriesMeta.events && seriesMeta.events[0] ? seriesMeta.events[0].date : null;
+    const saleEnd = computeSaleEndIso(saleOption, customDt, eventDate);
+    return {
+      enabled: true,
+      price: price === '' ? 0 : price,
+      quantityAvailable: qty === '' ? null : Number(qty),
+      saleEnd,
+      saleEndOption: saleOption,
+      saleEndCustom: customDt,
+    };
   }
 
-  function prefillAlumniFastPass(_eventRow, _alumniTicket) {
-    // Alumni Fast-Pass UI is hidden until the feature ships.
+  function prefillAlumniFastPass(eventRow, alumniTicket) {
+    const enabledEl = document.getElementById('ee-alumni-enabled');
+    const fields = document.getElementById('ee-alumni-fields');
+    const enabled = Boolean(eventRow?.alumniFastPassEnabled);
+    if (enabledEl) enabledEl.checked = enabled;
+    if (!enabled || !alumniTicket) {
+      if (fields) fields.hidden = true;
+      return;
+    }
+    const priceEl = document.getElementById('ee-alumni-price');
+    if (priceEl) {
+      priceEl.value =
+        alumniTicket.price === '' || alumniTicket.price == null ? '0' : String(alumniTicket.price);
+    }
+    const qtyEl = document.getElementById('ee-alumni-qty');
+    if (qtyEl) {
+      qtyEl.value =
+        alumniTicket.quantityAvailable == null || alumniTicket.quantityAvailable === ''
+          ? ''
+          : String(alumniTicket.quantityAvailable);
+    }
+    const eventDate = seriesMeta.events && seriesMeta.events[0] ? seriesMeta.events[0].date : null;
+    const closeSel = document.getElementById('ee-alumni-sale-end');
+    const customWrap = document.getElementById('ee-alumni-sale-end-custom');
+    if (alumniTicket.saleEnd) {
+      const option = inferSaleEndOptionFromIso(alumniTicket.saleEnd, eventDate);
+      if (closeSel) closeSel.value = option;
+      if (customWrap) customWrap.hidden = option !== 'custom';
+      if (option === 'custom') {
+        const dateEl = document.getElementById('ee-alumni-sale-end-date');
+        const timeEl = document.getElementById('ee-alumni-sale-end-time');
+        if (dateEl) dateEl.value = isoToDateInput(alumniTicket.saleEnd);
+        if (timeEl) populateQuarterTimeSelect(timeEl, isoToTimeInput(alumniTicket.saleEnd) || '18:00');
+      }
+    }
+    if (fields) fields.hidden = false;
   }
 
   function isCategoryExclusivityTicket(ticket) {
@@ -1573,6 +1645,8 @@
       prefillGuestPassesDisabled(loaded.event);
       prefillRefundFromEvent(loaded.event);
       applyTicketsLockUi(loaded.event);
+      const alumniTicket = loaded.tickets.find(isAlumniTicket);
+      prefillAlumniFastPass(loaded.event, alumniTicket);
     }
 
     await loadOrganiserGuestVisitSetting(seriesMeta.organiserGroupId);
@@ -1628,6 +1702,7 @@
       });
     }
     bindRefundPolicy();
+    bindAlumniFastPassFields();
     if (!selectedRefundPolicy && !document.querySelector('input[name="refund-policy"]:checked')) {
       const defaultRadio = document.getElementById('refund-policy-standard');
       if (defaultRadio) selectRefundCard(defaultRadio);
@@ -1809,6 +1884,7 @@
       publish,
       attendanceMode,
       guestPassesDisabled: collectGuestPassesDisabled(),
+      alumniFastPass: collectAlumniFastPass(),
       vatTreatment: collectVatTreatment(),
       attendeeExtras: attendeeExtras(),
       ...refund,

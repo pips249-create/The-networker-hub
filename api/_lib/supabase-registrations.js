@@ -281,6 +281,7 @@ async function createRegistrationFromPayment(input) {
       eventId,
       ticketId,
       code: accessCodeRaw,
+      accessCodeId: accessCodeIdInput || null,
     });
     if (
       accessCodeIdInput &&

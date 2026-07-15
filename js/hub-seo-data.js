@@ -93,7 +93,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "Why should I list my networking group on The Networker Hub?",
-      "answer": "The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. Networking-specific tools include the guest visit programme (1–2 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Alumni Fast-Pass to invite past attendees to exclusive alumni rates on repeat events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page.",
+      "answer": "The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. Networking-specific tools include the guest visit programme (1–2 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Previous Attendees to invite past attendees to exclusive returning rates on repeat events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page.",
       "category": "organisers",
       "icon": "⭐"
     },
@@ -458,7 +458,7 @@ window.HUB_SEO_DATA = {
               "name": "Why should I list my networking group on The Networker Hub?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. Networking-specific tools include the guest visit programme (1–2 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Alumni Fast-Pass to invite past attendees to exclusive alumni rates on repeat events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page."
+                "text": "The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. Networking-specific tools include the guest visit programme (1–2 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Previous Attendees to invite past attendees to exclusive returning rates on repeat events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page."
               }
             },
             {
@@ -772,7 +772,7 @@ window.HUB_SEO_DATA = {
           "@type": "WebPage",
           "url": "http://localhost:3000/for-organisers",
           "name": "For Organisers – The Networker Hub",
-          "description": "Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Alumni Fast-Pass, and discovery in the UK events and opportunities directories.",
+          "description": "Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Previous Attendees, and discovery in the UK events and opportunities directories.",
           "about": {
             "@context": "https://schema.org",
             "@type": "Organization",
@@ -1269,7 +1269,7 @@ window.HUB_SEO_DATA = {
               "@type": "HowToStep",
               "position": 4,
               "name": "Set up tickets",
-              "text": "Choose standard tickets, guest visit programme, Category Exclusivity, or Alumni Fast-Pass. Set prices, quantities, VAT if applicable, and your refund policy.",
+              "text": "Choose standard tickets, guest visit programme, Category Exclusivity, or Previous Attendees. Set prices, quantities, VAT if applicable, and your refund policy.",
               "url": "http://localhost:3000/guides/list-an-event#tickets"
             },
             {

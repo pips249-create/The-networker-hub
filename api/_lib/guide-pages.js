@@ -13,7 +13,7 @@ const GUIDE_PAGES = {
       { id: 'sign-in', name: 'Sign in to the organiser dashboard', text: 'Sign in and open the organiser dashboard at /organiser/. If your networking group is already listed, search the organiser directory and claim your page when prompted.' },
       { id: 'organiser-page', name: 'Create or update your organiser page', text: 'Under Organiser pages, add your public group profile: name, logo, description, contact email, and social links.' },
       { id: 'new-event', name: 'Start a new event listing', text: 'From My events, choose List event. Add title, event type, description, cover photo, format (in person, online, or hybrid), venue, and dates.' },
-      { id: 'tickets', name: 'Set up tickets', text: 'Choose standard tickets, guest visit programme, Category Exclusivity, or Alumni Fast-Pass. Set prices, quantities, VAT if applicable, and your refund policy.' },
+      { id: 'tickets', name: 'Set up tickets', text: 'Choose standard tickets, guest visit programme, Category Exclusivity, or Previous Attendees. Set prices, quantities, VAT if applicable, and your refund policy.' },
       { id: 'stripe', name: 'Connect Stripe for paid tickets', text: 'For paid events, complete Connect Stripe under Revenue so ticket money reaches your bank account. Free events do not require Stripe.' },
       { id: 'publish', name: 'Publish', text: 'When details and tickets are complete, publish the event. Once Published, Approved, linked to a published organiser page, and has ticket types, it appears on Browse events.' },
       { id: 'manage-bookings', name: 'Manage bookings after publish', text: 'Use the dashboard to view attendees, revenue and payout status, reviews, and handle cancellations or refunds.' },

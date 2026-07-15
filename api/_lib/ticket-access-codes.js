@@ -88,7 +88,7 @@ async function lookupAccessCode(sb, { eventId, code }) {
   return { valid: true, codeRow: data, ticket: ticketRes.data };
 }
 
-async function assertAccessCodeBookingAllowed(sb, { eventId, ticketId, code }) {
+async function assertAccessCodeBookingAllowed(sb, { eventId, ticketId, code, accessCodeId }) {
   if (!ticketId) {
     const err = new Error('access_code_required');
     err.status = 403;
@@ -104,6 +104,23 @@ async function assertAccessCodeBookingAllowed(sb, { eventId, ticketId, code }) {
     throw err;
   }
   if (!isHiddenTicket(ticket)) return null;
+
+  const codeId = String(accessCodeId || '').trim();
+  if (codeId) {
+    const { data, error } = await sb
+      .from('ticket_access_codes')
+      .select('id, event_id, ticket_id, code, max_uses, uses_count, expires_at')
+      .eq('id', codeId)
+      .eq('event_id', eventId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data || data.ticket_id !== ticketId || !accessCodeRowIsActive(data)) {
+      const err = new Error('access_code_invalid');
+      err.status = 403;
+      throw err;
+    }
+    return { valid: true, codeRow: data, ticket };
+  }
 
   const normalized = normalizeAccessCode(code);
   if (!normalized) {

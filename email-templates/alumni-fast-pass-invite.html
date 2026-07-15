@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your alumni rate</title>
+  <title>Your previous attendee rate</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
     body, table, td, p, a { margin:0; padding:0; border:0; font-size:100%; font:inherit; vertical-align:top; }
@@ -59,9 +59,9 @@
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 16px;">
               <tr><td style="width:52px;height:52px;background:#f3eeff;border-radius:50%;text-align:center;vertical-align:middle;font-size:24px;color:#6b4c9a;line-height:52px;">&#127891;</td></tr>
             </table>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#6b4c9a;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Alumni Fast-Pass</p>
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Your alumni rate for {{event_name}}</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{user_name}}, thanks for attending <strong style="color:#1c2040;">{{source_event_name}}</strong> with <strong style="color:#1c2040;">{{organiser_name}}</strong>. You are invited back at an exclusive alumni rate for <strong style="color:#1c2040;">{{event_name}}</strong>.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#6b4c9a;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Previous Attendees</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Your previous attendee rate for {{event_name}}</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{user_name}}, thanks for attending <strong style="color:#1c2040;">{{source_event_name}}</strong> with <strong style="color:#1c2040;">{{organiser_name}}</strong>. You are invited back at an exclusive returning rate for <strong style="color:#1c2040;">{{event_name}}</strong>.</p>
           </td>
         </tr>
         <tr>
@@ -72,7 +72,7 @@
                   <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Your event</p>
                   <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:18px;font-weight:600;color:#ffffff;margin:0 0 6px;line-height:1.35;">{{event_name}}</p>
                   <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);margin:0 0 10px;">{{event_date}} · {{event_time}} · {{event_location}}</p>
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;color:#ffffff;margin:0;"><strong>Alumni rate:</strong> {{alumni_price}}</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;color:#ffffff;margin:0;"><strong>Your rate:</strong> {{alumni_price}}</p>
                 </td>
               </tr>
             </table>
@@ -80,13 +80,13 @@
         </tr>
         <tr>
           <td class="mobile-pad email-cta" style="padding:0 40px 28px;text-align:center;">
-            <a href="{{invite_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#9a7aa8;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">Claim your alumni ticket &rarr;</a>
+            <a href="{{invite_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#9a7aa8;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">Claim your previous attendee ticket &rarr;</a>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;line-height:1.6;color:#8a8285;margin:12px 0 0;">This link is personal to you. Sign in with this email address to complete booking.</p>
           </td>
         </tr>
         <tr>
           <td class="mobile-pad" style="padding:0 40px 28px;text-align:center;">
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.6;color:#8a8285;margin:0;">You can also <a href="{{event_url}}" style="color:#4aa8f0;text-decoration:none;">view the public listing</a> — the alumni ticket only appears when you use your invite link.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.6;color:#8a8285;margin:0;">You can also <a href="{{event_url}}" style="color:#4aa8f0;text-decoration:none;">view the public listing</a> — the previous attendee ticket only appears when you use your invite link.</p>
           </td>
         </tr>
         {{mini_sponsors_row}}

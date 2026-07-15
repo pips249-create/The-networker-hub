@@ -110,6 +110,14 @@ module.exports = async function handler(req, res) {
             categoryExclusivity: Boolean(t.categoryExclusivity),
             ticketType: t.ticketType || (t.categoryExclusivity ? 'Application-based' : 'Standard'),
             displayOrder: t.displayOrder != null ? t.displayOrder : idx,
+            visibility: String(t.visibility || 'public').toLowerCase() === 'hidden' ? 'hidden' : 'public',
+            accessCode: String(t.accessCode || t.access_code || '').trim(),
+            accessMaxUses:
+              t.accessMaxUses != null && t.accessMaxUses !== ''
+                ? Number(t.accessMaxUses)
+                : t.access_max_uses != null && t.access_max_uses !== ''
+                  ? Number(t.access_max_uses)
+                  : null,
           }))
           .filter((t) => t.name);
         if (!tiers.length) return json(res, 400, { error: 'missing_ticket_types' });

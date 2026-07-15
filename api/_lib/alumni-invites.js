@@ -5,7 +5,7 @@ const { siteBase } = require('./hub-email-urls');
 const { formatEventDateTime } = require('./favourite-sales-emails');
 
 const ALUMNI_TICKET_TYPE = 'Alumni';
-const ALUMNI_TIER_NAME = 'Alumni ticket';
+const ALUMNI_TIER_NAME = 'Previous attendee ticket';
 const INVITE_STATUSES_ACTIVE = ['pending', 'sent'];
 
 function isAlumniTicket(ticket) {
