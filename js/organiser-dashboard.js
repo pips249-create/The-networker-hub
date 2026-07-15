@@ -5278,18 +5278,32 @@
         '/organiser/member-roster?id=' + encodeURIComponent(groups[0].id);
       return;
     }
-    setRoute('groups');
-    if (groups.length > 1) {
-      showOrganiserAlert(
-        'Each organiser page has its own member list. Click <strong>Member list</strong> on the row for the group you want.',
-        false
-      );
-    } else {
+    if (!groups.length) {
+      setRoute('groups');
       showOrganiserAlert(
         'Create an organiser page first, then open <strong>Member list</strong> from that row.',
         false
       );
+      return;
     }
+    const mount = document.getElementById('modal-member-lists-choices');
+    if (mount) {
+      mount.innerHTML = groups
+        .map(function (g) {
+          return (
+            '<a class="org-member-list-chooser-item" href="/organiser/member-roster?id=' +
+            encodeURIComponent(g.id) +
+            '">' +
+            '<strong>' +
+            esc(g.name || 'Organiser page') +
+            '</strong>' +
+            '<span>Open member list →</span>' +
+            '</a>'
+          );
+        })
+        .join('');
+    }
+    openModal('modal-member-lists');
   }
 
   function sidebarRouteForPage(page, sub) {
@@ -5297,9 +5311,7 @@
     if (page === 'business-overview') return 'business-overview';
     if (page === 'business-list') return 'business-list';
     if (page === 'events') {
-      const route = sub || 'events-list';
-      if (route === 'events-tickets') return 'events-list';
-      return route;
+      return sub || 'events-list';
     }
     return page;
   }

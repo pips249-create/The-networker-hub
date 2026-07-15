@@ -2296,6 +2296,42 @@
   vertical-align: middle;
 }
 
+.org-member-list-chooser {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 8px;
+}
+
+.org-member-list-chooser-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--od-border-soft);
+  border-radius: 12px;
+  background: var(--od-white);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.org-member-list-chooser-item:hover {
+  border-color: var(--od-gold);
+  box-shadow: var(--od-shadow-sm);
+}
+
+.org-member-list-chooser-item strong {
+  font-size: 15px;
+}
+
+.org-member-list-chooser-item span {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--od-gold);
+}
+
 .org-application-review {
   display: grid;
   gap: 10px;

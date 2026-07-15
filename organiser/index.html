@@ -84,6 +84,7 @@
               Member lists
               <span class="org-nav-badge">New</span>
             </a>
+            <a href="#events-tickets" class="hub-side-nav-link hub-side-nav-link--events-sub" data-org-route="events-tickets">Tickets</a>
             <a href="#events-attendees" class="hub-side-nav-link hub-side-nav-link--events-sub" data-org-route="events-attendees">
               Attendees
               <span class="org-nav-badge" id="org-pending-applications-nav-badge" hidden>New</span>
@@ -844,9 +845,37 @@
                 placeholder="Search name, email or company…"
                 aria-label="Search attendees"
               />
-              <select id="filter-attendees-event" aria-label="Filter by event">
-                <option value="all">All events</option>
-              </select>
+              <div class="org-event-picker" id="attendees-event-picker">
+                <button
+                  type="button"
+                  class="org-event-picker-trigger"
+                  id="filter-attendees-event-trigger"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                  aria-controls="filter-attendees-event-list"
+                >
+                  <span class="org-event-picker-value" id="filter-attendees-event-label">All events</span>
+                </button>
+                <div class="org-event-picker-panel" id="filter-attendees-event-panel" hidden>
+                  <input
+                    type="search"
+                    class="org-event-picker-search"
+                    id="filter-attendees-event-search"
+                    placeholder="Type to find an event…"
+                    autocomplete="off"
+                    aria-label="Search events"
+                  />
+                  <ul
+                    class="org-event-picker-list"
+                    id="filter-attendees-event-list"
+                    role="listbox"
+                    aria-label="Events"
+                  ></ul>
+                </div>
+                <select id="filter-attendees-event" class="org-event-picker-native" tabindex="-1" aria-hidden="true">
+                  <option value="all">All events</option>
+                </select>
+              </div>
               <select id="filter-attendees-status" aria-label="Filter by registration status">
                 <option value="all">All statuses</option>
                 <option value="confirmed">Confirmed</option>
@@ -1208,6 +1237,19 @@
         <div class="org-modal-actions">
           <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
           <button type="button" class="org-btn org-btn-gold" id="btn-payout-submit" disabled>Submit payout request</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: choose organiser page for member list -->
+    <div class="org-modal" id="modal-member-lists" role="dialog" aria-modal="true" aria-labelledby="modal-member-lists-title" hidden>
+      <div class="org-modal-backdrop" data-org-modal-close></div>
+      <div class="org-modal-panel">
+        <h2 id="modal-member-lists-title">Open a member list</h2>
+        <p class="org-modal-sub">Each organiser page has its own member list for members-only tickets.</p>
+        <div class="org-member-list-chooser" id="modal-member-lists-choices"></div>
+        <div class="org-modal-actions">
+          <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
         </div>
       </div>
     </div>
@@ -1666,6 +1708,6 @@
     <script src="../js/organiser-payment-setup.js?v=20260714link"></script>
     <script src="../js/review-report.js?v=20260708"></script>
     <script src="../js/organiser-linkedin-post-builder.js?v=20260714logo"></script>
-    <script src="../js/organiser-dashboard.js?v=20260715memberlists3"></script>
+    <script src="../js/organiser-dashboard.js?v=20260715memberlists4"></script>
   </body>
 </html>
