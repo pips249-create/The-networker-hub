@@ -173,7 +173,7 @@
         },
         {
           href: '/opportunities/',
-          label: 'Business Op',
+          label: 'Business Opportunity',
           detail: 'Franchises, partnerships & side hustles',
           tone: 'purple',
         },
@@ -184,11 +184,9 @@
       label: 'H · Motion',
       layout: 'video-rotate',
       strategy: 'Find your next + moving words',
-      note: 'Uses the Find your next video with rotating words (Event, Connection, Opportunity, Community), then Event / Business Op choices and Ask Hubert.',
+      note: 'Find your next with rotating words (Event, Connection, Opportunity, Community), then Event / Business Opportunity choices and Ask Hubert.',
       titleLine: 'Find your next',
       rotateWords: ['Event', 'Connection', 'Opportunity', 'Community'],
-      videoSrc: 'assets/find-your-next-hero.mp4',
-      videoPoster: 'assets/hero-networking.jpg',
       hubertLabel: 'Ask Hubert',
       hubertPlaceholder: 'Ask Hubert to find an event, opportunity, or group\u2026',
       hubertBtn: 'Ask Hubert',
@@ -201,7 +199,7 @@
         },
         {
           href: '/opportunities/',
-          label: 'Business Op',
+          label: 'Business Opportunity',
           detail: 'Franchises, partnerships & side hustles',
           tone: 'purple',
         },
@@ -606,22 +604,6 @@
     var existing = hero.querySelector('.home-hero-video-bg');
     if (existing) existing.remove();
     hero.classList.toggle('home-hero--motion', variant.layout === 'video-rotate');
-
-    if (variant.layout !== 'video-rotate') return;
-
-    var wrap = document.createElement('div');
-    wrap.className = 'home-hero-video-bg';
-    wrap.setAttribute('aria-hidden', 'true');
-    wrap.innerHTML =
-      '<video class="home-hero-video" autoplay muted loop playsinline preload="metadata" poster="' +
-      esc(variant.videoPoster || '') +
-      '">' +
-      '<source src="' +
-      esc(variant.videoSrc || '') +
-      '" type="video/mp4">' +
-      '</video>' +
-      '<span class="home-hero-video-shade"></span>';
-    hero.insertBefore(wrap, hero.firstChild);
   }
 
   function setVariant(id) {
