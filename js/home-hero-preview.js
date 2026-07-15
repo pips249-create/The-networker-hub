@@ -186,6 +186,8 @@
       strategy: 'Find your next + moving words',
       note: 'Find your next with rotating words (Event, Connection, Opportunity, Community), then Event / Business Opportunity choices and Ask Hubert.',
       titleLine: 'Find your next\u2026',
+      rotateWords: ['Event', 'Connection', 'Opportunity', 'Community'],
+      hubertLabel: 'Ask Hubert',
       hubertPlaceholder: 'Ask Hubert to find an event, opportunity, or group\u2026',
       hubertBtn: 'Ask Hubert',
       cards: [
