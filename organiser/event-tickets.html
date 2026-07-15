@@ -56,7 +56,7 @@
         <div class="ee-card" id="ee-panel-tickets">
           <h2 id="ee-tickets-panel-title">Ticket types</h2>
           <p class="ee-hint" style="margin-top:0">
-            Add the tickets everyone should see (e.g. Standard, Early bird). Optional extras for members sit below — guest visits, a private ticket with a code, or previous attendees.
+            Add the tickets everyone should see (e.g. Standard, Early bird). Optional extras for members sit below — guest visits, a members-only roster ticket, or previous attendees.
           </p>
           <p class="ee-tier-summary" id="ee-tier-summary" aria-live="polite">0 ticket types · unlimited available · from £0</p>
           <div id="ee-tier-rows"></div>
@@ -107,29 +107,18 @@
             </div>
           </div>
 
-          <div class="ee-guest-addon ee-private-ticket-addon" id="ee-private-ticket-addon" data-hub-tip="private-ticket-code">
-            <h3 class="ee-guest-addon-title">Private ticket with a code <span class="ee-optional">(optional)</span></h3>
+          <div class="ee-guest-addon ee-private-ticket-addon" id="ee-private-ticket-addon" data-hub-tip="members-only-ticket">
+            <h3 class="ee-guest-addon-title">Members only ticket <span class="ee-optional">(optional)</span></h3>
             <div class="ee-info-box ee-guest-how">
               <strong>How it works</strong>
               <p>
-                Add a ticket that stays off your public event page. Share the access code with members (email, WhatsApp, newsletter). They enter it on the event page and the private ticket appears for them to book.
+                Add a ticket that stays off your public event page. People on your Member roster see it automatically when they sign in with their roster email — no access codes.
               </p>
             </div>
             <label class="ee-check">
               <input type="checkbox" id="ee-private-ticket-enabled" />
-              <span>Offer a private member ticket</span>
+              <span>Offer a members-only ticket</span>
             </label>
-            <fieldset class="ee-field omr-ticket-mode" id="ee-private-ticket-mode-wrap" hidden>
-              <legend class="ee-label-block">How members unlock it</legend>
-              <label class="ee-check">
-                <input type="radio" name="ee-private-ticket-mode" id="ee-private-ticket-mode-roster" value="roster" checked />
-                <span><strong>Member roster</strong> — signed-in roster members see this ticket automatically (recommended)</span>
-              </label>
-              <label class="ee-check">
-                <input type="radio" name="ee-private-ticket-mode" id="ee-private-ticket-mode-code" value="code" />
-                <span><strong>Access code</strong> — share a code (legacy / guests not on roster yet)</span>
-              </label>
-            </fieldset>
             <div id="ee-private-ticket-fields" hidden>
               <div class="ee-row-2">
                 <div class="ee-field">
@@ -142,24 +131,9 @@
                   <p class="ee-hint">Enter 0 for free</p>
                 </div>
               </div>
-              <div class="ee-field ee-private-code-field">
-                <label for="ee-private-ticket-code">Access code</label>
-                <p class="ee-hint" style="margin-top:0">Share this with the people who should unlock the ticket. Letters and numbers only.</p>
-                <div class="ee-private-code-row">
-                  <input
-                    type="text"
-                    id="ee-private-ticket-code"
-                    maxlength="32"
-                    placeholder="e.g. MEMBER10"
-                    autocapitalize="characters"
-                    autocomplete="off"
-                    spellcheck="false"
-                  />
-                  <button type="button" class="ee-btn ee-btn-outline" id="ee-private-ticket-generate">Generate</button>
-                  <button type="button" class="ee-btn ee-btn-outline" id="ee-private-ticket-copy">Copy</button>
-                </div>
-                <p class="ee-hint" id="ee-private-ticket-code-hint" aria-live="polite"></p>
-              </div>
+              <p class="ee-hint" id="ee-private-ticket-roster-hint" aria-live="polite">
+                Manage who can see this ticket under Member roster on your organiser page.
+              </p>
               <div class="ee-field ee-guest-visits-field">
                 <label for="ee-private-ticket-qty">Quantity available <span class="ee-optional">(optional)</span></label>
                 <input type="number" id="ee-private-ticket-qty" min="1" step="1" inputmode="numeric" placeholder="Unlimited" />

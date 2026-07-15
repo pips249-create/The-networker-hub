@@ -861,26 +861,7 @@ a.ee-wizard-link:hover {
   margin-top: 8px;
 }
 
-.ee-private-ticket-addon .ee-private-code-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-.ee-private-ticket-addon .ee-private-code-row input {
-  flex: 1 1 160px;
-  min-width: 0;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-.ee-private-ticket-addon .ee-private-code-row .ee-btn {
-  flex: 0 0 auto;
-}
-
-.ee-private-ticket-addon #ee-private-ticket-code-hint.ee-hint-ok {
+.ee-private-ticket-addon #ee-private-ticket-roster-hint.ee-hint-ok {
   color: #027a48;
 }
 

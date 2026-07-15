@@ -1552,8 +1552,6 @@
   let guestVisitEligibility = null;
   let alumniEligibility = null;
   let alumniInviteToken = '';
-  let unlockedHiddenTiers = [];
-  let appliedAccessCode = '';
   let rosterMemberTickets = [];
   let rosterMembership = null;
   let eventApplicationState = null;
@@ -1790,7 +1788,6 @@
     }
     saveBookingPending(event, ticketId, qty, attendee);
     const isAlumniBooking = Boolean(event.alumniTier && event.alumniTier.id === ticketId);
-    const needsAccessCode = unlockedHiddenTiers.some((tier) => tier.id === ticketId);
     const res = await fetch('/api/auth/create-checkout', {
       method: 'POST',
       credentials: 'include',
@@ -1808,7 +1805,6 @@
           isAlumniBooking
             ? alumniEligibility?.inviteToken || alumniInviteToken || ''
             : undefined,
-        accessCode: needsAccessCode ? appliedAccessCode : undefined,
       }),
     });
     const data = await res.json().catch(function () {
@@ -1825,10 +1821,9 @@
   async function completeFreeBooking(ev, ticketId, qty, attendee) {
     const isGuestVisit = Boolean(ev.guestVisitTier && ev.guestVisitTier.id === ticketId);
     const isAlumni = Boolean(ev.alumniTier && ev.alumniTier.id === ticketId);
-    const needsAccessCode = unlockedHiddenTiers.some((tier) => tier.id === ticketId);
     saveBookingPending(ev, ticketId, qty, attendee);
     const endpoint =
-      isGuestVisit || isAlumni || needsAccessCode
+      isGuestVisit || isAlumni
         ? '/api/auth/create-checkout'
         : '/api/auth/complete-booking';
     const body = {
@@ -1841,7 +1836,6 @@
       dietaryRequirements: attendee?.dietaryRequirements || '',
       accessibilityRequirements: attendee?.accessibilityRequirements || '',
     };
-    if (needsAccessCode) body.accessCode = appliedAccessCode;
     if (isAlumni) {
       body.alumniInviteToken = alumniEligibility?.inviteToken || alumniInviteToken || '';
     }
@@ -1895,101 +1889,10 @@
               label: 'Standard',
             },
           ];
-    const extras = (unlockedHiddenTiers || [])
-      .concat(rosterMemberTickets || [])
-      .filter(
+    const extras = (rosterMemberTickets || []).filter(
       (tier) => !base.some((existing) => existing.id === tier.id)
     );
     return base.concat(extras);
-  }
-
-  function resetAccessCodeUnlock() {
-    unlockedHiddenTiers = [];
-    appliedAccessCode = '';
-    const input = document.getElementById('access-code-input');
-    const message = document.getElementById('access-code-message');
-    if (input) input.value = '';
-    if (message) {
-      message.hidden = true;
-      message.textContent = '';
-      message.classList.remove('is-error', 'is-success');
-    }
-  }
-
-  function renderAccessCodePanel(ev) {
-    const panel = document.getElementById('access-code-panel');
-    const form = document.getElementById('access-code-form');
-    const toggle = document.getElementById('access-code-toggle');
-    if (!panel) return;
-    const show = Boolean(ev && ev.hasHiddenTiers && !eventIsCategoryExclusivity(ev));
-    panel.hidden = !show;
-    if (!show) {
-      if (form) form.hidden = true;
-      if (toggle) toggle.setAttribute('aria-expanded', 'false');
-      return;
-    }
-    if (toggle) {
-      toggle.textContent = appliedAccessCode
-        ? 'Access code applied'
-        : 'Have an access code?';
-    }
-  }
-
-  async function applyAccessCode(ev) {
-    const input = document.getElementById('access-code-input');
-    const message = document.getElementById('access-code-message');
-    const code = String(input?.value || '').trim();
-    if (!code) {
-      if (message) {
-        message.textContent = 'Enter an access code.';
-        message.hidden = false;
-        message.classList.add('is-error');
-        message.classList.remove('is-success');
-      }
-      return;
-    }
-    const res = await fetch('/api/auth/validate-access-code', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ eventId: ev.id, code: code }),
-    });
-    const data = await res.json().catch(function () {
-      return {};
-    });
-    if (!res.ok || !data.ok || !Array.isArray(data.tiers) || !data.tiers.length) {
-      if (message) {
-        message.textContent =
-          data.message || checkoutErrorMessage(data) || 'That access code is not valid.';
-        message.hidden = false;
-        message.classList.add('is-error');
-        message.classList.remove('is-success');
-      }
-      return;
-    }
-    appliedAccessCode = code;
-    const merged = unlockedHiddenTiers.slice();
-    data.tiers.forEach(function (tier) {
-      if (!merged.some((existing) => existing.id === tier.id)) merged.push(tier);
-    });
-    unlockedHiddenTiers = merged;
-    if (message) {
-      message.textContent =
-        data.tiers.length === 1
-          ? 'Access code accepted — ' + (data.tiers[0].name || 'ticket') + ' is now available.'
-          : 'Access code accepted — hidden tickets are now available.';
-      message.hidden = false;
-      message.classList.remove('is-error');
-      message.classList.add('is-success');
-    }
-    renderAccessCodePanel(ev);
-    renderTicketPanel(ev);
-    const unlockedId = data.tiers[0] && data.tiers[0].id;
-    if (unlockedId) {
-      const escaped = String(unlockedId).replace(/"/g, '\\"');
-      const tier = document.querySelector('#ticket-tiers .tier[data-ticket-id="' + escaped + '"]');
-      if (tier) tier.click();
-    }
   }
 
   function renderVatNote(ev, tiers) {
@@ -2047,8 +1950,6 @@
     const tiersEl = document.getElementById('ticket-tiers');
     const urgencyEl = document.getElementById('ev-urgency');
     if (!tiersEl) return;
-
-    renderAccessCodePanel(ev);
 
     const tiers = ticketTiersForEvent(ev);
     const salesPending = Boolean(ev.isTicketSalesPending || ev.isTicketSalesScheduled);
@@ -2156,26 +2057,21 @@
       const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
       const priceDisplay = t.priceKey === 'free' ? 'Free' : t.price || fmt(priceNum);
       const remainingLabel = soldOut ? '' : tierRemainingLabel(t);
-      const isUnlockedHidden = Boolean(t.unlockedByAccessCode);
       const isMemberTier = Boolean(t.isMembersOnly);
       const subtitle = soldOut
         ? 'Sold out'
         : isMemberTier
           ? 'Member rate — your roster account'
-          : isUnlockedHidden
-          ? 'Unlocked with your access code'
           : remainingLabel || t.description || '';
 
       const tier = document.createElement('div');
       tier.className =
         'tier' +
-        (soldOut ? ' sold-out tier-disabled' : '') +
-        (isUnlockedHidden ? ' tier-hidden-unlocked' : '');
+        (soldOut ? ' sold-out tier-disabled' : '');
       tier.id = index === 0 ? 'ev-tier-standard' : 'ev-tier-' + t.id;
       tier.setAttribute('data-ticket-id', t.id);
       tier.setAttribute('data-price', String(priceNum));
       tier.setAttribute('data-label', t.label || t.name || 'Ticket');
-      if (isUnlockedHidden) tier.setAttribute('data-hidden-unlocked', '1');
       if (t.stripePaymentLink) tier.setAttribute('data-stripe-link', t.stripePaymentLink);
       const cap = t.quantityAvailable;
       const sold = Math.max(0, Number(t.registrationsCount) || 0);
@@ -2206,10 +2102,7 @@
         '</strong><span class="tier-subtitle">' +
         escapeHtml(subtitle) +
         '</span>' +
-        (isUnlockedHidden
-          ? '<span class="tier-hidden-badge">Access code</span>'
-          : '') +
-        (remainingLabel && !isUnlockedHidden
+        (remainingLabel && !isMemberTier
           ? '<span class="tier-remaining-badge">' + escapeHtml(remainingLabel) + '</span>'
           : '') +
         '</div>' +
@@ -2236,14 +2129,6 @@
         ? 'All ticket tiers are currently sold out.'
         : 'Tickets are not currently available for this event.';
       tiersEl.innerHTML = '<p class="ticket-load-hint">' + hint + '</p>';
-    } else if (
-      !firstSelectable &&
-      !tiersEl.children.length &&
-      !isCategoryExclusivity &&
-      ev.hasHiddenTiers
-    ) {
-      tiersEl.innerHTML =
-        '<p class="ticket-load-hint">Enter your access code above to unlock member tickets.</p>';
     } else if (
       !firstSelectable &&
       !tiersEl.children.length &&
@@ -3637,32 +3522,6 @@
     ticketPanelBound = true;
     initApplicationSuccessModal();
 
-    const accessToggle = document.getElementById('access-code-toggle');
-    const accessForm = document.getElementById('access-code-form');
-    const accessApply = document.getElementById('access-code-apply');
-    const accessInput = document.getElementById('access-code-input');
-    if (accessToggle && accessForm) {
-      accessToggle.addEventListener('click', function () {
-        const open = accessForm.hidden;
-        accessForm.hidden = !open;
-        accessToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-        if (open && accessInput) accessInput.focus();
-      });
-    }
-    if (accessApply) {
-      accessApply.addEventListener('click', function () {
-        applyAccessCode(activeEvent());
-      });
-    }
-    if (accessInput) {
-      accessInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          applyAccessCode(activeEvent());
-        }
-      });
-    }
-
     currentEventDetail = ev;
     const qtyUp = document.getElementById('qty-up');
     const qtyValue = document.getElementById('qty-value');
@@ -4071,7 +3930,6 @@
     ticketPanelSetEvent = function (newEv) {
       currentEvent = newEv;
       currentEventDetail = newEv;
-      resetAccessCodeUnlock();
       qty = 1;
       price = newEv.priceKey === 'free' ? 0 : Number(newEv.priceNum) || 0;
       label = 'Standard';

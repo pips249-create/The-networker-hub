@@ -6135,16 +6135,19 @@
     });
   }
 
-  function bindTeamGroupPicker(allCheckbox, listEl, options) {
-    if (!allCheckbox || !listEl) return;
+  function bindTeamGroupPicker(allCheckbox, listEl) {
+    if (!allCheckbox || !listEl || allCheckbox.dataset.teamPickerBound === '1') return;
+    allCheckbox.dataset.teamPickerBound = '1';
     const sync = function () {
       const all = allCheckbox.checked;
       listEl.hidden = all;
       if (!all) {
         const boxes = listEl.querySelectorAll('input[type="checkbox"]');
-        if (![...boxes].some(function (box) {
-          return box.checked;
-        })) {
+        if (
+          ![...boxes].some(function (box) {
+            return box.checked;
+          })
+        ) {
           boxes.forEach(function (box) {
             box.checked = true;
           });
@@ -6174,7 +6177,10 @@
     renderTeamGroupCheckboxes(listEl, (state.groups || []).map(function (g) {
       return g.id;
     }));
-    bindTeamGroupPicker(allBox, listEl);
+    if (allBox) {
+      allBox.checked = true;
+      allBox.dispatchEvent(new Event('change'));
+    }
   }
 
   function openTeamGroupsModal(member) {
@@ -6185,9 +6191,11 @@
     const listEl = document.getElementById('team-groups-group-list');
     if (idInput) idInput.value = member.id || '';
     if (emailEl) emailEl.textContent = member.email || '';
-    if (allBox) allBox.checked = member.allGroups !== false;
     renderTeamGroupCheckboxes(listEl, member.allGroups ? [] : member.groupIds || []);
-    bindTeamGroupPicker(allBox, listEl);
+    if (allBox) {
+      allBox.checked = member.allGroups !== false;
+      allBox.dispatchEvent(new Event('change'));
+    }
     openModal('modal-team-groups');
   }
 
@@ -6205,6 +6213,8 @@
     state.teamMembers = data.members || [];
     state.canManageTeam = data.canManageTeam !== false;
     state.canDeleteEvents = data.canDeleteEvents !== false;
+    state.canManagePayments = data.canManagePayments !== false;
+    state.canCreateGroups = data.canCreateGroups !== false;
     state.organiserRole = data.role || state.organiserRole;
     state.useTeamWorkspace = Boolean(data.useTeamWorkspace);
     state.teamMax = Number(data.teamMax) || 10;
@@ -6295,6 +6305,11 @@
       const isOwner = m.role === 'owner' || m.isAccountOwner;
       const actions = [];
       if (!isOwner && state.canManageTeam) {
+        actions.push(
+          '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-team-groups="' +
+            esc(m.id) +
+            '">Edit groups</button>'
+        );
         if (m.status === 'pending') {
           actions.push(
             '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-team-resend="' +
@@ -6313,6 +6328,8 @@
         esc(m.email) +
         '</td><td>' +
         esc(teamRoleLabel(m.role)) +
+        '</td><td class="org-team-group-access">' +
+        esc(teamGroupAccessLabel(m)) +
         '</td><td>' +
         esc(teamStatusLabel(m.status)) +
         '</td><td class="org-td-actions">' +
@@ -6324,6 +6341,14 @@
   }
 
   function bindTeamUi() {
+    bindTeamGroupPicker(
+      document.getElementById('team-invite-all-groups'),
+      document.getElementById('team-invite-group-list')
+    );
+    bindTeamGroupPicker(
+      document.getElementById('team-groups-all-groups'),
+      document.getElementById('team-groups-group-list')
+    );
     const openInvite = () => {
       if (state.teamSlotsRemaining <= 0) {
         showOrganiserAlert(
@@ -6333,6 +6358,7 @@
         return;
       }
       updateTeamLimitUi();
+      resetTeamInviteGroupPicker();
       openModal('modal-team-invite');
     };
     const inviteBtn = document.getElementById('btn-invite-team');
@@ -6349,10 +6375,23 @@
         e.preventDefault();
         const email = document.getElementById('team-invite-email').value.trim();
         const btn = e.submitter;
+        const groupSelection = readTeamGroupSelection(
+          document.getElementById('team-invite-all-groups'),
+          document.getElementById('team-invite-group-list')
+        );
+        if (!groupSelection.allGroups && !groupSelection.groupIds.length) {
+          alert('Select at least one group, or choose All groups.');
+          return;
+        }
         if (btn) btn.disabled = true;
         const { ok, data } = await api('/api/organiser/team', {
           method: 'POST',
-          body: JSON.stringify({ email, role: 'editor' }),
+          body: JSON.stringify({
+            email,
+            role: 'editor',
+            allGroups: groupSelection.allGroups,
+            groupIds: groupSelection.groupIds,
+          }),
         });
         if (btn) btn.disabled = false;
         if (!ok) {
@@ -6370,6 +6409,15 @@
     const teamPage = document.getElementById('org-page-team');
     if (teamPage) {
       teamPage.addEventListener('click', async (e) => {
+        const editGroups = e.target.closest('[data-team-groups]');
+        if (editGroups) {
+          const id = editGroups.getAttribute('data-team-groups');
+          const member = state.teamMembers.find(function (m) {
+            return m.id === id;
+          });
+          if (member) openTeamGroupsModal(member);
+          return;
+        }
         const resend = e.target.closest('[data-team-resend]');
         if (resend) {
           const id = resend.getAttribute('data-team-resend');
@@ -6401,6 +6449,41 @@
             updateGettingStartedPanel();
           }
         }
+      });
+    }
+    const groupsForm = document.getElementById('form-team-groups');
+    if (groupsForm) {
+      groupsForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const memberId = document.getElementById('team-groups-member-id').value.trim();
+        const groupSelection = readTeamGroupSelection(
+          document.getElementById('team-groups-all-groups'),
+          document.getElementById('team-groups-group-list')
+        );
+        if (!memberId) return;
+        if (!groupSelection.allGroups && !groupSelection.groupIds.length) {
+          alert('Select at least one group, or choose All groups.');
+          return;
+        }
+        const btn = e.submitter;
+        if (btn) btn.disabled = true;
+        const { ok, data } = await api('/api/organiser/team', {
+          method: 'PATCH',
+          body: JSON.stringify({
+            id: memberId,
+            allGroups: groupSelection.allGroups,
+            groupIds: groupSelection.groupIds,
+          }),
+        });
+        if (btn) btn.disabled = false;
+        if (!ok) {
+          alert(data.message || data.error || 'Could not update group access');
+          return;
+        }
+        closeModals();
+        await loadTeamMembers();
+        renderTeam();
+        showOrganiserAlert(data.message || 'Group access updated.');
       });
     }
   }
@@ -7413,6 +7496,8 @@
     }
     state.canManageTeam = data.canManageTeam !== false;
     state.canDeleteEvents = data.canDeleteEvents !== false;
+    state.canManagePayments = data.canManagePayments !== false;
+    state.canCreateGroups = data.canCreateGroups !== false;
     state.organiserRole = data.organiserRole || 'owner';
     state.useTeamWorkspace = Boolean(data.useTeamWorkspace);
     state.stripeConnectEnabled = Boolean(data.stripeConnectEnabled);

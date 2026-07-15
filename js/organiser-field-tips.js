@@ -22,11 +22,11 @@
         'Turns off complimentary guest passes on this date only. Paid member tickets stay on sale and anyone can book them directly — even if they still have free visits left on your organiser page. Your guest visit programme continues on your other events. Use for conferences, member evenings, or any date where you want paying attendees only.',
       hubertPrompt: 'What does Member-only for this event do on the tickets step?',
     },
-    'private-ticket-code': {
-      title: 'Private ticket with a code',
+    'members-only-ticket': {
+      title: 'Members only ticket',
       body:
-        'Adds a ticket that the public cannot see. You share one access code with members; they enter it on the event page and the private ticket unlocks. Use for member rates, VIP lists, or invite-only pricing — without putting the price on the public listing.',
-      hubertPrompt: 'How do I set up a private ticket with an access code?',
+        'Adds a ticket that the public cannot see. People on your Member roster see it automatically when they sign in with their roster email. Use for member rates or invite-only pricing — without putting the price on the public listing.',
+      hubertPrompt: 'How do I set up a members only ticket with the member roster?',
     },
     'category-exclusivity': {
       title: 'Category Exclusivity',

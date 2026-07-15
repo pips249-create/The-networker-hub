@@ -98,10 +98,10 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ORGANISER TEAM & EDITORS',
     body:
-      'Team invites live under /organiser/ → Team & invites. Only the account owner can invite or remove editors (up to 10 editors per organiser account). ' +
-      'INVITE FLOW: owner enters colleague email → invite email is sent → colleague signs in with that exact email → they become Active and see the same networking groups and events on that account. ' +
-      'EDITOR ACCESS: view all groups on the account; create and edit events, tickets, and attendees; view revenue and reviews; reply publicly to attendee reviews; manage business opportunities. ' +
-      'EDITORS CANNOT: invite or remove team members; delete events (cancel instead if needed). Access is account-wide — not limited to one group. ' +
+      'Team invites live under /organiser/ → Team & invites. Only the account owner can invite or remove editors (up to 10 editors per organiser account). When inviting, the owner can grant access to all groups or selected networking groups only. ' +
+      'INVITE FLOW: owner enters colleague email, chooses group access, invite email is sent → colleague signs in with that exact email → they become Active and see only their assigned groups (or all groups if the owner chose that). ' +
+      'EDITOR ACCESS: manage assigned groups (or all groups); create and edit events, tickets, and attendees; view revenue and reviews for those groups; reply publicly to attendee reviews; manage business opportunities. ' +
+      'EDITORS CANNOT: invite or remove team members; create or duplicate networking groups; add bank details or request payouts; delete events (cancel instead if needed). ' +
       'If someone already runs their own organiser account with claimed groups, their own workspace takes priority over an editor invite.',
   },
   {

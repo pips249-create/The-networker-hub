@@ -115,29 +115,8 @@
     if (paymentNeeded) {
       blockers.push('Add bank details for paid tickets');
     }
-    const seenCodes = new Set();
-    list.forEach((tier) => {
-      if (String(tier.visibility || 'public').toLowerCase() !== 'hidden') return;
-      const code = String(tier.accessCode || '')
-        .trim()
-        .toUpperCase()
-        .replace(/[^A-Z0-9]/g, '');
-      if (code.length < 4) {
-        blockers.push('Add an access code for your private ticket (at least 4 characters)');
-        return;
-      }
-      if (seenCodes.has(code)) {
-        blockers.push('Access codes must be unique within this event');
-        return;
-      }
-      seenCodes.add(code);
-    });
-    if (privateTicketEnabled() && !collectPrivateAccessTicket()) {
-      blockers.push(
-        privateTicketMode() === 'roster'
-          ? 'Add a name for your member roster ticket'
-          : 'Add a name and access code for your private ticket'
-      );
+    if (privateTicketEnabled() && !collectMembersOnlyTicket()) {
+      blockers.push('Add a name for your members-only ticket');
     }
     const alumni = collectAlumniFastPass();
     if (alumni.enabled && !alumni.saleEnd) {
@@ -778,83 +757,44 @@
     }
   }
 
-  function isHiddenAccessTicket(ticket) {
-    return String(ticket?.visibility || '').toLowerCase() === 'hidden';
+  function isMembersOnlyTicket(ticket) {
+    return String(ticket?.visibility || '').toLowerCase() === 'members_only';
   }
 
   function privateTicketEnabled() {
     return Boolean(document.getElementById('ee-private-ticket-enabled')?.checked);
   }
 
-  function normalizeOrganiserAccessCode(raw) {
-    return String(raw || '')
-      .trim()
-      .toUpperCase()
-      .replace(/[^A-Z0-9]/g, '');
-  }
-
-  function generateOrganiserAccessCode() {
-    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let suffix = '';
-    for (let i = 0; i < 4; i++) {
-      suffix += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-    }
-    return 'MEMBER' + suffix;
-  }
-
-  function setPrivateTicketCodeHint(msg, tone) {
-    const el = document.getElementById('ee-private-ticket-code-hint');
+  function setMembersOnlyTicketHint(msg, tone) {
+    const el = document.getElementById('ee-private-ticket-roster-hint');
     if (!el) return;
-    el.textContent = msg || '';
+    el.textContent =
+      msg || 'Manage who can see this ticket under Member roster on your organiser page.';
     el.classList.toggle('ee-hint-ok', tone === 'ok');
-  }
-
-  function isMembersOnlyAccessTicket(ticket) {
-    return String(ticket?.visibility || '').toLowerCase() === 'members_only';
-  }
-
-  function privateTicketMode() {
-    const roster = document.getElementById('ee-private-ticket-mode-roster');
-    if (roster && roster.checked) return 'roster';
-    return 'code';
   }
 
   function syncPrivateTicketFields() {
     const fields = document.getElementById('ee-private-ticket-fields');
-    const modeWrap = document.getElementById('ee-private-ticket-mode-wrap');
     const enabled = privateTicketEnabled();
     if (fields) fields.hidden = !enabled;
-    if (modeWrap) modeWrap.hidden = !enabled;
-    const codeField = document.querySelector('.ee-private-code-field');
-    if (codeField) codeField.hidden = enabled && privateTicketMode() === 'roster';
     if (enabled) {
-      if (privateTicketMode() === 'code') {
-        const codeEl = document.getElementById('ee-private-ticket-code');
-        if (codeEl && !normalizeOrganiserAccessCode(codeEl.value)) {
-          codeEl.value = generateOrganiserAccessCode();
-          setPrivateTicketCodeHint('We generated a code for you — copy it to share with members.', 'ok');
-        }
-      } else {
-        setPrivateTicketCodeHint('Add members on your organiser page under Member roster.', 'ok');
-      }
+      setMembersOnlyTicketHint(
+        'Roster members see this ticket when signed in with their roster email.',
+        'ok'
+      );
     } else {
-      setPrivateTicketCodeHint('');
+      setMembersOnlyTicketHint('');
     }
     updatePublishButton();
   }
 
-  function collectPrivateAccessTicket(publicTiers) {
+  function collectMembersOnlyTicket(publicTiers) {
     if (!privateTicketEnabled()) return null;
     const name =
       document.getElementById('ee-private-ticket-name')?.value.trim() || 'Member ticket';
+    if (!name) return null;
     const price = document.getElementById('ee-private-ticket-price')?.value;
     const qty = document.getElementById('ee-private-ticket-qty')?.value;
-    const mode = privateTicketMode();
-    const code =
-      mode === 'code'
-        ? normalizeOrganiserAccessCode(document.getElementById('ee-private-ticket-code')?.value)
-        : '';
-    if (mode === 'code' && code.length < 4) return null;
 
     const template = Array.isArray(publicTiers) && publicTiers.length ? publicTiers[0] : null;
     const eventDate = seriesMeta.events && seriesMeta.events[0] ? seriesMeta.events[0].date : null;
@@ -863,10 +803,7 @@
     return {
       name,
       price: price === '' || price == null ? 0 : price,
-      description:
-        mode === 'roster'
-          ? 'For members on your roster when signed in'
-          : 'Unlock with your access code',
+      description: 'For members on your roster when signed in',
       status: 'Available',
       quantityAvailable: qty === '' || qty == null ? null : Number(qty),
       saleStart: template?.saleStart || null,
@@ -876,30 +813,22 @@
       categoryExclusivity: false,
       ticketType: 'Standard',
       displayOrder: (publicTiers || []).length,
-      visibility: mode === 'roster' ? 'members_only' : 'hidden',
-      accessCode: mode === 'code' ? code : '',
-      accessMaxUses: null,
+      visibility: 'members_only',
     };
   }
 
-  function prefillPrivateAccessTicket(tickets) {
-    const hidden = (tickets || []).find(isHiddenAccessTicket);
-    const rosterTier = (tickets || []).find(isMembersOnlyAccessTicket);
-    const tier = rosterTier || hidden;
+  function prefillMembersOnlyTicket(tickets) {
+    const tier = (tickets || []).find(isMembersOnlyTicket);
     const enabledEl = document.getElementById('ee-private-ticket-enabled');
     const fields = document.getElementById('ee-private-ticket-fields');
     if (!tier) {
       if (enabledEl) enabledEl.checked = false;
       if (fields) fields.hidden = true;
-      setPrivateTicketCodeHint('');
+      setMembersOnlyTicketHint('');
       return;
     }
     if (enabledEl) enabledEl.checked = true;
     if (fields) fields.hidden = false;
-    const rosterRadio = document.getElementById('ee-private-ticket-mode-roster');
-    const codeRadio = document.getElementById('ee-private-ticket-mode-code');
-    if (rosterTier && rosterRadio) rosterRadio.checked = true;
-    else if (hidden && codeRadio) codeRadio.checked = true;
     const nameEl = document.getElementById('ee-private-ticket-name');
     if (nameEl) nameEl.value = tier.name || 'Member ticket';
     const priceEl = document.getElementById('ee-private-ticket-price');
@@ -913,14 +842,8 @@
           ? ''
           : String(tier.quantityAvailable);
     }
-    const codeEl = document.getElementById('ee-private-ticket-code');
-    if (codeEl) codeEl.value = tier.accessCode || '';
-    setPrivateTicketCodeHint(
-      rosterTier
-        ? 'Roster members see this ticket when signed in.'
-        : tier.accessCode
-          ? 'Share this code with members so they can unlock the ticket.'
-          : '',
+    setMembersOnlyTicketHint(
+      'Roster members see this ticket when signed in with their roster email.',
       'ok'
     );
     syncPrivateTicketFields();
@@ -929,10 +852,7 @@
   function bindPrivateTicketFields() {
     const enabled = document.getElementById('ee-private-ticket-enabled');
     if (enabled) enabled.addEventListener('change', syncPrivateTicketFields);
-    document.querySelectorAll('input[name="ee-private-ticket-mode"]').forEach(function (radio) {
-      radio.addEventListener('change', syncPrivateTicketFields);
-    });
-    ['ee-private-ticket-name', 'ee-private-ticket-price', 'ee-private-ticket-qty', 'ee-private-ticket-code'].forEach(
+    ['ee-private-ticket-name', 'ee-private-ticket-price', 'ee-private-ticket-qty'].forEach(
       (id) => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -940,40 +860,6 @@
         el.addEventListener('change', updatePublishButton);
       }
     );
-    const codeEl = document.getElementById('ee-private-ticket-code');
-    if (codeEl) {
-      codeEl.addEventListener('input', function () {
-        codeEl.value = normalizeOrganiserAccessCode(codeEl.value);
-        updatePublishButton();
-      });
-    }
-    const generateBtn = document.getElementById('ee-private-ticket-generate');
-    if (generateBtn) {
-      generateBtn.addEventListener('click', function () {
-        const el = document.getElementById('ee-private-ticket-code');
-        if (el) el.value = generateOrganiserAccessCode();
-        setPrivateTicketCodeHint('New code generated — copy it to share with members.', 'ok');
-        updatePublishButton();
-      });
-    }
-    const copyBtn = document.getElementById('ee-private-ticket-copy');
-    if (copyBtn) {
-      copyBtn.addEventListener('click', async function () {
-        const code = normalizeOrganiserAccessCode(
-          document.getElementById('ee-private-ticket-code')?.value
-        );
-        if (!code) {
-          setPrivateTicketCodeHint('Generate or type a code first.');
-          return;
-        }
-        try {
-          await navigator.clipboard.writeText(code);
-          setPrivateTicketCodeHint('Copied — paste it into your member email or WhatsApp.', 'ok');
-        } catch {
-          setPrivateTicketCodeHint('Could not copy automatically — select the code and copy it.');
-        }
-      });
-    }
     syncPrivateTicketFields();
   }
 
@@ -983,13 +869,14 @@
     wrap.innerHTML = '';
     const sorted = tickets
       .slice()
-      .filter((t) => !isHiddenAccessTicket(t))
+      .filter((t) => !isMembersOnlyTicket(t))
       .sort((a, b) => (Number(a.displayOrder) || 0) - (Number(b.displayOrder) || 0));
     sorted.forEach((ticket) => {
       const row = addTierRow({ useDefaultName: false });
       fillTierFromTicket(row, ticket);
     });
-    existingTicketsLoaded = sorted.length > 0 || (tickets || []).some(isHiddenAccessTicket);
+    existingTicketsLoaded =
+      sorted.length > 0 || (tickets || []).some(isMembersOnlyTicket);
     updateTierSummary();
     updatePublishButton();
   }
@@ -1115,11 +1002,9 @@
         ticketType: 'Standard',
         displayOrder: idx,
         visibility: 'public',
-        accessCode: '',
-        accessMaxUses: null,
       });
     });
-    const privateTier = collectPrivateAccessTicket(tiers);
+    const privateTier = collectMembersOnlyTicket(tiers);
     if (privateTier) tiers.push(privateTier);
     return tiers;
   }
@@ -1215,7 +1100,7 @@
     } else {
       return false;
     }
-    if (Array.isArray(draft.tiers)) prefillPrivateAccessTicket(draft.tiers);
+    if (Array.isArray(draft.tiers)) prefillMembersOnlyTicket(draft.tiers);
     if (draft.guestPassesDisabled != null) {
       const guestEl = document.getElementById('ee-guest-passes-disabled');
       if (guestEl) guestEl.checked = Boolean(draft.guestPassesDisabled);
@@ -1811,7 +1696,7 @@
       applyTicketsLockUi(loaded.event);
       const alumniTicket = loaded.tickets.find(isAlumniTicket);
       prefillAlumniFastPass(loaded.event, alumniTicket);
-      prefillPrivateAccessTicket(loaded.tickets);
+      prefillMembersOnlyTicket(loaded.tickets);
     }
 
     await loadOrganiserGuestVisitSetting(seriesMeta.organiserGroupId);
@@ -1836,7 +1721,7 @@
       showAlert('Restored your ticket details from before bank setup. Review them, then publish when ready.', 'ok');
     } else if (loaded.tickets.length) {
       const memberTickets = loaded.tickets.filter(
-        (t) => !isGuestVisitTicket(t) && !isAlumniTicket(t) && !isHiddenAccessTicket(t)
+        (t) => !isGuestVisitTicket(t) && !isAlumniTicket(t) && !isMembersOnlyTicket(t)
       );
       if (loaded.event && loaded.event.attendanceMode === 'guest_programme') {
         setAttendanceMode('guest_programme');
@@ -1847,7 +1732,7 @@
       } else {
         addTierRow();
       }
-      prefillPrivateAccessTicket(loaded.tickets);
+      prefillMembersOnlyTicket(loaded.tickets);
     } else {
       addTierRow();
     }
