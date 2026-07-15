@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
-    <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260715" />
+    <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260715b" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
@@ -23,50 +23,92 @@
       </div>
       <h1 class="ee-title" id="omr-title">Member list</h1>
       <p class="ee-lead" id="omr-lead">
-        Upload your member list so signed-in members see <strong>Members only</strong> tickets.
+        Your private list of members for this organiser page. People on it unlock
+        <strong>Members only</strong> tickets when they sign in with their membership email.
       </p>
       <div id="omr-alert" class="ee-alert" hidden></div>
 
+      <div class="omr-intro" aria-label="How member lists work">
+        <h2 class="omr-intro-title">How it works</h2>
+        <ol class="omr-intro-steps">
+          <li>
+            <strong>Add your members</strong>
+            <span>Upload a spreadsheet (CSV from Excel or Google Sheets) or add people one by one.</span>
+          </li>
+          <li>
+            <strong>Create a Members only ticket</strong>
+            <span>On your event’s tickets step, add a Members only tier — it stays off the public page.</span>
+          </li>
+          <li>
+            <strong>They sign in &amp; book</strong>
+            <span>Matching emails see the member rate automatically. Optional expiry dates flag renewals in your reports.</span>
+          </li>
+        </ol>
+      </div>
+
       <div class="omr-reports" id="omr-reports" hidden></div>
 
-      <div class="ee-card">
-        <h2>Add a member</h2>
-        <form id="omr-add-form" class="omr-add-form">
-          <div class="ee-row-2">
-            <div class="ee-field">
-              <label for="omr-name">Name</label>
-              <input type="text" id="omr-name" placeholder="Jane Smith" />
+      <div class="omr-actions-grid">
+        <div class="ee-card omr-card">
+          <h2>Add a member</h2>
+          <p class="omr-card-lead">Add someone individually when you’re not importing a full list.</p>
+          <form id="omr-add-form" class="omr-add-form">
+            <div class="ee-row-2">
+              <div class="ee-field">
+                <label for="omr-name">Name</label>
+                <input type="text" id="omr-name" placeholder="Jane Smith" autocomplete="name" />
+              </div>
+              <div class="ee-field">
+                <label for="omr-email">Email</label>
+                <input type="email" id="omr-email" required placeholder="member@example.com" autocomplete="email" />
+              </div>
             </div>
             <div class="ee-field">
-              <label for="omr-email">Email</label>
-              <input type="email" id="omr-email" required placeholder="member@example.com" />
+              <label for="omr-expires">Membership expires <span class="ee-optional">(optional)</span></label>
+              <input type="date" id="omr-expires" />
+              <p class="ee-hint">We flag expiring memberships in your reports. Renew off-platform and update the date here.</p>
+            </div>
+            <label class="omr-check">
+              <input type="checkbox" id="omr-send-invite" checked />
+              Email this member about the group and its next meeting
+            </label>
+            <button type="submit" class="ee-btn ee-btn-gold">Add to list</button>
+          </form>
+        </div>
+
+        <div class="ee-card omr-card">
+          <h2>Import a spreadsheet</h2>
+          <p class="omr-card-lead">
+            Export from Excel or Google Sheets as <strong>CSV</strong>, then drop the file here.
+            Columns: <code>email</code> (required), <code>name</code>, <code>expires</code> or <code>membership expiry</code>.
+          </p>
+          <div
+            class="omr-dropzone"
+            id="omr-dropzone"
+            tabindex="0"
+            role="button"
+            aria-label="Upload member list CSV"
+          >
+            <input type="file" id="omr-file" accept=".csv,.tsv,text/csv,text/tab-separated-values" hidden />
+            <div class="omr-dropzone-inner" id="omr-dropzone-inner">
+              <strong>Drop a CSV here</strong>
+              <span>or click to choose a file from your computer</span>
             </div>
           </div>
-          <div class="ee-field">
-            <label for="omr-expires">Membership expires <span class="ee-optional">(optional)</span></label>
-            <input type="date" id="omr-expires" />
-            <p class="ee-hint">We flag expiring memberships in your reports. Renew off-platform and update the date here.</p>
-          </div>
+          <p class="omr-file-name" id="omr-file-name" hidden></p>
+          <details class="omr-paste-details">
+            <summary>Or paste CSV text instead</summary>
+            <textarea id="omr-csv" rows="5" placeholder="email,name,expires&#10;jane@example.com,Jane Smith,2026-12-31"></textarea>
+          </details>
           <label class="omr-check">
-            <input type="checkbox" id="omr-send-invite" checked />
-            Email this member about the group and its next meeting
+            <input type="checkbox" id="omr-csv-send-invites" />
+            Send invite emails after import — new emails get a sign-up link; existing Hub accounts get a sign-in link to the group’s next meeting
           </label>
-          <button type="submit" class="ee-btn ee-btn-gold">Add to list</button>
-        </form>
+          <button type="button" class="ee-btn ee-btn-outline" id="omr-import-btn">Import members</button>
+        </div>
       </div>
 
-      <div class="ee-card">
-        <h2>Import CSV</h2>
-        <p class="ee-hint">Columns: <code>email</code> (required), <code>name</code>, <code>expires</code> or <code>membership expiry</code>.</p>
-        <textarea id="omr-csv" rows="6" placeholder="email,name,expires&#10;jane@example.com,Jane Smith,2026-12-31"></textarea>
-        <label class="omr-check">
-          <input type="checkbox" id="omr-csv-send-invites" />
-          Send invite emails after import — new emails get a sign-up link; existing Hub accounts get a sign-in link to the group’s next meeting
-        </label>
-        <button type="button" class="ee-btn ee-btn-outline" id="omr-import-btn">Import CSV</button>
-      </div>
-
-      <div class="ee-card">
+      <div class="ee-card omr-card">
         <div class="omr-roster-head">
           <h2>Members</h2>
           <label class="omr-event-filter">
@@ -92,13 +134,13 @@
             <tbody id="omr-body"></tbody>
           </table>
         </div>
-        <p class="org-empty-state-text" id="omr-empty" hidden>No members on this list yet.</p>
+        <p class="org-empty-state-text" id="omr-empty" hidden>No members on this list yet. Add someone above or import a spreadsheet to get started.</p>
       </div>
     </div>
 
     <script src="../js/hubert-chat.js?v=20260612"></script>
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../"></script>
     <script src="../js/organiser-flow-tour.js?v=20260701" data-root="../"></script>
-    <script src="../js/organiser-member-roster.js?v=20260715"></script>
+    <script src="../js/organiser-member-roster.js?v=20260715b"></script>
   </body>
 </html>

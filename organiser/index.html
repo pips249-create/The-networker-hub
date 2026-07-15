@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260714cap" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260715memberlists2" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260714cls" />
   </head>
   <body class="organiser-dashboard-page hub-is-page-loading">
@@ -1244,9 +1244,39 @@
     <!-- Modal: choose organiser page for member list -->
     <div class="org-modal" id="modal-member-lists" role="dialog" aria-modal="true" aria-labelledby="modal-member-lists-title" hidden>
       <div class="org-modal-backdrop" data-org-modal-close></div>
-      <div class="org-modal-panel">
-        <h2 id="modal-member-lists-title">Open a member list</h2>
-        <p class="org-modal-sub">Each organiser page has its own member list for members-only tickets.</p>
+      <div class="org-modal-panel org-modal-panel--wide org-modal-panel--member-lists">
+        <h2 id="modal-member-lists-title">What is a member list?</h2>
+        <p class="org-modal-sub org-member-list-intro">
+          If you run a networking group, chapter, or membership community, a <strong>member list</strong> is your private
+          roll of who belongs. You add their name and email here — then, when you create a
+          <strong>Members only</strong> ticket on an event, those people see it automatically after they sign in.
+          Everyone else never sees that rate.
+        </p>
+
+        <div class="org-member-list-explainer" aria-label="How member lists work">
+          <p class="org-member-list-explainer-title">How it works</p>
+          <ol class="org-member-list-steps">
+            <li>
+              <strong>Upload your members</strong>
+              <span>Add people one by one, or import a spreadsheet (CSV from Excel or Google Sheets).</span>
+            </li>
+            <li>
+              <strong>Add a Members only ticket</strong>
+              <span>On your event’s tickets step — it stays hidden from the public event page.</span>
+            </li>
+            <li>
+              <strong>They sign in and book</strong>
+              <span>Anyone on the list who signs in with their membership email gets the member rate.</span>
+            </li>
+          </ol>
+        </div>
+
+        <div class="org-member-list-notes">
+          <p><strong>Optional expiry dates</strong> flag memberships due for renewal in your reports. You can also send invite emails when you add or import members.</p>
+          <p><strong>One list per organiser page</strong> — if you run more than one group, each has its own list. Choose which one to open below.</p>
+        </div>
+
+        <p class="org-member-list-chooser-label">Choose an organiser page</p>
         <div class="org-member-list-chooser" id="modal-member-lists-choices"></div>
         <div class="org-modal-actions">
           <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
@@ -1708,6 +1738,6 @@
     <script src="../js/organiser-payment-setup.js?v=20260714link"></script>
     <script src="../js/review-report.js?v=20260708"></script>
     <script src="../js/organiser-linkedin-post-builder.js?v=20260714logo"></script>
-    <script src="../js/organiser-dashboard.js?v=20260715memberlists4"></script>
+    <script src="../js/organiser-dashboard.js?v=20260715memberlists5"></script>
   </body>
 </html>

@@ -2424,22 +2424,97 @@
 }
 
 .org-modal-panel--member-lists {
-  max-width: 560px;
+  max-width: 600px;
+}
+
+.org-member-list-intro {
+  margin-bottom: 16px !important;
+  line-height: 1.5 !important;
 }
 
 .org-member-list-explainer {
-  margin: 0 0 18px;
-  padding: 14px 16px 14px 34px;
+  margin: 0 0 14px;
+  padding: 16px 18px;
   border-radius: 12px;
   background: var(--od-purple-pale);
   border: 1px solid var(--od-border-soft);
-  color: var(--od-text-mid);
-  font-size: 13px;
-  line-height: 1.45;
 }
 
-.org-member-list-explainer li + li {
-  margin-top: 6px;
+.org-member-list-explainer-title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--od-purple-dark);
+}
+
+.org-member-list-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+  counter-reset: org-member-step;
+}
+
+.org-member-list-steps li {
+  position: relative;
+  padding-left: 34px;
+  counter-increment: org-member-step;
+}
+
+.org-member-list-steps li::before {
+  content: counter(org-member-step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--od-purple);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.org-member-list-steps strong {
+  display: block;
+  font-size: 13px;
+  color: var(--od-text-dark);
+  margin-bottom: 2px;
+}
+
+.org-member-list-steps span {
+  display: block;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--od-text-mid);
+}
+
+.org-member-list-notes {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--od-gold-light);
+  border: 1px solid rgba(189, 147, 46, 0.22);
+}
+
+.org-member-list-notes p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--od-text-mid);
+}
+
+.org-member-list-notes p + p {
+  margin-top: 8px;
+}
+
+.org-member-list-notes strong {
+  color: var(--od-text-dark);
 }
 
 .org-member-list-chooser-label {

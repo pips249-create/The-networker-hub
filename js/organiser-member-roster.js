@@ -291,10 +291,91 @@
       }
     });
 
+    const csvEl = document.getElementById('omr-csv');
+    const fileInput = document.getElementById('omr-file');
+    const dropzone = document.getElementById('omr-dropzone');
+    const fileNameEl = document.getElementById('omr-file-name');
+
+    function setLoadedFileName(name) {
+      if (!fileNameEl) return;
+      if (name) {
+        fileNameEl.hidden = false;
+        fileNameEl.textContent = 'Ready to import: ' + name;
+      } else {
+        fileNameEl.hidden = true;
+        fileNameEl.textContent = '';
+      }
+    }
+
+    function loadCsvText(text, sourceName) {
+      if (csvEl) csvEl.value = text;
+      setLoadedFileName(sourceName || '');
+      const paste = document.querySelector('.omr-paste-details');
+      if (paste && text) paste.open = false;
+    }
+
+    function readMemberFile(file) {
+      if (!file) return;
+      const name = String(file.name || '').toLowerCase();
+      const okType =
+        name.endsWith('.csv') ||
+        name.endsWith('.tsv') ||
+        name.endsWith('.txt') ||
+        /csv|tab-separated|plain/i.test(file.type || '');
+      if (!okType) {
+        showAlert('Please upload a CSV file (export from Excel or Google Sheets as CSV).', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function () {
+        loadCsvText(String(reader.result || ''), file.name);
+        showAlert('File loaded. Click Import members to add them.', 'success');
+      };
+      reader.onerror = function () {
+        showAlert('Could not read that file.', 'error');
+      };
+      reader.readAsText(file);
+    }
+
+    if (dropzone && fileInput) {
+      dropzone.addEventListener('click', function () {
+        fileInput.click();
+      });
+      dropzone.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          fileInput.click();
+        }
+      });
+      fileInput.addEventListener('change', function () {
+        const file = fileInput.files && fileInput.files[0];
+        readMemberFile(file);
+        fileInput.value = '';
+      });
+      ['dragenter', 'dragover'].forEach(function (evt) {
+        dropzone.addEventListener(evt, function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.add('is-dragover');
+        });
+      });
+      ['dragleave', 'drop'].forEach(function (evt) {
+        dropzone.addEventListener(evt, function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove('is-dragover');
+        });
+      });
+      dropzone.addEventListener('drop', function (e) {
+        const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        readMemberFile(file);
+      });
+    }
+
     document.getElementById('omr-import-btn')?.addEventListener('click', async function () {
-      const csv = document.getElementById('omr-csv')?.value || '';
+      const csv = csvEl?.value || '';
       if (!csv.trim()) {
-        showAlert('Paste CSV content first.', 'error');
+        showAlert('Upload a CSV spreadsheet or paste CSV text first.', 'error');
         return;
       }
       try {
@@ -310,6 +391,8 @@
         const inviteNote =
           data.invitesSent > 0 ? ' · ' + data.invitesSent + ' invites sent' : '';
         showAlert('Imported ' + data.ok + ' of ' + data.total + ' rows' + inviteNote + '.', 'success');
+        if (csvEl) csvEl.value = '';
+        setLoadedFileName('');
         await refresh();
       } catch (err) {
         showAlert(err.message, 'error');

@@ -152,6 +152,10 @@
   box-shadow: 0 4px 14px rgba(31, 28, 70, 0.06);
 }
 
+.networking-city-partner-ad--available {
+  border-style: dashed;
+}
+
 /* Override Sponsor Hub logo band — that layout breaks this compact slot. */
 .networking-city-partner-ad .sponsor-logo-wrap,
 .networking-city-partner-ad .sponsor-logo-wrap.sponsor-logo-band {

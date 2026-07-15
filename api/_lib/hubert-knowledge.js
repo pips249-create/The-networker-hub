@@ -414,9 +414,9 @@ const FALLBACK_REPLIES = [
       'A networking group added your email to their member list so you can book member-only ticket rates. Sign in at /login with that exact email — the group appears under My Hub → My groups (/account/). Open their event and you will see member tickets the public cannot.',
   },
   {
-    match: /import.*(member|list|roster).*csv|csv.*member (list|roster)|upload.*member list|bulk.*member (list|roster)/i,
+    match: /import.*(member|list|roster).*csv|csv.*member (list|roster)|upload.*member list|bulk.*member (list|roster)|import.*(spreadsheet|excel).*member/i,
     reply:
-      'On /organiser/member-roster, use Import CSV. Required column: email. Optional: name, expires (or membership expiry). Example row: jane@example.com,Jane Smith,2026-12-31. You can tick to send invite emails after import — new accounts get a sign-up link; existing Hub accounts get a sign-in link.',
+      'On /organiser/member-roster, use Import CSV — drop a spreadsheet saved as CSV from Excel or Google Sheets, or paste CSV text. Required column: email. Optional: name, expires (or membership expiry). Example row: jane@example.com,Jane Smith,2026-12-31. You can tick to send invite emails after import — new accounts get a sign-up link; existing Hub accounts get a sign-in link.',
   },
   {
     match: /add.*(to|someone).*(member list|member roster|roster)|manage member (list|roster)|set up member (list|roster)|open member (list|roster)|where.*member (list|roster)/i,

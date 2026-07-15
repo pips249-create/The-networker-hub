@@ -132,19 +132,7 @@
     }
   }
 
-  function showOrganiserCta() {
-    var partner = document.getElementById('networking-region-city-partner');
-    var organiserCta = document.getElementById('networking-region-organiser-cta');
-    var organiserLink = document.getElementById('networking-region-organiser-link');
-    if (partner) {
-      partner.hidden = true;
-      partner.innerHTML = '';
-    }
-    if (organiserCta) organiserCta.hidden = false;
-    if (organiserLink) organiserLink.hidden = true;
-  }
-
-  function showCityPartner() {
+  function showCityPartnerLayout() {
     var organiserCta = document.getElementById('networking-region-organiser-cta');
     var organiserLink = document.getElementById('networking-region-organiser-link');
     if (organiserCta) organiserCta.hidden = true;
@@ -156,15 +144,17 @@
     window.CmsAdBlocks.loadCmsAd('networking_city_partner_' + slug)
       .then(function (block) {
         if (block && window.CmsAdBlocks.renderCityPartnerAd(partnerShell, block)) {
-          showCityPartner();
-        } else {
-          showOrganiserCta();
+          showCityPartnerLayout();
+          return;
+        }
+        if (window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell)) {
+          showCityPartnerLayout();
         }
       })
       .catch(function () {
-        showOrganiserCta();
+        if (window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell)) {
+          showCityPartnerLayout();
+        }
       });
-  } else {
-    showOrganiserCta();
   }
 })();

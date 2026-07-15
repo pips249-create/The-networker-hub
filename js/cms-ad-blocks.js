@@ -219,13 +219,24 @@
     return '<div class="networking-city-partner-logo-placeholder">Your logo here</div>';
   }
 
+  function renderCityPartnerPlaceholder(container) {
+    if (!container) return false;
+    container.hidden = false;
+    container.removeAttribute('hidden');
+    container.removeAttribute('data-company');
+    container.innerHTML =
+      '<aside class="networking-city-partner-ad networking-city-partner-ad--available" aria-label="City partner available">' +
+      '<span class="networking-city-partner-badge">City partner</span>' +
+      '<div class="networking-city-partner-logo-placeholder">Your logo here</div>' +
+      '<a class="networking-city-partner-cta" href="/advertising#city-partner-package">Become a city partner</a>' +
+      '</aside>';
+    return true;
+  }
+
   function renderCityPartnerAd(container, block) {
     if (!container || !block) return false;
     if (!isCompactRenderable(block)) {
-      container.hidden = true;
-      container.innerHTML = '';
-      container.removeAttribute('data-company');
-      return false;
+      return renderCityPartnerPlaceholder(container);
     }
     var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
     var ctaLabel = String(block.cta_label || '').trim() || 'Find out more';
@@ -527,6 +538,7 @@
     renderBannerAd: renderBannerAd,
     renderCompactAd: renderCompactAd,
     renderCityPartnerAd: renderCityPartnerAd,
+    renderCityPartnerPlaceholder: renderCityPartnerPlaceholder,
     renderCarouselAd: renderCarouselAd,
     renderLogoOnlyAd: renderLogoOnlyAd,
     isCompactRenderable: isCompactRenderable,
