@@ -8,6 +8,8 @@
   const BOOKING_FEE_PER_TICKET = 0.2;
 
   let currentEvent = null;
+  let guestVisitEligibilityByOrganiser = window.hubGuestVisitEligibilityByOrganiser || {};
+  window.hubGuestVisitEligibilityByOrganiser = guestVisitEligibilityByOrganiser;
   let seriesDatesList = [];
   let seriesBaseEvent = null;
   let selectedSeriesEventId = null;
@@ -44,13 +46,18 @@
     if (window.HubBookingFees) {
       const opts = Object.assign({}, options || {});
       if (!opts.guestVisitEligibility && !opts.guestVisitRemaining) {
-        const sameOrganiser =
-          ev &&
-          currentEvent &&
-          String(ev.organiserId || '') &&
-          String(ev.organiserId) === String(currentEvent.organiserId || '');
-        if (sameOrganiser && guestVisitEligibility) {
-          opts.guestVisitEligibility = guestVisitEligibility;
+        const organiserId = String((ev && ev.organiserId) || '').trim();
+        if (organiserId && guestVisitEligibilityByOrganiser[organiserId]) {
+          opts.guestVisitEligibility = guestVisitEligibilityByOrganiser[organiserId];
+        } else {
+          const sameOrganiser =
+            ev &&
+            currentEvent &&
+            organiserId &&
+            organiserId === String(currentEvent.organiserId || '');
+          if (sameOrganiser && guestVisitEligibility) {
+            opts.guestVisitEligibility = guestVisitEligibility;
+          }
         }
       }
       return window.HubBookingFees.listingPriceLabel(ev, opts);
@@ -370,7 +377,72 @@
     } catch {
       guestVisitEligibility = null;
     }
+    const organiserId = String((ev && ev.organiserId) || '').trim();
+    if (organiserId && guestVisitEligibility) {
+      guestVisitEligibilityByOrganiser[organiserId] = guestVisitEligibility;
+    }
     return guestVisitEligibility;
+  }
+
+  async function refreshGuestVisitLabelsForEvents(list) {
+    const organiserIds = [];
+    const seen = {};
+    (list || []).forEach(function (ev) {
+      if (!ev || String(ev.attendanceMode || '') !== 'guest_programme') return;
+      if (ev.guestPassesDisabled) return;
+      if (!(Number(ev.complimentaryVisitsAllowed) > 0)) return;
+      const organiserId = String(ev.organiserId || '').trim();
+      if (!organiserId || seen[organiserId]) return;
+      if (guestVisitEligibilityByOrganiser[organiserId]) return;
+      seen[organiserId] = true;
+      organiserIds.push(organiserId);
+    });
+    if (!organiserIds.length) {
+      applyRelatedGuestVisitPriceLabels();
+      return;
+    }
+    try {
+      const sessionData = await fetchSessionData();
+      if (!sessionData || !sessionData.ok || !sessionData.user) return;
+      const res = await fetch(
+        '/api/auth/guest-visit-eligibility?organiserIds=' +
+          encodeURIComponent(organiserIds.join(',')),
+        { credentials: 'include', cache: 'no-store' }
+      );
+      const data = await res.json().catch(function () {
+        return {};
+      });
+      if (!data || !data.ok || !data.byOrganiserId) return;
+      Object.keys(data.byOrganiserId).forEach(function (organiserId) {
+        guestVisitEligibilityByOrganiser[organiserId] = data.byOrganiserId[organiserId];
+      });
+      applyRelatedGuestVisitPriceLabels();
+      if (currentEvent) {
+        setText('ev-price', publicListingPriceLabel(currentEvent));
+        syncTicketHeader(currentEvent);
+      }
+    } catch {
+      /* non-fatal */
+    }
+  }
+
+  function applyRelatedGuestVisitPriceLabels() {
+    document.querySelectorAll('.related-card .mini-price[data-organiser-id]').forEach(function (el) {
+      const organiserId = String(el.getAttribute('data-organiser-id') || '').trim();
+      const attendanceMode = String(el.getAttribute('data-attendance-mode') || '').trim();
+      if (attendanceMode !== 'guest_programme' || !organiserId) return;
+      const allowed = Number(el.getAttribute('data-visits-allowed') || 0) || 0;
+      const stub = {
+        attendanceMode: 'guest_programme',
+        complimentaryVisitsAllowed: allowed,
+        guestPassesDisabled: false,
+        organiserId: organiserId,
+        priceKey: el.getAttribute('data-price-key') || '',
+        priceNum: Number(el.getAttribute('data-price-num') || 0) || 0,
+        price: el.getAttribute('data-price-raw') || '',
+      };
+      el.textContent = publicListingPriceLabel(stub);
+    });
   }
 
   function tierIsAlumni(t) {
@@ -875,6 +947,15 @@
 
       const price = document.createElement('span');
       price.className = 'mini-price';
+      price.setAttribute('data-organiser-id', String(ev.organiserId || ''));
+      price.setAttribute('data-attendance-mode', String(ev.attendanceMode || ''));
+      price.setAttribute(
+        'data-visits-allowed',
+        String(Number(ev.complimentaryVisitsAllowed) || 0)
+      );
+      price.setAttribute('data-price-key', String(ev.priceKey || ''));
+      price.setAttribute('data-price-num', String(Number(ev.priceNum) || 0));
+      price.setAttribute('data-price-raw', String(ev.price || ''));
       price.textContent = publicListingPriceLabel(ev);
       imgWrap.appendChild(price);
 
@@ -899,6 +980,7 @@
       card.appendChild(body);
       grid.appendChild(card);
     });
+    refreshGuestVisitLabelsForEvents(list);
   }
 
   function updateBreadcrumbTrail(ev) {
@@ -1123,6 +1205,56 @@
     }
   }
 
+  function setSeriesDatePickerOpen(open) {
+    const picker = document.getElementById('ev-series-picker');
+    const collapsed = document.getElementById('ev-series-collapsed');
+    if (picker) picker.hidden = !open;
+    if (collapsed) collapsed.hidden = open;
+  }
+
+  function seriesHasOtherBookableDates(currentEventId) {
+    if (!seriesDatesList || seriesDatesList.length <= 1) return false;
+    const now = Date.now() - 86400000;
+    return seriesDatesList.some(function (entry) {
+      if (!entry || !entry.id || entry.id === currentEventId) return false;
+      if (entry.isSoldOut) return false;
+      const ts =
+        entry.dateTs != null
+          ? Number(entry.dateTs)
+          : entry.dateRaw
+            ? new Date(entry.dateRaw).getTime()
+            : 0;
+      if (ts && ts < now) return false;
+      return true;
+    });
+  }
+
+  function openSeriesDatePickerForAnotherDate() {
+    const wrap = document.getElementById('ev-series-dates');
+    if (!wrap || wrap.hidden) return;
+    setSeriesDatePickerOpen(true);
+    try {
+      wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch {
+      /* ignore */
+    }
+    const calendar = document.getElementById('ev-date-calendar');
+    if (calendar && typeof calendar.focus === 'function') {
+      try {
+        calendar.focus({ preventScroll: true });
+      } catch {
+        calendar.focus();
+      }
+    }
+  }
+
+  function bindAlreadyGoingActions() {
+    const anotherBtn = document.getElementById('category-exclusivity-application-status-another-date');
+    if (!anotherBtn || anotherBtn.dataset.bound === '1') return;
+    anotherBtn.dataset.bound = '1';
+    anotherBtn.addEventListener('click', openSeriesDatePickerForAnotherDate);
+  }
+
   function selectSeriesDate(entry) {
     if (!entry || !seriesBaseEvent) return;
     selectedSeriesEventId = entry.id;
@@ -1133,6 +1265,7 @@
     const selectedEl = document.getElementById('ev-series-selected');
     if (selectedEl) selectedEl.textContent = 'Selected: ' + formatSeriesSelectedLine(entry);
     renderSeriesCalendar();
+    setSeriesDatePickerOpen(false);
     if (ticketPanelSetEvent) ticketPanelSetEvent(merged);
   }
 
@@ -1190,6 +1323,9 @@
         }
         renderSeriesCalendar();
       });
+      document.getElementById('ev-series-change-btn')?.addEventListener('click', () => {
+        setSeriesDatePickerOpen(true);
+      });
     }
 
     selectedSeriesEventId = initialEv.id;
@@ -1198,6 +1334,7 @@
     if (selectedEl && initialEntry) {
       selectedEl.textContent = 'Selected: ' + formatSeriesSelectedLine(initialEntry);
     }
+    setSeriesDatePickerOpen(false);
   }
 
   function populateFromEvent(ev) {
@@ -1299,6 +1436,26 @@
       return ev.refundPolicyDetails || ev.refund_policy_details || 'See organiser refund policy.';
     }
     return 'See organiser refund policy.';
+  }
+
+  function refundPolicyShortLabel(ev) {
+    const policy = ev.refundPolicy || ev.refund_policy || '';
+    if (!policy) return 'Not set';
+    if (policy === 'full_refund') {
+      const days = ev.refundCutoffDays != null ? ev.refundCutoffDays : ev.refund_cutoff_days;
+      if (Number(days) === 2 || Number(days) === 1) return 'Flexible refunds';
+      if (Number(days) === 7) return 'Standard refunds';
+      if (Number(days) === 14 || Number(days) === 3) return 'Strict refunds (B2B)';
+      return 'Full refunds available';
+    }
+    if (policy === 'partial_refund') return 'Partial refunds';
+    if (policy === 'no_refunds') return 'Non-refundable';
+    if (policy === 'custom') {
+      const policyDetails = ev.refundPolicyDetails || ev.refund_policy_details || '';
+      if (/^100% refund up to 7 days before/i.test(policyDetails)) return 'Standard refunds';
+      return 'Custom policy';
+    }
+    return 'See policy';
   }
 
   function renderRefundPolicy(ev) {
@@ -2346,6 +2503,7 @@
     const organiserEl = document.getElementById('checkout-organiser-name');
     const totalEl = document.getElementById('checkout-total-price');
     const refundEl = document.getElementById('checkout-refund-policy');
+    const refundLabelEl = document.getElementById('checkout-refund-policy-label');
     const feeNoteEl = document.getElementById('checkout-fee-note');
     const accountLine = document.getElementById('checkout-account-line');
     const secureFoot = document.getElementById('ticket-secure-foot');
@@ -2379,6 +2537,9 @@
     }
     if (refundEl && ev) {
       refundEl.textContent = refundPolicyDetailText(ev);
+    }
+    if (refundLabelEl && ev) {
+      refundLabelEl.textContent = refundPolicyShortLabel(ev);
     }
     if (feeNoteEl) feeNoteEl.hidden = isFree;
     if (accountLine) {
@@ -2615,7 +2776,7 @@
     if (status === 'Approved' && (payment === 'Paid' || payment === 'Free')) {
       return {
         title: "You're already going",
-        lead: "You're registered for this event. View your ticket in My Hub.",
+        lead: "You're registered for this date.",
       };
     }
     if (status === 'Pending') {
@@ -2635,8 +2796,28 @@
       title: eventIsCategoryExclusivity(ev) ? 'Application submitted' : "You're already going",
       lead: eventIsCategoryExclusivity(ev)
         ? "You've already applied for this event."
-        : "You're registered for this event. View your ticket in My Hub.",
+        : "You're registered for this date.",
     };
+  }
+
+  function applyAlreadyGoingStatusActions(ev, alreadyGoing) {
+    const link = document.getElementById('category-exclusivity-application-status-link');
+    const anotherBtn = document.getElementById('category-exclusivity-application-status-another-date');
+    if (!link) return;
+
+    if (alreadyGoing) {
+      link.textContent = 'View my tickets';
+      link.href = '/account/#upcoming';
+      if (anotherBtn) {
+        const showAnother = seriesHasOtherBookableDates(ev && ev.id);
+        anotherBtn.hidden = !showAnother;
+      }
+      return;
+    }
+
+    link.textContent = 'View in My Hub';
+    link.href = '/account/';
+    if (anotherBtn) anotherBtn.hidden = true;
   }
 
   function applyEventApplicationUi(ev) {
@@ -2656,6 +2837,7 @@
 
     if (!shouldShow) {
       statusPanel.hidden = true;
+      applyAlreadyGoingStatusActions(ev, false);
       updateTicketJumpBar(ev);
       return;
     }
@@ -2663,6 +2845,7 @@
     const copy = applicationStatusCopy(eventApplicationState, ev);
     if (titleEl) titleEl.textContent = copy.title;
     if (leadEl) leadEl.textContent = copy.lead;
+    applyAlreadyGoingStatusActions(ev, alreadyGoing);
     statusPanel.hidden = false;
     updateTicketJumpBar(ev);
   }

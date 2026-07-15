@@ -49,7 +49,7 @@
     <link rel="stylesheet" href="../css/hub-loading.css" />
     <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260612f" />
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
-  <link rel="stylesheet" href="../css/event-detail.css?v=20260714gvhdr" />
+  <link rel="stylesheet" href="../css/event-detail.css?v=20260715going" />
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
@@ -285,23 +285,29 @@
           </div>
           <div class="ticket-urgency" id="ev-urgency" hidden></div>
 
-          <div id="ticket-purchase-view">
           <div class="ev-series-dates" id="ev-series-dates" hidden>
             <h3 class="ev-series-dates-title">Choose a date</h3>
-            <p class="ev-series-dates-hint" id="ev-series-dates-hint"></p>
-            <div class="ev-calendar" id="ev-date-calendar">
-              <div class="ev-cal-header">
-                <button type="button" id="ev-cal-prev" aria-label="Previous month">‹</button>
-                <span class="ev-cal-month" id="ev-cal-month-label"></span>
-                <button type="button" id="ev-cal-next" aria-label="Next month">›</button>
-              </div>
-              <div class="ev-cal-weekdays" aria-hidden="true">
-                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-              </div>
-              <div class="ev-cal-days" id="ev-cal-days" aria-label="Choose an event date"></div>
+            <div class="ev-series-collapsed" id="ev-series-collapsed" hidden>
+              <p class="ev-series-selected" id="ev-series-selected" aria-live="polite"></p>
+              <button type="button" class="ev-series-change-btn" id="ev-series-change-btn">Change date</button>
             </div>
-            <p class="ev-series-selected" id="ev-series-selected" aria-live="polite"></p>
+            <div class="ev-series-picker" id="ev-series-picker">
+              <p class="ev-series-dates-hint" id="ev-series-dates-hint"></p>
+              <div class="ev-calendar" id="ev-date-calendar">
+                <div class="ev-cal-header">
+                  <button type="button" id="ev-cal-prev" aria-label="Previous month">‹</button>
+                  <span class="ev-cal-month" id="ev-cal-month-label"></span>
+                  <button type="button" id="ev-cal-next" aria-label="Next month">›</button>
+                </div>
+                <div class="ev-cal-weekdays" aria-hidden="true">
+                  <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                </div>
+                <div class="ev-cal-days" id="ev-cal-days" aria-label="Choose an event date"></div>
+              </div>
+            </div>
           </div>
+
+          <div id="ticket-purchase-view">
           <div class="ticket-tiers" id="ticket-tiers">
             <p class="ticket-load-hint">Loading tickets…</p>
           </div>
@@ -348,21 +354,31 @@
                   <dt>Total price</dt>
                   <dd id="checkout-total-price">—</dd>
                 </div>
-                <div class="checkout-precontract-row">
+                <div class="checkout-precontract-row checkout-precontract-row--refund">
                   <dt>Refund policy</dt>
-                  <dd id="checkout-refund-policy">—</dd>
+                  <dd>
+                    <details class="checkout-refund-details" id="checkout-refund-details">
+                      <summary>
+                        <span id="checkout-refund-policy-label">Read policy</span>
+                      </summary>
+                      <div class="checkout-refund-body" id="checkout-refund-policy">—</div>
+                    </details>
+                  </dd>
                 </div>
               </dl>
-              <p class="checkout-precontract-note">
-                Your contract to attend is with the event organiser named above. The Networker Hub provides the booking platform. Statutory consumer rights apply.
-              </p>
-              <p class="checkout-precontract-note checkout-data-sharing-note">
-                Your name and email will be shared with <strong id="checkout-data-sharing-organiser">the event organiser</strong> so they can manage your booking and attendance. Guest names and any dietary or accessibility details you provide are shared for the same purpose.
-                <a href="/legal-policies#privacy" target="_blank" rel="noopener noreferrer">Privacy policy</a>
-              </p>
-              <p class="checkout-precontract-note checkout-fee-note" id="checkout-fee-note" hidden>
-                The Networker Hub booking fee (platform fee) is non-refundable.
-              </p>
+              <details class="checkout-more-details">
+                <summary>Booking details &amp; privacy</summary>
+                <p class="checkout-precontract-note">
+                  Your contract to attend is with the event organiser named above. The Networker Hub provides the booking platform. Statutory consumer rights apply.
+                </p>
+                <p class="checkout-precontract-note checkout-data-sharing-note">
+                  Your name and email will be shared with <strong id="checkout-data-sharing-organiser">the event organiser</strong> so they can manage your booking and attendance. Guest names and any dietary or accessibility details you provide are shared for the same purpose.
+                  <a href="/legal-policies#privacy" target="_blank" rel="noopener noreferrer">Privacy policy</a>
+                </p>
+                <p class="checkout-precontract-note checkout-fee-note" id="checkout-fee-note" hidden>
+                  The Networker Hub booking fee (platform fee) is non-refundable.
+                </p>
+              </details>
             </div>
             <p class="checkout-account-line" id="checkout-account-line" hidden></p>
             <label class="checkout-terms-check" for="checkout-terms-agree">
@@ -473,7 +489,10 @@
             <p class="category-exclusivity-application-status-lead" id="category-exclusivity-application-status-lead">
               You've already applied for this event. We'll email you when the organiser makes a decision.
             </p>
-            <a class="category-exclusivity-application-status-link" id="category-exclusivity-application-status-link" href="/account/">View in My Hub</a>
+            <div class="category-exclusivity-application-status-actions" id="category-exclusivity-application-status-actions">
+              <a class="category-exclusivity-application-status-link category-exclusivity-application-status-link--primary" id="category-exclusivity-application-status-link" href="/account/#upcoming">View my tickets</a>
+              <button type="button" class="category-exclusivity-application-status-secondary" id="category-exclusivity-application-status-another-date" hidden>Book another date</button>
+            </div>
           </div>
 
           <p class="refund-badge" id="ev-refund-badge" hidden></p>
@@ -520,7 +539,7 @@
     <script src="../js/review-report.js?v=20260609"></script>
     <script src="../js/hub-favourites.js?v=20260629"></script>
     <script src="../js/booking-fees.js?v=20260715gvleft"></script>
-    <script src="../js/event-detail.js?v=20260715pos"></script>
+    <script src="../js/event-detail.js?v=20260715gvleft2"></script>
     <div id="hub-site-footer"></div>
 
     <div class="hub-modal application-success-modal" id="application-success-modal" role="dialog" aria-modal="true" aria-labelledby="application-success-title" hidden>
