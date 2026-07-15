@@ -91,7 +91,7 @@
     '<p class="footer-copy">' +
     '© ' +
     new Date().getFullYear() +
-    ' The Networker Group Ltd · Registered in England &amp; Wales (Company No. 15252227) · VAT No. 454 4092 94<br>' +
+    ' The Networker Group Ltd · Registered in England &amp; Wales (Company No. 15252227) · <span class="nowrap">VAT No. 454&nbsp;4092&nbsp;94</span><br>' +
     'Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF' +
     '</p>' +
     '</div>' +

@@ -1018,6 +1018,10 @@ body.hub-page-account .site-nav {
   color: var(--text-soft);
 }
 
+.nowrap {
+  white-space: nowrap;
+}
+
 .footer-cookie-settings {
   font-family: inherit;
   font-size: 13px;
