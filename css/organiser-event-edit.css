@@ -904,8 +904,16 @@ a.ee-wizard-link:hover {
   margin-top: 14px;
 }
 
-.ee-guest-opt-out-hint {
+.ee-guest-member-only {
+  margin: 8px 0 0;
+}
+
+.ee-guest-member-only p {
   margin: 6px 0 0;
+}
+
+.ee-guest-member-only p:last-child {
+  margin-bottom: 0;
 }
 
 @media (max-width: 720px) {

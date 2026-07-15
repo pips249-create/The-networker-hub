@@ -89,14 +89,20 @@
                 />
                 <p class="ee-hint" id="ee-guest-visits-max">Hub maximum: 3</p>
               </div>
-              <div id="ee-guest-passes-opt-out">
+              <div id="ee-guest-passes-opt-out" data-hub-tip="member-only-event">
                 <label class="ee-check">
-                  <input type="checkbox" id="ee-guest-passes-disabled" />
+                  <input type="checkbox" id="ee-guest-passes-disabled" aria-describedby="ee-member-only-explainer" />
                   <span>Member-only for this event</span>
                 </label>
-                <p class="ee-hint ee-guest-opt-out-hint">
-                  Turn off guest passes for this date only (e.g. conferences). Paid member tickets stay available.
-                </p>
+                <div class="ee-info-box ee-guest-member-only" id="ee-member-only-explainer">
+                  <strong>What this means</strong>
+                  <p>
+                    Hides complimentary guest passes on <em>this date only</em>. Paid member tickets stay on sale and anyone can book them straight away &mdash; even newcomers who still have free visits left on your organiser page.
+                  </p>
+                  <p>
+                    Your guest visit programme stays active for your other events. Tick this for conferences, member evenings, or any date where you want paying attendees only.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
