@@ -96,9 +96,9 @@
       label: 'D · Dual CTA',
       layout: 'dual-cta',
       strategy: 'Split the journey in the headline',
-      note: '"Find your next\u2026" stays open, then two equal CTA pills let visitors self-select events vs opportunities, each with a short explainer underneath.',
-      kicker: 'This hub lets you find networking meetings, conferences, business opportunities, side hustles, training and so much more.',
-      kickerCta: 'Get started',
+      note: '"Find your next\u2026" with a short hub explainer, then two coloured CTA pills for events vs opportunities.',
+      lede: 'This hub lets you find networking meetings, conferences, business opportunities, side hustles, training and so much more.',
+      ledeCta: 'Get started',
       titleLine: 'Find your next\u2026',
       tagline: '',
       ctaPills: [
@@ -209,22 +209,19 @@
   }
 
   function renderDualCtaHero(variant) {
-    var kickerHtml = variant.kickerCta
-      ? '<p class="home-hero-kicker home-hero-kicker--lede">' +
-        esc(variant.kicker) +
-        ' <a class="home-hero-kicker-cta" href="/events/">' +
-        esc(variant.kickerCta) +
-        '</a></p>'
-      : '<p class="home-hero-kicker">' + esc(variant.kicker) + '</p>';
-
     return (
       '<header class="home-hero-copy home-hero-copy--dual-cta">' +
-      kickerHtml +
       '<h1 class="hero-title hero-title--dual-cta">' +
       '<span class="hero-title-line">' +
       esc(variant.titleLine) +
       '</span>' +
       '</h1>' +
+      '<p class="home-hero-lede">' +
+      esc(variant.lede) +
+      '</p>' +
+      (variant.ledeCta
+        ? '<a class="home-hero-lede-cta" href="/events/">' + esc(variant.ledeCta) + '</a>'
+        : '') +
       renderDualCtaPills(variant.ctaPills) +
       (variant.tagline
         ? '<p class="hero-tagline hero-tagline--dual-cta">' + esc(variant.tagline) + '</p>'

@@ -176,47 +176,69 @@
 }
 
 /* Option D — dual headline CTAs */
-.home-page .home-hero-kicker--lede {
-  display: block;
-  max-width: 36rem;
-  margin: 0 auto 14px;
-  padding: 12px 18px;
-  font-size: 0.92rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  line-height: 1.45;
-  text-transform: none;
-  white-space: normal;
-  text-wrap: pretty;
-  animation: none;
-}
-
-.home-page .home-hero-kicker-cta {
-  display: inline;
-  margin-left: 0.15em;
-  font-weight: 700;
-  color: #fff8ec;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  text-decoration-color: rgba(255, 248, 236, 0.55);
-}
-
-.home-page .home-hero-kicker-cta:hover {
-  color: #fff;
-  text-decoration-color: #fff;
+.home-page .home-hero-copy--dual-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .home-page .hero-title--dual-cta {
-  margin-bottom: 6px;
+  margin-bottom: 12px;
+}
+
+.home-page .home-hero-lede {
+  max-width: 32rem;
+  margin: 0 auto 18px;
+  padding: 0;
+  font-size: clamp(1rem, 2.1vw, 1.12rem);
+  font-weight: 500;
+  line-height: 1.55;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.94);
+  text-align: center;
+  text-wrap: pretty;
+  text-shadow: 0 1px 3px rgba(45, 35, 50, 0.35);
+}
+
+.home-page .home-hero-lede-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 22px;
+  padding: 11px 22px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 8px 22px rgba(45, 35, 50, 0.18);
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.home-page .home-hero-lede-cta:hover {
+  background: rgba(255, 255, 255, 0.26);
+  border-color: rgba(255, 255, 255, 0.65);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.home-page .home-hero-lede-cta:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
 }
 
 .home-page .home-hero-cta-pills {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
   width: 100%;
-  max-width: 40rem;
-  margin: 18px auto 0;
+  max-width: 42rem;
+  margin: 0 auto;
 }
 
 .home-page .home-hero-cta-pill {
@@ -224,10 +246,10 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 112px;
-  padding: 18px 16px 16px;
-  border-radius: 999px;
+  gap: 8px;
+  min-height: 118px;
+  padding: 22px 20px 20px;
+  border-radius: 28px;
   border: 1px solid transparent;
   box-shadow: 0 14px 34px rgba(45, 35, 50, 0.16);
   text-align: center;
@@ -236,13 +258,13 @@
 }
 
 .home-page .home-hero-cta-pill--gold {
-  background: linear-gradient(145deg, #fff8ec 0%, #f5d998 52%, #e8c47a 100%);
-  border-color: rgba(184, 149, 106, 0.55);
+  background: linear-gradient(155deg, #fff8ec 0%, #f5d998 55%, #e8c47a 100%);
+  border-color: rgba(184, 149, 106, 0.5);
   color: var(--charcoal);
 }
 
 .home-page .home-hero-cta-pill--gold:hover {
-  background: linear-gradient(145deg, #fffaf0 0%, #f8e2a8 52%, #edc98a 100%);
+  background: linear-gradient(155deg, #fffaf0 0%, #f8e2a8 55%, #edc98a 100%);
   border-color: var(--gold);
   color: var(--charcoal);
 }
@@ -256,14 +278,14 @@
 }
 
 .home-page .home-hero-cta-pill--purple {
-  background: linear-gradient(145deg, #8f7199 0%, #7d6585 48%, #6b5578 100%);
+  background: linear-gradient(155deg, #947a9e 0%, #7d6585 48%, #6b5578 100%);
   border-color: rgba(255, 255, 255, 0.22);
   color: var(--brand-cream);
   box-shadow: 0 14px 34px rgba(45, 35, 50, 0.22);
 }
 
 .home-page .home-hero-cta-pill--purple:hover {
-  background: linear-gradient(145deg, #9a7aa8 0%, #877092 48%, #756083 100%);
+  background: linear-gradient(155deg, #9a7aa8 0%, #877092 48%, #756083 100%);
   border-color: rgba(255, 255, 255, 0.35);
   color: #fff;
 }
@@ -289,20 +311,18 @@
 .home-page .home-hero-cta-pill-label {
   display: block;
   font-family: var(--font-serif, 'DM Serif Display', Georgia, serif);
-  font-size: clamp(1.05rem, 2.4vw, 1.28rem);
+  font-size: clamp(1.08rem, 2.4vw, 1.32rem);
   font-weight: 400;
   line-height: 1.15;
   letter-spacing: -0.01em;
-  color: var(--charcoal);
 }
 
 .home-page .home-hero-cta-pill-detail {
   display: block;
-  max-width: 16rem;
-  font-size: 12px;
+  max-width: 17rem;
+  font-size: 0.8rem;
   line-height: 1.45;
   font-weight: 500;
-  color: var(--text-muted);
 }
 
 .home-page .hero-tagline--dual-cta {
@@ -311,7 +331,7 @@
 }
 
 .home-page .home-hero-search-note--dual-cta {
-  margin-top: 14px;
+  margin-top: 16px;
 }
 
 @media (max-width: 720px) {
@@ -335,7 +355,13 @@
   }
 
   .home-page .home-hero-cta-pill {
-    min-height: 96px;
-    padding: 16px 18px 14px;
+    min-height: 100px;
+    padding: 18px 18px 16px;
+    border-radius: 24px;
+  }
+
+  .home-page .home-hero-lede {
+    margin-bottom: 14px;
+    font-size: 0.98rem;
   }
 }
