@@ -105,11 +105,13 @@
           href: '/events/',
           label: 'UK networking event',
           detail: 'Breakfast meetings, conferences, training, and exhibitions near you.',
+          tone: 'gold',
         },
         {
           href: '/opportunities/',
           label: 'UK business opportunity',
           detail: 'Franchises, partnerships, side hustles, and deals to explore.',
+          tone: 'purple',
         },
       ],
     },
@@ -184,8 +186,11 @@
       '<div class="home-hero-cta-pills" role="group" aria-label="Choose where to start">' +
       pills
         .map(function (pill) {
+          var toneClass = pill.tone ? ' home-hero-cta-pill--' + pill.tone : '';
           return (
-            '<a class="home-hero-cta-pill" href="' +
+            '<a class="home-hero-cta-pill' +
+            toneClass +
+            '" href="' +
             esc(pill.href) +
             '">' +
             '<span class="home-hero-cta-pill-label">' +
