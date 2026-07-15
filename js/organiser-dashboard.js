@@ -25,6 +25,9 @@
     ticketsScope: 'current',
     reviewsGroup: 'all',
     attendeesEvent: 'all',
+    attendeesSearch: '',
+    attendeesStatus: 'all',
+    attendeesHideArchived: true,
     attendeesPendingOnly: false,
     attendeesRelationship: 'all',
     attendeesView: 'active',
@@ -138,6 +141,7 @@
       id: ev.id,
       title: ev.title,
       date: ev.date || null,
+      statusKey: ev.statusKey || ev.status || null,
     }));
   }
 
@@ -1723,6 +1727,9 @@
         '<a class="org-action-item" href="../events/organiser?id=' +
         esc(id) +
         '" target="_blank" rel="noopener noreferrer"><span class="org-action-icon">↗</span><span class="org-action-text"><strong>View public profile</strong><span>See your group page and ranking badge</span></span></a>' +
+        '<a class="org-action-item" href="/organiser/member-roster?id=' +
+        esc(id) +
+        '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>Member roster</strong><span>Upload members for members-only tickets</span></span></a>' +
         '<button type="button" class="org-action-item" data-add-event-for-group="' +
         esc(id) +
         '"><span class="org-action-icon">📅</span><span class="org-action-text"><strong>Add an event</strong><span>List a new event for this group</span></span></button>' +
@@ -2314,8 +2321,44 @@
           )
       );
     }
+    if (filters.attendeesHideArchived && filters.attendeesEvent === 'all') {
+      const archivedEventIds = new Set(
+        allEventOptions()
+          .filter((ev) => String(ev.statusKey || '').toLowerCase() === 'archived')
+          .map((ev) => ev.id)
+      );
+      list = list.filter((a) => !archivedEventIds.has(a.eventId));
+    }
     if (filters.attendeesEvent !== 'all') {
       list = list.filter((a) => a.eventId === filters.attendeesEvent);
+    }
+    const search = String(filters.attendeesSearch || '').trim().toLowerCase();
+    if (search) {
+      list = list.filter((a) =>
+        [
+          a.name,
+          a.email,
+          a.company,
+          a.jobTitle,
+          a.screeningJobTitle,
+          a.eventTitle,
+          a.ticketName,
+          ...(a.guestNames || []),
+        ].some((value) => String(value || '').toLowerCase().includes(search))
+      );
+    }
+    if (filters.attendeesStatus === 'pending') {
+      list = list.filter((a) => String(a.applicationStatus || '') === 'Pending');
+    } else if (filters.attendeesStatus === 'awaiting_payment') {
+      list = list.filter(
+        (a) => String(a.applicationStatus || 'Approved') === 'Approved' && a.needsPayment
+      );
+    } else if (filters.attendeesStatus === 'confirmed') {
+      list = list.filter(
+        (a) =>
+          String(a.applicationStatus || 'Approved') === 'Approved' &&
+          !a.needsPayment
+      );
     }
     if (filters.attendeesPendingOnly) {
       list = list.filter((a) => String(a.applicationStatus || '') === 'Pending');
@@ -2373,12 +2416,21 @@
     const sel = document.getElementById('filter-attendees-event');
     if (!sel) return;
     sel.innerHTML = '<option value="all">All events</option>';
-    allEventOptions().forEach((ev) => {
-      const opt = document.createElement('option');
-      opt.value = ev.id;
-      opt.textContent = eventFilterOptionLabel(ev);
-      sel.appendChild(opt);
-    });
+    allEventOptions()
+      .filter(
+        (ev) =>
+          !filters.attendeesHideArchived ||
+          String(ev.statusKey || '').toLowerCase() !== 'archived' ||
+          ev.id === filters.attendeesEvent
+      )
+      .forEach((ev) => {
+        const opt = document.createElement('option');
+        opt.value = ev.id;
+        opt.textContent =
+          eventFilterOptionLabel(ev) +
+          (String(ev.statusKey || '').toLowerCase() === 'archived' ? ' · Archived' : '');
+        sel.appendChild(opt);
+      });
     sel.value = filters.attendeesEvent;
   }
 
@@ -8116,11 +8168,49 @@
       });
     }
 
+    const attendeesSearchFilter = document.getElementById('filter-attendees-search');
+    if (attendeesSearchFilter) {
+      attendeesSearchFilter.addEventListener('input', () => {
+        filters.attendeesSearch = attendeesSearchFilter.value;
+        listPages.attendees = 1;
+        renderAttendees();
+      });
+    }
+
+    const attendeesStatusFilter = document.getElementById('filter-attendees-status');
+    if (attendeesStatusFilter) {
+      attendeesStatusFilter.addEventListener('change', () => {
+        filters.attendeesStatus = attendeesStatusFilter.value;
+        listPages.attendees = 1;
+        renderAttendees();
+      });
+    }
+
     const attendeesRelationshipFilter = document.getElementById('filter-attendees-relationship');
     if (attendeesRelationshipFilter) {
       attendeesRelationshipFilter.addEventListener('change', () => {
         filters.attendeesRelationship = attendeesRelationshipFilter.value;
         listPages.attendees = 1;
+        renderAttendees();
+      });
+    }
+
+    const attendeesHideArchivedFilter = document.getElementById(
+      'filter-attendees-hide-archived'
+    );
+    if (attendeesHideArchivedFilter) {
+      attendeesHideArchivedFilter.checked = filters.attendeesHideArchived !== false;
+      attendeesHideArchivedFilter.addEventListener('change', () => {
+        filters.attendeesHideArchived = attendeesHideArchivedFilter.checked;
+        const selectedEvent = allEventOptions().find((ev) => ev.id === filters.attendeesEvent);
+        if (
+          filters.attendeesHideArchived &&
+          String(selectedEvent?.statusKey || '').toLowerCase() === 'archived'
+        ) {
+          filters.attendeesEvent = 'all';
+        }
+        listPages.attendees = 1;
+        fillAttendeesEventFilter();
         renderAttendees();
       });
     }

@@ -23,6 +23,15 @@ Per **organiser page** (group profile), organisers maintain a **Member Roster** 
 - Registration and login claim every active, unexpired roster row matching the account email.
 - Once booked, member tickets use the same confirmation, reminder, event update, cancellation, refund, online-link and post-event review lifecycle as standard confirmed tickets.
 
+## Smoke test
+
+```bash
+npm run check:member-roster:local
+# or: node scripts/smoke-test-member-roster.js http://localhost:3000
+```
+
+Uses `ADMIN_EMAIL` / `ADMIN_INITIAL_PASSWORD` (or `SMOKE_ORGANISER_*`) from `local.env`. Optional: `SMOKE_ATTENDEE_EMAIL` + `SMOKE_ATTENDEE_PASSWORD` for eligibility / My groups checks.
+
 ## Out of scope
 
 - Stripe membership renewals / chapter SaaS billing

@@ -823,14 +823,31 @@
               </p>
             </div>
             <div class="org-filter-bar">
+              <input
+                type="search"
+                class="org-table-search"
+                id="filter-attendees-search"
+                placeholder="Search name, email or company…"
+                aria-label="Search attendees"
+              />
               <select id="filter-attendees-event" aria-label="Filter by event">
                 <option value="all">All events</option>
+              </select>
+              <select id="filter-attendees-status" aria-label="Filter by registration status">
+                <option value="all">All statuses</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="pending">Application pending</option>
+                <option value="awaiting_payment">Awaiting payment</option>
               </select>
               <select id="filter-attendees-relationship" aria-label="Filter by organiser page relationship">
                 <option value="all">All attendees</option>
                 <option value="new">New to your group</option>
                 <option value="returning">Returning</option>
               </select>
+              <label class="org-filter-check">
+                <input type="checkbox" id="filter-attendees-hide-archived" checked />
+                Hide archived events
+              </label>
               <button type="button" class="org-btn org-btn-gold" id="btn-download-attendees-csv">
                 ⬇ Download attendees CSV
               </button>

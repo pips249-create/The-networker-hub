@@ -311,21 +311,35 @@ async function listEventSummariesForOrganiserGroups(groupIds, allEvents) {
   const ids = groupIds || [];
   if (!ids.length && !allEvents) return [];
   const sb = getSupabaseAdmin();
-  let query = sb.from('events').select('id, title, organiser_id, starts_at').order('starts_at', {
-    ascending: false,
-  });
+  let query = sb
+    .from('events')
+    .select('id, title, organiser_id, starts_at, ends_at, status, approval_status')
+    .order('starts_at', {
+      ascending: false,
+    });
   if (!allEvents) {
     if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
     else query = query.in('organiser_id', ids);
   }
   const { data, error } = await query;
   if (error) throw new Error(error.message);
-  return (data || []).map((row) => ({
-    id: row.id,
-    title: String(row.title || 'Untitled event').trim(),
-    organiserId: row.organiser_id || null,
-    date: row.starts_at || null,
-  }));
+  return (data || []).map((row) => {
+    const listingStatus = deriveListingStatus(
+      row.approval_status,
+      row.starts_at,
+      row.status,
+      row.ends_at
+    );
+    return {
+      id: row.id,
+      title: String(row.title || 'Untitled event').trim(),
+      organiserId: row.organiser_id || null,
+      date: row.starts_at || null,
+      endDate: row.ends_at || null,
+      statusKey: listingStatus.key,
+      statusLabel: listingStatus.label,
+    };
+  });
 }
 
 function applyGroupSalesSummary(groups, summary) {
