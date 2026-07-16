@@ -268,6 +268,7 @@
     renderHubPortalMeta();
     renderOrganiserRankingBanner();
     renderOrganiserRankingShareIfNeeded();
+    if (state.opportunitiesLoaded) renderOpportunityRoiInsights();
   }
 
   function renderOrganiserRankingShareIfNeeded() {
@@ -1655,8 +1656,8 @@
             : newEnquiries + ' new business opportunity enquiries',
         text:
           newEnquiries === 1
-            ? 'A member sent a message about one of your opportunity listings. Reply from your workspace while the lead is still warm.'
-            : 'Members have sent new messages about your opportunity listings. Review and reply from Enquiries received.',
+            ? 'A member sent a message about one of your business opportunities. Reply from your workspace while the lead is still warm.'
+            : 'Members have sent new messages about your business opportunities. Review and reply from Enquiries received.',
         actions:
           '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="business-overview">View enquiries</button>',
       });
@@ -2736,7 +2737,7 @@
         state.upcomingEvents = data.upcomingEvents || [];
         state.tickets = data.tickets || [];
         if (data.groups && data.groups.length) {
-          state.groups = data.groups;
+          state.groups = dedupeGroupsById(data.groups);
         }
         state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
         state.eventsChunkOffset = data.eventsPagination?.offset ?? 0;
@@ -6259,8 +6260,19 @@
     alertEl.innerHTML = message;
   }
 
+  function dedupeGroupsById(groups) {
+    const seen = new Set();
+    const out = [];
+    (groups || []).forEach(function (g) {
+      if (!g || !g.id || seen.has(g.id)) return;
+      seen.add(g.id);
+      out.push(g);
+    });
+    return out;
+  }
+
   function memberListGroups() {
-    return (state.groups || []).filter((g) => g && g.id);
+    return dedupeGroupsById(state.groups);
   }
 
   function memberRosterUrl(groupId) {
@@ -6364,7 +6376,6 @@
       return;
     }
     setRoute('memberships');
-    renderMembershipsPage();
   }
 
   function sidebarRouteForPage(page, sub) {
@@ -6412,6 +6423,7 @@
       return;
     }
     let page = route || 'dashboard';
+    if (page === 'member-lists') page = 'memberships';
     let sub = null;
     if (route === 'opportunity-enquiries' || route === 'business-overview') {
       page = 'business-overview';
@@ -6466,11 +6478,13 @@
       requestAnimationFrame(function () {
         loadOpportunityEnquiries();
         loadOpportunitiesList();
+        loadOpportunityPremiumSlots();
       });
     }
     if (page === 'business-list') {
       requestAnimationFrame(function () {
         loadOpportunityEnquiries();
+        loadOpportunityPremiumSlots();
         loadOpportunitiesList().then(function () {
           renderOpportunityPerformance();
           updateBusinessListPageHead();
@@ -6555,6 +6569,7 @@
     pendingDeleteEventId = null;
     pendingDuplicateEventId = null;
     pendingDuplicateGroupId = null;
+    pendingOpportunityEnquiry = null;
     const duplicateConfirmBtn = document.getElementById('btn-event-duplicate-confirm');
     if (duplicateConfirmBtn) duplicateConfirmBtn.disabled = false;
     const groupDuplicateConfirmBtn = document.getElementById('btn-group-duplicate-confirm');
@@ -8403,6 +8418,435 @@
     return (enquiries || []).filter((e) => String(e.status || '').toLowerCase() === 'new').length;
   }
 
+  const OPPORTUNITY_LISTING_MONTHLY_INC_VAT_PENCE = 3000;
+  const OPPORTUNITY_PREMIUM_MONTHLY_PENCE = 5500;
+  const OPPORTUNITY_LISTING_MIN_MONTHS = 3;
+  const BUSINESS_INTRO_COLLAPSE_KEY = 'hub_org_business_intro_collapsed_v1';
+  const OPPORTUNITY_ENQUIRY_TEMPLATES = {
+    thanks:
+      'Hi {{name}},\n\nThank you for your enquiry about "{{title}}".\n\n',
+    call:
+      'Hi {{name}},\n\nThanks for getting in touch about "{{title}}". I would love to arrange a quick call — what times work for you this week?\n\n',
+    info:
+      'Hi {{name}},\n\nThank you for your interest in "{{title}}". Here is a bit more information:\n\n[Add details]\n\n',
+  };
+  let opportunityEnquiryFilterId = null;
+  let businessIntroPanelBound = false;
+  let opportunityPremiumSlots = null;
+  let pendingOpportunityEnquiry = null;
+  let opportunityEnquiryReplyBound = false;
+
+  function formatPenceGbp(pence) {
+    const pounds = pence / 100;
+    if (pence % 100 === 0) return '£' + String(Math.round(pounds));
+    return '£' + pounds.toFixed(2);
+  }
+
+  function opportunityListingSpendPence(opportunity) {
+    const months = Number(opportunity?.listingMonths);
+    if (Number.isFinite(months) && months > 0) {
+      return months * OPPORTUNITY_LISTING_MONTHLY_INC_VAT_PENCE;
+    }
+    const paid = opportunity?.listingPaidAt ? new Date(opportunity.listingPaidAt) : null;
+    const expires = opportunity?.listingExpiresAt ? new Date(opportunity.listingExpiresAt) : null;
+    if (paid && !Number.isNaN(paid.getTime()) && expires && !Number.isNaN(expires.getTime())) {
+      const ms = Math.max(expires.getTime() - paid.getTime(), 0);
+      const estMonths = Math.max(
+        OPPORTUNITY_LISTING_MIN_MONTHS,
+        Math.round(ms / (30 * 86400000))
+      );
+      return estMonths * OPPORTUNITY_LISTING_MONTHLY_INC_VAT_PENCE;
+    }
+    return OPPORTUNITY_LISTING_MIN_MONTHS * OPPORTUNITY_LISTING_MONTHLY_INC_VAT_PENCE;
+  }
+
+  function opportunityPremiumMonthsEstimate(opportunity) {
+    if (!opportunity?.featured && !opportunity?.featuredUntil) return 0;
+    const until = opportunity.featuredUntil ? new Date(opportunity.featuredUntil) : null;
+    if (!until || Number.isNaN(until.getTime())) return opportunity.featured ? 1 : 0;
+    const now = Date.now();
+    if (opportunity.featured && until.getTime() > now) {
+      const remaining = Math.ceil((until.getTime() - now) / (30 * 86400000));
+      return Math.max(1, remaining + 1);
+    }
+    if (until.getTime() <= now) return 1;
+    return 1;
+  }
+
+  function opportunityPremiumSpendPence(opportunity) {
+    return opportunityPremiumMonthsEstimate(opportunity) * OPPORTUNITY_PREMIUM_MONTHLY_PENCE;
+  }
+
+  function opportunityTotalSpendPence(opportunity) {
+    return opportunityListingSpendPence(opportunity) + opportunityPremiumSpendPence(opportunity);
+  }
+
+  function opportunityCostPerEnquiryPence(opportunity, enquiryCount) {
+    const count = Math.max(0, Number(enquiryCount) || 0);
+    if (!count) return null;
+    return Math.round(opportunityTotalSpendPence(opportunity) / count);
+  }
+
+  function opportunityPremiumBadgeHtml(opportunity) {
+    const meta = opportunityPremiumMeta(opportunity);
+    if (meta.tone === 'muted') return '';
+    const cls =
+      meta.tone === 'warn'
+        ? 'org-opp-premium-badge is-warn'
+        : meta.tone === 'ok'
+          ? 'org-opp-premium-badge is-active'
+          : 'org-opp-premium-badge';
+    return (
+      '<span class="' +
+      cls +
+      '" title="Premium spotlight placement">Spotlight · ' +
+      esc(meta.label) +
+      '</span>'
+    );
+  }
+
+  function opportunityPremiumCellHtml(opportunity) {
+    const meta = opportunityPremiumMeta(opportunity);
+    if (meta.tone !== 'muted') {
+      const cls =
+        meta.tone === 'warn'
+          ? 'org-opp-premium is-warn'
+          : meta.tone === 'ok'
+            ? 'org-opp-premium is-active'
+            : 'org-opp-premium';
+      return '<span class="' + cls + '">' + esc(meta.label) + '</span>';
+    }
+    if (opportunityCanUpgradePremium(opportunity)) {
+      const slots = opportunityPremiumSlots;
+      if (slots && slots.full) {
+        return '<span class="org-opp-premium-upsell-muted" title="All spotlight places are taken">Full</span>';
+      }
+      return (
+        '<button type="button" class="org-opp-premium-upsell-link" data-opp-premium-upgrade="' +
+        esc(opportunity.id) +
+        '">Add spotlight</button>'
+      );
+    }
+    return '<span class="muted">—</span>';
+  }
+
+  function opportunityRoiFootnoteHtml(opportunity, enquiryCount) {
+    const per = opportunityCostPerEnquiryPence(opportunity, enquiryCount);
+    if (!per) return '';
+    const saves = opportunitySaveCount(opportunity);
+    const parts = [
+      '<span class="org-opp-roi-metric" title="Estimated from listing and premium spend">' +
+        esc(formatPenceGbp(per)) +
+        ' per enquiry</span>',
+    ];
+    if (opportunityPremiumSpendPence(opportunity) > 0) {
+      parts.push(
+        '<span class="org-opp-roi-metric org-opp-roi-metric--muted">includes premium</span>'
+      );
+    }
+    if (saves > 0 && enquiryCount > 0) {
+      const rate = Math.round((enquiryCount / saves) * 100);
+      parts.push(
+        '<span class="org-opp-roi-metric org-opp-roi-metric--muted">' +
+          esc(String(rate)) +
+          '% of savers enquired</span>'
+      );
+    }
+    return '<p class="org-opp-listing-card-roi">' + parts.join('') + '</p>';
+  }
+
+  function renderOpportunityRoiInsights() {
+    const mount = document.getElementById('org-opp-roi-insights');
+    if (!mount) return;
+    const listings = state.opportunities || [];
+    if (!listings.length) {
+      mount.hidden = true;
+      mount.innerHTML = '';
+      return;
+    }
+    let totalSpend = 0;
+    let totalEnquiries = 0;
+    let totalSaves = 0;
+    let hasPremiumSpend = false;
+    listings.forEach(function (o) {
+      const enquiries = opportunityEnquiriesForListing(o.id);
+      totalSpend += opportunityTotalSpendPence(o);
+      if (opportunityPremiumSpendPence(o) > 0) hasPremiumSpend = true;
+      totalEnquiries += enquiries.length;
+      totalSaves += opportunitySaveCount(o);
+    });
+    if (!totalEnquiries) {
+      mount.hidden = true;
+      mount.innerHTML = '';
+      return;
+    }
+    const avgPerEnquiry = Math.round(totalSpend / totalEnquiries);
+    const saveRate =
+      totalSaves > 0 ? Math.round((totalEnquiries / totalSaves) * 100) : null;
+    mount.hidden = false;
+    mount.innerHTML =
+      '<p><strong>Business opportunities ROI:</strong> ' +
+      esc(formatPenceGbp(avgPerEnquiry)) +
+      ' average cost per enquiry across your business opportunities' +
+      (hasPremiumSpend ? ' (listing + premium spend)' : '') +
+      '.' +
+      (saveRate != null
+        ? ' ' + esc(String(saveRate)) + '% of members who saved a business opportunity also enquired.'
+        : '') +
+      '</p>';
+  }
+
+  function opportunityCanUpgradePremium(opportunity) {
+    const status = String(opportunity?.status || '').toLowerCase();
+    if (status !== 'published' && status !== 'live') return false;
+    return opportunityPremiumMeta(opportunity).tone === 'muted';
+  }
+
+  function opportunityPremiumUpsellHtml(opportunity) {
+    if (!opportunityCanUpgradePremium(opportunity)) return '';
+    const slots = opportunityPremiumSlots;
+    if (slots && slots.full) {
+      return (
+        '<button type="button" class="org-btn org-btn-outline org-btn-sm org-opp-premium-upsell is-disabled" disabled title="All spotlight places are taken">Spotlight full</button>'
+      );
+    }
+    const slotHint =
+      slots && slots.available > 0 && slots.available <= 3
+        ? ' title="Only ' +
+          esc(String(slots.available)) +
+          ' spotlight ' +
+          (slots.available === 1 ? 'place' : 'places') +
+          ' left"'
+        : '';
+    return (
+      '<button type="button" class="org-btn org-btn-outline org-btn-sm org-opp-premium-upsell"' +
+      slotHint +
+      ' data-opp-premium-upgrade="' +
+      esc(opportunity.id) +
+      '">Upgrade to spotlight</button>'
+    );
+  }
+
+  async function loadOpportunityPremiumSlots() {
+    try {
+      const res = await fetch('/api/opportunities?meta=premium-slots', { cache: 'no-store' });
+      const data = await res.json();
+      if (res.ok && data.premiumSlots) {
+        opportunityPremiumSlots = data.premiumSlots;
+        if (state.opportunitiesLoaded) renderOpportunitiesList();
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async function startOpportunityPremiumCheckout(opportunityId, triggerBtn) {
+    if (!opportunityId) return;
+    const btn = triggerBtn || null;
+    const prevLabel = btn ? btn.textContent : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Opening checkout…';
+    }
+    try {
+      const { ok, data } = await api('/api/organiser/opportunity-premium-checkout', {
+        method: 'POST',
+        body: JSON.stringify({ opportunityId: opportunityId }),
+      });
+      if (ok && data.ok && data.url) {
+        location.href = data.url;
+        return;
+      }
+      const msg =
+        data.error === 'premium_slots_full'
+          ? data.message || 'All spotlight places are taken — try again later.'
+          : data.message || data.error || 'Could not start checkout.';
+      window.alert(msg);
+    } catch {
+      window.alert('Could not reach checkout. Try again in a moment.');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = prevLabel || 'Upgrade to spotlight';
+      }
+    }
+  }
+
+  function fillEnquiryReplyTemplate(enquiry, templateKey) {
+    let body = OPPORTUNITY_ENQUIRY_TEMPLATES[templateKey] || OPPORTUNITY_ENQUIRY_TEMPLATES.thanks;
+    body = body
+      .replace(/\{\{name\}\}/g, enquiry.enquirerName || 'there')
+      .replace(/\{\{title\}\}/g, enquiry.opportunityTitle || 'our business opportunity');
+    return body;
+  }
+
+  function buildEnquiryReplyMailto(enquiry, body) {
+    const subject = 'Re: ' + (enquiry.opportunityTitle || 'your enquiry');
+    return (
+      'mailto:' +
+      encodeURIComponent(enquiry.enquirerEmail || '') +
+      '?subject=' +
+      encodeURIComponent(subject) +
+      '&body=' +
+      encodeURIComponent(body || '')
+    );
+  }
+
+  function openOpportunityEnquiryReplyModal(enquiry) {
+    pendingOpportunityEnquiry = enquiry;
+    const modal = document.getElementById('modal-opp-enquiry-reply');
+    const sub = document.getElementById('modal-opp-enquiry-reply-sub');
+    const to = document.getElementById('modal-opp-enquiry-reply-to');
+    const msg = document.getElementById('modal-opp-enquiry-reply-message');
+    const template = document.getElementById('modal-opp-enquiry-reply-template');
+    const err = document.getElementById('modal-opp-enquiry-reply-error');
+    if (!modal || !msg) return;
+    if (sub) {
+      sub.textContent =
+        'Reply to ' +
+        (enquiry.enquirerName || 'member') +
+        ' about "' +
+        (enquiry.opportunityTitle || 'your business opportunity') +
+        '"';
+    }
+    if (to) to.textContent = enquiry.enquirerEmail || '—';
+    if (template) template.value = 'thanks';
+    msg.value = fillEnquiryReplyTemplate(enquiry, 'thanks');
+    if (err) err.hidden = true;
+    modal.hidden = false;
+    modal.removeAttribute('hidden');
+    modal.classList.add('is-open');
+    msg.focus();
+  }
+
+  function bindOpportunityEnquiryReplyModal() {
+    if (opportunityEnquiryReplyBound) return;
+    const template = document.getElementById('modal-opp-enquiry-reply-template');
+    const msg = document.getElementById('modal-opp-enquiry-reply-message');
+    const sendBtn = document.getElementById('modal-opp-enquiry-reply-send');
+    const copyBtn = document.getElementById('modal-opp-enquiry-reply-copy');
+    if (!sendBtn && !copyBtn && !(template && msg)) return;
+    opportunityEnquiryReplyBound = true;
+
+    if (template && msg) {
+      template.addEventListener('change', function () {
+        if (!pendingOpportunityEnquiry) return;
+        msg.value = fillEnquiryReplyTemplate(pendingOpportunityEnquiry, template.value);
+      });
+    }
+
+    if (sendBtn) {
+      sendBtn.addEventListener('click', async function () {
+        if (!pendingOpportunityEnquiry) return;
+        const body = msg ? msg.value.trim() : '';
+        const err = document.getElementById('modal-opp-enquiry-reply-error');
+        if (!body) {
+          if (err) {
+            err.hidden = false;
+            err.textContent = 'Add a message before sending.';
+          }
+          return;
+        }
+        const enquiry = pendingOpportunityEnquiry;
+        sendBtn.disabled = true;
+        try {
+          await markOpportunityEnquiryResponded(enquiry.id);
+          renderStats();
+          window.location.href = buildEnquiryReplyMailto(enquiry, body);
+          closeModals();
+        } catch (e) {
+          if (err) {
+            err.hidden = false;
+            err.textContent =
+              (e && e.message) || 'Could not update enquiry status. Try again or use your email app directly.';
+          }
+        } finally {
+          sendBtn.disabled = false;
+        }
+      });
+    }
+
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function () {
+        const body = msg ? msg.value : '';
+        if (!body) return;
+        copyOrganiserText(body, copyBtn);
+      });
+    }
+  }
+
+  function opportunityEnquiryFilterLabel(opportunityId) {
+    const match = (state.opportunities || []).find(function (o) {
+      return String(o.id) === String(opportunityId);
+    });
+    return match?.title || 'Business opportunity';
+  }
+
+  function renderOpportunityEnquiryFilter() {
+    const mount = document.getElementById('org-opp-enquiries-filter');
+    if (!mount) return;
+    if (!opportunityEnquiryFilterId) {
+      mount.hidden = true;
+      mount.innerHTML = '';
+      return;
+    }
+    mount.hidden = false;
+    mount.innerHTML =
+      '<span class="org-opp-enquiries-filter-label">Showing enquiries for</span> ' +
+      '<span class="org-opp-enquiries-filter-chip">' +
+      esc(opportunityEnquiryFilterLabel(opportunityEnquiryFilterId)) +
+      '<button type="button" class="org-opp-enquiries-filter-clear" data-opp-enquiry-filter-clear aria-label="Clear enquiry filter">×</button>' +
+      '</span>';
+  }
+
+  function bindBusinessIntroPanel() {
+    if (businessIntroPanelBound) return;
+    const toggle = document.getElementById('org-business-intro-toggle');
+    const body = document.getElementById('org-business-intro-body');
+    if (!toggle || !body) return;
+    businessIntroPanelBound = true;
+
+    function applyCollapsed(collapsed) {
+      body.hidden = collapsed;
+      toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      const chev = toggle.querySelector('.org-business-intro-chev');
+      if (chev) chev.textContent = collapsed ? 'Show' : 'Hide';
+    }
+
+    toggle.addEventListener('click', function () {
+      const collapsed = !body.hidden;
+      applyCollapsed(collapsed);
+      try {
+        localStorage.setItem(BUSINESS_INTRO_COLLAPSE_KEY, collapsed ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+    });
+
+    window.__applyBusinessIntroCollapsed = applyCollapsed;
+  }
+
+  function updateBusinessIntroPanel() {
+    const head = document.getElementById('org-business-intro-head');
+    const body = document.getElementById('org-business-intro-body');
+    if (!body) return;
+    bindBusinessIntroPanel();
+    const hasListings = hasOpportunityListings();
+    if (head) head.hidden = !hasListings;
+    if (!hasListings) {
+      body.hidden = false;
+      return;
+    }
+    let collapsed = true;
+    try {
+      const stored = localStorage.getItem(BUSINESS_INTRO_COLLAPSE_KEY);
+      if (stored === '0') collapsed = false;
+    } catch {
+      collapsed = true;
+    }
+    if (window.__applyBusinessIntroCollapsed) window.__applyBusinessIntroCollapsed(collapsed);
+  }
+
   function updateOpportunityEnquiryUi() {
     const newCount = Number(state.opportunityEnquiriesNewCount) || 0;
     const navBadge = document.getElementById('org-opp-enquiry-nav-badge');
@@ -8419,10 +8863,23 @@
     const empty = document.getElementById('opp-enquiries-empty');
     if (!body) return;
 
-    const list = state.opportunityEnquiries || [];
+    let list = state.opportunityEnquiries || [];
+    if (opportunityEnquiryFilterId) {
+      list = list.filter(function (e) {
+        return String(e.opportunityId || '') === String(opportunityEnquiryFilterId);
+      });
+    }
+    renderOpportunityEnquiryFilter();
     body.innerHTML = '';
     if (!list.length) {
-      setOrgEmpty(empty, { show: true });
+      setOrgEmpty(empty, {
+        show: true,
+        title: opportunityEnquiryFilterId ? 'No enquiries for this business opportunity' : undefined,
+        text: opportunityEnquiryFilterId
+          ? 'Try clearing the filter to see all enquiries.'
+          : undefined,
+        hideActions: Boolean(opportunityEnquiryFilterId),
+      });
       updateOpportunityEnquiryUi();
       return;
     }
@@ -8437,7 +8894,7 @@
         '<td>' +
         esc(formatDate(enquiry.createdAt)) +
         '</td><td class="org-td-name">' +
-        esc(enquiry.opportunityTitle || 'Listing') +
+        esc(enquiry.opportunityTitle || 'Business opportunity') +
         '</td><td>' +
         esc(enquiry.enquirerName || '—') +
         '<br><span class="org-payout-muted">' +
@@ -8446,12 +8903,10 @@
         esc(enquiry.message || '') +
         '</td><td>' +
         statusBadgeHtml(statusKey, enquiryStatusLabel(status)) +
-        '</td><td class="org-td-actions">' +
-        '<a class="org-btn org-btn-gold org-btn-sm" data-opp-enquiry-reply="' +
+        '</td><td class="org-td-actions org-td-actions--wrap">' +
+        '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-enquiry-reply-open="' +
         esc(enquiry.id) +
-        '" href="' +
-        esc(enquiryReplyMailto(enquiry)) +
-        '">Respond here</a>' +
+        '">Reply</button>' +
         '</td>';
       body.appendChild(tr);
     });
@@ -8474,9 +8929,12 @@
     setRoute('business-list');
   }
 
-  function scrollToBusinessEnquiries() {
+  function scrollToBusinessEnquiries(opportunityId) {
+    if (opportunityId) opportunityEnquiryFilterId = String(opportunityId);
+    else opportunityEnquiryFilterId = null;
     setRoute('business-overview');
     requestAnimationFrame(function () {
+      renderOpportunityEnquiries();
       const el = document.getElementById('org-opp-enquiries-section');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
@@ -8487,13 +8945,13 @@
     const leadEl = document.getElementById('org-business-list-lead');
     if (!titleEl || !leadEl) return;
     if (hasOpportunityListings()) {
-      titleEl.textContent = 'My listings';
+      titleEl.textContent = 'Your business opportunities';
       leadEl.textContent =
-        'See how your listings are performing, then add another franchise, partnership, or side hustle when you are ready.';
+        'See how your business opportunities are performing, then add another franchise, partnership, or side hustle when you are ready.';
     } else {
-      titleEl.textContent = 'List a listing';
+      titleEl.textContent = 'List a business opportunity';
       leadEl.textContent =
-        'See how listing works, what it costs, and start promoting a franchise, partnership, or side hustle on the hub.';
+        'See how business opportunities work, what they cost, and start promoting a franchise, partnership, or side hustle on the hub.';
     }
   }
 
@@ -8566,17 +9024,17 @@
       : '/organiser/#business-overview';
     const copy =
       expiring.length === 1
-        ? 'Your listing <strong>' + esc(first.title || 'Untitled') + '</strong> expires soon.'
-        : expiring.length + ' of your listings expire soon.';
+        ? 'Your business opportunity <strong>' + esc(first.title || 'Untitled') + '</strong> expires soon.'
+        : expiring.length + ' of your business opportunities expire soon.';
     mount.hidden = false;
     mount.innerHTML =
       '<div class="org-inline-banner org-inline-banner--warn">' +
       '<p>' +
       copy +
-      ' Renew to stay visible on the opportunities directory.</p>' +
+      ' Renew to stay visible on the business opportunities directory.</p>' +
       '<a class="org-btn org-btn-gold org-btn-sm" href="' +
       esc(renewUrl) +
-      '">Renew listing</a>' +
+      '">Renew business opportunity</a>' +
       '</div>';
   }
 
@@ -8588,7 +9046,7 @@
     const n = opportunitySaveCount(o);
     if (!n) return '<span class="muted">0</span>';
     return (
-      '<span class="org-opp-save-count" title="Members who saved this listing — anonymous">' +
+      '<span class="org-opp-save-count" title="Members who saved this business opportunity — anonymous">' +
       esc(String(n)) +
       '</span>'
     );
@@ -8603,6 +9061,7 @@
       wrap.hidden = true;
       mount.innerHTML = '';
       updateBusinessListPageHead();
+      updateBusinessIntroPanel();
       return;
     }
     wrap.hidden = false;
@@ -8612,6 +9071,7 @@
       const enquiries = opportunityEnquiriesForListing(o.id);
       const newCount = enquiries.filter((e) => String(e.status || '').toLowerCase() === 'new').length;
       const expiry = opportunityExpiryMeta(o);
+      const premiumBadge = opportunityPremiumBadgeHtml(o);
       const editUrl = '/organiser/opportunity-edit?id=' + encodeURIComponent(o.id);
       const viewUrl = o.slug
         ? '/opportunities/' + encodeURIComponent(o.slug)
@@ -8625,7 +9085,10 @@
         '">' +
         esc(o.title || 'Untitled') +
         '</a></h3>' +
+        '<span class="org-opp-listing-card-badges">' +
         statusBadgeHtml(st.key, st.label) +
+        (premiumBadge ? ' ' + premiumBadge : '') +
+        '</span>' +
         '</header>' +
         '<div class="org-stats org-stats--four org-opp-listing-card-stats">' +
         '<div class="org-stat gold"><div class="org-stat-label">Enquiries</div><div class="org-stat-value">' +
@@ -8637,26 +9100,31 @@
         '<div class="org-stat purple"><div class="org-stat-label">Member saves</div><div class="org-stat-value">' +
         esc(String(opportunitySaveCount(o))) +
         '</div></div>' +
-        '<div class="org-stat gold"><div class="org-stat-label">Listing expires</div><div class="org-stat-value org-stat-value--text' +
+        '<div class="org-stat gold"><div class="org-stat-label">Expires</div><div class="org-stat-value org-stat-value--text' +
         (expiry.tone === 'danger' ? ' is-danger' : expiry.tone === 'warn' ? ' is-warn' : '') +
         '">' +
         esc(expiry.label) +
         '</div></div>' +
         '</div>' +
+        opportunityRoiFootnoteHtml(o, enquiries.length) +
         '<div class="org-opp-listing-card-actions">' +
         '<a class="org-btn org-btn-outline org-btn-sm" href="' +
         esc(editUrl) +
-        '">Edit listing</a> ' +
+        '">Edit</a> ' +
         '<a class="org-btn org-btn-outline org-btn-sm" href="' +
         esc(viewUrl) +
         '" target="_blank" rel="noopener">View live</a> ' +
         (enquiries.length
-          ? '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-shortcut="business-overview-enquiries">View enquiries</button>'
+          ? '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-enquiry-filter="' +
+            esc(o.id) +
+            '">View enquiries</button> '
           : '') +
+        opportunityPremiumUpsellHtml(o) +
         '</div>';
       mount.appendChild(card);
     });
     updateBusinessListPageHead();
+    updateBusinessIntroPanel();
   }
 
   function opportunityStatusForBadge(o) {
@@ -8698,7 +9166,15 @@
         '</a></td><td>' +
         statusBadgeHtml(st.key, st.label) +
         '</td><td>' +
-        esc(String(enquiries.length)) +
+        opportunityPremiumCellHtml(o) +
+        '</td><td>' +
+        (enquiries.length
+          ? '<button type="button" class="org-opp-enquiry-count-link" data-opp-enquiry-filter="' +
+            esc(o.id) +
+            '">' +
+            esc(String(enquiries.length)) +
+            '</button>'
+          : '<span class="muted">0</span>') +
         '</td><td>' +
         (newCount
           ? '<span class="org-opp-new-count">' + esc(String(newCount)) + '</span>'
@@ -8713,12 +9189,14 @@
         '">Edit</a> ' +
         '<a class="org-btn org-btn-outline org-btn-sm" href="' +
         esc(viewUrl) +
-        '" target="_blank" rel="noopener">View</a>' +
+        '" target="_blank" rel="noopener">View</a> ' +
+        opportunityPremiumUpsellHtml(o) +
         '</td>';
       body.appendChild(tr);
     });
     renderOpportunityExpiryBanner();
     renderOpportunityPerformance();
+    renderOpportunityRoiInsights();
   }
 
   async function loadOpportunitiesList() {
@@ -8768,13 +9246,19 @@
       method: 'PATCH',
       body: JSON.stringify({ id: enquiryId, status: 'responded' }),
     });
-    if (!ok) return;
+    if (!ok) {
+      throw new Error(data.message || data.error || 'enquiry_update_failed');
+    }
     const enquiry = data.enquiry;
-    if (!enquiry) return;
+    if (!enquiry) {
+      throw new Error('enquiry_update_failed');
+    }
     const idx = state.opportunityEnquiries.findIndex((e) => e.id === enquiry.id);
     if (idx >= 0) state.opportunityEnquiries[idx] = enquiry;
     state.opportunityEnquiriesNewCount = opportunityEnquiryNewCount(state.opportunityEnquiries);
     renderOpportunityEnquiries();
+    renderOpportunitiesList();
+    updateOpportunityEnquiryUi();
   }
 
   function renderAll() {
@@ -8809,7 +9293,7 @@
     const { ok, data } = await api('/api/organiser/bootstrap');
     if (!ok) throw new Error(data.message || data.error || 'load_failed');
     cacheBootstrapForEmbed(data);
-    state.groups = data.groups || [];
+    state.groups = dedupeGroupsById(data.groups || []);
     state.pendingClaimGroups = data.pendingClaimGroups || [];
     state.events = data.events || [];
     state.upcomingEvents = data.upcomingEvents || [];
@@ -9176,6 +9660,8 @@
     document.querySelectorAll('[data-org-modal-close]').forEach((el) => {
       el.addEventListener('click', closeModals);
     });
+
+    bindOpportunityEnquiryReplyModal();
 
     document.getElementById('btn-needs-organiser-page-create')?.addEventListener('click', () => {
       closeModals();
@@ -9678,6 +10164,41 @@
         if (enquiryReply) {
           const enquiryId = enquiryReply.getAttribute('data-opp-enquiry-reply');
           if (enquiryId) markOpportunityEnquiryResponded(enquiryId);
+          return;
+        }
+
+        const enquiryReplyOpen = e.target.closest('[data-opp-enquiry-reply-open]');
+        if (enquiryReplyOpen) {
+          e.preventDefault();
+          const enquiryId = enquiryReplyOpen.getAttribute('data-opp-enquiry-reply-open');
+          const enquiry = (state.opportunityEnquiries || []).find(function (item) {
+            return String(item.id) === String(enquiryId);
+          });
+          if (enquiry) openOpportunityEnquiryReplyModal(enquiry);
+          return;
+        }
+
+        const premiumUpgradeBtn = e.target.closest('[data-opp-premium-upgrade]');
+        if (premiumUpgradeBtn) {
+          e.preventDefault();
+          startOpportunityPremiumCheckout(
+            premiumUpgradeBtn.getAttribute('data-opp-premium-upgrade'),
+            premiumUpgradeBtn
+          );
+          return;
+        }
+
+        const enquiryFilterBtn = e.target.closest('[data-opp-enquiry-filter]');
+        if (enquiryFilterBtn) {
+          e.preventDefault();
+          scrollToBusinessEnquiries(enquiryFilterBtn.getAttribute('data-opp-enquiry-filter'));
+          return;
+        }
+
+        const enquiryFilterClear = e.target.closest('[data-opp-enquiry-filter-clear]');
+        if (enquiryFilterClear) {
+          e.preventDefault();
+          scrollToBusinessEnquiries(null);
           return;
         }
 

@@ -131,11 +131,19 @@ async function listGroupsForAccount(session, resolvedAccess) {
     .map(rowToGroup);
 }
 
+function dedupeGroupsById(groups) {
+  const byId = new Map();
+  (groups || []).forEach((g) => {
+    if (g && g.id && !byId.has(g.id)) byId.set(g.id, g);
+  });
+  return [...byId.values()];
+}
+
 async function listGroupsForSession(session, adminView, resolvedAccess) {
-  if (adminView) return listGroupsForAdminOverview(session);
+  if (adminView) return dedupeGroupsById(await listGroupsForAdminOverview(session));
   const accountGroups = await listGroupsForAccount(session, resolvedAccess);
-  if (accountGroups.length) return accountGroups;
-  return listGroupsForUser(session.sub || '', session.email);
+  if (accountGroups.length) return dedupeGroupsById(accountGroups);
+  return dedupeGroupsById(await listGroupsForUser(session.sub || '', session.email));
 }
 
 function groupOwnedBySession(session, groups, groupId) {

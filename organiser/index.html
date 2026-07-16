@@ -88,12 +88,12 @@
               Memberships
             </a>
 
-            <span class="hub-side-nav-divider">Opportunities</span>
+            <span class="hub-side-nav-divider">Business opportunities</span>
             <a href="#business-overview" class="hub-side-nav-link" data-org-route="business-overview">
-              My opportunities
+              My business opportunities
               <span class="org-nav-badge" id="org-opp-enquiry-nav-badge" hidden>New</span>
             </a>
-            <a href="#business-list" class="hub-side-nav-link" data-org-route="business-list">List a listing</a>
+            <a href="#business-list" class="hub-side-nav-link" data-org-route="business-list">List a business opportunity</a>
 
             <div class="hub-side-nav-util">
               <a href="../guides">Organiser guides</a>
@@ -284,35 +284,45 @@
           </aside>
         </section>
 
-        <!-- List a listing (how it works + listing performance) -->
+        <!-- Business opportunities: how it works + performance -->
         <section class="org-page org-page--business-ops organiser-opportunity-edit-page" id="org-page-business-list" data-org-page="business-list">
           <button type="button" class="org-hub-back" data-org-route="business-overview">← Back to My business opportunities</button>
           <header class="org-hub-page-head">
             <p class="org-page-kicker org-biz-kicker">Business opportunities</p>
-            <h1 class="org-page-title" id="org-business-list-title">List a listing</h1>
+            <h1 class="org-page-title" id="org-business-list-title">List a business opportunity</h1>
             <p class="org-page-lead" id="org-business-list-lead">
-              See how listing works, what it costs, and start promoting a franchise, partnership, or side hustle on the hub.
+              See how business opportunities work, what they cost, and start promoting a franchise, partnership, or side hustle on the hub.
             </p>
           </header>
 
           <div id="org-opp-performance-wrap" hidden>
             <div class="org-overview-head">
               <div class="org-overview-head-text">
-                <h2 class="org-section-title">How your listings are doing</h2>
-                <p class="org-section-sub">Enquiries, member saves, expiry dates, and premium placement — at a glance before you add another listing.</p>
+                <h2 class="org-section-title">How your business opportunities are doing</h2>
+                <p class="org-section-sub">Enquiries, member saves, expiry dates, and premium placement — at a glance before you add another.</p>
               </div>
               <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-shortcut="business-overview-enquiries">View all enquiries →</button>
             </div>
             <div class="org-opp-listing-cards" id="org-opp-listing-cards" aria-live="polite"></div>
           </div>
 
-          <div class="org-business-intro">
-            <h2 class="org-section-title">How listing works</h2>
-            <ol class="oe-intro-steps" aria-label="Listing steps">
+          <div class="org-business-intro-panel" id="org-business-intro-panel">
+            <div class="org-overview-head org-business-intro-head" id="org-business-intro-head" hidden>
+              <div class="org-overview-head-text">
+                <h2 class="org-section-title">Business opportunities guide &amp; pricing</h2>
+                <p class="org-section-sub">Steps, fees, and FAQs — expand when you need a refresher.</p>
+              </div>
+              <button type="button" class="org-btn org-btn-outline org-btn-sm org-business-intro-toggle" id="org-business-intro-toggle" aria-expanded="false" aria-controls="org-business-intro-body">
+                <span class="org-business-intro-chev">Show</span> guide
+              </button>
+            </div>
+            <div class="org-business-intro" id="org-business-intro-body">
+            <h2 class="org-section-title">How it works</h2>
+            <ol class="oe-intro-steps" aria-label="Business opportunity steps">
               <li class="oe-intro-step">
                 <span class="oe-intro-step-num" aria-hidden="true">1</span>
                 <div>
-                  <strong>Add your listing details</strong>
+                  <strong>Add your business opportunity details</strong>
                   <span>Title, opportunity type, investment, location, description, logo and cover photo.</span>
                 </div>
               </li>
@@ -326,7 +336,7 @@
               <li class="oe-intro-step">
                 <span class="oe-intro-step-num" aria-hidden="true">3</span>
                 <div>
-                  <strong>Your listing goes live</strong>
+                  <strong>Your business opportunity goes live</strong>
                   <span>It appears in the business opportunities directory where members can filter by type and location.</span>
                 </div>
               </li>
@@ -374,8 +384,9 @@
             </div>
 
             <div class="org-business-intro-actions">
-              <a class="org-btn org-btn-gold" href="/organiser/opportunity-edit" id="org-opp-start-listing">Start your listing →</a>
+              <a class="org-btn org-btn-gold" href="/organiser/opportunity-edit" id="org-opp-start-listing">Start your business opportunity →</a>
               <a class="org-btn org-btn-outline" href="../opportunities/" target="_blank" rel="noopener">Preview the directory</a>
+            </div>
             </div>
           </div>
         </section>
@@ -386,12 +397,12 @@
           <header class="org-hub-page-head">
             <p class="org-page-kicker">Business opportunities</p>
             <h1 class="org-page-title">My business opportunities</h1>
-            <p class="org-page-lead">List services for other members and respond when someone enquires about your listings.</p>
+            <p class="org-page-lead">List business opportunities for other members and respond when someone enquires.</p>
           </header>
 
           <div class="org-stats org-stats--four">
             <div class="org-stat gold">
-              <div class="org-stat-label">Live listings</div>
+              <div class="org-stat-label">Live opportunities</div>
               <div class="org-stat-value" id="stat-opp-listings">0</div>
             </div>
             <div class="org-stat green">
@@ -407,13 +418,14 @@
               <div class="org-stat-value" id="stat-opp-saves">0</div>
             </div>
           </div>
+          <div class="org-opp-roi-insights" id="org-opp-roi-insights" hidden aria-live="polite"></div>
 
           <div class="org-quick-actions org-quick-actions--compact" aria-label="Quick links">
             <h2 class="org-quick-actions-title">Quick links</h2>
             <div class="org-quick-actions-grid">
               <button type="button" class="org-quick-card org-quick-card--primary" data-org-route="business-list">
                 <span class="org-quick-icon" aria-hidden="true">+</span>
-                <span class="org-quick-label">List a listing</span>
+                <span class="org-quick-label">List a business opportunity</span>
                 <span class="org-quick-hint">Steps, pricing and how yours are doing</span>
               </button>
               <button type="button" class="org-quick-card" data-org-shortcut="business-overview-enquiries">
@@ -424,17 +436,17 @@
               <a class="org-quick-card" href="../opportunities/" target="_blank" rel="noopener">
                 <span class="org-quick-icon" aria-hidden="true">↗</span>
                 <span class="org-quick-label">Browse opportunities</span>
-                <span class="org-quick-hint">See how listings appear on the hub</span>
+                <span class="org-quick-hint">See how business opportunities appear on the hub</span>
               </a>
             </div>
           </div>
 
           <div class="org-overview-head">
             <div class="org-overview-head-text">
-              <h2 class="org-section-title">Your listings</h2>
-              <p class="org-section-sub">Business opportunities you&apos;ve published on the hub — edit a listing, see anonymous member saves, or check enquiries received.</p>
+              <h2 class="org-section-title">Your business opportunities</h2>
+              <p class="org-section-sub">Business opportunities you&apos;ve published on the hub — edit one, see anonymous member saves, or check enquiries received.</p>
             </div>
-            <button type="button" class="org-btn org-btn-gold org-btn-sm" data-action="add-opportunity-listing">+ Add listing</button>
+            <button type="button" class="org-btn org-btn-gold org-btn-sm" data-action="add-opportunity-listing">+ Add business opportunity</button>
           </div>
           <div id="org-opp-expiry-banner" hidden></div>
           <div class="org-table-wrap org-overview-table">
@@ -443,9 +455,10 @@
                 <tr>
                   <th>Title</th>
                   <th>Status</th>
+                  <th>Premium</th>
                   <th>Enquiries</th>
                   <th>New</th>
-                  <th title="Members who saved this listing — anonymous">Saved</th>
+                  <th title="Members who saved this business opportunity — anonymous">Saved</th>
                   <th>Expires</th>
                   <th class="org-th-actions">Actions</th>
                 </tr>
@@ -456,10 +469,10 @@
               <div class="org-empty-state-icon" aria-hidden="true">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
               </div>
-              <h3 class="org-empty-state-title">No listings yet</h3>
-              <p class="org-empty-state-text">Publish a business opportunity to start receiving member enquiries. See <a href="/guides/list-a-business-opportunity">how listing works</a> or browse <a href="/opportunities/" target="_blank" rel="noopener">live listings</a> for inspiration.</p>
+              <h3 class="org-empty-state-title">No business opportunities yet</h3>
+              <p class="org-empty-state-text">Publish a business opportunity to start receiving member enquiries. See <a href="/guides/list-a-business-opportunity">how it works</a> or browse <a href="/opportunities/" target="_blank" rel="noopener">live business opportunities</a> for inspiration.</p>
               <div class="org-empty-state-actions">
-                <button type="button" class="org-btn org-btn-gold org-btn-sm" data-action="add-opportunity-listing">+ Add listing</button>
+                <button type="button" class="org-btn org-btn-gold org-btn-sm" data-action="add-opportunity-listing">+ Add business opportunity</button>
               </div>
             </div>
           </div>
@@ -467,9 +480,10 @@
           <div class="org-overview-head org-overview-head--spaced" id="org-opp-enquiries-section">
             <div class="org-overview-head-text">
               <h2 class="org-section-title">Enquiries received</h2>
-              <p class="org-section-sub">Messages from members who enquired about your business opportunity listings — respond by email from here.</p>
+              <p class="org-section-sub">Messages from members who enquired about your business opportunities — compose a reply here or send via your email app.</p>
             </div>
           </div>
+          <div class="org-opp-enquiries-filter" id="org-opp-enquiries-filter" hidden></div>
           <p class="org-load-hint" id="opp-enquiries-load-hint" hidden>Loading enquiries…</p>
           <div class="org-table-wrap">
             <table>
@@ -1446,6 +1460,38 @@
       </div>
     </div>
 
+    <!-- Modal: reply to opportunity enquiry -->
+    <div class="org-modal" id="modal-opp-enquiry-reply" role="dialog" aria-modal="true" aria-labelledby="modal-opp-enquiry-reply-title" hidden>
+      <div class="org-modal-backdrop" data-org-modal-close></div>
+      <div class="org-modal-panel org-modal-panel--wide">
+        <h2 id="modal-opp-enquiry-reply-title">Reply to enquiry</h2>
+        <p id="modal-opp-enquiry-reply-sub" class="org-modal-sub"></p>
+        <p class="org-modal-note">Compose your reply here, then send it through your email app. We mark the enquiry as responded when you send.</p>
+        <div class="org-field">
+          <label for="modal-opp-enquiry-reply-template">Quick template</label>
+          <select id="modal-opp-enquiry-reply-template">
+            <option value="thanks">Thank you &amp; acknowledge</option>
+            <option value="call">Suggest a call</option>
+            <option value="info">Share more information</option>
+          </select>
+        </div>
+        <div class="org-field">
+          <label for="modal-opp-enquiry-reply-to">To</label>
+          <p id="modal-opp-enquiry-reply-to" class="org-opp-enquiry-reply-to"></p>
+        </div>
+        <div class="org-field">
+          <label for="modal-opp-enquiry-reply-message">Your message</label>
+          <textarea id="modal-opp-enquiry-reply-message" class="org-opp-enquiry-reply-message" rows="8" required></textarea>
+        </div>
+        <p class="org-modal-note org-modal-note--error" id="modal-opp-enquiry-reply-error" hidden></p>
+        <div class="org-modal-actions org-modal-actions--stack">
+          <button type="button" class="org-btn org-btn-gold" id="modal-opp-enquiry-reply-send">Send via email app</button>
+          <button type="button" class="org-btn org-btn-outline" id="modal-opp-enquiry-reply-copy">Copy message</button>
+          <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal: alumni invites -->
     <div class="org-modal" id="modal-alumni-invites" role="dialog" aria-modal="true" aria-labelledby="modal-alumni-invites-title" hidden>
       <div class="org-modal-backdrop" data-org-modal-close></div>
@@ -1849,6 +1895,6 @@
     <script src="../js/hub-event-timezone.js?v=20260716"></script>
     <script src="../js/organiser-featured-duration.js?v=20260716feat"></script>
     <script src="../js/organiser-linkedin-post-builder.js?v=20260714logo"></script>
-    <script src="../js/organiser-dashboard.js?v=20260716ux"></script>
+    <script src="../js/organiser-dashboard.js?v=20260716a"></script>
   </body>
 </html>

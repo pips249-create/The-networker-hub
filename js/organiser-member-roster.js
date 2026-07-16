@@ -1,4 +1,7 @@
 (function () {
+  if (window.__omrInitDone) return;
+  window.__omrInitDone = true;
+
   const params = new URLSearchParams(location.search);
   const organiserId = String(params.get('id') || params.get('organiserId') || '').trim();
   const PAGE_SIZE = 10;
@@ -139,30 +142,33 @@
         opt.textContent = isPast ? label + ' (past)' : label;
         sel.appendChild(opt);
       });
-      sel.addEventListener('change', function () {
-        const reportBtn = document.getElementById('omr-download-report');
-        const remindBtn = document.getElementById('omr-remind-not-booked');
-        if (reportBtn) {
-          reportBtn.disabled = !sel.value;
-          reportBtn.title = sel.value ? '' : 'Choose an event first';
-        }
-        if (remindBtn) {
-          remindBtn.disabled = !sel.value;
-          remindBtn.title = sel.value ? '' : 'Choose an event first';
-        }
-        if (
-          !sel.value &&
-          (filters.status === 'booked' || filters.status === 'not_booked')
-        ) {
-          filters.status = 'all';
-          const statusSel = document.getElementById('omr-status-filter');
-          if (statusSel) statusSel.value = 'all';
-        }
-        page = 1;
-        loadReports(sel.value).then(function () {
-          renderRoster();
+      if (sel.dataset.omrBound !== '1') {
+        sel.dataset.omrBound = '1';
+        sel.addEventListener('change', function () {
+          const reportBtn = document.getElementById('omr-download-report');
+          const remindBtn = document.getElementById('omr-remind-not-booked');
+          if (reportBtn) {
+            reportBtn.disabled = !sel.value;
+            reportBtn.title = sel.value ? '' : 'Choose an event first';
+          }
+          if (remindBtn) {
+            remindBtn.disabled = !sel.value;
+            remindBtn.title = sel.value ? '' : 'Choose an event first';
+          }
+          if (
+            !sel.value &&
+            (filters.status === 'booked' || filters.status === 'not_booked')
+          ) {
+            filters.status = 'all';
+            const statusSel = document.getElementById('omr-status-filter');
+            if (statusSel) statusSel.value = 'all';
+          }
+          page = 1;
+          loadReports(sel.value).then(function () {
+            renderRoster();
+          });
         });
-      });
+      }
     } catch {
       /* optional */
     }
@@ -736,11 +742,20 @@
     if (hint) hint.hidden = true;
   }
 
+  function removeDuplicateAddPanels() {
+    const panels = document.querySelectorAll('.omr-add-panel');
+    for (let i = 1; i < panels.length; i += 1) {
+      panels[i].remove();
+    }
+  }
+
   async function init() {
     if (!organiserId) {
       location.href = '/organiser/#groups';
       return;
     }
+
+    removeDuplicateAddPanels();
 
     const back = document.getElementById('omr-back');
     if (back) {
