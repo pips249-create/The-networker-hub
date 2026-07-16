@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716mem" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716mem2" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
   <body class="organiser-dashboard-page hub-is-page-loading">
@@ -586,36 +586,37 @@
 
           <div class="org-member-list-how" aria-label="How memberships work">
             <h2 class="org-member-list-how-title">How it works</h2>
-            <ol class="org-member-list-steps">
-              <li class="org-member-list-step-card">
-                <span class="org-member-list-step-num" aria-hidden="true">1</span>
-                <div class="org-member-list-step-body">
-                  <strong>Upload your members</strong>
-                  <span>Add people one by one, or import a spreadsheet (CSV from Excel or Google Sheets).</span>
-                </div>
-              </li>
-              <li class="org-member-list-step-card">
-                <span class="org-member-list-step-num" aria-hidden="true">2</span>
-                <div class="org-member-list-step-body">
-                  <strong>Add a Members only ticket</strong>
-                  <span>On your event’s tickets step — it stays hidden from the public event page.</span>
-                </div>
-              </li>
-              <li class="org-member-list-step-card">
-                <span class="org-member-list-step-num" aria-hidden="true">3</span>
-                <div class="org-member-list-step-body">
-                  <strong>They sign in and book</strong>
-                  <span>Anyone on the list who signs in with their membership email gets the member rate.</span>
-                </div>
-              </li>
-            </ol>
+            <div class="org-member-list-how-panel">
+              <ol class="org-member-list-steps">
+                <li class="org-member-list-step-card">
+                  <div class="org-member-list-step-head">
+                    <span class="org-member-list-step-num" aria-hidden="true">1</span>
+                    <strong>Upload your members</strong>
+                  </div>
+                  <p class="org-member-list-step-desc">Add people one by one, or import a CSV from Excel or Google Sheets.</p>
+                </li>
+                <li class="org-member-list-step-card">
+                  <div class="org-member-list-step-head">
+                    <span class="org-member-list-step-num" aria-hidden="true">2</span>
+                    <strong>Add a Members only ticket</strong>
+                  </div>
+                  <p class="org-member-list-step-desc">On your event’s tickets step — hidden from the public event page.</p>
+                </li>
+                <li class="org-member-list-step-card">
+                  <div class="org-member-list-step-head">
+                    <span class="org-member-list-step-num" aria-hidden="true">3</span>
+                    <strong>They sign in and book</strong>
+                  </div>
+                  <p class="org-member-list-step-desc">Members sign in with their membership email to see the member rate.</p>
+                </li>
+              </ol>
+              <p class="org-member-list-how-footnote">
+                Optional expiry dates flag renewals in your reports. Invite emails can be sent when you add or import members.
+              </p>
+            </div>
           </div>
 
-          <div class="org-member-list-notes">
-            <p>Optional expiry dates flag renewals in your reports. You can send invite emails when you add or import members.</p>
-          </div>
-
-          <div id="member-lists-chooser-wrap">
+          <div id="member-lists-chooser-wrap" class="org-member-list-chooser-section">
             <h2 class="org-member-list-chooser-heading" id="member-lists-chooser-heading">Choose an organiser page</h2>
             <div class="org-member-list-chooser" id="member-lists-choices"></div>
             <p class="org-member-list-loading" id="member-lists-loading" hidden>Loading organiser pages…</p>
