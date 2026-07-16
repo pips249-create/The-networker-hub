@@ -4316,6 +4316,7 @@
 
   let eventDrawerLoadTimeout = null;
   let eventDrawerCreateFlow = false;
+  let eventDrawerProgressStep = '';
   let eventDrawerBackEventId = '';
   let eventDrawerBackTarget = '';
 
@@ -4344,7 +4345,6 @@
   }
 
   const EVENT_DRAWER_PROGRESS_STEPS = [
-    { id: 'format', label: 'Group & format' },
     { id: 'details', label: 'Event details' },
     { id: 'location', label: 'Location & access' },
     { id: 'tickets', label: 'Set up tickets' },
@@ -4381,6 +4381,7 @@
     setEventDrawerLoading(false);
     setEventDrawerBackButton(false);
     eventDrawerCreateFlow = false;
+    eventDrawerProgressStep = '';
     renderEventDrawerOverview(null);
     if (frame) frame.removeAttribute('src');
     setTimeout(function () {
@@ -4502,7 +4503,10 @@
 
   function renderEventDrawerOverview(ev, drawerUi) {
     const cancelRow = document.getElementById('org-event-drawer-cancel');
-    const progressStep = drawerUi && drawerUi.progressStep ? drawerUi.progressStep : null;
+    if (drawerUi && drawerUi.progressStep) {
+      eventDrawerProgressStep = drawerUi.progressStep;
+    }
+    const progressStep = eventDrawerCreateFlow && eventDrawerProgressStep ? eventDrawerProgressStep : null;
     renderEventDrawerProgress(progressStep);
 
     if (progressStep || !ev || !ev.id) {
@@ -9865,6 +9869,10 @@
       }
       if (e.data && e.data.type === 'hub-event-drawer-busy') {
         setEventDrawerLoading(Boolean(e.data.busy), e.data.message || '');
+        if (e.data.progressStep && eventDrawerCreateFlow) {
+          eventDrawerProgressStep = e.data.progressStep;
+          renderEventDrawerProgress(eventDrawerProgressStep);
+        }
         return;
       }
       if (e.data && e.data.type === 'hub-event-not-found') {

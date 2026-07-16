@@ -203,6 +203,18 @@
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
+  function formatReviewDateLabel(ev) {
+    if (!ev || !ev.date) return 'Date TBC';
+    const datePart = formatDateShort(ev.date);
+    const endDate = ev.endDate || anchorEvent?.endDate || '';
+    const tz = window.HubEventTimezone;
+    const timePart =
+      tz && typeof tz.formatTimeRange === 'function'
+        ? tz.formatTimeRange(ev.date, endDate)
+        : '';
+    return timePart ? datePart + ' · ' + timePart : datePart;
+  }
+
   function earliestEventDate() {
     const events = seriesMeta.events && seriesMeta.events.length ? seriesMeta.events : [];
     let earliest = null;
@@ -402,6 +414,7 @@
       id: ev.id,
       title: ev.title,
       date: ev.date,
+      endDate: ev.endDate || '',
       imageUrl: ev.imageUrl || seriesMeta.imageUrl || '',
       imagePosition: ev.imagePosition || seriesMeta.imagePosition || '',
     }));
@@ -430,6 +443,7 @@
             id: ev.id,
             title: cur.title || ev.title,
             date: cur.date || ev.date,
+            endDate: cur.endDate || ev.endDate || '',
             imageUrl: cur.imageUrl || ev.imageUrl,
             imagePosition: cur.imagePosition || ev.imagePosition || '',
           });
@@ -456,6 +470,7 @@
           id: ev.id || id,
           title: ev.title,
           date: ev.date,
+          endDate: ev.endDate || '',
           imageUrl: ev.imageUrl,
           imagePosition: ev.imagePosition || '',
         });
@@ -2017,7 +2032,7 @@
           });
     const dateItems = events
       .map(function (ev) {
-        const label = ev.date ? formatDateShort(ev.date) : 'Date TBC';
+        const label = formatReviewDateLabel(ev);
         return '<li>' + esc(label) + '</li>';
       })
       .join('');
@@ -2417,7 +2432,11 @@
     let result;
     try {
       if (loading && loading.run) {
-        result = await loading.run(busyMessage, saveWork);
+        result = await loading.run(
+          busyMessage,
+          saveWork,
+          publish ? { progressStep: 'publish' } : null
+        );
       } else {
         if (loading) loading.show(busyMessage);
         result = await saveWork();

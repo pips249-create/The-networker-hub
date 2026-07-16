@@ -2003,6 +2003,7 @@
         id: ev.id,
         title: ev.title,
         date: ev.date,
+        endDate: ev.endDate || '',
         imageUrl: ev.imageUrl || leadImage,
         imagePosition: ev.imagePosition || leadImagePosition,
       })),

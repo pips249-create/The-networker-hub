@@ -3,7 +3,6 @@
  */
 (function () {
   var STEPS = [
-    { id: 'format', label: 'Group & format' },
     { id: 'details', label: 'Event details' },
     { id: 'location', label: 'Location & access' },
     { id: 'tickets', label: 'Set up tickets' },

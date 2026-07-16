@@ -16,26 +16,25 @@
     }
   }
 
-  function notifyParentBusy(on, message) {
+  function notifyParentBusy(on, message, progressStep) {
     if (!isEmbedDrawer() || !global.parent || global.parent === global) return;
     try {
-      global.parent.postMessage(
-        {
-          type: 'hub-event-drawer-busy',
-          busy: Boolean(on),
-          message: message || '',
-        },
-        global.location.origin
-      );
+      const payload = {
+        type: 'hub-event-drawer-busy',
+        busy: Boolean(on),
+        message: message || '',
+      };
+      if (progressStep) payload.progressStep = progressStep;
+      global.parent.postMessage(payload, global.location.origin);
     } catch {
       /* ignore */
     }
   }
 
-  function setPageLoading(on, message) {
+  function setPageLoading(on, message, progressStep) {
     const el = document.getElementById('ee-page-loading');
     if (!el) {
-      notifyParentBusy(on, message);
+      notifyParentBusy(on, message, progressStep);
       return;
     }
     const label = el.querySelector('.ee-page-loading-label');
@@ -43,10 +42,11 @@
     el.hidden = !on;
     el.setAttribute('aria-busy', on ? 'true' : 'false');
     document.body.classList.toggle('ee-is-loading', !!on);
-    notifyParentBusy(on, message);
+    notifyParentBusy(on, message, progressStep);
   }
 
-  function run(message, work) {
+  function run(message, work, opts) {
+    const progressStep = opts && opts.progressStep ? opts.progressStep : '';
     const fn =
       typeof work === 'function'
         ? work
@@ -55,7 +55,7 @@
           };
     // Organiser editor pages use a fast overlay — FactLoader's min display time slows wizards.
     if (document.getElementById('ee-page-loading')) {
-      setPageLoading(true, message);
+      setPageLoading(true, message, progressStep);
       return Promise.resolve()
         .then(fn)
         .finally(function () {
@@ -65,7 +65,7 @@
     if (global.FactLoader) {
       return global.FactLoader.run(fn);
     }
-    setPageLoading(true, message);
+    setPageLoading(true, message, progressStep);
     return Promise.resolve()
       .then(fn)
       .finally(function () {
