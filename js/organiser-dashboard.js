@@ -9983,6 +9983,7 @@
     const cancelConfirmBtn = document.getElementById('btn-event-cancel-confirm');
     if (cancelRefundCheck && cancelConfirmBtn) {
       cancelRefundCheck.addEventListener('change', () => {
+        if (!pendingCancelRefundRequired) return;
         cancelConfirmBtn.disabled = !cancelRefundCheck.checked;
       });
     }

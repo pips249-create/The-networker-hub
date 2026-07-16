@@ -2826,6 +2826,10 @@
   cursor: pointer;
 }
 
+.org-check[hidden] {
+  display: none !important;
+}
+
 .org-check input {
   margin-top: 3px;
   flex-shrink: 0;
