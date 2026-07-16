@@ -3,6 +3,7 @@
  */
 (function () {
   const SERIES_STORAGE_KEY = 'hub_event_series';
+  const PUBLISHED_PREVIEW_KEY = 'hub_event_published_preview';
   const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
   const TICKET_DRAFT_KEY = 'hub_ticket_setup_draft';
   const params = new URLSearchParams(location.search);
@@ -2153,10 +2154,21 @@
       seriesMeta.imageUrl ||
       (seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].imageUrl) ||
       '';
+    try {
+      sessionStorage.setItem(
+        PUBLISHED_PREVIEW_KEY,
+        JSON.stringify({
+          ids: eventIds.join(','),
+          title: publishedTitle,
+          image: publishedImage,
+        })
+      );
+    } catch {
+      /* ignore — preview falls back to API fetch */
+    }
     const publishedQs = new URLSearchParams();
     publishedQs.set('ids', eventIds.join(','));
     if (publishedTitle) publishedQs.set('title', publishedTitle);
-    if (publishedImage) publishedQs.set('image', publishedImage);
     const publishedUrl = '/organiser/event-published?' + publishedQs.toString();
 
     if (isEmbedDrawer && window.parent && window.parent !== window) {

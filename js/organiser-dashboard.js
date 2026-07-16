@@ -9782,10 +9782,26 @@
           return;
         }
         if (publishedEventId) {
+          const publishedIds = publishedEventIds.length
+            ? publishedEventIds.join(',')
+            : publishedEventId;
+          const publishedTitle = e.data.title ? String(e.data.title) : '';
+          const publishedImage = e.data.imageUrl ? String(e.data.imageUrl) : '';
+          try {
+            sessionStorage.setItem(
+              'hub_event_published_preview',
+              JSON.stringify({
+                ids: publishedIds,
+                title: publishedTitle,
+                image: publishedImage,
+              })
+            );
+          } catch {
+            /* ignore */
+          }
           const qs = new URLSearchParams();
-          qs.set('ids', publishedEventIds.length ? publishedEventIds.join(',') : publishedEventId);
-          if (e.data.title) qs.set('title', String(e.data.title));
-          if (e.data.imageUrl) qs.set('image', String(e.data.imageUrl));
+          qs.set('ids', publishedIds);
+          if (publishedTitle) qs.set('title', publishedTitle);
           location.href = '/organiser/event-published?' + qs.toString();
           return;
         }

@@ -36,14 +36,50 @@
     }
   }
 
+  const PUBLISHED_PREVIEW_KEY = 'hub_event_published_preview';
+
+  function readPublishedPreview(ids) {
+    try {
+      const raw = sessionStorage.getItem(PUBLISHED_PREVIEW_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      const storedIds = String(data.ids || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const currentIds = (ids || []).map((s) => String(s).trim()).filter(Boolean);
+      if (
+        storedIds.length &&
+        currentIds.length &&
+        storedIds.join(',') === currentIds.join(',')
+      ) {
+        return data;
+      }
+    } catch {
+      /* ignore */
+    }
+    return null;
+  }
+
   const params = new URLSearchParams(location.search);
   const eventIds = (params.get('ids') || '')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
   const primaryId = eventIds[0] || '';
-  const fallbackTitle = params.get('title') || '';
-  const fallbackImage = params.get('image') || '';
+  const previewStash = readPublishedPreview(eventIds);
+  const urlImage = params.get('image') || '';
+  const fallbackTitle = (previewStash && previewStash.title) || params.get('title') || '';
+  const fallbackImage =
+    (previewStash && previewStash.image) ||
+    (urlImage && !/^data:/i.test(urlImage) && urlImage.length <= 2048 ? urlImage : '');
+  if (previewStash) {
+    try {
+      sessionStorage.removeItem(PUBLISHED_PREVIEW_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
   const featuredCancelled = params.get('featured') === 'cancelled';
   const extendFeatured = params.get('extend') === 'featured';
 
