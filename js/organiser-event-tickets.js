@@ -678,7 +678,7 @@
       '<div class="ee-field"><label>Quantity available <span class="ee-optional">(optional)</span></label>' +
       '<input type="number" class="ee-tier-qty" min="0" step="1" placeholder="Unlimited" /></div>' +
       '</div>' +
-      '<div class="ee-field ee-tier-series-pass-field" hidden>' +
+      '<div class="ee-field ee-tier-series-pass-field" hidden data-field-tip="event-series-pass-tier">' +
       '<label class="ee-check-label">' +
       '<input type="checkbox" class="ee-tier-series-pass" /> ' +
       '<span><strong>Full series pass</strong> — one price covers every date in this listing (not per session)</span>' +
@@ -748,6 +748,17 @@
     updateTierSummary();
   }
 
+  function seriesHasMultipleDates() {
+    return Array.isArray(eventIds) && eventIds.length > 1;
+  }
+
+  function syncSeriesPassFieldVisibility(row) {
+    if (!row) return;
+    const field = row.querySelector('.ee-tier-series-pass-field');
+    if (!field) return;
+    field.hidden = !seriesHasMultipleDates();
+  }
+
   function bindTierRow(row) {
     const saleSelect = row.querySelector('.ee-tier-sale-end');
     const customWrap = row.querySelector('.ee-sale-custom-wrap');
@@ -782,6 +793,7 @@
         updatePublishButton();
       });
     }
+    syncSeriesPassFieldVisibility(row);
   }
 
   function addTierRow(options) {
@@ -797,6 +809,7 @@
       nameEl.value = DEFAULT_TIER_NAME;
     }
     wrap.appendChild(row);
+    syncSeriesPassFieldVisibility(row);
     updateTierSummary();
     updatePublishButton();
     return row;
@@ -837,6 +850,11 @@
         if (customTime) populateQuarterTimeSelect(customTime, isoToTimeInput(ticket.saleEnd) || '18:00');
       }
     }
+    const passEl = row.querySelector('.ee-tier-series-pass');
+    if (passEl) {
+      passEl.checked = String(ticket.seriesScope || ticket.series_scope || '').trim() === 'series_pass';
+    }
+    syncSeriesPassFieldVisibility(row);
   }
 
   function isMembersOnlyTicket(ticket) {

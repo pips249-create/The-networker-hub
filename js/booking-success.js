@@ -187,7 +187,7 @@
     const list = document.getElementById('booking-success-series-dates');
     const similarSection = document.getElementById('booking-success-similar');
     if (!section || !list || !pending || !pending.eventId) return false;
-    if (pending.bookSeriesBundle) return false;
+    if (pending.bookSeriesBundle || pending.bookSeriesPass) return false;
 
     let seriesDates = [];
     let ev = evFromSummary;
@@ -413,6 +413,37 @@
     return similarEventImage(ev);
   }
 
+  function buildConfirmationMessage(pending, qty, emailResult, apiData) {
+    const n =
+      (pending && pending.seriesDateCount) ||
+      (apiData && apiData.bundleCount) ||
+      0;
+    let leadMsg;
+    if (pending && pending.bookSeriesPass && n >= 2) {
+      leadMsg = 'Your series pass is confirmed — you’re booked for all ' + n + ' sessions.';
+    } else if (pending && pending.bookSeriesBundle && n >= 2) {
+      leadMsg = 'You’re booked for all ' + n + ' remaining sessions.';
+    } else if (qty > 1) {
+      leadMsg = 'Your ' + qty + ' tickets are confirmed.';
+    } else {
+      leadMsg = 'Your ticket is confirmed.';
+    }
+    const email = emailResult || {};
+    if (email.attendee) {
+      return leadMsg + ' We have emailed you the details.';
+    }
+    if (email.skipped) {
+      return leadMsg + ' Check My tickets for your booking details.';
+    }
+    if (email.errors && email.errors.length) {
+      return (
+        leadMsg +
+        ' Your ticket is saved — if the confirmation email does not arrive shortly, check spam or My tickets.'
+      );
+    }
+    return leadMsg + ' We have emailed you the details.';
+  }
+
   async function loadEventSummary(eventId, qty, pending) {
     if (!eventId || !eventBlock) {
       revealNextPanel();
@@ -448,12 +479,25 @@
       const locationIcon = online
         ? '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>'
         : '<path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>';
+      let displayDateLine = dateLine;
+      if (pending && (pending.bookSeriesPass || pending.bookSeriesBundle)) {
+        const seriesDates = data.seriesDates || [];
+        const labels = seriesDates
+          .map(function (entry) {
+            return formatSeriesDateLabel(entry);
+          })
+          .filter(Boolean);
+        if (labels.length > 1) {
+          displayDateLine =
+            (pending.bookSeriesPass ? 'All sessions' : 'All dates') + ': ' + labels.join(' · ');
+        }
+      }
       const rows = [
-        metaRow('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>', dateLine),
+        metaRow('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>', displayDateLine),
         metaRow(locationIcon, location),
       ].join('');
 
-      if (eventMeta && (dateLine || location)) {
+      if (eventMeta && (displayDateLine || location)) {
         eventMeta.innerHTML = rows;
         eventBlock.hidden = false;
       }
@@ -659,22 +703,15 @@
         return;
       }
 
-      const qtyMsg = qty > 1 ? 'Your ' + qty + ' tickets are confirmed.' : 'Your ticket is confirmed.';
-      let tail = '';
-      const emailResult = data.emailResult || {};
-      if (emailResult.attendee) {
-        tail = ' We have emailed you the details.';
-      } else if (emailResult.skipped) {
-        tail = ' Check My tickets for your booking details.';
-      } else if (emailResult.errors && emailResult.errors.length) {
-        tail =
-          ' Your ticket is saved — if the confirmation email does not arrive shortly, check spam or My tickets.';
-      } else {
-        tail = ' We have emailed you the details.';
-      }
+      const qtyMsg = buildConfirmationMessage(
+        pending,
+        qty,
+        data.emailResult || {},
+        data
+      );
       await finishConfirmedBooking(
         pending,
-        qtyMsg + tail,
+        qtyMsg,
         data.id || data.registrationId || (data.registration && data.registration.id)
       );
     } catch (e) {

@@ -261,6 +261,58 @@
     return !Number.isNaN(t) && t >= Date.now();
   }
 
+  function groupSeriesRegistrations(regs) {
+    const byGroup = new Map();
+    (regs || []).forEach(function (reg) {
+      const kind = String(reg.registrationKind || '').trim();
+      const groupId = reg.bookingGroupId;
+      if (!groupId || (kind !== 'series_bundle' && kind !== 'series_pass')) return;
+      if (!byGroup.has(groupId)) byGroup.set(groupId, []);
+      byGroup.get(groupId).push(reg);
+    });
+    const memberIds = new Set();
+    const groupRows = [];
+    byGroup.forEach(function (members) {
+      const sorted = members.slice().sort(function (a, b) {
+        return new Date(a.date || 0) - new Date(b.date || 0);
+      });
+      sorted.forEach(function (m) {
+        memberIds.add(m.id);
+      });
+      const primary = sorted.find(function (m) {
+        return Number(m.amountPaid) > 0;
+      }) || sorted[0];
+      const dateParts = sorted.map(function (m) {
+        return formatDateShort(m.date);
+      }).filter(Boolean);
+      let dateLabel = dateParts.join(', ');
+      if (dateParts.length > 1) {
+        const last = dateParts.pop();
+        dateLabel = dateParts.join(', ') + ' & ' + last;
+      }
+      groupRows.push(
+        Object.assign({}, primary, {
+          isSeriesGroup: true,
+          seriesGroupKind: primary.registrationKind,
+          seriesDateCount: sorted.length,
+          seriesDateLabel: dateLabel,
+          seriesMemberIds: sorted.map(function (m) {
+            return m.id;
+          }),
+          ticketLabel:
+            (primary.registrationKind === 'series_pass' ? 'Series pass' : 'All dates') +
+            ' · ' +
+            sorted.length +
+            ' sessions',
+        })
+      );
+    });
+    const singles = (regs || []).filter(function (reg) {
+      return !memberIds.has(reg.id);
+    });
+    return groupRows.concat(singles);
+  }
+
   function upcomingList() {
     return registrations.filter(isUpcoming);
   }
@@ -2155,9 +2207,9 @@
           '</td><td class="ad-td-name">' +
           eventTitleCell(reg) +
           '</td><td>' +
-          esc(formatDateShort(reg.date)) +
+          esc(reg.isSeriesGroup ? reg.seriesDateLabel || formatDateShort(reg.date) : formatDateShort(reg.date)) +
           '</td><td>' +
-          esc(formatTimeRange(reg.date, reg.endDate)) +
+          esc(reg.isSeriesGroup ? 'All sessions' : formatTimeRange(reg.date, reg.endDate)) +
           '</td><td>' +
           esc(reg.ticketLabel || '—') +
           '</td><td>' +
@@ -3126,7 +3178,7 @@
   }
 
   function applyDashboardData(data) {
-    registrations = data.registrations || [];
+    registrations = groupSeriesRegistrations(data.registrations || []);
     cancelledBookings = data.cancelledBookings || [];
     opportunityEnquiries = data.opportunityEnquiries || [];
     myGroups = data.myGroups || [];

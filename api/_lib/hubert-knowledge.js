@@ -462,7 +462,12 @@ const FALLBACK_REPLIES = [
   {
     match: /conference.*(pass|ticket|multi.?day|3 day|three day)|multi.?day conference|one ticket.*all (day|date)|full conference|delegate pass/i,
     reply:
-      'For a multi-day conference with the same price every day: select all dates on the calendar, set identical ticket tiers, and publish — attendees can tick Book all remaining dates for one checkout (one registration per day). If you prefer one admission price without per-day booking, list only the first day as the paid ticket and state clearly in the description that the ticket includes all conference days — you verify entry manually. Different prices or schedules per day? Use separate listings.',
+      'For a multi-day conference, select every date on the calendar, then on the tickets step tick Full series pass on a tier — one price at checkout covers every day (e.g. £299 for all three days). Per-session tiers with the same price still work with Book all remaining dates (price × number of days). Different prices or schedules per day? Use separate listings.',
+  },
+  {
+    match: /series pass|full series pass|one price.*all (date|day|session)/i,
+    reply:
+      'On a multi-date listing, tick Full series pass when adding a ticket tier — one checkout price covers every date in the series. Quantity caps how many passes you sell (not per-day seats). Per-session tiers with matching names and prices can still use Book all remaining dates instead.',
   },
   {
     match: /book all (date|day|session)|all remaining date|bundle checkout|checkout.*every date/i,

@@ -2680,7 +2680,7 @@
     if (hubSummary) hubSummary.hidden = eventsSubRoute !== 'events-list';
     const titles = {
       'events-list': ['My Events', 'Manage all your event listings — click any event name to edit.'],
-      'events-tickets': ['Tickets', 'All ticket types across your events.'],
+      'events-tickets': ['Tickets', 'Overview of ticket tiers. Open an event → Set up tickets for members-only rates, Category Exclusivity, and guest visits.'],
       'events-attendees': [
         'Attendees',
         'Registrations and Category Exclusivity applications — see who is new to your group vs returning, filter by event, and export a CSV.',
@@ -6128,6 +6128,8 @@
         }
       );
       if (navBadge) navBadge.hidden = true;
+      const revenueTabBadge = document.getElementById('org-events-tab-revenue-badge');
+      if (revenueTabBadge) revenueTabBadge.hidden = true;
       const legacyBanner = document.getElementById('stripe-connect-banner');
       if (legacyBanner) {
         legacyBanner.hidden = true;
@@ -6143,6 +6145,11 @@
       } else {
         navBadge.textContent = 'Setup';
       }
+    }
+    const revenueTabBadge = document.getElementById('org-events-tab-revenue-badge');
+    if (revenueTabBadge) {
+      revenueTabBadge.hidden = !setupState.needsSetup;
+      revenueTabBadge.textContent = navBadge ? navBadge.textContent : 'Setup';
     }
 
     const legacyBanner = document.getElementById('stripe-connect-banner');
@@ -6215,22 +6222,60 @@
     alertEl.innerHTML = message;
   }
 
+  function memberListGroups() {
+    return (state.groups || []).filter((g) => g && g.id);
+  }
+
+  function memberRosterUrl(groupId) {
+    return '/organiser/member-roster?id=' + encodeURIComponent(groupId);
+  }
+
+  function maybeRedirectToSingleMemberList() {
+    const groups = memberListGroups();
+    if (groups.length === 1) {
+      window.location.href = memberRosterUrl(groups[0].id);
+      return true;
+    }
+    return false;
+  }
+
   function renderMemberListsPage() {
-    const groups = (state.groups || []).filter((g) => g && g.id);
     const mount = document.getElementById('member-lists-choices');
     const empty = document.getElementById('member-lists-empty');
+    const loading = document.getElementById('member-lists-loading');
+    const chooserWrap = document.getElementById('member-lists-chooser-wrap');
     if (!mount) return;
+
+    if (!bootstrapReady) {
+      if (loading) loading.hidden = false;
+      if (empty) empty.hidden = true;
+      if (chooserWrap) chooserWrap.hidden = false;
+      mount.innerHTML = '';
+      return;
+    }
+
+    if (loading) loading.hidden = true;
+
+    const groups = memberListGroups();
+    if (groups.length === 1) {
+      window.location.href = memberRosterUrl(groups[0].id);
+      return;
+    }
+
     if (!groups.length) {
       mount.innerHTML = '';
       if (empty) empty.hidden = false;
+      if (chooserWrap) chooserWrap.hidden = true;
       return;
     }
+
     if (empty) empty.hidden = true;
+    if (chooserWrap) chooserWrap.hidden = false;
     mount.innerHTML = groups
       .map(function (g) {
         return (
-          '<a class="org-member-list-chooser-item" href="/organiser/member-roster?id=' +
-          encodeURIComponent(g.id) +
+          '<a class="org-member-list-chooser-item" href="' +
+          memberRosterUrl(g.id) +
           '">' +
           '<span class="org-member-list-chooser-text">' +
           '<strong class="org-member-list-chooser-name">' +
@@ -6245,13 +6290,17 @@
       .join('');
   }
 
-  function navigateToMemberLists() {
-    const groups = (state.groups || []).filter((g) => g && g.id);
-    if (groups.length === 1) {
-      window.location.href =
-        '/organiser/member-roster?id=' + encodeURIComponent(groups[0].id);
-      return;
+  async function navigateToMemberLists() {
+    if (!bootstrapReady) {
+      try {
+        await loadBootstrap({ silent: true });
+      } catch (e) {
+        showOrganiserAlert('Could not load organiser pages. Please try again.', true);
+        return;
+      }
     }
+    if (maybeRedirectToSingleMemberList()) return;
+    const groups = memberListGroups();
     if (!groups.length) {
       setRoute('groups');
       showOrganiserAlert(
@@ -6269,7 +6318,7 @@
     if (page === 'business-overview') return 'business-overview';
     if (page === 'business-list') return 'business-list';
     if (page === 'events') {
-      return sub || 'events-list';
+      return 'events-list';
     }
     return page;
   }
@@ -6375,12 +6424,7 @@
       });
     }
     if (page === 'member-lists') {
-      const memberListGroups = (state.groups || []).filter((g) => g && g.id);
-      if (memberListGroups.length === 1) {
-        window.location.href =
-          '/organiser/member-roster?id=' + encodeURIComponent(memberListGroups[0].id);
-        return;
-      }
+      if (bootstrapReady && maybeRedirectToSingleMemberList()) return;
       renderMemberListsPage();
     }
 
@@ -7277,15 +7321,15 @@
 
   function teamGroupAccessLabel(member) {
     if (!member || member.role === 'owner' || member.isAccountOwner || member.allGroups) {
-      return 'All groups';
+      return 'All organiser pages';
     }
     const ids = member.groupIds || [];
-    if (!ids.length) return 'No groups assigned';
+    if (!ids.length) return 'No pages assigned';
     const names = ids.map(function (id) {
       const g = state.groups.find(function (x) {
         return x.id === id;
       });
-      return g && g.name ? g.name : 'Group';
+      return g && g.name ? g.name : 'Organiser page';
     });
     return names.join(', ');
   }
@@ -7299,7 +7343,7 @@
     if (!groups.length) {
       const empty = document.createElement('p');
       empty.className = 'org-field-hint';
-      empty.textContent = 'Create a networking group first, then assign access.';
+      empty.textContent = 'Create an organiser page first, then assign access.';
       listEl.appendChild(empty);
       return;
     }
@@ -7505,7 +7549,7 @@
         actions.push(
           '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-team-groups="' +
             esc(m.id) +
-            '">Edit groups</button>'
+            '">Edit access</button>'
         );
         if (m.status === 'pending') {
           actions.push(
@@ -7577,7 +7621,7 @@
           document.getElementById('team-invite-group-list')
         );
         if (!groupSelection.allGroups && !groupSelection.groupIds.length) {
-          alert('Select at least one group, or choose All groups.');
+          alert('Select at least one organiser page, or choose All organiser pages.');
           return;
         }
         if (btn) btn.disabled = true;
@@ -7659,7 +7703,7 @@
         );
         if (!memberId) return;
         if (!groupSelection.allGroups && !groupSelection.groupIds.length) {
-          alert('Select at least one group, or choose All groups.');
+          alert('Select at least one organiser page, or choose All organiser pages.');
           return;
         }
         const btn = e.submitter;
@@ -7674,7 +7718,7 @@
         });
         if (btn) btn.disabled = false;
         if (!ok) {
-          alert(data.message || data.error || 'Could not update group access');
+          alert(data.message || data.error || 'Could not update organiser page access');
           return;
         }
         closeModals();
@@ -8748,6 +8792,10 @@
     if (document.querySelector('[data-org-page="events"].is-active')) {
       setEventsSub(eventsSubRoute);
     }
+    if (parseRoute().page === 'member-lists') {
+      if (maybeRedirectToSingleMemberList()) return;
+      renderMemberListsPage();
+    }
     } finally {
       if (!silent) setDashboardLoading(false);
     }
@@ -9639,11 +9687,13 @@
     document.querySelectorAll('[data-org-member-lists-nav]').forEach((el) => {
       el.addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         navigateToMemberLists();
       });
     });
 
     document.querySelectorAll('[data-org-route]').forEach((el) => {
+      if (el.hasAttribute('data-org-member-lists-nav')) return;
       if (el.tagName === 'A') {
         const href = el.getAttribute('href');
         if (href && !href.startsWith('#')) return;

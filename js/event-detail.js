@@ -1203,6 +1203,7 @@
 
   function seriesBundleOffer(ev, tierEl) {
     if (!seriesDatesList || seriesDatesList.length <= 1 || !tierEl || !ev) return null;
+    if (tierEl.getAttribute('data-series-pass') === '1') return null;
     if (eventIsCategoryExclusivity(ev) || eventIsGuestProgramme(ev)) return null;
     if (tierEl.getAttribute('data-guest-visit') === '1' || tierEl.getAttribute('data-alumni') === '1') {
       return null;
@@ -1259,9 +1260,47 @@
     return offer;
   }
 
+  function seriesPassOffer(ev, tierEl) {
+    if (!seriesDatesList || seriesDatesList.length <= 1 || !tierEl || !ev) return null;
+    if (tierEl.getAttribute('data-series-pass') !== '1') return null;
+    if (eventIsCategoryExclusivity(ev) || eventIsGuestProgramme(ev)) return null;
+    const matches = seriesDatesList.filter(function (entry) {
+      if (!seriesEntryIsBookable(entry)) return false;
+      if (entry.isSoldOut || entry.isSalesClosed) return false;
+      return Boolean(findSeriesTierMatch(entry, normalizeTierName(tierEl.getAttribute('data-tier-name') || tierEl.getAttribute('data-label') || ''), parseFloat(tierEl.getAttribute('data-price')) || 0));
+    });
+    if (matches.length < 2) return null;
+    return { dateCount: matches.length };
+  }
+
   function isSeriesBundleCheckoutSelected() {
     const check = document.getElementById('ev-series-bundle-check');
     return Boolean(check && check.checked && !check.closest('[hidden]'));
+  }
+
+  function isSeriesPassCheckoutSelected() {
+    const tierEl = getSelectedTierEl();
+    return Boolean(tierEl && tierEl.getAttribute('data-series-pass') === '1');
+  }
+
+  function seriesCheckoutOptions() {
+    const bookSeriesPass = isSeriesPassCheckoutSelected();
+    const bookSeriesBundle = !bookSeriesPass && isSeriesBundleCheckoutSelected();
+    const tierEl = getSelectedTierEl();
+    const ev = activeEvent();
+    let seriesDateCount = null;
+    if (bookSeriesPass && tierEl) {
+      const offer = seriesPassOffer(ev, tierEl);
+      seriesDateCount = offer ? offer.dateCount : seriesDatesList.length;
+    } else if (bookSeriesBundle && tierEl) {
+      const offer = seriesBundleOffer(ev, tierEl);
+      seriesDateCount = offer ? offer.dateCount : null;
+    }
+    return {
+      bookSeriesPass: bookSeriesPass,
+      bookSeriesBundle: bookSeriesBundle,
+      seriesDateCount: seriesDateCount,
+    };
   }
 
   function renderSeriesCalendar() {
@@ -1743,7 +1782,10 @@
 
   function saveBookingPending(ev, ticketId, qty, attendee, options) {
     const seriesKey = seriesKeyFromContext();
-    const bookSeriesBundle = Boolean(options && options.bookSeriesBundle);
+    const checkoutOpts = options || seriesCheckoutOptions();
+    const bookSeriesBundle = Boolean(checkoutOpts.bookSeriesBundle);
+    const bookSeriesPass = Boolean(checkoutOpts.bookSeriesPass);
+    const seriesDateCount = checkoutOpts.seriesDateCount || null;
     const eventImage = window.getEventImage
       ? window.getEventImage(ev)
       : window.getFlexibleEventImage
@@ -1765,6 +1807,8 @@
           seriesKey: seriesKey || null,
           seriesTitle: seriesBaseEvent && seriesBaseEvent.title ? seriesBaseEvent.title : ev.title || '',
           bookSeriesBundle: bookSeriesBundle,
+          bookSeriesPass: bookSeriesPass,
+          seriesDateCount: seriesDateCount,
         })
       );
     } catch (e) {
@@ -1888,8 +1932,10 @@
     if (!event || !event.id) {
       throw new Error('This event could not be loaded for checkout. Refresh the page and try again.');
     }
-    const bookSeriesBundle = Boolean(options && options.bookSeriesBundle);
-    saveBookingPending(event, ticketId, qty, attendee, { bookSeriesBundle: bookSeriesBundle });
+    const checkoutOpts = options || seriesCheckoutOptions();
+    const bookSeriesBundle = Boolean(checkoutOpts.bookSeriesBundle);
+    const bookSeriesPass = Boolean(checkoutOpts.bookSeriesPass);
+    saveBookingPending(event, ticketId, qty, attendee, checkoutOpts);
     const isAlumniBooking = Boolean(event.alumniTier && event.alumniTier.id === ticketId);
     const res = await fetch('/api/auth/create-checkout', {
       method: 'POST',
@@ -1909,6 +1955,7 @@
             ? alumniEligibility?.inviteToken || alumniInviteToken || ''
             : undefined,
         bookSeriesBundle: bookSeriesBundle,
+        bookSeriesPass: bookSeriesPass,
       }),
     });
     const data = await res.json().catch(function () {
@@ -1923,15 +1970,18 @@
   }
 
   async function completeFreeBooking(ev, ticketId, qty, attendee, options) {
-    const bookSeriesBundle = Boolean(options && options.bookSeriesBundle);
+    const checkoutOpts = options || seriesCheckoutOptions();
+    const bookSeriesBundle = Boolean(checkoutOpts.bookSeriesBundle);
+    const bookSeriesPass = Boolean(checkoutOpts.bookSeriesPass);
     const isGuestVisit = Boolean(ev.guestVisitTier && ev.guestVisitTier.id === ticketId);
     const isAlumni = Boolean(ev.alumniTier && ev.alumniTier.id === ticketId);
     const isMembersOnly = Boolean(
       (rosterMemberTickets || []).some((tier) => tier.id === ticketId)
     );
-    saveBookingPending(ev, ticketId, qty, attendee, { bookSeriesBundle: bookSeriesBundle });
+    const isSeriesCheckout = bookSeriesBundle || bookSeriesPass;
+    saveBookingPending(ev, ticketId, qty, attendee, checkoutOpts);
     const endpoint =
-      isGuestVisit || isAlumni || isMembersOnly
+      isGuestVisit || isAlumni || isMembersOnly || isSeriesCheckout
         ? '/api/auth/create-checkout'
         : '/api/auth/complete-booking';
     const body = {
@@ -1953,6 +2003,9 @@
     }
     if (bookSeriesBundle) {
       body.bookSeriesBundle = true;
+    }
+    if (bookSeriesPass) {
+      body.bookSeriesPass = true;
     }
     const res = await fetch(endpoint, {
       method: 'POST',
@@ -2169,9 +2222,12 @@
       const priceDisplay = t.priceKey === 'free' ? 'Free' : t.price || fmt(priceNum);
       const remainingLabel = soldOut ? '' : tierRemainingLabel(t);
       const isMemberTier = Boolean(t.isMembersOnly);
+      const isPass = Boolean(t.isSeriesPass);
       const subtitle = soldOut
         ? 'Sold out'
-        : isMemberTier
+        : isPass
+          ? 'All dates included — one checkout'
+          : isMemberTier
           ? 'Member rate — your membership'
           : remainingLabel || t.description || '';
 
@@ -2184,6 +2240,7 @@
       tier.setAttribute('data-price', String(priceNum));
       tier.setAttribute('data-label', t.label || t.name || 'Ticket');
       tier.setAttribute('data-tier-name', t.name || t.label || 'Ticket');
+      if (t.isSeriesPass) tier.setAttribute('data-series-pass', '1');
       if (t.stripePaymentLink) tier.setAttribute('data-stripe-link', t.stripePaymentLink);
       const cap = t.quantityAvailable;
       const sold = Math.max(0, Number(t.registrationsCount) || 0);
@@ -2290,6 +2347,8 @@
 
     updateSeriesBundleOption(ev);
   }
+
+  function escapeHtml(str) {
     return String(str || '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -3683,13 +3742,21 @@
         maxQty = 1;
       }
       const bundleOffer = updateSeriesBundleOption(evNow);
+      const selectedTier = getSelectedTierEl();
       const bundleSelected = Boolean(bundleOffer && bundleCheck && bundleCheck.checked);
-      if (bundleSelected) {
+      const passSelected =
+        selectedTier && selectedTier.getAttribute('data-series-pass') === '1';
+      if (bundleSelected || passSelected) {
         qty = 1;
         maxQty = 1;
       }
       if (qty > maxQty) qty = maxQty;
-      const billQty = bundleSelected && bundleOffer ? bundleOffer.dateCount : qty;
+      const billQty =
+        bundleSelected && bundleOffer
+          ? bundleOffer.dateCount
+          : passSelected
+            ? 1
+            : qty;
       const subtotal = price * billQty;
       const fee =
         subtotal > 0 ? subtotal * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * billQty : 0;
@@ -3697,7 +3764,9 @@
       if (sumLabel) {
         sumLabel.textContent = bundleSelected
           ? label + ' · all dates'
-          : label;
+          : passSelected
+            ? label + ' · all dates'
+            : label;
       }
       if (sumQty) sumQty.textContent = String(billQty);
       if (sumSubtotal) sumSubtotal.textContent = fmt(subtotal);
@@ -3706,13 +3775,16 @@
       if (summaryFeeNote) summaryFeeNote.hidden = subtotal <= 0;
       if (sumTotal) sumTotal.textContent = fmt(total);
       if (qtyValue) qtyValue.textContent = String(qty);
-      qtyDown.disabled = qty <= 1 || bundleSelected;
-      qtyUp.disabled = qty >= maxQty || bundleSelected;
-      if (qtyRow) qtyRow.hidden = bundleSelected;
+      qtyDown.disabled = qty <= 1 || bundleSelected || passSelected;
+      qtyUp.disabled = qty >= maxQty || bundleSelected || passSelected;
+      if (qtyRow) qtyRow.hidden = bundleSelected || passSelected;
       if (qtyHint) {
         if (bundleSelected) {
           qtyHint.hidden = false;
           qtyHint.textContent = 'Booking all remaining dates in one checkout.';
+        } else if (passSelected) {
+          qtyHint.hidden = false;
+          qtyHint.textContent = 'Full series pass — includes every date in this listing.';
         } else if (maxQty < 99) {
           qtyHint.textContent =
             maxQty === 1
@@ -3881,9 +3953,7 @@
       if (!paid) {
         setCheckoutSubmitting(true, 'Registering…');
         try {
-          await completeFreeBooking(ev, ticketId, qty, attendee, {
-            bookSeriesBundle: isSeriesBundleCheckoutSelected(),
-          });
+          await completeFreeBooking(ev, ticketId, qty, attendee, seriesCheckoutOptions());
         } catch (err) {
           setCheckoutSubmitting(false);
           throw err;
@@ -3893,9 +3963,7 @@
 
       setCheckoutSubmitting(true, 'Redirecting to payment…');
       try {
-        await startPaidCheckout(ev, ticketId, qty, attendee, {
-          bookSeriesBundle: isSeriesBundleCheckoutSelected(),
-        });
+        await startPaidCheckout(ev, ticketId, qty, attendee, seriesCheckoutOptions());
       } catch (err) {
         setCheckoutSubmitting(false);
         throw err;

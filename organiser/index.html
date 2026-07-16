@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716tixsteps" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716nav" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
   <body class="organiser-dashboard-page hub-is-page-loading">
@@ -78,22 +78,15 @@
             </a>
 
             <span class="hub-side-nav-divider">Events</span>
-            <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">My events</a>
+            <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">
+              My events
+              <span class="org-nav-badge" id="org-pending-applications-nav-badge" hidden>New</span>
+              <span class="org-nav-badge org-nav-badge--action" id="org-payment-setup-nav-badge" hidden>Setup</span>
+            </a>
             <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Organiser pages</a>
             <a href="#member-lists" class="hub-side-nav-link" id="org-nav-member-lists" data-org-route="member-lists" data-org-member-lists-nav>
               Member lists
               <span class="org-nav-badge">New</span>
-            </a>
-            <a href="#events-tickets" class="hub-side-nav-link hub-side-nav-link--events-sub" data-org-route="events-tickets">Tickets</a>
-            <a href="#events-attendees" class="hub-side-nav-link hub-side-nav-link--events-sub" data-org-route="events-attendees">
-              Attendees
-              <span class="org-nav-badge" id="org-pending-applications-nav-badge" hidden>New</span>
-            </a>
-            <a href="#events-cancellations" class="hub-side-nav-link hub-side-nav-link--events-sub" data-org-route="events-cancellations">Cancellations</a>
-            <a href="#events-reviews" class="hub-side-nav-link hub-side-nav-link--events-sub" data-org-route="events-reviews">Reviews</a>
-            <a href="#events-revenue" class="hub-side-nav-link hub-side-nav-link--events-sub" data-org-route="events-revenue">
-              Revenue &amp; payouts
-              <span class="org-nav-badge org-nav-badge--action" id="org-payment-setup-nav-badge" hidden>Setup</span>
             </a>
 
             <span class="hub-side-nav-divider">Opportunities</span>
@@ -101,7 +94,7 @@
               My opportunities
               <span class="org-nav-badge" id="org-opp-enquiry-nav-badge" hidden>New</span>
             </a>
-            <a href="#business-list" class="hub-side-nav-link" data-org-route="business-list">Add a listing</a>
+            <a href="#business-list" class="hub-side-nav-link" data-org-route="business-list">List a listing</a>
 
             <div class="hub-side-nav-util">
               <a href="../guides">Organiser guides</a>
@@ -160,9 +153,22 @@
             <div class="org-page-head-text">
               <p class="org-page-kicker">Organiser workspace</p>
               <h1 class="org-page-title" id="org-page-title">Overview</h1>
-              <p class="org-page-lead" id="org-page-lead">Open an area below to get started.</p>
+              <p class="org-page-lead" id="org-page-lead">
+                Use the sidebar for events, attendees, revenue, and more — or jump in with the shortcuts below.
+              </p>
+              <p class="org-workspace-map" aria-label="Workspace areas">
+                <span class="org-workspace-map-label">Go to</span>
+                <a href="#events-list" data-org-route="events-list">My events</a>
+                <span class="org-workspace-map-sep" aria-hidden="true">·</span>
+                <a href="#events-revenue" data-org-route="events-revenue">Revenue tab</a>
+                <span class="org-workspace-map-sep" aria-hidden="true">·</span>
+                <a href="#social" data-org-route="social">Promote &amp; social</a>
+                <span class="org-workspace-map-sep" aria-hidden="true">·</span>
+                <a href="#team" data-org-route="team">Team</a>
+              </p>
             </div>
             <div class="org-page-head-actions">
+              <button type="button" class="org-btn org-btn-outline org-btn-sm" id="org-start-tour">Take the tour again</button>
               <button type="button" class="ee-hubert-help-btn" data-hubert-help>Hubert&apos;s help</button>
             <div class="org-overview-add" id="org-add-menu-wrap">
               <button
@@ -576,8 +582,11 @@
             <p><strong>One list per organiser page</strong> — if you run more than one group, each has its own list. Choose which one to open below.</p>
           </div>
 
-          <p class="org-member-list-chooser-label">Choose an organiser page</p>
-          <div class="org-member-list-chooser" id="member-lists-choices"></div>
+          <div id="member-lists-chooser-wrap">
+            <p class="org-member-list-chooser-label">Choose an organiser page</p>
+            <div class="org-member-list-chooser" id="member-lists-choices"></div>
+            <p class="org-member-list-loading" id="member-lists-loading" hidden>Loading organiser pages…</p>
+          </div>
           <div class="org-empty-state" id="member-lists-empty" hidden role="status">
             <div class="org-empty-state-icon" aria-hidden="true">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
@@ -669,7 +678,7 @@
             <div class="org-page-head-text">
               <p class="org-page-kicker">Team</p>
               <h1 class="org-page-title">Team &amp; invites</h1>
-              <p class="org-page-lead">Invite editors to help manage events. Choose which networking groups each editor can access. Only the account owner can invite or remove team members.</p>
+              <p class="org-page-lead">Invite editors to help manage events. Choose which organiser pages each editor can access. Only the account owner can invite or remove team members.</p>
               <p class="org-section-sub org-team-limit-note" id="team-limit-note" hidden></p>
               <p class="org-section-sub org-team-editor-note" id="team-editor-note" hidden>
                 You&apos;re signed in as an <strong>editor</strong>. You can manage events for your assigned groups, but only the account owner can send invites or change bank details.
@@ -683,9 +692,9 @@
               <div class="org-team-permissions-col">
                 <p class="org-team-permissions-label">Editors can</p>
                 <ul class="org-team-permissions-list org-team-permissions-list--can">
-                  <li>View and manage assigned networking groups (or all groups if you choose)</li>
-                  <li>Create and edit events, tickets, and attendee lists for those groups</li>
-                  <li>View revenue, registrations, and reviews for those groups</li>
+                  <li>View and manage assigned organiser pages (or all pages if you choose)</li>
+                  <li>Create and edit events, tickets, and attendee lists for those pages</li>
+                  <li>View revenue, registrations, and reviews for those pages</li>
                   <li>Manage business opportunity listings</li>
                 </ul>
               </div>
@@ -693,7 +702,7 @@
                 <p class="org-team-permissions-label">Editors cannot</p>
                 <ul class="org-team-permissions-list org-team-permissions-list--cannot">
                   <li>Invite or remove team members</li>
-                  <li>Create new networking groups or duplicate existing ones</li>
+                  <li>Create new organiser pages or duplicate existing ones</li>
                   <li>Add bank details, request payouts, or delete events</li>
                 </ul>
               </div>
@@ -705,7 +714,7 @@
                 <tr>
                   <th>Name / email</th>
                   <th>Role</th>
-                  <th>Groups</th>
+                  <th>Organiser pages</th>
                   <th>Status</th>
                   <th class="org-th-actions">Actions</th>
                 </tr>
@@ -760,6 +769,9 @@
             </p>
           </div>
 
+          <p class="org-events-nav-hint">
+            Open <strong>My events</strong> in the sidebar, then switch between Events, Tickets, Attendees, Reviews, and Revenue using the tabs below.
+          </p>
           <nav class="org-events-subnav" id="org-events-subnav" role="tablist" aria-label="Events sections">
             <button type="button" role="tab" class="org-events-tab is-active" id="events-tab-list" data-events-tab="events-list" aria-controls="sub-events-list" aria-selected="true">
               Events <span class="org-events-tab-count" id="tab-count-events">0</span>
@@ -775,12 +787,18 @@
             <button type="button" role="tab" class="org-events-tab" id="events-tab-reviews" data-events-tab="events-reviews" aria-controls="sub-events-reviews" aria-selected="false" tabindex="-1">
               Reviews <span class="org-events-tab-count" id="tab-count-reviews">0</span>
             </button>
-            <button type="button" role="tab" class="org-events-tab" id="events-tab-revenue" data-events-tab="events-revenue" aria-controls="sub-events-revenue" aria-selected="false" tabindex="-1">Revenue</button>
+            <button type="button" role="tab" class="org-events-tab" id="events-tab-revenue" data-events-tab="events-revenue" aria-controls="sub-events-revenue" aria-selected="false" tabindex="-1">
+              Revenue
+              <span class="org-events-tab-badge org-events-tab-badge--action" id="org-events-tab-revenue-badge" hidden>Setup</span>
+            </button>
           </nav>
 
           <!-- All events -->
           <div class="org-sub-page is-active" id="sub-events-list" role="tabpanel" data-events-panel="events-list" aria-labelledby="events-tab-list">
             <p class="org-filter-linked-note">Status and search filters apply to both Events and Revenue.</p>
+            <p class="org-status-glossary">
+              <strong>Statuses:</strong> Draft — not finished yet · Unpublished — was live, now hidden · Live — on the hub · Archived — event ended
+            </p>
             <div class="org-filter-bar">
               <select id="filter-events-status" aria-label="Filter by status">
                 <option value="all">All events</option>
@@ -850,9 +868,9 @@
           <div class="org-sub-page" id="sub-events-tickets" role="tabpanel" data-events-panel="events-tickets" aria-labelledby="events-tab-tickets" hidden>
             <div class="org-toolbar org-toolbar--section">
               <p class="org-section-sub org-sub-lead org-sub-lead--flush">
-                Ticket tiers linked to your events. Individual sales appear when registrations are connected.
+                Overview of ticket tiers across your events. For members-only rates, Category Exclusivity, guest visits, and series bundles, open an event and go to <strong>Set up tickets</strong>.
               </p>
-              <button type="button" class="org-btn org-btn-gold" id="btn-new-ticket">+ New ticket type</button>
+              <button type="button" class="org-btn org-btn-outline" id="btn-new-ticket" title="Adds a basic ticket tier only — use Set up tickets in the event editor for full options">Quick add ticket</button>
             </div>
             <div class="org-filter-bar">
               <select id="filter-tickets-scope" aria-label="Filter ticket types by event status">
@@ -888,9 +906,9 @@
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 9h18"/><path d="M7 13h.01"/><path d="M11 13h6"/><path d="M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>
                 </div>
                 <h3 class="org-empty-state-title">No ticket types yet</h3>
-                <p class="org-empty-state-text">Add ticket tiers when you create or edit an event.</p>
+                <p class="org-empty-state-text">Add ticket tiers from an event&apos;s <strong>Set up tickets</strong> step, or use Quick add for a basic tier.</p>
                 <div class="org-empty-state-actions">
-                  <button type="button" class="org-btn org-btn-outline org-btn-sm" id="btn-new-ticket-empty">+ New ticket type</button>
+                  <button type="button" class="org-btn org-btn-outline org-btn-sm" id="btn-new-ticket-empty">Quick add ticket</button>
                 </div>
               </div>
             </div>
@@ -1251,13 +1269,13 @@
             <p class="org-field-hint">Team invites are editors only. Owners cannot be invited — there is one account owner.</p>
           </div>
           <fieldset class="org-team-group-fieldset" id="team-invite-groups-fieldset">
-            <legend class="org-team-group-legend">Group access</legend>
+            <legend class="org-team-group-legend">Organiser page access</legend>
             <label class="org-team-group-all">
               <input type="checkbox" id="team-invite-all-groups" checked />
-              All groups on this account
+              All organiser pages on this account
             </label>
             <div class="org-team-group-list" id="team-invite-group-list" hidden></div>
-            <p class="org-field-hint">Uncheck &ldquo;All groups&rdquo; to limit this editor to specific networking groups.</p>
+            <p class="org-field-hint">Uncheck &ldquo;All organiser pages&rdquo; to limit this editor to specific pages.</p>
           </fieldset>
           <div class="org-modal-actions">
             <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
@@ -1271,15 +1289,15 @@
     <div class="org-modal" id="modal-team-groups" role="dialog" aria-modal="true" aria-labelledby="modal-team-groups-title" hidden>
       <div class="org-modal-backdrop" data-org-modal-close></div>
       <div class="org-modal-panel">
-        <h2 id="modal-team-groups-title">Edit group access</h2>
+        <h2 id="modal-team-groups-title">Edit organiser page access</h2>
         <p id="modal-team-groups-email" class="org-modal-sub"></p>
         <form id="form-team-groups">
           <input type="hidden" id="team-groups-member-id" value="" />
           <fieldset class="org-team-group-fieldset">
-            <legend class="org-team-group-legend">Group access</legend>
+            <legend class="org-team-group-legend">Organiser page access</legend>
             <label class="org-team-group-all">
               <input type="checkbox" id="team-groups-all-groups" />
-              All groups on this account
+              All organiser pages on this account
             </label>
             <div class="org-team-group-list" id="team-groups-group-list" hidden></div>
           </fieldset>
@@ -1439,8 +1457,8 @@
     <div class="org-modal" id="modal-ticket" role="dialog" aria-modal="true" aria-labelledby="modal-ticket-title" hidden>
       <div class="org-modal-backdrop" data-org-modal-close></div>
       <div class="org-modal-panel">
-        <h2 id="modal-ticket-title">New ticket type</h2>
-        <p>Ticket rows link to your event in the Tickets table.</p>
+        <h2 id="modal-ticket-title">Quick add ticket</h2>
+        <p>For members-only rates, Category Exclusivity, and guest visits, open the event and go to <strong>Set up tickets</strong> instead.</p>
         <form id="form-ticket">
           <div class="org-field">
             <label for="ticket-event">Event</label>
@@ -1550,7 +1568,7 @@
         <p class="org-group-claim-kicker" id="org-group-claim-kicker">Step 1 of 1</p>
         <h2 class="org-group-claim-title" id="org-group-claim-title">Is this your organiser page?</h2>
         <p class="org-group-claim-intro" id="org-group-claim-intro">
-          We found an organiser page linked to your account. Please confirm you manage this networking group or business before you check the details and list events.
+          We found an organiser page linked to your account. Please confirm you manage this page before you check the details and list events.
         </p>
 
         <div class="org-group-claim-card" id="org-group-claim-card">
@@ -1790,7 +1808,7 @@
       <div class="org-onboard-backdrop" data-onboard-skip></div>
       <div class="org-onboard-spotlight" aria-hidden="true"></div>
       <div class="org-onboard-popover" role="dialog" aria-modal="true" aria-labelledby="org-onboard-title">
-        <p class="org-onboard-step">1 of 2</p>
+        <p class="org-onboard-step">1 of 4</p>
         <h2 class="org-onboard-title" id="org-onboard-title">Welcome</h2>
         <p class="org-onboard-body"></p>
         <div class="org-onboard-actions">
@@ -1807,13 +1825,13 @@
     <script src="../js/hubert-widget.js?v=20260618" data-root="../" data-hubert="organiser-dashboard"></script>
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
     <script src="../js/organiser-flow-tour.js?v=20260703"></script>
-    <script src="../js/organiser-onboarding.js?v=20260709"></script>
+    <script src="../js/organiser-onboarding.js?v=20260716nav"></script>
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
     <script src="../js/organiser-payment-setup.js?v=20260714link"></script>
     <script src="../js/review-report.js?v=20260708"></script>
     <script src="../js/hub-event-timezone.js?v=20260716"></script>
     <script src="../js/organiser-featured-duration.js?v=20260716feat"></script>
     <script src="../js/organiser-linkedin-post-builder.js?v=20260714logo"></script>
-    <script src="../js/organiser-dashboard.js?v=20260716tixsteps"></script>
+    <script src="../js/organiser-dashboard.js?v=20260716nav"></script>
   </body>
 </html>

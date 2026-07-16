@@ -102,8 +102,14 @@
     'event-series-tickets': {
       title: 'Tickets on a multi-date series',
       body:
-        'Each ticket tier you add is copied to every date in the series. Keep the same price on each day if you want attendees to use Book all remaining dates (one checkout for every session). Early bird and standard tiers work — set sale end dates per tier. For one conference pass price covering all days without per-day booking, use a single paid date and explain in the description that admission includes every day.',
+        'Each ticket tier is copied to every date. For a conference pass at one price (e.g. £299 for all three days), tick Full series pass on that tier. For the same per-session price on every day, leave it unchecked — attendees can use Book all remaining dates (one checkout, price × number of days). Early bird and standard tiers work — set sale end dates per tier.',
       hubertPrompt: 'How do tickets work when my event has multiple dates?',
+    },
+    'event-series-pass-tier': {
+      title: 'Full series pass',
+      body:
+        'One checkout price covers every date in this listing — ideal for a 3-day conference pass. Quantity limits how many passes you sell overall. Add separate per-day tiers (without this tick) if you also want single-session tickets or Book all remaining dates.',
+      hubertPrompt: 'How do I sell one conference pass price for all days?',
     },
     'stripe-refunds': {
       title: 'Refunds & Stripe Connect',

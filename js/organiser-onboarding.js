@@ -12,9 +12,25 @@
       target: null,
     },
     {
-      title: 'Your setup checklist',
-      body: 'Follow these steps on Overview. Claim your group if prompted, check your organiser page, then list a meeting, exhibition, or conference.',
-      target: '#org-getting-started',
+      title: 'Start from Overview',
+      body: 'Use the shortcuts below for events, business opportunities, and member lists. New organisers: follow the setup checklist when it appears.',
+      target: '.org-hub-portals',
+    },
+    {
+      title: 'My events',
+      body: 'Open My events in the sidebar, then use the tabs — Events, Tickets, Attendees, Reviews, Revenue — to switch sections.',
+      target: '#org-events-subnav',
+      beforeShow: function () {
+        if (window.orgDashSetRoute) window.orgDashSetRoute('events-list');
+      },
+    },
+    {
+      title: 'Revenue & payouts',
+      body: 'Set up Stripe bank details before publishing paid tickets. After an event ends and is archived, request your payout from the Revenue tab.',
+      target: '#events-tab-revenue',
+      beforeShow: function () {
+        if (window.orgDashSetRoute) window.orgDashSetRoute('events-revenue');
+      },
     },
   ];
 
@@ -138,6 +154,8 @@
     var titleEl = popoverEl.querySelector('.org-onboard-title');
     var bodyEl = popoverEl.querySelector('.org-onboard-body');
     var nextBtn = popoverEl.querySelector('[data-onboard-next]');
+
+    if (step.beforeShow) step.beforeShow();
 
     if (stepLabel) stepLabel.textContent = stepIndex + 1 + ' of ' + steps.length;
     if (titleEl) titleEl.textContent = step.title;

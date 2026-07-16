@@ -38,7 +38,7 @@
   var FILTER_OPTION_LABELS = {};
   var searchQ = '';
   var sortBy = 'recommended';
-  var viewMode = 'list';
+  var viewMode = 'grid';
   var minInvest = null;
   var maxInvest = null;
   var currentPage = 1;

@@ -127,6 +127,8 @@ function mapRegistrationRow(row, reviewByEventId, seriesPeersByEventId) {
     bookedSnapshotAt: booked.snapshotCapturedAt,
     city: String(ev.city || booked.eventRow?.city || '').trim() || null,
     isCategoryExclusivity: deriveIsCategoryExclusivity(row),
+    bookingGroupId: row.booking_group_id || null,
+    registrationKind: String(row.registration_kind || 'standard').trim(),
   };
 }
 
@@ -201,6 +203,8 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
       amount_paid,
       quantity,
       booked_snapshot,
+      booking_group_id,
+      registration_kind,
       events (
         id,
         title,

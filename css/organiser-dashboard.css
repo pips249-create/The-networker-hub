@@ -296,6 +296,10 @@
   display: none;
 }
 
+.org-events-tab-badge--action {
+  background: #bd932e;
+}
+
 .org-sub-page {
   display: none;
 }
@@ -546,6 +550,25 @@
 .org-filter-linked-note.is-active {
   color: var(--od-purple-dark);
   font-weight: 600;
+}
+
+.org-status-glossary {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--od-text-soft);
+}
+
+.org-status-glossary strong {
+  color: var(--od-text-mid);
+  font-weight: 600;
+}
+
+.org-events-nav-hint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--od-text-soft);
 }
 
 .org-td-name-click {
@@ -1965,6 +1988,35 @@
   line-height: 1.5;
 }
 
+.org-workspace-map {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--od-text-soft);
+  max-width: 42em;
+}
+
+.org-workspace-map-label {
+  font-weight: 600;
+  color: var(--od-text-mid);
+  margin-right: 4px;
+}
+
+.org-workspace-map a {
+  color: var(--od-purple-dark);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.org-workspace-map a:hover {
+  text-decoration: underline;
+}
+
+.org-workspace-map-sep {
+  margin: 0 6px;
+  color: var(--od-border-soft);
+}
+
 .org-hub-portals {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2885,6 +2937,12 @@
   display: grid;
   gap: 10px;
   margin: 0 0 8px;
+}
+
+.org-member-list-loading {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--od-text-soft);
 }
 
 .org-member-list-chooser-item {
