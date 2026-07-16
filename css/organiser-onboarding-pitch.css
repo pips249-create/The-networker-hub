@@ -254,6 +254,75 @@
   margin-bottom: 4px;
 }
 
+.org-pitch-offer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.org-pitch-offer-item {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--pitch-border);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.org-pitch-offer-item strong {
+  display: block;
+  color: var(--pitch-ink);
+  margin-bottom: 2px;
+}
+
+.org-pitch-offer-item span {
+  color: var(--pitch-muted);
+}
+
+.org-pitch-audience-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 720px) {
+  .org-pitch-audience-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.org-pitch-audience-card {
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1.5px solid var(--pitch-border);
+}
+
+.org-pitch-audience-card h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  color: var(--pitch-ink);
+}
+
+.org-pitch-audience-card ul {
+  margin: 0;
+  padding-left: 1.1em;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--pitch-muted);
+}
+
+.org-pitch-audience-card li + li {
+  margin-top: 4px;
+}
+
+.org-pitch-forecast-note {
+  margin-top: 12px;
+  font-size: 0.78rem;
+  color: var(--pitch-muted);
+  line-height: 1.45;
+}
+
 .org-pitch-slide-logos {
   display: flex;
   align-items: center;

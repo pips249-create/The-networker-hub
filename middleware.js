@@ -405,8 +405,8 @@ async function verifySignedToken(token, secret) {
 }
 
 function isInternalSalesPath(pathname) {
-  if (/^\/p-tnh-[a-z0-9-]+$/i.test(pathname)) return true;
-  if (/^\/p\/tnh-[a-z0-9-]+$/i.test(pathname)) return true;
+  if (/^\/p-tnh-[a-z0-9-]+(?:\.html)?$/i.test(pathname)) return true;
+  if (/^\/p\/tnh-[a-z0-9-]+(?:\.html)?$/i.test(pathname)) return true;
   if (pathname.startsWith('/marketing/internal/')) return true;
   return INTERNAL_SALES_PREFIXES.some(function (prefix) {
     return pathname === prefix || pathname.startsWith(prefix + '/');

@@ -203,6 +203,18 @@
       "destination": "/p-tnh-bmu-onboard-k7m2.html"
     },
     {
+      "source": "/p-tnh-embed-events-k1",
+      "destination": "/p-tnh-embed-events-k1.html"
+    },
+    {
+      "source": "/p-tnh-embed-org-k2",
+      "destination": "/p-tnh-embed-org-k2.html"
+    },
+    {
+      "source": "/p-tnh-embed-dash-k3",
+      "destination": "/p-tnh-embed-dash-k3.html"
+    },
+    {
       "source": "/help/organiser-payouts",
       "destination": "/help/organiser-payouts.html"
     },

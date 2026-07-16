@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/sponsor-pitch.css?v=20260716bmu2">
-<link rel="stylesheet" href="/css/organiser-onboarding-pitch.css?v=20260716bmu2">
+<link rel="stylesheet" href="/css/organiser-onboarding-pitch.css?v=20260716bmu3">
 <link rel="icon" href="/assets/hubert-icon.png" type="image/png">
 </head>
 <body class="sponsor-pitch-page org-pitch-page">
@@ -46,8 +46,11 @@
   <nav class="sponsor-pitch-nav" id="pitch-section-nav" aria-label="Sections">
     <div class="sponsor-pitch-nav-inner">
       <button type="button" class="is-active" data-pitch-section="fit">The fit</button>
+      <button type="button" data-pitch-section="audience">Why browse here</button>
+      <button type="button" data-pitch-section="organisers">Organiser offer</button>
       <button type="button" data-pitch-section="site">See the Hub</button>
-      <button type="button" data-pitch-section="tools">Your tools</button>
+      <button type="button" data-pitch-section="tools">BMU tools</button>
+      <button type="button" data-pitch-section="forecast">Forecast</button>
       <button type="button" data-pitch-section="pilot">Pilot</button>
     </div>
   </nav>
@@ -74,6 +77,46 @@
     </div>
   </section>
 
+  <section class="sponsor-pitch-section org-pitch-section--compact" id="audience">
+    <h2>Why people come to The Networker Hub</h2>
+    <p class="section-intro">One place instead of Eventbrite, LinkedIn, and WhatsApp — browse free, book when ready.</p>
+    <div class="org-pitch-audience-row">
+      <article class="org-pitch-audience-card">
+        <h3>For business owners browsing</h3>
+        <ul>
+          <li>Events, networking groups &amp; business opportunities in one search</li>
+          <li>Filter by city, postcode, date, type, price — list &amp; map view</li>
+          <li>Compare organisers · read reviews · save favourites &amp; get alerts</li>
+          <li>Guest visits &amp; register-interest flows — try before they commit</li>
+        </ul>
+      </article>
+      <article class="org-pitch-audience-card">
+        <h3>Why that matters for BMU</h3>
+        <ul>
+          <li>Leeds &amp; Manchester prospects find you without knowing someone in PLMS</li>
+          <li>Register-interest applicants arrive pre-qualified by city &amp; occupation</li>
+          <li>Members return for tri-weekly dates, alerts, and organiser follow</li>
+          <li>Business Opps hub surfaces your vetted digital opportunities too</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section class="sponsor-pitch-section org-pitch-section--compact" id="organisers">
+    <h2>What we offer organisers</h2>
+    <p class="section-intro">Free to list. You keep 100% of ticket price. Everything below is in one workspace.</p>
+    <div class="org-pitch-offer-grid">
+      <div class="org-pitch-offer-item"><strong>Discovery</strong><span>Events directory · organiser browse · Premium Spotlight · regional SEO pages</span></div>
+      <div class="org-pitch-offer-item"><strong>Organiser page</strong><span>Logo, description, social links, reviews, ranking badges, every event you host</span></div>
+      <div class="org-pitch-offer-item"><strong>Events &amp; series</strong><span>One-off or recurring · hybrid Zoom + face-to-face · draft &amp; duplicate</span></div>
+      <div class="org-pitch-offer-item"><strong>Ticketing &amp; payouts</strong><span>Stripe Connect · you keep full price · free events need no Stripe</span></div>
+      <div class="org-pitch-offer-item"><strong>Attendee ops</strong><span>Lists · visit tracking · CSV export · Avery name badges · auto emails</span></div>
+      <div class="org-pitch-offer-item"><strong>Networking tools</strong><span>Guest visits · Category Exclusivity · member register · Previous Attendees</span></div>
+      <div class="org-pitch-offer-item"><strong>Business Opps</strong><span>List franchises &amp; partnerships · enquiries in same dashboard</span></div>
+      <div class="org-pitch-offer-item"><strong>Team &amp; promote</strong><span>Editor access · LinkedIn-ready graphics · booking &amp; application alerts</span></div>
+    </div>
+  </section>
+
   <section class="sponsor-pitch-section org-pitch-section--compact" id="site">
     <h2>See the Hub</h2>
     <p class="section-intro">Live UI from The Networker Hub — how members find you and how you run each city group.</p>
@@ -87,19 +130,19 @@
 
       <div class="org-pitch-site-frame-wrap" data-site-panel-view="events">
         <div class="org-pitch-site-chrome"><span></span><span></span><span></span><code>/events/</code></div>
-        <iframe class="org-pitch-site-frame" src="/p-tnh-embed-events-k1.html" title="Events directory preview" loading="lazy"></iframe>
+        <iframe class="org-pitch-site-frame" src="/p-tnh-embed-events-k1" title="Events directory preview" loading="lazy"></iframe>
         <p class="org-pitch-site-caption">Members browse free · filter by city · book or register interest · <a href="/events/" target="_blank" rel="noopener">Open live →</a></p>
       </div>
 
       <div class="org-pitch-site-frame-wrap" data-site-panel-view="organiser" hidden>
         <div class="org-pitch-site-chrome"><span></span><span></span><span></span><code>/organisers/business-matching-manchester</code></div>
-        <iframe class="org-pitch-site-frame" src="/p-tnh-embed-org-k2.html" title="Organiser page preview" loading="lazy"></iframe>
+        <iframe class="org-pitch-site-frame" src="/p-tnh-embed-org-k2" title="Organiser page preview" loading="lazy"></iframe>
         <p class="org-pitch-site-caption">One page per city group · logo, reviews, every meeting · <a href="/events/?mode=organisers" target="_blank" rel="noopener">Browse organisers →</a></p>
       </div>
 
       <div class="org-pitch-site-frame-wrap" data-site-panel-view="dashboard" hidden>
         <div class="org-pitch-site-chrome"><span></span><span></span><span></span><code>/organiser/</code></div>
-        <iframe class="org-pitch-site-frame" src="/p-tnh-embed-dash-k3.html" title="Organiser dashboard preview" loading="lazy"></iframe>
+        <iframe class="org-pitch-site-frame" src="/p-tnh-embed-dash-k3" title="Organiser dashboard preview" loading="lazy"></iframe>
         <p class="org-pitch-site-caption">Approve occupations · track guest visits · member register · <a href="/for-organisers" target="_blank" rel="noopener">Organiser overview →</a></p>
       </div>
     </div>
@@ -119,6 +162,36 @@
       <div class="org-pitch-pricing-item"><strong>4.5% + 20p</strong><span>paid by members<br>at checkout</span></div>
       <div class="org-pitch-pricing-item"><strong>£0</strong><span>guest visits<br>no Stripe needed</span></div>
     </div>
+  </section>
+
+  <section class="sponsor-pitch-section org-pitch-section--compact" id="forecast">
+    <h2>Discovery forecast</h2>
+    <p class="section-intro">Illustrative monthly ranges post public launch (Sep 2026) — planning estimates for directory traffic and organiser visibility, not guaranteed.</p>
+
+    <div class="sponsor-pitch-scenario-tabs" id="pitch-scenario-tabs">
+      <button type="button" class="is-active" data-pitch-scenario="launch">Launch</button>
+      <button type="button" data-pitch-scenario="growth">Growth</button>
+      <button type="button" data-pitch-scenario="scale">Scale</button>
+    </div>
+    <p id="pitch-scenario-caption" class="org-pitch-forecast-note"></p>
+
+    <div class="sponsor-pitch-table-wrap">
+      <table class="sponsor-pitch-table" id="pitch-forecast-table">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Monthly range</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <p class="sponsor-pitch-note" style="margin-top:14px;">
+      <strong>For BMU:</strong> listing Leeds, Manchester &amp; North East puts you in front of this traffic from day one.
+      Pilot one city, measure profile views, guest visits &amp; applications, then replicate the playbook nationally.
+    </p>
   </section>
 
   <section class="sponsor-pitch-section org-pitch-section--compact" id="pilot">
@@ -154,7 +227,7 @@
 
 <div class="org-pitch-present-overlay" id="org-pitch-present" aria-hidden="true">
   <div class="org-pitch-present-bar">
-    <span id="org-pitch-present-counter">1 / 7</span>
+    <span id="org-pitch-present-counter">1 / 10</span>
     <span><kbd>←</kbd> <kbd>→</kbd> · <kbd>Esc</kbd></span>
     <button type="button" id="org-pitch-present-close">Exit</button>
   </div>
@@ -182,6 +255,27 @@
     </div>
 
     <div class="org-pitch-slide">
+      <p class="org-pitch-slide-kicker">Why browse here</p>
+      <h2>One place for <span class="accent">events &amp; opportunities</span></h2>
+      <ul class="org-pitch-slide-bullets">
+        <li>Not Eventbrite + LinkedIn + WhatsApp — one UK directory</li>
+        <li>Browse free · filters · map · saved events &amp; alerts</li>
+        <li>Guest visits — try a room before joining</li>
+      </ul>
+    </div>
+
+    <div class="org-pitch-slide">
+      <p class="org-pitch-slide-kicker">Organiser offer</p>
+      <h2>Free to list. <span class="accent">Full toolkit.</span></h2>
+      <div class="org-pitch-slide-grid">
+        <div class="org-pitch-slide-card"><strong>Discovery</strong><span>Directory · organiser page · Spotlight</span></div>
+        <div class="org-pitch-slide-card"><strong>Events</strong><span>Series · hybrid · Stripe payouts</span></div>
+        <div class="org-pitch-slide-card"><strong>Networking tools</strong><span>Guest visits · exclusivity · members</span></div>
+        <div class="org-pitch-slide-card"><strong>Ops</strong><span>Team · badges · Business Opps · reviews</span></div>
+      </div>
+    </div>
+
+    <div class="org-pitch-slide">
       <p class="org-pitch-slide-kicker">Events directory</p>
       <h2>Where members <span class="accent">find you</span></h2>
       <ul class="org-pitch-slide-bullets">
@@ -200,6 +294,16 @@
         <div class="org-pitch-slide-card"><strong>Guest visits</strong><span>Try before 6-month join</span></div>
         <div class="org-pitch-slide-card"><strong>Hybrid series</strong><span>Tri-weekly in one flow</span></div>
       </div>
+    </div>
+
+    <div class="org-pitch-slide">
+      <p class="org-pitch-slide-kicker">Forecast</p>
+      <h2>Discovery traffic <span class="accent">grows with the Hub</span></h2>
+      <ul class="org-pitch-slide-bullets">
+        <li>Launch: 2k–5k directory views / mo · 80–250 BMU pilot city views</li>
+        <li>Growth: 8k–18k views · 300–900 views per BMU city group</li>
+        <li>Scale: 20k–45k views · 2k–6k BMU national footprint</li>
+      </ul>
     </div>
 
     <div class="org-pitch-slide">
@@ -238,6 +342,6 @@
   <div class="org-pitch-present-dots" id="org-pitch-present-dots" aria-hidden="true"></div>
 </div>
 
-<script src="/js/organiser-onboarding-pitch.js?v=20260716bmu2"></script>
+<script src="/js/organiser-onboarding-pitch.js?v=20260716bmu3"></script>
 </body>
 </html>

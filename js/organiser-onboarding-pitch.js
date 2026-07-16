@@ -150,4 +150,108 @@
   bindDashTabs();
   bindPresentMode();
   bindSiteTabs();
+  bindForecastTabs();
 })();
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s == null ? '' : String(s);
+  return d.innerHTML;
+}
+
+function bindForecastTabs() {
+  var wrap = document.getElementById('pitch-scenario-tabs');
+  var table = document.getElementById('pitch-forecast-table');
+  if (!wrap || !table) return;
+
+  var isBmu = document.body.classList.contains('org-pitch-page');
+
+  var scenarios = isBmu
+    ? {
+        launch: {
+          label: 'Launch · months 1–3 post Sep 2026',
+          rows: [
+            ['Events directory views', '2k – 5k / mo', 'UK-wide browse · map · filters'],
+            ['Organiser profile views', '400 – 1.2k / mo', 'Groups discovered via directory'],
+            ['Discovery-led bookings', '50 – 180 / mo', 'Guest visits & open checkout'],
+            ['BMU pilot city (est.)', '80 – 250 / mo', 'Profile views · Leeds or Manchester'],
+          ],
+        },
+        growth: {
+          label: 'Growth · months 4–12',
+          rows: [
+            ['Events directory views', '8k – 18k / mo', 'Primary UK networking discovery page'],
+            ['Organiser profile views', '2k – 5k / mo', 'Organiser tab + SEO landing pages'],
+            ['Discovery-led bookings', '400 – 1.2k / mo', 'Compounds as groups list here'],
+            ['BMU per city group (est.)', '300 – 900 / mo', '3 live groups · guest + member funnel'],
+          ],
+        },
+        scale: {
+          label: 'Scale · year 2+',
+          rows: [
+            ['Events directory views', '20k – 45k / mo', 'Directory + regional SEO pages'],
+            ['Organiser profile views', '6k – 15k / mo', '42-city organiser network potential'],
+            ['Discovery-led bookings', '1.5k – 4k / mo', 'Saved events · ticket alerts · re-engagement'],
+            ['BMU national footprint (est.)', '2k – 6k / mo', 'Profile views across franchise cities'],
+          ],
+        },
+      }
+    : {
+        launch: {
+          label: 'Launch · months 1–3 post Sep 2026',
+          rows: [
+            ['Events directory views', '2k – 5k / mo', 'Every browse visit sees listings'],
+            ['Organiser profile views', '400 – 1.2k / mo', 'Organiser tab discovery'],
+            ['Discovery-led bookings', '50 – 180 / mo', 'New attendees from directory'],
+          ],
+        },
+        growth: {
+          label: 'Growth · months 4–12',
+          rows: [
+            ['Events directory views', '8k – 18k / mo', 'Primary UK events browse'],
+            ['Organiser profile views', '2k – 5k / mo', 'Reviews · ranking badges visible'],
+            ['Discovery-led bookings', '400 – 1.2k / mo', 'Guest visits · member conversion'],
+          ],
+        },
+        scale: {
+          label: 'Scale · year 2+',
+          rows: [
+            ['Events directory views', '20k – 45k / mo', 'Regional networking landing pages'],
+            ['Organiser profile views', '6k – 15k / mo', 'Organiser ecosystem at scale'],
+            ['Discovery-led bookings', '1.5k – 4k / mo', 'Lifecycle emails bring browsers back'],
+          ],
+        },
+      };
+
+  function renderScenario(key) {
+    var data = scenarios[key] || scenarios.launch;
+    var tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    tbody.innerHTML = data.rows
+      .map(function (row) {
+        return (
+          '<tr><td>' +
+          escHtml(row[0]) +
+          '</td><td class="num">' +
+          escHtml(row[1]) +
+          '</td><td>' +
+          escHtml(row[2]) +
+          '</td></tr>'
+        );
+      })
+      .join('');
+    var caption = document.getElementById('pitch-scenario-caption');
+    if (caption) caption.textContent = data.label + ' · planning estimates, not guaranteed.';
+  }
+
+  wrap.querySelectorAll('[data-pitch-scenario]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      wrap.querySelectorAll('[data-pitch-scenario]').forEach(function (b) {
+        b.classList.toggle('is-active', b === btn);
+      });
+      renderScenario(btn.getAttribute('data-pitch-scenario'));
+    });
+  });
+
+  renderScenario('launch');
+}
