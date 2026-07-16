@@ -84,7 +84,13 @@ module.exports = async function handler(req, res) {
       entries.forEach(([id, eligibility]) => {
         byOrganiserId[id] = eligibility;
       });
-      return json(res, 200, { ok: true, byOrganiserId });
+      return json(res, 200, {
+        ok: true,
+        viewerEmail: String(session.email || '')
+          .trim()
+          .toLowerCase(),
+        byOrganiserId,
+      });
     }
 
     if (!isUuid(eventId)) {
@@ -123,6 +129,9 @@ module.exports = async function handler(req, res) {
       ok: true,
       attendanceMode: evRes.data.attendance_mode || 'tickets',
       organiserId,
+      viewerEmail: String(session.email || '')
+        .trim()
+        .toLowerCase(),
       eligibility,
     });
   } catch (e) {

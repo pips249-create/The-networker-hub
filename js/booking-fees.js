@@ -51,7 +51,11 @@
     if (allowed < 1) return '';
 
     const eligibility = opts.guestVisitEligibility || null;
-    if (eligibility && Number.isFinite(Number(eligibility.remaining))) {
+    if (eligibility && eligibility.isRosterMember) return '';
+    if (eligibility && eligibility.signedOut) {
+      return allowed === 1 ? 'up to 1 complimentary visit' : 'up to ' + allowed + ' complimentary visits';
+    }
+    if (eligibility && eligibility.eligible === true && Number.isFinite(Number(eligibility.remaining))) {
       const remaining = Math.max(0, Number(eligibility.remaining) || 0);
       if (remaining < 1) return '';
       return remaining === 1 ? '1 complimentary visit left' : remaining + ' complimentary visits left';

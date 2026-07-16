@@ -348,6 +348,19 @@
     return /^guest\s*visit$/i.test(String(t.name || '').trim());
   }
 
+  function isRosterMemberForEvent() {
+    return Boolean(guestVisitEligibility?.isRosterMember || rosterMembership?.isMember);
+  }
+
+  async function refreshGuestProgrammeTicketPanel(ev) {
+    if (!ev || !eventIsGuestProgramme(ev)) return;
+    await Promise.all([loadGuestVisitEligibility(ev), loadRosterEligibility(ev)]);
+    renderTicketPanel(ev);
+    setText('ev-price', publicListingPriceLabel(ev));
+    syncTicketHeader(ev);
+    applyTicketPanelState(ev);
+  }
+
   async function loadGuestVisitEligibility(ev) {
     if (!eventAllowsGuestPasses(ev)) {
       guestVisitEligibility = { allowed: 0, used: 0, remaining: 0, eligible: false };
@@ -363,6 +376,9 @@
       });
       if (data.ok && data.eligibility) {
         guestVisitEligibility = data.eligibility;
+        if (data.viewerEmail) {
+          guestVisitEligibility.viewerEmail = data.viewerEmail;
+        }
       } else if (res.status === 401) {
         guestVisitEligibility = {
           allowed: ev.complimentaryVisitsAllowed,
@@ -644,6 +660,7 @@
       const showGuestHeader =
         eventAllowsGuestPasses(ev) &&
         guestVisitEligibility &&
+        !isRosterMemberForEvent() &&
         (guestVisitEligibility.eligible || guestVisitEligibility.signedOut);
       if (showGuestHeader) {
         const remaining = Number(guestVisitEligibility.remaining) || 0;
@@ -656,6 +673,17 @@
             remaining + ' complimentary visits left';
         }
         return;
+      }
+      if (isRosterMemberForEvent()) {
+        const memberOnly = (rosterMemberTickets || []).find(function (t) {
+          return t.isMembersOnly;
+        });
+        if (memberOnly) {
+          labelEl.textContent = 'Member ticket';
+          priceEl.textContent =
+            memberOnly.priceKey === 'free' ? 'Free' : memberOnly.price || memberTicketPriceLabel(ev);
+          return;
+        }
       }
       labelEl.textContent = 'Member tickets from';
       priceEl.textContent = memberTicketPriceLabel(ev);
@@ -2057,7 +2085,16 @@
     const extras = (rosterMemberTickets || []).filter(
       (tier) => !base.some((existing) => existing.id === tier.id)
     );
-    return base.concat(extras);
+    let combined = base.concat(extras);
+    if (rosterMembership?.isMember) {
+      combined = combined.filter(function (t) {
+        return !tierIsGuestVisit(t);
+      });
+      combined.sort(function (a, b) {
+        return (a.isMembersOnly ? 0 : 1) - (b.isMembersOnly ? 0 : 1);
+      });
+    }
+    return combined;
   }
 
   function renderVatNote(ev, tiers) {
@@ -2121,6 +2158,7 @@
     const panelClosed = ev.isSoldOut || (ev.isSalesClosed && !salesPending);
     const isCategoryExclusivity = eventIsCategoryExclusivity(ev);
     const isGuestProg = eventIsGuestProgramme(ev);
+    const rosterMember = isRosterMemberForEvent();
     const showGuestTier =
       eventAllowsGuestPasses(ev) &&
       ev.guestVisitTier &&
@@ -2136,6 +2174,29 @@
     const alumniOnlyView = hasAlumniInviteLink(ev);
     const memberTiers = isGuestProg ? tiers : tiers;
     tiersEl.innerHTML = '';
+
+    if (rosterMember) {
+      const banner = document.createElement('p');
+      banner.className = 'ticket-load-hint ticket-load-hint--member';
+      banner.textContent = 'You\u2019re on this group\u2019s member list — member tickets are shown below.';
+      tiersEl.appendChild(banner);
+    } else if (
+      isGuestProg &&
+      ev.hasMembersOnlyTiers &&
+      guestVisitEligibility &&
+      !guestVisitEligibility.signedOut &&
+      guestVisitEligibility.eligible
+    ) {
+      const hint = document.createElement('p');
+      hint.className = 'ticket-load-hint';
+      const signedInEmail = String(guestVisitEligibility.viewerEmail || '').trim();
+      hint.textContent = signedInEmail
+        ? 'Complimentary visits are for newcomers. Member tickets need the email on the organiser\u2019s member list (you\u2019re signed in as ' +
+          signedInEmail +
+          ').'
+        : 'Complimentary visits are for newcomers. Sign in with the email on the organiser\u2019s member list for member tickets.';
+      tiersEl.appendChild(hint);
+    }
 
     let firstSelectable = null;
 
@@ -4411,6 +4472,12 @@
           initSeriesDatePicker(displayEv);
           initActions(displayEv);
           setEventLoading(false);
+          if (eventIsGuestProgramme(displayEv)) {
+            fetchSessionData().then(function (sessionData) {
+              if (!sessionData || !sessionData.ok || !sessionData.user) return;
+              refreshGuestProgrammeTicketPanel(displayEv);
+            });
+          }
 
           const relatedFromApi = data.related || [];
           if (relatedFromApi.length) {
