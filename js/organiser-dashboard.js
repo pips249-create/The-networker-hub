@@ -1403,6 +1403,35 @@
     });
   }
 
+  function formatRelativeAge(raw) {
+    if (!raw) return '';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return '';
+    const ms = Date.now() - d.getTime();
+    if (ms < 0) return 'just now';
+    const mins = Math.floor(ms / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return mins + 'm ago';
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return hours + 'h ago';
+    const days = Math.floor(hours / 24);
+    if (days === 1) return '1 day ago';
+    if (days < 14) return days + ' days ago';
+    return formatDateShort(raw);
+  }
+
+  function showOpportunityLoadError(message) {
+    const el = document.getElementById('org-opp-load-error');
+    if (!el) return;
+    if (!message) {
+      el.hidden = true;
+      el.innerHTML = '';
+      return;
+    }
+    el.hidden = false;
+    el.innerHTML = '<p>' + esc(message) + '</p>';
+  }
+
   function formatTimeShort(raw) {
     if (!raw) return '';
     if (window.HubEventTimezone && typeof window.HubEventTimezone.formatTime === 'function') {
@@ -6312,12 +6341,17 @@
   }
 
   function maybeRedirectToSingleMemberList() {
-    const groups = memberListGroups();
-    if (groups.length === 1) {
-      window.location.href = memberRosterUrl(groups[0].id);
-      return true;
-    }
     return false;
+  }
+
+  function updateMembershipChooserHeading(groupCount) {
+    const heading = document.getElementById('member-lists-chooser-heading');
+    if (!heading) return;
+    if (groupCount <= 1) {
+      heading.textContent = 'Your membership';
+    } else {
+      heading.textContent = 'Choose an organiser page';
+    }
   }
 
   function membershipSummaryLine(g) {
@@ -6353,13 +6387,9 @@
     if (loading) loading.hidden = true;
 
     const groups = memberListGroups();
-    if (groups.length === 1) {
-      window.location.href = memberRosterUrl(groups[0].id);
-      return;
-    }
-
     if (!groups.length) {
-      mount.innerHTML = '';
+      mount.replaceChildren();
+      updateMembershipChooserHeading(0);
       if (empty) empty.hidden = false;
       if (chooserWrap) chooserWrap.hidden = true;
       return;
@@ -6367,10 +6397,12 @@
 
     if (empty) empty.hidden = true;
     if (chooserWrap) chooserWrap.hidden = false;
+    updateMembershipChooserHeading(groups.length);
     mount.replaceChildren();
     groups.forEach(function (g) {
       const link = document.createElement('a');
       link.className = 'org-member-list-chooser-item';
+      if (groups.length === 1) link.classList.add('org-member-list-chooser-item--solo');
       link.href = memberRosterUrl(g.id);
 
       const textWrap = document.createElement('span');
@@ -8476,6 +8508,7 @@
   let opportunityPremiumSlots = null;
   let pendingOpportunityEnquiry = null;
   let opportunityEnquiryReplyBound = false;
+  let premiumWaitlistOn = false;
 
   function formatPenceGbp(pence) {
     const pounds = pence / 100;
@@ -8560,7 +8593,14 @@
     if (opportunityCanUpgradePremium(opportunity)) {
       const slots = opportunityPremiumSlots;
       if (slots && slots.full) {
-        return '<span class="org-opp-premium-upsell-muted" title="All spotlight places are taken">Full</span>';
+        if (premiumWaitlistOn) {
+          return '<span class="org-opp-premium-upsell-muted">Waitlisted</span>';
+        }
+        return (
+          '<button type="button" class="org-opp-premium-upsell-link" data-opp-waitlist="' +
+          esc(opportunity.id) +
+          '">Join waitlist</button>'
+        );
       }
       return (
         '<button type="button" class="org-opp-premium-upsell-link" data-opp-premium-upgrade="' +
@@ -8608,6 +8648,7 @@
     let totalSpend = 0;
     let totalEnquiries = 0;
     let totalSaves = 0;
+    let totalViews = 0;
     let hasPremiumSpend = false;
     listings.forEach(function (o) {
       const enquiries = opportunityEnquiriesForListing(o.id);
@@ -8615,6 +8656,7 @@
       if (opportunityPremiumSpendPence(o) > 0) hasPremiumSpend = true;
       totalEnquiries += enquiries.length;
       totalSaves += opportunitySaveCount(o);
+      totalViews += opportunityViewCount(o);
     });
     if (!totalEnquiries) {
       mount.hidden = true;
@@ -8630,11 +8672,232 @@
       esc(formatPenceGbp(avgPerEnquiry)) +
       ' average cost per enquiry across your business opportunities' +
       (hasPremiumSpend ? ' (listing + premium spend)' : '') +
+      (totalViews ? '; ' + esc(String(totalViews)) + ' directory views recorded' : '') +
       '.' +
       (saveRate != null
         ? ' ' + esc(String(saveRate)) + '% of members who saved a business opportunity also enquired.'
         : '') +
       '</p>';
+  }
+
+  function opportunityPublicUrl(opportunity) {
+    if (!opportunity) return '/opportunities/';
+    if (opportunity.slug) return '/opportunities/' + encodeURIComponent(opportunity.slug);
+    if (opportunity.id) return '/opportunities/' + encodeURIComponent(opportunity.id);
+    return '/opportunities/';
+  }
+
+  function opportunityViewCount(opportunity) {
+    return Math.max(0, Number(opportunity && opportunity.viewCount) || 0);
+  }
+
+  function opportunityEnquiriesRespondedCount(opportunityId) {
+    return (opportunityEnquiriesForListing(opportunityId) || []).filter(function (e) {
+      return String(e.status || '').toLowerCase() === 'responded';
+    }).length;
+  }
+
+  function opportunityFunnelHtml(opportunity, enquiryCount) {
+    const views = opportunityViewCount(opportunity);
+    const saves = opportunitySaveCount(opportunity);
+    const responded = opportunityEnquiriesRespondedCount(opportunity.id);
+    const parts = [];
+    if (views > 0) parts.push(esc(String(views)) + ' views');
+    if (saves > 0) parts.push(esc(String(saves)) + ' saves');
+    parts.push(esc(String(enquiryCount)) + ' enquiries');
+    parts.push(esc(String(responded)) + ' responded');
+    return (
+      '<p class="org-opp-listing-card-funnel" title="Views → saves → enquiries → responses">' +
+      parts.join(' → ') +
+      '</p>'
+    );
+  }
+
+  function opportunityCoachingMessage(opportunity, enquiryCount) {
+    const views = opportunityViewCount(opportunity);
+    const saves = opportunitySaveCount(opportunity);
+    const st = String(opportunity?.status || '').toLowerCase();
+    if (st !== 'published' && st !== 'live') return '';
+    if (enquiryCount > 0) return '';
+    if (saves > 0) {
+      return 'Members are saving this business opportunity — sharpen your description or try premium spotlight to convert interest into enquiries.';
+    }
+    if (views > 0) {
+      return 'Your business opportunity is getting views — share the public link or promote it on LinkedIn to turn traffic into enquiries.';
+    }
+    return 'Your business opportunity is live — copy the public link and share it with your network to get your first enquiries.';
+  }
+
+  function renderOpportunityCoaching() {
+    const mount = document.getElementById('org-opp-coaching');
+    if (!mount) return;
+    const list = (state.opportunities || []).filter(function (o) {
+      const st = String(o.status || '').toLowerCase();
+      return st === 'published' || st === 'live';
+    });
+    const tips = list
+      .map(function (o) {
+        const enquiries = opportunityEnquiriesForListing(o.id);
+        const msg = opportunityCoachingMessage(o, enquiries.length);
+        if (!msg) return null;
+        return (
+          '<li><strong>' +
+          esc(o.title || 'Business opportunity') +
+          ':</strong> ' +
+          esc(msg) +
+          '</li>'
+        );
+      })
+      .filter(Boolean);
+    if (!tips.length) {
+      mount.hidden = true;
+      mount.innerHTML = '';
+      return;
+    }
+    mount.hidden = false;
+    mount.innerHTML =
+      '<div class="org-opp-coaching-inner">' +
+      '<h3 class="org-opp-coaching-title">Tips to get more enquiries</h3>' +
+      '<ul class="org-opp-coaching-list">' +
+      tips.join('') +
+      '</ul></div>';
+  }
+
+  function renderOpportunityCompare() {
+    const mount = document.getElementById('org-opp-compare');
+    if (!mount) return;
+    const list = (state.opportunities || []).slice();
+    if (list.length < 2) {
+      mount.hidden = true;
+      mount.innerHTML = '';
+      return;
+    }
+    const ranked = list
+      .map(function (o) {
+        const enquiries = opportunityEnquiriesForListing(o.id);
+        const per =
+          enquiries.length > 0 ? opportunityCostPerEnquiryPence(o, enquiries.length) : null;
+        return {
+          title: o.title || 'Untitled',
+          enquiries: enquiries.length,
+          saves: opportunitySaveCount(o),
+          views: opportunityViewCount(o),
+          per: per,
+        };
+      })
+      .sort(function (a, b) {
+        return b.enquiries - a.enquiries || b.saves - a.saves || b.views - a.views;
+      });
+    const best = ranked[0];
+    mount.hidden = false;
+    mount.innerHTML =
+      '<p><strong>Best performer:</strong> ' +
+      esc(best.title) +
+      ' — ' +
+      esc(String(best.enquiries)) +
+      ' enquiries' +
+      (best.per != null ? ', ' + esc(formatPenceGbp(best.per)) + ' per enquiry' : '') +
+      (best.views ? ', ' + esc(String(best.views)) + ' views' : '') +
+      '.</p>';
+  }
+
+  function opportunityRenewButtonHtml(opportunity) {
+    const meta = opportunityExpiryMeta(opportunity);
+    if (meta.tone !== 'warn' && meta.tone !== 'danger') return '';
+    return (
+      '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-renew="' +
+      esc(opportunity.id) +
+      '" data-opp-renew-months="3">Renew 3 months</button>'
+    );
+  }
+
+  async function startOpportunityListingRenew(opportunityId, months, triggerBtn) {
+    if (!opportunityId) return;
+    const btn = triggerBtn || null;
+    const termMonths = Math.max(3, Number(months) || 3);
+    const prevLabel = btn ? btn.textContent : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Opening checkout…';
+    }
+    try {
+      const { ok, data } = await api('/api/organiser/opportunity-listing-checkout', {
+        method: 'POST',
+        body: JSON.stringify({ opportunityId: opportunityId, months: termMonths }),
+      });
+      if (ok && data.ok && data.url) {
+        location.href = data.url;
+        return;
+      }
+      window.alert(data.message || data.error || 'Could not start renewal checkout.');
+    } catch {
+      window.alert('Could not reach checkout. Try again in a moment.');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = prevLabel || 'Renew 3 months';
+      }
+    }
+  }
+
+  async function loadPremiumWaitlistStatus() {
+    try {
+      const { ok, data } = await api('/api/organiser/opportunity-premium-waitlist');
+      if (ok) premiumWaitlistOn = Boolean(data.onWaitlist);
+    } catch {
+      premiumWaitlistOn = false;
+    }
+  }
+
+  async function joinPremiumWaitlist(opportunityId, triggerBtn) {
+    const btn = triggerBtn || null;
+    const prevLabel = btn ? btn.textContent : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Joining…';
+    }
+    try {
+      const { ok, data } = await api('/api/organiser/opportunity-premium-waitlist', {
+        method: 'POST',
+        body: JSON.stringify({ opportunityId: opportunityId || null }),
+      });
+      if (!ok) throw new Error(data.message || data.error || 'waitlist_failed');
+      premiumWaitlistOn = true;
+      if (btn) btn.textContent = 'On waitlist ✓';
+      else renderOpportunitiesList();
+    } catch (e) {
+      window.alert((e && e.message) || 'Could not join the waitlist.');
+      if (btn) btn.textContent = prevLabel;
+    } finally {
+      if (btn) btn.disabled = premiumWaitlistOn;
+    }
+  }
+
+  function scrollToSocialLinkedIn() {
+    setRoute('social');
+    requestAnimationFrame(function () {
+      const el = document.getElementById('org-social-linkedin');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  function handleBusinessRenewUrlParam() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const renewId = params.get('renew');
+      if (!renewId) return;
+      const match = (state.opportunities || []).find(function (o) {
+        return String(o.id) === String(renewId);
+      });
+      if (match) {
+        requestAnimationFrame(function () {
+          const row = document.querySelector('[data-opp-renew="' + renewId + '"]');
+          if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      }
+    } catch {
+      /* ignore */
+    }
   }
 
   function opportunityCanUpgradePremium(opportunity) {
@@ -8647,8 +8910,15 @@
     if (!opportunityCanUpgradePremium(opportunity)) return '';
     const slots = opportunityPremiumSlots;
     if (slots && slots.full) {
+      if (premiumWaitlistOn) {
+        return (
+          '<button type="button" class="org-btn org-btn-outline org-btn-sm org-opp-premium-upsell" disabled>On spotlight waitlist</button>'
+        );
+      }
       return (
-        '<button type="button" class="org-btn org-btn-outline org-btn-sm org-opp-premium-upsell is-disabled" disabled title="All spotlight places are taken">Spotlight full</button>'
+        '<button type="button" class="org-btn org-btn-outline org-btn-sm org-opp-premium-waitlist" data-opp-waitlist="' +
+        esc(opportunity.id) +
+        '">Notify when slot opens</button>'
       );
     }
     const slotHint =
@@ -8676,6 +8946,7 @@
         opportunityPremiumSlots = data.premiumSlots;
         if (state.opportunitiesLoaded) renderOpportunitiesList();
       }
+      await loadPremiumWaitlistStatus();
     } catch {
       /* ignore */
     }
@@ -8931,9 +9202,13 @@
       const status = String(enquiry.status || 'new').toLowerCase();
       const statusKey =
         status === 'responded' ? 'live' : status === 'read' ? 'archived' : 'upcoming';
+      const age = formatRelativeAge(enquiry.createdAt);
+      const ageMs = enquiry.createdAt ? Date.now() - new Date(enquiry.createdAt).getTime() : 0;
+      if (status === 'new' && ageMs > 86400000) tr.className = 'org-enquiry-row is-stale';
       tr.innerHTML =
         '<td>' +
         esc(formatDate(enquiry.createdAt)) +
+        (age ? '<br><span class="org-payout-muted">' + esc(age) + '</span>' : '') +
         '</td><td class="org-td-name">' +
         esc(enquiry.opportunityTitle || 'Business opportunity') +
         '</td><td>' +
@@ -8947,7 +9222,12 @@
         '</td><td class="org-td-actions org-td-actions--wrap">' +
         '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-enquiry-reply-open="' +
         esc(enquiry.id) +
-        '">Reply</button>' +
+        '">Reply</button> ' +
+        (status === 'new'
+          ? '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-enquiry-read="' +
+            esc(enquiry.id) +
+            '">Mark read</button>'
+          : '') +
         '</td>';
       body.appendChild(tr);
     });
@@ -9060,9 +9340,6 @@
       return;
     }
     const first = expiring[0];
-    const renewUrl = first.id
-      ? '/organiser/opportunity-edit?id=' + encodeURIComponent(first.id)
-      : '/organiser/#business-overview';
     const copy =
       expiring.length === 1
         ? 'Your business opportunity <strong>' + esc(first.title || 'Untitled') + '</strong> expires soon.'
@@ -9073,9 +9350,11 @@
       '<p>' +
       copy +
       ' Renew to stay visible on the business opportunities directory.</p>' +
-      '<a class="org-btn org-btn-gold org-btn-sm" href="' +
-      esc(renewUrl) +
-      '">Renew business opportunity</a>' +
+      (first.id
+        ? '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-renew="' +
+          esc(first.id) +
+          '" data-opp-renew-months="3">Renew 3 months</button>'
+        : '') +
       '</div>';
   }
 
@@ -9114,9 +9393,8 @@
       const expiry = opportunityExpiryMeta(o);
       const premiumBadge = opportunityPremiumBadgeHtml(o);
       const editUrl = '/organiser/opportunity-edit?id=' + encodeURIComponent(o.id);
-      const viewUrl = o.slug
-        ? '/opportunities/' + encodeURIComponent(o.slug)
-        : '/opportunities/' + encodeURIComponent(o.id);
+      const viewUrl = opportunityPublicUrl(o);
+      const publicUrl = window.location.origin + viewUrl;
       const card = document.createElement('article');
       card.className = 'org-opp-listing-card';
       card.innerHTML =
@@ -9147,6 +9425,7 @@
         esc(expiry.label) +
         '</div></div>' +
         '</div>' +
+        opportunityFunnelHtml(o, enquiries.length) +
         opportunityRoiFootnoteHtml(o, enquiries.length) +
         '<div class="org-opp-listing-card-actions">' +
         '<a class="org-btn org-btn-outline org-btn-sm" href="' +
@@ -9155,11 +9434,17 @@
         '<a class="org-btn org-btn-outline org-btn-sm" href="' +
         esc(viewUrl) +
         '" target="_blank" rel="noopener">View live</a> ' +
+        '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-copy-link="' +
+        esc(publicUrl) +
+        '">Copy link</button> ' +
+        '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-promote-social="1">Promote</button> ' +
         (enquiries.length
           ? '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-enquiry-filter="' +
             esc(o.id) +
             '">View enquiries</button> '
           : '') +
+        opportunityRenewButtonHtml(o) +
+        ' ' +
         opportunityPremiumUpsellHtml(o) +
         '</div>';
       mount.appendChild(card);
@@ -9209,6 +9494,10 @@
         '</td><td>' +
         opportunityPremiumCellHtml(o) +
         '</td><td>' +
+        (opportunityViewCount(o)
+          ? esc(String(opportunityViewCount(o)))
+          : '<span class="muted">0</span>') +
+        '</td><td>' +
         (enquiries.length
           ? '<button type="button" class="org-opp-enquiry-count-link" data-opp-enquiry-filter="' +
             esc(o.id) +
@@ -9231,6 +9520,11 @@
         '<a class="org-btn org-btn-outline org-btn-sm" href="' +
         esc(viewUrl) +
         '" target="_blank" rel="noopener">View</a> ' +
+        '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-copy-link="' +
+        esc(window.location.origin + opportunityPublicUrl(o)) +
+        '">Copy link</button> ' +
+        opportunityRenewButtonHtml(o) +
+        ' ' +
         opportunityPremiumUpsellHtml(o) +
         '</td>';
       body.appendChild(tr);
@@ -9238,6 +9532,9 @@
     renderOpportunityExpiryBanner();
     renderOpportunityPerformance();
     renderOpportunityRoiInsights();
+    renderOpportunityCompare();
+    renderOpportunityCoaching();
+    handleBusinessRenewUrlParam();
   }
 
   async function loadOpportunitiesList() {
@@ -9248,16 +9545,19 @@
     }
     try {
       const { ok, data } = await api('/api/organiser/opportunities');
-      if (!ok) return;
+      if (!ok) throw new Error(data.message || data.error || 'load_failed');
       state.opportunities = data.opportunities || [];
       state.opportunitiesLoaded = true;
+      showOpportunityLoadError('');
       renderStats();
       renderOpportunitiesList();
       if (linkedInPostBuilder && linkedInPostBuilder.refreshOpportunities) {
         linkedInPostBuilder.refreshOpportunities();
       }
-    } catch {
-      /* ignore */
+    } catch (e) {
+      showOpportunityLoadError(
+        'Could not load your business opportunities. Refresh the page or try again in a moment.'
+      );
     }
   }
 
@@ -9270,9 +9570,11 @@
       state.opportunityEnquiries = data.enquiries || [];
       state.opportunityEnquiriesNewCount = opportunityEnquiryNewCount(state.opportunityEnquiries);
       state.opportunityEnquiriesLoaded = true;
+      showOpportunityLoadError('');
     } catch (e) {
       state.opportunityEnquiries = [];
       state.opportunityEnquiriesNewCount = 0;
+      showOpportunityLoadError('Could not load enquiries. Refresh the page or try again in a moment.');
     } finally {
       if (hint) hint.hidden = true;
       renderHubPortalMeta();
@@ -9280,6 +9582,23 @@
       renderOpportunityEnquiries();
       renderOpportunitiesList();
     }
+  }
+
+  async function markOpportunityEnquiryRead(enquiryId) {
+    const { ok, data } = await api('/api/organiser/opportunity-enquiries', {
+      method: 'PATCH',
+      body: JSON.stringify({ id: enquiryId, status: 'read' }),
+    });
+    if (!ok) throw new Error(data.message || data.error || 'enquiry_update_failed');
+    const enquiry = data.enquiry;
+    if (!enquiry) throw new Error('enquiry_update_failed');
+    const idx = state.opportunityEnquiries.findIndex((e) => e.id === enquiry.id);
+    if (idx >= 0) state.opportunityEnquiries[idx] = enquiry;
+    state.opportunityEnquiriesNewCount = opportunityEnquiryNewCount(state.opportunityEnquiries);
+    renderOpportunityEnquiries();
+    renderOpportunitiesList();
+    updateOpportunityEnquiryUi();
+    renderStats();
   }
 
   async function markOpportunityEnquiryResponded(enquiryId) {
@@ -10225,6 +10544,42 @@
             premiumUpgradeBtn.getAttribute('data-opp-premium-upgrade'),
             premiumUpgradeBtn
           );
+          return;
+        }
+
+        const renewBtn = e.target.closest('[data-opp-renew]');
+        if (renewBtn) {
+          e.preventDefault();
+          startOpportunityListingRenew(
+            renewBtn.getAttribute('data-opp-renew'),
+            Number(renewBtn.getAttribute('data-opp-renew-months')) || 3,
+            renewBtn
+          );
+          return;
+        }
+
+        const waitlistBtn = e.target.closest('[data-opp-waitlist]');
+        if (waitlistBtn) {
+          e.preventDefault();
+          joinPremiumWaitlist(waitlistBtn.getAttribute('data-opp-waitlist'), waitlistBtn);
+          return;
+        }
+
+        const enquiryReadBtn = e.target.closest('[data-opp-enquiry-read]');
+        if (enquiryReadBtn) {
+          e.preventDefault();
+          markOpportunityEnquiryRead(enquiryReadBtn.getAttribute('data-opp-enquiry-read')).catch(
+            function () {
+              window.alert('Could not mark enquiry as read.');
+            }
+          );
+          return;
+        }
+
+        const promoteBtn = e.target.closest('[data-opp-promote-social]');
+        if (promoteBtn) {
+          e.preventDefault();
+          scrollToSocialLinkedIn();
           return;
         }
 

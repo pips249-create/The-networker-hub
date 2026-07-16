@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716ux" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716mem" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
   <body class="organiser-dashboard-page hub-is-page-loading">
@@ -354,12 +354,12 @@
               <h2>Pricing</h2>
               <div class="oe-intro-price-grid">
                 <div class="oe-intro-price-card oe-intro-price-card--standard">
-                  <p class="oe-intro-price-label">Standard listing</p>
+                  <p class="oe-intro-price-label">Standard business opportunity</p>
                   <p class="oe-intro-price-amount">£25 <span>/ month + VAT</span></p>
                   <p class="oe-intro-price-note">Minimum 3 months upfront — <strong>£72.00</strong> inc. VAT for a 3-month term.</p>
                   <ul class="oe-intro-price-list">
-                    <li>Live in the opportunities directory</li>
-                    <li>Enquiry form on your listing page</li>
+                    <li>Live in the business opportunities directory</li>
+                    <li>Enquiry form on your business opportunity page</li>
                     <li>Edit any time from your workspace</li>
                   </ul>
                 </div>
@@ -379,8 +379,8 @@
               <h2>Good to know</h2>
               <ul class="oe-intro-faq-list">
                 <li>You keep full control — enquiries go to your email; there is no commission on deals you make.</li>
-                <li>Listings are reviewed before going live to keep the directory trustworthy.</li>
-                <li>Premium spotlight is optional (£55/month) and limited to <strong>12 active listings</strong> in the carousel at any time.</li>
+                <li>Business opportunities are reviewed before going live to keep the directory trustworthy.</li>
+                <li>Premium spotlight is optional (£55/month) and limited to <strong>12 active business opportunities</strong> in the carousel at any time.</li>
               </ul>
             </div>
 
@@ -401,6 +401,8 @@
             <p class="org-page-lead">List business opportunities for other members and respond when someone enquires.</p>
           </header>
 
+          <div class="org-inline-banner org-inline-banner--warn" id="org-opp-load-error" hidden role="alert"></div>
+
           <div class="org-stats org-stats--four">
             <div class="org-stat gold">
               <div class="org-stat-label">Live opportunities</div>
@@ -420,6 +422,8 @@
             </div>
           </div>
           <div class="org-opp-roi-insights" id="org-opp-roi-insights" hidden aria-live="polite"></div>
+          <div class="org-opp-compare" id="org-opp-compare" hidden aria-live="polite"></div>
+          <div class="org-opp-coaching" id="org-opp-coaching" hidden aria-live="polite"></div>
 
           <div class="org-quick-actions org-quick-actions--compact" aria-label="Quick links">
             <h2 class="org-quick-actions-title">Quick links</h2>
@@ -457,6 +461,7 @@
                   <th>Title</th>
                   <th>Status</th>
                   <th>Premium</th>
+                  <th>Views</th>
                   <th>Enquiries</th>
                   <th>New</th>
                   <th title="Members who saved this business opportunity — anonymous">Saved</th>
@@ -579,31 +584,39 @@
             </p>
           </header>
 
-          <div class="org-member-list-explainer" aria-label="How memberships work">
-            <p class="org-member-list-explainer-title">How it works</p>
+          <div class="org-member-list-how" aria-label="How memberships work">
+            <h2 class="org-member-list-how-title">How it works</h2>
             <ol class="org-member-list-steps">
-              <li>
-                <strong>Upload your members</strong>
-                <span>Add people one by one, or import a spreadsheet (CSV from Excel or Google Sheets).</span>
+              <li class="org-member-list-step-card">
+                <span class="org-member-list-step-num" aria-hidden="true">1</span>
+                <div class="org-member-list-step-body">
+                  <strong>Upload your members</strong>
+                  <span>Add people one by one, or import a spreadsheet (CSV from Excel or Google Sheets).</span>
+                </div>
               </li>
-              <li>
-                <strong>Add a Members only ticket</strong>
-                <span>On your event’s tickets step — it stays hidden from the public event page.</span>
+              <li class="org-member-list-step-card">
+                <span class="org-member-list-step-num" aria-hidden="true">2</span>
+                <div class="org-member-list-step-body">
+                  <strong>Add a Members only ticket</strong>
+                  <span>On your event’s tickets step — it stays hidden from the public event page.</span>
+                </div>
               </li>
-              <li>
-                <strong>They sign in and book</strong>
-                <span>Anyone on the list who signs in with their membership email gets the member rate.</span>
+              <li class="org-member-list-step-card">
+                <span class="org-member-list-step-num" aria-hidden="true">3</span>
+                <div class="org-member-list-step-body">
+                  <strong>They sign in and book</strong>
+                  <span>Anyone on the list who signs in with their membership email gets the member rate.</span>
+                </div>
               </li>
             </ol>
           </div>
 
           <div class="org-member-list-notes">
-            <p><strong>Optional expiry dates</strong> flag memberships due for renewal in your reports. You can also send invite emails when you add or import members.</p>
-            <p><strong>One list per organiser page</strong> — if you run more than one group, each has its own list. Choose which one to open below.</p>
+            <p>Optional expiry dates flag renewals in your reports. You can send invite emails when you add or import members.</p>
           </div>
 
           <div id="member-lists-chooser-wrap">
-            <p class="org-member-list-chooser-label">Choose an organiser page</p>
+            <h2 class="org-member-list-chooser-heading" id="member-lists-chooser-heading">Choose an organiser page</h2>
             <div class="org-member-list-chooser" id="member-lists-choices"></div>
             <p class="org-member-list-loading" id="member-lists-loading" hidden>Loading organiser pages…</p>
           </div>
@@ -1896,6 +1909,6 @@
     <script src="../js/hub-event-timezone.js?v=20260716"></script>
     <script src="../js/organiser-featured-duration.js?v=20260716feat"></script>
     <script src="../js/organiser-linkedin-post-builder.js?v=20260714logo"></script>
-    <script src="../js/organiser-dashboard.js?v=20260716c"></script>
+    <script src="../js/organiser-dashboard.js?v=20260716mem"></script>
   </body>
 </html>
