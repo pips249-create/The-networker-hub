@@ -162,45 +162,37 @@ const NETWORKING_REGION_THEMES = {
     "tagline": "From the Northern Quarter to Salford Quays and beyond.",
     "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M104 82V24h32v58\"/><path d=\"M108 24V4h24v20\"/><path d=\"M98 24h44\" stroke-width=\"2\"/><path d=\"M104 36h32M104 48h32M104 60h32M104 72h32\" opacity=\".4\"/><path d=\"M114 24v58M126 24v58\" opacity=\".35\"/><path d=\"M90 82h60\" stroke-width=\"2\"/></svg>"
   },
-  "birmingham": {
-    "tagline": "From Digbeth and the Jewellery Quarter to the wider Midlands.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M90 38C54 34 42 10 56-4c0 20 14 36 34 46M150 38c36-4 48-28 34-42 0 20-14 36-34 46\" stroke-width=\"3\"/><path d=\"M84 44l-14 4 4 14 14-8M156 44l14 4-4 14-14-8\"/><path d=\"M88 36h64l4 14H84z\"/><path d=\"M84 50c-2 18 4 34 16 44h40c12-10 18-26 16-44\"/><circle cx=\"104\" cy=\"58\" r=\"4\"/><circle cx=\"136\" cy=\"58\" r=\"4\"/><path d=\"M100 70h40v16H100z\"/><path d=\"M110 76v5M130 76v5\" stroke-width=\"2\"/><circle cx=\"120\" cy=\"92\" r=\"9\"/><path d=\"M120 83v-4\"/></svg>"
-  },
-  "glasgow": {
-    "tagline": "Connect with entrepreneurs across the Clyde and the city centre.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M56 82V20h14v62\"/><path d=\"M56 34l14 10M56 50l14 10M56 66l14 10M70 34l-14 10M70 50l-14 10M70 66l-14 10\" opacity=\".45\"/><path d=\"M36 20h140v12H36z\"/><path d=\"M48 20l16 12M80 20l16 12M112 20l16 12M144 20l16 12M64 32l-16-12M96 32l-16-12M128 32l-16-12M160 32l-16-12\" opacity=\".5\"/><path d=\"M156 32v36\"/><path d=\"M148 68h16\"/></svg>"
-  },
-  "edinburgh": {
-    "tagline": "From the Old Town and New Town to Leith and the wider Lothians.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M24 82L40 56l16 10 20-36 16 8 24-32 16 14 20-18 16 20 20 40v20H24z\" stroke-width=\"2\"/><path d=\"M72 48h96\" stroke-width=\"2.2\"/><path d=\"M72 48V28h24v20M96 48V16h40v32M136 48V30h28v18\"/><path d=\"M72 28h3v-5h4v5h4v-5h4v5h5\"/><path d=\"M96 16h4v-5h5v5h5v-5h5v5h5v-5h5v5h6\"/><path d=\"M136 30h3v-5h4v5h4v-5h4v5h5\"/><path d=\"M116 16V2M116 2h14l-4 4 4 4h-14\"/><path d=\"M84 36h6v8M112 28h8v10M148 36h6v8\" opacity=\".5\"/></svg>"
+  "liverpool": {
+    "tagline": "From the Albert Dock and Baltic Triangle to the wider Merseyside business community.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M40 82V28h40v54M160 82V16h40v66\"/><circle cx=\"60\" cy=\"42\" r=\"10\"/><circle cx=\"180\" cy=\"32\" r=\"10\"/><path d=\"M48 20c0-12 6-18 10-18 2 0 4 4 6 8l4-12c4 8 6 16 4 22\"/><path d=\"M168 8c0-12 6-18 10-18 2 0 4 4 6 8l4-12c4 8 6 16 4 22\"/><path d=\"M80 62h80v20H80z\"/><path d=\"M48 56h24M48 68h24M168 48h24M168 60h24\" opacity=\".4\"/></svg>"
   },
   "leeds": {
     "tagline": "From the city centre to the wider West Yorkshire business community.",
     "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M36 82V52h168v30\"/><path d=\"M48 52v28M72 52v28M96 52v28M144 52v28M168 52v28M192 52v28\" opacity=\".45\"/><path d=\"M36 52l84-22 84 22\"/><path d=\"M100 40V10h40v30\"/><circle cx=\"120\" cy=\"24\" r=\"10\"/><path d=\"M120 24v-6M120 24l5 3\"/><path d=\"M104 10h32l-4-8h-24z\"/><path d=\"M120 2v-4\"/></svg>"
   },
-  "liverpool": {
-    "tagline": "From the Albert Dock and Baltic Triangle to the wider Merseyside business community.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M40 82V28h40v54M160 82V16h40v66\"/><circle cx=\"60\" cy=\"42\" r=\"10\"/><circle cx=\"180\" cy=\"32\" r=\"10\"/><path d=\"M48 20c0-12 6-18 10-18 2 0 4 4 6 8l4-12c4 8 6 16 4 22\"/><path d=\"M168 8c0-12 6-18 10-18 2 0 4 4 6 8l4-12c4 8 6 16 4 22\"/><path d=\"M80 62h80v20H80z\"/><path d=\"M48 56h24M48 68h24M168 48h24M168 60h24\" opacity=\".4\"/></svg>"
+  "chester": {
+    "tagline": "From the city walls and Rows to the wider Cheshire business network.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M60 82V32h120v50\"/><path d=\"M80 82V50c0-14 10-22 40-22s40 8 40 22v32\" opacity=\".55\"/><path d=\"M72 32h96v28H72z\"/><circle cx=\"120\" cy=\"46\" r=\"12\"/><path d=\"M120 46v-8M120 46l6 4\"/><path d=\"M84 32l10-16h52l10 16\"/></svg>"
   },
   "newcastle": {
     "tagline": "From the Quayside and city centre to the wider North East.",
     "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M28 82V40h32v42M180 82V40h32v42\"/><path d=\"M20 40c56-40 112-40 168 0\" stroke-width=\"2.4\"/><path d=\"M40 44c40-28 80-28 120 0\" opacity=\".45\"/><path d=\"M48 54h144\" stroke-width=\"2\"/><path d=\"M60 42v12M90 32v22M120 32v22M150 32v22M180 42v12\" opacity=\".55\"/></svg>"
   },
-  "bristol": {
-    "tagline": "From Temple Meads and the Harbourside to Clifton and beyond.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M32 82V28h28v54M180 82V28h28v54\"/><path d=\"M24 36c48-32 96-32 144 0\" stroke-width=\"2.2\"/><path d=\"M36 44c36-20 72-20 108 0\" opacity=\".45\"/><path d=\"M60 52h120\" stroke-width=\"2\"/><path d=\"M72 36v16M96 28v24M120 28v24M144 28v24M168 36v16\" opacity=\".5\"/></svg>"
-  },
-  "sheffield": {
-    "tagline": "From the city centre to business communities across South Yorkshire.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M28 82V44h48v38M88 82V24h52v58M152 82V52h48v30\"/><path d=\"M28 44l12-14 12 14 12-14\"/><path d=\"M88 24l14-16 14 16 14-16\"/><path d=\"M40 30V8h8v22M108 14V0h8v14M168 40V18h8v22\"/><path d=\"M36 56h12v12H36zM100 44h12v12h-12z\" opacity=\".5\"/></svg>"
+  "birmingham": {
+    "tagline": "From Digbeth and the Jewellery Quarter to the wider Midlands.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M90 38C54 34 42 10 56-4c0 20 14 36 34 46M150 38c36-4 48-28 34-42 0 20-14 36-34 46\" stroke-width=\"3\"/><path d=\"M84 44l-14 4 4 14 14-8M156 44l14 4-4 14-14-8\"/><path d=\"M88 36h64l4 14H84z\"/><path d=\"M84 50c-2 18 4 34 16 44h40c12-10 18-26 16-44\"/><circle cx=\"104\" cy=\"58\" r=\"4\"/><circle cx=\"136\" cy=\"58\" r=\"4\"/><path d=\"M100 70h40v16H100z\"/><path d=\"M110 76v5M130 76v5\" stroke-width=\"2\"/><circle cx=\"120\" cy=\"92\" r=\"9\"/><path d=\"M120 83v-4\"/></svg>"
   },
   "nottingham": {
     "tagline": "From the Lace Market and city centre to the wider East Midlands.",
     "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M28 82c14-18 36-26 92-26s78 8 92 26\"/><path d=\"M48 62V34h144v28\"/><path d=\"M88 34l32-22 32 22\"/><path d=\"M108 62v-20c0-8 5-12 12-12s12 4 12 12v20\" opacity=\".55\"/><path d=\"M48 34V20h22v14M170 34V20h22v14\"/><path d=\"M120 12V0M120 0h16l-4 4 4 4h-16\"/></svg>"
   },
-  "cardiff": {
-    "tagline": "From the bay and city centre to business networks across South Wales.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><ellipse cx=\"120\" cy=\"42\" rx=\"88\" ry=\"28\"/><ellipse cx=\"120\" cy=\"42\" rx=\"52\" ry=\"14\" opacity=\".45\"/><path d=\"M40 42h160\" opacity=\".4\"/><path d=\"M48 62c18 14 44 20 72 20s54-6 72-20\" opacity=\".5\"/><path d=\"M40 62V42M200 62V42\"/></svg>"
+  "sheffield": {
+    "tagline": "From the city centre to business communities across South Yorkshire.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M28 82V44h48v38M88 82V24h52v58M152 82V52h48v30\"/><path d=\"M28 44l12-14 12 14 12-14\"/><path d=\"M88 24l14-16 14 16 14-16\"/><path d=\"M40 30V8h8v22M108 14V0h8v14M168 40V18h8v22\"/><path d=\"M36 56h12v12H36zM100 44h12v12h-12z\" opacity=\".5\"/></svg>"
+  },
+  "bristol": {
+    "tagline": "From Temple Meads and the Harbourside to Clifton and beyond.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M32 82V28h28v54M180 82V28h28v54\"/><path d=\"M24 36c48-32 96-32 144 0\" stroke-width=\"2.2\"/><path d=\"M36 44c36-20 72-20 108 0\" opacity=\".45\"/><path d=\"M60 52h120\" stroke-width=\"2\"/><path d=\"M72 36v16M96 28v24M120 28v24M144 28v24M168 36v16\" opacity=\".5\"/></svg>"
   },
   "brighton": {
     "tagline": "From the seafront and creative quarter to the wider Sussex coast.",
@@ -214,9 +206,17 @@ const NETWORKING_REGION_THEMES = {
     "tagline": "From the city centre to business communities across Oxfordshire.",
     "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M24 82h192\" opacity=\".35\"/><circle cx=\"120\" cy=\"42\" r=\"36\"/><path d=\"M90 34c8-28 20-40 30-40s22 12 30 40\"/><path d=\"M120 2v8\"/><path d=\"M88 42v28M100 36v34M120 32v38M140 36v34M152 42v28\" opacity=\".45\"/><path d=\"M84 70h72v12H84z\"/></svg>"
   },
-  "chester": {
-    "tagline": "From the city walls and Rows to the wider Cheshire business network.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M60 82V32h120v50\"/><path d=\"M80 82V50c0-14 10-22 40-22s40 8 40 22v32\" opacity=\".55\"/><path d=\"M72 32h96v28H72z\"/><circle cx=\"120\" cy=\"46\" r=\"12\"/><path d=\"M120 46v-8M120 46l6 4\"/><path d=\"M84 32l10-16h52l10 16\"/></svg>"
+  "glasgow": {
+    "tagline": "Connect with entrepreneurs across the Clyde and the city centre.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M56 82V20h14v62\"/><path d=\"M56 34l14 10M56 50l14 10M56 66l14 10M70 34l-14 10M70 50l-14 10M70 66l-14 10\" opacity=\".45\"/><path d=\"M36 20h140v12H36z\"/><path d=\"M48 20l16 12M80 20l16 12M112 20l16 12M144 20l16 12M64 32l-16-12M96 32l-16-12M128 32l-16-12M160 32l-16-12\" opacity=\".5\"/><path d=\"M156 32v36\"/><path d=\"M148 68h16\"/></svg>"
+  },
+  "edinburgh": {
+    "tagline": "From the Old Town and New Town to Leith and the wider Lothians.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M24 82L40 56l16 10 20-36 16 8 24-32 16 14 20-18 16 20 20 40v20H24z\" stroke-width=\"2\"/><path d=\"M72 48h96\" stroke-width=\"2.2\"/><path d=\"M72 48V28h24v20M96 48V16h40v32M136 48V30h28v18\"/><path d=\"M72 28h3v-5h4v5h4v-5h4v5h5\"/><path d=\"M96 16h4v-5h5v5h5v-5h5v5h5v-5h5v5h6\"/><path d=\"M136 30h3v-5h4v5h4v-5h4v5h5\"/><path d=\"M116 16V2M116 2h14l-4 4 4 4h-14\"/><path d=\"M84 36h6v8M112 28h8v10M148 36h6v8\" opacity=\".5\"/></svg>"
+  },
+  "cardiff": {
+    "tagline": "From the bay and city centre to business networks across South Wales.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><ellipse cx=\"120\" cy=\"42\" rx=\"88\" ry=\"28\"/><ellipse cx=\"120\" cy=\"42\" rx=\"52\" ry=\"14\" opacity=\".45\"/><path d=\"M40 42h160\" opacity=\".4\"/><path d=\"M48 62c18 14 44 20 72 20s54-6 72-20\" opacity=\".5\"/><path d=\"M40 62V42M200 62V42\"/></svg>"
   }
 };
 

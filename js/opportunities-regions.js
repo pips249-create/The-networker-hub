@@ -45,6 +45,7 @@
   var region = REGIONS[slug];
   var themes = window.HUB_NETWORKING_REGION_THEMES || {};
   var theme = themes[slug] || {};
+  var applyAccent = window.HUB_applyRegionAccentVars;
   var year = new Date().getFullYear();
 
   window.hubOppRegionalLanding = {
@@ -57,8 +58,8 @@
   document.body.classList.add('opp-regional-landing');
   document.body.setAttribute('data-opp-region', slug);
   document.body.setAttribute('data-region', slug);
-  if (theme.accent) {
-    document.body.style.setProperty('--opp-region-accent', theme.accent);
+  if (theme.accentHero || theme.accent) {
+    document.body.style.setProperty('--opp-region-accent', theme.accentHero || theme.accent);
   }
 
   function setText(id, text) {
@@ -83,6 +84,7 @@
   if (intro) {
     intro.hidden = false;
     intro.setAttribute('data-region', slug);
+    if (applyAccent) applyAccent(intro, theme);
   }
 
   var introHeading = document.getElementById('networking-region-intro-heading');

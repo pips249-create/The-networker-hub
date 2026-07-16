@@ -40,6 +40,7 @@
 
   var themes = window.HUB_NETWORKING_REGION_THEMES || {};
   var theme = themes[slug] || {};
+  var applyAccent = window.HUB_applyRegionAccentVars;
   var year = new Date().getFullYear();
 
   window.hubRegionalLanding = {
@@ -62,7 +63,10 @@
     heading.innerHTML =
       'The best business networking events &amp; groups in <span class="accent"></span>';
     var accent = heading.querySelector('.accent');
-    if (accent) accent.textContent = region.name + ' ' + year;
+    if (accent) {
+      accent.textContent = region.name + ' ' + year;
+      if (theme.accentHero) accent.style.color = theme.accentHero;
+    }
   }
   setText(
     'events-hero-lede',
@@ -76,6 +80,7 @@
   if (intro) {
     intro.hidden = false;
     intro.setAttribute('data-region', slug);
+    if (applyAccent) applyAccent(intro, theme);
   }
 
   var introHeading = document.getElementById('networking-region-intro-heading');

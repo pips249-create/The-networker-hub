@@ -1,7 +1,9 @@
 /**
- * Inject landmark icons into homepage chips and directory location links.
+ * Inject landmark icons and accent colours into homepage chips and directory links.
  */
 (function () {
+  var applyAccent = window.HUB_applyRegionAccentVars;
+
   function injectIcon(host, theme) {
     if (!host || !theme || !theme.landmarkChip) return;
     host.innerHTML = theme.landmarkChip;
@@ -16,6 +18,7 @@
     document.querySelectorAll('.home-location-chip[data-region]').forEach(function (chip) {
       var slug = chip.getAttribute('data-region');
       var theme = themes[slug];
+      if (applyAccent) applyAccent(chip, theme);
       var icon = chip.querySelector('.home-location-chip-icon');
       if (!icon) return;
       icon.classList.remove('home-location-chip-icon--mark');
@@ -25,6 +28,7 @@
     document.querySelectorAll('.networking-location-links a[data-region]').forEach(function (link) {
       var slug = link.getAttribute('data-region');
       var theme = themes[slug];
+      if (applyAccent) applyAccent(link, theme);
       if (!theme || !theme.landmarkChip) return;
 
       var icon = link.querySelector('.networking-location-icon');
