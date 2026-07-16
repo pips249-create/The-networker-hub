@@ -6405,6 +6405,42 @@
     if (label) label.hidden = groups.length <= 1;
   }
 
+  function updateMembershipNetworkSummary() {
+    const el = document.getElementById('memberships-network-summary');
+    if (!el) return;
+    const groups = memberListGroups();
+    if (!state.canManageTeam || groups.length < 2) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    let totalMembers = 0;
+    let chaptersWithMembers = 0;
+    groups.forEach(function (g) {
+      const active = Number(g.rosterSummary && g.rosterSummary.active) || 0;
+      if (active > 0) {
+        totalMembers += active;
+        chaptersWithMembers += 1;
+      }
+    });
+    let revenueLine = '';
+    if (hasWorkspaceSummary()) {
+      revenueLine =
+        ' · ' + formatGbpAmount(state.workspaceSummary.totalRevenue) + ' ticket revenue (all pages)';
+    }
+    el.hidden = false;
+    el.textContent =
+      'HQ network: ' +
+      groups.length +
+      ' organiser pages · ' +
+      totalMembers +
+      ' members across ' +
+      chaptersWithMembers +
+      ' chapter' +
+      (chaptersWithMembers === 1 ? '' : 's') +
+      revenueLine;
+  }
+
   function updateMembershipGroupMeta(groupId) {
     const meta = document.getElementById('memberships-group-meta');
     if (!meta) return;
@@ -6459,6 +6495,7 @@
     workspace.hidden = false;
 
     fillMembershipsGroupFilter();
+    updateMembershipNetworkSummary();
     updateMembershipGroupMeta(filters.membershipsGroup);
     syncMembershipGroupUrl();
 

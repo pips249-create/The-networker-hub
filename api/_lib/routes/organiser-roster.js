@@ -100,7 +100,7 @@ module.exports = async function handler(req, res) {
           filter,
           eventId,
         });
-        return json(res, 200, { ok: true, members, total, limit, offset });
+        return json(res, 200, { ok: true, members, total, totalActive, limit, offset });
       }
 
       const status = String(req.query?.status || 'active').trim().toLowerCase();

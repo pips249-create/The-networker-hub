@@ -5,10 +5,13 @@
   let organiserId = String(params.get('id') || params.get('organiserId') || '').trim();
   const PAGE_SIZE = 25;
   let members = [];
+  let rosterTotal = 0;
+  let rosterActiveTotal = 0;
   let events = [];
   let lastReports = null;
   let page = 1;
   let controlsBound = false;
+  let searchTimer = null;
   const filters = { search: '', status: 'all' };
 
   function getOrganiserId() {
@@ -60,6 +63,19 @@
     });
     if (!res.ok) throw new Error(data.message || data.error || 'Request failed');
     return data;
+  }
+
+  function rosterListQuery(offset, limit) {
+    const params = new URLSearchParams();
+    params.set('limit', String(limit != null ? limit : PAGE_SIZE));
+    params.set('offset', String(offset != null ? offset : (page - 1) * PAGE_SIZE));
+    if (filters.search.trim()) params.set('search', filters.search.trim());
+    if (filters.status && filters.status !== 'all') params.set('filter', filters.status);
+    const eventId = selectedEventId();
+    if (eventId && (filters.status === 'booked' || filters.status === 'not_booked')) {
+      params.set('eventId', eventId);
+    }
+    return '&' + params.toString();
   }
 
   function rosterUrl(extra) {
@@ -364,9 +380,10 @@
   function syncBulkResend(totalActive) {
     const btn = document.getElementById('omr-bulk-resend');
     if (!btn) return;
-    const unclaimed = members.filter(function (m) {
-      return m.status === 'active' && !isClaimed(m);
-    }).length;
+    const unclaimed =
+      lastReports && lastReports.rosterHealth
+        ? Number(lastReports.rosterHealth.unclaimed) || 0
+        : 0;
     btn.hidden = !(totalActive > 0 && unclaimed > 0);
     btn.textContent =
       unclaimed === 1
@@ -452,8 +469,9 @@
             if (statusSel) statusSel.value = 'all';
           }
           page = 1;
-          renderRoster();
-          loadReports(sel.value).then(function () {
+          fetchRosterPage(1).then(function () {
+            return loadReports(sel.value);
+          }).then(function () {
             renderRoster();
           });
         });
@@ -616,8 +634,15 @@
     );
   }
 
-  function downloadMembersCsv() {
-    const rows = filteredMembers();
+  async function downloadMembersCsv() {
+    let rows = [];
+    try {
+      const data = await api(rosterUrl(rosterListQuery(0, 10000)));
+      rows = data.members || [];
+    } catch (err) {
+      showAlert(err.message, 'error');
+      return;
+    }
     if (!rows.length) {
       showAlert('No members to download for the current filters.', 'error');
       return;
@@ -762,9 +787,13 @@
       '</div>';
     nav.querySelectorAll('[data-omr-page]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        if (btn.dataset.omrPage === 'prev' && page > 1) page -= 1;
-        if (btn.dataset.omrPage === 'next' && page < totalPages) page += 1;
-        renderRoster();
+        if (btn.dataset.omrPage === 'prev' && page > 1) {
+          fetchRosterPage(page - 1);
+        }
+        if (btn.dataset.omrPage === 'next') {
+          const totalPages = Math.max(1, Math.ceil(rosterTotal / PAGE_SIZE));
+          if (page < totalPages) fetchRosterPage(page + 1);
+        }
       });
     });
   }
@@ -777,19 +806,17 @@
     closeAllActionMenus();
     body.innerHTML = '';
 
-    const totalActive = members.filter(function (m) {
-      return m.status === 'active';
-    }).length;
+    const totalActive = rosterActiveTotal;
     syncAddPanel(totalActive);
     syncBulkResend(totalActive);
 
-    const rows = filteredMembers();
+    const rows = members;
     if (count) {
-      count.hidden = totalActive === 0;
+      count.hidden = totalActive === 0 && rosterTotal === 0;
       count.textContent =
-        rows.length === totalActive
+        rosterTotal === totalActive
           ? totalActive + (totalActive === 1 ? ' member on this register' : ' members on this register')
-          : rows.length + ' of ' + totalActive + ' members shown';
+          : rosterTotal + ' of ' + totalActive + ' members shown';
     }
 
     if (!rows.length) {
@@ -806,16 +833,14 @@
             'Add someone above or import a spreadsheet to start your membership register.';
         }
       }
-      renderPagination(0);
+      renderPagination(rosterTotal);
       return;
     }
     if (empty) empty.hidden = true;
 
-    renderPagination(rows.length);
-    const start = (page - 1) * PAGE_SIZE;
-    const pageRows = rows.slice(start, start + PAGE_SIZE);
+    renderPagination(rosterTotal);
 
-    pageRows.forEach(function (m) {
+    rows.forEach(function (m) {
       const tr = document.createElement('tr');
       const hub = isClaimed(m)
         ? '<span class="omr-badge-claimed">Signed up</span>'
@@ -1020,62 +1045,74 @@
   }
 
   async function bulkResendInvites() {
-    const unclaimed = members.filter(function (m) {
-      return m.status === 'active' && !isClaimed(m);
-    });
-    if (!unclaimed.length) {
+    const unclaimed =
+      lastReports && lastReports.rosterHealth
+        ? Number(lastReports.rosterHealth.unclaimed) || 0
+        : 0;
+    if (!unclaimed) {
       showAlert('Everyone on the list already has a Hub account.', 'success');
       return;
     }
     if (
       !confirm(
-        'Resend invite emails to ' +
-          unclaimed.length +
+        'Queue invite emails for ' +
+          unclaimed +
           ' member' +
-          (unclaimed.length === 1 ? '' : 's') +
-          ' who have not signed up yet?'
+          (unclaimed === 1 ? '' : 's') +
+          ' who have not signed up yet? They will send gradually over the next 2 hours.'
       )
     ) {
       return;
     }
     const btn = document.getElementById('omr-bulk-resend');
     if (btn) btn.disabled = true;
-    let sent = 0;
-    let failed = 0;
-    for (const m of unclaimed) {
-      try {
-        await api(rosterUrl(), {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            organiserId: getOrganiserId(),
-            id: m.id,
-            email: m.email,
-            resendInvite: true,
-          }),
-        });
-        sent += 1;
-      } catch {
-        failed += 1;
-      }
+    try {
+      const data = await api(rosterUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organiserId: getOrganiserId(),
+          action: 'queue-invites',
+        }),
+      });
+      showAlert(
+        'Queued ' +
+          (data.queued || 0) +
+          ' invite' +
+          ((data.queued || 0) === 1 ? '' : 's') +
+          ' — sending over the next 2 hours.',
+        (data.queued || 0) ? 'success' : 'error'
+      );
+    } catch (err) {
+      showAlert(err.message, 'error');
+    } finally {
+      if (btn) btn.disabled = false;
     }
-    if (btn) btn.disabled = false;
-    showAlert(
-      'Resent ' + sent + ' invite' + (sent === 1 ? '' : 's') + (failed ? ' · ' + failed + ' failed' : '') + '.',
-      failed && !sent ? 'error' : 'success'
-    );
-    await refresh();
+  }
+
+  async function fetchRosterPage(pageNum) {
+    page = Math.max(Number(pageNum) || 1, 1);
+    const hint = document.getElementById('omr-load-hint');
+    if (hint) hint.hidden = false;
+    try {
+      const data = await api(rosterUrl(rosterListQuery((page - 1) * PAGE_SIZE, PAGE_SIZE)));
+      members = data.members || [];
+      rosterTotal = Number(data.total) || members.length;
+      rosterActiveTotal = Number(data.totalActive) || rosterTotal;
+      renderRoster();
+    } catch (err) {
+      showAlert(err.message, 'error');
+    } finally {
+      if (hint) hint.hidden = true;
+    }
   }
 
   async function refresh() {
-    const hint = document.getElementById('omr-load-hint');
-    if (hint) hint.hidden = false;
-    const data = await api(rosterUrl());
-    members = data.members || [];
+    page = 1;
+    await fetchRosterPage(1);
     const eventId = selectedEventId();
     await loadReports(eventId);
     renderRoster();
-    if (hint) hint.hidden = true;
   }
 
   function removeDuplicateAddPanels() {
@@ -1133,7 +1170,10 @@
     document.getElementById('omr-search')?.addEventListener('input', function (e) {
       filters.search = e.target.value || '';
       page = 1;
-      renderRoster();
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () {
+        fetchRosterPage(1);
+      }, 300);
     });
     document.getElementById('omr-status-filter')?.addEventListener('change', function (e) {
       filters.status = e.target.value || 'all';
@@ -1146,7 +1186,7 @@
         e.target.value = 'all';
       }
       page = 1;
-      renderRoster();
+      fetchRosterPage(1);
     });
     document.getElementById('omr-download-members')?.addEventListener('click', downloadMembersCsv);
     document.getElementById('omr-download-report')?.addEventListener('click', downloadReportCsv);
@@ -1163,11 +1203,11 @@
       }
       if (
         !confirm(
-          'Email ' +
+          'Queue reminder emails for ' +
             count +
             ' member' +
             (count === 1 ? '' : 's') +
-            ' who have not booked yet?'
+            ' who have not booked yet? They will send gradually over the next 2 hours.'
         )
       ) {
         return;
@@ -1184,15 +1224,13 @@
             eventId: eventId,
           }),
         });
-        const failed = (data.errors || []).length;
         showAlert(
-          'Sent ' +
-            (data.sent || 0) +
+          'Queued ' +
+            (data.queued || 0) +
             ' reminder' +
-            ((data.sent || 0) === 1 ? '' : 's') +
-            (failed ? ' · ' + failed + ' failed' : '') +
-            '.',
-          failed && !data.sent ? 'error' : 'success'
+            ((data.queued || 0) === 1 ? '' : 's') +
+            ' — sending over the next 2 hours.',
+          (data.queued || 0) ? 'success' : 'error'
         );
       } catch (err) {
         showAlert(err.message, 'error');
@@ -1334,7 +1372,11 @@
           }),
         });
         const inviteNote =
-          data.invitesSent > 0 ? ' · ' + data.invitesSent + ' invites sent' : '';
+          data.invitesQueued > 0
+            ? ' · ' + data.invitesQueued + ' invites queued (sending over 2 hours)'
+            : data.invitesSent > 0
+              ? ' · ' + data.invitesSent + ' invites sent'
+              : '';
         let msg = 'Imported ' + data.ok + ' of ' + data.total + ' rows' + inviteNote + '.';
         if (data.fail > 0 && data.errors && data.errors.length) {
           msg +=
@@ -1362,6 +1404,8 @@
     organiserId = String(groupId || '').trim();
     if (!getOrganiserId()) {
       members = [];
+      rosterTotal = 0;
+      rosterActiveTotal = 0;
       events = [];
       lastReports = null;
       page = 1;

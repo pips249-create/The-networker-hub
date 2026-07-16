@@ -407,7 +407,8 @@ async function listRosterPage(organiserId, options = {}) {
     const total = filtered.length;
     const slice = filtered.slice(offset, offset + limit);
     const members = enrichBookings ? await enrichMembersWithBookings(orgId, slice) : slice;
-    return { members, total };
+    const totalActive = await countActiveRosterMembers(orgId);
+    return { members, total, totalActive };
   }
 
   let q = sb
@@ -444,7 +445,21 @@ async function listRosterPage(organiserId, options = {}) {
   const members = enrichBookings
     ? await enrichMembersWithBookings(orgId, rows, { emails: rows.map((m) => m.email) })
     : rows;
-  return { members, total: Number(count) || rows.length };
+  const totalActive = await countActiveRosterMembers(orgId);
+  return { members, total: Number(count) || rows.length, totalActive };
+}
+
+async function countActiveRosterMembers(organiserId) {
+  const sb = getSupabaseAdmin();
+  const orgId = String(organiserId || '').trim();
+  if (!orgId) return 0;
+  const { count, error } = await sb
+    .from('organiser_member_roster')
+    .select('id', { count: 'exact', head: true })
+    .eq('organiser_id', orgId)
+    .eq('status', ROSTER_STATUS_ACTIVE);
+  if (error) throw new Error(error.message);
+  return Number(count) || 0;
 }
 
 function rosterRowToClient(row) {
@@ -596,20 +611,6 @@ async function removeRosterMember(organiserId, memberId) {
     throw err;
   }
   return { ok: true };
-}
-
-async function batchResolveAttendeeIdsByEmails(sb, emails) {
-  const map = new Map();
-  const list = [...new Set((emails || []).map(normalizeRosterEmail).filter(Boolean))];
-  for (let i = 0; i < list.length; i += 100) {
-    const chunk = list.slice(i, i + 100);
-    const { data, error } = await sb.from('attendees').select('id, email').in('email', chunk);
-    if (error) throw new Error(error.message);
-    (data || []).forEach((row) => {
-      map.set(normalizeRosterEmail(row.email), row.id);
-    });
-  }
-  return map;
 }
 
 async function importRosterCsv(organiserId, rows, options) {

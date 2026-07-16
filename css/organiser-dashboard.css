@@ -3022,6 +3022,17 @@
   color: var(--od-text-soft);
 }
 
+.org-memberships-network-summary {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(201, 162, 39, 0.08);
+  border: 1px solid rgba(201, 162, 39, 0.22);
+  font-size: 13px;
+  color: var(--od-text-mid);
+  line-height: 1.45;
+}
+
 @media (min-width: 768px) {
   .org-memberships-group-meta {
     flex: 1 1 auto;

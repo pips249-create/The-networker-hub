@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
     <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716mem5" />
-    <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260716mem9" />
+    <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260716mem10" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
   <body class="organiser-dashboard-page hub-is-page-loading">
@@ -615,6 +615,7 @@
           </div>
 
           <div id="memberships-workspace" class="org-memberships-workspace" hidden>
+            <p class="org-memberships-network-summary" id="memberships-network-summary" hidden></p>
             <div class="org-filter-bar org-filter-bar--memberships-group">
               <label class="org-filter-label" for="filter-memberships-group">Organiser page</label>
               <select id="filter-memberships-group" aria-label="Organiser page for membership register"></select>
@@ -729,7 +730,7 @@
                     </details>
                     <label class="omr-check omr-check--compact">
                       <input type="checkbox" id="omr-csv-send-invites" />
-                      Send invite emails after import
+                      Queue invite emails after import (sent gradually over 2 hours)
                     </label>
                   </div>
                 </details>
@@ -2046,7 +2047,7 @@
     <script src="../js/hub-event-timezone.js?v=20260716"></script>
     <script src="../js/organiser-featured-duration.js?v=20260716feat"></script>
     <script src="../js/organiser-linkedin-post-builder.js?v=20260714logo"></script>
-    <script src="../js/organiser-member-roster.js?v=20260716mem9"></script>
+    <script src="../js/organiser-member-roster.js?v=20260716mem10"></script>
     <script src="../js/organiser-dashboard.js?v=20260716mem6"></script>
   </body>
 </html>
