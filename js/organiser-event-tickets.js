@@ -456,6 +456,35 @@
     }
   }
 
+  function goBackToEventDetailsInDrawer() {
+    if (!eventIds[0] || !window.parent || window.parent === window) return;
+    window.parent.postMessage(
+      { type: 'hub-event-goto-edit', eventId: eventIds[0] },
+      window.location.origin
+    );
+  }
+
+  function bindEmbedBackToEdit() {
+    if (!isEmbedDrawer || !eventIds[0]) return;
+    const editLink = document.getElementById('ee-edit-event-link');
+    const actionBack = document.getElementById('ee-tickets-back-edit');
+    if (editLink) {
+      editLink.hidden = false;
+      editLink.href = '#';
+      editLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        goBackToEventDetailsInDrawer();
+      });
+    }
+    if (actionBack) {
+      actionBack.hidden = false;
+      actionBack.addEventListener('click', function (e) {
+        e.preventDefault();
+        goBackToEventDetailsInDrawer();
+      });
+    }
+  }
+
   function isOpenBookingMode(mode) {
     return mode === 'tickets' || mode === 'guest_programme';
   }
@@ -1645,17 +1674,7 @@
     const editLink = document.getElementById('ee-edit-event-link');
     if (editLink && eventIds[0]) {
       if (isEmbedDrawer) {
-        editLink.hidden = false;
-        editLink.href = '#';
-        editLink.addEventListener('click', function (e) {
-          e.preventDefault();
-          if (window.parent && window.parent !== window) {
-            window.parent.postMessage(
-              { type: 'hub-event-goto-edit', eventId: eventIds[0] },
-              window.location.origin
-            );
-          }
-        });
+        bindEmbedBackToEdit();
       } else {
         editLink.href = '/organiser/event-edit?id=' + encodeURIComponent(eventIds[0]);
         editLink.hidden = false;

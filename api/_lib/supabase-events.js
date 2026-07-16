@@ -352,14 +352,12 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     );
   const eventHasEnded = isEventPast(row);
   const isSalesClosed =
-    eventHasEnded ||
     isSoldOut ||
     !ticketSalesEnabled ||
     !ticketsOnSale ||
     (connectRequired && !connectReady);
   let salesClosedReason = '';
-  if (eventHasEnded) salesClosedReason = 'event_ended';
-  else if (isTicketSalesScheduled) salesClosedReason = 'scheduled';
+  if (isTicketSalesScheduled) salesClosedReason = 'scheduled';
   else if (!hasTicketTiers) salesClosedReason = 'no_tickets';
   else if (!ticketSalesEnabled) salesClosedReason = 'organiser_pending';
   else if (connectRequired && !connectReady) salesClosedReason = 'stripe_connect';
@@ -1029,16 +1027,6 @@ async function handle(req, res) {
         organiserRankingPromise,
       ]);
       const seriesDates = seriesResult.seriesDates || [];
-      const hasUpcomingSeriesDate = seriesDates.some((entry) => !isEventPast(entry));
-      if (isEventPast(row) && !hasUpcomingSeriesDate) {
-        return res.status(404).json({
-          configured: true,
-          provider: 'supabase',
-          error: 'event_ended',
-          message: 'This event has ended.',
-          event: null,
-        });
-      }
       const seriesSiblingRows = seriesResult.siblingRows || [];
       const ticketsList = ticketsRaw || [];
       const regCounts = await fetchRegistrationCountsByTicket(sb, ticketsList);

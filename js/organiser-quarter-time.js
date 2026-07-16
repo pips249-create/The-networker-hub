@@ -169,11 +169,11 @@
         const startM = timeToMinutes(startEl.value);
         const endM = timeToMinutes(endEl.value);
         if (endM <= startM) {
-          const prev = Math.max(endM - 60, 0);
-          const nh = Math.floor(prev / 60);
-          const nm = prev % 60;
-          startEl.value = pad2(nh) + ':' + pad2(nm);
-          if (typeof startEl._quarterSyncUi === 'function') startEl._quarterSyncUi();
+          const next = Math.min(startM + 60, 23 * 60 + 45);
+          const nh = Math.floor(next / 60);
+          const nm = next % 60;
+          endEl.value = pad2(nh) + ':' + pad2(nm);
+          if (typeof endEl._quarterSyncUi === 'function') endEl._quarterSyncUi();
         }
       });
     }

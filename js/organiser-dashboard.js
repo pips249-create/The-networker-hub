@@ -3741,6 +3741,19 @@
 
   let eventDrawerLoadTimeout = null;
   let eventDrawerCreateFlow = false;
+  let eventDrawerTicketsBackId = '';
+
+  function setEventDrawerBackButton(show, eventId) {
+    const backBtn = document.getElementById('org-event-drawer-back');
+    eventDrawerTicketsBackId = show && eventId ? String(eventId) : '';
+    if (!backBtn) return;
+    backBtn.hidden = !eventDrawerTicketsBackId;
+  }
+
+  function goBackFromEventTicketsDrawer() {
+    if (!eventDrawerTicketsBackId) return;
+    openEventEditorDrawer(eventDrawerTicketsBackId, { fromTickets: true });
+  }
 
   const EVENT_DRAWER_PROGRESS_STEPS = [
     { id: 'format', label: 'Group & format' },
@@ -3777,6 +3790,7 @@
     drawer.classList.remove('is-open');
     document.body.classList.remove('org-event-drawer-open');
     setEventDrawerLoading(false);
+    setEventDrawerBackButton(false);
     eventDrawerCreateFlow = false;
     renderEventDrawerOverview(null);
     if (frame) frame.removeAttribute('src');
@@ -3939,6 +3953,8 @@
   function openEventTicketsDrawer(eventIds, title) {
     const label = title ? 'Tickets: ' + title : 'Set up tickets';
     const drawerUi = eventDrawerCreateFlow ? { progressStep: 'tickets' } : null;
+    const backId = Array.isArray(eventIds) && eventIds.length ? eventIds[0] : '';
+    setEventDrawerBackButton(Boolean(backId), backId);
     openEventDrawerFrame(eventTicketsFrameUrl(eventIds), label, null, drawerUi);
   }
 
@@ -3981,15 +3997,25 @@
         groupId: drawerOpts.groupId || '',
         format: drawerOpts.format || 'in-person',
       });
+      setEventDrawerBackButton(false);
       openEventDrawerFrame(frameUrl, drawerTitle, null, { progressStep: 'details' });
       return;
     } else {
-      eventDrawerCreateFlow = false;
+      if (!drawerOpts.fromTickets) {
+        eventDrawerCreateFlow = false;
+      }
       const ev =
         typeof eventOrId === 'object' && eventOrId && eventOrId.title
           ? eventOrId
           : findEventById(editId);
       if (!ev || !ev.id) {
+        if (drawerOpts.fromTickets && editId) {
+          frameUrl = eventEditorFrameUrl({ editId: editId });
+          const drawerUi = eventDrawerCreateFlow ? { progressStep: 'details' } : null;
+          setEventDrawerBackButton(false);
+          openEventDrawerFrame(frameUrl, 'Edit event', null, drawerUi);
+          return;
+        }
         showOrganiserAlert(
           'That event is no longer available — it may have been deleted. Check My Events for your current listings.',
           true
@@ -4008,12 +4034,17 @@
         frameOpts.seriesEdit = true;
       }
       frameUrl = eventEditorFrameUrl(frameOpts);
-      openEventDrawerFrame(frameUrl, drawerTitle, ev);
+      const drawerUi =
+        eventDrawerCreateFlow && drawerOpts.fromTickets ? { progressStep: 'details' } : null;
+      setEventDrawerBackButton(false);
+      openEventDrawerFrame(frameUrl, drawerTitle, drawerUi ? null : ev, drawerUi);
       return;
     }
   }
 
   let pendingDeleteEventId = null;
+  let pendingDuplicateEventId = null;
+  let pendingDuplicateGroupId = null;
 
   function openDeleteEventModal(eventId) {
     if (!eventId) return;
@@ -4509,27 +4540,41 @@
     }
   }
 
-  async function confirmDuplicateEvent(eventId) {
+  function openDuplicateEventModal(eventId) {
     if (!eventId) return;
+    pendingDuplicateEventId = eventId;
+    const modal = document.getElementById('modal-event-duplicate');
+    const nameEl = document.getElementById('modal-event-duplicate-name');
+    const confirmBtn = document.getElementById('btn-event-duplicate-confirm');
     const ev = findEventById(eventId);
     const label = ev && ev.title ? ev.title : 'this event';
-    if (
-      !window.confirm(
-        'Create a draft copy of "' +
-          label +
-          '"?\n\nDates are cleared so you can set a new schedule. Ticket types are copied — review everything before publishing.'
-      )
-    ) {
-      return;
+    if (nameEl) {
+      nameEl.textContent = '“' + label + '”';
     }
+    if (confirmBtn) confirmBtn.disabled = false;
+    if (modal) {
+      modal.removeAttribute('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      modal.classList.add('is-open');
+      document.body.classList.add('org-cancel-modal-open');
+    }
+  }
+
+  async function submitDuplicateEvent() {
+    if (!pendingDuplicateEventId) return;
+    const eventId = pendingDuplicateEventId;
+    const confirmBtn = document.getElementById('btn-event-duplicate-confirm');
+    if (confirmBtn) confirmBtn.disabled = true;
     const res = await api('/api/organiser/events', {
       method: 'POST',
       body: JSON.stringify({ action: 'duplicate', id: eventId }),
     });
     if (!res.ok) {
-      window.alert(res.data.message || res.data.error || 'Could not duplicate this event.');
+      if (confirmBtn) confirmBtn.disabled = false;
+      showOrganiserAlert(res.data.message || res.data.error || 'Could not duplicate this event.', true);
       return;
     }
+    closeModals();
     showOrganiserAlert(
       res.data.message || 'Event duplicated as a draft — add dates and publish when ready.',
       false
@@ -4542,28 +4587,45 @@
     }
   }
 
-  async function confirmDuplicateGroup(groupId) {
+  function confirmDuplicateEvent(eventId) {
+    openDuplicateEventModal(eventId);
+  }
+
+  function openDuplicateGroupModal(groupId) {
     if (!groupId) return;
+    pendingDuplicateGroupId = groupId;
+    const modal = document.getElementById('modal-group-duplicate');
+    const nameEl = document.getElementById('modal-group-duplicate-name');
+    const confirmBtn = document.getElementById('btn-group-duplicate-confirm');
     const g = findGroupById(groupId);
     const label = g && g.name ? g.name : 'this group';
-    if (
-      !window.confirm(
-        'Create a draft copy of "' +
-          label +
-          '"?\n\nYou can edit the name and details before publishing.\n\n' +
-          'The copy will not share bank details with the original — complete Stripe setup separately for this page if you sell paid tickets.'
-      )
-    ) {
-      return;
+    if (nameEl) {
+      nameEl.textContent = '“' + label + '”';
     }
+    if (confirmBtn) confirmBtn.disabled = false;
+    if (modal) {
+      modal.removeAttribute('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      modal.classList.add('is-open');
+      document.body.classList.add('org-cancel-modal-open');
+    }
+  }
+
+  async function submitDuplicateGroup() {
+    if (!pendingDuplicateGroupId) return;
+    const groupId = pendingDuplicateGroupId;
+    const confirmBtn = document.getElementById('btn-group-duplicate-confirm');
+    if (confirmBtn) confirmBtn.disabled = true;
     const res = await api('/api/organiser/groups', {
       method: 'POST',
       body: JSON.stringify({ action: 'duplicate', id: groupId }),
     });
     if (!res.ok) {
-      window.alert(res.data.message || res.data.error || 'Could not duplicate this group.');
+      if (confirmBtn) confirmBtn.disabled = false;
+      showOrganiserAlert(res.data.message || res.data.error || 'Could not duplicate this group.', true);
       return;
     }
+    closeModals();
     showOrganiserAlert(res.data.message || 'Group duplicated.', false);
     await loadBootstrap();
     renderAll();
@@ -4571,6 +4633,10 @@
     if (res.data.group && res.data.group.id) {
       openGroupEditorDrawer(res.data.group.id);
     }
+  }
+
+  function confirmDuplicateGroup(groupId) {
+    openDuplicateGroupModal(groupId);
   }
 
   function goToAddEventForGroup(groupId) {
@@ -5756,6 +5822,12 @@
     pendingCancelEventId = null;
     pendingCancelRefundRequired = false;
     pendingDeleteEventId = null;
+    pendingDuplicateEventId = null;
+    pendingDuplicateGroupId = null;
+    const duplicateConfirmBtn = document.getElementById('btn-event-duplicate-confirm');
+    if (duplicateConfirmBtn) duplicateConfirmBtn.disabled = false;
+    const groupDuplicateConfirmBtn = document.getElementById('btn-group-duplicate-confirm');
+    if (groupDuplicateConfirmBtn) groupDuplicateConfirmBtn.disabled = false;
     const cancelForm = document.getElementById('form-event-cancel');
     if (cancelForm) cancelForm.reset();
     const cancelConfirm = document.getElementById('btn-event-cancel-confirm');
@@ -9026,6 +9098,11 @@
       el.addEventListener('click', closeEventEditorDrawer);
     });
 
+    const eventDrawerBack = document.getElementById('org-event-drawer-back');
+    if (eventDrawerBack) {
+      eventDrawerBack.addEventListener('click', goBackFromEventTicketsDrawer);
+    }
+
     const eventDrawerHelp = document.getElementById('org-event-drawer-help');
     if (eventDrawerHelp) {
       eventDrawerHelp.addEventListener('click', () => {
@@ -9119,7 +9196,7 @@
       }
       if (e.data && e.data.type === 'hub-event-goto-edit') {
         const editId = e.data.eventId || '';
-        if (editId) openEventEditorDrawer(editId);
+        if (editId) openEventEditorDrawer(editId, { fromTickets: true });
       }
     });
 
@@ -9157,6 +9234,18 @@
     if (deleteConfirmBtn) {
       deleteConfirmBtn.addEventListener('click', () => {
         submitDeleteEvent();
+      });
+    }
+    const duplicateConfirmBtn = document.getElementById('btn-event-duplicate-confirm');
+    if (duplicateConfirmBtn) {
+      duplicateConfirmBtn.addEventListener('click', () => {
+        submitDuplicateEvent();
+      });
+    }
+    const groupDuplicateConfirmBtn = document.getElementById('btn-group-duplicate-confirm');
+    if (groupDuplicateConfirmBtn) {
+      groupDuplicateConfirmBtn.addEventListener('click', () => {
+        submitDuplicateGroup();
       });
     }
   }

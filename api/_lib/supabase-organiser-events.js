@@ -798,6 +798,48 @@ async function duplicateEventForSession(session, sourceEventId, groupIds) {
   return { event, ticketCount };
 }
 
+/** Keep ticket sale windows aligned when an event start time moves. */
+async function syncTicketSaleEndsAfterStartChange(sb, eventId, oldStartsAt, newStartsAt) {
+  const oldStart = oldStartsAt ? String(oldStartsAt).trim() : '';
+  const newStart = newStartsAt ? String(newStartsAt).trim() : '';
+  if (!eventId || !newStart || oldStart === newStart) return;
+
+  const oldMs = new Date(oldStart).getTime();
+  const newMs = new Date(newStart).getTime();
+  if (!Number.isFinite(oldMs) || !Number.isFinite(newMs)) return;
+
+  const { data: tickets, error } = await sb
+    .from('tickets')
+    .select('id, sale_ends_at')
+    .eq('event_id', eventId);
+  if (error) throw new Error(error.message);
+
+  const relativeOffsets = [
+    0,
+    12 * 60 * 60 * 1000,
+    24 * 60 * 60 * 1000,
+    7 * 24 * 60 * 60 * 1000,
+  ];
+
+  for (const ticket of tickets || []) {
+    const endRaw = ticket.sale_ends_at ? String(ticket.sale_ends_at).trim() : '';
+    if (!endRaw) continue;
+    const endMs = new Date(endRaw).getTime();
+    if (!Number.isFinite(endMs)) continue;
+
+    for (const offset of relativeOffsets) {
+      if (endMs !== oldMs - offset) continue;
+      const nextEnd = new Date(newMs - offset).toISOString();
+      const { error: updateErr } = await sb
+        .from('tickets')
+        .update({ sale_ends_at: nextEnd })
+        .eq('id', ticket.id);
+      if (updateErr) throw new Error(updateErr.message);
+      break;
+    }
+  }
+}
+
 async function updateEvent(eventId, payload) {
   const sb = getSupabaseAdmin();
   const { data: existing } = await sb.from('events').select('*').eq('id', eventId).maybeSingle();
@@ -841,6 +883,9 @@ async function updateEvent(eventId, payload) {
   }
   const { data, error } = await sb.from('events').update(row).eq('id', eventId).select('*').single();
   if (error) throw new Error(error.message);
+  if (existing?.starts_at !== data?.starts_at && data?.starts_at) {
+    await syncTicketSaleEndsAfterStartChange(sb, eventId, existing?.starts_at, data.starts_at);
+  }
   await propagateSeriesEventDetails(sb, data);
 
   if (payload.photoBase64) {

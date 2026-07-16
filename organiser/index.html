@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716drawer" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716back" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
   <body class="organiser-dashboard-page hub-is-page-loading">
@@ -1326,6 +1326,42 @@
       </div>
     </div>
 
+    <!-- Modal: duplicate event -->
+    <div class="org-modal" id="modal-event-duplicate" role="dialog" aria-modal="true" aria-labelledby="modal-event-duplicate-title" hidden>
+      <div class="org-modal-backdrop" data-org-modal-close></div>
+      <div class="org-modal-panel">
+        <div class="org-modal-duplicate-icon" aria-hidden="true">⧉</div>
+        <h2 id="modal-event-duplicate-title">Create draft copy</h2>
+        <p id="modal-event-duplicate-name" class="org-modal-sub"></p>
+        <div class="org-modal-duplicate-info">
+          <p>Dates are cleared so you can set a new schedule.</p>
+          <p>Ticket types are copied — review everything before publishing.</p>
+        </div>
+        <div class="org-modal-actions">
+          <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
+          <button type="button" class="org-btn org-btn-gold" id="btn-event-duplicate-confirm">Create draft copy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: duplicate group -->
+    <div class="org-modal" id="modal-group-duplicate" role="dialog" aria-modal="true" aria-labelledby="modal-group-duplicate-title" hidden>
+      <div class="org-modal-backdrop" data-org-modal-close></div>
+      <div class="org-modal-panel">
+        <div class="org-modal-duplicate-icon" aria-hidden="true">⧉</div>
+        <h2 id="modal-group-duplicate-title">Create draft copy</h2>
+        <p id="modal-group-duplicate-name" class="org-modal-sub"></p>
+        <div class="org-modal-duplicate-info">
+          <p>You can edit the name and details before publishing.</p>
+          <p>The copy will not share bank details with the original — complete Stripe setup separately for this page if you sell paid tickets.</p>
+        </div>
+        <div class="org-modal-actions">
+          <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
+          <button type="button" class="org-btn org-btn-gold" id="btn-group-duplicate-confirm">Create draft copy</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal: delete event -->
     <div class="org-modal" id="modal-event-delete" role="dialog" aria-modal="true" aria-labelledby="modal-event-delete-title" hidden>
       <div class="org-modal-backdrop" data-org-modal-close></div>
@@ -1658,6 +1694,15 @@
         <header class="org-group-drawer-head org-event-drawer-head">
           <button
             type="button"
+            class="org-event-drawer-back"
+            id="org-event-drawer-back"
+            hidden
+            aria-label="Back to event details"
+          >
+            ← Event details
+          </button>
+          <button
+            type="button"
             class="org-event-drawer-help"
             id="org-event-drawer-help"
             aria-label="Open Hubert's help"
@@ -1743,6 +1788,6 @@
     <script src="../js/review-report.js?v=20260708"></script>
     <script src="../js/hub-event-timezone.js?v=20260716"></script>
     <script src="../js/organiser-linkedin-post-builder.js?v=20260714logo"></script>
-    <script src="../js/organiser-dashboard.js?v=20260716tz"></script>
+    <script src="../js/organiser-dashboard.js?v=20260716back"></script>
   </body>
 </html>

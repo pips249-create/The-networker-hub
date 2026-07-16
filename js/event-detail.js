@@ -690,7 +690,6 @@
       isSoldOut: parseBoolFlag(ev.isSoldOut) || p.get('sold_out') === '1' || p.get('isSoldOut') === '1',
       isEventPast: past,
       isSalesClosed:
-        past ||
         parseBoolFlag(ev.isSalesClosed) ||
         p.get('sales_closed') === '1' ||
         p.get('isSalesClosed') === '1',

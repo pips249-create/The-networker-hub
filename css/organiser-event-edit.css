@@ -2296,6 +2296,18 @@ body.ee-embed-drawer .ee-actions {
   z-index: 2;
 }
 
+body.ee-embed-drawer .ee-fullpage-back {
+  display: none !important;
+}
+
+.ee-embed-back {
+  display: none;
+}
+
+body.ee-embed-drawer .ee-embed-back:not([hidden]) {
+  display: inline-flex;
+}
+
 @media (min-width: 860px) {
   body.ee-embed-drawer .ee-grid--create {
     grid-template-columns: minmax(0, 1fr) 300px;

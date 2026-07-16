@@ -135,7 +135,7 @@ function eventEndMs(source) {
   if (endOk && startOk && endMs - startMs >= 0 && endMs - startMs <= MAX_EVENT_SPAN_MS) {
     return endMs;
   }
-  if (startOk) return startMs;
+  if (startOk) return startMs + 2 * 60 * 60 * 1000;
   if (endOk) return endMs;
   const fallback = eventEndRaw(source);
   if (!fallback) return null;

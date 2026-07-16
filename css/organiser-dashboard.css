@@ -3851,6 +3851,39 @@ a.hub-payment-setup-btn {
   color: var(--od-text-soft);
 }
 
+.org-modal-duplicate-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: 0 0 14px;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--od-purple-dark);
+  background: var(--od-purple-pale, #f6f0fa);
+  border-radius: 12px;
+}
+
+.org-modal-duplicate-info {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--od-text-mid);
+  background: #f8fafc;
+  border: 1px solid var(--od-border);
+  border-radius: 8px;
+}
+
+.org-modal-duplicate-info p {
+  margin: 0;
+}
+
+.org-modal-duplicate-info p + p {
+  margin-top: 8px;
+}
+
 .org-payout-breakdown {
   background: var(--od-purple-pale, #f6f0fa);
   border-radius: var(--od-radius-sm);
@@ -5296,6 +5329,29 @@ body.org-event-drawer-open {
 
 .org-event-drawer-cancel {
   margin-top: 10px;
+}
+
+.org-event-drawer-back {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  border: none;
+  border-radius: 999px;
+  background: var(--od-bg-soft, #faf7f2);
+  color: var(--od-purple-dark, #5a2d6a);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.org-event-drawer-back:hover {
+  background: var(--od-border);
+}
+
+.org-event-drawer-back[hidden] {
+  display: none !important;
 }
 
 .org-event-drawer-help {
