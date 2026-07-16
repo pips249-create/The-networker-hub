@@ -8,6 +8,7 @@
     'terms',
     'refunds',
     'organisers',
+    'hub-rules',
     'cookies',
     'acceptable-use',
     'copyright',

@@ -41,6 +41,8 @@ const ORGANISER_EMAIL_SLUGS = new Set([
   'organiser_new_application',
   'organiser_booking_cancelled',
   'event_removed_by_hub',
+  'organiser_hub_warning',
+  'organiser_hub_suspended',
   'organiser_ranking_badge',
   'organiser_low_upcoming_events',
   'organiser_ticket_sales_nudge',

@@ -218,6 +218,23 @@ async function adminRemoveEvent(sb, eventId, opts) {
     organiserEmailResult = { sent: false, error: e.message || String(e) };
   }
 
+  let moderationResult = null;
+  if (row.organiser_id) {
+    try {
+      const { recordConductWarningFromAdminRemoval } = require('./organiser-moderation');
+      moderationResult = await recordConductWarningFromAdminRemoval(sb, {
+        organiserId: row.organiser_id,
+        reason,
+        details,
+        eventId,
+        eventCancellationId: cancellation.id,
+        adminUserId,
+      });
+    } catch (e) {
+      moderationResult = { error: e.message || String(e) };
+    }
+  }
+
   return {
     id: eventId,
     removed: true,
@@ -226,6 +243,7 @@ async function adminRemoveEvent(sb, eventId, opts) {
     activeBookings: sales.activeBookings,
     emailResult,
     organiserEmailResult,
+    moderationResult,
     refundResult,
     refundsConfirmed,
     refundsEmailResult: refundsConfirmedResult?.emailResult || null,

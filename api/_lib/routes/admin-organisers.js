@@ -68,7 +68,7 @@ async function eventCountsForOrganisers(sb, organiserIds) {
   return counts;
 }
 
-function mapOrganiserRow(row, eventCount, loginMeta) {
+function mapOrganiserRow(row, eventCount, loginMeta, moderation) {
   const description = String(row.description || '').trim();
   const photoUrl = String(row.photo_url || '').trim();
   const website = String(row.website || '').trim();
@@ -80,6 +80,12 @@ function mapOrganiserRow(row, eventCount, loginMeta) {
 
   const userId = loginMeta?.userId || row.supabase_user_id || null;
   const hasLogin = loginMeta?.hasLogin != null ? loginMeta.hasLogin : Boolean(userId);
+  const mod = moderation || {
+    warning_count: 0,
+    warning_limit: 3,
+    hub_suspended: false,
+    recent: [],
+  };
 
   return {
     id: row.id,
@@ -101,6 +107,10 @@ function mapOrganiserRow(row, eventCount, loginMeta) {
     slug: publicOrganiserSlug(row) || '',
     event_count: eventCount || 0,
     missing,
+    moderation: mod,
+    warning_count: mod.warning_count,
+    warning_limit: mod.warning_limit,
+    hub_suspended: mod.hub_suspended,
   };
 }
 
@@ -250,19 +260,26 @@ async function listOrganisersForAdmin(query) {
   if (res.error) throw new Error(res.error.message);
 
   const rows = res.data || [];
-  const [counts, loginMeta] = await Promise.all([
+  const { moderationSummariesForOrganisers } = require('../organiser-moderation');
+  const [counts, loginMeta, moderationById] = await Promise.all([
     eventCountsForOrganisers(
       sb,
       rows.map((r) => r.id)
     ),
     loginMetaForOrganisers(sb, rows),
+    moderationSummariesForOrganisers(
+      sb,
+      rows.map((r) => r.id)
+    ),
   ]);
   const total = organiserId ? rows.length : res.count != null ? res.count : rows.length;
 
   const incompleteCount = await getIncompleteOrganiserCount(sb);
 
   return {
-    organisers: rows.map((row) => mapOrganiserRow(row, counts[row.id] || 0, loginMeta.get(row.id))),
+    organisers: rows.map((row) =>
+      mapOrganiserRow(row, counts[row.id] || 0, loginMeta.get(row.id), moderationById.get(row.id))
+    ),
     count: rows.length,
     total,
     offset,
@@ -842,6 +859,66 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: e.message || 'merge_failed',
         message: messages[e.message] || e.message || 'Merge failed',
+      });
+    }
+  }
+
+  if (body.action === 'issue_warning') {
+    const organiserId = String(body.id || body.organiserId || body.organiser_id || '').trim();
+    if (!organiserId) {
+      return json(res, 400, { ok: false, error: 'missing_id', message: 'Organiser id is required.' });
+    }
+    try {
+      const sb = getSupabaseAdmin();
+      const { issueManualConductWarning, MANUAL_WARNING_REASONS } = require('../organiser-moderation');
+      const result = await issueManualConductWarning(sb, {
+        organiserId,
+        reason: body.reason,
+        details: body.details,
+        adminUserId: session.sub,
+      });
+      let message = 'Warning ' + result.warningCount + ' of ' + result.warningLimit + ' recorded.';
+      if (result.hubSuspended) {
+        message += ' Organiser profile suspended and live events unpublished.';
+      } else if (result.warningEmailResult?.sent) {
+        message += ' Warning email sent.';
+      }
+      return json(res, 200, { ok: true, ...result, message });
+    } catch (e) {
+      const status = e.status || 500;
+      return json(res, status, {
+        ok: false,
+        error: e.message || 'issue_warning_failed',
+        message: e.message || 'Could not issue warning.',
+      });
+    }
+  }
+
+  if (body.action === 'reinstate_organiser') {
+    const organiserId = String(body.id || body.organiserId || body.organiser_id || '').trim();
+    if (!organiserId) {
+      return json(res, 400, { ok: false, error: 'missing_id', message: 'Organiser id is required.' });
+    }
+    try {
+      const sb = getSupabaseAdmin();
+      const { reinstateOrganiser } = require('../organiser-moderation');
+      const result = await reinstateOrganiser(sb, {
+        organiserId,
+        details: body.details,
+        adminUserId: session.sub,
+      });
+      return json(res, 200, {
+        ok: true,
+        ...result,
+        message:
+          'Organiser profile reinstated (published). They must republish events manually. Warning history remains on record.',
+      });
+    } catch (e) {
+      const status = e.status || 500;
+      return json(res, status, {
+        ok: false,
+        error: e.message || 'reinstate_failed',
+        message: e.message || 'Could not reinstate organiser.',
       });
     }
   }

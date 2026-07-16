@@ -79,6 +79,9 @@
     href('/legal-policies#terms') +
     '">Terms</a>' +
     '<a href="' +
+    href('/legal-policies#hub-rules') +
+    '">Hub rules</a>' +
+    '<a href="' +
     href('/legal-policies#refunds') +
     '">Refunds</a>' +
     '<a href="' +

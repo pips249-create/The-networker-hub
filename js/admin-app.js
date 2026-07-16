@@ -6353,6 +6353,7 @@
       contact_url: previewOrigin + '/contact',
       privacy_url: previewOrigin + '/legal-policies#privacy',
       terms_url: previewOrigin + '/legal-policies#terms',
+      hub_rules_url: previewOrigin + '/legal-policies#hub-rules',
       refunds_url: previewOrigin + '/legal-policies#refunds',
       payment_summary_row: '',
       organiser_name: 'City Connectors',
@@ -8094,6 +8095,103 @@
     );
   }
 
+  function moderationBadge(o) {
+    var mod = o.moderation || {};
+    var count = Number(mod.warning_count != null ? mod.warning_count : o.warning_count) || 0;
+    var limit = Number(mod.warning_limit != null ? mod.warning_limit : o.warning_limit) || 3;
+    var suspended = Boolean(mod.hub_suspended != null ? mod.hub_suspended : o.hub_suspended);
+    if (suspended) {
+      return '<span class="text-xs font-semibold text-red-800 bg-red-100 px-2 py-0.5 rounded">Suspended</span>';
+    }
+    if (count > 0) {
+      return (
+        '<span class="text-xs font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded">' +
+        count +
+        ' warning' +
+        (count === 1 ? '' : 's') +
+        ' / ' +
+        limit +
+        '</span>'
+      );
+    }
+    return '';
+  }
+
+  var MANUAL_CONDUCT_WARNING_REASONS = [
+    'Breach of Hub rules',
+    'Misleading listing',
+    'Quality issue',
+    'Spam or prohibited content',
+    'Other',
+  ];
+
+  function formatModerationActionLine(action) {
+    if (!action) return '';
+    var when = '';
+    if (action.created_at) {
+      var d = new Date(action.created_at);
+      if (!isNaN(d.getTime())) {
+        when = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      }
+    }
+    var label =
+      action.action_type === 'warning'
+        ? 'Warning'
+        : action.action_type === 'suspension'
+          ? 'Suspended'
+          : action.action_type === 'reinstatement'
+            ? 'Reinstated'
+            : action.action_type || 'Action';
+    return esc(label + ': ' + (action.reason || '—')) + (when ? ' · ' + esc(when) : '');
+  }
+
+  function groupModerationPanelHtml(o) {
+    var mod = o.moderation || {};
+    var recent = mod.recent || [];
+    var suspended = Boolean(mod.hub_suspended != null ? mod.hub_suspended : o.hub_suspended);
+    var historyHtml = recent.length
+      ? recent
+          .map(function (action) {
+            return '<li class="text-xs text-slate-600">' + formatModerationActionLine(action) + '</li>';
+          })
+          .join('')
+      : '<li class="text-xs text-slate-500">No conduct warnings on record.</li>';
+
+    return (
+      '<div class="group-moderation-panel rounded-lg border border-slate-200 bg-white p-3 space-y-3 mt-3" data-organiser-moderation="' +
+      attrEsc(o.id) +
+      '">' +
+      '<div class="flex flex-wrap items-center justify-between gap-2">' +
+      '<div><p class="text-xs font-semibold text-brand-900">Conduct &amp; warnings</p>' +
+      '<p class="text-[11px] text-slate-500 mt-0.5">Three conduct warnings suspend the organiser from the Hub. <a href="../legal-policies#hub-rules" target="_blank" rel="noopener" class="text-brand-700 font-semibold hover:underline">Hub rules</a></p></div>' +
+      moderationBadge(o) +
+      '</div>' +
+      '<ul class="space-y-1 list-disc pl-4">' +
+      historyHtml +
+      '</ul>' +
+      '<div class="grid sm:grid-cols-2 gap-2">' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Issue warning</label>' +
+      '<select class="group-warning-reason w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">Select reason…</option>' +
+      MANUAL_CONDUCT_WARNING_REASONS.map(function (r) {
+        return '<option value="' + attrEsc(r) + '">' + esc(r) + '</option>';
+      }).join('') +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Note (optional)</label>' +
+      '<input type="text" class="group-warning-details w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Internal note sent to organiser"></div></div>' +
+      '<div class="flex flex-wrap items-center gap-2">' +
+      '<button type="button" class="group-issue-warning rounded-lg border border-amber-300 bg-amber-50 text-amber-900 text-xs font-semibold px-3 py-1.5 hover:bg-amber-100" data-organiser-id="' +
+      attrEsc(o.id) +
+      '">Issue warning</button>' +
+      (suspended
+        ? '<button type="button" class="group-reinstate rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-900 text-xs font-semibold px-3 py-1.5 hover:bg-emerald-100" data-organiser-id="' +
+          attrEsc(o.id) +
+          '">Reinstate profile</button>'
+        : '') +
+      '<span class="group-moderation-msg text-xs"></span></div></div>'
+    );
+  }
+
   function groupCleanupQuickFormHtml(o) {
     return (
       '<form class="group-cleanup-form group-cleanup-quick-form" data-organiser-id="' +
@@ -8117,8 +8215,83 @@
       '<a href="../organiser/group-edit?id=' +
       encodeURIComponent(o.id) +
       '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline text-center">Full editor</a>' +
-      '<span class="group-cleanup-msg text-xs text-center"></span></div></form>'
+      '<span class="group-cleanup-msg text-xs text-center"></span></div></form>' +
+      groupModerationPanelHtml(o)
     );
+  }
+
+  function issueGroupWarning(organiserId, panel, triggerBtn) {
+    if (!organiserId || !panel) return;
+    var reasonEl = panel.querySelector('.group-warning-reason');
+    var detailsEl = panel.querySelector('.group-warning-details');
+    var msgEl = panel.querySelector('.group-moderation-msg');
+    var reason = reasonEl ? String(reasonEl.value || '').trim() : '';
+    if (!reason) {
+      if (msgEl) {
+        msgEl.textContent = 'Select a warning reason.';
+        msgEl.className = 'group-moderation-msg text-xs text-red-700 font-semibold';
+      }
+      return;
+    }
+    if (triggerBtn) triggerBtn.disabled = true;
+    if (msgEl) {
+      msgEl.textContent = 'Issuing warning…';
+      msgEl.className = 'group-moderation-msg text-xs text-slate-500';
+    }
+    adminPost('/api/admin/organisers', {
+      action: 'issue_warning',
+      id: organiserId,
+      reason: reason,
+      details: detailsEl ? String(detailsEl.value || '').trim() : '',
+    })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Could not issue warning');
+        if (msgEl) {
+          msgEl.textContent = data.message || 'Warning recorded.';
+          msgEl.className = 'group-moderation-msg text-xs text-emerald-700 font-semibold';
+        }
+        return refreshGroupCleanupPage();
+      })
+      .catch(function (err) {
+        if (msgEl) {
+          msgEl.textContent = err.message || 'Could not issue warning';
+          msgEl.className = 'group-moderation-msg text-xs text-red-700 font-semibold';
+        }
+        if (triggerBtn) triggerBtn.disabled = false;
+      });
+  }
+
+  function reinstateGroup(organiserId, panel, triggerBtn) {
+    if (!organiserId) return;
+    if (
+      !window.confirm(
+        'Reinstate this organiser profile?\n\nTheir listing will be published again, but events stay unpublished until they republish manually. Warning history remains on record.'
+      )
+    ) {
+      return;
+    }
+    var msgEl = panel && panel.querySelector('.group-moderation-msg');
+    if (triggerBtn) triggerBtn.disabled = true;
+    if (msgEl) {
+      msgEl.textContent = 'Reinstating…';
+      msgEl.className = 'group-moderation-msg text-xs text-slate-500';
+    }
+    adminPost('/api/admin/organisers', { action: 'reinstate_organiser', id: organiserId })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Could not reinstate');
+        if (msgEl) {
+          msgEl.textContent = data.message || 'Profile reinstated.';
+          msgEl.className = 'group-moderation-msg text-xs text-emerald-700 font-semibold';
+        }
+        return refreshGroupCleanupPage();
+      })
+      .catch(function (err) {
+        if (msgEl) {
+          msgEl.textContent = err.message || 'Could not reinstate';
+          msgEl.className = 'group-moderation-msg text-xs text-red-700 font-semibold';
+        }
+        if (triggerBtn) triggerBtn.disabled = false;
+      });
   }
 
   function applyLogoPreviewToForm(form, logoUrl) {
@@ -8918,6 +9091,20 @@
       return;
     }
 
+    var warnBtn = e.target.closest('.group-issue-warning');
+    if (warnBtn) {
+      var warnPanel = warnBtn.closest('.group-moderation-panel');
+      issueGroupWarning(warnBtn.getAttribute('data-organiser-id'), warnPanel, warnBtn);
+      return;
+    }
+
+    var reinstateBtn = e.target.closest('.group-reinstate');
+    if (reinstateBtn) {
+      var reinstatePanel = reinstateBtn.closest('.group-moderation-panel');
+      reinstateGroup(reinstateBtn.getAttribute('data-organiser-id'), reinstatePanel, reinstateBtn);
+      return;
+    }
+
     if (e.target.closest('#group-create-toggle')) {
       var createPanel = document.getElementById('group-create-panel');
       var createToggle = document.getElementById('group-create-toggle');
@@ -9373,6 +9560,7 @@
             esc(o.name || 'Untitled') +
             '</h3>' +
             listingStatusBadge(o.listing_status) +
+            moderationBadge(o) +
             loginBadge +
             '</div>' +
             '<p class="text-xs text-slate-500 mt-0.5">' +
@@ -9791,15 +9979,28 @@
 
   function formatEventBulkDeleteResult(data) {
     var parts = [];
-    if (data.removed) {
-      parts.push(
-        'Removed ' +
-          data.removed +
-          ' event' +
-          (data.removed === 1 ? '' : 's') +
-          ' (cancelled, refunds processing, organiser notified)'
-      );
-    }
+        if (data.removed) {
+          parts.push(
+            'Removed ' +
+              data.removed +
+              ' event' +
+              (data.removed === 1 ? '' : 's') +
+              ' (cancelled, refunds processing, organiser notified)'
+          );
+          if (data.removedEvents && data.removedEvents.length) {
+            var suspended = data.removedEvents.filter(function (row) {
+              return row.moderationResult && row.moderationResult.hubSuspended;
+            }).length;
+            if (suspended) {
+              parts.push(
+                suspended +
+                  ' organiser' +
+                  (suspended === 1 ? '' : 's') +
+                  ' suspended after conduct warnings'
+              );
+            }
+          }
+        }
     if (data.deleted) {
       parts.push('Deleted ' + data.deleted + ' event' + (data.deleted === 1 ? '' : 's') + '.');
     }

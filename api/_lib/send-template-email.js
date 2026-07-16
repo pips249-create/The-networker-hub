@@ -57,9 +57,15 @@ const {
 } = require('./email-sponsor-sections');
 const { emailGreetingName } = require('./email-display-name');
 const {
+  enrichOrganiserHubWarningVars,
+  enrichOrganiserHubSuspendedVars,
+  stripOrganiserHubModerationPlaceholders,
+} = require('./organiser-hub-moderation-sections');
+const {
   enrichEventRemovedByHubVars,
   stripEventRemovedByHubPlaceholders,
 } = require('./event-removed-by-hub-sections');
+const { patchEmailMobileStyles } = require('./email-mobile-styles');
 
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
@@ -93,6 +99,8 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_new_application',
   'organiser_booking_cancelled',
   'event_removed_by_hub',
+  'organiser_hub_warning',
+  'organiser_hub_suspended',
   'organiser_ticket_sales_nudge',
   'application_received',
   'application_approved',
@@ -239,6 +247,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     logo_footer_url: logoFooterUrl(siteUrl),
     privacy_url: legalPolicyUrl(siteUrl, 'privacy'),
     terms_url: legalPolicyUrl(siteUrl, 'terms'),
+    hub_rules_url: legalPolicyUrl(siteUrl, 'hub-rules'),
     refunds_url: legalPolicyUrl(siteUrl, 'refunds'),
     contact_url: contactUrl(siteUrl),
     support_email: supportEmail(),
@@ -275,6 +284,10 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     merged = enrichEventCancelledVars(merged, sponsorSection);
   } else if (slug === 'event_removed_by_hub') {
     merged = enrichEventRemovedByHubVars(merged, sponsorSection);
+  } else if (slug === 'organiser_hub_warning') {
+    merged = enrichOrganiserHubWarningVars(merged, sponsorSection);
+  } else if (slug === 'organiser_hub_suspended') {
+    merged = enrichOrganiserHubSuspendedVars(merged, sponsorSection);
   } else if (slug === 'refund_processed') {
     merged = enrichRefundProcessedVars(merged, sponsorSection);
   }
@@ -376,6 +389,9 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     html = replacePlaceholders(html, merged);
   } else if (slug === 'event_removed_by_hub') {
     html = stripEventRemovedByHubPlaceholders(html);
+    html = replacePlaceholders(html, merged);
+  } else if (slug === 'organiser_hub_warning' || slug === 'organiser_hub_suspended') {
+    html = stripOrganiserHubModerationPlaceholders(html);
     html = replacePlaceholders(html, merged);
   } else if (slug === 'refund_processed') {
     html = stripRefundProcessedPlaceholders(html);

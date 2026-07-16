@@ -177,6 +177,16 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'organiser-email-layout-v2',
     subject: 'Your event {{event_name}} has been removed from The Networker Hub',
   },
+  organiser_hub_warning: {
+    file: 'organiser-hub-warning.html',
+    marker: 'organiser-email-layout-v2',
+    subject: 'Warning {{warning_count}} of {{warning_limit}} — The Networker Hub',
+  },
+  organiser_hub_suspended: {
+    file: 'organiser-hub-suspended.html',
+    marker: 'organiser-email-layout-v2',
+    subject: 'Your organiser account has been suspended — The Networker Hub',
+  },
   saved_organiser_new_listing: {
     file: 'saved-organiser-new-listing.html',
     marker: 'hub-email-layout-v2',
