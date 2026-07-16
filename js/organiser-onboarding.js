@@ -267,6 +267,10 @@
           window.location.href = '/organiser/group-edit';
           return;
         }
+        if (action === 'memberships' && typeof window.orgDashSetRoute === 'function') {
+          window.orgDashSetRoute('memberships');
+          return;
+        }
         if (action === 'event' && typeof window.orgDashSetRoute === 'function') {
           window.orgDashSetRoute('events-list');
           return;

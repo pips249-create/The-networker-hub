@@ -2403,7 +2403,7 @@
         '" target="_blank" rel="noopener noreferrer"><span class="org-action-icon">↗</span><span class="org-action-text"><strong>View public profile</strong><span>See your group page and ranking badge</span></span></a>' +
         '<a class="org-action-item" href="/organiser/member-roster?id=' +
         esc(id) +
-        '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>Member list</strong><span>Upload members for members-only tickets</span></span></a>' +
+        '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>Membership</strong><span>Upload members for members-only tickets</span></span></a>' +
         '<button type="button" class="org-action-item" data-add-event-for-group="' +
         esc(id) +
         '"><span class="org-action-icon">📅</span><span class="org-action-text"><strong>Add an event</strong><span>List a new event for this group</span></span></button>' +
@@ -2659,6 +2659,7 @@
       return { page: 'dashboard', sub: null };
     }
     if (hash === 'team') return { page: 'team', sub: null };
+    if (hash === 'member-lists' || hash === 'memberships') return { page: 'memberships', sub: null };
     return { page: hash, sub: null };
   }
 
@@ -3006,7 +3007,7 @@
 
   function attendeeGroupRelationshipBadgeHtml(a) {
     const memberBadge = a.isRosterMember
-      ? '<span class="org-badge org-badge-member" title="On your member list">Member</span>'
+      ? '<span class="org-badge org-badge-member" title="On your membership">Member</span>'
       : '';
     const n = attendeeVisitCount(a);
     if (n == null) {
@@ -3017,7 +3018,7 @@
     const cls = rel === 'new' ? 'org-badge-new' : 'org-badge-returning';
     const hint =
       a.isRosterMember
-        ? ' title="Member list · ' +
+        ? ' title="Membership · ' +
           (n === 1 ? 'first event booking' : n + ' event bookings') +
           ' with your organiser page"'
         : rel === 'returning' && n > 1
@@ -3182,7 +3183,7 @@
     }
     el.innerHTML =
       parts.join('') +
-      '<span class="org-attendees-summary-note">Event bookings register — member list membership is separate. Members on your list still appear here when they book.</span>';
+      '<span class="org-attendees-summary-note">Event bookings register — membership is separate. Members on your membership still appear here when they book.</span>';
   }
 
   function setAttendeesEventFilterValue(eventId, options) {
@@ -6255,7 +6256,22 @@
     return false;
   }
 
-  function renderMemberListsPage() {
+  function membershipSummaryLine(g) {
+    const summary = g && g.rosterSummary ? g.rosterSummary : null;
+    if (!summary || !summary.active) {
+      return 'No members yet — upload for members-only tickets';
+    }
+    const parts = [summary.active + (summary.active === 1 ? ' member' : ' members')];
+    if (summary.unclaimed > 0) {
+      parts.push(summary.unclaimed + ' not signed up');
+    }
+    if (summary.expiringSoon > 0) {
+      parts.push(summary.expiringSoon + ' expiring soon');
+    }
+    return parts.join(' · ');
+  }
+
+  function renderMembershipsPage() {
     const mount = document.getElementById('member-lists-choices');
     const empty = document.getElementById('member-lists-empty');
     const loading = document.getElementById('member-lists-loading');
@@ -6297,16 +6313,18 @@
           '<strong class="org-member-list-chooser-name">' +
           esc(g.name || 'Organiser page') +
           '</strong>' +
-          '<span class="org-member-list-chooser-meta">Members only tickets &amp; invite emails</span>' +
+          '<span class="org-member-list-chooser-meta">' +
+          esc(membershipSummaryLine(g)) +
           '</span>' +
-          '<span class="org-member-list-chooser-cta">Open list →</span>' +
+          '</span>' +
+          '<span class="org-member-list-chooser-cta">Open membership →</span>' +
           '</a>'
         );
       })
       .join('');
   }
 
-  async function navigateToMemberLists() {
+  async function navigateToMemberships() {
     if (!bootstrapReady) {
       try {
         await loadBootstrap({ silent: true });
@@ -6320,13 +6338,13 @@
     if (!groups.length) {
       setRoute('groups');
       showOrganiserAlert(
-        'Create an organiser page first, then open <strong>Member list</strong> from that row.',
+        'Create an organiser page first, then open <strong>Membership</strong> from that row.',
         false
       );
       return;
     }
-    setRoute('member-lists');
-    renderMemberListsPage();
+    setRoute('memberships');
+    renderMembershipsPage();
   }
 
   function sidebarRouteForPage(page, sub) {
@@ -6439,9 +6457,9 @@
         });
       });
     }
-    if (page === 'member-lists') {
+    if (page === 'memberships') {
       if (bootstrapReady && maybeRedirectToSingleMemberList()) return;
-      renderMemberListsPage();
+      renderMembershipsPage();
     }
 
     // Route lives in the hash only (/organiser/#events-list). Do not also write ?panel=
@@ -6720,7 +6738,7 @@
         '</td><td class="org-td-actions">' +
         '<a href="/organiser/member-roster?id=' +
         esc(g.id) +
-        '" class="org-btn org-btn-sm org-btn-outline org-member-list-link">Member list</a> ' +
+        '" class="org-btn org-btn-sm org-btn-outline org-member-list-link">Membership</a> ' +
         actionMenuHtml('group', g.id, g.name, g) +
         '</td>';
       body.appendChild(tr);
@@ -7908,10 +7926,13 @@
   function gettingStartedProgress() {
     const hasGroup = state.groups.length > 0;
     const hasEvent = hasListedEvents();
+    const hasMembership = (state.groups || []).some(function (g) {
+      return g && g.rosterSummary && Number(g.rosterSummary.active) > 0;
+    });
     const hasTeam = (state.teamMembers || []).some(function (m) {
       return m.role === 'editor' || (m.status === 'pending' && !m.isAccountOwner);
     });
-    return { hasGroup, hasEvent, hasTeam };
+    return { hasGroup, hasEvent, hasMembership, hasTeam };
   }
 
   function updateGettingStartedPanel() {
@@ -7974,6 +7995,7 @@
 
     const stepDone = {
       group: progress.hasGroup,
+      membership: progress.hasMembership,
       event: progress.hasEvent,
       team: progress.hasTeam,
     };
@@ -8739,7 +8761,7 @@
     renderStats();
     renderOrganiserNotices();
     renderGroups();
-    if (document.querySelector('[data-org-page="member-lists"].is-active')) renderMemberListsPage();
+    if (document.querySelector('[data-org-page="memberships"].is-active')) renderMembershipsPage();
     if (document.querySelector('[data-org-page="team"].is-active')) renderTeam();
     if (document.querySelector('[data-org-page="events"].is-active') && state.eventsLoaded) {
       renderMyEventsHub();
@@ -8850,9 +8872,9 @@
     if (document.querySelector('[data-org-page="events"].is-active')) {
       setEventsSub(eventsSubRoute);
     }
-    if (parseRoute().page === 'member-lists') {
+    if (parseRoute().page === 'memberships' || parseRoute().page === 'member-lists') {
       if (maybeRedirectToSingleMemberList()) return;
-      renderMemberListsPage();
+      renderMembershipsPage();
     }
     } finally {
       if (!silent) setDashboardLoading(false);
@@ -9742,16 +9764,16 @@
       true
     );
 
-    document.querySelectorAll('[data-org-member-lists-nav]').forEach((el) => {
+    document.querySelectorAll('[data-org-memberships-nav], [data-org-member-lists-nav]').forEach((el) => {
       el.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        navigateToMemberLists();
+        navigateToMemberships();
       });
     });
 
     document.querySelectorAll('[data-org-route]').forEach((el) => {
-      if (el.hasAttribute('data-org-member-lists-nav')) return;
+      if (el.hasAttribute('data-org-memberships-nav') || el.hasAttribute('data-org-member-lists-nav')) return;
       if (el.tagName === 'A') {
         const href = el.getAttribute('href');
         if (href && !href.startsWith('#')) return;
@@ -9774,6 +9796,7 @@
       setRoute(r.sub || r.page);
       if (
         r.page === 'groups' ||
+        r.page === 'memberships' ||
         r.page === 'member-lists' ||
         r.page === 'dashboard' ||
         r.page === 'team' ||

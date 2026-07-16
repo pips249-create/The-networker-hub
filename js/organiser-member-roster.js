@@ -105,24 +105,50 @@
 
   async function loadEvents() {
     try {
-      const data = await api('/api/organiser/events?upcoming=1');
-      events = (data.events || []).filter(function (ev) {
-        return String(ev.organiserGroupId || ev.organiserId || '') === organiserId;
-      });
+      const data = await api('/api/organiser/events');
+      const now = Date.now();
+      events = (data.events || [])
+        .filter(function (ev) {
+          return String(ev.organiserGroupId || ev.organiserId || '') === organiserId;
+        })
+        .filter(function (ev) {
+          const status = String(ev.status || ev.listingStatus || '').toLowerCase();
+          const approval = String(ev.approvalStatus || ev.approval_status || 'Approved');
+          return status === 'published' && approval === 'Approved';
+        })
+        .sort(function (a, b) {
+          const aStart = a.startsAt || a.starts_at || a.date || '';
+          const bStart = b.startsAt || b.starts_at || b.date || '';
+          const aTime = aStart ? new Date(aStart).getTime() : 0;
+          const bTime = bStart ? new Date(bStart).getTime() : 0;
+          const aUpcoming = aTime >= now;
+          const bUpcoming = bTime >= now;
+          if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1;
+          if (aUpcoming) return aTime - bTime;
+          return bTime - aTime;
+        });
       const sel = document.getElementById('omr-event-select');
       if (!sel) return;
       while (sel.options.length > 1) sel.remove(1);
       events.forEach(function (ev) {
         const opt = document.createElement('option');
         opt.value = ev.id;
-        opt.textContent = (ev.title || 'Event') + (ev.dateLabel ? ' · ' + ev.dateLabel : '');
+        const start = ev.startsAt || ev.starts_at || ev.date || '';
+        const isPast = start && new Date(start).getTime() < now;
+        const label = (ev.title || 'Event') + (ev.dateLabel ? ' · ' + ev.dateLabel : '');
+        opt.textContent = isPast ? label + ' (past)' : label;
         sel.appendChild(opt);
       });
       sel.addEventListener('change', function () {
         const reportBtn = document.getElementById('omr-download-report');
+        const remindBtn = document.getElementById('omr-remind-not-booked');
         if (reportBtn) {
           reportBtn.disabled = !sel.value;
           reportBtn.title = sel.value ? '' : 'Choose an event first';
+        }
+        if (remindBtn) {
+          remindBtn.disabled = !sel.value;
+          remindBtn.title = sel.value ? '' : 'Choose an event first';
         }
         if (
           !sel.value &&
@@ -757,6 +783,58 @@
     });
     document.getElementById('omr-download-members')?.addEventListener('click', downloadMembersCsv);
     document.getElementById('omr-download-report')?.addEventListener('click', downloadReportCsv);
+    document.getElementById('omr-remind-not-booked')?.addEventListener('click', async function () {
+      const eventId = selectedEventId();
+      if (!eventId || !lastReports || !lastReports.bookedForEvent) {
+        showAlert('Choose an event first.', 'error');
+        return;
+      }
+      const count = lastReports.bookedForEvent.notBookedCount || 0;
+      if (count < 1) {
+        showAlert('Everyone on your membership has booked for this event.', 'success');
+        return;
+      }
+      if (
+        !confirm(
+          'Email ' +
+            count +
+            ' member' +
+            (count === 1 ? '' : 's') +
+            ' who have not booked yet?'
+        )
+      ) {
+        return;
+      }
+      const btn = document.getElementById('omr-remind-not-booked');
+      if (btn) btn.disabled = true;
+      try {
+        const data = await api(rosterUrl(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            organiserId: organiserId,
+            action: 'remind-not-booked',
+            eventId: eventId,
+          }),
+        });
+        const failed = (data.errors || []).length;
+        showAlert(
+          'Sent ' +
+            (data.sent || 0) +
+            ' reminder' +
+            ((data.sent || 0) === 1 ? '' : 's') +
+            (failed ? ' · ' + failed + ' failed' : '') +
+            '.',
+          failed && !data.sent ? 'error' : 'success'
+        );
+      } catch (err) {
+        showAlert(err.message, 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = !selectedEventId();
+        }
+      }
+    });
     document.getElementById('omr-download-template')?.addEventListener('click', downloadTemplateCsv);
     document.getElementById('omr-bulk-resend')?.addEventListener('click', bulkResendInvites);
 
@@ -916,7 +994,7 @@
       const group = await api('/api/organiser/groups?id=' + encodeURIComponent(organiserId));
       const title = document.getElementById('omr-title');
       if (title && group.group?.name) {
-        title.textContent = 'Member list — ' + group.group.name;
+        title.textContent = 'Membership — ' + group.group.name;
       }
     } catch {
       /* ignore */
@@ -927,6 +1005,6 @@
   }
 
   init().catch(function (e) {
-    showAlert(e.message || 'Could not load member list', 'error');
+    showAlert(e.message || 'Could not load membership', 'error');
   });
 })();

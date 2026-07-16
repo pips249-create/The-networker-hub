@@ -10,7 +10,7 @@
     'event-tickets':
       'Almost there — ticket types and publishing next. Ask if VAT, refunds, tier setup, or member list tickets are unclear.',
     'member-roster':
-      'This is your member list — it unlocks Members only tickets. Ask how to add members, import CSV, expiry dates, or reports.',
+      'This is your membership — it unlocks Members only tickets. Ask how to add members, import CSV, expiry dates, or reports.',
     'group-edit':
       'Your organiser page is the home for your events. Ask if anything on this page is unclear.',
     'organiser-dashboard':
@@ -74,7 +74,7 @@
       { label: 'List an event', prompt: 'How do I list my first event?' },
       { label: 'Stripe payouts', prompt: 'How do Stripe Connect payouts and refunds work for organisers?' },
       { label: 'Invite my team', prompt: 'How do I invite team members to help manage events?' },
-      { label: 'Member list', prompt: 'What is a member list and how do I use it?' },
+      { label: 'Membership', prompt: 'What is a membership and how do I use it?' },
     ],
   };
 

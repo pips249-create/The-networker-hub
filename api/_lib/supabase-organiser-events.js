@@ -426,8 +426,8 @@ function applyGroupSalesSummary(groups, summary) {
   });
 }
 
-/** Enrich lean-bootstrap groups with event counts and revenue without loading full events. */
-function enrichGroupsFromLeanData(groups, eventSummaries, workspaceSummary) {
+/** Enrich lean-bootstrap groups with event counts, revenue, and membership stats. */
+function enrichGroupsFromLeanData(groups, eventSummaries, workspaceSummary, rosterSummaries) {
   const eventsByGroup = new Map();
   (eventSummaries || []).forEach((ev) => {
     const orgId = ev.organiserId;
@@ -438,9 +438,14 @@ function enrichGroupsFromLeanData(groups, eventSummaries, workspaceSummary) {
   let enriched = (groups || []).map((g) => {
     const status = deriveGroupListingStatus(g.statusRaw);
     const eventsListed = eventsByGroup.get(g.id) || 0;
+    const rosterSummary =
+      rosterSummaries && rosterSummaries.get
+        ? rosterSummaries.get(g.id) || { active: 0, unclaimed: 0, expiringSoon: 0 }
+        : g.rosterSummary || { active: 0, unclaimed: 0, expiringSoon: 0 };
     return {
       ...g,
       eventsListed,
+      rosterSummary,
       statusKey: status.key,
       statusLabel: status.label,
       revenueDisplay: g.revenueDisplay || formatMoney(g.revenueNum || 0),
@@ -1872,7 +1877,15 @@ async function getLeanOrganiserWorkspace(req) {
       }
     : null;
 
-  groups = enrichGroupsFromLeanData(groups, eventSummaries, workspaceSummary);
+  let rosterSummaries = new Map();
+  try {
+    const { buildRosterSummariesForOrganisers } = require('./organiser-member-roster');
+    rosterSummaries = await buildRosterSummariesForOrganisers(groupIds);
+  } catch {
+    rosterSummaries = new Map();
+  }
+
+  groups = enrichGroupsFromLeanData(groups, eventSummaries, workspaceSummary, rosterSummaries);
 
   let stripeConnectEnabled = false;
   try {

@@ -2178,7 +2178,7 @@
     if (rosterMember) {
       const banner = document.createElement('p');
       banner.className = 'ticket-load-hint ticket-load-hint--member';
-      banner.textContent = 'You\u2019re on this group\u2019s member list — member tickets are shown below.';
+      banner.textContent = 'You\u2019re in this group\u2019s membership — member tickets are shown below.';
       tiersEl.appendChild(banner);
     } else if (
       isGuestProg &&
@@ -2191,10 +2191,10 @@
       hint.className = 'ticket-load-hint';
       const signedInEmail = String(guestVisitEligibility.viewerEmail || '').trim();
       hint.textContent = signedInEmail
-        ? 'Complimentary visits are for newcomers. Member tickets need the email on the organiser\u2019s member list (you\u2019re signed in as ' +
+        ? 'Complimentary visits are for newcomers. Member tickets need the email on the organiser\u2019s membership (you\u2019re signed in as ' +
           signedInEmail +
           ').'
-        : 'Complimentary visits are for newcomers. Sign in with the email on the organiser\u2019s member list for member tickets.';
+        : 'Complimentary visits are for newcomers. Sign in with the email on the organiser\u2019s membership for member tickets.';
       tiersEl.appendChild(hint);
     }
 

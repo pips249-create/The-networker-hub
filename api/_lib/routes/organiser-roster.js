@@ -7,6 +7,7 @@ const {
   importRosterCsv,
   parseRosterCsv,
   buildRosterReports,
+  sendMemberRosterBookingReminders,
 } = require('../organiser-member-roster');
 
 function parseBody(req) {
@@ -89,6 +90,14 @@ module.exports = async function handler(req, res) {
         const rows = parseRosterCsv(body.csv || body.csvText || body.csv_text);
         const sendInvite = body.sendInvites === true || body.send_invites === true;
         const result = await importRosterCsv(groupId, rows, { sendInvite });
+        return json(res, 200, { ok: true, ...result });
+      }
+
+      const action = String(body.action || '').trim().toLowerCase();
+      if (action === 'remind-not-booked' || action === 'remind_not_booked') {
+        const eventId = String(body.eventId || body.event_id || '').trim();
+        if (!eventId) return json(res, 400, { ok: false, error: 'missing_event_id' });
+        const result = await sendMemberRosterBookingReminders(groupId, eventId);
         return json(res, 200, { ok: true, ...result });
       }
 

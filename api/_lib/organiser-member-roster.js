@@ -935,6 +935,140 @@ async function notifyRosterMembersOfPublishedEvent(eventRow) {
   return result;
 }
 
+/**
+ * Batch membership stats for organiser dashboard chooser cards.
+ */
+async function buildRosterSummariesForOrganisers(organiserIds) {
+  const ids = [...new Set((organiserIds || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  const map = new Map();
+  ids.forEach((id) => map.set(id, { active: 0, unclaimed: 0, expiringSoon: 0 }));
+  if (!ids.length) return map;
+
+  const sb = getSupabaseAdmin();
+  const CHUNK = 100;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK);
+    const { data, error } = await sb
+      .from('organiser_member_roster')
+      .select('organiser_id, status, expires_at, claimed_at, attendee_id')
+      .in('organiser_id', chunk)
+      .eq('status', ROSTER_STATUS_ACTIVE);
+    if (error) throw new Error(error.message);
+    (data || []).forEach((row) => {
+      if (!rosterRowIsActive(row)) return;
+      const orgId = String(row.organiser_id || '').trim();
+      const summary = map.get(orgId);
+      if (!summary) return;
+      summary.active += 1;
+      if (!row.claimed_at && !row.attendee_id) summary.unclaimed += 1;
+      const days = daysUntilExpiry(row.expires_at);
+      if (days != null && days >= 0 && days <= 14) summary.expiringSoon += 1;
+    });
+  }
+  return map;
+}
+
+/**
+ * Email active members who have not booked a specific event.
+ */
+async function sendMemberRosterBookingReminders(organiserId, eventId) {
+  const result = { sent: 0, skipped: 0, errors: [] };
+  const orgId = String(organiserId || '').trim();
+  const targetEventId = String(eventId || '').trim();
+  if (!orgId || !targetEventId) return result;
+
+  const reports = await buildRosterReports(orgId, { eventId: targetEventId });
+  const notBooked = reports.bookedForEvent?.notBooked || [];
+  if (!notBooked.length) return result;
+
+  const sb = getSupabaseAdmin();
+  const { data: eventRow, error: eventErr } = await sb
+    .from('events')
+    .select(
+      'id, title, slug, starts_at, status, approval_status, venue, city, location_label, organiser_id'
+    )
+    .eq('id', targetEventId)
+    .maybeSingle();
+  if (eventErr) throw new Error(eventErr.message);
+  if (!eventRow) {
+    const err = new Error('event_not_found');
+    err.status = 404;
+    throw err;
+  }
+
+  const { data: organiser, error: orgErr } = await sb
+    .from('organisers')
+    .select('id, name, slug')
+    .eq('id', orgId)
+    .maybeSingle();
+  if (orgErr) throw new Error(orgErr.message);
+  if (!organiser) return result;
+
+  const site = siteBase();
+  const { event_date, event_time } = formatEventDateTime(eventRow.starts_at);
+  const eventLocation =
+    String(eventRow.location_label || eventRow.venue || eventRow.city || '').trim() ||
+    'See event page';
+  const eventTimeSuffix = event_time ? ' · ' + event_time : '';
+  const eventUrl = eventPublicUrl(eventRow, site);
+  const organiserUrl = organiserPublicUrl(organiser, site);
+  const organiserName = String(organiser.name || 'your networking group').trim();
+
+  for (const member of notBooked) {
+    const email = normalizeRosterEmail(member.email);
+    if (!email) {
+      result.skipped += 1;
+      continue;
+    }
+    const hasAccount = Boolean(member.claimedAt || member.attendeeId);
+    const ctaUrl = hasAccount
+      ? loginUrlWithNext(site, email, eventUrl)
+      : site +
+        '/register?email=' +
+        encodeURIComponent(email) +
+        '&next=' +
+        encodeURIComponent(eventUrl);
+    const ctaLabel = hasAccount ? 'Book member tickets' : 'Create account & book';
+
+    try {
+      await sendTemplatedEmail({
+        slug: 'member_roster_booking_reminder',
+        to: email,
+        variables: {
+          user_name: emailGreetingName(member.name, email),
+          user_email: email,
+          organiser_name: organiserName,
+          organiser_url: organiserUrl,
+          event_name: String(eventRow.title || 'Event').trim(),
+          event_date: event_date || '',
+          event_time: eventTimeSuffix,
+          event_location: eventLocation,
+          event_url: eventUrl,
+          cta_url: ctaUrl,
+          cta_label: ctaLabel,
+          hub_account_url: hubAccountUrl(site),
+          browse_events_url: browseEventsUrl(site),
+          contact_url: contactUrl(site),
+          privacy_url: legalPolicyUrl(site, 'privacy'),
+          terms_url: legalPolicyUrl(site, 'terms'),
+          site_url: site,
+          logo_url: logoNavUrl(site),
+          logo_footer_url: logoFooterUrl(site),
+        },
+      });
+      result.sent += 1;
+    } catch (e) {
+      if (e.code === 'emails_disabled' || /emails_disabled/i.test(String(e.message || ''))) {
+        result.skipped += 1;
+        continue;
+      }
+      result.errors.push({ email, message: e.message || String(e) });
+    }
+  }
+
+  return result;
+}
+
 module.exports = {
   ROSTER_STATUS_ACTIVE,
   ROSTER_STATUS_REMOVED,
@@ -955,4 +1089,6 @@ module.exports = {
   ensureOrganiserFavouritesForRoster,
   notifyRosterMembersOfPublishedEvent,
   notifyRosterMemberOfUpcomingLiveEvents,
+  buildRosterSummariesForOrganisers,
+  sendMemberRosterBookingReminders,
 };

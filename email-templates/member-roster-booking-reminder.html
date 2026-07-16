@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New member event</title>
+  <title>Member booking reminder</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
     body, table, td, p, a { margin:0; padding:0; border:0; font-size:100%; font:inherit; vertical-align:top; }
@@ -66,9 +66,9 @@
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 16px;">
               <tr><td style="width:52px;height:52px;background:#d4f0f3;border-radius:50%;text-align:center;vertical-align:middle;font-size:24px;color:#0d6e7a;line-height:52px;">&#9733;</td></tr>
             </table>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:#0d6e7a;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">For members</p>
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">{{organiser_name}} has a new event</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{user_name}}, you&apos;re in the membership for <strong style="color:#1c2040;">{{organiser_name}}</strong>. They&apos;ve just published a new event — sign in with this email to see Members only tickets.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:#0d6e7a;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Membership reminder</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Book your place — {{event_name}}</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{user_name}}, you&apos;re in the membership for <strong style="color:#1c2040;">{{organiser_name}}</strong> but we don&apos;t have your booking for this meeting yet. Sign in with this email to book member tickets.</p>
           </td>
         </tr><tr><td class="mobile-pad" style="padding:0 40px 20px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#1c2040;border-radius:16px;"><tr><td style="padding:24px;"><p style="font-family:'DM Sans',system-ui,sans-serif;font-size:17px;font-weight:600;color:#ffffff;margin:0 0 8px;line-height:1.35;">{{event_name}}</p><p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);margin:0;">{{event_date}}{{event_time}} &middot; {{event_location}}</p></td></tr></table></td></tr><tr><td class="mobile-pad email-cta" style="padding:0 40px 28px;text-align:center;"><a href="{{cta_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#4aa8f0;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">{{cta_label}} &rarr;</a></td></tr>
         {{mini_sponsors_row}}
@@ -77,7 +77,7 @@
             <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
               <img src="{{logo_footer_url}}" alt="The Networker Hub" width="200" class="email-logo-footer" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
             </a>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:400;color:rgba(255,255,255,0.55);margin:0 0 12px;">You received this because you&apos;re in {{organiser_name}}&apos;s membership.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:400;color:rgba(255,255,255,0.55);margin:0 0 12px;">You received this because you&apos;re in {{organiser_name}}&apos;s membership on The Networker Hub.</p>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);margin:0;">
               <a href="{{privacy_url}}" style="color:#4aa8f0;text-decoration:none;">Privacy</a>
               &nbsp;&middot;&nbsp;

@@ -130,12 +130,12 @@ const BRANDED_EMAIL_TEMPLATES = {
   member_roster_invite: {
     file: 'member-roster-invite.html',
     marker: 'hub-email-layout-v2',
-    subject: '{{organiser_name}} added you to their member list on The Networker Hub',
+    subject: '{{organiser_name}} added you to their membership on The Networker Hub',
   },
   member_roster_existing: {
     file: 'member-roster-existing.html',
     marker: 'hub-email-layout-v2',
-    subject: '{{organiser_name}} added you to their member list',
+    subject: '{{organiser_name}} added you to their membership',
   },
   category_exclusivity_payment_reminder: {
     file: 'category-exclusivity-payment-reminder.html',
@@ -181,6 +181,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     file: 'member-roster-new-event.html',
     marker: 'hub-email-layout-v2',
     subject: '{{organiser_name}} has a new event for members',
+  },
+  member_roster_booking_reminder: {
+    file: 'member-roster-booking-reminder.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Reminder — book {{event_name}} with {{organiser_name}}',
   },
   password_reset: {
     file: 'password-reset.html',

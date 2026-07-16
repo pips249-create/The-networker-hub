@@ -125,6 +125,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'member_roster_invite',
   'member_roster_existing',
   'member_roster_new_event',
+  'member_roster_booking_reminder',
   'booking_confirmation',
   'booking_reminder',
   'online_join_reminder',
