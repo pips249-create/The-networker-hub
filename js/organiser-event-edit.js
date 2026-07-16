@@ -665,7 +665,7 @@
           seriesBanner.innerHTML =
             'This listing has <strong>' +
             scope.peerCount +
-            ' dates</strong>. Title, location, times, and description apply to <strong>every date</strong> in the series.';
+            ' dates</strong>. Title, location, times, and description apply to <strong>every date</strong> in the series. Use matching ticket prices on each day if you want attendees to book all dates in one checkout.';
         }
       }
     }

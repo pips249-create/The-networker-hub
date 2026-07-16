@@ -78,7 +78,7 @@ async function testCronEligibility() {
   const result = await sendDuePostEventReviewEmails(sb, { dryRun: true });
 
   console.log('');
-  console.log('Cron window: events ended ~30–42 hours ago (36h ± 6h)');
+  console.log('Cron window: events ended ~11–37 hours ago (24h ± 13h)');
   console.log('Candidates:', result.candidates.length, '| Skipped:', result.skipped);
   if (result.candidates.length) {
     result.candidates.slice(0, 5).forEach(function (row, i) {
@@ -98,7 +98,7 @@ async function testCronEligibility() {
     }
   } else {
     console.log(
-      '  No eligible registrations in the window. To test live cron, set a past event ends_at to ~36 hours ago with a paid/free registration and post_event_review_sent_at null.'
+      '  No eligible registrations in the window. To test live cron, set a past event ends_at to ~24 hours ago with a paid/free registration and post_event_review_sent_at null.'
     );
   }
   pass('dry-run cron completed');

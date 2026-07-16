@@ -816,6 +816,46 @@ a:hover {
   color: var(--ink-muted);
 }
 
+.ev-series-bundle-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #faf7f2;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.ev-series-bundle-option[hidden] {
+  display: none !important;
+}
+
+.ev-series-bundle-option input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.ev-series-bundle-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ev-series-bundle-copy strong {
+  font-weight: 700;
+  color: var(--purple-dark);
+}
+
+.ev-series-bundle-hint {
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
 .ev-series-collapsed {
   display: flex;
   align-items: flex-start;

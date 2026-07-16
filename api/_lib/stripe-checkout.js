@@ -65,6 +65,7 @@ async function createPaidCheckoutSession(opts) {
     customer_email: opts.email,
     client_reference_id: opts.clientReferenceId,
     metadata: {
+      checkout_type: opts.checkoutType || 'event_ticket',
       event_id: opts.eventId,
       ticket_id: opts.ticketId || '',
       registration_id: opts.registrationId || '',
@@ -75,6 +76,8 @@ async function createPaidCheckoutSession(opts) {
       accessibility_requirements: String(opts.accessibilityRequirements || '').trim().slice(0, 500),
       alumni_invite_token: String(opts.alumniInviteToken || '').trim().slice(0, 120),
       quantity: String(opts.qty || 1),
+      bundle_event_ids: String(opts.bundleEventIds || '').slice(0, 500),
+      bundle_ticket_ids: String(opts.bundleTicketIds || '').slice(0, 500),
     },
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,

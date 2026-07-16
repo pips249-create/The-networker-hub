@@ -31,13 +31,19 @@
     'event-dates': {
       title: 'Dates',
       body:
-        'Select one date for a single event, or click multiple days on the calendar to create a series — the same times apply to every date you pick.',
+        'Select one date for a single event, or click multiple days on the calendar to create a series — the same times apply to every date you pick. Series work best for recurring meetings on different weeks (same time and venue each session).',
       hubertPrompt: 'How do I add multiple dates or create a recurring series?',
+    },
+    'event-series-planning': {
+      title: 'Multi-date listings',
+      body:
+        'Each calendar date becomes its own session with the same ticket tiers copied across the series. Attendees can book one date or use Book all remaining dates on the listing when every session shares the same price. For a small conference with one admission price covering every day, you can instead sell tickets on the first date only and state in the description that the ticket includes all days — you manage entry manually.',
+      hubertPrompt: 'How should I list a multi-day conference or recurring series?',
     },
     'event-times': {
       title: 'Start and end time',
       body:
-        'Same start and end time for every selected date. End time must be after start time. Pick the hour, then minutes in 15-minute steps.',
+        'Same start and end time for every selected date. End time must be after start time. Pick the hour, then minutes in 15-minute steps. Different times per day? Create separate listings instead.',
       hubertPrompt: 'Can I set different times for different dates in a series?',
     },
     'event-venue': {
@@ -92,6 +98,12 @@
       body:
         'Required before publishing paid tickets. Choose whether your listed price includes VAT or whether VAT is added at checkout. Shown on your public listing so attendees know what to expect. Not needed when all tickets are free.',
       hubertPrompt: 'Should VAT be included in my ticket price or added at checkout?',
+    },
+    'event-series-tickets': {
+      title: 'Tickets on a multi-date series',
+      body:
+        'Each ticket tier you add is copied to every date in the series. Keep the same price on each day if you want attendees to use Book all remaining dates (one checkout for every session). Early bird and standard tiers work — set sale end dates per tier. For one conference pass price covering all days without per-day booking, use a single paid date and explain in the description that admission includes every day.',
+      hubertPrompt: 'How do tickets work when my event has multiple dates?',
     },
     'stripe-refunds': {
       title: 'Refunds & Stripe Connect',

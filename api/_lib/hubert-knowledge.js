@@ -457,7 +457,17 @@ const FALLBACK_REPLIES = [
   {
     match: /add.*(more than one|multiple).*(date|day)|multiple dates|recurring (event|meeting|series)|event series|repeat.*date/i,
     reply:
-      'Use the calendar on the listing details step and click every date you want to include. All selected dates form one series and share the same start time, end time, venue or online link, and ticket tiers. If any session has a different time or location, create it as a separate listing instead.',
+      'Use the calendar on the listing details step and click every date you want to include. All selected dates form one series and share the same start time, end time, venue or online link, and ticket tiers. This suits recurring meetings on different weeks. If any session has a different time or location, create it as a separate listing instead.',
+  },
+  {
+    match: /conference.*(pass|ticket|multi.?day|3 day|three day)|multi.?day conference|one ticket.*all (day|date)|full conference|delegate pass/i,
+    reply:
+      'For a multi-day conference with the same price every day: select all dates on the calendar, set identical ticket tiers, and publish — attendees can tick Book all remaining dates for one checkout (one registration per day). If you prefer one admission price without per-day booking, list only the first day as the paid ticket and state clearly in the description that the ticket includes all conference days — you verify entry manually. Different prices or schedules per day? Use separate listings.',
+  },
+  {
+    match: /book all (date|day|session)|all remaining date|bundle checkout|checkout.*every date/i,
+    reply:
+      'When your listing has multiple dates with the same ticket price on each day, signed-in attendees see Book all remaining dates on the event page — one payment, registrations on every upcoming session they have not booked yet. Every tier must match by name and price on each date. Guest visit, alumni, member-only, and application tickets are excluded.',
   },
   {
     match: /early bird|early-bird/i,

@@ -680,8 +680,135 @@ async function sendMeetingLinkAddedEmails(sb, eventId, { previousLink, newLink }
   return result;
 }
 
+function formatSeriesBundleDateLine(startsAt) {
+  if (!startsAt) return '';
+  const d = new Date(startsAt);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Europe/London',
+  });
+}
+
+/**
+ * One attendee confirmation listing every date in a series bundle checkout.
+ */
+async function sendSeriesBundleConfirmation(sb, { primaryRegistration, bundleRegistrations }) {
+  const primary = primaryRegistration;
+  if (!primary?.id || !primary.event_id) return { skipped: true, reason: 'missing_primary' };
+
+  const registrationIds = (bundleRegistrations || []).map((row) => row.id).filter(Boolean);
+  const eventIds = [...new Set((bundleRegistrations || []).map((row) => row.event_id).filter(Boolean))];
+  if (!eventIds.length) return { skipped: true, reason: 'missing_events' };
+
+  const [eventRes, attendeeRes, ticketRes] = await Promise.all([
+    sb
+      .from('events')
+      .select(
+        'id, title, slug, starts_at, ends_at, city, venue, location_label, organiser_id, meeting_link, meeting_type, postcode, refund_policy, refund_policy_details, refund_cutoff_days'
+      )
+      .in('id', eventIds),
+    primary.attendee_id
+      ? sb.from('attendees').select('id, email, name').eq('id', primary.attendee_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    primary.ticket_id
+      ? sb.from('tickets').select('id, name').eq('id', primary.ticket_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
+  if (eventRes.error) throw new Error(eventRes.error.message);
+
+  const eventsById = new Map((eventRes.data || []).map((row) => [row.id, row]));
+  const sortedEvents = eventIds
+    .map((id) => eventsById.get(id))
+    .filter(Boolean)
+    .sort((a, b) => new Date(a.starts_at || 0) - new Date(b.starts_at || 0));
+
+  const dateLines = sortedEvents.map((row) => formatSeriesBundleDateLine(row.starts_at)).filter(Boolean);
+  let eventDate = dateLines.join(', ');
+  if (dateLines.length > 1) {
+    const last = dateLines.pop();
+    eventDate = dateLines.join(', ') + ' & ' + last;
+  }
+
+  const anchorEvent = eventsById.get(primary.event_id) || sortedEvents[0];
+  const attendee = attendeeRes.data || {};
+  const attendeeEmail = String(attendee.email || '').trim().toLowerCase();
+  const organiserContact = anchorEvent?.organiser_id
+    ? await resolveOrganiserNotificationEmail(sb, anchorEvent.organiser_id)
+    : { name: '', email: '' };
+
+  const vars = buildAttendeeEmailVars({
+    registration: primary,
+    eventRow: anchorEvent,
+    attendee,
+    ticketName: String(ticketRes.data?.name || 'Ticket').trim(),
+    organiserName: organiserContact.name,
+    amountPaid: formatAmount(primary.amount_paid),
+    ticketRow: ticketRes.data,
+  });
+  vars.event_date = eventDate || vars.event_date;
+  vars.ticket_quantity = registrationIds.length;
+  vars.ticket_quantity_label = formatTicketQuantity(registrationIds.length, vars.ticket_name);
+
+  const sent = { attendee: false, organiser: false, errors: [] };
+
+  if (attendeeEmail && !primary.ticket_email_sent) {
+    try {
+      await sendTemplatedEmail({
+        slug: 'booking_confirmation',
+        to: attendeeEmail,
+        variables: vars,
+      });
+      await sb
+        .from('registrations')
+        .update({ ticket_email_sent: true })
+        .eq('id', primary.id);
+      sent.attendee = true;
+    } catch (e) {
+      sent.errors.push({ target: 'attendee', message: e.message || String(e) });
+    }
+  }
+
+  if (organiserContact.email) {
+    for (const reg of bundleRegistrations || []) {
+      const eventRow = eventsById.get(reg.event_id);
+      if (!eventRow) continue;
+      try {
+        const stats = await fetchEventRegistrationStats(sb, reg.event_id);
+        const organiserVars = buildOrganiserEmailVars(
+          buildAttendeeEmailVars({
+            registration: reg,
+            eventRow,
+            attendee,
+            ticketName: String(ticketRes.data?.name || 'Ticket').trim(),
+            organiserName: organiserContact.name,
+            amountPaid: formatAmount(reg.amount_paid),
+            ticketRow: ticketRes.data,
+          }),
+          stats
+        );
+        organiserVars.dashboard_url = organiserAttendeesDashboardUrl(siteBase(), reg.event_id);
+        await sendTemplatedEmail({
+          slug: 'organiser_new_registration',
+          to: organiserContact.email,
+          variables: organiserVars,
+        });
+        sent.organiser = true;
+      } catch (e) {
+        sent.errors.push({ target: 'organiser', eventId: reg.event_id, message: e.message || String(e) });
+      }
+    }
+  }
+
+  return sent;
+}
+
 module.exports = {
   sendRegistrationEmails,
+  sendSeriesBundleConfirmation,
   sendApplicationEmails,
   sendOrganiserApplicationAlertEmail,
   sendApplicationDecisionEmails,

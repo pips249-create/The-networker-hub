@@ -49,7 +49,7 @@
     <link rel="stylesheet" href="../css/hub-loading.css" />
     <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260612f" />
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
-  <link rel="stylesheet" href="../css/event-detail.css?v=20260715going" />
+  <link rel="stylesheet" href="../css/event-detail.css?v=20260716bundle" />
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
@@ -312,6 +312,14 @@
             <p class="ticket-load-hint">Loading tickets…</p>
           </div>
 
+          <label class="ev-series-bundle-option" id="ev-series-bundle-option" hidden>
+            <input type="checkbox" id="ev-series-bundle-check" />
+            <span class="ev-series-bundle-copy">
+              <strong id="ev-series-bundle-label">Book all dates</strong>
+              <span class="ev-series-bundle-hint" id="ev-series-bundle-hint"></span>
+            </span>
+          </label>
+
           <p class="ticket-vat-note" id="ev-vat-note" hidden></p>
 
           <div class="qty-row">
@@ -540,7 +548,7 @@
     <script src="../js/hub-favourites.js?v=20260629"></script>
     <script src="../js/hub-event-timezone.js?v=20260716"></script>
     <script src="../js/booking-fees.js?v=20260715gvleft"></script>
-    <script src="../js/event-detail.js?v=20260716tickets"></script>
+    <script src="../js/event-detail.js?v=20260716bundle"></script>
     <div id="hub-site-footer"></div>
 
     <div class="hub-modal application-success-modal" id="application-success-modal" role="dialog" aria-modal="true" aria-labelledby="application-success-title" hidden>

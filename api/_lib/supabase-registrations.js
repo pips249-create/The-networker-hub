@@ -19,6 +19,7 @@ const {
   assertMembersOnlyBookingAllowed,
   getActiveRosterMembership,
 } = require('./organiser-member-roster');
+const { parseBundleMetadata, newBookingGroupId } = require('./series-bundle-checkout');
 
 /**
  * Insert a registration after successful checkout.
@@ -324,6 +325,8 @@ async function createRegistrationFromPayment(input) {
     registration_kind: registrationKind,
     booked_snapshot: bookedSnapshot,
   };
+  const bookingGroupId = String(input.bookingGroupId || input.booking_group_id || '').trim();
+  if (bookingGroupId) row.booking_group_id = bookingGroupId;
 
   const ins = await sb.from('registrations').insert(row).select('*').single();
   if (ins.error) throw new Error(ins.error.message);
@@ -338,10 +341,12 @@ async function createRegistrationFromPayment(input) {
   await lockEventOnFirstSale(sb, eventId);
 
   let emailResult = null;
-  try {
-    emailResult = await sendRegistrationEmails(sb, ins.data);
-  } catch (e) {
-    emailResult = { error: e.message || String(e) };
+  if (!input.skipConfirmationEmail && !input.skip_confirmation_email) {
+    try {
+      emailResult = await sendRegistrationEmails(sb, ins.data);
+    } catch (e) {
+      emailResult = { error: e.message || String(e) };
+    }
   }
 
   return {
@@ -350,6 +355,104 @@ async function createRegistrationFromPayment(input) {
     attendeeId,
     stripeCheckoutSessionId,
     registration: ins.data,
+    emailResult,
+  };
+}
+
+/**
+ * One checkout → registrations on each date in a series bundle.
+ */
+async function createSeriesBundleFromPayment(input) {
+  if (!isSupabaseConfigured()) throw new Error('supabase_not_configured');
+
+  const sb = getSupabaseAdmin();
+  const stripeCheckoutSessionId =
+    input.stripeCheckoutSessionId || input.stripe_checkout_session_id || null;
+  const bundleItems = Array.isArray(input.bundleItems) ? input.bundleItems : [];
+  if (!bundleItems.length) throw new Error('missing_bundle_items');
+
+  if (stripeCheckoutSessionId) {
+    const existingSession = await sb
+      .from('registrations')
+      .select('id, booking_group_id')
+      .eq('stripe_checkout_session_id', stripeCheckoutSessionId)
+      .maybeSingle();
+    if (existingSession.error) throw new Error(existingSession.error.message);
+    if (existingSession.data?.id) {
+      const groupId = existingSession.data.booking_group_id;
+      let siblings = [existingSession.data];
+      if (groupId) {
+        const groupRes = await sb
+          .from('registrations')
+          .select('id, event_id, ticket_id, amount_paid, ticket_email_sent')
+          .eq('booking_group_id', groupId);
+        if (groupRes.error) throw new Error(groupRes.error.message);
+        siblings = groupRes.data || siblings;
+      }
+      return {
+        action: 'exists',
+        id: existingSession.data.id,
+        registrationIds: siblings.map((row) => row.id),
+        bundleCount: siblings.length,
+      };
+    }
+  }
+
+  const bookingGroupId = String(input.bookingGroupId || input.booking_group_id || '').trim() || newBookingGroupId();
+  const amountTotal =
+    input.amountPaid != null
+      ? Number(input.amountPaid)
+      : input.amount_paid != null
+        ? Number(input.amount_paid)
+        : 0;
+  const paymentStatus = input.paymentStatus || input.payment_status || (amountTotal > 0 ? 'Paid' : 'Free');
+
+  const registrationKind =
+    String(input.registrationKind || input.registration_kind || 'series_bundle').trim() ||
+    'series_bundle';
+
+  const created = [];
+  for (let i = 0; i < bundleItems.length; i++) {
+    const item = bundleItems[i];
+    const isPrimary = i === 0;
+    const result = await createRegistrationFromPayment({
+      email: input.email,
+      name: input.name,
+      userId: input.userId,
+      eventId: item.eventId,
+      ticketId: item.ticketId,
+      quantity: 1,
+      guestNames: input.guestNames,
+      dietaryRequirements: input.dietaryRequirements,
+      accessibilityRequirements: input.accessibilityRequirements,
+      amountPaid: isPrimary ? amountTotal : 0,
+      paymentStatus,
+      stripePaymentIntentId: isPrimary ? input.stripePaymentIntentId || input.stripe_payment_intent_id : null,
+      stripeCheckoutSessionId: isPrimary ? stripeCheckoutSessionId : null,
+      registrationKind,
+      bookingGroupId,
+      skipConfirmationEmail: true,
+    });
+    created.push(result.registration || { id: result.id });
+  }
+
+  let emailResult = null;
+  try {
+    const { sendSeriesBundleConfirmation } = require('./registration-emails');
+    emailResult = await sendSeriesBundleConfirmation(sb, {
+      primaryRegistration: created[0],
+      bundleRegistrations: created,
+    });
+  } catch (e) {
+    emailResult = { error: e.message || String(e) };
+  }
+
+  return {
+    action: 'created',
+    id: created[0]?.id,
+    registrationIds: created.map((row) => row.id).filter(Boolean),
+    bundleCount: created.length,
+    bookingGroupId,
     emailResult,
   };
 }
@@ -446,6 +549,47 @@ async function handleCheckoutSessionCompleted(session) {
       ? session.payment_intent
       : session.payment_intent?.id || null;
 
+  if (String(metadata.checkout_type || '').trim() === 'series_pass') {
+    const bundleItems = parseBundleMetadata(metadata);
+    if (!bundleItems.length) {
+      return { skipped: true, reason: 'missing_bundle_metadata' };
+    }
+    return createSeriesBundleFromPayment({
+      email: customerEmail,
+      name: session.customer_details?.name || metadata.attendee_name || null,
+      bundleItems,
+      guestNames: metadata.guest_names || metadata.guestNames || null,
+      dietaryRequirements: metadata.dietary_requirements || metadata.dietaryRequirements || null,
+      accessibilityRequirements:
+        metadata.accessibility_requirements || metadata.accessibilityRequirements || null,
+      amountPaid: amountTotal,
+      paymentStatus: amountTotal > 0 ? 'Paid' : 'Free',
+      stripePaymentIntentId: paymentIntentId,
+      stripeCheckoutSessionId: session.id,
+      registrationKind: 'series_pass',
+    });
+  }
+
+  if (String(metadata.checkout_type || '').trim() === 'series_bundle') {
+    const bundleItems = parseBundleMetadata(metadata);
+    if (!bundleItems.length) {
+      return { skipped: true, reason: 'missing_bundle_metadata' };
+    }
+    return createSeriesBundleFromPayment({
+      email: customerEmail,
+      name: session.customer_details?.name || metadata.attendee_name || null,
+      bundleItems,
+      guestNames: metadata.guest_names || metadata.guestNames || null,
+      dietaryRequirements: metadata.dietary_requirements || metadata.dietaryRequirements || null,
+      accessibilityRequirements:
+        metadata.accessibility_requirements || metadata.accessibilityRequirements || null,
+      amountPaid: amountTotal,
+      paymentStatus: amountTotal > 0 ? 'Paid' : 'Free',
+      stripePaymentIntentId: paymentIntentId,
+      stripeCheckoutSessionId: session.id,
+    });
+  }
+
   return createRegistrationFromPayment({
     email: customerEmail,
     name: session.customer_details?.name || metadata.attendee_name || null,
@@ -467,6 +611,7 @@ async function handleCheckoutSessionCompleted(session) {
 
 module.exports = {
   createRegistrationFromPayment,
+  createSeriesBundleFromPayment,
   handleCheckoutSessionCompleted,
   parseStripeEventBody,
   parseClientReferenceId,

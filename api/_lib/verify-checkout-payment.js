@@ -4,6 +4,7 @@
 const { getSupabaseAdmin } = require('./supabase');
 const { retrieveCheckoutSession, isStripeCheckoutConfigured } = require('./stripe-checkout');
 const { getOrganiserConnectForEvent, connectRequiredForPaidCheckout } = require('./stripe-connect');
+const { parseBundleMetadata } = require('./series-bundle-checkout');
 
 const NON_EVENT_CHECKOUT_TYPES = new Set([
   'opportunity_listing',
@@ -185,6 +186,8 @@ async function verifyEventCheckoutPayment(input, sessionUser) {
     amountPaid,
     stripePaymentIntentId: paymentIntent,
     stripeCheckoutSessionId: sessionId,
+    checkoutType: String(checkout.metadata?.checkout_type || '').trim() || 'event_ticket',
+    bundleItems: parseBundleMetadata(checkout.metadata || {}),
     ...checkoutBookingFields(checkout, input),
   };
 }

@@ -28,7 +28,7 @@ const REENGAGEMENT_INACTIVE_DAYS = 30;
 const REENGAGEMENT_COOLDOWN_DAYS = 60;
 const LOW_EVENTS_MAX_UPCOMING = 3;
 const LOW_EVENTS_NUDGE_COOLDOWN_DAYS = 30;
-const POST_EVENT_REVIEW_HOURS = 36;
+const POST_EVENT_REVIEW_HOURS = 24;
 // This job runs daily. A 26-hour window avoids gaps between runs; the
 // review-request sent timestamp prevents duplicate emails.
 const POST_EVENT_REVIEW_WINDOW_HOURS = 26;

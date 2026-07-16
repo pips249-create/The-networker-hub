@@ -1177,7 +1177,91 @@
     hint.textContent =
       'This event runs on multiple ' +
       word +
-      '. Pick the one you want to attend.';
+      '. Pick one date, or tick Book all dates below to checkout for every remaining session at once.';
+  }
+
+  function normalizeTierName(name) {
+    return String(name || '')
+      .trim()
+      .toLowerCase();
+  }
+
+  function tierPriceNum(tier) {
+    if (!tier) return 0;
+    if (tier.priceKey === 'free') return 0;
+    return Number(tier.priceNum) || 0;
+  }
+
+  function findSeriesTierMatch(entry, tierName, unitPrice) {
+    const tickets = entry && entry.tickets ? entry.tickets : [];
+    return tickets.find(function (t) {
+      if (t.isGuestVisit || t.isAlumni || t.isMembersOnly || t.categoryExclusivity) return false;
+      if (Boolean(t.soldOut)) return false;
+      return normalizeTierName(t.name) === tierName && tierPriceNum(t) === unitPrice;
+    });
+  }
+
+  function seriesBundleOffer(ev, tierEl) {
+    if (!seriesDatesList || seriesDatesList.length <= 1 || !tierEl || !ev) return null;
+    if (eventIsCategoryExclusivity(ev) || eventIsGuestProgramme(ev)) return null;
+    if (tierEl.getAttribute('data-guest-visit') === '1' || tierEl.getAttribute('data-alumni') === '1') {
+      return null;
+    }
+    const unitPrice = parseFloat(tierEl.getAttribute('data-price')) || 0;
+    const tierName = normalizeTierName(
+      tierEl.getAttribute('data-tier-name') || tierEl.getAttribute('data-label') || ''
+    );
+    if (!tierName) return null;
+
+    const matches = seriesDatesList.filter(function (entry) {
+      if (!seriesEntryIsBookable(entry)) return false;
+      if (entry.isSoldOut || entry.isSalesClosed) return false;
+      return Boolean(findSeriesTierMatch(entry, tierName, unitPrice));
+    });
+    if (matches.length < 2) return null;
+
+    return {
+      dateCount: matches.length,
+      unitPrice: unitPrice,
+      tierName: tierName,
+    };
+  }
+
+  function updateSeriesBundleOption(ev) {
+    const wrap = document.getElementById('ev-series-bundle-option');
+    const check = document.getElementById('ev-series-bundle-check');
+    const label = document.getElementById('ev-series-bundle-label');
+    const hint = document.getElementById('ev-series-bundle-hint');
+    const tierEl = getSelectedTierEl();
+    const offer = seriesBundleOffer(ev || activeEvent(), tierEl);
+    if (!wrap || !check) return null;
+
+    if (!offer) {
+      wrap.hidden = true;
+      check.checked = false;
+      return null;
+    }
+
+    wrap.hidden = false;
+    const priceLabel =
+      offer.unitPrice <= 0 ? 'free' : fmt(offer.unitPrice);
+    if (label) {
+      label.textContent = 'Book all ' + offer.dateCount + ' remaining dates';
+    }
+    if (hint) {
+      hint.textContent =
+        'One checkout — ' +
+        offer.dateCount +
+        ' × ' +
+        priceLabel +
+        ' (same ticket type on every date).';
+    }
+    return offer;
+  }
+
+  function isSeriesBundleCheckoutSelected() {
+    const check = document.getElementById('ev-series-bundle-check');
+    return Boolean(check && check.checked && !check.closest('[hidden]'));
   }
 
   function renderSeriesCalendar() {
@@ -1657,8 +1741,9 @@
     );
   }
 
-  function saveBookingPending(ev, ticketId, qty, attendee) {
+  function saveBookingPending(ev, ticketId, qty, attendee, options) {
     const seriesKey = seriesKeyFromContext();
+    const bookSeriesBundle = Boolean(options && options.bookSeriesBundle);
     const eventImage = window.getEventImage
       ? window.getEventImage(ev)
       : window.getFlexibleEventImage
@@ -1679,6 +1764,7 @@
           ts: Date.now(),
           seriesKey: seriesKey || null,
           seriesTitle: seriesBaseEvent && seriesBaseEvent.title ? seriesBaseEvent.title : ev.title || '',
+          bookSeriesBundle: bookSeriesBundle,
         })
       );
     } catch (e) {
@@ -1786,6 +1872,8 @@
       alumni_not_eligible: 'This previous attendee ticket is invite-only. Use the link from your email.',
       not_invited: 'This previous attendee ticket is invite-only. Use the link from your email.',
       email_mismatch: 'Sign in with the email address that received the previous attendee invite.',
+      series_bundle_unavailable:
+        'Book all dates is not available for this ticket right now. Pick a single date instead.',
       already_going: "You're already going to this event. View your ticket in My Hub.",
       not_authenticated: 'Please sign in or create a free account to complete your booking.',
     };
@@ -1795,12 +1883,13 @@
     return 'Could not start checkout. Please try again or contact support.';
   }
 
-  async function startPaidCheckout(ev, ticketId, qty, attendee) {
+  async function startPaidCheckout(ev, ticketId, qty, attendee, options) {
     const event = ev || activeEvent();
     if (!event || !event.id) {
       throw new Error('This event could not be loaded for checkout. Refresh the page and try again.');
     }
-    saveBookingPending(event, ticketId, qty, attendee);
+    const bookSeriesBundle = Boolean(options && options.bookSeriesBundle);
+    saveBookingPending(event, ticketId, qty, attendee, { bookSeriesBundle: bookSeriesBundle });
     const isAlumniBooking = Boolean(event.alumniTier && event.alumniTier.id === ticketId);
     const res = await fetch('/api/auth/create-checkout', {
       method: 'POST',
@@ -1819,6 +1908,7 @@
           isAlumniBooking
             ? alumniEligibility?.inviteToken || alumniInviteToken || ''
             : undefined,
+        bookSeriesBundle: bookSeriesBundle,
       }),
     });
     const data = await res.json().catch(function () {
@@ -1832,13 +1922,14 @@
     throw new Error(checkoutErrorMessage(data));
   }
 
-  async function completeFreeBooking(ev, ticketId, qty, attendee) {
+  async function completeFreeBooking(ev, ticketId, qty, attendee, options) {
+    const bookSeriesBundle = Boolean(options && options.bookSeriesBundle);
     const isGuestVisit = Boolean(ev.guestVisitTier && ev.guestVisitTier.id === ticketId);
     const isAlumni = Boolean(ev.alumniTier && ev.alumniTier.id === ticketId);
     const isMembersOnly = Boolean(
       (rosterMemberTickets || []).some((tier) => tier.id === ticketId)
     );
-    saveBookingPending(ev, ticketId, qty, attendee);
+    saveBookingPending(ev, ticketId, qty, attendee, { bookSeriesBundle: bookSeriesBundle });
     const endpoint =
       isGuestVisit || isAlumni || isMembersOnly
         ? '/api/auth/create-checkout'
@@ -1859,6 +1950,9 @@
     if (!isGuestVisit && !isAlumni) {
       body.amountPaid = 0;
       body.paymentStatus = 'Free';
+    }
+    if (bookSeriesBundle) {
+      body.bookSeriesBundle = true;
     }
     const res = await fetch(endpoint, {
       method: 'POST',
@@ -2089,6 +2183,7 @@
       tier.setAttribute('data-ticket-id', t.id);
       tier.setAttribute('data-price', String(priceNum));
       tier.setAttribute('data-label', t.label || t.name || 'Ticket');
+      tier.setAttribute('data-tier-name', t.name || t.label || 'Ticket');
       if (t.stripePaymentLink) tier.setAttribute('data-stripe-link', t.stripePaymentLink);
       const cap = t.quantityAvailable;
       const sold = Math.max(0, Number(t.registrationsCount) || 0);
@@ -2192,9 +2287,9 @@
         }
       }
     }
-  }
 
-  function escapeHtml(str) {
+    updateSeriesBundleOption(ev);
+  }
     return String(str || '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -3555,6 +3650,8 @@
     const summaryFeeNote = document.getElementById('summary-fee-note');
     const sumTotal = document.getElementById('sum-total');
     const qtyHint = document.getElementById('qty-avail-hint');
+    const qtyRow = document.querySelector('.qty-row');
+    const bundleCheck = document.getElementById('ev-series-bundle-check');
 
     let qty = 1;
     let price = ev.priceKey === 'free' ? 0 : Number(ev.priceNum) || 0;
@@ -3585,23 +3682,38 @@
         qty = 1;
         maxQty = 1;
       }
+      const bundleOffer = updateSeriesBundleOption(evNow);
+      const bundleSelected = Boolean(bundleOffer && bundleCheck && bundleCheck.checked);
+      if (bundleSelected) {
+        qty = 1;
+        maxQty = 1;
+      }
       if (qty > maxQty) qty = maxQty;
-      const subtotal = price * qty;
+      const billQty = bundleSelected && bundleOffer ? bundleOffer.dateCount : qty;
+      const subtotal = price * billQty;
       const fee =
-        subtotal > 0 ? subtotal * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty : 0;
+        subtotal > 0 ? subtotal * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * billQty : 0;
       const total = subtotal + fee;
-      if (sumLabel) sumLabel.textContent = label;
-      if (sumQty) sumQty.textContent = String(qty);
+      if (sumLabel) {
+        sumLabel.textContent = bundleSelected
+          ? label + ' · all dates'
+          : label;
+      }
+      if (sumQty) sumQty.textContent = String(billQty);
       if (sumSubtotal) sumSubtotal.textContent = fmt(subtotal);
       if (sumFee) sumFee.textContent = fmt(fee);
       if (sumFeeRow) sumFeeRow.hidden = subtotal <= 0;
       if (summaryFeeNote) summaryFeeNote.hidden = subtotal <= 0;
       if (sumTotal) sumTotal.textContent = fmt(total);
       if (qtyValue) qtyValue.textContent = String(qty);
-      qtyDown.disabled = qty <= 1;
-      qtyUp.disabled = qty >= maxQty;
+      qtyDown.disabled = qty <= 1 || bundleSelected;
+      qtyUp.disabled = qty >= maxQty || bundleSelected;
+      if (qtyRow) qtyRow.hidden = bundleSelected;
       if (qtyHint) {
-        if (maxQty < 99) {
+        if (bundleSelected) {
+          qtyHint.hidden = false;
+          qtyHint.textContent = 'Booking all remaining dates in one checkout.';
+        } else if (maxQty < 99) {
           qtyHint.textContent =
             maxQty === 1
               ? 'Only 1 ticket available for this type.'
@@ -3612,7 +3724,12 @@
           qtyHint.textContent = '';
         }
       }
-      syncPaidCheckoutPanel(label, qty, total);
+      syncPaidCheckoutPanel(label, billQty, total);
+    }
+
+    if (bundleCheck && !bundleCheck.dataset.bound) {
+      bundleCheck.dataset.bound = '1';
+      bundleCheck.addEventListener('change', update);
     }
 
     function selectTier(tier) {
@@ -3764,7 +3881,9 @@
       if (!paid) {
         setCheckoutSubmitting(true, 'Registering…');
         try {
-          await completeFreeBooking(ev, ticketId, qty, attendee);
+          await completeFreeBooking(ev, ticketId, qty, attendee, {
+            bookSeriesBundle: isSeriesBundleCheckoutSelected(),
+          });
         } catch (err) {
           setCheckoutSubmitting(false);
           throw err;
@@ -3774,7 +3893,9 @@
 
       setCheckoutSubmitting(true, 'Redirecting to payment…');
       try {
-        await startPaidCheckout(ev, ticketId, qty, attendee);
+        await startPaidCheckout(ev, ticketId, qty, attendee, {
+          bookSeriesBundle: isSeriesBundleCheckoutSelected(),
+        });
       } catch (err) {
         setCheckoutSubmitting(false);
         throw err;

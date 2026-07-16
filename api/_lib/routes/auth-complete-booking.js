@@ -1,7 +1,8 @@
 const { setCors, json, sessionFromRequest } = require('../auth');
-const { createRegistrationFromPayment } = require('../supabase-registrations');
+const { createRegistrationFromPayment, createSeriesBundleFromPayment } = require('../supabase-registrations');
 const { isSupabaseConfigured } = require('../supabase');
 const { verifyEventCheckoutPayment } = require('../verify-checkout-payment');
+const { parseBundleMetadata } = require('../series-bundle-checkout');
 const { bookingErrorResponse } = require('../booking-error-messages');
 
 function parseBody(req) {
@@ -52,14 +53,10 @@ module.exports = async function handler(req, res) {
 
     if (!email) return json(res, 400, { ok: false, error: 'missing_email' });
 
-    const result = await createRegistrationFromPayment({
+    const paymentPayload = {
       email,
       name,
       userId: session.sub || null,
-      eventId: body.eventId || body.event_id || payment.eventId,
-      ticketId: body.ticketId || body.ticket_id || payment.ticketId,
-      registrationId: body.registrationId || body.registration_id || payment.registrationId,
-      quantity: body.quantity ?? body.qty ?? payment.quantity,
       guestNames: body.guestNames || body.guest_names || payment.guestNames,
       dietaryRequirements:
         body.dietaryRequirements || body.dietary_requirements || payment.dietaryRequirements,
@@ -71,12 +68,28 @@ module.exports = async function handler(req, res) {
       paymentStatus: payment.paymentStatus,
       stripePaymentIntentId: payment.stripePaymentIntentId,
       stripeCheckoutSessionId: payment.stripeCheckoutSessionId,
-      alumniInviteToken:
-        body.alumniInviteToken ||
-        body.alumni_invite_token ||
-        payment.alumniInviteToken ||
-        undefined,
-    });
+    };
+
+    let result;
+    if (payment.checkoutType === 'series_bundle' && payment.bundleItems?.length) {
+      result = await createSeriesBundleFromPayment({
+        ...paymentPayload,
+        bundleItems: payment.bundleItems,
+      });
+    } else {
+      result = await createRegistrationFromPayment({
+        ...paymentPayload,
+        eventId: body.eventId || body.event_id || payment.eventId,
+        ticketId: body.ticketId || body.ticket_id || payment.ticketId,
+        registrationId: body.registrationId || body.registration_id || payment.registrationId,
+        quantity: body.quantity ?? body.qty ?? payment.quantity,
+        alumniInviteToken:
+          body.alumniInviteToken ||
+          body.alumni_invite_token ||
+          payment.alumniInviteToken ||
+          undefined,
+      });
+    }
     return json(res, 200, { ok: true, ...result });
   } catch (e) {
     const msg = e.message || String(e);

@@ -7,7 +7,7 @@ const {
   getOrganiserConnectForEvent,
   buildConnectCheckoutParams,
 } = require('../stripe-connect');
-const { normalizeGuestNames, createRegistrationFromPayment } = require('../supabase-registrations');
+const { normalizeGuestNames, createRegistrationFromPayment, createSeriesBundleFromPayment } = require('../supabase-registrations');
 const { resolveTicketSalesEnabled } = require('../ticket-sales');
 const { assertRefundPolicyForPaidCheckout } = require('../event-refund-policy');
 const { isUuid } = require('../uuid');
@@ -25,6 +25,11 @@ const {
 } = require('../ticket-visibility');
 const { assertMembersOnlyBookingAllowed, getActiveRosterMembership } = require('../organiser-member-roster');
 const { bookingErrorResponse } = require('../booking-error-messages');
+const {
+  resolveSeriesBundleItems,
+  resolveSeriesPassItems,
+  bundleMetadataFromItems,
+} = require('../series-bundle-checkout');
 
 function parseBody(req) {
   let body = req.body;
@@ -197,7 +202,7 @@ module.exports = async function handler(req, res) {
     if (ticketId) {
       const tRes = await sb
         .from('tickets')
-        .select('id, name, price, event_id, ticket_type, visibility')
+        .select('id, name, price, event_id, ticket_type, visibility, series_scope')
         .eq('id', ticketId)
         .maybeSingle();
       if (tRes.error) throw new Error(tRes.error.message);
@@ -210,7 +215,7 @@ module.exports = async function handler(req, res) {
     } else {
       const tRes = await sb
         .from('tickets')
-        .select('id, name, price, ticket_type, visibility')
+        .select('id, name, price, ticket_type, visibility, series_scope')
         .eq('event_id', eventId)
         .order('created_at', { ascending: true });
       if (tRes.error) throw new Error(tRes.error.message);
@@ -281,9 +286,53 @@ module.exports = async function handler(req, res) {
       .trim()
       .slice(0, 500);
 
+    const { isSeriesPassTicket } = require('../series-bundle-checkout');
+    const bookSeriesPass = Boolean(body.bookSeriesPass || body.book_series_pass);
+    const bookSeriesBundle = Boolean(body.bookSeriesBundle || body.book_series_bundle);
+    let seriesMultiDate = null;
+    const wantsSeriesPass =
+      bookSeriesPass || (ticketRow && isSeriesPassTicket(ticketRow) && !bookSeriesBundle);
+    if (wantsSeriesPass || bookSeriesBundle) {
+      if (!ticketId) {
+        return json(res, 400, {
+          ok: false,
+          error: 'missing_ticket_id',
+          message: 'Select a ticket type before checkout.',
+        });
+      }
+      try {
+        if (wantsSeriesPass) {
+          seriesMultiDate = await resolveSeriesPassItems(sb, {
+            eventId,
+            ticketId,
+            email: checkoutEmail,
+            userId: session?.sub || null,
+          });
+        } else {
+          seriesMultiDate = await resolveSeriesBundleItems(sb, {
+            eventId,
+            ticketId,
+            email: checkoutEmail,
+            userId: session?.sub || null,
+          });
+        }
+      } catch (multiErr) {
+        return json(res, multiErr.status || 400, {
+          ok: false,
+          error: multiErr.code || 'series_checkout_unavailable',
+          message: multiErr.message,
+        });
+      }
+      requestedQty = seriesMultiDate.checkoutQty || seriesMultiDate.items.length;
+    }
+
     if (unitPrice <= 0) {
-      if (isGuestVisit || isAlumni || isMembersOnly || registrationId) {
-        const qty = isGuestVisit || isAlumni ? 1 : requestedQty;
+      if (isGuestVisit || isAlumni || isMembersOnly || registrationId || seriesMultiDate) {
+        const qty = seriesMultiDate
+          ? seriesMultiDate.checkoutQty || 1
+          : isGuestVisit || isAlumni
+            ? 1
+            : requestedQty;
         const guestNames = normalizeGuestNames(body.guestNames || body.guest_names, qty);
         if (isGuestVisit) {
           if (evRes.data.guest_passes_disabled) {
@@ -336,6 +385,29 @@ module.exports = async function handler(req, res) {
               message: messages[code] || alumniErr.message,
             });
           }
+        }
+        if (seriesMultiDate) {
+          const result = await createSeriesBundleFromPayment({
+            email: checkoutEmail,
+            name: checkoutName,
+            userId: session?.sub || null,
+            bundleItems: seriesMultiDate.items,
+            guestNames,
+            dietaryRequirements,
+            accessibilityRequirements,
+            amountPaid: 0,
+            paymentStatus: 'Free',
+            registrationKind:
+              seriesMultiDate.pricingMode === 'series_pass' ? 'series_pass' : 'series_bundle',
+          });
+          return json(res, 200, {
+            ok: true,
+            completed: true,
+            registrationId: result.id,
+            registrationIds: result.registrationIds,
+            bundleCount: result.bundleCount,
+            action: result.action,
+          });
         }
         const result = await createRegistrationFromPayment({
           email: checkoutEmail,
@@ -438,10 +510,26 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    const totals = calculateCheckoutTotals(unitPrice, requestedQty, maxQty);
+    if (seriesMultiDate) {
+      maxQty = Math.max(maxQty, seriesMultiDate.checkoutQty || seriesMultiDate.items.length);
+    }
+
+    const checkoutUnitPrice =
+      seriesMultiDate && seriesMultiDate.pricingMode === 'series_pass'
+        ? seriesMultiDate.unitPrice
+        : unitPrice;
+    const checkoutRequestedQty =
+      seriesMultiDate && seriesMultiDate.pricingMode === 'series_pass'
+        ? 1
+        : requestedQty;
+
+    const totals = calculateCheckoutTotals(checkoutUnitPrice, checkoutRequestedQty, maxQty);
     const qty = totals.qty;
-    const guestNames = normalizeGuestNames(body.guestNames || body.guest_names, qty);
-    if (qty > 1 && guestNames.length < qty - 1) {
+    const guestNames = normalizeGuestNames(
+      body.guestNames || body.guest_names,
+      seriesMultiDate ? 1 : qty
+    );
+    if (!seriesMultiDate && qty > 1 && guestNames.length < qty - 1) {
       return json(res, 400, { ok: false, error: 'missing_guest_names' });
     }
     const siteUrl = String(process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(
@@ -462,7 +550,7 @@ module.exports = async function handler(req, res) {
             'This organiser has not finished Stripe Connect setup. Ticket sales are temporarily unavailable.',
         });
       }
-      const ticketSubtotalPence = Math.round(unitPrice * 100) * qty;
+      const ticketSubtotalPence = Math.round(checkoutUnitPrice * 100) * qty;
       const bookingFeePence = Math.round(totals.fee * 100);
       const connectParams = buildConnectCheckoutParams({
         connect,
@@ -472,6 +560,9 @@ module.exports = async function handler(req, res) {
       paymentIntentData = connectParams?.paymentIntentData || null;
     }
 
+    const bundleMeta = seriesMultiDate ? bundleMetadataFromItems(seriesMultiDate.items) : null;
+    const isSeriesPass =
+      seriesMultiDate && seriesMultiDate.pricingMode === 'series_pass';
     const checkoutSession = await createPaidCheckoutSession({
       email: checkoutEmail,
       name: checkoutName,
@@ -483,14 +574,26 @@ module.exports = async function handler(req, res) {
       ticketId,
       registrationId,
       qty,
-      eventTitle: evRes.data.title,
-      ticketName,
-      unitPricePounds: unitPrice,
+      eventTitle: seriesMultiDate ? seriesMultiDate.eventTitle : evRes.data.title,
+      ticketName: seriesMultiDate
+        ? isSeriesPass
+          ? seriesMultiDate.ticketName + ' — all dates'
+          : seriesMultiDate.ticketName + ' — all ' + qty + ' dates'
+        : ticketName,
+      unitPricePounds: checkoutUnitPrice,
       bookingFeePounds: totals.fee,
       successUrl: `${siteUrl}/events/booking-success?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${siteUrl}${cancelPath}`,
-      clientReferenceId: buildClientReferenceId(eventId, ticketId, qty, ticketName),
+      clientReferenceId: buildClientReferenceId(
+        eventId,
+        ticketId,
+        qty,
+        isSeriesPass ? 'series-pass' : seriesMultiDate ? 'series-bundle' : ticketName
+      ),
       paymentIntentData,
+      checkoutType: isSeriesPass ? 'series_pass' : seriesMultiDate ? 'series_bundle' : 'event_ticket',
+      bundleEventIds: bundleMeta?.bundle_event_ids || '',
+      bundleTicketIds: bundleMeta?.bundle_ticket_ids || '',
     });
 
     return json(res, 200, {

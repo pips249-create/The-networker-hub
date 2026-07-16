@@ -1104,6 +1104,7 @@ async function createTicket({
   displayOrder,
   ticketType,
   visibility,
+  seriesScope,
 }) {
   const sb = getSupabaseAdmin();
   await assertTicketsEditableForEvents(sb, [eventId]);
@@ -1136,6 +1137,7 @@ async function createTicket({
     ticket_type: type,
     display_order: displayOrder != null ? Number(displayOrder) : 0,
     visibility: normalizeTicketVisibility(visibility),
+    series_scope: String(seriesScope || 'date').trim() === 'series_pass' ? 'series_pass' : 'date',
   };
   const { data, error } = await sb.from('tickets').insert(row).select('*').single();
   if (error) throw new Error(error.message);

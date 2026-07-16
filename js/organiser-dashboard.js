@@ -6215,6 +6215,36 @@
     alertEl.innerHTML = message;
   }
 
+  function renderMemberListsPage() {
+    const groups = (state.groups || []).filter((g) => g && g.id);
+    const mount = document.getElementById('member-lists-choices');
+    const empty = document.getElementById('member-lists-empty');
+    if (!mount) return;
+    if (!groups.length) {
+      mount.innerHTML = '';
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+    mount.innerHTML = groups
+      .map(function (g) {
+        return (
+          '<a class="org-member-list-chooser-item" href="/organiser/member-roster?id=' +
+          encodeURIComponent(g.id) +
+          '">' +
+          '<span class="org-member-list-chooser-text">' +
+          '<strong class="org-member-list-chooser-name">' +
+          esc(g.name || 'Organiser page') +
+          '</strong>' +
+          '<span class="org-member-list-chooser-meta">Members only tickets &amp; invite emails</span>' +
+          '</span>' +
+          '<span class="org-member-list-chooser-cta">Open list →</span>' +
+          '</a>'
+        );
+      })
+      .join('');
+  }
+
   function navigateToMemberLists() {
     const groups = (state.groups || []).filter((g) => g && g.id);
     if (groups.length === 1) {
@@ -6230,27 +6260,8 @@
       );
       return;
     }
-    const mount = document.getElementById('modal-member-lists-choices');
-    if (mount) {
-      mount.innerHTML = groups
-        .map(function (g) {
-          return (
-            '<a class="org-member-list-chooser-item" href="/organiser/member-roster?id=' +
-            encodeURIComponent(g.id) +
-            '">' +
-            '<span class="org-member-list-chooser-text">' +
-            '<strong class="org-member-list-chooser-name">' +
-            esc(g.name || 'Organiser page') +
-            '</strong>' +
-            '<span class="org-member-list-chooser-meta">Members only tickets &amp; invite emails</span>' +
-            '</span>' +
-            '<span class="org-member-list-chooser-cta">Open list →</span>' +
-            '</a>'
-          );
-        })
-        .join('');
-    }
-    openModal('modal-member-lists');
+    setRoute('member-lists');
+    renderMemberListsPage();
   }
 
   function sidebarRouteForPage(page, sub) {
@@ -6362,6 +6373,15 @@
           updateBusinessListPageHead();
         });
       });
+    }
+    if (page === 'member-lists') {
+      const memberListGroups = (state.groups || []).filter((g) => g && g.id);
+      if (memberListGroups.length === 1) {
+        window.location.href =
+          '/organiser/member-roster?id=' + encodeURIComponent(memberListGroups[0].id);
+        return;
+      }
+      renderMemberListsPage();
     }
 
     // Route lives in the hash only (/organiser/#events-list). Do not also write ?panel=
@@ -8617,6 +8637,7 @@
     renderStats();
     renderOrganiserNotices();
     renderGroups();
+    if (document.querySelector('[data-org-page="member-lists"].is-active')) renderMemberListsPage();
     if (document.querySelector('[data-org-page="team"].is-active')) renderTeam();
     if (document.querySelector('[data-org-page="events"].is-active') && state.eventsLoaded) {
       renderMyEventsHub();
@@ -9645,6 +9666,7 @@
       setRoute(r.sub || r.page);
       if (
         r.page === 'groups' ||
+        r.page === 'member-lists' ||
         r.page === 'dashboard' ||
         r.page === 'team' ||
         (r.page === 'events' && (r.sub === 'events-attendees' || r.sub === 'events-cancellations'))

@@ -187,6 +187,7 @@
     const list = document.getElementById('booking-success-series-dates');
     const similarSection = document.getElementById('booking-success-similar');
     if (!section || !list || !pending || !pending.eventId) return false;
+    if (pending.bookSeriesBundle) return false;
 
     let seriesDates = [];
     let ev = evFromSummary;
