@@ -77,17 +77,26 @@
     return Boolean(m.claimedAt || m.attendeeId);
   }
 
-  function syncAddPanel(totalActive) {
+  function setAddPanelOpen(open) {
     const panel = document.getElementById('omr-add-panel');
+    const toggle = document.getElementById('omr-add-panel-toggle');
+    const body = document.getElementById('omr-add-panel-body');
+    if (!panel || !toggle || !body) return;
+    panel.classList.toggle('is-open', open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    body.hidden = !open;
+  }
+
+  function syncAddPanel(totalActive) {
     const hint = document.getElementById('omr-add-panel-hint');
     const intro = document.getElementById('omr-intro');
-    if (!panel) return;
+    if (!document.getElementById('omr-add-panel')) return;
     if (totalActive > 0) {
-      panel.open = false;
+      setAddPanelOpen(false);
       if (hint) hint.textContent = 'Add more people or import another spreadsheet';
       if (intro) intro.hidden = true;
     } else {
-      panel.open = true;
+      setAddPanelOpen(true);
       if (hint) hint.textContent = 'Name, email, or a spreadsheet';
       if (intro) intro.hidden = false;
     }
@@ -756,6 +765,12 @@
     }
 
     removeDuplicateAddPanels();
+
+    document.getElementById('omr-add-panel-toggle')?.addEventListener('click', function () {
+      const body = document.getElementById('omr-add-panel-body');
+      if (!body) return;
+      setAddPanelOpen(body.hidden);
+    });
 
     const back = document.getElementById('omr-back');
     if (back) {

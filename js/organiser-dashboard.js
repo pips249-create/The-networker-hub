@@ -4462,7 +4462,7 @@
     if (!mount) return;
     if (!stepId) {
       mount.hidden = true;
-      mount.innerHTML = '';
+      mount.replaceChildren();
       return;
     }
 
@@ -4471,7 +4471,7 @@
     });
     if (currentIndex < 0) {
       mount.hidden = true;
-      mount.innerHTML = '';
+      mount.replaceChildren();
       return;
     }
 
@@ -6314,7 +6314,7 @@
       if (loading) loading.hidden = false;
       if (empty) empty.hidden = true;
       if (chooserWrap) chooserWrap.hidden = false;
-      mount.innerHTML = '';
+      mount.replaceChildren();
       return;
     }
 
@@ -6335,25 +6335,34 @@
 
     if (empty) empty.hidden = true;
     if (chooserWrap) chooserWrap.hidden = false;
-    mount.innerHTML = groups
-      .map(function (g) {
-        return (
-          '<a class="org-member-list-chooser-item" href="' +
-          memberRosterUrl(g.id) +
-          '">' +
-          '<span class="org-member-list-chooser-text">' +
-          '<strong class="org-member-list-chooser-name">' +
-          esc(g.name || 'Organiser page') +
-          '</strong>' +
-          '<span class="org-member-list-chooser-meta">' +
-          esc(membershipSummaryLine(g)) +
-          '</span>' +
-          '</span>' +
-          '<span class="org-member-list-chooser-cta">Open membership →</span>' +
-          '</a>'
-        );
-      })
-      .join('');
+    mount.replaceChildren();
+    groups.forEach(function (g) {
+      const link = document.createElement('a');
+      link.className = 'org-member-list-chooser-item';
+      link.href = memberRosterUrl(g.id);
+
+      const textWrap = document.createElement('span');
+      textWrap.className = 'org-member-list-chooser-text';
+
+      const name = document.createElement('strong');
+      name.className = 'org-member-list-chooser-name';
+      name.textContent = g.name || 'Organiser page';
+
+      const meta = document.createElement('span');
+      meta.className = 'org-member-list-chooser-meta';
+      meta.textContent = membershipSummaryLine(g);
+
+      textWrap.appendChild(name);
+      textWrap.appendChild(meta);
+
+      const cta = document.createElement('span');
+      cta.className = 'org-member-list-chooser-cta';
+      cta.textContent = 'Open membership →';
+
+      link.appendChild(textWrap);
+      link.appendChild(cta);
+      mount.appendChild(link);
+    });
   }
 
   async function navigateToMemberships() {
@@ -8561,7 +8570,7 @@
     const listings = state.opportunities || [];
     if (!listings.length) {
       mount.hidden = true;
-      mount.innerHTML = '';
+      mount.replaceChildren();
       return;
     }
     let totalSpend = 0;
@@ -8577,7 +8586,7 @@
     });
     if (!totalEnquiries) {
       mount.hidden = true;
-      mount.innerHTML = '';
+      mount.replaceChildren();
       return;
     }
     const avgPerEnquiry = Math.round(totalSpend / totalEnquiries);
@@ -8787,7 +8796,7 @@
     if (!mount) return;
     if (!opportunityEnquiryFilterId) {
       mount.hidden = true;
-      mount.innerHTML = '';
+      mount.replaceChildren();
       return;
     }
     mount.hidden = false;
@@ -9015,7 +9024,7 @@
     });
     if (!expiring.length) {
       mount.hidden = true;
-      mount.innerHTML = '';
+      mount.replaceChildren();
       return;
     }
     const first = expiring[0];
@@ -9362,6 +9371,7 @@
 
     applyPendingGroupSave();
     pruneStaleEventFilters();
+    bootstrapReady = true;
     renderAll();
     if (!document.querySelector('[data-org-page="events"].is-active')) {
       renderStripeConnectBanner();
@@ -9371,14 +9381,12 @@
     if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
       window.HubOrganiserOnboarding.initAfterDashboardReady();
     }
-    bootstrapReady = true;
     enforceEventsOrganiserGate();
     if (document.querySelector('[data-org-page="events"].is-active')) {
       setEventsSub(eventsSubRoute);
     }
     if (parseRoute().page === 'memberships' || parseRoute().page === 'member-lists') {
-      if (maybeRedirectToSingleMemberList()) return;
-      renderMembershipsPage();
+      maybeRedirectToSingleMemberList();
     }
     } finally {
       if (!silent) setDashboardLoading(false);

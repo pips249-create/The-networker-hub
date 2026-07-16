@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
-    <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260716a" />
+    <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260716b" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
@@ -58,13 +58,20 @@
 
       <div class="omr-reports" id="omr-reports" hidden></div>
 
-      <details class="omr-add-panel" id="omr-add-panel" open>
-        <summary class="omr-add-panel-summary">
+      <div class="omr-add-panel is-open" id="omr-add-panel">
+        <button
+          type="button"
+          class="omr-add-panel-toggle"
+          id="omr-add-panel-toggle"
+          aria-expanded="true"
+          aria-controls="omr-add-panel-body"
+        >
           <span class="omr-add-panel-summary-row">
             <span>Add or import members</span>
             <span class="omr-add-panel-hint" id="omr-add-panel-hint">Name, email, or a spreadsheet</span>
           </span>
-        </summary>
+        </button>
+        <div class="omr-add-panel-body" id="omr-add-panel-body">
         <div class="omr-actions-grid">
           <div class="ee-card omr-card">
             <h2>Add a member</h2>
@@ -129,7 +136,8 @@
             <button type="button" class="ee-btn ee-btn-outline" id="omr-import-btn">Import members</button>
           </div>
         </div>
-      </details>
+        </div>
+      </div>
 
       <div class="ee-card omr-card omr-members-card">
         <div class="omr-roster-head">
@@ -200,6 +208,6 @@
     <script src="../js/hubert-chat.js?v=20260612"></script>
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../"></script>
     <script src="../js/organiser-flow-tour.js?v=20260701" data-root="../"></script>
-    <script src="../js/organiser-member-roster.js?v=20260716a"></script>
+    <script src="../js/organiser-member-roster.js?v=20260716b"></script>
   </body>
 </html>
