@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Events directory — pitch embed</title>
+<link rel="stylesheet" href="/css/hub.css?v=20260716embed">
+<link rel="stylesheet" href="/css/events-page.css?v=20260716embed">
+<link rel="stylesheet" href="/css/events-filter-bar.css?v=20260716embed">
+<style>
+  html, body { margin: 0; background: #f4f8fa; overflow: hidden; }
+  .embed-root { transform-origin: top left; width: 1280px; transform: scale(0.72); }
+  @media (max-width: 900px) { .embed-root { transform: scale(0.55); } }
+  .events-hero { padding: 24px 32px 16px; }
+  .events-filter-bar { position: static; box-shadow: none; }
+  .events-list-preview { padding: 0 32px 24px; display: grid; gap: 12px; }
+  .ev-card-mini {
+    display: grid; grid-template-columns: 72px 1fr auto; gap: 14px; align-items: center;
+    padding: 14px; background: #fff; border: 1px solid rgba(13,110,122,.14); border-radius: 14px;
+  }
+  .ev-card-mini-thumb {
+    width: 72px; height: 72px; border-radius: 10px;
+    background: linear-gradient(135deg, #e8f6f8, #fff);
+    display: flex; align-items: center; justify-content: center; font-size: 1.6rem;
+  }
+  .ev-card-mini h3 { margin: 0 0 4px; font-size: 1rem; color: #1e3a4f; }
+  .ev-card-mini p { margin: 0; font-size: 0.82rem; color: #4a6272; }
+  .ev-card-mini .price { font-weight: 700; color: #0d6e7a; white-space: nowrap; }
+  .ev-card-mini.is-bmu { border-color: #0d6e7a; box-shadow: 0 8px 24px rgba(13,110,122,.12); }
+</style>
+</head>
+<body>
+<div class="embed-root">
+  <section class="events-hero">
+    <div class="events-hero-inner events-hero-layout">
+      <div class="events-hero-copy">
+        <p class="events-hero-badge">Event discovery</p>
+        <h1>Find your next <span class="accent">business event</span> across the UK</h1>
+        <div class="events-hero-browse-switch browse-mode-toggle browse-mode-toggle--hero" role="tablist">
+          <button type="button" class="browse-mode-btn is-active">Events</button>
+          <button type="button" class="browse-mode-btn">Organisers</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div class="events-filter-bar events-filter-bar--docked" style="position:static">
+    <div class="events-filter-inner">
+      <input type="search" class="events-search-input" value="Business Matching Leeds" readonly aria-label="Search">
+      <div class="events-filter-chips">
+        <span class="events-filter-chip is-active">Near Leeds · 25 mi</span>
+        <span class="events-filter-chip is-active">In person</span>
+        <span class="events-filter-chip">Hybrid</span>
+      </div>
+    </div>
+  </div>
+  <div class="events-list-preview">
+    <article class="ev-card-mini is-bmu">
+      <div class="ev-card-mini-thumb"><img src="/assets/marketing/bmu-logo.png" alt="" width="56" style="max-height:40px;object-fit:contain"></div>
+      <div>
+        <h3>Business Matching UK · Leeds hybrid meeting</h3>
+        <p>Leeds · Thu 24 Jul · Guest visit available · Max 100 members</p>
+      </div>
+      <span class="price">Register</span>
+    </article>
+    <article class="ev-card-mini">
+      <div class="ev-card-mini-thumb">🤝</div>
+      <div>
+        <h3>Friday breakfast networking</h3>
+        <p>Manchester · Tue 22 Jul · In person</p>
+      </div>
+      <span class="price">from £15</span>
+    </article>
+  </div>
+</div>
+</body>
+</html>

@@ -620,11 +620,17 @@ async function buildRosterReports(organiserId, { eventId, recentEventIds } = {})
       notBooked,
     };
 
+    const rosterEmails = new Set(
+      activeRoster.filter((m) => m.membershipActive).map((m) => m.email)
+    );
+
     const { buildRegistrationRelationshipMap, relationshipForRegistration } = require('./organiser-attendee-relationship');
     const relMap = buildRegistrationRelationshipMap(regs || []);
     let newCount = 0;
     let returningCount = 0;
     (regs || []).forEach((row) => {
+      const em = normalizeRosterEmail(row.attendees?.email);
+      if (!em || !rosterEmails.has(em)) return;
       const rel = relationshipForRegistration(row, relMap);
       if (rel.groupRelationship === 'new') newCount += 1;
       else if (rel.groupRelationship === 'returning') returningCount += 1;
@@ -633,7 +639,8 @@ async function buildRosterReports(organiserId, { eventId, recentEventIds } = {})
       eventId: targetEventId,
       newCount,
       returningCount,
-      totalRegistrations: (regs || []).length,
+      totalMemberBookings: newCount + returningCount,
+      memberListOnly: true,
     };
   }
 

@@ -1,15 +1,29 @@
 (function () {
-  if (window.__omrInitDone) return;
-  window.__omrInitDone = true;
-
   const params = new URLSearchParams(location.search);
-  const organiserId = String(params.get('id') || params.get('organiserId') || '').trim();
+  const isDashboardEmbed = Boolean(document.getElementById('org-page-memberships'));
+  const isStandalonePage = Boolean(document.querySelector('.omr-page')) && !isDashboardEmbed;
+  let organiserId = String(params.get('id') || params.get('organiserId') || '').trim();
   const PAGE_SIZE = 25;
   let members = [];
   let events = [];
   let lastReports = null;
   let page = 1;
+  let controlsBound = false;
   const filters = { search: '', status: 'all' };
+
+  function getOrganiserId() {
+    if (isDashboardEmbed) {
+      const sel = document.getElementById('filter-memberships-group');
+      return String(sel && sel.value ? sel.value : '').trim();
+    }
+    return organiserId;
+  }
+
+  function requireOrganiserId() {
+    const id = getOrganiserId();
+    if (!id) throw new Error('Choose an organiser page first.');
+    return id;
+  }
 
   function esc(s) {
     const d = document.createElement('div');
@@ -24,6 +38,8 @@
     el.hidden = !msg;
     el.classList.toggle('ee-alert-error', tone === 'error');
     el.classList.toggle('ee-alert-success', tone === 'success');
+    el.classList.toggle('org-alert-error', tone === 'error');
+    el.classList.toggle('org-alert-success', tone === 'success');
     if (msg) {
       try {
         el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -47,9 +63,10 @@
   }
 
   function rosterUrl(extra) {
+    const id = requireOrganiserId();
     return (
       '/api/organiser/roster?organiserId=' +
-      encodeURIComponent(organiserId) +
+      encodeURIComponent(id) +
       (extra || '')
     );
   }
@@ -262,7 +279,11 @@
   }
 
   function getActionMenuPortal() {
-    return document.getElementById('omr-action-menu-portal') || document.body;
+    return (
+      document.getElementById('org-action-menu-portal') ||
+      document.getElementById('omr-action-menu-portal') ||
+      document.body
+    );
   }
 
   function openActionMenu(menu, toggle) {
@@ -300,21 +321,31 @@
   }
 
   function syncAddPanel(totalActive) {
-    const lead = document.getElementById('omr-add-panel-lead');
-    if (!document.getElementById('omr-add-panel')) return;
-    if (lead) {
-      lead.textContent =
-        totalActive > 0
-          ? 'Add more people or import another spreadsheet.'
-          : 'Add someone individually or upload a spreadsheet to start your register.';
+    const details = document.getElementById('omr-add-details');
+    if (!document.getElementById('omr-add-panel') && !details) return;
+    if (details) {
+      if (totalActive === 0) details.open = true;
+      else if (!details.dataset.omrUserOpened) details.open = false;
     }
   }
 
   function jumpToAddSection(targetId) {
     const section = document.getElementById('omr-add-section');
-    const target = document.getElementById(targetId);
+    const addDetails = document.getElementById('omr-add-details');
+    const importDetails = document.getElementById('omr-import-card');
+    if (targetId === 'omr-import-card' && importDetails) {
+      importDetails.open = true;
+      importDetails.dataset.omrUserOpened = '1';
+    }
+    if ((targetId === 'omr-add-card' || targetId === 'omr-add-details') && addDetails) {
+      addDetails.open = true;
+      addDetails.dataset.omrUserOpened = '1';
+    }
+    const target =
+      document.getElementById(targetId) ||
+      (targetId === 'omr-add-card' ? addDetails : null);
     if (section) {
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     if (target) {
       window.setTimeout(function () {
@@ -347,7 +378,7 @@
       const now = Date.now();
       events = (data.events || [])
         .filter(function (ev) {
-          return String(ev.organiserGroupId || ev.organiserId || '') === organiserId;
+          return String(ev.organiserGroupId || ev.organiserId || '') === getOrganiserId();
         })
         .filter(function (ev) {
           const status = String(ev.status || ev.listingStatus || '').toLowerCase();
@@ -377,6 +408,26 @@
         opt.textContent = isPast ? label + ' (past)' : label;
         sel.appendChild(opt);
       });
+
+      if (!sel.value && events.length) {
+        const firstUpcoming = events.find(function (ev) {
+          const start = ev.startsAt || ev.starts_at || ev.date || '';
+          return start && new Date(start).getTime() >= now;
+        });
+        sel.value = (firstUpcoming || events[0]).id;
+      }
+
+      const reportBtn = document.getElementById('omr-download-report');
+      const remindBtn = document.getElementById('omr-remind-not-booked');
+      if (reportBtn) {
+        reportBtn.disabled = !sel.value;
+        reportBtn.title = sel.value ? '' : 'Choose an event first';
+      }
+      if (remindBtn) {
+        remindBtn.disabled = !sel.value;
+        remindBtn.title = sel.value ? '' : 'Choose an event first';
+      }
+
       if (sel.dataset.omrBound !== '1') {
         sel.dataset.omrBound = '1';
         sel.addEventListener('change', function () {
@@ -424,7 +475,8 @@
     const expiry = reports.membershipExpiry || {};
 
     let html =
-      '<div class="omr-report-card"><h3>Membership health</h3>' +
+      '<p class="omr-reports-intro">Based on people you have added to this member list — not all event attendees. Download CSV or email reminders below; members are also notified by email when you publish events.</p>' +
+      '<div class="omr-report-card"><h3>Your member list</h3>' +
       '<p class="omr-report-stat">' +
       esc(h.totalActive || 0) +
       ' active</p>' +
@@ -438,7 +490,7 @@
 
     if (booked) {
       html +=
-        '<div class="omr-report-card"><h3>Booked for selected event</h3>' +
+        '<div class="omr-report-card"><h3>Your members — booked for selected event</h3>' +
         '<p class="omr-report-stat">' +
         esc(booked.bookedCount) +
         ' booked · ' +
@@ -459,16 +511,17 @@
 
     if (attendance) {
       html +=
-        '<div class="omr-report-card"><h3>New vs returning (event)</h3>' +
+        '<div class="omr-report-card"><h3>Your members at this event</h3>' +
         '<p>' +
         esc(attendance.newCount) +
-        ' new · ' +
+        ' new to your group · ' +
         esc(attendance.returningCount) +
-        ' returning</p></div>';
+        ' returning</p>' +
+        '<p class="omr-report-note">Only people on your uploaded member list who booked this event.</p></div>';
     }
 
     if (missed && missed.members && missed.members.length) {
-      html += '<div class="omr-report-card"><h3>Missed recent meetings</h3><ul>';
+      html += '<div class="omr-report-card"><h3>Your members — missed recent meetings</h3><ul>';
       missed.members.slice(0, 6).forEach(function (m) {
         html +=
           '<li>' +
@@ -483,7 +536,7 @@
     }
 
     if (expiry.within14Days && expiry.within14Days.length) {
-      html += '<div class="omr-report-card"><h3>Expiring within 14 days</h3><ul>';
+      html += '<div class="omr-report-card"><h3>Your members — expiring within 14 days</h3><ul>';
       expiry.within14Days.forEach(function (m) {
         html +=
           '<li>' +
@@ -644,9 +697,9 @@
 
     if (r.eventAttendance) {
       const a = r.eventAttendance;
-      lines.push(csvCell('New vs returning at this event'));
-      lines.push(['New to your group', 'Returning', 'Total registrations'].map(csvCell).join(','));
-      lines.push([a.newCount, a.returningCount, a.totalRegistrations].map(csvCell).join(','));
+      lines.push(csvCell('Your members at this event (member list only)'));
+      lines.push(['New to your group', 'Returning', 'Member bookings'].map(csvCell).join(','));
+      lines.push([a.newCount, a.returningCount, a.totalMemberBookings || a.newCount + a.returningCount].map(csvCell).join(','));
       lines.push('');
     }
 
@@ -855,7 +908,7 @@
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                organiserId: organiserId,
+                organiserId: getOrganiserId(),
                 id: resendBtn.dataset.id,
                 email: resendBtn.dataset.email,
                 resendInvite: true,
@@ -915,7 +968,7 @@
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            organiserId: organiserId,
+            organiserId: getOrganiserId(),
             id: memberId,
             email: email,
             name: value,
@@ -950,7 +1003,7 @@
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            organiserId: organiserId,
+            organiserId: getOrganiserId(),
             id: memberId,
             email: email,
             expiresAt: value,
@@ -993,7 +1046,7 @@
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            organiserId: organiserId,
+            organiserId: getOrganiserId(),
             id: m.id,
             email: m.email,
             resendInvite: true,
@@ -1030,22 +1083,27 @@
     }
   }
 
-  async function init() {
-    if (!organiserId) {
-      location.href = '/organiser/#memberships';
-      return;
-    }
+  function bindControlsOnce() {
+    if (controlsBound) return;
+    controlsBound = true;
 
     removeDuplicateAddPanels();
     bindMemberActionHandlers();
 
     document.getElementById('omr-jump-add')?.addEventListener('click', function () {
-      jumpToAddSection('omr-add-card');
+      jumpToAddSection('omr-add-details');
     });
     document.getElementById('omr-jump-import')?.addEventListener('click', function () {
       const details = document.getElementById('omr-import-card');
       if (details && details.tagName === 'DETAILS') details.open = true;
       jumpToAddSection('omr-import-card');
+    });
+
+    document.getElementById('omr-add-details')?.addEventListener('toggle', function (e) {
+      if (e.target.open) e.target.dataset.omrUserOpened = '1';
+    });
+    document.getElementById('omr-import-card')?.addEventListener('toggle', function (e) {
+      if (e.target.open) e.target.dataset.omrUserOpened = '1';
     });
 
     const back = document.getElementById('omr-back');
@@ -1119,7 +1177,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            organiserId: organiserId,
+            organiserId: getOrganiserId(),
             action: 'remind-not-booked',
             eventId: eventId,
           }),
@@ -1152,7 +1210,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            organiserId: organiserId,
+            organiserId: getOrganiserId(),
             name: document.getElementById('omr-name')?.value.trim(),
             email: document.getElementById('omr-email')?.value.trim(),
             expiresAt: document.getElementById('omr-expires')?.value || null,
@@ -1268,7 +1326,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            organiserId: organiserId,
+            organiserId: getOrganiserId(),
             csv: csv,
             sendInvites: document.getElementById('omr-csv-send-invites')?.checked === true,
           }),
@@ -1296,9 +1354,28 @@
         showAlert(err.message, 'error');
       }
     });
+  }
+
+  async function loadForGroup(groupId) {
+    organiserId = String(groupId || '').trim();
+    if (!getOrganiserId()) {
+      members = [];
+      events = [];
+      lastReports = null;
+      page = 1;
+      renderRoster();
+      const mount = document.getElementById('omr-reports');
+      const wrap = document.getElementById('omr-reports-wrap');
+      if (mount) mount.innerHTML = '';
+      if (wrap) wrap.hidden = true;
+      return;
+    }
+
+    bindControlsOnce();
+    page = 1;
 
     try {
-      const group = await api('/api/organiser/groups?id=' + encodeURIComponent(organiserId));
+      const group = await api('/api/organiser/groups?id=' + encodeURIComponent(getOrganiserId()));
       const title = document.getElementById('omr-title');
       if (title && group.group?.name) {
         title.textContent = 'Membership — ' + group.group.name;
@@ -1311,7 +1388,21 @@
     await refresh();
   }
 
-  init().catch(function (e) {
-    showAlert(e.message || 'Could not load membership', 'error');
-  });
+  async function initStandalone() {
+    if (!organiserId) {
+      location.replace('/organiser/#memberships');
+      return;
+    }
+    await loadForGroup(organiserId);
+  }
+
+  window.OrganiserMemberRoster = {
+    loadForGroup: loadForGroup,
+  };
+
+  if (isStandalonePage) {
+    initStandalone().catch(function (e) {
+      showAlert(e.message || 'Could not load membership', 'error');
+    });
+  }
 })();

@@ -1353,7 +1353,7 @@ window.HUB_SEO_DATA = {
               "@type": "HowToStep",
               "position": 2,
               "name": "Start a new listing",
-              "text": "From the dashboard choose Add new → Event. Pick your organiser page, set format, venue, and dates. For multi-day conferences, select multiple dates on the calendar.",
+              "text": "From the dashboard choose Add new → Event. Pick your organiser page, set format, venue, and dates. For a recurring series or multi-day conference with the same schedule each day, select every date on the calendar.",
               "url": "http://localhost:3000/guides/list-a-conference-or-exhibition#new-listing"
             },
             {
@@ -1367,7 +1367,7 @@ window.HUB_SEO_DATA = {
               "@type": "HowToStep",
               "position": 4,
               "name": "Set up tickets (free or paid)",
-              "text": "Add delegate ticket tiers (early bird, standard, VIP, exhibitor, visitor, or free registration). Paid tickets require Connect Stripe under Revenue.",
+              "text": "Add delegate ticket tiers (early bird, standard, VIP, or free registration). For one admission price covering every day, tick Full series pass on that tier. For the same per-session price on each day, leave it unchecked — attendees can book all remaining dates in one checkout. Paid tickets require Connect Stripe under Revenue.",
               "url": "http://localhost:3000/guides/list-a-conference-or-exhibition#tickets"
             },
             {

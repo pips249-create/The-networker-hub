@@ -25,7 +25,8 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716mem2" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716mem5" />
+    <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260716mem9" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
   <body class="organiser-dashboard-page hub-is-page-loading">
@@ -237,7 +238,7 @@
               </span>
               <span class="org-hub-portal-body">
                 <strong>Memberships</strong>
-                <span class="org-hub-portal-meta">Upload members for members-only tickets</span>
+                <span class="org-hub-portal-meta">Member register, members-only tickets &amp; reports</span>
               </span>
               <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
             </button>
@@ -266,7 +267,7 @@
               </li>
               <li data-getting-step="membership">
                 <strong>Set up membership</strong>
-                <span>Upload members for members-only tickets.</span>
+                <span>Upload members, sell members-only tickets, and track renewals.</span>
                 <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-getting-action="memberships">Open membership</button>
               </li>
               <li data-getting-step="event">
@@ -572,64 +573,199 @@
         </section>
 
         <!-- Memberships -->
-        <section class="org-page" id="org-page-memberships" data-org-page="memberships">
+        <section class="org-page org-page--memberships" id="org-page-memberships" data-org-page="memberships">
           <header class="org-page-head">
             <p class="org-page-kicker">My events</p>
             <h1 class="org-page-title">Memberships</h1>
             <p class="org-page-lead org-member-list-intro">
-              If you run a networking group, chapter, or membership community, your <strong>membership</strong> is your private
-              roll of who belongs. You add their name and email here — then, when you create a
-              <strong>Members only</strong> ticket on an event, those people see it automatically after they sign in.
-              Everyone else never sees that rate.
+              Your private member register for each organiser page — upload members, then add a
+              <strong>Members only</strong> ticket on your events. Members see the rate when signed in with their membership email; everyone else never sees it.
             </p>
           </header>
 
-          <div class="org-member-list-how" aria-label="How memberships work">
-            <h2 class="org-member-list-how-title">How it works</h2>
-            <div class="org-member-list-how-panel">
-              <ol class="org-member-list-steps">
-                <li class="org-member-list-step-card">
-                  <div class="org-member-list-step-head">
-                    <span class="org-member-list-step-num" aria-hidden="true">1</span>
-                    <strong>Upload your members</strong>
-                  </div>
-                  <p class="org-member-list-step-desc">Add people one by one, or import a CSV from Excel or Google Sheets.</p>
-                </li>
-                <li class="org-member-list-step-card">
-                  <div class="org-member-list-step-head">
-                    <span class="org-member-list-step-num" aria-hidden="true">2</span>
-                    <strong>Add a Members only ticket</strong>
-                  </div>
-                  <p class="org-member-list-step-desc">On your event’s tickets step — hidden from the public event page.</p>
-                </li>
-                <li class="org-member-list-step-card">
-                  <div class="org-member-list-step-head">
-                    <span class="org-member-list-step-num" aria-hidden="true">3</span>
-                    <strong>They sign in and book</strong>
-                  </div>
-                  <p class="org-member-list-step-desc">Members sign in with their membership email to see the member rate.</p>
-                </li>
-              </ol>
-              <p class="org-member-list-how-footnote">
-                Optional expiry dates flag renewals in your reports. Invite emails can be sent when you add or import members.
-              </p>
-            </div>
+          <div class="org-toolbar org-toolbar--section">
+            <p class="org-section-sub org-sub-lead org-sub-lead--flush">
+              Reports cover only people on <strong>your uploaded member list</strong> — not every event attendee (use Attendees for that).
+              Members are emailed when you publish events and when you send booking reminders, so they do not need to keep checking the Hub.
+              Export CSV anytime for your own records.
+            </p>
           </div>
 
-          <div id="member-lists-chooser-wrap" class="org-member-list-chooser-section">
-            <h2 class="org-member-list-chooser-heading" id="member-lists-chooser-heading">Choose an organiser page</h2>
-            <div class="org-member-list-chooser" id="member-lists-choices"></div>
-            <p class="org-member-list-loading" id="member-lists-loading" hidden>Loading organiser pages…</p>
+          <div class="org-attendee-data-notice org-notice org-notice--info" role="note">
+            <p class="org-notice-title">Using member contact details</p>
+            <p class="org-notice-text">
+              Use this list for membership and event booking only.
+              Please do not add members to marketing lists or contact them about unrelated services without their consent.
+            </p>
           </div>
+
+          <div id="omr-alert" class="org-alert" hidden role="status"></div>
+
+          <p class="org-load-hint" id="member-lists-loading" hidden>Loading organiser pages…</p>
+
           <div class="org-empty-state" id="member-lists-empty" hidden role="status">
             <div class="org-empty-state-icon" aria-hidden="true">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
             </div>
             <h3 class="org-empty-state-title">No organiser pages yet</h3>
-            <p class="org-empty-state-text">Create an organiser page first, then open <strong>Membership</strong> from that row.</p>
+            <p class="org-empty-state-text">Create an organiser page first, then upload members here for members-only tickets.</p>
             <div class="org-empty-state-actions">
               <a href="/organiser/group-edit" class="org-btn org-btn-gold org-btn-sm">+ Add organiser page</a>
             </div>
+          </div>
+
+          <div id="memberships-workspace" class="org-memberships-workspace" hidden>
+            <div class="org-filter-bar org-filter-bar--memberships-group">
+              <label class="org-filter-label" for="filter-memberships-group">Organiser page</label>
+              <select id="filter-memberships-group" aria-label="Organiser page for membership register"></select>
+              <p class="org-memberships-group-meta" id="memberships-group-meta" hidden></p>
+            </div>
+
+            <section class="omr-register" aria-label="Member register">
+              <div class="omr-roster-head">
+                <div>
+                  <h2 class="omr-section-title">Member register</h2>
+                  <p class="omr-count" id="omr-count" hidden></p>
+                </div>
+                <div class="omr-roster-quick-actions">
+                  <button type="button" class="org-btn org-btn-gold omr-quick-add" id="omr-jump-add">+ Add a member</button>
+                  <button type="button" class="org-btn org-btn-outline omr-quick-import" id="omr-jump-import">↑ Import spreadsheet</button>
+                </div>
+              </div>
+
+              <div class="org-filter-bar omr-filter-bar">
+                <input
+                  type="search"
+                  class="org-table-search omr-table-search"
+                  id="omr-search"
+                  placeholder="Search name or email…"
+                  aria-label="Search members"
+                />
+                <select id="omr-status-filter" aria-label="Filter members by status">
+                  <option value="all">All members</option>
+                  <option value="claimed">Signed up to the Hub</option>
+                  <option value="unclaimed">Not signed up yet</option>
+                  <option value="expiring">Expiring soon</option>
+                  <option value="has_bookings">Has event bookings</option>
+                  <option value="no_bookings">No event bookings yet</option>
+                  <option value="booked">Booked for selected event</option>
+                  <option value="not_booked">Not booked for selected event</option>
+                </select>
+                <select id="omr-event-select" aria-label="Filter or report by event">
+                  <option value="">All events — show bookings</option>
+                </select>
+                <button type="button" class="org-btn org-btn-outline omr-bar-btn" id="omr-bulk-resend" hidden>
+                  Resend invites to not signed up
+                </button>
+                <button type="button" class="org-btn org-btn-outline omr-bar-btn" id="omr-remind-not-booked" disabled title="Choose an event first">
+                  Email not booked
+                </button>
+                <button type="button" class="org-btn org-btn-gold omr-bar-btn" id="omr-download-members">
+                  ⬇ Download members CSV
+                </button>
+                <button type="button" class="org-btn org-btn-outline omr-bar-btn" id="omr-download-report" disabled title="Choose an event first">
+                  ⬇ Download event report CSV
+                </button>
+              </div>
+
+              <div class="omr-add-section omr-add-section--compact" id="omr-add-section" aria-label="Add or import members">
+                <details class="omr-add-details" id="omr-add-details">
+                  <summary class="omr-add-summary">Add a member</summary>
+                  <div class="omr-add-panel" id="omr-add-panel">
+                    <p class="omr-add-panel-lead" id="omr-add-panel-lead" hidden></p>
+                    <form id="omr-add-form" class="omr-add-form omr-add-form--compact">
+                      <div class="omr-add-fields">
+                        <div class="ee-field">
+                          <label for="omr-name">Name</label>
+                          <input type="text" id="omr-name" placeholder="Jane Smith" autocomplete="name" />
+                        </div>
+                        <div class="ee-field">
+                          <label for="omr-email">Email</label>
+                          <input type="email" id="omr-email" required placeholder="member@example.com" autocomplete="email" />
+                        </div>
+                        <div class="ee-field">
+                          <label for="omr-expires">Expires <span class="ee-optional">(optional)</span></label>
+                          <input type="date" id="omr-expires" />
+                        </div>
+                      </div>
+                      <div class="omr-add-actions">
+                        <label class="omr-check omr-check--compact">
+                          <input type="checkbox" id="omr-send-invite" checked />
+                          Email invite
+                        </label>
+                        <button type="submit" class="org-btn org-btn-gold org-btn-sm">Add to list</button>
+                      </div>
+                    </form>
+                  </div>
+                </details>
+
+                <details class="omr-import-details" id="omr-import-card">
+                  <summary class="omr-import-summary">Import from spreadsheet (CSV)</summary>
+                  <div class="omr-import-body">
+                    <p class="omr-import-hint">
+                      Excel or Google Sheets → export as CSV. Columns:
+                      <code>email</code> (required), <code>name</code>, <code>expires</code>.
+                      <button type="button" class="omr-inline-link" id="omr-download-template">Download template</button>
+                    </p>
+                    <div class="omr-import-row">
+                      <div
+                        class="omr-dropzone omr-dropzone--compact"
+                        id="omr-dropzone"
+                        tabindex="0"
+                        role="button"
+                        aria-label="Upload member list CSV"
+                      >
+                        <input type="file" id="omr-file" accept=".csv,.tsv,text/csv,text/tab-separated-values" hidden />
+                        <div class="omr-dropzone-inner" id="omr-dropzone-inner">
+                          <strong>Choose CSV file</strong>
+                        </div>
+                      </div>
+                      <button type="button" class="org-btn org-btn-outline omr-btn-sm" id="omr-import-btn">Import</button>
+                    </div>
+                    <p class="omr-file-name" id="omr-file-name" hidden></p>
+                    <details class="omr-paste-details">
+                      <summary>Or paste CSV text</summary>
+                      <textarea id="omr-csv" rows="4" placeholder="email,name,expires&#10;jane@example.com,Jane Smith,2026-12-31"></textarea>
+                    </details>
+                    <label class="omr-check omr-check--compact">
+                      <input type="checkbox" id="omr-csv-send-invites" />
+                      Send invite emails after import
+                    </label>
+                  </div>
+                </details>
+              </div>
+
+              <div class="omr-reports-wrap" id="omr-reports-wrap" hidden>
+                <h3 class="omr-reports-title">Member list reports</h3>
+                <div class="omr-reports" id="omr-reports"></div>
+              </div>
+
+              <p class="org-load-hint" id="omr-load-hint" hidden>Loading membership…</p>
+              <div class="org-table-wrap org-attendees-table-wrap omr-table-wrap">
+                <table class="org-attendees-table omr-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Expires</th>
+                      <th>Hub account</th>
+                      <th>Invite</th>
+                      <th>Event bookings</th>
+                      <th class="org-td-actions">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="omr-body"></tbody>
+                </table>
+                <div class="org-empty-state omr-empty" id="omr-empty" hidden role="status">
+                  <div class="org-empty-state-icon" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  </div>
+                  <h3 class="org-empty-state-title">No members yet</h3>
+                  <p class="org-empty-state-text">Add someone above or import a spreadsheet to start your membership register.</p>
+                </div>
+              </div>
+              <nav class="org-pagination omr-pagination" id="omr-pagination" aria-label="Members pages" hidden></nav>
+            </section>
           </div>
         </section>
 
@@ -1910,6 +2046,7 @@
     <script src="../js/hub-event-timezone.js?v=20260716"></script>
     <script src="../js/organiser-featured-duration.js?v=20260716feat"></script>
     <script src="../js/organiser-linkedin-post-builder.js?v=20260714logo"></script>
-    <script src="../js/organiser-dashboard.js?v=20260716mem3"></script>
+    <script src="../js/organiser-member-roster.js?v=20260716mem9"></script>
+    <script src="../js/organiser-dashboard.js?v=20260716mem6"></script>
   </body>
 </html>

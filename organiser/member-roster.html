@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="Cache-Control" content="no-cache" />
     <title>Membership – The Networker Hub</title>
+    <script>
+      (function () {
+        var params = new URLSearchParams(location.search);
+        var id = params.get('id') || params.get('organiserId') || '';
+        var target = '/organiser/#memberships';
+        if (id) target += '?membershipGroup=' + encodeURIComponent(id);
+        location.replace(target);
+      })();
+    </script>
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />

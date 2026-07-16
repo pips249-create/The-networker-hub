@@ -3000,6 +3000,55 @@
   padding-bottom: 96px;
 }
 
+.org-page--memberships .org-memberships-workspace {
+  margin-top: 4px;
+}
+
+.org-filter-bar--memberships-group {
+  margin-bottom: 18px;
+  align-items: center;
+}
+
+.org-filter-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--od-text-mid);
+}
+
+.org-memberships-group-meta {
+  margin: 0;
+  flex: 1 1 100%;
+  font-size: 13px;
+  color: var(--od-text-soft);
+}
+
+@media (min-width: 768px) {
+  .org-memberships-group-meta {
+    flex: 1 1 auto;
+    text-align: right;
+  }
+}
+
+.org-page--memberships .omr-register {
+  margin-top: 0;
+}
+
+.org-page--memberships .omr-pagination {
+  margin-top: 16px;
+}
+
+#omr-alert.org-alert-error {
+  background: rgba(185, 28, 28, 0.08);
+  border-color: rgba(185, 28, 28, 0.2);
+  color: #9f1239;
+}
+
+#omr-alert.org-alert-success {
+  background: rgba(13, 110, 122, 0.08);
+  border-color: rgba(13, 110, 122, 0.18);
+  color: var(--od-purple-dark);
+}
+
 .org-member-list-how {
   margin: 0 0 28px;
 }
@@ -3092,6 +3141,60 @@
   font-size: 12px;
   line-height: 1.45;
   color: var(--od-text-soft);
+}
+
+.org-member-list-features {
+  margin: 0 0 28px;
+}
+
+.org-member-list-features-title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--od-text-soft);
+}
+
+.org-member-list-features-grid {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .org-member-list-features-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .org-member-list-features-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.org-member-list-feature {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--od-white);
+  border: 1px solid var(--od-border-soft);
+  box-shadow: 0 1px 2px rgba(26, 46, 59, 0.04);
+}
+
+.org-member-list-feature strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--od-purple-dark);
+  line-height: 1.25;
+}
+
+.org-member-list-feature p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--od-text-mid);
 }
 
 .org-member-list-chooser-section {

@@ -66,7 +66,14 @@ const GATE_BYPASS_PREFIXES = [
 ];
 
 /** Unlisted internal sales decks — not linked from nav; noindex in page HTML. */
-const INTERNAL_SALES_PREFIXES = ['/p/tnh-ev-hub-k7m2'];
+const INTERNAL_SALES_PREFIXES = [
+  '/p-tnh-ev-hub-k7m2',
+  '/p/tnh-ev-hub-k7m2',
+  '/p-tnh-org-onboard-x4n7',
+  '/p/tnh-org-onboard-x4n7',
+  '/p-tnh-bmu-onboard-k7m2',
+  '/p/tnh-bmu-onboard-k7m2',
+];
 
 /** Organiser early-access paths — reachable while the public site gate is on. */
 const ORGANISER_EARLY_ACCESS_PREFIXES = [
@@ -398,6 +405,9 @@ async function verifySignedToken(token, secret) {
 }
 
 function isInternalSalesPath(pathname) {
+  if (/^\/p-tnh-[a-z0-9-]+$/i.test(pathname)) return true;
+  if (/^\/p\/tnh-[a-z0-9-]+$/i.test(pathname)) return true;
+  if (pathname.startsWith('/marketing/internal/')) return true;
   return INTERNAL_SALES_PREFIXES.some(function (prefix) {
     return pathname === prefix || pathname.startsWith(prefix + '/');
   });

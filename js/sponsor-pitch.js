@@ -1,10 +1,12 @@
 (function () {
+  var DEMO_HUB_LOGO = '/assets/advertising-example-hub-logo.png';
+
   var DEMO_SPONSOR = {
     active: true,
     logo_url: '/assets/advertising-example-everlasting-build.png',
-    company_name: 'Your brand',
-    title: 'Your tagline goes here',
-    cta_label: 'Visit website →',
+    company_name: 'Everlasting Build',
+    title: 'Renovations & construction you can trust',
+    cta_label: 'Find out more →',
     cta_url: 'https://example.com',
   };
 
@@ -14,71 +16,81 @@
     return d.innerHTML;
   }
 
+  function previewBlock(raw) {
+    if (!raw || raw.active === false) return DEMO_SPONSOR;
+    var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(raw) : String(raw.logo_url || '').trim();
+    if (!logo) return DEMO_SPONSOR;
+    return raw;
+  }
+
   function logoFromBlock(block) {
-    if (!block || !window.CmsSponsorFields) return '';
-    return window.CmsSponsorFields.logoUrl(block);
+    if (!block || !window.CmsSponsorFields) return DEMO_SPONSOR.logo_url;
+    return window.CmsSponsorFields.logoUrl(block) || DEMO_SPONSOR.logo_url;
   }
 
   function companyFromBlock(block) {
-    if (!block || !window.CmsSponsorFields) return '';
-    return window.CmsSponsorFields.companyName(block);
+    if (!block || !window.CmsSponsorFields) return DEMO_SPONSOR.company_name;
+    return window.CmsSponsorFields.companyName(block) || DEMO_SPONSOR.company_name;
   }
 
   function ctaUrlFromBlock(block) {
-    if (!block) return '#';
+    if (!block) return DEMO_SPONSOR.cta_url;
     var url = String(block.cta_url || '').trim();
-    return /^(https?:|mailto:)/i.test(url) ? url : '#';
+    return /^(https?:|mailto:)/i.test(url) ? url : DEMO_SPONSOR.cta_url;
   }
 
   function renderHeroPreview(container, block) {
-    if (!container) return;
-    if (window.CmsAdBlocks && block && block.active !== false) {
-      container.innerHTML = '';
-      window.CmsAdBlocks.renderHeroSponsorAd(container, block);
-      return;
-    }
-    container.innerHTML =
-      '<div class="sponsor-pitch-demo-placeholder">' +
-      '<strong>' +
-      esc((block && block.company_name) || 'Your logo &amp; CTA here') +
-      '</strong>' +
-      '<span>Hero Sponsor Hub on /events/</span>' +
-      '</div>';
+    if (!container || !window.CmsAdBlocks) return;
+    window.CmsAdBlocks.renderHeroSponsorAd(container, previewBlock(block));
   }
 
-  function renderEmailPreview(container, block) {
-    if (!container) return;
-    var logo = logoFromBlock(block) || DEMO_SPONSOR.logo_url;
-    var company = companyFromBlock(block) || DEMO_SPONSOR.company_name;
-    var url = ctaUrlFromBlock(block);
-    var logoHtml =
+  function buildSponsorEmailRow(block) {
+    var safe = previewBlock(block);
+    var logo = logoFromBlock(safe);
+    var company = companyFromBlock(safe);
+    var url = ctaUrlFromBlock(safe);
+    var logoInner =
       '<img src="' +
       esc(logo) +
       '" alt="' +
       esc(company) +
-      '" class="sponsor-pitch-email-sponsor-logo">';
-    if (url !== '#') {
-      logoHtml =
-        '<a href="' +
-        esc(url) +
-        '" target="_blank" rel="noopener noreferrer">' +
-        logoHtml +
-        '</a>';
-    }
+      '" class="ad-full-email-sponsor-logo" loading="lazy" decoding="async">';
+    return (
+      '<div class="ad-full-email-sponsor ad-full-email-sponsor--highlight">' +
+      '<p class="pitch-email-kicker">Our event directory is proudly powered by</p>' +
+      '<a href="' +
+      esc(url) +
+      '" target="_blank" rel="noopener noreferrer">' +
+      logoInner +
+      '</a>' +
+      '</div>'
+    );
+  }
+
+  function renderFullBookingEmail(container, block) {
+    if (!container) return;
+    var sponsorRow = buildSponsorEmailRow(block);
     container.innerHTML =
-      '<div class="sponsor-pitch-email-mock">' +
-      '<div class="sponsor-pitch-email-header">' +
-      '<img src="/assets/advertising-example-hub-logo.png" alt="" class="hub-logo">' +
-      '<p style="font-size:0.75rem;color:#4a6272;margin:0 0 8px;">Our event directory is proudly powered by</p>' +
-      '<div class="sponsor-pitch-email-sponsor">' +
-      logoHtml +
+      '<div class="ad-full-email-card">' +
+      '<div class="ad-full-email-header">' +
+      '<img src="' +
+      DEMO_HUB_LOGO +
+      '" alt="" class="ad-full-email-hub-logo">' +
+      sponsorRow +
+      '<div class="ad-full-email-wave" aria-hidden="true"></div>' +
       '</div>' +
+      '<div class="ad-full-email-body">' +
+      '<div class="ad-full-email-check" aria-hidden="true"></div>' +
+      '<p class="pitch-email-title">You&rsquo;re booked in</p>' +
+      '<span class="ad-email-line"></span>' +
+      '<span class="ad-email-line ad-email-line--short"></span>' +
       '</div>' +
-      '<div class="sponsor-pitch-email-body">' +
-      '<span class="line w50"></span>' +
-      '<span class="line w70"></span>' +
-      '<span class="line"></span>' +
-      '<span class="line w50"></span>' +
+      '<div class="ad-full-email-event-wrap">' +
+      '<div class="ad-full-email-event">' +
+      '<span class="ad-email-line ad-email-line--on-dark ad-email-line--xs"></span>' +
+      '<span class="ad-email-line ad-email-line--on-dark ad-email-line--title"></span>' +
+      '<span class="ad-email-line ad-email-line--on-dark"></span>' +
+      '</div>' +
       '</div>' +
       '</div>';
   }
@@ -135,8 +147,7 @@
           t.setAttribute('aria-selected', active ? 'true' : 'false');
         });
         panels.forEach(function (panel) {
-          var show = panel.getAttribute('data-pitch-preview-panel') === key;
-          panel.hidden = !show;
+          panel.hidden = panel.getAttribute('data-pitch-preview-panel') !== key;
         });
       });
     });
@@ -149,30 +160,27 @@
 
     var scenarios = {
       launch: {
-        label: 'Launch (months 1–3)',
+        label: 'Launch · months 1–3 post Sep 2026',
         rows: [
-          ['Events directory page views', '2,000 – 5,000', 'First container every visitor sees'],
-          ['Attendee transactional emails', '800 – 2,500', 'Logo + backlink in header band'],
-          ['Estimated logo impressions', '3,000 – 7,500', 'Site + email combined'],
-          ['Exclusive competitors in slot', '0', 'One vetted brand per calendar month'],
+          ['Directory views', '2k – 5k / mo', 'Hero slot · every browse visit'],
+          ['Attendee emails', '800 – 2.5k / mo', 'Logo + link in header'],
+          ['Total impressions', '3k – 7.5k / mo', 'Site + email combined'],
         ],
       },
       growth: {
-        label: 'Growth (months 4–12)',
+        label: 'Growth · months 4–12',
         rows: [
-          ['Events directory page views', '8,000 – 18,000', 'Primary UK networking discovery page'],
-          ['Attendee transactional emails', '4,000 – 12,000', 'Every booking lifecycle touchpoint'],
-          ['Estimated logo impressions', '12,000 – 30,000', 'Compounds as organiser base grows'],
-          ['Exclusive competitors in slot', '0', 'Renewals prioritised for incumbents'],
+          ['Directory views', '8k – 18k / mo', 'Primary UK events browse page'],
+          ['Attendee emails', '4k – 12k / mo', 'Full booking lifecycle'],
+          ['Total impressions', '12k – 30k / mo', 'Compounds with organiser base'],
         ],
       },
       scale: {
-        label: 'Scale (year 2+)',
+        label: 'Scale · year 2+',
         rows: [
-          ['Events directory page views', '20,000 – 45,000', 'Regional browse + SEO landing pages'],
-          ['Attendee transactional emails', '12,000 – 35,000', 'Reminders, saved events, re-engagement'],
-          ['Estimated logo impressions', '32,000 – 80,000', 'Highest-attention inventory on Hub'],
-          ['Exclusive competitors in slot', '0', 'Category leadership positioning'],
+          ['Directory views', '20k – 45k / mo', 'Directory + regional SEO pages'],
+          ['Attendee emails', '12k – 35k / mo', 'Reminders, saved events, nudges'],
+          ['Total impressions', '32k – 80k / mo', 'Flagship Hub inventory'],
         ],
       },
     };
@@ -195,7 +203,7 @@
         })
         .join('');
       var caption = document.getElementById('pitch-scenario-caption');
-      if (caption) caption.textContent = data.label + ' — illustrative monthly ranges post public launch (Sep 2026).';
+      if (caption) caption.textContent = data.label + ' · planning estimates, not guaranteed.';
     }
 
     wrap.querySelectorAll('[data-pitch-scenario]').forEach(function (btn) {
@@ -215,19 +223,21 @@
     var emailSlot = document.getElementById('pitch-live-email');
     if (!heroSlot && !emailSlot) return;
 
+    renderHeroPreview(heroSlot, DEMO_SPONSOR);
+    renderFullBookingEmail(emailSlot, DEMO_SPONSOR);
+
     fetch('/api/cms-block?slot=events_sponsor_hub')
       .then(function (res) {
         return res.ok ? res.json() : null;
       })
       .then(function (data) {
-        var block =
-          data && data.block && data.block.active !== false ? data.block : DEMO_SPONSOR;
+        var block = data && data.block ? data.block : null;
+        if (!block) return;
         renderHeroPreview(heroSlot, block);
-        renderEmailPreview(emailSlot, block);
+        renderFullBookingEmail(emailSlot, block);
       })
       .catch(function () {
-        renderHeroPreview(heroSlot, DEMO_SPONSOR);
-        renderEmailPreview(emailSlot, DEMO_SPONSOR);
+        /* demo creative already shown */
       });
   }
 

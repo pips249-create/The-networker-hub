@@ -274,7 +274,8 @@
     const rosterLink = el('ge-roster-link');
     if (rosterWrap && rosterLink && g.id) {
       rosterWrap.hidden = false;
-      rosterLink.href = '/organiser/member-roster?id=' + encodeURIComponent(g.id);
+      rosterLink.href =
+        '/organiser/#memberships?membershipGroup=' + encodeURIComponent(g.id);
     } else if (rosterWrap) {
       rosterWrap.hidden = true;
     }

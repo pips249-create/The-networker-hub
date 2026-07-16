@@ -131,14 +131,30 @@
   color: #7a94a3;
 }
 
-.omr-wrap .omr-reports {
+.omr-reports-intro {
+  grid-column: 1 / -1;
+  margin: 0 0 4px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #635c5e;
+}
+
+.omr-report-note {
+  margin-top: 6px !important;
+  font-size: 12px !important;
+  color: #7a94a3 !important;
+}
+
+.omr-wrap .omr-reports,
+.org-page--memberships .omr-reports {
   display: grid;
   gap: 12px;
   margin-bottom: 0;
 }
 
 @media (min-width: 720px) {
-  .omr-wrap .omr-reports {
+  .omr-wrap .omr-reports,
+  .org-page--memberships .omr-reports {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -289,9 +305,117 @@
   color: #084a52;
 }
 
+.org-page--memberships .omr-register {
+  margin-top: 0;
+}
+
+.omr-add-section--compact {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 14px;
+}
+
+.omr-add-details,
+.omr-add-section--compact .omr-import-details {
+  border: 1px solid rgba(13, 110, 122, 0.14);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.omr-add-summary,
+.omr-add-section--compact .omr-import-summary {
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #084a52;
+  cursor: pointer;
+  list-style: none;
+}
+
+.omr-add-summary::-webkit-details-marker,
+.omr-add-section--compact .omr-import-summary::-webkit-details-marker {
+  display: none;
+}
+
+.omr-add-summary::before,
+.omr-add-section--compact .omr-import-summary::before {
+  content: '▸ ';
+  color: #0d6e7a;
+}
+
+.omr-add-details[open] .omr-add-summary::before,
+.omr-add-section--compact .omr-import-details[open] .omr-import-summary::before {
+  content: '▾ ';
+}
+
+.org-page--memberships .omr-add-panel {
+  margin: 0;
+  padding: 0 14px 14px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.omr-add-form--compact {
+  display: grid;
+  gap: 10px;
+}
+
+.omr-add-fields {
+  display: grid;
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .omr-add-fields {
+    grid-template-columns: 1.1fr 1.4fr 0.9fr;
+    align-items: end;
+  }
+}
+
+.omr-add-fields .ee-field {
+  margin: 0;
+}
+
+.omr-add-fields label {
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.omr-add-fields input {
+  min-height: 38px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.omr-add-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.omr-add-section--compact .omr-import-body {
+  padding: 0 14px 14px;
+}
+
+.omr-add-section--compact .omr-check--compact {
+  margin: 0;
+  font-size: 13px;
+}
+
 .omr-members-card,
 .omr-add-section {
   margin-top: 0;
+}
+
+.org-page--memberships .omr-add-section {
+  margin-bottom: 0;
+}
+
+.org-page--memberships .omr-add-section--compact {
+  margin: 12px 0 14px;
 }
 
 .omr-add-section {

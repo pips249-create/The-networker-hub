@@ -36,6 +36,7 @@
     attendeesRelationship: 'all',
     attendeesView: 'active',
     cancellationsEvent: 'all',
+    membershipsGroup: '',
   };
 
   const state = {
@@ -2431,9 +2432,9 @@
         '<a class="org-action-item" href="../events/organiser?id=' +
         esc(id) +
         '" target="_blank" rel="noopener noreferrer"><span class="org-action-icon">↗</span><span class="org-action-text"><strong>View public profile</strong><span>See your group page and ranking badge</span></span></a>' +
-        '<a class="org-action-item" href="/organiser/member-roster?id=' +
+        '<button type="button" class="org-action-item" data-org-goto-memberships="' +
         esc(id) +
-        '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>Membership</strong><span>Upload members for members-only tickets</span></span></a>' +
+        '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>Membership</strong><span>Upload members for members-only tickets</span></span></button>' +
         '<button type="button" class="org-action-item" data-add-event-for-group="' +
         esc(id) +
         '"><span class="org-action-icon">📅</span><span class="org-action-text"><strong>Add an event</strong><span>List a new event for this group</span></span></button>' +
@@ -2554,12 +2555,16 @@
     const params = new URLSearchParams(window.location.search);
     const panel = String(params.get('panel') || '').trim().toLowerCase();
     const eventId = String(params.get('eventId') || params.get('event_id') || '').trim();
+    const membershipGroup = String(
+      params.get('membershipGroup') || params.get('membership_group') || params.get('id') || ''
+    ).trim();
     const applications = String(params.get('applications') || '').trim().toLowerCase();
     const hash = (location.hash.replace('#', '') || '').toLowerCase();
     const route = panel || hash || '';
     return {
       route,
       eventId,
+      membershipGroup,
       pendingOnly: applications === 'pending' || applications === '1' || applications === 'true',
     };
   }
@@ -2589,11 +2594,14 @@
   }
 
   function applyAttendeesDeepLinkFromUrl() {
-    const { route, eventId, pendingOnly } = parseDeepLinkFromUrl();
+    const { route, eventId, membershipGroup, pendingOnly } = parseDeepLinkFromUrl();
     if (eventId) {
       filters.attendeesEvent = eventId;
       filters.ticketsEvent = eventId;
       filters.cancellationsEvent = eventId;
+    }
+    if (membershipGroup) {
+      filters.membershipsGroup = membershipGroup;
     }
     if (pendingOnly) {
       filters.attendeesPendingOnly = true;
@@ -5558,6 +5566,17 @@
       return true;
     }
 
+    const membershipsBtn = e.target.closest('[data-org-goto-memberships]');
+    if (membershipsBtn && !membershipsBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      const groupId = membershipsBtn.getAttribute('data-org-goto-memberships');
+      if (groupId) filters.membershipsGroup = groupId;
+      setRoute('memberships');
+      return true;
+    }
+
     return false;
   }
 
@@ -6337,21 +6356,12 @@
   }
 
   function memberRosterUrl(groupId) {
-    return '/organiser/member-roster?id=' + encodeURIComponent(groupId);
+    const id = encodeURIComponent(groupId);
+    return '/organiser/#memberships?membershipGroup=' + id;
   }
 
   function maybeRedirectToSingleMemberList() {
     return false;
-  }
-
-  function updateMembershipChooserHeading(groupCount) {
-    const heading = document.getElementById('member-lists-chooser-heading');
-    if (!heading) return;
-    if (groupCount <= 1) {
-      heading.textContent = 'Your membership';
-    } else {
-      heading.textContent = 'Choose an organiser page';
-    }
   }
 
   function membershipSummaryLine(g) {
@@ -6369,18 +6379,69 @@
     return parts.join(' · ');
   }
 
+  function fillMembershipsGroupFilter() {
+    const sel = document.getElementById('filter-memberships-group');
+    if (!sel) return;
+    const groups = memberListGroups();
+    const prev = filters.membershipsGroup || sel.value || '';
+    sel.innerHTML = '';
+    groups.forEach(function (g) {
+      const opt = document.createElement('option');
+      opt.value = g.id;
+      opt.textContent = g.name || 'Organiser page';
+      sel.appendChild(opt);
+    });
+    if (!groups.length) {
+      filters.membershipsGroup = '';
+      return;
+    }
+    const match = groups.find(function (g) {
+      return g.id === prev;
+    });
+    filters.membershipsGroup = (match || groups[0]).id;
+    sel.value = filters.membershipsGroup;
+    sel.hidden = groups.length <= 1;
+    const label = sel.closest('.org-filter-bar--memberships-group')?.querySelector('.org-filter-label');
+    if (label) label.hidden = groups.length <= 1;
+  }
+
+  function updateMembershipGroupMeta(groupId) {
+    const meta = document.getElementById('memberships-group-meta');
+    if (!meta) return;
+    const g = findGroupById(groupId);
+    if (!g) {
+      meta.hidden = true;
+      meta.textContent = '';
+      return;
+    }
+    meta.hidden = false;
+    meta.textContent = membershipSummaryLine(g);
+  }
+
+  function syncMembershipGroupUrl() {
+    const url = new URL(window.location.href);
+    if (filters.membershipsGroup) {
+      url.searchParams.set('membershipGroup', filters.membershipsGroup);
+    } else {
+      url.searchParams.delete('membershipGroup');
+      url.searchParams.delete('membership_group');
+    }
+    const next = url.pathname + url.search + url.hash;
+    if (window.location.pathname + window.location.search + window.location.hash !== next) {
+      history.replaceState(null, '', next);
+    }
+  }
+
   function renderMembershipsPage() {
-    const mount = document.getElementById('member-lists-choices');
+    const workspace = document.getElementById('memberships-workspace');
     const empty = document.getElementById('member-lists-empty');
     const loading = document.getElementById('member-lists-loading');
-    const chooserWrap = document.getElementById('member-lists-chooser-wrap');
-    if (!mount) return;
+    if (!workspace) return;
 
     if (!bootstrapReady) {
       if (loading) loading.hidden = false;
       if (empty) empty.hidden = true;
-      if (chooserWrap) chooserWrap.hidden = false;
-      mount.replaceChildren();
+      workspace.hidden = true;
       return;
     }
 
@@ -6388,45 +6449,39 @@
 
     const groups = memberListGroups();
     if (!groups.length) {
-      mount.replaceChildren();
-      updateMembershipChooserHeading(0);
       if (empty) empty.hidden = false;
-      if (chooserWrap) chooserWrap.hidden = true;
+      workspace.hidden = true;
+      filters.membershipsGroup = '';
       return;
     }
 
     if (empty) empty.hidden = true;
-    if (chooserWrap) chooserWrap.hidden = false;
-    updateMembershipChooserHeading(groups.length);
-    mount.replaceChildren();
-    groups.forEach(function (g) {
-      const link = document.createElement('a');
-      link.className = 'org-member-list-chooser-item';
-      if (groups.length === 1) link.classList.add('org-member-list-chooser-item--solo');
-      link.href = memberRosterUrl(g.id);
+    workspace.hidden = false;
 
-      const textWrap = document.createElement('span');
-      textWrap.className = 'org-member-list-chooser-text';
+    fillMembershipsGroupFilter();
+    updateMembershipGroupMeta(filters.membershipsGroup);
+    syncMembershipGroupUrl();
 
-      const name = document.createElement('strong');
-      name.className = 'org-member-list-chooser-name';
-      name.textContent = g.name || 'Organiser page';
+    const sel = document.getElementById('filter-memberships-group');
+    if (sel && sel.dataset.membershipsBound !== '1') {
+      sel.dataset.membershipsBound = '1';
+      sel.addEventListener('change', function () {
+        filters.membershipsGroup = sel.value || '';
+        updateMembershipGroupMeta(filters.membershipsGroup);
+        syncMembershipGroupUrl();
+        if (window.OrganiserMemberRoster && typeof window.OrganiserMemberRoster.loadForGroup === 'function') {
+          window.OrganiserMemberRoster.loadForGroup(filters.membershipsGroup).catch(function (err) {
+            showOrganiserAlert(err.message || 'Could not load membership', true);
+          });
+        }
+      });
+    }
 
-      const meta = document.createElement('span');
-      meta.className = 'org-member-list-chooser-meta';
-      meta.textContent = membershipSummaryLine(g);
-
-      textWrap.appendChild(name);
-      textWrap.appendChild(meta);
-
-      const cta = document.createElement('span');
-      cta.className = 'org-member-list-chooser-cta';
-      cta.textContent = 'Open member register →';
-
-      link.appendChild(textWrap);
-      link.appendChild(cta);
-      mount.appendChild(link);
-    });
+    if (window.OrganiserMemberRoster && typeof window.OrganiserMemberRoster.loadForGroup === 'function') {
+      window.OrganiserMemberRoster.loadForGroup(filters.membershipsGroup).catch(function (err) {
+        showOrganiserAlert(err.message || 'Could not load membership', true);
+      });
+    }
   }
 
   async function navigateToMemberships() {
@@ -6596,6 +6651,12 @@
       url.searchParams.set('applications', 'pending');
     } else {
       url.searchParams.delete('applications');
+    }
+    if (page === 'memberships' && filters.membershipsGroup) {
+      url.searchParams.set('membershipGroup', filters.membershipsGroup);
+    } else if (page !== 'memberships') {
+      url.searchParams.delete('membershipGroup');
+      url.searchParams.delete('membership_group');
     }
     url.hash = hash ? '#' + hash : '';
     const nextUrl = url.pathname + url.search + url.hash;
@@ -6844,9 +6905,9 @@
         '</td><td>' +
         statusBadgeHtml(g.statusKey || 'draft', g.statusLabel || 'Draft') +
         '</td><td class="org-td-actions">' +
-        '<a href="/organiser/member-roster?id=' +
+        '<button type="button" class="org-btn org-btn-sm org-btn-outline org-member-list-link" data-org-goto-memberships="' +
         esc(g.id) +
-        '" class="org-btn org-btn-sm org-btn-outline org-member-list-link">Membership</a> ' +
+        '">Membership</button> ' +
         actionMenuHtml('group', g.id, g.name, g) +
         '</td>';
       body.appendChild(tr);

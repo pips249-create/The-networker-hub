@@ -173,6 +173,233 @@
   line-height: 1.6;
 }
 
+.pitch-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.pitch-section-head h2 {
+  margin: 0;
+}
+
+.pitch-live-link {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--pitch-teal);
+  text-decoration: none;
+}
+
+.pitch-live-link:hover {
+  text-decoration: underline;
+}
+
+.pitch-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+}
+
+.pitch-stat {
+  background: #fff;
+  border: 1.5px solid var(--pitch-border);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.pitch-stat strong {
+  display: block;
+  font-size: 1rem;
+  color: var(--pitch-ink);
+  margin-bottom: 6px;
+}
+
+.pitch-stat span {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--pitch-muted);
+}
+
+.pitch-stat a {
+  color: var(--pitch-teal);
+  font-weight: 600;
+}
+
+.pitch-aside {
+  margin: 16px 0 0;
+  font-size: 0.88rem;
+  color: var(--pitch-muted);
+}
+
+.pitch-presenter-notes {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  background: var(--pitch-teal-soft);
+  border-radius: 12px;
+  border: 1px solid var(--pitch-border);
+}
+
+.pitch-presenter-notes li {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--pitch-muted);
+  padding: 4px 0;
+}
+
+.pitch-presenter-notes strong {
+  color: var(--pitch-teal);
+}
+
+.pitch-preview-stage {
+  background: #fff;
+  border: 1.5px solid var(--pitch-border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(30, 58, 79, 0.08);
+}
+
+.pitch-preview-stage .sponsor-pitch-preview-tabs {
+  margin: 0;
+  border-bottom: 1px solid var(--pitch-border);
+}
+
+.pitch-preview-panel {
+  padding: 16px;
+  background: #f8fafb;
+}
+
+.pitch-preview-panel[hidden] {
+  display: none !important;
+}
+
+.pitch-preview-panel .ad-mock-page,
+.pitch-preview-panel .ad-email-preview-wrap {
+  margin: 0 auto;
+}
+
+.pitch-email-kicker {
+  margin: 0 0 8px;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: #4a6272;
+}
+
+.pitch-email-title {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #2d2636;
+}
+
+.pitch-placement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.pitch-placement {
+  background: #fff;
+  border: 1.5px solid var(--pitch-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.pitch-placement-type {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pitch-teal);
+  margin-bottom: 6px;
+}
+
+.pitch-placement strong {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 4px;
+  color: var(--pitch-ink);
+}
+
+.pitch-placement p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--pitch-muted);
+}
+
+.pitch-email-details {
+  margin-top: 18px;
+  background: #fff;
+  border: 1px solid var(--pitch-border);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.pitch-email-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--pitch-ink);
+}
+
+.pitch-email-tags {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pitch-email-tags li {
+  font-size: 0.78rem;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--pitch-teal-soft);
+  color: var(--pitch-muted);
+}
+
+.pitch-spec-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.pitch-spec-row div {
+  background: #fff;
+  border: 1px solid var(--pitch-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--pitch-muted);
+}
+
+.pitch-spec-row strong {
+  display: block;
+  color: var(--pitch-ink);
+  margin-bottom: 4px;
+}
+
+.pitch-scenario-caption {
+  font-size: 0.88rem;
+  color: var(--pitch-muted);
+  margin: 0 0 12px;
+}
+
+.pitch-footnote {
+  margin: 16px 0 0;
+  font-size: 0.82rem;
+  color: var(--pitch-muted);
+  text-align: center;
+}
+
 .sponsor-pitch-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

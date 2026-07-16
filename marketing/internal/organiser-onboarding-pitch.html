@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Organiser onboarding — sales presentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/sponsor-pitch.css?v=20260716orgpitch">
+<link rel="stylesheet" href="/css/organiser-onboarding-pitch.css?v=20260716orgpitch">
+<link rel="icon" href="/assets/hubert-icon.png" type="image/png">
+</head>
+<body class="sponsor-pitch-page org-pitch-page">
+
+<div class="sponsor-pitch-banner" aria-hidden="false">
+  <span><strong>Internal sales deck</strong> — open via <code>/p/tnh-org-onboard-x4n7</code> · run <code>npm start</code> locally</span>
+  <div class="org-pitch-banner-actions">
+    <button type="button" id="org-pitch-present-open">Present fullscreen</button>
+    <span>Questions? <a href="mailto:rosie@thenetworkerhub.com">rosie@thenetworkerhub.com</a></span>
+  </div>
+</div>
+
+<div class="sponsor-pitch-shell">
+
+  <header class="sponsor-pitch-hero">
+    <img class="sponsor-pitch-logo" src="/assets/logo-nav-transparent.png" alt="The Networker Hub" width="220" height="48">
+    <p class="sponsor-pitch-kicker">For networking organisers</p>
+    <h1>Move your events to <span class="accent">The Networker Hub</span></h1>
+    <p class="sponsor-pitch-lede">
+      Ticketing and discovery built for UK networking groups — with tools generic platforms
+      don&rsquo;t offer. Free to list. You keep 100% of the ticket price. List where networkers already browse.
+    </p>
+    <div class="org-pitch-chip-row">
+      <span class="org-pitch-chip">Free to list</span>
+      <span class="org-pitch-chip">Keep <em>100%</em> of ticket price</span>
+      <span class="org-pitch-chip">5 networking-only tools</span>
+    </div>
+  </header>
+
+  <nav class="sponsor-pitch-nav" id="pitch-section-nav" aria-label="Presentation sections">
+    <div class="sponsor-pitch-nav-inner">
+      <button type="button" class="is-active" data-pitch-section="opening">Opening</button>
+      <button type="button" data-pitch-section="problem">The problem</button>
+      <button type="button" data-pitch-section="discovery">Member discovery</button>
+      <button type="button" data-pitch-section="dashboard">Dashboard</button>
+      <button type="button" data-pitch-section="tools">Networking tools</button>
+      <button type="button" data-pitch-section="pricing">Pricing</button>
+      <button type="button" data-pitch-section="objections">Objections</button>
+      <button type="button" data-pitch-section="next-steps">Next steps</button>
+    </div>
+  </nav>
+
+  <!-- 1. Opening -->
+  <section class="sponsor-pitch-section" id="opening">
+    <h2>Opening the conversation</h2>
+    <p class="section-intro">
+      Start by understanding how they run events today. Mirror their pain back, then position
+      The Networker Hub as built for UK networking — not generic ticketing.
+    </p>
+
+    <div class="sponsor-pitch-split">
+      <div>
+        <h3 style="margin:0 0 12px;font-size:1.05rem;">Discovery questions</h3>
+        <ul class="sponsor-pitch-checklist">
+          <li>How do new people find and book your meetings today?</li>
+          <li>Do you offer guest or trial visits before paid membership?</li>
+          <li>How do you handle member-only pricing — access codes, spreadsheets, manual lists?</li>
+          <li>Do you need to approve who&rsquo;s in the room before they pay?</li>
+          <li>What hurts most: filling seats, admin, converting guests, or getting found?</li>
+        </ul>
+        <p class="org-pitch-quote">
+          &ldquo;We built The Networker Hub because generic ticketing platforms weren&rsquo;t built for how UK networking groups actually grow — trial visits, member rates, curated rooms, and repeat attendance.&rdquo;
+        </p>
+      </div>
+
+      <div class="sponsor-pitch-grid" style="grid-template-columns:1fr;">
+        <article class="sponsor-pitch-card sponsor-pitch-card--featured">
+          <div class="sponsor-pitch-card-icon">🎯</div>
+          <h3>Your one-line hook</h3>
+          <p>Ticketing built for UK networking groups — not another generic events marketplace.</p>
+        </article>
+        <article class="sponsor-pitch-card">
+          <div class="sponsor-pitch-card-icon">🔗</div>
+          <h3>End card line</h3>
+          <p><strong>List where networkers already browse.</strong></p>
+        </article>
+        <article class="sponsor-pitch-card">
+          <div class="sponsor-pitch-card-icon">📄</div>
+          <h3>Leave-behinds</h3>
+          <p>
+            <a href="/for-organisers">for-organisers</a> ·
+            <a href="/guides/list-an-event">List an event guide</a> ·
+            <a href="/assets/guides/organiser-benefits-linkedin.pdf">Organiser benefits PDF</a>
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. The problem -->
+  <section class="sponsor-pitch-section" id="problem">
+    <h2>Three problems every networking group faces</h2>
+    <p class="section-intro">
+      Generic platforms handle dates and payments. They don&rsquo;t handle how membership-style networking actually works.
+    </p>
+
+    <div class="org-pitch-pain-grid">
+      <article class="org-pitch-pain-card">
+        <strong>1 · Discovery</strong>
+        <p>New people can&rsquo;t find you unless they already know someone in the room. You&rsquo;re competing with Eventbrite, LinkedIn, and word of mouth.</p>
+      </article>
+      <article class="org-pitch-pain-card">
+        <strong>2 · Conversion</strong>
+        <p>You offer trial visits, but your ticketing treats every booking the same. You can&rsquo;t easily see who&rsquo;s on visit one vs ready to join.</p>
+      </article>
+      <article class="org-pitch-pain-card">
+        <strong>3 · Admin</strong>
+        <p>Member rates via access codes, spreadsheets for check-in, WhatsApp for &ldquo;who&rsquo;s coming?&rdquo; It works until it doesn&rsquo;t.</p>
+      </article>
+    </div>
+
+    <p class="sponsor-pitch-note" style="margin-top:20px;">
+      <strong>Talk track:</strong> &ldquo;We built five tools that generic platforms simply don&rsquo;t have. Everything else — listings, payments, payouts, team access — sits in one organiser dashboard.&rdquo;
+    </p>
+  </section>
+
+  <!-- 3. Member discovery -->
+  <section class="sponsor-pitch-section" id="discovery">
+    <h2>What their members see</h2>
+    <p class="section-intro">
+      Half the value is discovery. Your events appear where UK business owners already search for networking meetings.
+    </p>
+
+    <div class="sponsor-pitch-split">
+      <div>
+        <h3 style="margin:0 0 12px;font-size:1.05rem;">Talk track</h3>
+        <ul class="sponsor-pitch-checklist">
+          <li><strong>Browse free</strong> — no account needed until they book (~2 minutes to sign up).</li>
+          <li><strong>Events &amp; Organisers tabs</strong> — members follow your group, not just one date.</li>
+          <li><strong>Powerful filters</strong> — postcode, radius, date, event type, price, keyword search.</li>
+          <li><strong>Organiser page</strong> — logo, description, social links, reviews, every event you host.</li>
+          <li><strong>Premium Spotlight</strong> — optional boost when you want extra visibility.</li>
+          <li><strong>Business opportunities</strong> — franchises and partnerships in the same ecosystem.</li>
+        </ul>
+        <p style="margin-top:16px;">
+          <a href="/events/" class="fo-showcase-link" style="font-weight:700;color:var(--pitch-teal);">Preview the events directory →</a>
+        </p>
+      </div>
+
+      <div class="org-pitch-browse-mock" aria-hidden="true">
+        <div class="org-pitch-browse-head">
+          <div class="org-pitch-browse-tabs">
+            <span class="is-on">Events</span>
+            <span>Organisers</span>
+          </div>
+          <div class="org-pitch-browse-search">Search breakfast, Manchester, women only…</div>
+          <div class="org-pitch-browse-chips">
+            <span class="is-on">Near me · 25 mi</span>
+            <span class="is-on">In person</span>
+            <span>Breakfast</span>
+            <span>Free</span>
+            <span>This month</span>
+          </div>
+        </div>
+        <div class="org-pitch-browse-body">
+          <div class="org-pitch-browse-spotlight">
+            <strong>★ Premium Spotlight</strong> — featured event or organiser at the top of browse
+          </div>
+          <div class="org-pitch-browse-card">
+            <div class="org-pitch-browse-thumb"></div>
+            <div>
+              <strong>Friday breakfast networking</strong>
+              <span>Manchester · Your organiser page</span>
+            </div>
+            <span class="org-pitch-browse-price">from £15</span>
+          </div>
+          <div class="org-pitch-browse-card">
+            <div class="org-pitch-browse-thumb"></div>
+            <div>
+              <strong>Annual conference 2026</strong>
+              <span>Birmingham · Guest visit available</span>
+            </div>
+            <span class="org-pitch-browse-price">from £89</span>
+          </div>
+          <div class="org-pitch-browse-card">
+            <div class="org-pitch-browse-thumb"></div>
+            <div>
+              <strong>Women in business lunch</strong>
+              <span>Leeds · Members only rate</span>
+            </div>
+            <span class="org-pitch-browse-price">from £12</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Dashboard -->
+  <section class="sponsor-pitch-section" id="dashboard">
+    <h2>One organiser workspace</h2>
+    <p class="section-intro">
+      Events, attendees, applications, business opportunities, payouts, and team — all from one dashboard.
+      Click the tabs in the preview to walk through each area on a sales call.
+    </p>
+
+    <div class="sponsor-pitch-split">
+      <div class="org-pitch-dash" aria-label="Organiser dashboard preview">
+        <div class="org-pitch-dash-bar">
+          <div class="org-pitch-dash-dots"><span></span><span></span><span></span></div>
+          Organiser workspace · The Networker Hub
+        </div>
+        <div class="org-pitch-dash-body">
+          <nav class="org-pitch-dash-nav" id="org-pitch-dash-tabs" aria-label="Dashboard sections">
+            <button type="button" class="is-active" data-dash-panel="overview">Overview</button>
+            <button type="button" data-dash-panel="events">My events</button>
+            <button type="button" data-dash-panel="attendees">Attendees</button>
+            <button type="button" data-dash-panel="applications">Applications</button>
+            <button type="button" data-dash-panel="payouts">Payouts</button>
+          </nav>
+          <div>
+            <div class="org-pitch-dash-panel is-active" data-dash-panel-view="overview">
+              <p class="org-pitch-dash-title">Overview</p>
+              <p class="org-pitch-dash-sub">Events, opportunities, and bookings at a glance</p>
+              <div class="org-pitch-dash-stats">
+                <div class="org-pitch-dash-stat"><b>148</b><small>Tickets sold</small></div>
+                <div class="org-pitch-dash-stat"><b>£2.4k</b><small>Revenue</small></div>
+                <div class="org-pitch-dash-stat"><b>23</b><small>1st visits</small></div>
+              </div>
+              <ul class="org-pitch-dash-list">
+                <li><strong>Previous attendee invites ready</strong><span>18 past attendees</span></li>
+                <li><strong>Category Exclusivity pending</strong><span>2 applications</span></li>
+              </ul>
+            </div>
+            <div class="org-pitch-dash-panel" data-dash-panel-view="events">
+              <p class="org-pitch-dash-title">My events</p>
+              <p class="org-pitch-dash-sub">Live listings, drafts, and recurring series</p>
+              <ul class="org-pitch-dash-list">
+                <li><strong>Friday breakfast networking</strong><span>Live · 24 booked</span></li>
+                <li><strong>Annual conference 2026</strong><span>Draft · Series</span></li>
+                <li><strong>Women in business lunch</strong><span>Live · 11 booked</span></li>
+              </ul>
+            </div>
+            <div class="org-pitch-dash-panel" data-dash-panel-view="attendees">
+              <p class="org-pitch-dash-title">Attendees</p>
+              <p class="org-pitch-dash-sub">Visit tracking across your events</p>
+              <ul class="org-pitch-dash-list">
+                <li><strong>Sam K.</strong><span>1st visit</span></li>
+                <li><strong>Priya M.</strong><span>3 visits · Returning</span></li>
+                <li><strong>Alex R.</strong><span>2 visits · Returning</span></li>
+              </ul>
+            </div>
+            <div class="org-pitch-dash-panel" data-dash-panel-view="applications">
+              <p class="org-pitch-dash-title">Applications</p>
+              <p class="org-pitch-dash-sub">Category Exclusivity queue</p>
+              <div class="org-pitch-dash-stats">
+                <div class="org-pitch-dash-stat"><b>2</b><small>Pending</small></div>
+                <div class="org-pitch-dash-stat"><b>7</b><small>Approved</small></div>
+              </div>
+              <ul class="org-pitch-dash-list">
+                <li><strong>Finance · Director</strong><span>Pending</span></li>
+                <li><strong>Marketing · Freelancer</strong><span>Pending</span></li>
+              </ul>
+            </div>
+            <div class="org-pitch-dash-panel" data-dash-panel-view="payouts">
+              <p class="org-pitch-dash-title">Payouts</p>
+              <p class="org-pitch-dash-sub">Stripe Connect · you keep the ticket price</p>
+              <div class="org-pitch-dash-stats">
+                <div class="org-pitch-dash-stat"><b>£1.8k</b><small>Available</small></div>
+                <div class="org-pitch-dash-stat"><b>£560</b><small>Settling</small></div>
+              </div>
+              <ul class="org-pitch-dash-list">
+                <li><strong>Friday breakfast</strong><span>£840 ready</span></li>
+                <li><strong>Women in business lunch</strong><span>£560 in settlement</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sponsor-pitch-grid" style="grid-template-columns:1fr;">
+        <article class="sponsor-pitch-card sponsor-pitch-card--featured">
+          <div class="sponsor-pitch-card-icon">📅</div>
+          <h3>Event listings &amp; series</h3>
+          <p>One-off dates or full recurring series. Draft, duplicate, manage ticket types from one flow.</p>
+        </article>
+        <article class="sponsor-pitch-card">
+          <div class="sponsor-pitch-card-icon">👤</div>
+          <h3>Organiser pages &amp; team</h3>
+          <p>Permanent home for your group. Invite team editors without sharing your login.</p>
+        </article>
+        <article class="sponsor-pitch-card">
+          <div class="sponsor-pitch-card-icon">⭐</div>
+          <h3>Reviews &amp; ranking badges</h3>
+          <p>Attendee reviews plus LinkedIn-ready promote graphics from your dashboard.</p>
+        </article>
+        <article class="sponsor-pitch-card">
+          <div class="sponsor-pitch-card-icon">💼</div>
+          <h3>Business opportunities</h3>
+          <p>List franchises and partnerships. Enquiries land in the same workspace as events.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Networking tools -->
+  <section class="sponsor-pitch-section" id="tools">
+    <h2>Five tools generic platforms don&rsquo;t have</h2>
+    <p class="section-intro">
+      Walk through each tool tied to their workflow. These are your strongest differentiators vs Eventbrite and Meetup.
+    </p>
+
+    <div class="org-pitch-tool-grid">
+      <article class="org-pitch-tool-card is-featured">
+        <div class="org-pitch-tool-head"><span>🎫</span><h3>Guest visit programme</h3></div>
+        <p class="org-pitch-tool-lede">Let newcomers try your room before they commit to paid membership.</p>
+        <ul>
+          <li>1–2 complimentary visits set on your organiser page</li>
+          <li>Paid member tickets unlock after visits are used</li>
+          <li>Opt out on specific dates (conferences, member-only evenings)</li>
+        </ul>
+      </article>
+      <article class="org-pitch-tool-card is-featured">
+        <div class="org-pitch-tool-head"><span>📊</span><h3>Visit tracking</h3></div>
+        <p class="org-pitch-tool-lede">See who is still trialling vs ready to convert.</p>
+        <ul>
+          <li>1st visit vs returning labels on every attendee list</li>
+          <li>Filter and export CSV with visit metadata</li>
+          <li>Dashboard stats for new vs returning attendance</li>
+        </ul>
+      </article>
+      <article class="org-pitch-tool-card">
+        <div class="org-pitch-tool-head"><span>🪑</span><h3>Category Exclusivity</h3></div>
+        <p class="org-pitch-tool-lede">Curate who is in the room before anyone pays.</p>
+        <ul>
+          <li>Application-based attendance instead of open checkout</li>
+          <li>Industry, job title, and pitch — approve or deny from dashboard</li>
+          <li>Approved guests receive a payment link only</li>
+        </ul>
+      </article>
+      <article class="org-pitch-tool-card">
+        <div class="org-pitch-tool-head"><span>🎓</span><h3>Previous Attendees</h3></div>
+        <p class="org-pitch-tool-lede">Reward past attendees with invite-only rates on repeat events.</p>
+        <ul>
+          <li>Pull attendees from a past event and send locked invite links</li>
+          <li>Hidden previous attendee ticket — non-invited guests cannot access</li>
+          <li>Works alongside standard tickets for first-time visitors</li>
+        </ul>
+      </article>
+      <article class="org-pitch-tool-card is-featured">
+        <div class="org-pitch-tool-head"><span>📋</span><h3>Membership register</h3></div>
+        <p class="org-pitch-tool-lede">Member-only ticket rates without access codes or manual lists.</p>
+        <ul>
+          <li>Upload members individually or import CSV with expiry dates</li>
+          <li>Members only ticket — hidden from public, visible when signed in</li>
+          <li>Auto-notify members on new events · reports &amp; booking reminders</li>
+        </ul>
+      </article>
+    </div>
+
+    <p class="sponsor-pitch-note" style="margin-top:20px;">
+      <strong>Day-to-day extras:</strong> printable Avery name badges, booking confirmations and reminders sent automatically,
+      team editor access, and CSV export for your CRM.
+    </p>
+  </section>
+
+  <!-- 6. Pricing -->
+  <section class="sponsor-pitch-section" id="pricing">
+    <h2>Pricing — be upfront</h2>
+    <p class="section-intro">
+      No monthly subscription for events. Low-risk to try alongside their current platform.
+    </p>
+
+    <div class="org-pitch-pricing-box">
+      <div class="org-pitch-pricing-item">
+        <strong>Free</strong>
+        <span>to list events<br>No monthly subscription</span>
+      </div>
+      <div class="org-pitch-pricing-item">
+        <strong>100%</strong>
+        <span>of ticket price to you<br>Stripe Connect at checkout</span>
+      </div>
+      <div class="org-pitch-pricing-item">
+        <strong>4.5% + 20p</strong>
+        <span>booking fee paid by attendees<br>at checkout, not from your price</span>
+      </div>
+      <div class="org-pitch-pricing-item">
+        <strong>£0</strong>
+        <span>Stripe setup for free events<br>7-day settlement then request payout</span>
+      </div>
+    </div>
+
+    <div class="sponsor-pitch-grid">
+      <article class="sponsor-pitch-card sponsor-pitch-card--featured">
+        <div class="sponsor-pitch-card-icon">📈</div>
+        <h3>Why move now</h3>
+        <ul>
+          <li><strong>Fill seats faster</strong> — UK directory built for networking discovery</li>
+          <li><strong>Convert guests to members</strong> — proper funnel, not workarounds</li>
+          <li><strong>Less admin</strong> — one dashboard for events, members, and payouts</li>
+          <li><strong>Professional experience</strong> — confirmations, reminders, name badges</li>
+        </ul>
+      </article>
+      <article class="sponsor-pitch-card">
+        <div class="sponsor-pitch-card-icon">🔄</div>
+        <h3>Low-risk transition</h3>
+        <p>Works alongside Eventbrite or other platforms. List your next 2–3 meetings here, compare admin time and new bookings, then decide. Many organisers run both during transition.</p>
+      </article>
+    </div>
+
+    <p class="org-pitch-quote">
+      &ldquo;We&rsquo;re not asking you to rip everything out on day one. List your next few dates here, see how discovery and the member tools feel, then decide.&rdquo;
+    </p>
+  </section>
+
+  <!-- 7. Objections -->
+  <section class="sponsor-pitch-section" id="objections">
+    <h2>Handle objections</h2>
+    <p class="section-intro">
+      Click each objection to reveal the recommended response. Expand before a call if you want these on screen.
+    </p>
+
+    <details class="org-pitch-objection">
+      <summary>We&rsquo;re fine on Eventbrite</summary>
+      <div class="org-pitch-objection-body">
+        Totally fair — it works for one-off events. The question is whether it handles guest visits, member-only tickets without codes, and visit tracking. Most groups list here alongside Eventbrite for a month and compare admin time and new bookings.
+      </div>
+    </details>
+    <details class="org-pitch-objection">
+      <summary>Our members won&rsquo;t sign up for another platform</summary>
+      <div class="org-pitch-objection-body">
+        Browsing is free with no account. They only sign up when they book — about two minutes. Members on your list get invite emails and auto-notified on new events. Once signed in, member tickets appear automatically.
+      </div>
+    </details>
+    <details class="org-pitch-objection">
+      <summary>We manage membership in a CRM or spreadsheet</summary>
+      <div class="org-pitch-objection-body">
+        Keep that for renewals. Use our member register for booking and visibility — CSV import in minutes. Reports tell you who&rsquo;s booked, who&rsquo;s expiring, and who missed meetings.
+      </div>
+    </details>
+    <details class="org-pitch-objection">
+      <summary>What about our existing attendees?</summary>
+      <div class="org-pitch-objection-body">
+        Export from your current system, import to the member register. For repeat events, Previous Attendees lets you invite past bookers to loyalty rates. Run parallel for one cycle if needed.
+      </div>
+    </details>
+    <details class="org-pitch-objection">
+      <summary>We need category control in the room</summary>
+      <div class="org-pitch-objection-body">
+        Category Exclusivity is exactly that — applications before payment, approve or deny from dashboard, payment link only for approved guests.
+      </div>
+    </details>
+    <details class="org-pitch-objection">
+      <summary>What&rsquo;s the catch on free listing?</summary>
+      <div class="org-pitch-objection-body">
+        No catch. We grow when organisers and members use the hub. Attendees pay a small booking fee at checkout. Optional paid boosts like Premium Spotlight if you want extra visibility.
+      </div>
+    </details>
+  </section>
+
+  <!-- 8. Next steps -->
+  <section class="sponsor-pitch-section" id="next-steps">
+    <h2>Close with a low-friction next step</h2>
+    <p class="section-intro">
+      End with a concrete action — not &ldquo;think about it.&rdquo; Offer to list their next meeting together on the call.
+    </p>
+
+    <ol class="org-pitch-steps">
+      <li><strong>Claim your organiser page</strong> — together in 10 minutes, or at <a href="/events/?mode=organisers">/events/?mode=organisers</a></li>
+      <li><strong>List your next 2–3 meetings</strong> — free, even if Eventbrite stays live for now</li>
+      <li><strong>Turn on guest visits or upload your member list</strong> — whichever matters most to them</li>
+      <li><strong>Review after the first event</strong> — visit tracking, bookings, and discovery numbers together</li>
+    </ol>
+
+    <div class="sponsor-pitch-cta" style="margin-top:28px;">
+      <div>
+        <h2>Ready to list your group?</h2>
+        <p>Claim or create your organiser page, publish your first event, and reach members browsing across the UK network.</p>
+      </div>
+      <div class="sponsor-pitch-cta-actions">
+        <a class="primary" href="/guides/list-an-event">List your first event →</a>
+        <a class="secondary" href="/for-organisers">Public organiser page</a>
+      </div>
+    </div>
+  </section>
+
+  <p class="sponsor-pitch-foot">
+    The Networker Hub · Confidential sales material · Not indexed · Jul 2026
+  </p>
+
+</div>
+
+<!-- Fullscreen present mode -->
+<div class="org-pitch-present-overlay" id="org-pitch-present" aria-hidden="true">
+  <div class="org-pitch-present-bar">
+    <span id="org-pitch-present-counter">1 / 10</span>
+    <span><kbd>←</kbd> <kbd>→</kbd> navigate · <kbd>Esc</kbd> exit</span>
+    <button type="button" id="org-pitch-present-close">Exit present mode</button>
+  </div>
+  <div class="org-pitch-present-stage">
+
+    <div class="org-pitch-slide is-active">
+      <img src="/assets/logo-nav-transparent.png" alt="The Networker Hub" width="240" style="margin-bottom:24px;">
+      <p class="org-pitch-slide-kicker">For networking organisers</p>
+      <h2>Move your events to <span class="accent">The Networker Hub</span></h2>
+      <p class="org-pitch-slide-lede">Ticketing and discovery built for UK networking groups. Free to list. You keep 100% of the ticket price.</p>
+    </div>
+
+    <div class="org-pitch-slide">
+      <p class="org-pitch-slide-kicker">The problem</p>
+      <h2>Generic ticketing wasn&rsquo;t built for <span class="accent">networking groups</span></h2>
+      <ul class="org-pitch-slide-bullets">
+        <li><strong>Discovery</strong> — new people can&rsquo;t find you unless they already know someone</li>
+        <li><strong>Conversion</strong> — trial visits and member rates need workarounds</li>
+        <li><strong>Admin</strong> — access codes, spreadsheets, WhatsApp headcount</li>
+      </ul>
+    </div>
+
+    <div class="org-pitch-slide">
+      <p class="org-pitch-slide-kicker">Member discovery</p>
+      <h2>List where <span class="accent">networkers already browse</span></h2>
+      <ul class="org-pitch-slide-bullets">
+        <li>UK events directory with postcode, map, and organiser browse</li>
+        <li>Browse free — sign up only when ready to book</li>
+        <li>Permanent organiser page with reviews and ranking badges</li>
+        <li>Business opportunities in the same ecosystem</li>
+      </ul>
+    </div>
+
+    <div class="org-pitch-slide">
+      <p class="org-pitch-slide-kicker">Organiser dashboard</p>
+      <h2>Everything you run, <span class="accent">one workspace</span></h2>
+      <div class="org-pitch-slide-grid">
+        <div class="org-pitch-slide-card"><strong>Events &amp; series</strong><span>Publish, draft, duplicate recurring meetings</span></div>
+        <div class="org-pitch-slide-card"><strong>Attendees</strong><span>Visit tracking, CSV export, name badges</span></div>
+        <div class="org-pitch-slide-card"><strong>Stripe Connect</strong><span>You keep the full ticket price</span></div>
+        <div class="org-pitch-slide-card"><strong>Team editors</strong><span>Share workload without sharing login</span></div>
+      </div>
+    </div>
+
+    <div class="org-pitch-slide">
+      <p class="org-pitch-slide-kicker">Networking tools</p>
+      <h2>Five tools other platforms <span class="accent">don&rsquo;t have</span></h2>
+      <div class="org-pitch-slide-grid">
+        <div class="org-pitch-slide-card"><strong>🎫 Guest visits</strong><span>Complimentary trial visits before paid member tickets</span></div>
+        <div class="org-pitch-slide-card"><strong>📊 Visit tracking</strong><span>1st visit vs returning on every list</span></div>
+        <div class="org-pitch-slide-card"><strong>🪑 Category Exclusivity</strong><span>Approve who&rsquo;s in the room before payment</span></div>
+        <div class="org-pitch-slide-card"><strong>🎓 Previous Attendees</strong><span>Invite-only loyalty rates on repeat events</span></div>
+        <div class="org-pitch-slide-card" style="grid-column:1/-1;"><strong>📋 Membership register</strong><span>Member-only tickets without access codes · CSV import · auto-notify on new events</span></div>
+      </div>
+    </div>
+
+    <div class="org-pitch-slide">
+      <p class="org-pitch-slide-kicker">Pricing</p>
+      <h2>Free to list. <span class="accent">Keep 100%.</span></h2>
+      <ul class="org-pitch-slide-bullets">
+        <li>No monthly subscription for events</li>
+        <li>You receive the full ticket price you set</li>
+        <li>Attendees pay 4.5% + 20p booking fee at checkout</li>
+        <li>Free events need no Stripe setup</li>
+        <li>Works alongside Eventbrite during transition</li>
+      </ul>
+    </div>
+
+    <div class="org-pitch-slide">
+      <p class="org-pitch-slide-kicker">Why switch</p>
+      <h2>Fill seats. Convert guests. <span class="accent">Less admin.</span></h2>
+      <ul class="org-pitch-slide-bullets">
+        <li>UK directory built for networking — not generic events</li>
+        <li>Guest visit → member register conversion funnel</li>
+        <li>Confirmations, reminders, and name badges handled for you</li>
+        <li>Reviews and LinkedIn-ready promote graphics</li>
+      </ul>
+    </div>
+
+    <div class="org-pitch-slide">
+      <p class="org-pitch-slide-kicker">Objections</p>
+      <h2>Low-risk to <span class="accent">try</span></h2>
+      <ul class="org-pitch-slide-bullets">
+        <li>&ldquo;We&rsquo;re on Eventbrite&rdquo; → list both for a month, compare</li>
+        <li>&ldquo;Members won&rsquo;t sign up&rdquo; → browse free, 2 min to book</li>
+        <li>&ldquo;We have a CRM&rdquo; → keep it for renewals, use Hub for booking</li>
+        <li>&ldquo;What&rsquo;s the catch?&rdquo; → none; attendees pay booking fee</li>
+      </ul>
+    </div>
+
+    <div class="org-pitch-slide">
+      <p class="org-pitch-slide-kicker">Next steps</p>
+      <h2>Let&rsquo;s list your <span class="accent">next meeting</span></h2>
+      <ul class="org-pitch-slide-bullets">
+        <li>Claim your organiser page — 10 minutes together</li>
+        <li>Publish your next 2–3 dates</li>
+        <li>Turn on guest visits or upload your member list</li>
+        <li>Review bookings and visit tracking after the first event</li>
+      </ul>
+    </div>
+
+    <div class="org-pitch-slide">
+      <div class="org-pitch-slide-close">
+        <img src="/assets/logo-nav-transparent.png" alt="The Networker Hub">
+        <p>Find your next attendees</p>
+        <p class="url">thenetworkerhub.com/for-organisers</p>
+      </div>
+    </div>
+
+  </div>
+  <div class="org-pitch-present-dots" id="org-pitch-present-dots" aria-hidden="true"></div>
+</div>
+
+<script src="/js/organiser-onboarding-pitch.js?v=20260716orgpitch"></script>
+</body>
+</html>
