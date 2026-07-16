@@ -84,6 +84,33 @@ async function countUsedGuestVisits(sb, { organiserId, attendeeId, email }) {
 
 async function getGuestVisitEligibility(sb, { organiserId, attendeeId, email, allowed }) {
   const allowedVisits = clampComplimentaryVisitsAllowed(allowed);
+  const orgId = String(organiserId || '').trim();
+  const normalizedEmail = String(email || '')
+    .trim()
+    .toLowerCase();
+
+  if (orgId && normalizedEmail) {
+    try {
+      const { getActiveRosterMembership } = require('./organiser-member-roster');
+      const membership = await getActiveRosterMembership(sb, {
+        organiserId: orgId,
+        email: normalizedEmail,
+      });
+      if (membership.active) {
+        return {
+          allowed: allowedVisits,
+          used: allowedVisits,
+          remaining: 0,
+          eligible: false,
+          isRosterMember: true,
+          platformMax: PLATFORM_MAX_COMPLIMENTARY_VISITS,
+        };
+      }
+    } catch {
+      /* roster lookup optional */
+    }
+  }
+
   const used = await countUsedGuestVisits(sb, { organiserId, attendeeId, email });
   const remaining = Math.max(0, allowedVisits - used);
   return {
@@ -127,6 +154,11 @@ async function assertGuestVisitBookingAllowed(
     email,
     allowed,
   });
+  if (eligibility.isRosterMember) {
+    const err = new Error('guest_visits_roster_member');
+    err.status = 400;
+    throw err;
+  }
   if (!eligibility.eligible) {
     const err = new Error('guest_visits_exhausted');
     err.status = 400;

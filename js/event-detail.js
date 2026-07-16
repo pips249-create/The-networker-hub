@@ -387,7 +387,8 @@
   async function loadRosterEligibility(ev) {
     rosterMemberTickets = [];
     rosterMembership = null;
-    if (!ev?.hasMembersOnlyTiers) return rosterMembership;
+    const organiserId = String((ev && ev.organiserId) || '').trim();
+    if (!organiserId && !(ev && ev.id)) return rosterMembership;
     try {
       const res = await fetch(
         '/api/auth/roster-eligibility?eventId=' + encodeURIComponent(ev.id),
@@ -2124,6 +2125,8 @@
       eventAllowsGuestPasses(ev) &&
       ev.guestVisitTier &&
       guestVisitEligibility &&
+      !guestVisitEligibility.isRosterMember &&
+      !rosterMembership?.isMember &&
       (guestVisitEligibility.eligible || guestVisitEligibility.signedOut);
     const showAlumniTier =
       ev.alumniFastPassEnabled &&
@@ -3249,7 +3252,7 @@
       buy.textContent = 'Apply for a Seat';
       const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
       if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = false;
-    } else if (eventAllowsGuestPasses(ev) && guestVisitEligibility?.eligible) {
+    } else if (eventAllowsGuestPasses(ev) && guestVisitEligibility?.eligible && !rosterMembership?.isMember) {
       const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
       if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = true;
       buy.textContent = 'Book complimentary visit';
@@ -4390,7 +4393,10 @@
           setEventLoading(false);
           alumniInviteToken = String(params.get('alumni_token') || '').trim();
           if (eventIsGuestProgramme(displayEv)) {
-            await loadGuestVisitEligibility(displayEv);
+            await Promise.all([
+              loadGuestVisitEligibility(displayEv),
+              loadRosterEligibility(displayEv),
+            ]);
             renderTicketPanel(displayEv);
             setText('ev-price', publicListingPriceLabel(displayEv));
             syncTicketHeader(displayEv);

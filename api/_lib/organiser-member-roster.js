@@ -391,7 +391,7 @@ async function upsertRosterMember(organiserId, payload, options) {
 
   const { data: existing } = await sb
     .from('organiser_member_roster')
-    .select('id, claimed_at, invite_sent_at')
+    .select('id, status, claimed_at, invite_sent_at')
     .eq('organiser_id', orgId)
     .eq('email', email)
     .maybeSingle();
@@ -445,6 +445,21 @@ async function upsertRosterMember(organiserId, payload, options) {
         attendeeId,
       });
     }
+  }
+
+  const becameActiveMember =
+    saved.status === ROSTER_STATUS_ACTIVE &&
+    rosterRowIsActive(saved) &&
+    (isNew || String(existing?.status || '') === ROSTER_STATUS_REMOVED);
+  if (becameActiveMember) {
+    notifyRosterMemberOfUpcomingLiveEvents(orgId, rosterRowToClient(saved)).catch((err) => {
+      console.error(
+        '[member-roster] upcoming event notify failed',
+        orgId,
+        email,
+        err?.message || err
+      );
+    });
   }
 
   return { member: rosterRowToClient(saved), invite: inviteResult };
@@ -700,6 +715,163 @@ async function listRosterGroupsForAttendee(email) {
 }
 
 /**
+ * Send one member-list new-event email and record dedupe row.
+ * Returns 'sent' | 'skipped' | throws on hard failure.
+ */
+async function sendMemberRosterNewEventAlert(sb, { eventRow, organiser, member, alreadyAlerted }) {
+  const eventId = String(eventRow?.id || '').trim();
+  const organiserId = String(organiser?.id || eventRow?.organiser_id || '').trim();
+  const memberId = String(member?.id || '').trim();
+  if (!eventId || !organiserId || !memberId) return 'skipped';
+  if (alreadyAlerted && alreadyAlerted.has(memberId)) return 'skipped';
+
+  const email = normalizeRosterEmail(member.email);
+  if (!email || !member.membershipActive) return 'skipped';
+
+  const alertedRes = await sb
+    .from('organiser_roster_listing_alerts')
+    .select('id')
+    .eq('roster_member_id', memberId)
+    .eq('event_id', eventId)
+    .maybeSingle();
+  if (alertedRes.error) throw new Error(alertedRes.error.message);
+  if (alertedRes.data?.id) return 'skipped';
+
+  const site = siteBase();
+  const { event_date, event_time } = formatEventDateTime(eventRow.starts_at || eventRow.startsAt);
+  const eventLocation =
+    String(eventRow.location_label || eventRow.locationLabel || eventRow.venue || eventRow.city || '').trim() ||
+    'See event page';
+  const eventTimeSuffix = event_time ? ' · ' + event_time : '';
+  const eventUrl = eventPublicUrl(eventRow, site);
+  const organiserUrl = organiserPublicUrl(organiser, site);
+  const organiserName = String(organiser.name || 'your networking group').trim();
+  const hasAccount = Boolean(member.attendeeId || member.claimedAt);
+  const ctaUrl = hasAccount
+    ? loginUrlWithNext(site, email, eventUrl)
+    : site +
+      '/register?email=' +
+      encodeURIComponent(email) +
+      '&next=' +
+      encodeURIComponent(eventUrl);
+  const ctaLabel = hasAccount ? 'View member tickets' : 'Create account & view event';
+
+  await sendTemplatedEmail({
+    slug: 'member_roster_new_event',
+    to: email,
+    variables: {
+      user_name: emailGreetingName(member.name, email),
+      user_email: email,
+      organiser_name: organiserName,
+      organiser_url: organiserUrl,
+      event_name: String(eventRow.title || 'Event').trim(),
+      event_date: event_date || '',
+      event_time: eventTimeSuffix,
+      event_location: eventLocation,
+      event_url: eventUrl,
+      cta_url: ctaUrl,
+      cta_label: ctaLabel,
+      hub_account_url: hubAccountUrl(site),
+      browse_events_url: browseEventsUrl(site),
+      contact_url: contactUrl(site),
+      privacy_url: legalPolicyUrl(site, 'privacy'),
+      terms_url: legalPolicyUrl(site, 'terms'),
+      site_url: site,
+      logo_url: logoNavUrl(site),
+      logo_footer_url: logoFooterUrl(site),
+    },
+  });
+
+  await sb.from('organiser_roster_listing_alerts').insert({
+    roster_member_id: memberId,
+    event_id: eventId,
+  });
+  if (alreadyAlerted) alreadyAlerted.add(memberId);
+
+  if (member.attendeeId) {
+    try {
+      const fav = await sb
+        .from('organiser_favourites')
+        .select('id')
+        .eq('attendee_id', member.attendeeId)
+        .eq('organiser_id', organiserId)
+        .maybeSingle();
+      if (fav.data?.id) {
+        await sb.from('organiser_favourite_listing_alerts').upsert(
+          {
+            organiser_favourite_id: fav.data.id,
+            event_id: eventId,
+          },
+          { onConflict: 'organiser_favourite_id,event_id', ignoreDuplicates: true }
+        );
+      }
+    } catch {
+      /* non-fatal */
+    }
+  }
+
+  return 'sent';
+}
+
+/**
+ * When someone joins (or rejoins) a member list, email them about live upcoming events
+ * they have not been notified about yet.
+ */
+async function notifyRosterMemberOfUpcomingLiveEvents(organiserId, member) {
+  const result = { sent: 0, skipped: 0, errors: [] };
+  const orgId = String(organiserId || '').trim();
+  if (!orgId || !member?.id || !member.email || !member.membershipActive) return result;
+
+  const sb = getSupabaseAdmin();
+  const { data: organiser, error: orgErr } = await sb
+    .from('organisers')
+    .select('id, name, slug')
+    .eq('id', orgId)
+    .maybeSingle();
+  if (orgErr) throw new Error(orgErr.message);
+  if (!organiser) return result;
+
+  const now = new Date().toISOString();
+  const { data: events, error: eventsErr } = await sb
+    .from('events')
+    .select(
+      'id, title, slug, starts_at, status, approval_status, venue, city, location_label, organiser_id, published_at'
+    )
+    .eq('organiser_id', orgId)
+    .eq('status', 'published')
+    .eq('approval_status', 'Approved')
+    .gte('starts_at', now)
+    .order('starts_at', { ascending: true })
+    .limit(20);
+  if (eventsErr) throw new Error(eventsErr.message);
+  if (!(events || []).length) return result;
+
+  for (const eventRow of events) {
+    try {
+      const outcome = await sendMemberRosterNewEventAlert(sb, {
+        eventRow,
+        organiser,
+        member,
+      });
+      if (outcome === 'sent') result.sent += 1;
+      else result.skipped += 1;
+    } catch (e) {
+      if (e.code === 'emails_disabled' || /emails_disabled/i.test(String(e.message || ''))) {
+        result.skipped += 1;
+        continue;
+      }
+      result.errors.push({
+        event_id: eventRow.id,
+        email: member.email,
+        message: e.message || String(e),
+      });
+    }
+  }
+
+  return result;
+}
+
+/**
  * Email active member-list people when their organiser publishes an Approved event.
  * Deduped per (roster_member_id, event_id). Also marks favourite listing alerts so
  * the daily saved-organiser cron does not double-send to the same inbox.
@@ -736,92 +908,21 @@ async function notifyRosterMembersOfPublishedEvent(eventRow) {
   if (alertedRes.error) throw new Error(alertedRes.error.message);
   const already = new Set((alertedRes.data || []).map((r) => String(r.roster_member_id)));
 
-  const site = siteBase();
-  const { event_date, event_time } = formatEventDateTime(eventRow.starts_at || eventRow.startsAt);
-  const eventLocation =
-    String(eventRow.location_label || eventRow.locationLabel || eventRow.venue || eventRow.city || '').trim() ||
-    'See event page';
-  const eventTimeSuffix = event_time ? ' · ' + event_time : '';
-  const eventUrl = eventPublicUrl(eventRow, site);
-  const organiserUrl = organiserPublicUrl(organiser, site);
-  const organiserName = String(organiser.name || 'your networking group').trim();
-
   for (const member of activeMembers) {
-    if (already.has(String(member.id))) {
-      result.skipped += 1;
-      continue;
-    }
     const email = normalizeRosterEmail(member.email);
     if (!email) {
       result.skipped += 1;
       continue;
     }
-
-    const hasAccount = Boolean(member.attendeeId || member.claimedAt);
-    const ctaUrl = hasAccount
-      ? loginUrlWithNext(site, email, eventUrl)
-      : site +
-        '/register?email=' +
-        encodeURIComponent(email) +
-        '&next=' +
-        encodeURIComponent(eventUrl);
-    const ctaLabel = hasAccount ? 'View member tickets' : 'Create account & view event';
-
     try {
-      await sendTemplatedEmail({
-        slug: 'member_roster_new_event',
-        to: email,
-        variables: {
-          user_name: emailGreetingName(member.name, email),
-          user_email: email,
-          organiser_name: organiserName,
-          organiser_url: organiserUrl,
-          event_name: String(eventRow.title || 'Event').trim(),
-          event_date: event_date || '',
-          event_time: eventTimeSuffix,
-          event_location: eventLocation,
-          event_url: eventUrl,
-          cta_url: ctaUrl,
-          cta_label: ctaLabel,
-          hub_account_url: hubAccountUrl(site),
-          browse_events_url: browseEventsUrl(site),
-          contact_url: contactUrl(site),
-          privacy_url: legalPolicyUrl(site, 'privacy'),
-          terms_url: legalPolicyUrl(site, 'terms'),
-          site_url: site,
-          logo_url: logoNavUrl(site),
-          logo_footer_url: logoFooterUrl(site),
-        },
+      const outcome = await sendMemberRosterNewEventAlert(sb, {
+        eventRow,
+        organiser,
+        member,
+        alreadyAlerted: already,
       });
-      await sb.from('organiser_roster_listing_alerts').insert({
-        roster_member_id: member.id,
-        event_id: eventId,
-      });
-      already.add(String(member.id));
-      result.sent += 1;
-
-      // Prevent the daily favourite-listing cron from double-emailing the same inbox
-      if (member.attendeeId) {
-        try {
-          const fav = await sb
-            .from('organiser_favourites')
-            .select('id')
-            .eq('attendee_id', member.attendeeId)
-            .eq('organiser_id', organiserId)
-            .maybeSingle();
-          if (fav.data?.id) {
-            await sb.from('organiser_favourite_listing_alerts').upsert(
-              {
-                organiser_favourite_id: fav.data.id,
-                event_id: eventId,
-              },
-              { onConflict: 'organiser_favourite_id,event_id', ignoreDuplicates: true }
-            );
-          }
-        } catch {
-          /* non-fatal */
-        }
-      }
+      if (outcome === 'sent') result.sent += 1;
+      else result.skipped += 1;
     } catch (e) {
       if (e.code === 'emails_disabled' || /emails_disabled/i.test(String(e.message || ''))) {
         result.skipped += 1;
@@ -853,4 +954,5 @@ module.exports = {
   sendMemberRosterInviteEmail,
   ensureOrganiserFavouritesForRoster,
   notifyRosterMembersOfPublishedEvent,
+  notifyRosterMemberOfUpcomingLiveEvents,
 };
