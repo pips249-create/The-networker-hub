@@ -1,5 +1,5 @@
 const FEATURED_PLANS = {
-  '1month': { label: '1 month', days: 30, amountPence: 5500, displayPrice: '£55.00' },
+  '1month': { label: '1 month', days: 30, amountPence: 0, displayPrice: '£0.00' },
   /** @deprecated Legacy plans — checkout UI offers 1 month only; kept for older sessions */
   '1week': { label: '1 week', days: 7, amountPence: 2000, displayPrice: '£20.00' },
   '2months': { label: '2 months', days: 60, amountPence: 10000, displayPrice: '£100.00' },

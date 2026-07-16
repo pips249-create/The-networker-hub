@@ -2,6 +2,15 @@
  * Post-publish confirmation — listing preview + social share.
  */
 (function () {
+  const FEATURED_LISTING_PRICE = '£0.00';
+
+  function applyFeaturedListingPrice() {
+    document.querySelectorAll('.ep-featured-plan-price').forEach(function (el) {
+      el.textContent = FEATURED_LISTING_PRICE;
+    });
+  }
+  applyFeaturedListingPrice();
+
   const params = new URLSearchParams(location.search);
   const eventIds = (params.get('ids') || '')
     .split(',')
@@ -530,7 +539,7 @@
   }
   if (extendFeatured && featuredLede) {
     featuredLede.textContent =
-      'Your featured placement is ending soon. Extend for <strong>£55 per month</strong> to keep premium visibility.';
+      'Your featured placement is ending soon. Extend for <strong>£0.00 per month</strong> to keep premium visibility.';
   }
 
   if (featuredCancelled && featuredError) {

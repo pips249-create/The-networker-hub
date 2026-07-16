@@ -244,7 +244,7 @@ async function createEventFeaturedCheckoutSession(opts) {
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
     line_items: [
-      planId === '1month'
+      planId === '1month' && plan.amountPence > 0
         ? lineItemFromCatalog('event_featured_1month', {
             currency: 'gbp',
             product_data: {
