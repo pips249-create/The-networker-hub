@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260716tixux" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260716tixsteps" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -53,8 +53,8 @@
       </div>
 
       <form id="ee-tickets-form">
-        <div class="ee-card ee-attendance-card-wrap">
-          <p class="ee-step-label">Step 1</p>
+        <div class="ee-card ee-attendance-card-wrap" id="ee-attendance-card-wrap">
+          <p class="ee-step-label" data-ee-step-label>Step 1</p>
           <h2 data-hub-tip="attendance-modes">How should people attend?</h2>
           <p class="ee-hint ee-attendance-lead">
             Pick one approach for this event. You can&rsquo;t mix open ticket sales with Category Exclusivity on the same listing.
@@ -73,8 +73,55 @@
           </div>
         </div>
 
+        <div class="ee-card" id="ee-panel-category-exclusivity" hidden>
+          <p class="ee-step-label" data-ee-step-label>Step 2</p>
+          <h2 data-hub-tip="category-exclusivity">Category Exclusivity</h2>
+          <p class="ee-hint" style="margin-top:0">
+            Set the price, capacity, and application deadline. Attendees apply instead of buying straight away.
+          </p>
+          <div class="ee-row-2">
+            <div class="ee-field">
+              <label for="ee-ce-price">Price <span class="ee-optional">(optional)</span></label>
+              <input type="number" id="ee-ce-price" min="0" step="0.01" value="0" inputmode="decimal" />
+              <p class="ee-hint">Charged after you approve. Enter 0 for free.</p>
+            </div>
+            <div class="ee-field">
+              <label for="ee-ce-places">Places available <span class="ee-optional">(optional)</span></label>
+              <input type="number" id="ee-ce-places" min="1" step="1" inputmode="numeric" placeholder="e.g. 20" />
+              <p class="ee-hint">Maximum approved applicants. Leave blank for unlimited.</p>
+            </div>
+          </div>
+          <div class="ee-field">
+            <label for="ee-ce-close">Applications close <span class="ee-optional">(optional)</span></label>
+            <select id="ee-ce-close" aria-describedby="ee-ce-close-hint">
+              <option value="at_start">When the event starts</option>
+              <option value="12_hours">12 hours before the event</option>
+              <option value="1_day">1 day before the event</option>
+              <option value="1_week" selected>1 week before the event</option>
+              <option value="custom">Custom date &amp; time</option>
+            </select>
+            <div class="ee-sale-custom" id="ee-ce-close-custom" hidden>
+              <div class="ee-field">
+                <label for="ee-ce-close-date">Custom closing date</label>
+                <input type="date" id="ee-ce-close-date" aria-label="Application closing date" />
+              </div>
+              <div class="ee-field">
+                <label for="ee-ce-close-time">Time</label>
+                <select id="ee-ce-close-time" aria-label="Application closing time"></select>
+              </div>
+            </div>
+          </div>
+          <div class="ee-ce-questions">
+            <p class="ee-label-block">Application questions <span class="ee-optional">(fixed)</span></p>
+            <ul class="ee-fixed-questions">
+              <li>What industry are you in?</li>
+              <li>What is your job title?</li>
+            </ul>
+          </div>
+        </div>
+
         <div class="ee-card" id="ee-panel-tickets">
-          <p class="ee-step-label">Step 2</p>
+          <p class="ee-step-label" data-ee-step-label>Step 2</p>
           <h2 id="ee-tickets-panel-title">Public ticket types</h2>
           <p class="ee-hint" style="margin-top:0">
             These are the tickets everyone sees on your listing — e.g. Standard, Early bird, or Member rate.
@@ -85,7 +132,7 @@
         </div>
 
         <div class="ee-card ee-optional-extras" id="ee-panel-optional-extras">
-          <p class="ee-step-label">Step 3 <span class="ee-optional">(optional)</span></p>
+          <p class="ee-step-label" data-ee-step-label>Step 3 <span class="ee-optional">(optional)</span></p>
           <h2>Optional extras</h2>
           <p class="ee-hint" style="margin-top:0">
             Turn on only what you need. Most events get by with public ticket types alone.
@@ -204,60 +251,13 @@
           </div>
         </div>
 
-        <div class="ee-card" id="ee-panel-category-exclusivity" hidden>
-          <p class="ee-step-label">Step 2</p>
-          <h2 data-hub-tip="category-exclusivity">Category Exclusivity</h2>
-          <p class="ee-hint" style="margin-top:0">
-            Set the price, capacity, and application deadline. Attendees apply instead of buying straight away.
-          </p>
-          <div class="ee-row-2">
-            <div class="ee-field">
-              <label for="ee-ce-price">Price <span class="ee-optional">(optional)</span></label>
-              <input type="number" id="ee-ce-price" min="0" step="0.01" value="0" inputmode="decimal" />
-              <p class="ee-hint">Charged after you approve. Enter 0 for free.</p>
-            </div>
-            <div class="ee-field">
-              <label for="ee-ce-places">Places available <span class="ee-optional">(optional)</span></label>
-              <input type="number" id="ee-ce-places" min="1" step="1" inputmode="numeric" placeholder="e.g. 20" />
-              <p class="ee-hint">Maximum approved applicants. Leave blank for unlimited.</p>
-            </div>
-          </div>
-          <div class="ee-field">
-            <label for="ee-ce-close">Applications close <span class="ee-optional">(optional)</span></label>
-            <select id="ee-ce-close" aria-describedby="ee-ce-close-hint">
-              <option value="at_start">When the event starts</option>
-              <option value="12_hours">12 hours before the event</option>
-              <option value="1_day">1 day before the event</option>
-              <option value="1_week" selected>1 week before the event</option>
-              <option value="custom">Custom date &amp; time</option>
-            </select>
-            <div class="ee-sale-custom" id="ee-ce-close-custom" hidden>
-              <div class="ee-field">
-                <label for="ee-ce-close-date">Custom closing date</label>
-                <input type="date" id="ee-ce-close-date" aria-label="Application closing date" />
-              </div>
-              <div class="ee-field">
-                <label for="ee-ce-close-time">Time</label>
-                <select id="ee-ce-close-time" aria-label="Application closing time"></select>
-              </div>
-            </div>
-          </div>
-          <div class="ee-ce-questions">
-            <p class="ee-label-block">Application questions <span class="ee-optional">(fixed)</span></p>
-            <ul class="ee-fixed-questions">
-              <li>What industry are you in?</li>
-              <li>What is your job title?</li>
-            </ul>
-          </div>
-        </div>
-
         <p class="ee-hint ee-free-tickets-note" id="ee-free-tickets-note" hidden>
           All your ticket types are free — VAT and refund policy are not required.
         </p>
 
         <div id="ee-paid-setup-wrap">
           <div class="ee-card" id="ee-vat-card">
-            <p class="ee-step-label">Step 4</p>
+            <p class="ee-step-label" data-ee-step-label>Step 4</p>
             <h2 data-hub-tip="vat-treatment">VAT on ticket prices</h2>
           <p class="ee-hint" style="margin-top:0">
             Required before publishing paid tickets. Choose one option — shown under tickets on your public listing so attendees know how VAT applies.
@@ -321,7 +321,7 @@
         </div>
 
         <div class="ee-card" id="ee-attendee-extras-card">
-          <p class="ee-step-label">Step 5 <span class="ee-optional">(optional)</span></p>
+          <p class="ee-step-label" data-ee-step-label>Step 5 <span class="ee-optional">(optional)</span></p>
           <h2>Attendee information at booking</h2>
           <p class="ee-hint" style="margin-top:0">
             Optional extras for events with catering or accessibility needs. We add a note to your listing description and can collect these details at checkout when registration is connected.
@@ -344,7 +344,7 @@
           <button type="button" class="ee-btn ee-btn-outline" id="ee-tickets-save">Save tickets (draft)</button>
           <button type="submit" class="ee-btn ee-btn-primary" id="ee-tickets-submit">Publish event</button>
           <button type="button" class="ee-btn ee-btn-outline ee-embed-back" id="ee-tickets-back-edit" hidden>
-            ← Event details
+            ← Location &amp; access
           </button>
           <a class="ee-btn ee-btn-outline ee-fullpage-back" href="/organiser/#events-tickets">Back to dashboard</a>
         </div>
@@ -362,6 +362,6 @@
     <script src="../js/organiser-payment-setup.js?v=20260714a"></script>
     <script src="../js/organiser-field-tips.js?v=20260715guest"></script>
     <script src="../js/hub-field-tip.js?v=20260711"></script>
-    <script src="../js/organiser-event-tickets.js?v=20260716guestfree"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260716tixsteps"></script>
   </body>
 </html>

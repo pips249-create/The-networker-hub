@@ -482,6 +482,7 @@
     }
     if (actionBack) {
       actionBack.hidden = false;
+      actionBack.textContent = '← Location & access';
       actionBack.addEventListener('click', function (e) {
         e.preventDefault();
         goBackToEventLocationInDrawer();
@@ -510,6 +511,41 @@
   function syncAddonCard(cardId, enabled) {
     const card = document.getElementById(cardId);
     if (card) card.classList.toggle('is-enabled', Boolean(enabled));
+  }
+
+  function setStepLabelText(labelEl, stepNum, optional) {
+    if (!labelEl) return;
+    labelEl.innerHTML = optional
+      ? 'Step ' + stepNum + ' <span class="ee-optional">(optional)</span>'
+      : 'Step ' + stepNum;
+  }
+
+  function syncTicketStepLabels() {
+    const sections = [];
+    const attendance = document.getElementById('ee-attendance-card-wrap');
+    if (attendance) sections.push({ el: attendance, optional: false });
+
+    const categoryPanel = document.getElementById('ee-panel-category-exclusivity');
+    if (categoryPanel && !categoryPanel.hidden) sections.push({ el: categoryPanel, optional: false });
+
+    const ticketsPanel = document.getElementById('ee-panel-tickets');
+    if (ticketsPanel && !ticketsPanel.hidden) sections.push({ el: ticketsPanel, optional: false });
+
+    const optionalExtras = document.getElementById('ee-panel-optional-extras');
+    if (optionalExtras && !optionalExtras.hidden) sections.push({ el: optionalExtras, optional: true });
+
+    const paidWrap = document.getElementById('ee-paid-setup-wrap');
+    const vatCard = document.getElementById('ee-vat-card');
+    if (paidWrap && !paidWrap.hidden && vatCard && !vatCard.hidden) {
+      sections.push({ el: vatCard, optional: false });
+    }
+
+    const attendeeExtras = document.getElementById('ee-attendee-extras-card');
+    if (attendeeExtras) sections.push({ el: attendeeExtras, optional: true });
+
+    sections.forEach(function (section, index) {
+      setStepLabelText(section.el.querySelector('[data-ee-step-label]'), index + 1, section.optional);
+    });
   }
 
   function setAttendanceMode(mode) {
@@ -557,6 +593,7 @@
     }
     syncGuestVisitsInput();
     updateTierSummary();
+    syncTicketStepLabels();
   }
 
   function readGuestVisitsAllowed() {
@@ -1262,6 +1299,7 @@
     document.querySelectorAll('input[name="vat-treatment"]').forEach(function (radio) {
       radio.required = hasPaid;
     });
+    syncTicketStepLabels();
   }
 
   function updatePublishButton() {

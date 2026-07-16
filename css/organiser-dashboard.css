@@ -5665,7 +5665,7 @@ body.org-event-drawer-open {
   padding-right: 0;
 }
 
-.org-event-drawer-progress {[hidden] {
+.org-event-drawer-progress[hidden] {
   display: none !important;
 }
 

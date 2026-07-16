@@ -1194,16 +1194,25 @@ a.ee-wizard-link:hover {
   box-shadow: inset 0 0 0 1px var(--ee-purple);
 }
 
+#ee-tickets-form .ee-card[hidden],
+#ee-paid-setup-wrap[hidden] {
+  display: none !important;
+}
+
 .ee-optional-extras {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+}
+
+.ee-optional-extras > .ee-hint {
+  margin-bottom: 2px;
 }
 
 .ee-addon-card {
   border: 1.5px solid var(--ee-border);
-  border-radius: var(--ee-radius);
-  padding: 14px 16px;
+  border-radius: calc(var(--ee-radius) - 2px);
+  padding: 10px 12px;
   background: var(--ee-white);
   transition: border-color 0.15s, background 0.15s;
 }
@@ -1215,15 +1224,15 @@ a.ee-wizard-link:hover {
 
 .ee-addon-toggle {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
   cursor: pointer;
   margin: 0;
 }
 
 .ee-addon-toggle input {
   width: auto;
-  margin: 4px 0 0;
+  margin: 0;
   padding: 0;
   border: none;
   accent-color: var(--ee-purple);
@@ -1233,24 +1242,26 @@ a.ee-wizard-link:hover {
 .ee-addon-toggle-copy {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  min-width: 0;
 }
 
 .ee-addon-toggle-copy strong {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--ee-text);
+  line-height: 1.3;
 }
 
 .ee-addon-summary {
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: 11px;
+  line-height: 1.35;
   color: var(--ee-text-mid);
   font-weight: 400;
 }
 
 .ee-addon-body {
-  margin-top: 14px;
-  padding-top: 14px;
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px solid var(--ee-border);
 }
 
