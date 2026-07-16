@@ -11,7 +11,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260716" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260716d" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
   </head>
@@ -24,8 +24,31 @@
       <div class="ep-success" role="status">
         <span class="ep-success-icon" aria-hidden="true">✓</span>
         <h1 class="ep-title" id="ep-title">Your event is now published</h1>
-        <p class="ep-lead" id="ep-lead">Attendees can find it on the hub. Preview your listing and choose featured placement, then share it with your network.</p>
+        <p class="ep-lead" id="ep-lead">Attendees can find it on the hub. Choose your next step below, preview your listing, then share it with your network.</p>
       </div>
+
+      <section class="ee-card ep-next-steps" aria-labelledby="ep-next-steps-heading">
+        <p class="ep-next-steps-label">Next steps</p>
+        <h2 class="ep-next-steps-heading" id="ep-next-steps-heading">Choose what to do next</h2>
+        <p class="oe-premium-slot-status" id="ep-featured-slot-status" hidden role="status"></p>
+        <p class="oe-premium-note" id="ep-featured-error" hidden role="alert"></p>
+        <div class="ep-next-steps-actions" id="ep-next-steps-actions">
+          <button type="button" class="ee-btn ee-btn-gold ep-next-step-btn" id="ep-featured-yes">
+            Yes — feature my event
+          </button>
+          <button type="button" class="ee-btn ee-btn-outline ep-next-step-btn" id="ep-featured-skip">
+            No thanks — keep my standard listing
+          </button>
+          <a
+            class="ee-btn ee-btn-outline ep-next-step-btn ep-open-listing"
+            id="ep-open-listing"
+            href="#"
+            target="_blank"
+            rel="noopener"
+            >Open full listing page</a
+          >
+        </div>
+      </section>
 
       <div class="ep-publish-row">
         <div class="ee-card oe-premium-upsell ep-featured-upsell" id="ep-featured-upsell">
@@ -44,16 +67,6 @@
             <li>Featured badge on your listing card</li>
             <li>Priority exposure to motivated attendees</li>
           </ul>
-          <p class="oe-premium-slot-status" id="ep-featured-slot-status" hidden role="status"></p>
-          <p class="oe-premium-note" id="ep-featured-error" hidden role="alert"></p>
-          <div class="oe-premium-actions">
-            <button type="button" class="ee-btn ee-btn-gold" id="ep-featured-yes">
-              Yes — feature my event
-            </button>
-            <button type="button" class="ee-btn ee-btn-outline" id="ep-featured-skip">
-              No thanks — keep my standard listing
-            </button>
-          </div>
         </div>
 
         <section class="ee-card ep-preview-card" aria-labelledby="ep-preview-heading">
@@ -68,9 +81,6 @@
               <h3 class="ep-preview-title" id="ep-preview-title">Event title</h3>
               <p class="ep-preview-meta" id="ep-preview-meta"></p>
               <p class="ep-preview-desc" id="ep-preview-desc"></p>
-              <a class="ee-btn ee-btn-outline ep-open-listing" id="ep-open-listing" href="#" target="_blank" rel="noopener"
-                >Open full listing page</a
-              >
             </div>
           </article>
         </section>
@@ -170,6 +180,6 @@
     <script src="../js/organiser-event-wizard.js?v=20260608c" data-step="publish"></script>
     <script src="../js/hub-comms-pack.js?v=20260714events"></script>
     <script src="../js/hub-going-share.js?v=20260716"></script>
-    <script src="../js/organiser-event-published.js?v=20260716b"></script>
+    <script src="../js/organiser-event-published.js?v=20260716d"></script>
   </body>
 </html>

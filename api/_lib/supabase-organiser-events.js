@@ -1118,10 +1118,8 @@ async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales)
 
   await assertEventsHaveTicketsForPublish(sb, ids);
 
-  const salesLiveNow = eventHasTicketsOnSale(ticketsForSales || []);
   const patch = {
     status: 'published',
-    ticket_sales_enabled: salesLiveNow,
     published_at: new Date().toISOString(),
     refund_policy: refundPayload.refundPolicy || null,
     refund_policy_details: refundPayload.refundPolicyDetails || null,
@@ -1169,10 +1167,14 @@ async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales)
       eventId: row.id,
       currentSlug: row.slug,
     });
-    const rowPatch = { ...patch, slug };
-    const mergedRow = { ...row, ...patch };
-    const organiser = row.organiser_id ? orgById.get(row.organiser_id) : null;
     const eventTickets = ticketsByEvent.get(row.id) || [];
+    const rowPatch = {
+      ...patch,
+      slug,
+      ticket_sales_enabled: eventHasTicketsOnSale(eventTickets),
+    };
+    const mergedRow = { ...row, ...rowPatch };
+    const organiser = row.organiser_id ? orgById.get(row.organiser_id) : null;
     if (eventRowReadyForAutoApproval(mergedRow, organiser, eventTickets, refundPayload)) {
       rowPatch.approval_status = 'Approved';
     } else if (String(row.approval_status || '').trim() !== 'Approved') {

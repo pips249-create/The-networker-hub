@@ -143,6 +143,20 @@ function eventEndMs(source) {
   return Number.isFinite(ms) ? ms : null;
 }
 
+function eventStartMs(source) {
+  const raw = eventStartRaw(source);
+  if (!raw) return null;
+  const ms = new Date(raw).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
+function isEventStarted(source, at) {
+  const start = eventStartMs(source);
+  if (start == null) return false;
+  const now = at instanceof Date ? at.getTime() : Date.now();
+  return start <= now;
+}
+
 function isEventPast(source, at) {
   const end = eventEndMs(source);
   if (end == null) return false;
@@ -157,6 +171,8 @@ module.exports = {
   formatTimeRange,
   formatDateOnly,
   londonTimeFromIso,
+  eventStartMs,
   eventEndMs,
+  isEventStarted,
   isEventPast,
 };

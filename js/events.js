@@ -514,7 +514,7 @@
       ? '<span class="event-grid-sales-pending">Tickets open ' +
         escapeHtml(ev.ticketSalesOpensShort) +
         '</span>'
-      : ev.isTicketSalesPending || ev.isTicketSalesScheduled
+      : ev.isTicketSalesScheduled
         ? '<span class="event-grid-sales-pending">Tickets soon</span>'
         : '';
     const rankingShort = rankingShortLabel(ev);

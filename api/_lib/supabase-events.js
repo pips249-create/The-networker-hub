@@ -13,6 +13,7 @@ const {
   formatDateOnly,
   formatTime: formatEventTime,
   isEventPast,
+  isEventStarted,
 } = require('./event-timezone');
 
 const IN_CHUNK_SIZE = 80;
@@ -36,7 +37,7 @@ const BROWSE_TICKET_COLUMNS =
 
 function upcomingBrowseOrFilter(nowIso) {
   const now = nowIso || new Date().toISOString();
-  return `ends_at.gte.${now},and(ends_at.is.null,starts_at.gte.${now})`;
+  return `starts_at.gt.${now}`;
 }
 
 function stripBrowseListPayload(ev) {
@@ -340,7 +341,11 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   const isTicketSalesScheduled =
     isEventPublishedForSale(row) && hasTicketTiers && !ticketsOnSale && Boolean(ticketSalesOpensAt);
   const isTicketSalesPending =
-    isEventPublishedForSale(row) && hasTicketTiers && !ticketsOnSale && !isTicketSalesScheduled;
+    isEventPublishedForSale(row) &&
+    hasTicketTiers &&
+    !isTicketSalesScheduled &&
+    !ticketSalesEnabled &&
+    ticketsOnSale;
   const connectRequired = connectRequiredForPaidCheckout() && hasPaidTickets;
   const connectReady =
     !connectRequired ||
@@ -552,11 +557,11 @@ function browseEventEndRaw(source) {
 }
 
 function isUpcomingBrowseEventRow(row) {
-  return !isEventPast(row);
+  return !isEventStarted(row);
 }
 
 function isUpcomingBrowseEvent(ev) {
-  return !isEventPast(ev);
+  return !isEventStarted(ev);
 }
 
 function bestSeriesPhotoFromRows(rows) {

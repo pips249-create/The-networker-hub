@@ -110,6 +110,20 @@
     return null;
   }
 
+  function eventStartMs(source) {
+    var raw = eventStartRaw(source);
+    if (!raw) return null;
+    var ms = new Date(raw).getTime();
+    return Number.isFinite(ms) ? ms : null;
+  }
+
+  function isEventStarted(source, at) {
+    var start = eventStartMs(source);
+    if (start == null) return false;
+    var now = at instanceof Date ? at.getTime() : Date.now();
+    return start <= now;
+  }
+
   function isEventPast(source, at) {
     var end = eventEndMs(source);
     if (end == null) return false;
@@ -123,7 +137,9 @@
     formatTime: formatTime,
     formatTimeRange: formatTimeRange,
     londonTimeFromIso: londonTimeFromIso,
+    eventStartMs: eventStartMs,
     eventEndMs: eventEndMs,
+    isEventStarted: isEventStarted,
     isEventPast: isEventPast,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

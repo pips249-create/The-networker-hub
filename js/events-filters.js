@@ -141,11 +141,14 @@
   }
 
   function isUpcomingBrowseEvent(ev) {
-    var endRaw = ev.endDateRaw || ev.dateRaw || ev.nextDate || null;
-    if (!endRaw) return false;
-    var endTs = new Date(endRaw).getTime();
-    if (Number.isNaN(endTs)) return false;
-    return endTs >= Date.now();
+    if (window.HubEventTimezone && typeof window.HubEventTimezone.isEventStarted === 'function') {
+      return !window.HubEventTimezone.isEventStarted(ev);
+    }
+    var startRaw = ev.dateRaw || ev.nextDate || ev.dateFieldRaw || null;
+    if (!startRaw) return false;
+    var startTs = new Date(startRaw).getTime();
+    if (Number.isNaN(startTs)) return false;
+    return startTs > Date.now();
   }
 
   function eventTicketPrice(ev) {

@@ -18,7 +18,7 @@ const IN_CHUNK = 80;
 
 function upcomingOrFilter(nowIso) {
   const now = nowIso || new Date().toISOString();
-  return `ends_at.gte.${now},and(ends_at.is.null,starts_at.gte.${now})`;
+  return `starts_at.gt.${now}`;
 }
 
 function sanitizeSearchTerm(term) {
